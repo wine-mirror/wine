@@ -616,7 +616,7 @@ static void shader_glsl_get_register_name(
     case WINED3DSPR_INPUT:
         if (pshader) {
             /* Pixel shaders >= 3.0 */
-            if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
+            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
                 sprintf(tmpStr, "IN%u", reg);
              else {
                 if (reg==0)
@@ -639,7 +639,7 @@ static void shader_glsl_get_register_name(
 
            /* Relative addressing on shaders 2.0+ have a relative address token, 
             * prior to that, it was hard-coded as "A0.x" because there's only 1 register */
-           if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
+           if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
                char relStr[100], relReg[50], relMask[6];
                shader_glsl_add_param(arg, addr_token, 0, TRUE, relReg, relMask, relStr);
                sprintf(tmpStr, "%s[%s + %u]", prefix, relStr, reg);
@@ -708,7 +708,7 @@ static void shader_glsl_get_register_name(
     break;
     case WINED3DSPR_TEXCRDOUT:
         /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
-        if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
+        if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3)
             sprintf(tmpStr, "OUT%u", reg);
         else
             sprintf(tmpStr, "gl_TexCoord[%u]", reg);
@@ -1010,7 +1010,7 @@ void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src_reg, src_mask, src_str);
     shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
 
-    if (hex_version < D3DPS_VERSION(2,0)) {
+    if (hex_version < WINED3DPS_VERSION(2,0)) {
         shader_addline(arg->buffer, "tmp0.x = vec4(exp2(floor(%s))).x;\n", src_str);
         shader_addline(arg->buffer, "tmp0.y = vec4(%s - floor(%s)).y;\n", src_str, src_str);
         shader_addline(arg->buffer, "tmp0.z = vec4(exp2(%s)).x;\n", src_str);
@@ -1376,14 +1376,14 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
-    if (hex_version < D3DPS_VERSION(1,4))
+    if (hex_version < WINED3DPS_VERSION(1,4))
        strcpy(coord_reg, dst_reg);
     else
        shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, coord_reg, coord_mask, coord_str);
 
     /* 1.0-1.4: Use destination register as coordinate source.
      * 2.0+: Use provided coordinate source register. */
-    if (hex_version < D3DPS_VERSION(2,0)) {
+    if (hex_version < WINED3DPS_VERSION(2,0)) {
         sprintf(sampler_str, "Psampler%u", reg_dest_code); 
         sampler_code = reg_dest_code;
     }       
@@ -1445,7 +1445,7 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, tmpReg, tmpMask, tmpStr);
 
-    if (hex_version != D3DPS_VERSION(1,4)) {
+    if (hex_version != WINED3DPS_VERSION(1,4)) {
         DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "%s = clamp(gl_TexCoord[%u], 0.0, 1.0);\n", tmpReg, reg);
     } else {

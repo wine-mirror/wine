@@ -101,7 +101,7 @@ int shader_get_param(
      * The version check below should work in general */
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    char rel_token = D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2 &&
+    char rel_token = WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2 &&
         ((*pToken & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
 
     *param = *pToken;
@@ -118,7 +118,7 @@ static inline int shader_skip_opcode(
    /* Shaders >= 2.0 may contain address tokens, but fortunately they
     * have a useful legnth mask - use it here. Shaders 1.0 contain no such tokens */
 
-    return (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
+    return (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)?
         ((opcode_token & WINED3DSI_INSTLENGTH_MASK) >> WINED3DSI_INSTLENGTH_SHIFT):
         curOpcode->num_params;
 }
@@ -191,7 +191,7 @@ HRESULT shader_get_registers_used(
     if (pToken == NULL)
         return WINED3D_OK;
 
-    while (D3DVS_END() != *pToken) {
+    while (WINED3DVS_END() != *pToken) {
         CONST SHADER_OPCODE* curOpcode;
         DWORD opcode_token;
 
@@ -292,7 +292,7 @@ HRESULT shader_get_registers_used(
             int i, limit;
 
             /* Declare 1.X samplers implicitly, based on the destination reg. number */
-            if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
+            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
                 (WINED3DSIO_TEX == curOpcode->opcode ||
                  WINED3DSIO_TEXBEM == curOpcode->opcode ||
                  WINED3DSIO_TEXM3x2TEX == curOpcode->opcode ||
@@ -329,7 +329,7 @@ HRESULT shader_get_registers_used(
                     }
                 }
 
-            } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
+            } else if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
                 (WINED3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
                  WINED3DSIO_TEXM3x3VSPEC == curOpcode->opcode)) {
 
@@ -339,7 +339,7 @@ HRESULT shader_get_registers_used(
                  * For now, use Cube textures because they are more common. */
                 DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
                 reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
-            } else if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
+            } else if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 &&
                 (WINED3DSIO_TEXDP3TEX == curOpcode->opcode)) {
                 
                 /* 1D Sampler usage */
@@ -414,7 +414,7 @@ static void shader_dump_decl_usage(
 
         /* Pixel shaders 3.0 don't have usage semantics */
         char pshader = shader_is_pshader_version(This->baseShader.hex_version);
-        if (pshader && This->baseShader.hex_version < D3DPS_VERSION(3,0))
+        if (pshader && This->baseShader.hex_version < WINED3DPS_VERSION(3,0))
             return;
         else
             TRACE("_");
@@ -571,7 +571,7 @@ void shader_dump_param(
             /* Vertex shaders >= 3.0 use general purpose output registers
              * (WINED3DSPR_OUTPUT), which can include an address token */
 
-            if (D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
+            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 3) {
                 TRACE("o");
                 shader_dump_arr_entry(iface, param, addr_token, reg, input);
             }
@@ -689,7 +689,7 @@ void shader_generate_main(
 
     /* Second pass, process opcodes */
     if (NULL != pToken) {
-        while (D3DPS_END() != *pToken) {
+        while (WINED3DPS_END() != *pToken) {
 
             /* Skip version token */
             if (shader_is_version_token(*pToken)) {
@@ -821,12 +821,12 @@ void shader_trace_init(
     TRACE("(%p) : Parsing programme\n", This);
 
     if (NULL != pToken) {
-        while (D3DVS_END() != *pToken) {
+        while (WINED3DVS_END() != *pToken) {
             if (shader_is_version_token(*pToken)) { /** version */
                 This->baseShader.hex_version = *pToken;
                 TRACE("%s_%u_%u\n", shader_is_pshader_version(This->baseShader.hex_version)? "ps": "vs",
-                    D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version),
-                    D3DSHADER_VERSION_MINOR(This->baseShader.hex_version));
+                    WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version),
+                    WINED3DSHADER_VERSION_MINOR(This->baseShader.hex_version));
                 ++pToken;
                 ++len;
                 continue;

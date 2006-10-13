@@ -2206,15 +2206,15 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
            vs_nv_version which is based on NV_vertex_program. For Ati cards there's no easy way, so for
            now only support 2.0/3.0 detection on Nvidia GeforceFX cards and default to 3.0 for everything else */
         if(This->gl_info.vs_nv_version == VS_VERSION_20)
-            *pCaps->VertexShaderVersion = D3DVS_VERSION(2,0);
+            *pCaps->VertexShaderVersion = WINED3DVS_VERSION(2,0);
         else
-            *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
+            *pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
         TRACE_(d3d_caps)("Hardware vertex shader version 3.0 enabled (GLSL)\n");
     } else if (vs_selected_mode == SHADER_ARB) {
-        *pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+        *pCaps->VertexShaderVersion = WINED3DVS_VERSION(1,1);
         TRACE_(d3d_caps)("Hardware vertex shader version 1.1 enabled (ARB_PROGRAM)\n");
     } else if (vs_selected_mode == SHADER_SW) {
-        *pCaps->VertexShaderVersion = D3DVS_VERSION(3,0);
+        *pCaps->VertexShaderVersion = WINED3DVS_VERSION(3,0);
         TRACE_(d3d_caps)("Software vertex shader version 3.0 enabled\n");
     } else {
         *pCaps->VertexShaderVersion  = 0;
@@ -2227,19 +2227,19 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         /* See the comment about VS2.0/VS3.0 detection as we do the same here but then based on NV_fragment_program
            in case of GeforceFX cards. */
         if(This->gl_info.ps_nv_version == PS_VERSION_20)
-            *pCaps->PixelShaderVersion = D3DPS_VERSION(2,0);
+            *pCaps->PixelShaderVersion = WINED3DPS_VERSION(2,0);
         else
-            *pCaps->PixelShaderVersion = D3DPS_VERSION(3,0);
+            *pCaps->PixelShaderVersion = WINED3DPS_VERSION(3,0);
         /* FIXME: The following line is card dependent. -1.0 to 1.0 is a safe default clamp range for now */
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 3.0 enabled (GLSL)\n");
     } else if (ps_selected_mode == SHADER_ARB) {
-        *pCaps->PixelShaderVersion    = D3DPS_VERSION(1,4);
+        *pCaps->PixelShaderVersion    = WINED3DPS_VERSION(1,4);
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Hardware pixel shader version 1.4 enabled (ARB_PROGRAM)\n");
     /* FIXME: Uncomment this when there is support for software Pixel Shader 3.0 and PS_SW is defined
     } else if (ps_selected_mode = SHADER_SW) {
-        *pCaps->PixelShaderVersion    = D3DPS_VERSION(3,0);
+        *pCaps->PixelShaderVersion    = WINED3DPS_VERSION(3,0);
         *pCaps->PixelShader1xMaxValue = 1.0;
         TRACE_(d3d_caps)("Software pixel shader version 3.0 enabled\n"); */
     } else {
@@ -2260,7 +2260,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->AdapterOrdinalInGroup             = 0;
         *pCaps->NumberOfAdaptersInGroup           = 1;
 
-        if(*pCaps->VertexShaderVersion >= D3DVS_VERSION(2,0)) {
+        if(*pCaps->VertexShaderVersion >= WINED3DVS_VERSION(2,0)) {
             /* OpenGL supports all formats below, perhaps not always without conversion but it supports them.
                Further GLSL doesn't seem to have an official unsigned type as I'm not sure how we handle it
                don't advertise it yet. We might need to add some clamping in the shader engine to support it.
@@ -2285,7 +2285,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->StretchRectFilterCaps             = 0;
         *pCaps->VertexTextureFilterCaps           = 0;
         
-        if(*pCaps->VertexShaderVersion == D3DVS_VERSION(3,0)) {
+        if(*pCaps->VertexShaderVersion == WINED3DVS_VERSION(3,0)) {
             /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
                use the VS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum VS3.0 value. */
             *pCaps->VS20Caps.Caps                     = D3DVS20CAPS_PREDICATION;
@@ -2295,7 +2295,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
             *pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
             *pCaps->MaxVertexShader30InstructionSlots = max(512, This->gl_info.vs_arb_max_instructions);
-        } else if(*pCaps->VertexShaderVersion == D3DVS_VERSION(2,0)) {
+        } else if(*pCaps->VertexShaderVersion == WINED3DVS_VERSION(2,0)) {
             *pCaps->VS20Caps.Caps                     = 0;
             *pCaps->VS20Caps.DynamicFlowControlDepth  = D3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
             *pCaps->VS20Caps.NumTemps                 = max(12, This->gl_info.vs_arb_max_temps);
@@ -2313,7 +2313,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->MaxVertexShader30InstructionSlots = 0;        
         }
 
-        if(*pCaps->PixelShaderVersion == D3DPS_VERSION(3,0)) {
+        if(*pCaps->PixelShaderVersion == WINED3DPS_VERSION(3,0)) {
             /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
                use the PS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum PS 3.0 value. */
             
@@ -2330,7 +2330,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
             *pCaps->MaxPShaderInstructionsExecuted    = 65535;
             *pCaps->MaxPixelShader30InstructionSlots  = max(D3DMIN30SHADERINSTRUCTIONS, This->gl_info.ps_arb_max_instructions);
-        } else if(*pCaps->PixelShaderVersion == D3DPS_VERSION(2,0)) {
+        } else if(*pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0)) {
             /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
             *pCaps->PS20Caps.Caps                     = 0;
             *pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* D3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */

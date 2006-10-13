@@ -643,8 +643,8 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {WINED3DSIO_DST,  "dst",  "DST", 1, 3, pshader_dst, pshader_hw_map2gl, shader_glsl_dst, 0, 0},
     {WINED3DSIO_LRP,  "lrp",  "LRP", 1, 4, pshader_lrp, pshader_hw_map2gl, shader_glsl_lrp, 0, 0},
     {WINED3DSIO_FRC,  "frc",  "FRC", 1, 2, pshader_frc, pshader_hw_map2gl, shader_glsl_map2gl, 0, 0},
-    {WINED3DSIO_CND,  "cnd",  NULL, 1, 4, pshader_cnd, pshader_hw_cnd, shader_glsl_cnd, D3DPS_VERSION(1,1), D3DPS_VERSION(1,4)},
-    {WINED3DSIO_CMP,  "cmp",  NULL, 1, 4, pshader_cmp, pshader_hw_cmp, shader_glsl_cmp, D3DPS_VERSION(1,2), D3DPS_VERSION(3,0)},
+    {WINED3DSIO_CND,  "cnd",  NULL, 1, 4, pshader_cnd, pshader_hw_cnd, shader_glsl_cnd, WINED3DPS_VERSION(1,1), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_CMP,  "cmp",  NULL, 1, 4, pshader_cmp, pshader_hw_cmp, shader_glsl_cmp, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(3,0)},
     {WINED3DSIO_POW,  "pow",  "POW", 1, 3, pshader_pow,  NULL, shader_glsl_map2gl, 0, 0},
     {WINED3DSIO_CRS,  "crs",  "XPS", 1, 3, pshader_crs,  NULL, shader_glsl_map2gl, 0, 0},
     /* TODO: xyz normalise can be performed as VS_ARB using one temporary register,
@@ -658,10 +658,10 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     */
     {WINED3DSIO_NRM,      "nrm",      NULL, 1, 2, pshader_nrm,     NULL, shader_glsl_map2gl, 0, 0},
-    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, shader_glsl_sincos, D3DPS_VERSION(2,0), D3DPS_VERSION(2,0)},
-    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, shader_glsl_sincos, D3DPS_VERSION(3,0), -1},
+    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, shader_glsl_sincos, WINED3DPS_VERSION(2,0), WINED3DPS_VERSION(2,0)},
+    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, shader_glsl_sincos, WINED3DPS_VERSION(3,0), -1},
     /* TODO: dp2add can be made out of multiple instuctions */
-    {WINED3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, pshader_glsl_dp2add, D3DPS_VERSION(2,0), -1},
+    {WINED3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, pshader_glsl_dp2add, WINED3DPS_VERSION(2,0), -1},
 
     /* Matrix */
     {WINED3DSIO_M4x4, "m4x4", "undefined", 1, 3, pshader_m4x4, NULL, shader_glsl_mnxn, 0, 0},
@@ -674,21 +674,21 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {WINED3DSIO_DCL,      "dcl",      NULL, 0, 2, pshader_dcl,     NULL, NULL, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
-    {WINED3DSIO_REP ,     "rep",      NULL, 0, 1, pshader_rep,     NULL, shader_glsl_rep,    D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_ENDREP,   "endrep",   NULL, 0, 0, pshader_endrep,  NULL, shader_glsl_end,    D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_IF,       "if",       NULL, 0, 1, pshader_if,      NULL, shader_glsl_if,     D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_IFC,      "ifc",      NULL, 0, 2, pshader_ifc,     NULL, shader_glsl_ifc,    D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_ELSE,     "else",     NULL, 0, 0, pshader_else,    NULL, shader_glsl_else,   D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_ENDIF,    "endif",    NULL, 0, 0, pshader_endif,   NULL, shader_glsl_end,    D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_BREAK,    "break",    NULL, 0, 0, pshader_break,   NULL, shader_glsl_break,  D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_BREAKC,   "breakc",   NULL, 0, 2, pshader_breakc,  NULL, shader_glsl_breakc, D3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_REP ,     "rep",      NULL, 0, 1, pshader_rep,     NULL, shader_glsl_rep,    WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_ENDREP,   "endrep",   NULL, 0, 0, pshader_endrep,  NULL, shader_glsl_end,    WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_IF,       "if",       NULL, 0, 1, pshader_if,      NULL, shader_glsl_if,     WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_IFC,      "ifc",      NULL, 0, 2, pshader_ifc,     NULL, shader_glsl_ifc,    WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_ELSE,     "else",     NULL, 0, 0, pshader_else,    NULL, shader_glsl_else,   WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_ENDIF,    "endif",    NULL, 0, 0, pshader_endif,   NULL, shader_glsl_end,    WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_BREAK,    "break",    NULL, 0, 0, pshader_break,   NULL, shader_glsl_break,  WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_BREAKC,   "breakc",   NULL, 0, 2, pshader_breakc,  NULL, shader_glsl_breakc, WINED3DPS_VERSION(2,1), -1},
     {WINED3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL, 0, 1, pshader_breakp,  NULL, NULL, 0, 0},
-    {WINED3DSIO_CALL,     "call",     NULL, 0, 1, pshader_call,    NULL, shader_glsl_call, D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_CALLNZ,   "callnz",   NULL, 0, 2, pshader_callnz,  NULL, shader_glsl_callnz, D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_LOOP,     "loop",     NULL, 0, 2, pshader_loop,    NULL, shader_glsl_loop,   D3DPS_VERSION(3,0), -1},
-    {WINED3DSIO_RET,      "ret",      NULL, 0, 0, pshader_ret,     NULL, NULL,               D3DPS_VERSION(2,1), -1},
-    {WINED3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, pshader_endloop, NULL, shader_glsl_end,    D3DPS_VERSION(3,0), -1},
-    {WINED3DSIO_LABEL,    "label",    NULL, 0, 1, pshader_label,   NULL, shader_glsl_label,  D3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_CALL,     "call",     NULL, 0, 1, pshader_call,    NULL, shader_glsl_call, WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_CALLNZ,   "callnz",   NULL, 0, 2, pshader_callnz,  NULL, shader_glsl_callnz, WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_LOOP,     "loop",     NULL, 0, 2, pshader_loop,    NULL, shader_glsl_loop,   WINED3DPS_VERSION(3,0), -1},
+    {WINED3DSIO_RET,      "ret",      NULL, 0, 0, pshader_ret,     NULL, NULL,               WINED3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, pshader_endloop, NULL, shader_glsl_end,    WINED3DPS_VERSION(3,0), -1},
+    {WINED3DSIO_LABEL,    "label",    NULL, 0, 1, pshader_label,   NULL, shader_glsl_label,  WINED3DPS_VERSION(2,1), -1},
 
     /* Constant definitions */
     {WINED3DSIO_DEF,      "def",      "undefined",         1, 5, pshader_def,     NULL, NULL, 0, 0},
@@ -696,33 +696,33 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {WINED3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, pshader_defi,    NULL, NULL, 0, 0},
 
     /* Texture */
-    {WINED3DSIO_TEXCOORD, "texcoord", "undefined", 1, 1, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, 0, D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXCOORD, "texcrd",   "undefined", 1, 2, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {WINED3DSIO_TEXKILL,  "texkill",  "KIL",       1, 1, pshader_texkill,     pshader_hw_map2gl, pshader_glsl_texkill, D3DPS_VERSION(1,0), D3DPS_VERSION(3,0)},
-    {WINED3DSIO_TEX,      "tex",      "undefined", 1, 1, pshader_tex,         pshader_hw_tex, pshader_glsl_tex, 0, D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEX,      "texld",    "undefined", 1, 2, pshader_texld,       pshader_hw_tex, pshader_glsl_tex, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {WINED3DSIO_TEX,      "texld",    "undefined", 1, 3, pshader_texld,       pshader_hw_tex, pshader_glsl_tex, D3DPS_VERSION(2,0), -1},
-    {WINED3DSIO_TEXBEM,   "texbem",   "undefined", 1, 2, pshader_texbem,      pshader_hw_texbem, pshader_glsl_texbem, 0, D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texbeml, NULL, NULL, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXREG2AR,"texreg2ar","undefined", 1, 2, pshader_texreg2ar,   pshader_hw_texreg2ar, pshader_glsl_texreg2ar, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXREG2GB,"texreg2gb","undefined", 1, 2, pshader_texreg2gb,   pshader_hw_texreg2gb, pshader_glsl_texreg2gb, D3DPS_VERSION(1,1), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texreg2rgb,  NULL, pshader_glsl_texreg2rgb, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined", 1, 2, pshader_texm3x2pad,   pshader_hw_texm3x2pad, pshader_glsl_texm3x2pad, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined", 1, 2, pshader_texm3x2tex,   pshader_hw_texm3x2tex, pshader_glsl_texm3x2tex, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined", 1, 2, pshader_texm3x3pad,   pshader_hw_texm3x3pad, pshader_glsl_texm3x3pad, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3diff,  NULL, NULL, D3DPS_VERSION(0,0), D3DPS_VERSION(0,0)},
-    {WINED3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined", 1, 3, pshader_texm3x3spec,  pshader_hw_texm3x3spec, pshader_glsl_texm3x3spec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x3VSPEC, "texm3x3vspec",  "undefined", 1, 2, pshader_texm3x3vspec, pshader_hw_texm3x3vspec, pshader_glsl_texm3x3vspec, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined", 1, 2, pshader_texm3x3tex,   pshader_hw_texm3x3tex, pshader_glsl_texm3x3tex, D3DPS_VERSION(1,0), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3tex,   NULL, pshader_glsl_texdp3tex, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x2depth, NULL, pshader_glsl_texm3x2depth, D3DPS_VERSION(1,3), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3,   NULL, pshader_glsl_texdp3, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXM3x3,  "texm3x3",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3,  NULL, pshader_glsl_texm3x3, D3DPS_VERSION(1,2), D3DPS_VERSION(1,3)},
-    {WINED3DSIO_TEXDEPTH, "texdepth", GLNAME_REQUIRE_GLSL, 1, 1, pshader_texdepth, NULL, pshader_glsl_texdepth, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
-    {WINED3DSIO_BEM,      "bem",      GLNAME_REQUIRE_GLSL, 1, 3, pshader_bem,      NULL, NULL, D3DPS_VERSION(1,4), D3DPS_VERSION(1,4)},
+    {WINED3DSIO_TEXCOORD, "texcoord", "undefined", 1, 1, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, 0, WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXCOORD, "texcrd",   "undefined", 1, 2, pshader_texcoord,    pshader_hw_texcoord, pshader_glsl_texcoord, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_TEXKILL,  "texkill",  "KIL",       1, 1, pshader_texkill,     pshader_hw_map2gl, pshader_glsl_texkill, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(3,0)},
+    {WINED3DSIO_TEX,      "tex",      "undefined", 1, 1, pshader_tex,         pshader_hw_tex, pshader_glsl_tex, 0, WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEX,      "texld",    "undefined", 1, 2, pshader_texld,       pshader_hw_tex, pshader_glsl_tex, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_TEX,      "texld",    "undefined", 1, 3, pshader_texld,       pshader_hw_tex, pshader_glsl_tex, WINED3DPS_VERSION(2,0), -1},
+    {WINED3DSIO_TEXBEM,   "texbem",   "undefined", 1, 2, pshader_texbem,      pshader_hw_texbem, pshader_glsl_texbem, 0, WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXBEML,  "texbeml",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texbeml, NULL, NULL, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXREG2AR,"texreg2ar","undefined", 1, 2, pshader_texreg2ar,   pshader_hw_texreg2ar, pshader_glsl_texreg2ar, WINED3DPS_VERSION(1,1), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXREG2GB,"texreg2gb","undefined", 1, 2, pshader_texreg2gb,   pshader_hw_texreg2gb, pshader_glsl_texreg2gb, WINED3DPS_VERSION(1,1), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXREG2RGB,   "texreg2rgb",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texreg2rgb,  NULL, pshader_glsl_texreg2rgb, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x2PAD,   "texm3x2pad",   "undefined", 1, 2, pshader_texm3x2pad,   pshader_hw_texm3x2pad, pshader_glsl_texm3x2pad, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x2TEX,   "texm3x2tex",   "undefined", 1, 2, pshader_texm3x2tex,   pshader_hw_texm3x2tex, pshader_glsl_texm3x2tex, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3PAD,   "texm3x3pad",   "undefined", 1, 2, pshader_texm3x3pad,   pshader_hw_texm3x3pad, pshader_glsl_texm3x3pad, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3DIFF,  "texm3x3diff",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3diff,  NULL, NULL, WINED3DPS_VERSION(0,0), WINED3DPS_VERSION(0,0)},
+    {WINED3DSIO_TEXM3x3SPEC,  "texm3x3spec",  "undefined", 1, 3, pshader_texm3x3spec,  pshader_hw_texm3x3spec, pshader_glsl_texm3x3spec, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3VSPEC, "texm3x3vspec",  "undefined", 1, 2, pshader_texm3x3vspec, pshader_hw_texm3x3vspec, pshader_glsl_texm3x3vspec, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3TEX,   "texm3x3tex",   "undefined", 1, 2, pshader_texm3x3tex,   pshader_hw_texm3x3tex, pshader_glsl_texm3x3tex, WINED3DPS_VERSION(1,0), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXDP3TEX,    "texdp3tex",    GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3tex,   NULL, pshader_glsl_texdp3tex, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x2DEPTH, "texm3x2depth", GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x2depth, NULL, pshader_glsl_texm3x2depth, WINED3DPS_VERSION(1,3), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXDP3,   "texdp3",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texdp3,   NULL, pshader_glsl_texdp3, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXM3x3,  "texm3x3",  GLNAME_REQUIRE_GLSL, 1, 2, pshader_texm3x3,  NULL, pshader_glsl_texm3x3, WINED3DPS_VERSION(1,2), WINED3DPS_VERSION(1,3)},
+    {WINED3DSIO_TEXDEPTH, "texdepth", GLNAME_REQUIRE_GLSL, 1, 1, pshader_texdepth, NULL, pshader_glsl_texdepth, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
+    {WINED3DSIO_BEM,      "bem",      GLNAME_REQUIRE_GLSL, 1, 3, pshader_bem,      NULL, NULL, WINED3DPS_VERSION(1,4), WINED3DPS_VERSION(1,4)},
     {WINED3DSIO_DSX,      "dsx",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsx,     NULL, NULL, 0, 0},
     {WINED3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsy,     NULL, NULL, 0, 0},
-    {WINED3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL, 1, 5, pshader_texldd,  NULL, NULL, D3DPS_VERSION(2,1), -1},
+    {WINED3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL, 1, 5, pshader_texldd,  NULL, NULL, WINED3DPS_VERSION(2,1), -1},
     {WINED3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL, 1, 3, pshader_setp,    NULL, NULL, 0, 0},
     {WINED3DSIO_TEXLDL,   "texldl",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texldl,  NULL, NULL, 0, 0},
     {WINED3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL, 0, 0, pshader_nop,     NULL, NULL, 0, 0},
@@ -737,10 +737,10 @@ static void pshader_set_limits(
       This->baseShader.limits.packed_output = 0;
 
       switch (This->baseShader.hex_version) {
-          case D3DPS_VERSION(1,0):
-          case D3DPS_VERSION(1,1):
-          case D3DPS_VERSION(1,2):
-          case D3DPS_VERSION(1,3): 
+          case WINED3DPS_VERSION(1,0):
+          case WINED3DPS_VERSION(1,1):
+          case WINED3DPS_VERSION(1,2):
+          case WINED3DPS_VERSION(1,3): 
                    This->baseShader.limits.temporary = 2;
                    This->baseShader.limits.constant_float = 8;
                    This->baseShader.limits.constant_int = 0;
@@ -751,7 +751,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.label = 0;
                    break;
 
-          case D3DPS_VERSION(1,4):
+          case WINED3DPS_VERSION(1,4):
                    This->baseShader.limits.temporary = 6;
                    This->baseShader.limits.constant_float = 8;
                    This->baseShader.limits.constant_int = 0;
@@ -763,7 +763,7 @@ static void pshader_set_limits(
                    break;
                
           /* FIXME: temporaries must match D3DPSHADERCAPS2_0.NumTemps */ 
-          case D3DPS_VERSION(2,0):
+          case WINED3DPS_VERSION(2,0):
                    This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 32;
                    This->baseShader.limits.constant_int = 16;
@@ -773,7 +773,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.packed_input = 0;
                    break;
 
-          case D3DPS_VERSION(2,1):
+          case WINED3DPS_VERSION(2,1):
                    This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 32;
                    This->baseShader.limits.constant_int = 16;
@@ -784,7 +784,7 @@ static void pshader_set_limits(
                    This->baseShader.limits.label = 16;
                    break;
 
-          case D3DPS_VERSION(3,0):
+          case WINED3DPS_VERSION(3,0):
                    This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_float = 224;
                    This->baseShader.limits.constant_int = 16;
@@ -846,14 +846,14 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         shader_generate_glsl_declarations( (IWineD3DBaseShader*) This, reg_maps, &buffer, &GLINFO_LOCATION);
 
         /* Pack 3.0 inputs */
-        if (This->baseShader.hex_version >= D3DPS_VERSION(3,0))
+        if (This->baseShader.hex_version >= WINED3DPS_VERSION(3,0))
             pshader_glsl_input_pack(&buffer, This->semantics_in);
 
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* Pixel shaders < 2.0 place the resulting color in R0 implicitly */
-        if (This->baseShader.hex_version < D3DPS_VERSION(2,0)) {
+        if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
             /* Some older cards like GeforceFX ones don't support multiple buffers, so also not gl_FragData */
             if(GL_SUPPORT(ARB_DRAW_BUFFERS))
                 shader_addline(&buffer, "gl_FragData[0] = R0;\n");
@@ -889,7 +889,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
         /* Base Shader Body */
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
-        if (This->baseShader.hex_version < D3DPS_VERSION(2,0))
+        if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0))
             shader_addline(&buffer, "MOV result.color, R0;\n");
         shader_addline(&buffer, "END\n\0"); 
 

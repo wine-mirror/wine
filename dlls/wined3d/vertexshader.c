@@ -515,8 +515,8 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
 
     */
     {WINED3DSIO_NRM,      "nrm",      NULL, 1, 2, vshader_nrm,    NULL, shader_glsl_map2gl, 0, 0},
-    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 4, vshader_sincos2, NULL, shader_glsl_sincos, D3DVS_VERSION(2,0), D3DVS_VERSION(2,0)},
-    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 2, vshader_sincos3, NULL, shader_glsl_sincos, D3DVS_VERSION(3,0), -1},
+    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 4, vshader_sincos2, NULL, shader_glsl_sincos, WINED3DVS_VERSION(2,0), WINED3DVS_VERSION(2,0)},
+    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 2, vshader_sincos3, NULL, shader_glsl_sincos, WINED3DVS_VERSION(3,0), -1},
 
     /* Matrix */
     {WINED3DSIO_M4x4, "m4x4", "undefined", 1, 3, vshader_m4x4, vshader_hw_mnxn, shader_glsl_mnxn, 0, 0},
@@ -534,21 +534,21 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {WINED3DSIO_DEFI,     "defi",     GLNAME_REQUIRE_GLSL, 1, 5, vshader_defi,    NULL, NULL, 0, 0},
 
     /* Flow control - requires GLSL or software shaders */
-    {WINED3DSIO_REP ,     "rep",      NULL, 0, 1, vshader_rep,     NULL, shader_glsl_rep,    D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_ENDREP,   "endrep",   NULL, 0, 0, vshader_endrep,  NULL, shader_glsl_end,    D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_IF,       "if",       NULL, 0, 1, vshader_if,      NULL, shader_glsl_if,     D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_IFC,      "ifc",      NULL, 0, 2, vshader_ifc,     NULL, shader_glsl_ifc,    D3DVS_VERSION(2,1), -1},
-    {WINED3DSIO_ELSE,     "else",     NULL, 0, 0, vshader_else,    NULL, shader_glsl_else,   D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_ENDIF,    "endif",    NULL, 0, 0, vshader_endif,   NULL, shader_glsl_end,    D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_BREAK,    "break",    NULL, 0, 0, vshader_break,   NULL, shader_glsl_break,  D3DVS_VERSION(2,1), -1},
-    {WINED3DSIO_BREAKC,   "breakc",   NULL, 0, 2, vshader_breakc,  NULL, shader_glsl_breakc, D3DVS_VERSION(2,1), -1},
+    {WINED3DSIO_REP ,     "rep",      NULL, 0, 1, vshader_rep,     NULL, shader_glsl_rep,    WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_ENDREP,   "endrep",   NULL, 0, 0, vshader_endrep,  NULL, shader_glsl_end,    WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_IF,       "if",       NULL, 0, 1, vshader_if,      NULL, shader_glsl_if,     WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_IFC,      "ifc",      NULL, 0, 2, vshader_ifc,     NULL, shader_glsl_ifc,    WINED3DVS_VERSION(2,1), -1},
+    {WINED3DSIO_ELSE,     "else",     NULL, 0, 0, vshader_else,    NULL, shader_glsl_else,   WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_ENDIF,    "endif",    NULL, 0, 0, vshader_endif,   NULL, shader_glsl_end,    WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_BREAK,    "break",    NULL, 0, 0, vshader_break,   NULL, shader_glsl_break,  WINED3DVS_VERSION(2,1), -1},
+    {WINED3DSIO_BREAKC,   "breakc",   NULL, 0, 2, vshader_breakc,  NULL, shader_glsl_breakc, WINED3DVS_VERSION(2,1), -1},
     {WINED3DSIO_BREAKP,   "breakp",   GLNAME_REQUIRE_GLSL, 0, 1, vshader_breakp,  NULL, NULL, 0, 0},
-    {WINED3DSIO_CALL,     "call",     NULL, 0, 1, vshader_call,    NULL, shader_glsl_call,   D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_CALLNZ,   "callnz",   NULL, 0, 2, vshader_callnz,  NULL, shader_glsl_callnz, D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_LOOP,     "loop",     NULL, 0, 2, vshader_loop,    NULL, shader_glsl_loop,   D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_RET,      "ret",      NULL, 0, 0, vshader_ret,     NULL, NULL,               D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, vshader_endloop, NULL, shader_glsl_end,    D3DVS_VERSION(2,0), -1},
-    {WINED3DSIO_LABEL,    "label",    NULL, 0, 1, vshader_label,   NULL, shader_glsl_label,  D3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_CALL,     "call",     NULL, 0, 1, vshader_call,    NULL, shader_glsl_call,   WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_CALLNZ,   "callnz",   NULL, 0, 2, vshader_callnz,  NULL, shader_glsl_callnz, WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_LOOP,     "loop",     NULL, 0, 2, vshader_loop,    NULL, shader_glsl_loop,   WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_RET,      "ret",      NULL, 0, 0, vshader_ret,     NULL, NULL,               WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, vshader_endloop, NULL, shader_glsl_end,    WINED3DVS_VERSION(2,0), -1},
+    {WINED3DSIO_LABEL,    "label",    NULL, 0, 1, vshader_label,   NULL, shader_glsl_label,  WINED3DVS_VERSION(2,0), -1},
 
     {WINED3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_mova,    NULL, shader_glsl_mov, 0, 0},
     {WINED3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL, 1, 3, vshader_setp,    NULL, NULL, 0, 0},
@@ -567,8 +567,8 @@ static void vshader_set_limits(
       This->baseShader.limits.constant_float = GL_LIMITS(vshader_constantsF);
 
       switch (This->baseShader.hex_version) {
-          case D3DVS_VERSION(1,0):
-          case D3DVS_VERSION(1,1):
+          case WINED3DVS_VERSION(1,0):
+          case WINED3DVS_VERSION(1,1):
                    This->baseShader.limits.temporary = 12;
                    This->baseShader.limits.constant_bool = 0;
                    This->baseShader.limits.constant_int = 0;
@@ -578,8 +578,8 @@ static void vshader_set_limits(
                    This->baseShader.limits.label = 0;
                    break;
       
-          case D3DVS_VERSION(2,0):
-          case D3DVS_VERSION(2,1):
+          case WINED3DVS_VERSION(2,0):
+          case WINED3DVS_VERSION(2,1):
                    This->baseShader.limits.temporary = 12;
                    This->baseShader.limits.constant_bool = 16;
                    This->baseShader.limits.constant_int = 16;
@@ -589,7 +589,7 @@ static void vshader_set_limits(
                    This->baseShader.limits.label = 16;
                    break;
 
-          case D3DVS_VERSION(3,0):
+          case WINED3DVS_VERSION(3,0):
                    This->baseShader.limits.temporary = 32;
                    This->baseShader.limits.constant_bool = 32;
                    This->baseShader.limits.constant_int = 32;
@@ -727,7 +727,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
         shader_generate_main( (IWineD3DBaseShader*) This, &buffer, reg_maps, pFunction);
 
         /* Unpack 3.0 outputs */
-        if (This->baseShader.hex_version >= D3DVS_VERSION(3,0))
+        if (This->baseShader.hex_version >= WINED3DVS_VERSION(3,0))
             vshader_glsl_output_unpack(&buffer, This->semantics_out);
 
         /* Clamp the fog from 0 to 1 if it's used */
@@ -893,7 +893,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
     if (shader_is_vshader_version(*pToken)) { /** version */
         ++pToken;
     }
-    while (D3DVS_END() != *pToken) {
+    while (WINED3DVS_END() != *pToken) {
         if (shader_is_comment(*pToken)) { /** comment */
             DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
             ++pToken;

@@ -638,14 +638,14 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     /* 1.0-1.3: Use destination register as coordinate source.
        1.4+: Use provided coordinate source register. */
-   if (hex_version < D3DPS_VERSION(1,4))
+   if (hex_version < WINED3DPS_VERSION(1,4))
       strcpy(reg_coord, reg_dest);
    else
       pshader_gen_input_modifier_line(buffer, src[0], 0, reg_coord);
 
   /* 1.0-1.4: Use destination register number as texture code.
      2.0+: Use provided sampler number as texure code. */
-  if (hex_version < D3DPS_VERSION(2,0))
+  if (hex_version < WINED3DPS_VERSION(2,0))
      reg_sampler_code = reg_dest_code;
   else
      reg_sampler_code = src[1] & WINED3DSP_REGNUM_MASK;
@@ -692,7 +692,7 @@ void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
 
     char tmp[20];
     pshader_get_write_mask(dst, tmp);
-    if (hex_version != D3DPS_VERSION(1,4)) {
+    if (hex_version != WINED3DPS_VERSION(1,4)) {
         DWORD reg = dst & WINED3DSP_REGNUM_MASK;
         shader_addline(buffer, "MOV_SAT T%u%s, fragment.texcoord[%u];\n", reg, tmp, reg);
     } else {

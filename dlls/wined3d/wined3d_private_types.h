@@ -274,5 +274,14 @@ typedef enum _WINED3DSHADER_INSTRUCTION_OPCODE_TYPE {
   ((((commentSize) << WINED3DSI_COMMENTSIZE_SHIFT) & WINED3DSI_COMMENTSIZE_MASK) | WINED3DSIO_COMMENT)
 
 #define WINED3DSHADER_INSTRUCTION_PREDICATED (1 << 28)
+
+/** Shader version tokens, and shader end tokens **/
+
+#define WINED3DPS_VERSION(major, minor) (0xFFFF0000 | ((major) << 8) | (minor))
+#define WINED3DVS_VERSION(major, minor) (0xFFFE0000 | ((major) << 8) | (minor))
+#define WINED3DSHADER_VERSION_MAJOR(version) (((version) >> 8) & 0xFF)
+#define WINED3DSHADER_VERSION_MINOR(version) (((version) >> 0) & 0xFF)
+#define WINED3DPS_END() 0x0000FFFF
+#define WINED3DVS_END() 0x0000FFFF
   
 #endif
