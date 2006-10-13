@@ -23,7 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
-#include "ddk/cfgmgr32.h"
+#include "cfgmgr32.h"
 
 #include "wine/debug.h"
 

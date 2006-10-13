@@ -34,7 +34,7 @@
 #include "setupapi.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
-#include "ddk/cfgmgr32.h"
+#include "cfgmgr32.h"
 #include "initguid.h"
 #include "winioctl.h"
 #include "rpc.h"
