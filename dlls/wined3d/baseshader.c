@@ -102,7 +102,7 @@ int shader_get_param(
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
     char rel_token = D3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2 &&
-        ((*pToken & D3DSHADER_ADDRESSMODE_MASK) == D3DSHADER_ADDRMODE_RELATIVE);
+        ((*pToken & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
 
     *param = *pToken;
     *addr_token = rel_token? *(pToken + 1): 0;
@@ -480,7 +480,7 @@ static void shader_dump_arr_entry(
     int input) {
 
     char relative =
-        ((param & D3DSHADER_ADDRESSMODE_MASK) == D3DSHADER_ADDRMODE_RELATIVE);
+        ((param & WINED3DSHADER_ADDRESSMODE_MASK) == WINED3DSHADER_ADDRMODE_RELATIVE);
 
     if (relative) {
         TRACE("[");

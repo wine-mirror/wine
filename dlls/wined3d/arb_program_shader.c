@@ -388,7 +388,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     strcat(hwLine, tmpReg);
     break;
   case WINED3DSPR_CONST:
-    sprintf(tmpReg, "C[%s%u]", (param & D3DVS_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
+    sprintf(tmpReg, "C[%s%u]", (param & WINED3DSHADER_ADDRMODE_RELATIVE) ? "A0.x + " : "", reg);
     strcat(hwLine, tmpReg);
     break;
   case WINED3DSPR_ADDR: /*case D3DSPR_TEXTURE:*/

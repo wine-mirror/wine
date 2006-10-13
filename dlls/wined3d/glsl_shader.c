@@ -635,7 +635,7 @@ static void shader_glsl_get_register_name(
         const char* prefix = pshader? "PC":"VC";
 
         /* Relative addressing */
-        if (param & D3DVS_ADDRMODE_RELATIVE) {
+        if (param & WINED3DSHADER_ADDRMODE_RELATIVE) {
 
            /* Relative addressing on shaders 2.0+ have a relative address token, 
             * prior to that, it was hard-coded as "A0.x" because there's only 1 register */

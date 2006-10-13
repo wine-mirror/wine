@@ -926,7 +926,7 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                         p[i] = &input->V[reg];
                         break;
                     case WINED3DSPR_CONST:
-                        if (pToken[i] & D3DVS_ADDRMODE_RELATIVE) {
+                        if (pToken[i] & WINED3DSHADER_ADDRMODE_RELATIVE) {
                             p[i] = &This->data->C[(DWORD) A[0].x + reg];
                         } else {
                             p[i] = &This->data->C[reg];
