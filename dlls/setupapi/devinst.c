@@ -213,7 +213,7 @@ BOOL WINAPI SetupDiBuildClassInfoListExW(
 			       NULL,
 			       NULL,
 			       NULL);
-	TRACE("RegEnumKeyExW() returns %ld\n", lError);
+	TRACE("RegEnumKeyExW() returns %d\n", lError);
 	if (lError == ERROR_SUCCESS || lError == ERROR_MORE_DATA)
 	{
 	    TRACE("Key name: %p\n", szKeyName);
@@ -415,7 +415,7 @@ BOOL WINAPI SetupDiClassGuidsFromNameExW(
 			       NULL,
 			       NULL,
 			       NULL);
-	TRACE("RegEnumKeyExW() returns %ld\n", lError);
+	TRACE("RegEnumKeyExW() returns %d\n", lError);
 	if (lError == ERROR_SUCCESS || lError == ERROR_MORE_DATA)
 	{
 	    TRACE("Key name: %p\n", szKeyName);
@@ -748,7 +748,7 @@ BOOL WINAPI SetupDiCreateDeviceInfoW(
        DWORD CreationFlags,
        PSP_DEVINFO_DATA DeviceInfoData)
 {
-    TRACE("%p %s %s %s %p %lx %p\n", DeviceInfoSet, debugstr_w(DeviceName),
+    TRACE("%p %s %s %s %p %x %p\n", DeviceInfoSet, debugstr_w(DeviceName),
         debugstr_guid(ClassGuid), debugstr_w(DeviceDescription),
         hwndParent, CreationFlags, DeviceInfoData);
 
@@ -765,7 +765,7 @@ BOOL WINAPI SetupDiEnumDeviceInfo(
         DWORD  index,
         PSP_DEVINFO_DATA info)
 {
-    FIXME("%p %ld %p\n", devinfo, index, info);
+    FIXME("%p %d %p\n", devinfo, index, info);
 
     if(info==NULL)
         return FALSE;
@@ -931,7 +931,7 @@ BOOL WINAPI SetupDiGetClassDescriptionExW(
                                      Reserved);
     if (hKey == INVALID_HANDLE_VALUE)
     {
-	WARN("SetupDiOpenClassRegKeyExW() failed (Error %lu)\n", GetLastError());
+	WARN("SetupDiOpenClassRegKeyExW() failed (Error %u)\n", GetLastError());
 	return FALSE;
     }
 
@@ -1010,7 +1010,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsW(
 {
     HDEVINFO ret = (HDEVINFO)INVALID_HANDLE_VALUE;
 
-    TRACE("%s %s %p 0x%08lx\n", debugstr_guid(class), debugstr_w(enumstr),
+    TRACE("%s %s %p 0x%08x\n", debugstr_guid(class), debugstr_w(enumstr),
      parent, flags);
 
     if(flags & DIGCF_DEVICEINTERFACE)
@@ -1064,7 +1064,7 @@ BOOL WINAPI SetupDiEnumDeviceInterfaces(
 {
     BOOL ret = FALSE;
 
-    FIXME("%p, %p, %s, 0x%08lx, %p\n", devinfo, DeviceInfoData,
+    FIXME("%p, %p, %s, 0x%08x, %p\n", devinfo, DeviceInfoData,
      debugstr_guid(InterfaceClassGuid), MemberIndex, DeviceInterfaceData);
 
     if (devinfo && devinfo != (HDEVINFO)INVALID_HANDLE_VALUE)
@@ -1127,7 +1127,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(
 {
     BOOL ret = FALSE;
 
-    FIXME("(%p, %p, %p, %ld, %p, %p)\n", DeviceInfoSet,
+    FIXME("(%p, %p, %p, %d, %p, %p)\n", DeviceInfoSet,
      DeviceInterfaceData, DeviceInterfaceDetailData,
      DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
 
@@ -1146,7 +1146,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailW(
       PDWORD RequiredSize,
       PSP_DEVINFO_DATA DeviceInfoData)
 {
-    FIXME("(%p, %p, %p, %ld, %p, %p): stub\n", DeviceInfoSet,
+    FIXME("(%p, %p, %p, %d, %p, %p): stub\n", DeviceInfoSet,
      DeviceInterfaceData, DeviceInterfaceDetailData,
      DeviceInterfaceDetailDataSize, RequiredSize, DeviceInfoData);
     return FALSE;
@@ -1164,7 +1164,7 @@ BOOL WINAPI SetupDiGetDeviceRegistryPropertyA(
         DWORD   PropertyBufferSize,
         PDWORD  RequiredSize)
 {
-    FIXME("%04lx %p %ld %p %p %ld %p\n", (DWORD)devinfo, DeviceInfoData,
+    FIXME("%04x %p %d %p %p %d %p\n", (DWORD)devinfo, DeviceInfoData,
         Property, PropertyRegDataType, PropertyBuffer, PropertyBufferSize,
         RequiredSize);
     return FALSE;
@@ -1486,7 +1486,7 @@ BOOL WINAPI SetupDiOpenDeviceInterfaceW(
        DWORD OpenFlags,
        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
-    FIXME("%p %s %08lx %p\n",
+    FIXME("%p %s %08x %p\n",
         DeviceInfoSet, debugstr_w(DevicePath), OpenFlags, DeviceInterfaceData);
     return FALSE;
 }
@@ -1500,7 +1500,7 @@ BOOL WINAPI SetupDiOpenDeviceInterfaceA(
        DWORD OpenFlags,
        PSP_DEVICE_INTERFACE_DATA DeviceInterfaceData)
 {
-    FIXME("%p %s %08lx %p\n", DeviceInfoSet,
+    FIXME("%p %s %08x %p\n", DeviceInfoSet,
         debugstr_a(DevicePath), OpenFlags, DeviceInterfaceData);
     return FALSE;
 }
@@ -1514,7 +1514,7 @@ BOOL WINAPI SetupDiSetClassInstallParamsA(
        PSP_CLASSINSTALL_HEADER ClassInstallParams,
        DWORD ClassInstallParamsSize)
 {
-    FIXME("%p %p %x %lu\n",DeviceInfoSet, DeviceInfoData,
+    FIXME("%p %p %x %u\n",DeviceInfoSet, DeviceInfoData,
           ClassInstallParams->InstallFunction, ClassInstallParamsSize);
     return FALSE;
 }
@@ -1554,7 +1554,7 @@ HKEY WINAPI SetupDiOpenDevRegKey(
        DWORD KeyType,
        REGSAM samDesired)
 {
-    FIXME("%p %p %ld %ld %ld %lx\n", DeviceInfoSet, DeviceInfoData,
+    FIXME("%p %p %d %d %d %x\n", DeviceInfoSet, DeviceInfoData,
           Scope, HwProfile, KeyType, samDesired);
     return INVALID_HANDLE_VALUE;
 }

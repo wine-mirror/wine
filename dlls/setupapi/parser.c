@@ -1265,7 +1265,7 @@ LONG WINAPI SetupGetLineCountW( HINF hinf, PCWSTR section )
         if (ret == -1) ret = 0;
         ret += file->sections[section_index]->nb_lines;
     }
-    TRACE( "(%p,%s) returning %ld\n", hinf, debugstr_w(section), ret );
+    TRACE( "(%p,%s) returning %d\n", hinf, debugstr_w(section), ret );
     SetLastError( (ret == -1) ? ERROR_SECTION_NOT_FOUND : 0 );
     return ret;
 }
@@ -1310,7 +1310,7 @@ BOOL WINAPI SetupGetLineByIndexW( HINF hinf, PCWSTR section, DWORD index, INFCON
             context->Section    = section_index;
             context->Line       = index;
             SetLastError( 0 );
-            TRACE( "(%p,%s): returning %d/%ld\n",
+            TRACE( "(%p,%s): returning %d/%d\n",
                    hinf, debugstr_w(section), section_index, index );
             return TRUE;
         }
@@ -1652,7 +1652,7 @@ BOOL WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer,
         }
         PARSER_string_substA( file, field->text, buffer, size );
 
-        TRACE( "context %p/%p/%d/%d index %ld returning %s\n",
+        TRACE( "context %p/%p/%d/%d index %d returning %s\n",
                context->Inf, context->CurrentInf, context->Section, context->Line,
                index, debugstr_a(buffer) );
     }
@@ -1683,7 +1683,7 @@ BOOL WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer
         }
         PARSER_string_substW( file, field->text, buffer, size );
 
-        TRACE( "context %p/%p/%d/%d index %ld returning %s\n",
+        TRACE( "context %p/%p/%d/%d index %d returning %s\n",
                context->Inf, context->CurrentInf, context->Section, context->Line,
                index, debugstr_w(buffer) );
     }
@@ -1770,7 +1770,7 @@ BOOL WINAPI SetupGetBinaryField( PINFCONTEXT context, DWORD index, BYTE *buffer,
     }
     if (TRACE_ON(setupapi))
     {
-        TRACE( "%p/%p/%d/%d index %ld returning",
+        TRACE( "%p/%p/%d/%d index %d returning",
                context->Inf, context->CurrentInf, context->Section, context->Line, index );
         for (i = index; i < line->nb_fields; i++) TRACE( " %02x", buffer[i - index] );
         TRACE( "\n" );

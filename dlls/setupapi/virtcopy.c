@@ -447,7 +447,7 @@ LPCSTR WINAPI VcpExplain16(LPVIRTNODE lpVn, DWORD dwWhat)
 	    }
 	    break;
 	default:
-	    FIXME("%ld unimplemented !\n", dwWhat);
+            FIXME("%d unimplemented !\n", dwWhat);
 	    strcpy(buffer, "Unknown error");
 	    break;
     }

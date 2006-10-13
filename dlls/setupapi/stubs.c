@@ -107,7 +107,7 @@ DWORD WINAPI CM_Disconnect_Machine(DWORD handle)
 DWORD WINAPI CM_Get_Device_ID_ListA(
     PCSTR pszFilter, PCHAR Buffer, ULONG BufferLen, ULONG ulFlags )
 {
-    FIXME("%p %p %ld %ld\n", pszFilter, Buffer, BufferLen, ulFlags );
+    FIXME("%p %p %d %d\n", pszFilter, Buffer, BufferLen, ulFlags );
     memset(Buffer,0,2);
     return CR_SUCCESS;
 }
@@ -145,7 +145,7 @@ BOOL WINAPI SetupCopyOEMInfW(PCWSTR sourceinffile, PCWSTR sourcemedialoc,
 BOOL WINAPI SetupGetSourceInfoA(HINF InfHandle, UINT SourceId, UINT InfoDesired,
                 PSTR ReturnBuffer, DWORD ReturnBufferSize, LPDWORD RequiredSize)
 {
-  FIXME("(%p, %d, %d, %p, %ld, %p): stub\n", InfHandle, SourceId, InfoDesired,
+  FIXME("(%p, %d, %d, %p, %d, %p): stub\n", InfHandle, SourceId, InfoDesired,
         ReturnBuffer, ReturnBufferSize, RequiredSize);
   return FALSE;
 }
@@ -156,7 +156,7 @@ BOOL WINAPI SetupGetSourceInfoA(HINF InfHandle, UINT SourceId, UINT InfoDesired,
 BOOL WINAPI SetupGetSourceInfoW(HINF InfHandle, UINT SourceId, UINT InfoDesired,
                 PWSTR ReturnBuffer, DWORD ReturnBufferSize, LPDWORD RequiredSize)
 {
-  FIXME("(%p, %d, %d, %p, %ld, %p): stub\n", InfHandle, SourceId, InfoDesired,
+  FIXME("(%p, %d, %d, %p, %d, %p): stub\n", InfHandle, SourceId, InfoDesired,
         ReturnBuffer, ReturnBufferSize, RequiredSize);
   return FALSE;
 }
@@ -166,7 +166,7 @@ BOOL WINAPI SetupGetSourceInfoW(HINF InfHandle, UINT SourceId, UINT InfoDesired,
  */
 HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)
 {
-    FIXME("Stub %s, 0x%lx\n",debugstr_w(LogFileName),Flags);
+    FIXME("Stub %s, 0x%x\n",debugstr_w(LogFileName),Flags);
     return INVALID_HANDLE_VALUE;
 }
 
@@ -175,7 +175,7 @@ HANDLE WINAPI SetupInitializeFileLogW(LPWSTR LogFileName, DWORD Flags)
  */
 HANDLE WINAPI SetupInitializeFileLogA(LPSTR LogFileName, DWORD Flags)
 {
-    FIXME("Stub %s, 0x%lx\n",debugstr_a(LogFileName),Flags);
+    FIXME("Stub %s, 0x%x\n",debugstr_a(LogFileName),Flags);
     return INVALID_HANDLE_VALUE;
 }
 
@@ -193,7 +193,7 @@ BOOL WINAPI SetupTerminateFileLog(HANDLE FileLogHandle)
  */
 BOOL WINAPI RegistryDelnode(DWORD x, DWORD y)
 {
-    FIXME("%08lx %08lx: stub\n", x, y);
+    FIXME("%08x %08x: stub\n", x, y);
     return FALSE;
 }
 
@@ -210,7 +210,7 @@ void WINAPI SetupCloseLog()
  */
 BOOL WINAPI SetupLogErrorW(PCWSTR MessageString, LogSeverity Severity)
 {
-    FIXME("(%s, %ld) stub\n", debugstr_w(MessageString), Severity);
+    FIXME("(%s, %d) stub\n", debugstr_w(MessageString), Severity);
     return TRUE;
 }
 

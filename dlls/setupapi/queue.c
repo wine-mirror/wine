@@ -951,7 +951,7 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
     BOOL rc = FALSE;
     BOOL docopy = TRUE;
 
-    TRACE("copy %s to %s style 0x%lx\n",debugstr_w(source),debugstr_w(target),style);
+    TRACE("copy %s to %s style 0x%x\n",debugstr_w(source),debugstr_w(target),style);
 
     /* before copy processing */
     if (style & SP_COPY_REPLACEONLY)
@@ -982,7 +982,7 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
             VersionSizeTarget = GetFileVersionInfoSizeW(target,&zero);
         }
 
-        TRACE("SizeTarget %li ... SizeSource %li\n",VersionSizeTarget,
+        TRACE("SizeTarget %i ... SizeSource %i\n",VersionSizeTarget,
                 VersionSizeSource);
 
         if (VersionSizeSource && VersionSizeTarget)
@@ -1015,7 +1015,7 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
                 {
                     FILEPATHS_W filepaths;
 
-                    TRACE("Versions: Source %li.%li target %li.%li\n",
+                    TRACE("Versions: Source %i.%i target %i.%i\n",
                       SourceInfo->dwFileVersionMS, SourceInfo->dwFileVersionLS,
                       TargetInfo->dwFileVersionMS, TargetInfo->dwFileVersionLS);
 
@@ -1068,7 +1068,7 @@ static BOOL do_file_copyW( LPCWSTR source, LPCWSTR target, DWORD style,
     if (style & (SP_COPY_NODECOMP | SP_COPY_LANGUAGEAWARE | SP_COPY_FORCE_IN_USE |
                  SP_COPY_IN_USE_NEEDS_REBOOT | SP_COPY_NOSKIP | SP_COPY_WARNIFSKIP))
     {
-        ERR("Unsupported style(s) 0x%lx\n",style);
+        ERR("Unsupported style(s) 0x%x\n",style);
     }
 
     if (docopy)

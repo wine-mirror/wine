@@ -132,7 +132,7 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
     BOOL ret;
     DWORD infSize;
 
-    TRACE("(%p, %ld, %p, %ld, %p)\n", InfSpec, SearchControl, ReturnBuffer,
+    TRACE("(%p, %d, %p, %d, %p)\n", InfSpec, SearchControl, ReturnBuffer,
            ReturnBufferSize, RequiredSize);
 
     if (!InfSpec)
@@ -159,7 +159,7 @@ BOOL WINAPI SetupGetInfInformationW(LPCVOID InfSpec, DWORD SearchControl,
             inf = search_for_inf(InfSpec, SearchControl);
             break;
         case INFINFO_INF_PATH_LIST_SEARCH:
-            FIXME("Unhandled search control: %ld\n", SearchControl);
+            FIXME("Unhandled search control: %d\n", SearchControl);
 
             if (RequiredSize)
                 *RequiredSize = 0;
@@ -251,7 +251,7 @@ BOOL WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION InfInformation,
     DWORD len;
     LPWSTR ptr;
 
-    TRACE("(%p, %u, %p, %ld, %p) Stub!\n", InfInformation, InfIndex,
+    TRACE("(%p, %u, %p, %d, %p) Stub!\n", InfInformation, InfIndex,
           ReturnBuffer, ReturnBufferSize, RequiredSize);
 
     if (!InfInformation)

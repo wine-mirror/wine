@@ -541,7 +541,7 @@ BOOL WINAPI SetupIterateCabinetA(PCSTR CabinetFile, DWORD Reserved,
   BOOL ret;
 
 
-  TRACE("(CabinetFile == %s, Reserved == %lu, MsgHandler == ^%p, Context == ^%p)\n",
+  TRACE("(CabinetFile == %s, Reserved == %u, MsgHandler == ^%p, Context == ^%p)\n",
         debugstr_a(CabinetFile), Reserved, MsgHandler, Context);
 
   if (! LoadCABINETDll()) 
@@ -606,7 +606,7 @@ BOOL WINAPI SetupIterateCabinetW(PCWSTR CabinetFile, DWORD Reserved,
   DWORD fpnsize;
   BOOL ret;
 
-  TRACE("(CabinetFile == %s, Reserved == %lu, MsgHandler == ^%p, Context == ^%p)\n",
+  TRACE("(CabinetFile == %s, Reserved == %u, MsgHandler == ^%p, Context == ^%p)\n",
         debugstr_w(CabinetFile), Reserved, MsgHandler, Context);
 
   if (!LoadCABINETDll())

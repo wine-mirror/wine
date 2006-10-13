@@ -68,7 +68,7 @@ VOID WINAPI MyFree(LPVOID lpMem)
  */
 LPVOID WINAPI MyMalloc(DWORD dwSize)
 {
-    TRACE("%lu\n", dwSize);
+    TRACE("%u\n", dwSize);
     return HeapAlloc(GetProcessHeap(), 0, dwSize);
 }
 
@@ -93,7 +93,7 @@ LPVOID WINAPI MyMalloc(DWORD dwSize)
  */
 LPVOID WINAPI MyRealloc(LPVOID lpSrc, DWORD dwSize)
 {
-    TRACE("%p %lu\n", lpSrc, dwSize);
+    TRACE("%p %u\n", lpSrc, dwSize);
 
     if (lpSrc == NULL)
         return HeapAlloc(GetProcessHeap(), 0, dwSize);
@@ -858,6 +858,6 @@ void WINAPI pSetupSetGlobalFlags( DWORD flags )
  */
 DWORD WINAPI CMP_WaitNoPendingInstallEvents( DWORD dwTimeout )
 {
-    FIXME("%ld\n", dwTimeout);
+    FIXME("%d\n", dwTimeout);
     return WAIT_OBJECT_0;
 }

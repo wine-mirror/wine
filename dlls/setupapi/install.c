@@ -336,7 +336,7 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
         if (type == REG_DWORD)
         {
             DWORD dw = str ? strtoulW( str, NULL, 0 ) : 0;
-            TRACE( "setting dword %s to %lx\n", debugstr_w(value), dw );
+            TRACE( "setting dword %s to %x\n", debugstr_w(value), dw );
             RegSetValueExW( hkey, value, 0, type, (BYTE *)&dw, sizeof(dw) );
         }
         else
@@ -356,7 +356,7 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
         if (size)
         {
             if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
-            TRACE( "setting binary data %s len %ld\n", debugstr_w(value), size );
+            TRACE( "setting binary data %s len %d\n", debugstr_w(value), size );
             SetupGetBinaryField( context, 5, data, size, NULL );
         }
         RegSetValueExW( hkey, value, 0, type, data, size );
@@ -531,7 +531,7 @@ static BOOL do_register_dll( const struct register_dll_info *info, const WCHAR *
 
         if (FAILED(res))
         {
-            WARN( "calling %s in %s returned error %lx\n", entry_point, debugstr_w(path), res );
+            WARN( "calling %s in %s returned error %x\n", entry_point, debugstr_w(path), res );
             status.FailureCode = SPREG_REGSVR;
             status.Win32Error = res;
             goto done;
@@ -555,7 +555,7 @@ static BOOL do_register_dll( const struct register_dll_info *info, const WCHAR *
 
         if (FAILED(res))
         {
-            WARN( "calling DllInstall in %s returned error %lx\n", debugstr_w(path), res );
+            WARN( "calling DllInstall in %s returned error %x\n", debugstr_w(path), res );
             status.FailureCode = SPREG_REGSVR;
             status.Win32Error = res;
             goto done;
@@ -778,7 +778,7 @@ static BOOL iterate_section_fields( HINF hinf, PCWSTR section, PCWSTR key,
                 goto done;
             if (!callback( hinf, buffer, arg ))
             {
-                WARN("callback failed for %s %s err %ld\n",
+                WARN("callback failed for %s %s err %d\n",
                      debugstr_w(section), debugstr_w(buffer), GetLastError() );
                 goto done;
             }

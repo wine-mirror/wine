@@ -156,7 +156,7 @@ static const WCHAR *get_csidl_dir( DWORD csidl )
 
     if (!SHGetSpecialFolderPathW( NULL, buffer, csidl, TRUE ))
     {
-        FIXME( "CSIDL %lx not found\n", csidl );
+        FIXME( "CSIDL %x not found\n", csidl );
         return get_unknown_dirid();
     }
     len = (strlenW(buffer) + 1) * sizeof(WCHAR);
