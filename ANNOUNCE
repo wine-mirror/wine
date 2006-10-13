@@ -1,19 +1,17 @@
-This is release 0.9.22 of Wine, a free implementation of Windows on Unix.
+This is release 0.9.23 of Wine, a free implementation of Windows on Unix.
 
 What's new in this release:
-  - The usual assortment of MSI improvements.
-  - Several bug fixes to the various common controls.
-  - Pixel shaders enabled by default in D3D.
-  - Various improvements to the build process.
-  - Many translation updates.
+  - Massive update of printf formats for Win64 compatibility.
+  - Dynamic drive support on MacOSX.
+  - Still more MSI fixes and improvements.
   - Lots of bug fixes.
 
 Because of lags created by using mirrors, this message may reach you
 before the release is available at the public sites. The sources will
 be available from the following locations:
 
-  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.22.tar.bz2
-  http://prdownloads.sourceforge.net/wine/wine-0.9.22.tar.bz2
+  http://ibiblio.org/pub/linux/system/emulators/wine/wine-0.9.23.tar.bz2
+  http://prdownloads.sourceforge.net/wine/wine-0.9.23.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -27,12 +25,677 @@ You can also get the current source directly from the git or CVS
 repositories. Check respectively http://www.winehq.org/site/git or
 http://www.winehq.org/site/cvs for details.
 
-Patches should be submitted to "wine-patches@winehq.org".  Please
-don't forget to include a ChangeLog entry. If you submitted a patch,
-please check to make sure it has been included in the new release.
+If you fix something, please submit a patch; instructions on how to do
+this can be found at http://www.winehq.org/site/sending_patches
 
 Wine is available thanks to the work of many people. See the file
 AUTHORS in the distribution for the complete list.
+
+----------------------------------------------------------------
+
+Changes since 0.9.22:
+
+Alexander Nicolaysen Sørnes (1):
+      Updated Norwegian Bokmål translations.
+
+Alexandre Julliard (25):
+      winex11.drv: Fix typo that confuses winapi_check.
+      winsock: Make sure to include sys/types.h in all cases.
+      ws2_32: Avoid retrieving the fd twice in WSAIoctl.
+      explorer: Split the device management to a separate file to make it usable independently of HAL support.
+      explorer: Avoid repeated notifications on device removal.
+      explorer: Added dynamic drive support for MacOSX.
+      ntdll: Implement FSCTL_DISMOUNT_VOLUME for MacOSX.
+      ntdll: Added error mapping for ENXIO.
+      Makefile: Avoid trailing slash in find, it breaks tags on MacOS.
+      server: Return the data for winevent hooks in the varargs part of the get_message request.
+      server: Return the data for callback results in the varargs part of the get_message request.
+      server: Pass the data for message callbacks as vararg from the client side.
+      server: Rearrange a few fields to avoid wasting padding space on 64 bits.
+      user32: The per-window user data must be a DWORD_PTR.
+      ntdll: Fixed typo in serial.c.
+      user32: Store the prev_unicode hook flag on the client side.
+      server: Changed the get_next_hook request to allow retrieving the current hook too.
+      dinput: Only register the window class once to avoid race conditions.
+      winex11.drv: Give XInitThreads another chance.
+      winsock: Add a WS_ prefix to the BSD types.
+      ws2_32: Win64 printf format fixes.
+      loader: Make sure the reserved area is protected on MacOSX too.
+      Fixed some printf warnings caused by using sizeof.
+      sane.ds: Get rid of the prototypes of some removed functions.
+      msvfw32: Avoid a compiler warning.
+
+Andrew Talbot (19):
+      shell32: Cast-qual warnings fix.
+      shell32: Cast-qual warnings fix.
+      shell32: Cast-qual warnings fix.
+      shell32: Cast-qual warnings fix.
+      shell32: Cast-qual warnings fix.
+      shell32: Another cast-qual warning fix.
+      tapi32: Cast-qual warnings fix.
+      user: Cast-qual warnings fix.
+      user/tests: Cast-qual warnings fix.
+      wininet/tests: Cast-qual warning fix.
+      winecfg: Cast-qual warnings fix.
+      wineboot: Cast-qual warning fix.
+      winebrowser: Cast-qual warnings fix.
+      winefile: Cast-qual warnings fix.
+      server: Cast-qual warning fix.
+      widl: Cast-qual warning fix.
+      winebuild: Cast-qual warning fix.
+      winedump: Cast-qual warnings fix (with thanks to Dmitry Timoshkov and Eric Pouech).
+      regedit: Cast-qual warnings fix.
+
+Benjamin Arai (1):
+      resutils: Implements stub dll for resutils.dll.
+
+Byeong-Sik Jeon (1):
+      gdi32: Improve get_nearest_charset().
+
+Christian Gmeiner (1):
+      user32: SPI_GETFONTSMOOTHINGORIENTATION and SPI_SETFONTSMOOTHINGORIENTATION are kown actions.
+
+Christopher GAUTIER (1):
+      wined3d: Disable GL_REGISTER_COMBINERS_NV (if supported) in IWineD3DSurfaceImpl_BltOverride.
+
+Detlef Riekenberg (3):
+      winedump: Remove the shell script reference from the man-page.
+      shell32: Implement SHRegQueryValueA with RegQueryValueA.
+      shell32: Fix typo in Run dialog.
+
+Dmitry Timoshkov (8):
+      ws2_32: Use a symbolic name instead of hand-made value.
+      ws2_32: Add a comment to ioctlsocket about 'bogus' ioctl 0x667e.
+      user/tests: Flush events before running mouse tests.
+      winecfg: Fix a typo in Russian translation.
+      ntdll: Make test_debug_regs() print the actual Dr7 value it got.
+      user: Increase the time during which flush_events() waits for pending events.
+      winex11.drv: Make all windows moveable by default.
+      user: Add some missing messages to the message spy.
+
+Elie Morisse (1):
+      ddraw: Don't destroy complex attached surfaces even if explicitely
+
+Eric Pouech (4):
+      winedbg: Fixed the auto mode.
+      ntdll-kernel32: WaitCommEvent.
+      winedbg: Rewrote the file handling to use SearchPath instead of home grown version.
+      ntdll: Implemented AmILastThread information class for NtQueryInformationThread.
+
+Francois Gouget (44):
+      Assorted spelling fixes.
+      widl: Use CONST_VTBL to declare lpVtbl.
+      Fix rpcndr.h so it takes CONST_VTABLE into account.
+      secur32: Only include secext.h when asked to.
+      wincrypt: Fix the CERT_TRUST_PUB_AUTHENTICODE_FLAGS_VALUE_NAME declaration in the MSVC case.
+      ole32: Fix invalid macro usage.
+      msvcmaker: The msvcrt tests need '..' in the include path.
+      ddraw: Fix comparefloat() so it compiles with Visual C++ when given a negative value.
+      urlmon: Fix the case of the BINDINFO.cbstgmedData field. Fixes the htmldoc test compilation on Windows.
+      dsound: Don't use state.buffer_size before it has been initialized.
+      Add missing '\n's to ok() calls.
+      oleaut32: Fixed compilation in the nameless union case.
+      ddraw: Only perform the screen resolution changing tests in interactive mode.
+      rpcrt4: Don't return void values. This fixes Visual C++ warnings.
+      riched20: Tweak a buffer declaration to fix the compilation with Visual C++.
+      d3d9: Tweak a buffer declaration to fix the compilation with Visual C++.
+      mshtml: Remove space before '\n'.
+      Add missing '\n's to ok() calls.
+      Assorted spelling fixes.
+      urlmon: Fix spelling of the 'origin' parameter in the *Protocol_Seek() functions.
+      shell32: Microsoft's EXP_DARWIN_LINK structure does not have a dbh
+      oleaut32: Remove unnecessary casts.
+      include: Add missing PSP_ constants.
+      include: Add missing STATUS_CTX_ constants.
+      comctl32: Fix LVM_GETITEM/LVIF_STATE so it only returns the bits it
+      include: Add new Vista SDK constants and structures.
+      winecfg: Remove ZeroMemory() calls and instead set iSubItem = 0 manually.
+      taskmgr: Remove ZeroMemory() calls and instead set the relevant fields (usually just iSubItem) to zero manually.
+      gphoto2.ds: Remove ZeroMemory() calls and instead set the relevant fields (usually just iSubItem) to zero manually.
+      shell32: Don't forget to set stateMask when calling LVM_GETITEM/LVIF_STATE.
+      winecfg: Remove unneeded memset() calls.
+      d3d8: Fix '\n' typo.
+      oleview: Fix the placement of a '\n'.
+      user/tests: It is perfectly valid for some sysparams registry fields
+      Add missing '\n's to Wine traces.
+      French rc files must be encoded in iso-8859-1, not utf-8.
+      wined3d: Fix '\n' typo.
+      Tweak TRACE()s to simplify '\n' checks.
+      dmloader: Modify the debugstr_DMUS_* functions to return strings that never end with a '\n'.
+      olepro32: Mark stubs as such.
+      secur32: Add missing '\n' in a Wine trace.
+      rpcrt4: Add RPC_CSTR, RPC_WSTR and update the prototypes accordingly.
+      Assorted spelling fixes.
+      Add '\n's to Wine traces.
+
+Frank Richter (3):
+      kernel32: Translated some more NLS strings to German.
+      kernel32: Added German translation of messages.
+      kernel32: Fix typos in English messages.
+
+Ge van Geldorp (1):
+      winapi_test: Regenerate tests.
+
+Gerald Pfeifer (1):
+      programs/regedit: Fix format specifiers for _stscanf and fprintf.
+
+H. Verbeet (11):
+      wined3d: Explicitly enable the GL_ARB_draw_buffers extension in GLSL shaders.
+      wined3d: Report the correct number of available 4-component float vectors for GLSL.
+      wined3d: Improve shader_dump_decl_usage() TRACEs.
+      d3d8: Win64 printf format warning fixes.
+      d3d8/tests: Win64 printf format warning fixes.
+      d3d9: Win64 printf format warning fixes.
+      ddraw/tests: Win64 printf format warning fixes.
+      d3d9: Disable the surface pitch size test for now, just check alignment instead.
+      ddraw: Win64 printf format warning fixes.
+      wordpad: Format warning fixes.
+      regedit: Format warning fixes.
+
+Hans Leidekker (33):
+      usp10: Add a stub implementation and a test for ScriptLayout.
+      dnsapi: Win64 printf format warning fixes.
+      mscms: Win64 printf format warning fixes.
+      wldap32: Win64 printf format warning fixes.
+      advapi32: Win64 printf format warning fixes.
+      mscms: Restore the preprocessor hack.
+      advapi32/tests: Win64 printf format warning fixes.
+      wininet/tests: Win64 printf format warning fixes.
+      wininet: Win64 printf format warning fixes.
+      mscms: Document the transform functions.
+      mscms: Cast-qual warnings fix.
+      dnsapi: Cast-qual warnings fix.
+      wldap32: Cast-qual warnings fix.
+      Don't use utf-8 in rc files.
+      shlwapi: Win64 printf format warning fixes.
+      usp10: Add a stub implementation of ScriptStringValidate.
+      winspool.drv: Cast-qual warnings fix.
+      shlwapi/tests: Win64 printf format warning fixes.
+      iphlpapi: Win64 printf format warning fixes.
+      shell32: Win64 printf format warning fixes.
+      shell32/tests: Win64 printf format warning fixes.
+      mscms/tests: Win64 printf format warning fixes.
+      oleaut32/tests: Win64 printf format warning fixes.
+      netapi32: Win64 printf format warning fixes.
+      tapi32: Win64 printf format warning fixes.
+      mapi32/tests: Win64 printf format warning fixes.
+      itss: Win64 printf format warning fixes.
+      wineps.drv: Win64 printf format warning fixes.
+      quartz: Win64 printf format warning fixes.
+      oleaut32: Win64 printf format warning fixes.
+      winspool.drv: Win64 printf format warning fixes.
+      msxml3/tests: Win64 printf format warning fixes.
+      winspool.drv/tests: Win64 printf format warning fixes.
+
+Huw Davies (1):
+      oleaut32: Implement ITypeInfo_CreateInstance.
+
+Hwang YunSong(황윤성) (2):
+      regedit: Updated Korean Resource.
+      regedit: Updated Korean resource.
+
+Ivan Gyurdiev (38):
+      wined3d: Remove unused field in shader opcode_arg.
+      wined3d: Win64 printf fixes.
+      d3d9/tests: Clean up get/set handler arguments.
+      d3d9/tests: Add init/teardown handlers for state tests.
+      d3d9/tests: Remove unused device parameter.
+      d3d9/tests: Make d3d9 tests Wcast-qual compliant.
+      d3d9/tests: Printf format fixes for d3d9 tests.
+      wined3d: Make the shader mode selections per device.
+      wined3d: Move D3DSIO structure into WINED3D namespace.
+      wined3d: Move D3DSPR structure into the WINED3D namespace.
+      wined3d: Move D3DSP DCL-related structures into WINED3D namespace.
+      wined3d: Move D3DSP_REG structures into the WINED3D namespace.
+      wined3d: Move D3DSP source modifier-related items into the WINED3D namespace.
+      wined3d: Move D3DSP dest modifier related items into the WINED3D namespace.
+      wined3d: D3DFORMAT: Consistently use WINED3D namespace.
+      wined3d: D3DDEVTYPE: Consistently use in WINED3D namespace.
+      wined3d: D3DTEXTURESTAGESTATETYPE: Consistently use in WINED3D namespace.
+      wined3d: D3DQUERYTYPE: Consistently use in WINED3D namespace.
+      wined3d: D3DDECLTYPE: Consistently use in WINED3D namespace.
+      wined3d: TEXTUREFILTERTYPE: Consistently use in WINED3D namespace.
+      wined3d: Merge LIGHT types into one type in WINED3D namespace.
+      wined3d: Merge MATERIAL types into one type in WINED3D namespace.
+      wined3d: Merge VIEWPORT types into one type in WINED3D namespace.
+      wined3d: Merge GAMMARAMP types into one type in WINED3D namespace.
+      wined3d: D3DRENDERSTATETYPE: Consistently use in the WINED3D namespace.
+      wined3d: D3DTRANSFORMSTATETYPE: Consistently use in the WINED3D namespace.
+      wined3d: Merge D3DMATRIX types into one type in WINED3D namespace.
+      wined3d: Merge D3DRECT types into one type in WINED3D namespace.
+      wined3d: Merge D3DCOLOR types into one type in WINED3D namespace.
+      wined3d: Merge D3DPRIMITIVETYPE types into one type in WINED3D namespace.
+      wined3d: Merge D3DDP_MAXTEXCOORD constants into one constant in WINED3D namespace.
+      wined3d: Add D3DTEXTUREOP to the WINED3D namespace.
+      wined3d: Add D3DVERTEXBLENDFLAGS to the WINED3D namespace.
+      wined3d: Add D3DSI and other opcode masks to the WINED3D namespace.
+      wined3d: Add D3DSHADER_ADDRMODE masks to the WINED3D namespace.
+      wined3d: Add D3DCLIPPLANE constants to the WINED3D namespace.
+      wined3d: Add D3DTEXTURETRANSFORMTYPE to the WINED3D namespace.
+      wined3d: Add shader version/end masks to the WINED3D namespace.
+
+Jacek Caban (11):
+      mshtml: Code cleanup.
+      mshtml: Added begining implementation of IPersistStreamInit::Save.
+      mshtml: Silence common invalid QueryInterface FIXME.
+      shdocvw: Silence common invalid QueryInterface FIXMEs.
+      urlmon: Win64 printf format warning fixes.
+      shdocvw: Win64 printf format warning fixes.
+      mshtml: Win64 printf format warning fixes.
+      shdocvw: Win64 printf format warning fixes.
+      urlmon: Win64 printf format warning fixes.
+      mshtml: Win64 printf format warning fixes.
+      ole32: Don't fail in OleCreate if created object doesn't implement IRunnableObject or IOleChache.
+
+James Hawkins (41):
+      msi: Return to the parent dialog when the argument to the EndDialog event is Return.
+      msi: Implement MsiDatabaseImport.
+      comctl32: Set the TVIF_TEXT mask when notifying the parent window of a selection change.
+      msi: Add missing '\n' to TRACE output.
+      msi: Don't ERR if a dialog doesn't provide control conditions, as they are not required.
+      msi: Assign the property to path if the property is empty.
+      msi: Empty the window text if no text is provided.
+      msi: Select the first item in the SelectionTree control.
+      msi: Provide a specific dialog to ControlEvent_SubscribeToEvent, as package->dialog does not always point to the same dialog.
+      msi: Publish the SelectionPath event in the SetTargetPath event.
+      msi: Properly initialize the SelectionTree control's attributes and property values.
+      msi: Publish the SelectionDescription and SelectionPath events when the selection changes in the SelectionTree control.
+      msi: Store the selected item in the SelectionTree control.
+      msi: Subscribe the SelectionTree control to the SelectionPath event.
+      msi: Handle the SelectionBrowse event using ControlEvent_SpawnDialog.
+      msi: Only apply the last font style in the list of styles.
+      user: Add missing sizeof(WCHAR) multiplier.
+      crypt32: Remove redundant NULL checks before CryptMemFree (found by Smatch).
+      advapi32: Remove redundant NULL check before SERV_free (found by Smatch).
+      dbghelp: Remove redundant NULL checks before pdb_free (found by Smatch).
+      dinput: Call missing LeaveCriticalSection in the error case (found by Smatch).
+      ddraw: Set lplpDirect3DViewport3 to NULL before returning an error (found by Smatch).
+      msi: Make msi_dialog_dup_property return a copy of the property if the property is empty.
+      advpack: Win64 printf format warning fixes.
+      janitorial: Remove redundant NULL checks before CoTaskMemFree (found by Smatch).
+      janitorial: Remove redundant NULL checks before SHFree.
+      shdocvw: Return S_OK in PersistStorage_InitNew.
+      msi: Perform button control events in greatest to least order.
+      msi: Make internal functions static.
+      msi: Add missing declarations to the public headers.
+      advpack: Make internal functions static.
+      msi: Add missing sizeof(WCHAR) multiplier.
+      msi: NULL-terminate dst on error.
+      msi: Clean up after the package tests.
+      msi: Set the SourceDir and SOURCEDIR properties in the ResolveSource action.
+      advapi32: Make internal functions static.
+      advapi32: Add missing declarations to the public headers.
+      gphoto2.ds: Make an internal function static.
+      comctl32: Make internal functions static.
+      crypt32: Make an internal function static.
+      cabinet: Make internal functions static.
+
+Jason Green (1):
+      user32: Stub implementation of BlockInput.
+
+Jesse Allen (1):
+      ddraw: Fix for DDSURFACEDESC param in CreateSurface.
+
+Jonathan Ernst (7):
+      crypt32: Initial French translation.
+      cmdlgtst: Updated French translation.
+      taskmgr: Updated French translation.
+      regedit: Updated French translation.
+      oleview: Updated French translation.
+      cmdlgtst: Updated French translation.
+      taskmgr: Updated French translation.
+
+José Manuel Ferrer Ortiz (3):
+      mshtml: Added Spanish translation.
+      wldap32: Added Spanish translation.
+      msi: Updated Spanish translation.
+
+Juan Lang (14):
+      rsaenh: Correct signature checking.
+      wincrypt.h: Fix a typo.
+      winex11.drv: Don't deadlock if GL init fails.
+      shdocvw: Return S_OK from WebBrowser_put_RegisterAsDropTarget.
+      shdocvw: Ignore VT_ERROR arguments to WebBrowser_Navigate2.
+      crypt32/tests: Win64 printf format warning fixes.
+      msi: Implement msidbLocatorTypeFileName in RegLocator searches.
+      crypt32/tests: Win64 printf format warning fixes.
+      crypt32: Implement CryptSignAndEncodeCertificate.
+      crypt32: Make it clearer where alg ids come from in CryptVerifyCertificateSignatureEx.
+      crypt32: Forward CryptAcquireContextU to CryptAcquireContextW.
+      crypt32: Win64 printf format warning fixes.
+      crypt32: Implement CertVerifyValidityNesting.
+      crypt32: Don't crash when setting CRYPT_KEY_PROV_INFO with empty names.
+
+Kai Blin (1):
+      secur32: Add support for cached client credentials.
+
+Karsten Elfenbein (3):
+      rsaenh/tests: import & export of a plaintext public key + algID check.
+      d3d9: Fix typo in trace.
+      wined3d: Corrected names in checkGLcall text.
+
+Louis. Lenders (7):
+      kernel32: Print an error instead of crashing in GetLongPathNameW if shortpath=0.
+      kernel32: Add 2 simple tests for GetLongPathNameW.
+      wine.inf: Add d3d9 to fake dlls.
+      shlwapi: Update info in DllGetVersion.
+      wine.inf: Add ddeml.dll to fake dlls.
+      msxml3: Add a version resource.
+      user32: Return a fake device notification handle in RegisterDeviceNotificationA.
+
+Marcus Meissner (8):
+      mswsock: More debug output in AcceptEx().
+      ntdll: Added debug registers test case.
+      ntdll: Clear alignment check flag before entering exception handler.
+      ws2_32: Implemented FIONBIO and FIONREAD in WSAIoctl.
+      ntdll: More tests for exception handling.
+      crypt32/tests: Replace bad use of sprintf by 2 strcats.
+      crypt32: Include wine/port.h for strcasecmp.
+      wine.inf: Add some more fake binaries.
+
+Markus Amsler (4):
+      wined3d: Fix DEBUG_SINGLE_MODE.
+      msvcrt: Add fread eof tests.
+      msvcrt: fread: Fill buffer on small reads.
+      msvcrt: Fix fread eof handling.
+
+Michael Ploujnikov (13):
+      uxtheme: Win64 printf format warning fixes.
+      setupapi/tests: Win64 printf format warning fixes.
+      msi/tests: Win64 printf format warning fixes.
+      secur32/tests: Win64 printf format warning fixes.
+      psapi/tests: Win64 printf format warning fixes.
+      usp10/tests: Win64 printf format warning fixes.
+      mlang/tests: Win64 printf format warning fixes.
+      advpack/tests: Win64 printf format warning fixes.
+      dinput/tests: Win64 printf format warning fixes.
+      lz32/tests: Win64 printf format warning fixes.
+      mciseq: Win64 printf format warning fixes.
+      comdlg32: Win64 printf format warning fixes.
+      comctl32/tests: Win64 printf format warning fixes.
+
+Michael Stefaniuc (123):
+      Add a WINE_NO_LONG_INT define to many makefiles to ease the transition of DWORD/LONG/ULONG from long to int.
+      include: Make DWORD/LONG/ULONG an int to use the same type in Win32 and Win64.
+      debug.h, test.h: Temporary add ifdefs around some printfs to avoid format.
+      "One liners" printf format warning fixes for the migration of DWORD/LONG/ULONG from long to int.
+      server: Win64 printf format warning fixes.
+      wrc: Win64 printf format warning fixes.
+      winedump: Win64 printf format warning fixes.
+      user: Win64 printf format warning fixes.
+      wineboot: Win64 printf format warning fixes.
+      winecfg: Win64 printf format warning fixes.
+      winhelp: Win64 printf format warning fixes.
+      cmdlgtst: Win64 printf format warning fixes.
+      eject: Win64 printf format warning fixes.
+      icinfo: Win64 printf format warning fixes.
+      oleview: Win64 'incompatible pointer type' warning fix.
+      rpcss: Win64 printf format warning fixes.
+      wineconsole: Win64 printf format warning fixes.
+      winemenubuilder: Win64 printf format warning fixes.
+      winedos: Win64 printf format warning fixes.
+      msvcrt: Win64 printf format warning fixes.
+      cards: Win64 printf format warning fixes.
+      dinput8: Win64 printf format warning fixes.
+      d3dx8: Win64 printf format warning fixes.
+      hhctrl.ocx: Win64 printf format warning fixes.
+      localspl/tests: Win64 printf format warning fixes.
+      nddeapi: Win64 printf format warning fixes.
+      newdev: Win64 printf format warning fixes.
+      oleacc: Win64 printf format warning fixes.
+      query: Win64 printf format warning fixes.
+      spoolss: Win64 printf format warning fixes.
+      w32skrnl: Win64 printf format warning fixes.
+      activeds: Win64 printf format warning fixes.
+      comcat: Win64 printf format warning fixes.
+      ifsmgr.vxd: Win64 printf format warning fixes.
+      infosoft: Win64 printf format warning fixes.
+      opengl32: Win64 printf format warning fixes.
+      usp10: Win64 printf format warning fixes.
+      msadp32.acm: Win64 printf format warning fixes.
+      imaadp32.acm: Win64 printf format warning fixes.
+      msg711.acm: Win64 printf format warning fixes.
+      cfgmgr32: Win64 printf format warning fixes.
+      midimap: Win64 printf format warning fixes.
+      msxml3: Win64 printf format warning fixes.
+      msvidc32: Win64 printf format warning fixes.
+      comdlg32/tests: Win64 printf format warning fixes.
+      powrprof: Win64 printf format warning fixes.
+      msacm32/tests: Win64 printf format warning fixes.
+      comcat/tests: Win64 printf format warning fixes.
+      msdmo: Win64 printf format warning fixes.
+      msvcrt/tests: Win64 printf format warning fixes.
+      iccvid: Win64 printf format warning fixes.
+      cabinet/tests: Win64 printf format warning fixes.
+      winmm/winejack: Win64 printf format warning fixes.
+      winmm/wineesd: Win64 printf format warning fixes.
+      winmm/winenas: Win64 printf format warning fixes.
+      winmm/winearts: Win64 printf format warning fixes.
+      winmm/winealsa: Win64 printf format warning fixes.
+      winmm/wineoss: Win64 printf format warning fixes.
+      dxdiagn: Win64 printf format warning fixes.
+      winemp3.acm: Win64 printf format warning fixes.
+      serialui: Win64 printf format warning fixes.
+      vwin32.vxd: Win64 printf format warning fixes.
+      amstream: Win64 printf format warning fixes.
+      wtsapi32: Win64 printf format warning fixes.
+      wnaspi32: Win64 printf format warning fixes.
+      atl: Win64 printf format warning fixes.
+      psapi: Win64 printf format warning fixes.
+      rpcrt4/tests: Win64 printf format warning fixes.
+      quartz/tests: Win64 printf format warning fixes.
+      olesvr32: Win64 printf format warning fixes.
+      dxerr9: Win64 printf format warning fixes.
+      olecli32: Win64 printf format warning fixes.
+      dxerr8: Win64 printf format warning fixes.
+      user/tests: Win64 printf format warning fixes.
+      riched20/tests: Win64 printf format warning fixes.
+      imagehlp: Win64 printf format warning fixes.
+      msrle32: Win64 printf format warning fixes.
+      devenum: Win64 printf format warning fixes.
+      wsock32: Win64 printf format warning fixes.
+      pstorec: Win64 printf format warning fixes.
+      ws2_32/tests: Win64 printf format warning fixes.
+      dmsynth: Win64 printf format warning fixes.
+      vmm.vxd: Win64 printf format warning fixes.
+      d3dxof: Win64 printf format warning fixes.
+      wintab32: Win64 printf format warning fixes.
+      uxtheme: Win64 printf format warning fixes.
+      version: Win64 printf format warning fixes.
+      netapi32: Win64 printf format warning fixes.
+      qcap: Win64 printf format warning fixes.
+      hlink: Win64 printf format warning fixes.
+      dpnet: Win64 printf format warning fixes.
+      dswave: Win64 printf format warning fixes.
+      rsaenh: Win64 printf format warning fixes.
+      rasapi32: Win64 printf format warning fixes.
+      dmscript: Win64 printf format warning fixes.
+      odbc32: Win64 printf format warning fixes.
+      mcicda: Win64 printf format warning fixes.
+      msacm32.drv: Win64 printf format warning fixes.
+      dmcompos: Win64 printf format warning fixes.
+      mlang: Win64 printf format warning fixes.
+      version/tests: Win64 printf format warning fixes.
+      mapi32: Win64 printf format warning fixes.
+      avifil32: Win64 printf format warning fixes.
+      dplayx: Win64 printf format warning fixes.
+      dsound/tests: Win64 printf format warning fixes.
+      server: Remove redundant NULL check before free() (found by Smatch).
+      tools: Remove redundant NULL checks before free() (found by Smatch).
+      janitorial: Remove remaining NULL checks before free() (found by Smatch).
+      kernel32/tests: Win64 printf format warning fixes.
+      dmime: Win64 printf format warning fixes.
+      uxtheme/tests: Fix Win64 printf format warnings.
+      mpr: Win64 printf format warning fixes.
+      mciwave: Win64 printf format warning fixes.
+      dmloader: Win64 printf format warning fixes.
+      dmband: Win64 printf format warning fixes.
+      msvfw32: Win64 printf format warning fixes.
+      mciavi32: Win64 printf format warning fixes.
+      dmusic: Win64 printf format warning fixes.
+      msacm32: Win64 printf format warning fixes.
+      dmstyle: Win64 printf format warning fixes.
+      gdi: Win64 printf format warning fixes.
+      gdi/tests: Win64 printf format warning fixes.
+      kernel32: Win64 printf format warning fixes.
+
+Mike McCormack (27):
+      msi: Check that transforms preserve tables.
+      msi: Win64 printf format warning fixes.
+      msi: Remove an unused variable.
+      msi: Only declare the szStringData and szStringPool strings once.
+      msi: Only ignore the StringPool and StringData in a transform.
+      kernel32: Return some fake data in FindActCtxSectionStringW.
+      msi: Handle null integers properly in transforms.
+      msi: Transform the _Columns and _Tables tables first so the table metadata is present for new tables.
+      msi: Work around what appears to be a bug in native MSI's generation of transform data.
+      msi: Fix transform traces.
+      comctl32: Return the correct value for CB_GETLBTEXTLEN.
+      d3d8: Don't crash if d3d8 can't be loaded.
+      riched20: Don't crash if a colour isn't found.
+      msi: Fix memory leaks and bad frees.
+      msi: Fix handle leaks in the test cases.
+      msi: Avoid reading the transform table data twice.
+      msi: Avoid an unnecessary strdup.
+      msi: Fix a memory leak.
+      msi: Make msi_makestring static.
+      msi: Merge action.h into msipriv.h.
+      msi: Check that transforms return the correct data.
+      msi: Check transforms have the correct storage guid.
+      msi: An empty string table entry should always have a zero refcount.
+      msi: Tests for transforms modifying rows in a table.
+      msi: Test transforms removing a row in a table.
+      msi: Improve error checking when applying transform data.
+      msi: Handle the sign properly when converting integer data.
+
+Mikołaj Zalewski (33):
+      sane.ds: Add Polish translation.
+      sane.ds: Use SS_CENTER to center a dialog string.
+      gphoto2.ds: Add Polish translation.
+      gphoto2.ds: Use SS_CENTER to center a dialog string.
+      msvfw32: Add Polish translation.
+      comctl32: toolbar: Set correcly hwndTrack in TrackMouseEvent call.
+      comctl32: toolbar: Small fix in TOOLBAR_StyleChanged.
+      regedit: Fix some translated resources errors.
+      regedit: Some import/export dialogs code cleanup.
+      regedit: Add option to export only a specified branch.
+      regedit: Remove the unused IDD_DIALOG2.
+      comdlg32: Load "Save" string from resources in filedlgbrowser.c.
+      wineconsole: Make the user backend work on non-latin1 locales.
+      regedit: Update Polish translation.
+      taskmgr: Add Polish translation.
+      winspool.drv: Add Polish translation.
+      progman: Add Polish translation.
+      notepad: Update Polish translation.
+      clock: Update Polish translation.
+      winefile: Update Polish translation.
+      uninstaller: Fix Polish translation.
+      comctl32: toolbar: Move add/remove/setrect tooltip code to separate functions.
+      comctl32: toolbar: Create the tooltip control during WM_MOUSEMOVE so that the NM_TOOLTIPSCREATE is not sent too early.
+      comctl32: toolbar: Merge AddButtonsA and AddButtonsW into AddButtonsT.
+      comctl32: toolbar: Fix the TB_ADDSTRING from resources for a NUL delimiter.
+      comctl32: listview: Don't call ScrollColumn with an out of bounds index when resizing the last column.
+      comctl32: header: Invalidate the control after a WM_SETREDRAW with wParam == TRUE.
+      comctl32: header: Call DefWindowProcW not DefWindowProcA.
+      comctl32: toolbar: Don't send NM_CUSTOMDRAW for separators.
+      comctl32: toolbar: Remove dwItemCustDraw from TOOLBAR_INFO and store it as a local variable.
+      comctl32: toolbar: Passing a string pointer in TB_INSERTBUTTON shouldn't change the strings table (with test case).
+      comctl32: toolbar: Merge TOOLBAR_InsertButtonA and TOOLBAR_InsertButtonW.
+      comctl32: toolbar: Store dwBaseCustDraw and dwItemCDFlag in local variables.
+
+Nick Burns (2):
+      msvcrt/process.h: __stdcall__ defined safely for Mac OSX.
+      winegcc: __stdcall__ and __cdecl__ defined safely for Mac OSX.
+
+Nickolay V. Shmyrev (1):
+      winex11.drv: Always set window type.
+
+Nicolas Delcros (1):
+      winsock: Add mapping for SO_ACCEPTCONN.
+
+Oleg Krylov (1):
+      user: Fix CopyImage function declaration.
+
+Paul Chitescu (2):
+      netapi: Stub for DsGetDcNameA.
+      mscoree: Initial stub implementation.
+
+Paul Vriens (17):
+      crypt32: Added some CryptSIP stub implementations.
+      advapi32: Make sure it's a real cleanup.
+      crypt32: Remove bogus tests.
+      wintrust: Win64 printf format warning fixes.
+      crypt32: More tests for CryptSIPLoad.
+      wintrust: Win64 printf format warning fixes.
+      crypt32: Move some defines to the top as they will be needed in more functions.
+      crypt32: Change function declaration to overcome some cast-qual warnings in future patches.
+      crypt32: Correct the documentation.
+      crypt32: Cast-qual warnings fix.
+      advpack: Make tests run on Win98 again.
+      cabinet: Make tests run on Win98 again.
+      comdlg32: Move NULL check before use (Coverity).
+      msi: Make tests run on Win98 again.
+      rsaenh: Make hmac test run on all windows versions.
+      rsaenh: Win64 printf format warning fixes.
+      shlwapi: Cast-qual warnings fix.
+
+Peter Oberndorfer (2):
+      ntdll: Add a test for NtReadVirtualMemory.
+      winedbg: Don't try to read to invalid memory if winedbg does not find the thread.
+
+Robert Shearman (5):
+      oleaut32: Make ITypeInfo::GetDocumentation work for functions/variables in inherited interfaces.
+      oleaut32: Fix ITypeInfo::GetFuncDesc to return the correct information for dual dispinterfaces.
+      rpcrt4: Don't use HEAP_ZERO_MEMORY when most of the fields will be initialised to non-zero values.
+      rpcrt4: RpcBindingCopy is implemented.
+      rpcrt4: Use I_Rpc{Allocate, Free} instead of Heap{Alloc, Free} as that
+
+Roderick Colenbrander (5):
+      gdi32: Route WGL context code through gdi32.dll.
+      gdi32: Route WGL font code through gdi32.dll.
+      x11drv: Fix wgl pixel format bug.
+      x11drv: Fix building issue.
+      opengl: Fix wglMakeCurrent bug.
+
+Saulius Krasuckas (5):
+      lz32/tests: Test more last errors set by LZOpenFile[AW].
+      lz32/tests: Non-op cosmetics for LZOpenFile[AW] operations.
+      lz32/tests: More checks for various LZOpenFile[AW] operations on existing files.
+      lz32/tests: Be more verbose and aware of root directory.
+      lz32/tests: WinME sometimes returns short filenames.
+
+Srivatsa Kanchi, R (1):
+      wineprefixcreate: Set correct LD_LIBRARY_PATH.
+
+Stefan Dösinger (17):
+      wined3d: Correctly name a variable.
+      wined3d: Add IWineD3DSurface::SetOverlayPosition.
+      wined3d: Add IWineD3DSurface::GetOverlayPosition.
+      wined3d: Add UpdatOverlayZOrder.
+      wined3d: Add DDOVERLAYFX struct.
+      wined3d: Add IWineD3DSurface::UpdateOverlay.
+      wined3d: Add WINED3DUSAGE_OVERLAY.
+      wined3d: No color keying on surfaces with an alpha channel.
+      wined3d: Honor the pitch in a few more places.
+      wined3d: Define the surface alignment in the header.
+      wined3d: Pitch alignment for the pow2Size.
+      ddraw: Set the DDSCAPS2_MIPMAPSUBLEVEL flag on sublevels.
+      ddraw: Make the ddraw list a wine list.
+      ddraw: Protect the ddraw list.
+      ddraw: Remove the process counter.
+      ddraw: Remove an incorrect size check.
+      ddraw: Do not let the a surface dimension fall to 0.
+
+Stefan Leichter (1):
+      oleaut32/tests: Print each 64-bit integers as two 32 bit integers.
+
+Vitaliy Margolen (6):
+      capi: Fix compiler warnings.
+      user: Move some common code into one function.
+      user32: Pass hook handle to the destination thread.
+      dinput: Win64 printf format warning fixes.
+      winex11drv: Win64 printf format warning fixes.
+      user: Add test for LL mouse hook and [Get|Set]CursorPos.
 
 --
 Alexandre Julliard
