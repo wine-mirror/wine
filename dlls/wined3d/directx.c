@@ -489,7 +489,7 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
 
     /* Retrieve opengl defaults */
     glGetIntegerv(GL_MAX_CLIP_PLANES, &gl_max);
-    gl_info->max_clipplanes = min(D3DMAXUSERCLIPPLANES, gl_max);
+    gl_info->max_clipplanes = min(WINED3DMAXUSERCLIPPLANES, gl_max);
     TRACE_(d3d_caps)("ClipPlanes support - num Planes=%d\n", gl_max);
 
     glGetIntegerv(GL_MAX_LIGHTS, &gl_max);

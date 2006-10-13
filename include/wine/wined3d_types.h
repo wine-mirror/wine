@@ -1334,4 +1334,12 @@ typedef enum _WINED3DSURFTYPE {
 #define WINED3DPRESENT_INTERVAL_FOUR                 0x00000008
 #define WINED3DPRESENT_INTERVAL_IMMEDIATE            0x80000000
 
+#define WINED3DMAXUSERCLIPPLANES       32
+#define WINED3DCLIPPLANE0              (1 << 0)
+#define WINED3DCLIPPLANE1              (1 << 1)
+#define WINED3DCLIPPLANE2              (1 << 2)
+#define WINED3DCLIPPLANE3              (1 << 3)
+#define WINED3DCLIPPLANE4              (1 << 4)
+#define WINED3DCLIPPLANE5              (1 << 5)
+
 #endif

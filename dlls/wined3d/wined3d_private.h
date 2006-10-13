@@ -51,7 +51,7 @@
 #define MAX_TEXTURES      8
 #define MAX_SAMPLERS      16
 #define MAX_ACTIVE_LIGHTS 8
-#define MAX_CLIPPLANES    D3DMAXUSERCLIPPLANES
+#define MAX_CLIPPLANES    WINED3DMAXUSERCLIPPLANES
 #define MAX_LEVELS        256
 
 #define MAX_CONST_I 16
@@ -221,8 +221,6 @@ extern int num_lock;
                          /* Maximum number of constants provided to the shaders */
 #define HIGHEST_TRANSFORMSTATE 512 
                          /* Highest value in WINED3DTRANSFORMSTATETYPE */
-#define MAX_CLIPPLANES  D3DMAXUSERCLIPPLANES
-
 #define MAX_PALETTES      256
 
 /* Checking of API calls */
