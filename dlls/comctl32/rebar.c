@@ -188,8 +188,7 @@ typedef struct
     DWORD    orgStyle;    /* original style (dwStyle may change) */
     SIZE     calcSize;    /* calculated rebar size */
     SIZE     oldSize;     /* previous calculated rebar size */
-    BOOL     bUnicode;    /* TRUE if this window is W type */
-    BOOL     NtfUnicode;  /* TRUE if parent wants notify in W format */
+    BOOL     bUnicode;    /* TRUE if parent wants notify in W format */
     BOOL     DoRedraw;    /* TRUE to acutally draw bands */
     UINT     fStatus;     /* Status flags (see below)  */
     HCURSOR  hcurArrow;   /* handle to the arrow cursor */
@@ -287,6 +286,8 @@ typedef struct
 
 
 #define REBAR_GetInfoPtr(wndPtr) ((REBAR_INFO *)GetWindowLongPtrW (hwnd, 0))
+
+static LRESULT REBAR_NotifyFormat(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 
 
 /* "constant values" retrieved when DLL was initialized    */
@@ -408,9 +409,9 @@ REBAR_DumpBand (REBAR_INFO *iP)
 	  iP->hwndSelf, iP->fStatus, iP->dragStart.x, iP->dragStart.y,
 	  iP->dragNow.x, iP->dragNow.y,
 	  iP->iGrabbedBand);
-    TRACE("hwnd=%p: style=%08x, I'm Unicode=%s, notify in Unicode=%s, redraw=%s\n",
-	  iP->hwndSelf, iP->dwStyle, (iP->bUnicode)?"TRUE":"FALSE",
-	  (iP->NtfUnicode)?"TRUE":"FALSE", (iP->DoRedraw)?"TRUE":"FALSE");
+    TRACE("hwnd=%p: style=%08x, notify in Unicode=%s, redraw=%s\n",
+          iP->hwndSelf, iP->dwStyle, (iP->bUnicode)?"TRUE":"FALSE",
+          (iP->DoRedraw)?"TRUE":"FALSE");
     for (i = 0; i < iP->uNumBands; i++) {
 	pB = &iP->bands[i];
 	TRACE("band # %u:", i);
@@ -502,15 +503,9 @@ REBAR_Notify (NMHDR *nmhdr, REBAR_INFO *infoPtr, UINT code)
     nmhdr->hwndFrom = infoPtr->hwndSelf;
     nmhdr->code = code;
 
-    TRACE("window %p, code=%08x, %s\n", parent, code,
-	  (infoPtr->NtfUnicode) ? "via Unicode" : "via ANSI");
+    TRACE("window %p, code=%08x, via %s\n", parent, code, (infoPtr->bUnicode)?"Unicode":"ANSI");
 
-    if (infoPtr->NtfUnicode)
-	return SendMessageW (parent, WM_NOTIFY, (WPARAM) nmhdr->idFrom,
-			     (LPARAM)nmhdr);
-    else
-	return SendMessageA (parent, WM_NOTIFY, (WPARAM) nmhdr->idFrom,
-			     (LPARAM)nmhdr);
+    return SendMessageW(parent, WM_NOTIFY, (WPARAM)nmhdr->idFrom, (LPARAM)nmhdr);
 }
 
 static INT
@@ -4142,7 +4137,6 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     RECT wnrc1, clrc1;
     NONCLIENTMETRICSW ncm;
     HFONT tfont;
-    INT i;
 
     if (infoPtr != NULL) {
 	ERR("Strange info structure pointer *not* NULL\n");
@@ -4176,18 +4170,11 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hcurHorz  = LoadCursorW (0, (LPWSTR)IDC_SIZEWE);
     infoPtr->hcurVert  = LoadCursorW (0, (LPWSTR)IDC_SIZENS);
     infoPtr->hcurDrag  = LoadCursorW (0, (LPWSTR)IDC_SIZE);
-    infoPtr->bUnicode = IsWindowUnicode (hwnd);
     infoPtr->fStatus = CREATE_RUNNING;
     infoPtr->hFont = GetStockObject (SYSTEM_FONT);
 
     /* issue WM_NOTIFYFORMAT to get unicode status of parent */
-    i = SendMessageW(REBAR_GetNotifyParent (infoPtr),
-		     WM_NOTIFYFORMAT, (WPARAM)hwnd, NF_QUERY);
-    if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
-	ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n", i);
-	i = NFR_ANSI;
-    }
-    infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
+    REBAR_NotifyFormat(infoPtr, 0, NF_REQUERY);
 
     /* Stow away the original style */
     infoPtr->orgStyle = cs->style;
@@ -4318,11 +4305,11 @@ REBAR_NotifyFormat (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (lParam == NF_REQUERY) {
 	i = SendMessageW(REBAR_GetNotifyParent (infoPtr),
 			 WM_NOTIFYFORMAT, (WPARAM)infoPtr->hwndSelf, NF_QUERY);
-	if ((i < NFR_ANSI) || (i > NFR_UNICODE)) {
+        if ((i != NFR_ANSI) && (i != NFR_UNICODE)) {
 	    ERR("wrong response to WM_NOTIFYFORMAT (%d), assuming ANSI\n", i);
 	    i = NFR_ANSI;
 	}
-	infoPtr->NtfUnicode = (i == NFR_UNICODE) ? 1 : 0;
+        infoPtr->bUnicode = (i == NFR_UNICODE) ? 1 : 0;
 	return (LRESULT)i;
     }
     return (LRESULT)((infoPtr->bUnicode) ? NFR_UNICODE : NFR_ANSI);
@@ -4721,12 +4708,7 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_COMMAND:
 	case WM_DRAWITEM:
 	case WM_NOTIFY:
-	    if (infoPtr->NtfUnicode)
-		return SendMessageW (REBAR_GetNotifyParent (infoPtr),
-				     uMsg, wParam, lParam);
-	    else
-		return SendMessageA (REBAR_GetNotifyParent (infoPtr),
-				     uMsg, wParam, lParam);
+            return SendMessageW(REBAR_GetNotifyParent (infoPtr), uMsg, wParam, lParam);
 
 
 /*      case WM_CHARTOITEM:     supported according to ControlSpy */
