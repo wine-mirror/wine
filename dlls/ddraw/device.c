@@ -352,6 +352,15 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
                     }
                     break;
 
+                    case DDrawHandle_StateBlock:
+                    {
+                        /* No fixme here because this might happen because of sloppy apps */
+                        WARN("Leftover stateblock handle %d, deleting\n", i + 1);
+                        IDirect3DDevice7_DeleteStateBlock(ICOM_INTERFACE(This, IDirect3DDevice7),
+                                                          i + 1);
+                    }
+                    break;
+
                     default:
                         FIXME("Unknown handle %d not unset properly\n", i + 1);
                 }
@@ -4255,8 +4264,7 @@ IDirect3DDeviceImpl_7_BeginStateBlock(IDirect3DDevice7 *iface)
  * IDirect3DDevice7::EndStateBlock
  *
  * Stops recording to a state block and returns the created stateblock
- * handle. The d3d7 stateblock handles are the interface pointers of the
- * IWineD3DStateBlock interface
+ * handle.
  *
  * Version 7
  *
@@ -4278,10 +4286,20 @@ IDirect3DDeviceImpl_7_EndStateBlock(IDirect3DDevice7 *iface,
     TRACE("(%p)->(%p): Relay!\n", This, BlockHandle);
 
     if(!BlockHandle)
+    {
+        WARN("BlockHandle == NULL, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
+    }
 
+    *BlockHandle = IDirect3DDeviceImpl_CreateHandle(This);
+    if(!*BlockHandle)
+    {
+        ERR("Cannot get a handle number for the stateblock\n");
+        return DDERR_OUTOFMEMORY;
+    }
+    This->Handles[*BlockHandle - 1].type = DDrawHandle_StateBlock;
     hr = IWineD3DDevice_EndStateBlock(This->wineD3DDevice,
-                                      (IWineD3DStateBlock **) BlockHandle);
+                                      (IWineD3DStateBlock **) &This->Handles[*BlockHandle - 1].ptr);
     return hr_ddraw_from_wined3d(hr);
 }
 
@@ -4339,10 +4357,18 @@ IDirect3DDeviceImpl_7_ApplyStateBlock(IDirect3DDevice7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08x): Relay!\n", This, BlockHandle);
 
-    if(!BlockHandle)
+    if(!BlockHandle || BlockHandle > This->numHandles)
+    {
+        WARN("Out of range handle %d, returning D3DERR_INVALIDSTATEBLOCK\n", BlockHandle);
         return D3DERR_INVALIDSTATEBLOCK;
+    }
+    if(This->Handles[BlockHandle - 1].type != DDrawHandle_StateBlock)
+    {
+        WARN("Handle %d is not a stateblock, returning D3DERR_INVALIDSTATEBLOCK\n", BlockHandle);
+        return D3DERR_INVALIDSTATEBLOCK;
+    }
 
-    hr = IWineD3DStateBlock_Apply((IWineD3DStateBlock *) BlockHandle);
+    hr = IWineD3DStateBlock_Apply((IWineD3DStateBlock *) This->Handles[BlockHandle - 1].ptr);
     return hr_ddraw_from_wined3d(hr);
 }
 
@@ -4370,10 +4396,18 @@ IDirect3DDeviceImpl_7_CaptureStateBlock(IDirect3DDevice7 *iface,
     HRESULT hr;
     TRACE("(%p)->(%08x): Relay!\n", This, BlockHandle);
 
-    if(BlockHandle == 0)
+    if(BlockHandle == 0 || BlockHandle > This->numHandles)
+    {
+        WARN("Out of range handle %d, returning D3DERR_INVALIDSTATEBLOCK\n", BlockHandle);
         return D3DERR_INVALIDSTATEBLOCK;
+    }
+    if(This->Handles[BlockHandle - 1].type != DDrawHandle_StateBlock)
+    {
+        WARN("Handle %d is not a stateblock, returning D3DERR_INVALIDSTATEBLOCK\n", BlockHandle);
+        return D3DERR_INVALIDSTATEBLOCK;
+    }
 
-    hr = IWineD3DStateBlock_Capture((IWineD3DStateBlock *) BlockHandle);
+    hr = IWineD3DStateBlock_Capture((IWineD3DStateBlock *) This->Handles[BlockHandle - 1].ptr);
     return hr_ddraw_from_wined3d(hr);
 }
 
@@ -4397,12 +4431,27 @@ IDirect3DDeviceImpl_7_DeleteStateBlock(IDirect3DDevice7 *iface,
                                        DWORD BlockHandle)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    ULONG ref;
     TRACE("(%p)->(%08x): Relay!\n", This, BlockHandle);
 
-    if(BlockHandle == 0)
+    if(BlockHandle == 0 || BlockHandle > This->numHandles)
+    {
+        WARN("Out of range handle %d, returning D3DERR_INVALIDSTATEBLOCK\n", BlockHandle);
         return D3DERR_INVALIDSTATEBLOCK;
+    }
+    if(This->Handles[BlockHandle - 1].type != DDrawHandle_StateBlock)
+    {
+        WARN("Handle %d is not a stateblock, returning D3DERR_INVALIDSTATEBLOCK\n", BlockHandle);
+        return D3DERR_INVALIDSTATEBLOCK;
+    }
 
-    IWineD3DStateBlock_Release((IWineD3DStateBlock *) BlockHandle);
+    ref = IWineD3DStateBlock_Release((IWineD3DStateBlock *) This->Handles[BlockHandle - 1].ptr);
+    if(ref)
+    {
+        ERR("Something is still holding the stateblock %p(Handle %d). Ref = %d\n", This->Handles[BlockHandle - 1].ptr, BlockHandle, ref);
+    }
+    This->Handles[BlockHandle - 1].ptr = NULL;
+    This->Handles[BlockHandle - 1].type = DDrawHandle_Unknown;
 
     return D3D_OK;
 }
@@ -4433,12 +4482,23 @@ IDirect3DDeviceImpl_7_CreateStateBlock(IDirect3DDevice7 *iface,
     TRACE("(%p)->(%08x,%p)!\n", This, Type, BlockHandle);
 
     if(!BlockHandle)
+    {
+        WARN("BlockHandle == NULL, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
+    }
+
+    *BlockHandle = IDirect3DDeviceImpl_CreateHandle(This);
+    if(!*BlockHandle)
+    {
+        ERR("Cannot get a handle number for the stateblock\n");
+        return DDERR_OUTOFMEMORY;
+    }
+    This->Handles[*BlockHandle - 1].type = DDrawHandle_StateBlock;
 
     /* The D3DSTATEBLOCKTYPE enum is fine here */
     hr = IWineD3DDevice_CreateStateBlock(This->wineD3DDevice,
                                          Type,
-                                         (IWineD3DStateBlock **) BlockHandle,
+                                         (IWineD3DStateBlock **) &This->Handles[*BlockHandle - 1].ptr,
                                          NULL /* Parent, hope that works */);
     return hr_ddraw_from_wined3d(hr);
 }
