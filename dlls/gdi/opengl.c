@@ -136,6 +136,30 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 }
 
 /***********************************************************************
+ *		wglShareLists (OPENGL32.@)
+ */
+BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
+{
+    DC *dc;
+    BOOL ret = FALSE;
+    OPENGL_Context ctx = (OPENGL_Context)hglrc1;
+
+    TRACE("hglrc1: (%p); hglrc: (%p)\n", hglrc1, hglrc2);
+    if(ctx == NULL)
+        return FALSE;
+    
+    /* Retrieve the HDC associated with the context to access the display driver */
+    dc = DC_GetDCPtr(ctx->hdc);
+    if (!dc) return FALSE;
+
+    if (!dc->funcs->pwglShareLists) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglShareLists(hglrc1, hglrc2);
+
+    GDI_ReleaseObj(ctx->hdc);
+    return ret;
+}
+
+/***********************************************************************
  *		wglUseFontBitmapsA (OPENGL32.@)
  */
 BOOL WINAPI wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)

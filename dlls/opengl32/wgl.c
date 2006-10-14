@@ -49,7 +49,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 typedef struct wine_wgl_s {
     BOOL WINAPI  (*p_wglDeleteContext)(HGLRC hglrc);
     PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
-    BOOL WINAPI  (*p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
 
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
 } wine_wgl_t;
@@ -278,14 +277,6 @@ int WINAPI wglSetLayerPaletteEntries(HDC hdc,
   FIXME("(): stub !\n");
 
   return 0;
-}
-
-/***********************************************************************
- *		wglShareLists (OPENGL32.@)
- */
-BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
-    TRACE("(%p, %p)\n", hglrc1, hglrc2);
-    return wine_wgl.p_wglShareLists(hglrc1, hglrc2);
 }
 
 /***********************************************************************
@@ -633,7 +624,6 @@ static BOOL process_attach(void)
   /* Load WGL function pointers from winex11.drv */
   wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod, "wglDeleteContext");
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod, "wglGetProcAddress");
-  wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod, "wglShareLists");
 
   /* Interal WGL function */
   wine_wgl.p_wglGetIntegerv = (void *)GetProcAddress(mod, "wglGetIntegerv");

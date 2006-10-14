@@ -391,7 +391,7 @@
 @  stdcall wglRealizeLayerPalette(long long long)
 @  stdcall wglSetLayerPaletteEntries(long long long long ptr)
 @  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
-@  stdcall wglShareLists(long long)
+@  stdcall wglShareLists(long long) gdi32.wglShareLists
 @  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
 @  stdcall wglSwapLayerBuffers(long long)
 @  stdcall wglUseFontBitmapsA(long long long long) gdi32.wglUseFontBitmapsA
