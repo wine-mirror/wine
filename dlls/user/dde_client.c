@@ -254,7 +254,6 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 	{
 	    HWND	hwndClient = pConv->hwndClient;
 	    HWND	hwndServer = pConv->hwndServer;
-	    ATOM	aSrv, aTpc;
 
 	    SetWindowLongPtrW(pConv->hwndClient, GWL_WDML_CONVERSATION, 0);
 
