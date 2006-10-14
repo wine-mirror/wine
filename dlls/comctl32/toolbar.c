@@ -96,7 +96,7 @@ typedef struct
     BYTE  fsStyle;
     BYTE  bHot;
     BYTE  bDropDownPressed;
-    DWORD dwData;
+    DWORD_PTR dwData;
     INT_PTR iString;
     INT nRow;
     RECT rect;
@@ -272,7 +272,7 @@ static void
 TOOLBAR_DumpButton(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *bP, INT btn_num, BOOL internal)
 {
     if (TRACE_ON(toolbar)){
-	TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08x, stringid=0x%08x\n",
+        TRACE("button %d id %d, bitmap=%d, state=%02x, style=%02x, data=%08lx, stringid=0x%08x\n",
               btn_num, bP->idCommand, GETIBITMAP(infoPtr, bP->iBitmap), 
               bP->fsState, bP->fsStyle, bP->dwData, bP->iString);
 	TRACE("string %s\n", debugstr_w(TOOLBAR_GetText(infoPtr,bP)));
