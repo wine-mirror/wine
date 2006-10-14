@@ -273,7 +273,7 @@ static BOOL MZ_DoLoadImage( HANDLE hFile, LPCSTR filename, OverlayBlock *oblk, W
         env_seg = par_env_seg;
     else
         env_seg=MZ_InitEnvironment(oldenv, filename);
-    if( alloc && oldenv)
+    if (alloc)
         FreeEnvironmentStringsA( oldenv);
 
     /* allocate memory for the executable */

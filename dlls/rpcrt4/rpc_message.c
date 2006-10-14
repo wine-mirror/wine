@@ -595,7 +595,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   status = RPC_S_OK;
 
 fail:
-  if (status != RPC_S_OK && *Header) {
+  if (status != RPC_S_OK) {
     RPCRT4_FreeHeader(*Header);
     *Header = NULL;
   }
@@ -765,9 +765,7 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
   status = RPC_S_OK;
 
 fail:
-  if (hdr) {
-    RPCRT4_FreeHeader(hdr);
-  }
+  RPCRT4_FreeHeader(hdr);
   RPCRT4_CloseBinding(bind, conn);
   return status;
 }
