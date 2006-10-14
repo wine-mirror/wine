@@ -178,7 +178,7 @@ send_file (const char *name)
     if (send_buf (s, body2, sizeof body2 - 1)) {
         report (R_WARNING, "Error sending trailer: %d, %d",
                 errno, WSAGetLastError ());
-        goto abort2;
+        goto abort1;
     }
     report (R_DELTA, 0, "Network transfer: Done");
 
