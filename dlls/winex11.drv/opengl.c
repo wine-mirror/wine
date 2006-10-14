@@ -1272,27 +1272,6 @@ BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
     return ret;
 }
 
-/* OpenGL32 wglGetCurrentDC */
-HDC WINAPI X11DRV_wglGetCurrentDC(void) {
-    GLXContext gl_ctx;
-    Wine_GLContext *ret;
-
-    TRACE("()\n");
-
-    wine_tsx11_lock();
-    gl_ctx = pglXGetCurrentContext();
-    ret = get_context_from_GLXContext(gl_ctx);
-    wine_tsx11_unlock();
-
-    if (ret) {
-        TRACE(" returning %p (GL context %p - Wine context %p)\n", ret->hdc, gl_ctx, ret);
-        return ret->hdc;
-    } else {
-        TRACE(" no Wine context found for GLX context %p\n", gl_ctx);
-        return 0;
-    }
-}
-
 /* OpenGL32 wglGetCurrentReadDCARB */
 static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
 {
@@ -2353,7 +2332,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
             object->render_ctx = wglCreateContext(object->render_hdc);
             do_init = 1;
         }
-        object->prev_hdc = X11DRV_wglGetCurrentDC();
+        object->prev_hdc = wglGetCurrentDC();
         object->prev_ctx = wglGetCurrentContext();
         /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
         wglMakeCurrent(object->render_hdc, object->render_ctx);
@@ -2782,12 +2761,6 @@ HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc) {
 BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
-}
-
-/* OpenGL32 wglGetCurrentDC */
-HDC WINAPI X11DRV_wglGetCurrentDC(void) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
-    return 0;
 }
 
 /* OpenGL32: wglGetProcAddress */

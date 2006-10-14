@@ -500,6 +500,7 @@
 #
 @ stdcall wglCreateContext(long)
 @ stdcall wglGetCurrentContext()
+@ stdcall wglGetCurrentDC()
 @ stdcall wglMakeCurrent(long long)
 @ stdcall wglUseFontBitmapsA(long long long long)
 @ stdcall wglUseFontBitmapsW(long long long long)

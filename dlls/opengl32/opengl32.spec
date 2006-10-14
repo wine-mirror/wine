@@ -382,7 +382,7 @@
 @  stdcall wglDescribeLayerPlane(long long long long ptr)
 @  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
 @  stdcall wglGetCurrentContext() gdi32.wglGetCurrentContext
-@  stdcall wglGetCurrentDC()
+@  stdcall wglGetCurrentDC() gdi32.wglGetCurrentDC
 @  stub    wglGetDefaultProcAddress
 @  stdcall wglGetLayerPaletteEntries(long long long long ptr)
 @  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat

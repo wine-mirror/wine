@@ -48,7 +48,6 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 typedef struct wine_wgl_s {
     BOOL WINAPI  (*p_wglDeleteContext)(HGLRC hglrc);
-    HDC WINAPI   (*p_wglGetCurrentDC)(void);
     PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
     BOOL WINAPI  (*p_wglShareLists)(HGLRC hglrc1, HGLRC hglrc2);
 
@@ -169,14 +168,6 @@ BOOL WINAPI wglDescribeLayerPlane(HDC hdc,
   FIXME("(%p,%d,%d,%d,%p)\n", hdc, iPixelFormat, iLayerPlane, nBytes, plpd);
 
   return FALSE;
-}
-
-/***********************************************************************
- *		wglGetCurrentDC (OPENGL32.@)
- */
-HDC WINAPI wglGetCurrentDC(void) {
-    TRACE("\n");
-    return wine_wgl.p_wglGetCurrentDC();
 }
 
 /***********************************************************************
@@ -641,7 +632,6 @@ static BOOL process_attach(void)
 
   /* Load WGL function pointers from winex11.drv */
   wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod, "wglDeleteContext");
-  wine_wgl.p_wglGetCurrentDC = (void *)GetProcAddress(mod, "wglGetCurrentDC");
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod, "wglGetProcAddress");
   wine_wgl.p_wglShareLists = (void *)GetProcAddress(mod, "wglShareLists");
 

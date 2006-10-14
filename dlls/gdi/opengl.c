@@ -41,6 +41,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 
 static HDC default_hdc = 0;
 
+typedef struct opengl_context
+{
+    HDC hdc;
+} *OPENGL_Context;
+
 /* We route all wgl functions from opengl32.dll through gdi32.dll to
  * the display driver. Various wgl calls have a hDC as one of their parameters.
  * Using DC_GetDCPtr we get access to the functions exported by the driver.
@@ -82,6 +87,22 @@ HGLRC WINAPI wglGetCurrentContext(void)
     HGLRC ret = NtCurrentTeb()->glContext;
     TRACE(" returning %p\n", ret);
     return ret;
+}
+
+/***********************************************************************
+ *		wglGetCurrentDC (OPENGL32.@)
+ */
+HDC WINAPI wglGetCurrentDC(void)
+{
+    OPENGL_Context ctx = (OPENGL_Context)wglGetCurrentContext();
+
+    TRACE(" found context: %p\n", ctx);
+    if(ctx == NULL)
+        return NULL;
+
+    /* Retrieve the current DC from the active context */
+    TRACE(" returning hdc: %p\n", ctx->hdc);
+    return ctx->hdc;
 }
 
 /***********************************************************************
