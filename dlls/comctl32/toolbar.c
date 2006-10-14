@@ -4780,42 +4780,41 @@ TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason)
     {
         NMTBHOTITEM nmhotitem;
         TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
-        LRESULT no_highlight;
 
-        /* Remove the effect of an old hot button if the button was
-           drawn with the hot button effect */
         if(infoPtr->nHotItem >= 0)
         {
             oldBtnPtr = &infoPtr->buttons[infoPtr->nHotItem];
-            oldBtnPtr->bHot = FALSE;
+            nmhotitem.idOld = oldBtnPtr->idCommand;
         }
+        else
+            nmhotitem.dwFlags |= HICF_ENTERING;
 
-        infoPtr->nHotItem = nHit;
-
-        /* It's not a separator or in nowhere. It's a hot button. */
         if (nHit >= 0)
+        {
             btnPtr = &infoPtr->buttons[nHit];
-
-	nmhotitem.dwFlags = dwReason;
-	if (oldBtnPtr)
-	    nmhotitem.idOld = oldBtnPtr->idCommand;
-	else
-	    nmhotitem.dwFlags |= HICF_ENTERING;
-	if (btnPtr)
-	    nmhotitem.idNew = btnPtr->idCommand;
+            nmhotitem.idNew = btnPtr->idCommand;
+            /* setting disabled buttons as hot fails */
+            if (!(btnPtr->fsState & TBSTATE_ENABLED))
+                return;
+        }
 	else
 	    nmhotitem.dwFlags |= HICF_LEAVING;
 
-	no_highlight = TOOLBAR_SendNotify(&nmhotitem.hdr, infoPtr, TBN_HOTITEMCHANGE);
+        nmhotitem.dwFlags = dwReason;
 
-	/* now invalidate the old and new buttons so they will be painted,
-	 * but only if they are enabled - disabled buttons cannot become hot */
-	if (oldBtnPtr && (oldBtnPtr->fsState & TBSTATE_ENABLED))
-	    InvalidateRect(infoPtr->hwndSelf, &oldBtnPtr->rect, TRUE);
-	if (btnPtr && !no_highlight && (btnPtr->fsState & TBSTATE_ENABLED))
+	/* now change the hot and invalidate the old and new buttons - if the
+	 * parent agrees */
+	if (!TOOLBAR_SendNotify(&nmhotitem.hdr, infoPtr, TBN_HOTITEMCHANGE))
 	{
-            btnPtr->bHot = TRUE;
-	    InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+            infoPtr->nHotItem = nHit;
+            if (btnPtr) {
+                btnPtr->bHot = TRUE;
+                InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+            }
+            if (oldBtnPtr) {
+                oldBtnPtr->bHot = FALSE;
+                InvalidateRect(infoPtr->hwndSelf, &oldBtnPtr->rect, TRUE);
+            }
         }
     }
 }
@@ -4828,14 +4827,16 @@ TOOLBAR_SetHotItem (HWND hwnd, WPARAM wParam)
 
     TRACE("hwnd = %p, nHit = %d\n", hwnd, (INT)wParam);
 
-    if ((INT) wParam < 0 || (INT)wParam > infoPtr->nNumButtons)
+    if ((INT)wParam > infoPtr->nNumButtons)
+        return infoPtr->nHotItem;
+    
+    if ((INT)wParam < 0)
         wParam = -1;
 
     /* NOTE: an application can still remove the hot item even if anchor
      * highlighting is enabled */
 
-    if ((infoPtr->dwStyle & TBSTYLE_FLAT) || GetWindowTheme (infoPtr->hwndSelf))
-        TOOLBAR_SetHotItemEx(infoPtr, wParam, HICF_OTHER);
+    TOOLBAR_SetHotItemEx(infoPtr, wParam, HICF_OTHER);
 
     if (nOldHotItem < 0)
         return -1;

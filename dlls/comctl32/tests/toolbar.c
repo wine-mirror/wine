@@ -33,6 +33,8 @@
 #include "wine/test.h"
 
 HWND hMainWnd;
+BOOL g_fBlockHotItemChange;
+BOOL g_fReceivedHotItemChange;
  
 static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
   p->iBitmap = -2;
@@ -42,8 +44,27 @@ static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
   p->iString = nString;
 }
 
+LRESULT MyWnd_Notify(hWnd, wParam, lParam)
+{
+    NMHDR *hdr = (NMHDR *)lParam;
+    switch (hdr->code)
+    {
+        case TBN_HOTITEMCHANGE:
+            g_fReceivedHotItemChange = TRUE;
+            if (g_fBlockHotItemChange)
+                return 1;
+            break;
+    }
+    return 0;
+}
+
 static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    switch (msg)
+    {
+        case WM_NOTIFY:
+            return MyWnd_Notify(hWnd, wParam, lParam);
+    }
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
 
@@ -109,6 +130,32 @@ static void rebuild_toolbar(HWND *hToolbar)
     ok(SendMessage(*hToolbar, TB_BUTTONSTRUCTSIZE, (WPARAM)sizeof(TBBUTTON), 0) == 0, "TB_BUTTONSTRUCTSIZE failed\n");
     ok(SendMessage(*hToolbar, TB_AUTOSIZE, 0, 0) == 0, "TB_AUTOSIZE failed\n");
 }
+
+void rebuild_toolbar_with_buttons(HWND *hToolbar)
+{
+    TBBUTTON buttons[5];
+    rebuild_toolbar(hToolbar);
+    
+    ZeroMemory(&buttons, sizeof(buttons));
+    buttons[0].idCommand = 1;
+    buttons[0].fsStyle = BTNS_BUTTON;
+    buttons[0].fsState = TBSTATE_ENABLED;
+    buttons[1].idCommand = 3;
+    buttons[1].fsStyle = BTNS_BUTTON;
+    buttons[1].fsState = TBSTATE_ENABLED;
+    buttons[2].idCommand = 5;
+    buttons[2].fsStyle = BTNS_SEP;
+    buttons[2].fsState = TBSTATE_ENABLED;
+    buttons[3].idCommand = 7;
+    buttons[3].fsStyle = BTNS_BUTTON;
+    buttons[3].fsState = TBSTATE_ENABLED;
+    buttons[4].idCommand = 9;
+    buttons[4].fsStyle = BTNS_BUTTON;
+    buttons[4].fsState = 0;  /* disabled */
+    ok(SendMessage(*hToolbar, TB_ADDBUTTONS, 5, (LPARAM)buttons) == 1, "TB_ADDBUTTONS failed\n");
+    ok(SendMessage(*hToolbar, TB_AUTOSIZE, 0, 0) == 0, "TB_AUTOSIZE failed\n");
+}
+
 
 #define CHECK_IMAGELIST(count, dx, dy) { \
     int cx, cy; \
@@ -375,6 +422,93 @@ void test_add_string()
     CHECK_STRING_TABLE(14, ret7);
 }
 
+void test_hotitem()
+{
+    HWND hToolbar = NULL;
+    TBBUTTONINFO tbinfo;
+    LRESULT ret;
+
+    g_fBlockHotItemChange = FALSE;
+
+    rebuild_toolbar_with_buttons(&hToolbar);
+    /* set TBSTYLE_FLAT. comctl5 allows hot items only for such toolbars.
+     * comctl6 doesn't have this requirement even when theme == NULL */
+    SetWindowLong(hToolbar, GWL_STYLE, TBSTYLE_FLAT | GetWindowLong(hToolbar, GWL_STYLE));
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == -1, "Hot item: %ld, expected -1\n", ret);
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 1, 0);
+    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 1, "Hot item: %ld, expected 1\n", ret);
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 2, 0);
+    ok(ret == 1, "TB_SETHOTITEM returned %ld, expected 1\n", ret);
+
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 0xbeef, 0);
+    ok(ret == 2, "TB_SETHOTITEM returned %ld, expected 2\n", ret);
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 2, "Hot item: %lx, expected 2\n", ret);
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, -0xbeef, 0);
+    ok(ret == 2, "TB_SETHOTITEM returned %ld, expected 2\n", ret);
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == -1, "Hot item: %lx, expected -1\n", ret);
+
+    g_fReceivedHotItemChange = FALSE;
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
+    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
+    ok(g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE not received\n");
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
+    g_fBlockHotItemChange = TRUE;
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 2, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 2\n", ret);
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
+    g_fBlockHotItemChange = FALSE;
+
+    g_fReceivedHotItemChange = FALSE;
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 0xbeaf, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(g_fReceivedHotItemChange == FALSE, "TBN_HOTITEMCHANGE received for invalid parameter\n");
+
+    g_fReceivedHotItemChange = FALSE;
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(g_fReceivedHotItemChange == FALSE, "TBN_HOTITEMCHANGE received after a duplication\n");
+
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, -0xbeaf, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE not received\n");
+    SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
+
+    /* setting disabled buttons as hot failed and generates no notify */
+    g_fReceivedHotItemChange = FALSE;
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 4, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(!g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE received\n");
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
+
+    /* but disabling a hot button works */
+    ret = SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    g_fReceivedHotItemChange = FALSE;
+    SendMessage(hToolbar, TB_ENABLEBUTTON, 7, FALSE);
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
+
+    SendMessage(hToolbar, TB_SETHOTITEM, 1, 0);
+    tbinfo.cbSize = sizeof(TBBUTTONINFO);
+    tbinfo.dwMask = TBIF_STATE;
+    tbinfo.fsState = 0;  /* disabled */
+    g_fReceivedHotItemChange = FALSE;
+    ok(SendMessage(hToolbar, TB_SETBUTTONINFO, 1, (LPARAM)&tbinfo) == TRUE, "TB_SETBUTTONINFO failed\n");
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == 1, "TB_SETHOTITEM returned %ld, expected 1\n", ret);
+    ok(g_fReceivedHotItemChange == FALSE, "Unexpected TBN_HOTITEMCHANGE\n");
+
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -403,6 +537,7 @@ START_TEST(toolbar)
     basic_test();
     test_add_bitmap();
     test_add_string();
+    test_hotitem();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
