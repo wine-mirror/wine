@@ -31,6 +31,8 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winerror.h"
+#include "winternl.h"
+#include "winnt.h"
 #include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
@@ -69,6 +71,16 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     else ret = dc->funcs->pwglCreateContext(dc->physDev);
 
     GDI_ReleaseObj( hdc );
+    return ret;
+}
+
+/***********************************************************************
+ *		wglGetCurrentContext (OPENGL32.@)
+ */
+HGLRC WINAPI wglGetCurrentContext(void)
+{
+    HGLRC ret = NtCurrentTeb()->glContext;
+    TRACE(" returning %p\n", ret);
     return ret;
 }
 

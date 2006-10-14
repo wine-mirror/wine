@@ -499,6 +499,7 @@
 # Wine extensions: OpenGL support
 #
 @ stdcall wglCreateContext(long)
+@ stdcall wglGetCurrentContext()
 @ stdcall wglMakeCurrent(long long)
 @ stdcall wglUseFontBitmapsA(long long long long)
 @ stdcall wglUseFontBitmapsW(long long long long)

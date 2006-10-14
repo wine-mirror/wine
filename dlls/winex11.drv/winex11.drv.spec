@@ -131,7 +131,6 @@
 # OpenGL
 @ cdecl wglCreateContext(long) X11DRV_wglCreateContext
 @ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
-@ cdecl wglGetCurrentContext() X11DRV_wglGetCurrentContext
 @ cdecl wglGetCurrentDC() X11DRV_wglGetCurrentDC
 @ cdecl wglGetIntegerv(long ptr) X11DRV_wglGetIntegerv
 @ cdecl wglGetProcAddress(ptr) X11DRV_wglGetProcAddress

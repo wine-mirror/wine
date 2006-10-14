@@ -1272,23 +1272,6 @@ BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
     return ret;
 }
 
-/* OpenGL32 wglGetCurrentContext() */
-HGLRC WINAPI X11DRV_wglGetCurrentContext(void) {
-    GLXContext gl_ctx;
-    Wine_GLContext *ret;
-
-    TRACE("()\n");
-
-    wine_tsx11_lock();
-    gl_ctx = pglXGetCurrentContext();
-    ret = get_context_from_GLXContext(gl_ctx);
-    wine_tsx11_unlock();
-
-    TRACE(" returning %p (GL context %p)\n", ret, gl_ctx);
-
-    return (HGLRC)ret;
-}
-
 /* OpenGL32 wglGetCurrentDC */
 HDC WINAPI X11DRV_wglGetCurrentDC(void) {
     GLXContext gl_ctx;
@@ -1417,6 +1400,7 @@ static BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGL
     wine_tsx11_lock();
     if (hglrc == NULL) {
         ret = pglXMakeCurrent(gdi_display, None, NULL);
+        NtCurrentTeb()->glContext = NULL;
     } else {
         if (NULL == pglXMakeContextCurrent) {
             ret = FALSE;
@@ -1430,6 +1414,7 @@ static BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGL
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
             ret = pglXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
+            NtCurrentTeb()->glContext = ctx;
         }
     }
     wine_tsx11_unlock();
@@ -2369,7 +2354,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
             do_init = 1;
         }
         object->prev_hdc = X11DRV_wglGetCurrentDC();
-        object->prev_ctx = X11DRV_wglGetCurrentContext();
+        object->prev_ctx = wglGetCurrentContext();
         /* FIXME: This is routed through gdi32.dll to winex11.drv, replace this with GLX calls */
         wglMakeCurrent(object->render_hdc, object->render_ctx);
         /*
@@ -2797,12 +2782,6 @@ HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc) {
 BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
-}
-
-/* OpenGL32 wglGetCurrentContext() */
-HGLRC WINAPI X11DRV_wglGetCurrentContext(void) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
-    return NULL;
 }
 
 /* OpenGL32 wglGetCurrentDC */
