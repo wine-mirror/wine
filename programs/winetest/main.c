@@ -277,8 +277,7 @@ run_ex (char *cmd, const char *out, DWORD ms)
     DWORD wait, status;
 
     GetStartupInfo (&si);
-    si.wShowWindow = SW_HIDE;
-    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.dwFlags = 0;
 
     if (out) {
         fd = open (out, O_WRONLY | O_CREAT, 0666);
