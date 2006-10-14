@@ -1111,6 +1111,8 @@ TOOLBAR_Refresh (HWND hwnd, HDC hdc, PAINTSTRUCT* ps)
     for (i = 0; i < infoPtr->nNumButtons; i++, btnPtr++)
     {
         BOOL bDraw;
+        if (!RectVisible(hdc, &btnPtr->rect))
+            continue;
         if (infoPtr->dwExStyle & TBSTYLE_EX_HIDECLIPPEDBUTTONS)
         {
             IntersectRect(&rcTemp, &rcClient, &btnPtr->rect);
