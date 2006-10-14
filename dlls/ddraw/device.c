@@ -2094,16 +2094,53 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                                      DWORD *Value)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    HRESULT hr;
     TRACE("(%p)->(%08x,%p): Relay\n", This, RenderStateType, Value);
 
     if(!Value)
         return DDERR_INVALIDPARAMS;
 
-    /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
+    switch(RenderStateType)
+    {
+        case D3DRENDERSTATE_TEXTUREHANDLE:
+        {
+            /* This state is wrapped to SetTexture in SetRenderState, so
+             * it has to be wrapped to GetTexture here
+             */
+            IWineD3DBaseTexture *tex = NULL;
+            *Value = 0;
 
-    return IWineD3DDevice_GetRenderState(This->wineD3DDevice,
-                                         RenderStateType,
-                                         Value);
+            hr = IWineD3DDevice_GetTexture(This->wineD3DDevice,
+                                           0,
+                                           &tex);
+
+            if(hr == WINED3D_OK && tex)
+            {
+                IDirectDrawSurface7 *parent = NULL;
+                hr = IWineD3DBaseTexture_GetParent(tex,
+                                                   (IUnknown **) &parent);
+                if(parent)
+                {
+                    /* The parent of the texture is the IDirectDrawSurface7 interface
+                     * of the ddraw surface
+                     */
+                    IDirectDrawSurfaceImpl *texImpl = ICOM_OBJECT(IDirectDrawSurfaceImpl,
+                                                                  IDirectDrawSurface7,
+                                                                  parent);
+                    *Value = texImpl->Handle;
+                    IDirectDrawSurface7_Release(parent);
+                }
+                IWineD3DBaseTexture_Release(tex);
+            }
+            return hr;
+        }
+
+        default:
+            /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
+            return IWineD3DDevice_GetRenderState(This->wineD3DDevice,
+                                                 RenderStateType,
+                                                 Value);
+    }
 }
 
 static HRESULT WINAPI
