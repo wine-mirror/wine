@@ -83,14 +83,10 @@ static BSTR WINAPI ERRORINFO_SysAllocString(const OLECHAR* in)
     newBuffer++;
 
     /*
-     * Copy the information in the buffer.
-     * Since it is valid to pass a NULL pointer here, we'll initialize the
-     * buffer to nul if it is the case.
+     * Copy the information in the buffer.  It is not possible to pass 
+     * a NULL pointer here. 
      */
-    if (in != 0)
-      memcpy(newBuffer, in, bufferSize);
-    else
-      memset(newBuffer, 0, bufferSize);
+    memcpy(newBuffer, in, bufferSize);
 
     /*
      * Make sure that there is a nul character at the end of the
