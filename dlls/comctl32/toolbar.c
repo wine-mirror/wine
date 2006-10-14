@@ -5973,14 +5973,15 @@ static LRESULT
 TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    TBUTTON_INFO *hotBtnPtr;
-
-    hotBtnPtr = &infoPtr->buttons[infoPtr->nOldHit];
 
     /* don't remove hot effects when in anchor highlighting mode or when a
      * drop-down button is pressed */
-    if (!infoPtr->bAnchor && (infoPtr->nOldHit < 0 || !hotBtnPtr->bDropDownPressed))
-        TOOLBAR_SetHotItemEx(infoPtr, TOOLBAR_NOWHERE, HICF_MOUSE);
+    if (infoPtr->nHotItem >= 0 && !infoPtr->bAnchor)
+    {
+        TBUTTON_INFO *hotBtnPtr = &infoPtr->buttons[infoPtr->nHotItem];
+        if (!hotBtnPtr->bDropDownPressed)
+            TOOLBAR_SetHotItemEx(infoPtr, TOOLBAR_NOWHERE, HICF_MOUSE);
+    }
 
     if (infoPtr->nOldHit < 0)
       return TRUE;
@@ -5996,7 +5997,7 @@ TOOLBAR_MouseLeave (HWND hwnd, WPARAM wParam, LPARAM lParam)
 
       btnPtr->fsState &= ~TBSTATE_PRESSED;
 
-      rc1 = hotBtnPtr->rect;
+      rc1 = btnPtr->rect;
       InflateRect (&rc1, 1, 1);
       InvalidateRect (hwnd, &rc1, TRUE);
     }
