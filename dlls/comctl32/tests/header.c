@@ -31,6 +31,13 @@ typedef struct tagEXPECTEDNOTIFY
     HDITEMA hdItem;
 } EXPECTEDNOTIFY;
 
+typedef LRESULT (*CUSTOMDRAWPROC)(int n, NMCUSTOMDRAW *nm);
+
+CUSTOMDRAWPROC g_CustomDrawProc;
+int g_CustomDrawCount;
+DRAWITEMSTRUCT g_DrawItem;
+BOOL g_DrawItemReceived;
+
 EXPECTEDNOTIFY expectedNotify[10];
 INT nExpectedNotify = 0;
 INT nReceivedNotify = 0;
@@ -40,6 +47,8 @@ INT nUnexpectedNotify = 0;
 static HWND hHeaderParentWnd;
 static HWND hWndHeader;
 #define MAX_CHARS 100
+
+#define compare(val, exp, fmt)  ok((val) == (exp), #val " value: " fmt ", expected: " fmt "\n", (val), (exp))
 
 static void expect_notify(INT iCode, BOOL fUnicode, HDITEMA *lpItem)
 {
@@ -479,6 +488,173 @@ static void test_header_control (void)
 }
 
 
+#define TEST_NMCUSTOMDRAW(draw_stage, item_spec, lparam, _left, _top, _right, _bottom) \
+    ok(nm->dwDrawStage == draw_stage, "Invalid dwDrawStage %d vs %d\n", draw_stage, nm->dwDrawStage); \
+    if (item_spec != -1) \
+        ok(nm->dwItemSpec == item_spec, "Invalid dwItemSpec %d vs %ld\n", item_spec, nm->dwItemSpec); \
+    ok(nm->lItemlParam == lparam, "Invalid lItemlParam %d vs %ld\n", lparam, nm->lItemlParam); \
+    ok(nm->rc.top == _top && nm->rc.bottom == _bottom && nm->rc.left == _left && nm->rc.right == _right, \
+        "Invalid rect (%d,%d) (%d,%d) vs (%d,%d) (%d,%d)\n", _left, _top, _right, _bottom, \
+        nm->rc.left, nm->rc.top, nm->rc.right, nm->rc.bottom);
+
+static LRESULT customdraw_1(int n, NMCUSTOMDRAW *nm)
+{
+    if (nm == NULL) {  /* test ended */
+        ok(n==1, "NM_CUSTOMDRAW messages: %d, expected: 1\n", n);
+        return 0;
+    }
+
+    switch (n)
+    {
+    case 0:
+        /* don't test dwItemSpec - it's 0 no comctl5 but 1308756 on comctl6 */
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        return 0;
+    }
+
+    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    return -1;
+}
+
+static LRESULT customdraw_2(int n, NMCUSTOMDRAW *nm)
+{
+    if (nm == NULL) {  /* test ended */
+        ok(n==4, "NM_CUSTOMDRAW messages: %d, expected: 4\n", n);
+        return 0;
+    }
+
+    switch (n)
+    {
+    case 0:
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        return CDRF_NOTIFYITEMDRAW;
+    case 1:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, 18);
+        return 0;
+    case 2:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 1, 5, 50, 0, 150, 18);
+        return 0;
+    case 3:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, 18);
+        return 0;
+    }
+
+    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    return 0;
+}
+
+static LRESULT customdraw_3(int n, NMCUSTOMDRAW *nm)
+{
+    if (nm == NULL) {  /* test ended */
+        ok(n==5, "NM_CUSTOMDRAW messages: %d, expected: 5\n", n);
+        return 0;
+    }
+
+    switch (n)
+    {
+    case 0:
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTERASE|CDRF_NOTIFYPOSTPAINT|CDRF_SKIPDEFAULT;
+    case 1:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, 18);
+        return 0;
+    case 2:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 1, 5, 50, 0, 150, 18);
+        return 0;
+    case 3:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, 18);
+        return 0;
+    case 4:
+        TEST_NMCUSTOMDRAW(CDDS_POSTPAINT, -1, 0, 0, 0, 670, 18);
+        return 0;
+    }
+
+    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    return 0;
+}
+
+
+static LRESULT customdraw_4(int n, NMCUSTOMDRAW *nm)
+{
+    if (nm == NULL) {  /* test ended */
+        ok(n==4, "NM_CUSTOMDRAW messages: %d, expected: 4\n", n);
+        return 0;
+    }
+
+    switch (n)
+    {
+    case 0:
+        TEST_NMCUSTOMDRAW(CDDS_PREPAINT, -1, 0, 0, 0, 670, 18);
+        return CDRF_NOTIFYITEMDRAW|CDRF_NOTIFYPOSTPAINT;
+    case 1:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 0, 0, 0, 0, 50, 18);
+        return 0;
+    case 2:
+        TEST_NMCUSTOMDRAW(CDDS_ITEMPREPAINT, 2, 10, 150, 0, 300, 18);
+        return 0;
+    case 3:
+        TEST_NMCUSTOMDRAW(CDDS_POSTPAINT, -1, 0, 0, 0, 670, 18);
+        return 0;
+    }
+
+    ok(FALSE, "To many custom draw messages (n=%d, nm->dwDrawStage=%d)\n", n, nm->dwDrawStage);
+    return 0;
+}
+
+static void run_customdraw_scenario(CUSTOMDRAWPROC proc)
+{
+    g_CustomDrawProc = proc;
+    g_CustomDrawCount = 0;
+    InvalidateRect(hWndHeader, NULL, TRUE);
+    UpdateWindow(hWndHeader);
+    proc(g_CustomDrawCount, NULL);
+    g_CustomDrawProc = NULL;
+}
+
+void test_customdraw()
+{
+    int i;
+    HDITEM item;
+    RECT rect;
+    CHAR name[] = "Test";
+    hWndHeader = create_header_control();
+    GetClientRect(hWndHeader, &rect);
+    ok(rect.right - rect.left == 670 && rect.bottom - rect.top == 18,
+        "Tests will fail as header size is %dx%d instead of 670x18\n",
+        rect.right - rect.left == 670, rect.bottom - rect.top == 18);
+
+    for (i = 0; i < 3; i++)
+    {
+        ZeroMemory(&item, sizeof(item));
+        item.mask = HDI_TEXT|HDI_WIDTH;
+        item.cxy = 50*(i+1);
+        item.pszText = name;
+        item.lParam = i*5;
+        SendMessage(hWndHeader, HDM_INSERTITEM, i, (LPARAM)&item);
+    }
+
+    run_customdraw_scenario(customdraw_1);
+    run_customdraw_scenario(customdraw_2);
+    run_customdraw_scenario(customdraw_3);
+
+    ZeroMemory(&item, sizeof(item));
+    item.mask = HDI_FORMAT;
+    item.fmt = HDF_OWNERDRAW;
+    SendMessage(hWndHeader, HDM_SETITEM, 1, (LPARAM)&item);
+    g_DrawItem.CtlID = 0;
+    g_DrawItem.CtlType = ODT_HEADER;
+    g_DrawItem.hwndItem = hWndHeader;
+    g_DrawItem.itemID = 1;
+    g_DrawItem.itemState = 0;
+    SendMessage(hWndHeader, HDM_GETITEMRECT, 1, (LPARAM)&g_DrawItem.rcItem);
+    run_customdraw_scenario(customdraw_4);
+    ok(g_DrawItemReceived, "WM_DRAWITEM not received\n");
+    DestroyWindow(hWndHeader);
+    hWndHeader = NULL;
+    g_DrawItem.CtlType = 0;
+    g_DrawItemReceived = FALSE;
+}
+
 static void check_order(const int expected_id[], const int expected_order[],
                         int count, const char *type)
 {
@@ -561,6 +737,7 @@ static void test_header_order (void)
 
 LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    DRAWITEMSTRUCT *di;
     switch(msg) {
 
     case WM_NOTIFY:
@@ -568,7 +745,11 @@ LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         NMHEADERA *hdr = (NMHEADER *)lParam;
         EXPECTEDNOTIFY *expected;
         int i;
-        
+
+        if (hdr->hdr.code == NM_CUSTOMDRAW)
+            if (g_CustomDrawProc)
+                return g_CustomDrawProc(g_CustomDrawCount++, (NMCUSTOMDRAW*)hdr);
+
         for (i=0; i<nUnexpectedNotify; i++)
             ok(hdr->hdr.code != unexpectedNotify[i], "Received invalid notify %d\n", hdr->hdr.code);
         
@@ -583,7 +764,23 @@ LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
         compare_items(hdr->hdr.code, &expected->hdItem, hdr->pitem, expected->fUnicode);
         break;
     }
-    
+
+    case WM_DRAWITEM:
+        di = (DRAWITEMSTRUCT *)lParam;
+        ok(g_DrawItem.CtlType != 0, "Unexpected WM_DRAWITEM\n");
+        if (g_DrawItem.CtlType == 0) return 0;
+        g_DrawItemReceived = TRUE;
+        compare(di->CtlType,   g_DrawItem.CtlType, "%d");
+        compare(di->CtlID,     g_DrawItem.CtlID, "%d");
+        compare(di->hwndItem,  g_DrawItem.hwndItem, "%p");
+        compare(di->itemID,    g_DrawItem.itemID, "%d");
+        compare(di->itemState, g_DrawItem.itemState, "%d");
+        compare(di->rcItem.left,   g_DrawItem.rcItem.left, "%d");
+        compare(di->rcItem.top,    g_DrawItem.rcItem.top, "%d");
+        compare(di->rcItem.right,  g_DrawItem.rcItem.right, "%d");
+        compare(di->rcItem.bottom, g_DrawItem.rcItem.bottom, "%d");
+        break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -618,6 +815,7 @@ static void init(void) {
     hHeaderParentWnd = CreateWindowExA(0, "HeaderTestClass", "Header test", WS_OVERLAPPEDWINDOW, 
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
     assert(hHeaderParentWnd != NULL);
+    ShowWindow(hHeaderParentWnd, SW_SHOW);
 }
 
 START_TEST(header)
@@ -626,6 +824,7 @@ START_TEST(header)
 
     test_header_control();
     test_header_order();
+    test_customdraw();
 
     DestroyWindow(hHeaderParentWnd);
 }
