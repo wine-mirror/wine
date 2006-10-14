@@ -967,7 +967,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
             /* Initialize HoverInfo variables even if not hover tracking */
             tracking_info.pos = pos;
 
-            timer = SetSystemTimer(tracking_info.tme.hwndTrack, 0, hover_time, TrackMouseEventProc);
+            timer = SetSystemTimer(tracking_info.tme.hwndTrack, (UINT_PTR)&tracking_info.tme, hover_time, TrackMouseEventProc);
         }
     }
 
