@@ -167,7 +167,7 @@ static void test_validtypes(void)
         hr = PropVariantClear(&propvar);
         expected_result = (valid_types[i].simple <= version ? TRUE : FALSE);
         ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
-            "PropVariantClear(%s) should have returned 0x%08lx, but returned 0x%08lx\n",
+            "PropVariantClear(%s) should have returned 0x%08x, but returned 0x%08x\n",
             wine_vtypes[i],
             expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
 
@@ -175,7 +175,7 @@ static void test_validtypes(void)
         hr = PropVariantClear(&propvar);
         expected_result = (valid_types[i].with_array <= version ? TRUE : FALSE);
         ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
-            "PropVariantClear(%s|VT_ARRAY) should have returned 0x%08lx, but returned 0x%08lx\n",
+            "PropVariantClear(%s|VT_ARRAY) should have returned 0x%08x, but returned 0x%08x\n",
             wine_vtypes[i],
             expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
 
@@ -183,7 +183,7 @@ static void test_validtypes(void)
         hr = PropVariantClear(&propvar);
         expected_result = (valid_types[i].with_vector <= version ? TRUE : FALSE);
         ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
-            "PropVariantClear(%s|VT_VECTOR) should have returned 0x%08lx, but returned 0x%08lx\n",
+            "PropVariantClear(%s|VT_VECTOR) should have returned 0x%08x, but returned 0x%08x\n",
             wine_vtypes[i],
             expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
 
@@ -191,7 +191,7 @@ static void test_validtypes(void)
         hr = PropVariantClear(&propvar);
         expected_result = (valid_types[i].byref <= version ? TRUE : FALSE);
         ok(expected_result == !(hr == STG_E_INVALIDPARAMETER),
-            "PropVariantClear(%s|VT_BYREF) should have returned 0x%08lx, but returned 0x%08lx\n",
+            "PropVariantClear(%s|VT_BYREF) should have returned 0x%08x, but returned 0x%08x\n",
             wine_vtypes[i],
             expected_result ? S_OK : STG_E_INVALIDPARAMETER, hr);
     }

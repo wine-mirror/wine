@@ -35,9 +35,9 @@
 HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 
 /* helper macros to make tests a bit leaner */
-#define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %ld\n", cLocks)
-#define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %ld\n", cLocks)
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
+#define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
+#define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %d\n", cLocks)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
 static const IID IID_IWineTest =
 {
@@ -275,7 +275,7 @@ static void release_host_object(DWORD tid)
 static void end_host_object(DWORD tid, HANDLE thread)
 {
     BOOL ret = PostThreadMessage(tid, WM_QUIT, 0, 0);
-    ok(ret, "PostThreadMessage failed with error %ld\n", GetLastError());
+    ok(ret, "PostThreadMessage failed with error %d\n", GetLastError());
     /* be careful of races - don't return until hosting thread has terminated */
     WaitForSingleObject(thread, INFINITE);
     CloseHandle(thread);
@@ -291,7 +291,7 @@ static void test_no_marshaler(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
     ok_ole_success(hr, CreateStreamOnHGlobal);
     hr = CoMarshalInterface(pStream, &IID_IWineTest, (IUnknown*)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    ok(hr == E_NOINTERFACE, "CoMarshalInterface should have returned E_NOINTERFACE instead of 0x%08lx\n", hr);
+    ok(hr == E_NOINTERFACE, "CoMarshalInterface should have returned E_NOINTERFACE instead of 0x%08x\n", hr);
 
     IStream_Release(pStream);
 }
@@ -380,7 +380,7 @@ static void test_marshal_and_unmarshal_invalid(void)
     if (pProxy)
     {
         hr = IClassFactory_CreateInstance(pProxy, NULL, &IID_IUnknown, &dummy);
-        ok(hr == RPC_E_DISCONNECTED, "Remote call should have returned RPC_E_DISCONNECTED, instead of 0x%08lx\n", hr);
+        ok(hr == RPC_E_DISCONNECTED, "Remote call should have returned RPC_E_DISCONNECTED, instead of 0x%08x\n", hr);
 
         IClassFactory_Release(pProxy);
     }
@@ -918,7 +918,7 @@ static void test_tableweak_marshal_releasedata2(void)
     todo_wine
     {
     ok(hr == CO_E_OBJNOTREG,
-       "CoUnmarshalInterface should have failed with CO_E_OBJNOTREG, but returned 0x%08lx instead\n",
+       "CoUnmarshalInterface should have failed with CO_E_OBJNOTREG, but returned 0x%08x instead\n",
        hr);
     }
     IStream_Release(pStream);
@@ -1079,7 +1079,7 @@ static void test_normal_marshal_and_unmarshal_twice(void)
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
     ok(hr == CO_E_OBJNOTCONNECTED,
-        "CoUnmarshalInterface should have failed with error CO_E_OBJNOTCONNECTED for double unmarshal, instead of 0x%08lx\n", hr);
+        "CoUnmarshalInterface should have failed with error CO_E_OBJNOTCONNECTED for double unmarshal, instead of 0x%08x\n", hr);
 
     IStream_Release(pStream);
 
@@ -1108,14 +1108,14 @@ static void test_hresult_marshaling(void)
     hr = IStream_Read(pStream, &hr_marshaled, sizeof(HRESULT), NULL);
     ok_ole_success(hr, IStream_Read);
 
-    ok(hr_marshaled == E_DEADBEEF, "Didn't marshal HRESULT as expected: got value 0x%08lx instead\n", hr_marshaled);
+    ok(hr_marshaled == E_DEADBEEF, "Didn't marshal HRESULT as expected: got value 0x%08x instead\n", hr_marshaled);
 
     hr_marshaled = 0;
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalHresult(pStream, &hr_marshaled);
     ok_ole_success(hr, CoUnmarshalHresult);
 
-    ok(hr_marshaled == E_DEADBEEF, "Didn't marshal HRESULT as expected: got value 0x%08lx instead\n", hr_marshaled);
+    ok(hr_marshaled == E_DEADBEEF, "Didn't marshal HRESULT as expected: got value 0x%08x instead\n", hr_marshaled);
 
     IStream_Release(pStream);
 }
@@ -1133,7 +1133,7 @@ static DWORD CALLBACK bad_thread_proc(LPVOID p)
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     if (proxy) IUnknown_Release(proxy);
     ok(hr == RPC_E_WRONG_THREAD,
-        "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08lx\n",
+        "COM should have failed with RPC_E_WRONG_THREAD on using proxy from wrong apartment, but instead returned 0x%08x\n",
         hr);
 
     CoUninitialize();
@@ -1288,7 +1288,7 @@ static void test_message_filter(void)
     ok_more_than_one_lock();
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
-    todo_wine { ok(hr == RPC_E_CALL_REJECTED, "Call should have returned RPC_E_CALL_REJECTED, but return 0x%08lx instead\n", hr); }
+    todo_wine { ok(hr == RPC_E_CALL_REJECTED, "Call should have returned RPC_E_CALL_REJECTED, but return 0x%08x instead\n", hr); }
     if (proxy) IUnknown_Release(proxy);
     proxy = NULL;
 
@@ -1323,7 +1323,7 @@ static void test_bad_marshal_stream(void)
 
     /* try to read beyond end of stream */
     hr = CoReleaseMarshalData(pStream);
-    ok(hr == STG_E_READFAULT, "Should have failed with STG_E_READFAULT, but returned 0x%08lx instead\n", hr);
+    ok(hr == STG_E_READFAULT, "Should have failed with STG_E_READFAULT, but returned 0x%08x instead\n", hr);
 
     /* now release for real */
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
@@ -1451,7 +1451,7 @@ static void test_proxybuffer(REFIID riid)
     /* release our reference to the outer unknown object - the PS factory
      * buffer will have AddRef's it in the CreateProxy call */
     refs = IUnknown_Release((IUnknown *)pUnkOuter);
-    ok(refs == 1, "Ref count of outer unknown should have been 1 instead of %ld\n", refs);
+    ok(refs == 1, "Ref count of outer unknown should have been 1 instead of %d\n", refs);
 
     refs = IPSFactoryBuffer_Release(psfb);
 #if 0 /* not reliable on native. maybe it leaks references! */
@@ -1459,10 +1459,10 @@ static void test_proxybuffer(REFIID riid)
 #endif
 
     refs = IUnknown_Release((IUnknown *)lpvtbl);
-    ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
+    ok(refs == 0, "Ref-count leak of %d on IRpcProxyBuffer\n", refs);
 
     refs = IRpcProxyBuffer_Release(proxy);
-    ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
+    ok(refs == 0, "Ref-count leak of %d on IRpcProxyBuffer\n", refs);
 }
 
 static void test_stubbuffer(REFIID riid)
@@ -1496,7 +1496,7 @@ static void test_stubbuffer(REFIID riid)
     ok_no_locks();
 
     refs = IRpcStubBuffer_Release(stub);
-    ok(refs == 0, "Ref-count leak of %ld on IRpcProxyBuffer\n", refs);
+    ok(refs == 0, "Ref-count leak of %d on IRpcProxyBuffer\n", refs);
 }
 
 static HWND hwnd_app;
@@ -1668,13 +1668,13 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
     if (mshctx == MSHCTX_INPROC)
     {
         DWORD expected_size = sizeof(DWORD) + sizeof(void *) + sizeof(DWORD) + sizeof(GUID);
-        ok(size == expected_size, "size should have been %ld instead of %ld\n", expected_size, size);
+        ok(size == expected_size, "size should have been %d instead of %d\n", expected_size, size);
 
-        ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%lx, but got 0x%lx for mshctx\n", mshlflags, *(DWORD *)marshal_data);
+        ok(*(DWORD *)marshal_data == mshlflags, "expected 0x%x, but got 0x%x for mshctx\n", mshlflags, *(DWORD *)marshal_data);
         marshal_data += sizeof(DWORD);
         ok(*(void **)marshal_data == ptr, "expected %p, but got %p for mshctx\n", ptr, *(void **)marshal_data);
         marshal_data += sizeof(void *);
-        ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%lx\n", *(DWORD *)marshal_data);
+        ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%x\n", *(DWORD *)marshal_data);
         marshal_data += sizeof(DWORD);
         trace("got guid data: {%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
             ((GUID *)marshal_data)->Data1, ((GUID *)marshal_data)->Data2, ((GUID *)marshal_data)->Data3,
@@ -1683,7 +1683,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
     }
     else
     {
-        ok(size > sizeof(DWORD), "size should have been > sizeof(DWORD), not %ld\n", size);
+        ok(size > sizeof(DWORD), "size should have been > sizeof(DWORD), not %d\n", size);
         ok(*(DWORD *)marshal_data == 0x574f454d /* MEOW */,
             "marshal data should be filled by standard marshal and start with MEOW signature\n");
     }
@@ -1934,7 +1934,7 @@ static void test_out_of_process_com(void)
         NULL, &IID_IClassFactory, (LPVOID*)&cf);
     todo_wine {
     ok(hr == REGDB_E_CLASSNOTREG,
-        "CoGetClassObject should have returned REGDB_E_CLASSNOTREG instead of 0x%08lx\n", hr);
+        "CoGetClassObject should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
     }
 
     /* Resume the object suspended above ... */
@@ -1952,7 +1952,7 @@ static void test_out_of_process_com(void)
     ok_no_locks();
 
     hr = IClassFactory_LockServer(cf, TRUE);
-    trace("IClassFactory_LockServer returned 0x%08lx\n", hr);
+    trace("IClassFactory_LockServer returned 0x%08x\n", hr);
 
     ok_more_than_one_lock();
     
@@ -1971,7 +1971,7 @@ static void test_out_of_process_com(void)
         &IID_IClassFactory, (LPVOID*)&cf);
     todo_wine {
     ok(hr == CO_E_SERVER_STOPPING,
-        "CoGetClassObject should have returned CO_E_SERVER_STOPPING instead of 0x%08lx\n", hr);
+        "CoGetClassObject should have returned CO_E_SERVER_STOPPING instead of 0x%08x\n", hr);
     }
 
     hr = CoRevokeClassObject(cookie);
@@ -2021,7 +2021,7 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
 	ok(hr == CO_E_NOTINITIALIZED,
-		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED instead of 0x%08lx\n",
+		"IGlobalInterfaceTable_GetInterfaceFromGlobal should have failed with error CO_E_NOTINITIALIZED instead of 0x%08x\n",
 		hr);
 
 	CoInitialize(NULL);
@@ -2094,7 +2094,7 @@ static void test_marshal_CLIPFORMAT(void)
     CLIPFORMAT_UserMarshal(&flags, buffer, &cf);
     wirecf = (wireCLIPFORMAT)buffer;
     ok(wirecf->fContext == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08lx\n", wirecf->fContext);
-    ok(wirecf->u.dwValue == cf, "Marshaled value should be 0x%04x instead of 0x%04lx\n", cf, wirecf->u.dwValue);
+    ok(wirecf->u.dwValue == cf, "Marshaled value should be 0x%04x instead of 0x%04x\n", cf, wirecf->u.dwValue);
     ok(!memcmp(wirecf+1, cf_marshaled, sizeof(cf_marshaled)), "Marshaled data differs\n");
 
     CLIPFORMAT_UserUnmarshal(&flags, buffer, &cf2);
@@ -2148,7 +2148,7 @@ static void test_marshal_HGLOBAL(void)
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HGLOBAL_UserMarshal(&flags, buffer, &hglobal);
     wirehglobal = buffer;
-    ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08lx\n", *(ULONG *)wirehglobal);
+    ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(ULONG *)wirehglobal);
     wirehglobal += sizeof(ULONG);
     ok(*(ULONG *)wirehglobal == (ULONG)hglobal, "buffer+4 should be HGLOBAL\n");
     HGLOBAL_UserUnmarshal(&flags, buffer, &hglobal2);
@@ -2169,7 +2169,7 @@ static void test_marshal_HGLOBAL(void)
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HGLOBAL_UserMarshal(&flags, buffer, &hglobal);
     wirehglobal = buffer;
-    ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08lx\n", *(ULONG *)wirehglobal);
+    ok(*(ULONG *)wirehglobal == WDT_REMOTE_CALL, "Context should be WDT_REMOTE_CALL instead of 0x%08x\n", *(ULONG *)wirehglobal);
     wirehglobal += sizeof(ULONG);
     ok(*(ULONG *)wirehglobal == (ULONG)hglobal, "buffer+0x4 should be HGLOBAL\n");
     wirehglobal += sizeof(ULONG);
@@ -2212,15 +2212,15 @@ static void test_marshal_HENHMETAFILE(void)
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HENHMETAFILE_UserMarshal(&flags, buffer, &hemf);
     wirehemf = buffer;
-    ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08lx\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == (DWORD)(DWORD_PTR)hemf, "wirestgm + 0x4 should be hemf instead of 0x%08lx\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == (DWORD)(DWORD_PTR)hemf, "wirestgm + 0x4 should be hemf instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == (size - 0x10), "wirestgm + 0x8 should be size - 0x10 instead of 0x%08lx\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == (size - 0x10), "wirestgm + 0x8 should be size - 0x10 instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == (size - 0x10), "wirestgm + 0xc should be size - 0x10 instead of 0x%08lx\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == (size - 0x10), "wirestgm + 0xc should be size - 0x10 instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == EMR_HEADER, "wirestgm + 0x10 should be EMR_HEADER instead of %ld\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == EMR_HEADER, "wirestgm + 0x10 should be EMR_HEADER instead of %d\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
     /* ... rest of data not tested - refer to tests for GetEnhMetaFileBits
      * at this point */
@@ -2239,9 +2239,9 @@ static void test_marshal_HENHMETAFILE(void)
     buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
     HENHMETAFILE_UserMarshal(&flags, buffer, &hemf);
     wirehemf = buffer;
-    ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08lx\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
-    ok(*(DWORD *)wirehemf == (DWORD)(DWORD_PTR)hemf, "wirestgm + 0x4 should be hemf instead of 0x%08lx\n", *(DWORD *)wirehemf);
+    ok(*(DWORD *)wirehemf == (DWORD)(DWORD_PTR)hemf, "wirestgm + 0x4 should be hemf instead of 0x%08x\n", *(DWORD *)wirehemf);
     wirehemf += sizeof(DWORD);
 
     HENHMETAFILE_UserUnmarshal(&flags, buffer, &hemf2);

@@ -33,7 +33,7 @@
 /* functions that are not present on all versions of Windows */
 HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
 static const CLSID CLSID_non_existent =   { 0x12345678, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const CLSID CLSID_CDeviceMoniker = { 0x4315d437, 0x5b8c, 0x11d0, { 0xbd, 0x3b, 0x00, 0xa0, 0xc9, 0x11, 0xce, 0x86 } };
@@ -63,7 +63,7 @@ static void test_ProgIDFromCLSID(void)
 {
     LPWSTR progid;
     HRESULT hr = ProgIDFromCLSID(&CLSID_CDeviceMoniker, &progid);
-    ok(hr == S_OK, "ProgIDFromCLSID failed with error 0x%08lx\n", hr);
+    ok(hr == S_OK, "ProgIDFromCLSID failed with error 0x%08x\n", hr);
     if (hr == S_OK)
     {
         ok(!lstrcmpiW(progid, devicedotone), "Didn't get expected prog ID\n");
@@ -72,18 +72,18 @@ static void test_ProgIDFromCLSID(void)
 
     progid = (LPWSTR)0xdeadbeef;
     hr = ProgIDFromCLSID(&CLSID_non_existent, &progid);
-    ok(hr == REGDB_E_CLASSNOTREG, "ProgIDFromCLSID returned %08lx\n", hr);
+    ok(hr == REGDB_E_CLASSNOTREG, "ProgIDFromCLSID returned %08x\n", hr);
     ok(progid == NULL, "ProgIDFromCLSID returns with progid %p\n", progid);
 
     hr = ProgIDFromCLSID(&CLSID_CDeviceMoniker, NULL);
-    ok(hr == E_INVALIDARG, "ProgIDFromCLSID should return E_INVALIDARG instead of 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "ProgIDFromCLSID should return E_INVALIDARG instead of 0x%08x\n", hr);
 }
 
 static void test_CLSIDFromProgID(void)
 {
     CLSID clsid;
     HRESULT hr = CLSIDFromProgID(devicedotone, &clsid);
-    ok(hr == S_OK, "CLSIDFromProgID failed with error 0x%08lx\n", hr);
+    ok(hr == S_OK, "CLSIDFromProgID failed with error 0x%08x\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_CDeviceMoniker), "clsid wasn't equal to CLSID_CDeviceMoniker\n");
 
     hr = CLSIDFromString((LPOLESTR)devicedotone, &clsid);
@@ -93,14 +93,14 @@ static void test_CLSIDFromProgID(void)
     /* test some failure cases */
 
     hr = CLSIDFromProgID(wszNonExistent, NULL);
-    ok(hr == E_INVALIDARG, "CLSIDFromProgID should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "CLSIDFromProgID should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     hr = CLSIDFromProgID(NULL, &clsid);
-    ok(hr == E_INVALIDARG, "CLSIDFromProgID should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "CLSIDFromProgID should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 
     memset(&clsid, 0xcc, sizeof(clsid));
     hr = CLSIDFromProgID(wszNonExistent, &clsid);
-    ok(hr == CO_E_CLASSSTRING, "CLSIDFromProgID on nonexistent ProgID should have returned CO_E_CLASSSTRING instead of 0x%08lx\n", hr);
+    ok(hr == CO_E_CLASSSTRING, "CLSIDFromProgID on nonexistent ProgID should have returned CO_E_CLASSSTRING instead of 0x%08x\n", hr);
     ok(IsEqualCLSID(&clsid, &CLSID_NULL), "CLSIDFromProgID should have set clsid to all-zeros on failure\n");
 }
 
@@ -121,7 +121,7 @@ static void test_CoCreateInstance(void)
     REFCLSID rclsid = &CLSID_MyComputer;
     IUnknown *pUnk = (IUnknown *)0xdeadbeef;
     HRESULT hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
     ok(pUnk == NULL, "CoCreateInstance should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
 
     OleInitialize(NULL);
@@ -131,18 +131,18 @@ static void test_CoCreateInstance(void)
     OleUninitialize();
 
     hr = CoCreateInstance(rclsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void **)&pUnk);
-    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
 }
 
 static void test_CoGetClassObject(void)
 {
     IUnknown *pUnk = (IUnknown *)0xdeadbeef;
     HRESULT hr = CoGetClassObject(&CLSID_MyComputer, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void **)&pUnk);
-    ok(hr == CO_E_NOTINITIALIZED, "CoGetClassObject should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoGetClassObject should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
     ok(pUnk == NULL, "CoGetClassObject should have changed the passed in pointer to NULL, instead of %p\n", pUnk);
 
     hr = CoGetClassObject(&CLSID_MyComputer, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, NULL);
-    ok(hr == E_INVALIDARG, "CoGetClassObject should have returned E_INVALIDARG instead of 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "CoGetClassObject should have returned E_INVALIDARG instead of 0x%08x\n", hr);
 }
 
 static ATOM register_dummy_class(void)
@@ -258,7 +258,7 @@ static void test_CoRegisterMessageFilter(void)
     prev_filter = (IMessageFilter *)0xdeadbeef;
     hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
     ok(hr == CO_E_NOT_SUPPORTED,
-        "CoRegisterMessageFilter should have failed with CO_E_NOT_SUPPORTED instead of 0x%08lx\n",
+        "CoRegisterMessageFilter should have failed with CO_E_NOT_SUPPORTED instead of 0x%08x\n",
         hr);
     ok(prev_filter == (IMessageFilter *)0xdeadbeef,
         "prev_filter should have been set to %p\n", prev_filter);
@@ -395,7 +395,7 @@ static void test_CoRegisterPSClsid(void)
     CLSID clsid;
 
     hr = CoRegisterPSClsid(&IID_IWineTest, &CLSID_WineTestPSFactoryBuffer);
-    ok(hr == CO_E_NOTINITIALIZED, "CoRegisterPSClsid should have returened CO_E_NOTINITIALIZED instead of 0x%08lx\n", hr);
+    ok(hr == CO_E_NOTINITIALIZED, "CoRegisterPSClsid should have returened CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
@@ -410,7 +410,7 @@ static void test_CoRegisterPSClsid(void)
     ok_ole_success(hr, "CreateStreamOnHGlobal");
 
     hr = CoMarshalInterface(stream, &IID_IWineTest, (IUnknown *)&Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
-    ok(hr == E_NOTIMPL, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08lx\n", hr);
+    ok(hr == E_NOTIMPL, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08x\n", hr);
     IStream_Release(stream);
 
     hr = CoRevokeClassObject(dwRegistrationKey);
@@ -421,7 +421,7 @@ static void test_CoRegisterPSClsid(void)
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
     hr = CoGetPSClsid(&IID_IWineTest, &clsid);
-    ok(hr == REGDB_E_IIDNOTREG, "CoGetPSClsid should have returned REGDB_E_IIDNOTREG instead of 0x%08lx\n", hr);
+    ok(hr == REGDB_E_IIDNOTREG, "CoGetPSClsid should have returned REGDB_E_IIDNOTREG instead of 0x%08x\n", hr);
 
     CoUninitialize();
 }
@@ -433,7 +433,7 @@ static void test_CoGetPSClsid(void)
 
     hr = CoGetPSClsid(&IID_IClassFactory, &clsid);
     ok(hr == CO_E_NOTINITIALIZED,
-       "CoGetPSClsid should have returned CO_E_NOTINITIALIZED instead of 0x%08lx\n",
+       "CoGetPSClsid should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n",
        hr);
 
     pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
@@ -443,12 +443,12 @@ static void test_CoGetPSClsid(void)
 
     hr = CoGetPSClsid(&IID_IWineTest, &clsid);
     ok(hr == REGDB_E_IIDNOTREG,
-       "CoGetPSClsid for random IID returned 0x%08lx instead of REGDB_E_IIDNOTREG\n",
+       "CoGetPSClsid for random IID returned 0x%08x instead of REGDB_E_IIDNOTREG\n",
        hr);
 
     hr = CoGetPSClsid(&IID_IClassFactory, NULL);
     ok(hr == E_INVALIDARG,
-       "CoGetPSClsid for null clsid returned 0x%08lx instead of E_INVALIDARG\n",
+       "CoGetPSClsid for null clsid returned 0x%08x instead of E_INVALIDARG\n",
        hr);
 
     CoUninitialize();

@@ -28,7 +28,7 @@
 
 #include "wine/test.h"
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08lx\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
 
 static void test_streamonhglobal(IStream *pStream)
 {
@@ -54,7 +54,7 @@ static void test_streamonhglobal(IStream *pStream)
     /* should return S_OK, not S_FALSE */
     hr = IStream_Read(pStream, buffer, sizeof(buffer), &read);
     ok_ole_success(hr, "IStream_Read");
-    ok(read == sizeof(data), "IStream_Read returned read %ld\n", read);
+    ok(read == sizeof(data), "IStream_Read returned read %d\n", read);
 
     /* ignores HighPart */
     ull.HighPart = -1;
@@ -69,18 +69,18 @@ static void test_streamonhglobal(IStream *pStream)
     ok_ole_success(hr, "IStream_Revert");
 
     hr = IStream_LockRegion(pStream, ull, ull, LOCK_WRITE);
-    ok(hr == STG_E_INVALIDFUNCTION, "IStream_LockRegion should have returned STG_E_INVALIDFUNCTION instead of 0x%08lx\n", hr);
+    ok(hr == STG_E_INVALIDFUNCTION, "IStream_LockRegion should have returned STG_E_INVALIDFUNCTION instead of 0x%08x\n", hr);
 
     hr = IStream_Stat(pStream, &statstg, STATFLAG_DEFAULT);
     ok_ole_success(hr, "IStream_Stat");
-    ok(statstg.type == STGTY_STREAM, "statstg.type should have been STGTY_STREAM instead of %ld\n", statstg.type);
+    ok(statstg.type == STGTY_STREAM, "statstg.type should have been STGTY_STREAM instead of %d\n", statstg.type);
 
     /* test OOM condition */
     ull.HighPart = -1;
     ull.LowPart = -1;
     hr = IStream_SetSize(pStream, ull);
     todo_wine {
-    ok(hr == E_OUTOFMEMORY, "IStream_SetSize with large size should have returned E_OUTOFMEMORY instead of 0x%08lx\n", hr);
+    ok(hr == E_OUTOFMEMORY, "IStream_SetSize with large size should have returned E_OUTOFMEMORY instead of 0x%08x\n", hr);
     }
 }
 

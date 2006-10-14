@@ -256,7 +256,7 @@ static HRESULT WINAPI DataObjectImpl_EnumFormatEtc(IDataObject* iface, DWORD dwD
     DataObjectImpl *This = (DataObjectImpl*)iface;
 
     if(dwDirection != DATADIR_GET) {
-        ok(0, "unexpected direction %ld\n", dwDirection);
+        ok(0, "unexpected direction %d\n", dwDirection);
         return E_NOTIMPL;
     }
     return EnumFormatImpl_Create(This->fmtetc, This->fmtetc_cnt, ppenumFormatEtc);
@@ -322,11 +322,11 @@ static void test_set_clipboard(void)
     ULONG ref;
     LPDATAOBJECT data1, data2;
     hr = DataObjectImpl_CreateText("data1", &data1);
-    ok(SUCCEEDED(hr), "Failed to create data1 object: %ld\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create data1 object: %d\n", hr);
     if(FAILED(hr))
         return;
     hr = DataObjectImpl_CreateText("data2", &data2);
-    ok(SUCCEEDED(hr), "Failed to create data2 object: %ld\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create data2 object: %d\n", hr);
     if(FAILED(hr))
         return;
 
@@ -345,9 +345,9 @@ static void test_set_clipboard(void)
     ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard\n");
 
     ref = IDataObject_Release(data1);
-    ok(ref == 0, "expected data1 ref=0, got %ld\n", ref);
+    ok(ref == 0, "expected data1 ref=0, got %d\n", ref);
     ref = IDataObject_Release(data2);
-    ok(ref == 0, "expected data2 ref=0, got %ld\n", ref);
+    ok(ref == 0, "expected data2 ref=0, got %d\n", ref);
 }
 
 

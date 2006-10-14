@@ -253,7 +253,7 @@ static void test_storage_stream(void)
     r = IStorage_CreateStream(stg, NULL, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error\n");
     r = IStorage_CreateStream(stg, longname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
-    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error, got %ld GetLastError()=%ld\n", r, GetLastError());
+    ok(r==STG_E_INVALIDNAME, "IStorage->CreateStream wrong error, got %d GetLastError()=%d\n", r, GetLastError());
     r = IStorage_CreateStream(stg, stmname, STGM_READWRITE, 0, 0, &stm );
     ok(r==STG_E_INVALIDFLAG, "IStorage->CreateStream wrong error\n");
     r = IStorage_CreateStream(stg, stmname, STGM_READ, 0, 0, &stm );
@@ -391,7 +391,7 @@ static void test_open_storage(void)
     /* try opening a nonexistent file - it should create it */
     stgm = STGM_DIRECT | STGM_SHARE_EXCLUSIVE | STGM_READWRITE;
     r = StgOpenStorage( filename, NULL, stgm, NULL, 0, &stg);
-    ok(r==S_OK, "StgOpenStorage failed: 0x%08lx\n", r);
+    ok(r==S_OK, "StgOpenStorage failed: 0x%08x\n", r);
     if (r==S_OK) IStorage_Release(stg);
     ok(is_existing_file(filename), "StgOpenStorage didn't create a file\n");
     DeleteFileW(filename);
@@ -696,10 +696,10 @@ static void test_storage_refcount(void)
     ok (r == STG_E_REVERTED, "stat should fail\n");
 
     r = IStream_Write( stm, "Test string", strlen("Test string"), NULL);
-    ok (r == STG_E_REVERTED, "IStream_Write should return STG_E_REVERTED instead of 0x%08lx\n", r);
+    ok (r == STG_E_REVERTED, "IStream_Write should return STG_E_REVERTED instead of 0x%08x\n", r);
 
     r = IStream_Read( stm, buffer, sizeof(buffer), NULL);
-    ok (r == STG_E_REVERTED, "IStream_Read should return STG_E_REVERTED instead of 0x%08lx\n", r);
+    ok (r == STG_E_REVERTED, "IStream_Read should return STG_E_REVERTED instead of 0x%08x\n", r);
 
     r = IStream_Release(stm);
     ok (r == 0, "stream not released\n");
@@ -707,21 +707,21 @@ static void test_storage_refcount(void)
     /* tests that STGM_PRIORITY doesn't prevent readwrite access from other
      * StgOpenStorage calls in transacted mode */
     r = StgOpenStorage( filename, NULL, STGM_PRIORITY, NULL, 0, &stgprio);
-    ok(r==S_OK, "StgOpenStorage failed with error 0x%08lx\n", r);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
 
     todo_wine {
     /* non-transacted mode read/write fails */
     r = StgOpenStorage( filename, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg);
-    ok(r==STG_E_LOCKVIOLATION, "StgOpenStorage should return STG_E_LOCKVIOLATION instead of 0x%08lx\n", r);
+    ok(r==STG_E_LOCKVIOLATION, "StgOpenStorage should return STG_E_LOCKVIOLATION instead of 0x%08x\n", r);
     }
 
     /* non-transacted mode read-only succeeds */
     r = StgOpenStorage( filename, NULL, STGM_SHARE_DENY_WRITE|STGM_READ, NULL, 0, &stg);
-    ok(r==S_OK, "StgOpenStorage failed with error 0x%08lx\n", r);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
     IStorage_Release(stg);
 
     r = StgOpenStorage( filename, NULL, STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE, NULL, 0, &stg);
-    ok(r==S_OK, "StgOpenStorage failed with error 0x%08lx\n", r);
+    ok(r==S_OK, "StgOpenStorage failed with error 0x%08x\n", r);
     if(stg)
     {
         static const WCHAR stgname[] = { ' ',' ',' ','2','9',0 };
@@ -732,40 +732,40 @@ static void test_storage_refcount(void)
         STATSTG statstg;
 
         r = IStorage_Stat( stg, &statstg, STATFLAG_NONAME );
-        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08lx\n", r);
-        ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %ld\n", statstg.type);
-        ok(U(statstg.cbSize).LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %ld\n", U(statstg.cbSize).LowPart);
-        ok(U(statstg.cbSize).HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %ld\n", U(statstg.cbSize).HighPart);
+        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08x\n", r);
+        ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %d\n", statstg.type);
+        ok(U(statstg.cbSize).LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %d\n", U(statstg.cbSize).LowPart);
+        ok(U(statstg.cbSize).HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %d\n", U(statstg.cbSize).HighPart);
         ok(statstg.grfMode == (STGM_TRANSACTED|STGM_SHARE_DENY_WRITE|STGM_READWRITE),
-            "Statstg grfMode should have been 0x10022 instead of 0x%lx\n", statstg.grfMode);
-        ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %ld\n", statstg.grfLocksSupported);
+            "Statstg grfMode should have been 0x10022 instead of 0x%x\n", statstg.grfMode);
+        ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %d\n", statstg.grfLocksSupported);
         ok(IsEqualCLSID(&statstg.clsid, &test_stg_cls), "Statstg clsid is not test_stg_cls\n");
-        ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %ld\n", statstg.grfStateBits);
-        ok(statstg.reserved == 0, "Statstg reserved should have been 0 instead of %ld\n", statstg.reserved);
+        ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %d\n", statstg.grfStateBits);
+        ok(statstg.reserved == 0, "Statstg reserved should have been 0 instead of %d\n", statstg.reserved);
 
         r = IStorage_CreateStorage( stg, stgname, STGM_SHARE_EXCLUSIVE, 0, 0, &stg2 );
-        ok(r == S_OK, "CreateStorage should have succeeded instead of returning 0x%08lx\n", r);
+        ok(r == S_OK, "CreateStorage should have succeeded instead of returning 0x%08x\n", r);
 
         r = IStorage_Stat( stg2, &statstg, STATFLAG_DEFAULT );
-        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08lx\n", r);
+        ok(r == S_OK, "Stat should have succeded instead of returning 0x%08x\n", r);
         ok(!lstrcmpW(statstg.pwcsName, stgname),
             "Statstg pwcsName should have been the name the storage was created with\n");
-        ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %ld\n", statstg.type);
-        ok(U(statstg.cbSize).LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %ld\n", U(statstg.cbSize).LowPart);
-        ok(U(statstg.cbSize).HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %ld\n", U(statstg.cbSize).HighPart);
+        ok(statstg.type == STGTY_STORAGE, "Statstg type should have been STGTY_STORAGE instead of %d\n", statstg.type);
+        ok(U(statstg.cbSize).LowPart == 0, "Statstg cbSize.LowPart should have been 0 instead of %d\n", U(statstg.cbSize).LowPart);
+        ok(U(statstg.cbSize).HighPart == 0, "Statstg cbSize.HighPart should have been 0 instead of %d\n", U(statstg.cbSize).HighPart);
         ok(statstg.grfMode == STGM_SHARE_EXCLUSIVE,
-            "Statstg grfMode should have been STGM_SHARE_EXCLUSIVE instead of 0x%lx\n", statstg.grfMode);
-        ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %ld\n", statstg.grfLocksSupported);
+            "Statstg grfMode should have been STGM_SHARE_EXCLUSIVE instead of 0x%x\n", statstg.grfMode);
+        ok(statstg.grfLocksSupported == 0, "Statstg grfLocksSupported should have been 0 instead of %d\n", statstg.grfLocksSupported);
         ok(IsEqualCLSID(&statstg.clsid, &CLSID_NULL), "Statstg clsid is not CLSID_NULL\n");
-        ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %ld\n", statstg.grfStateBits);
-        ok(statstg.reserved == 0, "Statstg reserved should have been 0 instead of %ld\n", statstg.reserved);
+        ok(statstg.grfStateBits == 0, "Statstg grfStateBits should have been 0 instead of %d\n", statstg.grfStateBits);
+        ok(statstg.reserved == 0, "Statstg reserved should have been 0 instead of %d\n", statstg.reserved);
         CoTaskMemFree(statstg.pwcsName);
 
         r = IStorage_CreateStorage( stg2, stgname2, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stg3 );
-        ok(r == STG_E_ACCESSDENIED, "CreateStorage should have returned STG_E_ACCESSDENIED instead of 0x%08lx\n", r);
+        ok(r == STG_E_ACCESSDENIED, "CreateStorage should have returned STG_E_ACCESSDENIED instead of 0x%08x\n", r);
 
         r = IStorage_CreateStream( stg2, stmname2, STGM_CREATE|STGM_SHARE_EXCLUSIVE, 0, 0, &stm );
-        ok(r == STG_E_ACCESSDENIED, "CreateStream should have returned STG_E_ACCESSDENIED instead of 0x%08lx\n", r);
+        ok(r == STG_E_ACCESSDENIED, "CreateStream should have returned STG_E_ACCESSDENIED instead of 0x%08x\n", r);
 
         IStorage_Release(stg2);
 
@@ -892,17 +892,17 @@ static void test_transact(void)
         return;
 
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_DENY_NONE|STGM_READ, 0, &stm );
-    ok(r==STG_E_INVALIDFLAG, "IStorage->OpenStream failed %08lx\n", r);
+    ok(r==STG_E_INVALIDFLAG, "IStorage->OpenStream failed %08x\n", r);
 
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_DELETEONRELEASE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
-    ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08lx\n", r);
+    ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08x\n", r);
 
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
-    ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08lx\n", r);
+    ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08x\n", r);
 
     todo_wine {
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
-    ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08lx\n", r);
+    ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
     }
 
     if (stm)

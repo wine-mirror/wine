@@ -31,7 +31,7 @@
 
 #include "wine/test.h"
 
-#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08lx\n", hr)
+#define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 #define COUNTOF(x) (sizeof(x) / sizeof(x[0]))
 
 static const WCHAR wszFileName1[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','1','.','d','o','c',0};
@@ -105,18 +105,18 @@ static void test_MkParseDisplayName(void)
     ok_ole_success(hr, CreateBindCtx);
 
     hr = CreateFileMoniker(wszFileName1, &pmk1);
-    ok(hr==0, "CreateFileMoniker for file hr=%08lx\n", hr);
+    ok(hr==0, "CreateFileMoniker for file hr=%08x\n", hr);
     hr = CreateFileMoniker(wszFileName2, &pmk2);
-    ok(hr==0, "CreateFileMoniker for file hr=%08lx\n", hr);
+    ok(hr==0, "CreateFileMoniker for file hr=%08x\n", hr);
     hr = IBindCtx_GetRunningObjectTable(pbc, &pprot);
-    ok(hr==0, "IBindCtx_GetRunningObjectTable hr=%08lx\n", hr);
+    ok(hr==0, "IBindCtx_GetRunningObjectTable hr=%08x\n", hr);
 
     /* Check EnumMoniker before registering */
     hr = IRunningObjectTable_EnumRunning(pprot, &spEM1);
-    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08lx\n", hr);
+    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08x\n", hr);
     hr = IEnumMoniker_QueryInterface(spEM1, &IID_IUnknown, (void*) &lpEM1);
     /* Register a couple of Monikers and check is ok */
-    ok(hr==0, "IEnumMoniker_QueryInterface hr %08lx %p\n", hr, lpEM1);
+    ok(hr==0, "IEnumMoniker_QueryInterface hr %08x %p\n", hr, lpEM1);
     hr = MK_E_NOOBJECT;
     
     matchCnt = count_moniker_matches(pbc, spEM1);
@@ -124,18 +124,18 @@ static void test_MkParseDisplayName(void)
 
     grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk1, &pdwReg1);
-    ok(hr==0, "IRunningObjectTable_Register hr=%08lx %p %08lx %p %p %ld\n",
+    ok(hr==0, "IRunningObjectTable_Register hr=%08x %p %08x %p %p %d\n",
         hr, pprot, grflags, lpEM1, pmk1, pdwReg1);
 
     trace("IROT::Register\n");
     grflags=0;
     grflags= grflags | ROTFLAGS_REGISTRATIONKEEPSALIVE;
     hr = IRunningObjectTable_Register(pprot, grflags, lpEM1, pmk2, &pdwReg2);
-    ok(hr==0, "IRunningObjectTable_Register hr=%08lx %p %08lx %p %p %ld\n", hr,
+    ok(hr==0, "IRunningObjectTable_Register hr=%08x %p %08x %p %p %d\n", hr,
        pprot, grflags, lpEM1, pmk2, pdwReg2);
 
     hr = IRunningObjectTable_EnumRunning(pprot, &spEM2);
-    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08lx\n", hr);
+    ok(hr==0, "IRunningObjectTable_EnumRunning hr=%08x\n", hr);
 
     matchCnt = count_moniker_matches(pbc, spEM2);
     ok(matchCnt==2, "Number of matches should be equal to 2 not %i\n", matchCnt);
@@ -323,7 +323,7 @@ static void test_moniker(
     IBindCtx *bindctx;
 
     hr = IMoniker_IsDirty(moniker);
-    ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08lx\n", testname, hr);
+    ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08x\n", testname, hr);
 
     /* Display Name */
 
@@ -338,7 +338,7 @@ static void test_moniker(
     IBindCtx_Release(bindctx);
 
     hr = IMoniker_IsDirty(moniker);
-    ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08lx\n", testname, hr);
+    ok(hr == S_FALSE, "%s: IMoniker_IsDirty should return S_FALSE, not 0x%08x\n", testname, hr);
 
     /* IROTData::GetComparisonData test */
 
@@ -352,7 +352,7 @@ static void test_moniker(
 
     /* first check we have the right amount of data */
     ok(moniker_size == sizeof_expected_moniker_comparison_data,
-        "%s: Size of comparison data differs (expected %d, actual %ld)\n",
+        "%s: Size of comparison data differs (expected %d, actual %d)\n",
         testname, sizeof_expected_moniker_comparison_data, moniker_size);
 
     /* then do a byte-by-byte comparison */
@@ -395,7 +395,7 @@ static void test_moniker(
 
     /* first check we have the right amount of data */
     ok(moniker_size == sizeof_expected_moniker_saved_data,
-        "%s: Size of saved data differs (expected %d, actual %ld)\n",
+        "%s: Size of saved data differs (expected %d, actual %d)\n",
         testname, sizeof_expected_moniker_saved_data, moniker_size);
 
     /* then do a byte-by-byte comparison */
@@ -441,7 +441,7 @@ static void test_moniker(
 
     /* first check we have the right amount of data */
     ok(moniker_size == sizeof_expected_moniker_marshal_data,
-        "%s: Size of marshaled data differs (expected %d, actual %ld)\n",
+        "%s: Size of marshaled data differs (expected %d, actual %d)\n",
         testname, sizeof_expected_moniker_marshal_data, moniker_size);
 
     /* then do a byte-by-byte comparison */
@@ -506,7 +506,7 @@ static void test_class_moniker(void)
     ok_ole_success(hr, IMoniker_Hash);
 
     ok(hash == CLSID_StdComponentCategoriesMgr.Data1,
-        "Hash value != Data1 field of clsid, instead was 0x%08lx\n",
+        "Hash value != Data1 field of clsid, instead was 0x%08x\n",
         hash);
 
     /* IsSystemMoniker test */
@@ -515,7 +515,7 @@ static void test_class_moniker(void)
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
 
     ok(moniker_type == MKSYS_CLASSMONIKER,
-        "dwMkSys != MKSYS_CLASSMONIKER, instead was 0x%08lx\n",
+        "dwMkSys != MKSYS_CLASSMONIKER, instead was 0x%08x\n",
         moniker_type);
 
     hr = CreateBindCtx(0, &bindctx);
@@ -523,10 +523,10 @@ static void test_class_moniker(void)
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
-    ok(hr == E_NOTIMPL, "IMoniker_IsRunning should return E_NOTIMPL, not 0x%08lx\n", hr);
+    ok(hr == E_NOTIMPL, "IMoniker_IsRunning should return E_NOTIMPL, not 0x%08x\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
-    ok(hr == MK_E_UNAVAILABLE, "IMoniker_GetTimeOfLastChange should return MK_E_UNAVAILABLE, not 0x%08lx\n", hr);
+    ok(hr == MK_E_UNAVAILABLE, "IMoniker_GetTimeOfLastChange should return MK_E_UNAVAILABLE, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     ok_ole_success(hr, IMoniker_BindToStorage);
@@ -635,7 +635,7 @@ static void test_item_moniker(void)
     ok_ole_success(hr, IMoniker_Hash);
 
     ok(hash == 0x73c,
-        "Hash value != 0x73c, instead was 0x%08lx\n",
+        "Hash value != 0x73c, instead was 0x%08x\n",
         hash);
 
     /* IsSystemMoniker test */
@@ -644,7 +644,7 @@ static void test_item_moniker(void)
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
 
     ok(moniker_type == MKSYS_ITEMMONIKER,
-        "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08lx\n",
+        "dwMkSys != MKSYS_ITEMMONIKER, instead was 0x%08x\n",
         moniker_type);
 
     hr = CreateBindCtx(0, &bindctx);
@@ -652,13 +652,13 @@ static void test_item_moniker(void)
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
-    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08lx\n", hr);
+    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08x\n", hr);
 
     IBindCtx_Release(bindctx);
 
@@ -695,18 +695,18 @@ static void test_anti_moniker(void)
     hr = IMoniker_Hash(moniker, &hash);
     ok_ole_success(hr, IMoniker_Hash);
     ok(hash == 0x80000001,
-        "Hash value != 0x80000001, instead was 0x%08lx\n",
+        "Hash value != 0x80000001, instead was 0x%08x\n",
         hash);
 
     /* IsSystemMoniker test */
     hr = IMoniker_IsSystemMoniker(moniker, &moniker_type);
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
     ok(moniker_type == MKSYS_ANTIMONIKER,
-        "dwMkSys != MKSYS_ANTIMONIKER, instead was 0x%08lx\n",
+        "dwMkSys != MKSYS_ANTIMONIKER, instead was 0x%08x\n",
         moniker_type);
 
     hr = IMoniker_Inverse(moniker, &inverse);
-    ok(hr == MK_E_NOINVERSE, "IMoniker_Inverse should have returned MK_E_NOINVERSE instead of 0x%08lx\n", hr);
+    ok(hr == MK_E_NOINVERSE, "IMoniker_Inverse should have returned MK_E_NOINVERSE instead of 0x%08x\n", hr);
     ok(inverse == NULL, "inverse should have been set to NULL instead of %p\n", inverse);
 
     hr = CreateBindCtx(0, &bindctx);
@@ -714,16 +714,16 @@ static void test_anti_moniker(void)
 
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
-    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08lx\n", hr);
+    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
-    ok(hr == E_NOTIMPL, "IMoniker_GetTimeOfLastChange should return E_NOTIMPL, not 0x%08lx\n", hr);
+    ok(hr == E_NOTIMPL, "IMoniker_GetTimeOfLastChange should return E_NOTIMPL, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    ok(hr == E_NOTIMPL, "IMoniker_BindToObject should return E_NOTIMPL, not 0x%08lx\n", hr);
+    ok(hr == E_NOTIMPL, "IMoniker_BindToObject should return E_NOTIMPL, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    ok(hr == E_NOTIMPL, "IMoniker_BindToStorage should return E_NOTIMPL, not 0x%08lx\n", hr);
+    ok(hr == E_NOTIMPL, "IMoniker_BindToStorage should return E_NOTIMPL, not 0x%08x\n", hr);
 
     IBindCtx_Release(bindctx);
 
@@ -767,7 +767,7 @@ static void test_generic_composite_moniker(void)
     ok_ole_success(hr, IMoniker_Hash);
 
     ok(hash == 0xd87,
-        "Hash value != 0xd87, instead was 0x%08lx\n",
+        "Hash value != 0xd87, instead was 0x%08x\n",
         hash);
 
     /* IsSystemMoniker test */
@@ -776,7 +776,7 @@ static void test_generic_composite_moniker(void)
     ok_ole_success(hr, IMoniker_IsSystemMoniker);
 
     ok(moniker_type == MKSYS_GENERICCOMPOSITE,
-        "dwMkSys != MKSYS_GENERICCOMPOSITE, instead was 0x%08lx\n",
+        "dwMkSys != MKSYS_GENERICCOMPOSITE, instead was 0x%08x\n",
         moniker_type);
 
     hr = CreateBindCtx(0, &bindctx);
@@ -785,18 +785,18 @@ static void test_generic_composite_moniker(void)
     /* IsRunning test */
     hr = IMoniker_IsRunning(moniker, bindctx, NULL, NULL);
     todo_wine
-    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08lx\n", hr);
+    ok(hr == S_FALSE, "IMoniker_IsRunning should return S_FALSE, not 0x%08x\n", hr);
 
     hr = IMoniker_GetTimeOfLastChange(moniker, bindctx, NULL, &filetime);
-    ok(hr == MK_E_NOTBINDABLE, "IMoniker_GetTimeOfLastChange should return MK_E_NOTBINDABLE, not 0x%08lx\n", hr);
+    ok(hr == MK_E_NOTBINDABLE, "IMoniker_GetTimeOfLastChange should return MK_E_NOTBINDABLE, not 0x%08x\n", hr);
 
     hr = IMoniker_BindToObject(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
     todo_wine
-    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToObject should return E_INVALIDARG, not 0x%08x\n", hr);
 
     todo_wine
     hr = IMoniker_BindToStorage(moniker, bindctx, NULL, &IID_IUnknown, (void **)&unknown);
-    ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08lx\n", hr);
+    ok(hr == E_INVALIDARG, "IMoniker_BindToStorage should return E_INVALIDARG, not 0x%08x\n", hr);
 
     IBindCtx_Release(bindctx);
 
