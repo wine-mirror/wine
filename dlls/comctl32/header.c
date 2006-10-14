@@ -311,9 +311,6 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack)
 
     TRACE("DrawItem(iItem %d bHotTrack %d unicode flag %d)\n", iItem, bHotTrack, (infoPtr->nNotifyFormat == NFR_UNICODE));
 
-    if (!infoPtr->bRectsValid)
-    	HEADER_SetItemBounds(hwnd);
-
     r = phdi->rect;
     if (r.right - r.left == 0)
 	return phdi->rect.right;
@@ -557,12 +554,12 @@ HEADER_Refresh (HWND hwnd, HDC hdc)
     for (i = 0; x <= rect.right && i < infoPtr->uNumItem; i++) {
         int idx = HEADER_OrderToIndex(hwnd,i);
         if (RectVisible(hdc, &infoPtr->items[idx].rect))
-            HEADER_DrawItem (hwnd, hdc, idx, infoPtr->iHotItem == i);
+            HEADER_DrawItem(hwnd, hdc, idx, infoPtr->iHotItem == idx);
         x = infoPtr->items[idx].rect.right;
     }
 
-    if ((x <= rect.right) && (infoPtr->uNumItem > 0)) {
-        rect.left = x;
+    rect.left = x;
+    if ((x <= rect.right) && RectVisible(hdc, &rect) && (infoPtr->uNumItem > 0)) {
         if (theme != NULL) {
             DrawThemeBackground (theme, hdc, HP_HEADERITEM, HIS_NORMAL, &rect,
                 NULL);
@@ -588,12 +585,11 @@ static void
 HEADER_RefreshItem (HWND hwnd, HDC hdc, INT iItem)
 {
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
-    HFONT hFont, hOldFont;
 
-    hFont = infoPtr->hFont ? infoPtr->hFont : GetStockObject (SYSTEM_FONT);
-    hOldFont = SelectObject (hdc, hFont);
-    HEADER_DrawItem (hwnd, hdc, iItem, infoPtr->iHotItem == iItem);
-    SelectObject (hdc, hOldFont);
+    if (!infoPtr->bRectsValid)
+        HEADER_SetItemBounds(hwnd);
+
+    InvalidateRect(hwnd, &infoPtr->items[iItem].rect, FALSE);
 }
 
 
@@ -972,6 +968,10 @@ HEADER_CreateDragImage (HWND hwnd, WPARAM wParam)
     
     if (wParam < 0 || wParam >= infoPtr->uNumItem)
         return FALSE;
+
+    if (!infoPtr->bRectsValid)
+    	HEADER_SetItemBounds(hwnd);
+
     lpItem = &infoPtr->items[wParam];
     width = lpItem->rect.right - lpItem->rect.left;
     height = lpItem->rect.bottom - lpItem->rect.top;
