@@ -643,6 +643,80 @@ static void test_fvf_decl_conversion(IDirect3DDevice9 *pDevice)
     if ( default_decl ) IUnknown_Release (default_decl);
 }
 
+/* Check whether a declaration converted from FVF is shared.
+ * Check whether refcounts behave as expected */
+static void test_fvf_decl_management(
+    IDirect3DDevice9* device) {
+
+    HRESULT hr;
+    IDirect3DVertexDeclaration9* result_decl1 = NULL;
+    IDirect3DVertexDeclaration9* result_decl2 = NULL;
+    IDirect3DVertexDeclaration9* result_decl3 = NULL;
+    int ref1, ref2, ref3;
+
+    DWORD test_fvf1 = D3DFVF_XYZRHW;
+    DWORD test_fvf2 = D3DFVF_NORMAL;
+    CONST D3DVERTEXELEMENT9 test_elements1[] =
+        { { 0, 0, D3DDECLTYPE_FLOAT4, 0, D3DDECLUSAGE_POSITIONT, 0 }, D3DDECL_END() };
+    CONST D3DVERTEXELEMENT9 test_elements2[] =
+        { { 0, 0, D3DDECLTYPE_FLOAT3, 0, D3DDECLUSAGE_NORMAL, 0 }, D3DDECL_END() };
+
+    /* Clear down any current vertex declaration */
+    hr = IDirect3DDevice9_SetVertexDeclaration ( device, NULL );
+    ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    /* Conversion */
+    hr = IDirect3DDevice9_SetFVF( device, test_fvf1);
+    ok(SUCCEEDED(hr), "SetFVF returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    /* Get converted decl (#1) */
+    hr = IDirect3DDevice9_GetVertexDeclaration ( device, &result_decl1);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    /* Get converted decl again (#2) */
+    hr = IDirect3DDevice9_GetVertexDeclaration ( device, &result_decl2);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    /* Conversion */
+    hr = IDirect3DDevice9_SetFVF( device, test_fvf2);
+    ok(SUCCEEDED(hr), "SetFVF returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    /* The contents should correspond to the second conversion */
+    VDECL_CHECK(compare_elements(result_decl1, test_elements1));
+
+    /* Get converted decl (#3) */
+    hr = IDirect3DDevice9_GetVertexDeclaration ( device, &result_decl3);
+    ok(SUCCEEDED(hr), "GetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    /* The object should be the same */
+    ok (result_decl1 == result_decl2, "Declaration object changes on the second Get() call\n");
+    ok (result_decl2 != result_decl3, "Declaration object did not change during conversion\n");
+
+    /* The contents should correspond to the second conversion */
+    VDECL_CHECK(compare_elements(result_decl3, test_elements2));
+
+    /* The refcounts should all be 1 */
+    ref1 = get_refcount((IUnknown*) result_decl1);
+    ref2 = get_refcount((IUnknown*) result_decl2);
+    ref3 = get_refcount((IUnknown*) result_decl3);
+    ok (ref1 == 2, "Refcount #1 is %d, expected 2\n", ref1);
+    ok (ref2 == 2, "Refcount #2 is %d, expected 2\n", ref2);
+    ok (ref3 == 1, "Refcount #3 is %d, expected 1\n", ref3);
+
+    /* Clear down any current vertex declaration */
+    hr = IDirect3DDevice9_SetVertexDeclaration ( device, NULL );
+    ok (SUCCEEDED(hr), "SetVertexDeclaration returned %#x, expected %#x\n", hr, D3D_OK);
+    if (FAILED(hr)) return;
+
+    return;
+}
+
 START_TEST(vertexdeclaration)
 {
     static D3DVERTEXELEMENT9 simple_decl[] = {
@@ -676,4 +750,5 @@ START_TEST(vertexdeclaration)
     test_get_set_vertex_declaration(device_ptr, decl_ptr);
     test_get_declaration(decl_ptr, simple_decl, simple_decl_num_elements);
     test_fvf_decl_conversion(device_ptr);
+    test_fvf_decl_management(device_ptr);
 }
