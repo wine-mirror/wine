@@ -315,6 +315,8 @@ DDRAW_Create(GUID *guid,
 #undef CKEY_CAPS
 #undef FX_CAPS
 
+    list_init(&This->surface_list);
+
     EnterCriticalSection(&ddraw_list_cs);
     list_add_head(&global_ddraw_list, &This->ddraw_list_entry);
     LeaveCriticalSection(&ddraw_list_cs);

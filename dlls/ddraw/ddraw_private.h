@@ -130,10 +130,6 @@ struct IDirectDrawImpl
     /* The surface type to request */
     WINED3DSURFTYPE         ImplType;
 
-    /* The surface list - can't relay this to WineD3D
-     * because of IParent
-     */
-    IDirectDrawSurfaceImpl *surface_list;
 
     /* Our private window class */
     char classname[32];
@@ -145,6 +141,10 @@ struct IDirectDrawImpl
 
     /* For the dll unload cleanup code */
     struct list ddraw_list_entry;
+    /* The surface list - can't relay this to WineD3D
+     * because of IParent
+     */
+    struct list surface_list;
     LONG surfaces;
 };
 
@@ -233,8 +233,7 @@ struct IDirectDrawSurfaceImpl
     IDirectDrawClipperImpl  *clipper;
 
     /* For the ddraw surface list */
-    IDirectDrawSurfaceImpl *next;
-    IDirectDrawSurfaceImpl *prev;
+    struct list             surface_list_entry;
 
     DWORD                   Handle;
 };

@@ -238,15 +238,7 @@ static void IDirectDrawSurfaceImpl_Destroy(IDirectDrawSurfaceImpl *This)
 
     /* Reduce the ddraw surface count */
     InterlockedDecrement(&This->ddraw->surfaces);
-    if(This->prev)
-        This->prev->next = This->next;
-    else
-    {
-        assert(This->ddraw->surface_list == This);
-        This->ddraw->surface_list = This->next;
-    }
-    if(This->next)
-        This->next->prev = This->prev;
+    list_remove(&This->surface_list_entry);
 
     HeapFree(GetProcessHeap(), 0, This);
 }

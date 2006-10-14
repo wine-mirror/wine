@@ -1904,12 +1904,7 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
 
     /* Increase the surface counter, and attach the surface */
     InterlockedIncrement(&This->surfaces);
-    if(This->surface_list)
-    {
-        This->surface_list->prev = *ppSurf;
-    }
-    (*ppSurf)->next = This->surface_list;
-    This->surface_list = *ppSurf;
+    list_add_head(&This->surface_list, &(*ppSurf)->surface_list_entry);
 
     /* Here we could store all created surfaces in the DirectDrawImpl structure,
      * But this could also be delegated to WineDDraw, as it keeps track of all its
@@ -2375,23 +2370,20 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
     if( (This->ImplType == SURFACE_OPENGL) && !(This->d3d_initialized) &&
         desc2.ddsCaps.dwCaps & (DDSCAPS_PRIMARYSURFACE | DDSCAPS_3DDEVICE) )
     {
-        IDirectDrawSurfaceImpl *target = This->surface_list;
+        IDirectDrawSurfaceImpl *target = object, *surface;
+        struct list *entry;
 
         /* Search for the primary to use as render target */
-        while(target)
+        LIST_FOR_EACH(entry, &This->surface_list)
         {
-            if(target->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            surface = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
+            if(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
             {
                 /* found */
+                target = surface;
                 TRACE("Using primary %p as render target\n", target);
                 break;
             }
-            target = target->next;
-        }
-        /* If it's not found, use the just created DDSCAPS_3DDEVICE surface */
-        if(!target)
-        {
-            target = object;
         }
 
         TRACE("(%p) Attaching a D3DDevice, rendertarget = %p\n", This, target);
@@ -2601,6 +2593,7 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
     IDirectDrawSurfaceImpl *surf;
     BOOL all, nomatch;
     DDSURFACEDESC2 desc;
+    struct list *entry, *entry2;
 
     all = Flags & DDENUMSURFACES_ALL;
     nomatch = Flags & DDENUMSURFACES_NOMATCH;
@@ -2610,8 +2603,10 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
     if(!Callback)
         return DDERR_INVALIDPARAMS;
 
-    for(surf = This->surface_list; surf; surf = surf->next)
+    /* Use the _SAFE enumeration, the app may destroy enumerated surfaces */
+    LIST_FOR_EACH_SAFE(entry, entry2, &This->surface_list)
     {
+        surf = LIST_ENTRY(entry, IDirectDrawSurfaceImpl, surface_list_entry);
         if (all || (nomatch != IDirectDrawImpl_DDSD_Match(DDSD, &surf->surface_desc)))
         {
             desc = surf->surface_desc;
