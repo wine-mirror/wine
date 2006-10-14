@@ -915,19 +915,61 @@ static FILE_BOTH_DIR_INFORMATION *append_entry( void *info_ptr, ULONG_PTR *pos, 
 }
 
 
+#ifdef VFAT_IOCTL_READDIR_BOTH
+
+/***********************************************************************
+ *           start_vfat_ioctl
+ *
+ * Wrapper for the VFAT ioctl to work around various kernel bugs.
+ * dir_section must be held by caller.
+ */
+static KERNEL_DIRENT *start_vfat_ioctl( int fd )
+{
+    static KERNEL_DIRENT *de;
+    int res;
+
+    if (!de)
+    {
+        const size_t page_size = getpagesize();
+        SIZE_T size = 2 * sizeof(*de) + page_size;
+        void *addr = NULL;
+
+        if (NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 1, &size, MEM_RESERVE, PAGE_READWRITE ))
+            return NULL;
+        /* commit only the size needed for the dir entries */
+        /* this leaves an extra unaccessible page, which should make the kernel */
+        /* fail with -EFAULT before it stomps all over our memory */
+        de = addr;
+        size = 2 * sizeof(*de);
+        NtAllocateVirtualMemory( GetCurrentProcess(), &addr, 1, &size, MEM_COMMIT, PAGE_READWRITE );
+    }
+
+    /* set d_reclen to 65535 to work around an AFS kernel bug */
+    de[0].d_reclen = 65535;
+    res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+    if (res == -1)
+    {
+        if (errno != ENOENT) return NULL;  /* VFAT ioctl probably not supported */
+        de[0].d_reclen = 0;  /* eof */
+    }
+    else if (!res && de[0].d_reclen == 65535) return NULL;  /* AFS bug */
+
+    return de;
+}
+
+
 /***********************************************************************
  *           read_directory_vfat
  *
  * Read a directory using the VFAT ioctl; helper for NtQueryDirectoryFile.
  */
-#ifdef VFAT_IOCTL_READDIR_BOTH
 static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
                                 BOOLEAN single_entry, const UNICODE_STRING *mask,
                                 BOOLEAN restart_scan )
 
 {
-    int res;
-    KERNEL_DIRENT de[2];
+    size_t len;
+    KERNEL_DIRENT *de;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
     static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
 
@@ -939,18 +981,16 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
     {
         off_t old_pos = lseek( fd, 0, SEEK_CUR );
 
-        /* Set d_reclen to 65535 to work around an AFS kernel bug */
-        de[0].d_reclen = 65535;
-        res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
-        if (res == -1 && errno != ENOENT) return -1;  /* VFAT ioctl probably not supported */
-        if (!res && de[0].d_reclen == 65535) return -1;  /* AFS bug */
+        if (!(de = start_vfat_ioctl( fd ))) return -1;  /* not supported */
 
-        while (res != -1)
+        while (de[0].d_reclen)
         {
-            if (!de[0].d_reclen) break;
             /* make sure names are null-terminated to work around an x86-64 kernel bug */
-            if (de[0].d_reclen < sizeof(de[0].d_name)) de[0].d_name[de[0].d_reclen] = 0;
-            if (de[1].d_reclen < sizeof(de[1].d_name)) de[1].d_name[de[1].d_reclen] = 0;
+            len = min(de[0].d_reclen, sizeof(de[0].d_name) - 1 );
+            de[0].d_name[len] = 0;
+            len = min(de[1].d_reclen, sizeof(de[1].d_name) - 1 );
+            de[1].d_name[len] = 0;
+
             if (de[1].d_name[0])
                 info = append_entry( buffer, &io->Information, length,
                                      de[1].d_name, de[0].d_name, mask );
@@ -968,23 +1008,21 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
                 break;
             }
             old_pos = lseek( fd, 0, SEEK_CUR );
-            res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
         }
     }
     else  /* we'll only return full entries, no need to worry about overflow */
     {
-        /* Set d_reclen to 65535 to work around an AFS kernel bug */
-        de[0].d_reclen = 65535;
-        res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
-        if (res == -1 && errno != ENOENT) return -1;  /* VFAT ioctl probably not supported */
-        if (!res && de[0].d_reclen == 65535) return -1;  /* AFS bug */
+        if (!(de = start_vfat_ioctl( fd ))) return -1;  /* not supported */
 
-        while (res != -1)
+        while (de[0].d_reclen)
         {
-            if (!de[0].d_reclen) break;
             /* make sure names are null-terminated to work around an x86-64 kernel bug */
-            if (de[0].d_reclen < sizeof(de[0].d_name)) de[0].d_name[de[0].d_reclen] = 0;
-            if (de[1].d_reclen < sizeof(de[1].d_name)) de[1].d_name[de[1].d_reclen] = 0;
+            len = min(de[0].d_reclen, sizeof(de[0].d_name) - 1 );
+            de[0].d_name[len] = 0;
+            len = min(de[1].d_reclen, sizeof(de[1].d_name) - 1 );
+            de[1].d_name[len] = 0;
+
             if (de[1].d_name[0])
                 info = append_entry( buffer, &io->Information, length,
                                      de[1].d_name, de[0].d_name, mask );
@@ -998,7 +1036,7 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
                 /* check if we still have enough space for the largest possible entry */
                 if (io->Information + max_dir_info_size > length) break;
             }
-            res = ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de );
+            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1) break;
         }
     }
 
@@ -1355,20 +1393,19 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
         int fd = open( unix_name, O_RDONLY | O_DIRECTORY );
         if (fd != -1)
         {
-            KERNEL_DIRENT de[2];
+            KERNEL_DIRENT *de;
 
-            /* Set d_reclen to 65535 to work around an AFS kernel bug */
-            de[0].d_reclen = 65535;
-            if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) != -1 &&
-                de[0].d_reclen != 65535)
+            RtlEnterCriticalSection( &dir_section );
+            if ((de = start_vfat_ioctl( fd )))
             {
                 unix_name[pos - 1] = '/';
-                for (;;)
+                while (de[0].d_reclen)
                 {
-                    if (!de[0].d_reclen) break;
                     /* make sure names are null-terminated to work around an x86-64 kernel bug */
-                    if (de[0].d_reclen < sizeof(de[0].d_name)) de[0].d_name[de[0].d_reclen] = 0;
-                    if (de[1].d_reclen < sizeof(de[1].d_name)) de[1].d_name[de[1].d_reclen] = 0;
+                    size_t len = min(de[0].d_reclen, sizeof(de[0].d_name) - 1 );
+                    de[0].d_name[len] = 0;
+                    len = min(de[1].d_reclen, sizeof(de[1].d_name) - 1 );
+                    de[1].d_name[len] = 0;
 
                     if (de[1].d_name[0])
                     {
@@ -1377,6 +1414,7 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                         if (ret == length && !memicmpW( buffer, name, length))
                         {
                             strcpy( unix_name + pos, de[1].d_name );
+                            RtlLeaveCriticalSection( &dir_section );
                             close( fd );
                             return STATUS_SUCCESS;
                         }
@@ -1387,16 +1425,19 @@ static NTSTATUS find_file_in_dir( char *unix_name, int pos, const WCHAR *name, i
                     {
                         strcpy( unix_name + pos,
                                 de[1].d_name[0] ? de[1].d_name : de[0].d_name );
+                        RtlLeaveCriticalSection( &dir_section );
                         close( fd );
                         return STATUS_SUCCESS;
                     }
                     if (ioctl( fd, VFAT_IOCTL_READDIR_BOTH, (long)de ) == -1)
                     {
+                        RtlLeaveCriticalSection( &dir_section );
                         close( fd );
                         goto not_found;
                     }
                 }
             }
+            RtlLeaveCriticalSection( &dir_section );
             close( fd );
         }
         /* fall through to normal handling */
