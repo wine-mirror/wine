@@ -39,7 +39,7 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
         if (pBuffer)
         {
             /* FIXME: get from CryptoAPI */
-            FIXME("%ld: stub\n", ulAttribute);
+            FIXME("%d: stub\n", ulAttribute);
             ret = SEC_E_UNSUPPORTED_FUNCTION;
         }
         else
@@ -49,7 +49,7 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
         if (pBuffer)
         {
             /* FIXME: get from CryptoAPI */
-            FIXME("%ld: stub\n", ulAttribute);
+            FIXME("%d: stub\n", ulAttribute);
             ret = SEC_E_UNSUPPORTED_FUNCTION;
         }
         else
@@ -59,7 +59,7 @@ static SECURITY_STATUS schan_QueryCredentialsAttributes(
         if (pBuffer)
         {
             /* FIXME: get from OpenSSL? */
-            FIXME("%ld: stub\n", ulAttribute);
+            FIXME("%d: stub\n", ulAttribute);
             ret = SEC_E_UNSUPPORTED_FUNCTION;
         }
         else
@@ -76,7 +76,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("(%p, %ld, %p)\n", phCredential, ulAttribute, pBuffer);
+    TRACE("(%p, %d, %p)\n", phCredential, ulAttribute, pBuffer);
 
     switch (ulAttribute)
     {
@@ -96,7 +96,7 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("(%p, %ld, %p)\n", phCredential, ulAttribute, pBuffer);
+    TRACE("(%p, %d, %p)\n", phCredential, ulAttribute, pBuffer);
 
     switch (ulAttribute)
     {
@@ -212,7 +212,7 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleA(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     return schan_AcquireCredentialsHandle(fCredentialUse,
@@ -224,7 +224,7 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     return schan_AcquireCredentialsHandle(fCredentialUse,
@@ -249,7 +249,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if(phCredential)
@@ -275,7 +275,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)

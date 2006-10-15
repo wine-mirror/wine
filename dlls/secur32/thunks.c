@@ -38,7 +38,7 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%s %s %ld %p %p %p %p %p %p\n", debugstr_a(pszPrincipal),
+    TRACE("%s %s %d %p %p %p %p %p %p\n", debugstr_a(pszPrincipal),
      debugstr_a(pszPackage), fCredentialsUse, pvLogonID, pAuthData, pGetKeyFn,
      pvGetKeyArgument, phCredential, ptsExpiry);
     if (pszPackage)
@@ -65,7 +65,7 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%s %s %ld %p %p %p %p %p %p\n", debugstr_w(pszPrincipal),
+    TRACE("%s %s %d %p %p %p %p %p %p\n", debugstr_w(pszPrincipal),
      debugstr_w(pszPackage), fCredentialsUse, pvLogonID, pAuthData, pGetKeyFn,
      pvGetKeyArgument, phCredential, ptsExpiry);
     if (pszPackage)
@@ -89,11 +89,11 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
  * so we have to know about every type the caller does
  */
 SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesA(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer)
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phCredential, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phCredential, ulAttribute, pBuffer);
     if (phCredential)
     {
         SecurePackage *package = (SecurePackage *)phCredential->dwUpper;
@@ -125,7 +125,7 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesA(
                             break;
                         }
                         default:
-                            WARN("attribute type %ld unknown\n", ulAttribute);
+                            WARN("attribute type %d unknown\n", ulAttribute);
                             ret = SEC_E_INTERNAL_ERROR;
                     }
                 }
@@ -142,11 +142,11 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesA(
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesW(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer)
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phCredential, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phCredential, ulAttribute, pBuffer);
     if (phCredential)
     {
         SecurePackage *package = (SecurePackage *)phCredential->dwUpper;
@@ -178,7 +178,7 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesW(
                             break;
                         }
                         default:
-                            WARN("attribute type %ld unknown\n", ulAttribute);
+                            WARN("attribute type %d unknown\n", ulAttribute);
                             ret = SEC_E_INTERNAL_ERROR;
                     }
                 }
@@ -196,14 +196,14 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesW(
 
 SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextA(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_CHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry)
+ SEC_CHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)
@@ -236,14 +236,14 @@ SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextA(
 
 SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_WCHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry)
+ SEC_WCHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)
@@ -274,13 +274,13 @@ SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextW(
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsA(PCredHandle hCredentials,
- SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %s %s %ld %p %p %p %p\n", hCredentials, debugstr_a(pszPrincipal),
+    TRACE("%p %s %s %d %p %p %p %p\n", hCredentials, debugstr_a(pszPrincipal),
      debugstr_a(pszPackage), fCredentialUse, pAuthData, pGetKeyFn,
      pvGetKeyArgument, ptsExpiry);
     if (hCredentials)
@@ -314,13 +314,13 @@ SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsA(PCredHandle hCredentials,
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsW(PCredHandle hCredentials,
- SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %s %s %ld %p %p %p %p\n", hCredentials, debugstr_w(pszPrincipal),
+    TRACE("%p %s %s %d %p %p %p %p\n", hCredentials, debugstr_w(pszPrincipal),
      debugstr_w(pszPackage), fCredentialUse, pAuthData, pGetKeyFn,
      pvGetKeyArgument, ptsExpiry);
     if (hCredentials)
@@ -404,7 +404,7 @@ static PSecPkgInfoA _copyPackageInfoFlatWToA(PSecPkgInfoW infoW)
 }
 
 static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret = SEC_E_OK;
 
@@ -536,7 +536,7 @@ static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
             case SECPKG_ATTR_TARGET_INFORMATION:
                 break;
             default:
-                WARN("attribute type %ld unknown\n", ulAttribute);
+                WARN("attribute type %d unknown\n", ulAttribute);
                 ret = SEC_E_INTERNAL_ERROR;
         }
     }
@@ -546,11 +546,11 @@ static SECURITY_STATUS thunk_ContextAttributesWToA(SecurePackage *package,
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -629,7 +629,7 @@ static PSecPkgInfoW _copyPackageInfoFlatAToW(PSecPkgInfoA infoA)
 }
 
 static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret = SEC_E_OK;
 
@@ -762,7 +762,7 @@ static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
             case SECPKG_ATTR_TARGET_INFORMATION:
                 break;
             default:
-                WARN("attribute type %ld unknown\n", ulAttribute);
+                WARN("attribute type %d unknown\n", ulAttribute);
                 ret = SEC_E_INTERNAL_ERROR;
         }
     }
@@ -772,11 +772,11 @@ static SECURITY_STATUS thunk_ContextAttributesAToW(SecurePackage *package,
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -804,11 +804,11 @@ SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesW(PCtxtHandle phContext,
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer)
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, ulAttribute, pBuffer, cbBuffer);
+    TRACE("%p %d %p %d\n", phContext, ulAttribute, pBuffer, cbBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -837,11 +837,11 @@ SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesA(PCtxtHandle phContext,
 }
 
 SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer)
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, ulAttribute, pBuffer, cbBuffer);
+    TRACE("%p %d %p %d\n", phContext, ulAttribute, pBuffer, cbBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;

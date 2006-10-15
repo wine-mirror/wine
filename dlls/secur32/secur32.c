@@ -745,7 +745,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                     memcpy(pkgInfo, &package->infoW, sizeof(SecPkgInfoW));
                     if (package->infoW.Name)
                     {
-                        TRACE("Name[%ld] = %s\n", i - 1, debugstr_w(package->infoW.Name));
+                        TRACE("Name[%d] = %s\n", i - 1, debugstr_w(package->infoW.Name));
                         pkgInfo->Name = nextString;
                         lstrcpyW(nextString, package->infoW.Name);
                         nextString += lstrlenW(nextString) + 1;
@@ -754,7 +754,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
                         pkgInfo->Name = NULL;
                     if (package->infoW.Comment)
                     {
-                        TRACE("Comment[%ld] = %s\n", i - 1, debugstr_w(package->infoW.Comment));
+                        TRACE("Comment[%d] = %s\n", i - 1, debugstr_w(package->infoW.Comment));
                         pkgInfo->Comment = nextString;
                         lstrcpyW(nextString, package->infoW.Comment);
                         nextString += lstrlenW(nextString) + 1;
@@ -768,7 +768,7 @@ SECURITY_STATUS WINAPI EnumerateSecurityPackagesW(PULONG pcPackages,
         }
     }
     LeaveCriticalSection(&cs);
-    TRACE("<-- 0x%08lx\n", ret);
+    TRACE("<-- 0x%08x\n", ret);
     return ret;
 }
 
@@ -943,7 +943,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     if (ntStatus != STATUS_SUCCESS)
     {
         SetLastError(LsaNtStatusToWinError(ntStatus));
-        WARN("LsaOpenPolicy failed with NT status %lx\n", GetLastError());
+        WARN("LsaOpenPolicy failed with NT status %x\n", GetLastError());
         return FALSE;
     }
 
@@ -953,7 +953,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     if (ntStatus != STATUS_SUCCESS)
     {
         SetLastError(LsaNtStatusToWinError(ntStatus));
-        WARN("LsaQueryInformationPolicy failed with NT status %lx\n",
+        WARN("LsaQueryInformationPolicy failed with NT status %x\n",
              GetLastError());
         LsaClose(policyHandle);
         return FALSE;
@@ -1050,7 +1050,7 @@ NTSTATUS WINAPI LsaCallAuthenticationPackage(
   ULONG SubmitBufferLength, PVOID* ProtocolReturnBuffer, PULONG ReturnBufferLength,
   PNTSTATUS ProtocolStatus)
 {
-    FIXME("%p %ld %p %ld %p %p %p\n", LsaHandle, AuthenticationPackage,
+    FIXME("%p %d %p %d %p %p %p\n", LsaHandle, AuthenticationPackage,
           ProtocolSubmitBuffer, SubmitBufferLength, ProtocolReturnBuffer,
           ReturnBufferLength, ProtocolStatus);
     return 0;

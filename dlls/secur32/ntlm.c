@@ -43,7 +43,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("(%p, %ld, %p)\n", phCredential, ulAttribute, pBuffer);
+    TRACE("(%p, %d, %p)\n", phCredential, ulAttribute, pBuffer);
 
     if(ulAttribute == SECPKG_ATTR_NAMES)
     {
@@ -64,7 +64,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryCredentialsAttributesW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("(%p, %ld, %p)\n", phCredential, ulAttribute, pBuffer);
+    TRACE("(%p, %d, %p)\n", phCredential, ulAttribute, pBuffer);
 
     if(ulAttribute == SECPKG_ATTR_NAMES)
     {
@@ -100,7 +100,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
         server_helper_protocol,
         NULL };
 
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
 
@@ -273,7 +273,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
     PSEC_WINNT_AUTH_IDENTITY_W pAuthDataW = NULL;
     PSEC_WINNT_AUTH_IDENTITY_A identity  = NULL;
 
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p)\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     
@@ -384,7 +384,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
     PBYTE bin;
     int buffer_len, bin_len, max_len = NTLM_MAX_BUF;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
 
@@ -731,7 +731,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     
@@ -776,7 +776,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
     ULONG ctxt_attr = 0;
     PNegoHelper helper;
 
-    TRACE("%p %p %p %ld %ld %p %p %p %p\n", phCredential, phContext, pInput,
+    TRACE("%p %p %p %d %d %p %p %p %p\n", phCredential, phContext, pInput,
      fContextReq, TargetDataRep, phNewContext, pOutput, pfContextAttr,
      ptsExpiry);
 
@@ -1101,9 +1101,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
  *              QueryContextAttributesW
  */
 static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
-    TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
     if (!phContext)
         return SEC_E_INVALID_HANDLE;
 
@@ -1146,7 +1146,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
         _x(SECPKG_ATTR_TARGET_INFORMATION);
 #undef _x
         default:
-            TRACE("Unknown value %ld passed for ulAttribute\n", ulAttribute);
+            TRACE("Unknown value %d passed for ulAttribute\n", ulAttribute);
     }
 
     return SEC_E_UNSUPPORTED_FUNCTION;
@@ -1156,7 +1156,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesW(PCtxtHandle phCont
  *              QueryContextAttributesA
  */
 static SECURITY_STATUS SEC_ENTRY ntlm_QueryContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     return ntlm_QueryContextAttributesW(phContext, ulAttribute, pBuffer);
 }
@@ -1208,12 +1208,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
     PNegoHelper helper;
     ULONG sign_version = 1;
 
-    TRACE("%p %ld %p %ld\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
     if (!phContext)
         return SEC_E_INVALID_HANDLE;
 
     if(fQOP)
-        FIXME("Ignoring fQOP 0x%08lx\n", fQOP);
+        FIXME("Ignoring fQOP 0x%08x\n", fQOP);
 
     if(MessageSeqNo)
         FIXME("Ignoring MessageSeqNo\n");
@@ -1287,7 +1287,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     PNegoHelper helper;
     ULONG fQOP = 0;
 
-    TRACE("%p %p %ld %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if(!phContext)
         return SEC_E_INVALID_HANDLE;
 
@@ -1390,7 +1390,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
         ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
-    TRACE("(%p %ld %p %ld)\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("(%p %d %p %d)\n", phContext, fQOP, pMessage, MessageSeqNo);
 
     if(!phContext)
         return SEC_E_INVALID_HANDLE;
@@ -1460,7 +1460,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     SECURITY_STATUS ret;
     ULONG ntlmssp_flags_save;
     PNegoHelper helper;
-    TRACE("(%p %p %ld %p)\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("(%p %p %d %p)\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
     if(!phContext)
         return SEC_E_INVALID_HANDLE;

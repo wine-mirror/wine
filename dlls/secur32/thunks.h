@@ -34,16 +34,16 @@ SECURITY_STATUS SEC_ENTRY thunk_AcquireCredentialsHandleW(
  PVOID pvGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextA(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_CHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry);
+ SEC_CHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY thunk_InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_WCHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry);
+ SEC_WCHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY thunk_ImportSecurityContextA(
  SEC_CHAR *pszPackage, PSecBuffer pPackedContext, void *Token,
  PCtxtHandle phContext);
@@ -51,24 +51,24 @@ SECURITY_STATUS SEC_ENTRY thunk_ImportSecurityContextW(
  SEC_WCHAR *pszPackage, PSecBuffer pPackedContext, void *Token,
  PCtxtHandle phContext);
 SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsA(PCredHandle hCredentials,
- SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY thunk_AddCredentialsW(PCredHandle hCredentials,
- SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesA(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer);
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer);
 SECURITY_STATUS SEC_ENTRY thunk_QueryCredentialsAttributesW(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer);
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer);
 SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesA(
- PCtxtHandle phContext, unsigned long ulAttribute, void *pBuffer);
+ PCtxtHandle phContext, ULONG ulAttribute, void *pBuffer);
 SECURITY_STATUS SEC_ENTRY thunk_QueryContextAttributesW(
- PCtxtHandle phContext, unsigned long ulAttribute, void *pBuffer);
+ PCtxtHandle phContext, ULONG ulAttribute, void *pBuffer);
 SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer);
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer);
 SECURITY_STATUS SEC_ENTRY thunk_SetContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer);
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer);
 
 #endif /* ndef __SECUR32_THUNKS_H__ */

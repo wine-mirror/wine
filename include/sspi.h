@@ -172,15 +172,15 @@ typedef SECURITY_STATUS (SEC_ENTRY *ENUMERATE_SECURITY_PACKAGES_FN_W)(PULONG,
 #define ENUMERATE_SECURITY_PACKAGES_FN WINELIB_NAME_AW(ENUMERATE_SECURITY_PACKAGES_FN_)
 
 SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesA(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer);
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer);
 SECURITY_STATUS SEC_ENTRY QueryCredentialsAttributesW(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer);
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer);
 #define QueryCredentialsAttributes WINELIB_NAME_AW(QueryCredentialsAttributes)
 
 typedef SECURITY_STATUS (SEC_ENTRY *QUERY_CREDENTIALS_ATTRIBUTES_FN_A)
- (PCredHandle, unsigned long, PVOID);
+ (PCredHandle, ULONG, PVOID);
 typedef SECURITY_STATUS (SEC_ENTRY *QUERY_CREDENTIALS_ATTRIBUTES_FN_W)
- (PCredHandle, unsigned long, PVOID);
+ (PCredHandle, ULONG, PVOID);
 #define QUERY_CREDENTIALS_ATTRIBUTES_FN WINELIB_NAME_AW(QUERY_CREDENTIALS_ATTRIBUTES_FN_)
 
 /* values for QueryCredentialsAttributes ulAttribute */
@@ -237,26 +237,24 @@ typedef SECURITY_STATUS (SEC_ENTRY *FREE_CREDENTIALS_HANDLE_FN)(PCredHandle);
 
 SECURITY_STATUS SEC_ENTRY InitializeSecurityContextA(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_CHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry);
+ SEC_CHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_WCHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry);
+ SEC_WCHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry);
 #define InitializeSecurityContext WINELIB_NAME_AW(InitializeSecurityContext)
 
 typedef SECURITY_STATUS (SEC_ENTRY *INITIALIZE_SECURITY_CONTEXT_FN_A)
- (PCredHandle, PCtxtHandle, SEC_CHAR *, unsigned long, unsigned long,
- unsigned long, PSecBufferDesc, unsigned long, PCtxtHandle, PSecBufferDesc,
- unsigned long *, PTimeStamp);
+ (PCredHandle, PCtxtHandle, SEC_CHAR *, ULONG, ULONG, ULONG, PSecBufferDesc,
+ ULONG, PCtxtHandle, PSecBufferDesc, ULONG *, PTimeStamp);
 typedef SECURITY_STATUS (SEC_ENTRY *INITIALIZE_SECURITY_CONTEXT_FN_W)
- (PCredHandle, PCtxtHandle, SEC_WCHAR *, unsigned long, unsigned long,
- unsigned long, PSecBufferDesc, unsigned long, PCtxtHandle, PSecBufferDesc,
- unsigned long *, PTimeStamp);
+ (PCredHandle, PCtxtHandle, SEC_WCHAR *, ULONG, ULONG, ULONG, PSecBufferDesc,
+ ULONG, PCtxtHandle, PSecBufferDesc, ULONG *, PTimeStamp);
 #define INITIALIZE_SECURITY_CONTEXT_FN WINELIB_NAME_AW(INITIALIZE_SECURITY_CONTEXT_FN_)
 
 /* flags for InitializeSecurityContext fContextReq and pfContextAttr */
@@ -308,13 +306,13 @@ typedef SECURITY_STATUS (SEC_ENTRY *INITIALIZE_SECURITY_CONTEXT_FN_W)
 
 SECURITY_STATUS SEC_ENTRY AcceptSecurityContext(
  PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
- unsigned long fContextReq, unsigned long TargetDataRep,
+ ULONG fContextReq, ULONG TargetDataRep,
  PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry);
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry);
 
 typedef SECURITY_STATUS (SEC_ENTRY *ACCEPT_SECURITY_CONTEXT_FN)(PCredHandle,
- PCtxtHandle, PSecBufferDesc, unsigned long, unsigned long, PCtxtHandle,
- PSecBufferDesc, unsigned long *, PTimeStamp);
+ PCtxtHandle, PSecBufferDesc, ULONG, ULONG, PCtxtHandle,
+ PSecBufferDesc, ULONG *, PTimeStamp);
 
 /* flags for AcceptSecurityContext fContextReq and pfContextAttr */
 #define ASC_REQ_DELEGATE               0x00000001
@@ -384,15 +382,15 @@ typedef SECURITY_STATUS (SEC_ENTRY *APPLY_CONTROL_TOKEN_FN)(PCtxtHandle,
  PSecBufferDesc);
 
 SECURITY_STATUS SEC_ENTRY QueryContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer);
+ ULONG ulAttribute, void *pBuffer);
 SECURITY_STATUS SEC_ENTRY QueryContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer);
+ ULONG ulAttribute, void *pBuffer);
 #define QueryContextAttributes WINELIB_NAME_AW(QueryContextAttributes)
 
 typedef SECURITY_STATUS (SEC_ENTRY *QUERY_CONTEXT_ATTRIBUTES_FN_A)(PCtxtHandle,
- unsigned long, void *);
+ ULONG, void *);
 typedef SECURITY_STATUS (SEC_ENTRY *QUERY_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle,
- unsigned long, void *);
+ ULONG, void *);
 #define QUERY_CONTEXT_ATTRIBUTES_FN WINELIB_NAME_AW(QUERY_CONTEXT_ATTRIBUTES_FN_)
 
 /* values for QueryContextAttributes/SetContextAttributes ulAttribute */
@@ -678,20 +676,20 @@ typedef SECURITY_STATUS (SEC_ENTRY *IMPORT_SECURITY_CONTEXT_FN_W)(SEC_WCHAR *,
 #define IMPORT_SECURITY_CONTEXT_FN WINELIB_NAME_AW(IMPORT_SECURITY_CONTEXT_FN_)
 
 SECURITY_STATUS SEC_ENTRY AddCredentialsA(PCredHandle hCredentials,
- SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry);
 SECURITY_STATUS SEC_ENTRY AddCredentialsW(PCredHandle hCredentials,
- SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry);
 #define AddCredentials WINELIB_NAME_AW(AddCredentials)
 
 typedef SECURITY_STATUS (SEC_ENTRY *ADD_CREDENTIALS_FN_A)(PCredHandle,
- SEC_CHAR *, SEC_CHAR *, unsigned long, void *, SEC_GET_KEY_FN, void *,
+ SEC_CHAR *, SEC_CHAR *, ULONG, void *, SEC_GET_KEY_FN, void *,
  PTimeStamp);
 typedef SECURITY_STATUS (SEC_ENTRY *ADD_CREDENTIALS_FN_W)(PCredHandle,
- SEC_WCHAR *, SEC_WCHAR *, unsigned long, void *, SEC_GET_KEY_FN, void *,
+ SEC_WCHAR *, SEC_WCHAR *, ULONG, void *, SEC_GET_KEY_FN, void *,
  PTimeStamp);
 
 SECURITY_STATUS SEC_ENTRY QuerySecurityContextToken(PCtxtHandle phContext,
@@ -714,15 +712,15 @@ typedef SECURITY_STATUS (SEC_ENTRY *DECRYPT_MESSAGE_FN)(PCtxtHandle,
  PSecBufferDesc, ULONG, PULONG);
 
 SECURITY_STATUS SEC_ENTRY SetContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer);
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer);
 SECURITY_STATUS SEC_ENTRY SetContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer);
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer);
 #define SetContextAttributes WINELIB_NAME_AW(SetContextAttributes)
 
 typedef SECURITY_STATUS (SEC_ENTRY *SET_CONTEXT_ATTRIBUTES_FN_A)(PCtxtHandle,
- unsigned long, void *, unsigned long);
+ ULONG, void *, ULONG);
 typedef SECURITY_STATUS (SEC_ENTRY *SET_CONTEXT_ATTRIBUTES_FN_W)(PCtxtHandle,
- unsigned long, void *, unsigned long);
+ ULONG, void *, ULONG);
 
 #define SECURITY_ENTRYPOINT_ANSIA "InitSecurityInterfaceA"
 #define SECURITY_ENTRYPOINT_ANSIW "InitSecurityInterfaceW"

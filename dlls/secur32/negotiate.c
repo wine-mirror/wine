@@ -55,7 +55,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("(%p, %ld, %p)\n", phCredential, ulAttribute, pBuffer);
+    TRACE("(%p, %d, %p)\n", phCredential, ulAttribute, pBuffer);
 
     switch(ulAttribute)
     {
@@ -78,7 +78,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryCredentialsAttributesW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("(%p, %ld, %p)\n", phCredential, ulAttribute, pBuffer);
+    TRACE("(%p, %d, %p)\n", phCredential, ulAttribute, pBuffer);
 
     switch(ulAttribute)
     {
@@ -102,7 +102,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleA(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p) stub\n",
+    TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p) stub\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     return SEC_E_UNSUPPORTED_FUNCTION;
@@ -116,7 +116,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcquireCredentialsHandleW(
  PLUID pLogonID, PVOID pAuthData, SEC_GET_KEY_FN pGetKeyFn,
  PVOID pGetKeyArgument, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
-    TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p) stub\n",
+    TRACE("(%s, %s, 0x%08x, %p, %p, %p, %p, %p, %p) stub\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
     return SEC_E_UNSUPPORTED_FUNCTION;
@@ -133,7 +133,7 @@ static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if(phCredential){
@@ -157,7 +157,7 @@ static SECURITY_STATUS SEC_ENTRY nego_InitializeSecurityContextW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)
@@ -181,7 +181,7 @@ static SECURITY_STATUS SEC_ENTRY nego_AcceptSecurityContext(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %p %ld %ld %p %p %p %p\n", phCredential, phContext, pInput,
+    TRACE("%p %p %p %d %d %p %p %p %p\n", phCredential, phContext, pInput,
      fContextReq, TargetDataRep, phNewContext, pOutput, pfContextAttr,
      ptsExpiry);
     if (phCredential)
@@ -258,7 +258,7 @@ static SECURITY_STATUS SEC_ENTRY nego_ApplyControlToken(PCtxtHandle phContext,
  *              QueryContextAttributesW
  */
 static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
@@ -266,7 +266,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesW(PCtxtHandle phCont
      * the SecurePackage part and the dwLower part is the actual context 
      * handle. It should be easy to extract the context attributes from that.
      */
-    TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
     if (phContext)
     {
         ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -282,7 +282,7 @@ static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesW(PCtxtHandle phCont
  *              QueryContextAttributesA
  */
 static SECURITY_STATUS SEC_ENTRY nego_QueryContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     return nego_QueryContextAttributesW(phContext, ulAttribute, pBuffer);
 }
@@ -333,7 +333,7 @@ static SECURITY_STATUS SEC_ENTRY nego_MakeSignature(PCtxtHandle phContext, ULONG
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
     if (phContext)
     {
         ret = SEC_E_UNSUPPORTED_FUNCTION;
@@ -353,7 +353,7 @@ static SECURITY_STATUS SEC_ENTRY nego_VerifySignature(PCtxtHandle phContext,
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %ld %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if (phContext)
     {
         ret = SEC_E_UNSUPPORTED_FUNCTION;

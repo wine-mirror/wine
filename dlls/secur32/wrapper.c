@@ -68,7 +68,7 @@ SECURITY_STATUS WINAPI AcquireCredentialsHandleA(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%s %s %ld %p %p %p %p %p %p\n", debugstr_a(pszPrincipal),
+    TRACE("%s %s %d %p %p %p %p %p %p\n", debugstr_a(pszPrincipal),
      debugstr_a(pszPackage), fCredentialsUse, pvLogonID, pAuthData, pGetKeyFn,
      pvGetKeyArgument, phCredential, ptsExpiry);
     if (pszPackage)
@@ -114,7 +114,7 @@ SECURITY_STATUS WINAPI AcquireCredentialsHandleW(
 {
     SECURITY_STATUS ret;
 
-    TRACE("%s %s %ld %p %p %p %p %p %p\n", debugstr_w(pszPrincipal),
+    TRACE("%s %s %d %p %p %p %p %p %p\n", debugstr_w(pszPrincipal),
      debugstr_w(pszPackage), fCredentialsUse, pvLogonID, pAuthData, pGetKeyFn,
      pvGetKeyArgument, phCredential, ptsExpiry);
     if (pszPackage)
@@ -180,11 +180,11 @@ SECURITY_STATUS WINAPI FreeCredentialsHandle(
  *		QueryCredentialsAttributesA (SECUR32.@)
  */
 SECURITY_STATUS WINAPI QueryCredentialsAttributesA(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer)
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phCredential, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phCredential, ulAttribute, pBuffer);
     if (phCredential)
     {
         SecurePackage *package = (SecurePackage *)phCredential->dwUpper;
@@ -210,11 +210,11 @@ SECURITY_STATUS WINAPI QueryCredentialsAttributesA(
  *		QueryCredentialsAttributesW (SECUR32.@)
  */
 SECURITY_STATUS WINAPI QueryCredentialsAttributesW(
- PCredHandle phCredential, unsigned long ulAttribute, void *pBuffer)
+ PCredHandle phCredential, ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phCredential, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phCredential, ulAttribute, pBuffer);
     if (phCredential)
     {
         SecurePackage *package = (SecurePackage *)phCredential->dwUpper;
@@ -241,14 +241,14 @@ SECURITY_STATUS WINAPI QueryCredentialsAttributesW(
  */
 SECURITY_STATUS WINAPI InitializeSecurityContextA(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_CHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry)
+ SEC_CHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_a(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)
@@ -298,14 +298,14 @@ SECURITY_STATUS WINAPI InitializeSecurityContextA(
  */
 SECURITY_STATUS WINAPI InitializeSecurityContextW(
  PCredHandle phCredential, PCtxtHandle phContext,
- SEC_WCHAR *pszTargetName, unsigned long fContextReq,
- unsigned long Reserved1, unsigned long TargetDataRep, PSecBufferDesc pInput,
- unsigned long Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry)
+ SEC_WCHAR *pszTargetName, ULONG fContextReq,
+ ULONG Reserved1, ULONG TargetDataRep, PSecBufferDesc pInput,
+ ULONG Reserved2, PCtxtHandle phNewContext, PSecBufferDesc pOutput,
+ ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %s %ld %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
+    TRACE("%p %p %s %d %d %d %p %d %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
      Reserved1, phNewContext, pOutput, pfContextAttr, ptsExpiry);
     if (phCredential)
@@ -355,13 +355,12 @@ SECURITY_STATUS WINAPI InitializeSecurityContextW(
  */
 SECURITY_STATUS WINAPI AcceptSecurityContext(
  PCredHandle phCredential, PCtxtHandle phContext, PSecBufferDesc pInput,
- unsigned long fContextReq, unsigned long TargetDataRep,
- PCtxtHandle phNewContext, PSecBufferDesc pOutput,
- unsigned long *pfContextAttr, PTimeStamp ptsExpiry)
+ ULONG fContextReq, ULONG TargetDataRep, PCtxtHandle phNewContext,
+ PSecBufferDesc pOutput, ULONG *pfContextAttr, PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %p %ld %ld %p %p %p %p\n", phCredential, phContext, pInput,
+    TRACE("%p %p %p %d %d %p %p %p %p\n", phCredential, phContext, pInput,
      fContextReq, TargetDataRep, phNewContext, pOutput, pfContextAttr,
      ptsExpiry);
     if (phCredential)
@@ -495,11 +494,11 @@ SECURITY_STATUS WINAPI ApplyControlToken(PCtxtHandle phContext,
  *		QueryContextAttributesA (SECUR32.@)
  */
 SECURITY_STATUS WINAPI QueryContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -525,11 +524,11 @@ SECURITY_STATUS WINAPI QueryContextAttributesA(PCtxtHandle phContext,
  *		QueryContextAttributesW (SECUR32.@)
  */
 SECURITY_STATUS WINAPI QueryContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer)
+ ULONG ulAttribute, void *pBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p\n", phContext, ulAttribute, pBuffer);
+    TRACE("%p %d %p\n", phContext, ulAttribute, pBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -617,7 +616,7 @@ SECURITY_STATUS WINAPI MakeSignature(PCtxtHandle phContext, ULONG fQOP,
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -647,7 +646,7 @@ SECURITY_STATUS WINAPI VerifySignature(PCtxtHandle phContext,
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %ld %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -802,7 +801,7 @@ SECURITY_STATUS WINAPI ExportSecurityContext(PCtxtHandle phContext,
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %p\n", phContext, fFlags, pPackedContext, pToken);
+    TRACE("%p %d %p %p\n", phContext, fFlags, pPackedContext, pToken);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -897,13 +896,13 @@ SECURITY_STATUS WINAPI ImportSecurityContextW(SEC_WCHAR *pszPackage,
  *		AddCredentialsA (SECUR32.@)
  */
 SECURITY_STATUS WINAPI AddCredentialsA(PCredHandle hCredentials,
- SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_CHAR *pszPrincipal, SEC_CHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %s %s %ld %p %p %p %p\n", hCredentials, debugstr_a(pszPrincipal),
+    TRACE("%p %s %s %d %p %p %p %p\n", hCredentials, debugstr_a(pszPrincipal),
      debugstr_a(pszPackage), fCredentialUse, pAuthData, pGetKeyFn,
      pvGetKeyArgument, ptsExpiry);
     if (hCredentials)
@@ -932,13 +931,13 @@ SECURITY_STATUS WINAPI AddCredentialsA(PCredHandle hCredentials,
  *		AddCredentialsW (SECUR32.@)
  */
 SECURITY_STATUS WINAPI AddCredentialsW(PCredHandle hCredentials,
- SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, unsigned long fCredentialUse,
+ SEC_WCHAR *pszPrincipal, SEC_WCHAR *pszPackage, ULONG fCredentialUse,
  void *pAuthData, SEC_GET_KEY_FN pGetKeyFn, void *pvGetKeyArgument,
  PTimeStamp ptsExpiry)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %s %s %ld %p %p %p %p\n", hCredentials, debugstr_w(pszPrincipal),
+    TRACE("%p %s %s %d %p %p %p %p\n", hCredentials, debugstr_w(pszPrincipal),
      debugstr_w(pszPackage), fCredentialUse, pAuthData, pGetKeyFn,
      pvGetKeyArgument, ptsExpiry);
     if (hCredentials)
@@ -1001,7 +1000,7 @@ SECURITY_STATUS WINAPI EncryptMessage(PCtxtHandle phContext, ULONG fQOP,
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, fQOP, pMessage, MessageSeqNo);
+    TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -1031,7 +1030,7 @@ SECURITY_STATUS WINAPI DecryptMessage(PCtxtHandle phContext,
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %p %ld %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
+    TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -1057,11 +1056,11 @@ SECURITY_STATUS WINAPI DecryptMessage(PCtxtHandle phContext,
  *		SetContextAttributesA (SECUR32.@)
  */
 SECURITY_STATUS WINAPI SetContextAttributesA(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer)
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, ulAttribute, pBuffer, cbBuffer);
+    TRACE("%p %d %p %d\n", phContext, ulAttribute, pBuffer, cbBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
@@ -1087,11 +1086,11 @@ SECURITY_STATUS WINAPI SetContextAttributesA(PCtxtHandle phContext,
  *		SetContextAttributesW (SECUR32.@)
  */
 SECURITY_STATUS WINAPI SetContextAttributesW(PCtxtHandle phContext,
- unsigned long ulAttribute, void *pBuffer, unsigned long cbBuffer)
+ ULONG ulAttribute, void *pBuffer, ULONG cbBuffer)
 {
     SECURITY_STATUS ret;
 
-    TRACE("%p %ld %p %ld\n", phContext, ulAttribute, pBuffer, cbBuffer);
+    TRACE("%p %d %p %d\n", phContext, ulAttribute, pBuffer, cbBuffer);
     if (phContext)
     {
         SecurePackage *package = (SecurePackage *)phContext->dwUpper;
