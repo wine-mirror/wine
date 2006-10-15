@@ -20,16 +20,16 @@
 
 #define COBJMACROS
 
+#include <windows.h>
+#include <winreg.h>
+#include <commctrl.h>
+#include <unknwn.h>
+
 #ifdef NONAMELESSUNION
 # define U(x)  (x).u
 #else
 # define U(x)  (x)
 #endif
-
-#include <windows.h>
-#include <winreg.h>
-#include <commctrl.h>
-#include <unknwn.h>
 
 #include "resource.h"
 
