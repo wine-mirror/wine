@@ -71,6 +71,9 @@ void remove_doc_tasks(HTMLDocument *doc)
     thread_data_t *thread_data = get_thread_data(FALSE);
     task_t *iter, *tmp;
 
+    if(!thread_data)
+        return;
+
     while(thread_data->task_queue_head
           && thread_data->task_queue_head->doc == doc)
         pop_task();
