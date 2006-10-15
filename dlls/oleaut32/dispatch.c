@@ -357,7 +357,7 @@ static HRESULT WINAPI StdDispatch_GetTypeInfo(LPDISPATCH iface, UINT iTInfo, LCI
  *  Success: S_OK.
  *  Failure: DISP_E_UNKNOWNNAME, if any of the names is invalid.
  *           DISP_E_UNKNOWNLCID if lcid is invalid.
- *           Otherwise, an An HRESULT error code.
+ *           Otherwise, an HRESULT error code.
  *
  * NOTES
  *  This call defers to ITypeInfo_GetIDsOfNames(), using the ITypeInfo object

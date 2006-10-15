@@ -646,10 +646,10 @@ DGifDecompressLine(GifFileType * GifFile,
                 } else
                     CrntPrefix = CrntCode;
 
-                /* Now (if image is O.K.) we should not get an NO_SUCH_CODE
-                 * During the trace. As we might loop forever, in case of
+                /* Now (if image is O.K.) we should not get a NO_SUCH_CODE
+                 * during the trace. As we might loop forever, in case of
                  * defective image, we count the number of loops we trace
-                 * and stop if we got LZ_MAX_CODE. obviously we can not
+                 * and stop if we got LZ_MAX_CODE. Obviously we cannot
                  * loop more than that.  */
                 j = 0;
                 while (j++ <= LZ_MAX_CODE &&

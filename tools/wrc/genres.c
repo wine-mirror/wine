@@ -1408,7 +1408,7 @@ static res_t *rcdata2res(name_id_t *name, rcdata_t *rdt)
  * Output	: New .res format structure
  * Description	:
  * Remarks	: The data has been converted to the appropriate endian
- *		  after is was parsed.
+ *		  after it was parsed.
  *****************************************************************************
 */
 static res_t *messagetable2res(name_id_t *name, messagetable_t *msg)

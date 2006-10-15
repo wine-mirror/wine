@@ -7365,7 +7365,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     if (renderSurfaceSwapchain != NULL) {
 
         /* We also need to make sure that the lights &co are also in the context of the swapchains */
-        /* FIXME: If the render target gets sent to the frontBuffer should be be presenting it raw? */
+        /* FIXME: If the render target gets sent to the frontBuffer, should we be presenting it raw? */
         TRACE("making swapchain active\n");
         if (RenderSurface != This->renderTarget) {
             BOOL backbuf = FALSE;

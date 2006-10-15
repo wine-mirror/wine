@@ -1109,7 +1109,7 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
         wine_dbgstr_longlong(stdobjref->oid),
         debugstr_guid(&stdobjref->ipid));
 
-    /* create an a new proxy manager if one doesn't already exist for the
+    /* create a new proxy manager if one doesn't already exist for the
      * object */
     if (!find_proxy_manager(apt, stdobjref->oxid, stdobjref->oid, &proxy_manager))
     {

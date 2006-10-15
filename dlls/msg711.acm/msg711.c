@@ -202,7 +202,7 @@ static inline void  W16(unsigned char* dst, short s)
  *
  */
 
-#define	SIGN_BIT	(0x80)		/* Sign bit for a A-law byte. */
+#define	SIGN_BIT	(0x80)		/* Sign bit for an A-law byte. */
 #define	QUANT_MASK	(0xf)		/* Quantization field mask. */
 #define	NSEGS		(8)		/* Number of A-law segments. */
 #define	SEG_SHIFT	(4)		/* Left shift for segment number. */

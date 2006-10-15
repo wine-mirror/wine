@@ -773,7 +773,7 @@ static inline size_t VARIANT_DataSize(const VARIANT* pv)
 /******************************************************************************
  *    VariantCopyInd  [OLEAUT32.11]
  *
- * Copy a variant, dereferencing it it is by-reference.
+ * Copy a variant, dereferencing it if it is by-reference.
  *
  * PARAMS
  *  pvargDest [O] Destination for copy

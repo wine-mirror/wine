@@ -20,7 +20,7 @@
  * NOTES:
  *
  * The basic grammar of the file is yet another example of, humpf,
- * design. There is is mix of context-insensitive and -sentitive
+ * design. There is a mix of context-insensitive and -sensitive
  * stuff, which makes it rather complicated.
  * The header definitions are all context-insensitive because they have
  * delimited arguments, whereas the message headers are (semi-) context-

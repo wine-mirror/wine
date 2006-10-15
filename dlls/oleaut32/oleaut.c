@@ -218,7 +218,7 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
     WCHAR* stringBuffer;
 
     /*
-     * Find the length of the buffer passed-in in bytes.
+     * Find the length of the buffer passed-in, in bytes.
      */
     bufferSize = len * sizeof (WCHAR);
 

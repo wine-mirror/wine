@@ -586,7 +586,7 @@ static void test_storage_suminfo(void)
                                 STGM_CREATE|STGM_WRITE|STGM_SHARE_EXCLUSIVE, &ps );
     ok(r == STG_E_INVALIDFLAG, "created property set storage\n");
 
-    /* now try really creating a a property set */
+    /* now try really creating a property set */
     r = IPropertySetStorage_Create( propset, &FMTID_SummaryInformation, NULL, 0,
                                 STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, &ps );
     ok(r == S_OK, "failed to create property set storage\n");

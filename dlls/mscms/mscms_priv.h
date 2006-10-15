@@ -54,7 +54,7 @@
 
 /*  Funny thing is lcms.h defines DWORD as an 'unsigned long' whereas Wine
  *  defines it as an 'unsigned int'. To avoid compiler warnings we use a
- *  preprocessor define for DWORD and LPDWORD to get back Wine's orginal
+ *  preprocessor define for DWORD and LPDWORD to get back Wine's original
  *  (typedef) definitions.
  */
 

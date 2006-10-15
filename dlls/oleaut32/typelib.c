@@ -3312,7 +3312,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     /* Hopefully we now have enough ptrs set up to actually read in
        some TypeInfos.  It's not clear which order to do them in, so
        I'll just follow the links along the BlkEntry chain and read
-       them in in the order in which they're in the file */
+       them in the order in which they are in the file */
 
     ppTypeInfoImpl = &(pTypeLibImpl->pTypeInfo);
 

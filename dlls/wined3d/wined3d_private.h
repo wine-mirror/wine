@@ -325,8 +325,8 @@ extern const float identity[16];
 /* TODO: Confirm each of these works when wined3d move completed */
 #if 0 /* NOTE: Must be 0 in cvs */
   /* To avoid having to get gigabytes of trace, the following can be compiled in, and at the start
-     of each frame, a check is made for the existence of C:\D3DTRACE, and if if exists d3d trace
-     is enabled, and if it doesn't exists it is disabled.                                           */
+     of each frame, a check is made for the existence of C:\D3DTRACE, and if it exists d3d trace
+     is enabled, and if it doesn't exist it is disabled. */
 # define FRAME_DEBUGGING
   /*  Adding in the SINGLE_FRAME_DEBUGGING gives a trace of just what makes up a single frame, before
       the file is deleted                                                                            */

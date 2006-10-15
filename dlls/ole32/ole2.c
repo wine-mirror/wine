@@ -2533,13 +2533,13 @@ BSTR WINAPI PropSysAllocString(LPCOLESTR str)
 
     len = lstrlenW(str);
     /*
-     * Find the length of the buffer passed-in in bytes.
+     * Find the length of the buffer passed-in, in bytes.
      */
     bufferSize = len * sizeof (WCHAR);
 
     /*
      * Allocate a new buffer to hold the string.
-     * don't forget to keep an empty spot at the beginning of the
+     * Don't forget to keep an empty spot at the beginning of the
      * buffer for the character count and an extra character at the
      * end for the NULL.
      */

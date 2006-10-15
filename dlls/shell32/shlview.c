@@ -156,7 +156,7 @@ static inline IShellViewImpl *impl_from_IViewObject( IViewObject *iface )
 #define GET_WM_COMMAND_CMD(wp, lp)              HIWORD(wp)
 
 /*
-  Items merged into the toolbar and and the filemenu
+  Items merged into the toolbar and the filemenu
 */
 typedef struct
 {  int   idCommand;

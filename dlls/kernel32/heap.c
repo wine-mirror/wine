@@ -532,7 +532,7 @@ HGLOBAL WINAPI GlobalHandle(
     {
         handle = 0;
 
-        /* note that if pmem is a pointer to a a block allocated by        */
+        /* note that if pmem is a pointer to a block allocated by        */
         /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
         /* will fail.                                                      */
         if (ISPOINTER(pmem)) {

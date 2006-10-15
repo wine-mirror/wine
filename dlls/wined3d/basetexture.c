@@ -278,9 +278,9 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         glBindTexture(textureDimensions, This->baseTexture.textureName);
         checkGLcall("glBindTexture");
         if (isNewTexture) {
-            /* For a new texture we have to set the textures levels after binding the texture,
-            * in theory this is all we should ever have to dom, but because ATI's drivers are broken we
-            * also need to set the texture dimensins before the texture is is set */
+            /* For a new texture we have to set the textures levels after binding the texture.
+            * In theory this is all we should ever have to do, but because ATI's drivers are broken, we
+            * also need to set the texture dimensions before the texture is set */
             TRACE("Setting GL_TEXTURE_MAX_LEVEL to %d\n", This->baseTexture.levels - 1);
             glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels - 1);
             checkGLcall("glTexParameteri(textureDimensions, GL_TEXTURE_MAX_LEVEL, This->baseTexture.levels)");

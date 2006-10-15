@@ -52,7 +52,7 @@ static BSTR WINAPI ERRORINFO_SysAllocString(const OLECHAR* in)
     if (in == NULL)
 	return NULL;
     /*
-     * Find the lenth of the buffer passed-in in bytes.
+     * Find the length of the buffer passed-in, in bytes.
      */
     len = strlenW(in);
     bufferSize = len * sizeof (WCHAR);

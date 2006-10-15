@@ -231,7 +231,7 @@ static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
     case MIM_DATA:
     case MIM_MOREDATA:
     case MIM_ERROR:
-	/* dwParam1 & dwParam2 are are data, nothing to do */
+	/* dwParam1 & dwParam2 are data, nothing to do */
 	break;
     case MIM_LONGDATA:
     case MIM_LONGERROR:

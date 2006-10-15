@@ -342,14 +342,14 @@ static void test_query_value_ex(void)
 
     type = 0xdeadbeef;
     size = 0xdeadbeef;
-    ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Non Existent Value", NULL, &type, NULL, &size);
+    ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Nonexistent Value", NULL, &type, NULL, &size);
     ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
     ok(size == 0, "size should have been set to 0 instead of %d\n", size);
     ok(type == (DWORD)HKEY_CLASSES_ROOT /* NT */ || type == 0 /* Win9x */,
         "type should have been set to 0x80000000 or 0 instead of 0x%x\n", type);
 
     size = sizeof(buffer);
-    ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Non Existent Value", NULL, &type, buffer, &size);
+    ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Nonexistent Value", NULL, &type, buffer, &size);
     ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
     ok(size == sizeof(buffer), "size shouldn't have been changed to %d\n", size);
 }

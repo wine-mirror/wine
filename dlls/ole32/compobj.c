@@ -679,7 +679,7 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved)
  *
  * The behavior used to set the IMalloc used for memory management is
  * obsolete.
- * The dwCoInit parameter must specify of of the following apartment
+ * The dwCoInit parameter must specify one of the following apartment
  * threading models:
  *| COINIT_APARTMENTTHREADED - A single-threaded apartment (STA).
  *| COINIT_MULTITHREADED - A multi-threaded apartment (MTA).
