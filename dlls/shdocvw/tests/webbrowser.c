@@ -27,6 +27,7 @@
 #include "ole2.h"
 #include "exdisp.h"
 #include "htiframe.h"
+#include "mshtmhst.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -192,6 +193,8 @@ static const IOleClientSiteVtbl ClientSiteVtbl = {
     ClientSite_RequestNewObjectLayout
 };
 
+static IOleClientSite ClientSite = { &ClientSiteVtbl };
+
 static HRESULT WINAPI InPlaceUIWindow_QueryInterface(IOleInPlaceFrame *iface,
                                                      REFIID riid, void **ppv)
 {
@@ -343,8 +346,6 @@ static const IOleInPlaceFrameVtbl InPlaceFrameVtbl = {
 };
 
 static IOleInPlaceFrame InPlaceFrame = { &InPlaceFrameVtbl };
-
-static IOleClientSite ClientSite = { &ClientSiteVtbl };
 
 static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSiteEx *iface, REFIID riid, void **ppv)
 {
@@ -510,6 +511,151 @@ static const IOleInPlaceSiteExVtbl InPlaceSiteExVtbl = {
 
 static IOleInPlaceSiteEx InPlaceSite = { &InPlaceSiteExVtbl };
 
+static HRESULT WINAPI DocHostUIHandler_QueryInterface(IDocHostUIHandler2 *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI DocHostUIHandler_AddRef(IDocHostUIHandler2 *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DocHostUIHandler_Release(IDocHostUIHandler2 *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DocHostUIHandler_ShowContextMenu(IDocHostUIHandler2 *iface, DWORD dwID, POINT *ppt,
+        IUnknown *pcmdtReserved, IDispatch *pdicpReserved)
+{
+    ok(0, "unexpected call %d %p %p %p\n", dwID, ppt, pcmdtReserved, pdicpReserved);
+    return S_FALSE;
+}
+
+static HRESULT WINAPI DocHostUIHandler_GetHostInfo(IDocHostUIHandler2 *iface, DOCHOSTUIINFO *pInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_ShowUI(IDocHostUIHandler2 *iface, DWORD dwID,
+        IOleInPlaceActiveObject *pActiveObject, IOleCommandTarget *pCommandTarget,
+        IOleInPlaceFrame *pFrame, IOleInPlaceUIWindow *pDoc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_HideUI(IDocHostUIHandler2 *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_UpdateUI(IDocHostUIHandler2 *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_EnableModeless(IDocHostUIHandler2 *iface, BOOL fEnable)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_OnDocWindowActivate(IDocHostUIHandler2 *iface, BOOL fActivate)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_OnFrameWindowActivate(IDocHostUIHandler2 *iface, BOOL fActivate)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_ResizeBorder(IDocHostUIHandler2 *iface, LPCRECT prcBorder,
+        IOleInPlaceUIWindow *pUIWindow, BOOL fRameWindow)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_TranslateAccelerator(IDocHostUIHandler2 *iface, LPMSG lpMsg,
+        const GUID *pguidCmdGroup, DWORD nCmdID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_GetOptionKeyPath(IDocHostUIHandler2 *iface,
+        LPOLESTR *pchKey, DWORD dw)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_GetDropTarget(IDocHostUIHandler2 *iface,
+        IDropTarget *pDropTarget, IDropTarget **ppDropTarget)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, IDispatch **ppDispatch)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, DWORD dwTranslate,
+        OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_FilterDataObject(IDocHostUIHandler2 *iface, IDataObject *pDO,
+        IDataObject **ppPORet)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *iface,
+        LPOLESTR *pchKey, DWORD dw)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDocHostUIHandler2Vtbl DocHostUIHandlerVtbl = {
+    DocHostUIHandler_QueryInterface,
+    DocHostUIHandler_AddRef,
+    DocHostUIHandler_Release,
+    DocHostUIHandler_ShowContextMenu,
+    DocHostUIHandler_GetHostInfo,
+    DocHostUIHandler_ShowUI,
+    DocHostUIHandler_HideUI,
+    DocHostUIHandler_UpdateUI,
+    DocHostUIHandler_EnableModeless,
+    DocHostUIHandler_OnDocWindowActivate,
+    DocHostUIHandler_OnFrameWindowActivate,
+    DocHostUIHandler_ResizeBorder,
+    DocHostUIHandler_TranslateAccelerator,
+    DocHostUIHandler_GetOptionKeyPath,
+    DocHostUIHandler_GetDropTarget,
+    DocHostUIHandler_GetExternal,
+    DocHostUIHandler_TranslateUrl,
+    DocHostUIHandler_FilterDataObject,
+    DocHostUIHandler_GetOverrideKeyPath
+};
+
+static IDocHostUIHandler2 DocHostUIHandler = { &DocHostUIHandlerVtbl };
+
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -521,6 +667,9 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
             || IsEqualGUID(&IID_IOleInPlaceSite, riid)
             || IsEqualGUID(&IID_IOleInPlaceSiteEx, riid))
         *ppv = &InPlaceSite;
+    else if(IsEqualGUID(&IID_IDocHostUIHandler, riid)
+            || IsEqualGUID(&IID_IDocHostUIHandler2, riid))
+        *ppv = &DocHostUIHandler;
 
     if(*ppv)
         return S_OK;
