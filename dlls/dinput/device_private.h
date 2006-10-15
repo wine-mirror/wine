@@ -30,9 +30,9 @@
 typedef struct IDirectInputDevice2AImpl IDirectInputDevice2AImpl;
 struct IDirectInputDevice2AImpl
 {
-        const IDirectInputDevice2AVtbl *lpVtbl;
-        LONG                            ref;
-        GUID                            guid;
+    const void                 *lpVtbl;
+    LONG                        ref;
+    GUID                        guid;
 };
 
 /* Routines to do DataFormat / WineFormat conversions */

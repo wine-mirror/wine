@@ -89,9 +89,8 @@ static const IDirectInputDevice8AVtbl JoystickAvt;
 static const IDirectInputDevice8WVtbl JoystickWvt;
 struct JoystickImpl
 {
-        const void                     *lpVtbl;
-        LONG                            ref;
-        GUID                            guid;
+        struct IDirectInputDevice2AImpl base;
+
 	char				dev[32];
 
 	/* The 'parent' DInput */
@@ -495,12 +494,12 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     }
 #endif
 
-    newDevice->lpVtbl = jvt;
-    newDevice->ref = 1;
+    newDevice->base.lpVtbl = jvt;
+    newDevice->base.ref = 1;
     newDevice->dinput = dinput;
     newDevice->acquired = FALSE;
     newDevice->overflow = FALSE;
-    CopyMemory(&(newDevice->guid),rguid,sizeof(*rguid));
+    CopyMemory(&newDevice->base.guid, rguid, sizeof(*rguid));
 
     /* setup_dinput_options may change these */
     newDevice->deadzone = 5000;
@@ -672,7 +671,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     JoystickImpl *This = (JoystickImpl *)iface;
     ULONG ref;
 
-    ref = InterlockedDecrement((&This->ref));
+    ref = InterlockedDecrement(&This->base.ref);
     if (ref)
         return ref;
 

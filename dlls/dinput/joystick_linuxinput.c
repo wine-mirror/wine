@@ -118,9 +118,8 @@ struct JoyDev {
 
 struct JoystickImpl
 {
-        const void                     *lpVtbl;
-        LONG                            ref;
-        GUID                            guid;
+        struct IDirectInputDevice2AImpl base;
+
         struct JoyDev                  *joydev;
 
 	/* The 'parent' DInput */
@@ -373,15 +372,15 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     return NULL;
   }
 
-  newDevice->lpVtbl = jvt;
-  newDevice->ref = 1;
+  newDevice->base.lpVtbl = jvt;
+  newDevice->base.ref = 1;
+  memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
   newDevice->joyfd = -1;
   newDevice->dinput = dinput;
   newDevice->joydev = joydev;
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
   newDevice->ff_state = FF_STATUS_STOPPED;
 #endif
-  memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
   for (i=0;i<ABS_MAX;i++) {
     /* apps expect the range to be the same they would get from the
      * GetProperty/range method */
@@ -522,7 +521,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	JoystickImpl *This = (JoystickImpl *)iface;
 	ULONG ref;
 
-	ref = InterlockedDecrement(&(This->ref));
+	ref = InterlockedDecrement(&This->base.ref);
 	if (ref)
 		return ref;
 

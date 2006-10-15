@@ -46,9 +46,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt;
 typedef struct SysKeyboardImpl SysKeyboardImpl;
 struct SysKeyboardImpl
 {
-    const void                 *lpVtbl;
-    LONG                        ref;
-    GUID                        guid;
+    struct IDirectInputDevice2AImpl base;
 
     IDirectInputImpl*           dinput;
 
@@ -204,9 +202,9 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     SysKeyboardImpl* newDevice;
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysKeyboardImpl));
-    newDevice->lpVtbl = kvt;
-    newDevice->ref = 1;
-    memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
+    newDevice->base.lpVtbl = kvt;
+    newDevice->base.ref = 1;
+    memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     newDevice->dinput = dinput;
     InitializeCriticalSection(&(newDevice->crit));
 
@@ -263,7 +261,7 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
     ULONG ref;
 
-    ref = InterlockedDecrement(&(This->ref));
+    ref = InterlockedDecrement(&This->base.ref);
     if (ref) return ref;
 
     set_dinput_hook(WH_KEYBOARD_LL, NULL);

@@ -108,9 +108,7 @@ typedef enum {
 
 struct SysMouseImpl
 {
-    const void                     *lpVtbl;
-    LONG                            ref;
-    GUID                            guid;
+    struct IDirectInputDevice2AImpl base;
     
     IDirectInputImpl               *dinput;
     
@@ -251,10 +249,10 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     };
     SysMouseImpl* newDevice;
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
-    newDevice->ref = 1;
-    newDevice->lpVtbl = mvt;
+    newDevice->base.lpVtbl = mvt;
+    newDevice->base.ref = 1;
+    memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     InitializeCriticalSection(&(newDevice->crit));
-    memcpy(&(newDevice->guid),rguid,sizeof(*rguid));
 
     /* Per default, Wine uses its internal data format */
     newDevice->df = (DIDATAFORMAT *) &Wine_InternalMouseFormat;
@@ -327,7 +325,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     SysMouseImpl *This = (SysMouseImpl *)iface;
     ULONG ref;
  
-    ref = InterlockedDecrement(&(This->ref));
+    ref = InterlockedDecrement(&This->base.ref);
     if (ref)
 	return ref;
 
