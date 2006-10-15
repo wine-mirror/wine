@@ -137,7 +137,6 @@ struct JoystickImpl
 	LPDIDATAFORMAT			df;
 	DataFormat			*transform;	/* wine to user format converter */
 	int				*offsets;	/* object offsets */
-        HANDLE				hEvent;
         LPDIDEVICEOBJECTDATA 		data_queue;
         int				queue_head, queue_tail, queue_len;
 	BOOL				overflow;
@@ -1167,19 +1166,6 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
   return 0;
 }
 
-/******************************************************************************
-  *     SetEventNotification : specifies event to be sent on state change
-  */
-static HRESULT WINAPI JoystickAImpl_SetEventNotification(
-	LPDIRECTINPUTDEVICE8A iface, HANDLE hnd
-) {
-    JoystickImpl *This = (JoystickImpl *)iface;
-
-    TRACE("(this=%p,%p)\n",This,hnd);
-    This->hEvent = hnd;
-    return DI_OK;
-}
-
 static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	LPDIRECTINPUTDEVICE8A iface,
 	LPDIDEVCAPS lpDIDevCaps)
@@ -1808,7 +1794,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAImpl_GetDeviceState,
 	JoystickAImpl_GetDeviceData,
 	JoystickAImpl_SetDataFormat,
-	JoystickAImpl_SetEventNotification,
+	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
 	IDirectInputDevice2AImpl_GetObjectInfo,
 	IDirectInputDevice2AImpl_GetDeviceInfo,
@@ -1850,7 +1836,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
 	XCAST(GetDeviceData)JoystickAImpl_GetDeviceData,
 	XCAST(SetDataFormat)JoystickAImpl_SetDataFormat,
-	XCAST(SetEventNotification)JoystickAImpl_SetEventNotification,
+	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
 	IDirectInputDevice2WImpl_GetObjectInfo,
 	IDirectInputDevice2WImpl_GetDeviceInfo,

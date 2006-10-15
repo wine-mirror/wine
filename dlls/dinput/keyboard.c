@@ -50,7 +50,6 @@ struct SysKeyboardImpl
 
     IDirectInputImpl*           dinput;
 
-    HANDLE                      hEvent;
     /* SysKeyboardAImpl */
     int                         acquired;
 
@@ -101,7 +100,7 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
     GEN_EVENT(dik_code, new_diks, hook->time, This->dinput->evsequence++);
     LeaveCriticalSection(&This->crit);
 
-    if (This->hEvent) SetEvent(This->hEvent);
+    if (This->base.hEvent) SetEvent(This->base.hEvent);
     
     return CallNextHookEx(0, code, wparam, lparam);
 }
@@ -531,16 +530,6 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_SetEventNotification(LPDIRECTINPUTDEVICE8A iface,
-							    HANDLE hnd) {
-  SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-
-  TRACE("(this=%p,%p)\n",This,hnd);
-
-  This->hEvent = hnd;
-  return DI_OK;
-}
-
 /******************************************************************************
   *     GetCapabilities : get the device capablitites
   */
@@ -699,7 +688,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 	SysKeyboardAImpl_GetDeviceState,
 	SysKeyboardAImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
-	SysKeyboardAImpl_SetEventNotification,
+	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
 	SysKeyboardAImpl_GetObjectInfo,
 	SysKeyboardAImpl_GetDeviceInfo,
@@ -741,7 +730,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 	XCAST(GetDeviceState)SysKeyboardAImpl_GetDeviceState,
 	XCAST(GetDeviceData)SysKeyboardAImpl_GetDeviceData,
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
-	XCAST(SetEventNotification)SysKeyboardAImpl_SetEventNotification,
+	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
 	SysKeyboardWImpl_GetObjectInfo,
 	SysKeyboardWImpl_GetDeviceInfo,

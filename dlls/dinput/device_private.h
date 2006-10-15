@@ -33,6 +33,7 @@ struct IDirectInputDevice2AImpl
     const void                 *lpVtbl;
     LONG                        ref;
     GUID                        guid;
+    HANDLE                      hEvent;
 };
 
 /* Routines to do DataFormat / WineFormat conversions */

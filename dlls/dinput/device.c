@@ -475,11 +475,17 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
     return DI_OK;
 }
 
+/******************************************************************************
+  *     SetEventNotification : specifies event to be sent on state change
+  */
 HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
-	LPDIRECTINPUTDEVICE8A iface,HANDLE hnd
-) {
+	LPDIRECTINPUTDEVICE8A iface, HANDLE event)
+{
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    FIXME("(this=%p,%p): stub\n",This,hnd);
+
+    TRACE("(%p) %p\n", This, event);
+
+    This->hEvent = event;
     return DI_OK;
 }
 

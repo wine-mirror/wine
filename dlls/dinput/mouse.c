@@ -136,7 +136,6 @@ struct SysMouseImpl
     WARP_STATUS		            need_warp;
     DWORD                           last_warped;
     int				    acquired;
-    HANDLE			    hEvent;
     CRITICAL_SECTION		    crit;
     
     /* This is for mouse reporting. */
@@ -538,7 +537,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 
   end:
     /* Mouse moved -> send event if asked */
-    if (This->hEvent) SetEvent(This->hEvent);
+    if (This->base.hEvent) SetEvent(This->base.hEvent);
     
     LeaveCriticalSection(&(This->crit));
     
@@ -911,22 +910,6 @@ static HRESULT WINAPI SysMouseAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     return DI_OK;
 }
 
-
-
-/******************************************************************************
-  *     SetEventNotification : specifies event to be sent on state change
-  */
-static HRESULT WINAPI SysMouseAImpl_SetEventNotification(LPDIRECTINPUTDEVICE8A iface,
-							 HANDLE hnd) {
-    SysMouseImpl *This = (SysMouseImpl *)iface;
-    
-    TRACE("(this=%p,%p)\n",This,hnd);
-    
-    This->hEvent = hnd;
-    
-    return DI_OK;
-}
-
 /******************************************************************************
   *     GetCapabilities : get the device capablitites
   */
@@ -1107,7 +1090,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     SysMouseAImpl_GetDeviceState,
     SysMouseAImpl_GetDeviceData,
     SysMouseAImpl_SetDataFormat,
-    SysMouseAImpl_SetEventNotification,
+    IDirectInputDevice2AImpl_SetEventNotification,
     SysMouseAImpl_SetCooperativeLevel,
     IDirectInputDevice2AImpl_GetObjectInfo,
     SysMouseAImpl_GetDeviceInfo,
@@ -1149,7 +1132,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     XCAST(GetDeviceState)SysMouseAImpl_GetDeviceState,
     XCAST(GetDeviceData)SysMouseAImpl_GetDeviceData,
     XCAST(SetDataFormat)SysMouseAImpl_SetDataFormat,
-    XCAST(SetEventNotification)SysMouseAImpl_SetEventNotification,
+    XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
     XCAST(SetCooperativeLevel)SysMouseAImpl_SetCooperativeLevel,
     IDirectInputDevice2WImpl_GetObjectInfo,
     SysMouseWImpl_GetDeviceInfo,
