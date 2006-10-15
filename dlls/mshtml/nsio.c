@@ -644,7 +644,11 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
             }
         }
 
-        return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+        nsres = nsIChannel_AsyncOpen(This->channel, aListener, aContext);
+
+        if(NS_FAILED(nsres) && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI))
+            return WINE_NS_LOAD_FROM_MONIKER;
+        return nsres;
     }
 
     TRACE("channel == NULL\n");
