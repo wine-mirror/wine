@@ -20,7 +20,11 @@
 #define GUID_DEFINED
 typedef struct _GUID
 {
+#if defined(_MSC_VER) || (defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64))
     unsigned long  Data1;
+#else
+    unsigned int   Data1;
+#endif
     unsigned short Data2;
     unsigned short Data3;
     unsigned char  Data4[ 8 ];

@@ -615,7 +615,7 @@ static HRESULT register_inf(BOOL doregister)
 
     for(i = 0; i < sizeof(pse)/sizeof(pse[0]); i++) {
         pse[i].pszValue = HeapAlloc(GetProcessHeap(), 0, 39);
-        sprintf(pse[i].pszValue, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+        sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
                 clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
                 clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);

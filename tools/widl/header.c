@@ -83,7 +83,7 @@ int is_void(const type_t *t, const var_t *v)
 void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
-  fprintf(f, "DEFINE_GUID(%s_%s, 0x%08lx, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
+  fprintf(f, "DEFINE_GUID(%s_%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
         "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x);\n",
         guid_prefix, name, uuid->Data1, uuid->Data2, uuid->Data3, uuid->Data4[0],
         uuid->Data4[1], uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5],

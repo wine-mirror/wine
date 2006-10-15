@@ -272,7 +272,7 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
     LONG	tlfnlen;
     ITypeLib	*tl;
 
-    sprintf( interfacekey, "Interface\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\Typelib",
+    sprintf( interfacekey, "Interface\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\Typelib",
 	riid->Data1, riid->Data2, riid->Data3,
 	riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
 	riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7]

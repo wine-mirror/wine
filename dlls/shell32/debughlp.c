@@ -167,7 +167,7 @@ void _dbg_ILSimpleGetText (LPCITEMIDLIST pidl, LPSTR szOut, UINT uOutSize)
 	else if (( riid = _dbg_ILGetGUIDPointer(pidl) ))
 	{
 	  if (szOut)
-            sprintf( szOut, "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+            sprintf( szOut, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
                  riid->Data1, riid->Data2, riid->Data3,
                  riid->Data4[0], riid->Data4[1], riid->Data4[2], riid->Data4[3],
                  riid->Data4[4], riid->Data4[5], riid->Data4[6], riid->Data4[7] );
@@ -330,7 +330,7 @@ const char * shdebugstr_guid( const struct _GUID *id )
 		    name = clsidbuf;
 	    }
 
-            return wine_dbg_sprintf( "\n\t{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x} (%s)",
+            return wine_dbg_sprintf( "\n\t{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x} (%s)",
                  id->Data1, id->Data2, id->Data3,
                  id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
                  id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7], name ? name : "unknown" );

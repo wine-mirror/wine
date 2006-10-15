@@ -1676,7 +1676,7 @@ static void test_freethreadedmarshaldata(IStream *pStream, MSHCTX mshctx, void *
         marshal_data += sizeof(void *);
         ok(*(DWORD *)marshal_data == 0, "expected 0x0, but got 0x%x\n", *(DWORD *)marshal_data);
         marshal_data += sizeof(DWORD);
-        trace("got guid data: {%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+        trace("got guid data: {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
             ((GUID *)marshal_data)->Data1, ((GUID *)marshal_data)->Data2, ((GUID *)marshal_data)->Data3,
             ((GUID *)marshal_data)->Data4[0], ((GUID *)marshal_data)->Data4[1], ((GUID *)marshal_data)->Data4[2], ((GUID *)marshal_data)->Data4[3],
             ((GUID *)marshal_data)->Data4[4], ((GUID *)marshal_data)->Data4[5], ((GUID *)marshal_data)->Data4[6], ((GUID *)marshal_data)->Data4[7]);

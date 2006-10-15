@@ -163,7 +163,7 @@ static HRESULT add_wordbreaker_clsid( LPCSTR lang, const CLSID *id)
     CHAR key[100], val[50];
 
     strcpy(key, "CLSID\\");
-    sprintf(key+6, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+    sprintf(key+6, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
             id->Data1, id->Data2, id->Data3,
             id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
             id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7]);

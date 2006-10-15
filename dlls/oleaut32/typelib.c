@@ -2542,7 +2542,7 @@ static BOOL TLB_GUIDFromString(char *str, GUID *guid)
   int i;
   short s;
 
-  if(sscanf(str, "%lx-%hx-%hx-%hx", &guid->Data1, &guid->Data2, &guid->Data3, &s) != 4) {
+  if(sscanf(str, "%x-%hx-%hx-%hx", &guid->Data1, &guid->Data2, &guid->Data3, &s) != 4) {
     FIXME("Can't parse guid %s\n", debugstr_guid(guid));
     return FALSE;
   }
