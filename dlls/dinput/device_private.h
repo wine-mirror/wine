@@ -34,6 +34,8 @@ struct IDirectInputDevice2AImpl
     LONG                        ref;
     GUID                        guid;
     HANDLE                      hEvent;
+    DWORD                       dwCoopLevel;
+    HWND                        win;
 };
 
 /* Routines to do DataFormat / WineFormat conversions */

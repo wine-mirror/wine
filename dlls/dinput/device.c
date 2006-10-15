@@ -463,15 +463,42 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
     return DI_OK;
 }
 
+/******************************************************************************
+  *     SetCooperativeLevel
+  *
+  *  Set cooperative level and the source window for the events.
+  */
 HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
-	LPDIRECTINPUTDEVICE8A iface,HWND hwnd,DWORD dwflags
-) {
+        LPDIRECTINPUTDEVICE8A iface, HWND hwnd, DWORD dwflags)
+{
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    TRACE("(this=%p,%p,0x%08x)\n", This, hwnd, dwflags);
-    if (TRACE_ON(dinput)) {
-	TRACE(" cooperative level : ");
-	_dump_cooperativelevel_DI(dwflags);
-    }
+
+    TRACE("(%p) %p,0x%08x\n", This, hwnd, dwflags);
+    TRACE(" cooperative level : ");
+    _dump_cooperativelevel_DI(dwflags);
+
+    if ((dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == 0 ||
+        (dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE) ||
+        (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == 0 ||
+        (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == (DISCL_FOREGROUND | DISCL_BACKGROUND))
+        return DIERR_INVALIDPARAM;
+
+    if (dwflags == (DISCL_NONEXCLUSIVE | DISCL_BACKGROUND))
+        hwnd = GetDesktopWindow();
+
+    if (!hwnd) return E_HANDLE;
+
+    /* For security reasons native does not allow exclusive background level
+       for mouse and keyboard only */
+    if (dwflags & DISCL_EXCLUSIVE && dwflags & DISCL_BACKGROUND &&
+        (IsEqualGUID(&This->guid, &GUID_SysMouse) ||
+         IsEqualGUID(&This->guid, &GUID_SysKeyboard)))
+        return DIERR_UNSUPPORTED;
+
+    /* Store the window which asks for the mouse */
+    This->win = hwnd;
+    This->dwCoopLevel = dwflags;
+
     return DI_OK;
 }
 

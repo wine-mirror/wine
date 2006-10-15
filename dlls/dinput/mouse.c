@@ -124,8 +124,6 @@ struct SysMouseImpl
     LONG			    prevX, prevY;
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;
-    HWND			    win;
-    DWORD			    dwCoopLevel;
     POINT      			    mapped_center;
     DWORD			    win_centerX, win_centerY;
     LPDIDEVICEOBJECTDATA 	    data_queue;
@@ -250,6 +248,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
     newDevice->base.lpVtbl = mvt;
     newDevice->base.ref = 1;
+    newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     InitializeCriticalSection(&(newDevice->crit));
 
@@ -261,7 +260,6 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     newDevice->wine_df->internal_format_size = Wine_InternalMouseFormat.dwDataSize;
     newDevice->wine_df->dt = NULL;
     newDevice->dinput = dinput;
-    newDevice->dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
 
     return newDevice;
 }
@@ -344,47 +342,6 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     return 0;
 }
 
-
-/******************************************************************************
-  *     SetCooperativeLevel : store the window in which we will do our
-  *   grabbing.
-  */
-static HRESULT WINAPI SysMouseAImpl_SetCooperativeLevel(
-	LPDIRECTINPUTDEVICE8A iface,HWND hwnd,DWORD dwflags
-)
-{
-    SysMouseImpl *This = (SysMouseImpl *)iface;
-    
-    TRACE("(this=%p,%p,0x%08x)\n", This, hwnd, dwflags);
-    
-    if (TRACE_ON(dinput)) {
-	TRACE(" cooperative level : ");
-	_dump_cooperativelevel_DI(dwflags);
-    }
-
-    if ((dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == 0 ||
-        (dwflags & (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE)) == (DISCL_EXCLUSIVE | DISCL_NONEXCLUSIVE) ||
-        (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == 0 ||
-        (dwflags & (DISCL_FOREGROUND | DISCL_BACKGROUND)) == (DISCL_FOREGROUND | DISCL_BACKGROUND))
-        return DIERR_INVALIDPARAM;
-    
-    if (dwflags == (DISCL_NONEXCLUSIVE | DISCL_BACKGROUND))
-        hwnd = GetDesktopWindow();
-
-    if (!hwnd) return E_HANDLE;
-
-    if (dwflags & DISCL_EXCLUSIVE && dwflags & DISCL_BACKGROUND) {
-        return DIERR_UNSUPPORTED;
-    }
-
-    /* Store the window which asks for the mouse */
-    This->win = hwnd;
-    This->dwCoopLevel = dwflags;
-    
-    return DI_OK;
-}
-
-
 /******************************************************************************
   *     SetDataFormat : the application can choose the format of the data
   *   the device driver sends back with GetDeviceState.
@@ -430,7 +387,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
     EnterCriticalSection(&(This->crit));
-    dwCoop = This->dwCoopLevel;
+    dwCoop = This->base.dwCoopLevel;
 
     if (wparam == WM_MOUSEMOVE) {
 	if (This->absolute) {
@@ -553,7 +510,7 @@ static BOOL dinput_window_check(SysMouseImpl* This) {
     DWORD centerX, centerY;
 
     /* make sure the window hasn't moved */
-    if(!GetWindowRect(This->win, &rect))
+    if(!GetWindowRect(This->base.win, &rect))
         return FALSE;
     centerX = (rect.right  - rect.left) / 2;
     centerY = (rect.bottom - rect.top ) / 2;
@@ -563,7 +520,7 @@ static BOOL dinput_window_check(SysMouseImpl* This) {
     }
     This->mapped_center.x = This->win_centerX;
     This->mapped_center.y = This->win_centerY;
-    MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+    MapWindowPoints(This->base.win, HWND_DESKTOP, &This->mapped_center, 1);
     return TRUE;
 }
 
@@ -605,12 +562,12 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     This->m_state.rgbButtons[2] = GetKeyState(VK_MBUTTON) & 0x80;
     
     /* Install our mouse hook */
-    if (This->dwCoopLevel & DISCL_EXCLUSIVE)
+    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
       ShowCursor(FALSE); /* hide cursor */
     set_dinput_hook(WH_MOUSE_LL, dinput_mouse_hook);
     
     /* Get the window dimension and find the center */
-    GetWindowRect(This->win, &rect);
+    GetWindowRect(This->base.win, &rect);
     This->win_centerX = (rect.right  - rect.left) / 2;
     This->win_centerY = (rect.bottom - rect.top ) / 2;
     
@@ -618,7 +575,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     if (This->absolute == 0) {
       This->mapped_center.x = This->win_centerX;
       This->mapped_center.y = This->win_centerY;
-      MapWindowPoints(This->win, HWND_DESKTOP, &This->mapped_center, 1);
+      MapWindowPoints(This->base.win, HWND_DESKTOP, &This->mapped_center, 1);
       TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
       SetCursorPos( This->mapped_center.x, This->mapped_center.y );
       This->last_warped = GetCurrentTime();
@@ -647,7 +604,7 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     }
 
     set_dinput_hook(WH_MOUSE_LL, NULL);
-    if (This->dwCoopLevel & DISCL_EXCLUSIVE)
+    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
         ShowCursor(TRUE); /* show cursor */
 
     /* No more locks */
@@ -1091,7 +1048,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     SysMouseAImpl_GetDeviceData,
     SysMouseAImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
-    SysMouseAImpl_SetCooperativeLevel,
+    IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2AImpl_GetObjectInfo,
     SysMouseAImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
@@ -1133,7 +1090,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     XCAST(GetDeviceData)SysMouseAImpl_GetDeviceData,
     XCAST(SetDataFormat)SysMouseAImpl_SetDataFormat,
     XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
-    XCAST(SetCooperativeLevel)SysMouseAImpl_SetCooperativeLevel,
+    XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2WImpl_GetObjectInfo,
     SysMouseWImpl_GetDeviceInfo,
     XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
