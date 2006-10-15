@@ -860,7 +860,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
             else
                 shader_addline(&buffer, "gl_FragColor = R0;\n");
         }
-        shader_addline(&buffer, "}\n\0");
+        shader_addline(&buffer, "}\n");
 
         TRACE("Compiling shader object %u\n", shader_obj);
         GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer.buffer, NULL));
@@ -891,7 +891,7 @@ inline static VOID IWineD3DPixelShaderImpl_GenerateShader(
 
         if (This->baseShader.hex_version < WINED3DPS_VERSION(2,0))
             shader_addline(&buffer, "MOV result.color, R0;\n");
-        shader_addline(&buffer, "END\n\0"); 
+        shader_addline(&buffer, "END\n"); 
 
         /* TODO: change to resource.glObjectHandle or something like that */
         GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));

@@ -750,7 +750,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
          */
         shader_addline(&buffer, "gl_Position.y = gl_Position.y * posFixup[1];\n");
 
-        shader_addline(&buffer, "}\n\0");
+        shader_addline(&buffer, "}\n");
 
         TRACE("Compiling shader object %u\n", shader_obj);
         GL_EXTCALL(glShaderSourceARB(shader_obj, 1, (const char**)&buffer.buffer, NULL));
@@ -803,7 +803,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 
         shader_addline(&buffer, "MOV result.position, TMP_OUT;\n");
         
-        shader_addline(&buffer, "END\n\0"); 
+        shader_addline(&buffer, "END\n"); 
 
         /* TODO: change to resource.glObjectHandle or something like that */
         GL_EXTCALL(glGenProgramsARB(1, &This->baseShader.prgId));
