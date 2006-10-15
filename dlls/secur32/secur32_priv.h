@@ -50,8 +50,6 @@ typedef struct _SecurePackage
 typedef enum _helper_mode {
     NTLM_SERVER,
     NTLM_CLIENT,
-    NEGO_SERVER,
-    NEGO_CLIENT,
     NUM_HELPER_MODES
 } HelperMode;
 
