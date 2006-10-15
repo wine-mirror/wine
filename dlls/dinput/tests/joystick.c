@@ -123,6 +123,18 @@ static BOOL CALLBACK EnumAxes(
     return DIENUM_CONTINUE;
 }
 
+static const HRESULT SetCoop_null_window[16] =  {
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
+    E_INVALIDARG, E_HANDLE,     E_HANDLE,     E_INVALIDARG,
+    E_INVALIDARG, E_HANDLE,     S_OK,         E_INVALIDARG,
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG};
+
+static const HRESULT SetCoop_real_window[16] =  {
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
+    E_INVALIDARG, S_OK,         S_OK,         E_INVALIDARG,
+    E_INVALIDARG, S_OK,         S_OK,         E_INVALIDARG,
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG};
+
 static BOOL CALLBACK EnumJoysticks(
     LPCDIDEVICEINSTANCE lpddi,
     LPVOID pvRef)
@@ -192,6 +204,17 @@ static BOOL CALLBACK EnumJoysticks(
        DXGetErrorString8(hr));
     if (hr != DI_OK)
         goto RELEASE;
+
+    for (i=0; i<16; i++)
+    {
+        hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, NULL, i);
+        ok(hr == SetCoop_null_window[i], "SetCooperativeLevel(NULL, %d): %s\n", i, DXGetErrorString8(hr));
+    }
+    for (i=0; i<16; i++)
+    {
+        hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, hWnd, i);
+        ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %s\n", i, DXGetErrorString8(hr));
+    }
 
     hr = IDirectInputDevice_SetCooperativeLevel(pJoystick, hWnd,
                                                 DISCL_NONEXCLUSIVE | DISCL_BACKGROUND);
