@@ -223,7 +223,7 @@ static APARTMENT *apartment_construct(DWORD model)
 {
     APARTMENT *apt;
 
-    TRACE("creating new apartment, model=%ld\n", model);
+    TRACE("creating new apartment, model=%d\n", model);
 
     apt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*apt));
     apt->tid = GetCurrentThreadId();
@@ -314,7 +314,7 @@ static inline BOOL apartment_is_model(APARTMENT *apt, DWORD model)
 DWORD apartment_addref(struct apartment *apt)
 {
     DWORD refs = InterlockedIncrement(&apt->refs);
-    TRACE("%s: before = %ld\n", wine_dbgstr_longlong(apt->oxid), refs - 1);
+    TRACE("%s: before = %d\n", wine_dbgstr_longlong(apt->oxid), refs - 1);
     return refs;
 }
 
@@ -325,7 +325,7 @@ DWORD apartment_release(struct apartment *apt)
     EnterCriticalSection(&csApartment);
 
     ret = InterlockedDecrement(&apt->refs);
-    TRACE("%s: after = %ld\n", wine_dbgstr_longlong(apt->oxid), ret);
+    TRACE("%s: after = %d\n", wine_dbgstr_longlong(apt->oxid), ret);
     /* destruction stuff that needs to happen under csApartment CS */
     if (ret == 0)
     {
@@ -521,7 +521,7 @@ HRESULT apartment_createwindowifneeded(struct apartment *apt)
                                   0, 0, OLE32_hInstance, NULL);
         if (!hwnd)
         {
-            ERR("CreateWindow failed with error %ld\n", GetLastError());
+            ERR("CreateWindow failed with error %d\n", GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
         }
         if (InterlockedCompareExchangePointer((PVOID *)&apt->win, hwnd, NULL))
@@ -860,7 +860,7 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
     IMarshal *marshal;
     APARTMENT *apt;
 
-    TRACE("(%p, 0x%08lx)\n", lpUnk, reserved);
+    TRACE("(%p, 0x%08x)\n", lpUnk, reserved);
 
     hr = IUnknown_QueryInterface(lpUnk, &IID_IMarshal, (void **)&marshal);
     if (hr == S_OK)
@@ -1011,7 +1011,7 @@ HRESULT WINE_StringFromCLSID(
 	  return E_FAIL;
 	}
 
-  sprintf(idstr, "{%08lX-%04X-%04X-%02X%02X-",
+  sprintf(idstr, "{%08X-%04X-%04X-%02X%02X-",
 	  id->Data1, id->Data2, id->Data3,
 	  id->Data4[0], id->Data4[1]);
   s = &idstr[25];
@@ -1536,7 +1536,7 @@ HRESULT WINAPI CoRegisterClassObject(
   LPUNKNOWN        foundObject;
   HRESULT          hr;
 
-  TRACE("(%s,%p,0x%08lx,0x%08lx,%p)\n",
+  TRACE("(%s,%p,0x%08x,0x%08x,%p)\n",
 	debugstr_guid(rclsid),pUnk,dwClsContext,flags,lpdwRegister);
 
   if ( (lpdwRegister==0) || (pUnk==0) )
@@ -1606,7 +1606,7 @@ HRESULT WINAPI CoRegisterClassObject(
 
       hr = CreateStreamOnHGlobal(0, TRUE, &newClass->pMarshaledData);
       if (hr) {
-          FIXME("Failed to create stream on hglobal, %lx\n", hr);
+          FIXME("Failed to create stream on hglobal, %x\n", hr);
           IUnknown_Release(classfac);
           return hr;
       }
@@ -1614,7 +1614,7 @@ HRESULT WINAPI CoRegisterClassObject(
                               (LPVOID)classfac, MSHCTX_LOCAL, NULL,
                               MSHLFLAGS_TABLESTRONG);
       if (hr) {
-          FIXME("CoMarshalInterface failed, %lx!\n",hr);
+          FIXME("CoMarshalInterface failed, %x!\n",hr);
           IUnknown_Release(classfac);
           return hr;
       }
@@ -1648,7 +1648,7 @@ HRESULT WINAPI CoRevokeClassObject(
   RegisteredClass** prevClassLink;
   RegisteredClass*  curClass;
 
-  TRACE("(%08lx)\n",dwRegister);
+  TRACE("(%08x)\n",dwRegister);
 
   EnterCriticalSection( &csRegisteredClassList );
 
@@ -1861,7 +1861,7 @@ static HRESULT get_inproc_class_object(HKEY hkeydll, REFCLSID rclsid, REFIID rii
     hr = DllGetClassObject(rclsid, riid, ppv);
 
     if (hr != S_OK)
-        ERR("DllGetClassObject returned error 0x%08lx\n", hr);
+        ERR("DllGetClassObject returned error 0x%08x\n", hr);
 
     return hr;
 }
@@ -1991,7 +1991,7 @@ HRESULT WINAPI CoGetClassObject(
     }
 
     if (FAILED(hres))
-        ERR("no class object %s could be created for context 0x%lx\n",
+        ERR("no class object %s could be created for context 0x%x\n",
             debugstr_guid(rclsid), dwClsContext);
     return hres;
 }
@@ -2118,7 +2118,7 @@ HRESULT WINAPI CoCreateInstance(
   HRESULT hres;
   LPCLASSFACTORY lpclf = 0;
 
-  TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08lx, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
+  TRACE("(rclsid=%s, pUnkOuter=%p, dwClsContext=%08x, riid=%s, ppv=%p)\n", debugstr_guid(rclsid),
         pUnkOuter, dwClsContext, debugstr_guid(iid), ppv);
 
   /*
@@ -2170,7 +2170,7 @@ HRESULT WINAPI CoCreateInstance(
 	hres = IClassFactory_CreateInstance(lpclf, pUnkOuter, iid, ppv);
 	IClassFactory_Release(lpclf);
 	if(FAILED(hres))
-	  FIXME("no instance created for interface %s of class %s, hres is 0x%08lx\n",
+          FIXME("no instance created for interface %s of class %s, hres is 0x%08x\n",
 		debugstr_guid(iid), debugstr_guid(rclsid),hres);
 
 	return hres;
@@ -2442,7 +2442,7 @@ HRESULT WINAPI CoLockObjectExternal(
  */
 HRESULT WINAPI CoInitializeWOW(DWORD x,DWORD y)
 {
-    FIXME("(0x%08lx,0x%08lx),stub!\n",x,y);
+    FIXME("(0x%08x,0x%08x),stub!\n",x,y);
     return 0;
 }
 
@@ -2613,7 +2613,7 @@ HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID clsidNew)
     }
     res = CLSIDFromString(szClsidNew,clsidNew);
     if (FAILED(res))
-        ERR("Failed CLSIDFromStringA(%s), hres 0x%08lx\n", debugstr_w(szClsidNew), res);
+        ERR("Failed CLSIDFromStringA(%s), hres 0x%08x\n", debugstr_w(szClsidNew), res);
 done:
     if (hkey) RegCloseKey(hkey);
     return res;
@@ -2744,7 +2744,7 @@ HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc
                                     DWORD dwImpLevel, void* pReserved2,
                                     DWORD dwCapabilities, void* pReserved3)
 {
-  FIXME("(%p,%ld,%p,%p,%ld,%ld,%p,%ld,%p) - stub!\n", pSecDesc, cAuthSvc,
+  FIXME("(%p,%d,%p,%p,%d,%d,%p,%d,%p) - stub!\n", pSecDesc, cAuthSvc,
         asAuthSvc, pReserved1, dwAuthnLevel, dwImpLevel, pReserved2,
         dwCapabilities, pReserved3);
   return S_OK;
@@ -2866,7 +2866,7 @@ HRESULT WINAPI CoQueryProxyBlanket(IUnknown *pProxy, DWORD *pAuthnSvc,
         IClientSecurity_Release(pCliSec);
     }
 
-    if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    if (FAILED(hr)) ERR("-- failed with 0x%08x\n", hr);
     return hr;
 }
 
@@ -2911,7 +2911,7 @@ HRESULT WINAPI CoSetProxyBlanket(IUnknown *pProxy, DWORD AuthnSvc,
         IClientSecurity_Release(pCliSec);
     }
 
-    if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    if (FAILED(hr)) ERR("-- failed with 0x%08x\n", hr);
     return hr;
 }
 
@@ -2945,7 +2945,7 @@ HRESULT WINAPI CoCopyProxy(IUnknown *pProxy, IUnknown **ppCopy)
         IClientSecurity_Release(pCliSec);
     }
 
-    if (FAILED(hr)) ERR("-- failed with 0x%08lx\n", hr);
+    if (FAILED(hr)) ERR("-- failed with 0x%08x\n", hr);
     return hr;
 }
 
@@ -3134,7 +3134,7 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
     APARTMENT *apt = COM_CurrentApt();
     BOOL message_loop = apt && !apt->multi_threaded;
 
-    TRACE("(0x%08lx, 0x%08lx, %ld, %p, %p)\n", dwFlags, dwTimeout, cHandles,
+    TRACE("(0x%08x, 0x%08x, %d, %p, %p)\n", dwFlags, dwTimeout, cHandles,
         pHandles, lpdwindex);
 
     while (TRUE)
@@ -3207,12 +3207,12 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
         }
         else
         {
-            ERR("Unexpected wait termination: %ld, %ld\n", res, GetLastError());
+            ERR("Unexpected wait termination: %d, %d\n", res, GetLastError());
             hr = E_UNEXPECTED;
             break;
         }
     }
-    TRACE("-- 0x%08lx\n", hr);
+    TRACE("-- 0x%08x\n", hr);
     return hr;
 }
 
@@ -3273,7 +3273,7 @@ HRESULT WINAPI CoGetObject(LPCWSTR pszName, BIND_OPTS *pBindOptions,
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hinstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hinstDLL, fdwReason, fImpLoad);
 
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:

@@ -238,7 +238,7 @@ CompositeMonikerImpl_Load(IMoniker* iface,IStream* pStm)
         res=OleLoadFromStream(pStm,&IID_IMoniker,(void**)&This->tabMoniker[This->tabLastIndex]);
         if (FAILED(res))
         {
-            ERR("couldn't load moniker from stream, res = 0x%08lx\n", res);
+            ERR("couldn't load moniker from stream, res = 0x%08x\n", res);
             break;
         }
 
@@ -449,7 +449,7 @@ CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar
     IMoniker *tempMk,*antiMk,*mostRigthMk,*leftReducedComposedMk,*mostRigthReducedMk;
     IEnumMoniker *enumMoniker;
 
-    TRACE("(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -1250,7 +1250,7 @@ CompositeMonikerROTDataImpl_GetComparisonData(IROTData* iface,
     IMoniker *pmk;
     HRESULT hr;
 
-    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
 
     *pcbData = sizeof(CLSID);
 
@@ -1275,7 +1275,7 @@ CompositeMonikerROTDataImpl_GetComparisonData(IROTData* iface,
                 hr = S_OK;
             }
             else
-                ERR("IROTData_GetComparisonData failed with error 0x%08lx\n", hr);
+                ERR("IROTData_GetComparisonData failed with error 0x%08x\n", hr);
         }
 
         IMoniker_Release(pmk);
@@ -1313,7 +1313,7 @@ CompositeMonikerROTDataImpl_GetComparisonData(IROTData* iface,
                 cbMax -= cbData;
             }
             else
-                ERR("IROTData_GetComparisonData failed with error 0x%08lx\n", hr);
+                ERR("IROTData_GetComparisonData failed with error 0x%08x\n", hr);
         }
 
         IMoniker_Release(pmk);
@@ -1363,7 +1363,7 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_GetUnmarshalClass(
 {
     IMoniker *This = impl_from_IMarshal(iface);
 
-    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+    TRACE("(%s, %p, %x, %p, %x, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pCid);
 
     return IMoniker_GetClassID(This, pCid);
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_GetMarshalSizeMax(
     HRESULT hr;
     ULARGE_INTEGER size;
 
-    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+    TRACE("(%s, %p, %x, %p, %x, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pSize);
 
     *pSize = 0x10; /* to match native */
@@ -1421,7 +1421,7 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_MarshalInterface(LPMARSHAL ifa
     HRESULT hr;
     ULONG i = 0;
 
-    TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStm, debugstr_guid(riid), pv,
+    TRACE("(%p, %s, %p, %x, %p, %x)\n", pStm, debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags);
 
     hr = IMoniker_Enum(This, TRUE, &pEnumMk);
@@ -1442,7 +1442,7 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_MarshalInterface(LPMARSHAL ifa
     }
 
     if (i != 2)
-        FIXME("moniker count of %ld not supported\n", i);
+        FIXME("moniker count of %d not supported\n", i);
 
     IEnumMoniker_Release(pEnumMk);
 
@@ -1471,14 +1471,14 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_UnmarshalInterface(LPMARSHAL i
     hr = CoUnmarshalInterface(pStm, &IID_IMoniker, (void**)&This->tabMoniker[This->tabLastIndex]);
     if (FAILED(hr))
     {
-        ERR("couldn't unmarshal moniker, hr = 0x%08lx\n", hr);
+        ERR("couldn't unmarshal moniker, hr = 0x%08x\n", hr);
         return hr;
     }
     This->tabLastIndex++;
     hr = CoUnmarshalInterface(pStm, &IID_IMoniker, (void**)&This->tabMoniker[This->tabLastIndex]);
     if (FAILED(hr))
     {
-        ERR("couldn't unmarshal moniker, hr = 0x%08lx\n", hr);
+        ERR("couldn't unmarshal moniker, hr = 0x%08x\n", hr);
         return hr;
     }
     This->tabLastIndex++;
@@ -1496,7 +1496,7 @@ static HRESULT WINAPI CompositeMonikerMarshalImpl_ReleaseMarshalData(LPMARSHAL i
 
 static HRESULT WINAPI CompositeMonikerMarshalImpl_DisconnectObject(LPMARSHAL iface, DWORD dwReserved)
 {
-    TRACE("(0x%lx)\n", dwReserved);
+    TRACE("(0x%x)\n", dwReserved);
     /* can't disconnect a state-based marshal as nothing on server side to
      * disconnect from */
     return S_OK;

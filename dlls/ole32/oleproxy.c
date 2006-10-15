@@ -159,7 +159,7 @@ CFStub_Invoke(
 	ULONG		res;
 
 	if (msg->cbBuffer < sizeof(IID)) {
-	    FIXME("Not enough bytes in buffer (%ld)?\n",msg->cbBuffer);
+            FIXME("Not enough bytes in buffer (%d)?\n",msg->cbBuffer);
 	    return E_FAIL;
 	}
 	memcpy(&iid,msg->Buffer,sizeof(iid));
@@ -184,7 +184,7 @@ CFStub_Invoke(
 	hres = CoMarshalInterface(pStm,&iid,ppv,0,NULL,0);
 	IUnknown_Release((IUnknown*)ppv);
 	if (hres) {
-	    FIXME("CoMarshalInterface failed, %lx!\n",hres);
+            FIXME("CoMarshalInterface failed, %x!\n",hres);
 	    msg->cbBuffer = 0;
 	    return hres;
 	}
@@ -202,20 +202,20 @@ CFStub_Invoke(
 	seekto.u.LowPart = 0;seekto.u.HighPart = 0;
 	hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
 	if (hres) {
-	    FIXME("IStream_Seek failed, %lx\n",hres);
+            FIXME("IStream_Seek failed, %x\n",hres);
 	    return hres;
 	}
 	hres = IStream_Read(pStm,msg->Buffer,msg->cbBuffer,&res);
 	if (hres) {
-	    FIXME("Stream Read failed, %lx\n",hres);
+            FIXME("Stream Read failed, %x\n",hres);
 	    return hres;
 	}
 	IStream_Release(pStm);
 	return S_OK;
     }
     FIXME("(%p,%p), stub!\n",msg,chanbuf);
-    FIXME("iMethod is %ld\n",msg->iMethod);
-    FIXME("cbBuffer is %ld\n",msg->cbBuffer);
+    FIXME("iMethod is %d\n",msg->iMethod);
+    FIXME("cbBuffer is %d\n",msg->cbBuffer);
     return E_FAIL;
 }
 
@@ -375,13 +375,13 @@ static HRESULT WINAPI CFProxy_CreateInstance(
     msg.Buffer	 = NULL;
     hres = IRpcChannelBuffer_GetBuffer(This->chanbuf,&msg,&IID_IClassFactory);
     if (hres) {
-	FIXME("IRpcChannelBuffer_GetBuffer failed with %lx?\n",hres);
+	FIXME("IRpcChannelBuffer_GetBuffer failed with %x?\n",hres);
 	return hres;
     }
     memcpy(msg.Buffer,riid,sizeof(*riid));
     hres = IRpcChannelBuffer_SendReceive(This->chanbuf,&msg,&srstatus);
     if (hres) {
-	FIXME("IRpcChannelBuffer_SendReceive failed with %lx?\n",hres);
+	FIXME("IRpcChannelBuffer_SendReceive failed with %x?\n",hres);
 	return hres;
     }
 
@@ -389,12 +389,12 @@ static HRESULT WINAPI CFProxy_CreateInstance(
 	return srstatus;
 
     /* We got back: [Marshalled Interface data] */
-    TRACE("got %ld bytes data.\n",msg.cbBuffer);
+    TRACE("got %d bytes data.\n",msg.cbBuffer);
     hGlobal = GlobalAlloc(GMEM_MOVEABLE|GMEM_NODISCARD|GMEM_SHARE,msg.cbBuffer);
     memcpy(GlobalLock(hGlobal),msg.Buffer,msg.cbBuffer);
     hres = CreateStreamOnHGlobal(hGlobal,TRUE,&pStream);
     if (hres) {
-	FIXME("CreateStreamOnHGlobal failed with %lx\n",hres);
+	FIXME("CreateStreamOnHGlobal failed with %x\n",hres);
 	return hres;
     }
     hres = CoUnmarshalInterface(
@@ -404,7 +404,7 @@ static HRESULT WINAPI CFProxy_CreateInstance(
     );
     IStream_Release(pStream); /* Does GlobalFree hGlobal too. */
     if (hres) {
-	FIXME("CoMarshalInterface failed, %lx\n",hres);
+	FIXME("CoMarshalInterface failed, %x\n",hres);
 	return hres;
     }
     return S_OK;
@@ -521,7 +521,7 @@ static HRESULT WINAPI RemUnkStub_Invoke(LPRPCSTUBBUFFER iface,
   LPBYTE buf = pMsg->Buffer;
   HRESULT hr = RPC_E_INVALIDMETHOD;
 
-  TRACE("(%p)->Invoke(%p,%p) method %ld\n", This, pMsg, pChannel, iMethod);
+  TRACE("(%p)->Invoke(%p,%p) method %d\n", This, pMsg, pChannel, iMethod);
   switch (iMethod)
   {
   case 3: /* RemQueryInterface */
@@ -725,7 +725,7 @@ static HRESULT WINAPI RemUnkProxy_RemQueryInterface(LPREMUNKNOWN iface,
   HRESULT hr = S_OK;
   ULONG status;
 
-  TRACE("(%p)->(%s,%ld,%d,%p,%p)\n",This,
+  TRACE("(%p)->(%s,%d,%d,%p,%p)\n",This,
 	debugstr_guid(ripid),cRefs,cIids,iids,ppQIResults);
 
   *ppQIResults = NULL;
@@ -854,14 +854,14 @@ static HRESULT WINAPI RURpcProxyBufferImpl_QueryInterface(LPRPCPROXYBUFFER iface
 
 static ULONG WINAPI RURpcProxyBufferImpl_AddRef(LPRPCPROXYBUFFER iface) {
     ICOM_THIS_MULTI(RemUnkProxy,lpvtbl_proxy,iface);
-    TRACE("%p, %ld\n", iface, This->refs + 1);
+    TRACE("%p, %d\n", iface, This->refs + 1);
     return InterlockedIncrement(&This->refs);
 }
 
 static ULONG WINAPI RURpcProxyBufferImpl_Release(LPRPCPROXYBUFFER iface) {
     ICOM_THIS_MULTI(RemUnkProxy,lpvtbl_proxy,iface);
     ULONG ref = InterlockedDecrement(&This->refs);
-    TRACE("%p, %ld\n", iface, ref);
+    TRACE("%p, %d\n", iface, ref);
     if (!ref) {
         IRpcProxyBuffer_Disconnect(iface);
         HeapFree(GetProcessHeap(),0,This);

@@ -205,7 +205,7 @@ HRESULT WINAPI OleLoad16(
     SEGPTR		pClientSite,
     LPVOID*		ppvObj)
 {
-  FIXME("(%lx,%s,%lx,%p), stub!\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
+  FIXME("(%x,%s,%x,%p), stub!\n", pStg, debugstr_guid(riid), pClientSite, ppvObj);
   return E_NOTIMPL;
 }
 

@@ -222,7 +222,7 @@ static ULONG WINAPI IErrorInfoImpl_AddRef(
  	IErrorInfo* iface)
 {
 	ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 	return InterlockedIncrement(&This->ref);
 }
 
@@ -232,7 +232,7 @@ static ULONG WINAPI IErrorInfoImpl_Release(
 	ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
         ULONG ref = InterlockedDecrement(&This->ref);
 
-	TRACE("(%p)->(count=%lu)\n",This,ref+1);
+	TRACE("(%p)->(count=%u)\n",This,ref+1);
 
 	if (!ref)
 	{
@@ -248,7 +248,7 @@ static HRESULT WINAPI IErrorInfoImpl_GetGUID(
 	GUID * pGUID)
 {
 	ErrorInfoImpl *This = impl_from_IErrorInfo(iface);
-	TRACE("(%p)->(count=%lu)\n",This,This->ref);
+	TRACE("(%p)->(count=%u)\n",This,This->ref);
 	if(!pGUID )return E_INVALIDARG;
 	memcpy(pGUID, &This->m_Guid, sizeof(GUID));
 	return S_OK;
@@ -401,7 +401,7 @@ static HRESULT WINAPI ICreateErrorInfoImpl_SetHelpContext(
  	DWORD dwHelpContext)
 {
 	ErrorInfoImpl *This = impl_from_ICreateErrorInfo(iface);
-	TRACE("(%p,%ld)\n",This,dwHelpContext);
+	TRACE("(%p,%d)\n",This,dwHelpContext);
 	This->m_dwHelpContext = dwHelpContext;
 	return S_OK;
 }
@@ -486,7 +486,7 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **pperrinfo)
  */
 HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 {
-	TRACE("(%ld, %p, %p)\n", dwReserved, pperrinfo, COM_CurrentInfo()->errorinfo);
+	TRACE("(%d, %p, %p)\n", dwReserved, pperrinfo, COM_CurrentInfo()->errorinfo);
 
 	if(!pperrinfo) return E_INVALIDARG;
         
@@ -510,7 +510,7 @@ HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo)
 {
 	IErrorInfo * pei;
 
-	TRACE("(%ld, %p)\n", dwReserved, perrinfo);
+	TRACE("(%d, %p)\n", dwReserved, perrinfo);
 	
 	/* release old errorinfo */
 	pei = COM_CurrentInfo()->errorinfo;

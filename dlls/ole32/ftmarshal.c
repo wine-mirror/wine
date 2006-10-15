@@ -138,7 +138,7 @@ static HRESULT WINAPI
 FTMarshalImpl_GetUnmarshalClass (LPMARSHAL iface, REFIID riid, void *pv, DWORD dwDestContext,
 						void *pvDestContext, DWORD mshlflags, CLSID * pCid)
 {
-    TRACE("(%s, %p, 0x%lx, %p, 0x%lx, %p)\n", debugstr_guid(riid), pv,
+    TRACE("(%s, %p, 0x%x, %p, 0x%x, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pCid);
     if (dwDestContext == MSHCTX_INPROC || dwDestContext == MSHCTX_CROSSCTX)
         memcpy(pCid, &CLSID_InProcFreeMarshaler, sizeof(CLSID_InProcFreeMarshaler));
@@ -155,7 +155,7 @@ FTMarshalImpl_GetMarshalSizeMax (LPMARSHAL iface, REFIID riid, void *pv, DWORD d
     IMarshal *pMarshal = NULL;
     HRESULT hres;
 
-    TRACE("(%s, %p, 0x%lx, %p, 0x%lx, %p)\n", debugstr_guid(riid), pv,
+    TRACE("(%s, %p, 0x%x, %p, 0x%x, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pSize);
 
     /* if the marshalling happens inside the same process the interface pointer is
@@ -180,7 +180,7 @@ FTMarshalImpl_MarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, vo
     IMarshal *pMarshal = NULL;
     HRESULT hres;
 
-    TRACE("(%p, %s, %p, 0x%lx, %p, 0x%lx)\n", pStm, debugstr_guid(riid), pv,
+    TRACE("(%p, %s, %p, 0x%x, %p, 0x%x)\n", pStm, debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags);
 
     /* if the marshalling happens inside the same process the interface pointer is
@@ -240,7 +240,7 @@ FTMarshalImpl_UnmarshalInterface (LPMARSHAL iface, IStream * pStm, REFIID riid, 
     hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
     if (hres != S_OK) return STG_E_READFAULT;
     if (constant != 0)
-        FIXME("constant is 0x%lx instead of 0\n", constant);
+        FIXME("constant is 0x%x instead of 0\n", constant);
 
     hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
     if (hres != S_OK) return STG_E_READFAULT;
@@ -270,7 +270,7 @@ static HRESULT WINAPI FTMarshalImpl_ReleaseMarshalData (LPMARSHAL iface, IStream
     hres = IStream_Read (pStm, &constant, sizeof (constant), NULL);
     if (hres != S_OK) return STG_E_READFAULT;
     if (constant != 0)
-        FIXME("constant is 0x%lx instead of 0\n", constant);
+        FIXME("constant is 0x%x instead of 0\n", constant);
 
     hres = IStream_Read (pStm, &unknown_guid, sizeof (unknown_guid), NULL);
     if (hres != S_OK) return STG_E_READFAULT;

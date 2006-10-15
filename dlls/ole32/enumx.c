@@ -102,7 +102,7 @@ HRESULT WINAPI enumx_Next(enumx_impl *This, ULONG celt,
     unsigned char *p;
     ULONG count = 0;
 
-    TRACE("%p %lu %p\n", This, celt, pceltFetched);
+    TRACE("%p %u %p\n", This, celt, pceltFetched);
 
     if (This->current == NULL)
         This->current = list_head(&This->elements);
@@ -128,7 +128,7 @@ HRESULT WINAPI enumx_Skip(enumx_impl *This, ULONG celt)
 {
     ULONG count = 0;
 
-    TRACE("%p %lu\n", This, celt);
+    TRACE("%p %u\n", This, celt);
 
     if (This->current == NULL)
         This->current = list_head(&This->elements);

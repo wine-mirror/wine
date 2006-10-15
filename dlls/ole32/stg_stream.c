@@ -265,7 +265,7 @@ static HRESULT WINAPI StgStreamImpl_Read(
   ULONG bytesToReadFromBuffer;
   HRESULT res;
 
-  TRACE("(%p, %p, %ld, %p)\n",
+  TRACE("(%p, %p, %d, %p)\n",
 	iface, pv, cb, pcbRead);
 
   if (!This->parentStorage)
@@ -335,7 +335,7 @@ static HRESULT WINAPI StgStreamImpl_Read(
   }
 
 end:
-  TRACE("<-- %08lx\n", res);
+  TRACE("<-- %08x\n", res);
   return res;
 }
 
@@ -361,7 +361,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
   ULONG bytesWritten = 0;
   HRESULT res;
 
-  TRACE("(%p, %p, %ld, %p)\n",
+  TRACE("(%p, %p, %d, %p)\n",
 	iface, pv, cb, pcbWritten);
 
   /*
@@ -373,7 +373,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
   case STGM_READWRITE:
       break;
   default:
-      WARN("access denied by flags: 0x%lx\n", STGM_ACCESS_MODE(This->grfMode));
+      WARN("access denied by flags: 0x%x\n", STGM_ACCESS_MODE(This->grfMode));
       return STG_E_ACCESSDENIED;
   }
 
@@ -454,7 +454,7 @@ static HRESULT WINAPI StgStreamImpl_Write(
    */
   This->currentPosition.u.LowPart += *pcbWritten;
 
-  TRACE("<-- S_OK, written %lu\n", *pcbWritten);
+  TRACE("<-- S_OK, written %u\n", *pcbWritten);
   return res;
 }
 
@@ -476,7 +476,7 @@ static HRESULT WINAPI StgStreamImpl_Seek(
 
   ULARGE_INTEGER newPosition;
 
-  TRACE("(%p, %ld, %ld, %p)\n",
+  TRACE("(%p, %d, %d, %p)\n",
 	iface, dlibMove.u.LowPart, dwOrigin, plibNewPosition);
 
   /*
@@ -544,7 +544,7 @@ static HRESULT WINAPI StgStreamImpl_SetSize(
   StgProperty    curProperty;
   BOOL         Success;
 
-  TRACE("(%p, %ld)\n", iface, libNewSize.u.LowPart);
+  TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
 
   if(!This->parentStorage)
     return STG_E_REVERTED;
@@ -659,7 +659,7 @@ static HRESULT WINAPI StgStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesRead;
   ULARGE_INTEGER totalBytesWritten;
 
-  TRACE("(%p, %p, %ld, %p, %p)\n",
+  TRACE("(%p, %p, %d, %p, %p)\n",
 	iface, pstm, cb.u.LowPart, pcbRead, pcbWritten);
 
   /*
@@ -809,7 +809,7 @@ static HRESULT WINAPI StgStreamImpl_Stat(
   StgProperty    curProperty;
   BOOL         readSuccessful;
 
-  TRACE("%p %p %ld\n", This, pstatstg, grfStatFlag);
+  TRACE("%p %p %d\n", This, pstatstg, grfStatFlag);
 
   /*
    * if stream has no parent, return STG_E_REVERTED

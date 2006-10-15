@@ -289,7 +289,7 @@ static HRESULT WINAPI ClassMoniker_Reduce(IMoniker* iface,
                                       IMoniker** ppmkToLeft,
                                       IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if (!ppmkReduced)
         return E_POINTER;
@@ -637,7 +637,7 @@ static HRESULT WINAPI ClassMonikerROTData_GetComparaisonData(IROTData* iface,
 {
     ClassMoniker *This = (ClassMoniker *)impl_from_IROTData(iface);
 
-    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
 
     *pcbData = 2*sizeof(CLSID);
     if (cbMax < *pcbData)

@@ -353,12 +353,12 @@ STORAGE_get_big_block(stream_access16 *str,int n,BYTE *block)
 	if ((SetFilePointer( str->hf, (n+1)*BIGSIZE, NULL,
 			     SEEK_SET ) == INVALID_SET_FILE_POINTER) && GetLastError())
 	{
-	    WARN("(%p,%d,%p), seek failed (%ld)\n",str->hf, n, block, GetLastError());
+            WARN("(%p,%d,%p), seek failed (%d)\n",str->hf, n, block, GetLastError());
 	    return FALSE;
 	}
 	if (!ReadFile( str->hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE)
 	{
-	    WARN("(hf=%p, block size %d): read didn't read (%ld)\n",str->hf,n,GetLastError());
+            WARN("(hf=%p, block size %d): read didn't read (%d)\n",str->hf,n,GetLastError());
 	    return FALSE;
 	}
     } else {
@@ -382,7 +382,7 @@ STORAGE_get_big_block(stream_access16 *str,int n,BYTE *block)
 	    (LPVOID)args,
 	    (LPDWORD)&hres
 	)) {
-	    ERR("CallTo16 ILockBytes16::ReadAt() failed, hres %lx\n",hres);
+            ERR("CallTo16 ILockBytes16::ReadAt() failed, hres %x\n",hres);
 	    return FALSE;
 	}
 	memcpy(block, MapSL(args[3]), BIGSIZE);
@@ -414,7 +414,7 @@ _ilockbytes16_writeat(SEGPTR lockbytes, DWORD offset, DWORD length, void *buffer
 	(LPVOID)args,
 	(LPDWORD)&hres
     )) {
-	ERR("CallTo16 ILockBytes16::WriteAt() failed, hres %lx\n",hres);
+	ERR("CallTo16 ILockBytes16::WriteAt() failed, hres %x\n",hres);
 	return FALSE;
     }
     UnMapLS(args[3]);
@@ -434,12 +434,12 @@ STORAGE_put_big_block(stream_access16 *str,int n,BYTE *block)
 	if ((SetFilePointer( str->hf, (n+1)*BIGSIZE, NULL,
 			     SEEK_SET ) == INVALID_SET_FILE_POINTER) && GetLastError())
 	{
-	    WARN("seek failed (%ld)\n",GetLastError());
+            WARN("seek failed (%d)\n",GetLastError());
 	    return FALSE;
 	}
 	if (!WriteFile( str->hf, block, BIGSIZE, &result, NULL ) || result != BIGSIZE)
 	{
-	    WARN(" write failed (%ld)\n",GetLastError());
+            WARN(" write failed (%d)\n",GetLastError());
 	    return FALSE;
 	}
 	return TRUE;
@@ -719,9 +719,9 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
 		return;
 	DPRINTF("name: %s\n",name);
 	DPRINTF("type: %d\n",stde->pps_type);
-	DPRINTF("prev pps: %ld\n",stde->pps_prev);
-	DPRINTF("next pps: %ld\n",stde->pps_next);
-	DPRINTF("dir pps: %ld\n",stde->pps_dir);
+	DPRINTF("prev pps: %d\n",stde->pps_prev);
+	DPRINTF("next pps: %d\n",stde->pps_next);
+	DPRINTF("dir pps: %d\n",stde->pps_dir);
 	DPRINTF("guid: %s\n",debugstr_guid(&(stde->pps_guid)));
 	if (stde->pps_type !=2) {
 		time_t	t;
@@ -733,8 +733,8 @@ STORAGE_dump_pps_entry(struct storage_pps_entry *stde) {
                 t = dw;
 		DPRINTF("ts2: %s\n",ctime(&t));
 	}
-	DPRINTF("startblock: %ld\n",stde->pps_sb);
-	DPRINTF("size: %ld\n",stde->pps_size);
+	DPRINTF("startblock: %d\n",stde->pps_sb);
+	DPRINTF("size: %d\n",stde->pps_size);
 }
 
 /******************************************************************************
@@ -1107,7 +1107,7 @@ _ilockbytes16_addref(SEGPTR lockbytes) {
 	(LPVOID)args,
 	(LPDWORD)&hres
     ))
-	ERR("CallTo16 ILockBytes16::AddRef() failed, hres %lx\n",hres);
+	ERR("CallTo16 ILockBytes16::AddRef() failed, hres %x\n",hres);
 }
 
 static void
@@ -1125,7 +1125,7 @@ _ilockbytes16_release(SEGPTR lockbytes) {
 	(LPVOID)args,
 	(LPDWORD)&hres
     ))
-	ERR("CallTo16 ILockBytes16::Release() failed, hres %lx\n",hres);
+	ERR("CallTo16 ILockBytes16::Release() failed, hres %x\n",hres);
 }
 
 static void
@@ -1143,7 +1143,7 @@ _ilockbytes16_flush(SEGPTR lockbytes) {
 	(LPVOID)args,
 	(LPDWORD)&hres
     ))
-	ERR("CallTo16 ILockBytes16::Flush() failed, hres %lx\n",hres);
+	ERR("CallTo16 ILockBytes16::Flush() failed, hres %x\n",hres);
 }
 
 /******************************************************************************
@@ -1180,7 +1180,7 @@ HRESULT CDECL IStream16_fnSeek(
 	IStream16* iface,LARGE_INTEGER offset,DWORD whence,ULARGE_INTEGER *newpos
 ) {
 	IStream16Impl *This = (IStream16Impl *)iface;
-	TRACE_(relay)("(%p)->([%ld.%ld],%ld,%p)\n",This,offset.u.HighPart,offset.u.LowPart,whence,newpos);
+	TRACE_(relay)("(%p)->([%d.%d],%d,%p)\n",This,offset.u.HighPart,offset.u.LowPart,whence,newpos);
 
 	switch (whence) {
 	/* unix SEEK_xx should be the same as win95 ones */
@@ -1229,7 +1229,7 @@ HRESULT CDECL IStream16_fnRead(
 	int	blocknr;
 	LPBYTE	pbv = pv;
 
-	TRACE_(relay)("(%p)->(%p,%ld,%p)\n",This,pv,cb,pcbRead);
+	TRACE_(relay)("(%p)->(%p,%d,%p)\n",This,pv,cb,pcbRead);
 	if (!pcbRead) bytesread=&xxread;
 	*bytesread = 0;
 
@@ -1294,7 +1294,7 @@ HRESULT CDECL IStream16_fnWrite(
 	if (!pcbWrite) byteswritten=&xxwritten;
 	*byteswritten = 0;
 
-	TRACE_(relay)("(%p)->(%p,%ld,%p)\n",This,pv,cb,pcbWrite);
+	TRACE_(relay)("(%p)->(%p,%d,%p)\n",This,pv,cb,pcbWrite);
 	/* do we need to junk some blocks? */
 	newsize	= This->offset.u.LowPart+cb;
 	oldsize	= This->stde.pps_size;
@@ -1714,7 +1714,7 @@ HRESULT CDECL IStorage16_fnStat(
         DWORD len = WideCharToMultiByte( CP_ACP, 0, This->stde.pps_rawname, -1, NULL, 0, NULL, NULL );
         LPSTR nameA = HeapAlloc( GetProcessHeap(), 0, len );
 
-	TRACE("(%p)->(%p,0x%08lx)\n",
+	TRACE("(%p)->(%p,0x%08x)\n",
 		This,pstatstg,grfStatFlag
 	);
         WideCharToMultiByte( CP_ACP, 0, This->stde.pps_rawname, -1, nameA, len, NULL, NULL );
@@ -1739,7 +1739,7 @@ HRESULT CDECL IStorage16_fnCommit(
         LPSTORAGE16 iface,DWORD commitflags
 ) {
 	IStorage16Impl *This = (IStorage16Impl *)iface;
-	FIXME("(%p)->(0x%08lx),STUB!\n",
+	FIXME("(%p)->(0x%08x),STUB!\n",
 		This,commitflags
 	);
 	return S_OK;
@@ -1750,7 +1750,7 @@ HRESULT CDECL IStorage16_fnCommit(
  */
 HRESULT CDECL IStorage16_fnCopyTo(LPSTORAGE16 iface,DWORD ciidExclude,const IID *rgiidExclude,SNB16 SNB16Exclude,IStorage16 *pstgDest) {
 	IStorage16Impl *This = (IStorage16Impl *)iface;
-	FIXME("IStorage16(%p)->(0x%08lx,%s,%p,%p),stub!\n",
+	FIXME("IStorage16(%p)->(0x%08x,%s,%p,%p),stub!\n",
 		This,ciidExclude,debugstr_guid(rgiidExclude),SNB16Exclude,pstgDest
 	);
 	return S_OK;
@@ -1772,7 +1772,7 @@ HRESULT CDECL IStorage16_fnCreateStorage(
 	int	 nPPSEntries;
 
 	READ_HEADER(&This->str);
-	TRACE("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%p)->(%s,0x%08x,0x%08x,0x%08x,%p)\n",
 		This,pwcsName,grfMode,dwStgFormat,reserved2,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
@@ -1839,7 +1839,7 @@ HRESULT CDECL IStorage16_fnCreateStream(
 	BOOL ret;
 	int	 nPPSEntries;
 
-	TRACE("(%p)->(%s,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%p)->(%s,0x%08x,0x%08x,0x%08x,%p)\n",
 		This,pwcsName,grfMode,reserved1,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
@@ -1901,7 +1901,7 @@ HRESULT CDECL IStorage16_fnOpenStorage(
 	WCHAR		name[33];
 	int		newpps;
 
-	TRACE("(%p)->(%s,%p,0x%08lx,%p,0x%08lx,%p)\n",
+	TRACE("(%p)->(%s,%p,0x%08x,%p,0x%08x,%p)\n",
 		This,pwcsName,pstgPrio,grfMode,snbExclude,reserved,ppstg
 	);
 	if (grfMode & STGM_TRANSACTED)
@@ -1941,7 +1941,7 @@ HRESULT CDECL IStorage16_fnOpenStream(
 	WCHAR		name[33];
 	int		newpps;
 
-	TRACE("(%p)->(%s,%p,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%p)->(%s,%p,0x%08x,0x%08x,%p)\n",
 		This,pwcsName,reserved1,grfMode,reserved2,ppstm
 	);
 	if (grfMode & STGM_TRANSACTED)
@@ -2052,13 +2052,13 @@ HRESULT WINAPI StgCreateDocFile16(
 	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
 
-	TRACE("(%s,0x%08lx,0x%08lx,%p)\n",
+	TRACE("(%s,0x%08x,0x%08x,%p)\n",
 		pwcsName,grfMode,reserved,ppstgOpen
 	);
 	_create_istorage16(ppstgOpen);
 	hf = CreateFileA(pwcsName,GENERIC_READ|GENERIC_WRITE,0,NULL,CREATE_NEW,0,0);
 	if (hf==INVALID_HANDLE_VALUE) {
-		WARN("couldn't open file for storage:%ld\n",GetLastError());
+		WARN("couldn't open file for storage:%d\n",GetLastError());
 		return E_FAIL;
 	}
 	lpstg = MapSL((SEGPTR)*ppstgOpen);
@@ -2113,7 +2113,7 @@ HRESULT WINAPI StgOpenStorage16(
 	IStorage16Impl*	lpstg;
 	struct storage_pps_entry	stde;
 
-	TRACE("(%s,%p,0x%08lx,%p,%ld,%p)\n",
+	TRACE("(%s,%p,0x%08x,%p,%d,%p)\n",
               pwcsName,pstgPriority,grfMode,snbExclude,reserved,ppstgOpen
 	);
 	_create_istorage16(ppstgOpen);
@@ -2168,7 +2168,7 @@ HRESULT WINAPI StgIsStorageILockBytes16(SEGPTR plkbyt)
       (LPVOID)args,
       (LPDWORD)&hres
   )) {
-      ERR("CallTo16 ILockBytes16::ReadAt() failed, hres %lx\n",hres);
+      ERR("CallTo16 ILockBytes16::ReadAt() failed, hres %x\n",hres);
       return hres;
   }
   if (memcmp(MapSL(args[3]), STORAGE_magic, sizeof(STORAGE_magic)) == 0) {
@@ -2194,7 +2194,7 @@ HRESULT WINAPI StgOpenStorageOnILockBytes16(
 	int i,ret;
 	struct storage_pps_entry	stde;
 
-	FIXME("(%lx, %p, 0x%08lx, %d, %lx, %p)\n", plkbyt, pstgPriority, grfMode, (int)snbExclude, reserved, ppstgOpen);
+	FIXME("(%x, %p, 0x%08x, %d, %x, %p)\n", plkbyt, pstgPriority, grfMode, (int)snbExclude, reserved, ppstgOpen);
 	if ((plkbyt == 0) || (ppstgOpen == 0))
 		return STG_E_INVALIDPOINTER;
 
@@ -2241,7 +2241,7 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 	HRESULT	hres;
 	DWORD args[3];
 
-	TRACE("(%lx, %p)\n", pstg, pclsid);
+	TRACE("(%x, %p)\n", pstg, pclsid);
 
 	if(pclsid==NULL)
 		return E_POINTER;
@@ -2262,7 +2262,7 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 	    (LPDWORD)&hres
 	)) {
 	    WOWGlobalUnlockFree16(args[1]);
-	    ERR("CallTo16 IStorage16::Stat() failed, hres %lx\n",hres);
+            ERR("CallTo16 IStorage16::Stat() failed, hres %x\n",hres);
 	    return hres;
 	}
 	memcpy(&statstg, MapSL(args[1]), sizeof(STATSTG16));

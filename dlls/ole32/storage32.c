@@ -319,7 +319,7 @@ static ULONG WINAPI StorageBaseImpl_AddRef(
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p) AddRef to %ld\n", This, ref);
+  TRACE("(%p) AddRef to %d\n", This, ref);
 
   return ref;
 }
@@ -341,7 +341,7 @@ static ULONG WINAPI StorageBaseImpl_Release(
    */
   ULONG ref = InterlockedDecrement(&This->ref);
 
-  TRACE("(%p) ReleaseRef to %ld\n", This, ref);
+  TRACE("(%p) ReleaseRef to %d\n", This, ref);
 
   /*
    * If the reference count goes down to 0, perform suicide.
@@ -381,7 +381,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
   ULONG             foundPropertyIndex;
   HRESULT           res = STG_E_UNKNOWN;
 
-  TRACE("(%p, %s, %p, %lx, %ld, %p)\n",
+  TRACE("(%p, %s, %p, %x, %d, %p)\n",
 	iface, debugstr_w(pwcsName), reserved1, grfMode, reserved2, ppstm);
 
   /*
@@ -487,7 +487,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
 end:
   if (res == S_OK)
     TRACE("<-- IStream %p\n", *ppstm);
-  TRACE("<-- %08lx\n", res);
+  TRACE("<-- %08x\n", res);
   return res;
 }
 
@@ -514,7 +514,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   ULONG                  foundPropertyIndex;
   HRESULT                res = STG_E_UNKNOWN;
 
-  TRACE("(%p, %s, %p, %lx, %p, %ld, %p)\n",
+  TRACE("(%p, %s, %p, %x, %p, %d, %p)\n",
 	iface, debugstr_w(pwcsName), pstgPriority,
 	grfMode, snbExclude, reserved, ppstg);
 
@@ -626,7 +626,7 @@ static HRESULT WINAPI StorageBaseImpl_OpenStorage(
   res = STG_E_FILENOTFOUND;
 
 end:
-  TRACE("<-- %08lx\n", res);
+  TRACE("<-- %08x\n", res);
   return res;
 }
 
@@ -648,7 +648,7 @@ static HRESULT WINAPI StorageBaseImpl_EnumElements(
   StorageBaseImpl *This = (StorageBaseImpl *)iface;
   IEnumSTATSTGImpl* newEnum;
 
-  TRACE("(%p, %ld, %p, %ld, %p)\n",
+  TRACE("(%p, %d, %p, %d, %p)\n",
 	iface, reserved1, reserved2, reserved3, ppenum);
 
   /*
@@ -697,7 +697,7 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
   BOOL           readSuccessful;
   HRESULT        res = STG_E_UNKNOWN;
 
-  TRACE("(%p, %p, %lx)\n",
+  TRACE("(%p, %p, %x)\n",
 	iface, pstatstg, grfStatFlag);
 
   /*
@@ -735,9 +735,9 @@ static HRESULT WINAPI StorageBaseImpl_Stat(
 end:
   if (res == S_OK)
   {
-    TRACE("<-- STATSTG: pwcsName: %s, type: %ld, cbSize.Low/High: %ld/%ld, grfMode: %08lx, grfLocksSupported: %ld, grfStateBits: %08lx\n", debugstr_w(pstatstg->pwcsName), pstatstg->type, pstatstg->cbSize.u.LowPart, pstatstg->cbSize.u.HighPart, pstatstg->grfMode, pstatstg->grfLocksSupported, pstatstg->grfStateBits);
+    TRACE("<-- STATSTG: pwcsName: %s, type: %d, cbSize.Low/High: %d/%d, grfMode: %08x, grfLocksSupported: %d, grfStateBits: %08x\n", debugstr_w(pstatstg->pwcsName), pstatstg->type, pstatstg->cbSize.u.LowPart, pstatstg->cbSize.u.HighPart, pstatstg->grfMode, pstatstg->grfLocksSupported, pstatstg->grfStateBits);
   }
-  TRACE("<-- %08lx\n", res);
+  TRACE("<-- %08x\n", res);
   return res;
 }
 
@@ -921,7 +921,7 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
   StgProperty       currentProperty, newStreamProperty;
   ULONG             foundPropertyIndex, newPropertyIndex;
 
-  TRACE("(%p, %s, %lx, %ld, %ld, %p)\n",
+  TRACE("(%p, %s, %x, %d, %d, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
 	reserved1, reserved2, ppstm);
 
@@ -1141,7 +1141,7 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   ULONG            newPropertyIndex;
   HRESULT          hr;
 
-  TRACE("(%p, %s, %lx, %ld, %ld, %p)\n",
+  TRACE("(%p, %s, %x, %d, %d, %p)\n",
 	iface, debugstr_w(pwcsName), grfMode,
 	reserved1, reserved2, ppstg);
 
@@ -1165,7 +1165,7 @@ static HRESULT WINAPI StorageImpl_CreateStorage(
   if ( FAILED( validateSTGM(grfMode) ) ||
        (grfMode & STGM_DELETEONRELEASE) )
   {
-    WARN("bad grfMode: 0x%lx\n", grfMode);
+    WARN("bad grfMode: 0x%x\n", grfMode);
     return STG_E_INVALIDFLAG;
   }
 
@@ -1539,7 +1539,7 @@ static HRESULT WINAPI StorageImpl_CopyTo(
   if ((ciidExclude != 0) || (rgiidExclude != NULL) || (snbExclude != NULL))
     FIXME("Exclude option not implemented\n");
 
-  TRACE("(%p, %ld, %p, %p, %p)\n",
+  TRACE("(%p, %d, %p, %p, %p)\n",
 	iface, ciidExclude, rgiidExclude,
 	snbExclude, pstgDest);
 
@@ -1673,7 +1673,7 @@ static HRESULT WINAPI StorageImpl_CopyTo(
     }
     else
     {
-      WARN("unknown element type: %ld\n", curElement.type);
+      WARN("unknown element type: %d\n", curElement.type);
     }
 
   } while (hr == S_OK);
@@ -1696,7 +1696,7 @@ static HRESULT WINAPI StorageImpl_MoveElementTo(
   const OLECHAR *pwcsNewName,/* [string][in] */
   DWORD           grfFlags)    /* [in] */
 {
-  FIXME("(%p %s %p %s %lu): stub\n", iface,
+  FIXME("(%p %s %p %s %u): stub\n", iface,
          debugstr_w(pwcsName), pstgDest,
          debugstr_w(pwcsNewName), grfFlags);
   return E_NOTIMPL;
@@ -1716,7 +1716,7 @@ static HRESULT WINAPI StorageImpl_Commit(
   IStorage*   iface,
   DWORD         grfCommitFlags)/* [in] */
 {
-  FIXME("(%p %ld): stub\n", iface, grfCommitFlags);
+  FIXME("(%p %d): stub\n", iface, grfCommitFlags);
   return S_OK;
 }
 
@@ -2942,7 +2942,7 @@ static HRESULT StorageImpl_GetNextBlockInChain(
 
   if(depotBlockCount >= This->bigBlockDepotCount)
   {
-    WARN("depotBlockCount %ld, bigBlockDepotCount %ld\n", depotBlockCount,
+    WARN("depotBlockCount %d, bigBlockDepotCount %d\n", depotBlockCount,
 	 This->bigBlockDepotCount);
     return STG_E_READFAULT;
   }
@@ -3620,7 +3620,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 
   if (FAILED(resRead) || FAILED(resWrite))
   {
-    ERR("conversion failed: resRead = 0x%08lx, resWrite = 0x%08lx\n", resRead, resWrite);
+    ERR("conversion failed: resRead = 0x%08x, resWrite = 0x%08x\n", resRead, resWrite);
     BlockChainStream_Destroy(bbTempChain);
     return NULL;
   }
@@ -5686,7 +5686,7 @@ HRESULT WINAPI StgCreateDocfile(
   DWORD          fileAttributes;
   WCHAR          tempFileName[MAX_PATH];
 
-  TRACE("(%s, %lx, %ld, %p)\n",
+  TRACE("(%s, %x, %d, %p)\n",
 	debugstr_w(pwcsName), grfMode,
 	reserved, ppstgOpen);
 
@@ -5827,7 +5827,7 @@ HRESULT WINAPI StgCreateDocfile(
          (REFIID)&IID_IStorage,
          (void**)ppstgOpen);
 end:
-  TRACE("<-- %p  r = %08lx\n", *ppstgOpen, hr);
+  TRACE("<-- %p  r = %08x\n", *ppstgOpen, hr);
 
   return hr;
 }
@@ -5837,7 +5837,7 @@ end:
  */
 HRESULT WINAPI StgCreateStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgfmt, DWORD grfAttrs, STGOPTIONS* pStgOptions, void* reserved, REFIID riid, void** ppObjectOpen)
 {
-    TRACE("(%s, %lx, %lx, %lx, %p, %p, %p, %p)\n", debugstr_w(pwcsName),
+    TRACE("(%s, %x, %x, %x, %p, %p, %p, %p)\n", debugstr_w(pwcsName),
           grfMode, stgfmt, grfAttrs, pStgOptions, reserved, riid, ppObjectOpen);
 
     if (stgfmt != STGFMT_FILE && grfAttrs != 0)
@@ -5876,7 +5876,7 @@ HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved,
 {
     HRESULT hr;
 
-    TRACE("(%p, 0x%lx, %p)\n", pstg, reserved, ppPropSetStg);
+    TRACE("(%p, 0x%x, %p)\n", pstg, reserved, ppPropSetStg);
     if (reserved)
         hr = STG_E_INVALIDPARAMETER;
     else
@@ -5890,7 +5890,7 @@ HRESULT WINAPI StgCreatePropSetStg(IStorage *pstg, DWORD reserved,
  */
 HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcsName, DWORD grfMode, DWORD stgfmt, DWORD grfAttrs, STGOPTIONS* pStgOptions, void* reserved, REFIID riid, void** ppObjectOpen)
 {
-    TRACE("(%s, %lx, %lx, %lx, %p, %p, %p, %p)\n", debugstr_w(pwcsName),
+    TRACE("(%s, %x, %x, %x, %p, %p, %p, %p)\n", debugstr_w(pwcsName),
           grfMode, stgfmt, grfAttrs, pStgOptions, reserved, riid, ppObjectOpen);
 
     if (stgfmt != STGFMT_DOCFILE && grfAttrs != 0)
@@ -5948,7 +5948,7 @@ HRESULT WINAPI StgOpenStorage(
   WCHAR          fullname[MAX_PATH];
   BOOL           newFile;
 
-  TRACE("(%s, %p, %lx, %p, %ld, %p)\n",
+  TRACE("(%s, %p, %x, %p, %d, %p)\n",
 	debugstr_w(pwcsName), pstgPriority, grfMode,
 	snbExclude, reserved, ppstgOpen);
 
@@ -6144,7 +6144,7 @@ HRESULT WINAPI StgOpenStorage(
          (void**)ppstgOpen);
 
 end:
-  TRACE("<-- %08lx, IStorage %p\n", hr, ppstgOpen ? *ppstgOpen : NULL);
+  TRACE("<-- %08x, IStorage %p\n", hr, ppstgOpen ? *ppstgOpen : NULL);
   return hr;
 }
 
@@ -6463,7 +6463,7 @@ static HRESULT validateSTGM(DWORD stgm)
 
   if (stgm&~STGM_KNOWN_FLAGS)
   {
-    ERR("unknown flags %08lx\n", stgm);
+    ERR("unknown flags %08x\n", stgm);
     return E_FAIL;
   }
 
@@ -7061,7 +7061,7 @@ static HRESULT STREAM_ReadString( IStream *stm, LPWSTR *string )
     if( count != sizeof(len) )
         return E_OUTOFMEMORY;
 
-    TRACE("%ld bytes\n",len);
+    TRACE("%d bytes\n",len);
     
     str = CoTaskMemAlloc( len );
     if( !str )
@@ -7193,7 +7193,7 @@ HRESULT WINAPI ReadFmtUserTypeStg (LPSTORAGE pstg, CLIPFORMAT* pcf, LPOLESTR* lp
                     STGM_READ | STGM_SHARE_EXCLUSIVE, 0, &stm );
     if( FAILED ( r ) )
     {
-        WARN("Failed to open stream r = %08lx\n", r);
+        WARN("Failed to open stream r = %08x\n", r);
         return r;
     }
 

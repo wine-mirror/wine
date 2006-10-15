@@ -143,7 +143,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer
     hr = IMoniker_QueryInterface(pMoniker, &IID_IROTData, (void *)&pROTData);
     if (hr != S_OK)
     {
-        ERR("Failed to query moniker for IROTData interface, hr = 0x%08lx\n", hr);
+        ERR("Failed to query moniker for IROTData interface, hr = 0x%08x\n", hr);
         return hr;
     }
     IROTData_GetComparisonData(pROTData, NULL, 0, &size);
@@ -152,7 +152,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer
     hr = IROTData_GetComparisonData(pROTData, (*moniker_data)->abData, size, &size);
     if (hr != S_OK)
     {
-        ERR("Failed to copy comparison data into buffer, hr = 0x%08lx\n", hr);
+        ERR("Failed to copy comparison data into buffer, hr = 0x%08x\n", hr);
         HeapFree(GetProcessHeap(), 0, *moniker_data);
         return hr;
     }
@@ -280,7 +280,7 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
     IStream *pStream = NULL;
     DWORD mshlflags;
 
-    TRACE("(%p,%ld,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
+    TRACE("(%p,%d,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
 
     /*
      * there's only two types of register : strong and or weak registration
@@ -290,7 +290,7 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
          (!(grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) ||  (grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
          (grfFlags) )
     {
-        ERR("Invalid combination of ROTFLAGS: %lx\n", grfFlags);
+        ERR("Invalid combination of ROTFLAGS: %x\n", grfFlags);
         return E_INVALIDARG;
     }
 
@@ -404,7 +404,7 @@ RunningObjectTableImpl_Revoke( IRunningObjectTable* iface, DWORD dwRegister)
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
     struct rot_entry *rot_entry;
 
-    TRACE("(%p,%ld)\n",This,dwRegister);
+    TRACE("(%p,%d)\n",This,dwRegister);
 
     EnterCriticalSection(&This->lock);
     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
@@ -535,7 +535,7 @@ RunningObjectTableImpl_NoteChangeTime(IRunningObjectTable* iface,
     RunningObjectTableImpl *This = (RunningObjectTableImpl *)iface;
     struct rot_entry *rot_entry;
 
-    TRACE("(%p,%ld,%p)\n",This,dwRegister,pfiletime);
+    TRACE("(%p,%d,%p)\n",This,dwRegister,pfiletime);
 
     EnterCriticalSection(&This->lock);
     LIST_FOR_EACH_ENTRY(rot_entry, &This->rot, struct rot_entry, entry)
@@ -832,7 +832,7 @@ static HRESULT   WINAPI EnumMonikerImpl_Next(IEnumMoniker* iface, ULONG celt, IM
     EnumMonikerImpl *This = (EnumMonikerImpl *)iface;
     HRESULT hr = S_OK;
 
-    TRACE("(%p) TabCurrentPos %ld Tablastindx %ld\n", This, This->pos, This->moniker_count);
+    TRACE("(%p) TabCurrentPos %d Tablastindx %d\n", This, This->pos, This->moniker_count);
 
     /* retrieve the requested number of moniker from the current position */
     for(i = 0; (This->pos < This->moniker_count) && (i < celt); i++)
@@ -1037,7 +1037,7 @@ static HRESULT WINAPI MonikerMarshal_GetUnmarshalClass(
 {
     MonikerMarshal *This = impl_from_IMarshal(iface);
 
-    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+    TRACE("(%s, %p, %x, %p, %x, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pCid);
 
     return IMoniker_GetClassID(This->moniker, pCid);
@@ -1051,7 +1051,7 @@ static HRESULT WINAPI MonikerMarshal_GetMarshalSizeMax(
     HRESULT hr;
     ULARGE_INTEGER size;
 
-    TRACE("(%s, %p, %lx, %p, %lx, %p)\n", debugstr_guid(riid), pv,
+    TRACE("(%s, %p, %x, %p, %x, %p)\n", debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags, pSize);
 
     hr = IMoniker_GetSizeMax(This->moniker, &size);
@@ -1066,7 +1066,7 @@ static HRESULT WINAPI MonikerMarshal_MarshalInterface(LPMARSHAL iface, IStream *
 {
     MonikerMarshal *This = impl_from_IMarshal(iface);
 
-    TRACE("(%p, %s, %p, %lx, %p, %lx)\n", pStm, debugstr_guid(riid), pv,
+    TRACE("(%p, %s, %p, %x, %p, %x)\n", pStm, debugstr_guid(riid), pv,
         dwDestContext, pvDestContext, mshlflags);
 
     return IMoniker_Save(This->moniker, pStm, FALSE);

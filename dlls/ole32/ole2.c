@@ -283,7 +283,7 @@ void WINAPI OleUninitialize(void)
  *		OleInitializeWOW	[OLE32.@]
  */
 HRESULT WINAPI OleInitializeWOW(DWORD x, DWORD y) {
-        FIXME("(0x%08lx, 0x%08lx),stub!\n",x, y);
+        FIXME("(0x%08x, 0x%08x),stub!\n",x, y);
         return 0;
 }
 
@@ -385,12 +385,12 @@ HRESULT WINAPI OleRegGetUserType(
   /*
    * Build the key name we're looking for
    */
-  sprintf( keyName, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
+  sprintf( keyName, "CLSID\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
            clsid->Data1, clsid->Data2, clsid->Data3,
            clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
            clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
 
-  TRACE("(%s, %ld, %p)\n", keyName, dwFormOfType, pszUserType);
+  TRACE("(%s, %d, %p)\n", keyName, dwFormOfType, pszUserType);
 
   /*
    * Open the class id Key
@@ -602,12 +602,12 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Build the key name we're looking for
    */
-  sprintf( keyName, "CLSID\\{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
+  sprintf( keyName, "CLSID\\{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\\",
            clsid->Data1, clsid->Data2, clsid->Data3,
            clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
            clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
 
-  TRACE("(%s, %ld, %p)\n", keyName, dwAspect, pdwStatus);
+  TRACE("(%s, %d, %p)\n", keyName, dwAspect, pdwStatus);
 
   /*
    * Open the class id Key
@@ -641,7 +641,7 @@ HRESULT WINAPI OleRegGetMiscStatus(
   /*
    * Open the key specific to the requested aspect.
    */
-  sprintf(keyName, "%ld", dwAspect);
+  sprintf(keyName, "%d", dwAspect);
 
   result = RegOpenKeyA(miscStatusKey,
 		       keyName,
@@ -716,7 +716,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
     EnumOLEVERB *This = (EnumOLEVERB *)iface;
     HRESULT hr = S_OK;
 
-    TRACE("(%ld, %p, %p)\n", celt, rgelt, pceltFetched);
+    TRACE("(%d, %p, %p)\n", celt, rgelt, pceltFetched);
 
     if (pceltFetched)
         *pceltFetched = 0;
@@ -736,14 +736,14 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         }
         else if (res != ERROR_SUCCESS)
         {
-            ERR("RegEnumKeyW failed with error %ld\n", res);
+            ERR("RegEnumKeyW failed with error %d\n", res);
             hr = REGDB_E_READREGDB;
             break;
         }
         res = RegQueryValueW(This->hkeyVerb, wszSubKey, NULL, &cbData);
         if (res != ERROR_SUCCESS)
         {
-            ERR("RegQueryValueW failed with error %ld\n", res);
+            ERR("RegQueryValueW failed with error %d\n", res);
             hr = REGDB_E_READREGDB;
             break;
         }
@@ -756,7 +756,7 @@ static HRESULT WINAPI EnumOLEVERB_Next(
         res = RegQueryValueW(This->hkeyVerb, wszSubKey, pwszOLEVERB, &cbData);
         if (res != ERROR_SUCCESS)
         {
-            ERR("RegQueryValueW failed with error %ld\n", res);
+            ERR("RegQueryValueW failed with error %d\n", res);
             hr = REGDB_E_READREGDB;
             CoTaskMemFree(pwszOLEVERB);
             break;
@@ -802,7 +802,7 @@ static HRESULT WINAPI EnumOLEVERB_Skip(
 {
     EnumOLEVERB *This = (EnumOLEVERB *)iface;
 
-    TRACE("(%ld)\n", celt);
+    TRACE("(%d)\n", celt);
 
     This->index += celt;
     return S_OK;
@@ -891,7 +891,7 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
         else if (res == REGDB_E_KEYMISSING)
             ERR("no Verbs key for class %s\n", debugstr_guid(clsid));
         else
-            ERR("failed to open Verbs key for CLSID %s with error %ld\n",
+            ERR("failed to open Verbs key for CLSID %s with error %d\n",
                 debugstr_guid(clsid), res);
         return res;
     }
@@ -900,7 +900,7 @@ HRESULT WINAPI OleRegEnumVerbs (REFCLSID clsid, LPENUMOLEVERB* ppenum)
                           NULL, NULL, NULL, NULL, NULL, NULL);
     if (res != ERROR_SUCCESS)
     {
-        ERR("failed to get subkey count with error %ld\n", GetLastError());
+        ERR("failed to get subkey count with error %d\n", GetLastError());
         return REGDB_E_READREGDB;
     }
 
@@ -2358,7 +2358,7 @@ HRESULT WINAPI OleCreate(
         {
             TRACE("trying to set stg %p\n", pStg);
             hres = IPersistStorage_InitNew(pPS, pStg);
-            TRACE("-- result 0x%08lx\n", hres);
+            TRACE("-- result 0x%08x\n", hres);
             IPersistStorage_Release(pPS);
         }
     }
@@ -2367,7 +2367,7 @@ HRESULT WINAPI OleCreate(
     {
         TRACE("trying to set clientsite %p\n", pClientSite);
         hres = IOleObject_SetClientSite(pOleObject, pClientSite);
-        TRACE("-- result 0x%08lx\n", hres);
+        TRACE("-- result 0x%08x\n", hres);
     }
 
     if (pOleObject)
@@ -2931,7 +2931,7 @@ HRESULT WINAPI FreePropVariantArray(ULONG cVariants, /* [in] */
 {
     ULONG i;
 
-    TRACE("(%lu, %p)\n", cVariants, rgvars);
+    TRACE("(%u, %p)\n", cVariants, rgvars);
 
     if (!rgvars)
         return E_INVALIDARG;

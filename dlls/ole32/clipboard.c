@@ -78,7 +78,7 @@
 
 #include "storage32.h"
 
-#define HANDLE_ERROR(err) { hr = err; TRACE("(HRESULT=%lx)\n", (HRESULT)err); goto CLEANUP; }
+#define HANDLE_ERROR(err) { hr = err; TRACE("(HRESULT=%x)\n", (HRESULT)err); goto CLEANUP; }
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -930,7 +930,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
 
     if (FAILED(hr = IDataObject_GetDataHere(theOleClipboard->pIDataObjectSrc, pFormatetc, &std)))
     {
-      WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%lx)\n", hr);
+      WARN("() : IDataObject_GetDataHere failed to render clipboard data! (%x)\n", hr);
       GlobalFree(hStorage);
       return hr;
     }
@@ -1012,7 +1012,7 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
   {
     if (FAILED(hr = IDataObject_GetData(pIDataObject, pFormatetc, &std)))
     {
-        WARN("() : IDataObject_GetData failed to render clipboard data! (%lx)\n", hr);
+        WARN("() : IDataObject_GetData failed to render clipboard data! (%x)\n", hr);
         GlobalFree(hStorage);
         return hr;
     }
@@ -1154,7 +1154,7 @@ static ULONG WINAPI OLEClipbrd_IDataObject_AddRef(
    */
   OLEClipbrd *This = (OLEClipbrd *)iface;
 
-  TRACE("(%p)->(count=%lu)\n",This, This->ref);
+  TRACE("(%p)->(count=%u)\n",This, This->ref);
 
   return InterlockedIncrement(&This->ref);
 
@@ -1174,7 +1174,7 @@ static ULONG WINAPI OLEClipbrd_IDataObject_Release(
   OLEClipbrd *This = (OLEClipbrd *)iface;
   ULONG ref;
 
-  TRACE("(%p)->(count=%lu)\n",This, This->ref);
+  TRACE("(%p)->(count=%u)\n",This, This->ref);
 
   /*
    * Decrease the reference count on this object.
@@ -1406,7 +1406,7 @@ static HRESULT WINAPI OLEClipbrd_IDataObject_EnumFormatEtc(
    */
   OLEClipbrd *This = (OLEClipbrd *)iface;
 
-  TRACE("(%p, %lx, %p)\n", iface, dwDirection, ppenumFormatEtc);
+  TRACE("(%p, %x, %p)\n", iface, dwDirection, ppenumFormatEtc);
 
   /*
    * If we have a data source placed on the clipboard (via OleSetClipboard)
@@ -1637,7 +1637,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_QueryInterface
 static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_AddRef(LPENUMFORMATETC iface)
 {
   IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
-  TRACE("(%p)->(count=%lu)\n",This, This->ref);
+  TRACE("(%p)->(count=%u)\n",This, This->ref);
 
   if (This->pUnkDataObj)
     IUnknown_AddRef(This->pUnkDataObj);
@@ -1656,7 +1656,7 @@ static ULONG WINAPI OLEClipbrd_IEnumFORMATETC_Release(LPENUMFORMATETC iface)
   LPMALLOC pIMalloc;
   ULONG ref;
 
-  TRACE("(%p)->(count=%lu)\n",This, This->ref);
+  TRACE("(%p)->(count=%u)\n",This, This->ref);
 
   if (This->pUnkDataObj)
     IUnknown_Release(This->pUnkDataObj);  /* Release parent data object */
@@ -1723,7 +1723,7 @@ static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Next
 static HRESULT WINAPI OLEClipbrd_IEnumFORMATETC_Skip(LPENUMFORMATETC iface, ULONG celt)
 {
   IEnumFORMATETCImpl *This = (IEnumFORMATETCImpl *)iface;
-  TRACE("(%p)->(num=%lu)\n", This, celt);
+  TRACE("(%p)->(num=%u)\n", This, celt);
 
   This->posFmt += celt;
   if (This->posFmt > This->countFmt)

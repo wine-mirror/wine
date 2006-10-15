@@ -107,7 +107,7 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     hr = IUnknown_QueryInterface(object, riid, (void **)&iobject);
     if (hr != S_OK)
     {
-        ERR("object doesn't expose interface %s, failing with error 0x%08lx\n",
+        ERR("object doesn't expose interface %s, failing with error 0x%08x\n",
             debugstr_guid(riid), hr);
         return E_NOINTERFACE;
     }
@@ -222,7 +222,7 @@ static HRESULT WINAPI ClientIdentity_QueryInterface(IMultiQI * iface, REFIID rii
 static ULONG WINAPI ClientIdentity_AddRef(IMultiQI * iface)
 {
     struct proxy_manager * This = (struct proxy_manager *)iface;
-    TRACE("%p - before %ld\n", iface, This->refs);
+    TRACE("%p - before %d\n", iface, This->refs);
     return InterlockedIncrement(&This->refs);
 }
 
@@ -230,7 +230,7 @@ static ULONG WINAPI ClientIdentity_Release(IMultiQI * iface)
 {
     struct proxy_manager * This = (struct proxy_manager *)iface;
     ULONG refs = InterlockedDecrement(&This->refs);
-    TRACE("%p - after %ld\n", iface, refs);
+    TRACE("%p - after %d\n", iface, refs);
     if (!refs)
         proxy_manager_destroy(This);
     return refs;
@@ -247,13 +247,13 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
     /* mapping of RemQueryInterface index to QueryMultipleInterfaces index */
     ULONG *mapping = HeapAlloc(GetProcessHeap(), 0, cMQIs * sizeof(*mapping));
 
-    TRACE("cMQIs: %ld\n", cMQIs);
+    TRACE("cMQIs: %d\n", cMQIs);
 
     /* try to get a local interface - this includes already active proxy
      * interfaces and also interfaces exposed by the proxy manager */
     for (i = 0; i < cMQIs; i++)
     {
-        TRACE("iid[%ld] = %s\n", i, debugstr_guid(pMQIs[i].pIID));
+        TRACE("iid[%d] = %s\n", i, debugstr_guid(pMQIs[i].pIID));
         pMQIs[i].hr = proxy_manager_query_local_interface(This, pMQIs[i].pIID, (void **)&pMQIs[i].pItf);
         if (pMQIs[i].hr == S_OK)
             successful_mqis++;
@@ -265,7 +265,7 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
         }
     }
 
-    TRACE("%ld interfaces not found locally\n", nonlocal_mqis);
+    TRACE("%d interfaces not found locally\n", nonlocal_mqis);
 
     /* if we have more than one interface not found locally then we must try
      * to query the remote object for it */
@@ -288,7 +288,7 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
             hr = IRemUnknown_RemQueryInterface(remunk, ipid, NORMALEXTREFS,
                                                nonlocal_mqis, iids, &qiresults);
             if (FAILED(hr))
-                ERR("IRemUnknown_RemQueryInterface failed with error 0x%08lx\n", hr);
+                ERR("IRemUnknown_RemQueryInterface failed with error 0x%08x\n", hr);
         }
 
         /* IRemUnknown_RemQueryInterface can return S_FALSE if only some of
@@ -319,7 +319,7 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
         CoTaskMemFree(qiresults);
     }
 
-    TRACE("%ld/%ld successfully queried\n", successful_mqis, cMQIs);
+    TRACE("%d/%d successfully queried\n", successful_mqis, cMQIs);
 
     HeapFree(GetProcessHeap(), 0, iids);
     HeapFree(GetProcessHeap(), 0, mapping);
@@ -409,7 +409,7 @@ static HRESULT WINAPI Proxy_MarshalInterface(
                 if (hr == S_OK && hrref == S_OK)
                     stdobjref.cPublicRefs = rif.cPublicRefs;
                 else
-                    ERR("IRemUnknown_RemAddRef returned with 0x%08lx, hrref = 0x%08lx\n", hr, hrref);
+                    ERR("IRemUnknown_RemAddRef returned with 0x%08x, hrref = 0x%08x\n", hr, hrref);
             }
         }
 
@@ -458,7 +458,7 @@ static HRESULT WINAPI Proxy_MarshalInterface(
                 CoTaskMemFree(qiresults);
             }
             else
-                ERR("IRemUnknown_RemQueryInterface failed with error 0x%08lx\n", hr);
+                ERR("IRemUnknown_RemQueryInterface failed with error 0x%08x\n", hr);
         }
     }
 
@@ -506,7 +506,7 @@ static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
             if (hr == S_OK && hrref == S_OK)
                 This->refs += NORMALEXTREFS;
             else
-                ERR("IRemUnknown_RemAddRef returned with 0x%08lx, hrref = 0x%08lx\n", hr, hrref);
+                ERR("IRemUnknown_RemAddRef returned with 0x%08x, hrref = 0x%08x\n", hr, hrref);
         }
     }
     ReleaseMutex(This->parent->remoting_mutex);
@@ -528,7 +528,7 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
     {
         IRemUnknown *remunk = NULL;
 
-        TRACE("releasing %ld refs\n", This->refs);
+        TRACE("releasing %d refs\n", This->refs);
 
         hr = proxy_manager_get_remunknown(This->parent, &remunk);
         if (hr == S_OK)
@@ -546,7 +546,7 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
                      wine_dbgstr_longlong(This->parent->oxid),
                      wine_dbgstr_longlong(This->parent->oid));
             else
-                ERR("IRemUnknown_RemRelease failed with error 0x%08lx\n", hr);
+                ERR("IRemUnknown_RemRelease failed with error 0x%08x\n", hr);
         }
     }
     ReleaseMutex(This->parent->remoting_mutex);
@@ -784,11 +784,11 @@ static HRESULT proxy_manager_create_ifproxy(
                                               &ifproxy->proxy, &ifproxy->iface);
             IPSFactoryBuffer_Release(psfb);
             if (hr != S_OK)
-                ERR("Could not create proxy for interface %s, error 0x%08lx\n",
+                ERR("Could not create proxy for interface %s, error 0x%08x\n",
                     debugstr_guid(riid), hr);
         }
         else
-            ERR("Could not get IPSFactoryBuffer for interface %s, error 0x%08lx\n",
+            ERR("Could not get IPSFactoryBuffer for interface %s, error 0x%08x\n",
                 debugstr_guid(riid), hr);
 
         if (hr == S_OK)
@@ -909,7 +909,7 @@ static HRESULT proxy_manager_get_remunknown(struct proxy_manager * This, IRemUnk
     }
     LeaveCriticalSection(&This->cs);
 
-    TRACE("got IRemUnknown* pointer %p, hr = 0x%08lx\n", *remunk, hr);
+    TRACE("got IRemUnknown* pointer %p, hr = 0x%08x\n", *remunk, hr);
 
     return hr;
 }
@@ -1081,7 +1081,7 @@ StdMarshalImpl_MarshalInterface(
     hres = marshal_object(apt, &stdobjref, riid, (IUnknown *)pv, mshlflags);
     if (hres)
     {
-        ERR("Failed to create ifstub, hres=0x%lx\n", hres);
+        ERR("Failed to create ifstub, hres=0x%x\n", hres);
         return hres;
     }
 
@@ -1228,7 +1228,7 @@ StdMarshalImpl_UnmarshalInterface(LPMARSHAL iface, IStream *pStm, REFIID riid, v
         hres = unmarshal_object(&stdobjref, apt, This->dwDestContext,
                                 This->pvDestContext, riid, ppv);
 
-    if (hres) WARN("Failed with error 0x%08lx\n", hres);
+    if (hres) WARN("Failed with error 0x%08x\n", hres);
     else TRACE("Successfully created proxy %p\n", *ppv);
 
     return hres;
@@ -1337,11 +1337,11 @@ HRESULT WINAPI CoGetStandardMarshal(REFIID riid, IUnknown *pUnk,
 
     if (pUnk == NULL)
     {
-        FIXME("(%s,NULL,%lx,%p,%lx,%p), unimplemented yet.\n",
+        FIXME("(%s,NULL,%x,%p,%x,%p), unimplemented yet.\n",
             debugstr_guid(riid),dwDestContext,pvDestContext,mshlflags,ppMarshal);
         return E_NOTIMPL;
     }
-    TRACE("(%s,%p,%lx,%p,%lx,%p)\n",
+    TRACE("(%s,%p,%x,%p,%x,%p)\n",
         debugstr_guid(riid),pUnk,dwDestContext,pvDestContext,mshlflags,ppMarshal);
     *ppMarshal = HeapAlloc(GetProcessHeap(),0,sizeof(StdMarshalImpl));
     dm = (StdMarshalImpl*) *ppMarshal;
@@ -1393,7 +1393,7 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, 
     hr = IStream_Read(stream, &objref, FIELD_OFFSET(OBJREF, u_objref), &res);
     if (hr || (res != FIELD_OFFSET(OBJREF, u_objref)))
     {
-        ERR("Failed to read common OBJREF header, 0x%08lx\n", hr);
+        ERR("Failed to read common OBJREF header, 0x%08x\n", hr);
         return STG_E_READFAULT;
     }
 
@@ -1422,7 +1422,7 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, 
                           custom_header_size, &res);
         if (hr || (res != custom_header_size))
         {
-            ERR("Failed to read OR_CUSTOM header, 0x%08lx\n", hr);
+            ERR("Failed to read OR_CUSTOM header, 0x%08x\n", hr);
             return STG_E_READFAULT;
         }
         /* now create the marshaler specified in the stream */
@@ -1438,7 +1438,7 @@ static HRESULT get_unmarshaler_from_stream(IStream *stream, IMarshal **marshal, 
     }
 
     if (hr)
-        ERR("Failed to create marshal, 0x%08lx\n", hr);
+        ERR("Failed to create marshal, 0x%08x\n", hr);
 
     return hr;
 }
@@ -1479,7 +1479,7 @@ HRESULT WINAPI CoGetMarshalSizeMax(ULONG *pulSize, REFIID riid, IUnknown *pUnk,
                                     pvDestContext, mshlFlags, &marshaler_clsid);
     if (hr)
     {
-        ERR("IMarshal::GetUnmarshalClass failed, 0x%08lx\n", hr);
+        ERR("IMarshal::GetUnmarshalClass failed, 0x%08x\n", hr);
         IMarshal_Release(pMarshal);
         return hr;
     }
@@ -1552,7 +1552,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     OBJREF objref;
     LPMARSHAL pMarshal;
 
-    TRACE("(%p, %s, %p, %lx, %p,", pStream, debugstr_guid(riid), pUnk,
+    TRACE("(%p, %s, %p, %x, %p,", pStream, debugstr_guid(riid), pUnk,
         dwDestContext, pvDestContext);
     dump_MSHLFLAGS(mshlFlags);
     TRACE(")\n");
@@ -1567,7 +1567,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     hr = get_marshaler(riid, pUnk, dwDestContext, pvDestContext, mshlFlags, &pMarshal);
     if (hr)
     {
-        ERR("Failed to get marshaller, 0x%08lx\n", hr);
+        ERR("Failed to get marshaller, 0x%08x\n", hr);
         return hr;
     }
 
@@ -1575,7 +1575,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
                                     pvDestContext, mshlFlags, &marshaler_clsid);
     if (hr)
     {
-        ERR("IMarshal::GetUnmarshalClass failed, 0x%08lx\n", hr);
+        ERR("IMarshal::GetUnmarshalClass failed, 0x%08x\n", hr);
         goto cleanup;
     }
 
@@ -1589,7 +1589,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
         hr = IStream_Write(pStream, &objref, FIELD_OFFSET(OBJREF, u_objref), NULL);
         if (hr)
         {
-            ERR("Failed to write OBJREF header to stream, 0x%08lx\n", hr);
+            ERR("Failed to write OBJREF header to stream, 0x%08x\n", hr);
             goto cleanup;
         }
     }
@@ -1605,7 +1605,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
                                         &objref.u_objref.u_custom.size);
         if (hr)
         {
-            ERR("Failed to get max size of marshal data, error 0x%08lx\n", hr);
+            ERR("Failed to get max size of marshal data, error 0x%08x\n", hr);
             goto cleanup;
         }
         /* write constant sized common header and OR_CUSTOM data into stream */
@@ -1613,7 +1613,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
                           FIELD_OFFSET(OBJREF, u_objref.u_custom.pData), NULL);
         if (hr)
         {
-            ERR("Failed to write OR_CUSTOM header to stream with 0x%08lx\n", hr);
+            ERR("Failed to write OR_CUSTOM header to stream with 0x%08x\n", hr);
             goto cleanup;
         }
     }
@@ -1625,14 +1625,14 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
 
     if (hr)
     {
-        ERR("Failed to marshal the interface %s, %lx\n", debugstr_guid(riid), hr);
+        ERR("Failed to marshal the interface %s, %x\n", debugstr_guid(riid), hr);
         goto cleanup;
     }
 
 cleanup:
     IMarshal_Release(pMarshal);
 
-    TRACE("completed with hr 0x%08lx\n", hr);
+    TRACE("completed with hr 0x%08x\n", hr);
     
     return hr;
 }
@@ -1673,7 +1673,7 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
     /* call the helper object to do the actual unmarshaling */
     hr = IMarshal_UnmarshalInterface(pMarshal, pStream, &iid, (LPVOID*)&object);
     if (hr)
-        ERR("IMarshal::UnmarshalInterface failed, 0x%08lx\n", hr);
+        ERR("IMarshal::UnmarshalInterface failed, 0x%08x\n", hr);
 
     /* IID_NULL means use the interface ID of the marshaled object */
     if (!IsEqualIID(riid, &IID_NULL))
@@ -1686,7 +1686,7 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
             TRACE("requested interface != marshalled interface, additional QI needed\n");
             hr = IUnknown_QueryInterface(object, &iid, ppv);
             if (hr)
-                ERR("Couldn't query for interface %s, hr = 0x%08lx\n",
+                ERR("Couldn't query for interface %s, hr = 0x%08x\n",
                     debugstr_guid(riid), hr);
             IUnknown_Release(object);
         }
@@ -1698,7 +1698,7 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
 
     IMarshal_Release(pMarshal);
 
-    TRACE("completed with hr 0x%lx\n", hr);
+    TRACE("completed with hr 0x%x\n", hr);
     
     return hr;
 }
@@ -1740,7 +1740,7 @@ HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
     /* call the helper object to do the releasing of marshal data */
     hr = IMarshal_ReleaseMarshalData(pMarshal, pStream);
     if (hr)
-        ERR("IMarshal::ReleaseMarshalData failed with error 0x%08lx\n", hr);
+        ERR("IMarshal::ReleaseMarshalData failed with error 0x%08x\n", hr);
 
     IMarshal_Release(pMarshal);
     return hr;

@@ -205,7 +205,7 @@ ULONG stub_manager_int_addref(struct stub_manager *This)
     refs = ++This->refs;
     LeaveCriticalSection(&This->apt->cs);
 
-    TRACE("before %ld\n", refs - 1);
+    TRACE("before %d\n", refs - 1);
 
     return refs;
 }
@@ -219,7 +219,7 @@ ULONG stub_manager_int_release(struct stub_manager *This)
     EnterCriticalSection(&apt->cs);
     refs = --This->refs;
 
-    TRACE("after %ld\n", refs);
+    TRACE("after %d\n", refs);
 
     /* remove from apartment so no other thread can access it... */
     if (!refs)
@@ -247,7 +247,7 @@ ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs)
 
     LeaveCriticalSection(&m->lock);
     
-    TRACE("added %lu refs to %p (oid %s), rc is now %lu\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
+    TRACE("added %u refs to %p (oid %s), rc is now %u\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
 
     return rc;
 }
@@ -265,7 +265,7 @@ ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL last_unl
 
     LeaveCriticalSection(&m->lock);
     
-    TRACE("removed %lu refs from %p (oid %s), rc is now %lu\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
+    TRACE("removed %u refs from %p (oid %s), rc is now %u\n", refs, m, wine_dbgstr_longlong(m->oid), rc);
 
     if (rc == 0 && last_unlock_releases)
         stub_manager_int_release(m);
@@ -608,7 +608,7 @@ static ULONG WINAPI RemUnknown_AddRef(IRemUnknown *iface)
 
     refs = InterlockedIncrement(&This->refs);
 
-    TRACE("%p before: %ld\n", iface, refs-1);
+    TRACE("%p before: %d\n", iface, refs-1);
     return refs;
 }
 
@@ -621,7 +621,7 @@ static ULONG WINAPI RemUnknown_Release(IRemUnknown *iface)
     if (!refs)
         HeapFree(GetProcessHeap(), 0, This);
 
-    TRACE("%p after: %ld\n", iface, refs);
+    TRACE("%p after: %d\n", iface, refs);
     return refs;
 }
 
@@ -635,7 +635,7 @@ static HRESULT WINAPI RemUnknown_RemQueryInterface(IRemUnknown *iface,
     APARTMENT *apt;
     struct stub_manager *stubmgr;
 
-    TRACE("(%p)->(%s, %ld, %d, %p, %p)\n", iface, debugstr_guid(ripid), cRefs, cIids, iids, ppQIResults);
+    TRACE("(%p)->(%s, %d, %d, %p, %p)\n", iface, debugstr_guid(ripid), cRefs, cIids, iids, ppQIResults);
 
     hr = ipid_to_stub_manager(ripid, &apt, &stubmgr);
     if (hr != S_OK) return hr;

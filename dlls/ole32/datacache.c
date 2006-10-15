@@ -269,7 +269,7 @@ static void DataCache_FireOnViewChange(
   DWORD      aspect,
   LONG       lindex)
 {
-  TRACE("(%p, %lx, %ld)\n", this, aspect, lindex);
+  TRACE("(%p, %x, %d)\n", this, aspect, lindex);
 
   /*
    * The sink supplies a filter when it registers
@@ -1183,7 +1183,7 @@ static HRESULT WINAPI DataCache_Draw(
 
   DataCache *this = impl_from_IViewObject2(iface);
 
-  TRACE("(%p, %lx, %ld, %p, %p, %p, %p, %p, %p, %lx)\n",
+  TRACE("(%p, %x, %d, %p, %p, %p, %p, %p, %p, %lx)\n",
 	iface,
 	dwDrawAspect,
 	lindex,
@@ -1322,7 +1322,7 @@ static HRESULT WINAPI DataCache_SetAdvise(
 {
   DataCache *this = impl_from_IViewObject2(iface);
 
-  TRACE("(%p, %lx, %lx, %p)\n", iface, aspects, advf, pAdvSink);
+  TRACE("(%p, %x, %x, %p)\n", iface, aspects, advf, pAdvSink);
 
   /*
    * A call to this function removes the previous sink
@@ -1419,7 +1419,7 @@ static HRESULT WINAPI DataCache_GetExtent(
 
   DataCache *this = impl_from_IViewObject2(iface);
 
-  TRACE("(%p, %lx, %ld, %p, %p)\n",
+  TRACE("(%p, %x, %d, %p, %p)\n",
 	iface, dwDrawAspect, lindex, ptd, lpsizel);
 
   /*
@@ -1438,7 +1438,7 @@ static HRESULT WINAPI DataCache_GetExtent(
    * This flag should be set to -1.
    */
   if (lindex!=-1)
-    FIXME("Unimplemented flag lindex = %ld\n", lindex);
+    FIXME("Unimplemented flag lindex = %d\n", lindex);
 
   /*
    * Right now, we support only the callback from

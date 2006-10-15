@@ -248,7 +248,7 @@ static BOOL BIGBLOCKFILE_FileInit(LPBIGBLOCKFILE This, HANDLE hFile)
 
   This->maplist = NULL;
 
-  TRACE("file len %lu\n", This->filesize.u.LowPart);
+  TRACE("file len %u\n", This->filesize.u.LowPart);
 
   return TRUE;
 }
@@ -285,7 +285,7 @@ static BOOL BIGBLOCKFILE_MemInit(LPBIGBLOCKFILE This, ILockBytes* plkbyt)
 
   This->pbytearray = GlobalLock(This->hbytearray);
 
-  TRACE("mem on %p len %lu\n", This->pbytearray, This->filesize.u.LowPart);
+  TRACE("mem on %p len %u\n", This->pbytearray, This->filesize.u.LowPart);
 
   return TRUE;
 }
@@ -342,7 +342,7 @@ void* BIGBLOCKFILE_GetROBigBlock(
   if (This->blocksize * (index + 1)
       > ROUND_UP(This->filesize.u.LowPart, This->blocksize))
   {
-    TRACE("out of range %lu vs %lu\n", This->blocksize * (index + 1),
+    TRACE("out of range %u vs %u\n", This->blocksize * (index + 1),
 	  This->filesize.u.LowPart);
     return NULL;
   }
@@ -434,7 +434,7 @@ void BIGBLOCKFILE_SetSize(LPBIGBLOCKFILE This, ULARGE_INTEGER newSize)
   if (This->filesize.u.LowPart == newSize.u.LowPart)
     return;
 
-  TRACE("from %lu to %lu\n", This->filesize.u.LowPart, newSize.u.LowPart);
+  TRACE("from %u to %u\n", This->filesize.u.LowPart, newSize.u.LowPart);
   /*
    * unmap all views, must be done before call to SetEndFile
    */
@@ -687,7 +687,7 @@ static BOOL BIGBLOCKFILE_MapPage(LPBIGBLOCKFILE This, MappedPage *page)
 	page->lpBytes = (LPBYTE)This->pbytearray + lowoffset;
     }
 
-    TRACE("mapped page %lu to %p\n", page->page_index, page->lpBytes);
+    TRACE("mapped page %u to %p\n", page->page_index, page->lpBytes);
 
     return page->lpBytes != NULL;
 }
@@ -717,7 +717,7 @@ static MappedPage *BIGBLOCKFILE_CreatePage(LPBIGBLOCKFILE This,
 
 static void BIGBLOCKFILE_UnmapPage(LPBIGBLOCKFILE This, MappedPage *page)
 {
-    TRACE("%ld at %p\n", page->page_index, page->lpBytes);
+    TRACE("%d at %p\n", page->page_index, page->lpBytes);
     if (page->refcnt > 0)
 	ERR("unmapping inuse page %p\n", page->lpBytes);
 
@@ -831,7 +831,7 @@ static void BIGBLOCKFILE_RemapList(LPBIGBLOCKFILE This, MappedPage *list)
 
 	if (list->page_index * PAGE_SIZE > This->filesize.u.LowPart)
 	{
-	    TRACE("discarding %lu\n", list->page_index);
+            TRACE("discarding %u\n", list->page_index);
 
 	    /* page is entirely outside of the file, delete it */
 	    BIGBLOCKFILE_UnlinkPage(list);

@@ -265,7 +265,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     APARTMENT *apt = NULL;
     IPID ipid;
 
-    TRACE("(%p) iMethod=%ld\n", olemsg, olemsg->iMethod);
+    TRACE("(%p) iMethod=%d\n", olemsg, olemsg->iMethod);
 
     hr = ClientRpcChannelBuffer_IsCorrectApartment(This, COM_CurrentApt());
     if (hr != S_OK)
@@ -294,11 +294,11 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     params->handle = ClientRpcChannelBuffer_GetEventHandle(This);
     if ((hr == S_OK) && !apt->multi_threaded)
     {
-        TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
+        TRACE("Calling apartment thread 0x%08x...\n", apt->tid);
 
         if (!PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
         {
-            ERR("PostMessage failed with error %ld\n", GetLastError());
+            ERR("PostMessage failed with error %d\n", GetLastError());
             hr = HRESULT_FROM_WIN32(GetLastError());
         }
     }
@@ -322,7 +322,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
          */
         if (!QueueUserWorkItem(rpc_sendreceive_thread, params, WT_EXECUTEDEFAULT))
         {
-            ERR("QueueUserWorkItem failed with error %lx\n", GetLastError());
+            ERR("QueueUserWorkItem failed with error %x\n", GetLastError());
             hr = E_UNEXPECTED;
         }
         else
@@ -355,7 +355,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     else
         hr = HRESULT_FROM_WIN32(status);
 
-    TRACE("-- 0x%08lx\n", hr);
+    TRACE("-- 0x%08x\n", hr);
 
     return hr;
 }
@@ -562,13 +562,13 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     {
         params->handle = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-        TRACE("Calling apartment thread 0x%08lx...\n", apt->tid);
+        TRACE("Calling apartment thread 0x%08x...\n", apt->tid);
 
         if (PostMessageW(apartment_getwindow(apt), DM_EXECUTERPC, 0, (LPARAM)params))
             WaitForSingleObject(params->handle, INFINITE);
         else
         {
-            ERR("PostMessage failed with error %ld\n", GetLastError());
+            ERR("PostMessage failed with error %d\n", GetLastError());
             IRpcChannelBuffer_Release(params->chan);
             IRpcStubBuffer_Release(params->stub);
         }
@@ -759,7 +759,7 @@ static DWORD start_local_service(LPCWSTR name, DWORD num, LPCWSTR *params)
     SC_HANDLE handle, hsvc;
     DWORD     r = ERROR_FUNCTION_FAILED;
 
-    TRACE("Starting service %s %ld params\n", debugstr_w(name), num);
+    TRACE("Starting service %s %d params\n", debugstr_w(name), num);
 
     handle = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
     if (!handle)
@@ -779,7 +779,7 @@ static DWORD start_local_service(LPCWSTR name, DWORD num, LPCWSTR *params)
         r = GetLastError();
     CloseServiceHandle(handle);
 
-    TRACE("StartService returned error %ld (%s)\n", r, (r == ERROR_SUCCESS) ? "ok":"failed");
+    TRACE("StartService returned error %d (%s)\n", r, (r == ERROR_SUCCESS) ? "ok":"failed");
 
     return r;
 }
@@ -886,7 +886,7 @@ HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
                     return hres;
                 Sleep(1000);
             } else {
-                WARN("Connecting to %s, no response yet, retrying: le is %lx\n", debugstr_w(pipefn), GetLastError());
+                WARN("Connecting to %s, no response yet, retrying: le is %x\n", debugstr_w(pipefn), GetLastError());
                 Sleep(1000);
             }
             continue;
@@ -956,13 +956,13 @@ static DWORD WINAPI local_server_thread(LPVOID param)
 
     if (hPipe == INVALID_HANDLE_VALUE)
     {
-        FIXME("pipe creation failed for %s, le is %ld\n", debugstr_w(pipefn), GetLastError());
+        FIXME("pipe creation failed for %s, le is %d\n", debugstr_w(pipefn), GetLastError());
         return 1;
     }
     
     while (1) {
         if (!ConnectNamedPipe(hPipe,NULL) && GetLastError() != ERROR_PIPE_CONNECTED) {
-            ERR("Failure during ConnectNamedPipe %ld, ABORT!\n",GetLastError());
+            ERR("Failure during ConnectNamedPipe %d, ABORT!\n",GetLastError());
             break;
         }
 
@@ -975,7 +975,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         seekto.u.HighPart = 0;
         hres = IStream_Seek(pStm,seekto,SEEK_SET,&newpos);
         if (hres) {
-            FIXME("IStream_Seek failed, %lx\n",hres);
+            FIXME("IStream_Seek failed, %x\n",hres);
             return hres;
         }
 
@@ -984,7 +984,7 @@ static DWORD WINAPI local_server_thread(LPVOID param)
         
         hres = IStream_Read(pStm,buffer,buflen,&res);
         if (hres) {
-            FIXME("Stream Read failed, %lx\n",hres);
+            FIXME("Stream Read failed, %x\n",hres);
             HeapFree(GetProcessHeap(),0,buffer);
             return hres;
         }

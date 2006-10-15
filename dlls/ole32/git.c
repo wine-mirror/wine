@@ -235,7 +235,7 @@ StdGlobalInterfaceTable_RegisterInterfaceInGlobal(
   
   LeaveCriticalSection(&git_section);
   
-  TRACE("Cookie is 0x%lx\n", entry->cookie);
+  TRACE("Cookie is 0x%x\n", entry->cookie);
   return S_OK;
 }
 
@@ -259,7 +259,7 @@ StdGlobalInterfaceTable_RevokeInterfaceFromGlobal(
   hr = CoReleaseMarshalData(entry->stream);
   if (hr != S_OK)
   {
-    WARN("Failed to release marshal data, hr = 0x%08lx\n", hr);
+    WARN("Failed to release marshal data, hr = 0x%08x\n", hr);
     return hr;
   }
   IStream_Release(entry->stream);
@@ -286,7 +286,7 @@ StdGlobalInterfaceTable_GetInterfaceFromGlobal(
   LARGE_INTEGER move;
   LPUNKNOWN lpUnk;
   
-  TRACE("dwCookie=0x%lx, riid=%s, ppv=%p\n", dwCookie, debugstr_guid(riid), ppv);
+  TRACE("dwCookie=0x%x, riid=%s, ppv=%p\n", dwCookie, debugstr_guid(riid), ppv);
   
   entry = StdGlobalInterfaceTable_FindEntry(iface, dwCookie);
   if (entry == NULL) return E_INVALIDARG;

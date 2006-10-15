@@ -517,7 +517,7 @@ HRESULT WINAPI ItemMonikerImpl_Reduce(IMoniker* iface,
                                       IMoniker** ppmkToLeft,
                                       IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -967,7 +967,7 @@ HRESULT WINAPI ItemMonikerROTDataImpl_GetComparisonData(IROTData* iface,
     LPWSTR pszItemName;
     LPWSTR pszItemDelimiter;
 
-    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
 
     *pcbData = sizeof(CLSID) + sizeof(WCHAR) + len * sizeof(WCHAR);
     if (cbMax < *pcbData)

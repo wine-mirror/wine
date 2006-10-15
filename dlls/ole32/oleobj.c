@@ -104,7 +104,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Next(
     EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
     HRESULT hr = S_OK;
 
-    TRACE("(%ld, %p, %p)\n", celt, rgelt, pceltFetched);
+    TRACE("(%d, %p, %p)\n", celt, rgelt, pceltFetched);
 
     if (pceltFetched)
         *pceltFetched = 0;
@@ -140,7 +140,7 @@ static HRESULT WINAPI EnumOleSTATDATA_Skip(
 {
     EnumOleSTATDATA *This = (EnumOleSTATDATA *)iface;
 
-    TRACE("(%ld)\n", celt);
+    TRACE("(%d)\n", celt);
 
     for (; celt; celt--)
     {
@@ -277,7 +277,7 @@ static ULONG WINAPI OleAdviseHolderImpl_AddRef(
   OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
   ULONG ref = InterlockedIncrement(&This->ref);
 
-  TRACE("(%p)->(ref=%ld)\n", This, ref - 1);
+  TRACE("(%p)->(ref=%d)\n", This, ref - 1);
 
   return ref;
 }
@@ -290,7 +290,7 @@ static ULONG WINAPI OleAdviseHolderImpl_Release(
 {
   OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
   ULONG ref;
-  TRACE("(%p)->(ref=%ld)\n", This, This->ref);
+  TRACE("(%p)->(ref=%d)\n", This, This->ref);
   ref = InterlockedDecrement(&This->ref);
 
   if (ref == 0) OleAdviseHolderImpl_Destructor(This);
@@ -374,7 +374,7 @@ static HRESULT WINAPI OleAdviseHolderImpl_Unadvise(
 {
   OleAdviseHolderImpl *This = (OleAdviseHolderImpl *)iface;
 
-  TRACE("(%p)->(%lu)\n", This, dwConnection);
+  TRACE("(%p)->(%u)\n", This, dwConnection);
 
   /*
    * So we don't return 0 as a cookie, the index was
@@ -645,7 +645,7 @@ static ULONG WINAPI       DataAdviseHolder_AddRef(
   IDataAdviseHolder*      iface)
 {
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
-  TRACE("(%p) (ref=%ld)\n", This, This->ref);
+  TRACE("(%p) (ref=%d)\n", This, This->ref);
   return InterlockedIncrement(&This->ref);
 }
 
@@ -659,7 +659,7 @@ static ULONG WINAPI DataAdviseHolder_Release(
 {
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
   ULONG ref;
-  TRACE("(%p) (ref=%ld)\n", This, This->ref);
+  TRACE("(%p) (ref=%d)\n", This, This->ref);
 
   /*
    * Decrease the reference count on this object.
@@ -690,7 +690,7 @@ static HRESULT WINAPI DataAdviseHolder_Advise(
 
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
 
-  TRACE("(%p)->(%p, %p, %08lx, %p, %p)\n", This, pDataObject, pFetc, advf,
+  TRACE("(%p)->(%p, %p, %08x, %p, %p)\n", This, pDataObject, pFetc, advf,
 	pAdvise, pdwConnection);
   /*
    * Sanity check
@@ -779,7 +779,7 @@ static HRESULT WINAPI     DataAdviseHolder_Unadvise(
 {
   DataAdviseHolder *This = (DataAdviseHolder *)iface;
 
-  TRACE("(%p)->(%lu)\n", This, dwConnection);
+  TRACE("(%p)->(%u)\n", This, dwConnection);
 
   /*
    * So we don't return 0 as a cookie, the index was
@@ -834,7 +834,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
   STGMEDIUM stg;
   HRESULT res;
 
-  TRACE("(%p)->(%p,%08lx,%08lx)\n", This, pDataObject, dwReserved, advf);
+  TRACE("(%p)->(%p,%08x,%08x)\n", This, pDataObject, dwReserved, advf);
 
   for(index = 0; index < This->maxCons; index++) {
     if(This->Connections[index].sink != NULL) {
@@ -844,7 +844,7 @@ static HRESULT WINAPI     DataAdviseHolder_SendOnDataChange(
 	res = IDataObject_GetData(pDataObject,
 				  &(This->Connections[index].fmat),
 				  &stg);
-	TRACE("returns %08lx\n", res);
+	TRACE("returns %08x\n", res);
       }
       TRACE("Calling IAdviseSink_OnDataChange\n");
       IAdviseSink_OnDataChange(This->Connections[index].sink,

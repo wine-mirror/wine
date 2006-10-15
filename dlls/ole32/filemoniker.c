@@ -639,7 +639,7 @@ static HRESULT WINAPI
 FileMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
                        IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -1245,7 +1245,7 @@ FileMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
     int i;
     LPWSTR pszFileName;
 
-    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
 
     *pcbData = sizeof(CLSID) + len * sizeof(WCHAR);
     if (cbMax < *pcbData)

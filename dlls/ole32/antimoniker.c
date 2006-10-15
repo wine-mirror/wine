@@ -258,7 +258,7 @@ static HRESULT WINAPI
 AntiMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
                        IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
 {
-    TRACE("(%p,%p,%ld,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
+    TRACE("(%p,%p,%d,%p,%p)\n",iface,pbc,dwReduceHowFar,ppmkToLeft,ppmkReduced);
 
     if (ppmkReduced==NULL)
         return E_POINTER;
@@ -540,7 +540,7 @@ AntiMonikerROTDataImpl_GetComparisonData(IROTData* iface, BYTE* pbData,
 {
     DWORD constant = 1;
 
-    TRACE("(%p, %lu, %p)\n", pbData, cbMax, pcbData);
+    TRACE("(%p, %u, %p)\n", pbData, cbMax, pcbData);
 
     *pcbData = sizeof(CLSID) + sizeof(DWORD);
     if (cbMax < *pcbData)

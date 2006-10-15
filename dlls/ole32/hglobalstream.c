@@ -216,7 +216,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Read(
   ULONG bytesReadBuffer;
   ULONG bytesToReadFromBuffer;
 
-  TRACE("(%p, %p, %ld, %p)\n", iface,
+  TRACE("(%p, %p, %d, %p)\n", iface,
 	pv, cb, pcbRead);
 
   /*
@@ -284,7 +284,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
   ULARGE_INTEGER newSize;
   ULONG          bytesWritten = 0;
 
-  TRACE("(%p, %p, %ld, %p)\n", iface, pv, cb, pcbWritten);
+  TRACE("(%p, %p, %d, %p)\n", iface, pv, cb, pcbWritten);
 
   /*
    * If the caller is not interested in the number of bytes written,
@@ -308,7 +308,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Write(
     HRESULT hr = IStream_SetSize(iface, newSize);
     if (FAILED(hr))
     {
-      ERR("IStream_SetSize failed with error 0x%08lx\n", hr);
+      ERR("IStream_SetSize failed with error 0x%08x\n", hr);
       return hr;
     }
   }
@@ -357,7 +357,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_Seek(
 
   ULARGE_INTEGER newPosition;
 
-  TRACE("(%p, %lx%08lx, %ld, %p)\n", iface, dlibMove.u.HighPart,
+  TRACE("(%p, %x%08x, %d, %p)\n", iface, dlibMove.u.HighPart,
 	dlibMove.u.LowPart, dwOrigin, plibNewPosition);
 
   /*
@@ -411,7 +411,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_SetSize(
   HGLOBALStreamImpl* const This=(HGLOBALStreamImpl*)iface;
   HGLOBAL supportHandle;
 
-  TRACE("(%p, %ld)\n", iface, libNewSize.u.LowPart);
+  TRACE("(%p, %d)\n", iface, libNewSize.u.LowPart);
 
   /*
    * HighPart is ignored as shown in tests
@@ -454,7 +454,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
   ULARGE_INTEGER totalBytesRead;
   ULARGE_INTEGER totalBytesWritten;
 
-  TRACE("(%p, %p, %ld, %p, %p)\n", iface, pstm,
+  TRACE("(%p, %p, %d, %p, %p)\n", iface, pstm,
 	cb.u.LowPart, pcbRead, pcbWritten);
 
   /*

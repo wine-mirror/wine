@@ -148,7 +148,7 @@ interface ObjectRpcBaseTypes
     [case(OBJREF_CUSTOM)] struct OR_CUSTOM {
         CLSID clsid;
         unsigned long cbExtension;
-        unsigned long size;
+        ULONG size;
         [size_is(size), ref] byte *pData;
       } u_custom;
     } u_objref;
@@ -184,7 +184,7 @@ interface IRemUnknown : IUnknown
 
   HRESULT RemQueryInterface(
     [in] REFIPID ripid,
-    [in] unsigned long cRefs,
+    [in] ULONG cRefs,
     [in] unsigned short cIids,
     [in, size_is(cIids)] IID *iids,
     [out, size_is(,cIids)] REMQIRESULT **ppQIResults);
