@@ -18,6 +18,7 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
+#define COBJMACROS
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include <windows.h>
@@ -67,27 +68,15 @@ const char * get_file_version(const char * file_name)
     return version;
 }
 
-static void keyboard_tests(DWORD version)
+static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
 {
     HRESULT hr;
-    LPDIRECTINPUT pDI;
     LPDIRECTINPUTDEVICE pKeyboard;
-    HINSTANCE hInstance = GetModuleHandle(NULL);
     BYTE kbd_state[256];
-    ULONG ref;
 
-    hr = DirectInputCreate(hInstance, version, &pDI, NULL);
-    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
-    if (FAILED(hr)) return;
-    
-    
     hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
-    if (FAILED(hr))
-    {
-        IDirectInput_Release(pDI);
-        return;
-    }
+    if (FAILED(hr)) return;
 
     hr = IDirectInputDevice_SetDataFormat(pKeyboard, &c_dfDIKeyboard);
     ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
@@ -103,8 +92,68 @@ static void keyboard_tests(DWORD version)
     ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(10,) should have failed: %s\n", DXGetErrorString8(hr));
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
     ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
-    
-    ref = IDirectInput_Release(pDI);
+}
+
+static const HRESULT SetCoop_null_window[16] =  {
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
+    E_INVALIDARG, E_HANDLE,     E_HANDLE,     E_INVALIDARG,
+    E_INVALIDARG, E_HANDLE,     S_OK,         E_INVALIDARG,
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG};
+
+static const HRESULT SetCoop_real_window[16] =  {
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
+    E_INVALIDARG, S_OK,         S_OK,         E_INVALIDARG,
+    E_INVALIDARG, E_NOTIMPL,    S_OK,         E_INVALIDARG,
+    E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG};
+
+static void test_set_coop(LPDIRECTINPUT pDI, HWND hwnd)
+{
+    HRESULT hr;
+    LPDIRECTINPUTDEVICE pKeyboard = NULL;
+    int i;
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+    if (FAILED(hr)) return;
+
+    for (i=0; i<16; i++)
+    {
+        hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, NULL, i);
+        ok(hr == SetCoop_null_window[i], "SetCooperativeLevel(NULL, %d): %s\n", i, DXGetErrorString8(hr));
+    }
+    for (i=0; i<16; i++)
+    {
+        hr = IDirectInputDevice_SetCooperativeLevel(pKeyboard, hwnd, i);
+        ok(hr == SetCoop_real_window[i], "SetCooperativeLevel(hwnd, %d): %s\n", i, DXGetErrorString8(hr));
+    }
+
+    if (pKeyboard) IUnknown_Release(pKeyboard);
+}
+
+static void keyboard_tests(DWORD version)
+{
+    HRESULT hr;
+    LPDIRECTINPUT pDI = NULL;
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    HWND hwnd;
+    ULONG ref = 0;
+
+    hr = DirectInputCreate(hInstance, version, &pDI, NULL);
+    ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
+    if (FAILED(hr)) return;
+
+    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                        10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "err: %d\n", GetLastError());
+
+    if (hwnd)
+    {
+        acquire_tests(pDI, hwnd);
+        test_set_coop(pDI, hwnd);
+    }
+
+    DestroyWindow(hwnd);
+    if (pDI) ref = IUnknown_Release(pDI);
     ok(!ref, "IDirectInput_Release() reference count = %d\n", ref);
 }
 
