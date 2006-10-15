@@ -1659,7 +1659,7 @@ static MSIRECORD *msi_get_transform_record( MSITABLEVIEW *tv, string_table *st, 
     if( !rec )
         return rec;
 
-    TRACE("row -> \n");
+    TRACE("row ->\n");
     for( i=0; i<tv->num_cols; i++ )
     {
         UINT n = bytes_per_column( &columns[i] );
@@ -1936,12 +1936,12 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                     ERR("no matching row to transform\n");
                 else if ( mask )
                 {
-                    TRACE("modifying row [%d]: \n", row);
+                    TRACE("modifying row [%d]:\n", row);
                     msi_table_modify_row( tv, rec, row, mask );
                 }
                 else
                 {
-                    TRACE("deleting row [%d]: \n", row);
+                    TRACE("deleting row [%d]:\n", row);
                     msi_delete_row( tv, row );
                 }
             }
