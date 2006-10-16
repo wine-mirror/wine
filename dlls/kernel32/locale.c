@@ -31,6 +31,11 @@
 #include <ctype.h>
 #include <stdlib.h>
 
+#ifdef __APPLE__
+# include <CoreFoundation/CFLocale.h>
+# include <CoreFoundation/CFString.h>
+#endif
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "windef.h"
@@ -505,10 +510,20 @@ static LCID get_env_lcid( UINT *unix_cp, const char *env_str )
 {
     char *buf, *lang,*country,*charset,*dialect,*next;
     LCID ret = 0;
+    char user_locale[50] = { 0 };
+#ifdef __APPLE__
+    CFLocaleRef user_locale_ref = CFLocaleCopyCurrent();
+    CFStringRef user_locale_string_ref = CFLocaleGetIdentifier(user_locale_ref);
+
+    CFStringGetCString(user_locale_string_ref, user_locale,
+                       sizeof(user_locale), kCFStringEncodingUTF8);
+    CFRelease(user_locale_ref);
+#endif
 
     if (((lang = getenv( "LC_ALL" )) && *lang) ||
         (env_str && (lang = getenv( env_str )) && *lang) ||
-        ((lang = getenv( "LANG" )) && *lang))
+        ((lang = getenv( "LANG" )) && *lang) ||
+        ((lang = user_locale) && *lang))
     {
         if (!strcmp(lang,"POSIX") || !strcmp(lang,"C")) goto done;
 
@@ -545,6 +560,10 @@ static LCID get_env_lcid( UINT *unix_cp, const char *env_str )
                 else
                     FIXME("charset %s was not recognized\n", charset);
             }
+#ifdef __APPLE__
+            /* charset on Mac OS X is always UTF8 */
+            else if (unix_cp) *unix_cp = CP_UTF8;
+#endif
 
             lang=next;
         } while (lang && !ret);
