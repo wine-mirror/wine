@@ -34,6 +34,10 @@ typedef unsigned short wchar_t;
 #define __int64 long long
 #endif
 
+#if defined(__x86_64__) && !defined(_WIN64)
+#define _WIN64
+#endif
+
 #ifndef _SIZE_T_DEFINED
 #ifdef _WIN64
 typedef unsigned __int64 size_t;

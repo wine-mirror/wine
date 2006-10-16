@@ -19,6 +19,10 @@
 #define __int64 long long
 #endif
 
+#if defined(__x86_64__) && !defined(_WIN64)
+#define _WIN64
+#endif
+
 /* file._flag flags */
 #define _IOREAD          0x0001
 #define _IOWRT           0x0002

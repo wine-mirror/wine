@@ -23,6 +23,10 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#if defined(__x86_64__) && !defined(_WIN64)
+#define _WIN64
+#endif
+
 #ifndef _WCHAR_T_DEFINED
 #define _WCHAR_T_DEFINED
 #ifndef __cplusplus
