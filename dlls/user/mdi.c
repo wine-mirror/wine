@@ -618,7 +618,13 @@ static LONG MDI_ChildActivate( HWND client, HWND child )
     if( isActiveFrameWnd )
     {
         SendMessageW( child, WM_NCACTIVATE, TRUE, 0L);
-        SetFocus( client );
+        /* Let the client window manage focus for children, but if the focus
+         * is already on the client (for instance this is the 1st child) then
+         * SetFocus won't work. It appears that Windows sends WM_SETFOCUS
+         * manually in this case.
+         */
+        if (SetFocus(client) == client)
+            SendMessageW( client, WM_SETFOCUS, (WPARAM)client, 0 );
     }
 
     SendMessageW( child, WM_MDIACTIVATE, (WPARAM)prevActiveWnd, (LPARAM)child );

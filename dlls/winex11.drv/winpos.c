@@ -938,7 +938,7 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
     case SW_MAXIMIZE:
         old_style = GetWindowLongW( hwnd, GWL_STYLE );
-        if ((old_style & WS_MAXIMIZE) && (old_style & WS_CHILD)) return SWP_NOSIZE | SWP_NOMOVE;
+        if ((old_style & WS_MAXIMIZE) && (old_style & WS_VISIBLE)) return SWP_NOSIZE | SWP_NOMOVE;
 
         WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL );
 
@@ -1029,7 +1029,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
-            if ((style & WS_MAXIMIZE) && (style & WS_CHILD)) return wasVisible;
+            if ((style & WS_MAXIMIZE) && wasVisible) return wasVisible;
             state_change = TRUE;
             break;
 
