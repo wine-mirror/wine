@@ -483,6 +483,7 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     HWND hWnd;
     BOOL bPrimary;
     BOOL bPopup;
+    LPSTR name;
 
     bPrimary = !lstrcmpi(wi->name, "main");
     bPopup = wi->win_style & WS_POPUP;
@@ -495,8 +496,9 @@ BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE* page, HLPFILE_WINDOWINFO* wi,
     win->next = Globals.win_list;
     Globals.win_list = win;
 
-    win->lpszName = (char*)win + sizeof(WINHELP_WINDOW);
-    lstrcpy((char*)win->lpszName, wi->name);
+    name = (char*)win + sizeof(WINHELP_WINDOW);
+    lstrcpy(name, wi->name);
+    win->lpszName = name;
 
     win->page = page;
 
@@ -757,7 +759,7 @@ static LRESULT CALLBACK WINHELP_ButtonBoxWndProc(HWND hWnd, UINT msg, WPARAM wPa
             SIZE textsize;
             if (!button->hWnd)
             {
-                button->hWnd = CreateWindow(STRING_BUTTON, (LPSTR) button->lpszName,
+                button->hWnd = CreateWindow(STRING_BUTTON, button->lpszName,
                                             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
                                             0, 0, 0, 0,
                                             hWnd, (HMENU) button->wParam,
