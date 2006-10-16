@@ -62,6 +62,7 @@ typedef struct tagHelpLinePart
         struct
         {
             HMETAFILE   hMetaFile;
+            INT         mm;
         } metafile;
     } u;
     HLPFILE_LINK*       link;

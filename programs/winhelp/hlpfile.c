@@ -654,16 +654,17 @@ static BOOL     HLPFILE_LoadMetaFile(BYTE* beg, BYTE pack, HLPFILE_PARAGRAPH* pa
     unsigned long       size, csize;
     unsigned long       off, hsoff;
     BYTE*               bits;
-    METAFILEPICT        mfp;
+    LPMETAFILEPICT      lpmfp;
 
     WINE_TRACE("Loading metafile\n");
 
     ptr = beg + 2; /* for type and pack */
 
-    mfp.mm = fetch_ushort(&ptr); /* mapping mode */
+    lpmfp = &paragraph->u.gfx.u.mfp;
+    lpmfp->mm = fetch_ushort(&ptr); /* mapping mode */
 
-    mfp.xExt = GET_USHORT(ptr, 0);
-    mfp.yExt = GET_USHORT(ptr, 2);
+    lpmfp->xExt = GET_USHORT(ptr, 0);
+    lpmfp->yExt = GET_USHORT(ptr, 2);
     ptr += 4;
 
     size = fetch_ulong(&ptr); /* decompressed size */
@@ -674,24 +675,19 @@ static BOOL     HLPFILE_LoadMetaFile(BYTE* beg, BYTE pack, HLPFILE_PARAGRAPH* pa
     ptr += 8;
 
     WINE_TRACE("sz=%lu csz=%lu (%d,%d) offs=%lu/%u,%lu\n",
-               size, csize, mfp.xExt, mfp.yExt, off, ptr - beg, hsoff);
+               size, csize, lpmfp->xExt, lpmfp->yExt, off, ptr - beg, hsoff);
 
     bits = HLPFILE_DecompressGfx(beg + off, csize, size, pack);
     if (!bits) return FALSE;
 
     paragraph->cookie = para_metafile;
 
-    mfp.hMF = NULL;
+    lpmfp->hMF = SetMetaFileBitsEx(size, bits);
 
-    paragraph->u.gfx.u.mf.hMetaFile = SetMetaFileBitsEx(size, bits);
-
-    if (!paragraph->u.gfx.u.mf.hMetaFile)
+    if (!lpmfp->hMF)
         WINE_FIXME("Couldn't load metafile\n");
 
     if (bits != beg + off) HeapFree(GetProcessHeap(), 0, bits);
-
-    paragraph->u.gfx.u.mf.mfSize.cx = mfp.xExt;
-    paragraph->u.gfx.u.mf.mfSize.cy = mfp.yExt;
 
     return TRUE;
 }
@@ -1930,7 +1926,7 @@ static void HLPFILE_DeleteParagraph(HLPFILE_PARAGRAPH* paragraph)
         next = paragraph->next;
 
         if (paragraph->cookie == para_metafile)
-            DeleteMetaFile(paragraph->u.gfx.u.mf.hMetaFile);
+            DeleteMetaFile(paragraph->u.gfx.u.mfp.hMF);
 
         HLPFILE_FreeLink(paragraph->link);
 

@@ -1051,11 +1051,35 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                     break;
                 case hlp_line_part_metafile:
                     {
-                        POINT   pt;
+                        HDC hMemDC;
+                        HBITMAP hBitmap;
+                        SIZE sz;
+                        RECT rc;
 
-                        SetViewportOrgEx(hDc, part->rect.left, part->rect.top - scroll_pos, &pt);
-                        PlayMetaFile(hDc, part->u.metafile.hMetaFile);
-                        SetViewportOrgEx(hDc, pt.x, pt.y, NULL);
+                        sz.cx = part->rect.right - part->rect.left;
+                        sz.cy = part->rect.bottom - part->rect.top;
+                        hMemDC = CreateCompatibleDC(hDc);
+                        hBitmap = CreateCompatibleBitmap(hDc, sz.cx, sz.cy);
+                        SelectObject(hMemDC, hBitmap);
+                        SelectObject(hMemDC, win->hBrush);
+                        rc.left = 0;
+                        rc.top = 0;
+                        rc.right = sz.cx;
+                        rc.bottom = sz.cy;
+                        FillRect(hMemDC, &rc, win->hBrush);
+                        SetMapMode(hMemDC, part->u.metafile.mm);
+                        SetWindowExtEx(hMemDC, sz.cx, sz.cy, 0);
+                        SetViewportExtEx(hMemDC, sz.cx, sz.cy, 0);
+                        SetWindowOrgEx(hMemDC, 0, 0, 0);
+                        SetViewportOrgEx(hMemDC, 0, 0, 0);
+                        PlayMetaFile(hMemDC, part->u.metafile.hMetaFile);
+                        SetMapMode(hMemDC, MM_TEXT);
+                        SetWindowOrgEx(hMemDC, 0, 0, 0);
+                        SetViewportOrgEx(hMemDC, 0, 0, 0);
+                        BitBlt(hDc, part->rect.left, part->rect.top - scroll_pos,
+                               sz.cx, sz.cy, hMemDC, 0, 0, SRCCOPY);
+                        DeleteDC(hMemDC);
+                        DeleteObject(hBitmap);
                     }
                     break;
                 }
@@ -1578,8 +1602,23 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                     gfxSize.cx = dibs.dsBm.bmWidth;
                     gfxSize.cy = dibs.dsBm.bmHeight;
                 }
-                else gfxSize = p->u.gfx.u.mf.mfSize;
-                    
+                else
+                {
+                    LPMETAFILEPICT lpmfp = &p->u.gfx.u.mfp;
+                    if (lpmfp->mm == MM_ANISOTROPIC || lpmfp->mm == MM_ISOTROPIC)
+                    {
+                        gfxSize.cx = MulDiv(lpmfp->xExt, GetDeviceCaps(hDc, HORZRES),
+                                            100*GetDeviceCaps(hDc, HORZSIZE));
+                        gfxSize.cy = MulDiv(lpmfp->yExt, GetDeviceCaps(hDc, VERTRES),
+                                            100*GetDeviceCaps(hDc, VERTSIZE));
+                    }
+                    else
+                    {
+                        gfxSize.cx = lpmfp->xExt;
+                        gfxSize.cy = lpmfp->yExt;
+                    }
+                }
+
                 free_width = rect.right - ((part && *line) ? (*line)->rect.right : rect.left) - space.cx;
                 if (free_width <= 0)
                 {
@@ -1601,7 +1640,8 @@ static BOOL WINHELP_SplitLines(HWND hWnd, LPSIZE newsize)
                 else
                 {
                     ref_part->cookie = hlp_line_part_metafile;
-                    ref_part->u.metafile.hMetaFile = p->u.gfx.u.mf.hMetaFile;
+                    ref_part->u.metafile.hMetaFile = p->u.gfx.u.mfp.hMF;
+                    ref_part->u.metafile.mm = p->u.gfx.u.mfp.mm;
                 }
             }
             break;

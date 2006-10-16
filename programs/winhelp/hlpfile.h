@@ -69,11 +69,7 @@ typedef struct tagHlpFileParagraph
                 {
                     HBITMAP             hBitmap;
                 } bmp;
-                struct
-                {
-                    HMETAFILE           hMetaFile;
-                    SIZE                mfSize;
-                } mf;
+                METAFILEPICT            mfp;
             } u;
         } gfx; /* for bitmaps and metafiles */
     } u;
