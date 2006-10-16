@@ -89,7 +89,7 @@ struct timer
     unsigned int    rate;      /* timer rate in ms */
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
-    unsigned int    id;        /* timer id */
+    unsigned long   id;        /* timer id */
     unsigned long   lparam;    /* lparam for message */
 };
 
@@ -126,7 +126,7 @@ struct msg_queue
     struct message_result *recv_result;     /* stack of received messages waiting for result */
     struct list            pending_timers;  /* list of pending timers */
     struct list            expired_timers;  /* list of expired timers */
-    unsigned int           next_timer_id;   /* id for the next timer with a 0 window */
+    unsigned long          next_timer_id;   /* id for the next timer with a 0 window */
     struct timeout_user   *timeout;         /* timeout for next timer to expire */
     struct thread_input   *input;           /* thread input descriptor */
     struct hook_table     *hooks;           /* hook table */
@@ -966,7 +966,7 @@ static void set_next_timer( struct msg_queue *queue )
 
 /* find a timer from its window and id */
 static struct timer *find_timer( struct msg_queue *queue, user_handle_t win,
-                                 unsigned int msg, unsigned int id )
+                                 unsigned int msg, unsigned long id )
 {
     struct list *ptr;
 
@@ -1832,7 +1832,7 @@ DECL_HANDLER(set_win_timer)
     struct msg_queue *queue;
     struct thread *thread = NULL;
     user_handle_t win = 0;
-    unsigned int id = req->id;
+    unsigned long id = req->id;
 
     if (req->win)
     {

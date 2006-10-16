@@ -2179,21 +2179,21 @@ static void dump_set_win_timer_request( const struct set_win_timer_request *req 
 {
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " id=%08x,", req->id );
     fprintf( stderr, " rate=%08x,", req->rate );
+    fprintf( stderr, " id=%lx,", req->id );
     fprintf( stderr, " lparam=%lx", req->lparam );
 }
 
 static void dump_set_win_timer_reply( const struct set_win_timer_reply *req )
 {
-    fprintf( stderr, " id=%08x", req->id );
+    fprintf( stderr, " id=%lx", req->id );
 }
 
 static void dump_kill_win_timer_request( const struct kill_win_timer_request *req )
 {
     fprintf( stderr, " win=%p,", req->win );
     fprintf( stderr, " msg=%08x,", req->msg );
-    fprintf( stderr, " id=%08x", req->id );
+    fprintf( stderr, " id=%lx", req->id );
 }
 
 static void dump_get_serial_info_request( const struct get_serial_info_request *req )

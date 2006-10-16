@@ -1687,11 +1687,11 @@ enum message_type
 @REQ(set_win_timer)
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
-    unsigned int    id;        /* timer id */
     unsigned int    rate;      /* timer rate in ms */
+    unsigned long   id;        /* timer id */
     unsigned long   lparam;    /* message lparam (callback proc) */
 @REPLY
-    unsigned int    id;        /* timer id */
+    unsigned long   id;        /* timer id */
 @END
 
 
@@ -1699,7 +1699,7 @@ enum message_type
 @REQ(kill_win_timer)
     user_handle_t   win;       /* window handle */
     unsigned int    msg;       /* message to post */
-    unsigned int    id;        /* timer id */
+    unsigned long   id;        /* timer id */
 @END
 
 

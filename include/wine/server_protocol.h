@@ -2355,14 +2355,14 @@ struct set_win_timer_request
     struct request_header __header;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned int    id;
     unsigned int    rate;
+    unsigned long   id;
     unsigned long   lparam;
 };
 struct set_win_timer_reply
 {
     struct reply_header __header;
-    unsigned int    id;
+    unsigned long   id;
 };
 
 
@@ -2372,7 +2372,7 @@ struct kill_win_timer_request
     struct request_header __header;
     user_handle_t   win;
     unsigned int    msg;
-    unsigned int    id;
+    unsigned long   id;
 };
 struct kill_win_timer_reply
 {
@@ -4426,6 +4426,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 254
+#define SERVER_PROTOCOL_VERSION 255
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
