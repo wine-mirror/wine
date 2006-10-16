@@ -47,7 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(opengl);
 
 typedef struct wine_wgl_s {
-    BOOL WINAPI  (*p_wglDeleteContext)(HGLRC hglrc);
     PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
 
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
@@ -145,15 +144,6 @@ BOOL WINAPI wglCopyContext(HGLRC hglrcSrc,
   FIXME("(%p,%p,%d)\n", hglrcSrc, hglrcDst, mask);
 
   return FALSE;
-}
-
-/***********************************************************************
- *		wglDeleteContext (OPENGL32.@)
- */
-BOOL WINAPI wglDeleteContext(HGLRC hglrc)
-{
-    TRACE("(%p)\n", hglrc);
-    return wine_wgl.p_wglDeleteContext(hglrc);
 }
 
 /***********************************************************************
@@ -622,7 +612,6 @@ static BOOL process_attach(void)
   wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
 
   /* Load WGL function pointers from winex11.drv */
-  wine_wgl.p_wglDeleteContext = (void *)GetProcAddress(mod, "wglDeleteContext");
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod, "wglGetProcAddress");
 
   /* Interal WGL function */

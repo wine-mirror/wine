@@ -79,6 +79,31 @@ HGLRC WINAPI wglCreateContext(HDC hdc)
     return ret;
 }
 
+
+/***********************************************************************
+ *		wglDeleteContext (OPENGL32.@)
+ */
+BOOL WINAPI wglDeleteContext(HGLRC hglrc)
+{
+    DC *dc;
+    BOOL ret = FALSE;
+    OPENGL_Context ctx = (OPENGL_Context)hglrc;
+
+    TRACE("hglrc: (%p)\n", hglrc);
+    if(ctx == NULL)
+        return FALSE;
+
+    /* Retrieve the HDC associated with the context to access the display driver */
+    dc = DC_GetDCPtr(ctx->hdc);
+    if (!dc) return FALSE;
+
+    if (!dc->funcs->pwglDeleteContext) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglDeleteContext(hglrc);
+
+    GDI_ReleaseObj(ctx->hdc);
+    return ret;
+}
+
 /***********************************************************************
  *		wglGetCurrentContext (OPENGL32.@)
  */

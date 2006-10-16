@@ -378,7 +378,7 @@
 @  stdcall wglCopyContext(long long long)
 @  stdcall wglCreateContext(long) gdi32.wglCreateContext
 @  stdcall wglCreateLayerContext(long long)
-@  stdcall wglDeleteContext(long)
+@  stdcall wglDeleteContext(long) gdi32.wglDeleteContext
 @  stdcall wglDescribeLayerPlane(long long long long ptr)
 @  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
 @  stdcall wglGetCurrentContext() gdi32.wglGetCurrentContext

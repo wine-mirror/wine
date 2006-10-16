@@ -197,6 +197,7 @@ static struct graphics_driver *create_driver( HMODULE module )
 
         /* OpenGL32 */
         GET_FUNC(wglCreateContext);
+        GET_FUNC(wglDeleteContext);
         GET_FUNC(wglMakeCurrent);
         GET_FUNC(wglShareLists);
         GET_FUNC(wglUseFontBitmapsA);
