@@ -27,7 +27,6 @@
 #include "winerror.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
-#include "wine/list.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objbase.h"
@@ -164,82 +163,6 @@ UINT MSI_OpenQuery( MSIDATABASE *db, MSIQUERY **view, LPCWSTR fmt, ... )
     /* perform the query */
     r = MSI_DatabaseOpenViewW(db, query, view);
     msi_free(query);
-    return r;
-}
-
-struct rec_list
-{
-    struct list entry;
-    MSIRECORD *rec;
-};
-
-UINT MSI_ReverseIterateRecords( MSIQUERY *view, DWORD *count,
-                                record_func func, LPVOID param )
-{
-    MSIRECORD *rec = NULL;
-    struct rec_list *add_rec; 
-    struct list records;
-    UINT r, n = 0, max = 0;
-
-    r = MSI_ViewExecute( view, NULL );
-    if( r != ERROR_SUCCESS )
-        return r;
-
-    list_init( &records );
-
-    if( count )
-        max = *count;
-
-    /* reverse the query */
-    for( n = 0; (max == 0) || (n < max); n++ )
-    {
-        r = MSI_ViewFetch( view, &rec );
-        if( r != ERROR_SUCCESS )
-        {
-            if ( r == ERROR_NO_MORE_ITEMS )
-                break;
-            else
-                goto done;
-        }
-
-        add_rec = msi_alloc( sizeof( *add_rec ) );
-        if (!add_rec)
-            goto done;
-
-        add_rec->rec = rec;
-        list_add_head( &records, &add_rec->entry );
-    }
-
-    /* iterate over the reversed records */
-    n = 0;
-    LIST_FOR_EACH_ENTRY( add_rec, &records, struct rec_list, entry )
-    {
-        if (func)
-            r = func( add_rec->rec, param );
-
-        msiobj_release( &add_rec->rec->hdr );
-        if ( r != ERROR_SUCCESS )
-            goto done;
-
-        n++;
-    }
-
-done:
-    MSI_ViewClose( view );
-
-    while ( !list_empty( &records ) )
-    {
-        add_rec = LIST_ENTRY( list_head( &records ), struct rec_list, entry );
-        list_remove( &add_rec->entry );
-        msi_free( add_rec );
-    }
-
-    if( count )
-        *count = n;
-
-    if( r == ERROR_NO_MORE_ITEMS )
-        r = ERROR_SUCCESS;
-
     return r;
 }
 

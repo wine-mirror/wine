@@ -2912,7 +2912,7 @@ static UINT msi_dialog_button_handler( msi_dialog *dialog,
         return 0;
     }
 
-    r = MSI_ReverseIterateRecords( view, 0, msi_dialog_control_event, dialog );
+    r = MSI_IterateRecords( view, 0, msi_dialog_control_event, dialog );
     msiobj_release( &view->hdr );
 
     return r;
