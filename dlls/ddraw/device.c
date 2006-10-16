@@ -2135,6 +2135,29 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             return hr;
         }
 
+        case D3DRENDERSTATE_TEXTUREADDRESSU:
+        case D3DRENDERSTATE_TEXTUREADDRESSV:
+        case D3DRENDERSTATE_TEXTUREADDRESS:
+        {
+            WINED3DTEXTURESTAGESTATETYPE TexStageStateType;
+
+            if (RenderStateType == D3DRENDERSTATE_TEXTUREADDRESS)
+            {
+                TexStageStateType = WINED3DTSS_ADDRESS;
+            }
+            else if (RenderStateType == D3DRENDERSTATE_TEXTUREADDRESSU)
+            {
+                TexStageStateType = WINED3DTSS_ADDRESSU;
+            }
+            else
+            {
+                TexStageStateType = WINED3DTSS_ADDRESSV;
+            }
+            return IWineD3DDevice_GetTextureStageState(This->wineD3DDevice,
+                                                       0, TexStageStateType,
+                                                       Value);
+        }
+
         default:
             /* FIXME: Unhandled: D3DRENDERSTATE_STIPPLEPATTERN00 - 31 */
             return IWineD3DDevice_GetRenderState(This->wineD3DDevice,
