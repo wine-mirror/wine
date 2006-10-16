@@ -22,13 +22,14 @@
 #define __WINE_RPC_SERVER_H
 
 #include "rpc_binding.h"
+#include "wine/list.h"
 
 struct protseq_ops;
 
 typedef struct _RpcServerProtseq
 {
   const struct protseq_ops *ops;
-  struct _RpcServerProtseq* Next;
+  struct list entry;
   LPSTR Protseq;
   LPSTR Endpoint;
   UINT MaxCalls;

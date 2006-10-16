@@ -66,7 +66,8 @@ typedef struct _RpcObjTypeMap
 
 static RpcObjTypeMap *RpcObjTypeMaps;
 
-static RpcServerProtseq* protseqs;
+/* list of type RpcServerProtseq */
+static struct list protseqs = LIST_INIT(protseqs);
 static RpcServerInterface* ifs;
 
 static CRITICAL_SECTION server_cs;
@@ -599,16 +600,15 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
 
   if (std_listen)
   {
-    cps = protseqs;
-    while (cps && status == RPC_S_OK)
+    LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
     {
       status = RPCRT4_start_listen_protseq(cps, TRUE);
+      if (status != RPC_S_OK)
+        break;
       
       /* make sure server is actually listening on the interface before
-      * returning */
-      if (status == RPC_S_OK)
-        RPCRT4_sync_with_server_thread(cps);
-      cps = cps->Next;
+       * returning */
+      RPCRT4_sync_with_server_thread(cps);
     }
   }
 
@@ -626,11 +626,9 @@ static void RPCRT4_stop_listen(BOOL auto_listen)
       std_listen = FALSE;
       LeaveCriticalSection(&listen_cs);
 
-      cps = protseqs;
-      while (cps) {
+      LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
         RPCRT4_sync_with_server_thread(cps);
-        cps = cps->Next;
-      }
+
       return;
     }
     assert(listen_count >= 0);
@@ -648,8 +646,7 @@ static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps)
     return status;
 
   EnterCriticalSection(&server_cs);
-  ps->Next = protseqs;
-  protseqs = ps;
+  list_add_head(&protseqs, &ps->entry);
   LeaveCriticalSection(&server_cs);
 
   if (std_listen)
@@ -680,14 +677,12 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   EnterCriticalSection(&server_cs);
   /* count connections */
   count = 0;
-  ps = protseqs;
-  while (ps) {
+  LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
     conn = ps->conn;
     while (conn) {
       count++;
       conn = conn->Next;
     }
-    ps = ps->Next;
   }
   if (count) {
     /* export bindings */
@@ -696,8 +691,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
                               sizeof(RPC_BINDING_HANDLE)*(count-1));
     (*BindingVector)->Count = count;
     count = 0;
-    ps = protseqs;
-    while (ps) {
+    LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
       conn = ps->conn;
       while (conn) {
        RPCRT4_MakeBinding((RpcBinding**)&(*BindingVector)->BindingH[count],
@@ -705,7 +699,6 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
        count++;
        conn = conn->Next;
       }
-      ps = ps->Next;
     }
     status = RPC_S_OK;
   } else {
@@ -1022,7 +1015,7 @@ RPC_STATUS WINAPI RpcServerListen( UINT MinimumCallThreads, UINT MaxCalls, UINT 
 
   TRACE("(%u,%u,%u)\n", MinimumCallThreads, MaxCalls, DontWait);
 
-  if (!protseqs)
+  if (list_empty(&protseqs))
     return RPC_S_NO_PROTSEQS_REGISTERED;
 
   status = RPCRT4_start_listen(FALSE);
