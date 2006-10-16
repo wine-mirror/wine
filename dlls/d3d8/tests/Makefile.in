@@ -4,11 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = d3d8.dll
 IMPORTS   = user32 kernel32
-EXTRALIBS = -ldxerr8
+EXTRALIBS = -ldxerr8 -luuid -ldxguid
 
 CTESTS = \
 	d3d8_main.c \
-	device.c
+	device.c \
+	surface.c
 
 @MAKE_TEST_RULES@
 
