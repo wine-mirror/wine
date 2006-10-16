@@ -374,6 +374,8 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     RpcConnection* conn;
     RpcServerProtseq_np *npps = CONTAINING_RECORD(protseq, RpcServerProtseq_np, common);
 
+    EnterCriticalSection(&protseq->cs);
+
     /* open and count connections */
     *count = 1;
     conn = protseq->conn;
@@ -392,6 +394,7 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     if (!objs)
     {
         ERR("couldn't allocate objs\n");
+        LeaveCriticalSection(&protseq->cs);
         return NULL;
     }
     
@@ -403,6 +406,7 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
             (*count)++;
         conn = conn->Next;
     }
+    LeaveCriticalSection(&protseq->cs);
     return objs;
 }
 
@@ -434,7 +438,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
     {
         b_handle = objs[res - WAIT_OBJECT_0];
         /* find which connection got a RPC */
-        EnterCriticalSection(&server_cs);
+        EnterCriticalSection(&protseq->cs);
         conn = protseq->conn;
         while (conn) {
             if (b_handle == rpcrt4_conn_get_wait_object(conn)) break;
@@ -445,7 +449,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
             RPCRT4_SpawnConnection(&cconn, conn);
         else
             ERR("failed to locate connection for handle %p\n", b_handle);
-        LeaveCriticalSection(&server_cs);
+        LeaveCriticalSection(&protseq->cs);
         if (cconn)
         {
             RPCRT4_new_client(cconn);
@@ -504,9 +508,7 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
   TRACE("(the_arg == ^%p)\n", the_arg);
 
   for (;;) {
-    EnterCriticalSection(&server_cs);
     objs = cps->ops->get_wait_array(cps, objs, &count);
-    LeaveCriticalSection(&server_cs);
 
     if (set_ready_event)
     {
@@ -530,14 +532,14 @@ static DWORD CALLBACK RPCRT4_server_thread(LPVOID the_arg)
     }
   }
   cps->ops->free_wait_array(cps, objs);
-  EnterCriticalSection(&server_cs);
+  EnterCriticalSection(&cps->cs);
   /* close connections */
   conn = cps->conn;
   while (conn) {
     RPCRT4_CloseConnection(conn);
     conn = conn->Next;
   }
-  LeaveCriticalSection(&server_cs);
+  LeaveCriticalSection(&cps->cs);
   return 0;
 }
 
@@ -600,6 +602,7 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
 
   if (std_listen)
   {
+    EnterCriticalSection(&server_cs);
     LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
     {
       status = RPCRT4_start_listen_protseq(cps, TRUE);
@@ -610,6 +613,7 @@ static RPC_STATUS RPCRT4_start_listen(BOOL auto_listen)
        * returning */
       RPCRT4_sync_with_server_thread(cps);
     }
+    LeaveCriticalSection(&server_cs);
   }
 
   return status;
@@ -678,11 +682,13 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   /* count connections */
   count = 0;
   LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
+    EnterCriticalSection(&ps->cs);
     conn = ps->conn;
     while (conn) {
       count++;
       conn = conn->Next;
     }
+    LeaveCriticalSection(&ps->cs);
   }
   if (count) {
     /* export bindings */
@@ -692,6 +698,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
     (*BindingVector)->Count = count;
     count = 0;
     LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
+      EnterCriticalSection(&ps->cs);
       conn = ps->conn;
       while (conn) {
        RPCRT4_MakeBinding((RpcBinding**)&(*BindingVector)->BindingH[count],
@@ -699,6 +706,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
        count++;
        conn = conn->Next;
       }
+      LeaveCriticalSection(&ps->cs);
     }
     status = RPC_S_OK;
   } else {
@@ -763,6 +771,7 @@ static RpcServerProtseq *alloc_serverprotoseq(UINT MaxCalls, char *Protseq, char
   ps->ops = ops;
   ps->MaxCalls = 0;
   ps->conn = NULL;
+  InitializeCriticalSection(&ps->cs);
   ps->is_listening = FALSE;
   ps->mgr_mutex = NULL;
   ps->server_ready_event = NULL;

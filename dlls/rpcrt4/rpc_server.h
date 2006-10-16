@@ -28,15 +28,17 @@ struct protseq_ops;
 
 typedef struct _RpcServerProtseq
 {
-  const struct protseq_ops *ops;
-  struct list entry;
-  LPSTR Protseq;
-  LPSTR Endpoint;
+  const struct protseq_ops *ops; /* RO */
+  struct list entry; /* CS ::server_cs */
+  LPSTR Protseq; /* RO */
+  LPSTR Endpoint; /* RO */
   UINT MaxCalls;
-  RpcConnection* conn;
+  /* list of listening connections */
+  RpcConnection* conn; /* CS cs */
+  CRITICAL_SECTION cs;
 
   /* is the server currently listening? */
-  BOOL is_listening;
+  BOOL is_listening; /* CS ::listen_cs */
   /* mutex for ensuring only one thread can change state at a time */
   HANDLE mgr_mutex;
   /* set when server thread has finished opening connections */
