@@ -13,7 +13,7 @@ C_SRCS = \
 
 RC_SRCS = rsrc.rc
 
-IDL_SRCS = \
+IDL_H_SRCS = \
 	atliface.idl
 
 @MAKE_DLL_RULES@

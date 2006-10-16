@@ -111,7 +111,8 @@ conf_manext     = 5
 CLEAN_FILES     = *.o *.a *.so *.ln *.$(LIBEXT) \\\#*\\\# *~ *% .\\\#* *.bak *.orig *.rej \
                   *.flc *.res *.mc.rc *.tab.[ch] *.yy.c core
 
-OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(EXTRA_OBJS)
+IDL_GEN_C_SRCS = $(IDL_C_SRCS:.idl=_c.c) $(IDL_I_SRCS:.idl=_i.c) $(IDL_P_SRCS:.idl=_p.c) $(IDL_S_SRCS:.idl=_s.c) 
+OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o) $(IDL_GEN_C_SRCS:.c=.o) $(EXTRA_OBJS)
 
 RCOBJS = $(RC_SRCS:.rc=.res.o)
 LINTS  = $(C_SRCS:.c=.ln)
@@ -215,7 +216,7 @@ winapi_check:: dummy
 
 # Rules for dependencies
 
-DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_SRCS) $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
+DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_H_SRCS) $(IDL_GEN_C_SRCS) $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
 
 $(SUBDIRS:%=%/__depend__): dummy
 	@cd `dirname $@` && $(MAKE) depend
@@ -234,7 +235,7 @@ $(EXTRASUBDIRS:%=%/__clean__): dummy
 	-cd `dirname $@` && $(RM) $(CLEAN_FILES)
 
 clean:: $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
-	$(RM) $(CLEAN_FILES) $(IDL_SRCS:.idl=.h) $(IDL_SRCS:.idl=_c.c) $(IDL_SRCS:.idl=_i.c) $(IDL_SRCS:.idl=_p.c) $(IDL_SRCS:.idl=_s.c) $(IDL_TLB_SRCS:.idl=.tlb) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
+	$(RM) $(CLEAN_FILES) $(IDL_H_SRCS:.idl=.h) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb) $(PROGRAMS) $(RC_BINARIES) $(MANPAGES)
 
 .PHONY: clean $(SUBDIRS:%=%/__clean__) $(EXTRASUBDIRS:%=%/__clean__)
 
@@ -303,14 +304,7 @@ doc-sgml: $(DOCSUBDIRS:%=%/__doc_sgml__)
 
 $(MC_SRCS:.mc=.mc.rc): $(WMC)
 
-$(IDL_SRCS:.idl=.h): $(WIDL)
-
-$(IDL_SRCS:.idl=_c.c): $(WIDL)
-$(IDL_SRCS:.idl=_i.c): $(WIDL)
-$(IDL_SRCS:.idl=_p.c): $(WIDL)
-$(IDL_SRCS:.idl=_s.c): $(WIDL)
-
-$(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
+$(IDL_H_SRCS:.idl=.h) $(IDL_GEN_C_SRCS) $(IDL_TLB_SRCS:.idl=.tlb): $(WIDL)
 
 $(SUBDIRS): dummy
 	@cd $@ && $(MAKE)

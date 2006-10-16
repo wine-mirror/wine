@@ -377,7 +377,7 @@ WINE_INCLUDES = \
 	library.h \
 	unicode.h
 
-IDL_SRCS = $(WINDOWS_IDL_SRCS) $(WINE_IDL_SRCS:%=wine/%)
+IDL_H_SRCS = $(WINDOWS_IDL_SRCS) $(WINE_IDL_SRCS:%=wine/%)
 
 EXTRASUBDIRS = ddk msvcrt msvcrt/sys wine
 
@@ -392,7 +392,7 @@ INSTALLDIRS = \
 
 WINDOWS_IDL_HEADERS = $(WINDOWS_IDL_SRCS:.idl=.h)
 WINE_IDL_HEADERS = $(WINE_IDL_SRCS:.idl=.h)
-IDL_HEADERS = $(IDL_SRCS:.idl=.h)
+IDL_HEADERS = $(IDL_H_SRCS:.idl=.h)
 IDL_TLBS = $(IDL_TLB_SRCS:.idl=.tlb)
 
 all: $(IDL_HEADERS) $(IDL_TLBS)

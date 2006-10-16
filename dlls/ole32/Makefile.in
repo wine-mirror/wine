@@ -68,7 +68,7 @@ RC_BINARIES = \
 	drag_move.cur \
 	nodrop.cur 
 
-IDL_SRCS = \
+IDL_H_SRCS = \
 	dcom.idl
 
 @MAKE_DLL_RULES@

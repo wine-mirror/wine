@@ -41,7 +41,7 @@ C_SRCS = \
 
 RC_SRCS = rsrc.rc
 
-IDL_SRCS = nsiface.idl
+IDL_H_SRCS = nsiface.idl
 
 @MAKE_DLL_RULES@
 
