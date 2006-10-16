@@ -1698,7 +1698,10 @@ NTSTATUS wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *un
         {
             /* creation fails with STATUS_ACCESS_DENIED for the root of the drive */
             if (disposition == FILE_CREATE)
+            {
+                RtlFreeHeap( GetProcessHeap(), 0, unix_name );
                 return name_len ? STATUS_OBJECT_NAME_COLLISION : STATUS_ACCESS_DENIED;
+            }
             goto done;
         }
     }
