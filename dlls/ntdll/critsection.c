@@ -397,12 +397,12 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
             const char *name = NULL;
             if (crit->DebugInfo) name = (char *)crit->DebugInfo->Spare[0];
             if (!name) name = "?";
-            ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
+            ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), (DWORD)crit->OwningThread );
             status = wait_semaphore( crit, 60 );
             if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
-                ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
+                ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), (DWORD) crit->OwningThread );
                 status = wait_semaphore( crit, 300 );
             }

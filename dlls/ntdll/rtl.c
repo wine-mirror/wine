@@ -344,11 +344,11 @@ NTSTATUS WINAPI vDbgPrintExWithPrefix( LPCSTR prefix, ULONG id, ULONG level, LPC
 
     switch (level & DPFLTR_MASK)
     {
-    case DPFLTR_ERROR_LEVEL:   ERR("%s%lx: %s", prefix, id, buf); break;
-    case DPFLTR_WARNING_LEVEL: WARN("%s%lx: %s", prefix, id, buf); break;
+    case DPFLTR_ERROR_LEVEL:   ERR("%s%x: %s", prefix, id, buf); break;
+    case DPFLTR_WARNING_LEVEL: WARN("%s%x: %s", prefix, id, buf); break;
     case DPFLTR_TRACE_LEVEL:
     case DPFLTR_INFO_LEVEL:
-    default:                   TRACE("%s%lx: %s", prefix, id, buf); break;
+    default:                   TRACE("%s%x: %s", prefix, id, buf); break;
     }
     return STATUS_SUCCESS;
 }
@@ -545,7 +545,7 @@ SIZE_T WINAPI RtlCompareMemoryUlong(const ULONG *Source1, SIZE_T Length, ULONG d
  */
 void WINAPI RtlAssert(LPVOID x1,LPVOID x2,DWORD x3, DWORD x4)
 {
-	FIXME("(%p,%p,0x%08lx,0x%08lx),stub\n",x1,x2,x3,x4);
+	FIXME("(%p,%p,0x%08x,0x%08x),stub\n",x1,x2,x3,x4);
 }
 
 /*************************************************************************
@@ -563,7 +563,7 @@ void WINAPI RtlAssert(LPVOID x1,LPVOID x2,DWORD x3, DWORD x4)
  */
 VOID WINAPI RtlFillMemoryUlong(ULONG* lpDest, ULONG ulCount, ULONG ulValue)
 {
-  TRACE("(%p,%ld,%ld)\n", lpDest, ulCount, ulValue);
+  TRACE("(%p,%d,%d)\n", lpDest, ulCount, ulValue);
 
   ulCount /= sizeof(ULONG);
   while(ulCount--)
@@ -587,7 +587,7 @@ DWORD WINAPI RtlComputeCrc32(DWORD dwInitial, PBYTE pData, INT iLen)
 {
   DWORD crc = ~dwInitial;
 
-  TRACE("(%ld,%p,%d)\n", dwInitial, pData, iLen);
+  TRACE("(%d,%p,%d)\n", dwInitial, pData, iLen);
 
   while (iLen > 0)
   {

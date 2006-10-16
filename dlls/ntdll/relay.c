@@ -381,18 +381,18 @@ static LONGLONG WINAPI relay_call_from_32( struct relay_descr *descr, unsigned i
     else
     {
         if (entry_point->name)
-            DPRINTF( "%04lx:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
+            DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
         else
-            DPRINTF( "%04lx:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+            DPRINTF( "%04x:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
         RELAY_PrintArgs( stack + 1, nb_args, descr->arg_types[ordinal] );
         DPRINTF( ") ret=%08x\n", stack[0] );
 
         ret = call_entry_point( entry_point->orig_func, nb_args, stack + 1 );
 
         if (entry_point->name)
-            DPRINTF( "%04lx:Ret  %s.%s()", GetCurrentThreadId(), data->dllname, entry_point->name );
+            DPRINTF( "%04x:Ret  %s.%s()", GetCurrentThreadId(), data->dllname, entry_point->name );
         else
-            DPRINTF( "%04lx:Ret  %s.%u()", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+            DPRINTF( "%04x:Ret  %s.%u()", GetCurrentThreadId(), data->dllname, data->base + ordinal );
 
         if (flags & 1)  /* 64-bit return value */
             DPRINTF( " retval=%08x%08x ret=%08x\n",
@@ -429,14 +429,14 @@ void WINAPI __regs_relay_call_from_32_regs( struct relay_descr *descr, unsigned 
     if (TRACE_ON(relay))
     {
         if (entry_point->name)
-            DPRINTF( "%04lx:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
+            DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
         else
-            DPRINTF( "%04lx:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
+            DPRINTF( "%04x:Call %s.%u(", GetCurrentThreadId(), data->dllname, data->base + ordinal );
         RELAY_PrintArgs( args, nb_args, descr->arg_types[ordinal] );
         DPRINTF( ") ret=%08x\n", ret_addr );
 
-        DPRINTF( "%04lx:  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx "
-                 "ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+        DPRINTF( "%04x:  eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x "
+                 "ebp=%08x esp=%08x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
                  GetCurrentThreadId(), context->Eax, context->Ebx, context->Ecx,
                  context->Edx, context->Esi, context->Edi, context->Ebp, context->Esp,
                  context->SegDs, context->SegEs, context->SegFs, context->SegGs, context->EFlags );
@@ -456,15 +456,15 @@ void WINAPI __regs_relay_call_from_32_regs( struct relay_descr *descr, unsigned 
     if (TRACE_ON(relay))
     {
         if (entry_point->name)
-            DPRINTF( "%04lx:Ret  %s.%s() retval=%08lx ret=%08lx\n",
+            DPRINTF( "%04x:Ret  %s.%s() retval=%08x ret=%08x\n",
                      GetCurrentThreadId(), data->dllname, entry_point->name,
                      context->Eax, context->Eip );
         else
-            DPRINTF( "%04lx:Ret  %s.%u() retval=%08lx ret=%08lx\n",
+            DPRINTF( "%04x:Ret  %s.%u() retval=%08x ret=%08x\n",
                      GetCurrentThreadId(), data->dllname, data->base + ordinal,
                      context->Eax, context->Eip );
-        DPRINTF( "%04lx:  eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx "
-                 "ebp=%08lx esp=%08lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+        DPRINTF( "%04x:  eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x "
+                 "ebp=%08x esp=%08x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
                  GetCurrentThreadId(), context->Eax, context->Ebx, context->Ecx,
                  context->Edx, context->Esi, context->Edi, context->Ebp, context->Esp,
                  context->SegDs, context->SegEs, context->SegFs, context->SegGs, context->EFlags );
@@ -644,13 +644,15 @@ void SNOOP_SetupDLL(HMODULE hmod)
     char *p, *name;
     void *addr;
     SIZE_T size;
+    ULONG size32;
     IMAGE_EXPORT_DIRECTORY *exports;
 
     if (!init_done) init_debug_lists();
 
-    exports = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size );
+    exports = RtlImageDirectoryEntryToData( hmod, TRUE, IMAGE_DIRECTORY_ENTRY_EXPORT, &size32 );
     if (!exports) return;
     name = (char *)hmod + exports->Name;
+    size = size32;
 
     TRACE_(snoop)("hmod=%p, name=%s\n", hmod, name);
 
@@ -763,7 +765,7 @@ static void SNOOP_PrintArg(DWORD x)
 {
     int i,nostring;
 
-    DPRINTF("%08lx",x);
+    DPRINTF("%08x",x);
     if (!HIWORD(x) || TRACE_ON(seh)) return; /* trivial reject to avoid faults */
     __TRY
     {
@@ -818,7 +820,7 @@ void WINAPI __regs_SNOOP_Entry( CONTEXT86 *context )
 		dll=dll->next;
 	}
 	if (!dll) {
-		FIXME("entrypoint 0x%08lx not found\n",entry);
+		FIXME("entrypoint 0x%08x not found\n",entry);
 		return; /* oops */
 	}
 	/* guess cdecl ... */
@@ -870,8 +872,8 @@ void WINAPI __regs_SNOOP_Entry( CONTEXT86 *context )
 
 	context->Eip = (DWORD)fun->origfun;
 
-	if (fun->name) DPRINTF("%04lx:CALL %s.%s(",GetCurrentThreadId(),dll->name,fun->name);
-	else DPRINTF("%04lx:CALL %s.%ld(",GetCurrentThreadId(),dll->name,dll->ordbase+ordinal);
+	if (fun->name) DPRINTF("%04x:CALL %s.%s(",GetCurrentThreadId(),dll->name,fun->name);
+	else DPRINTF("%04x:CALL %s.%d(",GetCurrentThreadId(),dll->name,dll->ordbase+ordinal);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
@@ -887,7 +889,7 @@ void WINAPI __regs_SNOOP_Entry( CONTEXT86 *context )
                                             0,16*sizeof(DWORD));
 		memcpy(ret->args,(LPBYTE)(context->Esp + 4),sizeof(DWORD)*16);
 	}
-	DPRINTF(") ret=%08lx\n",(DWORD)ret->origreturn);
+	DPRINTF(") ret=%08x\n",(DWORD)ret->origreturn);
 }
 
 
@@ -908,9 +910,9 @@ void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
 		int	i,max;
 
                 if (fun->name)
-                    DPRINTF("%04lx:RET  %s.%s(", GetCurrentThreadId(), ret->dll->name, fun->name);
+                    DPRINTF("%04x:RET  %s.%s(", GetCurrentThreadId(), ret->dll->name, fun->name);
                 else
-                    DPRINTF("%04lx:RET  %s.%ld(", GetCurrentThreadId(),
+                    DPRINTF("%04x:RET  %s.%d(", GetCurrentThreadId(),
                             ret->dll->name,ret->dll->ordbase+ret->ordinal);
 
 		max = fun->nrofargs;
@@ -921,7 +923,7 @@ void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
                     SNOOP_PrintArg(ret->args[i]);
                     if (i<max-1) DPRINTF(",");
                 }
-		DPRINTF(") retval=%08lx ret=%08lx\n",
+		DPRINTF(") retval=%08x ret=%08x\n",
 			context->Eax,(DWORD)ret->origreturn );
 		RtlFreeHeap(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
@@ -929,11 +931,11 @@ void WINAPI __regs_SNOOP_Return( CONTEXT86 *context )
         else
         {
             if (fun->name)
-		DPRINTF("%04lx:RET  %s.%s() retval=%08lx ret=%08lx\n",
+		DPRINTF("%04x:RET  %s.%s() retval=%08x ret=%08x\n",
 			GetCurrentThreadId(),
 			ret->dll->name, fun->name, context->Eax, (DWORD)ret->origreturn);
             else
-		DPRINTF("%04lx:RET  %s.%ld() retval=%08lx ret=%08lx\n",
+		DPRINTF("%04x:RET  %s.%d() retval=%08x ret=%08x\n",
 			GetCurrentThreadId(),
 			ret->dll->name,ret->dll->ordbase+ret->ordinal,
 			context->Eax, (DWORD)ret->origreturn);

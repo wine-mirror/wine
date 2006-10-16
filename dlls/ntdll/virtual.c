@@ -866,7 +866,7 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
         /* sanity checks */
         if ((char *)rel + rel->SizeOfBlock > base + dir->VirtualAddress + dir->Size)
         {
-            ERR_(module)("invalid relocation %p,%lx,%ld at %p,%lx,%lx\n",
+            ERR_(module)("invalid relocation %p,%x,%d at %p,%x,%x\n",
                          rel, rel->VirtualAddress, rel->SizeOfBlock,
                          base, dir->VirtualAddress, dir->Size );
             return 0;
@@ -879,7 +879,7 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
             continue;
         }
 
-        TRACE_(module)("%d relocations for page %lx\n", count, rel->VirtualAddress);
+        TRACE_(module)("%d relocations for page %x\n", count, rel->VirtualAddress);
 
         /* patching in reverse order */
         for (i = 0 ; i < count; i++)
@@ -1048,7 +1048,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         end = sec->VirtualAddress + ROUND_SIZE( sec->VirtualAddress, map_size );
         if (sec->VirtualAddress > total_size || end > total_size || end < sec->VirtualAddress)
         {
-            ERR_(module)( "Section %.8s too large (%lx+%lx/%lx)\n",
+            ERR_(module)( "Section %.8s too large (%x+%lx/%lx)\n",
                           sec->Name, sec->VirtualAddress, map_size, total_size );
             goto error;
         }
@@ -1056,7 +1056,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         if ((sec->Characteristics & IMAGE_SCN_MEM_SHARED) &&
             (sec->Characteristics & IMAGE_SCN_MEM_WRITE))
         {
-            TRACE_(module)( "mapping shared section %.8s at %p off %lx (%x) size %lx (%lx) flags %lx\n",
+            TRACE_(module)( "mapping shared section %.8s at %p off %x (%x) size %lx (%lx) flags %x\n",
                             sec->Name, ptr + sec->VirtualAddress,
                             sec->PointerToRawData, (int)pos, file_size, map_size,
                             sec->Characteristics );
@@ -1085,7 +1085,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
             continue;
         }
 
-        TRACE_(module)( "mapping section %.8s at %p off %lx size %lx virt %lx flags %lx\n",
+        TRACE_(module)( "mapping section %.8s at %p off %x size %x virt %x flags %x\n",
                         sec->Name, ptr + sec->VirtualAddress,
                         sec->PointerToRawData, sec->SizeOfRawData,
                         sec->Misc.VirtualSize, sec->Characteristics );
@@ -1126,7 +1126,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
         if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
         {
-            WARN( "Need to relocate module from addr %lx, but there are no relocation records\n",
+            WARN( "Need to relocate module from addr %x, but there are no relocation records\n",
                   nt->OptionalHeader.ImageBase );
             status = STATUS_CONFLICTING_ADDRESSES;
             goto error;
@@ -1311,7 +1311,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     NTSTATUS status = STATUS_SUCCESS;
     struct file_view *view;
 
-    TRACE("%p %p %08lx %lx %08lx\n", process, *ret, size, type, protect );
+    TRACE("%p %p %08lx %x %08x\n", process, *ret, size, type, protect );
 
     if (!size) return STATUS_INVALID_PARAMETER;
 
@@ -1352,7 +1352,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         if (!(type & (MEM_COMMIT | MEM_RESERVE)) ||
             (type & ~(MEM_COMMIT | MEM_RESERVE | MEM_TOP_DOWN | MEM_WRITE_WATCH | MEM_RESET)))
         {
-            WARN("called with wrong alloc type flags (%08lx) !\n", type);
+            WARN("called with wrong alloc type flags (%08x) !\n", type);
             return STATUS_INVALID_PARAMETER;
         }
         if (type & MEM_WRITE_WATCH)
@@ -1417,7 +1417,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     LPVOID addr = *addr_ptr;
     SIZE_T size = *size_ptr;
 
-    TRACE("%p %p %08lx %lx\n", process, addr, size, type );
+    TRACE("%p %p %08lx %x\n", process, addr, size, type );
 
     if (!is_current_process( process ))
     {
@@ -1470,7 +1470,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     }
     else
     {
-        WARN("called with wrong free type flags (%08lx) !\n", type);
+        WARN("called with wrong free type flags (%08x) !\n", type);
         status = STATUS_INVALID_PARAMETER;
     }
 
@@ -1495,7 +1495,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     SIZE_T size = *size_ptr;
     LPVOID addr = *addr_ptr;
 
-    TRACE("%p %p %08lx %08lx\n", process, addr, size, new_prot );
+    TRACE("%p %p %08lx %08x\n", process, addr, size, new_prot );
 
     if (!is_current_process( process ))
     {
@@ -1782,7 +1782,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
-    TRACE("handle=%p process=%p addr=%p off=%lx%08lx size=%lx access=%lx\n",
+    TRACE("handle=%p process=%p addr=%p off=%x%08x size=%lx access=%x\n",
           handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, size, protect );
 
     if (!is_current_process( process ))
@@ -1897,7 +1897,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Map the file */
 
-    TRACE("handle=%p size=%lx offset=%lx%08lx\n",
+    TRACE("handle=%p size=%lx offset=%x%08x\n",
           handle, size, offset.u.HighPart, offset.u.LowPart );
 
     res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, prot, removable );
@@ -1913,7 +1913,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     }
     else
     {
-        ERR( "map_file_into_view %p %lx %lx%08lx failed\n",
+        ERR( "map_file_into_view %p %lx %x%08x failed\n",
              view->base, size, offset.u.HighPart, offset.u.LowPart );
         delete_view( view );
     }

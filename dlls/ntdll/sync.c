@@ -131,7 +131,7 @@ NTSTATUS WINAPI NtQuerySemaphore(
 	ULONG Length,
 	PULONG ReturnLength)
 {
-	FIXME("(%p,%d,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,%d,%p,0x%08x,%p) stub!\n",
 	SemaphoreHandle, SemaphoreInformationClass, SemaphoreInformation, Length, ReturnLength);
 	return STATUS_SUCCESS;
 }
@@ -280,7 +280,7 @@ NTSTATUS WINAPI NtPulseEvent( HANDLE handle, PULONG PulseCount )
     NTSTATUS ret;
 
     if (PulseCount)
-      FIXME("(%p,%ld)\n", handle, *PulseCount);
+      FIXME("(%p,%d)\n", handle, *PulseCount);
 
     SERVER_START_REQ( event_op )
     {
@@ -392,7 +392,7 @@ NTSTATUS WINAPI NtQueryMutant(IN HANDLE handle,
                               IN ULONG MutantInformationLength, 
                               OUT PULONG ResultLength OPTIONAL )
 {
-    FIXME("(%p %u %p %lu %p): stub!\n", 
+    FIXME("(%p %u %p %u %p): stub!\n", 
           handle, MutantInformationClass, MutantInformation, MutantInformationLength, ResultLength);
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -473,7 +473,7 @@ NTSTATUS WINAPI NtSetTimer(IN HANDLE handle,
 {
     NTSTATUS    status = STATUS_SUCCESS;
 
-    TRACE("(%p,%p,%p,%p,%08x,0x%08lx,%p) stub\n",
+    TRACE("(%p,%p,%p,%p,%08x,0x%08x,%p) stub\n",
           handle, when, callback, callback_arg, resume, period, state);
 
     SERVER_START_REQ( set_timer )
@@ -549,7 +549,7 @@ NTSTATUS WINAPI NtQueryTimer(
     NTSTATUS status;
     LARGE_INTEGER now;
 
-    TRACE("(%p,%d,%p,0x%08lx,%p)\n", TimerHandle, TimerInformationClass,
+    TRACE("(%p,%d,%p,0x%08x,%p)\n", TimerHandle, TimerInformationClass,
        TimerInformation, Length, ReturnLength);
 
     switch (TimerInformationClass)
@@ -606,7 +606,7 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
                                      IN BOOLEAN set_resolution,
                                      OUT ULONG* current_resolution )
 {
-    FIXME("(%lu,%u,%p), stub!\n",
+    FIXME("(%u,%u,%p), stub!\n",
           resolution, set_resolution, current_resolution);
 
     return STATUS_NOT_IMPLEMENTED;
@@ -849,7 +849,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
 NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
                                       POBJECT_ATTRIBUTES ObjectAttributes, ULONG NumberOfConcurrentThreads )
 {
-    FIXME("(%p, %lx, %p, %ld)\n", CompletionPort, DesiredAccess,
+    FIXME("(%p, %x, %p, %d)\n", CompletionPort, DesiredAccess,
           ObjectAttributes, NumberOfConcurrentThreads);
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -858,7 +858,7 @@ NTSTATUS WINAPI NtSetIoCompletion( HANDLE CompletionPort, ULONG_PTR CompletionKe
                                    PIO_STATUS_BLOCK iosb, ULONG NumberOfBytesTransferred,
                                    ULONG NumberOfBytesToTransfer )
 {
-    FIXME("(%p, %lx, %p, %ld, %ld)\n", CompletionPort, CompletionKey,
+    FIXME("(%p, %lx, %p, %d, %d)\n", CompletionPort, CompletionKey,
           iosb, NumberOfBytesTransferred, NumberOfBytesToTransfer);
     return STATUS_NOT_IMPLEMENTED;
 }

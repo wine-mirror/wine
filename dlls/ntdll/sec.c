@@ -131,7 +131,7 @@ NTSTATUS WINAPI RtlAllocateAndInitializeSid (
 {
     SID *tmp_sid;
 
-    TRACE("(%p, 0x%04x,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,0x%08lx,%p)\n",
+    TRACE("(%p, 0x%04x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,0x%08x,%p)\n",
 		pIdentifierAuthority,nSubAuthorityCount,
 		nSubAuthority0, nSubAuthority1,	nSubAuthority2, nSubAuthority3,
 		nSubAuthority4, nSubAuthority5,	nSubAuthority6, nSubAuthority7, pSid);
@@ -824,7 +824,7 @@ NTSTATUS WINAPI RtlMakeSelfRelativeSD(
     SECURITY_DESCRIPTOR* pAbs = pAbsoluteSecurityDescriptor;
     SECURITY_DESCRIPTOR* pRel = pSelfRelativeSecurityDescriptor;
 
-    TRACE(" %p %p %p(%ld)\n", pAbs, pRel, lpdwBufferLength,
+    TRACE(" %p %p %p(%d)\n", pAbs, pRel, lpdwBufferLength,
         lpdwBufferLength ? *lpdwBufferLength: -1);
 
     if (!lpdwBufferLength || !pAbs)
@@ -1047,7 +1047,7 @@ NTSTATUS WINAPI RtlAbsoluteToSelfRelativeSD(
  */
 NTSTATUS WINAPI RtlCreateAcl(PACL acl,DWORD size,DWORD rev)
 {
-	TRACE("%p 0x%08lx 0x%08lx\n", acl, size, rev);
+	TRACE("%p 0x%08x 0x%08x\n", acl, size, rev);
 
 	if (rev!=ACL_REVISION)
 		return STATUS_INVALID_PARAMETER;
@@ -1148,7 +1148,7 @@ NTSTATUS  WINAPI RtlDeleteAce(PACL pAcl, DWORD dwAceIndex)
 		pAcl->AceCount--;
 	}
 
-	TRACE("pAcl=%p dwAceIndex=%ld status=0x%08lx\n", pAcl, dwAceIndex, status);
+	TRACE("pAcl=%p dwAceIndex=%d status=0x%08x\n", pAcl, dwAceIndex, status);
 
 	return status;
 }
@@ -1175,7 +1175,7 @@ NTSTATUS WINAPI RtlAddAccessAllowedAceEx(
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
-   TRACE("(%p,0x%08lx,0x%08lx,%p)\n", pAcl, dwAceRevision, AccessMask, pSid);
+   TRACE("(%p,0x%08x,0x%08x,%p)\n", pAcl, dwAceRevision, AccessMask, pSid);
 
     return add_access_ace(pAcl, dwAceRevision, AceFlags,
                           AccessMask, pSid, ACCESS_ALLOWED_ACE_TYPE);
@@ -1203,7 +1203,7 @@ NTSTATUS WINAPI RtlAddAccessDeniedAceEx(
 	IN DWORD AccessMask,
 	IN PSID pSid)
 {
-   TRACE("(%p,0x%08lx,0x%08lx,%p)\n", pAcl, dwAceRevision, AccessMask, pSid);
+   TRACE("(%p,0x%08x,0x%08x,%p)\n", pAcl, dwAceRevision, AccessMask, pSid);
 
     return add_access_ace(pAcl, dwAceRevision, AceFlags,
                           AccessMask, pSid, ACCESS_DENIED_ACE_TYPE);
@@ -1222,7 +1222,7 @@ NTSTATUS WINAPI RtlAddAuditAccessAce(
 { 
     DWORD dwAceFlags = 0;
 
-    TRACE("(%p,%ld,%ld,%p,%u,%u)\n",pAcl,dwAceRevision,dwAccessMask,
+    TRACE("(%p,%d,%d,%p,%u,%u)\n",pAcl,dwAceRevision,dwAccessMask,
           pSid,bAuditSuccess,bAuditFailure);
 
     if (bAuditSuccess)
@@ -1281,7 +1281,7 @@ NTSTATUS WINAPI RtlGetAce(PACL pAcl,DWORD dwAceIndex,LPVOID *pAce )
 {
 	PACE_HEADER ace;
 
-	TRACE("(%p,%ld,%p)\n",pAcl,dwAceIndex,pAce);
+	TRACE("(%p,%d,%p)\n",pAcl,dwAceIndex,pAce);
 
 	if ((dwAceIndex < 0) || (dwAceIndex > pAcl->AceCount))
 		return STATUS_INVALID_PARAMETER;
@@ -1330,7 +1330,7 @@ RtlAdjustPrivilege(ULONG Privilege,
     HANDLE TokenHandle;
     NTSTATUS Status;
 
-    TRACE("(%ld, %s, %s, %p)\n", Privilege, Enable ? "TRUE" : "FALSE",
+    TRACE("(%d, %s, %s, %p)\n", Privilege, Enable ? "TRUE" : "FALSE",
         CurrentThread ? "TRUE" : "FALSE", Enabled);
 
     if (CurrentThread)
@@ -1349,7 +1349,7 @@ RtlAdjustPrivilege(ULONG Privilege,
 
     if (!NT_SUCCESS(Status))
     {
-        WARN("Retrieving token handle failed (Status %lx)\n", Status);
+        WARN("Retrieving token handle failed (Status %x)\n", Status);
         return Status;
     }
 
@@ -1374,7 +1374,7 @@ RtlAdjustPrivilege(ULONG Privilege,
     }
     if (!NT_SUCCESS(Status))
     {
-        WARN("NtAdjustPrivilegesToken() failed (Status %lx)\n", Status);
+        WARN("NtAdjustPrivilegesToken() failed (Status %x)\n", Status);
         return Status;
     }
 
@@ -1479,7 +1479,7 @@ NtAccessCheck(
 {
     NTSTATUS status;
 
-    TRACE("(%p, %p, %08lx, %p, %p, %p, %p, %p), stub\n",
+    TRACE("(%p, %p, %08x, %p, %p, %p, %p, %p), stub\n",
         SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
         PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
 
@@ -1544,7 +1544,7 @@ NtSetSecurityObject(
         IN SECURITY_INFORMATION SecurityInformation,
         IN PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
-	FIXME("%p 0x%08lx %p\n", Handle, SecurityInformation, SecurityDescriptor);
+	FIXME("%p 0x%08x %p\n", Handle, SecurityInformation, SecurityDescriptor);
 	return STATUS_SUCCESS;
 }
 
@@ -1602,7 +1602,7 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
 {
     NTSTATUS status = STATUS_SUCCESS;
 
-    TRACE("pAcl=%p pAclInfo=%p len=%ld, class=%d\n", 
+    TRACE("pAcl=%p pAclInfo=%p len=%d, class=%d\n", 
         pAcl, pAclInformation, nAclInformationLength, dwAclInformationClass);
 
     switch (dwAclInformationClass)
@@ -1643,7 +1643,7 @@ NTSTATUS WINAPI RtlQueryInformationAcl(
 
 		if (pAcl->AclSize < paclsize->AclBytesInUse)
                 {
-                    WARN("Acl has %ld bytes free\n", paclsize->AclBytesFree);
+                    WARN("Acl has %d bytes free\n", paclsize->AclBytesFree);
                     paclsize->AclBytesFree = 0;
                     paclsize->AclBytesInUse = pAcl->AclSize;
                 }

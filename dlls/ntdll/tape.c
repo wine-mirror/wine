@@ -76,7 +76,7 @@ static const char *io2str( DWORD io )
     X(IOCTL_TAPE_SET_POSITION);
     X(IOCTL_TAPE_WRITE_MARKS);
 #undef X
-    default: { static char tmp[32]; sprintf(tmp, "IOCTL_TAPE_%ld\n", io); return tmp; }
+    default: { static char tmp[32]; sprintf(tmp, "IOCTL_TAPE_%d\n", io); return tmp; }
     }
 }
 
@@ -97,7 +97,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, TAPE_CREATE_PARTITION *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d method: 0x%08lx count: 0x%08lx size: 0x%08lx\n",
+    TRACE( "fd: %d method: 0x%08x count: 0x%08x size: 0x%08x\n",
            fd, data->Method, data->Count, data->Size );
 
     if (data->Count > 1)
@@ -120,7 +120,7 @@ static NTSTATUS TAPE_CreatePartition( int fd, TAPE_CREATE_PARTITION *data )
         break;
 #endif
     default:
-        ERR( "Unhandled method: 0x%08lx\n", data->Method );
+        ERR( "Unhandled method: 0x%08x\n", data->Method );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -139,7 +139,7 @@ static NTSTATUS TAPE_Erase( int fd, TAPE_ERASE *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d type: 0x%08lx immediate: 0x%02x\n",
+    TRACE( "fd: %d type: 0x%08x immediate: 0x%02x\n",
            fd, data->Type, data->Immediate );
 
     switch (data->Type)
@@ -153,7 +153,7 @@ static NTSTATUS TAPE_Erase( int fd, TAPE_ERASE *data )
         cmd.mt_count = 0;
         break;
     default:
-        ERR( "Unhandled type: 0x%08lx\n", data->Type );
+        ERR( "Unhandled type: 0x%08x\n", data->Type );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -251,7 +251,7 @@ static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
 #endif
     NTSTATUS status;
 
-    TRACE( "fd: %d type: 0x%08lx\n", fd, type );
+    TRACE( "fd: %d type: 0x%08x\n", fd, type );
 
     memset( data, 0, sizeof(TAPE_GET_POSITION) );
 
@@ -281,7 +281,7 @@ static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
         WARN( "Positioning type not supported\n" );
         break;
     default:
-        ERR( "Unhandled type: 0x%08lx\n", type );
+        ERR( "Unhandled type: 0x%08x\n", type );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -300,7 +300,7 @@ static NTSTATUS TAPE_Prepare( int fd, TAPE_PREPARE *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d type: 0x%08lx immediate: 0x%02x\n",
+    TRACE( "fd: %d type: 0x%08x immediate: 0x%02x\n",
            fd, data->Operation, data->Immediate );
 
     switch (data->Operation)
@@ -334,7 +334,7 @@ static NTSTATUS TAPE_Prepare( int fd, TAPE_PREPARE *data )
         /* Native ignores this if the drive doesn't support it */
         return STATUS_SUCCESS;
     default:
-        ERR( "Unhandled operation: 0x%08lx\n", data->Operation );
+        ERR( "Unhandled operation: 0x%08x\n", data->Operation );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -355,7 +355,7 @@ static NTSTATUS TAPE_SetDriveParams( int fd, TAPE_SET_DRIVE_PARAMETERS *data )
 
     TRACE( "fd: %d ECC: 0x%02x, compression: 0x%02x padding: 0x%02x\n",
             fd, data->ECC, data->Compression, data->DataPadding );
-    TRACE( "setmarks: 0x%02x zonesize: 0x%08lx\n",
+    TRACE( "setmarks: 0x%02x zonesize: 0x%08x\n",
            data->ReportSetmarks, data->EOTWarningZoneSize );
 
     if (data->ECC || data->DataPadding || data->ReportSetmarks ||
@@ -379,7 +379,7 @@ static NTSTATUS TAPE_SetMediaParams( int fd, TAPE_SET_MEDIA_PARAMETERS *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d blocksize: 0x%08lx\n", fd, data->BlockSize );
+    TRACE( "fd: %d blocksize: 0x%08x\n", fd, data->BlockSize );
     
     cmd.mt_op = MTSETBLK;
     cmd.mt_count = data->BlockSize;
@@ -399,7 +399,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d method: 0x%08lx partition: 0x%08lx offset: 0x%08lx immediate: 0x%02x\n",
+    TRACE( "fd: %d method: 0x%08x partition: 0x%08x offset: 0x%08x immediate: 0x%02x\n",
            fd, data->Method, data->Partition, data->Offset.u.LowPart, data->Immediate );
 
     if (data->Offset.u.HighPart > 0)
@@ -451,7 +451,7 @@ static NTSTATUS TAPE_SetPosition( int fd, TAPE_SET_POSITION *data )
         WARN( "Positioning method not supported\n" );
         return STATUS_INVALID_PARAMETER;
     default:
-        ERR( "Unhandled method: 0x%08lx\n", data->Method );
+        ERR( "Unhandled method: 0x%08x\n", data->Method );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -470,7 +470,7 @@ static NTSTATUS TAPE_WriteMarks( int fd, TAPE_WRITE_MARKS *data )
 #ifdef HAVE_SYS_MTIO_H
     struct mtop cmd;
 
-    TRACE( "fd: %d type: 0x%08lx count: 0x%08lx immediate: 0x%02x\n",
+    TRACE( "fd: %d type: 0x%08x count: 0x%08x immediate: 0x%02x\n",
            fd, data->Type, data->Count, data->Immediate );
 
     switch (data->Type)
@@ -488,7 +488,7 @@ static NTSTATUS TAPE_WriteMarks( int fd, TAPE_WRITE_MARKS *data )
         cmd.mt_count = data->Count;
         break;
     default:
-        ERR( "Unhandled type: 0x%08lx\n", data->Type );
+        ERR( "Unhandled type: 0x%08x\n", data->Type );
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -514,7 +514,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
     NTSTATUS status = STATUS_INVALID_PARAMETER;
     int fd;
 
-    TRACE( "%p %s %p %ld %p %ld %p\n", device, io2str(io_control),
+    TRACE( "%p %s %p %d %p %d %p\n", device, io2str(io_control),
            in_buffer, in_size, out_buffer, out_size, io_status );
 
     io_status->Information = 0;
@@ -563,7 +563,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
     case IOCTL_TAPE_FIND_NEW_DEVICES:
         break;
     default:
-        FIXME( "Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n",
+        FIXME( "Unsupported IOCTL %x (type=%x access=%x func=%x meth=%x)\n",
                io_control, io_control >> 16, (io_control >> 14) & 3,
                (io_control >> 2) & 0xfff, io_control & 3 );
         break;

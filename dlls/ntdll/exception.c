@@ -261,10 +261,10 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
         }
 
         /* Call handler */
-        TRACE( "calling handler at %p code=%lx flags=%lx\n",
+        TRACE( "calling handler at %p code=%x flags=%x\n",
                frame->Handler, rec->ExceptionCode, rec->ExceptionFlags );
         res = EXC_CallHandler( rec, frame, context, &dispatch, frame->Handler, EXC_RaiseHandler );
-        TRACE( "handler at %p returned %lx\n", frame->Handler, res );
+        TRACE( "handler at %p returned %x\n", frame->Handler, res );
 
         if (frame == nested_frame)
         {
@@ -306,10 +306,10 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
     {
         DWORD c;
 
-        TRACE( "code=%lx flags=%lx addr=%p\n",
+        TRACE( "code=%x flags=%x addr=%p\n",
                rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
         for (c = 0; c < rec->NumberParameters; c++)
-            TRACE( " info[%ld]=%08lx\n", c, rec->ExceptionInformation[c] );
+            TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
         if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
         {
             if (rec->ExceptionInformation[1] >> 16)
@@ -324,10 +324,10 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
 #ifdef __i386__
         else
         {
-            TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
+            TRACE(" eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
                   context->Eax, context->Ebx, context->Ecx,
                   context->Edx, context->Esi, context->Edi );
-            TRACE(" ebp=%08lx esp=%08lx cs=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
+            TRACE(" ebp=%08x esp=%08x cs=%04x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
                   context->Ebp, context->Esp, context->SegCs, context->SegDs,
                   context->SegEs, context->SegFs, context->SegGs, context->EFlags );
         }
@@ -353,7 +353,7 @@ static NTSTATUS raise_exception( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL f
         else if (rec->ExceptionCode == STATUS_NONCONTINUABLE_EXCEPTION)
             ERR("Process attempted to continue execution after noncontinuable exception.\n");
         else
-            ERR("Unhandled exception code %lx flags %lx addr %p\n",
+            ERR("Unhandled exception code %x flags %x addr %p\n",
                 rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress );
         NtTerminateProcess( NtCurrentProcess(), 1 );
     }
@@ -429,7 +429,7 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
 
     pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
 
-    TRACE( "code=%lx flags=%lx\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
+    TRACE( "code=%x flags=%x\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
 
     /* get chain of exception frames */
     frame = NtCurrentTeb()->Tib.ExceptionList;
@@ -456,10 +456,10 @@ void WINAPI __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEndFrame, PVOID un
         }
 
         /* Call handler */
-        TRACE( "calling handler at %p code=%lx flags=%lx\n",
+        TRACE( "calling handler at %p code=%x flags=%x\n",
                frame->Handler, pRecord->ExceptionCode, pRecord->ExceptionFlags );
         res = EXC_CallHandler( pRecord, frame, context, &dispatch, frame->Handler, EXC_UnwindHandler );
-        TRACE( "handler at %p returned %lx\n", frame->Handler, res );
+        TRACE( "handler at %p returned %x\n", frame->Handler, res );
 
         switch(res)
         {

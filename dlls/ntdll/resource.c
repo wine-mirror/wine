@@ -266,7 +266,7 @@ NTSTATUS WINAPI LdrFindResourceDirectory_U( HMODULE hmod, const LDR_RESOURCE_INF
 
     __TRY
     {
-	if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
+	if (info) TRACE( "module %p type %s name %s lang %04x level %d\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
                      level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
                      level > 2 ? info->Language : 0, level );
@@ -294,7 +294,7 @@ NTSTATUS WINAPI LdrFindResource_U( HMODULE hmod, const LDR_RESOURCE_INFO *info,
 
     __TRY
     {
-	if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
+	if (info) TRACE( "module %p type %s name %s lang %04x level %d\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
                      level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
                      level > 2 ? info->Language : 0, level );
@@ -443,7 +443,7 @@ NTSTATUS WINAPI RtlFormatMessage( LPWSTR Message, UCHAR MaxWidth,
                                   BOOLEAN ArgumentIsArray, va_list * Arguments,
                                   LPWSTR Buffer, ULONG BufferSize )
 {
-    FIXME("(%s, %u, %s, %s, %s, %p, %p, %ld)\n", debugstr_w(Message),
+    FIXME("(%s, %u, %s, %s, %s, %p, %p, %d)\n", debugstr_w(Message),
         MaxWidth, IgnoreInserts ? "TRUE" : "FALSE", Ansi ? "TRUE" : "FALSE",
         ArgumentIsArray ? "TRUE" : "FALSE", Arguments, Buffer, BufferSize);
     return STATUS_SUCCESS;

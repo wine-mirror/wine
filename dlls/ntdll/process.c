@@ -92,7 +92,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
     NTSTATUS ret = STATUS_SUCCESS;
     ULONG len = 0;
 
-    TRACE("(%p,0x%08x,%p,0x%08lx,%p)\n",
+    TRACE("(%p,0x%08x,%p,0x%08x,%p)\n",
           ProcessHandle,ProcessInformationClass,
           ProcessInformation,ProcessInformationLength,
           ReturnLength);
@@ -292,7 +292,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
     default:
-        FIXME("(%p,info_class=%d,%p,0x%08lx,%p) Unknown information class\n",
+        FIXME("(%p,info_class=%d,%p,0x%08x,%p) Unknown information class\n",
               ProcessHandle,ProcessInformationClass,
               ProcessInformation,ProcessInformationLength,
               ReturnLength);
@@ -349,7 +349,7 @@ NTSTATUS WINAPI NtSetInformationProcess(
         }
         break;
     default:
-        FIXME("(%p,0x%08x,%p,0x%08lx) stub\n",
+        FIXME("(%p,0x%08x,%p,0x%08x) stub\n",
               ProcessHandle,ProcessInformationClass,ProcessInformation,
               ProcessInformationLength);
         ret = STATUS_NOT_IMPLEMENTED;

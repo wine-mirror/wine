@@ -68,7 +68,7 @@ ULONG WINAPI RtlNtStatusToDosErrorNoTeb( NTSTATUS status )
         if (status < table->end)
         {
             DWORD ret = table->table[status - table->start];
-            if (ret == ERROR_MR_MID_NOT_FOUND) FIXME( "no mapping for %08lx\n", status );
+            if (ret == ERROR_MR_MID_NOT_FOUND) FIXME( "no mapping for %08x\n", status );
             return ret;
         }
         table++;
@@ -77,7 +77,7 @@ ULONG WINAPI RtlNtStatusToDosErrorNoTeb( NTSTATUS status )
     /* now some special cases */
     if (HIWORD(status) == 0xc001) return LOWORD(status);
     if (HIWORD(status) == 0x8007) return LOWORD(status);
-    FIXME( "no mapping for %08lx\n", status );
+    FIXME( "no mapping for %08x\n", status );
     return ERROR_MR_MID_NOT_FOUND;
 }
 

@@ -214,7 +214,7 @@ static void HEAP_Dump( HEAP *heap )
 
     DPRINTF( "\nFree lists:\n Block   Stat   Size    Id\n" );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        DPRINTF( "%p free %08lx prev=%p next=%p\n",
+        DPRINTF( "%p free %08x prev=%p next=%p\n",
                  &heap->freeList[i].arena, HEAP_freeListSizes[i],
                  LIST_ENTRY( heap->freeList[i].arena.entry.prev, ARENA_FREE, entry ),
                  LIST_ENTRY( heap->freeList[i].arena.entry.next, ARENA_FREE, entry ));
@@ -223,7 +223,7 @@ static void HEAP_Dump( HEAP *heap )
     while (subheap)
     {
         SIZE_T freeSize = 0, usedSize = 0, arenaSize = subheap->headerSize;
-        DPRINTF( "\n\nSub-heap %p: size=%08lx committed=%08lx\n",
+        DPRINTF( "\n\nSub-heap %p: size=%08x committed=%08x\n",
                 subheap, subheap->size, subheap->commitSize );
 
         DPRINTF( "\n Block   Stat   Size    Id\n" );
@@ -233,7 +233,7 @@ static void HEAP_Dump( HEAP *heap )
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
                 ARENA_FREE *pArena = (ARENA_FREE *)ptr;
-                DPRINTF( "%p free %08lx prev=%p next=%p\n",
+                DPRINTF( "%p free %08x prev=%p next=%p\n",
                          pArena, pArena->size & ARENA_SIZE_MASK,
                          LIST_ENTRY( pArena->entry.prev, ARENA_FREE, entry ),
                          LIST_ENTRY( pArena->entry.next, ARENA_FREE, entry ) );
@@ -244,7 +244,7 @@ static void HEAP_Dump( HEAP *heap )
             else if (*(DWORD *)ptr & ARENA_FLAG_PREV_FREE)
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p Used %08lx back=%p\n",
+                DPRINTF( "%p Used %08x back=%p\n",
                         pArena, pArena->size & ARENA_SIZE_MASK, *((ARENA_FREE **)pArena - 1) );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
@@ -253,13 +253,13 @@ static void HEAP_Dump( HEAP *heap )
             else
             {
                 ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-                DPRINTF( "%p used %08lx\n", pArena, pArena->size & ARENA_SIZE_MASK );
+                DPRINTF( "%p used %08x\n", pArena, pArena->size & ARENA_SIZE_MASK );
                 ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
                 arenaSize += sizeof(ARENA_INUSE);
                 usedSize += pArena->size & ARENA_SIZE_MASK;
             }
         }
-        DPRINTF( "\nTotal: Size=%08lx Committed=%08lx Free=%08lx Used=%08lx Arenas=%08lx (%ld%%)\n\n",
+        DPRINTF( "\nTotal: Size=%08x Committed=%08x Free=%08lx Used=%08lx Arenas=%08lx (%ld%%)\n\n",
 	      subheap->size, subheap->commitSize, freeSize, usedSize,
 	      arenaSize, (arenaSize * 100) / subheap->size );
         subheap = subheap->next;
@@ -272,7 +272,7 @@ static void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
     WORD rem_flags;
     TRACE( "Dumping entry %p\n", entry );
     TRACE( "lpData\t\t: %p\n", entry->lpData );
-    TRACE( "cbData\t\t: %08lx\n", entry->cbData);
+    TRACE( "cbData\t\t: %08x\n", entry->cbData);
     TRACE( "cbOverhead\t: %08x\n", entry->cbOverhead);
     TRACE( "iRegionIndex\t: %08x\n", entry->iRegionIndex);
     TRACE( "WFlags\t\t: ");
@@ -301,8 +301,8 @@ static void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
     }
     if (entry->wFlags & PROCESS_HEAP_REGION)
     {
-        TRACE( "Region.dwCommittedSize\t:%08lx\n",entry->u.Region.dwCommittedSize);
-        TRACE( "Region.dwUnCommittedSize\t:%08lx\n",entry->u.Region.dwUnCommittedSize);
+        TRACE( "Region.dwCommittedSize\t:%08x\n",entry->u.Region.dwCommittedSize);
+        TRACE( "Region.dwUnCommittedSize\t:%08x\n",entry->u.Region.dwUnCommittedSize);
         TRACE( "Region.lpFirstBlock\t:%p\n",entry->u.Region.lpFirstBlock);
         TRACE( "Region.lpLastBlock\t:%p\n",entry->u.Region.lpLastBlock);
     }
@@ -793,14 +793,14 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
     if (!(pArena->size & ARENA_FLAG_FREE) ||
         (pArena->size & ARENA_FLAG_PREV_FREE))
     {
-        ERR("Heap %p: bad flags %08lx for free arena %p\n",
+        ERR("Heap %p: bad flags %08x for free arena %p\n",
             subheap->heap, pArena->size & ~ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
     /* Check arena size */
     if ((char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
-        ERR("Heap %p: bad size %08lx for free arena %p\n",
+        ERR("Heap %p: bad size %08x for free arena %p\n",
             subheap->heap, pArena->size & ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
@@ -902,14 +902,14 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
     /* Check size flags */
     if (pArena->size & ARENA_FLAG_FREE)
     {
-        ERR("Heap %p: bad flags %08lx for in-use arena %p\n",
+        ERR("Heap %p: bad flags %08x for in-use arena %p\n",
             subheap->heap, pArena->size & ~ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
     /* Check arena size */
     if ((const char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK) > heapEnd)
     {
-        ERR("Heap %p: bad size %08lx for in-use arena %p\n",
+        ERR("Heap %p: bad size %08x for in-use arena %p\n",
             subheap->heap, pArena->size & ARENA_SIZE_MASK, pArena );
         return FALSE;
     }
@@ -1156,7 +1156,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
 
     if (!(pArena = HEAP_FindFreeBlock( heapPtr, rounded_size, &subheap )))
     {
-        TRACE("(%p,%08lx,%08lx): returning NULL\n",
+        TRACE("(%p,%08x,%08lx): returning NULL\n",
                   heap, flags, size  );
         if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
         if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
@@ -1188,7 +1188,7 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%08lx): returning %p\n", heap, flags, size, pInUse + 1 );
+    TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, pInUse + 1 );
     return (LPVOID)(pInUse + 1);
 }
 
@@ -1241,13 +1241,13 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%p): returning TRUE\n", heap, flags, ptr );
+    TRACE("(%p,%08x,%p): returning TRUE\n", heap, flags, ptr );
     return TRUE;
 
 error:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-    TRACE("(%p,%08lx,%p): returning FALSE\n", heap, flags, ptr );
+    TRACE("(%p,%08x,%p): returning FALSE\n", heap, flags, ptr );
     return FALSE;
 }
 
@@ -1372,13 +1372,13 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%p,%08lx): returning %p\n", heap, flags, ptr, size, pArena + 1 );
+    TRACE("(%p,%08x,%p,%08lx): returning %p\n", heap, flags, ptr, size, pArena + 1 );
     return (LPVOID)(pArena + 1);
 
 error:
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
     RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-    TRACE("(%p,%08lx,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
+    TRACE("(%p,%08x,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
     return NULL;
 }
 
@@ -1489,7 +1489,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     }
     if (!(flags & HEAP_NO_SERIALIZE)) RtlLeaveCriticalSection( &heapPtr->critSection );
 
-    TRACE("(%p,%08lx,%p): returning %08lx\n", heap, flags, ptr, ret );
+    TRACE("(%p,%08x,%p): returning %08lx\n", heap, flags, ptr, ret );
     return ret;
 }
 

@@ -1287,7 +1287,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
     int cwd, fd;
     static const WCHAR wszWildcards[] = { '*','?',0 };
 
-    TRACE("(%p %p %p %p %p %p 0x%08lx 0x%08x 0x%08x %s 0x%08x\n",
+    TRACE("(%p %p %p %p %p %p 0x%08x 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
           length, info_class, single_entry, debugstr_us(mask),
           restart_scan);
@@ -1338,7 +1338,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     wine_server_release_fd( handle, fd );
     if (cwd != -1) close( cwd );
-    TRACE( "=> %lx (%ld)\n", io->u.Status, io->Information );
+    TRACE( "=> %x (%ld)\n", io->u.Status, io->Information );
     return io->u.Status;
 }
 
@@ -1966,7 +1966,7 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
     NTSTATUS ret = STATUS_SUCCESS;
     int len, action, i;
 
-    TRACE("%p %p %p %08lx\n", info, info->ApcContext, iosb, status);
+    TRACE("%p %p %p %08x\n", info, info->ApcContext, iosb, status);
 
     /*
      * FIXME: race me!
@@ -2007,7 +2007,7 @@ static void WINAPI read_changes_apc( void *user, PIO_STATUS_BLOCK iosb, ULONG st
         pfni->FileNameLength = len * sizeof (WCHAR);
         pfni->FileName[len] = 0;
 
-        TRACE("action = %ld name = %s\n", pfni->Action,
+        TRACE("action = %d name = %s\n", pfni->Action,
               debugstr_w(pfni->FileName) );
         len = sizeof (*pfni) - sizeof (DWORD) + pfni->FileNameLength;
     }
@@ -2045,7 +2045,7 @@ NtNotifyChangeDirectoryFile( HANDLE FileHandle, HANDLE Event,
     struct read_changes_info *info;
     NTSTATUS status;
 
-    TRACE("%p %p %p %p %p %p %lu %lu %d\n",
+    TRACE("%p %p %p %p %p %p %u %u %d\n",
           FileHandle, Event, ApcRoutine, ApcContext, IoStatusBlock,
           Buffer, BufferSize, CompletionFilter, WatchTree );
 

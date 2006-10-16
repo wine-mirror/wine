@@ -59,7 +59,7 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
     if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
     if (attr->ObjectName->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
-    TRACE( "(%p,%s,%s,%lx,%lx,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
+    TRACE( "(%p,%s,%s,%x,%x,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, retkey );
 
     SERVER_START_REQ( create_key )
@@ -117,7 +117,7 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
     NTSTATUS ret;
     DWORD len = attr->ObjectName->Length;
 
-    TRACE( "(%p,%s,%lx,%p)\n", attr->RootDirectory,
+    TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
 
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
@@ -417,7 +417,7 @@ NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index,
     void *ptr;
     size_t fixed_size;
 
-    TRACE( "(%p,%lu,%d,%p,%ld)\n", handle, index, info_class, info, length );
+    TRACE( "(%p,%u,%d,%p,%d)\n", handle, index, info_class, info, length );
 
     /* compute the length we want to retrieve */
     switch(info_class)
@@ -465,7 +465,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
     UCHAR *data_ptr;
     unsigned int fixed_size = 0;
 
-    TRACE( "(%p,%s,%d,%p,%ld)\n", handle, debugstr_us(name), info_class, info, length );
+    TRACE( "(%p,%s,%d,%p,%d)\n", handle, debugstr_us(name), info_class, info, length );
 
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
@@ -610,7 +610,7 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 {
     NTSTATUS ret;
 
-    TRACE("(%p,%p,%p,%p,%p,0x%08lx, 0x%08x,%p,0x%08lx,0x%08x)\n",
+    TRACE("(%p,%p,%p,%p,%p,0x%08x, 0x%08x,%p,0x%08x,0x%08x)\n",
         KeyHandle, Event, ApcRoutine, ApcContext, IoStatusBlock, CompletionFilter,
         Asynchronous, ChangeBuffer, Length, WatchSubtree);
 
@@ -659,7 +659,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey(
 	ULONG Length,
 	PULONG  ReturnLength)
 {
-	FIXME("(%p,%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,%p,0x%08x,%p,0x%08x,%p) stub!\n",
 	KeyHandle, ListOfValuesToQuery, NumberOfItems, MultipleValueInformation,
 	Length,ReturnLength);
 	return STATUS_SUCCESS;
@@ -688,7 +688,7 @@ NTSTATUS WINAPI NtRestoreKey(
 	HANDLE FileHandle,
 	ULONG RestoreFlags)
 {
-	FIXME("(%p,%p,0x%08lx) stub\n",
+	FIXME("(%p,%p,0x%08x) stub\n",
 	KeyHandle, FileHandle, RestoreFlags);
 	return STATUS_SUCCESS;
 }
@@ -722,7 +722,7 @@ NTSTATUS WINAPI NtSetInformationKey(
 	IN PVOID KeyInformation,
 	IN ULONG KeyInformationLength)
 {
-	FIXME("(%p,0x%08x,%p,0x%08lx) stub\n",
+	FIXME("(%p,0x%08x,%p,0x%08x) stub\n",
 	KeyHandle, KeyInformationClass, KeyInformation, KeyInformationLength);
 	return STATUS_SUCCESS;
 }
@@ -741,7 +741,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE hkey, const UNICODE_STRING *name, ULONG Ti
 {
     NTSTATUS ret;
 
-    TRACE( "(%p,%s,%ld,%p,%ld)\n", hkey, debugstr_us(name), type, data, count );
+    TRACE( "(%p,%s,%d,%p,%d)\n", hkey, debugstr_us(name), type, data, count );
 
     if (name->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
@@ -853,7 +853,7 @@ NTSTATUS WINAPI RtlOpenCurrentUser(
 	UNICODE_STRING ObjectName;
 	NTSTATUS ret;
 
-	TRACE("(0x%08lx, %p)\n",DesiredAccess, KeyHandle);
+	TRACE("(0x%08x, %p)\n",DesiredAccess, KeyHandle);
 
         if ((ret = RtlFormatCurrentUserKeyPath(&ObjectName))) return ret;
 	InitializeObjectAttributes(&ObjectAttributes,&ObjectName,OBJ_CASE_INSENSITIVE,0, NULL);
@@ -1119,7 +1119,7 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
     NTSTATUS status=STATUS_SUCCESS, ret = STATUS_SUCCESS;
     INT i;
 
-    TRACE("(%ld, %s, %p, %p, %p)\n", RelativeTo, debugstr_w(Path), QueryTable, Context, Environment);
+    TRACE("(%d, %s, %p, %p, %p)\n", RelativeTo, debugstr_w(Path), QueryTable, Context, Environment);
 
     if(Path == NULL)
         return STATUS_INVALID_PARAMETER;
@@ -1289,7 +1289,7 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
     HANDLE handle;
     NTSTATUS status;
 
-    TRACE("(%ld, %s)\n", RelativeTo, debugstr_w(Path));
+    TRACE("(%d, %s)\n", RelativeTo, debugstr_w(Path));
 
     if((!RelativeTo) && Path == NULL)
         return STATUS_OBJECT_PATH_SYNTAX_BAD;
@@ -1321,7 +1321,7 @@ NTSTATUS WINAPI RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN P
     HANDLE handle;
     UNICODE_STRING Value;
 
-    TRACE("(%ld, %s, %s)\n", RelativeTo, debugstr_w(Path), debugstr_w(ValueName));
+    TRACE("(%d, %s, %s)\n", RelativeTo, debugstr_w(Path), debugstr_w(ValueName));
 
     RtlInitUnicodeString(&Value, ValueName);
     if(RelativeTo == RTL_REGISTRY_HANDLE)

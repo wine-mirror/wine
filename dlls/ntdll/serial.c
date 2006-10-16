@@ -129,7 +129,7 @@ static const char* iocode2str(DWORD ioc)
         X(IOCTL_SERIAL_WAIT_ON_MASK);
         X(IOCTL_SERIAL_XOFF_COUNTER);
 #undef X
-    default: { static char tmp[32]; sprintf(tmp, "IOCTL_SERIAL_%ld\n", ioc); return tmp; }
+    default: { static char tmp[32]; sprintf(tmp, "IOCTL_SERIAL_%d\n", ioc); return tmp; }
     }
 }
 
@@ -483,7 +483,7 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
             nuts.flags &= ~ASYNC_SPD_MASK;
             nuts.flags |= ASYNC_SPD_CUST;
             WARN("You (or a program acting at your behest) have specified\n"
-                 "a non-standard baud rate %ld.  Wine will set the rate to %d,\n"
+                 "a non-standard baud rate %d.  Wine will set the rate to %d,\n"
                  "which is as close as we can get by our present understanding of your\n"
                  "hardware. I hope you know what you are doing.  Any disruption Wine\n"
                  "has caused to your linux system can be undone with setserial \n"
@@ -494,7 +494,7 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
         }
         break;
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
-        ERR("baudrate %ld\n", sbr->BaudRate);
+        ERR("baudrate %d\n", sbr->BaudRate);
         return STATUS_NOT_SUPPORTED;
     }
 #elif !defined(__EMX__)
@@ -540,7 +540,7 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
     case 460800:	port.c_cflag |= B460800;break;
 #endif
     default:
-        ERR("baudrate %ld\n", sbr->BaudRate);
+        ERR("baudrate %d\n", sbr->BaudRate);
         return STATUS_NOT_SUPPORTED;
     }
     port.c_ispeed = port.c_ospeed;
@@ -735,7 +735,7 @@ static NTSTATUS set_line_control(int fd, const SERIAL_LINE_CONTROL* slc)
 
 static NTSTATUS set_queue_size(int fd, const SERIAL_QUEUE_SIZE* sqs)
 {
-    FIXME("insize %ld outsize %ld unimplemented stub\n", sqs->InSize, sqs->OutSize);
+    FIXME("insize %d outsize %d unimplemented stub\n", sqs->InSize, sqs->OutSize);
     return STATUS_SUCCESS;
 }
 
@@ -924,7 +924,7 @@ static DWORD WINAPI check_events(int fd, DWORD mask,
 {
     DWORD ret = 0, queue;
 
-    TRACE("mask 0x%08lx\n", mask);
+    TRACE("mask 0x%08x\n", mask);
     TRACE("old->rx          0x%08x vs. new->rx          0x%08x\n", old->rx, new->rx);
     TRACE("old->tx          0x%08x vs. new->tx          0x%08x\n", old->tx, new->tx);
     TRACE("old->frame       0x%08x vs. new->frame       0x%08x\n", old->frame, new->frame);
@@ -964,7 +964,7 @@ static DWORD WINAPI check_events(int fd, DWORD mask,
 	if (!queue)
 #endif
            ret |= EV_TXEMPTY;
-	TRACE("OUTQUEUE %ld, Transmitter %sempty\n",
+	TRACE("OUTQUEUE %d, Transmitter %sempty\n",
               queue, (ret & EV_TXEMPTY) ? "" : "not ");
     }
     return ret & mask;
@@ -992,7 +992,7 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
         DWORD new_mstat, new_evtmask;
         LARGE_INTEGER time;
         
-        TRACE("device=%p fd=0x%08x mask=0x%08lx buffer=%p event=%p irq_info=%p\n", 
+        TRACE("device=%p fd=0x%08x mask=0x%08x buffer=%p event=%p irq_info=%p\n", 
               commio->hDevice, fd, commio->evtmask, commio->events, commio->hEvent, &commio->irq_info);
 
         time.QuadPart = (ULONGLONG)10000;
@@ -1128,7 +1128,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     NTSTATUS    status = STATUS_SUCCESS;
     int         fd = -1;
 
-    TRACE("%p %s %p %ld %p %ld %p\n",
+    TRACE("%p %s %p %d %p %d %p\n",
           hDevice, iocode2str(dwIoControlCode), lpInBuffer, nInBufferSize,
           lpOutBuffer, nOutBufferSize, piosb);
 
@@ -1336,7 +1336,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
             status = STATUS_INVALID_PARAMETER;
         break;
     default:
-        FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 
+        FIXME("Unsupported IOCTL %x (type=%x access=%x func=%x meth=%x)\n", 
               dwIoControlCode, dwIoControlCode >> 16, (dwIoControlCode >> 14) & 3,
               (dwIoControlCode >> 2) & 0xFFF, dwIoControlCode & 3);
         sz = 0;

@@ -56,7 +56,7 @@ NTSTATUS WINAPI NtDuplicateToken(
 {
     NTSTATUS status;
 
-    TRACE("(%p,0x%08lx,%p,0x%08x,0x%08x,%p)\n",
+    TRACE("(%p,0x%08x,%p,0x%08x,0x%08x,%p)\n",
         ExistingToken, DesiredAccess, ObjectAttributes,
         ImpersonationLevel, TokenType, NewToken);
         dump_ObjectAttributes(ObjectAttributes);
@@ -87,7 +87,7 @@ NTSTATUS WINAPI NtOpenProcessToken(
 {
     NTSTATUS ret;
 
-    TRACE("(%p,0x%08lx,%p)\n", ProcessHandle,DesiredAccess, TokenHandle);
+    TRACE("(%p,0x%08x,%p)\n", ProcessHandle,DesiredAccess, TokenHandle);
 
     SERVER_START_REQ( open_token )
     {
@@ -115,7 +115,7 @@ NTSTATUS WINAPI NtOpenThreadToken(
 {
     NTSTATUS ret;
 
-    TRACE("(%p,0x%08lx,0x%08x,%p)\n",
+    TRACE("(%p,0x%08x,0x%08x,%p)\n",
           ThreadHandle,DesiredAccess, OpenAsSelf, TokenHandle);
 
     SERVER_START_REQ( open_token )
@@ -149,7 +149,7 @@ NTSTATUS WINAPI NtAdjustPrivilegesToken(
 {
     NTSTATUS ret;
 
-    TRACE("(%p,0x%08x,%p,0x%08lx,%p,%p)\n",
+    TRACE("(%p,0x%08x,%p,0x%08x,%p,%p)\n",
         TokenHandle, DisableAllPrivileges, NewState, BufferLength, PreviousState, ReturnLength);
 
     SERVER_START_REQ( adjust_token_privileges )
@@ -197,7 +197,7 @@ NTSTATUS WINAPI NtQueryInformationToken(
     ULONG len;
     NTSTATUS status = STATUS_SUCCESS;
 
-    TRACE("(%p,%d,%p,%ld,%p)\n",
+    TRACE("(%p,%d,%p,%d,%p)\n",
           token,tokeninfoclass,tokeninfo,tokeninfolength,retlen);
 
     switch (tokeninfoclass)
@@ -371,7 +371,7 @@ NTSTATUS WINAPI NtSetInformationToken(
         PVOID TokenInformation,
         ULONG TokenInformationLength)
 {
-    FIXME("%p %d %p %lu\n", TokenHandle, TokenInformationClass,
+    FIXME("%p %d %p %u\n", TokenHandle, TokenInformationClass,
           TokenInformation, TokenInformationLength);
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -388,7 +388,7 @@ NTSTATUS WINAPI NtAdjustGroupsToken(
         PTOKEN_GROUPS PreviousState,
         PULONG ReturnLength)
 {
-    FIXME("%p %d %p %lu %p %p\n", TokenHandle, ResetToDefault,
+    FIXME("%p %d %p %u %p %p\n", TokenHandle, ResetToDefault,
           NewState, BufferLength, PreviousState, ReturnLength);
     return STATUS_NOT_IMPLEMENTED;
 }
@@ -435,7 +435,7 @@ NTSTATUS WINAPI NtQuerySection(
 	IN ULONG Length,
 	OUT PULONG ResultLength)
 {
-	FIXME("(%p,%d,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,%d,%p,0x%08x,%p) stub!\n",
 	SectionHandle,SectionInformationClass,SectionInformation,Length,ResultLength);
 	return 0;
 }
@@ -451,7 +451,7 @@ NTSTATUS WINAPI NtQuerySection(
 NTSTATUS WINAPI NtCreatePort(PHANDLE PortHandle,POBJECT_ATTRIBUTES ObjectAttributes,
                              ULONG MaxConnectInfoLength,ULONG MaxDataLength,PULONG reserved)
 {
-  FIXME("(%p,%p,%lu,%lu,%p),stub!\n",PortHandle,ObjectAttributes,
+  FIXME("(%p,%p,%u,%u,%p),stub!\n",PortHandle,ObjectAttributes,
         MaxConnectInfoLength,MaxDataLength,reserved);
   return STATUS_NOT_IMPLEMENTED;
 }
@@ -501,7 +501,7 @@ NTSTATUS WINAPI NtAcceptConnectPort(
         PLPC_SECTION_WRITE WriteSection,
         PLPC_SECTION_READ ReadSection)
 {
-  FIXME("(%p,%lu,%p,%d,%p,%p),stub!\n",
+  FIXME("(%p,%u,%p,%d,%p,%p),stub!\n",
         PortHandle,PortIdentifier,pLpcMessage,Accept,WriteSection,ReadSection);
   return STATUS_NOT_IMPLEMENTED;
 }
@@ -545,8 +545,8 @@ NTSTATUS WINAPI NtRequestWaitReplyPort(
     TRACE("\tVirtualRangesOffset = %u\n",pLpcMessageIn->VirtualRangesOffset);
     TRACE("\tClientId.UniqueProcess = %p\n",pLpcMessageIn->ClientId.UniqueProcess);
     TRACE("\tClientId.UniqueThread  = %p\n",pLpcMessageIn->ClientId.UniqueThread);
-    TRACE("\tMessageId           = %lu\n",pLpcMessageIn->MessageId);
-    TRACE("\tSectionSize         = %lu\n",pLpcMessageIn->SectionSize);
+    TRACE("\tMessageId           = %u\n",pLpcMessageIn->MessageId);
+    TRACE("\tSectionSize         = %u\n",pLpcMessageIn->SectionSize);
     TRACE("\tData                = %s\n",
       debugstr_an((const char*)pLpcMessageIn->Data,pLpcMessageIn->DataSize));
   }
@@ -579,7 +579,7 @@ NTSTATUS WINAPI NtSetIntervalProfile(
         ULONG Interval,
         KPROFILE_SOURCE Source)
 {
-    FIXME("%lu,%d\n", Interval, Source);
+    FIXME("%u,%d\n", Interval, Source);
     return STATUS_SUCCESS;
 }
 
@@ -611,7 +611,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
     NTSTATUS    ret = STATUS_SUCCESS;
     ULONG       len = 0;
 
-    TRACE("(0x%08x,%p,0x%08lx,%p)\n",
+    TRACE("(0x%08x,%p,0x%08x,%p)\n",
           SystemInformationClass,SystemInformation,Length,ResultLength);
 
     switch (SystemInformationClass)
@@ -933,7 +933,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
         }
 	break;
     default:
-	FIXME("(0x%08x,%p,0x%08lx,%p) stub\n",
+	FIXME("(0x%08x,%p,0x%08x,%p) stub\n",
 	      SystemInformationClass,SystemInformation,Length,ResultLength);
 
         /* Several Information Classes are not implemented on Windows and return 2 different values 
@@ -954,7 +954,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
  */
 NTSTATUS WINAPI NtSetSystemInformation(SYSTEM_INFORMATION_CLASS SystemInformationClass, PVOID SystemInformation, ULONG Length)
 {
-    FIXME("(0x%08x,%p,0x%08lx) stub\n",SystemInformationClass,SystemInformation,Length);
+    FIXME("(0x%08x,%p,0x%08x) stub\n",SystemInformationClass,SystemInformation,Length);
     return STATUS_SUCCESS;
 }
 
@@ -1000,7 +1000,7 @@ NTSTATUS WINAPI NtInitiatePowerAction(
 	IN ULONG Flags,
 	IN BOOLEAN Asynchronous)
 {
-        FIXME("(%d,%d,0x%08lx,%d),stub\n",
+        FIXME("(%d,%d,0x%08x,%d),stub\n",
 		SystemAction,MinSystemState,Flags,Asynchronous);
         return STATUS_NOT_IMPLEMENTED;
 }
@@ -1017,7 +1017,7 @@ NTSTATUS WINAPI NtPowerInformation(
 	IN PVOID lpOutputBuffer,
 	IN ULONG nOutputBufferSize)
 {
-	TRACE("(%d,%p,%ld,%p,%ld)\n",
+	TRACE("(%d,%p,%d,%p,%d)\n",
 		InformationLevel,lpInputBuffer,nInputBufferSize,lpOutputBuffer,nOutputBufferSize);
 	switch(InformationLevel) {
 		case SystemPowerCapabilities: {
@@ -1138,7 +1138,7 @@ NTSTATUS WINAPI NtAccessCheckAndAuditAlarm(PUNICODE_STRING SubsystemName, HANDLE
                                            ACCESS_MASK DesiredAccess, PGENERIC_MAPPING GenericMapping, BOOLEAN ObjectCreation,
                                            PACCESS_MASK GrantedAccess, PBOOLEAN AccessStatus, PBOOLEAN GenerateOnClose)
 {
-    FIXME("(%s, %p, %s, %p, 0x%08lx, %p, %d, %p, %p, %p), stub\n", debugstr_us(SubsystemName), HandleId,
+    FIXME("(%s, %p, %s, %p, 0x%08x, %p, %d, %p, %p, %p), stub\n", debugstr_us(SubsystemName), HandleId,
           debugstr_us(ObjectTypeName), SecurityDescriptor, DesiredAccess, GenericMapping, ObjectCreation,
           GrantedAccess, AccessStatus, GenerateOnClose);
 

@@ -196,7 +196,7 @@ void server_protocol_error( const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "wine client error:%lx: ", GetCurrentThreadId() );
+    fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     vfprintf( stderr, err, args );
     va_end( args );
     server_abort_thread(1);
@@ -208,7 +208,7 @@ void server_protocol_error( const char *err, ... )
  */
 void server_protocol_perror( const char *err )
 {
-    fprintf( stderr, "wine client error:%lx: ", GetCurrentThreadId() );
+    fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
     perror( err );
     server_abort_thread(1);
 }

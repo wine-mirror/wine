@@ -166,7 +166,7 @@ static int NTDLL_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_chan
     if (info->out_pos == info->output || info->out_pos[-1] == '\n')
     {
         if (TRACE_ON(tid))
-            ret = wine_dbg_printf( "%04lx:", GetCurrentThreadId() );
+            ret = wine_dbg_printf( "%04x:", GetCurrentThreadId() );
         if (cls < sizeof(classes)/sizeof(classes[0]))
             ret += wine_dbg_printf( "%s:%s:%s ", classes[cls], channel->name, function );
     }

@@ -162,7 +162,7 @@ NTSTATUS WINAPI RtlQueryAtomInAtomTable( RTL_ATOM_TABLE table, RTL_ATOM atom, UL
         *len = wlen;
     }
 
-    TRACE( "%p %x -> %s (%lx)\n",
+    TRACE( "%p %x -> %s (%x)\n",
            table, atom, len ? debugstr_wn(name, wlen / sizeof(WCHAR)) : NULL, status );
     return status;
 }
@@ -431,7 +431,7 @@ NTSTATUS WINAPI NtQueryInformationAtom( RTL_ATOM atom, ATOM_INFORMATION_CLASS cl
                 }
                 SERVER_END_REQ;
             }
-            TRACE( "%x -> %s (%lu)\n", 
+            TRACE( "%x -> %s (%u)\n", 
                    atom, debugstr_wn(abi->Name, abi->NameLength / sizeof(WCHAR)),
                    status );
             if (psize)

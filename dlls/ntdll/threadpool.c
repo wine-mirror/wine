@@ -182,7 +182,7 @@ NTSTATUS WINAPI RtlQueueWorkItem(PRTL_WORK_ITEM_ROUTINE Function, PVOID Context,
     work_item->context = Context;
 
     if (Flags != WT_EXECUTEDEFAULT)
-        FIXME("Flags 0x%lx not supported\n", Flags);
+        FIXME("Flags 0x%x not supported\n", Flags);
 
     status = add_work_item_to_queue(work_item);
 

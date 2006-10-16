@@ -1239,7 +1239,7 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
     int         ret = STATUS_NOT_SUPPORTED;
     int         io = -1;
 
-    TRACE("RAW_READ_INFO: DiskOffset=%li,%li SectorCount=%li TrackMode=%i\n buffer=%p len=%li sz=%p\n",
+    TRACE("RAW_READ_INFO: DiskOffset=%i,%i SectorCount=%i TrackMode=%i\n buffer=%p len=%i sz=%p\n",
           raw->DiskOffset.u.HighPart, raw->DiskOffset.u.LowPart, raw->SectorCount, raw->TrackMode, buffer, len, sz);
 
     if (len < raw->SectorCount * 2352) return STATUS_BUFFER_TOO_SMALL;
@@ -2016,7 +2016,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
     NTSTATUS    status = STATUS_SUCCESS;
     int fd, dev;
 
-    TRACE("%p %s %p %ld %p %ld %p\n",
+    TRACE("%p %s %p %d %p %d %p\n",
           hDevice, iocodex(dwIoControlCode), lpInBuffer, nInBufferSize,
           lpOutBuffer, nOutBufferSize, piosb);
 
@@ -2215,10 +2215,10 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         else if (nOutBufferSize < sz) status = STATUS_BUFFER_TOO_SMALL;
         else
         {
-            TRACE("before in 0x%08lx out 0x%08lx\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
+            TRACE("before in 0x%08x out 0x%08x\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
                   *(PDVD_SESSION_ID)lpOutBuffer);
             status = DVD_StartSession(fd, (PDVD_SESSION_ID)lpInBuffer, (PDVD_SESSION_ID)lpOutBuffer);
-            TRACE("before in 0x%08lx out 0x%08lx\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
+            TRACE("before in 0x%08x out 0x%08x\n",(lpInBuffer)?*(PDVD_SESSION_ID)lpInBuffer:0,
                   *(PDVD_SESSION_ID)lpOutBuffer);
         }
         break;
@@ -2274,7 +2274,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         break;
 
     default:
-        FIXME("Unsupported IOCTL %lx (type=%lx access=%lx func=%lx meth=%lx)\n", 
+        FIXME("Unsupported IOCTL %x (type=%x access=%x func=%x meth=%x)\n", 
               dwIoControlCode, dwIoControlCode >> 16, (dwIoControlCode >> 14) & 3,
               (dwIoControlCode >> 2) & 0xFFF, dwIoControlCode & 3);
         sz = 0;

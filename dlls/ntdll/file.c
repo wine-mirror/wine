@@ -135,8 +135,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
     ANSI_STRING unix_name;
     int created = FALSE;
 
-    TRACE("handle=%p access=%08lx name=%s objattr=%08lx root=%p sec=%p io=%p alloc_size=%p\n"
-          "attr=%08lx sharing=%08lx disp=%ld options=%08lx ea=%p.0x%08lx\n",
+    TRACE("handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p\n"
+          "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
           handle, access, debugstr_us(attr->ObjectName), attr->Attributes,
           attr->RootDirectory, attr->SecurityDescriptor, io, alloc_size,
           attributes, sharing, disposition, options, ea_buffer, ea_length );
@@ -234,7 +234,7 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
         SERVER_END_REQ;
         RtlFreeAnsiString( &unix_name );
     }
-    else WARN("%s not found (%lx)\n", debugstr_us(attr->ObjectName), io->u.Status );
+    else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), io->u.Status );
 
     if (io->u.Status == STATUS_SUCCESS)
     {
@@ -383,12 +383,12 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
     int result;
     int already = iosb->Information;
 
-    TRACE("%p %p 0x%lx\n", iosb, fileio->buffer, status);
+    TRACE("%p %p 0x%x\n", iosb, fileio->buffer, status);
 
     switch (status)
     {
     case STATUS_ALERTED: /* got some new data */
-        if (iosb->u.Status != STATUS_PENDING) FIXME("unexpected status %08lx\n", iosb->u.Status);
+        if (iosb->u.Status != STATUS_PENDING) FIXME("unexpected status %08x\n", iosb->u.Status);
         /* check to see if the data is ready (non-blocking) */
         if ( fileio->avail_mode )
             result = read(fileio->fd, &fileio->buffer[already], 
@@ -478,7 +478,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
 {
     int unix_handle, flags;
 
-    TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p),partial stub!\n",
+    TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p),partial stub!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
@@ -574,7 +574,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             if (ret != STATUS_USER_APC)
                 fileio->queue_apc_on_error = 1;
         }
-        TRACE("= 0x%08lx\n", io_status->u.Status);
+        TRACE("= 0x%08x\n", io_status->u.Status);
         return io_status->u.Status;
     }
 
@@ -612,7 +612,7 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
             io_status->u.Status = STATUS_END_OF_FILE;
     }
     wine_server_release_fd( hFile, unix_handle );
-    TRACE("= 0x%08lx (%lu)\n", io_status->u.Status, io_status->Information);
+    TRACE("= 0x%08x (%lu)\n", io_status->u.Status, io_status->Information);
     return io_status->u.Status;
 }
 
@@ -628,7 +628,7 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
     int result;
     int already = iosb->Information;
 
-    TRACE("(%p %p 0x%lx)\n",iosb, fileio->buffer, status);
+    TRACE("(%p %p 0x%x)\n",iosb, fileio->buffer, status);
 
     switch (status)
     {
@@ -700,7 +700,7 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
 {
     int unix_handle, flags;
 
-    TRACE("(%p,%p,%p,%p,%p,%p,0x%08lx,%p,%p)!\n",
+    TRACE("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%p)!\n",
           hFile,hEvent,apc,apc_user,io_status,buffer,length,offset,key);
 
     if (!io_status) return STATUS_ACCESS_VIOLATION;
@@ -863,7 +863,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
 {
     ULONG device = (code >> 16);
 
-    TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
+    TRACE("(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
           handle, event, apc, apc_context, io, code,
           in_buffer, in_size, out_buffer, out_size);
 
@@ -886,7 +886,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
                                             in_buffer, in_size, out_buffer, out_size);
         break;
     default:
-        FIXME("Unsupported ioctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
+        FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
               code, device, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         io->u.Status = STATUS_NOT_SUPPORTED;
         break;
@@ -899,7 +899,7 @@ NTSTATUS WINAPI NtDeviceIoControlFile(HANDLE handle, HANDLE event,
  */
 static void CALLBACK pipe_completion_wait(HANDLE event, PIO_STATUS_BLOCK iosb, ULONG status)
 {
-    TRACE("for %p/%p, status=%08lx\n", event, iosb, status);
+    TRACE("for %p/%p, status=%08x\n", event, iosb, status);
 
     if (iosb)
         iosb->u.Status = status;
@@ -933,7 +933,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                                 PVOID apc_context, PIO_STATUS_BLOCK io, ULONG code,
                                 PVOID in_buffer, ULONG in_size, PVOID out_buffer, ULONG out_size)
 {
-    TRACE("(%p,%p,%p,%p,%p,0x%08lx,%p,0x%08lx,%p,0x%08lx)\n",
+    TRACE("(%p,%p,%p,%p,%p,0x%08x,%p,0x%08x,%p,0x%08x)\n",
           handle, event, apc, apc_context, io, code,
           in_buffer, in_size, out_buffer, out_size);
 
@@ -1026,13 +1026,13 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
 
     case FSCTL_LOCK_VOLUME:
     case FSCTL_UNLOCK_VOLUME:
-        FIXME("stub! return success - Unsupported fsctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
+        FIXME("stub! return success - Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         io->u.Status = STATUS_SUCCESS;
         break;
 
     default:
-        FIXME("Unsupported fsctl %lx (device=%lx access=%lx func=%lx method=%lx)\n",
+        FIXME("Unsupported fsctl %x (device=%x access=%x func=%x method=%x)\n",
               code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
         io->u.Status = STATUS_NOT_SUPPORTED;
         break;
@@ -1064,7 +1064,7 @@ NTSTATUS WINAPI NtSetVolumeInformationFile(
         ULONG Length,
 	FS_INFORMATION_CLASS FsInformationClass)
 {
-	FIXME("(%p,%p,%p,0x%08lx,0x%08x) stub\n",
+	FIXME("(%p,%p,%p,0x%08x,0x%08x) stub\n",
 	FileHandle,IoStatusBlock,FsInformation,Length,FsInformationClass);
 	return 0;
 }
@@ -1133,7 +1133,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     struct stat st;
     int fd;
 
-    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", hFile, io, ptr, len, class);
+    TRACE("(%p,%p,%p,0x%08x,0x%08x)\n", hFile, io, ptr, len, class);
 
     io->Information = 0;
 
@@ -1351,7 +1351,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 {
     int fd;
 
-    TRACE("(%p,%p,%p,0x%08lx,0x%08x)\n", handle, io, ptr, len, class);
+    TRACE("(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class);
 
     if ((io->u.Status = wine_server_handle_to_fd( handle, 0, &fd, NULL )))
         return io->u.Status;
@@ -1524,7 +1524,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
         }
         RtlFreeAnsiString( &unix_name );
     }
-    else WARN("%s not found (%lx)\n", debugstr_us(attr->ObjectName), status );
+    else WARN("%s not found (%x)\n", debugstr_us(attr->ObjectName), status );
     return status;
 }
 
@@ -1929,7 +1929,7 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE hFile, PIO_STATUS_BLOCK io_status,
 {
     NTSTATUS status;
 
-    TRACE( "%p %lx%08lx %lx%08lx\n",
+    TRACE( "%p %x%08x %x%08x\n",
            hFile, offset->u.HighPart, offset->u.LowPart, count->u.HighPart, count->u.LowPart );
 
     if (io_status || key)
@@ -1967,7 +1967,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     NTSTATUS    status;
     static const WCHAR leadin[] = {'\\','?','?','\\','P','I','P','E','\\'};
 
-    TRACE("(%p %lx %s %p %lx %ld %lx %ld %ld %ld %ld %ld %ld %p)\n",
+    TRACE("(%p %x %s %p %x %d %x %d %d %d %d %d %d %p)\n",
           handle, access, debugstr_w(attr->ObjectName->Buffer), iosb, sharing, dispo,
           options, pipe_type, read_mode, completion_mode, max_inst, inbound_quota,
           outbound_quota, timeout);
@@ -2075,7 +2075,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
         '\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
     NTSTATUS ret;
 
-    TRACE("%p %08lx %p %p %08lx %08lx %08lx %p\n",
+    TRACE("%p %08x %p %p %08x %08x %08x %p\n",
               pHandle, DesiredAccess, attr, IoStatusBlock,
               CreateOptions, MailslotQuota, MaxMessageSize, TimeOut);
 

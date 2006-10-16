@@ -56,7 +56,7 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
 {
     NTSTATUS status;
 
-    TRACE("(%p,0x%08x,%p,0x%08lx,%p): stub\n",
+    TRACE("(%p,0x%08x,%p,0x%08x,%p): stub\n",
           handle, info_class, ptr, len, used_len);
 
     if (used_len) *used_len = 0;
@@ -104,7 +104,7 @@ NTSTATUS WINAPI NtSetInformationObject(IN HANDLE handle,
 {
     NTSTATUS status;
 
-    TRACE("(%p,0x%08x,%p,0x%08lx): stub\n",
+    TRACE("(%p,0x%08x,%p,0x%08x): stub\n",
           handle, info_class, ptr, len);
 
     switch (info_class)
@@ -161,7 +161,7 @@ NtQuerySecurityObject(
 	PISECURITY_DESCRIPTOR_RELATIVE psd = (PISECURITY_DESCRIPTOR_RELATIVE)Buffer;
 	UINT BufferIndex = sizeof(SECURITY_DESCRIPTOR_RELATIVE);
 
-	FIXME("(%p,0x%08lx,%p,0x%08lx,%p) stub!\n",
+	FIXME("(%p,0x%08x,%p,0x%08x,%p) stub!\n",
 	Object, RequestedInformation, pSecurityDesriptor, Length, ResultLength);
 
 	RequestedInformation &= 0x0000000f;
@@ -283,7 +283,7 @@ NtQuerySecurityObject(
 	  pacl->AclSize = BufferIndex - pacl->AclSize;
 	}
 	*ResultLength = BufferIndex;
-	TRACE("len=%lu\n", *ResultLength);
+	TRACE("len=%u\n", *ResultLength);
 	if (Length < *ResultLength) return STATUS_BUFFER_TOO_SMALL;
 	memcpy(pSecurityDesriptor, Buffer, *ResultLength);
 
@@ -367,7 +367,7 @@ NTSTATUS WINAPI NtOpenDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK Desir
                                       POBJECT_ATTRIBUTES ObjectAttributes)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08lx)\n", DirectoryHandle, DesiredAccess);
+    TRACE("(%p,0x%08x)\n", DirectoryHandle, DesiredAccess);
     dump_ObjectAttributes(ObjectAttributes);
 
     if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
@@ -416,7 +416,7 @@ NTSTATUS WINAPI NtCreateDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK Des
                                         POBJECT_ATTRIBUTES ObjectAttributes)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08lx)\n", DirectoryHandle, DesiredAccess);
+    TRACE("(%p,0x%08x)\n", DirectoryHandle, DesiredAccess);
     dump_ObjectAttributes(ObjectAttributes);
 
     if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
@@ -459,7 +459,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject(IN HANDLE DirectoryHandle, OUT PDIRECTORY
                                        IN ULONG BufferLength, IN BOOLEAN ReturnSingleEntry, IN BOOLEAN RestartScan,
                                        IN OUT PULONG Context, OUT PULONG ReturnLength OPTIONAL)
 {
-    FIXME("(%p,%p,0x%08lx,0x%08x,0x%08x,%p,%p), stub\n", DirectoryHandle, Buffer, BufferLength, ReturnSingleEntry,
+    FIXME("(%p,%p,0x%08x,0x%08x,0x%08x,%p,%p), stub\n", DirectoryHandle, Buffer, BufferLength, ReturnSingleEntry,
           RestartScan, Context, ReturnLength);
 
     return STATUS_NOT_IMPLEMENTED;
@@ -488,7 +488,7 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(OUT PHANDLE LinkHandle, IN ACCESS_MASK 
                                          IN POBJECT_ATTRIBUTES ObjectAttributes)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08lx,%p)\n",LinkHandle, DesiredAccess, ObjectAttributes);
+    TRACE("(%p,0x%08x,%p)\n",LinkHandle, DesiredAccess, ObjectAttributes);
     dump_ObjectAttributes(ObjectAttributes);
 
     if (!LinkHandle) return STATUS_ACCESS_VIOLATION;
@@ -539,7 +539,7 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACC
                                            IN PUNICODE_STRING TargetName)
 {
     NTSTATUS ret;
-    TRACE("(%p,0x%08lx,%p, -> %s)\n", SymbolicLinkHandle, DesiredAccess, ObjectAttributes,
+    TRACE("(%p,0x%08x,%p, -> %s)\n", SymbolicLinkHandle, DesiredAccess, ObjectAttributes,
                                       debugstr_us(TargetName));
     dump_ObjectAttributes(ObjectAttributes);
 

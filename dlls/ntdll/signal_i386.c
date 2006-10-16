@@ -739,7 +739,7 @@ void set_cpu_context( const CONTEXT *context )
     if (flags & CONTEXT_FULL)
     {
         if ((flags & CONTEXT_FULL) != (CONTEXT_FULL & ~CONTEXT_i386))
-            FIXME( "setting partial context (%lx) not supported\n", flags );
+            FIXME( "setting partial context (%x) not supported\n", flags );
         else
             __wine_call_from_32_restore_regs( context );
     }
@@ -837,7 +837,7 @@ static BOOL check_atl_thunk( EXCEPTION_RECORD *rec, CONTEXT *context )
         {
             *((DWORD *)context->Esp + 1) = thunk->this;
             context->Eip = (DWORD_PTR)(&thunk->func + 1) + thunk->func;
-            TRACE( "emulating ATL thunk at %p, func=%08lx arg=%08lx\n",
+            TRACE( "emulating ATL thunk at %p, func=%08x arg=%08x\n",
                    thunk, context->Eip, *((DWORD *)context->Esp + 1) );
             ret = TRUE;
         }
@@ -880,7 +880,7 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
     if ((char *)stack >= (char *)get_signal_stack() &&
         (char *)stack < (char *)get_signal_stack() + signal_stack_size)
     {
-        ERR( "nested exception on signal stack in thread %04lx eip %08x esp %08x stack %p-%p\n",
+        ERR( "nested exception on signal stack in thread %04x eip %08x esp %08x stack %p-%p\n",
              GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
              (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
              NtCurrentTeb()->Tib.StackBase );
@@ -894,13 +894,13 @@ static EXCEPTION_RECORD *setup_exception( SIGCONTEXT *sigcontext, raise_func fun
         UINT diff = (char *)NtCurrentTeb()->Tib.StackLimit - (char *)stack;
         if (diff < 4096)
         {
-            ERR( "stack overflow %u bytes in thread %04lx eip %08x esp %08x stack %p-%p\n",
+            ERR( "stack overflow %u bytes in thread %04x eip %08x esp %08x stack %p-%p\n",
                  diff, GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
                  (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
                  NtCurrentTeb()->Tib.StackBase );
             server_abort_thread(1);
         }
-        else WARN( "exception outside of stack limits in thread %04lx eip %08x esp %08x stack %p-%p\n",
+        else WARN( "exception outside of stack limits in thread %04x eip %08x esp %08x stack %p-%p\n",
                    GetCurrentThreadId(), (unsigned int) EIP_sig(sigcontext),
                    (unsigned int) ESP_sig(sigcontext), NtCurrentTeb()->Tib.StackLimit,
                    NtCurrentTeb()->Tib.StackBase );

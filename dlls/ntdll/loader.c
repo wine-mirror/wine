@@ -215,7 +215,7 @@ static ULONG_PTR allocate_stub( const char *dll, const char *name )
 
     if (!stubs)
     {
-        ULONG size = MAX_SIZE;
+        SIZE_T size = MAX_SIZE;
         if (NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&stubs, 0, &size,
                                      MEM_COMMIT, PAGE_EXECUTE_WRITECOPY ) != STATUS_SUCCESS)
             return 0xdeadbeef;
@@ -372,7 +372,7 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
 
     if (ordinal >= exports->NumberOfFunctions)
     {
-        TRACE("	ordinal %ld out of range!\n", ordinal + exports->Base );
+        TRACE("	ordinal %d out of range!\n", ordinal + exports->Base );
         return NULL;
     }
     if (!functions[ordinal]) return NULL;
@@ -486,7 +486,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
             ERR("Library %s (which is needed by %s) not found\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer));
         else
-            ERR("Loading library %s (which is needed by %s) failed (error %lx).\n",
+            ERR("Loading library %s (which is needed by %s) failed (error %x).\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer), status);
         return NULL;
     }
@@ -755,7 +755,7 @@ static NTSTATUS alloc_thread_tls(void)
         const IMAGE_TLS_DIRECTORY *dir = tls_dirs[i];
         ULONG size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
 
-        TRACE( "thread %04lx idx %d: %ld/%ld bytes from %p to %p\n",
+        TRACE( "thread %04x idx %d: %d/%d bytes from %p to %p\n",
                GetCurrentThreadId(), i, size, dir->SizeOfZeroFill,
                (void *)dir->StartAddressOfRawData, data );
 
@@ -785,11 +785,11 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
     for (callback = (const PIMAGE_TLS_CALLBACK *)dir->AddressOfCallBacks; *callback; callback++)
     {
         if (TRACE_ON(relay))
-            DPRINTF("%04lx:Call TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+            DPRINTF("%04x:Call TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
                     GetCurrentThreadId(), *callback, module, reason_names[reason] );
         (*callback)( module, reason, NULL );
         if (TRACE_ON(relay))
-            DPRINTF("%04lx:Ret  TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+            DPRINTF("%04x:Ret  TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
                     GetCurrentThreadId(), *callback, module, reason_names[reason] );
     }
 }
@@ -816,7 +816,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
         size_t len = min( wm->ldr.BaseDllName.Length, sizeof(mod_name)-sizeof(WCHAR) );
         memcpy( mod_name, wm->ldr.BaseDllName.Buffer, len );
         mod_name[len / sizeof(WCHAR)] = 0;
-        DPRINTF("%04lx:Call PE DLL (proc=%p,module=%p %s,reason=%s,res=%p)\n",
+        DPRINTF("%04x:Call PE DLL (proc=%p,module=%p %s,reason=%s,res=%p)\n",
                 GetCurrentThreadId(), entry, module, debugstr_w(mod_name),
                 reason_names[reason], lpReserved );
     }
@@ -829,7 +829,7 @@ static BOOL MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved )
        to the dll. We cannot assume that this module has not been
        deleted.  */
     if (TRACE_ON(relay))
-        DPRINTF("%04lx:Ret  PE DLL (proc=%p,module=%p %s,reason=%s,res=%p) retval=%x\n",
+        DPRINTF("%04x:Ret  PE DLL (proc=%p,module=%p %s,reason=%s,res=%p) retval=%x\n",
                 GetCurrentThreadId(), entry, module, debugstr_w(mod_name),
                 reason_names[reason], lpReserved, retv );
     else TRACE("(%p,%s,%p) - RETURN %d\n", module, reason_names[reason], lpReserved, retv );
@@ -1090,7 +1090,7 @@ NTSTATUS WINAPI LdrFindEntryForAddress(const void* addr, PLDR_MODULE* pmod)
  */
 NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG *magic )
 {
-    if (flags) FIXME( "flags %lx not supported\n", flags );
+    if (flags) FIXME( "flags %x not supported\n", flags );
 
     if (result) *result = 1;
     if (!magic) return STATUS_INVALID_PARAMETER_3;
@@ -1167,7 +1167,7 @@ NTSTATUS WINAPI LdrGetDllHandle(ULONG x, ULONG y, const UNICODE_STRING *name, HM
     }
 done:
     RtlLeaveCriticalSection( &loader_section );
-    TRACE("%lx %lx %s -> %p\n", x, y, debugstr_us(name), status ? NULL : *base);
+    TRACE("%x %x %s -> %p\n", x, y, debugstr_us(name), status ? NULL : *base);
     return status;
 }
 
@@ -1274,6 +1274,7 @@ static void load_builtin_callback( void *module, const char *filename )
     WINE_MODREF *wm;
     WCHAR *fullname;
     const WCHAR *load_path;
+    SIZE_T size;
 
     if (!module)
     {
@@ -1287,7 +1288,8 @@ static void load_builtin_callback( void *module, const char *filename )
         return;
     }
     addr = module;
-    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &nt->OptionalHeader.SizeOfImage,
+    size = nt->OptionalHeader.SizeOfImage;
+    NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size,
                              MEM_SYSTEM | MEM_IMAGE, PAGE_EXECUTE_WRITECOPY );
     /* create the MODREF */
 
@@ -1779,7 +1781,7 @@ static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_
         return nts;
     }
 
-    WARN("Failed to load module %s; status=%lx\n", debugstr_w(libname), nts);
+    WARN("Failed to load module %s; status=%x\n", debugstr_w(libname), nts);
     if (handle) NtClose( handle );
     if (filename != buffer) RtlFreeHeap( GetProcessHeap(), 0, filename );
     return nts;
@@ -2154,7 +2156,7 @@ void WINAPI LdrInitializeThunk( ULONG unknown1, ULONG unknown2, ULONG unknown3, 
     return;
 
 error:
-    ERR( "Main exe initialization for %s failed, status %lx\n",
+    ERR( "Main exe initialization for %s failed, status %x\n",
          debugstr_w(peb->ProcessParameters->ImagePathName.Buffer), status );
     exit(1);
 }
@@ -2362,14 +2364,14 @@ void __wine_process_init(void)
 
     if ((status = load_builtin_dll( NULL, kernel32W, 0, 0, &wm )) != STATUS_SUCCESS)
     {
-        MESSAGE( "wine: could not load kernel32.dll, status %lx\n", status );
+        MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
         exit(1);
     }
     RtlInitAnsiString( &func_name, "__wine_kernel_init" );
     if ((status = LdrGetProcedureAddress( wm->ldr.BaseAddress, &func_name,
                                           0, (void **)&init_func )) != STATUS_SUCCESS)
     {
-        MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %lx\n", status );
+        MESSAGE( "wine: could not find __wine_kernel_init in kernel32.dll, status %x\n", status );
         exit(1);
     }
     init_func();
