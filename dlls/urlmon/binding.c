@@ -250,19 +250,13 @@ static HWND get_notif_hwnd(void)
         wndclass.hInstance = URLMON_hInstance;
 
         wnd_class = RegisterClassExW(&wndclass);
+        if (!wnd_class && GetLastError() == ERROR_CLASS_ALREADY_EXISTS)
+            wnd_class = 1;
     }
 
-    if(!urlmon_tls)
-        urlmon_tls = TlsAlloc();
-
-    hwnd = TlsGetValue(urlmon_tls);
-    if(hwnd)
-        return hwnd;
-
-    hwnd = CreateWindowExW(0, MAKEINTATOMW(wnd_class),
+    hwnd = CreateWindowExW(0, wszURLMonikerNotificationWindow,
                            wszURLMonikerNotificationWindow, 0, 0, 0, 0, 0, HWND_MESSAGE,
                            NULL, URLMON_hInstance, NULL);
-    TlsSetValue(urlmon_tls, hwnd);
 
     TRACE("hwnd = %p\n", hwnd);
 
@@ -691,6 +685,8 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
+        if (This->notif_hwnd)
+            DestroyWindow( This->notif_hwnd );
         if(This->callback)
             IBindStatusCallback_Release(This->callback);
         if(This->protocol)

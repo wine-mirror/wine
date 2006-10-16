@@ -43,8 +43,6 @@ LONG URLMON_refCount = 0;
 HINSTANCE URLMON_hInstance = 0;
 static HMODULE hCabinet = NULL;
 
-DWORD urlmon_tls = 0;
-
 static void init_session(BOOL);
 
 /***********************************************************************
@@ -62,8 +60,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
 	break;
 
     case DLL_PROCESS_DETACH:
-        if(urlmon_tls)
-            TlsFree(urlmon_tls);
         if (hCabinet)
             FreeLibrary(hCabinet);
         hCabinet = NULL;
