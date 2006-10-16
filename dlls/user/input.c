@@ -758,6 +758,41 @@ typedef struct __TRACKINGLIST {
 static _TRACKINGLIST tracking_info;
 static UINT_PTR timer;
 
+static void check_mouse_leave(HWND hwnd, int hittest)
+{
+    if (tracking_info.tme.hwndTrack != hwnd)
+    {
+        if (tracking_info.tme.dwFlags & TME_NONCLIENT)
+            PostMessageW(tracking_info.tme.hwndTrack, WM_NCMOUSELEAVE, 0, 0);
+        else
+            PostMessageW(tracking_info.tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
+
+        /* remove the TME_LEAVE flag */
+        tracking_info.tme.dwFlags &= ~TME_LEAVE;
+    }
+    else
+    {
+        if (hittest == HTCLIENT)
+        {
+            if (tracking_info.tme.dwFlags & TME_NONCLIENT)
+            {
+                PostMessageW(tracking_info.tme.hwndTrack, WM_NCMOUSELEAVE, 0, 0);
+                /* remove the TME_LEAVE flag */
+                tracking_info.tme.dwFlags &= ~TME_LEAVE;
+            }
+        }
+        else
+        {
+            if (!(tracking_info.tme.dwFlags & TME_NONCLIENT))
+            {
+                PostMessageW(tracking_info.tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
+                /* remove the TME_LEAVE flag */
+                tracking_info.tme.dwFlags &= ~TME_LEAVE;
+            }
+        }
+    }
+}
+
 static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
                                          DWORD dwTime)
 {
@@ -782,37 +817,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
     /* mouse has left the window */
     if (tracking_info.tme.dwFlags & TME_LEAVE)
     {
-        if (tracking_info.tme.hwndTrack != hwnd)
-        {
-            if (tracking_info.tme.dwFlags & TME_NONCLIENT)
-                PostMessageW(tracking_info.tme.hwndTrack, WM_NCMOUSELEAVE, 0, 0);
-            else
-                PostMessageW(tracking_info.tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
-
-            /* remove the TME_LEAVE flag */
-            tracking_info.tme.dwFlags &= ~TME_LEAVE;
-        }
-        else
-        {
-            if (hittest == HTCLIENT)
-            {
-                if (tracking_info.tme.dwFlags & TME_NONCLIENT)
-                {
-                    PostMessageW(tracking_info.tme.hwndTrack, WM_NCMOUSELEAVE, 0, 0);
-                    /* remove the TME_LEAVE flag */
-                    tracking_info.tme.dwFlags &= ~TME_LEAVE;
-                }
-            }
-            else
-            {
-                if (!(tracking_info.tme.dwFlags & TME_NONCLIENT))
-                {
-                    PostMessageW(tracking_info.tme.hwndTrack, WM_MOUSELEAVE, 0, 0);
-                    /* remove the TME_LEAVE flag */
-                    tracking_info.tme.dwFlags &= ~TME_LEAVE;
-                }
-            }
-        }
+        check_mouse_leave(hwnd, hittest);
     }
 
     if (tracking_info.tme.hwndTrack != hwnd)
@@ -950,6 +955,12 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
             }
         }
     } else {
+        /* In our implementation it's possible that another window will receive a
+         * WM_MOUSEMOVE and call TrackMouseEvent before TrackMouseEventProc is
+         * called. In such a situation post the WM_MOUSELEAVE now */
+        if (tracking_info.tme.dwFlags & TME_LEAVE && tracking_info.tme.hwndTrack != NULL)
+            check_mouse_leave(hwnd, hittest);
+
         if (timer)
         {
             KillSystemTimer(tracking_info.tme.hwndTrack, timer);
