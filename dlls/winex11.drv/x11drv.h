@@ -163,8 +163,8 @@ extern LONG X11DRV_GetBitmapBits( HBITMAP hbitmap, void *bits, LONG count );
 extern BOOL X11DRV_GetCharWidth( X11DRV_PDEVICE *physDev, UINT firstChar,
                                    UINT lastChar, LPINT buffer );
 extern BOOL X11DRV_GetDCOrgEx( X11DRV_PDEVICE *physDev, LPPOINT lpp );
-extern BOOL X11DRV_GetTextExtentPoint( X11DRV_PDEVICE *physDev, LPCWSTR str,
-                                         INT count, LPSIZE size );
+extern BOOL X11DRV_GetTextExtentExPoint( X11DRV_PDEVICE *physDev, LPCWSTR str, INT count,
+                                  INT maxExt, LPINT lpnFit, LPINT alpDx, LPSIZE size );
 extern BOOL X11DRV_GetTextMetrics(X11DRV_PDEVICE *physDev, TEXTMETRICW *metrics);
 extern BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top,
                              INT width, INT height, DWORD rop );
