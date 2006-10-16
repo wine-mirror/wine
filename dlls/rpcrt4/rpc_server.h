@@ -23,8 +23,11 @@
 
 #include "rpc_binding.h"
 
+struct protseq_ops;
+
 typedef struct _RpcServerProtseq
 {
+  const struct protseq_ops *ops;
   struct _RpcServerProtseq* Next;
   LPSTR Protseq;
   LPSTR Endpoint;
@@ -33,13 +36,24 @@ typedef struct _RpcServerProtseq
 
   /* is the server currently listening? */
   BOOL is_listening;
-  /* set on change of configuration (e.g. listening on new protseq) */
-  HANDLE mgr_event;
   /* mutex for ensuring only one thread can change state at a time */
   HANDLE mgr_mutex;
   /* set when server thread has finished opening connections */
   HANDLE server_ready_event;
 } RpcServerProtseq;
+
+struct protseq_ops
+{
+    const char *name;
+    RpcServerProtseq *(*alloc)(void);
+    void (*signal_state_changed)(RpcServerProtseq *protseq);
+    /* previous array is passed in to allow reuse of memory */
+    void *(*get_wait_array)(RpcServerProtseq *protseq, void *prev_array, unsigned int *count);
+    void (*free_wait_array)(RpcServerProtseq *protseq, void *array);
+    /* returns -1 for failure, 0 for server state changed and 1 to indicate a
+     * new connection was established */
+    int (*wait_for_new_connection)(RpcServerProtseq *protseq, unsigned int count, void *wait_array);
+};
 
 typedef struct _RpcServerInterface
 {
