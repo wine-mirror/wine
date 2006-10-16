@@ -8584,6 +8584,12 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 		lpColumnInfo->rcHeader.right += dx;
 		if (lpnmh->iItem + 1 < DPA_GetPtrCount(infoPtr->hdpaColumns))
 		    LISTVIEW_ScrollColumns(infoPtr, lpnmh->iItem + 1, dx);
+		else
+		{
+		    /* only needs to update the scrolls */
+		    infoPtr->nItemWidth += dx;
+		    LISTVIEW_UpdateScroll(infoPtr);
+		}
 		LISTVIEW_UpdateItemSize(infoPtr);
 		if (uView == LVS_REPORT && is_redrawing(infoPtr))
 		{
