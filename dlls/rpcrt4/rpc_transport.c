@@ -709,7 +709,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
     return RPC_S_OK;
 }
 
-static const struct protseq_ops protseq_list[] = {
+static const struct connection_ops protseq_list[] = {
   { "ncacn_np",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_SMB },
     rpcrt4_conn_np_alloc,
@@ -750,7 +750,7 @@ static const struct protseq_ops protseq_list[] = {
 
 #define MAX_PROTSEQ (sizeof protseq_list / sizeof protseq_list[0])
 
-static const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
+static const struct connection_ops *rpcrt4_get_protseq_ops(const char *protseq)
 {
   int i;
   for(i=0; i<MAX_PROTSEQ; i++)
@@ -779,7 +779,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
     LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint,
     LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcBinding* Binding)
 {
-  const struct protseq_ops *ops;
+  const struct connection_ops *ops;
   RpcConnection* NewConnection;
 
   ops = rpcrt4_get_protseq_ops(Protseq);
@@ -875,7 +875,7 @@ RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data,
                                       const char *endpoint)
 {
     twr_empty_floor_t *protocol_floor;
-    const struct protseq_ops *protseq_ops = rpcrt4_get_protseq_ops(protseq);
+    const struct connection_ops *protseq_ops = rpcrt4_get_protseq_ops(protseq);
 
     *tower_size = 0;
 
@@ -913,7 +913,7 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
 {
     const twr_empty_floor_t *protocol_floor;
     const twr_empty_floor_t *floor4;
-    const struct protseq_ops *protseq_ops = NULL;
+    const struct connection_ops *protseq_ops = NULL;
     RPC_STATUS status;
     int i;
 

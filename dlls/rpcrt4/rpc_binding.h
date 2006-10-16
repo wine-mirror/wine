@@ -36,7 +36,7 @@ typedef struct _RpcAuthInfo
   TimeStamp exp;
 } RpcAuthInfo;
 
-struct protseq_ops;
+struct connection_ops;
 
 typedef struct _RpcConnection
 {
@@ -45,7 +45,7 @@ typedef struct _RpcConnection
   BOOL server;
   LPSTR NetworkAddr;
   LPSTR Endpoint;
-  const struct protseq_ops *ops;
+  const struct connection_ops *ops;
   USHORT MaxTransmissionSize;
   /* The active interface bound to server. */
   RPC_SYNTAX_IDENTIFIER ActiveInterface;
@@ -61,7 +61,7 @@ typedef struct _RpcConnection
   struct list conn_pool_entry;
 } RpcConnection;
 
-struct protseq_ops {
+struct connection_ops {
   const char *name;
   unsigned char epm_protocols[2]; /* only floors 3 and 4. see http://www.opengroup.org/onlinepubs/9629399/apdxl.htm */
   RpcConnection *(*alloc)(void);
