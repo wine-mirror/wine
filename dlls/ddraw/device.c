@@ -2135,6 +2135,52 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
             return hr;
         }
 
+        case D3DRENDERSTATE_TEXTUREMAG:
+        {
+            WINED3DTEXTUREFILTERTYPE tex_mag;
+
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+                                                0, WINED3DSAMP_MAGFILTER,
+                                                &tex_mag);
+
+            switch (tex_mag)
+            {
+                case WINED3DTEXF_POINT:
+                    *Value = D3DFILTER_NEAREST;
+                    break;
+                case WINED3DTEXF_LINEAR:
+                    *Value = D3DFILTER_LINEAR;
+                    break;
+                default:
+                    ERR("Unhandled texture mag %d !\n",tex_mag);
+                    *Value = 0;
+            }
+            return hr;
+        }
+
+        case D3DRENDERSTATE_TEXTUREMIN:
+        {
+            WINED3DTEXTUREFILTERTYPE tex_min;
+
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+                                                0, WINED3DSAMP_MINFILTER,
+                                                &tex_min);
+
+            switch (tex_min)
+            {
+                case WINED3DTEXF_POINT:
+                    *Value = D3DFILTER_NEAREST;
+                    break;
+                case WINED3DTEXF_LINEAR:
+                    *Value = D3DFILTER_LINEAR;
+                    break;
+                default:
+                    ERR("Unhandled texture mag %d !\n",tex_min);
+                    *Value = 0;
+            }
+            return hr;
+        }
+
         case D3DRENDERSTATE_TEXTUREADDRESSU:
         case D3DRENDERSTATE_TEXTUREADDRESSV:
         case D3DRENDERSTATE_TEXTUREADDRESS:
