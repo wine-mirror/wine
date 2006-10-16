@@ -229,6 +229,17 @@ static void add_include_path( const char *name )
     path->name = name;
 }
 
+/*******************************************************************
+ *         find_src_file
+ */
+static INCL_FILE *find_src_file( const char *name )
+{
+    INCL_FILE *file;
+
+    LIST_FOR_EACH_ENTRY( file, &sources, INCL_FILE, entry )
+        if (!strcmp( name, file->name )) return file;
+    return NULL;
+}
 
 /*******************************************************************
  *         add_src_file
@@ -237,7 +248,10 @@ static void add_include_path( const char *name )
  */
 static INCL_FILE *add_src_file( const char *name )
 {
-    INCL_FILE *file = xmalloc( sizeof(*file) );
+    INCL_FILE *file;
+
+    if (find_src_file( name )) return NULL;  /* we already have it */
+    file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup(name);
     list_add_tail( &sources, &file->entry );
@@ -615,11 +629,57 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
 
 
 /*******************************************************************
+ *         parse_generated_idl
+ */
+static void parse_generated_idl( INCL_FILE *source )
+{
+    char *header, *basename;
+
+    basename = xstrdup( source->name );
+    basename[strlen(basename) - 4] = 0;
+    header = strmake( "%s.h", basename );
+    source->filename = xstrdup( source->name );
+
+    if (strendswith( source->name, "_c.c" ))
+    {
+        add_include( source, header, 0, 0 );
+    }
+    else if (strendswith( source->name, "_i.c" ))
+    {
+        add_include( source, "rpc.h", 0, 1 );
+        add_include( source, "rpcndr.h", 0, 1 );
+        add_include( source, "guiddef.h", 0, 1 );
+    }
+    else if (strendswith( source->name, "_p.c" ))
+    {
+        add_include( source, "rpcproxy.h", 0, 1 );
+        add_include( source, header, 0, 0 );
+    }
+    else if (strendswith( source->name, "_s.c" ))
+    {
+        add_include( source, header, 0, 0 );
+    }
+
+    free( header );
+    free( basename );
+}
+
+/*******************************************************************
  *         parse_file
  */
 static void parse_file( INCL_FILE *pFile, int src )
 {
     FILE *file;
+
+    /* special case for source files generated from idl */
+    if (strendswith( pFile->name, "_c.c" ) ||
+        strendswith( pFile->name, "_i.c" ) ||
+        strendswith( pFile->name, "_p.c" ) ||
+        strendswith( pFile->name, "_s.c" ))
+    {
+        parse_generated_idl( pFile );
+        return;
+    }
 
     file = src ? open_src_file( pFile ) : open_include_file( pFile );
     if (!file) return;
@@ -686,7 +746,24 @@ static void output_src( FILE *file, INCL_FILE *pFile, int *column )
         }
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
-            *column += fprintf( file, "%s.h: %s", obj, pFile->filename );
+            char *name;
+
+            *column += fprintf( file, "%s.h", obj );
+
+            name = strmake( "%s_c.c", obj );
+            if (find_src_file( name )) *column += fprintf( file, " %s", name );
+            free( name );
+            name = strmake( "%s_i.c", obj );
+            if (find_src_file( name )) *column += fprintf( file, " %s", name );
+            free( name );
+            name = strmake( "%s_p.c", obj );
+            if (find_src_file( name )) *column += fprintf( file, " %s", name );
+            free( name );
+            name = strmake( "%s_s.c", obj );
+            if (find_src_file( name )) *column += fprintf( file, " %s", name );
+            free( name );
+
+            *column += fprintf( file, ": %s", pFile->filename );
         }
         else
         {
@@ -814,8 +891,7 @@ int main( int argc, char *argv[] )
 
     for (i = 1; i < argc; i++)
     {
-        pFile = add_src_file( argv[i] );
-        parse_file( pFile, 1 );
+        if ((pFile = add_src_file( argv[i] ))) parse_file( pFile, 1 );
     }
     LIST_FOR_EACH_ENTRY( pFile, &includes, INCL_FILE, entry ) parse_file( pFile, 0 );
     output_dependencies();
