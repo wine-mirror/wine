@@ -1293,7 +1293,9 @@ static UINT table_validate_new( MSITABLEVIEW *tv, MSIRECORD *rec )
         if ( tv->columns[i].type & MSITYPE_NULLABLE )
             continue;
 
-        if ( tv->columns[i].type & MSITYPE_STRING )
+        if ( MSITYPE_IS_BINARY(tv->columns[i].type) )
+            TRACE("skipping binary column\n");
+        else if ( tv->columns[i].type & MSITYPE_STRING )
         {
             LPCWSTR str;
 

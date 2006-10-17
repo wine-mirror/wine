@@ -1906,6 +1906,20 @@ static void test_try_transform(void)
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add table\n");
 
+    hrec = MsiCreateRecord(2);
+    r = MsiRecordSetInteger(hrec, 1, 2);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+
+    write_file("testdata.bin", "lamyon", 6);
+    r = MsiRecordSetStream(hrec, 2, "testdata.bin");
+    ok(r == ERROR_SUCCESS, "failed to set stream\n");
+
+    query = "INSERT INTO `BINARY` ( `ID`, `BLOB` ) VALUES ( ?, ? )";
+    r = run_query(hdb, hrec, query);
+    ok(r == ERROR_SUCCESS, "failed to add row with blob\n");
+
+    MsiCloseHandle(hrec);
+
     r = MsiDatabaseCommit( hdb );
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
