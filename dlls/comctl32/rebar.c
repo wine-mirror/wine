@@ -4119,11 +4119,12 @@ REBAR_NCCalcSize (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (infoPtr->dwStyle & WS_BORDER) {
         rect->left   = min(rect->left + GetSystemMetrics(SM_CXEDGE), rect->right);
         rect->right  = max(rect->right - GetSystemMetrics(SM_CXEDGE), rect->left);
-        rect->top    = min(rect->top + GetSystemMetrics(SM_CXEDGE), rect->bottom);
-        rect->bottom = max(rect->bottom - GetSystemMetrics(SM_CXEDGE), rect->top);
+        rect->top    = min(rect->top + GetSystemMetrics(SM_CYEDGE), rect->bottom);
+        rect->bottom = max(rect->bottom - GetSystemMetrics(SM_CYEDGE), rect->top);
     }
     else if ((theme = GetWindowTheme (infoPtr->hwndSelf)))
     {
+        /* FIXME: should use GetThemeInt */
         rect->top = min(rect->top + 1, rect->bottom);
     }
     TRACE("new client=(%d,%d)-(%d,%d)\n", rect->left, rect->top, rect->right, rect->bottom);
