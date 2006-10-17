@@ -1694,7 +1694,7 @@ static void test_handle_limit(void)
 
 static void generate_transform(void)
 {
-    MSIHANDLE hdb1, hdb2;
+    MSIHANDLE hdb1, hdb2, hrec;
     LPCSTR query;
     UINT r;
 
@@ -1736,6 +1736,20 @@ static void generate_transform(void)
     r = run_query(hdb1, 0, query);
     ok(r == ERROR_SUCCESS, "failed to delete row\n");
 
+    hrec = MsiCreateRecord(2);
+    r = MsiRecordSetInteger(hrec, 1, 1);
+    ok(r == ERROR_SUCCESS, "failed to set integer\n");
+
+    write_file("testdata.bin", "naengmyon", 9);
+    r = MsiRecordSetStream(hrec, 2, "testdata.bin");
+    ok(r == ERROR_SUCCESS, "failed to set stream\n");
+
+    query = "INSERT INTO `BINARY` ( `ID`, `BLOB` ) VALUES ( ?, ? )";
+    r = run_query(hdb1, hrec, query);
+    ok(r == ERROR_SUCCESS, "failed to add row with blob\n");
+
+    MsiCloseHandle(hrec);
+
     /* database needs to be committed */
     MsiDatabaseCommit(hdb1);
 
@@ -1744,6 +1758,8 @@ static void generate_transform(void)
 
     MsiCloseHandle( hdb1 );
     MsiCloseHandle( hdb2 );
+
+    DeleteFile("testdata.bin");
 }
 
 /* data for generating a transform */
@@ -1755,6 +1771,8 @@ static const WCHAR name3[] = { 0x4840, 0x3f7f, 0x4164, 0x422f, 0x4836, 0 }; /* _
 static const WCHAR name4[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3b6a, 0x45e4, 0x4824, 0 }; /* _StringData */
 static const WCHAR name5[] = { 0x4840, 0x3f3f, 0x4577, 0x446c, 0x3e6a, 0x44b2, 0x482f, 0 }; /* _StringPool */
 static const WCHAR name6[] = { 0x4840, 0x3e16, 0x4818, 0}; /* MOO */
+static const WCHAR name7[] = { 0x4840, 0x3c8b, 0x3a97, 0x409b, 0 }; /* BINARY */
+static const WCHAR name8[] = { 0x3c8b, 0x3a97, 0x409b, 0x387e, 0 }; /* BINARY.1 */
 
 /* data in each table */
 static const WCHAR data1[] = { /* AAR */
@@ -1786,6 +1804,13 @@ static const WCHAR data6[] = { /* MOO */
     0x0000, 0x8003,         /* delete row */
 };
 
+static const WCHAR data7[] = { /* BINARY */
+    0x0201, 0x8001, 0x0001,
+};
+
+static const char data8[] =  /* stream data for the BINARY table */
+    "naengmyon";
+
 static const struct {
     LPCWSTR name;
     const void *data;
@@ -1798,6 +1823,8 @@ static const struct {
     { name4, data4, sizeof data4 - 1 },
     { name5, data5, sizeof data5 },
     { name6, data6, sizeof data6 },
+    { name7, data7, sizeof data7 },
+    { name8, data8, sizeof data8 - 1 },
 };
 
 #define NUM_TRANSFORM_TABLES (sizeof table_transform_data/sizeof table_transform_data[0])
@@ -1829,7 +1856,7 @@ static void generate_transform_manual(void)
                             STGM_WRITE | STGM_SHARE_EXCLUSIVE, 0, 0, &stm );
         if (FAILED(r))
         {
-            ok(0, "failed to create stream\n");
+            ok(0, "failed to create stream %08x\n", r);
             continue;
         }
 
@@ -1848,6 +1875,8 @@ static void test_try_transform(void)
     MSIHANDLE hdb, hrec;
     LPCSTR query;
     UINT r;
+    DWORD sz;
+    char buffer[0x10];
 
     DeleteFile(msifile);
     DeleteFile(msifile2);
@@ -1872,6 +1901,10 @@ static void test_try_transform(void)
     query = "INSERT INTO `MOO` ( `NOO`, `OOO` ) VALUES ( 3, 'c' )";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to add row\n");
+
+    query = "CREATE TABLE `BINARY` ( `ID` SHORT NOT NULL, `BLOB` OBJECT PRIMARY KEY `ID`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to add table\n");
 
     r = MsiDatabaseCommit( hdb );
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
@@ -1929,6 +1962,22 @@ static void test_try_transform(void)
     r = do_query(hdb, query, &hrec);
     ok(r == ERROR_NO_MORE_ITEMS, "select query failed\n");
     if (hrec) MsiCloseHandle(hrec);
+
+    /* check added stream */
+    hrec = 0;
+    query = "select `BLOB` from `BINARY` where `ID` = 1";
+    r = do_query(hdb, query, &hrec);
+    ok(r == ERROR_SUCCESS, "select query failed\n");
+
+    todo_wine {
+    /* check the contents of the stream */
+    sz = sizeof buffer;
+    r = MsiRecordReadStream( hrec, 1, buffer, &sz );
+    ok(r == ERROR_SUCCESS, "read stream failed\n");
+    ok(!memcmp(buffer, "naengmyon", 9), "stream data was wrong\n");
+    ok(sz == 9, "stream data was wrong size\n");
+    if (hrec) MsiCloseHandle(hrec);
+    }
 
     MsiCloseHandle( hdb );
 
