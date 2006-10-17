@@ -3080,6 +3080,15 @@ int CDECL MSVCRT_wprintf(const MSVCRT_wchar_t *format, ...)
 }
 
 /*********************************************************************
+ *		_getmaxstdio (MSVCRT.@)
+ */
+int CDECL _getmaxstdio(void)
+{
+    FIXME("stub, always returns 512\n");
+    return 512;
+}
+
+/*********************************************************************
  *		__pioinfo (MSVCRT.@)
  * FIXME: see MSVCRT_MAX_FILES define.
  */

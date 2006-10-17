@@ -260,7 +260,7 @@
 @ cdecl _getdllprocaddr(long str long)
 @ cdecl _getdrive()
 @ cdecl _getdrives() kernel32.GetLogicalDrives
-@ stub _getmaxstdio #()
+@ cdecl _getmaxstdio()
 @ cdecl _getmbcp()
 @ cdecl _getpid() kernel32.GetCurrentProcessId
 @ stub _getsystime #(ptr)
