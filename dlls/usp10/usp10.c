@@ -326,7 +326,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     pItems[index].a.fLogicalOrder = 0;
     pItems[index].a.fNoGlyphIndex = 0;
     /*  set the SCRIPT_STATE                                */
-    if  (New_Script == Script_Arabic)
+    if  (pItems[index].a.eScript  == Script_Arabic)
         pItems[index].a.s.uBidiLevel = 1;
     else
         pItems[index].a.s.uBidiLevel = 0;

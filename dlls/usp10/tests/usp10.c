@@ -46,7 +46,8 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     WCHAR           TestItem1[] = {'T', 'e', 's', 't', 'a', 0}; 
     WCHAR           TestItem2[] = {'T', 'e', 's', 't', 'b', 0}; 
     WCHAR           TestItem3[] = {'T', 'e', 's', 't', 'c',' ','1','2','3',' ',' ','e','n','d',0}; 
-    WCHAR           TestItem4[] = {'T', 'e', 's', 't', 'c',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0}; 
+    WCHAR           TestItem4[] = {'T', 'e', 's', 't', 'c',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0};
+    WCHAR           TestItem5[] = {0x0684,'T','e','s','t','c',' ',0x0684,0x0694,0x06a4,' ',' ','e','n','d',0}; 
 
     SCRIPT_CACHE    psc;
     int             cChars;
@@ -243,6 +244,16 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
         hr = ScriptFreeCache( &psc);
         ok (!psc, "psc is not null after ScriptFreeCache\n");
     }
+
+    /*
+     * This test is for when the first unicode character requires bidi support
+     */ 
+    cInChars = (sizeof(TestItem5)-1)/sizeof(WCHAR);
+    hr = ScriptItemize(TestItem5, cInChars, cMaxItems, NULL, NULL, pItem, &pcItems);
+    ok (hr == 0, "ScriptItemize should return 0, returned %08x\n", hr);
+    ok (pcItems == 4, "There should have been 4 items, found %d\n", pcItems);
+    ok (pItem[0].a.s.uBidiLevel == 1, "The first character should have been bidi=1 not %d\n", 
+                                       pItem[0].a.s.uBidiLevel);
 }
 
 void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
