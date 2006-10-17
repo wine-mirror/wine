@@ -27,15 +27,16 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "wine/debug.h"
 #include "msi.h"
 #include "msiquery.h"
 #include "objbase.h"
 #include "objidl.h"
-#include "msipriv.h"
 #include "winnls.h"
-
+#include "msipriv.h"
 #include "query.h"
+
+#include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msidb);
 
@@ -1104,6 +1105,7 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     LPWSTR full_name;
     DWORD len;
     static const WCHAR szDot[] = { '.', 0 };
+    WCHAR number[0x20];
 
     if( !view->ops->fetch_int )
         return ERROR_INVALID_PARAMETER;
@@ -1118,15 +1120,31 @@ static UINT TABLE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     if( r != ERROR_SUCCESS )
         return r;
 
-    /* now get the column with the name of the stream */
-    r = view->ops->fetch_int( view, row, ival, &refcol );
-    if( r != ERROR_SUCCESS )
-        return r;
+    /* check the column value is in range */
+    if (ival < 0 || ival > tv->num_cols || ival == col)
+    {
+        ERR("bad column ref (%u) for stream\n", ival);
+        return ERROR_FUNCTION_FAILED;
+    }
 
-    /* lookup the string value from the string table */
-    sval = msi_string_lookup_id( tv->db->strings, refcol );
-    if( !sval )
-        return ERROR_INVALID_PARAMETER;
+    if ( tv->columns[ival - 1].type & MSITYPE_STRING )
+    {
+        /* now get the column with the name of the stream */
+        r = view->ops->fetch_int( view, row, ival, &refcol );
+        if ( r != ERROR_SUCCESS )
+            return r;
+
+        /* lookup the string value from the string table */
+        sval = msi_string_lookup_id( tv->db->strings, refcol );
+        if ( !sval )
+            return ERROR_INVALID_PARAMETER;
+    }
+    else
+    {
+        static const WCHAR fmt[] = { '%','d',0 };
+        sprintfW( number, fmt, ival );
+        sval = number;
+    }
 
     len = lstrlenW( tv->name ) + 2 + lstrlenW( sval );
     full_name = msi_alloc( len*sizeof(WCHAR) );

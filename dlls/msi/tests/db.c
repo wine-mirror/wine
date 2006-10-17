@@ -1983,7 +1983,6 @@ static void test_try_transform(void)
     r = do_query(hdb, query, &hrec);
     ok(r == ERROR_SUCCESS, "select query failed\n");
 
-    todo_wine {
     /* check the contents of the stream */
     sz = sizeof buffer;
     r = MsiRecordReadStream( hrec, 1, buffer, &sz );
@@ -1991,7 +1990,6 @@ static void test_try_transform(void)
     ok(!memcmp(buffer, "naengmyon", 9), "stream data was wrong\n");
     ok(sz == 9, "stream data was wrong size\n");
     if (hrec) MsiCloseHandle(hrec);
-    }
 
     MsiCloseHandle( hdb );
 
