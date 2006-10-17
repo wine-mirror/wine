@@ -1887,6 +1887,7 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
 {
     OBJECT_ATTRIBUTES destkey, file;
     UNICODE_STRING subkeyW, filenameW;
+    NTSTATUS status;
 
     if (!(hkey = get_special_root_hkey(hkey))) return ERROR_INVALID_HANDLE;
 
@@ -1906,7 +1907,9 @@ LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
     file.SecurityQualityOfService = NULL;
     RtlDosPathNameToNtPathName_U(filename, &filenameW, NULL, NULL);
 
-    return RtlNtStatusToDosError( NtLoadKey(&destkey, &file) );
+    status = NtLoadKey(&destkey, &file);
+    RtlFreeUnicodeString(&filenameW);
+    return RtlNtStatusToDosError( status );
 }
 
 
@@ -1920,17 +1923,22 @@ LONG WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
     UNICODE_STRING subkeyW, filenameW;
     STRING subkeyA, filenameA;
     NTSTATUS status;
+    LONG ret;
 
     RtlInitAnsiString(&subkeyA, subkey);
     RtlInitAnsiString(&filenameA, filename);
 
-    if ((status = RtlAnsiStringToUnicodeString(&subkeyW, &subkeyA, TRUE)))
-        return RtlNtStatusToDosError(status);
-
-    if ((status = RtlAnsiStringToUnicodeString(&filenameW, &filenameA, TRUE)))
-        return RtlNtStatusToDosError(status);
-
-    return RegLoadKeyW(hkey, subkeyW.Buffer, filenameW.Buffer);
+    RtlInitUnicodeString(&subkeyW, NULL);
+    RtlInitUnicodeString(&filenameW, NULL);
+    if (!(status = RtlAnsiStringToUnicodeString(&subkeyW, &subkeyA, TRUE)) &&
+        !(status = RtlAnsiStringToUnicodeString(&filenameW, &filenameA, TRUE)))
+    {
+        ret = RegLoadKeyW(hkey, subkeyW.Buffer, filenameW.Buffer);
+    }
+    else ret = RtlNtStatusToDosError(status);
+    RtlFreeUnicodeString(&subkeyW);
+    RtlFreeUnicodeString(&filenameW);
+    return ret;
 }
 
 

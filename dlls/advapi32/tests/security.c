@@ -100,6 +100,7 @@ static void test_str_sid(const char *str_sid)
             trace(" %s: %s\n", str_sid, temp);
             LocalFree(temp);
         }
+        LocalFree(psid);
     }
     else
     {
@@ -833,6 +834,7 @@ static void test_token_attr(void)
     pConvertSidToStringSidA(User->User.Sid, &SidString);
     trace("TokenUser: %s attr: 0x%08x\n", SidString, User->User.Attributes);
     LocalFree(SidString);
+    HeapFree(GetProcessHeap(), 0, User);
 
     /* privileges */
     ret = GetTokenInformation(Token, TokenPrivileges, NULL, 0, &Size);
@@ -1043,6 +1045,8 @@ static void test_LookupAccountSid(void)
     ok(dom_sizeW == real_dom_sizeW + 1,
        "LookupAccountSidW() Expected dom_size = %u, got %u\n",
        real_dom_sizeW + 1, dom_sizeW);
+
+    FreeSid(pUsersSid);
 
     pCreateWellKnownSid = (fnCreateWellKnownSid)GetProcAddress( hmod, "CreateWellKnownSid" );
 
