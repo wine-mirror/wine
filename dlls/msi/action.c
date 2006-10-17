@@ -596,6 +596,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         if (!check)
             MSI_SetPropertyW(package, cszSOURCEDIR, path);
 
+        msi_free( package->PackagePath );
         package->PackagePath = path;
 
         msi_free(check);
