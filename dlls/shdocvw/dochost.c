@@ -49,11 +49,12 @@ static void navigate_complete(DocHost *This)
     V_DISPATCH(params+1) = disp;
 
     V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = This->url;
+    V_BSTR(&url) = SysAllocString(This->url);
 
     call_sink(This->cps.wbe2, DISPID_NAVIGATECOMPLETE2, &dispparams);
     call_sink(This->cps.wbe2, DISPID_DOCUMENTCOMPLETE, &dispparams);
 
+    SysFreeString(V_BSTR(&url));
     if(disp)
         IDispatch_Release(disp);
 }
