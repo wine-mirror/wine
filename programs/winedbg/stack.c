@@ -285,7 +285,7 @@ static void backtrace(void)
                    dbg_curr_thread->curr_frame + 1);
         stack_print_addr_and_args(dbg_curr_thread->curr_frame);
         dbg_printf(" (");
-        print_bare_address(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_pc);
+        print_bare_address(&dbg_curr_thread->frames[dbg_curr_thread->curr_frame].addr_frame);
         dbg_printf(")\n");
     }
     /* reset context to current stack frame */
