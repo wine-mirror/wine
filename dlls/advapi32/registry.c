@@ -73,18 +73,16 @@ static const WCHAR name_CURRENT_CONFIG[] =
 static const WCHAR name_DYN_DATA[] =
     {'D','y','n','D','a','t','a',0};
 
-#define DECL_STR(key) { sizeof(name_##key)-sizeof(WCHAR), sizeof(name_##key), (LPWSTR)name_##key }
-static UNICODE_STRING root_key_names[NB_SPECIAL_ROOT_KEYS] =
+static const WCHAR *root_key_names[NB_SPECIAL_ROOT_KEYS] =
 {
-    DECL_STR(CLASSES_ROOT),
-    { 0, 0, NULL },         /* HKEY_CURRENT_USER is determined dynamically */
-    DECL_STR(LOCAL_MACHINE),
-    DECL_STR(USERS),
-    DECL_STR(PERFORMANCE_DATA),
-    DECL_STR(CURRENT_CONFIG),
-    DECL_STR(DYN_DATA)
+    name_CLASSES_ROOT,
+    NULL,         /* HKEY_CURRENT_USER is determined dynamically */
+    name_LOCAL_MACHINE,
+    name_USERS,
+    name_PERFORMANCE_DATA,
+    name_CURRENT_CONFIG,
+    name_DYN_DATA
 };
-#undef DECL_STR
 
 
 /* check if value type needs string conversion (Ansi<->Unicode) */
@@ -117,13 +115,15 @@ static HKEY create_special_root_hkey( HANDLE hkey, DWORD access )
     else
     {
         OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING name;
 
         attr.Length = sizeof(attr);
         attr.RootDirectory = 0;
-        attr.ObjectName = &root_key_names[idx];
+        attr.ObjectName = &name;
         attr.Attributes = 0;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
+        RtlInitUnicodeString( &name, root_key_names[idx] );
         if (NtCreateKey( &hkey, access, &attr, 0, NULL, 0, NULL )) return 0;
         TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
     }
