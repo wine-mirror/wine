@@ -24,7 +24,7 @@
  *
  */
 
-LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
                                                                                 
 IDR_WINECFG MENU DISCARDABLE
 BEGIN
