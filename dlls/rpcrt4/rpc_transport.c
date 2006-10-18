@@ -5,6 +5,7 @@
  * Copyright 2003 Mike Hearn
  * Copyright 2004 Filip Navara
  * Copyright 2006 Mike McCormack
+ * Copyright 2006 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,6 +48,9 @@
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
 #endif
 
 #include "windef.h"
@@ -448,14 +452,52 @@ typedef struct _RpcConnection_tcp
 {
   RpcConnection common;
   int sock;
+  HANDLE onEventAvailable;
+  HANDLE onEventHandled;
+  BOOL quit;
 } RpcConnection_tcp;
+
+static DWORD WINAPI rpcrt4_tcp_poll_thread(LPVOID arg)
+{
+  RpcConnection_tcp *tcpc;
+  int ret;
+  struct pollfd pollInfo;
+
+  tcpc = (RpcConnection_tcp*) arg;
+  pollInfo.fd = tcpc->sock;
+  pollInfo.events = POLLIN;
+
+  while (!tcpc->quit)
+  {
+    ret = poll(&pollInfo, 1, 1000);
+    if (ret < 0)
+      ERR("poll failed with error %d\n", ret);
+    else
+    {
+      if (pollInfo.revents & POLLIN)
+      {
+        SignalObjectAndWait(tcpc->onEventAvailable,
+          tcpc->onEventHandled, INFINITE, FALSE);
+      }
+    }
+  }
+
+  /* This avoids the tcpc being destroyed before we are done with it */
+  SetEvent(tcpc->onEventAvailable);
+
+  return 0;
+}
 
 static RpcConnection *rpcrt4_conn_tcp_alloc(void)
 {
   RpcConnection_tcp *tcpc;
   tcpc = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcConnection_tcp));
-  if (tcpc)
-    tcpc->sock = -1;
+  if (tcpc == NULL)
+    return NULL;
+  tcpc->sock = -1;
+  tcpc->onEventAvailable = NULL;
+  tcpc->onEventHandled = NULL;
+  tcpc->quit = FALSE;
   return &tcpc->common;
 }
 
@@ -469,12 +511,6 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   struct addrinfo hints;
 
   TRACE("(%s, %s)\n", Connection->NetworkAddr, Connection->Endpoint);
-
-  if (Connection->server)
-  {
-    ERR("ncacn_ip_tcp servers not supported yet\n");
-    return RPC_S_SERVER_UNAVAILABLE;
-  }
 
   if (tcpc->sock != -1)
     return RPC_S_OK;
@@ -514,14 +550,81 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
       continue;
     }
 
-    if (0>connect(sock, ai_cur->ai_addr, ai_cur->ai_addrlen))
+    if (Connection->server)
     {
-      WARN("connect() failed\n");
-      close(sock);
-      continue;
-    }
+      HANDLE thread = NULL;
+      ret = bind(sock, ai_cur->ai_addr, ai_cur->ai_addrlen);
+      if (ret < 0)
+      {
+        WARN("bind failed, error %d\n", ret);
+        goto done;
+      }
+      ret = listen(sock, 10);
+      if (ret < 0)
+      {
+        WARN("listen failed, error %d\n", ret);
+        goto done;
+      }
+      /* need a non-blocking socket, otherwise accept() has a potential
+       * race-condition (poll() says it is readable, connection drops,
+       * and accept() blocks until the next connection comes...)
+       */
+      ret = fcntl(sock, F_SETFL, O_NONBLOCK);
+      if (ret < 0)
+      {
+        WARN("couldn't make socket non-blocking, error %d\n", ret);
+        goto done;
+      }
+      tcpc->onEventAvailable = CreateEventW(NULL, FALSE, FALSE, NULL);
+      if (tcpc->onEventAvailable == NULL)
+      {
+        WARN("creating available event failed, error %lu\n", GetLastError());
+        goto done;
+      }
+      tcpc->onEventHandled = CreateEventW(NULL, FALSE, FALSE, NULL);
+      if (tcpc->onEventHandled == NULL)
+      {
+        WARN("creating handled event failed, error %lu\n", GetLastError());
+        goto done;
+      }
+      tcpc->sock = sock;
+      thread = CreateThread(NULL, 0, rpcrt4_tcp_poll_thread, tcpc, 0, NULL);
+      if (thread == NULL)
+      {
+        WARN("creating server polling thread failed, error %lu\n",
+          GetLastError());
+        tcpc->sock = -1;
+        goto done;
+      }
+      CloseHandle(thread);
 
-    tcpc->sock = sock;
+    done:
+      if (thread == NULL) /* ie. we failed somewhere */
+      {
+        close(sock);
+        if (tcpc->onEventAvailable != NULL)
+        {
+          CloseHandle(tcpc->onEventAvailable);
+          tcpc->onEventAvailable = NULL;
+        }
+        if (tcpc->onEventHandled != NULL)
+        {
+          CloseHandle(tcpc->onEventHandled);
+          tcpc->onEventHandled = NULL;
+        }
+        continue;
+      }
+    }
+    else /* it's a client */
+    {
+      if (0>connect(sock, ai_cur->ai_addr, ai_cur->ai_addrlen))
+      {
+        WARN("connect() failed\n");
+        close(sock);
+        continue;
+      }
+      tcpc->sock = sock;
+    }
 
     freeaddrinfo(ai);
     TRACE("connected\n");
@@ -535,14 +638,29 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
 
 static HANDLE rpcrt4_conn_tcp_get_wait_handle(RpcConnection *Connection)
 {
-  assert(0);
-  return 0;
+  RpcConnection_tcp *tcpc = (RpcConnection_tcp*) Connection;
+  return tcpc->onEventAvailable;
 }
 
 static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
-  assert(0);
-  return RPC_S_SERVER_UNAVAILABLE;
+  int ret;
+  struct sockaddr_in address;
+  socklen_t addrsize;
+  RpcConnection_tcp *server = (RpcConnection_tcp*) old_conn;
+  RpcConnection_tcp *client = (RpcConnection_tcp*) new_conn;
+
+  addrsize = sizeof(address);
+  ret = accept(server->sock, (struct sockaddr*) &address, &addrsize);
+  SetEvent(server->onEventHandled);
+  if (ret < 0)
+  {
+    ERR("Failed to accept a TCP connection: error %d\n", ret);
+    return RPC_S_SERVER_UNAVAILABLE;
+  }
+  client->sock = ret;
+  TRACE("Accepted a new TCP connection\n");
+  return RPC_S_OK;
 }
 
 static int rpcrt4_conn_tcp_read(RpcConnection *Connection,
@@ -568,6 +686,16 @@ static int rpcrt4_conn_tcp_close(RpcConnection *Connection)
   RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
 
   TRACE("%d\n", tcpc->sock);
+
+  if (tcpc->onEventAvailable != NULL)
+  {
+    /* it's a server connection */
+    tcpc->quit = TRUE;
+    WaitForSingleObject(tcpc->onEventAvailable, INFINITE);
+    CloseHandle(tcpc->onEventAvailable);
+    CloseHandle(tcpc->onEventHandled);
+  }
+
   if (tcpc->sock != -1)
     close(tcpc->sock);
   tcpc->sock = -1;
