@@ -113,26 +113,6 @@ UINT WINAPI OleUIInsertObjectW(LPOLEUIINSERTOBJECTW lpOleUIInsertObject)
 }
 
 /***********************************************************************
- *           OleUIPasteSpecialA (OLEDLG.4)
- */
-UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA lpOleUIPasteSpecial)
-{
-  FIXME("(%p): stub\n", lpOleUIPasteSpecial);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return OLEUI_FALSE;
-}
-
-/***********************************************************************
- *           OleUIPasteSpecialW (OLEDLG.22)
- */
-UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW lpOleUIPasteSpecial)
-{
-  FIXME("(%p): stub\n", lpOleUIPasteSpecial);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return OLEUI_FALSE;
-}
-
-/***********************************************************************
  *           OleUIEditLinksA (OLEDLG.5)
  */
 UINT WINAPI OleUIEditLinksA(LPOLEUIEDITLINKSA lpOleUIEditLinks)
