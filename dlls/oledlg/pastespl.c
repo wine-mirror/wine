@@ -243,6 +243,9 @@ UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW ps)
 
     if(TRACE_ON(ole)) dump_pastespecial(ps);
 
+    if(!ps->lpSrcDataObj)
+        OleGetClipboard(&ps->lpSrcDataObj);
+
     if(ps->hInstance || !ps->hResource)
     {
         HINSTANCE hInst = ps->hInstance ? ps->hInstance : OLEDLG_hInstance;
