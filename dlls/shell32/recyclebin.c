@@ -21,6 +21,7 @@
 #include "config.h"
 
 #define COBJMACROS
+#define NONAMELESSUNION
 
 #include <stdarg.h>
 
@@ -312,8 +313,8 @@ static HRESULT WINAPI RecycleBin_GetDisplayNameOf(IShellFolder2 *This, LPCITEMID
     TRACE("(%p, %p, %x, %p)\n", This, pidl, (unsigned int)uFlags, pName);
     TRASH_UnpackItemID(&pidl->mkid, NULL, &data);
     pName->uType = STRRET_WSTR;
-    pName->pOleStr = StrDupW(PathFindFileNameW(data.cFileName));
-    if (pName->pOleStr == NULL)
+    pName->u.pOleStr = StrDupW(PathFindFileNameW(data.cFileName));
+    if (pName->u.pOleStr == NULL)
         return E_OUTOFMEMORY;
 
     return S_OK;
@@ -407,7 +408,7 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     {
         pDetails->str.uType = STRRET_WSTR;
         LoadStringW(shell32_hInstance, RecycleBinColumns[iColumn].column_name_id, buffer, MAX_PATH);
-        return SHStrDupW(buffer, &pDetails->str.pOleStr);
+        return SHStrDupW(buffer, &pDetails->str.u.pOleStr);
     }
 
     if (iColumn == COLUMN_NAME)
@@ -438,8 +439,8 @@ static HRESULT WINAPI RecycleBin_GetDetailsOf(IShellFolder2 *iface, LPCITEMIDLIS
     }
     
     pDetails->str.uType = STRRET_WSTR;
-    pDetails->str.pOleStr = StrDupW(buffer);
-    return (pDetails->str.pOleStr != NULL ? S_OK : E_OUTOFMEMORY);
+    pDetails->str.u.pOleStr = StrDupW(buffer);
+    return (pDetails->str.u.pOleStr != NULL ? S_OK : E_OUTOFMEMORY);
 }
 
 static HRESULT WINAPI RecycleBin_MapColumnToSCID(IShellFolder2 *iface, UINT iColumn, SHCOLUMNID *pscid)

@@ -19,6 +19,8 @@
 
 #include <assert.h>
 #include <stdarg.h>
+
+#define NONAMELESSUNION
 #include "windef.h"
 #include "winbase.h"
 #include "wincrypt.h"
@@ -1241,7 +1243,7 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
     {
         if (!hCryptProv)
             hCryptProv = CRYPT_GetDefaultProvider();
-        ret = CryptCreateHash(hCryptProv, info->Algid, 0, 0, &hHash);
+        ret = CryptCreateHash(hCryptProv, info->u.Algid, 0, 0, &hHash);
         if (ret)
         {
             ret = CryptHashData(hHash, pbEncodedToBeSigned,
@@ -1261,7 +1263,7 @@ BOOL WINAPI CryptSignCertificate(HCRYPTPROV hCryptProv, DWORD dwKeySpec,
         }
         else
         {
-            ret = CryptCreateHash(hCryptProv, info->Algid, 0, 0, &hHash);
+            ret = CryptCreateHash(hCryptProv, info->u.Algid, 0, 0, &hHash);
             if (ret)
             {
                 ret = CryptHashData(hHash, pbEncodedToBeSigned,
@@ -1365,7 +1367,7 @@ static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
     }
     if (info->dwGroupId == CRYPT_PUBKEY_ALG_OID_GROUP_ID)
     {
-        switch (info->Algid)
+        switch (info->u.Algid)
         {
             case CALG_RSA_KEYX:
                 pubKeyID = CALG_RSA_SIGN;
@@ -1382,7 +1384,7 @@ static BOOL CRYPT_VerifyCertSignatureFromPublicKeyInfo(HCRYPTPROV hCryptProv,
     }
     else
     {
-        hashID = info->Algid;
+        hashID = info->u.Algid;
         if (info->ExtraInfo.cbData >= sizeof(ALG_ID))
             pubKeyID = *(ALG_ID *)info->ExtraInfo.pbData;
         else

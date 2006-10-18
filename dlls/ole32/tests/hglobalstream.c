@@ -57,8 +57,8 @@ static void test_streamonhglobal(IStream *pStream)
     ok(read == sizeof(data), "IStream_Read returned read %d\n", read);
 
     /* ignores HighPart */
-    ull.HighPart = -1;
-    ull.LowPart = 0;
+    ull.u.HighPart = -1;
+    ull.u.LowPart = 0;
     hr = IStream_SetSize(pStream, ull);
     ok_ole_success(hr, "IStream_SetSize");
 
@@ -76,8 +76,8 @@ static void test_streamonhglobal(IStream *pStream)
     ok(statstg.type == STGTY_STREAM, "statstg.type should have been STGTY_STREAM instead of %d\n", statstg.type);
 
     /* test OOM condition */
-    ull.HighPart = -1;
-    ull.LowPart = -1;
+    ull.u.HighPart = -1;
+    ull.u.LowPart = -1;
     hr = IStream_SetSize(pStream, ull);
     todo_wine {
     ok(hr == E_OUTOFMEMORY, "IStream_SetSize with large size should have returned E_OUTOFMEMORY instead of 0x%08x\n", hr);

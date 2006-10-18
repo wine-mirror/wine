@@ -786,10 +786,10 @@ static inline void print_matrix(
     const char* name, const D3DMATRIX* matrix) {
 
     trace("%s Matrix = {\n", name);
-    trace("    %f %f %f %f\n", matrix->m[0][0], matrix->m[1][0], matrix->m[2][0], matrix->m[3][0]);
-    trace("    %f %f %f %f\n", matrix->m[0][1], matrix->m[1][1], matrix->m[2][1], matrix->m[3][1]);
-    trace("    %f %f %f %f\n", matrix->m[0][2], matrix->m[1][2], matrix->m[2][2], matrix->m[3][2]);
-    trace("    %f %f %f %f\n", matrix->m[0][3], matrix->m[1][3], matrix->m[2][3], matrix->m[3][3]);
+    trace("    %f %f %f %f\n", U(*matrix).m[0][0], U(*matrix).m[1][0], U(*matrix).m[2][0], U(*matrix).m[3][0]);
+    trace("    %f %f %f %f\n", U(*matrix).m[0][1], U(*matrix).m[1][1], U(*matrix).m[2][1], U(*matrix).m[3][1]);
+    trace("    %f %f %f %f\n", U(*matrix).m[0][2], U(*matrix).m[1][2], U(*matrix).m[2][2], U(*matrix).m[3][2]);
+    trace("    %f %f %f %f\n", U(*matrix).m[0][3], U(*matrix).m[1][3], U(*matrix).m[2][3], U(*matrix).m[3][3]);
     trace("}\n");
 }
 
