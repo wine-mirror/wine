@@ -76,6 +76,60 @@ typedef struct IOleUIObjInfoW *POLEUIOBJINFOW, *LPOLEUIOBJINFOW;
 typedef UINT (CALLBACK *LPFNOLEUIHOOK)(HWND, UINT, WPARAM, LPARAM);
 
 /*****************************************************************************
+ * Registered Message Names
+ */
+#define SZOLEUI_MSG_HELPA              "OLEUI_MSG_HELP"
+#define SZOLEUI_MSG_ENDDIALOGA         "OLEUI_MSG_ENDDIALOG"
+#define SZOLEUI_MSG_BROWSEA            "OLEUI_MSG_BROWSE"
+#define SZOLEUI_MSG_CHANGEICONA        "OLEUI_MSG_CHANGEICON"
+#define SZOLEUI_MSG_CLOSEBUSYDIALOGA   "OLEUI_MSG_CLOSEBUSYDIALOG"
+#define SZOLEUI_MSG_CONVERTA           "OLEUI_MSG_CONVERT"
+#define SZOLEUI_MSG_CHANGESOURCEA      "OLEUI_MSG_CHANGESOURCE"
+#define SZOLEUI_MSG_ADDCONTROLA        "OLEUI_MSG_ADDCONTROL"
+#define SZOLEUI_MSG_BROWSE_OFNA        "OLEUI_MSG_BROWSE_OFN"
+#if defined(__GNUC__)
+# define SZOLEUI_MSG_HELPW             (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','H','E','L','P',0 }
+# define SZOLEUI_MSG_ENDDIALOGW        (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','E','N','D','D','I','A','L','O','G',0 }
+# define SZOLEUI_MSG_BROWSEW           (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','B','R','O','W','S','E',0 }
+# define SZOLEUI_MSG_CHANGEICONW       (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','H','A','N','G','E','I','C','O','N',0 }
+# define SZOLEUI_MSG_CLOSEBUSYDIALOGW  (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','L','O','S','E','B','U','S','Y','D','I','A','L','O','G',0 }
+# define SZOLEUI_MSG_CONVERTW          (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','O','N','V','E','R','T',0 }
+# define SZOLEUI_MSG_CHANGESOURCEW     (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','C','H','A','N','G','E','S','O','U','R','C','E',0 }
+# define SZOLEUI_MSG_ADDCONTROLW       (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','A','D','D','C','O','N','T','R','O','L',0 }
+# define SZOLEUI_MSG_BROWSE_OFNW       (const WCHAR []){ 'O','L','E','U','I','_','M','S','G','_','B','R','O','W','S','E','_','O','F','N',0 }
+#elif defined(_MSC_VER)
+# define SZOLEUI_MSG_HELPW              L"OLEUI_MSG_HELP"
+# define SZOLEUI_MSG_ENDDIALOGW         L"OLEUI_MSG_ENDDIALOG"
+# define SZOLEUI_MSG_BROWSEW            L"OLEUI_MSG_BROWSE"
+# define SZOLEUI_MSG_CHANGEICONW        L"OLEUI_MSG_CHANGEICON"
+# define SZOLEUI_MSG_CLOSEBUSYDIALOGW   L"OLEUI_MSG_CLOSEBUSYDIALOG"
+# define SZOLEUI_MSG_CONVERTW           L"OLEUI_MSG_CONVERT"
+# define SZOLEUI_MSG_CHANGESOURCEW      L"OLEUI_MSG_CHANGESOURCE"
+# define SZOLEUI_MSG_ADDCONTROLW        L"OLEUI_MSG_ADDCONTROL"
+# define SZOLEUI_MSG_BROWSE_OFNW        L"OLEUI_MSG_BROWSE_OFN"
+#else
+static const WCHAR SZOLEUI_MSG_HELPW[]             = { 'O','L','E','U','I','_','M','S','G','_','H','E','L','P',0 };
+static const WCHAR SZOLEUI_MSG_ENDDIALOGW[]        = { 'O','L','E','U','I','_','M','S','G','_','E','N','D','D','I','A','L','O','G',0 };
+static const WCHAR SZOLEUI_MSG_BROWSEW[]           = { 'O','L','E','U','I','_','M','S','G','_','B','R','O','W','S','E',0 };
+static const WCHAR SZOLEUI_MSG_CHANGEICONW[]       = { 'O','L','E','U','I','_','M','S','G','_','C','H','A','N','G','E','I','C','O','N',0 };
+static const WCHAR SZOLEUI_MSG_CLOSEBUSYDIALOGW[]  = { 'O','L','E','U','I','_','M','S','G','_','C','L','O','S','E','B','U','S','Y','D','I','A','L','O','G',0 };
+static const WCHAR SZOLEUI_MSG_CONVERTW[]          = { 'O','L','E','U','I','_','M','S','G','_','C','O','N','V','E','R','T',0 };
+static const WCHAR SZOLEUI_MSG_CHANGESOURCEW[]     = { 'O','L','E','U','I','_','M','S','G','_','C','H','A','N','G','E','S','O','U','R','C','E',0 };
+static const WCHAR SZOLEUI_MSG_ADDCONTROLW[]       = { 'O','L','E','U','I','_','M','S','G','_','A','D','D','C','O','N','T','R','O','L',0 };
+static const WCHAR SZOLEUI_MSG_BROWSE_OFNW[]       = { 'O','L','E','U','I','_','M','S','G','_','B','R','O','W','S','E','_','O','F','N',0 };
+#endif
+#define SZOLEUI_MSG_HELP             WINELIB_NAME_AW(SZOLEUI_MSG_HELP)
+#define SZOLEUI_MSG_ENDDIALOG        WINELIB_NAME_AW(SZOLEUI_MSG_ENDDIALOG)
+#define SZOLEUI_MSG_BROWSE           WINELIB_NAME_AW(SZOLEUI_MSG_BROWSE)
+#define SZOLEUI_MSG_CHANGEICON       WINELIB_NAME_AW(SZOLEUI_MSG_CHANGEICON)
+#define SZOLEUI_MSG_CLOSEBUSYDIALOG  WINELIB_NAME_AW(SZOLEUI_MSG_CLOSEBUSYDIALOG)
+#define SZOLEUI_MSG_CONVERT          WINELIB_NAME_AW(SZOLEUI_MSG_CONVERT)
+#define SZOLEUI_MSG_CHANGESOURCE     WINELIB_NAME_AW(SZOLEUI_MSG_CHANGESOURCE)
+#define SZOLEUI_MSG_ADDCONTROL       WINELIB_NAME_AW(SZOLEUI_MSG_ADDCONTROL)
+#define SZOLEUI_MSG_BROWSE_OFN       WINELIB_NAME_AW(SZOLEUI_MSG_BROWSE_OFN)
+
+
+/*****************************************************************************
  * INSERT OBJECT DIALOG
  */
 typedef struct tagOLEUIINSERTOBJECTA
