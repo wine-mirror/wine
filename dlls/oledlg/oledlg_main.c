@@ -45,6 +45,9 @@ UINT cf_ownerlink;
 UINT cf_filename;
 UINT cf_filenamew;
 
+UINT oleui_msg_help;
+UINT oleui_msg_enddialog;
+
 static void register_clipboard_formats(void)
 {
     /* These used to be declared in olestd.h, but that seems to have been removed from the api */
@@ -68,6 +71,12 @@ static void register_clipboard_formats(void)
     cf_filenamew            = RegisterClipboardFormatW(CF_FILENAMEWW);
 }
 
+static void register_messages(void)
+{
+    oleui_msg_help             = RegisterWindowMessageW(SZOLEUI_MSG_HELPW);
+    oleui_msg_enddialog        = RegisterWindowMessageW(SZOLEUI_MSG_ENDDIALOGW);
+}
+
 /***********************************************************************
  *		DllMain
  */
@@ -80,6 +89,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
         DisableThreadLibraryCalls(hinstDLL);
         OLEDLG_hInstance = hinstDLL;
         register_clipboard_formats();
+        register_messages();
         break;
 
     case DLL_PROCESS_DETACH:

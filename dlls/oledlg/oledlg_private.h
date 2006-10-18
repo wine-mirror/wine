@@ -32,4 +32,7 @@ extern UINT cf_ownerlink;
 extern UINT cf_filename;
 extern UINT cf_filenamew;
 
+extern UINT oleui_msg_help;
+extern UINT oleui_msg_enddialog;
+
 #endif /* __OLEDLG_PRIVATE_H__ */
