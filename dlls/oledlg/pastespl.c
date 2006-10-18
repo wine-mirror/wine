@@ -181,9 +181,45 @@ static DWORD init_pastelist(HWND hdlg, OLEUIPASTESPECIALW *ps)
     return items_added;
 }
 
+static DWORD init_linklist(HWND hdlg, OLEUIPASTESPECIALW *ps)
+{
+    HRESULT hr;
+    DWORD supported_mask = 0;
+    DWORD items_added = 0;
+    int link, req_fmt;
+    FORMATETC fmt = {0, NULL, DVASPECT_CONTENT, -1, -1};
+
+    for(link = 0; link < ps->cLinkTypes && link < PS_MAXLINKTYPES; link++)
+    {
+        fmt.cfFormat = ps->arrLinkTypes[link];
+        hr = IDataObject_QueryGetData(ps->lpSrcDataObj, &fmt);
+        if(hr == S_OK)
+            supported_mask |= 1 << link;
+    }
+    TRACE("supported_mask %02x\n", supported_mask);
+    for(req_fmt = 0; req_fmt < ps->cPasteEntries; req_fmt++)
+    {
+        DWORD linktypes;
+        if(ps->arrPasteEntries[req_fmt].dwFlags & OLEUIPASTE_LINKANYTYPE)
+            linktypes = 0xff;
+        else
+            linktypes = ps->arrPasteEntries[req_fmt].dwFlags & 0xff;
+
+        if(linktypes & supported_mask)
+        {
+            add_entry_to_lb(hdlg, IDC_PS_PASTELINKLIST, ps->arrPasteEntries + req_fmt);
+            items_added++;
+        }
+    }
+
+    EnableWindow(GetDlgItem(hdlg, IDC_PS_PASTELINK), items_added ? TRUE : FALSE);
+    return items_added;
+}
+
 static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
 {
     init_pastelist(hdlg, ps_struct->ps);
+    init_linklist(hdlg, ps_struct->ps);
 }
 
 static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
