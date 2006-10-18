@@ -401,6 +401,27 @@ DECL_WINELIB_TYPE_AW(LPOLEUIPASTESPECIAL)
 #define OLEUI_PSERR_CLIPBOARDCHANGED        (OLEUI_ERR_STANDARDMAX+3)
 #define OLEUI_PSERR_GETCLIPBOARDFAILED      (OLEUI_ERR_STANDARDMAX+4)
 
+/* Paste Special dialog resource ids */
+#define IDD_PASTESPECIAL       1003
+#define IDD_PASTESPECIAL4      1108
+
+/* Paste Special dialog control ids */
+#define IDC_PS_PASTE           500
+#define IDC_PS_PASTELINK       501
+#define IDC_PS_SOURCETEXT      502
+#define IDC_PS_PASTELIST       503
+#define IDC_PS_PASTELINKLIST   504
+#define IDC_PS_DISPLAYLIST     505
+#define IDC_PS_DISPLAYASICON   506
+#define IDC_PS_ICONDISPLAY     507
+#define IDC_PS_CHANGEICON      508
+#define IDC_PS_RESULTIMAGE     509
+#define IDC_PS_RESULTTEXT      510
+
+/*****************************************************************************
+ * EDIT LINKS DIALOG
+ */
+
 #define ELF_SHOWHELP               0x00000001L
 #define ELF_DISABLEUPDATENOW       0x00000002L
 #define ELF_DISABLEOPENSOURCE      0x00000004L
