@@ -539,7 +539,7 @@ serialize_param(
     case VT_UI8:
     case VT_CY:
 	hres = S_OK;
-	if (debugout) TRACE_(olerelay)("%x%x",arg[0],arg[1]);
+	if (debugout) TRACE_(olerelay)("%x%x\n",arg[0],arg[1]);
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,8);
 	return hres;
@@ -551,27 +551,27 @@ serialize_param(
     case VT_R4:
     case VT_UI4:
 	hres = S_OK;
-	if (debugout) TRACE_(olerelay)("%x",*arg);
+	if (debugout) TRACE_(olerelay)("%x\n",*arg);
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
 	return hres;
     case VT_I2:
     case VT_UI2:
 	hres = S_OK;
-	if (debugout) TRACE_(olerelay)("%04x",*arg & 0xffff);
+	if (debugout) TRACE_(olerelay)("%04x\n",*arg & 0xffff);
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
 	return hres;
     case VT_I1:
     case VT_UI1:
 	hres = S_OK;
-	if (debugout) TRACE_(olerelay)("%02x",*arg & 0xff);
+	if (debugout) TRACE_(olerelay)("%02x\n",*arg & 0xff);
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
 	return hres;
     case VT_I4|VT_BYREF:
 	hres = S_OK;
-	if (debugout) TRACE_(olerelay)("&0x%x",*arg);
+	if (debugout) TRACE_(olerelay)("&0x%x\n",*arg);
 	if (writeit)
 	    hres = xbuf_add(buf,(LPBYTE)(DWORD*)*arg,sizeof(DWORD));
 	/* do not dealloc at this time */
@@ -841,10 +841,10 @@ deserialize_param(
     while (1) {
 	switch (tdesc->vt) {
 	case VT_EMPTY:
-	    if (debugout) TRACE_(olerelay)("<empty>");
+	    if (debugout) TRACE_(olerelay)("<empty>\n");
 	    return S_OK;
 	case VT_NULL:
-	    if (debugout) TRACE_(olerelay)("<null>");
+	    if (debugout) TRACE_(olerelay)("<null>\n");
 	    return S_OK;
 	case VT_VARIANT: {
 	    VARIANT	*vt = (VARIANT*)arg;

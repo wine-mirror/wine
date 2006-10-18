@@ -1770,7 +1770,7 @@ static HRESULT WINAPI JoystickAImpl_EnumCreatedEffectObjects(
 	return DIERR_INVALIDPARAM;
 
     if (dwFlags != 0)
-	FIXME("Flags specified, but no flags exist yet (DX9)!");
+	FIXME("Flags specified, but no flags exist yet (DX9)!\n");
 
     while (itr) {
 	(*lpCallback)(itr->ref, pvRef);
