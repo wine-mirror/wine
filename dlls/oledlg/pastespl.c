@@ -288,6 +288,11 @@ static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
         EnableWindow(GetDlgItem(hdlg, IDOK), 0);
 }
 
+static void post_help_msg(HWND hdlg, ps_struct_t *ps_struct)
+{
+    PostMessageW(ps_struct->ps->hWndOwner, oleui_msg_help, (WPARAM)hdlg, IDD_PASTESPECIAL);
+}
+
 static void send_end_dialog_msg(HWND hdlg, ps_struct_t *ps_struct, UINT id)
 {
     SendMessageW(hdlg, oleui_msg_enddialog, id, 0);
@@ -331,7 +336,13 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 
         SetPropW(hdlg, prop_name, ps_struct);
 
-        if(ps_struct->ps->lpszCaption)
+        if(!(ps_struct->ps->dwFlags & PSF_SHOWHELP))
+        {
+            ShowWindow(GetDlgItem(hdlg, IDC_OLEUIHELP), SW_HIDE);
+            EnableWindow(GetDlgItem(hdlg, IDC_OLEUIHELP), 0);
+        }
+
+       if(ps_struct->ps->lpszCaption)
             SetWindowTextW(hdlg, ps_struct->ps->lpszCaption);
 
         init_lists(hdlg, ps_struct);
@@ -341,6 +352,15 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     case WM_COMMAND:
         switch(LOWORD(wp))
         {
+        case IDC_OLEUIHELP:
+            switch(HIWORD(wp))
+            {
+            case BN_CLICKED:
+                post_help_msg(hdlg, ps_struct);
+                return FALSE;
+            default:
+                return FALSE;
+            }
         case IDOK:
         case IDCANCEL:
             send_end_dialog_msg(hdlg, ps_struct, LOWORD(wp));
