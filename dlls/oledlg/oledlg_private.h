@@ -21,6 +21,8 @@
 #ifndef __OLEDLG_PRIVATE_H__
 #define __OLEDLG_PRIVATE_H__
 
+extern HINSTANCE OLEDLG_hInstance;
+
 extern UINT cf_embed_source;
 extern UINT cf_embedded_object;
 extern UINT cf_link_source;

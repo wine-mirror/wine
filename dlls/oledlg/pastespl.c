@@ -28,6 +28,9 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "oledlg.h"
+
+#include "oledlg_private.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -107,6 +110,30 @@ static inline WCHAR *strdupAtoW(const char *str)
     return ret;
 }
 
+static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
+{
+    TRACE("(%p, %04x, %08x, %08lx)\n", hdlg, msg, wp, lp);
+    switch(msg)
+    {
+    case WM_INITDIALOG:
+
+        return TRUE; /* use default focus */
+
+    case WM_COMMAND:
+        switch(LOWORD(wp))
+        {
+        case IDOK:
+        case IDCANCEL:
+            EndDialog(hdlg, wp);
+            return TRUE;
+        }
+        return FALSE;
+    default:
+        return FALSE;
+    }
+
+}
+
 /***********************************************************************
  *           OleUIPasteSpecialA (OLEDLG.4)
  */
@@ -170,9 +197,26 @@ UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA psA)
  */
 UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW ps)
 {
+    LPCDLGTEMPLATEW dlg_templ = (LPCDLGTEMPLATEW)ps->hResource;
+
     TRACE("(%p)\n", ps);
 
     if(TRACE_ON(ole)) dump_pastespecial(ps);
+
+    if(ps->hInstance || !ps->hResource)
+    {
+        HINSTANCE hInst = ps->hInstance ? ps->hInstance : OLEDLG_hInstance;
+        const WCHAR *name = ps->hInstance ? ps->lpszTemplate : MAKEINTRESOURCEW(IDD_PASTESPECIAL4);
+        HRSRC hrsrc;
+
+        if(name == NULL) return OLEUI_ERR_LPSZTEMPLATEINVALID;
+        hrsrc = FindResourceW(hInst, name, MAKEINTRESOURCEW(RT_DIALOG));
+        if(!hrsrc) return OLEUI_ERR_FINDTEMPLATEFAILURE;
+        dlg_templ = LoadResource(hInst, hrsrc);
+        if(!dlg_templ) return OLEUI_ERR_LOADTEMPLATEFAILURE;
+    }
+
+    DialogBoxIndirectParamW(OLEDLG_hInstance, dlg_templ, ps->hWndOwner, ps_dlg_proc, (LPARAM)ps);
 
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return OLEUI_FALSE;
