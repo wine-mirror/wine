@@ -19,6 +19,8 @@
  */
 
 #define COM_NO_WINDOWS_H
+#define COBJMACROS
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -116,6 +118,74 @@ static inline WCHAR *strdupAtoW(const char *str)
     return ret;
 }
 
+static BOOL add_entry_to_lb(HWND hdlg, UINT id, OLEUIPASTEENTRYW *pe)
+{
+    HWND hwnd = GetDlgItem(hdlg, id);
+    BOOL ret = FALSE;
+
+    /* FIXME %s handling */
+
+    /* Note that this suffers from the same bug as native, in that if a new string
+       is a substring of an already added string, then the FINDSTRING will succeed
+       this is probably not what we want */
+    if(SendMessageW(hwnd, LB_FINDSTRING, 0, (LPARAM)pe->lpstrFormatName) == -1)
+    {
+        LRESULT pos = SendMessageW(hwnd, LB_ADDSTRING, 0, (LPARAM)pe->lpstrFormatName);
+        SendMessageW(hwnd, LB_SETITEMDATA, pos, (LPARAM)pe);
+        ret = TRUE;
+    }
+    return ret;
+}
+
+static DWORD init_pastelist(HWND hdlg, OLEUIPASTESPECIALW *ps)
+{
+    IEnumFORMATETC *penum;
+    HRESULT hr;
+    FORMATETC fmts[20];
+    DWORD fetched, items_added = 0;
+
+    hr = IDataObject_EnumFormatEtc(ps->lpSrcDataObj, DATADIR_GET, &penum);
+    if(FAILED(hr))
+    {
+        WARN("Unable to create IEnumFORMATETC\n");
+        return 0;
+    }
+
+    /* The native version grabs only the first 20 fmts and we do the same */
+    hr = IEnumFORMATETC_Next(penum, sizeof(fmts)/sizeof(fmts[0]), fmts, &fetched);
+    TRACE("got %d formats hr %08x\n", fetched, hr);
+
+    if(SUCCEEDED(hr))
+    {
+        DWORD src_fmt, req_fmt;
+        for(req_fmt = 0; req_fmt < ps->cPasteEntries; req_fmt++)
+        {
+            /* This is used by update_struct() to set nSelectedIndex on exit */
+            ps->arrPasteEntries[req_fmt].dwScratchSpace = req_fmt;
+            TRACE("req_fmt %x\n", ps->arrPasteEntries[req_fmt].fmtetc.cfFormat);
+            for(src_fmt = 0; src_fmt < fetched; src_fmt++)
+            {
+                TRACE("\tenum'ed fmt %x\n", fmts[src_fmt].cfFormat);
+                if(ps->arrPasteEntries[req_fmt].fmtetc.cfFormat == fmts[src_fmt].cfFormat)
+                {
+                    add_entry_to_lb(hdlg, IDC_PS_PASTELIST, ps->arrPasteEntries + req_fmt);
+                    items_added++;
+                    break;
+                }
+            }
+        }
+    }
+
+    IEnumFORMATETC_Release(penum);
+    EnableWindow(GetDlgItem(hdlg, IDC_PS_PASTE), items_added ? TRUE : FALSE);
+    return items_added;
+}
+
+static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
+{
+    init_pastelist(hdlg, ps_struct->ps);
+}
+
 static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
 {
     ps_struct->ps->dwFlags = ps_struct->flags;
@@ -156,6 +226,8 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 
         if(ps_struct->ps->lpszCaption)
             SetWindowTextW(hdlg, ps_struct->ps->lpszCaption);
+
+        init_lists(hdlg, ps_struct);
 
         return TRUE; /* use default focus */
     }
