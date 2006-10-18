@@ -218,8 +218,40 @@ static DWORD init_linklist(HWND hdlg, OLEUIPASTESPECIALW *ps)
 
 static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
 {
-    init_pastelist(hdlg, ps_struct->ps);
-    init_linklist(hdlg, ps_struct->ps);
+    DWORD pastes_added = init_pastelist(hdlg, ps_struct->ps);
+    DWORD links_added = init_linklist(hdlg, ps_struct->ps);
+    UINT check_id, list_id;
+
+    if((ps_struct->flags & (PSF_SELECTPASTE | PSF_SELECTPASTELINK)) == 0)
+        ps_struct->flags |= PSF_SELECTPASTE;
+
+    if(!pastes_added && !links_added)
+        ps_struct->flags &= ~(PSF_SELECTPASTE | PSF_SELECTPASTELINK);
+    else if(!pastes_added && (ps_struct->flags & PSF_SELECTPASTE))
+    {
+        ps_struct->flags &= ~PSF_SELECTPASTE;
+        ps_struct->flags |= PSF_SELECTPASTELINK;
+    }
+    else if(!links_added && (ps_struct->flags & PSF_SELECTPASTELINK))
+    {
+        ps_struct->flags &= ~PSF_SELECTPASTELINK;
+        ps_struct->flags |= PSF_SELECTPASTE;
+    }
+
+    check_id = 0;
+    list_id = 0;
+    if(ps_struct->flags & PSF_SELECTPASTE)
+    {
+        check_id = IDC_PS_PASTE;
+        list_id = IDC_PS_PASTELIST;
+    }
+    else if(ps_struct->flags & PSF_SELECTPASTELINK)
+    {
+        check_id = IDC_PS_PASTELINK;
+        list_id = IDC_PS_PASTELINKLIST;
+    }
+
+    CheckRadioButton(hdlg, IDC_PS_PASTE, IDC_PS_PASTELINK, check_id);
 }
 
 static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
