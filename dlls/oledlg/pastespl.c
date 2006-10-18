@@ -216,6 +216,35 @@ static DWORD init_linklist(HWND hdlg, OLEUIPASTESPECIALW *ps)
     return items_added;
 }
 
+/* copies src_list_id into the display list */
+static void update_display_list(HWND hdlg, UINT src_list_id)
+{
+    LONG count, i, old_pos;
+    WCHAR txt[256];
+    LONG item_data;
+    HWND display_list = GetDlgItem(hdlg, IDC_PS_DISPLAYLIST);
+    HWND list = GetDlgItem(hdlg, src_list_id);
+
+    old_pos = SendMessageW(display_list, LB_GETCURSEL, 0, 0);
+    if(old_pos == -1) old_pos = 0;
+
+    SendMessageW(display_list, WM_SETREDRAW, 0, 0);
+    SendMessageW(display_list, LB_RESETCONTENT, 0, 0);
+    count = SendMessageW(list, LB_GETCOUNT, 0, 0);
+    for(i = 0; i < count; i++)
+    {
+        SendMessageW(list, LB_GETTEXT, i, (LPARAM)txt);
+        item_data = SendMessageW(list, LB_GETITEMDATA, i, 0);
+        SendMessageW(display_list, LB_INSERTSTRING, i, (LPARAM)txt);
+        SendMessageW(display_list, LB_SETITEMDATA, i, item_data);
+    }
+    old_pos = max(old_pos, count);
+    SendMessageW(display_list, LB_SETCURSEL, 0, 0);
+    SendMessageW(display_list, WM_SETREDRAW, 1, 0);
+    if(GetForegroundWindow() == hdlg)
+        SetFocus(display_list);
+}
+
 static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
 {
     DWORD pastes_added = init_pastelist(hdlg, ps_struct->ps);
@@ -252,6 +281,11 @@ static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
     }
 
     CheckRadioButton(hdlg, IDC_PS_PASTE, IDC_PS_PASTELINK, check_id);
+
+    if(list_id)
+        update_display_list(hdlg, list_id);
+    else
+        EnableWindow(GetDlgItem(hdlg, IDOK), 0);
 }
 
 static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
