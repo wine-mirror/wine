@@ -22,6 +22,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "oledlg.h"
+
 #include "resource.h"
 
 /*
