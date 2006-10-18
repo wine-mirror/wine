@@ -154,6 +154,9 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 
         SetPropW(hdlg, prop_name, ps_struct);
 
+        if(ps_struct->ps->lpszCaption)
+            SetWindowTextW(hdlg, ps_struct->ps->lpszCaption);
+
         return TRUE; /* use default focus */
     }
     case WM_COMMAND:
