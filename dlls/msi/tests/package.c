@@ -2706,7 +2706,8 @@ static void test_installprops(void)
     MSIHANDLE hpkg, hdb;
     CHAR path[MAX_PATH];
     CHAR buf[MAX_PATH];
-    DWORD size;
+    DWORD size, type;
+    HKEY hkey;
     UINT r;
 
     GetCurrentDirectory(MAX_PATH, path);
@@ -2725,7 +2726,30 @@ static void test_installprops(void)
     r = MsiGetProperty(hpkg, "DATABASE", buf, &size);
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+
+    RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", &hkey);
+
+    size = MAX_PATH;
+    type = REG_SZ;
+    RegQueryValueEx(hkey, "RegisteredOwner", NULL, &type, (LPBYTE)path, &size);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "USERNAME", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+
+    size = MAX_PATH;
+    type = REG_SZ;
+    RegQueryValueEx(hkey, "RegisteredOrganization", NULL, &type, (LPBYTE)path, &size);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "COMPANYNAME", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
+
+    CloseHandle(hkey);
     MsiCloseHandle(hpkg);
+    DeleteFile(msifile);
 }
 
 static void test_sourcedirprop(void)

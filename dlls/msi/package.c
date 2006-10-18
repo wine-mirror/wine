@@ -141,6 +141,9 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     DWORD verval;
     WCHAR verstr[10], bufstr[20];
     HDC dc;
+    LPWSTR check;
+    HKEY hkey;
+    LONG res;
 
     static const WCHAR cszbs[]={'\\',0};
     static const WCHAR CFF[] = 
@@ -210,6 +213,18 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szScreenFormat[] = {'%','d',0};
     static const WCHAR szIntel[] = { 'I','n','t','e','l',0 };
     static const WCHAR szAllUsers[] = { 'A','L','L','U','S','E','R','S',0 };
+    static const WCHAR szCurrentVersion[] = {
+        'S','O','F','T','W','A','R','E','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s',' ','N','T','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n',0
+    };
+    static const WCHAR szRegisteredUser[] = {'R','e','g','i','s','t','e','r','e','d','O','w','n','e','r',0};
+    static const WCHAR szRegisteredOrg[] = {
+        'R','e','g','i','s','t','e','r','e','d','O','r','g','a','n','i','z','a','t','i','o','n',0
+    };
+    static const WCHAR szUSERNAME[] = {'U','S','E','R','N','A','M','E',0};
+    static const WCHAR szCOMPANYNAME[] = {'C','O','M','P','A','N','Y','N','A','M','E',0};
     SYSTEM_INFO sys_info;
 
     /*
@@ -353,6 +368,32 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     sprintfW( bufstr, szScreenFormat, GetDeviceCaps( dc, BITSPIXEL ));
     MSI_SetPropertyW( package, szColorBits, bufstr );
     ReleaseDC(0, dc);
+
+    /* USERNAME and COMPANYNAME */
+    res = RegOpenKeyW( HKEY_LOCAL_MACHINE, szCurrentVersion, &hkey );
+    if (res != ERROR_SUCCESS)
+        return;
+
+    check = msi_dup_property( package, szUSERNAME );
+    if (!check)
+    {
+        LPWSTR user = msi_reg_get_val_str( hkey, szRegisteredUser );
+        MSI_SetPropertyW( package, szUSERNAME, user );
+        msi_free( user );
+    }
+
+    msi_free( check );
+
+    check = msi_dup_property( package, szCOMPANYNAME );
+    if (!check)
+    {
+        LPWSTR company = msi_reg_get_val_str( hkey, szRegisteredOrg );
+        MSI_SetPropertyW( package, szCOMPANYNAME, company );
+        msi_free( company );
+    }
+
+    msi_free( check );
+    CloseHandle( hkey );
 }
 
 static UINT msi_get_word_count( MSIPACKAGE *package )
