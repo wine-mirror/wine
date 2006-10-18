@@ -2939,7 +2939,8 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 	    break;
 	}
 	HttpAddRequestHeadersW(client1, lpszHeaders, dwHeadersLength, HTTP_ADDREQ_FLAG_ADD);
-	if (!HttpSendRequestW(client1, NULL, 0, NULL, 0)) {
+	if (!HttpSendRequestW(client1, NULL, 0, NULL, 0) &&
+            GetLastError() != ERROR_IO_PENDING) {
 	    InternetCloseHandle(client1);
 	    client1 = NULL;
 	    break;
