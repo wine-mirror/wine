@@ -3726,6 +3726,8 @@ TOOLBAR_GetToolTips (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
+    if ((infoPtr->dwStyle & TBSTYLE_TOOLTIPS) && (infoPtr->hwndToolTip == NULL))
+        TOOLBAR_TooltipCreateControl(infoPtr);
     return (LRESULT)infoPtr->hwndToolTip;
 }
 
