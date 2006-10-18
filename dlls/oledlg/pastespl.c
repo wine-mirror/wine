@@ -35,6 +35,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+typedef struct
+{
+    OLEUIPASTESPECIALW *ps;
+    DWORD flags;
+} ps_struct_t;
+
 static const struct ps_flag
 {
     DWORD flag;
@@ -110,21 +116,55 @@ static inline WCHAR *strdupAtoW(const char *str)
     return ret;
 }
 
+static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
+{
+    ps_struct->ps->dwFlags = ps_struct->flags;
+    ps_struct->ps->fLink = (ps_struct->flags & PSF_SELECTPASTELINK) ? TRUE : FALSE;
+}
+
+static void free_structure(ps_struct_t *ps_struct)
+{
+    HeapFree(GetProcessHeap(), 0, ps_struct);
+}
+
 static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 {
+    /* native uses prop name "Structure", but we're not compatible
+       with that so we'll prepend "Wine_". */
+    static const WCHAR prop_name[] = {'W','i','n','e','_','S','t','r','u','c','t','u','r','e',0};
+    ps_struct_t *ps_struct;
+
     TRACE("(%p, %04x, %08x, %08lx)\n", hdlg, msg, wp, lp);
+
+    ps_struct = GetPropW(hdlg, prop_name);
+
+    if(msg != WM_INITDIALOG)
+    {
+        if(!ps_struct)
+            return 0;
+    }
+
     switch(msg)
     {
     case WM_INITDIALOG:
+    {
+        ps_struct = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps_struct));
+        ps_struct->ps = (OLEUIPASTESPECIALW*)lp;
+        ps_struct->flags = ps_struct->ps->dwFlags;
+
+        SetPropW(hdlg, prop_name, ps_struct);
 
         return TRUE; /* use default focus */
-
+    }
     case WM_COMMAND:
         switch(LOWORD(wp))
         {
         case IDOK:
         case IDCANCEL:
+            if(wp == IDOK)
+                update_structure(hdlg, ps_struct);
             EndDialog(hdlg, wp);
+            free_structure(ps_struct);
             return TRUE;
         }
         return FALSE;
