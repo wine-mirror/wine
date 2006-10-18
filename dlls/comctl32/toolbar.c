@@ -4783,40 +4783,45 @@ TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason)
         NMTBHOTITEM nmhotitem;
         TBUTTON_INFO *btnPtr = NULL, *oldBtnPtr = NULL;
 
+        nmhotitem.dwFlags = dwReason;
         if(infoPtr->nHotItem >= 0)
         {
             oldBtnPtr = &infoPtr->buttons[infoPtr->nHotItem];
             nmhotitem.idOld = oldBtnPtr->idCommand;
         }
         else
+        {
             nmhotitem.dwFlags |= HICF_ENTERING;
+            nmhotitem.idOld = 0;
+        }
 
         if (nHit >= 0)
         {
             btnPtr = &infoPtr->buttons[nHit];
             nmhotitem.idNew = btnPtr->idCommand;
-            /* setting disabled buttons as hot fails */
-            if (!(btnPtr->fsState & TBSTATE_ENABLED))
-                return;
         }
 	else
+	{
 	    nmhotitem.dwFlags |= HICF_LEAVING;
-
-        nmhotitem.dwFlags = dwReason;
+	    nmhotitem.idNew = 0;
+	}
 
 	/* now change the hot and invalidate the old and new buttons - if the
 	 * parent agrees */
 	if (!TOOLBAR_SendNotify(&nmhotitem.hdr, infoPtr, TBN_HOTITEMCHANGE))
 	{
-            infoPtr->nHotItem = nHit;
-            if (btnPtr) {
-                btnPtr->bHot = TRUE;
-                InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
-            }
             if (oldBtnPtr) {
                 oldBtnPtr->bHot = FALSE;
                 InvalidateRect(infoPtr->hwndSelf, &oldBtnPtr->rect, TRUE);
             }
+            /* setting disabled buttons as hot fails even if the notify contains the button id */
+            if (btnPtr && (btnPtr->fsState & TBSTATE_ENABLED)) {
+                btnPtr->bHot = TRUE;
+                InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+                infoPtr->nHotItem = nHit;
+            }
+            else
+                infoPtr->nHotItem = -1;            
         }
     }
 }

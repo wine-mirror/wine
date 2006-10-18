@@ -35,7 +35,11 @@
 HWND hMainWnd;
 BOOL g_fBlockHotItemChange;
 BOOL g_fReceivedHotItemChange;
+BOOL g_fExpectedHotItemOld;
+BOOL g_fExpectedHotItemNew;
  
+#define compare(val, exp, format) ok((val) == (exp), #val " value " format " expected " format "\n", (val), (exp));
+
 static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
   p->iBitmap = -2;
   p->idCommand = idCommand;
@@ -47,10 +51,17 @@ static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
 LRESULT MyWnd_Notify(hWnd, wParam, lParam)
 {
     NMHDR *hdr = (NMHDR *)lParam;
+    NMTBHOTITEM *nmhi;
     switch (hdr->code)
     {
         case TBN_HOTITEMCHANGE:
+            nmhi = (NMTBHOTITEM *)lParam;
             g_fReceivedHotItemChange = TRUE;
+            if (g_fExpectedHotItemOld != g_fExpectedHotItemNew)
+            {
+                compare(nmhi->idOld, g_fExpectedHotItemOld, "%d");
+                compare(nmhi->idNew, g_fExpectedHotItemNew, "%d");
+            }
             if (g_fBlockHotItemChange)
                 return 1;
             break;
@@ -422,6 +433,17 @@ void test_add_string()
     CHECK_STRING_TABLE(14, ret7);
 }
 
+static void expect_hot_notify(int idold, int idnew)
+{
+    g_fExpectedHotItemOld = idold;
+    g_fExpectedHotItemNew = idnew;
+    g_fReceivedHotItemChange = FALSE;
+}
+
+#define check_hot_notify() \
+    ok(g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE not received\n"); \
+    g_fExpectedHotItemOld = g_fExpectedHotItemNew = 0;
+
 void test_hotitem()
 {
     HWND hToolbar = NULL;
@@ -452,10 +474,10 @@ void test_hotitem()
     ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
     ok(ret == -1, "Hot item: %lx, expected -1\n", ret);
 
-    g_fReceivedHotItemChange = FALSE;
+    expect_hot_notify(0, 7);
     ret = SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
     ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
-    ok(g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE not received\n");
+    check_hot_notify();
     ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
     ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
     g_fBlockHotItemChange = TRUE;
@@ -475,22 +497,27 @@ void test_hotitem()
     ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
     ok(g_fReceivedHotItemChange == FALSE, "TBN_HOTITEMCHANGE received after a duplication\n");
 
+    expect_hot_notify(7, 0);
     ret = SendMessage(hToolbar, TB_SETHOTITEM, -0xbeaf, 0);
     ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
-    ok(g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE not received\n");
+    check_hot_notify();
     SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
 
-    /* setting disabled buttons as hot failed and generates no notify */
-    g_fReceivedHotItemChange = FALSE;
+    /* setting disabled buttons will generate a notify with the button id but no button will be hot */
+    expect_hot_notify(7, 9);
     ret = SendMessage(hToolbar, TB_SETHOTITEM, 4, 0);
     ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
-    ok(!g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE received\n");
+    check_hot_notify();
     ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
-    ok(ret == 3, "Hot item: %lx, expected 3\n", ret);
+    ok(ret == -1, "Hot item: %lx, expected -1\n", ret);
+    /* enabling the button won't change that */
+    SendMessage(hToolbar, TB_ENABLEBUTTON, 9, TRUE);
+    ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
+    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
 
-    /* but disabling a hot button works */
+    /* disabling a hot button works */
     ret = SendMessage(hToolbar, TB_SETHOTITEM, 3, 0);
-    ok(ret == 3, "TB_SETHOTITEM returned %ld, expected 3\n", ret);
+    ok(ret == -1, "TB_SETHOTITEM returned %ld, expected -1\n", ret);
     g_fReceivedHotItemChange = FALSE;
     SendMessage(hToolbar, TB_ENABLEBUTTON, 7, FALSE);
     ret = SendMessage(hToolbar, TB_GETHOTITEM, 0, 0);
