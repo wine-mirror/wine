@@ -1924,6 +1924,7 @@ static void test_try_transform(void)
     ok( r == ERROR_SUCCESS , "Failed to commit database\n" );
 
     MsiCloseHandle( hdb );
+    DeleteFileA("testdata.bin");
 
     /*
      * Both these generate an equivilent transform,
