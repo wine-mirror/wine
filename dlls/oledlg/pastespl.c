@@ -288,6 +288,11 @@ static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
         EnableWindow(GetDlgItem(hdlg, IDOK), 0);
 }
 
+static void send_end_dialog_msg(HWND hdlg, ps_struct_t *ps_struct, UINT id)
+{
+    SendMessageW(hdlg, oleui_msg_enddialog, id, 0);
+}
+
 static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
 {
     ps_struct->ps->dwFlags = ps_struct->flags;
@@ -338,14 +343,19 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
         {
         case IDOK:
         case IDCANCEL:
+            send_end_dialog_msg(hdlg, ps_struct, LOWORD(wp));
+            return FALSE;
+        }
+        return FALSE;
+    default:
+        if(msg == oleui_msg_enddialog)
+        {
             if(wp == IDOK)
                 update_structure(hdlg, ps_struct);
             EndDialog(hdlg, wp);
             free_structure(ps_struct);
             return TRUE;
         }
-        return FALSE;
-    default:
         return FALSE;
     }
 
