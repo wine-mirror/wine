@@ -961,10 +961,6 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define PMB_ACTIVE      0x00000001
 
 /* Messages */
-
-  /* WM_GETDLGCODE values */
-
-
 #define WM_NULL                 0x0000
 #define WM_CREATE               0x0001
 #define WM_DESTROY              0x0002
@@ -1310,6 +1306,7 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define MWMO_ALERTABLE       0x0002
 #define MWMO_INPUTAVAILABLE  0x0004
 
+/* WM_GETDLGCODE values */
 #define DLGC_WANTARROWS      0x0001
 #define DLGC_WANTTAB         0x0002
 #define DLGC_WANTALLKEYS     0x0004
