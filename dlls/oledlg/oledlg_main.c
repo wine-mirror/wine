@@ -27,12 +27,46 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "oledlg.h"
-#include "wine/debug.h"
 #include "ole2.h"
+#include "oledlg_private.h"
+
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 HINSTANCE OLEDLG_hInstance = 0;
+
+UINT cf_embed_source;
+UINT cf_embedded_object;
+UINT cf_link_source;
+UINT cf_object_descriptor;
+UINT cf_link_src_descriptor;
+UINT cf_ownerlink;
+UINT cf_filename;
+UINT cf_filenamew;
+
+static void register_clipboard_formats(void)
+{
+    /* These used to be declared in olestd.h, but that seems to have been removed from the api */
+    static const WCHAR CF_EMBEDSOURCEW[]          = { 'E','m','b','e','d',' ','S','o','u','r','c','e',0 };
+    static const WCHAR CF_EMBEDDEDOBJECTW[]       = { 'E','m','b','e','d','d','e','d',' ','O','b','j','e','c','t',0 };
+    static const WCHAR CF_LINKSOURCEW[]           = { 'L','i','n','k',' ','S','o','u','r','c','e',0 };
+    static const WCHAR CF_OBJECTDESCRIPTORW[]     = { 'O','b','j','e','c','t',' ','D','e','s','c','r','i','p','t','o','r',0 };
+    static const WCHAR CF_LINKSRCDESCRIPTORW[]    = { 'L','i','n','k',' ','S','o','u','r','c','e',' ','D','e','s','c','r','i','p','t','o','r',0 };
+    static const WCHAR CF_OWNERLINKW[]            = { 'O','w','n','e','r','L','i','n','k',0 };
+    static const WCHAR CF_FILENAMEW[]             = { 'F','i','l','e','N','a','m','e',0 };
+    static const WCHAR CF_FILENAMEWW[]            = { 'F','i','l','e','N','a','m','e','W',0 };
+
+    /* Load in the same order as native to make debugging easier */
+    cf_object_descriptor    = RegisterClipboardFormatW(CF_OBJECTDESCRIPTORW);
+    cf_link_src_descriptor  = RegisterClipboardFormatW(CF_LINKSRCDESCRIPTORW);
+    cf_embed_source         = RegisterClipboardFormatW(CF_EMBEDSOURCEW);
+    cf_embedded_object      = RegisterClipboardFormatW(CF_EMBEDDEDOBJECTW);
+    cf_link_source          = RegisterClipboardFormatW(CF_LINKSOURCEW);
+    cf_ownerlink            = RegisterClipboardFormatW(CF_OWNERLINKW);
+    cf_filename             = RegisterClipboardFormatW(CF_FILENAMEW);
+    cf_filenamew            = RegisterClipboardFormatW(CF_FILENAMEWW);
+}
 
 /***********************************************************************
  *		DllMain
@@ -45,6 +79,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID fImpLoad)
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hinstDLL);
         OLEDLG_hInstance = hinstDLL;
+        register_clipboard_formats();
         break;
 
     case DLL_PROCESS_DETACH:
