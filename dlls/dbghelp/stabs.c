@@ -278,20 +278,25 @@ static struct symt** stabs_find_ref(long filenr, long subnr)
 static struct symt** stabs_read_type_enum(const char** x)
 {
     long        filenr, subnr;
+    const char* iter;
+    char*       end;
 
-    if (**x == '(') 
+    iter = *x;
+    if (*iter == '(')
     {
-	(*x)++;					/* '('   */
-	filenr = strtol(*x, (char**)x, 10);	/* <int> */
-	(*x)++;					/* ','   */
-	subnr = strtol(*x, (char**)x, 10);	/* <int> */
-	(*x)++;					/* ')'   */
+        ++iter;                             /* '('   */
+        filenr = strtol(iter, &end, 10);    /* <int> */
+        iter = ++end;                       /* ','   */
+        subnr = strtol(iter, &end, 10);     /* <int> */
+        iter = ++end;                       /* ')'   */
     }
     else
     {
-    	filenr = 0;
-	subnr = strtol(*x, (char**)x, 10);      /* <int> */
+        filenr = 0;
+        subnr = strtol(iter, &end, 10);     /* <int> */
+        iter = end;
     }
+    *x = iter;
     return stabs_find_ref(filenr, subnr);
 }
 
