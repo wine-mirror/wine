@@ -39,6 +39,23 @@ static HMODULE  hdll;
 static LPMONITOREX (WINAPI *pInitializePrintMonitor)(LPWSTR);
 
 static LPMONITOREX pm;
+static BOOL  (WINAPI *pEnumPorts)(LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD, LPDWORD);
+static BOOL  (WINAPI *pOpenPort)(LPWSTR, PHANDLE);
+static BOOL  (WINAPI *pOpenPortEx)(LPWSTR, LPWSTR, PHANDLE, struct _MONITOR *);
+static BOOL  (WINAPI *pStartDocPort)(HANDLE, LPWSTR, DWORD, DWORD, LPBYTE);
+static BOOL  (WINAPI *pWritePort)(HANDLE hPort, LPBYTE, DWORD, LPDWORD);
+static BOOL  (WINAPI *pReadPort)(HANDLE hPort, LPBYTE, DWORD, LPDWORD);
+static BOOL  (WINAPI *pEndDocPort)(HANDLE);
+static BOOL  (WINAPI *pClosePort)(HANDLE);
+static BOOL  (WINAPI *pAddPort)(LPWSTR, HWND, LPWSTR);
+static BOOL  (WINAPI *pAddPortEx)(LPWSTR, DWORD, LPBYTE, LPWSTR);
+static BOOL  (WINAPI *pConfigurePort)(LPWSTR, HWND, LPWSTR);
+static BOOL  (WINAPI *pDeletePort)(LPWSTR, HWND, LPWSTR);
+static BOOL  (WINAPI *pGetPrinterDataFromPort)(HANDLE, DWORD, LPWSTR, LPWSTR, DWORD, LPWSTR, DWORD, LPDWORD);
+static BOOL  (WINAPI *pSetPortTimeOuts)(HANDLE, LPCOMMTIMEOUTS, DWORD);
+static BOOL  (WINAPI *pXcvOpenPort)(HANDLE, LPCWSTR, ACCESS_MASK, PHANDLE phXcv);
+static DWORD (WINAPI *pXcvDataPort)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD);
+static BOOL  (WINAPI *pXcvClosePort)(HANDLE);
 
 static WCHAR emptyW[] = {0};
 static WCHAR Monitors_LocalPortW[] = { \
@@ -74,6 +91,14 @@ static void test_InitializePrintMonitor(void)
         "returned %p with %d (expected %p)\n", res, GetLastError(), pm);
 }
 
+/* ########################### */
+
+#define GET_MONITOR_FUNC(name) \
+            if(numentries > 0) { \
+                numentries--; \
+                p##name = (void *) pm->Monitor.pfn##name ;  \
+            }
+
 
 START_TEST(localmon)
 {
@@ -89,5 +114,30 @@ START_TEST(localmon)
        b) upto w2k: Section "Ports" in win.ini
        or InitializePrintMonitor fails. */
     pm = pInitializePrintMonitor(Monitors_LocalPortW);
+    if (pm) {
+        DWORD   numentries;
+        numentries = (pm->dwMonitorSize ) / sizeof(VOID *);
+        /* NT4: 14, since w2k: 17 */
+        ok( numentries == 14 || numentries == 17, 
+            "dwMonitorSize (%d) => %d Functions\n", pm->dwMonitorSize, numentries);
+
+        GET_MONITOR_FUNC(EnumPorts);
+        GET_MONITOR_FUNC(OpenPort);
+        GET_MONITOR_FUNC(OpenPortEx);
+        GET_MONITOR_FUNC(StartDocPort);
+        GET_MONITOR_FUNC(WritePort);
+        GET_MONITOR_FUNC(ReadPort);
+        GET_MONITOR_FUNC(EndDocPort);
+        GET_MONITOR_FUNC(ClosePort);
+        GET_MONITOR_FUNC(AddPort);
+        GET_MONITOR_FUNC(AddPortEx);
+        GET_MONITOR_FUNC(ConfigurePort);
+        GET_MONITOR_FUNC(DeletePort);
+        GET_MONITOR_FUNC(GetPrinterDataFromPort);
+        GET_MONITOR_FUNC(SetPortTimeOuts);
+        GET_MONITOR_FUNC(XcvOpenPort);
+        GET_MONITOR_FUNC(XcvDataPort);
+        GET_MONITOR_FUNC(XcvClosePort);
+    }
     test_InitializePrintMonitor();
 }
