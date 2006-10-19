@@ -944,31 +944,31 @@ static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down,
             PRIVATE(data)->has_selection = FALSE;
             WCUSER_SetSelection(data, 0);
             WCUSER_CopySelectionToClipboard(data);
-            break;
+            return;
         case VK_RIGHT:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.X++; c2.X++;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         case VK_LEFT:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.X--; c2.X--;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         case VK_UP:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.Y--; c2.Y--;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         case VK_DOWN:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c1.Y++; c2.Y++;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         }
         break;
     case SHIFT_PRESSED:
@@ -979,28 +979,34 @@ static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down,
             c2 = PRIVATE(data)->selectPt2;
             c2.X++;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         case VK_LEFT:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.X--;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         case VK_UP:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.Y--;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         case VK_DOWN:
             c1 = PRIVATE(data)->selectPt1;
             c2 = PRIVATE(data)->selectPt2;
             c2.Y++;
             WCUSER_MoveSelection(data, c1, c2);
-            break;
+            return;
         }
         break;
     }
+
+    if (wParam < VK_SPACE)  /* Shift, Alt, Ctrl, Num Lock etc. */
+        return;
+    
+    WCUSER_SetSelection(data, 0);    
+    PRIVATE(data)->has_selection = FALSE;
 }
 
 /******************************************************************
