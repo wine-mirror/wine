@@ -1175,12 +1175,14 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
     case WM_RBUTTONDOWN:
         if ((wParam & (MK_CONTROL|MK_SHIFT)) == data->curcfg.menu_mask)
         {
-            RECT        r;
+            POINT       pt;
 
-            GetWindowRect(hWnd, &r);
+            pt.x = LOWORD(lParam);
+            pt.y = HIWORD(lParam);
+            ClientToScreen(hWnd, &pt);
             WCUSER_SetMenuDetails(data, PRIVATE(data)->hPopMenu);
             TrackPopupMenu(PRIVATE(data)->hPopMenu, TPM_LEFTALIGN|TPM_TOPALIGN,
-                           r.left + LOWORD(lParam), r.top + HIWORD(lParam), 0, hWnd, NULL);
+                           pt.x, pt.y, 0, hWnd, NULL);
         }
         else
         {
