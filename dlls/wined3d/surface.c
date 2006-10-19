@@ -2637,9 +2637,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                     } else {
                         glCopyTexSubImage2D(GL_TEXTURE_2D,
                                             0, /* level */
-                                            rect.x1, This->currentDesc.Height - row - 1, /* xoffset, yoffset */
-                                            srect.x1, Src->currentDesc.Height - srect.y2 + row * yrel,
-                                            rect.x2, 1);
+                                            rect.x1, rect.y2 + rect.y1 - row - 1, /* xoffset, yoffset */
+                                            srect.x1, row - rect.y1,
+                                            rect.x2-rect.x1, 1);
                     }
                 }
 
