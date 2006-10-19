@@ -34,7 +34,6 @@
 #include "winspool.h"
 #include "ddk/winsplp.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 

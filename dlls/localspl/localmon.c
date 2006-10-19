@@ -34,7 +34,6 @@
 #include "winspool.h"
 #include "ddk/winsplp.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 
@@ -53,18 +52,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(localspl);
  *  Failure: NULL
  *
  * NOTES
- *  Native localspl.dll fails, when the Section "Ports" is missing in "win.ini".
+ *  The fixed location "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Ports"
+ *  is used to store the Ports (IniFileMapping from "win.ini", Section "Ports").
+ *  Native localspl.dll fails, when no valid Port-Entry is present.
  *
  */
 
 LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
 {
-    FIXME("(%s) stub\n", debugstr_w(regroot));
+    static MONITOREX mymonitorex =
+    {
+        sizeof(MONITOREX) - sizeof(DWORD)
+    };
+
+    TRACE("(%s)\n", debugstr_w(regroot));
+    /* Parameter "regroot" is ignored on NT4.0 (localmon.dll) */
     if (!regroot || !regroot[0]) {
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
+    TRACE("=> %p\n", &mymonitorex);
+    /* Native windows returns always the same pointer on success */
+    return &mymonitorex;
 }
