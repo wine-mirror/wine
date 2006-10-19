@@ -465,7 +465,6 @@ static BOOL init_function_pointers(void)
 static BOOL get_program_files_dir(LPSTR buf)
 {
     HKEY hkey;
-    CHAR temp[MAX_PATH];
     DWORD type = REG_EXPAND_SZ, size;
 
     if (RegOpenKey(HKEY_LOCAL_MACHINE,
@@ -473,10 +472,8 @@ static BOOL get_program_files_dir(LPSTR buf)
         return FALSE;
 
     size = MAX_PATH;
-    if (RegQueryValueEx(hkey, "ProgramFilesPath", 0, &type, (LPBYTE)temp, &size))
+    if (RegQueryValueEx(hkey, "ProgramFilesDir", 0, &type, (LPBYTE)buf, &size))
         return FALSE;
-
-    ExpandEnvironmentStrings(temp, buf, MAX_PATH);
 
     RegCloseKey(hkey);
     return TRUE;
@@ -642,21 +639,18 @@ static void test_MsiInstallProduct(void)
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
-    todo_wine
-    {
-        ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
-        ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
-        ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
-        ok(delete_pf("msitest", FALSE), "File not installed\n");
-    }
+    ok(delete_pf("msitest\\cabout\\new\\five.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\new", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout\\four.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\cabout", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\changed\\three.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\changed", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\first\\two.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\first", FALSE), "File not installed\n");
+    ok(delete_pf("msitest\\one.txt", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\filename", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\service.exe", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     res = RegOpenKey(HKEY_LOCAL_MACHINE, "SOFTWARE\\Wine\\msitest", &hkey);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
