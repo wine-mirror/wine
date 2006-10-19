@@ -18,6 +18,9 @@
  * This file holds the declarations needed for HMAC-MD5.
  */
 
+#ifndef _HMAC_MD5_H_
+#define _HMAC_MD5_H_
+
 #include <string.h>
 
 typedef struct
@@ -41,3 +44,4 @@ void MD5Final( MD5_CTX *ctx );
 void HMACMD5Init(HMAC_MD5_CTX *ctx, unsigned char *key, unsigned int key_len);
 void HMACMD5Update(HMAC_MD5_CTX *ctx, unsigned char *data, unsigned int data_len);
 void HMACMD5Final(HMAC_MD5_CTX *ctx, unsigned char *digest);
+#endif /*_HMAC_MD5_H_*/
