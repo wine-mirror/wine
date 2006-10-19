@@ -35,18 +35,25 @@
 
 /* ##### */
 
-static HANDLE  hdll;
+static HMODULE  hdll;
 static LPMONITOREX (WINAPI *pInitializePrintMonitor)(LPWSTR);
 
-static const WCHAR emptyW[] =    {0};
+static LPMONITOREX pm;
 
+static WCHAR emptyW[] = {0};
+static WCHAR Monitors_LocalPortW[] = { \
+                                'S','y','s','t','e','m','\\',
+                                'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
+                                'C','o','n','t','r','o','l','\\',
+                                'P','r','i','n','t','\\',
+                                'M','o','n','i','t','o','r','s','\\',
+                                'L','o','c','a','l',' ','P','o','r','t',0};
+                                       
 /* ##### */
 
 static void test_InitializePrintMonitor(void)
 {
     LPMONITOREX res;
-
-    if (!pInitializePrintMonitor) return;
 
     SetLastError(0xdeadbeef);
     res = pInitializePrintMonitor(NULL);
@@ -55,18 +62,32 @@ static void test_InitializePrintMonitor(void)
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
-    res = pInitializePrintMonitor((LPWSTR) emptyW);
+    res = pInitializePrintMonitor(emptyW);
     ok( (res == NULL) && (GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %p with %d\n (expected NULL with " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+    /* Every call with a non-empty string returns the same Pointer */
+    SetLastError(0xdeadbeef);
+    res = pInitializePrintMonitor(Monitors_LocalPortW);
+    ok( res == pm,
+        "returned %p with %d (expected %p)\n", res, GetLastError(), pm);
 }
 
 
 START_TEST(localmon)
 {
+    /* This DLL does not exists on Win9x */
     hdll = LoadLibraryA("localspl.dll");
     if (!hdll) return;
 
     pInitializePrintMonitor = (void *) GetProcAddress(hdll, "InitializePrintMonitor");
+    if (!pInitializePrintMonitor) return;
+
+    /* Native localmon.dll / localspl.dll need a vaild Port-Entry in:
+       a) since xp: HKLM\Software\Microsoft\Windows NT\CurrentVersion\Ports 
+       b) upto w2k: Section "Ports" in win.ini
+       or InitializePrintMonitor fails. */
+    pm = pInitializePrintMonitor(Monitors_LocalPortW);
     test_InitializePrintMonitor();
 }
