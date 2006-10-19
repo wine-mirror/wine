@@ -174,6 +174,22 @@ static inline void clear_block( void *ptr, SIZE_T size )
     memset( ptr, 0, size );
 }
 
+/* notify that a new block of memory has been allocated for debugging purposes */
+static inline void notify_alloc( void *ptr, SIZE_T size, BOOL init )
+{
+#ifdef VALGRIND_MALLOCLIKE_BLOCK
+    VALGRIND_MALLOCLIKE_BLOCK( ptr, size, 0, init );
+#endif
+}
+
+/* notify that a block of memory has been freed for debugging purposes */
+static inline void notify_free( void *ptr )
+{
+#ifdef VALGRIND_FREELIKE_BLOCK
+    VALGRIND_FREELIKE_BLOCK( ptr, 0 );
+#endif
+}
+
 /* locate a free list entry of the appropriate size */
 /* size is the size of the whole block including the arena header */
 static inline unsigned int get_freelist_index( SIZE_T size )
@@ -1181,6 +1197,8 @@ PVOID WINAPI RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
     HEAP_ShrinkBlock( subheap, pInUse, rounded_size );
     pInUse->unused_bytes = (pInUse->size & ARENA_SIZE_MASK) - size;
 
+    notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
+
     if (flags & HEAP_ZERO_MEMORY)
         clear_block( pInUse + 1, pInUse->size & ARENA_SIZE_MASK );
     else
@@ -1236,6 +1254,8 @@ BOOLEAN WINAPI RtlFreeHeap( HANDLE heap, ULONG flags, PVOID ptr )
     if (!HEAP_ValidateInUseArena( subheap, pInUse, QUIET )) goto error;
 
     /* Turn the block into a free block */
+
+    notify_free( ptr );
 
     HEAP_MakeInUseBlockFree( subheap, pInUse );
 
@@ -1317,7 +1337,11 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
                 RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
                 return NULL;
             }
+            notify_free( pArena + 1 );
             HEAP_ShrinkBlock( subheap, pArena, rounded_size );
+            notify_alloc( pArena + 1, size, FALSE );
+            /* FIXME: this is wrong as we may lose old VBits settings */
+            mark_block_initialized( pArena + 1, oldSize );
         }
         else  /* Do it the hard way */
         {
@@ -1343,16 +1367,26 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             pInUse->magic = ARENA_INUSE_MAGIC;
             HEAP_ShrinkBlock( newsubheap, pInUse, rounded_size );
             mark_block_initialized( pInUse + 1, oldSize );
+            notify_alloc( pInUse + 1, size, FALSE );
             memcpy( pInUse + 1, pArena + 1, oldSize );
 
             /* Free the previous block */
 
+            notify_free( pArena + 1 );
             HEAP_MakeInUseBlockFree( subheap, pArena );
             subheap = newsubheap;
             pArena  = pInUse;
         }
     }
-    else HEAP_ShrinkBlock( subheap, pArena, rounded_size );  /* Shrink the block */
+    else
+    {
+        /* Shrink the block */
+        notify_free( pArena + 1 );
+        HEAP_ShrinkBlock( subheap, pArena, rounded_size );
+        notify_alloc( pArena + 1, size, FALSE );
+        /* FIXME: this is wrong as we may lose old VBits settings */
+        mark_block_initialized( pArena + 1, size );
+    }
 
     pArena->unused_bytes = (pArena->size & ARENA_SIZE_MASK) - size;
 
