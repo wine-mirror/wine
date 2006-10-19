@@ -362,6 +362,23 @@ static void selection_change(HWND hdlg, ps_struct_t *ps_struct)
     update_result_text(hdlg, ps_struct);
 }
 
+static void mode_change(HWND hdlg, ps_struct_t *ps_struct, UINT id)
+{
+    if(id == IDC_PS_PASTE)
+    {
+        ps_struct->flags &= ~PSF_SELECTPASTELINK;
+        ps_struct->flags |= PSF_SELECTPASTE;
+    }
+    else
+    {
+        ps_struct->flags &= ~PSF_SELECTPASTE;
+        ps_struct->flags |= PSF_SELECTPASTELINK;
+    }
+
+    update_display_list(hdlg, id == IDC_PS_PASTE ? IDC_PS_PASTELIST : IDC_PS_PASTELINKLIST);
+    selection_change(hdlg, ps_struct);
+}
+
 static void post_help_msg(HWND hdlg, ps_struct_t *ps_struct)
 {
     PostMessageW(ps_struct->ps->hWndOwner, oleui_msg_help, (WPARAM)hdlg, IDD_PASTESPECIAL);
@@ -434,6 +451,17 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
             case LBN_SELCHANGE:
                 selection_change(hdlg, ps_struct);
                 return FALSE;
+            default:
+                return FALSE;
+            }
+        case IDC_PS_PASTE:
+        case IDC_PS_PASTELINK:
+            switch(HIWORD(wp))
+            {
+            case BN_CLICKED:
+                mode_change(hdlg, ps_struct, LOWORD(wp));
+                return FALSE;
+
             default:
                 return FALSE;
             }
