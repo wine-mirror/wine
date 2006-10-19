@@ -79,3 +79,17 @@ BEGIN
     CONTROL       "Result", -1, "Button", BS_GROUPBOX | WS_GROUP | WS_VISIBLE, 6, 90, 212, 48
     CONTROL       "", IDC_PS_SOURCETEXT, "Edit", ES_READONLY | ES_AUTOHSCROLL | WS_VISIBLE, 37, 9, 180, 8
 END
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_PS_PASTE_DATA                     "Inserts the contents of the clipboard into your document as %s."
+    IDS_PS_PASTE_OBJECT                   "Inserts the contents of the clipboard into your document so that you can activate it using %s."
+    IDS_PS_PASTE_OBJECT_AS_ICON           "Inserts the contents of the clipboard into your document so that you can activate it using %s.  It will be displayed as an icon."
+    IDS_PS_PASTE_LINK_DATA                "Inserts the contents of the clipboard into your document as %s.  The data is linked to the source file so that changes to the file will be reflected in your document."
+    IDS_PS_PASTE_LINK_OBJECT              "Inserts a picture of the clipboard contents into your document.  The picture is linked to the source file so that changes to the file will be reflected in your document."
+    IDS_PS_PASTE_LINK_OBJECT_AS_ICON      "Inserts a shortcut which points to the location of the clipboard contents.  The shortcut is linked to the source file so that changes to the file will be reflected in your document."
+    IDS_PS_NON_OLE                        "Inserts the contents of the clipboard into your document."
+    IDS_PS_UNKNOWN_TYPE                   "Unknown Type"
+    IDS_PS_UNKNOWN_SRC                    "Unknown Source"
+    IDS_PS_UNKNOWN_APP                    "the program which created it"
+}
