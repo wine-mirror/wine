@@ -174,7 +174,7 @@ DWORD WINAPI GetSize (LPVOID lpMem)
  *|    DWORD   nMaxItems;
  *|    DWORD   dwFlags;
  *|    HKEY    hKey;
- *|    LPCTSTR lpszSubKey;
+ *|    LPTSTR  lpszSubKey;
  *|    PROC    lpfnCompare;
  *|} CREATEMRULIST, *LPCREATEMRULIST;
  *
@@ -212,7 +212,7 @@ typedef struct tagCREATEMRULISTA
     DWORD  nMaxItems;
     DWORD  dwFlags;
     HKEY   hKey;
-    LPCSTR lpszSubKey;
+    LPSTR  lpszSubKey;
     PROC   lpfnCompare;
 } CREATEMRULISTA, *LPCREATEMRULISTA;
 
@@ -222,7 +222,7 @@ typedef struct tagCREATEMRULISTW
     DWORD   nMaxItems;
     DWORD   dwFlags;
     HKEY    hKey;
-    LPCWSTR lpszSubKey;
+    LPWSTR  lpszSubKey;
     PROC    lpfnCompare;
 } CREATEMRULISTW, *LPCREATEMRULISTW;
 
@@ -357,7 +357,7 @@ void WINAPI FreeMRUList (HANDLE hMRUList)
     }
     Free(mp->realMRU);
     Free(mp->array);
-    Free((LPWSTR)mp->extview.lpszSubKey);
+    Free(mp->extview.lpszSubKey);
     Free(mp);
 }
 
@@ -742,7 +742,7 @@ HANDLE WINAPI CreateMRUListLazyW (LPCREATEMRULISTW lpcml, DWORD dwParam2,
     mp = Alloc(sizeof(WINEMRULIST));
     memcpy(&mp->extview, lpcml, sizeof(CREATEMRULISTW));
     mp->extview.lpszSubKey = Alloc((strlenW(lpcml->lpszSubKey) + 1) * sizeof(WCHAR));
-    strcpyW((LPWSTR)mp->extview.lpszSubKey, lpcml->lpszSubKey);
+    strcpyW(mp->extview.lpszSubKey, lpcml->lpszSubKey);
     mp->isUnicode = TRUE;
 
     return CreateMRUListLazy_common(mp);
@@ -779,7 +779,7 @@ HANDLE WINAPI CreateMRUListLazyA (LPCREATEMRULISTA lpcml, DWORD dwParam2,
     len = MultiByteToWideChar(CP_ACP, 0, lpcml->lpszSubKey, -1, NULL, 0);
     mp->extview.lpszSubKey = Alloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, lpcml->lpszSubKey, -1,
-			(LPWSTR)mp->extview.lpszSubKey, len);
+			mp->extview.lpszSubKey, len);
     mp->isUnicode = FALSE;
     return CreateMRUListLazy_common(mp);
 }
