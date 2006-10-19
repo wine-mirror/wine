@@ -173,7 +173,8 @@ HKLM,%CurrentVersionNT%\Q246009,"Installed",,"1"
 [Debugger]
 HKLM,%CurrentVersionNT%\AeDebug,"Debugger",2,"winedbg --auto %ld %ld"
 HKLM,%CurrentVersionNT%\AeDebug,"Auto",2,"1"
-HKCU,Software\Wine\Debug,"RelayExclude",2,"ntdll.RtlEnterCriticalSection;ntdll.RtlLeaveCriticalSection;kernel32.97;kernel32.98"
+HKCU,Software\Wine\Debug,"RelayExclude",2,"ntdll.RtlEnterCriticalSection;ntdll.RtlLeaveCriticalSection;kernel32.94;kernel32.95;kernel32.96;kernel32.97;kernel32.98"
+HKCU,Software\Wine\Debug,"RelayFromExclude",2,"winex11.drv;user32;gdi32;advapi32;kernel32"
 
 [Desktop]
 HKCU,%Desktop%,"FontSmoothing",2,"0"
