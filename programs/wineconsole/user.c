@@ -689,8 +689,15 @@ static void	WCUSER_CopySelectionToClipboard(const struct inner_data* data)
 
 	for (y = 0; y < h; y++, c.Y++)
 	{
-	    ReadConsoleOutputCharacter(data->hConOut, &p[y * w], w - 1, c, NULL);
-	    p[y * w + w - 1] = (y < h - 1) ? '\n' : '\0';
+	    LPWSTR end;
+	    ReadConsoleOutputCharacter(data->hConOut, p, w - 1, c, NULL);
+	    
+	    /* strip spaces from the end of the line */
+	    end = p + w - 1;
+	    while (end > p && *(end - 1) == ' ')
+	        end--;
+	    *end = (y < h - 1) ? '\n' : '\0';
+	    p = end + 1;
 	}
 	GlobalUnlock(hMem);
 	SetClipboardData(CF_UNICODETEXT, hMem);
