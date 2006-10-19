@@ -175,6 +175,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         /* DDBLT_KEYSRC will cause BltOverride to enable the alpha test with GL_NOTEQUAL, 0.0,
          * which is exactly what we want :-)
          */
+        if (This->presentParms.Windowed) {
+            MapWindowPoints(NULL, This->win_handle, (LPPOINT)&destRect, 2);
+        }
         IWineD3DSurface_Blt(This->backBuffer[0], &destRect, (IWineD3DSurface *) &cursor, NULL, DDBLT_KEYSRC, NULL);
     }
 
