@@ -1116,12 +1116,14 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 	WCUSER_GenerateKeyInputRecord(data, uMsg == WM_SYSKEYDOWN, wParam, lParam, TRUE);
 	break;
     case WM_LBUTTONDOWN:
-        if (data->curcfg.quick_edit)
+        if (data->curcfg.quick_edit || PRIVATE(data)->has_selection)
         {
             if (PRIVATE(data)->has_selection)
+                WCUSER_SetSelection(data, 0);
+            
+            if (data->curcfg.quick_edit && PRIVATE(data)->has_selection)
             {
                 PRIVATE(data)->has_selection = FALSE;
-                WCUSER_SetSelection(data, 0);
             }
             else
             {
@@ -1137,7 +1139,7 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         }
 	break;
     case WM_MOUSEMOVE:
-        if (data->curcfg.quick_edit)
+        if (data->curcfg.quick_edit || PRIVATE(data)->has_selection)
         {
             if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection &&
                 (wParam & MK_LBUTTON))
@@ -1151,14 +1153,12 @@ static LRESULT CALLBACK WCUSER_Proc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
         }
 	break;
     case WM_LBUTTONUP:
-        if (data->curcfg.quick_edit)
+        if (data->curcfg.quick_edit || PRIVATE(data)->has_selection)
         {
-            if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection &&
-                (wParam& MK_LBUTTON))
+            if (GetCapture() == PRIVATE(data)->hWnd && PRIVATE(data)->has_selection)
             {
                 WCUSER_MoveSelection(data, PRIVATE(data)->selectPt1, WCUSER_GetCell(data, lParam));
                 ReleaseCapture();
-                PRIVATE(data)->has_selection = FALSE;
             }
         }
         else
