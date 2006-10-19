@@ -622,16 +622,10 @@ static void check_service_is_installed(void)
     ok(scm != NULL, "Failed to open the SC Manager\n");
 
     service = OpenService(scm, "TestService", SC_MANAGER_ALL_ACCESS);
-    todo_wine
-    {
-        ok(service != NULL, "Failed to open TestService\n");
-    }
+    ok(service != NULL, "Failed to open TestService\n");
 
     res = DeleteService(service);
-    todo_wine
-    {
-        ok(res, "Failed to delete TestService\n");
-    }
+    ok(res, "Failed to delete TestService\n");
 }
 
 static void test_MsiInstallProduct(void)

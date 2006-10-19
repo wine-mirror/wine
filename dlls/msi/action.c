@@ -34,6 +34,7 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #include "winbase.h"
 #include "winerror.h"
 #include "winreg.h"
+#include "winsvc.h"
 #include "wine/debug.h"
 #include "msidefs.h"
 #include "msipriv.h"
@@ -4075,6 +4076,100 @@ static UINT ACTION_PublishComponents(MSIPACKAGE *package)
     return rc;
 }
 
+static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    MSIRECORD *row;
+    MSIFILE *file;
+    SC_HANDLE hscm, service = NULL;
+    LPCWSTR name, disp, comp, depends, pass;
+    LPCWSTR load_order, serv_name, key;
+    DWORD serv_type, start_type;
+    DWORD err_control;
+
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ',
+         '`','C','o','m','p','o','n','e','n','t','`',' ',
+         'W','H','E','R','E',' ',
+         '`','C','o','m','p','o','n','e','n','t','`',' ',
+         '=','\'','%','s','\'',0};
+
+    hscm = OpenSCManagerW(NULL, SERVICES_ACTIVE_DATABASEW, GENERIC_WRITE);
+    if (!hscm)
+    {
+        ERR("Failed to open the SC Manager!\n");
+        goto done;
+    }
+
+    start_type = MSI_RecordGetInteger(rec, 5);
+    if (start_type == SERVICE_BOOT_START || start_type == SERVICE_SYSTEM_START)
+        goto done;
+
+    depends = MSI_RecordGetString(rec, 8);
+    if (depends && *depends)
+        FIXME("Dependency list unhandled!\n");
+
+    name = MSI_RecordGetString(rec, 2);
+    disp = MSI_RecordGetString(rec, 3);
+    serv_type = MSI_RecordGetInteger(rec, 4);
+    err_control = MSI_RecordGetInteger(rec, 6);
+    load_order = MSI_RecordGetString(rec, 7);
+    serv_name = MSI_RecordGetString(rec, 9);
+    pass = MSI_RecordGetString(rec, 10);
+    comp = MSI_RecordGetString(rec, 12);
+
+    /* fetch the service path */
+    row = MSI_QueryGetRecord(package->db, query, comp);
+    if (!row)
+    {
+        ERR("Control query failed!\n");
+        goto done;
+    }
+
+    key = MSI_RecordGetString(row, 6);
+    msiobj_release(&row->hdr);
+
+    file = get_loaded_file(package, key);
+    if (!file)
+    {
+        ERR("Failed to load the service file\n");
+        goto done;
+    }
+
+    service = CreateServiceW(hscm, name, disp, GENERIC_ALL, serv_type,
+                             start_type, err_control, file->TargetPath,
+                             load_order, NULL, NULL, serv_name, pass);
+    if (!service)
+    {
+        if (GetLastError() != ERROR_SERVICE_EXISTS)
+            ERR("Failed to create service %s: %d\n", debugstr_w(name), GetLastError());
+    }
+
+done:
+    CloseServiceHandle(service);
+    CloseServiceHandle(hscm);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT ACTION_InstallServices( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY * view;
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         'S','e','r','v','i','c','e','I','n','s','t','a','l','l',0};
+    
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallService, package);
+    msiobj_release(&view->hdr);
+
+    return rc;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -4147,13 +4242,6 @@ static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'S','e','l','f','R','e','g',0 };
     return msi_unimplemented_action_stub( package, "SelfUnregModules", table );
-}
-
-static UINT ACTION_InstallServices( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'S','e','r','v','i','c','e','I','n','s','t','a','l','l',0 };
-    return msi_unimplemented_action_stub( package, "InstallServices", table );
 }
 
 static UINT ACTION_StartServices( MSIPACKAGE *package )
