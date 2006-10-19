@@ -290,6 +290,23 @@ static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
         EnableWindow(GetDlgItem(hdlg, IDOK), 0);
 }
 
+static void update_as_icon(HWND hdlg, ps_struct_t *ps_struct)
+{
+    HWND icon_display = GetDlgItem(hdlg, IDC_PS_ICONDISPLAY);
+    HWND display_as_icon = GetDlgItem(hdlg, IDC_PS_DISPLAYASICON);
+    HWND change_icon = GetDlgItem(hdlg, IDC_PS_CHANGEICON);
+
+    /* FIXME. No as icon handling */
+    ps_struct->flags &= ~PSF_CHECKDISPLAYASICON;
+
+    CheckDlgButton(hdlg, IDC_PS_DISPLAYASICON, ps_struct->flags & PSF_CHECKDISPLAYASICON);
+    EnableWindow(display_as_icon, 0);
+    ShowWindow(icon_display, SW_HIDE);
+    EnableWindow(icon_display, 0);
+    ShowWindow(change_icon, SW_HIDE);
+    EnableWindow(change_icon, 0);
+}
+
 static void update_result_text(HWND hdlg, ps_struct_t *ps_struct)
 {
     WCHAR resource_txt[200];
@@ -341,6 +358,7 @@ static void update_result_text(HWND hdlg, ps_struct_t *ps_struct)
 
 static void selection_change(HWND hdlg, ps_struct_t *ps_struct)
 {
+    update_as_icon(hdlg, ps_struct);
     update_result_text(hdlg, ps_struct);
 }
 
