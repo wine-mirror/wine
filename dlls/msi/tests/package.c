@@ -1585,6 +1585,10 @@ static void test_states(void)
     r = add_component_entry( hdb, "'eta', '{DD89003F-0DD4-41B8-81C0-3411A7DA2695}', 'TARGETDIR', 1, '', 'eta_file'" );
     ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
 
+    /* no feature parent:msidbComponentAttributesLocalOnly */
+    r = add_component_entry( hdb, "'kappa', '{D6B93DC3-8DA5-4769-9888-42BFE156BB8B}', 'TARGETDIR', 1, '', 'kappa_file'" );
+    ok( r == ERROR_SUCCESS, "cannot add component: %d\n", r );
+
     r = create_feature_components_table( hdb );
     ok( r == ERROR_SUCCESS, "cannot create FeatureComponents table: %d\n", r );
 
@@ -1650,6 +1654,9 @@ static void test_states(void)
 
     /* compressed file */
     r = add_file_entry( hdb, "'eta_file', 'eta', 'eta.txt', 0, '', '1033', 16384, 1" );
+    ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
+
+    r = add_file_entry( hdb, "'kappa_file', 'kappa', 'kappa.txt', 0, '', '1033', 8192, 1" );
     ok( r == ERROR_SUCCESS, "cannot add file: %d\n", r);
 
     hpkg = package_from_db( hdb );
@@ -1755,6 +1762,13 @@ static void test_states(void)
     ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
     ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
 
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "kappa", &state, &action);
+    ok( r == ERROR_UNKNOWN_COMPONENT, "Expected ERROR_UNKNOWN_COMPONENT, got %d\n", r );
+    ok( state == 0xdeadbee, "Expected 0xdeadbee, got %d\n", state);
+    ok( action == 0xdeadbee, "Expected 0xdeadbee, got %d\n", action);
+
     r = MsiDoAction( hpkg, "CostInitialize");
     ok( r == ERROR_SUCCESS, "cost init failed\n");
 
@@ -1852,6 +1866,13 @@ static void test_states(void)
     state = 0xdeadbee;
     action = 0xdeadbee;
     r = MsiGetComponentState(hpkg, "eta", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "kappa", &state, &action);
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
@@ -1957,6 +1978,13 @@ static void test_states(void)
     ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
     ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "kappa", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
+
     r = MsiDoAction( hpkg, "CostFinalize");
     ok( r == ERROR_SUCCESS, "cost finalize failed: %d\n", r);
 
@@ -2057,6 +2085,13 @@ static void test_states(void)
     ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
     ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
     ok( action == INSTALLSTATE_LOCAL, "Expected INSTALLSTATE_LOCAL, got %d\n", action);
+
+    state = 0xdeadbee;
+    action = 0xdeadbee;
+    r = MsiGetComponentState(hpkg, "kappa", &state, &action);
+    ok( r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r );
+    ok( state == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", state);
+    ok( action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
     
     MsiCloseHandle( hpkg );
     DeleteFileA( msifile );

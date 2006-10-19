@@ -664,10 +664,7 @@ static void test_MsiInstallProduct(void)
     size = MAX_PATH;
     type = REG_SZ;
     res = RegQueryValueExA(hkey, "blah", NULL, &type, (LPBYTE)path, &size);
-    todo_wine
-    {
-        ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
-    }
+    ok(res == ERROR_FILE_NOT_FOUND, "Expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 
     size = sizeof(num);
     type = REG_DWORD;
@@ -690,6 +687,7 @@ static void test_MsiInstallProduct(void)
 
 static void test_MsiSetComponentState(void)
 {
+    INSTALLSTATE installed, action;
     MSIHANDLE package;
     char path[MAX_PATH];
     UINT r;
@@ -713,6 +711,11 @@ static void test_MsiSetComponentState(void)
 
     r = MsiDoAction(package, "CostFinalize");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+
+    r = MsiGetComponentState(package, "dangler", &installed, &action);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(installed == INSTALLSTATE_ABSENT, "Expected INSTALLSTATE_ABSENT, got %d\n", installed);
+    ok(action == INSTALLSTATE_UNKNOWN, "Expected INSTALLSTATE_UNKNOWN, got %d\n", action);
 
     r = MsiSetComponentState(package, "dangler", INSTALLSTATE_SOURCE);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);

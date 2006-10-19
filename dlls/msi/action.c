@@ -1792,6 +1792,31 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             component = cl->component;
 
+            switch (component->Attributes)
+            {
+            case msidbComponentAttributesLocalOnly:
+                component->Action = INSTALLSTATE_LOCAL;
+                component->ActionRequest = INSTALLSTATE_LOCAL;
+                break;
+            case msidbComponentAttributesSourceOnly:
+                component->Action = INSTALLSTATE_SOURCE;
+                component->ActionRequest = INSTALLSTATE_SOURCE;
+                break;
+            case msidbComponentAttributesOptional:
+                component->Action = INSTALLSTATE_DEFAULT;
+                component->ActionRequest = INSTALLSTATE_DEFAULT;
+                break;
+            default:
+                component->Action = INSTALLSTATE_LOCAL;
+                component->ActionRequest = INSTALLSTATE_LOCAL;
+            }
+
+            if (component->ForceLocalState)
+            {
+                component->Action = INSTALLSTATE_LOCAL;
+                component->ActionRequest = INSTALLSTATE_LOCAL;
+            }
+
             if (!component->Enabled)
             {
                 component->Action = INSTALLSTATE_UNKNOWN;
@@ -1907,33 +1932,6 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-static void load_all_component_states(MSIPACKAGE *package)
-{
-    MSICOMPONENT *comp;
-
-    LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
-    {
-        switch (comp->Attributes)
-        {
-        case msidbComponentAttributesLocalOnly:
-            comp->Action = INSTALLSTATE_LOCAL;
-            comp->ActionRequest = INSTALLSTATE_LOCAL;
-            break;
-        case msidbComponentAttributesSourceOnly:
-            comp->Action = INSTALLSTATE_SOURCE;
-            comp->ActionRequest = INSTALLSTATE_SOURCE;
-            break;
-        case msidbComponentAttributesOptional:
-            comp->Action = INSTALLSTATE_DEFAULT;
-            comp->ActionRequest = INSTALLSTATE_DEFAULT;
-            break;
-        default:
-            comp->Action = INSTALLSTATE_LOCAL;
-            comp->ActionRequest = INSTALLSTATE_LOCAL;
-        }
-    }
-}
-
 /* 
  * A lot is done in this function aside from just the costing.
  * The costing needs to be implemented at some point but for now I am going
@@ -1972,8 +1970,6 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         msiobj_release(&view->hdr);
     }
 
-    load_all_component_states(package);
-
     TRACE("File calculations\n");
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
@@ -1985,11 +1981,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             continue;
 
         if (file->IsCompressed)
-        {
             comp->ForceLocalState = TRUE;
-            comp->Action = INSTALLSTATE_LOCAL;
-            comp->ActionRequest = INSTALLSTATE_LOCAL;
-        }
 
         /* calculate target */
         p = resolve_folder(package, comp->Directory, FALSE, FALSE, NULL);
