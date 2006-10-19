@@ -615,6 +615,8 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
             if(wp == IDOK)
                 update_structure(hdlg, ps_struct);
             EndDialog(hdlg, wp);
+            /* native does its cleanup in WM_DESTROY */
+            RemovePropW(hdlg, prop_name);
             free_structure(ps_struct);
             return TRUE;
         }
