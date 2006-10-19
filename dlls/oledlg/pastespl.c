@@ -32,8 +32,10 @@
 #include "oledlg.h"
 
 #include "oledlg_private.h"
+#include "resource.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -288,6 +290,60 @@ static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
         EnableWindow(GetDlgItem(hdlg, IDOK), 0);
 }
 
+static void update_result_text(HWND hdlg, ps_struct_t *ps_struct)
+{
+    WCHAR resource_txt[200];
+    UINT res_id;
+    OLEUIPASTEENTRYW *pent;
+    LONG cur_sel;
+    static const WCHAR percent_s[] = {'%','s',0};
+    WCHAR *result_txt, *ptr;
+
+    cur_sel = SendMessageW(GetDlgItem(hdlg, IDC_PS_DISPLAYLIST), LB_GETCURSEL, 0, 0);
+    if(cur_sel == -1) return;
+    pent = (OLEUIPASTEENTRYW*)SendMessageW(GetDlgItem(hdlg, IDC_PS_DISPLAYLIST), LB_GETITEMDATA, cur_sel, 0);
+
+    if(ps_struct->flags & PSF_SELECTPASTE)
+    {
+        if(ps_struct->flags & PSF_CHECKDISPLAYASICON)
+            res_id = IDS_PS_PASTE_OBJECT_AS_ICON;
+        else
+            res_id = IDS_PS_PASTE_DATA;
+    }
+    else
+    {
+        if(ps_struct->flags & PSF_CHECKDISPLAYASICON)
+            res_id = IDS_PS_PASTE_LINK_OBJECT_AS_ICON;
+        else
+            res_id = IDS_PS_PASTE_LINK_DATA;
+    }
+
+    LoadStringW(OLEDLG_hInstance, res_id, resource_txt, sizeof(resource_txt)/sizeof(WCHAR));
+    if((ptr = strstrW(resource_txt, percent_s)))
+    {
+        /* FIXME handle %s in ResultText. Sub appname if IDS_PS_PASTE_OBJECT{_AS_ICON}.  Else sub appropiate type name */
+        size_t result_txt_len = strlenW(pent->lpstrResultText);
+        ptrdiff_t offs = (char*)ptr - (char*)resource_txt;
+        result_txt = HeapAlloc(GetProcessHeap(), 0, (strlenW(resource_txt) + result_txt_len - 1) * sizeof(WCHAR));
+        memcpy(result_txt, resource_txt, offs);
+        memcpy((char*)result_txt + offs, pent->lpstrResultText, result_txt_len * sizeof(WCHAR));
+        memcpy((char*)result_txt + offs + result_txt_len * sizeof(WCHAR), ptr + 2, (strlenW(ptr + 2) + 1) * sizeof(WCHAR));
+    }
+    else
+        result_txt = resource_txt;
+
+    SetDlgItemTextW(hdlg, IDC_PS_RESULTTEXT, result_txt);
+
+    if(result_txt != resource_txt)
+        HeapFree(GetProcessHeap(), 0, result_txt);
+
+}
+
+static void selection_change(HWND hdlg, ps_struct_t *ps_struct)
+{
+    update_result_text(hdlg, ps_struct);
+}
+
 static void post_help_msg(HWND hdlg, ps_struct_t *ps_struct)
 {
     PostMessageW(ps_struct->ps->hWndOwner, oleui_msg_help, (WPARAM)hdlg, IDD_PASTESPECIAL);
@@ -342,16 +398,27 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
             EnableWindow(GetDlgItem(hdlg, IDC_OLEUIHELP), 0);
         }
 
-       if(ps_struct->ps->lpszCaption)
+        if(ps_struct->ps->lpszCaption)
             SetWindowTextW(hdlg, ps_struct->ps->lpszCaption);
 
         init_lists(hdlg, ps_struct);
+
+        selection_change(hdlg, ps_struct);
 
         return TRUE; /* use default focus */
     }
     case WM_COMMAND:
         switch(LOWORD(wp))
         {
+        case IDC_PS_DISPLAYLIST:
+            switch(HIWORD(wp))
+            {
+            case LBN_SELCHANGE:
+                selection_change(hdlg, ps_struct);
+                return FALSE;
+            default:
+                return FALSE;
+            }
         case IDC_OLEUIHELP:
             switch(HIWORD(wp))
             {
