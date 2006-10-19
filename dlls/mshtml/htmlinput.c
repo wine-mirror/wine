@@ -190,7 +190,7 @@ static HRESULT WINAPI HTMLInputElement_get_value(IHTMLInputElement *iface, BSTR 
 
     nsAString_Finish(&value_str);
 
-    TRACE("value=%s\n", debugstr_w(value));
+    TRACE("value=%s\n", debugstr_w(*p));
     return S_OK;
 }
 

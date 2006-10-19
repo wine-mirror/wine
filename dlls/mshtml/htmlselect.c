@@ -186,7 +186,7 @@ static HRESULT WINAPI HTMLSelectElement_get_name(IHTMLSelectElement *iface, BSTR
 
     nsAString_Finish(&name_str);
 
-    TRACE("name=%s\n", debugstr_w(name));
+    TRACE("name=%s\n", debugstr_w(*p));
     return S_OK;
 }
 
@@ -260,7 +260,7 @@ static HRESULT WINAPI HTMLSelectElement_get_value(IHTMLSelectElement *iface, BST
 
     nsAString_Finish(&value_str);
 
-    TRACE("value=%s\n", debugstr_w(value));
+    TRACE("value=%s\n", debugstr_w(*p));
     return S_OK;
 }
 
