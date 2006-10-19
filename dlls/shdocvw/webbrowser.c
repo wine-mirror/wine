@@ -226,18 +226,11 @@ static HRESULT WINAPI WebBrowser_Navigate(IWebBrowser2 *iface, BSTR szUrl,
                                   VARIANT *PostData, VARIANT *Headers)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    VARIANT url;
-    HRESULT r;
 
-    FIXME("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(szUrl), Flags, TargetFrameName,
+    TRACE("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(szUrl), Flags, TargetFrameName,
           PostData, Headers);
 
-    V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = szUrl;
-    r = IWebBrowser2_Navigate2(iface, &url, Flags,
-                               TargetFrameName, PostData, Headers);
-
-    return r;
+    return navigate_url(&This->doc_host, szUrl, Flags, TargetFrameName, PostData, Headers);
 }
 
 static HRESULT WINAPI WebBrowser_Refresh(IWebBrowser2 *iface)
