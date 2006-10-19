@@ -150,9 +150,11 @@ static HRESULT WINAPI InternetExplorer_Navigate(IWebBrowser2 *iface, BSTR szUrl,
                                   VARIANT *PostData, VARIANT *Headers)
 {
     InternetExplorer *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(szUrl), Flags, TargetFrameName,
+
+    TRACE("(%p)->(%s %p %p %p %p)\n", This, debugstr_w(szUrl), Flags, TargetFrameName,
           PostData, Headers);
-    return E_NOTIMPL;
+
+    return navigate_url(&This->doc_host, szUrl, Flags, TargetFrameName, PostData, Headers);
 }
 
 static HRESULT WINAPI InternetExplorer_Refresh(IWebBrowser2 *iface)
