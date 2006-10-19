@@ -1860,7 +1860,9 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
     UINT r, n, sz, i, mask;
     MSIRECORD *rec = NULL;
     UINT colcol = 0;
+    WCHAR coltable[32];
 
+    coltable[0] = 0;
     TRACE("%p %p %p %s\n", db, stg, st, debugstr_w(name) );
 
     /* read the transform data */
@@ -1937,10 +1939,20 @@ static UINT msi_table_load_transform( MSIDATABASE *db, IStorage *stg,
                  */
                 if (!lstrcmpW(name, szColumns))
                 {
-                    if ( MSI_RecordIsNull( rec, 2 ) )
-                        MSI_RecordSetInteger( rec, 2, ++colcol );
-                    else
-                        ERR("_Columns has non-null data...\n");
+                    WCHAR table[32];
+                    DWORD sz = 32;
+
+                    MSI_RecordGetStringW( rec, 1, table, &sz );
+
+                    /* reset the column number on a new table */
+                    if ( lstrcmpW(coltable, table) )
+                    {
+                        colcol = 0;
+                        lstrcpyW( coltable, table );
+                    }
+
+                    /* fix nul column numbers */
+                    MSI_RecordSetInteger( rec, 2, ++colcol );
                 }
 
                 r = TABLE_insert_row( &tv->view, rec );
