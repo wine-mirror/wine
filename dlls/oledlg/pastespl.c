@@ -415,6 +415,12 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     {
         if(!ps_struct)
             return 0;
+
+        if(ps_struct->ps->lpfnHook)
+        {
+            INT_PTR ret = ps_struct->ps->lpfnHook(hdlg, msg, wp, lp);
+            if(ret) return ret;
+        }
     }
 
     switch(msg)
@@ -442,6 +448,8 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 
         SetFocus(GetDlgItem(hdlg, IDC_PS_DISPLAYLIST));
 
+        if(ps_struct->ps->lpfnHook)
+            ps_struct->ps->lpfnHook(hdlg, msg, 0, 0);
         return FALSE; /* use new focus */
     }
     case WM_COMMAND:
