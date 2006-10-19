@@ -440,7 +440,9 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 
         selection_change(hdlg, ps_struct);
 
-        return TRUE; /* use default focus */
+        SetFocus(GetDlgItem(hdlg, IDC_PS_DISPLAYLIST));
+
+        return FALSE; /* use new focus */
     }
     case WM_COMMAND:
         switch(LOWORD(wp))
