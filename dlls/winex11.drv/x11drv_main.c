@@ -514,7 +514,14 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (use_xkb)
     {
         use_xkb = XkbUseExtension( data->display, NULL, NULL );
-        if (use_xkb) XkbSetDetectableAutoRepeat( data->display, True, NULL );
+        if (use_xkb)
+        {
+            /* Hack: dummy call to XkbKeysymToModifiers to force initialisation of Xkb internals */
+            /* This works around an Xlib bug where it tries to get the display lock */
+            /* twice during XFilterEvents if Xkb hasn't been initialised yet. */
+            XkbKeysymToModifiers( data->display, 'A' );
+            XkbSetDetectableAutoRepeat( data->display, True, NULL );
+        }
     }
 #endif
 
