@@ -20,6 +20,8 @@
 
 #define COM_NO_WINDOWS_H
 #define COBJMACROS
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
 
 #include <stdarg.h>
 
@@ -43,6 +45,11 @@ typedef struct
 {
     OLEUIPASTESPECIALW *ps;
     DWORD flags;
+    WCHAR *source_name;
+    WCHAR *link_source_name;
+    WCHAR *type_name;
+    WCHAR *link_type_name;
+    LPOLESTR app_name;
 } ps_struct_t;
 
 static const struct ps_flag
@@ -118,6 +125,73 @@ static inline WCHAR *strdupAtoW(const char *str)
     ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     return ret;
+}
+
+static inline WCHAR *strdupW(const WCHAR *str)
+{
+    DWORD len;
+    WCHAR *ret;
+    if(!str) return NULL;
+    len = lstrlenW(str) + 1;
+    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    memcpy(ret, str, len * sizeof(WCHAR));
+    return ret;
+}
+
+static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
+{
+    FORMATETC fmtetc;
+    STGMEDIUM stg;
+
+    fmtetc.tymed = TYMED_HGLOBAL;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.ptd = NULL;
+    fmtetc.lindex = -1;
+
+    fmtetc.cfFormat = cf_object_descriptor;
+    if(IDataObject_GetData(ps_struct->ps->lpSrcDataObj, &fmtetc, &stg) == S_OK)
+    {
+        OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.u.hGlobal);
+        if(obj_desc->dwSrcOfCopy)
+            ps_struct->source_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
+        if(obj_desc->dwFullUserTypeName)
+            ps_struct->type_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
+        OleRegGetUserType(&obj_desc->clsid, USERCLASSTYPE_APPNAME, &ps_struct->app_name);
+        /* Get the icon here.  If dwDrawAspect & DVASCPECT_ICON call GetData(CF_METAFILEPICT), otherwise
+           native calls OleGetIconFromClass(obj_desc->clsid) */
+        GlobalUnlock(stg.u.hGlobal);
+        GlobalFree(stg.u.hGlobal);
+    }
+    else
+    {
+        /* Try to get some data using some of the other clipboard formats */
+    }
+
+    fmtetc.cfFormat = cf_link_src_descriptor;
+    if(IDataObject_GetData(ps_struct->ps->lpSrcDataObj, &fmtetc, &stg) == S_OK)
+    {
+        OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.u.hGlobal);
+        if(obj_desc->dwSrcOfCopy)
+            ps_struct->link_source_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
+        if(obj_desc->dwFullUserTypeName)
+            ps_struct->link_type_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
+        GlobalUnlock(stg.u.hGlobal);
+        GlobalFree(stg.u.hGlobal);
+    }
+
+    if(ps_struct->source_name == NULL && ps_struct->link_source_name == NULL)
+    {
+        WCHAR buf[200];
+        LoadStringW(OLEDLG_hInstance, IDS_PS_UNKNOWN_SRC, buf, sizeof(buf)/sizeof(WCHAR));
+        ps_struct->source_name = strdupW(buf);
+    }
+
+    if(ps_struct->type_name == NULL && ps_struct->link_type_name == NULL)
+    {
+        WCHAR buf[200];
+        LoadStringW(OLEDLG_hInstance, IDS_PS_UNKNOWN_TYPE, buf, sizeof(buf)/sizeof(WCHAR));
+        ps_struct->type_name = strdupW(buf);
+    }
 }
 
 static BOOL add_entry_to_lb(HWND hdlg, UINT id, OLEUIPASTEENTRYW *pe)
@@ -397,6 +471,11 @@ static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
 
 static void free_structure(ps_struct_t *ps_struct)
 {
+    HeapFree(GetProcessHeap(), 0, ps_struct->type_name);
+    HeapFree(GetProcessHeap(), 0, ps_struct->source_name);
+    HeapFree(GetProcessHeap(), 0, ps_struct->link_type_name);
+    HeapFree(GetProcessHeap(), 0, ps_struct->link_source_name);
+    CoTaskMemFree(ps_struct->app_name);
     HeapFree(GetProcessHeap(), 0, ps_struct);
 }
 
@@ -429,6 +508,11 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     {
         ps_struct = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps_struct));
         ps_struct->ps = (OLEUIPASTESPECIALW*)lp;
+        ps_struct->type_name = NULL;
+        ps_struct->source_name = NULL;
+        ps_struct->link_type_name = NULL;
+        ps_struct->link_source_name = NULL;
+        ps_struct->app_name = NULL;
         ps_struct->flags = ps_struct->ps->dwFlags;
 
         SetPropW(hdlg, prop_name, ps_struct);
@@ -441,6 +525,8 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
 
         if(ps_struct->ps->lpszCaption)
             SetWindowTextW(hdlg, ps_struct->ps->lpszCaption);
+
+        get_descriptors(hdlg, ps_struct);
 
         init_lists(hdlg, ps_struct);
 
