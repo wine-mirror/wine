@@ -687,6 +687,7 @@ UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA psA)
 UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW ps)
 {
     LPCDLGTEMPLATEW dlg_templ = (LPCDLGTEMPLATEW)ps->hResource;
+    UINT ret;
 
     TRACE("(%p)\n", ps);
 
@@ -708,8 +709,7 @@ UINT WINAPI OleUIPasteSpecialW(LPOLEUIPASTESPECIALW ps)
         if(!dlg_templ) return OLEUI_ERR_LOADTEMPLATEFAILURE;
     }
 
-    DialogBoxIndirectParamW(OLEDLG_hInstance, dlg_templ, ps->hWndOwner, ps_dlg_proc, (LPARAM)ps);
+    ret = DialogBoxIndirectParamW(OLEDLG_hInstance, dlg_templ, ps->hWndOwner, ps_dlg_proc, (LPARAM)ps);
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return OLEUI_FALSE;
+    return ret;
 }
