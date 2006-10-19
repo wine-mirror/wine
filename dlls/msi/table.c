@@ -34,6 +34,7 @@
 #include "winnls.h"
 #include "msipriv.h"
 #include "query.h"
+#include "assert.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -81,7 +82,7 @@ static const WCHAR szStringPool[] = {
 
 static UINT table_get_column_info( MSIDATABASE *db, LPCWSTR name,
        MSICOLUMNINFO **pcols, UINT *pcount );
-static UINT get_tablecolumns( MSIDATABASE *db, 
+static UINT get_tablecolumns( MSIDATABASE *db,
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz);
 static void msi_free_colinfo( MSICOLUMNINFO *colinfo, UINT count );
 
@@ -926,11 +927,13 @@ static LPWSTR msi_makestring( MSIDATABASE *db, UINT stringid)
     return strdupW(msi_string_lookup_id( db->strings, stringid ));
 }
 
-static UINT get_tablecolumns( MSIDATABASE *db, 
+static UINT get_tablecolumns( MSIDATABASE *db,
        LPCWSTR szTableName, MSICOLUMNINFO *colinfo, UINT *sz)
 {
     UINT r, i, n=0, table_id, count, maxcount = *sz;
     MSITABLE *table = NULL;
+
+    TRACE("%s\n", debugstr_w(szTableName));
 
     /* first check if there is a default table with that name */
     r = get_defaulttablecolumns( szTableName, colinfo, sz );
@@ -954,6 +957,8 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 
     TRACE("Table id is %d, row count is %d\n", table_id, table->row_count);
 
+    /* if maxcount is non-zero, assume it's exactly right for this table */
+    memset( colinfo, 0, maxcount*sizeof(*colinfo) );
     count = table->row_count;
     for( i=0; i<count; i++ )
     {
@@ -962,32 +967,53 @@ static UINT get_tablecolumns( MSIDATABASE *db,
         if( colinfo )
         {
             UINT id = table->data[ i ] [ 2 ];
-            colinfo[n].tablename = msi_makestring( db, table_id );
-            colinfo[n].number = table->data[ i ][ 1 ] - (1<<15);
-            colinfo[n].colname = msi_makestring( db, id );
-            colinfo[n].type = table->data[ i ] [ 3 ] ^ 0x8000;
-            colinfo[n].hash_table = NULL;
-            /* this assumes that columns are in order in the table */
-            if( n )
-                colinfo[n].offset = colinfo[n-1].offset
-                                  + bytes_per_column( &colinfo[n-1] );
-            else
-                colinfo[n].offset = 0;
-            TRACE("table %s column %d is [%s] (%d) with type %08x "
-                  "offset %d at row %d\n", debugstr_w(szTableName),
-                   colinfo[n].number, debugstr_w(colinfo[n].colname),
-                   id, colinfo[n].type, colinfo[n].offset, i);
-            if( n != (colinfo[n].number-1) )
+            UINT col = table->data[ i ][ 1 ] - (1<<15);
+
+            /* check the column number is in range */
+            if (col<1 || col>maxcount)
             {
-                ERR("oops. data in the _Columns table isn't in the right "
-                    "order for table %s\n", debugstr_w(szTableName));
-                msi_free_colinfo(colinfo, n+1 );
-                return ERROR_FUNCTION_FAILED;
+                ERR("column %d out of range\n", col);
+                continue;
             }
+
+            /* check if this column was already set */
+            if (colinfo[ col - 1 ].number)
+            {
+                ERR("duplicate column %d\n", col);
+                continue;
+            }
+
+            colinfo[ col - 1 ].tablename = msi_makestring( db, table_id );
+            colinfo[ col - 1 ].number = col;
+            colinfo[ col - 1 ].colname = msi_makestring( db, id );
+            colinfo[ col - 1 ].type = table->data[ i ] [ 3 ] - (1<<15);
+            colinfo[ col - 1 ].offset = 0;
+            colinfo[ col - 1 ].hash_table = NULL;
         }
         n++;
-        if( colinfo && ( n >= maxcount ) )
-            break;
+    }
+
+    TRACE("%s has %d columns\n", debugstr_w(szTableName), n);
+
+    if (maxcount && n != maxcount)
+    {
+        ERR("missing column in table %s\n", debugstr_w(szTableName));
+        msi_free_colinfo(colinfo, maxcount );
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    /* calculate the offsets */
+    for( i=0; maxcount && (i<maxcount); i++ )
+    {
+         assert( (i+1) == colinfo[ i ].number );
+         if (i)
+             colinfo[i].offset = colinfo[ i - 1 ].offset
+                               + bytes_per_column( &colinfo[ i - 1 ] );
+         else
+             colinfo[i].offset = 0;
+         TRACE("column %d is [%s] with type %08x ofs %d\n",
+               colinfo[i].number, debugstr_w(colinfo[i].colname),
+               colinfo[i].type, colinfo[i].offset);
     }
     *sz = n;
 
