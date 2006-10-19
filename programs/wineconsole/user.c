@@ -926,7 +926,7 @@ static void WCUSER_HandleSelectionKey(struct inner_data* data, BOOL down,
     DWORD       state = WCUSER_GetCtrlKeyState(keyState) & ~(CAPSLOCK_ON|NUMLOCK_ON|SCROLLLOCK_ON);
     COORD       c1, c2;
 
-    if (down) return;
+    if (!down) return;
 
     switch (state)
     {
