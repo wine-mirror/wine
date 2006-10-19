@@ -192,7 +192,7 @@ HRESULT WebBrowserV2_Create(IUnknown*,REFIID,void**);
 void create_doc_view_hwnd(DocHost*);
 void deactivate_document(DocHost*);
 void call_sink(ConnectionPoint*,DISPID,DISPPARAMS*);
-HRESULT navigate_url(DocHost*,LPCWSTR,PBYTE,ULONG,LPWSTR);
+HRESULT navigate_url(DocHost*,BSTR,VARIANT*,VARIANT*,VARIANT*,VARIANT*);
 
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
 void InternetExplorer_WebBrowser_Init(InternetExplorer*);

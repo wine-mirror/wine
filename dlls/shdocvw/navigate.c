@@ -476,7 +476,7 @@ static HRESULT navigate(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
 
 }
 
-HRESULT navigate_url(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_data_len,
+static HRESULT bind_url_to_object(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_data_len,
                      LPWSTR headers)
 {
     IBindStatusCallback *callback;
@@ -503,6 +503,47 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, PBYTE post_data, ULONG post_dat
     hres = navigate(This, mon, bindctx, callback);
 
     IMoniker_Release(mon);
+
+    return hres;
+}
+
+HRESULT navigate_url(DocHost *This, BSTR url, VARIANT *Flags, VARIANT *TargetFrameName,
+        VARIANT *PostData, VARIANT *Headers)
+{
+    PBYTE post_data = NULL;
+    ULONG post_data_len = 0;
+    LPWSTR headers = NULL;
+    HRESULT hres;
+
+    TRACE("navigating to %s\n", debugstr_w(url));
+
+    if((Flags && V_VT(Flags) != VT_EMPTY) 
+       || (TargetFrameName && V_VT(TargetFrameName) != VT_EMPTY))
+        FIXME("Unsupported arguments\n");
+
+    if(PostData && V_VT(PostData) != VT_EMPTY && V_VT(PostData) != VT_ERROR) {
+        if(V_VT(PostData) != (VT_ARRAY | VT_UI1)
+           || V_ARRAY(PostData)->cDims != 1) {
+            WARN("Invalid PostData\n");
+            return E_INVALIDARG;
+        }
+
+        SafeArrayAccessData(V_ARRAY(PostData), (void**)&post_data);
+        post_data_len = V_ARRAY(PostData)->rgsabound[0].cElements;
+    }
+
+    if(Headers && V_VT(Headers) != VT_EMPTY && V_VT(Headers) != VT_ERROR) {
+        if(V_VT(Headers) != VT_BSTR)
+            return E_INVALIDARG;
+
+        headers = V_BSTR(Headers);
+        TRACE("Headers: %s\n", debugstr_w(headers));
+    }
+
+    hres = bind_url_to_object(This, url, post_data, post_data_len, headers);
+
+    if(post_data)
+        SafeArrayUnaccessData(V_ARRAY(PostData));
 
     return hres;
 }
