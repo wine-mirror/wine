@@ -22,9 +22,11 @@
 #include "wine/port.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include "wine/server.h"
 #include "winecon_private.h"
 #include "winnls.h"
+#include "winuser.h"
 
 #include "wine/debug.h"
 
@@ -34,6 +36,27 @@ void WINECON_Fatal(const char* msg)
 {
     WINE_ERR("%s\n", msg);
     ExitProcess(0);
+}
+
+static void printf_res(UINT uResId, ...)
+{
+    WCHAR buffer[1024];
+    CHAR ansi[1024];
+    va_list args;
+
+    va_start(args, uResId);
+    LoadStringW(GetModuleHandle(NULL), uResId, buffer, sizeof(buffer)/sizeof(WCHAR));
+    WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, ansi, sizeof(ansi), NULL, NULL);
+    vprintf(ansi, args);
+    va_end(args);
+}
+
+static void WINECON_Usage()
+{
+    printf_res(IDS_USAGE_HEADER);
+    printf_res(IDS_USAGE_BACKEND);
+    printf_res(IDS_USAGE_COMMAND);
+    printf_res(IDS_USAGE_FOOTER);
 }
 
 /******************************************************************
@@ -729,12 +752,16 @@ struct wc_init {
     HANDLE              event;
 };
 
+#define WINECON_CMD_SHOW_USAGE 0x10000
+
 /******************************************************************
  *		 WINECON_ParseOptions
  *
- *
+ * RETURNS
+ *   On success: 0
+ *   On error:   error string id optionaly with the CMD_SHOW_USAGE flag
  */
-static BOOL WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
+static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
 {
     memset(wci, 0, sizeof(*wci));
     wci->ptr = lpCmdLine;
@@ -749,7 +776,7 @@ static BOOL WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
         {
             char*           end;
             wci->event = (HANDLE)strtol(wci->ptr + 12, &end, 10);
-            if (end == wci->ptr + 12) return FALSE;
+            if (end == wci->ptr + 12) return IDS_CMD_INVALID_EVENT_ID;
             wci->mode = from_event;
             wci->ptr = end;
             wci->backend = WCUSER_InitBackend;
@@ -766,13 +793,20 @@ static BOOL WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
                 wci->ptr += 16;
             }
             else
-                return FALSE;
+                return IDS_CMD_INVALID_BACKEND;
         }
         else
-            return FALSE;
+            return IDS_CMD_INVALID_OPTION|WINECON_CMD_SHOW_USAGE;
     }
 
-    return TRUE;
+    if (wci->mode == from_event)
+        return 0;
+
+    while (*wci->ptr == ' ' || *wci->ptr == '\t') wci->ptr++;
+    if (*wci->ptr == 0)
+        return IDS_CMD_ABOUT|WINECON_CMD_SHOW_USAGE;
+
+    return 0;
 }
 
 /******************************************************************
@@ -790,9 +824,11 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
     int			ret = 1;
     struct wc_init      wci;
 
-    if (!WINECON_ParseOptions(lpCmdLine, &wci))
+    if ((ret = WINECON_ParseOptions(lpCmdLine, &wci)) != 0)
     {
-        WINE_ERR("Wrong command line options\n");
+        printf_res(ret & 0xffff);
+        if (ret & WINECON_CMD_SHOW_USAGE)
+            WINECON_Usage();
         return 0;
     }
 
@@ -814,7 +850,11 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
                 return 0;
             ret = WINECON_Spawn(data, buffer);
             if (!ret)
-                WINE_MESSAGE("wineconsole: spawning client program failed (%s), invalid/missing command line arguments ?\n", wine_dbgstr_w(buffer));
+            {
+                WINECON_Delete(data);
+                printf_res(IDS_CMD_LAUNCH_FAILED, wine_dbgstr_a(wci.ptr));
+                return 0;
+            }
         }
         break;
     default:

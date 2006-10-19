@@ -40,6 +40,17 @@
 #define IDS_FNT_PREVIEW_1	0x201
 #define IDS_FNT_PREVIEW_2	0x202
 
+#define IDS_CMD_INVALID_EVENT_ID   0x300
+#define IDS_CMD_INVALID_BACKEND    0x301
+#define IDS_CMD_INVALID_OPTION     0x302
+#define IDS_CMD_ABOUT              0x303
+#define IDS_CMD_LAUNCH_FAILED      0x304
+
+#define IDS_USAGE_HEADER           0x310
+#define IDS_USAGE_BACKEND          0x311
+#define IDS_USAGE_COMMAND          0x312
+#define IDS_USAGE_FOOTER           0x313
+
 /* dialog boxes */
 #define IDD_OPTION		0x0100
 #define IDD_FONT		0x0200
