@@ -236,7 +236,7 @@ static DWORD init_pastelist(HWND hdlg, OLEUIPASTESPECIALW *ps)
         DWORD src_fmt, req_fmt;
         for(req_fmt = 0; req_fmt < ps->cPasteEntries; req_fmt++)
         {
-            /* This is used by update_struct() to set nSelectedIndex on exit */
+            /* This is used by update_structure() to set nSelectedIndex on exit */
             ps->arrPasteEntries[req_fmt].dwScratchSpace = req_fmt;
             TRACE("req_fmt %x\n", ps->arrPasteEntries[req_fmt].fmtetc.cfFormat);
             for(src_fmt = 0; src_fmt < fetched; src_fmt++)
@@ -465,6 +465,13 @@ static void send_end_dialog_msg(HWND hdlg, ps_struct_t *ps_struct, UINT id)
 
 static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
 {
+    LONG cur_sel = SendMessageW(GetDlgItem(hdlg, IDC_PS_DISPLAYLIST), LB_GETCURSEL, 0, 0);
+    if(cur_sel != -1)
+    {
+        OLEUIPASTEENTRYW *pent;
+        pent = (OLEUIPASTEENTRYW *)SendMessageW(GetDlgItem(hdlg, IDC_PS_DISPLAYLIST), LB_GETITEMDATA, cur_sel, 0);
+        ps_struct->ps->nSelectedIndex = pent->dwScratchSpace;
+    }
     ps_struct->ps->dwFlags = ps_struct->flags;
     ps_struct->ps->fLink = (ps_struct->flags & PSF_SELECTPASTELINK) ? TRUE : FALSE;
 }
