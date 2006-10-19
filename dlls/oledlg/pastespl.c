@@ -364,6 +364,29 @@ static void init_lists(HWND hdlg, ps_struct_t *ps_struct)
         EnableWindow(GetDlgItem(hdlg, IDOK), 0);
 }
 
+static void update_src_text(HWND hdlg, ps_struct_t *ps_struct)
+{
+    WCHAR *str;
+
+    if(ps_struct->flags & PSF_SELECTPASTE)
+    {
+        if(ps_struct->source_name)
+            str = ps_struct->source_name;
+        else
+            str = ps_struct->link_source_name;
+
+    }
+    else
+    {
+        if(ps_struct->link_source_name)
+            str = ps_struct->link_source_name;
+        else
+            str = ps_struct->source_name;
+
+    }
+    SetDlgItemTextW(hdlg, IDC_PS_SOURCETEXT, str);
+}
+
 static void update_as_icon(HWND hdlg, ps_struct_t *ps_struct)
 {
     HWND icon_display = GetDlgItem(hdlg, IDC_PS_ICONDISPLAY);
@@ -449,6 +472,7 @@ static void mode_change(HWND hdlg, ps_struct_t *ps_struct, UINT id)
         ps_struct->flags |= PSF_SELECTPASTELINK;
     }
 
+    update_src_text(hdlg, ps_struct);
     update_display_list(hdlg, id == IDC_PS_PASTE ? IDC_PS_PASTELIST : IDC_PS_PASTELINKLIST);
     selection_change(hdlg, ps_struct);
 }
@@ -536,6 +560,8 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
         get_descriptors(hdlg, ps_struct);
 
         init_lists(hdlg, ps_struct);
+
+        update_src_text(hdlg, ps_struct);
 
         selection_change(hdlg, ps_struct);
 
