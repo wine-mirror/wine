@@ -388,7 +388,9 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
                 type = type_char;
                 sprintfW(size, size_fmt, ptr);
                 break;
-            case 'I': case 'i':
+            case 'i':
+                lstrcpyW(extra, type_notnull);
+            case 'I':
                 if (len == 2)
                     type = type_int;
                 else

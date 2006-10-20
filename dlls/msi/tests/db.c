@@ -1433,17 +1433,14 @@ static void test_msiimport(void)
     count = MsiRecordGetFieldCount(rec);
     ok(count == 9, "Expected 9, got %d\n", count);
     ok(check_record(rec, 1, "s255"), "Expected s255\n");
+    ok(check_record(rec, 2, "i2"), "Expected i2\n");
+    ok(check_record(rec, 3, "i2"), "Expected i2\n");
     ok(check_record(rec, 4, "I2"), "Expected I2\n");
+    ok(check_record(rec, 5, "i4"), "Expected i4\n");
     ok(check_record(rec, 6, "I4"), "Expected I4\n");
     ok(check_record(rec, 7, "S255"), "Expected S255\n");
     ok(check_record(rec, 8, "S0"), "Expected S0\n");
     ok(check_record(rec, 9, "s0"), "Expected s0\n");
-    todo_wine
-    {
-        ok(check_record(rec, 2, "i2"), "Expected i2\n");
-        ok(check_record(rec, 3, "i2"), "Expected i2\n");
-        ok(check_record(rec, 5, "i4"), "Expected i4\n");
-    }
     MsiCloseHandle(rec);
 
     query = "SELECT * FROM `TestTable`";
