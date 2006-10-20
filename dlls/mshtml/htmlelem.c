@@ -188,8 +188,28 @@ static HRESULT WINAPI HTMLElement_put_className(IHTMLElement *iface, BSTR v)
 static HRESULT WINAPI HTMLElement_get_className(IHTMLElement *iface, BSTR *p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsAString class_str;
+    nsresult nsres;
+    HRESULT hres = S_OK;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsAString_Init(&class_str, NULL);
+    nsres = nsIDOMHTMLElement_GetClassName(This->nselem, &class_str);
+
+    if(NS_SUCCEEDED(nsres)) {
+        const PRUnichar *class;
+        nsAString_GetData(&class_str, &class, NULL);
+        *p = SysAllocString(class);
+    }else {
+        ERR("GetClassName failed: %08x\n", nsres);
+        hres = E_FAIL;
+    }
+
+    nsAString_Finish(&class_str);
+
+    TRACE("className=%s\n", debugstr_w(*p));
+    return hres;
 }
 
 static HRESULT WINAPI HTMLElement_put_id(IHTMLElement *iface, BSTR v)
