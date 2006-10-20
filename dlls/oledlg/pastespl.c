@@ -605,8 +605,14 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
             }
         case IDOK:
         case IDCANCEL:
-            send_end_dialog_msg(hdlg, ps_struct, LOWORD(wp));
-            return FALSE;
+            switch(HIWORD(wp))
+            {
+            case BN_CLICKED:
+                send_end_dialog_msg(hdlg, ps_struct, LOWORD(wp));
+                return FALSE;
+            default:
+                return FALSE;
+            }
         }
         return FALSE;
     default:
