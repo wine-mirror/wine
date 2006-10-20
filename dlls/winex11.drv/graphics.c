@@ -243,9 +243,7 @@ BOOL X11DRV_SetupGCForPen( X11DRV_PDEVICE *physDev )
 	val.join_style = JoinRound;
     }
     wine_tsx11_lock();
-    if ((physDev->pen.width <= 1) &&
-        (physDev->pen.style != PS_SOLID) &&
-        (physDev->pen.style != PS_INSIDEFRAME))
+    if (physDev->pen.width <= 1 && physDev->pen.dash_len)
     {
         XSetDashes( gdi_display, physDev->gc, 0, physDev->pen.dashes, physDev->pen.dash_len );
         val.line_style = (GetBkMode(physDev->hdc) == OPAQUE) ? LineDoubleDash : LineOnOffDash;

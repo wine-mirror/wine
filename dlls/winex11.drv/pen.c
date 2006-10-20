@@ -98,7 +98,11 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 	break;
       case PS_USERSTYLE:
         FIXME("PS_USERSTYLE is not supported\n");
-	break;
+        /* fall through */
+      default:
+        physDev->pen.dashes = NULL;
+        physDev->pen.dash_len = 0;
+        break;
     }
     return hpen;
 }
