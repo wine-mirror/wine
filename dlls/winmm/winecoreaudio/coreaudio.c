@@ -70,7 +70,7 @@ static LRESULT CoreAudio_drvOpen(LPSTR str)
  */
 static DWORD CoreAudio_drvClose(DWORD dwDevID)
 {
-    TRACE("(%08lx)\n", dwDevID);
+    TRACE("(%08x)\n", dwDevID);
     return 1;
 }
 #endif /* HAVE_COREAUDIO_COREAUDIO_H */
