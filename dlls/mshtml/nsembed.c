@@ -228,7 +228,7 @@ static BOOL load_mozctl(PRUnichar *gre_path)
             WCHAR *ptr;
             if((ptr = strrchrW(gre_path, '\\')))
                 ptr[1] = 0;
-            load_xpcom(gre_path);
+            return load_xpcom(gre_path);
         }else {
             ERR("Could not get value of %s\n", debugstr_w(wszMozCtlClsidKey));
         }
