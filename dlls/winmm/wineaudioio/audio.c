@@ -184,19 +184,19 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
                              PCMWAVEFORMAT* format)
 {
-    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%lu nChannels=%u nAvgBytesPerSec=%lu\n",
+    TRACE("wType=%04X wBitsPerSample=%u nSamplesPerSec=%u nChannels=%u nAvgBytesPerSec=%u\n",
           lpTime->wType, format->wBitsPerSample, format->wf.nSamplesPerSec,
           format->wf.nChannels, format->wf.nAvgBytesPerSec);
-    TRACE("Position in bytes=%lu\n", position);
+    TRACE("Position in bytes=%u\n", position);
 
     switch (lpTime->wType) {
     case TIME_SAMPLES:
         lpTime->u.sample = position / (format->wBitsPerSample / 8 * format->wf.nChannels);
-        TRACE("TIME_SAMPLES=%lu\n", lpTime->u.sample);
+        TRACE("TIME_SAMPLES=%u\n", lpTime->u.sample);
         break;
     case TIME_MS:
         lpTime->u.ms = 1000.0 * position / (format->wBitsPerSample / 8 * format->wf.nChannels * format->wf.nSamplesPerSec);
-        TRACE("TIME_MS=%lu\n", lpTime->u.ms);
+        TRACE("TIME_MS=%u\n", lpTime->u.ms);
         break;
     case TIME_SMPTE:
         lpTime->u.smpte.fps = 30;
@@ -220,7 +220,7 @@ static DWORD bytes_to_mmtime(LPMMTIME lpTime, DWORD position,
         /* fall through */
     case TIME_BYTES:
         lpTime->u.cb = position;
-        TRACE("TIME_BYTES=%lu\n", lpTime->u.cb);
+        TRACE("TIME_BYTES=%u\n", lpTime->u.cb);
         break;
     }
     return MMSYSERR_NOERROR;
@@ -324,7 +324,7 @@ LONG LIBAUDIOIO_WaveInit(void)
  * Note that libaudioio audio capture is not proven yet, in our open call
  * set the spec for input audio the same as for output
  */
-    TRACE("out dwFormats = %08lX, dwSupport = %08lX\n",
+    TRACE("out dwFormats = %08X, dwSupport = %08X\n",
 	  WOutDev[0].caps.dwFormats, WOutDev[0].caps.dwSupport);
 
     for (i = 0; i < MAX_WAVEINDRV; ++i)
@@ -350,7 +350,7 @@ LONG LIBAUDIOIO_WaveInit(void)
 		WInDev[0].caps.dwFormats |= WAVE_FORMAT_4S16;
 
 
-    TRACE("in dwFormats = %08lX\n", WInDev[0].caps.dwFormats);
+    TRACE("in dwFormats = %08X\n", WInDev[0].caps.dwFormats);
 
     return 0;
 }
@@ -360,7 +360,7 @@ LONG LIBAUDIOIO_WaveInit(void)
  */
 static DWORD LIBAUDIOIO_NotifyClient(UINT wDevID, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("wDevID = %04X wMsg = 0x%04x dwParm1 = %04lX dwParam2 = %04lX\n",wDevID, wMsg, dwParam1, dwParam2);
+    TRACE("wDevID = %04X wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n",wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
     case WOM_OPEN:
@@ -421,7 +421,7 @@ static	BOOL	wodPlayer_WriteFragments(WINE_WAVEOUT* wwo)
     LPBYTE		lpData;
     int			count;
 
-TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
+    TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
     for (;;) {
 
 
@@ -445,12 +445,12 @@ TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
 	}
 
 	if (wwo->dwOffCurrHdr == 0) {
-	    TRACE("Starting a new wavehdr %p of %ld bytes\n", lpWaveHdr, lpWaveHdr->dwBufferLength);
+	    TRACE("Starting a new wavehdr %p of %d bytes\n", lpWaveHdr, lpWaveHdr->dwBufferLength);
 	    if (lpWaveHdr->dwFlags & WHDR_BEGINLOOP) {
 		if (wwo->lpLoopPtr) {
 		    WARN("Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
 		} else {
-		    TRACE("Starting loop (%ldx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+		    TRACE("Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 		    wwo->lpLoopPtr = lpWaveHdr;
 		    /* Windows does not touch WAVEHDR.dwLoops,
 		     * so we need to make an internal copy */
@@ -467,7 +467,7 @@ TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
 
 	    /* write end of current wave hdr */
 	    count = AudioIOWrite(lpData + wwo->dwOffCurrHdr, toWrite);
-	    TRACE("write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, toWrite, count);
+	    TRACE("write(%p[%5u], %5u) => %d\n", lpData, wwo->dwOffCurrHdr, toWrite, count);
 
 	    if (count > 0 || toWrite == 0) {
 		DWORD	tc = GetTickCount();
@@ -477,7 +477,7 @@ TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
 		wwo->dwLastFragDone += (toWrite * 1000) / wwo->format.wf.nAvgBytesPerSec;
 
 		lpWaveHdr->reserved = wwo->dwLastFragDone;
-		TRACE("Tagging hdr %p with %08lx\n", lpWaveHdr, wwo->dwLastFragDone);
+		TRACE("Tagging hdr %p with %08x\n", lpWaveHdr, wwo->dwLastFragDone);
 
 		/* WAVEHDR written, go to next one */
 		if ((lpWaveHdr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr) {
@@ -508,7 +508,7 @@ TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
 	    continue; /* try to go to use next wavehdr */
 	}  else	{
 	    count = AudioIOWrite( lpData + wwo->dwOffCurrHdr, wwo->dwRemain);
-	    TRACE("write(%p[%5lu], %5lu) => %d\n", lpData, wwo->dwOffCurrHdr, wwo->dwRemain, count);
+	    TRACE("write(%p[%5u], %5u) => %d\n", lpData, wwo->dwOffCurrHdr, wwo->dwRemain, count);
 	    if (count > 0) {
 		DWORD	tc = GetTickCount();
 
@@ -516,7 +516,7 @@ TRACE("wodPlayer_WriteFragments sammplerate= %d\n",spec[CLIENT_PLAYBACK].rate);
 		    wwo->dwLastFragDone = tc;
 		wwo->dwLastFragDone += (wwo->dwRemain * 1000) / wwo->format.wf.nAvgBytesPerSec;
 
-		TRACE("Tagging frag with %08lx\n", wwo->dwLastFragDone);
+		TRACE("Tagging frag with %08x\n", wwo->dwLastFragDone);
 
 		wwo->dwOffCurrHdr += count;
 		wwo->dwRemain = wwo->dwFragmentSize;
@@ -686,10 +686,10 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
 	        dwSleepTime = 0;
 	}
 
-	TRACE("imhere[1] tc = %08lx\n", GetTickCount());
+	TRACE("imhere[1] tc = %08x\n", GetTickCount());
 	if (dwSleepTime)
 	    WaitForSingleObject(wwo->msg_event, dwSleepTime);
-	TRACE("imhere[2] (q=%p p=%p) tc = %08lx\n", wwo->lpQueuePtr,
+	TRACE("imhere[2] (q=%p p=%p) tc = %08x\n", wwo->lpQueuePtr,
 	      wwo->lpPlayPtr, GetTickCount());
 	had_msg = FALSE;
 	    	TRACE("Looking for message\n");
@@ -766,7 +766,7 @@ static	DWORD	CALLBACK	wodPlayer(LPVOID pmt)
  */
 static DWORD wodGetDevCaps(WORD wDevID, LPWAVEOUTCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -792,7 +792,7 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     int			audio_fragment;
     WINE_WAVEOUT*	wwo;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
@@ -807,14 +807,14 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	lpDesc->lpFormat->nChannels == 0 ||
 	lpDesc->lpFormat->nSamplesPerSec == 0 ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -915,12 +915,12 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	wwo->dwThreadID = 0;
     }
 
-    TRACE("fd=%d fragmentSize=%ld\n",
+    TRACE("fd=%d fragmentSize=%d\n",
 	  wwo->unixdev, wwo->dwFragmentSize);
     if (wwo->dwFragmentSize % wwo->format.wf.nBlockAlign)
 	ERR("Fragment doesn't contain an integral number of data blocks\n");
 
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwo->format.wBitsPerSample, wwo->format.wf.nAvgBytesPerSec,
 	  wwo->format.wf.nSamplesPerSec, wwo->format.wf.nChannels,
 	  wwo->format.wf.nBlockAlign);
@@ -980,7 +980,7 @@ static DWORD wodClose(WORD wDevID)
  */
 static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     /* first, do the sanity checks... */
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
@@ -1079,7 +1079,7 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEOUT*	wwo;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= MAX_WAVEOUTDRV || WOutDev[wDevID].unixdev == -1) {
 	WARN("bad device ID !\n");
@@ -1098,7 +1098,6 @@ static DWORD wodGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
  */
 static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
 {
-    int 	mixer;
     int		vol,bal;
     DWORD	left, right;
 
@@ -1131,11 +1130,10 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
  */
 static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
 {
-    int 	mixer;
     int		volume,bal;
     DWORD	left, right;
 
-    TRACE("(%u, %08lX);\n", wDevID, dwParam);
+    TRACE("(%u, %08X);\n", wDevID, dwParam);
 
     left  = (LOWORD(dwParam) * 100) / 0xFFFFl;
     right = (HIWORD(dwParam) * 100) / 0xFFFFl;
@@ -1177,7 +1175,7 @@ static	DWORD	wodGetNumDevs(void)
 DWORD WINAPI LIBAUDIOIO_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -1231,7 +1229,7 @@ struct IDsDriverImpl
 {
     /* IUnknown fields */
     const IDsDriverVtbl *lpVtbl;
-    DWORD		ref;
+    LONG		ref;
     /* IDsDriverImpl fields */
     UINT		wDevID;
     IDsDriverBufferImpl*primary;
@@ -1241,7 +1239,7 @@ struct IDsDriverBufferImpl
 {
     /* IUnknown fields */
     const IDsDriverBufferVtbl *lpVtbl;
-    DWORD		ref;
+    LONG		ref;
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl*	drv;
     DWORD		buflen;
@@ -1257,7 +1255,7 @@ static HRESULT DSDB_MapPrimary(IDsDriverBufferImpl *dsdb)
 	    ERR("(%p): Could not map sound device for direct access (errno=%d)\n", dsdb, errno);
 	    return DSERR_GENERIC;
 	}
-	TRACE("(%p): sound device has been mapped for direct access at %p, size=%ld\n", dsdb, wwo->mapping, wwo->maplen);
+	TRACE("(%p): sound device has been mapped for direct access at %p, size=%d\n", dsdb, wwo->mapping, wwo->maplen);
 
 	/* for some reason, es1371 and sblive! sometimes have junk in here. */
 	memset(wwo->mapping,0,wwo->maplen); /* clear it, or we get junk noise */
@@ -1346,7 +1344,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetFormat(PIDSDRIVERBUFFER iface,
 static HRESULT WINAPI IDsDriverBufferImpl_SetFrequency(PIDSDRIVERBUFFER iface, DWORD dwFreq)
 {
     /* IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface; */
-    TRACE("(%p,%ld): stub\n",iface,dwFreq);
+    TRACE("(%p,%d): stub\n",iface,dwFreq);
     return DSERR_UNSUPPORTED;
 }
 
@@ -1360,7 +1358,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, P
 static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
 {
     /* IDsDriverImpl *This = (IDsDriverImpl *)iface; */
-    TRACE("(%p,%ld): stub\n",iface,dwNewPos);
+    TRACE("(%p,%d): stub\n",iface,dwNewPos);
     return DSERR_UNSUPPORTED;
 }
 
@@ -1371,7 +1369,6 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 #if 0
     count_info info;
 #endif
-    DWORD ptr;
 
     TRACE("(%p)\n",iface);
     if (WOutDev[This->drv->wDevID].unixdev == -1) {
@@ -1385,8 +1382,8 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 
 static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
 {
-    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
 #if 0
+    IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     int enable = PCM_ENABLE_OUTPUT;
     TRACE("(%p,%lx,%lx,%lx)\n",iface,dwRes1,dwRes2,dwFlags);
     if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
@@ -1399,9 +1396,9 @@ static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwR
 
 static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 {
+#if 0
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     int enable = 0;
-#if 0
     TRACE("(%p)\n",iface);
     /* no more playing */
     if (ioctl(WOutDev[This->drv->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
@@ -1487,12 +1484,12 @@ static HRESULT WINAPI IDsDriverImpl_GetDriverDesc(PIDSDRIVER iface, PDSDRIVERDES
 
 static HRESULT WINAPI IDsDriverImpl_Open(PIDSDRIVER iface)
 {
+#if 0
     IDsDriverImpl *This = (IDsDriverImpl *)iface;
     int enable = 0;
 
     TRACE("(%p)\n",iface);
     /* make sure the card doesn't start playing before we want it to */
-#if 0
     if (ioctl(WOutDev[This->wDevID].unixdev, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {
 	ERR("ioctl failed (%d)\n", errno);
 	return DSERR_GENERIC;
@@ -1540,10 +1537,10 @@ static HRESULT WINAPI IDsDriverImpl_CreateSoundBuffer(PIDSDRIVER iface,
     HRESULT err;
 #if 0
     audio_buf_info info;
-#endif
     int enable = 0;
+#endif
 
-    TRACE("(%p,%p,%lx,%lx)\n",iface,pwfx,dwFlags,dwCardAddress);
+    TRACE("(%p,%p,%x,%x)\n",iface,pwfx,dwFlags,dwCardAddress);
     /* we only support primary buffers */
     if (!(dwFlags & DSBCAPS_PRIMARYBUFFER))
 	return DSERR_UNSUPPORTED;
@@ -1660,7 +1657,7 @@ static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc)
  */
 static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 {
-    TRACE("(%u, %p, %lu);\n", wDevID, lpCaps, dwSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
 
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
 
@@ -1691,14 +1688,11 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 	int fragstotal;
 	int bytes;
 
-
-    int xs;
-
 	LPVOID		buffer = HeapAlloc(GetProcessHeap(),
 		                           HEAP_ZERO_MEMORY,
        		                       wwi->dwFragmentSize);
 
-    LPVOID		pOffset = buffer;
+    BYTE *pOffset = buffer;
 
     PeekMessageA(&msg, 0, 0, 0, 0);
     wwi->state = WINE_WS_STOPPED;
@@ -1709,7 +1703,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 
 	/* make sleep time to be # of ms to output a fragment */
     dwSleepTime = (wwi->dwFragmentSize * 1000) / wwi->format.wf.nAvgBytesPerSec;
-    TRACE("sleeptime=%ld ms\n", dwSleepTime);
+    TRACE("sleeptime=%d ms\n", dwSleepTime);
 
     for (; ; ) {
 	/* wait for dwSleepTime or an event in thread's queue */
@@ -1722,7 +1716,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
             lpWaveHdr = wwi->lpQueuePtr;
 
 	    bytes=fragsize=AudioIORecordingAvailable();
-       fragments=fragstotal=1;
+            fragments=fragstotal=1;
 
             TRACE("info={frag=%d fsize=%d ftotal=%d bytes=%d}\n", fragments, fragsize, fragstotal, bytes);
 
@@ -1739,7 +1733,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
 		      		     lpWaveHdr->lpData + lpWaveHdr->dwBytesRecorded,
                                      wwi->dwFragmentSize);
 
-                    TRACE("bytesRead=%ld (direct)\n", bytesRead);
+                    TRACE("bytesRead=%d (direct)\n", bytesRead);
 		    if (bytesRead != (DWORD) -1)
 		    {
 			/* update number of bytes recorded in current buffer and by this device */
@@ -1772,7 +1766,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                     bytesRead = AudioIORead( buffer, wwi->dwFragmentSize);
                     pOffset = buffer;
 
-                    TRACE("bytesRead=%ld (local)\n", bytesRead);
+                    TRACE("bytesRead=%d (local)\n", bytesRead);
 
                     /* copy data in client buffers */
                     while (bytesRead != (DWORD) -1 && bytesRead > 0)
@@ -1812,7 +1806,7 @@ static	DWORD	CALLBACK	widRecorder(LPVOID pmt)
                                 /* no more buffer to copy data to, but we did read more.
                                  * what hasn't been copied will be dropped
                                  */
-                                WARN("buffer under run! %lu bytes dropped.\n", bytesRead);
+                                WARN("buffer under run! %u bytes dropped.\n", bytesRead);
                                 wwi->lpQueuePtr = NULL;
                                 break;
                             }
@@ -1913,7 +1907,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     WINE_WAVEIN*	wwi;
     int			audio_fragment;
 
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpDesc, dwFlags);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL) {
 	WARN("Invalid Parameter !\n");
 	return MMSYSERR_INVALPARAM;
@@ -1925,14 +1919,14 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 	lpDesc->lpFormat->nChannels == 0 ||
 	lpDesc->lpFormat->nSamplesPerSec == 0 ||
         (lpDesc->lpFormat->wBitsPerSample!=8 && lpDesc->lpFormat->wBitsPerSample!=16)) {
-	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return WAVERR_BADFORMAT;
     }
 
     if (dwFlags & WAVE_FORMAT_QUERY) {
-	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%ld !\n",
+	TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
 	     lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
 	     lpDesc->lpFormat->nSamplesPerSec);
 	return MMSYSERR_NOERROR;
@@ -1986,7 +1980,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     }
     wwi->dwFragmentSize = fragment_size;
 
-    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%lu, nSamplesPerSec=%lu, nChannels=%u nBlockAlign=%u!\n",
+    TRACE("wBitsPerSample=%u, nAvgBytesPerSec=%u, nSamplesPerSec=%u, nChannels=%u nBlockAlign=%u!\n",
 	  wwi->format.wBitsPerSample, wwi->format.wf.nAvgBytesPerSec,
 	  wwi->format.wf.nSamplesPerSec, wwi->format.wf.nChannels,
 	  wwi->format.wf.nBlockAlign);
@@ -2042,7 +2036,7 @@ static DWORD widClose(WORD wDevID)
  */
 static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
-    TRACE("(%u, %p, %08lX);\n", wDevID, lpWaveHdr, dwSize);
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't do it !\n");
@@ -2121,7 +2115,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 {
     WINE_WAVEIN*	wwi;
 
-    TRACE("(%u, %p, %lu);\n", wDevID, lpTime, uSize);
+    TRACE("(%u, %p, %u);\n", wDevID, lpTime, uSize);
 
     if (wDevID >= MAX_WAVEINDRV || WInDev[wDevID].unixdev == -1) {
 	WARN("can't get pos !\n");
@@ -2140,7 +2134,7 @@ static DWORD widGetPosition(WORD wDevID, LPMMTIME lpTime, DWORD uSize)
 DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    TRACE("(%u, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
@@ -2197,7 +2191,7 @@ static DWORD widDsDesc(UINT wDevID, PDSDRIVERDESC desc)
 DWORD WINAPI LIBAUDIOIO_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
@@ -2207,7 +2201,7 @@ DWORD WINAPI LIBAUDIOIO_wodMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 DWORD WINAPI LIBAUDIOIO_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
 			    DWORD dwParam1, DWORD dwParam2)
 {
-    FIXME("(%u, %04X, %08lX, %08lX, %08lX):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    FIXME("(%u, %04X, %08X, %08X, %08X):stub\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
     return MMSYSERR_NOTENABLED;
 }
 
