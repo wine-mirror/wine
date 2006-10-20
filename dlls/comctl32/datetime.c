@@ -526,7 +526,8 @@ DATETIME_ReturnFieldWidth (DATETIME_INFO *infoPtr, HDC hdc, int count, SHORT *fi
     static const WCHAR fld_mon[] = { 'S', 'e', 'p', 't', 'e', 'm', 'b', 'e', 'r', 0 };
     static const WCHAR fld_mon3[] = { 'D', 'e', 'c', 0 };
     int spec;
-    WCHAR buffer[80], *bufptr;
+    WCHAR buffer[80];
+    LPCWSTR bufptr;
     SIZE size;
 
     TRACE ("%d,%d\n", infoPtr->nrFields, count);
@@ -564,32 +565,32 @@ DATETIME_ReturnFieldWidth (DATETIME_INFO *infoPtr, HDC hdc, int count, SHORT *fi
 	    case TWODIGITMINUTE:
 	    case TWODIGITMONTH:
 	    case TWODIGITYEAR:
-	        bufptr = (WCHAR *)fld_d2W;
+	        bufptr = fld_d2W;
 	        break;
             case INVALIDFULLYEAR:
 	    case FULLYEAR:
-	        bufptr = (WCHAR *)fld_d4W;
+	        bufptr = fld_d4W;
 	        break;
 	    case THREECHARDAY:
-	        bufptr = (WCHAR *)fld_day3;
+	        bufptr = fld_day3;
 	        break;
 	    case FULLDAY:
-	        bufptr = (WCHAR *)fld_day;
+	        bufptr = fld_day;
 	        break;
 	    case THREECHARMONTH:
-	        bufptr = (WCHAR *)fld_mon3;
+	        bufptr = fld_mon3;
 	        break;
 	    case FULLMONTH:
-	        bufptr = (WCHAR *)fld_mon;
+	        bufptr = fld_mon;
 	        break;
 	    case ONELETTERAMPM:
-	        bufptr = (WCHAR *)fld_am1;
+	        bufptr = fld_am1;
 	        break;
 	    case TWOLETTERAMPM:
-	        bufptr = (WCHAR *)fld_am2;
+	        bufptr = fld_am2;
 	        break;
 	    default:
-	        bufptr = (WCHAR *)fld_d1W;
+	        bufptr = fld_d1W;
 	        break;
         }
     }
