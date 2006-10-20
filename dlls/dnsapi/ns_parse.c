@@ -34,6 +34,8 @@
 #endif
 #include <string.h>
 
+#include "windef.h"
+
 /* Forward. */
 
 static void	setsection(ns_msg *msg, ns_sect sect);
@@ -50,18 +52,18 @@ static void	setsection(ns_msg *msg, ns_sect sect);
 
 #define DNS_NS_GET16(s, cp) do { \
     register const u_char *t_cp = (const u_char *)(cp); \
-    (s) = ((u_int16_t)t_cp[0] << 8) \
-        | ((u_int16_t)t_cp[1]) \
+    (s) = ((WORD)t_cp[0] << 8) \
+        | ((WORD)t_cp[1]) \
         ; \
     (cp) += NS_INT16SZ; \
 } while (0)
 
 #define DNS_NS_GET32(l, cp) do { \
     register const u_char *t_cp = (const u_char *)(cp); \
-    (l) = ((u_int32_t)t_cp[0] << 24) \
-        | ((u_int32_t)t_cp[1] << 16) \
-        | ((u_int32_t)t_cp[2] << 8) \
-        | ((u_int32_t)t_cp[3]) \
+    (l) = ((DWORD)t_cp[0] << 24) \
+        | ((DWORD)t_cp[1] << 16) \
+        | ((DWORD)t_cp[2] << 8) \
+        | ((DWORD)t_cp[3]) \
         ; \
     (cp) += NS_INT32SZ; \
 } while (0)
