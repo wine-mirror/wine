@@ -397,6 +397,8 @@ static void test_summary_binary(void)
      * We can still read its type though...?
      */
     sz = sizeof sval;
+    sval[0] = 0;
+    type = 0;
     r = MsiSummaryInfoGetProperty(hsuminfo, PID_LASTPRINTED, &type, NULL, NULL, sval, &sz);
     ok(r == ERROR_SUCCESS, "MsiSummaryInfoGetProperty failed\n");
     ok( !strcmp(sval, ""), "value incorrect\n");
