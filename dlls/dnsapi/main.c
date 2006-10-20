@@ -164,12 +164,25 @@ DNS_STATUS WINAPI DnsModifyRecordsInSet_W( PDNS_RECORDW add, PDNS_RECORDW delete
 }
 
 /******************************************************************************
- * DnsWriteQuestionToBuffer               [DNSAPI.@]
+ * DnsWriteQuestionToBuffer_UTF8          [DNSAPI.@]
  *
  */
-BOOL WINAPI DnsWriteQuestionToBuffer( PDNS_MESSAGE_BUFFER buffer, LPDWORD size,
-                                      LPWSTR name, WORD type, WORD xid,
-                                      BOOL recurse )
+BOOL WINAPI DnsWriteQuestionToBuffer_UTF8( PDNS_MESSAGE_BUFFER buffer, LPDWORD size,
+                                           LPSTR name, WORD type, WORD xid,
+                                           BOOL recurse )
+{
+    FIXME( "(%p,%p,%s,%d,%d,%d) stub\n", buffer, size, debugstr_a(name),
+           type, xid, recurse );
+    return FALSE;
+}
+
+/******************************************************************************
+ * DnsWriteQuestionToBuffer_W              [DNSAPI.@]
+ *
+ */
+BOOL WINAPI DnsWriteQuestionToBuffer_W( PDNS_MESSAGE_BUFFER buffer, LPDWORD size,
+                                        LPWSTR name, WORD type, WORD xid,
+                                        BOOL recurse )
 {
     FIXME( "(%p,%p,%s,%d,%d,%d) stub\n", buffer, size, debugstr_w(name),
            type, xid, recurse );

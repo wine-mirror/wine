@@ -123,7 +123,7 @@
 @ stub DnsValidateUtf8Byte
 @ stub DnsWinsRecordFlagForString
 @ stub DnsWinsRecordFlagString
-@ stub DnsWriteQuestionToBuffer_UTF8
-@ stub DnsWriteQuestionToBuffer_W
+@ stdcall DnsWriteQuestionToBuffer_UTF8(ptr ptr str long long long)
+@ stdcall DnsWriteQuestionToBuffer_W(ptr ptr wstr long long long)
 @ stub DnsWriteReverseNameStringForIpAddress
 @ stub GetCurrentTimeInSeconds
