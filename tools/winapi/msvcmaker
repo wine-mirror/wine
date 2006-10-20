@@ -89,7 +89,7 @@ if ($options->wine || $options->winetest) {
     }
 }
 
-my @gdi32_dirs = qw(dlls/gdi/enhmfdrv dlls/gdi/mfdrv);
+my @gdi32_dirs = qw(dlls/gdi32/enhmfdrv dlls/gdi32/mfdrv);
 
 push @makefile_in_files, "libs/wine/Makefile.in";
 push @makefile_in_files, "tools/winebuild/Makefile.in";

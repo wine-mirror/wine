@@ -223,8 +223,8 @@ ALL_MAKEFILES = \
 	dlls/dxerr8/Makefile \
 	dlls/dxerr9/Makefile \
 	dlls/dxguid/Makefile \
-	dlls/gdi/Makefile \
-	dlls/gdi/tests/Makefile \
+	dlls/gdi32/Makefile \
+	dlls/gdi32/tests/Makefile \
 	dlls/glu32/Makefile \
 	dlls/glut32/Makefile \
 	dlls/gphoto2.ds/Makefile \
@@ -545,8 +545,8 @@ dlls/dxdiagn/Makefile: dlls/dxdiagn/Makefile.in dlls/Makedll.rules
 dlls/dxerr8/Makefile: dlls/dxerr8/Makefile.in dlls/Makeimplib.rules
 dlls/dxerr9/Makefile: dlls/dxerr9/Makefile.in dlls/Makeimplib.rules
 dlls/dxguid/Makefile: dlls/dxguid/Makefile.in dlls/Makeimplib.rules
-dlls/gdi/Makefile: dlls/gdi/Makefile.in dlls/Makedll.rules
-dlls/gdi/tests/Makefile: dlls/gdi/tests/Makefile.in dlls/Maketest.rules
+dlls/gdi32/Makefile: dlls/gdi32/Makefile.in dlls/Makedll.rules
+dlls/gdi32/tests/Makefile: dlls/gdi32/tests/Makefile.in dlls/Maketest.rules
 dlls/glu32/Makefile: dlls/glu32/Makefile.in dlls/Makedll.rules
 dlls/glut32/Makefile: dlls/glut32/Makefile.in dlls/Makedll.rules
 dlls/gphoto2.ds/Makefile: dlls/gphoto2.ds/Makefile.in dlls/Makedll.rules

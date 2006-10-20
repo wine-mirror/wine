@@ -66,7 +66,7 @@ BASEDIRS = \
 	dsound \
 	dswave \
 	dxdiagn \
-	gdi \
+	gdi32 \
 	gphoto2.ds \
 	hhctrl.ocx \
 	hid \
@@ -227,7 +227,7 @@ TESTSUBDIRS = \
 	dinput/tests \
 	dnsapi/tests \
 	dsound/tests \
-	gdi/tests \
+	gdi32/tests \
 	hlink/tests \
 	infosoft/tests \
 	iphlpapi/tests \
@@ -340,7 +340,6 @@ WIN16_FILES = \
 
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
-	gdi32.dll.so \
 	joystick.drv.so \
 	user32.dll.so \
 	winealsa.drv.so \
@@ -363,9 +362,6 @@ symlinks.so: $(SYMLINKS_SO)
 symlinks: $(BUILDSUBDIRS)
 
 # Map symlink name to the corresponding library
-
-gdi32.dll.so: gdi/gdi32.dll.so
-	$(RM) $@ && $(LN_S) gdi/gdi32.dll.so $@
 
 joystick.drv.so: winmm/joystick/joystick.drv.so
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
@@ -485,7 +481,6 @@ winsock.dll16:
 STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
-	libgdi32.$(IMPLIBEXT) \
 	libuser32.$(IMPLIBEXT) \
 	libwinspool.$(IMPLIBEXT)
 
@@ -533,7 +528,7 @@ IMPORT_LIBS = \
 	dplayx/libdplayx.$(IMPLIBEXT) \
 	dpnet/libdpnet.$(IMPLIBEXT) \
 	dsound/libdsound.$(IMPLIBEXT) \
-	gdi/libgdi32.$(IMPLIBEXT) \
+	gdi32/libgdi32.$(IMPLIBEXT) \
 	glu32/libglu32.$(IMPLIBEXT) \
 	glut32/libglut32.$(IMPLIBEXT) \
 	hid/libhid.$(IMPLIBEXT) \
@@ -728,8 +723,8 @@ dpnet/libdpnet.$(IMPLIBEXT): dpnet/dpnet.spec $(WINEBUILD)
 dsound/libdsound.$(IMPLIBEXT): dsound/dsound.spec $(WINEBUILD)
 	@cd dsound && $(MAKE) libdsound.$(IMPLIBEXT)
 
-gdi/libgdi32.$(IMPLIBEXT): gdi/gdi32.spec $(WINEBUILD)
-	@cd gdi && $(MAKE) libgdi32.$(IMPLIBEXT)
+gdi32/libgdi32.$(IMPLIBEXT): gdi32/gdi32.spec $(WINEBUILD)
+	@cd gdi32 && $(MAKE) libgdi32.$(IMPLIBEXT)
 
 glu32/libglu32.$(IMPLIBEXT): glu32/glu32.spec $(WINEBUILD)
 	@cd glu32 && $(MAKE) libglu32.$(IMPLIBEXT)
@@ -980,9 +975,6 @@ wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
 wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
 	@cd wtsapi32 && $(MAKE) libwtsapi32.$(IMPLIBEXT)
 
-libgdi32.$(IMPLIBEXT): gdi/libgdi32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) gdi/libgdi32.$(IMPLIBEXT) $@
-
 libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
 
@@ -994,7 +986,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-gdi/gdi32.dll.so: gdi
 winmm/joystick/joystick.drv.so: winmm/joystick
 user/user32.dll.so: user
 winmm/winealsa/winealsa.drv.so: winmm/winealsa

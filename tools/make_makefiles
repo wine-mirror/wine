@@ -181,7 +181,7 @@ replace_in_file( "configure.ac", '^MAKE_RULES', '\]\)$',
 ################################################################
 # update the tests list in programs/winetest/Makefile.in and programs/winetest/winetest.rc
 
-my %modules = ( "gdi" => "gdi32", "user" => "user32" );
+my %modules = ( "user" => "user32" );
 my %tests;
 @lines = ( "TESTBINS =" );
 

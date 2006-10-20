@@ -1472,8 +1472,8 @@ AH_TOP([#define __WINE_CONFIG_H])
 
 AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 
-WINE_CONFIG_EXTRA_DIR(dlls/gdi/enhmfdrv)
-WINE_CONFIG_EXTRA_DIR(dlls/gdi/mfdrv)
+WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
+WINE_CONFIG_EXTRA_DIR(dlls/gdi32/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel32/nls)
 WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
@@ -1568,8 +1568,8 @@ dlls/dxdiagn/Makefile
 dlls/dxerr8/Makefile
 dlls/dxerr9/Makefile
 dlls/dxguid/Makefile
-dlls/gdi/Makefile
-dlls/gdi/tests/Makefile
+dlls/gdi32/Makefile
+dlls/gdi32/tests/Makefile
 dlls/glu32/Makefile
 dlls/glut32/Makefile
 dlls/gphoto2.ds/Makefile

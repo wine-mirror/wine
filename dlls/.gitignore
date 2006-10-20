@@ -17,7 +17,6 @@
 /imm.dll16
 /keyboard.drv16
 /krnl386.exe16
-/libgdi32.def
 /libuser32.def
 /libwinspool.def
 /lzexpand.dll16
@@ -91,7 +90,7 @@ dplay/libdplay.def
 dplayx/libdplayx.def
 dpnet/libdpnet.def
 dsound/libdsound.def
-gdi/libgdi32.def
+gdi32/libgdi32.def
 glu32/libglu32.def
 glut32/libglut32.def
 hid/libhid.def
