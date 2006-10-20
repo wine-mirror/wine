@@ -178,8 +178,15 @@ static HRESULT WINAPI HTMLSelectElement_get_name(IHTMLSelectElement *iface, BSTR
 
     nsres = nsIDOMHTMLSelectElement_GetName(This->nsselect, &name_str);
     if(NS_SUCCEEDED(nsres)) {
+        static const WCHAR wszGarbage[] = {'g','a','r','b','a','g','e',0};
+
         nsAString_GetData(&name_str, &name, NULL);
-        *p = SysAllocString(name);
+
+        /*
+         * Native never returns empty string here. If an element has no name,
+         * name of previous element or ramdom data is returned.
+         */
+        *p = SysAllocString(*name ? name : wszGarbage);
     }else {
         ERR("GetName failed: %08x\n", nsres);
     }
