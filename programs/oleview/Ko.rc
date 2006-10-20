@@ -97,7 +97,8 @@ STRINGTABLE
     IDS_ABOUT              "OleView - OLE/COM 객체 뷰어"
     IDS_ABOUTVER           "버젼 1.0"
     IDS_TYPELIBTITLE       "ITypeLib 뷰어"
-    
+    IDS_OPEN               "열기"
+
     IDM_BIND,              "파일 별명으로 파일 연결"
     IDM_TYPELIB,           "타입 라이브러리 파일을 열고 내용 보기"
     IDM_SYSCONF,           "머신 전체의 DCOM설정 바꾸기"
@@ -139,9 +140,12 @@ STRINGTABLE
 
     IDS_CGCOFAIL,          "CoGetClassObject 실패."
     IDS_ERROR_UNKN,        "알수 없는 에러"
-    IDS_TRUE               "참"
-    IDS_FALSE              "거짓"
-    IDS_BYTES              "바이트"
+    IDS_TRUE,              "참"
+    IDS_FALSE,             "거짓"
+    IDS_BYTES,             "바이트"
+
+    IDS_ERROR_LOADTYPELIB, "LoadTypeLib( %s ) 실패 ($%x)"
+    IDS_INHERITINTERFACES, "Inherited Interfaces"
 }
 
 DLG_CREATEINSTON DIALOG DISCARDABLE 0, 0, 250, 41
