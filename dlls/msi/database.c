@@ -409,23 +409,44 @@ static LPWSTR msi_build_createsql_columns(LPWSTR *columns_data, LPWSTR *types, D
     return columns;
 }
 
-static LPWSTR msi_build_createsql_postlude(LPWSTR primary_key)
+static LPWSTR msi_build_createsql_postlude(LPWSTR *primary_keys, DWORD num_keys)
 {
-    LPWSTR postlude;
-    DWORD size;
+    LPWSTR postlude, keys, ptr;
+    DWORD size, key_size, i;
 
-    static const WCHAR postlude_fmt[] = {'P','R','I','M','A','R','Y',' ','K','E','Y',' ','`','%','s','`',')',' ','H','O','L','D',0};
+    static const WCHAR key_fmt[] = {'`','%','s','`',',',' ',0};
+    static const WCHAR postlude_fmt[] = {'P','R','I','M','A','R','Y',' ','K','E','Y',' ','%','s',')',' ','H','O','L','D',0};
 
-    size = sizeof(postlude_fmt) + lstrlenW(primary_key) - 2;
-    postlude = msi_alloc(size * sizeof(WCHAR));
-    if (!postlude)
+    for (i = 0, size = 1; i < num_keys; i++)
+        size += lstrlenW(key_fmt) + lstrlenW(primary_keys[i]) - 2;
+
+    keys = msi_alloc(size * sizeof(WCHAR));
+    if (!keys)
         return NULL;
 
-    sprintfW(postlude, postlude_fmt, primary_key);
+    for (i = 0, ptr = keys; i < num_keys; i++)
+    {
+        key_size = lstrlenW(key_fmt) + lstrlenW(primary_keys[i]) -2;
+        sprintfW(ptr, key_fmt, primary_keys[i]);
+        ptr += key_size;
+    }
+
+    /* remove final ', ' */
+    *(ptr - 2) = '\0';
+
+    size = lstrlenW(postlude_fmt) + size - 1;
+    postlude = msi_alloc(size * sizeof(WCHAR));
+    if (!postlude)
+        goto done;
+
+    sprintfW(postlude, postlude_fmt, keys);
+
+done:
+    msi_free(keys);
     return postlude;
 }
 
-static UINT msi_add_table_to_db(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types, LPWSTR *labels, DWORD num_columns)
+static UINT msi_add_table_to_db(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types, LPWSTR *labels, DWORD num_labels, DWORD num_columns)
 {
     UINT r;
     DWORD size;
@@ -435,7 +456,7 @@ static UINT msi_add_table_to_db(MSIDATABASE *db, LPWSTR *columns, LPWSTR *types,
 
     prelude = msi_build_createsql_prelude(labels[0]);
     columns_sql = msi_build_createsql_columns(columns, types, num_columns);
-    postlude = msi_build_createsql_postlude(labels[1]);
+    postlude = msi_build_createsql_postlude(labels + 1, num_labels - 1); /* skip over table name */
 
     if (!prelude || !columns_sql || !postlude)
         return ERROR_OUTOFMEMORY;
@@ -614,6 +635,7 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
 {
     UINT r;
     DWORD len, i;
+    DWORD num_labels;
     DWORD num_columns, num_records = 0;
     LPWSTR *columns, *types, *labels;
     LPWSTR path, ptr, data;
@@ -640,7 +662,7 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
     ptr = data;
     msi_parse_line( &ptr, &columns, &num_columns );
     msi_parse_line( &ptr, &types, NULL );
-    msi_parse_line( &ptr, &labels, NULL );
+    msi_parse_line( &ptr, &labels, &num_labels );
 
     records = msi_alloc(sizeof(LPWSTR *));
     if (!records)
@@ -657,7 +679,7 @@ UINT MSI_DatabaseImport(MSIDATABASE *db, LPCWSTR folder, LPCWSTR file)
             return ERROR_OUTOFMEMORY;
     }
 
-    r = msi_add_table_to_db( db, columns, types, labels, num_columns );
+    r = msi_add_table_to_db( db, columns, types, labels, num_labels, num_columns );
     if (r != ERROR_SUCCESS)
         goto done;
 

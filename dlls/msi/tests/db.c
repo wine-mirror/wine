@@ -1365,6 +1365,12 @@ static const CHAR test_data[] = "FirstPrimaryColumn\tSecondPrimaryColumn\tShortI
                                 "TestTable\tFirstPrimaryColumn\n"
                                 "stringage\t5\t2\t\t2147483640\t-2147483640\tanother string\tlocalizable\tduh\n";
 
+static const CHAR two_primary[] = "PrimaryOne\tPrimaryTwo\n"
+                                  "s255\ts255\n"
+                                  "TwoPrimary\tPrimaryOne\tPrimaryTwo\n"
+                                  "papaya\tleaf\n"
+                                  "papaya\tflower\n";
+
 static void write_file(const CHAR *filename, const char *data, int data_size)
 {
     DWORD size;
@@ -1400,6 +1406,9 @@ static void test_msiimport(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     r = add_table_to_db(hdb, test_data);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = add_table_to_db(hdb, two_primary);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
     query = "SELECT * FROM `TestTable`";
@@ -1464,6 +1473,51 @@ static void test_msiimport(void)
     ok(i == -2147483640, "Expected -2147483640, got %d\n", i);
 
     MsiCloseHandle(rec);
+    MsiCloseHandle(view);
+
+    query = "SELECT * FROM `TwoPrimary`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewGetColumnInfo(view, MSICOLINFO_NAMES, &rec);
+    count = MsiRecordGetFieldCount(rec);
+    ok(count == 2, "Expected 2, got %d\n", count);
+    ok(check_record(rec, 1, "PrimaryOne"), "Expected PrimaryOne\n");
+    ok(check_record(rec, 2, "PrimaryTwo"), "Expected PrimaryTwo\n");
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewGetColumnInfo(view, MSICOLINFO_TYPES, &rec);
+    count = MsiRecordGetFieldCount(rec);
+    ok(count == 2, "Expected 2, got %d\n", count);
+    ok(check_record(rec, 1, "s255"), "Expected s255\n");
+    ok(check_record(rec, 2, "s255"), "Expected s255\n");
+
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    ok(check_record(rec, 1, "papaya"), "Expected 'papaya'\n");
+    ok(check_record(rec, 2, "leaf"), "Expected 'leaf'\n");
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    ok(check_record(rec, 1, "papaya"), "Expected 'papaya'\n");
+    ok(check_record(rec, 2, "flower"), "Expected 'flower'\n");
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
     MsiCloseHandle(view);
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);
