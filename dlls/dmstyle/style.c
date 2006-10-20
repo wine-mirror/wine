@@ -598,7 +598,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTR
       IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
       cnt = (Chunk.dwSize - sizeof(DWORD));
       TRACE_(dmfile)(" - dwSize: %u\n", dwSize);
-      TRACE_(dmfile)(" - cnt: %u (%u / %u)\n", cnt / dwSize, (Chunk.dwSize - sizeof(DWORD)), dwSize);
+      TRACE_(dmfile)(" - cnt: %u (%u / %u)\n", cnt / dwSize, (DWORD)(Chunk.dwSize - sizeof(DWORD)), dwSize);
       if (cnt % dwSize != 0) {
 	ERR("Invalid Array Size\n");
 	return E_FAIL;
@@ -614,7 +614,7 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePartList (LPPERSISTSTR
       IStream_Read (pStm, &dwSize, sizeof(DWORD), NULL);
       cnt = (Chunk.dwSize - sizeof(DWORD));
       TRACE_(dmfile)(" - dwSize: %u\n", dwSize);
-      TRACE_(dmfile)(" - cnt: %u (%u / %u)\n", cnt / dwSize, (Chunk.dwSize - sizeof(DWORD)), dwSize);
+      TRACE_(dmfile)(" - cnt: %u (%u / %u)\n", cnt / dwSize, (DWORD)(Chunk.dwSize - sizeof(DWORD)), dwSize);
       if (cnt % dwSize != 0) {
 	ERR("Invalid Array Size\n");
 	return E_FAIL;

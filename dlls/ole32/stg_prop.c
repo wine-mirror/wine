@@ -1603,9 +1603,9 @@ static HRESULT PropertyStorage_WriteDictionaryToStream(
     *sectionOffset += closure.bytesWritten;
     if (closure.bytesWritten % sizeof(DWORD))
     {
-        TRACE("adding %d bytes of padding\n", sizeof(DWORD) -
-         closure.bytesWritten % sizeof(DWORD));
-        *sectionOffset += sizeof(DWORD) - closure.bytesWritten % sizeof(DWORD);
+        DWORD padding = sizeof(DWORD) - closure.bytesWritten % sizeof(DWORD);
+        TRACE("adding %d bytes of padding\n", padding);
+        *sectionOffset += padding;
     }
 
 end:
@@ -1744,9 +1744,9 @@ static HRESULT PropertyStorage_WritePropertyToStream(PropertyStorage_impl *This,
         *sectionOffset += bytesWritten;
         if (bytesWritten % sizeof(DWORD))
         {
-            TRACE("adding %d bytes of padding\n", sizeof(DWORD) -
-             bytesWritten % sizeof(DWORD));
-            *sectionOffset += sizeof(DWORD) - bytesWritten % sizeof(DWORD);
+            DWORD padding = sizeof(DWORD) - bytesWritten % sizeof(DWORD);
+            TRACE("adding %d bytes of padding\n", padding);
+            *sectionOffset += padding;
         }
     }
 

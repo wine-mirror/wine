@@ -520,8 +520,7 @@ LONG WINAPI ImmGetCompositionStringA(
     }
     else if (dwIndex == GCS_COMPSTR)
     {
-         TRACE("GSC_COMPSTR %p %i\n",data->CompositionString,
-                                     data->dwCompStringLength/ sizeof(WCHAR));
+         TRACE("GSC_COMPSTR %p %i\n", data->CompositionString, data->dwCompStringLength);
 
         buf = HeapAlloc( GetProcessHeap(), 0, data->dwCompStringLength * 3 );
         rc = WideCharToMultiByte(CP_ACP, 0,(LPWSTR)data->CompositionString,
@@ -533,8 +532,7 @@ LONG WINAPI ImmGetCompositionStringA(
     }
     else if (dwIndex == GCS_COMPATTR)
     {
-        TRACE("GSC_COMPATTR %p %i\n",data->CompositionString,
-                                    data->dwCompStringLength/ sizeof(WCHAR));
+        TRACE("GSC_COMPATTR %p %i\n", data->CompositionString, data->dwCompStringLength);
 
         rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)data->CompositionString,
                                  data->dwCompStringLength/ sizeof(WCHAR), NULL,
@@ -549,8 +547,7 @@ LONG WINAPI ImmGetCompositionStringA(
     }
     else if (dwIndex == GCS_COMPCLAUSE)
     {
-        TRACE("GSC_COMPCLAUSE %p %i\n",data->CompositionString,
-                                    data->dwCompStringLength/ sizeof(WCHAR));
+        TRACE("GSC_COMPCLAUSE %p %i\n", data->CompositionString, data->dwCompStringLength);
  
         rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)data->CompositionString,
                                  data->dwCompStringLength/ sizeof(WCHAR), NULL,

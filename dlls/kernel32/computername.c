@@ -276,7 +276,7 @@ void COMPUTERNAME_Init (void)
     }
 
     NtClose( hsubkey );
-    TRACE(" ComputerName: %s (%u)\n", debugstr_w ( computer_name ), len / sizeof(WCHAR));
+    TRACE(" ComputerName: %s (%u)\n", debugstr_w (computer_name), len);
 
     RtlInitUnicodeString( &nameW, ActiveComputerNameW );
     if ( ( st = NtCreateKey( &hsubkey, KEY_ALL_ACCESS, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL ) )

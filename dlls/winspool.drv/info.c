@@ -954,9 +954,8 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
             pm->monitorUI = pInitializePrintMonitorUI();
             TRACE("%p: MONITORUI from %s,InitializePrintMonitorUI()\n", pm->monitorUI, debugstr_w(driver)); 
             if (pm->monitorUI) {
-                TRACE(  "0x%08x: dwMonitorSize (%d) => %d Functions\n",
-                        pm->monitorUI->dwMonitorUISize, pm->monitorUI->dwMonitorUISize,
-                        (pm->monitorUI->dwMonitorUISize - sizeof(DWORD) ) / sizeof(VOID *));
+                TRACE(  "0x%08x: dwMonitorSize (%d)\n",
+                        pm->monitorUI->dwMonitorUISize, pm->monitorUI->dwMonitorUISize );
 
             }
         }
@@ -973,9 +972,7 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
         }
 
         if (pm->monitor) {
-            TRACE(  "0x%08x: dwMonitorSize (%d) => %d Functions\n", 
-                    pm->dwMonitorSize, pm->dwMonitorSize,
-                    (pm->dwMonitorSize) / sizeof(VOID *) );
+            TRACE(  "0x%08x: dwMonitorSize (%d)\n", pm->dwMonitorSize, pm->dwMonitorSize );
 
         }
 
@@ -5078,8 +5075,7 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
     lpValueName = HeapAlloc (hHeap, 0, cbMaxValueNameLen * sizeof (WCHAR));
     if (lpValueName == NULL)
     {
-	ERR ("Failed to allocate %i bytes from process heap\n",
-		cbMaxValueNameLen * sizeof (WCHAR));
+	ERR ("Failed to allocate %i WCHARs from process heap\n", cbMaxValueNameLen);
 	r = RegCloseKey (hkSubKey);
 	if (r != ERROR_SUCCESS)
 	    WARN ("RegCloseKey returned %i\n", r);
@@ -5122,9 +5118,9 @@ DWORD WINAPI EnumPrinterDataExW(HANDLE hPrinter, LPCWSTR pKeyName,
 	    return ret;
 	}
 
-	TRACE ("%s [%i]: name needs %i bytes, data needs %i bytes\n",
+	TRACE ("%s [%i]: name needs %i WCHARs, data needs %i bytes\n",
 		debugstr_w (lpValueName), dwIndex,
-		(cbValueNameLen + 1) * sizeof (WCHAR), cbValueLen);
+		cbValueNameLen + 1, cbValueLen);
 
 	cbBufSize += (cbValueNameLen + 1) * sizeof (WCHAR);
 	cbBufSize += cbValueLen;
@@ -5265,7 +5261,7 @@ DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
     if (pKeyNameW == NULL)
     {
 	ERR ("Failed to allocate %i bytes from process heap\n",
-		(LONG) len * sizeof (WCHAR));
+             (LONG)(len * sizeof (WCHAR)));
 	return ERROR_OUTOFMEMORY;
     }
 
