@@ -28,6 +28,8 @@ usage()
 
 Usage: $0 [options] input_file
 
+input_file:  the source code for the test program
+
 Options:
     -q       quiet mode
     -v       verbose mode (can be specified multiple times)
