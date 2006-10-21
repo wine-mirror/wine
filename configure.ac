@@ -899,7 +899,6 @@ int main(void) {
                   [AC_DEFINE(CC_FLAG_SHORT_WCHAR, "-fshort-wchar",
                              [Specifies the compiler flag that forces a short wchar_t])])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
-  WINE_TRY_CFLAGS([-gstabs+])
   WINE_TRY_CFLAGS([-Wdeclaration-after-statement])
   WINE_TRY_CFLAGS([-Wwrite-strings])
 
