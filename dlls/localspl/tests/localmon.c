@@ -36,6 +36,7 @@
 /* ##### */
 
 static HMODULE  hdll;
+static HMODULE  hlocalmon;
 static LPMONITOREX (WINAPI *pInitializePrintMonitor)(LPWSTR);
 
 static LPMONITOREX pm;
@@ -74,15 +75,17 @@ static void test_InitializePrintMonitor(void)
 
     SetLastError(0xdeadbeef);
     res = pInitializePrintMonitor(NULL);
-    ok( (res == NULL) && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %p with %d\n (expected NULL with " \
+    /* The Parameter was unchecked before w2k */
+    ok( res || (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %p with %d\n (expected '!= NULL' or: NULL with " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
     res = pInitializePrintMonitor(emptyW);
-    ok( (res == NULL) && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %p with %d\n (expected NULL with " \
+    ok( res || (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %p with %d\n (expected '!= NULL' or: NULL with " \
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
 
     /* Every call with a non-empty string returns the same Pointer */
     SetLastError(0xdeadbeef);
@@ -107,6 +110,13 @@ START_TEST(localmon)
     if (!hdll) return;
 
     pInitializePrintMonitor = (void *) GetProcAddress(hdll, "InitializePrintMonitor");
+    if (!pInitializePrintMonitor) {
+        /* The Monitor for "Local Ports" was in a seperate dll before w2k */
+        hlocalmon = LoadLibraryA("localmon.dll");
+        if (hlocalmon) {
+            pInitializePrintMonitor = (void *) GetProcAddress(hlocalmon, "InitializePrintMonitor");
+        }
+    }
     if (!pInitializePrintMonitor) return;
 
     /* Native localmon.dll / localspl.dll need a vaild Port-Entry in:
