@@ -379,30 +379,157 @@ static unsigned be_i386_is_break_insn(const void* insn)
     return c == 0xCC;
 }
 
+static unsigned get_size(ADDRESS_MODE am)
+{
+    if (am == AddrModeReal || am == AddrMode1616) return 16;
+    return 32;
+}
+
+static BOOL fetch_value(const char* addr, unsigned sz, int* value)
+{
+    char        value8;
+    short       value16;
+
+    switch (sz)
+    {
+    case 8:
+        if (!dbg_read_memory(addr, &value8, sizeof(value8)))
+            return FALSE;
+        *value = value8;
+        break;
+    case 16:
+        if (!dbg_read_memory(addr, &value16, sizeof(value16)))
+            return FALSE;
+        *value = value16;
+    case 32:
+        if (!dbg_read_memory(addr, value, sizeof(*value)))
+            return FALSE;
+        break;
+    default: return FALSE;
+    }
+    return TRUE;
+}
+
 static unsigned be_i386_is_func_call(const void* insn, ADDRESS64* callee)
 {
-    BYTE        ch;
-    int         delta;
+    BYTE                ch;
+    int                 delta;
+    short               segment;
+    unsigned            dst = 0;
+    unsigned            operand_size;
+    ADDRESS_MODE        cs_addr_mode;
 
-    if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+    cs_addr_mode = get_selector_type(dbg_curr_thread->handle, &dbg_context,
+                                     dbg_context.SegCs);
+    operand_size = get_size(cs_addr_mode);
+
+    /* get operand_size (also getting rid of the various prefixes */
+    do
+    {
+        if (!dbg_read_memory(insn, &ch, sizeof(ch))) return FALSE;
+        if (ch == 0x66)
+        {
+            operand_size = 48 - operand_size; /* 16 => 32, 32 => 16 */
+            insn = (const char*)insn + 1;
+        }
+    } while (ch == 0x66 || ch == 0x67);
+
     switch (ch)
     {
-    case 0xe8:
-	dbg_read_memory((const char*)insn + 1, &delta, sizeof(delta));
-	
-        callee->Mode = AddrModeFlat;
-        callee->Offset = (DWORD)insn;
-	be_i386_disasm_one_insn(callee, FALSE);
-        callee->Offset += delta;
-
+    case 0xe8: /* relative near call */
+        callee->Mode = cs_addr_mode;
+        if (!fetch_value((const char*)insn + 1, operand_size, &delta))
+            return FALSE;
+        callee->Segment = dbg_context.SegCs;
+        callee->Offset = (DWORD)insn + 1 + (operand_size / 8) + delta;
         return TRUE;
+
+    case 0x9a: /* absolute far call */
+        if (!dbg_read_memory((const char*)insn + 1 + operand_size / 8,
+                             &segment, sizeof(segment)))
+            return FALSE;
+        callee->Mode = get_selector_type(dbg_curr_thread->handle, &dbg_context,
+                                         segment);
+        if (!fetch_value((const char*)insn + 1, operand_size, &delta))
+            return FALSE;
+        callee->Segment = segment;
+        callee->Offset = delta;
+        return TRUE;
+
     case 0xff:
         if (!dbg_read_memory((const char*)insn + 1, &ch, sizeof(ch)))
             return FALSE;
-        ch &= 0x38;
-        if (ch != 0x10 && ch != 0x18) return FALSE;
-        /* fall through */
-    case 0x9a:
+        /* keep only the CALL and LCALL insn:s */
+        switch ((ch >> 3) & 0x07)
+        {
+        case 0x02:
+            segment = dbg_context.SegCs;
+            break;
+        case 0x03:
+            if (!dbg_read_memory((const char*)insn + 1 + operand_size / 8,
+                                 &segment, sizeof(segment)))
+                return FALSE;
+            break;
+        default: return FALSE;
+        }
+        /* FIXME: we only support the 32 bit far calls for now */
+        if (operand_size != 32)
+        {
+            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) with 16 bit operand-size at %p\n", ch, insn);
+            return FALSE;
+        }
+        switch (ch & 0xC7) /* keep Mod R/M only (skip reg) */
+        {
+        case 0x04:
+        case 0x44:
+        case 0x84:
+            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) (SIB bytes) at %p\n", ch, insn);
+            return FALSE;
+        case 0x05: /* addr32 */
+            WINE_FIXME("Unsupported yet call insn (0xFF 0x%02x) (addr32) at %p\n", ch, insn);
+            return FALSE;
+        default:
+            switch (ch & 0x07)
+            {
+            case 0x00: dst = dbg_context.Eax; break;
+            case 0x01: dst = dbg_context.Ecx; break;
+            case 0x02: dst = dbg_context.Edx; break;
+            case 0x03: dst = dbg_context.Ebx; break;
+            case 0x04: dst = dbg_context.Esp; break;
+            case 0x05: dst = dbg_context.Ebp; break;
+            case 0x06: dst = dbg_context.Esi; break;
+            case 0x07: dst = dbg_context.Edi; break;
+            }
+            if ((ch >> 6) != 0x03) /* indirect address */
+            {
+                if (ch >> 6) /* we got a displacement */
+                {
+                    if (!fetch_value((const char*)insn + 2, (ch >> 6) == 0x01 ? 8 : 32, &delta))
+                        return FALSE;
+                    dst += delta;
+                }
+                if (((ch >> 3) & 0x07) == 0x03) /* LCALL */
+                {
+                    if (!dbg_read_memory((const char*)dst + operand_size, &segment, sizeof(segment)))
+                        return FALSE;
+                }
+                else segment = dbg_context.SegCs;
+                if (!dbg_read_memory((const char*)dst, &delta, sizeof(delta)))
+                    return FALSE;
+                callee->Mode = get_selector_type(dbg_curr_thread->handle, &dbg_context,
+                                                 segment);
+                callee->Segment = segment;
+                callee->Offset = delta;
+            }
+            else
+            {
+                callee->Mode = cs_addr_mode;
+                callee->Segment = dbg_context.SegCs;
+                callee->Offset = dst;
+            }
+        }
+        return TRUE;
+
     case 0xCD:
         WINE_FIXME("Unsupported yet call insn (0x%02x) at %p\n", ch, insn);
         /* fall through */
