@@ -814,6 +814,7 @@ DECL_HANDLER(set_socket_event)
                                                 FILE_WRITE_ATTRIBUTES, &sock_ops))) return;
     old_event = sock->event;
     sock->mask    = req->mask;
+    sock->hmask   &= ~req->mask; /* re-enable held events */
     sock->event   = NULL;
     sock->window  = req->window;
     sock->message = req->msg;
