@@ -35,9 +35,11 @@
 #include "ddk/winsplp.h"
 
 #include "wine/debug.h"
-
+#include "localspl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
+
+HINSTANCE LOCALSPL_hInstance = NULL;
 
 /*****************************************************
  *      DllMain
@@ -53,6 +55,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls( hinstDLL );
+            LOCALSPL_hInstance = hinstDLL;
             break;
     }
     return TRUE;
