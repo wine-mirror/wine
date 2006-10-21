@@ -59,9 +59,8 @@ static void dumpLsaAttributes(PLSA_OBJECT_ATTRIBUTES oa)
 static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
 {
     HKEY key;
-    BOOL useDefault = TRUE;
     LONG ret;
-    BYTE* ptr;
+    BYTE* ptr = NULL;
     UNICODE_STRING* ustr;
 
     static const WCHAR wVNETSUP[] = {
@@ -84,26 +83,26 @@ static void* ADVAPI_GetDomainName(unsigned sz, unsigned ofs)
             ustr = (UNICODE_STRING*)(ptr + ofs);
             ustr->MaximumLength = size;
             ustr->Buffer = (WCHAR*)(ptr + sz);
-            if ((ret = RegQueryValueExW(key, wg, NULL, NULL,
-                                        (LPBYTE)ustr->Buffer, &size)) == ERROR_SUCCESS)
+            ret = RegQueryValueExW(key, wg, NULL, NULL, (LPBYTE)ustr->Buffer, &size);
+            if (ret != ERROR_SUCCESS)
             {
-                ustr->Length = (USHORT)(size - sizeof(WCHAR));
-                useDefault = FALSE;
-            }
-            else
                 HeapFree(GetProcessHeap(), 0, ptr);
+                ptr = NULL;
+            }   
+            else ustr->Length = size - sizeof(WCHAR);
         }
         RegCloseKey(key);
     }
-    if (useDefault)
+    if (!ptr)
     {
         static const WCHAR wDomain[] = {'D','O','M','A','I','N','\0'};
         ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                         sz + sizeof(wDomain));
+        if (!ptr) return NULL;
         ustr = (UNICODE_STRING*)(ptr + ofs);
         ustr->MaximumLength = sizeof(wDomain);
         ustr->Buffer = (WCHAR*)(ptr + sz);
-        ustr->Length = (USHORT)(sizeof(wDomain) - sizeof(WCHAR));
+        ustr->Length = sizeof(wDomain) - sizeof(WCHAR);
         memcpy(ustr->Buffer, wDomain, sizeof(wDomain));
     }
     return ptr;
