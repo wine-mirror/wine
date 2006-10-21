@@ -9,6 +9,8 @@ C_SRCS = \
 	localmon.c \
 	localspl_main.c
 
+RC_SRCS = localspl.rc
+
 @MAKE_DLL_RULES@
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
