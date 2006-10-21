@@ -710,6 +710,7 @@ HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSec
                 DWORD dwBufferSize, PDWORD pdwRequiredSize, PVOID pvReserved)
 {
     HINF hInf;
+    HRESULT hret = S_OK;
 
     TRACE("(%s, %s, %s, %s, %p, %d, %p, %p)\n",
           debugstr_w(pszInfFilename), debugstr_w(pszInstallSection),
@@ -730,13 +731,13 @@ HRESULT WINAPI TranslateInfStringW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSec
                            pszBuffer, dwBufferSize, pdwRequiredSize))
     {
         if (dwBufferSize < *pdwRequiredSize)
-            return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
-
-        return SPAPI_E_LINE_NOT_FOUND;
+            hret = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+        else
+            hret = SPAPI_E_LINE_NOT_FOUND;
     }
 
     SetupCloseInfFile(hInf);
-    return S_OK;
+    return hret;
 }
 
 /***********************************************************************

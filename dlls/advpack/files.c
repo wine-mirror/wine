@@ -573,7 +573,10 @@ static LPSTR convert_file_list(LPCSTR FileList, DWORD *dwNumFiles)
 
     /* empty list */
     if (!lstrlenA(szConvertedList))
+    {
+        HeapFree(GetProcessHeap(), 0, szConvertedList);
         return NULL;
+    }
         
     *dwNumFiles = 1;
 
@@ -743,6 +746,19 @@ HRESULT WINAPI ExtractFilesA(LPCSTR CabName, LPCSTR ExpandDir, DWORD Flags,
 
     extractDest.flags |= EXTRACT_EXTRACTFILES;
     res = pExtract(&extractDest, CabName);
+
+    if (extractDest.filelist)
+    {
+        struct ExtractFileList* curr = extractDest.filelist;
+        struct ExtractFileList* next;
+
+        while (curr)
+        {
+            next = curr->next;
+            free_file_node(curr);
+            curr = next;
+        }
+    }
 
 done:
     FreeLibrary(hCabinet);
