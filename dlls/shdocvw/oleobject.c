@@ -95,9 +95,12 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
     This->doc_host.frame_hwnd = This->shell_embedding_hwnd = CreateWindowExW(
             WS_EX_WINDOWEDGE,
             wszShellEmbedding, wszShellEmbedding,
-            WS_CHILD | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,
+            WS_CLIPSIBLINGS | WS_CLIPCHILDREN
+            | (parent ? WS_CHILD | WS_TABSTOP : WS_POPUP | WS_MAXIMIZEBOX),
             0, 0, 0, 0, parent,
             NULL, shdocvw_hinstance, This);
+
+    TRACE("parent=%p hwnd=%p\n", parent, This->shell_embedding_hwnd);
 }
 
 static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, HWND parent_hwnd)
