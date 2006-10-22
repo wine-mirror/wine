@@ -663,7 +663,7 @@ VOID DIALOG_Search(VOID)
         Globals.find.hInstance        = Globals.hInstance;
         Globals.find.lpstrFindWhat    = Globals.szFindText;
         Globals.find.wFindWhatLen     = SIZEOF(Globals.szFindText);
-        Globals.find.Flags            = FR_DOWN;
+        Globals.find.Flags            = FR_DOWN|FR_HIDEWHOLEWORD;
 
         /* We only need to create the modal FindReplace dialog which will */
         /* notify us of incoming events using hMainWnd Window Messages    */
@@ -674,8 +674,10 @@ VOID DIALOG_Search(VOID)
 
 VOID DIALOG_SearchNext(VOID)
 {
-    /* FIXME: Search Next */
-    DIALOG_Search();
+    if (Globals.lastFind.lpstrFindWhat == NULL)
+        DIALOG_Search();
+    else                /* use the last find data */
+        NOTEPAD_DoFind(&Globals.lastFind);
 }
 
 VOID DIALOG_HelpContents(VOID)

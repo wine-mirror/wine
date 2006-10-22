@@ -51,6 +51,7 @@ typedef struct
   INT     iWindowPosDY;
 
   FINDREPLACE find;
+  FINDREPLACE lastFind;
   HGLOBAL hDevMode; /* printer mode */
   HGLOBAL hDevNames; /* printer names */
 } NOTEPAD_GLOBALS;
@@ -58,3 +59,4 @@ typedef struct
 extern NOTEPAD_GLOBALS Globals;
 
 VOID SetFileName(LPCWSTR szFileName);
+void NOTEPAD_DoFind(FINDREPLACE *fr);

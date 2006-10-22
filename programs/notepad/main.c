@@ -25,6 +25,7 @@
 #define UNICODE
 
 #include <windows.h>
+#include <shlwapi.h>
 #include <stdio.h>
 
 #include "main.h"
@@ -314,6 +315,65 @@ static VOID NOTEPAD_InitMenuPopup(HMENU menu, int index)
         GetWindowTextLength(Globals.hEdit) ? MF_ENABLED : MF_GRAYED);
 }
 
+static LPTSTR NOTEPAD_StrRStr(LPTSTR pszSource, LPTSTR pszLast, LPTSTR pszSrch)
+{
+    int len = lstrlen(pszSrch);
+    pszLast--;
+    while (pszLast >= pszSource)
+    {
+        if (StrCmpN(pszLast, pszSrch, len) == 0)
+            return pszLast;
+        pszLast--;
+    }
+    return NULL;
+}
+
+/***********************************************************************
+ * The user activated the Find dialog
+ */
+void NOTEPAD_DoFind(FINDREPLACE *fr)
+{
+    LPTSTR content;
+    LPTSTR found;
+    int len = lstrlen(fr->lpstrFindWhat);
+    int fileLen;
+    DWORD pos;
+    
+    fileLen = GetWindowTextLength(Globals.hEdit) + 1;
+    content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(TCHAR));
+    if (!content) return;
+    GetWindowText(Globals.hEdit, content, fileLen);
+
+    SendMessage(Globals.hEdit, EM_GETSEL, 0, (LPARAM)&pos);        
+    switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
+    {
+        case 0:
+            found = StrRStrI(content, content+pos-len, fr->lpstrFindWhat);
+            break;
+        case FR_DOWN:
+            found = StrStrI(content+pos, fr->lpstrFindWhat);
+            break;
+        case FR_MATCHCASE:
+            found = NOTEPAD_StrRStr(content, content+pos-len, fr->lpstrFindWhat);
+            break;
+        case FR_DOWN|FR_MATCHCASE:
+            found = StrStr(content+pos, fr->lpstrFindWhat);
+            break;
+        default:    /* shouldn't happen */
+            return;
+    }
+    HeapFree(GetProcessHeap(), 0, content);
+
+    if (found == NULL)
+    {
+        DIALOG_StringMsgBox(Globals.hFindReplaceDlg, STRING_NOTFOUND, fr->lpstrFindWhat,
+            MB_ICONINFORMATION|MB_OK);
+        return;
+    }
+
+    SendMessage(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
+}
+
 /***********************************************************************
  *
  *           NOTEPAD_WndProc
@@ -321,13 +381,27 @@ static VOID NOTEPAD_InitMenuPopup(HMENU menu, int index)
 static LRESULT WINAPI NOTEPAD_WndProc(HWND hWnd, UINT msg, WPARAM wParam,
                                LPARAM lParam)
 {
+    if (msg == aFINDMSGSTRING)      /* not a constant so can't be used in switch */
+    {
+        FINDREPLACE *fr = (FINDREPLACE *)lParam;
+        
+        if (fr->Flags & FR_DIALOGTERM)
+            Globals.hFindReplaceDlg = NULL;
+        if (fr->Flags & FR_FINDNEXT)
+        {
+            Globals.lastFind = *fr;
+            NOTEPAD_DoFind(fr);
+        }
+        return 0;
+    }
+    
     switch (msg) {
 
     case WM_CREATE:
     {
         static const WCHAR editW[] = { 'e','d','i','t',0 };
         DWORD dwStyle = WS_CHILD | WS_VISIBLE | WS_BORDER | WS_VSCROLL |
-                        ES_AUTOVSCROLL | ES_MULTILINE;
+                        ES_AUTOVSCROLL | ES_MULTILINE | ES_NOHIDESEL;
         RECT rc;
         GetClientRect(hWnd, &rc);
 
