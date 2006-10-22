@@ -704,6 +704,7 @@ static INT_PTR WINAPI WCUSER_SaveDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPA
     switch (msg)
     {
     case WM_INITDIALOG:
+        SendDlgItemMessage(hDlg, IDC_SAV_SESSION, BM_SETCHECK, BST_CHECKED, 0);
 	break;
     case WM_COMMAND:
 	switch (LOWORD(wParam))
