@@ -28,7 +28,7 @@ MAIN_MENU MENU
   MENUITEM "O&pslaan\tCtrl+S",	     CMD_SAVE
   MENUITEM "Ops&laan als...",	     CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Afdrukken\tCtrl+P",	     CMD_PRINT
+  MENUITEM "&Afdrukken...\tCtrl+P",	     CMD_PRINT
   MENUITEM "Pagina-in&stelling...",  CMD_PAGE_SETUP
   MENUITEM "Printerinstellingen...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -49,7 +49,7 @@ POPUP "Be&werken" {
   MENUITEM "&Lettertype instellen...",   CMD_FONT
  }
 POPUP "&Zoeken" {
-  MENUITEM "&Zoeken\tCtrl+Z",       CMD_SEARCH
+  MENUITEM "&Zoeken...\tCtrl+Z",       CMD_SEARCH
   MENUITEM "&Volgende zoeken\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Help" {
@@ -57,10 +57,10 @@ POPUP "&Help" {
   MENUITEM "&Zoeken...",         CMD_HELP_SEARCH
   MENUITEM "&Hulp bij Help",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&o..." {
-   MENUITEM "&Licentie",         CMD_LICENSE
-   MENUITEM "&GEEN GARANTIE",    CMD_NO_WARRANTY
-   MENUITEM "&Over Wine",        CMD_ABOUT_WINE
+  POPUP "Inf&o" {
+   MENUITEM "&Licentie...",         CMD_LICENSE
+   MENUITEM "&GEEN GARANTIE...",    CMD_NO_WARRANTY
+   MENUITEM "&Over Wine...",        CMD_ABOUT_WINE
   }
  }
 }

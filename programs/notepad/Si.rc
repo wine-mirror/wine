@@ -28,7 +28,7 @@ MAIN_MENU MENU
   MENUITEM "&Shrani\tCtrl+S",             CMD_SAVE
   MENUITEM "Shrani &kot ...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "Na&tisni\tCtrl+P",            CMD_PRINT
+  MENUITEM "Na&tisni ...\tCtrl+P",            CMD_PRINT
   MENUITEM "P&riprava strani ...",    CMD_PAGE_SETUP
   MENUITEM "&Tiskalnik ...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -56,10 +56,10 @@ POPUP "&Pomoè" {
   MENUITEM "&Najdi ...",        CMD_HELP_SEARCH
   MENUITEM "&O pomoèi",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&ormacije ..." {
-   MENUITEM "&Licenèna pogodba",         CMD_LICENSE
-   MENUITEM "&BREZ GARANCIJE",     CMD_NO_WARRANTY
-   MENUITEM "&O Wine",      CMD_ABOUT_WINE
+  POPUP "Inf&ormacije" {
+   MENUITEM "&Licenèna pogodba ...",         CMD_LICENSE
+   MENUITEM "&BREZ GARANCIJE ...",     CMD_NO_WARRANTY
+   MENUITEM "&O Wine ...",      CMD_ABOUT_WINE
   }
  }
 }

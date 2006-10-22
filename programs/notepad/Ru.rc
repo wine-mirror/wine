@@ -28,7 +28,7 @@ MAIN_MENU MENU LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
   MENUITEM SEPARATOR
   MENUITEM "Пара&метры страницы...",    CMD_PAGE_SETUP
   MENUITEM "&Настройка принтера...", CMD_PRINTER_SETUP
-  MENUITEM "&Печатать\tCtrl+P",            CMD_PRINT
+  MENUITEM "&Печатать...\tCtrl+P",            CMD_PRINT
   MENUITEM SEPARATOR
   MENUITEM "В&ыход",             CMD_EXIT
  }
@@ -47,7 +47,7 @@ POPUP "&Правка" {
   MENUITEM "&Шрифт...",           CMD_FONT
  }
 POPUP "П&оиск" {
-  MENUITEM "&Найти",           CMD_SEARCH
+  MENUITEM "&Найти...",           CMD_SEARCH
   MENUITEM "Найти &далее\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Справка" {
@@ -55,10 +55,10 @@ POPUP "&Справка" {
   MENUITEM "&Поиск...",        CMD_HELP_SEARCH
   MENUITEM "&Использование справки",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Сведения..." {
-   MENUITEM "&Лицензия",         CMD_LICENSE
-   MENUITEM "&БЕЗ ГАРАНТИЙ",     CMD_NO_WARRANTY
-   MENUITEM "&O Wine",      CMD_ABOUT_WINE
+  POPUP "&Сведения" {
+   MENUITEM "&Лицензия...",         CMD_LICENSE
+   MENUITEM "&БЕЗ ГАРАНТИЙ...",     CMD_NO_WARRANTY
+   MENUITEM "&O Wine...",      CMD_ABOUT_WINE
   }
  }
 }

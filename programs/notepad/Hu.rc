@@ -30,7 +30,7 @@ MAIN_MENU MENU LANGUAGE LANG_HUNGARIAN, SUBLANG_DEFAULT
   MENUITEM "Mentés má&sként...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "&Oldalbeállítás...",    CMD_PAGE_SETUP
-  MENUITEM "Nyom&tatás\tCtrl+P",            CMD_PRINT
+  MENUITEM "Nyom&tatás...\tCtrl+P",            CMD_PRINT
   MENUITEM "Nyomtató &beállítás...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
   MENUITEM "&Kilépés",             CMD_EXIT
@@ -57,10 +57,10 @@ POPUP "&Súgó" {
   MENUITEM "&Keresés...",        CMD_HELP_SEARCH
   MENUITEM "&Használat",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&ormáció..." {
-   MENUITEM "&Licenc",         CMD_LICENSE
-   MENUITEM "&SEMMI GARANCIA",     CMD_NO_WARRANTY
-   MENUITEM "&Wine névjegy",      CMD_ABOUT_WINE
+  POPUP "Inf&ormáció" {
+   MENUITEM "&Licenc...",         CMD_LICENSE
+   MENUITEM "&SEMMI GARANCIA...",     CMD_NO_WARRANTY
+   MENUITEM "&Wine névjegy...",      CMD_ABOUT_WINE
   }
  }
 }

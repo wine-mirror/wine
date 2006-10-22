@@ -28,7 +28,7 @@ MAIN_MENU MENU
   MENUITEM "Å&bn...\tCtrl+O",       CMD_OPEN
   MENUITEM "&Gem\tCtrl+S",              CMD_SAVE
   MENUITEM "Gem so&m...",       CMD_SAVE_AS
-  MENUITEM "&Udskriv\tCtrl+P",          CMD_PRINT
+  MENUITEM "&Udskriv...\tCtrl+P",          CMD_PRINT
   MENUITEM "Side&opsætning...", CMD_PAGE_SETUP
   MENUITEM "&Indstil printer...",       CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -56,10 +56,10 @@ POPUP "&Hjælp" {
   MENUITEM "&Søg efter hjælp om...",    CMD_HELP_SEARCH
   MENUITEM "&Brug af Hjælp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Om Notesblok..." {
-   MENUITEM "&Licens",          CMD_LICENSE
-   MENUITEM "&Ingen Garenti",     CMD_NO_WARRANTY
-   MENUITEM "&Om WINE",         CMD_ABOUT_WINE
+  POPUP "&Om Notesblok" {
+   MENUITEM "&Licens...",          CMD_LICENSE
+   MENUITEM "&Ingen Garenti...",     CMD_NO_WARRANTY
+   MENUITEM "&Om WINE...",         CMD_ABOUT_WINE
   }
  }
 }

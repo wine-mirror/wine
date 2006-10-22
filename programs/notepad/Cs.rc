@@ -34,7 +34,7 @@ MAIN_MENU MENU
   MENUITEM "&Uložit\tCtrl+S",     CMD_SAVE
   MENUITEM "Uložit j&ako...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Tisk\tCtrl+P",            CMD_PRINT
+  MENUITEM "&Tisk...\tCtrl+P",            CMD_PRINT
   MENUITEM "Nas&tavení stránky...",    CMD_PAGE_SETUP
   MENUITEM "Nastavení tiská&rny...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -55,7 +55,7 @@ POPUP "U&pravit" {
   MENUITEM "&Písmo...",          CMD_FONT
  }
 POPUP "&Hledání" {
-  MENUITEM "&Hledej\tCtrl+F",   CMD_SEARCH
+  MENUITEM "&Hledej...\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Najdi další\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Nápovìda" {
@@ -63,10 +63,10 @@ POPUP "&Nápovìda" {
   MENUITEM "&Najít...",        CMD_HELP_SEARCH
   MENUITEM "&Pomoc k nápovìdì",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&o..." {
-   MENUITEM "&Licence",         CMD_LICENSE
-   MENUITEM "&BEZ ZÁRUKY",     CMD_NO_WARRANTY
-   MENUITEM "&O Wine",      CMD_ABOUT_WINE
+  POPUP "Inf&o" {
+   MENUITEM "&Licence...",         CMD_LICENSE
+   MENUITEM "&BEZ ZÁRUKY...",     CMD_NO_WARRANTY
+   MENUITEM "&O Wine...",      CMD_ABOUT_WINE
   }
  }
 }

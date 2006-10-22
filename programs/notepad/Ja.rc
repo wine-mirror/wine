@@ -30,7 +30,7 @@ MAIN_MENU MENU
   MENUITEM "保存(&S)\tCtrl+S",     CMD_SAVE
   MENUITEM "名前を付けて保存(&a)...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "印刷(&P)\tCtrl+P",            CMD_PRINT
+  MENUITEM "印刷(&P)...\tCtrl+P",            CMD_PRINT
   MENUITEM "ページ設定(&t)...",    CMD_PAGE_SETUP
   MENUITEM "プリンタの設定(&r)...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -51,7 +51,7 @@ POPUP "編集(&E)" {
   MENUITEM "フォント(&F)...",          CMD_FONT
  }
 POPUP "検索(&S)" {
-  MENUITEM "検索(&S)\tCtrl+F",   CMD_SEARCH
+  MENUITEM "検索(&S)...\tCtrl+F",   CMD_SEARCH
   MENUITEM "次の候補を検索(&S)\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "ヘルプ(&H)" {
@@ -59,10 +59,10 @@ POPUP "ヘルプ(&H)" {
   MENUITEM "検索(&S)...",        CMD_HELP_SEARCH
   MENUITEM "ヘルプの使い方(&H)",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "情報(&o)..." {
-   MENUITEM "ライセンス(&L)",         CMD_LICENSE
-   MENUITEM "未保証(&N)",     CMD_NO_WARRANTY
-   MENUITEM "Wineについて(&A)",      CMD_ABOUT_WINE
+  POPUP "情報(&o)" {
+   MENUITEM "ライセンス(&L)...",         CMD_LICENSE
+   MENUITEM "未保証(&N)...",     CMD_NO_WARRANTY
+   MENUITEM "Wineについて(&A)...",      CMD_ABOUT_WINE
   }
  }
 }

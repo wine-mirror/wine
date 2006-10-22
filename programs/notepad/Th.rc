@@ -57,9 +57,9 @@ MAIN_MENU MENU
   MENUITEM "ค้นหา...",        CMD_HELP_SEARCH
   MENUITEM "เกี่ยวกับช่วยเหลีอ",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "รายละเอียด..." {
-   MENUITEM "ใบอนุญาต", CMD_LICENSE
-   MENUITEM "ไม่มี WARRANTY", CMD_NO_WARRANTY
+  POPUP "รายละเอียด" {
+   MENUITEM "ใบอนุญาต...", CMD_LICENSE
+   MENUITEM "ไม่มี WARRANTY...", CMD_NO_WARRANTY
    MENUITEM "เกี่ยวกับ Wine... ", CMD_ABOUT_WINE
   }
  }

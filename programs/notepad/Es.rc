@@ -32,7 +32,7 @@ MAIN_MENU MENU
   MENUITEM "&Guardar\tCtrl+S",            CMD_SAVE
   MENUITEM "Guardar &como...",            CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Imprimir\tCtrl+P",                   CMD_PRINT
+  MENUITEM "&Imprimir...\tCtrl+P",                   CMD_PRINT
   MENUITEM "Configurar &página...",       CMD_PAGE_SETUP
   MENUITEM "Configuración &impresora...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -53,7 +53,7 @@ POPUP "&Editar" {
   MENUITEM "Tipo de &letra...",         CMD_FONT
  }
 POPUP "&Buscar" {
-  MENUITEM "&Buscar\tCtrl+F",       CMD_SEARCH
+  MENUITEM "&Buscar...\tCtrl+F",       CMD_SEARCH
   MENUITEM "Buscar &siguiente\tF3", CMD_SEARCH_NEXT
  }
 POPUP "A&yuda" {
@@ -61,10 +61,10 @@ POPUP "A&yuda" {
   MENUITEM "&Buscar...",            CMD_HELP_SEARCH
   MENUITEM "A&yuda sobre la ayuda", CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Información..." {
-   MENUITEM "&Licencia",            CMD_LICENSE
-   MENUITEM "SIN &GARANTÍA",        CMD_NO_WARRANTY
-   MENUITEM "&Acerca de Wine",      CMD_ABOUT_WINE
+  POPUP "&Información" {
+   MENUITEM "&Licencia...",            CMD_LICENSE
+   MENUITEM "SIN &GARANTÍA...",        CMD_NO_WARRANTY
+   MENUITEM "&Acerca de Wine...",      CMD_ABOUT_WINE
   }
  }
 }

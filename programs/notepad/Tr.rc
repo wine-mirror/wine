@@ -28,7 +28,7 @@ MAIN_MENU MENU
   MENUITEM "&Kaydet\tCtrl+S",     CMD_SAVE
   MENUITEM "&Farklý Kaydet...",   CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "Ya&zdýr\tCtrl+P",     CMD_PRINT
+  MENUITEM "Ya&zdýr...\tCtrl+P",     CMD_PRINT
   MENUITEM "Sa&yfa Ayarý...",     CMD_PAGE_SETUP
   MENUITEM "Yazýcý &Ayarlarý...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -49,7 +49,7 @@ POPUP "D&üzenle" {
   MENUITEM "&Yazý Tipi...",        CMD_FONT
  }
 POPUP "&Bul" {
-  MENUITEM "&Bul\tCtrl+F",         CMD_SEARCH
+  MENUITEM "&Bul...\tCtrl+F",         CMD_SEARCH
   MENUITEM "&Sonrakini bul\tF3",   CMD_SEARCH_NEXT
  }
 POPUP "&Yardým" {
@@ -57,10 +57,10 @@ POPUP "&Yardým" {
   MENUITEM "&Ara...",              CMD_HELP_SEARCH
   MENUITEM "&Yardým kullanýmý",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "B&ilgi..." {
-   MENUITEM "&Lisans",             CMD_LICENSE
-   MENUITEM "&GARANTÝ YOK",        CMD_NO_WARRANTY
-   MENUITEM "&Wine Hakkýnda",      CMD_ABOUT_WINE
+  POPUP "B&ilgi" {
+   MENUITEM "&Lisans...",             CMD_LICENSE
+   MENUITEM "&GARANTÝ YOK...",        CMD_NO_WARRANTY
+   MENUITEM "&Wine Hakkýnda...",      CMD_ABOUT_WINE
   }
  }
 }

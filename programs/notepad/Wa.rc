@@ -31,7 +31,7 @@ MAIN_MENU MENU
   MENUITEM "&Drovî...\tCtrl+O",            CMD_OPEN
   MENUITEM "&Schaper\tCtrl+S",          CMD_SAVE
   MENUITEM "Schaper èt r&lomer...",     CMD_SAVE_AS
-  MENUITEM "&Rexhe\tCtrl+P",            CMD_PRINT
+  MENUITEM "&Rexhe...\tCtrl+P",            CMD_PRINT
   MENUITEM "Arrandjmint del &Pådje...", CMD_PAGE_SETUP
   MENUITEM "&Apontiaedje del scrirece...",      CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -59,10 +59,10 @@ POPUP "&Aide" {
   MENUITEM "C&werî...",         CMD_HELP_SEARCH
   MENUITEM "&Aide so l' Aide",  CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Informåcion..." {
-   MENUITEM "&Licinse",         CMD_LICENSE
-   MENUITEM "&NOLE WARANTEYE",  CMD_NO_WARRANTY
-   MENUITEM "Å &dfait di Wine", CMD_ABOUT_WINE
+  POPUP "&Informåcion" {
+   MENUITEM "&Licinse...",         CMD_LICENSE
+   MENUITEM "&NOLE WARANTEYE...",  CMD_NO_WARRANTY
+   MENUITEM "Å &dfait di Wine...", CMD_ABOUT_WINE
   }
  }
 }

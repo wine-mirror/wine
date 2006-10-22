@@ -25,7 +25,7 @@ MAIN_MENU MENU LANGUAGE LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED
   MENUITEM "打开（&O）...\tCtrl+O",             CMD_OPEN
   MENUITEM "保存（&S）\tCtrl+S",             CMD_SAVE
   MENUITEM "另存为(&A)...",       CMD_SAVE_AS
-  MENUITEM "打印（&P）\tCtrl+P",            CMD_PRINT
+  MENUITEM "打印（&P）...\tCtrl+P",            CMD_PRINT
   MENUITEM "页面设置（&T）...",    CMD_PAGE_SETUP
   MENUITEM "打印设置（&R）...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -46,7 +46,7 @@ POPUP "编辑（&E）" {
   MENUITEM "&Font...",          CMD_FONT /* FIXME */
  }
 POPUP "搜索（&S）" {
-  MENUITEM "搜索（&S）",           CMD_SEARCH
+  MENUITEM "搜索（&S）...",           CMD_SEARCH
   MENUITEM "搜索下一个（&S）\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "帮助（&H）" {
@@ -54,10 +54,10 @@ POPUP "帮助（&H）" {
   MENUITEM "搜索（&S）...",        CMD_HELP_SEARCH
   MENUITEM "如何使用帮助（&H）",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "资料信息（&O）..." {
-   MENUITEM "用户许可协议（&L）",         CMD_LICENSE
-   MENUITEM "责任无关（&N）",     CMD_NO_WARRANTY
-   MENUITEM "关于 Wine（&A）",      CMD_ABOUT_WINE
+  POPUP "资料信息（&O）" {
+   MENUITEM "用户许可协议（&L）...",         CMD_LICENSE
+   MENUITEM "责任无关（&N）...",     CMD_NO_WARRANTY
+   MENUITEM "关于 Wine（&A）...",      CMD_ABOUT_WINE
   }
  }
 }

@@ -28,7 +28,7 @@ MAIN_MENU MENU
   MENUITEM "&Lagre\tCtrl+S",     CMD_SAVE
   MENUITEM "Lagr&e som . . .",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Skriv ut\tCtrl+P",            CMD_PRINT
+  MENUITEM "&Skriv ut . . .\tCtrl+P",            CMD_PRINT
   MENUITEM "Sideoppse&tt . . .",    CMD_PAGE_SETUP
   MENUITEM "Sk&riveroppsett . . .", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -49,7 +49,7 @@ POPUP "R&ediger" {
   MENUITEM "Skr&ift . . .",          CMD_FONT
  }
 POPUP "&Søk" {
-  MENUITEM "&Søk\tCtrl+F",   CMD_SEARCH
+  MENUITEM "&Søk . . .\tCtrl+F",   CMD_SEARCH
   MENUITEM "&Søk etter nest&e\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Hjelp" {
@@ -57,10 +57,10 @@ POPUP "&Hjelp" {
   MENUITEM "&Søk . . .",        CMD_HELP_SEARCH
   MENUITEM "&Hjelp om hjelp",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&ormasjon . . ." {
-   MENUITEM "&Lisens",         CMD_LICENSE
-   MENUITEM "I&NGEN GARANTI",     CMD_NO_WARRANTY
-   MENUITEM "&Om Wine",      CMD_ABOUT_WINE
+  POPUP "Inf&ormasjon" {
+   MENUITEM "&Lisens . . .",         CMD_LICENSE
+   MENUITEM "I&NGEN GARANTI . . .",     CMD_NO_WARRANTY
+   MENUITEM "&Om Wine . . .",      CMD_ABOUT_WINE
   }
  }
 }

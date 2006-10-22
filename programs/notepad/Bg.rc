@@ -28,7 +28,7 @@ MAIN_MENU MENU
   MENUITEM "&Съхрани\tCtrl+S",     CMD_SAVE
   MENUITEM "Съхрани &като...",       CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "&Печат\tCtrl+P",            CMD_PRINT
+  MENUITEM "&Печат...\tCtrl+P",            CMD_PRINT
   MENUITEM "Наст&ройки на страницата...",    CMD_PAGE_SETUP
   MENUITEM "Настро&йки на печатането...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -49,7 +49,7 @@ POPUP "&Редактиране" {
   MENUITEM "&Шрифт...",          CMD_FONT
  }
 POPUP "&Търсене" {
-  MENUITEM "&Търси\tCtrl+F",   CMD_SEARCH
+  MENUITEM "&Търси...\tCtrl+F",   CMD_SEARCH
   MENUITEM "Намери &следващ\tF3",  CMD_SEARCH_NEXT
  }
 POPUP "&Помощ" {
@@ -57,10 +57,10 @@ POPUP "&Помощ" {
   MENUITEM "&Търси...",        CMD_HELP_SEARCH
   MENUITEM "&Помощ за помощта",     CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "&Информация..." {
-   MENUITEM "&Лиценз",         CMD_LICENSE
-   MENUITEM "&БЕЗ ГАРАНЦИЯ",     CMD_NO_WARRANTY
-   MENUITEM "&Относно Wine",      CMD_ABOUT_WINE
+  POPUP "&Информация" {
+   MENUITEM "&Лиценз...",         CMD_LICENSE
+   MENUITEM "&БЕЗ ГАРАНЦИЯ...",     CMD_NO_WARRANTY
+   MENUITEM "&Относно Wine...",      CMD_ABOUT_WINE
   }
  }
 }

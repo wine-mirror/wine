@@ -29,7 +29,7 @@ MAIN_MENU MENU
   MENUITEM "Ö&ppna...\tCtrl+O",            CMD_OPEN
   MENUITEM "&Spara\tCtrl+S",            CMD_SAVE
   MENUITEM "Spara &som...",     CMD_SAVE_AS
-  MENUITEM "&Skriv ut\tCtrl+P",         CMD_PRINT
+  MENUITEM "&Skriv ut...\tCtrl+P",         CMD_PRINT
   MENUITEM "Sid La&yout...",    CMD_PAGE_SETUP
   MENUITEM "Skrivar &inställningar...", CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
@@ -57,10 +57,10 @@ POPUP "&Hjälp" {
   MENUITEM "&Sök...",           CMD_HELP_SEARCH
   MENUITEM "Användningen &av hjälp",    CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
-  POPUP "Inf&ormation..." {
-   MENUITEM "&Licens",          CMD_LICENSE
-   MENUITEM "&INGEN GARANTI",   CMD_NO_WARRANTY
-   MENUITEM "&Om Wine",         CMD_ABOUT_WINE
+  POPUP "Inf&ormation" {
+   MENUITEM "&Licens...",          CMD_LICENSE
+   MENUITEM "&INGEN GARANTI...",   CMD_NO_WARRANTY
+   MENUITEM "&Om Wine...",         CMD_ABOUT_WINE
   }
  }
 }
