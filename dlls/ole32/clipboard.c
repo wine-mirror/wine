@@ -914,7 +914,8 @@ static HRESULT OLEClipbrd_RenderFormat(IDataObject *pIDataObject, LPFORMATETC pF
   ILockBytes *ptrILockBytes = 0;
   HGLOBAL hStorage = 0;
 
-  GetClipboardFormatNameA(pFormatetc->cfFormat, szFmtName, MAX_CLIPFORMAT_NAME);
+  if (!GetClipboardFormatNameA(pFormatetc->cfFormat, szFmtName, MAX_CLIPFORMAT_NAME))
+      szFmtName[0] = '\0';
 
   /* If embed source */
   if (!strcmp(szFmtName, CF_EMBEDSOURCE))
