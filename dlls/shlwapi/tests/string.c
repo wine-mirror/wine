@@ -750,7 +750,11 @@ START_TEST(string)
     test_StrFormatKBSizeA();
     test_StrFormatKBSizeW();
   }
-  test_StrFromTimeIntervalA();
+  if (0)
+  {
+    /* language-dependent test. FIXME: how to detect the language? */
+    test_StrFromTimeIntervalA();
+  }
   test_StrCmpA();
   test_StrCmpW();
   test_StrRetToBSTR();
