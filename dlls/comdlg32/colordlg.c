@@ -1328,7 +1328,9 @@ BOOL WINAPI ChooseColorW( LPCHOOSECOLORW lpChCol )
 BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
 
 {
+  LPWSTR template_name = NULL;
   BOOL ret;
+
   LPCHOOSECOLORW lpcc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(CHOOSECOLORW));
   lpcc->lStructSize = sizeof(*lpcc);
   lpcc->hwndOwner = lpChCol->hwndOwner;
@@ -1341,8 +1343,9 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
   if ((lpcc->Flags & CC_ENABLETEMPLATE) && (lpChCol->lpTemplateName)) {
       if (HIWORD(lpChCol->lpTemplateName)) {
 	  INT len = MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, NULL, 0);
-	  lpcc->lpTemplateName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-	  MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, (LPWSTR)lpcc->lpTemplateName, len );
+          template_name = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
+          MultiByteToWideChar( CP_ACP, 0, lpChCol->lpTemplateName, -1, template_name, len );
+          lpcc->lpTemplateName = template_name;
       } else {
 	  lpcc->lpTemplateName = (LPCWSTR)lpChCol->lpTemplateName;
       }
@@ -1352,7 +1355,7 @@ BOOL WINAPI ChooseColorA( LPCHOOSECOLORA lpChCol )
 
   if (ret)
       lpChCol->rgbResult = lpcc->rgbResult;
-  if (HIWORD(lpcc->lpTemplateName)) HeapFree(GetProcessHeap(), 0, (LPSTR)lpcc->lpTemplateName);
+  HeapFree(GetProcessHeap(), 0, template_name);
   HeapFree(GetProcessHeap(), 0, lpcc);
   return ret;
 }
