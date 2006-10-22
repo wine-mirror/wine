@@ -43,7 +43,7 @@ static BOOL    (WINAPI *pIntlStrEqWorkerA)(BOOL,LPCSTR,LPCSTR,int);
 static BOOL    (WINAPI *pStrIsIntlEqualW)(BOOL,LPCWSTR,LPCWSTR,int);
 static BOOL    (WINAPI *pIntlStrEqWorkerW)(BOOL,LPCWSTR,LPCWSTR,int);
 
-static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
+static int strcmpW(const WCHAR *str1, const WCHAR *str2)
 {
     while (*str1 && (*str1 == *str2)) { str1++; str2++; }
     return *str1 - *str2;
@@ -619,7 +619,7 @@ static void test_StrRetToBSTR(void)
     if (!pStrRetToBSTR) return;
 
     strret.uType = STRRET_WSTR;
-    strret.u.pOleStr = CoDupStrW("Test");
+    U(strret).pOleStr = CoDupStrW("Test");
     bstr = 0;
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
@@ -628,7 +628,7 @@ static void test_StrRetToBSTR(void)
       SysFreeString(bstr);
 
     strret.uType = STRRET_CSTR;
-    lstrcpyA(strret.u.cStr, "Test");
+    lstrcpyA(U(strret).cStr, "Test");
     ret = pStrRetToBSTR(&strret, NULL, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
        "STRRET_CSTR: dup failed, ret=0x%08x, bstr %p\n", ret, bstr);
@@ -636,7 +636,7 @@ static void test_StrRetToBSTR(void)
       SysFreeString(bstr);
 
     strret.uType = STRRET_OFFSET;
-    strret.u.uOffset = 1;
+    U(strret).uOffset = 1;
     strcpy((char*)&iidl, " Test");
     ret = pStrRetToBSTR(&strret, iidl, &bstr);
     ok(ret == S_OK && bstr && !strcmpW(bstr, szTestW),
