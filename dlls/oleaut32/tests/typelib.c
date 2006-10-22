@@ -2,6 +2,7 @@
  * ITypeLib and ITypeInfo test
  *
  * Copyright 2004 Jacek Caban
+ * Copyright 2006 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,6 +30,7 @@
 #include "winbase.h"
 #include "oleauto.h"
 #include "ocidl.h"
+#include "shlwapi.h"
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 
@@ -488,10 +490,103 @@ static void test_TypeInfo(void)
     ITypeLib_Release(pTypeLib);
 }
 
+static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL remove)
+{
+    static const WCHAR typelibW[] = {'T','y','p','e','l','i','b','\\',0};
+    static const WCHAR formatW[] = {'\\','%','u','.','%','u','\\','0','\\','w','i','n','3','2',0};
+    static const WCHAR format2W[] = {'%','s','_','%','u','_','%','u','.','d','l','l',0};
+    WCHAR buf[128];
+    HKEY hkey;
+    BOOL ret = TRUE;
+
+    memcpy(buf, typelibW, sizeof(typelibW));
+    StringFromGUID2(uid, buf + lstrlenW(buf), 40);
+
+    if (remove)
+    {
+todo_wine {
+        ok(SHDeleteKeyW(HKEY_CLASSES_ROOT, buf) == ERROR_SUCCESS, "SHDeleteKey failed\n");
+}
+        return TRUE;
+    }
+
+    wsprintfW(buf + lstrlenW(buf), formatW, maj, min );
+
+    if (RegCreateKeyExW(HKEY_CLASSES_ROOT, buf, 0, NULL, 0,
+                        KEY_WRITE, NULL, &hkey, NULL) != ERROR_SUCCESS)
+    {
+        trace("RegCreateKeyExW failed\n");
+        return FALSE;
+    }
+
+    wsprintfW(buf, format2W, base, maj, min);
+    if (RegSetValueExW(hkey, NULL, 0, REG_SZ,
+                       (BYTE *)buf, (lstrlenW(buf) + 1) * sizeof(WCHAR)) != ERROR_SUCCESS)
+    {
+        trace("RegSetValueExW failed\n");
+        ret = FALSE;
+    }
+    RegCloseKey(hkey);
+    return ret;
+}
+
+static void test_QueryPathOfRegTypeLib(void)
+{
+    static const struct test_data
+    {
+        WORD maj, min;
+        HRESULT ret;
+        const WCHAR path[16];
+    } td[] = {
+        { 1, 0, TYPE_E_LIBNOTREGISTERED, { 0 } },
+        { 3, 0, S_OK, {'f','a','k','e','_','3','_','0','.','d','l','l',0 } },
+        { 3, 1, S_OK, {'f','a','k','e','_','3','_','1','.','d','l','l',0 } },
+#if 0 /* todo: enable once properly implemented */
+        { 3, 22, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
+#endif
+        { 3, 37, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
+#if 0 /* todo: enable once properly implemented */
+        { 3, 40, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
+#endif
+        { 4, 0, TYPE_E_LIBNOTREGISTERED, { 0 } }
+    };
+    static const WCHAR base[] = {'f','a','k','e',0};
+    UINT i;
+    RPC_STATUS status;
+    GUID uid;
+    WCHAR uid_str[40];
+    HRESULT ret;
+    BSTR path;
+
+    status = UuidCreate(&uid);
+    ok(!status, "UuidCreate error %08lx\n", status);
+
+    StringFromGUID2(&uid, uid_str, 40);
+    /*trace("GUID: %s\n", wine_dbgstr_w(uid_str));*/
+
+    if (!do_typelib_reg_key(&uid, 3, 0, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 3, 1, base, 0)) return;
+    if (!do_typelib_reg_key(&uid, 3, 37, base, 0)) return;
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        ret = QueryPathOfRegTypeLib(&uid, td[i].maj, td[i].min, 0, &path);
+        ok(ret == td[i].ret, "QueryPathOfRegTypeLib(%u.%u) returned %08x\n", td[i].maj, td[i].min, ret);
+        if (ret == S_OK)
+        {
+            ok(!lstrcmpW(td[i].path, path), "typelib %u.%u path doesn't match\n", td[i].maj, td[i].min);
+            SysFreeString(path);
+        }
+    }
+
+    do_typelib_reg_key(&uid, 0, 0, NULL, 1);
+}
+
 START_TEST(typelib)
 {
     ref_count_test(wszStdOle2);
     test_TypeComp();
     test_CreateDispTypeInfo();
     test_TypeInfo();
+    test_QueryPathOfRegTypeLib();
 }
