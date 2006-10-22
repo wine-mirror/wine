@@ -135,7 +135,7 @@ BEGIN
         MENUITEM "&Wiederherstellen",               ID_RESTORE
         MENUITEM "&Schlieﬂen",                      ID_FILE_EXIT
         MENUITEM SEPARATOR
-        MENUITEM "&Immer im Vordergrund",           ID_OPTIONS_ALWAYSONTOP, CHECKED
+        MENUITEM "&Immer im Vordergrund",           ID_OPTIONS_ALWAYSONTOP
     END
 END
 
