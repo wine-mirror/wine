@@ -683,6 +683,45 @@ static void test_StrCpyNXW(void)
        dest + 5, lpszRes, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
 }
 
+#define check_strrstri(type, str, pos, needle, exp) \
+    ret##type = StrRStrI##type(str, str+pos, needle); \
+    ok(ret##type == (exp), "Type " #type ", expected %p but got %p (string base %p)\n", \
+    (exp), ret##type, str);
+
+static void test_StrRStrI()
+{
+    static const CHAR szTest[] = "yAxxxxAy";
+    static const CHAR szTest2[] = "ABABABAB";
+    static const WCHAR wszTest[] = {'y','A','x','x','x','x','A','y',0};
+    static const WCHAR wszTest2[] = {'A','B','A','B','A','B','A','B',0};
+
+    static const WCHAR wszPattern1[] = {'A',0};
+    static const WCHAR wszPattern2[] = {'a','X',0};
+    static const WCHAR wszPattern3[] = {'A','y',0};
+    static const WCHAR wszPattern4[] = {'a','b',0};
+    LPWSTR retW;
+    LPSTR retA;
+    
+    check_strrstri(A, szTest, 4, "A", szTest+1);
+    check_strrstri(A, szTest, 4, "aX", szTest+1);
+    check_strrstri(A, szTest, 4, "Ay", NULL);
+    check_strrstri(W, wszTest, 4, wszPattern1, wszTest+1);
+    check_strrstri(W, wszTest, 4, wszPattern2, wszTest+1);
+    check_strrstri(W, wszTest, 4, wszPattern3, NULL);
+
+    check_strrstri(A, szTest2, 4, "ab", szTest2+2);
+    check_strrstri(A, szTest2, 3, "ab", szTest2+2);
+    check_strrstri(A, szTest2, 2, "ab", szTest2);
+    check_strrstri(A, szTest2, 1, "ab", szTest2);
+    check_strrstri(A, szTest2, 0, "ab", NULL);
+    check_strrstri(W, wszTest2, 4, wszPattern4, wszTest2+2);
+    check_strrstri(W, wszTest2, 3, wszPattern4, wszTest2+2);
+    check_strrstri(W, wszTest2, 2, wszPattern4, wszTest2);
+    check_strrstri(W, wszTest2, 1, wszPattern4, wszTest2);
+    check_strrstri(W, wszTest2, 0, wszPattern4, NULL);
+
+}
+
 static void test_SHAnsiToAnsi(void)
 {
   char dest[8];
@@ -760,6 +799,7 @@ START_TEST(string)
   test_StrRetToBSTR();
   test_StrCpyNXA();
   test_StrCpyNXW();
+  test_StrRStrI();
   test_SHAnsiToAnsi();
   test_SHUnicodeToUnicode();
 }
