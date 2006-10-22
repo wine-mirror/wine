@@ -1678,8 +1678,16 @@ static DWORD modReset(WORD wDevID)
 
 LRESULT OSS_MidiInit(void)
 {
+    TRACE("()\n");
     return FALSE;
 }
+
+LRESULT OSS_MidiExit(void)
+{
+    TRACE("()\n");
+    return 0;
+}
+
 
 #endif /* HAVE_OSS_MIDI */
 
