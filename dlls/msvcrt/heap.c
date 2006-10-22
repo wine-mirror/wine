@@ -49,8 +49,9 @@ void* CDECL MSVCRT_operator_new(unsigned long size)
 {
   void *retval = HeapAlloc(GetProcessHeap(), 0, size);
   TRACE("(%ld) returning %p\n", size, retval);
+  if(retval) return retval;
   LOCK_HEAP;
-  if(!retval && MSVCRT_new_handler)
+  if(MSVCRT_new_handler)
     (*MSVCRT_new_handler)(size);
   UNLOCK_HEAP;
   return retval;
