@@ -724,12 +724,14 @@ void FD31_MapOfnStructA(const LPOPENFILENAMEA ofnA, LPOPENFILENAMEW ofnW, BOOL o
         ofnW->lpstrTitle = usBuffer.Buffer;
     } else {
         WCHAR buf[16];
+        LPWSTR title_tmp;
         int len;
         LoadStringW(COMDLG32_hInstance, open ? IDS_OPEN_FILE : IDS_SAVE_AS,
                     buf, sizeof(buf)/sizeof(WCHAR));
         len = lstrlenW(buf)+1;
-        ofnW->lpstrTitle = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        memcpy((void*)ofnW->lpstrTitle, buf, len*sizeof(WCHAR));
+        title_tmp = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+        memcpy(title_tmp, buf, len * sizeof(WCHAR));
+        ofnW->lpstrTitle = title_tmp;
     }
     ofnW->Flags = ofnA->Flags;
     ofnW->nFileOffset = ofnA->nFileOffset;
