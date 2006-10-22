@@ -720,7 +720,12 @@ static void test_SHUnicodeToUnicode(void)
 
 START_TEST(string)
 {
+  TCHAR thousandDelim[8];
+  TCHAR decimalDelim[8];
   CoInitialize(0);
+
+  GetLocaleInfo(GetUserDefaultLCID(), LOCALE_STHOUSAND, thousandDelim, 8);
+  GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SDECIMAL, decimalDelim, 8);
 
   hShlwapi = GetModuleHandleA("shlwapi");
   if (!hShlwapi)
@@ -738,15 +743,11 @@ START_TEST(string)
   test_StrToIntExA();
   test_StrToIntExW();
   test_StrDupA();
-  if (0)
+  if (lstrcmp(thousandDelim, ",")==0 && lstrcmp(decimalDelim, ".")==0)
   {
-    /* this test fails on locales which do not use '.' as a decimal separator */
+    /* these tests are locale-dependent */
     test_StrFormatByteSize64A();
-
-    /* this test fails on locales which do not use '.' as a decimal separator */
     test_StrFormatKBSizeA();
-
-    /* FIXME: Awaiting NLS fixes in kernel before these succeed */
     test_StrFormatKBSizeW();
   }
   test_StrFromTimeIntervalA();
