@@ -145,6 +145,17 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
+IDD_EXPORT_TEMPLATE DIALOG DISCARDABLE  50, 50, 278, 54
+STYLE DS_3DLOOK | DS_CONTROL | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS |
+    WS_BORDER
+FONT 8, "MS Shell Dlg"
+BEGIN
+    GROUPBOX "Registry &exportieren", IDC_EXPORT_BASE, 6, 6, 266, 42, WS_GROUP
+    AUTORADIOBUTTON "&Alles", IDC_EXPORT_ALL, 12, 15, 244, 12
+    AUTORADIOBUTTON "Ausgewählter &Zweig:", IDC_EXPORT_SELECTED, 12, 30, 90, 12
+    EDITTEXT IDC_EXPORT_PATH, 102, 30, 164, 12
+END
+
 IDD_FIND DIALOG DISCARDABLE  22, 17, 210, 85
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "Suchen"
@@ -299,6 +310,22 @@ BEGIN
     IDS_NEWKEY              "Neuer Schlüssel #%d"
     IDS_NEWVALUE            "Neuer Wert #%d"
     IDS_NOTFOUND            "Suchfolge '%s' wurde nicht gefunden."
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_FILEDIALOG_IMPORT_TITLE   "Registry-Datei importieren"
+    IDS_FILEDIALOG_EXPORT_TITLE   "Registry-Datei exportieren"
+    IDS_FILEDIALOG_FILTER         "Registry-Dateien\0*.reg\0Win9x/NT4 Registry-Dateien (REGEDIT4)\0*.reg\0Alle Dateien (*.*)\0*.*\0\0"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDS_REGISTRY_ROOT_NAME           "Arbeitsplatz"
+    IDS_REGISTRY_DEFAULT_VALUE       "(Standard)"
+    IDS_REGISTRY_VALUE_NOT_SET       "(Wert nicht gesetzt)"
+    IDS_REGISTRY_VALUE_CANT_DISPLAY  "(kann Wert nicht darstellen)"
+    IDS_REGISTRY_UNKNOWN_TYPE        "(unbekannt %d)"
 END
 
 /*****************************************************************/
