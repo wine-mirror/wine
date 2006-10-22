@@ -1283,7 +1283,10 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
     DWORD time = GetCurrentTime();
 
     alt = control = shift = 0;
-    for (i = 0; i < 32; i++)
+    /* the minimum keycode is always greater or equal to 8, so we can
+     * skip the first 8 values, hence start at 1
+     */
+    for (i = 1; i < 32; i++)
     {
         if (!event->xkeymap.key_vector[i]) continue;
         for (j = 0; j < 8; j++)
