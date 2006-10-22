@@ -756,18 +756,19 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
         for (i = 0; i < count; i++) {
             textWidth += lpDx[i];
         }
-        GetTextExtentPoint32W(physDev->hdc, str, count, &strSize);
-        textHeight = strSize.cy;
+        if (GetTextExtentPoint32W(physDev->hdc, str, count, &strSize))
+            textHeight = strSize.cy;
     }
     else {
         UINT i;
         INT *dx = (INT *)((char*)pemr + pemr->emrtext.offDx);
         SIZE charSize;
         for (i = 0; i < count; i++) {
-            GetTextExtentPoint32W(physDev->hdc, str + i, 1, &charSize);
-            dx[i] = charSize.cx;
-            textWidth += charSize.cx;
-            textHeight = max(textHeight, charSize.cy);
+            if (GetTextExtentPoint32W(physDev->hdc, str + i, 1, &charSize)) {
+                dx[i] = charSize.cx;
+                textWidth += charSize.cx;
+                textHeight = max(textHeight, charSize.cy);
+            }
         }
     }
 
@@ -791,7 +792,8 @@ BOOL EMFDRV_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     switch (textAlign & (TA_TOP | TA_BOTTOM | TA_BASELINE)) {
     case TA_BASELINE: {
         TEXTMETRICW tm;
-        GetTextMetricsW(physDev->hdc, &tm);
+        if (!GetTextMetricsW(physDev->hdc, &tm))
+            tm.tmDescent = 0;
         /* Play safe here... it's better to have a bounding box */
         /* that is too big than too small. */
         pemr->rclBounds.top    = y - textHeight - 1;
