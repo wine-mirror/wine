@@ -365,8 +365,8 @@ DWORD apartment_release(struct apartment *apt)
             struct registered_psclsid *registered_psclsid =
                 LIST_ENTRY(cursor, struct registered_psclsid, entry);
 
-            HeapFree(GetProcessHeap(), 0, registered_psclsid);
             list_remove(&registered_psclsid->entry);
+            HeapFree(GetProcessHeap(), 0, registered_psclsid);
         }
 
         /* if this assert fires, then another thread took a reference to a
