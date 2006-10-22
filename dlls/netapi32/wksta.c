@@ -445,7 +445,7 @@ NET_API_STATUS WINAPI NetpGetComputerName(LPWSTR *Buffer)
     if (GetComputerNameW(*Buffer,  &dwSize))
     {
         NetApiBufferReallocate(
-            *Buffer, dwSize * sizeof(WCHAR),
+            *Buffer, (dwSize + 1) * sizeof(WCHAR),
             (LPVOID *) Buffer);
         return NERR_Success;
     }
