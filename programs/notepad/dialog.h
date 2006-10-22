@@ -49,6 +49,7 @@ VOID DIALOG_HelpNoWarranty(VOID);
 VOID DIALOG_HelpAboutWine(VOID);
 
 VOID DIALOG_TimeDate(VOID);
+int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCWSTR szString, DWORD dwFlags);
 
 /* utility functions */
 VOID ShowLastError(void);

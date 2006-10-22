@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <commdlg.h>
+#include <shlwapi.h>
 
 #include "main.h"
 #include "dialog.h"
@@ -78,39 +79,39 @@ static void UpdateWindowCaption(void)
   SetWindowText(Globals.hMainWnd, szCaption);
 }
 
-static void AlertFileNotFound(LPCWSTR szFileName)
+int DIALOG_StringMsgBox(HWND hParent, int formatId, LPCWSTR szString, DWORD dwFlags)
 {
    WCHAR szMessage[MAX_STRING_LEN];
    WCHAR szResource[MAX_STRING_LEN];
 
    /* Load and format szMessage */
-   LoadString(Globals.hInstance, STRING_NOTFOUND, szResource, SIZEOF(szResource));
-   wsprintf(szMessage, szResource, szFileName);
+   LoadString(Globals.hInstance, formatId, szResource, SIZEOF(szResource));
+   wnsprintf(szMessage, SIZEOF(szMessage), szResource, szString);
 
    /* Load szCaption */
-   LoadString(Globals.hInstance, STRING_ERROR,  szResource, SIZEOF(szResource));
+   if ((dwFlags & MB_ICONMASK) == MB_ICONEXCLAMATION)
+     LoadString(Globals.hInstance, STRING_ERROR,  szResource, SIZEOF(szResource));
+   else
+     LoadString(Globals.hInstance, STRING_NOTEPAD,  szResource, SIZEOF(szResource));
 
    /* Display Modal Dialog */
-   MessageBox(Globals.hMainWnd, szMessage, szResource, MB_ICONEXCLAMATION);
+   if (hParent == NULL)
+     hParent = Globals.hMainWnd;
+   return MessageBox(hParent, szMessage, szResource, dwFlags);
+}
+
+static void AlertFileNotFound(LPCWSTR szFileName)
+{
+   DIALOG_StringMsgBox(NULL, STRING_NOTFOUND, szFileName, MB_ICONEXCLAMATION|MB_OK);
 }
 
 static int AlertFileNotSaved(LPCWSTR szFileName)
 {
-   WCHAR szMessage[MAX_STRING_LEN];
-   WCHAR szResource[MAX_STRING_LEN];
    WCHAR szUntitled[MAX_STRING_LEN];
 
    LoadString(Globals.hInstance, STRING_UNTITLED, szUntitled, SIZEOF(szUntitled));
-
-   /* Load and format Message */
-   LoadString(Globals.hInstance, STRING_NOTSAVED, szResource, SIZEOF(szResource));
-   wsprintf(szMessage, szResource, szFileName[0] ? szFileName : szUntitled);
-
-   /* Load Caption */
-   LoadString(Globals.hInstance, STRING_NOTEPAD, szResource, SIZEOF(szResource));
-
-   /* Display modal */
-   return MessageBox(Globals.hMainWnd, szMessage, szResource, MB_ICONEXCLAMATION|MB_YESNOCANCEL);
+   return DIALOG_StringMsgBox(NULL, STRING_NOTSAVED, szFileName[0] ? szFileName : szUntitled,
+     MB_ICONQUESTION|MB_YESNOCANCEL);
 }
 
 /**
