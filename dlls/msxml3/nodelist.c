@@ -334,17 +334,20 @@ static HRESULT WINAPI xmlnodelist_get_length(
 	return S_OK;
     }
         
+    curr = This->node;
+
     if(This->enum_children)
     {
         tmp = curr;
         top_level_node = &tmp;
     }
 
-    for(curr = This->node; curr; curr = get_next_node(&This->xinfo, curr, top_level_node))
+    while (curr)
     {
         r = xslt_next_match( &This->xinfo, &curr, top_level_node );
         if(FAILED(r) || !curr) break;
         nodeCount++;
+        curr = get_next_node(&This->xinfo, curr, top_level_node);
     }
 
     *listLength = nodeCount;
