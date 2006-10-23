@@ -1816,7 +1816,7 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 {
                     if ( pFuncRec->FKCCIC & 0x2000 )
                     {
-                       (*pptfd)->Entry = (WCHAR*) pFuncRec->OptAttr[2] ;
+                       (*pptfd)->Entry = SysAllocString((WCHAR*)pFuncRec->OptAttr[2]);
                     }
                     else
                     {
@@ -3593,6 +3593,8 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
 
       for (pImpLib = This->pImpLibs; pImpLib; pImpLib = pImpLibNext)
       {
+          if (pImpLib->pImpTypeLib)
+              ITypeLib_Release((ITypeLib *)pImpLib->pImpTypeLib);
           TLB_Free(pImpLib->name);
 
           pImpLibNext = pImpLib->next;
@@ -4433,6 +4435,7 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
               pCustDataNext = pCustData->next;
               TLB_Free(pCustData);
           }
+          SysFreeString(pFInfo->Entry);
           SysFreeString(pFInfo->HelpString);
           SysFreeString(pFInfo->Name);
 
