@@ -534,7 +534,9 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
     wine_tsx11_unlock();
 
-    if (use_xim && !(data->xim = X11DRV_SetupXIM( data->display, input_style )))
+    if (!use_xim)
+        data->xim = NULL;
+    else if (!(data->xim = X11DRV_SetupXIM( data->display, input_style )))
         WARN("Input Method is not available\n");
 
     if (wine_server_fd_to_handle( ConnectionNumber(data->display), GENERIC_READ | SYNCHRONIZE,
