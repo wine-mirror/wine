@@ -300,6 +300,8 @@ static void test_instances(void)
     HINSTANCE kernel32 = GetModuleHandleA("kernel32");
     HINSTANCE user32 = GetModuleHandleA("user32");
     HINSTANCE main_module = GetModuleHandleA(NULL);
+    DWORD r;
+    char buffer[0x10];
 
     memset( &cls, 0, sizeof(cls) );
     cls.style         = CS_HREDRAW | CS_VREDRAW;
@@ -410,6 +412,10 @@ static void test_instances(void)
     ok( (HINSTANCE)GetClassLongPtrA( hwnd2, GCLP_HMODULE ) == kernel32,
         "Didn't get kernel32 class for null instance\n" );
     DestroyWindow( hwnd2 );
+
+    r = GetClassName( hwnd, buffer, 4 );
+    todo_wine ok( r == 3, "return wrong\n");
+    ok( !strcmp( buffer, "__t"), "name wrong\n");
 
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
 
