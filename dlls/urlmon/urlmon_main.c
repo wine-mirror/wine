@@ -402,9 +402,8 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
  *
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  */
-static BOOL text_html_filter(LPVOID buf, DWORD size)
+static BOOL text_html_filter(const BYTE const *b, DWORD size)
 {
-    const char *b = buf;
     int i;
 
     if(size < 5)
@@ -422,10 +421,8 @@ static BOOL text_html_filter(LPVOID buf, DWORD size)
     return FALSE;
 }
 
-static BOOL image_gif_filter(LPVOID buf, DWORD size)
+static BOOL image_gif_filter(const BYTE const *b, DWORD size)
 {
-    const BYTE const *b = buf;
-
     return size >= 6
         && (b[0] == 'G' || b[0] == 'g')
         && (b[1] == 'I' || b[1] == 'i')
@@ -435,44 +432,41 @@ static BOOL image_gif_filter(LPVOID buf, DWORD size)
         && (b[5] == 'A' || b[5] == 'a');
 }
 
-static BOOL image_pjpeg_filter(LPVOID buf, DWORD size)
+static BOOL image_pjpeg_filter(const BYTE const *b, DWORD size)
 {
-    return size > 2 && *(BYTE*)buf == 0xff && *((BYTE*)buf+1) == 0xd8;
+    return size > 2 && b[0] == 0xff && b[1] == 0xd8;
 }
 
-static BOOL image_tiff_filter(LPVOID buf, DWORD size)
+static BOOL image_tiff_filter(const BYTE const *b, DWORD size)
 {
-    return size > 2 && *(WORD*)buf == 0x4d4d;
+    return size > 2 && b[0] == 0x4d && b[1] == 0x4d;
 }
 
-static BOOL image_xpng_filter(LPVOID buf, DWORD size)
+static BOOL image_xpng_filter(const BYTE const *b, DWORD size)
 {
     static const BYTE xpng_header[] = {0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a};
-    return size > sizeof(xpng_header) && !memcmp(buf, xpng_header, sizeof(xpng_header));
+    return size > sizeof(xpng_header) && !memcmp(b, xpng_header, sizeof(xpng_header));
 }
 
-static BOOL image_bmp_filter(LPVOID buf, DWORD size)
+static BOOL image_bmp_filter(const BYTE const *b, DWORD size)
 {
     return size >= 14
-        && *(BYTE*)buf == 0x42
-        && *((BYTE*)buf+1) == 0x4d
-        && *(DWORD*)((BYTE*)buf+6) == 0;
+        && b[0] == 0x42 && b[1] == 0x4d
+        && *(DWORD*)(b+6) == 0;
 }
 
-static BOOL video_avi_filter(LPVOID buf, DWORD size)
+static BOOL video_avi_filter(const BYTE const *b, DWORD size)
 {
-    const BYTE const *b = buf;
-
     return size > 12
         && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
         && b[8] == 'A' && b[9] == 'V' && b[10] == 'I' && b[11] == 0x20;
 }
 
-static BOOL text_plain_filter(LPVOID buf, DWORD size)
+static BOOL text_plain_filter(const BYTE const *b, DWORD size)
 {
-    UCHAR *ptr;
+    const BYTE *ptr;
 
-    for(ptr = buf; ptr < (UCHAR*)buf+size-1; ptr++) {
+    for(ptr = b; ptr < b+size-1; ptr++) {
         if(*ptr < 0x20 && *ptr != '\n' && *ptr != '\r' && *ptr != '\t')
             return FALSE;
     }
@@ -480,7 +474,7 @@ static BOOL text_plain_filter(LPVOID buf, DWORD size)
     return TRUE;
 }
 
-static BOOL application_octet_stream_filter(LPVOID buf, DWORD size)
+static BOOL application_octet_stream_filter(const BYTE const *b, DWORD size)
 {
     return TRUE;
 }
@@ -515,6 +509,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     }
 
     if(pBuffer) {
+        const BYTE const *buf = pBuffer;
         DWORD len;
         LPCWSTR ret = NULL;
         int i;
@@ -532,7 +527,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 
         static const struct {
             LPCWSTR mime;
-            BOOL (*filter)(LPVOID,DWORD);
+            BOOL (*filter)(const BYTE const*,DWORD);
         } mime_filters[] = {
             {wszTextHtml,       text_html_filter},
             {wszImageGif,       image_gif_filter},
@@ -555,7 +550,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             }
 
             if(i == sizeof(mime_filters)/sizeof(*mime_filters)
-                    || mime_filters[i].filter(pBuffer, cbSize)) {
+                    || mime_filters[i].filter(buf, cbSize)) {
                 len = strlenW(pwzMimeProposed)+1;
                 *ppwzMimeOut = CoTaskMemAlloc(len*sizeof(WCHAR));
                 memcpy(*ppwzMimeOut, pwzMimeProposed, len*sizeof(WCHAR));
@@ -565,10 +560,15 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 
         i=0;
         while(!ret) {
-            if(mime_filters[i].filter(pBuffer, cbSize))
+            if(mime_filters[i].filter(buf, cbSize))
                 ret = mime_filters[i].mime;
             i++;
         }
+
+        TRACE("found %s for data\n"
+              "%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+              debugstr_w(ret), buf[0],buf[1],buf[2],buf[3], buf[4],buf[5],buf[6],buf[7],
+              buf[8],buf[9],buf[10],buf[11], buf[12],buf[13],buf[14],buf[15]);
 
         if(pwzMimeProposed) {
             if(i == sizeof(mime_filters)/sizeof(*mime_filters))
