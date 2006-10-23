@@ -1418,13 +1418,13 @@ static void test_msipackage(void)
     r = try_query(hdb, query);
     ok(r == ERROR_SUCCESS, "failed to create Properties table\n");
 
-    todo_wine {
     query = "CREATE TABLE `InstallExecuteSequence` ("
             "`Action` CHAR(72), `Condition` CHAR(0), `Sequence` INTEGER "
             "PRIMARY KEY `Action`)";
     r = try_query(hdb, query);
     ok(r == ERROR_SUCCESS, "failed to create InstallExecuteSequence table\n");
 
+    todo_wine {
     sprintf(name, "#%ld", hdb);
     r = MsiOpenPackage(name, &hpack);
     ok(r == ERROR_INSTALL_PACKAGE_INVALID, "MsiOpenPackage returned wrong code\n");

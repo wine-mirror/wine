@@ -94,6 +94,7 @@ static const WCHAR INNER_W[] = { 'I','N','N','E','R',0 };
 static const WCHAR INSERT_W[] = { 'I','N','S','E','R','T',0 };
 static const WCHAR INSTEAD_W[] = { 'I','N','S','T','E','A','D',0 };
 static const WCHAR INT_W[] = { 'I','N','T',0 };
+static const WCHAR INTEGER_W[] = { 'I','N','T','E','G','E','R',0 };
 static const WCHAR INTERSECT_W[] = { 'I','N','T','E','R','S','E','C','T',0 };
 static const WCHAR INTO_W[] = { 'I','N','T','O',0 };
 static const WCHAR IS_W[] = { 'I','S',0 };
@@ -206,6 +207,7 @@ static const Keyword aKeywordTable[] = {
   { INSERT_W, TK_INSERT },
   { INSTEAD_W, TK_INSTEAD },
   { INT_W, TK_INT },
+  { INTEGER_W, TK_INT },
   { INTERSECT_W, TK_INTERSECT },
   { INTO_W, TK_INTO },
   { IS_W, TK_IS },
