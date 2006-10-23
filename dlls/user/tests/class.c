@@ -414,8 +414,8 @@ static void test_instances(void)
     DestroyWindow( hwnd2 );
 
     r = GetClassName( hwnd, buffer, 4 );
-    todo_wine ok( r == 3, "return wrong\n");
-    ok( !strcmp( buffer, "__t"), "name wrong\n");
+    ok( r == 3, "expected 3, got %d\n", r );
+    ok( !strcmp( buffer, "__t"), "name wrong: %s\n", buffer );
 
     ok( UnregisterClassA( name, kernel32 ), "Unregister failed for kernel32\n" );
 

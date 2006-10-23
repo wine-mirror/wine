@@ -63,6 +63,7 @@ typedef struct tagCLASS
 static struct list class_list = LIST_INIT( class_list );
 
 #define CLASS_OTHER_PROCESS ((CLASS *)1)
+#define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
 
 /***********************************************************************
  *           get_class_ptr
@@ -956,9 +957,20 @@ DWORD WINAPI SetClassLongA( HWND hwnd, INT offset, LONG newval )
  */
 INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
 {
-    INT ret = GlobalGetAtomNameA( GetClassLongA( hwnd, GCW_ATOM ), buffer, count );
+    char tmpbuf[MAX_ATOM_LEN + 1];
+    INT ret;
 
-    TRACE("%p %s %x\n",hwnd, debugstr_a(buffer), count);
+    TRACE("%p %p %d\n", hwnd, buffer, count);
+
+    if (count <= 0) return 0;
+
+    ret = GlobalGetAtomNameA( GetClassLongW( hwnd, GCW_ATOM ), tmpbuf, MAX_ATOM_LEN + 1 );
+    if (ret)
+    {
+        ret = min(count - 1, ret);
+        memcpy(buffer, tmpbuf, ret);
+        buffer[ret] = 0;
+    }
     return ret;
 }
 
@@ -968,9 +980,20 @@ INT WINAPI GetClassNameA( HWND hwnd, LPSTR buffer, INT count )
  */
 INT WINAPI GetClassNameW( HWND hwnd, LPWSTR buffer, INT count )
 {
-    INT ret = GlobalGetAtomNameW( GetClassLongW( hwnd, GCW_ATOM ), buffer, count );
+    WCHAR tmpbuf[MAX_ATOM_LEN + 1];
+    INT ret;
 
-    TRACE("%p %s %x\n",hwnd, debugstr_w(buffer), count);
+    TRACE("%p %p %d\n", hwnd, buffer, count);
+
+    if (count <= 0) return 0;
+
+    ret = GlobalGetAtomNameW( GetClassLongW( hwnd, GCW_ATOM ), tmpbuf, MAX_ATOM_LEN + 1 );
+    if (ret)
+    {
+        ret = min(count - 1, ret);
+        memcpy(buffer, tmpbuf, ret * sizeof(WCHAR));
+        buffer[ret] = 0;
+    }
     return ret;
 }
 
