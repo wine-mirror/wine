@@ -488,6 +488,31 @@ static void SYSPARAMS_NonClientMetrics32ATo32W( const NONCLIENTMETRICSA* lpnm32A
     SYSPARAMS_LogFont32ATo32W( &lpnm32A->lfMessageFont,		&lpnm32W->lfMessageFont );
 }
 
+
+/* Helper functions to retrieve monitors info */
+
+struct monitor_info
+{
+    int count;
+    RECT virtual_rect;
+};
+
+static BOOL CALLBACK monitor_info_proc( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    struct monitor_info *info = (struct monitor_info *)lp;
+    info->count++;
+    UnionRect( &info->virtual_rect, &info->virtual_rect, rect );
+    return TRUE;
+}
+
+static void get_monitors_info( struct monitor_info *info )
+{
+    info->count = 0;
+    SetRectEmpty( &info->virtual_rect );
+    EnumDisplayMonitors( 0, NULL, monitor_info_proc, (LPARAM)info );
+}
+
+
 /* get text metrics and/or "average" char width of the specified logfont 
  * for the specified dc */
 static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW * ptm, UINT *psz)
@@ -2677,9 +2702,9 @@ INT WINAPI GetSystemMetrics( INT index )
         if (!spi_loaded[SPI_NONCLIENTMETRICS_IDX]) load_nonclient_metrics();
         return nonclient_metrics.iCaptionHeight + 6;
     case SM_CXMAXTRACK:
-        return GetSystemMetrics(SM_CXSCREEN) + 4 + 2 * GetSystemMetrics(SM_CXFRAME);
+        return GetSystemMetrics(SM_CXVIRTUALSCREEN) + 4 + 2 * GetSystemMetrics(SM_CXFRAME);
     case SM_CYMAXTRACK:
-        return GetSystemMetrics(SM_CYSCREEN) + 4 + 2 * GetSystemMetrics(SM_CYFRAME);
+        return GetSystemMetrics(SM_CYVIRTUALSCREEN) + 4 + 2 * GetSystemMetrics(SM_CYFRAME);
     case SM_CXMAXIMIZED:
         /* FIXME: subtract the width of any vertical application toolbars*/
         return GetSystemMetrics(SM_CXSCREEN) + 2 * GetSystemMetrics(SM_CXFRAME);
@@ -2708,14 +2733,35 @@ INT WINAPI GetSystemMetrics( INT index )
     case SM_MOUSEWHEELPRESENT:
         return 1;
     case SM_XVIRTUALSCREEN:
+    {
+        struct monitor_info info;
+        get_monitors_info( &info );
+        return info.virtual_rect.left;
+    }
     case SM_YVIRTUALSCREEN:
-        return 0;
+    {
+        struct monitor_info info;
+        get_monitors_info( &info );
+        return info.virtual_rect.top;
+    }
     case SM_CXVIRTUALSCREEN:
-        return GetSystemMetrics(SM_CXSCREEN);
+    {
+        struct monitor_info info;
+        get_monitors_info( &info );
+        return info.virtual_rect.right - info.virtual_rect.left;
+    }
     case SM_CYVIRTUALSCREEN:
-        return GetSystemMetrics(SM_CYSCREEN);
+    {
+        struct monitor_info info;
+        get_monitors_info( &info );
+        return info.virtual_rect.bottom - info.virtual_rect.top;
+    }
     case SM_CMONITORS:
-        return 1;
+    {
+        struct monitor_info info;
+        get_monitors_info( &info );
+        return info.count;
+    }
     case SM_SAMEDISPLAYFORMAT:
         return 1;
     case SM_IMMENABLED:

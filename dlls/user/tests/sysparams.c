@@ -2384,9 +2384,9 @@ void test_GetSystemMetrics( void)
     /* SM_ARRANGE */
     ok_gsm( SM_CXMINIMIZED, minim.iWidth + 6);
     ok_gsm( SM_CYMINIMIZED, GetSystemMetrics( SM_CYCAPTION) + 5);
-    ok_gsm( SM_CXMAXTRACK, GetSystemMetrics( SM_CXSCREEN) +
+    ok_gsm( SM_CXMAXTRACK, GetSystemMetrics( SM_CXVIRTUALSCREEN) +
             4 + 2 * GetSystemMetrics( SM_CXFRAME));
-    ok_gsm( SM_CYMAXTRACK, GetSystemMetrics( SM_CYSCREEN) +
+    ok_gsm( SM_CYMAXTRACK, GetSystemMetrics( SM_CYVIRTUALSCREEN) +
             4 + 2 * GetSystemMetrics( SM_CYFRAME));
     /* the next two cannot really be tested as they depend on (application)
      * toolbars */
