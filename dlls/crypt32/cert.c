@@ -364,7 +364,7 @@ BOOL WINAPI CertGetCertificateContextProperty(PCCERT_CONTEXT pCertContext,
  * - rgProvParam[0]...
  */
 static void CRYPT_CopyKeyProvInfo(PCRYPT_KEY_PROV_INFO to,
- PCRYPT_KEY_PROV_INFO from)
+ const CRYPT_KEY_PROV_INFO *from)
 {
     DWORD i;
     LPBYTE nextData = (LPBYTE)to + sizeof(CRYPT_KEY_PROV_INFO);
@@ -403,7 +403,7 @@ static void CRYPT_CopyKeyProvInfo(PCRYPT_KEY_PROV_INFO to,
 }
 
 static BOOL CertContext_SetKeyProvInfoProperty(PCONTEXT_PROPERTY_LIST properties,
- PCRYPT_KEY_PROV_INFO info)
+ const CRYPT_KEY_PROV_INFO *info)
 {
     BOOL ret;
     LPBYTE buf = NULL;
@@ -468,7 +468,7 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
         {
             if (pvData)
             {
-                PCRYPT_DATA_BLOB blob = (PCRYPT_DATA_BLOB)pvData;
+                const CRYPT_DATA_BLOB *blob = (const CRYPT_DATA_BLOB *)pvData;
 
                 ret = ContextPropertyList_SetProperty(properties, dwPropId,
                  blob->pbData, blob->cbData);
@@ -483,7 +483,7 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
         case CERT_DATE_STAMP_PROP_ID:
             if (pvData)
                 ret = ContextPropertyList_SetProperty(properties, dwPropId,
-                 (LPBYTE)pvData, sizeof(FILETIME));
+                 (const BYTE *)pvData, sizeof(FILETIME));
             else
             {
                 ContextPropertyList_RemoveProperty(properties, dwPropId);
@@ -494,7 +494,7 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
         {
             if (pvData)
             {
-                PCERT_KEY_CONTEXT keyContext = (PCERT_KEY_CONTEXT)pvData;
+                const CERT_KEY_CONTEXT *keyContext = (const CERT_KEY_CONTEXT *)pvData;
 
                 ret = ContextPropertyList_SetProperty(properties, dwPropId,
                  (const BYTE *)keyContext, keyContext->cbSize);
@@ -509,7 +509,7 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
         case CERT_KEY_PROV_INFO_PROP_ID:
             if (pvData)
                 ret = CertContext_SetKeyProvInfoProperty(properties,
-                 (PCRYPT_KEY_PROV_INFO)pvData);
+                 (const CRYPT_KEY_PROV_INFO *)pvData);
             else
             {
                 ContextPropertyList_RemoveProperty(properties, dwPropId);
@@ -528,7 +528,7 @@ static BOOL WINAPI CertContext_SetProperty(void *context, DWORD dwPropId,
                 if (!(dwFlags & CERT_STORE_NO_CRYPT_RELEASE_FLAG))
                     CryptReleaseContext(keyContext.hCryptProv, 0);
                 if (pvData)
-                    keyContext.hCryptProv = *(HCRYPTPROV *)pvData;
+                    keyContext.hCryptProv = *(const HCRYPTPROV *)pvData;
                 else
                     keyContext.hCryptProv = 0;
                 ret = CertContext_SetProperty(context, CERT_KEY_CONTEXT_PROP_ID,
