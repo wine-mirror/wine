@@ -29,6 +29,7 @@
 #include "winuser.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "user_private.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -55,8 +56,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 #define USIG_PROCESS_DESTROY      0x0400
 #define USIG_PROCESS_RUNNING      0x0500
 #define USIG_PROCESS_LOADED       0x0600
-
-#define xPRIMARY_MONITOR ((HMONITOR)0x12340042)
 
 /***********************************************************************
  *		SignalProc32 (USER.391)
@@ -339,36 +338,85 @@ BOOL WINAPI EnumDisplayDevicesW( LPCWSTR lpDevice, DWORD i, LPDISPLAY_DEVICEW lp
     return TRUE;
 }
 
-/***********************************************************************
- *		MonitorFromPoint (USER32.@)
- */
-HMONITOR WINAPI MonitorFromPoint(POINT ptScreenCoords, DWORD dwFlags)
+struct monitor_enum_info
 {
-    if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
-        ((ptScreenCoords.x >= 0) &&
-        (ptScreenCoords.x < GetSystemMetrics(SM_CXSCREEN)) &&
-        (ptScreenCoords.y >= 0) &&
-        (ptScreenCoords.y < GetSystemMetrics(SM_CYSCREEN))))
+    RECT     rect;
+    UINT     max_area;
+    UINT     min_distance;
+    HMONITOR primary;
+    HMONITOR ret;
+};
+
+/* helper callback for MonitorFromRect */
+static BOOL CALLBACK monitor_enum( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
+{
+    struct monitor_enum_info *info = (struct monitor_enum_info *)lp;
+    RECT intersect;
+
+    if (IntersectRect( &intersect, rect, &info->rect ))
     {
-        return xPRIMARY_MONITOR;
+        /* check for larger intersecting area */
+        UINT area = (intersect.right - intersect.left) * (intersect.bottom - intersect.top);
+        if (area > info->max_area)
+        {
+            info->max_area = area;
+            info->ret = monitor;
+        }
     }
-    return NULL;
+    else if (!info->max_area)  /* if not intersecting, check for min distance */
+    {
+        UINT distance;
+        INT x, y;
+
+        if (rect->left >= info->rect.right) x = info->rect.right - rect->left;
+        else x = rect->right - info->rect.left;
+        if (rect->top >= info->rect.bottom) y = info->rect.bottom - rect->top;
+        else y = rect->bottom - info->rect.top;
+        distance = x * x + y * y;
+        if (distance < info->min_distance)
+        {
+            info->min_distance = distance;
+            info->ret = monitor;
+        }
+    }
+    if (!info->primary)
+    {
+        MONITORINFO mon_info;
+        mon_info.cbSize = sizeof(mon_info);
+        GetMonitorInfoW( monitor, &mon_info );
+        if (mon_info.dwFlags & MONITORINFOF_PRIMARY) info->primary = monitor;
+    }
+    return TRUE;
 }
 
 /***********************************************************************
  *		MonitorFromRect (USER32.@)
  */
-HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
+HMONITOR WINAPI MonitorFromRect( LPRECT rect, DWORD flags )
 {
-    if ((dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST)) ||
-        ((lprcScreenCoords->right > 0) &&
-        (lprcScreenCoords->bottom > 0) &&
-        (lprcScreenCoords->left < GetSystemMetrics(SM_CXSCREEN)) &&
-        (lprcScreenCoords->top < GetSystemMetrics(SM_CYSCREEN))))
-    {
-        return xPRIMARY_MONITOR;
-    }
-    return NULL;
+    struct monitor_enum_info info;
+
+    info.rect         = *rect;
+    info.max_area     = 0;
+    info.min_distance = ~0u;
+    info.primary      = 0;
+    info.ret          = 0;
+    if (!EnumDisplayMonitors( 0, NULL, monitor_enum, (LPARAM)&info )) return 0;
+    if (!info.ret && (flags & MONITOR_DEFAULTTOPRIMARY)) info.ret = info.primary;
+
+    TRACE( "%s flags %x returning %p\n", wine_dbgstr_rect(rect), flags, info.ret );
+    return info.ret;
+}
+
+/***********************************************************************
+ *		MonitorFromPoint (USER32.@)
+ */
+HMONITOR WINAPI MonitorFromPoint( POINT pt, DWORD flags )
+{
+    RECT rect;
+
+    SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
+    return MonitorFromRect( &rect, flags );
 }
 
 /***********************************************************************
@@ -376,19 +424,14 @@ HMONITOR WINAPI MonitorFromRect(LPRECT lprcScreenCoords, DWORD dwFlags)
  */
 HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
 {
+    RECT rect;
     WINDOWPLACEMENT wp;
 
-    if (dwFlags & (MONITOR_DEFAULTTOPRIMARY | MONITOR_DEFAULTTONEAREST))
-        return xPRIMARY_MONITOR;
+    if (IsIconic(hWnd) && GetWindowPlacement(hWnd, &wp))
+        return MonitorFromRect( &wp.rcNormalPosition, dwFlags );
 
-    if (IsIconic(hWnd) ?
-            GetWindowPlacement(hWnd, &wp) :
-            GetWindowRect(hWnd, &wp.rcNormalPosition)) {
-
-        return MonitorFromRect(&wp.rcNormalPosition, dwFlags);
-    }
-
-    return NULL;
+    GetWindowRect( hWnd, &rect );
+    return MonitorFromRect( &rect, dwFlags );
 }
 
 /***********************************************************************
@@ -418,81 +461,15 @@ BOOL WINAPI GetMonitorInfoA(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
  */
 BOOL WINAPI GetMonitorInfoW(HMONITOR hMonitor, LPMONITORINFO lpMonitorInfo)
 {
-    RECT rcWork;
-
-    if ((hMonitor == xPRIMARY_MONITOR) &&
-        lpMonitorInfo &&
-        (lpMonitorInfo->cbSize >= sizeof(MONITORINFO)) &&
-        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcWork, 0))
-    {
-        SetRect( &lpMonitorInfo->rcMonitor, 0, 0,
-                 GetSystemMetrics(SM_CXSCREEN),
-                 GetSystemMetrics(SM_CYSCREEN) );
-        lpMonitorInfo->rcWork = rcWork;
-        lpMonitorInfo->dwFlags = MONITORINFOF_PRIMARY;
-
-        if (lpMonitorInfo->cbSize >= sizeof(MONITORINFOEXW))
-            strcpyW(((MONITORINFOEXW*)lpMonitorInfo)->szDevice, primary_device_name);
-
-        return TRUE;
-    }
-
-    return FALSE;
+    return USER_Driver->pGetMonitorInfo( hMonitor, lpMonitorInfo );
 }
 
 /***********************************************************************
  *		EnumDisplayMonitors (USER32.@)
  */
-BOOL WINAPI EnumDisplayMonitors(
-        HDC             hdcOptionalForPainting,
-        LPRECT         lprcEnumMonitorsThatIntersect,
-        MONITORENUMPROC lpfnEnumProc,
-        LPARAM          dwData)
+BOOL WINAPI EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
 {
-    RECT rcLimit;
-    SetRect( &rcLimit, 0, 0, GetSystemMetrics(SM_CXSCREEN),
-             GetSystemMetrics(SM_CYSCREEN) );
-
-    if (!lpfnEnumProc)
-        return FALSE;
-
-    if (hdcOptionalForPainting)
-    {
-        RECT    rcClip;
-        POINT   ptOrg;
-
-        switch (GetClipBox(hdcOptionalForPainting, &rcClip))
-        {
-        default:
-            if (!GetDCOrgEx(hdcOptionalForPainting, &ptOrg))
-                return FALSE;
-
-            OffsetRect(&rcLimit, -ptOrg.x, -ptOrg.y);
-            if (IntersectRect(&rcLimit, &rcLimit, &rcClip) &&
-                (!lprcEnumMonitorsThatIntersect ||
-                     IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect))) {
-
-                break;
-            }
-            /* fall through */
-        case NULLREGION:
-             return TRUE;
-        case ERROR:
-             return FALSE;
-        }
-    } else {
-        if (    lprcEnumMonitorsThatIntersect &&
-                !IntersectRect(&rcLimit, &rcLimit, lprcEnumMonitorsThatIntersect)) {
-
-            return TRUE;
-        }
-    }
-
-    return lpfnEnumProc(
-            xPRIMARY_MONITOR,
-            hdcOptionalForPainting,
-            &rcLimit,
-            dwData);
+    return USER_Driver->pEnumDisplayMonitors( hdc, rect, proc, lp );
 }
 
 /***********************************************************************

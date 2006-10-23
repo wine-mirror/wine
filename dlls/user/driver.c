@@ -101,7 +101,9 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(GetClipboardFormatName);
         GET_USER_FUNC(EndClipboardUpdate);
         GET_USER_FUNC(ChangeDisplaySettingsEx);
+        GET_USER_FUNC(EnumDisplayMonitors);
         GET_USER_FUNC(EnumDisplaySettingsEx);
+        GET_USER_FUNC(GetMonitorInfo);
         GET_USER_FUNC(CreateDesktopWindow);
         GET_USER_FUNC(CreateWindow);
         GET_USER_FUNC(DestroyWindow);
@@ -290,7 +292,17 @@ static LONG nulldrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HWND
     return DISP_CHANGE_FAILED;
 }
 
+static BOOL nulldrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    return FALSE;
+}
+
 static BOOL nulldrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
 {
     return FALSE;
 }
@@ -435,7 +447,9 @@ static const USER_DRIVER null_driver =
     nulldrv_SetClipboardData,
     /* display modes */
     nulldrv_ChangeDisplaySettingsEx,
+    nulldrv_EnumDisplayMonitors,
     nulldrv_EnumDisplaySettingsEx,
+    nulldrv_GetMonitorInfo,
     /* windowing functions */
     nulldrv_CreateDesktopWindow,
     nulldrv_CreateWindow,
@@ -612,9 +626,19 @@ static LONG loaderdrv_ChangeDisplaySettingsEx( LPCWSTR name, LPDEVMODEW mode, HW
     return load_driver()->pChangeDisplaySettingsEx( name, mode, hwnd, flags, lparam );
 }
 
+static BOOL loaderdrv_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    return load_driver()->pEnumDisplayMonitors( hdc, rect, proc, lp );
+}
+
 static BOOL loaderdrv_EnumDisplaySettingsEx( LPCWSTR name, DWORD num, LPDEVMODEW mode, DWORD flags )
 {
     return load_driver()->pEnumDisplaySettingsEx( name, num, mode, flags );
+}
+
+static BOOL loaderdrv_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+{
+    return load_driver()->pGetMonitorInfo( handle, info );
 }
 
 static BOOL loaderdrv_CreateDesktopWindow( HWND hwnd )
@@ -745,7 +769,9 @@ static const USER_DRIVER lazy_load_driver =
     loaderdrv_SetClipboardData,
     /* display modes */
     loaderdrv_ChangeDisplaySettingsEx,
+    loaderdrv_EnumDisplayMonitors,
     loaderdrv_EnumDisplaySettingsEx,
+    loaderdrv_GetMonitorInfo,
     /* windowing functions */
     loaderdrv_CreateDesktopWindow,
     loaderdrv_CreateWindow,

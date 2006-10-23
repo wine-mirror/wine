@@ -134,7 +134,9 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pSetClipboardData)(UINT, HANDLE16, HANDLE, BOOL);   /* Set specified selection data */
     /* display modes */
     LONG   (*pChangeDisplaySettingsEx)(LPCWSTR,LPDEVMODEW,HWND,DWORD,LPVOID);
+    BOOL   (*pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
     BOOL   (*pEnumDisplaySettingsEx)(LPCWSTR,DWORD,LPDEVMODEW,DWORD);
+    BOOL   (*pGetMonitorInfo)(HMONITOR,MONITORINFO*);
     /* windowing functions */
     BOOL   (*pCreateDesktopWindow)(HWND);
     BOOL   (*pCreateWindow)(HWND,CREATESTRUCTA*,BOOL);

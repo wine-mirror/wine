@@ -53,6 +53,19 @@ static inline MONITORINFOEXW *get_primary(void)
     return &monitors[idx];
 }
 
+static inline HMONITOR index_to_monitor( int index )
+{
+    return (HMONITOR)(UINT_PTR)(index + 1);
+}
+
+static inline int monitor_to_index( HMONITOR handle )
+{
+    UINT_PTR index = (UINT_PTR)handle;
+    if (index < 1 || index > nb_monitors) return -1;
+    return index - 1;
+}
+
+
 #ifdef HAVE_LIBXINERAMA
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -110,8 +123,8 @@ static int query_screens(void)
         get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
 
         for (i = 0; i < nb_monitors; i++)
-            TRACE( "monitor %d: %s%s\n",
-                   i, wine_dbgstr_rect(&monitors[i].rcMonitor),
+            TRACE( "monitor %p: %s%s\n",
+                   index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
                    (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
     else count = 0;
@@ -153,4 +166,63 @@ void xinerama_init(void)
            wine_dbgstr_rect(&virtual_screen_rect), screen_width, screen_height );
 
     wine_tsx11_unlock();
+}
+
+
+/***********************************************************************
+ *		X11DRV_GetMonitorInfo  (X11DRV.@)
+ */
+BOOL X11DRV_GetMonitorInfo( HMONITOR handle, LPMONITORINFO info )
+{
+    int i = monitor_to_index( handle );
+
+    if (i == -1)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+    info->rcMonitor = monitors[i].rcMonitor;
+    info->rcWork = monitors[i].rcWork;
+    info->dwFlags = monitors[i].dwFlags;
+    if (info->cbSize >= sizeof(MONITORINFOEXW))
+        lstrcpyW( ((MONITORINFOEXW *)info)->szDevice, monitors[i].szDevice );
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		X11DRV_EnumDisplayMonitors  (X11DRV.@)
+ */
+BOOL X11DRV_EnumDisplayMonitors( HDC hdc, LPRECT rect, MONITORENUMPROC proc, LPARAM lp )
+{
+    int i;
+
+    if (hdc)
+    {
+        POINT origin;
+        RECT limit;
+
+        if (!GetDCOrgEx( hdc, &origin )) return FALSE;
+        if (GetClipBox( hdc, &limit ) == ERROR) return FALSE;
+
+        if (rect && !IntersectRect( &limit, &limit, rect )) return TRUE;
+
+        for (i = 0; i < nb_monitors; i++)
+        {
+            RECT monrect = monitors[i].rcMonitor;
+            OffsetRect( &monrect, -origin.x, -origin.y );
+            if (IntersectRect( &monrect, &monrect, &limit ))
+                if (!proc( index_to_monitor(i), hdc, &monrect, lp )) break;
+        }
+    }
+    else
+    {
+        for (i = 0; i < nb_monitors; i++)
+        {
+            RECT unused;
+            if (!rect || IntersectRect( &unused, &monitors[i].rcMonitor, rect ))
+                if (!proc( index_to_monitor(i), 0, &monitors[i].rcMonitor, lp )) break;
+        }
+    }
+    return TRUE;
 }
