@@ -741,16 +741,6 @@ serialize_param(
 		    ERR("Could not get vardesc of %d\n",i);
 		    return hres;
 		}
-		/* Need them for hack below */
-		/*
-		memset(names,0,sizeof(names));
-		hres = ITypeInfo_GetNames(tinfo2,vdesc->memid,names,sizeof(names)/sizeof(names[0]),&nrofnames);
-		if (nrofnames > sizeof(names)/sizeof(names[0])) {
-		    ERR("Need more names!\n");
-		}
-		if (!hres && debugout)
-		    TRACE_(olerelay)("%s=",relaystr(names[0]));
-		*/
 		elem2 = &vdesc->elemdescVar;
 		tdesc2 = &elem2->tdesc;
 		hres = serialize_param(
@@ -1382,6 +1372,8 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
     hres = remoteresult;
 
 exit:
+    for (i = 0; i < nrofnames; i++)
+        SysFreeString(names[i]);
     HeapFree(GetProcessHeap(),0,buf.base);
     IRpcChannelBuffer_Release(chanbuf);
     ITypeInfo_Release(tinfo);
@@ -1849,6 +1841,10 @@ TMStubImpl_Invoke(
     }
 
     hres = xbuf_add (&buf, (LPBYTE)&res, sizeof(DWORD));
+
+    for (i = 0; i < nrofnames; i++)
+        SysFreeString(names[i]);
+
     if (hres != S_OK)
 	return hres;
 
