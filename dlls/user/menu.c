@@ -1772,6 +1772,9 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
 {
     POPUPMENU *menu;
     UINT width, height;
+    POINT pt;
+    HMONITOR monitor;
+    MONITORINFO info;
 
     TRACE("owner=%p hmenu=%p id=0x%04x x=0x%04x y=0x%04x xa=0x%04x ya=0x%04x\n",
           hwndOwner, hmenu, id, x, y, xanchor, yanchor);
@@ -1794,25 +1797,31 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
     width = menu->Width + GetSystemMetrics(SM_CXBORDER);
     height = menu->Height + GetSystemMetrics(SM_CYBORDER);
 
-    if( x + width > GetSystemMetrics(SM_CXSCREEN ))
+    /* FIXME: should use item rect */
+    pt.x = x;
+    pt.y = y;
+    monitor = MonitorFromPoint( pt, MONITOR_DEFAULTTONEAREST );
+    info.cbSize = sizeof(info);
+    GetMonitorInfoW( monitor, &info );
+    if( x + width > info.rcWork.right)
     {
         if( xanchor && x >= width - xanchor )
             x -= width - xanchor;
 
-        if( x + width > GetSystemMetrics(SM_CXSCREEN))
-            x = GetSystemMetrics(SM_CXSCREEN) - width;
+        if( x + width > info.rcWork.right)
+            x = info.rcWork.right - width;
     }
-    if( x < 0 ) x = 0;
+    if( x < info.rcWork.left ) x = info.rcWork.left;
 
-    if( y + height > GetSystemMetrics(SM_CYSCREEN ))
+    if( y + height > info.rcWork.bottom)
     {
         if( yanchor && y >= height + yanchor )
             y -= height + yanchor;
 
-        if( y + height > GetSystemMetrics(SM_CYSCREEN ))
-            y = GetSystemMetrics(SM_CYSCREEN) - height;
+        if( y + height > info.rcWork.bottom)
+            y = info.rcWork.bottom - height;
     }
-    if( y < 0 ) y = 0;
+    if( y < info.rcWork.top ) y = info.rcWork.top;
 
     /* NOTE: In Windows, top menu popup is not owned. */
     menu->hWnd = CreateWindowExW( 0, POPUPMENU_CLASS_ATOMW, NULL,
