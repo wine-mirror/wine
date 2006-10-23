@@ -246,7 +246,7 @@ BOOL CreateKey(HWND hwnd, HKEY hKeyRoot, LPCTSTR keyPath, LPTSTR keyName)
 {
     BOOL result = FALSE;
     LONG lRet = ERROR_SUCCESS;
-    HKEY retKey;
+    HKEY retKey = NULL;
     TCHAR newKey[MAX_NEW_KEY_LEN - 4];
     int keyNum;
     HKEY hKey;
