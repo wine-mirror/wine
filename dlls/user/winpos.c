@@ -727,6 +727,7 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
 {
     LPINTERNALPOS lpPos;
     MINMAXINFO MinMax;
+    HMONITOR monitor;
     INT xinc, yinc;
     LONG style = GetWindowLongA( hwnd, GWL_STYLE );
     LONG exstyle = GetWindowLongA( hwnd, GWL_EXSTYLE );
@@ -759,8 +760,8 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     }
     MinMax.ptMinTrackSize.x = GetSystemMetrics(SM_CXMINTRACK);
     MinMax.ptMinTrackSize.y = GetSystemMetrics(SM_CYMINTRACK);
-    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXSCREEN) + 2*GetSystemMetrics(SM_CXFRAME);
-    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYSCREEN) + 2*GetSystemMetrics(SM_CYFRAME);
+    MinMax.ptMaxTrackSize.x = GetSystemMetrics(SM_CXMAXTRACK);
+    MinMax.ptMaxTrackSize.y = GetSystemMetrics(SM_CYMAXTRACK);
 
     if (HAS_DLGFRAME( style, exstyle ))
     {
@@ -797,6 +798,28 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
     }
 
     SendMessageW( hwnd, WM_GETMINMAXINFO, 0, (LPARAM)&MinMax );
+
+    /* if the app didn't change the values, adapt them for the current monitor */
+
+    if ((monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTOPRIMARY )))
+    {
+        MONITORINFO mon_info;
+
+        mon_info.cbSize = sizeof(mon_info);
+        GetMonitorInfoW( monitor, &mon_info );
+
+        if (MinMax.ptMaxSize.x == GetSystemMetrics(SM_CXSCREEN) &&
+            MinMax.ptMaxSize.y == GetSystemMetrics(SM_CYSCREEN))
+        {
+            MinMax.ptMaxSize.x = mon_info.rcWork.right - mon_info.rcWork.left;
+            MinMax.ptMaxSize.y = mon_info.rcWork.bottom - mon_info.rcWork.top;
+        }
+        if (MinMax.ptMaxPosition.x == -xinc && MinMax.ptMaxPosition.y == -yinc)
+        {
+            MinMax.ptMaxPosition.x = mon_info.rcWork.left - xinc;
+            MinMax.ptMaxPosition.y = mon_info.rcWork.top - yinc;
+        }
+    }
 
       /* Some sanity checks */
 
