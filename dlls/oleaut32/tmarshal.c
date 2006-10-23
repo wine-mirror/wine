@@ -1201,8 +1201,12 @@ _get_funcdesc(
 		}
 		hres = _get_funcdesc(tinfo2,iMethod,tactual,fdesc,iname,fname);
 		ITypeInfo_Release(tinfo2);
-		if (!hres) return S_OK;
+		if (!hres) {
+		    ITypeInfo_ReleaseTypeAttr(tinfo, attr);
+		    return S_OK;
+                }
 	    }
+	    ITypeInfo_ReleaseTypeAttr(tinfo, attr);
 	    return hres;
 	}
 	if (((*fdesc)->oVft/4) == iMethod) {
