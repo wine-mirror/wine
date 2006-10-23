@@ -398,6 +398,28 @@ static LPWSTR* msi_split_string( LPCWSTR str, WCHAR sep )
     return ret;
 }
 
+static UINT msi_check_transform_applicable( MSIPACKAGE *package, IStorage *patch )
+{
+    WCHAR szProductCode[] = { 'P','r','o','d','u','c','t','C','o','d','e',0 };
+    LPWSTR prod_code, patch_product;
+    UINT ret;
+
+    prod_code = msi_dup_property( package, szProductCode );
+    patch_product = msi_get_suminfo_product( patch );
+
+    TRACE("db = %s patch = %s\n", debugstr_w(prod_code), debugstr_w(patch_product));
+
+    if ( strstrW( patch_product, prod_code ) )
+        ret = ERROR_SUCCESS;
+    else
+        ret = ERROR_FUNCTION_FAILED;
+
+    msi_free( patch_product );
+    msi_free( prod_code );
+
+    return ret;
+}
+
 static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
                                  MSIDATABASE *patch_db, LPCWSTR name )
 {
@@ -416,14 +438,17 @@ static UINT msi_apply_substorage_transform( MSIPACKAGE *package,
     r = IStorage_OpenStorage( patch_db->storage, name, NULL, STGM_SHARE_EXCLUSIVE, NULL, 0, &stg );
     if (SUCCEEDED(r))
     {
-        ret = msi_table_apply_transform( package->db, stg );
+        ret = msi_check_transform_applicable( package, stg );
+        if (ret == ERROR_SUCCESS)
+            msi_table_apply_transform( package->db, stg );
+        else
+            TRACE("substorage transform %s wasn't applicable\n", debugstr_w(name));
         IStorage_Release( stg );
-        ret = ERROR_SUCCESS;
     }
     else
         ERR("failed to open substorage %s\n", debugstr_w(name));
 
-    return ret;
+    return ERROR_SUCCESS;
 }
 
 static UINT msi_check_patch_applicable( MSIPACKAGE *package, MSISUMMARYINFO *si )

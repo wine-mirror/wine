@@ -602,6 +602,22 @@ LPWSTR msi_suminfo_dup_string( MSISUMMARYINFO *si, UINT uiProperty )
     return strdupAtoW( prop->u.pszVal );
 }
 
+LPWSTR msi_get_suminfo_product( IStorage *stg )
+{
+    MSISUMMARYINFO *si;
+    LPWSTR prod;
+
+    si = MSI_GetSummaryInformationW( stg, 0 );
+    if (!si)
+    {
+        ERR("no summary information!\n");
+        return NULL;
+    }
+    prod = msi_suminfo_dup_string( si, PID_REVNUMBER );
+    msiobj_release( &si->hdr );
+    return prod;
+}
+
 UINT WINAPI MsiSummaryInfoGetPropertyA(
       MSIHANDLE handle, UINT uiProperty, UINT *puiDataType, INT *piValue,
       FILETIME *pftValue, LPSTR szValueBuf, DWORD *pcchValueBuf)

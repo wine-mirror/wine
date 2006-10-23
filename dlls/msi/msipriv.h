@@ -688,6 +688,7 @@ extern UINT MSI_PreviewDialogW( MSIPREVIEW *, LPCWSTR );
 /* summary information */
 extern MSISUMMARYINFO *MSI_GetSummaryInformationW( IStorage *stg, UINT uiUpdateCount );
 extern LPWSTR msi_suminfo_dup_string( MSISUMMARYINFO *si, UINT uiProperty );
+extern LPWSTR msi_get_suminfo_product( IStorage *stg );
 
 /* undocumented functions */
 UINT WINAPI MsiCreateAndVerifyInstallerDirectory( DWORD );
