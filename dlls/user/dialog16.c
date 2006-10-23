@@ -290,6 +290,8 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
 {
     HWND hwnd;
     RECT rect;
+    POINT pos;
+    SIZE size;
     WND * wndPtr;
     DLG_TEMPLATE template;
     DIALOGINFO * dlgInfo;
@@ -356,40 +358,63 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
     rect.bottom =  MulDiv(template.cy, dlgInfo->yBaseUnit, 8);
     if (template.style & DS_MODALFRAME) exStyle |= WS_EX_DLGMODALFRAME;
     AdjustWindowRectEx( &rect, template.style, (dlgInfo->hMenu != 0), exStyle );
-    rect.right -= rect.left;
-    rect.bottom -= rect.top;
+    pos.x = rect.left;
+    pos.y = rect.top;
+    size.cx = rect.right - rect.left;
+    size.cy = rect.bottom - rect.top;
 
     if (template.x == CW_USEDEFAULT16)
     {
-        rect.left = rect.top = CW_USEDEFAULT16;
+        pos.x = pos.y = CW_USEDEFAULT16;
     }
     else
     {
+        HMONITOR monitor = 0;
+        MONITORINFO mon_info;
+
+        mon_info.cbSize = sizeof(mon_info);
         if (template.style & DS_CENTER)
         {
-            rect.left = (GetSystemMetrics(SM_CXSCREEN) - rect.right) / 2;
-            rect.top = (GetSystemMetrics(SM_CYSCREEN) - rect.bottom) / 2;
+            if (!(monitor = MonitorFromWindow( owner ? owner : GetActiveWindow(),
+                                               MONITOR_DEFAULTTOPRIMARY )))
+            {
+                pos.x = pos.y = 0;  /* default to primary monitor */
+                monitor = MonitorFromPoint( pos, MONITOR_DEFAULTTOPRIMARY );
+            }
+            GetMonitorInfoW( monitor, &mon_info );
+            pos.x = (mon_info.rcWork.left + mon_info.rcWork.right - size.cx) / 2;
+            pos.y = (mon_info.rcWork.top + mon_info.rcWork.bottom - size.cy) / 2;
+        }
+        else if (template.style & DS_CENTERMOUSE)
+        {
+            GetCursorPos( &pos );
+            monitor = MonitorFromPoint( pos, MONITOR_DEFAULTTOPRIMARY );
+            GetMonitorInfoW( monitor, &mon_info );
         }
         else
         {
-            rect.left += MulDiv(template.x, dlgInfo->xBaseUnit, 4);
-            rect.top += MulDiv(template.y, dlgInfo->yBaseUnit, 8);
+            pos.x += MulDiv(template.x, dlgInfo->xBaseUnit, 4);
+            pos.y += MulDiv(template.y, dlgInfo->yBaseUnit, 8);
+            if (!(template.style & (WS_CHILD|DS_ABSALIGN))) ClientToScreen( owner, &pos );
         }
         if ( !(template.style & WS_CHILD) )
         {
-            INT16 dX, dY;
-
-            if( !(template.style & DS_ABSALIGN) )
-                ClientToScreen( owner, (POINT *)&rect );
+            INT dX, dY;
 
             /* try to fit it into the desktop */
 
-            if( (dX = rect.left + rect.right + GetSystemMetrics(SM_CXDLGFRAME)
-                 - GetSystemMetrics(SM_CXSCREEN)) > 0 ) rect.left -= dX;
-            if( (dY = rect.top + rect.bottom + GetSystemMetrics(SM_CYDLGFRAME)
-                 - GetSystemMetrics(SM_CYSCREEN)) > 0 ) rect.top -= dY;
-            if( rect.left < 0 ) rect.left = 0;
-            if( rect.top < 0 ) rect.top = 0;
+            if (!monitor)
+            {
+                SetRect( &rect, pos.x, pos.y, pos.x + size.cx, pos.y + size.cy );
+                monitor = MonitorFromRect( &rect, MONITOR_DEFAULTTOPRIMARY );
+                GetMonitorInfoW( monitor, &mon_info );
+            }
+            if ((dX = pos.x + size.cx + GetSystemMetrics(SM_CXDLGFRAME) - mon_info.rcWork.right) > 0)
+                pos.x -= dX;
+            if ((dY = pos.y + size.cy + GetSystemMetrics(SM_CYDLGFRAME) - mon_info.rcWork.bottom) > 0)
+                pos.y -= dY;
+            if( pos.x < mon_info.rcWork.left ) pos.x = mon_info.rcWork.left;
+            if( pos.y < mon_info.rcWork.top ) pos.y = mon_info.rcWork.top;
         }
     }
 
@@ -401,7 +426,7 @@ static HWND DIALOG_CreateIndirect16( HINSTANCE16 hInst, LPCVOID dlgTemplate,
 
     hwnd = WIN_Handle32( CreateWindowEx16(exStyle, template.className,
                                           template.caption, template.style & ~WS_VISIBLE,
-                                          rect.left, rect.top, rect.right, rect.bottom,
+                                          pos.x, pos.y, size.cx, size.cy,
                                           HWND_16(owner), HMENU_16(dlgInfo->hMenu),
                                           hInst, NULL ));
     if (!hwnd)
