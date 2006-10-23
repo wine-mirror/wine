@@ -537,7 +537,7 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             }
             bFirst = TRUE;
 #define ENUM_PARAM_FLAG(x)\
-            if(pFuncDesc->lprgelemdescParam[j].paramdesc.wParamFlags & x)\
+            if(U(pFuncDesc->lprgelemdescParam[j]).paramdesc.wParamFlags & x) \
             {\
                 if(bFirst) AddToTLDataStrW((TYPELIB_DATA*)(U(tvis).item.lParam),\
                         wszOpenBrackets1);\
