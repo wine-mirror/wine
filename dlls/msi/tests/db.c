@@ -1458,10 +1458,7 @@ static void test_msiimport(void)
     ok(i == 2, "Expected 2, got %d\n", i);
 
     i = MsiRecordGetInteger(rec, 4);
-    todo_wine
-    {
-        ok(i == 0x80000000, "Expected 0x80000000, got %d\n", i);
-    }
+    ok(i == MSI_NULL_INTEGER, "Expected MSI_NULL_INTEGER, got %d\n", i);
 
     i = MsiRecordGetInteger(rec, 5);
     ok(i == 2147483640, "Expected 2147483640, got %d\n", i);
@@ -2887,12 +2884,10 @@ static void test_integers(void)
     r = MsiRecordGetFieldCount(rec);
     ok(r == 8, "record count wrong: %d\n", r);
 
-    todo_wine {
     i = MsiRecordGetInteger(rec, 1);
     ok(i == MSI_NULL_INTEGER, "Expected MSI_NULL_INTEGER, got %d\n", i);
     i = MsiRecordGetInteger(rec, 3);
     ok(i == MSI_NULL_INTEGER, "Expected MSI_NULL_INTEGER, got %d\n", i);
-    }
     i = MsiRecordGetInteger(rec, 2);
     ok(i == 2, "Expected 2, got %d\n", i);
     i = MsiRecordGetInteger(rec, 4);

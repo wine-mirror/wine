@@ -1378,7 +1378,9 @@ static UINT msi_table_modify_row( MSITABLEVIEW *tv, MSIRECORD *rec,
         if( (~tv->columns[i].type & MSITYPE_KEY) && (~mask & (1<<i)) )
             continue;
 
-        if( (tv->columns[i].type & MSITYPE_STRING) &&
+        if (MSI_RecordIsNull( rec, i+1))
+            val = 0;
+        else if( (tv->columns[i].type & MSITYPE_STRING) &&
             ! MSITYPE_IS_BINARY(tv->columns[i].type) )
         {
             const WCHAR *str = MSI_RecordGetString( rec, i+1 );
