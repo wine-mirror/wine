@@ -149,6 +149,55 @@ static void FromLEDWords(void *p_Val, int p_iSize)
 #define FromLEDWords(X,Y) /*nothing*/
 #endif
 
+/*
+ * Find a typelib key which matches a requested maj.min version.
+ */
+static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
+{
+    static const WCHAR typelibW[] = {'T','y','p','e','l','i','b','\\',0};
+    WCHAR buffer[60];
+    char key_name[16];
+    DWORD len, i;
+    INT best_min = -1;
+    HKEY hkey;
+
+    memcpy( buffer, typelibW, sizeof(typelibW) );
+    StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
+
+    if (RegOpenKeyExW( HKEY_CLASSES_ROOT, buffer, 0, KEY_READ, &hkey ) != ERROR_SUCCESS)
+        return FALSE;
+
+    len = sizeof(key_name);
+    i = 0;
+    while (RegEnumKeyExA(hkey, i++, key_name, &len, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
+    {
+        INT v_maj, v_min;
+
+        if (sscanf(key_name, "%u.%u", &v_maj, &v_min) == 2)
+        {
+            TRACE("found %s: %u.%u\n", debugstr_w(buffer), v_maj, v_min);
+
+            if (*wMaj == v_maj)
+            {
+                if (*wMin == v_min)
+                {
+                    best_min = v_min;
+                    break; /* exact match */
+                }
+                if (v_min > best_min) best_min = v_min;
+            }
+        }
+        len = sizeof(key_name);
+    }
+    RegCloseKey( hkey );
+    if (best_min >= 0)
+    {
+        *wMin = best_min;
+        return TRUE;
+    }
+    return FALSE;
+}
+
 /* get the path of a typelib key, in the form "Typelib\\<guid>\\<maj>.<min>" */
 /* buffer must be at least 60 characters long */
 static WCHAR *get_typelib_key( REFGUID guid, WORD wMaj, WORD wMin, WCHAR *buffer )
@@ -230,6 +279,7 @@ HRESULT WINAPI QueryPathOfRegTypeLib(
 
     TRACE_(typelib)("(%s, %x.%x, 0x%x, %p)\n", debugstr_guid(guid), wMaj, wMin, lcid, path);
 
+    if (!find_typelib_key( guid, &wMaj, &wMin )) return TYPE_E_LIBNOTREGISTERED;
     get_typelib_key( guid, wMaj, wMin, buffer );
 
     res = RegOpenKeyExW( HKEY_CLASSES_ROOT, buffer, 0, KEY_READ, &hkey );
@@ -708,7 +758,7 @@ HRESULT WINAPI UnRegisterTypeLib(
     }
 
     /* Try and open the key to the type library. */
-    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, keyName, 0, KEY_READ | KEY_WRITE, &key) != S_OK) {
+    if (RegOpenKeyExW(HKEY_CLASSES_ROOT, keyName, 0, KEY_READ | KEY_WRITE, &key) != ERROR_SUCCESS) {
         result = E_INVALIDARG;
         goto end;
     }
@@ -742,7 +792,7 @@ HRESULT WINAPI UnRegisterTypeLib(
         get_interface_key( &typeAttr->guid, subKeyName );
 
         /* Delete its bits */
-        if (RegOpenKeyExW(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE, &subKey) != S_OK) {
+        if (RegOpenKeyExW(HKEY_CLASSES_ROOT, subKeyName, 0, KEY_WRITE, &subKey) != ERROR_SUCCESS) {
             goto enddeleteloop;
         }
         RegDeleteKeyW(subKey, ProxyStubClsidW);
@@ -770,7 +820,7 @@ enddeleteloop:
     tmpLength = sizeof(subKeyName)/sizeof(WCHAR);
     deleteOtherStuff = TRUE;
     i = 0;
-    while(RegEnumKeyExW(key, i++, subKeyName, &tmpLength, NULL, NULL, NULL, NULL) == S_OK) {
+    while(RegEnumKeyExW(key, i++, subKeyName, &tmpLength, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
         tmpLength = sizeof(subKeyName)/sizeof(WCHAR);
 
         /* if its not FLAGS or HELPDIR, then we must keep the rest of the key */

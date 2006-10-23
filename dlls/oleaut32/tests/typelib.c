@@ -541,13 +541,9 @@ static void test_QueryPathOfRegTypeLib(void)
         { 1, 0, TYPE_E_LIBNOTREGISTERED, { 0 } },
         { 3, 0, S_OK, {'f','a','k','e','_','3','_','0','.','d','l','l',0 } },
         { 3, 1, S_OK, {'f','a','k','e','_','3','_','1','.','d','l','l',0 } },
-#if 0 /* todo: enable once properly implemented */
         { 3, 22, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
-#endif
         { 3, 37, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
-#if 0 /* todo: enable once properly implemented */
         { 3, 40, S_OK, {'f','a','k','e','_','3','_','3','7','.','d','l','l',0 } },
-#endif
         { 4, 0, TYPE_E_LIBNOTREGISTERED, { 0 } }
     };
     static const WCHAR base[] = {'f','a','k','e',0};
