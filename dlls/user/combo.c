@@ -1052,6 +1052,8 @@ static void CBUpdateEdit( LPHEADCOMBO lphc , INT index )
  */
 static void CBDropDown( LPHEADCOMBO lphc )
 {
+    HMONITOR monitor;
+    MONITORINFO mon_info;
    RECT rect,r;
    int nItems = 0;
    int nDroppedHeight;
@@ -1123,7 +1125,11 @@ static void CBDropDown( LPHEADCOMBO lphc )
    }
 
    /*If height of dropped rectangle gets beyond a screen size it should go up, otherwise down.*/
-   if( (rect.bottom + nDroppedHeight) >= GetSystemMetrics( SM_CYSCREEN ) )
+   monitor = MonitorFromRect( &rect, MONITOR_DEFAULTTOPRIMARY );
+   mon_info.cbSize = sizeof(mon_info);
+   GetMonitorInfoW( monitor, &mon_info );
+
+   if( (rect.bottom + nDroppedHeight) >= mon_info.rcWork.bottom )
       rect.bottom = rect.top - nDroppedHeight;
 
    SetWindowPos( lphc->hWndLBox, HWND_TOP, rect.left, rect.bottom,
