@@ -57,15 +57,12 @@ DEFINE_GUID( CLSID_MsiPatch, 0x000c1086, 0x0000, 0x0000,
 static VOID MSI_CloseDatabase( MSIOBJECTHDR *arg )
 {
     MSIDATABASE *db = (MSIDATABASE *) arg;
-    DWORD r;
 
     msi_free(db->path);
     free_cached_tables( db );
     msi_free_transforms( db );
     msi_destroy_stringtable( db->strings );
-    r = IStorage_Release( db->storage );
-    if( r )
-        ERR("database reference count was not zero (%d)\n", r);
+    IStorage_Release( db->storage );
     if (db->deletefile)
     {
         DeleteFileW( db->deletefile );

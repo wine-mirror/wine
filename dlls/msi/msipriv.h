@@ -256,7 +256,7 @@ typedef struct tagMSIPREVIEW
 typedef struct tagMSISUMMARYINFO
 {
     MSIOBJECTHDR hdr;
-    MSIDATABASE *db;
+    IStorage *storage;
     DWORD update_count;
     PROPVARIANT property[MSI_MAX_PROPS];
 } MSISUMMARYINFO;
@@ -686,7 +686,7 @@ extern MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE * );
 extern UINT MSI_PreviewDialogW( MSIPREVIEW *, LPCWSTR );
 
 /* summary information */
-extern MSISUMMARYINFO *MSI_GetSummaryInformationW( MSIDATABASE *db, UINT uiUpdateCount );
+extern MSISUMMARYINFO *MSI_GetSummaryInformationW( IStorage *stg, UINT uiUpdateCount );
 extern LPWSTR msi_suminfo_dup_string( MSISUMMARYINFO *si, UINT uiProperty );
 
 /* undocumented functions */

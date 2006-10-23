@@ -460,7 +460,7 @@ static UINT msi_parse_patch_summary( MSIPACKAGE *package, MSIDATABASE *patch_db 
     LPWSTR str, *substorage;
     UINT i, r = ERROR_SUCCESS;
 
-    si = MSI_GetSummaryInformationW( patch_db, 0 );
+    si = MSI_GetSummaryInformationW( patch_db->storage, 0 );
     if (!si)
         return ERROR_FUNCTION_FAILED;
 
