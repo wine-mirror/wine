@@ -1511,7 +1511,6 @@ static BSTR MSFT_ReadName( TLBContext *pcx, int offset)
     char * name;
     MSFT_NameIntro niName;
     int lengthInChars;
-    WCHAR* pwstring = NULL;
     BSTR bstrName = NULL;
 
     if (offset < 0)
@@ -1532,15 +1531,12 @@ static BSTR MSFT_ReadName( TLBContext *pcx, int offset)
     /* no invalid characters in string */
     if (lengthInChars)
     {
-        pwstring = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*lengthInChars);
+        bstrName = SysAllocStringByteLen(NULL, lengthInChars * sizeof(WCHAR));
 
         /* don't check for invalid character since this has been done previously */
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, name, -1, pwstring, lengthInChars);
-
-        bstrName = SysAllocStringLen(pwstring, lengthInChars);
-        lengthInChars = SysStringLen(bstrName);
-        HeapFree(GetProcessHeap(), 0, pwstring);
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, name, -1, bstrName, lengthInChars);
     }
+    TLB_Free(name);
 
     TRACE_(typelib)("%s %d\n", debugstr_w(bstrName), lengthInChars);
     return bstrName;
@@ -1566,15 +1562,12 @@ static BSTR MSFT_ReadString( TLBContext *pcx, int offset)
     /* no invalid characters in string */
     if (lengthInChars)
     {
-        WCHAR* pwstring = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*lengthInChars);
+        bstr = SysAllocStringByteLen(NULL, lengthInChars * sizeof(WCHAR));
 
         /* don't check for invalid character since this has been done previously */
-        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, string, -1, pwstring, lengthInChars);
-
-        bstr = SysAllocStringLen(pwstring, lengthInChars);
-        lengthInChars = SysStringLen(bstr);
-        HeapFree(GetProcessHeap(), 0, pwstring);
+        MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, string, -1, bstr, lengthInChars);
     }
+    TLB_Free(string);
 
     TRACE_(typelib)("%s %d\n", debugstr_w(bstr), lengthInChars);
     return bstr;
