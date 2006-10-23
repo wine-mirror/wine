@@ -756,6 +756,7 @@ static DWORD CALLBACK no_couninitialize_client_proc(LPVOID p)
 
     hr = CoUnmarshalInterface(ncu_params->stream, &IID_IClassFactory, (void **)&pProxy);
     ok_ole_success(hr, CoUnmarshalInterface);
+    IStream_Release(ncu_params->stream);
 
     ok_more_than_one_lock();
 
@@ -824,6 +825,7 @@ static void test_tableweak_marshal_and_unmarshal_twice(void)
 
     IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
     hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy2);
+    IStream_Release(pStream);
     ok_ole_success(hr, CoUnmarshalInterface);
 
     ok_more_than_one_lock();
@@ -1998,6 +2000,7 @@ static void test_ROT(void)
     ok_ole_success(hr, GetRunningObjectTable);
     hr = IRunningObjectTable_Register(pROT, 0, (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
+    IMoniker_Release(pMoniker);
 
     ok_more_than_one_lock();
 
