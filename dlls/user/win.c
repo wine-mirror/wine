@@ -667,10 +667,10 @@ void WIN_DestroyThreadWindows( HWND hwnd )
  *
  * Fix the coordinates - Helper for WIN_CreateWindowEx.
  * returns default show mode in sw.
- * Note: the feature presented as undocumented *is* in the MSDN since 1993.
  */
 static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
 {
+#define IS_DEFAULT(x)  ((x) == CW_USEDEFAULT || (x) == CW_USEDEFAULT16)
     POINT pos[2];
 
     if (cs->dwExStyle & WS_EX_MDICHILD)
@@ -683,97 +683,78 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
         TRACE("MDI child id %04x\n", id);
     }
 
-    if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16 ||
-        cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
+    if (cs->style & (WS_CHILD | WS_POPUP))
     {
-        if (cs->style & (WS_CHILD | WS_POPUP))
+        if (cs->dwExStyle & WS_EX_MDICHILD)
         {
-            if (cs->dwExStyle & WS_EX_MDICHILD)
+            if (IS_DEFAULT(cs->x))
             {
-                if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
-                {
-                    cs->x = pos[0].x;
-                    cs->y = pos[0].y;
-                }
-                if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16 || !cs->cx)
-                    cs->cx = pos[1].x;
-                if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16 || !cs->cy)
-                    cs->cy = pos[1].y;
+                cs->x = pos[0].x;
+                cs->y = pos[0].y;
+            }
+            if (IS_DEFAULT(cs->cx) || !cs->cx) cs->cx = pos[1].x;
+            if (IS_DEFAULT(cs->cy) || !cs->cy) cs->cy = pos[1].y;
+        }
+        else
+        {
+            if (IS_DEFAULT(cs->x)) cs->x = cs->y = 0;
+            if (IS_DEFAULT(cs->cx)) cs->cx = cs->cy = 0;
+        }
+    }
+    else  /* overlapped window */
+    {
+        HMONITOR monitor;
+        MONITORINFO mon_info;
+        STARTUPINFOW info;
+        POINT pt;
+
+        if (!IS_DEFAULT(cs->x) && !IS_DEFAULT(cs->cx) && !IS_DEFAULT(cs->cy)) return;
+
+        if (!(monitor = MonitorFromWindow( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY )))
+        {
+            pt.x = pt.y = 0;  /* default to primary monitor */
+            if (!IS_DEFAULT(cs->x))
+            {
+                pt.x = cs->x;
+                pt.y = cs->y;
+            }
+            monitor = MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY );
+        }
+        mon_info.cbSize = sizeof(mon_info);
+        GetMonitorInfoW( monitor, &mon_info );
+        GetStartupInfoW( &info );
+
+        if (IS_DEFAULT(cs->x))
+        {
+            if (!IS_DEFAULT(cs->y)) *sw = cs->y;
+            cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : mon_info.rcWork.left;
+            cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : mon_info.rcWork.top;
+        }
+
+        if (IS_DEFAULT(cs->cx))
+        {
+            if (info.dwFlags & STARTF_USESIZE)
+            {
+                cs->cx = info.dwXSize;
+                cs->cy = info.dwYSize;
             }
             else
             {
-                if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
-                    cs->x = cs->y = 0;
-                if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
-                    cs->cx = cs->cy = 0;
+                cs->cx = (mon_info.rcWork.right - mon_info.rcWork.left) * 3 / 4 - cs->x;
+                cs->cy = (mon_info.rcWork.bottom - mon_info.rcWork.top) * 3 / 4 - cs->y;
             }
         }
-        else  /* overlapped window */
-        {
-            STARTUPINFOW info;
-
-            GetStartupInfoW( &info );
-
-            if (cs->x == CW_USEDEFAULT || cs->x == CW_USEDEFAULT16)
-            {
-                /* Never believe Microsoft's documentation... CreateWindowEx doc says
-                 * that if an overlapped window is created with WS_VISIBLE style bit
-                 * set and the x parameter is set to CW_USEDEFAULT, the system ignores
-                 * the y parameter. However, disassembling NT implementation (WIN32K.SYS)
-                 * reveals that
-                 *
-                 * 1) not only it checks for CW_USEDEFAULT but also for CW_USEDEFAULT16
-                 * 2) it does not ignore the y parameter as the docs claim; instead, it
-                 *    uses it as second parameter to ShowWindow() unless y is either
-                 *    CW_USEDEFAULT or CW_USEDEFAULT16.
-                 *
-                 * The fact that we didn't do 2) caused bogus windows pop up when wine
-                 * was running apps that were using this obscure feature. Example -
-                 * calc.exe that comes with Win98 (only Win98, it's different from
-                 * the one that comes with Win95 and NT)
-                 */
-                if (cs->y != CW_USEDEFAULT && cs->y != CW_USEDEFAULT16) *sw = cs->y;
-                cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : 0;
-                cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : 0;
-            }
-
-            if (cs->cx == CW_USEDEFAULT || cs->cx == CW_USEDEFAULT16)
-            {
-                if (info.dwFlags & STARTF_USESIZE)
-                {
-                    cs->cx = info.dwXSize;
-                    cs->cy = info.dwYSize;
-                }
-                else  /* if no other hint from the app, pick 3/4 of the screen real estate */
-                {
-                    RECT r;
-                    SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
-                    cs->cx = (((r.right - r.left) * 3) / 4) - cs->x;
-                    cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
-                }
-            }
-            /* Handle case where only the cy values is set to default */
-            else if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16)
-            {
-                RECT r;
-                SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
-                cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
-            }
-        }
-    }
-    else
-    {
         /* neither x nor cx are default. Check the y values .
          * In the trace we see Outlook and Outlook Express using
          * cy set to CW_USEDEFAULT when opening the address book.
          */
-        if (cs->cy == CW_USEDEFAULT || cs->cy == CW_USEDEFAULT16) {
-            RECT r;
+        else if (IS_DEFAULT(cs->cy))
+        {
             FIXME("Strange use of CW_USEDEFAULT in nHeight\n");
-            SystemParametersInfoW( SPI_GETWORKAREA, 0, &r, 0);
-            cs->cy = (((r.bottom - r.top) * 3) / 4) - cs->y;
+            cs->cy = (mon_info.rcWork.bottom - mon_info.rcWork.top) * 3 / 4 - cs->y;
         }
     }
+#undef IS_DEFAULT
 }
 
 /***********************************************************************
