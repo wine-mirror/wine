@@ -283,6 +283,8 @@ static void testHotspot (void)
 #undef SIZEX2
 #undef SIZEY2
 #undef HOTSPOTS_MAX
+    ImageList_Destroy(himl2);
+    ImageList_Destroy(himl1);
     DestroyWindow(hwnd);
 }
 
