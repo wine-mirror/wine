@@ -320,6 +320,9 @@
 /* Define to 1 if you have the `socket' library (-lsocket). */
 #undef HAVE_LIBSOCKET
 
+/* Define if you have the Xinerama library */
+#undef HAVE_LIBXINERAMA
+
 /* Define if you have the libxml2 library */
 #undef HAVE_LIBXML2
 
@@ -896,6 +899,9 @@
 /* Define to 1 if you have the <X11/extensions/xf86vmode.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XF86VMODE_H
 
+/* Define to 1 if you have the <X11/extensions/Xinerama.h> header file. */
+#undef HAVE_X11_EXTENSIONS_XINERAMA_H
+
 /* Define to 1 if you have the <X11/extensions/XInput.h> header file. */
 #undef HAVE_X11_EXTENSIONS_XINPUT_H
 
@@ -1012,6 +1018,9 @@
 
 /* Define to the soname of the libXi library. */
 #undef SONAME_LIBXI
+
+/* Define to the soname of the libXinerama library. */
+#undef SONAME_LIBXINERAMA
 
 /* Define to the soname of the libXrandr library. */
 #undef SONAME_LIBXRANDR

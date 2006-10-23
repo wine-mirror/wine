@@ -328,6 +328,7 @@ then
                       X11/extensions/shape.h \
                       X11/extensions/XInput.h \
                       X11/extensions/XShm.h \
+                      X11/extensions/Xinerama.h \
                       X11/extensions/Xrandr.h \
                       X11/extensions/Xrender.h \
                       X11/extensions/xf86vmode.h],,,
@@ -388,6 +389,15 @@ then
                  [Define if Xrender has the XRenderSetPictureTransform function])],,
                 $X_LIBS -lXext -lX11 $X_EXTRA_LIBS)
         fi
+
+        dnl *** Check for Xinerama extension
+        if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
+        then
+                AC_TRY_COMPILE([#include <X11/Xlib.h>
+#include <X11/extensions/Xinerama.h>],[static typeof(XineramaQueryScreens) * func;],
+                  [AC_DEFINE(HAVE_LIBXINERAMA, 1, [Define if you have the Xinerama library])])
+        fi
+
     dnl *** End of X11/Xlib.h check
 
     dnl Check for the presence of OpenGL
@@ -1133,6 +1143,7 @@ then
   WINE_GET_SONAME(X11,XCreateWindow,[$X_LIBS $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xext,XextCreateExtension,[$X_LIBS -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xi,XOpenDevice,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
+  WINE_GET_SONAME(Xinerama,XineramaQueryScreens,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrender,XRenderQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(Xrandr,XRRQueryExtension,[$X_LIBS -lXext -lX11 $X_EXTRA_LIBS])
   WINE_GET_SONAME(freetype,FT_Init_FreeType,[$X_LIBS])
