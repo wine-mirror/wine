@@ -526,12 +526,14 @@ extern Window root_window;
 extern unsigned int screen_width;
 extern unsigned int screen_height;
 extern unsigned int screen_depth;
+extern RECT virtual_screen_rect;
 extern unsigned int text_caps;
 extern int use_xkb;
 extern int use_take_focus;
 extern int use_primary_selection;
 extern int managed_mode;
 extern int private_color_map;
+extern int primary_monitor;
 extern int copy_default_colors;
 extern int alloc_system_colors;
 extern int xrender_error_base;
@@ -686,6 +688,7 @@ extern void X11DRV_sync_window_position( Display *display, struct x11drv_win_dat
 extern BOOL X11DRV_set_window_pos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
                                    const RECT *rectClient, UINT swp_flags, const RECT *validRects );
 extern void X11DRV_set_wm_hints( Display *display, struct x11drv_win_data *data );
+extern void xinerama_init(void);
 
 extern void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height );
 extern void X11DRV_handle_desktop_resize(unsigned int width, unsigned int height);

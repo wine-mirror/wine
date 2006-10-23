@@ -39,6 +39,7 @@ C_SRCS = \
 	xdnd.c \
 	xfont.c \
 	xim.c \
+	xinerama.c \
 	xrandr.c \
 	xrender.c \
 	xvidmode.c

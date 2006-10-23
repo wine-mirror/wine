@@ -1154,7 +1154,7 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
         GetObjectW( physDevSrc->bitmap->hbitmap, sizeof(bm), &bm );
         SetRect( &clipRect, 0, 0, bm.bmWidth, bm.bmHeight );
     }
-    else SetRect( &clipRect, 0, 0, screen_width, screen_height );
+    else clipRect = virtual_screen_rect;
     if (!IntersectRect( visRectSrc, &rect, &clipRect ))
         return FALSE;
 

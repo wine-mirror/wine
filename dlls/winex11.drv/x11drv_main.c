@@ -69,6 +69,7 @@ Visual *visual;
 unsigned int screen_width;
 unsigned int screen_height;
 unsigned int screen_depth;
+RECT virtual_screen_rect;
 Window root_window;
 int dxgrab = 0;
 int usexvidmode = 1;
@@ -78,6 +79,7 @@ int use_take_focus = 1;
 int use_primary_selection = 0;
 int managed_mode = 1;
 int private_color_map = 0;
+int primary_monitor = 0;
 int client_side_with_core = 1;
 int client_side_with_render = 1;
 int client_side_antialias_with_core = 1;
@@ -358,6 +360,9 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "PrivateColorMap", buffer, sizeof(buffer) ))
         private_color_map = IS_OPTION_TRUE( buffer[0] );
 
+    if (!get_config_key( hkey, appkey, "PrimaryMonitor", buffer, sizeof(buffer) ))
+        primary_monitor = atoi( buffer );
+
     if (!get_config_key( hkey, appkey, "CopyDefaultColors", buffer, sizeof(buffer) ))
         copy_default_colors = atoi(buffer);
 
@@ -429,6 +434,7 @@ static BOOL process_attach(void)
     screen_width  = WidthOfScreen( screen );
     screen_height = HeightOfScreen( screen );
 
+    xinerama_init();
     X11DRV_Settings_Init();
 
 #ifdef HAVE_LIBXXF86VM

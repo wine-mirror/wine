@@ -1253,6 +1253,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
 
     screen_width  = width;
     screen_height = height;
+    xinerama_init();
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
     SetRect( &rect, 0, 0, width, height );
     data->lock_changes++;
@@ -1665,7 +1666,7 @@ void X11DRV_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     else
     {
         parent = 0;
-        SetRect(&mouseRect, 0, 0, GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN));
+        mouseRect = virtual_screen_rect;
     }
     origRect = sizingRect;
 

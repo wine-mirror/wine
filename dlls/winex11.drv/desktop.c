@@ -141,6 +141,7 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     max_height = screen_height;
     screen_width  = width;
     screen_height = height;
+    xinerama_init();
 
     /* initialize the available resolutions */
     dd_modes = X11DRV_Settings_SetHandlers("desktop", 

@@ -110,8 +110,11 @@ BOOL X11DRV_is_window_rect_mapped( const RECT *rect )
     if (IsRectEmpty( rect )) return FALSE;
 
     /* don't map if rect is off-screen */
-    if (rect->left >= (int)screen_width || rect->top >= (int)screen_height) return FALSE;
-    if (rect->right < 0 || rect->bottom < 0) return FALSE;
+    if (rect->left >= virtual_screen_rect.right ||
+        rect->top >= virtual_screen_rect.bottom ||
+        rect->right <= virtual_screen_rect.left ||
+        rect->bottom <= virtual_screen_rect.top)
+        return FALSE;
 
     return TRUE;
 }
@@ -335,7 +338,7 @@ static void systray_dock_window( Display *display, struct x11drv_win_data *data 
          * For more information on this problem, see
          * http://standards.freedesktop.org/xembed-spec/latest/ar01s04.html */
         
-        SetWindowPos( data->hwnd, NULL, screen_width + 1, screen_height + 1, 
+        SetWindowPos( data->hwnd, NULL, virtual_screen_rect.right + 1, virtual_screen_rect.bottom + 1,
                       0, 0, SWP_NOZORDER | SWP_NOSIZE );
 
         /* set XEMBED protocol data on the window */
@@ -938,7 +941,6 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
 /* fill in the desktop X window id in the x11drv_win_data structure */
 static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
 {
-    RECT rect;
     Window win = (Window)GetPropA( data->hwnd, whole_window_prop );
 
     if (win)
@@ -967,8 +969,8 @@ static void get_desktop_xwin( Display *display, struct x11drv_win_data *data )
         SetPropA( data->hwnd, whole_window_prop, (HANDLE)root_window );
         SetPropA( data->hwnd, visual_id_prop, (HANDLE)visualid );
         data->whole_window = root_window;
-        SetRect( &rect, 0, 0, screen_width, screen_height );
-        X11DRV_set_window_pos( data->hwnd, 0, &rect, &rect, SWP_NOZORDER, NULL );
+        X11DRV_set_window_pos( data->hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
+                               SWP_NOZORDER, NULL );
         if (root_window != DefaultRootWindow( display ))
         {
             data->managed = TRUE;
