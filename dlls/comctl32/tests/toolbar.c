@@ -48,7 +48,7 @@ static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
   p->iString = nString;
 }
 
-LRESULT MyWnd_Notify(hWnd, wParam, lParam)
+static LRESULT MyWnd_Notify(LPARAM lParam)
 {
     NMHDR *hdr = (NMHDR *)lParam;
     NMTBHOTITEM *nmhi;
@@ -74,7 +74,7 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     switch (msg)
     {
         case WM_NOTIFY:
-            return MyWnd_Notify(hWnd, wParam, lParam);
+            return MyWnd_Notify(lParam);
     }
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
