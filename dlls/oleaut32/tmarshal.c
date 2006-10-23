@@ -315,7 +315,7 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
 	ITypeLib_Release(tl);
 	return hres;
     }
-    /* FIXME: do this?  ITypeLib_Release(tl); */
+    ITypeLib_Release(tl);
     return hres;
 }
 
@@ -417,6 +417,7 @@ TMProxyImpl_Release(LPRPCPROXYBUFFER iface)
         if (This->chanbuf) IRpcChannelBuffer_Release(This->chanbuf);
         VirtualFree(This->asmstubs, 0, MEM_RELEASE);
         HeapFree(GetProcessHeap(), 0, This->lpvtbl);
+        ITypeInfo_Release(This->tinfo);
         CoTaskMemFree(This);
     }
     return refCount;
@@ -675,6 +676,7 @@ serialize_param(
 		derefhere=FALSE;
 		break;
 	    }
+	    ITypeInfo_ReleaseTypeAttr(tinfo, tattr);
 	    ITypeInfo_Release(tinfo2);
 	}
 
@@ -762,18 +764,20 @@ serialize_param(
 	    break;
 	}
 	case TKIND_ALIAS:
-	    return serialize_param(tinfo2,writeit,debugout,dealloc,&tattr->tdescAlias,arg,buf);
+	    hres = serialize_param(tinfo2,writeit,debugout,dealloc,&tattr->tdescAlias,arg,buf);
+	    break;
 	case TKIND_ENUM:
 	    hres = S_OK;
 	    if (debugout) TRACE_(olerelay)("%x",*arg);
 	    if (writeit)
 	        hres = xbuf_add(buf,(LPBYTE)arg,sizeof(DWORD));
-	    return hres;
+	    break;
 	default:
 	    FIXME("Unhandled typekind %d\n",tattr->typekind);
 	    hres = E_FAIL;
 	    break;
 	}
+	ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
 	ITypeInfo_Release(tinfo2);
 	return hres;
     }
@@ -1001,6 +1005,7 @@ deserialize_param(
 		    derefhere=FALSE;
 		    break;
 		}
+		ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
 		ITypeInfo_Release(tinfo2);
 	    }
 	    /* read it in all cases, we need to know if we have 
@@ -1080,6 +1085,8 @@ deserialize_param(
 			hres = ITypeInfo2_GetVarDesc(tinfo2, i, &vdesc);
 			if (hres) {
 			    ERR("Could not get vardesc of %d\n",i);
+			    ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
+			    ITypeInfo_Release(tinfo2);
 			    return hres;
 			}
 			hres = deserialize_param(
@@ -1098,19 +1105,21 @@ deserialize_param(
 		    break;
 		}
 		case TKIND_ALIAS:
-		    return deserialize_param(tinfo2,readit,debugout,alloc,&tattr->tdescAlias,arg,buf);
+		    hres = deserialize_param(tinfo2,readit,debugout,alloc,&tattr->tdescAlias,arg,buf);
+		    break;
 		case TKIND_ENUM:
 		    if (readit) {
 		        hres = xbuf_get(buf,(LPBYTE)arg,sizeof(DWORD));
 		        if (hres) ERR("Failed to read enum (4 byte)\n");
 		    }
 		    if (debugout) TRACE_(olerelay)("%x",*arg);
-		    return hres;
+		    break;
 		default:
 		    ERR("Unhandled typekind %d\n",tattr->typekind);
 		    hres = E_FAIL;
 		    break;
 		}
+		ITypeInfo_ReleaseTypeAttr(tinfo2, tattr);
 	    }
 	    if (hres)
 		ERR("failed to stuballoc in TKIND_RECORD.\n");
@@ -1165,9 +1174,6 @@ _get_funcdesc(
     if (fname) *fname = NULL;
     if (iname) *iname = NULL;
 
-    *tactual = tinfo;
-    ITypeInfo_AddRef(*tactual);
-
     while (1) {
 	hres = ITypeInfoImpl_GetInternalFuncDesc(tinfo, i, fdesc);
 
@@ -1204,6 +1210,8 @@ _get_funcdesc(
 		ITypeInfo_GetDocumentation(tinfo,(*fdesc)->memid,fname,NULL,NULL,NULL);
 	    if (iname)
 		ITypeInfo_GetDocumentation(tinfo,-1,iname,NULL,NULL,NULL);
+	    *tactual = tinfo;
+	    ITypeInfo_AddRef(*tactual);
 	    return S_OK;
 	}
 	i++;
@@ -1709,12 +1717,12 @@ TMStubImpl_Invoke(
     const FUNCDESC *fdesc;
     TMStubImpl *This = (TMStubImpl *)iface;
     HRESULT	hres;
-    DWORD	*args, res, *xargs, nrofargs;
+    DWORD	*args = NULL, res, *xargs, nrofargs;
     marshal_state	buf;
     UINT	nrofnames;
     BSTR	names[10];
     BSTR	iname = NULL;
-    ITypeInfo 	*tinfo;
+    ITypeInfo 	*tinfo = NULL;
 
     TRACE("...\n");
 
@@ -1753,8 +1761,9 @@ TMStubImpl_Invoke(
     if (iname && !lstrcmpW(iname, IDispatchW))
     {
         ERR("IDispatch cannot be marshaled by the typelib marshaler\n");
-        ITypeInfo_Release(tinfo);
-        return E_UNEXPECTED;
+        hres = E_UNEXPECTED;
+        SysFreeString (iname);
+        goto exit;
     }
 
     if (iname) SysFreeString (iname);
@@ -1771,7 +1780,11 @@ TMStubImpl_Invoke(
     for (i=0;i<fdesc->cParams;i++)
 	nrofargs += _argsize(fdesc->lprgelemdescParam[i].tdesc.vt);
     args = HeapAlloc(GetProcessHeap(),0,(nrofargs+1)*sizeof(DWORD));
-    if (!args) return E_OUTOFMEMORY;
+    if (!args)
+    {
+        hres = E_OUTOFMEMORY;
+        goto exit;
+    }
 
     /* Allocate all stuff used by call. */
     xargs = args+1;
@@ -1817,7 +1830,7 @@ TMStubImpl_Invoke(
     __ENDTRY
 
     if (hres != S_OK)
-        return hres;
+        goto exit;
 
     buf.curoff = 0;
 
@@ -1842,14 +1855,8 @@ TMStubImpl_Invoke(
 
     hres = xbuf_add (&buf, (LPBYTE)&res, sizeof(DWORD));
 
-    for (i = 0; i < nrofnames; i++)
-        SysFreeString(names[i]);
-
     if (hres != S_OK)
-	return hres;
-
-    ITypeInfo_Release(tinfo);
-    HeapFree(GetProcessHeap(), 0, args);
+        goto exit;
 
     xmsg->cbBuffer	= buf.curoff;
     hres = IRpcChannelBuffer_GetBuffer(rpcchanbuf, xmsg, &This->iid);
@@ -1858,6 +1865,13 @@ TMStubImpl_Invoke(
 
     if (hres == S_OK)
         memcpy(xmsg->Buffer, buf.base, buf.curoff);
+
+exit:
+    for (i = 0; i < nrofnames; i++)
+        SysFreeString(names[i]);
+
+    ITypeInfo_Release(tinfo);
+    HeapFree(GetProcessHeap(), 0, args);
 
     HeapFree(GetProcessHeap(), 0, buf.base);
 
