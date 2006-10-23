@@ -496,7 +496,9 @@ static void
 TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
 {
     TTTOOL_INFO *toolPtr;
-    RECT rect, wndrect;
+    HMONITOR monitor;
+    MONITORINFO mon_info;
+    RECT rect;
     SIZE size;
     NMHDR  hdr;
     int ptfx = 0;
@@ -593,13 +595,18 @@ TOOLTIPS_Show (HWND hwnd, TOOLTIPS_INFO *infoPtr)
     rect.bottom = rect.top + size.cy;
 
     /* check position */
-    wndrect.right = GetSystemMetrics( SM_CXSCREEN );
-    if( rect.right > wndrect.right ) {
-	   rect.left -= rect.right - wndrect.right + 2;
-	   rect.right = wndrect.right - 2;
+
+    monitor = MonitorFromRect( &rect, MONITOR_DEFAULTTOPRIMARY );
+    mon_info.cbSize = sizeof(mon_info);
+    GetMonitorInfoW( monitor, &mon_info );
+
+    if( rect.right > mon_info.rcWork.right ) {
+        rect.left -= rect.right - mon_info.rcWork.right + 2;
+        rect.right = mon_info.rcWork.right - 2;
     }
-    wndrect.bottom = GetSystemMetrics( SM_CYSCREEN );
-    if( rect.bottom > wndrect.bottom ) {
+    if (rect.left < mon_info.rcWork.left) rect.left = mon_info.rcWork.left;
+
+    if( rect.bottom > mon_info.rcWork.bottom ) {
         RECT rc;
 
 	if (toolPtr->uFlags & TTF_IDISHWND)
