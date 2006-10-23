@@ -459,6 +459,15 @@ static BOOL image_bmp_filter(LPVOID buf, DWORD size)
         && *(DWORD*)((BYTE*)buf+6) == 0;
 }
 
+static BOOL video_avi_filter(LPVOID buf, DWORD size)
+{
+    const BYTE const *b = buf;
+
+    return size > 12
+        && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
+        && b[8] == 'A' && b[9] == 'V' && b[10] == 'I' && b[11] == 0x20;
+}
+
 static BOOL text_plain_filter(LPVOID buf, DWORD size)
 {
     UCHAR *ptr;
@@ -516,6 +525,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         static const WCHAR wszImageTiff[] = {'i','m','a','g','e','/','t','i','f','f',0};
         static const WCHAR wszImageXPng[] = {'i','m','a','g','e','/','x','-','p','n','g',0};
         static const WCHAR wszImageBmp[] = {'i','m','a','g','e','/','b','m','p',0};
+        static const WCHAR wszVideoAvi[] = {'v','i','d','e','o','/','a','v','i',0};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
         static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
             'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
@@ -530,6 +540,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             {wszImageTiff,      image_tiff_filter},
             {wszImageXPng,      image_xpng_filter},
             {wszImageBmp,       image_bmp_filter},
+            {wszVideoAvi,       video_avi_filter},
             {wszTextPlain,      text_plain_filter},
             {wszAppOctetStream, application_octet_stream_filter}
         };
@@ -564,7 +575,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
                 ret = pwzMimeProposed;
 
             /* text/html is a special case */
-           if(!strcmpW(pwzMimeProposed, wszTextHtml) && !strcmpW(ret, wszTextPlain))
+            if(!strcmpW(pwzMimeProposed, wszTextHtml) && !strcmpW(ret, wszTextPlain))
                 ret = wszTextHtml;
         }
 
