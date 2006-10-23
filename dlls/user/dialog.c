@@ -543,12 +543,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         mon_info.cbSize = sizeof(mon_info);
         if (template.style & DS_CENTER)
         {
-            if (!(monitor = MonitorFromWindow( owner ? owner : GetActiveWindow(),
-                                               MONITOR_DEFAULTTOPRIMARY )))
-            {
-                pos.x = pos.y = 0;  /* default to primary monitor */
-                monitor = MonitorFromPoint( pos, MONITOR_DEFAULTTOPRIMARY );
-            }
+            monitor = MonitorFromWindow( owner ? owner : GetActiveWindow(), MONITOR_DEFAULTTOPRIMARY );
             GetMonitorInfoW( monitor, &mon_info );
             pos.x = (mon_info.rcWork.left + mon_info.rcWork.right - size.cx) / 2;
             pos.y = (mon_info.rcWork.top + mon_info.rcWork.bottom - size.cy) / 2;

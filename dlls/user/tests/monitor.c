@@ -146,10 +146,28 @@ static void test_ChangeDisplaySettingsEx(void)
     ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %d\n", res);
 }
 
+static void test_monitors(void)
+{
+    HMONITOR monitor, primary;
+    POINT pt;
+
+    pt.x = pt.y = 0;
+    primary = MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY );
+    ok( primary != 0, "couldn't get primary monitor\n" );
+
+    monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTONULL );
+    ok( !monitor, "got %p, should not get a monitor for an invalid window\n", monitor );
+    monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
+    ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTOPRIMARY\n", monitor, primary );
+    monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTONEAREST );
+    ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTONEAREST\n", monitor, primary );
+}
+
 
 START_TEST(monitor)
 {
     init_function_pointers();
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx();
+    test_monitors();
 }

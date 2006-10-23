@@ -706,20 +706,10 @@ static void WIN_FixCoordinates( CREATESTRUCTA *cs, INT *sw)
         HMONITOR monitor;
         MONITORINFO mon_info;
         STARTUPINFOW info;
-        POINT pt;
 
         if (!IS_DEFAULT(cs->x) && !IS_DEFAULT(cs->cx) && !IS_DEFAULT(cs->cy)) return;
 
-        if (!(monitor = MonitorFromWindow( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY )))
-        {
-            pt.x = pt.y = 0;  /* default to primary monitor */
-            if (!IS_DEFAULT(cs->x))
-            {
-                pt.x = cs->x;
-                pt.y = cs->y;
-            }
-            monitor = MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY );
-        }
+        monitor = MonitorFromWindow( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY );
         mon_info.cbSize = sizeof(mon_info);
         GetMonitorInfoW( monitor, &mon_info );
         GetStartupInfoW( &info );

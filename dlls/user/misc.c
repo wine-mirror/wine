@@ -430,7 +430,12 @@ HMONITOR WINAPI MonitorFromWindow(HWND hWnd, DWORD dwFlags)
     if (IsIconic(hWnd) && GetWindowPlacement(hWnd, &wp))
         return MonitorFromRect( &wp.rcNormalPosition, dwFlags );
 
-    GetWindowRect( hWnd, &rect );
+    if (GetWindowRect( hWnd, &rect ))
+        return MonitorFromRect( &rect, dwFlags );
+
+    if (!(dwFlags & (MONITOR_DEFAULTTOPRIMARY|MONITOR_DEFAULTTONEAREST))) return 0;
+    /* retrieve the primary */
+    SetRect( &rect, 0, 0, 1, 1 );
     return MonitorFromRect( &rect, dwFlags );
 }
 
