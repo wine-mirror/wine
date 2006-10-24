@@ -683,31 +683,31 @@ GLenum CompareFunc(DWORD func) {
 
 static GLenum d3dta_to_combiner_input(DWORD d3dta, DWORD stage, INT texture_idx) {
     switch (d3dta) {
-        case D3DTA_DIFFUSE:
+        case WINED3DTA_DIFFUSE:
             return GL_PRIMARY_COLOR_NV;
 
-        case D3DTA_CURRENT:
+        case WINED3DTA_CURRENT:
             if (stage) return GL_SPARE0_NV;
             else return GL_PRIMARY_COLOR_NV;
 
-        case D3DTA_TEXTURE:
+        case WINED3DTA_TEXTURE:
             if (texture_idx > -1) return GL_TEXTURE0_ARB + texture_idx;
             else return GL_PRIMARY_COLOR_NV;
 
-        case D3DTA_TFACTOR:
+        case WINED3DTA_TFACTOR:
             return GL_CONSTANT_COLOR0_NV;
 
-        case D3DTA_SPECULAR:
+        case WINED3DTA_SPECULAR:
             return GL_SECONDARY_COLOR_NV;
 
-        case D3DTA_TEMP:
+        case WINED3DTA_TEMP:
             /* TODO: Support WINED3DTSS_RESULTARG */
-            FIXME("D3DTA_TEMP, not properly supported.\n");
+            FIXME("WINED3DTA_TEMP, not properly supported.\n");
             return GL_SPARE1_NV;
 
-        case D3DTA_CONSTANT:
+        case WINED3DTA_CONSTANT:
             /* TODO: Support per stage constants (WINED3DTSS_CONSTANT, NV_register_combiners2) */
-            FIXME("D3DTA_CONSTANT, not properly supported.\n");
+            FIXME("WINED3DTA_CONSTANT, not properly supported.\n");
             return GL_CONSTANT_COLOR1_NV;
 
         default:
@@ -725,17 +725,17 @@ static GLenum invert_mapping(GLenum mapping) {
 }
 
 static void get_src_and_opr_nvrc(DWORD stage, DWORD arg, BOOL is_alpha, GLenum* input, GLenum* mapping, GLenum *component_usage, INT texture_idx) {
-    /* The D3DTA_COMPLEMENT flag specifies the complement of the input should
+    /* The WINED3DTA_COMPLEMENT flag specifies the complement of the input should
      * be used. */
-    if (arg & D3DTA_COMPLEMENT) *mapping = GL_UNSIGNED_INVERT_NV;
+    if (arg & WINED3DTA_COMPLEMENT) *mapping = GL_UNSIGNED_INVERT_NV;
     else *mapping = GL_SIGNED_IDENTITY_NV;
 
-    /* The D3DTA_ALPHAREPLICATE flag specifies the alpha component of the input
+    /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the input
      * should be used for all input components. */
-    if (is_alpha || arg & D3DTA_ALPHAREPLICATE) *component_usage = GL_ALPHA;
+    if (is_alpha || arg & WINED3DTA_ALPHAREPLICATE) *component_usage = GL_ALPHA;
     else *component_usage = GL_RGB;
 
-    *input = d3dta_to_combiner_input(arg & D3DTA_SELECTMASK, stage, texture_idx);
+    *input = d3dta_to_combiner_input(arg & WINED3DTA_SELECTMASK, stage, texture_idx);
 }
 
 typedef struct {
@@ -748,9 +748,9 @@ static BOOL is_invalid_op(IWineD3DDeviceImpl *This, int stage, WINED3DTEXTUREOP 
     if (op == WINED3DTOP_DISABLE) return FALSE;
     if (This->stateBlock->textures[stage]) return FALSE;
 
-    if (arg1 == D3DTA_TEXTURE && op != WINED3DTOP_SELECTARG2) return TRUE;
-    if (arg2 == D3DTA_TEXTURE && op != WINED3DTOP_SELECTARG1) return TRUE;
-    if (arg3 == D3DTA_TEXTURE && (op == WINED3DTOP_MULTIPLYADD || op == WINED3DTOP_LERP)) return TRUE;
+    if (arg1 == WINED3DTA_TEXTURE && op != WINED3DTOP_SELECTARG2) return TRUE;
+    if (arg2 == WINED3DTA_TEXTURE && op != WINED3DTOP_SELECTARG1) return TRUE;
+    if (arg3 == WINED3DTA_TEXTURE && (op == WINED3DTOP_MULTIPLYADD || op == WINED3DTOP_LERP)) return TRUE;
 
     return FALSE;
 }
@@ -767,7 +767,7 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
     /* If a texture stage references an invalid texture unit the stage just
      * passes through the result from the previous stage */
     if (is_invalid_op(This, stage, op, arg1, arg2, arg3)) {
-        arg1 = D3DTA_CURRENT;
+        arg1 = WINED3DTA_CURRENT;
         op = WINED3DTOP_SELECTARG1;
     }
 
@@ -901,11 +901,11 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
         case WINED3DTOP_BLENDCURRENTALPHA:
         {
             GLenum alpha_src = GL_PRIMARY_COLOR_NV;
-            if (op == WINED3DTOP_BLENDDIFFUSEALPHA) alpha_src = d3dta_to_combiner_input(D3DTA_DIFFUSE, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDTEXTUREALPHA) alpha_src = d3dta_to_combiner_input(D3DTA_TEXTURE, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDFACTORALPHA) alpha_src = d3dta_to_combiner_input(D3DTA_TFACTOR, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDTEXTUREALPHAPM) alpha_src = d3dta_to_combiner_input(D3DTA_TEXTURE, stage, texture_idx);
-            else if (op == WINED3DTOP_BLENDCURRENTALPHA) alpha_src = d3dta_to_combiner_input(D3DTA_CURRENT, stage, texture_idx);
+            if (op == WINED3DTOP_BLENDDIFFUSEALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_DIFFUSE, stage, texture_idx);
+            else if (op == WINED3DTOP_BLENDTEXTUREALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_TEXTURE, stage, texture_idx);
+            else if (op == WINED3DTOP_BLENDFACTORALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_TFACTOR, stage, texture_idx);
+            else if (op == WINED3DTOP_BLENDTEXTUREALPHAPM) alpha_src = d3dta_to_combiner_input(WINED3DTA_TEXTURE, stage, texture_idx);
+            else if (op == WINED3DTOP_BLENDCURRENTALPHA) alpha_src = d3dta_to_combiner_input(WINED3DTA_CURRENT, stage, texture_idx);
             else FIXME("Unhandled WINED3DTOP %s, shouldn't happen\n", debug_d3dtop(op));
 
             /* Input, arg1*alpha_src+arg2*(1-alpha_src) */
@@ -1054,11 +1054,11 @@ void set_tex_op_nvrc(IWineD3DDevice *iface, BOOL is_alpha, int stage, WINED3DTEX
 }
 
 static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
-    /* The D3DTA_ALPHAREPLICATE flag specifies the alpha component of the
-     * input should be used for all input components. The D3DTA_COMPLEMENT
+    /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the
+     * input should be used for all input components. The WINED3DTA_COMPLEMENT
      * flag specifies the complement of the input should be used. */
-    BOOL from_alpha = is_alpha || arg & D3DTA_ALPHAREPLICATE;
-    BOOL complement = arg & D3DTA_COMPLEMENT;
+    BOOL from_alpha = is_alpha || arg & WINED3DTA_ALPHAREPLICATE;
+    BOOL complement = arg & WINED3DTA_COMPLEMENT;
 
     /* Calculate the operand */
     if (complement) {
@@ -1070,18 +1070,18 @@ static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* op
     }
 
     /* Calculate the source */
-    switch (arg & D3DTA_SELECTMASK) {
-        case D3DTA_CURRENT: *source = GL_PREVIOUS_EXT; break;
-        case D3DTA_DIFFUSE: *source = GL_PRIMARY_COLOR_EXT; break;
-        case D3DTA_TEXTURE: *source = GL_TEXTURE; break;
-        case D3DTA_TFACTOR: *source = GL_CONSTANT_EXT; break;
-        case D3DTA_SPECULAR:
+    switch (arg & WINED3DTA_SELECTMASK) {
+        case WINED3DTA_CURRENT: *source = GL_PREVIOUS_EXT; break;
+        case WINED3DTA_DIFFUSE: *source = GL_PRIMARY_COLOR_EXT; break;
+        case WINED3DTA_TEXTURE: *source = GL_TEXTURE; break;
+        case WINED3DTA_TFACTOR: *source = GL_CONSTANT_EXT; break;
+        case WINED3DTA_SPECULAR:
             /*
              * According to the GL_ARB_texture_env_combine specs, SPECULAR is
              * 'Secondary color' and isn't supported until base GL supports it
              * There is no concept of temp registers as far as I can tell
              */
-            FIXME("Unhandled texture arg D3DTA_SPECULAR\n");
+            FIXME("Unhandled texture arg WINED3DTA_SPECULAR\n");
             *source = GL_TEXTURE;
             break;
         default:
@@ -1165,16 +1165,16 @@ void set_tex_op(IWineD3DDevice *iface, BOOL isAlpha, int Stage, WINED3DTEXTUREOP
         /* If a texture stage references an invalid texture unit the stage just
          * passes through the result from the previous stage */
         if (is_invalid_op(This, Stage, op, arg1, arg2, arg3)) {
-            arg1 = D3DTA_CURRENT;
+            arg1 = WINED3DTA_CURRENT;
             op = WINED3DTOP_SELECTARG1;
         }
 
         /* From MSDN (WINED3DTSS_ALPHAARG1) :
-           The default argument is D3DTA_TEXTURE. If no texture is set for this stage,
-                   then the default argument is D3DTA_DIFFUSE.
+           The default argument is WINED3DTA_TEXTURE. If no texture is set for this stage,
+                   then the default argument is WINED3DTA_DIFFUSE.
                    FIXME? If texture added/removed, may need to reset back as well?    */
-        if (isAlpha && This->stateBlock->textures[Stage] == NULL && arg1 == D3DTA_TEXTURE) {
-            get_src_and_opr(D3DTA_DIFFUSE, isAlpha, &src1, &opr1);
+        if (isAlpha && This->stateBlock->textures[Stage] == NULL && arg1 == WINED3DTA_TEXTURE) {
+            get_src_and_opr(WINED3DTA_DIFFUSE, isAlpha, &src1, &opr1);
         } else {
             get_src_and_opr(arg1, isAlpha, &src1, &opr1);
         }
