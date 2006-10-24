@@ -147,6 +147,36 @@ static const CHAR service_control_dat[] = "ServiceControl\tName\tEvent\tArgument
                                           "ServiceControl\tServiceControl\n"
                                           "ServiceControl\tTestService\t8\t\t0\tservice_comp";
 
+/* tables for test_continuouscabs */
+static const CHAR cc_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n"
+                                       "augustus\t\tMSITESTDIR\t0\t1\taugustus";
+
+static const CHAR cc_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                     "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                     "Feature\tFeature\n"
+                                     "feature\t\t\t\t2\t1\tTARGETDIR\t0";
+
+static const CHAR cc_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                          "s38\ts72\n"
+                                          "FeatureComponents\tFeature_\tComponent_\n"
+                                          "feature\tmaximus\n"
+                                          "feature\taugustus";
+
+static const CHAR cc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
+                                  "augustus\taugustus\taugustus\t50000\t\t\t16384\t1";
+
+static const CHAR cc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                   "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                   "Media\tDiskId\n"
+                                   "1\t10\t\ttest1.cab\tDISK1\t\n"
+                                   "2\t2\t\ttest2.cab\tDISK2\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -171,10 +201,22 @@ static const msi_table tables[] =
     ADD_TABLE(service_control)
 };
 
+static const msi_table cc_tables[] =
+{
+    ADD_TABLE(cc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(cc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(cc_media),
+    ADD_TABLE(property),
+};
+
 /* cabinet definitions */
 
 /* make the max size large so there is only one cab file */
-#define MEDIA_SIZE          999999999
+#define MEDIA_SIZE          0x7FFFFFFF
 #define FOLDER_THRESHOLD    900000
 
 /* the FCI callbacks */
@@ -191,6 +233,7 @@ static void mem_free(void *memory)
 
 static BOOL get_next_cabinet(PCCAB pccab, ULONG  cbPrevCab, void *pv)
 {
+    sprintf(pccab->szCab, pv, pccab->iCab);
     return TRUE;
 }
 
@@ -336,11 +379,10 @@ static INT_PTR get_open_info(char *pszName, USHORT *pdate, USHORT *ptime,
     return (INT_PTR)handle;
 }
 
-static void add_file(HFCI hfci, const char *file, TCOMP compress)
+static BOOL add_file(HFCI hfci, const char *file, TCOMP compress)
 {
     char path[MAX_PATH];
     char filename[MAX_PATH];
-    BOOL res;
 
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\");
@@ -348,9 +390,8 @@ static void add_file(HFCI hfci, const char *file, TCOMP compress)
 
     lstrcpyA(filename, file);
 
-    res = FCIAddFile(hfci, path, filename, FALSE, get_next_cabinet, progress,
-                     get_open_info, compress);
-    ok(res, "Expected FCIAddFile to succeed\n");
+    return FCIAddFile(hfci, path, filename, FALSE, get_next_cabinet,
+                      progress, get_open_info, compress);
 }
 
 static void set_cab_parameters(PCCAB pCabParams, const CHAR *name, DWORD max_size)
@@ -360,6 +401,7 @@ static void set_cab_parameters(PCCAB pCabParams, const CHAR *name, DWORD max_siz
     pCabParams->cb = max_size;
     pCabParams->cbFolderThresh = FOLDER_THRESHOLD;
     pCabParams->setID = 0xbeef;
+    pCabParams->iCab = 1;
     lstrcpyA(pCabParams->szCabPath, CURR_DIR);
     lstrcatA(pCabParams->szCabPath, "\\");
     lstrcpyA(pCabParams->szCab, name);
@@ -384,7 +426,8 @@ static void create_cab_file(const CHAR *name, DWORD max_size, const CHAR *files)
     ptr = files;
     while (*ptr)
     {
-        add_file(hfci, ptr, tcompTYPE_MSZIP);
+        res = add_file(hfci, ptr, tcompTYPE_MSZIP);
+        ok(res, "Failed to add file: %s\n", ptr);
         ptr += lstrlen(ptr) + 1;
     }
 
@@ -432,8 +475,6 @@ static void create_file(const CHAR *name, DWORD size)
 
 static void create_test_files(void)
 {
-    get_program_files_dir(PROG_FILES_DIR);
-
     CreateDirectoryA("msitest", NULL);
     create_file("msitest\\one.txt", 100);
     CreateDirectoryA("msitest\\first", NULL);
@@ -716,9 +757,75 @@ static void test_packagecoltypes(void)
     DeleteFile(msifile);
 }
 
+static void create_cc_test_files(void)
+{
+    CCAB cabParams;
+    HFCI hfci;
+    ERF erf;
+    BOOL res;
+
+    create_file("maximus", 500);
+    create_file("augustus", 50000);
+
+    set_cab_parameters(&cabParams, "test1.cab", 200);
+
+    hfci = FCICreate(&erf, file_placed, mem_alloc, mem_free, fci_open,
+                      fci_read, fci_write, fci_close, fci_seek, fci_delete,
+                      get_temp_file, &cabParams, (void*)"test%d.cab");
+    ok(hfci != NULL, "Failed to create an FCI context\n");
+
+    /* spews out hundreds of cab files.  re-enable when cabinet.dll is fixed */
+#if 0
+    res = add_file(hfci, "maximus", tcompTYPE_MSZIP);
+    ok(res, "Failed to add file maximus\n");
+
+    res = add_file(hfci, "augustus", tcompTYPE_MSZIP);
+    todo_wine
+    {
+        ok(res, "Failed to add file augustus\n");
+    }
+#endif
+
+    res = FCIFlushCabinet(hfci, FALSE, get_next_cabinet, progress);
+    ok(res, "Failed to flush the cabinet\n");
+
+    res = FCIDestroy(hfci);
+    ok(res, "Failed to destroy the cabinet\n");
+
+    DeleteFile("maximus");
+    DeleteFile("augustus");
+}
+
+static void test_continuouscabs(void)
+{
+    UINT r;
+
+    create_cc_test_files();
+    create_database(msifile, cc_tables, sizeof(cc_tables) / sizeof(msi_table));
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    }
+
+    todo_wine
+    {
+        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    }
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile("test1.cab");
+    DeleteFile("test2.cab");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
+
+    get_program_files_dir(PROG_FILES_DIR);
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
     len = lstrlenA(CURR_DIR);
@@ -729,4 +836,5 @@ START_TEST(install)
     test_MsiInstallProduct();
     test_MsiSetComponentState();
     test_packagecoltypes();
+    test_continuouscabs();
 }
