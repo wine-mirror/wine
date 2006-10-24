@@ -221,7 +221,7 @@ static BOOL is_full_path(LPWSTR path)
     if (!path || lstrlenW(path) < MIN_PATH_LEN)
         return FALSE;
 
-    if (path[1] == ':' || (path[0] == '\\' && path[1] == '\\'))
+    if ((path[1] == ':' && path[2] == '\\') || (path[0] == '\\' && path[1] == '\\'))
         return TRUE;
 
     return FALSE;

@@ -226,6 +226,23 @@ static void test_LaunchINFSection()
     DeleteFileA("test.inf");
 }
 
+static void test_LaunchINFSectionEx()
+{
+    HRESULT hr;
+    char cmdline[MAX_PATH];
+
+    create_inf_file("test.inf");
+
+    /* try an invalid CAB filename */
+    lstrcpy(cmdline, CURR_DIR);
+    lstrcpy(cmdline, "\\");
+    lstrcpy(cmdline, "test.inf,DefaultInstall,c:imacab.cab,4");
+    hr = pLaunchINFSectionEx(NULL, NULL, cmdline, 0);
+    ok(hr == 0, "Expected 0, got %d\n", hr);
+
+    DeleteFileA("test.inf");
+}
+
 START_TEST(install)
 {
     if (!init_function_pointers())
@@ -235,4 +252,5 @@ START_TEST(install)
 
     test_RunSetupCommand();
     test_LaunchINFSection();
+    test_LaunchINFSectionEx();
 }
