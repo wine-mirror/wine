@@ -900,6 +900,7 @@ typedef struct tagITypeLibImpl
     int ctCustData;             /* number of items in cust data list */
     TLBCustData * pCustData;    /* linked list to cust data */
     TLBImpLib   * pImpLibs;     /* linked list to all imported typelibs */
+    int ctTypeDesc;             /* number of items in type desc array */
     TYPEDESC * pTypeDesc;       /* array of TypeDescriptions found in the
 				   libary. Only used while read MSFT
 				   typelibs */
@@ -2451,6 +2452,7 @@ static ITypeLib2* ITypeLib2_Constructor_MSFT(LPVOID pLib, DWORD dwTLBLength)
     {
         int i, j, cTD = tlbSegDir.pTypdescTab.length / (2*sizeof(INT));
         INT16 td[4];
+        pTypeLibImpl->ctTypeDesc = cTD;
         pTypeLibImpl->pTypeDesc = TLB_Alloc( cTD * sizeof(TYPEDESC));
         MSFT_ReadLEWords(td, sizeof(td), &cx, tlbSegDir.pTypdescTab.offset);
         for(i=0; i<cTD; )
@@ -3542,6 +3544,7 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
     {
       TLBImpLib *pImpLib, *pImpLibNext;
       TLBCustData *pCustData, *pCustDataNext;
+      int i;
 
       /* remove cache entry */
       if(This->path)
@@ -3588,7 +3591,10 @@ static ULONG WINAPI ITypeLib2_fnRelease( ITypeLib2 *iface)
           TLB_Free(pCustData);
       }
 
-      /* FIXME: free arrays inside elements of This->pTypeDesc */
+      for (i = 0; i < This->ctTypeDesc; i++)
+          if (This->pTypeDesc[i].vt == VT_CARRAY)
+              TLB_Free(This->pTypeDesc[i].u.lpadesc);
+
       TLB_Free(This->pTypeDesc);
 
       for (pImpLib = This->pImpLibs; pImpLib; pImpLib = pImpLibNext)
