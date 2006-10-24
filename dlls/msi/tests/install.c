@@ -766,13 +766,10 @@ static void test_packagecoltypes(void)
     ok(count == 6, "Expected 6, got %d\n", count);
     ok(check_record(rec, 1, "i2"), "wrong column label\n");
     ok(check_record(rec, 2, "i4"), "wrong column label\n");
+    ok(check_record(rec, 3, "L64"), "wrong column label\n");
     ok(check_record(rec, 4, "S255"), "wrong column label\n");
     ok(check_record(rec, 5, "S32"), "wrong column label\n");
     ok(check_record(rec, 6, "S72"), "wrong column label\n");
-    todo_wine
-    {
-        ok(check_record(rec, 3, "L64"), "wrong column label\n");
-    }
 
     MsiCloseHandle(rec);
     MsiCloseHandle(view);
