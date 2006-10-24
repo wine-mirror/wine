@@ -16,7 +16,7 @@
 ; Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
 ;
 
-LanguageNames=(DEU=0x407:winerr)
+LanguageNames=(DEU=0x0007:winerr)
 
 MessageId=0
 SymbolicName=ERROR_SUCCESS
