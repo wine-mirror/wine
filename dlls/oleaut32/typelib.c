@@ -1298,15 +1298,19 @@ static void dump_DispParms(const DISPPARAMS * pdp)
 
     TRACE("args=%u named args=%u\n", pdp->cArgs, pdp->cNamedArgs);
 
-    if (pdp->cNamedArgs)
+    if (pdp->cNamedArgs && pdp->rgdispidNamedArgs)
+    {
         TRACE("named args:\n");
-    for (index = 0; index < pdp->cNamedArgs; index++)
-        TRACE( "\t0x%x\n", pdp->rgdispidNamedArgs[index] );
+        for (index = 0; index < pdp->cNamedArgs; index++)
+            TRACE( "\t0x%x\n", pdp->rgdispidNamedArgs[index] );
+    }
 
-    if (pdp->cArgs)
+    if (pdp->cArgs && pdp->rgvarg)
+    {
         TRACE("args:\n");
-    for (index = 0; index < pdp->cArgs; index++)
-        dump_Variant( &pdp->rgvarg[index] );
+        for (index = 0; index < pdp->cArgs; index++)
+            dump_Variant( &pdp->rgvarg[index] );
+    }
 }
 
 static void dump_TypeInfo(const ITypeInfoImpl * pty)
