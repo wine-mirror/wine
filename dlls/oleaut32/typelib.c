@@ -6788,6 +6788,10 @@ HRESULT WINAPI CreateDispTypeInfo(
     pTypeLibImpl->TypeInfoCount++;
 
     *pptinfo = (ITypeInfo*)pTIClass;
+
+    ITypeInfo_AddRef(*pptinfo);
+    ITypeLib_Release((ITypeLib *)&pTypeLibImpl->lpVtbl);
+
     return S_OK;
 
 }
