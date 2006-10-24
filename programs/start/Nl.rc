@@ -18,9 +18,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
+LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_DUTCH, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE LANGUAGE LANG_DUTCH, SUBLANG_NEUTRAL
 {
 STRING_USAGE,                                   "Start een programma, of open een document met het programma dat normaal voor bestanden met die extensie gebruikt wordt. \n\
 Gebruik: \n\
