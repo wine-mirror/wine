@@ -451,9 +451,9 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
 
         TRACE("Locking directly into the buffer\n");
 
-        if((This->resource.usage & WINED3DUSAGE_WRITEONLY) || ( Flags & D3DLOCK_DISCARD) ) {
+        if((This->resource.usage & WINED3DUSAGE_WRITEONLY) || ( Flags & WINED3DLOCK_DISCARD) ) {
             mode = GL_WRITE_ONLY_ARB;
-        } else if( Flags & (D3DLOCK_READONLY | D3DLOCK_NO_DIRTY_UPDATE) ) {
+        } else if( Flags & (WINED3DLOCK_READONLY | WINED3DLOCK_NO_DIRTY_UPDATE) ) {
             mode = GL_READ_ONLY_ARB;
         }
 

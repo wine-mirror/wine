@@ -541,7 +541,7 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
     {
         if (Src)
         {
-            IWineD3DSurface_LockRect(SrcSurface, &slock, NULL, D3DLOCK_READONLY);
+            IWineD3DSurface_LockRect(SrcSurface, &slock, NULL, WINED3DLOCK_READONLY);
             sfmt = Src->resource.format;
         }
         sEntry = getFormatDescEntry(sfmt);
@@ -1220,7 +1220,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
     }
     else
     {
-        ret = IWineD3DSurface_LockRect(Source, &slock, &lock_src, D3DLOCK_READONLY);
+        ret = IWineD3DSurface_LockRect(Source, &slock, &lock_src, WINED3DLOCK_READONLY);
         if(ret != D3D_OK) goto error;
         ret = IWineD3DSurface_LockRect(iface, &dlock, &lock_dst, 0);
         if(ret != D3D_OK) goto error;
