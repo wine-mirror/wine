@@ -3585,29 +3585,29 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         {
             int newVal = GL_ZERO;
             switch (Value) {
-            case D3DBLEND_ZERO               : newVal = GL_ZERO;  break;
-            case D3DBLEND_ONE                : newVal = GL_ONE;  break;
-            case D3DBLEND_SRCCOLOR           : newVal = GL_SRC_COLOR;  break;
-            case D3DBLEND_INVSRCCOLOR        : newVal = GL_ONE_MINUS_SRC_COLOR;  break;
-            case D3DBLEND_SRCALPHA           : newVal = GL_SRC_ALPHA;  break;
-            case D3DBLEND_INVSRCALPHA        : newVal = GL_ONE_MINUS_SRC_ALPHA;  break;
-            case D3DBLEND_DESTALPHA          : newVal = GL_DST_ALPHA;  break;
-            case D3DBLEND_INVDESTALPHA       : newVal = GL_ONE_MINUS_DST_ALPHA;  break;
-            case D3DBLEND_DESTCOLOR          : newVal = GL_DST_COLOR;  break;
-            case D3DBLEND_INVDESTCOLOR       : newVal = GL_ONE_MINUS_DST_COLOR;  break;
-            case D3DBLEND_SRCALPHASAT        : newVal = GL_SRC_ALPHA_SATURATE;  break;
+            case WINED3DBLEND_ZERO               : newVal = GL_ZERO;  break;
+            case WINED3DBLEND_ONE                : newVal = GL_ONE;  break;
+            case WINED3DBLEND_SRCCOLOR           : newVal = GL_SRC_COLOR;  break;
+            case WINED3DBLEND_INVSRCCOLOR        : newVal = GL_ONE_MINUS_SRC_COLOR;  break;
+            case WINED3DBLEND_SRCALPHA           : newVal = GL_SRC_ALPHA;  break;
+            case WINED3DBLEND_INVSRCALPHA        : newVal = GL_ONE_MINUS_SRC_ALPHA;  break;
+            case WINED3DBLEND_DESTALPHA          : newVal = GL_DST_ALPHA;  break;
+            case WINED3DBLEND_INVDESTALPHA       : newVal = GL_ONE_MINUS_DST_ALPHA;  break;
+            case WINED3DBLEND_DESTCOLOR          : newVal = GL_DST_COLOR;  break;
+            case WINED3DBLEND_INVDESTCOLOR       : newVal = GL_ONE_MINUS_DST_COLOR;  break;
+            case WINED3DBLEND_SRCALPHASAT        : newVal = GL_SRC_ALPHA_SATURATE;  break;
 
-            case D3DBLEND_BOTHSRCALPHA       : newVal = GL_SRC_ALPHA;
+            case WINED3DBLEND_BOTHSRCALPHA       : newVal = GL_SRC_ALPHA;
                 This->srcBlend = newVal;
                 This->dstBlend = newVal;
                 break;
 
-            case D3DBLEND_BOTHINVSRCALPHA    : newVal = GL_ONE_MINUS_SRC_ALPHA;
+            case WINED3DBLEND_BOTHINVSRCALPHA    : newVal = GL_ONE_MINUS_SRC_ALPHA;
                 This->srcBlend = newVal;
                 This->dstBlend = newVal;
                 break;
-            case D3DBLEND_BLENDFACTOR        : newVal = GL_CONSTANT_COLOR;   break;
-            case D3DBLEND_INVBLENDFACTOR     : newVal = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+            case WINED3DBLEND_BLENDFACTOR        : newVal = GL_CONSTANT_COLOR;   break;
+            case WINED3DBLEND_INVBLENDFACTOR     : newVal = GL_ONE_MINUS_CONSTANT_COLOR;  break;
             default:
                 FIXME("Unrecognized src/dest blend value %d (%d)\n", Value, State);
             }

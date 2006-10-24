@@ -851,8 +851,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ZWRITEENABLE,     TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHATESTENABLE,  FALSE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_LASTPIXEL,        TRUE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLEND,         D3DBLEND_ONE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLEND,        D3DBLEND_ZERO);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLEND,         WINED3DBLEND_ONE);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLEND,        WINED3DBLEND_ZERO);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CULLMODE,         D3DCULL_CCW);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ZFUNC,            D3DCMP_LESSEQUAL);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAFUNC,        D3DCMP_ALWAYS);
@@ -973,8 +973,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP14, 0);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP15, 0);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SEPARATEALPHABLENDENABLE, FALSE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLENDALPHA,            D3DBLEND_ONE);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLENDALPHA,           D3DBLEND_ZERO);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLENDALPHA,            WINED3DBLEND_ONE);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLENDALPHA,           WINED3DBLEND_ZERO);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOPALPHA,             D3DBLENDOP_ADD);
 
     /* clipping status */
