@@ -819,7 +819,7 @@ static void start_process( void *arg )
 
         SetLastError( 0 );  /* clear error code */
         if (peb->BeingDebugged) DbgBreakPoint();
-        ExitProcess( entry( peb ) );
+        ExitThread( entry( peb ) );
     }
     __EXCEPT(UnhandledExceptionFilter)
     {
