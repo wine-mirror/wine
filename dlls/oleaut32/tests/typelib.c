@@ -114,6 +114,7 @@ static void test_TypeComp(void)
         "desckind should have been DESCKIND_TYPECOMP instead of %d\n",
         desckind);
     ok(!pTypeInfo, "pTypeInfo should have been set to NULL\n");
+    ITypeComp_Release(bindptr.lptcomp);
 
     /* test getting a function within a TKIND_MODULE */
     ulHash = LHashValOfNameSys(SYS_WIN32, LOCALE_NEUTRAL, wszSavePicture);
