@@ -700,6 +700,181 @@ static void test_ScriptString(void)
     }
 }
 
+void test_ScriptStringXtoCP_CPtoX(HDC hdc)
+{
+/*****************************************************************************************
+ *
+ * This test is for the ScriptStringXtoCP and ScriptStringXtoCP functions.  Due to the
+ * nature of the fonts between Windows and Wine, the test is implemented by generating
+ * values using one one function then checking the output of the second.  In this way
+ * the validity of the functions is established using Windows as a base and confirming
+ * similar behaviour in wine.
+ */
+
+    HRESULT         hr;
+    WCHAR           teststr1[] = {'T', 'e', 's', 't', 'e', '1', '2', ' ', 'a', '\0'};
+    void            *String = (WCHAR *) &teststr1;      /* ScriptStringAnalysis needs void */
+    int             String_len = (sizeof(teststr1)/sizeof(WCHAR))-1;
+    int             Glyphs = String_len * 2 + 16;       /* size of buffer as recommended  */
+    int             Charset = -1;                       /* unicode                        */
+    DWORD           Flags = SSA_GLYPHS;
+    int             ReqWidth = 100;
+    SCRIPT_CONTROL  Control;
+    SCRIPT_STATE    State;
+    SCRIPT_TABDEF   Tabdef;
+    const BYTE      InClass = 0;
+    SCRIPT_STRING_ANALYSIS ssa = NULL;
+
+    int             Ch;                                  /* Character position in string */
+    int             iTrailing;
+    int             Cp;                                  /* Character position in string */
+    int             X;
+    BOOL            fTrailing;
+
+    LOGFONTA        lf;
+    HFONT           zfont;
+
+    lstrcpyA(lf.lfFaceName, "Symbol");
+    lf.lfHeight = 10;
+    lf.lfCharSet = 0;
+    lf.lfItalic = 0;
+    lf.lfEscapement = 0;
+    lf.lfOrientation = 0;
+    lf.lfUnderline = 0;
+    lf.lfStrikeOut = 0;
+    lf.lfWeight = 400;
+    lf.lfWidth = 0;
+    lf.lfPitchAndFamily = 0;
+
+    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
+
+    /* Test with hdc, this should be a valid test
+     * Here we generrate an SCRIPT_STRING_ANALYSIS that will be used as input to the
+     * following character positions to X and X to character position functions.
+     */
+    hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
+                              ReqWidth, &Control, &State, NULL, &Tabdef,
+                              &InClass, &ssa);
+    todo_wine ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
+    todo_wine ok(ssa != NULL, "ScriptStringAnalyse ssa should not be NULL\n");
+    if  (hr == 0)
+    {
+        /*
+         * Loop to generate character positions to provide starting positions for the
+         * ScriptStringCPtoX and ScriptStringXtoCP functions
+         */
+        for (Cp = 0; Cp < String_len; Cp++)
+        {
+            /* The fTrailing flag is used to indicate whether the X being returned is at
+             * the beginning or the end of the character. What happens here is that if
+             * fTrailing indicates the end of the character, ie. FALSE, then ScriptStringXtoCP
+             * returns the beginning of the next character and iTrailing is FALSE.  So for this
+             * loop iTrailing will be FALSE in both cases.
+             */
+            fTrailing = FALSE;
+            hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+            todo_wine ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+            todo_wine ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+            todo_wine ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
+            todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
+                                  iTrailing, X);
+            fTrailing = TRUE;
+            hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+            todo_wine ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+            hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+            todo_wine ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+
+            /*
+             * Check that character position returned by ScriptStringXtoCP in Ch matches the 
+             * one input to ScriptStringCPtoX.  This means that the Cp to X position and back
+             * again works
+             */
+            todo_wine ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
+            todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
+                                   iTrailing, X);
+        }
+
+        /*
+         * This test is to check that if the X position is just inside the trailing edge of the
+         * character then iTrailing will indicate the trailing edge, ie. TRUE
+         */
+        fTrailing = TRUE;
+        Cp = 3;
+        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+        todo_wine ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+        X--;                                /* put X just inside the trailing edge */
+        hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+        todo_wine ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+        todo_wine ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
+        todo_wine ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n", 
+                                  iTrailing, X);
+
+        /*
+         * This test is to check that if the X position is just outside the trailing edge of the
+         * character then iTrailing will indicate the leading edge, ie. FALSE, and Ch will indicate
+         * the next character, ie. Cp + 1 
+         */
+        fTrailing = TRUE;
+        Cp = 3;
+        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+        todo_wine ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+        X++;                                /* put X just outside the trailing edge */
+        hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+        todo_wine ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+        todo_wine ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
+        todo_wine ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
+                                  iTrailing, X);
+
+        /*
+         * This test is to check that if the X position is just outside the leading edge of the
+         * character then iTrailing will indicate the trailing edge, ie. TRUE, and Ch will indicate
+         * the next character down , ie. Cp - 1 
+         */
+        fTrailing = FALSE;
+        Cp = 3;
+        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+        todo_wine ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
+        X--;                                /* put X just outside the leading edge */
+        hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
+        todo_wine ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
+        todo_wine ok(Cp - 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp - 1, Ch, X);
+        todo_wine ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n", 
+                                  iTrailing, X);
+
+        /*
+         * Cleanup the the SSA for the next round of tests
+         */ 
+        hr = ScriptStringFree(&ssa);
+        todo_wine ok(hr == S_OK, "ScriptStringFree should return S_OK not %08x\n", hr);
+
+        /*
+         * Test to see that exceeding the number of chars returns E_INVALIDARG.  First
+         * generate an SSA for the subsequent tests.
+         */
+        hr = ScriptStringAnalyse( hdc, String, String_len, Glyphs, Charset, Flags,
+                                  ReqWidth, &Control, &State, NULL, &Tabdef,
+                                  &InClass, &ssa);
+        todo_wine ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
+
+        /*
+         * When ScriptStringCPtoX is called with a character position Cp that exceeds the 
+         * string length, return E_INVALIDARG.  This also invalidates the ssa so a 
+         * ScriptStringFree should also fail.
+         */
+        fTrailing = FALSE;
+        Cp = String_len + 1; 
+        hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
+        todo_wine ok(hr == E_INVALIDARG, "ScriptStringCPtoX should return E_INVALIDARG not %08x\n", hr);
+
+        hr = ScriptStringFree(&ssa);
+        /*
+         * ScriptStringCPtoX should free ssa, hence ScriptStringFree should fail
+         */
+        todo_wine ok(hr == E_INVALIDARG, "ScriptStringFree should return E_INVALIDARG not %08x\n", hr);
+    }   
+}
+
 void test_ScriptCacheGetHeight(HDC hdc)
 {
     HRESULT hr;
@@ -1078,8 +1253,9 @@ START_TEST(usp10)
     test_ScriptTextOut();
     test_ScriptXtoX();
     test_ScriptString();
-    test_ScriptLayout();
+    test_ScriptStringXtoCP_CPtoX(hdc);
 
+    test_ScriptLayout();
     test_digit_substitution();
 
     ReleaseDC(hwnd, hdc);
