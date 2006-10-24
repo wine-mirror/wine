@@ -77,7 +77,7 @@ static ULONG WINAPI EnumFormatImpl_Release(IEnumFORMATETC *iface)
 
     if(!ref) {
         GlobalFree(This->fmtetc);
-        HeapFree(GetProcessHeap(), 0, This);
+        richedit_free(This);
     }
 
     return ref;
@@ -152,7 +152,7 @@ static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT fmtetc_cnt, IEnumFO
     EnumFormatImpl *ret;
     TRACE("\n");
 
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(EnumFormatImpl));
+    ret = richedit_alloc(sizeof(EnumFormatImpl));
     ret->lpVtbl = &VT_EnumFormatImpl;
     ret->ref = 1;
     ret->cur = 0;
@@ -195,7 +195,7 @@ static ULONG WINAPI DataObjectImpl_Release(IDataObject* iface)
         if(This->unicode) GlobalFree(This->unicode);
         if(This->rtf) GlobalFree(This->rtf);
         if(This->fmtetc) GlobalFree(This->fmtetc);
-        HeapFree(GetProcessHeap(), 0, This);
+        richedit_free(This);
     }
 
     return ref;
@@ -388,7 +388,7 @@ HRESULT ME_GetDataObject(ME_TextEditor *editor, CHARRANGE *lpchrg, LPDATAOBJECT 
     DataObjectImpl *obj;
     TRACE("(%p,%d,%d)\n", editor, lpchrg->cpMin, lpchrg->cpMax);
 
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(DataObjectImpl));
+    obj = richedit_alloc(sizeof(DataObjectImpl));
     if(cfRTF == 0)
         cfRTF = RegisterClipboardFormatA("Rich Text Format");
 

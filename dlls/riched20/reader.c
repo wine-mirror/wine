@@ -86,17 +86,9 @@ static void	RTFPutCodePageChar(RTF_Info *info, int c);
  * Return pointer to block of size bytes, or NULL if there's
  * not enough memory available.
  */
-static inline void *RTFAlloc(int size)
-{
-	return HeapAlloc(me_heap, 0, size);
-}
-
-
-static inline void * RTFReAlloc(void *ptr, int size)
-{
-        return HeapReAlloc(me_heap, 0, ptr, size);
-}
-
+#define RTFAlloc(size) richedit_alloc(size)
+#define RTFReAlloc(ptr, size) richedit_realloc(ptr, size)
+#define RTFFree(ptr) richedit_free(ptr)
 
 /*
  * Saves a string on the heap and returns a pointer to it.
@@ -109,12 +101,6 @@ static inline char *RTFStrSave(char *s)
 	if (p == NULL)
 		return NULL;
 	return lstrcpyA (p, s);
-}
-
-
-static inline void RTFFree(void *p)
-{
-        HeapFree(me_heap, 0, p);
 }
 
 

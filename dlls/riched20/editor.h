@@ -21,9 +21,26 @@
 #include "editstr.h"
 #include "wine/unicode.h"
 
-#define ALLOC_OBJ(type) HeapAlloc(me_heap, 0, sizeof(type))
-#define ALLOC_N_OBJ(type, count) HeapAlloc(me_heap, 0, (count)*sizeof(type))
-#define FREE_OBJ(ptr) HeapFree(me_heap, 0, ptr)
+extern HANDLE me_heap;
+
+static inline void *richedit_alloc( size_t len )
+{
+    return HeapAlloc( me_heap, 0, len );
+}
+
+static inline BOOL richedit_free( void *ptr )
+{
+    return HeapFree( me_heap, 0, ptr );
+}
+
+static inline void *richedit_realloc( void *ptr, size_t len )
+{
+    return HeapReAlloc( me_heap, 0, ptr, len );
+}
+
+#define ALLOC_OBJ(type) richedit_alloc(sizeof(type))
+#define ALLOC_N_OBJ(type, count) richedit_alloc((count)*sizeof(type))
+#define FREE_OBJ(ptr) richedit_free(ptr)
 
 #define RUN_IS_HIDDEN(run) ((run)->style->fmt.dwMask & CFM_HIDDEN \
                              && (run)->style->fmt.dwEffects & CFE_HIDDEN)
@@ -264,7 +281,6 @@ ME_DisplayItem *ME_FindItemAtOffset(ME_TextEditor *editor, ME_DIType nItemType, 
 void ME_StreamInFill(ME_InStream *stream);
 int ME_AutoURLDetect(ME_TextEditor *editor, WCHAR curChar);
 extern int me_debug;
-extern HANDLE me_heap;
 extern void DoWrap(ME_TextEditor *editor);
 
 /* writer.c */

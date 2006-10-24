@@ -1998,7 +1998,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       /* potentially each char may be a CR, why calculate the exact value with O(N) when
         we can just take a bigger buffer? :) */
       int crlfmul = (ex->flags & GT_USECRLF) ? 2 : 1;
-      LPWSTR buffer = HeapAlloc(GetProcessHeap(), 0, (crlfmul*nCount + 1) * sizeof(WCHAR));
+      LPWSTR buffer = richedit_alloc((crlfmul*nCount + 1) * sizeof(WCHAR));
       DWORD buflen = ex->cb;
       LRESULT rc;
       DWORD flags = 0;
@@ -2006,7 +2006,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       buflen = ME_GetTextW(editor, buffer, nStart, nCount, ex->flags & GT_USECRLF);
       rc = WideCharToMultiByte(ex->codepage, flags, buffer, -1, (LPSTR)lParam, ex->cb, ex->lpDefaultChar, ex->lpUsedDefaultChar);
 
-      HeapFree(GetProcessHeap(),0,buffer);
+      richedit_free(buffer);
       return rc;
     }
   }
