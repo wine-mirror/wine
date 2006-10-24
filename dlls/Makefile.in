@@ -10,8 +10,9 @@ VPATH     = @srcdir@
 GLU32FILES = glu32
 GLUT32FILES = glut32
 OPENGLFILES = opengl32 wined3d
+QUARTZFILES = winequartz.drv
 XFILES = winex11.drv
-EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @XFILES@
+EXTRADIRS = @GLU32FILES@ @GLUT32FILES@ @OPENGLFILES@ @QUARTZFILES@ @XFILES@
 
 # Subdir list
 
@@ -277,6 +278,7 @@ SUBDIRS = \
 	glut32 \
 	opengl32 \
 	wined3d \
+	winequartz.drv \
 	winex11.drv
 
 BUILDSUBDIRS   = $(BASEDIRS) $(EXTRADIRS) $(TESTSUBDIRS)

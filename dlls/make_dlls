@@ -35,7 +35,8 @@ my %special_dlls =
   "glut32"   => "GLUT32FILES",
   "opengl32" => "OPENGLFILES",
   "wined3d"  => "OPENGLFILES",
-  "winex11.drv" => "XFILES"
+  "winex11.drv" => "XFILES",
+  "winequartz.drv" => "QUARTZFILES"
 );
 
 sub needs_symlink($)

@@ -146,11 +146,13 @@ AC_SUBST(XFILES,"")
 AC_SUBST(OPENGLFILES,"")
 AC_SUBST(GLU32FILES,"")
 AC_SUBST(OPENGL_LIBS,"")
+AC_SUBST(QUARTZFILES,"")
 
 dnl **** Check for header files ****
 
 AC_CHECK_HEADERS(\
 	AudioUnit/AudioUnit.h \
+	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
@@ -1026,6 +1028,11 @@ case $host_os in
         LDDLLFLAGS="$LDDLLFLAGS -read_only_relocs warning"  dnl FIXME
         ;;
     esac
+    dnl Enable quartz driver on Mac OS X
+    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
+    then
+        QUARTZFILES='$(QUARTZFILES)'
+    fi
     ;;
   *)
     DLLFLAGS="$DLLFLAGS -fPIC"
@@ -1738,6 +1745,7 @@ dlls/wined3d/Makefile
 dlls/winedos/Makefile
 dlls/winemp3.acm/Makefile
 dlls/wineps.drv/Makefile
+dlls/winequartz.drv/Makefile
 dlls/winex11.drv/Makefile
 dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
