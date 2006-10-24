@@ -6721,12 +6721,14 @@ HRESULT WINAPI CreateDispTypeInfo(
         *ppFuncDesc = HeapAlloc(GetProcessHeap(), 0, sizeof(**ppFuncDesc));
         (*ppFuncDesc)->Name = SysAllocString(md->szName);
         (*ppFuncDesc)->funcdesc.memid = md->dispid;
+        (*ppFuncDesc)->funcdesc.lprgscode = NULL;
         (*ppFuncDesc)->funcdesc.funckind = FUNC_VIRTUAL;
         (*ppFuncDesc)->funcdesc.invkind = md->wFlags;
         (*ppFuncDesc)->funcdesc.callconv = md->cc;
         (*ppFuncDesc)->funcdesc.cParams = md->cArgs;
         (*ppFuncDesc)->funcdesc.cParamsOpt = 0;
         (*ppFuncDesc)->funcdesc.oVft = md->iMeth << 2;
+        (*ppFuncDesc)->funcdesc.cScodes = 0;
         (*ppFuncDesc)->funcdesc.wFuncFlags = 0;
         (*ppFuncDesc)->funcdesc.elemdescFunc.tdesc.vt = md->vtReturn;
         (*ppFuncDesc)->funcdesc.elemdescFunc.u.paramdesc.wParamFlags = PARAMFLAG_NONE;
