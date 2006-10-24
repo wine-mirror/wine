@@ -34,35 +34,6 @@ CHAR PROG_FILES_DIR[MAX_PATH];
 
 /* msi database data */
 
-static const CHAR admin_exec_seq_dat[] = "Action\tCondition\tSequence\n"
-                                         "s72\tS255\tI2\n"
-                                         "AdminExecuteSequence\tAction\n"
-                                         "CostFinalize\t\t1000\n"
-                                         "CostInitialize\t\t800\n"
-                                         "FileCost\t\t900\n"
-                                         "InstallAdminPackage\t\t3900\n"
-                                         "InstallFiles\t\t4000\n"
-                                         "InstallFinalize\t\t6600\n"
-                                         "InstallInitialize\t\t1500\n"
-                                         "InstallValidate\t\t1400";
-
-static const CHAR advt_exec_seq_dat[] = "Action\tCondition\tSequence\n"
-                                        "s72\tS255\tI2\n"
-                                        "AdvtExecuteSequence\tAction\n"
-                                        "CostFinalize\t\t1000\n"
-                                        "CostInitialize\t\t800\n"
-                                        "CreateShortcuts\t\t4500\n"
-                                        "InstallFinalize\t\t6600\n"
-                                        "InstallInitialize\t\t1500\n"
-                                        "InstallValidate\t\t1400\n"
-                                        "PublishComponents\t\t6200\n"
-                                        "PublishFeatures\t\t6300\n"
-                                        "PublishProduct\t\t6400\n"
-                                        "RegisterClassInfo\t\t4600\n"
-                                        "RegisterExtensionInfo\t\t4700\n"
-                                        "RegisterMIMEInfo\t\t4900\n"
-                                        "RegisterProgIdInfo\t\t4800";
-
 static const CHAR component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
                                     "s72\tS38\ts72\ti2\tS255\tS72\n"
                                     "Component\tComponent\n"
@@ -187,8 +158,6 @@ typedef struct _msi_table
 
 static const msi_table tables[] =
 {
-    ADD_TABLE(admin_exec_seq),
-    ADD_TABLE(advt_exec_seq),
     ADD_TABLE(component),
     ADD_TABLE(directory),
     ADD_TABLE(feature),
