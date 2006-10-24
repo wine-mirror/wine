@@ -3452,22 +3452,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         break;
 
     case WINED3DRS_ZENABLE                   :
-        switch ((D3DZBUFFERTYPE) Value) {
-        case D3DZB_FALSE:
+        switch ((WINED3DZBUFFERTYPE) Value) {
+        case WINED3DZB_FALSE:
             glDisable(GL_DEPTH_TEST);
             checkGLcall("glDisable GL_DEPTH_TEST");
             break;
-        case D3DZB_TRUE:
+        case WINED3DZB_TRUE:
             glEnable(GL_DEPTH_TEST);
             checkGLcall("glEnable GL_DEPTH_TEST");
             break;
-        case D3DZB_USEW:
+        case WINED3DZB_USEW:
             glEnable(GL_DEPTH_TEST);
             checkGLcall("glEnable GL_DEPTH_TEST");
             FIXME("W buffer is not well handled\n");
             break;
         default:
-            FIXME("Unrecognized D3DZBUFFERTYPE value %d\n", Value);
+            FIXME("Unrecognized WINED3DZBUFFERTYPE value %d\n", Value);
         }
         break;
 

@@ -470,6 +470,14 @@ typedef enum _WINED3DVERTEXBLENDFLAGS {
     WINED3DVBF_0WEIGHTS = 256
 } WINED3DVERTEXBLENDFLAGS;
 
+typedef enum _WINED3DZBUFFERTYPE {
+    WINED3DZB_FALSE                 = 0,
+    WINED3DZB_TRUE                  = 1,
+    WINED3DZB_USEW                  = 2,
+
+    WINED3DZB_FORCE_DWORD           = 0x7fffffff
+} WINED3DZBUFFERTYPE;
+
 typedef struct _WINED3DDISPLAYMODE {
     UINT            Width;
     UINT            Height;

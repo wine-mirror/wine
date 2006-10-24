@@ -839,9 +839,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     TRACE("Render states\n");
     /* Render states: */
     if (ThisDevice->depthStencilBuffer != NULL) {
-       IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       D3DZB_TRUE);
+       IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_TRUE);
     } else {
-       IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       D3DZB_FALSE);
+       IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_FALSE);
     }
     IWineD3DDevice_SetRenderState(device, WINED3DRS_FILLMODE,         D3DFILL_SOLID);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SHADEMODE,        D3DSHADE_GOURAUD);

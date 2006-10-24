@@ -1224,8 +1224,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 glDrawBuffer(GL_BACK);
                 vcheckGLcall("glDrawBuffer");
             }
-            if(myDevice->stateBlock->renderState[WINED3DRS_ZENABLE] == D3DZB_TRUE ||
-               myDevice->stateBlock->renderState[WINED3DRS_ZENABLE] == D3DZB_USEW) glEnable(GL_DEPTH_TEST);
+            if(myDevice->stateBlock->renderState[WINED3DRS_ZENABLE] == WINED3DZB_TRUE ||
+               myDevice->stateBlock->renderState[WINED3DRS_ZENABLE] == WINED3DZB_USEW) glEnable(GL_DEPTH_TEST);
             if (myDevice->stateBlock->renderState[WINED3DRS_ALPHABLENDENABLE]) glEnable(GL_BLEND);
             if (myDevice->stateBlock->renderState[WINED3DRS_FOGENABLE]) glEnable(GL_FOG);
 
