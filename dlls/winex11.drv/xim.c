@@ -456,7 +456,7 @@ err:
 
 XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
 {
-    XFontSet fontSet;
+    XFontSet fontSet = NULL;
     char **list;
     int count;
     XPoint spot = {0};
@@ -485,22 +485,27 @@ XIC X11DRV_CreateIC(XIM xim, Display *display, Window win)
         return xic;
     }
 
-    fontSet = XCreateFontSet(display,
-                      "*", /*FIXME*/
-                      &list, &count, NULL);
 
-    TRACE("ximFontSet = %p\n", fontSet);
-    TRACE("list = %p, count = %d\n", list, count);
-
-    if (list != NULL)
+    if (((ximStyle & (XIMPreeditNothing | XIMPreeditNone)) == 0) ||
+        ((ximStyle & (XIMStatusNothing | XIMStatusNone)) == 0))
     {
-        int i;
+        fontSet = XCreateFontSet(display,
+                          "*", /*FIXME*/
+                          &list, &count, NULL);
 
-        for (i = 0; i < count; ++i)
+        TRACE("ximFontSet = %p\n", fontSet);
+        TRACE("list = %p, count = %d\n", list, count);
+
+        if (list != NULL)
         {
-            TRACE("list[%d] = %s\n", i, list[i]);
+            int i;
+
+            for (i = 0; i < count; ++i)
+            {
+                TRACE("list[%d] = %s\n", i, list[i]);
+            }
+            XFreeStringList(list);
         }
-        XFreeStringList(list);
     }
 
     /* create callbacks */
