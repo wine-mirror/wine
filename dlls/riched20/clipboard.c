@@ -76,7 +76,7 @@ static ULONG WINAPI EnumFormatImpl_Release(IEnumFORMATETC *iface)
     TRACE("(%p) ref=%d\n", This, ref);
 
     if(!ref) {
-        HeapFree(GetProcessHeap(), 0, This->fmtetc);
+        GlobalFree(This->fmtetc);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -157,7 +157,7 @@ static HRESULT EnumFormatImpl_Create(FORMATETC *fmtetc, UINT fmtetc_cnt, IEnumFO
     ret->ref = 1;
     ret->cur = 0;
     ret->fmtetc_cnt = fmtetc_cnt;
-    ret->fmtetc = HeapAlloc(GetProcessHeap(), 0, fmtetc_cnt*sizeof(FORMATETC));
+    ret->fmtetc = GlobalAlloc(GMEM_ZEROINIT, fmtetc_cnt*sizeof(FORMATETC));
     memcpy(ret->fmtetc, fmtetc, fmtetc_cnt*sizeof(FORMATETC));
     *lplpformatetc = (LPENUMFORMATETC)ret;
     return S_OK;
@@ -400,7 +400,7 @@ HRESULT ME_GetDataObject(ME_TextEditor *editor, CHARRANGE *lpchrg, LPDATAOBJECT 
     obj->fmtetc_cnt = 1;
     if(editor->mode & TM_RICHTEXT)
         obj->fmtetc_cnt++;
-    obj->fmtetc = HeapAlloc(GetProcessHeap(), 0, obj->fmtetc_cnt*sizeof(FORMATETC));
+    obj->fmtetc = GlobalAlloc(GMEM_ZEROINIT, obj->fmtetc_cnt*sizeof(FORMATETC));
     InitFormatEtc(obj->fmtetc[0], CF_UNICODETEXT, TYMED_HGLOBAL);
     if(editor->mode & TM_RICHTEXT) {
         obj->rtf = get_rtf_text(editor, lpchrg);
