@@ -942,13 +942,13 @@ HRESULT WINAPI IWineD3DVertexShaderImpl_ExecuteSW(IWineD3DVertexShader* iface, W
                         break;
                     case WINED3DSPR_RASTOUT:
                         switch (reg) {
-                        case D3DSRO_POSITION:
+                        case WINED3DSRO_POSITION:
                             p[i] = &output->oPos;
                             break;
-                        case D3DSRO_FOG:
+                        case WINED3DSRO_FOG:
                             p[i] = &output->oFog;
                             break;
-                        case D3DSRO_POINT_SIZE:
+                        case WINED3DSRO_POINT_SIZE:
                             p[i] = &output->oPts;
                             break;
                         }
