@@ -177,35 +177,6 @@ static const msi_table tables[] =
 #define MEDIA_SIZE          999999999
 #define FOLDER_THRESHOLD    900000
 
-/* The following defintions were copied from dlls/cabinet/cabinet.h
- * because they are undocumented in windows.
- */
-
-/* EXTRACTdest flags */
-#define EXTRACT_FILLFILELIST  0x00000001
-#define EXTRACT_EXTRACTFILES  0x00000002
-
-struct ExtractFileList {
-    LPSTR  filename;
-    struct ExtractFileList *next;
-    BOOL   unknown;  /* always 1L */
-};
-
-/* the first parameter of the function extract */
-typedef struct {
-    long   result1;          /* 0x000 */
-    long   unknown1[3];      /* 0x004 */
-    struct ExtractFileList *filelist; /* 0x010 */
-    long   filecount;        /* 0x014 */
-    long   flags;            /* 0x018 */
-    char   directory[0x104]; /* 0x01c */
-    char   lastfile[0x20c];  /* 0x120 */
-} EXTRACTDEST;
-
-/* cabinet function pointers */
-HMODULE hCabinet;
-static HRESULT (WINAPI *pExtract)(EXTRACTDEST*, LPCSTR);
-
 /* the FCI callbacks */
 
 static void *mem_alloc(ULONG cb)
@@ -416,19 +387,6 @@ static void create_cab_file(const CHAR *name)
 
     res = FCIDestroy(hfci);
     ok(res, "Failed to destroy the cabinet\n");
-}
-
-static BOOL init_function_pointers(void)
-{
-    hCabinet = LoadLibraryA("cabinet.dll");
-    if (!hCabinet)
-        return FALSE;
-
-    pExtract = (void *)GetProcAddress(hCabinet, "Extract");
-    if (!pExtract)
-        return FALSE;
-
-    return TRUE;
 }
 
 static BOOL get_program_files_dir(LPSTR buf)
@@ -749,9 +707,6 @@ static void test_packagecoltypes(void)
 START_TEST(install)
 {
     DWORD len;
-
-    if (!init_function_pointers())
-        return;
 
     GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
     len = lstrlenA(CURR_DIR);
