@@ -614,30 +614,38 @@ static void test_ScriptXtoX(void)
 
 static void test_ScriptString(void)
 {
+/*******************************************************************************************
+ *
+ * This set of tests are for the string functions of uniscribe.  The ScriptStringAnalyse
+ * function allocates memory pointed to by the SCRIPT_STRING_ANALYSIS ssa pointer.  This 
+ * memory if freed by ScriptStringFree.  There needs to be a valid hdc for this this as 
+ * ScriptStrinAnalyse calls ScriptSItemize, ScriptShape and ScriptPlace which require it.
+ *
+ */
+
     HRESULT         hr;
     HWND            hwnd;
     HDC             hdc = 0;
-    WCHAR           teststr[] = {'T', 'e', 's', 't', 'a', '\0'};
-    void            *pString = (WCHAR *) &teststr;
-    int             cString = 5;
-    int             cGlyphs = cString * 2 + 16;
-    int             iCharset = -1;
-    DWORD           dwFlags = SSA_GLYPHS;
-    int             iReqWidth = 100;
-    SCRIPT_CONTROL  psControl;
-    SCRIPT_STATE    psState;
-    const int       piDx[5] = {10, 10, 10, 10, 10};
-    SCRIPT_TABDEF   pTabdef;
-    const BYTE      pbInClass = 0;
-    SCRIPT_STRING_ANALYSIS pssa = NULL;
+    WCHAR           teststr[] = {'T','e','s','t','1',' ','a','2','b','3', '\0'};
+    int             String = (sizeof(teststr)/sizeof(WCHAR))-1;
+    int             Glyphs = String * 2 + 16;
+    int             Charset;
+    DWORD           Flags = SSA_GLYPHS;
+    int             ReqWidth = 100;
+    SCRIPT_CONTROL  Control;
+    SCRIPT_STATE    State;
+    const int       Dx[5] = {10, 10, 10, 10, 10};
+    SCRIPT_TABDEF   Tabdef;
+    const BYTE      InClass = 0;
+    SCRIPT_STRING_ANALYSIS ssa = NULL;
 
-    int             iX = 10; 
-    int             iY = 100;
-    UINT            uOptions = 0; 
-    const RECT      prc = {0, 50, 100, 100}; 
-    int             iMinSel = 0; 
-    int             iMaxSel = 0;
-    BOOL            fDisabled = FALSE;
+    int             X = 10; 
+    int             Y = 100;
+    UINT            Options = 0; 
+    const RECT      rc = {0, 50, 100, 100}; 
+    int             MinSel = 0; 
+    int             MaxSel = 0;
+    BOOL            Disabled = FALSE;
 
     LOGFONTA        lf;
     HFONT           zfont;
@@ -658,31 +666,37 @@ static void test_ScriptString(void)
     lf.lfOrientation = 0;
     lf.lfUnderline = 0;
     lf.lfStrikeOut = 0;
-    lf.lfWeight = 3;
+    lf.lfWeight = 300;
     lf.lfWidth = 10;
 
     zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
  
+    Charset = -1;     /* this flag indicates unicode input */
     /* Test without hdc to get E_INVALIDARG */
-    hr = ScriptStringAnalyse( NULL, pString, cString, cGlyphs, iCharset, dwFlags,
-                             iReqWidth, &psControl, &psState, piDx, &pTabdef,
-                             &pbInClass, &pssa);
+    hr = ScriptStringAnalyse( NULL, teststr, String, Glyphs, Charset, Flags,
+                             ReqWidth, &Control, &State, Dx, &Tabdef,
+                             &InClass, &ssa);
     ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", hr);
 
     /* test with hdc, this should be a valid test  */
-    hr = ScriptStringAnalyse( hdc, pString, cString, cGlyphs, iCharset, dwFlags,
-                              iReqWidth, &psControl, &psState, piDx, &pTabdef,
-                              &pbInClass, &pssa);
-    ok(hr == E_NOTIMPL, "ScriptStringAnalyse Stub should return E_NOTIMPL not %08x\n", hr);
-/*    Commented code it pending new code in ScriptStringAnalysis */
-/*    ok(hr == S_OK, "ScriptStringAnalyse Stub should return S_OK not %08x\n", (unsigned int) hr);*/
-/*    ok(pssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");*/
+    hr = ScriptStringAnalyse( hdc, teststr, String, Glyphs, Charset, Flags,
+                              ReqWidth, &Control, &State, Dx, &Tabdef,
+                              &InClass, &ssa);
+    todo_wine ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
+
+    /* test makes sure that a call with a valid pssa still works */
+    hr = ScriptStringAnalyse( hdc, teststr, String, Glyphs, Charset, Flags,
+                              ReqWidth, &Control, &State, Dx, &Tabdef,
+                              &InClass, &ssa);
+    todo_wine ok(hr == S_OK, "ScriptStringAnalyse should return S_OK not %08x\n", hr);
+    todo_wine ok(ssa != NULL, "ScriptStringAnalyse pssa should not be NULL\n");
+
     if  (hr == 0)
     {
-        hr = ScriptStringOut(pssa, iX, iY, uOptions, &prc, iMinSel, iMaxSel,fDisabled);
-        ok(hr == E_NOTIMPL, "ScriptStringOut Stub should return E_NOTIMPL not %08x\n", hr);
-        hr = ScriptStringFree(&pssa);
-        ok(hr == S_OK, "ScriptStringFree Stub should return S_OK not %08x\n", hr);
+        hr = ScriptStringOut(ssa, X, Y, Options, &rc, MinSel, MaxSel, Disabled);
+        todo_wine ok(hr == S_OK, "ScriptStringOut should return S_OK not %08x\n", hr);
+        hr = ScriptStringFree(&ssa);
+        todo_wine ok(hr == S_OK, "ScriptStringFree should return S_OK not %08x\n", hr);
     }
 }
 
@@ -1060,9 +1074,6 @@ START_TEST(usp10)
     test_ScriptCacheGetHeight(hdc);
     test_ScriptGetGlyphABCWidth(hdc);
 
-    ReleaseDC(hwnd, hdc);
-    DestroyWindow(hwnd);
-
     test_ScriptGetFontProperties();
     test_ScriptTextOut();
     test_ScriptXtoX();
@@ -1070,4 +1081,7 @@ START_TEST(usp10)
     test_ScriptLayout();
 
     test_digit_substitution();
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
 }
