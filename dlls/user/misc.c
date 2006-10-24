@@ -396,6 +396,9 @@ HMONITOR WINAPI MonitorFromRect( LPRECT rect, DWORD flags )
 {
     struct monitor_enum_info info;
 
+    /* make sure the desktop window exists */
+    GetDesktopWindow();
+
     info.rect         = *rect;
     info.max_area     = 0;
     info.min_distance = ~0u;
