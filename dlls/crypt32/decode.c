@@ -1333,7 +1333,7 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValueInternal(DWORD dwCertEncodingType,
         case ASN_UTF8STRING:
             valueType = CERT_RDN_UTF8_STRING;
             bytesNeeded += MultiByteToWideChar(CP_UTF8, 0,
-             (LPSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
+             (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
             break;
         default:
             SetLastError(CRYPT_E_ASN1_BADTAG);
@@ -1394,7 +1394,7 @@ static BOOL WINAPI CRYPT_AsnDecodeNameValueInternal(DWORD dwCertEncodingType,
                     LPWSTR str = (LPWSTR)value->Value.pbData;
 
                     value->Value.cbData = MultiByteToWideChar(CP_UTF8, 0,
-                     (LPSTR)pbEncoded + 1 + lenBytes, dataLen, 
+                     (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, 
                      str, bytesNeeded - sizeof(CERT_NAME_VALUE)) * 2;
                     break;
                 }
@@ -1508,7 +1508,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeNameValueInternal(
         case ASN_UTF8STRING:
             valueType = CERT_RDN_UTF8_STRING;
             bytesNeeded += MultiByteToWideChar(CP_UTF8, 0,
-             (LPSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
+             (LPCSTR)pbEncoded + 1 + lenBytes, dataLen, NULL, 0) * 2;
             break;
         default:
             SetLastError(CRYPT_E_ASN1_BADTAG);
@@ -1561,7 +1561,7 @@ static BOOL WINAPI CRYPT_AsnDecodeUnicodeNameValueInternal(
                     break;
                 case ASN_UTF8STRING:
                     value->Value.cbData = MultiByteToWideChar(CP_UTF8, 0,
-                     (LPSTR)pbEncoded + 1 + lenBytes, dataLen, 
+                     (LPCSTR)pbEncoded + 1 + lenBytes, dataLen,
                      str, bytesNeeded - sizeof(CERT_NAME_VALUE)) * 2;
                     break;
                 }

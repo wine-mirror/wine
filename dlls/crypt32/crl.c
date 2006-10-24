@@ -429,7 +429,7 @@ static BOOL WINAPI CRLContext_SetProperty(void *context, DWORD dwPropId,
         }
         case CERT_DATE_STAMP_PROP_ID:
             ret = ContextPropertyList_SetProperty(properties, dwPropId,
-             (LPBYTE)pvData, sizeof(FILETIME));
+             (const BYTE *)pvData, sizeof(FILETIME));
             break;
         default:
             FIXME("%d: stub\n", dwPropId);

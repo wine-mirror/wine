@@ -600,7 +600,7 @@ static BOOL WINAPI CRYPT_AsnEncodeCRLEntries(DWORD dwCertEncodingType,
 {
     DWORD cCRLEntry = *(const DWORD *)pvStructInfo;
     DWORD bytesNeeded, dataLen, lenBytes, i;
-    const CRL_ENTRY *rgCRLEntry = *(const CRL_ENTRY **)
+    const CRL_ENTRY *rgCRLEntry = *(const CRL_ENTRY *const *)
      ((const BYTE *)pvStructInfo + sizeof(DWORD));
     BOOL ret = TRUE;
 
