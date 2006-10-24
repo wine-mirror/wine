@@ -643,7 +643,6 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
  *           WIN_DestroyThreadWindows
  *
  * Destroy all children of 'wnd' owned by the current thread.
- * Return TRUE if something was done.
  */
 void WIN_DestroyThreadWindows( HWND hwnd )
 {
