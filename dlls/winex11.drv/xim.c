@@ -430,17 +430,20 @@ XIM X11DRV_SetupXIM(Display *display, const char *input_style)
             ximStyleCallback = ximStyle;
         }
 
-        }
+    }
 
     wine_tsx11_unlock();
 
-    LoadImmDll();
-
-    if (pImmCreateContext)
+    if(!hImmDll)
     {
-        root_context = pImmCreateContext();
-        if (pImmAssociateContext)
-            pImmAssociateContext(0,root_context);
+        LoadImmDll();
+
+        if (pImmCreateContext)
+        {
+            root_context = pImmCreateContext();
+            if (pImmAssociateContext)
+                pImmAssociateContext(0,root_context);
+        }
     }
 
     return xim;
