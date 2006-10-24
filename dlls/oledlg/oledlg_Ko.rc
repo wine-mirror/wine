@@ -91,5 +91,5 @@ STRINGTABLE DISCARDABLE
     IDS_PS_NON_OLE                        "당신의 문서에 클립보드의 내용 삽입하기."
     IDS_PS_UNKNOWN_TYPE                   "알수 없는 형식"
     IDS_PS_UNKNOWN_SRC                    "알수 없는 원본"
-    IDS_PS_UNKNOWN_APP                    "이 프로그램은 이것으로 만들어졌습니다"
+    IDS_PS_UNKNOWN_APP                    "이 프로그램은 알 수 없는 프로그램으로 만들어졌습니다"
 }
