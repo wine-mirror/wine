@@ -106,10 +106,9 @@ static int query_screens(void)
         nb_monitors = count;
         for (i = 0; i < nb_monitors; i++)
         {
-#if 1
             /* FIXME: for now, force primary to be the screen that starts at (0,0) origin */
             if (!screens[i].x_org && !screens[i].y_org) primary_monitor = i;
-#endif
+
             monitors[i].cbSize = sizeof( monitors[i] );
             monitors[i].rcMonitor.left   = screens[i].x_org;
             monitors[i].rcMonitor.top    = screens[i].y_org;
@@ -122,6 +121,11 @@ static int query_screens(void)
         }
 
         get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
+
+        for (i = 0; i < nb_monitors; i++)
+            TRACE( "monitor %p: %s%s\n",
+                   index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
+                   (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
     else count = 0;
 
@@ -141,36 +145,11 @@ static inline int query_screens(void)
 void xinerama_init(void)
 {
     MONITORINFOEXW *primary;
-    int i;
 
     wine_tsx11_lock();
 
     SetRect( &virtual_screen_rect, 0, 0, screen_width, screen_height );
 
-#if 0
-    if (root_window != DefaultRootWindow( gdi_display ))
-    {
-        static const WCHAR monitorW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y','%','u',0};
-        nb_monitors = 4;
-        if ((monitors = HeapAlloc( GetProcessHeap(), 0, nb_monitors * sizeof(*monitors) )))
-        {
-            for (i = 0; i < nb_monitors; i++)
-            {
-                monitors[i].cbSize = sizeof( monitors[i] );
-                monitors[i].rcMonitor.left   = (i & 1) ? screen_width / 2 : 0;
-                monitors[i].rcMonitor.top    = (i & 2) ? screen_height / 2 : 0;
-                monitors[i].rcMonitor.right  = monitors[i].rcMonitor.left + screen_width / 2;
-                monitors[i].rcMonitor.bottom = monitors[i].rcMonitor.top + screen_height / 2;
-                monitors[i].rcWork           = monitors[i].rcMonitor;
-                monitors[i].dwFlags          = 0;
-                wsprintfW( monitors[i].szDevice, monitorW, i );
-            }
-            primary_monitor = 3;
-            get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
-        }
-    }
-    else
-#endif
     if (root_window != DefaultRootWindow( gdi_display ) || !query_screens())
     {
         default_monitor.rcWork = default_monitor.rcMonitor = virtual_screen_rect;
@@ -179,21 +158,11 @@ void xinerama_init(void)
     }
 
     primary = get_primary();
-
     /* coordinates (0,0) have to point to the primary monitor origin */
     OffsetRect( &virtual_screen_rect, -primary->rcMonitor.left, -primary->rcMonitor.top );
-    for (i = 0; i < nb_monitors; i++)
-    {
-        OffsetRect( &monitors[i].rcMonitor, virtual_screen_rect.left, virtual_screen_rect.top );
-        OffsetRect( &monitors[i].rcWork, virtual_screen_rect.left, virtual_screen_rect.top );
-        ERR( "monitor %p: %s%s\n",
-               index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
-               (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
-    }
-
     screen_width = primary->rcMonitor.right - primary->rcMonitor.left;
     screen_height = primary->rcMonitor.bottom - primary->rcMonitor.top;
-    ERR( "virtual size: %s primary size: %dx%d\n",
+    TRACE( "virtual size: %s primary size: %dx%d\n",
            wine_dbgstr_rect(&virtual_screen_rect), screen_width, screen_height );
 
     wine_tsx11_unlock();
