@@ -336,25 +336,28 @@ static INT_PTR get_open_info(char *pszName, USHORT *pdate, USHORT *ptime,
     return (INT_PTR)handle;
 }
 
-static void add_file(HFCI hfci, char *file)
+static void add_file(HFCI hfci, const char *file, TCOMP compress)
 {
     char path[MAX_PATH];
+    char filename[MAX_PATH];
     BOOL res;
 
     lstrcpyA(path, CURR_DIR);
     lstrcatA(path, "\\");
     lstrcatA(path, file);
 
-    res = FCIAddFile(hfci, path, file, FALSE, get_next_cabinet, progress,
-                     get_open_info, tcompTYPE_MSZIP);
+    lstrcpyA(filename, file);
+
+    res = FCIAddFile(hfci, path, filename, FALSE, get_next_cabinet, progress,
+                     get_open_info, compress);
     ok(res, "Expected FCIAddFile to succeed\n");
 }
 
-static void set_cab_parameters(PCCAB pCabParams, const CHAR *name)
+static void set_cab_parameters(PCCAB pCabParams, const CHAR *name, DWORD max_size)
 {
     ZeroMemory(pCabParams, sizeof(CCAB));
 
-    pCabParams->cb = MEDIA_SIZE;
+    pCabParams->cb = max_size;
     pCabParams->cbFolderThresh = FOLDER_THRESHOLD;
     pCabParams->setID = 0xbeef;
     lstrcpyA(pCabParams->szCabPath, CURR_DIR);
@@ -362,16 +365,15 @@ static void set_cab_parameters(PCCAB pCabParams, const CHAR *name)
     lstrcpyA(pCabParams->szCab, name);
 }
 
-static void create_cab_file(const CHAR *name)
+static void create_cab_file(const CHAR *name, DWORD max_size, const CHAR *files)
 {
     CCAB cabParams;
+    LPCSTR ptr;
     HFCI hfci;
     ERF erf;
-    static CHAR four_txt[] = "four.txt",
-                five_txt[] = "five.txt";
     BOOL res;
 
-    set_cab_parameters(&cabParams, name);
+    set_cab_parameters(&cabParams, name, max_size);
 
     hfci = FCICreate(&erf, file_placed, mem_alloc, mem_free, fci_open,
                       fci_read, fci_write, fci_close, fci_seek, fci_delete,
@@ -379,8 +381,12 @@ static void create_cab_file(const CHAR *name)
 
     ok(hfci != NULL, "Failed to create an FCI context\n");
 
-    add_file(hfci, four_txt);
-    add_file(hfci, five_txt);
+    ptr = files;
+    while (*ptr)
+    {
+        add_file(hfci, ptr, tcompTYPE_MSZIP);
+        ptr += lstrlen(ptr) + 1;
+    }
 
     res = FCIFlushCabinet(hfci, FALSE, get_next_cabinet, progress);
     ok(res, "Failed to flush the cabinet\n");
@@ -406,15 +412,21 @@ static BOOL get_program_files_dir(LPSTR buf)
     return TRUE;
 }
 
-static void create_file(const CHAR *name)
+static void create_file(const CHAR *name, DWORD size)
 {
     HANDLE file;
-    DWORD written;
+    DWORD written, left;
 
     file = CreateFileA(name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "Failure to open file %s\n", name);
     WriteFile(file, name, strlen(name), &written, NULL);
     WriteFile(file, "\n", strlen("\n"), &written, NULL);
+
+    left = size - lstrlen(name) - 1;
+
+    SetFilePointer(file, left, NULL, FILE_CURRENT);
+    SetEndOfFile(file);
+    
     CloseHandle(file);
 }
 
@@ -423,18 +435,18 @@ static void create_test_files(void)
     get_program_files_dir(PROG_FILES_DIR);
 
     CreateDirectoryA("msitest", NULL);
-    create_file("msitest\\one.txt");
+    create_file("msitest\\one.txt", 100);
     CreateDirectoryA("msitest\\first", NULL);
-    create_file("msitest\\first\\two.txt");
+    create_file("msitest\\first\\two.txt", 100);
     CreateDirectoryA("msitest\\second", NULL);
-    create_file("msitest\\second\\three.txt");
+    create_file("msitest\\second\\three.txt", 100);
 
-    create_file("four.txt");
-    create_file("five.txt");
-    create_cab_file("msitest.cab");
+    create_file("four.txt", 100);
+    create_file("five.txt", 100);
+    create_cab_file("msitest.cab", MEDIA_SIZE, "four.txt\0five.txt\0");
 
-    create_file("msitest\\filename");
-    create_file("msitest\\service.exe");
+    create_file("msitest\\filename", 100);
+    create_file("msitest\\service.exe", 100);
 
     DeleteFileA("four.txt");
     DeleteFileA("five.txt");
