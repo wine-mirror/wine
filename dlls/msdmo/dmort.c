@@ -19,7 +19,6 @@
 #include <stdarg.h>
 
 #define COBJMACROS
-#define COM_NO_WINDOWS_H
 
 #include "windef.h"
 #include "winbase.h"

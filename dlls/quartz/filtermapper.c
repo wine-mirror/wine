@@ -31,7 +31,6 @@
 
 #include "quartz_private.h"
 
-#define COM_NO_WINDOWS_H
 #include "ole2.h"
 #include "olectl.h"
 #include "strmif.h"

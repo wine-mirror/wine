@@ -21,7 +21,6 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #define COBJMACROS
-#define COM_NO_WINDOWS_H
 #include <stdarg.h>
 #include <string.h>
 

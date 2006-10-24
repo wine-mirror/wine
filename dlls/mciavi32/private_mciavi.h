@@ -21,7 +21,6 @@
 #ifndef __WINE_PRIVATE_MCIAVI_H
 #define __WINE_PRIVATE_MCIAVI_H
 
-#define COM_NO_WINDOWS_H
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"

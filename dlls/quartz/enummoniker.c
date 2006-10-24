@@ -22,7 +22,6 @@
  */
 
 #define COBJMACROS
-#define COM_NO_WINDOWS_H
 
 #include "quartz_private.h"
 

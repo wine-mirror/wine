@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#define COM_NO_WINDOWS_H
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"

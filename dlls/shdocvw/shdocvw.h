@@ -22,7 +22,6 @@
 #ifndef __WINE_SHDOCVW_H
 #define __WINE_SHDOCVW_H
 
-#define COM_NO_WINDOWS_H
 #define COBJMACROS
 
 #include <stdarg.h>

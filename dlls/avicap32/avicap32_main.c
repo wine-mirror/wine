@@ -20,8 +20,6 @@
 #include "config.h"
 #include "wine/port.h"
 
-#define COM_NO_WINDOWS_H
-
 #include <stdarg.h>
 #include <stdio.h>
 #include <fcntl.h>

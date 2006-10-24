@@ -19,7 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define COM_NO_WINDOWS_H
 #include "config.h"
 
 #include <X11/Xatom.h>
@@ -650,6 +649,8 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     wine_tsx11_lock();
     XQueryPointer( event->display, win, &w_aux_root, &w_aux_child,
                    &x, &y, &dummy, &dummy, (unsigned int*)&aux_long);
+    x += virtual_screen_rect.left;
+    y += virtual_screen_rect.top;
     wine_tsx11_unlock();
 
     pWnd = WIN_GetPtr(hWnd);
@@ -802,6 +803,8 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
       wine_tsx11_lock();
       XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
                      &x, &y, &u.i, &u.i, &u.u);
+      x += virtual_screen_rect.left;
+      y += virtual_screen_rect.top;
       wine_tsx11_unlock();
 
       drop_len += sizeof(DROPFILES) + 1;

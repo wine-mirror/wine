@@ -30,7 +30,6 @@
  *    When index is missing it works, but index seems to be okay.
  */
 
-#define COM_NO_WINDOWS_H
 #include <assert.h>
 #include <stdarg.h>
 

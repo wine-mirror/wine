@@ -23,7 +23,6 @@
 #include <stdarg.h>
 #endif
 
-#define COM_NO_WINDOWS_H
 #include "windef.h"
 #include "winbase.h"
 #include "mmsystem.h"

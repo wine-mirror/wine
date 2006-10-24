@@ -22,7 +22,6 @@
 #include <stdarg.h>
 
 #include "windef.h"
-#define COM_NO_WINDOWS_H
 #include "initguid.h"
 
 /* GUIDs defined in uuids.lib */
