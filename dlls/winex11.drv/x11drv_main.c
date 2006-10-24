@@ -465,8 +465,8 @@ static void thread_detach(void)
         X11DRV_ResetSelectionOwner();
         CloseHandle( data->display_fd );
         wine_tsx11_lock();
+        if (data->xim) XCloseIM( data->xim );
         XCloseDisplay( data->display );
-        /* if (data->xim) XCloseIM( data->xim ); */ /* crashes Xlib */
         wine_tsx11_unlock();
         HeapFree( GetProcessHeap(), 0, data );
     }
