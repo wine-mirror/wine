@@ -1,5 +1,6 @@
 /*
  * Copyright 2001 Eric Pouech
+ * Copyright 2006 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +21,7 @@ LANGUAGE LANG_FRENCH, SUBLANG_NEUTRAL
 
 STRINGTABLE
 BEGIN
-IDS_EDIT,		"&Editer"
+IDS_EDIT,		"É&dition"
 IDS_DEFAULT,		"Par &défaut"
 IDS_PROPERTIES,		"&Propriétés"
 IDS_MARK,		"&Marquer"
@@ -36,6 +37,20 @@ IDS_DLG_TIT_DEFAULT,    "Configuration par défaut"
 IDS_DLG_TIT_CURRENT,    "Configuration courante"
 IDS_DLG_TIT_ERROR,	"Erreur de configuration"
 IDS_DLG_ERR_SBWINSIZE,	"La taille du tampon écran doit être plus grande que celle de la fenêtre"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole : Impossible d'analyser l'événement\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole : Moteur invalide\n"
+IDS_CMD_INVALID_OPTION     "wineconsole : Option de la ligne de commande non reconnue\n"
+IDS_CMD_ABOUT              "Démarre un programme dans une console Wine\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole : Échec lors du démarrage du programme %s.\n"\
+                           "La commande est invalide.\n"
+
+IDS_USAGE_HEADER           "\nUsage :\n  wineconsole [options] <commande>\n\nOptions :\n"
+IDS_USAGE_BACKEND          "  --backend={user|ncurses}  En choisissant « user » une nouvelle fenêtre sera créée, « ncurses »\n"\
+                           "                            essaiera de convertir le terminal courant en console Wine\n"
+IDS_USAGE_COMMAND          "  <command>                 Le programme Wine à exécuter dans la console\n"
+IDS_USAGE_FOOTER           "\nExemple :\n  wineconsole cmd\nDémarre l'interpréteur de commandes de Wine dans une console Wine\n\n"
+
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
