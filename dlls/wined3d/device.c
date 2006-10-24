@@ -5510,7 +5510,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
     case WINED3DTSS_ADDRESSW              :
 #if 0 /* I'm not sure what D3D does about ADDRESSW appearing twice */
             if (Value < minLookup[WINELOOKUP_WARPPARAM] || Value > maxLookup[WINELOOKUP_WARPPARAM]) {
-                FIXME("Unrecognized or unsupported D3DTADDRESS_* value %d, state %d\n", Value, Type);
+                FIXME("Unrecognized or unsupported WINED3DTADDRESS_* value %d, state %d\n", Value, Type);
 
             } else {
                 GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][Value - minLookup[WINELOOKUP_WARPPARAM]];

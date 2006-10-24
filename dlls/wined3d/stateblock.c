@@ -999,7 +999,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->textureState[i][WINED3DTSS_BUMPENVLSCALE         ] = (DWORD) 0.0;
         This->textureState[i][WINED3DTSS_BUMPENVLOFFSET        ] = (DWORD) 0.0;
         This->textureState[i][WINED3DTSS_TEXTURETRANSFORMFLAGS ] = WINED3DTTFF_DISABLE;
-        This->textureState[i][WINED3DTSS_ADDRESSW              ] = D3DTADDRESS_WRAP;
+        This->textureState[i][WINED3DTSS_ADDRESSW              ] = WINED3DTADDRESS_WRAP;
         This->textureState[i][WINED3DTSS_COLORARG0             ] = D3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_ALPHAARG0             ] = D3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_RESULTARG             ] = D3DTA_CURRENT;
@@ -1008,9 +1008,9 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         /* Sampler states*/
     for (i = 0 ; i <  GL_LIMITS(sampler_stages); i++) {
         TRACE("Setting up default samplers states for sampler %d\n", i);
-        This->samplerState[i][WINED3DSAMP_ADDRESSU         ] = D3DTADDRESS_WRAP;
-        This->samplerState[i][WINED3DSAMP_ADDRESSV         ] = D3DTADDRESS_WRAP;
-        This->samplerState[i][WINED3DSAMP_ADDRESSW         ] = D3DTADDRESS_WRAP;
+        This->samplerState[i][WINED3DSAMP_ADDRESSU         ] = WINED3DTADDRESS_WRAP;
+        This->samplerState[i][WINED3DSAMP_ADDRESSV         ] = WINED3DTADDRESS_WRAP;
+        This->samplerState[i][WINED3DSAMP_ADDRESSW         ] = WINED3DTADDRESS_WRAP;
         This->samplerState[i][WINED3DSAMP_BORDERCOLOR      ] = 0x00;
         This->samplerState[i][WINED3DSAMP_MAGFILTER        ] = WINED3DTEXF_POINT;
         This->samplerState[i][WINED3DSAMP_MINFILTER        ] = WINED3DTEXF_POINT;

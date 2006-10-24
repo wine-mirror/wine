@@ -256,9 +256,9 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         }
         /* Initialise the state of the texture object
         to the openGL defaults, not the directx defaults */
-        This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = D3DTADDRESS_WRAP;
-        This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = D3DTADDRESS_WRAP;
-        This->baseTexture.states[WINED3DTEXSTA_ADDRESSW]      = D3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_ADDRESSU]      = WINED3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_ADDRESSV]      = WINED3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_ADDRESSW]      = WINED3DTADDRESS_WRAP;
         This->baseTexture.states[WINED3DTEXSTA_BORDERCOLOR]   = 0;
         This->baseTexture.states[WINED3DTEXSTA_MAGFILTER]     = WINED3DTEXF_LINEAR;
         This->baseTexture.states[WINED3DTEXSTA_MINFILTER]     = WINED3DTEXF_POINT; /* GL_NEAREST_MIPMAP_LINEAR */
@@ -268,7 +268,7 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
         This->baseTexture.states[WINED3DTEXSTA_SRGBTEXTURE]   = 0;
         This->baseTexture.states[WINED3DTEXSTA_ELEMENTINDEX]  = 0;
         This->baseTexture.states[WINED3DTEXSTA_DMAPOFFSET]    = 0;
-        This->baseTexture.states[WINED3DTEXSTA_TSSADDRESSW]   = D3DTADDRESS_WRAP;
+        This->baseTexture.states[WINED3DTEXSTA_TSSADDRESSW]   = WINED3DTADDRESS_WRAP;
         IWineD3DBaseTexture_SetDirty(iface, TRUE);
         isNewTexture = TRUE;
     }
@@ -358,7 +358,7 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
             case WINED3DSAMP_ADDRESSW: /* fall through */
                 *state = samplerStates[textureObjectSamplerStates[i].state];
                 if (*state < minLookup[WINELOOKUP_WARPPARAM] || *state > maxLookup[WINELOOKUP_WARPPARAM]) {
-                    FIXME("Unrecognized or unsupported D3DTADDRESS_* value %d, state %d\n", *state, textureObjectSamplerStates[i].function);
+                    FIXME("Unrecognized or unsupported WINED3DTADDRESS_* value %d, state %d\n", *state, textureObjectSamplerStates[i].function);
                 } else {
                     GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][*state - minLookup[WINELOOKUP_WARPPARAM]];
                     TRACE("Setting WRAP_R to %d for %x\n", wrapParm, textureDimensions);
