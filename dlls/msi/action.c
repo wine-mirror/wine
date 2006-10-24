@@ -1957,7 +1957,40 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-/* 
+LPWSTR msi_get_disk_file_version( LPCWSTR filename )
+{
+    static const WCHAR name_fmt[] =
+        {'%','u','.','%','u','.','%','u','.','%','u',0};
+    static WCHAR name[] = {'\\',0};
+    VS_FIXEDFILEINFO *lpVer;
+    WCHAR filever[0x100];
+    LPVOID version;
+    DWORD versize;
+    DWORD handle;
+    UINT sz;
+
+    TRACE("%s\n", debugstr_w(filename));
+
+    versize = GetFileVersionInfoSizeW( filename, &handle );
+    if (!versize)
+        return NULL;
+
+    version = msi_alloc( versize );
+    GetFileVersionInfoW( filename, 0, versize, version );
+
+    VerQueryValueW( version, name, (LPVOID*)&lpVer, &sz );
+    msi_free( version );
+
+    sprintfW( filever, name_fmt,
+        HIWORD(lpVer->dwFileVersionMS),
+        LOWORD(lpVer->dwFileVersionMS),
+        HIWORD(lpVer->dwFileVersionLS),
+        LOWORD(lpVer->dwFileVersionLS));
+
+    return strdupW( filever );
+}
+
+/*
  * A lot is done in this function aside from just the costing.
  * The costing needs to be implemented at some point but for now I am going
  * to focus on the directory building
@@ -1980,11 +2013,11 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     MSIFILE *file;
     UINT rc;
     MSIQUERY * view;
-    LPWSTR level;
+    LPWSTR level, file_version;
 
     if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
         return ERROR_SUCCESS;
-    
+
     TRACE("Building Directory properties\n");
 
     rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
@@ -2014,14 +2047,14 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         msi_free(file->TargetPath);
 
         TRACE("file %s is named %s\n",
-               debugstr_w(file->File),debugstr_w(file->FileName));       
+               debugstr_w(file->File), debugstr_w(file->FileName));
 
         file->TargetPath = build_directory_name(2, p, file->FileName);
 
         msi_free(p);
 
         TRACE("file %s resolves to %s\n",
-               debugstr_w(file->File),debugstr_w(file->TargetPath));       
+               debugstr_w(file->File), debugstr_w(file->TargetPath));
 
         if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
@@ -2030,42 +2063,20 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             continue;
         }
 
-        if (file->Version)
+        if (file->Version &&
+            (file_version = msi_get_disk_file_version( file->TargetPath )))
         {
-            DWORD handle;
-            DWORD versize;
-            UINT sz;
-            LPVOID version;
-            static WCHAR name[] = {'\\',0};
-            static const WCHAR name_fmt[] = 
-                {'%','u','.','%','u','.','%','u','.','%','u',0};
-            WCHAR filever[0x100];
-            VS_FIXEDFILEINFO *lpVer;
-
-            TRACE("Version comparison..\n");
-            versize = GetFileVersionInfoSizeW(file->TargetPath,&handle);
-            version = msi_alloc(versize);
-            GetFileVersionInfoW(file->TargetPath, 0, versize, version);
-
-            VerQueryValueW(version, name, (LPVOID*)&lpVer, &sz);
-
-            sprintfW(filever,name_fmt,
-                HIWORD(lpVer->dwFileVersionMS),
-                LOWORD(lpVer->dwFileVersionMS),
-                HIWORD(lpVer->dwFileVersionLS),
-                LOWORD(lpVer->dwFileVersionLS));
-
             TRACE("new %s old %s\n", debugstr_w(file->Version),
-                  debugstr_w(filever));
-            if (strcmpiW(filever,file->Version)<0)
+                  debugstr_w(file_version));
+            /* FIXME: seems like a bad way to compare version numbers */
+            if (lstrcmpiW(file_version, file->Version)<0)
             {
                 file->state = msifs_overwrite;
-                /* FIXME: cost should be diff in size */
                 comp->Cost += file->FileSize;
             }
             else
                 file->state = msifs_present;
-            msi_free(version);
+            msi_free( file_version );
         }
         else
             file->state = msifs_present;
