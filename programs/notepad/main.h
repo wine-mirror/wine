@@ -45,11 +45,6 @@ typedef struct
   WCHAR   szHeader[MAX_PATH];
   WCHAR   szFooter[MAX_PATH];
 
-  INT     iWindowPosX;
-  INT     iWindowPosY;
-  INT     iWindowPosDX;
-  INT     iWindowPosDY;
-
   FINDREPLACE find;
   FINDREPLACE lastFind;
   HGLOBAL hDevMode; /* printer mode */
