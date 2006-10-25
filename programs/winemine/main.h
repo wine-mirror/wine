@@ -136,7 +136,7 @@ void CreateBoard( BOARD *p_board );
 
 void CreateBoxes( BOARD *p_board );
 
-void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg );
+void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg );
 
 void TestMines( BOARD *p_board, POINT pt, int msg );
 

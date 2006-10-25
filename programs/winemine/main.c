@@ -134,7 +134,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         WINE_TRACE("WM_LBUTTONDOWN\n");
         if( wParam & MK_RBUTTON )
             msg = WM_MBUTTONDOWN;
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam), msg );
         SetCapture( hWnd );
         return 0;
 
@@ -142,7 +142,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
         WINE_TRACE("WM_LBUTTONUP\n");
         if( wParam & MK_RBUTTON )
             msg = WM_MBUTTONUP;
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam), msg );
         ReleaseCapture();
         return 0;
 
@@ -153,24 +153,24 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             board.press.y = 0;
             msg = WM_MBUTTONDOWN;
         }
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam), msg );
         return 0;
 
     case WM_RBUTTONUP:
         WINE_TRACE("WM_RBUTTONUP\n");
         if( wParam & MK_LBUTTON )
             msg = WM_MBUTTONUP;
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam), msg );
         return 0;
 
     case WM_MBUTTONDOWN:
         WINE_TRACE("WM_MBUTTONDOWN\n");
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam), msg );
         return 0;
 
     case WM_MBUTTONUP:
         WINE_TRACE("WM_MBUTTONUP\n");
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam), msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam), msg );
         return 0;
 
     case WM_MOUSEMOVE:
@@ -185,7 +185,7 @@ LRESULT WINAPI MainProc( HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         }
 
-        TestBoard( hWnd, &board, LOWORD(lParam), HIWORD(lParam),  msg );
+        TestBoard( hWnd, &board, (short)LOWORD(lParam), (short)HIWORD(lParam),  msg );
 
         return 0;
     }
@@ -755,7 +755,7 @@ void DrawBoard( HDC hdc, HDC hMemDC, PAINTSTRUCT *ps, BOARD *p_board )
 }
 
 
-void TestBoard( HWND hWnd, BOARD *p_board, unsigned x, unsigned y, int msg )
+void TestBoard( HWND hWnd, BOARD *p_board, int x, int y, int msg )
 {
     POINT pt;
     unsigned col,row;
