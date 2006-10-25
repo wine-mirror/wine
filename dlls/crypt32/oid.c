@@ -253,8 +253,11 @@ BOOL WINAPI CryptInstallOIDFunctionAddress(HMODULE hModule,
                 func->encoding = dwEncodingType;
                 if (HIWORD(rgFuncEntry[i].pszOID))
                 {
-                    func->entry.pszOID = (LPSTR)((LPBYTE)func + sizeof(*func));
-                    strcpy((LPSTR)func->entry.pszOID, rgFuncEntry[i].pszOID);
+                    LPSTR oid;
+
+                    oid = (LPSTR)((LPBYTE)func + sizeof(*func));
+                    strcpy(oid, rgFuncEntry[i].pszOID);
+                    func->entry.pszOID = oid;
                 }
                 else
                     func->entry.pszOID = rgFuncEntry[i].pszOID;
