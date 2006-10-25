@@ -1771,7 +1771,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
                               INT x, INT y, INT xanchor, INT yanchor )
 {
     POPUPMENU *menu;
-    UINT width, height;
+    INT width, height;
     POINT pt;
     HMONITOR monitor;
     MONITORINFO info;

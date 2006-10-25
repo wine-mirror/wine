@@ -1703,8 +1703,8 @@ static void COMBO_LButtonDown( LPHEADCOMBO lphc, LPARAM lParam )
    BOOL      bButton;
    HWND      hWnd = lphc->self;
 
-   pt.x = LOWORD(lParam);
-   pt.y = HIWORD(lParam);
+   pt.x = (short)LOWORD(lParam);
+   pt.y = (short)HIWORD(lParam);
    bButton = PtInRect(&lphc->buttonRect, pt);
 
    if( (CB_GETTYPE(lphc) == CBS_DROPDOWNLIST) ||
@@ -1780,8 +1780,8 @@ static void COMBO_MouseMove( LPHEADCOMBO lphc, WPARAM wParam, LPARAM lParam )
    POINT  pt;
    RECT   lbRect;
 
-   pt.x = LOWORD(lParam);
-   pt.y = HIWORD(lParam);
+   pt.x = (short)LOWORD(lParam);
+   pt.y = (short)HIWORD(lParam);
 
    if( lphc->wState & CBF_BUTTONDOWN )
    {

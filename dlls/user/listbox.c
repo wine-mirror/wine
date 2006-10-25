@@ -2732,8 +2732,8 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
             POINT pt;
             RECT rect;
 
-	    pt.x = LOWORD(lParam);
-	    pt.y = HIWORD(lParam);
+	    pt.x = (short)LOWORD(lParam);
+	    pt.y = (short)HIWORD(lParam);
 	    rect.left = 0;
 	    rect.top = 0;
 	    rect.right = descr->width;

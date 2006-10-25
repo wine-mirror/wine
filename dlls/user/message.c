@@ -2785,8 +2785,8 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     }
 
     thread_info->GetMessageTimeVal = msg.time;
-    msg.pt.x = LOWORD( thread_info->GetMessagePosVal );
-    msg.pt.y = HIWORD( thread_info->GetMessagePosVal );
+    msg.pt.x = (short)LOWORD( thread_info->GetMessagePosVal );
+    msg.pt.y = (short)HIWORD( thread_info->GetMessagePosVal );
 
     HOOK_CallHooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)&msg, TRUE );
 

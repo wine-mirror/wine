@@ -3023,8 +3023,8 @@ BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
             if( msg.message == WM_MOUSEMOVE )
             {
                 POINT tmp;
-                tmp.x = LOWORD(msg.lParam);
-                tmp.y = HIWORD(msg.lParam);
+                tmp.x = (short)LOWORD(msg.lParam);
+                tmp.y = (short)HIWORD(msg.lParam);
                 if( !PtInRect( &rect, tmp ))
                 {
                     ReleaseCapture();
