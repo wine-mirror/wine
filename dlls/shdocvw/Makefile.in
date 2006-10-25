@@ -24,6 +24,7 @@ C_SRCS = \
 	regsvr.c \
 	shdocvw_main.c \
 	shlinstobj.c \
+	urlhist.c \
 	view.c \
 	webbrowser.c
 

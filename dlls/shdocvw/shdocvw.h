@@ -196,6 +196,8 @@ HRESULT navigate_url(DocHost*,BSTR,VARIANT*,VARIANT*,VARIANT*,VARIANT*);
 HRESULT InternetExplorer_Create(IUnknown*,REFIID,void**);
 void InternetExplorer_WebBrowser_Init(InternetExplorer*);
 
+HRESULT CUrlHistory_Create(IUnknown*,REFIID,void**);
+
 #define WB_WM_NAVIGATE2 (WM_USER+100)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
