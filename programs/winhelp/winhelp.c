@@ -1111,8 +1111,8 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
             HLPFILE*            hlpfile;
             HLPFILE_WINDOWINFO* wi;
 
-            mouse.x = LOWORD(lParam);
-            mouse.y = HIWORD(lParam);
+            mouse.x = (short)LOWORD(lParam);
+            mouse.y = (short)HIWORD(lParam);
 
             if (part->link) switch (part->link->cookie)
             {
