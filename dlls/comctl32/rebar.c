@@ -3933,8 +3933,8 @@ REBAR_LButtonDown (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     UINT htFlags;
     INT iHitBand;
     POINT ptMouseDown;
-    ptMouseDown.x = (INT)LOWORD(lParam);
-    ptMouseDown.y = (INT)HIWORD(lParam);
+    ptMouseDown.x = (short)LOWORD(lParam);
+    ptMouseDown.y = (short)HIWORD(lParam);
 
     REBAR_InternalHitTest(infoPtr, &ptMouseDown, &htFlags, &iHitBand);
     lpBand = &infoPtr->bands[iHitBand];

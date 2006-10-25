@@ -1794,8 +1794,8 @@ TOOLTIPS_RelayEvent (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	    break;
 
 	case WM_MOUSEMOVE:
-	    pt.x = LOWORD(lpMsg->lParam);
-	    pt.y = HIWORD(lpMsg->lParam);
+	    pt.x = (short)LOWORD(lpMsg->lParam);
+	    pt.y = (short)HIWORD(lpMsg->lParam);
 	    nOldTool = infoPtr->nTool;
 	    infoPtr->nTool = TOOLTIPS_GetToolFromPoint(infoPtr, lpMsg->hwnd,
 						       &pt);

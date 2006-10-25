@@ -1887,8 +1887,8 @@ TOOLBAR_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
     msg.wParam = wParam;
     msg.lParam = lParam;
     msg.time = GetMessageTime ();
-    msg.pt.x = LOWORD(GetMessagePos ());
-    msg.pt.y = HIWORD(GetMessagePos ());
+    msg.pt.x = (short)LOWORD(GetMessagePos ());
+    msg.pt.y = (short)HIWORD(GetMessagePos ());
 
     SendMessageW (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
 }
@@ -4601,7 +4601,7 @@ static LRESULT
 TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
-    INT cx = LOWORD(lParam), cy = HIWORD(lParam);
+    INT cx = (short)LOWORD(lParam), cy = (short)HIWORD(lParam);
 
     if ((cx < 0) || (cy < 0))
     {
@@ -4634,16 +4634,16 @@ TOOLBAR_SetButtonWidth (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
     /* if setting to current values, ignore */
-    if ((infoPtr->cxMin == (INT)LOWORD(lParam)) &&
-	(infoPtr->cxMax == (INT)HIWORD(lParam))) {
+    if ((infoPtr->cxMin == (short)LOWORD(lParam)) &&
+	(infoPtr->cxMax == (short)HIWORD(lParam))) {
 	TRACE("matches current width, min=%d, max=%d, no recalc\n",
 	      infoPtr->cxMin, infoPtr->cxMax);
 	return TRUE;
     }
 
     /* save new values */
-    infoPtr->cxMin = (INT)LOWORD(lParam);
-    infoPtr->cxMax = (INT)HIWORD(lParam);
+    infoPtr->cxMin = (short)LOWORD(lParam);
+    infoPtr->cxMax = (short)HIWORD(lParam);
 
     /* otherwise we need to recalc the toolbar and in some cases
        recalc the bounding rectangle (does DrawText w/ DT_CALCRECT
@@ -5598,8 +5598,8 @@ TOOLBAR_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
     POINT pt;
     INT   nHit;
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
     if (nHit >= 0)
@@ -5633,8 +5633,8 @@ TOOLBAR_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, hwnd,
 			    WM_LBUTTONDOWN, wParam, lParam);
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
     btnPtr = &infoPtr->buttons[nHit];
@@ -5769,8 +5769,8 @@ TOOLBAR_LButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, hwnd,
 			    WM_LBUTTONUP, wParam, lParam);
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 
     if (!infoPtr->bAnchor || (nHit >= 0))
@@ -5922,8 +5922,8 @@ TOOLBAR_RButtonUp( HWND hwnd, WPARAM wParam, LPARAM lParam)
     NMMOUSE nmmouse;
     POINT pt;
 
-    pt.x = LOWORD(lParam);
-    pt.y = HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     nHit = TOOLBAR_InternalHitTest(hwnd, &pt);
     nmmouse.dwHitInfo = nHit;
@@ -6059,8 +6059,8 @@ TOOLBAR_MouseMove (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_RelayEvent (infoPtr->hwndToolTip, hwnd,
 			    WM_MOUSEMOVE, wParam, lParam);
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     nHit = TOOLBAR_InternalHitTest (hwnd, &pt);
 

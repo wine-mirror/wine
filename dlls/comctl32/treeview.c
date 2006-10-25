@@ -5203,8 +5203,8 @@ TREEVIEW_MouseMove (TREEVIEW_INFO * infoPtr, WPARAM wParam, LPARAM lParam)
         _TrackMouseEvent(&trackinfo);
     }
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     item = TREEVIEW_HitTestPoint(infoPtr, pt);
 

@@ -367,8 +367,8 @@ STATUSBAR_Relay2Tip (STATUS_INFO *infoPtr, UINT uMsg,
     msg.wParam = wParam;
     msg.lParam = lParam;
     msg.time = GetMessageTime ();
-    msg.pt.x = LOWORD(GetMessagePos ());
-    msg.pt.y = HIWORD(GetMessagePos ());
+    msg.pt.x = (short)LOWORD(GetMessagePos ());
+    msg.pt.y = (short)HIWORD(GetMessagePos ());
 
     return SendMessageW (infoPtr->hwndToolTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
 }
@@ -1330,8 +1330,8 @@ StatusWindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	    return STATUSBAR_Relay2Tip (infoPtr, msg, wParam, lParam);
 
 	case WM_NCHITTEST:
-	    res = STATUSBAR_WMNCHitTest(infoPtr, (INT)LOWORD(lParam),
-			                (INT)HIWORD(lParam));
+	    res = STATUSBAR_WMNCHitTest(infoPtr, (short)LOWORD(lParam),
+                                        (short)HIWORD(lParam));
 	    if (res != HTERROR) return res;
 	    return DefWindowProcW (hwnd, msg, wParam, lParam);
 

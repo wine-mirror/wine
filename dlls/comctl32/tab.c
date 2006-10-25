@@ -193,8 +193,8 @@ TAB_RelayEvent (HWND hwndTip, HWND hwndMsg, UINT uMsg,
     msg.wParam = wParam;
     msg.lParam = lParam;
     msg.time = GetMessageTime ();
-    msg.pt.x = LOWORD(GetMessagePos ());
-    msg.pt.y = HIWORD(GetMessagePos ());
+    msg.pt.x = (short)LOWORD(GetMessagePos ());
+    msg.pt.y = (short)HIWORD(GetMessagePos ());
 
     SendMessageW (hwndTip, TTM_RELAYEVENT, 0, (LPARAM)&msg);
 }
@@ -589,8 +589,8 @@ TAB_NCHitTest (TAB_INFO *infoPtr, LPARAM lParam)
   POINT pt;
   UINT dummyflag;
 
-  pt.x = LOWORD(lParam);
-  pt.y = HIWORD(lParam);
+  pt.x = (short)LOWORD(lParam);
+  pt.y = (short)HIWORD(lParam);
   ScreenToClient(infoPtr->hwnd, &pt);
 
   if (TAB_InternalHitTest(infoPtr, pt, &dummyflag) == -1)
@@ -618,8 +618,8 @@ TAB_LButtonDown (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TAB_RelayEvent (infoPtr->hwndToolTip, infoPtr->hwnd,
 		    WM_LBUTTONDOWN, wParam, lParam);
 
-  pt.x = (INT)LOWORD(lParam);
-  pt.y = (INT)HIWORD(lParam);
+  pt.x = (short)LOWORD(lParam);
+  pt.y = (short)HIWORD(lParam);
 
   newItem = TAB_InternalHitTest (infoPtr, pt, &dummy);
 
@@ -790,8 +790,8 @@ TAB_RecalcHotTrack
     }
     else
     {
-      pt.x = LOWORD(*pos);
-      pt.y = HIWORD(*pos);
+      pt.x = (short)LOWORD(*pos);
+      pt.y = (short)HIWORD(*pos);
     }
 
     item = TAB_InternalHitTest(infoPtr, pt, &flags);

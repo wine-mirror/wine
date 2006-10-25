@@ -1555,8 +1555,8 @@ HEADER_LButtonDblClk (HWND hwnd, WPARAM wParam, LPARAM lParam)
     UINT  flags;
     INT   nItem;
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if ((GetWindowLongW (hwnd, GWL_STYLE) & HDS_BUTTONS) && (flags == HHT_ONHEADER))
@@ -1578,8 +1578,8 @@ HEADER_LButtonDown (HWND hwnd, WPARAM wParam, LPARAM lParam)
     INT   nItem;
     HDC   hdc;
 
-    pt.x = (INT)LOWORD(lParam);
-    pt.y = (INT)HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
     HEADER_InternalHitTest (hwnd, &pt, &flags, &nItem);
 
     if ((dwStyle & HDS_BUTTONS) && (flags == HHT_ONHEADER)) {
@@ -1905,8 +1905,8 @@ HEADER_RButtonUp (HWND hwnd, WPARAM wParam, LPARAM lParam)
     BOOL bRet;
     POINT pt;
 
-    pt.x = LOWORD(lParam);
-    pt.y = HIWORD(lParam);
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     /* Send a Notify message */
     bRet = HEADER_SendSimpleNotify (hwnd, NM_RCLICK);
