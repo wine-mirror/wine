@@ -477,6 +477,7 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     /* Arithmetic */ 
     {WINED3DSIO_NOP,  "nop",  "NOP", 0, 0, vshader_nop,  vshader_hw_map2gl, NULL, 0, 0},
     {WINED3DSIO_MOV,  "mov",  "MOV", 1, 2, vshader_mov,  vshader_hw_map2gl, shader_glsl_mov, 0, 0},
+    {WINED3DSIO_MOVA, "mova",  NULL, 1, 2, vshader_mova, vshader_hw_map2gl, shader_glsl_mov, WINED3DVS_VERSION(2,0), -1},
     {WINED3DSIO_ADD,  "add",  "ADD", 1, 3, vshader_add,  vshader_hw_map2gl, shader_glsl_arith, 0, 0},
     {WINED3DSIO_SUB,  "sub",  "SUB", 1, 3, vshader_sub,  vshader_hw_map2gl, shader_glsl_arith, 0, 0},
     {WINED3DSIO_MAD,  "mad",  "MAD", 1, 4, vshader_mad,  vshader_hw_map2gl, shader_glsl_mad, 0, 0},
@@ -550,7 +551,6 @@ CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
     {WINED3DSIO_ENDLOOP,  "endloop",  NULL, 0, 0, vshader_endloop, NULL, shader_glsl_end,    WINED3DVS_VERSION(2,0), -1},
     {WINED3DSIO_LABEL,    "label",    NULL, 0, 1, vshader_label,   NULL, shader_glsl_label,  WINED3DVS_VERSION(2,0), -1},
 
-    {WINED3DSIO_MOVA,     "mova",     GLNAME_REQUIRE_GLSL, 1, 2, vshader_mova,    NULL, shader_glsl_mov, 0, 0},
     {WINED3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL, 1, 3, vshader_setp,    NULL, NULL, 0, 0},
     {WINED3DSIO_TEXLDL,   "texdl",    GLNAME_REQUIRE_GLSL, 1, 2, vshader_texldl,  NULL, NULL, 0, 0},
     {0,               NULL,       NULL,   0, 0, NULL,            NULL, 0, 0}

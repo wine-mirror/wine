@@ -896,7 +896,7 @@ void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
     char tmpLine[256];
     unsigned int i;
 
-    if (curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == WINED3DSPR_ADDR)
+    if ((curOpcode->opcode == WINED3DSIO_MOV && dst_regtype == WINED3DSPR_ADDR) || curOpcode->opcode == WINED3DSIO_MOVA)
         strcpy(tmpLine, "ARL");
     else
         strcpy(tmpLine, curOpcode->glname);
