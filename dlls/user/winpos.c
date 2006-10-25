@@ -808,11 +808,11 @@ void WINPOS_GetMinMaxInfo( HWND hwnd, POINT *maxSize, POINT *maxPos,
         mon_info.cbSize = sizeof(mon_info);
         GetMonitorInfoW( monitor, &mon_info );
 
-        if (MinMax.ptMaxSize.x == GetSystemMetrics(SM_CXSCREEN) &&
-            MinMax.ptMaxSize.y == GetSystemMetrics(SM_CYSCREEN))
+        if (MinMax.ptMaxSize.x == GetSystemMetrics(SM_CXSCREEN) + 2 * xinc &&
+            MinMax.ptMaxSize.y == GetSystemMetrics(SM_CYSCREEN) + 2 * yinc)
         {
-            MinMax.ptMaxSize.x = mon_info.rcWork.right - mon_info.rcWork.left;
-            MinMax.ptMaxSize.y = mon_info.rcWork.bottom - mon_info.rcWork.top;
+            MinMax.ptMaxSize.x = (mon_info.rcWork.right - mon_info.rcWork.left) + 2 * xinc;
+            MinMax.ptMaxSize.y = (mon_info.rcWork.bottom - mon_info.rcWork.top) + 2 * yinc;
         }
         if (MinMax.ptMaxPosition.x == -xinc && MinMax.ptMaxPosition.y == -yinc)
         {
