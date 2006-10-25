@@ -132,7 +132,10 @@ static void SB_OnLButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 static void SB_OnLButtonUp(HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
-    POINTS pt = MAKEPOINTS(lParam);
+    POINT pt;
+
+    pt.x = (short)LOWORD(lParam);
+    pt.y = (short)HIWORD(lParam);
 
     /* update the window sizes */
     pHHInfo->pHHWinType->iNavWidth += pt.x;
