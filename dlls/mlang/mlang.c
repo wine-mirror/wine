@@ -1281,8 +1281,10 @@ static HRESULT WINAPI fnIMLangFontLink_GetStrCodePages(
         DWORD* pdwCodePages,
         long* pcchCodePages)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    FIXME("(pszSrc=%s, cchSrc=%ld, dwPriorityCodePages=%d) stub\n", debugstr_w(pszSrc), cchSrc, dwPriorityCodePages);
+    *pdwCodePages = 0;
+    *pcchCodePages = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI fnIMLangFontLink_CodePageToCodePages(
