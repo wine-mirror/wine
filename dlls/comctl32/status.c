@@ -992,7 +992,7 @@ STATUSBAR_WMCreate (HWND hwnd, LPCREATESTRUCTA lpCreate)
 
     if (dwStyle & SBT_TOOLTIPS) {
 	infoPtr->hwndToolTip =
-	    CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, 0,
+	    CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, WS_POPUP | TTS_ALWAYSTIP,
 			     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
 			     CW_USEDEFAULT, hwnd, 0,
 			     (HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE), NULL);
