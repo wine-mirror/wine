@@ -68,6 +68,7 @@
 
 #include "rpc_binding.h"
 #include "rpc_message.h"
+#include "rpc_server.h"
 #include "epm_towers.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
@@ -380,6 +381,117 @@ static RPC_STATUS rpcrt4_ncacn_np_parse_top_of_tower(const unsigned char *tower_
     }
 
     return RPC_S_OK;
+}
+
+typedef struct _RpcServerProtseq_np
+{
+    RpcServerProtseq common;
+    HANDLE mgr_event;
+} RpcServerProtseq_np;
+
+static RpcServerProtseq *rpcrt4_protseq_np_alloc(void)
+{
+    RpcServerProtseq_np *ps = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps));
+    if (ps)
+        ps->mgr_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    return &ps->common;
+}
+
+static void rpcrt4_protseq_np_signal_state_changed(RpcServerProtseq *protseq)
+{
+    RpcServerProtseq_np *npps = CONTAINING_RECORD(protseq, RpcServerProtseq_np, common);
+    SetEvent(npps->mgr_event);
+}
+
+static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *prev_array, unsigned int *count)
+{
+    HANDLE *objs = prev_array;
+    RpcConnection* conn;
+    RpcServerProtseq_np *npps = CONTAINING_RECORD(protseq, RpcServerProtseq_np, common);
+    
+    EnterCriticalSection(&protseq->cs);
+    
+    /* open and count connections */
+    *count = 1;
+    conn = protseq->conn;
+    while (conn) {
+        RPCRT4_OpenConnection(conn);
+        if (rpcrt4_conn_get_wait_object(conn))
+            (*count)++;
+        conn = conn->Next;
+    }
+    
+    /* make array of connections */
+    if (objs)
+        objs = HeapReAlloc(GetProcessHeap(), 0, objs, *count*sizeof(HANDLE));
+    else
+        objs = HeapAlloc(GetProcessHeap(), 0, *count*sizeof(HANDLE));
+    if (!objs)
+    {
+        ERR("couldn't allocate objs\n");
+        LeaveCriticalSection(&protseq->cs);
+        return NULL;
+    }
+    
+    objs[0] = npps->mgr_event;
+    *count = 1;
+    conn = protseq->conn;
+    while (conn) {
+        if ((objs[*count] = rpcrt4_conn_get_wait_object(conn)))
+            (*count)++;
+        conn = conn->Next;
+    }
+    LeaveCriticalSection(&protseq->cs);
+    return objs;
+}
+
+static void rpcrt4_protseq_np_free_wait_array(RpcServerProtseq *protseq, void *array)
+{
+    HeapFree(GetProcessHeap(), 0, array);
+}
+
+static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, unsigned int count, void *wait_array)
+{
+    HANDLE b_handle;
+    HANDLE *objs = wait_array;
+    DWORD res;
+    RpcConnection* cconn;
+    RpcConnection* conn;
+    
+    if (!objs)
+        return -1;
+    
+    res = WaitForMultipleObjects(count, objs, FALSE, INFINITE);
+    if (res == WAIT_OBJECT_0)
+        return 0;
+    else if (res == WAIT_FAILED)
+    {
+        ERR("wait failed with error %ld\n", GetLastError());
+        return -1;
+    }
+    else
+    {
+        b_handle = objs[res - WAIT_OBJECT_0];
+        /* find which connection got a RPC */
+        EnterCriticalSection(&protseq->cs);
+        conn = protseq->conn;
+        while (conn) {
+            if (b_handle == rpcrt4_conn_get_wait_object(conn)) break;
+            conn = conn->Next;
+        }
+        cconn = NULL;
+        if (conn)
+            RPCRT4_SpawnConnection(&cconn, conn);
+        else
+            ERR("failed to locate connection for handle %p\n", b_handle);
+        LeaveCriticalSection(&protseq->cs);
+        if (cconn)
+        {
+            RPCRT4_new_client(cconn);
+            return 1;
+        }
+        else return -1;
+    }
 }
 
 static size_t rpcrt4_ncalrpc_get_top_of_tower(unsigned char *tower_data,
@@ -837,7 +949,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_parse_top_of_tower(const unsigned char *to
     return RPC_S_OK;
 }
 
-static const struct connection_ops protseq_list[] = {
+static const struct connection_ops conn_protseq_list[] = {
   { "ncacn_np",
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_SMB },
     rpcrt4_conn_np_alloc,
@@ -876,15 +988,53 @@ static const struct connection_ops protseq_list[] = {
   }
 };
 
-#define MAX_PROTSEQ (sizeof protseq_list / sizeof protseq_list[0])
 
-static const struct connection_ops *rpcrt4_get_protseq_ops(const char *protseq)
+static const struct protseq_ops protseq_list[] =
+{
+    {
+        "ncacn_np",
+        rpcrt4_protseq_np_alloc,
+        rpcrt4_protseq_np_signal_state_changed,
+        rpcrt4_protseq_np_get_wait_array,
+        rpcrt4_protseq_np_free_wait_array,
+        rpcrt4_protseq_np_wait_for_new_connection,
+    },
+    {
+        "ncalrpc",
+        rpcrt4_protseq_np_alloc,
+        rpcrt4_protseq_np_signal_state_changed,
+        rpcrt4_protseq_np_get_wait_array,
+        rpcrt4_protseq_np_free_wait_array,
+        rpcrt4_protseq_np_wait_for_new_connection,
+    },
+    {
+        "ncacn_ip_tcp",
+        rpcrt4_protseq_np_alloc,
+        rpcrt4_protseq_np_signal_state_changed,
+        rpcrt4_protseq_np_get_wait_array,
+        rpcrt4_protseq_np_free_wait_array,
+        rpcrt4_protseq_np_wait_for_new_connection,
+    },
+};
+
+#define ARRAYSIZE(a) (sizeof((a)) / sizeof((a)[0]))
+
+const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq)
 {
   int i;
-  for(i=0; i<MAX_PROTSEQ; i++)
+  for(i=0; i<ARRAYSIZE(protseq_list); i++)
     if (!strcmp(protseq_list[i].name, protseq))
       return &protseq_list[i];
   return NULL;
+}
+
+static const struct connection_ops *rpcrt4_get_conn_protseq_ops(const char *protseq)
+{
+    int i;
+    for(i=0; i<ARRAYSIZE(conn_protseq_list); i++)
+        if (!strcmp(conn_protseq_list[i].name, protseq))
+            return &conn_protseq_list[i];
+    return NULL;
 }
 
 /**** interface to rest of code ****/
@@ -910,7 +1060,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   const struct connection_ops *ops;
   RpcConnection* NewConnection;
 
-  ops = rpcrt4_get_protseq_ops(Protseq);
+  ops = rpcrt4_get_conn_protseq_ops(Protseq);
   if (!ops)
     return RPC_S_PROTSEQ_NOT_SUPPORTED;
 
@@ -1003,7 +1153,7 @@ RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data,
                                       const char *endpoint)
 {
     twr_empty_floor_t *protocol_floor;
-    const struct connection_ops *protseq_ops = rpcrt4_get_protseq_ops(protseq);
+    const struct connection_ops *protseq_ops = rpcrt4_get_conn_protseq_ops(protseq);
 
     *tower_size = 0;
 
@@ -1062,11 +1212,11 @@ RPC_STATUS RpcTransport_ParseTopOfTower(const unsigned char *tower_data,
         (floor4->count_lhs != sizeof(floor4->protid)))
         return EPT_S_NOT_REGISTERED;
 
-    for(i = 0; i < MAX_PROTSEQ; i++)
-        if ((protocol_floor->protid == protseq_list[i].epm_protocols[0]) &&
-            (floor4->protid == protseq_list[i].epm_protocols[1]))
+    for(i = 0; i < ARRAYSIZE(conn_protseq_list); i++)
+        if ((protocol_floor->protid == conn_protseq_list[i].epm_protocols[0]) &&
+            (floor4->protid == conn_protseq_list[i].epm_protocols[1]))
         {
-            protseq_ops = &protseq_list[i];
+            protseq_ops = &conn_protseq_list[i];
             break;
         }
 
@@ -1097,7 +1247,7 @@ RPC_STATUS WINAPI RpcNetworkIsProtseqValidW(RPC_WSTR protseq)
 
   WideCharToMultiByte(CP_ACP, 0, protseq, -1,
                       ps, sizeof ps, NULL, NULL);
-  if (rpcrt4_get_protseq_ops(ps))
+  if (rpcrt4_get_conn_protseq_ops(ps))
     return RPC_S_OK;
 
   FIXME("Unknown protseq %s\n", debugstr_w(protseq));

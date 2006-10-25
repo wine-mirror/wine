@@ -70,4 +70,7 @@ typedef struct _RpcServerInterface
   RPC_IF_CALLBACK_FN* IfCallbackFn;
 } RpcServerInterface;
 
+void RPCRT4_new_client(RpcConnection* conn);
+const struct protseq_ops *rpcrt4_get_protseq_ops(const char *protseq);
+
 #endif  /* __WINE_RPC_SERVER_H */
