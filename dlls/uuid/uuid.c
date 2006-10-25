@@ -66,6 +66,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "optary.h"
 #include "indexsrv.h"
 #include "htiframe.h"
+#include "urlhist.h"
 
 /* FIXME: cguids declares GUIDs but does not define their values */
 

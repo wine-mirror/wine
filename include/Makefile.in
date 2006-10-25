@@ -46,6 +46,7 @@ WINDOWS_IDL_SRCS = \
 	strmif.idl \
 	tom.idl \
 	unknwn.idl \
+	urlhist.idl \
 	urlmon.idl \
 	wtypes.idl \
 	xmldom.idl \
