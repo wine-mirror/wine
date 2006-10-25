@@ -2021,6 +2021,7 @@ BOOL FILEDLG95_OnOpen(HWND hwnd)
             IShellView_Refresh(fodInfos->Shell.FOIShellView);
 	  }
           COMDLG32_SHFree(pidlCurrent);
+          SendMessageW(fodInfos->DlgInfos.hwndFileName, EM_SETSEL, 0, -1);
         }
       }
       ret = FALSE;
