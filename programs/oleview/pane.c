@@ -73,11 +73,11 @@ LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 SetCursor(LoadCursor(0, IDC_SIZEWE));
             break;
         case WM_LBUTTONDOWN:
-            if(LOWORD(lParam) >= GetSplitPos(hWnd)-pane->size/2 &&
-                    LOWORD(lParam) <= GetSplitPos(hWnd)+pane->size/2)
+            if((short)LOWORD(lParam) >= GetSplitPos(hWnd)-pane->size/2 &&
+               (short)LOWORD(lParam) <= GetSplitPos(hWnd)+pane->size/2)
             {
                 pane->last = -1;
-                DrawSplitMoving(hWnd, LOWORD(lParam));
+                DrawSplitMoving(hWnd, (short)LOWORD(lParam));
                 SetCapture(hWnd);
             }
             break;
@@ -85,7 +85,7 @@ LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if(GetCapture() == hWnd)
             {
                 pane->last = -1;
-                DrawSplitMoving(hWnd, LOWORD(lParam));
+                DrawSplitMoving(hWnd, (short)LOWORD(lParam));
 
                 MoveWindow(pane->left, 0, 0,
                         GetSplitPos(hWnd)-pane->size/2, pane->height, TRUE);
@@ -97,7 +97,7 @@ LRESULT CALLBACK PaneProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             break;
         case WM_MOUSEMOVE:
             if(GetCapture() == hWnd)
-                DrawSplitMoving(hWnd, LOWORD(lParam));
+                DrawSplitMoving(hWnd, (short)LOWORD(lParam));
             break;
         case WM_NOTIFY:
             if((int)wParam != TYPELIB_TREE) break;
