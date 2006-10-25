@@ -1095,7 +1095,7 @@ static unsigned dwarf2_map_register(int regno)
 
     switch (regno)
     {
-    case Wine_DW_no_register: FIXME("What the heck\n"); reg = 0; break;
+    case Wine_DW_no_register: FIXME("What the heck map reg 0x%x\n",regno); reg = 0; break;
     /* FIXME: this is a dirty hack */
     case Wine_DW_frame_register: reg = 0;          break;
     case  0: reg = CV_REG_EAX; break;
@@ -1394,8 +1394,16 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     subpgm.ctx = ctx;
     subpgm.compiland = compiland;
-    if (dwarf2_compute_location(ctx, di, DW_AT_frame_base, &subpgm.frame_offset, &subpgm.frame_reg))
+    if (dwarf2_compute_location(ctx, di, DW_AT_frame_base, &subpgm.frame_offset, &subpgm.frame_reg)) {
         TRACE("For %s got %ld/%d\n", name.u.string, subpgm.frame_offset, subpgm.frame_reg);
+	if (subpgm.frame_reg == Wine_DW_no_register) {
+	   /* Likely a constant, meaning a location list offset.
+	      We do not handle those yet. */
+           /*FIXME("need to handle location lists\n"); */
+           subpgm.frame_reg = 0;
+           subpgm.frame_offset = 0;
+	}
+    }
     else /* on stack !! */
     {
         subpgm.frame_reg = 0;
