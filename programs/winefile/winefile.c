@@ -4320,7 +4320,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 
 		case WM_LBUTTONDOWN: {
 			RECT rt;
-			int x = LOWORD(lparam);
+                        int x = (short)LOWORD(lparam);
 
 			GetClientRect(hwnd, &rt);
 
@@ -4338,7 +4338,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 			if (GetCapture() == hwnd) {
 #ifdef _NO_EXTENSIONS
 				RECT rt;
-				int x = LOWORD(lparam);
+                                int x = (short)LOWORD(lparam);
 				draw_splitbar(hwnd, last_split);
 				last_split = -1;
 				GetClientRect(hwnd, &rt);
@@ -4376,7 +4376,7 @@ static LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM
 		case WM_MOUSEMOVE:
 			if (GetCapture() == hwnd) {
 				RECT rt;
-				int x = LOWORD(lparam);
+                                int x = (short)LOWORD(lparam);
 
 #ifdef _NO_EXTENSIONS
 				HDC hdc = GetDC(hwnd);
