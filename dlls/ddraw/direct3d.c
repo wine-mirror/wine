@@ -737,6 +737,8 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     IParentImpl *IndexBufferParent;
     HRESULT hr;
     IDirectDrawSurfaceImpl *target = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, Surface);
+    IDirectDrawSurface7 *depthbuffer = NULL;
+    static DDSCAPS2 depthcaps = { DDSCAPS_ZBUFFER, 0, 0, 0 };
     TRACE("(%p)->(%s,%p,%p)\n", iface, debugstr_guid(refiid), Surface, Device);
 
     *Device = NULL;
@@ -871,6 +873,19 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
     IDirectDrawSurface7_AddRef(ICOM_INTERFACE(This->d3d_target, IDirectDrawSurface7));
 
     This->d3ddevice = object;
+
+    /* Look for a depth buffer and enable the Z test if one is found */
+    hr = IDirectDrawSurface7_GetAttachedSurface(Surface,
+                                                &depthcaps,
+                                                &depthbuffer);
+    if(depthbuffer)
+    {
+        TRACE("(%p) Depth buffer found, enabling Z test\n", object);
+        IWineD3DDevice_SetRenderState(This->wineD3DDevice,
+                                      WINED3DRS_ZENABLE,
+                                      TRUE);
+        IDirectDrawSurface7_Release(depthbuffer);
+    }
 
     return D3D_OK;
 }

@@ -309,6 +309,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
 
             /* Unset any index buffer, just to be sure */
             IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL, 0);
+            IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
 
             if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice) != D3D_OK)
             {
@@ -779,6 +780,14 @@ IDirectDrawSurfaceImpl_AddAttachedSurface(IDirectDrawSurface7 *iface,
     Surf->first_attached = This->first_attached;
     This->next_attached = Surf;
 
+    /* Check if we attach a back buffer to the primary */
+    if(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER &&
+       This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        IWineD3DDevice_SetDepthStencilSurface(This->ddraw->wineD3DDevice,
+                                              Surf->WineD3DSurface);
+    }
+
     /* MSDN: 
      * "This method increments the reference count of the surface being attached."
      */
@@ -837,6 +846,14 @@ IDirectDrawSurfaceImpl_DeleteAttachedSurface(IDirectDrawSurface7 *iface,
     Prev->next_attached = Surf->next_attached;
     Surf->next_attached = NULL;
     Surf->first_attached = Surf;
+
+    /* Check if we attach a back buffer to the primary */
+    if(Surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER &&
+       This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    {
+        IWineD3DDevice_SetDepthStencilSurface(This->ddraw->wineD3DDevice,
+                                              NULL);
+    }
 
     IDirectDrawSurface7_Release(Attach);
     return DD_OK;
