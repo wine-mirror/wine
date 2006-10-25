@@ -163,7 +163,7 @@ static void 	 Control_WndProc_Create(HWND hWnd, const CREATESTRUCTA* cs)
 #define	YICON	32
 #define YSTEP	64
 
-static BOOL	Control_Localize(const CPanel* panel, unsigned cx, unsigned cy,
+static BOOL	Control_Localize(const CPanel* panel, int cx, int cy,
 				 CPlApplet** papplet, unsigned* psp)
 {
     unsigned	i, x = (XSTEP-XICON)/2, y = 0;
@@ -228,7 +228,7 @@ static LRESULT Control_WndProc_LButton(CPanel* panel, LPARAM lParam, BOOL up)
     unsigned	i;
     CPlApplet*	applet;
 
-    if (Control_Localize(panel, LOWORD(lParam), HIWORD(lParam), &applet, &i)) {
+    if (Control_Localize(panel, (short)LOWORD(lParam), (short)HIWORD(lParam), &applet, &i)) {
        if (up) {
 	   if (panel->clkApplet == applet && panel->clkSP == i) {
 	       applet->proc(applet->hWnd, CPL_DBLCLK, i, applet->info[i].lData);
