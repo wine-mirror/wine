@@ -1415,7 +1415,7 @@ TRACKBAR_Create (HWND hwnd, LPCREATESTRUCTW lpcs)
     if (dwStyle & TBS_TOOLTIPS) {
 
     	infoPtr->hwndToolTip =
-            CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, 0,
+            CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, WS_POPUP,
                              CW_USEDEFAULT, CW_USEDEFAULT,
                              CW_USEDEFAULT, CW_USEDEFAULT,
                              hwnd, 0, 0, 0);

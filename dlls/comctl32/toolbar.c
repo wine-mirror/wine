@@ -1950,7 +1950,7 @@ TOOLBAR_TooltipCreateControl(TOOLBAR_INFO *infoPtr)
     int i;
     NMTOOLTIPSCREATED nmttc;
 
-    infoPtr->hwndToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
+    infoPtr->hwndToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, WS_POPUP,
             CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
             infoPtr->hwndSelf, 0, 0, 0);
 

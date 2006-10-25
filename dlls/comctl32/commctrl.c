@@ -1336,7 +1336,7 @@ COMCTL32_CreateToolTip(HWND hwndOwner)
 {
     HWND hwndToolTip;
 
-    hwndToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, 0,
+    hwndToolTip = CreateWindowExW(0, TOOLTIPS_CLASSW, NULL, WS_POPUP,
 				  CW_USEDEFAULT, CW_USEDEFAULT,
 				  CW_USEDEFAULT, CW_USEDEFAULT, hwndOwner,
 				  0, 0, 0);

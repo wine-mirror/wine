@@ -3038,7 +3038,7 @@ static LRESULT TAB_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
   if (dwStyle & TCS_TOOLTIPS) {
     /* Create tooltip control */
     infoPtr->hwndToolTip =
-      CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, 0,
+      CreateWindowExW (0, TOOLTIPS_CLASSW, NULL, WS_POPUP,
 		       CW_USEDEFAULT, CW_USEDEFAULT,
 		       CW_USEDEFAULT, CW_USEDEFAULT,
 		       hwnd, 0, 0, 0);
