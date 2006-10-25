@@ -1800,8 +1800,8 @@ MSISelectionTree_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
     switch( msg )
     {
     case WM_LBUTTONDOWN:
-        tvhti.pt.x = LOWORD( lParam );
-        tvhti.pt.y = HIWORD( lParam );
+        tvhti.pt.x = (short)LOWORD( lParam );
+        tvhti.pt.y = (short)HIWORD( lParam );
         tvhti.flags = 0;
         tvhti.hItem = 0;
         r = CallWindowProcW(info->oldproc, hWnd, TVM_HITTEST, 0, (LPARAM) &tvhti );
