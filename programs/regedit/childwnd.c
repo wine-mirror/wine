@@ -245,7 +245,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_LBUTTONDOWN: {
             RECT rt;
-            int x = LOWORD(lParam);
+            int x = (short)LOWORD(lParam);
             GetClientRect(hWnd, &rt);
             if (x>=pChildWnd->nSplitPos-SPLIT_WIDTH/2 && x<pChildWnd->nSplitPos+SPLIT_WIDTH/2+1) {
                 last_split = pChildWnd->nSplitPos;
