@@ -546,7 +546,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   }
   buffer_length = 0;
   buffer_ptr = pMsg->Buffer;
-  while (buffer_length < pMsg->BufferLength)
+  while (TRUE)
   {
     unsigned int header_auth_len = RPC_AUTH_VERIFIER_LEN(&(*Header)->common);
 
@@ -598,16 +598,8 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       }
     }
 
-    /* when there is no more data left, it should be the last packet */
-    if (buffer_length == pMsg->BufferLength &&
-        ((*Header)->common.flags & RPC_FLG_LAST) == 0) {
-      WARN("no more data left, but not last packet\n");
-      status = RPC_S_PROTOCOL_ERROR;
-      goto fail;
-    }
-
     buffer_length += data_length;
-    if (buffer_length < pMsg->BufferLength) {
+    if (!((*Header)->common.flags & RPC_FLG_LAST)) {
       TRACE("next header\n");
 
       /* read the header of next packet */
@@ -620,8 +612,11 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
 
       buffer_ptr += data_length;
       first_flag = 0;
+    } else {
+      break;
     }
   }
+  pMsg->BufferLength = buffer_length;
 
   /* respond to authorization request */
   if (common_hdr.ptype == PKT_BIND_ACK && auth_length > sizeof(RpcAuthVerifier))
