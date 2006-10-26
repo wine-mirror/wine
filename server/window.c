@@ -638,7 +638,7 @@ static int all_windows_from_point( struct window *top, int x, int y, struct user
     struct window *ptr;
 
     /* make point relative to top window */
-    for (ptr = top->parent; ptr; ptr = ptr->parent)
+    for (ptr = top->parent; ptr && !is_desktop_window(ptr); ptr = ptr->parent)
     {
         x -= ptr->client_rect.left;
         y -= ptr->client_rect.top;
@@ -651,9 +651,12 @@ static int all_windows_from_point( struct window *top, int x, int y, struct user
         x >= top->client_rect.left && x < top->client_rect.right &&
         y >= top->client_rect.top && y < top->client_rect.bottom)
     {
-        if (!get_window_children_from_point( top, x - top->client_rect.left,
-                                             y - top->client_rect.top, array ))
-            return 0;
+        if (!is_desktop_window(top))
+        {
+            x -= top->client_rect.left;
+            y -= top->client_rect.top;
+        }
+        if (!get_window_children_from_point( top, x, y, array )) return 0;
     }
     /* now add window to the array */
     if (!add_handle_to_array( array, top->handle )) return 0;
@@ -746,7 +749,7 @@ static struct region *intersect_window_region( struct region *region, struct win
 /* convert coordinates from client to screen coords */
 static inline void client_to_screen( struct window *win, int *x, int *y )
 {
-    for ( ; win; win = win->parent)
+    for ( ; win && !is_desktop_window(win); win = win->parent)
     {
         *x += win->client_rect.left;
         *y += win->client_rect.top;
@@ -756,10 +759,13 @@ static inline void client_to_screen( struct window *win, int *x, int *y )
 /* map the region from window to screen coordinates */
 static inline void map_win_region_to_screen( struct window *win, struct region *region )
 {
-    int x = win->window_rect.left;
-    int y = win->window_rect.top;
-    client_to_screen( win->parent, &x, &y );
-    offset_region( region, x, y );
+    if (!is_desktop_window(win))
+    {
+        int x = win->window_rect.left;
+        int y = win->window_rect.top;
+        client_to_screen( win->parent, &x, &y );
+        offset_region( region, x, y );
+    }
 }
 
 
@@ -849,18 +855,28 @@ static struct region *get_visible_region( struct window *win, struct window *top
         set_region_client_rect( region, win );
         if (win->win_region && !intersect_window_region( region, win )) goto error;
     }
-    offset_x = win->window_rect.left;
-    offset_y = win->window_rect.top;
 
     /* clip children */
 
     if (flags & DCX_CLIPCHILDREN)
     {
-        if (!clip_children( win, NULL, region, win->client_rect.left, win->client_rect.top ))
-            goto error;
+        if (is_desktop_window(win)) offset_x = offset_y = 0;
+        else
+        {
+            offset_x = win->client_rect.left;
+            offset_y = win->client_rect.top;
+        }
+        if (!clip_children( win, NULL, region, offset_x, offset_y )) goto error;
     }
 
     /* clip siblings of ancestors */
+
+    if (is_desktop_window(win)) offset_x = offset_y = 0;
+    else
+    {
+        offset_x = win->window_rect.left;
+        offset_y = win->window_rect.top;
+    }
 
     if (top && top != win && (tmp = create_empty_region()) != NULL)
     {
@@ -873,9 +889,12 @@ static struct region *get_visible_region( struct window *win, struct window *top
             }
             /* clip to parent client area */
             win = win->parent;
-            offset_x += win->client_rect.left;
-            offset_y += win->client_rect.top;
-            offset_region( region, win->client_rect.left, win->client_rect.top );
+            if (!is_desktop_window(win))
+            {
+                offset_x += win->client_rect.left;
+                offset_y += win->client_rect.top;
+                offset_region( region, win->client_rect.left, win->client_rect.top );
+            }
             set_region_client_rect( tmp, win );
             if (win->win_region && !intersect_window_region( tmp, win )) goto error;
             if (!intersect_region( region, region, tmp )) goto error;
@@ -913,7 +932,8 @@ static struct region *crop_region_to_win_rect( struct window *win, struct region
     /* get bounding rect in client coords */
     if (frame) set_region_rect( tmp, &win->window_rect );
     else set_region_client_rect( tmp, win );
-    offset_region( tmp, -win->client_rect.left, -win->client_rect.top );
+    if (!is_desktop_window(win))
+        offset_region( tmp, -win->client_rect.left, -win->client_rect.top );
 
     /* intersect specified region with bounding rect */
     if (region && !intersect_region( tmp, region, tmp )) goto done;
@@ -1271,7 +1291,7 @@ static void expose_window( struct window *win, struct window *top, struct region
 
     offset_x = win->window_rect.left - win->client_rect.left;
     offset_y = win->window_rect.top - win->client_rect.top;
-    for (ptr = win; ptr != parent; ptr = ptr->parent)
+    for (ptr = win; ptr != parent && !is_desktop_window(ptr); ptr = ptr->parent)
     {
         offset_x += ptr->client_rect.left;
         offset_y += ptr->client_rect.top;
@@ -1351,7 +1371,8 @@ static void set_window_pos( struct window *win, struct window *previous,
         if (tmp)
         {
             set_region_rect( tmp, window_rect );
-            offset_region( tmp, -window_rect->left, -window_rect->top );
+            if (!is_desktop_window(win))
+                offset_region( tmp, -window_rect->left, -window_rect->top );
             if (intersect_region( tmp, win->update_region, tmp ))
                 set_update_region( win, tmp );
             else
@@ -1381,7 +1402,8 @@ static void set_window_pos( struct window *win, struct window *previous,
             set_region_rect( new_vis_rgn, window_rect );
             if (subtract_region( tmp, new_vis_rgn, tmp ))
             {
-                offset_region( tmp, -client_rect->left, -client_rect->top );
+                if (!is_desktop_window(win))
+                    offset_region( tmp, -client_rect->left, -client_rect->top );
                 redraw_window( win, tmp, 1, RDW_INVALIDATE | RDW_ERASE | RDW_FRAME | RDW_ALLCHILDREN );
             }
             free_region( tmp );
@@ -1768,7 +1790,7 @@ DECL_HANDLER(get_windows_offset)
     if (req->from)
     {
         if (!(win = get_window( req->from ))) return;
-        while (win)
+        while (win && !is_desktop_window(win))
         {
             reply->x += win->client_rect.left;
             reply->y += win->client_rect.top;
@@ -1778,7 +1800,7 @@ DECL_HANDLER(get_windows_offset)
     if (req->to)
     {
         if (!(win = get_window( req->to ))) return;
-        while (win)
+        while (win && !is_desktop_window(win))
         {
             reply->x -= win->client_rect.left;
             reply->y -= win->client_rect.top;
@@ -1807,10 +1829,15 @@ DECL_HANDLER(get_visible_region)
     reply->top_win   = top->handle;
     reply->top_org_x = top->visible_rect.left;
     reply->top_org_y = top->visible_rect.top;
-    reply->win_org_x = (req->flags & DCX_WINDOW) ? win->window_rect.left : win->client_rect.left;
-    reply->win_org_y = (req->flags & DCX_WINDOW) ? win->window_rect.top : win->client_rect.top;
-    client_to_screen( top->parent, &reply->top_org_x, &reply->top_org_y );
-    client_to_screen( win->parent, &reply->win_org_x, &reply->win_org_y );
+
+    if (!is_desktop_window(top))
+    {
+        reply->win_org_x = (req->flags & DCX_WINDOW) ? win->window_rect.left : win->client_rect.left;
+        reply->win_org_y = (req->flags & DCX_WINDOW) ? win->window_rect.top : win->client_rect.top;
+        client_to_screen( top->parent, &reply->top_org_x, &reply->top_org_y );
+        client_to_screen( win->parent, &reply->win_org_x, &reply->win_org_y );
+    }
+    else reply->win_org_x = reply->win_org_y = 0;
 }
 
 
