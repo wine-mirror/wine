@@ -2915,6 +2915,267 @@ static void test_integers(void)
     ok(r == TRUE, "file didn't exist after commit\n");
 }
 
+static void test_update(void)
+{
+    MSIHANDLE hdb = 0, view = 0, rec = 0;
+    CHAR result[MAX_PATH];
+    const char *query;
+    DWORD size;
+    UINT r;
+
+    /* just MsiOpenDatabase should not create a file */
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    /* create the Control table */
+    query = "CREATE TABLE `Control` ( "
+        "`Dialog_` CHAR(72) NOT NULL, `Control` CHAR(50) NOT NULL, `Type` SHORT NOT NULL, "
+        "`X` SHORT NOT NULL, `Y` SHORT NOT NULL, `Width` SHORT NOT NULL, `Height` SHORT NOT NULL,"
+        "`Attributes` LONG, `Property` CHAR(50), `Text` CHAR(0) LOCALIZABLE, "
+        "`Control_Next` CHAR(50), `Help` CHAR(50) LOCALIZABLE PRIMARY KEY `Dialog_`, `Control`)";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseOpenView failed\n");
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "MsiViewExecute failed\n");
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* add a control */
+    query = "INSERT INTO `Control` ( "
+        "`Dialog_`, `Control`, `Type`, `X`, `Y`, `Width`, `Height`, "
+        "`Property`, `Text`, `Control_Next`, `Help` )"
+        "VALUES('ErrorDialog', 'ErrorText', '1', '5', '5', '5', '5', '', '', '', '')";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* add a second control */
+    query = "INSERT INTO `Control` ( "
+        "`Dialog_`, `Control`, `Type`, `X`, `Y`, `Width`, `Height`, "
+        "`Property`, `Text`, `Control_Next`, `Help` )"
+        "VALUES('ErrorDialog', 'Button', '1', '5', '5', '5', '5', '', '', '', '')";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* add a third control */
+    query = "INSERT INTO `Control` ( "
+        "`Dialog_`, `Control`, `Type`, `X`, `Y`, `Width`, `Height`, "
+        "`Property`, `Text`, `Control_Next`, `Help` )"
+        "VALUES('AnotherDialog', 'ErrorText', '1', '5', '5', '5', '5', '', '', '', '')";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* bad table */
+    query = "UPDATE `NotATable` SET `Text` = 'this is text' WHERE `Dialog_` = 'ErrorDialog'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* bad set column */
+    query = "UPDATE `Control` SET `NotAColumn` = 'this is text' WHERE `Dialog_` = 'ErrorDialog'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* bad where condition */
+    query = "UPDATE `Control` SET `Text` = 'this is text' WHERE `NotAColumn` = 'ErrorDialog'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "Expected ERROR_BAD_QUERY_SYNTAX, got %d\n", r);
+
+    /* just the dialog_ specified */
+    query = "UPDATE `Control` SET `Text` = 'this is text' WHERE `Dialog_` = 'ErrorDialog'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        r = MsiViewExecute(view, 0);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        r = MsiViewClose(view);
+        ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    }
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* check the modified text */
+    query = "SELECT `Text` FROM `Control` WHERE `Control` = 'ErrorText'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
+    }
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrlen(result), "Expected an empty string, got %s\n", result);
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* dialog_ and control specified */
+    query = "UPDATE `Control` SET `Text` = 'this is text' WHERE `Dialog_` = 'ErrorDialog' AND `Control` = 'ErrorText'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    todo_wine
+    {
+        r = MsiViewExecute(view, 0);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        r = MsiViewClose(view);
+        ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    }
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* check the modified text */
+    query = "SELECT `Text` FROM `Control` WHERE `Control` = 'ErrorText'";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
+    }
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(!lstrlen(result), "Expected an empty string, got %s\n", result);
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+
+    /* no where condition */
+    query = "UPDATE `Control` SET `Text` = 'this is text'";
+    todo_wine
+    {
+        r = MsiDatabaseOpenView(hdb, query, &view);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+        r = MsiViewExecute(view, 0);
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        r = MsiViewClose(view);
+        ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+        r = MsiCloseHandle(view);
+        ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    }
+
+    /* check the modified text */
+    query = "SELECT `Text` FROM `Control`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
+    }
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
+    }
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(rec, 1, result, &size);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    todo_wine
+    {
+        ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
+    }
+
+    MsiCloseHandle(rec);
+
+    r = MsiViewFetch(view, &rec);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    r = MsiDatabaseCommit(hdb);
+    ok(r == ERROR_SUCCESS, "MsiDatabaseCommit failed\n");
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -2936,4 +3197,5 @@ START_TEST(db)
     test_temporary_table();
     test_alter();
     test_integers();
+    test_update();
 }
