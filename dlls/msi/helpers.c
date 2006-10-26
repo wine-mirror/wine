@@ -865,17 +865,13 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
             continue;
  
         if (newstate == INSTALLSTATE_LOCAL)
-        {
-            component->ActionRequest = INSTALLSTATE_LOCAL;
-            component->Action = INSTALLSTATE_LOCAL;
-        }
+            msi_component_set_state( component, INSTALLSTATE_LOCAL );
         else 
         {
             ComponentList *clist;
             MSIFEATURE *f;
 
-            component->ActionRequest = newstate;
-            component->Action = newstate;
+            msi_component_set_state( component, newstate );
 
             /*if any other feature wants is local we need to set it local*/
             LIST_FOR_EACH_ENTRY( f, &package->features, MSIFEATURE, entry )
@@ -897,26 +893,14 @@ void ACTION_UpdateComponentStates(MSIPACKAGE *package, LPCWSTR szFeature)
                         if (component->Attributes & msidbComponentAttributesOptional)
                         {
                             if (f->Attributes & msidbFeatureAttributesFavorSource)
-                            {
-                                component->Action = INSTALLSTATE_SOURCE;
-                                component->ActionRequest = INSTALLSTATE_SOURCE;
-                            }
+                                msi_component_set_state( component, INSTALLSTATE_SOURCE );
                             else
-                            {
-                                component->Action = INSTALLSTATE_LOCAL;
-                                component->ActionRequest = INSTALLSTATE_LOCAL;
-                            }
+                                msi_component_set_state( component, INSTALLSTATE_LOCAL );
                         }
                         else if (component->Attributes & msidbComponentAttributesSourceOnly)
-                        {
-                            component->Action = INSTALLSTATE_SOURCE;
-                            component->ActionRequest = INSTALLSTATE_SOURCE;
-                        }
+                            msi_component_set_state( component, INSTALLSTATE_SOURCE );
                         else
-                        {
-                            component->Action = INSTALLSTATE_LOCAL;
-                            component->ActionRequest = INSTALLSTATE_LOCAL;
-                        } 
+                            msi_component_set_state( component, INSTALLSTATE_LOCAL );
                     }
                 }
             }

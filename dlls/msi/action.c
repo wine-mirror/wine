@@ -1150,8 +1150,7 @@ static UINT load_component( MSIRECORD *row, LPVOID param )
     comp->KeyPath = msi_dup_record_field( row, 6 );
 
     comp->Installed = INSTALLSTATE_UNKNOWN;
-    comp->Action = INSTALLSTATE_UNKNOWN;
-    comp->ActionRequest = INSTALLSTATE_UNKNOWN;
+    msi_component_set_state( comp, INSTALLSTATE_UNKNOWN );
 
     return ERROR_SUCCESS;
 }
@@ -1282,8 +1281,7 @@ static UINT load_feature(MSIRECORD * row, LPVOID param)
     feature->Attributes = MSI_RecordGetInteger(row,8);
 
     feature->Installed = INSTALLSTATE_UNKNOWN;
-    feature->Action = INSTALLSTATE_UNKNOWN;
-    feature->ActionRequest = INSTALLSTATE_UNKNOWN;
+    msi_feature_set_state( feature, INSTALLSTATE_UNKNOWN );
 
     list_add_tail( &package->features, &feature->entry );
 
@@ -1665,14 +1663,11 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
     override = msi_dup_property( package, property );
     if (!override)
         return FALSE;
- 
+
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
         if (strcmpiW(override,all)==0)
-        {
-            feature->ActionRequest= state;
-            feature->Action = state;
-        }
+            msi_feature_set_state( feature, state );
         else
         {
             LPWSTR ptr = override;
@@ -1683,8 +1678,7 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
                 if ((ptr2 && strncmpW(ptr,feature->Feature, ptr2-ptr)==0)
                     || (!ptr2 && strcmpW(ptr,feature->Feature)==0))
                 {
-                    feature->ActionRequest= state;
-                    feature->Action = state;
+                    msi_feature_set_state( feature, state );
                     break;
                 }
                 if (ptr2)
@@ -1700,18 +1694,6 @@ static BOOL process_state_property (MSIPACKAGE* package, LPCWSTR property,
     msi_free(override);
 
     return TRUE;
-}
-
-static void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE state )
-{
-    feature->ActionRequest = state;
-    feature->Action = state;
-}
-
-static void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE state )
-{
-    comp->ActionRequest = state;
-    comp->Action = state;
 }
 
 UINT MSI_SetFeatureStates(MSIPACKAGE *package)

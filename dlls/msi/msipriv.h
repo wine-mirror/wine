@@ -713,6 +713,18 @@ extern UINT ACTION_PerformUIAction(MSIPACKAGE *package, const WCHAR *action);
 extern void ACTION_FinishCustomActions( MSIPACKAGE* package);
 extern UINT ACTION_CustomAction(MSIPACKAGE *package,const WCHAR *action, BOOL execute);
 
+static inline void msi_feature_set_state( MSIFEATURE *feature, INSTALLSTATE state )
+{
+    feature->ActionRequest = state;
+    feature->Action = state;
+}
+
+static inline void msi_component_set_state( MSICOMPONENT *comp, INSTALLSTATE state )
+{
+    comp->ActionRequest = state;
+    comp->Action = state;
+}
+
 /* actions in other modules */
 extern UINT ACTION_AppSearch(MSIPACKAGE *package);
 extern UINT ACTION_FindRelatedProducts(MSIPACKAGE *package);

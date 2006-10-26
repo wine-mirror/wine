@@ -1766,8 +1766,7 @@ msi_seltree_menu( HWND hwnd, HTREEITEM hItem )
     case INSTALLSTATE_LOCAL:
     case INSTALLSTATE_ADVERTISED:
     case INSTALLSTATE_ABSENT:
-        feature->ActionRequest = r;
-        feature->Action = r;
+        msi_feature_set_state( feature, r );
         break;
     default:
         FIXME("select feature and all children\n");
