@@ -422,7 +422,6 @@ static void setup_ns_editing(NSContainer *This)
     }
 
     nsres = nsIWebBrowser_GetContentDOMWindow(This->webbrowser, &dom_window);
-    nsIDOMWindow_Release(dom_window);
     if(NS_FAILED(nsres)) {
         ERR("Could not get content DOM window: %08x\n", nsres);
         nsIEditingSession_Release(editing_session);
@@ -431,6 +430,7 @@ static void setup_ns_editing(NSContainer *This)
 
     nsres = nsIEditingSession_MakeWindowEditable(editing_session, dom_window, NULL, FALSE);
     nsIEditingSession_Release(editing_session);
+    nsIDOMWindow_Release(dom_window);
     if(NS_FAILED(nsres)) {
         ERR("MakeWindowEditable failed: %08x\n", nsres);
         return;
