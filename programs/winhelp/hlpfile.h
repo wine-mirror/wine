@@ -110,6 +110,12 @@ typedef struct
 
 typedef struct
 {
+    LONG                        lMap;
+    unsigned long               offset;
+} HLPFILE_MAP;
+
+typedef struct
+{
     LOGFONT                     LogFont;
     HFONT                       hFont;
     COLORREF                    color;
@@ -124,6 +130,8 @@ typedef struct tagHlpFileFile
     HLPFILE_MACRO*              first_macro;
     unsigned                    wContextLen;
     HLPFILE_CONTEXT*            Context;
+    unsigned                    wMapLen;
+    HLPFILE_MAP*                Map;
     unsigned long               contents_start;
 
     struct tagHlpFileFile*      prev;
@@ -148,6 +156,7 @@ typedef struct tagHlpFileFile
 HLPFILE*      HLPFILE_ReadHlpFile(LPCSTR lpszPath);
 HLPFILE_PAGE* HLPFILE_Contents(HLPFILE* hlpfile);
 HLPFILE_PAGE* HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash);
+HLPFILE_PAGE* HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap);
 HLPFILE_PAGE* HLPFILE_PageByOffset(HLPFILE* hlpfile, LONG offset);
 LONG          HLPFILE_Hash(LPCSTR lpszContext);
 void          HLPFILE_FreeLink(HLPFILE_LINK* link);

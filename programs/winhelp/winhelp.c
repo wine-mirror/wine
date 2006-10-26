@@ -362,6 +362,7 @@ static LRESULT  WINHELP_HandleCommand(HWND hSrcWnd, LPARAM lParam)
         /* case HELP_CONTEXTMENU: */
         case HELP_FINDER:
             /* in fact, should be the topic dialog box */
+            WINE_FIXME("HELP_FINDER: stub\n");
             if (ptr)
             {
                 MACRO_JumpHash(ptr, "main", 0);
@@ -581,6 +582,20 @@ BOOL WINHELP_CreateHelpWindowByHash(HLPFILE* hlpfile, LONG lHash,
     if (hlpfile)
         page = lHash ? HLPFILE_PageByHash(hlpfile, lHash) : 
             HLPFILE_Contents(hlpfile);
+    if (page) page->file->wRefCount++;
+    return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
+}
+
+/***********************************************************************
+ *
+ *           WINHELP_CreateHelpWindowByMap
+ */
+BOOL WINHELP_CreateHelpWindowByMap(HLPFILE* hlpfile, LONG lMap,
+                                   HLPFILE_WINDOWINFO* wi, int nCmdShow)
+{
+    HLPFILE_PAGE*       page = NULL;
+
+    page = HLPFILE_PageByMap(hlpfile, lMap);
     if (page) page->file->wRefCount++;
     return WINHELP_CreateHelpWindow(page, wi, nCmdShow);
 }

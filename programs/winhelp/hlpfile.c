@@ -84,6 +84,7 @@ static BOOL  HLPFILE_UncompressLZ77_Phrases(HLPFILE*);
 static BOOL  HLPFILE_Uncompress_Phrases40(HLPFILE*);
 static BOOL  HLPFILE_Uncompress_Topic(HLPFILE*);
 static BOOL  HLPFILE_GetContext(HLPFILE*);
+static BOOL  HLPFILE_GetMap(HLPFILE*);
 static BOOL  HLPFILE_AddPage(HLPFILE*, BYTE*, BYTE*, unsigned);
 static BOOL  HLPFILE_AddParagraph(HLPFILE*, BYTE *, BYTE*, unsigned*);
 static void  HLPFILE_Uncompress2(const BYTE*, const BYTE*, BYTE*, const BYTE*);
@@ -174,6 +175,28 @@ HLPFILE_PAGE *HLPFILE_PageByHash(HLPFILE* hlpfile, LONG lHash)
 
 /***********************************************************************
  *
+ *           HLPFILE_PageByMap
+ */
+HLPFILE_PAGE *HLPFILE_PageByMap(HLPFILE* hlpfile, LONG lMap)
+{
+    int                 i;
+
+    if (!hlpfile) return 0;
+
+    WINE_TRACE("<%s>[%x]\n", hlpfile->lpszPath, lMap);
+
+    for (i = 0; i < hlpfile->wMapLen; i++)
+    {
+        if (hlpfile->Map[i].lMap == lMap)
+            return HLPFILE_PageByOffset(hlpfile, hlpfile->Map[i].offset);
+    }
+
+    WINE_ERR("Page of Map %x not found in file %s\n", lMap, hlpfile->lpszPath);
+    return NULL;
+}
+
+/***********************************************************************
+ *
  *           HLPFILE_Contents
  */
 HLPFILE_PAGE* HLPFILE_Contents(HLPFILE *hlpfile)
@@ -237,6 +260,8 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
     hlpfile->first_macro        = NULL;
     hlpfile->wContextLen        = 0;
     hlpfile->Context            = NULL;
+    hlpfile->wMapLen            = 0;
+    hlpfile->Map                = NULL;
     hlpfile->contents_start     = 0xFFFFFFFF;
     hlpfile->prev               = NULL;
     hlpfile->next               = first_hlpfile;
@@ -347,6 +372,7 @@ static BOOL HLPFILE_DoReadHlpFile(HLPFILE *hlpfile, LPCSTR lpszPath)
         ref = GET_UINT(buf, 0xc);
     } while (ref != 0xffffffff);
 
+    HLPFILE_GetMap(hlpfile);
     return HLPFILE_GetContext(hlpfile);
 }
 
@@ -1902,6 +1928,29 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
     return TRUE;
 }
 
+/***********************************************************************
+ *
+ *           HLPFILE_GetMap
+ */
+static BOOL HLPFILE_GetMap(HLPFILE *hlpfile)
+{
+    BYTE                *cbuf, *cend;
+    unsigned            entries, i;
+
+    if (!HLPFILE_FindSubFile("|CTXOMAP",  &cbuf, &cend)) {WINE_WARN("no map section\n"); return FALSE;}
+
+    entries = GET_USHORT(cbuf, 9);
+    hlpfile->Map = HeapAlloc(GetProcessHeap(), 0, entries * sizeof(HLPFILE_MAP));
+    if (!hlpfile->Map) return FALSE;
+    hlpfile->wMapLen = entries;
+    for (i = 0; i < entries; i++)
+    {
+        hlpfile->Map[i].lMap = GET_UINT(cbuf+11,i*8);
+        hlpfile->Map[i].offset = GET_UINT(cbuf+11,i*8+4);
+    }
+    return TRUE;
+}
+
 /******************************************************************
  *		HLPFILE_DeleteLink
  *
@@ -2006,6 +2055,7 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
 
     if (hlpfile->numWindows)    HeapFree(GetProcessHeap(), 0, hlpfile->windows);
     HeapFree(GetProcessHeap(), 0, hlpfile->Context);
+    HeapFree(GetProcessHeap(), 0, hlpfile->Map);
     HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
     HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
     HeapFree(GetProcessHeap(), 0, hlpfile);

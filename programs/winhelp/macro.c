@@ -680,8 +680,14 @@ void CALLBACK MACRO_JumpContents(LPCSTR lpszPath, LPCSTR lpszWindow)
 
 void CALLBACK MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context)
 {
-    WINE_FIXME("(\"%s\", \"%s\", %d)semi-stub\n", lpszPath, lpszWindow, context);
-    return MACRO_JumpContents(lpszPath, lpszWindow);
+    HLPFILE*    hlpfile;
+
+    WINE_TRACE("(\"%s\", \"%s\", %d)", lpszPath, lpszWindow, context);
+    hlpfile = WINHELP_LookupHelpFile(lpszPath);
+    /* Some madness: what user calls 'context', hlpfile calls 'map' */
+    WINHELP_CreateHelpWindowByMap(hlpfile, context,
+                                  WINHELP_GetWindowInfo(hlpfile, lpszWindow),
+                                  SW_NORMAL);
 }
 
 void CALLBACK MACRO_JumpHash(LPCSTR lpszPath, LPCSTR lpszWindow, LONG lHash)
