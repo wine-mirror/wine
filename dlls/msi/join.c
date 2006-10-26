@@ -172,13 +172,16 @@ static UINT join_match( UINT *ldata, UINT lcount,
         {
             pairs[n*2] = ldata[i*2];
             pairs[n*2+1] = rdata[j*2];
-            i++;  /* FIXME: assumes primary key on the right */
             n++;
-            continue;
+
+            if ( ldata[i*2+3] < rdata[j*2+3])
+                i++;
+            else
+                j++;
         }
 
         /* values differ... move along */
-        if (ldata[i*2+1] < rdata[j*2+1])
+        else if (ldata[i*2+1] < rdata[j*2+1])
             i++;
         else
             j++;
