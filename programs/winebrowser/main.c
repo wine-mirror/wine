@@ -74,7 +74,7 @@ static int launch_app( char *candidates, const char *argv1 )
 static int open_http_url( const char *url )
 {
     static const char *defaultbrowsers =
-        "firefox,konqueror,mozilla,netscape,galeon,opera,dillo";
+        "xdg-open,firefox,konqueror,mozilla,netscape,galeon,opera,dillo";
     char browsers[256];
 
     DWORD length, type;
@@ -106,7 +106,7 @@ static int open_http_url( const char *url )
 static int open_mailto_url( const char *url )
 {
     static const char *defaultmailers =
-        "mozilla-thunderbird,thunderbird,evolution";
+        "xdg-email,mozilla-thunderbird,thunderbird,evolution";
     char mailers[256];
 
     DWORD length, type;
