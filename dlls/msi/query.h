@@ -125,4 +125,6 @@ UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, int hold )
 
 int sqliteGetToken(const WCHAR *z, int *tokenType);
 
+MSIRECORD *msi_query_merge_record( UINT fields, column_info *vl, MSIRECORD *rec );
+
 #endif /* __WINE_MSI_QUERY_H */

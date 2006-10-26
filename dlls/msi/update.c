@@ -59,12 +59,10 @@ static UINT UPDATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIUPDATEVIEW *uv = (MSIUPDATEVIEW*)view;
     UINT n, type, val, r, row, col_count = 0, row_count = 0;
+    MSIRECORD *values = NULL;
     MSIVIEW *wv;
 
     TRACE("%p %p\n", uv, record );
-
-    if( !record )
-        return ERROR_FUNCTION_FAILED;
 
     wv = uv->wv;
     if( !wv )
@@ -79,6 +77,10 @@ static UINT UPDATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
     if( r )
         goto err;
 
+    values = msi_query_merge_record( col_count, uv->vals, record );
+    if (!values)
+        return ERROR_FUNCTION_FAILED;
+
     for( row = 0; row < row_count; row++ )
     {
         for( n = 1; n <= col_count; n++ )
@@ -87,21 +89,30 @@ static UINT UPDATE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
             if( r )
                 break;
 
-            if( type & MSITYPE_STRING )
+            if( MSI_RecordIsNull( values, n ))
+                val = 0;
+            else if( type & MSITYPE_STRING )
             {
-                const WCHAR *str = MSI_RecordGetString( record, n );
+                const WCHAR *str = MSI_RecordGetString( values, n );
                 val = msi_addstringW( uv->db->strings, 0, str, -1, 1 );
+            }
+            else if ((type & 0xff) == 2)
+            {
+                val = MSI_RecordGetInteger( values, n );
+                val ^= 0x8000;
             }
             else
             {
-                val = MSI_RecordGetInteger( record, n );
-                val |= 0x8000;
+                val = MSI_RecordGetInteger( values, n );
+                val ^= 0x80000000;
             }
             r = wv->ops->set_int( wv, row, n, val );
             if( r )
                 break;
         }
     }
+
+    msiobj_release( &values->hdr );
 
 err:
     return ERROR_SUCCESS;
