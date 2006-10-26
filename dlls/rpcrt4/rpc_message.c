@@ -50,6 +50,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 #define ROUND_UP_AMOUNT(value, alignment) \
     (((alignment) - (((value) % (alignment)))) % (alignment))
 
+static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg);
+
 static DWORD RPCRT4_GetHeaderSize(RpcPktHdr *Header)
 {
   static const DWORD header_sizes[] = {
@@ -476,7 +478,6 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   unsigned long data_length;
   unsigned long buffer_length;
   unsigned long auth_length;
-  unsigned char *buffer_ptr;
   unsigned char *auth_data = NULL;
   RpcPktCommonHdr common_hdr;
 
@@ -545,7 +546,6 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     }
   }
   buffer_length = 0;
-  buffer_ptr = pMsg->Buffer;
   while (TRUE)
   {
     unsigned int header_auth_len = RPC_AUTH_VERIFIER_LEN(&(*Header)->common);
@@ -567,16 +567,24 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       goto fail;
     }
 
-    data_length = (*Header)->common.frag_len - hdr_length - header_auth_len;
-    if (((*Header)->common.flags & RPC_FLG_FIRST) != first_flag ||
-        data_length + buffer_length > pMsg->BufferLength) {
-      TRACE("invalid packet flags or buffer length\n");
+    if (((*Header)->common.flags & RPC_FLG_FIRST) != first_flag) {
+      TRACE("invalid packet flags\n");
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
 
+    data_length = (*Header)->common.frag_len - hdr_length - header_auth_len;
+    if (data_length + buffer_length > pMsg->BufferLength) {
+      TRACE("allocation hint exceeded, new buffer length = %ld\n",
+        data_length + buffer_length);
+      pMsg->BufferLength = data_length + buffer_length;
+      status = I_RpcReAllocateBuffer(pMsg);
+      if (status != RPC_S_OK) goto fail;
+    }
+
     if (data_length == 0) dwRead = 0; else
-    dwRead = rpcrt4_conn_read(Connection, buffer_ptr, data_length);
+    dwRead = rpcrt4_conn_read(Connection,
+        (unsigned char *)pMsg->Buffer + buffer_length, data_length);
     if (dwRead != data_length) {
       WARN("bad data length, %ld/%ld\n", dwRead, data_length);
       status = RPC_S_PROTOCOL_ERROR;
@@ -610,7 +618,6 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
         goto fail;
       }
 
-      buffer_ptr += data_length;
       first_flag = 0;
     } else {
       break;
@@ -652,6 +659,18 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
   TRACE("Buffer=%p\n", pMsg->Buffer);
   /* FIXME: which errors to return? */
   return pMsg->Buffer ? S_OK : E_OUTOFMEMORY;
+}
+
+/***********************************************************************
+ *           I_RpcReAllocateBuffer (internal)
+ */
+static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg)
+{
+  TRACE("(%p): BufferLength=%d\n", pMsg, pMsg->BufferLength);
+  pMsg->Buffer = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
+
+  TRACE("Buffer=%p\n", pMsg->Buffer);
+  return pMsg->Buffer ? RPC_S_OK : RPC_S_OUT_OF_RESOURCES;
 }
 
 /***********************************************************************
