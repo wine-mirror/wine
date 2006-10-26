@@ -123,6 +123,11 @@ static void update_mouse_state( HWND hwnd, Window window, int x, int y, unsigned
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
 
+    if (window == root_window)
+    {
+        x += virtual_screen_rect.left;
+        y += virtual_screen_rect.top;
+    }
     get_coords( hwnd, x, y, pt );
     update_key_state( state );
 
@@ -287,7 +292,8 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         {
             TRACE( "warping to (%d,%d)\n", pt.x, pt.y );
             wine_tsx11_lock();
-            XWarpPointer( thread_display(), root_window, root_window, 0, 0, 0, 0, pt.x, pt.y );
+            XWarpPointer( thread_display(), root_window, root_window, 0, 0, 0, 0,
+                          pt.x - virtual_screen_rect.left, pt.y - virtual_screen_rect.top );
             wine_tsx11_unlock();
         }
     }
@@ -690,7 +696,8 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
     TRACE( "warping to (%d,%d)\n", x, y );
 
     wine_tsx11_lock();
-    XWarpPointer( display, root_window, root_window, 0, 0, 0, 0, x, y );
+    XWarpPointer( display, root_window, root_window, 0, 0, 0, 0,
+                  x - virtual_screen_rect.left, y - virtual_screen_rect.top );
     XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
     cursor_pos.x = x;
     cursor_pos.y = y;
@@ -714,6 +721,8 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
     {
         update_key_state( xstate );
         update_button_state( xstate );
+        winX += virtual_screen_rect.left;
+        winY += virtual_screen_rect.top;
         TRACE("pointer at (%d,%d)\n", winX, winY );
         cursor_pos.x = winX;
         cursor_pos.y = winY;

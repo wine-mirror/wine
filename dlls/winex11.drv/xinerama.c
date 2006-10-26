@@ -106,9 +106,6 @@ static int query_screens(void)
         nb_monitors = count;
         for (i = 0; i < nb_monitors; i++)
         {
-            /* FIXME: for now, force primary to be the screen that starts at (0,0) origin */
-            if (!screens[i].x_org && !screens[i].y_org) primary_monitor = i;
-
             monitors[i].cbSize = sizeof( monitors[i] );
             monitors[i].rcMonitor.left   = screens[i].x_org;
             monitors[i].rcMonitor.top    = screens[i].y_org;
@@ -121,11 +118,6 @@ static int query_screens(void)
         }
 
         get_primary()->dwFlags |= MONITORINFOF_PRIMARY;
-
-        for (i = 0; i < nb_monitors; i++)
-            TRACE( "monitor %p: %s%s\n",
-                   index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
-                   (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
     }
     else count = 0;
 
@@ -145,6 +137,7 @@ static inline int query_screens(void)
 void xinerama_init(void)
 {
     MONITORINFOEXW *primary;
+    int i;
 
     wine_tsx11_lock();
 
@@ -158,8 +151,18 @@ void xinerama_init(void)
     }
 
     primary = get_primary();
+
     /* coordinates (0,0) have to point to the primary monitor origin */
     OffsetRect( &virtual_screen_rect, -primary->rcMonitor.left, -primary->rcMonitor.top );
+    for (i = 0; i < nb_monitors; i++)
+    {
+        OffsetRect( &monitors[i].rcMonitor, virtual_screen_rect.left, virtual_screen_rect.top );
+        OffsetRect( &monitors[i].rcWork, virtual_screen_rect.left, virtual_screen_rect.top );
+        TRACE( "monitor %p: %s%s\n",
+               index_to_monitor(i), wine_dbgstr_rect(&monitors[i].rcMonitor),
+               (monitors[i].dwFlags & MONITORINFOF_PRIMARY) ? " (primary)" : "" );
+    }
+
     screen_width = primary->rcMonitor.right - primary->rcMonitor.left;
     screen_height = primary->rcMonitor.bottom - primary->rcMonitor.top;
     TRACE( "virtual size: %s primary size: %dx%d\n",

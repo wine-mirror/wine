@@ -102,6 +102,9 @@ void X11DRV_Expose( HWND hwnd, XEvent *xev )
     rect.right  = rect.left + event->width;
     rect.bottom = rect.top + event->height;
 
+    if (event->window == root_window)
+        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
+
     if (rect.left < data->client_rect.left ||
         rect.top < data->client_rect.top ||
         rect.right > data->client_rect.right ||
@@ -1168,6 +1171,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         rect.top    = y;
         rect.right  = x + width;
         rect.bottom = y + height;
+        OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
         X11DRV_X_to_window_rect( data, &rect );
 
         invalidate_dce( hwnd, &data->window_rect );
@@ -1255,9 +1259,9 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     screen_height = height;
     xinerama_init();
     TRACE("desktop %p change to (%dx%d)\n", hwnd, width, height);
-    SetRect( &rect, 0, 0, width, height );
     data->lock_changes++;
-    X11DRV_set_window_pos( hwnd, 0, &rect, &rect, SWP_NOZORDER|SWP_NOMOVE, NULL );
+    X11DRV_set_window_pos( hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
+                           SWP_NOZORDER|SWP_NOMOVE, NULL );
     data->lock_changes--;
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
@@ -1295,6 +1299,7 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     rect.top    = y;
     rect.right  = x + event->width;
     rect.bottom = y + event->height;
+    OffsetRect( &rect, virtual_screen_rect.left, virtual_screen_rect.top );
     TRACE( "win %p new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
            hwnd, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
            event->x, event->y, event->width, event->height );

@@ -611,8 +611,8 @@ void X11DRV_set_iconic_state( HWND hwnd )
     if (!(wm_hints = XGetWMHints( display, data->whole_window ))) wm_hints = XAllocWMHints();
     wm_hints->flags |= StateHint | IconPositionHint;
     wm_hints->initial_state = iconic ? IconicState : NormalState;
-    wm_hints->icon_x = rect.left;
-    wm_hints->icon_y = rect.top;
+    wm_hints->icon_x = rect.left - virtual_screen_rect.left;
+    wm_hints->icon_y = rect.top - virtual_screen_rect.top;
     XSetWMHints( display, data->whole_window, wm_hints );
 
     if (style & WS_VISIBLE)
@@ -734,6 +734,8 @@ void X11DRV_sync_window_position( Display *display, struct x11drv_win_data *data
 
         wine_tsx11_lock();
         if (mask & (CWWidth|CWHeight)) set_size_hints( display, data, style );
+        if (mask & CWX) changes.x -= virtual_screen_rect.left;
+        if (mask & CWY) changes.y -= virtual_screen_rect.top;
         XReconfigureWMWindow( display, data->whole_window,
                               DefaultScreen(display), mask, &changes );
         wine_tsx11_unlock();
@@ -773,9 +775,11 @@ static Window create_whole_window( Display *display, struct x11drv_win_data *dat
     wine_tsx11_lock();
 
     data->whole_rect = rect;
-    data->whole_window = XCreateWindow( display, root_window, rect.left, rect.top, cx, cy,
-                                        0, screen_depth, InputOutput, visual,
-                                        mask, &attr );
+    data->whole_window = XCreateWindow( display, root_window,
+                                        rect.left - virtual_screen_rect.left,
+                                        rect.top - virtual_screen_rect.top,
+                                        cx, cy, 0, screen_depth, InputOutput,
+                                        visual, mask, &attr );
 
     if (!data->whole_window)
     {
