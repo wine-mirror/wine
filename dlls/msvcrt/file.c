@@ -2550,8 +2550,9 @@ MSVCRT_size_t CDECL MSVCRT_fread(void *ptr, MSVCRT_size_t size, MSVCRT_size_t nm
     }
     pread += i;
     rcnt -= i;
+    ptr = (char *)ptr+i;
     /* expose feof condition in the flags
-     * MFC tests file->_flag for feof, and doesn't not call feof())
+     * MFC tests file->_flag for feof, and doesn't call feof())
      */
     if ( MSVCRT_fdesc[file->_file].wxflag & WX_ATEOF)
         file->_flag |= MSVCRT__IOEOF;
