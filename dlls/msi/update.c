@@ -199,14 +199,19 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **view, LPWSTR table,
     if( r != ERROR_SUCCESS )
         return r;
 
-    /* add conditions first */
-    r = WHERE_CreateView( db, &wv, tv, expr );
-    if( r != ERROR_SUCCESS )
+    if (expr)
     {
-        tv->ops->delete( tv );
-        return r;
+        /* add conditions first */
+        r = WHERE_CreateView( db, &wv, tv, expr );
+        if( r != ERROR_SUCCESS )
+        {
+            tv->ops->delete( tv );
+            return r;
+        }
     }
-    
+    else
+       wv = tv;
+
     /* then select the columns we want */
     r = SELECT_CreateView( db, &sv, wv, columns );
     if( r != ERROR_SUCCESS )

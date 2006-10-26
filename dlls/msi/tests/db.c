@@ -3093,17 +3093,14 @@ static void test_update(void)
 
     /* no where condition */
     query = "UPDATE `Control` SET `Text` = 'this is text'";
-    todo_wine
-    {
-        r = MsiDatabaseOpenView(hdb, query, &view);
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
-        r = MsiViewExecute(view, 0);
-        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-        r = MsiViewClose(view);
-        ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
-        r = MsiCloseHandle(view);
-        ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
-    }
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    r = MsiViewExecute(view, 0);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 
     /* check the modified text */
     query = "SELECT `Text` FROM `Control`";
@@ -3138,10 +3135,7 @@ static void test_update(void)
     size = MAX_PATH;
     r = MsiRecordGetString(rec, 1, result, &size);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
-    todo_wine
-    {
-        ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
-    }
+    ok(!lstrcmp(result, "this is text"), "Expected `this is text`, got %s\n", result);
 
     MsiCloseHandle(rec);
 

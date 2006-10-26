@@ -214,9 +214,19 @@ oneupdate:
     TK_UPDATE table TK_SET update_assign_list TK_WHERE expr
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *update = NULL; 
+            MSIVIEW *update = NULL;
 
             UPDATE_CreateView( sql->db, &update, $2, $4, $6 );
+            if( !update )
+                YYABORT;
+            $$ = update;
+        }
+  | TK_UPDATE table TK_SET update_assign_list
+        {
+            SQL_input* sql = (SQL_input*) info;
+            MSIVIEW *update = NULL;
+
+            UPDATE_CreateView( sql->db, &update, $2, $4, NULL );
             if( !update )
                 YYABORT;
             $$ = update;
