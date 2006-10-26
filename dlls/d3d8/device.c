@@ -309,7 +309,7 @@ static void WINAPI IDirect3DDevice8Impl_SetGammaRamp(LPDIRECT3DDEVICE8 iface, DW
     TRACE("(%p) Relay\n", This);
 
     /* Note: D3DGAMMARAMP is compatible with WINED3DGAMMARAMP */
-    return IWineD3DDevice_SetGammaRamp(This->WineD3DDevice, 0, Flags, (WINED3DGAMMARAMP *) pRamp);
+    return IWineD3DDevice_SetGammaRamp(This->WineD3DDevice, 0, Flags, (CONST WINED3DGAMMARAMP *) pRamp);
 }
 
 static void WINAPI IDirect3DDevice8Impl_GetGammaRamp(LPDIRECT3DDEVICE8 iface, D3DGAMMARAMP* pRamp) {
@@ -1448,14 +1448,14 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 iface
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    return IWineD3DDevice_DrawRectPatch(This->WineD3DDevice, Handle, pNumSegs, (WINED3DRECTPATCH_INFO *)pRectPatchInfo);
+    return IWineD3DDevice_DrawRectPatch(This->WineD3DDevice, Handle, pNumSegs, (CONST WINED3DRECTPATCH_INFO *)pRectPatchInfo);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DrawTriPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DTRIPATCH_INFO* pTriPatchInfo) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
 
-    return IWineD3DDevice_DrawTriPatch(This->WineD3DDevice, Handle, pNumSegs, (WINED3DTRIPATCH_INFO *)pTriPatchInfo);
+    return IWineD3DDevice_DrawTriPatch(This->WineD3DDevice, Handle, pNumSegs, (CONST WINED3DTRIPATCH_INFO *)pTriPatchInfo);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DeletePatch(LPDIRECT3DDEVICE8 iface, UINT Handle) {
