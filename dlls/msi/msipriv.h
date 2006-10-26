@@ -133,11 +133,11 @@ typedef struct tagMSIVIEWOPS
     UINT (*fetch_stream)( struct tagMSIVIEW *, UINT row, UINT col, IStream **stm );
 
     /*
-     * get_int - sets one integer at {row,col} in the table
+     * set_row - sets values in a row as specified by mask
      *
      *  Similar semantics to fetch_int
      */
-    UINT (*set_int)( struct tagMSIVIEW *, UINT row, UINT col, UINT val );
+    UINT (*set_row)( struct tagMSIVIEW *, UINT row, MSIRECORD *rec, UINT mask );
 
     /*
      * Inserts a new row into the database from the records contents

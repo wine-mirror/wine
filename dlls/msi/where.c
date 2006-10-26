@@ -82,21 +82,21 @@ static UINT WHERE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, ISt
     return wv->table->ops->fetch_stream( wv->table, row, col, stm );
 }
 
-static UINT WHERE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
+static UINT WHERE_set_row( struct tagMSIVIEW *view, UINT row, MSIRECORD *rec, UINT mask )
 {
     MSIWHEREVIEW *wv = (MSIWHEREVIEW*)view;
 
-    TRACE("%p %d %d %04x\n", wv, row, col, val );
+    TRACE("%p %d %p %08x\n", wv, row, rec, mask );
 
     if( !wv->table )
          return ERROR_FUNCTION_FAILED;
-    
+
     if( row > wv->row_count )
         return ERROR_NO_MORE_ITEMS;
-    
+
     row = wv->reorder[ row ];
-    
-    return wv->table->ops->set_int( wv->table, row, col, val );
+
+    return wv->table->ops->set_row( wv->table, row, rec, mask );
 }
 
 static INT INT_evaluate( INT lval, UINT op, INT rval )
@@ -420,7 +420,7 @@ static const MSIVIEWOPS where_ops =
 {
     WHERE_fetch_int,
     WHERE_fetch_stream,
-    WHERE_set_int,
+    WHERE_set_row,
     NULL,
     WHERE_execute,
     WHERE_close,
