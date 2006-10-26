@@ -382,11 +382,14 @@ static HRESULT WINAPI CFProxy_CreateInstance(
     hres = IRpcChannelBuffer_SendReceive(This->chanbuf,&msg,&srstatus);
     if (hres) {
 	FIXME("IRpcChannelBuffer_SendReceive failed with %x?\n",hres);
+	IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
 	return hres;
     }
 
-    if (!msg.cbBuffer) /* interface not found on remote */
+    if (!msg.cbBuffer) { /* interface not found on remote */
+	IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
 	return srstatus;
+    }
 
     /* We got back: [Marshalled Interface data] */
     TRACE("got %d bytes data.\n",msg.cbBuffer);
@@ -395,6 +398,7 @@ static HRESULT WINAPI CFProxy_CreateInstance(
     hres = CreateStreamOnHGlobal(hGlobal,TRUE,&pStream);
     if (hres) {
 	FIXME("CreateStreamOnHGlobal failed with %x\n",hres);
+	IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
 	return hres;
     }
     hres = CoUnmarshalInterface(
@@ -403,6 +407,9 @@ static HRESULT WINAPI CFProxy_CreateInstance(
 	    ppv
     );
     IStream_Release(pStream); /* Does GlobalFree hGlobal too. */
+
+    IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
+
     if (hres) {
 	FIXME("CoMarshalInterface failed, %x\n",hres);
 	return hres;
