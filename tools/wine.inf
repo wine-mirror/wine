@@ -644,6 +644,14 @@ HKLM,"Software\Microsoft\OLE","EnableRemoteConnect",,"N"
 
 [Printing]
 HKLM,%Control%\Print\Monitors\Local Port,"Driver",2,"localspl.dll"
+HKLM,%CurrentVersionNT%\Ports,"FILE:",,""
+HKLM,%CurrentVersionNT%\Ports,"LPT1:",,""
+HKLM,%CurrentVersionNT%\Ports,"LPT2:",,""
+HKLM,%CurrentVersionNT%\Ports,"LPT3:",,""
+HKLM,%CurrentVersionNT%\Ports,"COM1:",2,"9600,n,8,1"
+HKLM,%CurrentVersionNT%\Ports,"COM2:",2,"9600,n,8,1"
+HKLM,%CurrentVersionNT%\Ports,"COM3:",2,"9600,n,8,1"
+HKLM,%CurrentVersionNT%\Ports,"COM4:",2,"9600,n,8,1"
 
 [Tapi]
 HKLM,%CurrentVersion%\Telephony,"Perf1",0x10001,0x5045524a
