@@ -1299,19 +1299,24 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
     if (padding < 0)
         padding = 0;
 
-    TRACE("('%s'):%*s", lpszProc, padding, " ");
-    for (i = 0; i < WineGLExtensionListSize; ++i) {
-        ext = WineGLExtensionList[i];
-        for (j = 0; ext->extEntryPoints[j].funcName; ++j) {
-            if (strcmp(ext->extEntryPoints[j].funcName, lpszProc) == 0) {
-                TRACE("(%p) - WineGL\n", ext->extEntryPoints[j].funcAddress);
-                return ext->extEntryPoints[j].funcAddress;
+    /* Check the table of WGL extensions to see if we need to return a WGL extension
+     * or a function pointer to a native OpenGL function. */
+    if(strncmp(lpszProc, "wgl", 3) != 0) {
+        return pglXGetProcAddressARB((GLubyte*)lpszProc);
+    } else {
+        TRACE("('%s'):%*s", lpszProc, padding, " ");
+        for (i = 0; i < WineGLExtensionListSize; ++i) {
+            ext = WineGLExtensionList[i];
+            for (j = 0; ext->extEntryPoints[j].funcName; ++j) {
+                if (strcmp(ext->extEntryPoints[j].funcName, lpszProc) == 0) {
+                    TRACE("(%p) - WineGL\n", ext->extEntryPoints[j].funcAddress);
+                    return ext->extEntryPoints[j].funcAddress;
+                }
             }
         }
     }
 
     ERR("(%s) - not found\n", lpszProc);
-
     return NULL;
 }
 
@@ -2457,6 +2462,15 @@ static BOOL register_extension(const WineGLExtension * ext)
     return TRUE;
 }
 
+static const WineGLExtension WGL_internal_functions =
+{
+  "",
+  {
+    { "wglGetIntegerv", X11DRV_wglGetIntegerv },
+  }
+};
+
+
 static const WineGLExtension WGL_ARB_extensions_string =
 {
   "WGL_ARB_extensions_string",
@@ -2535,6 +2549,9 @@ static const WineGLExtension WGL_EXT_swap_control =
 static void X11DRV_WineGL_LoadExtensions(void)
 {
     WineGLInfo.wglExtensions[0] = 0;
+
+    /* Load Wine internal functions */
+    register_extension(&WGL_internal_functions);
 
     /* ARB Extensions */
 
@@ -2793,11 +2810,6 @@ BOOL WINAPI X11DRV_wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD l
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
-}
-
-/* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
-void X11DRV_wglGetIntegerv(int pname, int* params) {
-    ERR_(opengl)("No OpenGL support compiled in.\n");
 }
 
 XVisualInfo *X11DRV_setup_opengl_visual( Display *display )

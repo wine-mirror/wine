@@ -79,8 +79,6 @@ static Display *default_display;  /* display to use for default context */
 
 static HMODULE opengl32_handle;
 
-static void* (*p_glXGetProcAddressARB)(const GLubyte *);
-
 static char  internal_gl_disabled_extensions[512];
 static char* internal_gl_extensions = NULL;
 
@@ -193,11 +191,6 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     return local_func;
   }
 
-  if (p_glXGetProcAddressARB == NULL) {
-    ERR("Warning : dynamic GL extension loading not supported by native GL library.\n");
-    return NULL;
-  }
-  
   /* After that, search in the thunks to find the real name of the extension */
   ext.name = lpszProc;
   ext_ret = (const OpenGL_extension *) bsearch(&ext, extension_registry,
@@ -205,13 +198,11 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   /* If nothing was found, we are looking for a WGL extension */
   if (ext_ret == NULL) {
+    WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
     return wine_wgl.p_wglGetProcAddress(lpszProc);
   } else { /* We are looking for an OpenGL extension */
-    const char *glx_name = ext_ret->glx_name ? ext_ret->glx_name : ext_ret->name;
-    ENTER_GL();
-    local_func = p_glXGetProcAddressARB( (const GLubyte*)glx_name);
-    LEAVE_GL();
-    
+    local_func = wine_wgl.p_wglGetProcAddress(ext_ret->name);
+
     /* After that, look at the extensions defined in the Linux OpenGL library */
     if (local_func == NULL) {
       char buf[256];
@@ -224,15 +215,15 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 	 OpenGL drivers (moreover, it is only useful for old 1.0 apps
 	 that query the glBindTextureEXT extension).
       */
-      memcpy(buf, glx_name, strlen(glx_name) - 3);
-      buf[strlen(glx_name) - 3] = '\0';
+      memcpy(buf, ext_ret->name, strlen(ext_ret->name) - 3);
+      buf[strlen(ext_ret->name) - 3] = '\0';
       TRACE(" extension not found in the Linux OpenGL library, checking against libGL bug with %s..\n", buf);
 
       ret = GetProcAddress(opengl32_handle, buf);
       if (ret != NULL) {
-	TRACE(" found function in main OpenGL library (%p) !\n", ret);
+        TRACE(" found function in main OpenGL library (%p) !\n", ret);
       } else {
-	WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, glx_name);
+        WARN("Did not find function %s (%s) in your OpenGL library !\n", lpszProc, ext_ret->name);
       }
 
       return ret;
@@ -598,24 +589,23 @@ static BOOL process_attach(void)
   XVisualInfo *vis = NULL;
   Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
   HMODULE mod = GetModuleHandleA( "winex11.drv" );
-  void *opengl_handle;
+  HMODULE mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
   DWORD size = sizeof(internal_gl_disabled_extensions);
   HKEY hkey = 0;
 
-  if (!root || !mod)
+  if (!root || !mod || !mod_gdi32)
   {
-      ERR("X11DRV not loaded. Cannot create default context.\n");
+      ERR("X11DRV or GDI32 not loaded. Cannot create default context.\n");
       return FALSE;
   }
 
   wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
   wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
 
-  /* Load WGL function pointers from winex11.drv */
-  wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod, "wglGetProcAddress");
+  wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
 
   /* Interal WGL function */
-  wine_wgl.p_wglGetIntegerv = (void *)GetProcAddress(mod, "wglGetIntegerv");
+  wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
 
   hdc = GetDC(0);
   default_display = get_display( hdc );
@@ -650,14 +640,6 @@ static BOOL process_attach(void)
   if (default_cx != NULL) glXMakeCurrent(default_display, root, default_cx);
   XFree(vis);
   LEAVE_GL();
-
-  opengl_handle = wine_dlopen(SONAME_LIBGL, RTLD_NOW|RTLD_GLOBAL, NULL, 0);
-  if (opengl_handle != NULL) {
-   p_glXGetProcAddressARB = wine_dlsym(opengl_handle, "glXGetProcAddressARB", NULL, 0);
-   wine_dlclose(opengl_handle, NULL, 0);
-   if (p_glXGetProcAddressARB == NULL)
-	   TRACE("could not find glXGetProcAddressARB in libGL.\n");
-  }
 
   internal_gl_disabled_extensions[0] = 0;
   if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\OpenGL", &hkey)) {

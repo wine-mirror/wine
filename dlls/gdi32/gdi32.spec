@@ -502,6 +502,7 @@
 @ stdcall wglDeleteContext(long)
 @ stdcall wglGetCurrentContext()
 @ stdcall wglGetCurrentDC()
+@ stdcall -private wglGetProcAddress(str)
 @ stdcall wglMakeCurrent(long long)
 @ stdcall wglShareLists(long long)
 @ stdcall wglUseFontBitmapsA(long long long long)

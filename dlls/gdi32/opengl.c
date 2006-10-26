@@ -221,3 +221,28 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
     GDI_ReleaseObj( hdc);
     return ret;
 }
+
+/***********************************************************************
+ *		Internal wglGetProcAddress for retrieving WGL extensions
+ */
+PROC WINAPI wglGetProcAddress(LPCSTR func)
+{
+    PROC ret = NULL;
+    DC * dc = NULL;
+
+    if(!func)
+	return NULL;
+
+    TRACE("func: '%p'\n", func);
+
+    /* Retrieve the global hDC to get access to the driver.  */
+    dc = OPENGL_GetDefaultDC();
+    if (!dc) return FALSE;
+
+    if (!dc->funcs->pwglGetProcAddress) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglGetProcAddress(func);
+
+    GDI_ReleaseObj(default_hdc);
+
+    return ret;
+}
