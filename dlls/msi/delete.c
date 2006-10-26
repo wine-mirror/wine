@@ -73,24 +73,6 @@ static UINT DELETE_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IS
     return ERROR_FUNCTION_FAILED;
 }
 
-static UINT DELETE_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
-{
-    MSIDELETEVIEW *dv = (MSIDELETEVIEW*)view;
-
-    TRACE("%p %d %d %04x\n", dv, row, col, val );
-
-    return ERROR_FUNCTION_FAILED;
-}
-
-static UINT DELETE_insert_row( struct tagMSIVIEW *view, MSIRECORD *record )
-{
-    MSIDELETEVIEW *dv = (MSIDELETEVIEW*)view;
-
-    TRACE("%p %p\n", dv, record );
-
-    return ERROR_FUNCTION_FAILED;
-}
-
 static UINT DELETE_execute( struct tagMSIVIEW *view, MSIRECORD *record )
 {
     MSIDELETEVIEW *dv = (MSIDELETEVIEW*)view;
@@ -195,8 +177,8 @@ static const MSIVIEWOPS delete_ops =
 {
     DELETE_fetch_int,
     DELETE_fetch_stream,
-    DELETE_set_int,
-    DELETE_insert_row,
+    NULL,
+    NULL,
     DELETE_execute,
     DELETE_close,
     DELETE_get_dimensions,

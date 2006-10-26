@@ -103,24 +103,6 @@ static UINT JOIN_fetch_stream( struct tagMSIVIEW *view, UINT row, UINT col, IStr
     return table->ops->fetch_stream( table, row, col, stm );
 }
 
-static UINT JOIN_set_int( struct tagMSIVIEW *view, UINT row, UINT col, UINT val )
-{
-    MSIJOINVIEW *jv = (MSIJOINVIEW*)view;
-
-    TRACE("%p %d %d %04x\n", jv, row, col, val );
-
-    return ERROR_FUNCTION_FAILED;
-}
-
-static UINT JOIN_insert_row( struct tagMSIVIEW *view, MSIRECORD *record )
-{
-    MSIJOINVIEW *jv = (MSIJOINVIEW*)view;
-
-    TRACE("%p %p\n", jv, record );
-
-    return ERROR_FUNCTION_FAILED;
-}
-
 static int join_key_compare(const void *l, const void *r)
 {
     const UINT *left = l, *right = r;
@@ -345,8 +327,8 @@ static const MSIVIEWOPS join_ops =
 {
     JOIN_fetch_int,
     JOIN_fetch_stream,
-    JOIN_set_int,
-    JOIN_insert_row,
+    NULL,
+    NULL,
     JOIN_execute,
     JOIN_close,
     JOIN_get_dimensions,
