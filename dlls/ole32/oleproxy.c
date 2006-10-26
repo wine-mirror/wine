@@ -171,31 +171,31 @@ CFStub_Invoke(
 	}
 	hres = IClassFactory_CreateInstance(classfac,NULL,&iid,(LPVOID*)&ppv);
 	IClassFactory_Release(classfac);
+	msg->cbBuffer = 0;
 	if (hres) {
-	    msg->cbBuffer = 0;
 	    FIXME("Failed to create an instance of %s\n",debugstr_guid(&iid));
-	    return hres;
+	    goto getbuffer;
 	}
 	hres = CreateStreamOnHGlobal(0,TRUE,&pStm);
 	if (hres) {
 	    FIXME("Failed to create stream on hglobal\n");
-	    return hres;
+	    goto getbuffer;
 	}
 	hres = CoMarshalInterface(pStm,&iid,ppv,0,NULL,0);
 	IUnknown_Release((IUnknown*)ppv);
 	if (hres) {
-            FIXME("CoMarshalInterface failed, %x!\n",hres);
-	    msg->cbBuffer = 0;
-	    return hres;
+	    FIXME("CoMarshalInterface failed, %x!\n",hres);
+	    goto getbuffer;
 	}
 	hres = IStream_Stat(pStm,&ststg,0);
 	if (hres) {
 	    FIXME("Stat failed.\n");
-	    return hres;
+	    goto getbuffer;
 	}
 
 	msg->cbBuffer = ststg.cbSize.u.LowPart;
 
+getbuffer:
         IRpcChannelBuffer_GetBuffer(chanbuf, msg, &IID_IClassFactory);
         if (hres) return hres;
 
