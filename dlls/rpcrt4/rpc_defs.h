@@ -143,6 +143,9 @@ typedef struct
   unsigned long auth_context_id; /* unique value for the authenticated connection */
 } RpcAuthVerifier;
 
+#define RPC_AUTH_VERIFIER_LEN(common_hdr) \
+    ((common_hdr)->auth_len ? (common_hdr)->auth_len + sizeof(RpcAuthVerifier) : 0)
+
 #define RPC_VER_MAJOR             5
 #define RPC_VER_MINOR             0
 

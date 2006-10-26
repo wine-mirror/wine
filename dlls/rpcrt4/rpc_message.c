@@ -475,7 +475,9 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   unsigned short first_flag;
   unsigned long data_length;
   unsigned long buffer_length;
+  unsigned long auth_length;
   unsigned char *buffer_ptr;
+  unsigned char *auth_data = NULL;
   RpcPktCommonHdr common_hdr;
 
   *Header = NULL;
@@ -525,7 +527,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     pMsg->BufferLength = (*Header)->request.alloc_hint;
     break;
   default:
-    pMsg->BufferLength = common_hdr.frag_len - hdr_length;
+    pMsg->BufferLength = common_hdr.frag_len - hdr_length - RPC_AUTH_VERIFIER_LEN(&common_hdr);
   }
 
   TRACE("buffer length = %u\n", pMsg->BufferLength);
@@ -534,11 +536,38 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   if (status != RPC_S_OK) goto fail;
 
   first_flag = RPC_FLG_FIRST;
+  auth_length = common_hdr.auth_len;
+  if (auth_length) {
+    auth_data = HeapAlloc(GetProcessHeap(), 0, RPC_AUTH_VERIFIER_LEN(&common_hdr));
+    if (!auth_data) {
+      status = RPC_S_PROTOCOL_ERROR;
+      goto fail;
+    }
+  }
   buffer_length = 0;
   buffer_ptr = pMsg->Buffer;
   while (buffer_length < pMsg->BufferLength)
   {
-    data_length = (*Header)->common.frag_len - hdr_length;
+    unsigned int header_auth_len = RPC_AUTH_VERIFIER_LEN(&(*Header)->common);
+
+    /* verify header fields */
+
+    if (((*Header)->common.frag_len < hdr_length) ||
+        ((*Header)->common.frag_len - hdr_length < header_auth_len)) {
+      WARN("frag_len %d too small for hdr_length %ld and auth_len %d\n",
+        common_hdr.frag_len, hdr_length, common_hdr.auth_len);
+      status = RPC_S_PROTOCOL_ERROR;
+      goto fail;
+    }
+
+    if ((*Header)->common.auth_len != auth_length) {
+      WARN("auth_len header field changed from %ld to %d\n",
+        auth_length, (*Header)->common.auth_len);
+      status = RPC_S_PROTOCOL_ERROR;
+      goto fail;
+    }
+
+    data_length = (*Header)->common.frag_len - hdr_length - header_auth_len;
     if (((*Header)->common.flags & RPC_FLG_FIRST) != first_flag ||
         data_length + buffer_length > pMsg->BufferLength) {
       TRACE("invalid packet flags or buffer length\n");
@@ -552,6 +581,21 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       WARN("bad data length, %ld/%ld\n", dwRead, data_length);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
+    }
+
+    if (header_auth_len) {
+      /* FIXME: we should accumulate authentication data for the bind,
+       * bind_ack, alter_context and alter_context_response if necessary.
+       * however, the details of how this is done is very sketchy in the
+       * DCE/RPC spec. for all other packet types that have authentication
+       * verifier data then it is just duplicated in all the fragments */
+      dwRead = rpcrt4_conn_read(Connection, auth_data, header_auth_len);
+      if (dwRead != header_auth_len) {
+        WARN("bad authentication data length, %ld/%d\n", dwRead,
+          header_auth_len);
+        status = RPC_S_PROTOCOL_ERROR;
+        goto fail;
+      }
     }
 
     /* when there is no more data left, it should be the last packet */
@@ -580,13 +624,11 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   }
 
   /* respond to authorization request */
-  if (common_hdr.ptype == PKT_BIND_ACK && common_hdr.auth_len > 8)
+  if (common_hdr.ptype == PKT_BIND_ACK && auth_length > sizeof(RpcAuthVerifier))
   {
-    unsigned int offset;
-
-    offset = common_hdr.frag_len - hdr_length - common_hdr.auth_len;
-    status = RPCRT_AuthorizeConnection(Connection, (LPBYTE)pMsg->Buffer + offset,
-                                       common_hdr.auth_len);
+    status = RPCRT_AuthorizeConnection(Connection,
+                                       auth_data + sizeof(RpcAuthVerifier),
+                                       auth_length);
     if (status)
         goto fail;
   }
@@ -599,6 +641,7 @@ fail:
     RPCRT4_FreeHeader(*Header);
     *Header = NULL;
   }
+  HeapFree(GetProcessHeap(), 0, auth_data);
   return status;
 }
 
