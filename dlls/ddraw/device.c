@@ -1693,7 +1693,7 @@ Thunk_IDirect3DDeviceImpl_2_GetCurrentViewport(IDirect3DDevice2 *iface,
     hr = IDirect3DDevice3_GetCurrentViewport(ICOM_INTERFACE(This, IDirect3DDevice3),
                                             (IDirect3DViewport3 **) Direct3DViewport2);
     if(hr != D3D_OK) return hr;
-    *Direct3DViewport2 = (IDirect3DViewport2 *) COM_INTERFACE_CAST(IDirect3DViewportImpl, IDirect3DViewport3, IDirect3DViewport3, Direct3DViewport2);
+    *Direct3DViewport2 = (IDirect3DViewport2 *) COM_INTERFACE_CAST(IDirect3DViewportImpl, IDirect3DViewport3, IDirect3DViewport3, *Direct3DViewport2);
     return D3D_OK;
 }
 
@@ -1800,7 +1800,7 @@ Thunk_IDirect3DDeviceImpl_3_GetRenderTarget(IDirect3DDevice3 *iface,
     hr = IDirect3DDevice7_GetRenderTarget(ICOM_INTERFACE(This, IDirect3DDevice7),
                                           (IDirectDrawSurface7 **) RenderTarget);
     if(hr != D3D_OK) return hr;
-    *RenderTarget = (IDirectDrawSurface4 *) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirectDrawSurface7, RenderTarget);
+    *RenderTarget = (IDirectDrawSurface4 *) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirectDrawSurface7, *RenderTarget);
     return D3D_OK;
 }
 
@@ -1814,7 +1814,7 @@ Thunk_IDirect3DDeviceImpl_2_GetRenderTarget(IDirect3DDevice2 *iface,
     hr = IDirect3DDevice7_GetRenderTarget(ICOM_INTERFACE(This, IDirect3DDevice7),
                                           (IDirectDrawSurface7 **) RenderTarget);
     if(hr != D3D_OK) return hr;
-    *RenderTarget = (IDirectDrawSurface *) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirectDrawSurface3, RenderTarget);
+    *RenderTarget = (IDirectDrawSurface *) COM_INTERFACE_CAST(IDirectDrawSurfaceImpl, IDirectDrawSurface7, IDirectDrawSurface3, *RenderTarget);
     return D3D_OK;
 }
 
