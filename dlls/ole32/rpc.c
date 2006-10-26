@@ -547,6 +547,7 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     if (hr != S_OK)
     {
         ERR("no apartment found for ipid %s\n", debugstr_guid(&ipid));
+        HeapFree(GetProcessHeap(), 0, params);
         return RpcRaiseException(hr);
     }
 
