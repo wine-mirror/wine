@@ -29,27 +29,19 @@
  * - dual interface dispinterfaces. vtable-interface ITypeInfo instances are
  *   creating by doing a straight copy of the dispinterface instance and just changing
  *   its typekind. Pointed structures aren't copied - only the address of the pointers.
- *   So when you release the dispinterface, you delete the vtable-interface structures
- *   as well... fortunately, clean up of structures is not implemented.
  *
  * - locale stuff is partially implemented but hasn't been tested.
  *
  * - typelib file is still read in its entirety, but it is released now.
- * - some garbage is read from function names on some very rare occasions.
  *
  * --------------------------------------------------------------------------------------
  *  Known problems left from previous implementation (1999, Rein Klazes) :
  *
  * -. Data structures are straightforward, but slow for look-ups.
  * -. (related) nothing is hashed
- * -. there are a number of stubs in ITypeLib and ITypeInfo interfaces. Most
- *      of them I don't know yet how to implement them.
  * -. Most error return values are just guessed not checked with windows
  *      behaviour.
- * -. didn't bother with a c++ interface
  * -. lousy fatal error handling
- * -. some methods just return pointers to internal data structures, this is
- *      partly laziness, partly I want to check how windows does it.
  *
  */
 
@@ -739,7 +731,7 @@ HRESULT WINAPI UnRegisterTypeLib(
     ITypeLib* typeLib = NULL;
     int numTypes;
 
-    TRACE("(IID: %s): stub\n",debugstr_guid(libid));
+    TRACE("(IID: %s)\n",debugstr_guid(libid));
 
     /* Create the path to the key */
     get_typelib_key( libid, wVerMajor, wVerMinor, keyName );
@@ -4542,7 +4534,7 @@ static HRESULT WINAPI ITypeInfo_fnGetTypeComp( ITypeInfo2 *iface,
 {
     ITypeInfoImpl *This = (ITypeInfoImpl *)iface;
 
-    TRACE("(%p)->(%p) stub!\n", This, ppTComp);
+    TRACE("(%p)->(%p)\n", This, ppTComp);
 
     *ppTComp = (ITypeComp *)&This->lpVtblTypeComp;
     ITypeComp_AddRef(*ppTComp);
