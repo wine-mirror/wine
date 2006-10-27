@@ -1,6 +1,7 @@
 /*
- * Implementation of the Local Printmonitor: internal include file
+ * English resources for localspl
  *
+ * Copyright 2005 Huw Davies
  * Copyright 2006 Detlef Riekenberg
  *
  * This library is free software; you can redistribute it and/or
@@ -18,15 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_LOCALSPL_PRIVATE__
-#define __WINE_LOCALSPL_PRIVATE__
+LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 
-
-/* ## DLL-wide Globals ## */
-extern HINSTANCE LOCALSPL_hInstance;
-
-/* ## Resource-ID ## */
-#define IDS_LOCALPORT       500
-#define IDS_LOCALMONITOR    507
-
-#endif /* __WINE_LOCALSPL_PRIVATE__ */
+STRINGTABLE DISCARDABLE
+{
+    IDS_LOCALPORT "Local Port"
+    IDS_LOCALMONITOR "Local Monitor"
+}
