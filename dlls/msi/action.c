@@ -700,12 +700,10 @@ static UINT ACTION_PerformActionSequence(MSIPACKAGE *package, UINT seq, BOOL UI)
 
         /* check conditions */
         cond = MSI_RecordGetString(row,2);
-        if (cond)
-        {
-            /* this is a hack to skip errors in the condition code */
-            if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
-                goto end;
-        }
+
+        /* this is a hack to skip errors in the condition code */
+        if (MSI_EvaluateConditionW(package, cond) == MSICONDITION_FALSE)
+            goto end;
 
         action = MSI_RecordGetString(row,1);
         if (!action)
@@ -743,20 +741,17 @@ static UINT ITERATE_Actions(MSIRECORD *row, LPVOID param)
     if (!action)
     {
         ERR("Error is retrieving action name\n");
-        return  ERROR_FUNCTION_FAILED;
+        return ERROR_FUNCTION_FAILED;
     }
 
     /* check conditions */
     cond = MSI_RecordGetString(row,2);
-    if (cond)
+
+    /* this is a hack to skip errors in the condition code */
+    if (MSI_EvaluateConditionW(iap->package, cond) == MSICONDITION_FALSE)
     {
-        /* this is a hack to skip errors in the condition code */
-        if (MSI_EvaluateConditionW(iap->package, cond) == MSICONDITION_FALSE)
-        {
-            TRACE("Skipping action: %s (condition is false)\n",
-                            debugstr_w(action));
-            return ERROR_SUCCESS;
-        }
+        TRACE("Skipping action: %s (condition is false)\n", debugstr_w(action));
+        return ERROR_SUCCESS;
     }
 
     if (iap->UI)
@@ -2044,14 +2039,10 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     TRACE("Enabling or Disabling Components\n");
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
-        if (comp->Condition)
+        if (MSI_EvaluateConditionW(package, comp->Condition) == MSICONDITION_FALSE)
         {
-            if (MSI_EvaluateConditionW(package,
-                comp->Condition) == MSICONDITION_FALSE)
-            {
-                TRACE("Disabling component %s\n", debugstr_w(comp->Component));
-                comp->Enabled = FALSE;
-            }
+            TRACE("Disabling component %s\n", debugstr_w(comp->Component));
+            comp->Enabled = FALSE;
         }
     }
 
