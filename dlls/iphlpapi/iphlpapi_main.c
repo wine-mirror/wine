@@ -722,7 +722,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                   if (firstIPAddr) {
                     toIPAddressString(ipAddrTable->table[i].dwAddr,
                      ptr->IpAddressList.IpAddress.String);
-                    toIPAddressString(ipAddrTable->table[i].dwBCastAddr,
+                    toIPAddressString(ipAddrTable->table[i].dwMask,
                      ptr->IpAddressList.IpMask.String);
                     firstIPAddr = FALSE;
                   }
@@ -731,7 +731,7 @@ DWORD WINAPI GetAdaptersInfo(PIP_ADAPTER_INFO pAdapterInfo, PULONG pOutBufLen)
                     currentIPAddr = nextIPAddr;
                     toIPAddressString(ipAddrTable->table[i].dwAddr,
                      currentIPAddr->IpAddress.String);
-                    toIPAddressString(ipAddrTable->table[i].dwBCastAddr,
+                    toIPAddressString(ipAddrTable->table[i].dwMask,
                      currentIPAddr->IpMask.String);
                     nextIPAddr++;
                   }
