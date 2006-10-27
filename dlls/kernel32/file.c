@@ -1546,6 +1546,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
                                 LPVOID data, FINDEX_SEARCH_OPS search_op,
                                 LPVOID filter, DWORD flags)
 {
+    static const WCHAR wildcardsW[] = { '*','?',0 };
     WCHAR *mask, *p;
     FIND_FIRST_INFO *info = NULL;
     UNICODE_STRING nt_name;
@@ -1637,6 +1638,12 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         SetLastError( ERROR_FILE_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
     }
+    if (!strpbrkW( info->mask.Buffer, wildcardsW ))
+    {
+        /* we can't find two files with the same name */
+        CloseHandle( info->handle );
+        info->handle = 0;
+    }
     return (HANDLE)info;
 
 error:
@@ -1671,7 +1678,8 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
 
     RtlEnterCriticalSection( &info->cs );
 
-    for (;;)
+    if (!info->handle) SetLastError( ERROR_NO_MORE_FILES );
+    else for (;;)
     {
         if (info->data_pos >= info->data_len)  /* need to read some more data */
         {
@@ -1682,6 +1690,11 @@ BOOL WINAPI FindNextFileW( HANDLE handle, WIN32_FIND_DATAW *data )
             if (io.u.Status)
             {
                 SetLastError( RtlNtStatusToDosError( io.u.Status ) );
+                if (io.u.Status == STATUS_NO_MORE_FILES)
+                {
+                    CloseHandle( info->handle );
+                    info->handle = 0;
+                }
                 break;
             }
             info->data_len = io.Information;
