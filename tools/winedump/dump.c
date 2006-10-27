@@ -248,16 +248,12 @@ int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
 
     effective_sig = check_headers();
 
-    if (effective_sig == SIG_UNKNOWN)
-    {
-	printf("Can't get a recognized file signature, aborting\n");
-	ret = 0;
-    }
-    else if (wanted_sig == SIG_UNKNOWN || wanted_sig == effective_sig)
+    if (wanted_sig == SIG_UNKNOWN || wanted_sig == effective_sig)
     {
 	switch (effective_sig)
 	{
 	case SIG_UNKNOWN: /* shouldn't happen... */
+	    printf("Can't get a recognized file signature, aborting\n");
 	    ret = 0; break;
 	case SIG_PE:
 	case SIG_NE:
