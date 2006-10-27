@@ -1797,7 +1797,6 @@ typedef struct _WineD3D_GL_Info {
 
 typedef struct _WineD3D_GLContext {
   GLXContext   glCtx; 
-  XVisualInfo* visInfo;
   Display*     display;
   Drawable     drawable;
   LONG         ref;

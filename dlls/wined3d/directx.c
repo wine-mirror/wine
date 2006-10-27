@@ -73,7 +73,7 @@ DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
  * function query some info from GL
  */
 static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
-    static WineD3D_Context ctx = { NULL, NULL, NULL, 0, 0 };
+    static WineD3D_Context ctx;
     WineD3D_Context* ret = NULL;
 
     if (glXGetCurrentContext() == NULL) {
@@ -84,6 +84,7 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
        Visual*      visual;
        BOOL         failed = FALSE;
        int          num;
+       XVisualInfo *visInfo;
        XWindowAttributes win_attr;
        TRACE_(d3d_caps)("Creating Fake GL Context\n");
 
@@ -102,8 +103,8 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
            visual = DefaultVisual(ctx.display, DefaultScreen(ctx.display));
        }
        template.visualid = XVisualIDFromVisual(visual);
-       ctx.visInfo = XGetVisualInfo(ctx.display, VisualIDMask, &template, &num);
-       if (ctx.visInfo == NULL) {
+       visInfo = XGetVisualInfo(ctx.display, VisualIDMask, &template, &num);
+       if (visInfo == NULL) {
            LEAVE_GL();
            WARN_(d3d_caps)("Error creating visual info for capabilities initialization\n");
            failed = TRUE;
@@ -111,7 +112,8 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
 
        /* Create a GL context */
        if (!failed) {
-           ctx.glCtx = glXCreateContext(ctx.display, ctx.visInfo, NULL, GL_TRUE);
+           ctx.glCtx = glXCreateContext(ctx.display, visInfo, NULL, GL_TRUE);
+           XFree( visInfo );
 
            if (ctx.glCtx == NULL) {
                LEAVE_GL();
