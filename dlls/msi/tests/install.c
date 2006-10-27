@@ -803,6 +803,8 @@ static void test_continuouscabs(void)
     create_cc_test_files();
     create_database(msifile, cc_tables, sizeof(cc_tables) / sizeof(msi_table));
 
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
     r = MsiInstallProductA(msifile, NULL);
     todo_wine
     {

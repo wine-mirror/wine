@@ -680,6 +680,7 @@ extern UINT msi_dialog_reset( msi_dialog *dialog );
 extern UINT msi_dialog_directorylist_up( msi_dialog *dialog );
 extern msi_dialog *msi_dialog_get_parent( msi_dialog *dialog );
 extern LPWSTR msi_dialog_get_name( msi_dialog *dialog );
+extern UINT msi_spawn_error_dialog( MSIPACKAGE*, LPWSTR, LPWSTR );
 
 /* preview */
 extern MSIPREVIEW *MSI_EnableUIPreview( MSIDATABASE * );

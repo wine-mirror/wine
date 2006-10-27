@@ -425,6 +425,29 @@ static UINT msi_extract_remote_cabinet( MSIPACKAGE *package, struct media_info *
     return !extract_cabinet_file(package, mi->source, mi->last_path);
 }
 
+static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi, LPCWSTR prompt )
+{
+    LPWSTR error, error_dialog;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
+    static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
+
+    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE )
+        return ERROR_SUCCESS;
+
+    error = generate_error_string( package, 1302, 1, prompt );
+    error_dialog = msi_dup_property( package, error_prop );
+
+    while ( r == ERROR_SUCCESS && GetFileAttributesW( mi->source ) == INVALID_FILE_ATTRIBUTES )
+        r = msi_spawn_error_dialog( package, error_dialog, error );
+
+    msi_free( error );
+    msi_free( error_dialog );
+
+    return r;
+}
+
 static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                                   MSIFILE *file )
 {
@@ -528,6 +551,12 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                 strcpyW(mi->last_path,mi->source);
                 strcatW(mi->source,cab);
 
+                if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+                    rc = msi_change_media(package, mi, prompt);
+
+                if ( rc != ERROR_SUCCESS )
+                    goto done;
+
                 MsiSourceListSetInfoW(package->ProductCode, NULL,
                             MSIINSTALLCONTEXT_USERMANAGED,
                             MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
@@ -570,6 +599,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
             MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
             prompt);
 
+done:
     msiobj_release(&row->hdr);
 
     return rc;
