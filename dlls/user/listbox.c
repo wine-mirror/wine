@@ -2731,16 +2731,38 @@ static LRESULT WINAPI ListBoxWndProc_common( HWND hwnd, UINT msg,
         {
             POINT pt;
             RECT rect;
+            int index;
+            BOOL hit = TRUE;
 
-	    pt.x = (short)LOWORD(lParam);
-	    pt.y = (short)HIWORD(lParam);
-	    rect.left = 0;
-	    rect.top = 0;
-	    rect.right = descr->width;
-	    rect.bottom = descr->height;
+            /* The hiword of the return value is not a client area
+               hittest as suggested by MSDN, but rather a hittest on
+               the returned listbox item. */
 
-            return MAKELONG( LISTBOX_GetItemFromPoint(descr, pt.x, pt.y),
-                             !PtInRect( &rect, pt ) );
+            if(descr->nb_items == 0)
+                return 0x1ffff;      /* win9x returns 0x10000, we copy winnt */
+
+            pt.x = (short)LOWORD(lParam);
+            pt.y = (short)HIWORD(lParam);
+
+            SetRect(&rect, 0, 0, descr->width, descr->height);
+
+            if(!PtInRect(&rect, pt))
+            {
+                pt.x = min(pt.x, rect.right - 1);
+                pt.x = max(pt.x, 0);
+                pt.y = min(pt.y, rect.bottom - 1);
+                pt.y = max(pt.y, 0);
+                hit = FALSE;
+            }
+
+            index = LISTBOX_GetItemFromPoint(descr, pt.x, pt.y);
+
+            if(index == -1)
+            {
+                index = descr->nb_items - 1;
+                hit = FALSE;
+            }
+            return MAKELONG(index, hit ? 0 : 1);
         }
 
     case LB_SETCARETINDEX16:

@@ -429,6 +429,79 @@ static void test_listbox_height(void)
     DestroyWindow( hList );
 }
 
+static void test_itemfrompoint(void)
+{
+    HWND hList = CreateWindow( "ListBox", "list test", 0,
+                               1, 1, 600, 100, NULL, NULL, NULL, NULL );
+    LONG r, id;
+    RECT rc;
+
+    /* For an empty listbox win2k returns 0x1ffff, win98 returns 0x10000 */
+    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 30 ));
+    ok( r == 0x1ffff || r == 0x10000, "ret %x\n", r );
+
+    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( 700, 30 ));
+    ok( r == 0x1ffff || r == 0x10000, "ret %x\n", r );
+
+    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( 30, 300 ));
+    ok( r == 0x1ffff || r == 0x10000, "ret %x\n", r );
+
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi");
+    ok( id == 0, "item id wrong\n");
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi1");
+    ok( id == 1, "item id wrong\n");
+
+    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 30 ));
+    ok( r == 0x1, "ret %x\n", r );
+
+    r = SendMessage(hList, LB_ITEMFROMPOINT, 0, MAKELPARAM( /* x */ 30, /* y */ 37 ));
+    ok( r == 0x10001, "ret %x\n", r );
+
+
+
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi2");
+    ok( id == 2, "item id wrong\n");
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi3");
+    ok( id == 3, "item id wrong\n");
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi4");
+    ok( id == 4, "item id wrong\n");
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi5");
+    ok( id == 5, "item id wrong\n");
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi6");
+    ok( id == 6, "item id wrong\n");
+    id = SendMessage( hList, LB_ADDSTRING, 0, (LPARAM) "hi7");
+    ok( id == 7, "item id wrong\n");
+
+    /* Set the listbox up so that id 1 is at the top, this leaves 5
+       partially visible at the bottom and 6, 7 are invisible */
+
+    SendMessage( hList, LB_SETTOPINDEX, 1, 0);
+    r = SendMessage( hList, LB_GETTOPINDEX, 0, 0);
+    ok( r == 1, "top %d\n", r);
+
+    r = SendMessage( hList, LB_GETITEMRECT, 5, (LPARAM)&rc);
+    ok( r == 1, "ret %x\n", r);
+    r = SendMessage( hList, LB_GETITEMRECT, 6, (LPARAM)&rc);
+    ok( r == 0, "ret %x\n", r);
+
+    r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(/* x */ 10, /* y */ 10) );
+    ok( r == 1, "ret %x\n", r);
+
+    r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(1000, 10) );
+    ok( r == 0x10001, "ret %x\n", r );
+
+    r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(10, -10) );
+    ok( r == 0x10001, "ret %x\n", r );
+
+    r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(10, 100) );
+    ok( r == 0x10005, "item %x\n", r );
+
+    r = SendMessage( hList, LB_ITEMFROMPOINT, 0, MAKELPARAM(10, 200) );
+    ok( r == 0x10005, "item %x\n", r );
+
+    DestroyWindow( hList );
+}
+
 START_TEST(listbox)
 {
   const struct listbox_test SS =
@@ -503,4 +576,5 @@ START_TEST(listbox)
   test_ownerdraw();
   test_selection();
   test_listbox_height();
+  test_itemfrompoint();
 }
