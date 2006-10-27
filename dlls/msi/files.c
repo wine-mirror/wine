@@ -458,7 +458,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
          '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
          '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
          ' ','%', 'i',' ','O','R','D','E','R',' ','B','Y',' ',
-         '`','L','a','s','t','S','e','q','u','e','n','c','e','`',0};
+         '`','D','i','s','k','I','d','`',0};
     LPCWSTR cab, volume;
     DWORD sz;
     INT seq;
@@ -700,8 +700,13 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (file->IsCompressed)
         {
             if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(file->TargetPath))
+            {
                 ERR("compressed file wasn't extracted (%s)\n",
                     debugstr_w(file->TargetPath));
+                rc = ERROR_INSTALL_FAILURE;
+                break;
+            }
+
             continue;
         }
 

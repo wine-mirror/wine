@@ -839,13 +839,13 @@ static void test_caborder(void)
     create_cab_file("test2.cab", MEDIA_SIZE, "augustus\0");
 
     r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
     todo_wine
     {
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
-        ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
-        ok(!delete_pf("msitest", FALSE), "File is installed\n");
+    	ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+    	ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
-    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
 
     DeleteFile("test1.cab");
     DeleteFile("test2.cab");
@@ -854,12 +854,12 @@ static void test_caborder(void)
     create_cab_file("test2.cab", MEDIA_SIZE, "maximus\0augustus\0");
 
     r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
     todo_wine
     {
-        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
-        ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
-        ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
-        ok(!delete_pf("msitest", FALSE), "File is installed\n");
+    	ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
 
     DeleteFile("test1.cab");
