@@ -864,8 +864,8 @@ UINT WINAPI SHAppBarMessage(DWORD msg, PAPPBARDATA data)
         data->hWnd=GetActiveWindow();
         return TRUE;
     case ABM_NEW:
-        SetWindowPos(data->hWnd,HWND_TOP,rec.left,rec.top,
-                          width,height,SWP_SHOWWINDOW);
+        /* cbSize, hWnd, and uCallbackMessage are used. All other ignored */
+        SetWindowPos(data->hWnd,HWND_TOP,0,0,0,0,SWP_SHOWWINDOW|SWP_NOMOVE|SWP_NOSIZE);
         return TRUE;
     case ABM_QUERYPOS:
         GetWindowRect(data->hWnd, &(data->rc));
