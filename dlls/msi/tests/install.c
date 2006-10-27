@@ -823,6 +823,54 @@ static void test_continuouscabs(void)
     DeleteFile(msifile);
 }
 
+static void test_caborder(void)
+{
+    UINT r;
+
+    create_file("imperator", 100);
+    create_file("maximus", 500);
+    create_file("augustus", 50000);
+
+    create_database(msifile, cc_tables, sizeof(cc_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
+    create_cab_file("test2.cab", MEDIA_SIZE, "augustus\0");
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
+        ok(!delete_pf("msitest", FALSE), "File is installed\n");
+    }
+    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+
+    DeleteFile("test1.cab");
+    DeleteFile("test2.cab");
+
+    create_cab_file("test1.cab", MEDIA_SIZE, "imperator\0");
+    create_cab_file("test2.cab", MEDIA_SIZE, "maximus\0augustus\0");
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+        ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
+        ok(!delete_pf("msitest", FALSE), "File is installed\n");
+    }
+
+    DeleteFile("test1.cab");
+    DeleteFile("test2.cab");
+
+    DeleteFile("imperator");
+    DeleteFile("maximus");
+    DeleteFile("augustus");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -839,4 +887,5 @@ START_TEST(install)
     test_MsiSetComponentState();
     test_packagecoltypes();
     test_continuouscabs();
+    test_caborder();
 }
