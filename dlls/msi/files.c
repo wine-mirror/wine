@@ -490,11 +490,16 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         /* the stream does not contain the # character */
         if (cab[0]=='#')
         {
-            LPWSTR path;
+            LPWSTR path, p;
 
-            writeout_cabinet_stream(package,&cab[1],mi->source);
+            rc = writeout_cabinet_stream(package,&cab[1],mi->source);
+            if (rc != ERROR_SUCCESS)
+                return rc;
+
             mi->last_path = strdupW(mi->source);
-            *(strrchrW(mi->last_path,'\\')+1)=0;
+            p = strrchrW(mi->last_path,'\\');
+            if (p)
+                p[1] = 0;
 
             path = msi_dup_property( package, cszSourceDir );
 
