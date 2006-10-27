@@ -69,7 +69,6 @@ DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 typedef struct _WineD3D_GLContext {
   GLXContext   glCtx;
   Display*     display;
-  Drawable     drawable;
   LONG         ref;
 } WineD3D_Context;
 
@@ -92,10 +91,11 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
        BOOL         failed = FALSE;
        int          num;
        XVisualInfo *visInfo;
+       Drawable drawable;
        XWindowAttributes win_attr;
        TRACE_(d3d_caps)("Creating Fake GL Context\n");
 
-       ctx.drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
+       drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
 
        /* Get the display */
        device_context = GetDC(0);
@@ -104,7 +104,7 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
 
        /* Get the X visual */
        ENTER_GL();
-       if (XGetWindowAttributes(ctx.display, ctx.drawable, &win_attr)) {
+       if (XGetWindowAttributes(ctx.display, drawable, &win_attr)) {
            visual = win_attr.visual;
        } else {
            visual = DefaultVisual(ctx.display, DefaultScreen(ctx.display));
@@ -130,7 +130,7 @@ static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
        }
 
        /* Make it the current GL context */
-       if (!failed && glXMakeCurrent(ctx.display, ctx.drawable, ctx.glCtx) == False) {
+       if (!failed && glXMakeCurrent(ctx.display, drawable, ctx.glCtx) == False) {
            glXDestroyContext(ctx.display, ctx.glCtx);
            LEAVE_GL();
            WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
@@ -1342,17 +1342,17 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
     return WINED3D_OK;
 }
 
-static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(WineD3D_Context* ctx, GLXFBConfig cfgs, WINED3DFORMAT Format) {
+static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(Display *display, GLXFBConfig cfgs, WINED3DFORMAT Format) {
 #if 0 /* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
   int gl_test;
   int rb, gb, bb, ab, type, buf_sz;
 
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_RED_SIZE,   &rb);
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_GREEN_SIZE, &gb);
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_BLUE_SIZE,  &bb);
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_ALPHA_SIZE, &ab);
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_RENDER_TYPE, &type);
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_BUFFER_SIZE, &buf_sz);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_RED_SIZE,   &rb);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_GREEN_SIZE, &gb);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_BLUE_SIZE,  &bb);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_ALPHA_SIZE, &ab);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_RENDER_TYPE, &type);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_BUFFER_SIZE, &buf_sz);
 
   switch (Format) {
   case WINED3DFMT_X8R8G8B8:
@@ -1412,13 +1412,13 @@ return FALSE;
 #endif
 }
 
-static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(WineD3D_Context* ctx, GLXFBConfig cfgs, WINED3DFORMAT Format) {
+static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(Display *display, GLXFBConfig cfgs, WINED3DFORMAT Format) {
 #if 0/* This code performs a strict test between the format and the current X11  buffer depth, which may give the best performance */
   int gl_test;
   int db, sb;
 
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_DEPTH_SIZE, &db);
-  gl_test = glXGetFBConfigAttrib(ctx->display, cfgs, GLX_STENCIL_SIZE, &sb);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_DEPTH_SIZE, &db);
+  gl_test = glXGetFBConfigAttrib(display, cfgs, GLX_STENCIL_SIZE, &sb);
 
   switch (Format) {
   case WINED3DFMT_D16:
@@ -1503,8 +1503,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
 
     if (NULL != cfgs) {
         for (it = 0; it < nCfgs; ++it) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], RenderTargetFormat)) {
-                if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(ctx, cfgs[it], DepthStencilFormat)) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx->display, cfgs[it], RenderTargetFormat)) {
+                if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(ctx->display, cfgs[it], DepthStencilFormat)) {
                     hr = WINED3D_OK;
                     break ;
                 }
@@ -1584,7 +1584,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
       if (NULL != ctx) {
         cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
         for (it = 0; it < nCfgs; ++it) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx, cfgs[it], DisplayFormat)) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx->display, cfgs[it], DisplayFormat)) {
                 hr = WINED3D_OK;
                 break ;
             }
