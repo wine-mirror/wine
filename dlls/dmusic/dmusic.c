@@ -133,7 +133,7 @@ static HRESULT WINAPI IDirectMusic8Impl_CreatePort (LPDIRECTMUSIC8 iface, REFCLS
 			This->nrofports++;
 			if (!This->ppPorts) This->ppPorts = HeapAlloc(GetProcessHeap(), 0, sizeof(LPDIRECTMUSICPORT) * This->nrofports);
 			else This->ppPorts = HeapReAlloc(GetProcessHeap(), 0, This->ppPorts, sizeof(LPDIRECTMUSICPORT) * This->nrofports); 			
-			This->ppPorts[This->nrofports] = pNewPort;
+			This->ppPorts[This->nrofports - 1] = pNewPort;
 			*ppPort = (LPDIRECTMUSICPORT) pNewPort;
 			return S_OK;			
 		}
