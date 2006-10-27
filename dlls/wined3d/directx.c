@@ -66,6 +66,13 @@ DWORD *stateLookup[MAX_LOOKUPS];
 DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 
 
+typedef struct _WineD3D_GLContext {
+  GLXContext   glCtx;
+  Display*     display;
+  Drawable     drawable;
+  LONG         ref;
+} WineD3D_Context;
+
 
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created

@@ -1795,13 +1795,6 @@ typedef struct _WineD3D_GL_Info {
 } WineD3D_GL_Info;
 #undef USE_GL_FUNC
 
-typedef struct _WineD3D_GLContext {
-  GLXContext   glCtx; 
-  Display*     display;
-  Drawable     drawable;
-  LONG         ref;
-} WineD3D_Context;
-
 #endif /* HAVE_OPENGL */
 
 #endif /* __WINE_WINED3D_GL */
