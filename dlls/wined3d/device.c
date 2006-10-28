@@ -4638,7 +4638,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /** TODO: check that sampler is in  range **/
-    *Value = This->updateStateBlock->samplerState[Sampler][Type];
+    *Value = This->stateBlock->samplerState[Sampler][Type];
     TRACE("(%p) : Sampler %d Type %u Returning %d\n", This, Sampler, Type, *Value);
 
     return WINED3D_OK;
@@ -5817,7 +5817,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
         TRACE("Attempt to access invalid texture rejected\n");
         return WINED3DERR_INVALIDCALL;
     }
-    *ppTexture=This->updateStateBlock->textures[Stage];
+    *ppTexture=This->stateBlock->textures[Stage];
     if (*ppTexture)
         IWineD3DBaseTexture_AddRef(*ppTexture);
 
