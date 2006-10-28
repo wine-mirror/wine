@@ -249,7 +249,7 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
     static const WCHAR host[] =
         {'w','w','w','.','w','i','n','e','h','q','.','o','r','g',0};
     static const WCHAR wszWineHQIP[] =
-        {'2','0','9','.','3','2','.','1','4','1','.','3',0};
+        {'2','0','9','.','4','6','.','2','5','.','1','3','4',0};
     /* I'm not sure if it's a good idea to hardcode here the IP address... */
 
     switch(ulStatusCode) {
