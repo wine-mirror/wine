@@ -867,7 +867,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
     unsigned int textureNo   = 0;
     unsigned int texture_idx = 0;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint curVBO = -1;
+    GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
 
     TRACE("Using fast vertex array code\n");
     /* Blend Data ---------------------------------------------- */
