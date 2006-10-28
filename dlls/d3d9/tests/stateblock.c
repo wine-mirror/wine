@@ -197,13 +197,13 @@ static void execute_test_chain(
                 memcpy(test[i].return_data, test[i].poison_data, test[i].data_size);
                 test[i].get_handler(device, &test[i], test[i].return_data);
 
-                if ((outcome & EVENT_CHECK_TEST) &&
-                    memcmp(test[i].test_data_out, test[i].return_data, test[i].data_size)) {
+                if (outcome & EVENT_CHECK_TEST) {
 
-                    ok(FALSE, "Test %s, Stage %u: change applied, but returned data does not "
-                        "match test data [csize=%u]\n", test[i].test_name, j, test[i].data_size);
+                    BOOL test_failed = memcmp(test[i].test_data_out, test[i].return_data, test[i].data_size);
+                    ok(!test_failed, "Test %s, Stage %u: returned data does not match test data [csize=%u]\n",
+                        test[i].test_name, j, test[i].data_size);
 
-                    if (test[i].print_handler) {
+                    if (test_failed && test[i].print_handler) {
                         trace("Returned data was:\n");
                         test[i].print_handler(&test[i], test[i].return_data);
                         trace("Test data was:\n");
@@ -211,13 +211,13 @@ static void execute_test_chain(
                     }
                 }
 
-                else if ((outcome & EVENT_CHECK_DEFAULT) &&
-                    memcmp(test[i].default_data, test[i].return_data, test[i].data_size)) {
+                else if (outcome & EVENT_CHECK_DEFAULT) {
+                  
+                    BOOL test_failed = memcmp(test[i].default_data, test[i].return_data, test[i].data_size);
+                    ok (!test_failed, "Test %s, Stage %u: returned data does not match default data [csize=%u]\n",
+                        test[i].test_name, j, test[i].data_size);
 
-                    ok (FALSE, "Test %s, Stage %u: change aborted, but returned data does not "
-                         "match default data [csize=%u]\n", test[i].test_name, j, test[i].data_size);
-
-                    if (test[i].print_handler) {
+                    if (test_failed && test[i].print_handler) {
                         trace("Returned data was:\n");
                         test[i].print_handler(&test[i], test[i].return_data);
                         trace("Default data was:\n");
@@ -225,13 +225,13 @@ static void execute_test_chain(
                     }
                 }
 
-                else if ((outcome & EVENT_CHECK_INITIAL) &&
-                    memcmp(test[i].initial_data, test[i].return_data, test[i].data_size)) {
+                else if (outcome & EVENT_CHECK_INITIAL) {
+                    
+                    BOOL test_failed = memcmp(test[i].initial_data, test[i].return_data, test[i].data_size);
+                    ok (!test_failed, "Test %s, Stage %u: returned data does not match initial data [csize=%u]\n",
+                        test[i].test_name, j, test[i].data_size);
 
-                    ok (FALSE, "Test %s, Stage %u: returned data does not "
-                         "match initial data [csize=%u]\n", test[i].test_name, j, test[i].data_size);
-
-                    if (test[i].print_handler) {
+                    if (test_failed && test[i].print_handler) {
                         trace("Returned data was:\n");
                         test[i].print_handler(&test[i], test[i].return_data);
                         trace("Initial data was:\n");
