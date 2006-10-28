@@ -349,6 +349,7 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
     struct process*     pcs = process_find_by_handle(hProcess);
     char                tmp[MAX_PATH];
     char*               ptr;
+    char*               buf = NULL;
     const char*         filename;
     const char*         searchPath = inSearchPath;
 
@@ -360,7 +361,6 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
     if (!searchPath)
     {
         unsigned len = WideCharToMultiByte(CP_ACP, 0, pcs->search_path, -1, NULL, 0, NULL, NULL);
-        char* buf;
 
         searchPath = buf = HeapAlloc(GetProcessHeap(), 0, len);
         if (!searchPath) return FALSE;
@@ -381,8 +381,7 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
     if (sffip_cb(full_path, &s))
     {
         strcpy(buffer, full_path);
-        if (searchPath != inSearchPath)
-            HeapFree(GetProcessHeap(), 0, (char*)searchPath);
+        HeapFree(GetProcessHeap(), 0, buf);
         return TRUE;
     }
 
@@ -403,12 +402,10 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
         if (do_search(filename, tmp, FALSE, sffip_cb, &s))
         {
             strcpy(buffer, tmp);
-            if (searchPath != inSearchPath)
-                HeapFree(GetProcessHeap(), 0, (char*)searchPath);
+            HeapFree(GetProcessHeap(), 0, buf);
             return TRUE;
         }
     }
-    if (searchPath != inSearchPath)
-        HeapFree(GetProcessHeap(), 0, (char*)searchPath);
+    HeapFree(GetProcessHeap(), 0, buf);
     return FALSE;
 }
