@@ -3121,6 +3121,12 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
 
     switch (message)
     {
+	/* ignore */
+	case WM_MOUSEMOVE:
+	case WM_SETCURSOR:
+	case WM_DEVICECHANGE:
+            return 0;
+
         case WM_WINDOWPOSCHANGING:
         case WM_WINDOWPOSCHANGED:
         {
@@ -3824,6 +3830,8 @@ static void test_messages(void)
     /* MsgWaitForMultipleObjects test */
     ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
     ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %x\n", ret);
+    msg.message = 0xdeadbeef;
+    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "got not expected %04x\n", msg.message);
 
     PostMessageA(hparent, WM_USER, 0, 0);
 
@@ -4935,54 +4943,70 @@ static void test_interthread_messages(void)
 
 
 static const struct message WmVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 1 },
     { WM_KEYDOWN, sent|wparam|lparam, 'N', 1 },
     { WM_CHAR, wparam|lparam, 'n', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1002,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
     { 0 }
 };
 static const struct message WmShiftVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 1 },
     { WM_KEYDOWN, sent|wparam|lparam, 'N', 1 },
     { WM_CHAR, wparam|lparam, 'N', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1001,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
     { 0 }
 };
 static const struct message WmCtrlVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 1 },
     { WM_KEYDOWN, sent|wparam|lparam, 'N', 1 },
     { WM_CHAR, wparam|lparam, 0x000e, 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1000,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
 static const struct message WmCtrlVkN_2[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1000,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
 static const struct message WmAltVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0x20000001 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, 'N', 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, 'N', 0x20000001 },
     { WM_SYSCHAR, wparam|lparam, 'n', 0x20000001 },
@@ -5003,75 +5027,103 @@ static const struct message WmAltVkN[] = {
     { WM_EXITMENULOOP, sent|defwinproc },
     { WM_MENUSELECT, sent|defwinproc|wparam|optional, MAKEWPARAM(0,0xffff) }, /* Win95 bug */
     { WM_EXITMENULOOP, sent|defwinproc|optional }, /* Win95 bug */
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xe0000001 }, /* XP */
     { WM_SYSKEYUP, wparam|lparam, 'N', 0xe0000001 },
     { WM_SYSKEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
 };
 static const struct message WmAltVkN_2[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0x20000001 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, 'N', 0x20000001 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1003,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xe0000001 }, /* XP */
     { WM_SYSKEYUP, wparam|lparam, 'N', 0xe0000001 },
     { WM_SYSKEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
 };
 static const struct message WmCtrlAltVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0x20000001 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 0x20000001 },
     { WM_KEYDOWN, sent|wparam|lparam, 'N', 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xe0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xe0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
 static const struct message WmCtrlShiftVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 1 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1004,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
 static const struct message WmCtrlAltShiftVkN[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_CONTROL, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_CONTROL, 1 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0x20000001 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_SHIFT, 0x20000001 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_SHIFT, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0x20000001 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, 'N', 0x20000001 },
     { WM_COMMAND, sent|wparam|lparam, MAKEWPARAM(1005,1), 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xe0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, 'N', 0xe0000001 },
     { WM_KEYUP, sent|wparam|lparam, 'N', 0xe0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_SHIFT, 0xe0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_SHIFT, 0xe0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_SHIFT, 0xe0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_CONTROL, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_CONTROL, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_CONTROL, 0xc0000001 },
     { 0 }
 };
 static const struct message WmAltPressRelease[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_SYSCOMMAND, sent|defwinproc|wparam|lparam, SC_KEYMENU, 0 },
@@ -5083,17 +5135,21 @@ static const struct message WmAltPressRelease[] = {
     { WM_MENUSELECT, sent|defwinproc|wparam, MAKEWPARAM(0,MF_SYSMENU|MF_POPUP|MF_HILITE) },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_SYSMENU, 1 },
 
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x30000001 }, /* XP */
+
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_SYSMENU, 0 },
     { EVENT_SYSTEM_CAPTUREEND, winevent_hook|wparam|lparam, 0, 0, },
     { WM_CAPTURECHANGED, sent|defwinproc },
     { WM_MENUSELECT, sent|defwinproc|wparam|optional, MAKEWPARAM(0,0xffff) },
     { EVENT_SYSTEM_MENUEND, winevent_hook|wparam|lparam, OBJID_SYSMENU, 0 },
     { WM_EXITMENULOOP, sent|defwinproc },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
 };
 static const struct message WmAltMouseButton[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0x20000001 }, /* XP */
     { WM_SYSKEYDOWN, wparam|lparam, VK_MENU, 0x20000001 },
     { WM_SYSKEYDOWN, sent|wparam|lparam, VK_MENU, 0x20000001 },
     { WM_MOUSEMOVE, wparam|optional, 0, 0 },
@@ -5102,16 +5158,19 @@ static const struct message WmAltMouseButton[] = {
     { WM_LBUTTONDOWN, sent|wparam, MK_LBUTTON, 0 },
     { WM_LBUTTONUP, wparam, 0, 0 },
     { WM_LBUTTONUP, sent|wparam, 0, 0 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_MENU, 0xc0000001 }, /* XP */
     { WM_SYSKEYUP, wparam|lparam, VK_MENU, 0xc0000001 },
     { WM_SYSKEYUP, sent|wparam|lparam, VK_MENU, 0xc0000001 },
     { 0 }
 };
 static const struct message WmF1Seq[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_F1, 1 }, /* XP */
     { WM_KEYDOWN, wparam|lparam, VK_F1, 1 },
     { WM_KEYDOWN, sent|wparam|lparam, VK_F1, 0x00000001 },
     { 0x4d, wparam|lparam, 0, 0 },
     { 0x4d, sent|wparam|lparam, 0, 0 },
     { WM_HELP, sent|defwinproc },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_F1, 0xc0000001 }, /* XP */
     { WM_KEYUP, wparam|lparam, VK_F1, 0xc0000001 },
     { WM_KEYUP, sent|wparam|lparam, VK_F1, 0xc0000001 },
     { 0 }
@@ -5539,6 +5598,9 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     {
         switch (message)
         {
+            case WM_NCHITTEST: /* ignore */
+                return 0;
+
             case WM_ERASEBKGND:
             {
                 RECT rc;
@@ -5712,7 +5774,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 
     ok(cbt_hook_thread_id == GetCurrentThreadId(), "we didn't ask for events from other threads\n");
 
-    if (nCode == HCBT_SYSCOMMAND)
+    if (nCode == HCBT_SYSCOMMAND || nCode == HCBT_KEYSKIPPED)
     {
 	struct message msg;
 
@@ -7230,6 +7292,17 @@ static void test_edit_messages(void)
 
 /**************************** End of Edit test ******************************/
 
+static const struct message WmKeyDownSkippedSeq[] =
+{
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 1 }, /* XP */
+    { 0 }
+};
+static const struct message WmKeyUpSkippedSeq[] =
+{
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, 'N', 0xc0000001 }, /* XP */
+    { 0 }
+};
+
 #define EV_START_STOP 0
 #define EV_SENDMSG 1
 #define EV_ACK 2
@@ -7541,8 +7614,8 @@ todo_wine {
     ok(ret && msg.message == WM_KEYDOWN && msg.wParam == 'N',
        "got %d and %04x wParam %08x instead of TRUE and WM_KEYDOWN wParam 'N'\n",
        ret, msg.message, msg.wParam);
+    ok_sequence(WmKeyDownSkippedSeq, "WmKeyDownSkippedSeq", FALSE);
 }
-    ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
@@ -7556,8 +7629,8 @@ todo_wine {
     ok(ret && msg.message == WM_KEYUP && msg.wParam == 'N',
        "got %d and %04x wParam %08x instead of TRUE and WM_KEYUP wParam 'N'\n",
        ret, msg.message, msg.wParam);
+    ok_sequence(WmKeyUpSkippedSeq, "WmKeyUpSkippedSeq", FALSE);
 }
-    ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
 todo_wine {
