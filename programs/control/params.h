@@ -31,9 +31,6 @@
 
 /* alphabetical list of appropriate commands to execute */
 
-#define szEXEC_PREFIX      "rundll32.exe"
-#define szEXEC_ARGS        "Shell32.dll,Control_RunDLL "
-
 #define szC_COLOR          "desk.cpl,,2"
 #define szC_DATETIME       "timedate.cpl"
 #define szC_DESKTOP        "desk.cpl"
