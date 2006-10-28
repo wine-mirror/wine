@@ -239,6 +239,33 @@ static BOOL load_mozctl(PRUnichar *gre_path)
     return FALSE;
 }
 
+static void check_version(LPCWSTR gre_path)
+{
+    WCHAR file_name[MAX_PATH];
+    char version[128];
+    DWORD read=0;
+    HANDLE hfile;
+
+    static const WCHAR wszVersion[] = {'\\','V','E','R','S','I','O','N',0};
+
+    strcpyW(file_name, gre_path);
+    strcatW(file_name, wszVersion);
+
+    hfile = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if(hfile == INVALID_HANDLE_VALUE) {
+        TRACE("unknown version\n");
+        return;
+    }
+
+    ReadFile(hfile, version, sizeof(version), &read, NULL);
+    version[read] = 0;
+
+    TRACE("%s\n", debugstr_a(version));
+
+    CloseHandle(hfile);
+}
+
 static BOOL load_wine_gecko(PRUnichar *gre_path)
 {
     HKEY hkey;
@@ -258,6 +285,9 @@ static BOOL load_wine_gecko(PRUnichar *gre_path)
     res = RegQueryValueExW(hkey, wszGeckoPath, NULL, &type, (LPBYTE)gre_path, &size);
     if(res != ERROR_SUCCESS || type != REG_SZ)
         return FALSE;
+
+    if(TRACE_ON(mshtml))
+        check_version(gre_path);
 
     return load_xpcom(gre_path);
 }
