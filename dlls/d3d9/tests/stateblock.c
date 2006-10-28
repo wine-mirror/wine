@@ -133,7 +133,7 @@ typedef struct state_test {
     /* Test data handlers */
     void (*set_handler) (IDirect3DDevice9* device, const struct state_test* test, const void* data_in);
     void (*get_handler) (IDirect3DDevice9* device, const struct state_test* test, void* data_out);
-    void (*print_handler) (const void* data);
+    void (*print_handler) (const struct state_test* test, const void* data);
 
     /* Test arguments */
     const void* test_arg;
@@ -205,9 +205,9 @@ static void execute_test_chain(
 
                     if (test[i].print_handler) {
                         trace("Returned data was:\n");
-                        test[i].print_handler(test[i].return_data);
+                        test[i].print_handler(&test[i], test[i].return_data);
                         trace("Test data was:\n");
-                        test[i].print_handler(test[i].test_data_out);
+                        test[i].print_handler(&test[i], test[i].test_data_out);
                     }
                 }
 
@@ -219,9 +219,9 @@ static void execute_test_chain(
 
                     if (test[i].print_handler) {
                         trace("Returned data was:\n");
-                        test[i].print_handler(test[i].return_data);
+                        test[i].print_handler(&test[i], test[i].return_data);
                         trace("Default data was:\n");
-                        test[i].print_handler(test[i].default_data);
+                        test[i].print_handler(&test[i], test[i].default_data);
                     }
                 }
 
@@ -233,9 +233,9 @@ static void execute_test_chain(
 
                     if (test[i].print_handler) {
                         trace("Returned data was:\n");
-                        test[i].print_handler(test[i].return_data);
+                        test[i].print_handler(&test[i], test[i].return_data);
                         trace("Initial data was:\n");
-                        test[i].print_handler(test[i].initial_data);
+                        test[i].print_handler(&test[i], test[i].initial_data);
                     }
                 }
             }
@@ -492,6 +492,7 @@ typedef struct shader_constant_context {
 } shader_constant_context;
 
 static void shader_constant_print_handler(
+    const state_test* test,
     const void* data) {
 
     const shader_constant_data* scdata = data;
@@ -633,6 +634,7 @@ typedef struct light_context {
 } light_context;
 
 static void light_print_handler(
+    const state_test* test,
     const void* data) {
 
     const light_data* ldata = data;
@@ -794,6 +796,7 @@ static inline void print_matrix(
 }
 
 static void transform_print_handler(
+    const state_test* test,
     const void* data) {
 
     const transform_data* tdata = data;
@@ -1096,6 +1099,7 @@ static void render_state_get_handler(
 }
 
 static void render_state_print_handler(
+    const state_test* test,
     const void* data) {
 
     const render_state_data* rsdata = data;
