@@ -59,6 +59,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
     int         len;
     unsigned    ret;
     const char* full;
+    char*       tmp = NULL;
 
     if (!name) return (unsigned)-1;
     if (!base || *name == '/')
@@ -66,8 +67,8 @@ unsigned source_new(struct module* module, const char* base, const char* name)
     else
     {
         unsigned bsz = strlen(base);
-        char* tmp = HeapAlloc(GetProcessHeap(), 0, bsz + 1 + strlen(name) + 1);
 
+        tmp = HeapAlloc(GetProcessHeap(), 0, bsz + 1 + strlen(name) + 1);
         if (!tmp) return (unsigned)-1;
         full = tmp;
         strcpy(tmp, base);
@@ -92,7 +93,7 @@ unsigned source_new(struct module* module, const char* base, const char* name)
     strcpy(module->sources + module->sources_used, full);
     module->sources_used += len;
     module->sources[module->sources_used] = '\0';
-    if (full != name) HeapFree(GetProcessHeap(), 0, (char*)full);
+    HeapFree(GetProcessHeap(), 0, tmp);
     return ret;
 }
 
