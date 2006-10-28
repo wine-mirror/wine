@@ -3816,6 +3816,7 @@ static void test_messages(void)
     ok (hchild != 0, "Failed to create child window\n");
 
     SetFocus(hchild);
+    flush_events();
     flush_sequence();
 
     EnableWindow(hparent, FALSE);
@@ -3830,8 +3831,6 @@ static void test_messages(void)
     /* MsgWaitForMultipleObjects test */
     ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
     ok(ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %x\n", ret);
-    msg.message = 0xdeadbeef;
-    ok(!PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "got not expected %04x\n", msg.message);
 
     PostMessageA(hparent, WM_USER, 0, 0);
 
@@ -6712,6 +6711,8 @@ static void test_scrollwindowex(void)
     flush_sequence();
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
+    flush_events();
+    flush_sequence();
 
     /* Now without the SW_ERASE flag */
     trace("start scroll\n");
@@ -6721,6 +6722,8 @@ static void test_scrollwindowex(void)
     flush_sequence();
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence(ScrollWindowPaint2, "ScrollWindowEx", 0);
+    flush_events();
+    flush_sequence();
 
     /* now scroll the child window as well */
     trace("start scroll\n");
@@ -6734,6 +6737,8 @@ static void test_scrollwindowex(void)
     flush_sequence();
     while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
     ok_sequence(ScrollWindowPaint1, "ScrollWindowEx", 0);
+    flush_events();
+    flush_sequence();
 
     /* now scroll with ScrollWindow() */
     trace("start scroll with ScrollWindow\n");
