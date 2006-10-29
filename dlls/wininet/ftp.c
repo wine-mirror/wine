@@ -1728,6 +1728,9 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwfs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
     lpwfs->download_in_progress = NULL;
 
+    WININET_AddRef( &hIC->hdr );
+    lpwfs->lpAppInfo = hIC;
+
     handle = WININET_AllocHandle( &lpwfs->hdr );
     if( !handle )
     {
@@ -2684,6 +2687,8 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
     LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) hdr;
 
     TRACE("\n");
+
+    WININET_Release(&lpwfs->lpAppInfo->hdr);
 
     if (lpwfs->download_in_progress != NULL)
 	lpwfs->download_in_progress->session_deleted = TRUE;

@@ -213,6 +213,7 @@ typedef struct
 typedef struct
 {
     WININETHANDLEHEADER hdr;
+    WININETAPPINFOW *lpAppInfo;
     int sndSocket;
     int lstnSocket;
     int pasvSocket; /* data socket connected by us in case of passive FTP */
