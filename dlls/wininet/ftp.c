@@ -1037,7 +1037,6 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
         lpwh->hdr.htype = WH_HFILE;
         lpwh->hdr.dwFlags = dwFlags;
         lpwh->hdr.dwContext = dwContext;
-        lpwh->hdr.lpwhparent = WININET_AddRef( &lpwfs->hdr );
         lpwh->hdr.dwRefCount = 1;
         lpwh->hdr.destroy = FTP_CloseFileTransferHandle;
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
@@ -1722,7 +1721,6 @@ HINTERNET FTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
 	nServerPort = INTERNET_DEFAULT_FTP_PORT;
 
     lpwfs->hdr.htype = WH_HFTPSESSION;
-    lpwfs->hdr.lpwhparent = WININET_AddRef( &hIC->hdr );
     lpwfs->hdr.dwFlags = dwFlags;
     lpwfs->hdr.dwContext = dwContext;
     lpwfs->hdr.dwInternalFlags = dwInternalFlags;
@@ -2730,8 +2728,6 @@ BOOL WINAPI FTP_FindNextFileW(LPWININETFTPFINDNEXTW lpwh, LPVOID lpvFindData)
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    assert(lpwh->hdr.lpwhparent->htype == WH_HFTPSESSION);
-
     lpFindFileData = (LPWIN32_FIND_DATAW) lpvFindData;
     ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
 
@@ -2856,7 +2852,6 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
         if (lpwfn)
         {
             lpwfn->hdr.htype = WH_HFTPFINDNEXT;
-            lpwfn->hdr.lpwhparent = WININET_AddRef( &lpwfs->hdr );
             lpwfn->hdr.dwContext = dwContext;
             lpwfn->hdr.dwRefCount = 1;
             lpwfn->hdr.destroy = FTP_CloseFindNextHandle;

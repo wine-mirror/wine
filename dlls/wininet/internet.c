@@ -521,7 +521,6 @@ HINTERNET WINAPI InternetOpenW(LPCWSTR lpszAgent, DWORD dwAccessType,
  
     memset(lpwai, 0, sizeof(WININETAPPINFOW));
     lpwai->hdr.htype = WH_HINIT;
-    lpwai->hdr.lpwhparent = NULL;
     lpwai->hdr.dwFlags = dwFlags;
     lpwai->hdr.dwRefCount = 1;
     lpwai->hdr.destroy = INTERNET_CloseHandle;
@@ -1027,8 +1026,6 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
                           INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
                           sizeof(HINTERNET));
 
-    if( lpwh->lpwhparent )
-        WININET_Release( lpwh->lpwhparent );
     WININET_FreeHandle( hInternet );
     WININET_Release( lpwh );
 

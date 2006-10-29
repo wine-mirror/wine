@@ -146,7 +146,6 @@ struct _WININETHANDLEHEADER
     DWORD  dwRefCount;
     WININET_object_destructor destroy;
     INTERNET_STATUS_CALLBACK lpfnStatusCB;
-    struct _WININETHANDLEHEADER *lpwhparent;
 };
 
 

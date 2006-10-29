@@ -1002,7 +1002,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
         goto lend;
     }
     lpwhr->hdr.htype = WH_HHTTPREQ;
-    lpwhr->hdr.lpwhparent = WININET_AddRef( &lpwhs->hdr );
     lpwhr->hdr.dwFlags = dwFlags;
     lpwhr->hdr.dwContext = dwContext;
     lpwhr->hdr.dwRefCount = 1;
@@ -2400,7 +2399,6 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     */
 
     lpwhs->hdr.htype = WH_HHTTPSESSION;
-    lpwhs->hdr.lpwhparent = WININET_AddRef( &hIC->hdr );
     lpwhs->hdr.dwFlags = dwFlags;
     lpwhs->hdr.dwContext = dwContext;
     lpwhs->hdr.dwInternalFlags = dwInternalFlags;
