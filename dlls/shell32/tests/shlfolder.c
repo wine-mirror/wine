@@ -624,7 +624,7 @@ static void test_GetAttributesOf(void)
         'A','2','D','8','-','0','8','0','0','2','B','3','0','3','0','9','D','}',0 };
     char  cCurrDirA [MAX_PATH] = {0};
     WCHAR cCurrDirW [MAX_PATH];
-    static const WCHAR cTestDirW[] = {'t','e','s','t','d','i','r',0};
+    static WCHAR cTestDirW[] = {'t','e','s','t','d','i','r',0};
     static const WCHAR cBackSlash[] = {'\\',0};
     IShellFolder *IDesktopFolder, *testIShellFolder;
     ITEMIDLIST *newPIDL;
@@ -713,7 +713,7 @@ static void test_GetAttributesOf(void)
     IMalloc_Free(ppM, newPIDL);
 
     /* get relative PIDL */
-    hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, (LPWSTR)cTestDirW, NULL, &newPIDL, 0);
+    hr = IShellFolder_ParseDisplayName(testIShellFolder, NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
     ok(hr == S_OK, "ParseDisplayName failed %08x\n", hr);
 
     /* test the shell attributes of the test directory using the relative PIDL */
