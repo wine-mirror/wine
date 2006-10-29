@@ -1703,7 +1703,7 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
             break;
 
         case WH_HFILE:
-            nSocket = ((LPWININETFILE)lpwh)->nDataSocket;
+            nSocket = ((LPWININETFTPFILE)lpwh)->nDataSocket;
             break;
 
         default:
@@ -1745,7 +1745,7 @@ static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
 
         case WH_HFILE:
             /* FIXME: FTP should use NETCON_ stuff */
-            nSocket = ((LPWININETFILE)lpwh)->nDataSocket;
+            nSocket = ((LPWININETFTPFILE)lpwh)->nDataSocket;
             if (nSocket != -1)
             {
                 int res = recv(nSocket, lpBuffer, dwNumOfBytesToRead, bWait ? MSG_WAITALL : 0);

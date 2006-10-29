@@ -202,22 +202,25 @@ typedef struct
 } WININETHTTPREQW, *LPWININETHTTPREQW;
 
 
+struct _WININETFTPSESSIONW;
+
 typedef struct
 {
     WININETHANDLEHEADER hdr;
+    struct _WININETFTPSESSIONW *lpFtpSession;
     BOOL session_deleted;
     int nDataSocket;
-} WININETFILE, *LPWININETFILE;
+} WININETFTPFILE, *LPWININETFTPFILE;
 
 
-typedef struct
+typedef struct _WININETFTPSESSIONW
 {
     WININETHANDLEHEADER hdr;
     WININETAPPINFOW *lpAppInfo;
     int sndSocket;
     int lstnSocket;
     int pasvSocket; /* data socket connected by us in case of passive FTP */
-    LPWININETFILE download_in_progress;
+    LPWININETFTPFILE download_in_progress;
     struct sockaddr_in socketAddress;
     struct sockaddr_in lstnSocketAddress;
     LPWSTR  lpszPassword;

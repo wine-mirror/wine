@@ -1008,7 +1008,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
 {
     INT nDataSocket;
     BOOL bSuccess = FALSE;
-    LPWININETFILE lpwh = NULL;
+    LPWININETFTPFILE lpwh = NULL;
     LPWININETAPPINFOW hIC = NULL;
     HINTERNET handle = NULL;
 
@@ -1033,7 +1033,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
     /* Get data socket to server */
     if (bSuccess && FTP_GetDataSocket(lpwfs, &nDataSocket))
     {
-        lpwh = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETFILE));
+        lpwh = HeapAlloc(GetProcessHeap(), 0, sizeof(WININETFTPFILE));
         lpwh->hdr.htype = WH_HFILE;
         lpwh->hdr.dwFlags = dwFlags;
         lpwh->hdr.dwContext = dwContext;
@@ -1043,6 +1043,9 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
         lpwh->hdr.lpfnStatusCB = lpwfs->hdr.lpfnStatusCB;
         lpwh->nDataSocket = nDataSocket;
 	lpwh->session_deleted = FALSE;
+
+        WININET_AddRef( &lpwfs->hdr );
+        lpwh->lpFtpSession = lpwfs;
 	
         handle = WININET_AllocHandle( &lpwh->hdr );
         if( !handle )
@@ -2800,11 +2803,13 @@ static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
  */
 static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
 {
-    LPWININETFILE lpwh = (LPWININETFILE) hdr;
-    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) lpwh->hdr.lpwhparent;
+    LPWININETFTPFILE lpwh = (LPWININETFTPFILE) hdr;
+    LPWININETFTPSESSIONW lpwfs = lpwh->lpFtpSession;
     INT nResCode;
 
     TRACE("\n");
+
+    WININET_Release(&lpwh->lpFtpSession->hdr);
 
     if (!lpwh->session_deleted)
 	lpwfs->download_in_progress = NULL;
