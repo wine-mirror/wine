@@ -2405,6 +2405,9 @@ HINTERNET HTTP_Connect(LPWININETAPPINFOW hIC, LPCWSTR lpszServerName,
     lpwhs->hdr.destroy = HTTP_CloseHTTPSessionHandle;
     lpwhs->hdr.lpfnStatusCB = hIC->hdr.lpfnStatusCB;
 
+    WININET_AddRef( &hIC->hdr );
+    lpwhs->lpAppInfo = hIC;
+
     handle = WININET_AllocHandle( &lpwhs->hdr );
     if (NULL == handle)
     {
@@ -2966,6 +2969,8 @@ static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
     LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
 
     TRACE("%p\n", lpwhs);
+
+    WININET_Release(&lpwhs->lpAppInfo->hdr);
 
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszHostName);
     HeapFree(GetProcessHeap(), 0, lpwhs->lpszServerName);
