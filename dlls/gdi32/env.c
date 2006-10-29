@@ -114,7 +114,8 @@ INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nCount
 {
     ATOM atom;
     BOOL16 nullport = FALSE;
-    LPSTR p;
+    LPCSTR port_name;
+    LPSTR device_mode;
     ENVTABLE *env;
     HGLOBAL16 handle;
 
@@ -131,20 +132,20 @@ INT16 WINAPI SetEnvironment16(LPCSTR lpPortName, LPDEVMODEA lpdev, UINT16 nCount
     }
     if (nCount) { /* store DEVMODE struct */
 	if (nullport)
-	    p = (LPSTR)lpdev;
+	    port_name = (LPSTR)lpdev;
         else
-	    p = (LPSTR)lpPortName;
+	    port_name = lpPortName;
 
-        if ((atom = PortNameToAtom(p, TRUE))
+        if ((atom = PortNameToAtom(port_name, TRUE))
 	 && (env = SearchEnvTable(0))
 	 && (handle = GlobalAlloc16(GMEM_SHARE|GMEM_MOVEABLE, nCount))) {
-	    if (!(p = GlobalLock16(handle))) {
+	    if (!(device_mode = GlobalLock16(handle))) {
 	        GlobalFree16(handle);
 	        return 0;
 	    }
 	    env->atom = atom;
 	    env->handle = handle;
-            memcpy(p, lpdev, nCount);
+            memcpy(device_mode, lpdev, nCount);
             GlobalUnlock16(handle);
             return handle;
 	}
