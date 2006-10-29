@@ -72,7 +72,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == lpwhs)
 	return FALSE;
 
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
+    hIC = lpwhs->lpAppInfo;
     if (NULL == hIC)
 	return FALSE;
 
@@ -216,7 +216,7 @@ static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
 	return FALSE;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwhs->hdr.lpwhparent;
+    hIC = lpwhs->lpAppInfo;
 
     p = HeapAlloc( GetProcessHeap(), 0, (strlenW( username ) + 1)*sizeof(WCHAR) );
     if( !p )

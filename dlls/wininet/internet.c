@@ -75,7 +75,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define RESPONSE_TIMEOUT        30
 
 #define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
-(LPWININETAPPINFOW)(((LPWININETFTPSESSIONW)(lpwh->hdr.lpwhparent))->hdr.lpwhparent)
+(((LPWININETFTPSESSIONW)(lpwh->hdr.lpwhparent))->lpAppInfo)
 
 
 typedef struct

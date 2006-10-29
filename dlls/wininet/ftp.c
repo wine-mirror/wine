@@ -194,7 +194,7 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -252,7 +252,7 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
 
     /* Open file to be uploaded */
     if (INVALID_HANDLE_VALUE ==
@@ -358,7 +358,7 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 
     TRACE("lpszDirectory(%s)\n", debugstr_w(lpszDirectory));
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -411,7 +411,7 @@ BOOL WINAPI FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpsz
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_CWD, lpszDirectory,
         lpwfs->hdr.lpfnStatusCB, &lpwfs->hdr, lpwfs->hdr.dwContext))
         goto lend;
@@ -485,7 +485,7 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -550,7 +550,7 @@ BOOL WINAPI FTP_FtpCreateDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDire
     }
 
 lend:
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -618,7 +618,7 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -681,7 +681,7 @@ HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
     if (!FTP_SendPortOrPasv(lpwfs))
         goto lend;
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_LIST, NULL,
         lpwfs->hdr.lpfnStatusCB, &lpwfs->hdr, lpwfs->hdr.dwContext))
         goto lend;
@@ -800,7 +800,7 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -858,7 +858,7 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
 
     ZeroMemory(lpszCurrentDirectory, *lpdwCurrentDirectory);
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (!FTP_SendCommand(lpwfs->sndSocket, FTP_CMD_PWD, NULL,
         lpwfs->hdr.lpfnStatusCB, &lpwfs->hdr, lpwfs->hdr.dwContext))
         goto lend;
@@ -962,7 +962,7 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
 	INTERNET_SetLastError(ERROR_FTP_TRANSFER_IN_PROGRESS);
 	goto lend;
     }
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -1055,7 +1055,7 @@ HINTERNET FTP_FtpOpenFileW(LPWININETFTPSESSIONW lpwfs,
     if (lpwfs->lstnSocket != -1)
         closesocket(lpwfs->lstnSocket);
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -1140,7 +1140,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         goto lend;
     }
     
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -1237,7 +1237,7 @@ lend:
     if (hFile)
         CloseHandle(hFile);
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -1308,7 +1308,7 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -1368,7 +1368,7 @@ BOOL FTP_FtpDeleteFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszFileName)
             FTP_SetResponseError(nResCode);
     }
 lend:
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -1427,7 +1427,7 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -1488,7 +1488,7 @@ BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory)
     }
 
 lend:
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -1550,7 +1550,7 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
         goto lend;
     }
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
@@ -1618,7 +1618,7 @@ BOOL FTP_FtpRenameFileW( LPWININETFTPSESSIONW lpwfs,
         FTP_SetResponseError(nResCode);
 
 lend:
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         INTERNET_ASYNC_RESULT iar;
@@ -2006,7 +2006,7 @@ INT FTP_ReceiveResponse(LPWININETFTPSESSIONW lpwfs, DWORD dwContext)
 
     TRACE("socket(%d)\n", lpwfs->sndSocket);
 
-    hIC = (LPWININETAPPINFOW) lpwfs->hdr.lpwhparent;
+    hIC = lpwfs->lpAppInfo;
     SendAsyncCallback(&lpwfs->hdr, dwContext, INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
 
     while(1)
