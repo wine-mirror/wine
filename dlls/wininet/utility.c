@@ -214,7 +214,6 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                            DWORD dwInternetStatus, LPVOID lpvStatusInfo,
                            DWORD dwStatusInfoLength)
 {
-    HINTERNET hHttpSession;
     LPVOID lpvNewInfo = NULL;
 
     if( !hdr->lpfnStatusCB )
@@ -224,12 +223,6 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
        send callbacks if dwContext is zero */
     if( !dwContext )
         return;
-
-    hHttpSession = WININET_FindHandle( hdr );
-    if( !hHttpSession ) {
-	TRACE(" Could not convert header '%p' into a handle !\n", hdr);
-        return;
-    }
 
     lpvNewInfo = lpvStatusInfo;
     if(hdr->dwInternalFlags & INET_CALLBACKW) {
@@ -249,18 +242,16 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
     }
     
     TRACE(" callback(%p) (%p (%p), %08x, %d (%s), %p, %d)\n",
-	  hdr->lpfnStatusCB, hHttpSession, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
+	  hdr->lpfnStatusCB, hdr->hInternet, hdr, dwContext, dwInternetStatus, get_callback_name(dwInternetStatus),
 	  lpvNewInfo, dwStatusInfoLength);
     
-    hdr->lpfnStatusCB(hHttpSession, dwContext, dwInternetStatus,
+    hdr->lpfnStatusCB(hdr->hInternet, dwContext, dwInternetStatus,
                       lpvNewInfo, dwStatusInfoLength);
 
     TRACE(" end callback().\n");
 
     if(lpvNewInfo != lpvStatusInfo)
         HeapFree(GetProcessHeap(), 0, lpvNewInfo);
-
-    WININET_Release( hdr );
 }
 
 

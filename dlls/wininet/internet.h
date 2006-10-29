@@ -139,6 +139,7 @@ typedef void (*WININET_object_destructor)( LPWININETHANDLEHEADER );
 struct _WININETHANDLEHEADER
 {
     WH_TYPE htype;
+    HINTERNET hInternet;
     DWORD  dwFlags;
     DWORD  dwContext;
     DWORD  dwError;

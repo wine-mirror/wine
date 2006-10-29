@@ -151,26 +151,13 @@ HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info )
 end:
     LeaveCriticalSection( &WININET_cs );
 
-    return (HINTERNET) (handle+1);
+    return info->hInternet = (HINTERNET) (handle+1);
 }
 
 HINTERNET WININET_FindHandle( LPWININETHANDLEHEADER info )
 {
-    UINT i, handle = 0;
-
-    EnterCriticalSection( &WININET_cs );
-    for( i=0; i<WININET_dwMaxHandles; i++ )
-    {
-        if( info == WININET_Handles[i] )
-        {
-            WININET_AddRef( info );
-            handle = i+1;
-            break;
-        }
-    }
-    LeaveCriticalSection( &WININET_cs );
-
-    return (HINTERNET) handle;
+    WININET_AddRef(info);
+    return info->hInternet;
 }
 
 LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info )
