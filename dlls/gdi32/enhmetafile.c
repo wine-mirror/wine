@@ -1082,8 +1082,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 		      pStretchDIBits->ySrc,
 		      pStretchDIBits->cxSrc,
 		      pStretchDIBits->cySrc,
-		      (BYTE *)mr + pStretchDIBits->offBitsSrc,
-		      (const BITMAPINFO *)((BYTE *)mr + pStretchDIBits->offBmiSrc),
+		      (const BYTE *)mr + pStretchDIBits->offBitsSrc,
+		      (const BITMAPINFO *)((const BYTE *)mr + pStretchDIBits->offBmiSrc),
 		      pStretchDIBits->iUsageSrc,
 		      pStretchDIBits->dwRop);
 	break;
@@ -1093,7 +1093,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	const EMREXTTEXTOUTA *pExtTextOutA = (const EMREXTTEXTOUTA *)mr;
 	RECT rc;
-        INT *dx = NULL;
+        const INT *dx = NULL;
 
 	rc.left = pExtTextOutA->emrtext.rcl.left;
 	rc.top = pExtTextOutA->emrtext.rcl.top;
@@ -1108,11 +1108,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
          * fine, but at least Win2k chokes on them.
          */
         if (pExtTextOutA->emrtext.offDx)
-            dx = (INT *)((BYTE *)mr + pExtTextOutA->emrtext.offDx);
+            dx = (const INT *)((const BYTE *)mr + pExtTextOutA->emrtext.offDx);
 
 	ExtTextOutA(hdc, pExtTextOutA->emrtext.ptlReference.x, pExtTextOutA->emrtext.ptlReference.y,
 	    pExtTextOutA->emrtext.fOptions, &rc,
-	    (LPSTR)((BYTE *)mr + pExtTextOutA->emrtext.offString), pExtTextOutA->emrtext.nChars,
+	    (LPCSTR)((const BYTE *)mr + pExtTextOutA->emrtext.offString), pExtTextOutA->emrtext.nChars,
 	    dx);
 	break;
     }
@@ -1121,7 +1121,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     {
 	const EMREXTTEXTOUTW *pExtTextOutW = (const EMREXTTEXTOUTW *)mr;
 	RECT rc;
-        INT *dx = NULL;
+        const INT *dx = NULL;
 
 	rc.left = pExtTextOutW->emrtext.rcl.left;
 	rc.top = pExtTextOutW->emrtext.rcl.top;
@@ -1136,11 +1136,11 @@ BOOL WINAPI PlayEnhMetaFileRecord(
          * fine, but at least Win2k chokes on them.
          */
         if (pExtTextOutW->emrtext.offDx)
-            dx = (INT *)((BYTE *)mr + pExtTextOutW->emrtext.offDx);
+            dx = (const INT *)((const BYTE *)mr + pExtTextOutW->emrtext.offDx);
 
 	ExtTextOutW(hdc, pExtTextOutW->emrtext.ptlReference.x, pExtTextOutW->emrtext.ptlReference.y,
 	    pExtTextOutW->emrtext.fOptions, &rc,
-	    (LPWSTR)((BYTE *)mr + pExtTextOutW->emrtext.offString), pExtTextOutW->emrtext.nChars,
+	    (LPCWSTR)((const BYTE *)mr + pExtTextOutW->emrtext.offString), pExtTextOutW->emrtext.nChars,
 	    dx);
 	break;
     }
@@ -1691,10 +1691,10 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
         /* Now pack this structure */
         memcpy( lpPackedStruct,
-                ((BYTE*)lpCreate) + lpCreate->offBmi,
+                ((const BYTE *)lpCreate) + lpCreate->offBmi,
                 lpCreate->cbBmi );
         memcpy( ((BYTE*)lpPackedStruct) + lpCreate->cbBmi,
-                ((BYTE*)lpCreate) + lpCreate->offBits,
+                ((const BYTE *)lpCreate) + lpCreate->offBits,
                 lpCreate->cbBits );
 
         (handletable->objectHandle)[lpCreate->ihBrush] =
@@ -1708,7 +1708,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
     case EMR_CREATEMONOBRUSH:
     {
         const EMRCREATEMONOBRUSH *pCreateMonoBrush = (const EMRCREATEMONOBRUSH *)mr;
-        BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pCreateMonoBrush->offBmi);
+        const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pCreateMonoBrush->offBmi);
         HBITMAP hBmp;
 
         /* Need to check if the bitmap is monochrome, and if the
@@ -1736,12 +1736,12 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 
           hBmp = CreateBitmap(pbi->bmiHeader.biWidth, abs(height), 1, 1, NULL);
           SetDIBits(hdc, hBmp, 0, pbi->bmiHeader.biHeight,
-              (BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
+              (const BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
         }
         else
         {
-            hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-              (BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
+            hBmp = CreateDIBitmap(hdc, (const BITMAPINFOHEADER *)pbi, CBM_INIT,
+              (const BYTE *)mr + pCreateMonoBrush->offBits, pbi, pCreateMonoBrush->iUsage);
         }
 
 	(handletable->objectHandle)[pCreateMonoBrush->ihBrush] = CreatePatternBrush(hBmp);
@@ -1762,7 +1762,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             HDC hdcSrc = CreateCompatibleDC(hdc);
             HBRUSH hBrush, hBrushOld;
             HBITMAP hBmp = 0, hBmpOld = 0;
-            BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pBitBlt->offBmiSrc);
+            const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pBitBlt->offBmiSrc);
 
             SetWorldTransform(hdcSrc, &pBitBlt->xformSrc);
 
@@ -1774,8 +1774,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             SelectObject(hdcSrc, hBrushOld);
             DeleteObject(hBrush);
 
-            hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-                                  (BYTE *)mr + pBitBlt->offBitsSrc, pbi, pBitBlt->iUsageSrc);
+            hBmp = CreateDIBitmap(hdc, (const BITMAPINFOHEADER *)pbi, CBM_INIT,
+                                  (const BYTE *)mr + pBitBlt->offBitsSrc, pbi, pBitBlt->iUsageSrc);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
             BitBlt(hdc, pBitBlt->xDest, pBitBlt->yDest, pBitBlt->cxDest, pBitBlt->cyDest,
@@ -1804,7 +1804,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             HDC hdcSrc = CreateCompatibleDC(hdc);
             HBRUSH hBrush, hBrushOld;
             HBITMAP hBmp = 0, hBmpOld = 0;
-            BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pStretchBlt->offBmiSrc);
+            const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pStretchBlt->offBmiSrc);
 
             SetWorldTransform(hdcSrc, &pStretchBlt->xformSrc);
 
@@ -1816,8 +1816,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
             SelectObject(hdcSrc, hBrushOld);
             DeleteObject(hBrush);
 
-            hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-                                  (BYTE *)mr + pStretchBlt->offBitsSrc, pbi, pStretchBlt->iUsageSrc);
+            hBmp = CreateDIBitmap(hdc, (const BITMAPINFOHEADER *)pbi, CBM_INIT,
+                                  (const BYTE *)mr + pStretchBlt->offBitsSrc, pbi, pStretchBlt->iUsageSrc);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
             StretchBlt(hdc, pStretchBlt->xDest, pStretchBlt->yDest, pStretchBlt->cxDest, pStretchBlt->cyDest,
@@ -1845,14 +1845,14 @@ BOOL WINAPI PlayEnhMetaFileRecord(
         } else {
             HDC hdcSrc = CreateCompatibleDC(hdc);
             HBITMAP hBmp = 0, hBmpOld = 0;
-            BITMAPINFO *pbi = (BITMAPINFO *)((BYTE *)mr + pAlphaBlend->offBmiSrc);
+            const BITMAPINFO *pbi = (const BITMAPINFO *)((const BYTE *)mr + pAlphaBlend->offBmiSrc);
             BLENDFUNCTION blendfn;
             void *bits;
 
             SetWorldTransform(hdcSrc, &pAlphaBlend->xformSrc);
 
             hBmp = CreateDIBSection(hdc, pbi, pAlphaBlend->iUsageSrc, &bits, NULL, 0);
-            memcpy(bits, (BYTE*)mr + pAlphaBlend->offBitsSrc, pAlphaBlend->cbBitsSrc);
+            memcpy(bits, (const BYTE *)mr + pAlphaBlend->offBitsSrc, pAlphaBlend->cbBitsSrc);
             hBmpOld = SelectObject(hdcSrc, hBmp);
 
             blendfn.BlendOp             = (pAlphaBlend->dwRop >> 24) & 0xff;
@@ -1877,7 +1877,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	HDC hdcSrc = CreateCompatibleDC(hdc);
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
-	BITMAPINFO *pbi;
+	const BITMAPINFO *pbi;
 
 	SetWorldTransform(hdcSrc, &pMaskBlt->xformSrc);
 
@@ -1889,15 +1889,15 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	SelectObject(hdcSrc, hBrushOld);
 	DeleteObject(hBrush);
 
-	pbi = (BITMAPINFO *)((BYTE *)mr + pMaskBlt->offBmiMask);
+	pbi = (const BITMAPINFO *)((const BYTE *)mr + pMaskBlt->offBmiMask);
 	hBmpMask = CreateBitmap(pbi->bmiHeader.biWidth, pbi->bmiHeader.biHeight,
 	             1, 1, NULL);
 	SetDIBits(hdc, hBmpMask, 0, pbi->bmiHeader.biHeight,
-	  (BYTE *)mr + pMaskBlt->offBitsMask, pbi, pMaskBlt->iUsageMask);
+	  (const BYTE *)mr + pMaskBlt->offBitsMask, pbi, pMaskBlt->iUsageMask);
 
-	pbi = (BITMAPINFO *)((BYTE *)mr + pMaskBlt->offBmiSrc);
-	hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-			      (BYTE *)mr + pMaskBlt->offBitsSrc, pbi, pMaskBlt->iUsageSrc);
+	pbi = (const BITMAPINFO *)((const BYTE *)mr + pMaskBlt->offBmiSrc);
+	hBmp = CreateDIBitmap(hdc, (const BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (const BYTE *)mr + pMaskBlt->offBitsSrc, pbi, pMaskBlt->iUsageSrc);
 	hBmpOld = SelectObject(hdcSrc, hBmp);
 	MaskBlt(hdc,
 		pMaskBlt->xDest,
@@ -1924,7 +1924,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	HDC hdcSrc = CreateCompatibleDC(hdc);
 	HBRUSH hBrush, hBrushOld;
 	HBITMAP hBmp, hBmpOld, hBmpMask;
-	BITMAPINFO *pbi;
+	const BITMAPINFO *pbi;
 	POINT pts[3];
 
 	SetWorldTransform(hdcSrc, &pPlgBlt->xformSrc);
@@ -1941,15 +1941,15 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	SelectObject(hdcSrc, hBrushOld);
 	DeleteObject(hBrush);
 
-	pbi = (BITMAPINFO *)((BYTE *)mr + pPlgBlt->offBmiMask);
+	pbi = (const BITMAPINFO *)((const BYTE *)mr + pPlgBlt->offBmiMask);
 	hBmpMask = CreateBitmap(pbi->bmiHeader.biWidth, pbi->bmiHeader.biHeight,
 	             1, 1, NULL);
 	SetDIBits(hdc, hBmpMask, 0, pbi->bmiHeader.biHeight,
-	  (BYTE *)mr + pPlgBlt->offBitsMask, pbi, pPlgBlt->iUsageMask);
+	  (const BYTE *)mr + pPlgBlt->offBitsMask, pbi, pPlgBlt->iUsageMask);
 
-	pbi = (BITMAPINFO *)((BYTE *)mr + pPlgBlt->offBmiSrc);
-	hBmp = CreateDIBitmap(hdc, (BITMAPINFOHEADER *)pbi, CBM_INIT,
-			      (BYTE *)mr + pPlgBlt->offBitsSrc, pbi, pPlgBlt->iUsageSrc);
+	pbi = (const BITMAPINFO *)((const BYTE *)mr + pPlgBlt->offBmiSrc);
+	hBmp = CreateDIBitmap(hdc, (const BITMAPINFOHEADER *)pbi, CBM_INIT,
+			      (const BYTE *)mr + pPlgBlt->offBitsSrc, pbi, pPlgBlt->iUsageSrc);
 	hBmpOld = SelectObject(hdcSrc, hBmp);
 	PlgBlt(hdc,
 	       pts,
@@ -1981,8 +1981,8 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 			  pSetDIBitsToDevice->ySrc,
 			  pSetDIBitsToDevice->iStartScan,
 			  pSetDIBitsToDevice->cScans,
-			  (BYTE *)mr + pSetDIBitsToDevice->offBitsSrc,
-			  (BITMAPINFO *)((BYTE *)mr + pSetDIBitsToDevice->offBmiSrc),
+			  (const BYTE *)mr + pSetDIBitsToDevice->offBitsSrc,
+			  (const BITMAPINFO *)((const BYTE *)mr + pSetDIBitsToDevice->offBmiSrc),
 			  pSetDIBitsToDevice->iUsageSrc);
 	break;
     }
@@ -2012,7 +2012,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	    polytextA[i].x = pPolyTextOutA->aemrtext[i].ptlReference.x;
 	    polytextA[i].y = pPolyTextOutA->aemrtext[i].ptlReference.y;
 	    polytextA[i].n = pPolyTextOutA->aemrtext[i].nChars;
-	    polytextA[i].lpstr = (LPSTR)((BYTE *)mr + pPolyTextOutA->aemrtext[i].offString);
+	    polytextA[i].lpstr = (LPCSTR)((const BYTE *)mr + pPolyTextOutA->aemrtext[i].offString);
 	    polytextA[i].uiFlags = pPolyTextOutA->aemrtext[i].fOptions;
 	    polytextA[i].rcl.left = pPolyTextOutA->aemrtext[i].rcl.left;
 	    polytextA[i].rcl.right = pPolyTextOutA->aemrtext[i].rcl.right;
@@ -2053,7 +2053,7 @@ BOOL WINAPI PlayEnhMetaFileRecord(
 	    polytextW[i].x = pPolyTextOutW->aemrtext[i].ptlReference.x;
 	    polytextW[i].y = pPolyTextOutW->aemrtext[i].ptlReference.y;
 	    polytextW[i].n = pPolyTextOutW->aemrtext[i].nChars;
-	    polytextW[i].lpstr = (LPWSTR)((BYTE *)mr + pPolyTextOutW->aemrtext[i].offString);
+	    polytextW[i].lpstr = (LPCWSTR)((const BYTE *)mr + pPolyTextOutW->aemrtext[i].offString);
 	    polytextW[i].uiFlags = pPolyTextOutW->aemrtext[i].fOptions;
 	    polytextW[i].rcl.left = pPolyTextOutW->aemrtext[i].rcl.left;
 	    polytextW[i].rcl.right = pPolyTextOutW->aemrtext[i].rcl.right;
