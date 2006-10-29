@@ -4317,10 +4317,17 @@ DWORD WINAPI SHGetShellKey(DWORD a, DWORD b, DWORD c)
 /***********************************************************************
  *		SHQueueUserWorkItem (SHLWAPI.@)
  */
-HRESULT WINAPI SHQueueUserWorkItem(DWORD a, DWORD b, DWORD c, DWORD d, DWORD e, DWORD f, DWORD g)
+BOOL WINAPI SHQueueUserWorkItem(LPTHREAD_START_ROUTINE pfnCallback, 
+        LPVOID pContext, LONG lPriority, DWORD_PTR dwTag,
+        DWORD_PTR *pdwId, LPCSTR pszModule, DWORD dwFlags)
 {
-    FIXME("(%x, %x, %x, %x, %x, %x, %x): stub\n", a, b, c, d, e, f, g);
-    return E_FAIL;
+    TRACE("(%p, %p, %d, %lx, %p, %s, %08x)\n", pfnCallback, pContext,
+          lPriority, dwTag, pdwId, debugstr_a(pszModule), dwFlags);
+
+    if(lPriority || dwTag || pdwId || pszModule || dwFlags)
+        FIXME("Unsupported arguments\n");
+
+    return QueueUserWorkItem(pfnCallback, pContext, 0);
 }
 
 /***********************************************************************
