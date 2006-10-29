@@ -2689,6 +2689,10 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("\n");
 
+    INTERNET_SendCallback(hdr, hdr->dwContext,
+                          INTERNET_STATUS_HANDLE_CLOSING, &hdr->hInternet,
+                          sizeof(HINTERNET));
+
     WININET_Release(&lpwfs->lpAppInfo->hdr);
 
     if (lpwfs->download_in_progress != NULL)
@@ -2779,6 +2783,10 @@ static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("\n");
 
+    INTERNET_SendCallback(hdr, hdr->dwContext,
+                          INTERNET_STATUS_HANDLE_CLOSING, &hdr->hInternet,
+                          sizeof(HINTERNET));
+
     WININET_Release(&lpwfn->lpFtpSession->hdr);
 
     for (i = 0; i < lpwfn->size; i++)
@@ -2804,6 +2812,10 @@ static void FTP_CloseFileTransferHandle(LPWININETHANDLEHEADER hdr)
     INT nResCode;
 
     TRACE("\n");
+
+    INTERNET_SendCallback(hdr, hdr->dwContext,
+                          INTERNET_STATUS_HANDLE_CLOSING, &hdr->hInternet,
+                          sizeof(HINTERNET));
 
     WININET_Release(&lpwh->lpFtpSession->hdr);
 
