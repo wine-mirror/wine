@@ -2706,6 +2706,64 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
 
 
 /***********************************************************************
+ *           FTP_FindNextFileW (Internal)
+ *
+ * Continues a file search from a previous call to FindFirstFile
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
+BOOL WINAPI FTP_FindNextFileW(LPWININETFTPFINDNEXTW lpwh, LPVOID lpvFindData)
+{
+    BOOL bSuccess = TRUE;
+    LPWIN32_FIND_DATAW lpFindFileData;
+
+    TRACE("index(%d) size(%d)\n", lpwh->index, lpwh->size);
+
+    assert (lpwh->hdr.htype == WH_HFTPFINDNEXT);
+
+    /* Clear any error information */
+    INTERNET_SetLastError(0);
+
+    assert(lpwh->hdr.lpwhparent->htype == WH_HFTPSESSION);
+
+    lpFindFileData = (LPWIN32_FIND_DATAW) lpvFindData;
+    ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
+
+    if (lpwh->index >= lpwh->size)
+    {
+        INTERNET_SetLastError(ERROR_NO_MORE_FILES);
+        bSuccess = FALSE;
+	goto lend;
+    }
+
+    FTP_ConvertFileProp(&lpwh->lpafp[lpwh->index], lpFindFileData);
+    lpwh->index++;
+
+    TRACE("\nName: %s\nSize: %d\n", debugstr_w(lpFindFileData->cFileName), lpFindFileData->nFileSizeLow);
+
+lend:
+
+    if (lpwh->hdr.dwFlags & INTERNET_FLAG_ASYNC)
+    {
+        INTERNET_ASYNC_RESULT iar;
+
+        iar.dwResult = (DWORD)bSuccess;
+        iar.dwError = iar.dwError = bSuccess ? ERROR_SUCCESS :
+                                               INTERNET_GetLastError();
+
+        INTERNET_SendCallback(&lpwh->hdr, lpwh->hdr.dwContext,
+                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
+                              sizeof(INTERNET_ASYNC_RESULT));
+    }
+
+    return bSuccess;
+}
+
+
+/***********************************************************************
  *           FTP_CloseFindNextHandle (internal)
  *
  * Deallocate session handle
@@ -2717,7 +2775,7 @@ static void FTP_CloseSessionHandle(LPWININETHANDLEHEADER hdr)
  */
 static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
 {
-    LPWININETFINDNEXTW lpwfn = (LPWININETFINDNEXTW) hdr;
+    LPWININETFTPFINDNEXTW lpwfn = (LPWININETFTPFINDNEXTW) hdr;
     DWORD i;
 
     TRACE("\n");
@@ -2777,7 +2835,7 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
 {
     DWORD dwSize = 0;
     LPFILEPROPERTIESW lpafp = NULL;
-    LPWININETFINDNEXTW lpwfn = NULL;
+    LPWININETFTPFINDNEXTW lpwfn = NULL;
     HINTERNET handle = 0;
 
     TRACE("(%p,%d,%s,%p,%d)\n", lpwfs, nSocket, debugstr_w(lpszSearchFile), lpFindFileData, dwContext);
@@ -2787,10 +2845,10 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
         if(lpFindFileData)
             FTP_ConvertFileProp(lpafp, lpFindFileData);
 
-        lpwfn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETFINDNEXTW));
+        lpwfn = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WININETFTPFINDNEXTW));
         if (lpwfn)
         {
-            lpwfn->hdr.htype = WH_HFINDNEXT;
+            lpwfn->hdr.htype = WH_HFTPFINDNEXT;
             lpwfn->hdr.lpwhparent = WININET_AddRef( &lpwfs->hdr );
             lpwfn->hdr.dwContext = dwContext;
             lpwfn->hdr.dwRefCount = 1;

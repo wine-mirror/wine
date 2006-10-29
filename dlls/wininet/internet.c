@@ -85,7 +85,6 @@ typedef struct
 } WITHREADERROR, *LPWITHREADERROR;
 
 static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr);
-BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData);
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
               LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
 static VOID INTERNET_ExecuteWork(void);
@@ -943,14 +942,15 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
 BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 {
     LPWININETAPPINFOW hIC = NULL;
-    LPWININETFINDNEXTW lpwh;
+    LPWININETFTPFINDNEXTW lpwh;
     BOOL bSuccess = FALSE;
 
     TRACE("\n");
 
-    lpwh = (LPWININETFINDNEXTW) WININET_GetObject( hFind );
-    if (NULL == lpwh || lpwh->hdr.htype != WH_HFINDNEXT)
+    lpwh = (LPWININETFTPFINDNEXTW) WININET_GetObject( hFind );
+    if (NULL == lpwh || lpwh->hdr.htype != WH_HFTPFINDNEXT)
     {
+        FIXME("Only FTP supported\n");
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
         goto lend;
     }
@@ -959,89 +959,24 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
-        struct WORKREQ_INTERNETFINDNEXTW *req;
+        struct WORKREQ_FTPFINDNEXTW *req;
 
-        workRequest.asyncall = INTERNETFINDNEXTW;
+        workRequest.asyncall = FTPFINDNEXTW;
 	workRequest.hdr = WININET_AddRef( &lpwh->hdr );
-        req = &workRequest.u.InternetFindNextW;
+        req = &workRequest.u.FtpFindNextW;
 	req->lpFindFileData = lpvFindData;
 
 	bSuccess = INTERNET_AsyncCall(&workRequest);
     }
     else
     {
-        bSuccess = INTERNET_FindNextFileW(lpwh, lpvFindData);
+        bSuccess = FTP_FindNextFileW(lpwh, lpvFindData);
     }
 lend:
     if( lpwh )
         WININET_Release( &lpwh->hdr );
     return bSuccess;
 }
-
-/***********************************************************************
- *           INTERNET_FindNextFileW (Internal)
- *
- * Continues a file search from a previous call to FindFirstFile
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
-BOOL WINAPI INTERNET_FindNextFileW(LPWININETFINDNEXTW lpwh, LPVOID lpvFindData)
-{
-    BOOL bSuccess = TRUE;
-    LPWIN32_FIND_DATAW lpFindFileData;
-
-    TRACE("\n");
-
-    assert (lpwh->hdr.htype == WH_HFINDNEXT);
-
-    /* Clear any error information */
-    INTERNET_SetLastError(0);
-
-    if (lpwh->hdr.lpwhparent->htype != WH_HFTPSESSION)
-    {
-        FIXME("Only FTP find next supported\n");
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-	return FALSE;
-    }
-
-    TRACE("index(%d) size(%d)\n", lpwh->index, lpwh->size);
-
-    lpFindFileData = (LPWIN32_FIND_DATAW) lpvFindData;
-    ZeroMemory(lpFindFileData, sizeof(WIN32_FIND_DATAA));
-
-    if (lpwh->index >= lpwh->size)
-    {
-        INTERNET_SetLastError(ERROR_NO_MORE_FILES);
-        bSuccess = FALSE;
-	goto lend;
-    }
-
-    FTP_ConvertFileProp(&lpwh->lpafp[lpwh->index], lpFindFileData);
-    lpwh->index++;
-
-    TRACE("\nName: %s\nSize: %d\n", debugstr_w(lpFindFileData->cFileName), lpFindFileData->nFileSizeLow);
-
-lend:
-
-    if (lpwh->hdr.dwFlags & INTERNET_FLAG_ASYNC)
-    {
-        INTERNET_ASYNC_RESULT iar;
-
-        iar.dwResult = (DWORD)bSuccess;
-        iar.dwError = iar.dwError = bSuccess ? ERROR_SUCCESS :
-                                               INTERNET_GetLastError();
-
-        INTERNET_SendCallback(&lpwh->hdr, lpwh->hdr.dwContext,
-                              INTERNET_STATUS_REQUEST_COMPLETE, &iar,
-                              sizeof(INTERNET_ASYNC_RESULT));
-    }
-
-    return bSuccess;
-}
-
 
 /***********************************************************************
  *           INTERNET_CloseHandle (internal)
@@ -3439,15 +3374,15 @@ static VOID INTERNET_ExecuteWork(void)
         }
 	break;
 
-    case INTERNETFINDNEXTW:
+    case FTPFINDNEXTW:
         {
-        struct WORKREQ_INTERNETFINDNEXTW *req;
-        LPWININETFINDNEXTW lpwh = (LPWININETFINDNEXTW) workRequest.hdr;
+        struct WORKREQ_FTPFINDNEXTW *req;
+        LPWININETFTPFINDNEXTW lpwh = (LPWININETFTPFINDNEXTW) workRequest.hdr;
 
         TRACE("INTERNETFINDNEXTW %p\n", lpwh);
 
-        req = &workRequest.u.InternetFindNextW;
-	INTERNET_FindNextFileW(lpwh, req->lpFindFileData);
+        req = &workRequest.u.FtpFindNextW;
+	FTP_FindNextFileW(lpwh, req->lpFindFileData);
         }
 	break;
 
