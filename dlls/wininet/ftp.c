@@ -2780,6 +2780,8 @@ static void FTP_CloseFindNextHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("\n");
 
+    WININET_Release(&lpwfn->lpFtpSession->hdr);
+
     for (i = 0; i < lpwfn->size; i++)
     {
         HeapFree(GetProcessHeap(), 0, lpwfn->lpafp[i].lpszName);
@@ -2857,6 +2859,9 @@ static HINTERNET FTP_ReceiveFileList(LPWININETFTPSESSIONW lpwfs, INT nSocket, LP
             lpwfn->index = 1; /* Next index is 1 since we return index 0 */
             lpwfn->size = dwSize;
             lpwfn->lpafp = lpafp;
+
+            WININET_AddRef( &lpwfs->hdr );
+            lpwfn->lpFtpSession = lpwfs;
 
             handle = WININET_AllocHandle( &lpwfn->hdr );
         }

@@ -238,6 +238,7 @@ typedef struct
 typedef struct
 {
     WININETHANDLEHEADER hdr;
+    WININETFTPSESSIONW *lpFtpSession;
     DWORD index;
     DWORD size;
     LPFILEPROPERTIESW lpafp;

@@ -74,10 +74,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define MAX_WORKER_THREADS 10
 #define RESPONSE_TIMEOUT        30
 
-#define GET_HWININET_FROM_LPWININETFINDNEXT(lpwh) \
-(((LPWININETFTPSESSIONW)(lpwh->hdr.lpwhparent))->lpAppInfo)
-
-
 typedef struct
 {
     DWORD  dwError;
@@ -955,7 +951,7 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
         goto lend;
     }
 
-    hIC = GET_HWININET_FROM_LPWININETFINDNEXT(lpwh);
+    hIC = lpwh->lpFtpSession->lpAppInfo;
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC)
     {
         WORKREQUEST workRequest;
