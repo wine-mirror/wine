@@ -54,7 +54,7 @@ void enter_gl(void);
 
 typedef struct {
   const char  *name;     /* name of the extension */
-  const char  *glx_name; /* name used on Unix's libGL */
+  const char  *extension; /* name of the GL/WGL extension */
   void  *func;     /* pointer to the Wine function for this extension */
 } OpenGL_extension;
 

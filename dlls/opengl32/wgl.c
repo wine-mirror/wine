@@ -178,6 +178,53 @@ static int compar(const void *elt_a, const void *elt_b) {
 		((const OpenGL_extension *) elt_b)->name);
 }
 
+/* Check if a GL extension is supported */
+static BOOL is_extension_supported(const char* extension)
+{
+    const char *gl_ext_string = (const char*)internal_glGetString(GL_EXTENSIONS);
+
+    TRACE("Checking for extension '%s'\n", extension);
+
+    if(!gl_ext_string) {
+        ERR("No OpenGL extensions found, check if your OpenGL setup is correct!\n");
+        return FALSE;
+    }
+
+    /* We use the GetProcAddress function from the display driver to retrieve function pointers
+     * for OpenGL and WGL extensions. In case of winex11.drv the OpenGL extension lookup is done
+     * using glXGetProcAddress. This function is quite unreliable in the sense that its specs don't
+     * require the function to return NULL when a extension isn't found. For this reason we check
+     * if the OpenGL extension required for the function we are looking up is supported. */
+
+    /* Check if the extension is part of the GL extension string to see if it is supported. */
+    if(strstr(gl_ext_string, extension) != NULL)
+        return TRUE;
+
+    /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
+     * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
+     * suffix aswell. In the extension table, these functions contain GL_VERSION_major_minor.
+     * Check if we are searching for a core GL function */
+    if(strncmp(extension, "GL_VERSION_", 11) == 0)
+    {
+        const GLubyte *gl_version = glGetString(GL_VERSION);
+        const const char *version = extension + 11; /* Move past 'GL_VERSION_' */
+
+        if(!gl_version) {
+            ERR("Error no OpenGL version found,\n");
+            return FALSE;
+        }
+
+        /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
+         * The gl_version string is guaranteed to have atleast a major/minor and sometimes it has a release number aswell. */
+        if( (gl_version[0] >= version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
+            return TRUE;
+        }
+        WARN("The function requires OpenGL version '%c.%c' while your drivers only provide '%c.%c'\n", version[0], version[2], gl_version[0], gl_version[2]);
+    }
+
+    return FALSE;
+}
+
 PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   OpenGL_extension  ext;
@@ -201,6 +248,13 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
     WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
     return wine_wgl.p_wglGetProcAddress(lpszProc);
   } else { /* We are looking for an OpenGL extension */
+
+    /* Check if the GL extension required by the function is available */
+    if(!is_extension_supported(ext_ret->extension)) {
+        WARN("Extension '%s' required by function '%s' not supported!\n", ext_ret->extension, lpszProc);
+        return NULL;
+    }
+
     local_func = wine_wgl.p_wglGetProcAddress(ext_ret->name);
 
     /* After that, look at the extensions defined in the Linux OpenGL library */
