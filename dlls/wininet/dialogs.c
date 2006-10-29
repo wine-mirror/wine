@@ -68,7 +68,7 @@ static BOOL WININET_GetProxyServer( HINTERNET hRequest, LPWSTR szBuf, DWORD sz )
     if (NULL == lpwhr)
 	return FALSE;
 
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs)
 	return FALSE;
 
@@ -209,7 +209,7 @@ static BOOL WININET_SetProxyAuthorization( HINTERNET hRequest,
     if( !lpwhr )
 	return FALSE;
         
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);

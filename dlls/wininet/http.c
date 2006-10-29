@@ -372,7 +372,7 @@ static void HTTP_ProcessHeaders( LPWININETHTTPREQW lpwhr )
 
 static void HTTP_AddProxyInfo( LPWININETHTTPREQW lpwhr )
 {
-    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
+    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
 
     assert(lpwhs->hdr.htype == WH_HHTTPSESSION);
@@ -1761,7 +1761,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
     	return FALSE;
     }
 
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    lpwhs = lpwhr->lpHttpSession;
     assert(lpwhs->hdr.htype == WH_HHTTPSESSION);
     hIC = lpwhs->lpAppInfo;
     assert(hIC->hdr.htype == WH_HINIT);
@@ -1845,7 +1845,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         goto lend;
     }
 
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    lpwhs = lpwhr->lpHttpSession;
     if (NULL == lpwhs ||  lpwhs->hdr.htype != WH_HHTTPSESSION)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
@@ -1932,7 +1932,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
                                 DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
                                 DWORD dwContentLength)
 {
-    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
     WCHAR path[2048];
     char szaddr[32];
@@ -2174,7 +2174,7 @@ static BOOL HTTP_SecureProxyConnect(LPWININETHTTPREQW lpwhr)
     BOOL ret;
     static const WCHAR szConnect[] = {'C','O','N','N','E','C','T',0};
     static const WCHAR szFormat[] = {'%','s',':','%','d',0};
-    LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
+    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
 
     TRACE("\n");
 
@@ -2485,7 +2485,7 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
         goto lend;
     }
 
-    lpwhs = (LPWININETHTTPSESSIONW)lpwhr->hdr.lpwhparent;
+    lpwhs = lpwhr->lpHttpSession;
 
     hIC = lpwhs->lpAppInfo;
     inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
@@ -2912,7 +2912,7 @@ static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
 
     TRACE("%p\n",lpwhr);
 
-    lpwhs = (LPWININETHTTPSESSIONW) lpwhr->hdr.lpwhparent;
+    lpwhs = lpwhr->lpHttpSession;
     hIC = lpwhs->lpAppInfo;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
