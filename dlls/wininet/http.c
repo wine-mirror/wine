@@ -1009,6 +1009,9 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     lpwhr->hdr.destroy = HTTP_CloseHTTPRequestHandle;
     lpwhr->hdr.lpfnStatusCB = lpwhs->hdr.lpfnStatusCB;
 
+    WININET_AddRef( &lpwhs->hdr );
+    lpwhr->lpHttpSession = lpwhs;
+
     handle = WININET_AllocHandle( &lpwhr->hdr );
     if (NULL == handle)
     {
@@ -2937,6 +2940,8 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
     LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) hdr;
 
     TRACE("\n");
+
+    WININET_Release(&lpwhr->hdr);
 
     if (NETCON_connected(&lpwhr->netConnection))
         HTTP_CloseConnection(lpwhr);

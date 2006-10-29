@@ -190,6 +190,7 @@ typedef struct
 typedef struct
 {
     WININETHANDLEHEADER hdr;
+    WININETHTTPSESSIONW *lpHttpSession;
     LPWSTR lpszPath;
     LPWSTR lpszVerb;
     LPWSTR lpszRawHeaders;
