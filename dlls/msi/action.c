@@ -1592,15 +1592,10 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
     return folder;
 }
 
-/* scan for and update current install states */
-static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
+static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
 {
     MSICOMPONENT *comp;
-    MSIFEATURE *feature;
 
-    /* FIXME: component's installed state should be determined
-     * by the component's registration
-     */
     LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
     {
         INSTALLSTATE res;
@@ -1608,12 +1603,19 @@ static void ACTION_UpdateInstallStates(MSIPACKAGE *package)
         if (!comp->ComponentId)
             continue;
 
-        res = MsiGetComponentPathW( package->ProductCode, 
+        res = MsiGetComponentPathW( package->ProductCode,
                                     comp->ComponentId, NULL, NULL);
         if (res < 0)
             res = INSTALLSTATE_ABSENT;
         comp->Installed = res;
     }
+}
+
+/* scan for and update current install states */
+static void ACTION_UpdateFeatureInstallStates(MSIPACKAGE *package)
+{
+    MSICOMPONENT *comp;
+    MSIFEATURE *feature;
 
     LIST_FOR_EACH_ENTRY( feature, &package->features, MSIFEATURE, entry )
     {
@@ -1972,6 +1974,9 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         msiobj_release(&view->hdr);
     }
 
+    /* read components states from the registry */
+    ACTION_GetComponentInstallStates(package);
+
     TRACE("File calculations\n");
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
@@ -2053,7 +2058,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         MSI_SetPropertyW(package,szlevel, szOne);
     msi_free(level);
 
-    ACTION_UpdateInstallStates(package);
+    ACTION_UpdateFeatureInstallStates(package);
 
     return MSI_SetFeatureStates(package);
 }
