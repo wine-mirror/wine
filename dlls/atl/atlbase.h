@@ -142,7 +142,9 @@ struct _ATL_REGMAP_ENTRY
 };
 
 HRESULT WINAPI AtlAdvise(IUnknown *pUnkCP, IUnknown *pUnk, const IID * iid, LPDWORD dpw);
+HRESULT WINAPI AtlAxAttachControl(IUnknown*,HWND,IUnknown**);
 HRESULT WINAPI AtlAxCreateControl(LPCOLESTR,HWND,IStream*,IUnknown**);
+HRESULT WINAPI AtlAxCreateControlEx(LPCOLESTR,HWND,IStream*,IUnknown**,IUnknown**,REFIID,IUnknown*);
 HRESULT WINAPI AtlFreeMarshalStream(IStream *pStream);
 HRESULT WINAPI AtlInternalQueryInterface(LPVOID pThis, const _ATL_INTMAP_ENTRY* pEntries, REFIID iid, LPVOID* ppvObject);
 HRESULT WINAPI AtlMarshalPtrInProc(IUnknown *pUnk, const IID *iid, IStream **ppStream);
