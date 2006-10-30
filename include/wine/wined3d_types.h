@@ -480,6 +480,19 @@ typedef enum _WINED3DVERTEXBLENDFLAGS {
     WINED3DVBF_0WEIGHTS = 256
 } WINED3DVERTEXBLENDFLAGS;
 
+typedef enum _WINED3DCMPFUNC {
+    WINED3DCMP_NEVER                = 1,
+    WINED3DCMP_LESS                 = 2,
+    WINED3DCMP_EQUAL                = 3,
+    WINED3DCMP_LESSEQUAL            = 4,
+    WINED3DCMP_GREATER              = 5,
+    WINED3DCMP_NOTEQUAL             = 6,
+    WINED3DCMP_GREATEREQUAL         = 7,
+    WINED3DCMP_ALWAYS               = 8,
+
+    WINED3DCMP_FORCE_DWORD          = 0x7fffffff
+} WINED3DCMPFUNC;
+
 typedef enum _WINED3DZBUFFERTYPE {
     WINED3DZB_FALSE                 = 0,
     WINED3DZB_TRUE                  = 1,

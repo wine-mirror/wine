@@ -854,8 +854,8 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLEND,         WINED3DBLEND_ONE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLEND,        WINED3DBLEND_ZERO);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CULLMODE,         WINED3DCULL_CCW);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ZFUNC,            D3DCMP_LESSEQUAL);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAFUNC,        D3DCMP_ALWAYS);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_ZFUNC,            WINED3DCMP_LESSEQUAL);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAFUNC,        WINED3DCMP_ALWAYS);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAREF,         0);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DITHERENABLE,     FALSE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHABLENDENABLE, FALSE);
@@ -886,7 +886,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
      */
     This->renderState[WINED3DRS_STENCILREF] = 0;
     This->renderState[WINED3DRS_STENCILMASK] = 0xFFFFFFFF;
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILFUNC,      D3DCMP_ALWAYS);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILFUNC,      WINED3DCMP_ALWAYS);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_STENCILWRITEMASK, 0xFFFFFFFF);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_TEXTUREFACTOR,    0xFFFFFFFF);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_WRAP0, 0);
@@ -957,7 +957,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILFAIL,          WINED3DSTENCILOP_KEEP);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILZFAIL,         WINED3DSTENCILOP_KEEP);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILPASS,          WINED3DSTENCILOP_KEEP);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILFUNC,          D3DCMP_ALWAYS);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_CCW_STENCILFUNC,          WINED3DCMP_ALWAYS);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE1,        0x0000000F);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE2,        0x0000000F);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE3,        0x0000000F);
