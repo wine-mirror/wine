@@ -651,14 +651,14 @@ const char* debug_d3dpool(WINED3DPOOL Pool) {
  */
 GLenum StencilOp(DWORD op) {
     switch(op) {
-    case D3DSTENCILOP_KEEP    : return GL_KEEP;
-    case D3DSTENCILOP_ZERO    : return GL_ZERO;
-    case D3DSTENCILOP_REPLACE : return GL_REPLACE;
-    case D3DSTENCILOP_INCRSAT : return GL_INCR;
-    case D3DSTENCILOP_DECRSAT : return GL_DECR;
-    case D3DSTENCILOP_INVERT  : return GL_INVERT;
-    case D3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
-    case D3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
+    case WINED3DSTENCILOP_KEEP    : return GL_KEEP;
+    case WINED3DSTENCILOP_ZERO    : return GL_ZERO;
+    case WINED3DSTENCILOP_REPLACE : return GL_REPLACE;
+    case WINED3DSTENCILOP_INCRSAT : return GL_INCR;
+    case WINED3DSTENCILOP_DECRSAT : return GL_DECR;
+    case WINED3DSTENCILOP_INVERT  : return GL_INVERT;
+    case WINED3DSTENCILOP_INCR    : return GL_INCR_WRAP_EXT;
+    case WINED3DSTENCILOP_DECR    : return GL_DECR_WRAP_EXT;
     default:
         FIXME("Unrecognized stencil op %d\n", op);
         return GL_KEEP;

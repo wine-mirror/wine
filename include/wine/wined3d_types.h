@@ -521,6 +521,19 @@ typedef enum _WINED3DCULL {
     WINED3DCULL_FORCE_DWORD         = 0x7fffffff
 } WINED3DCULL;
 
+typedef enum _WINED3DSTENCILOP {
+    WINED3DSTENCILOP_KEEP           = 1,
+    WINED3DSTENCILOP_ZERO           = 2,
+    WINED3DSTENCILOP_REPLACE        = 3,
+    WINED3DSTENCILOP_INCRSAT        = 4,
+    WINED3DSTENCILOP_DECRSAT        = 5,
+    WINED3DSTENCILOP_INVERT         = 6,
+    WINED3DSTENCILOP_INCR           = 7,
+    WINED3DSTENCILOP_DECR           = 8,
+
+    WINED3DSTENCILOP_FORCE_DWORD    = 0x7fffffff
+} WINED3DSTENCILOP;
+
 typedef struct _WINED3DDISPLAYMODE {
     UINT            Width;
     UINT            Height;
