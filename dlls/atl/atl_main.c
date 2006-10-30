@@ -423,3 +423,42 @@ void WINAPI AtlPixelToHiMetric(const SIZEL* lpPix, SIZEL* lpHiMetric)
     lpHiMetric->cy = 100 * lpPix->cy / GetDeviceCaps( dc, LOGPIXELSY );
     ReleaseDC( NULL, dc );
 }
+
+/***********************************************************************
+ *           AtlModuleAddCreateWndData          [ATL.@]
+ */
+void WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData, LPVOID pvObject)
+{
+    TRACE("(%p, %p, %p)\n", pM, pData, pvObject);
+
+    pData->m_pThis = pvObject;
+    pData->m_dwThreadID = GetCurrentThreadId();
+    pData->m_pNext = pM->m_pCreateWndList;
+    pM->m_pCreateWndList = pData;
+}
+
+/***********************************************************************
+ *           AtlModuleExtractCreateWndData      [ATL.@]
+ *
+ *  NOTE: I failed to find any good description of this function.
+ *        Tests show that this function extracts one of _AtlCreateWndData
+ *        records from the current thread from a list 
+ *        
+ */
+LPVOID WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM)
+{
+    _AtlCreateWndData **ppData;
+
+    TRACE("(%p)\n", pM);
+
+    for(ppData = &pM->m_pCreateWndList; *ppData!=NULL; ppData = &(*ppData)->m_pNext)
+    {
+        if ((*ppData)->m_dwThreadID == GetCurrentThreadId())
+        {
+            _AtlCreateWndData *pData = *ppData;
+            *ppData = pData->m_pNext;
+            return pData->m_pThis;
+        }
+    }
+    return NULL;
+}
