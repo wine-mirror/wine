@@ -26,6 +26,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
 #include "objbase.h"
@@ -420,4 +421,20 @@ ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW 
 
     TRACE("returning 0x%04x\n", atom);
     return atom;
+}
+
+void WINAPI AtlHiMetricToPixel(const SIZEL* lpHiMetric, SIZEL* lpPix)
+{
+    HDC dc = GetDC(NULL);
+    lpPix->cx = lpHiMetric->cx * GetDeviceCaps( dc, LOGPIXELSX ) / 100;
+    lpPix->cy = lpHiMetric->cy * GetDeviceCaps( dc, LOGPIXELSY ) / 100;
+    ReleaseDC( NULL, dc );
+}
+
+void WINAPI AtlPixelToHiMetric(const SIZEL* lpPix, SIZEL* lpHiMetric)
+{
+    HDC dc = GetDC(NULL);
+    lpHiMetric->cx = 100 * lpPix->cx / GetDeviceCaps( dc, LOGPIXELSX );
+    lpHiMetric->cy = 100 * lpPix->cy / GetDeviceCaps( dc, LOGPIXELSY );
+    ReleaseDC( NULL, dc );
 }

@@ -19,8 +19,8 @@
 24 stub AtlWaitWithMessageLoop
 25 stub AtlSetErrorInfo
 26 stub AtlCreateTargetDC
-27 stub AtlHiMetricToPixel
-28 stub AtlPixelToHiMetric
+27 stdcall AtlHiMetricToPixel(ptr ptr)
+28 stdcall AtlPixelToHiMetric(ptr ptr)
 29 stub AtlDevModeW2A
 30 stdcall AtlComPtrAssign(ptr ptr)
 31 stub AtlComQIPtrAssign
