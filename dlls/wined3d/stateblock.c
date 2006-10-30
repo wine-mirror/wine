@@ -844,7 +844,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
        IWineD3DDevice_SetRenderState(device, WINED3DRS_ZENABLE,       WINED3DZB_FALSE);
     }
     IWineD3DDevice_SetRenderState(device, WINED3DRS_FILLMODE,         D3DFILL_SOLID);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_SHADEMODE,        D3DSHADE_GOURAUD);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_SHADEMODE,        WINED3DSHADE_GOURAUD);
     lp.lp.wRepeatFactor = 0;
     lp.lp.wLinePattern  = 0;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_LINEPATTERN,      lp.d);

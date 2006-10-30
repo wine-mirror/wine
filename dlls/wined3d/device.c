@@ -3511,20 +3511,20 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         break;
 
     case WINED3DRS_SHADEMODE                 :
-        switch ((D3DSHADEMODE) Value) {
-        case D3DSHADE_FLAT:
+        switch ((WINED3DSHADEMODE) Value) {
+        case WINED3DSHADE_FLAT:
             glShadeModel(GL_FLAT);
             checkGLcall("glShadeModel");
             break;
-        case D3DSHADE_GOURAUD:
+        case WINED3DSHADE_GOURAUD:
             glShadeModel(GL_SMOOTH);
             checkGLcall("glShadeModel");
             break;
-        case D3DSHADE_PHONG:
-            FIXME("D3DSHADE_PHONG isn't supported\n");
+        case WINED3DSHADE_PHONG:
+            FIXME("WINED3DSHADE_PHONG isn't supported\n");
             break;
         default:
-            FIXME("Unrecognized/Unhandled D3DSHADEMODE value %d\n", Value);
+            FIXME("Unrecognized/Unhandled WINED3DSHADEMODE value %d\n", Value);
         }
         break;
 

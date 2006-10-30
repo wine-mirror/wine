@@ -497,6 +497,14 @@ typedef enum _WINED3DFOGMODE {
     WINED3DFOG_FORCE_DWORD          = 0x7fffffff
 } WINED3DFOGMODE;
 
+typedef enum _WINED3DSHADEMODE {
+    WINED3DSHADE_FLAT               = 1,
+    WINED3DSHADE_GOURAUD            = 2,
+    WINED3DSHADE_PHONG              = 3,
+
+    WINED3DSHADE_FORCE_DWORD        = 0x7fffffff
+} WINED3DSHADEMODE;
+
 typedef struct _WINED3DDISPLAYMODE {
     UINT            Width;
     UINT            Height;
