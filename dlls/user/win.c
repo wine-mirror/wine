@@ -626,7 +626,8 @@ LRESULT WIN_DestroyWindow( HWND hwnd )
     /* free resources associated with the window */
 
     if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
-    if (!(wndPtr->dwStyle & WS_CHILD)) menu = (HMENU)wndPtr->wIDmenu;
+    if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+        menu = (HMENU)wndPtr->wIDmenu;
     sys_menu = wndPtr->hSysMenu;
     WIN_ReleasePtr( wndPtr );
 
@@ -1012,7 +1013,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
      * It affects only the style loaded into the WIN structure.
      */
 
-    if (!(wndPtr->dwStyle & WS_CHILD))
+    if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
     {
         wndPtr->dwStyle |= WS_CLIPSIBLINGS;
         if (!(wndPtr->dwStyle & WS_POPUP))
@@ -1048,7 +1049,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
 
     /* Set the window menu */
 
-    if (!(wndPtr->dwStyle & WS_CHILD))
+    if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
     {
         if (cs->hMenu)
         {
