@@ -547,6 +547,14 @@ typedef enum _WINED3DSTENCILOP {
     WINED3DSTENCILOP_FORCE_DWORD    = 0x7fffffff
 } WINED3DSTENCILOP;
 
+typedef enum _WINED3DMATERIALCOLORSOURCE {
+    WINED3DMCS_MATERIAL         = 0,
+    WINED3DMCS_COLOR1           = 1,
+    WINED3DMCS_COLOR2           = 2,
+
+    WINED3DMCS_FORCE_DWORD      = 0x7fffffff
+} WINED3DMATERIALCOLORSOURCE;
+
 typedef struct _WINED3DDISPLAYMODE {
     UINT            Width;
     UINT            Height;

@@ -4067,17 +4067,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                       This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE],
                       This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE]);
 
-                if (This->stateBlock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
-                    if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                if (This->stateBlock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+                    if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
                         Parm = GL_AMBIENT_AND_DIFFUSE;
                     } else {
                         Parm = GL_DIFFUSE;
                     }
-                } else if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                } else if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
                     Parm = GL_AMBIENT;
-                } else if (This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
+                } else if (This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
                     Parm = GL_EMISSION;
-                } else if (This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
+                } else if (This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
                     Parm = GL_SPECULAR;
                 } else {
                     Parm = -1;
