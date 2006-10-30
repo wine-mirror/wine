@@ -24,14 +24,14 @@
 
 struct ImgDelayDescr
 {
-    DWORD                   grAttrs;
+    DWORD_PTR               grAttrs;
     LPCSTR                  szName;
     HMODULE                *phmod;
     IMAGE_THUNK_DATA       *pIAT;
     const IMAGE_THUNK_DATA *pINT;
     const IMAGE_THUNK_DATA *pBoundIAT;
     const IMAGE_THUNK_DATA *pUnloadIAT;
-    DWORD                   dwTimeStamp;
+    DWORD_PTR               dwTimeStamp;
 };
 
 extern struct ImgDelayDescr __wine_spec_delay_imports[];
