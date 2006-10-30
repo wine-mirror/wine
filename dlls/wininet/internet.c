@@ -154,12 +154,6 @@ end:
     return info->hInternet = (HINTERNET) (handle+1);
 }
 
-HINTERNET WININET_FindHandle( LPWININETHANDLEHEADER info )
-{
-    WININET_AddRef(info);
-    return info->hInternet;
-}
-
 LPWININETHANDLEHEADER WININET_AddRef( LPWININETHANDLEHEADER info )
 {
     info->dwRefCount++;

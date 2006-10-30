@@ -1924,12 +1924,7 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 
 	if (lpfnStatusCB)
         {
-             HINTERNET hHandle = WININET_FindHandle( hdr );
-	     if( hHandle )
-             {
-                 lpfnStatusCB(hHandle, dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
-                 WININET_Release( hdr );
-             }
+            lpfnStatusCB(hdr->hInternet, dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
         }
 
 	dwParamLen = lpszParam?strlen(lpszParam)+1:0;
@@ -1953,13 +1948,8 @@ static BOOL FTP_SendCommandA(INT nSocket, FTP_COMMAND ftpCmd, LPCSTR lpszParam,
 
 	if (lpfnStatusCB)
         {
-             HINTERNET hHandle = WININET_FindHandle( hdr );
-	     if( hHandle )
-             {
-                 lpfnStatusCB(hHandle, dwContext, INTERNET_STATUS_REQUEST_SENT,
-                              &nBytesSent, sizeof(DWORD));
-                 WININET_Release( hdr );
-             }
+            lpfnStatusCB(hdr->hInternet, dwContext, INTERNET_STATUS_REQUEST_SENT,
+                         &nBytesSent, sizeof(DWORD));
         }
 
 	TRACE("Sent %d bytes\n", nBytesSent);
