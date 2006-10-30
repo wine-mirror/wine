@@ -853,7 +853,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_LASTPIXEL,        TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLEND,         WINED3DBLEND_ONE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLEND,        WINED3DBLEND_ZERO);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_CULLMODE,         D3DCULL_CCW);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_CULLMODE,         WINED3DCULL_CCW);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ZFUNC,            D3DCMP_LESSEQUAL);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAFUNC,        D3DCMP_ALWAYS);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ALPHAREF,         0);

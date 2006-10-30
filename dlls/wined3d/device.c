@@ -3476,12 +3476,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         /* If we are culling "back faces with clockwise vertices" then
            set front faces to be counter clockwise and enable culling
            of back faces                                               */
-        switch ((D3DCULL) Value) {
-        case D3DCULL_NONE:
+        switch ((WINED3DCULL) Value) {
+        case WINED3DCULL_NONE:
             glDisable(GL_CULL_FACE);
             checkGLcall("glDisable GL_CULL_FACE");
             break;
-        case D3DCULL_CW:
+        case WINED3DCULL_CW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             if (This->renderUpsideDown) {
@@ -3493,7 +3493,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
             }
             glCullFace(GL_BACK);
             break;
-        case D3DCULL_CCW:
+        case WINED3DCULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
             if (This->renderUpsideDown) {
@@ -3506,7 +3506,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
             glCullFace(GL_BACK);
             break;
         default:
-            FIXME("Unrecognized/Unhandled D3DCULL value %d\n", Value);
+            FIXME("Unrecognized/Unhandled WINED3DCULL value %d\n", Value);
         }
         break;
 
