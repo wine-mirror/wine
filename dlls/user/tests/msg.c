@@ -7996,6 +7996,73 @@ static void test_TrackMouseEvent(void)
 #undef track_hover_cancel
 }
 
+
+static const struct message WmSetWindowRgn[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent }, /* wparam != 1 */
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOSIZE|SWP_NOMOVE },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message WmSetWindowRgn_no_redraw[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOSIZE|SWP_NOMOVE|SWP_NOREDRAW },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static const struct message WmSetWindowRgn_clear[] = {
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCCALCSIZE, sent|wparam, 1 },
+    { WM_NCPAINT, sent }, /* wparam != 1 */
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional }, /* FIXME: remove optional once Wine is fixed */
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOZORDER|SWP_NOSIZE|SWP_NOMOVE },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
+    { WM_NCPAINT, sent|optional }, /* wparam != 1 */
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_ERASEBKGND, sent|optional },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, 0, 0 },
+    { 0 }
+};
+
+static void test_SetWindowRgn(void)
+{
+    HRGN hrgn;
+    HWND hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
+                                100, 100, 200, 200, 0, 0, 0, NULL);
+    ok( hwnd != 0, "Failed to create overlapped window\n" );
+
+    ShowWindow( hwnd, SW_SHOW );
+    UpdateWindow( hwnd );
+    flush_events();
+    flush_sequence();
+
+    trace("testing SetWindowRgn\n");
+    hrgn = CreateRectRgn( 0, 0, 150, 150 );
+    SetWindowRgn( hwnd, hrgn, TRUE );
+    ok_sequence( WmSetWindowRgn, "WmSetWindowRgn", FALSE );
+
+    hrgn = CreateRectRgn( 30, 30, 160, 160 );
+    SetWindowRgn( hwnd, hrgn, FALSE );
+    ok_sequence( WmSetWindowRgn_no_redraw, "WmSetWindowRgn_no_redraw", FALSE );
+
+    hrgn = CreateRectRgn( 0, 0, 180, 180 );
+    SetWindowRgn( hwnd, hrgn, TRUE );
+    ok_sequence( WmSetWindowRgn, "WmSetWindowRgn2", FALSE );
+
+    SetWindowRgn( hwnd, 0, TRUE );
+    ok_sequence( WmSetWindowRgn_clear, "WmSetWindowRgn_clear", FALSE );
+
+    DestroyWindow( hwnd );
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -8060,6 +8127,7 @@ START_TEST(msg)
     test_edit_messages();
     test_quit_message();
     test_TrackMouseEvent();
+    test_SetWindowRgn();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

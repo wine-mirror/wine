@@ -265,7 +265,13 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
 
     if (ret) ret = USER_Driver->pSetWindowRgn( hwnd, hrgn, bRedraw );
 
-    if (ret && bRedraw) RedrawWindow( hwnd, NULL, 0, RDW_FRAME | RDW_INVALIDATE | RDW_ERASE );
+    if (ret)
+    {
+        UINT swp_flags = SWP_NOSIZE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE|SWP_FRAMECHANGED;
+        if (hrgn) swp_flags |= SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE;
+        if (!bRedraw) swp_flags |= SWP_NOREDRAW;
+        SetWindowPos( hwnd, 0, 0, 0, 0, 0, swp_flags );
+    }
     return ret;
 }
 
