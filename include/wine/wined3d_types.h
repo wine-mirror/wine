@@ -478,6 +478,15 @@ typedef enum _WINED3DZBUFFERTYPE {
     WINED3DZB_FORCE_DWORD           = 0x7fffffff
 } WINED3DZBUFFERTYPE;
 
+typedef enum _WINED3DFOGMODE {
+    WINED3DFOG_NONE                 = 0,
+    WINED3DFOG_EXP                  = 1,
+    WINED3DFOG_EXP2                 = 2,
+    WINED3DFOG_LINEAR               = 3,
+
+    WINED3DFOG_FORCE_DWORD          = 0x7fffffff
+} WINED3DFOGMODE;
+
 typedef struct _WINED3DDISPLAYMODE {
     UINT            Width;
     UINT            Height;

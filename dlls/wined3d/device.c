@@ -3891,14 +3891,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_FOGVERTEXMODE             :
         {
           /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes, the system will apply only pixel(=table) fog effects." */
-          if(This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+          if(This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
               glHint(GL_FOG_HINT, GL_FASTEST);
               checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
               switch (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE]) {
                   /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
                    * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
                    */
-                  case D3DFOG_EXP:  {
+                  case WINED3DFOG_EXP:  {
                       if(!This->last_was_rhw) {
                           glFogi(GL_FOG_MODE, GL_EXP);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
@@ -3911,7 +3911,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                           break;
                       }
                   }
-                  case D3DFOG_EXP2: {
+                  case WINED3DFOG_EXP2: {
                       if(!This->last_was_rhw) {
                           glFogi(GL_FOG_MODE, GL_EXP2);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
@@ -3924,7 +3924,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                           break;
                       }
                   }
-                  case D3DFOG_LINEAR: {
+                  case WINED3DFOG_LINEAR: {
                       if(!This->last_was_rhw) {
                           glFogi(GL_FOG_MODE, GL_LINEAR);
                           checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
@@ -3937,7 +3937,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                           break;
                       }
                   }
-                  case D3DFOG_NONE: {
+                  case WINED3DFOG_NONE: {
                       /* Both are none? According to msdn the alpha channel of the specular
                        * color contains a fog factor. Set it in drawStridedSlow.
                        * Same happens with Vertexfog on transformed vertices
@@ -3964,7 +3964,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
               glHint(GL_FOG_HINT, GL_NICEST);
               checkGLcall("glHint(GL_FOG_HINT, GL_NICEST)");
               switch (This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]) {
-                  case D3DFOG_EXP:    glFogi(GL_FOG_MODE, GL_EXP);
+                  case WINED3DFOG_EXP:
+                                      glFogi(GL_FOG_MODE, GL_EXP);
                                       checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
                                       if(GL_SUPPORT(EXT_FOG_COORD)) {
                                           glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
@@ -3973,7 +3974,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                                       }
                                       break;
-                  case D3DFOG_EXP2:   glFogi(GL_FOG_MODE, GL_EXP2);
+                  case WINED3DFOG_EXP2:
+                                      glFogi(GL_FOG_MODE, GL_EXP2);
                                       checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
                                       if(GL_SUPPORT(EXT_FOG_COORD)) {
                                           glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
@@ -3982,7 +3984,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                                       }
                                       break;
-                  case D3DFOG_LINEAR: glFogi(GL_FOG_MODE, GL_LINEAR);
+                  case WINED3DFOG_LINEAR:
+                                      glFogi(GL_FOG_MODE, GL_LINEAR);
                                       checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
                                       if(GL_SUPPORT(EXT_FOG_COORD)) {
                                           glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
@@ -3991,8 +3994,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
                                           IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
                                       }
                                       break;
-                  case D3DFOG_NONE:   /* Won't happen */
-                  default:            FIXME("Unexpected WINED3DRS_FOGTABLEMODE %d\n", This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]);
+                  case WINED3DFOG_NONE:
+                  default:            /* Won't happen */
+                                      FIXME("Unexpected WINED3DRS_FOGTABLEMODE %d\n", This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]);
               }
           }
           if (GL_SUPPORT(NV_FOG_DISTANCE)) {

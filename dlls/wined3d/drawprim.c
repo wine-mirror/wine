@@ -201,7 +201,7 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
         }
 
         /* Vertex fog on transformed vertices? Use the calculated fog factor stored in the specular color */
-        if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
+        if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != WINED3DFOG_NONE) {
             if(GL_SUPPORT(EXT_FOG_COORD)) {
                 glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
                 checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
@@ -326,7 +326,7 @@ static void primitiveInitState(
             glFogf(GL_FOG_END, 0.0f);
 
         } else if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] 
-                  && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != D3DFOG_NONE) {
+                  && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != WINED3DFOG_NONE) {
             
             if(GL_SUPPORT(EXT_FOG_COORD)) {
                 glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
@@ -1508,8 +1508,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         if (sd->u.s.specular.lpData != NULL) {
             /* special case where the fog density is stored in the diffuse alpha channel */
             if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] &&
-              (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == D3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
-              This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+              (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] == WINED3DFOG_NONE || sd->u.s.position.dwType == WINED3DDECLTYPE_FLOAT4 )&&
+              This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
                     GL_EXTCALL(glFogCoordfEXT(specularColor >> 24));
                 } else {

@@ -863,7 +863,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SPECULARENABLE,   FALSE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_ZVISIBLE,         0);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGCOLOR,         0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGTABLEMODE,     D3DFOG_NONE);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGTABLEMODE,     WINED3DFOG_NONE);
     tmpfloat.f = 0.0f;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGSTART,         tmpfloat.d);
     tmpfloat.f = 1.0f;
@@ -900,7 +900,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_CLIPPING,                 TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_LIGHTING,                 TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_AMBIENT,                  0);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGVERTEXMODE,            D3DFOG_NONE);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_FOGVERTEXMODE,            WINED3DFOG_NONE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORVERTEX,              TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_LOCALVIEWER,              TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_NORMALIZENORMALS,         FALSE);
