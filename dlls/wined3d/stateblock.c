@@ -935,7 +935,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_COLORWRITEENABLE,         0x0000000F);
     tmpfloat.f = 0.0f;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_TWEENFACTOR,              tmpfloat.d);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOP,                  D3DBLENDOP_ADD);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOP,                  WINED3DBLENDOP_ADD);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_POSITIONDEGREE,           WINED3DDEGREE_CUBIC);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_NORMALDEGREE,             WINED3DDEGREE_LINEAR);
     /* states new in d3d9 */
@@ -975,7 +975,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SEPARATEALPHABLENDENABLE, FALSE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_SRCBLENDALPHA,            WINED3DBLEND_ONE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DESTBLENDALPHA,           WINED3DBLEND_ZERO);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOPALPHA,             D3DBLENDOP_ADD);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_BLENDOPALPHA,             WINED3DBLENDOP_ADD);
 
     /* clipping status */
     This->clip_status.ClipUnion = 0;

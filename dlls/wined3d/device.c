@@ -3716,14 +3716,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         {
             int glParm = GL_FUNC_ADD;
 
-            switch ((D3DBLENDOP) Value) {
-            case D3DBLENDOP_ADD              : glParm = GL_FUNC_ADD;              break;
-            case D3DBLENDOP_SUBTRACT         : glParm = GL_FUNC_SUBTRACT;         break;
-            case D3DBLENDOP_REVSUBTRACT      : glParm = GL_FUNC_REVERSE_SUBTRACT; break;
-            case D3DBLENDOP_MIN              : glParm = GL_MIN;                   break;
-            case D3DBLENDOP_MAX              : glParm = GL_MAX;                   break;
+            switch ((WINED3DBLENDOP) Value) {
+            case WINED3DBLENDOP_ADD              : glParm = GL_FUNC_ADD;              break;
+            case WINED3DBLENDOP_SUBTRACT         : glParm = GL_FUNC_SUBTRACT;         break;
+            case WINED3DBLENDOP_REVSUBTRACT      : glParm = GL_FUNC_REVERSE_SUBTRACT; break;
+            case WINED3DBLENDOP_MIN              : glParm = GL_MIN;                   break;
+            case WINED3DBLENDOP_MAX              : glParm = GL_MAX;                   break;
             default:
-                FIXME("Unrecognized/Unhandled D3DBLENDOP value %d\n", Value);
+                FIXME("Unrecognized/Unhandled WINED3DBLENDOP value %d\n", Value);
             }
 
             if(GL_SUPPORT(EXT_BLEND_MINMAX)) {
