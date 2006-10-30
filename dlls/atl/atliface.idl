@@ -73,3 +73,7 @@ cpp_quote("DEFINE_GUID(CLSID_ATLRegistrar,0x44ec053a,0x400f,0x11d0,0x9d,0xcd,0x0
 cpp_quote("HRESULT WINAPI AtlAxCreateControl(LPCOLESTR,HWND,IStream*,IUnknown**);")
 cpp_quote("HRESULT WINAPI AtlAxCreateControlEx(LPCOLESTR,HWND,IStream*,IUnknown**,IUnknown**,REFIID,IUnknown*);")
 cpp_quote("BOOL WINAPI AtlAxWinInit(void);")
+
+cpp_quote("HWND WINAPI AtlAxCreateDialogW(HINSTANCE,LPCWSTR,HWND,DLGPROC,LPARAM);");
+cpp_quote("HWND WINAPI AtlAxCreateDialogA(HINSTANCE,LPCSTR,HWND,DLGPROC,LPARAM);");
+cpp_quote("#define     AtlAxCreateDialog WINELIB_NAME_AW(AtlAxCreateDialog");

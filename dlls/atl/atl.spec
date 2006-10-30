@@ -28,8 +28,8 @@
 34 stub AtlGetVersion
 35 stub AtlAxDialogBoxW
 36 stub AtlAxDialogBoxA
-37 stub AtlAxCreateDialogW
-38 stub AtlAxCreateDialogA
+37 stdcall AtlAxCreateDialogW(long wstr long ptr long)
+38 stdcall AtlAxCreateDialogA(long str long ptr long)
 39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)
 40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr)
 41 stub AtlAxAttachControl
