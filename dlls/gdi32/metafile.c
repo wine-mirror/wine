@@ -1069,27 +1069,28 @@ break;
  */
 HMETAFILE WINAPI SetMetaFileBitsEx( UINT size, const BYTE *lpData )
 {
-    METAHEADER *mh = (METAHEADER *)lpData;
+    const METAHEADER *mh_in = (const METAHEADER *)lpData;
+    METAHEADER *mh_out;
 
     if (size & 1) return 0;
 
-    if (!size || mh->mtType != METAFILE_MEMORY || mh->mtVersion != MFVERSION ||
-        mh->mtHeaderSize != sizeof(METAHEADER) / 2)
+    if (!size || mh_in->mtType != METAFILE_MEMORY || mh_in->mtVersion != MFVERSION ||
+        mh_in->mtHeaderSize != sizeof(METAHEADER) / 2)
     {
         SetLastError(ERROR_INVALID_DATA);
         return 0;
     }
 
-    mh = HeapAlloc( GetProcessHeap(), 0, size );
-    if (!mh)
+    mh_out = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!mh_out)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return 0;
     }
 
-    memcpy(mh, lpData, size);
-    mh->mtSize = size / 2;
-    return MF_Create_HMETAFILE(mh);
+    memcpy(mh_out, mh_in, size);
+    mh_out->mtSize = size / 2;
+    return MF_Create_HMETAFILE(mh_out);
 }
 
 /*****************************************************************
