@@ -1140,23 +1140,23 @@ void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
     switch(arg->opcode->opcode) {
         case WINED3DSIO_M4x4:
             nComponents = 4;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP4];
+            tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP4);
             break;
         case WINED3DSIO_M4x3:
             nComponents = 3;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP4];
+            tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP4);
             break;
         case WINED3DSIO_M3x4:
             nComponents = 4;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
+            tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP3);
             break;
         case WINED3DSIO_M3x3:
             nComponents = 3;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
+            tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP3);
             break;
         case WINED3DSIO_M3x2:
             nComponents = 2;
-            tmpArg.opcode = &IWineD3DVertexShaderImpl_shader_ins[WINED3DSIO_DP3];
+            tmpArg.opcode = shader_get_opcode(arg->shader, WINED3DSIO_DP3);
             break;
         default:
             break;

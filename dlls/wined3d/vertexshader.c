@@ -473,7 +473,8 @@ static void vshader_texldl(WINED3DSHADERVECTOR* d) {
 }
 
 CONST SHADER_OPCODE IWineD3DVertexShaderImpl_shader_ins[] = {
-
+    /* This table is not order or position dependent. */
+    
     /* Arithmetic */ 
     {WINED3DSIO_NOP,  "nop",  "NOP", 0, 0, vshader_nop,  vshader_hw_map2gl, NULL, 0, 0},
     {WINED3DSIO_MOV,  "mov",  "MOV", 1, 2, vshader_mov,  vshader_hw_map2gl, shader_glsl_mov, 0, 0},
