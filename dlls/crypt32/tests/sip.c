@@ -272,17 +272,15 @@ static void test_SIPLoad(void)
     SetLastError(0xdeadbeef);
     ret = CryptSIPLoad(NULL, 0, NULL);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
-    todo_wine
-        ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
+    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
 
     /* Only pSipDispatch NULL */
     SetLastError(0xdeadbeef);
     ret = CryptSIPLoad(&subject, 0, NULL);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
-    todo_wine
-        ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
+    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
 
     /* No NULLs, but nonexistent pgSubject */
     SetLastError(0xdeadbeef);
@@ -405,9 +403,8 @@ static void test_SIPLoad(void)
     sdi.pfGet = (pCryptSIPGetSignedDataMsg)0xdeadbeef;
     ret = CryptSIPLoad(&unknown, 1, &sdi);
     ok ( !ret, "Expected CryptSIPLoad to fail\n");
-    todo_wine
-        ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
+    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08x\n", GetLastError());
     ok( sdi.pfGet == (pCryptSIPGetSignedDataMsg)0xdeadbeef, "Expected no change to the function pointer\n");
 }
 
