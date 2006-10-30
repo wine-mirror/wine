@@ -8,6 +8,7 @@ IMPORTS   = ole32 shlwapi user32 gdi32 advapi32 kernel32
 EXTRALIBS = -luuid
 
 C_SRCS = \
+	atl_ax.c \
 	atl_main.c \
 	registrar.c
 
