@@ -1186,7 +1186,8 @@ static void load_fontconfig_fonts(void)
     FcObjectSet *os;
     FcFontSet *fontset;
     int i, len;
-    const char *file, *ext;
+    char *file;
+    const char *ext;
 
     fc_handle = wine_dlopen(SONAME_LIBFONTCONFIG, RTLD_NOW, NULL, 0);
     if(!fc_handle) {
