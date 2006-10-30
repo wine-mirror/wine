@@ -796,7 +796,6 @@ static void HH_Close(HHInfo *pHHInfo)
         HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszType);
         HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszCaption);
         HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszToc);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszType);
         HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszIndex);
         HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszFile);
         HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszHome);
