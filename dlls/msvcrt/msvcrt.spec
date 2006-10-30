@@ -431,7 +431,7 @@
 @ cdecl _seterrormode(long)
 @ cdecl -i386 -norelay _setjmp(ptr) MSVCRT__setjmp
 @ cdecl -i386 -norelay _setjmp3(ptr long) MSVCRT__setjmp3
-@ stub _setmaxstdio #(long)
+@ cdecl _setmaxstdio(long)
 @ cdecl _setmbcp(long)
 @ cdecl _setmode(long long)
 @ stub _setsystime #(ptr long)

@@ -3090,6 +3090,20 @@ int CDECL _getmaxstdio(void)
 }
 
 /*********************************************************************
+ *		_setmaxstdio_ (MSVCRT.@)
+ */
+int CDECL _setmaxstdio(int newmax)
+{
+    int res;
+    if( newmax > 2048)
+      res = -1;
+    else
+      res = newmax;
+    FIXME("stub: setting new maximum for number of simultaneously open files not implemented,returning %d\n",res);
+    return res;
+}
+
+/*********************************************************************
  *		__pioinfo (MSVCRT.@)
  * FIXME: see MSVCRT_MAX_FILES define.
  */

@@ -788,6 +788,12 @@ static void test_get_osfhandle(void)
     _unlink(fname);
 }
 
+static void test_setmaxstdio(void)
+{
+    ok(2048 == _setmaxstdio(2048),"_setmaxstdio returned %d instead of 2048\n",_setmaxstdio(2048));
+    ok(-1 == _setmaxstdio(2049),"_setmaxstdio returned %d instead of -1\n",_setmaxstdio(2049));
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -818,4 +824,5 @@ START_TEST(file)
     test_file_put_get();
     test_tmpnam();
     test_get_osfhandle();
+    test_setmaxstdio();
 }
