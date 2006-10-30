@@ -505,6 +505,14 @@ typedef enum _WINED3DSHADEMODE {
     WINED3DSHADE_FORCE_DWORD        = 0x7fffffff
 } WINED3DSHADEMODE;
 
+typedef enum _WINED3DFILLMODE {
+    WINED3DFILL_POINT               = 1,
+    WINED3DFILL_WIREFRAME           = 2,
+    WINED3DFILL_SOLID               = 3,
+
+    WINED3DFILL_FORCE_DWORD         = 0x7fffffff
+} WINED3DFILLMODE;
+
 typedef enum _WINED3DCULL {
     WINED3DCULL_NONE                = 1,
     WINED3DCULL_CW                  = 2,
