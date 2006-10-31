@@ -1186,7 +1186,7 @@ static char get_windows_drive(void)
 static void test_FindFirstFileA(void)
 {
     HANDLE handle;
-    WIN32_FIND_DATAA search_results;
+    WIN32_FIND_DATAA data;
     int err;
     char buffer[5] = "C:\\";
     char buffer2[100];
@@ -1195,7 +1195,7 @@ static void test_FindFirstFileA(void)
     buffer[0] = get_windows_drive();
     
     SetLastError( 0xdeadbeaf );
-    handle = FindFirstFileA(buffer, &search_results);
+    handle = FindFirstFileA(buffer, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on root directory should fail\n" );
     ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
@@ -1203,7 +1203,7 @@ static void test_FindFirstFileA(void)
     /* try FindFirstFileA on "C:\*" */
     strcpy(buffer2, buffer);
     strcat(buffer2, "*");
-    handle = FindFirstFileA(buffer2, &search_results);
+    handle = FindFirstFileA(buffer2, &data);
     ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s should succeed\n", buffer2 );
     ok ( FindClose(handle) == TRUE, "Failed to close handle %s\n", buffer2 );
 
@@ -1211,7 +1211,7 @@ static void test_FindFirstFileA(void)
     SetLastError( 0xdeadbeaf );
     strcpy(buffer2, buffer);
     strcat(buffer2, "foo\\");
-    handle = FindFirstFileA(buffer2, &search_results);
+    handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
     todo_wine {
@@ -1222,33 +1222,94 @@ static void test_FindFirstFileA(void)
     SetLastError( 0xdeadbeaf );
     strcpy(buffer2, buffer);
     strcat(buffer2, "foo\\bar.txt");
-    handle = FindFirstFileA(buffer2, &search_results);
+    handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
-    todo_wine {
-	ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
-    }
+    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "C:\foo\*.*" */
     SetLastError( 0xdeadbeaf );
     strcpy(buffer2, buffer);
     strcat(buffer2, "foo\\*.*");
-    handle = FindFirstFileA(buffer2, &search_results);
+    handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
-    todo_wine {
-	ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
-    }
+    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 
     /* try FindFirstFileA on "foo\bar.txt" */
     SetLastError( 0xdeadbeaf );
     strcpy(buffer2, "foo\\bar.txt");
-    handle = FindFirstFileA(buffer2, &search_results);
+    handle = FindFirstFileA(buffer2, &data);
     err = GetLastError();
     ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
-    todo_wine {
-	ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
-    }
+    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+
+    /* try FindFirstFileA on "c:\nul" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "nul");
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed\n", buffer2 );
+    ok( 0 == lstrcmpiA(data.cFileName, "nul"), "wrong name %s\n", data.cFileName );
+    ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
+    ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
+    ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes, "wrong attributes %x\n", data.dwFileAttributes );
+    SetLastError( 0xdeadbeaf );
+    ok( !FindNextFileA( handle, &data ), "FindNextFileA succeeded\n" );
+    ok( GetLastError() == ERROR_NO_MORE_FILES, "bad error %d\n", GetLastError() );
+    ok( FindClose( handle ), "failed to close handle\n" );
+
+    /* try FindFirstFileA on "lpt1" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, "lpt1");
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s failed\n", buffer2 );
+    ok( 0 == lstrcmpiA(data.cFileName, "lpt1"), "wrong name %s\n", data.cFileName );
+    ok( 0 == data.nFileSizeHigh, "wrong size %d\n", data.nFileSizeHigh );
+    ok( 0 == data.nFileSizeLow, "wrong size %d\n", data.nFileSizeLow );
+    ok( FILE_ATTRIBUTE_ARCHIVE == data.dwFileAttributes, "wrong attributes %x\n", data.dwFileAttributes );
+    SetLastError( 0xdeadbeaf );
+    ok( !FindNextFileA( handle, &data ), "FindNextFileA succeeded\n" );
+    ok( GetLastError() == ERROR_NO_MORE_FILES, "bad error %d\n", GetLastError() );
+    ok( FindClose( handle ), "failed to close handle\n" );
+
+    /* try FindFirstFileA on "c:\nul\*" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "nul\\*");
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+
+    /* try FindFirstFileA on "c:\nul*" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "nul*");
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( err == ERROR_FILE_NOT_FOUND, "Bad Error number %d\n", err );
+
+    /* try FindFirstFileA on "c:\foo\bar\nul" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "foo\\bar\\nul");
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
+
+    /* try FindFirstFileA on "c:\foo\nul\bar" */
+    SetLastError( 0xdeadbeaf );
+    strcpy(buffer2, buffer);
+    strcat(buffer2, "foo\\nul\\bar");
+    handle = FindFirstFileA(buffer2, &data);
+    err = GetLastError();
+    ok ( handle == INVALID_HANDLE_VALUE, "FindFirstFile on %s should Fail\n", buffer2 );
+    ok ( err == ERROR_PATH_NOT_FOUND, "Bad Error number %d\n", err );
 }
 
 static void test_FindNextFileA(void)

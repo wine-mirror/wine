@@ -1553,6 +1553,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     OBJECT_ATTRIBUTES attr;
     IO_STATUS_BLOCK io;
     NTSTATUS status;
+    DWORD device = 0;
 
     TRACE("%s %d %p %d %p %x\n", debugstr_w(filename), level, data, search_op, filter, flags);
 
@@ -1574,27 +1575,56 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         return INVALID_HANDLE_VALUE;
     }
 
-    if (!mask || !*mask)
-    {
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        goto error;
-    }
-
     if (!(info = HeapAlloc( GetProcessHeap(), 0, sizeof(*info))))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         goto error;
     }
 
-    if (!RtlCreateUnicodeString( &info->mask, mask ))
+    if (!mask && (device = RtlIsDosDeviceName_U( filename )))
     {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        static const WCHAR dotW[] = {'.',0};
+        WCHAR *dir = NULL;
+
+        /* we still need to check that the directory can be opened */
+
+        if (HIWORD(device))
+        {
+            if (!(dir = HeapAlloc( GetProcessHeap(), 0, HIWORD(device) + sizeof(WCHAR) )))
+            {
+                SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                goto error;
+            }
+            memcpy( dir, filename, HIWORD(device) );
+            dir[HIWORD(device)/sizeof(WCHAR)] = 0;
+        }
+        RtlFreeUnicodeString( &nt_name );
+        if (!RtlDosPathNameToNtPathName_U( dir ? dir : dotW, &nt_name, &mask, NULL ))
+        {
+            HeapFree( GetProcessHeap(), 0, dir );
+            SetLastError( ERROR_PATH_NOT_FOUND );
+            goto error;
+        }
+        HeapFree( GetProcessHeap(), 0, dir );
+        RtlInitUnicodeString( &info->mask, NULL );
+    }
+    else if (!mask || !*mask)
+    {
+        SetLastError( ERROR_FILE_NOT_FOUND );
         goto error;
     }
+    else
+    {
+        if (!RtlCreateUnicodeString( &info->mask, mask ))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            goto error;
+        }
 
-    /* truncate dir name before mask */
-    *mask = 0;
-    nt_name.Length = (mask - nt_name.Buffer) * sizeof(WCHAR);
+        /* truncate dir name before mask */
+        *mask = 0;
+        nt_name.Length = (mask - nt_name.Buffer) * sizeof(WCHAR);
+    }
 
     /* check if path is the root of the drive */
     info->is_root = FALSE;
@@ -1620,7 +1650,10 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     if (status != STATUS_SUCCESS)
     {
         RtlFreeUnicodeString( &info->mask );
-        SetLastError( RtlNtStatusToDosError(status) );
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+            SetLastError( ERROR_PATH_NOT_FOUND );
+        else
+            SetLastError( RtlNtStatusToDosError(status) );
         goto error;
     }
 
@@ -1631,14 +1664,24 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     info->data_len = 0;
     info->search_op = search_op;
 
-    if (!FindNextFileW( (HANDLE)info, data ))
+    if (device)
+    {
+        WIN32_FIND_DATAW *wfd = data;
+
+        memset( wfd, 0, sizeof(*wfd) );
+        memcpy( wfd->cFileName, filename + HIWORD(device)/sizeof(WCHAR), LOWORD(device) );
+        wfd->dwFileAttributes = FILE_ATTRIBUTE_ARCHIVE;
+        CloseHandle( info->handle );
+        info->handle = 0;
+    }
+    else if (!FindNextFileW( (HANDLE)info, data ))
     {
         TRACE( "%s not found\n", debugstr_w(filename) );
         FindClose( (HANDLE)info );
         SetLastError( ERROR_FILE_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
     }
-    if (!strpbrkW( info->mask.Buffer, wildcardsW ))
+    else if (!strpbrkW( info->mask.Buffer, wildcardsW ))
     {
         /* we can't find two files with the same name */
         CloseHandle( info->handle );
