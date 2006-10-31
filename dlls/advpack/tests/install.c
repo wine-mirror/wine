@@ -235,8 +235,8 @@ static void test_LaunchINFSectionEx()
 
     /* try an invalid CAB filename */
     lstrcpy(cmdline, CURR_DIR);
-    lstrcpy(cmdline, "\\");
-    lstrcpy(cmdline, "test.inf,DefaultInstall,c:imacab.cab,4");
+    lstrcat(cmdline, "\\");
+    lstrcat(cmdline, "test.inf,DefaultInstall,c:imacab.cab,4");
     hr = pLaunchINFSectionEx(NULL, NULL, cmdline, 0);
     ok(hr == 0, "Expected 0, got %d\n", hr);
 
