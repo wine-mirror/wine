@@ -4100,7 +4100,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         {
             union {
                 DWORD                 d;
-                D3DLINEPATTERN        lp;
+                WINED3DLINEPATTERN    lp;
             } tmppattern;
             tmppattern.d = Value;
 

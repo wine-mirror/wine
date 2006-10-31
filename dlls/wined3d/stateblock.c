@@ -813,7 +813,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice         *device = (IWineD3DDevice *)This->wineD3DDevice;
     IWineD3DDeviceImpl     *ThisDevice = (IWineD3DDeviceImpl *)device;
     union {
-        D3DLINEPATTERN lp;
+        WINED3DLINEPATTERN lp;
         DWORD d;
     } lp;
     union {

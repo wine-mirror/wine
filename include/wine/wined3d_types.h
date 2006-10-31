@@ -118,6 +118,11 @@ typedef struct _WINED3DGAMMARAMP {
     WORD                blue [256];
 } WINED3DGAMMARAMP;
 
+typedef struct _WINED3DLINEPATTERN {
+    WORD    wRepeatFactor;
+    WORD    wLinePattern;
+} WINED3DLINEPATTERN;
+
 #define WINED3D_VSHADER_MAX_CONSTANTS 96
 #define WINED3D_PSHADER_MAX_CONSTANTS 32
 
