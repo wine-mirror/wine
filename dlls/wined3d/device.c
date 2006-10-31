@@ -4493,14 +4493,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
     case WINED3DRS_POSITIONDEGREE :
     {
-        if(D3DDEGREE_CUBIC != Value)
+        if(WINED3DDEGREE_CUBIC != Value)
             ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
         break;
     }
 
     case WINED3DRS_NORMALDEGREE :
     {
-        if(D3DDEGREE_LINEAR != Value)
+        if(WINED3DDEGREE_LINEAR != Value)
             ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
         break;
     }
