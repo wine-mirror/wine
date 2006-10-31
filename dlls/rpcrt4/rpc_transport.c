@@ -684,6 +684,8 @@ static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection
     ERR("Failed to accept a TCP connection: error %d\n", ret);
     return RPC_S_SERVER_UNAVAILABLE;
   }
+  /* reset to blocking behaviour */
+  fcntl(ret, F_SETFL, 0);
   client->sock = ret;
   TRACE("Accepted a new TCP connection\n");
   return RPC_S_OK;
