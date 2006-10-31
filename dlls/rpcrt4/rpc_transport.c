@@ -221,12 +221,6 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
   return r;
 }
 
-static HANDLE rpcrt4_conn_np_get_connect_event(RpcConnection *Connection)
-{
-  RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  return npc->ovl.hEvent;
-}
-
 static RPC_STATUS rpcrt4_conn_np_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
   RpcConnection_np *old_npc = (RpcConnection_np *) old_conn;
@@ -406,19 +400,19 @@ static void rpcrt4_protseq_np_signal_state_changed(RpcServerProtseq *protseq)
 static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *prev_array, unsigned int *count)
 {
     HANDLE *objs = prev_array;
-    RpcConnection* conn;
+    RpcConnection_np *conn;
     RpcServerProtseq_np *npps = CONTAINING_RECORD(protseq, RpcServerProtseq_np, common);
     
     EnterCriticalSection(&protseq->cs);
     
     /* open and count connections */
     *count = 1;
-    conn = protseq->conn;
+    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
     while (conn) {
-        RPCRT4_OpenConnection(conn);
-        if (rpcrt4_conn_get_wait_object(conn))
+        RPCRT4_OpenConnection(&conn->common);
+        if (conn->ovl.hEvent)
             (*count)++;
-        conn = conn->Next;
+        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
     }
     
     /* make array of connections */
@@ -435,11 +429,11 @@ static void *rpcrt4_protseq_np_get_wait_array(RpcServerProtseq *protseq, void *p
     
     objs[0] = npps->mgr_event;
     *count = 1;
-    conn = protseq->conn;
+    conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
     while (conn) {
-        if ((objs[*count] = rpcrt4_conn_get_wait_object(conn)))
+        if ((objs[*count] = conn->ovl.hEvent))
             (*count)++;
-        conn = conn->Next;
+        conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
     }
     LeaveCriticalSection(&protseq->cs);
     return objs;
@@ -455,8 +449,8 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
     HANDLE b_handle;
     HANDLE *objs = wait_array;
     DWORD res;
-    RpcConnection* cconn;
-    RpcConnection* conn;
+    RpcConnection *cconn;
+    RpcConnection_np *conn;
     
     if (!objs)
         return -1;
@@ -474,14 +468,14 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         b_handle = objs[res - WAIT_OBJECT_0];
         /* find which connection got a RPC */
         EnterCriticalSection(&protseq->cs);
-        conn = protseq->conn;
+        conn = CONTAINING_RECORD(protseq->conn, RpcConnection_np, common);
         while (conn) {
-            if (b_handle == rpcrt4_conn_get_wait_object(conn)) break;
-            conn = conn->Next;
+            if (b_handle == conn->ovl.hEvent) break;
+            conn = CONTAINING_RECORD(conn->common.Next, RpcConnection_np, common);
         }
         cconn = NULL;
         if (conn)
-            RPCRT4_SpawnConnection(&cconn, conn);
+            RPCRT4_SpawnConnection(&cconn, &conn->common);
         else
             ERR("failed to locate connection for handle %p\n", b_handle);
         LeaveCriticalSection(&protseq->cs);
@@ -1004,7 +998,6 @@ static const struct connection_ops conn_protseq_list[] = {
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_SMB },
     rpcrt4_conn_np_alloc,
     rpcrt4_ncacn_np_open,
-    rpcrt4_conn_np_get_connect_event,
     rpcrt4_conn_np_handoff,
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
@@ -1016,7 +1009,6 @@ static const struct connection_ops conn_protseq_list[] = {
     { EPM_PROTOCOL_NCALRPC, EPM_PROTOCOL_PIPE },
     rpcrt4_conn_np_alloc,
     rpcrt4_ncalrpc_open,
-    rpcrt4_conn_np_get_connect_event,
     rpcrt4_conn_np_handoff,
     rpcrt4_conn_np_read,
     rpcrt4_conn_np_write,
@@ -1028,7 +1020,6 @@ static const struct connection_ops conn_protseq_list[] = {
     { EPM_PROTOCOL_NCACN, EPM_PROTOCOL_TCP },
     rpcrt4_conn_tcp_alloc,
     rpcrt4_ncacn_ip_tcp_open,
-    NULL,
     rpcrt4_conn_tcp_handoff,
     rpcrt4_conn_tcp_read,
     rpcrt4_conn_tcp_write,

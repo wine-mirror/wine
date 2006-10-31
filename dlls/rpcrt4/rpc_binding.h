@@ -66,7 +66,6 @@ struct connection_ops {
   unsigned char epm_protocols[2]; /* only floors 3 and 4. see http://www.opengroup.org/onlinepubs/9629399/apdxl.htm */
   RpcConnection *(*alloc)(void);
   RPC_STATUS (*open_connection)(RpcConnection *conn);
-  HANDLE (*get_connect_wait_handle)(RpcConnection *conn);
   RPC_STATUS (*handoff)(RpcConnection *old_conn, RpcConnection *new_conn);
   int (*read)(RpcConnection *conn, void *buffer, unsigned int len);
   int (*write)(RpcConnection *conn, const void *buffer, unsigned int len);
@@ -148,11 +147,6 @@ static inline int rpcrt4_conn_write(RpcConnection *Connection,
 static inline int rpcrt4_conn_close(RpcConnection *Connection)
 {
   return Connection->ops->close(Connection);
-}
-
-static inline HANDLE rpcrt4_conn_get_wait_object(RpcConnection *Connection)
-{
-  return Connection->ops->get_connect_wait_handle(Connection);
 }
 
 static inline RPC_STATUS rpcrt4_conn_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
