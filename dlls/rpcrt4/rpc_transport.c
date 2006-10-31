@@ -596,7 +596,8 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   ret = getaddrinfo(Connection->NetworkAddr, Connection->Endpoint, &hints, &ai);
   if (ret)
   {
-    ERR("getaddrinfo failed: %s\n", gai_strerror(ret));
+    ERR("getaddrinfo for %s:%s failed: %s\n", Connection->NetworkAddr,
+      Connection->Endpoint, gai_strerror(ret));
     return RPC_S_SERVER_UNAVAILABLE;
   }
 
@@ -615,7 +616,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     sock = socket(ai_cur->ai_family, ai_cur->ai_socktype, ai_cur->ai_protocol);
     if (sock < 0)
     {
-      WARN("socket() failed\n");
+      WARN("socket() failed: %s\n", strerror(errno));
       continue;
     }
 
@@ -624,14 +625,14 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
       ret = bind(sock, ai_cur->ai_addr, ai_cur->ai_addrlen);
       if (ret < 0)
       {
-        WARN("bind failed, error %d\n", ret);
+        WARN("bind failed: %s\n", strerror(errno));
         close(sock);
         continue;
       }
       ret = listen(sock, 10);
       if (ret < 0)
       {
-        WARN("listen failed, error %d\n", ret);
+        WARN("listen failed: %s\n", strerror(errno));
         close(sock);
         continue;
       }
@@ -652,7 +653,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     {
       if (0>connect(sock, ai_cur->ai_addr, ai_cur->ai_addrlen))
       {
-        WARN("connect() failed\n");
+        WARN("connect() failed: %s\n", strerror(errno));
         close(sock);
         continue;
       }
