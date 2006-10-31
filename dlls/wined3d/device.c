@@ -2368,17 +2368,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     /* D3d9 only, but shouldn't  hurt d3d8 */
     UINT streamFlags;
 
-    streamFlags = StreamNumber &(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+    streamFlags = StreamNumber &(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
     if (streamFlags) {
-        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
            FIXME("stream index data not supported\n");
         }
-        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
            FIXME("stream instance data not supported\n");
         }
     }
 
-    StreamNumber&= ~(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+    StreamNumber&= ~(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
@@ -2434,17 +2434,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, 
            This->stateBlock->streamSource[StreamNumber], This->stateBlock->streamStride[StreamNumber]);
 
 
-    streamFlags = StreamNumber &(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+    streamFlags = StreamNumber &(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
     if (streamFlags) {
-        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
            FIXME("stream index data not supported\n");
         }
-        if (streamFlags & D3DSTREAMSOURCE_INDEXEDDATA) {
+        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
             FIXME("stream instance data not supported\n");
         }
     }
 
-    StreamNumber&= ~(D3DSTREAMSOURCE_INDEXEDDATA | D3DSTREAMSOURCE_INSTANCEDATA);
+    StreamNumber&= ~(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
@@ -2479,7 +2479,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     TRACE("(%p) StreamNumber(%d), Divider(%d)\n", This, StreamNumber, Divider);
-    This->updateStateBlock->streamFlags[StreamNumber] = Divider & (D3DSTREAMSOURCE_INSTANCEDATA  | D3DSTREAMSOURCE_INDEXEDDATA );
+    This->updateStateBlock->streamFlags[StreamNumber] = Divider & (WINED3DSTREAMSOURCE_INSTANCEDATA  | WINED3DSTREAMSOURCE_INDEXEDDATA );
 
     This->updateStateBlock->changed.streamFreq[StreamNumber]  = TRUE;
     This->updateStateBlock->set.streamFreq[StreamNumber]      = TRUE;

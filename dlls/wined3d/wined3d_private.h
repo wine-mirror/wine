@@ -1102,7 +1102,7 @@ struct IWineD3DStateBlockImpl
     UINT                      streamOffset[MAX_STREAMS];
     IWineD3DVertexBuffer     *streamSource[MAX_STREAMS];
     UINT                      streamFreq[MAX_STREAMS];
-    UINT                      streamFlags[MAX_STREAMS];     /*0 | D3DSTREAMSOURCE_INSTANCEDATA | D3DSTREAMSOURCE_INDEXEDDATA  */
+    UINT                      streamFlags[MAX_STREAMS];     /*0 | WINED3DSTREAMSOURCE_INSTANCEDATA | WINED3DSTREAMSOURCE_INDEXEDDATA  */
 
     /* Indices */
     IWineD3DIndexBuffer*      pIndexData;
