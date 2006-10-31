@@ -52,11 +52,10 @@ typedef DWORD (WINAPI *VxDCallProc)(DWORD, CONTEXT86 *);
 
 struct vxd_module
 {
-    dev_t        dev;
-    ino_t        ino;
-    HANDLE       handle;
-    HMODULE      module;
-    DeviceIoProc proc;
+    LARGE_INTEGER index;
+    HANDLE        handle;
+    HMODULE       module;
+    DeviceIoProc  proc;
 };
 
 struct vxdcall_service
@@ -134,30 +133,24 @@ static HANDLE open_vxd_handle( LPCWSTR name )
 /* retrieve the DeviceIoControl function for a Vxd given a file handle */
 static DeviceIoProc get_vxd_proc( HANDLE handle )
 {
-    struct stat st;
     DeviceIoProc ret = NULL;
-    int status, i, fd;
+    int status, i;
+    IO_STATUS_BLOCK io;
+    FILE_INTERNAL_INFORMATION info;
 
-    status = wine_server_handle_to_fd( handle, 0, &fd, NULL );
+    status = NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
     if (status)
     {
         SetLastError( RtlNtStatusToDosError(status) );
         return NULL;
     }
-    if (fstat( fd, &st ) == -1)
-    {
-        wine_server_release_fd( handle, fd );
-        SetLastError( ERROR_INVALID_HANDLE );
-        return NULL;
-    }
-    wine_server_release_fd( handle, fd );
 
     RtlEnterCriticalSection( &vxd_section );
 
     for (i = 0; i < MAX_VXD_MODULES; i++)
     {
         if (!vxd_modules[i].module) break;
-        if (vxd_modules[i].dev == st.st_dev && vxd_modules[i].ino == st.st_ino)
+        if (vxd_modules[i].index.QuadPart == info.IndexNumber.QuadPart)
         {
             if (!(ret = vxd_modules[i].proc)) SetLastError( ERROR_INVALID_FUNCTION );
             goto done;
@@ -230,8 +223,8 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
         }
         if (!vxd_modules[i].module)  /* new one, register it */
         {
-            struct stat st;
-            int fd;
+            IO_STATUS_BLOCK io;
+            FILE_INTERNAL_INFORMATION info;
 
             /* get a file handle to the dummy file */
             if (!(handle = open_vxd_handle( name )))
@@ -239,16 +232,12 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
                 FreeLibrary( module );
                 goto done;
             }
-            wine_server_handle_to_fd( handle, 0, &fd, NULL );
-            if (fstat( fd, &st ) != -1)
-            {
-                vxd_modules[i].dev = st.st_dev;
-                vxd_modules[i].ino = st.st_ino;
-            }
+            if (!NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation ))
+                vxd_modules[i].index = info.IndexNumber;
+
             vxd_modules[i].module = module;
             vxd_modules[i].handle = handle;
             vxd_modules[i].proc = (DeviceIoProc)GetProcAddress( module, "DeviceIoControl" );
-            wine_server_release_fd( handle, fd );
             goto done;
         }
     }
