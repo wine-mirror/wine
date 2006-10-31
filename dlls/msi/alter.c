@@ -141,9 +141,9 @@ static const MSIVIEWOPS alter_ops =
 
 UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, int hold )
 {
-    MSIALTERVIEW *av = NULL;
+    MSIALTERVIEW *av;
 
-    TRACE("%p\n", av );
+    TRACE("%p\n", view );
 
     av = msi_alloc_zero( sizeof *av );
     if( !av )
