@@ -233,12 +233,18 @@ static void test_LaunchINFSectionEx()
 
     create_inf_file("test.inf");
 
-    /* try an invalid CAB filename */
+    /* try an invalid CAB filename with an absolute INF name */
     lstrcpy(cmdline, CURR_DIR);
     lstrcat(cmdline, "\\");
     lstrcat(cmdline, "test.inf,DefaultInstall,c:imacab.cab,4");
     hr = pLaunchINFSectionEx(NULL, NULL, cmdline, 0);
     ok(hr == 0, "Expected 0, got %d\n", hr);
+
+    /* try an invalid CAB filename with a relative INF name */
+    lstrcpy(cmdline, "test.inf,DefaultInstall,c:imacab.cab,4");
+    hr = pLaunchINFSectionEx(NULL, NULL, cmdline, 0);
+    todo_wine
+        ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %d\n", hr);
 
     DeleteFileA("test.inf");
 }
