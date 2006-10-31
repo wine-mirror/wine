@@ -110,6 +110,11 @@ BOOL force, status;
 static const char overwrite[] = "Overwrite file (Y/N)?";
 char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
 
+  if (param1[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
+
   if ((strchr(param1,'*') != NULL) && (strchr(param1,'%') != NULL)) {
     WCMD_output ("Wildcards not yet supported\n");
     return;
@@ -203,6 +208,10 @@ BOOL create_full_path(CHAR* path)
 
 void WCMD_create_dir (void) {
 
+    if (param1[0] == 0x00) {
+        WCMD_output ("Argument missing\n");
+        return;
+    }
     if (!create_full_path(param1)) WCMD_print_error ();
 }
 
@@ -220,6 +229,10 @@ HANDLE hff;
 char fpath[MAX_PATH];
 char *p;
 
+  if (param1[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
   hff = FindFirstFile (param1, &fd);
   if (hff == INVALID_HANDLE_VALUE) {
     WCMD_output ("%s :File Not Found\n",param1);
@@ -413,6 +426,10 @@ void WCMD_goto (void) {
 
 char string[MAX_PATH];
 
+  if (param1[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
   if (context != NULL) {
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
     while (WCMD_fgets (string, sizeof(string), context -> h)) {
@@ -484,6 +501,11 @@ char outpath[MAX_PATH], inpath[MAX_PATH], *infile;
 WIN32_FIND_DATA fd;
 HANDLE hff;
 
+  if (param1[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
+
   if ((strchr(param1,'*') != NULL) || (strchr(param1,'%') != NULL)) {
     WCMD_output ("Wildcards not yet supported\n");
     return;
@@ -533,6 +555,10 @@ char string[32];
 
 void WCMD_remove_dir (void) {
 
+  if (param1[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
   if (!RemoveDirectory (param1)) WCMD_print_error ();
 }
 
@@ -547,6 +573,10 @@ void WCMD_rename (void) {
 
 int status;
 
+  if (param1[0] == 0x00 || param2[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
   if ((strchr(param1,'*') != NULL) || (strchr(param1,'%') != NULL)) {
     WCMD_output ("Wildcards not yet supported\n");
     return;
@@ -1008,6 +1038,10 @@ HANDLE h;
 char buffer[512];
 DWORD count;
 
+  if (param1[0] == 0x00) {
+    WCMD_output ("Argument missing\n");
+    return;
+  }
   h = CreateFile (param1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING,
   		FILE_ATTRIBUTE_NORMAL, NULL);
   if (h == INVALID_HANDLE_VALUE) {
