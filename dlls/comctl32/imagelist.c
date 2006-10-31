@@ -316,6 +316,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     {
         hdcMask = himl->hdcMask;
         nMaskXOffset = nIndex * himl->cx;
+        imagelist_point_from_index( himl, nIndex, &pt );
     }
     else
     {
@@ -327,13 +328,14 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
         hMaskBitmap = CreateBitmap(bmp.bmWidth, bmp.bmHeight, 1, 1, NULL);
         SelectObject(hdcMask, hMaskBitmap);
         nMaskXOffset = 0;
+        imagelist_point_from_index( himl, 0, &pt );
     }
     /* create monochrome image to the mask bitmap */
     bkColor = (clrMask != CLR_DEFAULT) ? clrMask :
         GetPixel (hdcBitmap, 0, 0);
     SetBkColor (hdcBitmap, bkColor);
     BitBlt (hdcMask,
-        nMaskXOffset, 0, bmp.bmWidth, bmp.bmHeight,
+        pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
         hdcBitmap, 0, 0,
         SRCCOPY);
 
@@ -2108,16 +2110,17 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
         /* copy all images and masks prior to the "removed" image */
         if (i > 0) {
+            POINT pt;
+
             TRACE("Pre image copy: Copy %d images\n", i);
 
             SelectObject (hdcBmp, hbmNewImage);
-            BitBlt (hdcBmp, 0, 0, i * himl->cx, himl->cy,
-                    himl->hdcImage, 0, 0, SRCCOPY);
+            imagelist_point_from_index(himl, i, &pt);
+            BitBlt (hdcBmp, 0, 0, pt.x, pt.y, himl->hdcImage, 0, 0, SRCCOPY);
 
             if (himl->hbmMask) {
                 SelectObject (hdcBmp, hbmNewMask);
-                BitBlt (hdcBmp, 0, 0, i * himl->cx, himl->cy,
-                        himl->hdcMask, 0, 0, SRCCOPY);
+                BitBlt (hdcBmp, 0, 0, pt.x, pt.y, himl->hdcMask, 0, 0, SRCCOPY);
             }
         }
 
@@ -2179,6 +2182,7 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
     HDC hdcImage;
     BITMAP bmp;
     HBITMAP hOldBitmap;
+    POINT pt;
 
     TRACE("%p %d %p %p\n", himl, i, hbmImage, hbmMask);
 
@@ -2198,7 +2202,8 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
     /* Replace Image */
     hOldBitmap = SelectObject (hdcImage, hbmImage);
 
-    StretchBlt (himl->hdcImage, i * himl->cx, 0, himl->cx, himl->cy,
+    imagelist_point_from_index(himl, i, &pt);
+    StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                   hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
 
     if (himl->hbmMask)
@@ -2209,18 +2214,15 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
         hdcTemp   = CreateCompatibleDC(0);
         hOldBitmapTemp = SelectObject(hdcTemp, hbmMask);
 
-        StretchBlt (himl->hdcMask, i * himl->cx, 0, himl->cx, himl->cy,
+        StretchBlt (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
                       hdcTemp, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
         SelectObject(hdcTemp, hOldBitmapTemp);
         DeleteDC(hdcTemp);
 
         /* Remove the background from the image
         */
-        BitBlt (himl->hdcImage,
-            i*himl->cx, 0, bmp.bmWidth, bmp.bmHeight,
-            himl->hdcMask,
-            i*himl->cx, 0,
-            0x220326); /* NOTSRCAND */
+        BitBlt (himl->hdcImage, pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
+                himl->hdcMask, pt.x, pt.y, 0x220326); /* NOTSRCAND */
     }
 
     SelectObject (hdcImage, hOldBitmap);
@@ -2255,6 +2257,7 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     ICONINFO  ii;
     BITMAP  bmp;
     BOOL    ret;
+    POINT   pt;
 
     TRACE("(%p %d %p)\n", himl, i, hIcon);
 
@@ -2319,12 +2322,13 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     SetBkColor  (himl->hdcImage, RGB(255,255,255));
     hbmOldSrc = SelectObject (hdcImage, ii.hbmColor);
 
-    StretchBlt (himl->hdcImage, nIndex * himl->cx, 0, himl->cx, himl->cy,
+    imagelist_point_from_index(himl, nIndex, &pt);
+    StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
                   hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
 
     if (himl->hbmMask) {
         SelectObject (hdcImage, ii.hbmMask);
-        StretchBlt   (himl->hdcMask, nIndex * himl->cx, 0, himl->cx, himl->cy,
+        StretchBlt   (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
                       hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
     }
 
