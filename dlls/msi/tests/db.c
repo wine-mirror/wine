@@ -2754,7 +2754,6 @@ static void test_alter(void)
     cond = MsiDatabaseIsTablePersistent(hdb, "T");
     ok( cond == MSICONDITION_FALSE, "wrong return condition\n");
 
-    todo_wine {
     query = "ALTER TABLE `T` HOLD";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to hold table %d\n", r);
@@ -2766,8 +2765,8 @@ static void test_alter(void)
     query = "ALTER TABLE `T` FREE";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_SUCCESS, "failed to free table\n");
-    }
 
+    todo_wine {
     query = "ALTER TABLE `T` FREE";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to free table\n");
@@ -2775,6 +2774,7 @@ static void test_alter(void)
     query = "ALTER TABLE `T` HOLD";
     r = run_query(hdb, 0, query);
     ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to hold table %d\n", r);
+    }
 
     MsiCloseHandle( hdb );
 

@@ -40,8 +40,8 @@ struct Keyword {
 
 static const WCHAR ABORT_W[] = { 'A','B','O','R','T',0 };
 static const WCHAR AFTER_W[] = { 'A','F','T','E','R',0 };
-static const WCHAR ALTER_W[] = { 'A','L','T','E','R',0 };
 static const WCHAR ALL_W[] = { 'A','L','L',0 };
+static const WCHAR ALTER_W[] = { 'A','L','T','E','R',0 };
 static const WCHAR AND_W[] = { 'A','N','D',0 };
 static const WCHAR AS_W[] = { 'A','S',0 };
 static const WCHAR ASC_W[] = { 'A','S','C',0 };
@@ -154,8 +154,8 @@ static const WCHAR WHERE_W[] = { 'W','H','E','R','E',0 };
 static const Keyword aKeywordTable[] = {
   { ABORT_W, TK_ABORT },
   { AFTER_W, TK_AFTER },
-  { ALTER_W, TK_ALTER },
   { ALL_W, TK_ALL },
+  { ALTER_W, TK_ALTER },
   { AND_W, TK_AND },
   { AS_W, TK_AS },
   { ASC_W, TK_ASC },
@@ -192,6 +192,7 @@ static const Keyword aKeywordTable[] = {
   { FAIL_W, TK_FAIL },
   { FOR_W, TK_FOR },
   { FOREIGN_W, TK_FOREIGN },
+  { FREE_W, TK_FREE },
   { FROM_W, TK_FROM },
   { FULL_W, TK_JOIN_KW },
   { GLOB_W, TK_GLOB },
