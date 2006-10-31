@@ -2005,10 +2005,19 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         TRACE("file %s resolves to %s\n",
                debugstr_w(file->File), debugstr_w(file->TargetPath));
 
+        /* don't check files of components that aren't installed */
+        if (comp->Installed == INSTALLSTATE_UNKNOWN ||
+            comp->Installed == INSTALLSTATE_ABSENT)
+        {
+            file->state = msifs_missing;  /* assume files are missing */
+            continue;
+        }
+
         if (GetFileAttributesW(file->TargetPath) == INVALID_FILE_ATTRIBUTES)
         {
             file->state = msifs_missing;
             comp->Cost += file->FileSize;
+            comp->Installed = INSTALLSTATE_INCOMPLETE;
             continue;
         }
 
@@ -2022,6 +2031,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             {
                 file->state = msifs_overwrite;
                 comp->Cost += file->FileSize;
+                comp->Installed = INSTALLSTATE_INCOMPLETE;
             }
             else
                 file->state = msifs_present;
