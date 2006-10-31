@@ -847,7 +847,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     MSG msg;
     HHInfo *pHHInfo;
 
-    if (OleInitialize(NULL) != S_OK)
+    if (FAILED(OleInitialize(NULL)))
         return -1;
 
     pHHInfo = HH_OpenHH(hInstance, HH_ANSIToUnicode(szCmdLine));
