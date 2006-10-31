@@ -584,7 +584,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
   if (tcpc->sock != -1)
     return RPC_S_OK;
 
-  hints.ai_flags          = 0;
+  hints.ai_flags          = Connection->server ? AI_PASSIVE : 0;
   hints.ai_family         = PF_UNSPEC;
   hints.ai_socktype       = SOCK_STREAM;
   hints.ai_protocol       = IPPROTO_TCP;
