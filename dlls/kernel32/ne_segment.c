@@ -421,8 +421,8 @@ BOOL NE_LoadSegment( NE_MODULE *pModule, WORD segnum )
         if (buff == NULL) return FALSE;
 
         while(curr < buff + size) {
-            unsigned int rept = ((short*)curr)[0];
-            unsigned int len =  ((short*)curr)[1];
+            unsigned int rept = ((const short *)curr)[0];
+            unsigned int len =  ((const short *)curr)[1];
 
             curr += 2*sizeof(short);
             while (rept--)
