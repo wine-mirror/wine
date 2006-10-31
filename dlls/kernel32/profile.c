@@ -1073,7 +1073,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 					    BOOL win32 )
 {
     int		ret;
-    LPCWSTR	pDefVal = NULL;
+    LPWSTR	defval_tmp = NULL;
 
     TRACE("%s,%s,%s,%p,%u,%s\n", debugstr_w(section), debugstr_w(entry),
           debugstr_w(def_val), buffer, len, debugstr_w(filename));
@@ -1092,16 +1092,13 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 	if (*p == ' ') /* ouch, contained trailing ' ' */
 	{
 	    int len = (int)(p - def_val);
-            LPWSTR p;
 
-	    p = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
-	    memcpy(p, def_val, len * sizeof(WCHAR));
-	    p[len] = '\0';
-            pDefVal = p;
-	}
+            defval_tmp = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+            memcpy(defval_tmp, def_val, len * sizeof(WCHAR));
+            defval_tmp[len] = '\0';
+            def_val = defval_tmp;
+        }
     }
-    if (!pDefVal)
-	pDefVal = def_val;
 
     RtlEnterCriticalSection( &PROFILE_CritSect );
 
@@ -1110,9 +1107,9 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
             ret = PROFILE_GetSectionNames(buffer, len);
 	else 
 	    /* PROFILE_GetString can handle the 'entry == NULL' case */
-            ret = PROFILE_GetString( section, entry, pDefVal, buffer, len, win32 );
-    } else if (buffer && pDefVal) {
-       lstrcpynW( buffer, pDefVal, len );
+            ret = PROFILE_GetString( section, entry, def_val, buffer, len, win32 );
+    } else if (buffer && def_val) {
+       lstrcpynW( buffer, def_val, len );
        ret = strlenW( buffer );
     }
     else
@@ -1120,8 +1117,7 @@ static int PROFILE_GetPrivateProfileString( LPCWSTR section, LPCWSTR entry,
 
     RtlLeaveCriticalSection( &PROFILE_CritSect );
 
-    if (pDefVal != def_val) /* allocated */
-	HeapFree(GetProcessHeap(), 0, (void*)pDefVal);
+    HeapFree(GetProcessHeap(), 0, defval_tmp);
 
     TRACE("returning %s, %d\n", debugstr_w(buffer), ret);
 
