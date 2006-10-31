@@ -267,8 +267,7 @@ struct magic_device
 {
     WCHAR  name[10];
     HANDLE handle;
-    dev_t  dev;
-    ino_t  ino;
+    LARGE_INTEGER index;
     void (*ioctl_handler)(CONTEXT86 *);
 };
 
@@ -278,9 +277,9 @@ static void INT21_IoctlHPScanHandler( CONTEXT86 * );
 
 static struct magic_device magic_devices[] =
 {
-    { {'s','c','s','i','m','g','r','$',0}, NULL, 0, 0, INT21_IoctlScsiMgrHandler },
-    { {'e','m','m','x','x','x','x','0',0}, NULL, 0, 0, INT21_IoctlEMSHandler },
-    { {'h','p','s','c','a','n',0},         NULL, 0, 0, INT21_IoctlHPScanHandler },
+    { {'s','c','s','i','m','g','r','$',0}, NULL, { { 0, 0 } }, INT21_IoctlScsiMgrHandler },
+    { {'e','m','m','x','x','x','x','0',0}, NULL, { { 0, 0 } }, INT21_IoctlEMSHandler },
+    { {'h','p','s','c','a','n',0},         NULL, { { 0, 0 } }, INT21_IoctlHPScanHandler },
 };
 
 #define NB_MAGIC_DEVICES  (sizeof(magic_devices)/sizeof(magic_devices[0]))
@@ -911,15 +910,13 @@ static HANDLE INT21_OpenMagicDevice( LPCWSTR name, DWORD access )
 
     if (!magic_devices[i].handle) /* need to open it */
     {
-        int fd;
-        struct stat st;
+        IO_STATUS_BLOCK io;
+        FILE_INTERNAL_INFORMATION info;
 
         if (!(handle = INT21_CreateMagicDeviceHandle( magic_devices[i].name ))) return 0;
-        wine_server_handle_to_fd( handle, 0, &fd, NULL );
-        fstat( fd, &st );
-        wine_server_release_fd( handle, fd );
-        magic_devices[i].dev = st.st_dev;
-        magic_devices[i].ino = st.st_ino;
+
+        NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
+        magic_devices[i].index = info.IndexNumber;
         magic_devices[i].handle = handle;
     }
     if (!DuplicateHandle( GetCurrentProcess(), magic_devices[i].handle,
@@ -2732,12 +2729,13 @@ static void INT21_IoctlHPScanHandler( CONTEXT86 *context )
  */
 static void INT21_Ioctl_Char( CONTEXT86 *context )
 {
-    struct stat st;
-    int status, i, fd;
+    int status, i;
     int IsConsoleIOHandle = 0;
+    IO_STATUS_BLOCK io;
+    FILE_INTERNAL_INFORMATION info;
     HANDLE handle = DosFileHandleToWin32Handle(BX_reg(context));
 
-    status = wine_server_handle_to_fd( handle, 0, &fd, NULL );
+    status = NtQueryInformationFile( handle, &io, &info, sizeof(info), FileInternalInformation );
     if (status)
     {
         if( VerifyConsoleIoHandle( handle))
@@ -2748,14 +2746,10 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
             return;
         }
     } else {
-        fstat( fd, &st );
-        IsConsoleIOHandle = isatty( fd);
-        wine_server_release_fd( handle, fd );
         for (i = 0; i < NB_MAGIC_DEVICES; i++)
         {
             if (!magic_devices[i].handle) continue;
-            if (magic_devices[i].dev == st.st_dev &&
-                    magic_devices[i].ino == st.st_ino)
+            if (magic_devices[i].index.QuadPart == info.IndexNumber.QuadPart)
             {
                 /* found it */
                 magic_devices[i].ioctl_handler( context );
@@ -2770,7 +2764,7 @@ static void INT21_Ioctl_Char( CONTEXT86 *context )
     {
     case 0x00: /* GET DEVICE INFORMATION */
         TRACE( "IOCTL - GET DEVICE INFORMATION - %d\n", BX_reg(context) );
-        if (IsConsoleIOHandle || S_ISCHR(st.st_mode))
+        if (IsConsoleIOHandle || GetFileType(handle) == FILE_TYPE_CHAR)
         {
             /*
              * Returns attribute word in DX: 
