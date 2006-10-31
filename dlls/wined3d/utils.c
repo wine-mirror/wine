@@ -2482,15 +2482,15 @@ void multiply_matrix(WINED3DMATRIX *dest, WINED3DMATRIX *src1, WINED3DMATRIX *sr
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
     DWORD size = 0;
     int i;
-    int numTextures = (d3dvtVertexType & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+    int numTextures = (d3dvtVertexType & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
 
-    if (d3dvtVertexType & D3DFVF_NORMAL) size += 3 * sizeof(float);
-    if (d3dvtVertexType & D3DFVF_DIFFUSE) size += sizeof(DWORD);
-    if (d3dvtVertexType & D3DFVF_SPECULAR) size += sizeof(DWORD);
-    if (d3dvtVertexType & D3DFVF_PSIZE) size += sizeof(DWORD);
-    switch (d3dvtVertexType & D3DFVF_POSITION_MASK) {
-        case D3DFVF_XYZ: size += 3 * sizeof(float); break;
-        case D3DFVF_XYZRHW: size += 4 * sizeof(float); break;
+    if (d3dvtVertexType & WINED3DFVF_NORMAL) size += 3 * sizeof(float);
+    if (d3dvtVertexType & WINED3DFVF_DIFFUSE) size += sizeof(DWORD);
+    if (d3dvtVertexType & WINED3DFVF_SPECULAR) size += sizeof(DWORD);
+    if (d3dvtVertexType & WINED3DFVF_PSIZE) size += sizeof(DWORD);
+    switch (d3dvtVertexType & WINED3DFVF_POSITION_MASK) {
+        case WINED3DFVF_XYZ: size += 3 * sizeof(float); break;
+        case WINED3DFVF_XYZRHW: size += 4 * sizeof(float); break;
         default: TRACE(" matrix weighting not handled yet...\n");
     }
     for (i = 0; i < numTextures; i++) {

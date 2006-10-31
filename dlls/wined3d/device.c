@@ -666,7 +666,7 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
       * usage assume DYNAMIC usage and print a warning. The app will have to update
       * the vertices regularily for them to be useful
       */
-    if(((object->fvf & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) &&
+    if(((object->fvf & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) &&
         !(vboUsage & WINED3DUSAGE_DYNAMIC)) {
         WARN("Application creates a vertex buffer holding transformed vertices which doesn't specify dynamic usage\n");
         vboUsage |= WINED3DUSAGE_DYNAMIC;
@@ -753,7 +753,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
      * There is a IDirect3DVertexBuffer7::Optimize call after which the buffer can't be locked any
      * more. In this call we can convert dx7 buffers too.
      */
-    conv = ((FVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW ) || (FVF & (D3DFVF_DIFFUSE | D3DFVF_SPECULAR));
+    conv = ((FVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) || (FVF & (WINED3DFVF_DIFFUSE | WINED3DFVF_SPECULAR));
     if( GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) && Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && 
         (dxVersion > 7 || !conv) ) {
         CreateVBO(object);
@@ -5092,11 +5092,11 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     BOOL doClip;
     int numTextures;
 
-    if (SrcFVF & D3DFVF_NORMAL) {
+    if (SrcFVF & WINED3DFVF_NORMAL) {
         WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
     }
 
-    if ( (SrcFVF & D3DFVF_POSITION_MASK) != D3DFVF_XYZ) {
+    if ( (SrcFVF & WINED3DFVF_POSITION_MASK) != WINED3DFVF_XYZ) {
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -5204,13 +5204,13 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     multiply_matrix(&mat,&view_mat,&world_mat);
     multiply_matrix(&mat,&proj_mat,&mat);
 
-    numTextures = (DestFVF & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
+    numTextures = (DestFVF & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
 
     for (i = 0; i < dwCount; i+= 1) {
         unsigned int tex_index;
 
-        if ( ((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZ ) ||
-             ((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW ) ) {
+        if ( ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZ ) ||
+             ((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW ) ) {
             /* The position first */
             float *p =
               (float *) (((char *) lpStrideData->u.s.position.lpData) + i * lpStrideData->u.s.position.dwStride);
@@ -5306,7 +5306,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 
             dest_ptr += 3 * sizeof(float);
 
-            if((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
+            if((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) {
                 dest_ptr += sizeof(float);
             }
 
@@ -5319,16 +5319,16 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
 
                 dest_conv += 3 * sizeof(float);
 
-                if((DestFVF & D3DFVF_POSITION_MASK) == D3DFVF_XYZRHW) {
+                if((DestFVF & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) {
                     dest_conv += sizeof(float);
                 }
             }
         }
-        if (DestFVF & D3DFVF_PSIZE) {
+        if (DestFVF & WINED3DFVF_PSIZE) {
             dest_ptr += sizeof(DWORD);
             if(dest_conv) dest_conv += sizeof(DWORD);
         }
-        if (DestFVF & D3DFVF_NORMAL) {
+        if (DestFVF & WINED3DFVF_NORMAL) {
             float *normal =
               (float *) (((float *) lpStrideData->u.s.normal.lpData) + i * lpStrideData->u.s.normal.dwStride);
             /* AFAIK this should go into the lighting information */
@@ -5339,7 +5339,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             }
         }
 
-        if (DestFVF & D3DFVF_DIFFUSE) {
+        if (DestFVF & WINED3DFVF_DIFFUSE) {
             DWORD *color_d = 
               (DWORD *) (((char *) lpStrideData->u.s.diffuse.lpData) + i * lpStrideData->u.s.diffuse.dwStride);
             if(!color_d) {
@@ -5369,7 +5369,7 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
             }
         }
 
-        if (DestFVF & D3DFVF_SPECULAR) { 
+        if (DestFVF & WINED3DFVF_SPECULAR) { 
             /* What's the color value in the feedback buffer? */
             DWORD *color_s = 
               (DWORD *) (((char *) lpStrideData->u.s.specular.lpData) + i * lpStrideData->u.s.specular.dwStride);

@@ -487,18 +487,18 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     int           numTextures;
     int           textureNo;
     int           coordIdxInfo = 0x00;    /* Information on number of coords supplied */
-    int           numCoords[8];           /* Holding place for D3DFVF_TEXTUREFORMATx  */
+    int           numCoords[8];           /* Holding place for WINED3DFVF_TEXTUREFORMATx  */
 
     /* Either 3 or 4 floats depending on the FVF */
     /* FIXME: Can blending data be in a different stream to the position data?
           and if so using the fixed pipeline how do we handle it               */
-    if (thisFVF & D3DFVF_POSITION_MASK) {
+    if (thisFVF & WINED3DFVF_POSITION_MASK) {
         strided->u.s.position.lpData    = data;
         strided->u.s.position.dwType    = WINED3DDECLTYPE_FLOAT3;
         strided->u.s.position.dwStride  = stride;
         strided->u.s.position.VBO       = streamVBO;
         data += 3 * sizeof(float);
-        if (thisFVF & D3DFVF_XYZRHW) {
+        if (thisFVF & WINED3DFVF_XYZRHW) {
             strided->u.s.position.dwType = WINED3DDECLTYPE_FLOAT4;
             strided->u.s.position_transformed = TRUE;
             data += sizeof(float);
@@ -508,10 +508,10 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
 
     /* Blending is numBlends * FLOATs followed by a DWORD for UBYTE4 */
     /** do we have to Check This->stateBlock->renderState[D3DRS_INDEXEDVERTEXBLENDENABLE] ? */
-    numBlends = 1 + (((thisFVF & D3DFVF_XYZB5) - D3DFVF_XYZB1) >> 1);
-    if(thisFVF & D3DFVF_LASTBETA_UBYTE4) numBlends--;
+    numBlends = 1 + (((thisFVF & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
+    if(thisFVF & WINED3DFVF_LASTBETA_UBYTE4) numBlends--;
 
-    if ((thisFVF & D3DFVF_XYZB5 ) > D3DFVF_XYZRHW) {
+    if ((thisFVF & WINED3DFVF_XYZB5 ) > WINED3DFVF_XYZRHW) {
         TRACE("Setting blend Weights to %p\n", data);
         strided->u.s.blendWeights.lpData    = data;
         strided->u.s.blendWeights.dwType    = WINED3DDECLTYPE_FLOAT1 + numBlends - 1;
@@ -519,7 +519,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.blendWeights.VBO       = streamVBO;
         data += numBlends * sizeof(FLOAT);
 
-        if (thisFVF & D3DFVF_LASTBETA_UBYTE4) {
+        if (thisFVF & WINED3DFVF_LASTBETA_UBYTE4) {
             strided->u.s.blendMatrixIndices.lpData = data;
             strided->u.s.blendMatrixIndices.dwType  = WINED3DDECLTYPE_UBYTE4;
             strided->u.s.blendMatrixIndices.dwStride= stride;
@@ -529,7 +529,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     }
 
     /* Normal is always 3 floats */
-    if (thisFVF & D3DFVF_NORMAL) {
+    if (thisFVF & WINED3DFVF_NORMAL) {
         strided->u.s.normal.lpData    = data;
         strided->u.s.normal.dwType    = WINED3DDECLTYPE_FLOAT3;
         strided->u.s.normal.dwStride  = stride;
@@ -538,7 +538,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     }
 
     /* Pointsize is a single float */
-    if (thisFVF & D3DFVF_PSIZE) {
+    if (thisFVF & WINED3DFVF_PSIZE) {
         strided->u.s.pSize.lpData    = data;
         strided->u.s.pSize.dwType    = WINED3DDECLTYPE_FLOAT1;
         strided->u.s.pSize.dwStride  = stride;
@@ -547,7 +547,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     }
 
     /* Diffuse is 4 unsigned bytes */
-    if (thisFVF & D3DFVF_DIFFUSE) {
+    if (thisFVF & WINED3DFVF_DIFFUSE) {
         strided->u.s.diffuse.lpData    = data;
         strided->u.s.diffuse.dwType    = WINED3DDECLTYPE_SHORT4;
         strided->u.s.diffuse.dwStride  = stride;
@@ -556,7 +556,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     }
 
     /* Specular is 4 unsigned bytes */
-    if (thisFVF & D3DFVF_SPECULAR) {
+    if (thisFVF & WINED3DFVF_SPECULAR) {
         strided->u.s.specular.lpData    = data;
         strided->u.s.specular.dwType    = WINED3DDECLTYPE_SHORT4;
         strided->u.s.specular.dwStride  = stride;
@@ -565,14 +565,14 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
     }
 
     /* Texture coords */
-    numTextures   = (thisFVF & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
-    coordIdxInfo  = (thisFVF & 0x00FF0000) >> 16; /* 16 is from definition of D3DFVF_TEXCOORDSIZE1, and is 8 (0-7 stages) * 2bits long */
+    numTextures   = (thisFVF & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
+    coordIdxInfo  = (thisFVF & 0x00FF0000) >> 16; /* 16 is from definition of WINED3DFVF_TEXCOORDSIZE1, and is 8 (0-7 stages) * 2bits long */
 
     /* numTextures indicates the number of texture coordinates supplied */
     /* However, the first set may not be for stage 0 texture - it all   */
     /*   depends on WINED3DTSS_TEXCOORDINDEX.                           */
     /* The number of bytes for each coordinate set is based off         */
-    /*   D3DFVF_TEXCOORDSIZEn, which are the bottom 2 bits              */
+    /*   WINED3DFVF_TEXCOORDSIZEn, which are the bottom 2 bits              */
 
     /* So, for each supplied texture extract the coords */
     for (textureNo = 0; textureNo < numTextures; ++textureNo) {
@@ -585,13 +585,13 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
 
         /* Always one set */
         data += sizeof(float);
-        if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT1) {
+        if (numCoords[textureNo] != WINED3DFVF_TEXTUREFORMAT1) {
             strided->u.s.texCoords[textureNo].dwType = WINED3DDECLTYPE_FLOAT2;
             data += sizeof(float);
-            if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT2) {
+            if (numCoords[textureNo] != WINED3DFVF_TEXTUREFORMAT2) {
                 strided->u.s.texCoords[textureNo].dwType = WINED3DDECLTYPE_FLOAT3;
                 data += sizeof(float);
-                if (numCoords[textureNo] != D3DFVF_TEXTUREFORMAT3) {
+                if (numCoords[textureNo] != WINED3DFVF_TEXTUREFORMAT3) {
                     strided->u.s.texCoords[textureNo].dwType = WINED3DDECLTYPE_FLOAT4;
                     data += sizeof(float);
                 }

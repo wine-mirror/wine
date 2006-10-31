@@ -1478,4 +1478,43 @@ typedef enum _WINED3DSURFTYPE {
 #define WINED3DCLIPPLANE4              (1 << 4)
 #define WINED3DCLIPPLANE5              (1 << 5)
 
+/* FVF (Flexible Vertex Format) codes */
+#define WINED3DFVF_RESERVED0           0x0001
+#define WINED3DFVF_POSITION_MASK       0x000E
+#define WINED3DFVF_XYZ                 0x0002
+#define WINED3DFVF_XYZRHW              0x0004
+#define WINED3DFVF_XYZB1               0x0006
+#define WINED3DFVF_XYZB2               0x0008
+#define WINED3DFVF_XYZB3               0x000a
+#define WINED3DFVF_XYZB4               0x000c
+#define WINED3DFVF_XYZB5               0x000e
+#define WINED3DFVF_XYZW                0x4002
+#define WINED3DFVF_NORMAL              0x0010
+#define WINED3DFVF_PSIZE               0x0020
+#define WINED3DFVF_DIFFUSE             0x0040
+#define WINED3DFVF_SPECULAR            0x0080
+#define WINED3DFVF_TEXCOUNT_MASK       0x0f00
+#define WINED3DFVF_TEXCOUNT_SHIFT           8
+#define WINED3DFVF_TEX0                0x0000
+#define WINED3DFVF_TEX1                0x0100
+#define WINED3DFVF_TEX2                0x0200
+#define WINED3DFVF_TEX3                0x0300
+#define WINED3DFVF_TEX4                0x0400
+#define WINED3DFVF_TEX5                0x0500
+#define WINED3DFVF_TEX6                0x0600
+#define WINED3DFVF_TEX7                0x0700
+#define WINED3DFVF_TEX8                0x0800
+#define WINED3DFVF_LASTBETA_UBYTE4     0x1000
+#define WINED3DFVF_LASTBETA_D3DCOLOR   0x8000
+#define WINED3DFVF_RESERVED2           0x6000
+
+#define WINED3DFVF_TEXTUREFORMAT1 3
+#define WINED3DFVF_TEXTUREFORMAT2 0
+#define WINED3DFVF_TEXTUREFORMAT3 1
+#define WINED3DFVF_TEXTUREFORMAT4 2
+#define WINED3DFVF_TEXCOORDSIZE1(CoordIndex) (WINED3DFVF_TEXTUREFORMAT1 << (CoordIndex*2 + 16))
+#define WINED3DFVF_TEXCOORDSIZE2(CoordIndex) (WINED3DFVF_TEXTUREFORMAT2)
+#define WINED3DFVF_TEXCOORDSIZE3(CoordIndex) (WINED3DFVF_TEXTUREFORMAT3 << (CoordIndex*2 + 16))
+#define WINED3DFVF_TEXCOORDSIZE4(CoordIndex) (WINED3DFVF_TEXTUREFORMAT4 << (CoordIndex*2 + 16))
+
 #endif
