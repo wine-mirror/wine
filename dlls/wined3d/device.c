@@ -4463,7 +4463,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
     case WINED3DRS_PATCHEDGESTYLE :
     {
-        if(D3DPATCHEDGE_DISCRETE != Value)
+        if(WINED3DPATCHEDGE_DISCRETE != Value)
             ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
         break;
     }

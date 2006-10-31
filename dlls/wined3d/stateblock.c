@@ -925,7 +925,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
     IWineD3DDevice_SetRenderState(device, WINED3DRS_POINTSCALE_C,             tmpfloat.d);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_MULTISAMPLEANTIALIAS,     TRUE);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_MULTISAMPLEMASK,          0xFFFFFFFF);
-    IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHEDGESTYLE,           D3DPATCHEDGE_DISCRETE);
+    IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHEDGESTYLE,           WINED3DPATCHEDGE_DISCRETE);
     tmpfloat.f = 1.0f;
     IWineD3DDevice_SetRenderState(device, WINED3DRS_PATCHSEGMENTS,            tmpfloat.d);
     IWineD3DDevice_SetRenderState(device, WINED3DRS_DEBUGMONITORTOKEN,        0xbaadcafe);
