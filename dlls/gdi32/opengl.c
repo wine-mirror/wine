@@ -161,6 +161,36 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
 }
 
 /***********************************************************************
+ *		wglMakeContextCurrentARB
+ */
+static BOOL WINAPI wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc)
+{
+    BOOL ret = FALSE;
+    DC *DrawDC;
+    DC *ReadDC;
+
+    TRACE("hDrawDC: (%p), hReadDC: (%p) hglrc: (%p)\n", hDrawDC, hReadDC, hglrc);
+
+    /* Both hDrawDC and hReadDC need to be valid */
+    DrawDC = DC_GetDCPtr( hDrawDC);
+    if (!DrawDC) return FALSE;
+
+    ReadDC = DC_GetDCPtr( hReadDC);
+    if (!ReadDC) {
+        GDI_ReleaseObj(hDrawDC);
+        return FALSE;
+    }
+
+    if (!DrawDC->funcs->pwglMakeContextCurrentARB) FIXME(" :stub\n");
+    else ret = DrawDC->funcs->pwglMakeContextCurrentARB(DrawDC->physDev, ReadDC->physDev, hglrc);
+
+    GDI_ReleaseObj(hDrawDC);
+    GDI_ReleaseObj(hReadDC);
+
+    return ret;
+}
+
+/***********************************************************************
  *		wglShareLists (OPENGL32.@)
  */
 BOOL WINAPI wglShareLists(HGLRC hglrc1, HGLRC hglrc2)
@@ -228,7 +258,7 @@ BOOL WINAPI wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase
 PROC WINAPI wglGetProcAddress(LPCSTR func)
 {
     PROC ret = NULL;
-    DC * dc = NULL;
+    DC *dc;
 
     if(!func)
 	return NULL;
@@ -243,6 +273,14 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
     else ret = dc->funcs->pwglGetProcAddress(func);
 
     GDI_ReleaseObj(default_hdc);
+
+    /* At the moment we implement one WGL extension which requires a HDC. When we
+     * are looking up this call and when the Extension is available (that is the case
+     * when a non-NULL value is returned by wglGetProcAddress), we return the address
+     * of a wrapper function which will handle the HDC->PhysDev conversion.
+     */
+    if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
+        return wglMakeContextCurrentARB;
 
     return ret;
 }

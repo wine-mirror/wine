@@ -1376,10 +1376,10 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
 }
 
 /* OpenGL32 wglMakeContextCurrentARB */
-static BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGLRC hglrc) 
+BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* hReadDev, HGLRC hglrc) 
 {
     BOOL ret;
-    TRACE("(%p,%p,%p)\n", hDrawDC, hReadDC, hglrc);
+    TRACE("(%p,%p,%p)\n", hDrawDev, hReadDev, hglrc);
 
     wine_tsx11_lock();
     if (hglrc == NULL) {
@@ -1390,11 +1390,11 @@ static BOOL WINAPI X11DRV_wglMakeContextCurrentARB(HDC hDrawDC, HDC hReadDC, HGL
             ret = FALSE;
         } else {
             Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
-            Drawable d_draw = get_drawable( hDrawDC );
-            Drawable d_read = get_drawable( hReadDC );
+            Drawable d_draw = get_glxdrawable(hDrawDev);
+            Drawable d_read = get_glxdrawable(hReadDev);
 
             if (ctx->ctx == NULL) {
-                ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, GetObjectType(hDrawDC) == OBJ_MEMDC ? False : True);
+                ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, GetObjectType(hDrawDev->hdc) == OBJ_MEMDC ? False : True);
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
             ret = pglXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
