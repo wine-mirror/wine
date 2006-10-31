@@ -232,7 +232,7 @@ static void WINAPI IWineD3DCubeTextureImpl_ApplyStateChanges(IWineD3DCubeTexture
 
     /* Apply non-power2 mappings and texture offsets so long as the texture coords aren't projected or generated */
     if(This->pow2scalingFactor != 1.0f) {
-        if((textureStates[WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) == D3DTSS_TCI_PASSTHRU &&
+        if((textureStates[WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) == WINED3DTSS_TCI_PASSTHRU &&
            (~textureStates[WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED)) {
 
             glMatrixMode(GL_TEXTURE);

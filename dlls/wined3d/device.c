@@ -5530,7 +5530,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
             /* FIXME: From MSDN: The WINED3DTSS_TCI_* flags are mutually exclusive. If you include
                   one flag, you can still specify an index value, which the system uses to
                   determine the texture wrapping mode.
-                  eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, D3DTSS_TCI_CAMERASPACEPOSITION | 1 );
+                  eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, WINED3DTSS_TCI_CAMERASPACEPOSITION | 1 );
                   means use the vertex position (camera-space) as the input texture coordinates
                   for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render
                   state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
@@ -5540,7 +5540,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
              * Be careful the value of the mask 0xF0000 come from d3d8types.h infos
              */
             switch (Value & 0xFFFF0000) {
-            case D3DTSS_TCI_PASSTHRU:
+            case WINED3DTSS_TCI_PASSTHRU:
                 /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
                 glDisable(GL_TEXTURE_GEN_S);
                 glDisable(GL_TEXTURE_GEN_T);
@@ -5549,7 +5549,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
                 checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R,Q)");
                 break;
 
-            case D3DTSS_TCI_CAMERASPACEPOSITION:
+            case WINED3DTSS_TCI_CAMERASPACEPOSITION:
                 /* CameraSpacePosition means use the vertex position, transformed to camera space,
                     as the input texture coordinates for this stage's texture transformation. This
                     equates roughly to EYE_LINEAR                                                  */
@@ -5585,7 +5585,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
                 }
                 break;
 
-            case D3DTSS_TCI_CAMERASPACENORMAL:
+            case WINED3DTSS_TCI_CAMERASPACENORMAL:
                 {
                     if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
                         float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
@@ -5619,7 +5619,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
                 }
                 break;
 
-            case D3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+            case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
                 {
                     if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
                     float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
@@ -5669,7 +5669,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
 
         /* Unhandled */
     case WINED3DTSS_TEXTURETRANSFORMFLAGS :
-        set_texture_matrix((float *)&This->stateBlock->transforms[WINED3DTS_TEXTURE0 + Stage].u.m[0][0], Value, (This->stateBlock->textureState[Stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != D3DTSS_TCI_PASSTHRU);
+        set_texture_matrix((float *)&This->stateBlock->transforms[WINED3DTS_TEXTURE0 + Stage].u.m[0][0], Value, (This->stateBlock->textureState[Stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU);
         break;
 
     case WINED3DTSS_BUMPENVMAT00          :
