@@ -6343,7 +6343,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, I
 
                 for (i = 0 ; i < levels ; ++i) {
                     /* Update each cube face */
-                    for (faceType = D3DCUBEMAP_FACE_POSITIVE_X; faceType <= D3DCUBEMAP_FACE_NEGATIVE_Z; ++faceType){
+                    for (faceType = WINED3DCUBEMAP_FACE_POSITIVE_X; faceType <= WINED3DCUBEMAP_FACE_NEGATIVE_Z; ++faceType){
                         hr = IWineD3DCubeTexture_GetCubeMapSurface((IWineD3DCubeTexture *)pSourceTexture,      faceType, i, &srcSurface);
                         if (WINED3D_OK != hr) {
                             FIXME("(%p) : Failed to get src cube surface facetype %d, level %d\n", This, faceType, i);
