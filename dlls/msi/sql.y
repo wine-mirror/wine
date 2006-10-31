@@ -79,40 +79,17 @@ static struct expr * EXPR_wildcard( void *info );
     int integer;
 }
 
-%token TK_ABORT TK_AFTER TK_AGG_FUNCTION TK_ALL TK_ALTER TK_AND TK_AS TK_ASC
-%token TK_BEFORE TK_BEGIN TK_BETWEEN TK_BITAND TK_BITNOT TK_BITOR TK_BY
-%token TK_CASCADE TK_CASE TK_CHAR TK_CHECK TK_CLUSTER TK_COLLATE TK_COLUMN
-%token TK_COMMA TK_COMMENT TK_COMMIT TK_CONCAT TK_CONFLICT
-%token TK_CONSTRAINT TK_COPY TK_CREATE
-%token TK_DEFAULT TK_DEFERRABLE TK_DEFERRED TK_DELETE TK_DELIMITERS TK_DESC
-%token TK_DISTINCT TK_DOT TK_DROP TK_EACH
-%token TK_ELSE TK_END TK_END_OF_FILE TK_EQ TK_EXCEPT TK_EXPLAIN
-%token TK_FAIL TK_FLOAT TK_FOR TK_FOREIGN TK_FREE TK_FROM TK_FUNCTION
-%token TK_GE TK_GLOB TK_GROUP TK_GT
-%token TK_HAVING TK_HOLD
-%token TK_IGNORE TK_ILLEGAL TK_IMMEDIATE TK_IN TK_INDEX TK_INITIALLY
-%token <str> TK_ID 
-%token TK_INSERT TK_INSTEAD TK_INT 
+%token TK_ALTER TK_AND TK_BY TK_CHAR TK_COMMA TK_CREATE TK_DELETE
+%token TK_DISTINCT TK_DOT TK_EQ TK_FREE TK_FROM TK_GE TK_GT TK_HOLD
+%token <str> TK_ID
+%token TK_ILLEGAL TK_INSERT TK_INT
 %token <str> TK_INTEGER
-%token TK_INTERSECT TK_INTO TK_IS
-%token TK_ISNULL
-%token TK_JOIN TK_JOIN_KW
-%token TK_KEY
-%token TK_LE TK_LIKE TK_LIMIT TK_LONG TK_LONGCHAR TK_LP TK_LSHIFT TK_LT
-%token TK_LOCALIZABLE
-%token TK_MATCH TK_MINUS
-%token TK_NE TK_NOT TK_NOTNULL TK_NULL
-%token TK_OBJECT TK_OF TK_OFFSET TK_ON TK_OR TK_ORACLE_OUTER_JOIN TK_ORDER
-%token TK_PLUS TK_PRAGMA TK_PRIMARY
-%token TK_RAISE TK_REFERENCES TK_REM TK_REPLACE TK_RESTRICT TK_ROLLBACK
-%token TK_ROW TK_RP TK_RSHIFT
-%token TK_SELECT TK_SEMI TK_SET TK_SHORT TK_SLASH TK_SPACE TK_STAR TK_STATEMENT 
+%token TK_INTO TK_IS TK_KEY TK_LE TK_LONG TK_LONGCHAR TK_LP TK_LT
+%token TK_LOCALIZABLE TK_MINUS TK_NE TK_NOT TK_NULL
+%token TK_OBJECT TK_OR TK_ORDER TK_PRIMARY TK_RP
+%token TK_SELECT TK_SET TK_SHORT TK_SPACE TK_STAR
 %token <str> TK_STRING
-%token TK_TABLE TK_TEMPORARY TK_THEN TK_TRANSACTION TK_TRIGGER
-%token TK_UMINUS TK_UNCLOSED_STRING TK_UNION TK_UNIQUE
-%token TK_UPDATE TK_UPLUS TK_USING
-%token TK_VACUUM TK_VALUES TK_VIEW
-%token TK_WHEN TK_WHERE TK_WILDCARD
+%token TK_TABLE TK_TEMPORARY TK_UPDATE TK_VALUES TK_WHERE TK_WILDCARD
 
 /*
  * These are extra tokens used by the lexer but never seen by the
@@ -136,8 +113,7 @@ static struct expr * EXPR_wildcard( void *info );
 %left TK_OR
 %left TK_AND
 %left TK_NOT
-%left TK_EQ TK_NE TK_LT TK_GT TK_LE TK_GE TK_ISNULL TK_LIKE TK_BETWEEN TK_IN
-%left TK_PLUS TK_MINUS TK_CONCAT
+%left TK_EQ TK_NE TK_LT TK_GT TK_LE TK_GE TK_LIKE
 %right TK_NEGATION
 
 %%
@@ -163,10 +139,10 @@ oneinsert:
     TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP
         {
             SQL_input *sql = (SQL_input*) info;
-            MSIVIEW *insert = NULL; 
+            MSIVIEW *insert = NULL;
             UINT r;
 
-            r = INSERT_CreateView( sql->db, &insert, $3, $5, $9, FALSE ); 
+            r = INSERT_CreateView( sql->db, &insert, $3, $5, $9, FALSE );
             if( !insert )
                 YYABORT;
             $$ = insert;
@@ -174,9 +150,9 @@ oneinsert:
   | TK_INSERT TK_INTO table TK_LP selcollist TK_RP TK_VALUES TK_LP constlist TK_RP TK_TEMPORARY
         {
             SQL_input *sql = (SQL_input*) info;
-            MSIVIEW *insert = NULL; 
+            MSIVIEW *insert = NULL;
 
-            INSERT_CreateView( sql->db, &insert, $3, $5, $9, TRUE ); 
+            INSERT_CreateView( sql->db, &insert, $3, $5, $9, TRUE );
             if( !insert )
                 YYABORT;
             $$ = insert;
@@ -187,7 +163,7 @@ onecreate:
     TK_CREATE TK_TABLE table TK_LP table_def TK_RP
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *create = NULL; 
+            MSIVIEW *create = NULL;
 
             if( !$5 )
                 YYABORT;
@@ -199,7 +175,7 @@ onecreate:
   | TK_CREATE TK_TABLE table TK_LP table_def TK_RP TK_HOLD
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *create = NULL; 
+            MSIVIEW *create = NULL;
 
             if( !$5 )
                 YYABORT;
@@ -237,7 +213,7 @@ onedelete:
     TK_DELETE from
         {
             SQL_input* sql = (SQL_input*) info;
-            MSIVIEW *delete = NULL; 
+            MSIVIEW *delete = NULL;
 
             DELETE_CreateView( sql->db, &delete, $2 );
             if( !delete )
@@ -408,7 +384,7 @@ unorderedsel:
     ;
 
 selectfrom:
-    selcollist multifrom 
+    selcollist multifrom
         {
             SQL_input* sql = (SQL_input*) info;
             UINT r;
@@ -429,9 +405,9 @@ selectfrom:
     ;
 
 selcollist:
-    column 
+    column
   | column TK_COMMA selcollist
-        { 
+        {
             $1->next = $3;
         }
   | TK_STAR
@@ -457,7 +433,7 @@ multifrom:
 from:
     fromtable
   | fromtable TK_WHERE expr
-        { 
+        {
             SQL_input* sql = (SQL_input*) info;
             UINT r;
 
@@ -621,7 +597,7 @@ const_val:
     ;
 
 column_val:
-    column 
+    column
         {
             $$ = EXPR_column( info, $1 );
             if( !$$ )
@@ -717,7 +693,7 @@ static int sql_lex( void *SQL_lval, SQL_input *sql )
     while( token == TK_SPACE );
 
     /* TRACE("token : %d (%s)\n", token, debugstr_wn(&sql->command[sql->n], sql->len)); */
-    
+
     return token;
 }
 
@@ -728,7 +704,7 @@ LPWSTR SQL_getstring( void *info, struct sql_str *strdata )
     LPWSTR str;
 
     /* if there's quotes, remove them */
-    if( ( (p[0]=='`') && (p[len-1]=='`') ) || 
+    if( ( (p[0]=='`') && (p[len-1]=='`') ) ||
         ( (p[0]=='\'') && (p[len-1]=='\'') ) )
     {
         p++;
