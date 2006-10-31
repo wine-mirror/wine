@@ -2133,7 +2133,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
 
     /* Clear the screen */
-    IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, D3DCLEAR_STENCIL|D3DCLEAR_ZBUFFER|D3DCLEAR_TARGET, 0x00, 1.0, 0);
+    IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER|WINED3DCLEAR_TARGET, 0x00, 1.0, 0);
 
     This->d3d_initialized = TRUE;
     return WINED3D_OK;
@@ -6028,8 +6028,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                                         DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    /* TODO: From MSDN This method fails if you specify the D3DCLEAR_ZBUFFER or D3DCLEAR_STENCIL flags when the
-      render target does not have an attached depth buffer. Similarly, if you specify the D3DCLEAR_STENCIL flag
+    /* TODO: From MSDN This method fails if you specify the WINED3DCLEAR_ZBUFFER or WINED3DCLEAR_STENCIL flags when the
+      render target does not have an attached depth buffer. Similarly, if you specify the WINED3DCLEAR_STENCIL flag
       when the depth-buffer format does not contain stencil buffer information, this method fails. */
     GLbitfield     glMask = 0;
     GLboolean      old_ztest;
@@ -6054,7 +6054,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     /* Only set the values up once, as they are not changing */
-    if (Flags & D3DCLEAR_STENCIL) {
+    if (Flags & WINED3DCLEAR_STENCIL) {
         glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
         glClearStencil(Stencil);
         checkGLcall("glClearStencil");
@@ -6062,7 +6062,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glStencilMask(0xFFFFFFFF);
     }
 
-    if (Flags & D3DCLEAR_ZBUFFER) {
+    if (Flags & WINED3DCLEAR_ZBUFFER) {
         glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
         glDepthMask(GL_TRUE);
         glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
@@ -6071,7 +6071,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
     }
 
-    if (Flags & D3DCLEAR_TARGET) {
+    if (Flags & WINED3DCLEAR_TARGET) {
         TRACE("Clearing screen with glClear to color %x\n", Color);
         glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
         glClearColor(D3DCOLOR_R(Color),
@@ -6115,15 +6115,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     /* Restore the old values (why..?) */
-    if (Flags & D3DCLEAR_STENCIL) {
+    if (Flags & WINED3DCLEAR_STENCIL) {
         glClearStencil(old_stencil_clear_value);
         glStencilMask(This->stateBlock->renderState[WINED3DRS_STENCILWRITEMASK]);
     }
-    if (Flags & D3DCLEAR_ZBUFFER) {
+    if (Flags & WINED3DCLEAR_ZBUFFER) {
         glDepthMask(old_ztest);
         glClearDepth(old_z_clear_value);
     }
-    if (Flags & D3DCLEAR_TARGET) {
+    if (Flags & WINED3DCLEAR_TARGET) {
         glClearColor(old_color_clear_value[0],
                      old_color_clear_value[1],
                      old_color_clear_value[2],

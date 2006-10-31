@@ -2721,7 +2721,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         IWineD3DDevice_Clear( (IWineD3DDevice *) myDevice,
                               1 /* Number of rectangles */,
                               &rect,
-                              D3DCLEAR_TARGET,
+                              WINED3DCLEAR_TARGET,
                               color,
                               0.0 /* Z */,
                               0 /* Stencil */);
