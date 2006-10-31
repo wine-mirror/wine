@@ -2226,6 +2226,26 @@ static void test_join(void)
     MsiViewClose(hview);
     MsiCloseHandle(hview);
 
+    /* try a join without a WHERE condition */
+    query = "SELECT `Component`.`ComponentId`, `FeatureComponents`.`Feature_` "
+            "FROM `Component`, `FeatureComponents` ";
+    r = MsiDatabaseOpenView(hdb, query, &hview);
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
+
+    r = MsiViewExecute(hview, 0);
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
+
+    i = 0;
+    while ((r = MsiViewFetch(hview, &hrec)) == ERROR_SUCCESS)
+    {
+        i++;
+        MsiCloseHandle(hrec);
+    }
+    ok( i == 24, "Expected 24 rows, got %d\n", i );
+
+    MsiViewClose(hview);
+    MsiCloseHandle(hview);
+
     query = "SELECT DISTINCT Component, ComponentId FROM FeatureComponents, Component "
             "WHERE FeatureComponents.Component_=Component.Component "
             "AND (Feature_='nasalis') ORDER BY Feature_";
