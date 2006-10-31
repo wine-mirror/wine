@@ -600,7 +600,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
     return RPC_S_SERVER_UNAVAILABLE;
   }
 
-  for (ai_cur = ai; ai_cur; ai_cur = ai->ai_next)
+  for (ai_cur = ai; ai_cur; ai_cur = ai_cur->ai_next)
   {
     if (TRACE_ON(rpc))
     {
