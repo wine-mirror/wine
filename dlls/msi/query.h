@@ -118,8 +118,7 @@ UINT UPDATE_CreateView( MSIDATABASE *db, MSIVIEW **, LPWSTR table,
 UINT DELETE_CreateView( MSIDATABASE *db, MSIVIEW **view, MSIVIEW *table );
 
 UINT JOIN_CreateView( MSIDATABASE *db, MSIVIEW **view,
-                      LPCWSTR left, LPCWSTR right,
-                      struct expr *cond );
+                      LPCWSTR left, LPCWSTR right );
 
 UINT ALTER_CreateView( MSIDATABASE *db, MSIVIEW **view, LPCWSTR name, int hold );
 

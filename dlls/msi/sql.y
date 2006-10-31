@@ -103,7 +103,7 @@ static struct expr * EXPR_wildcard( void *info );
 %type <string> table id
 %type <column_list> selcollist column column_and_type column_def table_def
 %type <column_list> column_assignment update_assign_list constlist
-%type <query> query multifrom from fromtable selectfrom unorderedsel
+%type <query> query from fromtable selectfrom unorderedsel
 %type <query> oneupdate onedelete oneselect onequery onecreate oneinsert onealter
 %type <expr> expr val column_val const_val
 %type <column_type> column_type data_type data_type_l data_count
@@ -384,7 +384,7 @@ unorderedsel:
     ;
 
 selectfrom:
-    selcollist multifrom
+    selcollist from
         {
             SQL_input* sql = (SQL_input*) info;
             UINT r;
@@ -416,20 +416,6 @@ selcollist:
         }
     ;
 
-multifrom:
-    from
-  | TK_FROM table TK_COMMA table TK_WHERE expr
-        {
-            SQL_input* sql = (SQL_input*) info;
-            UINT r;
-
-            /* only support inner joins on two tables */
-            r = JOIN_CreateView( sql->db, &$$, $2, $4, $6 );
-            if( r != ERROR_SUCCESS )
-                YYABORT;
-        }
-    ;
-
 from:
     fromtable
   | fromtable TK_WHERE expr
@@ -456,6 +442,16 @@ fromtable:
             $$ = NULL;
             r = TABLE_CreateView( sql->db, $2, &$$ );
             if( r != ERROR_SUCCESS || !$$ )
+                YYABORT;
+        }
+  | TK_FROM table TK_COMMA table
+        {
+            SQL_input* sql = (SQL_input*) info;
+            UINT r;
+
+            /* only support inner joins on two tables */
+            r = JOIN_CreateView( sql->db, &$$, $2, $4 );
+            if( r != ERROR_SUCCESS )
                 YYABORT;
         }
     ;

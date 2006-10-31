@@ -2221,7 +2221,6 @@ static void test_join(void)
     }
 
     ok( i == 5, "Expected 5 rows, got %d\n", i );
-
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
@@ -2231,16 +2230,10 @@ static void test_join(void)
             "WHERE FeatureComponents.Component_=Component.Component "
             "AND (Feature_='nasalis') ORDER BY Feature_";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -2267,15 +2260,8 @@ static void test_join(void)
 
     ok( data_correct, "data returned in the wrong order\n");
 
-    todo_wine
-    {
-        ok( i == 2, "Expected 2 rows, got %d\n", i );
-    }
-
-    todo_wine
-    {
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    ok( i == 2, "Expected 2 rows, got %d\n", i );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
@@ -2356,7 +2342,6 @@ static void test_join(void)
     ok( data_correct, "data returned in the wrong order\n");
 
     ok( i == 1, "Expected 1 rows, got %d\n", i );
-
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
@@ -2368,16 +2353,10 @@ static void test_join(void)
             "AND `FeatureComponents`.`Component_` = 'maxilla' "
             "ORDER BY `Feature_`";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -2401,17 +2380,10 @@ static void test_join(void)
         i++;
         MsiCloseHandle(hrec);
     }
-    ok( data_correct, "data returned in the wrong order\n");
+    todo_wine ok( data_correct, "data returned in the wrong order\n");
 
-    todo_wine
-    {
-        ok( i == 1, "Expected 1 rows, got %d\n", i );
-    }
-
-    todo_wine
-    {
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    ok( i == 1, "Expected 1 rows, got %d\n", i );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
@@ -2421,10 +2393,7 @@ static void test_join(void)
             "WHERE `Component` = 'zygomatic' "
             "ORDER BY `Feature_`";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
     todo_wine
@@ -2460,11 +2429,7 @@ static void test_join(void)
     {
         ok( i == 6, "Expected 6 rows, got %d\n", i );
     }
-
-    todo_wine
-    {
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
@@ -2475,16 +2440,10 @@ static void test_join(void)
             "AND `Feature_` = 'nasalis' "
             "ORDER BY `Feature_`";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -2510,15 +2469,8 @@ static void test_join(void)
     }
 
     ok( data_correct, "data returned in the wrong order\n");
-    todo_wine
-    {
-        ok( i == 3, "Expected 3 rows, got %d\n", i );
-    }
-
-    todo_wine
-    {
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    ok( i == 3, "Expected 3 rows, got %d\n", i );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
@@ -2526,16 +2478,10 @@ static void test_join(void)
     query = "SELECT `StdDlls`.`File`, `Binary`.`Data` "
             "FROM `StdDlls`, `Binary` ";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -2560,28 +2506,19 @@ static void test_join(void)
         MsiCloseHandle(hrec);
     }
 
-    ok( data_correct, "data returned in the wrong order\n");
-    todo_wine
-    {
-        ok( i == 6, "Expected 6 rows, got %d\n", i );
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    todo_wine ok( data_correct, "data returned in the wrong order\n");
+    ok( i == 6, "Expected 6 rows, got %d\n", i );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
 
     query = "SELECT * FROM `StdDlls`, `Binary` ";
     r = MsiDatabaseOpenView(hdb, query, &hview);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to open view: %d\n", r );
 
     r = MsiViewExecute(hview, 0);
-    todo_wine
-    {
-        ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
-    }
+    ok( r == ERROR_SUCCESS, "failed to execute view: %d\n", r );
 
     i = 0;
     data_correct = TRUE;
@@ -2617,13 +2554,10 @@ static void test_join(void)
         i++;
         MsiCloseHandle(hrec);
     }
-    ok( data_correct, "data returned in the wrong order\n");
+    todo_wine ok( data_correct, "data returned in the wrong order\n");
 
-    todo_wine
-    {
-        ok( i == 6, "Expected 6 rows, got %d\n", i );
-        ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
-    }
+    ok( i == 6, "Expected 6 rows, got %d\n", i );
+    ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
 
     MsiViewClose(hview);
     MsiCloseHandle(hview);
