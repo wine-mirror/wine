@@ -248,7 +248,7 @@ MAKE_FUNCPTR(glNewList)
 MAKE_FUNCPTR(glPixelStorei)
 #undef MAKE_FUNCPTR
 
-BOOL X11DRV_WineGL_InitOpenglInfo()
+static BOOL X11DRV_WineGL_InitOpenglInfo(void)
 {
     static BOOL infoInitialized = FALSE;
 
@@ -1246,7 +1246,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 }
 
 /* OpenGL32 wglDeleteContext */
-BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc)
+BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
     BOOL ret = TRUE;
@@ -1408,7 +1408,7 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
 }
 
 /* OpenGL32 wglShaderLists */
-BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
+BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
     Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
 
@@ -1585,7 +1585,7 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 }
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */ 
-void X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
+static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
     TRACE("pname: 0x%x, params: %p\n", pname, params);
     if (pname == GL_DEPTH_BITS) { 
         GLXContext gl_ctx = pglXGetCurrentContext();
@@ -1967,7 +1967,7 @@ static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, cons
 }
 
 /* WGL_ARB_pixel_format: wglChoosePixelFormatARB */
-GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)
+static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)
 {
     int gl_test = 0;
     int attribs[256];
@@ -2093,14 +2093,14 @@ GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribILis
 }
 
 /* WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB */
-GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
+static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
 {
     FIXME("(%p, %d, %d, %d, %p, %p): stub\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
     return GL_FALSE;
 }
 
 /* WGL_ARB_pixel_format: wglGetPixelFormatAttribivARB */
-GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues)
+static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues)
 {
     UINT i;
     GLXFBConfig* cfgs = NULL;
@@ -2403,19 +2403,19 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
 }
 
 /* WGL_EXT_extensions_string: wglGetExtensionsStringEXT */
-const char * WINAPI X11DRV_wglGetExtensionsStringEXT(void) {
+static const char * WINAPI X11DRV_wglGetExtensionsStringEXT(void) {
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
     return WineGLInfo.wglExtensions;
 }
 
 /* WGL_EXT_swap_control: wglGetSwapIntervalEXT */
-int WINAPI X11DRV_wglGetSwapIntervalEXT(VOID) {
+static int WINAPI X11DRV_wglGetSwapIntervalEXT(VOID) {
     FIXME("(),stub!\n");
     return swap_interval;
 }
 
 /* WGL_EXT_swap_control: wglSwapIntervalEXT */
-BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
+static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
     TRACE("(%d)\n", interval);
     swap_interval = interval;
     if (NULL != pglXSwapIntervalSGI) {
@@ -2713,10 +2713,6 @@ XVisualInfo *X11DRV_setup_opengl_visual( Display *display )
 
 #else  /* no OpenGL includes */
 
-void X11DRV_OpenGL_Init(Display *display)
-{
-}
-
 /***********************************************************************
  *		ChoosePixelFormat (X11DRV.@)
  */
@@ -2769,13 +2765,13 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
 }
 
 /* OpenGL32 wglCreateContext */
-HGLRC WINAPI X11DRV_wglCreateContext(HDC hdc) {
+HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return NULL;
 }
 
 /* OpenGL32 wglDeleteContext */
-BOOL WINAPI X11DRV_wglDeleteContext(HGLRC hglrc) {
+BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
@@ -2786,27 +2782,32 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
     return NULL;
 }
 
+BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* hReadDev, HGLRC hglrc) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return FALSE;
+}
+
 /* OpenGL32 wglMakeCurrent */
-BOOL WINAPI X11DRV_wglMakeCurrent(HDC hdc, HGLRC hglrc) {
+BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
 /* OpenGL32 wglShaderLists */
-BOOL WINAPI X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
+BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
 /* OpenGL32 wglUseFontBitmapsA */
-BOOL WINAPI X11DRV_wglUseFontBitmapsA(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
 /* OpenGL32 wglUseFontBitmapsW */
-BOOL WINAPI X11DRV_wglUseFontBitmapsW(HDC hdc, DWORD first, DWORD count, DWORD listBase)
+BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;

@@ -131,11 +131,11 @@
 @ cdecl ForceXIMReset(long) X11DRV_ForceXIMReset
 
 # OpenGL
-@ cdecl wglCreateContext(long) X11DRV_wglCreateContext
+@ cdecl wglCreateContext(ptr) X11DRV_wglCreateContext
 @ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
-@ cdecl wglGetProcAddress(ptr) X11DRV_wglGetProcAddress
+@ cdecl wglGetProcAddress(str) X11DRV_wglGetProcAddress
 @ cdecl wglMakeContextCurrentARB(ptr ptr long) X11DRV_wglMakeContextCurrentARB
-@ cdecl wglMakeCurrent(long long) X11DRV_wglMakeCurrent
+@ cdecl wglMakeCurrent(ptr long) X11DRV_wglMakeCurrent
 @ cdecl wglShareLists(long long) X11DRV_wglShareLists
-@ cdecl wglUseFontBitmapsA(long long long long) X11DRV_wglUseFontBitmapsA
-@ cdecl wglUseFontBitmapsW(long long long long) X11DRV_wglUseFontBitmapsW
+@ cdecl wglUseFontBitmapsA(ptr long long long) X11DRV_wglUseFontBitmapsA
+@ cdecl wglUseFontBitmapsW(ptr long long long) X11DRV_wglUseFontBitmapsW
