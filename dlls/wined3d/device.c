@@ -4237,14 +4237,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_COLORWRITEENABLE          :
       {
         TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
-              Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
-              Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
-              Value & D3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
-              Value & D3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
-        glColorMask(Value & D3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
-                    Value & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                    Value & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                    Value & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+              Value & WINED3DCOLORWRITEENABLE_RED   ? 1 : 0,
+              Value & WINED3DCOLORWRITEENABLE_GREEN ? 1 : 0,
+              Value & WINED3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
+              Value & WINED3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
+        glColorMask(Value & WINED3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
+                    Value & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    Value & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                    Value & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
         checkGLcall("glColorMask(...)");
       }
       break;
@@ -6128,10 +6128,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
                      old_color_clear_value[1],
                      old_color_clear_value[2],
                      old_color_clear_value[3]);
-        glColorMask(This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+        glColorMask(This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     }
 
     glDisable(GL_SCISSOR_TEST);
