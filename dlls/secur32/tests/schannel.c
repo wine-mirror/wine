@@ -140,10 +140,14 @@ static void testAcquireSecurityContext(void)
      NULL);
     ok(st == SEC_E_SECPKG_NOT_FOUND,
      "Expected SEC_E_SECPKG_NOT_FOUND, got %08x\n", st);
-    st = pAcquireCredentialsHandleA(NULL, unisp_name_a, 0, NULL, NULL, NULL,
-     NULL, NULL, NULL);
-    ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n",
-     st);
+    if (0)
+    {
+        /* Crashes on Win2K */
+        st = pAcquireCredentialsHandleA(NULL, unisp_name_a, 0, NULL, NULL, NULL,
+         NULL, NULL, NULL);
+        ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n",
+         st);
+    }
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_BOTH, NULL,
      NULL, NULL, NULL, NULL, NULL);
     ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n",
@@ -152,10 +156,12 @@ static void testAcquireSecurityContext(void)
      NULL, NULL, NULL, NULL, NULL, NULL);
     ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n",
      st);
-    /* Crashes
-    st = pAcquireCredentialsHandleA(NULL, UNISP_NAME_A, SECPKG_CRED_OUTBOUND,
-     NULL, NULL, NULL, NULL, NULL, NULL);
-     */
+    if (0)
+    {
+        /* Crashes */
+        st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
+         NULL, NULL, NULL, NULL, NULL, NULL);
+    }
     st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, NULL);
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08x\n", st);
@@ -191,11 +197,13 @@ static void testAcquireSecurityContext(void)
     ok(st == SEC_E_NO_CREDENTIALS, "Expected SEC_E_NO_CREDENTIALS, got %08x\n",
      st);
 
-    /* Crashes with bad paCred pointer
-    schanCred.cCreds = 1;
-    st = pAcquireCredentialsHandleA(NULL, UNISP_NAME_A, SECPKG_CRED_OUTBOUND,
-     NULL, &schanCred, NULL, NULL, NULL, NULL);
-     */
+    if (0)
+    {
+        /* Crashes with bad paCred pointer */
+        schanCred.cCreds = 1;
+        st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
+         NULL, &schanCred, NULL, NULL, NULL, NULL);
+    }
 
     /* Bogus cert in SCHANNEL_CRED. Windows fails with
      * SEC_E_UNKNOWN_CREDENTIALS, but I'll accept SEC_E_NO_CREDENTIALS too.
@@ -251,10 +259,12 @@ static void testAcquireSecurityContext(void)
     {
         PCCERT_CONTEXT tmp;
 
-        /* Crashes
-        st = pAcquireCredentialsHandleA(NULL, UNISP_NAME_A, SECPKG_CRED_INBOUND,
-         NULL, &schanCred, NULL, NULL, NULL, NULL);
-         */
+        if (0)
+        {
+            /* Crashes */
+            st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND,
+             NULL, &schanCred, NULL, NULL, NULL, NULL);
+        }
         /* Good cert with private key, bogus version */
         schanCred.dwVersion = SCH_CRED_V1;
         st = pAcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
