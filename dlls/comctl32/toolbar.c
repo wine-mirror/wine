@@ -247,6 +247,7 @@ static VOID TOOLBAR_DeleteImageList(PIMLENTRY **pies, INT *cies);
 static HIMAGELIST TOOLBAR_InsertImageList(PIMLENTRY **pies, INT *cies, HIMAGELIST himl, INT id);
 static LRESULT TOOLBAR_LButtonDown(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static void TOOLBAR_SetHotItemEx (TOOLBAR_INFO *infoPtr, INT nHit, DWORD dwReason);
+static void TOOLBAR_LayoutToolbar(HWND hwnd);
 static LRESULT TOOLBAR_AutoSize(HWND hwnd);
 static void TOOLBAR_CheckImageListIconSize(TOOLBAR_INFO *infoPtr);
 static void TOOLBAR_TooltipSetRect(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button);
@@ -1615,14 +1616,8 @@ static void
 TOOLBAR_CalcToolbar (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
-    DWORD dwStyle = infoPtr->dwStyle;
-    TBUTTON_INFO *btnPtr;
-    INT i, nRows, nSepRows;
-    INT x, y, cx, cy;
     SIZE  sizeString, sizeButton;
-    BOOL bWrap;
     BOOL validImageList = FALSE;
-    BOOL hasDropDownArrows = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle);
 
     TOOLBAR_CalcStrings (hwnd, &sizeString);
 
@@ -1639,15 +1634,25 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     if ( infoPtr->cxMax > 0 && infoPtr->nButtonWidth > infoPtr->cxMax )
         infoPtr->nButtonWidth = infoPtr->cxMax;
 
-    TOOLBAR_WrapToolbar( hwnd, dwStyle );
+    TOOLBAR_LayoutToolbar(hwnd);
+}
+
+static void
+TOOLBAR_LayoutToolbar(HWND hwnd)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+    TBUTTON_INFO *btnPtr;
+    SIZE sizeButton;
+    INT i, nRows, nSepRows;
+    INT x, y, cx, cy;
+    BOOL bWrap;
+    BOOL validImageList = TOOLBAR_IsValidImageList(infoPtr, 0);
+    BOOL hasDropDownArrows = TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle);
+
+    TOOLBAR_WrapToolbar(hwnd, infoPtr->dwStyle);
 
     x  = infoPtr->nIndent;
-    if (infoPtr->dwStyle & TBSTYLE_FLAT)
-        y = 0;
-    else
-        y = TOP_BORDER;
-
-    /* from above, minimum is a button, and possible text */
+    y  = (infoPtr->dwStyle & TBSTYLE_FLAT ? 0 : TOP_BORDER);
     cx = infoPtr->nButtonWidth;
     cy = infoPtr->nButtonHeight;
 
@@ -2867,6 +2872,7 @@ TOOLBAR_AddButtonsT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
     LPTBBUTTON lpTbb = (LPTBBUTTON)lParam;
     INT nOldButtons, nNewButtons, nAddButtons, nCount;
+    BOOL fHasString = FALSE;
 
     TRACE("adding %d buttons (unicode=%d)!\n", wParam, fUnicode);
 
@@ -2892,6 +2898,7 @@ TOOLBAR_AddButtonsT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
                 Str_SetPtrW ((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[nCount].iString );
             else
                 Str_SetPtrAtoW((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[nCount].iString);
+            fHasString = TRUE;
         }
         else
             btnPtr->iString   = lpTbb[nCount].iString;
@@ -2899,7 +2906,10 @@ TOOLBAR_AddButtonsT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
         TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
     }
 
-    TOOLBAR_CalcToolbar (hwnd);
+    if (infoPtr->nNumStrings > 0 || fHasString)
+        TOOLBAR_CalcToolbar(hwnd);
+    else
+        TOOLBAR_LayoutToolbar(hwnd);
     TOOLBAR_AutoSize (hwnd);
 
     TOOLBAR_DumpToolbar (infoPtr, __LINE__);
@@ -2915,6 +2925,7 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
 #define MAX_RESOURCE_STRING_LENGTH 512
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    BOOL fFirstString = (infoPtr->nNumStrings == 0);
     INT nIndex = infoPtr->nNumStrings;
 
     if ((wParam) && (HIWORD(lParam) == 0)) {
@@ -2971,6 +2982,8 @@ TOOLBAR_AddStringW (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	}
     }
 
+    if (fFirstString)
+        TOOLBAR_CalcToolbar(hwnd);
     return nIndex;
 }
 
@@ -2979,6 +2992,7 @@ static LRESULT
 TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
+    BOOL fFirstString = (infoPtr->nNumStrings == 0);
     LPSTR p;
     INT nIndex;
     INT len;
@@ -3003,6 +3017,8 @@ TOOLBAR_AddStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         p += (len+1);
     }
 
+    if (fFirstString)
+        TOOLBAR_CalcToolbar(hwnd);
     return nIndex;
 }
 
@@ -3035,7 +3051,7 @@ TOOLBAR_AutoSize (HWND hwnd)
 
     if ((infoPtr->dwStyle & TBSTYLE_WRAPABLE) || (infoPtr->dwExStyle & TBSTYLE_EX_UNDOC1))
     {
-        TOOLBAR_CalcToolbar(hwnd);
+        TOOLBAR_LayoutToolbar(hwnd);
         InvalidateRect( hwnd, NULL, TRUE );
     }
 
@@ -3261,7 +3277,7 @@ TOOLBAR_DeleteButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	Free (oldButtons);
     }
 
-    TOOLBAR_CalcToolbar (hwnd);
+    TOOLBAR_LayoutToolbar(hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
 
@@ -3864,7 +3880,10 @@ TOOLBAR_InsertButtonT(HWND hwnd, WPARAM wParam, LPARAM lParam, BOOL fUnicode)
 
     TOOLBAR_TooltipAddTool(infoPtr, &infoPtr->buttons[nIndex]);
 
-    TOOLBAR_CalcToolbar (hwnd);
+    if (infoPtr->nNumStrings > 0)
+        TOOLBAR_CalcToolbar(hwnd);
+    else
+        TOOLBAR_LayoutToolbar(hwnd);
     TOOLBAR_AutoSize (hwnd);
 
     InvalidateRect (hwnd, NULL, TRUE);
@@ -4483,6 +4502,7 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
             infoPtr->nBitmapHeight);
     }
 
+    TOOLBAR_CalcToolbar(hwnd);
     InvalidateRect(infoPtr->hwndSelf, NULL, FALSE);
     return TRUE;
 }
@@ -5386,8 +5406,6 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     OpenThemeData (hwnd, themeClass);
 
     TOOLBAR_CheckStyle (hwnd, dwStyle);
-
-    TOOLBAR_CalcToolbar(hwnd);
 
     return 0;
 }
@@ -6588,6 +6606,9 @@ TOOLBAR_StyleChanged (HWND hwnd, INT nType, LPSTYLESTRUCT lpStyle)
         TRACE("new style 0x%08x\n", lpStyle->styleNew);
 
         infoPtr->dwStyle = lpStyle->styleNew;
+
+        if ((dwOldStyle ^ lpStyle->styleNew) & (TBSTYLE_WRAPABLE | CCS_VERT))
+            TOOLBAR_LayoutToolbar(hwnd);
 
         /* only resize if one of the CCS_* styles was changed */
         if ((dwOldStyle ^ lpStyle->styleNew) & COMMON_STYLES)
