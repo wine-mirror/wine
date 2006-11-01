@@ -22,14 +22,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * NOTE
- * 
+ *
  * This code was audited for completeness against the documented features
  * of Comctl32.dll version 6.0 on Sep. 12, 2002, by Dimitrie O. Paun.
- * 
+ *
  * Unless otherwise noted, we believe this code to be complete, as per
  * the specification mentioned above.
  * If you discover missing features, or bugs, please note them below.
- * 
+ *
  *  TODO:
  *    - Add support for ILD_PRESERVEALPHA, ILD_SCALE, ILD_DPISCALE
  *    - Add support for ILS_GLOW, ILS_SHADOW, ILS_SATURATE, ILS_ALPHA
@@ -90,6 +90,12 @@ static inline void imagelist_point_from_index( HIMAGELIST himl, UINT index, LPPO
     pt->y = 0;
 }
 
+static inline void imagelist_get_bitmap_size( HIMAGELIST himl, UINT count, UINT cy, SIZE *sz )
+{
+    sz->cx = count * himl->cx;
+    sz->cy = cy;
+}
+
 /*************************************************************************
  * IMAGELIST_InternalExpandBitmaps [Internal]
  *
@@ -111,6 +117,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
     HDC     hdcBitmap;
     HBITMAP hbmNewBitmap, hbmNull;
     INT     nNewWidth, nNewCount;
+    SIZE    sz;
 
     if ((himl->cCurImage + nImageCount <= himl->cMaxImage)
         && (himl->cy >= cy))
@@ -128,10 +135,12 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
     if (hbmNewBitmap == 0)
         ERR("creating new image bitmap (x=%d y=%d)!\n", nNewWidth, cy);
 
-    if(himl->cCurImage)
+    imagelist_get_bitmap_size(himl, nNewCount, cy, &sz);
+
+    if (himl->cCurImage)
     {
         hbmNull = SelectObject (hdcBitmap, hbmNewBitmap);
-        BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
+        BitBlt (hdcBitmap, 0, 0, sz.cx, sz.cy,
                 himl->hdcImage, 0, 0, SRCCOPY);
         SelectObject (hdcBitmap, hbmNull);
     }
@@ -149,7 +158,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
 	if(himl->cCurImage)
 	{
 	    hbmNull = SelectObject (hdcBitmap, hbmNewBitmap);
-	    BitBlt (hdcBitmap, 0, 0, himl->cCurImage * himl->cx, cy,
+	    BitBlt (hdcBitmap, 0, 0, sz.cx, sz.cy,
 		    himl->hdcMask, 0, 0, SRCCOPY);
 	    SelectObject (hdcBitmap, hbmNull);
 	}
@@ -617,9 +626,10 @@ ImageList_Create (INT cx, INT cy, UINT flags,
         himl->hbmImage = 0;
 
     if ((himl->cMaxImage > 0) && (himl->flags & ILC_MASK)) {
-        himl->hbmMask =
-          CreateBitmap (himl->cx * himl->cMaxImage, himl->cy,
-			1, 1, NULL);
+        SIZE sz;
+
+        imagelist_get_bitmap_size(himl, himl->cMaxImage, himl->cy, &sz);
+        himl->hbmMask = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
         if (himl->hbmMask == 0) {
             ERR("Error creating mask bitmap!\n");
             goto cleanup;
@@ -1275,11 +1285,14 @@ ImageList_Duplicate (HIMAGELIST himlSrc)
 
     if (himlDst)
     {
-        BitBlt (himlDst->hdcImage, 0, 0, himlSrc->cCurImage * himlSrc->cx, himlSrc->cy,
+        SIZE sz;
+
+        imagelist_get_bitmap_size(himlSrc, himlSrc->cCurImage, himlSrc->cy, &sz);
+        BitBlt (himlDst->hdcImage, 0, 0, sz.cx, sz.cy,
                 himlSrc->hdcImage, 0, 0, SRCCOPY);
 
         if (himlDst->hbmMask)
-            BitBlt (himlDst->hdcMask, 0, 0, himlSrc->cCurImage * himlSrc->cx, himlSrc->cy,
+            BitBlt (himlDst->hdcMask, 0, 0, sz.cx, sz.cy,
                     himlSrc->hdcMask, 0, 0, SRCCOPY);
 
 	himlDst->cCurImage = himlSrc->cCurImage;
@@ -2079,8 +2092,10 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         himl->hbmImage = hbmNewImage;
 
         if (himl->hbmMask) {
-            hbmNewMask = CreateBitmap (himl->cMaxImage * himl->cx, himl->cy,
-                                1, 1, NULL);
+            SIZE sz;
+
+            imagelist_get_bitmap_size(himl, himl->cMaxImage, himl->cy, &sz);
+            hbmNewMask = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
             SelectObject (himl->hdcMask, hbmNewMask);
             DeleteObject (himl->hbmMask);
             himl->hbmMask = hbmNewMask;
