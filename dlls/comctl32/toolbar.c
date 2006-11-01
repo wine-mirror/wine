@@ -896,7 +896,7 @@ TOOLBAR_DrawButton (HWND hwnd, TBUTTON_INFO *btnPtr, HDC hdc, DWORD dwBaseCustDr
             rcBitmap.left += GetSystemMetrics(SM_CXEDGE) + infoPtr->iListGap / 2;
     }
     else
-        rcBitmap.left += (infoPtr->nButtonWidth - infoPtr->nBitmapWidth) / 2;
+        rcBitmap.left += ((rc.right - rc.left) - infoPtr->nBitmapWidth) / 2;
 
     rcBitmap.top += infoPtr->szPadding.cy / 2;
 
