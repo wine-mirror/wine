@@ -141,6 +141,7 @@ typedef struct
     INT      nOldHit;
     INT      nHotItem;        /* index of the "hot" item */
     SIZE     szPadding;       /* padding values around button */
+    INT      iTopMargin;      /* the top margin */
     INT      iListGap;        /* default gap between text and image for toolbar with list style */
     HFONT    hDefaultFont;
     HFONT    hFont;           /* text font */
@@ -255,6 +256,10 @@ static void TOOLBAR_TooltipSetRect(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *button);
 static LRESULT
 TOOLBAR_NotifyFormat(TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam);
 
+inline static int default_top_margin(TOOLBAR_INFO *infoPtr)
+{
+    return (infoPtr->dwStyle & TBSTYLE_FLAT ? 0 : TOP_BORDER);
+}
 
 static LPWSTR
 TOOLBAR_GetText(TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr)
@@ -1628,6 +1633,7 @@ TOOLBAR_CalcToolbar (HWND hwnd)
     sizeButton = TOOLBAR_MeasureButton(infoPtr, sizeString, TRUE, validImageList);
     infoPtr->nButtonWidth = sizeButton.cx;
     infoPtr->nButtonHeight = sizeButton.cy;
+    infoPtr->iTopMargin = default_top_margin(infoPtr);
 
     if ( infoPtr->cxMin >= 0 && infoPtr->nButtonWidth < infoPtr->cxMin )
         infoPtr->nButtonWidth = infoPtr->cxMin;
@@ -1652,7 +1658,7 @@ TOOLBAR_LayoutToolbar(HWND hwnd)
     TOOLBAR_WrapToolbar(hwnd, infoPtr->dwStyle);
 
     x  = infoPtr->nIndent;
-    y  = (infoPtr->dwStyle & TBSTYLE_FLAT ? 0 : TOP_BORDER);
+    y  = infoPtr->iTopMargin;
     cx = infoPtr->nButtonWidth;
     cy = infoPtr->nButtonHeight;
 
@@ -5393,6 +5399,7 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->szPadding.cx = DEFPAD_CX;
     infoPtr->szPadding.cy = DEFPAD_CY;
     infoPtr->iListGap = DEFLISTGAP;
+    infoPtr->iTopMargin = default_top_margin(infoPtr);
     infoPtr->dwStyle = dwStyle;
     infoPtr->tbim.iButton = -1;
     GetClientRect(hwnd, &infoPtr->client_rect);
