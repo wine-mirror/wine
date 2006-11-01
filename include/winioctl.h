@@ -411,6 +411,14 @@ typedef struct _FILE_PIPE_WAIT_FOR_BUFFER {
     WCHAR           Name[1];
 } FILE_PIPE_WAIT_FOR_BUFFER, *PFILE_PIPE_WAIT_FOR_BUFFER;
 
+typedef struct _FILE_PIPE_PEEK_BUFFER {
+    ULONG   NamedPipeState;
+    ULONG   ReadDataAvailable;
+    ULONG   NumberOfMessages;
+    ULONG   MessageLength;
+    CHAR    Data[1];
+} FILE_PIPE_PEEK_BUFFER, *PFILE_PIPE_PEEK_BUFFER;
+
 /* Device GUIDs */
 #ifdef DEFINE_GUID
 

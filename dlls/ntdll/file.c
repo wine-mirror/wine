@@ -42,6 +42,15 @@
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
 #endif
+#ifdef HAVE_POLL_H
+#include <poll.h>
+#endif
+#ifdef HAVE_SYS_POLL_H
+#include <sys/poll.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
 #ifdef HAVE_UTIME_H
 # include <utime.h>
 #endif
@@ -1011,6 +1020,71 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 }
             }
             if (internal_event) NtClose(internal_event);
+        }
+        break;
+
+    case FSCTL_PIPE_PEEK:
+        {
+            FILE_PIPE_PEEK_BUFFER *buffer = out_buffer;
+            int avail = 0, fd, flags;
+
+            if (out_size < FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data ))
+            {
+                io->u.Status = STATUS_INFO_LENGTH_MISMATCH;
+                break;
+            }
+
+            if ((io->u.Status = wine_server_handle_to_fd( handle, FILE_READ_DATA, &fd, &flags )))
+                break;
+
+            if (flags & FD_FLAG_RECV_SHUTDOWN)
+            {
+                wine_server_release_fd( handle, fd );
+                io->u.Status = STATUS_PIPE_DISCONNECTED;
+                break;
+            }
+
+#ifdef FIONREAD
+            if (ioctl( fd, FIONREAD, &avail ) != 0)
+            {
+                TRACE("FIONREAD failed reason: %s\n",strerror(errno));
+                wine_server_release_fd( handle, fd );
+                io->u.Status = FILE_GetNtStatus();
+                break;
+            }
+#endif
+            if (!avail)  /* check for closed pipe */
+            {
+                struct pollfd pollfd;
+                int ret;
+
+                pollfd.fd = fd;
+                pollfd.events = POLLIN;
+                pollfd.revents = 0;
+                ret = poll( &pollfd, 1, 0 );
+                if (ret == -1 || (ret == 1 && (pollfd.revents & (POLLHUP|POLLERR))))
+                {
+                    wine_server_release_fd( handle, fd );
+                    io->u.Status = STATUS_PIPE_BROKEN;
+                    break;
+                }
+            }
+            buffer->NamedPipeState    = 0;  /* FIXME */
+            buffer->ReadDataAvailable = avail;
+            buffer->NumberOfMessages  = 0;  /* FIXME */
+            buffer->MessageLength     = 0;  /* FIXME */
+            io->Information = FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
+            io->u.Status = STATUS_SUCCESS;
+            if (avail)
+            {
+                ULONG data_size = out_size - FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
+                if (data_size)
+                {
+                    int res = recv( fd, buffer->Data, data_size, MSG_PEEK );
+                    if (res >= 0) io->Information += res;
+                }
+            }
+            wine_server_release_fd( handle, fd );
         }
         break;
 

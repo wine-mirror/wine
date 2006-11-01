@@ -26,18 +26,6 @@
 # include <unistd.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_SYS_IOCTL_H
-#include <sys/ioctl.h>
-#endif
-#ifdef HAVE_POLL_H
-#include <poll.h>
-#endif
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -54,7 +42,6 @@
 #include "winioctl.h"
 #include "ddk/wdm.h"
 
-#include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/winbase16.h"
 #include "kernel_private.h"
@@ -1194,75 +1181,32 @@ HANDLE WINAPI CreateNamedPipeW( LPCWSTR name, DWORD dwOpenMode,
 BOOL WINAPI PeekNamedPipe( HANDLE hPipe, LPVOID lpvBuffer, DWORD cbBuffer,
                            LPDWORD lpcbRead, LPDWORD lpcbAvail, LPDWORD lpcbMessage )
 {
-#ifdef FIONREAD
-    int avail=0, fd, ret, flags;
+    FILE_PIPE_PEEK_BUFFER local_buffer;
+    FILE_PIPE_PEEK_BUFFER *buffer = &local_buffer;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
 
-    TRACE("(%p,%p,%u,%p,%p,%p)\n", hPipe, lpvBuffer, cbBuffer, lpcbRead, lpcbAvail, lpcbMessage);
-
-    ret = wine_server_handle_to_fd( hPipe, FILE_READ_DATA, &fd, &flags );
-    if (ret)
+    if (cbBuffer && !(buffer = HeapAlloc( GetProcessHeap(), 0,
+                                          FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data[cbBuffer] ))))
     {
-        SetLastError( RtlNtStatusToDosError(ret) );
-        return FALSE;
-    }
-    if (flags & FD_FLAG_RECV_SHUTDOWN)
-    {
-        wine_server_release_fd( hPipe, fd );
-        SetLastError ( ERROR_PIPE_NOT_CONNECTED );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
 
-    if (ioctl(fd,FIONREAD, &avail ) != 0)
+    status = NtFsControlFile( hPipe, 0, NULL, NULL, &io, FSCTL_PIPE_PEEK, NULL, 0,
+                              buffer, FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data[cbBuffer] ) );
+    if (!status)
     {
-        TRACE("FIONREAD failed reason: %s\n",strerror(errno));
-        wine_server_release_fd( hPipe, fd );
-        return FALSE;
+        ULONG read_size = io.Information - FIELD_OFFSET( FILE_PIPE_PEEK_BUFFER, Data );
+        if (lpcbAvail) *lpcbAvail = buffer->ReadDataAvailable;
+        if (lpcbRead) *lpcbRead = read_size;
+        if (lpcbMessage) *lpcbMessage = 0;  /* FIXME */
+        if (lpvBuffer) memcpy( lpvBuffer, buffer->Data, read_size );
     }
-    if (!avail)  /* check for closed pipe */
-    {
-        struct pollfd pollfd;
-        pollfd.fd = fd;
-        pollfd.events = POLLIN;
-        pollfd.revents = 0;
-        switch (poll( &pollfd, 1, 0 ))
-        {
-        case 0:
-            break;
-        case 1:  /* got something */
-            if (!(pollfd.revents & (POLLHUP | POLLERR))) break;
-            TRACE("POLLHUP | POLLERR\n");
-            /* fall through */
-        case -1:
-            wine_server_release_fd( hPipe, fd );
-            SetLastError(ERROR_BROKEN_PIPE);
-            return FALSE;
-        }
-    }
-    TRACE(" 0x%08x bytes available\n", avail );
-    ret = TRUE;
-    if (lpcbAvail)
-	*lpcbAvail = avail;
-    if (lpcbRead)
-        *lpcbRead = 0;
-    if (avail && lpvBuffer && cbBuffer)
-    {
-        int readbytes = (avail < cbBuffer) ? avail : cbBuffer;
-        readbytes = recv(fd, lpvBuffer, readbytes, MSG_PEEK);
-        if (readbytes < 0)
-        {
-            WARN("failed to peek socket (%d)\n", errno);
-            ret = FALSE;
-        }
-        else if (lpcbRead)
-            *lpcbRead = readbytes;
-    }
-    wine_server_release_fd( hPipe, fd );
-    return ret;
-#endif /* defined(FIONREAD) */
+    else SetLastError( RtlNtStatusToDosError(status) );
 
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    FIXME("function not implemented\n");
-    return FALSE;
+    if (buffer != &local_buffer) HeapFree( GetProcessHeap(), 0, buffer );
+    return !status;
 }
 
 /***********************************************************************
