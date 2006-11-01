@@ -833,7 +833,7 @@ HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, I
     LPWSTR cmdline_copy, cmdline_ptr;
     LPWSTR flags, ptr;
     CABINFOW cabinfo;
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("(%p, %p, %s, %d)\n", hWnd, hInst, debugstr_w(cmdline), show);
 
@@ -853,22 +853,26 @@ HRESULT WINAPI LaunchINFSectionExW(HWND hWnd, HINSTANCE hInst, LPWSTR cmdline, I
     if (flags)
         cabinfo.dwFlags = atolW(flags);
 
+    if (!is_full_path(cabinfo.pszCab) && !is_full_path(cabinfo.pszInf))
+    {
+        HeapFree(GetProcessHeap(), 0, cmdline_copy);
+        return E_INVALIDARG;
+    }
+
     /* get the source path from the cab filename */
     if (cabinfo.pszCab && *cabinfo.pszCab)
     {
         if (!is_full_path(cabinfo.pszCab))
-            goto done;
+            lstrcpyW(cabinfo.szSrcPath, cabinfo.pszInf);
+        else
+            lstrcpyW(cabinfo.szSrcPath, cabinfo.pszCab);
 
-        lstrcpyW(cabinfo.szSrcPath, cabinfo.pszCab);
         ptr = strrchrW(cabinfo.szSrcPath, '\\');
         *(++ptr) = '\0';
     }
 
     hr = ExecuteCabW(hWnd, &cabinfo, NULL);
-
-done:
     HeapFree(GetProcessHeap(), 0, cmdline_copy);
-
     return SUCCEEDED(hr) ? ADV_SUCCESS : ADV_FAILURE;
 }
 
