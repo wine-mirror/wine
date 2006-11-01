@@ -4646,8 +4646,17 @@ TOOLBAR_SetButtonSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
      * either size, the system changes it to the default of 24 wide and
      * 22 high. Demonstarted in ControlSpy Toolbar. GLA 3/02
      */
-    infoPtr->nButtonWidth = (cx) ? cx : 24;
-    infoPtr->nButtonHeight = (cy) ? cy : 22;
+    if (cx == 0) cx = 24;
+    if (cy == 0) cx = 22;
+    
+    cx = max(cx, infoPtr->szPadding.cx + infoPtr->nBitmapWidth);
+    cy = max(cy, infoPtr->szPadding.cy + infoPtr->nVBitmapHeight);
+
+    infoPtr->nButtonWidth = cx;
+    infoPtr->nButtonHeight = cy;
+    
+    infoPtr->iTopMargin = default_top_margin(infoPtr);
+    TOOLBAR_LayoutToolbar(hwnd);
     return TRUE;
 }
 
