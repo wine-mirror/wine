@@ -125,6 +125,7 @@ typedef struct
     INT      nButtonHeight;
     INT      nButtonWidth;
     INT      nBitmapHeight;
+    INT      nVBitmapHeight;  /* see TOOLBAR_Create for an explanation */
     INT      nBitmapWidth;
     INT      nIndent;
     INT      nRows;           /* number of button rows */
@@ -1553,7 +1554,7 @@ static inline SIZE TOOLBAR_MeasureButton(TOOLBAR_INFO *infoPtr, SIZE sizeString,
     if (infoPtr->dwStyle & TBSTYLE_LIST)
     {
         /* set button height from bitmap / text height... */
-        sizeButton.cy = max((bHasBitmap ? infoPtr->nBitmapHeight : 0),
+        sizeButton.cy = max((bHasBitmap ? infoPtr->nVBitmapHeight : 0),
             sizeString.cy);
 
         /* ... add on the necessary padding */
@@ -1582,8 +1583,9 @@ static inline SIZE TOOLBAR_MeasureButton(TOOLBAR_INFO *infoPtr, SIZE sizeString,
     {
         if (bHasBitmap)
         {
-            sizeButton.cy = infoPtr->nBitmapHeight + 1 +
-                sizeString.cy + DEFPAD_CY;
+            sizeButton.cy = infoPtr->nVBitmapHeight + DEFPAD_CY;
+            if (sizeString.cy > 0)
+                sizeButton.cy += 1 + sizeString.cy;
             sizeButton.cx = infoPtr->szPadding.cx +
                 max(sizeString.cx, infoPtr->nBitmapWidth);
         }
@@ -4472,8 +4474,7 @@ TOOLBAR_SetBitmapSize (HWND hwnd, WPARAM wParam, LPARAM lParam)
              LOWORD(lParam), HIWORD(lParam));
 
     infoPtr->nBitmapWidth = (INT)LOWORD(lParam);
-    infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
-
+    infoPtr->nVBitmapHeight = infoPtr->nBitmapHeight = (INT)HIWORD(lParam);
 
     if ((himlDef == infoPtr->himlInt) &&
         (ImageList_GetImageCount(infoPtr->himlInt) == 0))
@@ -4873,6 +4874,7 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
         infoPtr->nBitmapWidth = 1;
         infoPtr->nBitmapHeight = 1;
     }
+    infoPtr->nVBitmapHeight = infoPtr->nBitmapHeight;
 
     TRACE("hwnd %p, new himl=%p, id = %d, count=%d, bitmap w=%d, h=%d\n",
 	  hwnd, infoPtr->himlDef, id, infoPtr->nNumBitmaps,
@@ -5338,10 +5340,15 @@ TOOLBAR_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
     TRACE("hwnd = %p\n", hwnd);
 
     /* initialize info structure */
+    infoPtr->nButtonWidth = 23;
     infoPtr->nButtonHeight = 22;
-    infoPtr->nButtonWidth = 24;
     infoPtr->nBitmapHeight = 15;
     infoPtr->nBitmapWidth = 16;
+    /* By default Windows creates an image list with 16x15 icons but computes the button size as
+     * if the icons were 16x16. That's why we keep infoPtr->nVBitmapHeight. After a call to
+     * TB_SETBITMAPSIZE or TB_SETIMAGELIST the nVBitmapHeight = nBitmapHeight.
+     */
+    infoPtr->nVBitmapHeight = 16;
 
     infoPtr->nMaxTextRows = 1;
     infoPtr->cxMin = -1;
