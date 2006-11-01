@@ -677,7 +677,6 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(set_handle_fd)
     obj_handle_t handle;       /* handle we are interested in */
     int          fd;           /* file descriptor */
-    int          removable;    /* is device removable? (-1 if unknown) */
 @REPLY
     int          cur_fd;       /* current file descriptor */
 @END

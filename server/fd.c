@@ -37,6 +37,21 @@
 #ifdef HAVE_SYS_POLL_H
 #include <sys/poll.h>
 #endif
+#ifdef HAVE_LINUX_MAJOR_H
+#include <linux/major.h>
+#endif
+#ifdef HAVE_SYS_STATVFS_H
+#include <sys/statvfs.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
 #ifdef HAVE_SYS_EVENT_H
 #include <sys/event.h>
 #undef LIST_INIT
@@ -722,8 +737,47 @@ void main_loop(void)
 
 static struct list device_hash[DEVICE_HASH_SIZE];
 
+static int is_device_removable( dev_t dev, int unix_fd )
+{
+#if defined(linux) && defined(HAVE_FSTATFS)
+    struct statfs stfs;
+
+    /* check for floppy disk */
+    if (major(dev) == FLOPPY_MAJOR) return 1;
+
+    if (fstatfs( unix_fd, &stfs ) == -1) return 0;
+    return (stfs.f_type == 0x9660 ||    /* iso9660 */
+            stfs.f_type == 0x9fa1 ||    /* supermount */
+            stfs.f_type == 0x15013346); /* udf */
+#elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__APPLE__)
+    struct statfs stfs;
+
+    if (fstatfs( unix_fd, &stfs ) == -1) return 0;
+    return (!strncmp("cd9660", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
+            !strncmp("udf", stfs.f_fstypename, sizeof(stfs.f_fstypename)));
+#elif defined(__NetBSD__)
+    struct statvfs stfs;
+
+    if (fstatvfs( unix_fd, &stfs ) == -1) return 0;
+    return (!strncmp("cd9660", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
+            !strncmp("udf", stfs.f_fstypename, sizeof(stfs.f_fstypename)));
+#elif defined(sun)
+# include <sys/dkio.h>
+# include <sys/vtoc.h>
+    struct dk_cinfo dkinf;
+    if (ioctl( unix_fd, DKIOCINFO, &dkinf ) == -1) return 0;
+    return (dkinf.dki_ctype == DKC_CDROM ||
+            dkinf.dki_ctype == DKC_NCRFLOPPY ||
+            dkinf.dki_ctype == DKC_SMSFLOPPY ||
+            dkinf.dki_ctype == DKC_INTEL82072 ||
+            dkinf.dki_ctype == DKC_INTEL82077);
+#else
+    return 0;
+#endif
+}
+
 /* retrieve the device object for a given fd, creating it if needed */
-static struct device *get_device( dev_t dev, int create )
+static struct device *get_device( dev_t dev, int unix_fd )
 {
     struct device *device;
     unsigned int i, hash = dev % DEVICE_HASH_SIZE;
@@ -737,11 +791,11 @@ static struct device *get_device( dev_t dev, int create )
 
     /* not found, create it */
 
-    if (!create) return NULL;
+    if (unix_fd == -1) return NULL;
     if ((device = alloc_object( &device_ops )))
     {
         device->dev = dev;
-        device->removable = -1;
+        device->removable = is_device_removable( dev, unix_fd );
         for (i = 0; i < INODE_HASH_SIZE; i++) list_init( &device->inode_hash[i] );
         list_add_head( &device_hash[hash], &device->entry );
     }
@@ -834,13 +888,13 @@ static void inode_destroy( struct object *obj )
 }
 
 /* retrieve the inode object for a given fd, creating it if needed */
-static struct inode *get_inode( dev_t dev, ino_t ino )
+static struct inode *get_inode( dev_t dev, ino_t ino, int unix_fd )
 {
     struct device *device;
     struct inode *inode;
     unsigned int hash = ino % INODE_HASH_SIZE;
 
-    if (!(device = get_device( dev, 1 ))) return NULL;
+    if (!(device = get_device( dev, unix_fd ))) return NULL;
 
     LIST_FOR_EACH_ENTRY( inode, &device->inode_hash[hash], struct inode, entry )
     {
@@ -1508,7 +1562,7 @@ struct fd *open_fd( const char *name, int flags, mode_t *mode, unsigned int acce
     /* only bother with an inode for normal files and directories */
     if (S_ISREG(st.st_mode) || S_ISDIR(st.st_mode))
     {
-        struct inode *inode = get_inode( st.st_dev, st.st_ino );
+        struct inode *inode = get_inode( st.st_dev, st.st_ino, fd->unix_fd );
 
         if (!inode)
         {
@@ -1808,7 +1862,7 @@ static void unmount_device( struct fd *device_fd )
         return;
     }
 
-    if (!(device = get_device( st.st_rdev, 0 ))) return;
+    if (!(device = get_device( st.st_rdev, -1 ))) return;
 
     for (i = 0; i < INODE_HASH_SIZE; i++)
     {
@@ -1916,8 +1970,6 @@ DECL_HANDLER(set_handle_fd)
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
         struct device *device = fd->inode ? fd->inode->device : NULL;
-
-        if (device && device->removable == -1) device->removable = req->removable;
 
         /* only cache the fd on non-removable devices */
         if (!device || !device->removable)

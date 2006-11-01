@@ -861,7 +861,6 @@ struct set_handle_fd_request
     struct request_header __header;
     obj_handle_t handle;
     int          fd;
-    int          removable;
 };
 struct set_handle_fd_reply
 {
@@ -4426,6 +4425,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 255
+#define SERVER_PROTOCOL_VERSION 256
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

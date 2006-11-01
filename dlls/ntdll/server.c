@@ -523,20 +523,13 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
     }
     assert( fd_handle == handle );
 
-    if (removable == -1)
-    {
-        FILE_FS_DEVICE_INFORMATION info;
-        if (FILE_GetDeviceInfo( fd, &info ) == STATUS_SUCCESS)
-            removable = (info.Characteristics & FILE_REMOVABLE_MEDIA) != 0;
-    }
-    else if (removable) goto done;  /* don't cache it */
+    if (removable) goto done;  /* don't cache it */
 
     /* and store it back into the cache */
     SERVER_START_REQ( set_handle_fd )
     {
         req->handle    = fd_handle;
         req->fd        = fd;
-        req->removable = removable;
         if (!(ret = wine_server_call( req )))
         {
             if (reply->cur_fd != -1) /* it has been cached */

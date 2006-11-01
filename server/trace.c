@@ -1116,8 +1116,7 @@ static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 static void dump_set_handle_fd_request( const struct set_handle_fd_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " fd=%d,", req->fd );
-    fprintf( stderr, " removable=%d", req->removable );
+    fprintf( stderr, " fd=%d", req->fd );
 }
 
 static void dump_set_handle_fd_reply( const struct set_handle_fd_reply *req )
