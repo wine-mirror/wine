@@ -493,76 +493,67 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
     RtlEnterCriticalSection( &fd_cache_section );
 
     *unix_fd = -1;
-    for (;;)
+
+    SERVER_START_REQ( get_handle_fd )
     {
-        SERVER_START_REQ( get_handle_fd )
+        req->handle = handle;
+        req->access = access;
+        if (!(ret = wine_server_call( req )))
         {
-            req->handle = handle;
-            req->access = access;
-            if (!(ret = wine_server_call( req )))
-            {
-                fd = reply->fd;
-                removable = reply->removable;
-                if (flags) *flags = reply->flags;
-            }
+            fd = reply->fd;
+            removable = reply->removable;
+            if (flags) *flags = reply->flags;
         }
-        SERVER_END_REQ;
-        if (ret) break;
+    }
+    SERVER_END_REQ;
+    if (ret) goto done;
 
-        if (fd != -1)
-        {
-            if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
-            break;
-        }
-
-        /* it wasn't in the cache, get it from the server */
-        fd = receive_fd( &fd_handle );
-        if (fd == -1)
-        {
-            ret = STATUS_TOO_MANY_OPENED_FILES;
-            break;
-        }
-        if (fd_handle != handle) removable = -1;
-
-        if (removable == -1)
-        {
-            FILE_FS_DEVICE_INFORMATION info;
-            if (FILE_GetDeviceInfo( fd, &info ) == STATUS_SUCCESS)
-                removable = (info.Characteristics & FILE_REMOVABLE_MEDIA) != 0;
-        }
-        else if (removable) break;  /* don't cache it */
-
-        /* and store it back into the cache */
-        SERVER_START_REQ( set_handle_fd )
-        {
-            req->handle    = fd_handle;
-            req->fd        = fd;
-            req->removable = removable;
-            if (!(ret = wine_server_call( req )))
-            {
-                if (reply->cur_fd != -1) /* it has been cached */
-                {
-                    if (reply->cur_fd != fd) close( fd );  /* someone was here before us */
-                    if ((fd = dup(reply->cur_fd)) == -1) ret = FILE_GetNtStatus();
-                }
-            }
-            else
-            {
-                close( fd );
-                fd = -1;
-            }
-        }
-        SERVER_END_REQ;
-        if (ret) break;
-
-        if (fd_handle == handle) break;
-        /* if we received a different handle this means there was
-         * a race with another thread; we restart everything from
-         * scratch in this case.
-         */
-        close( fd );
+    if (fd != -1)
+    {
+        if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
+        goto done;
     }
 
+    /* it wasn't in the cache, get it from the server */
+    fd = receive_fd( &fd_handle );
+    if (fd == -1)
+    {
+        ret = STATUS_TOO_MANY_OPENED_FILES;
+        goto done;
+    }
+    assert( fd_handle == handle );
+
+    if (removable == -1)
+    {
+        FILE_FS_DEVICE_INFORMATION info;
+        if (FILE_GetDeviceInfo( fd, &info ) == STATUS_SUCCESS)
+            removable = (info.Characteristics & FILE_REMOVABLE_MEDIA) != 0;
+    }
+    else if (removable) goto done;  /* don't cache it */
+
+    /* and store it back into the cache */
+    SERVER_START_REQ( set_handle_fd )
+    {
+        req->handle    = fd_handle;
+        req->fd        = fd;
+        req->removable = removable;
+        if (!(ret = wine_server_call( req )))
+        {
+            if (reply->cur_fd != -1) /* it has been cached */
+            {
+                if (reply->cur_fd != fd) close( fd );  /* someone was here before us */
+                if ((fd = dup(reply->cur_fd)) == -1) ret = FILE_GetNtStatus();
+            }
+        }
+        else
+        {
+            close( fd );
+            fd = -1;
+        }
+    }
+    SERVER_END_REQ;
+
+done:
     RtlLeaveCriticalSection( &fd_cache_section );
     if (!ret) *unix_fd = fd;
     return ret;
