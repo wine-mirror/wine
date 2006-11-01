@@ -1226,7 +1226,7 @@ TOOLBAR_CalcStrings (HWND hwnd, LPSIZE lpSize)
     hdc = GetDC (hwnd);
     hOldFont = SelectObject (hdc, infoPtr->hFont);
 
-    if (infoPtr->nNumButtons == 0)
+    if (infoPtr->nNumButtons == 0 && infoPtr->nNumStrings > 0)
     {
         TEXTMETRICW tm;
 
@@ -3460,11 +3460,8 @@ TOOLBAR_GetButtonSize (HWND hwnd)
 {
     TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr (hwnd);
 
-    if (infoPtr->nNumButtons > 0)
-	return MAKELONG((WORD)infoPtr->nButtonWidth,
-			(WORD)infoPtr->nButtonHeight);
-    else
-	return MAKELONG(23,22);
+    return MAKELONG((WORD)infoPtr->nButtonWidth,
+                    (WORD)infoPtr->nButtonHeight);
 }
 
 
