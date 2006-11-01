@@ -47,7 +47,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "thread.h"
-#include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
@@ -940,44 +939,48 @@ DWORD WINAPI SetFilePointer( HANDLE hFile, LONG distance, LONG *highword, DWORD 
 BOOL WINAPI SetFilePointerEx( HANDLE hFile, LARGE_INTEGER distance,
                               LARGE_INTEGER *newpos, DWORD method )
 {
-    static const int whence[3] = { SEEK_SET, SEEK_CUR, SEEK_END };
-    BOOL ret = FALSE;
-    NTSTATUS status;
-    int fd;
+    LONGLONG pos;
+    IO_STATUS_BLOCK io;
+    FILE_POSITION_INFORMATION info;
 
-    TRACE("handle %p offset %s newpos %p origin %d\n",
-          hFile, wine_dbgstr_longlong(distance.QuadPart), newpos, method );
-
-    if (method > FILE_END)
+    switch(method)
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return ret;
-    }
-
-    if (!(status = wine_server_handle_to_fd( hFile, 0, &fd, NULL )))
-    {
-        off_t pos, res;
-
+    case FILE_BEGIN:
         pos = distance.QuadPart;
-        if ((res = lseek( fd, pos, whence[method] )) == (off_t)-1)
+        break;
+    case FILE_CURRENT:
+        if (NtQueryInformationFile( hFile, &io, &info, sizeof(info), FilePositionInformation ))
+            goto error;
+        pos = info.CurrentByteOffset.QuadPart + distance.QuadPart;
+        break;
+    case FILE_END:
         {
-            /* also check EPERM due to SuSE7 2.2.16 lseek() EPERM kernel bug */
-            if (((errno == EINVAL) || (errno == EPERM)) && (method != FILE_BEGIN) && (pos < 0))
-                SetLastError( ERROR_NEGATIVE_SEEK );
-            else
-                FILE_SetDosError();
+            FILE_END_OF_FILE_INFORMATION eof;
+            if (NtQueryInformationFile( hFile, &io, &eof, sizeof(eof), FileEndOfFileInformation ))
+                goto error;
+            pos = eof.EndOfFile.QuadPart + distance.QuadPart;
         }
-        else
-        {
-            ret = TRUE;
-            if( newpos )
-                newpos->QuadPart = res;
-        }
-        wine_server_release_fd( hFile, fd );
+        break;
+    default:
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
     }
-    else SetLastError( RtlNtStatusToDosError(status) );
 
-    return ret;
+    if (pos < 0)
+    {
+        SetLastError( ERROR_NEGATIVE_SEEK );
+        return FALSE;
+    }
+
+    info.CurrentByteOffset.QuadPart = pos;
+    if (NtSetInformationFile( hFile, &io, &info, sizeof(info), FilePositionInformation ))
+        goto error;
+    if (newpos) newpos->QuadPart = pos;
+    return TRUE;
+
+error:
+    SetLastError( RtlNtStatusToDosError(io.u.Status) );
+    return FALSE;
 }
 
 /***********************************************************************
