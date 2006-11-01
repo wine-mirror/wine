@@ -2065,7 +2065,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
         goto end;
 
     /*
-     * Apply _Tables and _Coluimns transforms first so that
+     * Apply _Tables and _Columns transforms first so that
      * the table metadata is correct, and empty tables exist.
      */
     ret = msi_table_load_transform( db, stg, strings, szTables );
