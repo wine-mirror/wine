@@ -9,7 +9,7 @@
 @ stub CloseCtrs
 @ stub ClrCreateManagedInstance
 @ stub CoEEShutDownCOM
-@ stub CoInitializeCor
+@ stdcall CoInitializeCor(long)
 @ stub CoInitializeEE
 @ stub CoUninitializeCor
 @ stub CoUninitializeEE
@@ -36,7 +36,7 @@
 @ stub EEDllGetClassObjectFromClass
 @ stub EEDllRegisterServer
 @ stub EEDllUnregisterServer
-@ stub GetAssemblyMDImport
+@ stdcall GetAssemblyMDImport(ptr ptr ptr)
 @ stub GetCORRequiredVersion
 @ stub GetCORRootDirectory
 @ stub GetCORSystemDirectory
@@ -67,7 +67,7 @@
 @ stub GetXMLElement
 @ stub GetXMLElementAttribute
 @ stub GetXMLObject
-@ stub LoadLibraryShim
+@ stdcall LoadLibraryShim(ptr ptr ptr ptr)
 @ stub LoadLibraryWithPolicyShim
 @ stub LoadStringRCEx
 @ stub LockClrVersion

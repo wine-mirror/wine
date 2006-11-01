@@ -23,6 +23,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winuser.h"
+#include "ole2.h"
 
 #include "wine/debug.h"
 
@@ -114,4 +116,23 @@ HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
         lstrcpyW(pbuffer, version);
 
     return S_OK;
+}
+
+HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvReserved, HMODULE * phModDll)
+{
+    *phModDll = LoadLibraryW(szDllName);
+    FIXME("(%p %s, %p, %p, %p): semi-stub\n", szDllName, debugstr_w(szDllName), szVersion, pvReserved, phModDll);
+    return S_OK;
+}
+
+HRESULT WINAPI CoInitializeCor(DWORD fFlags)
+{
+    FIXME("(0x%08x): stub\n", fFlags);
+    return S_OK;
+}
+
+HRESULT WINAPI GetAssemblyMDImport(LPCWSTR szFileName, REFIID riid, IUnknown **ppIUnk)
+{
+    FIXME("(%p %s, %p, %p): stub\n", szFileName, debugstr_w(szFileName), riid, *ppIUnk);
+    return ERROR_CALL_NOT_IMPLEMENTED;
 }
