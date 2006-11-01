@@ -5425,8 +5425,7 @@ TOOLBAR_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 	TOOLBAR_DeleteImageList(&infoPtr->himlHot, &infoPtr->cimlHot);
 
     /* delete default font */
-    if (infoPtr->hFont)
-	DeleteObject (infoPtr->hDefaultFont);
+    DeleteObject (infoPtr->hDefaultFont);
         
     CloseThemeData (GetWindowTheme (hwnd));
 
@@ -6466,6 +6465,24 @@ TOOLBAR_SetFocus (HWND hwnd, WPARAM wParam)
     return 0;
 }
 
+static LRESULT
+TOOLBAR_SetFont(HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
+    TOOLBAR_INFO *infoPtr = TOOLBAR_GetInfoPtr(hwnd);
+    
+    TRACE("font=%p redraw=%ld\n", (HFONT)wParam, lParam);
+    
+    if (wParam == 0)
+        infoPtr->hFont = infoPtr->hDefaultFont;
+    else
+        infoPtr->hFont = (HFONT)wParam;
+
+    TOOLBAR_CalcToolbar(hwnd);
+
+    if (lParam)
+        InvalidateRect(hwnd, NULL, TRUE);
+    return 1;
+}
 
 static LRESULT
 TOOLBAR_SetRedraw (HWND hwnd, WPARAM wParam, LPARAM lParam)
@@ -6975,6 +6992,9 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_SETFOCUS:
 	    return TOOLBAR_SetFocus (hwnd, wParam);
+
+	case WM_SETFONT:
+            return TOOLBAR_SetFont(hwnd, wParam, lParam);
 
 	case WM_SETREDRAW:
 	    return TOOLBAR_SetRedraw (hwnd, wParam, lParam);
