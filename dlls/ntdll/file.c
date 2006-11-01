@@ -1550,6 +1550,42 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
 }
 
 
+#if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__APPLE__)
+/* helper for FILE_GetDeviceInfo to hide some platform differences in fstatfs */
+static inline get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, const char *fstypename,
+                                       size_t fstypesize, unsigned int flags )
+{
+    if (!strncmp("cd9660", fstypename, fstypesize) ||
+        !strncmp("udf", fstypename, fstypesize))
+    {
+        info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
+        /* Don't assume read-only, let the mount options set it below */
+        info->Characteristics |= FILE_REMOVABLE_MEDIA;
+    }
+    else if (!strncmp("nfs", fstypename, fstypesize) ||
+             !strncmp("nwfs", fstypename, fstypesize) ||
+             !strncmp("smbfs", fstypename, fstypesize) ||
+             !strncmp("afpfs", fstypename, fstypesize))
+    {
+        info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+        info->Characteristics |= FILE_REMOTE_DEVICE;
+    }
+    else if (!strncmp("procfs", fstypename, fstypesize))
+        info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
+    else
+        info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
+
+    if (flags & MNT_RDONLY)
+        info->Characteristics |= FILE_READ_ONLY_DEVICE;
+
+    if (!(flags & MNT_LOCAL))
+    {
+        info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
+        info->Characteristics |= FILE_REMOTE_DEVICE;
+    }
+}
+#endif
+
 /******************************************************************************
  *              FILE_GetDeviceInfo
  *
@@ -1627,37 +1663,19 @@ NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__APPLE__)
         struct statfs stfs;
 
-        /* The proper way to do this in FreeBSD seems to be with the
-         * name rather than the type, since their linux-compatible
-         * fstatfs call converts the name to one of the Linux types.
-         */
         if (fstatfs( fd, &stfs ) < 0)
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-        else if (!strncmp("cd9660", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
-                 !strncmp("udf", stfs.f_fstypename, sizeof(stfs.f_fstypename)))
-        {
-            info->DeviceType = FILE_DEVICE_CD_ROM_FILE_SYSTEM;
-            /* Don't assume read-only, let the mount options set it below */
-            info->Characteristics |= FILE_REMOVABLE_MEDIA;
-        }
-        else if (!strncmp("nfs", stfs.f_fstypename, sizeof(stfs.f_fstypename)) ||
-                 !strncmp("nwfs", stfs.f_fstypename, sizeof(stfs.f_fstypename)))
-        {
-            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-            info->Characteristics |= FILE_REMOTE_DEVICE;
-        }
-        else if (!strncmp("procfs", stfs.f_fstypename,
-                          sizeof(stfs.f_fstypename)))
-            info->DeviceType = FILE_DEVICE_VIRTUAL_DISK;
         else
+            get_device_info_fstatfs( info, stfs.f_fstypename,
+                                     sizeof(stfs.f_fstypename), stfs.f_flags );
+#elif defined(__NetBSD__)
+        struct statvfs stfs;
+
+        if (fstatvfs( fd, &stfs) < 0)
             info->DeviceType = FILE_DEVICE_DISK_FILE_SYSTEM;
-        if (stfs.f_flags & MNT_RDONLY)
-            info->Characteristics |= FILE_READ_ONLY_DEVICE;
-        if (!(stfs.f_flags & MNT_LOCAL))
-        {
-            info->DeviceType = FILE_DEVICE_NETWORK_FILE_SYSTEM;
-            info->Characteristics |= FILE_REMOTE_DEVICE;
-        }
+        else
+            get_device_info_fstatfs( info, stfs.f_fstypename,
+                                     sizeof(stfs.f_fstypename), stfs.f_flag );
 #elif defined(sun)
         /* Use dkio to work out device types */
         {
