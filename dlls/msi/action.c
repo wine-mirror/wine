@@ -526,6 +526,13 @@ static UINT msi_apply_patch_package( MSIPACKAGE *package, LPCWSTR file )
     }
 
     msi_parse_patch_summary( package, patch_db );
+
+    /*
+     * There might be a CAB file in the patch package,
+     * so append it to the list of storage to search for streams.
+     */
+    append_storage_to_db( package->db, patch_db->storage );
+
     msiobj_release( &patch_db->hdr );
 
     return ERROR_SUCCESS;

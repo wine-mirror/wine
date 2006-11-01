@@ -2101,14 +2101,7 @@ UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg )
     }
 
     if ( ret == ERROR_SUCCESS )
-    {
-        MSITRANSFORM *t;
-
-        t = msi_alloc( sizeof *t );
-        t->stg = stg;
-        IStorage_AddRef( stg );
-        list_add_tail( &db->transforms, &t->entry );
-    }
+        append_storage_to_db( db, stg );
 
 end:
     if ( stgenum )
@@ -2117,6 +2110,16 @@ end:
         msi_destroy_stringtable( strings );
 
     return ret;
+}
+
+void append_storage_to_db( MSIDATABASE *db, IStorage *stg )
+{
+    MSITRANSFORM *t;
+
+    t = msi_alloc( sizeof *t );
+    t->stg = stg;
+    IStorage_AddRef( stg );
+    list_add_tail( &db->transforms, &t->entry );
 }
 
 void msi_free_transforms( MSIDATABASE *db )

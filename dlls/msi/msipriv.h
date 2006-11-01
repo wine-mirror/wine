@@ -563,6 +563,7 @@ extern UINT read_raw_stream_data( MSIDATABASE*, LPCWSTR stname,
 extern UINT msi_table_apply_transform( MSIDATABASE *db, IStorage *stg );
 extern UINT MSI_DatabaseApplyTransformW( MSIDATABASE *db,
                  LPCWSTR szTransformFile, int iErrorCond );
+extern void append_storage_to_db( MSIDATABASE *db, IStorage *stg );
 
 /* action internals */
 extern UINT MSI_InstallPackage( MSIPACKAGE *, LPCWSTR, LPCWSTR );
