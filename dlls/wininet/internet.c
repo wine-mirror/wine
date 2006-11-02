@@ -2397,8 +2397,6 @@ BOOL WINAPI InternetSetOptionW(HINTERNET hInternet, DWORD dwOption,
             {
                 FIXME("INTERNET_OPTION_SEND/RECEIVE_TIMEOUT not supported on protocol %d\n",
                       lpwhh->htype);
-                INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-                ret = FALSE;
             }
         }
         else
