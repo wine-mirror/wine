@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NSCMD_BOLD "cmd_bold"
 #define NSCMD_ITALIC "cmd_italic"
+#define NSCMD_UNDERLINE "cmd_underline"
 
 /**********************************************************
  * IOleCommandTarget implementation
@@ -408,7 +409,7 @@ static HRESULT exec_underline(HTMLDocument *This)
     TRACE("(%p)\n", This);
 
     if(This->nscontainer)
-        do_ns_command(This->nscontainer, "cmd_underline", NULL);
+        do_ns_command(This->nscontainer, NSCMD_UNDERLINE, NULL);
 
     return S_OK;
 }
@@ -674,8 +675,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
                 break;
             case IDM_UNDERLINE:
-                FIXME("CGID_MSHTML: IDM_UNDERLINE\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_UNDERLINE\n");
+                prgCmds[i].cmdf = query_edit_status(This, NSCMD_UNDERLINE);
                 break;
             case IDM_HORIZONTALLINE:
                 FIXME("CGID_MSHTML: IDM_HORIZONTALLINE\n");

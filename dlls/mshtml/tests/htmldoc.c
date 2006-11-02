@@ -2041,6 +2041,7 @@ static void test_MSHTML_QueryStatus(IUnknown *unk, DWORD cmdf)
 
     test_QueryStatus(unk, &CGID_MSHTML, IDM_BOLD, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_ITALIC, cmdf);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_UNDERLINE, cmdf);
 }
 
 static void test_OleCommandTarget(IUnknown *unk)
