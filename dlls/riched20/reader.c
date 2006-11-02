@@ -64,7 +64,6 @@ static void	ReadStyleSheet (RTF_Info *);
 static void	ReadInfoGroup (RTF_Info *);
 static void	ReadPictGroup (RTF_Info *);
 static void	ReadObjGroup (RTF_Info *);
-static void	LookupInit (void);
 static void	Lookup (RTF_Info *, char *);
 static int	Hash (const char *);
 
@@ -213,9 +212,6 @@ void RTFInit(RTF_Info *info)
 	RTFFree (info->inputName);
 	RTFFree (info->outputName);
 	info->inputName = info->outputName = NULL;
-
-	/* initialize lookup table */
-	LookupInit ();
 
 	for (i = 0; i < rtfMaxClass; i++)
 		RTFSetClassCallback (info, i, NULL);
@@ -1816,7 +1812,7 @@ static RTFKey	rtfKey[] =
 
 	{ rtfDocAttr,	rtfRTLDoc,		"rtldoc",	0 },
 	{ rtfDocAttr,	rtfLTRDoc,		"ltrdoc",	0 },
-       
+
         { rtfDocAttr,	rtfAnsiCodePage,	"ansicpg",	0 },
         { rtfDocAttr,	rtfUTF8RTF,		"urtf",		0 },
 
@@ -2325,26 +2321,34 @@ static RTFHashTableEntry rtfHashTable[RTF_KEY_COUNT * 2];
  * Initialize lookup table hash values.  Only need to do this once.
  */
 
-static void LookupInit(void)
+void LookupInit(void)
 {
-	static int	inited = 0;
 	RTFKey	*rp;
 
-	if (inited == 0)
+	memset(rtfHashTable, 0, RTF_KEY_COUNT * 2 * sizeof(*rtfHashTable));
+	for (rp = rtfKey; rp->rtfKStr != NULL; rp++)
 	{
-                memset(rtfHashTable, 0, RTF_KEY_COUNT * 2 * sizeof(*rtfHashTable));
-		for (rp = rtfKey; rp->rtfKStr != NULL; rp++) {
-                        int index;
+		int index;
 
-			rp->rtfKHash = Hash (rp->rtfKStr);
-                        index = rp->rtfKHash % (RTF_KEY_COUNT * 2);
-                        if (!rtfHashTable[index].count)
-                                rtfHashTable[index].value = RTFAlloc(sizeof(RTFKey *));
-                        else
-                                rtfHashTable[index].value = RTFReAlloc(rtfHashTable[index].value, sizeof(RTFKey *) * (rtfHashTable[index].count + 1));
-                        rtfHashTable[index].value[rtfHashTable[index].count++] = rp;
-                }
-		++inited;
+		rp->rtfKHash = Hash (rp->rtfKStr);
+		index = rp->rtfKHash % (RTF_KEY_COUNT * 2);
+		if (!rtfHashTable[index].count)
+			rtfHashTable[index].value = RTFAlloc(sizeof(RTFKey *));
+		else
+			rtfHashTable[index].value = RTFReAlloc(rtfHashTable[index].value, sizeof(RTFKey *) * (rtfHashTable[index].count + 1));
+		rtfHashTable[index].value[rtfHashTable[index].count++] = rp;
+	}
+}
+
+void LookupCleanup(void)
+{
+	int i;
+
+	for (i=0; i<RTF_KEY_COUNT*2; i++)
+	{
+		RTFFree( rtfHashTable[i].value );
+		rtfHashTable[i].value = NULL;
+		rtfHashTable[i].count = 0;
 	}
 }
 
@@ -2524,7 +2528,7 @@ static void
 CharAttr(RTF_Info *info)
 {
         RTFFont *font;
-        
+
         switch (info->rtfMinor)
         {
         case rtfFontNum:
@@ -2627,9 +2631,9 @@ static void SpecialChar (RTF_Info *info)
 	case rtfUnicode:
 	{
                 int i;
-               
+
                 RTFPutUnicodeChar(info, info->rtfParam);
-		
+
                 /* After \u we must skip number of character tokens set by \ucN */
                 for (i = 0; i < info->unicodeLength; i++)
                 {

@@ -1245,6 +1245,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
       DisableThreadLibraryCalls(hinstDLL);
       me_heap = HeapCreate (0, 0x10000, 0);
       ME_RegisterEditorClass(hinstDLL);
+      LookupInit();
       break;
 
     case DLL_PROCESS_DETACH:
@@ -1256,6 +1257,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
           UnregisterClassW(wszClassNameListBox, 0);
       if (ME_ComboBoxRegistered)
           UnregisterClassW(wszClassNameComboBox, 0);
+      LookupCleanup();
       HeapDestroy (me_heap);
       me_heap = NULL;
       break;
