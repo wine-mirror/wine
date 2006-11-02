@@ -40,6 +40,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define NSCMD_BOLD "cmd_bold"
+#define NSCMD_ITALIC "cmd_italic"
 
 /**********************************************************
  * IOleCommandTarget implementation
@@ -397,7 +398,7 @@ static HRESULT exec_italic(HTMLDocument *This)
     TRACE("(%p)\n", This);
 
     if(This->nscontainer)
-        do_ns_command(This->nscontainer, "cmd_italic", NULL);
+        do_ns_command(This->nscontainer, NSCMD_ITALIC, NULL);
 
     return S_OK;
 }
@@ -657,8 +658,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
                 break;
             case IDM_ITALIC:
-                FIXME("CGID_MSHTML: IDM_ITALIC\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_ITALIC\n");
+                prgCmds[i].cmdf = query_edit_status(This, NSCMD_ITALIC);
                 break;
             case IDM_JUSTIFYCENTER:
                 FIXME("CGID_MSHTML: IDM_JUSTIFYCENTER\n");
