@@ -288,6 +288,12 @@ SIZE_T WINAPI HeapSize( HANDLE heap, DWORD flags, LPVOID ptr )
     return RtlSizeHeap( heap, flags, ptr );
 }
 
+BOOL WINAPI HeapSetInformation( HANDLE heap, HEAP_INFORMATION_CLASS infoclass, PVOID info, SIZE_T size)
+{
+    FIXME("%p %d %p %ld\n", heap, infoclass, info, size );
+    return TRUE;
+}
+
 /*
  * Win32 Global heap functions (GlobalXXX).
  * These functions included in Win32 for compatibility with 16 bit Windows
