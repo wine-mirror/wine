@@ -30,6 +30,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "idispids.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -216,6 +217,27 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
             V_VT(&var) = VT_I4;
             V_I4(&var) = 0;
             IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
+        }
+    }
+
+    if(This->client) {
+        VARIANT silent, offline;
+
+        hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&silent) != VT_BOOL)
+                WARN("V_VT(silent) = %d\n", V_VT(&silent));
+            else if(V_BOOL(&silent))
+                FIXME("silent == true\n");
+        }
+
+        hres = get_client_disp_property(This->client,
+                DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline);
+        if(SUCCEEDED(hres)) {
+            if(V_VT(&silent) != VT_BOOL)
+                WARN("V_VT(offline) = %d\n", V_VT(&silent));
+            else if(V_BOOL(&silent))
+                FIXME("offline == true\n");
         }
     }
 
