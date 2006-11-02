@@ -1491,14 +1491,10 @@ static UINT execute_script(MSIPACKAGE *package, UINT script )
         ui_actionstart(package, action);
         TRACE("Executing Action (%s)\n",debugstr_w(action));
         rc = ACTION_PerformAction(package, action, TRUE);
-        msi_free(package->script->Actions[script][i]);
         if (rc != ERROR_SUCCESS)
             break;
     }
-    msi_free(package->script->Actions[script]);
-
-    package->script->ActionCount[script] = 0;
-    package->script->Actions[script] = NULL;
+    msi_free_action_script(package, script);
     return rc;
 }
 

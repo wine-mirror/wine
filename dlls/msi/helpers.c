@@ -384,6 +384,17 @@ UINT schedule_action(MSIPACKAGE *package, UINT script, LPCWSTR action)
    return ERROR_SUCCESS;
 }
 
+void msi_free_action_script(MSIPACKAGE *package, UINT script)
+{
+    int i;
+    for (i = 0; i < package->script->ActionCount[script]; i++)
+        msi_free(package->script->Actions[script][i]);
+
+    msi_free(package->script->Actions[script]);
+    package->script->Actions[script] = NULL;
+    package->script->ActionCount[script] = 0;
+}
+
 static void remove_tracked_tempfiles(MSIPACKAGE* package)
 {
     struct list *item, *cursor;
@@ -571,13 +582,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     if (package->script)
     {
         for (i = 0; i < TOTAL_SCRIPTS; i++)
-        {
-            int j;
-            for (j = 0; j < package->script->ActionCount[i]; j++)
-                msi_free(package->script->Actions[i][j]);
-        
-            msi_free(package->script->Actions[i]);
-        }
+            msi_free_action_script(package, i);
 
         for (i = 0; i < package->script->UniqueActionsCount; i++)
             msi_free(package->script->UniqueActions[i]);
