@@ -1804,24 +1804,33 @@ static void test_Load(IPersistMoniker *persist)
                                  (IUnknown*)&ClientSite);
 
     SET_EXPECT(GetDisplayName);
-    SET_EXPECT(GetHostInfo);
-    SET_EXPECT(Invoke_AMBIENT_USERMODE);
-    SET_EXPECT(Invoke_AMBIENT_SILENT);
-    SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
-    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    SET_EXPECT(Invoke_AMBIENT_USERAGENT);
-    SET_EXPECT(Invoke_AMBIENT_PALETTE);
-    SET_EXPECT(GetOptionKeyPath);
-    SET_EXPECT(GetOverrideKeyPath);
-    SET_EXPECT(GetWindow);
-    SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
-    SET_EXPECT(Exec_SETPROGRESSMAX);
-    SET_EXPECT(Exec_SETPROGRESSPOS);
-    SET_EXPECT(Exec_ShellDocView_37);
+    if(!set_clientsite) {
+        SET_EXPECT(Invoke_AMBIENT_USERMODE);
+        SET_EXPECT(GetHostInfo);
+        SET_EXPECT(Invoke_AMBIENT_DLCONTROL);
+        SET_EXPECT(Invoke_AMBIENT_SILENT);
+        SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        SET_EXPECT(Invoke_AMBIENT_USERAGENT);
+        SET_EXPECT(Invoke_AMBIENT_PALETTE);
+        SET_EXPECT(GetOptionKeyPath);
+        SET_EXPECT(GetOverrideKeyPath);
+        SET_EXPECT(GetWindow);
+        SET_EXPECT(QueryStatus_SETPROGRESSTEXT);
+        SET_EXPECT(Exec_SETPROGRESSMAX);
+        SET_EXPECT(Exec_SETPROGRESSPOS);
+        SET_EXPECT(Exec_ShellDocView_37);
+    }
+    if(!container_locked) {
+        SET_EXPECT(GetContainer);
+        SET_EXPECT(LockContainer);
+    }
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(BindToStorage);
-    SET_EXPECT(GetContainer);
-    SET_EXPECT(LockContainer);
+    if(set_clientsite) {
+        SET_EXPECT(Invoke_AMBIENT_SILENT);
+        SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        SET_EXPECT(Exec_ShellDocView_37);
+    }
     expect_LockContainer_fLock = TRUE;
     readystate_set_loading = TRUE;
 
@@ -1829,24 +1838,34 @@ static void test_Load(IPersistMoniker *persist)
     ok(hres == S_OK, "Load failed: %08x\n", hres);
 
     CHECK_CALLED(GetDisplayName);
-    CHECK_CALLED(GetHostInfo);
-    CHECK_CALLED(Invoke_AMBIENT_USERMODE);
-    CHECK_CALLED(Invoke_AMBIENT_SILENT);
-    CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
-    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
-    CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
-    CHECK_CALLED(Invoke_AMBIENT_PALETTE);
-    CHECK_CALLED(GetOptionKeyPath);
-    CHECK_CALLED(GetOverrideKeyPath);
-    CHECK_CALLED(GetWindow);
-    CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
-    CHECK_CALLED(Exec_SETPROGRESSMAX);
-    CHECK_CALLED(Exec_SETPROGRESSPOS);
-    CHECK_CALLED(Exec_ShellDocView_37);
+    if(!set_clientsite) {
+        CHECK_CALLED(Invoke_AMBIENT_USERMODE);
+        CHECK_CALLED(GetHostInfo);
+        CHECK_CALLED(Invoke_AMBIENT_DLCONTROL);
+        CHECK_CALLED(Invoke_AMBIENT_SILENT);
+        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        CHECK_CALLED(Invoke_AMBIENT_USERAGENT);
+        CHECK_CALLED(Invoke_AMBIENT_PALETTE);
+        CHECK_CALLED(GetOptionKeyPath);
+        CHECK_CALLED(GetOverrideKeyPath);
+        CHECK_CALLED(GetWindow);
+        CHECK_CALLED(QueryStatus_SETPROGRESSTEXT);
+        CHECK_CALLED(Exec_SETPROGRESSMAX);
+        CHECK_CALLED(Exec_SETPROGRESSPOS);
+        CHECK_CALLED(Exec_ShellDocView_37);
+    }
+    if(!container_locked) {
+        CHECK_CALLED(GetContainer);
+        CHECK_CALLED(LockContainer);
+        container_locked = TRUE;
+    }
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(BindToStorage);
-    CHECK_CALLED(GetContainer);
-    CHECK_CALLED(LockContainer);
+    if(set_clientsite) {
+        CHECK_CALLED(Invoke_AMBIENT_SILENT);
+        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        CHECK_CALLED(Exec_ShellDocView_37);
+    }
 
     set_clientsite = container_locked = TRUE;
 
@@ -1855,7 +1874,7 @@ static void test_Load(IPersistMoniker *persist)
     test_readyState((IUnknown*)persist);
 }
 
-static void test_download(void)
+static void test_download(BOOL verb_done)
 {
     HWND hwnd;
     MSG msg;
@@ -1865,6 +1884,10 @@ static void test_download(void)
 
     test_readyState(NULL);
 
+    if(verb_done) {
+        SET_EXPECT(Exec_SETPROGRESSMAX);
+        SET_EXPECT(GetHostInfo);
+    }
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(GetDropTarget);
@@ -1882,6 +1905,10 @@ static void test_download(void)
         DispatchMessage(&msg);
     }
 
+    if(verb_done) {
+        CHECK_CALLED(Exec_SETPROGRESSMAX);
+        CHECK_CALLED(GetHostInfo);
+    }
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(GetDropTarget);
@@ -1987,7 +2014,7 @@ static void test_OleCommandTarget(IUnknown *unk)
     HRESULT hres;
 
     hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
-    ok(hres == S_OK, "QueryInterface(IIDIOleM=CommandTarget failed: %08x\n", hres);
+    ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget failed: %08x\n", hres);
     if(FAILED(hres))
         return;
 
@@ -2579,7 +2606,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     }
 
     if(load_state == LD_LOADING)
-        test_download();
+        test_download(FALSE);
 
     test_OleCommandTarget_fail(unk);
     test_OleCommandTarget(unk);
@@ -2648,7 +2675,7 @@ static void test_HTMLDocument_hlink(void)
     test_Persist(unk);
     test_Navigate(unk);
 
-    test_download();
+    test_download(FALSE);
 
     test_exec_onunload(unk);
     test_Window(unk, TRUE);
@@ -2689,6 +2716,7 @@ static void test_editing_mode(void)
     IOleObject_Release(oleobj);
 
     test_exec_editmode(unk);
+    test_download(TRUE);
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
