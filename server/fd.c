@@ -1658,6 +1658,12 @@ int is_same_file_fd( struct fd *fd1, struct fd *fd2 )
     return fd1->inode == fd2->inode;
 }
 
+/* handler for close_handle that refuses to close fd-associated handles in other processes */
+int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    return (!current || current->process == process);
+}
+
 /* callback for event happening in the main poll() loop */
 void fd_poll_event( struct fd *fd, int event )
 {

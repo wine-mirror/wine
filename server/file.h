@@ -55,6 +55,7 @@ extern void *get_fd_user( struct fd *fd );
 extern void set_fd_user( struct fd *fd, const struct fd_ops *ops, struct object *user );
 extern int get_unix_fd( struct fd *fd );
 extern int is_same_file_fd( struct fd *fd1, struct fd *fd2 );
+extern int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 extern void fd_poll_event( struct fd *fd, int event );
 extern int check_fd_events( struct fd *fd, int events );
 extern void set_fd_events( struct fd *fd, int events );
