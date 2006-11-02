@@ -386,6 +386,9 @@ static HRESULT WINAPI xmlnode_insertBefore(
 
     TRACE("(%p)->(%p,var,%p)\n",This,newChild,outNewChild);
 
+    if (!(newChild && outNewChild))
+        return E_INVALIDARG;
+
     switch(V_VT(&refChild))
     {
     case VT_EMPTY:
