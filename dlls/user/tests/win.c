@@ -724,7 +724,10 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
 
     ok(info->dwStyle == (DWORD)GetWindowLongA(hwnd, GWL_STYLE),
        "wrong dwStyle: %08x != %08x\n", info->dwStyle, GetWindowLongA(hwnd, GWL_STYLE));
-    ok(info->dwExStyle == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
+    /* Windows reports a not documented exstyle 0x800 in WINDOWINFO, but
+     * doesn't return it in GetWindowLong(hwnd, GWL_EXSTYLE).
+     */
+    ok((info->dwExStyle & ~0x800) == (DWORD)GetWindowLongA(hwnd, GWL_EXSTYLE),
        "wrong dwExStyle: %08x != %08x\n", info->dwExStyle, GetWindowLongA(hwnd, GWL_EXSTYLE));
     status = (GetActiveWindow() == hwnd) ? WS_ACTIVECAPTION : 0;
     ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x\n",
