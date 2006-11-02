@@ -2548,8 +2548,9 @@ ImageList_SetIconSize (HIMAGELIST himl, INT cx, INT cy)
     himl->hbmImage = hbmNew;
 
     if (himl->hbmMask) {
-        hbmNew = CreateBitmap (himl->cMaxImage * himl->cx, himl->cy,
-                            1, 1, NULL);
+        SIZE sz;
+        imagelist_get_bitmap_size(himl, himl->cMaxImage, himl->cy, &sz);
+        hbmNew = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
         SelectObject (himl->hdcMask, hbmNew);
         DeleteObject (himl->hbmMask);
         himl->hbmMask = hbmNew;
@@ -2847,7 +2848,9 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count, UINT 
 {
     HBITMAP hbmNewBitmap;
     UINT ilc = (himl->flags & 0xFE);
-    UINT width = count * himl->cx;
+    SIZE sz;
+
+    imagelist_get_bitmap_size( himl, count, height, &sz );
 
     if ((ilc >= ILC_COLOR4 && ilc <= ILC_COLOR32) || ilc == ILC_COLOR)
     {
@@ -2884,8 +2887,8 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count, UINT 
 	}
 
 	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi->bmiHeader.biWidth = width;
-	bmi->bmiHeader.biHeight = height;
+	bmi->bmiHeader.biWidth = sz.cx;
+	bmi->bmiHeader.biHeight = sz.cy;
 	bmi->bmiHeader.biPlanes = 1;
 	bmi->bmiHeader.biBitCount = himl->uBitsPixel;
 	bmi->bmiHeader.biCompression = BI_RGB;
@@ -2903,7 +2906,7 @@ static HBITMAP ImageList_CreateImage(HDC hdc, HIMAGELIST himl, UINT count, UINT 
     {
         TRACE("Creating Bitmap: %d Bits per Pixel\n", himl->uBitsPixel);
 
-        hbmNewBitmap = CreateBitmap (width, height, 1, himl->uBitsPixel, NULL);
+        hbmNewBitmap = CreateBitmap (sz.cx, sz.cy, 1, himl->uBitsPixel, NULL);
     }
     TRACE("returning %p\n", hbmNewBitmap);
     return hbmNewBitmap;
