@@ -122,8 +122,6 @@ typedef struct tagPropSheetInfo
   BOOL hasApply;
   BOOL hasFinish;
   BOOL useCallback;
-  BOOL restartWindows;
-  BOOL rebootSystem;
   BOOL activeValid;
   PropPageInfo* proppage;
   HFONT hFont;
@@ -132,6 +130,7 @@ typedef struct tagPropSheetInfo
   int height;
   HIMAGELIST hImageList;
   BOOL ended;
+  INT result;
 } PropSheetInfo;
 
 typedef struct
@@ -333,8 +332,7 @@ static BOOL PROPSHEET_CollectSheetInfoA(LPCPROPSHEETHEADERA lppsh,
   if (psInfo->active_page < 0 || psInfo->active_page >= psInfo->nPages)
      psInfo->active_page = 0;
 
-  psInfo->restartWindows = FALSE;
-  psInfo->rebootSystem = FALSE;
+  psInfo->result = 0;
   psInfo->hImageList = 0;
   psInfo->activeValid = FALSE;
 
@@ -388,8 +386,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
   if (psInfo->active_page < 0 || psInfo->active_page >= psInfo->nPages)
      psInfo->active_page = 0;
 
-  psInfo->restartWindows = FALSE;
-  psInfo->rebootSystem = FALSE;
+  psInfo->result = 0;
   psInfo->hImageList = 0;
   psInfo->activeValid = FALSE;
 
@@ -2763,6 +2760,9 @@ static INT do_loop(PropSheetInfo *psInfo)
         ret = -1;
     }
 
+    if(ret != -1)
+        ret = psInfo->result;
+
     DestroyWindow(hwnd);
     return ret;
 }
@@ -3147,14 +3147,10 @@ static BOOL PROPSHEET_DoCommand(HWND hwnd, WORD wID)
 		{
 		    PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwnd,
 								      PropSheetInfoStr);
-		    int result = TRUE;
 
-		    if (psInfo->restartWindows)
-			result = ID_PSRESTARTWINDOWS;
-
-		    /* reboot system takes precedence over restart windows */
-		    if (psInfo->rebootSystem)
-			result = ID_PSREBOOTSYSTEM;
+                    /* don't overwrite ID_PSRESTARTWINDOWS or ID_PSREBOOTSYSTEM */
+                    if (psInfo->result == 0)
+                        psInfo->result = IDOK;
 
 		    if (psInfo->isModeless)
 			psInfo->activeValid = FALSE;
@@ -3630,7 +3626,10 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (!psInfo)
         return FALSE;
 
-      psInfo->restartWindows = TRUE;
+      /* reboot system takes precedence over restart windows */
+      if (psInfo->result != ID_PSREBOOTSYSTEM)
+          psInfo->result = ID_PSRESTARTWINDOWS;
+
       return TRUE;
     }
 
@@ -3642,7 +3641,8 @@ PROPSHEET_DialogProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
       if (!psInfo)
         return FALSE;
 
-      psInfo->rebootSystem = TRUE;
+      psInfo->result = ID_PSREBOOTSYSTEM;
+
       return TRUE;
     }
 
