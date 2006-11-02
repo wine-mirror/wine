@@ -116,7 +116,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
 {
     HDC     hdcBitmap;
     HBITMAP hbmNewBitmap, hbmNull;
-    INT     nNewWidth, nNewCount;
+    INT     nNewCount;
     SIZE    sz;
 
     if ((himl->cCurImage + nImageCount <= himl->cMaxImage)
@@ -125,17 +125,16 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
 
     if (cy == 0) cy = himl->cy;
     nNewCount = himl->cCurImage + nImageCount + himl->cGrow;
-    nNewWidth = nNewCount * himl->cx;
 
-    TRACE("Create expanded bitmaps : himl=%p x=%d y=%d count=%d\n", himl, nNewWidth, cy, nNewCount);
+    imagelist_get_bitmap_size(himl, nNewCount, cy, &sz);
+
+    TRACE("Create expanded bitmaps : himl=%p x=%d y=%d count=%d\n", himl, sz.cx, cy, nNewCount);
     hdcBitmap = CreateCompatibleDC (0);
 
     hbmNewBitmap = ImageList_CreateImage(hdcBitmap, himl, nNewCount, cy);
 
     if (hbmNewBitmap == 0)
-        ERR("creating new image bitmap (x=%d y=%d)!\n", nNewWidth, cy);
-
-    imagelist_get_bitmap_size(himl, nNewCount, cy, &sz);
+        ERR("creating new image bitmap (x=%d y=%d)!\n", sz.cx, cy);
 
     if (himl->cCurImage)
     {
@@ -150,7 +149,7 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
 
     if (himl->flags & ILC_MASK)
     {
-        hbmNewBitmap = CreateBitmap (nNewWidth, cy, 1, 1, NULL);
+        hbmNewBitmap = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
 
         if (hbmNewBitmap == 0)
             ERR("creating new mask bitmap!\n");
