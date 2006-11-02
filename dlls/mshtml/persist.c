@@ -240,9 +240,6 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
         if(post_data_stream)
             nsIInputStream_Release(post_data_stream);
 
-        if(!bscallback->nschannel)
-            ERR("bscallback->nschannel == NULL\n");
-
         if(NS_SUCCEEDED(nsres)) {
             /* FIXME: don't return here (URL Moniker needs to be good enough) */
 
