@@ -448,7 +448,10 @@ static void setup_ns_editing(NSContainer *This)
 
 static HRESULT exec_editmode(HTMLDocument *This)
 {
+    IMoniker *mon;
     HRESULT hres;
+
+    static const WCHAR wszAboutBlank[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 
     TRACE("(%p)\n", This);
 
@@ -456,20 +459,6 @@ static HRESULT exec_editmode(HTMLDocument *This)
 
     if(This->frame)
         IOleInPlaceFrame_SetStatusText(This->frame, NULL);
-
-    if(This->client) {
-        IOleCommandTarget *cmdtrg = NULL;
-
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget,
-                (void**)&cmdtrg);
-        if(SUCCEEDED(hres)) {
-            VARIANT var;
-
-            V_VT(&var) = VT_I4;
-            V_I4(&var) = 0;
-            IOleCommandTarget_Exec(cmdtrg, &CGID_ShellDocView, 37, 0, &var, NULL);
-        }
-    }
 
     if(This->hostui) {
         DOCHOSTUIINFO hostinfo;
@@ -484,37 +473,16 @@ static HRESULT exec_editmode(HTMLDocument *This)
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
     }
 
-    if(This->client) {
-        VARIANT silent, offline;
-
-        hres = get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
-        if(SUCCEEDED(hres)) {
-            if(V_VT(&silent) != VT_BOOL)
-                WARN("V_VT(silent) = %d\n", V_VT(&silent));
-            else if(V_BOOL(&silent))
-                FIXME("silent == true\n");
-        }
-
-        hres = get_client_disp_property(This->client,
-                DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline); 
-        if(SUCCEEDED(hres)) {
-            if(V_VT(&silent) != VT_BOOL)
-                WARN("V_VT(offline) = %d\n", V_VT(&silent));
-            else if(V_BOOL(&silent))
-                FIXME("offline == true\n");
-        }
-    }
-
     if(This->nscontainer)
         setup_ns_editing(This->nscontainer);
 
-    /* 
-     * FIXME: We should load about:protocol here.
-     */
-    This->readystate = READYSTATE_LOADING;
-    call_property_onchanged(This->cp_propnotif, DISPID_READYSTATE);
+    hres = CreateURLMoniker(NULL, wszAboutBlank, &mon);
+    if(FAILED(hres)) {
+        FIXME("CreateURLMoniker failed: %08x\n", hres);
+        return hres;
+    }
 
-    return S_OK;
+    return IPersistMoniker_Load(PERSISTMON(This), TRUE, mon, NULL, 0);
 }
 
 static HRESULT exec_baselinefont3(HTMLDocument *This)
