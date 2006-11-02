@@ -1093,7 +1093,7 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         {
             req->handle = handle;
             io->u.Status = wine_server_call(req);
-            if (!io->u.Status && reply->fd != -1) close(reply->fd);
+            if (!io->u.Status) server_remove_fd_from_cache( handle );
         }
         SERVER_END_REQ;
         break;

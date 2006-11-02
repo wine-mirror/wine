@@ -585,7 +585,7 @@ struct dup_handle_reply
 {
     struct reply_header __header;
     obj_handle_t handle;
-    int          fd;
+    int          closed;
 };
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
 #define DUP_HANDLE_SAME_ACCESS   DUPLICATE_SAME_ACCESS
@@ -840,12 +840,11 @@ struct get_handle_fd_request
     struct request_header __header;
     obj_handle_t handle;
     unsigned int access;
+    int          cached;
 };
 struct get_handle_fd_reply
 {
     struct reply_header __header;
-    int          fd;
-    int          removable;
     int          flags;
 };
 #define FD_FLAG_OVERLAPPED         0x01
@@ -854,6 +853,7 @@ struct get_handle_fd_reply
 #define FD_FLAG_SEND_SHUTDOWN      0x08
 #define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation,
                                          * only handle available data (don't wait) */
+#define FD_FLAG_REMOVABLE          0x20
 
 
 struct set_handle_fd_request
@@ -4425,6 +4425,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 256
+#define SERVER_PROTOCOL_VERSION 257
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

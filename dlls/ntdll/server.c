@@ -438,6 +438,92 @@ static int receive_fd( obj_handle_t *handle )
 }
 
 
+inline static unsigned int handle_to_index( obj_handle_t handle )
+{
+    return ((unsigned long)handle >> 2) - 1;
+}
+
+static int *fd_cache;
+static unsigned int fd_cache_size;
+
+/***********************************************************************
+ *           add_fd_to_cache
+ *
+ * Caller must hold fd_cache_section.
+ */
+static int add_fd_to_cache( obj_handle_t handle, int fd )
+{
+    unsigned int idx = handle_to_index( handle );
+
+    if (idx >= fd_cache_size)
+    {
+        unsigned int i, size = max( 32, fd_cache_size * 2 );
+        int *new_cache;
+
+        if (size <= idx) size = idx + 1;
+        if (fd_cache)
+            new_cache = RtlReAllocateHeap( GetProcessHeap(), 0, fd_cache, size*sizeof(fd_cache[0]) );
+        else
+            new_cache = RtlAllocateHeap( GetProcessHeap(), 0, size*sizeof(fd_cache[0]) );
+
+        if (new_cache)
+        {
+            for (i = fd_cache_size; i < size; i++) new_cache[i] = -1;
+            fd_cache = new_cache;
+            fd_cache_size = size;
+        }
+    }
+    if (idx < fd_cache_size)
+    {
+        assert( fd_cache[idx] == -1 );
+        fd_cache[idx] = fd;
+        TRACE("added %p (%d) to cache\n", handle, fd );
+        return 1;
+    }
+    return 0;
+}
+
+
+/***********************************************************************
+ *           get_cached_fd
+ *
+ * Caller must hold fd_cache_section.
+ */
+static inline int get_cached_fd( obj_handle_t handle )
+{
+    unsigned int idx = handle_to_index( handle );
+    int fd = -1;
+
+    if (idx < fd_cache_size) fd = fd_cache[idx];
+    return fd;
+}
+
+
+/***********************************************************************
+ *           server_remove_fd_from_cache
+ */
+int server_remove_fd_from_cache( obj_handle_t handle )
+{
+    unsigned int idx = handle_to_index( handle );
+    int fd = -1;
+
+    RtlEnterCriticalSection( &fd_cache_section );
+    if (idx < fd_cache_size)
+    {
+        fd = fd_cache[idx];
+        fd_cache[idx] = -1;
+    }
+    RtlLeaveCriticalSection( &fd_cache_section );
+
+    if (fd != -1)
+    {
+        close( fd );
+        TRACE("removed %p (%d) from cache\n", handle, fd );
+    }
+    return fd;
+}
+
+
 /***********************************************************************
  *           wine_server_fd_to_handle   (NTDLL.@)
  *
@@ -488,20 +574,27 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
 int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags )
 {
     obj_handle_t fd_handle;
-    int ret, removable = -1, fd = -1;
+    int ret = 0, removable = 0, fd = -1;
 
     RtlEnterCriticalSection( &fd_cache_section );
 
     *unix_fd = -1;
 
+    fd = get_cached_fd( handle );
+    if (fd != -1 && !flags)
+    {
+        if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
+        goto done;
+    }
+
     SERVER_START_REQ( get_handle_fd )
     {
         req->handle = handle;
         req->access = access;
+        req->cached = (fd != -1);
         if (!(ret = wine_server_call( req )))
         {
-            fd = reply->fd;
-            removable = reply->removable;
+            removable = reply->flags & FD_FLAG_REMOVABLE;
             if (flags) *flags = reply->flags;
         }
     }
@@ -525,26 +618,10 @@ int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *uni
 
     if (removable) goto done;  /* don't cache it */
 
-    /* and store it back into the cache */
-    SERVER_START_REQ( set_handle_fd )
+    if (add_fd_to_cache( handle, fd ))
     {
-        req->handle    = fd_handle;
-        req->fd        = fd;
-        if (!(ret = wine_server_call( req )))
-        {
-            if (reply->cur_fd != -1) /* it has been cached */
-            {
-                if (reply->cur_fd != fd) close( fd );  /* someone was here before us */
-                if ((fd = dup(reply->cur_fd)) == -1) ret = FILE_GetNtStatus();
-            }
-        }
-        else
-        {
-            close( fd );
-            fd = -1;
-        }
+        if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
     }
-    SERVER_END_REQ;
 
 done:
     RtlLeaveCriticalSection( &fd_cache_section );

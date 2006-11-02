@@ -485,7 +485,7 @@ enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
     unsigned int options;      /* duplicate options (see below) */
 @REPLY
     obj_handle_t handle;       /* duplicated handle in dst process */
-    int          fd;           /* associated fd to close */
+    int          closed;       /* whether the source handle has been closed */
 @END
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
 #define DUP_HANDLE_SAME_ACCESS   DUPLICATE_SAME_ACCESS
@@ -661,9 +661,8 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 @REQ(get_handle_fd)
     obj_handle_t handle;        /* handle to the file */
     unsigned int access;        /* wanted access rights */
+    int          cached;        /* is it cached on the client already? */
 @REPLY
-    int          fd;            /* file descriptor */
-    int          removable;     /* is device removable? (-1 if unknown) */
     int          flags;         /* file read/write flags (see below) */
 @END
 #define FD_FLAG_OVERLAPPED         0x01 /* fd opened in overlapped mode */
@@ -672,6 +671,7 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 #define FD_FLAG_SEND_SHUTDOWN      0x08
 #define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation, 
                                          * only handle available data (don't wait) */
+#define FD_FLAG_REMOVABLE          0x20 /* is it on a removable device? */
 
 /* Set the cached file descriptor of a handle */
 @REQ(set_handle_fd)

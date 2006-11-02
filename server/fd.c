@@ -1944,19 +1944,15 @@ DECL_HANDLER(get_handle_fd)
 {
     struct fd *fd;
 
-    reply->fd = -1;
-
     if ((fd = get_handle_fd_obj( current->process, req->handle, req->access )))
     {
-        int unix_fd = get_unix_fd( fd );
-        if (unix_fd != -1)
+        if (!req->cached)
         {
-            int cached_fd = get_handle_unix_fd( current->process, req->handle, req->access );
-            if (cached_fd != -1) reply->fd = cached_fd;
-            else if (!get_error()) send_client_fd( current->process, unix_fd, req->handle );
+            int unix_fd = get_unix_fd( fd );
+            if (unix_fd != -1) send_client_fd( current->process, unix_fd, req->handle );
         }
-        if (fd->inode) reply->removable = fd->inode->device->removable;
         reply->flags = fd->fd_ops->get_file_info( fd );
+        if (fd->inode && fd->inode->device->removable) reply->flags |= FD_FLAG_REMOVABLE;
         release_object( fd );
     }
 }

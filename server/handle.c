@@ -562,7 +562,6 @@ DECL_HANDLER(dup_handle)
     struct process *src, *dst;
 
     reply->handle = 0;
-    reply->fd = -1;
     if ((src = get_process_from_handle( req->src_process, PROCESS_DUP_HANDLE )))
     {
         if (req->options & DUP_HANDLE_MAKE_GLOBAL)
@@ -579,8 +578,9 @@ DECL_HANDLER(dup_handle)
         /* close the handle no matter what happened */
         if (req->options & DUP_HANDLE_CLOSE_SOURCE)
         {
-            if (src == current->process) close_handle( src, req->src_handle, &reply->fd );
-            else close_handle( src, req->src_handle, NULL );
+            unsigned int err = get_error();  /* don't overwrite error from the above calls */
+            reply->closed = close_handle( src, req->src_handle, NULL );
+            set_error( err );
         }
         release_object( src );
     }

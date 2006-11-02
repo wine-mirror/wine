@@ -901,7 +901,7 @@ static void dump_dup_handle_request( const struct dup_handle_request *req )
 static void dump_dup_handle_reply( const struct dup_handle_reply *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " fd=%d", req->fd );
+    fprintf( stderr, " closed=%d", req->closed );
 }
 
 static void dump_open_process_request( const struct open_process_request *req )
@@ -1103,13 +1103,12 @@ static void dump_alloc_file_handle_reply( const struct alloc_file_handle_reply *
 static void dump_get_handle_fd_request( const struct get_handle_fd_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " cached=%d", req->cached );
 }
 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 {
-    fprintf( stderr, " fd=%d,", req->fd );
-    fprintf( stderr, " removable=%d,", req->removable );
     fprintf( stderr, " flags=%d", req->flags );
 }
 
