@@ -353,7 +353,8 @@ typedef struct task_t {
 
     enum {
         TASK_SETDOWNLOADSTATE,
-        TASK_PARSECOMPLETE
+        TASK_PARSECOMPLETE,
+        TASK_SETPROGRESS
     } task_id;
 
     struct task_t *next;

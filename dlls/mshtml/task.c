@@ -179,6 +179,44 @@ static void set_parsecomplete(HTMLDocument *doc)
     }
 }
 
+static void set_progress(HTMLDocument *doc)
+{
+    IOleCommandTarget *olecmd = NULL;
+    HRESULT hres;
+
+    TRACE("(%p)\n", doc);
+
+    if(doc->client)
+        IOleClientSite_QueryInterface(doc->client, &IID_IOleCommandTarget, (void**)&olecmd);
+
+    if(olecmd) {
+        VARIANT progress_max, progress;
+
+        V_VT(&progress_max) = VT_I4;
+        V_I4(&progress_max) = 0; /* FIXME */
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSMAX, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &progress_max, NULL);
+
+        V_VT(&progress) = VT_I4;
+        V_I4(&progress) = 0; /* FIXME */
+        IOleCommandTarget_Exec(olecmd, NULL, OLECMDID_SETPROGRESSPOS, OLECMDEXECOPT_DONTPROMPTUSER,
+                               &progress, NULL);
+    }
+
+    if(doc->usermode == EDITMODE && doc->hostui) {
+        DOCHOSTUIINFO hostinfo;
+
+        memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
+        hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
+        hres = IDocHostUIHandler_GetHostInfo(doc->hostui, &hostinfo);
+        if(SUCCEEDED(hres))
+            /* FIXME: use hostinfo */
+            TRACE("hostinfo = {%u %08x %08x %s %s}\n",
+                    hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
+                    debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
+    }
+}
+
 static void process_task(task_t *task)
 {
     switch(task->task_id) {
@@ -186,6 +224,8 @@ static void process_task(task_t *task)
         return set_downloading(task->doc);
     case TASK_PARSECOMPLETE:
         return set_parsecomplete(task->doc);
+    case TASK_SETPROGRESS:
+        return set_progress(task->doc);
     default:
         ERR("Wrong task_id %d\n", task->task_id);
     }

@@ -243,6 +243,16 @@ static HRESULT WINAPI PersistMoniker_Load(IPersistMoniker *iface, BOOL fFullyAva
 
     bscallback = create_bscallback(pimkName);
 
+    if(This->frame) {
+        task = mshtml_alloc(sizeof(task_t));
+
+        task->doc = This;
+        task->task_id = TASK_SETPROGRESS;
+        task->next = NULL;
+
+        push_task(task);
+    }
+
     task = mshtml_alloc(sizeof(task_t));
 
     task->doc = This;
