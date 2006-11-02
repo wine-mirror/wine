@@ -1486,6 +1486,7 @@ static void test_msiimport(void)
     ok(count == 2, "Expected 2, got %d\n", count);
     ok(check_record(rec, 1, "s255"), "Expected s255\n");
     ok(check_record(rec, 2, "s255"), "Expected s255\n");
+    MsiCloseHandle(rec);
 
     r = MsiViewExecute(view, 0);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
