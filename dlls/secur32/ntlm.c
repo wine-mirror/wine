@@ -35,6 +35,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 #define NTLM_MAX_BUF 1904
 
 
+static CHAR ntlm_auth[] = "ntlm_auth";
+
 /***********************************************************************
  *              QueryCredentialsAttributesA
  */
@@ -87,8 +89,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
 {
     SECURITY_STATUS ret;
     PNegoHelper helper = NULL;
-    static CHAR ntlm_auth[] = "ntlm_auth",
-                server_helper_protocol[] = "--helper-protocol=squid-2.5-ntlmssp",
+    static CHAR server_helper_protocol[] = "--helper-protocol=squid-2.5-ntlmssp",
                 credentials_argv[] = "--use-cached-creds";
 
     SEC_CHAR *client_user_arg = NULL;
@@ -108,7 +109,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
     switch(fCredentialUse)
     {
         case SECPKG_CRED_INBOUND:
-            if( (ret = fork_helper(&helper, "ntlm_auth", server_argv)) !=
+            if( (ret = fork_helper(&helper, ntlm_auth, server_argv)) !=
                     SEC_E_OK)
             {
                 phCredential = NULL;
@@ -126,7 +127,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
             {
                 static const char username_arg[] = "--username=";
                 static const char domain_arg[] = "--domain=";
-                static char ntlm_auth[] = "ntlm_auth";
                 static char helper_protocol[] = "--helper-protocol=ntlmssp-client-1";
                 int unixcp_size;
 
@@ -200,7 +200,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                 client_argv[4] = credentials_argv;
                 client_argv[5] = NULL;
 
-                if((ret = fork_helper(&helper, "ntlm_auth", client_argv)) !=
+                if((ret = fork_helper(&helper, ntlm_auth, client_argv)) !=
                         SEC_E_OK)
                 {
                     phCredential = NULL;
@@ -1609,15 +1609,14 @@ void SECUR32_initNTLMSP(void)
 {
     SECURITY_STATUS ret;
     PNegoHelper helper;
-    static CHAR ntlm_auth[] = "ntlm_auth",
-                version[]   = "--version";
+    static CHAR version[] = "--version";
 
     SEC_CHAR *args[] = {
         ntlm_auth,
         version,
         NULL };
 
-    if((ret = fork_helper(&helper, "ntlm_auth", args)) != SEC_E_OK)
+    if((ret = fork_helper(&helper, ntlm_auth, args)) != SEC_E_OK)
     {
         /* Cheat and allocate a helper anyway, so cleanup later will work. */
         helper = HeapAlloc(GetProcessHeap(),0, sizeof(PNegoHelper));
@@ -1633,8 +1632,9 @@ void SECUR32_initNTLMSP(void)
     }
     else
     {
-        ERR("ntlm_auth was not found or is outdated. "
-            "Make sure that ntlm_auth >= 3.x is in your path.\n");
+        ERR("%s was not found or is outdated. "
+            "Make sure that ntlm_auth >= 3.x is in your path.\n",
+            ntlm_auth);
     }
     cleanup_helper(helper);
 }
