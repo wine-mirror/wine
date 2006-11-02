@@ -609,6 +609,10 @@ typedef struct _SINGLE_LIST_ENTRY {
    FIXME: correct name */
 #define HEAP_SHARED                     0x04000000
 
+typedef enum _HEAP_INFORMATION_CLASS {
+    HeapCompatibilityInformation,
+} HEAP_INFORMATION_CLASS;
+
 /* Processor feature flags.  */
 #define PF_FLOATING_POINT_PRECISION_ERRATA	0
 #define PF_FLOATING_POINT_EMULATED		1
