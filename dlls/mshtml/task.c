@@ -97,7 +97,7 @@ static void set_downloading(HTMLDocument *doc)
 
     TRACE("(%p)\n", doc);
 
-    if(doc->frame) 
+    if(doc->frame)
         IOleInPlaceFrame_SetStatusText(doc->frame, NULL /* FIXME */);
 
     if(!doc->client)
@@ -159,6 +159,11 @@ static void set_parsecomplete(HTMLDocument *doc)
 
     doc->readystate = READYSTATE_COMPLETE;
     call_property_onchanged(doc->cp_propnotif, DISPID_READYSTATE);
+
+    if(doc->frame) {
+        static const WCHAR wszDone[] = {'D','o','n','e',0};
+        IOleInPlaceFrame_SetStatusText(doc->frame, wszDone);
+    }
 
     if(olecmd) {
         VARIANT title;
