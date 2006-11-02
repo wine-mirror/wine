@@ -969,10 +969,6 @@ static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("%p\n",lpwai);
 
-    INTERNET_SendCallback(hdr, hdr->dwContext,
-                          INTERNET_STATUS_HANDLE_CLOSING, &hdr->hInternet,
-                          sizeof(HINTERNET));
-
     HeapFree(GetProcessHeap(), 0, lpwai->lpszAgent);
     HeapFree(GetProcessHeap(), 0, lpwai->lpszProxy);
     HeapFree(GetProcessHeap(), 0, lpwai->lpszProxyBypass);
@@ -1004,6 +1000,12 @@ BOOL WINAPI InternetCloseHandle(HINTERNET hInternet)
         INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
+
+    /* FIXME: native appears to send this from the equivalent of
+     * WININET_Release */
+    INTERNET_SendCallback(lpwh, lpwh->dwContext,
+                          INTERNET_STATUS_HANDLE_CLOSING, &hInternet,
+                          sizeof(HINTERNET));
 
     WININET_FreeHandle( hInternet );
     WININET_Release( lpwh );

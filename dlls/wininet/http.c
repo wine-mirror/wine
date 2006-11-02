@@ -2940,10 +2940,6 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("\n");
 
-    INTERNET_SendCallback(hdr, hdr->dwContext,
-                          INTERNET_STATUS_HANDLE_CLOSING, &hdr->hInternet,
-                          sizeof(HINTERNET));
-
     WININET_Release(&lpwhr->hdr);
 
     if (NETCON_connected(&lpwhr->netConnection))
@@ -2977,10 +2973,6 @@ static void HTTP_CloseHTTPSessionHandle(LPWININETHANDLEHEADER hdr)
     LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) hdr;
 
     TRACE("%p\n", lpwhs);
-
-    INTERNET_SendCallback(hdr, hdr->dwContext,
-                          INTERNET_STATUS_HANDLE_CLOSING, &hdr->hInternet,
-                          sizeof(HINTERNET));
 
     WININET_Release(&lpwhs->lpAppInfo->hdr);
 
