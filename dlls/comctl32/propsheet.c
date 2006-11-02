@@ -32,7 +32,6 @@
  *   - Wizard 97 header resizing
  *   - Enforcing of minimal wizard size
  *   - Messages:
- *     o PSM_GETRESULT
  *     o PSM_INSERTPAGE
  *     o PSM_RECALCPAGESIZES
  *     o PSM_SETHEADERSUBTITLE
@@ -2641,8 +2640,9 @@ static LRESULT PROPSHEET_IndexToId(HWND hwndDlg, int iPageIndex)
  */
 static LRESULT PROPSHEET_GetResult(HWND hwndDlg)
 {
-    FIXME("(%p): stub\n", hwndDlg);
-    return -1;
+    PropSheetInfo * psInfo = (PropSheetInfo*) GetPropW(hwndDlg,
+                                                       PropSheetInfoStr);
+    return psInfo->result;
 }
 
 /******************************************************************************
