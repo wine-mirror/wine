@@ -148,7 +148,6 @@ DECL_HANDLER(create_file);
 DECL_HANDLER(open_file_object);
 DECL_HANDLER(alloc_file_handle);
 DECL_HANDLER(get_handle_fd);
-DECL_HANDLER(set_handle_fd);
 DECL_HANDLER(flush_file);
 DECL_HANDLER(lock_file);
 DECL_HANDLER(unlock_file);
@@ -368,7 +367,6 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_open_file_object,
     (req_handler)req_alloc_file_handle,
     (req_handler)req_get_handle_fd,
-    (req_handler)req_set_handle_fd,
     (req_handler)req_flush_file,
     (req_handler)req_lock_file,
     (req_handler)req_unlock_file,

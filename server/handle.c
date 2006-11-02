@@ -42,7 +42,6 @@ struct handle_entry
 {
     struct object *ptr;       /* object */
     unsigned int   access;    /* access rights */
-    int            fd;        /* file descriptor (in client process) */
 };
 
 struct handle_table
@@ -218,7 +217,6 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
     table->free = i + 1;
     entry->ptr    = grab_object( obj );
     entry->access = access;
-    entry->fd     = -1;
     return index_to_handle(i);
 }
 
@@ -319,7 +317,6 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
         for (i = 0; i <= table->last; i++, ptr++)
         {
             if (!ptr->ptr) continue;
-            ptr->fd = -1;
             if (ptr->access & RESERVED_INHERIT) grab_object( ptr->ptr );
             else ptr->ptr = NULL; /* don't inherit this entry */
         }
@@ -331,7 +328,7 @@ struct handle_table *copy_handle_table( struct process *process, struct process 
 
 /* close a handle and decrement the refcount of the associated object */
 /* return 1 if OK, 0 on error */
-int close_handle( struct process *process, obj_handle_t handle, int *fd )
+int close_handle( struct process *process, obj_handle_t handle )
 {
     struct handle_table *table;
     struct handle_entry *entry;
@@ -350,9 +347,6 @@ int close_handle( struct process *process, obj_handle_t handle, int *fd )
         return 0;
     }
     entry->ptr = NULL;
-    if (fd) *fd = entry->fd;
-    else if (entry->fd != -1) return 1;  /* silently ignore close attempt if we cannot close the fd */
-    entry->fd = -1;
     table = handle_is_global(handle) ? global_table : process->handles;
     if (entry < table->entries + table->free) table->free = entry - table->entries;
     if (entry == table->entries + table->last) shrink_handle_table( table );
@@ -408,46 +402,6 @@ unsigned int get_handle_access( struct process *process, obj_handle_t handle )
     if (get_magic_handle( handle )) return ~0U;  /* magic handles have all access rights */
     if (!(entry = get_handle( process, handle ))) return 0;
     return entry->access;
-}
-
-/* retrieve the cached fd for a given handle */
-int get_handle_unix_fd( struct process *process, obj_handle_t handle, unsigned int access )
-{
-    struct handle_entry *entry;
-
-    if (!(entry = get_handle( process, handle ))) return -1;
-    if ((entry->access & access) != access)
-    {
-        set_error( STATUS_ACCESS_DENIED );
-        return -1;
-    }
-    return entry->fd;
-}
-
-/* set the cached fd for a handle if not set already, and return the current value */
-int set_handle_unix_fd( struct process *process, obj_handle_t handle, int fd )
-{
-    struct handle_entry *entry;
-
-    if (handle_is_global( handle )) return -1;  /* no fd cache for global handles */
-    if (!(entry = get_handle( process, handle ))) return -1;
-    /* if no current fd set it, otherwise return current fd */
-    if (entry->fd == -1) entry->fd = fd;
-    return entry->fd;
-}
-
-/* remove the cached fd and return it */
-int flush_cached_fd( struct process *process, obj_handle_t handle )
-{
-    struct handle_entry *entry = get_handle( process, handle );
-    int fd = -1;
-
-    if (entry)
-    {
-        fd = entry->fd;
-        entry->fd = -1;
-    }
-    return fd;
 }
 
 /* find the first inherited handle of the given type */
@@ -547,7 +501,7 @@ unsigned int get_handle_table_count( struct process *process )
 /* close a handle */
 DECL_HANDLER(close_handle)
 {
-    close_handle( current->process, req->handle, &reply->fd );
+    close_handle( current->process, req->handle );
 }
 
 /* set a handle information */
@@ -579,7 +533,7 @@ DECL_HANDLER(dup_handle)
         if (req->options & DUP_HANDLE_CLOSE_SOURCE)
         {
             unsigned int err = get_error();  /* don't overwrite error from the above calls */
-            reply->closed = close_handle( src, req->src_handle, NULL );
+            reply->closed = close_handle( src, req->src_handle );
             set_error( err );
         }
         release_object( src );

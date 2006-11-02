@@ -353,7 +353,7 @@ void close_thread_desktop( struct thread *thread )
     obj_handle_t handle = thread->desktop;
 
     thread->desktop = 0;
-    if (handle) close_handle( thread->process, handle, NULL );
+    if (handle) close_handle( thread->process, handle );
     clear_error();  /* ignore errors */
 }
 
@@ -395,7 +395,7 @@ DECL_HANDLER(close_winstation)
     if ((winstation = (struct winstation *)get_handle_obj( current->process, req->handle,
                                                            0, &winstation_ops )))
     {
-        if (!close_handle( current->process, req->handle, NULL )) set_error( STATUS_ACCESS_DENIED );
+        if (!close_handle( current->process, req->handle )) set_error( STATUS_ACCESS_DENIED );
         release_object( winstation );
     }
 }
@@ -474,7 +474,7 @@ DECL_HANDLER(close_desktop)
     if ((desktop = (struct desktop *)get_handle_obj( current->process, req->handle,
                                                      0, &desktop_ops )))
     {
-        if (!close_handle( current->process, req->handle, NULL )) set_error( STATUS_DEVICE_BUSY );
+        if (!close_handle( current->process, req->handle )) set_error( STATUS_DEVICE_BUSY );
         release_object( desktop );
     }
 }

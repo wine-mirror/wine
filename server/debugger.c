@@ -140,7 +140,7 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
     /* documented: THREAD_GET_CONTEXT | THREAD_SET_CONTEXT | THREAD_SUSPEND_RESUME */
     if (!(handle = alloc_handle( debugger, thread, THREAD_ALL_ACCESS, 0 )))
     {
-        close_handle( debugger, event->data.info.create_process.process, NULL );
+        close_handle( debugger, event->data.info.create_process.process );
         return 0;
     }
     event->data.info.create_process.thread = handle;
@@ -150,8 +150,8 @@ static int fill_create_process_event( struct debug_event *event, void *arg )
         /* the doc says write access too, but this doesn't seem a good idea */
         !(handle = alloc_handle( debugger, exe_module->file, GENERIC_READ, 0 )))
     {
-        close_handle( debugger, event->data.info.create_process.process, NULL );
-        close_handle( debugger, event->data.info.create_process.thread, NULL );
+        close_handle( debugger, event->data.info.create_process.process );
+        close_handle( debugger, event->data.info.create_process.thread );
         return 0;
     }
     event->data.info.create_process.file       = handle;
@@ -287,17 +287,17 @@ static void debug_event_destroy( struct object *obj )
         switch(event->data.code)
         {
         case CREATE_THREAD_DEBUG_EVENT:
-            close_handle( debugger, event->data.info.create_thread.handle, NULL );
+            close_handle( debugger, event->data.info.create_thread.handle );
             break;
         case CREATE_PROCESS_DEBUG_EVENT:
             if (event->data.info.create_process.file)
-                close_handle( debugger, event->data.info.create_process.file, NULL );
-            close_handle( debugger, event->data.info.create_process.thread, NULL );
-            close_handle( debugger, event->data.info.create_process.process, NULL );
+                close_handle( debugger, event->data.info.create_process.file );
+            close_handle( debugger, event->data.info.create_process.thread );
+            close_handle( debugger, event->data.info.create_process.process );
             break;
         case LOAD_DLL_DEBUG_EVENT:
             if (event->data.info.load_dll.handle)
-                close_handle( debugger, event->data.info.load_dll.handle, NULL );
+                close_handle( debugger, event->data.info.load_dll.handle );
             break;
         }
     }
@@ -661,7 +661,7 @@ DECL_HANDLER(get_exception_status)
     if ((event = (struct debug_event *)get_handle_obj( current->process, req->handle,
                                                        0, &debug_event_ops )))
     {
-        close_handle( current->process, req->handle, NULL );
+        close_handle( current->process, req->handle );
         if (event->state == EVENT_CONTINUED)
         {
             if (current->context == &event->context)

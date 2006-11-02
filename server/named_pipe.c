@@ -884,7 +884,6 @@ DECL_HANDLER(disconnect_named_pipe)
 {
     struct pipe_server *server;
 
-    reply->fd = -1;
     server = get_pipe_server_obj( current->process, req->handle, 0 );
     if (!server)
         return;
@@ -901,7 +900,6 @@ DECL_HANDLER(disconnect_named_pipe)
            around - client loses all waiting data */
         server->state = ps_disconnected_server;
         do_disconnect( server );
-        reply->fd = flush_cached_fd( current->process, req->handle );
         break;
 
     case ps_wait_disconnect:
@@ -909,7 +907,6 @@ DECL_HANDLER(disconnect_named_pipe)
         assert( server->fd );
         do_disconnect( server );
         server->state = ps_wait_connect;
-        reply->fd = flush_cached_fd( current->process, req->handle );
         break;
 
     case ps_idle_server:

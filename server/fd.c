@@ -1957,23 +1957,6 @@ DECL_HANDLER(get_handle_fd)
     }
 }
 
-/* set the cached file descriptor of a handle */
-DECL_HANDLER(set_handle_fd)
-{
-    struct fd *fd;
-
-    reply->cur_fd = -1;
-    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
-    {
-        struct device *device = fd->inode ? fd->inode->device : NULL;
-
-        /* only cache the fd on non-removable devices */
-        if (!device || !device->removable)
-            reply->cur_fd = set_handle_unix_fd( current->process, req->handle, req->fd );
-        release_object( fd );
-    }
-}
-
 /* get ready to unmount a Unix device */
 DECL_HANDLER(unmount_device)
 {

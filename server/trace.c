@@ -871,11 +871,6 @@ static void dump_close_handle_request( const struct close_handle_request *req )
     fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_close_handle_reply( const struct close_handle_reply *req )
-{
-    fprintf( stderr, " fd=%d", req->fd );
-}
-
 static void dump_set_handle_info_request( const struct set_handle_info_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
@@ -1110,17 +1105,6 @@ static void dump_get_handle_fd_request( const struct get_handle_fd_request *req 
 static void dump_get_handle_fd_reply( const struct get_handle_fd_reply *req )
 {
     fprintf( stderr, " flags=%d", req->flags );
-}
-
-static void dump_set_handle_fd_request( const struct set_handle_fd_request *req )
-{
-    fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " fd=%d", req->fd );
-}
-
-static void dump_set_handle_fd_reply( const struct set_handle_fd_reply *req )
-{
-    fprintf( stderr, " cur_fd=%d", req->cur_fd );
 }
 
 static void dump_flush_file_request( const struct flush_file_request *req )
@@ -2293,11 +2277,6 @@ static void dump_disconnect_named_pipe_request( const struct disconnect_named_pi
     fprintf( stderr, " handle=%p", req->handle );
 }
 
-static void dump_disconnect_named_pipe_reply( const struct disconnect_named_pipe_reply *req )
-{
-    fprintf( stderr, " fd=%d", req->fd );
-}
-
 static void dump_get_named_pipe_info_request( const struct get_named_pipe_info_request *req )
 {
     fprintf( stderr, " handle=%p", req->handle );
@@ -3322,7 +3301,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_file_object_request,
     (dump_func)dump_alloc_file_handle_request,
     (dump_func)dump_get_handle_fd_request,
-    (dump_func)dump_set_handle_fd_request,
     (dump_func)dump_flush_file_request,
     (dump_func)dump_lock_file_request,
     (dump_func)dump_unlock_file_request,
@@ -3520,7 +3498,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_apc_reply,
-    (dump_func)dump_close_handle_reply,
+    (dump_func)0,
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
     (dump_func)dump_open_process_reply,
@@ -3539,7 +3517,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_file_object_reply,
     (dump_func)dump_alloc_file_handle_reply,
     (dump_func)dump_get_handle_fd_reply,
-    (dump_func)dump_set_handle_fd_reply,
     (dump_func)dump_flush_file_reply,
     (dump_func)dump_lock_file_reply,
     (dump_func)0,
@@ -3639,7 +3616,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_open_named_pipe_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)dump_disconnect_named_pipe_reply,
+    (dump_func)0,
     (dump_func)dump_get_named_pipe_info_reply,
     (dump_func)dump_create_window_reply,
     (dump_func)0,
@@ -3756,7 +3733,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "open_file_object",
     "alloc_file_handle",
     "get_handle_fd",
-    "set_handle_fd",
     "flush_file",
     "lock_file",
     "unlock_file",

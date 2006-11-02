@@ -1279,7 +1279,7 @@ DECL_HANDLER(alloc_console)
                 release_object( console );
                 goto the_end;
             }
-            close_handle( renderer, in, NULL );
+            close_handle( renderer, in );
         }
         free_console( process );
     }

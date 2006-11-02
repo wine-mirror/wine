@@ -551,7 +551,6 @@ struct close_handle_request
 struct close_handle_reply
 {
     struct reply_header __header;
-    int          fd;
 };
 
 
@@ -854,20 +853,6 @@ struct get_handle_fd_reply
 #define FD_FLAG_AVAILABLE          0x10 /* in overlap read/write operation,
                                          * only handle available data (don't wait) */
 #define FD_FLAG_REMOVABLE          0x20
-
-
-struct set_handle_fd_request
-{
-    struct request_header __header;
-    obj_handle_t handle;
-    int          fd;
-};
-struct set_handle_fd_reply
-{
-    struct reply_header __header;
-    int          cur_fd;
-};
-
 
 
 struct flush_file_request
@@ -2533,7 +2518,6 @@ struct disconnect_named_pipe_request
 struct disconnect_named_pipe_reply
 {
     struct reply_header __header;
-    int            fd;
 };
 
 
@@ -3807,7 +3791,6 @@ enum request
     REQ_open_file_object,
     REQ_alloc_file_handle,
     REQ_get_handle_fd,
-    REQ_set_handle_fd,
     REQ_flush_file,
     REQ_lock_file,
     REQ_unlock_file,
@@ -4028,7 +4011,6 @@ union generic_request
     struct open_file_object_request open_file_object_request;
     struct alloc_file_handle_request alloc_file_handle_request;
     struct get_handle_fd_request get_handle_fd_request;
-    struct set_handle_fd_request set_handle_fd_request;
     struct flush_file_request flush_file_request;
     struct lock_file_request lock_file_request;
     struct unlock_file_request unlock_file_request;
@@ -4247,7 +4229,6 @@ union generic_reply
     struct open_file_object_reply open_file_object_reply;
     struct alloc_file_handle_reply alloc_file_handle_reply;
     struct get_handle_fd_reply get_handle_fd_reply;
-    struct set_handle_fd_reply set_handle_fd_reply;
     struct flush_file_reply flush_file_reply;
     struct lock_file_reply lock_file_reply;
     struct unlock_file_reply unlock_file_reply;
@@ -4425,6 +4406,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 257
+#define SERVER_PROTOCOL_VERSION 258
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
