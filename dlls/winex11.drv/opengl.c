@@ -1124,6 +1124,11 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
   TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
+  if (!has_opengl()) {
+    ERR("No libGL on this box - disabling OpenGL support !\n");
+    return 0;
+  }
+
   /* At the moment we only support the pixelformat corresponding to the main
    * x11drv visual which got created at x11drv initialization. More formats
    * can be supported if there was a way to recreate x11 windows in x11drv
@@ -1198,6 +1203,11 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 
     TRACE("(%p)->(PF:%d)\n", hdc, hdcPF);
 
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+    }
+
     /* First, get the visual in use by the X11DRV */
     if (!gdi_display) return 0;
 
@@ -1253,6 +1263,11 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
 
     TRACE("(%p)\n", hglrc);
 
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+    }
+
     wine_tsx11_lock();
     /* A game (Half Life not to name it) deletes twice the same context,
     * so make sure it is valid first */
@@ -1299,6 +1314,11 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
     if (padding < 0)
         padding = 0;
 
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+    }
+
     /* Check the table of WGL extensions to see if we need to return a WGL extension
      * or a function pointer to a native OpenGL function. */
     if(strncmp(lpszProc, "wgl", 3) != 0) {
@@ -1328,6 +1348,11 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     DWORD type = GetObjectType(hdc);
 
     TRACE("(%p,%p)\n", hdc, hglrc);
+
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+    }
 
     wine_tsx11_lock();
     if (hglrc == NULL) {
@@ -1381,6 +1406,11 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
     BOOL ret;
     TRACE("(%p,%p,%p)\n", hDrawDev, hReadDev, hglrc);
 
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+    }
+
     wine_tsx11_lock();
     if (hglrc == NULL) {
         ret = pglXMakeCurrent(gdi_display, None, NULL);
@@ -1413,6 +1443,11 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
 
     TRACE("(%p, %p)\n", org, dest);
+
+    if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+    }
 
     if (NULL != dest && dest->ctx != NULL) {
         ERR("Could not share display lists, context already created !\n");
@@ -1553,6 +1588,11 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
 
      TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
 
+     if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+     }
+
      if (fid == 0) {
          return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineA);
      }
@@ -1570,6 +1610,11 @@ BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
      Font fid = physDev->font;
 
      TRACE("(%p, %d, %d, %d) using font %ld\n", physDev->hdc, first, count, listBase, fid);
+
+     if (!has_opengl()) {
+        ERR("No libGL on this box - disabling OpenGL support !\n");
+        return 0;
+     }
 
      if (fid == 0) {
          return internal_wglUseFontBitmaps(physDev->hdc, first, count, listBase, GetGlyphOutlineW);
