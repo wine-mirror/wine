@@ -39,6 +39,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define NSCMD_BOLD "cmd_bold"
+
 /**********************************************************
  * IOleCommandTarget implementation
  */
@@ -245,7 +247,7 @@ static void do_ns_command(NSContainer *This, const char *cmd, nsICommandParams *
     nsIInterfaceRequestor *iface_req;
     nsresult nsres;
 
-    FIXME("(%p)\n", This);
+    TRACE("(%p)\n", This);
 
     nsres = nsIWebBrowser_QueryInterface(This->webbrowser,
             &IID_nsIInterfaceRequestor, (void**)&iface_req);
@@ -296,6 +298,27 @@ static nsresult get_ns_command_state(NSContainer *This, const char *cmd, nsIComm
 
     nsICommandManager_Release(cmdmgr);
     return nsres;
+}
+
+static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
+{
+    nsICommandParams *nsparam;
+    PRBool b = FALSE;
+
+    if(!This->nscontainer) {
+        FIXME("dummy not implemented\n");
+        return OLECMDF_SUPPORTED;
+    }
+
+    if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
+        return OLECMDF_SUPPORTED;
+
+    nsparam = create_nscommand_params();
+    get_ns_command_state(This->nscontainer, nscmd, nsparam);
+
+    nsICommandParams_GetBooleanValue(nsparam, "state_enabled", &b);
+
+    return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
 }
 
 static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
@@ -364,7 +387,7 @@ static HRESULT exec_bold(HTMLDocument *This)
     TRACE("(%p)\n", This);
 
     if(This->nscontainer)
-        do_ns_command(This->nscontainer, "cmd_bold", NULL);
+        do_ns_command(This->nscontainer, NSCMD_BOLD, NULL);
 
     return S_OK;
 }
@@ -626,8 +649,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
                 break;
             case IDM_BOLD:
-                FIXME("CGID_MSHTML: IDM_BOLD\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_BOLD\n");
+                prgCmds[i].cmdf = query_edit_status(This, NSCMD_BOLD);
                 break;
             case IDM_FORECOLOR:
                 FIXME("CGID_MSHTML: IDM_FORECOLOR\n");
