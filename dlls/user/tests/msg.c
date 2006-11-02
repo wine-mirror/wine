@@ -3494,10 +3494,17 @@ static void test_showwindow(void)
     flush_sequence();
 }
 
-static void test_sys_menu(HWND hwnd)
+static void test_sys_menu(void)
 {
+    HWND hwnd;
     HMENU hmenu;
     UINT state;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+
+    flush_sequence();
 
     /* test existing window without CS_NOCLOSE style */
     hmenu = GetSystemMenu(hwnd, FALSE);
@@ -3520,6 +3527,15 @@ static void test_sys_menu(HWND hwnd)
     state = GetMenuState(hmenu, SC_CLOSE, MF_BYCOMMAND);
     ok(state != 0xffffffff, "wrong SC_CLOSE state %x\n", state);
     ok(!(state & (MF_DISABLED | MF_GRAYED)), "wrong SC_CLOSE state %x\n", state);
+
+    /* test whether removing WS_SYSMENU destroys a system menu */
+    SetWindowLongW(hwnd, GWL_STYLE, WS_POPUP);
+    SetWindowPos(hwnd, 0, 0, 0, 0, 0, SWP_NOZORDER|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_FRAMECHANGED);
+    flush_sequence();
+    hmenu = GetSystemMenu(hwnd, FALSE);
+    ok(hmenu != 0, "GetSystemMenu error %d\n", GetLastError());
+
+    DestroyWindow(hwnd);
 
     /* test new window with CS_NOCLOSE style */
     hwnd = CreateWindowExA(0, "NoCloseWindowClass", NULL, WS_OVERLAPPEDWINDOW,
@@ -3610,9 +3626,6 @@ static void test_messages(void)
     SetWindowPos( hwnd, 0, 0, 0, 200, 200, SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE );
     ok_sequence(WmSWP_ResizePopupSeq, "SetWindowPos:ResizePopup", FALSE );
 
-    test_sys_menu(hwnd);
-
-    flush_sequence();
     DestroyWindow(hwnd);
     ok_sequence(WmDestroyOverlappedSeq, "DestroyWindow:overlapped", FALSE);
 
@@ -8128,6 +8141,7 @@ START_TEST(msg)
     test_quit_message();
     test_TrackMouseEvent();
     test_SetWindowRgn();
+    test_sys_menu();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
