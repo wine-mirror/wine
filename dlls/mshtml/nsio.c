@@ -568,6 +568,29 @@ static nsresult NSAPI nsChannel_Open(nsIHttpChannel *iface, nsIInputStream **_re
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
+static BOOL do_load_from_moniker_hack(nsChannel *This)
+{
+    PRBool b = FALSE;
+
+    /* 
+     * We should always load the page from IMoniker, but Wine is not yet
+     * ready for this. This function is a heuristic, that decides which
+     * way of loading is better (Gecko implementation or IMoniker). The
+     * aim is to always return TRUE.
+     */
+
+    /* Load from moniker if there is no Gecko channel available */
+    if(!This->channel)
+        return TRUE;
+
+    /* Load about protocol from moniker */
+    nsIWineURI_SchemeIs(This->uri, "about", &b);
+    if(b)
+        return TRUE;
+
+    return FALSE;
+}
+
 static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListener *aListener,
                                           nsISupports *aContext)
 {
@@ -602,7 +625,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
 
-            if(!This->channel) {
+            if(do_load_from_moniker_hack(This)) {
                 if(This->load_group) {
                     nsres = nsILoadGroup_AddRequest(This->load_group,
                                                     (nsIRequest*)NSCHANNEL(This), NULL);
