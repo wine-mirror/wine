@@ -2444,7 +2444,7 @@ static INT MENU_ExecFocusedItem( MTRACKER* pmt, HMENU hMenu, UINT wFlags )
 
     item = &menu->items[menu->FocusedItem];
 
-    TRACE("%p %08x %p\n", hMenu, item->wID, item->hSubMenu);
+    TRACE("hMenu %p wID %08x hSubMenu %p fType %04x\n", hMenu, item->wID, item->hSubMenu, item->fType);
 
     if (!(item->fType & MF_POPUP))
     {
@@ -2566,10 +2566,13 @@ static INT MENU_ButtonUp( MTRACKER* pmt, HMENU hPtMenu, UINT wFlags)
 
 	if( item && (ptmenu->FocusedItem == id ))
 	{
+            debug_print_menuitem ("FocusedItem: ", item, "");
+
 	    if( !(item->fType & MF_POPUP) )
 	    {
 	        INT executedMenuId = MENU_ExecFocusedItem( pmt, hPtMenu, wFlags);
-	        return (executedMenuId < 0) ? -1 : executedMenuId;
+                if (executedMenuId == -1 || executedMenuId == -2) return -1;
+                return executedMenuId;
 	    }
 
 	    /* If we are dealing with the top-level menu            */
@@ -3050,6 +3053,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 		    if (hmenu)
 		    {
                         executedMenuId = MENU_ButtonUp( &mt, hmenu, wFlags);
+                        TRACE("executedMenuId %d\n", executedMenuId);
 
 			/* End the loop if executedMenuId is an item ID */
 			/* or if the job was done (executedMenuId = 0). */
@@ -3214,7 +3218,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
     /* The return value is only used by TrackPopupMenu */
     if (!(wFlags & TPM_RETURNCMD)) return TRUE;
-    if (executedMenuId < 0) executedMenuId = 0;
+    if (executedMenuId == -1) executedMenuId = 0;
     return executedMenuId;
 }
 
@@ -3363,6 +3367,9 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
                            INT nReserved, HWND hWnd, const RECT *lpRect )
 {
     BOOL ret = FALSE;
+
+    TRACE("hmenu %p flags %04x (%d,%d) reserved %d hwnd %p rect %s\n",
+           hMenu, wFlags, x, y, nReserved, hWnd, wine_dbgstr_rect(lpRect));
 
     MENU_InitTracking(hWnd, hMenu, TRUE, wFlags);
 
