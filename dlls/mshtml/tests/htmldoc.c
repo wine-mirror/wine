@@ -115,6 +115,7 @@ static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
 static BOOL readystate_set_loading = FALSE;
+static BOOL editmode = FALSE;
 static enum load_state_t {
     LD_DOLOAD,
     LD_LOADING,
@@ -127,6 +128,7 @@ static LPCOLESTR expect_status_text = NULL;
 
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_readyState(IUnknown*);
+static void test_MSHTML_QueryStatus(IUnknown*,DWORD);
 
 static HRESULT WINAPI HlinkFrame_QueryInterface(IHlinkFrame *iface, REFIID riid, void **ppv)
 {
@@ -249,6 +251,10 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
     switch(dispID) {
     case DISPID_READYSTATE:
         CHECK_EXPECT2(OnChanged_READYSTATE);
+        test_MSHTML_QueryStatus(NULL, OLECMDF_SUPPORTED
+            | (editmode && (load_state == LD_INTERACTIVE || load_state == LD_COMPLETE)
+               ? OLECMDF_ENABLED : 0));
+
         if(readystate_set_loading) {
             readystate_set_loading = FALSE;
             load_state = LD_LOADING;
@@ -2006,6 +2012,36 @@ static const OLECMDF expect_cmds[OLECMDID_GETPRINTTEMPLATE+1] = {
     OLECMDF_SUPPORTED                   /* OLECMDID_GETPRINTTEMPLATE */
 };
 
+static void test_QueryStatus(IUnknown *unk, REFIID cgid, ULONG cmdid, DWORD cmdf)
+{
+    IOleCommandTarget *cmdtrg;
+    OLECMD olecmd = {cmdid, 0};
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleCommandTarget, (void**)&cmdtrg);
+    ok(hres == S_OK, "QueryInterface(IID_IOleCommandTarget failed: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    hres = IOleCommandTarget_QueryStatus(cmdtrg, cgid, 1, &olecmd, NULL);
+    ok(hres == S_OK, "QueryStatus failed: %08x\n", hres);
+
+    IOleCommandTarget_Release(cmdtrg);
+
+    ok(olecmd.cmdID == cmdid, "cmdID changed\n");
+    ok(olecmd.cmdf == cmdf, "cmdf=%08x, expected %08x\n", olecmd.cmdf, cmdf);
+}
+
+static void test_MSHTML_QueryStatus(IUnknown *unk, DWORD cmdf)
+{
+    static IUnknown *_unk;
+
+    if(unk) _unk = unk;
+    else unk = _unk;
+
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_BOLD, cmdf);
+}
+
 static void test_OleCommandTarget(IUnknown *unk)
 {
     IOleCommandTarget *cmdtrg;
@@ -2147,6 +2183,8 @@ static void test_exec_editmode(IUnknown *unk)
     CHECK_CALLED(OnChanged_READYSTATE);
 
     IOleCommandTarget_Release(cmdtrg);
+
+    editmode = TRUE;
 }
 
 static HWND create_container_window(void)
@@ -2577,6 +2615,7 @@ static void init_test(enum load_state_t ls) {
     set_clientsite = FALSE;
     call_UIActivate = FALSE;
     load_state = ls;
+    editmode = FALSE;
 }
 
 static void test_HTMLDocument(enum load_state_t ls)
@@ -2594,6 +2633,7 @@ static void test_HTMLDocument(enum load_state_t ls)
         return;
 
     test_QueryInterface(unk);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_ConnectionPointContainer(unk);
     test_Persist(unk);
     if(load_state == LD_NO)
@@ -2608,6 +2648,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     if(load_state == LD_LOADING)
         test_download(FALSE);
 
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_OleCommandTarget_fail(unk);
     test_OleCommandTarget(unk);
     test_OnAmbientPropertyChange(unk);
@@ -2677,6 +2718,7 @@ static void test_HTMLDocument_hlink(void)
 
     test_download(FALSE);
 
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_exec_onunload(unk);
     test_Window(unk, TRUE);
     test_InPlaceDeactivate(unk, TRUE);
@@ -2712,11 +2754,14 @@ static void test_editing_mode(void)
     test_ConnectionPointContainer(unk);
     test_ClientSite(oleobj, CLIENTSITE_EXPECTPATH);
     test_DoVerb(oleobj);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
 
     IOleObject_Release(oleobj);
 
     test_exec_editmode(unk);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_download(TRUE);
+    test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
     test_UIDeactivate();
     test_InPlaceDeactivate(unk, TRUE);
