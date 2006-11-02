@@ -583,7 +583,7 @@ RTFCharSetToCodePage(RTF_Info *info, int charset)
 		{
                         CHARSETINFO csi;
                         DWORD n = charset;
-                        
+
                         /* FIXME: TranslateCharsetInfo does not work as good as it
                          * should, so let's use it only when all else fails */
                         if (!TranslateCharsetInfo(&n, &csi, TCI_SRCCHARSET))
@@ -916,7 +916,7 @@ static void ReadFontTbl(RTF_Info *info)
 				{
 				default:
 					/* ignore token but announce it */
-					ERR ("%s: unknown token \"%s\"\n",
+					WARN ("%s: unknown token \"%s\"\n",
 						fn, info->rtfTextBuf);
                                         break;
 				case rtfFontFamily:
@@ -986,7 +986,7 @@ static void ReadFontTbl(RTF_Info *info)
 			else
 			{
 				/* ignore token but announce it */
-				ERR ( "%s: unknown token \"%s\"\n",
+				WARN ( "%s: unknown token \"%s\"\n",
 							fn,info->rtfTextBuf);
 			}
 			RTFGetToken (info);
@@ -1064,7 +1064,7 @@ static void ReadColorTbl(RTF_Info *info)
                         group_level++;
                         continue;
                 }
-                
+
 		cp = New (RTFColor);
 		if (cp == NULL)
 			ERR ( "%s: cannot allocate color entry\n", fn);
@@ -1228,7 +1228,7 @@ static void ReadStyleSheet(RTF_Info *info)
 			else		/* unrecognized */
 			{
 				/* ignore token but announce it */
-				ERR ( "%s: unknown token \"%s\"\n",
+				WARN ( "%s: unknown token \"%s\"\n",
 							fn, info->rtfTextBuf);
 			}
 		}
