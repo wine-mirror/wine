@@ -682,7 +682,7 @@ void CALLBACK MACRO_JumpContext(LPCSTR lpszPath, LPCSTR lpszWindow, LONG context
 {
     HLPFILE*    hlpfile;
 
-    WINE_TRACE("(\"%s\", \"%s\", %d)", lpszPath, lpszWindow, context);
+    WINE_TRACE("(\"%s\", \"%s\", %d)\n", lpszPath, lpszWindow, context);
     hlpfile = WINHELP_LookupHelpFile(lpszPath);
     /* Some madness: what user calls 'context', hlpfile calls 'map' */
     WINHELP_CreateHelpWindowByMap(hlpfile, context,
