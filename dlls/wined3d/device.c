@@ -6440,8 +6440,8 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *i
             FIXME("Reading of depthstencil not yet supported\n");
         }
 
-        glReadPixels(surfaceGlDescription->target,
-                    surfaceGlDescription->level,
+        glReadPixels(0,
+                    0,
                     surfaceWidth,
                     surfaceHeight,
                     surfaceGlDescription->glFormat,
