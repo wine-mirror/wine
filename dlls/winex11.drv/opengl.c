@@ -895,21 +895,24 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
       iPixelType = PFD_TYPE_COLORINDEX;
 
     if (ppfd->iPixelType != iPixelType) {
+      TRACE("pixel type mismatch\n");
       goto choose_exit;
     }
 
     /* Doublebuffer */
     pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DOUBLEBUFFER, &value); if (value) dwFlags |= PFD_DOUBLEBUFFER;
-    if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE)) {
-      if ((ppfd->dwFlags & PFD_DOUBLEBUFFER) != (dwFlags & PFD_DOUBLEBUFFER)) {
+    if (!(ppfd->dwFlags & PFD_DOUBLEBUFFER_DONTCARE) && (ppfd->dwFlags & PFD_DOUBLEBUFFER)) {
+      if (!(dwFlags & PFD_DOUBLEBUFFER)) {
+        TRACE("dbl buffer mismatch\n");
         goto choose_exit;
       }
     }
 
     /* Stereo */
     pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STEREO, &value); if (value) dwFlags |= PFD_STEREO;
-    if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE)) {
-      if ((ppfd->dwFlags & PFD_STEREO) != (dwFlags & PFD_STEREO)) {
+    if (!(ppfd->dwFlags & PFD_STEREO_DONTCARE) && (ppfd->dwFlags & PFD_STEREO)) {
+      if (!(dwFlags & PFD_STEREO)) {
+        TRACE("stereo mismatch\n");
         goto choose_exit;
       }
     }
@@ -917,24 +920,28 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
     /* Alpha bits */
     pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_ALPHA_SIZE, &value);
     if (ppfd->iPixelType==PFD_TYPE_RGBA && ppfd->cAlphaBits && !value) {
+      TRACE("alpha mismatch\n");
       goto choose_exit;
     }
 
     /* Depth bits */
     pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_DEPTH_SIZE, &value);
     if (ppfd->cDepthBits && !value) {
+      TRACE("depth mismatch\n");
       goto choose_exit;
     }
 
     /* Stencil bits */
     pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_STENCIL_SIZE, &value);
     if (ppfd->cStencilBits && !value) {
+      TRACE("stencil mismatch\n");
       goto choose_exit;
     }
 
     /* Aux buffers */
     pglXGetFBConfigAttrib(gdi_display, cfgs[fmt_index], GLX_AUX_BUFFERS, &value);
     if (ppfd->cAuxBuffers && !value) {
+      TRACE("aux mismatch\n");
       goto choose_exit;
     }
 
