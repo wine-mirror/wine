@@ -74,9 +74,6 @@ enum x11drv_escape_codes
 void (*wine_tsx11_lock_ptr)(void) = NULL;
 void (*wine_tsx11_unlock_ptr)(void) = NULL;
 
-static GLXContext default_cx = NULL;
-static Display *default_display;  /* display to use for default context */
-
 static HMODULE opengl32_handle;
 
 static char  internal_gl_disabled_extensions[512];
@@ -105,17 +102,6 @@ void enter_gl(void)
 
     wine_tsx11_lock_ptr();
     return;
-}
-
-/* retrieve the X display to use on a given DC */
-inline static Display *get_display( HDC hdc )
-{
-    Display *display;
-    enum x11drv_escape_codes escape = X11DRV_GET_DISPLAY;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(display), (LPSTR)&display )) display = NULL;
-    return display;
 }
 
 /***********************************************************************
@@ -635,19 +621,12 @@ void internal_glGetIntegerv(GLenum pname, GLint* params) {
    creating a rendering context.... */
 static BOOL process_attach(void)
 {
-  XWindowAttributes win_attr;
-  Visual *rootVisual;
-  int num;
-  XVisualInfo template;
-  HDC hdc;
-  XVisualInfo *vis = NULL;
-  Window root = (Window)GetPropA( GetDesktopWindow(), "__wine_x11_whole_window" );
   HMODULE mod = GetModuleHandleA( "winex11.drv" );
   HMODULE mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
   DWORD size = sizeof(internal_gl_disabled_extensions);
   HKEY hkey = 0;
 
-  if (!root || !mod || !mod_gdi32)
+  if (!mod || !mod_gdi32)
   {
       ERR("X11DRV or GDI32 not loaded. Cannot create default context.\n");
       return FALSE;
@@ -661,40 +640,6 @@ static BOOL process_attach(void)
   /* Interal WGL function */
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
 
-  hdc = GetDC(0);
-  default_display = get_display( hdc );
-  ReleaseDC( 0, hdc );
-  if (!default_display)
-  {
-      ERR("X11DRV not loaded. Cannot get display for screen DC.\n");
-      return FALSE;
-  }
-
-  ENTER_GL();
-
-  /* Try to get the visual from the Root Window.  We can't use the standard (presumably
-     double buffered) X11DRV visual with the Root Window, since we don't know if the Root
-     Window was created using the standard X11DRV visual, and glXMakeCurrent can't deal
-     with mismatched visuals.  Note that the Root Window visual may not be double
-     buffered, so apps actually attempting to render this way may flicker */
-  if (XGetWindowAttributes( default_display, root, &win_attr ))
-  {
-    rootVisual = win_attr.visual;
-  }
-  else
-  {
-    /* Get the default visual, since we can't seem to get the attributes from the
-       Root Window.  Let's hope that the Root Window Visual matches the DefaultVisual */
-    rootVisual = DefaultVisual( default_display, DefaultScreen(default_display) );
-  }
-
-  template.visualid = XVisualIDFromVisual(rootVisual);
-  vis = XGetVisualInfo(default_display, VisualIDMask, &template, &num);
-  if (vis != NULL) default_cx = glXCreateContext(default_display, vis, 0, GL_TRUE);
-  if (default_cx != NULL) glXMakeCurrent(default_display, root, default_cx);
-  XFree(vis);
-  LEAVE_GL();
-
   internal_gl_disabled_extensions[0] = 0;
   if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\OpenGL", &hkey)) {
     if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (LPBYTE)internal_gl_disabled_extensions, &size)) {
@@ -703,9 +648,6 @@ static BOOL process_attach(void)
     RegCloseKey(hkey);
   }
 
-  if (default_cx == NULL) {
-    ERR("Could not create default context.\n");
-  }
   return TRUE;
 }
 
@@ -714,8 +656,6 @@ static BOOL process_attach(void)
 
 static void process_detach(void)
 {
-  glXDestroyContext(default_display, default_cx);
-
   HeapFree(GetProcessHeap(), 0, internal_gl_extensions);
 }
 
