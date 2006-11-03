@@ -105,7 +105,6 @@ extern NTSTATUS TAPE_DeviceIoControl(HANDLE hDevice,
 
 /* file I/O */
 extern NTSTATUS FILE_GetNtStatus(void);
-extern NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info );
 extern BOOL DIR_is_hidden_file( const UNICODE_STRING *name );
 extern NTSTATUS DIR_unmount_device( HANDLE handle );
 extern NTSTATUS DIR_get_unix_cwd( char **cwd );

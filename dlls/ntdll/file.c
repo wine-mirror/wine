@@ -1617,8 +1617,8 @@ NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC
 
 #if defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || defined(__APPLE__)
 /* helper for FILE_GetDeviceInfo to hide some platform differences in fstatfs */
-static inline get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, const char *fstypename,
-                                       size_t fstypesize, unsigned int flags )
+static inline void get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, const char *fstypename,
+                                            size_t fstypesize, unsigned int flags )
 {
     if (!strncmp("cd9660", fstypename, fstypesize) ||
         !strncmp("udf", fstypename, fstypesize))
@@ -1652,11 +1652,11 @@ static inline get_device_info_fstatfs( FILE_FS_DEVICE_INFORMATION *info, const c
 #endif
 
 /******************************************************************************
- *              FILE_GetDeviceInfo
+ *              get_device_info
  *
  * Implementation of the FileFsDeviceInformation query for NtQueryVolumeInformationFile.
  */
-NTSTATUS FILE_GetDeviceInfo( int fd, FILE_FS_DEVICE_INFORMATION *info )
+static NTSTATUS get_device_info( int fd, FILE_FS_DEVICE_INFORMATION *info )
 {
     struct stat st;
 
@@ -1873,7 +1873,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
         {
             FILE_FS_DEVICE_INFORMATION *info = buffer;
 
-            if ((io->u.Status = FILE_GetDeviceInfo( fd, info )) == STATUS_SUCCESS)
+            if ((io->u.Status = get_device_info( fd, info )) == STATUS_SUCCESS)
                 io->Information = sizeof(*info);
         }
         break;
