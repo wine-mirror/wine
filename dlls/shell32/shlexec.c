@@ -75,17 +75,15 @@ static const WCHAR wszEmpty[] = {0};
  * %S ???
  * %* all following parameters (see batfile)
  *
- * FIXME: use 'len'
- * FIXME: Careful of going over string boundaries. No checking is done to 'res'...
  */
-static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lpFile, LPITEMIDLIST pidl, LPCWSTR args)
+static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lpFile, LPITEMIDLIST pidl, LPCWSTR args, DWORD* out_len)
 {
     WCHAR   xlpFile[1024];
     BOOL    done = FALSE;
     BOOL    found_p1 = FALSE;
     PWSTR   res = out;
     PCWSTR  cmd;
-    LPVOID  pv;
+    DWORD   used = 0;
 
     TRACE("%p, %d, %s, %s, %p, %p\n", out, len, debugstr_w(fmt),
           debugstr_w(lpFile), pidl, args);
@@ -98,7 +96,9 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
             {
             case '\0':
             case '%':
-                *res++ = '%';
+                used++;
+                if (used < len)
+                    *res++ = '%';
                 break;
 
             case '2':
@@ -115,15 +115,31 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                 {
                     if (*fmt == '*')
                     {
-                        *res++ = '"';
+                        used++;
+                        if (used < len)
+                            *res++ = '"';
                         while(*args)
-                            *res++ = *args++;
-                        *res++ = '"';
+                        {
+                            used++;
+                            if (used < len)
+                                *res++ = *args++;
+                            else
+                                args++;
+                        }
+                        used++;
+                        if (used < len)
+                            *res++ = '"';
                     }
                     else
                     {
                         while(*args && !isspace(*args))
-                            *res++ = *args++;
+                        {
+                            used++;
+                            if (used < len)
+                                *res++ = *args++;
+                            else
+                                args++;
+                        }
 
                         while(isspace(*args))
                             ++args;
@@ -145,15 +161,27 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
                        enclosed in double quotation marks */
                     if ((res == out || *(fmt + 1) != '"') && *cmd != '"')
                     {
-                        *res++ = '"';
-                        strcpyW(res, cmd);
-                        res += strlenW(cmd);
-                        *res++ = '"';
+                        used++;
+                        if (used < len)
+                            *res++ = '"';
+                        used += strlenW(cmd);
+                        if (used < len)
+                        {
+                            strcpyW(res, cmd);
+                            res += strlenW(cmd);
+                        }
+                        used++;
+                        if (used < len)
+                            *res++ = '"';
                     }
                     else
                     {
-                        strcpyW(res, cmd);
-                        res += strlenW(cmd);
+                        used += strlenW(cmd);
+                        if (used < len)
+                        {
+                            strcpyW(res, cmd);
+                            res += strlenW(cmd);
+                        }
                     }
                 }
                 found_p1 = TRUE;
@@ -167,18 +195,35 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
             case 'l':
             case 'L':
 		if (lpFile) {
-		    strcpyW(res, lpFile);
-		    res += strlenW(lpFile);
+		    used += strlenW(lpFile);
+		    if (used < len)
+		    {
+			strcpyW(res, lpFile);
+			res += strlenW(lpFile);
+		    }
 		}
-                found_p1 = TRUE;
+		found_p1 = TRUE;
                 break;
 
             case 'i':
             case 'I':
 		if (pidl) {
+		    INT chars = 0;
+		    /* %p should not exceed 8, maybe 16 when looking foward to 64bit.
+		     * allowing a buffer of 100 should more than exceed all needs */
+		    WCHAR buf[100];
+		    LPVOID  pv;
 		    HGLOBAL hmem = SHAllocShared(pidl, ILGetSize(pidl), 0);
 		    pv = SHLockShared(hmem, 0);
-		    res += sprintfW(res, wszILPtr, pv);
+		    chars = sprintfW(buf, wszILPtr, pv);
+		    if (chars >= sizeof(buf)/sizeof(WCHAR))
+			ERR("pidl format buffer too small!");
+		    used += chars;
+		    if (used < len)
+		    {
+			strcpyW(res,buf);
+			res += chars;
+		    }
 		    SHUnlockShared(pv);
 		}
                 found_p1 = TRUE;
@@ -205,10 +250,23 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 
                     envRet = GetEnvironmentVariableW(tmpBuffer, tmpEnvBuff, MAX_PATH);
                     if (envRet == 0 || envRet > MAX_PATH)
-                        strcpyW( res, tmpBuffer );
+                    {
+                        used += strlenW(tmpBuffer);
+                        if (used < len)
+                        {
+                            strcpyW( res, tmpBuffer );
+                            res += strlenW(tmpBuffer);
+                        }
+                    }
                     else
-                        strcpyW( res, tmpEnvBuff );
-                    res += strlenW(res);
+                    {
+                        used += strlenW(tmpEnvBuff);
+                        if (used < len)
+                        {
+                            strcpyW( res, tmpEnvBuff );
+                            res += strlenW(tmpEnvBuff);
+                        }
+                    }
                 }
                 done = TRUE;
                 break;
@@ -220,10 +278,19 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
             }
         }
         else
-            *res++ = *fmt++;
+        {
+            used ++;
+            if (used < len) 
+                *res++ = *fmt++;
+            else
+                fmt++;
+        }
     }
 
     *res = '\0';
+    TRACE("used %i of %i space\n",used,len);
+    if (out_len)
+        *out_len = used;
 
     return found_p1;
 }
@@ -621,7 +688,10 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
 
 	if (retval > 32)
 	{
-	    SHELL_ArgifyW(lpResult, resultLen, command, xlpFile, pidl, args);
+	    DWORD finishedLen;
+	    SHELL_ArgifyW(lpResult, resultLen, command, xlpFile, pidl, args, &finishedLen);
+	    if (finishedLen > resultLen)
+		ERR("Argify buffer not large enough.. truncated\n");
 
 	    /* Remove double quotation marks and command line arguments */
 	    if (*lpResult == '"')
@@ -703,6 +773,7 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
     WCHAR *     exec;
     DWORD       ddeInst = 0;
     DWORD       tid;
+    DWORD       resultLen;
     HSZ         hszApp, hszTopic;
     HCONV       hConv;
     HDDEDATA    hDdeData;
@@ -767,7 +838,9 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
         }
     }
 
-    SHELL_ArgifyW(res, sizeof(res)/sizeof(WCHAR), exec, lpFile, pidl, szCommandline);
+    SHELL_ArgifyW(res, sizeof(res)/sizeof(WCHAR), exec, lpFile, pidl, szCommandline, &resultLen);
+    if (resultLen > sizeof(res)/sizeof(WCHAR))
+        ERR("Argify buffer not large enough, truncated\n");
     TRACE("%s %s => %s\n", debugstr_w(exec), debugstr_w(lpFile), debugstr_w(res));
 
     /* It's documented in the KB 330337 that IE has a bug and returns
@@ -820,6 +893,7 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
     if (RegQueryValueW(HKEY_CLASSES_ROOT, key, cmd, &cmdlen) == ERROR_SUCCESS)
     {
         WCHAR param[1024];
+        DWORD resultLen;
 
         TRACE("got cmd: %s\n", debugstr_w(cmd));
 
@@ -828,13 +902,16 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
         /* Is there a replace() function anywhere? */
         cmdlen /= sizeof(WCHAR);
         cmd[cmdlen] = '\0';
-        if (!SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline))
+        if (!SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen))
         {
             /* looks like there is no %1 param in the cmd, add one */
             static const WCHAR oneW[] = { ' ','\"','%','1','\"',0 };
             strcatW(cmd, oneW);
-            SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline);
+            SHELL_ArgifyW(param, sizeof(param)/sizeof(WCHAR), cmd, lpFile, psei->lpIDList, szCommandline, &resultLen);
         }
+        if (resultLen > sizeof(param)/sizeof(WCHAR))
+            ERR("Argify buffer not large enough, truncating\n");
+
         TRACE("executing: %s\n", debugstr_w(param));
         retval = execfunc(param, env, FALSE, psei, psei_out);
     }
@@ -1299,6 +1376,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         /* the Commandline contains 'c:\Path\wordpad.exe "%1"' */
         /* FIXME: szCommandline should not be of a fixed size. Fixed to 1024, MAX_PATH is way too short! */
         ULONG cmask=(sei_tmp.fMask & SEE_MASK_CLASSALL);
+        DWORD resultLen;
         HCR_GetExecuteCommandW((cmask == SEE_MASK_CLASSKEY) ? sei_tmp.hkeyClass : NULL,
                                (cmask == SEE_MASK_CLASSNAME) ? sei_tmp.lpClass: NULL,
                                sei_tmp.lpVerb,
@@ -1308,12 +1386,14 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         TRACE("SEE_MASK_CLASSNAME->'%s', doc->'%s'\n", debugstr_w(wszParameters), debugstr_w(wszApplicationName));
 
         wcmd[0] = '\0';
-        done = SHELL_ArgifyW(wcmd, sizeof(wcmd)/sizeof(WCHAR), wszParameters, wszApplicationName, sei_tmp.lpIDList, NULL);
+        done = SHELL_ArgifyW(wcmd, sizeof(wcmd)/sizeof(WCHAR), wszParameters, wszApplicationName, sei_tmp.lpIDList, NULL, &resultLen);
         if (!done && wszApplicationName[0])
         {
             strcatW(wcmd, wSpace);
             strcatW(wcmd, wszApplicationName);
         }
+        if (resultLen > sizeof(wcmd)/sizeof(WCHAR))
+            ERR("Argify buffer not large enough... truncating\n");
         retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
 
         HeapFree(GetProcessHeap(), 0, wszApplicationName);
@@ -1334,6 +1414,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 	    } else {
                 WCHAR target[MAX_PATH];
                 DWORD attribs;
+                DWORD resultLen;
 		/* Check if we're executing a directory and if so use the
 		   handler for the Folder class */
 		strcpyW(target, buffer);
@@ -1344,7 +1425,9 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 		                           sei_tmp.lpVerb,
 		                           buffer, sizeof(buffer))) {
 		    SHELL_ArgifyW(wszApplicationName, dwApplicationNameLen,
-		                  buffer, target, sei_tmp.lpIDList, NULL);
+		                  buffer, target, sei_tmp.lpIDList, NULL, &resultLen);
+		    if (resultLen > dwApplicationNameLen)
+			ERR("Argify buffer not large enough... truncating\n");
 		}
 		sei_tmp.fMask &= ~SEE_MASK_INVOKEIDLIST;
 	    }
