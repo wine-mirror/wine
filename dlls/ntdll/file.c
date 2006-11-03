@@ -286,8 +286,6 @@ typedef struct async_fileio
     off_t               offset;
     int                 queue_apc_on_error;
     BOOL                avail_mode;
-    int                 fd;
-    int                 needs_close;
     HANDLE              event;
 } async_fileio;
 
@@ -295,7 +293,6 @@ static void fileio_terminate(async_fileio *fileio, IO_STATUS_BLOCK* iosb)
 {
     TRACE("data: %p\n", fileio);
 
-    if (fileio->needs_close) close( fileio->fd );
     if (fileio->event) NtSetEvent( fileio->event, NULL );
 
     if (fileio->apc && 
@@ -382,14 +379,11 @@ NTSTATUS FILE_GetNtStatus(void)
 
 /***********************************************************************
  *             FILE_AsyncReadService      (INTERNAL)
- *
- *  This function is called while the client is waiting on the
- *  server, so we can't make any server calls here.
  */
 static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULONG status)
 {
     async_fileio *fileio = (async_fileio*)user;
-    int result;
+    int fd, needs_close, result;
     int already = iosb->Information;
 
     TRACE("%p %p 0x%x\n", iosb, fileio->buffer, status);
@@ -399,18 +393,22 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
     case STATUS_ALERTED: /* got some new data */
         if (iosb->u.Status != STATUS_PENDING) FIXME("unexpected status %08x\n", iosb->u.Status);
         /* check to see if the data is ready (non-blocking) */
+        if ((iosb->u.Status = server_get_unix_fd( fileio->handle, FILE_READ_DATA, &fd, &needs_close, NULL )))
+        {
+            fileio_terminate(fileio, iosb);
+            break;
+        }
         if ( fileio->avail_mode )
-            result = read(fileio->fd, &fileio->buffer[already], 
-                          fileio->count - already);
+            result = read(fd, &fileio->buffer[already], fileio->count - already);
         else
         {
-            result = pread(fileio->fd, &fileio->buffer[already],
+            result = pread(fd, &fileio->buffer[already],
                            fileio->count - already,
                            fileio->offset + already);
             if ((result < 0) && (errno == ESPIPE))
-                result = read(fileio->fd, &fileio->buffer[already], 
-                              fileio->count - already);
+                result = read(fd, &fileio->buffer[already], fileio->count - already);
         }
+        if (needs_close) close( fd );
 
         if (result < 0)
         {
@@ -545,16 +543,14 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
         fileio->buffer = buffer;
         fileio->queue_apc_on_error = 0;
         fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
-        fileio->fd = unix_handle;  /* FIXME */
-        fileio->needs_close = needs_close;
         fileio->event = hEvent;
-        NtResetEvent(hEvent, NULL);
+        if (hEvent) NtResetEvent(hEvent, NULL);
+        if (needs_close) close( unix_handle );
 
         io_status->u.Status = STATUS_PENDING;
         ret = fileio_queue_async(fileio, io_status, TRUE);
         if (ret != STATUS_SUCCESS)
         {
-            if (needs_close) close( unix_handle );
             if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
             return ret;
         }
@@ -625,14 +621,11 @@ done:
 
 /***********************************************************************
  *             FILE_AsyncWriteService      (INTERNAL)
- *
- *  This function is called while the client is waiting on the
- *  server, so we can't make any server calls here.
  */
 static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULONG status)
 {
     async_fileio *fileio = (async_fileio *) ovp;
-    int result;
+    int result, fd, needs_close;
     int already = iosb->Information;
 
     TRACE("(%p %p 0x%x)\n",iosb, fileio->buffer, status);
@@ -641,17 +634,21 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
     {
     case STATUS_ALERTED:
         /* write some data (non-blocking) */
+        if ((iosb->u.Status = server_get_unix_fd( fileio->handle, FILE_WRITE_DATA, &fd, &needs_close, NULL )))
+        {
+            fileio_terminate(fileio, iosb);
+            break;
+        }
         if ( fileio->avail_mode )
-            result = write(fileio->fd, &fileio->buffer[already], 
-                           fileio->count - already);
+            result = write(fd, &fileio->buffer[already], fileio->count - already);
         else
         {
-            result = pwrite(fileio->fd, &fileio->buffer[already], 
+            result = pwrite(fd, &fileio->buffer[already],
                             fileio->count - already, fileio->offset + already);
             if ((result < 0) && (errno == ESPIPE))
-                result = write(fileio->fd, &fileio->buffer[already], 
-                               fileio->count - already);
+                result = write(fd, &fileio->buffer[already], fileio->count - already);
         }
+        if (needs_close) close( fd );
 
         if (result < 0)
         {
@@ -767,17 +764,15 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
         fileio->buffer = (void*)buffer;
         fileio->queue_apc_on_error = 0;
         fileio->avail_mode = (flags & FD_FLAG_AVAILABLE);
-        fileio->fd = unix_handle;  /* FIXME */
-        fileio->needs_close = needs_close;
         fileio->event = hEvent;
-        NtResetEvent(hEvent, NULL);
+        if (hEvent) NtResetEvent(hEvent, NULL);
+        if (needs_close) close( unix_handle );
 
         io_status->Information = 0;
         io_status->u.Status = STATUS_PENDING;
         ret = fileio_queue_async(fileio, io_status, FALSE);
         if (ret != STATUS_SUCCESS)
         {
-            if (needs_close) close( unix_handle );
             if (flags & FD_FLAG_TIMEOUT) NtClose(hEvent);
             return ret;
         }
