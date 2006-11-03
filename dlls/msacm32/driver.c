@@ -402,6 +402,8 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
         PWINE_ACMDRIVERID padid;
         LRESULT lResult;
         LPDRVCONFIGINFO pConfigInfo = NULL;
+        LPWSTR section_name = NULL;
+        LPWSTR alias_name = NULL;
 
         /* Check whether handle is an HACMDRIVERID */
         padid  = MSACM_GetDriverID((HACMDRIVERID)had);
@@ -434,16 +436,19 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
                     ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
                 } else {
                     static const WCHAR drivers32[] = {'D','r','i','v','e','r','s','3','2','\0'};
+
                     pConfigInfo->dwDCISize = iStructSize;
-                
-                    pConfigInfo->lpszDCISectionName = HeapAlloc(MSACM_hHeap, 0, (strlenW(drivers32) + 1) * sizeof(WCHAR));
-                    if (pConfigInfo->lpszDCISectionName) strcpyW((WCHAR *)pConfigInfo->lpszDCISectionName, drivers32);
-                    pConfigInfo->lpszDCIAliasName = HeapAlloc(MSACM_hHeap, 0, (strlenW(pAlias) + 1) * sizeof(WCHAR));
-                    if (pConfigInfo->lpszDCIAliasName) strcpyW((WCHAR *)pConfigInfo->lpszDCIAliasName, pAlias);
-                    
+
+                    section_name = HeapAlloc(MSACM_hHeap, 0, (strlenW(drivers32) + 1) * sizeof(WCHAR));
+                    if (section_name) strcpyW(section_name, drivers32);
+                    pConfigInfo->lpszDCISectionName = section_name;
+                    alias_name = HeapAlloc(MSACM_hHeap, 0, (strlenW(pAlias) + 1) * sizeof(WCHAR));
+                    if (alias_name) strcpyW(alias_name, pAlias);
+                    pConfigInfo->lpszDCIAliasName = alias_name;
+
                     if (pConfigInfo->lpszDCISectionName == NULL || pConfigInfo->lpszDCIAliasName == NULL) {
-                        HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCIAliasName);
-                        HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCISectionName);
+                        HeapFree(MSACM_hHeap, 0, alias_name);
+                        HeapFree(MSACM_hHeap, 0, section_name);
                         HeapFree(MSACM_hHeap, 0, pConfigInfo);
                         pConfigInfo = NULL;
                         ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
@@ -471,8 +476,8 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
             lResult = MSACM_Message(had, uMsg, lParam1, lParam2);
         }
         if (pConfigInfo) {
-            HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCIAliasName);
-            HeapFree(MSACM_hHeap, 0, (void *)pConfigInfo->lpszDCISectionName);
+            HeapFree(MSACM_hHeap, 0, alias_name);
+            HeapFree(MSACM_hHeap, 0, section_name);
             HeapFree(MSACM_hHeap, 0, pConfigInfo);
         }
         return lResult;
@@ -523,6 +528,7 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
     {
         ACMDRVOPENDESCW	adod;
         int		len;
+        LPWSTR		section_name;
 
 	/* this is not an externally added driver... need to actually load it */
 	if (!padid->pszDriverAlias)
@@ -538,14 +544,15 @@ MMRESULT WINAPI acmDriverOpen(PHACMDRIVER phad, HACMDRIVERID hadid, DWORD fdwOpe
         adod.dwFlags = fdwOpen;
         adod.dwError = 0;
         len = strlen("Drivers32") + 1;
-        adod.pszSectionName = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, "Drivers32", -1, (LPWSTR)adod.pszSectionName, len);
+        section_name = HeapAlloc(MSACM_hHeap, 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, "Drivers32", -1, section_name, len);
+        adod.pszSectionName = section_name;
         adod.pszAliasName = padid->pszDriverAlias;
         adod.dnDevNode = 0;
 
         pad->hDrvr = OpenDriver(padid->pszDriverAlias, NULL, (DWORD)&adod);
 
-        HeapFree(MSACM_hHeap, 0, (LPWSTR)adod.pszSectionName);
+        HeapFree(MSACM_hHeap, 0, section_name);
         if (!pad->hDrvr)
         {
             ret = adod.dwError;
