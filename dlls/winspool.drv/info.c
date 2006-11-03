@@ -4665,159 +4665,141 @@ BOOL WINAPI EnumPrinterDriversA(LPSTR pName, LPSTR pEnvironment, DWORD Level,
     return ret;
 }
 
-static CHAR PortMonitor[] = "Wine Port Monitor";
-static CHAR PortDescription[] = "Wine Port";
-
-static BOOL WINSPOOL_ComPortExists( LPCSTR name )
-{
-    HANDLE handle;
-
-    handle = CreateFileA( name, 0, FILE_SHARE_READ|FILE_SHARE_WRITE,
-                         NULL, OPEN_EXISTING, 0, NULL );
-    if (handle == INVALID_HANDLE_VALUE)
-        return FALSE;
-    TRACE("Checking %s exists\n", name );
-    CloseHandle( handle );
-    return TRUE;
-}
-
-static DWORD WINSPOOL_CountSerialPorts(void)
-{
-    CHAR name[6];
-    DWORD n = 0, i;
-
-    for (i=0; i<4; i++)
-    {
-        strcpy( name, "COMx:" );
-        name[3] = '1' + i;
-        if (WINSPOOL_ComPortExists( name ))
-            n++;
-    }
-
-    return n;
-}
-
 /******************************************************************************
  *		EnumPortsA   (WINSPOOL.@)
  *
  * See EnumPortsW.
  *
- * BUGS
- *  ANSI-Version did not call the UNICODE-Version
- *
  */
-BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
-                       LPDWORD bufneeded,LPDWORD bufreturned)
+BOOL WINAPI EnumPortsA( LPSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf,
+                        LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    CHAR portname[10];
-    DWORD info_size, ofs, i, printer_count, serial_count, count, n, r;
-    const LPCSTR szPrinterPortKey = "Software\\Wine\\Wine\\Config\\spooler";
-    HKEY hkey_printer;
-    BOOL retval = TRUE;
+    BOOL    res;
+    LPBYTE  bufferW = NULL;
+    LPWSTR  nameW = NULL;
+    DWORD   needed = 0;
+    DWORD   numentries = 0;
+    INT     len;
 
-    TRACE("(%s,%d,%p,%d,%p,%p)\n",
-          debugstr_a(name),level,buffer,bufsize,bufneeded,bufreturned);
+    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_a(pName), Level, pPorts,
+          cbBuf, pcbNeeded, pcReturned);
 
-    switch( level )
-    {
-    case 1:
-        info_size = sizeof (PORT_INFO_1A);
-        break;
-    case 2:
-        info_size = sizeof (PORT_INFO_2A);
-        break;
-    default:
-        SetLastError(ERROR_INVALID_LEVEL);
-        return FALSE;
+    /* convert servername to unicode */
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
     }
-    
-    /* see how many exist */
+    /* alloc (userbuffersize*sizeof(WCHAR) and try to enum the Ports */
+    needed = cbBuf * sizeof(WCHAR);    
+    if (needed) bufferW = HeapAlloc(GetProcessHeap(), 0, needed);
+    res = EnumPortsW(nameW, Level, bufferW, needed, pcbNeeded, pcReturned);
 
-    hkey_printer = 0;
-    serial_count = WINSPOOL_CountSerialPorts();
-    printer_count = 0;
+    if(!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+        if (pcbNeeded) needed = *pcbNeeded;
+        /* HeapReAlloc return NULL, when bufferW was NULL */
+        bufferW = (bufferW) ? HeapReAlloc(GetProcessHeap(), 0, bufferW, needed) :
+                              HeapAlloc(GetProcessHeap(), 0, needed);
 
-    r = RegOpenKeyA( HKEY_LOCAL_MACHINE, szPrinterPortKey, &hkey_printer);
-    if ( r == ERROR_SUCCESS )
-    {
-        RegQueryInfoKeyA( hkey_printer, NULL, NULL, NULL, NULL, NULL, NULL,
-	    &printer_count, NULL, NULL, NULL, NULL);
+        /* Try again with the large Buffer */
+        res = EnumPortsW(nameW, Level, bufferW, needed, pcbNeeded, pcReturned);
     }
-    count = serial_count + printer_count;
+    needed = pcbNeeded ? *pcbNeeded : 0;
+    numentries = pcReturned ? *pcReturned : 0;
 
-    /* then fill in the structure info structure once
-       we know the offset to the first string */
+    /*
+       W2k require the buffersize from EnumPortsW also for EnumPortsA.
+       We use the smaller Ansi-Size to avoid conflicts with fixed Buffers of old Apps.
+     */
+    if (res) {
+        /* EnumPortsW collected all Data. Parse them to caclulate ANSI-Size */
+        DWORD   entrysize = 0;
+        DWORD   index;
+        LPSTR   ptr;
+        LPPORT_INFO_2W pi2w;
+        LPPORT_INFO_2A pi2a;
 
-    memset( buffer, 0, bufsize );
-    n = 0;
-    ofs = info_size*count; 
-    for ( i=0; i<count; i++)
-    {
-        DWORD vallen = sizeof(portname) - 1;
+        needed = 0;
+        entrysize = (Level == 1) ? sizeof(PORT_INFO_1A) : sizeof(PORT_INFO_2A);
 
-        /* get the serial port values, then the printer values */
-        if ( i < serial_count )
-        {
-            strcpy( portname, "COMx:" );
-            portname[3] = '1' + i;
-            if (!WINSPOOL_ComPortExists( portname ))
-                continue;
+        /* First pass: calculate the size for all Entries */
+        pi2w = (LPPORT_INFO_2W) bufferW;
+        pi2a = (LPPORT_INFO_2A) pPorts;
+        index = 0;
+        while (index < numentries) {
+            index++;
+            needed += entrysize;    /* PORT_INFO_?A */
+            TRACE("%p: parsing #%d (%s)\n", pi2w, index, debugstr_w(pi2w->pPortName));
 
-            TRACE("Found %s\n", portname );
-            vallen = strlen( portname );
-        }
-        else
-        {
-            r = RegEnumValueA( hkey_printer, i-serial_count, 
-                     portname, &vallen, NULL, NULL, NULL, 0 );
-            if ( r )
-                continue;
-        }
-
-        /* add a colon if necessary, and make it upper case */
-        CharUpperBuffA(portname,vallen);
-        if (strcasecmp(portname,"nul")!=0)
-            if (vallen && (portname[vallen-1] != ':') )
-                lstrcatA(portname,":");
-
-        /* add the port info structure if we can fit it */
-        if ( info_size*(n+1) < bufsize )
-        {
-            if ( level == 1)
-            {
-                PORT_INFO_1A *info = (PORT_INFO_1A*) &buffer[info_size*n];
-                info->pName = (LPSTR) &buffer[ofs];
+            needed += WideCharToMultiByte(CP_ACP, 0, pi2w->pPortName, -1,
+                                            NULL, 0, NULL, NULL);
+            if (Level > 1) {
+                needed += WideCharToMultiByte(CP_ACP, 0, pi2w->pMonitorName, -1,
+                                                NULL, 0, NULL, NULL);
+                needed += WideCharToMultiByte(CP_ACP, 0, pi2w->pDescription, -1,
+                                                NULL, 0, NULL, NULL);
             }
-            else if ( level == 2)
-            {
-                PORT_INFO_2A *info = (PORT_INFO_2A*) &buffer[info_size*n];
-                info->pPortName = (LPSTR) &buffer[ofs];
-                /* FIXME: fill in more stuff here */
-                info->pMonitorName = PortMonitor;
-                info->pDescription = PortDescription;
-                info->fPortType = PORT_TYPE_WRITE|PORT_TYPE_READ;
-            }
-
-            /* add the name of the port if we can fit it */
-            if ( ofs < bufsize )
-                lstrcpynA((LPSTR)&buffer[ofs],portname,bufsize - ofs);
-
-            n++;
+            /* use LPBYTE with entrysize to avoid double code (PORT_INFO_1 + PORT_INFO_2) */
+            pi2w = (LPPORT_INFO_2W) (((LPBYTE)pi2w) + entrysize);
+            pi2a = (LPPORT_INFO_2A) (((LPBYTE)pi2a) + entrysize);
         }
-        else
-            retval = FALSE;
-        ofs += lstrlenA(portname)+1;
+
+        /* check for errors and quit on failure */
+        if (cbBuf < needed) {
+            SetLastError(ERROR_INSUFFICIENT_BUFFER);
+            res = FALSE;
+            goto cleanup;
+        }
+        len = entrysize * numentries;       /* room for all PORT_INFO_?A */
+        ptr = (LPSTR) &pPorts[len];         /* room for strings */
+        cbBuf -= len ;                      /* free Bytes in the user-Buffer */
+        pi2w = (LPPORT_INFO_2W) bufferW;
+        pi2a = (LPPORT_INFO_2A) pPorts;
+        index = 0;
+        /* Second Pass: Fill the User Buffer (if we have one) */
+        while ((index < numentries) && pPorts) {
+            index++;
+            TRACE("%p: writing PORT_INFO_%dA #%d\n", pi2a, Level, index);
+            pi2a->pPortName = ptr;
+            len = WideCharToMultiByte(CP_ACP, 0, pi2w->pPortName, -1,
+                                            ptr, cbBuf , NULL, NULL);
+            ptr += len;
+            cbBuf -= len;
+            if (Level > 1) {
+                pi2a->pMonitorName = ptr;
+                len = WideCharToMultiByte(CP_ACP, 0, pi2w->pMonitorName, -1,
+                                            ptr, cbBuf, NULL, NULL);
+                ptr += len;
+                cbBuf -= len;
+
+                pi2a->pDescription = ptr;
+                len = WideCharToMultiByte(CP_ACP, 0, pi2w->pDescription, -1,
+                                            ptr, cbBuf, NULL, NULL);
+                ptr += len;
+                cbBuf -= len;
+
+                pi2a->fPortType = pi2w->fPortType;
+                pi2a->Reserved = 0;              /* documented: "must be zero" */
+                
+            }
+            /* use LPBYTE with entrysize to avoid double code (PORT_INFO_1 + PORT_INFO_2) */
+            pi2w = (LPPORT_INFO_2W) (((LPBYTE)pi2w) + entrysize);
+            pi2a = (LPPORT_INFO_2A) (((LPBYTE)pi2a) + entrysize);
+        }
     }
 
-    RegCloseKey(hkey_printer);
+cleanup:
+    if (pcbNeeded)  *pcbNeeded = needed;
+    if (pcReturned) *pcReturned = (res) ? numentries : 0;
 
-    if(bufneeded)
-        *bufneeded = ofs;
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, bufferW);
 
-    if(bufreturned)
-        *bufreturned = n;
+    TRACE("returning %d with %d (%d byte for %d of %d entries)\n", 
+            (res), GetLastError(), needed, (res)? numentries : 0, numentries);
 
-    return retval;
+    return (res);
+
 }
 
 /******************************************************************************
