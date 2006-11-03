@@ -3186,9 +3186,7 @@ static void dump_set_mailslot_info_request( const struct set_mailslot_info_reque
 static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *req )
 {
     fprintf( stderr, " max_msgsize=%08x,", req->max_msgsize );
-    fprintf( stderr, " read_timeout=%d,", req->read_timeout );
-    fprintf( stderr, " msg_count=%08x,", req->msg_count );
-    fprintf( stderr, " next_msgsize=%08x", req->next_msgsize );
+    fprintf( stderr, " read_timeout=%d", req->read_timeout );
 }
 
 static void dump_create_directory_request( const struct create_directory_request *req )

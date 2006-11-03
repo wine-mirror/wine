@@ -2578,8 +2578,6 @@ enum message_type
 @REPLY
     unsigned int   max_msgsize;
     int            read_timeout;
-    unsigned int   msg_count;
-    unsigned int   next_msgsize;
 @END
 #define MAILSLOT_SET_READ_TIMEOUT  1
 

@@ -3666,8 +3666,6 @@ struct set_mailslot_info_reply
     struct reply_header __header;
     unsigned int   max_msgsize;
     int            read_timeout;
-    unsigned int   msg_count;
-    unsigned int   next_msgsize;
 };
 #define MAILSLOT_SET_READ_TIMEOUT  1
 
@@ -4406,6 +4404,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 258
+#define SERVER_PROTOCOL_VERSION 259
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

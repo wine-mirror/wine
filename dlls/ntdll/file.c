@@ -1350,12 +1350,29 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 {
                     info->MaximumMessageSize = reply->max_msgsize;
                     info->MailslotQuota = 0;
-                    info->NextMessageSize = reply->next_msgsize;
-                    info->MessagesAvailable = reply->msg_count;
+                    info->NextMessageSize = 0;
+                    info->MessagesAvailable = 0;
                     info->ReadTimeout.QuadPart = reply->read_timeout * -10000;
                 }
             }
             SERVER_END_REQ;
+            if (!io->u.Status)
+            {
+                ULONG size = info->MaximumMessageSize ? info->MaximumMessageSize : 0x10000;
+                char *tmpbuf = RtlAllocateHeap( GetProcessHeap(), 0, size );
+                if (tmpbuf)
+                {
+                    int fd, needs_close;
+                    if (!server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL ))
+                    {
+                        int res = recv( fd, tmpbuf, size, MSG_PEEK );
+                        info->MessagesAvailable = (res > 0);
+                        info->NextMessageSize = (res >= 0) ? res : MAILSLOT_NO_MESSAGE;
+                        if (needs_close) close( fd );
+                    }
+                    RtlFreeHeap( GetProcessHeap(), 0, tmpbuf );
+                }
+            }
         }
         break;
     case FilePipeLocalInformation:
