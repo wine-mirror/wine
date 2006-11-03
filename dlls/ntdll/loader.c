@@ -1868,6 +1868,16 @@ NTSTATUS WINAPI LdrQueryProcessModuleInformation(PSYSTEM_MODULE_INFORMATION smi,
     return nts;
 }
 
+
+/******************************************************************
+ *		RtlDllShutdownInProgress  (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlDllShutdownInProgress(void)
+{
+    return process_detaching;
+}
+
+
 /******************************************************************
  *		LdrShutdownProcess (NTDLL.@)
  *

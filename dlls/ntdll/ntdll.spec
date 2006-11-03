@@ -530,7 +530,7 @@
 @ stdcall RtlDestroyProcessParameters(ptr)
 @ stdcall RtlDestroyQueryDebugBuffer(ptr)
 @ stdcall RtlDetermineDosPathNameType_U(wstr)
-# @ stub RtlDllShutdownInProgress
+@ stdcall RtlDllShutdownInProgress()
 # @ stub RtlDnsHostNameToComputerName
 @ stdcall RtlDoesFileExists_U(wstr)
 # @ stub RtlDosApplyFileIsolationRedirection_Ustr
