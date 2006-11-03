@@ -915,6 +915,18 @@ static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
             lstrcpyW(regroot, MonitorsW);
             lstrcatW(regroot, name);
             /* Get the Driver from the Registry */
+            if (driver == NULL) {
+                HKEY    hroot;
+                DWORD   namesize;
+                if (RegOpenKeyW(HKEY_LOCAL_MACHINE, regroot, &hroot) == ERROR_SUCCESS) {
+                    if (RegQueryValueExW(hroot, DriverW, NULL, NULL, NULL,
+                                        &namesize) == ERROR_SUCCESS) {
+                        driver = HeapAlloc(GetProcessHeap(), 0, namesize);
+                        RegQueryValueExW(hroot, DriverW, NULL, NULL, (LPBYTE) driver, &namesize) ;
+                    }
+                    RegCloseKey(hroot);
+                }
+            }
         }
 
         pm->name = strdupW(name);
