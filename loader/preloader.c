@@ -163,6 +163,26 @@ void __bb_init_func(void) { return; }
 void *__stack_chk_guard = 0;
 void __stack_chk_fail(void) { return; }
 
+/* data for setting up the glibc-style thread-local storage in %gs */
+
+static int thread_data[256];
+
+struct
+{
+    /* this is the kernel modify_ldt struct */
+    unsigned int  entry_number;
+    unsigned long base_addr;
+    unsigned int  limit;
+    unsigned int  seg_32bit : 1;
+    unsigned int  contents : 2;
+    unsigned int  read_exec_only : 1;
+    unsigned int  limit_in_pages : 1;
+    unsigned int  seg_not_present : 1;
+    unsigned int  useable : 1;
+    unsigned int  garbage : 25;
+} thread_ldt = { -1, (unsigned long)thread_data, 0xfffff, 1, 0, 0, 1, 0, 1, 0 };
+
+
 /*
  * The _start function is the entry and exit point of this program
  *
@@ -172,7 +192,17 @@ void __stack_chk_fail(void) { return; }
 void _start();
 extern char _end[];
 __ASM_GLOBAL_FUNC(_start,
-                  "\tmovl %esp,%eax\n"
+                  "\tmovl $243,%eax\n"        /* SYS_set_thread_area */
+                  "\tmovl $thread_ldt,%ebx\n"
+                  "\tint $0x80\n"             /* allocate gs segment */
+                  "\torl %eax,%eax\n"
+                  "\tjl 1f\n"
+                  "\tmovl thread_ldt,%eax\n"  /* thread_ldt.entry_number */
+                  "\tshl $3,%eax\n"
+                  "\torl $3,%eax\n"
+                  "\tmov %ax,%gs\n"
+                  "\tmov %ax,%fs\n"           /* set %fs too so libwine can retrieve it later on */
+                  "1:\tmovl %esp,%eax\n"
                   "\tleal -136(%esp),%esp\n"  /* allocate some space for extra aux values */
                   "\tpushl %eax\n"            /* orig stack pointer */
                   "\tpushl %esp\n"            /* ptr to orig stack pointer */
