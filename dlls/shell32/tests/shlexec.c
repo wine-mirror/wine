@@ -813,6 +813,37 @@ static void test_exes(void)
     }
 }
 
+static void test_exes_long(void)
+{
+    char filename[MAX_PATH];
+    char params[2024];
+    char longparam[MAX_PATH];
+    int rc;
+
+    for (rc = 0; rc < MAX_PATH; rc++)
+        longparam[rc]='a'+rc%26;
+    longparam[MAX_PATH-1]=0;
+
+
+    sprintf(params, "shlexec \"%s\" %s", child_file,longparam);
+
+    /* We need NOZONECHECKS on Win2003 to block a dialog */
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
+                        NULL);
+    ok(rc>=32, "%s returned %d\n", shell_call, rc);
+    okChildInt("argcA", 4);
+    okChildString("argvA3", longparam);
+
+    sprintf(filename, "%s\\test file.noassoc", tmpdir);
+    if (CopyFile(argv0, filename, FALSE))
+    {
+        rc=shell_execute(NULL, filename, params, NULL);
+        todo_wine {
+        ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%d\n", shell_call, rc);
+        }
+    }
+}
+
 
 static void init_test(void)
 {
@@ -954,6 +985,7 @@ START_TEST(shlexec)
     test_filename();
     test_lnks();
     test_exes();
+    test_exes_long();
 
     cleanup_test();
 }

@@ -1198,6 +1198,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 
     WCHAR *wszApplicationName, wszParameters[1024], wszDir[MAX_PATH];
     DWORD dwApplicationNameLen = MAX_PATH+2;
+    DWORD len;
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
     WCHAR wfileName[MAX_PATH];
     WCHAR *env;
@@ -1351,16 +1352,51 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     }
 
     /* expand environment strings */
-    if (ExpandEnvironmentStringsW(sei_tmp.lpFile, buffer, MAX_PATH))
-	lstrcpyW(wszApplicationName, buffer);
+    len = ExpandEnvironmentStringsW(sei_tmp.lpFile, NULL, 0);
+    if (len>0)
+    {
+        LPWSTR buf;
+        buf = HeapAlloc(GetProcessHeap(),0,(len+1)*sizeof(WCHAR));
+
+        ExpandEnvironmentStringsW(sei_tmp.lpFile, buf, len+1);
+        HeapFree(GetProcessHeap(), 0, wszApplicationName);
+        dwApplicationNameLen = len+1;
+        wszApplicationName = buf;
+
+        sei_tmp.lpFile = wszApplicationName;
+    }
 
     if (*sei_tmp.lpParameters)
-        if (ExpandEnvironmentStringsW(sei_tmp.lpParameters, buffer, MAX_PATH))
-	    lstrcpyW(wszParameters, buffer);
+    {
+        len = ExpandEnvironmentStringsW(sei_tmp.lpParameters, NULL, 0);
+        if (len > 0)
+        {
+            LPWSTR buf;
+            len++;
+            buf = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+            ExpandEnvironmentStringsW(sei_tmp.lpParameters, buf, len);
+            if (len > 1024)
+                ERR("Parameters exceeds buffer size (%i > 1024)\n",len);
+            lstrcpynW(wszParameters, buf, min(1024,len));
+            HeapFree(GetProcessHeap(),0,buf);
+        }
+    }
 
     if (*sei_tmp.lpDirectory)
-	if (ExpandEnvironmentStringsW(sei_tmp.lpDirectory, buffer, MAX_PATH))
-	    lstrcpyW(wszDir, buffer);
+    {
+        len = ExpandEnvironmentStringsW(sei_tmp.lpDirectory, NULL, 0);
+        if (len > 0)
+        {
+            LPWSTR buf;
+            len++;
+            buf = HeapAlloc(GetProcessHeap(),0,len*sizeof(WCHAR));
+            ExpandEnvironmentStringsW(sei_tmp.lpDirectory, buf, len);
+            if (len > 1024)
+                ERR("Directory exceeds buffer size (%i > 1024)\n",len);
+            lstrcpynW(wszDir, buf, min(1024,len));
+            HeapFree(GetProcessHeap(),0,buf);
+        }
+    }
 
     /* Else, try to execute the filename */
     TRACE("execute:%s,%s,%s\n", debugstr_w(wszApplicationName), debugstr_w(wszParameters), debugstr_w(wszDir));
