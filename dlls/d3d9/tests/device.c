@@ -315,8 +315,27 @@ static void test_refcount(void)
     /* Buffers */
     hr = IDirect3DDevice9_CreateIndexBuffer( pDevice, 16, 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &pIndexBuffer, NULL );
     CHECK_CALL( hr, "CreateIndexBuffer", pDevice, ++refcount );
+    if(pIndexBuffer)
+    {
+        tmp = get_refcount( (IUnknown *)pIndexBuffer );
+
+        hr = IDirect3DDevice9_SetIndices(pDevice, pIndexBuffer);
+        CHECK_CALL( hr, "SetIndices", pIndexBuffer, tmp);
+        hr = IDirect3DDevice9_SetIndices(pDevice, NULL);
+        CHECK_CALL( hr, "SetIndices", pIndexBuffer, tmp);
+    }
+
     hr = IDirect3DDevice9_CreateVertexBuffer( pDevice, 16, 0, D3DFVF_XYZ, D3DPOOL_DEFAULT, &pVertexBuffer, NULL );
     CHECK_CALL( hr, "CreateVertexBuffer", pDevice, ++refcount );
+    if(pVertexBuffer)
+    {
+        tmp = get_refcount( (IUnknown *)pVertexBuffer );
+
+        hr = IDirect3DDevice9_SetStreamSource(pDevice, 0, pVertexBuffer, 0, 3 * sizeof(float));
+        CHECK_CALL( hr, "SetStreamSource", pVertexBuffer, tmp);
+        hr = IDirect3DDevice9_SetStreamSource(pDevice, 0, NULL, 0, 0);
+        CHECK_CALL( hr, "SetStreamSource", pVertexBuffer, tmp);
+    }
     /* Shaders */
     hr = IDirect3DDevice9_CreateVertexDeclaration( pDevice, decl, &pVertexDeclaration );
     CHECK_CALL( hr, "CreateVertexDeclaration", pDevice, ++refcount );
@@ -330,6 +349,13 @@ static void test_refcount(void)
     if (pTexture)
     {
         tmp = get_refcount( (IUnknown *)pTexture );
+
+        /* SetTexture should not increase refcounts */
+        hr = IDirect3DDevice9_SetTexture(pDevice, 0, (IDirect3DBaseTexture9 *) pTexture);
+        CHECK_CALL( hr, "SetTexture", pTexture, tmp);
+        hr = IDirect3DDevice9_SetTexture(pDevice, 0, NULL);
+        CHECK_CALL( hr, "SetTexture", pTexture, tmp);
+
         /* This should not increment device refcount */
         hr = IDirect3DTexture9_GetSurfaceLevel( pTexture, 1, &pTextureLevel );
         CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount );
