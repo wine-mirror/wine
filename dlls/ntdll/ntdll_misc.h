@@ -62,6 +62,8 @@ extern void DECLSPEC_NORETURN server_protocol_perror( const char *err );
 extern void DECLSPEC_NORETURN server_exit_thread( int status );
 extern void DECLSPEC_NORETURN server_abort_thread( int status );
 extern int server_remove_fd_from_cache( obj_handle_t handle );
+extern int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
+                               int *flags, int *needs_close );
 
 /* module handling */
 extern NTSTATUS MODULE_DllThreadAttach( LPVOID lpReserved );

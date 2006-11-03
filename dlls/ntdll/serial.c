@@ -980,13 +980,9 @@ static DWORD WINAPI check_events(int fd, DWORD mask,
 static DWORD CALLBACK wait_for_event(LPVOID arg)
 {
     async_commio *commio = (async_commio*) arg;
-    int fd;
+    int fd, needs_close;
 
-    if (wine_server_handle_to_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, NULL ))
-    {
-        fd = -1;
-    }
-    else
+    if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL ))
     {
         serial_irq_info new_irq_info;
         DWORD new_mstat, new_evtmask;
@@ -1020,10 +1016,9 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
                 break;
             }
         }
+        if (needs_close) close( fd );
     }
-    if (commio->hEvent != INVALID_HANDLE_VALUE)
-        NtSetEvent(commio->hEvent, NULL);
-    if (fd != -1) wine_server_release_fd( commio->hDevice, fd );
+    if (commio->hEvent) NtSetEvent(commio->hEvent, NULL);
     RtlFreeHeap(GetProcessHeap(), 0, commio);
     return 0;
 }
@@ -1126,7 +1121,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
 {
     DWORD       sz = 0, access = FILE_READ_DATA;
     NTSTATUS    status = STATUS_SUCCESS;
-    int         fd = -1;
+    int         fd = -1, needs_close = 0;
 
     TRACE("%p %s %p %d %p %d %p\n",
           hDevice, iocode2str(dwIoControlCode), lpInBuffer, nInBufferSize,
@@ -1135,7 +1130,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     piosb->Information = 0;
 
     if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS)
-        if ((status = wine_server_handle_to_fd( hDevice, access, &fd, NULL )))
+        if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, NULL )))
             goto error;
 
     switch (dwIoControlCode)
@@ -1343,7 +1338,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
         status = STATUS_INVALID_PARAMETER;
         break;
     }
-    if (fd != -1) wine_server_release_fd( hDevice, fd );
+    if (needs_close) close( fd );
  error:
     piosb->u.Status = status;
     piosb->Information = sz;

@@ -525,6 +525,58 @@ int server_remove_fd_from_cache( obj_handle_t handle )
 
 
 /***********************************************************************
+ *           server_get_unix_fd
+ *
+ * The returned unix_fd should be closed iff needs_close is non-zero.
+ */
+int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
+                        int *needs_close, int *flags )
+{
+    obj_handle_t fd_handle;
+    int ret = 0, removable = 0, fd;
+
+    *unix_fd = -1;
+    *needs_close = 0;
+
+    RtlEnterCriticalSection( &fd_cache_section );
+
+    fd = get_cached_fd( handle );
+    if (fd != -1 && !flags) goto done;
+
+    SERVER_START_REQ( get_handle_fd )
+    {
+        req->handle = handle;
+        req->access = access;
+        req->cached = (fd != -1);
+        if (!(ret = wine_server_call( req )))
+        {
+            removable = reply->flags & FD_FLAG_REMOVABLE;
+            if (flags) *flags = reply->flags;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (!ret && fd == -1)
+    {
+        /* it wasn't in the cache, get it from the server */
+        fd = receive_fd( &fd_handle );
+        if (fd == -1)
+        {
+            ret = STATUS_TOO_MANY_OPENED_FILES;
+            goto done;
+        }
+        assert( fd_handle == handle );
+        *needs_close = removable || !add_fd_to_cache( handle, fd );
+    }
+
+done:
+    RtlLeaveCriticalSection( &fd_cache_section );
+    if (!ret) *unix_fd = fd;
+    return ret;
+}
+
+
+/***********************************************************************
  *           wine_server_fd_to_handle   (NTDLL.@)
  *
  * Allocate a file handle for a Unix file descriptor.
@@ -573,59 +625,12 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
  */
 int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags )
 {
-    obj_handle_t fd_handle;
-    int ret = 0, removable = 0, fd = -1;
+    int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, flags );
 
-    RtlEnterCriticalSection( &fd_cache_section );
-
-    *unix_fd = -1;
-
-    fd = get_cached_fd( handle );
-    if (fd != -1 && !flags)
+    if (!ret && !needs_close)
     {
-        if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
-        goto done;
+        if ((*unix_fd = dup(*unix_fd)) == -1) ret = FILE_GetNtStatus();
     }
-
-    SERVER_START_REQ( get_handle_fd )
-    {
-        req->handle = handle;
-        req->access = access;
-        req->cached = (fd != -1);
-        if (!(ret = wine_server_call( req )))
-        {
-            removable = reply->flags & FD_FLAG_REMOVABLE;
-            if (flags) *flags = reply->flags;
-        }
-    }
-    SERVER_END_REQ;
-    if (ret) goto done;
-
-    if (fd != -1)
-    {
-        if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
-        goto done;
-    }
-
-    /* it wasn't in the cache, get it from the server */
-    fd = receive_fd( &fd_handle );
-    if (fd == -1)
-    {
-        ret = STATUS_TOO_MANY_OPENED_FILES;
-        goto done;
-    }
-    assert( fd_handle == handle );
-
-    if (removable) goto done;  /* don't cache it */
-
-    if (add_fd_to_cache( handle, fd ))
-    {
-        if ((fd = dup(fd)) == -1) ret = FILE_GetNtStatus();
-    }
-
-done:
-    RtlLeaveCriticalSection( &fd_cache_section );
-    if (!ret) *unix_fd = fd;
     return ret;
 }
 

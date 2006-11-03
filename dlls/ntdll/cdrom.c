@@ -2014,7 +2014,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 {
     DWORD       sz = 0;
     NTSTATUS    status = STATUS_SUCCESS;
-    int fd, dev;
+    int fd, needs_close, dev;
 
     TRACE("%p %s %p %d %p %d %p\n",
           hDevice, iocodex(dwIoControlCode), lpInBuffer, nInBufferSize,
@@ -2022,10 +2022,10 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = wine_server_handle_to_fd( hDevice, 0, &fd, NULL ))) goto error;
+    if ((status = server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL ))) goto error;
     if ((status = CDROM_Open(fd, &dev)))
     {
-        wine_server_release_fd( hDevice, fd );
+        if (needs_close) close( fd );
         goto error;
     }
 
@@ -2281,7 +2281,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
         status = STATUS_INVALID_PARAMETER;
         break;
     }
-    wine_server_release_fd( hDevice, fd );
+    if (needs_close) close( fd );
  error:
     piosb->u.Status = status;
     piosb->Information = sz;

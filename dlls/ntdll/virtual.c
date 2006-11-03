@@ -1767,11 +1767,10 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
-    FILE_FS_DEVICE_INFORMATION device_info;
     NTSTATUS res;
     SIZE_T size = 0;
     SIZE_T mask = get_mask( zero_bits );
-    int unix_handle = -1;
+    int unix_handle = -1, flags, needs_close;
     int prot;
     void *base;
     struct file_view *view;
@@ -1811,22 +1810,20 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
-    if ((res = wine_server_handle_to_fd( handle, 0, &unix_handle, NULL ))) return res;
-
-    if (FILE_GetDeviceInfo( unix_handle, &device_info ) == STATUS_SUCCESS)
-        removable = device_info.Characteristics & FILE_REMOVABLE_MEDIA;
+    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, &flags ))) return res;
+    removable = (flags & FD_FLAG_REMOVABLE) != 0;
 
     if (prot & VPROT_IMAGE)
     {
         if (shared_file)
         {
-            int shared_fd;
+            int shared_fd, shared_needs_close;
 
-            if ((res = wine_server_handle_to_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
-                                                 &shared_fd, NULL ))) goto done;
+            if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
+                                           &shared_fd, &shared_needs_close, NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size_low, mask, header_size,
                              shared_fd, removable, addr_ptr );
-            wine_server_release_fd( shared_file, shared_fd );
+            if (shared_needs_close) close( shared_fd );
             NtClose( shared_file );
         }
         else
@@ -1834,7 +1831,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             res = map_image( handle, unix_handle, base, size_low, mask, header_size,
                              -1, removable, addr_ptr );
         }
-        wine_server_release_fd( handle, unix_handle );
+        if (needs_close) close( unix_handle );
         if (!res) *size_ptr = size_low;
         return res;
     }
@@ -1921,7 +1918,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     RtlLeaveCriticalSection( &csVirtual );
 
 done:
-    wine_server_release_fd( handle, unix_handle );
+    if (needs_close) close( unix_handle );
     return res;
 }
 

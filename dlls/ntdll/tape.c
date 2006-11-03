@@ -512,14 +512,14 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
 {
     DWORD sz = 0;
     NTSTATUS status = STATUS_INVALID_PARAMETER;
-    int fd;
+    int fd, needs_close;
 
     TRACE( "%p %s %p %d %p %d %p\n", device, io2str(io_control),
            in_buffer, in_size, out_buffer, out_size, io_status );
 
     io_status->Information = 0;
 
-    if ((status = wine_server_handle_to_fd( device, 0, &fd, NULL )))
+    if ((status = server_get_unix_fd( device, 0, &fd, &needs_close, NULL )))
         goto error;
 
     switch (io_control)
@@ -569,7 +569,7 @@ NTSTATUS TAPE_DeviceIoControl( HANDLE device, HANDLE event,
         break;
     }
 
-    wine_server_release_fd( device, fd );
+    if (needs_close) close( fd );
 
 error:
     io_status->u.Status = status;

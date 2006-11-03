@@ -1284,7 +1284,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
                                       PUNICODE_STRING mask,
                                       BOOLEAN restart_scan )
 {
-    int cwd, fd;
+    int cwd, fd, needs_close;
     static const WCHAR wszWildcards[] = { '*','?',0 };
 
     TRACE("(%p %p %p %p %p %p 0x%08x 0x%08x 0x%08x %s 0x%08x\n",
@@ -1305,7 +1305,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         return io->u.Status = STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((io->u.Status = wine_server_handle_to_fd( handle, FILE_LIST_DIRECTORY, &fd, NULL )) != STATUS_SUCCESS)
+    if ((io->u.Status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
 
     io->Information = 0;
@@ -1336,7 +1336,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     RtlLeaveCriticalSection( &dir_section );
 
-    wine_server_release_fd( handle, fd );
+    if (needs_close) close( fd );
     if (cwd != -1) close( cwd );
     TRACE( "=> %x (%ld)\n", io->u.Status, io->Information );
     return io->u.Status;
@@ -1819,7 +1819,7 @@ BOOLEAN WINAPI RtlDoesFileExists_U(LPCWSTR file_name)
 NTSTATUS DIR_unmount_device( HANDLE handle )
 {
     NTSTATUS status;
-    int unix_fd;
+    int unix_fd, needs_close;
 
     SERVER_START_REQ( unmount_device )
     {
@@ -1829,7 +1829,7 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
     SERVER_END_REQ;
     if (status) return status;
 
-    if (!(status = wine_server_handle_to_fd( handle, 0, &unix_fd, NULL )))
+    if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL )))
     {
         struct stat st;
         char *mount_point = NULL;
@@ -1861,7 +1861,7 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
                 RtlFreeHeap( GetProcessHeap(), 0, mount_point );
             }
         }
-        wine_server_release_fd( handle, unix_fd );
+        if (needs_close) close( unix_fd );
     }
     return status;
 }
@@ -1875,7 +1875,7 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
  */
 NTSTATUS DIR_get_unix_cwd( char **cwd )
 {
-    int old_cwd, unix_fd;
+    int old_cwd, unix_fd, needs_close;
     CURDIR *curdir;
     HANDLE handle;
     NTSTATUS status;
@@ -1911,7 +1911,7 @@ NTSTATUS DIR_get_unix_cwd( char **cwd )
         if (status != STATUS_SUCCESS) goto done;
     }
 
-    if ((status = wine_server_handle_to_fd( handle, 0, &unix_fd, NULL )) == STATUS_SUCCESS)
+    if ((status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL )) == STATUS_SUCCESS)
     {
         RtlEnterCriticalSection( &dir_section );
 
@@ -1940,7 +1940,7 @@ NTSTATUS DIR_get_unix_cwd( char **cwd )
         else status = FILE_GetNtStatus();
 
         RtlLeaveCriticalSection( &dir_section );
-        wine_server_release_fd( handle, unix_fd );
+        if (needs_close) close( unix_fd );
     }
     if (!curdir->Handle) NtClose( handle );
 
