@@ -98,6 +98,10 @@ typedef struct {
     HMODULE         hdll;
     DWORD           refcount;
     DWORD           dwMonitorSize;
+    LPPORT_INFO_2W  cache;          /* cached PORT_INFO_2W data */
+    DWORD           pi1_needed;     /* size for PORT_INFO_1W */
+    DWORD           pi2_needed;     /* size for PORT_INFO_2W */
+    DWORD           returned;       /* number of cached PORT_INFO_2W - entries */
 } monitor_t;
 
 typedef struct {
@@ -863,6 +867,26 @@ static void monitor_unload(monitor_t * pm)
 }
 
 /******************************************************************
+ * monitor_unloadall [internal]
+ *
+ * release all printmonitors and unload them from memory, when needed 
+ */
+
+static void monitor_unloadall(void)
+{
+    monitor_t * pm;
+    monitor_t * next;
+
+    EnterCriticalSection(&monitor_handles_cs);
+    /* iterate through the list, with safety against removal */
+    LIST_FOR_EACH_ENTRY_SAFE(pm, next, &monitor_handles, monitor_t, entry)
+    {
+        monitor_unload(pm);
+    }
+    LeaveCriticalSection(&monitor_handles_cs);
+}
+
+/******************************************************************
  * monitor_load [internal]
  *
  * load a printmonitor, get the dllname from the registry, when needed 
@@ -1011,6 +1035,134 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, regroot);
     TRACE("=> %p\n", pm);
     return pm;
+}
+
+/******************************************************************
+ * monitor_loadall [internal]
+ *
+ * Load all registered monitors
+ *
+ */
+static DWORD monitor_loadall(void)
+{
+    monitor_t * pm;
+    DWORD   registered = 0;
+    DWORD   loaded = 0;
+    HKEY    hmonitors;
+    WCHAR   buffer[MAX_PATH];
+    DWORD   id = 0;
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hmonitors) == ERROR_SUCCESS) {
+        RegQueryInfoKeyW(hmonitors, NULL, NULL, NULL, &registered, NULL, NULL,
+                        NULL, NULL, NULL, NULL, NULL);
+
+        TRACE("%d monitors registered\n", registered);
+
+        EnterCriticalSection(&monitor_handles_cs);
+        while (id < registered) {
+            buffer[0] = '\0';
+            RegEnumKeyW(hmonitors, id, buffer, MAX_PATH);
+            pm = monitor_load(buffer, NULL);
+            if (pm) loaded++;
+            id++;
+        }
+        LeaveCriticalSection(&monitor_handles_cs);
+        RegCloseKey(hmonitors);
+    }
+    TRACE("%d monitors loaded\n", loaded);
+    return loaded;
+}
+
+/******************************************************************
+ * enumerate the local Ports from all loaded monitors (internal)  
+ *
+ * returns the needed size (in bytes) for pPorts
+ * and  *lpreturned is set to number of entries returned in pPorts
+ *
+ */
+static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf, LPDWORD lpreturned)
+{
+    monitor_t * pm;
+    LPWSTR      ptr;
+    LPPORT_INFO_2W cache;
+    LPPORT_INFO_2W out;
+    DWORD   res;
+    DWORD   cacheindex;
+    DWORD   outindex = 0;
+    DWORD   needed = 0;
+    DWORD   numentries;
+    DWORD   entrysize;
+
+
+    TRACE("(%d, %p, %d, %p)\n", level, pPorts, cbBuf, lpreturned);
+    entrysize = (level == 1) ? sizeof(PORT_INFO_1W) : sizeof(PORT_INFO_2W);
+
+    numentries = *lpreturned;       /* this is 0, when we scan the registry */
+    needed = entrysize * numentries;
+    ptr = (LPWSTR) &pPorts[needed];
+
+    numentries = 0;
+    needed = 0;
+
+    LIST_FOR_EACH_ENTRY(pm, &monitor_handles, monitor_t, entry)
+    {
+        if ((pm->monitor) && (pm->monitor->pfnEnumPorts)) {
+            if (pm->cache == NULL) {
+                res = pm->monitor->pfnEnumPorts(NULL, 2, NULL, 0, &(pm->pi2_needed), &(pm->returned));
+                if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
+                    pm->cache = HeapAlloc(GetProcessHeap(), 0, (pm->pi2_needed));
+                    res = pm->monitor->pfnEnumPorts(NULL, 2, (LPBYTE) pm->cache, pm->pi2_needed, &(pm->pi2_needed), &(pm->returned));
+                }
+                TRACE("(%s) got %d with %d (cache need %d byte for %d entries)\n", 
+                        debugstr_w(pm->name), res, GetLastError(), pm->pi2_needed, pm->returned);
+                res = FALSE;
+            }     
+            if (pm->cache && (level == 1) && (pm->pi1_needed == 0) && (pm->returned > 0)) {
+                cacheindex = 0;
+                cache = pm->cache;
+                while (cacheindex < (pm->returned)) {
+                    pm->pi1_needed += sizeof(PORT_INFO_1W);
+                    pm->pi1_needed += (lstrlenW(cache->pPortName) + 1) * sizeof(WCHAR);
+                    cache++;
+                    cacheindex++;
+                }
+                TRACE("%d byte for %d cached PORT_INFO_1W entries (%s)\n",
+                        pm->pi1_needed, cacheindex, debugstr_w(pm->name));
+            }
+            numentries += pm->returned;
+            needed += (level == 1) ? pm->pi1_needed : pm->pi2_needed;
+
+            /* fill the buffer, if we have one */
+            if (pPorts && (cbBuf >= needed )) {
+                cacheindex = 0;
+                cache = pm->cache;
+                while (cacheindex < pm->returned) {
+                    out = (LPPORT_INFO_2W) &pPorts[outindex * entrysize];
+                    out->pPortName = ptr;
+                    lstrcpyW(ptr, cache->pPortName);
+                    ptr += (lstrlenW(ptr)+1);
+                    if (level > 1) {
+                        out->pMonitorName = ptr;
+                        lstrcpyW(ptr,  cache->pMonitorName);
+                        ptr += (lstrlenW(ptr)+1);
+
+                        out->pDescription = ptr;
+                        lstrcpyW(ptr,  cache->pDescription);
+                        ptr += (lstrlenW(ptr)+1);
+                        out->fPortType = cache->fPortType;
+                        out->Reserved = cache->Reserved;
+                    }
+                    cache++;
+                    cacheindex++;
+                    outindex++;
+                }
+            }
+        }
+    }
+
+    *lpreturned = numentries;
+    TRACE("need %d byte for %d entries\n", needed, numentries);
+    return needed;
 }
 
 /******************************************************************
@@ -4685,16 +4837,69 @@ BOOL WINAPI EnumPortsA(LPSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
  *  Success: TRUE
  *  Failure: FALSE and in bufneeded the Bytes required for buffer, if bufsize is too small
  *
- * BUGS
- *  UNICODE-Version is a stub
- *
  */
-BOOL WINAPI EnumPortsW(LPWSTR name,DWORD level,LPBYTE buffer,DWORD bufsize,
-                       LPDWORD bufneeded,LPDWORD bufreturned)
+
+BOOL WINAPI EnumPortsW(LPWSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf, LPDWORD pcbNeeded, LPDWORD pcReturned)
 {
-    FIXME("(%s,%d,%p,%d,%p,%p) - stub\n",
-          debugstr_w(name),level,buffer,bufsize,bufneeded,bufreturned);
-    return FALSE;
+    DWORD   needed = 0;
+    DWORD   numentries = 0;
+    BOOL    res = FALSE;
+
+    TRACE("(%s, %d, %p, %d, %p, %p)\n", debugstr_w(pName), Level, pPorts,
+          cbBuf, pcbNeeded, pcReturned);
+
+    if (pName && (pName[0])) {
+        FIXME("not implemented for Server %s\n", debugstr_w(pName));
+        SetLastError(ERROR_ACCESS_DENIED);
+        goto emP_cleanup;
+    }
+
+    /* Level is not checked in win9x */
+    if (!Level || (Level > 2)) {
+        WARN("level (%d) is ignored in win9x\n", Level);
+        SetLastError(ERROR_INVALID_LEVEL);
+        goto emP_cleanup;
+    }
+    if (!pcbNeeded) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        goto emP_cleanup;
+    }
+
+    EnterCriticalSection(&monitor_handles_cs);
+    monitor_loadall();
+
+    /* Scan all local Ports */
+    numentries = 0;
+    needed = get_ports_from_all_monitors(Level, NULL, 0, &numentries);
+
+    /* we calculated the needed buffersize. now do the error-checks */
+    if (cbBuf < needed) {
+        monitor_unloadall();
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        goto emP_cleanup_cs;
+    }
+    else if (!pPorts || !pcReturned) {
+        monitor_unloadall();
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        goto emP_cleanup_cs;
+    }
+
+    /* Fill the Buffer */
+    needed = get_ports_from_all_monitors(Level, pPorts, cbBuf, &numentries);
+    res = TRUE;
+    monitor_unloadall();
+
+emP_cleanup_cs:
+    LeaveCriticalSection(&monitor_handles_cs);
+
+emP_cleanup:
+    if (pcbNeeded)  *pcbNeeded = needed;
+    if (pcReturned) *pcReturned = (res) ? numentries : 0;
+
+    TRACE("returning %d with %d (%d byte for %d of %d entries)\n", 
+            (res), GetLastError(), needed, (res)? numentries : 0, numentries);
+
+    return (res);
 }
 
 /******************************************************************************
