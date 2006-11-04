@@ -1980,7 +1980,8 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
   else
   {
       unsigned int i, j, nr_lf;
-      char *p;
+      char *p = NULL;
+      const char *q;
       const char *s = (const char *)buf, *buf_start = (const char *)buf;
       /* find number of \n ( without preceding \r ) */
       for ( nr_lf=0,i = 0; i <count; i++)
@@ -1993,7 +1994,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
       }
       if (nr_lf)
       {
-          if ((p = MSVCRT_malloc(count + nr_lf)))
+          if ((q = p = MSVCRT_malloc(count + nr_lf)))
           {
               for (s = (const char *)buf, i = 0, j = 0; i < count; i++)
               {
@@ -2009,13 +2010,13 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
           {
               FIXME("Malloc failed\n");
               nr_lf =0;
-              p = (char*)buf;
+              q = buf;
           }
       }
       else
-          p = (char*)buf;
+          q = buf;
 
-      if ((WriteFile(hand, p, count+nr_lf, &num_written, NULL) == 0 ) || (num_written != count+nr_lf))
+      if ((WriteFile(hand, q, count+nr_lf, &num_written, NULL) == 0 ) || (num_written != count+nr_lf))
       {
           TRACE("WriteFile (fd %d, hand %p) failed-last error (%d), num_written %d\n",
            fd, hand, GetLastError(), num_written);
