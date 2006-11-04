@@ -641,7 +641,7 @@ static BOOL process_attach(void)
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
 
   internal_gl_disabled_extensions[0] = 0;
-  if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "Software\\Wine\\OpenGL", &hkey)) {
+  if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey)) {
     if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (LPBYTE)internal_gl_disabled_extensions, &size)) {
       TRACE("found DisabledExtensions=\"%s\"\n", internal_gl_disabled_extensions);
     }
