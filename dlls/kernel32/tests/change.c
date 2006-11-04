@@ -457,9 +457,12 @@ static void test_readdirectorychanges(void)
     ok( ov.Internal == STATUS_SUCCESS, "ov.Internal wrong\n");
     ok( ov.InternalHigh == 0x12, "ov.InternalHigh wrong\n");
 
-    r = GetOverlappedResult( hdir, &ov, &dwCount, TRUE );
-    ok( r == TRUE, "getoverlappedresult failed\n");
-    ok( dwCount == 0x12, "count wrong\n");
+    if (ov.Internal == STATUS_SUCCESS)
+    {
+        r = GetOverlappedResult( hdir, &ov, &dwCount, TRUE );
+        ok( r == TRUE, "getoverlappedresult failed\n");
+        ok( dwCount == 0x12, "count wrong\n");
+    }
 
     pfni = (PFILE_NOTIFY_INFORMATION) buffer;
     ok( pfni->NextEntryOffset == 0, "offset wrong\n" );
