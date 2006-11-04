@@ -1207,6 +1207,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
 {
     PNegoHelper helper;
     ULONG sign_version = 1;
+    UINT i;
+    int token_idx = -1;
 
     TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
     if (!phContext)
@@ -1218,12 +1220,22 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
     if(MessageSeqNo)
         FIXME("Ignoring MessageSeqNo\n");
 
-    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
-            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
-            !pMessage->pBuffers[0].pvBuffer)
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    if(pMessage->pBuffers[0].cbBuffer < 16)
+    for(i=0; i < pMessage->cBuffers; ++i)
+    {
+        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        {
+            token_idx = i;
+            break;
+        }
+    }
+    /* If we didn't find a SECBUFFER_TOKEN type buffer */
+    if(token_idx == -1)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[token_idx].cbBuffer < 16)
         return SEC_E_BUFFER_TOO_SMALL;
 
     helper = (PNegoHelper)phContext->dwLower;
@@ -1235,9 +1247,17 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
     }
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        PBYTE sig = pMessage->pBuffers[0].pvBuffer;
-        ULONG crc = ComputeCrc32(pMessage->pBuffers[1].pvBuffer,
-                pMessage->pBuffers[1].cbBuffer);
+        PBYTE sig = pMessage->pBuffers[token_idx].pvBuffer;
+        ULONG crc = 0U;
+
+        for(i=0; i < pMessage->cBuffers; ++i)
+        {
+            if(pMessage->pBuffers[i].BufferType & SECBUFFER_DATA)
+            {
+                crc = ComputeCrc32(pMessage->pBuffers[i].pvBuffer,
+                    pMessage->pBuffers[i].cbBuffer, crc);
+            }
+        }
 
         sig[ 0] = (sign_version >>  0) & 0xff;
         sig[ 1] = (sign_version >>  8) & 0xff;
@@ -1269,9 +1289,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
     {
         TRACE("Generating dummy signature\n");
         /* A dummy signature is 0x01 followed by 15 bytes of 0x00 */
-        memset(pMessage->pBuffers[0].pvBuffer, 0, 16);
-        memset(pMessage->pBuffers[0].pvBuffer, 0x01, 1);
-        pMessage->pBuffers[0].cbBuffer = 16;
+        memset(pMessage->pBuffers[token_idx].pvBuffer, 0, 16);
+        memset(pMessage->pBuffers[token_idx].pvBuffer, 0x01, 1);
+        pMessage->pBuffers[token_idx].cbBuffer = 16;
         return SEC_E_OK;
     }
 
@@ -1286,17 +1306,28 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 {
     PNegoHelper helper;
     ULONG fQOP = 0;
+    UINT i;
+    int token_idx = -1;
 
     TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if(!phContext)
         return SEC_E_INVALID_HANDLE;
 
-    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
-            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
-            !pMessage->pBuffers[0].pvBuffer)
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    if(pMessage->pBuffers[0].cbBuffer < 16)
+    for(i=0; i < pMessage->cBuffers; ++i)
+    {
+        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        {
+            token_idx = i;
+            break;
+        }
+    }
+    if(token_idx == -1)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[token_idx].cbBuffer < 16)
         return SEC_E_BUFFER_TOO_SMALL;
 
     if(MessageSeqNo)
@@ -1329,7 +1360,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
 
         ntlm_MakeSignature(phContext, fQOP, &local_desc, MessageSeqNo);
 
-        if(memcmp(((PBYTE)local_buff[0].pvBuffer) + 8, ((PBYTE)pMessage->pBuffers[0].pvBuffer) + 8, 8))
+        if(memcmp(((PBYTE)local_buff[0].pvBuffer) + 8,
+                    ((PBYTE)pMessage->pBuffers[token_idx].pvBuffer) + 8, 8))
             return SEC_E_MESSAGE_ALTERED;
 
         return SEC_E_OK;
@@ -1346,7 +1378,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
         const BYTE dummy_sig[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
         TRACE("Assuming dummy signature.\n");
-        if(memcmp(pMessage->pBuffers[0].pvBuffer, dummy_sig, sizeof(dummy_sig)) != 0)
+        if(memcmp(pMessage->pBuffers[token_idx].pvBuffer, dummy_sig, sizeof(dummy_sig)) != 0)
         {
             TRACE("Failed to verify the packet signature. Not a dummy signature?\n");
             return SEC_E_MESSAGE_ALTERED;
@@ -1389,6 +1421,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
         ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
+    UINT i;
+    int token_idx = -1;
+
     TRACE("(%p %d %p %d)\n", phContext, fQOP, pMessage, MessageSeqNo);
 
     if(!phContext)
@@ -1400,12 +1435,22 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
     if(MessageSeqNo)
         FIXME("Ignoring MessageSeqNo\n");
 
-    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
-            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
-            !pMessage->pBuffers[0].pvBuffer)
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    if(pMessage->pBuffers[0].cbBuffer < 16)
+    for(i=0; i < pMessage->cBuffers; ++i)
+    {
+        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        {
+            token_idx = i;
+            break;
+        }
+    }
+
+    if(token_idx == -1)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[token_idx].cbBuffer < 16)
         return SEC_E_BUFFER_TOO_SMALL;
 
     helper = (PNegoHelper) phContext->dwLower;
@@ -1417,10 +1462,18 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
     }
     else
     {
-        PBYTE sig = pMessage->pBuffers[0].pvBuffer;
-        ULONG crc = ComputeCrc32(pMessage->pBuffers[1].pvBuffer,
-                pMessage->pBuffers[1].cbBuffer);
+        PBYTE sig = pMessage->pBuffers[token_idx].pvBuffer;
+        ULONG crc = 0U;
         ULONG sign_version = 1l;
+
+        for(i=0; i < pMessage->cBuffers; ++i)
+        {
+            if(pMessage->pBuffers[i].BufferType & SECBUFFER_DATA)
+            {
+                crc = ComputeCrc32(pMessage->pBuffers[i].pvBuffer,
+                    pMessage->pBuffers[i].cbBuffer, crc);
+            }
+        }
 
         sig[ 0] = (sign_version >>  0) & 0xff;
         sig[ 1] = (sign_version >>  8) & 0xff;
@@ -1459,6 +1512,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     SECURITY_STATUS ret;
     ULONG ntlmssp_flags_save;
     PNegoHelper helper;
+    UINT i;
+    int token_idx = -1;
     TRACE("(%p %p %d %p)\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
     if(!phContext)
@@ -1467,12 +1522,21 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     if(MessageSeqNo)
         FIXME("Ignoring MessageSeqNo\n");
 
-    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2 ||
-            pMessage->pBuffers[0].BufferType != SECBUFFER_TOKEN ||
-            !pMessage->pBuffers[0].pvBuffer)
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    if(pMessage->pBuffers[0].cbBuffer < 16)
+    for(i=0; i < pMessage->cBuffers; ++i)
+    {
+        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        {
+            token_idx = i;
+            break;
+        }
+    }
+    if(token_idx == -1)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[token_idx].cbBuffer < 16)
         return SEC_E_BUFFER_TOO_SMALL;
 
     helper = (PNegoHelper) phContext->dwLower;

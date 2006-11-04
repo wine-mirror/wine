@@ -93,9 +93,9 @@ VOID WINAPI MD4Init( MD4_CTX *ctx );
 VOID WINAPI MD4Update( MD4_CTX *ctx, const unsigned char *buf, unsigned int len );
 VOID WINAPI MD4Final( MD4_CTX *ctx );
 
-ULONG ComputeCrc32(const BYTE *pData, INT iLen)
+ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc)
 {
-  ULONG crc = ~0U;
+  ULONG crc = ~initial_crc;
 
   while (iLen > 0)
   {

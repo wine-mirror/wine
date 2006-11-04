@@ -134,7 +134,7 @@ SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
         int max_len, int *out_len);
 
 /* Functions from util.c */
-ULONG ComputeCrc32(const BYTE *pData, INT iLen);
+ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc);
 SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE session_key);
 arc4_info *SECUR32_arc4Alloc(void);
 void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen);

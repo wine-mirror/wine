@@ -111,6 +111,8 @@ static BYTE message_binary[] =
 
 static char message[] = "Hello, world!";
 
+static char message_header[] = "Header Test";
+
 static BYTE crypt_trailer_client[] =
    {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xe8, 0xc7,
     0xaa, 0x26, 0x16, 0x39, 0x07, 0x4e};
@@ -118,6 +120,14 @@ static BYTE crypt_trailer_client[] =
 static BYTE crypt_message_client[] =
    {0x86, 0x9c, 0x5a, 0x10, 0x78, 0xb3, 0x30, 0x98, 0x46, 0x15,
     0xa0, 0x31, 0xd9};
+
+static BYTE crypt_trailer_client2[] =
+   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xc5, 0xa7,
+    0xf7, 0x0f, 0x5b, 0x25, 0xbe, 0xa4};
+
+static BYTE crypt_message_client2[] =
+   {0x20, 0x6c, 0x01, 0xab, 0xb0, 0x4c, 0x93, 0xe4, 0x1e, 0xfc,
+    0xe1, 0xfa, 0xfe};
 
 static BYTE crypt_trailer_server[] =
    {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1c, 0x46,
@@ -674,7 +684,7 @@ static void testSignSeal()
     SEC_WINNT_AUTH_IDENTITY id;
     static char             sec_pkg_name[] = "NTLM";
     SecBufferDesc           crypt;
-    SecBuffer               data[2], fake_data[2];
+    SecBuffer               data[2], fake_data[2], complex_data[4];
     ULONG                   qop = 0;
     SecPkgContext_Sizes     ctxt_sizes;
 
@@ -806,6 +816,45 @@ static void testSignSeal()
         ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
                    crypt.pBuffers[1].cbBuffer),
                 "Failed to decrypt message correctly.\n");
+
+        trace("Testing with more than one buffer.\n");
+
+        crypt.cBuffers = sizeof(complex_data)/sizeof(complex_data[0]);
+        crypt.pBuffers = complex_data;
+
+        complex_data[0].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+        complex_data[0].cbBuffer = sizeof(message_header);
+        complex_data[0].pvBuffer = message_header;
+
+        complex_data[1].BufferType = SECBUFFER_DATA;
+        complex_data[1].cbBuffer = lstrlen(message);
+        complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
+        memcpy(complex_data[1].pvBuffer, message, complex_data[1].cbBuffer);
+
+        complex_data[2].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+        complex_data[2].cbBuffer = sizeof(message_header);
+        complex_data[2].pvBuffer = message_header;
+
+        complex_data[3].BufferType = SECBUFFER_TOKEN;
+        complex_data[3].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+        complex_data[3].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[3].cbBuffer);
+
+        /* We should get a dummy signature again. */
+        sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
+        ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+        ok(!memcmp(crypt.pBuffers[3].pvBuffer, message_signature,
+                   crypt.pBuffers[3].cbBuffer), "Signature is not as expected.\n");
+
+        sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
+        ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+
+        ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
+                   crypt.pBuffers[3].cbBuffer), "Crypt trailer not as expected.\n");
+
+        ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
+                   crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
 
 end:
         cleanupBuffers(&client);
