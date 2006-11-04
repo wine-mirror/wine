@@ -213,6 +213,7 @@ __ASM_GLOBAL_FUNC(_start,
                   "\txor %eax,%eax\n"
                   "\txor %ecx,%ecx\n"
                   "\txor %edx,%edx\n"
+                  "\tmov %ax,%gs\n"           /* clear %gs again */
                   "\tret\n")
 
 /* wrappers for Linux system calls */
