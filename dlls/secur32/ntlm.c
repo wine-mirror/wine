@@ -1373,7 +1373,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_FreeCredentialsHandle(
         PNegoHelper helper = (PNegoHelper) phCredential->dwLower;
         phCredential->dwUpper = 0;
         phCredential->dwLower = 0;
-        HeapFree(GetProcessHeap(), 0, helper->session_key);
         cleanup_helper(helper);
         ret = SEC_E_OK;
     }
