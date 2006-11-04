@@ -1308,6 +1308,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     ULONG fQOP = 0;
     UINT i;
     int token_idx = -1;
+    SECURITY_STATUS ret;
 
     TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if(!phContext)
@@ -1345,26 +1346,42 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
         SecBufferDesc local_desc;
-        SecBuffer     local_buff[2];
+        PSecBuffer    local_buff;
         BYTE          local_sig[16];
 
+        local_buff = HeapAlloc(GetProcessHeap(), 0, pMessage->cBuffers * sizeof(SecBuffer));
+
         local_desc.ulVersion = SECBUFFER_VERSION;
-        local_desc.cBuffers = 2;
+        local_desc.cBuffers = pMessage->cBuffers;
         local_desc.pBuffers = local_buff;
-        local_buff[0].BufferType = SECBUFFER_TOKEN;
-        local_buff[0].cbBuffer = 16;
-        local_buff[0].pvBuffer = local_sig;
-        local_buff[1].BufferType = SECBUFFER_DATA;
-        local_buff[1].cbBuffer = pMessage->pBuffers[1].cbBuffer;
-        local_buff[1].pvBuffer = pMessage->pBuffers[1].pvBuffer;
+
+        for(i=0; i < pMessage->cBuffers; ++i)
+        {
+            if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+            {
+                local_buff[i].BufferType = SECBUFFER_TOKEN;
+                local_buff[i].cbBuffer = 16;
+                local_buff[i].pvBuffer = local_sig;
+            }
+            else
+            {
+                local_buff[i].BufferType = pMessage->pBuffers[i].BufferType;
+                local_buff[i].cbBuffer = pMessage->pBuffers[i].cbBuffer;
+                local_buff[i].pvBuffer = pMessage->pBuffers[i].pvBuffer;
+            }
+        }
 
         ntlm_MakeSignature(phContext, fQOP, &local_desc, MessageSeqNo);
 
-        if(memcmp(((PBYTE)local_buff[0].pvBuffer) + 8,
+        if(memcmp(((PBYTE)local_buff[token_idx].pvBuffer) + 8,
                     ((PBYTE)pMessage->pBuffers[token_idx].pvBuffer) + 8, 8))
-            return SEC_E_MESSAGE_ALTERED;
+            ret = SEC_E_MESSAGE_ALTERED;
+        else
+            ret = SEC_E_OK;
 
-        return SEC_E_OK;
+        HeapFree(GetProcessHeap(), 0, local_buff);
+
+        return ret;
     }
 
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)

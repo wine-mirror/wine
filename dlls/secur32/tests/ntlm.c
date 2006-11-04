@@ -137,6 +137,14 @@ static BYTE crypt_message_server[] =
    {0xf6, 0xb7, 0x92, 0x0c, 0xac, 0xea, 0x98, 0xe6, 0xef, 0xa0,
     0x29, 0x66, 0xfd};
 
+static BYTE crypt_trailer_server2[] =
+   {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xb1, 0x4e,
+    0x46, 0xb7, 0xca, 0xf7, 0x7f, 0xb3};
+
+static BYTE crypt_message_server2[] =
+   {0xc8, 0xf2, 0x39, 0x7f, 0x0c, 0xaf, 0xf5, 0x5d, 0xef, 0x0c,
+    0x8b, 0x5f, 0x82};
+
 static void InitFunctionPtrs(void)
 {
     secdll = LoadLibraryA("secur32.dll");
@@ -846,6 +854,12 @@ static void testSignSeal()
         ok(!memcmp(crypt.pBuffers[3].pvBuffer, message_signature,
                    crypt.pBuffers[3].cbBuffer), "Signature is not as expected.\n");
 
+        /* Being a dummy signature, it will verify right away, as if the server
+         * sent it */
+        sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
+        ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK\n",
+                getSecError(sec_status));
+
         sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
         ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
@@ -855,6 +869,14 @@ static void testSignSeal()
 
         ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
                    crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+
+        memcpy(complex_data[1].pvBuffer, crypt_message_server2, complex_data[1].cbBuffer);
+        memcpy(complex_data[3].pvBuffer, crypt_trailer_server2, complex_data[3].cbBuffer);
+
+        sec_status = pDecryptMessage(client.ctxt, &crypt, 0, &qop);
+        ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
+                getSecError(sec_status));
+
 
 end:
         cleanupBuffers(&client);
@@ -867,6 +889,8 @@ end:
         HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
         HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
         HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
+        HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
+        HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
     }
     else
     {
