@@ -1871,23 +1871,26 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
     return GL_TRUE;
 }
 
-/* WGL_ARB_pbuffer: wglGetPbufferDCARB */
-static HDC WINAPI X11DRV_wglGetPbufferDCARB(HPBUFFERARB hPbuffer)
+/* WGL_ARB_pbuffer: wglGetPbufferDCARB
+ * The function wglGetPbufferDCARB returns a device context for a pbuffer.
+ * Gdi32 implements the part of this function which creates a device context.
+ * This part associates the physDev with the X drawable of the pbuffer.
+ */
+HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
-    HDC hDC;
     if (NULL == object) {
         SetLastError(ERROR_INVALID_HANDLE);
         return NULL;
     }
-    hDC = CreateCompatibleDC(object->hdc);
 
     /* The function wglGetPbufferDCARB returns a DC to which the pbuffer can be connected.
      * We only support one onscreen rendering format (the one from the main visual), so use that. */
-    SetPixelFormat(hDC, 1, NULL);
-    set_drawable(hDC, object->drawable); /* works ?? */
-    TRACE("(%p)->(%p)\n", hPbuffer, hDC);
-    return hDC;
+    physDev->current_pf = 1;
+    physDev->drawable = object->drawable;
+
+    TRACE("(%p)->(%p)\n", hPbuffer, physDev->hdc);
+    return physDev->hdc;
 }
 
 /* WGL_ARB_pbuffer: wglQueryPbufferARB */
@@ -2379,6 +2382,9 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
+/* Disable WGL_ARB_render_texture support untill it is implemented properly
+ * using pbuffers or FBOs */
+#if 0
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {
         int do_init = 0;
         GLint prev_binded_tex;
@@ -2406,6 +2412,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         object->texture = prev_binded_tex;
         return GL_TRUE;
     }
+#endif
     if (NULL != pglXBindTexImageARB) {
         return pglXBindTexImageARB(object->display, object->drawable, iBuffer);
     }
@@ -2830,6 +2837,12 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
 
 /* OpenGL32: wglGetProcAddress */
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
+    ERR_(opengl)("No OpenGL support compiled in.\n");
+    return NULL;
+}
+
+HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *hDevice, HPBUFFERARB hPbuffer)
+{
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return NULL;
 }

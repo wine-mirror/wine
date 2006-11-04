@@ -187,6 +187,7 @@ typedef struct tagDC_FUNCS
     HGLRC    (*pwglCreateContext)(PHYSDEV);
     BOOL     (*pwglDeleteContext)(HGLRC);
     PROC     (*pwglGetProcAddress)(LPCSTR);
+    HDC      (*pwglGetPbufferDCARB)(PHYSDEV, void*);
     BOOL     (*pwglMakeCurrent)(PHYSDEV, HGLRC);
     BOOL     (*pwglMakeContextCurrentARB)(PHYSDEV, PHYSDEV, HGLRC);
     BOOL     (*pwglShareLists)(HGLRC hglrc1, HGLRC hglrc2);

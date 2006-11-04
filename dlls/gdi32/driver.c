@@ -199,6 +199,7 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(wglCreateContext);
         GET_FUNC(wglDeleteContext);
         GET_FUNC(wglGetProcAddress);
+        GET_FUNC(wglGetPbufferDCARB);
         GET_FUNC(wglMakeContextCurrentARB);
         GET_FUNC(wglMakeCurrent);
         GET_FUNC(wglShareLists);

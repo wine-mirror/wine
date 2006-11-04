@@ -131,6 +131,33 @@ HDC WINAPI wglGetCurrentDC(void)
 }
 
 /***********************************************************************
+ *		wglGetPbufferDCARB
+ */
+static HDC WINAPI wglGetPbufferDCARB(void *pbuffer)
+{
+    HDC ret = 0;
+
+    /* Create a device context to associate with the pbuffer */
+    HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    DC *dc = DC_GetDCPtr(hdc);
+
+    TRACE("(%p)\n", pbuffer);
+
+    if (!dc) return FALSE;
+
+    /* The display driver has to do the rest of the work because
+     * we need access to lowlevel datatypes which we can't access here
+     */
+    if (!dc->funcs->pwglGetPbufferDCARB) FIXME(" :stub\n");
+    else ret = dc->funcs->pwglGetPbufferDCARB(dc->physDev, pbuffer);
+
+    TRACE("(%p), hdc=%p\n", pbuffer, ret);
+    
+    GDI_ReleaseObj(hdc);
+    return ret;
+}
+
+/***********************************************************************
  *		wglMakeCurrent (OPENGL32.@)
  */
 BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
@@ -281,6 +308,8 @@ PROC WINAPI wglGetProcAddress(LPCSTR func)
      */
     if(ret && strcmp(func, "wglMakeContextCurrentARB") == 0)
         return wglMakeContextCurrentARB;
+    else if(ret && strcmp(func, "wglGetPbufferDCARB") == 0)
+        return (PROC)wglGetPbufferDCARB;
 
     return ret;
 }

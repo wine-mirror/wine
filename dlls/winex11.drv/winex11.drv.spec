@@ -134,6 +134,7 @@
 @ cdecl wglCreateContext(ptr) X11DRV_wglCreateContext
 @ cdecl wglDeleteContext(long) X11DRV_wglDeleteContext
 @ cdecl wglGetProcAddress(str) X11DRV_wglGetProcAddress
+@ cdecl wglGetPbufferDCARB(ptr ptr) X11DRV_wglGetPbufferDCARB
 @ cdecl wglMakeContextCurrentARB(ptr ptr long) X11DRV_wglMakeContextCurrentARB
 @ cdecl wglMakeCurrent(ptr long) X11DRV_wglMakeCurrent
 @ cdecl wglShareLists(long long) X11DRV_wglShareLists
