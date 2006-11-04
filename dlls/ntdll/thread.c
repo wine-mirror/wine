@@ -1150,7 +1150,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                     if (!status)
                     {
                         if (!(reply->flags & WINE_LDT_FLAGS_ALLOCATED))
-                            status = STATUS_INVALID_LDT_OFFSET;
+                            status = STATUS_ACCESS_VIOLATION;
                         else
                         {
                             wine_ldt_set_base ( &tdi->Entry, (void *)reply->base );
@@ -1161,7 +1161,9 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 }
                 SERVER_END_REQ;
             }
-            if (status == STATUS_SUCCESS && ret_len) *ret_len = sizeof(*tdi);
+            if (status == STATUS_SUCCESS && ret_len)
+                /* yes, that's a bit strange, but it's the way it is */
+                *ret_len = sizeof(LDT_ENTRY);
 #else
             status = STATUS_NOT_IMPLEMENTED;
 #endif

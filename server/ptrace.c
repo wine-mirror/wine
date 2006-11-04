@@ -445,7 +445,7 @@ void get_selector_entry( struct thread *thread, int entry, unsigned int *base,
     }
     if (entry >= 8192)
     {
-        set_error( STATUS_INVALID_PARAMETER );  /* FIXME */
+        set_error( STATUS_ACCESS_VIOLATION );
         return;
     }
     if (suspend_for_ptrace( thread ))
