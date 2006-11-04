@@ -673,8 +673,8 @@ static void testSignSeal()
     SspiData                client, server;
     SEC_WINNT_AUTH_IDENTITY id;
     static char             sec_pkg_name[] = "NTLM";
-    PSecBufferDesc          crypt = NULL;
-    PSecBuffer              data = NULL, fake_data = NULL;
+    SecBufferDesc           crypt;
+    SecBuffer               data[2], fake_data[2];
     ULONG                   qop = 0;
     SecPkgContext_Sizes     ctxt_sizes;
 
@@ -731,22 +731,10 @@ static void testSignSeal()
             goto end;
         }
 
-        if((crypt = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBufferDesc))) == NULL)
-        {
-            trace("Failed to allocate the crypto buffer, aborting test.\n");
-            goto end;
-        }
+        crypt.ulVersion = SECBUFFER_VERSION;
+        crypt.cBuffers = 2;
 
-        crypt->ulVersion = SECBUFFER_VERSION;
-        crypt->cBuffers = 2;
-
-        if((fake_data = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBuffer) * 2)) == NULL)
-        {
-            trace("Failed to allocate the fake crypto buffer, aborting test.\n");
-            goto end;
-        }
-
-        crypt->pBuffers = fake_data;
+        crypt.pBuffers = fake_data;
 
         fake_data[0].BufferType = SECBUFFER_DATA;
         fake_data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
@@ -756,19 +744,12 @@ static void testSignSeal()
         fake_data[1].cbBuffer = lstrlen(message);
         fake_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[1].cbBuffer);
 
-        sec_status = pMakeSignature(client.ctxt, 0, crypt, 0);
-        ok(sec_status == SEC_E_INVALID_TOKEN, 
+        sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
+        ok(sec_status == SEC_E_INVALID_TOKEN,
                 "MakeSignature returned %s, not SEC_E_INVALID_TOKEN.\n",
                 getSecError(sec_status));
 
-
-        if((data = HeapAlloc(GetProcessHeap(), 0, sizeof(SecBuffer) * 2)) == NULL)
-        {
-            trace("Failed to allocate the crypto buffer, aborting test.\n");
-            goto end;
-        }
-
-        crypt->pBuffers = data;
+        crypt.pBuffers = data;
 
         data[0].BufferType = SECBUFFER_TOKEN;
         data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
@@ -783,47 +764,47 @@ static void testSignSeal()
          * we should get the same signature for our data, no matter if
          * it is sent by the client or the server
          */
-        sec_status = pMakeSignature(client.ctxt, 0, crypt, 0);
+        sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
         ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
-        ok(!memcmp(crypt->pBuffers[0].pvBuffer, message_signature,
-                   crypt->pBuffers[0].cbBuffer), "Signature is not as expected.\n");
+        ok(!memcmp(crypt.pBuffers[0].pvBuffer, message_signature,
+                   crypt.pBuffers[0].cbBuffer), "Signature is not as expected.\n");
 
         data[0].cbBuffer = sizeof(message_signature);
 
         memcpy(data[0].pvBuffer, crypt_trailer_client, data[0].cbBuffer);
 
-        sec_status = pVerifySignature(client.ctxt, crypt, 0, &qop);
+        sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
         ok(sec_status == SEC_E_MESSAGE_ALTERED,
                 "VerifySignature returned %s, not SEC_E_MESSAGE_ALTERED.\n",
                 getSecError(sec_status));
 
         memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
 
-        sec_status = pVerifySignature(client.ctxt, crypt, 0, &qop);
+        sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
         ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
 
-        sec_status = pEncryptMessage(client.ctxt, 0, crypt, 0);
+        sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
         ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
 
-        ok(!memcmp(crypt->pBuffers[0].pvBuffer, crypt_trailer_client,
-                   crypt->pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
-        ok(!memcmp(crypt->pBuffers[1].pvBuffer, crypt_message_client,
-                   crypt->pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+        ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
+                   crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
+        ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
+                   crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
 
         data[0].cbBuffer = sizeof(crypt_trailer_server);
         data[1].cbBuffer = sizeof(crypt_message_server);
         memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
         memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
 
-        sec_status = pDecryptMessage(client.ctxt, crypt, 0, &qop);
+        sec_status = pDecryptMessage(client.ctxt, &crypt, 0, &qop);
 
         ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
                 getSecError(sec_status));
-        ok(!memcmp(crypt->pBuffers[1].pvBuffer, message_binary,
-                   crypt->pBuffers[1].cbBuffer),
+        ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
+                   crypt.pBuffers[1].cbBuffer),
                 "Failed to decrypt message correctly.\n");
 
 end:
@@ -832,18 +813,11 @@ end:
 
         pDeleteSecurityContext(client.ctxt);
         pFreeCredentialsHandle(client.cred);
-        if(fake_data)
-        {
-            HeapFree(GetProcessHeap(), 0, fake_data[0].pvBuffer);
-            HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
-        }
-        if(data)
-        {
-            HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
-            HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
-        }
-        HeapFree(GetProcessHeap(), 0, data);
-        HeapFree(GetProcessHeap(), 0, crypt);
+
+        HeapFree(GetProcessHeap(), 0, fake_data[0].pvBuffer);
+        HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
+        HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
+        HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
     }
     else
     {
