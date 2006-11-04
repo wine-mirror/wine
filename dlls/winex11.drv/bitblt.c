@@ -2,6 +2,7 @@
  * GDI bit-blit operations
  *
  * Copyright 1993, 1994  Alexandre Julliard
+ * Copyright 2006 Damjan Jovanovic
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1526,6 +1527,93 @@ BOOL X11DRV_PatBlt( X11DRV_PDEVICE *physDev, INT left, INT top, INT width, INT h
 
 
 /***********************************************************************
+ *           X11DRV_ClientSideDIBCopy
+ */
+static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT ySrc,
+                                      X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
+                                      INT width, INT height )
+{
+    DIBSECTION srcDib, dstDib;
+    BYTE *srcPtr, *dstPtr;
+    INT bytesPerPixel;
+    INT bytesToCopy;
+    INT y;
+    static RECT unusedRect;
+
+    if (GetObjectW(physDevSrc->bitmap->hbitmap, sizeof(srcDib), &srcDib) != sizeof(srcDib))
+      return FALSE;
+    if (GetObjectW(physDevDst->bitmap->hbitmap, sizeof(dstDib), &dstDib) != sizeof(dstDib))
+      return FALSE;
+
+    /* check for oversized values, just like X11DRV_DIB_CopyDIBSection() */
+    if (xSrc > srcDib.dsBm.bmWidth || ySrc > srcDib.dsBm.bmHeight)
+      return FALSE;
+    if (xSrc + width > srcDib.dsBm.bmWidth)
+      width = srcDib.dsBm.bmWidth - xSrc;
+    if (ySrc + height > srcDib.dsBm.bmHeight)
+      height = srcDib.dsBm.bmHeight - ySrc;
+
+    if (GetRgnBox(physDevSrc->region, &unusedRect) == COMPLEXREGION ||
+        GetRgnBox(physDevDst->region, &unusedRect) == COMPLEXREGION)
+    {
+      /* for simple regions, the clipping was already done by BITBLT_GetVisRectangles */
+      FIXME("potential optimization: client-side complex region clipping\n");
+      return FALSE;
+    }
+    if (dstDib.dsBm.bmBitsPixel <= 8)
+    {
+      FIXME("potential optimization: client-side color-index mode DIB copy\n");
+      return FALSE;
+    }
+    if (!(srcDib.dsBmih.biCompression == BI_BITFIELDS &&
+          dstDib.dsBmih.biCompression == BI_BITFIELDS &&
+          !memcmp(srcDib.dsBitfields, dstDib.dsBitfields, 3*sizeof(DWORD)))
+        && !(srcDib.dsBmih.biCompression == BI_RGB &&
+             dstDib.dsBmih.biCompression == BI_RGB))
+    {
+      FIXME("potential optimization: client-side compressed DIB copy\n");
+      return FALSE;
+    }
+    if (srcDib.dsBm.bmHeight < 0 || dstDib.dsBm.bmHeight < 0)
+    {
+      FIXME("potential optimization: client-side bottom-up DIB copy\n");
+      return FALSE;
+    }
+
+    switch (dstDib.dsBm.bmBitsPixel)
+    {
+      case 15:
+      case 16:
+        bytesPerPixel = 2;
+        break;
+      case 24:
+        bytesPerPixel = 3;
+        break;
+      case 32:
+        bytesPerPixel = 4;
+        break;
+      default:
+        FIXME("don't know how to work with a depth of %d\n", physDevSrc->depth);
+        return FALSE;
+    }
+
+    bytesToCopy = width * bytesPerPixel;
+
+    srcPtr = &physDevSrc->bitmap->base[ySrc*srcDib.dsBm.bmWidthBytes + xSrc*bytesPerPixel];
+    dstPtr = &physDevDst->bitmap->base[yDst*dstDib.dsBm.bmWidthBytes + xDst*bytesPerPixel];
+
+    for (y = yDst; y < yDst + height; ++y)
+    {
+      memcpy(dstPtr, srcPtr, bytesToCopy);
+      srcPtr += srcDib.dsBm.bmWidthBytes;
+      dstPtr += dstDib.dsBm.bmWidthBytes;
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
  *           X11DRV_BitBlt
  */
 BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
@@ -1587,7 +1675,12 @@ BOOL X11DRV_BitBlt( X11DRV_PDEVICE *physDevDst, INT xDst, INT yDst,
       height = visRectDst.bottom - visRectDst.top;
 
       if (sDst == DIB_Status_AppMod) {
-        FIXME("potential optimization - client-side DIB copy\n");
+        result = X11DRV_ClientSideDIBCopy( physDevSrc, xSrc, ySrc,
+                                           physDevDst, xDst, yDst,
+                                           width, height );
+        if (result)
+          goto END;
+        /* fall back to X server copying */
       }
       X11DRV_CoerceDIBSection( physDevDst, DIB_Status_GdiMod, FALSE );
 
