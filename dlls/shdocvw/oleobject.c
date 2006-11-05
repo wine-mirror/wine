@@ -212,6 +212,20 @@ static HRESULT get_client_disp_property(IOleClientSite *client, DISPID dispid, V
     return hres;
 }
 
+static HRESULT on_offlineconnected_change(WebBrowser *This)
+{
+    VARIANT offline;
+
+    get_client_disp_property(This->client, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED, &offline);
+
+    if(V_VT(&offline) == VT_BOOL)
+        IWebBrowser2_put_Offline(WEBBROWSER2(This), V_BOOL(&offline));
+    else if(V_VT(&offline) != VT_EMPTY)
+        WARN("wrong V_VT(silent) %d\n", V_VT(&offline));
+
+    return S_OK;
+}
+
 static HRESULT on_silent_change(WebBrowser *This)
 {
     VARIANT silent;
@@ -683,6 +697,8 @@ static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DIS
     TRACE("(%p)->(%d)\n", This, dispID);
 
     switch(dispID) {
+    case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
+        return on_offlineconnected_change(This);
     case DISPID_AMBIENT_SILENT:
         return on_silent_change(This);
     }
