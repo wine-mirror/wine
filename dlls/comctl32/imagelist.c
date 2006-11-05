@@ -84,28 +84,59 @@ static inline BOOL is_valid(HIMAGELIST himl)
     return himl && himl->magic == IMAGELIST_MAGIC;
 }
 
+/*
+ * An imagelist with N images is tiled like this:
+ *
+ *   N/4 ->
+ *
+ * 4 048C..
+ *   159D..
+ * | 26AE.N
+ * V 37BF.
+ */
+
+#define TILE_COUNT 4
+
+static inline UINT imagelist_width( UINT count )
+{
+    return ((count + TILE_COUNT - 1)/TILE_COUNT);
+}
+
 static inline void imagelist_point_from_index( HIMAGELIST himl, UINT index, LPPOINT pt )
 {
-    pt->x = index * himl->cx;
-    pt->y = 0;
+    pt->x = (index/TILE_COUNT) * himl->cx;
+    pt->y = (index%TILE_COUNT) * himl->cy;
 }
 
 static inline void imagelist_get_bitmap_size( HIMAGELIST himl, UINT count, UINT cy, SIZE *sz )
 {
-    sz->cx = count * himl->cx;
-    sz->cy = cy;
+    sz->cx = imagelist_width( count ) * himl->cx;
+    sz->cy = cy*TILE_COUNT;
 }
 
+/*
+ * imagelist_copy_images()
+ *
+ * Copies a block of count images from offset src in the list to offset dest.
+ * Images are copied a row at at time. Assumes hdcSrc and hdcDest are different.
+ */
 static inline void imagelist_copy_images( HIMAGELIST himl, HDC hdcSrc, HDC hdcDest,
                                           UINT src, UINT count, UINT dest )
 {
     POINT ptSrc, ptDest;
     SIZE sz;
+    UINT i;
 
-    imagelist_point_from_index( himl, src, &ptSrc );
-    imagelist_point_from_index( himl, dest, &ptDest );
-    imagelist_get_bitmap_size( himl, count, himl->cy, &sz );
-    BitBlt (hdcDest, ptSrc.x, ptSrc.y, sz.cx, sz.cy, hdcSrc, ptDest.x, ptDest.y, SRCCOPY);
+    for ( i=0; i<TILE_COUNT; i++ )
+    {
+        imagelist_point_from_index( himl, src+i, &ptSrc );
+        imagelist_point_from_index( himl, dest+i, &ptDest );
+        sz.cx = himl->cx * imagelist_width( count - i );
+        sz.cy = himl->cy;
+
+        BitBlt( hdcDest, ptDest.x, ptDest.y, sz.cx, sz.cy,
+                hdcSrc, ptSrc.x, ptSrc.y, SRCCOPY );
+    }
 }
 
 /*************************************************************************
