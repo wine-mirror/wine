@@ -2073,7 +2073,8 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 {
     HBITMAP hbmNewImage, hbmNewMask;
     HDC     hdcBmp;
-    INT     cxNew, nCount;
+    INT     nCount;
+    SIZE    sz;
 
     TRACE("(himl=%p i=%d)\n", himl, i);
 
@@ -2106,7 +2107,6 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         himl->hbmImage = hbmNewImage;
 
         if (himl->hbmMask) {
-            SIZE sz;
 
             imagelist_get_bitmap_size(himl, himl->cMaxImage, himl->cy, &sz);
             hbmNewMask = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
@@ -2121,7 +2121,6 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
         /* create new bitmap(s) */
         nCount = (himl->cCurImage + himl->cGrow - 1);
-	cxNew = nCount * himl->cx;
 
         TRACE(" - Number of images: %d / %d (Old/New)\n",
                  himl->cCurImage, himl->cCurImage - 1);
@@ -2130,8 +2129,9 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
         hbmNewImage = ImageList_CreateImage(himl->hdcImage, himl, nCount, himl->cy);
 
+        imagelist_get_bitmap_size(himl, nCount, himl->cy, &sz );
         if (himl->hbmMask)
-            hbmNewMask = CreateBitmap (cxNew, himl->cy, 1, 1, NULL);
+            hbmNewMask = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
         else
             hbmNewMask = 0;  /* Just to keep compiler happy! */
 
