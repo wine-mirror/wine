@@ -1812,18 +1812,20 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     LPWSTR wszText = ME_ToUnicode(hWnd, (void *)lParam);
     size_t len = lstrlenW(wszText);
     TRACE("EM_REPLACESEL - %s\n", debugstr_w(wszText));
-    
+
     ME_GetSelection(editor, &from, &to);
     style = ME_GetSelectionInsertStyle(editor);
     ME_InternalDeleteText(editor, from, to-from);
     ME_InsertTextFromCursor(editor, 0, wszText, len, style);
     ME_ReleaseStyle(style);
-    ME_EndToUnicode(hWnd, wszText);
     /* drop temporary style if line end */
-    /* FIXME question: does abc\n mean: put abc, clear temp style, put \n? (would require a change) */  
+    /*
+     * FIXME question: does abc\n mean: put abc,
+     * clear temp style, put \n? (would require a change)
+     */
     if (len>0 && wszText[len-1] == '\n')
       ME_ClearTempStyle(editor);
-      
+    ME_EndToUnicode(hWnd, wszText);
     ME_CommitUndo(editor);
     if (!wParam)
       ME_EmptyUndoStack(editor);
