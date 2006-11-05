@@ -307,18 +307,15 @@ static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
     nsICommandParams *nsparam;
     PRBool b = FALSE;
 
-    if(!This->nscontainer) {
-        FIXME("dummy not implemented\n");
-        return OLECMDF_SUPPORTED;
-    }
-
     if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
-    nsparam = create_nscommand_params();
-    get_ns_command_state(This->nscontainer, nscmd, nsparam);
+    if(This->nscontainer) {
+        nsparam = create_nscommand_params();
+        get_ns_command_state(This->nscontainer, nscmd, nsparam);
 
-    nsICommandParams_GetBooleanValue(nsparam, "state_enabled", &b);
+        nsICommandParams_GetBooleanValue(nsparam, "state_all", &b);
+    }
 
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
 }
