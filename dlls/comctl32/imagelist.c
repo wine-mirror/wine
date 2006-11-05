@@ -300,7 +300,7 @@ INT WINAPI
 ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
 {
     HDC    hdcMask, hdcBitmap;
-    INT    nIndex, nImageCount, nMaskXOffset=0;
+    INT    nIndex, nImageCount;
     BITMAP bmp;
     HBITMAP hOldBitmap;
     HBITMAP hMaskBitmap=0;
@@ -331,7 +331,6 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     if(himl->hbmMask)
     {
         hdcMask = himl->hdcMask;
-        nMaskXOffset = nIndex * himl->cx;
         imagelist_point_from_index( himl, nIndex, &pt );
     }
     else
@@ -343,7 +342,6 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
         hdcMask = CreateCompatibleDC(0);
         hMaskBitmap = CreateBitmap(bmp.bmWidth, bmp.bmHeight, 1, 1, NULL);
         SelectObject(hdcMask, hMaskBitmap);
-        nMaskXOffset = 0;
         imagelist_point_from_index( himl, 0, &pt );
     }
     /* create monochrome image to the mask bitmap */
@@ -370,7 +368,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     BitBlt(hdcBitmap,
         0, 0, bmp.bmWidth, bmp.bmHeight,
         hdcMask,
-        nMaskXOffset, 0,
+        pt.x, pt.y,
         0x220326); /* NOTSRCAND */
     /* Copy result to the imagelist
     */
