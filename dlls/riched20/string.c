@@ -360,7 +360,7 @@ LPWSTR ME_ToUnicode(HWND hWnd, LPVOID psz)
 
 void ME_EndToUnicode(HWND hWnd, LPVOID psz)
 {
-  if (IsWindowUnicode(hWnd))
+  if (!IsWindowUnicode(hWnd))
     FREE_OBJ(psz);
 }
 
