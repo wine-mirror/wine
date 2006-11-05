@@ -121,6 +121,8 @@ void ME_DestroyDisplayItem(ME_DisplayItem *item) {
   if (item->type==diUndoSetCharFormat || item->type==diUndoSetDefaultCharFormat) {
     ME_ReleaseStyle(item->member.ustyle);
   }
+  if (item->type==diUndoSplitParagraph)
+     FREE_OBJ(item->member.para.pFmt);
   FREE_OBJ(item);
 }
 
