@@ -2124,17 +2124,17 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
         /* copy all images and masks prior to the "removed" image */
         if (i > 0) {
-            POINT pt;
+            SIZE sz;
 
             TRACE("Pre image copy: Copy %d images\n", i);
 
             SelectObject (hdcBmp, hbmNewImage);
-            imagelist_point_from_index(himl, i, &pt);
-            BitBlt (hdcBmp, 0, 0, pt.x, pt.y, himl->hdcImage, 0, 0, SRCCOPY);
+            imagelist_get_bitmap_size( himl, i, himl->cy, &sz );
+            BitBlt (hdcBmp, 0, 0, sz.cx, sz.cy, himl->hdcImage, 0, 0, SRCCOPY);
 
             if (himl->hbmMask) {
                 SelectObject (hdcBmp, hbmNewMask);
-                BitBlt (hdcBmp, 0, 0, pt.x, pt.y, himl->hdcMask, 0, 0, SRCCOPY);
+                BitBlt (hdcBmp, 0, 0, sz.cx, sz.cy, himl->hdcMask, 0, 0, SRCCOPY);
             }
         }
 
