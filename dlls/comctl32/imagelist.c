@@ -202,10 +202,10 @@ IMAGELIST_InternalExpandBitmaps (HIMAGELIST himl, INT nImageCount, INT cx, INT c
 INT WINAPI
 ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 {
-    HDC     hdcBitmap;
-    INT     nFirstIndex, nImageCount;
+    HDC     hdcBitmap, hdcTemp;
+    INT     nFirstIndex, nImageCount, i;
     BITMAP  bmp;
-    HBITMAP hOldBitmap;
+    HBITMAP hOldBitmap, hOldBitmapTemp;
     POINT   pt;
 
     TRACE("himl=%p hbmimage=%p hbmmask=%p\n", himl, hbmImage, hbmMask);
@@ -217,41 +217,35 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
 
     IMAGELIST_InternalExpandBitmaps (himl, nImageCount, bmp.bmWidth, bmp.bmHeight);
 
-    imagelist_point_from_index( himl, himl->cCurImage, &pt );
-
     hdcBitmap = CreateCompatibleDC(0);
 
     hOldBitmap = SelectObject(hdcBitmap, hbmImage);
 
-    /* Copy result to the imagelist
-    */
-    BitBlt (himl->hdcImage, pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
-        hdcBitmap, 0, 0, SRCCOPY);
-
-    if(himl->hbmMask)
+    for (i=0; i<nImageCount; i++)
     {
-	HDC hdcTemp;
-	HBITMAP hOldBitmapTemp;
+        imagelist_point_from_index( himl, himl->cCurImage + i, &pt );
+
+        /* Copy result to the imagelist
+        */
+        BitBlt( himl->hdcImage, pt.x, pt.y, himl->cx, bmp.bmHeight,
+                hdcBitmap, i*himl->cx, 0, SRCCOPY );
+
+        if (!himl->hbmMask)
+             continue;
 
         hdcTemp   = CreateCompatibleDC(0);
         hOldBitmapTemp = SelectObject(hdcTemp, hbmMask);
 
-        BitBlt (himl->hdcMask,
-            pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
-            hdcTemp,
-            0, 0,
-            SRCCOPY);
+        BitBlt( himl->hdcMask, pt.x, pt.y, himl->cx, bmp.bmHeight,
+                hdcTemp, i*himl->cx, 0, SRCCOPY );
 
         SelectObject(hdcTemp, hOldBitmapTemp);
         DeleteDC(hdcTemp);
 
         /* Remove the background from the image
         */
-        BitBlt (himl->hdcImage,
-            pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
-            himl->hdcMask,
-            pt.x, pt.y,
-            0x220326); /* NOTSRCAND */
+        BitBlt( himl->hdcImage, pt.x, pt.y, himl->cx, bmp.bmHeight,
+                himl->hdcMask, pt.x, pt.y, 0x220326 ); /* NOTSRCAND */
     }
 
     SelectObject(hdcBitmap, hOldBitmap);
