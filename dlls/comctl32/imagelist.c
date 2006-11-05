@@ -1209,7 +1209,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
 	    BitBlt(hBlendMaskDC, 0, 0, cx, cy, hMaskListDC, pt.x, pt.y, 0x220326); /* NOTSRCAND */
 	    BitBlt(hBlendMaskDC, 0, 0, cx, cy, hBlendMaskDC, 0, 0, NOTSRCCOPY);
 	}
-	
+
 	/* now apply blend to the current image given the BlendMask */
         if (clrBlend == CLR_DEFAULT) clrBlend = GetSysColor (COLOR_HIGHLIGHT);
         else if (clrBlend == CLR_NONE) clrBlend = GetTextColor (pimldp->hdcDst);
@@ -1224,10 +1224,12 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     if ( (nOvlIdx >= 1) && (nOvlIdx <= MAX_OVERLAYIMAGE)) {
 	nOvlIdx = himl->nOvlIdx[nOvlIdx - 1];
 	if ((nOvlIdx >= 0) && (nOvlIdx < himl->cCurImage)) {
-	    const INT ox = himl->cx * nOvlIdx + pimldp->xBitmap;
+            POINT ptOvl;
+            imagelist_point_from_index( himl, nOvlIdx, &ptOvl );
+            ptOvl.x += pimldp->xBitmap;
 	    if (himl->hbmMask && !(fStyle & ILD_IMAGE))
-		BitBlt (hImageDC, 0, 0, cx, cy, hMaskListDC, ox, pt.x, SRCAND);
-	    BitBlt (hImageDC, 0, 0, cx, cy, hImageListDC, ox, pt.y, SRCPAINT);
+		BitBlt (hImageDC, 0, 0, cx, cy, hMaskListDC, ptOvl.x, ptOvl.y, SRCAND);
+	    BitBlt (hImageDC, 0, 0, cx, cy, hImageListDC, ptOvl.x, ptOvl.y, SRCPAINT);
 	}
     }
 
@@ -1239,7 +1241,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     if (fStyle & ILD_PRESERVEALPHA) FIXME("ILD_PRESERVEALPHA: unimplemented!\n");
     if (fStyle & ILD_SCALE) FIXME("ILD_SCALE: unimplemented!\n");
     if (fStyle & ILD_DPISCALE) FIXME("ILD_DPISCALE: unimplemented!\n");
-    
+
     /* now copy the image to the screen */
     dwRop = SRCCOPY;
     if (himl->hbmMask && bIsTransparent ) {
@@ -1254,7 +1256,7 @@ ImageList_DrawIndirect (IMAGELISTDRAWPARAMS *pimldp)
     BitBlt (pimldp->hdcDst, pimldp->x,  pimldp->y, cx, cy, hImageDC, 0, 0, dwRop);
 
     bResult = TRUE;
-end: 
+end:
     /* cleanup the mess */
     SetBkColor(hImageDC, oldImageBk);
     SetTextColor(hImageDC, oldImageFg);
