@@ -27,6 +27,7 @@
 #include "wine/debug.h"
 #include "shdocvw.h"
 #include "htiframe.h"
+#include "idispids.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
@@ -182,6 +183,45 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
         IOleInPlaceFrame_SetMenu(This->frame, NULL, NULL, This->shell_embedding_hwnd);
 
     SetFocus(This->shell_embedding_hwnd);
+
+    return S_OK;
+}
+
+static HRESULT get_client_disp_property(IOleClientSite *client, DISPID dispid, VARIANT *res)
+{
+    IDispatch *disp = NULL;
+    DISPPARAMS dispparams = {NULL, 0};
+    HRESULT hres;
+
+    VariantInit(res);
+
+    if(!client)
+        return S_OK;
+
+    hres = IOleClientSite_QueryInterface(client, &IID_IDispatch, (void**)&disp);
+    if(FAILED(hres)) {
+        TRACE("Could not get IDispatch\n");
+        return hres;
+    }
+
+    hres = IDispatch_Invoke(disp, dispid, &IID_NULL, LOCALE_SYSTEM_DEFAULT,
+            DISPATCH_PROPERTYGET, &dispparams, res, NULL, NULL);
+
+    IDispatch_Release(disp);
+
+    return hres;
+}
+
+static HRESULT on_silent_change(WebBrowser *This)
+{
+    VARIANT silent;
+
+    get_client_disp_property(This->client, DISPID_AMBIENT_SILENT, &silent);
+
+    if(V_VT(&silent) == VT_BOOL)
+        IWebBrowser2_put_Silent(WEBBROWSER2(This), V_BOOL(&silent));
+    else if(V_VT(&silent) != VT_EMPTY)
+        WARN("wrong V_VT(silent) %d\n", V_VT(&silent));
 
     return S_OK;
 }
@@ -639,7 +679,15 @@ static HRESULT WINAPI OleControl_OnMnemonic(IOleControl *iface, struct tagMSG *p
 static HRESULT WINAPI OleControl_OnAmbientPropertyChange(IOleControl *iface, DISPID dispID)
 {
     WebBrowser *This = CONTROL_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, dispID);
+
+    TRACE("(%p)->(%d)\n", This, dispID);
+
+    switch(dispID) {
+    case DISPID_AMBIENT_SILENT:
+        return on_silent_change(This);
+    }
+
+    FIXME("Unknown dispID %d\n", dispID);
     return E_NOTIMPL;
 }
 
