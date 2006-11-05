@@ -56,7 +56,6 @@ static unsigned source_find(const struct module* module, const char* name)
  */
 unsigned source_new(struct module* module, const char* base, const char* name)
 {
-    int         len;
     unsigned    ret;
     const char* full;
     char*       tmp = NULL;
@@ -75,24 +74,24 @@ unsigned source_new(struct module* module, const char* base, const char* name)
         if (tmp[bsz - 1] != '/') tmp[bsz++] = '/';
         strcpy(&tmp[bsz], name);
     }
-    if (module->sources && (ret = source_find(module, full)) != (unsigned)-1)
-        return ret;
-
-    len = strlen(full) + 1;
-    if (module->sources_used + len + 1 > module->sources_alloc)
+    if (!module->sources || (ret = source_find(module, full)) == (unsigned)-1)
     {
-        /* Alloc by block of 256 bytes */
-        module->sources_alloc = (module->sources_used + len + 1 + 255) & ~255;
-        if (!module->sources)
-            module->sources = HeapAlloc(GetProcessHeap(), 0, module->sources_alloc);
-        else
-            module->sources = HeapReAlloc(GetProcessHeap(), 0, module->sources,
-                                          module->sources_alloc);
+        int len = strlen(full) + 1;
+        if (module->sources_used + len + 1 > module->sources_alloc)
+        {
+            /* Alloc by block of 256 bytes */
+            module->sources_alloc = (module->sources_used + len + 1 + 255) & ~255;
+            if (!module->sources)
+                module->sources = HeapAlloc(GetProcessHeap(), 0, module->sources_alloc);
+            else
+                module->sources = HeapReAlloc(GetProcessHeap(), 0, module->sources,
+                                              module->sources_alloc);
+        }
+        ret = module->sources_used;
+        memcpy(module->sources + module->sources_used, full, len);
+        module->sources_used += len;
+        module->sources[module->sources_used] = '\0';
     }
-    ret = module->sources_used;
-    strcpy(module->sources + module->sources_used, full);
-    module->sources_used += len;
-    module->sources[module->sources_used] = '\0';
     HeapFree(GetProcessHeap(), 0, tmp);
     return ret;
 }
