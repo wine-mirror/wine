@@ -96,6 +96,18 @@ static inline void imagelist_get_bitmap_size( HIMAGELIST himl, UINT count, UINT 
     sz->cy = cy;
 }
 
+static inline void imagelist_copy_images( HIMAGELIST himl, HDC hdcSrc, HDC hdcDest,
+                                          UINT src, UINT count, UINT dest )
+{
+    POINT ptSrc, ptDest;
+    SIZE sz;
+
+    imagelist_point_from_index( himl, src, &ptSrc );
+    imagelist_point_from_index( himl, dest, &ptDest );
+    imagelist_get_bitmap_size( himl, count, himl->cy, &sz );
+    BitBlt (hdcDest, ptSrc.x, ptSrc.y, sz.cx, sz.cy, hdcSrc, ptDest.x, ptDest.y, SRCCOPY);
+}
+
 /*************************************************************************
  * IMAGELIST_InternalExpandBitmaps [Internal]
  *
@@ -2124,32 +2136,29 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
         /* copy all images and masks prior to the "removed" image */
         if (i > 0) {
-            SIZE sz;
-
             TRACE("Pre image copy: Copy %d images\n", i);
 
             SelectObject (hdcBmp, hbmNewImage);
-            imagelist_get_bitmap_size( himl, i, himl->cy, &sz );
-            BitBlt (hdcBmp, 0, 0, sz.cx, sz.cy, himl->hdcImage, 0, 0, SRCCOPY);
+            imagelist_copy_images( himl, himl->hdcImage, hdcBmp, 0, i, 0 );
 
             if (himl->hbmMask) {
                 SelectObject (hdcBmp, hbmNewMask);
-                BitBlt (hdcBmp, 0, 0, sz.cx, sz.cy, himl->hdcMask, 0, 0, SRCCOPY);
+                imagelist_copy_images( himl, himl->hdcMask, hdcBmp, 0, i, 0 );
             }
         }
 
         /* copy all images and masks behind the removed image */
         if (i < himl->cCurImage - 1) {
             TRACE("Post image copy!\n");
+
             SelectObject (hdcBmp, hbmNewImage);
-            BitBlt (hdcBmp, i * himl->cx, 0, (himl->cCurImage - i - 1) * himl->cx,
-                      himl->cy, himl->hdcImage, (i + 1) * himl->cx, 0, SRCCOPY);
+            imagelist_copy_images( himl, himl->hdcImage, hdcBmp, i,
+                                   (himl->cCurImage - i - 1), i + 1 );
 
             if (himl->hbmMask) {
                 SelectObject (hdcBmp, hbmNewMask);
-                BitBlt (hdcBmp, i * himl->cx, 0,
-                          (himl->cCurImage - i - 1) * himl->cx,
-                          himl->cy, himl->hdcMask, (i + 1) * himl->cx, 0, SRCCOPY);
+                imagelist_copy_images( himl, himl->hdcMask, hdcBmp, i,
+                                       (himl->cCurImage - i - 1), i + 1 );
             }
         }
 
