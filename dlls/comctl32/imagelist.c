@@ -2613,17 +2613,10 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
     if (hbmNewBitmap != 0)
     {
         SelectObject (hdcBitmap, hbmNewBitmap);
+        imagelist_copy_images( himl, himl->hdcImage, hdcBitmap, 0, nCopyCount, 0 );
 
-	/* copy images */
-        BitBlt (hdcBitmap, 0, 0, nCopyCount * himl->cx, himl->cy,
-                himl->hdcImage, 0, 0, SRCCOPY);
-#if 0
-	/* delete 'empty' image space */
-	SetBkColor (hdcBitmap, RGB(255, 255, 255));
-	SetTextColor (hdcBitmap, RGB(0, 0, 0));
-	PatBlt (hdcBitmap,  nCopyCount * himl->cx, 0,
-		  (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
-#endif
+	/* FIXME: delete 'empty' image space? */
+
         SelectObject (himl->hdcImage, hbmNewBitmap);
 	DeleteObject (himl->hbmImage);
 	himl->hbmImage = hbmNewBitmap;
@@ -2633,22 +2626,16 @@ ImageList_SetImageCount (HIMAGELIST himl, UINT iImageCount)
 
     if (himl->hbmMask)
     {
-        hbmNewBitmap = CreateBitmap (nNewCount * himl->cx, himl->cy,
-                                       1, 1, NULL);
+        SIZE sz;
+        imagelist_get_bitmap_size( himl, nNewCount, himl->cy, &sz );
+        hbmNewBitmap = CreateBitmap (sz.cx, sz.cy, 1, 1, NULL);
         if (hbmNewBitmap != 0)
         {
             SelectObject (hdcBitmap, hbmNewBitmap);
+            imagelist_copy_images( himl, himl->hdcMask, hdcBitmap, 0, nCopyCount, 0 );
 
-	    /* copy images */
-            BitBlt (hdcBitmap, 0, 0, nCopyCount * himl->cx, himl->cy,
-                    himl->hdcMask, 0, 0, SRCCOPY);
-#if 0
-	    /* delete 'empty' image space */
-	    SetBkColor (hdcBitmap, RGB(255, 255, 255));
-	    SetTextColor (hdcBitmap, RGB(0, 0, 0));
-            PatBlt (hdcBitmap,  nCopyCount * himl->cx, 0,
-		      (nNewCount - nCopyCount) * himl->cx, himl->cy, BLACKNESS);
-#endif
+	    /* FIXME: delete 'empty' image space? */
+
             SelectObject (himl->hdcMask, hbmNewBitmap);
             DeleteObject (himl->hbmMask);
             himl->hbmMask = hbmNewBitmap;
