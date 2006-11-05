@@ -127,6 +127,7 @@ struct WebBrowser {
     VARIANT_BOOL status_bar;
     VARIANT_BOOL tool_bar;
     VARIANT_BOOL silent;
+    VARIANT_BOOL offline;
 
     DocHost doc_host;
 };

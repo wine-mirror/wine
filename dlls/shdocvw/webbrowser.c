@@ -703,15 +703,21 @@ static HRESULT WINAPI WebBrowser_get_ReadyState(IWebBrowser2 *iface, READYSTATE 
 static HRESULT WINAPI WebBrowser_get_Offline(IWebBrowser2 *iface, VARIANT_BOOL *pbOffline)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pbOffline);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pbOffline);
+
+    *pbOffline = This->offline;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_put_Offline(IWebBrowser2 *iface, VARIANT_BOOL bOffline)
 {
     WebBrowser *This = WEBBROWSER_THIS(iface);
-    FIXME("(%p)->(%x)\n", This, bOffline);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, bOffline);
+
+    This->offline = bOffline ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI WebBrowser_get_Silent(IWebBrowser2 *iface, VARIANT_BOOL *pbSilent)
@@ -922,6 +928,7 @@ static HRESULT WebBrowser_Create(INT version, IUnknown *pOuter, REFIID riid, voi
     ret->status_bar = VARIANT_TRUE;
     ret->tool_bar = VARIANT_TRUE;
     ret->silent = VARIANT_FALSE;
+    ret->offline = VARIANT_FALSE;
 
     WebBrowser_OleObject_Init(ret);
     WebBrowser_ViewObject_Init(ret);
