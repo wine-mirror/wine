@@ -725,7 +725,7 @@ static void test_DoVerb(IUnknown *unk)
     SET_EXPECT(SetMenu);
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
-                             0, container_hwnd, &rect);
+                             0, (HWND)0xdeadbeef, &rect);
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
 
     CHECK_CALLED(CanInPlaceActivate);
@@ -741,7 +741,7 @@ static void test_DoVerb(IUnknown *unk)
     CHECK_CALLED(SetMenu);
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
-                           0, container_hwnd, &rect);
+                           0, (HWND)0xdeadbeef, &rect);
     ok(hres == S_OK, "DoVerb failed: %08x\n", hres);
 
     IOleObject_Release(oleobj);

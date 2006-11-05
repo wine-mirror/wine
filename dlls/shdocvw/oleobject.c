@@ -106,8 +106,9 @@ static void create_shell_embedding_hwnd(WebBrowser *This)
     TRACE("parent=%p hwnd=%p\n", parent, This->shell_embedding_hwnd);
 }
 
-static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, HWND parent_hwnd)
+static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site)
 {
+    HWND parent_hwnd;
     HRESULT hres;
 
     if(This->inplace)
@@ -157,7 +158,7 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, H
     return S_OK;
 }
 
-static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site, HWND parent_hwnd)
+static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
 {
     HRESULT hres;
 
@@ -166,7 +167,7 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site, HWND p
     if(This->inplace)
         return S_OK;
 
-    hres = activate_inplace(This, active_site, parent_hwnd);
+    hres = activate_inplace(This, active_site);
     if(FAILED(hres))
         return hres;
 
@@ -347,13 +348,13 @@ static HRESULT WINAPI OleObject_DoVerb(IOleObject *iface, LONG iVerb, struct tag
     {
     case OLEIVERB_SHOW:
         TRACE("OLEIVERB_SHOW\n");
-        return activate_ui(This, pActiveSite, hwndParent);
+        return activate_ui(This, pActiveSite);
     case OLEIVERB_UIACTIVATE:
         TRACE("OLEIVERB_UIACTIVATE\n");
-        return activate_ui(This, pActiveSite, hwndParent);
+        return activate_ui(This, pActiveSite);
     case OLEIVERB_INPLACEACTIVATE:
         TRACE("OLEIVERB_INPLACEACTIVATE\n");
-        return activate_inplace(This, pActiveSite, hwndParent);
+        return activate_inplace(This, pActiveSite);
     default:
         FIXME("stub for %d\n", iVerb);
         break;
