@@ -28,6 +28,7 @@
 #include "exdisp.h"
 #include "htiframe.h"
 #include "mshtmhst.h"
+#include "idispids.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
@@ -65,6 +66,8 @@ DEFINE_EXPECT(Frame_GetWindow);
 DEFINE_EXPECT(Frame_SetActiveObject);
 DEFINE_EXPECT(UIWindow_SetActiveObject);
 DEFINE_EXPECT(SetMenu);
+DEFINE_EXPECT(Invoke_AMBIENT_SILENT);
+DEFINE_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
 
@@ -123,6 +126,86 @@ static const IOleContainerVtbl OleContainerVtbl = {
 };
 
 static IOleContainer OleContainer = { &OleContainerVtbl };
+
+static HRESULT WINAPI Dispatch_QueryInterface(IDispatch *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI Dispatch_AddRef(IDispatch *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Dispatch_Release(IDispatch *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfoCount(IDispatch *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetTypeInfo(IDispatch *iface, UINT iTInfo, LCID lcid,
+        ITypeInfo **ppTInfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_GetIDsOfNames(IDispatch *iface, REFIID riid, LPOLESTR *rgszNames,
+        UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Dispatch_Invoke(IDispatch *iface, DISPID dispIdMember, REFIID riid,
+        LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    ok(IsEqualGUID(&IID_NULL, riid), "riid != IID_NULL\n");
+    ok(pDispParams != NULL, "pDispParams == NULL\n");
+    ok(pExcepInfo == NULL, "pExcepInfo=%p, expected NULL\n", pExcepInfo);
+    ok(puArgErr == NULL, "puArgErr=%p\n", puArgErr);
+    ok(V_VT(pVarResult) == VT_EMPTY, "V_VT(pVarResult)=%d\n", V_VT(pVarResult));
+    ok(wFlags == DISPATCH_PROPERTYGET, "wFlags=%08x, expected DISPATCH_PROPERTYGET\n", wFlags);
+    ok(pDispParams->rgvarg == NULL, "pDispParams->rgvarg = %p\n", pDispParams->rgvarg);
+    ok(pDispParams->rgdispidNamedArgs == NULL,
+       "pDispParams->rgdispidNamedArgs = %p\n", pDispParams->rgdispidNamedArgs);
+    ok(pDispParams->cArgs == 0, "pDispParams->cArgs = %d\n", pDispParams->cArgs);
+    ok(pDispParams->cNamedArgs == 0, "pDispParams->cNamedArgs = %d\n", pDispParams->cNamedArgs);
+
+    switch(dispIdMember) {
+    case DISPID_AMBIENT_OFFLINEIFNOTCONNECTED:
+        CHECK_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = VARIANT_FALSE;
+        return S_OK;
+    case DISPID_AMBIENT_SILENT:
+        CHECK_EXPECT(Invoke_AMBIENT_SILENT);
+        V_VT(pVarResult) = VT_BOOL;
+        V_BOOL(pVarResult) = VARIANT_FALSE;
+        return S_OK;
+    }
+
+    ok(0, "unexpected dispIdMember %d\n", dispIdMember);
+    return E_NOTIMPL;
+}
+
+static IDispatchVtbl DispatchVtbl = {
+    Dispatch_QueryInterface,
+    Dispatch_AddRef,
+    Dispatch_Release,
+    Dispatch_GetTypeInfoCount,
+    Dispatch_GetTypeInfo,
+    Dispatch_GetIDsOfNames,
+    Dispatch_Invoke
+};
+
+static IDispatch Dispatch = { &DispatchVtbl };
 
 static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
 {
@@ -670,6 +753,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
     else if(IsEqualGUID(&IID_IDocHostUIHandler, riid)
             || IsEqualGUID(&IID_IDocHostUIHandler2, riid))
         *ppv = &DocHostUIHandler;
+    else if(IsEqualGUID(&IID_IDispatch, riid))
+        *ppv = &Dispatch;
 
     if(*ppv)
         return S_OK;
@@ -791,6 +876,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     if(client) {
         SET_EXPECT(GetContainer);
         SET_EXPECT(Site_GetWindow);
+        SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        SET_EXPECT(Invoke_AMBIENT_SILENT);
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
@@ -799,6 +886,8 @@ static void test_ClientSite(IUnknown *unk, IOleClientSite *client)
     if(client) {
         CHECK_CALLED(GetContainer);
         CHECK_CALLED(Site_GetWindow);
+        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+        CHECK_CALLED(Invoke_AMBIENT_SILENT);
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
@@ -959,16 +1048,10 @@ static void test_ie_funcs(IUnknown *unk)
     IWebBrowser2_Release(wb);
 }
 
-static void test_Silent(IUnknown *unk)
+static void test_Silent(IWebBrowser2 *wb, IOleControl *control, BOOL is_clientsite)
 {
-    IWebBrowser2 *wb;
     VARIANT_BOOL b;
     HRESULT hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
-    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
-    if(FAILED(hres))
-        return;
 
     b = 100;
     hres = IWebBrowser2_get_Silent(wb, &b);
@@ -999,7 +1082,95 @@ static void test_Silent(IUnknown *unk)
     ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
     ok(b == VARIANT_FALSE, "b=%x\n", b);
 
+    if(is_clientsite) {
+        hres = IWebBrowser2_put_Silent(wb, VARIANT_TRUE);
+        ok(hres == S_OK, "set_Silent failed: %08x\n", hres);
+
+        SET_EXPECT(Invoke_AMBIENT_SILENT);
+    }
+
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_SILENT);
+    ok(hres == S_OK, "OnAmbientPropertyChange failed %08x\n", hres);
+
+    if(is_clientsite)
+        CHECK_CALLED(Invoke_AMBIENT_SILENT);
+
+    b = 100;
+    hres = IWebBrowser2_get_Silent(wb, &b);
+    ok(hres == S_OK, "get_Silent failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+}
+
+static void test_Offline(IWebBrowser2 *wb, IOleControl *control, BOOL is_clientsite)
+{
+    VARIANT_BOOL b;
+    HRESULT hres;
+
+    b = 100;
+    hres = IWebBrowser2_get_Offline(wb, &b);
+    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_Offline(wb, VARIANT_TRUE);
+    ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+
+    b = 100;
+    hres = IWebBrowser2_get_Offline(wb, &b);
+    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_Offline(wb, 100);
+    ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+
+    b = 100;
+    hres = IWebBrowser2_get_Offline(wb, &b);
+    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(b == VARIANT_TRUE, "b=%x\n", b);
+
+    hres = IWebBrowser2_put_Offline(wb, VARIANT_FALSE);
+    ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+
+    b = 100;
+    hres = IWebBrowser2_get_Offline(wb, &b);
+    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+
+    if(is_clientsite) {
+        hres = IWebBrowser2_put_Offline(wb, VARIANT_TRUE);
+        ok(hres == S_OK, "set_Offline failed: %08x\n", hres);
+
+        SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    }
+
+    hres = IOleControl_OnAmbientPropertyChange(control, DISPID_AMBIENT_OFFLINEIFNOTCONNECTED);
+    ok(hres == S_OK, "OnAmbientPropertyChange failed %08x\n", hres);
+
+    if(is_clientsite)
+        CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+
+    b = 100;
+    hres = IWebBrowser2_get_Offline(wb, &b);
+    ok(hres == S_OK, "get_Offline failed: %08x\n", hres);
+    ok(b == VARIANT_FALSE, "b=%x\n", b);
+}
+
+static void test_wb_funcs(IUnknown *unk, BOOL is_clientsite)
+{
+    IWebBrowser2 *wb;
+    IOleControl *control;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IWebBrowser2, (void**)&wb);
+    ok(hres == S_OK, "Could not get IWebBrowser2 interface: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IOleControl, (void**)&control);
+    ok(hres == S_OK, "Could not get IOleControl interface: %08x\n", hres);
+
+    test_Silent(wb, control, is_clientsite);
+    test_Offline(wb, control, is_clientsite);
+
     IWebBrowser_Release(wb);
+    IOleControl_Release(control);
 }
 
 static void test_GetControlInfo(IUnknown *unk)
@@ -1116,11 +1287,12 @@ static void test_WebBrowser(void)
     test_ClassInfo(unk);
     test_ClientSite(unk, &ClientSite);
     test_Extent(unk);
+    test_wb_funcs(unk, TRUE);
     test_DoVerb(unk);
     test_ClientSite(unk, NULL);
     test_ie_funcs(unk);
     test_GetControlInfo(unk);
-    test_Silent(unk);
+    test_wb_funcs(unk, FALSE);
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
