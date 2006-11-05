@@ -43,6 +43,11 @@
 #define MT_ST_BLKSIZE_MASK 0xffffff
 #endif
 
+/* Darwin 7.9.0 has MTSETBSIZ instead of MTSETBLK */
+#if !defined(MTSETBLK) && defined(MTSETBSIZ)
+#define MTSETBLK MTSETBSIZ
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 #include "ntstatus.h"
