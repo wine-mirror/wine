@@ -229,7 +229,7 @@ void  output_c_preamble (void)
 
   fprintf (cfile,
            "BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID "
-           "lpvReserved)\n{\n\tTRACE(\"(0x%%p, %%ld, %%p)\\n\",hinstDLL,"
+           "lpvReserved)\n{\n\tTRACE(\"(0x%%p, %%d, %%p)\\n\",hinstDLL,"
            "fdwReason,lpvReserved);\n\n\t"
            "if (fdwReason == DLL_WINE_PREATTACH) return FALSE;\t"
            "/* prefer native version */\n\n\t"
