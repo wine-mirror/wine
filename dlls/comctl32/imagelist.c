@@ -212,7 +212,9 @@ ImageList_Add (HIMAGELIST himl,	HBITMAP hbmImage, HBITMAP hbmMask)
     if (!is_valid(himl))
         return -1;
 
-    GetObjectA (hbmImage, sizeof(BITMAP), (LPVOID)&bmp);
+    if (!GetObjectW(hbmImage, sizeof(BITMAP), (LPVOID)&bmp))
+        return -1;
+
     nImageCount = bmp.bmWidth / himl->cx;
 
     IMAGELIST_InternalExpandBitmaps (himl, nImageCount, bmp.bmWidth, bmp.bmHeight);
@@ -309,7 +311,7 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     if (!is_valid(himl))
         return -1;
 
-    if (!GetObjectA (hBitmap, sizeof(BITMAP), &bmp))
+    if (!GetObjectW(hBitmap, sizeof(BITMAP), &bmp))
         return -1;
 
     if (himl->cx > 0)
@@ -2218,8 +2220,10 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
         return FALSE;
     }
 
+    if (!GetObjectW(hbmImage, sizeof(BITMAP), (LPVOID)&bmp))
+        return FALSE;
+
     hdcImage = CreateCompatibleDC (0);
-    GetObjectA (hbmImage, sizeof(BITMAP), (LPVOID)&bmp);
 
     /* Replace Image */
     hOldBitmap = SelectObject (hdcImage, hbmImage);
@@ -2691,7 +2695,7 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm, int cx, int cy)
 {
     LPBITMAPFILEHEADER bmfh;
     LPBITMAPINFOHEADER bmih;
-    LPBYTE data, lpBits, lpBitsOrg;
+    LPBYTE data = NULL, lpBits = NULL, lpBitsOrg = NULL;
     BITMAP bm;
     INT bitCount, sizeImage, offBits, totalSize;
     INT nwidth, nheight, nsizeImage, icount;
@@ -2700,7 +2704,8 @@ _write_bitmap(HBITMAP hBitmap, LPSTREAM pstm, int cx, int cy)
 
 
     xdc = GetDC(0);
-    GetObjectA(hBitmap, sizeof(BITMAP), (LPVOID)&bm);
+    if (!GetObjectW(hBitmap, sizeof(BITMAP), (LPVOID)&bm))
+        goto failed;
 
     /* XXX is this always correct? */
     icount = bm.bmWidth / cx;
