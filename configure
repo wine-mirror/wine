@@ -567,36 +567,36 @@ ac_unique_file="server/atom.c"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>
-#if HAVE_SYS_TYPES_H
+#ifdef HAVE_SYS_TYPES_H
 # include <sys/types.h>
 #endif
-#if HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
-#if STDC_HEADERS
+#ifdef STDC_HEADERS
 # include <stdlib.h>
 # include <stddef.h>
 #else
-# if HAVE_STDLIB_H
+# ifdef HAVE_STDLIB_H
 #  include <stdlib.h>
 # endif
 #endif
-#if HAVE_STRING_H
-# if !STDC_HEADERS && HAVE_MEMORY_H
+#ifdef HAVE_STRING_H
+# if !defined STDC_HEADERS && defined HAVE_MEMORY_H
 #  include <memory.h>
 # endif
 # include <string.h>
 #endif
-#if HAVE_STRINGS_H
+#ifdef HAVE_STRINGS_H
 # include <strings.h>
 #endif
-#if HAVE_INTTYPES_H
+#ifdef HAVE_INTTYPES_H
 # include <inttypes.h>
 #endif
-#if HAVE_STDINT_H
+#ifdef HAVE_STDINT_H
 # include <stdint.h>
 #endif
-#if HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif"
 
@@ -667,8 +667,8 @@ X_PRE_LIBS
 X_LIBS
 X_EXTRA_LIBS
 LEX
-LEXLIB
 LEX_OUTPUT_ROOT
+LEXLIB
 XLEX
 BISON
 AS
@@ -744,8 +744,8 @@ DLLTOOL
 DLLWRAP
 COREFOUNDATIONLIB
 IOKITLIB
-DISKARBITRATIONLIB
 LDEXECFLAGS
+DISKARBITRATIONLIB
 COREAUDIO
 CROSSTEST
 CROSSCC
@@ -4069,7 +4069,7 @@ do
 done
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi # $ac_x_libraries = no
 
@@ -4246,11 +4246,11 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "${ECHO_T}neither works" >&6; }
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
     ac_c_werror_flag=$ac_xsave_c_werror_flag
     LIBS=$ac_xsave_LIBS
@@ -4399,7 +4399,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_dnet_dnet_ntoa=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -4481,7 +4481,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_dnet_stub_dnet_ntoa=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -4494,7 +4494,7 @@ fi
     fi
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
     LIBS="$ac_xsave_LIBS"
 
@@ -4598,7 +4598,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_func_gethostbyname=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_func_gethostbyname" >&5
@@ -4676,7 +4676,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_nsl_gethostbyname=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -4758,7 +4758,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_bsd_gethostbyname=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -4870,7 +4870,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_func_connect=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_func_connect" >&5
@@ -4948,7 +4948,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_socket_connect=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -5053,7 +5053,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_func_remove=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_func_remove" >&5
@@ -5131,7 +5131,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_posix_remove=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -5236,7 +5236,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_func_shmat=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_func_shmat" >&5
@@ -5314,7 +5314,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_ipc_shmat=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -5407,7 +5407,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_ICE_IceConnectionNumber=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -5464,184 +5464,25 @@ fi
 done
 test -n "$LEX" || LEX=":"
 
-if test -z "$LEXLIB"
-then
-  { echo "$as_me:$LINENO: checking for yywrap in -lfl" >&5
-echo $ECHO_N "checking for yywrap in -lfl... $ECHO_C" >&6; }
-if test "${ac_cv_lib_fl_yywrap+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lfl  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char yywrap ();
-int
-main ()
-{
-return yywrap ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_fl_yywrap=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_fl_yywrap=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_fl_yywrap" >&5
-echo "${ECHO_T}$ac_cv_lib_fl_yywrap" >&6; }
-if test $ac_cv_lib_fl_yywrap = yes; then
-  LEXLIB="-lfl"
-else
-  { echo "$as_me:$LINENO: checking for yywrap in -ll" >&5
-echo $ECHO_N "checking for yywrap in -ll... $ECHO_C" >&6; }
-if test "${ac_cv_lib_l_yywrap+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-ll  $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char yywrap ();
-int
-main ()
-{
-return yywrap ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
-  cat conftest.err >&5
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; } &&
-	 { ac_try='test -s conftest$ac_exeext'
-  { (case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
-  (eval "$ac_try") 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  ac_cv_lib_l_yywrap=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_l_yywrap=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_lib_l_yywrap" >&5
-echo "${ECHO_T}$ac_cv_lib_l_yywrap" >&6; }
-if test $ac_cv_lib_l_yywrap = yes; then
-  LEXLIB="-ll"
-fi
-
-fi
-
-fi
-
 if test "x$LEX" != "x:"; then
-  { echo "$as_me:$LINENO: checking lex output file root" >&5
-echo $ECHO_N "checking lex output file root... $ECHO_C" >&6; }
-if test "${ac_cv_prog_lex_root+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  # The minimal lex program is just a single line: %%.  But some broken lexes
-# (Solaris, I think it was) want two %% lines, so accommodate them.
-cat >conftest.l <<_ACEOF
+  cat >conftest.l <<_ACEOF
 %%
+a { ECHO; }
+b { REJECT; }
+c { yymore (); }
+d { yyless (1); }
+e { yyless (input () != 0); }
+f { unput (yytext[0]); }
+. { BEGIN INITIAL; }
 %%
+#ifdef YYTEXT_POINTER
+extern char *yytext;
+#endif
+int
+main (void)
+{
+  return ! yylex () + ! yywrap ();
+}
 _ACEOF
 { (ac_try="$LEX conftest.l"
 case "(($ac_try" in
@@ -5653,6 +5494,12 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }
+{ echo "$as_me:$LINENO: checking lex output file root" >&5
+echo $ECHO_N "checking lex output file root... $ECHO_C" >&6; }
+if test "${ac_cv_prog_lex_root+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
 if test -f lex.yy.c; then
   ac_cv_prog_lex_root=lex.yy
 elif test -f lexyy.c; then
@@ -5665,8 +5512,76 @@ fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_prog_lex_root" >&5
 echo "${ECHO_T}$ac_cv_prog_lex_root" >&6; }
-rm -f conftest.l
 LEX_OUTPUT_ROOT=$ac_cv_prog_lex_root
+
+if test -z "${LEXLIB+set}"; then
+  { echo "$as_me:$LINENO: checking lex library" >&5
+echo $ECHO_N "checking lex library... $ECHO_C" >&6; }
+if test "${ac_cv_lib_lex+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+
+    ac_save_LIBS=$LIBS
+    ac_cv_lib_lex='none needed'
+    for ac_lib in '' -lfl -ll; do
+      LIBS="$ac_lib $ac_save_LIBS"
+      cat >conftest.$ac_ext <<_ACEOF
+`cat $LEX_OUTPUT_ROOT.c`
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_lex=$ac_lib
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+      test "$ac_cv_lib_lex" != 'none needed' && break
+    done
+    LIBS=$ac_save_LIBS
+
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_lex" >&5
+echo "${ECHO_T}$ac_cv_lib_lex" >&6; }
+  test "$ac_cv_lib_lex" != 'none needed' && LEXLIB=$ac_cv_lib_lex
+fi
+
 
 { echo "$as_me:$LINENO: checking whether yytext is a pointer" >&5
 echo $ECHO_N "checking whether yytext is a pointer... $ECHO_C" >&6; }
@@ -5674,13 +5589,13 @@ if test "${ac_cv_prog_lex_yytext_pointer+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   # POSIX says lex can declare yytext either as a pointer or an array; the
-# default is implementation-dependent. Figure out which it is, since
+# default is implementation-dependent.  Figure out which it is, since
 # not all implementations provide the %pointer and %array declarations.
 ac_cv_prog_lex_yytext_pointer=no
-echo 'extern char *yytext;' >>$LEX_OUTPUT_ROOT.c
 ac_save_LIBS=$LIBS
-LIBS="$LIBS $LEXLIB"
+LIBS="$LEXLIB $ac_save_LIBS"
 cat >conftest.$ac_ext <<_ACEOF
+#define YYTEXT_POINTER 1
 `cat $LEX_OUTPUT_ROOT.c`
 _ACEOF
 rm -f conftest.$ac_objext conftest$ac_exeext
@@ -5725,10 +5640,9 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_save_LIBS
-rm -f "${LEX_OUTPUT_ROOT}.c"
 
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_prog_lex_yytext_pointer" >&5
@@ -5740,6 +5654,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
+rm -f conftest.l $LEX_OUTPUT_ROOT.c
 
 fi
 
@@ -6997,7 +6912,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_i386_i386_set_ldt=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -7084,7 +6999,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_ossaudio__oss_ioctl=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -7171,7 +7086,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_xpg4__xpg4_setrunelocale=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -7257,7 +7172,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_pthread_pthread_create=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -7958,38 +7873,65 @@ cat >>conftest.$ac_ext <<_ACEOF
 #include <sys/stat.h>
 
 #if defined S_ISBLK && defined S_IFDIR
-# if S_ISBLK (S_IFDIR)
-You lose.
-# endif
+extern char c1[S_ISBLK (S_IFDIR) ? -1 : 1];
 #endif
 
 #if defined S_ISBLK && defined S_IFCHR
-# if S_ISBLK (S_IFCHR)
-You lose.
-# endif
+extern char c2[S_ISBLK (S_IFCHR) ? -1 : 1];
 #endif
 
 #if defined S_ISLNK && defined S_IFREG
-# if S_ISLNK (S_IFREG)
-You lose.
-# endif
+extern char c3[S_ISLNK (S_IFREG) ? -1 : 1];
 #endif
 
 #if defined S_ISSOCK && defined S_IFREG
-# if S_ISSOCK (S_IFREG)
-You lose.
-# endif
+extern char c4[S_ISSOCK (S_IFREG) ? -1 : 1];
 #endif
 
 _ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "You lose" >/dev/null 2>&1; then
-  ac_cv_header_stat_broken=yes
-else
+rm -f conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag" || test ! -s conftest.err'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_try") 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
   ac_cv_header_stat_broken=no
-fi
-rm -f conftest*
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
 
+	ac_cv_header_stat_broken=yes
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_header_stat_broken" >&5
 echo "${ECHO_T}$ac_cv_header_stat_broken" >&6; }
@@ -8827,7 +8769,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_X11_XkbQueryExtension=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -8916,7 +8858,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_Xext_XShmQueryExtension=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -9005,7 +8947,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_Xext_XShapeQueryExtension=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -9094,7 +9036,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_Xxf86vm_XF86VidModeQueryExtension=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -9252,7 +9194,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_Xrender_XRenderSetPictureTransform=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -9562,7 +9504,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_GL_glXCreateContext=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -9652,7 +9594,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_GLU_gluLookAt=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -9737,7 +9679,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_glut_glutMainLoop=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -10066,7 +10008,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_audio_AuCreateFlow=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -10344,7 +10286,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_xml2_xmlParseMemory=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -10431,7 +10373,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_xml2_xmlReadMemory=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -10598,7 +10540,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_xslt_xsltCompilePattern=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -10873,7 +10815,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_hal_libhal_ctx_new=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -10951,7 +10893,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_dbus_1_dbus_connection_close=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -11048,7 +10990,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_ncurses_waddch=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -11136,7 +11078,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_curses_waddch=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -11250,7 +11192,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 ac_res=`eval echo '${'$as_ac_var'}'`
@@ -11544,7 +11486,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_sane_sane_open=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -11892,7 +11834,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_gphoto2_gp_camera_new=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -11995,7 +11937,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 echo "${ECHO_T}no" >&6; }
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
     done
     LIBS="$saved_libs"
@@ -12076,7 +12018,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_resolv_res_query=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -12168,7 +12110,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_lcms_cmsOpenProfileFromFile=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -12260,7 +12202,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_ldap_r_ldap_initialize=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -12338,7 +12280,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_lber_ber_init=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -12460,7 +12402,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 ac_res=`eval echo '${'$as_ac_var'}'`
@@ -12642,7 +12584,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_freetype_FT_Init_FreeType=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -12983,7 +12925,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 ac_res=`eval echo '${'$as_ac_var'}'`
@@ -13161,7 +13103,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c_va_copy="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 
 fi
@@ -13239,7 +13181,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c___va_copy="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 
 fi
@@ -13318,7 +13260,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c_sigsetjmp="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 
 fi
@@ -13600,7 +13542,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 ac_res=`eval echo '${'$as_ac_var'}'`
@@ -13746,7 +13688,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_artsc_arts_init=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -13947,7 +13889,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_esd_esd_open_sound=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -14043,7 +13985,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_asound_snd_pcm_hw_params_get_access=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -14197,7 +14139,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_audioio_AudioIOGetVersion=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -14288,7 +14230,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_capi20_capi20_register=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -14444,7 +14386,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fshort_wchar=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -14522,7 +14464,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fno_strict_aliasing=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -14596,7 +14538,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__Wdeclaration_after_statement=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -14670,7 +14612,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__Wwrite_strings=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15006,15 +14948,15 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_asm_func_def="unknown"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_asm_func_def" >&5
@@ -15109,7 +15051,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c_extern_prefix="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_c_extern_prefix" >&5
@@ -15361,10 +15303,13 @@ fi
 
     IOKITLIB="-framework IOKit -framework CoreFoundation"
 
-    DISKARBITRATIONLIB="-framework DiskArbitration -framework CoreFoundation"
-
     LDEXECFLAGS="-image_base 0x7bf00000 -Wl,-segaddr,WINE_DOS,0x00000000,-segaddr,WINE_SHARED_HEAP,0x7f000000"
 
+    if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
+    then
+                DISKARBITRATIONLIB="-framework DiskArbitration -framework CoreFoundation"
+
+    fi
     if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes" -a "$ac_cv_header_AudioUnit_AudioUnit_h" = "yes"
     then
                 COREAUDIO="-framework CoreAudio -framework AudioUnit -framework CoreServices"
@@ -15434,7 +15379,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c_dll_gnuelf="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15508,7 +15453,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15581,7 +15526,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15658,7 +15603,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__z_defs=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15733,7 +15678,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fPIC__shared__Wl__Bsymbolic__init___wine_spec_init__fini___wine_spec_fini=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15809,7 +15754,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15885,7 +15830,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__fPIC__Wl___export_dynamic=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -15962,7 +15907,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -16040,7 +15985,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_cflags__Wl___section_start__interp_0x7bf00400=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -16106,7 +16051,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c_dll_unixware="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -16170,7 +16115,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_c_dll_hpux="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
@@ -16495,7 +16440,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_X11="libX11.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -16587,7 +16532,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_Xext="libXext.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -16679,7 +16624,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_Xi="libXi.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -16771,7 +16716,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_Xinerama="libXinerama.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -16863,7 +16808,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_Xrender="libXrender.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -16955,7 +16900,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_Xrandr="libXrandr.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17047,7 +16992,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_freetype="libfreetype.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17139,7 +17084,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_GL="libGL.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17231,7 +17176,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_hal="libhal.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17323,7 +17268,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_txc_dxtn="libtxc_dxtn.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17415,7 +17360,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_cups="libcups.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17507,7 +17452,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_jack="libjack.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17599,7 +17544,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_fontconfig="libfontconfig.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17691,7 +17636,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_ssl="libssl.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17783,7 +17728,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_crypto="libcrypto.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17875,7 +17820,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_ncurses="libncurses.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -17967,7 +17912,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_curses="libcurses.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -18059,7 +18004,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_jpeg="libjpeg.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -18151,7 +18096,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_soname_capi20="libcapi20.$LIBEXT"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
   LIBS=$ac_get_soname_save_LIBS
 fi
@@ -18403,7 +18348,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 ac_res=`eval echo '${'$as_ac_var'}'`
@@ -18491,7 +18436,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_dl_dlopen=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -18604,7 +18549,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	eval "$as_ac_var=no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 ac_res=`eval echo '${'$as_ac_var'}'`
@@ -18693,7 +18638,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_poll_poll=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -18783,7 +18728,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_nsl_gethostbyname=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -18874,7 +18819,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_socket_connect=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -18965,7 +18910,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_lib_resolv_inet_aton=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
@@ -19002,10 +18947,10 @@ main ()
 #ifndef __cplusplus
   /* Ultrix mips cc rejects this.  */
   typedef int charset[2];
-  const charset x;
+  const charset cs;
   /* SunOS 4.1.1 cc rejects this.  */
-  char const *const *ccp;
-  char **p;
+  char const *const *pcpcc;
+  char **ppc;
   /* NEC SVR4.0.2 mips cc rejects this.  */
   struct point {int x, y;};
   static struct point const zero = {0,0};
@@ -19014,11 +18959,11 @@ main ()
      an arm of an if-expression whose if-part is not a constant
      expression */
   const char *g = "string";
-  ccp = &g + (g ? g-g : 0);
+  pcpcc = &g + (g ? g-g : 0);
   /* HPUX 7.0 cc rejects these. */
-  ++ccp;
-  p = (char**) ccp;
-  ccp = (char const *const *) p;
+  ++pcpcc;
+  ppc = (char**) pcpcc;
+  pcpcc = (char const *const *) ppc;
   { /* SCO 3.2v4 cc rejects this.  */
     char *t;
     char const *s = 0 ? (char *) 0 : (char const *) 0;
@@ -19045,7 +18990,7 @@ main ()
     const int foo = 10;
     if (!foo) return 0;
   }
-  return !x[0] && !zero.x;
+  return !cs[0] && !zero.x;
 #endif
 
   ;
@@ -20183,7 +20128,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	wine_cv_have_sigaddset=no
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $wine_cv_have_sigaddset" >&5
@@ -20275,7 +20220,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 
 fi
@@ -23442,7 +23387,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_have_timezone="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_have_timezone" >&5
@@ -23517,7 +23462,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 	ac_cv_have_daylight="no"
 fi
 
-rm -f core conftest.err conftest.$ac_objext \
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
       conftest$ac_exeext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_have_daylight" >&5
@@ -24775,8 +24720,8 @@ X_PRE_LIBS!$X_PRE_LIBS$ac_delim
 X_LIBS!$X_LIBS$ac_delim
 X_EXTRA_LIBS!$X_EXTRA_LIBS$ac_delim
 LEX!$LEX$ac_delim
-LEXLIB!$LEXLIB$ac_delim
 LEX_OUTPUT_ROOT!$LEX_OUTPUT_ROOT$ac_delim
+LEXLIB!$LEXLIB$ac_delim
 XLEX!$XLEX$ac_delim
 BISON!$BISON$ac_delim
 AS!$AS$ac_delim
@@ -24913,8 +24858,8 @@ DLLTOOL!$DLLTOOL$ac_delim
 DLLWRAP!$DLLWRAP$ac_delim
 COREFOUNDATIONLIB!$COREFOUNDATIONLIB$ac_delim
 IOKITLIB!$IOKITLIB$ac_delim
-DISKARBITRATIONLIB!$DISKARBITRATIONLIB$ac_delim
 LDEXECFLAGS!$LDEXECFLAGS$ac_delim
+DISKARBITRATIONLIB!$DISKARBITRATIONLIB$ac_delim
 COREAUDIO!$COREAUDIO$ac_delim
 CROSSTEST!$CROSSTEST$ac_delim
 CROSSCC!$CROSSCC$ac_delim

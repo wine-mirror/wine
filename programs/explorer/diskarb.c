@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorer);
 
-#ifdef __APPLE__
+#ifdef HAVE_DISKARBITRATION_DISKARBITRATION_H
 
 #include <DiskArbitration/DiskArbitration.h>
 
@@ -133,11 +133,11 @@ void initialize_diskarbitration(void)
     CloseHandle( handle );
 }
 
-#else  /* __APPLE__ */
+#else  /*  HAVE_DISKARBITRATION_DISKARBITRATION_H */
 
 void initialize_diskarbitration(void)
 {
-    WINE_TRACE( "Skipping on non-Apple platform\n" );
+    WINE_TRACE( "Skipping, Disk Arbitration support not compiled in\n" );
 }
 
-#endif  /* __APPLE__ */
+#endif  /* HAVE_DISKARBITRATION_DISKARBITRATION_H */
