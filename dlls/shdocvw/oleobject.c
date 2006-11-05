@@ -30,6 +30,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(shdocvw);
 
+/* shlwapi.dll */
+HWND WINAPI SHSetParentHwnd(HWND hWnd, HWND hWndParent);
+
 static ATOM shell_embedding_atom = 0;
 
 static LRESULT resize_window(WebBrowser *This, LONG width, LONG height)
@@ -127,9 +130,9 @@ static HRESULT activate_inplace(WebBrowser *This, IOleClientSite *active_site, H
         return E_FAIL;
     }
 
-    hres = IOleInPlaceSite_GetWindow(This->inplace, &This->iphwnd);
-    if(FAILED(hres))
-        This->iphwnd = parent_hwnd;
+    hres = IOleInPlaceSite_GetWindow(This->inplace, &parent_hwnd);
+    if(SUCCEEDED(hres))
+        SHSetParentHwnd(This->shell_embedding_hwnd, parent_hwnd);
 
     IOleInPlaceSite_OnInPlaceActivate(This->inplace);
 
@@ -810,7 +813,6 @@ void WebBrowser_OleObject_Init(WebBrowser *This)
     This->client = NULL;
     This->inplace = NULL;
     This->container = NULL;
-    This->iphwnd = NULL;
     This->frame_hwnd = NULL;
     This->frame = NULL;
     This->uiwindow = NULL;

@@ -111,7 +111,6 @@ struct WebBrowser {
 
     /* window context */
 
-    HWND iphwnd;
     HWND frame_hwnd;
     IOleInPlaceFrame *frame;
     IOleInPlaceUIWindow *uiwindow;
