@@ -325,6 +325,9 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, LPOLECLIENTSITE
 
     create_shell_embedding_hwnd(This);
 
+    on_offlineconnected_change(This);
+    on_silent_change(This);
+
     return S_OK;
 }
 
