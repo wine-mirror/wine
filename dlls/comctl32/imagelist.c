@@ -1441,6 +1441,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
     HICON hIcon;
     HBITMAP hOldDstBitmap;
     HDC hdcDst;
+    POINT pt;
 
     TRACE("%p %d %d\n", himl, i, fStyle);
     if (!is_valid(himl) || (i < 0) || (i >= himl->cCurImage)) return NULL;
@@ -1456,12 +1457,14 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
 
     hdcDst = CreateCompatibleDC(0);
 
+    imagelist_point_from_index( himl, i, &pt );
+
     /* draw mask*/
     ii.hbmMask  = CreateBitmap (himl->cx, himl->cy, 1, 1, NULL);
     hOldDstBitmap = SelectObject (hdcDst, ii.hbmMask);
     if (himl->hbmMask) {
         BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
-                himl->hdcMask, i * himl->cx, 0, SRCCOPY);
+                himl->hdcMask, pt.x, pt.y, SRCCOPY);
     }
     else
         PatBlt (hdcDst, 0, 0, himl->cx, himl->cy, BLACKNESS);
@@ -1469,7 +1472,7 @@ ImageList_GetIcon (HIMAGELIST himl, INT i, UINT fStyle)
     /* draw image*/
     SelectObject (hdcDst, ii.hbmColor);
     BitBlt (hdcDst, 0, 0, himl->cx, himl->cy,
-            himl->hdcImage, i * himl->cx, 0, SRCCOPY);
+            himl->hdcImage, pt.x, pt.y, SRCCOPY);
 
     /*
      * CreateIconIndirect requires us to deselect the bitmaps from
