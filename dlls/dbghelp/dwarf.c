@@ -1582,6 +1582,7 @@ static void dwarf2_set_line_number(struct module* module, unsigned long address,
 
 static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,        
                                       dwarf2_parse_context_t* ctx,
+                                      const char* compile_dir,
                                       unsigned long offset)
 {
     dwarf2_traverse_context_t   traverse;
@@ -1615,13 +1616,28 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 
     vector_init(&dirs, sizeof(const char*), 4);
     p = vector_add(&dirs, &ctx->pool);
-    *p = ".";
+    *p = compile_dir ? compile_dir : ".";
     while (*traverse.data)
     {
-        TRACE("Got include %s\n", (const char*)traverse.data);
+        const char*  rel = (const char*)traverse.data;
+        unsigned     rellen = strlen(rel);
+        TRACE("Got include %s\n", rel);
+        traverse.data += rellen + 1;
         p = vector_add(&dirs, &ctx->pool);
-        *p = (const char *)traverse.data;
-        traverse.data += strlen((const char *)traverse.data) + 1;
+
+        if (*rel == '/' || !compile_dir)
+            *p = rel;
+        else
+        {
+           /* include directory relative to compile directory */
+           unsigned  baselen = strlen(compile_dir);
+           char*     tmp = pool_alloc(&ctx->pool, baselen + 1 + rellen + 1);
+           strcpy(tmp, compile_dir);
+           if (tmp[baselen - 1] != '/') tmp[baselen++] = '/';
+           strcpy(&tmp[baselen], rel);
+           *p = tmp;
+        }
+
     }
     traverse.data++;
 
@@ -1788,9 +1804,15 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         struct attribute            name;
         dwarf2_debug_info_t**       pdi = NULL;
         struct attribute            stmt_list;
+        struct attribute            comp_dir;
 
         dwarf2_find_name(&ctx, di, &name, "compiland");
-        di->symt = &symt_new_compiland(module, source_new(module, NULL, name.u.string))->symt;
+
+        /* get working directory of current compilation unit */
+        if (!dwarf2_find_attribute(&ctx, di, DW_AT_comp_dir, &comp_dir))
+            comp_dir.u.string = NULL;
+
+        di->symt = &symt_new_compiland(module, source_new(module, comp_dir.u.string, name.u.string))->symt;
 
         if (di->abbrev->have_child)
         {
@@ -1801,7 +1823,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         }
         if (dwarf2_find_attribute(&ctx, di, DW_AT_stmt_list, &stmt_list))
         {
-            dwarf2_parse_line_numbers(sections, &ctx, stmt_list.u.uvalue);
+            dwarf2_parse_line_numbers(sections, &ctx, comp_dir.u.string, stmt_list.u.uvalue);
         }
         ret = TRUE;
     }
