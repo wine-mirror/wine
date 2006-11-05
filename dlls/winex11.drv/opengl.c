@@ -873,9 +873,9 @@ int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev,
   }
 
   /* Get a list containing all supported FB configurations */
-  cfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), NULL, &nCfgs);
+  cfgs = pglXGetFBConfigs(gdi_display, DefaultScreen(gdi_display), &nCfgs);
   if (NULL == cfgs || 0 == nCfgs) {
-    ERR("glXChooseFBConfig returns NULL (glError: %d)\n", pglGetError());
+    ERR("glXGetFBConfigs returns NULL (glError: %d)\n", pglGetError());
     goto choose_exit;
   }
 
