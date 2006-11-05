@@ -1210,12 +1210,12 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   ME_DisplayItem *pFirst = editor->pBuffer->pFirst;
   ME_DisplayItem *p = pFirst, *pNext = NULL;
   int i;
-  
+
   ME_ClearTempStyle(editor);
   ME_EmptyUndoStack(editor);
   while(p) {
     pNext = p->next;
-    ME_DestroyDisplayItem(p);    
+    ME_DestroyDisplayItem(p);
     p = pNext;
   }
   ME_ReleaseStyle(editor->pBuffer->pDefaultStyle);
@@ -1227,6 +1227,9 @@ void ME_DestroyEditor(ME_TextEditor *editor)
   DeleteObject(editor->hbrBackground);
   if(editor->lpOleCallback)
     IUnknown_Release(editor->lpOleCallback);
+
+  FREE_OBJ(editor->pBuffer);
+  FREE_OBJ(editor->pCursors);
 
   FREE_OBJ(editor);
 }
