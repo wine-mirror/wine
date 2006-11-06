@@ -100,7 +100,7 @@ DWORD _CorValidateImage(LPCVOID* imageBase, LPCWSTR imageName)
 
 HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
 {
-    static const WCHAR version[] = {'1','.','1','.','4','3','2','2',0};
+    static const WCHAR version[] = {'v','1','.','1','.','4','3','2','2',0};
 
     FIXME("(%p, %d, %p): semi-stub!\n", pbuffer, cchBuffer, dwLength);
 
