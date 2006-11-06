@@ -154,6 +154,7 @@ AC_CHECK_HEADERS(\
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
+	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \

@@ -7582,10 +7582,12 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
+	DiskArbitration/DiskArbitration.h \
 	IOKit/IOKitLib.h \
 	alsa/asoundlib.h \
 	arpa/inet.h \

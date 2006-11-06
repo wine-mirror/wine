@@ -71,6 +71,10 @@
 /* Define to 1 if you have the <direct.h> header file. */
 #undef HAVE_DIRECT_H
 
+/* Define to 1 if you have the <DiskArbitration/DiskArbitration.h> header
+   file. */
+#undef HAVE_DISKARBITRATION_DISKARBITRATION_H
+
 /* Define to 1 if you have the `dladdr' function. */
 #undef HAVE_DLADDR
 
