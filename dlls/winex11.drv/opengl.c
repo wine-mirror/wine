@@ -2841,7 +2841,7 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
     return NULL;
 }
 
-HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *hDevice, HPBUFFERARB hPbuffer)
+HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *hDevice, void *hPbuffer)
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return NULL;
