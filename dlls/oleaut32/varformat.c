@@ -2199,7 +2199,7 @@ HRESULT WINAPI VarFormatNumber(LPVARIANT pVarIn, INT nDigits, INT nLeading, INT 
   hRet = VariantCopyInd(&vStr, pVarIn);
 
   if (SUCCEEDED(hRet))
-    hRet = VariantChangeTypeEx(&vStr, &vStr, LOCALE_USER_DEFAULT, 0, VT_BSTR);
+    hRet = VariantChangeTypeEx(&vStr, &vStr, LCID_US, 0, VT_BSTR);
 
   if (SUCCEEDED(hRet))
   {
