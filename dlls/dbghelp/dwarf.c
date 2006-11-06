@@ -150,6 +150,7 @@ typedef struct dwarf2_debug_info_s
     struct vector               children;
 } dwarf2_debug_info_t;
 
+#define NO_MAP                  ((const void*)0xffffffff)
 
 typedef struct dwarf2_section_s
 {
@@ -1594,6 +1595,10 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
     struct vector               dirs;
     struct vector               files;
     const char**                p;
+
+    /* section with line numbers stripped */
+    if (sections[section_line].address == NO_MAP)
+        return;
 
     traverse.data = sections[section_line].address + offset;
     traverse.start_data = traverse.data;

@@ -901,7 +901,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                                     dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
                                     dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
                                     dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size,
-                                    dw2_debug_line, fmap->sect[debug_line_sect].shdr.sh_size);
+                                    dw2_debug_line, dw2_debug_line != NO_MAP ? fmap->sect[debug_line_sect].shdr.sh_size : 0);
                 if (!lret)
                     WARN("Couldn't correctly read stabs\n");
                 ret = ret || lret;
