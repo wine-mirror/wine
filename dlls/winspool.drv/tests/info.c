@@ -33,12 +33,16 @@
 #define DEFAULT_PRINTER_SIZE 1000
 
 static CHAR does_not_exist_dll[]= "does_not_exists.dll";
+static CHAR does_not_exist[]    = "does_not_exists";
 static CHAR empty[]             = "";
 static CHAR env_x86[]           = "Windows NT x86";
 static CHAR env_win9x_case[]    = "windowS 4.0";
 static CHAR illegal_name[]      = "illegal,name";
 static CHAR invalid_env[]       = "invalid_env";
 static CHAR invalid_server[]    = "\\invalid_server";
+static CHAR portname_com1[]     = "COM1:";
+static CHAR portname_file[]     = "FILE:";
+static CHAR portname_lpt1[]     = "LPT1:";
 static CHAR version_dll[]       = "version.dll";
 static CHAR winetest_monitor[]  = "winetest";
 
@@ -319,6 +323,70 @@ static void test_AddMonitor(void)
     /* cleanup */
     DeleteMonitorA(NULL, entry->env, winetest_monitor);
 
+}
+
+/* ########################### */
+
+static void test_ConfigurePort(void)
+{
+    DWORD   res;
+
+
+    SetLastError(0xdeadbeef);
+    res = ConfigurePortA(NULL, 0, NULL);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = ConfigurePortA(NULL, 0, empty);
+    /* Allowed only for (Printer-)Administrators */
+    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
+        trace(" skip tests (ACCESS_DENIED)\n");
+        return;
+    }
+    /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+
+    SetLastError(0xdeadbeef);
+    res = ConfigurePortA(NULL, 0, does_not_exist);
+    /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+
+    /*  Testing-Results:
+        - Case of Portnames is ignored 
+        - Portname without ":" => NT: ERROR_NOT_SUPPORTED, 9x: Dialog comes up
+        - Empty Servername (LPT1:) => NT: ERROR_NOT_SUPPORTED, 9x: Dialog comes up
+
+        - Port not present =>  9x: ERROR_INVALID_PARAMETER, NT:ERROR_NOT_SUPPORTED
+        - "FILE:" => 9x:Success, NT:ERROR_CANCELED
+        - Cancel ("Local Port") => ERROR_CANCELED
+        - Cancel ("Redirected Port") => Success
+    */
+    if (winetest_interactive > 0) {
+        SetLastError(0xdeadbeef);
+        res = ConfigurePortA(NULL, 0, portname_com1);
+        trace("'%s' returned %d with %d\n", portname_com1, res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = ConfigurePortA(NULL, 0, portname_lpt1);
+        trace("'%s' returned %d with %d\n", portname_lpt1, res, GetLastError());
+
+        SetLastError(0xdeadbeef);
+        res = ConfigurePortA(NULL, 0, portname_file);
+        trace("'%s' returned %d with %d\n", portname_file, res, GetLastError());
+    }
 }
 
 /* ########################### */
@@ -1507,6 +1575,7 @@ START_TEST(info)
     default_printer = find_default_printer();
 
     test_AddMonitor();
+    test_ConfigurePort();
     test_DeleteMonitor();
     test_DocumentProperties();
     test_EnumForms(NULL);
