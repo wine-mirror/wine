@@ -23,6 +23,7 @@
 #define DIRECT3D_VERSION  0x0800
 #endif
 
+#define COM_NO_WINDOWS_H
 #include <objbase.h>
 
 #include <d3d8types.h>

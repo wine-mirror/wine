@@ -19,6 +19,7 @@
 #ifndef __WINE_DINPUT_H
 #define __WINE_DINPUT_H
 
+#define COM_NO_WINDOWS_H
 #include <objbase.h>
 
 #ifndef DIRECTINPUT_VERSION

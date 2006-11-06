@@ -27,6 +27,7 @@
 #include <oleauto.h> /* VARIANT */
 #endif /* __WINESRC__ */
 
+#define COM_NO_WINDOWS_H
 #include <objbase.h>
 #include <mmsystem.h>
 #include <dmusicc.h>

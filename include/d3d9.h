@@ -24,6 +24,7 @@
 #define DIRECT3D_VERSION  0x0900
 #endif
 
+#define COM_NO_WINDOWS_H
 #include <objbase.h>
 
 #include <d3d9types.h>
