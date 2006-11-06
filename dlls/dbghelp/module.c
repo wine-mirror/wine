@@ -136,8 +136,8 @@ struct module* module_new(struct process* pcs, const char* name,
     module->module.LineNumbers = FALSE;
     module->module.GlobalSymbols = FALSE;
     module->module.TypeInfo = FALSE;
-    module->module.SourceIndexed = 0;
-    module->module.Publics = 0;
+    module->module.SourceIndexed = FALSE;
+    module->module.Publics = FALSE;
 
     module->type              = type;
     module->is_virtual        = virtual ? TRUE : FALSE;
