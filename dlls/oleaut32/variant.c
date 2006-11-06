@@ -2478,7 +2478,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         leftvt == VT_UI8 || leftvt == VT_INT ||
         leftvt == VT_UINT || leftvt == VT_EMPTY ||
         leftvt == VT_NULL || leftvt == VT_DATE ||
-        leftvt == VT_DECIMAL)
+        leftvt == VT_DECIMAL || leftvt == VT_DISPATCH)
         &&
         (rightvt == VT_I2 || rightvt == VT_I4 ||
         rightvt == VT_R4 || rightvt == VT_R8 ||
@@ -2489,7 +2489,7 @@ HRESULT WINAPI VarCat(LPVARIANT left, LPVARIANT right, LPVARIANT out)
         rightvt == VT_UI8 || rightvt == VT_INT ||
         rightvt == VT_UINT || rightvt == VT_EMPTY ||
         rightvt == VT_NULL || rightvt == VT_DATE ||
-        rightvt == VT_DECIMAL))
+        rightvt == VT_DECIMAL || rightvt == VT_DISPATCH))
         resultvt = VT_BSTR;
     else if (rightvt == VT_ERROR && leftvt < VT_VOID)
         hres = DISP_E_TYPEMISMATCH;
