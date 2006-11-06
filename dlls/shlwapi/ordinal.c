@@ -4453,3 +4453,151 @@ void WINAPI SHChangeNotify(LONG wEventId, UINT uFlags, LPCVOID dwItem1, LPCVOID 
     }
     fn(wEventId, uFlags, dwItem1, dwItem2);
 }
+
+typedef struct SHELL_USER_SID {   /* according to MSDN this should be in shlobj.h... */
+    SID_IDENTIFIER_AUTHORITY sidAuthority;
+    DWORD                    dwUserGroupID;
+    DWORD                    dwUserID;
+} SHELL_USER_SID, *PSHELL_USER_SID;
+
+typedef struct SHELL_USER_PERMISSION { /* ...and this should be in shlwapi.h */
+    SHELL_USER_SID susID;
+    DWORD          dwAccessType;
+    BOOL           fInherit;
+    DWORD          dwAccessMask;
+    DWORD          dwInheritMask;
+    DWORD          dwInheritAccessMask;
+} SHELL_USER_PERMISSION, *PSHELL_USER_PERMISSION;
+
+/***********************************************************************
+ *             GetShellSecurityDescriptor [SHLWAPI.475]
+ *
+ * prepares SECURITY_DESCRIPTOR from a set of ACEs
+ *
+ * PARAMS
+ *  apUserPerm [I] array of pointers to SHELL_USER_PERMISSION structures,
+ *                 each of which describes permissions to apply
+ *  cUserPerm  [I] number of entries in apUserPerm array
+ *
+ * RETURNS
+ *  success: pointer to SECURITY_DESCRIPTOR
+ *  failure: NULL
+ *
+ * NOTES
+ *  Call should free returned descriptor with LocalFree
+ */
+SECURITY_DESCRIPTOR * WINAPI GetShellSecurityDescriptor(PSHELL_USER_PERMISSION *apUserPerm, int cUserPerm)
+{
+    PSID *sidlist;
+    PSID  cur_user = NULL;
+    BYTE  tuUser[2000];
+    DWORD acl_size;
+    int   sid_count, i;
+    PSECURITY_DESCRIPTOR psd = NULL;
+
+    TRACE("%p %d\n", apUserPerm, cUserPerm);
+
+    if (apUserPerm == NULL || cUserPerm <= 0)
+        return NULL;
+
+    sidlist = HeapAlloc(GetProcessHeap(), 0, cUserPerm * sizeof(PSID));
+    if (!sidlist)
+        return NULL;
+
+    acl_size = sizeof(ACL);
+
+    for(sid_count = 0; sid_count < cUserPerm; sid_count++)
+    {
+        static SHELL_USER_SID null_sid = {{SECURITY_NULL_SID_AUTHORITY}, 0, 0};
+        PSHELL_USER_PERMISSION perm = apUserPerm[sid_count];
+        PSHELL_USER_SID sid = &perm->susID;
+        PSID pSid;
+        BOOL ret = TRUE;
+
+        if (!memcmp((void*)sid, (void*)&null_sid, sizeof(SHELL_USER_SID)))
+        {  /* current user's SID */ 
+            if (!cur_user)
+            {
+                HANDLE Token;
+                DWORD bufsize = sizeof(tuUser);
+
+                ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &Token);
+                if (ret)
+                {
+                    ret = GetTokenInformation(Token, TokenUser, (void*)tuUser, bufsize, &bufsize );
+                    if (ret)
+                        cur_user = ((PTOKEN_USER)&tuUser)->User.Sid;
+                    CloseHandle(Token);
+                }
+            }
+            pSid = cur_user;
+        } else if (sid->dwUserID==0) /* one sub-authority */
+            ret = AllocateAndInitializeSid(&sid->sidAuthority, 1, sid->dwUserGroupID, 0,
+                    0, 0, 0, 0, 0, 0, &pSid);
+        else
+            ret = AllocateAndInitializeSid(&sid->sidAuthority, 2, sid->dwUserGroupID, sid->dwUserID,
+                    0, 0, 0, 0, 0, 0, &pSid);
+        if (!ret)
+            goto free_sids;
+
+        sidlist[sid_count] = pSid;
+        /* increment acl_size (1 ACE for non-inheritable and 2 ACEs for inheritable records */
+        acl_size += (sizeof(ACCESS_ALLOWED_ACE)-sizeof(DWORD) + GetLengthSid(pSid)) * (perm->fInherit ? 2 : 1);
+    }
+
+    psd = LocalAlloc(0, sizeof(SECURITY_DESCRIPTOR) + acl_size);
+
+    if (psd != NULL)
+    {
+        PACL pAcl = (PACL)(((BYTE*)psd)+sizeof(SECURITY_DESCRIPTOR));
+
+        if (!InitializeSecurityDescriptor(psd, SECURITY_DESCRIPTOR_REVISION))
+            goto error;
+
+        if (!InitializeAcl(pAcl, acl_size, ACL_REVISION))
+            goto error;
+
+        for(i = 0; i < sid_count; i++)
+        {
+            PSHELL_USER_PERMISSION sup = apUserPerm[i];
+            PSID sid = sidlist[i];
+
+            switch(sup->dwAccessType)
+            {
+                case ACCESS_ALLOWED_ACE_TYPE:
+                    if (!AddAccessAllowedAce(pAcl, ACL_REVISION, sup->dwAccessMask, sid))
+                        goto error;
+                    if (sup->fInherit && !AddAccessAllowedAceEx(pAcl, ACL_REVISION, 
+                                (BYTE)sup->dwInheritMask, sup->dwInheritAccessMask, sid))
+                        goto error;
+                    break;
+                case ACCESS_DENIED_ACE_TYPE:
+                    if (!AddAccessDeniedAce(pAcl, ACL_REVISION, sup->dwAccessMask, sid))
+                        goto error;
+                    if (sup->fInherit && !AddAccessDeniedAceEx(pAcl, ACL_REVISION, 
+                                (BYTE)sup->dwInheritMask, sup->dwInheritAccessMask, sid))
+                        goto error;
+                    break;
+                default:
+                    goto error;
+            }
+        }
+
+        if (!SetSecurityDescriptorDacl(psd, TRUE, pAcl, FALSE))
+            goto error;
+    }
+    goto free_sids;
+
+error:
+    LocalFree(psd);
+    psd = NULL;
+free_sids:
+    for(i = 0; i < sid_count; i++)
+    {
+        if (!cur_user || sidlist[i] != cur_user)
+            FreeSid(sidlist[i]);
+    }
+    HeapFree(GetProcessHeap(), 0, sidlist);
+
+    return psd;
+}

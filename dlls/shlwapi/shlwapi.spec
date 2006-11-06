@@ -472,7 +472,7 @@
 472 stub -noname SHCreatePropertyBagOnProfileSelections
 473 stub -noname SHGetIniStringUTF7W
 474 stub -noname SHSetIniStringUTF7W
-475 stub -noname GetShellSecurityDescriptor
+475 stdcall -noname GetShellSecurityDescriptor(ptr long)
 476 stub -noname SHGetObjectCompatFlags
 477 stub -noname SHCreatePropertyBagOnMemory
 478 stdcall -noname IUnknown_TranslateAcceleratorIO(ptr ptr)

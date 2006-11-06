@@ -327,6 +327,110 @@ static void test_fdsa(void)
     HeapFree(GetProcessHeap(), 0, mem);
 }
 
+
+typedef struct SHELL_USER_SID {
+    SID_IDENTIFIER_AUTHORITY sidAuthority;
+    DWORD                    dwUserGroupID;
+    DWORD                    dwUserID;
+} SHELL_USER_SID, *PSHELL_USER_SID;
+typedef struct SHELL_USER_PERMISSION {
+    SHELL_USER_SID susID;
+    DWORD          dwAccessType;
+    BOOL           fInherit;
+    DWORD          dwAccessMask;
+    DWORD          dwInheritMask;
+    DWORD          dwInheritAccessMask;
+} SHELL_USER_PERMISSION, *PSHELL_USER_PERMISSION;
+static void test_GetShellSecurityDescriptor(void)
+{
+    SHELL_USER_PERMISSION supCurrentUserFull = {
+        { {SECURITY_NULL_SID_AUTHORITY}, 0, 0 },
+        ACCESS_ALLOWED_ACE_TYPE, FALSE,
+        GENERIC_ALL, 0, 0 };
+#define MY_INHERITANCE 0xBE /* invalid value to proof behavior */
+    SHELL_USER_PERMISSION supEveryoneDenied = {
+        { {SECURITY_WORLD_SID_AUTHORITY}, SECURITY_WORLD_RID, 0 },
+        ACCESS_DENIED_ACE_TYPE, TRUE,
+        GENERIC_WRITE, MY_INHERITANCE | 0xDEADBA00, GENERIC_READ };
+    PSHELL_USER_PERMISSION rgsup[2] = {
+        &supCurrentUserFull, &supEveryoneDenied,
+    };
+    SECURITY_DESCRIPTOR* psd;
+    SECURITY_DESCRIPTOR* (WINAPI*pGetShellSecurityDescriptor)(PSHELL_USER_PERMISSION*,int);
+
+    pGetShellSecurityDescriptor=(void*)GetProcAddress(hShlwapi,(char*)475);
+
+    psd = pGetShellSecurityDescriptor(NULL, 2);
+    ok(psd==NULL, "GetShellSecurityDescriptor should fail\n");
+    psd = pGetShellSecurityDescriptor(rgsup, 0);
+    ok(psd==NULL, "GetShellSecurityDescriptor should fail\n");
+
+    psd = pGetShellSecurityDescriptor(rgsup, 2);
+    ok(psd!=NULL, "GetShellSecurityDescriptor failed\n");
+    if (psd!=NULL)
+    {
+        BOOL bHasDacl = FALSE, bDefaulted;
+        PACL pAcl;
+        DWORD dwRev;
+        SECURITY_DESCRIPTOR_CONTROL control;
+
+        ok(IsValidSecurityDescriptor(psd), "returned value is not valid SD\n");
+
+        ok(GetSecurityDescriptorControl(psd, &control, &dwRev),
+                "GetSecurityDescriptorControl failed with error %d\n", GetLastError());
+        ok(0 == (control & SE_SELF_RELATIVE), "SD should be absolute\n");
+
+        ok(GetSecurityDescriptorDacl(psd, &bHasDacl, &pAcl, &bDefaulted), 
+            "GetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+
+        ok(bHasDacl, "SD has no DACL\n");
+        if (bHasDacl)
+        {
+            ok(!bDefaulted, "DACL should not be defaulted\n");
+
+            ok(pAcl != NULL, "NULL DACL!\n");
+            if (pAcl != NULL)
+            {
+                ACL_SIZE_INFORMATION asiSize;
+
+                ok(IsValidAcl(pAcl), "DACL is not valid\n");
+
+                ok(GetAclInformation(pAcl, &asiSize, sizeof(asiSize), AclSizeInformation),
+                        "GetAclInformation failed with error %d\n", GetLastError());
+
+                ok(asiSize.AceCount == 3, "Incorrect number of ACEs: %d entries\n", asiSize.AceCount);
+                if (asiSize.AceCount == 3)
+                {
+                    ACCESS_ALLOWED_ACE *paaa; /* will use for DENIED too */
+
+                    ok(GetAce(pAcl, 0, (LPVOID*)&paaa), "GetAce failed with error %d\n", GetLastError());
+                    ok(paaa->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, 
+                            "Invalid ACE type %d\n", paaa->Header.AceType); 
+                    ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
+                    ok(paaa->Mask == GENERIC_ALL, "Invalid ACE mask %x\n", paaa->Mask);
+
+                    ok(GetAce(pAcl, 1, (LPVOID*)&paaa), "GetAce failed with error %d\n", GetLastError());
+                    ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
+                            "Invalid ACE type %d\n", paaa->Header.AceType); 
+                    /* first one of two ACEs generated from inheritable entry - without inheritance */
+                    ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
+                    ok(paaa->Mask == GENERIC_WRITE, "Invalid ACE mask %x\n", paaa->Mask);
+
+                    ok(GetAce(pAcl, 2, (LPVOID*)&paaa), "GetAce failed with error %d\n", GetLastError());
+                    ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
+                            "Invalid ACE type %d\n", paaa->Header.AceType); 
+                    /* second ACE - with inheritance */
+                    ok(paaa->Header.AceFlags == MY_INHERITANCE,
+                            "Invalid ACE flags %x\n", paaa->Header.AceFlags);
+                    ok(paaa->Mask == GENERIC_READ, "Invalid ACE mask %x\n", paaa->Mask);
+                }
+            }
+        }
+
+        LocalFree(psd);
+    }
+}
+
 START_TEST(ordinal)
 {
   hShlwapi = LoadLibraryA("shlwapi.dll");
@@ -345,6 +449,7 @@ START_TEST(ordinal)
   test_SHSearchMapInt();
   test_alloc_shared();
   test_fdsa();
+  test_GetShellSecurityDescriptor();
 
   FreeLibrary(hShlwapi);
 }
