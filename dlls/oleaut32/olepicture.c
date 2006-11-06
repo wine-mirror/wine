@@ -1400,6 +1400,7 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
   BOOL		headerisdata = FALSE;
   BOOL		statfailed = FALSE;
   ULONG		xread, toread;
+  ULONG 	headerread;
   BYTE 		*xbuf;
   DWORD		header[2];
   WORD		magic;
@@ -1431,31 +1432,43 @@ static HRESULT WINAPI OLEPictureImpl_Load(IPersistStream* iface,IStream*pStm) {
       /* we will read at least 8 byte ... just right below */
       statstg.cbSize.QuadPart = 8;
   }
-  hr=IStream_Read(pStm,header,8,&xread);
-  if (hr || xread!=8) {
-      FIXME("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
-      return hr;
-  }
 
+  toread = 0;
+  headerread = 0;
   headerisdata = FALSE;
-  xread = 0;
-  if (!memcmp(&(header[0]),"lt\0\0", 4) && (header[1] <= statstg.cbSize.QuadPart-8)) {
-      toread = header[1];
-  } else {
-      if (!memcmp(&(header[0]), "GIF8",     4) ||   /* GIF header */
-          !memcmp(&(header[0]), "BM",       2) ||   /* BMP header */
-          !memcmp(&(header[0]), "\xff\xd8", 2) ||   /* JPEG header */
-          (header[1] > statstg.cbSize.QuadPart)||   /* invalid size */
-          (header[1]==0)
-      ) {/* Incorrect header, assume none. */
-          headerisdata = TRUE;
-          toread = statstg.cbSize.QuadPart-8;
-          xread = 8;
-      } else {
-          FIXME("Unknown stream header magic: %08x\n", header[0]);
-          toread = header[1];
+  do {
+      hr=IStream_Read(pStm,header,8,&xread);
+      if (hr || xread!=8) {
+          FIXME("Failure while reading picture header (hr is %x, nread is %d).\n",hr,xread);
+          return hr;
       }
-  }
+      headerread += xread;
+      xread = 0;
+      
+      if (!memcmp(&(header[0]),"lt\0\0", 4) && (statfailed || (header[1] + headerread <= statstg.cbSize.QuadPart))) {
+          if (toread != 0 && toread != header[1]) 
+              FIXME("varying lengths of image data (prev=%u curr=%u), only last one will be used\n",
+                  toread, header[1]);
+          toread = header[1];
+          if (toread == 0) break;
+      } else {
+          if (!memcmp(&(header[0]), "GIF8",     4) ||   /* GIF header */
+              !memcmp(&(header[0]), "BM",       2) ||   /* BMP header */
+              !memcmp(&(header[0]), "\xff\xd8", 2) ||   /* JPEG header */
+              (header[1] > statstg.cbSize.QuadPart)||   /* invalid size */
+              (header[1]==0)
+          ) {/* Found start of bitmap data */
+              headerisdata = TRUE;
+              if (toread == 0) 
+              	  toread = statstg.cbSize.QuadPart-8;
+              else toread -= 8;
+              xread = 8;
+          } else {
+              FIXME("Unknown stream header magic: %08x\n", header[0]);
+              toread = header[1];
+          }
+      }
+  } while (!headerisdata);
 
   if (statfailed) { /* we don't know the size ... read all we get */
       int sizeinc = 4096;
