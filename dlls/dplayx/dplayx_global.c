@@ -60,7 +60,7 @@ static HANDLE hDplayxSharedMem;
 static LPVOID lpSharedStaticData = NULL;
 
 
-#define DPLAYX_AquireSemaphore()  TRACE( "Waiting for DPLAYX semaphore\n" ); \
+#define DPLAYX_AcquireSemaphore() TRACE( "Waiting for DPLAYX semaphore\n" ); \
                                   WaitForSingleObject( hDplayxSema, INFINITE );\
                                   TRACE( "Through wait\n" )
 
@@ -242,7 +242,7 @@ BOOL DPLAYX_ConstructData(void)
   else if ( GetLastError() == ERROR_ALREADY_EXISTS )
   {
     TRACE( "Found semaphore handle %p\n", hDplayxSema );
-    DPLAYX_AquireSemaphore();
+    DPLAYX_AcquireSemaphore();
   }
   else
   {
@@ -401,7 +401,7 @@ void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData )
   ZeroMemory( lpData, sizeof( *lpData ) );
 }
 
-/* NOTE: This must be called with the semaphore aquired.
+/* NOTE: This must be called with the semaphore acquired.
  * TRUE/FALSE with a pointer to it's data returned. Pointer data is
  * is only valid if TRUE is returned.
  */
@@ -442,7 +442,7 @@ BOOL DPLAYX_CreateLobbyApplication( DWORD dwAppID )
     return FALSE;
   }
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   /* Find an empty space in the list and insert the data */
   for( i=0; i < numSupportedLobbies; i++ )
@@ -477,7 +477,7 @@ BOOL DPLAYX_DestroyLobbyApplication( DWORD dwAppID )
 {
   UINT i;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   /* Find an empty space in the list and insert the data */
   for( i=0; i < numSupportedLobbies; i++ )
@@ -510,7 +510,7 @@ BOOL DPLAYX_SetLobbyHandles( DWORD dwAppID,
     return FALSE;
   }
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if( !DPLAYX_IsAppIdLobbied( dwAppID, &lpLData ) )
   {
@@ -534,7 +534,7 @@ BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
 {
   LPDPLAYX_LOBBYDATA lpLData;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if( !DPLAYX_IsAppIdLobbied( 0, &lpLData ) )
   {
@@ -608,7 +608,7 @@ HRESULT DPLAYX_GetConnectionSettingsA
   DWORD              dwRequiredDataSize = 0;
   HANDLE             hInformOnSettingRead;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
@@ -732,7 +732,7 @@ HRESULT DPLAYX_GetConnectionSettingsW
   DWORD              dwRequiredDataSize = 0;
   HANDLE             hInformOnSettingRead;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
@@ -872,7 +872,7 @@ HRESULT DPLAYX_SetConnectionSettingsA
     return DPERR_INVALIDPARAMS;
   }
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
@@ -934,7 +934,7 @@ HRESULT DPLAYX_SetConnectionSettingsW
     return DPERR_INVALIDPARAMS;
   }
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if ( ! DPLAYX_IsAppIdLobbied( dwAppID, &lpDplData ) )
   {
@@ -1145,7 +1145,7 @@ BOOL DPLAYX_WaitForConnectionSettings( BOOL bWait )
 {
   LPDPLAYX_LOBBYDATA lpLobbyData;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if( !DPLAYX_IsAppIdLobbied( 0, &lpLobbyData ) )
   {
@@ -1165,7 +1165,7 @@ BOOL DPLAYX_AnyLobbiesWaitingForConnSettings(void)
   UINT i;
   BOOL bFound = FALSE;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   for( i=0; i < numSupportedLobbies; i++ )
   {
@@ -1187,7 +1187,7 @@ BOOL DPLAYX_SetLobbyMsgThreadId( DWORD dwAppId, DWORD dwThreadId )
 {
   LPDPLAYX_LOBBYDATA lpLobbyData;
 
-  DPLAYX_AquireSemaphore();
+  DPLAYX_AcquireSemaphore();
 
   if( !DPLAYX_IsAppIdLobbied( dwAppId, &lpLobbyData ) )
   {
