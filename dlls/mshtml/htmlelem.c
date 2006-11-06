@@ -1183,22 +1183,73 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
 {
     HTMLElementCollection *This = ELEMCOL_THIS(iface);
 
-    if(V_VT(&index) != VT_I4) {
-        WARN("Invalid index vt=%d\n", V_VT(&index));
-        return E_INVALIDARG;
+    TRACE("(%p)->(v(%d) v(%d) %p)\n", This, V_VT(&name), V_VT(&index), pdisp);
+
+    if(V_VT(&name) == VT_I4) {
+        TRACE("name is VT_I4: %d\n", V_I4(&name));
+        if(V_I4(&name) < 0 || V_I4(&name) >= This->len) {
+            ERR("Invalid name! name=%d\n", V_I4(&name));
+            return E_INVALIDARG;
+        }
+
+        *pdisp = (IDispatch*)This->elems[V_I4(&name)];
+        IDispatch_AddRef(*pdisp);
+        TRACE("Returning pdisp=%p\n", pdisp);
+        return S_OK;
     }
 
-    if(V_VT(&name) != VT_I4 || V_I4(&name) != V_I4(&index))
-        FIXME("Unsupproted name vt=%d\n", V_VT(&name));
+    if(V_VT(&name) == VT_BSTR) {
+        DWORD i;
+        nsAString tag_str;
+        const PRUnichar *tag;
+        elem_vector buf = {NULL, 0, 8};
 
-    TRACE("(%p)->(%d %d %p)\n", This, V_I4(&name), V_I4(&index), pdisp);
+        TRACE("name is VT_BSTR: %s\n", debugstr_w(V_BSTR(&name)));
 
-    if(V_I4(&index) < 0 || V_I4(&index) >= This->len)
-        return E_INVALIDARG;
+        nsAString_Init(&tag_str, NULL);
+        buf.buf = mshtml_alloc(buf.size*sizeof(HTMLElement*));
 
-    *pdisp = (IDispatch*)This->elems[V_I4(&index)];
-    IDispatch_AddRef(*pdisp);
-    return S_OK;
+        for(i=0; i<This->len; i++) {
+            if(!This->elems[i]->nselem) continue;
+
+            nsIDOMHTMLElement_GetId(This->elems[i]->nselem, &tag_str);
+            nsAString_GetData(&tag_str, &tag, NULL);
+
+            if(CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE, tag, -1,
+                                V_BSTR(&name), -1) == CSTR_EQUAL) {
+                TRACE("Found name. elem=%d\n", i);
+                if (V_VT(&index) == VT_I4)
+                    if (buf.len == V_I4(&index)) {
+                        nsAString_Finish(&tag_str);
+                        mshtml_free(buf.buf);
+                        buf.buf = NULL;
+                        *pdisp = (IDispatch*)This->elems[i];
+                        TRACE("Returning element %d pdisp=%p\n", i, pdisp);
+                        IDispatch_AddRef(*pdisp);
+                        return S_OK;
+                    }
+                elem_vector_add(&buf, This->elems[i]);
+            }
+        }
+        nsAString_Finish(&tag_str);
+        if (V_VT(&index) == VT_I4) {
+            mshtml_free(buf.buf);
+            buf.buf = NULL;
+            ERR("Invalid index. index=%d >= buf.len=%d\n",V_I4(&index), buf.len);
+            return E_INVALIDARG;
+        }
+        if(!buf.len) {
+            mshtml_free(buf.buf);
+            buf.buf = NULL;
+        } else if(buf.size > buf.len) {
+            buf.buf = mshtml_realloc(buf.buf, buf.len*sizeof(HTMLElement*));
+        }
+        TRACE("Returning %d element(s).\n", buf.len);
+        return HTMLElementCollection_Create(This->ref_unk, buf.buf, buf.len, pdisp);
+    }
+
+    FIXME("unsupported arguments\n");
+    return E_INVALIDARG;
 }
 
 static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
