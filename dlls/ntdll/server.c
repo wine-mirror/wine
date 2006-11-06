@@ -869,15 +869,19 @@ static void create_config_dir(void)
     }
     if (!pid)
     {
-        const char *argv[6];
+        char *argv[6];
+        static char argv0[] = "tools/wineprefixcreate",
+                    argv1[] = "--quiet",
+                    argv2[] = "--wait",
+                    argv3[] = "--prefix";
 
-        argv[0] = "tools/wineprefixcreate";
-        argv[1] = "--quiet";
-        argv[2] = "--wait";
-        argv[3] = "--prefix";
+        argv[0] = argv0;
+        argv[1] = argv1;
+        argv[2] = argv2;
+        argv[3] = argv3;
         argv[4] = tmp_dir;
         argv[5] = NULL;
-        wine_exec_wine_binary( argv[0], (char **)argv, NULL );
+        wine_exec_wine_binary( argv[0], argv, NULL );
         rmdir( tmp_dir );
         fatal_perror( "could not exec wineprefixcreate" );
     }
