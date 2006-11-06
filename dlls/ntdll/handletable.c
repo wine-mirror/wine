@@ -186,6 +186,16 @@ static NTSTATUS RtlpAllocateSomeHandles(RTL_HANDLE_TABLE * HandleTable)
  *  Success: Pointer to allocated handle.
  *  Failure: NULL.
  *
+ * NOTES
+ *  A valid handle must have the bit set as indicated in the code below 
+ *  otherwise subsquent RtlIsValidHandle() calls will fail.
+ *
+ *  static inline void RtlpMakeHandleAllocated(RTL_HANDLE * Handle)
+ *  {
+ *    ULONG_PTR *AllocatedBit = (ULONG_PTR *)(&Handle->Next);
+ *    *AllocatedBit = *AllocatedBit | 1;
+ *  }
+ *
  * SEE
  *  RtlFreeHandle().
  */
