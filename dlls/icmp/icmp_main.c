@@ -61,6 +61,9 @@
 #ifdef HAVE_ARPA_INET_H
 # include <arpa/inet.h>
 #endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 
 #include "windef.h"
 #include "winbase.h"
@@ -209,8 +212,7 @@ DWORD WINAPI IcmpSendEcho(
     char* endbuf;
     int ip_header_len;
     int maxlen;
-    fd_set fdr;
-    struct timeval timeout;
+    struct pollfd fdr;
     DWORD send_time,recv_time;
     struct sockaddr_in addr;
     unsigned int addrlen;
@@ -291,10 +293,8 @@ DWORD WINAPI IcmpSendEcho(
     /* Get ready for receiving the reply
      * Do it before we send the request to minimize the risk of introducing delays
      */
-    FD_ZERO(&fdr);
-    FD_SET(icp->sid,&fdr);
-    timeout.tv_sec=Timeout/1000;
-    timeout.tv_usec=(Timeout % 1000)*1000;
+    fdr.fd = icp->sid;
+    fdr.events = POLLIN;
     addrlen=sizeof(addr);
     ier=ReplyBuffer;
     ip_header=(struct ip *) ((char *) ReplyBuffer+sizeof(ICMP_ECHO_REPLY));
@@ -338,7 +338,7 @@ DWORD WINAPI IcmpSendEcho(
 
     /* Get the reply */
     ip_header_len=0; /* because gcc was complaining */
-    while ((res=select(icp->sid+1,&fdr,NULL,NULL,&timeout))>0) {
+    while ((res=poll(&fdr,1,Timeout))>0) {
         recv_time = GetTickCount();
         res=recvfrom(icp->sid, (char*)ip_header, maxlen, 0, (struct sockaddr*)&addr,&addrlen);
         TRACE("received %d bytes from %s\n",res, inet_ntoa(addr.sin_addr));
@@ -433,10 +433,8 @@ DWORD WINAPI IcmpSendEcho(
              * Decrease the timeout so that we don't enter an endless loop even
              * if we get flooded with ICMP packets that are not for us.
              */
-            int t = Timeout - (recv_time - send_time);
-            if (t < 0) t = 0;
-            timeout.tv_sec = t / 1000;
-            timeout.tv_usec = (t % 1000) * 1000;
+            Timeout -= (recv_time - send_time);
+            if (Timeout < 0) Timeout = 0;
             continue;
         } else {
             /* This is a reply to our packet */
@@ -467,11 +465,8 @@ DWORD WINAPI IcmpSendEcho(
             maxlen=endbuf-(char*)ip_header;
 
             /* Check out whether there is more but don't wait this time */
-            timeout.tv_sec=0;
-            timeout.tv_usec=0;
+            Timeout=0;
         }
-        FD_ZERO(&fdr);
-        FD_SET(icp->sid,&fdr);
     }
     res=ier-(ICMP_ECHO_REPLY*)ReplyBuffer;
     if (res==0)
