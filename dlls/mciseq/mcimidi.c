@@ -1114,7 +1114,7 @@ static DWORD MIDI_mciPlay(UINT wDevID, DWORD dwFlags, LPMCI_PLAY_PARMS lpParms)
 		    FIXME("NIY: SMPTE track start %u:%u:%u %u.%u\n", h, m, s, f, ff);
 		}
 		break;
-	    case 0x58: /* file rythm */
+	    case 0x58: /* file rhythm */
 		if (TRACE_ON(mcimidi)) {
 		    BYTE	num, den, cpmc, _32npqn;
 

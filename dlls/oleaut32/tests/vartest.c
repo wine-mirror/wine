@@ -6125,7 +6125,7 @@ static void test_VarCmp(void)
     VARCMP(I2,2,EMPTY,1,VARCMP_GT);
     VARCMP(I2,2,NULL_,1,VARCMP_NULL);
 
-    /* BSTR handling, especialy in conjunction with VT_RESERVED */
+    /* BSTR handling, especially in conjunction with VT_RESERVED */
     VARCMP(BSTR,bstr0,NULL_,0,VARCMP_NULL);
     VARCMP(BSTR,bstr0,BSTR,bstr0,VARCMP_EQ);
     VARCMP(BSTR,bstrempty,BSTR,bstr0,VARCMP_LT);

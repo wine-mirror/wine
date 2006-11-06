@@ -1880,7 +1880,7 @@ LONG WINAPI RegDeleteValueA( HKEY hkey, LPCSTR name )
  *  filename  [I] Address of filename for registry information
  *
  * RETURNS
- *  Success: ERROR_SUCCES
+ *  Success: ERROR_SUCCESS
  *  Failure: nonzero error code from Winerror.h
  */
 LONG WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )

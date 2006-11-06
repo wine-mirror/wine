@@ -4370,7 +4370,7 @@ INT WINAPI WSAAddressToStringA( LPSOCKADDR sockaddr, DWORD len,
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
     if (!string || !lenstr) return SOCKET_ERROR;
 
-    /* sin_family is garanteed to be the first u_short */
+    /* sin_family is guaranteed to be the first u_short */
     if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
 
     sprintf( buffer, "%u.%u.%u.%u:%u",
@@ -4432,7 +4432,7 @@ INT WINAPI WSAAddressToStringW( LPSOCKADDR sockaddr, DWORD len,
     if (!sockaddr || len < sizeof(SOCKADDR_IN)) return SOCKET_ERROR;
     if (!string || !lenstr) return SOCKET_ERROR;
 
-    /* sin_family is garanteed to be the first u_short */
+    /* sin_family is guaranteed to be the first u_short */
     if (((SOCKADDR_IN *)sockaddr)->sin_family != AF_INET) return SOCKET_ERROR;
 
     sprintfW( buffer, format,

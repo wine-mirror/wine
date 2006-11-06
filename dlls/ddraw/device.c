@@ -733,7 +733,7 @@ IDirect3DDeviceImpl_1_CreateExecuteBuffer(IDirect3DDevice *iface,
  *
  * Returns:
  *  DDERR_INVALIDPARAMS if ExecuteBuffer == NULL
- *  D3D_OK on sucess
+ *  D3D_OK on success
  *
  *****************************************************************************/
 static HRESULT WINAPI

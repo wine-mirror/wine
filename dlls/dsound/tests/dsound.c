@@ -564,7 +564,7 @@ static HRESULT test_primary_secondary(LPGUID lpGuid)
             ok(rc==DS_OK,"IDirectSoundBuffer_SetFormat(%s) failed: %s\n",
                format_string(&wfx), DXGetErrorString8(rc));
 
-            /* There is no garantee that SetFormat will actually change the
+            /* There is no guarantee that SetFormat will actually change the
              * format to what we asked for. It depends on what the soundcard
              * supports. So we must re-query the format.
              */

@@ -1486,7 +1486,7 @@ static int ALSA_ScanDevices(int directhw,
 **                      juse use device 0 on each card
 **
 **  Returns:
-**      0   on succes
+**      0   on success
 **
 **  Effects:
 **      Invokes the ALSA_AddXXXDevice functions on valid

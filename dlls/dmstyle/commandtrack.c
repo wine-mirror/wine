@@ -271,7 +271,7 @@ static HRESULT WINAPI IDirectMusicCommandTrack_IPersistStream_Load (LPPERSISTSTR
 			}
 			chunkSize -= sizeof(DWORD); /* now chunk size is one DWORD shorter */
 			nrCommands = chunkSize/dwSizeOfStruct; /* and this is the number of commands */
-			/* load each command seperately in new entry */
+			/* load each command separately in new entry */
 			for (count = 0; count < nrCommands; count++) {
 				LPDMUS_PRIVATE_COMMAND pNewCommand = HeapAlloc (GetProcessHeap (), HEAP_ZERO_MEMORY, sizeof(DMUS_PRIVATE_COMMAND));
 				IStream_Read (pStm, &pNewCommand->pCommand, dwSizeOfStruct, NULL);

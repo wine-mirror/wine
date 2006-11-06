@@ -279,7 +279,7 @@ IDirect3DViewportImpl_GetViewport(IDirect3DViewport3 *iface,
  *  lpData: Viewport to set
  *
  * Returns:
- *  D3D_OK on succes
+ *  D3D_OK on success
  *  DDERR_INVALIDPARAMS if Data is NULL
  *
  *****************************************************************************/

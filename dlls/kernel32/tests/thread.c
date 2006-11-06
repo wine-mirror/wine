@@ -126,7 +126,7 @@ static DWORD WINAPI threadFunc1(LPVOID p)
    /* lstrlenA contains an exception handler so this makes sure exceptions work in threads */
    ok( lstrlenA( (char *)0xdeadbeef ) == 0, "lstrlenA: unexpected success\n" );
 
-/* Check that noone changed our tls memory */
+/* Check that no one changed our tls memory */
    ok((int)TlsGetValue(tlsIndex)-1==tstruct->threadnum,
       "TlsGetValue failed\n");
    return NUM_THREADS+tstruct->threadnum;
@@ -224,7 +224,7 @@ static VOID test_CreateThread_basic(void)
   }
 /* Test that each thread executed in its parent's address space
    (it was able to change threadmem and pass that change back to its parent)
-   and that each thread id was independant).  Note that we prove that the
+   and that each thread id was independent).  Note that we prove that the
    threads actually execute concurrently by having them block on each other
    in threadFunc1
 */

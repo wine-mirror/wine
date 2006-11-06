@@ -119,7 +119,7 @@ static ULONG WINAPI IWineD3DSwapChainImpl_Release(IWineD3DSwapChain *iface) {
         }
         glXDestroyContext(This->display, This->glCtx);
         /* IUnknown_Release(This->parent); This should only apply to the primary swapchain,
-         all others are crated by the caller, so releasing the parent should cause
+         all others are created by the caller, so releasing the parent should cause
          the child to be released, not the other way around!
          */
         HeapFree(GetProcessHeap(), 0, This);

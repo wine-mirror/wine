@@ -125,7 +125,7 @@ SCODE WINAPI PropCopyMore(LPSPropValue lpDest, LPSPropValue lpSrc,
                 break;
 
             /* Note that we could allocate the memory for each value in a
-             * multi-value property seperately, however if an allocation failed
+             * multi-value property separately, however if an allocation failed
              * we would be left with a bunch of allocated memory, which (while
              * not really leaked) is unusable until lpOrig is freed. So for
              * strings and binary arrays we make a single allocation for all
@@ -1437,7 +1437,7 @@ static IPropDataItem *IMAPIPROP_AddValue(IPropDataImpl *This,
         lpNew = lpMem;
         lpNew->ulAccess = IPROP_READWRITE;
 
-        /* Allocate the value seperately so we can update it easily */
+        /* Allocate the value separately so we can update it easily */
         lpMem = NULL;
         hRet = This->lpAlloc(sizeof(SPropValue), &lpMem);
         if (SUCCEEDED(hRet))
@@ -1562,7 +1562,7 @@ static inline ULONG WINAPI IMAPIProp_fnRelease(LPMAPIPROP iface)
 /**************************************************************************
  *  IMAPIProp_GetLastError {MAPI32}
  *
- * Get information about the last error that ocurred in an IMAPIProp object.
+ * Get information about the last error that occurred in an IMAPIProp object.
  *
  * PARAMS
  *  iface    [I] IMAPIProp object that experienced the error

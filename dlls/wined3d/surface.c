@@ -1186,7 +1186,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 glDisable(GL_TEXTURE_1D);
                 checkGLcall("glDisable GL_TEXTURE_1D");
             }
-            /* Activate texture 0, but don't disable it necessarilly */
+            /* Activate texture 0, but don't disable it necessarily */
             if (GL_SUPPORT(ARB_MULTITEXTURE)) {
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
                 checkGLcall("glActiveTextureARB");
@@ -1693,7 +1693,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
 
 /* This function is used in case of 8bit paletted textures to upload the palette.
    For now it only supports GL_EXT_paletted_texture extension but support for other
-   extensions like ARB_fragment_program and ATI_fragment_shaders will be added aswell.
+   extensions like ARB_fragment_program and ATI_fragment_shaders will be added as well.
 */
 void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;

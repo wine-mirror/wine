@@ -273,7 +273,7 @@ void test_buffer8(LPDIRECTSOUND8 dso, LPDIRECTSOUNDBUFFER * dsbo,
         ok(rc==DS_OK,"IDirectSoundBuffer_SetFormat(%s) failed: %s\n",
            format_string(&wfx2), DXGetErrorString8(rc));
 
-        /* There is no garantee that SetFormat will actually change the
+        /* There is no guarantee that SetFormat will actually change the
 	 * format to what we asked for. It depends on what the soundcard
 	 * supports. So we must re-query the format.
 	 */

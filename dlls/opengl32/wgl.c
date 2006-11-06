@@ -188,7 +188,7 @@ static BOOL is_extension_supported(const char* extension)
 
     /* In general an OpenGL function starts as an ARB/EXT extension and at some stage
      * it becomes part of the core OpenGL library and can be reached without the ARB/EXT
-     * suffix aswell. In the extension table, these functions contain GL_VERSION_major_minor.
+     * suffix as well. In the extension table, these functions contain GL_VERSION_major_minor.
      * Check if we are searching for a core GL function */
     if(strncmp(extension, "GL_VERSION_", 11) == 0)
     {
@@ -201,7 +201,7 @@ static BOOL is_extension_supported(const char* extension)
         }
 
         /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
-         * The gl_version string is guaranteed to have atleast a major/minor and sometimes it has a release number aswell. */
+         * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
         if( (gl_version[0] >= version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
             return TRUE;
         }

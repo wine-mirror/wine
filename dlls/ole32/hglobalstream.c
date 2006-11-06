@@ -487,7 +487,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_CopyTo(
     totalBytesWritten.u.LowPart += bytesWritten;
 
     /*
-     * Check that read & write operations were succesfull
+     * Check that read & write operations were successful
      */
     if (bytesRead != bytesWritten)
     {

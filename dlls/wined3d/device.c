@@ -2209,8 +2209,8 @@ static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL 
 
     /* DirectDraw apps can change between fullscreen and windowed mode after device creation with
      * IDirectDraw7::SetCooperativeLevel. The GDI surface implementation needs to know this.
-     * DDraw doesn't necessarilly have a swapchain, so we have to store the fullscreen flag
-     * seperately.
+     * DDraw doesn't necessarily have a swapchain, so we have to store the fullscreen flag
+     * separately.
      */
     This->ddraw_fullscreen = fullscreen;
 }
@@ -2306,8 +2306,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWin
 }
 
 static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *iface) {
-    /** NOTE: There's a probably  a hack-around for this one by putting as many pbuffers, VBO's (or whatever)
-    * Into the video ram as possible and seeing how many fit
+    /** NOTE: There's a probably  a hack-around for this one by putting as many pbuffers, VBOs (or whatever)
+    * into the video ram as possible and seeing how many fit
     * you can also get the correct initial value from nvidia and ATI's driver via X
     * texture memory is video memory + AGP memory
     *******************/

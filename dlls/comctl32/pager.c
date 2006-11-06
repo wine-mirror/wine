@@ -885,7 +885,7 @@ PAGER_NCCalcSize(PAGER_INFO* infoPtr, WPARAM wParam, LPRECT lpRect)
 	    lpRect->bottom -= infoPtr->nButtonSize;
     }
 
-    TRACE("nPos=%d, nHeigth=%d, window=%s\n",
+    TRACE("nPos=%d, nHeight=%d, window=%s\n",
           infoPtr->nPos, infoPtr->nHeight,
           wine_dbgstr_rect(&rcWindow));
 

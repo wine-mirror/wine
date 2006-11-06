@@ -295,7 +295,7 @@ static DWORD VideoRenderer_SendSampleData(VideoRendererImpl* This, LPBYTE data, 
 
     TRACE("biSize = %d\n", format->bmiHeader.biSize);
     TRACE("biWidth = %d\n", format->bmiHeader.biWidth);
-    TRACE("biHeigth = %d\n", format->bmiHeader.biHeight);
+    TRACE("biHeight = %d\n", format->bmiHeader.biHeight);
     TRACE("biPlanes = %d\n", format->bmiHeader.biPlanes);
     TRACE("biBitCount = %d\n", format->bmiHeader.biBitCount);
     TRACE("biCompression = %s\n", debugstr_an((LPSTR)&(format->bmiHeader.biCompression), 4));

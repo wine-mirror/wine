@@ -1644,7 +1644,7 @@ static HRESULT WINAPI JoystickWImpl_EnumEffects(LPDIRECTINPUTDEVICE8W iface,
 	}
     }
 
-    /* return to unaquired state if that's where it was */
+    /* return to unacquired state if that's where it was */
     if (xfd == -1)
 	IDirectInputDevice8_Unacquire(iface);
 #endif

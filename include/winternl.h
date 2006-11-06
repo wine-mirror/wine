@@ -82,7 +82,7 @@ typedef struct _FILETIME
 /*
  * RTL_SYSTEM_TIME and RTL_TIME_ZONE_INFORMATION are the same as
  * the SYSTEMTIME and TIME_ZONE_INFORMATION structures defined
- * in winbase.h, however we need to define them seperately so
+ * in winbase.h, however we need to define them separately so
  * winternl.h doesn't depend on winbase.h.  They are used by
  * RtlQueryTimeZoneInformation and RtlSetTimeZoneInformation.
  * The names are guessed; if anybody knows the real names, let me know.
@@ -1332,7 +1332,7 @@ typedef unsigned short RTL_ATOM, *PRTL_ATOM;
 
 /* Wine doesn't implement atom table as NT does:
  * - in NT, atom tables are user space tables, which ntdll directly accesses
- * - on Wine, (even local) atom tables are wineserver object, hence a HANDLE
+ * - on Wine, (even local) atom tables are wineserver objects, hence a HANDLE
  */
 typedef struct atom_table *RTL_ATOM_TABLE, **PRTL_ATOM_TABLE;
 

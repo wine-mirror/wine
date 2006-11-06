@@ -374,7 +374,7 @@ HRESULT SHDOCVW_GetShellInstanceObjectClassObject(REFCLSID rclsid, REFIID riid,
     TRACE("(rclsid=%s, riid=%s, ppvClassObject=%p)\n", debugstr_guid(rclsid), debugstr_guid(riid), 
           ppvClassObj);
 
-    /* Figure if there is an 'Instance' subkey for the given CLSID and aquire a handle. */
+    /* Figure if there is an 'Instance' subkey for the given CLSID and acquire a handle. */
     if (!StringFromGUID2(rclsid, wszInstanceKey + 6, CHARS_IN_GUID) ||
         !(wszInstanceKey[5+CHARS_IN_GUID]='\\') || /* Repair the null-termination. */
         ERROR_SUCCESS != RegOpenKeyExW(HKEY_CLASSES_ROOT, wszInstanceKey, 0, KEY_READ, &hInstanceKey))

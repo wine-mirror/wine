@@ -121,7 +121,7 @@ enum DataKind
 /* values for registers (on different CPUs) */
 enum CV_HREG_e
 {
-    /* those values are common to all supported CPUs (and CPU independant) */
+    /* those values are common to all supported CPUs (and CPU independent) */
     CV_ALLREG_ERR       = 30000,
     CV_ALLREG_TEB       = 30001,
     CV_ALLREG_TIMER     = 30002,

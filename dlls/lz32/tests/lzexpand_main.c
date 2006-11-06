@@ -432,7 +432,7 @@ static void test_LZOpenFileA(void)
 
   memset(&test, 0xA5, sizeof(test));
 
-  /* d, for checking file existance. */
+  /* d, for checking file existence. */
   file = LZOpenFileA(filename_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileA failed on read/write\n");
   ok(test.cBytes == sizeof(OFSTRUCT),
@@ -840,7 +840,7 @@ static void test_LZOpenFileW(void)
 
   memset(&test, 0xA5, sizeof(test));
 
-  /* d, for checking file existance. */
+  /* d, for checking file existence. */
   file = LZOpenFileW(filenameW_, &test, OF_EXIST);
   ok(file >= 0, "LZOpenFileW failed on read/write\n");
   ok(test.cBytes == sizeof(OFSTRUCT),

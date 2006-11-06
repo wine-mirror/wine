@@ -1875,9 +1875,9 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* FIXME: If a mapping is created with SEC_RESERVE and a process,
      * which has a view of this mapping commits some pages, they will
-     * appear commited in all other processes, which have the same
-     * view created. Since we don`t support this yet, we create the
-     * whole mapping commited.
+     * appear committed in all other processes, which have the same
+     * view created. Since we don't support this yet, we create the
+     * whole mapping committed.
      */
     prot |= VPROT_COMMITTED;
 

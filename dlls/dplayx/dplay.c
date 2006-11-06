@@ -4475,7 +4475,7 @@ static HRESULT WINAPI DP_SendEx
          dwTimeout, lpContext, lpdwMsgID, bAnsi );
 
   /* FIXME: Add parameter checking */
-  /* FIXME: First call to this needs to aquire a message id which will be
+  /* FIXME: First call to this needs to acquire a message id which will be
    *        used for multiple sends
    */
 

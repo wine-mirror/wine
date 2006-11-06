@@ -349,10 +349,10 @@ static UINT ICO_ExtractIconExW(
         dwSearchReturn = SearchPathW(NULL, lpszExeFileName, NULL, sizeof(szExePath) / sizeof(szExePath[0]), szExePath, NULL);
         if ((dwSearchReturn == 0) || (dwSearchReturn > sizeof(szExePath) / sizeof(szExePath[0])))
         {
-          /* This is very wine specific: If the user tries to extract icon's from system dlls, 
-           * wine's build-in *.dll.so's will not be found (Even if they would be found it wouldn't 
+          /* This is very wine specific: If the user tries to extract icons from system dlls, 
+           * wine's builtin *.dll.so's will not be found (Even if they would be found it wouldn't 
            * work, since they are not in PE-format). Thus, if the SearchPath call fails, we try
-           * to load the file with LoadLibary and extract the icons with LoadImage (via
+           * to load the file with LoadLibrary and extract the icons with LoadImage (via
            * EnumResourceNames).
            */
           struct extract_icons_state state;

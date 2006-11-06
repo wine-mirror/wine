@@ -411,7 +411,7 @@ static BOOL CreateCPanelEnumList(
 
     TRACE("(%p)->(flags=0x%08x)\n", iface, dwFlags);
 
-    /* enumerate control panel folders folders */
+    /* enumerate control panel folders */
     if (dwFlags & SHCONTF_FOLDERS)
         SHELL_RegisterCPanelFolders(iface, HKEY_LOCAL_MACHINE, "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ControlPanel\\NameSpace");
 
@@ -671,7 +671,7 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetDisplayNameOf(IShellFolder2 * iface,
 	if (!(dwFlags & SHGDN_FORPARSING))
 	    FIXME("retrieve display name from control panel app\n");
     }
-    /* take names of special folders only if its only this folder */
+    /* take names of special folders only if it's only this folder */
     else if (_ILIsSpecialFolder(pidl)) {
 	BOOL bSimplePidl = _ILIsPidlSimple(pidl);
 

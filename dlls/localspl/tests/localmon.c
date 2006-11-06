@@ -212,7 +212,7 @@ START_TEST(localmon)
 
     /* Native localmon.dll / localspl.dll need a vaild Port-Entry in:
        a) since xp: HKLM\Software\Microsoft\Windows NT\CurrentVersion\Ports 
-       b) upto w2k: Section "Ports" in win.ini
+       b) up to w2k: Section "Ports" in win.ini
        or InitializePrintMonitor fails. */
     pm = pInitializePrintMonitor(Monitors_LocalPortW);
     if (pm) {

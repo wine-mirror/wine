@@ -759,7 +759,7 @@ struct wc_init {
  *
  * RETURNS
  *   On success: 0
- *   On error:   error string id optionaly with the CMD_SHOW_USAGE flag
+ *   On error:   error string id optionally with the CMD_SHOW_USAGE flag
  */
 static UINT WINECON_ParseOptions(const char* lpCmdLine, struct wc_init* wci)
 {

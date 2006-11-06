@@ -499,7 +499,7 @@ static HRESULT WINAPI IDirectPlaySPImpl_HandleMessage
 #if 0
   HRESULT hr = DP_OK;
   HANDLE  hReceiveEvent = 0;
-  /* FIXME: Aquire some sort of interface lock */
+  /* FIXME: Acquire some sort of interface lock */
   /* FIXME: Need some sort of context for this callback. Need to determine
    *        how this is actually done with the SP
    */

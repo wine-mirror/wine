@@ -605,7 +605,7 @@ static HRESULT WINAPI LinuxInputEffectImpl_SetParameters(
 
 	if (peff->lpEnvelope == NULL) {
 	    /* if this type had an envelope, reset it
-	     * note that length can never be zero, so we set it to something miniscule */
+	     * note that length can never be zero, so we set it to something minuscule */
 	    if (env) {
 		env->attack_length = 0x10;
 		env->attack_level = 0x7FFF;

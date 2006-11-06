@@ -1810,7 +1810,7 @@ static void XFONT_LoadIgnores( HKEY hkey )
     char  subsection[32];
     char buffer[MAX_LFD_LENGTH];
 
-    /* Standard one that noone wants */
+    /* Standard one that no one wants */
     strcpy(buffer, "-misc-nil-");
     XFONT_LoadIgnore(buffer);
 

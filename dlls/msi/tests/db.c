@@ -2983,7 +2983,7 @@ static void test_update(void)
     /* check the modified text */
     query = "SELECT `Text` FROM `Control` WHERE `Control` = 'ErrorText'";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewExecute(view, 0);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -3018,7 +3018,7 @@ static void test_update(void)
     /* dialog_ and control specified */
     query = "UPDATE `Control` SET `Text` = 'this is text' WHERE `Dialog_` = 'ErrorDialog' AND `Control` = 'ErrorText'";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewExecute(view, 0);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewClose(view);
@@ -3029,7 +3029,7 @@ static void test_update(void)
     /* check the modified text */
     query = "SELECT `Text` FROM `Control` WHERE `Control` = 'ErrorText'";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewExecute(view, 0);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 
@@ -3064,7 +3064,7 @@ static void test_update(void)
     /* no where condition */
     query = "UPDATE `Control` SET `Text` = 'this is text'";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewExecute(view, 0);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewClose(view);
@@ -3075,7 +3075,7 @@ static void test_update(void)
     /* check the modified text */
     query = "SELECT `Text` FROM `Control`";
     r = MsiDatabaseOpenView(hdb, query, &view);
-    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCESS, got %d\n", r);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     r = MsiViewExecute(view, 0);
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
 

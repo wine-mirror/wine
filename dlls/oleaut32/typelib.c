@@ -894,7 +894,7 @@ typedef struct tagITypeLibImpl
     TLBImpLib   * pImpLibs;     /* linked list to all imported typelibs */
     int ctTypeDesc;             /* number of items in type desc array */
     TYPEDESC * pTypeDesc;       /* array of TypeDescriptions found in the
-				   libary. Only used while read MSFT
+				   library. Only used while read MSFT
 				   typelibs */
 
     /* typelibs are cached, keyed by path and index, so store the linked list info within them */
