@@ -393,16 +393,20 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
         }
         else
         {
-            LPWSTR wideStr;
+            LPCWSTR wideStr = NULL;
+            LPWSTR wideStr_tmp = NULL;
 
             if (srcCP == CP_UNICODE)
-                wideStr = (LPWSTR)src;
+                wideStr = (LPCWSTR)src;
             else
             {
                 len = MultiByteToWideChar(srcCP, 0, src, -1, NULL, 0);
-                wideStr = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-                if (wideStr)
-                    MultiByteToWideChar(srcCP, 0, src, -1, wideStr, len);
+                wideStr_tmp = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+                if (wideStr_tmp)
+                {
+                    MultiByteToWideChar(srcCP, 0, src, -1, wideStr_tmp, len);
+                    wideStr = wideStr_tmp;
+                }
                 else
                     hr = STG_E_INSUFFICIENTMEMORY;
             }
@@ -426,8 +430,7 @@ static HRESULT PropertyStorage_StringCopy(LPCSTR src, LCID srcCP, LPSTR *dst,
                     }
                 }
             }
-            if (wideStr != (LPWSTR)src)
-                HeapFree(GetProcessHeap(), 0, wideStr);
+            HeapFree(GetProcessHeap(), 0, wideStr_tmp);
         }
     }
     TRACE("returning 0x%08x (%s)\n", hr,
