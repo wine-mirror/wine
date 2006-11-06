@@ -19,6 +19,9 @@
  */
 
 #include <stdio.h>
+
+#define OEMRESOURCE
+
 #include <windows.h>
 #include <wine/debug.h>
 #include "explorer_private.h"

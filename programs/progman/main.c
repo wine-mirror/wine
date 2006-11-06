@@ -21,6 +21,9 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#define OEMRESOURCE
+
 #include "windows.h"
 #include "progman.h"
 

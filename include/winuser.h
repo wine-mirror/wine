@@ -671,6 +671,7 @@ typedef struct tagWINDOWPLACEMENT
 #define ES_NUMBER       0x00002000
 
 /* OEM Resource Ordinal Numbers */
+#ifdef OEMRESOURCE
 #define OBM_TRTYPE          32732
 #define OBM_LFARROWI        32734
 #define OBM_RGARROWI        32735
@@ -737,6 +738,7 @@ typedef struct tagWINDOWPLACEMENT
 #define OIC_WARNING         OIC_BANG
 #define OIC_ERROR           OIC_HAND
 #define OIC_INFORMATION     OIC_NOTE
+#endif /* OEMRESOURCE */
 
 #ifndef NOCOLOR
 

@@ -27,6 +27,8 @@
 #include <string.h>
 #include <assert.h>
 
+#define OEMRESOURCE         /* For OBM_MNARROW */
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

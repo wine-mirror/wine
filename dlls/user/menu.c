@@ -45,6 +45,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+#define OEMRESOURCE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"

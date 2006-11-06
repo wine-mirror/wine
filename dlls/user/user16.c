@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define OEMRESOURCE
+
 #include "wine/winuser16.h"
 #include "windef.h"
 #include "winbase.h"

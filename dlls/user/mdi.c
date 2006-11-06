@@ -86,6 +86,8 @@
 #include <string.h>
 #include <math.h>
 
+#define OEMRESOURCE
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
