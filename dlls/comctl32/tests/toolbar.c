@@ -845,10 +845,10 @@ void test_sizes()
     /* delete button doesn't change the buttons size */
     SendMessageA(hToolbar, TB_DELETEBUTTON, 2, 0);
     SendMessageA(hToolbar, TB_DELETEBUTTON, 1, 0);
-    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(163, 39), "Unexpected button size");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(163, 39), "Unexpected button size\n");
     /* TB_INSERTBUTTONS will */
     SendMessageA(hToolbar, TB_INSERTBUTTON, 1, (LPARAM)&buttons2[0]);
-    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size");
+    ok(SendMessageA(hToolbar, TB_GETBUTTONSIZE, 0, 0) == MAKELONG(23, 22), "Unexpected button size\n");
 
     rebuild_toolbar(&hToolbar);
     SendMessageA(hToolbar, TB_ADDBUTTONS, 1, (LPARAM)&buttons3[3]);
