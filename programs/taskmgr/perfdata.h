@@ -183,7 +183,7 @@ typedef struct _SYSTEM_PERFORMANCE_INFORMATION
 	ULONG		IoWriteOperationCount;
 	ULONG		IoOtherOperationCount;
 	ULONG		MmAvailablePages;
-	ULONG		MmTotalCommitedPages;
+	ULONG		MmTotalCommittedPages;
 	ULONG		MmTotalCommitLimit;
 	ULONG		MmPeakLimit;
 	ULONG		PageFaults;

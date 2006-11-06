@@ -678,7 +678,7 @@ ULONG PerfDataGetCommitChargeTotalK(void)
 
     EnterCriticalSection(&PerfDataCriticalSection);
 
-    Total = SystemPerfInfo.MmTotalCommitedPages;
+    Total = SystemPerfInfo.MmTotalCommittedPages;
     PageSize = SystemBasicInfo.uPageSize;
 
     LeaveCriticalSection(&PerfDataCriticalSection);
