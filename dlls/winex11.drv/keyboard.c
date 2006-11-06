@@ -2401,7 +2401,7 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
       {
 	WARN("Unknown virtual key %X !!!\n", virtKey);
         wine_tsx11_unlock();
-	return virtKey; /* whatever */
+	return 0;
       }
     else TRACE("Found keycode %d (0x%2X)\n",e.keycode,e.keycode);
 
