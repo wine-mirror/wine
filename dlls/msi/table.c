@@ -1587,12 +1587,12 @@ static UINT TABLE_find_matching_rows( struct tagMSIVIEW *view, UINT col,
     if( !*handle )
         entry = tv->columns[col-1].hash_table[val % MSITABLE_HASH_TABLE_SIZE];
     else
-        entry = ((const MSICOLUMNHASHENTRY *)*handle)->next;
+        entry = (*handle)->next;
 
     while (entry && entry->value != val)
         entry = entry->next;
 
-    *handle = (MSIITERHANDLE)entry;
+    *handle = entry;
     if (!entry)
         return ERROR_NO_MORE_ITEMS;
 
