@@ -106,6 +106,7 @@ STID_HISTORY, 		"&Histórico"
 STID_TOPICS,		"&Tópicos"
 STID_ALL_FILES, 	"Todos os arquivos (*.*)"
 STID_HELP_FILES_HLP, 	"Arquivos de ajuda (*.hlp)"
+STID_FILE_NOT_FOUND_s"Cannot find '%s'. Do you want to find this file yourself?"
 }
 
 LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
@@ -125,4 +126,5 @@ STID_HISTORY, 		"&Histórico"
 STID_TOPICS,		"&Tópicos"
 STID_ALL_FILES, 	"Todos os ficheiros (*.*)"
 STID_HELP_FILES_HLP, 	"Ficheiros de ajuda (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

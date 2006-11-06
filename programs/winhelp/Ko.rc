@@ -67,4 +67,5 @@ STID_HISTORY, 		"히스토리(&H)"
 STID_TOPICS,		"&Topics"
 STID_ALL_FILES, 	"모든 파일 (*.*)"
 STID_HELP_FILES_HLP, 	"도움말 파일 (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

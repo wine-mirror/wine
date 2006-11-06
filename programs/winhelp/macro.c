@@ -505,52 +505,11 @@ BOOL CALLBACK MACRO_FileExist(LPCSTR str)
 
 void CALLBACK MACRO_FileOpen(void)
 {
-    OPENFILENAME openfilename;
-    CHAR szPath[MAX_PATHNAME_LEN];
-    CHAR szDir[MAX_PATHNAME_LEN];
-    CHAR szzFilter[2 * MAX_STRING_LEN + 100];
-    LPSTR p = szzFilter;
+    char szFile[MAX_PATH];
 
-    WINE_TRACE("()\n");
-
-    LoadString(Globals.hInstance, STID_HELP_FILES_HLP, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, "*.hlp");
-    p += strlen(p) + 1;
-    LoadString(Globals.hInstance, STID_ALL_FILES, p, MAX_STRING_LEN);
-    p += strlen(p) + 1;
-    lstrcpy(p, "*.*");
-    p += strlen(p) + 1;
-    *p = '\0';
-
-    GetCurrentDirectory(sizeof(szDir), szDir);
-
-    szPath[0]='\0';
-
-    openfilename.lStructSize       = sizeof(OPENFILENAME);
-    openfilename.hwndOwner         = Globals.active_win->hMainWnd;
-    openfilename.hInstance         = Globals.hInstance;
-    openfilename.lpstrFilter       = szzFilter;
-    openfilename.lpstrCustomFilter = 0;
-    openfilename.nMaxCustFilter    = 0;
-    openfilename.nFilterIndex      = 1;
-    openfilename.lpstrFile         = szPath;
-    openfilename.nMaxFile          = sizeof(szPath);
-    openfilename.lpstrFileTitle    = 0;
-    openfilename.nMaxFileTitle     = 0;
-    openfilename.lpstrInitialDir   = szDir;
-    openfilename.lpstrTitle        = 0;
-    openfilename.Flags             = 0;
-    openfilename.nFileOffset       = 0;
-    openfilename.nFileExtension    = 0;
-    openfilename.lpstrDefExt       = 0;
-    openfilename.lCustData         = 0;
-    openfilename.lpfnHook          = 0;
-    openfilename.lpTemplateName    = 0;
-
-    if (GetOpenFileName(&openfilename))
+    if (WINHELP_GetOpenFileName(szFile, MAX_PATH))
     {
-        HLPFILE*        hlpfile = WINHELP_LookupHelpFile(szPath);
+        HLPFILE*        hlpfile = WINHELP_LookupHelpFile(szFile);
 
         WINHELP_CreateHelpWindowByHash(hlpfile, 0,
                                        WINHELP_GetWindowInfo(hlpfile, "main"), SW_SHOWNORMAL);

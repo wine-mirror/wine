@@ -68,4 +68,5 @@ STID_HISTORY, 		"&Luetut"
 STID_TOPICS,		"T&opics"
 STID_ALL_FILES, 	"Kaikki tiedostot (*.*)"
 STID_HELP_FILES_HLP, 	"Ohjetiedostot (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

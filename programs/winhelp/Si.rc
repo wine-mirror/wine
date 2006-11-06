@@ -65,4 +65,5 @@ STID_HISTORY, 		"&Zgodovina"
 STID_TOPICS,		"&Vsebina"
 STID_ALL_FILES, 		"Vse datiteke (*.*)"
 STID_HELP_FILES_HLP, 	"Datoteke s pomoèjo (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

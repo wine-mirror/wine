@@ -68,4 +68,5 @@ STID_HISTORY, 		"Krono&logio"
 STID_TOPICS,		"&Temoj"
 STID_ALL_FILES, 	"Tutaj dosieroj (*.*)"
 STID_HELP_FILES_HLP, 	"Helpaj dosieroj (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

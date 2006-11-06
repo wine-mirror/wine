@@ -68,4 +68,5 @@ STID_HISTORY, 		"&Elõzmény"
 STID_TOPICS,		"&Témakörök"
 STID_ALL_FILES, 	"Minden fájl (*.*)"
 STID_HELP_FILES_HLP, 	"Súgó fájlok (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

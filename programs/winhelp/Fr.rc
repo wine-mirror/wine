@@ -68,4 +68,5 @@ STID_HISTORY, 		"&Historique"
 STID_TOPICS,		"&Sujets"
 STID_ALL_FILES, 	"Tous fichiers (*.*)"
 STID_HELP_FILES_HLP, 	"Fichiers d'aide (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

@@ -68,4 +68,5 @@ STID_HISTORY, 		"&Översikt"
 STID_TOPICS,		"T&opics"
 STID_ALL_FILES, 	"Alla filer (*.*))"
 STID_HELP_FILES_HLP, 	"Hjälp filer (*.hlp)"
+STID_FILE_NOT_FOUND_s	"Cannot find '%s'. Do you want to find this file yourself?"
 }

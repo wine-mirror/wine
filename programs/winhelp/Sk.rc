@@ -62,4 +62,5 @@ STID_HISTORY,               "&História"
 STID_TOPICS,		    "&Topics"
 STID_ALL_FILES,             "Všetky súbory (*.*)"
 STID_HELP_FILES_HLP,        "Súbory pomoci (*.hlp)"
+STID_FILE_NOT_FOUND_s       "Cannot find '%s'. Do you want to find this file yourself?"
 }

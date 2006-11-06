@@ -31,6 +31,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "commdlg.h"
 #include "winhelp.h"
 #include "winhelp_res.h"
 #include "shellapi.h"
@@ -56,6 +57,58 @@ static WINHELP_LINE_PART* WINHELP_IsOverLink(WINHELP_WINDOW*, WPARAM, LPARAM);
 
 WINHELP_GLOBALS Globals = {3, NULL, NULL, 0, TRUE, NULL, NULL, NULL, NULL};
 
+
+/***********************************************************************
+ *
+ *           WINHELP_GetOpenFileName
+ */
+BOOL WINHELP_GetOpenFileName(LPSTR lpszFile, int len)
+{
+    OPENFILENAME openfilename;
+    CHAR szDir[MAX_PATH];
+    CHAR szzFilter[2 * MAX_STRING_LEN + 100];
+    LPSTR p = szzFilter;
+
+    WINE_TRACE("()\n");
+
+    LoadString(Globals.hInstance, STID_HELP_FILES_HLP, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, "*.hlp");
+    p += strlen(p) + 1;
+    LoadString(Globals.hInstance, STID_ALL_FILES, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, "*.*");
+    p += strlen(p) + 1;
+    *p = '\0';
+
+    GetCurrentDirectory(sizeof(szDir), szDir);
+
+    lpszFile[0]='\0';
+
+    openfilename.lStructSize       = sizeof(OPENFILENAME);
+    openfilename.hwndOwner         = NULL;
+    openfilename.hInstance         = Globals.hInstance;
+    openfilename.lpstrFilter       = szzFilter;
+    openfilename.lpstrCustomFilter = 0;
+    openfilename.nMaxCustFilter    = 0;
+    openfilename.nFilterIndex      = 1;
+    openfilename.lpstrFile         = lpszFile;
+    openfilename.nMaxFile          = len;
+    openfilename.lpstrFileTitle    = 0;
+    openfilename.nMaxFileTitle     = 0;
+    openfilename.lpstrInitialDir   = szDir;
+    openfilename.lpstrTitle        = 0;
+    openfilename.Flags             = 0;
+    openfilename.nFileOffset       = 0;
+    openfilename.nFileExtension    = 0;
+    openfilename.lpstrDefExt       = 0;
+    openfilename.lCustData         = 0;
+    openfilename.lpfnHook          = 0;
+    openfilename.lpTemplateName    = 0;
+
+    return GetOpenFileName(&openfilename);
+}
+
 /***********************************************************************
  *
  *           WINHELP_LookupHelpFile
@@ -63,25 +116,20 @@ WINHELP_GLOBALS Globals = {3, NULL, NULL, 0, TRUE, NULL, NULL, NULL, NULL};
 HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile)
 {
     HLPFILE*        hlpfile;
+    char szFullName[MAX_PATH];
 
-    hlpfile = HLPFILE_ReadHlpFile(lpszFile);
-
-    /* Add Suffix `.hlp' */
-    if (!hlpfile && lstrcmpi(lpszFile + strlen(lpszFile) - 4, ".hlp") != 0)
+    if (!SearchPath(NULL, lpszFile, ".hlp", MAX_PATH, szFullName, NULL))
     {
-        char      szFile_hlp[MAX_PATHNAME_LEN];
-
-        lstrcpyn(szFile_hlp, lpszFile, sizeof(szFile_hlp) - 4);
-        szFile_hlp[sizeof(szFile_hlp) - 5] = '\0';
-        lstrcat(szFile_hlp, ".hlp");
-
-        hlpfile = HLPFILE_ReadHlpFile(szFile_hlp);
+        if (WINHELP_MessageBoxIDS_s(STID_FILE_NOT_FOUND_s, lpszFile, STID_WHERROR,
+                                    MB_YESNO|MB_ICONQUESTION) != IDYES)
+            return NULL;
+        if (!WINHELP_GetOpenFileName(szFullName, MAX_PATH))
+            return NULL;
     }
+    hlpfile = HLPFILE_ReadHlpFile(szFullName);
     if (!hlpfile)
-    {
-        WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile, STID_WHERROR, MB_OK);
-        if (Globals.win_list) return NULL;
-    }
+        WINHELP_MessageBoxIDS_s(STID_HLPFILE_ERROR_s, lpszFile,
+                                STID_WHERROR, MB_OK|MB_ICONSTOP);
     return hlpfile;
 }
 
@@ -1815,7 +1863,7 @@ INT WINHELP_MessageBoxIDS_s(UINT ids_text, LPCSTR str, UINT ids_title, WORD type
 {
     CHAR text[MAX_STRING_LEN];
     CHAR title[MAX_STRING_LEN];
-    CHAR newtext[MAX_STRING_LEN + MAX_PATHNAME_LEN];
+    CHAR newtext[MAX_STRING_LEN + MAX_PATH];
 
     LoadString(Globals.hInstance, ids_text, text, sizeof(text));
     LoadString(Globals.hInstance, ids_title, title, sizeof(title));

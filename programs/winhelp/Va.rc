@@ -72,4 +72,5 @@ HISTORY, 		"&Fin qua"
 TOPICS,			"T&opics"
 ALL_FILES, 		"Tuot las datotecas (*.*)"
 HELP_FILES_HLP, 	"Datotecas d'agüd (*.hlp)"
+STID_FILE_NOT_FOUND_s   "Cannot find '%s'. Do you want to find this file yourself?"
 }

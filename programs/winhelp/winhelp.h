@@ -21,7 +21,6 @@
  */
 
 #define MAX_LANGUAGE_NUMBER     255
-#define MAX_PATHNAME_LEN        1024
 #define MAX_STRING_LEN          255
 
 #define INTERNAL_BORDER_WIDTH   5
@@ -174,6 +173,7 @@ extern FARPROC         Callbacks[];
 BOOL WINHELP_CreateHelpWindowByHash(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindowByMap(HLPFILE*, LONG, HLPFILE_WINDOWINFO*, int);
 BOOL WINHELP_CreateHelpWindow(HLPFILE_PAGE*, HLPFILE_WINDOWINFO*, int);
+BOOL WINHELP_GetOpenFileName(LPSTR, int);
 INT  WINHELP_MessageBoxIDS(UINT, UINT, WORD);
 INT  WINHELP_MessageBoxIDS_s(UINT, LPCSTR, UINT, WORD);
 HLPFILE* WINHELP_LookupHelpFile(LPCSTR lpszFile);
