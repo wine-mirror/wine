@@ -1581,7 +1581,7 @@ static void dwarf2_set_line_number(struct module* module, unsigned long address,
     symt_add_func_line(module, func, *psrc, line, address - func->address);
 }
 
-static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,        
+static BOOL dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
                                       dwarf2_parse_context_t* ctx,
                                       const char* compile_dir,
                                       unsigned long offset)
@@ -1598,7 +1598,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
 
     /* section with line numbers stripped */
     if (sections[section_line].address == NO_MAP)
-        return;
+        return FALSE;
 
     traverse.data = sections[section_line].address + offset;
     traverse.start_data = traverse.data;
@@ -1754,6 +1754,7 @@ static void dwarf2_parse_line_numbers(const dwarf2_section_t* sections,
             }
         }
     }
+    return TRUE;
 }
 
 static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
@@ -1828,7 +1829,8 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         }
         if (dwarf2_find_attribute(&ctx, di, DW_AT_stmt_list, &stmt_list))
         {
-            dwarf2_parse_line_numbers(sections, &ctx, comp_dir.u.string, stmt_list.u.uvalue);
+            if (dwarf2_parse_line_numbers(sections, &ctx, comp_dir.u.string, stmt_list.u.uvalue))
+                module->module.LineNumbers = TRUE;
         }
         ret = TRUE;
     }
@@ -1875,7 +1877,6 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     module->module.SymType = SymDia;
     module->module.CVSig = 'D' | ('W' << 8) | ('A' << 16) | ('R' << 24);
     /* FIXME: we could have a finer grain here */
-    module->module.LineNumbers = TRUE;
     module->module.GlobalSymbols = TRUE;
     module->module.TypeInfo = TRUE;
     module->module.SourceIndexed = TRUE;
