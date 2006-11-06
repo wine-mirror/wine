@@ -76,7 +76,7 @@ typedef struct _DMUS_PRIVATE_STYLE_PARTREF_ITEM {
 
 typedef struct _DMUS_PRIVATE_STYLE_MOTIF {
   struct list entry; /* for listing elements */
-  DWORD dwRythm;
+  DWORD dwRhythm;
   DMUS_IO_PATTERN pattern;
   DMUS_OBJECTDESC desc;
   /** optional for motifs */

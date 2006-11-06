@@ -741,9 +741,9 @@ static HRESULT IDirectMusicStyle8Impl_IPersistStream_ParsePatternList (LPPERSIST
       break;
     }
     case DMUS_FOURCC_RHYTHM_CHUNK: { 
-      TRACE_(dmfile)(": Rythm chunk\n");
-      IStream_Read (pStm, &pNewMotif->dwRythm, sizeof(DWORD), NULL);
-      TRACE_(dmfile)(" - dwRythm: %u\n", pNewMotif->dwRythm);
+      TRACE_(dmfile)(": Rhythm chunk\n");
+      IStream_Read (pStm, &pNewMotif->dwRhythm, sizeof(DWORD), NULL);
+      TRACE_(dmfile)(" - dwRhythm: %u\n", pNewMotif->dwRhythm);
       /** TODO understand why some Chunks have size > 4 */
       liMove.QuadPart = Chunk.dwSize - sizeof(DWORD);
       IStream_Seek (pStm, liMove, STREAM_SEEK_CUR, NULL);
