@@ -1842,7 +1842,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
         /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
         outpitch = width * bpp;
-        outpitch = (outpitch + 3) & ~3;
+        outpitch = (outpitch + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
 
         mem = HeapAlloc(GetProcessHeap(), 0, outpitch * height);
         if(!mem) {
@@ -2126,7 +2126,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
                format == WINED3DFMT_DXT4 || format == WINED3DFMT_DXT5) {
         This->resource.size = ((max(This->pow2Width, 4) * formatEntry->bpp) * max(This->pow2Height, 4));
     } else {
-        This->resource.size = ((This->pow2Width * formatEntry->bpp) + 3) & ~3;
+        This->resource.size = ((This->pow2Width * formatEntry->bpp) + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
         This->resource.size *= This->pow2Height;
     }
 
