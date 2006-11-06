@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(atl);
 /**********************************************************************
  * AtlAxWin class window procedure
  */
-LRESULT static CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
+static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
 {
     if ( wMsg == WM_CREATE )
     {
