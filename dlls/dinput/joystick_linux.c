@@ -53,6 +53,9 @@
 #ifdef HAVE_LINUX_JOYSTICK_H
 # include <linux/joystick.h>
 #endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -897,8 +900,7 @@ static LONG calculate_pov(JoystickImpl *This, int index)
 }
 
 static void joy_polldev(JoystickImpl *This) {
-    struct timeval tv;
-    fd_set	readfds;
+    struct pollfd plfd;
     struct	js_event jse;
     TRACE("(%p)\n", This);
 
@@ -907,9 +909,9 @@ static void joy_polldev(JoystickImpl *This) {
         return;
     }
     while (1) {
-	memset(&tv,0,sizeof(tv));
-	FD_ZERO(&readfds);FD_SET(This->joyfd,&readfds);
-	if (1>select(This->joyfd+1,&readfds,NULL,NULL,&tv))
+	plfd.fd = This->joyfd;
+	plfd.events = POLLIN;
+	if (poll(&plfd,1,0) != 1)
 	    return;
 	/* we have one event, so we can read */
 	if (sizeof(jse)!=read(This->joyfd,&jse,sizeof(jse))) {

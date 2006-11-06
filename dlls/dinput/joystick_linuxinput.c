@@ -48,6 +48,9 @@
 #  define HAVE_CORRECT_LINUXINPUT_H
 # endif
 #endif
+#ifdef HAVE_SYS_POLL_H
+# include <sys/poll.h>
+#endif
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -860,8 +863,7 @@ static void calculate_ids(LPDIDATAFORMAT df)
 }
 
 static void joy_polldev(JoystickImpl *This) {
-    struct timeval tv;
-    fd_set	readfds;
+    struct pollfd plfd;
     struct	input_event ie;
     int         btn, offset;
 
@@ -869,11 +871,10 @@ static void joy_polldev(JoystickImpl *This) {
 	return;
 
     while (1) {
-	memset(&tv,0,sizeof(tv));
-	FD_ZERO(&readfds);
-	FD_SET(This->joyfd,&readfds);
+	plfd.fd = This->joyfd;
+	plfd.events = POLLIN;
 
-	if (1>select(This->joyfd+1,&readfds,NULL,NULL,&tv))
+	if (poll(&plfd,1,0) != 1)
 	    return;
 
 	/* we have one event, so we can read */
