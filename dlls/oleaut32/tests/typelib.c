@@ -20,8 +20,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include <wine/test.h>
 #include <stdarg.h>
@@ -365,10 +363,10 @@ static void test_CreateDispTypeInfo(void)
     ok(pFuncDesc->wFuncFlags == 0, "oVft %d\n", pFuncDesc->wFuncFlags);
     ok(pFuncDesc->elemdescFunc.tdesc.vt == VT_HRESULT, "ret vt %x\n", pFuncDesc->elemdescFunc.tdesc.vt);
     ok(pFuncDesc->lprgelemdescParam[0].tdesc.vt == VT_I4, "parm 0 vt %x\n", pFuncDesc->lprgelemdescParam[0].tdesc.vt);
-    ok(pFuncDesc->lprgelemdescParam[0].u.paramdesc.wParamFlags == PARAMFLAG_NONE, "parm 0 flags %x\n", pFuncDesc->lprgelemdescParam[0].u.paramdesc.wParamFlags);
+    ok(U(pFuncDesc->lprgelemdescParam[0]).paramdesc.wParamFlags == PARAMFLAG_NONE, "parm 0 flags %x\n", U(pFuncDesc->lprgelemdescParam[0]).paramdesc.wParamFlags);
 
     ok(pFuncDesc->lprgelemdescParam[1].tdesc.vt == VT_BSTR, "parm 1 vt %x\n", pFuncDesc->lprgelemdescParam[1].tdesc.vt);
-    ok(pFuncDesc->lprgelemdescParam[1].u.paramdesc.wParamFlags == PARAMFLAG_NONE, "parm 1 flags %x\n", pFuncDesc->lprgelemdescParam[1].u.paramdesc.wParamFlags);
+    ok(U(pFuncDesc->lprgelemdescParam[1]).paramdesc.wParamFlags == PARAMFLAG_NONE, "parm 1 flags %x\n", U(pFuncDesc->lprgelemdescParam[1]).paramdesc.wParamFlags);
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 1, &pFuncDesc);
@@ -392,7 +390,7 @@ static void test_CreateDispTypeInfo(void)
     ok(pFuncDesc->wFuncFlags == 0, "oVft %d\n", pFuncDesc->wFuncFlags);
     ok(pFuncDesc->elemdescFunc.tdesc.vt == VT_HRESULT, "ret vt %x\n", pFuncDesc->elemdescFunc.tdesc.vt);
     ok(pFuncDesc->lprgelemdescParam[0].tdesc.vt == VT_I4, "parm 0 vt %x\n", pFuncDesc->lprgelemdescParam[0].tdesc.vt);
-    ok(pFuncDesc->lprgelemdescParam[0].u.paramdesc.wParamFlags == PARAMFLAG_NONE, "parm 0 flags %x\n", pFuncDesc->lprgelemdescParam[0].u.paramdesc.wParamFlags);
+    ok(U(pFuncDesc->lprgelemdescParam[0]).paramdesc.wParamFlags == PARAMFLAG_NONE, "parm 0 flags %x\n", U(pFuncDesc->lprgelemdescParam[0]).paramdesc.wParamFlags);
     ITypeInfo_ReleaseFuncDesc(pTI2, pFuncDesc);
 
     hr = ITypeInfo_GetFuncDesc(pTI2, 3, &pFuncDesc);
