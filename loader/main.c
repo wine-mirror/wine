@@ -61,6 +61,37 @@ static inline void reserve_area( void *addr, size_t size )
 
 #endif  /* __APPLE__ */
 
+/***********************************************************************
+ *           check_command_line
+ *
+ * Check if command line is one that needs to be handled specially.
+ */
+static void check_command_line( int argc, char *argv[] )
+{
+    static const char version[] = PACKAGE_STRING;
+    static const char usage[] =
+        "Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program\n"
+        "       wine --help                   Display this help and exit\n"
+        "       wine --version                Output version information and exit";
+
+    if (argc <= 1)
+    {
+        fprintf( stderr, "%s\n", usage );
+        exit(1);
+    }
+    if (!strcmp( argv[1], "--help" ))
+    {
+        printf( "%s\n", usage );
+        exit(0);
+    }
+    if (!strcmp( argv[1], "--version" ))
+    {
+        printf( "%s\n", version );
+        exit(0);
+    }
+}
+
+
 /**********************************************************************
  *           main
  */
@@ -69,6 +100,7 @@ int main( int argc, char *argv[] )
     char error[1024];
     int i;
 
+    check_command_line( argc, argv );
     if (wine_main_preload_info)
     {
         for (i = 0; wine_main_preload_info[i].size; i++)

@@ -2319,37 +2319,6 @@ void __wine_init_windows_dir( const WCHAR *windir, const WCHAR *sysdir )
 
 
 /***********************************************************************
- *           check_command_line
- *
- * Check if command line is one that needs to be handled specially.
- */
-static void check_command_line( int argc, char *argv[] )
-{
-    static const char version[] = PACKAGE_STRING "\n";
-    static const char usage[] =
-        "Usage: wine PROGRAM [ARGUMENTS...]   Run the specified program\n"
-        "       wine --help                   Display this help and exit\n"
-        "       wine --version                Output version information and exit\n";
-
-    if (argc <= 1)
-    {
-        write( 2, usage, sizeof(usage) - 1 );
-        exit(1);
-    }
-    if (!strcmp( argv[1], "--help" ))
-    {
-        write( 1, usage, sizeof(usage) - 1 );
-        exit(0);
-    }
-    if (!strcmp( argv[1], "--version" ))
-    {
-        write( 1, version, sizeof(version) - 1 );
-        exit(0);
-    }
-}
-
-
-/***********************************************************************
  *           __wine_process_init
  */
 void __wine_process_init(void)
@@ -2362,7 +2331,6 @@ void __wine_process_init(void)
     void (* DECLSPEC_NORETURN init_func)(void);
     extern mode_t FILE_umask;
 
-    check_command_line( __wine_main_argc, __wine_main_argv );
     main_exe_file = thread_init();
 
     /* retrieve current umask */
