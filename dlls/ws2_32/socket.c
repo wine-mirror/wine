@@ -589,31 +589,6 @@ static char *strdup_lower(const char *str)
     return ret;
 }
 
-static fd_set* fd_set_import( fd_set* fds, const WS_fd_set* wsfds, int access, int* highfd, int lfd[] )
-{
-    /* translate Winsock fd set into local fd set */
-    if( wsfds )
-    {
-        unsigned int i;
-
-        FD_ZERO(fds);
-        for( i = 0; i < wsfds->fd_count; i++ )
-        {
-            int s = wsfds->fd_array[i];
-            int fd = get_sock_fd( s, access, NULL );
-            if (fd != -1)
-            {
-                lfd[ i ] = fd;
-                if( fd > *highfd ) *highfd = fd;
-                FD_SET(fd, fds);
-            }
-            else lfd[ i ] = -1;
-        }
-        return fds;
-    }
-    return NULL;
-}
-
 inline static int sock_error_p(int s)
 {
     unsigned int optval, optlen;
@@ -622,50 +597,6 @@ inline static int sock_error_p(int s)
     getsockopt(s, SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
     if (optval) WARN("\t[%i] error: %d\n", s, optval);
     return optval != 0;
-}
-
-static int fd_set_export( const fd_set* fds, fd_set* exceptfds, WS_fd_set* wsfds, int lfd[] )
-{
-    int num_err = 0;
-
-    /* translate local fd set into Winsock fd set, adding
-     * errors to exceptfds (only if app requested it) */
-
-    if( wsfds )
-    {
-	int i, j, count = wsfds->fd_count;
-
-	for( i = 0, j = 0; i < count; i++ )
-	{
-            int fd = lfd[i];
-            SOCKET s = wsfds->fd_array[i];
-            if (fd == -1) continue;
-            if( FD_ISSET(fd, fds) )
-            {
-                if ( exceptfds && sock_error_p(fd) )
-                {
-                    FD_SET(fd, exceptfds);
-                    num_err++;
-                }
-                else wsfds->fd_array[j++] = s;
-            }
-            release_sock_fd( s, fd );
-	}
-	wsfds->fd_count = j;
-    }
-    return num_err;
-}
-
-static void fd_set_unimport( WS_fd_set* wsfds, int lfd[] )
-{
-    if ( wsfds )
-    {
-	unsigned int i;
-
-	for ( i = 0; i < wsfds->fd_count; i++ )
-	    if ( lfd[i] >= 0 ) release_sock_fd( wsfds->fd_array[i], lfd[i] );
-        wsfds->fd_count = 0;
-    }
 }
 
 /* Utility: get the SO_RCVTIMEO or SO_SNDTIMEO socket option
@@ -2437,6 +2368,103 @@ int WINAPI WS_recvfrom(SOCKET s, char *buf, INT len, int flags,
         return n;
 }
 
+/* allocate a poll array for the corresponding fd sets */
+static struct pollfd *fd_sets_to_poll( const WS_fd_set *readfds, const WS_fd_set *writefds,
+                                       const WS_fd_set *exceptfds, int *count_ptr )
+{
+    int i, j = 0, count = 0;
+    struct pollfd *fds;
+
+    if (readfds) count += readfds->fd_count;
+    if (writefds) count += writefds->fd_count;
+    if (exceptfds) count += exceptfds->fd_count;
+    *count_ptr = count;
+    if (!count) return NULL;
+    if (!(fds = HeapAlloc( GetProcessHeap(), 0, count * sizeof(fds[0])))) return NULL;
+    if (readfds)
+        for (i = 0; i < readfds->fd_count; i++, j++)
+        {
+            fds[j].fd = get_sock_fd( readfds->fd_array[i], FILE_READ_DATA, NULL );
+            fds[j].events = POLLIN;
+            fds[j].revents = 0;
+        }
+    if (writefds)
+        for (i = 0; i < writefds->fd_count; i++, j++)
+        {
+            fds[j].fd = get_sock_fd( writefds->fd_array[i], FILE_WRITE_DATA, NULL );
+            fds[j].events = POLLOUT;
+            fds[j].revents = 0;
+        }
+    if (exceptfds)
+        for (i = 0; i < exceptfds->fd_count; i++, j++)
+        {
+            fds[j].fd = get_sock_fd( exceptfds->fd_array[i], 0, NULL );
+            fds[j].events = POLLHUP;
+            fds[j].revents = 0;
+        }
+    return fds;
+}
+
+/* release the file descriptor obtained in fd_sets_to_poll */
+/* must be called with the original fd_set arrays, before calling get_poll_results */
+static void release_poll_fds( const WS_fd_set *readfds, const WS_fd_set *writefds,
+                              const WS_fd_set *exceptfds, struct pollfd *fds )
+{
+    int i, j = 0;
+
+    if (readfds)
+    {
+        for (i = 0; i < readfds->fd_count; i++, j++)
+            if (fds[j].fd != -1) release_sock_fd( readfds->fd_array[i], fds[j].fd );
+    }
+    if (writefds)
+    {
+        for (i = 0; i < writefds->fd_count; i++, j++)
+            if (fds[j].fd != -1) release_sock_fd( writefds->fd_array[i], fds[j].fd );
+    }
+    if (exceptfds)
+    {
+        for (i = 0; i < exceptfds->fd_count; i++, j++)
+            if (fds[j].fd != -1)
+            {
+                /* make sure we have a real error before releasing the fd */
+                if (!sock_error_p( fds[j].fd )) fds[j].revents = 0;
+                release_sock_fd( exceptfds->fd_array[i], fds[j].fd );
+            }
+    }
+}
+
+/* map the poll results back into the Windows fd sets */
+static int get_poll_results( WS_fd_set *readfds, WS_fd_set *writefds, WS_fd_set *exceptfds,
+                             const struct pollfd *fds )
+{
+    int i, j = 0, k, total = 0;
+
+    if (readfds)
+    {
+        for (i = k = 0; i < readfds->fd_count; i++, j++)
+            if (fds[j].revents) readfds->fd_array[k++] = readfds->fd_array[i];
+        readfds->fd_count = k;
+        total += k;
+    }
+    if (writefds)
+    {
+        for (i = k = 0; i < writefds->fd_count; i++, j++)
+            if (fds[j].revents) writefds->fd_array[k++] = writefds->fd_array[i];
+        writefds->fd_count = k;
+        total += k;
+    }
+    if (exceptfds)
+    {
+        for (i = k = 0; i < exceptfds->fd_count; i++, j++)
+            if (fds[j].revents) exceptfds->fd_array[k++] = exceptfds->fd_array[i];
+        exceptfds->fd_count = k;
+        total += k;
+    }
+    return total;
+}
+
+
 /***********************************************************************
  *		select			(WS2_32.18)
  */
@@ -2444,53 +2472,27 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
                      WS_fd_set *ws_writefds, WS_fd_set *ws_exceptfds,
                      const struct WS_timeval* ws_timeout)
 {
-    int         highfd = 0;
-    fd_set      readfds, writefds, exceptfds;
-    fd_set     *p_read, *p_write, *p_except;
-    int         readfd[FD_SETSIZE], writefd[FD_SETSIZE], exceptfd[FD_SETSIZE];
-    struct timeval timeout, *timeoutaddr = NULL;
+    struct pollfd *pollfds;
+    int count, ret, timeout = -1;
 
     TRACE("read %p, write %p, excp %p timeout %p\n",
           ws_readfds, ws_writefds, ws_exceptfds, ws_timeout);
 
-    p_read = fd_set_import(&readfds, ws_readfds, FILE_READ_DATA, &highfd, readfd);
-    p_write = fd_set_import(&writefds, ws_writefds, FILE_WRITE_DATA, &highfd, writefd);
-    p_except = fd_set_import(&exceptfds, ws_exceptfds, 0, &highfd, exceptfd);
-    if (ws_timeout)
+    if (!(pollfds = fd_sets_to_poll( ws_readfds, ws_writefds, ws_exceptfds, &count )) && count)
     {
-        timeoutaddr = &timeout;
-        timeout.tv_sec=ws_timeout->tv_sec;
-        timeout.tv_usec=ws_timeout->tv_usec;
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return -1;
     }
 
-    if( (highfd = select(highfd + 1, p_read, p_write, p_except, timeoutaddr)) > 0 )
-    {
-        fd_set_export(&readfds, p_except, ws_readfds, readfd);
-        fd_set_export(&writefds, p_except, ws_writefds, writefd);
+    if (ws_timeout) timeout = (ws_timeout->tv_sec * 1000) + (ws_timeout->tv_usec + 999) / 1000;
 
-        if (p_except && ws_exceptfds)
-        {
-            unsigned int i, j;
+    ret = poll( pollfds, count, timeout );
+    release_poll_fds( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
 
-            for (i = j = 0; i < ws_exceptfds->fd_count; i++)
-            {
-                int fd = exceptfd[i];
-                SOCKET s = ws_exceptfds->fd_array[i];
-                if (fd == -1) continue;
-                if (FD_ISSET(fd, &exceptfds)) ws_exceptfds->fd_array[j++] = s;
-                release_sock_fd( s, fd );
-            }
-            ws_exceptfds->fd_count = j;
-        }
-        return highfd;
-    }
-    fd_set_unimport(ws_readfds, readfd);
-    fd_set_unimport(ws_writefds, writefd);
-    fd_set_unimport(ws_exceptfds, exceptfd);
-
-    if( highfd == 0 ) return 0;
-    SetLastError(wsaErrno());
-    return SOCKET_ERROR;
+    if (ret == -1) SetLastError(wsaErrno());
+    else ret = get_poll_results( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
+    HeapFree( GetProcessHeap(), 0, pollfds );
+    return ret;
 }
 
 
