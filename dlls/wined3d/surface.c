@@ -47,7 +47,7 @@ typedef enum {
     CONVERT_RGB32_888
 } CONVERT_TYPES;
 
-HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
 
 static void surface_download_data(IWineD3DSurfaceImpl *This) {
     if (This->resource.format == WINED3DFMT_DXT1 ||
@@ -991,6 +991,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             d3dfmt_convert_surface(This->resource.allocatedMemory,
                                    mem,
                                    pitch,
+                                   pitch,
                                    height,
                                    pitch * 4,
                                    CONVERT_PALETTED,
@@ -1572,8 +1573,8 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
     return WINED3D_OK;
 }
 
-HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf) {
-    BYTE *dest;
+HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf) {
+    BYTE *source, *dest;
     TRACE("(%p)->(%p),(%d,%d,%d,%d,%p)\n", src, dst, pitch, height, outpitch, convert, surf);
 
     switch (convert) {
@@ -1636,10 +1637,11 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT height, UI
 
             for (y = 0; y < height; y++)
             {
+                source = src + pitch * y;
                 dest = dst + outpitch * y;
-                /* This is an 1 bpp format, using the pitch here is fine */
-                for (x = 0; x < pitch; x++) {
-                    BYTE color = *src++;
+                /* This is an 1 bpp format, using the width here is fine */
+                for (x = 0; x < width; x++) {
+                    BYTE color = *source++;
                     *dest++ = table[color][0];
                     *dest++ = table[color][1];
                     *dest++ = table[color][2];
@@ -1670,7 +1672,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT height, UI
             for (y = 0; y < height; y++) {
                 Source = (WORD *) (src + y * pitch);
                 Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < pitch / 2; x++ ) {
+                for (x = 0; x < width / 2; x++ ) {
                     WORD color = *Source++;
                     *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
                     if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
@@ -1849,7 +1851,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
             ERR("Out of memory %d, %d!\n", outpitch, height);
             return WINED3DERR_OUTOFVIDEOMEMORY;
         }
-        d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, height, outpitch, convert, This);
+        d3dfmt_convert_surface(This->resource.allocatedMemory, mem, pitch, width, height, outpitch, convert, This);
 
         This->Flags |= SFLAG_CONVERTED;
     } else if (This->resource.format == WINED3DFMT_P8 && GL_SUPPORT(EXT_PALETTED_TEXTURE)) {
