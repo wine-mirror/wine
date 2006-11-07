@@ -1902,26 +1902,18 @@ BOOL WINAPI AddMonitorW(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
  *              DeletePrinterDriverA        [WINSPOOL.@]
  *
  */
-BOOL WINAPI
-DeletePrinterDriverA (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
+BOOL WINAPI DeletePrinterDriverA (LPSTR pName, LPSTR pEnvironment, LPSTR pDriverName)
 {
-    FIXME("(%s,%s,%s):stub\n",debugstr_a(pName),debugstr_a(pEnvironment),
-          debugstr_a(pDriverName));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    return DeletePrinterDriverExA(pName, pEnvironment, pDriverName, 0, 0);
 }
 
 /******************************************************************
  *              DeletePrinterDriverW        [WINSPOOL.@]
  *
  */
-BOOL WINAPI
-DeletePrinterDriverW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pDriverName)
+BOOL WINAPI DeletePrinterDriverW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pDriverName)
 {
-    FIXME("(%s,%s,%s):stub\n",debugstr_w(pName),debugstr_w(pEnvironment),
-          debugstr_w(pDriverName));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    return DeletePrinterDriverExW(pName, pEnvironment, pDriverName, 0, 0);
 }
 
 /******************************************************************
