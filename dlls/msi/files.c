@@ -354,23 +354,6 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, LPCWSTR path)
         file->SourcePath = build_directory_name(2, path, file->File);
 }
 
-static struct media_info *create_media_info( void )
-{
-    struct media_info *mi;
-
-    mi = msi_alloc( sizeof *mi  );
-    if (mi)
-    {
-        mi->last_sequence = 0; 
-        mi->last_volume = NULL;
-        mi->last_path = NULL;
-        mi->count = 0;
-        mi->source[0] = 0;
-    }
-
-    return mi;
-}
-
 static void free_media_info( struct media_info *mi )
 {
     msi_free( mi->last_path );
@@ -670,7 +653,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
      */
     msi_create_component_directories( package );
 
-    mi = create_media_info();
+    mi = msi_alloc_zero( sizeof(struct media_info) );
 
     /* Pass 2 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
