@@ -41,8 +41,13 @@ static inline PFORMAT_STRING ComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, uns
 
 static inline PFORMAT_STRING ComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat, ULONG def)
 {
+    PFORMAT_STRING ret;
+    ULONG_PTR ActualCount = pStubMsg->ActualCount;
+
     pStubMsg->Offset = 0;
-    return ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat, def, &pStubMsg->ActualCount);
+    ret = ComputeConformanceOrVariance(pStubMsg, pMemory, pFormat, def, &ActualCount);
+    pStubMsg->ActualCount = (ULONG)ActualCount;
+    return ret;
 }
 
 typedef unsigned char* (WINAPI *NDR_MARSHALL)  (PMIDL_STUB_MESSAGE, unsigned char*, PFORMAT_STRING);
