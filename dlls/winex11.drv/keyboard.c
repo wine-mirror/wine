@@ -1449,14 +1449,40 @@ X11DRV_KEYBOARD_DetectLayout (void)
   const char (*lkey)[MAIN_LEN][4];
   unsigned max_seq = 0;
   int max_score = 0, ismatch = 0;
-  char ckey[4] =
-  {0, 0, 0, 0};
+  char ckey[256][4];
 
   syms = keysyms_per_keycode;
   if (syms > 4) {
     WARN("%d keysyms per keycode not supported, set to 4\n", syms);
     syms = 4;
   }
+
+  memset( ckey, 0, sizeof(ckey) );
+  for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
+      /* get data for keycode from X server */
+      for (i = 0; i < syms; i++) {
+        if (!(keysym = XKeycodeToKeysym (display, keyc, i))) continue;
+	/* Allow both one-byte and two-byte national keysyms */
+	if ((keysym < 0x8000) && (keysym != ' '))
+        {
+#ifdef HAVE_XKB
+            if (!use_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[keyc][i], 1, NULL))
+#endif
+            {
+                TRACE("XKB could not translate keysym %ld\n", keysym);
+                /* FIXME: query what keysym is used as Mode_switch, fill XKeyEvent
+                 * with appropriate ShiftMask and Mode_switch, use XLookupString
+                 * to get character in the local encoding.
+                 */
+                ckey[keyc][i] = keysym & 0xFF;
+            }
+        }
+	else {
+	  ckey[keyc][i] = KEYBOARD_MapDeadKeysym(keysym);
+	}
+      }
+  }
+
   for (current = 0; main_key_tab[current].comment; current++) {
     TRACE("Attempting to match against \"%s\"\n", main_key_tab[current].comment);
     match = 0;
@@ -1466,29 +1492,7 @@ X11DRV_KEYBOARD_DetectLayout (void)
     lkey = main_key_tab[current].key;
     pkey = -1;
     for (keyc = min_keycode; keyc <= max_keycode; keyc++) {
-      /* get data for keycode from X server */
-      for (i = 0; i < syms; i++) {
-	keysym = XKeycodeToKeysym (display, keyc, i);
-	/* Allow both one-byte and two-byte national keysyms */
-	if ((keysym < 0x8000) && (keysym != ' '))
-        {
-#ifdef HAVE_XKB
-            if (!use_xkb || !XkbTranslateKeySym(display, &keysym, 0, &ckey[i], 1, NULL))
-#endif
-            {
-                TRACE("XKB could not translate keysym %ld\n", keysym);
-                /* FIXME: query what keysym is used as Mode_switch, fill XKeyEvent
-                 * with appropriate ShiftMask and Mode_switch, use XLookupString
-                 * to get character in the local encoding.
-                 */
-                ckey[i] = keysym & 0xFF;
-            }
-        }
-	else {
-	  ckey[i] = KEYBOARD_MapDeadKeysym(keysym);
-	}
-      }
-      if (ckey[0]) {
+      if (ckey[keyc][0]) {
 	/* search for a match in layout table */
 	/* right now, we just find an absolute match for defined positions */
 	/* (undefined positions are ignored, so if it's defined as "3#" in */
@@ -1496,9 +1500,9 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	/* however, the score will be higher for longer matches */
 	for (key = 0; key < MAIN_LEN; key++) {
 	  for (ok = 0, i = 0; (ok >= 0) && (i < syms); i++) {
-	    if ((*lkey)[key][i] && ((*lkey)[key][i] == ckey[i]))
+	    if ((*lkey)[key][i] && ((*lkey)[key][i] == ckey[keyc][i]))
 	      ok++;
-	    if ((*lkey)[key][i] && ((*lkey)[key][i] != ckey[i]))
+	    if ((*lkey)[key][i] && ((*lkey)[key][i] != ckey[keyc][i]))
 	      ok = -1;
 	  }
 	  if (ok > 0) {
@@ -1514,11 +1518,12 @@ X11DRV_KEYBOARD_DetectLayout (void)
 	  pkey = key;
 	} else {
           /* print spaces instead of \0's */
-          for (i = 0; i < sizeof(ckey); i++) if (!ckey[i]) ckey[i] = ' ';
-          TRACE_(key)("mismatch for keysym 0x%04lX, keycode %d, got %c%c%c%c\n",
-                      keysym, keyc, ckey[0], ckey[1], ckey[2], ckey[3]);
-	  mismatch++;
-	  score -= syms;
+          char str[5];
+          for (i = 0; i < 4; i++) str[i] = ckey[keyc][i] ? ckey[keyc][i] : ' ';
+          str[4] = 0;
+          TRACE_(key)("mismatch for keysym 0x%04lX, keycode %d, got %s\n", keysym, keyc, str );
+          mismatch++;
+          score -= syms;
 	}
       }
     }
