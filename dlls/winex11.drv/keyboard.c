@@ -2512,6 +2512,13 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             ret = 0;
         }
 
+        /* Hack to detect an XLookupString hard-coded to Latin1 */
+        if (ret == 1 && keysym >= 0x00a0 && keysym <= 0x00ff && (BYTE)lpChar[0] == keysym)
+        {
+            bufW[0] = (BYTE)lpChar[0];
+            goto found;
+        }
+
 	/* perform translation to unicode */
 	if(ret)
 	{
