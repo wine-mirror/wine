@@ -1574,7 +1574,7 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
       FIXME("potential optimization: client-side compressed DIB copy\n");
       return FALSE;
     }
-    if (srcDib.dsBm.bmHeight < 0 || dstDib.dsBm.bmHeight < 0)
+    if (srcDib.dsBmih.biHeight < 0 || dstDib.dsBmih.biHeight < 0)
     {
       FIXME("potential optimization: client-side bottom-up DIB copy\n");
       return FALSE;
