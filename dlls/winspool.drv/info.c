@@ -5756,9 +5756,40 @@ BOOL WINAPI DeletePrinterConnectionW( LPWSTR pName )
 BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
     LPWSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag)
 {
-    FIXME("%s %s %s %x %x\n", debugstr_w(pName), debugstr_w(pEnvironment),
+    HKEY hkey_drivers;
+    BOOL ret = FALSE;
+
+    TRACE("%s %s %s %x %x\n", debugstr_w(pName), debugstr_w(pEnvironment),
           debugstr_w(pDriverName), dwDeleteFlag, dwVersionFlag);
-    return TRUE;
+
+    if(pName && pName[0])
+    {
+        FIXME("pName = %s - unsupported\n", debugstr_w(pName));
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if(dwDeleteFlag)
+    {
+        FIXME("dwDeleteFlag = %x - unsupported\n", dwDeleteFlag);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    hkey_drivers = WINSPOOL_OpenDriverReg(pEnvironment, TRUE);
+
+    if(!hkey_drivers)
+    {
+        ERR("Can't open drivers key\n");
+        return FALSE;
+    }
+
+    if(WINSPOOL_SHDeleteKeyW(hkey_drivers, pDriverName) == ERROR_SUCCESS)
+        ret = TRUE;
+
+    RegCloseKey(hkey_drivers);
+
+    return ret;
 }
 
 /******************************************************************************
