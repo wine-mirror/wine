@@ -58,10 +58,12 @@ extern const WCHAR szRemoveFiles[];
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
 struct media_info {
+    UINT disk_id;
     UINT last_sequence;
-    LPWSTR last_volume;
-    LPWSTR last_path;
-    DWORD count;
+    LPWSTR disk_prompt;
+    LPWSTR cabinet;
+    LPWSTR volume_label;
+    BOOL is_continuous;
     WCHAR source[MAX_PATH];
 };
 
@@ -112,7 +114,7 @@ end:
 typedef struct
 {
     MSIPACKAGE* package;
-    LPCSTR cab_path;
+    struct media_info *mi;
 } CabData;
 
 static void * cabinet_alloc(ULONG cb)
@@ -282,53 +284,43 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
  */
 static BOOL extract_cabinet_file(MSIPACKAGE* package, struct media_info *mi)
 {
+    LPSTR cabinet, cab_path = NULL;
+    LPWSTR ptr;
     HFDI hfdi;
     ERF erf;
-    BOOL ret;
-    char *cabinet;
-    char *cab_path;
-    static CHAR empty[] = "";
+    BOOL ret = FALSE;
     CabData data;
 
-    TRACE("Extracting %s to %s\n",debugstr_w(mi->source), debugstr_w(mi->last_path));
+    TRACE("Extracting %s\n", debugstr_w(mi->source));
 
-    hfdi = FDICreate(cabinet_alloc,
-                     cabinet_free,
-                     cabinet_open,
-                     cabinet_read,
-                     cabinet_write,
-                     cabinet_close,
-                     cabinet_seek,
-                     0,
-                     &erf);
+    hfdi = FDICreate(cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
+                     cabinet_write, cabinet_close, cabinet_seek, 0, &erf);
     if (!hfdi)
     {
         ERR("FDICreate failed\n");
         return FALSE;
     }
 
-    if (!(cabinet = strdupWtoA( mi->source )))
-    {
-        FDIDestroy(hfdi);
-        return FALSE;
-    }
-    if (!(cab_path = strdupWtoA( mi->last_path )))
-    {
-        FDIDestroy(hfdi);
-        msi_free(cabinet);
-        return FALSE;
-    }
+    ptr = strrchrW(mi->source, '\\') + 1;
+    cabinet = strdupWtoA(ptr);
+    if (!cabinet)
+        goto done;
+
+    cab_path = strdupWtoA(mi->source);
+    if (!cab_path)
+        goto done;
+
+    cab_path[ptr - mi->source] = '\0';
 
     data.package = package;
-    data.cab_path = cab_path;
+    data.mi = mi;
 
-    ret = FDICopy(hfdi, cabinet, empty, 0, cabinet_notify, NULL, &data);
-
+    ret = FDICopy(hfdi, cabinet, cab_path, 0, cabinet_notify, NULL, &data);
     if (!ret)
         ERR("FDICopy failed\n");
 
+done:
     FDIDestroy(hfdi);
-
     msi_free(cabinet);
     msi_free(cab_path);
 
@@ -356,7 +348,9 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, LPCWSTR path)
 
 static void free_media_info( struct media_info *mi )
 {
-    msi_free( mi->last_path );
+    msi_free( mi->disk_prompt );
+    msi_free( mi->cabinet );
+    msi_free( mi->volume_label );
     msi_free( mi );
 }
 
@@ -441,19 +435,18 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
          ' ','%', 'i',' ','O','R','D','E','R',' ','B','Y',' ',
          '`','D','i','s','k','I','d','`',0};
     LPCWSTR cab, volume;
+    LPWSTR source_dir;
     DWORD sz;
     INT seq;
     LPCWSTR prompt;
-    MSICOMPONENT *comp = file->Component;
 
     if (file->Sequence <= mi->last_sequence)
     {
-        set_file_source(package, file, mi->last_path);
+        set_file_source(package, file, mi->source);
         TRACE("Media already ready (%u, %u)\n",file->Sequence,mi->last_sequence);
         return ERROR_SUCCESS;
     }
 
-    mi->count ++;
     row = MSI_QueryGetRecord(package->db, ExecSeqQuery, file->Sequence);
     if (!row)
     {
@@ -464,22 +457,21 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     volume = MSI_RecordGetString(row, 5);
     prompt = MSI_RecordGetString(row, 3);
 
-    msi_free(mi->last_path);
-    mi->last_path = NULL;
+    source_dir = msi_dup_property(package, cszSourceDir);
 
     if (!file->IsCompressed)
     {
-        mi->last_path = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
-        set_file_source(package, file, mi->last_path);
+        lstrcpyW(mi->source, source_dir);
+        set_file_source(package, file, mi->source);
 
         MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
-            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
+            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id, volume,
             prompt);
 
         MsiSourceListSetInfoW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, 
                 MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
+                INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
         msiobj_release(&row->hdr);
         return rc;
     }
@@ -494,21 +486,16 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         /* the stream does not contain the # character */
         if (cab[0]=='#')
         {
-            LPWSTR path, p;
+            LPWSTR path;
 
             rc = writeout_cabinet_stream(package,&cab[1],mi->source);
             if (rc != ERROR_SUCCESS)
                 return rc;
 
-            mi->last_path = strdupW(mi->source);
-            p = strrchrW(mi->last_path,'\\');
-            if (p)
-                p[1] = 0;
-
             path = msi_dup_property( package, cszSourceDir );
 
             MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
-                MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count,
+                MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id,
                 volume, prompt);
 
             MsiSourceListSetInfoW(package->ProductCode, NULL,
@@ -521,7 +508,6 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         else
         {
             sz = MAX_PATH;
-            mi->last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
             if (MSI_GetPropertyW(package, cszSourceDir, mi->source, &sz))
             {
                 ERR("No Source dir defined\n");
@@ -529,7 +515,6 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
             }
             else
             {
-                strcpyW(mi->last_path,mi->source);
                 strcatW(mi->source,cab);
 
                 if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
@@ -541,13 +526,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                 MsiSourceListSetInfoW(package->ProductCode, NULL,
                             MSIINSTALLCONTEXT_USERMANAGED,
                             MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                            INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
-
-                /* extract the cab file into a folder in the temp folder */
-                sz = MAX_PATH;
-                if (MSI_GetPropertyW(package, cszTempFolder,mi->last_path, &sz) 
-                                    != ERROR_SUCCESS)
-                    GetTempPathW(MAX_PATH,mi->last_path);
+                            INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
             }
         }
 
@@ -565,22 +544,21 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     else
     {
         sz = MAX_PATH;
-        mi->last_path = msi_alloc(MAX_PATH*sizeof(WCHAR));
         MSI_GetPropertyW(package,cszSourceDir,mi->source,&sz);
-        strcpyW(mi->last_path,mi->source);
 
         MsiSourceListSetInfoW(package->ProductCode, NULL,
                     MSIINSTALLCONTEXT_USERMANAGED,
                     MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                    INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
+                    INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
     }
-    set_file_source(package, file, mi->last_path);
+    set_file_source(package, file, mi->source);
 
     MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
-            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
+            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id, volume,
             prompt);
 
 done:
+    msi_free(source_dir);
     msiobj_release(&row->hdr);
 
     return rc;
