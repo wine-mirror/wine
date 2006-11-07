@@ -335,13 +335,12 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, struct media_info *mi)
     return ret;
 }
 
-static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, MSICOMPONENT*
-        comp, LPCWSTR path)
+static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, LPCWSTR path)
 {
     if (!file->IsCompressed)
     {
         LPWSTR p, path;
-        p = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
+        p = resolve_folder(package, file->Component->Directory, TRUE, FALSE, NULL);
         path = build_directory_name(2, p, file->ShortName);
         if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
         {
@@ -466,7 +465,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
 
     if (file->Sequence <= mi->last_sequence)
     {
-        set_file_source(package,file,comp,mi->last_path);
+        set_file_source(package, file, mi->last_path);
         TRACE("Media already ready (%u, %u)\n",file->Sequence,mi->last_sequence);
         return ERROR_SUCCESS;
     }
@@ -488,7 +487,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     if (!file->IsCompressed)
     {
         mi->last_path = resolve_folder(package, comp->Directory, TRUE, FALSE, NULL);
-        set_file_source(package,file,comp,mi->last_path);
+        set_file_source(package, file, mi->last_path);
 
         MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
             MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
@@ -592,7 +591,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                     MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
                     INSTALLPROPERTY_LASTUSEDSOURCEW, mi->last_path);
     }
-    set_file_source(package, file, comp, mi->last_path);
+    set_file_source(package, file, mi->last_path);
 
     MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
             MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->count, volume,
