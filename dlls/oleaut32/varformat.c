@@ -1858,7 +1858,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
                                     LPBYTE rgbTok, ULONG dwFlags,
                                     BSTR *pbstrOut, LCID lcid)
 {
-  static const WCHAR szEmpty[] = { '\0' };
+  static WCHAR szEmpty[] = { '\0' };
   WCHAR buff[256], *pBuff = buff;
   WCHAR *pSrc;
   FMT_HEADER *header = (FMT_HEADER*)rgbTok;
@@ -1878,7 +1878,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   if (V_TYPE(pVarIn) == VT_EMPTY || V_TYPE(pVarIn) == VT_NULL)
   {
     strHeader = (FMT_STRING_HEADER*)(rgbTok + FmtGetNegative(header));
-    V_BSTR(&vStr) = (WCHAR*)szEmpty;
+    V_BSTR(&vStr) = szEmpty;
   }
   else
   {
@@ -2131,7 +2131,7 @@ HRESULT WINAPI VarFormat(LPVARIANT pVarIn, LPOLESTR lpszFormat,
  */
 HRESULT WINAPI VarFormatDateTime(LPVARIANT pVarIn, INT nFormat, ULONG dwFlags, BSTR *pbstrOut)
 {
-  static const WCHAR szEmpty[] = { '\0' };
+  static WCHAR szEmpty[] = { '\0' };
   const BYTE* lpFmt = NULL;
 
   TRACE("(%p->(%s%s),%d,0x%08x,%p)\n", pVarIn, debugstr_VT(pVarIn),
@@ -2148,7 +2148,7 @@ HRESULT WINAPI VarFormatDateTime(LPVARIANT pVarIn, INT nFormat, ULONG dwFlags, B
   case 3: lpFmt = fmtLongTime; break;
   case 4: lpFmt = fmtShortTime; break;
   }
-  return VarFormatFromTokens(pVarIn, (LPWSTR)szEmpty, (BYTE*)lpFmt, dwFlags,
+  return VarFormatFromTokens(pVarIn, szEmpty, (BYTE*)lpFmt, dwFlags,
                               pbstrOut, LOCALE_USER_DEFAULT);
 }
 

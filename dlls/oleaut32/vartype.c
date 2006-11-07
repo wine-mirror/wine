@@ -114,7 +114,7 @@ static HRESULT VARIANT_NumberFromBstr(OLECHAR* pStrIn, LCID lcid, ULONG ulFlags,
 static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
                                 VARTYPE vt, DWORD dwFlags)
 {
-  static const DISPPARAMS emptyParams = { NULL, NULL, 0, 0 };
+  static DISPPARAMS emptyParams = { NULL, NULL, 0, 0 };
   VARIANTARG srcVar, dstVar;
   HRESULT hRet;
 
@@ -123,7 +123,7 @@ static HRESULT VARIANT_FromDisp(IDispatch* pdispIn, LCID lcid, void* pOut,
 
   /* Get the default 'value' property from the IDispatch */
   hRet = IDispatch_Invoke(pdispIn, DISPID_VALUE, &IID_NULL, lcid, DISPATCH_PROPERTYGET,
-                          (DISPPARAMS*)&emptyParams, &srcVar, NULL, NULL);
+                          &emptyParams, &srcVar, NULL, NULL);
 
   if (SUCCEEDED(hRet))
   {
