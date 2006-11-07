@@ -281,13 +281,16 @@ typedef interface IRpcStubBuffer IRpcStubBuffer;
 typedef interface IRpcChannelBuffer IRpcChannelBuffer;
 #endif
 
-#include <objidl.h>
-
 #ifndef RC_INVOKED
 /* For compatibility only, at least for now */
 #include <stdlib.h>
 #endif
 
+#include <wtypes.h>
+#include <unknwn.h>
+#include <objidl.h>
+
+#include <guiddef.h>
 #ifndef INITGUID
 #include <cguid.h>
 #endif
@@ -511,7 +514,9 @@ HRESULT WINAPI StgSetTimes( OLECHAR const *lpszName, FILETIME const *pctime, FIL
 }
 #endif
 
-/* FIXME: #include <urlmon.h> */
+#ifndef __WINESRC__
+# include <urlmon.h>
+#endif
 #include <propidl.h>
 
 #ifndef __WINESRC__
