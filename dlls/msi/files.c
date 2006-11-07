@@ -57,6 +57,14 @@ extern const WCHAR szRemoveFiles[];
 
 static const WCHAR cszTempFolder[]= {'T','e','m','p','F','o','l','d','e','r',0};
 
+struct media_info {
+    UINT last_sequence;
+    LPWSTR last_volume;
+    LPWSTR last_path;
+    DWORD count;
+    WCHAR source[MAX_PATH];
+};
+
 /*
  * This is a helper function for handling embedded cabinet media
  */
@@ -272,8 +280,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
  *
  * Extract files from a cab file.
  */
-static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source, 
-                                 LPCWSTR path)
+static BOOL extract_cabinet_file(MSIPACKAGE* package, struct media_info *mi)
 {
     HFDI hfdi;
     ERF erf;
@@ -283,7 +290,7 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
     static CHAR empty[] = "";
     CabData data;
 
-    TRACE("Extracting %s to %s\n",debugstr_w(source), debugstr_w(path));
+    TRACE("Extracting %s to %s\n",debugstr_w(mi->source), debugstr_w(mi->last_path));
 
     hfdi = FDICreate(cabinet_alloc,
                      cabinet_free,
@@ -300,12 +307,12 @@ static BOOL extract_cabinet_file(MSIPACKAGE* package, LPCWSTR source,
         return FALSE;
     }
 
-    if (!(cabinet = strdupWtoA( source )))
+    if (!(cabinet = strdupWtoA( mi->source )))
     {
         FDIDestroy(hfdi);
         return FALSE;
     }
-    if (!(cab_path = strdupWtoA( path )))
+    if (!(cab_path = strdupWtoA( mi->last_path )))
     {
         FDIDestroy(hfdi);
         msi_free(cabinet);
@@ -347,14 +354,6 @@ static VOID set_file_source(MSIPACKAGE* package, MSIFILE* file, MSICOMPONENT*
     else
         file->SourcePath = build_directory_name(2, path, file->File);
 }
-
-struct media_info {
-    UINT last_sequence; 
-    LPWSTR last_volume;
-    LPWSTR last_path;
-    DWORD count;
-    WCHAR source[MAX_PATH];
-};
 
 static struct media_info *create_media_info( void )
 {
@@ -422,7 +421,7 @@ static UINT msi_extract_remote_cabinet( MSIPACKAGE *package, struct media_info *
     }
 
     msi_free(cabpath);
-    return !extract_cabinet_file(package, mi->source, mi->last_path);
+    return !extract_cabinet_file(package, mi);
 }
 
 static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi, LPCWSTR prompt )
@@ -578,7 +577,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         }
         else
         {
-            rc = !extract_cabinet_file(package, mi->source, mi->last_path);
+            rc = !extract_cabinet_file(package, mi);
         }
     }
     else
