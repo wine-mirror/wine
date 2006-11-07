@@ -5767,9 +5767,20 @@ BOOL WINAPI DeletePrinterDriverExW( LPWSTR pName, LPWSTR pEnvironment,
 BOOL WINAPI DeletePrinterDriverExA( LPSTR pName, LPSTR pEnvironment,
     LPSTR pDriverName, DWORD dwDeleteFlag, DWORD dwVersionFlag)
 {
-    FIXME("%s %s %s %x %x\n", debugstr_a(pName), debugstr_a(pEnvironment),
-          debugstr_a(pDriverName), dwDeleteFlag, dwVersionFlag);
-    return TRUE;
+    UNICODE_STRING NameW, EnvW, DriverW;
+    BOOL ret;
+
+    asciitounicode(&NameW, pName);
+    asciitounicode(&EnvW, pEnvironment);
+    asciitounicode(&DriverW, pDriverName);
+
+    ret = DeletePrinterDriverExW(NameW.Buffer, EnvW.Buffer, DriverW.Buffer, dwDeleteFlag, dwVersionFlag);
+
+    RtlFreeUnicodeString(&DriverW);
+    RtlFreeUnicodeString(&EnvW);
+    RtlFreeUnicodeString(&NameW);
+
+    return ret;
 }
 
 /******************************************************************************
