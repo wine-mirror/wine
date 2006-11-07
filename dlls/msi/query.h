@@ -54,6 +54,7 @@
 #define EXPR_WILDCARD 9
 #define EXPR_COL_NUMBER_STRING 10
 #define EXPR_COL_NUMBER32 11
+#define EXPR_UNARY    12
 
 struct sql_str {
     LPCWSTR data;

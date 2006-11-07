@@ -59,6 +59,7 @@ static column_info *parser_alloc_column( void *info, LPCWSTR table, LPCWSTR colu
 static BOOL SQL_MarkPrimaryKeys( column_info *cols, column_info *keys);
 
 static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct expr *r );
+static struct expr * EXPR_unary( void *info, struct expr *l, UINT op );
 static struct expr * EXPR_column( void *info, column_info *column );
 static struct expr * EXPR_ival( void *info, int val );
 static struct expr * EXPR_sval( void *info, struct sql_str * );
@@ -513,13 +514,13 @@ expr:
         }
   | column_val TK_IS TK_NULL
         {
-            $$ = EXPR_complex( info, $1, OP_ISNULL, NULL );
+            $$ = EXPR_unary( info, $1, OP_ISNULL );
             if( !$$ )
                 YYABORT;
         }
   | column_val TK_IS TK_NOT TK_NULL
         {
-            $$ = EXPR_complex( info, $1, OP_NOTNULL, NULL );
+            $$ = EXPR_unary( info, $1, OP_NOTNULL );
             if( !$$ )
                 YYABORT;
         }
@@ -758,6 +759,19 @@ static struct expr * EXPR_complex( void *info, struct expr *l, UINT op, struct e
         e->u.expr.left = l;
         e->u.expr.op = op;
         e->u.expr.right = r;
+    }
+    return e;
+}
+
+static struct expr * EXPR_unary( void *info, struct expr *l, UINT op )
+{
+    struct expr *e = parser_alloc( info, sizeof *e );
+    if( e )
+    {
+        e->type = EXPR_UNARY;
+        e->u.expr.left = l;
+        e->u.expr.op = op;
+        e->u.expr.right = NULL;
     }
     return e;
 }

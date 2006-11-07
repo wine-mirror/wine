@@ -1354,6 +1354,12 @@ static void test_where(void)
 
     MsiCloseHandle( rec );
 
+    rec = 0;
+    query = "SELECT * FROM `Media` WHERE `DiskPrompt` IS NULL";
+    r = do_query(hdb, query, &rec);
+    ok( r == ERROR_SUCCESS, "query failed: %d\n", r );
+    MsiCloseHandle( rec );
+
     MsiCloseHandle( hdb );
     DeleteFile(msifile);
 }
