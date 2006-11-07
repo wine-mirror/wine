@@ -21,6 +21,7 @@
 #include <stdarg.h>
 
 #include "windows.h"
+#include "vfwmsgs.h"
 #include "uxtheme.h"
 
 #include "wine/test.h"

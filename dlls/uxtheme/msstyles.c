@@ -28,6 +28,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "vfwmsgs.h"
 #include "uxtheme.h"
 #include "tmschema.h"
 
