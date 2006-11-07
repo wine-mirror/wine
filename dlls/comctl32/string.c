@@ -165,8 +165,8 @@ INT WINAPI Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
 
     TRACE("(%p %p %d)\n", lpSrc, lpDest, nMaxLen);
 
-    if (!lpDest && lpSrc)
-        return strlen (lpSrc);
+    if ((!lpDest || nMaxLen == 0) && lpSrc)
+        return (strlen(lpSrc) + 1);
 
     if (nMaxLen == 0)
         return 0;
@@ -176,12 +176,12 @@ INT WINAPI Str_GetPtrA (LPCSTR lpSrc, LPSTR lpDest, INT nMaxLen)
         return 0;
     }
 
-    len = strlen (lpSrc);
+    len = strlen(lpSrc) + 1;
     if (len >= nMaxLen)
-        len = nMaxLen - 1;
+        len = nMaxLen;
 
-    RtlMoveMemory (lpDest, lpSrc, len);
-    lpDest[len] = '\0';
+    RtlMoveMemory (lpDest, lpSrc, len - 1);
+    lpDest[len - 1] = '\0';
 
     return len;
 }
