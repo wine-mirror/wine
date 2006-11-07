@@ -365,6 +365,37 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     }
 }
 
+BOOL add_printer_driver(const char *name)
+{
+    DRIVER_INFO_3A di3a;
+
+    static char driver_path[]       = "wineps16",
+                data_file[]         = "<datafile?>",
+                config_file[]       = "wineps16",
+                help_file[]         = "<helpfile?>",
+                dep_file[]          = "<dependent files?>\0",
+                monitor_name[]      = "<monitor name?>",
+                default_data_type[] = "RAW";
+
+    di3a.cVersion = (GetVersion() & 0x80000000) ? 0 : 3; /* FIXME: add 1, 2 */
+    di3a.pName            = (char *)name;
+    di3a.pEnvironment     = NULL;      /* NULL means auto */
+    di3a.pDriverPath      = driver_path;
+    di3a.pDataFile        = data_file;
+    di3a.pConfigFile      = config_file;
+    di3a.pHelpFile        = help_file;
+    di3a.pDependentFiles  = dep_file;
+    di3a.pMonitorName     = monitor_name;
+    di3a.pDefaultDataType = default_data_type;
+
+    if (!AddPrinterDriverA(NULL, 3, (LPBYTE)&di3a))
+    {
+        ERR("Failed adding driver (%d)\n", GetLastError());
+        return FALSE;
+    }
+    return TRUE;
+}
+
 #ifdef HAVE_CUPS_CUPS_H
 static typeof(cupsGetDests)  *pcupsGetDests;
 static typeof(cupsGetPPD)    *pcupsGetPPD;
@@ -424,18 +455,19 @@ static BOOL CUPS_LoadPrinters(void)
         } else {
             static CHAR data_type[] = "RAW",
                     print_proc[]    = "WinPrint",
-                    driver_name[]   = "PS Driver",
                     comment[]       = "WINEPS Printer using CUPS",
                     location[]      = "<physical location of printer>",
                     params[]        = "<parameters?>",
                     share_name[]    = "<share name?>",
                     sep_file[]      = "<sep file?>";
 
+            add_printer_driver(dests[i].name);
+
             memset(&pinfo2a,0,sizeof(pinfo2a));
             pinfo2a.pPrinterName    = dests[i].name;
             pinfo2a.pDatatype       = data_type;
             pinfo2a.pPrintProcessor = print_proc;
-            pinfo2a.pDriverName     = driver_name;
+            pinfo2a.pDriverName     = dests[i].name;
             pinfo2a.pComment        = comment;
             pinfo2a.pLocation       = location;
             pinfo2a.pPortName       = port;
@@ -547,17 +579,18 @@ PRINTCAP_ParseEntry(const char *pent, BOOL isfirst) {
     } else {
         static CHAR data_type[]   = "RAW",
                     print_proc[]  = "WinPrint",
-                    driver_name[] = "PS Driver",
                     comment[]     = "WINEPS Printer using LPR",
                     params[]      = "<parameters?>",
                     share_name[]  = "<share name?>",
                     sep_file[]    = "<sep file?>";
 
+        add_printer_driver(devname);
+
         memset(&pinfo2a,0,sizeof(pinfo2a));
         pinfo2a.pPrinterName    = devname;
         pinfo2a.pDatatype       = data_type;
         pinfo2a.pPrintProcessor = print_proc;
-        pinfo2a.pDriverName     = driver_name;
+        pinfo2a.pDriverName     = devname;
         pinfo2a.pComment        = comment;
         pinfo2a.pLocation       = prettyname;
         pinfo2a.pPortName       = port;
@@ -645,35 +678,10 @@ static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *va
 void WINSPOOL_LoadSystemPrinters(void)
 {
     HKEY                hkey, hkeyPrinters;
-    DRIVER_INFO_3A      di3a;
     HANDLE              hprn;
     DWORD               needed, num, i;
     WCHAR               PrinterName[256];
     BOOL                done = FALSE;
-    static CHAR         name[]              = "PS Driver",
-                        driver_path[]       = "wineps16",
-                        data_file[]         = "<datafile?>",
-                        config_file[]       = "wineps16",
-                        help_file[]         = "<helpfile?>",
-                        dep_file[]          = "<dependent files?>\0",
-                        monitor_name[]      = "<monitor name?>",
-                        default_data_type[] = "RAW";
-
-    di3a.cVersion = (GetVersion() & 0x80000000) ? 0 : 3; /* FIXME: add 1, 2 */
-    di3a.pName            = name;
-    di3a.pEnvironment     = NULL;      /* NULL means auto */
-    di3a.pDriverPath      = driver_path;
-    di3a.pDataFile        = data_file;
-    di3a.pConfigFile      = config_file;
-    di3a.pHelpFile        = help_file;
-    di3a.pDependentFiles  = dep_file;
-    di3a.pMonitorName     = monitor_name;
-    di3a.pDefaultDataType = default_data_type;
-
-    if (!AddPrinterDriverA(NULL,3,(LPBYTE)&di3a)) {
-	ERR("Failed adding PS Driver (%d)\n",GetLastError());
-        return;
-    }
 
     /* This ensures that all printer entries have a valid Name value.  If causes
        problems later if they don't.  If one is found to be missed we create one
@@ -744,15 +752,19 @@ void WINSPOOL_LoadSystemPrinters(void)
             for(i = 0; i < num; i++) {
                 if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
                     if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
+                        BOOL delete_driver = FALSE;
                         if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
                             DWORD dw, type, size = sizeof(dw);
                             if(RegQueryValueExW(hkey, May_Delete_Value, NULL, &type, (LPBYTE)&dw, &size) == ERROR_SUCCESS) {
                                 TRACE("Deleting old printer %s\n", pi[i].pPrinterName);
                                 DeletePrinter(hprn);
+                                delete_driver = TRUE;
                             }
                             RegCloseKey(hkey);
                         }
                         ClosePrinter(hprn);
+                        if(delete_driver)
+                            DeletePrinterDriverExA(NULL, NULL, pi[i].pPrinterName, 0, 0);
                     }
                 }
             }
