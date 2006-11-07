@@ -24,7 +24,6 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <time.h>
@@ -732,7 +731,6 @@ static BOOL process_init(void)
 
     setbuf(stdout,NULL);
     setbuf(stderr,NULL);
-    setlocale(LC_CTYPE,"");
 
     kernel32_handle = GetModuleHandleW(kernel32W);
 

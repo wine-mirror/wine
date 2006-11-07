@@ -25,6 +25,7 @@
 #include "wine/port.h"
 
 #include <assert.h>
+#include <locale.h>
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -506,24 +507,12 @@ static int charset_cmp( const void *name, const void *entry )
 /***********************************************************************
  *		get_env_lcid
  */
-static LCID get_env_lcid( UINT *unix_cp, const char *env_str )
+static LCID get_env_lcid( UINT *unix_cp, int category )
 {
     char *buf, *lang,*country,*charset,*dialect,*next;
     LCID ret = 0;
-    char user_locale[50] = { 0 };
-#ifdef __APPLE__
-    CFLocaleRef user_locale_ref = CFLocaleCopyCurrent();
-    CFStringRef user_locale_string_ref = CFLocaleGetIdentifier(user_locale_ref);
 
-    CFStringGetCString(user_locale_string_ref, user_locale,
-                       sizeof(user_locale), kCFStringEncodingUTF8);
-    CFRelease(user_locale_ref);
-#endif
-
-    if (((lang = getenv( "LC_ALL" )) && *lang) ||
-        (env_str && (lang = getenv( env_str )) && *lang) ||
-        ((lang = getenv( "LANG" )) && *lang) ||
-        ((lang = user_locale) && *lang))
+    if ((lang = setlocale( category, NULL )) && *lang)
     {
         if (!strcmp(lang,"POSIX") || !strcmp(lang,"C")) goto done;
 
@@ -560,11 +549,6 @@ static LCID get_env_lcid( UINT *unix_cp, const char *env_str )
                 else
                     FIXME("charset %s was not recognized\n", charset);
             }
-#ifdef __APPLE__
-            /* charset on Mac OS X is always UTF8 */
-            else if (unix_cp) *unix_cp = CP_UTF8;
-#endif
-
             lang=next;
         } while (lang && !ret);
 
@@ -2590,13 +2574,28 @@ void LOCALE_Init(void)
     UINT ansi_cp = 1252, oem_cp = 437, mac_cp = 10000, unix_cp = ~0U;
     LCID lcid;
 
-    lcid = get_env_lcid( NULL, NULL );
+#ifdef __APPLE__
+    /* MacOS doesn't set the locale environment variables so we have to do it ourselves */
+    char user_locale[50];
+    CFLocaleRef user_locale_ref = CFLocaleCopyCurrent();
+    CFStringRef user_locale_string_ref = CFLocaleGetIdentifier( user_locale_ref );
+
+    CFStringGetCString( user_locale_string_ref, user_locale, sizeof(user_locale), kCFStringEncodingUTF8 );
+    CFRelease( user_locale_ref );
+    if (!strchr( user_locale, '.' )) strcat( user_locale, ".UTF-8" );
+    unix_cp = CP_UTF8;  /* default to utf-8 even if we don't get a valid locale */
+    setenv( "LANG", user_locale, 0 );
+    TRACE( "setting locale to '%s'\n", user_locale );
+#endif
+    setlocale( LC_ALL, "" );
+
+    lcid = get_env_lcid( NULL, LC_ALL );
     NtSetDefaultLocale( TRUE, lcid );
 
-    lcid = get_env_lcid( NULL, "LC_MESSAGES" );
+    lcid = get_env_lcid( NULL, LC_MESSAGES );
     NtSetDefaultUILanguage( LANGIDFROMLCID(lcid) );
 
-    lcid = get_env_lcid( &unix_cp, "LC_CTYPE" );
+    lcid = get_env_lcid( &unix_cp, LC_CTYPE );
     NtSetDefaultLocale( FALSE, lcid );
 
     ansi_cp = get_lcid_codepage(lcid);
