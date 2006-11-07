@@ -2395,13 +2395,13 @@ static void test_join(void)
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
-        if( !lstrcmp( buf, join_res_fifth[i].two ))
+        if( lstrcmp( buf, join_res_fifth[i].two ))
             data_correct = FALSE;
 
         i++;
         MsiCloseHandle(hrec);
     }
-    todo_wine ok( data_correct, "data returned in the wrong order\n");
+    ok( data_correct, "data returned in the wrong order\n");
 
     ok( i == 1, "Expected 1 rows, got %d\n", i );
     ok( r == ERROR_NO_MORE_ITEMS, "expected no more items: %d\n", r );
@@ -2551,25 +2551,25 @@ static void test_join(void)
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 1, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
-        if( !lstrcmp( buf, join_res_eighth[i].one ))
+        if( lstrcmp( buf, join_res_eighth[i].one ))
             data_correct = FALSE;
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 2, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
-        if( !lstrcmp( buf, join_res_eighth[i].two ))
+        if( lstrcmp( buf, join_res_eighth[i].two ))
             data_correct = FALSE;
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 3, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
-        if( !lstrcmp( buf, join_res_eighth[i].three ))
+        if( lstrcmp( buf, join_res_eighth[i].three ))
             data_correct = FALSE;
 
         size = MAX_PATH;
         r = MsiRecordGetString( hrec, 4, buf, &size );
         ok( r == ERROR_SUCCESS, "failed to get record string: %d\n", r );
-        if( !lstrcmp( buf, join_res_eighth[i].four ))
+        if( lstrcmp( buf, join_res_eighth[i].four ))
             data_correct = FALSE;
 
         i++;
