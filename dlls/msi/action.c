@@ -1939,48 +1939,10 @@ LPWSTR msi_get_disk_file_version( LPCWSTR filename )
     return strdupW( filever );
 }
 
-/*
- * A lot is done in this function aside from just the costing.
- * The costing needs to be implemented at some point but for now I am going
- * to focus on the directory building
- *
- */
-static UINT ACTION_CostFinalize(MSIPACKAGE *package)
+static UINT msi_check_file_install_states( MSIPACKAGE *package )
 {
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','D','i','r','e','c','t','o','r','y','`',0};
-    static const WCHAR ConditionQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','C','o','n','d','i','t','i','o','n','`',0};
-    static const WCHAR szCosting[] =
-        {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
-    static const WCHAR szlevel[] =
-        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
-    static const WCHAR szOne[] = { '1', 0 };
-    MSICOMPONENT *comp;
+    LPWSTR file_version;
     MSIFILE *file;
-    UINT rc;
-    MSIQUERY * view;
-    LPWSTR level, file_version;
-
-    if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
-        return ERROR_SUCCESS;
-
-    TRACE("Building Directory properties\n");
-
-    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
-    if (rc == ERROR_SUCCESS)
-    {
-        rc = MSI_IterateRecords(view, NULL, ITERATE_CostFinalizeDirectories,
-                        package);
-        msiobj_release(&view->hdr);
-    }
-
-    /* read components states from the registry */
-    ACTION_GetComponentInstallStates(package);
-
-    TRACE("File calculations\n");
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
@@ -2043,6 +2005,52 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
         else
             file->state = msifs_present;
     }
+
+    return ERROR_SUCCESS;
+}
+
+/*
+ * A lot is done in this function aside from just the costing.
+ * The costing needs to be implemented at some point but for now I am going
+ * to focus on the directory building
+ *
+ */
+static UINT ACTION_CostFinalize(MSIPACKAGE *package)
+{
+    static const WCHAR ExecSeqQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','D','i','r','e','c','t','o','r','y','`',0};
+    static const WCHAR ConditionQuery[] =
+        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+         '`','C','o','n','d','i','t','i','o','n','`',0};
+    static const WCHAR szCosting[] =
+        {'C','o','s','t','i','n','g','C','o','m','p','l','e','t','e',0 };
+    static const WCHAR szlevel[] =
+        {'I','N','S','T','A','L','L','L','E','V','E','L',0};
+    static const WCHAR szOne[] = { '1', 0 };
+    MSICOMPONENT *comp;
+    UINT rc;
+    MSIQUERY * view;
+    LPWSTR level;
+
+    if ( 1 == msi_get_property_int( package, szCosting, 0 ) )
+        return ERROR_SUCCESS;
+
+    TRACE("Building Directory properties\n");
+
+    rc = MSI_DatabaseOpenViewW(package->db, ExecSeqQuery, &view);
+    if (rc == ERROR_SUCCESS)
+    {
+        rc = MSI_IterateRecords(view, NULL, ITERATE_CostFinalizeDirectories,
+                        package);
+        msiobj_release(&view->hdr);
+    }
+
+    /* read components states from the registry */
+    ACTION_GetComponentInstallStates(package);
+
+    TRACE("File calculations\n");
+    msi_check_file_install_states( package );
 
     TRACE("Evaluating Condition Table\n");
 
