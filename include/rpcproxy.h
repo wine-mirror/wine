@@ -91,7 +91,7 @@ typedef struct tagCInterfaceStubHeader
 {
   const IID *piid;
   const MIDL_SERVER_INFO *pServerInfo;
-  unsigned long DispatchTableCount;
+  ULONG DispatchTableCount;
   const PRPC_STUB_FUNCTION *pDispatchTable;
 } CInterfaceStubHeader;
 
@@ -104,7 +104,7 @@ typedef struct tagCInterfaceStubVtbl
 typedef struct tagCStdStubBuffer
 {
   const IRpcStubBufferVtbl *lpVtbl;
-  long RefCount;
+  LONG RefCount;
   struct IUnknown *pvServerObject;
   const struct ICallFactoryVtbl *pCallFactoryVtbl;
   const IID *pAsyncIID;
@@ -114,9 +114,9 @@ typedef struct tagCStdStubBuffer
 typedef struct tagCStdPSFactoryBuffer
 {
   const IPSFactoryBufferVtbl *lpVtbl;
-  long RefCount;
+  LONG RefCount;
   const ProxyFileInfo **pProxyFileList;
-  long Filler1;
+  LONG Filler1;
 } CStdPSFactoryBuffer;
 
 #define STUB_FORWARDING_FUNCTION NdrStubForwardingFunction
@@ -180,7 +180,7 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrStubInitializePartial( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg,
                             PMIDL_STUB_DESC pStubDescriptor, IRpcChannelBuffer *pRpcChannelBuffer,
-                            unsigned long RequestedBufferSize );
+                            ULONG RequestedBufferSize );
 void __RPC_STUB NdrStubForwardingFunction( IRpcStubBuffer *This, IRpcChannelBuffer *pChannel,
                                            PRPC_MESSAGE pMsg, DWORD *pdwStubPhase );
 RPCRTAPI void RPC_ENTRY

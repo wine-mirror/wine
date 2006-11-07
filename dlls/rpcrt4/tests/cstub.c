@@ -516,7 +516,7 @@ static IPSFactoryBuffer *test_NdrDllGetClassObject(void)
 #undef VTBL_TEST_CHANGE_TO
 #undef VTBL_TEST_ZERO
 
-    ok(PSFactoryBuffer.RefCount == 1, "ref count %ld\n", PSFactoryBuffer.RefCount);
+    ok(PSFactoryBuffer.RefCount == 1, "ref count %d\n", PSFactoryBuffer.RefCount);
     return ppsf;
 }
 
@@ -608,7 +608,7 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     CInterfaceStubHeader *header = ((CInterfaceStubHeader *)cstd_stub->lpVtbl) - 1;
 
     ok(IsEqualIID(header->piid, &IID_if1), "header iid differs\n");
-    ok(cstd_stub->RefCount == 1, "ref count %ld\n", cstd_stub->RefCount);
+    ok(cstd_stub->RefCount == 1, "ref count %d\n", cstd_stub->RefCount);
     /* 0xdeadbeef returned from create_stub_test_QI */
     ok(cstd_stub->pvServerObject == (void*)0xdeadbeef, "pvServerObject %p\n", cstd_stub->pvServerObject);
     ok(cstd_stub->pPSFactory == ppsf, "pPSFactory %p\n", cstd_stub->pPSFactory);
@@ -780,21 +780,21 @@ static void test_Release(IPSFactoryBuffer *ppsf)
     facbuf_refs = PSFactoryBuffer.RefCount;
 
     /* This shows that NdrCStdStubBuffer_Release doesn't call Disconnect */
-    ok(cstd_stub->RefCount == 1, "ref count %ld\n", cstd_stub->RefCount);
+    ok(cstd_stub->RefCount == 1, "ref count %d\n", cstd_stub->RefCount);
     connect_test_orig_release_called = 0;
     IRpcStubBuffer_Release(pstub);
 todo_wine {
     ok(connect_test_orig_release_called == 0, "release called %d\n", connect_test_orig_release_called);
 }
-    ok(PSFactoryBuffer.RefCount == facbuf_refs - 1, "factory buffer refs %ld orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs - 1, "factory buffer refs %d orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
 
     /* This shows that NdrCStdStubBuffer_Release calls Release on its 2nd arg, rather than on This->pPSFactory
        (which are usually the same and indeed it's odd that _Release requires this 2nd arg). */
     pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
-    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %d orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
     NdrCStdStubBuffer_Release(pstub, (IPSFactoryBuffer*)pretend_psfacbuf);
     ok(release_test_psfacbuf_release_called == 1, "pretend_psfacbuf_release called %d\n", release_test_psfacbuf_release_called);
-    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %ld orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
+    ok(PSFactoryBuffer.RefCount == facbuf_refs, "factory buffer refs %d orig %d\n", PSFactoryBuffer.RefCount, facbuf_refs);
 }
 
 static HRESULT WINAPI delegating_invoke_test_QI(ITypeLib *pUnk, REFIID iid, void** ppv)
