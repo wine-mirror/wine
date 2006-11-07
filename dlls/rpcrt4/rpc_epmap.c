@@ -251,7 +251,7 @@ typedef unsigned int unsigned32;
 typedef struct twr_t
     {
     unsigned32 tower_length;
-    /* [size_is] */ byte tower_octet_string[ 1 ];
+    /* [size_is] */ BYTE tower_octet_string[ 1 ];
     } 	twr_t;
 
 RPC_STATUS WINAPI TowerExplode(

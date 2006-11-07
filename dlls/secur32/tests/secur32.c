@@ -21,6 +21,7 @@
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>
+#include <winnls.h>
 #define SECURITY_WIN32
 #include <security.h>
 #include <schannel.h>

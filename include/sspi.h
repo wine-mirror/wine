@@ -18,7 +18,7 @@
 #ifndef __WINE_SSPI_H__
 #define __WINE_SSPI_H__
 
-#include <wtypes.h>
+/* FIXME: #include <sdkddkver.h> */
 
 #ifdef __cplusplus
 extern "C" {
