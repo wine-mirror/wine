@@ -2444,10 +2444,19 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
-	    {
+        {
 	    MultiByteToWideChar(CP_UNIXCP, 0, &dead_char, 1, bufW, bufW_size);
 	    ret = -1;
-	    }
+            goto found;
+        }
+
+        if (keysym >= 0x01000100 && keysym <= 0x0100ffff)
+        {
+            /* Unicode direct mapping */
+            bufW[0] = keysym & 0xffff;
+            ret = 1;
+            goto found;
+        }
 	else
 	    {
 	    const char *ksname;
