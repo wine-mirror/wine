@@ -597,6 +597,42 @@ static void schedule_install_files(MSIPACKAGE *package)
     }
 }
 
+static UINT copy_install_file(MSIFILE *file)
+{
+    BOOL ret;
+    UINT gle;
+
+    TRACE("Copying %s to %s\n", debugstr_w(file->SourcePath),
+          debugstr_w(file->TargetPath));
+
+    ret = CopyFileW(file->SourcePath, file->TargetPath, FALSE);
+    if (ret)
+    {
+        file->state = msifs_installed;
+        return ERROR_SUCCESS;
+    }
+
+    gle = GetLastError();
+    if (gle == ERROR_ALREADY_EXISTS && file->state == msifs_overwrite)
+    {
+        TRACE("overwriting existing file\n");
+        gle = ERROR_SUCCESS;
+    }
+    else if (gle == ERROR_FILE_NOT_FOUND)
+    {
+        /* FIXME: this needs to be tested, I'm pretty sure it fails */
+        TRACE("Source file not found\n");
+        gle = ERROR_SUCCESS;
+    }
+    else if (!(file->Attributes & msidbFileAttributesVital))
+    {
+        TRACE("Ignoring error for nonvital\n");
+        gle = ERROR_SUCCESS;
+    }
+
+    return gle;
+}
+
 /*
  * ACTION_InstallFiles()
  * 
@@ -673,31 +709,13 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
             continue;
         }
 
-        rc = CopyFileW(file->SourcePath,file->TargetPath,FALSE);
-        if (!rc)
+        rc = copy_install_file(file);
+        if (rc != ERROR_SUCCESS)
         {
-            rc = GetLastError();
-            ERR("Unable to copy file (%s -> %s) (error %d)\n",
-                debugstr_w(file->SourcePath), debugstr_w(file->TargetPath), rc);
-            if (rc == ERROR_ALREADY_EXISTS && file->state == msifs_overwrite)
-            {
-                rc = 0;
-            }
-            else if (rc == ERROR_FILE_NOT_FOUND)
-            {
-                ERR("Source File Not Found!  Continuing\n");
-                rc = 0;
-            }
-            else if (file->Attributes & msidbFileAttributesVital)
-            {
-                ERR("Ignoring Error and continuing (nonvital file)...\n");
-                rc = 0;
-            }
-        }
-        else
-        {
-            file->state = msifs_installed;
-            rc = ERROR_SUCCESS;
+            ERR("Failed to copy %s to %s (%d)\n", debugstr_w(file->SourcePath),
+                debugstr_w(file->TargetPath), rc);
+            rc = ERROR_INSTALL_FAILURE;
+            break;
         }
     }
 
