@@ -37,6 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(setupapi);
 
+DECLARE_HANDLE(HSTRING_TABLE);
+
 typedef struct _TABLE_SLOT
 {
     LPWSTR pString;

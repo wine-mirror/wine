@@ -158,8 +158,6 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PSP_FILE_CALLBACK)
 
 typedef UINT DI_FUNCTION;
 
-DECLARE_HANDLE(HSTRING_TABLE);
-
 typedef struct _SP_CLASSINSTALL_HEADER
 {
   DWORD       cbSize;
@@ -416,9 +414,6 @@ DECL_WINELIB_SETUPAPI_TYPE_AW(PFILEPATHS)
 #define SP_COPY_REPLACE_BOOT_FILE         0x00080000
 #define SP_COPY_NOPRUNE                   0x00100000
 #define SP_COPY_OEM_F6_INF                0x00200000
-
-/* Flags for StringTableAddString and StringTableLookUpString */
-#define ST_CASE_SENSITIVE_COMPARE	0x00000001
 
 #define FLG_ADDREG_DELREG_BIT             0x00008000
 #define FLG_ADDREG_BINVALUETYPE           0x00000001
@@ -885,14 +880,6 @@ BOOL     WINAPI SetupSetFileQueueAlternatePlatformW( HSPFILEQ, PSP_ALTPLATFORM_I
 BOOL     WINAPI SetupSetFileQueueFlags( HSPFILEQ, DWORD, DWORD );
 void     WINAPI SetupTermDefaultQueueCallback( PVOID );
 DWORD    WINAPI StampFileSecurity(PCWSTR, PSECURITY_DESCRIPTOR);
-DWORD    WINAPI StringTableAddString(HSTRING_TABLE, LPWSTR, DWORD);
-VOID     WINAPI StringTableDestroy(HSTRING_TABLE);
-HSTRING_TABLE WINAPI StringTableDuplicate(HSTRING_TABLE hStringTable);
-HSTRING_TABLE WINAPI StringTableInitialize(VOID);
-DWORD    WINAPI StringTableLookUpString(HSTRING_TABLE, LPWSTR, DWORD);
-LPWSTR   WINAPI StringTableStringFromId(HSTRING_TABLE, DWORD);
-BOOL     WINAPI StringTableStringFromIdEx(HSTRING_TABLE, DWORD, LPWSTR, LPDWORD);
-VOID     WINAPI StringTableTrim(HSTRING_TABLE);
 DWORD    WINAPI TakeOwnershipOfFile(PCWSTR);
 PSTR     WINAPI UnicodeToMultiByte(PCWSTR lpUnicodeStr, UINT uCodePage);
 BOOL     WINAPI UnmapAndCloseFile(HANDLE, HANDLE, PVOID);

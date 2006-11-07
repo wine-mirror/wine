@@ -34,6 +34,11 @@
 #include "wine/test.h"
 
 
+DECLARE_HANDLE(HSTRING_TABLE);
+
+/* Flags for StringTableAddString and StringTableLookUpString */
+#define ST_CASE_SENSITIVE_COMPARE	0x00000001
+
 static DWORD    (WINAPI *pStringTableAddString)(HSTRING_TABLE, LPWSTR, DWORD);
 static VOID     (WINAPI *pStringTableDestroy)(HSTRING_TABLE);
 static HSTRING_TABLE (WINAPI *pStringTableDuplicate)(HSTRING_TABLE hStringTable);
