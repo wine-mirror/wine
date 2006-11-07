@@ -581,6 +581,22 @@ static UINT get_file_target(MSIPACKAGE *package, LPCWSTR file_key,
     return ERROR_FUNCTION_FAILED;
 }
 
+static void schedule_install_files(MSIPACKAGE *package)
+{
+    MSIFILE *file;
+
+    LIST_FOR_EACH_ENTRY(file, &package->files, MSIFILE, entry)
+    {
+        if (!ACTION_VerifyComponentForAction(file->Component, INSTALLSTATE_LOCAL))
+        {
+            TRACE("File %s is not scheduled for install\n", debugstr_w(file->File));
+
+            ui_progress(package,2,file->FileSize,0,0);
+            file->state = msifs_skipped;
+        }
+    }
+}
+
 /*
  * ACTION_InstallFiles()
  * 
@@ -608,20 +624,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
                 MSICODE_PRODUCT,
                 INSTALLPROPERTY_PACKAGENAMEW, ptr);
     }
-    /* FIXME("Write DiskPrompt\n"); */
-    
-    /* Pass 1 */
-    LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
-    {
-        if (!ACTION_VerifyComponentForAction( file->Component, INSTALLSTATE_LOCAL ))
-        {
-            ui_progress(package,2,file->FileSize,0,0);
-            TRACE("File %s is not scheduled for install\n",
-                   debugstr_w(file->File));
 
-            file->state = msifs_skipped;
-        }
-    }
+    schedule_install_files(package);
 
     /*
      * Despite MSDN specifying that the CreateFolders action
