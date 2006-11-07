@@ -152,7 +152,8 @@ static const CHAR cc_component_dat[] = "Component\tComponentId\tDirectory_\tAttr
                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
                                        "Component\tComponent\n"
                                        "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n"
-                                       "augustus\t\tMSITESTDIR\t0\t1\taugustus";
+                                       "augustus\t\tMSITESTDIR\t0\t1\taugustus\n"
+                                       "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n";
 
 static const CHAR cc_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
@@ -163,19 +164,43 @@ static const CHAR cc_feature_comp_dat[] = "Feature_\tComponent_\n"
                                           "s38\ts72\n"
                                           "FeatureComponents\tFeature_\tComponent_\n"
                                           "feature\tmaximus\n"
-                                          "feature\taugustus";
+                                          "feature\taugustus\n"
+                                          "feature\tcaesar";
 
 static const CHAR cc_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
                                   "File\tFile\n"
                                   "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
-                                  "augustus\taugustus\taugustus\t50000\t\t\t16384\t1";
+                                  "augustus\taugustus\taugustus\t50000\t\t\t16384\t2\n"
+                                  "caesar\tcaesar\tcaesar\t500\t\t\t16384\t12";
 
 static const CHAR cc_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
                                    "Media\tDiskId\n"
                                    "1\t10\t\ttest1.cab\tDISK1\t\n"
-                                   "2\t2\t\ttest2.cab\tDISK2\t\n";
+                                   "2\t2\t\ttest2.cab\tDISK2\t\n"
+                                   "3\t12\t\ttest3.cab\tDISK3\t\n";
+
+static const CHAR co_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "maximus\tmaximus\tmaximus\t500\t\t\t16384\t1\n"
+                                  "augustus\taugustus\taugustus\t50000\t\t\t16384\t2\n"
+                                  "caesar\tcaesar\tcaesar\t500\t\t\t16384\t3";
+
+static const CHAR co_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                   "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                   "Media\tDiskId\n"
+                                   "1\t10\t\ttest1.cab\tDISK1\t\n"
+                                   "2\t2\t\ttest2.cab\tDISK2\t\n"
+                                   "3\t3\t\ttest3.cab\tDISK3\t\n";
+
+static const CHAR co2_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                    "Media\tDiskId\n"
+                                    "1\t10\t\ttest1.cab\tDISK1\t\n"
+                                    "2\t12\t\ttest3.cab\tDISK3\t\n"
+                                    "3\t2\t\ttest2.cab\tDISK2\t\n";
 
 typedef struct _msi_table
 {
@@ -210,6 +235,30 @@ static const msi_table cc_tables[] =
     ADD_TABLE(cc_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(cc_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table co_tables[] =
+{
+    ADD_TABLE(cc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(co_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(co_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table co2_tables[] =
+{
+    ADD_TABLE(cc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(cc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(co2_media),
     ADD_TABLE(property),
 };
 
@@ -766,6 +815,7 @@ static void create_cc_test_files(void)
 
     create_file("maximus", 500);
     create_file("augustus", 50000);
+    create_file("caesar", 500);
 
     set_cab_parameters(&cabParams, "test1.cab", 200);
 
@@ -792,8 +842,11 @@ static void create_cc_test_files(void)
     res = FCIDestroy(hfci);
     ok(res, "Failed to destroy the cabinet\n");
 
+    create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
+
     DeleteFile("maximus");
     DeleteFile("augustus");
+    DeleteFile("caesar");
 }
 
 static void test_continuouscabs(void)
@@ -815,11 +868,13 @@ static void test_continuouscabs(void)
     {
         ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     }
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     DeleteFile("test1.cab");
     DeleteFile("test2.cab");
+    DeleteFile("test3.cab");
     DeleteFile(msifile);
 }
 
@@ -830,6 +885,7 @@ static void test_caborder(void)
     create_file("imperator", 100);
     create_file("maximus", 500);
     create_file("augustus", 50000);
+    create_file("caesar", 500);
 
     create_database(msifile, cc_tables, sizeof(cc_tables) / sizeof(msi_table));
 
@@ -837,10 +893,12 @@ static void test_caborder(void)
 
     create_cab_file("test1.cab", MEDIA_SIZE, "maximus\0");
     create_cab_file("test2.cab", MEDIA_SIZE, "augustus\0");
+    create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
     ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
     todo_wine
     {
     	ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
@@ -849,14 +907,17 @@ static void test_caborder(void)
 
     DeleteFile("test1.cab");
     DeleteFile("test2.cab");
+    DeleteFile("test3.cab");
 
     create_cab_file("test1.cab", MEDIA_SIZE, "imperator\0");
     create_cab_file("test2.cab", MEDIA_SIZE, "maximus\0augustus\0");
+    create_cab_file("test3.cab", MEDIA_SIZE, "caesar\0");
 
     r = MsiInstallProductA(msifile, NULL);
     ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
     ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
     ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
     todo_wine
     {
     	ok(!delete_pf("msitest", FALSE), "File is installed\n");
@@ -864,10 +925,47 @@ static void test_caborder(void)
 
     DeleteFile("test1.cab");
     DeleteFile("test2.cab");
+    DeleteFile("test3.cab");
+    DeleteFile(msifile);
 
+    create_cc_test_files();
+    create_database(msifile, co_tables, sizeof(co_tables) / sizeof(msi_table));
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest", FALSE), "File is installed\n");
+    }
+
+    DeleteFile("test1.cab");
+    DeleteFile("test2.cab");
+    DeleteFile("test3.cab");
+    DeleteFile(msifile);
+
+    create_cc_test_files();
+    create_database(msifile, co2_tables, sizeof(co2_tables) / sizeof(msi_table));
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
+    todo_wine
+    {
+        ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest", FALSE), "File is installed\n");
+    }
+
+    DeleteFile("test1.cab");
+    DeleteFile("test2.cab");
+    DeleteFile("test3.cab");
     DeleteFile("imperator");
     DeleteFile("maximus");
     DeleteFile("augustus");
+    DeleteFile("caesar");
     DeleteFile(msifile);
 }
 
