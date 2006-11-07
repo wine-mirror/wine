@@ -228,6 +228,7 @@ typedef struct tagMSIPACKAGE
 
     struct list RunningActions;
 
+    LPWSTR BaseURL;
     LPWSTR PackagePath;
     LPWSTR ProductCode;
 
@@ -620,7 +621,7 @@ extern UINT VIEW_find_column( MSIVIEW *, LPCWSTR, UINT * );
 extern UINT MSI_SetInstallLevel( MSIPACKAGE *package, int iInstallLevel );
 
 /* package internals */
-extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE * );
+extern MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *, LPWSTR );
 extern UINT MSI_OpenPackageW( LPCWSTR szPackage, MSIPACKAGE ** );
 extern UINT MSI_SetTargetPathW( MSIPACKAGE *, LPCWSTR, LPCWSTR );
 extern UINT MSI_SetPropertyW( MSIPACKAGE *, LPCWSTR, LPCWSTR );

@@ -532,7 +532,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
 
         /* only download the remote cabinet file if a local copy does not exist */
         if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
-            UrlIsW(package->PackagePath, URLIS_URL))
+            UrlIsW(package->BaseURL, URLIS_URL))
         {
             rc = msi_extract_remote_cabinet(package, mi);
         }

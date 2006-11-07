@@ -591,6 +591,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         msi_free(package->script);
     }
 
+    msi_free(package->BaseURL);
     msi_free(package->PackagePath);
     msi_free(package->ProductCode);
     msi_free(package->ActionFormat);
