@@ -325,6 +325,20 @@ static LPWSTR strdupW(LPCWSTR p)
     return ret;
 }
 
+/* Returns the number of bytes in an ansi \0\0 terminated string (multi_sz).
+   The result includes all \0s (specifically the last two). */
+static int multi_sz_lenA(const char *str)
+{
+    const char *ptr = str;
+    if(!str) return 0;
+    do
+    {
+        ptr += lstrlenA(ptr) + 1;
+    } while(*ptr);
+
+    return ptr - str + 1;
+}
+
 static void
 WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     char qbuf[200];
@@ -623,7 +637,7 @@ static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *va
 {
     if (value)
         return RegSetValueExW(hkey, keyname, 0, REG_SZ, (const BYTE*)value,
-                   lstrlenW(value) * sizeof(WCHAR));
+                              (lstrlenW(value) + 1) * sizeof(WCHAR));
     else
         return ERROR_FILE_NOT_FOUND;
 }
@@ -641,7 +655,7 @@ void WINSPOOL_LoadSystemPrinters(void)
                         data_file[]         = "<datafile?>",
                         config_file[]       = "wineps16",
                         help_file[]         = "<helpfile?>",
-                        dep_file[]          = "<dependend files?>",
+                        dep_file[]          = "<dependent files?>\0",
                         monitor_name[]      = "<monitor name?>",
                         default_data_type[] = "RAW";
 
@@ -4369,16 +4383,16 @@ BOOL WINAPI AddPrinterDriverA(LPSTR pName, DWORD level, LPBYTE pDriverInfo)
 	return FALSE;
     }
     RegSetValueExA(hkeyName, "Configuration File", 0, REG_SZ, (LPBYTE) di3.pConfigFile,
-		   0);
-    RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, (LPBYTE) di3.pDataFile, 0);
-    RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, (LPBYTE) di3.pDriverPath, 0);
+		   lstrlenA(di3.pConfigFile) + 1);
+    RegSetValueExA(hkeyName, "Data File", 0, REG_SZ, (LPBYTE) di3.pDataFile, lstrlenA(di3.pDataFile) + 1);
+    RegSetValueExA(hkeyName, "Driver", 0, REG_SZ, (LPBYTE) di3.pDriverPath, lstrlenA(di3.pDriverPath) + 1);
     RegSetValueExA(hkeyName, "Version", 0, REG_DWORD, (LPBYTE) &di3.cVersion,
 		   sizeof(DWORD));
-    RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, (LPBYTE) di3.pDefaultDataType, 0);
+    RegSetValueExA(hkeyName, "Datatype", 0, REG_SZ, (LPBYTE) di3.pDefaultDataType, lstrlenA(di3.pDefaultDataType));
     RegSetValueExA(hkeyName, "Dependent Files", 0, REG_MULTI_SZ,
-		   (LPBYTE) di3.pDependentFiles, 0);
-    RegSetValueExA(hkeyName, "Help File", 0, REG_SZ, (LPBYTE) di3.pHelpFile, 0);
-    RegSetValueExA(hkeyName, "Monitor", 0, REG_SZ, (LPBYTE) di3.pMonitorName, 0);
+                   (LPBYTE) di3.pDependentFiles, multi_sz_lenA(di3.pDependentFiles));
+    RegSetValueExA(hkeyName, "Help File", 0, REG_SZ, (LPBYTE) di3.pHelpFile, lstrlenA(di3.pHelpFile) + 1);
+    RegSetValueExA(hkeyName, "Monitor", 0, REG_SZ, (LPBYTE) di3.pMonitorName, lstrlenA(di3.pMonitorName) + 1);
     RegCloseKey(hkeyName);
     RegCloseKey(hkeyDrivers);
 
