@@ -1853,6 +1853,12 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
     {
+        if (component->Action == INSTALLSTATE_DEFAULT)
+        {
+            TRACE("%s was default, setting to local\n", debugstr_w(component->Component));
+            msi_component_set_state( component, INSTALLSTATE_LOCAL );
+        }
+
         TRACE("Result: Component %s (Installed %i, Action %i, Request %i)\n",
             debugstr_w(component->Component), component->Installed,
             component->Action, component->ActionRequest);
