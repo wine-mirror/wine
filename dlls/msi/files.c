@@ -354,52 +354,6 @@ static void free_media_info( struct media_info *mi )
     msi_free( mi );
 }
 
-/* downloads a remote cabinet and extracts it if it exists */
-static UINT msi_extract_remote_cabinet( MSIPACKAGE *package, struct media_info *mi )
-{
-    FDICABINETINFO cabinfo;
-    WCHAR temppath[MAX_PATH];
-    WCHAR src[MAX_PATH];
-    LPSTR cabpath;
-    LPCWSTR file;
-    LPWSTR ptr;
-    HFDI hfdi;
-    ERF erf;
-    int hf;
-
-    /* the URL is the path prefix of the package URL and the filename
-     * of the file to download
-     */
-    ptr = strrchrW(package->PackagePath, '/');
-    lstrcpynW(src, package->PackagePath, ptr - package->PackagePath + 2);
-    ptr = strrchrW(mi->source, '\\');
-    lstrcatW(src, ptr + 1);
-
-    file = msi_download_file( src, temppath );
-    lstrcpyW(mi->source, file);
-
-    /* check if the remote cabinet still exists, ignore if it doesn't */
-    hfdi = FDICreate(cabinet_alloc, cabinet_free, cabinet_open, cabinet_read,
-                     cabinet_write, cabinet_close, cabinet_seek, 0, &erf);
-    if (!hfdi)
-    {
-        ERR("FDICreate failed\n");
-        return ERROR_FUNCTION_FAILED;
-    }
-
-    cabpath = strdupWtoA(mi->source);
-    hf = cabinet_open(cabpath, _O_RDONLY, 0);
-    if (!FDIIsCabinet(hfdi, hf, &cabinfo))
-    {
-        WARN("Remote cabinet %s does not exist.\n", debugstr_w(mi->source));
-        msi_free(cabpath);
-        return ERROR_SUCCESS;
-    }
-
-    msi_free(cabpath);
-    return !extract_cabinet_file(package, mi);
-}
-
 static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi, LPCWSTR prompt )
 {
     LPWSTR error, error_dialog;
@@ -421,6 +375,34 @@ static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi, LPCWST
     msi_free( error_dialog );
 
     return r;
+}
+
+static UINT download_remote_cabinet(MSIPACKAGE *package, struct media_info *mi)
+{
+    WCHAR temppath[MAX_PATH];
+    LPWSTR src, ptr;
+    LPCWSTR cab;
+
+    src = strdupW(package->BaseURL);
+    if (!src)
+        return ERROR_OUTOFMEMORY;
+
+    ptr = strrchrW(src, '/');
+    if (!ptr)
+    {
+        msi_free(src);
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    *(ptr + 1) = '\0';
+    ptr = strrchrW(mi->source, '\\');
+    lstrcatW(src, ptr + 1);
+
+    cab = msi_download_file(src, temppath);
+    lstrcpyW(mi->source, cab);
+
+    msi_free(src);
+    return ERROR_SUCCESS;
 }
 
 static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
@@ -534,12 +516,15 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
             UrlIsW(package->BaseURL, URLIS_URL))
         {
-            rc = msi_extract_remote_cabinet(package, mi);
+            rc = download_remote_cabinet(package, mi);
+            if (rc != ERROR_SUCCESS ||
+                GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+            {
+                goto done;
+            }
         }
-        else
-        {
-            rc = !extract_cabinet_file(package, mi);
-        }
+
+        rc = !extract_cabinet_file(package, mi);
     }
     else
     {
