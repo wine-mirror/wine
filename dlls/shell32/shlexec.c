@@ -217,7 +217,7 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
 		    pv = SHLockShared(hmem, 0);
 		    chars = sprintfW(buf, wszILPtr, pv);
 		    if (chars >= sizeof(buf)/sizeof(WCHAR))
-			ERR("pidl format buffer too small!");
+			ERR("pidl format buffer too small!\n");
 		    used += chars;
 		    if (used < len)
 		    {
