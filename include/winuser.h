@@ -654,6 +654,7 @@ typedef struct tagWINDOWPLACEMENT
 #define ODS_COMBOBOXEDIT 0x1000 /* Edit of a combo box */
 
 /* Edit control styles */
+#ifndef NOWINSTYLES
 #define ES_LEFT         0x00000000
 #define ES_CENTER       0x00000001
 #define ES_RIGHT        0x00000002
@@ -669,6 +670,7 @@ typedef struct tagWINDOWPLACEMENT
 #define ES_READONLY     0x00000800
 #define ES_WANTRETURN   0x00001000
 #define ES_NUMBER       0x00002000
+#endif /* NOWINSTYLES */
 
 /* OEM Resource Ordinal Numbers */
 #ifdef OEMRESOURCE
@@ -1623,7 +1625,7 @@ typedef struct
 #define SC_ICON   SC_MINIMIZE
 #define SC_ZOOM   SC_MAXIMIZE
 
-
+#ifndef NOWINSTYLES
 #define CS_VREDRAW          0x00000001
 #define CS_HREDRAW          0x00000002
 #define CS_KEYCVTWINDOW     0x00000004
@@ -1639,6 +1641,7 @@ typedef struct
 #define CS_GLOBALCLASS      0x00004000
 #define CS_IME              0x00010000
 #define CS_DROPSHADOW       0x00020000
+#endif /* NOWINSTYLES */
 
 #define PRF_CHECKVISIBLE    0x00000001L
 #define PRF_NONCLIENT       0x00000002L
@@ -2142,6 +2145,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define SB_BOTH             3
 
 /* Scrollbar styles */
+#ifndef NOWINSTYLES
 #define SBS_HORZ                    0x0000L
 #define SBS_VERT                    0x0001L
 #define SBS_TOPALIGN                0x0002L
@@ -2152,6 +2156,7 @@ typedef PVOID *LPMENUTEMPLATE;
 #define SBS_SIZEBOXBOTTOMRIGHTALIGN 0x0004L
 #define SBS_SIZEBOX                 0x0008L
 #define SBS_SIZEGRIP                0x0010L
+#endif /* NOWINSTYLES */
 
 /* EnableScrollBar() flags */
 #define ESB_ENABLE_BOTH     0x0000
@@ -2291,6 +2296,7 @@ typedef struct tagSCROLLBARINFO
 #define SIF_ALL             (SIF_RANGE | SIF_PAGE | SIF_POS | SIF_TRACKPOS)
 
 /* Listbox styles */
+#ifndef NOWINSTYLES
 #define LBS_NOTIFY               0x0001
 #define LBS_SORT                 0x0002
 #define LBS_NOREDRAW             0x0004
@@ -2308,6 +2314,7 @@ typedef struct tagSCROLLBARINFO
 #define LBS_NOSEL                0x4000
 #define LBS_COMBOBOX             0x8000
 #define LBS_STANDARD  (LBS_NOTIFY | LBS_SORT | WS_VSCROLL | WS_BORDER)
+#endif /* NOWINSTYLES */
 
 /* Listbox messages */
 #define LB_ADDSTRING           0x0180
@@ -2371,6 +2378,7 @@ typedef struct tagSCROLLBARINFO
 #define LB_CTLCODE          0L
 
 /* Combo box styles */
+#ifndef NOWINSTYLES
 #define CBS_SIMPLE            0x0001L
 #define CBS_DROPDOWN          0x0002L
 #define CBS_DROPDOWNLIST      0x0003L
@@ -2385,7 +2393,7 @@ typedef struct tagSCROLLBARINFO
 
 #define CBS_UPPERCASE	      0x2000L
 #define CBS_LOWERCASE	      0x4000L
-
+#endif /* NOWINSTYLES */
 
 /* Combo box messages */
 #define CB_GETEDITSEL            0x0140
@@ -3021,6 +3029,8 @@ typedef struct tagMINIMIZEDMETRICS {
     int iArrange;
 } MINIMIZEDMETRICS, *PMINIMIZEDMETRICS, *LPMINIMIZEDMETRICS;
 
+#ifndef NOWINSTYLES
+
 /* Window Styles */
 #define WS_OVERLAPPED    0x00000000L
 #define WS_POPUP         0x80000000L
@@ -3082,6 +3092,8 @@ typedef struct tagMINIMIZEDMETRICS {
 
 /* WINE internal... */
 #define WS_EX_TRAYWINDOW	0x80000000L
+
+#endif /* NOWINSTYLES */
 
 /* Window scrolling */
 #define SW_SCROLLCHILDREN      0x0001
