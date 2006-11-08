@@ -834,4 +834,10 @@ void    MMDRV_Exit(void)
         MMDRV_ExitPerType(&MMDrvs[i], MMDRV_WAVEOUT);
         CloseDriver(MMDrvs[i].hDriver, 0, 0);
     }
+    HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_AUX].lpMlds - 1);
+    HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_MIXER].lpMlds - 1);
+    HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_MIDIIN].lpMlds - 1);
+    HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_MIDIOUT].lpMlds - 1);
+    HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_WAVEIN].lpMlds - 1);
+    HeapFree(GetProcessHeap(), 0, llTypes[MMDRV_WAVEOUT].lpMlds - 1);
 }
