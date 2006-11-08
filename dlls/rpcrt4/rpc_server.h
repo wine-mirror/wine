@@ -56,6 +56,8 @@ struct protseq_ops
     /* returns -1 for failure, 0 for server state changed and 1 to indicate a
      * new connection was established */
     int (*wait_for_new_connection)(RpcServerProtseq *protseq, unsigned int count, void *wait_array);
+    /* opens the endpoint and optionally begins listening */
+    RPC_STATUS (*open_endpoint)(RpcServerProtseq *protseq, LPSTR endpoint);
 };
 
 typedef struct _RpcServerInterface

@@ -496,8 +496,7 @@ static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps)
 {
   RPC_STATUS status;
 
-  status = RPCRT4_CreateConnection(&ps->conn, TRUE, ps->Protseq, NULL,
-                                   ps->Endpoint, NULL, NULL, NULL);
+  status = ps->ops->open_endpoint(ps, ps->Endpoint);
   if (status != RPC_S_OK)
     return status;
 

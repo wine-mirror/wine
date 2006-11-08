@@ -258,7 +258,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq,
                           Binding->NetworkAddr, Binding->Endpoint, NULL,
                           Binding->AuthInfo, Binding);
-  status = RPCRT4_OpenConnection(NewConnection);
+  status = RPCRT4_OpenClientConnection(NewConnection);
   if (status != RPC_S_OK)
   {
     RPCRT4_DestroyConnection(NewConnection);
