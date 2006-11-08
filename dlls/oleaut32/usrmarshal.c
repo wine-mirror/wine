@@ -62,7 +62,7 @@ HRESULT OLEAUTPS_DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
                               &CLSID_PSDispatch, &PSFactoryBuffer);
 }
 
-static void dump_user_flags(unsigned long *pFlags)
+static void dump_user_flags(ULONG *pFlags)
 {
     if (HIWORD(*pFlags) == NDR_LOCAL_DATA_REPRESENTATION)
         TRACE("MAKELONG(NDR_LOCAL_REPRESENTATION, ");
@@ -121,7 +121,7 @@ unsigned char * WINAPI CLEANLOCALSTORAGE_UserMarshal(ULONG *pFlags, unsigned cha
     return Buffer + sizeof(DWORD);
 }
 
-unsigned char * WINAPI CLEANLOCALSTORAGE_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, CLEANLOCALSTORAGE *pstr)
+unsigned char * WINAPI CLEANLOCALSTORAGE_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, CLEANLOCALSTORAGE *pstr)
 {
     ALIGN_POINTER(Buffer, 3);
     pstr->flags = *(DWORD*)Buffer;
@@ -174,7 +174,7 @@ unsigned char * WINAPI BSTR_UserMarshal(ULONG *pFlags, unsigned char *Buffer, BS
     return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
 }
 
-unsigned char * WINAPI BSTR_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, BSTR *pstr)
+unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, BSTR *pstr)
 {
     bstr_wire_t *header;
     TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
@@ -220,7 +220,7 @@ typedef struct
     DWORD switch_is;
 } variant_wire_t;
 
-static unsigned int get_type_size(unsigned long *pFlags, VARIANT *pvar)
+static unsigned int get_type_size(ULONG *pFlags, VARIANT *pvar)
 {
     if (V_VT(pvar) & VT_ARRAY) return 4;
 
@@ -268,7 +268,7 @@ static unsigned int get_type_size(unsigned long *pFlags, VARIANT *pvar)
     }
 }
 
-static unsigned int get_type_alignment(unsigned long *pFlags, VARIANT *pvar)
+static unsigned int get_type_alignment(ULONG *pFlags, VARIANT *pvar)
 {
     unsigned int size = get_type_size(pFlags, pvar);
     if(V_VT(pvar) & VT_BYREF) return 3;
@@ -544,10 +544,10 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
     return Pos;
 }
 
-unsigned char * WINAPI VARIANT_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, VARIANT *pvar)
+unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, VARIANT *pvar)
 {
     variant_wire_t *header;
-    unsigned long type_size;
+    ULONG type_size;
     int align;
     unsigned char *Pos;
 
@@ -940,7 +940,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buf
                            FADF_BSTR | FADF_UNKNOWN | FADF_DISPATCH | \
                            FADF_VARIANT | FADF_CREATEVECTOR)
 
-unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(unsigned long *pFlags, unsigned char *Buffer, LPSAFEARRAY *ppsa)
+unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, LPSAFEARRAY *ppsa)
 {
     ULONG_PTR ptr;
     wireSAFEARRAY wiresa;

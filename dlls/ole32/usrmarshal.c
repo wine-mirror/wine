@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
 
-static void dump_user_flags(unsigned long *pFlags)
+static void dump_user_flags(ULONG *pFlags)
 {
     if (HIWORD(*pFlags) == NDR_LOCAL_DATA_REPRESENTATION)
         TRACE("MAKELONG(NDR_LOCAL_REPRESENTATION, ");
@@ -181,7 +181,7 @@ unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(ULONG *pFlags, unsigned char *
  *  the first parameter is an unsigned long.
  *  This function is only intended to be called by the RPC runtime.
  */
-unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
+unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
 {
     wireCLIPFORMAT wirecf = (wireCLIPFORMAT)pBuffer;
 
@@ -265,7 +265,7 @@ static unsigned char * __RPC_USER handle_UserMarshal(ULONG *pFlags, unsigned cha
     return pBuffer + sizeof(RemotableHandle);
 }
 
-static unsigned char * __RPC_USER handle_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, HANDLE *handle)
+static unsigned char * __RPC_USER handle_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HANDLE *handle)
 {
     RemotableHandle *remhandle = (RemotableHandle *)pBuffer;
     if (remhandle->fContext != WDT_INPROC_CALL)
@@ -292,7 +292,7 @@ static void __RPC_USER handle_UserFree(unsigned long *pFlags, HANDLE *phMenu)
         return handle_UserMarshal(pFlags, pBuffer, (HANDLE *)handle); \
     } \
     \
-    unsigned char * __RPC_USER type##_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, type *handle) \
+    unsigned char * __RPC_USER type##_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
     { \
         TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, handle); \
         return handle_UserUnmarshal(pFlags, pBuffer, (HANDLE *)handle); \
@@ -381,7 +381,7 @@ unsigned char * __RPC_USER HGLOBAL_UserMarshal(ULONG *pFlags, unsigned char *pBu
     return pBuffer;
 }
 
-unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
+unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
 {
     ULONG fContext;
 
@@ -469,7 +469,7 @@ unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *pFlags, unsigned char *pBu
     return pBuffer;
 }
 
-unsigned char * __RPC_USER HBITMAP_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
+unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -492,7 +492,7 @@ unsigned char * __RPC_USER HDC_UserMarshal(ULONG *pFlags, unsigned char *pBuffer
     return pBuffer;
 }
 
-unsigned char * __RPC_USER HDC_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, HDC *phdc)
+unsigned char * __RPC_USER HDC_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HDC *phdc)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -515,7 +515,7 @@ unsigned char * __RPC_USER HPALETTE_UserMarshal(ULONG *pFlags, unsigned char *pB
     return pBuffer;
 }
 
-unsigned char * __RPC_USER HPALETTE_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, HPALETTE *phPal)
+unsigned char * __RPC_USER HPALETTE_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HPALETTE *phPal)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -590,7 +590,7 @@ unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(ULONG *pFlags, unsigned char
     return pBuffer;
 }
 
-unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
+unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
 {
     ULONG fContext;
 
@@ -747,7 +747,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
     return pBuffer;
 }
 
-unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
+unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
 {
     DWORD content;
     DWORD releaseunk;
@@ -824,7 +824,7 @@ unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserMarshal(  ULONG *pFlags, unsigned
     return pBuffer;
 }
 
-unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, ASYNC_STGMEDIUM *pStgMedium)
+unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, ASYNC_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -847,7 +847,7 @@ unsigned char * __RPC_USER FLAG_STGMEDIUM_UserMarshal(  ULONG *pFlags, unsigned 
     return pBuffer;
 }
 
-unsigned char * __RPC_USER FLAG_STGMEDIUM_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, FLAG_STGMEDIUM *pStgMedium)
+unsigned char * __RPC_USER FLAG_STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, FLAG_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -870,7 +870,7 @@ unsigned char * __RPC_USER SNB_UserMarshal(  ULONG *pFlags, unsigned char *pBuff
     return pBuffer;
 }
 
-unsigned char * __RPC_USER SNB_UserUnmarshal(unsigned long *pFlags, unsigned char *pBuffer, SNB *pSnb)
+unsigned char * __RPC_USER SNB_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, SNB *pSnb)
 {
     FIXME(":stub\n");
     return pBuffer;
