@@ -2,6 +2,7 @@
  * Unit test suite for CreateProcess function.
  *
  * Copyright 2002 Eric Pouech
+ * Copyright 2006 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1265,6 +1266,89 @@ static  void    test_ExitCode(void)
     assert(DeleteFileA(resfile) != 0);
 }
 
+static void test_OpenProcess(void)
+{
+    HANDLE hproc;
+    void *addr1;
+    MEMORY_BASIC_INFORMATION info;
+    SIZE_T dummy, read_bytes;
+
+    /* without PROCESS_VM_OPERATION */
+    hproc = OpenProcess(PROCESS_ALL_ACCESS & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
+    ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+todo_wine {
+    ok(!addr1, "VirtualAllocEx should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+}
+
+    read_bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ok(ReadProcessMemory(hproc, test_OpenProcess, &dummy, sizeof(dummy), &read_bytes),
+       "ReadProcessMemory error %d\n", GetLastError());
+    ok(read_bytes == sizeof(dummy), "wrong read bytes %ld\n", read_bytes);
+
+    CloseHandle(hproc);
+
+    hproc = OpenProcess(PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
+    ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
+
+    addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+todo_wine {
+    ok(addr1 != NULL, "VirtualAllocEx error %d\n", GetLastError());
+}
+    if (addr1 == NULL) /* FIXME: remove once Wine is fixed */
+        addr1 = VirtualAllocEx(GetCurrentProcess(), 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+
+    /* without PROCESS_QUERY_INFORMATION */
+    SetLastError(0xdeadbeef);
+    ok(!VirtualQueryEx(hproc, addr1, &info, sizeof(info)),
+       "VirtualQueryEx without PROCESS_QUERY_INFORMATION rights should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+
+    /* without PROCESS_VM_READ */
+    read_bytes = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    ok(!ReadProcessMemory(hproc, addr1, &dummy, sizeof(dummy), &read_bytes),
+       "ReadProcessMemory without PROCESS_VM_READ rights should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+    ok(read_bytes == 0, "wrong read bytes %ld\n", read_bytes);
+
+    CloseHandle(hproc);
+
+    hproc = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, GetCurrentProcessId());
+
+    memset(&info, 0xaa, sizeof(info));
+    ok(VirtualQueryEx(hproc, addr1, &info, sizeof(info)) == sizeof(info),
+       "VirtualQueryEx error %d\n", GetLastError());
+
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
+    ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
+    /* NT reports Protect == 0 for a not committed memory block */
+    ok(info.Protect == 0 /* NT */ ||
+       info.Protect == PAGE_NOACCESS, /* Win9x */
+        "%x != PAGE_NOACCESS\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+
+    SetLastError(0xdeadbeef);
+todo_wine {
+    ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
+       "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
+    ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+}
+
+    CloseHandle(hproc);
+
+todo_wine {
+    ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+}
+}
+
 START_TEST(process)
 {
     int b = init();
@@ -1284,6 +1368,7 @@ START_TEST(process)
     test_DebuggingFlag();
     test_Console();
     test_ExitCode();
+    test_OpenProcess();
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
