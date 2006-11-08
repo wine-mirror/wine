@@ -162,7 +162,7 @@ static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
  */
 static void elf_unmap_section(struct elf_file_map* fmap, int sidx)
 {
-    if (sidx < fmap->elfhdr.e_shnum && fmap->sect[sidx].mapped != NO_MAP)
+    if (sidx >= 0 && sidx < fmap->elfhdr.e_shnum && fmap->sect[sidx].mapped != NO_MAP)
     {
         munmap((char*)fmap->sect[sidx].mapped, fmap->sect[sidx].shdr.sh_size);
         fmap->sect[sidx].mapped = NO_MAP;
