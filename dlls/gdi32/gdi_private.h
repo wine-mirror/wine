@@ -324,6 +324,8 @@ typedef struct tagBITMAPOBJ
     /* For device-independent bitmaps: */
     DIBSECTION         *dib;
     SEGPTR              segptr_bits;  /* segptr to DIB bits */
+    RGBQUAD            *color_table;  /* DIB color table if <= 8bpp */
+    UINT                nb_colors;    /* number of colors in table */
 } BITMAPOBJ;
 
 /* bidi.c */

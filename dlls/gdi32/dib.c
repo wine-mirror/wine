@@ -387,11 +387,27 @@ UINT WINAPI SetDIBColorTable( HDC hdc, UINT startpos, UINT entries, CONST RGBQUA
 {
     DC * dc;
     UINT result = 0;
+    BITMAPOBJ * bitmap;
 
-    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
+
+    if ((bitmap = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC )))
+    {
+        /* Check if currently selected bitmap is a DIB */
+        if (bitmap->color_table)
+        {
+            if (startpos < bitmap->nb_colors)
+            {
+                if (startpos + entries > bitmap->nb_colors) entries = bitmap->nb_colors - startpos;
+                memcpy(bitmap->color_table + startpos, colors, entries * sizeof(RGBQUAD));
+                result = entries;
+            }
+        }
+        GDI_ReleaseObj( dc->hBitmap );
+    }
 
     if (dc->funcs->pSetDIBColorTable)
-        result = dc->funcs->pSetDIBColorTable(dc->physDev, startpos, entries, colors);
+        dc->funcs->pSetDIBColorTable(dc->physDev, startpos, entries, colors);
 
     GDI_ReleaseObj( hdc );
     return result;
@@ -406,11 +422,28 @@ UINT WINAPI GetDIBColorTable( HDC hdc, UINT startpos, UINT entries, RGBQUAD *col
     DC * dc;
     UINT result = 0;
 
-    if (!(dc = DC_GetDCUpdate( hdc ))) return 0;
+    if (!(dc = DC_GetDCPtr( hdc ))) return 0;
 
     if (dc->funcs->pGetDIBColorTable)
         result = dc->funcs->pGetDIBColorTable(dc->physDev, startpos, entries, colors);
-
+    else
+    {
+        BITMAPOBJ *bitmap = GDI_GetObjPtr( dc->hBitmap, BITMAP_MAGIC );
+        if (bitmap)
+        {
+            /* Check if currently selected bitmap is a DIB */
+            if (bitmap->color_table)
+            {
+                if (startpos < bitmap->nb_colors)
+                {
+                    if (startpos + entries > bitmap->nb_colors) entries = bitmap->nb_colors - startpos;
+                    memcpy(colors, bitmap->color_table + startpos, entries * sizeof(RGBQUAD));
+                    result = entries;
+                }
+            }
+            GDI_ReleaseObj( dc->hBitmap );
+        }
+    }
     GDI_ReleaseObj( hdc );
     return result;
 }
@@ -533,7 +566,6 @@ INT WINAPI GetDIBits(
     DC * dc;
     BITMAPOBJ * bmp;
     int i;
-    HDC memdc;
     int bitmap_type;
     BOOL core_header;
     LONG width;
@@ -553,16 +585,13 @@ INT WINAPI GetDIBits(
         return 0;
     }
     core_header = (bitmap_type == 0);
-    memdc = CreateCompatibleDC(hdc);
     if (!(dc = DC_GetDCUpdate( hdc )))
     {
-        DeleteDC(memdc);
         return 0;
     }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))
     {
         GDI_ReleaseObj( hdc );
-        DeleteDC(memdc);
 	return 0;
     }
 
@@ -580,34 +609,25 @@ INT WINAPI GetDIBits(
 	   same color depth then get the color map from it */
 	if (bmp->dib && bmp->dib->dsBm.bmBitsPixel == bpp) {
             if(coloruse == DIB_RGB_COLORS) {
-                HBITMAP oldbm = SelectObject(memdc, hbitmap);
-                unsigned int colors = 1 << bpp;
+                unsigned int colors = min( bmp->nb_colors, 1 << bpp );
 
                 if (core_header)
                 {
-                    /* Convert the color table (RGBQUAD to RGBTRIPLE) */		    
-                    RGBQUAD* buffer = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD));
+                    /* Convert the color table (RGBQUAD to RGBTRIPLE) */
+                    RGBTRIPLE* index = rgbTriples;
 
-                    if (buffer)
+                    for (i=0; i < colors; i++, index++)
                     {
-                        RGBTRIPLE* index = rgbTriples;
-                        GetDIBColorTable(memdc, 0, colors, buffer);
-
-                        for (i=0; i < colors; i++, index++)
-                        {
-                            index->rgbtRed   = buffer[i].rgbRed;
-                            index->rgbtGreen = buffer[i].rgbGreen;
-                            index->rgbtBlue  = buffer[i].rgbBlue;
-                        }
-
-                        HeapFree(GetProcessHeap(), 0, buffer);
+                        index->rgbtRed   = bmp->color_table[i].rgbRed;
+                        index->rgbtGreen = bmp->color_table[i].rgbGreen;
+                        index->rgbtBlue  = bmp->color_table[i].rgbBlue;
                     }
                 }
                 else
                 {
-                    GetDIBColorTable(memdc, 0, colors, colorPtr);
+                    if (colors != 1 << bpp) info->bmiHeader.biClrUsed = colors;
+                    memcpy(colorPtr, bmp->color_table, colors * sizeof(RGBQUAD));
                 }
-                SelectObject(memdc, oldbm);
             }
             else {
                 WORD *index = colorPtr;
@@ -623,7 +643,6 @@ INT WINAPI GetDIBits(
                 if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC ))) {
                     GDI_ReleaseObj( hdc );
                     GDI_ReleaseObj( hbitmap );
-                    DeleteDC(memdc);
                     return 0;
                 }
                 palEntry = palette->logpalette.palPalEntry;
@@ -1019,7 +1038,6 @@ INT WINAPI GetDIBits(
 
     GDI_ReleaseObj( hdc );
     GDI_ReleaseObj( hbitmap );
-    DeleteDC(memdc);
     return lines;
 }
 
@@ -1124,6 +1142,72 @@ HBITMAP16 WINAPI CreateDIBSection16 (HDC16 hdc, const BITMAPINFO *bmi, UINT16 us
         if (bmp) GDI_ReleaseObj( hbitmap );
     }
     return HBITMAP_16(hbitmap);
+}
+
+/* Copy/synthetize RGB palette from BITMAPINFO. Ripped from dlls/winex11.drv/dib.c */
+static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BITMAPINFO *info )
+{
+    RGBQUAD *colorTable;
+    unsigned int colors;
+    int i;
+    BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
+
+    if (core_info)
+    {
+        colors = 1 << ((const BITMAPCOREINFO*) info)->bmciHeader.bcBitCount;
+    }
+    else
+    {
+        colors = info->bmiHeader.biClrUsed;
+        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
+    }
+
+    if (colors > 256) {
+        ERR("called with >256 colors!\n");
+        return;
+    }
+
+    if (!(colorTable = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD) ))) return;
+
+    if(coloruse == DIB_RGB_COLORS)
+    {
+        if (core_info)
+        {
+           /* Convert RGBTRIPLEs to RGBQUADs */
+           for (i=0; i < colors; i++)
+           {
+               colorTable[i].rgbRed   = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtRed;
+               colorTable[i].rgbGreen = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtGreen;
+               colorTable[i].rgbBlue  = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtBlue;
+               colorTable[i].rgbReserved = 0;
+           }
+        }
+        else
+        {
+            memcpy(colorTable, (const BYTE*) info + (WORD) info->bmiHeader.biSize, colors * sizeof(RGBQUAD));
+        }
+    }
+    else
+    {
+        PALETTEOBJ *palette;
+        const WORD *index = (const WORD*) ((const BYTE*) info + (WORD) info->bmiHeader.biSize);
+
+        if ((palette = GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
+        {
+            UINT entries = palette->logpalette.palNumEntries;
+            for (i = 0; i < colors; i++, index++)
+            {
+                PALETTEENTRY *entry = &palette->logpalette.palPalEntry[*index % entries];
+                colorTable[i].rgbRed = entry->peRed;
+                colorTable[i].rgbGreen = entry->peGreen;
+                colorTable[i].rgbBlue = entry->peBlue;
+                colorTable[i].rgbReserved = 0;
+            }
+            GDI_ReleaseObj( dc->hPalette );
+        }
+    }
+    bmp->color_table = colorTable;
+    bmp->nb_colors = colors;
 }
 
 /***********************************************************************
@@ -1260,6 +1344,8 @@ HBITMAP WINAPI CreateDIBSection(HDC hdc, CONST BITMAPINFO *bmi, UINT usage,
     {
         bmp->dib = dib;
         bmp->funcs = dc->funcs;
+        /* create local copy of DIB palette */
+        if (bpp <= 8) DIB_CopyColorTable( dc, bmp, usage, bmi );
         GDI_ReleaseObj( ret );
 
         if (dc->funcs->pCreateDIBSection)

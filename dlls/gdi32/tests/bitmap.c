@@ -1096,10 +1096,7 @@ static void test_GetDIBits_selected_DIB(UINT bpp)
             break;
         }
     }
-    todo_wine
-    {
-        ok(equalContents, "GetDIBits with DIB selected in DC: Invalid DIB color table\n");
-    }
+    ok(equalContents, "GetDIBits with DIB selected in DC: Invalid DIB color table\n");
 
     equalContents = TRUE;
     for (i=0; i < dib_size / sizeof(DWORD); i++)
