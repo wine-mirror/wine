@@ -2084,14 +2084,14 @@ static const char cf_marshaled[] =
 static void test_marshal_CLIPFORMAT(void)
 {
     unsigned char *buffer;
-    unsigned long size;
-    unsigned long flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+    ULONG size;
+    ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
     wireCLIPFORMAT wirecf;
     CLIPFORMAT cf = RegisterClipboardFormatA("MyFormat");
     CLIPFORMAT cf2;
 
     size = CLIPFORMAT_UserSize(&flags, 0, &cf);
-    ok(size == sizeof(*wirecf) + sizeof(cf_marshaled), "Wrong size %ld\n", size);
+    ok(size == sizeof(*wirecf) + sizeof(cf_marshaled), "Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     CLIPFORMAT_UserMarshal(&flags, buffer, &cf);
@@ -2110,14 +2110,14 @@ static void test_marshal_CLIPFORMAT(void)
 static void test_marshal_HWND(void)
 {
     unsigned char *buffer;
-    unsigned long size;
-    unsigned long flags = MAKELONG(MSHCTX_LOCAL, NDR_LOCAL_DATA_REPRESENTATION);
+    ULONG size;
+    ULONG flags = MAKELONG(MSHCTX_LOCAL, NDR_LOCAL_DATA_REPRESENTATION);
     HWND hwnd = GetDesktopWindow();
     HWND hwnd2;
     wireHWND wirehwnd;
 
     size = HWND_UserSize(&flags, 0, &hwnd);
-    ok(size == sizeof(*wirehwnd), "Wrong size %ld\n", size);
+    ok(size == sizeof(*wirehwnd), "Wrong size %d\n", size);
 
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HWND_UserMarshal(&flags, buffer, &hwnd);
@@ -2135,8 +2135,8 @@ static void test_marshal_HWND(void)
 static void test_marshal_HGLOBAL(void)
 {
     unsigned char *buffer;
-    unsigned long size;
-    unsigned long flags = MAKELONG(MSHCTX_LOCAL, NDR_LOCAL_DATA_REPRESENTATION);
+    ULONG size;
+    ULONG flags = MAKELONG(MSHCTX_LOCAL, NDR_LOCAL_DATA_REPRESENTATION);
     HGLOBAL hglobal;
     HGLOBAL hglobal2;
     unsigned char *wirehglobal;
@@ -2147,7 +2147,7 @@ static void test_marshal_HGLOBAL(void)
     size = HGLOBAL_UserSize(&flags, 0, &hglobal);
     /* native is poorly programmed and allocates 4 bytes more than it needs to
      * here - Wine doesn't have to emulate that */
-    ok((size == 8) || (size == 12), "Size should be 12, instead of %ld\n", size);
+    ok((size == 8) || (size == 12), "Size should be 12, instead of %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HGLOBAL_UserMarshal(&flags, buffer, &hglobal);
     wirehglobal = buffer;
@@ -2168,7 +2168,7 @@ static void test_marshal_HGLOBAL(void)
     size = HGLOBAL_UserSize(&flags, 0, &hglobal);
     /* native is poorly programmed and allocates 4 bytes more than it needs to
      * here - Wine doesn't have to emulate that */
-    ok((size == 24) || (size == 28), "Size should be 24 or 28, instead of %ld\n", size);
+    ok((size == 24) || (size == 28), "Size should be 24 or 28, instead of %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HGLOBAL_UserMarshal(&flags, buffer, &hglobal);
     wirehglobal = buffer;
@@ -2202,8 +2202,8 @@ static HENHMETAFILE create_emf(void)
 static void test_marshal_HENHMETAFILE(void)
 {
     unsigned char *buffer;
-    unsigned long size;
-    unsigned long flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+    ULONG size;
+    ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
     HENHMETAFILE hemf;
     HENHMETAFILE hemf2 = NULL;
     unsigned char *wirehemf;
@@ -2211,7 +2211,7 @@ static void test_marshal_HENHMETAFILE(void)
     hemf = create_emf();
 
     size = HENHMETAFILE_UserSize(&flags, 0, &hemf);
-    ok(size > 20, "size should be at least 20 bytes, not %ld\n", size);
+    ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
     buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HENHMETAFILE_UserMarshal(&flags, buffer, &hemf);
     wirehemf = buffer;
@@ -2238,7 +2238,7 @@ static void test_marshal_HENHMETAFILE(void)
     hemf = NULL;
 
     size = HENHMETAFILE_UserSize(&flags, 0, &hemf);
-    ok(size == 8, "size should be 8 bytes, not %ld\n", size);
+    ok(size == 8, "size should be 8 bytes, not %d\n", size);
     buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
     HENHMETAFILE_UserMarshal(&flags, buffer, &hemf);
     wirehemf = buffer;

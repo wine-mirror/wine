@@ -83,7 +83,7 @@ ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG StartingSize, CLIPFORM
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, pCF);
+    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, pCF);
 
     size += sizeof(userCLIPFORMAT);
 
@@ -282,7 +282,7 @@ static void __RPC_USER handle_UserFree(ULONG *pFlags, HANDLE *phMenu)
 #define IMPL_WIREM_HANDLE(type) \
     ULONG __RPC_USER type##_UserSize(ULONG *pFlags, ULONG StartingSize, type *handle) \
     { \
-        TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, handle); \
+        TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, handle); \
         return handle_UserSize(pFlags, StartingSize, (HANDLE *)handle); \
     } \
     \
@@ -315,7 +315,7 @@ ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *ph
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, phGlobal);
+    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, phGlobal);
 
     ALIGN_LENGTH(size, 3);
 
@@ -531,7 +531,7 @@ ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHME
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, *phEmf);
+    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, *phEmf);
 
     size += sizeof(ULONG);
     if (LOWORD(*pFlags) == MSHCTX_INPROC)
@@ -647,7 +647,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, pStgMedium);
+    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, pStgMedium);
 
     ALIGN_LENGTH(size, 3);
 
