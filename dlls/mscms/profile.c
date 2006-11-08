@@ -91,14 +91,13 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
 
     if (bufferW)
     {
-        ret = GetColorDirectoryW( NULL, bufferW, &sizeW );
-        *size = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
-
-        if (ret)
+        if ((ret = GetColorDirectoryW( NULL, bufferW, &sizeW )))
         {
-            len = WideCharToMultiByte( CP_ACP, 0, bufferW, *size, buffer, *size, NULL, NULL );
+            *size = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
+            len = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, buffer, *size, NULL, NULL );
             if (!len) ret = FALSE;
         }
+        else *size = sizeW / sizeof(WCHAR);
 
         HeapFree( GetProcessHeap(), 0, bufferW );
     }
@@ -132,13 +131,14 @@ BOOL WINAPI GetColorDirectoryW( PCWSTR machine, PWSTR buffer, PDWORD size )
 
     len = lstrlenW( colordir ) * sizeof(WCHAR);
 
-    if (len <= *size && buffer)
+    if (buffer && len <= *size)
     {
         lstrcpyW( buffer, colordir );
         *size = len;
         return TRUE;
     }
 
+    SetLastError( ERROR_MORE_DATA );
     *size = len;
     return FALSE;
 }
@@ -389,14 +389,13 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
 
     if (profileW)
     {
-        ret = GetStandardColorSpaceProfileW( NULL, id, profileW, &sizeW );
-        *size = WideCharToMultiByte( CP_ACP, 0, profileW, -1, NULL, 0, NULL, NULL );
-
-        if (ret)
+        if ((ret = GetStandardColorSpaceProfileW( NULL, id, profileW, &sizeW )))
         {
-            len = WideCharToMultiByte( CP_ACP, 0, profileW, *size, profile, *size, NULL, NULL );
+            *size = WideCharToMultiByte( CP_ACP, 0, profileW, -1, NULL, 0, NULL, NULL );
+            len = WideCharToMultiByte( CP_ACP, 0, profileW, -1, profile, *size, NULL, NULL );
             if (!len) ret = FALSE;
         }
+        else *size = sizeW / sizeof(WCHAR);
 
         HeapFree( GetProcessHeap(), 0, profileW );
     }
@@ -451,20 +450,22 @@ BOOL WINAPI GetStandardColorSpaceProfileW( PCWSTR machine, DWORD id, PWSTR profi
 
     switch (id)
     {
-        case 0x52474220: /* 'RGB ' */
+        case SPACE_RGB: /* 'RGB ' */
             lstrcatW( rgbprofile, rgbprofilefile );
             len = lstrlenW( rgbprofile ) * sizeof(WCHAR);
 
             if (*size < len || !profile)
             {
                 *size = len;
-                return TRUE;
+                SetLastError( ERROR_MORE_DATA );
+                return FALSE;
             }
 
             lstrcpyW( profile, rgbprofile );
             break;
 
         default:
+            SetLastError( ERROR_FILE_NOT_FOUND );
             return FALSE;
     }
     return TRUE;
