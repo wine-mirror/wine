@@ -467,8 +467,7 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
     return ERROR_SUCCESS;
 }
 
-static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
-                                  MSIFILE *file )
+static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *mi)
 {
     UINT rc = ERROR_SUCCESS;
     BOOL found = FALSE;
@@ -480,33 +479,21 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         return ERROR_FUNCTION_FAILED;
     }
 
-    if (mi->cabinet)
+    if (file->IsCompressed &&
+        GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
     {
-        TRACE("Source is CAB %s\n", debugstr_w(mi->cabinet));
-
-        /* only download the remote cabinet file if a local copy does not exist */
-        if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
-            UrlIsW(package->BaseURL, URLIS_URL))
+        if (package->BaseURL && UrlIsW(package->BaseURL, URLIS_URL))
         {
             rc = download_remote_cabinet(package, mi);
-            if (rc != ERROR_SUCCESS ||
-                GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+            if (rc == ERROR_SUCCESS &&
+                GetFileAttributesW(mi->source) != INVALID_FILE_ATTRIBUTES)
             {
-                found = FALSE;
+                found = TRUE;
             }
         }
 
         if (!found)
-        {
             rc = msi_change_media(package, mi);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Cabinet not found: %s\n", debugstr_w(mi->cabinet));
-                return ERROR_FUNCTION_FAILED;
-            }
-        }
-
-        rc = !extract_cabinet_file(package, mi);
     }
 
     return rc;
@@ -602,7 +589,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
     ptr = strrchrW(package->PackagePath,'\\');
     if (ptr)
     {
-        ptr ++;
+        ptr++;
         MsiSourceListSetInfoW(package->ProductCode, NULL,
                 MSIINSTALLCONTEXT_USERMANAGED,
                 MSICODE_PRODUCT,
@@ -628,10 +615,17 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
         if (file->Sequence > mi->last_sequence || mi->is_continuous)
         {
-            rc = ready_media_for_file( package, mi, file );
+            rc = ready_media(package, file, mi);
             if (rc != ERROR_SUCCESS)
             {
                 ERR("Failed to ready media\n");
+                rc = ERROR_FUNCTION_FAILED;
+                break;
+            }
+
+            if (file->IsCompressed && !extract_cabinet_file(package, mi))
+            {
+                ERR("Failed to extract cabinet: %s\n", debugstr_w(mi->cabinet));
                 rc = ERROR_FUNCTION_FAILED;
                 break;
             }
@@ -642,34 +636,25 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
               debugstr_w(file->TargetPath));
 
-        if (file->state != msifs_missing && file->state != msifs_overwrite)
-            continue;
-
-        /* compressed files are extracted in ready_media_for_file */
-        if (file->IsCompressed)
+        if (!file->IsCompressed)
         {
-            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW(file->TargetPath))
+            rc = copy_install_file(file);
+            if (rc != ERROR_SUCCESS)
             {
-                ERR("compressed file wasn't extracted (%s)\n",
-                    debugstr_w(file->TargetPath));
+                ERR("Failed to copy %s to %s (%d)\n", debugstr_w(file->SourcePath),
+                    debugstr_w(file->TargetPath), rc);
                 rc = ERROR_INSTALL_FAILURE;
                 break;
             }
-
-            continue;
         }
-
-        rc = copy_install_file(file);
-        if (rc != ERROR_SUCCESS)
+        else if (file->state != msifs_installed)
         {
-            ERR("Failed to copy %s to %s (%d)\n", debugstr_w(file->SourcePath),
-                debugstr_w(file->TargetPath), rc);
+            ERR("compressed file wasn't extracted (%s)\n", debugstr_w(file->TargetPath));
             rc = ERROR_INSTALL_FAILURE;
             break;
         }
     }
 
-    /* cleanup */
     free_media_info( mi );
     return rc;
 }
