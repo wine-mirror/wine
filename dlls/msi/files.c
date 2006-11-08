@@ -405,21 +405,73 @@ static UINT download_remote_cabinet(MSIPACKAGE *package, struct media_info *mi)
     return ERROR_SUCCESS;
 }
 
+static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_info *mi)
+{
+    MSIRECORD *row;
+    LPWSTR source_dir;
+    UINT r;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+        '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+        '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
+        ' ','%','i',' ','A','N','D',' ','`','D','i','s','k','I','d','`',' ','>','=',
+        ' ','%','i',' ','O','R','D','E','R',' ','B','Y',' ',
+        '`','D','i','s','k','I','d','`',0
+    };
+
+    row = MSI_QueryGetRecord(package->db, query, file->Sequence, mi->disk_id);
+    if (!row)
+    {
+        TRACE("Unable to query row\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    mi->disk_id = MSI_RecordGetInteger(row, 1);
+    mi->last_sequence = MSI_RecordGetInteger(row, 2);
+    mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
+    mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
+    mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
+    msiobj_release(&row->hdr);
+
+    source_dir = msi_dup_property(package, cszSourceDir);
+
+    if (mi->cabinet && mi->cabinet[0] == '#')
+    {
+        r = writeout_cabinet_stream(package, &mi->cabinet[1], mi->source);
+        if (r != ERROR_SUCCESS)
+        {
+            ERR("Failed to extract cabinet stream\n");
+            return ERROR_FUNCTION_FAILED;
+        }
+    }
+    else
+    {
+        lstrcpyW(mi->source, source_dir);
+
+
+        if (mi->cabinet)
+            lstrcatW(mi->source, mi->cabinet);
+    }
+
+    MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
+        MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT,
+        mi->disk_id, mi->volume_label, mi->disk_prompt);
+
+    MsiSourceListSetInfoW(package->ProductCode, NULL,
+        MSIINSTALLCONTEXT_USERMANAGED,
+        MSICODE_PRODUCT | MSISOURCETYPE_MEDIA,
+        INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
+
+    msi_free(source_dir);
+    return ERROR_SUCCESS;
+}
+
 static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                                   MSIFILE *file )
 {
     UINT rc = ERROR_SUCCESS;
-    MSIRECORD * row = 0;
-    static const WCHAR ExecSeqQuery[] =
-        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
-         '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
-         '`','L','a','s','t','S','e','q','u','e','n','c','e','`',' ','>','=',
-         ' ','%', 'i',' ','O','R','D','E','R',' ','B','Y',' ',
-         '`','D','i','s','k','I','d','`',0};
-    LPCWSTR cab, volume;
-    LPWSTR source_dir;
-    DWORD sz;
-    INT seq;
+    BOOL found = FALSE;
 
     if (file->Sequence <= mi->last_sequence)
     {
@@ -428,88 +480,22 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
         return ERROR_SUCCESS;
     }
 
-    row = MSI_QueryGetRecord(package->db, ExecSeqQuery, file->Sequence);
-    if (!row)
+    rc = load_media_info(package, file, mi);
+    if (rc != ERROR_SUCCESS)
     {
-        TRACE("Unable to query row\n");
+        ERR("Unable to load media info\n");
         return ERROR_FUNCTION_FAILED;
     }
 
-    volume = MSI_RecordGetString(row, 5);
-    mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
-
-    source_dir = msi_dup_property(package, cszSourceDir);
-
     if (!file->IsCompressed)
     {
-        lstrcpyW(mi->source, source_dir);
         set_file_source(package, file, mi->source);
-
-        MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
-            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id, volume,
-            mi->disk_prompt);
-
-        MsiSourceListSetInfoW(package->ProductCode, NULL, 
-                MSIINSTALLCONTEXT_USERMANAGED, 
-                MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
-        msiobj_release(&row->hdr);
         return rc;
     }
 
-    seq = MSI_RecordGetInteger(row,2);
-    mi->last_sequence = seq;
-
-    cab = MSI_RecordGetString(row,4);
-    if (cab)
+    if (mi->cabinet)
     {
-        TRACE("Source is CAB %s\n",debugstr_w(cab));
-        /* the stream does not contain the # character */
-        if (cab[0]=='#')
-        {
-            LPWSTR path;
-
-            rc = writeout_cabinet_stream(package,&cab[1],mi->source);
-            if (rc != ERROR_SUCCESS)
-                return rc;
-
-            path = msi_dup_property( package, cszSourceDir );
-
-            MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
-                MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id,
-                volume, mi->disk_prompt);
-
-            MsiSourceListSetInfoW(package->ProductCode, NULL,
-                MSIINSTALLCONTEXT_USERMANAGED,
-                MSICODE_PRODUCT|MSISOURCETYPE_NETWORK,
-                INSTALLPROPERTY_LASTUSEDSOURCEW, path);
-
-            msi_free(path);
-        }
-        else
-        {
-            sz = MAX_PATH;
-            if (MSI_GetPropertyW(package, cszSourceDir, mi->source, &sz))
-            {
-                ERR("No Source dir defined\n");
-                rc = ERROR_FUNCTION_FAILED;
-            }
-            else
-            {
-                strcatW(mi->source,cab);
-
-                if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
-                    rc = msi_change_media(package, mi);
-
-                if ( rc != ERROR_SUCCESS )
-                    goto done;
-
-                MsiSourceListSetInfoW(package->ProductCode, NULL,
-                            MSIINSTALLCONTEXT_USERMANAGED,
-                            MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                            INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
-            }
-        }
+        TRACE("Source is CAB %s\n", debugstr_w(mi->cabinet));
 
         /* only download the remote cabinet file if a local copy does not exist */
         if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES &&
@@ -519,31 +505,24 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
             if (rc != ERROR_SUCCESS ||
                 GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
             {
-                goto done;
+                found = FALSE;
+            }
+        }
+
+        if (!found)
+        {
+            rc = msi_change_media(package, mi);
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Cabinet not found: %s\n", debugstr_w(mi->cabinet));
+                return ERROR_FUNCTION_FAILED;
             }
         }
 
         rc = !extract_cabinet_file(package, mi);
     }
-    else
-    {
-        sz = MAX_PATH;
-        MSI_GetPropertyW(package,cszSourceDir,mi->source,&sz);
 
-        MsiSourceListSetInfoW(package->ProductCode, NULL,
-                    MSIINSTALLCONTEXT_USERMANAGED,
-                    MSICODE_PRODUCT|MSISOURCETYPE_MEDIA,
-                    INSTALLPROPERTY_LASTUSEDSOURCEW, mi->source);
-    }
     set_file_source(package, file, mi->source);
-
-    MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
-            MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id, volume,
-            mi->disk_prompt);
-
-done:
-    msi_free(source_dir);
-    msiobj_release(&row->hdr);
 
     return rc;
 }
