@@ -1002,7 +1002,7 @@ static const WORD nonchar_key_vkey[256] =
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF58 */
     /* misc keys */
     VK_SELECT, VK_SNAPSHOT, VK_EXECUTE, VK_INSERT, 0, 0, 0, 0,  /* FF60 */
-    VK_CANCEL, VK_HELP, VK_CANCEL, VK_CANCEL, 0, 0, 0, 0,       /* FF68 */
+    0, VK_CANCEL, VK_HELP, VK_CANCEL, 0, 0, 0, 0,               /* FF68 */
     0, 0, 0, 0, 0, 0, 0, 0,                                     /* FF70 */
     /* keypad keys */
     0, 0, 0, 0, 0, 0, 0, VK_NUMLOCK,                            /* FF78 */
