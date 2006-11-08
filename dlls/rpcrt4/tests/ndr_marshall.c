@@ -103,7 +103,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     NdrPointerBufferSize( &StubMsg,
                           memsrc,
                           formattypes );
-    ok(StubMsg.BufferLength >= wiredatalen, "%s: length %ld\n", msgpfx, StubMsg.BufferLength);
+    ok(StubMsg.BufferLength >= wiredatalen, "%s: length %d\n", msgpfx, StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
@@ -164,7 +164,7 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     ok(mem == mem_orig, "%s: mem has changed %p %p\n", msgpfx, mem, mem_orig);
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-    ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
+    ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
     my_alloc_called = 0;
 
@@ -180,7 +180,7 @@ todo_wine {
  }
     ok(!cmp(mem, memsrc, srcsize), "%s: incorrectly unmarshaled\n", msgpfx);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-    ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
+    ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
 
 todo_wine {
     ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
@@ -196,7 +196,7 @@ todo_wine {
         ok(mem != StubMsg.BufferStart + wiredatalen - srcsize, "%s: mem points to buffer %p %p\n", msgpfx, mem, StubMsg.BufferStart);
         ok(!cmp(mem, memsrc, size), "%s: incorrectly unmarshaled\n", msgpfx);
         ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-        ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize);
+        ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
         ok(my_alloc_called == num_additional_allocs + 1, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
         my_alloc_called = 0;
         NdrPointerFree(&StubMsg, mem, formattypes);
@@ -212,7 +212,7 @@ todo_wine {
  }
         ok(!cmp(mem, memsrc, size), "%s: incorrecly unmarshaled\n", msgpfx);
         ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
-        ok(StubMsg.MemorySize == 0, "%s: memorysize %ld\n", msgpfx, StubMsg.MemorySize); 
+        ok(StubMsg.MemorySize == 0, "%s: memorysize %d\n", msgpfx, StubMsg.MemorySize);
 todo_wine {
         ok(my_alloc_called == num_additional_allocs, "%s: my_alloc got called %d times\n", msgpfx, my_alloc_called); 
         my_alloc_called = 0;
@@ -441,7 +441,7 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
 
     StubMsg.BufferLength = 0;
     NdrSimpleStructBufferSize( &StubMsg, (unsigned char *)memsrc, formattypes );
-    ok(StubMsg.BufferLength >= wiredatalen, "%s: length %ld\n", msgpfx, StubMsg.BufferLength);
+    ok(StubMsg.BufferLength >= wiredatalen, "%s: length %d\n", msgpfx, StubMsg.BufferLength);
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
     ptr = NdrSimpleStructMarshall( &StubMsg,  (unsigned char*)memsrc, formattypes );
@@ -692,7 +692,7 @@ static void test_simple_struct(void)
 static void test_fullpointer_xlat(void)
 {
     PFULL_PTR_XLAT_TABLES pXlatTables;
-    unsigned long RefId;
+    ULONG RefId;
     int ret;
     void *Pointer;
 
@@ -702,23 +702,23 @@ static void test_fullpointer_xlat(void)
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x1, "RefId should be 0x1 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x1, "RefId should be 0x1 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x1, "RefId should be 0x1 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x1, "RefId should be 0x1 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebabe, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x2, "RefId should be 0x2 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x2, "RefId should be 0x2 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, NULL, 0, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    ok(RefId == 0, "RefId should be 0 instead of 0x%lx\n", RefId);
+    ok(RefId == 0, "RefId should be 0 instead of 0x%x\n", RefId);
 
     /* "unmarshaling" phase */
 
@@ -760,23 +760,23 @@ static void test_fullpointer_xlat(void)
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebabe, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x2, "RefId should be 0x2 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x2, "RefId should be 0x2 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 0, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%x\n", RefId);
 
     /* "freeing" phase */
 
@@ -785,11 +785,11 @@ static void test_fullpointer_xlat(void)
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 0x20, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xcafebeef, 1, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x3, "RefId should be 0x3 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerFree(pXlatTables, (void *)0xcafebabe);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
@@ -799,15 +799,15 @@ static void test_fullpointer_xlat(void)
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 0x20, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 1, &RefId);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
-    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerQueryPointer(pXlatTables, (void *)0xdeadbeef, 1, &RefId);
     ok(ret == 1, "ret should be 1 instead of 0x%x\n", ret);
-    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%lx\n", RefId);
+    ok(RefId == 0x4, "RefId should be 0x4 instead of 0x%x\n", RefId);
 
     ret = NdrFullPointerFree(pXlatTables, (void *)0xdeadbeef);
     ok(ret == 0, "ret should be 0 instead of 0x%x\n", ret);
@@ -826,14 +826,15 @@ static void test_client_init(void)
 
 #define TEST_ZERO(field, fmt) ok(stubMsg.field == 0, #field " should have be set to zero instead of " fmt "\n", stubMsg.field)
 #define TEST_POINTER_UNSET(field) ok(stubMsg.field == (void *)0xcccccccc, #field " should have be unset instead of %p\n", stubMsg.field)
-#define TEST_ULONG_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have be unset instead of 0x%lx\n", stubMsg.field)
+#define TEST_ULONG_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have be unset instead of 0x%x\n", stubMsg.field)
+#define TEST_ULONG_PTR_UNSET(field) ok(stubMsg.field == 0xcccccccc, #field " should have be unset instead of 0x%lx\n", stubMsg.field)
 
     ok(stubMsg.RpcMsg == &rpcMsg, "stubMsg.RpcMsg should have been %p instead of %p\n", &rpcMsg, stubMsg.RpcMsg);
     TEST_POINTER_UNSET(Buffer);
     TEST_ZERO(BufferStart, "%p");
     TEST_ZERO(BufferEnd, "%p");
     TEST_POINTER_UNSET(BufferMark);
-    TEST_ZERO(BufferLength, "%ld");
+    TEST_ZERO(BufferLength, "%d");
     TEST_ULONG_UNSET(MemorySize);
     TEST_POINTER_UNSET(Memory);
     ok(stubMsg.IsClient == 1, "stubMsg.IsClient should have been 1 instead of %u\n", stubMsg.IsClient);
@@ -845,7 +846,7 @@ static void test_client_init(void)
     TEST_ZERO(fBufferValid, "%d");
     TEST_ZERO(uFlags, "%d");
     /* FIXME: UniquePtrCount */
-    TEST_ULONG_UNSET(MaxCount);
+    TEST_ULONG_PTR_UNSET(MaxCount);
     TEST_ULONG_UNSET(Offset);
     TEST_ULONG_UNSET(ActualCount);
     ok(stubMsg.pfnAllocate == my_alloc, "stubMsg.pfnAllocate should have been %p instead of %p\n", my_alloc, stubMsg.pfnAllocate);
@@ -856,8 +857,8 @@ static void test_client_init(void)
     TEST_POINTER_UNSET(SavedHandle);
     ok(stubMsg.StubDesc == &Object_StubDesc, "stubMsg.StubDesc should have been %p instead of %p\n", &Object_StubDesc, stubMsg.StubDesc);
     TEST_POINTER_UNSET(FullPtrXlatTables);
-    TEST_ZERO(FullPtrRefId, "%ld");
-    TEST_ZERO(PointerLength, "%ld");
+    TEST_ZERO(FullPtrRefId, "%d");
+    TEST_ZERO(PointerLength, "%d");
     TEST_ZERO(fInDontFree, "%d");
     TEST_ZERO(fDontCallFreeInst, "%d");
     TEST_ZERO(fInOnlyParam, "%d");
@@ -866,7 +867,7 @@ static void test_client_init(void)
     TEST_ZERO(fHasNewCorrDesc, "%d");
     TEST_ZERO(fUnused, "%d");
     ok(stubMsg.fUnused2 == 0xffffcccc, "stubMsg.fUnused2 should have been 0xcccc instead of 0x%x\n", stubMsg.fUnused2);
-    ok(stubMsg.dwDestContext == MSHCTX_DIFFERENTMACHINE, "stubMsg.dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %ld\n", stubMsg.dwDestContext);
+    ok(stubMsg.dwDestContext == MSHCTX_DIFFERENTMACHINE, "stubMsg.dwDestContext should have been MSHCTX_DIFFERENTMACHINE instead of %d\n", stubMsg.dwDestContext);
     TEST_ZERO(pvDestContext, "%p");
     TEST_POINTER_UNSET(SavedContextHandles);
     TEST_ULONG_UNSET(ParamNumber);
@@ -876,7 +877,7 @@ static void test_client_init(void)
     TEST_POINTER_UNSET(SizePtrOffsetArray);
     TEST_POINTER_UNSET(SizePtrLengthArray);
     TEST_POINTER_UNSET(pArgQueue);
-    TEST_ZERO(dwStubPhase, "%ld");
+    TEST_ZERO(dwStubPhase, "%d");
     /* FIXME: where does this value come from? */
     trace("LowStackMark is %p\n", stubMsg.LowStackMark);
     TEST_ZERO(pAsyncMsg, "%p");
