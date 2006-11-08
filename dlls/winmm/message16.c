@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(winmm);
 /**************************************************************************
  * 				MMDRV_Callback			[internal]
  */
-static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam1, DWORD dwParam2)
+static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     TRACE("CB (*%08lx)(%p %08x %08lx %08lx %08lx\n",
 	  mld->dwCallback, hDev, uMsg, mld->dwClientInstance, dwParam1, dwParam2);
@@ -70,7 +70,7 @@ static  void	MMDRV_Callback(LPWINE_MLD mld, HDRVR hDev, UINT uMsg, DWORD dwParam
 /**************************************************************************
  * 				MMDRV_Aux_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_Aux_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Aux_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -78,7 +78,7 @@ static  WINMM_MapType	MMDRV_Aux_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWOR
 /**************************************************************************
  * 				MMDRV_Aux_UnMap16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_Aux_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_Aux_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -86,7 +86,7 @@ static  WINMM_MapType	MMDRV_Aux_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWOR
 /**************************************************************************
  * 				MMDRV_Aux_Map32WTo16		[internal]
  */
-static  WINMM_MapType	MMDRV_Aux_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Aux_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -94,7 +94,7 @@ static  WINMM_MapType	MMDRV_Aux_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWOR
 /**************************************************************************
  * 				MMDRV_Aux_UnMap32WTo16		[internal]
  */
-static  WINMM_MapType	MMDRV_Aux_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_Aux_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
 #if 0
  case AUXDM_GETDEVCAPS:
@@ -111,7 +111,7 @@ static  WINMM_MapType	MMDRV_Aux_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWOR
 /**************************************************************************
  * 				MMDRV_Aux_Callback		[internal]
  */
-static  void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static  void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
@@ -126,7 +126,7 @@ static  void	CALLBACK MMDRV_Aux_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance
 /**************************************************************************
  * 				xMMDRV_Mixer_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Mixer_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -134,7 +134,7 @@ static  WINMM_MapType	MMDRV_Mixer_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_Mixer_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_Mixer_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
 #if 0
     MIXERCAPSA	micA;
@@ -156,7 +156,7 @@ static  WINMM_MapType	MMDRV_Mixer_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_Mixer_Map32WTo16		[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_Mixer_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -164,7 +164,7 @@ static  WINMM_MapType	MMDRV_Mixer_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_Mixer_UnMap32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_Mixer_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_Mixer_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -172,7 +172,7 @@ static  WINMM_MapType	MMDRV_Mixer_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDW
 /**************************************************************************
  * 				MMDRV_Mixer_Callback		[internal]
  */
-static  void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static  void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
@@ -187,7 +187,7 @@ static  void	CALLBACK MMDRV_Mixer_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstan
 /**************************************************************************
  * 				MMDRV_MidiIn_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -195,7 +195,7 @@ static  WINMM_MapType	MMDRV_MidiIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiIn_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_MidiIn_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -203,7 +203,7 @@ static  WINMM_MapType	MMDRV_MidiIn_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiIn_Map32WTo16		[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -211,7 +211,7 @@ static  WINMM_MapType	MMDRV_MidiIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiIn_UnMap32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiIn_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_MidiIn_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     return WINMM_MAP_MSGERROR;
 }
@@ -219,7 +219,7 @@ static  WINMM_MapType	MMDRV_MidiIn_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_MidiIn_Callback		[internal]
  */
-static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
@@ -275,7 +275,7 @@ static  void	CALLBACK MMDRV_MidiIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 /**************************************************************************
  * 				MMDRV_MidiOut_Map16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -348,7 +348,7 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LP
 	    *lpParam2 = sizeof(MIDIHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == MODM_LONGDATA && mh32->dwBufferLength < mh16->dwBufferLength) {
-		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
 		    mh32->dwBufferLength, mh16->dwBufferLength);
 	    } else
                 mh32->dwBufferLength = mh16->dwBufferLength;
@@ -368,7 +368,7 @@ static  WINMM_MapType	MMDRV_MidiOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_MidiOut_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -440,7 +440,7 @@ static  WINMM_MapType	MMDRV_MidiOut_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_MidiOut_Map32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_MidiOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -491,9 +491,8 @@ static  WINMM_MapType	MMDRV_MidiOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 		mh32->lpNext = (LPMIDIHDR)mh16; /* for reuse in unprepare and write */
 		mh32->reserved = *lpParam2;
 
-		TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n",
-		      *lpParam1, (DWORD)mh16->lpData,
-		      mh32->dwBufferLength, (DWORD)mh32->lpData);
+		TRACE("mh16=%08lx mh16->lpData=%p mh32->buflen=%u mh32->lpData=%p\n",
+		      *lpParam1, mh16->lpData, mh32->dwBufferLength, mh32->lpData);
 		*lpParam2 = sizeof(MIDIHDR);
 
 		ret = WINMM_MAP_OKMEM;
@@ -516,12 +515,12 @@ static  WINMM_MapType	MMDRV_MidiOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 
 	    *lpParam1 = MapLS(mh16);
 	    *lpParam2 = sizeof(MIDIHDR);
-	    TRACE("mh16=%08lx mh16->lpData=%08lx mh32->buflen=%lu mh32->lpData=%08lx\n",
-                  *lpParam1, (DWORD)mh16->lpData, mh32->dwBufferLength, (DWORD)mh32->lpData);
+	    TRACE("mh16=%08lx mh16->lpData=%p mh32->buflen=%u mh32->lpData=%p\n",
+                  *lpParam1, mh16->lpData, mh32->dwBufferLength, mh32->lpData);
 
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == MODM_LONGDATA && mh16->dwBufferLength < mh32->dwBufferLength) {
-		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
 		    mh16->dwBufferLength, mh32->dwBufferLength);
 	    } else
                 mh16->dwBufferLength = mh32->dwBufferLength;
@@ -580,7 +579,7 @@ static  WINMM_MapType	MMDRV_MidiOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_MidiOut_UnMap32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_MidiOut_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_MidiOut_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -658,7 +657,7 @@ static  WINMM_MapType	MMDRV_MidiOut_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_MidiOut_Callback		[internal]
  */
-static  void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static  void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
@@ -706,7 +705,7 @@ static  void	CALLBACK MMDRV_MidiOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInst
 /**************************************************************************
  * 				MMDRV_WaveIn_Map16To32W		[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -793,7 +792,7 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == WIDM_ADDBUFFER && wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
@@ -815,7 +814,7 @@ static  WINMM_MapType	MMDRV_WaveIn_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveIn_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -888,7 +887,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveIn_Map32WTo16		[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -969,9 +968,9 @@ static  WINMM_MapType	MMDRV_WaveIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
-		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
-		      seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
-		      wh32->dwBufferLength, (DWORD)wh32->lpData);
+		TRACE("wh16=%08x wh16->lpData=%p wh32->buflen=%u wh32->lpData=%p\n",
+		      seg_ptr + sizeof(LPWAVEHDR), wh16->lpData,
+		      wh32->dwBufferLength, wh32->lpData);
 		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 		*lpParam2 = sizeof(WAVEHDR);
 
@@ -991,9 +990,8 @@ static  WINMM_MapType	MMDRV_WaveIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 
 	    assert(*(LPWAVEHDR*)ptr == wh32);
 
-	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
-		  seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
-		  wh32->dwBufferLength, (DWORD)wh32->lpData);
+	    TRACE("wh16=%08x wh16->lpData=%p wh32->buflen=%u wh32->lpData=%p\n",
+		  seg_ptr + sizeof(LPWAVEHDR), wh16->lpData, wh32->dwBufferLength, wh32->lpData);
 
 	    if (wMsg == WIDM_ADDBUFFER)
 		memcpy((LPSTR)wh16 + sizeof(WAVEHDR), wh32->lpData, wh32->dwBufferLength);
@@ -1002,7 +1000,7 @@ static  WINMM_MapType	MMDRV_WaveIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == WIDM_ADDBUFFER && wh16->dwBufferLength < wh32->dwBufferLength) {
-		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
 		    wh16->dwBufferLength, wh32->dwBufferLength);
 	    } else
                 wh16->dwBufferLength = wh32->dwBufferLength;
@@ -1058,7 +1056,7 @@ static  WINMM_MapType	MMDRV_WaveIn_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveIn_UnMap32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveIn_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_WaveIn_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -1153,7 +1151,7 @@ static  WINMM_MapType	MMDRV_WaveIn_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPD
 /**************************************************************************
  * 				MMDRV_WaveIn_Callback		[internal]
  */
-static  void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static  void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
@@ -1197,7 +1195,7 @@ static  void	CALLBACK MMDRV_WaveIn_Callback(HDRVR hDev, UINT uMsg, DWORD dwInsta
 /**************************************************************************
  * 				MMDRV_WaveOut_Map16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -1294,7 +1292,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LP
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == WODM_WRITE && wh32->dwBufferLength < wh16->dwBufferLength) {
-		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
 		    wh32->dwBufferLength, wh16->dwBufferLength);
 	    } else
                 wh32->dwBufferLength = wh16->dwBufferLength;
@@ -1315,7 +1313,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map16To32W  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_WaveOut_UnMap16To32W	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret = WINMM_MAP_MSGERROR;
 
@@ -1399,7 +1397,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap16To32W(UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_WaveOut_Map32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2)
+static  WINMM_MapType	MMDRV_WaveOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2)
 {
     WINMM_MapType	ret;
 
@@ -1530,9 +1528,9 @@ static  WINMM_MapType	MMDRV_WaveOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 		/* FIXME: nothing on wh32->lpNext */
 		/* could link the wh32->lpNext at this level for memory house keeping */
 		wh32->lpNext = wh16; /* for reuse in unprepare and write */
-		TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
-		      seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
-		      wh32->dwBufferLength, (DWORD)wh32->lpData);
+		TRACE("wh16=%08x wh16->lpData=%p wh32->buflen=%u wh32->lpData=%p\n",
+		      seg_ptr + sizeof(LPWAVEHDR), wh16->lpData,
+		      wh32->dwBufferLength, wh32->lpData);
 		*lpParam1 = seg_ptr + sizeof(LPWAVEHDR);
 		*lpParam2 = sizeof(WAVEHDR);
 
@@ -1552,9 +1550,9 @@ static  WINMM_MapType	MMDRV_WaveOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 
 	    assert(*(LPWAVEHDR*)ptr == wh32);
 
-	    TRACE("wh16=%08lx wh16->lpData=%08lx wh32->buflen=%lu wh32->lpData=%08lx\n",
-		  seg_ptr + sizeof(LPWAVEHDR), (DWORD)wh16->lpData,
-		  wh32->dwBufferLength, (DWORD)wh32->lpData);
+	    TRACE("wh16=%08x wh16->lpData=%p wh32->buflen=%u wh32->lpData=%p\n",
+		  seg_ptr + sizeof(LPWAVEHDR), wh16->lpData,
+		  wh32->dwBufferLength, wh32->lpData);
 
 	    if (wMsg == WODM_WRITE)
 		memcpy((LPSTR)wh16 + sizeof(WAVEHDR), wh32->lpData, wh32->dwBufferLength);
@@ -1563,7 +1561,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 	    *lpParam2 = sizeof(WAVEHDR);
 	    /* dwBufferLength can be reduced between prepare & write */
 	    if (wMsg == WODM_WRITE && wh16->dwBufferLength < wh32->dwBufferLength) {
-		ERR("Size of buffer has been increased from %ld to %ld, keeping initial value\n",
+		ERR("Size of buffer has been increased from %d to %d, keeping initial value\n",
 		    wh16->dwBufferLength, wh32->dwBufferLength);
 	    } else
                 wh16->dwBufferLength = wh32->dwBufferLength;
@@ -1588,7 +1586,7 @@ static  WINMM_MapType	MMDRV_WaveOut_Map32WTo16  (UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_WaveOut_UnMap32WTo16	[internal]
  */
-static  WINMM_MapType	MMDRV_WaveOut_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT fn_ret)
+static  WINMM_MapType	MMDRV_WaveOut_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT fn_ret)
 {
     WINMM_MapType	ret;
 
@@ -1701,7 +1699,7 @@ static  WINMM_MapType	MMDRV_WaveOut_UnMap32WTo16(UINT wMsg, LPDWORD lpdwUser, LP
 /**************************************************************************
  * 				MMDRV_WaveOut_Callback		[internal]
  */
-static  void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD dwInstance, DWORD dwParam1, DWORD dwParam2)
+static  void	CALLBACK MMDRV_WaveOut_Callback(HDRVR hDev, UINT uMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     LPWINE_MLD	mld = (LPWINE_MLD)dwInstance;
 
@@ -1780,9 +1778,9 @@ static  BOOL	MMDRV_GetDescription16(const char* fname, char* buf, int buflen)
     if (w != ('Z' * 256 + 'M')) 			E(("Bad sig %04x\n", w));
     if (_llseek(hFile, 0x3C, SEEK_SET) < 0) 		E(("Can't seek to ext header offset\n"));
     if (_lread(hFile, &dw, 4) != 4)			E(("Can't read ext header offset\n"));
-    if (_llseek(hFile, dw + 0x2C, SEEK_SET) < 0) 	E(("Can't seek to ext header.nr table %lu\n", dw+0x2C));
+    if (_llseek(hFile, dw + 0x2C, SEEK_SET) < 0) 	E(("Can't seek to ext header.nr table %u\n", dw+0x2C));
     if (_lread(hFile, &dw, 4) != 4)			E(("Can't read nr table offset\n"));
-    if (_llseek(hFile, dw, SEEK_SET) < 0) 		E(("Can't seek to nr table %lu\n", dw));
+    if (_llseek(hFile, dw, SEEK_SET) < 0) 		E(("Can't seek to nr table %u\n", dw));
     if (_lread(hFile, buf, 1) != 1)			E(("Can't read descr length\n"));
     buflen = min((int)(unsigned)(BYTE)buf[0], buflen - 1);
     if (_lread(hFile, buf, buflen) != buflen)		E(("Can't read descr (%d)\n", buflen));
@@ -3426,7 +3424,7 @@ static  WINMM_MapType	MCI_UnMapMsg32WTo16(WORD uDevType, WORD wMsg, DWORD dwFlag
 	    if (mdsp16) {
 		mdsp32a->dwReturn = mdsp16->dwReturn;
 		if (dwFlags & MCI_DGV_STATUS_DISKSPACE) {
-		    TRACE("MCI_STATUS (DGV) lpstrDrive=%08lx\n", mdsp16->lpstrDrive);
+		    TRACE("MCI_STATUS (DGV) lpstrDrive=%08x\n", mdsp16->lpstrDrive);
 		    TRACE("MCI_STATUS (DGV) lpstrDrive=%s\n", (LPSTR)MapSL(mdsp16->lpstrDrive));
                     UnMapLS( mdsp16->lpstrDrive );
 		}

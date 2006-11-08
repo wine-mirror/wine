@@ -80,7 +80,7 @@ static    BOOL                  TIME_TimeToDie = TRUE;
 
 static	void	TIME_TriggerCallBack(LPWINE_TIMERENTRY lpTimer)
 {
-    TRACE("%04lx:CallBack => lpFunc=%p wTimerID=%04X dwUser=%08lX dwTriggerTime %ld(delta %ld)\n",
+    TRACE("%04x:CallBack => lpFunc=%p wTimerID=%04X dwUser=%08X dwTriggerTime %d(delta %d)\n",
 	  GetCurrentThreadId(), lpTimer->lpFunc, lpTimer->wTimerID, lpTimer->dwUser,
           lpTimer->dwTriggerTime, GetTickCount() - lpTimer->dwTriggerTime);
 
@@ -247,7 +247,7 @@ static DWORD CALLBACK TIME_MMSysTimeThread(LPVOID arg)
         rc = WaitForSingleObject(TIME_hWakeEvent, sleep_time);
         if (rc != WAIT_TIMEOUT && rc != WAIT_OBJECT_0)
         {   
-            FIXME("Unexpected error %ld(%ld) in timer thread\n", rc, GetLastError());
+            FIXME("Unexpected error %d(%d) in timer thread\n", rc, GetLastError());
             break;
         }
     }
@@ -314,7 +314,7 @@ WORD	TIME_SetEventInternal(UINT wDelay, UINT wResol,
     LPWINE_TIMERENTRY	lpNewTimer;
     LPWINE_TIMERENTRY	lpTimer;
 
-    TRACE("(%u, %u, %p, %08lX, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
+    TRACE("(%u, %u, %p, %08X, %04X);\n", wDelay, wResol, lpFunc, dwUser, wFlags);
 
     if (wDelay < MMSYSTIME_MININTERVAL || wDelay > MMSYSTIME_MAXINTERVAL)
 	return 0;

@@ -172,7 +172,7 @@ const char* WINMM_ErrorToString(MMRESULT error)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID fImpLoad)
 {
-    TRACE("%p 0x%lx %p\n", hInstDLL, fdwReason, fImpLoad);
+    TRACE("%p 0x%x %p\n", hInstDLL, fdwReason, fImpLoad);
 
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
@@ -313,7 +313,7 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
     DWORD		dwRet = 0;
     MIXEROPENDESC	mod;
 
-    TRACE("(%p, %d, %08lx, %08lx, %08lx)\n",
+    TRACE("(%p, %d, %08lx, %08lx, %08x)\n",
 	  lphMix, uDeviceID, dwCallback, dwInstance, fdwOpen);
 
     wmld = MMDRV_Alloc(sizeof(WINE_MIXER), MMDRV_MIXER, &hMix, &fdwOpen,
@@ -331,7 +331,7 @@ UINT  MIXER_Open(LPHMIXER lphMix, UINT uDeviceID, DWORD_PTR dwCallback,
 	hMix = 0;
     }
     if (lphMix) *lphMix = hMix;
-    TRACE("=> %ld hMixer=%p\n", dwRet, hMix);
+    TRACE("=> %d hMixer=%p\n", dwRet, hMix);
 
     return dwRet;
 }
@@ -371,7 +371,7 @@ UINT WINAPI mixerGetID(HMIXEROBJ hmix, LPUINT lpid, DWORD fdwID)
     LPWINE_MIXER	lpwm;
     UINT		uRet = MMSYSERR_NOERROR;
 
-    TRACE("(%p %p %08lx)\n", hmix, lpid, fdwID);
+    TRACE("(%p %p %08x)\n", hmix, lpid, fdwID);
 
     if ((uRet = MIXER_GetDev(hmix, fdwID, &lpwm)) != MMSYSERR_NOERROR)
 	return uRet;
@@ -391,7 +391,7 @@ UINT WINAPI mixerGetControlDetailsW(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdW
     LPWINE_MIXER	lpwm;
     UINT		uRet = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmcdW, fdwDetails);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmcdW, fdwDetails);
 
     if ((uRet = MIXER_GetDev(hmix, fdwDetails, &lpwm)) != MMSYSERR_NOERROR)
 	return uRet;
@@ -411,7 +411,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 {
     DWORD			ret = MMSYSERR_NOTENABLED;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmcdA, fdwDetails);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmcdA, fdwDetails);
 
     if (lpmcdA == NULL || lpmcdA->cbStruct != sizeof(*lpmcdA))
 	return MMSYSERR_INVALPARAM;
@@ -456,7 +456,7 @@ UINT WINAPI mixerGetControlDetailsA(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcdA
 	}
 	break;
     default:
-	ERR("Unsupported fdwDetails=0x%08lx\n", fdwDetails);
+	ERR("Unsupported fdwDetails=0x%08x\n", fdwDetails);
     }
 
     return ret;
@@ -472,7 +472,7 @@ UINT WINAPI mixerGetLineControlsA(HMIXEROBJ hmix, LPMIXERLINECONTROLSA lpmlcA,
     DWORD		ret;
     unsigned int	i;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmlcA, fdwControls);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmlcA, fdwControls);
 
     if (lpmlcA == NULL || lpmlcA->cbStruct != sizeof(*lpmlcA) ||
 	lpmlcA->cbmxctrl != sizeof(MIXERCONTROLA))
@@ -540,7 +540,7 @@ UINT WINAPI mixerGetLineControlsW(HMIXEROBJ hmix, LPMIXERLINECONTROLSW lpmlcW,
     LPWINE_MIXER	lpwm;
     UINT		uRet = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmlcW, fdwControls);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmlcW, fdwControls);
 
     if ((uRet = MIXER_GetDev(hmix, fdwControls, &lpwm)) != MMSYSERR_NOERROR)
 	return uRet;
@@ -560,7 +560,7 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, DWORD fdwInfo
     LPWINE_MIXER	lpwm;
     UINT		uRet = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmliW, fdwInfo);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmliW, fdwInfo);
 
     if ((uRet = MIXER_GetDev(hmix, fdwInfo, &lpwm)) != MMSYSERR_NOERROR)
 	return uRet;
@@ -578,7 +578,7 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
     MIXERLINEW		mliW;
     UINT		ret;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmliA, fdwInfo);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmliA, fdwInfo);
 
     if (lpmliA == NULL || lpmliA->cbStruct != sizeof(*lpmliA))
 	return MMSYSERR_INVALPARAM;
@@ -606,7 +606,7 @@ UINT WINAPI mixerGetLineInfoA(HMIXEROBJ hmix, LPMIXERLINEA lpmliA,
         MultiByteToWideChar( CP_ACP, 0, lpmliA->Target.szPname, -1, mliW.Target.szPname, sizeof(mliW.Target.szPname)/sizeof(WCHAR));
 	break;
     default:
-	WARN("Unsupported fdwControls=0x%08lx\n", fdwInfo);
+	WARN("Unsupported fdwControls=0x%08x\n", fdwInfo);
         return MMSYSERR_INVALFLAG;
     }
 
@@ -645,7 +645,7 @@ UINT WINAPI mixerSetControlDetails(HMIXEROBJ hmix, LPMIXERCONTROLDETAILS lpmcd,
     LPWINE_MIXER	lpwm;
     UINT		uRet = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %p, %08lx)\n", hmix, lpmcd, fdwDetails);
+    TRACE("(%p, %p, %08x)\n", hmix, lpmcd, fdwDetails);
 
     if ((uRet = MIXER_GetDev(hmix, fdwDetails, &lpwm)) != MMSYSERR_NOERROR)
 	return uRet;
@@ -661,8 +661,8 @@ DWORD WINAPI mixerMessage(HMIXER hmix, UINT uMsg, DWORD_PTR dwParam1, DWORD_PTR 
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04lx, %d, %08lx, %08lx): semi-stub?\n",
-	  (DWORD)hmix, uMsg, dwParam1, dwParam2);
+    TRACE("(%p, %d, %08lx, %08lx): semi-stub?\n",
+	  hmix, uMsg, dwParam1, dwParam2);
 
     if ((wmld = MMDRV_Get(hmix, MMDRV_MIXER, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -741,7 +741,7 @@ UINT WINAPI auxSetVolume(UINT uDeviceID, DWORD dwVolume)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%04X, %lu) !\n", uDeviceID, dwVolume);
+    TRACE("(%04X, %u) !\n", uDeviceID, dwVolume);
 
     if ((wmld = MMDRV_Get((HANDLE)uDeviceID, MMDRV_AUX, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -868,8 +868,8 @@ UINT WINAPI midiOutGetErrorTextW(UINT uError, LPWSTR lpText, UINT uSize)
 /**************************************************************************
  * 				MIDI_OutAlloc    		[internal]
  */
-static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, LPDWORD lpdwCallback,
-				      LPDWORD lpdwInstance, LPDWORD lpdwFlags,
+static	LPWINE_MIDI	MIDI_OutAlloc(HMIDIOUT* lphMidiOut, DWORD_PTR* lpdwCallback,
+				      DWORD_PTR* lpdwInstance, LPDWORD lpdwFlags,
 				      DWORD cIDs, MIDIOPENSTRMID* lpIDs, BOOL bFrom32)
 {
     HANDLE	      	hMidiOut;
@@ -903,7 +903,7 @@ UINT MIDI_OutOpen(LPHMIDIOUT lphMidiOut, UINT uDeviceID, DWORD_PTR dwCallback,
     LPWINE_MIDI		lpwm;
     UINT		dwRet = 0;
 
-    TRACE("(%p, %d, %08lX, %08lX, %08lX);\n",
+    TRACE("(%p, %d, %08lX, %08lX, %08X);\n",
 	  lphMidiOut, uDeviceID, dwCallback, dwInstance, dwFlags);
 
     if (lphMidiOut != NULL) *lphMidiOut = 0;
@@ -1006,7 +1006,7 @@ UINT WINAPI midiOutShortMsg(HMIDIOUT hMidiOut, DWORD dwMsg)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lX)\n", hMidiOut, dwMsg);
+    TRACE("(%p, %08X)\n", hMidiOut, dwMsg);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, FALSE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1067,7 +1067,7 @@ UINT WINAPI midiOutSetVolume(HMIDIOUT hMidiOut, DWORD dwVolume)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %ld);\n", hMidiOut, dwVolume);
+    TRACE("(%p, %d);\n", hMidiOut, dwVolume);
 
     if ((wmld = MMDRV_Get(hMidiOut, MMDRV_MIDIOUT, TRUE)) == NULL)
 	return MMSYSERR_INVALHANDLE;
@@ -1201,7 +1201,7 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
     LPWINE_MIDI		lpwm;
     DWORD		dwRet = 0;
 
-    TRACE("(%p, %d, %08lX, %08lX, %08lX);\n",
+    TRACE("(%p, %d, %08lX, %08lX, %08X);\n",
 	  lphMidiIn, uDeviceID, dwCallback, dwInstance, dwFlags);
 
     if (lphMidiIn != NULL) *lphMidiIn = 0;
@@ -1224,7 +1224,7 @@ UINT MIDI_InOpen(HMIDIIN* lphMidiIn, UINT uDeviceID, DWORD_PTR dwCallback,
 	hMidiIn = 0;
     }
     if (lphMidiIn != NULL) *lphMidiIn = hMidiIn;
-    TRACE("=> %ld hMidi=%p\n", dwRet, hMidiIn);
+    TRACE("=> %d hMidi=%p\n", dwRet, hMidiIn);
 
     return dwRet;
 }
@@ -1520,9 +1520,9 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	 */
 	lpMidiHdr = (LPMIDIHDR)msg->lParam;
 	lpData = (LPBYTE)lpMidiHdr->lpData;
-	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%08lx dwBufferLength=%lu/%lu dwFlags=0x%08lx size=%u]\n",
+	TRACE("Adding %s lpMidiHdr=%p [lpData=0x%p dwBufferLength=%u/%u dwFlags=0x%08x size=%u]\n",
 	      (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular", lpMidiHdr,
-	      (DWORD)lpMidiHdr, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded,
+	      lpMidiHdr, lpMidiHdr->dwBufferLength, lpMidiHdr->dwBytesRecorded,
 	      lpMidiHdr->dwFlags, msg->wParam);
 #if 0
 	/* dumps content of lpMidiHdr->lpData
@@ -1547,7 +1547,7 @@ static	BOOL	MMSYSTEM_MidiStream_MessageHandler(WINE_MIDIStream* lpMidiStrm, LPWI
 	if (((LPMIDIEVENT)lpData)->dwStreamID != 0 &&
 	    ((LPMIDIEVENT)lpData)->dwStreamID != 0xFFFFFFFF &&
 	    ((LPMIDIEVENT)lpData)->dwStreamID != (DWORD)lpMidiStrm) {
-	    FIXME("Dropping bad %s lpMidiHdr (streamID=%08lx)\n",
+	    FIXME("Dropping bad %s lpMidiHdr (streamID=%08x)\n",
 		  (lpMidiHdr->dwFlags & MHDR_ISSTRM) ? "stream" : "regular",
 		  ((LPMIDIEVENT)lpData)->dwStreamID);
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
@@ -1637,7 +1637,7 @@ static	DWORD	CALLBACK	MMSYSTEM_MidiStream_Player(LPVOID pmt)
 
 	    dwToGo = lpMidiStrm->dwStartTicks + lpMidiStrm->dwPositionMS;
 
-	    TRACE("%ld/%ld/%ld\n", dwToGo, GetTickCount(), me->dwDeltaTime);
+	    TRACE("%d/%d/%d\n", dwToGo, GetTickCount(), me->dwDeltaTime);
 	    while ((dwCurrTC = GetTickCount()) < dwToGo) {
 		if (MsgWaitForMultipleObjects(0, NULL, FALSE, dwToGo - dwCurrTC, QS_ALLINPUT) == WAIT_OBJECT_0) {
 		    /* got a message, handle it */
@@ -1751,7 +1751,7 @@ MMRESULT MIDI_StreamOpen(HMIDISTRM* lphMidiStrm, LPUINT lpuDeviceID, DWORD cMidi
     LPWINE_MIDI		lpwm;
     HMIDIOUT		hMidiOut;
 
-    TRACE("(%p, %p, %ld, 0x%08lx, 0x%08lx, 0x%08lx)!\n",
+    TRACE("(%p, %p, %d, 0x%08lx, 0x%08lx, 0x%08x)!\n",
 	  lphMidiStrm, lpuDeviceID, cMidi, dwCallback, dwInstance, fdwOpen);
 
     if (cMidi != 1 || lphMidiStrm == NULL || lpuDeviceID == NULL)
@@ -1857,7 +1857,7 @@ MMRESULT WINAPI midiStreamPause(HMIDISTRM hMidiStrm)
 	ret = MMSYSERR_INVALHANDLE;
     } else {
 	if (SuspendThread(lpMidiStrm->hThread) == 0xFFFFFFFF) {
-	    WARN("bad Suspend (%ld)\n", GetLastError());
+	    WARN("bad Suspend (%d)\n", GetLastError());
 	    ret = MMSYSERR_ERROR;
 	}
     }
@@ -1882,11 +1882,11 @@ MMRESULT WINAPI midiStreamPosition(HMIDISTRM hMidiStrm, LPMMTIME lpMMT, UINT cbm
 	switch (lpMMT->wType) {
 	case TIME_MS:
 	    lpMMT->u.ms = lpMidiStrm->dwPositionMS;
-	    TRACE("=> %ld ms\n", lpMMT->u.ms);
+	    TRACE("=> %d ms\n", lpMMT->u.ms);
 	    break;
 	case TIME_TICKS:
 	    lpMMT->u.ticks = lpMidiStrm->dwPulses;
-	    TRACE("=> %ld ticks\n", lpMMT->u.ticks);
+	    TRACE("=> %d ticks\n", lpMMT->u.ticks);
 	    break;
 	default:
 	    WARN("Unsupported time type %d\n", lpMMT->wType);
@@ -1906,7 +1906,7 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
     WINE_MIDIStream*	lpMidiStrm;
     MMRESULT		ret = MMSYSERR_NOERROR;
 
-    TRACE("(%p, %p, %lx)\n", hMidiStrm, lpPropData, dwProperty);
+    TRACE("(%p, %p, %x)\n", hMidiStrm, lpPropData, dwProperty);
 
     if (!MMSYSTEM_GetMidiStream(hMidiStrm, &lpMidiStrm, NULL)) {
 	ret = MMSYSERR_INVALHANDLE;
@@ -1919,10 +1919,10 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 	    ret = MMSYSERR_INVALPARAM;
 	} else if (dwProperty & MIDIPROP_SET) {
 	    lpMidiStrm->dwTempo = mpt->dwTempo;
-	    TRACE("Setting tempo to %ld\n", mpt->dwTempo);
+	    TRACE("Setting tempo to %d\n", mpt->dwTempo);
 	} else if (dwProperty & MIDIPROP_GET) {
 	    mpt->dwTempo = lpMidiStrm->dwTempo;
-	    TRACE("Getting tempo <= %ld\n", mpt->dwTempo);
+	    TRACE("Getting tempo <= %d\n", mpt->dwTempo);
 	}
     } else if (dwProperty & MIDIPROP_TIMEDIV) {
 	MIDIPROPTIMEDIV*	mptd = (MIDIPROPTIMEDIV*)lpPropData;
@@ -1931,10 +1931,10 @@ MMRESULT WINAPI midiStreamProperty(HMIDISTRM hMidiStrm, LPBYTE lpPropData, DWORD
 	    ret = MMSYSERR_INVALPARAM;
 	} else if (dwProperty & MIDIPROP_SET) {
 	    lpMidiStrm->dwTimeDiv = mptd->dwTimeDiv;
-	    TRACE("Setting time div to %ld\n", mptd->dwTimeDiv);
+	    TRACE("Setting time div to %d\n", mptd->dwTimeDiv);
 	} else if (dwProperty & MIDIPROP_GET) {
 	    mptd->dwTimeDiv = lpMidiStrm->dwTimeDiv;
-	    TRACE("Getting time div <= %ld\n", mptd->dwTimeDiv);
+	    TRACE("Getting time div <= %d\n", mptd->dwTimeDiv);
 	}
     } else {
 	ret = MMSYSERR_INVALPARAM;
@@ -1965,7 +1965,7 @@ MMRESULT WINAPI midiStreamRestart(HMIDISTRM hMidiStrm)
 	    ret = ResumeThread(lpMidiStrm->hThread);
 	} while (ret != 0xFFFFFFFF && ret != 0);
 	if (ret == 0xFFFFFFFF) {
-	    WARN("bad Resume (%ld)\n", GetLastError());
+	    WARN("bad Resume (%d)\n", GetLastError());
 	    ret = MMSYSERR_ERROR;
 	} else {
 	    lpMidiStrm->dwStartTicks = GetTickCount() - lpMidiStrm->dwPositionMS;
@@ -2003,7 +2003,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     DWORD		dwRet = MMSYSERR_NOERROR;
     WAVEOPENDESC	wod;
 
-    TRACE("(%p, %d, %s, %p, %08lX, %08lX, %08lX, %d);\n",
+    TRACE("(%p, %d, %s, %p, %08lX, %08lX, %08X, %d);\n",
 	  lphndl, (int)uDeviceID, (uType==MMDRV_WAVEOUT)?"Out":"In", lpFormat, dwCallback,
 	  dwInstance, dwFlags, bFrom32?32:16);
 
@@ -2021,7 +2021,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     }
 
     /* may have a PCMWAVEFORMAT rather than a WAVEFORMATEX so don't read cbSize */
-    TRACE("wFormatTag=%u, nChannels=%u, nSamplesPerSec=%lu, nAvgBytesPerSec=%lu, nBlockAlign=%u, wBitsPerSample=%u\n",
+    TRACE("wFormatTag=%u, nChannels=%u, nSamplesPerSec=%u, nAvgBytesPerSec=%u, nBlockAlign=%u, wBitsPerSample=%u\n",
 	  lpFormat->wFormatTag, lpFormat->nChannels, lpFormat->nSamplesPerSec,
 	  lpFormat->nAvgBytesPerSec, lpFormat->nBlockAlign, lpFormat->wBitsPerSample);
 
@@ -2037,7 +2037,7 @@ UINT WAVE_Open(HANDLE* lphndl, UINT uDeviceID, UINT uType,
     wod.dwInstance = dwInstance;
     wod.dnDevNode = 0L;
 
-    TRACE("cb=%08lx\n", wod.dwCallback);
+    TRACE("cb=%08x\n", wod.dwCallback);
 
     for (;;) {
         if (dwFlags & WAVE_MAPPED) {
@@ -2367,7 +2367,7 @@ UINT WINAPI waveOutGetPitch(HWAVEOUT hWaveOut, LPDWORD lpdw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)lpdw);
+    TRACE("(%p, %p);\n", hWaveOut, lpdw);
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
         return MMSYSERR_INVALHANDLE;
@@ -2381,7 +2381,7 @@ UINT WINAPI waveOutSetPitch(HWAVEOUT hWaveOut, DWORD dw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)dw);
+    TRACE("(%p, %08x);\n", hWaveOut, dw);
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
         return MMSYSERR_INVALHANDLE;
@@ -2395,7 +2395,7 @@ UINT WINAPI waveOutGetPlaybackRate(HWAVEOUT hWaveOut, LPDWORD lpdw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)lpdw);
+    TRACE("(%p, %p);\n", hWaveOut, lpdw);
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
         return MMSYSERR_INVALHANDLE;
@@ -2409,7 +2409,7 @@ UINT WINAPI waveOutSetPlaybackRate(HWAVEOUT hWaveOut, DWORD dw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)dw);
+    TRACE("(%p, %08x);\n", hWaveOut, dw);
 
     if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, FALSE)) == NULL)
         return MMSYSERR_INVALHANDLE;
@@ -2423,7 +2423,7 @@ UINT WINAPI waveOutGetVolume(HWAVEOUT hWaveOut, LPDWORD lpdw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lx);\n", hWaveOut, (DWORD)lpdw);
+    TRACE("(%p, %p);\n", hWaveOut, lpdw);
 
     if (lpdw == NULL) {
         WARN("invalid parameter\n");
@@ -2443,7 +2443,7 @@ UINT WINAPI waveOutSetVolume(HWAVEOUT hWaveOut, DWORD dw)
 {
     LPWINE_MLD		wmld;
 
-    TRACE("(%p, %08lx);\n", hWaveOut, dw);
+    TRACE("(%p, %08x);\n", hWaveOut, dw);
 
      if ((wmld = MMDRV_Get(hWaveOut, MMDRV_WAVEOUT, TRUE)) == NULL)
         return MMSYSERR_INVALHANDLE;

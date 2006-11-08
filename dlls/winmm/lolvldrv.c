@@ -189,7 +189,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
     WINMM_MapType		map;
     int				devID;
 
-    TRACE("(%s %u %u 0x%08lx 0x%08lx 0x%08lx %c)\n",
+    TRACE("(%s %u %u 0x%08x 0x%08lx 0x%08lx %c)\n",
 	  llTypes[mld->type].typestr, mld->uDeviceID, wMsg,
 	  mld->dwDriverInstance, dwParam1, dwParam2, bFrom32?'Y':'N');
 
@@ -223,7 +223,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 	assert(part->u.fnMessage32);
 
 	if (bFrom32) {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 	    TRACE("=> %s\n", WINMM_ErrorToString(ret));
@@ -239,7 +239,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		break;
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = part->u.fnMessage32(mld->uDeviceID, wMsg, mld->dwDriverInstance,
 					  dwParam1, dwParam2);
@@ -268,7 +268,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		break;
 	    case WINMM_MAP_OK:
 	    case WINMM_MAP_OKMEM:
-		TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+		TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
 		      mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
 		ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
                                          mld->uDeviceID, wMsg, mld->dwDriverInstance, 
@@ -283,7 +283,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
 		break;
 	    }
 	} else {
-	    TRACE("Calling message(dev=%u msg=%u usr=0x%08lx p1=0x%08lx p2=0x%08lx)\n",
+	    TRACE("Calling message(dev=%u msg=%u usr=0x%08x p1=0x%08lx p2=0x%08lx)\n",
 		  mld->uDeviceID, wMsg, mld->dwDriverInstance, dwParam1, dwParam2);
             ret = pFnCallMMDrvFunc16((DWORD)part->u.fnMessage16, 
                                      mld->uDeviceID, wMsg, mld->dwDriverInstance, 
@@ -298,7 +298,7 @@ DWORD  MMDRV_Message(LPWINE_MLD mld, UINT wMsg, DWORD_PTR dwParam1,
  * 				MMDRV_Alloc			[internal]
  */
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
-			    DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32)
+			    DWORD_PTR* dwCallback, DWORD_PTR* dwInstance, BOOL bFrom32)
 {
     LPWINE_MLD	mld;
     UINT i;
@@ -370,7 +370,7 @@ DWORD	MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwFlags)
     DWORD		dwRet = MMSYSERR_BADDEVICEID;
     DWORD		dwInstance;
     WINE_LLTYPE*	llType = &llTypes[mld->type];
-    TRACE("(%p, %04x, 0x%08lx, 0x%08lx)\n", mld, wMsg, dwParam1, dwFlags);
+    TRACE("(%p, %04x, 0x%08x, 0x%08x)\n", mld, wMsg, dwParam1, dwFlags);
 
     mld->dwDriverInstance = (DWORD)&dwInstance;
 
@@ -490,7 +490,7 @@ UINT	MMDRV_PhysicalFeatures(LPWINE_MLD mld, UINT uMsg, DWORD dwParam1,
 {
     WINE_MM_DRIVER*	lpDrv = &MMDrvs[mld->mmdIndex];
 
-    TRACE("(%p, %04x, %08lx, %08lx)\n", mld, uMsg, dwParam1, dwParam2);
+    TRACE("(%p, %04x, %08x, %08x)\n", mld, uMsg, dwParam1, dwParam2);
 
     /* all those function calls are undocumented */
     switch (uMsg) {

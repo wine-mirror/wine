@@ -1429,7 +1429,7 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
      */
     if (lpstrRet && uRetLen) *lpstrRet = '\0';
 
-    TRACE("[%d, %s, %08lx, %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s %08lx/%s]\n",
+    TRACE("[%d, %s, %08x, %08x/%s %08x/%s %08x/%s %08x/%s %08x/%s %08x/%s]\n",
 	  wmd->wDeviceID, MCI_MessageToString(MCI_GetMessage(lpCmd)), dwFlags,
 	  data[0], debugstr_w((WCHAR *)data[0]), data[1], debugstr_w((WCHAR *)data[1]),
 	  data[2], debugstr_w((WCHAR *)data[2]), data[3], debugstr_w((WCHAR *)data[3]),
@@ -1442,9 +1442,9 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     } else {
 	dwRet = MCI_SendCommand(wmd->wDeviceID, MCI_GetMessage(lpCmd), dwFlags, (DWORD)data, TRUE);
     }
-    TRACE("=> 1/ %lx (%s)\n", dwRet, debugstr_w(lpstrRet));
+    TRACE("=> 1/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
     dwRet = MCI_HandleReturnValues(dwRet, wmd, retType, data, lpstrRet, uRetLen);
-    TRACE("=> 2/ %lx (%s)\n", dwRet, debugstr_w(lpstrRet));
+    TRACE("=> 2/ %x (%s)\n", dwRet, debugstr_w(lpstrRet));
 
 errCleanUp:
     HeapFree(GetProcessHeap(), 0, verb);
@@ -1498,7 +1498,7 @@ BOOL WINAPI mciExecute(LPCSTR lpstrCommand)
     ret = mciSendStringA(lpstrCommand, strRet, sizeof(strRet), 0);
     if (ret != 0) {
 	if (!mciGetErrorStringA(ret, strRet, sizeof(strRet))) {
-	    sprintf(strRet, "Unknown MCI error (%ld)", ret);
+	    sprintf(strRet, "Unknown MCI error (%d)", ret);
 	}
 	MessageBoxA(0, strRet, "Error in mciExecute()", MB_OK);
     }
@@ -1639,7 +1639,7 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSW lpParms)
     DWORD 			dwRet;
     LPWINE_MCIDRIVER		wmd = NULL;
 
-    TRACE("(%08lX, %p)\n", dwParam, lpParms);
+    TRACE("(%08X, %p)\n", dwParam, lpParms);
     if (lpParms == NULL) return MCIERR_NULL_PARAMETER_BLOCK;
 
     /* only two low bytes are generic, the other ones are dev type specific */
@@ -1741,13 +1741,13 @@ static	DWORD MCI_Open(DWORD dwParam, LPMCI_OPEN_PARMSW lpParms)
     }
 
     if ((dwRet = MCI_FinishOpen(wmd, lpParms, dwParam))) {
-	TRACE("Failed to open driver (MCI_OPEN_DRIVER) [%08lx], closing\n", dwRet);
+	TRACE("Failed to open driver (MCI_OPEN_DRIVER) [%08x], closing\n", dwRet);
 	/* FIXME: is dwRet the correct ret code ? */
 	goto errCleanUp;
     }
 
     /* only handled devices fall through */
-    TRACE("wDevID=%04X wDeviceID=%d dwRet=%ld\n", wmd->wDeviceID, lpParms->wDeviceID, dwRet);
+    TRACE("wDevID=%04X wDeviceID=%d dwRet=%d\n", wmd->wDeviceID, lpParms->wDeviceID, dwRet);
 
     if (dwParam & MCI_NOTIFY)
 	mciDriverNotify((HWND)lpParms->dwCallback, wmd->wDeviceID, MCI_NOTIFY_SUCCESSFUL);
@@ -1769,7 +1769,7 @@ static	DWORD MCI_Close(UINT16 wDevID, DWORD dwParam, LPMCI_GENERIC_PARMS lpParms
     DWORD		dwRet;
     LPWINE_MCIDRIVER	wmd;
 
-    TRACE("(%04x, %08lX, %p)\n", wDevID, dwParam, lpParms);
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwParam, lpParms);
 
     if (wDevID == MCI_ALL_DEVICE_ID) {
 	LPWINE_MCIDRIVER	next;
@@ -1837,7 +1837,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 
     if (lpParms == NULL)			return MCIERR_NULL_PARAMETER_BLOCK;
 
-    TRACE("(%08x, %08lX, %08lX[num=%ld, wDevTyp=%u])\n",
+    TRACE("(%08x, %08X, %08X[num=%d, wDevTyp=%u])\n",
 	  uDevID, dwFlags, (DWORD)lpParms, lpParms->dwNumber, lpParms->wDeviceType);
 
     switch (dwFlags & ~MCI_SYSINFO_OPEN) {
@@ -1875,7 +1875,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    }
 	}
 	*(DWORD*)lpParms->lpstrReturn = cnt;
-	TRACE("(%ld) => '%ld'\n", lpParms->dwNumber, *(DWORD*)lpParms->lpstrReturn);
+	TRACE("(%d) => '%d'\n", lpParms->dwNumber, *(DWORD*)lpParms->lpstrReturn);
 	ret = MCI_INTEGER_RETURNED;
 	break;
     case MCI_SYSINFO_INSTALLNAME:
@@ -1887,7 +1887,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    *lpParms->lpstrReturn = 0;
 	    ret = MCIERR_INVALID_DEVICE_ID;
 	}
-	TRACE("(%ld) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
+	TRACE("(%d) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
 	break;
     case MCI_SYSINFO_NAME:
 	TRACE("MCI_SYSINFO_NAME\n");
@@ -1911,7 +1911,7 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    if (!s) {
 		if (GetPrivateProfileStringW(wszMci, 0, wszNull, buf, sizeof(buf) / sizeof(buf[0]), wszSystemIni)) {
 		    for (p = buf; *p; p += strlenW(p) + 1, cnt++) {
-                        TRACE("%ld: %s\n", cnt, debugstr_w(p));
+                        TRACE("%d: %s\n", cnt, debugstr_w(p));
 			if (cnt == lpParms->dwNumber - 1) {
 			    s = p;
 			    break;
@@ -1921,10 +1921,10 @@ static	DWORD MCI_SysInfo(UINT uDevID, DWORD dwFlags, LPMCI_SYSINFO_PARMSW lpParm
 	    }
 	    ret = s ? MCI_WriteString(lpParms->lpstrReturn, lpParms->dwRetSize / sizeof(WCHAR), s) : MCIERR_OUTOFRANGE;
 	}
-	TRACE("(%ld) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
+	TRACE("(%d) => %s\n", lpParms->dwNumber, debugstr_w(lpParms->lpstrReturn));
 	break;
     default:
-	TRACE("Unsupported flag value=%08lx\n", dwFlags);
+	TRACE("Unsupported flag value=%08x\n", dwFlags);
 	ret = MCIERR_UNRECOGNIZED_COMMAND;
     }
     return ret;
@@ -1969,8 +1969,8 @@ static	DWORD MCI_Sound(UINT wDevID, DWORD dwFlags, LPMCI_SOUND_PARMSW lpParms)
 /**************************************************************************
  * 			MCI_SendCommand				[internal]
  */
-DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1,
-			DWORD dwParam2, BOOL bFrom32)
+DWORD	MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1,
+			DWORD_PTR dwParam2, BOOL bFrom32)
 {
     DWORD		dwRet = MCIERR_UNRECOGNIZED_COMMAND;
 
@@ -2086,7 +2086,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2)
 		LPMCI_GETDEVCAPS_PARMS	lmgp;
 
 		lmgp = (LPMCI_GETDEVCAPS_PARMS)(void*)dwParam2;
-		TRACE("Changing %08lx to %08lx\n", lmgp->dwReturn, (DWORD)LOWORD(lmgp->dwReturn));
+		TRACE("Changing %08x to %08x\n", lmgp->dwReturn, LOWORD(lmgp->dwReturn));
 		lmgp->dwReturn = LOWORD(lmgp->dwReturn);
 	    }
 	    break;
@@ -2109,7 +2109,7 @@ LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2)
 		LPMCI_STATUS_PARMS	lsp;
 
 		lsp = (LPMCI_STATUS_PARMS)(void*)dwParam2;
-		TRACE("Changing %08lx to %08lx\n", lsp->dwReturn, (DWORD)LOWORD(lsp->dwReturn));
+		TRACE("Changing %08x to %08x\n", lsp->dwReturn, LOWORD(lsp->dwReturn));
 		lsp->dwReturn = LOWORD(lsp->dwReturn);
 	    }
 	    break;
@@ -2210,7 +2210,7 @@ BOOL WINAPI mciSetDriverData(MCIDEVICEID uDeviceID, DWORD data)
 {
     LPWINE_MCIDRIVER	wmd;
 
-    TRACE("(%04x, %08lx)\n", uDeviceID, data);
+    TRACE("(%04x, %08x)\n", uDeviceID, data);
 
     wmd = MCI_GetDriver(uDeviceID);
 
@@ -2236,7 +2236,7 @@ DWORD WINAPI mciSendCommandW(MCIDEVICEID wDevID, UINT wMsg, DWORD_PTR dwParam1, 
 
     dwRet = MCI_SendCommand(wDevID, wMsg, dwParam1, dwParam2, TRUE);
     dwRet = MCI_CleanUp(dwRet, wMsg, dwParam2);
-    TRACE("=> %08lx\n", dwRet);
+    TRACE("=> %08x\n", dwRet);
     return dwRet;
 }
 
@@ -2309,7 +2309,7 @@ UINT WINAPI MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data)
 {
     INT16	ret;
 
-    TRACE("(0x%04x, 0x%08lx)\n", wDevID, data);
+    TRACE("(0x%04x, 0x%08x)\n", wDevID, data);
 
     if ((HIWORD(data) != 0 && HWND_16(GetActiveWindow()) != HIWORD(data)) ||
 	(GetAsyncKeyState(LOWORD(data)) & 1) == 0) {
@@ -2332,7 +2332,7 @@ BOOL WINAPI mciSetYieldProc(MCIDEVICEID uDeviceID, YIELDPROC fpYieldProc, DWORD 
 {
     LPWINE_MCIDRIVER	wmd;
 
-    TRACE("(%u, %p, %08lx)\n", uDeviceID, fpYieldProc, dwYieldData);
+    TRACE("(%u, %p, %08x)\n", uDeviceID, fpYieldProc, dwYieldData);
 
     if (!(wmd = MCI_GetDriver(uDeviceID))) {
 	WARN("Bad uDeviceID\n");
@@ -2370,7 +2370,7 @@ UINT WINAPI mciGetDeviceIDFromElementIDW(DWORD dwElementID, LPCWSTR lpstrType)
     /* FIXME: that's rather strange, there is no
      * mciGetDeviceIDFromElementID32A in winmm.spec
      */
-    FIXME("(%lu, %s) stub\n", dwElementID, debugstr_w(lpstrType));
+    FIXME("(%u, %s) stub\n", dwElementID, debugstr_w(lpstrType));
     return 0;
 }
 

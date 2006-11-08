@@ -155,7 +155,7 @@ static void CALLBACK PlaySound_Callback(HWAVEOUT hwo, UINT uMsg,
 	break;
     case WOM_DONE:
 	InterlockedIncrement(&s->dwEventCount);
-	TRACE("Returning waveHdr=%lx\n", dwParam1);
+	TRACE("Returning waveHdr=%x\n", dwParam1);
 	SetEvent(s->hEvent);
 	break;
     default:
@@ -317,7 +317,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &ckMainRIFF, NULL, 0))
 	goto errCleanUp;
 
-    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08lX\n",
+    TRACE("ParentChunk ckid=%.4s fccType=%.4s cksize=%08X\n",
 	  (LPSTR)&ckMainRIFF.ckid, (LPSTR)&ckMainRIFF.fccType, ckMainRIFF.cksize);
 
     if ((ckMainRIFF.ckid != FOURCC_RIFF) ||
@@ -328,7 +328,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
 	goto errCleanUp;
 
-    TRACE("Chunk Found ckid=%.4s fccType=%08lx cksize=%08lX\n",
+    TRACE("Chunk Found ckid=%.4s fccType=%08x cksize=%08X\n",
 	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
@@ -337,8 +337,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 
     TRACE("wFormatTag=%04X !\n", 	lpWaveFormat->wFormatTag);
     TRACE("nChannels=%d\n", 		lpWaveFormat->nChannels);
-    TRACE("nSamplesPerSec=%ld\n", 	lpWaveFormat->nSamplesPerSec);
-    TRACE("nAvgBytesPerSec=%ld\n", 	lpWaveFormat->nAvgBytesPerSec);
+    TRACE("nSamplesPerSec=%d\n", 	lpWaveFormat->nSamplesPerSec);
+    TRACE("nAvgBytesPerSec=%d\n", 	lpWaveFormat->nAvgBytesPerSec);
     TRACE("nBlockAlign=%d\n", 		lpWaveFormat->nBlockAlign);
     TRACE("wBitsPerSample=%u !\n", 	lpWaveFormat->wBitsPerSample);
 
@@ -349,7 +349,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     if (mmioDescend(hmmio, &mmckInfo, &ckMainRIFF, MMIO_FINDCHUNK))
 	goto errCleanUp;
 
-    TRACE("Chunk Found ckid=%.4s fccType=%08lx cksize=%08lX\n",
+    TRACE("Chunk Found ckid=%.4s fccType=%08x cksize=%08X\n",
 	  (LPSTR)&mmckInfo.ckid, mmckInfo.fccType, mmckInfo.cksize);
 
     s.hEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -424,7 +424,7 @@ static BOOL MULTIMEDIA_PlaySound(const void* pszSound, HMODULE hmod, DWORD fdwSo
 {
     WINE_PLAYSOUND*     wps = NULL;
 
-    TRACE("pszSound='%p' hmod=%p fdwSound=%08lX\n",
+    TRACE("pszSound='%p' hmod=%p fdwSound=%08X\n",
 	  pszSound, hmod, fdwSound);
 
     /* FIXME? I see no difference between SND_NOWAIT and SND_NOSTOP !

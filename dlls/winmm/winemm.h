@@ -99,8 +99,8 @@ typedef struct tagWINE_MLD {
 							 * opendesc.dwInstance which is client (callback) related */
        WORD			bFrom32;
        WORD			dwFlags;
-       DWORD			dwCallback;
-       DWORD			dwClientInstance;
+       DWORD_PTR		dwCallback;
+       DWORD_PTR		dwClientInstance;
 } WINE_MLD, *LPWINE_MLD;
 
 typedef struct  {
@@ -217,8 +217,8 @@ typedef struct tagWINE_MM_IDATA {
 /* function prototypes */
 
 typedef LONG			(*MCIPROC)(DWORD, HDRVR, DWORD, DWORD, DWORD);
-typedef	WINMM_MapType	        (*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2);
-typedef	WINMM_MapType	        (*MMDRV_UNMAPFUNC)(UINT wMsg, LPDWORD lpdwUser, LPDWORD lpParam1, LPDWORD lpParam2, MMRESULT ret);
+typedef	WINMM_MapType	        (*MMDRV_MAPFUNC)(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2);
+typedef	WINMM_MapType	        (*MMDRV_UNMAPFUNC)(UINT wMsg, LPDWORD lpdwUser, DWORD_PTR* lpParam1, DWORD_PTR* lpParam2, MMRESULT ret);
 
 LPWINE_DRIVER	DRIVER_FindFromHDrvr(HDRVR hDrvr);
 BOOL		DRIVER_GetLibName(LPCWSTR keyName, LPCWSTR sectName, LPWSTR buf, int sz);
@@ -229,7 +229,7 @@ BOOL		MMDRV_Init(void);
 void            MMDRV_Exit(void);
 UINT		MMDRV_GetNum(UINT);
 LPWINE_MLD	MMDRV_Alloc(UINT size, UINT type, LPHANDLE hndl, DWORD* dwFlags,
-                            DWORD* dwCallback, DWORD* dwInstance, BOOL bFrom32);
+                            DWORD_PTR* dwCallback, DWORD_PTR* dwInstance, BOOL bFrom32);
 void		MMDRV_Free(HANDLE hndl, LPWINE_MLD mld);
 DWORD		MMDRV_Open(LPWINE_MLD mld, UINT wMsg, DWORD dwParam1, DWORD dwParam2);
 DWORD		MMDRV_Close(LPWINE_MLD mld, UINT wMsg);
@@ -247,7 +247,7 @@ DWORD		MCI_WriteString(LPWSTR lpDstStr, DWORD dstSize, LPCWSTR lpSrcStr);
 const char* 	MCI_MessageToString(UINT wMsg);
 UINT	WINAPI	MCI_DefYieldProc(MCIDEVICEID wDevID, DWORD data);
 LRESULT		MCI_CleanUp(LRESULT dwRet, UINT wMsg, DWORD dwParam2);
-DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD dwParam1, DWORD dwParam2, BOOL bFrom32);
+DWORD		MCI_SendCommand(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2, BOOL bFrom32);
 DWORD		MCI_SendCommandFrom32(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 DWORD		MCI_SendCommandFrom16(UINT wDevID, UINT16 wMsg, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 UINT		MCI_SetCommandTable(void *table, UINT uDevType);
