@@ -73,6 +73,17 @@ typedef struct _SECURITY_INTEGER
 } SECURITY_INTEGER, *PSECURITY_INTEGER;
 typedef SECURITY_INTEGER TimeStamp, *PTimeStamp;
 
+#ifndef __UNICODE_STRING_DEFINED__
+#define __UNICODE_STRING_DEFINED__
+typedef struct _UNICODE_STRING {
+  USHORT Length;        /* bytes */
+  USHORT MaximumLength; /* bytes */
+  PWSTR  Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+#endif
+
+typedef UNICODE_STRING SECURITY_STRING, *PSECURITY_STRING;
+
 typedef struct _SecPkgInfoA
 {
     unsigned long  fCapabilities;

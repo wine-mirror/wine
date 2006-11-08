@@ -135,6 +135,36 @@ typedef enum _POLICY_AUDIT_EVENT_TYPE
     AuditCategoryAccountManagement
 } POLICY_AUDIT_EVENT_TYPE, *PPOLICY_AUDIT_EVENT_TYPE;
 
+#ifndef __STRING_DEFINED__
+#define __STRING_DEFINED__
+typedef struct _STRING {
+  USHORT Length;
+  USHORT MaximumLength;
+  PCHAR Buffer;
+} STRING, *PSTRING;
+#endif
+
+#ifndef __UNICODE_STRING_DEFINED__
+#define __UNICODE_STRING_DEFINED__
+typedef struct _UNICODE_STRING {
+  USHORT Length;        /* bytes */
+  USHORT MaximumLength; /* bytes */
+  PWSTR  Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+#endif
+
+#ifndef __OBJECT_ATTRIBUTES_DEFINED__
+#define __OBJECT_ATTRIBUTES_DEFINED__
+typedef struct _OBJECT_ATTRIBUTES {
+  ULONG Length;
+  HANDLE RootDirectory;
+  PUNICODE_STRING ObjectName;
+  ULONG Attributes;
+  PVOID SecurityDescriptor;       /* type SECURITY_DESCRIPTOR */
+  PVOID SecurityQualityOfService; /* type SECURITY_QUALITY_OF_SERVICE */
+} OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
+#endif
+
 typedef UNICODE_STRING LSA_UNICODE_STRING, *PLSA_UNICODE_STRING;
 typedef STRING LSA_STRING, *PLSA_STRING;
 typedef OBJECT_ATTRIBUTES LSA_OBJECT_ATTRIBUTES, *PLSA_OBJECT_ATTRIBUTES;

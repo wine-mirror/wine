@@ -42,11 +42,14 @@ typedef CONST char *PCSZ;
 typedef short CSHORT;
 typedef CSHORT *PCSHORT;
 
+#ifndef __STRING_DEFINED__
+#define __STRING_DEFINED__
 typedef struct _STRING {
   USHORT Length;
   USHORT MaximumLength;
   PCHAR Buffer;
 } STRING, *PSTRING;
+#endif
 
 typedef STRING ANSI_STRING;
 typedef PSTRING PANSI_STRING;
@@ -56,11 +59,14 @@ typedef STRING OEM_STRING;
 typedef PSTRING POEM_STRING;
 typedef const STRING *PCOEM_STRING;
 
+#ifndef __UNICODE_STRING_DEFINED__
+#define __UNICODE_STRING_DEFINED__
 typedef struct _UNICODE_STRING {
   USHORT Length;        /* bytes */
   USHORT MaximumLength; /* bytes */
   PWSTR  Buffer;
 } UNICODE_STRING, *PUNICODE_STRING;
+#endif
 
 typedef const UNICODE_STRING *PCUNICODE_STRING;
 
@@ -919,6 +925,8 @@ typedef struct _KEY_VALUE_PARTIAL_INFORMATION {
     UCHAR Data[1];
 } KEY_VALUE_PARTIAL_INFORMATION, *PKEY_VALUE_PARTIAL_INFORMATION;
 
+#ifndef __OBJECT_ATTRIBUTES_DEFINED__
+#define __OBJECT_ATTRIBUTES_DEFINED__
 typedef struct _OBJECT_ATTRIBUTES {
   ULONG Length;
   HANDLE RootDirectory;
@@ -927,6 +935,7 @@ typedef struct _OBJECT_ATTRIBUTES {
   PVOID SecurityDescriptor;       /* type SECURITY_DESCRIPTOR */
   PVOID SecurityQualityOfService; /* type SECURITY_QUALITY_OF_SERVICE */
 } OBJECT_ATTRIBUTES, *POBJECT_ATTRIBUTES;
+#endif
 
 typedef struct _OBJECT_DATA_INFORMATION {
     BOOLEAN InheritHandle;

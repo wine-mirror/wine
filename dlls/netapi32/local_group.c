@@ -30,7 +30,6 @@
 #include "lmapibuf.h"
 #include "lmerr.h"
 #include "winreg.h"
-#include "winternl.h"
 #include "ntsecapi.h"
 #include "netapi32_misc.h"
 #include "wine/debug.h"

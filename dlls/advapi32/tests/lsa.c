@@ -26,7 +26,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
-#include "winternl.h"
 #include "ntsecapi.h"
 #include "sddl.h"
 #include "winnls.h"

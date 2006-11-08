@@ -28,7 +28,6 @@
 #include "winerror.h"
 #include "aclapi.h"
 #include "winnt.h"
-#include "winternl.h"
 #include "sddl.h"
 #include "ntsecapi.h"
 
