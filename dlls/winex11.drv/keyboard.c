@@ -1016,7 +1016,7 @@ static const WORD nonchar_key_vkey[256] =
     VK_SEPARATOR, VK_SUBTRACT, VK_DECIMAL, VK_DIVIDE,
     VK_NUMPAD0, VK_NUMPAD1, VK_NUMPAD2, VK_NUMPAD3,             /* FFB0 */
     VK_NUMPAD4, VK_NUMPAD5, VK_NUMPAD6, VK_NUMPAD7,
-    VK_NUMPAD8, VK_NUMPAD9, 0, 0, 0, 0,                         /* FFB8 */
+    VK_NUMPAD8, VK_NUMPAD9, 0, 0, 0, VK_OEM_NEC_EQUAL,          /* FFB8 */
     /* function keys */
     VK_F1, VK_F2,
     VK_F3, VK_F4, VK_F5, VK_F6, VK_F7, VK_F8, VK_F9, VK_F10,    /* FFC0 */
