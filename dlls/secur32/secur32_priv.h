@@ -80,6 +80,11 @@ typedef struct _NegoHelper {
     } crypt;
 } NegoHelper, *PNegoHelper;
 
+typedef enum _sign_direction {
+    NTLM_SEND,
+    NTLM_RECV
+} SignDirection;
+
 /* Allocates space for and initializes a new provider.  If fnTableA or fnTableW
  * is non-NULL, assumes the provider is built-in (and is thus already loaded.)
  * Otherwise moduleName must not be NULL.

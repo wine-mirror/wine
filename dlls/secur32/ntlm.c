@@ -1199,50 +1199,41 @@ static SECURITY_STATUS SEC_ENTRY ntlm_RevertSecurityContext(PCtxtHandle phContex
     return ret;
 }
 
-/***********************************************************************
- *              MakeSignature
+/*************************************************************************
+ *             ntlm_GetTokenBufferIndex
+ * Calculates the index of the secbuffer with BufferType == SECBUFFER_TOKEN
+ * Returns index if found or -1 if not found.
  */
-static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
- PSecBufferDesc pMessage, ULONG MessageSeqNo)
+static int ntlm_GetTokenBufferIndex(PSecBufferDesc pMessage)
 {
-    PNegoHelper helper;
-    ULONG sign_version = 1;
     UINT i;
-    int token_idx = -1;
 
-    TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
-    if (!phContext)
-        return SEC_E_INVALID_HANDLE;
+    TRACE("%p\n", pMessage);
 
-    if(fQOP)
-        FIXME("Ignoring fQOP 0x%08x\n", fQOP);
-
-    if(MessageSeqNo)
-        FIXME("Ignoring MessageSeqNo\n");
-
-    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
-        return SEC_E_INVALID_TOKEN;
-
-    for(i=0; i < pMessage->cBuffers; ++i)
+    for( i = 0; i < pMessage->cBuffers; ++i )
     {
         if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
-        {
-            token_idx = i;
-            break;
-        }
+            return i;
     }
-    /* If we didn't find a SECBUFFER_TOKEN type buffer */
-    if(token_idx == -1)
-        return SEC_E_INVALID_TOKEN;
 
-    if(pMessage->pBuffers[token_idx].cbBuffer < 16)
-        return SEC_E_BUFFER_TOO_SMALL;
+    return -1;
+}
 
-    helper = (PNegoHelper)phContext->dwLower;
-    TRACE("Negotiated flags are: 0x%08lx\n", helper->neg_flags);
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
+/***********************************************************************
+ *             ntlm_CreateSignature
+ * As both MakeSignature and VerifySignature need this, but different keys
+ * are needed for NTLMv2, the logic goes into a helper function.
+ */
+static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc pMessage,
+        int token_idx, SignDirection direction)
+{
+    ULONG sign_version = 1;
+    UINT i;
+    TRACE("%p, %p, %d\n", helper, pMessage, direction);
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2 && 
+            helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        FIXME("Can't handle NTLMv2 signing yet. Aborting.\n");
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
@@ -1279,15 +1270,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
         return SEC_E_OK;
     }
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
-    {
-        FIXME("Can't handle encrypted session key yet. Aborting.\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
-
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
     {
-        TRACE("Generating dummy signature\n");
+        TRACE("Creating a dummy signature.\n");
         /* A dummy signature is 0x01 followed by 15 bytes of 0x00 */
         memset(pMessage->pBuffers[token_idx].pvBuffer, 0, 16);
         memset(pMessage->pBuffers[token_idx].pvBuffer, 0x01, 1);
@@ -1299,6 +1284,41 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
 }
 
 /***********************************************************************
+ *              MakeSignature
+ */
+static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG fQOP,
+ PSecBufferDesc pMessage, ULONG MessageSeqNo)
+{
+    PNegoHelper helper;
+    int token_idx;
+
+    TRACE("%p %d %p %d\n", phContext, fQOP, pMessage, MessageSeqNo);
+    if (!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    if(fQOP)
+        FIXME("Ignoring fQOP 0x%08x\n", fQOP);
+
+    if(MessageSeqNo)
+        FIXME("Ignoring MessageSeqNo\n");
+
+    if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
+        return SEC_E_INVALID_TOKEN;
+
+    /* If we didn't find a SECBUFFER_TOKEN type buffer */
+    if((token_idx = ntlm_GetTokenBufferIndex(pMessage)) == -1)
+        return SEC_E_INVALID_TOKEN;
+
+    if(pMessage->pBuffers[token_idx].cbBuffer < 16)
+        return SEC_E_BUFFER_TOO_SMALL;
+
+    helper = (PNegoHelper)phContext->dwLower;
+    TRACE("Negotiated flags are: 0x%08lx\n", helper->neg_flags);
+
+    return ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND);
+}
+
+/***********************************************************************
  *              VerifySignature
  */
 static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
@@ -1307,8 +1327,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     PNegoHelper helper;
     ULONG fQOP = 0;
     UINT i;
-    int token_idx = -1;
+    int token_idx;
     SECURITY_STATUS ret;
+    SecBufferDesc local_desc;
+    PSecBuffer     local_buff;
+    BYTE          local_sig[16];
 
     TRACE("%p %p %d %p\n", phContext, pMessage, MessageSeqNo, pfQOP);
     if(!phContext)
@@ -1317,15 +1340,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    for(i=0; i < pMessage->cBuffers; ++i)
-    {
-        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
-        {
-            token_idx = i;
-            break;
-        }
-    }
-    if(token_idx == -1)
+    if((token_idx = ntlm_GetTokenBufferIndex(pMessage)) == -1)
         return SEC_E_INVALID_TOKEN;
 
     if(pMessage->pBuffers[token_idx].cbBuffer < 16)
@@ -1337,77 +1352,42 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     helper = (PNegoHelper)phContext->dwLower;
     TRACE("Negotiated flags: 0x%08lx\n", helper->neg_flags);
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
+    local_buff = HeapAlloc(GetProcessHeap(), 0, pMessage->cBuffers * sizeof(SecBuffer));
+
+    local_desc.ulVersion = SECBUFFER_VERSION;
+    local_desc.cBuffers = pMessage->cBuffers;
+    local_desc.pBuffers = local_buff;
+
+    for(i=0; i < pMessage->cBuffers; ++i)
     {
-        FIXME("Can't handle NTLMv2 signing yet. Aborting.\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
+        {
+            local_buff[i].BufferType = SECBUFFER_TOKEN;
+            local_buff[i].cbBuffer = 16;
+            local_buff[i].pvBuffer = local_sig;
+        }
+        else
+        {
+            local_buff[i].BufferType = pMessage->pBuffers[i].BufferType;
+            local_buff[i].cbBuffer = pMessage->pBuffers[i].cbBuffer;
+            local_buff[i].pvBuffer = pMessage->pBuffers[i].pvBuffer;
+        }
     }
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
-    {
-        SecBufferDesc local_desc;
-        PSecBuffer    local_buff;
-        BYTE          local_sig[16];
-
-        local_buff = HeapAlloc(GetProcessHeap(), 0, pMessage->cBuffers * sizeof(SecBuffer));
-
-        local_desc.ulVersion = SECBUFFER_VERSION;
-        local_desc.cBuffers = pMessage->cBuffers;
-        local_desc.pBuffers = local_buff;
-
-        for(i=0; i < pMessage->cBuffers; ++i)
-        {
-            if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
-            {
-                local_buff[i].BufferType = SECBUFFER_TOKEN;
-                local_buff[i].cbBuffer = 16;
-                local_buff[i].pvBuffer = local_sig;
-            }
-            else
-            {
-                local_buff[i].BufferType = pMessage->pBuffers[i].BufferType;
-                local_buff[i].cbBuffer = pMessage->pBuffers[i].cbBuffer;
-                local_buff[i].pvBuffer = pMessage->pBuffers[i].pvBuffer;
-            }
-        }
-
-        ntlm_MakeSignature(phContext, fQOP, &local_desc, MessageSeqNo);
-
-        if(memcmp(((PBYTE)local_buff[token_idx].pvBuffer) + 8,
-                    ((PBYTE)pMessage->pBuffers[token_idx].pvBuffer) + 8, 8))
-            ret = SEC_E_MESSAGE_ALTERED;
-        else
-            ret = SEC_E_OK;
-
-        HeapFree(GetProcessHeap(), 0, local_buff);
-
+    if((ret = ntlm_CreateSignature(helper, &local_desc, token_idx, NTLM_RECV)) != SEC_E_OK)
         return ret;
-    }
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
-    {
-        FIXME("Can't handle encrypted session keys yet. Aborting.\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
-    }
+    if(memcmp(((PBYTE)local_buff[token_idx].pvBuffer) + 8,
+                ((PBYTE)pMessage->pBuffers[token_idx].pvBuffer) + 8, 8))
+        ret = SEC_E_MESSAGE_ALTERED;
+    else
+        ret = SEC_E_OK;
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
-    {
-        const BYTE dummy_sig[] = {0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-            0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        TRACE("Assuming dummy signature.\n");
-        if(memcmp(pMessage->pBuffers[token_idx].pvBuffer, dummy_sig, sizeof(dummy_sig)) != 0)
-        {
-            TRACE("Failed to verify the packet signature. Not a dummy signature?\n");
-            return SEC_E_MESSAGE_ALTERED;
-        }
-        else
-        {
-            pfQOP = &fQOP;
-            return SEC_E_OK;
-        }
-    }
+    HeapFree(GetProcessHeap(), 0, local_buff);
+    pfQOP = &fQOP;
 
-    return SEC_E_UNSUPPORTED_FUNCTION;
+    return ret;
+
 }
 
 /***********************************************************************
