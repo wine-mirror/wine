@@ -22,6 +22,7 @@
 #define _HMAC_MD5_H_
 
 #include <string.h>
+#include "windef.h"
 
 typedef struct
 {
@@ -37,9 +38,9 @@ typedef struct
     unsigned char outer_padding[64];
 } HMAC_MD5_CTX;
 
-void MD5Init( MD5_CTX *ctx );
-void MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len );
-void MD5Final( MD5_CTX *ctx );
+void WINAPI MD5Init( MD5_CTX *ctx );
+void WINAPI MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len );
+void WINAPI MD5Final( MD5_CTX *ctx );
 
 void HMACMD5Init(HMAC_MD5_CTX *ctx, unsigned char *key, unsigned int key_len);
 void HMACMD5Update(HMAC_MD5_CTX *ctx, unsigned char *data, unsigned int data_len);
