@@ -95,7 +95,7 @@ typedef struct
  */
 const struct builtin_class_descr DIALOG_builtin_class =
 {
-    DIALOG_CLASS_ATOMA,  /* name */
+    (LPCSTR)DIALOG_CLASS_ATOM, /* name */
     CS_SAVEBITS | CS_DBLCLKS, /* style  */
     DefDlgProcA,        /* procA */
     DefDlgProcW,        /* procW */
@@ -400,7 +400,7 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     switch(GET_WORD(p))
     {
     case 0x0000:
-        result->className = DIALOG_CLASS_ATOMW;
+        result->className = (LPCWSTR)DIALOG_CLASS_ATOM;
         p++;
         break;
     case 0xffff:

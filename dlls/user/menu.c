@@ -189,7 +189,7 @@ DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFO
  */
 const struct builtin_class_descr MENU_builtin_class =
 {
-    POPUPMENU_CLASS_ATOMA,         /* name */
+    (LPCSTR)POPUPMENU_CLASS_ATOM,  /* name */
     CS_DROPSHADOW | CS_SAVEBITS | CS_DBLCLKS,  /* style */
     NULL,                          /* procA (winproc is Unicode only) */
     PopupMenuWndProc,              /* procW */
@@ -1826,7 +1826,7 @@ static BOOL MENU_ShowPopup( HWND hwndOwner, HMENU hmenu, UINT id,
     if( y < info.rcWork.top ) y = info.rcWork.top;
 
     /* NOTE: In Windows, top menu popup is not owned. */
-    menu->hWnd = CreateWindowExW( 0, POPUPMENU_CLASS_ATOMW, NULL,
+    menu->hWnd = CreateWindowExW( 0, (LPCWSTR)POPUPMENU_CLASS_ATOM, NULL,
                                 WS_POPUP, x, y, width, height,
                                 hwndOwner, 0, (HINSTANCE)GetWindowLongPtrW(hwndOwner, GWLP_HINSTANCE),
                                 (LPVOID)hmenu );

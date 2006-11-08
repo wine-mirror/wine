@@ -454,9 +454,12 @@ typedef struct _PROCESS_HEAP_ENTRY
 
 #define INVALID_ATOM        ((ATOM)0)
 #define MAXINTATOM          0xc000
-#define MAKEINTATOMA(atom)  ((LPCSTR)((ULONG_PTR)((WORD)(atom))))
-#define MAKEINTATOMW(atom)  ((LPCWSTR)((ULONG_PTR)((WORD)(atom))))
-#define MAKEINTATOM  WINELIB_NAME_AW(MAKEINTATOM)
+#ifdef __WINESRC__
+/* force using a cast when inside Wine */
+#define MAKEINTATOM(atom)   ((ULONG_PTR)((WORD)(atom)))
+#else
+#define MAKEINTATOM(atom)   ((LPTSTR)((ULONG_PTR)((WORD)(atom))))
+#endif
 
 typedef struct tagMEMORYSTATUS
 {

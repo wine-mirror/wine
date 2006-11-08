@@ -1961,7 +1961,7 @@ static void test_window_tree(HWND parent, const DWORD *style, const int *order, 
     {
         if (style[i] & DS_CONTROL)
         {
-            child[i] = CreateWindowExA(0, MAKEINTATOMA(32770), "", style[i] & ~WS_VISIBLE,
+            child[i] = CreateWindowExA(0, MAKEINTATOM(32770), "", style[i] & ~WS_VISIBLE,
                                        0,0,0,0, parent, (HMENU)i, 0, NULL);
             if (style[i] & WS_VISIBLE)
                 ShowWindow(child[i], SW_SHOW);

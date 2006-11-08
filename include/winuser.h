@@ -1439,9 +1439,7 @@ typedef struct tagSTYLESTRUCT {
     DWORD   styleNew;
 } STYLESTRUCT, *LPSTYLESTRUCT;
 
-#define WC_DIALOGA MAKEINTATOMA(0x8002)
-#define WC_DIALOGW MAKEINTATOMW(0x8002)
-#define WC_DIALOG  WINELIB_NAME_AW(WC_DIALOG)
+#define WC_DIALOG  MAKEINTATOM(0x8002)
 
   /* Offsets for GetWindowLong() and GetWindowWord() */
 #define GWL_EXSTYLE         (-20)

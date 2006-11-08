@@ -45,7 +45,7 @@ static LRESULT WINAPI IconTitleWndProc( HWND hWnd, UINT msg, WPARAM wParam, LPAR
  */
 const struct builtin_class_descr ICONTITLE_builtin_class =
 {
-    ICONTITLE_CLASS_ATOM, /* name */
+    (LPCSTR)ICONTITLE_CLASS_ATOM, /* name */
     0,                    /* style */
     NULL,                 /* procA (winproc is Unicode only) */
     IconTitleWndProc,     /* procW */
@@ -67,11 +67,11 @@ HWND ICONTITLE_Create( HWND owner )
 
     if (!IsWindowEnabled(owner)) style |= WS_DISABLED;
     if( GetWindowLongA( owner, GWL_STYLE ) & WS_CHILD )
-	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
+	hWnd = CreateWindowExA( 0, (LPCSTR)ICONTITLE_CLASS_ATOM, NULL,
                                 style | WS_CHILD, 0, 0, 1, 1,
                                 GetParent(owner), 0, instance, NULL );
     else
-	hWnd = CreateWindowExA( 0, ICONTITLE_CLASS_ATOM, NULL,
+	hWnd = CreateWindowExA( 0, (LPCSTR)ICONTITLE_CLASS_ATOM, NULL,
                                 style, 0, 0, 1, 1,
                                 owner, 0, instance, NULL );
     WIN_SetOwner( hWnd, owner );  /* MDI depends on this */

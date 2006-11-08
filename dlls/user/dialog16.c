@@ -249,7 +249,7 @@ static LPCSTR DIALOG_ParseTemplate16( LPCSTR p, DLG_TEMPLATE * result )
         result->className = p;
         TRACE(" CLASS '%s'\n", result->className );
     }
-    else result->className = DIALOG_CLASS_ATOMA;
+    else result->className = (LPCSTR)DIALOG_CLASS_ATOM;
     p += strlen(p) + 1;
 
     /* Get the window caption */

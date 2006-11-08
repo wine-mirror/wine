@@ -606,13 +606,13 @@ HRESULT WINAPI EnableTheming(BOOL fEnable)
  */
 HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
 {
-    ATOM oldValue = (ATOM)(size_t)RemovePropW(hwnd, MAKEINTATOMW(aProp));
+    ATOM oldValue = (ATOM)(size_t)RemovePropW(hwnd, (LPCWSTR)MAKEINTATOM(aProp));
     if(oldValue)
         DeleteAtom(oldValue);
     if(pszValue) {
         ATOM atValue = AddAtomW(pszValue);
         if(!atValue
-           || !SetPropW(hwnd, MAKEINTATOMW(aProp), (LPWSTR)MAKEINTATOMW(atValue))) {
+           || !SetPropW(hwnd, (LPCWSTR)MAKEINTATOM(aProp), (LPWSTR)MAKEINTATOM(atValue))) {
             HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
             if(atValue) DeleteAtom(atValue);
             return hr;
@@ -623,7 +623,7 @@ HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
 
 LPWSTR UXTHEME_GetWindowProperty(HWND hwnd, ATOM aProp, LPWSTR pszBuffer, int dwLen)
 {
-    ATOM atValue = (ATOM)(size_t)GetPropW(hwnd, MAKEINTATOMW(aProp));
+    ATOM atValue = (ATOM)(size_t)GetPropW(hwnd, (LPCWSTR)MAKEINTATOM(aProp));
     if(atValue) {
         if(GetAtomNameW(atValue, pszBuffer, dwLen))
             return pszBuffer;
@@ -656,7 +656,7 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
             hTheme = MSSTYLES_OpenThemeClass(pszAppName, pszUseClassList);
     }
     if(IsWindow(hwnd))
-        SetPropW(hwnd, MAKEINTATOMW(atWindowTheme), hTheme);
+        SetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atWindowTheme), hTheme);
     TRACE(" = %p\n", hTheme);
     return hTheme;
 }
@@ -675,7 +675,7 @@ HTHEME WINAPI OpenThemeData(HWND hwnd, LPCWSTR pszClassList)
 HTHEME WINAPI GetWindowTheme(HWND hwnd)
 {
     TRACE("(%p)\n", hwnd);
-    return GetPropW(hwnd, MAKEINTATOMW(atWindowTheme));
+    return GetPropW(hwnd, (LPCWSTR)MAKEINTATOM(atWindowTheme));
 }
 
 /***********************************************************************

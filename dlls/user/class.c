@@ -570,7 +570,7 @@ ATOM WINAPI RegisterClassExW( const WNDCLASSEXW* wc )
 BOOL WINAPI UnregisterClassA( LPCSTR className, HINSTANCE hInstance )
 {
     ATOM atom = HIWORD(className) ? GlobalFindAtomA( className ) : LOWORD(className);
-    return UnregisterClassW( MAKEINTATOMW(atom), hInstance );
+    return UnregisterClassW( (LPCWSTR)MAKEINTATOM(atom), hInstance );
 }
 
 /***********************************************************************
