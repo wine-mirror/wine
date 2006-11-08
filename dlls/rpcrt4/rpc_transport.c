@@ -125,7 +125,7 @@ static RPC_STATUS rpcrt4_conn_listen_pipe(RpcConnection_np *npc)
     return RPC_S_OK;
   }
   npc->listening = FALSE;
-  return RPC_S_SERVER_UNAVAILABLE;
+  return RPC_S_OUT_OF_RESOURCES;
 }
 
 static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pname)
@@ -139,7 +139,10 @@ static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pnam
                                RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
   if (npc->pipe == INVALID_HANDLE_VALUE) {
     WARN("CreateNamedPipe failed with error %ld\n", GetLastError());
-    return RPC_S_SERVER_UNAVAILABLE;
+    if (GetLastError() == ERROR_FILE_EXISTS)
+      return RPC_S_DUPLICATE_ENDPOINT;
+    else
+      return RPC_S_CANT_CREATE_ENDPOINT;
   }
 
   memset(&npc->ovl, 0, sizeof(npc->ovl));
@@ -727,7 +730,7 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
 
 static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *protseq, LPSTR endpoint)
 {
-    RPC_STATUS status;
+    RPC_STATUS status = RPC_S_CANT_CREATE_ENDPOINT;
     int sock;
     int ret;
     struct addrinfo *ai;
@@ -750,7 +753,9 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     {
         ERR("getaddrinfo for port %s failed: %s\n", endpoint,
             gai_strerror(ret));
-        return RPC_S_SERVER_UNAVAILABLE;
+        if ((ret == EAI_SERVICE) || (ret == EAI_NONAME))
+            return RPC_S_INVALID_ENDPOINT_FORMAT;
+        return RPC_S_CANT_CREATE_ENDPOINT;
     }
 
     for (ai_cur = ai; ai_cur; ai_cur = ai_cur->ai_next)
@@ -770,6 +775,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (sock < 0)
         {
             WARN("socket() failed: %s\n", strerror(errno));
+            status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
         }
 
@@ -778,6 +784,10 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         {
             WARN("bind failed: %s\n", strerror(errno));
             close(sock);
+            if (errno == EADDRINUSE)
+              status = RPC_S_DUPLICATE_ENDPOINT;
+            else
+              status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
         }
         status = RPCRT4_CreateConnection((RpcConnection **)&tcpc, TRUE,
@@ -794,6 +804,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         {
             WARN("listen failed: %s\n", strerror(errno));
             close(sock);
+            status = RPC_S_OUT_OF_RESOURCES;
             continue;
         }
         /* need a non-blocking socket, otherwise accept() has a potential
@@ -805,6 +816,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         {
             WARN("couldn't make socket non-blocking, error %d\n", ret);
             close(sock);
+            status = RPC_S_OUT_OF_RESOURCES;
             continue;
         }
         tcpc->sock = sock;
@@ -822,7 +834,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
 
     freeaddrinfo(ai);
     ERR("couldn't listen on port %s\n", endpoint);
-    return RPC_S_SERVER_UNAVAILABLE;
+    return status;
 }
 
 static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
@@ -838,7 +850,7 @@ static RPC_STATUS rpcrt4_conn_tcp_handoff(RpcConnection *old_conn, RpcConnection
   if (ret < 0)
   {
     ERR("Failed to accept a TCP connection: error %d\n", ret);
-    return RPC_S_SERVER_UNAVAILABLE;
+    return RPC_S_OUT_OF_RESOURCES;
   }
   /* reset to blocking behaviour */
   fcntl(ret, F_SETFL, 0);
