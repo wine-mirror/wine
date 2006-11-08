@@ -5788,8 +5788,31 @@ BOOL WINAPI AddPrinterDriverExA( LPSTR pName, DWORD Level,
  */
 BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
 {
-    FIXME("%s %p %s\n", debugstr_a(pName), hWnd, debugstr_a(pPortName));
-    return FALSE;
+    LPWSTR  nameW = NULL;
+    LPWSTR  portW = NULL;
+    INT     len;
+    DWORD   res;
+
+    TRACE("(%s, %p, %s)\n", debugstr_a(pName), hWnd, debugstr_a(pPortName));
+
+    /* convert servername to unicode */
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    /* convert portname to unicode */
+    if (pPortName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pPortName, -1, NULL, 0);
+        portW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pPortName, -1, portW, len);
+    }
+
+    res = ConfigurePortW(nameW, hWnd, portW);
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, portW);
+    return res;
 }
 
 /******************************************************************************
