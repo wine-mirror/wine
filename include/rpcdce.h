@@ -139,6 +139,45 @@ typedef I_RPC_HANDLE *RPC_EP_INQ_HANDLE;
 #define RPC_C_AUTHN_MQ 100
 #define RPC_C_AUTHN_DEFAULT 0xffffffff
 
+/* values for RPC_SECURITY_QOS*::ImpersonationLevel */
+#define RPC_C_IMP_LEVEL_DEFAULT     0
+#define RPC_C_IMP_LEVEL_ANONYMOUS   1
+#define RPC_C_IMP_LEVEL_IDENTIFY    2
+#define RPC_C_IMP_LEVEL_IMPERSONATE 3
+#define RPC_C_IMP_LEVEL_DELEGATE    4
+
+/* values for RPC_SECURITY_QOS*::IdentityTracking */
+#define RPC_C_QOS_IDENTIFY_STATIC   0
+#define RPC_C_QOS_IDENTIFY_DYNAMIC  1
+
+/* flags for RPC_SECURITY_QOS*::Capabilities */
+#define RPC_C_QOS_CAPABILITIES_DEFAULT          0x0
+#define RPC_C_QOS_CAPABILITIES_MUTUAL_AUTH      0x1
+#define RPC_C_QOS_CAPABILITIES_MAKE_FULLSIC     0x2
+#define RPC_C_QOS_CAPABILITIES_ANY_AUTHORITY    0x4
+
+/* values for RPC_SECURITY_QOS*::Version */
+#define RPC_C_SECURITY_QOS_VERSION      1
+#define RPC_C_SECURITY_QOS_VERSION_1    1
+#define RPC_C_SECURITY_QOS_VERSION_2    2
+
+/* flags for RPC_SECURITY_QOS_V2::AdditionalSecurityInfoType */
+#define RPC_C_AUTHN_INFO_TYPE_HTTP  1
+
+/* flags for RPC_HTTP_TRANSPORT_CREDENTIALS::Flags */
+#define RPC_C_HTTP_FLAG_USE_SSL                 0x1
+#define RPC_C_HTTP_FLAG_USE_FIRST_AUTH_SCHEME   0x2
+
+/* values for RPC_HTTP_TRANSPORT_CREDENTIALS::AuthenticationTarget */
+#define RPC_C_HTTP_AUTHN_TARGET_SERVER  1
+#define RPC_C_HTTP_AUTHN_TARGET_PROXY   2
+
+#define RPC_C_HTTP_AUTHN_SCHEME_BASIC       0x01
+#define RPC_C_HTTP_AUTHN_SCHEME_NTLM        0x02
+#define RPC_C_HTTP_AUTHN_SCHEME_PASSPORT    0x04
+#define RPC_C_HTTP_AUTHN_SCHEME_DIGEST      0x08
+#define RPC_C_HTTP_AUTHN_SCHEME_NEGOTIATE   0x10
+
 typedef RPC_STATUS RPC_ENTRY RPC_IF_CALLBACK_FN( RPC_IF_HANDLE InterfaceUuid, void *Context );
 typedef void (__RPC_USER *RPC_AUTH_KEY_RETRIEVAL_FN)();
 
@@ -171,6 +210,26 @@ typedef struct _SEC_WINNT_AUTH_IDENTITY_A
     unsigned long Flags;
 } SEC_WINNT_AUTH_IDENTITY_A, *PSEC_WINNT_AUTH_IDENTITY_A;
 
+typedef struct _RPC_HTTP_TRANSPORT_CREDENTIALS_W
+{
+    SEC_WINNT_AUTH_IDENTITY_W *TransportCredentials;
+    unsigned long Flags;
+    unsigned long AuthenticationTarget;
+    unsigned long NumberOfAuthnSchemes;
+    unsigned long *AuthnSchemes;
+    unsigned short *ServerCertificateSubject;
+} RPC_HTTP_TRANSPORT_CREDENTIALS_W, *PRPC_HTTP_TRANSPORT_CREDENTIALS_W;
+
+typedef struct _RPC_HTTP_TRANSPORT_CREDENTIALS_A
+{
+    SEC_WINNT_AUTH_IDENTITY_A *TransportCredentials;
+    unsigned long Flags;
+    unsigned long AuthenticationTarget;
+    unsigned long NumberOfAuthnSchemes;
+    unsigned long *AuthnSchemes;
+    unsigned char *ServerCertificateSubject;
+} RPC_HTTP_TRANSPORT_CREDENTIALS_A, *PRPC_HTTP_TRANSPORT_CREDENTIALS_A;
+
 typedef struct _RPC_SECURITY_QOS {
     unsigned long Version;
     unsigned long Capabilities;
@@ -178,9 +237,43 @@ typedef struct _RPC_SECURITY_QOS {
     unsigned long ImpersonationType;
 } RPC_SECURITY_QOS, *PRPC_SECURITY_QOS;
 
+typedef struct _RPC_SECURITY_QOS_V2_W
+{
+    unsigned long Version;
+    unsigned long Capabilities;
+    unsigned long IdentityTracking;
+    unsigned long ImpersonationType;
+    unsigned long AdditionalSecurityInfoType;
+    union
+    {
+        RPC_HTTP_TRANSPORT_CREDENTIALS_W *HttpCredentials;
+    } u;
+} RPC_SECURITY_QOS_V2_W, *PRPC_SECURITY_QOS_V2_W;
+
+typedef struct _RPC_SECURITY_QOS_V2_A
+{
+    unsigned long Version;
+    unsigned long Capabilities;
+    unsigned long IdentityTracking;
+    unsigned long ImpersonationType;
+    unsigned long AdditionalSecurityInfoType;
+    union
+    {
+        RPC_HTTP_TRANSPORT_CREDENTIALS_A *HttpCredentials;
+    } u;
+} RPC_SECURITY_QOS_V2_A, *PRPC_SECURITY_QOS_V2_A;
+
 #define _SEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(_SEC_WINNT_AUTH_IDENTITY_)
 #define  SEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(SEC_WINNT_AUTH_IDENTITY_)
 #define PSEC_WINNT_AUTH_IDENTITY WINELIB_NAME_AW(PSEC_WINNT_AUTH_IDENTITY_)
+
+#define RPC_HTTP_TRANSPORT_CREDENTIALS_  WINELIB_NAME_AW(RPC_HTTP_TRANSPORT_CREDENTIALS_)
+#define PRPC_HTTP_TRANSPORT_CREDENTIALS_ WINELIB_NAME_AW(PRPC_HTTP_TRANSPORT_CREDENTIALS_)
+#define _RPC_HTTP_TRANSPORT_CREDENTIALS_ WINELIB_NAME_AW(_RPC_HTTP_TRANSPORT_CREDENTIALS_)
+
+#define RPC_SECURITY_QOS_V2  WINELIB_NAME_AW(RPC_SECURITY_QOS_V2_)
+#define PRPC_SECURITY_QOS_V2 WINELIB_NAME_AW(PRPC_SECURITY_QOS_V2_)
+#define _RPC_SECURITY_QOS_V2 WINELIB_NAME_AW(_RPC_SECURITY_QOS_V2_)
 
 /* SEC_WINNT_AUTH Flags */
 #define SEC_WINNT_AUTH_IDENTITY_ANSI    0x1
