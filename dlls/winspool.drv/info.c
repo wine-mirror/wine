@@ -171,7 +171,7 @@ static const WCHAR PrintersW[] = {'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t','\\',
                                   'P','r','i','n','t','e','r','s',0};
 
-static const WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
+static       WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 
 static const WCHAR user_default_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
                                               'M','i','c','r','o','s','o','f','t','\\',
@@ -184,6 +184,12 @@ static const WCHAR user_printers_reg_key[] = { 'S','o','f','t','w','a','r','e','
                                                'W','i','n','d','o','w','s',' ','N','T','\\',
                                                'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                                'D','e','v','i','c','e','s',0};
+
+static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
+                                        'M','i','c','r','o','s','o','f','t','\\',
+                                        'W','i','n','d','o','w','s',' ','N','T','\\',
+                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                        'P','o','r','t','s',0};
 
 static const WCHAR DefaultEnvironmentW[] = {'W','i','n','e',0};
 static const WCHAR envname_win40W[] = {'W','i','n','d','o','w','s',' ','4','.','0',0};
@@ -212,6 +218,7 @@ static const WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
 static const WCHAR NameW[] = {'N','a','m','e',0};
 static const WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR PortW[] = {'P','o','r','t',0};
+static const WCHAR bs_Ports_bsW[] = {'\\','P','o','r','t','s','\\',0};
 static const WCHAR Print_ProcessorW[] = {'P','r','i','n','t',' ','P','r','o','c','e',
 				   's','s','o','r',0};
 static const WCHAR Printer_DriverW[] = {'P','r','i','n','t','e','r',' ','D','r','i',
@@ -876,6 +883,7 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
  */
 static void monitor_unload(monitor_t * pm)
 {
+    if (pm == NULL) return;
     TRACE("%p (refcount: %d) %s\n", pm, pm->refcount, debugstr_w(pm->name));
 
     EnterCriticalSection(&monitor_handles_cs);
@@ -1097,6 +1105,65 @@ static DWORD monitor_loadall(void)
     }
     TRACE("%d monitors loaded\n", loaded);
     return loaded;
+}
+
+/******************************************************************
+ * monitor_load_by_port [internal]
+ *
+ * load a printmonitor for a given port
+ *
+ * On failure, NULL is returned
+ */
+
+static monitor_t * monitor_load_by_port(LPWSTR portname)
+{
+    HKEY    hroot;
+    HKEY    hport;
+    LPWSTR  buffer;
+    monitor_t * pm = NULL;
+    DWORD   registered = 0;
+    DWORD   id = 0;
+    DWORD   len;
+
+    TRACE("(%s)\n", debugstr_w(portname));
+
+    /* Try the Local Monitor first */
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot) == ERROR_SUCCESS) {
+        if (RegQueryValueExW(hroot, portname, NULL, NULL, NULL, &len) == ERROR_SUCCESS) {
+            /* found the portname */
+            RegCloseKey(hroot);
+            return monitor_load(LocalPortW, NULL);
+        }
+        RegCloseKey(hroot);
+    }
+
+    len = MAX_PATH + lstrlenW(bs_Ports_bsW) + lstrlenW(portname) + 1;
+    buffer = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    if (buffer == NULL) return NULL;
+
+    if (RegOpenKeyW(HKEY_LOCAL_MACHINE, MonitorsW, &hroot) == ERROR_SUCCESS) {
+        EnterCriticalSection(&monitor_handles_cs);
+        RegQueryInfoKeyW(hroot, NULL, NULL, NULL, &registered, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+
+        while ((pm == NULL) && (id < registered)) {
+            buffer[0] = '\0';
+            RegEnumKeyW(hroot, id, buffer, MAX_PATH);
+            TRACE("testing %s\n", debugstr_w(buffer));
+            len = lstrlenW(buffer);
+            lstrcatW(buffer, bs_Ports_bsW);
+            lstrcatW(buffer, portname);
+            if (RegOpenKeyW(hroot, buffer, &hport) == ERROR_SUCCESS) {
+                RegCloseKey(hport);
+                buffer[len] = '\0';             /* use only the Monitor-Name */
+                pm = monitor_load(buffer, NULL);
+            }
+            id++;
+        }
+        LeaveCriticalSection(&monitor_handles_cs);
+        RegCloseKey(hroot);
+    }
+    HeapFree(GetProcessHeap(), 0, buffer);
+    return pm;
 }
 
 /******************************************************************
@@ -5739,14 +5806,47 @@ BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
  *  Success: TRUE
  *  Failure: FALSE
  *
- * BUGS
- *  only a Stub
- *
  */
 BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 {
-    FIXME("%s %p %s\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
-    return FALSE;
+    monitor_t * pm;
+    DWORD   res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+
+    if (pName && pName[0]) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!pPortName) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    /* an empty Portname is Invalid, but can popup a Dialog */
+    if (!pPortName[0]) goto cleanup;
+
+
+    pm = monitor_load_by_port(pPortName);
+    if (pm && pm->monitor) {
+        if (pm->monitor->pfnConfigurePort != NULL) {
+            TRACE("Using %s for %s:\n", debugstr_w(pm->name), debugstr_w(pPortName));
+            res = pm->monitor->pfnConfigurePort(pName, hWnd, pPortName);
+            TRACE("got %d with %d\n", res, GetLastError());
+        }
+        else
+        {
+            FIXME("XcvOpenPort not implemented (dwMonitorSize: %d)\n", pm->dwMonitorSize);
+        }
+    }
+    monitor_unload(pm);
+
+cleanup:
+    /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
+    if (res == ROUTER_UNKNOWN) SetLastError(ERROR_NOT_SUPPORTED);
+    TRACE("returning %d with %d\n", (res == ROUTER_SUCCESS), GetLastError());
+    return (res == ROUTER_SUCCESS);
 }
 
 /******************************************************************************
