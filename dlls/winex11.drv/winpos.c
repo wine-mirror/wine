@@ -1183,7 +1183,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         SendMessageW( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
         data->lock_changes++;
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-                      SWP_NOZORDER );
+                      SWP_NOZORDER | SWP_FRAMECHANGED );
         data->lock_changes--;
     }
     else WIN_ReleasePtr( win );
