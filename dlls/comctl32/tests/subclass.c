@@ -285,9 +285,12 @@ START_TEST(subclass)
     
     hdll = GetModuleHandleA("comctl32.dll");
     assert(hdll);
-    pSetWindowSubclass = (void*)GetProcAddress(hdll, "SetWindowSubclass");
-    pRemoveWindowSubclass = (void*)GetProcAddress(hdll, "RemoveWindowSubclass");
-    pDefSubclassProc = (void*)GetProcAddress(hdll, "DefSubclassProc");
+    /* Functions have to be loaded by ordinal. Only XP and W2K3 export
+     * them by name.
+     */
+    pSetWindowSubclass = (void*)GetProcAddress(hdll, (LPSTR)410);
+    pRemoveWindowSubclass = (void*)GetProcAddress(hdll, (LPSTR)412);
+    pDefSubclassProc = (void*)GetProcAddress(hdll, (LPSTR)413);
     
     if(!pSetWindowSubclass || !pRemoveWindowSubclass || !pDefSubclassProc)
         return;
