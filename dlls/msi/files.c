@@ -473,24 +473,11 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     UINT rc = ERROR_SUCCESS;
     BOOL found = FALSE;
 
-    if (file->Sequence <= mi->last_sequence)
-    {
-        set_file_source(package, file, mi->source);
-        TRACE("Media already ready (%u, %u)\n",file->Sequence,mi->last_sequence);
-        return ERROR_SUCCESS;
-    }
-
     rc = load_media_info(package, file, mi);
     if (rc != ERROR_SUCCESS)
     {
         ERR("Unable to load media info\n");
         return ERROR_FUNCTION_FAILED;
-    }
-
-    if (!file->IsCompressed)
-    {
-        set_file_source(package, file, mi->source);
-        return rc;
     }
 
     if (mi->cabinet)
@@ -521,8 +508,6 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
 
         rc = !extract_cabinet_file(package, mi);
     }
-
-    set_file_source(package, file, mi->source);
 
     return rc;
 }
@@ -636,21 +621,23 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
     mi = msi_alloc_zero( sizeof(struct media_info) );
 
-    /* Pass 2 */
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
         if (file->state != msifs_missing && file->state != msifs_overwrite)
             continue;
 
-        TRACE("Pass 2: %s\n",debugstr_w(file->File));
-
-        rc = ready_media_for_file( package, mi, file );
-        if (rc != ERROR_SUCCESS)
+        if (file->Sequence > mi->last_sequence || mi->is_continuous)
         {
-            ERR("Unable to ready media\n");
-            rc = ERROR_FUNCTION_FAILED;
-            break;
+            rc = ready_media_for_file( package, mi, file );
+            if (rc != ERROR_SUCCESS)
+            {
+                ERR("Failed to ready media\n");
+                rc = ERROR_FUNCTION_FAILED;
+                break;
+            }
         }
+
+        set_file_source(package, file, mi->source);
 
         TRACE("file paths %s to %s\n",debugstr_w(file->SourcePath),
               debugstr_w(file->TargetPath));
