@@ -2393,6 +2393,9 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
 	  }
       }
 
+    if (virtKey >= VK_LEFT && virtKey <= VK_DOWN)
+        e.keycode = XKeysymToKeycode(e.display, virtKey - VK_LEFT + XK_Left);
+
     if ((virtKey>=VK_NUMPAD0) && (virtKey<=VK_NUMPAD9))
         e.keycode = XKeysymToKeycode(e.display, virtKey-VK_NUMPAD0+XK_KP_0);
 
