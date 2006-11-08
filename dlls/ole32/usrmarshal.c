@@ -234,7 +234,7 @@ unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(ULONG *pFlags, unsigned char
  *  structure, of which the first parameter is an unsigned long.
  *  This function is only intended to be called by the RPC runtime.
  */
-void __RPC_USER CLIPFORMAT_UserFree(unsigned long *pFlags, CLIPFORMAT *pCF)
+void __RPC_USER CLIPFORMAT_UserFree(ULONG *pFlags, CLIPFORMAT *pCF)
 {
     /* there is no inverse of the RegisterClipboardFormat function,
      * so nothing to do */
@@ -274,7 +274,7 @@ static unsigned char * __RPC_USER handle_UserUnmarshal(ULONG *pFlags, unsigned c
     return pBuffer + sizeof(RemotableHandle);
 }
 
-static void __RPC_USER handle_UserFree(unsigned long *pFlags, HANDLE *phMenu)
+static void __RPC_USER handle_UserFree(ULONG *pFlags, HANDLE *phMenu)
 {
     /* nothing to do */
 }
@@ -298,7 +298,7 @@ static void __RPC_USER handle_UserFree(unsigned long *pFlags, HANDLE *phMenu)
         return handle_UserUnmarshal(pFlags, pBuffer, (HANDLE *)handle); \
     } \
     \
-    void __RPC_USER type##_UserFree(unsigned long *pFlags, type *handle) \
+    void __RPC_USER type##_UserFree(ULONG *pFlags, type *handle) \
     { \
         TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *handle); \
         return handle_UserFree(pFlags, (HANDLE *)handle); \
@@ -449,7 +449,7 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *p
 /******************************************************************************
  *           HGLOBAL_UserFree [OLE32.@]
  */
-void __RPC_USER HGLOBAL_UserFree(unsigned long *pFlags, HGLOBAL *phGlobal)
+void __RPC_USER HGLOBAL_UserFree(ULONG *pFlags, HGLOBAL *phGlobal)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *phGlobal);
 
@@ -475,7 +475,7 @@ unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *pFlags, unsigned char *p
     return pBuffer;
 }
 
-void __RPC_USER HBITMAP_UserFree(unsigned long *pFlags, HBITMAP *phBmp)
+void __RPC_USER HBITMAP_UserFree(ULONG *pFlags, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
 }
@@ -498,7 +498,7 @@ unsigned char * __RPC_USER HDC_UserUnmarshal(ULONG *pFlags, unsigned char *pBuff
     return pBuffer;
 }
 
-void __RPC_USER HDC_UserFree(unsigned long *pFlags, HDC *phdc)
+void __RPC_USER HDC_UserFree(ULONG *pFlags, HDC *phdc)
 {
     FIXME(":stub\n");
 }
@@ -521,7 +521,7 @@ unsigned char * __RPC_USER HPALETTE_UserUnmarshal(ULONG *pFlags, unsigned char *
     return pBuffer;
 }
 
-void __RPC_USER HPALETTE_UserFree(unsigned long *pFlags, HPALETTE *phPal)
+void __RPC_USER HPALETTE_UserFree(ULONG *pFlags, HPALETTE *phPal)
 {
     FIXME(":stub\n");
 }
@@ -635,7 +635,7 @@ unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned ch
     return pBuffer;
 }
 
-void __RPC_USER HENHMETAFILE_UserFree(unsigned long *pFlags, HENHMETAFILE *phEmf)
+void __RPC_USER HENHMETAFILE_UserFree(ULONG *pFlags, HENHMETAFILE *phEmf)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *phEmf);
 
@@ -805,7 +805,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
     return pBuffer;
 }
 
-void __RPC_USER STGMEDIUM_UserFree(unsigned long *pFlags, STGMEDIUM *pStgMedium)
+void __RPC_USER STGMEDIUM_UserFree(ULONG *pFlags, STGMEDIUM *pStgMedium)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", %p\n", pStgMedium);
 
@@ -830,7 +830,7 @@ unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned
     return pBuffer;
 }
 
-void __RPC_USER ASYNC_STGMEDIUM_UserFree(unsigned long *pFlags, ASYNC_STGMEDIUM *pStgMedium)
+void __RPC_USER ASYNC_STGMEDIUM_UserFree(ULONG *pFlags, ASYNC_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
 }
@@ -853,7 +853,7 @@ unsigned char * __RPC_USER FLAG_STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned 
     return pBuffer;
 }
 
-void __RPC_USER FLAG_STGMEDIUM_UserFree(unsigned long *pFlags, FLAG_STGMEDIUM *pStgMedium)
+void __RPC_USER FLAG_STGMEDIUM_UserFree(ULONG *pFlags, FLAG_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
 }
@@ -876,7 +876,7 @@ unsigned char * __RPC_USER SNB_UserUnmarshal(ULONG *pFlags, unsigned char *pBuff
     return pBuffer;
 }
 
-void __RPC_USER SNB_UserFree(unsigned long *pFlags, SNB *pSnb)
+void __RPC_USER SNB_UserFree(ULONG *pFlags, SNB *pSnb)
 {
     FIXME(":stub\n");
 }

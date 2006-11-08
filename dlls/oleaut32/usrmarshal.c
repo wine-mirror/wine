@@ -128,7 +128,7 @@ unsigned char * WINAPI CLEANLOCALSTORAGE_UserUnmarshal(ULONG *pFlags, unsigned c
     return Buffer + sizeof(DWORD);
 }
 
-void WINAPI CLEANLOCALSTORAGE_UserFree(unsigned long *pFlags, CLEANLOCALSTORAGE *pstr)
+void WINAPI CLEANLOCALSTORAGE_UserFree(ULONG *pFlags, CLEANLOCALSTORAGE *pstr)
 {
     /* Nothing to do */
 }
@@ -197,7 +197,7 @@ unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, 
     return Buffer + sizeof(*header) + sizeof(OLECHAR) * header->len;
 }
 
-void WINAPI BSTR_UserFree(unsigned long *pFlags, BSTR *pstr)
+void WINAPI BSTR_UserFree(ULONG *pFlags, BSTR *pstr)
 {
     TRACE("(%lx,%p) => %p\n", *pFlags, pstr, *pstr);
     if (*pstr)
@@ -277,7 +277,7 @@ static unsigned int get_type_alignment(ULONG *pFlags, VARIANT *pvar)
     return 7;
 }
 
-static unsigned interface_variant_size(unsigned long *pFlags, REFIID riid, VARIANT *pvar)
+static unsigned interface_variant_size(ULONG *pFlags, REFIID riid, VARIANT *pvar)
 {
   ULONG size;
   HRESULT hr;
@@ -295,7 +295,7 @@ static unsigned interface_variant_size(unsigned long *pFlags, REFIID riid, VARIA
   return size;
 }
 
-static unsigned long wire_extra_user_size(unsigned long *pFlags, unsigned long Start, VARIANT *pvar)
+static ULONG wire_extra_user_size(ULONG *pFlags, ULONG Start, VARIANT *pvar)
 {
   if (V_ISARRAY(pvar))
   {
@@ -329,7 +329,7 @@ static unsigned long wire_extra_user_size(unsigned long *pFlags, unsigned long S
 }
 
 /* helper: called for VT_DISPATCH variants to marshal the IDispatch* into the buffer. returns Buffer on failure, new position otherwise */
-static unsigned char* interface_variant_marshal(unsigned long *pFlags, unsigned char *Buffer, REFIID riid, VARIANT *pvar)
+static unsigned char* interface_variant_marshal(ULONG *pFlags, unsigned char *Buffer, REFIID riid, VARIANT *pvar)
 {
   IStream *working; 
   HGLOBAL working_mem;
@@ -378,7 +378,7 @@ static unsigned char* interface_variant_marshal(unsigned long *pFlags, unsigned 
 }
 
 /* helper: called for VT_DISPATCH / VT_UNKNOWN variants to unmarshal the buffer. returns Buffer on failure, new position otherwise */
-static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigned char *Buffer, REFIID riid, VARIANT *pvar)
+static unsigned char *interface_variant_unmarshal(ULONG *pFlags, unsigned char *Buffer, REFIID riid, VARIANT *pvar)
 {
   IStream *working;
   HGLOBAL working_mem;
@@ -631,7 +631,7 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
     return Pos;
 }
 
-void WINAPI VARIANT_UserFree(unsigned long *pFlags, VARIANT *pvar)
+void WINAPI VARIANT_UserFree(ULONG *pFlags, VARIANT *pvar)
 {
   VARTYPE vt = V_VT(pvar);
   PVOID ref = NULL;
@@ -1070,7 +1070,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     return Buffer;
 }
 
-void WINAPI LPSAFEARRAY_UserFree(unsigned long *pFlags, LPSAFEARRAY *ppsa)
+void WINAPI LPSAFEARRAY_UserFree(ULONG *pFlags, LPSAFEARRAY *ppsa)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *ppsa);
 
