@@ -90,7 +90,6 @@ static void testProps(void)
     /* test setting one that I can't set */
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PID_DICTIONARY;
-    PropVariantClear(&var);
     var.vt = VT_I4;
     U(var).lVal = 1;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
