@@ -81,6 +81,11 @@ static const ULONG CRC_table[256] =
     0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d
 };
 
+static const char client_to_server_sign_constant[] = "session key to client-to-server signing key magic constant";
+static const char client_to_server_seal_constant[] = "session key to client-to-server sealing key magic constant";
+static const char server_to_client_sign_constant[] = "session key to server-to-client signing key magic constant";
+static const char server_to_client_seal_constant[] = "session key to server-to-client sealing key magic constant";
+
 typedef struct
 {
     unsigned int buf[4];
@@ -89,9 +94,21 @@ typedef struct
     unsigned char digest[16];
 } MD4_CTX;
 
+/* And now the same with a different memory layout. */
+typedef struct
+{
+    unsigned int i[2];
+    unsigned int buf[4];
+    unsigned char in[64];
+    unsigned char digest[16];
+} MD5_CTX;
+
 VOID WINAPI MD4Init( MD4_CTX *ctx );
 VOID WINAPI MD4Update( MD4_CTX *ctx, const unsigned char *buf, unsigned int len );
 VOID WINAPI MD4Final( MD4_CTX *ctx );
+VOID WINAPI MD5Init( MD5_CTX *ctx );
+VOID WINAPI MD5Update( MD5_CTX *ctx, const unsigned char *buf, unsigned int len );
+VOID WINAPI MD5Final( MD5_CTX *ctx );
 
 ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc)
 {
@@ -124,6 +141,51 @@ SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE se
     MD4Final(&ctx);
 
     memcpy(session_key, ctx.digest, 0x10);
+
+    return SEC_E_OK;
+}
+
+void SECUR32_CalcNTLMv2Subkey(PBYTE session_key, const char *magic, PBYTE subkey)
+{
+    MD5_CTX ctx;
+
+    MD5Init(&ctx);
+    MD5Update(&ctx, session_key, 16);
+    MD5Update(&ctx, (unsigned char*)magic, lstrlenA(magic)+1);
+    MD5Final(&ctx);
+    memcpy(subkey, ctx.digest, 16);
+}
+
+/* This assumes we do have a valid NTLM2 user session key */
+SECURITY_STATUS SECUR32_CreateNTLMv2SubKeys(PNegoHelper helper)
+{
+    helper->crypt.ntlm2.send_sign_key = HeapAlloc(GetProcessHeap(), 0, 16);
+    helper->crypt.ntlm2.send_seal_key = HeapAlloc(GetProcessHeap(), 0, 16);
+    helper->crypt.ntlm2.recv_sign_key = HeapAlloc(GetProcessHeap(), 0, 16);
+    helper->crypt.ntlm2.recv_seal_key = HeapAlloc(GetProcessHeap(), 0, 16);
+
+    if(helper->mode == NTLM_CLIENT)
+    {
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_sign_constant,
+                helper->crypt.ntlm2.send_sign_key);
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_seal_constant,
+                helper->crypt.ntlm2.send_seal_key);
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_sign_constant,
+                helper->crypt.ntlm2.recv_sign_key);
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_seal_constant,
+                helper->crypt.ntlm2.recv_seal_key);
+    }
+    else
+    {
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_sign_constant,
+                helper->crypt.ntlm2.send_sign_key);
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, server_to_client_seal_constant,
+                helper->crypt.ntlm2.send_seal_key);
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_sign_constant,
+                helper->crypt.ntlm2.recv_sign_key);
+        SECUR32_CalcNTLMv2Subkey(helper->session_key, client_to_server_seal_constant,
+                helper->crypt.ntlm2.recv_seal_key);
+    }
 
     return SEC_E_OK;
 }

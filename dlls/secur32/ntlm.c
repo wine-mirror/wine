@@ -28,6 +28,7 @@
 #include "sspi.h"
 #include "lm.h"
 #include "secur32_priv.h"
+#include "hmac_md5.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
@@ -528,10 +529,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                         max_len-1, &bin_len)) != SEC_E_OK)
             goto isc_end;
 
-        /* Mask away the NTLMv2 flag, as well as the key exchange flag */
-        bin[14] &= ~0x08;
-        bin[15] &= ~0x40;
-
         /* put the decoded client blob into the out buffer */
 
         ret = SEC_I_CONTINUE_NEEDED;
@@ -703,6 +700,15 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         helper->crypt.ntlm.a4i = SECUR32_arc4Alloc();
         SECUR32_arc4Init(helper->crypt.ntlm.a4i, helper->session_key, 16);
         helper->crypt.ntlm.seq_num = 0l;
+        SECUR32_CreateNTLMv2SubKeys(helper);
+        helper->crypt.ntlm2.send_a4i = SECUR32_arc4Alloc();
+        helper->crypt.ntlm2.recv_a4i = SECUR32_arc4Alloc();
+        SECUR32_arc4Init(helper->crypt.ntlm2.send_a4i,
+                (BYTE *)helper->crypt.ntlm2.send_seal_key, 16);
+        SECUR32_arc4Init(helper->crypt.ntlm2.recv_a4i,
+               (BYTE *)helper->crypt.ntlm2.recv_seal_key, 16);
+        helper->crypt.ntlm2.send_seq_no = 0l;
+        helper->crypt.ntlm2.recv_seq_no = 0l;
     }
 
     if(ret != SEC_I_CONTINUE_NEEDED)
@@ -1093,6 +1099,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContex
     SECUR32_arc4Cleanup(helper->crypt.ntlm.a4i);
     HeapFree(GetProcessHeap(), 0, helper->session_key);
     helper->valid_session_key = FALSE;
+    SECUR32_arc4Cleanup(helper->crypt.ntlm2.send_a4i);
+    SECUR32_arc4Cleanup(helper->crypt.ntlm2.recv_a4i);
+    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.send_sign_key);
+    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.send_seal_key);
+    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.recv_sign_key);
+    HeapFree(GetProcessHeap(), 0, helper->crypt.ntlm2.recv_seal_key);
 
     return SEC_E_OK;
 }
@@ -1229,16 +1241,84 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
 {
     ULONG sign_version = 1;
     UINT i;
-    TRACE("%p, %p, %d\n", helper, pMessage, direction);
+    PBYTE sig;
+    TRACE("%p, %p, %d, %d\n", helper, pMessage, token_idx, direction);
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2 && 
+    sig = pMessage->pBuffers[token_idx].pvBuffer;
+
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2 &&
             helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        BYTE digest[16];
+        BYTE seq_no[4];
+        HMAC_MD5_CTX hmac_md5_ctx;
+
+        TRACE("Encrypting NTLM2 style\n");
+
+        if(direction == NTLM_SEND)
+        {
+            TRACE("Signing for sending\n");
+            seq_no[0] = (helper->crypt.ntlm2.send_seq_no >>  0) & 0xff;
+            seq_no[1] = (helper->crypt.ntlm2.send_seq_no >>  8) & 0xff;
+            seq_no[2] = (helper->crypt.ntlm2.send_seq_no >> 16) & 0xff;
+            seq_no[3] = (helper->crypt.ntlm2.send_seq_no >> 24) & 0xff;
+
+            ++(helper->crypt.ntlm2.send_seq_no);
+
+            TRACE("HMACMD5Init...\n");
+            HMACMD5Init(&hmac_md5_ctx, helper->crypt.ntlm2.send_sign_key, 16);
+            TRACE("Done\n");
+        }
+        else
+        {
+            seq_no[0] = (helper->crypt.ntlm2.recv_seq_no >>  0) & 0xff;
+            seq_no[1] = (helper->crypt.ntlm2.recv_seq_no >>  8) & 0xff;
+            seq_no[2] = (helper->crypt.ntlm2.recv_seq_no >> 16) & 0xff;
+            seq_no[3] = (helper->crypt.ntlm2.recv_seq_no >> 24) & 0xff;
+
+            ++(helper->crypt.ntlm2.recv_seq_no);
+
+            HMACMD5Init(&hmac_md5_ctx, helper->crypt.ntlm2.recv_sign_key, 16);
+        }
+
+        TRACE("Starting the update loop\n");
+
+        HMACMD5Update(&hmac_md5_ctx, seq_no, 4);
+        for( i = 0; i < pMessage->cBuffers; ++i )
+        {
+            if(pMessage->pBuffers[i].BufferType & SECBUFFER_DATA)
+                HMACMD5Update(&hmac_md5_ctx, (BYTE *)pMessage->pBuffers[i].pvBuffer,
+                        pMessage->pBuffers[i].cbBuffer);
+        }
+
+        HMACMD5Final(&hmac_md5_ctx, digest);
+
+        TRACE("After HMACMD5Final\n");
+
+        if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
+        {
+            if(direction == NTLM_SEND)
+                SECUR32_arc4Process(helper->crypt.ntlm2.send_a4i, digest, 8);
+            else
+                SECUR32_arc4Process(helper->crypt.ntlm2.recv_a4i, digest, 8);
+        }
+
+        /* The NTLM2 signature is the sign version */
+        sig[ 0] = (sign_version >>  0) & 0xff;
+        sig[ 1] = (sign_version >>  8) & 0xff;
+        sig[ 2] = (sign_version >> 16) & 0xff;
+        sig[ 3] = (sign_version >> 24) & 0xff;
+        /* The first 8 bytes of the digest */
+        memcpy(sig+4, digest, 8);
+        /* And the sequence number */
+        memcpy(sig+12, seq_no, 4);
+
+        pMessage->pBuffers[token_idx].cbBuffer = 16;
+
+        return SEC_E_OK;
     }
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
-        PBYTE sig = pMessage->pBuffers[token_idx].pvBuffer;
         ULONG crc = 0U;
 
         for(i=0; i < pMessage->cBuffers; ++i)

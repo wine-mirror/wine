@@ -77,6 +77,16 @@ typedef struct _NegoHelper {
             ULONG seq_num;
             arc4_info *a4i;
         } ntlm;
+        struct {
+            BYTE *send_sign_key;
+            BYTE *send_seal_key;
+            BYTE *recv_sign_key;
+            BYTE *recv_seal_key;
+            ULONG send_seq_no;
+            ULONG recv_seq_no;
+            arc4_info *send_a4i;
+            arc4_info *recv_a4i;
+        } ntlm2;
     } crypt;
 } NegoHelper, *PNegoHelper;
 
@@ -141,6 +151,7 @@ SECURITY_STATUS decodeBase64(char *in_buf, int in_len, BYTE *out_buf,
 /* Functions from util.c */
 ULONG ComputeCrc32(const BYTE *pData, INT iLen, ULONG initial_crc);
 SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE session_key);
+SECURITY_STATUS SECUR32_CreateNTLMv2SubKeys(PNegoHelper helper);
 arc4_info *SECUR32_arc4Alloc(void);
 void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen);
 void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length);
