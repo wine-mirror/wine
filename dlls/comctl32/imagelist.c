@@ -1884,97 +1884,80 @@ static int may_use_dibsection(HDC hdc) {
 #endif
 
 /* helper for ImageList_Read, see comments below */
-static HBITMAP _read_bitmap(LPSTREAM pstm,int ilcFlag,int cx,int cy) {
-    HDC                        xdc = 0, hBitmapDC =0;
+static BOOL _read_bitmap(HIMAGELIST himl, HDC hdcIml, LPSTREAM pstm, int ilcFlag)
+{
+    HDC                 xdc = 0;
     BITMAPFILEHEADER	bmfh;
     BITMAPINFOHEADER	bmih;
     int			bitsperpixel,palspace,longsperline,width,height;
-    LPBITMAPINFOHEADER	bmihc = NULL;
-    int			result = 0;
-    HBITMAP            hbitmap = 0, hDIB = 0;
+    LPBITMAPINFO       bmi = NULL;
+    int                result = FALSE;
+    HBITMAP            hDIB = 0;
     LPBYTE             bits = NULL;
+    int i, j, nheight, nRows, nCols;
+    POINT pt;
+    int cy = himl->cy;
 
-    if (!SUCCEEDED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL))	||
-    	(bmfh.bfType != (('M'<<8)|'B'))					||
-    	!SUCCEEDED(IStream_Read ( pstm, &bmih, sizeof(bmih), NULL))	||
-    	(bmih.biSize != sizeof(bmih))
-    )
+    if (!SUCCEEDED(IStream_Read ( pstm, &bmfh, sizeof(bmfh), NULL)))
+        return result;
+
+    if (bmfh.bfType != (('M'<<8)|'B'))
+        return result;
+
+    if (!SUCCEEDED(IStream_Read ( pstm, &bmih, sizeof(bmih), NULL)))
+        return result;
+
+    if ((bmih.biSize != sizeof(bmih)))
 	return 0;
 
     bitsperpixel = bmih.biPlanes * bmih.biBitCount;
     if (bitsperpixel<=8)
-    	palspace = (1<<bitsperpixel)*sizeof(RGBQUAD);
+        palspace = (1<<bitsperpixel)*sizeof(RGBQUAD);
     else
-    	palspace = 0;
+        palspace = 0;
     width = bmih.biWidth;
     height = bmih.biHeight;
-    bmihc = (LPBITMAPINFOHEADER)LocalAlloc(LMEM_ZEROINIT,sizeof(bmih)+palspace);
-    if (!bmihc) goto ret1;
-    memcpy(bmihc,&bmih,sizeof(bmih));
-    longsperline	= ((width*bitsperpixel+31)&~0x1f)>>5;
-    bmihc->biSizeImage	= (longsperline*height)<<2;
+    bmi = Alloc(sizeof(bmih)+palspace);
+    if (!bmi)
+        return result;
+
+    memcpy(bmi, &bmih, sizeof(bmih));
+    longsperline = ((width*bitsperpixel+31)&~0x1f)>>5;
+    bmi->bmiHeader.biSizeImage = (longsperline*height)<<2;
 
     /* read the palette right after the end of the bitmapinfoheader */
-    if (palspace)
-	if (!SUCCEEDED(IStream_Read ( pstm, bmihc+1, palspace, NULL)))
-	    goto ret1;
+    if (palspace && !SUCCEEDED(IStream_Read(pstm, bmi->bmiColors, palspace, NULL)))
+	goto error;
 
     xdc = GetDC(0);
-#if 0 /* Magic for NxM -> 1x(N*M) not implemented for DIB Sections */
-    if ((bitsperpixel>1) &&
-	((ilcFlag!=ILC_COLORDDB) && (!ilcFlag || may_use_dibsection(xdc)))
-     ) {
-	hbitmap = CreateDIBSection(xdc,(BITMAPINFO*)bmihc,0,(LPVOID*)&bits,0,0);
-	if (!hbitmap)
-	    goto ret1;
-	if (!SUCCEEDED(IStream_Read( pstm, bits, bmihc->biSizeImage, NULL)))
-	    goto ret1;
-	result = 1;
-    } else
-#endif
-    {
-       int i,nwidth,nheight,nRows;
 
-	nwidth	= width*(height/cy);
-	nheight	= cy;
-        nRows   = (height/cy);
+    nheight = cy;
+    nRows = height/cy;
+    nCols = width/himl->cx;
 
-	if (bitsperpixel==1)
-	    hbitmap = CreateBitmap(nwidth,nheight,1,1,NULL);
-	else
-	    hbitmap = CreateCompatibleBitmap(xdc,nwidth,nheight);
+    hDIB = CreateDIBSection(xdc, bmi, 0, (LPVOID*) &bits, 0, 0);
+    if (!hDIB)
+        goto error;
+    if (!SUCCEEDED(IStream_Read(pstm, bits, bmi->bmiHeader.biSizeImage, NULL)))
+        goto error;
 
-       hDIB = CreateDIBSection(xdc,(BITMAPINFO*)bmihc,0,(LPVOID*)&bits,0,0);
-       if (!hDIB)
-           goto ret1;
-       if (!SUCCEEDED(IStream_Read( pstm, bits, bmihc->biSizeImage, NULL)))
-           goto ret1;
-
-        hBitmapDC = CreateCompatibleDC(0);
-        SelectObject(hBitmapDC, hbitmap);
-
-	/* Copy the NxM bitmap into a 1x(N*M) bitmap we need, linewise */
-	/* Do not forget that windows bitmaps are bottom->top */
-        TRACE("nRows=%d\n", nRows);
-        for (i=0; i < nRows; i++){
-            StretchDIBits(hBitmapDC, width*i, 0, width, cy, 0, cy*(nRows-1-i), width, cy, bits,
-                (BITMAPINFO*)bmihc, DIB_RGB_COLORS, SRCCOPY);
+    /* Copy the NxM bitmap into a 1x(N*M) bitmap we need, linewise */
+    /* Do not forget that windows bitmaps are bottom->top */
+    for (i=0; i < nRows; i++) {
+        for (j=0; j < nCols; j++) {
+            imagelist_point_from_index(himl, i*nCols + j, &pt);
+            StretchDIBits(hdcIml, pt.x, pt.y, himl->cx, cy,
+                      j*himl->cx, (nRows - 1 - i)*himl->cy, himl->cx, cy, bits,
+                      bmi, DIB_RGB_COLORS, SRCCOPY);
         }
-        
-	result = 1;
     }
-ret1:
+
+    result = TRUE;
+error:
     if (xdc)	ReleaseDC(0,xdc);
-    if (bmihc)	LocalFree((HLOCAL)bmihc);
+    Free(bmi);
     if (hDIB)   DeleteObject(hDIB);
-    if (hBitmapDC)   DeleteDC(hBitmapDC);
-    if (!result) {
-	if (hbitmap) {
-	    DeleteObject(hbitmap);
-	    hbitmap = 0;
-	}
-    }
-    return hbitmap;
+    return result;
 }
 
 /*************************************************************************
@@ -1990,11 +1973,11 @@ ret1:
  *     Failure: NULL
  *
  * The format is like this:
- * 	ILHEAD 			ilheadstruct;
+ *	ILHEAD			ilheadstruct;
  *
  * for the color image part:
- * 	BITMAPFILEHEADER	bmfh;
- * 	BITMAPINFOHEADER	bmih;
+ *	BITMAPFILEHEADER	bmfh;
+ *	BITMAPINFOHEADER	bmih;
  * only if it has a palette:
  *	RGBQUAD		rgbs[nr_of_paletted_colors];
  *
@@ -2018,51 +2001,32 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
     HBITMAP	hbmColor=0,hbmMask=0;
     int		i;
 
+    TRACE("%p\n", pstm);
+
     if (!SUCCEEDED(IStream_Read (pstm, &ilHead, sizeof(ILHEAD), NULL)))
-    	return NULL;
+	return NULL;
     if (ilHead.usMagic != (('L' << 8) | 'I'))
 	return NULL;
     if (ilHead.usVersion != 0x101) /* probably version? */
 	return NULL;
 
-#if 0
-    FIXME("	ilHead.cCurImage = %d\n",ilHead.cCurImage);
-    FIXME("	ilHead.cMaxImage = %d\n",ilHead.cMaxImage);
-    FIXME("	ilHead.cGrow = %d\n",ilHead.cGrow);
-    FIXME("	ilHead.cx = %d\n",ilHead.cx);
-    FIXME("	ilHead.cy = %d\n",ilHead.cy);
-    FIXME("	ilHead.flags = %x\n",ilHead.flags);
-    FIXME("	ilHead.ovls[0] = %d\n",ilHead.ovls[0]);
-    FIXME("	ilHead.ovls[1] = %d\n",ilHead.ovls[1]);
-    FIXME("	ilHead.ovls[2] = %d\n",ilHead.ovls[2]);
-    FIXME("	ilHead.ovls[3] = %d\n",ilHead.ovls[3]);
-#endif
-
-    hbmColor = _read_bitmap(pstm,ilHead.flags & ~ILC_MASK,ilHead.cx,ilHead.cy);
-    if (!hbmColor) {
-	WARN("failed to read bitmap from stream\n");
-	return NULL;
-    }
-    if (ilHead.flags & ILC_MASK) {
-	hbmMask = _read_bitmap(pstm,0,ilHead.cx,ilHead.cy);
-	if (!hbmMask) {
-	    DeleteObject(hbmColor);
-	    return NULL;
-	}
-    }
-
-    himl = ImageList_Create (
-		    ilHead.cx,
-		    ilHead.cy,
-		    ilHead.flags,
-		    1,		/* initial */
-		    ilHead.cGrow
-    );
+    himl = ImageList_Create(ilHead.cx, ilHead.cy, ilHead.flags, ilHead.cCurImage, ilHead.cMaxImage);
     if (!himl) {
 	DeleteObject(hbmColor);
 	DeleteObject(hbmMask);
 	return NULL;
     }
+    if (!_read_bitmap(himl, himl->hdcImage, pstm, ilHead.flags & ~ILC_MASK)) {
+	WARN("failed to read bitmap from stream\n");
+	return NULL;
+    }
+    if (ilHead.flags & ILC_MASK) {
+	if (!_read_bitmap(himl, himl->hdcMask, pstm, 0)) {
+	    DeleteObject(hbmColor);
+	    return NULL;
+	}
+    }
+
     SelectObject(himl->hdcImage, hbmColor);
     DeleteObject(himl->hbmImage);
     himl->hbmImage = hbmColor;
@@ -2076,7 +2040,7 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 
     ImageList_SetBkColor(himl,ilHead.bkcolor);
     for (i=0;i<4;i++)
-    	ImageList_SetOverlayImage(himl,ilHead.ovls[i],i+1);
+	ImageList_SetOverlayImage(himl,ilHead.ovls[i],i+1);
     return himl;
 }
 
