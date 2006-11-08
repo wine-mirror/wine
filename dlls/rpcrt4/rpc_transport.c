@@ -799,7 +799,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
             continue;
         }
 
-        ret = listen(sock, 10);
+        ret = listen(sock, protseq->MaxCalls);
         if (ret < 0)
         {
             WARN("listen failed: %s\n", strerror(errno));
