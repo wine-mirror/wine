@@ -139,6 +139,7 @@ SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE se
 arc4_info *SECUR32_arc4Alloc(void);
 void SECUR32_arc4Init(arc4_info *a4i, const BYTE *key, unsigned int keyLen);
 void SECUR32_arc4Process(arc4_info *a4i, BYTE *inoutString, unsigned int length);
+void SECUR32_arc4Cleanup(arc4_info *a4i);
 
 /* NTLMSSP flags indicating the negotiated features */
 #define NTLMSSP_NEGOTIATE_UNICODE                   0x00000001

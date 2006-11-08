@@ -690,8 +690,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
             }
             TRACE("Session key is %s\n", debugstr_a(buffer+3));
             helper->valid_session_key = TRUE;
-            if(!helper->session_key)
-                helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
+            helper->session_key = HeapAlloc(GetProcessHeap(), 0, bin_len);
             if(!helper->session_key)
             {
                 TRACE("Failed to allocate memory for session key\n");
@@ -1036,8 +1035,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcceptSecurityContext(
                 }
                 TRACE("Session key is %s\n", debugstr_a(buffer+3));
                 helper->valid_session_key = TRUE;
-                if(!helper->session_key)
-                    helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
+                helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
                 if(!helper->session_key)
                 {
                     TRACE("Failed to allocate memory for session key\n");
@@ -1081,20 +1079,22 @@ static SECURITY_STATUS SEC_ENTRY ntlm_CompleteAuthToken(PCtxtHandle phContext,
  */
 static SECURITY_STATUS SEC_ENTRY ntlm_DeleteSecurityContext(PCtxtHandle phContext)
 {
-    SECURITY_STATUS ret;
+    PNegoHelper helper;
 
     TRACE("%p\n", phContext);
-    if (phContext)
-    {
-        phContext->dwUpper = 0;
-        phContext->dwLower = 0;
-        ret = SEC_E_OK;
-    }
-    else
-    {
-        ret = SEC_E_INVALID_HANDLE;
-    }
-    return ret;
+    if (!phContext)
+        return SEC_E_INVALID_HANDLE;
+
+    helper = (PNegoHelper)phContext->dwLower;
+
+    phContext->dwUpper = 0;
+    phContext->dwLower = 0;
+
+    SECUR32_arc4Cleanup(helper->crypt.ntlm.a4i);
+    HeapFree(GetProcessHeap(), 0, helper->session_key);
+    helper->valid_session_key = FALSE;
+
+    return SEC_E_OK;
 }
 
 /***********************************************************************

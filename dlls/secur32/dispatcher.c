@@ -258,7 +258,6 @@ void cleanup_helper(PNegoHelper helper)
         return;
 
     HeapFree(GetProcessHeap(), 0, helper->com_buf);
-    HeapFree(GetProcessHeap(), 0, helper->session_key);
 
     /* closing stdin will terminate ntlm_auth */
     close(helper->pipe_out);
