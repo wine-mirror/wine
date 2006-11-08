@@ -91,7 +91,7 @@ ULONG WINAPI CLEANLOCALSTORAGE_UserSize(ULONG *pFlags, ULONG Start, CLEANLOCALST
     return Start + sizeof(DWORD);
 }
 
-unsigned char * WINAPI CLEANLOCALSTORAGE_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, CLEANLOCALSTORAGE *pstg)
+unsigned char * WINAPI CLEANLOCALSTORAGE_UserMarshal(ULONG *pFlags, unsigned char *Buffer, CLEANLOCALSTORAGE *pstg)
 {
     ALIGN_POINTER(Buffer, 3);
     *(DWORD*)Buffer = pstg->flags;
@@ -152,7 +152,7 @@ ULONG WINAPI BSTR_UserSize(ULONG *pFlags, ULONG Start, BSTR *pstr)
     return Start;
 }
 
-unsigned char * WINAPI BSTR_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, BSTR *pstr)
+unsigned char * WINAPI BSTR_UserMarshal(ULONG *pFlags, unsigned char *Buffer, BSTR *pstr)
 {
     bstr_wire_t *header;
     DWORD len = SysStringByteLen(*pstr);
@@ -447,10 +447,10 @@ ULONG WINAPI VARIANT_UserSize(ULONG *pFlags, ULONG Start, VARIANT *pvar)
     return Start;
 }
 
-unsigned char * WINAPI VARIANT_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, VARIANT *pvar)
+unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer, VARIANT *pvar)
 {
     variant_wire_t *header;
-    unsigned long type_size;
+    ULONG type_size;
     int align;
     unsigned char *Pos;
 
@@ -820,7 +820,7 @@ ULONG WINAPI LPSAFEARRAY_UserSize(ULONG *pFlags, ULONG StartingSize, LPSAFEARRAY
     return size;
 }
 
-unsigned char * WINAPI LPSAFEARRAY_UserMarshal(unsigned long *pFlags, unsigned char *Buffer, LPSAFEARRAY *ppsa)
+unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buffer, LPSAFEARRAY *ppsa)
 {
     HRESULT hr;
 

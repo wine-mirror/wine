@@ -124,7 +124,7 @@ ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG StartingSize, CLIPFORM
  *  the first parameter is an unsigned long.
  *  This function is only intended to be called by the RPC runtime.
  */
-unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
+unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, CLIPFORMAT *pCF)
 {
     wireCLIPFORMAT wirecf = (wireCLIPFORMAT)pBuffer;
 
@@ -251,7 +251,7 @@ static ULONG __RPC_USER handle_UserSize(ULONG *pFlags, ULONG StartingSize, HANDL
     return StartingSize + sizeof(RemotableHandle);
 }
 
-static unsigned char * __RPC_USER handle_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, HANDLE *handle)
+static unsigned char * __RPC_USER handle_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HANDLE *handle)
 {
     RemotableHandle *remhandle = (RemotableHandle *)pBuffer;
     if (LOWORD(*pFlags) == MSHCTX_DIFFERENTMACHINE)
@@ -286,7 +286,7 @@ static void __RPC_USER handle_UserFree(unsigned long *pFlags, HANDLE *phMenu)
         return handle_UserSize(pFlags, StartingSize, (HANDLE *)handle); \
     } \
     \
-    unsigned char * __RPC_USER type##_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, type *handle) \
+    unsigned char * __RPC_USER type##_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
     { \
         TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *handle); \
         return handle_UserMarshal(pFlags, pBuffer, (HANDLE *)handle); \
@@ -338,7 +338,7 @@ ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *ph
     return size;
 }
 
-unsigned char * __RPC_USER HGLOBAL_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
+unsigned char * __RPC_USER HGLOBAL_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *phGlobal);
 
@@ -463,7 +463,7 @@ ULONG __RPC_USER HBITMAP_UserSize(ULONG *pFlags, ULONG StartingSize, HBITMAP *ph
     return StartingSize;
 }
 
-unsigned char * __RPC_USER HBITMAP_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
+unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -486,7 +486,7 @@ ULONG __RPC_USER HDC_UserSize(ULONG *pFlags, ULONG StartingSize, HDC *phdc)
     return StartingSize;
 }
 
-unsigned char * __RPC_USER HDC_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, HDC *phdc)
+unsigned char * __RPC_USER HDC_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HDC *phdc)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -509,7 +509,7 @@ ULONG __RPC_USER HPALETTE_UserSize(ULONG *pFlags, ULONG StartingSize, HPALETTE *
     return StartingSize;
 }
 
-unsigned char * __RPC_USER HPALETTE_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, HPALETTE *phPal)
+unsigned char * __RPC_USER HPALETTE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HPALETTE *phPal)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -553,7 +553,7 @@ ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHME
     return size;
 }
 
-unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
+unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *phEmf);
 
@@ -693,7 +693,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
     return size;
 }
 
-unsigned char * __RPC_USER STGMEDIUM_UserMarshal(unsigned long *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
+unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
 {
     TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, pStgMedium);
 
@@ -818,7 +818,7 @@ ULONG __RPC_USER ASYNC_STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, ASY
     return StartingSize;
 }
 
-unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserMarshal(  unsigned long *pFlags, unsigned char *pBuffer, ASYNC_STGMEDIUM *pStgMedium)
+unsigned char * __RPC_USER ASYNC_STGMEDIUM_UserMarshal(  ULONG *pFlags, unsigned char *pBuffer, ASYNC_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -841,7 +841,7 @@ ULONG __RPC_USER FLAG_STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, FLAG
     return StartingSize;
 }
 
-unsigned char * __RPC_USER FLAG_STGMEDIUM_UserMarshal(  unsigned long *pFlags, unsigned char *pBuffer, FLAG_STGMEDIUM *pStgMedium)
+unsigned char * __RPC_USER FLAG_STGMEDIUM_UserMarshal(  ULONG *pFlags, unsigned char *pBuffer, FLAG_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
     return pBuffer;
@@ -864,7 +864,7 @@ ULONG __RPC_USER SNB_UserSize(ULONG *pFlags, ULONG StartingSize, SNB *pSnb)
     return StartingSize;
 }
 
-unsigned char * __RPC_USER SNB_UserMarshal(  unsigned long *pFlags, unsigned char *pBuffer, SNB *pSnb)
+unsigned char * __RPC_USER SNB_UserMarshal(  ULONG *pFlags, unsigned char *pBuffer, SNB *pSnb)
 {
     FIXME(":stub\n");
     return pBuffer;
