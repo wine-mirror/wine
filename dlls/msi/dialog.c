@@ -920,6 +920,7 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     struct msi_scrolltext_info *info;
     msi_control *control;
     HMODULE hRichedit;
+    LPCWSTR text;
     DWORD style;
 
     info = msi_alloc( sizeof *info );
@@ -949,7 +950,9 @@ static UINT msi_dialog_scrolltext_control( msi_dialog *dialog, MSIRECORD *rec )
     SetPropW( control->hwnd, szButtonData, info );
 
     /* add the text into the richedit */
-    msi_scrolltext_add_text( control, MSI_RecordGetString( rec, 10 ) );
+    text = MSI_RecordGetString( rec, 10 );
+    if (text)
+        msi_scrolltext_add_text( control, text );
 
     return ERROR_SUCCESS;
 }
