@@ -402,6 +402,7 @@ HEADER_DrawItem (HWND hwnd, HDC hdc, INT iItem, BOOL bHotTrack, LRESULT lCDFlags
 	if (phdi->fmt & HDF_STRING) {
 	    RECT textRect;
 
+            SetRectEmpty(&textRect);
 	    DrawTextW (hdc, phdi->pszText, -1,
 	               &textRect, DT_LEFT|DT_VCENTER|DT_SINGLELINE|DT_CALCRECT);
 	    cw = textRect.right - textRect.left + 2 * infoPtr->iMargin;
