@@ -79,9 +79,9 @@ static void dump_user_flags(unsigned long *pFlags)
  *  the first parameter is an unsigned long.
  *  This function is only intended to be called by the RPC runtime.
  */
-unsigned long __RPC_USER CLIPFORMAT_UserSize(unsigned long *pFlags, unsigned long StartingSize, CLIPFORMAT *pCF)
+ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG StartingSize, CLIPFORMAT *pCF)
 {
-    unsigned long size = StartingSize;
+    ULONG size = StartingSize;
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, pCF);
 
@@ -240,7 +240,7 @@ void __RPC_USER CLIPFORMAT_UserFree(unsigned long *pFlags, CLIPFORMAT *pCF)
      * so nothing to do */
 }
 
-static unsigned long __RPC_USER handle_UserSize(unsigned long *pFlags, unsigned long StartingSize, HANDLE *handle)
+static ULONG __RPC_USER handle_UserSize(ULONG *pFlags, ULONG StartingSize, HANDLE *handle)
 {
     if (LOWORD(*pFlags) == MSHCTX_DIFFERENTMACHINE)
     {
@@ -280,7 +280,7 @@ static void __RPC_USER handle_UserFree(unsigned long *pFlags, HANDLE *phMenu)
 }
 
 #define IMPL_WIREM_HANDLE(type) \
-    unsigned long __RPC_USER type##_UserSize(unsigned long *pFlags, unsigned long StartingSize, type *handle) \
+    ULONG __RPC_USER type##_UserSize(ULONG *pFlags, ULONG StartingSize, type *handle) \
     { \
         TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, handle); \
         return handle_UserSize(pFlags, StartingSize, (HANDLE *)handle); \
@@ -311,9 +311,9 @@ IMPL_WIREM_HANDLE(HWND)
 /******************************************************************************
  *           HGLOBAL_UserSize [OLE32.@]
  */
-unsigned long __RPC_USER HGLOBAL_UserSize(unsigned long *pFlags, unsigned long StartingSize, HGLOBAL *phGlobal)
+ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *phGlobal)
 {
-    unsigned long size = StartingSize;
+    ULONG size = StartingSize;
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, phGlobal);
 
@@ -331,7 +331,7 @@ unsigned long __RPC_USER HGLOBAL_UserSize(unsigned long *pFlags, unsigned long S
             SIZE_T ret;
             size += 3 * sizeof(ULONG);
             ret = GlobalSize(*phGlobal);
-            size += (unsigned long)ret;
+            size += (ULONG)ret;
         }
     }
     
@@ -457,7 +457,7 @@ void __RPC_USER HGLOBAL_UserFree(unsigned long *pFlags, HGLOBAL *phGlobal)
         GlobalFree(*phGlobal);
 }
 
-unsigned long __RPC_USER HBITMAP_UserSize(unsigned long *pFlags, unsigned long StartingSize, HBITMAP *phBmp)
+ULONG __RPC_USER HBITMAP_UserSize(ULONG *pFlags, ULONG StartingSize, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
     return StartingSize;
@@ -480,7 +480,7 @@ void __RPC_USER HBITMAP_UserFree(unsigned long *pFlags, HBITMAP *phBmp)
     FIXME(":stub\n");
 }
 
-unsigned long __RPC_USER HDC_UserSize(unsigned long *pFlags, unsigned long StartingSize, HDC *phdc)
+ULONG __RPC_USER HDC_UserSize(ULONG *pFlags, ULONG StartingSize, HDC *phdc)
 {
     FIXME(":stub\n");
     return StartingSize;
@@ -503,7 +503,7 @@ void __RPC_USER HDC_UserFree(unsigned long *pFlags, HDC *phdc)
     FIXME(":stub\n");
 }
 
-unsigned long __RPC_USER HPALETTE_UserSize(unsigned long *pFlags, unsigned long StartingSize, HPALETTE *phPal)
+ULONG __RPC_USER HPALETTE_UserSize(ULONG *pFlags, ULONG StartingSize, HPALETTE *phPal)
 {
     FIXME(":stub\n");
     return StartingSize;
@@ -527,9 +527,9 @@ void __RPC_USER HPALETTE_UserFree(unsigned long *pFlags, HPALETTE *phPal)
 }
 
 
-unsigned long __RPC_USER HENHMETAFILE_UserSize(unsigned long *pFlags, unsigned long StartingSize, HENHMETAFILE *phEmf)
+ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHMETAFILE *phEmf)
 {
-    unsigned long size = StartingSize;
+    ULONG size = StartingSize;
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, *phEmf);
 
@@ -643,9 +643,9 @@ void __RPC_USER HENHMETAFILE_UserFree(unsigned long *pFlags, HENHMETAFILE *phEmf
         DeleteEnhMetaFile(*phEmf);
 }
 
-unsigned long __RPC_USER STGMEDIUM_UserSize(unsigned long *pFlags, unsigned long StartingSize, STGMEDIUM *pStgMedium)
+ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM *pStgMedium)
 {
-    unsigned long size = StartingSize;
+    ULONG size = StartingSize;
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, pStgMedium);
 
@@ -812,7 +812,7 @@ void __RPC_USER STGMEDIUM_UserFree(unsigned long *pFlags, STGMEDIUM *pStgMedium)
     ReleaseStgMedium(pStgMedium);
 }
 
-unsigned long __RPC_USER ASYNC_STGMEDIUM_UserSize(unsigned long *pFlags, unsigned long StartingSize, ASYNC_STGMEDIUM *pStgMedium)
+ULONG __RPC_USER ASYNC_STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, ASYNC_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
     return StartingSize;
@@ -835,7 +835,7 @@ void __RPC_USER ASYNC_STGMEDIUM_UserFree(unsigned long *pFlags, ASYNC_STGMEDIUM 
     FIXME(":stub\n");
 }
 
-unsigned long __RPC_USER FLAG_STGMEDIUM_UserSize(unsigned long *pFlags, unsigned long StartingSize, FLAG_STGMEDIUM *pStgMedium)
+ULONG __RPC_USER FLAG_STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, FLAG_STGMEDIUM *pStgMedium)
 {
     FIXME(":stub\n");
     return StartingSize;
@@ -858,7 +858,7 @@ void __RPC_USER FLAG_STGMEDIUM_UserFree(unsigned long *pFlags, FLAG_STGMEDIUM *p
     FIXME(":stub\n");
 }
 
-unsigned long __RPC_USER SNB_UserSize(unsigned long *pFlags, unsigned long StartingSize, SNB *pSnb)
+ULONG __RPC_USER SNB_UserSize(ULONG *pFlags, ULONG StartingSize, SNB *pSnb)
 {
     FIXME(":stub\n");
     return StartingSize;

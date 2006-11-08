@@ -85,7 +85,7 @@ static void dump_user_flags(unsigned long *pFlags)
 #define CLS_TYPEATTR  't'
 #define CLS_VARDESC   'v'
 
-unsigned long WINAPI CLEANLOCALSTORAGE_UserSize(unsigned long *pFlags, unsigned long Start, CLEANLOCALSTORAGE *pstg)
+ULONG WINAPI CLEANLOCALSTORAGE_UserSize(ULONG *pFlags, ULONG Start, CLEANLOCALSTORAGE *pstg)
 {
     ALIGN_LENGTH(Start, 3);
     return Start + sizeof(DWORD);
@@ -142,7 +142,7 @@ typedef struct
     DWORD len2;         /* == len */
 } bstr_wire_t;
 
-unsigned long WINAPI BSTR_UserSize(unsigned long *pFlags, unsigned long Start, BSTR *pstr)
+ULONG WINAPI BSTR_UserSize(ULONG *pFlags, ULONG Start, BSTR *pstr)
 {
     TRACE("(%lx,%ld,%p) => %p\n", *pFlags, Start, pstr, *pstr);
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
@@ -424,7 +424,7 @@ static unsigned char *interface_variant_unmarshal(unsigned long *pFlags, unsigne
 }
 
 
-unsigned long WINAPI VARIANT_UserSize(unsigned long *pFlags, unsigned long Start, VARIANT *pvar)
+ULONG WINAPI VARIANT_UserSize(ULONG *pFlags, ULONG Start, VARIANT *pvar)
 {
     int align;
     TRACE("(%lx,%ld,%p)\n", *pFlags, Start, pvar);
@@ -732,9 +732,9 @@ static inline SF_TYPE SAFEARRAY_GetUnionType(SAFEARRAY *psa)
     }
 }
 
-unsigned long WINAPI LPSAFEARRAY_UserSize(unsigned long *pFlags, unsigned long StartingSize, LPSAFEARRAY *ppsa)
+ULONG WINAPI LPSAFEARRAY_UserSize(ULONG *pFlags, ULONG StartingSize, LPSAFEARRAY *ppsa)
 {
-    unsigned long size = StartingSize;
+    ULONG size = StartingSize;
 
     TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, *ppsa);
 
