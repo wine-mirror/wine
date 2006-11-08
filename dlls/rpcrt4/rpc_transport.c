@@ -736,6 +736,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     struct addrinfo *ai;
     struct addrinfo *ai_cur;
     struct addrinfo hints;
+    RpcConnection *first_connection = NULL;
 
     TRACE("(%p, %s)\n", protseq, endpoint);
 
@@ -761,6 +762,8 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
     for (ai_cur = ai; ai_cur; ai_cur = ai_cur->ai_next)
     {
         RpcConnection_tcp *tcpc;
+        RPC_STATUS create_status;
+
         if (TRACE_ON(rpc))
         {
             char host[256];
@@ -790,20 +793,22 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
               status = RPC_S_CANT_CREATE_ENDPOINT;
             continue;
         }
-        status = RPCRT4_CreateConnection((RpcConnection **)&tcpc, TRUE,
-                                         protseq->Protseq, NULL, endpoint, NULL,
-                                         NULL, NULL);
-        if (status != RPC_S_OK)
+        create_status = RPCRT4_CreateConnection((RpcConnection **)&tcpc, TRUE,
+                                                protseq->Protseq, NULL,
+                                                endpoint, NULL, NULL, NULL);
+        if (create_status != RPC_S_OK)
         {
             close(sock);
+            status = create_status;
             continue;
         }
 
+        tcpc->sock = sock;
         ret = listen(sock, protseq->MaxCalls);
         if (ret < 0)
         {
             WARN("listen failed: %s\n", strerror(errno));
-            close(sock);
+            RPCRT4_DestroyConnection(&tcpc->common);
             status = RPC_S_OUT_OF_RESOURCES;
             continue;
         }
@@ -815,24 +820,36 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         if (ret < 0)
         {
             WARN("couldn't make socket non-blocking, error %d\n", ret);
-            close(sock);
+            RPCRT4_DestroyConnection(&tcpc->common);
             status = RPC_S_OUT_OF_RESOURCES;
             continue;
         }
-        tcpc->sock = sock;
 
-        freeaddrinfo(ai);
+        tcpc->common.Next = first_connection;
+        first_connection = &tcpc->common;
+    }
+
+    freeaddrinfo(ai);
+
+    /* if at least one connection was created for an endpoint then
+     * return success */
+    if (first_connection)
+    {
+        RpcConnection *conn;
+
+        /* find last element in list */
+        for (conn = first_connection; conn->Next; conn = conn->Next)
+            ;
 
         EnterCriticalSection(&protseq->cs);
-        tcpc->common.Next = protseq->conn;
-        protseq->conn = &tcpc->common;
+        conn->Next = protseq->conn;
+        protseq->conn = first_connection;
         LeaveCriticalSection(&protseq->cs);
-
+        
         TRACE("listening on %s\n", endpoint);
         return RPC_S_OK;
     }
 
-    freeaddrinfo(ai);
     ERR("couldn't listen on port %s\n", endpoint);
     return status;
 }
