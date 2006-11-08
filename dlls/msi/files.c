@@ -354,7 +354,7 @@ static void free_media_info( struct media_info *mi )
     msi_free( mi );
 }
 
-static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi, LPCWSTR prompt )
+static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi )
 {
     LPWSTR error, error_dialog;
     UINT r = ERROR_SUCCESS;
@@ -365,7 +365,7 @@ static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi, LPCWST
     if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE )
         return ERROR_SUCCESS;
 
-    error = generate_error_string( package, 1302, 1, prompt );
+    error = generate_error_string( package, 1302, 1, mi->disk_prompt );
     error_dialog = msi_dup_property( package, error_prop );
 
     while ( r == ERROR_SUCCESS && GetFileAttributesW( mi->source ) == INVALID_FILE_ATTRIBUTES )
@@ -420,7 +420,6 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     LPWSTR source_dir;
     DWORD sz;
     INT seq;
-    LPCWSTR prompt;
 
     if (file->Sequence <= mi->last_sequence)
     {
@@ -437,7 +436,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
     }
 
     volume = MSI_RecordGetString(row, 5);
-    prompt = MSI_RecordGetString(row, 3);
+    mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
 
     source_dir = msi_dup_property(package, cszSourceDir);
 
@@ -448,7 +447,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
 
         MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
             MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id, volume,
-            prompt);
+            mi->disk_prompt);
 
         MsiSourceListSetInfoW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, 
@@ -478,7 +477,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
 
             MsiSourceListAddMediaDiskW(package->ProductCode, NULL, 
                 MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id,
-                volume, prompt);
+                volume, mi->disk_prompt);
 
             MsiSourceListSetInfoW(package->ProductCode, NULL,
                 MSIINSTALLCONTEXT_USERMANAGED,
@@ -500,7 +499,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
                 strcatW(mi->source,cab);
 
                 if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
-                    rc = msi_change_media(package, mi, prompt);
+                    rc = msi_change_media(package, mi);
 
                 if ( rc != ERROR_SUCCESS )
                     goto done;
@@ -540,7 +539,7 @@ static UINT ready_media_for_file( MSIPACKAGE *package, struct media_info *mi,
 
     MsiSourceListAddMediaDiskW(package->ProductCode, NULL,
             MSIINSTALLCONTEXT_USERMANAGED, MSICODE_PRODUCT, mi->disk_id, volume,
-            prompt);
+            mi->disk_prompt);
 
 done:
     msi_free(source_dir);
