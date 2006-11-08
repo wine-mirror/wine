@@ -299,11 +299,11 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
             if (depth == 1)  /* Monochrome */
             {
                 BOOL invert = FALSE;
-                if(physDev && physDev->bitmap && physDev->bitmap->colorTable)
-                {
-                    if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
-                        invert = TRUE;
-                }
+                RGBQUAD table[2];
+
+                if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
+                    invert = !colour_is_brighter(table[1], table[0]);
+
                 for (i = start; i < end; i++, rgb++) 
                     colorMapping[i] = ((rgb->rgbRed + rgb->rgbGreen +
                                         rgb->rgbBlue > 255*3/2 && !invert) ||
@@ -323,11 +323,11 @@ static int *X11DRV_DIB_GenColorMap( X11DRV_PDEVICE *physDev, int *colorMapping,
             if (depth == 1)  /* Monochrome */
             {
                 BOOL invert = FALSE;
-                if(physDev && physDev->bitmap && physDev->bitmap->colorTable)
-                {
-                    if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
-                        invert = TRUE;
-                }
+                RGBQUAD table[2];
+
+                if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
+                    invert = !colour_is_brighter(table[1], table[0]);
+
                 for (i = start; i < end; i++, rgb++)
                     colorMapping[i] = ((rgb->rgbtRed + rgb->rgbtGreen +
                                         rgb->rgbtBlue > 255*3/2 && !invert) ||
@@ -402,84 +402,6 @@ static int *X11DRV_DIB_BuildColorMap( X11DRV_PDEVICE *physDev, WORD coloruse, WO
                                    isInfo, colorPtr, 0, colors);
 }
 
-/***********************************************************************
- *           X11DRV_DIB_BuildColorTable
- *
- * Build the dib color table. This either keeps a copy of the bmiColors array if
- * usage is DIB_RGB_COLORS, or looks up the palette indices if usage is
- * DIB_PAL_COLORS.
- * Should not be called for a >8-bit deep bitmap.
- */
-static RGBQUAD *X11DRV_DIB_BuildColorTable( X11DRV_PDEVICE *physDev, WORD coloruse, WORD depth,
-                                            const BITMAPINFO *info )
-{
-    RGBQUAD *colorTable;
-    unsigned int colors;
-    int i;
-    BOOL core_info = info->bmiHeader.biSize == sizeof(BITMAPCOREHEADER);
-
-    if (core_info)
-    {
-        colors = 1 << ((const BITMAPCOREINFO*) info)->bmciHeader.bcBitCount;
-    }
-    else
-    {
-        colors = info->bmiHeader.biClrUsed;
-        if (!colors) colors = 1 << info->bmiHeader.biBitCount;
-    }
-
-    if (colors > 256) {
-        ERR("called with >256 colors!\n");
-        return NULL;
-    }
-
-    if (!(colorTable = HeapAlloc(GetProcessHeap(), 0, colors * sizeof(RGBQUAD) )))
-	return NULL;
-
-    if(coloruse == DIB_RGB_COLORS)
-    {
-        if (core_info)
-        {
-           /* Convert RGBTRIPLEs to RGBQUADs */
-           for (i=0; i < colors; i++)
-           {
-               colorTable[i].rgbRed   = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtRed;
-               colorTable[i].rgbGreen = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtGreen;
-               colorTable[i].rgbBlue  = ((const BITMAPCOREINFO*) info)->bmciColors[i].rgbtBlue;
-               colorTable[i].rgbReserved = 0;
-           }
-        }
-        else
-        {
-            memcpy(colorTable, (const BYTE*) info + (WORD) info->bmiHeader.biSize, colors * sizeof(RGBQUAD));
-        }
-    }
-    else
-    {
-        HPALETTE hpal = GetCurrentObject(physDev->hdc, OBJ_PAL);
-        PALETTEENTRY * pal_ents;
-        const WORD *index = (const WORD*) ((const BYTE*) info + (WORD) info->bmiHeader.biSize);
-        int logcolors, entry;
-
-        logcolors = GetPaletteEntries( hpal, 0, 0, NULL );
-        pal_ents = HeapAlloc(GetProcessHeap(), 0, logcolors * sizeof(*pal_ents));
-        logcolors = GetPaletteEntries( hpal, 0, logcolors, pal_ents );
-
-        for(i = 0; i < colors; i++, index++)
-        {
-            entry = *index % logcolors;
-            colorTable[i].rgbRed = pal_ents[entry].peRed;
-            colorTable[i].rgbGreen = pal_ents[entry].peGreen;
-            colorTable[i].rgbBlue = pal_ents[entry].peBlue;
-            colorTable[i].rgbReserved = 0;
-        }
-
-        HeapFree(GetProcessHeap(), 0, pal_ents);
-    }
-    return colorTable;
-}
-        
-    
 /***********************************************************************
  *           X11DRV_DIB_MapColor
  */
@@ -4663,7 +4585,6 @@ HBITMAP X11DRV_CreateDIBSection( X11DRV_PDEVICE *physDev, HBITMAP hbitmap,
     /* create color map */
     if (dib.dsBm.bmBitsPixel <= 8)
     {
-        physBitmap->colorTable = X11DRV_DIB_BuildColorTable( physDev, usage, dib.dsBm.bmBitsPixel, bmi );
         physBitmap->colorMap = X11DRV_DIB_BuildColorMap( physDev,
                                                          usage, dib.dsBm.bmBitsPixel, bmi,
                                                          &physBitmap->nColorMap );
@@ -4742,7 +4663,6 @@ void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib)
   }
 
   HeapFree(GetProcessHeap(), 0, physBitmap->colorMap);
-  HeapFree(GetProcessHeap(), 0, physBitmap->colorTable);
   DeleteCriticalSection(&physBitmap->lock);
 }
 
@@ -4771,7 +4691,6 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
          * at least for a 1 bpp dibsection
          */
         X11DRV_DIB_Lock( physBitmap, DIB_Status_AppMod, FALSE );
-        memcpy(physBitmap->colorTable + start, colors, (end - start) * sizeof(RGBQUAD));
         X11DRV_DIB_GenColorMap( physDev, physBitmap->colorMap, DIB_RGB_COLORS,
                                 dib.dsBm.bmBitsPixel,
                                 TRUE, colors, start, end );
@@ -4780,23 +4699,6 @@ UINT X11DRV_SetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, c
     }
     return ret;
 }
-
-/***********************************************************************
- *           GetDIBColorTable   (X11DRV.@)
- */
-UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, RGBQUAD *colors )
-{
-    UINT ret = 0;
-    X_PHYSBITMAP *physBitmap = physDev->bitmap;
-
-    if (physBitmap && physBitmap->colorTable && start < physBitmap->nColorMap) {
-        if (start + count > physBitmap->nColorMap) count = physBitmap->nColorMap - start;
-        memcpy(colors, physBitmap->colorTable + start, count * sizeof(RGBQUAD));
-        ret = count;
-    }
-    return ret;
-}
-
 
 
 /***********************************************************************

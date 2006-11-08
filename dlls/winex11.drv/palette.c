@@ -843,7 +843,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 	switch(spec_type)
         {
           case 0x10: /* DIBINDEX */
-            if( X11DRV_GetDIBColorTable( physDev, idx, 1, &quad ) != 1 ) {
+            if( GetDIBColorTable( physDev->hdc, idx, 1, &quad ) != 1 ) {
                 WARN("DIBINDEX(%x) : idx %d is out of bounds, assuming black\n", color , idx);
                 GDI_ReleaseObj( hPal );
                 return 0;
@@ -877,12 +877,12 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 	    if (physDev && (physDev->depth == 1) )
 	    {
                 int white = 1;
+                RGBQUAD table[2];
 
 		GDI_ReleaseObj( hPal );
-                if (physDev->bitmap && physDev->bitmap->colorTable)
+                if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
                 {
-                    if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
-                        white = 0;
+                    if(!colour_is_brighter(table[1], table[0])) white = 0;
                 }
 		return (((color >> 16) & 0xff) +
 			((color >> 8) & 0xff) + (color & 0xff) > 255*3/2) ? white : 1 - white;
@@ -937,11 +937,12 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 		if (physDev && (physDev->depth == 1) )
 		{
                     int white = 1;
+                    RGBQUAD table[2];
 
 		    GDI_ReleaseObj( hPal );	
-                    if (physDev->bitmap && physDev->bitmap->colorTable)
+                    if (GetDIBColorTable( physDev->hdc, 0, 2, table ) == 2)
                     {
-                        if(!colour_is_brighter(physDev->bitmap->colorTable[1], physDev->bitmap->colorTable[0]))
+                        if(!colour_is_brighter(table[1], table[0]))
                             white = 0;
                     }
                     return (((color >> 16) & 0xff) +

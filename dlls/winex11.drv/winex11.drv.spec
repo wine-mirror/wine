@@ -19,7 +19,6 @@
 @ cdecl GetBitmapBits(long ptr long) X11DRV_GetBitmapBits
 @ cdecl GetCharWidth(ptr long long ptr) X11DRV_GetCharWidth
 @ cdecl GetDCOrgEx(ptr ptr) X11DRV_GetDCOrgEx
-@ cdecl GetDIBColorTable(ptr long long ptr) X11DRV_GetDIBColorTable
 @ cdecl GetDIBits(ptr long long long ptr ptr long) X11DRV_GetDIBits
 @ cdecl GetDeviceCaps(ptr long) X11DRV_GetDeviceCaps
 @ cdecl GetDeviceGammaRamp(ptr ptr) X11DRV_GetDeviceGammaRamp

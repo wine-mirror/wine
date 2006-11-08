@@ -103,7 +103,6 @@ typedef struct
     XImage      *image;             /* cached XImage */
     int         *colorMap;          /* color map info */
     int          nColorMap;
-    RGBQUAD     *colorTable;        /* original dib color table converted to rgb values if usage was DIB_PAL_COLORS */
     CRITICAL_SECTION lock;          /* GDI access lock */
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo shminfo;        /* shared memory segment info */
@@ -422,7 +421,6 @@ extern INT X11DRV_LockDIBSection(X11DRV_PDEVICE *physDev,INT,BOOL);
 extern void X11DRV_UnlockDIBSection(X11DRV_PDEVICE *physDev,BOOL);
 
 extern void X11DRV_DIB_DeleteDIBSection(X_PHYSBITMAP *physBitmap, DIBSECTION *dib);
-extern UINT X11DRV_GetDIBColorTable( X11DRV_PDEVICE *physDev, UINT start, UINT count, RGBQUAD *colors );
 extern void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physDevDst,
                                       DWORD xSrc, DWORD ySrc, DWORD xDest, DWORD yDest,
                                       DWORD width, DWORD height);
