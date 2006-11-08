@@ -331,7 +331,7 @@ INT WINAPI
 ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
 {
     HDC    hdcMask, hdcBitmap;
-    INT    nIndex, nImageCount;
+    INT    i, nIndex, nImageCount;
     BITMAP bmp;
     HBITMAP hOldBitmap;
     HBITMAP hMaskBitmap=0;
@@ -356,68 +356,50 @@ ImageList_AddMasked (HIMAGELIST himl, HBITMAP hBitmap, COLORREF clrMask)
     himl->cCurImage += nImageCount;
 
     hdcBitmap = CreateCompatibleDC(0);
-
-
     hOldBitmap = SelectObject(hdcBitmap, hBitmap);
-    if(himl->hbmMask)
-    {
-        hdcMask = himl->hdcMask;
-        imagelist_point_from_index( himl, nIndex, &pt );
-    }
-    else
-    {
-        /*
-            Create a temp Mask so we can remove the background of
-            the Image (Windows does this even if there is no mask)
-        */
-        hdcMask = CreateCompatibleDC(0);
-        hMaskBitmap = CreateBitmap(bmp.bmWidth, bmp.bmHeight, 1, 1, NULL);
-        SelectObject(hdcMask, hMaskBitmap);
-        imagelist_point_from_index( himl, 0, &pt );
-    }
+
+    /* Create a temp Mask so we can remove the background of the Image */
+    hdcMask = CreateCompatibleDC(0);
+    hMaskBitmap = CreateBitmap(bmp.bmWidth, bmp.bmHeight, 1, 1, NULL);
+    SelectObject(hdcMask, hMaskBitmap);
+
     /* create monochrome image to the mask bitmap */
-    bkColor = (clrMask != CLR_DEFAULT) ? clrMask :
-        GetPixel (hdcBitmap, 0, 0);
+    bkColor = (clrMask != CLR_DEFAULT) ? clrMask : GetPixel (hdcBitmap, 0, 0);
     SetBkColor (hdcBitmap, bkColor);
-    BitBlt (hdcMask,
-        pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
-        hdcBitmap, 0, 0,
-        SRCCOPY);
+    BitBlt (hdcMask, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcBitmap, 0, 0, SRCCOPY);
 
     SetBkColor(hdcBitmap, RGB(255,255,255));
-    /*Remove the background from the image
-    */
+
     /*
-        WINDOWS BUG ALERT!!!!!!
-        The statement below should not be done in common practice
-        but this is how ImageList_AddMasked works in Windows.
-        It overwrites the original bitmap passed, this was discovered
-        by using the same bitmap to iterate the different styles
-        on windows where it failed (BUT ImageList_Add is OK)
-        This is here in case some apps rely on this bug
-    */
-    BitBlt(hdcBitmap,
-        0, 0, bmp.bmWidth, bmp.bmHeight,
-        hdcMask,
-        pt.x, pt.y,
-        0x220326); /* NOTSRCAND */
-    /* Copy result to the imagelist
-    */
-    imagelist_point_from_index( himl, nIndex, &pt );
-    BitBlt (himl->hdcImage,
-        pt.x, pt.y, bmp.bmWidth, bmp.bmHeight,
-        hdcBitmap,
-        0, 0,
-        SRCCOPY);
-    /* Clean up
-    */
+     * Remove the background from the image
+     *
+     * WINDOWS BUG ALERT!!!!!!
+     *  The statement below should not be done in common practice
+     *  but this is how ImageList_AddMasked works in Windows.
+     *  It overwrites the original bitmap passed, this was discovered
+     *  by using the same bitmap to iterate the different styles
+     *  on windows where it failed (BUT ImageList_Add is OK)
+     *  This is here in case some apps rely on this bug
+     *
+     *  Blt mode 0x220326 is NOTSRCAND
+     */
+    BitBlt(hdcBitmap, 0, 0, bmp.bmWidth, bmp.bmHeight, hdcMask, 0, 0, 0x220326);
+
+    /* Copy result to the imagelist */
+    for (i=0; i<nImageCount; i++)
+    {
+        imagelist_point_from_index( himl, nIndex + i, &pt );
+        BitBlt(himl->hdcImage, pt.x, pt.y, himl->cx, bmp.bmHeight,
+                hdcBitmap, i*himl->cx, 0, SRCCOPY);
+        BitBlt(himl->hdcMask, pt.x, pt.y, himl->cx, bmp.bmHeight,
+                hdcMask, i*himl->cx, 0, SRCCOPY);
+    }
+
+    /* Clean up */
     SelectObject(hdcBitmap, hOldBitmap);
     DeleteDC(hdcBitmap);
-    if(!himl->hbmMask)
-    {
-        DeleteObject(hMaskBitmap);
-        DeleteDC(hdcMask);
-    }
+    DeleteObject(hMaskBitmap);
+    DeleteDC(hdcMask);
 
     return nIndex;
 }
