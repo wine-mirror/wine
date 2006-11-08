@@ -1672,7 +1672,7 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             for (y = 0; y < height; y++) {
                 Source = (WORD *) (src + y * pitch);
                 Dest = (WORD *) (dst + y * outpitch);
-                for (x = 0; x < width / 2; x++ ) {
+                for (x = 0; x < width; x++ ) {
                     WORD color = *Source++;
                     *Dest = ((color & 0xFFC0) | ((color & 0x1F) << 1));
                     if ((color < surf->SrcBltCKey.dwColorSpaceLowValue) ||
