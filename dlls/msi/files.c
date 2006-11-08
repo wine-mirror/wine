@@ -67,6 +67,29 @@ struct media_info {
     WCHAR source[MAX_PATH];
 };
 
+static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi )
+{
+    LPWSTR error, error_dialog;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
+    static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
+
+    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE )
+        return ERROR_SUCCESS;
+
+    error = generate_error_string( package, 1302, 1, mi->disk_prompt );
+    error_dialog = msi_dup_property( package, error_prop );
+
+    while ( r == ERROR_SUCCESS && GetFileAttributesW( mi->source ) == INVALID_FILE_ATTRIBUTES )
+        r = msi_spawn_error_dialog( package, error_dialog, error );
+
+    msi_free( error );
+    msi_free( error_dialog );
+
+    return r;
+}
+
 /*
  * This is a helper function for handling embedded cabinet media
  */
@@ -210,10 +233,83 @@ static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *ac
     ui_progress( package, 2, f->FileSize, 0, 0);
 }
 
+static UINT msi_media_get_disk_info( CabData *data )
+{
+    MSIPACKAGE *package = data->package;
+    MSIRECORD *row;
+    LPWSTR ptr;
+
+    static const WCHAR query[] =
+        {'S','E','L','E','C','T',' ','*',' ', 'F','R','O','M',' ',
+         '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
+         '`','D','i','s','k','I','d','`',' ','=',' ','%','i',0};
+
+    row = MSI_QueryGetRecord(package->db, query, data->mi->disk_id);
+    if (!row)
+    {
+        TRACE("Unable to query row\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    data->mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
+    data->mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
+
+    ptr = strrchrW(data->mi->source, '\\') + 1;
+    lstrcpyW(ptr, data->mi->cabinet);
+
+    return ERROR_SUCCESS;
+}
+
 static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
 {
+    TRACE("(%d)\n", fdint);
+
     switch (fdint)
     {
+    case fdintPARTIAL_FILE:
+    {
+        CabData *data = (CabData *)pfdin->pv;
+        data->mi->is_continuous = FALSE;
+        return 0;
+    }
+    case fdintNEXT_CABINET:
+    {
+        CabData *data = (CabData *)pfdin->pv;
+        struct media_info *mi = data->mi;
+        LPWSTR cab = strdupAtoW(pfdin->psz1);
+        UINT rc;
+
+        msi_free(mi->disk_prompt);
+
+        mi->disk_id++;
+        mi->is_continuous = TRUE;
+
+        rc = msi_media_get_disk_info(data);
+        if (rc != ERROR_SUCCESS)
+        {
+            ERR("Failed to get next cabinet information: %d\n", rc);
+            return -1;
+        }
+
+        if (lstrcmpiW(mi->cabinet, cab))
+        {
+            msi_free(cab);
+            ERR("Continuous cabinet does not match the next cabinet in the Media table\n");
+            return -1;
+        }
+
+        msi_free(cab);
+
+        TRACE("Searching for %s\n", debugstr_w(mi->source));
+
+        if (GetFileAttributesW(mi->source) == INVALID_FILE_ATTRIBUTES)
+            rc = msi_change_media(data->package, mi);
+
+        if (rc != ERROR_SUCCESS)
+            return -1;
+
+        return 0;
+    }
     case fdintCOPY_FILE:
     {
         CabData *data = (CabData*) pfdin->pv;
@@ -354,29 +450,6 @@ static void free_media_info( struct media_info *mi )
     msi_free( mi );
 }
 
-static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi )
-{
-    LPWSTR error, error_dialog;
-    UINT r = ERROR_SUCCESS;
-
-    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
-    static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
-
-    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE )
-        return ERROR_SUCCESS;
-
-    error = generate_error_string( package, 1302, 1, mi->disk_prompt );
-    error_dialog = msi_dup_property( package, error_prop );
-
-    while ( r == ERROR_SUCCESS && GetFileAttributesW( mi->source ) == INVALID_FILE_ATTRIBUTES )
-        r = msi_spawn_error_dialog( package, error_dialog, error );
-
-    msi_free( error );
-    msi_free( error_dialog );
-
-    return r;
-}
-
 static UINT download_remote_cabinet(MSIPACKAGE *package, struct media_info *mi)
 {
     WCHAR temppath[MAX_PATH];
@@ -471,6 +544,10 @@ static UINT ready_media(MSIPACKAGE *package, MSIFILE *file, struct media_info *m
 {
     UINT rc = ERROR_SUCCESS;
     BOOL found = FALSE;
+
+    /* media info for continuous cabinet is already loaded */
+    if (mi->is_continuous)
+        return ERROR_SUCCESS;
 
     rc = load_media_info(package, file, mi);
     if (rc != ERROR_SUCCESS)
