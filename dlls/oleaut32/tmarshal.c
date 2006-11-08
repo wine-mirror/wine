@@ -804,8 +804,8 @@ serialize_param(
     case VT_SAFEARRAY: {
         if (writeit)
         {
-            unsigned long flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
-            unsigned long size = LPSAFEARRAY_UserSize(&flags, buf->curoff, (LPSAFEARRAY *)arg);
+            ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+            ULONG size = LPSAFEARRAY_UserSize(&flags, buf->curoff, (LPSAFEARRAY *)arg);
             xbuf_resize(buf, size);
             LPSAFEARRAY_UserMarshal(&flags, buf->base + buf->curoff, (LPSAFEARRAY *)arg);
             buf->curoff = size;
@@ -1149,7 +1149,7 @@ deserialize_param(
     case VT_SAFEARRAY: {
 	    if (readit)
 	    {
-		unsigned long flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+		ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
 		unsigned char *buffer;
 		buffer = LPSAFEARRAY_UserUnmarshal(&flags, buf->base + buf->curoff, (LPSAFEARRAY *)arg);
 		buf->curoff = buffer - buf->base;

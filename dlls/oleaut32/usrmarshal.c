@@ -144,11 +144,11 @@ typedef struct
 
 ULONG WINAPI BSTR_UserSize(ULONG *pFlags, ULONG Start, BSTR *pstr)
 {
-    TRACE("(%lx,%ld,%p) => %p\n", *pFlags, Start, pstr, *pstr);
+    TRACE("(%x,%d,%p) => %p\n", *pFlags, Start, pstr, *pstr);
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
     ALIGN_LENGTH(Start, 3);
     Start += sizeof(bstr_wire_t) + ((SysStringByteLen(*pstr) + 1) & ~1);
-    TRACE("returning %ld\n", Start);
+    TRACE("returning %d\n", Start);
     return Start;
 }
 
@@ -157,7 +157,7 @@ unsigned char * WINAPI BSTR_UserMarshal(ULONG *pFlags, unsigned char *Buffer, BS
     bstr_wire_t *header;
     DWORD len = SysStringByteLen(*pstr);
 
-    TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
+    TRACE("(%x,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
     if (*pstr) TRACE("string=%s\n", debugstr_w(*pstr));
 
     ALIGN_POINTER(Buffer, 3);
@@ -177,7 +177,7 @@ unsigned char * WINAPI BSTR_UserMarshal(ULONG *pFlags, unsigned char *Buffer, BS
 unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, BSTR *pstr)
 {
     bstr_wire_t *header;
-    TRACE("(%lx,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
+    TRACE("(%x,%p,%p) => %p\n", *pFlags, Buffer, pstr, *pstr);
 
     ALIGN_POINTER(Buffer, 3);
     header = (bstr_wire_t*)Buffer;
@@ -199,7 +199,7 @@ unsigned char * WINAPI BSTR_UserUnmarshal(ULONG *pFlags, unsigned char *Buffer, 
 
 void WINAPI BSTR_UserFree(ULONG *pFlags, BSTR *pstr)
 {
-    TRACE("(%lx,%p) => %p\n", *pFlags, pstr, *pstr);
+    TRACE("(%x,%p) => %p\n", *pFlags, pstr, *pstr);
     if (*pstr)
     {
         SysFreeString(*pstr);
@@ -338,7 +338,7 @@ static unsigned char* interface_variant_marshal(ULONG *pFlags, unsigned char *Bu
   ULONG size;
   HRESULT hr;
   
-  TRACE("pFlags=%ld, Buffer=%p, pvar=%p\n", *pFlags, Buffer, pvar);
+  TRACE("pFlags=%d, Buffer=%p, pvar=%p\n", *pFlags, Buffer, pvar);
 
   oldpos = Buffer;
   
@@ -387,7 +387,7 @@ static unsigned char *interface_variant_unmarshal(ULONG *pFlags, unsigned char *
   ULONG size;
   HRESULT hr;
   
-  TRACE("pFlags=%ld, Buffer=%p, pvar=%p\n", *pFlags, Buffer, pvar);
+  TRACE("pFlags=%d, Buffer=%p, pvar=%p\n", *pFlags, Buffer, pvar);
 
   oldpos = Buffer;
   
@@ -427,7 +427,7 @@ static unsigned char *interface_variant_unmarshal(ULONG *pFlags, unsigned char *
 ULONG WINAPI VARIANT_UserSize(ULONG *pFlags, ULONG Start, VARIANT *pvar)
 {
     int align;
-    TRACE("(%lx,%ld,%p)\n", *pFlags, Start, pvar);
+    TRACE("(%x,%d,%p)\n", *pFlags, Start, pvar);
     TRACE("vt=%04x\n", V_VT(pvar));
 
     ALIGN_LENGTH(Start, 7);
@@ -443,7 +443,7 @@ ULONG WINAPI VARIANT_UserSize(ULONG *pFlags, ULONG Start, VARIANT *pvar)
         Start += get_type_size(pFlags, pvar);
     Start = wire_extra_user_size(pFlags, Start, pvar);
 
-    TRACE("returning %ld\n", Start);
+    TRACE("returning %d\n", Start);
     return Start;
 }
 
@@ -454,7 +454,7 @@ unsigned char * WINAPI VARIANT_UserMarshal(ULONG *pFlags, unsigned char *Buffer,
     int align;
     unsigned char *Pos;
 
-    TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
+    TRACE("(%x,%p,%p)\n", *pFlags, Buffer, pvar);
     TRACE("vt=%04x\n", V_VT(pvar));
 
     ALIGN_POINTER(Buffer, 7);
@@ -551,7 +551,7 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
     int align;
     unsigned char *Pos;
 
-    TRACE("(%lx,%p,%p)\n", *pFlags, Buffer, pvar);
+    TRACE("(%x,%p,%p)\n", *pFlags, Buffer, pvar);
 
     ALIGN_POINTER(Buffer, 7);
     VariantInit(pvar);
@@ -636,7 +636,7 @@ void WINAPI VARIANT_UserFree(ULONG *pFlags, VARIANT *pvar)
   VARTYPE vt = V_VT(pvar);
   PVOID ref = NULL;
 
-  TRACE("(%lx,%p)\n", *pFlags, pvar);
+  TRACE("(%x,%p)\n", *pFlags, pvar);
   TRACE("vt=%04x\n", V_VT(pvar));
 
   if (vt & VT_BYREF) ref = pvar->n1.n2.n3.byref;
@@ -736,7 +736,7 @@ ULONG WINAPI LPSAFEARRAY_UserSize(ULONG *pFlags, ULONG StartingSize, LPSAFEARRAY
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %ld, %p\n", StartingSize, *ppsa);
+    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, *ppsa);
 
     ALIGN_LENGTH(size, 3);
     size += sizeof(ULONG_PTR);
