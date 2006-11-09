@@ -24,8 +24,14 @@
 #define DIRECT3D_VERSION  0x0900
 #endif
 
+#include <stdlib.h>
+
 #define COM_NO_WINDOWS_H
 #include <objbase.h>
+
+#ifndef __WINESRC__
+# include <windows.h>
+#endif
 
 #include <d3d9types.h>
 #include <d3d9caps.h>
