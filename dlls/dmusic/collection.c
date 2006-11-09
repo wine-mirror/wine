@@ -715,8 +715,8 @@ static HRESULT WINAPI IDirectMusicCollectionImpl_IPersistStream_Load (LPPERSISTS
 		if (This->pDesc->dwValidData & DMUS_OBJ_OBJECT)
 			TRACE(" - GUID = %s\n", debugstr_dmguid(&This->pDesc->guidObject));
 		if (This->pDesc->dwValidData & DMUS_OBJ_VERSION)
-			TRACE(" - Version = %i,%i,%i,%i\n", (This->pDesc->vVersion.dwVersionMS >> 8) && 0x0000FFFF, This->pDesc->vVersion.dwVersionMS && 0x0000FFFF, \
-				(This->pDesc->vVersion.dwVersionLS >> 8) && 0x0000FFFF, This->pDesc->vVersion.dwVersionLS && 0x0000FFFF);
+			TRACE(" - Version = %i,%i,%i,%i\n", (This->pDesc->vVersion.dwVersionMS >> 8) & 0x0000FFFF, This->pDesc->vVersion.dwVersionMS & 0x0000FFFF, \
+				(This->pDesc->vVersion.dwVersionLS >> 8) & 0x0000FFFF, This->pDesc->vVersion.dwVersionLS & 0x0000FFFF);
 		if (This->pDesc->dwValidData & DMUS_OBJ_NAME)
 			TRACE(" - Name = %s\n", debugstr_w(This->pDesc->wszName));
 		
