@@ -185,6 +185,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetCursorProperties(LPDIRECT3DDEVICE8
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DSurface8Impl *pSurface = (IDirect3DSurface8Impl*)pCursorBitmap;
     TRACE("(%p) Relay\n", This);
+    if(!pCursorBitmap) {
+        WARN("No cursor bitmap, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
     return IWineD3DDevice_SetCursorProperties(This->WineD3DDevice,XHotSpot,YHotSpot,(IWineD3DSurface*)pSurface->wineD3DSurface);
 }
 
