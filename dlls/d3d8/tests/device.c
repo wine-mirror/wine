@@ -45,6 +45,63 @@ static int get_refcount(IUnknown *object)
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
 
+static void check_mipmap_levels(
+    IDirect3DDevice8* device, 
+    int width, int height, int count) 
+{
+
+    IDirect3DBaseTexture8* texture = NULL;
+    HRESULT hr = IDirect3DDevice8_CreateTexture( device, width, height, 0, 0, 
+        D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, (IDirect3DTexture8**) &texture );
+       
+    if (SUCCEEDED(hr)) {
+        DWORD levels = IDirect3DBaseTexture8_GetLevelCount(texture);
+        ok(levels == count, "Invalid level count. Expected %d got %u\n", count, levels);
+    } else 
+        trace("CreateTexture failed: %s\n", DXGetErrorString8(hr));
+
+    if (texture) IUnknown_Release( texture );
+}
+
+static void test_mipmap_levels(void)
+{
+
+    HRESULT               hr;
+    HWND                  hwnd = NULL;
+
+    IDirect3D8            *pD3d = NULL;
+    IDirect3DDevice8      *pDevice = NULL;
+    D3DPRESENT_PARAMETERS d3dpp;
+    D3DDISPLAYMODE        d3ddm;
+ 
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
+    if (FAILED(hr)) goto cleanup;
+
+    check_mipmap_levels(pDevice, 32, 32, 6);
+    check_mipmap_levels(pDevice, 256, 1, 9);
+    check_mipmap_levels(pDevice, 1, 256, 9);
+    check_mipmap_levels(pDevice, 1, 1, 1);
+
+    cleanup:
+    if (pD3d)     IUnknown_Release( pD3d );
+    if (pDevice)  IUnknown_Release( pDevice );
+    DestroyWindow( hwnd );
+}
+
 static void test_swapchain(void)
 {
     HRESULT                      hr;
@@ -229,8 +286,27 @@ static void test_refcount(void)
     /* Buffers */
     hr = IDirect3DDevice8_CreateIndexBuffer( pDevice, 16, 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &pIndexBuffer );
     CHECK_CALL( hr, "CreateIndexBuffer", pDevice, ++refcount );
+    if(pIndexBuffer)
+    {
+        tmp = get_refcount( (IUnknown *)pIndexBuffer );
+
+        hr = IDirect3DDevice8_SetIndices(pDevice, pIndexBuffer, 0);
+        CHECK_CALL( hr, "SetIndices", pIndexBuffer, tmp);
+        hr = IDirect3DDevice8_SetIndices(pDevice, NULL, 0);
+        CHECK_CALL( hr, "SetIndices", pIndexBuffer, tmp);
+    }
+
     hr = IDirect3DDevice8_CreateVertexBuffer( pDevice, 16, 0, D3DFVF_XYZ, D3DPOOL_DEFAULT, &pVertexBuffer );
     CHECK_CALL( hr, "CreateVertexBuffer", pDevice, ++refcount );
+    if(pVertexBuffer)
+    {
+        tmp = get_refcount( (IUnknown *)pVertexBuffer );
+
+        hr = IDirect3DDevice8_SetStreamSource(pDevice, 0, pVertexBuffer, 3 * sizeof(float));
+        CHECK_CALL( hr, "SetStreamSource", pVertexBuffer, tmp);
+        hr = IDirect3DDevice8_SetStreamSource(pDevice, 0, NULL, 0);
+        CHECK_CALL( hr, "SetStreamSource", pVertexBuffer, tmp);
+    }
     /* Shaders */
     hr = IDirect3DDevice8_CreateVertexShader( pDevice, decl, simple_vs, &dVertexShader, 0 );
     CHECK_CALL( hr, "CreateVertexShader", pDevice, refcount );
@@ -242,6 +318,13 @@ static void test_refcount(void)
     if (pTexture)
     {
         tmp = get_refcount( (IUnknown *)pTexture );
+
+        /* SetTexture should not increase refcounts */
+        hr = IDirect3DDevice8_SetTexture(pDevice, 0, (IDirect3DBaseTexture8 *) pTexture);
+        CHECK_CALL( hr, "SetTexture", pTexture, tmp);
+        hr = IDirect3DDevice8_SetTexture(pDevice, 0, NULL);
+        CHECK_CALL( hr, "SetTexture", pTexture, tmp);
+
         /* This should not increment device refcount */
         hr = IDirect3DTexture8_GetSurfaceLevel( pTexture, 1, &pTextureLevel );
         CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount );
@@ -308,6 +391,88 @@ cleanup:
     DestroyWindow( hwnd );
 }
 
+static void test_cursor(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D8                  *pD3d               = NULL;
+    IDirect3DDevice8            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    CURSORINFO                   info;
+    IDirect3DSurface8 *cursor = NULL;
+    HCURSOR cur;
+
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    hr = GetCursorInfo(&info);
+    cur = info.hCursor;
+
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+    hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
+    if (FAILED(hr)) goto cleanup;
+
+    IDirect3DDevice8_CreateImageSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, &cursor);
+    ok(cursor != NULL, "IDirect3DDevice8_CreateOffscreenPlainSurface failed with %08x\n", hr);
+
+    /* Initially hidden */
+    hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
+    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+
+    /* Not enabled without a surface*/
+    hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
+    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+
+    /* Fails */
+    hr = IDirect3DDevice8_SetCursorProperties(pDevice, 0, 0, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_SetCursorProperties returned %08x\n", hr);
+
+    hr = IDirect3DDevice8_SetCursorProperties(pDevice, 0, 0, cursor);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetCursorProperties returned %08x\n", hr);
+
+    IDirect3DSurface8_Release(cursor);
+
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    hr = GetCursorInfo(&info);
+    ok(hr != 0, "GetCursorInfo returned %08x\n", hr);
+    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
+    ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
+
+    /* Still hidden */
+    hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
+    ok(hr == FALSE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+
+    /* Enabled now*/
+    hr = IDirect3DDevice8_ShowCursor(pDevice, TRUE);
+    ok(hr == TRUE, "IDirect3DDevice8_ShowCursor returned %08x\n", hr);
+
+    /* GDI cursor unchanged */
+    memset(&info, 0, sizeof(info));
+    info.cbSize = sizeof(info);
+    hr = GetCursorInfo(&info);
+    ok(hr != 0, "GetCursorInfo returned %08x\n", hr);
+    ok(info.flags & CURSOR_SHOWING, "The gdi cursor is hidden (%08x)\n", info.flags);
+    ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
+
+cleanup:
+    if(pD3d) IDirect3D8_Release(pD3d);
+    if(pDevice) IDirect3D8_Release(pDevice);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -315,7 +480,9 @@ START_TEST(device)
     pDirect3DCreate8 = (void *)GetProcAddress( d3d8_handle, "Direct3DCreate8" );
     if (pDirect3DCreate8)
     {
-        test_refcount();
         test_swapchain();
+        test_refcount();
+        test_mipmap_levels();
+        test_cursor();
     }
 }
