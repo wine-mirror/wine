@@ -141,7 +141,7 @@ static int EventsQueue_GetEvent(EventsQueue* omr, Event* evt, long msTimeOut)
 
 #define MAX_ITF_CACHE_ENTRIES 3
 typedef struct _ITF_CACHE_ENTRY {
-   IID* riid;
+   const IID* riid;
    IBaseFilter* filter;
    IUnknown* iface;
 } ITF_CACHE_ENTRY;
@@ -1766,7 +1766,7 @@ static HRESULT GetTargetInterface(IFilterGraphImpl* pGraph, REFIID riid, LPVOID*
         hr = IBaseFilter_QueryInterface(pGraph->ppFiltersInGraph[i], riid, ppvObj);
         if (hr == S_OK)
         {
-            pGraph->ItfCacheEntries[entry].riid = (IID*)riid;
+            pGraph->ItfCacheEntries[entry].riid = riid;
             pGraph->ItfCacheEntries[entry].filter = pGraph->ppFiltersInGraph[i];
             pGraph->ItfCacheEntries[entry].iface = (IUnknown*)*ppvObj;
             if (entry >= pGraph->nItfCacheEntries)
