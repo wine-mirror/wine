@@ -44,6 +44,19 @@ static int get_refcount(IUnknown *object)
         tmp1 = get_refcount( (IUnknown *)d ); \
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
+#define CHECK_REFCOUNT(obj,rc) \
+    { \
+        int rc_new = rc; \
+        int count = get_refcount( (IUnknown *)obj ); \
+        ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
+    }
+
+#define CHECK_RELEASE_REFCOUNT(obj,rc) \
+    { \
+        int rc_new = rc; \
+        int count = IUnknown_Release( (IUnknown *)obj ); \
+        ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
+    }
 
 static void check_mipmap_levels(
     IDirect3DDevice8* device, 
@@ -234,6 +247,7 @@ static void test_refcount(void)
     IDirect3DSurface8           *pImageSurface      = NULL;
     IDirect3DSurface8           *pRenderTarget      = NULL;
     IDirect3DSurface8           *pTextureLevel      = NULL;
+    IDirect3DSurface8           *pBackBuffer        = NULL;
     DWORD                       dStateBlock         = -1;
     IDirect3DSwapChain8         *pSwapChain         = NULL;
 
@@ -274,6 +288,8 @@ static void test_refcount(void)
     d3dpp.Windowed         = TRUE;
     d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
     d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
@@ -282,6 +298,45 @@ static void test_refcount(void)
 
     refcount = get_refcount( (IUnknown *)pDevice );
     ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
+
+    /**
+     * Check refcount of implicit surfaces. Findings:
+     *   - they hold a refernce to the device
+     *   - they are created with a refcount of 0 (Get/Release returns orignial refcount)
+     */
+    hr = IDirect3DDevice8_GetRenderTarget(pDevice, &pRenderTarget);
+    todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
+    if(pRenderTarget)
+    {
+        todo_wine CHECK_REFCOUNT( pRenderTarget, 1);
+        hr = IDirect3DDevice8_GetRenderTarget(pDevice, &pRenderTarget);
+        todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, refcount);
+        todo_wine CHECK_REFCOUNT( pRenderTarget, 2);
+        todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
+        todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
+        pRenderTarget = NULL;
+    }
+    CHECK_REFCOUNT( pDevice, --refcount);
+
+    hr = IDirect3DDevice8_GetDepthStencilSurface(pDevice, &pStencilSurface);
+    todo_wine CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
+    if(pStencilSurface)
+    {
+        todo_wine CHECK_REFCOUNT( pStencilSurface, 1);
+        todo_wine CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
+        pStencilSurface = NULL;
+    }
+    CHECK_REFCOUNT( pDevice, --refcount);
+
+    hr = IDirect3DDevice8_GetBackBuffer(pDevice, 0, 0, &pBackBuffer);
+    todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
+    if(pBackBuffer)
+    {
+        todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
+        todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
+        pBackBuffer = NULL;
+    }
+    CHECK_REFCOUNT( pDevice, --refcount);
 
     /* Buffers */
     hr = IDirect3DDevice8_CreateIndexBuffer( pDevice, 16, 0, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &pIndexBuffer );
@@ -347,6 +402,21 @@ static void test_refcount(void)
     CHECK_CALL( hr, "CreateStateBlock", pDevice, refcount );
     hr = IDirect3DDevice8_CreateAdditionalSwapChain( pDevice, &d3dpp, &pSwapChain );
     CHECK_CALL( hr, "CreateAdditionalSwapChain", pDevice, ++refcount );
+    if(pSwapChain)
+    {
+        /* check implicit back buffer */
+        hr = IDirect3DSwapChain8_GetBackBuffer(pSwapChain, 0, 0, &pBackBuffer);
+        todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
+        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
+        if(pBackBuffer)
+        {
+            todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
+            todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
+            pBackBuffer = NULL;
+        }
+        CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_REFCOUNT( pDevice, --refcount);
+    }
 
     if(pVertexBuffer)
     {
@@ -384,9 +454,9 @@ cleanup:
     /* Misc */
     if (dStateBlock != -1)    IDirect3DDevice8_DeleteStateBlock( pDevice, dStateBlock );
     /* This will destroy device - cannot check the refcount here */
-    if (pSwapChain)           IUnknown_Release( pSwapChain );
+    if (pSwapChain)           CHECK_RELEASE_REFCOUNT( pSwapChain, 0);
 
-    if (pD3d)                 IUnknown_Release( pD3d );
+    if (pD3d)                 CHECK_RELEASE_REFCOUNT( pD3d, 0);
 
     DestroyWindow( hwnd );
 }
