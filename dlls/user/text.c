@@ -1083,7 +1083,7 @@ INT WINAPI DrawTextW( HDC hdc, LPCWSTR str, INT count, LPRECT rect, UINT flags )
     memset (&dtp, 0, sizeof(dtp));
     if (flags & DT_TABSTOP)
     {
-        dtp.iTabLength = (flags >> 8) && 0xff;
+        dtp.iTabLength = (flags >> 8) & 0xff;
         flags &= 0xffff00ff;
     }
     return DrawTextExW(hdc, (LPWSTR)str, count, rect, flags, &dtp);
@@ -1099,7 +1099,7 @@ INT WINAPI DrawTextA( HDC hdc, LPCSTR str, INT count, LPRECT rect, UINT flags )
     memset (&dtp, 0, sizeof(dtp));
     if (flags & DT_TABSTOP)
     {
-        dtp.iTabLength = (flags >> 8) && 0xff;
+        dtp.iTabLength = (flags >> 8) & 0xff;
         flags &= 0xffff00ff;
     }
     return DrawTextExA( hdc, (LPSTR)str, count, rect, flags, &dtp );
