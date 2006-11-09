@@ -462,6 +462,20 @@ static HRESULT exec_justifycenter(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_justifyleft(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+    set_ns_align(This, "left");
+    return S_OK;
+}
+
+static HRESULT exec_justifyright(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+    set_ns_align(This, "right");
+    return S_OK;
+}
+
 static HRESULT exec_underline(HTMLDocument *This)
 {
     TRACE("(%p)\n", This);
@@ -821,6 +835,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_justifycenter(This);
+        case IDM_JUSTIFYLEFT:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_justifyleft(This);
+        case IDM_JUSTIFYRIGHT:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_justifyright(This);
         case IDM_UNDERLINE:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
