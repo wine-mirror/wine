@@ -195,8 +195,8 @@ const char *debugstr_fourcc (DWORD fourcc) {
 const char *debugstr_dmversion (LPDMUS_VERSION version) {
 	if (!version) return "'null'";
 	return wine_dbg_sprintf ("\'%i,%i,%i,%i\'",
-		(int)((version->dwVersionMS && 0xFFFF0000) >> 8), (int)(version->dwVersionMS && 0x0000FFFF), 
-		(int)((version->dwVersionLS && 0xFFFF0000) >> 8), (int)(version->dwVersionLS && 0x0000FFFF));
+		(int)((version->dwVersionMS & 0xFFFF0000) >> 8), (int)(version->dwVersionMS & 0x0000FFFF),
+		(int)((version->dwVersionLS & 0xFFFF0000) >> 8), (int)(version->dwVersionLS & 0x0000FFFF));
 }
 
 /* returns name of given GUID */
