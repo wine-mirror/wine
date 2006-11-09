@@ -1173,7 +1173,7 @@ static void dump_TLBFuncDescOne(const TLBFuncDesc * pfd)
   dump_FUNCDESC(&(pfd->funcdesc));
 
   MESSAGE("\thelpstring: %s\n", debugstr_w(pfd->HelpString));
-  MESSAGE("\tentry: %s\n", debugstr_w(pfd->Entry));
+  MESSAGE("\tentry: %s\n", (pfd->Entry == (void *)-1) ? "invalid" : debugstr_w(pfd->Entry));
 }
 static void dump_TLBFuncDesc(const TLBFuncDesc * pfd)
 {
@@ -1813,7 +1813,9 @@ MSFT_DoFuncs(TLBContext*     pcx,
                 {
                     if ( pFuncRec->FKCCIC & 0x2000 )
                     {
-                       (*pptfd)->Entry = SysAllocString((WCHAR*)pFuncRec->OptAttr[2]);
+                       if (HIWORD(pFuncRec->OptAttr[2]) != 0)
+                           ERR("ordinal 0x%08x invalid, HIWORD != 0\n", pFuncRec->OptAttr[2]);
+                       (*pptfd)->Entry = (BSTR)pFuncRec->OptAttr[2];
                     }
                     else
                     {
@@ -1831,6 +1833,10 @@ MSFT_DoFuncs(TLBContext*     pcx,
 					  &(*pptfd)->pCustData);
                         }
                     }
+                }
+                else
+                {
+                    (*pptfd)->Entry = (BSTR)-1;
                 }
             }
         }
@@ -4437,7 +4443,8 @@ static ULONG WINAPI ITypeInfo_fnRelease(ITypeInfo2 *iface)
               pCustDataNext = pCustData->next;
               TLB_Free(pCustData);
           }
-          SysFreeString(pFInfo->Entry);
+          if (HIWORD(pFInfo->Entry) != 0 && pFInfo->Entry != (BSTR)-1) 
+              SysFreeString(pFInfo->Entry);
           SysFreeString(pFInfo->HelpString);
           SysFreeString(pFInfo->Name);
 
