@@ -2426,7 +2426,7 @@ GdiFont *WineEngCreateFontInstance(DC *dc, HFONT hfont)
             face = LIST_ENTRY(face_elem_ptr, Face, entry);
             if(face->scalable) {
                 csi.fs.fsCsb[0] = 0;
-                FIXME("just using first face for now\n");
+                WARN("just using first face for now\n");
                 goto found;
             }
             if(can_use_bitmap && !last_resort_family)
