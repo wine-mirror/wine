@@ -9,7 +9,8 @@ EXTRALIBS = -ldxerr8 -luuid -ldxguid
 CTESTS = \
 	d3d8_main.c \
 	device.c \
-	surface.c
+	surface.c \
+	texture.c
 
 @MAKE_TEST_RULES@
 
