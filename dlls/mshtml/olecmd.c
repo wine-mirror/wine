@@ -44,8 +44,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_UNDERLINE "cmd_underline"
 #define NSCMD_FONTCOLOR "cmd_fontColor"
 #define NSCMD_ALIGN "cmd_align"
+#define NSCMD_FONTFACE "cmd_fontFace"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
+#define NSSTATE_ALL "state_all"
 
 /**********************************************************
  * IOleCommandTarget implementation
@@ -318,7 +320,7 @@ static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
         nsparam = create_nscommand_params();
         get_ns_command_state(This->nscontainer, nscmd, nsparam);
 
-        nsICommandParams_GetBooleanValue(nsparam, "state_all", &b);
+        nsICommandParams_GetBooleanValue(nsparam, NSSTATE_ALL, &b);
     }
 
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
@@ -359,10 +361,10 @@ static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
         len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, NULL, 0, NULL, NULL);
         stra = mshtml_alloc(len);
         WideCharToMultiByte(CP_ACP, 0, V_BSTR(in), -1, stra, -1, NULL, NULL);
-        nsICommandParams_SetCStringValue(nsparam, "state_attribute", stra);
+        nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, stra);
         mshtml_free(stra);
 
-        do_ns_command(This->nscontainer, "cmd_fontFace", nsparam);
+        do_ns_command(This->nscontainer, NSCMD_FONTFACE, nsparam);
 
         nsICommandParams_Release(nsparam);
     }
@@ -381,11 +383,11 @@ static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
 
         nsparam = create_nscommand_params();
 
-        nsres = get_ns_command_state(This->nscontainer, "cmd_fontFace", nsparam);
+        nsres = get_ns_command_state(This->nscontainer, NSCMD_FONTFACE, nsparam);
         if(NS_FAILED(nsres))
             return S_OK;
 
-        nsICommandParams_GetCStringValue(nsparam, "state_attribute", &stra);
+        nsICommandParams_GetCStringValue(nsparam, NSSTATE_ATTRIBUTE, &stra);
         nsICommandParams_Release(nsparam);
 
         len = MultiByteToWideChar(CP_ACP, 0, stra, -1, NULL, 0);
