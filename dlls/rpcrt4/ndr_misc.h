@@ -32,7 +32,7 @@ struct IPSFactoryBuffer;
 
 PFORMAT_STRING ComputeConformanceOrVariance(
     MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pMemory,
-    PFORMAT_STRING pFormat, ULONG_PTR def, ULONG *pCount);
+    PFORMAT_STRING pFormat, ULONG_PTR def, ULONG_PTR *pCount);
 
 static inline PFORMAT_STRING ComputeConformance(PMIDL_STUB_MESSAGE pStubMsg, unsigned char *pMemory, PFORMAT_STRING pFormat, ULONG def)
 {
@@ -53,7 +53,7 @@ static inline PFORMAT_STRING ComputeVariance(PMIDL_STUB_MESSAGE pStubMsg, unsign
 typedef unsigned char* (WINAPI *NDR_MARSHALL)  (PMIDL_STUB_MESSAGE, unsigned char*, PFORMAT_STRING);
 typedef unsigned char* (WINAPI *NDR_UNMARSHALL)(PMIDL_STUB_MESSAGE, unsigned char**,PFORMAT_STRING, unsigned char);
 typedef void           (WINAPI *NDR_BUFFERSIZE)(PMIDL_STUB_MESSAGE, unsigned char*, PFORMAT_STRING);
-typedef unsigned long  (WINAPI *NDR_MEMORYSIZE)(PMIDL_STUB_MESSAGE,                 PFORMAT_STRING);
+typedef ULONG          (WINAPI *NDR_MEMORYSIZE)(PMIDL_STUB_MESSAGE,                 PFORMAT_STRING);
 typedef void           (WINAPI *NDR_FREE)      (PMIDL_STUB_MESSAGE, unsigned char*, PFORMAT_STRING);
 
 extern const NDR_MARSHALL   NdrMarshaller[];

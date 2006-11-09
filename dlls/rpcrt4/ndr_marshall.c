@@ -117,7 +117,7 @@ static unsigned char *WINAPI NdrBaseTypeMarshall(PMIDL_STUB_MESSAGE, unsigned ch
 static unsigned char *WINAPI NdrBaseTypeUnmarshall(PMIDL_STUB_MESSAGE, unsigned char **, PFORMAT_STRING, unsigned char);
 static void WINAPI NdrBaseTypeBufferSize(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
 static void WINAPI NdrBaseTypeFree(PMIDL_STUB_MESSAGE, unsigned char *, PFORMAT_STRING);
-static unsigned long WINAPI NdrBaseTypeMemorySize(PMIDL_STUB_MESSAGE, PFORMAT_STRING);
+static ULONG WINAPI NdrBaseTypeMemorySize(PMIDL_STUB_MESSAGE, PFORMAT_STRING);
 
 const NDR_MARSHALL NdrMarshaller[NDR_TABLE_SIZE] = {
   0,
@@ -399,7 +399,7 @@ static inline void SizeVariance(MIDL_STUB_MESSAGE *pStubMsg)
 
 PFORMAT_STRING ComputeConformanceOrVariance(
     MIDL_STUB_MESSAGE *pStubMsg, unsigned char *pMemory,
-    PFORMAT_STRING pFormat, ULONG_PTR def, ULONG *pCount)
+    PFORMAT_STRING pFormat, ULONG_PTR def, ULONG_PTR *pCount)
 {
   BYTE dtype = pFormat[0] & 0xf;
   short ofs = *(const short *)&pFormat[2];
@@ -802,7 +802,7 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned type = pFormat[0], attr = pFormat[1];
   PFORMAT_STRING desc;
   NDR_MARSHALL m;
-  unsigned long pointer_id;
+  ULONG pointer_id;
   int pointer_needs_marshaling;
 
   TRACE("(%p,%p,%p,%p)\n", pStubMsg, Buffer, Pointer, pFormat);
@@ -825,7 +825,7 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
       pointer_needs_marshaling = 1;
     else
       pointer_needs_marshaling = 0;
-    pointer_id = (unsigned long)Pointer;
+    pointer_id = (ULONG)Pointer;
     TRACE("writing 0x%08lx to buffer\n", pointer_id);
     NDR_LOCAL_UINT32_WRITE(Buffer, pointer_id);
     break;
@@ -946,7 +946,7 @@ static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   PFORMAT_STRING desc;
   NDR_BUFFERSIZE m;
   int pointer_needs_sizing;
-  unsigned long pointer_id;
+  ULONG pointer_id;
 
   TRACE("(%p,%p,%p)\n", pStubMsg, Pointer, pFormat);
   TRACE("type=0x%x, attr=", type); dump_pointer_attr(attr);
@@ -2742,7 +2742,7 @@ void WINAPI NdrComplexArrayFree(PMIDL_STUB_MESSAGE pStubMsg,
     pMemory = ComplexFree(pStubMsg, pMemory, pFormat, NULL);
 }
 
-static unsigned long UserMarshalFlags(PMIDL_STUB_MESSAGE pStubMsg)
+static ULONG UserMarshalFlags(PMIDL_STUB_MESSAGE pStubMsg)
 {
   return MAKELONG(pStubMsg->dwDestContext,
                   pStubMsg->RpcMsg->DataRepresentation);
@@ -2761,7 +2761,7 @@ unsigned char * WINAPI NdrUserMarshalMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 {
   unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
-  unsigned long uflag = UserMarshalFlags(pStubMsg);
+  ULONG uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
 
@@ -2795,7 +2795,7 @@ unsigned char * WINAPI NdrUserMarshalUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD memsize = *(const WORD*)&pFormat[4];
-  unsigned long uflag = UserMarshalFlags(pStubMsg);
+  ULONG uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p,%d)\n", pStubMsg, ppMemory, pFormat, fMustAlloc);
   TRACE("index=%d\n", index);
 
@@ -2829,7 +2829,7 @@ void WINAPI NdrUserMarshalBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
   DWORD bufsize = *(const WORD*)&pFormat[6];
-  unsigned long uflag = UserMarshalFlags(pStubMsg);
+  ULONG uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
 
@@ -2894,7 +2894,7 @@ void WINAPI NdrUserMarshalFree(PMIDL_STUB_MESSAGE pStubMsg,
 {
 /*  unsigned flags = pFormat[1]; */
   unsigned index = *(const WORD*)&pFormat[2];
-  unsigned long uflag = UserMarshalFlags(pStubMsg);
+  ULONG uflag = UserMarshalFlags(pStubMsg);
   TRACE("(%p,%p,%p)\n", pStubMsg, pMemory, pFormat);
   TRACE("index=%d\n", index);
 
@@ -4698,7 +4698,7 @@ static void WINAPI NdrBaseTypeBufferSize(
 /***********************************************************************
  *           NdrBaseTypeMemorySize [internal]
  */
-static unsigned long WINAPI NdrBaseTypeMemorySize(
+static ULONG WINAPI NdrBaseTypeMemorySize(
     PMIDL_STUB_MESSAGE pStubMsg,
     PFORMAT_STRING pFormat)
 {

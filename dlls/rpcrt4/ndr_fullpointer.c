@@ -72,7 +72,7 @@ void WINAPI NdrFullPointerXlatFree(PFULL_PTR_XLAT_TABLES pXlatTables)
     HeapFree(GetProcessHeap(), 0, pXlatTables);
 }
 
-static void expand_pointer_table_if_necessary(PFULL_PTR_XLAT_TABLES pXlatTables, unsigned long RefId)
+static void expand_pointer_table_if_necessary(PFULL_PTR_XLAT_TABLES pXlatTables, ULONG RefId)
 {
     if (RefId >= pXlatTables->RefIdToPointer.NumberOfEntries)
     {
@@ -195,10 +195,10 @@ void WINAPI NdrFullPointerInsertRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
 
 int WINAPI NdrFullPointerFree(PFULL_PTR_XLAT_TABLES pXlatTables, void *Pointer)
 {
-    unsigned long Hash = 0;
+    ULONG Hash = 0;
     int i;
     PFULL_PTR_TO_REFID_ELEMENT XlatTableEntry;
-    unsigned long RefId = 0;
+    ULONG RefId = 0;
 
     TRACE("(%p, %p)\n", pXlatTables, Pointer);
 
