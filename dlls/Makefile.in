@@ -153,6 +153,7 @@ BASEDIRS = \
 	serialui \
 	setupapi \
 	sfc \
+	shdoclc \
 	shdocvw \
 	shell32 \
 	shfolder \

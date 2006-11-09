@@ -340,6 +340,7 @@ ALL_MAKEFILES = \
 	dlls/setupapi/Makefile \
 	dlls/setupapi/tests/Makefile \
 	dlls/sfc/Makefile \
+	dlls/shdoclc/Makefile \
 	dlls/shdocvw/Makefile \
 	dlls/shdocvw/tests/Makefile \
 	dlls/shell32/Makefile \
@@ -663,6 +664,7 @@ dlls/serialui/Makefile: dlls/serialui/Makefile.in dlls/Makedll.rules
 dlls/setupapi/Makefile: dlls/setupapi/Makefile.in dlls/Makedll.rules
 dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in dlls/Maketest.rules
 dlls/sfc/Makefile: dlls/sfc/Makefile.in dlls/Makedll.rules
+dlls/shdoclc/Makefile: dlls/shdoclc/Makefile.in dlls/Makedll.rules
 dlls/shdocvw/Makefile: dlls/shdocvw/Makefile.in dlls/Makedll.rules
 dlls/shdocvw/tests/Makefile: dlls/shdocvw/tests/Makefile.in dlls/Maketest.rules
 dlls/shell32/Makefile: dlls/shell32/Makefile.in dlls/Makedll.rules
