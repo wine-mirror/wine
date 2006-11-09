@@ -81,6 +81,8 @@ static inline HLOCAL16 LOCAL_Free( HANDLE16 ds, HLOCAL16 handle )
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
 #define GET_DWORD(ptr) (*(const DWORD *)(ptr))
 
+#define WM_SYSTIMER	    0x0118
+
 /* internal messages codes */
 enum wine_internal_message
 {

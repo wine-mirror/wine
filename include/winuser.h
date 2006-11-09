@@ -1105,7 +1105,6 @@ BOOL        WINAPI SetSysColors(INT,const INT*,const COLORREF*);
 #define WM_COMMAND          0x0111
 #define WM_SYSCOMMAND       0x0112
 #define WM_TIMER	    0x0113
-#define WM_SYSTIMER	    0x0118
 
   /* scroll messages */
 #define WM_HSCROLL          0x0114

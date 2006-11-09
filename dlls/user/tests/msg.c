@@ -42,6 +42,10 @@
 
 #define SW_NORMALNA	        0xCC    /* undoc. flag in MinMaximize */
 
+#ifndef WM_SYSTIMER
+#define WM_SYSTIMER	    0x0118
+#endif
+
 #define WND_PARENT_ID		1
 #define WND_POPUP_ID		2
 #define WND_CHILD_ID		3
