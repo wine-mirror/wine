@@ -1235,14 +1235,20 @@ static int ntlm_GetTokenBufferIndex(PSecBufferDesc pMessage)
  *             ntlm_CreateSignature
  * As both MakeSignature and VerifySignature need this, but different keys
  * are needed for NTLMv2, the logic goes into a helper function.
+ * To ensure maximal reusability, we can specify the direction as NTLM_SEND for
+ * signing/encrypting and NTLM_RECV for verfying/decrypting. When encrypting,
+ * the signature is encrypted after the message was encrypted, so
+ * CreateSignature shouldn't do it. In this case, encrypt_sig can be set to
+ * false.
  */
 static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc pMessage,
-        int token_idx, SignDirection direction)
+        int token_idx, SignDirection direction, BOOL encrypt_sig)
 {
     ULONG sign_version = 1;
     UINT i;
     PBYTE sig;
-    TRACE("%p, %p, %d, %d\n", helper, pMessage, token_idx, direction);
+    TRACE("%p, %p, %d, %d, %d\n", helper, pMessage, token_idx, direction,
+            encrypt_sig);
 
     sig = pMessage->pBuffers[token_idx].pvBuffer;
 
@@ -1253,11 +1259,10 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
         BYTE seq_no[4];
         HMAC_MD5_CTX hmac_md5_ctx;
 
-        TRACE("Encrypting NTLM2 style\n");
+        TRACE("Signing NTLM2 style\n");
 
         if(direction == NTLM_SEND)
         {
-            TRACE("Signing for sending\n");
             seq_no[0] = (helper->crypt.ntlm2.send_seq_no >>  0) & 0xff;
             seq_no[1] = (helper->crypt.ntlm2.send_seq_no >>  8) & 0xff;
             seq_no[2] = (helper->crypt.ntlm2.send_seq_no >> 16) & 0xff;
@@ -1265,9 +1270,7 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
 
             ++(helper->crypt.ntlm2.send_seq_no);
 
-            TRACE("HMACMD5Init...\n");
             HMACMD5Init(&hmac_md5_ctx, helper->crypt.ntlm2.send_sign_key, 16);
-            TRACE("Done\n");
         }
         else
         {
@@ -1281,8 +1284,6 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
             HMACMD5Init(&hmac_md5_ctx, helper->crypt.ntlm2.recv_sign_key, 16);
         }
 
-        TRACE("Starting the update loop\n");
-
         HMACMD5Update(&hmac_md5_ctx, seq_no, 4);
         for( i = 0; i < pMessage->cBuffers; ++i )
         {
@@ -1293,9 +1294,7 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
 
         HMACMD5Final(&hmac_md5_ctx, digest);
 
-        TRACE("After HMACMD5Final\n");
-
-        if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
+        if(encrypt_sig && helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
         {
             if(direction == NTLM_SEND)
                 SECUR32_arc4Process(helper->crypt.ntlm2.send_a4i, digest, 8);
@@ -1320,6 +1319,7 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
     if(helper->neg_flags & NTLMSSP_NEGOTIATE_SIGN)
     {
         ULONG crc = 0U;
+        TRACE("Signing NTLM1 style\n");
 
         for(i=0; i < pMessage->cBuffers; ++i)
         {
@@ -1346,7 +1346,8 @@ static SECURITY_STATUS ntlm_CreateSignature(PNegoHelper helper, PSecBufferDesc p
 
         ++(helper->crypt.ntlm.seq_num);
 
-        SECUR32_arc4Process(helper->crypt.ntlm.a4i, sig+4, 12);
+        if(encrypt_sig)
+            SECUR32_arc4Process(helper->crypt.ntlm.a4i, sig+4, 12);
         return SEC_E_OK;
     }
 
@@ -1395,7 +1396,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_MakeSignature(PCtxtHandle phContext, ULONG
     helper = (PNegoHelper)phContext->dwLower;
     TRACE("Negotiated flags are: 0x%08lx\n", helper->neg_flags);
 
-    return ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND);
+    return ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND, TRUE);
 }
 
 /***********************************************************************
@@ -1454,7 +1455,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
         }
     }
 
-    if((ret = ntlm_CreateSignature(helper, &local_desc, token_idx, NTLM_RECV)) != SEC_E_OK)
+    if((ret = ntlm_CreateSignature(helper, &local_desc, token_idx, NTLM_RECV, TRUE)) != SEC_E_OK)
         return ret;
 
     if(memcmp(((PBYTE)local_buff[token_idx].pvBuffer) + 8,
@@ -1498,8 +1499,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
         ULONG fQOP, PSecBufferDesc pMessage, ULONG MessageSeqNo)
 {
     PNegoHelper helper;
-    UINT i;
-    int token_idx = -1;
+    int token_idx;
 
     TRACE("(%p %d %p %d)\n", phContext, fQOP, pMessage, MessageSeqNo);
 
@@ -1515,16 +1515,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
     if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    for(i=0; i < pMessage->cBuffers; ++i)
-    {
-        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
-        {
-            token_idx = i;
-            break;
-        }
-    }
-
-    if(token_idx == -1)
+    if((token_idx = ntlm_GetTokenBufferIndex(pMessage)) == -1)
         return SEC_E_INVALID_TOKEN;
 
     if(pMessage->pBuffers[token_idx].cbBuffer < 16)
@@ -1532,39 +1523,34 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 
     helper = (PNegoHelper) phContext->dwLower;
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
-    {
-        FIXME("Can't handle NTLMv2 encryption yet, aborting\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2 && 
+            helper->neg_flags & NTLMSSP_NEGOTIATE_SEAL)
+    { 
+        ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND, FALSE);
+        SECUR32_arc4Process(helper->crypt.ntlm2.send_a4i,
+                (BYTE *)pMessage->pBuffers[1].pvBuffer,
+                pMessage->pBuffers[1].cbBuffer);
+
+        if(helper->neg_flags & NTLMSSP_NEGOTIATE_KEY_EXCHANGE)
+            SECUR32_arc4Process(helper->crypt.ntlm2.send_a4i,
+                    ((BYTE *)pMessage->pBuffers[token_idx].pvBuffer)+4, 8);
+
+
+        return SEC_E_OK;
     }
     else
     {
-        PBYTE sig = pMessage->pBuffers[token_idx].pvBuffer;
-        ULONG crc = 0U;
-        ULONG sign_version = 1l;
+        PBYTE sig;
+        ULONG save_flags;
 
-        for(i=0; i < pMessage->cBuffers; ++i)
-        {
-            if(pMessage->pBuffers[i].BufferType & SECBUFFER_DATA)
-            {
-                crc = ComputeCrc32(pMessage->pBuffers[i].pvBuffer,
-                    pMessage->pBuffers[i].cbBuffer, crc);
-            }
-        }
+        /* EncryptMessage always produces real signatures, so make sure
+         * NTLMSSP_NEGOTIATE_SIGN is set*/
+        save_flags = helper->neg_flags;
+        helper->neg_flags |= NTLMSSP_NEGOTIATE_SIGN;
+        ntlm_CreateSignature(helper, pMessage, token_idx, NTLM_SEND, FALSE);
+        helper->neg_flags = save_flags;
 
-        sig[ 0] = (sign_version >>  0) & 0xff;
-        sig[ 1] = (sign_version >>  8) & 0xff;
-        sig[ 2] = (sign_version >> 16) & 0xff;
-        sig[ 3] = (sign_version >> 24) & 0xff;
-        memset(sig+4, 0, 4);
-        sig[ 8] = (crc >>  0) & 0xff;
-        sig[ 9] = (crc >>  8) & 0xff;
-        sig[10] = (crc >> 16) & 0xff;
-        sig[11] = (crc >> 24) & 0xff;
-        sig[12] = (helper->crypt.ntlm.seq_num >>  0) & 0xff;
-        sig[13] = (helper->crypt.ntlm.seq_num >>  8) & 0xff;
-        sig[14] = (helper->crypt.ntlm.seq_num >> 16) & 0xff;
-        sig[15] = (helper->crypt.ntlm.seq_num >> 24) & 0xff;
+        sig = pMessage->pBuffers[token_idx].pvBuffer;
 
         SECUR32_arc4Process(helper->crypt.ntlm.a4i, pMessage->pBuffers[1].pvBuffer,
                 pMessage->pBuffers[1].cbBuffer);
@@ -1572,8 +1558,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_EncryptMessage(PCtxtHandle phContext,
 
         if(helper->neg_flags & NTLMSSP_NEGOTIATE_ALWAYS_SIGN || helper->neg_flags == 0)
             memset(sig+4, 0, 4);
-
-        ++(helper->crypt.ntlm.seq_num);
 
     }
 
@@ -1589,8 +1573,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     SECURITY_STATUS ret;
     ULONG ntlmssp_flags_save;
     PNegoHelper helper;
-    UINT i;
-    int token_idx = -1;
+    int token_idx;
     TRACE("(%p %p %d %p)\n", phContext, pMessage, MessageSeqNo, pfQOP);
 
     if(!phContext)
@@ -1602,15 +1585,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     if(!pMessage || !pMessage->pBuffers || pMessage->cBuffers < 2)
         return SEC_E_INVALID_TOKEN;
 
-    for(i=0; i < pMessage->cBuffers; ++i)
-    {
-        if(pMessage->pBuffers[i].BufferType == SECBUFFER_TOKEN)
-        {
-            token_idx = i;
-            break;
-        }
-    }
-    if(token_idx == -1)
+    if((token_idx = ntlm_GetTokenBufferIndex(pMessage)) == -1)
         return SEC_E_INVALID_TOKEN;
 
     if(pMessage->pBuffers[token_idx].cbBuffer < 16)
@@ -1618,10 +1593,10 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
 
     helper = (PNegoHelper) phContext->dwLower;
 
-    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2)
+    if(helper->neg_flags & NTLMSSP_NEGOTIATE_NTLM2 && helper->neg_flags & NTLMSSP_NEGOTIATE_SEAL)
     {
-        FIXME("Can't handle NTLMv2 encryption yet, aborting\n");
-        return SEC_E_UNSUPPORTED_FUNCTION;
+        SECUR32_arc4Process(helper->crypt.ntlm2.recv_a4i,
+                pMessage->pBuffers[1].pvBuffer, pMessage->pBuffers[1].cbBuffer);
     }
     else
     {
