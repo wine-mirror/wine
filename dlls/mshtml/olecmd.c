@@ -640,8 +640,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_FONTSIZE:
-                FIXME("CGID_MSHTML: IDM_FONTSIZE\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_FONTSIZE\n");
+                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_PASTE:
                 FIXME("CGID_MSHTML: IDM_PASTE\n");
