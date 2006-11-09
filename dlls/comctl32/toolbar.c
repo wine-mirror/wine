@@ -5205,7 +5205,7 @@ TOOLBAR_GetStringA (HWND hwnd, WPARAM wParam, LPARAM lParam)
         TRACE("returning %s\n", debugstr_a(str));
     }
     else
-        ERR("String index %d out of range (largest is %d)\n", iString, infoPtr->nNumStrings - 1);
+        WARN("String index %d out of range (largest is %d)\n", iString, infoPtr->nNumStrings - 1);
 
     return ret;
 }
