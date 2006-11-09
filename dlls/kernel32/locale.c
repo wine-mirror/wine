@@ -804,7 +804,6 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
     }
 
     status = NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, info, size, &size );
-    if (status == STATUS_BUFFER_OVERFLOW && !buffer) status = 0;
 
     if (!status)
     {
@@ -825,14 +824,18 @@ static INT get_registry_locale_info( LPCWSTR value, LPWSTR buffer, INT len )
             buffer[ret-1] = 0;
         }
     }
+    else if (status == STATUS_BUFFER_OVERFLOW && !buffer)
+    {
+        ret = (size - info_size) / sizeof(WCHAR) + 1;
+    }
+    else if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        ret = -1;
+    }
     else
     {
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND) ret = -1;
-        else
-        {
-            SetLastError( RtlNtStatusToDosError(status) );
-            ret = 0;
-        }
+        SetLastError( RtlNtStatusToDosError(status) );
+        ret = 0;
     }
     NtClose( hkey );
     HeapFree( GetProcessHeap(), 0, info );
