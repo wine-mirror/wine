@@ -310,7 +310,7 @@ static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
     if(This->usermode != EDITMODE || This->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
-    if(This->nscontainer) {
+    if(This->nscontainer && nscmd) {
         nsparam = create_nscommand_params();
         get_ns_command_state(This->nscontainer, nscmd, nsparam);
 
@@ -636,8 +636,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
                 break;
             case IDM_FONTNAME:
-                FIXME("CGID_MSHTML: IDM_FONTNAME\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_FONTNAME\n");
+                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_FONTSIZE:
                 FIXME("CGID_MSHTML: IDM_FONTSIZE\n");
