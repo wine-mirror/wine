@@ -21,9 +21,18 @@
 #ifndef __WINE_OLEDLG_H
 #define __WINE_OLEDLG_H
 
+#ifndef __WINESRC__
+# include <windows.h>
+#endif
+#include <shellapi.h>
 #include <commdlg.h>
-#include <prsht.h>
 #include <ole2.h>
+#ifndef __WINESRC__
+# include <string.h>
+# include <tchar.h>
+#endif
+#include <dlgs.h>
+#include <prsht.h>
 
 #ifdef __cplusplus
 extern "C" {
