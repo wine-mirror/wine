@@ -144,7 +144,7 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
 
 static WINE_EXCEPTION_FILTER(rpc_filter)
 {
-  WARN("exception caught with code 0x%08lx = %ld\n", GetExceptionCode(), GetExceptionCode());
+  WARN("exception caught with code 0x%08x = %d\n", GetExceptionCode(), GetExceptionCode());
   TRACE("returning failure packet\n");
   /* catch every exception */
   return EXCEPTION_EXECUTE_HANDLER;
@@ -337,7 +337,7 @@ void RPCRT4_new_client(RpcConnection* conn)
   HANDLE thread = CreateThread(NULL, 0, RPCRT4_io_thread, conn, 0, NULL);
   if (!thread) {
     DWORD err = GetLastError();
-    ERR("failed to create thread, error=%08lx\n", err);
+    ERR("failed to create thread, error=%08x\n", err);
     RPCRT4_DestroyConnection(conn);
   }
   /* we could set conn->thread, but then we'd have to make the io_thread wait
@@ -957,7 +957,7 @@ RPC_STATUS WINAPI I_RpcServerStopListening( void )
  */
 UINT WINAPI I_RpcWindowProc( void *hWnd, UINT Message, UINT wParam, ULONG lParam )
 {
-  FIXME( "(%p,%08x,%08x,%08lx): stub\n", hWnd, Message, wParam, lParam );
+  FIXME( "(%p,%08x,%08x,%08x): stub\n", hWnd, Message, wParam, lParam );
 
   return 0;
 }

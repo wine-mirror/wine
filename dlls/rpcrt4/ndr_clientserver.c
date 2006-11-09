@@ -131,7 +131,7 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
  */
 unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, ULONG buflen, RPC_BINDING_HANDLE handle)
 {
-  TRACE("(stubmsg == ^%p, buflen == %lu, handle == %p): wild guess.\n", stubmsg, buflen, handle);
+  TRACE("(stubmsg == ^%p, buflen == %u, handle == %p): wild guess.\n", stubmsg, buflen, handle);
   
   assert( stubmsg && stubmsg->RpcMsg );
 

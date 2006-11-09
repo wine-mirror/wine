@@ -1063,7 +1063,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   r = EnumerateSecurityPackagesA(&package_count, &packages);
   if (r != SEC_E_OK)
   {
-    ERR("EnumerateSecurityPackagesA failed with error 0x%08lx\n", r);
+    ERR("EnumerateSecurityPackagesA failed with error 0x%08x\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 
@@ -1093,7 +1093,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   }
   else
   {
-    ERR("AcquireCredentialsHandleA failed with error 0x%08lx\n", r);
+    ERR("AcquireCredentialsHandleA failed with error 0x%08x\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 }
@@ -1135,7 +1135,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   r = EnumerateSecurityPackagesW(&package_count, &packages);
   if (r != SEC_E_OK)
   {
-    ERR("EnumerateSecurityPackagesA failed with error 0x%08lx\n", r);
+    ERR("EnumerateSecurityPackagesA failed with error 0x%08x\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 
@@ -1165,7 +1165,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   }
   else
   {
-    ERR("AcquireCredentialsHandleA failed with error 0x%08lx\n", r);
+    ERR("AcquireCredentialsHandleA failed with error 0x%08x\n", r);
     return RPC_S_SEC_PKG_ERROR;
   }
 }
@@ -1199,6 +1199,6 @@ RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, un
  */
 RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Option, ULONG OptionValue)
 {
-    FIXME("(%p, %ld, %ld): stub\n", BindingHandle, Option, OptionValue);
+    FIXME("(%p, %d, %d): stub\n", BindingHandle, Option, OptionValue);
     return RPC_S_OK;
 }

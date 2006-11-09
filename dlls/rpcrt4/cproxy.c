@@ -101,7 +101,7 @@ static HRESULT WINAPI ObjectStubless(DWORD index)
 
   PFORMAT_STRING fs = This->stubless->ProcFormatString + This->stubless->FormatStringOffset[index];
   unsigned bytes = *(const WORD*)(fs+8) - STACK_ADJUST;
-  TRACE("(%p)->(%ld)([%d bytes]) ret=%08lx\n", iface, index, bytes, *(DWORD*)(args+bytes));
+  TRACE("(%p)->(%d)([%d bytes]) ret=%08x\n", iface, index, bytes, *(DWORD*)(args+bytes));
 
   return NdrClientCall2(This->stubless->pStubDesc, fs, args);
 }
@@ -420,7 +420,7 @@ void WINAPI NdrProxyFreeBuffer(void *This,
  */
 HRESULT WINAPI NdrProxyErrorHandler(DWORD dwExceptionCode)
 {
-  WARN("(0x%08lx): a proxy call failed\n", dwExceptionCode);
+  WARN("(0x%08x): a proxy call failed\n", dwExceptionCode);
 
   if (FAILED(dwExceptionCode))
     return dwExceptionCode;

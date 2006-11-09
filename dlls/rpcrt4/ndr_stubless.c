@@ -785,7 +785,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     /* Later NDR language versions probably won't be backwards compatible */
     if (pStubDesc->Version > 0x50002)
     {
-        FIXME("Incompatible stub description version: 0x%lx\n", pStubDesc->Version);
+        FIXME("Incompatible stub description version: 0x%x\n", pStubDesc->Version);
         RpcRaiseException(RPC_X_WRONG_STUB_VERSION);
     }
 
@@ -819,7 +819,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
         NdrClientInitializeNew(&rpcMsg, &stubMsg, pStubDesc, procedure_number);
 
     TRACE("Oi_flags = 0x%02x\n", pProcHeader->Oi_flags);
-    TRACE("MIDL stub version = 0x%lx\n", pStubDesc->MIDLVersion);
+    TRACE("MIDL stub version = 0x%x\n", pStubDesc->MIDLVersion);
 
     /* needed for conformance of top-level objects */
 #ifdef __i386__
@@ -1127,7 +1127,7 @@ LONG WINAPI NdrStubCall2(
     /* Later NDR language versions probably won't be backwards compatible */
     if (pStubDesc->Version > 0x50002)
     {
-        FIXME("Incompatible stub description version: 0x%lx\n", pStubDesc->Version);
+        FIXME("Incompatible stub description version: 0x%x\n", pStubDesc->Version);
         RpcRaiseException(RPC_X_WRONG_STUB_VERSION);
     }
 

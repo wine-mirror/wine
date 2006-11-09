@@ -115,7 +115,7 @@ static RPC_STATUS rpcrt4_conn_listen_pipe(RpcConnection_np *npc)
   if (ConnectNamedPipe(npc->pipe, &npc->ovl))
     return RPC_S_OK;
 
-  WARN("Couldn't ConnectNamedPipe (error was %ld)\n", GetLastError());
+  WARN("Couldn't ConnectNamedPipe (error was %d)\n", GetLastError());
   if (GetLastError() == ERROR_PIPE_CONNECTED) {
     SetEvent(npc->ovl.hEvent);
     return RPC_S_OK;
@@ -138,7 +138,7 @@ static RPC_STATUS rpcrt4_conn_create_pipe(RpcConnection *Connection, LPCSTR pnam
                                PIPE_UNLIMITED_INSTANCES,
                                RPC_MAX_PACKET_SIZE, RPC_MAX_PACKET_SIZE, 5000, NULL);
   if (npc->pipe == INVALID_HANDLE_VALUE) {
-    WARN("CreateNamedPipe failed with error %ld\n", GetLastError());
+    WARN("CreateNamedPipe failed with error %d\n", GetLastError());
     if (GetLastError() == ERROR_FILE_EXISTS)
       return RPC_S_DUPLICATE_ENDPOINT;
     else
@@ -167,14 +167,14 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
     if (pipe != INVALID_HANDLE_VALUE) break;
     err = GetLastError();
     if (err == ERROR_PIPE_BUSY) {
-      TRACE("connection failed, error=%lx\n", err);
+      TRACE("connection failed, error=%x\n", err);
       return RPC_S_SERVER_TOO_BUSY;
     }
     if (!wait)
       return RPC_S_SERVER_UNAVAILABLE;
     if (!WaitNamedPipeA(pname, NMPWAIT_WAIT_FOREVER)) {
       err = GetLastError();
-      WARN("connection failed, error=%lx\n", err);
+      WARN("connection failed, error=%x\n", err);
       return RPC_S_SERVER_UNAVAILABLE;
     }
   }
@@ -550,7 +550,7 @@ static int rpcrt4_protseq_np_wait_for_new_connection(RpcServerProtseq *protseq, 
         return 0;
     else if (res == WAIT_FAILED)
     {
-        ERR("wait failed with error %ld\n", GetLastError());
+        ERR("wait failed with error %d\n", GetLastError());
         return -1;
     }
     else

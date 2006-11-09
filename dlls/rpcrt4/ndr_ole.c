@@ -112,7 +112,7 @@ static ULONG WINAPI RpcStream_Release(LPSTREAM iface)
 {
   RpcStreamImpl *This = (RpcStreamImpl *)iface;
   if (!--(This->RefCount)) {
-    TRACE("size=%ld\n", *This->size);
+    TRACE("size=%d\n", *This->size);
     This->pMsg->Buffer = (unsigned char*)This->data + *This->size;
     HeapFree(GetProcessHeap(),0,This);
     return 0;
@@ -219,7 +219,7 @@ static LPSTREAM RpcStream_Create(PMIDL_STUB_MESSAGE pStubMsg, BOOL init)
   This->data = (char*)(This->size + 1);
   This->pos = 0;
   if (init) *This->size = 0;
-  TRACE("init size=%ld\n", *This->size);
+  TRACE("init size=%d\n", *This->size);
   return (LPSTREAM)This;
 }
 
@@ -314,7 +314,7 @@ void WINAPI NdrInterfacePointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
   hr = COM_GetMarshalSizeMax(&size, riid, (LPUNKNOWN)pMemory,
                             pStubMsg->dwDestContext, pStubMsg->pvDestContext,
                             MSHLFLAGS_NORMAL);
-  TRACE("size=%ld\n", size);
+  TRACE("size=%d\n", size);
   pStubMsg->BufferLength += sizeof(DWORD) + size;
 }
 

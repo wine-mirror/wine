@@ -201,10 +201,10 @@ static void fill_table(IUnknownVtbl *vtbl, DWORD num)
 
 void create_delegating_vtbl(DWORD num_methods)
 {
-    TRACE("%ld\n", num_methods);
+    TRACE("%d\n", num_methods);
     if(num_methods <= 3)
     {
-        ERR("should have more than %ld methods\n", num_methods);
+        ERR("should have more than %d methods\n", num_methods);
         return;
     }
 
@@ -243,7 +243,7 @@ static void release_delegating_vtbl(IUnknownVtbl *vtbl)
 
     EnterCriticalSection(&delegating_vtbl_section);
     table->ref--;
-    TRACE("ref now %ld\n", table->ref);
+    TRACE("ref now %d\n", table->ref);
     if(table->ref == 0 && table != current_vtbl.table)
     {
         TRACE("... and we're not current so free'ing\n");
@@ -423,7 +423,7 @@ HRESULT WINAPI CStdStubBuffer_Invoke(LPRPCSTUBBUFFER iface,
   __EXCEPT(stub_filter)
   {
     DWORD dwExceptionCode = GetExceptionCode();
-    WARN("a stub call failed with exception 0x%08lx (%ld)\n", dwExceptionCode, dwExceptionCode);
+    WARN("a stub call failed with exception 0x%08x (%d)\n", dwExceptionCode, dwExceptionCode);
     if (FAILED(dwExceptionCode))
       hr = dwExceptionCode;
     else

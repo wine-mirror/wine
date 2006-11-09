@@ -367,7 +367,7 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
         ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
         NULL, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
 
-  TRACE("r = %08lx cbBuffer = %ld attr = %08lx\n", r, out->cbBuffer, conn->attr);
+  TRACE("r = %08x cbBuffer = %ld attr = %08x\n", r, out->cbBuffer, conn->attr);
 }
 
 /***********************************************************************
@@ -383,7 +383,7 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
   RpcPktHdr *resp_hdr;
   RPC_STATUS status;
 
-  TRACE("challenge %s, %ld bytes\n", challenge, count);
+  TRACE("challenge %s, %d bytes\n", challenge, count);
 
   out.BufferType = SECBUFFER_TOKEN;
   out.cbBuffer = sizeof buffer;
@@ -407,7 +407,7 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
         &inp_desc, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
   if (r)
   {
-    WARN("InitializeSecurityContext failed with error 0x%08lx\n", r);
+    WARN("InitializeSecurityContext failed with error 0x%08x\n", r);
     return ERROR_ACCESS_DENIED;
   }
 
@@ -488,7 +488,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   /* read packet common header */
   dwRead = rpcrt4_conn_read(Connection, &common_hdr, sizeof(common_hdr));
   if (dwRead != sizeof(common_hdr)) {
-    WARN("Short read of header, %ld bytes\n", dwRead);
+    WARN("Short read of header, %d bytes\n", dwRead);
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
@@ -514,7 +514,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   /* read the rest of packet header */
   dwRead = rpcrt4_conn_read(Connection, &(*Header)->common + 1, hdr_length - sizeof(common_hdr));
   if (dwRead != hdr_length - sizeof(common_hdr)) {
-    WARN("bad header length, %ld/%ld bytes\n", dwRead, hdr_length - sizeof(common_hdr));
+    WARN("bad header length, %d/%d bytes\n", dwRead, hdr_length - sizeof(common_hdr));
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
@@ -554,7 +554,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
 
     if (((*Header)->common.frag_len < hdr_length) ||
         ((*Header)->common.frag_len - hdr_length < header_auth_len)) {
-      WARN("frag_len %d too small for hdr_length %ld and auth_len %d\n",
+      WARN("frag_len %d too small for hdr_length %d and auth_len %d\n",
         common_hdr.frag_len, hdr_length, common_hdr.auth_len);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
@@ -586,7 +586,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     dwRead = rpcrt4_conn_read(Connection,
         (unsigned char *)pMsg->Buffer + buffer_length, data_length);
     if (dwRead != data_length) {
-      WARN("bad data length, %ld/%ld\n", dwRead, data_length);
+      WARN("bad data length, %d/%ld\n", dwRead, data_length);
       status = RPC_S_PROTOCOL_ERROR;
       goto fail;
     }
@@ -599,7 +599,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
        * verifier data then it is just duplicated in all the fragments */
       dwRead = rpcrt4_conn_read(Connection, auth_data, header_auth_len);
       if (dwRead != header_auth_len) {
-        WARN("bad authentication data length, %ld/%d\n", dwRead,
+        WARN("bad authentication data length, %d/%d\n", dwRead,
           header_auth_len);
         status = RPC_S_PROTOCOL_ERROR;
         goto fail;
@@ -613,7 +613,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
       /* read the header of next packet */
       dwRead = rpcrt4_conn_read(Connection, *Header, hdr_length);
       if (dwRead != hdr_length) {
-        WARN("invalid packet header size (%ld)\n", dwRead);
+        WARN("invalid packet header size (%d)\n", dwRead);
         status = RPC_S_PROTOCOL_ERROR;
         goto fail;
       }
