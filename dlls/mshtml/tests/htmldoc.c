@@ -2043,6 +2043,9 @@ static void test_MSHTML_QueryStatus(IUnknown *unk, DWORD cmdf)
     test_QueryStatus(unk, &CGID_MSHTML, IDM_FONTSIZE, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_BOLD, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_FORECOLOR, cmdf);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYCENTER, cmdf);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYLEFT, cmdf);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_JUSTIFYRIGHT, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_ITALIC, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_UNDERLINE, cmdf);
 }
