@@ -43,6 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_ITALIC "cmd_italic"
 #define NSCMD_UNDERLINE "cmd_underline"
 #define NSCMD_FONTCOLOR "cmd_fontColor"
+#define NSCMD_ALIGN "cmd_align"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
 
@@ -323,6 +324,21 @@ static DWORD query_edit_status(HTMLDocument *This, const char *nscmd)
     return OLECMDF_SUPPORTED | OLECMDF_ENABLED | (b ? OLECMDF_LATCHED : 0);
 }
 
+static void set_ns_align(HTMLDocument *This, const char *align_str)
+{
+    nsICommandParams *nsparam;
+
+    if(!This->nscontainer)
+        return;
+
+    nsparam = create_nscommand_params();
+    nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, align_str);
+
+    do_ns_command(This->nscontainer, NSCMD_ALIGN, nsparam);
+
+    nsICommandParams_Release(nsparam);
+}
+
 static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
 {
     TRACE("(%p)->(%p %p)\n", This, in, out);
@@ -436,6 +452,13 @@ static HRESULT exec_italic(HTMLDocument *This)
     if(This->nscontainer)
         do_ns_command(This->nscontainer, NSCMD_ITALIC, NULL);
 
+    return S_OK;
+}
+
+static HRESULT exec_justifycenter(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+    set_ns_align(This, "center");
     return S_OK;
 }
 
@@ -794,6 +817,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_italic(This);
+        case IDM_JUSTIFYCENTER:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_justifycenter(This);
         case IDM_UNDERLINE:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
