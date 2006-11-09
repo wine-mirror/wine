@@ -20,6 +20,11 @@
 #ifndef __USP10_H
 #define __USP10_H
 
+#ifndef __WINESRC__
+# include <windows.h>
+#endif
+/* FIXME: #include <specstrings.h> */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
