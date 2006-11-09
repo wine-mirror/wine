@@ -49,6 +49,8 @@ HINSTANCE hInst;
 LONG module_ref = 0;
 DWORD mshtml_tls = 0;
 
+static HINSTANCE shdoclc = NULL;
+
 static void thread_detach(void)
 {
     thread_data_t *thread_data = get_thread_data(FALSE);
@@ -62,6 +64,17 @@ static void thread_detach(void)
     mshtml_free(thread_data);
 }
 
+HINSTANCE get_shdoclc(void)
+{
+    static const WCHAR wszShdoclc[] =
+        {'s','h','d','o','c','l','c','.','d','l','l',0};
+
+    if(shdoclc)
+        return shdoclc;
+
+    return shdoclc = LoadLibraryExW(wszShdoclc, NULL, LOAD_LIBRARY_AS_DATAFILE);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
@@ -70,6 +83,8 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
         break;
     case DLL_PROCESS_DETACH:
         close_gecko();
+        if(shdoclc)
+            FreeLibrary(shdoclc);
         if(mshtml_tls)
             TlsFree(mshtml_tls);
         break;

@@ -405,4 +405,6 @@ static inline BOOL mshtml_free(void *mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
+HINSTANCE get_shdoclc(void);
+
 extern HINSTANCE hInst;

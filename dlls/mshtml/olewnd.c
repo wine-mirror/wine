@@ -272,7 +272,7 @@ void HTMLDocument_ShowContextMenu(HTMLDocument *This, DWORD dwID, POINT *ppt)
     if(hres == S_OK)
         return;
 
-    menu_res = LoadMenuW(hInst, MAKEINTRESOURCEW(IDR_BROWSE_CONTEXT_MENU));
+    menu_res = LoadMenuW(get_shdoclc(), MAKEINTRESOURCEW(IDR_BROWSE_CONTEXT_MENU));
     menu = GetSubMenu(menu_res, dwID);
 
     TrackPopupMenu(menu, TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
