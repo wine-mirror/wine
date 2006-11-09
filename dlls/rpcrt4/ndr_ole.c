@@ -321,8 +321,8 @@ void WINAPI NdrInterfacePointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrInterfacePointerMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrInterfacePointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                                  PFORMAT_STRING pFormat)
+ULONG WINAPI NdrInterfacePointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                           PFORMAT_STRING pFormat)
 {
   ULONG size;
 

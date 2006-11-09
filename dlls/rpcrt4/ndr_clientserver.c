@@ -129,7 +129,7 @@ unsigned char* WINAPI NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_M
 /***********************************************************************
  *           NdrGetBuffer [RPCRT4.@]
  */
-unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, unsigned long buflen, RPC_BINDING_HANDLE handle)
+unsigned char *WINAPI NdrGetBuffer(MIDL_STUB_MESSAGE *stubmsg, ULONG buflen, RPC_BINDING_HANDLE handle)
 {
   TRACE("(stubmsg == ^%p, buflen == %lu, handle == %p): wild guess.\n", stubmsg, buflen, handle);
   
@@ -195,8 +195,8 @@ unsigned char *WINAPI NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char 
  *           NdrMapCommAndFaultStatus [RPCRT4.@]
  */
 RPC_STATUS RPC_ENTRY NdrMapCommAndFaultStatus( PMIDL_STUB_MESSAGE pStubMsg,
-                                               unsigned long *pCommStatus,
-                                               unsigned long *pFaultStatus,
+                                               ULONG *pCommStatus,
+                                               ULONG *pFaultStatus,
                                                RPC_STATUS Status )
 {
     FIXME("(%p, %p, %p, %ld): stub\n", pStubMsg, pCommStatus, pFaultStatus, Status);

@@ -29,10 +29,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
-PFULL_PTR_XLAT_TABLES WINAPI NdrFullPointerXlatInit(unsigned long NumberOfPointers,
+PFULL_PTR_XLAT_TABLES WINAPI NdrFullPointerXlatInit(ULONG NumberOfPointers,
                                                     XLAT_SIDE XlatSide)
 {
-    unsigned long NumberOfBuckets;
+    ULONG NumberOfBuckets;
     PFULL_PTR_XLAT_TABLES pXlatTables = HeapAlloc(GetProcessHeap(), 0, sizeof(*pXlatTables));
 
     TRACE("(%ld, %d)\n", NumberOfPointers, XlatSide);
@@ -93,9 +93,9 @@ static void expand_pointer_table_if_necessary(PFULL_PTR_XLAT_TABLES pXlatTables,
 
 int WINAPI NdrFullPointerQueryPointer(PFULL_PTR_XLAT_TABLES pXlatTables,
                                       void *pPointer, unsigned char QueryType,
-                                      unsigned long *pRefId )
+                                      ULONG *pRefId )
 {
-    unsigned long Hash = 0;
+    ULONG Hash = 0;
     int i;
     PFULL_PTR_TO_REFID_ELEMENT XlatTableEntry;
 
@@ -141,8 +141,8 @@ int WINAPI NdrFullPointerQueryPointer(PFULL_PTR_XLAT_TABLES pXlatTables,
 }
 
 int WINAPI NdrFullPointerQueryRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
-                                    unsigned long RefId,
-                                    unsigned char QueryType, void **ppPointer)
+                                    ULONG RefId, unsigned char QueryType,
+                                    void **ppPointer)
 {
     TRACE("(%p, 0x%lx, %d, %p)\n", pXlatTables, RefId, QueryType, ppPointer);
 
@@ -168,9 +168,9 @@ int WINAPI NdrFullPointerQueryRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
 }
 
 void WINAPI NdrFullPointerInsertRefId(PFULL_PTR_XLAT_TABLES pXlatTables,
-                                      unsigned long RefId, void *pPointer)
+                                      ULONG RefId, void *pPointer)
 {
-    unsigned long Hash = 0;
+    ULONG Hash = 0;
     int i;
     PFULL_PTR_TO_REFID_ELEMENT XlatTableEntry;
 

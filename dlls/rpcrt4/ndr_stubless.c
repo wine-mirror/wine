@@ -1076,11 +1076,11 @@ static DWORD calc_arg_size(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
 }
 
 /* FIXME: need to free some stuff in here too */
-long WINAPI NdrStubCall2(
+LONG WINAPI NdrStubCall2(
     struct IRpcStubBuffer * pThis,
     struct IRpcChannelBuffer * pChannel,
     PRPC_MESSAGE pRpcMsg,
-    unsigned long * pdwStubPhase)
+    DWORD * pdwStubPhase)
 {
     const MIDL_SERVER_INFO *pServerInfo;
     const MIDL_STUB_DESC *pStubDesc;
