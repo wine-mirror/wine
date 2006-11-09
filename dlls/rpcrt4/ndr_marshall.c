@@ -645,13 +645,13 @@ void WINAPI NdrConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /************************************************************************
  *            NdrConformantStringMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrConformantStringMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
   PFORMAT_STRING pFormat )
 {
-  unsigned long rslt = 0;
+  ULONG rslt = 0;
 
   FIXME("(pStubMsg == ^%p, pFormat == ^%p)\n", pStubMsg, pFormat);
-   
+
   assert(pStubMsg && pFormat);
 
   if (*pFormat == RPC_FC_C_CSTRING) {
@@ -769,7 +769,7 @@ void WINAPI NdrNonConformantStringBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrNonConformantStringMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrNonConformantStringMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrNonConformantStringMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
@@ -1498,8 +1498,8 @@ void WINAPI NdrPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrPointerMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                          PFORMAT_STRING pFormat)
+ULONG WINAPI NdrPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                  PFORMAT_STRING pFormat)
 {
   /* unsigned size = *(LPWORD)(pFormat+2); */
   FIXME("(%p,%p): stub\n", pStubMsg, pFormat);
@@ -1614,8 +1614,8 @@ void WINAPI NdrSimpleStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrSimpleStructMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrSimpleStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                               PFORMAT_STRING pFormat)
+ULONG WINAPI NdrSimpleStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                       PFORMAT_STRING pFormat)
 {
   unsigned short size = *(const WORD *)(pFormat+2);
 
@@ -2186,8 +2186,8 @@ void WINAPI NdrComplexStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrComplexStructMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                                PFORMAT_STRING pFormat)
+ULONG WINAPI NdrComplexStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                        PFORMAT_STRING pFormat)
 {
   unsigned size = *(const WORD*)(pFormat+2);
   PFORMAT_STRING conf_array = NULL;
@@ -2333,8 +2333,8 @@ void WINAPI NdrConformantArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrConformantArrayMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrConformantArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                                  PFORMAT_STRING pFormat)
+ULONG WINAPI NdrConformantArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                          PFORMAT_STRING pFormat)
 {
   DWORD size = 0, esize = *(const WORD*)(pFormat+2);
   unsigned char alignment = pFormat[1] + 1;
@@ -2513,8 +2513,8 @@ void WINAPI NdrConformantVaryingArrayBufferSize( PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrConformantVaryingArrayMemorySize  [RPCRT4.@]
  */
-unsigned long WINAPI NdrConformantVaryingArrayMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
-                                                          PFORMAT_STRING pFormat )
+ULONG WINAPI NdrConformantVaryingArrayMemorySize( PMIDL_STUB_MESSAGE pStubMsg,
+                                                  PFORMAT_STRING pFormat )
 {
     FIXME( "stub\n" );
     return 0;
@@ -2666,14 +2666,12 @@ void WINAPI NdrComplexArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrComplexArrayMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                               PFORMAT_STRING pFormat)
+ULONG WINAPI NdrComplexArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                       PFORMAT_STRING pFormat)
 {
-  ULONG i, count, esize;
+  ULONG i, count, esize, SavedMemorySize, MemorySize;
   unsigned char alignment;
   unsigned char *Buffer;
-  unsigned long SavedMemorySize;
-  unsigned long MemorySize;
 
   TRACE("(%p,%p)\n", pStubMsg, pFormat);
 
@@ -2859,8 +2857,8 @@ void WINAPI NdrUserMarshalBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrUserMarshalMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrUserMarshalMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
-                                              PFORMAT_STRING pFormat)
+ULONG WINAPI NdrUserMarshalMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+                                      PFORMAT_STRING pFormat)
 {
   unsigned flags = pFormat[1];
   unsigned index = *(const WORD*)&pFormat[2];
@@ -2927,7 +2925,7 @@ void WINAPI NdrConvert( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat )
 /***********************************************************************
  *           NdrConvert2 [RPCRT4.@]
  */
-void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, long NumberParams )
+void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, LONG NumberParams )
 {
   FIXME("(pStubMsg == ^%p, pFormat == ^%p, NumberParams == %ld): stub.\n",
     pStubMsg, pFormat, NumberParams);
@@ -3100,7 +3098,7 @@ void WINAPI NdrConformantStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrConformantStructMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrConformantStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrConformantStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
@@ -3385,7 +3383,7 @@ void WINAPI NdrConformantVaryingStructBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrConformantVaryingStructMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrConformantVaryingStructMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     const NDR_CVSTRUCT_FORMAT *pCVStructFormat = (const NDR_CVSTRUCT_FORMAT *)pFormat;
@@ -3655,11 +3653,11 @@ void WINAPI NdrFixedArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrFixedArrayMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrFixedArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrFixedArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     const NDR_SMFARRAY_FORMAT *pSmFArrayFormat = (const NDR_SMFARRAY_FORMAT *)pFormat;
-    unsigned long total_size;
+    ULONG total_size;
 
     TRACE("(%p, %p)\n", pStubMsg, pFormat);
 
@@ -3908,7 +3906,7 @@ void WINAPI NdrVaryingArrayBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrVaryingArrayMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrVaryingArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrVaryingArrayMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     unsigned char alignment;
@@ -4044,7 +4042,7 @@ void WINAPI NdrEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrEncapsulatedUnionMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
@@ -4326,10 +4324,10 @@ void WINAPI NdrNonEncapsulatedUnionBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrNonEncapsulatedUnionMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrNonEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrNonEncapsulatedUnionMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
-    unsigned long discriminant;
+    ULONG discriminant;
     unsigned short type, size;
 
     pFormat++;
@@ -4430,7 +4428,7 @@ void WINAPI NdrByteCountPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrByteCountPointerMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrByteCountPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrByteCountPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
@@ -4483,7 +4481,7 @@ void WINAPI NdrXmitOrRepAsBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 /***********************************************************************
  *           NdrXmitOrRepAsMemorySize [RPCRT4.@]
  */
-unsigned long WINAPI NdrXmitOrRepAsMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
+ULONG WINAPI NdrXmitOrRepAsMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                 PFORMAT_STRING pFormat)
 {
     FIXME("stub\n");
@@ -4965,8 +4963,7 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
 
 void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
                                   RPC_BINDING_HANDLE hBinding,
-                                  void *pBuff,
-                                  unsigned long DataRepresentation)
+                                  void *pBuff, ULONG DataRepresentation)
 {
     UINT r;
 
@@ -4999,15 +4996,14 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
                                  NDR_SCONTEXT CContext,
                                  void *pBuff,
                                  NDR_RUNDOWN userRunDownIn,
-                                 void *CtxGuard,
-                                 unsigned long Flags)
+                                 void *CtxGuard, ULONG Flags)
 {
     FIXME("(%p %p %p %p %p %lu): stub\n",
           hBinding, CContext, pBuff, userRunDownIn, CtxGuard, Flags);
 }
 
 NDR_SCONTEXT WINAPI NDRSContextUnmarshall(void *pBuff,
-                                          unsigned long DataRepresentation)
+                                          ULONG DataRepresentation)
 {
     FIXME("(%p %08lx): stub\n", pBuff, DataRepresentation);
     return NULL;
@@ -5015,7 +5011,7 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall(void *pBuff,
 
 NDR_SCONTEXT WINAPI NDRSContextUnmarshallEx(RPC_BINDING_HANDLE hBinding,
                                             void *pBuff,
-                                            unsigned long DataRepresentation)
+                                            ULONG DataRepresentation)
 {
     FIXME("(%p %p %08lx): stub\n", hBinding, pBuff, DataRepresentation);
     return NULL;
@@ -5023,9 +5019,8 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshallEx(RPC_BINDING_HANDLE hBinding,
 
 NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
                                            void *pBuff,
-                                           unsigned long DataRepresentation,
-                                           void *CtxGuard,
-                                           unsigned long Flags)
+                                           ULONG DataRepresentation,
+                                           void *CtxGuard, ULONG Flags)
 {
     FIXME("(%p %p %08lx %p %lu): stub\n",
           hBinding, pBuff, DataRepresentation, CtxGuard, Flags);
