@@ -2318,7 +2318,7 @@ BOOL WINAPI SetWindowTextA( HWND hwnd, LPCSTR lpString )
         return FALSE;
     }
     if (!WIN_IsCurrentProcess( hwnd ))
-        FIXME( "setting text %s of other process window %p should not use SendMessage\n",
+        WARN( "setting text %s of other process window %p should not use SendMessage\n",
                debugstr_a(lpString), hwnd );
     return (BOOL)SendMessageA( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
@@ -2335,7 +2335,7 @@ BOOL WINAPI SetWindowTextW( HWND hwnd, LPCWSTR lpString )
         return FALSE;
     }
     if (!WIN_IsCurrentProcess( hwnd ))
-        FIXME( "setting text %s of other process window %p should not use SendMessage\n",
+        WARN( "setting text %s of other process window %p should not use SendMessage\n",
                debugstr_w(lpString), hwnd );
     return (BOOL)SendMessageW( hwnd, WM_SETTEXT, 0, (LPARAM)lpString );
 }
