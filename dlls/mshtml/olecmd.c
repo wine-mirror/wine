@@ -42,6 +42,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_BOLD "cmd_bold"
 #define NSCMD_ITALIC "cmd_italic"
 #define NSCMD_UNDERLINE "cmd_underline"
+#define NSCMD_FONTCOLOR "cmd_fontColor"
+
+#define NSSTATE_ATTRIBUTE "state_attribute"
 
 /**********************************************************
  * IOleCommandTarget implementation
@@ -381,6 +384,35 @@ static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
     return S_OK;
 }
 
+static HRESULT exec_forecolor(HTMLDocument *This, VARIANT *in, VARIANT *out)
+{
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(in) {
+        if(V_VT(in) == VT_I4) {
+            nsICommandParams *nsparam = create_nscommand_params();
+            char color_str[10];
+
+            sprintf(color_str, "#%02x%02x%02x",
+                    V_I4(in)&0xff, (V_I4(in)>>8)&0xff, (V_I4(in)>>16)&0xff);
+
+            nsICommandParams_SetCStringValue(nsparam, NSSTATE_ATTRIBUTE, color_str);
+            do_ns_command(This->nscontainer, NSCMD_FONTCOLOR, nsparam);
+
+            nsICommandParams_Release(nsparam);
+        }else {
+            FIXME("unsupported in vt=%d\n", V_VT(in));
+        }
+    }
+
+    if(out) {
+        FIXME("unsupported out\n");
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 static HRESULT exec_fontsize(HTMLDocument *This, VARIANT *in, VARIANT *out)
 {
     FIXME("(%p)->(%p %p)\n", This, in, out);
@@ -658,8 +690,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = query_edit_status(This, NSCMD_BOLD);
                 break;
             case IDM_FORECOLOR:
-                FIXME("CGID_MSHTML: IDM_FORECOLOR\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_FORECOLOR\n");
+                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_ITALIC:
                 TRACE("CGID_MSHTML: IDM_ITALIC\n");
@@ -756,6 +788,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_bold(This);
+        case IDM_FORECOLOR:
+            return exec_forecolor(This, pvaIn, pvaOut);
         case IDM_ITALIC:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
