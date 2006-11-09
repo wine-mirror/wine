@@ -49,8 +49,10 @@ static int option(int shortopt, const WCHAR *longopt)
     "\n"
     "  -u, --unix    converts a Windows path to a Unix path\n"
     "  -w, --windows converts a Unix path to a long Windows path\n"
-    "  -l, --long    converts a short Windows path to the long format\n"
-    "  -s, --short   converts a long Windows path to the short format\n"
+    "  -l, --long    converts the short Windows path of an existing file or\n"
+    "                directory to the long format\n"
+    "  -s, --short   converts the long Windows path of an existing file or\n"
+    "                directory to the short format\n"
     "  -h, --help    output this help message and exit\n"
     "  -v, --version output version information and exit\n"
     "\n"
@@ -177,7 +179,7 @@ int wmain(int argc, const WCHAR *argv[])
     {
         *path='\0';
         if (outputformats & LONGFORMAT) {
-            if (GetFullPathNameW(argv[i], MAX_PATH, dos_pathW, NULL))
+            if (GetLongPathNameW(argv[i], dos_pathW, MAX_PATH))
                 WideCharToMultiByte(CP_UNIXCP, 0, dos_pathW, -1, path, MAX_PATH, NULL, NULL);
             printf("%s\n", path);
         }
