@@ -10,7 +10,8 @@ CTESTS = \
 	d3d8_main.c \
 	device.c \
 	surface.c \
-	texture.c
+	texture.c \
+	volume.c
 
 @MAKE_TEST_RULES@
 
