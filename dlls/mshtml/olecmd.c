@@ -381,6 +381,12 @@ static HRESULT exec_fontname(HTMLDocument *This, VARIANT *in, VARIANT *out)
     return S_OK;
 }
 
+static HRESULT exec_fontsize(HTMLDocument *This, VARIANT *in, VARIANT *out)
+{
+    FIXME("(%p)->(%p %p)\n", This, in, out);
+    return E_NOTIMPL;
+}
+
 static HRESULT exec_bold(HTMLDocument *This)
 {
     TRACE("(%p)\n", This);
@@ -744,6 +750,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         switch(nCmdID) {
         case IDM_FONTNAME:
             return exec_fontname(This, pvaIn, pvaOut);
+        case IDM_FONTSIZE:
+            return exec_fontsize(This, pvaIn, pvaOut);
         case IDM_BOLD:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
