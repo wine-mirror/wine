@@ -168,6 +168,7 @@ START_TEST(monitor)
 {
     init_function_pointers();
     test_enumdisplaydevices();
-    test_ChangeDisplaySettingsEx();
+    if (winetest_interactive)
+        test_ChangeDisplaySettingsEx();
     test_monitors();
 }
