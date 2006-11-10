@@ -1116,7 +1116,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ME_MakeFirstParagraph(hDC, ed->pBuffer);
   ReleaseDC(hWnd, hDC);
   ed->bCaretShown = FALSE;
-  ed->nCursors = 3;
+  ed->nCursors = 2;
   ed->pCursors = ALLOC_N_OBJ(ME_Cursor, ed->nCursors);
   ed->pCursors[0].pRun = ME_FindItemFwd(ed->pBuffer->pFirst, diRun);
   ed->pCursors[0].nOffset = 0;
