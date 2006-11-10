@@ -46,6 +46,7 @@ typedef struct IOCS {
     const IOleContainerVtbl *lpOleContainerVtbl;
     const IOleInPlaceSiteWindowlessVtbl *lpOleInPlaceSiteWindowlessVtbl;
     const IOleInPlaceFrameVtbl *lpOleInPlaceFrameVtbl;
+    const IOleControlSiteVtbl *lpOleControlSiteVtbl;
 
     LONG ref;
     HWND hWnd;
@@ -130,6 +131,7 @@ static ULONG WINAPI IOCS_AddRef(IOCS *This)
 #define THIS2IOLECONTAINER(This) ((IOleContainer*)&This->lpOleContainerVtbl)
 #define THIS2IOLEINPLACESITEWINDOWLESS(This) ((IOleInPlaceSiteWindowless*)&This->lpOleInPlaceSiteWindowlessVtbl)
 #define THIS2IOLEINPLACEFRAME(This) ((IOleInPlaceFrame*)&This->lpOleInPlaceFrameVtbl)
+#define THIS2IOLECONTROLSITE(This) ((IOleControlSite*)&This->lpOleControlSiteVtbl)
 
 static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
 {
@@ -148,6 +150,9 @@ static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
     } else if ( IsEqualIID( &IID_IOleInPlaceFrame, riid ) )
     {
         *ppv = THIS2IOLEINPLACEFRAME(This);
+    } else if ( IsEqualIID( &IID_IOleControlSite, riid ) )
+    {
+        *ppv = THIS2IOLECONTROLSITE(This);
     }
 
     if (*ppv)
@@ -604,6 +609,61 @@ static HRESULT WINAPI OleInPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *ifa
 #undef IFACE2THIS
 
 
+/******    IOleControlSite    *******/
+#define IFACE2THIS(iface) DEFINE_THIS(IOCS, OleControlSite, iface)
+static HRESULT WINAPI OleControlSite_QueryInterface(IOleControlSite *iface, REFIID riid, void **ppv)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_QueryInterface(This, riid, ppv);
+}
+static ULONG WINAPI OleControlSite_AddRef(IOleControlSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_AddRef(This);
+}
+static ULONG WINAPI OleControlSite_Release(IOleControlSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_Release(This);
+}
+static HRESULT WINAPI OleControlSite_OnControlInfoChanged( IOleControlSite* This)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleControlSite_LockInPlaceActive( IOleControlSite* This, BOOL fLock)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleControlSite_GetExtendedControl( IOleControlSite* This, IDispatch** ppDisp)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleControlSite_TransformCoords( IOleControlSite* This, POINTL* pPtlHimetric, POINTF* pPtfContainer, DWORD dwFlags)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleControlSite_TranslateAccelerator( IOleControlSite* This, MSG* pMsg, DWORD grfModifiers)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleControlSite_OnFocus( IOleControlSite* This, BOOL fGotFocus)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleControlSite_ShowPropertyFrame( IOleControlSite* This)
+{
+    FIXME( "\n" );
+    return E_NOTIMPL;
+}
+#undef IFACE2THIS
+
+
 
 static const IOleClientSiteVtbl OleClientSite_vtbl = {
     OleClientSite_QueryInterface,
@@ -673,6 +733,19 @@ static const IOleInPlaceFrameVtbl OleInPlaceFrame_vtbl =
     OleInPlaceFrame_SetStatusText,
     OleInPlaceFrame_EnableModeless,
     OleInPlaceFrame_TranslateAccelerator
+};
+static const IOleControlSiteVtbl OleControlSite_vtbl =
+{
+    OleControlSite_QueryInterface,
+    OleControlSite_AddRef,
+    OleControlSite_Release,
+    OleControlSite_OnControlInfoChanged,
+    OleControlSite_LockInPlaceActive,
+    OleControlSite_GetExtendedControl,
+    OleControlSite_TransformCoords,
+    OleControlSite_TranslateAccelerator,
+    OleControlSite_OnFocus,
+    OleControlSite_ShowPropertyFrame
 };
 
 static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
@@ -828,6 +901,7 @@ static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IOCS **ppSite )
     This->lpOleContainerVtbl = &OleContainer_vtbl;
     This->lpOleInPlaceSiteWindowlessVtbl = &OleInPlaceSiteWindowless_vtbl;
     This->lpOleInPlaceFrameVtbl = &OleInPlaceFrame_vtbl;
+    This->lpOleControlSiteVtbl = &OleControlSite_vtbl;
     This->ref = 1;
 
     This->OrigWndProc = NULL;
