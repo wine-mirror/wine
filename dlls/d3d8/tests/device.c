@@ -37,6 +37,7 @@ static int get_refcount(IUnknown *object)
     } else {\
         trace("%s failed: %s\n", c, DXGetErrorString8(r)); \
     }
+
 #define CHECK_RELEASE(obj,d,rc) \
     if (obj) { \
         int tmp1, rc_new = rc; \
@@ -44,6 +45,7 @@ static int get_refcount(IUnknown *object)
         tmp1 = get_refcount( (IUnknown *)d ); \
         ok(tmp1 == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, tmp1); \
     }
+
 #define CHECK_REFCOUNT(obj,rc) \
     { \
         int rc_new = rc; \
@@ -56,6 +58,15 @@ static int get_refcount(IUnknown *object)
         int rc_new = rc; \
         int count = IUnknown_Release( (IUnknown *)obj ); \
         ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
+    }
+
+#define CHECK_SURFACE_CONTAINER(obj,iid,expected) \
+    { \
+        void *container_ptr = (void *)0x1337c0d3; \
+        hr = IDirect3DSurface8_GetContainer(obj, &iid, &container_ptr); \
+        ok(SUCCEEDED(hr) && container_ptr == expected, "GetContainer returned: hr %#x, container_ptr %p. " \
+            "Expected hr %#x, container_ptr %p\n", hr, container_ptr, S_OK, expected); \
+        if (container_ptr && container_ptr != (void *)0x1337c0d3) IUnknown_Release((IUnknown *)container_ptr); \
     }
 
 static void check_mipmap_levels(
@@ -301,6 +312,7 @@ static void test_refcount(void)
 
     /**
      * Check refcount of implicit surfaces. Findings:
+     *   - the container is the device
      *   - they hold a refernce to the device
      *   - they are created with a refcount of 0 (Get/Release returns orignial refcount)
      */
@@ -308,6 +320,7 @@ static void test_refcount(void)
     todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
     if(pRenderTarget)
     {
+        todo_wine CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DDevice8, pDevice);
         todo_wine CHECK_REFCOUNT( pRenderTarget, 1);
         hr = IDirect3DDevice8_GetRenderTarget(pDevice, &pRenderTarget);
         todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, refcount);
@@ -322,6 +335,7 @@ static void test_refcount(void)
     todo_wine CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
     if(pStencilSurface)
     {
+        CHECK_SURFACE_CONTAINER( pStencilSurface, IID_IDirect3DDevice8, pDevice);
         todo_wine CHECK_REFCOUNT( pStencilSurface, 1);
         todo_wine CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
         pStencilSurface = NULL;
@@ -332,6 +346,7 @@ static void test_refcount(void)
     todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
     if(pBackBuffer)
     {
+        todo_wine CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DDevice8, pDevice);
         todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
         todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
         pBackBuffer = NULL;
@@ -410,6 +425,7 @@ static void test_refcount(void)
         todo_wine CHECK_REFCOUNT( pSwapChain, 1);
         if(pBackBuffer)
         {
+            todo_wine CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DDevice8, pDevice);
             todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
             todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
             pBackBuffer = NULL;
