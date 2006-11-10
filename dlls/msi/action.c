@@ -1800,6 +1800,9 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             component = cl->component;
 
+            if (!component->Enabled)
+                continue;
+
             if (component->Attributes & msidbComponentAttributesOptional)
                 msi_component_set_state( component, INSTALLSTATE_DEFAULT );
             else
@@ -1813,9 +1816,7 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             if (component->ForceLocalState)
                 msi_component_set_state( component, INSTALLSTATE_LOCAL );
 
-            if (!component->Enabled)
-                msi_component_set_state( component, INSTALLSTATE_UNKNOWN );
-            else if (feature->Attributes == msidbFeatureAttributesFavorLocal)
+            if (feature->Attributes == msidbFeatureAttributesFavorLocal)
             {
                 if (!(component->Attributes & msidbComponentAttributesSourceOnly))
                     msi_component_set_state( component, INSTALLSTATE_LOCAL );
