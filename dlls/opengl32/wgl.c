@@ -621,19 +621,22 @@ void internal_glGetIntegerv(GLenum pname, GLint* params) {
    creating a rendering context.... */
 static BOOL process_attach(void)
 {
-  HMODULE mod = GetModuleHandleA( "winex11.drv" );
-  HMODULE mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
+  HMODULE mod_x11, mod_gdi32;
   DWORD size = sizeof(internal_gl_disabled_extensions);
   HKEY hkey = 0;
 
-  if (!mod || !mod_gdi32)
+  GetDesktopWindow();  /* make sure winex11 is loaded (FIXME) */
+  mod_x11 = GetModuleHandleA( "winex11.drv" );
+  mod_gdi32 = GetModuleHandleA( "gdi32.dll" );
+
+  if (!mod_x11 || !mod_gdi32)
   {
       ERR("X11DRV or GDI32 not loaded. Cannot create default context.\n");
       return FALSE;
   }
 
-  wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod, "wine_tsx11_lock" );
-  wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod, "wine_tsx11_unlock" );
+  wine_tsx11_lock_ptr   = (void *)GetProcAddress( mod_x11, "wine_tsx11_lock" );
+  wine_tsx11_unlock_ptr = (void *)GetProcAddress( mod_x11, "wine_tsx11_unlock" );
 
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
 
