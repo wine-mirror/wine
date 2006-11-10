@@ -1411,5 +1411,6 @@ START_TEST( editor )
     }
   }
 
+  OleFlushClipboard();
   ok(FreeLibrary(hmoduleRichEdit) != 0, "error: %d\n", (int) GetLastError());
 }
