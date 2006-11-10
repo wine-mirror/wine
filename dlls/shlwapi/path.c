@@ -1181,7 +1181,7 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
   /* Try dirs listed in %PATH% */
   dwLenPATH = GetEnvironmentVariableW(szPath, buff, MAX_PATH);
 
-  if (!dwLenPATH || !(lpszPATH = malloc((dwLenPATH + 1) * sizeof (WCHAR))))
+  if (!dwLenPATH || !(lpszPATH = HeapAlloc(GetProcessHeap, 0, (dwLenPATH + 1) * sizeof (WCHAR))))
     return FALSE;
 
   GetEnvironmentVariableW(szPath, lpszPATH, dwLenPATH + 1);
@@ -1204,17 +1204,17 @@ static BOOL WINAPI SHLWAPI_PathFindInOtherDirs(LPWSTR lpszFile, DWORD dwWhich)
 
     if (!PathAppendW(buff, lpszFile))
     {
-      free(lpszPATH);
+      HeapFree(GetProcessHeap, 0, lpszPATH);
       return FALSE;
     }
     if (PathFileExistsDefExtW(buff, dwWhich))
     {
       strcpyW(lpszFile, buff);
-      free(lpszPATH);
+      HeapFree(GetProcessHeap, 0, lpszPATH);
       return TRUE;
     }
   }
-  free(lpszPATH);
+  HeapFree(GetProcessHeap, 0, lpszPATH);
   return FALSE;
 }
 
