@@ -1980,7 +1980,7 @@ LONG WINAPI RegSaveKeyW( HKEY hkey, LPCWSTR file, LPSECURITY_ATTRIBUTES sa )
         handle = CreateFileW( buffer, GENERIC_WRITE, 0, NULL,
                             CREATE_NEW, FILE_ATTRIBUTE_NORMAL, 0 );
         if (handle != INVALID_HANDLE_VALUE) break;
-        if ((ret = GetLastError()) != ERROR_ALREADY_EXISTS) goto done;
+        if ((ret = GetLastError()) != ERROR_FILE_EXISTS) goto done;
 
         /* Something gone haywire ? Please report if this happens abnormally */
         if (count >= 100)
