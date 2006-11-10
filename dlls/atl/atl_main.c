@@ -341,8 +341,25 @@ HRESULT WINAPI AtlModuleGetClassObject(_ATL_MODULEW *pm, REFCLSID rclsid,
  */
 HRESULT WINAPI AtlModuleRegisterTypeLib(_ATL_MODULEW *pm, LPCOLESTR lpszIndex)
 {
-    FIXME("%p %s\n", pm, debugstr_w(lpszIndex));
-    return E_FAIL;
+    HRESULT hRes;
+    BSTR path;
+    ITypeLib *typelib;
+
+    TRACE("%p %s\n", pm, debugstr_w(lpszIndex));
+
+    if (!pm)
+        return E_INVALIDARG;
+
+    hRes = AtlModuleLoadTypeLib(pm, lpszIndex, &path, &typelib);
+
+    if (SUCCEEDED(hRes))
+    {
+        hRes = RegisterTypeLib(typelib, path, NULL); /* FIXME: pass help directory */
+        ITypeLib_Release(typelib);
+        SysFreeString(path);
+    }
+
+    return hRes;
 }
 
 /***********************************************************************

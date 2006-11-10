@@ -154,6 +154,7 @@ LPVOID  WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM);
 HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE h);
 HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEW* pM, DWORD dwClsContext, DWORD dwFlags);
 HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* pCLSID);
+HRESULT WINAPI AtlModuleRegisterTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex);
 HRESULT WINAPI AtlModuleUnregisterServer(_ATL_MODULEW* pM, const CLSID* pCLSID);
 HRESULT WINAPI AtlModuleUpdateRegistryFromResourceD(_ATL_MODULEW *pM, LPCOLESTR lpszRes, BOOL bRegister, struct _ATL_REGMAP_ENTRY *pMapEntries, IRegistrar *pReg );
 HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEW* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID);
