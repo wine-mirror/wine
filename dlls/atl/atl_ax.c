@@ -41,6 +41,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
+typedef struct IOCS {
+    const IOleClientSiteVtbl *lpOleClientSiteVtbl;
+
+    LONG ref;
+    HWND hWnd;
+    IOleObject *control;
+    WNDPROC OrigWndProc;
+} IOCS;
+
 /**********************************************************************
  * AtlAxWin class window procedure
  */
@@ -97,6 +106,249 @@ BOOL WINAPI AtlAxWinInit(void)
 
     return TRUE;
 }
+
+/***********************************************************************
+ *  Atl container component implementation
+ */
+
+
+static ULONG WINAPI IOCS_AddRef(IOCS *This)
+{
+    ULONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE( "(%p) : AddRef from %d\n", This, ref - 1 );
+
+    return ref;
+}
+
+#define THIS2IOLECLIENTSITE(This) ((IOleClientSite*)&This->lpOleClientSiteVtbl)
+
+static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if ( IsEqualIID( &IID_IUnknown, riid )
+      || IsEqualIID( &IID_IOleClientSite, riid ) )
+    {
+        *ppv = THIS2IOLECLIENTSITE(This);
+    }
+
+    if (*ppv)
+    {
+        IOCS_AddRef( This );
+        return S_OK;
+    }
+    
+    WARN("unsupported interface %s\n", debugstr_guid( riid ) );
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static HRESULT IOCS_Detach( IOCS *This );
+static ULONG WINAPI IOCS_Release(IOCS *This)
+{
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE( "(%p) : ReleaseRef to %d\n", This, ref );
+
+    if (!ref)
+    {
+        IOCS_Detach( This );
+        HeapFree( GetProcessHeap(), 0, This );
+    }
+
+    return ref;
+}
+
+#define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
+
+#undef  IFACE2THIS
+#define IFACE2THIS(iface) DEFINE_THIS(IOCS,OleClientSite, iface)
+static HRESULT WINAPI OleClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_QueryInterface(This, riid, ppv);
+}
+static ULONG WINAPI OleClientSite_AddRef(IOleClientSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_AddRef(This);
+}
+static ULONG WINAPI OleClientSite_Release(IOleClientSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_Release(This);
+}
+static HRESULT WINAPI OleClientSite_SaveObject(IOleClientSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p) - stub\n", This );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssign, DWORD dwWhichMoniker, IMoniker **ppmk)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p, 0x%x, 0x%x, %p)\n", This, dwAssign, dwWhichMoniker, ppmk );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p, %p)\n", This, ppContainer );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleClientSite_ShowObject(IOleClientSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p) - stub\n", This );
+    return S_OK;
+}
+static HRESULT WINAPI OleClientSite_OnShowWindow(IOleClientSite *iface, BOOL fShow)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p, %s) - stub\n", This, fShow ? "TRUE" : "FALSE" );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleClientSite_RequestNewObjectLayout(IOleClientSite *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p) - stub\n", This );
+    return E_NOTIMPL;
+}
+#undef IFACE2THIS
+
+
+
+static const IOleClientSiteVtbl OleClientSite_vtbl = {
+    OleClientSite_QueryInterface,
+    OleClientSite_AddRef,
+    OleClientSite_Release,
+    OleClientSite_SaveObject,
+    OleClientSite_GetMoniker,
+    OleClientSite_GetContainer,
+    OleClientSite_ShowObject,
+    OleClientSite_OnShowWindow,
+    OleClientSite_RequestNewObjectLayout
+};
+
+static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
+{
+    if ( This->hWnd )
+    {
+        SetWindowLongPtrW( This->hWnd, GWLP_WNDPROC, (ULONG_PTR) This->OrigWndProc );
+        SetWindowLongPtrW( This->hWnd, GWLP_USERDATA, (LONG_PTR) NULL );
+        This->hWnd = NULL;
+    }
+    if ( This->control )
+    {
+        IOleObject *control = This->control;
+        
+        This->control = NULL;
+        IOleObject_SetClientSite( control, NULL );
+        IOleObject_Release( control );
+    }
+    return S_OK;
+}
+
+static void IOCS_OnSize( IOCS* This, LPCRECT rect )
+{
+    SIZEL inPix, inHi;
+
+    if ( !This->control )
+        return;
+
+    inPix.cx = rect->right - rect->left;
+    inPix.cy = rect->bottom - rect->top;
+    AtlPixelToHiMetric( &inPix, &inHi );
+    IOleObject_SetExtent( This->control, DVASPECT_CONTENT, &inHi );
+}
+
+static LRESULT IOCS_OnWndProc( IOCS *This, HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
+{
+    WNDPROC OrigWndProc = This->OrigWndProc;
+
+    switch( uMsg )
+    {
+        case WM_DESTROY:
+            IOCS_Detach( This );
+            break;
+        case WM_SIZE:
+            {
+                RECT r;
+                r.left = r.top = 0;
+                r.right = LOWORD( lParam );
+                r.bottom = HIWORD( lParam );
+                IOCS_OnSize( This, &r );
+            }
+            break;
+    }
+
+    return OrigWndProc( hWnd, uMsg, wParam, lParam );
+}
+
+static LRESULT CALLBACK AtlHost_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, LPARAM lParam )
+{
+    IOCS *This = (IOCS*) GetWindowLongPtrW( hWnd, GWLP_USERDATA );
+    return IOCS_OnWndProc( This, hWnd, wMsg, wParam, lParam );
+}
+
+static HRESULT IOCS_Attach( IOCS *This, HWND hWnd, IUnknown *pUnkControl ) /* subclass hWnd */
+{
+    This->hWnd = hWnd;
+    IUnknown_QueryInterface( pUnkControl, &IID_IOleObject, (void**)&This->control );
+    IOleObject_SetClientSite( This->control, THIS2IOLECLIENTSITE( This ) );
+    This->OrigWndProc = (WNDPROC) GetWindowLongPtrW( This->hWnd, GWLP_WNDPROC );
+    SetWindowLongPtrW( hWnd, GWLP_USERDATA, (ULONG_PTR) This );
+    SetWindowLongPtrW( hWnd, GWLP_WNDPROC, (ULONG_PTR) AtlHost_wndproc );
+
+    return S_OK;
+}
+
+static HRESULT IOCS_Init( IOCS *This )
+{
+    RECT rect;
+    static const WCHAR AXWIN[] = {'A','X','W','I','N',0};
+
+    IOleObject_SetHostNames( This->control, AXWIN, AXWIN );
+
+    GetClientRect( This->hWnd, &rect );
+    IOCS_OnSize( This, &rect );
+
+    return S_OK;
+}
+
+/**********************************************************************
+ * Create new instance of Atl host component and attach it to window  *
+ */
+static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IOCS **ppSite )
+{
+    HRESULT hr;
+    IOCS *This;
+    
+    *ppSite = NULL;
+    This = HeapAlloc(GetProcessHeap(), 0, sizeof(IOCS));
+
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->lpOleClientSiteVtbl = &OleClientSite_vtbl;
+    This->ref = 1;
+
+    This->OrigWndProc = NULL;
+    This->hWnd = NULL;
+
+    hr = IOCS_Attach( This, hWnd, pUnkControl );
+    if ( SUCCEEDED( hr ) )
+        hr = IOCS_Init( This );
+    if ( SUCCEEDED( hr ) )
+        *ppSite = This;
+    else
+        IOCS_Release( This );
+
+    return hr;
+}
+
 
 /***********************************************************************
  *           AtlAxCreateControl           [ATL.@]
