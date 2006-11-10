@@ -1535,6 +1535,7 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
 {
     DIBSECTION srcDib, dstDib;
     BYTE *srcPtr, *dstPtr;
+    INT srcRowOffset, dstRowOffset;
     INT bytesPerPixel;
     INT bytesToCopy;
     INT y;
@@ -1574,11 +1575,6 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
       FIXME("potential optimization: client-side compressed DIB copy\n");
       return FALSE;
     }
-    if (srcDib.dsBmih.biHeight < 0 || dstDib.dsBmih.biHeight < 0)
-    {
-      FIXME("potential optimization: client-side bottom-up DIB copy\n");
-      return FALSE;
-    }
 
     switch (dstDib.dsBm.bmBitsPixel)
     {
@@ -1599,14 +1595,34 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
 
     bytesToCopy = width * bytesPerPixel;
 
-    srcPtr = &physDevSrc->bitmap->base[ySrc*srcDib.dsBm.bmWidthBytes + xSrc*bytesPerPixel];
-    dstPtr = &physDevDst->bitmap->base[yDst*dstDib.dsBm.bmWidthBytes + xDst*bytesPerPixel];
+    if (srcDib.dsBmih.biHeight < 0)
+    {
+      srcPtr = &physDevSrc->bitmap->base[ySrc*srcDib.dsBm.bmWidthBytes + xSrc*bytesPerPixel];
+      srcRowOffset = srcDib.dsBm.bmWidthBytes;
+    }
+    else
+    {
+      srcPtr = &physDevSrc->bitmap->base[(srcDib.dsBm.bmWidth-ySrc-1)*srcDib.dsBm.bmWidthBytes
+        + xSrc*bytesPerPixel];
+      srcRowOffset = -srcDib.dsBm.bmWidthBytes;
+    }
+    if (dstDib.dsBmih.biHeight < 0)
+    {
+      dstPtr = &physDevDst->bitmap->base[yDst*dstDib.dsBm.bmWidthBytes + xDst*bytesPerPixel];
+      dstRowOffset = dstDib.dsBm.bmWidthBytes;
+    }
+    else
+    {
+      dstPtr = &physDevDst->bitmap->base[(dstDib.dsBm.bmWidth-yDst-1)*dstDib.dsBm.bmWidthBytes
+        + xDst*bytesPerPixel];
+      dstRowOffset = -dstDib.dsBm.bmWidthBytes;
+    }
 
     for (y = yDst; y < yDst + height; ++y)
     {
       memcpy(dstPtr, srcPtr, bytesToCopy);
-      srcPtr += srcDib.dsBm.bmWidthBytes;
-      dstPtr += dstDib.dsBm.bmWidthBytes;
+      srcPtr += srcRowOffset;
+      dstPtr += dstRowOffset;
     }
 
     return TRUE;
