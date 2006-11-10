@@ -1575,6 +1575,16 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
       FIXME("potential optimization: client-side compressed DIB copy\n");
       return FALSE;
     }
+    if (srcDib.dsBm.bmBitsPixel != dstDib.dsBm.bmBitsPixel)
+    {
+      FIXME("potential optimization: pixel format conversion\n");
+      return FALSE;
+    }
+    if (srcDib.dsBmih.biWidth < 0 || dstDib.dsBmih.biWidth < 0)
+    {
+      FIXME("negative widths not yet implemented\n");
+      return FALSE;
+    }
 
     switch (dstDib.dsBm.bmBitsPixel)
     {
