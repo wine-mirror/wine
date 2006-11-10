@@ -55,7 +55,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 #define ATLVer1Size 100
 
-HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE h)
+HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE h)
 {
     INT i;
     UINT size;
@@ -63,7 +63,7 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
     FIXME("SEMI-STUB (%p %p %p)\n",pM,p,h);
 
     size = pM->cbSize;
-    if  (size != sizeof(_ATL_MODULEA) && size != ATLVer1Size)
+    if  (size != sizeof(_ATL_MODULEW) && size != ATLVer1Size)
     {
         FIXME("Unknown structure version (size %i)\n",size);
         return E_INVALIDARG;
@@ -97,14 +97,14 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEA* pM, _ATL_OBJMAP_ENTRYA* p, HINSTANCE 
     return S_OK;
 }
 
-HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEA *pM, LPCOLESTR lpszIndex, 
+HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex, 
                                     BSTR *pbstrPath, ITypeLib **ppTypeLib)
 {
     FIXME("(%p, %s, %p, %p): stub\n", pM, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
     return E_FAIL;
 }
 
-HRESULT WINAPI AtlModuleTerm(_ATL_MODULEA* pM)
+HRESULT WINAPI AtlModuleTerm(_ATL_MODULEW* pM)
 {
     _ATL_TERMFUNC_ELEM *iter = pM->m_pTermFuncs, *tmp;
 
@@ -138,7 +138,7 @@ HRESULT WINAPI AtlModuleAddTermFunc(_ATL_MODULEW *pM, _ATL_TERMFUNC *pFunc, DWOR
     return S_OK;
 }
 
-HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA *pM, DWORD dwClsContext,
+HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEW *pM, DWORD dwClsContext,
                                              DWORD dwFlags)
 {
     HRESULT hRes = S_OK;
@@ -152,7 +152,7 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA *pM, DWORD dwClsContex
     while(pM->m_pObjMap[i].pclsid != NULL)
     {
         IUnknown* pUnknown;
-        _ATL_OBJMAP_ENTRYA *obj = &(pM->m_pObjMap[i]);
+        _ATL_OBJMAP_ENTRYW *obj = &(pM->m_pObjMap[i]);
         HRESULT rc;
 
         TRACE("Registering object %i\n",i);
@@ -174,7 +174,7 @@ HRESULT WINAPI AtlModuleRegisterClassObjects(_ATL_MODULEA *pM, DWORD dwClsContex
    return hRes;
 }
 
-HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEA* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID)
+HRESULT WINAPI AtlModuleUnregisterServerEx(_ATL_MODULEW* pM, BOOL bUnRegTypeLib, const CLSID* pCLSID)
 {
     FIXME("(%p, %i, %p) stub\n", pM, bUnRegTypeLib, pCLSID);
     return S_OK;
