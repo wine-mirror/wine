@@ -1800,19 +1800,14 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         {
             component = cl->component;
 
-            switch (component->Attributes)
-            {
-            case msidbComponentAttributesLocalOnly:
-                msi_component_set_state( component, INSTALLSTATE_LOCAL );
-                break;
-            case msidbComponentAttributesSourceOnly:
-                msi_component_set_state( component, INSTALLSTATE_SOURCE );
-                break;
-            case msidbComponentAttributesOptional:
+            if (component->Attributes & msidbComponentAttributesOptional)
                 msi_component_set_state( component, INSTALLSTATE_DEFAULT );
-                break;
-            default:
-                msi_component_set_state( component, INSTALLSTATE_LOCAL );
+            else
+            {
+                if (component->Attributes & msidbComponentAttributesSourceOnly)
+                    msi_component_set_state( component, INSTALLSTATE_SOURCE );
+                else
+                    msi_component_set_state( component, INSTALLSTATE_LOCAL );
             }
 
             if (component->ForceLocalState)
