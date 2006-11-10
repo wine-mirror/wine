@@ -3271,7 +3271,7 @@ static void test_VarDateFromDec(void)
 #define MKRELDATE(day,mth) st.wMonth = mth; st.wDay = day; \
   pSystemTimeToVariantTime(&st,&relative)
 
-static const char *BadDateStrings[] =
+static const char * const BadDateStrings[] =
 {
   "True", "False", /* Plain text */
   "0.", ".0", "-1.1", "1.1-", /* Partial specifications */
@@ -5736,7 +5736,7 @@ static void test_ChangeType_keep_dst(void)
 {
      VARIANT v1, v2;
      BSTR bstr;
-     WCHAR testW[] = {'t','e','s','t',0};
+     static const WCHAR testW[] = {'t','e','s','t',0};
      HRESULT hres;
 
      bstr = SysAllocString(testW);
