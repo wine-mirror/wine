@@ -469,8 +469,13 @@ static UINT download_remote_cabinet(MSIPACKAGE *package, struct media_info *mi)
 
     *(ptr + 1) = '\0';
     ptr = strrchrW(mi->source, '\\');
+    src = msi_realloc(src, (lstrlenW(src) + lstrlenW(ptr)) * sizeof(WCHAR));
+    if (!src)
+        return ERROR_OUTOFMEMORY;
+
     lstrcatW(src, ptr + 1);
 
+    temppath[0] = '\0';
     cab = msi_download_file(src, temppath);
     lstrcpyW(mi->source, cab);
 
