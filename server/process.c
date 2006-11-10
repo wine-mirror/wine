@@ -515,15 +515,25 @@ static void process_unload_dll( struct process *process, void *base )
 /* terminate a process with the given exit code */
 static void terminate_process( struct process *process, struct thread *skip, int exit_code )
 {
-    struct list *ptr, *next;
+    struct list *ptr;
 
-    LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+    if (skip)  /* move it to the end of the list */
+    {
+        assert( skip->state != TERMINATED );
+        list_remove( &skip->proc_entry );
+        list_add_tail( &process->thread_list, &skip->proc_entry );
+    }
+
+    grab_object( process );  /* make sure it doesn't get freed when threads die */
+    while ((ptr = list_head( &process->thread_list )))
     {
         struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
 
         if (exit_code) thread->exit_code = exit_code;
-        if (thread != skip) kill_thread( thread, 1 );
+        if (thread == skip) break;
+        kill_thread( thread, 1 );
     }
+    release_object( process );
 }
 
 /* kill all processes */
@@ -657,13 +667,15 @@ void kill_process( struct process *process, int violent_death )
     if (violent_death) terminate_process( process, NULL, 1 );
     else
     {
-        struct list *ptr, *next;
+        struct list *ptr;
 
-        LIST_FOR_EACH_SAFE( ptr, next, &process->thread_list )
+        grab_object( process );  /* make sure it doesn't get freed when threads die */
+        while ((ptr = list_head( &process->thread_list )))
         {
             struct thread *thread = LIST_ENTRY( ptr, struct thread, proc_entry );
             kill_thread( thread, 0 );
         }
+        release_object( process );
     }
 }
 
