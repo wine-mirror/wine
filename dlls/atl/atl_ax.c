@@ -470,8 +470,20 @@ HRESULT WINAPI AtlAxCreateControlEx(LPCOLESTR lpszName, HWND hWnd,
  */
 HRESULT WINAPI AtlAxAttachControl(IUnknown* pControl, HWND hWnd, IUnknown** ppUnkContainer)
 {
-    FIXME( "(%p %p %p) - stub\n", pControl, hWnd, ppUnkContainer );
-    return E_NOTIMPL;
+    IOCS *pUnkContainer;
+    HRESULT hr;
+
+    TRACE( "%p %p %p\n", pControl, hWnd, ppUnkContainer );
+
+    *ppUnkContainer = NULL;
+
+    hr = IOCS_Create( hWnd, pControl, &pUnkContainer );
+    if ( SUCCEEDED( hr ) )
+    {
+        *ppUnkContainer = (IUnknown*) pUnkContainer;
+    }
+
+    return hr;
 }
 
 /**********************************************************************

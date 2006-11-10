@@ -32,7 +32,7 @@
 38 stdcall AtlAxCreateDialogA(long str long ptr long)
 39 stdcall AtlAxCreateControl(ptr ptr ptr ptr)
 40 stdcall AtlAxCreateControlEx(ptr ptr ptr ptr ptr ptr ptr)
-41 stub AtlAxAttachControl
+41 stdcall AtlAxAttachControl(ptr ptr ptr)
 42 stdcall AtlAxWinInit()
 43 stdcall AtlModuleAddCreateWndData(ptr ptr ptr)
 44 stdcall AtlModuleExtractCreateWndData(ptr)
