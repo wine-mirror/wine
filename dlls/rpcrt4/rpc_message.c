@@ -517,7 +517,7 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
   /* read the rest of packet header */
   dwRead = rpcrt4_conn_read(Connection, &(*Header)->common + 1, hdr_length - sizeof(common_hdr));
   if (dwRead != hdr_length - sizeof(common_hdr)) {
-    WARN("bad header length, %d/%d bytes\n", dwRead, hdr_length - sizeof(common_hdr));
+    WARN("bad header length, %d bytes, hdr_length %d\n", dwRead, hdr_length);
     status = RPC_S_PROTOCOL_ERROR;
     goto fail;
   }
