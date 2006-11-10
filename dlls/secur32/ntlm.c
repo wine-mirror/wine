@@ -448,7 +448,11 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         {
             /* This is default, so we'll enable it */
             ctxt_attr |= ISC_RET_CONNECTION;
-            lstrcatA(want_flags, " NTLMSSP_FEATURE_SESSION_KEY");
+            /* Work around a bug in ntlm_auth that sets the
+             * NTLMSSP_FEATURE_SIGN flag for this want flag, which
+             * breaks RPC. */
+            if(0)
+                lstrcatA(want_flags, " NTLMSSP_FEATURE_SESSION_KEY");
         }
         if(fContextReq & ISC_REQ_EXTENDED_ERROR)
             FIXME("ISC_REQ_EXTENDED_ERROR\n");
