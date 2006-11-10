@@ -875,25 +875,25 @@ static void test_EM_SETUNDOLIMIT(void)
   DestroyWindow(hwndRichEdit);
 }
 
-static void test_ES_PASSWORD()
+static void test_ES_PASSWORD(void)
 {
   /* This isn't hugely testable, so we're just going to run it through it's paces. */
-	
+
   HWND hwndRichEdit = new_richedit(NULL);
   WCHAR result;
-	
+
   /* First, check the default of a regular control */
   result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
   ok (result == 0,
 	"EM_GETPASSWORDCHAR returned %c by default, instead of NULL\n",result);
-  
+
   /* Now, set it to something normal */
   SendMessage(hwndRichEdit, EM_SETPASSWORDCHAR, 'x', 0);
   result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
   ok (result == 120,
 	"EM_GETPASSWORDCHAR returned %c (%d) when set to 'x', instead of x (120)\n",result,result);
-	
-  /* Now, set it to something odd */	
+
+  /* Now, set it to something odd */
   SendMessage(hwndRichEdit, EM_SETPASSWORDCHAR, (WCHAR)1234, 0);
   result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
   ok (result == 1234,
@@ -901,7 +901,7 @@ static void test_ES_PASSWORD()
   DestroyWindow(hwndRichEdit);
 }
 
-static void test_EM_SETTEXTEX()
+static void test_EM_SETTEXTEX(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
   SETTEXTEX setText;
@@ -1064,7 +1064,7 @@ static void test_EM_GETLIMITTEXT(void)
   DestroyWindow(hwndRichEdit);
 }
 
-static void test_WM_SETFONT()
+static void test_WM_SETFONT(void)
 {
   /* There is no invalid input or error conditions for this function.
    * NULL wParam and lParam just fall back to their default values 
