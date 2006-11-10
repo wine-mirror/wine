@@ -1261,3 +1261,47 @@ HWND WINAPI AtlAxCreateDialogW(HINSTANCE hInst, LPCWSTR name, HWND owner, DLGPRO
     FreeResource ( hrsrc );
     return res;
 }
+
+/***********************************************************************
+ *           AtlAxGetHost                 [ATL.@]
+ *
+ */
+HRESULT WINAPI AtlAxGetHost(HWND hWnd, IUnknown **pUnk)
+{
+    IOCS *This;
+
+    TRACE( "(%p, %p)\n", hWnd, pUnk );
+
+    *pUnk = NULL;
+
+    This = (IOCS*) GetWindowLongPtrW( hWnd, GWLP_USERDATA );
+    if ( !This )
+    {
+        WARN("No container attached to %p\n", hWnd );
+        return E_FAIL;
+    }
+
+    return IOCS_QueryInterface( This, &IID_IUnknown, (void**) pUnk );
+}
+
+/***********************************************************************
+ *           AtlAxGetControl              [ATL.@]
+ *
+ */
+HRESULT WINAPI AtlAxGetControl(HWND hWnd, IUnknown **pUnk)
+{
+    IOCS *This;
+
+    TRACE( "(%p, %p)\n", hWnd, pUnk );
+
+    *pUnk = NULL;
+
+    This = (IOCS*) GetWindowLongPtrW( hWnd, GWLP_USERDATA );
+    if ( !This || !This->control )
+    {
+        WARN("No control attached to %p\n", hWnd );
+        return E_FAIL;
+    }
+
+    return IOleObject_QueryInterface( This->control, &IID_IUnknown, (void**) pUnk );
+}

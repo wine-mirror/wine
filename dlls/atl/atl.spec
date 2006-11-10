@@ -38,8 +38,8 @@
 44 stdcall AtlModuleExtractCreateWndData(ptr)
 45 stdcall AtlModuleRegisterWndClassInfoW(ptr ptr ptr)
 46 stub AtlModuleRegisterWndClassInfoA
-47 stub AtlAxGetControl
-48 stub AtlAxGetHost
+47 stdcall AtlAxGetControl(long ptr)
+48 stdcall AtlAxGetHost(long ptr)
 49 stub AtlRegisterClassCategoriesHelper
 50 stub AtlIPersistStreamInit_Load
 51 stub AtlIPersistStreamInit_Save
