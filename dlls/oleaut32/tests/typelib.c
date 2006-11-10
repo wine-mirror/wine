@@ -503,9 +503,7 @@ static BOOL do_typelib_reg_key(GUID *uid, WORD maj, WORD min, LPCWSTR base, BOOL
 
     if (remove)
     {
-todo_wine {
         ok(SHDeleteKeyW(HKEY_CLASSES_ROOT, buf) == ERROR_SUCCESS, "SHDeleteKey failed\n");
-}
         return TRUE;
     }
 

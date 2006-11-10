@@ -1553,7 +1553,7 @@ DWORD WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey)
  */
 DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
 {
-  DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
+  DWORD dwRet, dwMaxSubkeyLen = 0, dwSize;
   WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
   HKEY hSubKey = 0;
 
@@ -1562,8 +1562,8 @@ DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
   dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
   if(!dwRet)
   {
-    /* Find how many subkeys there are */
-    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+    /* Find the maximum subkey length so that we can allocate a buffer */
+    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, NULL,
                              &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
     if(!dwRet)
     {
@@ -1576,15 +1576,16 @@ DWORD WINAPI SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
         dwRet = ERROR_NOT_ENOUGH_MEMORY;
       else
       {
-        /* Recursively delete all the subkeys */
-        for(i = 0; i < dwKeyCount && !dwRet; i++)
+        while (dwRet == ERROR_SUCCESS)
         {
           dwSize = dwMaxSubkeyLen;
-          dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
-          if(!dwRet)
+          dwRet = RegEnumKeyExW(hSubKey, 0, lpszName, &dwSize, NULL, NULL, NULL, NULL);
+          if (dwRet == ERROR_SUCCESS || dwRet == ERROR_MORE_DATA)
             dwRet = SHDeleteKeyW(hSubKey, lpszName);
         }
-
+        if (dwRet == ERROR_NO_MORE_ITEMS)
+          dwRet = ERROR_SUCCESS;
+    
         if (lpszName != szNameBuf)
           HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
       }
