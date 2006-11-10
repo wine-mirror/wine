@@ -257,7 +257,34 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
  */
 HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* clsid)
 {
-    FIXME("%p %d %s\n", pM, bRegTypeLib, debugstr_guid(clsid));
+    int i;
+    HRESULT hRes;
+
+    TRACE("%p %d %s\n", pM, bRegTypeLib, debugstr_guid(clsid));
+
+    if (pM == NULL)
+        return E_INVALIDARG;
+
+    for (i = 0; pM->m_pObjMap[i].pclsid != NULL; i++) /* register CLSIDs */
+    {
+        if (!clsid || IsEqualCLSID(pM->m_pObjMap[i].pclsid, clsid))
+        {
+            const _ATL_OBJMAP_ENTRYW *obj = &pM->m_pObjMap[i];
+
+            TRACE("Registering clsid %s\n", debugstr_guid(obj->pclsid));
+            hRes = obj->pfnUpdateRegistry(TRUE); /* register */
+            if (FAILED(hRes))
+                return hRes;
+        }
+    }
+
+    if (bRegTypeLib)
+    {
+        hRes = AtlModuleRegisterTypeLib(pM, NULL);
+        if (FAILED(hRes))
+            return hRes;
+    }
+
     return S_OK;
 }
 
