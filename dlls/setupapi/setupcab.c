@@ -105,12 +105,12 @@ static void UnloadCABINETDll(void)
 
 static void *sc_cb_alloc(ULONG cb)
 {
-  return malloc(cb);
+  return HeapAlloc(GetProcessHeap(), 0, cb);
 }
 
 static void sc_cb_free(void *pv)
 {
-  free(pv);
+  HeapFree(GetProcessHeap(), 0, pv);
 }
 
 static INT_PTR sc_cb_open(char *pszFile, int oflag, int pmode)
