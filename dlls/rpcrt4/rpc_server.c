@@ -500,10 +500,6 @@ static RPC_STATUS RPCRT4_use_protseq(RpcServerProtseq* ps, LPSTR endpoint)
   if (status != RPC_S_OK)
     return status;
 
-  EnterCriticalSection(&server_cs);
-  list_add_head(&protseqs, &ps->entry);
-  LeaveCriticalSection(&server_cs);
-
   if (std_listen)
   {
     status = RPCRT4_start_listen_protseq(ps, FALSE);
@@ -604,6 +600,8 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpW( RPC_WSTR Protseq, UINT MaxCalls, RPC_W
 
 /***********************************************************************
  *             alloc_serverprotoseq (internal)
+ *
+ * Must be called with server_cs held.
  */
 static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, char *Protseq, RpcServerProtseq **ps)
 {
@@ -628,7 +626,35 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, char *Protseq, RpcServerPr
   (*ps)->mgr_mutex = NULL;
   (*ps)->server_ready_event = NULL;
 
+  list_add_head(&protseqs, &(*ps)->entry);
+
+  TRACE("new protseq %p created for %s\n", *ps, Protseq);
+
   return RPC_S_OK;
+}
+
+/* Finds a given protseq or creates a new one if one doesn't already exist */
+static RPC_STATUS RPCRT4_get_or_create_serverprotseq(UINT MaxCalls, char *Protseq, RpcServerProtseq **ps)
+{
+    RPC_STATUS status;
+    RpcServerProtseq *cps;
+
+    EnterCriticalSection(&server_cs);
+
+    LIST_FOR_EACH_ENTRY(cps, &protseqs, RpcServerProtseq, entry)
+        if (!strcmp(cps->Protseq, Protseq))
+        {
+            TRACE("found existing protseq object for %s\n", Protseq);
+            *ps = cps;
+            LeaveCriticalSection(&server_cs);
+            return S_OK;
+        }
+
+    status = alloc_serverprotoseq(MaxCalls, Protseq, ps);
+
+    LeaveCriticalSection(&server_cs);
+
+    return status;
 }
 
 /***********************************************************************
@@ -645,7 +671,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExA( RPC_CSTR Protseq, UINT MaxCalls, RPC
        debugstr_a(szep), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
-  status = alloc_serverprotoseq(MaxCalls, RPCRT4_strdupA(szps), &ps);
+  status = RPCRT4_get_or_create_serverprotseq(MaxCalls, RPCRT4_strdupA(szps), &ps);
   if (status != RPC_S_OK)
     return status;
 
@@ -666,7 +692,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( RPC_WSTR Protseq, UINT MaxCalls, RPC
        debugstr_w( Endpoint ), SecurityDescriptor,
        lpPolicy->Length, lpPolicy->EndpointFlags, lpPolicy->NICFlags );
 
-  status = alloc_serverprotoseq(MaxCalls, RPCRT4_strdupWtoA(Protseq), &ps);
+  status = RPCRT4_get_or_create_serverprotseq(MaxCalls, RPCRT4_strdupWtoA(Protseq), &ps);
   if (status != RPC_S_OK)
     return status;
 
