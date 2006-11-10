@@ -88,9 +88,8 @@ typedef struct
 
 typedef struct
 {
-  unsigned char padding1[2];       /* Force alignment! */
   unsigned char num_results;       /* Number of results */
-  unsigned char padding2[3];       /* Force alignment! */
+  unsigned char reserved[3];       /* Force alignment! */
   struct {
     unsigned short result;
     unsigned short reason;
@@ -106,6 +105,7 @@ typedef struct
   /* 
    * Following this header are these fields:
    *   RpcAddressString server_address;
+   *   [0 - 3 bytes of padding so that results is 4-byte aligned]
    *   RpcResults results;
    *   RPC_SYNTAX_IDENTIFIER transfer;
    */

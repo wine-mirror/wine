@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 /* gets the amount needed to round a value up to the specified alignment */
 #define ROUND_UP_AMOUNT(value, alignment) \
     (((alignment) - (((value) % (alignment)))) % (alignment))
+#define ROUND_UP(value, alignment) (((value) + ((alignment) - 1)) & ~((alignment)-1))
 
 static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg);
 
@@ -230,9 +231,10 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
   RpcResults *results;
   RPC_SYNTAX_IDENTIFIER *transfer_id;
 
-  header_size = sizeof(header->bind_ack) + sizeof(RpcResults) +
-                sizeof(RPC_SYNTAX_IDENTIFIER) + sizeof(RpcAddressString) +
-                strlen(ServerAddress);
+  header_size = sizeof(header->bind_ack) +
+                ROUND_UP(FIELD_OFFSET(RpcAddressString, string[strlen(ServerAddress) + 1]), 4) +
+                sizeof(RpcResults) +
+                sizeof(RPC_SYNTAX_IDENTIFIER);
 
   header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, header_size);
   if (header == NULL) {
@@ -246,7 +248,8 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(unsigned long DataRepresentation,
   server_address = (RpcAddressString*)(&header->bind_ack + 1);
   server_address->length = strlen(ServerAddress) + 1;
   strcpy(server_address->string, ServerAddress);
-  results = (RpcResults*)((ULONG_PTR)server_address + sizeof(RpcAddressString) + server_address->length - 1);
+  /* results is 4-byte aligned */
+  results = (RpcResults*)((ULONG_PTR)server_address + ROUND_UP(FIELD_OFFSET(RpcAddressString, string[server_address->length]), 4));
   results->num_results = 1;
   results->results[0].result = Result;
   results->results[0].reason = Reason;
