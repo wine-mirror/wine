@@ -1195,7 +1195,7 @@ static LRESULT CALLBACK WINHELP_TextWndProc(HWND hWnd, UINT msg, WPARAM wParam, 
                 break;
             case hlp_link_popup:
                 hlpfile = WINHELP_LookupHelpFile(part->link->lpszString);
-                WINHELP_CreateHelpWindowByHash(hlpfile, part->link->lHash, 
+                if (hlpfile) WINHELP_CreateHelpWindowByHash(hlpfile, part->link->lHash, 
                                                WINHELP_GetPopupWindowInfo(hlpfile, hWnd, &mouse),
                                                SW_NORMAL);
                 break;
