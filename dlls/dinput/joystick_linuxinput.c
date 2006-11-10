@@ -1469,17 +1469,17 @@ static HRESULT WINAPI JoystickAImpl_CreateEffect(LPDIRECTINPUTDEVICE8A iface,
 #ifndef HAVE_STRUCT_FF_EFFECT_DIRECTION
     TRACE("not available (compiled w/o ff support)\n");
     *ppdef = NULL;
-    return DI_OK; 
+    return DI_OK;
 #else
 
-    new = malloc(sizeof(EffectListItem));
+    new = HeapAlloc(GetProcessHeap(), 0, sizeof(EffectListItem));
     new->next = This->top_effect;
     This->top_effect = new;
 
     retval = linuxinput_create_effect(&(This->joyfd), rguid, &(new->ref));
     if (retval != DI_OK)
 	return retval;
- 
+
     if (lpeff != NULL)
 	retval = IDirectInputEffect_SetParameters(new->ref, lpeff, 0);
     if (retval != DI_OK && retval != DI_DOWNLOADSKIPPED)
@@ -1729,12 +1729,12 @@ static HRESULT WINAPI JoystickAImpl_SendForceFeedbackCommand(
 	/* Stop, unload, release and free all effects */
 	/* This returns the device to its "bare" state */
 	while (This->top_effect) {
-	    EffectListItem* temp = This->top_effect; 
+	    EffectListItem* temp = This->top_effect;
 	    IDirectInputEffect_Stop(temp->ref);
 	    IDirectInputEffect_Unload(temp->ref);
 	    IDirectInputEffect_Release(temp->ref);
-	    This->top_effect = temp->next; 
-	    free(temp);
+	    This->top_effect = temp->next;
+	    HeapFree(GetProcessHeap(), 0, temp);
 	}
     } else if (dwFlags == DISFFC_PAUSE || dwFlags == DISFFC_CONTINUE) {
 	FIXME("No support for Pause or Continue in linux\n");
