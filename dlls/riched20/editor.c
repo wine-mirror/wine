@@ -1145,6 +1145,7 @@ ME_TextEditor *ME_MakeEditor(HWND hWnd) {
   ed->pfnWordBreak = NULL;
   ed->lpOleCallback = NULL;
   ed->mode = TM_RICHTEXT | TM_MULTILEVELUNDO | TM_MULTICODEPAGE;
+  ed->AutoURLDetect_bEnable = FALSE;
   GetClientRect(hWnd, &ed->rcFormat);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {
