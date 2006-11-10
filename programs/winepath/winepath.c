@@ -189,14 +189,61 @@ int wmain(int argc, const WCHAR *argv[])
             printf("%s\n", path);
         }
         if (outputformats & UNIXFORMAT) {
-            char *unix_name;
-
-            if ((unix_name = wine_get_unix_file_name_ptr(argv[i])))
+            WCHAR *ntpath, *tail;
+            int ntpathlen=lstrlenW(argv[i]);
+            ntpath=HeapAlloc(GetProcessHeap(), 0, sizeof(*ntpath)*(ntpathlen+1));
+            lstrcpyW(ntpath, argv[i]);
+            tail=NULL;
+            while (1)
             {
-                printf("%s\n", unix_name);
-                HeapFree( GetProcessHeap(), 0, unix_name );
+                char *unix_name;
+                WCHAR *slash, *c;
+
+                unix_name = wine_get_unix_file_name_ptr(ntpath);
+                if (unix_name)
+                {
+                    if (tail)
+                    {
+                        WideCharToMultiByte(CP_UNIXCP, 0, tail+1, -1, path, MAX_PATH, NULL, NULL);
+                        printf("%s/%s\n", unix_name, path);
+                    }
+                    else
+                    {
+                        printf("%s\n", unix_name);
+                    }
+                    HeapFree( GetProcessHeap(), 0, unix_name );
+                    break;
+                }
+
+                slash=(tail ? tail : ntpath+ntpathlen);
+                while (slash != ntpath && *slash != '/' && *slash != '\\')
+                    slash--;
+                if (slash == ntpath)
+                {
+                    /* This is a complete path conversion failure.
+                     * It would typically happen if ntpath == "".
+                     */
+                    printf("\n");
+                    break;
+                }
+                c=slash+1;
+                while (*c != '\0' && *c != '*' && *c != '?' &&
+                       *c != '<' && *c != '>' && *c != '|' && *c != '"')
+                    c++;
+                if (*c != '\0')
+                {
+                    /* If this is not a valid NT path to start with,
+                     * then obviously we cannot convert it.
+                     */
+                    printf("\n");
+                    break;
+                }
+                if (tail)
+                    *tail='/';
+                tail=slash;
+                *tail='\0';
             }
-            else printf( "\n" );
+            HeapFree(GetProcessHeap(), 0, ntpath);
         }
         if (outputformats & WINDOWSFORMAT) {
             WCHAR* windows_name;
