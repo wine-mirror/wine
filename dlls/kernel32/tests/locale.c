@@ -1857,8 +1857,15 @@ static void test_FoldStringW(void)
     EXPECT_LEN(2); EXPECT_VALID;
     ok(dst[0] == expected ||
        /* Wine (correctly) uses updated mappings for some Unicode 4.0 chars */
-       (ch >= 0xFA0D && ch <= 0xFA47) ||
-       0xf92c || ch == 0xf979 || ch == 0xf995 || ch == 0xf9e7 || ch == 0xf9f1,
+       /* FIXME: But they should be re-checked */
+       ch == 0xf92c || ch == 0xf979 || ch == 0xf995 || ch == 0xf9e7 ||
+       ch == 0xf9f1 ||
+       (0xfa0c <= ch && ch <= 0xfa6a) ||
+       (0xfa70 <= ch && ch <= 0xfad9) ||
+       ch == 0xfe47 || ch == 0xfe48 || ch == 0xfe68 ||
+       (0xfe70 <= ch && ch <= 0xfe7f) ||
+       ch == 0xff3c || ch == 0xff5f || ch == 0xff60 ||
+       ch == 0xff9e || ch == 0xff9f,
        "MAP_FOLDCZONE: ch %d 0x%04x Expected 0x%04x got 0x%04x\n",
        ch, ch, expected, dst[0]);
   }
