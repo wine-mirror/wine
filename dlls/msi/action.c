@@ -1792,9 +1792,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
     {
         ComponentList *cl;
 
-        TRACE("Examining Feature %s (Installed %i, Action %i, Request %i)\n",
-            debugstr_w(feature->Feature), feature->Installed, feature->Action,
-            feature->ActionRequest);
+        TRACE("Examining Feature %s (Installed %i, Action %i)\n",
+            debugstr_w(feature->Feature), feature->Installed, feature->Action);
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
@@ -1856,9 +1855,8 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             msi_component_set_state( component, INSTALLSTATE_LOCAL );
         }
 
-        TRACE("Result: Component %s (Installed %i, Action %i, Request %i)\n",
-            debugstr_w(component->Component), component->Installed,
-            component->Action, component->ActionRequest);
+        TRACE("Result: Component %s (Installed %i, Action %i)\n",
+            debugstr_w(component->Component), component->Installed, component->Action);
     }
 
 
