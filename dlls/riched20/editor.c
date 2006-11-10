@@ -2201,20 +2201,26 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     FINDTEXTA *ft = (FINDTEXTA *)lParam;
     int nChars = MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, NULL, 0);
     WCHAR *tmp;
-    
+    LRESULT r;
+
     if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
       MultiByteToWideChar(CP_ACP, 0, ft->lpstrText, -1, tmp, nChars);
-    return ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
+    r = ME_FindText(editor, wParam, &ft->chrg, tmp, NULL);
+    FREE_OBJ( tmp );
+    return r;
   }
   case EM_FINDTEXTEX:
   {
     FINDTEXTEXA *ex = (FINDTEXTEXA *)lParam;
     int nChars = MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, NULL, 0);
     WCHAR *tmp;
-    
+    LRESULT r;
+
     if ((tmp = ALLOC_N_OBJ(WCHAR, nChars)) != NULL)
       MultiByteToWideChar(CP_ACP, 0, ex->lpstrText, -1, tmp, nChars);
-    return ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
+    r = ME_FindText(editor, wParam, &ex->chrg, tmp, &ex->chrgText);
+    FREE_OBJ( tmp );
+    return r;
   }
   case EM_FINDTEXTW:
   {
