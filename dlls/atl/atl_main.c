@@ -68,7 +68,7 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE 
         FIXME("Unknown structure version (size %i)\n",size);
         return E_INVALIDARG;
     }
-    
+
     memset(pM,0,pM->cbSize);
     pM->cbSize = size;
     pM->m_hInst = h;
@@ -97,11 +97,28 @@ HRESULT WINAPI AtlModuleInit(_ATL_MODULEW* pM, _ATL_OBJMAP_ENTRYW* p, HINSTANCE 
     return S_OK;
 }
 
-HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex, 
+HRESULT WINAPI AtlModuleLoadTypeLib(_ATL_MODULEW *pM, LPCOLESTR lpszIndex,
                                     BSTR *pbstrPath, ITypeLib **ppTypeLib)
 {
-    FIXME("(%p, %s, %p, %p): stub\n", pM, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
-    return E_FAIL;
+    HRESULT hRes;
+    OLECHAR path[MAX_PATH+8]; /* leave some space for index */
+
+    TRACE("(%p, %s, %p, %p)\n", pM, debugstr_w(lpszIndex), pbstrPath, ppTypeLib);
+
+    if (!pM)
+        return E_INVALIDARG;
+
+    GetModuleFileNameW(pM->m_hInstTypeLib, path, MAX_PATH);
+    if (lpszIndex)
+        lstrcatW(path, lpszIndex);
+
+    hRes = LoadTypeLib(path, ppTypeLib);
+    if (FAILED(hRes))
+        return hRes;
+
+    *pbstrPath = SysAllocString(path);
+
+    return S_OK;
 }
 
 HRESULT WINAPI AtlModuleTerm(_ATL_MODULEW* pM)
@@ -238,7 +255,7 @@ HRESULT WINAPI AtlInternalQueryInterface(LPVOID this, const _ATL_INTMAP_ENTRY* p
  *           AtlModuleRegisterServer         [ATL.@]
  *
  */
-HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* clsid) 
+HRESULT WINAPI AtlModuleRegisterServer(_ATL_MODULEW* pM, BOOL bRegTypeLib, const CLSID* clsid)
 {
     FIXME("%p %d %s\n", pM, bRegTypeLib, debugstr_guid(clsid));
     return S_OK;
@@ -362,7 +379,7 @@ HRESULT WINAPI AtlModuleUnregisterServer(_ATL_MODULEW *pm, const CLSID *clsid)
  *
  *  If the class name is NULL then it a class with a name of "ATLxxxxxxxx" is
  *  registered, where the x's represent an unique value.
- *  
+ *
  */
 ATOM WINAPI AtlModuleRegisterWndClassInfoW(_ATL_MODULEW *pm, _ATL_WNDCLASSINFOW *wci, WNDPROC *pProc)
 {
@@ -432,8 +449,8 @@ void WINAPI AtlModuleAddCreateWndData(_ATL_MODULEW *pM, _AtlCreateWndData *pData
  *
  *  NOTE: I failed to find any good description of this function.
  *        Tests show that this function extracts one of _AtlCreateWndData
- *        records from the current thread from a list 
- *        
+ *        records from the current thread from a list
+ *
  */
 LPVOID WINAPI AtlModuleExtractCreateWndData(_ATL_MODULEW *pM)
 {
