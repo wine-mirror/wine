@@ -45,6 +45,7 @@ typedef struct IOCS {
     const IOleClientSiteVtbl *lpOleClientSiteVtbl;
     const IOleContainerVtbl *lpOleContainerVtbl;
     const IOleInPlaceSiteWindowlessVtbl *lpOleInPlaceSiteWindowlessVtbl;
+    const IOleInPlaceFrameVtbl *lpOleInPlaceFrameVtbl;
 
     LONG ref;
     HWND hWnd;
@@ -128,6 +129,7 @@ static ULONG WINAPI IOCS_AddRef(IOCS *This)
 #define THIS2IOLECLIENTSITE(This) ((IOleClientSite*)&This->lpOleClientSiteVtbl)
 #define THIS2IOLECONTAINER(This) ((IOleContainer*)&This->lpOleContainerVtbl)
 #define THIS2IOLEINPLACESITEWINDOWLESS(This) ((IOleInPlaceSiteWindowless*)&This->lpOleInPlaceSiteWindowlessVtbl)
+#define THIS2IOLEINPLACEFRAME(This) ((IOleInPlaceFrame*)&This->lpOleInPlaceFrameVtbl)
 
 static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
 {
@@ -143,6 +145,9 @@ static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
     } else if ( IsEqualIID( &IID_IOleInPlaceSite, riid ) || IsEqualIID( &IID_IOleInPlaceSiteEx, riid ) || IsEqualIID( &IID_IOleInPlaceSiteWindowless, riid ) )
     {
         *ppv = THIS2IOLEINPLACESITEWINDOWLESS(This);
+    } else if ( IsEqualIID( &IID_IOleInPlaceFrame, riid ) )
+    {
+        *ppv = THIS2IOLEINPLACEFRAME(This);
     }
 
     if (*ppv)
@@ -340,7 +345,7 @@ static HRESULT WINAPI OleInPlaceSiteWindowless_GetWindowContext(IOleInPlaceSiteW
 
     if ( ppFrame )
     {
-        *ppFrame = NULL;
+        IOCS_QueryInterface( This, &IID_IOleInPlaceFrame, (void**) ppFrame );
     }
 
     if ( ppDoc )
@@ -480,6 +485,124 @@ static HRESULT WINAPI OleInPlaceSiteWindowless_OnDefWindowMessage( IOleInPlaceSi
     FIXME("\n");
     return E_NOTIMPL;
 }
+#undef IFACE2THIS
+
+
+/******    IOleInPlaceFrame   *******/
+#define IFACE2THIS(iface) DEFINE_THIS(IOCS, OleInPlaceFrame, iface)
+static HRESULT WINAPI OleInPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_QueryInterface(This, riid, ppv);
+}
+static ULONG WINAPI OleInPlaceFrame_AddRef(IOleInPlaceFrame *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_AddRef(This);
+}
+static ULONG WINAPI OleInPlaceFrame_Release(IOleInPlaceFrame *iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_Release(This);
+}
+static HRESULT WINAPI OleInPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phWnd)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    TRACE( "(%p,%p)\n", This, phWnd );
+
+    *phWnd = This->hWnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_ContextSensitiveHelp(IOleInPlaceFrame *iface, BOOL fEnterMode)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%d) - stub\n", This, fEnterMode );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_GetBorder(IOleInPlaceFrame *iface, LPRECT lprectBorder)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%p) - stub\n", This, lprectBorder );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface, LPCBORDERWIDTHS pborderwidths)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%p) - stub\n", This, pborderwidths );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface, LPCBORDERWIDTHS pborderwidths)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%p) - stub\n", This, pborderwidths );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface, IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%p,%s) - stub\n", This, pActiveObject, debugstr_w(pszObjName) );
+    return S_OK;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_InsertMenus(IOleInPlaceFrame *iface, HMENU hmenuShared, LPOLEMENUGROUPWIDTHS lpMenuWidths)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%p,%p) - stub\n", This, hmenuShared, lpMenuWidths );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_SetMenu(IOleInPlaceFrame *iface, HMENU hmenuShared, HOLEMENU holemenu, HWND hwndActiveObject)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p,%p,%p,%p) - stub\n", This, hmenuShared, holemenu, hwndActiveObject );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleInPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hmenuShared)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p, %p) - stub\n", This, hmenuShared );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p, %s) - stub\n", This, debugstr_w( pszStatusText ) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p, %d) - stub\n", This, fEnable );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI OleInPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface, LPMSG lpmsg, WORD wID)
+{
+    IOCS *This = IFACE2THIS(iface);
+
+    FIXME( "(%p, %p, %x) - stub\n", This, lpmsg, wID );
+    return E_NOTIMPL;
+}
+#undef IFACE2THIS
+
 
 
 static const IOleClientSiteVtbl OleClientSite_vtbl = {
@@ -532,6 +655,24 @@ static const IOleInPlaceSiteWindowlessVtbl OleInPlaceSiteWindowless_vtbl = {
     OleInPlaceSiteWindowless_ScrollRect,
     OleInPlaceSiteWindowless_AdjustRect,
     OleInPlaceSiteWindowless_OnDefWindowMessage
+};
+static const IOleInPlaceFrameVtbl OleInPlaceFrame_vtbl =
+{
+    OleInPlaceFrame_QueryInterface,
+    OleInPlaceFrame_AddRef,
+    OleInPlaceFrame_Release,
+    OleInPlaceFrame_GetWindow,
+    OleInPlaceFrame_ContextSensitiveHelp,
+    OleInPlaceFrame_GetBorder,
+    OleInPlaceFrame_RequestBorderSpace,
+    OleInPlaceFrame_SetBorderSpace,
+    OleInPlaceFrame_SetActiveObject,
+    OleInPlaceFrame_InsertMenus,
+    OleInPlaceFrame_SetMenu,
+    OleInPlaceFrame_RemoveMenus,
+    OleInPlaceFrame_SetStatusText,
+    OleInPlaceFrame_EnableModeless,
+    OleInPlaceFrame_TranslateAccelerator
 };
 
 static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
@@ -686,6 +827,7 @@ static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IOCS **ppSite )
     This->lpOleClientSiteVtbl = &OleClientSite_vtbl;
     This->lpOleContainerVtbl = &OleContainer_vtbl;
     This->lpOleInPlaceSiteWindowlessVtbl = &OleInPlaceSiteWindowless_vtbl;
+    This->lpOleInPlaceFrameVtbl = &OleInPlaceFrame_vtbl;
     This->ref = 1;
 
     This->OrigWndProc = NULL;
