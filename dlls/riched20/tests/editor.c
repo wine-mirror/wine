@@ -570,6 +570,7 @@ static void test_WM_GETTEXT(void)
     result = strcmp(buffer,text);
     ok(result == 0, 
         "WM_GETTEXT: settext and gettext differ. strcmp: %d\n", result);
+    DestroyWindow(hwndRichEdit);
 }
 
 /* FIXME: need to test unimplemented options and robustly test wparam */
@@ -897,6 +898,7 @@ static void test_ES_PASSWORD()
   result = SendMessage(hwndRichEdit, EM_GETPASSWORDCHAR, 0, 0);
   ok (result == 1234,
 	"EM_GETPASSWORDCHAR returned %c (%d) when set to 'x', instead of x (120)\n",result,result);
+  DestroyWindow(hwndRichEdit);
 }
 
 static void test_EM_SETTEXTEX()
@@ -1311,7 +1313,6 @@ static void test_EM_GETMODIFY(void)
       "EM_GETMODIFY returned zero, instead of non-zero for EM_STREAM\n");
   }
 
-  
   DestroyWindow(hwndRichEdit);
 }
 
