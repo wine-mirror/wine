@@ -43,6 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(atl);
 
 typedef struct IOCS {
     const IOleClientSiteVtbl *lpOleClientSiteVtbl;
+    const IOleContainerVtbl *lpOleContainerVtbl;
 
     LONG ref;
     HWND hWnd;
@@ -71,13 +72,13 @@ static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, L
 
 /***********************************************************************
  *           AtlAxWinInit          [ATL.@]
- * Initializes the control-hosting code: registering the AtlAxWin, 
+ * Initializes the control-hosting code: registering the AtlAxWin,
  * AtlAxWin7 and AtlAxWinLic7 window classes and some messages.
  *
  * RETURNS
  *  TRUE or FALSE
  */
- 
+
 BOOL WINAPI AtlAxWinInit(void)
 {
     WNDCLASSEXW wcex;
@@ -122,6 +123,7 @@ static ULONG WINAPI IOCS_AddRef(IOCS *This)
 }
 
 #define THIS2IOLECLIENTSITE(This) ((IOleClientSite*)&This->lpOleClientSiteVtbl)
+#define THIS2IOLECONTAINER(This) ((IOleContainer*)&This->lpOleContainerVtbl)
 
 static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
 {
@@ -131,6 +133,9 @@ static HRESULT WINAPI IOCS_QueryInterface(IOCS *This, REFIID riid, void **ppv)
       || IsEqualIID( &IID_IOleClientSite, riid ) )
     {
         *ppv = THIS2IOLECLIENTSITE(This);
+    } else if ( IsEqualIID( &IID_IOleContainer, riid ) )
+    {
+        *ppv = THIS2IOLECONTAINER(This);
     }
 
     if (*ppv)
@@ -162,6 +167,7 @@ static ULONG WINAPI IOCS_Release(IOCS *This)
 
 #define DEFINE_THIS(cls,ifc,iface) ((cls*)((BYTE*)(iface)-offsetof(cls,lp ## ifc ## Vtbl)))
 
+/******      IOleClientSite    *****/
 #undef  IFACE2THIS
 #define IFACE2THIS(iface) DEFINE_THIS(IOCS,OleClientSite, iface)
 static HRESULT WINAPI OleClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
@@ -195,8 +201,8 @@ static HRESULT WINAPI OleClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAs
 static HRESULT WINAPI OleClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
 {
     IOCS *This = IFACE2THIS(iface);
-    FIXME( "(%p, %p)\n", This, ppContainer );
-    return E_NOTIMPL;
+    TRACE( "(%p, %p)\n", This, ppContainer );
+    return OleClientSite_QueryInterface( iface, &IID_IOleContainer, (void**)ppContainer );
 }
 static HRESULT WINAPI OleClientSite_ShowObject(IOleClientSite *iface)
 {
@@ -219,6 +225,45 @@ static HRESULT WINAPI OleClientSite_RequestNewObjectLayout(IOleClientSite *iface
 #undef IFACE2THIS
 
 
+/******      IOleContainer     *****/
+#define IFACE2THIS(iface) DEFINE_THIS(IOCS, OleContainer, iface)
+static HRESULT WINAPI OleContainer_QueryInterface( IOleContainer* iface, REFIID riid, void** ppv)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_QueryInterface( This, riid, ppv );
+}
+static ULONG WINAPI OleContainer_AddRef(IOleContainer* iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_AddRef(This);
+}
+static ULONG WINAPI OleContainer_Release(IOleContainer* iface)
+{
+    IOCS *This = IFACE2THIS(iface);
+    return IOCS_Release(This);
+}
+static HRESULT WINAPI OleContainer_ParseDisplayName(IOleContainer* iface, IBindCtx* pbc,
+        LPOLESTR pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p,%p,%s,%p,%p) - stub\n", This, pbc, debugstr_w(pszDisplayName), pchEaten, ppmkOut );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleContainer_EnumObjects(IOleContainer* iface, DWORD grfFlags, IEnumUnknown** ppenum)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p, %u, %p) - stub\n", This, grfFlags, ppenum );
+    return E_NOTIMPL;
+}
+static HRESULT WINAPI OleContainer_LockContainer(IOleContainer* iface, BOOL fLock)
+{
+    IOCS *This = IFACE2THIS(iface);
+    FIXME( "(%p, %s) - stub\n", This, fLock?"TRUE":"FALSE" );
+    return E_NOTIMPL;
+}
+#undef  IFACE2THIS
+
+
 
 static const IOleClientSiteVtbl OleClientSite_vtbl = {
     OleClientSite_QueryInterface,
@@ -230,6 +275,14 @@ static const IOleClientSiteVtbl OleClientSite_vtbl = {
     OleClientSite_ShowObject,
     OleClientSite_OnShowWindow,
     OleClientSite_RequestNewObjectLayout
+};
+static const IOleContainerVtbl OleContainer_vtbl = {
+    OleContainer_QueryInterface,
+    OleContainer_AddRef,
+    OleContainer_Release,
+    OleContainer_ParseDisplayName,
+    OleContainer_EnumObjects,
+    OleContainer_LockContainer
 };
 
 static HRESULT IOCS_Detach( IOCS *This ) /* remove subclassing */
@@ -333,6 +386,7 @@ static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IOCS **ppSite )
         return E_OUTOFMEMORY;
 
     This->lpOleClientSiteVtbl = &OleClientSite_vtbl;
+    This->lpOleContainerVtbl = &OleContainer_vtbl;
     This->ref = 1;
 
     This->OrigWndProc = NULL;
