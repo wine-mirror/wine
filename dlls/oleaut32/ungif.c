@@ -51,6 +51,25 @@
 #include <string.h>
 #include "ungif.h"
 
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+
+static void *ungif_alloc( size_t sz )
+{
+    return HeapAlloc( GetProcessHeap(), 0, sz );
+}
+
+static void *ungif_calloc( size_t num, size_t sz )
+{
+    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, num*sz );
+}
+
+static void ungif_free( void *ptr )
+{
+    HeapFree( GetProcessHeap(), 0, ptr );
+}
+
 #define LZ_MAX_CODE         4095    /* Biggest code possible in 12 bits. */
 #define LZ_BITS             12
 
@@ -127,14 +146,14 @@ MakeMapObject(int ColorCount,
         return ((ColorMapObject *) NULL);
     }
 
-    Object = malloc(sizeof(ColorMapObject));
+    Object = ungif_alloc(sizeof(ColorMapObject));
     if (Object == (ColorMapObject *) NULL) {
         return ((ColorMapObject *) NULL);
     }
 
-    Object->Colors = (GifColorType *)calloc(ColorCount, sizeof(GifColorType));
+    Object->Colors = ungif_calloc(ColorCount, sizeof(GifColorType));
     if (Object->Colors == (GifColorType *) NULL) {
-        return ((ColorMapObject *) NULL);
+        return NULL;
     }
 
     Object->ColorCount = ColorCount;
@@ -154,8 +173,8 @@ static void
 FreeMapObject(ColorMapObject * Object) {
 
     if (Object != NULL) {
-        free(Object->Colors);
-        free(Object);
+        ungif_free(Object->Colors);
+        ungif_free(Object);
         /*** FIXME:
          * When we are willing to break API we need to make this function
          * FreeMapObject(ColorMapObject **Object)
@@ -173,7 +192,7 @@ AddExtensionBlock(SavedImage * New,
     ExtensionBlock *ep;
 
     if (New->ExtensionBlocks == NULL)
-        New->ExtensionBlocks = malloc(sizeof(ExtensionBlock));
+        New->ExtensionBlocks = ungif_alloc(sizeof(ExtensionBlock));
     else
         New->ExtensionBlocks = realloc(New->ExtensionBlocks,
                                       sizeof(ExtensionBlock) *
@@ -185,7 +204,7 @@ AddExtensionBlock(SavedImage * New,
     ep = &New->ExtensionBlocks[New->ExtensionBlockCount++];
 
     ep->ByteCount=Len;
-    ep->Bytes = malloc(ep->ByteCount);
+    ep->Bytes = ungif_alloc(ep->ByteCount);
     if (ep->Bytes == NULL)
         return (GIF_ERROR);
 
@@ -207,8 +226,8 @@ FreeExtension(SavedImage * Image)
     }
     for (ep = Image->ExtensionBlocks;
          ep < (Image->ExtensionBlocks + Image->ExtensionBlockCount); ep++)
-        free(ep->Bytes);
-    free(Image->ExtensionBlocks);
+        ungif_free(ep->Bytes);
+    ungif_free(Image->ExtensionBlocks);
     Image->ExtensionBlocks = NULL;
 }
 
@@ -231,12 +250,12 @@ FreeSavedImages(GifFileType * GifFile) {
             sp->ImageDesc.ColorMap = NULL;
         }
 
-        free(sp->RasterBits);
+        ungif_free(sp->RasterBits);
 
         if (sp->ExtensionBlocks)
             FreeExtension(sp);
     }
-    free(GifFile->SavedImages);
+    ungif_free(GifFile->SavedImages);
     GifFile->SavedImages=NULL;
 }
 
@@ -374,7 +393,7 @@ DGifGetImageDesc(GifFileType * GifFile) {
             return GIF_ERROR;
         }
     } else {
-        if ((GifFile->SavedImages = malloc(sizeof(SavedImage))) == NULL) {
+        if ((GifFile->SavedImages = ungif_alloc(sizeof(SavedImage))) == NULL) {
             return GIF_ERROR;
         }
     }
@@ -828,7 +847,7 @@ DGifSlurp(GifFileType * GifFile) {
               sp = &GifFile->SavedImages[GifFile->ImageCount - 1];
               ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
 
-              sp->RasterBits = malloc(ImageSize * sizeof(GifPixelType));
+              sp->RasterBits = ungif_alloc(ImageSize * sizeof(GifPixelType));
               if (sp->RasterBits == NULL) {
                   return GIF_ERROR;
               }
@@ -895,16 +914,16 @@ DGifOpen(void *userData,
     GifFileType *GifFile;
     GifFilePrivateType *Private;
 
-    GifFile = malloc(sizeof(GifFileType));
+    GifFile = ungif_alloc(sizeof(GifFileType));
     if (GifFile == NULL) {
         return NULL;
     }
 
     memset(GifFile, '\0', sizeof(GifFileType));
 
-    Private = malloc(sizeof(GifFilePrivateType));
+    Private = ungif_alloc(sizeof(GifFilePrivateType));
     if (!Private) {
-        free(GifFile);
+        ungif_free(GifFile);
         return NULL;
     }
 
@@ -915,8 +934,8 @@ DGifOpen(void *userData,
 
     /* Lets see if this is a GIF file: */
     if (READ(GifFile, Buf, GIF_STAMP_LEN) != GIF_STAMP_LEN) {
-        free(Private);
-        free(GifFile);
+        ungif_free(Private);
+        ungif_free(GifFile);
         return NULL;
     }
 
@@ -924,14 +943,14 @@ DGifOpen(void *userData,
      * something more useful with it. */
     Buf[GIF_STAMP_LEN] = 0;
     if (memcmp(GIF_STAMP, Buf, GIF_VERSION_POS) != 0) {
-        free(Private);
-        free(GifFile);
+        ungif_free(Private);
+        ungif_free(GifFile);
         return NULL;
     }
 
     if (DGifGetScreenDesc(GifFile) == GIF_ERROR) {
-        free(Private);
-        free(GifFile);
+        ungif_free(Private);
+        ungif_free(GifFile);
         return NULL;
     }
 
@@ -961,7 +980,7 @@ DGifCloseFile(GifFileType * GifFile) {
         GifFile->SColorMap = NULL;
     }
 
-    free(Private);
+    ungif_free(Private);
     Private = NULL;
 
     if (GifFile->SavedImages) {
@@ -969,7 +988,7 @@ DGifCloseFile(GifFileType * GifFile) {
         GifFile->SavedImages = NULL;
     }
 
-    free(GifFile);
+    ungif_free(GifFile);
 
     return GIF_OK;
 }
