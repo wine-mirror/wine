@@ -31,8 +31,7 @@ typedef struct _RpcServerProtseq
   const struct protseq_ops *ops; /* RO */
   struct list entry; /* CS ::server_cs */
   LPSTR Protseq; /* RO */
-  LPSTR Endpoint; /* RO */
-  UINT MaxCalls;
+  UINT MaxCalls; /* RO */
   /* list of listening connections */
   RpcConnection* conn; /* CS cs */
   CRITICAL_SECTION cs;
