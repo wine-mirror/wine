@@ -1781,6 +1781,13 @@ static void WINHELP_DeleteWindow(WINHELP_WINDOW* win)
         }
     }
 
+    if (Globals.active_win == win)
+    {
+        Globals.active_win = Globals.win_list;
+        if (Globals.win_list)
+            SetActiveWindow(Globals.win_list->hMainWnd);
+    }
+
     for (b = win->first_button; b; b = bp)
     {
         DestroyWindow(b->hWnd);
