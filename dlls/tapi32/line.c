@@ -24,9 +24,11 @@
 #include <stdio.h>
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winreg.h"
 #include "winnls.h"
 #include "winerror.h"
+#include "objbase.h"
 #include "tapi.h"
 #include "wine/debug.h"
 

@@ -21,6 +21,12 @@
 #ifndef __WINE_TAPI_H
 #define __WINE_TAPI_H
 
+#ifndef __WINESRC__
+# include <windows.h>
+#endif
+#include <basetsd.h>
+#include <oaidl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* defined(__cplusplus) */
