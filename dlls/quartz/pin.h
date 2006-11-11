@@ -133,7 +133,7 @@ HRESULT WINAPI OutputPin_EndFlush(IPin * iface);
 HRESULT WINAPI OutputPin_NewSegment(IPin * iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
 
 HRESULT OutputPin_CommitAllocator(OutputPin * This);
-HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, const REFERENCE_TIME * tStart, const REFERENCE_TIME * tStop, DWORD dwFlags);
+HRESULT OutputPin_GetDeliveryBuffer(OutputPin * This, IMediaSample ** ppSample, REFERENCE_TIME * tStart, REFERENCE_TIME * tStop, DWORD dwFlags);
 HRESULT OutputPin_SendSample(OutputPin * This, IMediaSample * pSample);
 HRESULT OutputPin_DeliverDisconnect(OutputPin * This);
 HRESULT OutputPin_DeliverNewSegment(OutputPin * This, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate);
