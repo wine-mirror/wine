@@ -1612,7 +1612,7 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
     }
     else
     {
-      srcPtr = &physDevSrc->bitmap->base[(srcDib.dsBm.bmWidth-ySrc-1)*srcDib.dsBm.bmWidthBytes
+      srcPtr = &physDevSrc->bitmap->base[(srcDib.dsBm.bmHeight-ySrc-1)*srcDib.dsBm.bmWidthBytes
         + xSrc*bytesPerPixel];
       srcRowOffset = -srcDib.dsBm.bmWidthBytes;
     }
@@ -1623,7 +1623,7 @@ static BOOL X11DRV_ClientSideDIBCopy( X11DRV_PDEVICE *physDevSrc, INT xSrc, INT 
     }
     else
     {
-      dstPtr = &physDevDst->bitmap->base[(dstDib.dsBm.bmWidth-yDst-1)*dstDib.dsBm.bmWidthBytes
+      dstPtr = &physDevDst->bitmap->base[(dstDib.dsBm.bmHeight-yDst-1)*dstDib.dsBm.bmWidthBytes
         + xDst*bytesPerPixel];
       dstRowOffset = -dstDib.dsBm.bmWidthBytes;
     }
