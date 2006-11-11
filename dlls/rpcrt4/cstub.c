@@ -37,7 +37,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
-#define STUB_HEADER(This) (((CInterfaceStubHeader*)((This)->lpVtbl))[-1])
+#define STUB_HEADER(This) (((const CInterfaceStubHeader*)((This)->lpVtbl))[-1])
 
 static WINE_EXCEPTION_FILTER(stub_filter)
 {
