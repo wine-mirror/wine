@@ -2049,6 +2049,7 @@ static void test_MSHTML_QueryStatus(IUnknown *unk, DWORD cmdf)
     test_QueryStatus(unk, &CGID_MSHTML, IDM_ITALIC, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_UNDERLINE, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_HORIZONTALLINE, cmdf);
+    test_QueryStatus(unk, &CGID_MSHTML, IDM_UNORDERLIST, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_INDENT, cmdf);
     test_QueryStatus(unk, &CGID_MSHTML, IDM_OUTDENT, cmdf);
 }
