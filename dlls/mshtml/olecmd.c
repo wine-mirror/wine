@@ -45,6 +45,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_FONTCOLOR "cmd_fontColor"
 #define NSCMD_ALIGN "cmd_align"
 #define NSCMD_FONTFACE "cmd_fontFace"
+#define NSCMD_INDENT "cmd_indent"
+#define NSCMD_OUTDENT "cmd_outdent"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
 #define NSSTATE_ALL "state_all"
@@ -616,6 +618,26 @@ static HRESULT exec_baselinefont3(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_indent(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_INDENT, NULL);
+
+    return S_OK;
+}
+
+static HRESULT exec_outdent(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_OUTDENT, NULL);
+
+    return S_OK;
+}
+
 static const struct {
     OLECMDF cmdf;
     HRESULT (*func)(HTMLDocument*,DWORD,VARIANT*,VARIANT*);
@@ -791,12 +813,12 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
                 break;
             case IDM_INDENT:
-                FIXME("CGID_MSHTML: IDM_INDENT\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_INDENT\n");
+                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_OUTDENT:
-                FIXME("CGID_MSHTML: IDM_OUTDENT\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_OUTDENT\n");
+                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_BLOCKDIRLTR:
                 FIXME("CGID_MSHTML: IDM_BLOCKDIRLTR\n");
@@ -885,6 +907,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return exec_editmode(This);
         case IDM_BASELINEFONT3:
             return exec_baselinefont3(This);
+        case IDM_INDENT:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_indent(This);
+        case IDM_OUTDENT:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_outdent(This);
         default:
             FIXME("unsupported nCmdID %d of CGID_MSHTML group\n", nCmdID);
             return OLECMDERR_E_NOTSUPPORTED;
