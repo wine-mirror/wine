@@ -135,7 +135,7 @@ A_SHAInit(PSHA_CTX Context)
  *  Nothing
  */
 VOID WINAPI
-A_SHAUpdate(PSHA_CTX Context, PCHAR Buffer, UINT BufferSize)
+A_SHAUpdate(PSHA_CTX Context, const unsigned char *Buffer, UINT BufferSize)
 {
    ULONG BufferContentSize;
 
@@ -199,7 +199,7 @@ A_SHAFinal(PSHA_CTX Context, PULONG Result)
    Count = (ULONG*)(Buffer + Pad);
    Count[0] = DWORD2BE(LengthHi);
    Count[1] = DWORD2BE(LengthLo);
-   A_SHAUpdate(Context, (PCHAR)Buffer, Pad + 8);
+   A_SHAUpdate(Context, Buffer, Pad + 8);
 
    for (Index = 0; Index < 5; Index++)
       Result[Index] = DWORD2BE(Context->State[Index]);
