@@ -812,7 +812,7 @@ LONG_PTR WINAPIV NdrClientCall2(PMIDL_STUB_DESC pStubDesc, PFORMAT_STRING pForma
     if (pProcHeader->Oi_flags & RPC_FC_PROC_OIF_OBJECT)
     {
         /* object is always the first argument */
-        This = **(void ***)(&pFormat+1);
+        This = **(void *const **)(&pFormat+1);
         NdrProxyInitialize(This, &rpcMsg, &stubMsg, pStubDesc, procedure_number);
     }
     else
