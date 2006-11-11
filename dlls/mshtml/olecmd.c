@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_FONTFACE "cmd_fontFace"
 #define NSCMD_INDENT "cmd_indent"
 #define NSCMD_OUTDENT "cmd_outdent"
+#define NSCMD_INSERTHR "cmd_insertHR"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
 #define NSSTATE_ALL "state_all"
@@ -618,6 +619,16 @@ static HRESULT exec_baselinefont3(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_horizontalline(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_INSERTHR, NULL);
+
+    return S_OK;
+}
+
 static HRESULT exec_indent(HTMLDocument *This)
 {
     TRACE("(%p)\n", This);
@@ -801,8 +812,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = query_edit_status(This, NSCMD_UNDERLINE);
                 break;
             case IDM_HORIZONTALLINE:
-                FIXME("CGID_MSHTML: IDM_HORIZONTALLINE\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
+                prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_ORDERLIST:
                 FIXME("CGID_MSHTML: IDM_ORDERLIST\n");
@@ -907,6 +918,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return exec_editmode(This);
         case IDM_BASELINEFONT3:
             return exec_baselinefont3(This);
+        case IDM_HORIZONTALLINE:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_horizontalline(This);
         case IDM_INDENT:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
