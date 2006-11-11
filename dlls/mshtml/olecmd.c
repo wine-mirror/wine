@@ -49,6 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 #define NSCMD_OUTDENT "cmd_outdent"
 #define NSCMD_INSERTHR "cmd_insertHR"
 #define NSCMD_UL "cmd_ul"
+#define NSCMD_OL "cmd_ol"
 
 #define NSSTATE_ATTRIBUTE "state_attribute"
 #define NSSTATE_ALL "state_all"
@@ -630,6 +631,16 @@ static HRESULT exec_horizontalline(HTMLDocument *This)
     return S_OK;
 }
 
+static HRESULT exec_orderlist(HTMLDocument *This)
+{
+    TRACE("(%p)\n", This);
+
+    if(This->nscontainer)
+        do_ns_command(This->nscontainer, NSCMD_OL, NULL);
+
+    return S_OK;
+}
+
 static HRESULT exec_unorderlist(HTMLDocument *This)
 {
     TRACE("(%p)\n", This);
@@ -827,8 +838,8 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
             case IDM_ORDERLIST:
-                FIXME("CGID_MSHTML: IDM_ORDERLIST\n");
-                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                TRACE("CGID_MSHTML: IDM_ORDERLIST\n");
+                prgCmds[i].cmdf = query_edit_status(This, NSCMD_OL);
                 break;
             case IDM_UNORDERLIST:
                 TRACE("CGID_MSHTML: IDM_HORIZONTALLINE\n");
@@ -933,6 +944,10 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
             return exec_horizontalline(This);
+        case IDM_ORDERLIST:
+            if(pvaIn || pvaOut)
+                FIXME("unsupported arguments\n");
+            return exec_orderlist(This);
         case IDM_UNORDERLIST:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
