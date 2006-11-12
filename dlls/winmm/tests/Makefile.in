@@ -4,7 +4,6 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = winmm.dll
 IMPORTS   = winmm user32 kernel32
-EXTRADEFS = -DWINE_NO_LONG_AS_INT
 
 CTESTS = \
 	capture.c \

@@ -319,7 +319,7 @@ const char * wave_header_flags(DWORD flags)
     }
     if (flags & ~WHDR_MASK) {
         char temp[32];
-        sprintf(temp, "UNKNOWN(0x%08lx)", flags & ~WHDR_MASK);
+        sprintf(temp, "UNKNOWN(0x%08x)", flags & ~WHDR_MASK);
         if (!first) strcat(msg, " ");
         strcat(msg, temp);
     }
@@ -461,8 +461,8 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
         trace("waveOutGetPosition(%s): TIME_BYTES not supported, returned %s\n",
               dev_name(device),wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
-    ok(returned == bytes, "waveOutGetPosition(%s): returned %ld bytes, "
-       "should be %ld\n", dev_name(device), returned, bytes);
+    ok(returned == bytes, "waveOutGetPosition(%s): returned %d bytes, "
+       "should be %d\n", dev_name(device), returned, bytes);
 
     mmtime.wType = TIME_SAMPLES;
     rc=waveOutGetPosition(wout, &mmtime, sizeof(mmtime));
@@ -472,8 +472,8 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
         trace("waveOutGetPosition(%s): TIME_SAMPLES not supported, "
               "returned %s\n",dev_name(device),wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
-    ok(returned == bytes, "waveOutGetPosition(%s): returned %ld samples "
-       "(%ld bytes), should be %ld (%ld bytes)\n", dev_name(device),
+    ok(returned == bytes, "waveOutGetPosition(%s): returned %d samples "
+       "(%d bytes), should be %d (%d bytes)\n", dev_name(device),
        bytes_to_samples(returned, pwfx), returned,
        bytes_to_samples(bytes, pwfx), bytes);
 
@@ -485,8 +485,8 @@ static void check_position(int device, HWAVEOUT wout, DWORD bytes,
         trace("waveOutGetPosition(%s): TIME_MS not supported, returned %s\n",
               dev_name(device), wave_time_format(mmtime.wType));
     returned = time_to_bytes(&mmtime, pwfx);
-    ok(returned == bytes, "waveOutGetPosition(%s): returned %ld ms, "
-       "(%ld bytes), should be %ld (%ld bytes)\n", dev_name(device),
+    ok(returned == bytes, "waveOutGetPosition(%s): returned %d ms, "
+       "(%d bytes), should be %d (%d bytes)\n", dev_name(device),
        bytes_to_ms(returned, pwfx), returned,
        bytes_to_ms(bytes, pwfx), bytes);
 
@@ -581,7 +581,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     int i, j;
 
     hevent=CreateEvent(NULL,FALSE,FALSE,NULL);
-    ok(hevent!=NULL,"CreateEvent(): error=%ld\n",GetLastError());
+    ok(hevent!=NULL,"CreateEvent(): error=%d\n",GetLastError());
     if (hevent==NULL)
         return;
 
@@ -629,7 +629,7 @@ static void wave_out_test_deviceOut(int device, double duration,
        (!(flags & WAVE_FORMAT_DIRECT) || (flags & WAVE_MAPPED)) &&
        !(pcaps->dwFormats & format)) ||
        (rc==MMSYSERR_INVALFLAG && (flags & WAVE_FORMAT_DIRECT)),
-       "waveOutOpen(%s): format=%ldx%2dx%d flags=%lx(%s) rc=%s\n",
+       "waveOutOpen(%s): format=%dx%2dx%d flags=%lx(%s) rc=%s\n",
        dev_name(device),pwfx->nSamplesPerSec,pwfx->wBitsPerSample,
        pwfx->nChannels,CALLBACK_EVENT|flags,
        wave_open_flags(CALLBACK_EVENT|flags),wave_out_error(rc));
@@ -639,7 +639,7 @@ static void wave_out_test_deviceOut(int device, double duration,
               "capabilities but opening it failed.\n");
     if ((rc==WAVERR_BADFORMAT || rc==MMSYSERR_NOTSUPPORTED) &&
        !(pcaps->dwFormats & format))
-        trace("waveOutOpen(%s): format=%ldx%2dx%d %s rc=%s failed but format "
+        trace("waveOutOpen(%s): format=%dx%2dx%d %s rc=%s failed but format "
               "not supported so OK.\n", dev_name(device), pwfx->nSamplesPerSec,
               pwfx->wBitsPerSample,pwfx->nChannels,
               flags & WAVE_FORMAT_DIRECT ? "flags=WAVE_FORMAT_DIRECT" :
@@ -652,7 +652,7 @@ static void wave_out_test_deviceOut(int device, double duration,
     ok(pwfx->nChannels==nChannels &&
        pwfx->wBitsPerSample==wBitsPerSample &&
        pwfx->nSamplesPerSec==nSamplesPerSec,
-       "got the wrong format: %ldx%2dx%d instead of %ldx%2dx%d\n",
+       "got the wrong format: %dx%2dx%d instead of %dx%2dx%d\n",
        pwfx->nSamplesPerSec, pwfx->wBitsPerSample,
        pwfx->nChannels, nSamplesPerSec, wBitsPerSample, nChannels);
 
@@ -690,7 +690,7 @@ static void wave_out_test_deviceOut(int device, double duration,
 
     if (interactive && rc==MMSYSERR_NOERROR) {
         DWORD start,end;
-        trace("Playing %g second %s at %5ldx%2dx%d %2d header%s %d loop%s %ld bytes %s %s\n",duration,
+        trace("Playing %g second %s at %5dx%2dx%d %2d header%s %d loop%s %d bytes %s %s\n",duration,
               sine ? "440Hz tone" : "silence",pwfx->nSamplesPerSec,
               pwfx->wBitsPerSample,pwfx->nChannels, headers, headers > 1 ? "s": " ",
               loops, loops == 1 ? " " : "s", length * (loops + 1),
@@ -873,7 +873,7 @@ static void wave_out_test_device(int device)
                           (DWORD_PTR)nameW, size);
         ok(rc==MMSYSERR_NOERROR,"waveOutMessage(%s): failed to get interface "
            "name, rc=%s\n",dev_name(device),wave_out_error(rc));
-        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size %ld\n",size);
+        ok(lstrlenW(nameW)+1==size/sizeof(WCHAR),"got an incorrect size %d\n",size);
         if (rc==MMSYSERR_NOERROR) {
             nameA = malloc(size/sizeof(WCHAR));
             WideCharToMultiByte(CP_ACP, 0, nameW, size/sizeof(WCHAR), nameA,
@@ -888,7 +888,7 @@ static void wave_out_test_device(int device)
     trace("  %s: \"%s\" (%s) %d.%d (%d:%d)\n",dev_name(device),capsA.szPname,
           (nameA?nameA:"failed"),capsA.vDriverVersion >> 8,
           capsA.vDriverVersion & 0xff, capsA.wMid,capsA.wPid);
-    trace("     channels=%d formats=%05lx support=%04lx\n",
+    trace("     channels=%d formats=%05x support=%04x\n",
           capsA.wChannels,capsA.dwFormats,capsA.dwSupport);
     trace("     %s\n",wave_out_caps(capsA.dwSupport));
     free(nameA);
@@ -1084,7 +1084,7 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): opening the device in 11 bits mode should fail: "
        "rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
+        trace("     got %dx%2dx%d for %dx%2dx%d\n",
               format.nSamplesPerSec, format.wBitsPerSample,
               format.nChannels,
               oformat.nSamplesPerSec, oformat.wBitsPerSample,
@@ -1107,7 +1107,7 @@ static void wave_out_test_device(int device)
        "waveOutOpen(%s): opening the device at 2 MHz sample rate should fail: "
        "rc=%s\n",dev_name(device),wave_out_error(rc));
     if (rc==MMSYSERR_NOERROR) {
-        trace("     got %ldx%2dx%d for %ldx%2dx%d\n",
+        trace("     got %dx%2dx%d for %dx%2dx%d\n",
               format.nSamplesPerSec, format.wBitsPerSample,
               format.nChannels,
               oformat.nSamplesPerSec, oformat.wBitsPerSample,

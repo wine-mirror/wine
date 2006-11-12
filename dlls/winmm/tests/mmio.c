@@ -59,25 +59,25 @@ static void test_mmioDescend(void)
     /* first normal RIFF AVI parsing */
     ret = mmioDescend(hmmio, &ckRiff, NULL, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ckRiff.ckid == FOURCC_RIFF, "wrong ckid: %04lx\n", ckRiff.ckid);
-    ok(ckRiff.fccType == formtypeAVI, "wrong fccType: %04lx\n", ckRiff.fccType);
-    trace("ckid %4.4s cksize %04lx fccType %4.4s off %04lx flags %04lx\n",
+    ok(ckRiff.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ckRiff.ckid);
+    ok(ckRiff.fccType == formtypeAVI, "wrong fccType: %04x\n", ckRiff.fccType);
+    trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ckRiff.ckid, ckRiff.cksize, (LPCSTR)&ckRiff.fccType,
           ckRiff.dwDataOffset, ckRiff.dwFlags);
 
     ret = mmioDescend(hmmio, &ckList, &ckRiff, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04lx\n", ckList.ckid);
-    ok(ckList.fccType == listtypeAVIHEADER, "wrong fccType: %04lx\n", ckList.fccType);
-    trace("ckid %4.4s cksize %04lx fccType %4.4s off %04lx flags %04lx\n",
+    ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ckList.ckid);
+    ok(ckList.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ckList.fccType);
+    trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ckList.ckid, ckList.cksize, (LPCSTR)&ckList.fccType,
           ckList.dwDataOffset, ckList.dwFlags);
 
     ret = mmioDescend(hmmio, &ck, &ckList, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == ckidAVIMAINHDR, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == 0, "wrong fccType: %04lx\n", ck.fccType);
-    trace("ckid %4.4s cksize %04lx fccType %4.4s off %04lx flags %04lx\n",
+    ok(ck.ckid == ckidAVIMAINHDR, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == 0, "wrong fccType: %04x\n", ck.fccType);
+    trace("ckid %4.4s cksize %04x fccType %4.4s off %04x flags %04x\n",
           (LPCSTR)&ck.ckid, ck.cksize, (LPCSTR)&ck.fccType,
           ck.dwDataOffset, ck.dwFlags);
 
@@ -101,23 +101,23 @@ static void test_mmioDescend(void)
     ck.fccType = 0;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDRIFF);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == formtypeAVI, "wrong fccType: %04lx\n", ck.fccType);
+    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
     memset(&ck, 0x55, sizeof(ck));
     ret = mmioDescend(hmmio, &ck, NULL, 0);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == formtypeAVI, "wrong fccType: %04lx\n", ck.fccType);
+    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     /* do NOT seek, use current file position */
     memset(&ck, 0x55, sizeof(ck));
     ck.fccType = 0;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDLIST);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == FOURCC_LIST, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == listtypeAVIHEADER, "wrong fccType: %04lx\n", ck.fccType);
+    ok(ck.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ck.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
     memset(&ck, 0x55, sizeof(ck));
@@ -125,41 +125,41 @@ static void test_mmioDescend(void)
     ck.fccType = listtypeAVIHEADER;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == formtypeAVI, "wrong fccType: %04lx\n", ck.fccType);
+    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     /* do NOT seek, use current file position */
     memset(&ck, 0x55, sizeof(ck));
     ck.ckid = FOURCC_LIST;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == FOURCC_LIST, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == listtypeAVIHEADER, "wrong fccType: %04lx\n", ck.fccType);
+    ok(ck.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ck.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
     memset(&ck, 0x55, sizeof(ck));
     ck.ckid = FOURCC_RIFF;
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType == formtypeAVI, "wrong fccType: %04lx\n", ck.fccType);
+    ok(ck.ckid == FOURCC_RIFF, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType == formtypeAVI, "wrong fccType: %04x\n", ck.fccType);
 
     /* do NOT seek, use current file position */
     memset(&ckList, 0x55, sizeof(ckList));
     ckList.ckid = 0;
     ret = mmioDescend(hmmio, &ckList, &ck, MMIO_FINDCHUNK);
     ok(ret == MMSYSERR_NOERROR, "mmioDescend error %u\n", ret);
-    ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04lx\n", ckList.ckid);
-    ok(ckList.fccType == listtypeAVIHEADER, "wrong fccType: %04lx\n", ckList.fccType);
+    ok(ckList.ckid == FOURCC_LIST, "wrong ckid: %04x\n", ckList.ckid);
+    ok(ckList.fccType == listtypeAVIHEADER, "wrong fccType: %04x\n", ckList.fccType);
 
     mmioSeek(hmmio, 0, SEEK_SET);
     memset(&ck, 0x55, sizeof(ck));
     ret = mmioDescend(hmmio, &ck, NULL, MMIO_FINDCHUNK);
     ok(ret == MMIOERR_CHUNKNOTFOUND ||
        ret == MMIOERR_INVALIDFILE, "mmioDescend returned %u\n", ret);
-    ok(ck.ckid != 0x55555555, "wrong ckid: %04lx\n", ck.ckid);
-    ok(ck.fccType != 0x55555555, "wrong fccType: %04lx\n", ck.fccType);
-    ok(ck.dwDataOffset != 0x55555555, "wrong dwDataOffset: %04lx\n", ck.dwDataOffset);
+    ok(ck.ckid != 0x55555555, "wrong ckid: %04x\n", ck.ckid);
+    ok(ck.fccType != 0x55555555, "wrong fccType: %04x\n", ck.fccType);
+    ok(ck.dwDataOffset != 0x55555555, "wrong dwDataOffset: %04x\n", ck.dwDataOffset);
 
     mmioSeek(hmmio, 0, SEEK_SET);
     memset(&ck, 0x55, sizeof(ck));
