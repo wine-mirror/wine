@@ -184,7 +184,7 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
      * -> New semantics that have to be converted appear
      * -> The position of semantics that have to be converted changes
      * -> The stride of the vertex changed AND there is stuff that needs conversion
-     * -> (If a vertex buffer is bound and in use assume that nothing that needs conversion is there)
+     * -> (If a vertex shader is bound and in use assume that nothing that needs conversion is there)
      *
      * Return values:
      *  TRUE: Reload is needed
