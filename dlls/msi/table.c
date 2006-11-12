@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <assert.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -34,7 +35,6 @@
 #include "winnls.h"
 #include "msipriv.h"
 #include "query.h"
-#include "assert.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
