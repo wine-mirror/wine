@@ -838,7 +838,7 @@ HRESULT WINAPI UrlEscapeA(
     }
     if(ret == S_OK) {
         RtlUnicodeToMultiByteSize(&lenA, escapedW, lenW * sizeof(WCHAR));
-        if(*pcchEscaped > lenA) {
+        if(pszEscaped && *pcchEscaped > lenA) {
             RtlUnicodeToMultiByteN(pszEscaped, *pcchEscaped - 1, &lenA, escapedW, lenW * sizeof(WCHAR));
             pszEscaped[lenA] = 0;
             *pcchEscaped = lenA;
@@ -967,8 +967,8 @@ HRESULT WINAPI UrlEscapeW(
     TRACE("(%s %p %p 0x%08x)\n", debugstr_w(pszUrl), pszEscaped,
 	  pcchEscaped, dwFlags);
 
-    if(!pszUrl || !pszEscaped || !pcchEscaped)
-	return E_INVALIDARG;
+    if(!pszUrl || !pcchEscaped)
+        return E_INVALIDARG;
 
     if(dwFlags & ~(URL_ESCAPE_SPACES_ONLY |
 		   URL_ESCAPE_SEGMENT_ONLY |
