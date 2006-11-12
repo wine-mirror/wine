@@ -394,7 +394,7 @@ DSOUND_capture_callback(
     DWORD dw2 )
 {
     DirectSoundCaptureDevice * This = (DirectSoundCaptureDevice*)dwUser;
-    TRACE("(%p,%08x(%s),%08lx,%08lx,%08lx) entering at %ld\n",hwi,msg,
+    TRACE("(%p,%08x(%s),%08x,%08x,%08x) entering at %d\n",hwi,msg,
 	msg == MM_WIM_OPEN ? "MM_WIM_OPEN" : msg == MM_WIM_CLOSE ? "MM_WIM_CLOSE" :
 	msg == MM_WIM_DATA ? "MM_WIM_DATA" : "UNKNOWN",dwUser,dw1,dw2,GetTickCount());
 
@@ -470,7 +470,7 @@ IDirectSoundCaptureImpl_AddRef( LPDIRECTSOUNDCAPTURE iface )
 {
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -479,7 +479,7 @@ IDirectSoundCaptureImpl_Release( LPDIRECTSOUNDCAPTURE iface )
 {
     IDirectSoundCaptureImpl *This = (IDirectSoundCaptureImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
         if (This->device)
@@ -550,7 +550,7 @@ HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
     }
 
     if (lpDSCCaps->dwSize < sizeof(*lpDSCCaps)) {
-	WARN("invalid parameter: lpDSCCaps->dwSize = %ld\n", lpDSCCaps->dwSize);
+	WARN("invalid parameter: lpDSCCaps->dwSize = %d\n", lpDSCCaps->dwSize);
 	return DSERR_INVALIDPARAM;
     }
 
@@ -558,7 +558,7 @@ HRESULT WINAPI IDirectSoundCaptureImpl_GetCaps(
     lpDSCCaps->dwFormats = This->device->drvcaps.dwFormats;
     lpDSCCaps->dwChannels = This->device->drvcaps.dwChannels;
 
-    TRACE("(flags=0x%08lx,format=0x%08lx,channels=%ld)\n",lpDSCCaps->dwFlags,
+    TRACE("(flags=0x%08x,format=0x%08x,channels=%d)\n",lpDSCCaps->dwFlags,
         lpDSCCaps->dwFormats, lpDSCCaps->dwChannels);
 
     return DS_OK;
@@ -638,7 +638,7 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_AddRef(LPDIRECTSOUNDNOTIFY ifa
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -646,7 +646,7 @@ static ULONG WINAPI IDirectSoundCaptureNotifyImpl_Release(LPDIRECTSOUNDNOTIFY if
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
         if (This->dscb->hwnotify)
@@ -665,7 +665,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     LPCDSBPOSITIONNOTIFY notify)
 {
     IDirectSoundCaptureNotifyImpl *This = (IDirectSoundCaptureNotifyImpl *)iface;
-    TRACE("(%p,0x%08lx,%p)\n",This,howmuch,notify);
+    TRACE("(%p,0x%08x,%p)\n",This,howmuch,notify);
 
     if (howmuch > 0 && notify == NULL) {
 	WARN("invalid parameter: notify == NULL\n");
@@ -675,7 +675,7 @@ static HRESULT WINAPI IDirectSoundCaptureNotifyImpl_SetNotificationPositions(
     if (TRACE_ON(dsound)) {
 	unsigned int i;
 	for (i=0;i<howmuch;i++)
-	    TRACE("notify at %ld to %p\n",
+            TRACE("notify at %d to %p\n",
 	    notify[i].dwOffset,notify[i].hEventNotify);
     }
 
@@ -801,7 +801,7 @@ IDirectSoundCaptureBufferImpl_AddRef( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -810,7 +810,7 @@ IDirectSoundCaptureBufferImpl_Release( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
         TRACE("deleting object\n");
@@ -857,7 +857,7 @@ IDirectSoundCaptureBufferImpl_GetCaps(
     }
 
     if (lpDSCBCaps->dwSize < sizeof(DSCBCAPS)) {
-        WARN("invalid parameter: lpDSCBCaps->dwSize = %ld\n", lpDSCBCaps->dwSize);
+        WARN("invalid parameter: lpDSCBCaps->dwSize = %d\n", lpDSCBCaps->dwSize);
         return DSERR_INVALIDPARAM;
     }
 
@@ -901,7 +901,7 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
             MMTIME mtime;
             mtime.wType = TIME_BYTES;
             waveInGetPosition(This->device->hwi, &mtime, sizeof(mtime));
-	    TRACE("mtime.u.cb=%ld,This->device->buflen=%ld\n", mtime.u.cb,
+            TRACE("mtime.u.cb=%d,This->device->buflen=%d\n", mtime.u.cb,
 		This->device->buflen);
 	    mtime.u.cb = mtime.u.cb % This->device->buflen;
             *lpdwCapturePosition = mtime.u.cb;
@@ -917,14 +917,14 @@ IDirectSoundCaptureBufferImpl_GetCurrentPosition(
         }
 	TRACE("new This->device->state=%s\n",captureStateString[This->device->state]);
 	LeaveCriticalSection(&(This->device->lock));
-	if (lpdwCapturePosition) TRACE("*lpdwCapturePosition=%ld\n",*lpdwCapturePosition);
-	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%ld\n",*lpdwReadPosition);
+	if (lpdwCapturePosition) TRACE("*lpdwCapturePosition=%d\n",*lpdwCapturePosition);
+	if (lpdwReadPosition) TRACE("*lpdwReadPosition=%d\n",*lpdwReadPosition);
     } else {
         WARN("no driver\n");
         hres = DSERR_NODRIVER;
     }
 
-    TRACE("returning %08lx\n", hres);
+    TRACE("returning %08x\n", hres);
     return hres;
 }
 
@@ -937,7 +937,7 @@ IDirectSoundCaptureBufferImpl_GetFormat(
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
     HRESULT hres = DS_OK;
-    TRACE( "(%p,%p,0x%08lx,%p)\n", This, lpwfxFormat, dwSizeAllocated,
+    TRACE( "(%p,%p,0x%08x,%p)\n", This, lpwfxFormat, dwSizeAllocated,
         lpdwSizeWritten );
 
     if (This->device == NULL) {
@@ -961,7 +961,7 @@ IDirectSoundCaptureBufferImpl_GetFormat(
         }
     }
 
-    TRACE("returning %08lx\n", hres);
+    TRACE("returning %08x\n", hres);
     return hres;
 }
 
@@ -971,7 +971,7 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     LPDWORD lpdwStatus )
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
-    TRACE( "(%p, %p), thread is %04lx\n", This, lpdwStatus, GetCurrentThreadId() );
+    TRACE( "(%p, %p), thread is %04x\n", This, lpdwStatus, GetCurrentThreadId() );
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -986,7 +986,7 @@ IDirectSoundCaptureBufferImpl_GetStatus(
     *lpdwStatus = 0;
     EnterCriticalSection(&(This->device->lock));
 
-    TRACE("old This->device->state=%s, old lpdwStatus=%08lx\n",
+    TRACE("old This->device->state=%s, old lpdwStatus=%08x\n",
 	captureStateString[This->device->state],*lpdwStatus);
     if ((This->device->state == STATE_STARTING) ||
         (This->device->state == STATE_CAPTURING)) {
@@ -994,11 +994,11 @@ IDirectSoundCaptureBufferImpl_GetStatus(
         if (This->flags & DSCBSTART_LOOPING)
             *lpdwStatus |= DSCBSTATUS_LOOPING;
     }
-    TRACE("new This->device->state=%s, new lpdwStatus=%08lx\n",
+    TRACE("new This->device->state=%s, new lpdwStatus=%08x\n",
 	captureStateString[This->device->state],*lpdwStatus);
     LeaveCriticalSection(&(This->device->lock));
 
-    TRACE("status=%lx\n", *lpdwStatus);
+    TRACE("status=%x\n", *lpdwStatus);
     TRACE("returning DS_OK\n");
     return DS_OK;
 }
@@ -1029,7 +1029,7 @@ IDirectSoundCaptureBufferImpl_Lock(
 {
     HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
-    TRACE( "(%p,%08lu,%08lu,%p,%p,%p,%p,0x%08lx) at %ld\n", This, dwReadCusor,
+    TRACE( "(%p,%08u,%08u,%p,%p,%p,%p,0x%08x) at %d\n", This, dwReadCusor,
         dwReadBytes, lplpvAudioPtr1, lpdwAudioBytes1, lplpvAudioPtr2,
         lpdwAudioBytes2, dwFlags, GetTickCount() );
 
@@ -1079,7 +1079,7 @@ IDirectSoundCaptureBufferImpl_Lock(
 
     LeaveCriticalSection(&(This->device->lock));
 
-    TRACE("returning %08lx\n", hres);
+    TRACE("returning %08x\n", hres);
     return hres;
 }
 
@@ -1090,7 +1090,7 @@ IDirectSoundCaptureBufferImpl_Start(
 {
     HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
-    TRACE( "(%p,0x%08lx)\n", This, dwFlags );
+    TRACE( "(%p,0x%08x)\n", This, dwFlags );
 
     if (This->device == NULL) {
         WARN("invalid parameter: This->device == NULL\n");
@@ -1233,7 +1233,7 @@ IDirectSoundCaptureBufferImpl_Start(
         hres = DSERR_NODRIVER;
     }
 
-    TRACE("returning %08lx\n", hres);
+    TRACE("returning %08x\n", hres);
     return hres;
 }
 
@@ -1273,7 +1273,7 @@ IDirectSoundCaptureBufferImpl_Stop( LPDIRECTSOUNDCAPTUREBUFFER8 iface )
         hres = DSERR_NODRIVER;
     }
 
-    TRACE("returning %08lx\n", hres);
+    TRACE("returning %08x\n", hres);
     return hres;
 }
 
@@ -1287,7 +1287,7 @@ IDirectSoundCaptureBufferImpl_Unlock(
 {
     HRESULT hres = DS_OK;
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
-    TRACE( "(%p,%p,%08lu,%p,%08lu)\n", This, lpvAudioPtr1, dwAudioBytes1,
+    TRACE( "(%p,%p,%08u,%p,%08u)\n", This, lpvAudioPtr1, dwAudioBytes1,
         lpvAudioPtr2, dwAudioBytes2 );
 
     if (lpvAudioPtr1 == NULL) {
@@ -1308,7 +1308,7 @@ IDirectSoundCaptureBufferImpl_Unlock(
         hres = DSERR_INVALIDCALL;
     }
 
-    TRACE("returning %08lx\n", hres);
+    TRACE("returning %08x\n", hres);
     return hres;
 }
 
@@ -1322,7 +1322,7 @@ IDirectSoundCaptureBufferImpl_GetObjectInPath(
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
 
-    FIXME( "(%p,%s,%lu,%s,%p): stub\n", This, debugstr_guid(rguidObject),
+    FIXME( "(%p,%s,%u,%s,%p): stub\n", This, debugstr_guid(rguidObject),
         dwIndex, debugstr_guid(rguidInterface), ppObject );
 
     return DS_OK;
@@ -1336,7 +1336,7 @@ IDirectSoundCaptureBufferImpl_GetFXStatus(
 {
     IDirectSoundCaptureBufferImpl *This = (IDirectSoundCaptureBufferImpl *)iface;
 
-    FIXME( "(%p,%lu,%p): stub\n", This, dwFXCount, pdwFXStatus );
+    FIXME( "(%p,%u,%p): stub\n", This, dwFXCount, pdwFXStatus );
 
     return DS_OK;
 }
@@ -1401,8 +1401,8 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
     wfex = lpcDSCBufferDesc->lpwfxFormat;
 
     if (wfex) {
-        TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
-            "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+        TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"
+            "bytespersec=%d,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
             wfex->wFormatTag, wfex->nChannels, wfex->nSamplesPerSec,
             wfex->nAvgBytesPerSec, wfex->nBlockAlign,
             wfex->wBitsPerSample, wfex->cbSize);
@@ -1462,7 +1462,7 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
             if (This->device->drvdesc.dwFlags & DSDDESC_USESYSTEMMEMORY) {
                 /* allocate buffer from system memory */
                 buflen = lpcDSCBufferDesc->dwBufferBytes;
-                TRACE("desired buflen=%ld, old buffer=%p\n", buflen, device->buffer);
+                TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
                 if (device->buffer)
                     newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
                 else
@@ -1509,7 +1509,7 @@ HRESULT IDirectSoundCaptureBufferImpl_Create(
             }
 
 	    buflen = lpcDSCBufferDesc->dwBufferBytes;
-            TRACE("desired buflen=%ld, old buffer=%p\n", buflen, device->buffer);
+            TRACE("desired buflen=%d, old buffer=%p\n", buflen, device->buffer);
 	    if (device->buffer)
                 newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
 	    else
@@ -1587,7 +1587,7 @@ HRESULT DirectSoundCaptureDevice_Initialize(
 
     err = mmErr(waveInMessage((HWAVEIN)wid,DRV_QUERYDSOUNDIFACE,(DWORD_PTR)&(device->driver),0));
     if ( (err != DS_OK) && (err != DSERR_UNSUPPORTED) ) {
-	WARN("waveInMessage failed; err=%lx\n",err);
+	WARN("waveInMessage failed; err=%x\n",err);
 	return err;
     }
     err = DS_OK;
@@ -1676,7 +1676,7 @@ ULONG DirectSoundCaptureDevice_AddRef(
     DirectSoundCaptureDevice * device)
 {
     ULONG ref = InterlockedIncrement(&(device->ref));
-    TRACE("(%p) ref was %ld\n", device, ref - 1);
+    TRACE("(%p) ref was %d\n", device, ref - 1);
     return ref;
 }
 
@@ -1684,7 +1684,7 @@ ULONG DirectSoundCaptureDevice_Release(
     DirectSoundCaptureDevice * device)
 {
     ULONG ref = InterlockedDecrement(&(device->ref));
-    TRACE("(%p) ref was %ld\n", device, ref + 1);
+    TRACE("(%p) ref was %d\n", device, ref + 1);
 
     if (!ref) {
         TRACE("deleting object\n");

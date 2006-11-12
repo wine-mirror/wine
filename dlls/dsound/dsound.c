@@ -119,7 +119,7 @@ const char * dumpCooperativeLevel(DWORD level)
         LE(DSSCL_WRITEPRIMARY);
     }
 #undef LE
-    sprintf(unknown, "Unknown(%08lx)", level);
+    sprintf(unknown, "Unknown(%08x)", level);
     return unknown;
 }
 
@@ -285,7 +285,7 @@ static ULONG IDirectSoundImpl_AddRef(
 {
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -294,7 +294,7 @@ static ULONG IDirectSoundImpl_Release(
 {
     IDirectSoundImpl *This = (IDirectSoundImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
 
     if (!ref) {
         if (This->device)
@@ -345,7 +345,7 @@ static ULONG WINAPI IDirectSound_IUnknown_AddRef(
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -354,7 +354,7 @@ static ULONG WINAPI IDirectSound_IUnknown_Release(
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(), 0, This);
@@ -423,7 +423,7 @@ static ULONG WINAPI IDirectSound_IDirectSound_AddRef(
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -432,7 +432,7 @@ static ULONG WINAPI IDirectSound_IDirectSound_Release(
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(), 0, This);
@@ -503,7 +503,7 @@ static HRESULT WINAPI IDirectSound_IDirectSound_SetSpeakerConfig(
     DWORD config)
 {
     IDirectSound_IDirectSound *This = (IDirectSound_IDirectSound *)iface;
-    TRACE("(%p,0x%08lx)\n",This,config);
+    TRACE("(%p,0x%08x)\n",This,config);
     return DirectSoundDevice_SetSpeakerConfig(((IDirectSoundImpl *)This->pds)->device,config);
 }
 
@@ -584,7 +584,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_AddRef(
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -593,7 +593,7 @@ static ULONG WINAPI IDirectSound8_IUnknown_Release(
 {
     IDirectSound_IUnknown *This = (IDirectSound_IUnknown *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(), 0, This);
@@ -662,7 +662,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound_AddRef(
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -671,7 +671,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound_Release(
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(), 0, This);
@@ -742,7 +742,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound_SetSpeakerConfig(
     DWORD config)
 {
     IDirectSound8_IDirectSound *This = (IDirectSound8_IDirectSound *)iface;
-    TRACE("(%p,0x%08lx)\n",This,config);
+    TRACE("(%p,0x%08x)\n",This,config);
     return DirectSoundDevice_SetSpeakerConfig(((IDirectSoundImpl *)This->pds)->device,config);
 }
 
@@ -823,7 +823,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_AddRef(
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -832,7 +832,7 @@ static ULONG WINAPI IDirectSound8_IDirectSound8_Release(
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSoundImpl_Release(This->pds);
         HeapFree(GetProcessHeap(), 0, This);
@@ -903,7 +903,7 @@ static HRESULT WINAPI IDirectSound8_IDirectSound8_SetSpeakerConfig(
     DWORD config)
 {
     IDirectSound8_IDirectSound8 *This = (IDirectSound8_IDirectSound8 *)iface;
-    TRACE("(%p,0x%08lx)\n",This,config);
+    TRACE("(%p,0x%08x)\n",This,config);
     return DirectSoundDevice_SetSpeakerConfig(((IDirectSoundImpl *)This->pds)->device,config);
 }
 
@@ -1236,7 +1236,7 @@ static HRESULT DirectSoundDevice_Create(DirectSoundDevice ** ppDevice)
 static ULONG DirectSoundDevice_AddRef(DirectSoundDevice * device)
 {
     ULONG ref = InterlockedIncrement(&(device->ref));
-    TRACE("(%p) ref was %ld\n", device, ref - 1);
+    TRACE("(%p) ref was %d\n", device, ref - 1);
     return ref;
 }
 
@@ -1244,7 +1244,7 @@ ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
 {
     HRESULT hr;
     ULONG ref = InterlockedDecrement(&(device->ref));
-    TRACE("(%p) ref was %lu\n", device, ref + 1);
+    TRACE("(%p) ref was %u\n", device, ref + 1);
     if (!ref) {
         int i;
         timeKillEvent(device->timerID);
@@ -1314,13 +1314,13 @@ HRESULT DirectSoundDevice_GetCaps(
 
     /* check if there is enough room */
     if (lpDSCaps->dwSize < sizeof(*lpDSCaps)) {
-        WARN("invalid parameter: lpDSCaps->dwSize = %ld\n", lpDSCaps->dwSize);
+        WARN("invalid parameter: lpDSCaps->dwSize = %d\n", lpDSCaps->dwSize);
         return DSERR_INVALIDPARAM;
     }
 
     lpDSCaps->dwFlags                           = device->drvcaps.dwFlags;
     if (TRACE_ON(dsound)) {
-        TRACE("(flags=0x%08lx:\n",lpDSCaps->dwFlags);
+        TRACE("(flags=0x%08x:\n",lpDSCaps->dwFlags);
         _dump_DSCAPS(lpDSCaps->dwFlags);
         DPRINTF(")\n");
     }
@@ -1561,11 +1561,11 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
     }
 
     if (TRACE_ON(dsound)) {
-        TRACE("(structsize=%ld)\n",dsbd->dwSize);
-        TRACE("(flags=0x%08lx:\n",dsbd->dwFlags);
+        TRACE("(structsize=%d)\n",dsbd->dwSize);
+        TRACE("(flags=0x%08x:\n",dsbd->dwFlags);
         _dump_DSBCAPS(dsbd->dwFlags);
         DPRINTF(")\n");
-        TRACE("(bufferbytes=%ld)\n",dsbd->dwBufferBytes);
+        TRACE("(bufferbytes=%d)\n",dsbd->dwBufferBytes);
         TRACE("(lpwfxFormat=%p)\n",dsbd->lpwfxFormat);
     }
 
@@ -1598,8 +1598,8 @@ HRESULT DirectSoundDevice_CreateSoundBuffer(
             return DSERR_INVALIDPARAM;
         }
 
-        TRACE("(formattag=0x%04x,chans=%d,samplerate=%ld,"
-              "bytespersec=%ld,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
+        TRACE("(formattag=0x%04x,chans=%d,samplerate=%d,"
+              "bytespersec=%d,blockalign=%d,bitspersamp=%d,cbSize=%d)\n",
               dsbd->lpwfxFormat->wFormatTag, dsbd->lpwfxFormat->nChannels,
               dsbd->lpwfxFormat->nSamplesPerSec,
               dsbd->lpwfxFormat->nAvgBytesPerSec,
@@ -1741,7 +1741,7 @@ HRESULT DirectSoundDevice_SetSpeakerConfig(
     DirectSoundDevice * device,
     DWORD config)
 {
-    TRACE("(%p,0x%08lx)\n",device,config);
+    TRACE("(%p,0x%08x)\n",device,config);
 
     if (device == NULL) {
         WARN("not initialized\n");

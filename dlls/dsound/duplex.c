@@ -57,7 +57,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IUnknown_AddRef(
 {
     IDirectSoundFullDuplex_IUnknown *This = (IDirectSoundFullDuplex_IUnknown *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -66,7 +66,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IUnknown_Release(
 {
     IDirectSoundFullDuplex_IUnknown *This = (IDirectSoundFullDuplex_IUnknown *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSound_Release(This->pdsfd->pUnknown);
         HeapFree(GetProcessHeap(), 0, This);
@@ -133,7 +133,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound_AddRef(
 {
     IDirectSoundFullDuplex_IDirectSound *This = (IDirectSoundFullDuplex_IDirectSound *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -142,7 +142,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound_Release(
 {
     IDirectSoundFullDuplex_IDirectSound *This = (IDirectSoundFullDuplex_IDirectSound *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSound_Release(This->pdsfd->pDS);
         HeapFree(GetProcessHeap(), 0, This);
@@ -213,7 +213,7 @@ static HRESULT WINAPI IDirectSoundFullDuplex_IDirectSound_SetSpeakerConfig(
     DWORD config)
 {
     IDirectSoundFullDuplex_IDirectSound *This = (IDirectSoundFullDuplex_IDirectSound *)iface;
-    TRACE("(%p,0x%08lx)\n",This,config);
+    TRACE("(%p,0x%08x)\n",This,config);
     return DirectSoundDevice_SetSpeakerConfig(This->pdsfd->renderer_device,config);
 }
 
@@ -298,7 +298,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound8_AddRef(
 {
     IDirectSoundFullDuplex_IDirectSound8 *This = (IDirectSoundFullDuplex_IDirectSound8 *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -307,7 +307,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSound8_Release(
 {
     IDirectSoundFullDuplex_IDirectSound8 *This = (IDirectSoundFullDuplex_IDirectSound8 *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSound_Release(This->pdsfd->pDS8);
         HeapFree(GetProcessHeap(), 0, This);
@@ -378,7 +378,7 @@ static HRESULT WINAPI IDirectSoundFullDuplex_IDirectSound8_SetSpeakerConfig(
     DWORD config)
 {
     IDirectSoundFullDuplex_IDirectSound8 *This = (IDirectSoundFullDuplex_IDirectSound8 *)iface;
-    TRACE("(%p,0x%08lx)\n",This,config);
+    TRACE("(%p,0x%08x)\n",This,config);
     return DirectSoundDevice_SetSpeakerConfig(This->pdsfd->renderer_device,config);
 }
 
@@ -463,7 +463,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSoundCapture_AddRef(
 {
     IDirectSoundFullDuplex_IDirectSoundCapture *This = (IDirectSoundFullDuplex_IDirectSoundCapture *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -472,7 +472,7 @@ static ULONG WINAPI IDirectSoundFullDuplex_IDirectSoundCapture_Release(
 {
     IDirectSoundFullDuplex_IDirectSoundCapture *This = (IDirectSoundFullDuplex_IDirectSoundCapture *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref + 1);
+    TRACE("(%p) ref was %d\n", This, ref + 1);
     if (!ref) {
         IDirectSoundCapture_Release(This->pdsfd->pDSC);
         HeapFree(GetProcessHeap(), 0, This);
@@ -567,7 +567,7 @@ IDirectSoundFullDuplexImpl_AddRef( LPDIRECTSOUNDFULLDUPLEX iface )
 {
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     ULONG ref = InterlockedIncrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
     return ref;
 }
 
@@ -649,7 +649,7 @@ IDirectSoundFullDuplexImpl_Release( LPDIRECTSOUNDFULLDUPLEX iface )
 {
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     ULONG ref = InterlockedDecrement(&(This->ref));
-    TRACE("(%p) ref was %ld\n", This, ref - 1);
+    TRACE("(%p) ref was %d\n", This, ref - 1);
 
     if (!ref) {
         if (This->capture_device)
@@ -678,7 +678,7 @@ IDirectSoundFullDuplexImpl_Initialize(
     IDirectSoundFullDuplexImpl *This = (IDirectSoundFullDuplexImpl *)iface;
     IDirectSoundBufferImpl * dsb;
 
-    TRACE("(%p,%s,%s,%p,%p,%lx,%lx,%p,%p)\n", This,
+    TRACE("(%p,%s,%s,%p,%p,%x,%x,%p,%p)\n", This,
         debugstr_guid(pCaptureGuid), debugstr_guid(pRendererGuid),
         lpDscBufferDesc, lpDsBufferDesc, (DWORD)hWnd, dwLevel,
         lplpDirectSoundCaptureBuffer8, lplpDirectSoundBuffer8);
@@ -837,7 +837,7 @@ DirectSoundFullDuplexCreate(
 {
     HRESULT hres;
     IDirectSoundFullDuplexImpl *This = NULL;
-    TRACE("(%s,%s,%p,%p,%p,%lx,%p,%p,%p,%p)\n",
+    TRACE("(%s,%s,%p,%p,%p,%x,%p,%p,%p,%p)\n",
         debugstr_guid(pcGuidCaptureDevice), debugstr_guid(pcGuidRenderDevice),
         pcDSCBufferDesc, pcDSBufferDesc, hWnd, dwLevel, ppDSFD, ppDSCBuffer8,
         ppDSBuffer8, pUnkOuter);
