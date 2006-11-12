@@ -164,7 +164,7 @@ INT16 WINAPI FontStyleEnumProc16( SEGPTR logfont, SEGPTR metrics,
 BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
 {
     HINSTANCE16 hInst;
-    HANDLE16 hDlgTmpl16 = 0, hResource16 = 0;
+    HANDLE16 hDlgTmpl16 = 0;
     HGLOBAL16 hGlobal16 = 0;
     BOOL16 bRet = FALSE;
     LPVOID template;
@@ -255,7 +255,6 @@ BOOL16 WINAPI ChooseFont16(LPCHOOSEFONT16 lpChFont)
     hInst = GetWindowLongPtrA(HWND_32(lpChFont->hwndOwner), GWLP_HINSTANCE);
     bRet = DialogBoxIndirectParam16(hInst, hDlgTmpl16, lpChFont->hwndOwner,
                      (DLGPROC16) ptr, (DWORD)lpChFont);
-    if (hResource16) FreeResource16(hDlgTmpl16);
     if (hGlobal16)
     {
         GlobalUnlock16(hGlobal16);
