@@ -91,6 +91,8 @@ struct HTMLDocument {
     HWND hwnd;
     HWND tooltips_hwnd;
 
+    DOCHOSTUIINFO hostinfo;
+
     USERMODE usermode;
     READYSTATE readystate;
     BOOL in_place_active;

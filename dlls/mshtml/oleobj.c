@@ -84,6 +84,8 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         This->hostui = NULL;
     }
 
+    memset(&This->hostinfo, 0, sizeof(DOCHOSTUIINFO));
+
     if(!pClientSite)
         return S_OK;
 
@@ -96,11 +98,12 @@ static HRESULT WINAPI OleObject_SetClientSite(IOleObject *iface, IOleClientSite 
         memset(&hostinfo, 0, sizeof(DOCHOSTUIINFO));
         hostinfo.cbSize = sizeof(DOCHOSTUIINFO);
         hres = IDocHostUIHandler_GetHostInfo(pDocHostUIHandler, &hostinfo);
-        if(SUCCEEDED(hres))
-            /* FIXME: use hostinfo */
+        if(SUCCEEDED(hres)) {
             TRACE("hostinfo = {%u %08x %08x %s %s}\n",
                     hostinfo.cbSize, hostinfo.dwFlags, hostinfo.dwDoubleClick,
                     debugstr_w(hostinfo.pchHostCss), debugstr_w(hostinfo.pchHostNS));
+            memcpy(&This->hostinfo, &hostinfo, sizeof(DOCHOSTUIINFO));
+        }
 
         if(!This->has_key_path) {
             hres = IDocHostUIHandler_GetOptionKeyPath(pDocHostUIHandler, &key_path, 0);
@@ -693,4 +696,6 @@ void HTMLDocument_OleObj_Init(HTMLDocument *This)
 
     This->has_key_path = FALSE;
     This->container_locked = FALSE;
+
+    memset(&This->hostinfo, 0, sizeof(DOCHOSTUIINFO));
 }

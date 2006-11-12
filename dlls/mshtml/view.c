@@ -49,29 +49,37 @@ typedef struct {
     WNDPROC proc;
 } tooltip_data;
 
-static void paint_disabled(HWND hwnd) {
-    HDC hdc;
+static void paint_document(HTMLDocument *This)
+{
     PAINTSTRUCT ps;
-    HBRUSH brush;
     RECT rect;
-    HFONT font;
-    WCHAR wszHTMLDisabled[100];
+    HDC hdc;
 
-    LoadStringW(hInst, IDS_HTMLDISABLED, wszHTMLDisabled, sizeof(wszHTMLDisabled)/sizeof(WCHAR));
+    GetClientRect(This->hwnd, &rect);
 
-    font = CreateFontA(25,0,0,0,400,0,0,0,ANSI_CHARSET,0,0,DEFAULT_QUALITY,DEFAULT_PITCH,NULL);
-    brush = CreateSolidBrush(RGB(255,255,255));
-    GetClientRect(hwnd, &rect);
+    hdc = BeginPaint(This->hwnd, &ps);
 
-    hdc = BeginPaint(hwnd, &ps);
-    SelectObject(hdc, font);
-    SelectObject(hdc, brush);
-    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
-    DrawTextW(hdc, wszHTMLDisabled,-1, &rect, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
-    EndPaint(hwnd, &ps);
+    if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER)))
+        DrawEdge(hdc, &rect, EDGE_SUNKEN, BF_RECT|BF_ADJUST);
 
-    DeleteObject(font);
-    DeleteObject(brush);
+    if(!This->nscontainer) {
+        WCHAR wszHTMLDisabled[100];
+        HFONT font;
+
+        LoadStringW(hInst, IDS_HTMLDISABLED, wszHTMLDisabled, sizeof(wszHTMLDisabled)/sizeof(WCHAR));
+
+        font = CreateFontA(25,0,0,0,400,0,0,0,ANSI_CHARSET,0,0,DEFAULT_QUALITY,DEFAULT_PITCH,NULL);
+
+        SelectObject(hdc, font);
+        SelectObject(hdc, GetSysColorBrush(COLOR_WINDOW));
+
+        Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+        DrawTextW(hdc, wszHTMLDisabled,-1, &rect, DT_CENTER | DT_SINGLELINE | DT_VCENTER);
+
+        DeleteObject(font);
+    }
+
+    EndPaint(This->hwnd, &ps);
 }
 
 static void activate_gecko(HTMLDocument *This)
@@ -106,14 +114,22 @@ static LRESULT WINAPI serverwnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
             activate_gecko(This);
         break;
     case WM_PAINT:
-        if(!This->nscontainer)
-            paint_disabled(hwnd);
+        paint_document(This);
         break;
     case WM_SIZE:
         TRACE("(%p)->(WM_SIZE)\n", This);
-        if(This->nscontainer)
-            SetWindowPos(This->nscontainer->hwnd, NULL, 0, 0, LOWORD(lParam), HIWORD(lParam),
-                    SWP_NOZORDER | SWP_NOACTIVATE);
+        if(This->nscontainer) {
+            INT ew=0, eh=0;
+
+            if(!(This->hostinfo.dwFlags & (DOCHOSTUIFLAG_NO3DOUTERBORDER|DOCHOSTUIFLAG_NO3DBORDER))) {
+                ew = GetSystemMetrics(SM_CXEDGE);
+                eh = GetSystemMetrics(SM_CYEDGE);
+            }
+
+            SetWindowPos(This->nscontainer->hwnd, NULL, ew, eh,
+                         LOWORD(lParam) - 2*ew, HIWORD(lParam) - 2*eh,
+                         SWP_NOZORDER | SWP_NOACTIVATE);
+        }
     }
         
     return DefWindowProcW(hwnd, msg, wParam, lParam);
