@@ -2110,7 +2110,7 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
                 ERR("Failed to retrieve FBCONFIG_ID from GLXFBConfig, expect problems.\n");
                 continue;
             }
-            gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs[it], GLX_VISUAL_ID, &tmp_vis_id);
+            gl_test = pglXGetFBConfigAttrib(gdi_display, cfgs_fmt[it_fmt], GLX_VISUAL_ID, &tmp_vis_id);
             if (gl_test) {
                 ERR("Failed to retrieve VISUAL_ID from GLXFBConfig, expect problems.\n");
                 continue;
