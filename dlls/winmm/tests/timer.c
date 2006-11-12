@@ -68,7 +68,8 @@ static void test_timeGetDevCaps(void)
 static DWORD count = 0;
 static DWORD times[NUM_SAMPLES];
 
-static void CALLBACK testTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+static void CALLBACK testTimeProc(UINT uID, UINT uMsg, DWORD_PTR dwUser,
+                                  DWORD_PTR dw1, DWORD_PTR dw2)
 {
     if (count < NUM_SAMPLES)
         times[count++] = timeGetTime();
@@ -162,7 +163,8 @@ static const char * get_priority(int priority)
 static int priority = 0;
 static BOOL fired = FALSE;
 
-static void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD dwUser, DWORD dw1, DWORD dw2)
+static void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD_PTR dwUser,
+                                      DWORD_PTR dw1, DWORD_PTR dw2)
 {
     priority = GetThreadPriority(GetCurrentThread());
     ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %08lx\n", GetLastError());
