@@ -52,6 +52,9 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     return TRUE;
 }
 
+/***********************************************************************
+ *             DllGetClassObject (QUERY.@)
+ */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);

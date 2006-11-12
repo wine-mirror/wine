@@ -268,6 +268,9 @@ DWORD WINAPI GetProcessHeaps( DWORD count, HANDLE *heaps )
 
 /* These are needed so that we can call the functions from inside kernel itself */
 
+/***********************************************************************
+ *           HeapAlloc    (KERNEL32.@)
+ */
 LPVOID WINAPI HeapAlloc( HANDLE heap, DWORD flags, SIZE_T size )
 {
     return RtlAllocateHeap( heap, flags, size );

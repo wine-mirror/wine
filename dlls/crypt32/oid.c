@@ -502,6 +502,9 @@ error_close_key:
     return TRUE;
 }
 
+/***********************************************************************
+ *             CryptUnregisterOIDFunction (CRYPT32.@)
+ */
 BOOL WINAPI CryptUnregisterOIDFunction(DWORD dwEncodingType, LPCSTR pszFuncName,
  LPCSTR pszOID)
 {
@@ -768,6 +771,9 @@ static inline BOOL CRYPT_SetDefaultOIDDlls(HKEY key, LPCWSTR dlls)
     return r == ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ *             CryptRegisterDefaultOIDFunction (CRYPT32.@)
+ */
 BOOL WINAPI CryptRegisterDefaultOIDFunction(DWORD dwEncodingType,
  LPCSTR pszFuncName, DWORD dwIndex, LPCWSTR pwszDll)
 {
@@ -1247,6 +1253,9 @@ static void free_oid_info(void)
     DeleteCriticalSection(&oidInfoCS);
 }
 
+/***********************************************************************
+ *             CryptEnumOIDInfo (CRYPT32.@)
+ */
 BOOL WINAPI CryptEnumOIDInfo(DWORD dwGroupId, DWORD dwFlags, void *pvArg,
  PFN_CRYPT_ENUM_OID_INFO pfnEnumOIDInfo)
 {

@@ -339,6 +339,9 @@ static const IClassFactoryVtbl hlcfvt =
 static CFImpl HLink_cf = { &hlcfvt, &HLink_Constructor };
 static CFImpl HLinkBrowseContext_cf = { &hlcfvt, &HLinkBrowseContext_Constructor };
 
+/***********************************************************************
+ *             DllGetClassObject (HLINK.@)
+ */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     IClassFactory   *pcf = NULL;

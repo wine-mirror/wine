@@ -45,6 +45,9 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
+/***********************************************************************
+ *             DsMakeSpnW (NTDSAPI.@)
+ */
 DWORD WINAPI DsMakeSpnW(LPCWSTR svc_class, LPCWSTR svc_name,
                         LPCWSTR inst_name, USHORT inst_port,
                         LPCWSTR ref, DWORD *spn_length, LPWSTR spn)

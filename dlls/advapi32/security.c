@@ -3715,6 +3715,9 @@ BOOL WINAPI CreateProcessAsUserW(
     return TRUE;
 }
 
+/******************************************************************************
+ * DuplicateTokenEx [ADVAPI32.@]
+ */
 BOOL WINAPI DuplicateTokenEx(
         HANDLE ExistingTokenHandle, DWORD dwDesiredAccess,
         LPSECURITY_ATTRIBUTES lpTokenAttributes,

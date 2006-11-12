@@ -156,9 +156,6 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
-/***********************************************************************
- *		wglGetProcAddress (OPENGL32.@)
- */
 static int compar(const void *elt_a, const void *elt_b) {
   return strcmp(((const OpenGL_extension *) elt_a)->name,
 		((const OpenGL_extension *) elt_b)->name);
@@ -211,6 +208,9 @@ static BOOL is_extension_supported(const char* extension)
     return FALSE;
 }
 
+/***********************************************************************
+ *		wglGetProcAddress (OPENGL32.@)
+ */
 PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   void *local_func;
   OpenGL_extension  ext;

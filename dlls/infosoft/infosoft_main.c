@@ -123,6 +123,9 @@ static const IClassFactoryVtbl infosoft_cfvt =
 
 static CFImpl wb_cf = { &infosoft_cfvt, &wb_Constructor };
 
+/***********************************************************************
+ *             DllGetClassObject (INFOSOFT.@)
+ */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     IClassFactory   *pcf = NULL;
@@ -183,6 +186,9 @@ static HRESULT add_content_index_keys(void)
     return S_OK;
 }
 
+/***********************************************************************
+ *             DllRegisterServer (INFOSOFT.@)
+ */
 HRESULT WINAPI DllRegisterServer(void)
 {
     add_content_index_keys();

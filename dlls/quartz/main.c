@@ -269,6 +269,9 @@ LONG WINAPI DBToAmpFactor(LONG db)
     return 100;
 }
 
+/***********************************************************************
+ *              AMGetErrorTextA (QUARTZ.@)
+ */
 DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen)
 {
     int len;
@@ -284,6 +287,9 @@ DWORD WINAPI AMGetErrorTextA(HRESULT hr, char *buffer, DWORD maxlen)
     return len;
 }
 
+/***********************************************************************
+ *              AMGetErrorTextW (QUARTZ.@)
+ */
 DWORD WINAPI AMGetErrorTextW(HRESULT hr, WCHAR *buffer, DWORD maxlen)
 {
     int len;

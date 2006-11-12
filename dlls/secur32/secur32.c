@@ -1031,6 +1031,9 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     return status;
 }
 
+/***********************************************************************
+ *		GetUserNameExA (SECUR32.@)
+ */
 BOOLEAN WINAPI GetUserNameExA(
   EXTENDED_NAME_FORMAT NameFormat, LPSTR lpNameBuffer, PULONG nSize)
 {

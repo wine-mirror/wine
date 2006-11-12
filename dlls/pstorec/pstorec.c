@@ -379,6 +379,9 @@ HRESULT WINAPI DllUnregisterServer(void)
     return S_OK;
 }
 
+/***********************************************************************
+ *             DllGetClassObject (PSTOREC.@)
+ */
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 {
     FIXME("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv);
