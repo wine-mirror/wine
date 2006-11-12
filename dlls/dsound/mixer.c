@@ -1107,7 +1107,8 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 	}
 }
 
-void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD dwUser, DWORD dw1, DWORD dw2)
+void CALLBACK DSOUND_timer(UINT timerID, UINT msg, DWORD_PTR dwUser,
+                           DWORD_PTR dw1, DWORD_PTR dw2)
 {
         DirectSoundDevice * device = (DirectSoundDevice*)dwUser;
 	DWORD start_time =  GetTickCount();
