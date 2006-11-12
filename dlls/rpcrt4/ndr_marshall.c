@@ -792,7 +792,7 @@ static inline void dump_pointer_attr(unsigned char attr)
 }
 
 /***********************************************************************
- *           PointerMarshall
+ *           PointerMarshall [internal]
  */
 static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                             unsigned char *Buffer,
@@ -857,7 +857,7 @@ static void PointerMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           PointerUnmarshall
+ *           PointerUnmarshall [internal]
  */
 static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Buffer,
@@ -936,7 +936,7 @@ static void PointerUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           PointerBufferSize
+ *           PointerBufferSize [internal]
  */
 static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
                               unsigned char *Pointer,
@@ -986,7 +986,7 @@ static void PointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           PointerMemorySize [RPCRT4.@]
+ *           PointerMemorySize [internal]
  */
 static unsigned long PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                        unsigned char *Buffer,
@@ -1022,7 +1022,7 @@ static unsigned long PointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           PointerFree [RPCRT4.@]
+ *           PointerFree [internal]
  */
 static void PointerFree(PMIDL_STUB_MESSAGE pStubMsg,
                         unsigned char *Pointer,
@@ -1292,7 +1292,7 @@ static void EmbeddedPointerBufferSize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           EmbeddedPointerMemorySize
+ *           EmbeddedPointerMemorySize [internal]
  */
 static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
                                                PFORMAT_STRING pFormat)
@@ -1353,7 +1353,7 @@ static unsigned long EmbeddedPointerMemorySize(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           EmbeddedPointerFree
+ *           EmbeddedPointerFree [internal]
  */
 static void EmbeddedPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char *pMemory,
@@ -4203,7 +4203,7 @@ static long unmarshall_discriminant(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /**********************************************************************
- *           NdrNonEncapsulatedUnionUnmarshall[RPCRT4.@]
+ *           NdrNonEncapsulatedUnionUnmarshall [RPCRT4.@]
  */
 unsigned char *  WINAPI NdrNonEncapsulatedUnionUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                 unsigned char **ppMemory,
@@ -4762,7 +4762,7 @@ static void WINAPI NdrBaseTypeFree(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           NdrClientContextMarshall
+ *           NdrClientContextMarshall [RPCRT4.@]
  */
 void WINAPI NdrClientContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                      NDR_CCONTEXT ContextHandle,
@@ -4780,7 +4780,7 @@ void WINAPI NdrClientContextMarshall(PMIDL_STUB_MESSAGE pStubMsg,
 }
 
 /***********************************************************************
- *           NdrClientContextUnmarshall
+ *           NdrClientContextUnmarshall [RPCRT4.@]
  */
 void WINAPI NdrClientContextUnmarshall(PMIDL_STUB_MESSAGE pStubMsg,
                                        NDR_CCONTEXT * pContextHandle,
@@ -4961,6 +4961,9 @@ static UINT ndr_update_context_handle(NDR_CCONTEXT *CContext,
     return ERROR_SUCCESS;
 }
 
+/***********************************************************************
+ *           NDRCContextUnmarshall [RPCRT4.@]
+ */
 void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
                                   RPC_BINDING_HANDLE hBinding,
                                   void *pBuff, ULONG DataRepresentation)
@@ -4977,6 +4980,9 @@ void WINAPI NDRCContextUnmarshall(NDR_CCONTEXT *CContext,
         RpcRaiseException(r);
 }
 
+/***********************************************************************
+ *           NDRSContextMarshall [RPCRT4.@]
+ */
 void WINAPI NDRSContextMarshall(NDR_SCONTEXT CContext,
                                void *pBuff,
                                NDR_RUNDOWN userRunDownIn)
@@ -4984,6 +4990,9 @@ void WINAPI NDRSContextMarshall(NDR_SCONTEXT CContext,
     FIXME("(%p %p %p): stub\n", CContext, pBuff, userRunDownIn);
 }
 
+/***********************************************************************
+ *           NDRSContextMarshallEx [RPCRT4.@]
+ */
 void WINAPI NDRSContextMarshallEx(RPC_BINDING_HANDLE hBinding,
                                   NDR_SCONTEXT CContext,
                                   void *pBuff,
@@ -4992,6 +5001,9 @@ void WINAPI NDRSContextMarshallEx(RPC_BINDING_HANDLE hBinding,
     FIXME("(%p %p %p %p): stub\n", hBinding, CContext, pBuff, userRunDownIn);
 }
 
+/***********************************************************************
+ *           NDRSContextMarshall2 [RPCRT4.@]
+ */
 void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
                                  NDR_SCONTEXT CContext,
                                  void *pBuff,
@@ -5002,6 +5014,9 @@ void WINAPI NDRSContextMarshall2(RPC_BINDING_HANDLE hBinding,
           hBinding, CContext, pBuff, userRunDownIn, CtxGuard, Flags);
 }
 
+/***********************************************************************
+ *           NDRSContextUnmarshall [RPCRT4.@]
+ */
 NDR_SCONTEXT WINAPI NDRSContextUnmarshall(void *pBuff,
                                           ULONG DataRepresentation)
 {
@@ -5009,6 +5024,9 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshall(void *pBuff,
     return NULL;
 }
 
+/***********************************************************************
+ *           NDRSContextUnmarshallEx [RPCRT4.@]
+ */
 NDR_SCONTEXT WINAPI NDRSContextUnmarshallEx(RPC_BINDING_HANDLE hBinding,
                                             void *pBuff,
                                             ULONG DataRepresentation)
@@ -5017,6 +5035,9 @@ NDR_SCONTEXT WINAPI NDRSContextUnmarshallEx(RPC_BINDING_HANDLE hBinding,
     return NULL;
 }
 
+/***********************************************************************
+ *           NDRSContextUnmarshall2 [RPCRT4.@]
+ */
 NDR_SCONTEXT WINAPI NDRSContextUnmarshall2(RPC_BINDING_HANDLE hBinding,
                                            void *pBuff,
                                            ULONG DataRepresentation,
