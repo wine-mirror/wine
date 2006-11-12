@@ -19,8 +19,6 @@
  */
 
 #define COBJMACROS
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 
 #include <stdarg.h>
 
@@ -201,7 +199,7 @@ static HRESULT WINAPI DataObjectImpl_GetData(IDataObject* iface, FORMATETC *pfor
         return DV_E_TYMED;
 
     if(This->text && pformatetc->cfFormat == CF_TEXT)
-        pmedium->u.hGlobal = This->text;
+        U(*pmedium).hGlobal = This->text;
     else
         return DV_E_FORMATETC;
 
