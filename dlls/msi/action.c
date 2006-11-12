@@ -1643,7 +1643,7 @@ static void ACTION_UpdateFeatureInstallStates(MSIPACKAGE *package)
                 if (res == comp->Installed)
                     continue;
 
-                if (res != INSTALLSTATE_DEFAULT || res != INSTALLSTATE_LOCAL ||
+                if (res != INSTALLSTATE_DEFAULT && res != INSTALLSTATE_LOCAL &&
                     res != INSTALLSTATE_SOURCE)
                 {
                     res = INSTALLSTATE_INCOMPLETE;
