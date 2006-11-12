@@ -154,9 +154,12 @@ HRESULT WINAPI CreateFileMoniker16(LPCOLESTR16 lpszPathName,LPMONIKER* ppmk)
 
 /******************************************************************************
  *        OleSetMenuDescriptor (OLE2.41)
+ *
+ * PARAMS
+ *  hOleMenu  FIXME: Should probably be an HOLEMENU16.
  */
 HRESULT WINAPI OleSetMenuDescriptor16(
-    HOLEMENU               hOleMenu, /* FIXME: HOLEMENU16 likely */
+    HOLEMENU               hOleMenu,
     HWND16                 hwndFrame,
     HWND16                 hwndActiveObject,
     LPOLEINPLACEFRAME        lpFrame,

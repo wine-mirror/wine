@@ -2181,9 +2181,12 @@ HRESULT WINAPI StgIsStorageILockBytes16(SEGPTR plkbyt)
 
 /******************************************************************************
  *    StgOpenStorageOnILockBytes    [STORAGE.4]
+ *
+ * PARAMS
+ *  plkbyt  FIXME: Should probably be an ILockBytes16 *.
  */
 HRESULT WINAPI StgOpenStorageOnILockBytes16(
-	SEGPTR /*ILockBytes16 **/plkbyt,
+	SEGPTR plkbyt,
 	IStorage16 *pstgPriority,
 	DWORD grfMode,
 	SNB16 snbExclude,
