@@ -74,7 +74,7 @@ IWineD3D* WINAPI WineDirect3DCreate(UINT SDKVersion, UINT dxVersion, IUnknown *p
 
     /*Create a structure for storing global data in*/
     if(wineD3DGlobalStatistics == NULL){
-        TRACE("Createing global statistics store\n");
+        TRACE("Creating global statistics store\n");
         wineD3DGlobalStatistics = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*wineD3DGlobalStatistics));
 
     }

@@ -188,7 +188,7 @@ static NTSTATUS RtlpAllocateSomeHandles(RTL_HANDLE_TABLE * HandleTable)
  *
  * NOTES
  *  A valid handle must have the bit set as indicated in the code below 
- *  otherwise subsquent RtlIsValidHandle() calls will fail.
+ *  otherwise subsequent RtlIsValidHandle() calls will fail.
  *
  *  static inline void RtlpMakeHandleAllocated(RTL_HANDLE * Handle)
  *  {

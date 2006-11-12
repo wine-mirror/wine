@@ -1699,7 +1699,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
    *******************/
 
     /* Put the correct figures in the presentation parameters */
-    TRACE("Coppying accross presentaion paraneters\n");
+    TRACE("Copying across presentation parameters\n");
     object->presentParms.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
     object->presentParms.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);
     object->presentParms.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
@@ -5452,7 +5452,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
      * buffer and loading the VBO
      */
     if(SrcImpl->vbo) {
-        TRACE("Releaseing the source vbo, it won't be needed\n");
+        TRACE("Releasing the source vbo, it won't be needed\n");
 
         if(!SrcImpl->resource.allocatedMemory) {
             /* Rescue the data from the buffer */
@@ -6761,7 +6761,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
             WINED3DFMT_DXT5 == destFormat) {
             if (GL_SUPPORT(EXT_TEXTURE_COMPRESSION_S3TC)) {
                 if (destSurfaceHeight != srcHeight || destSurfaceWidth != srcWidth) {
-                    /* FIXME: The easy way to do this is lock the destination, and copy the bits accross */
+                    /* FIXME: The easy way to do this is to lock the destination, and copy the bits across */
                     FIXME("Updating part of a compressed texture is not supported at the moment\n");
                 } if (destFormat != srcFormat) {
                     FIXME("Updating mixed format compressed texture is not curretly support\n");

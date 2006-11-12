@@ -67,7 +67,7 @@ static void IDirectSound_test(LPDIRECTSOUND dso, BOOL initialized,
         IDirectSound8_Release(ds8);
 
     if (initialized == FALSE) {
-        /* try unitialized object */
+        /* try uninitialized object */
         rc=IDirectSound_GetCaps(dso,0);
         ok(rc==DSERR_UNINITIALIZED,"IDirectSound_GetCaps(NULL) "
            "should have returned DSERR_UNINITIALIZED, returned: %s\n",

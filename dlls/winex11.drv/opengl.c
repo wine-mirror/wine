@@ -1146,7 +1146,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 
   /* At the moment we only support the pixelformat corresponding to the main
    * x11drv visual which got created at x11drv initialization. More formats
-   * can be supported if there was a way to recreate x11 windows in x11drv
+   * could be supported if there was a way to recreate x11 windows in x11drv
    */
   if(iPixelFormat != 1) {
     TRACE("Invalid iPixelFormat: %d\n", iPixelFormat);
@@ -1212,7 +1212,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     Wine_GLContext *ret;
     GLXFBConfig* cfgs_fmt = NULL;
     GLXFBConfig cur_cfg;
-    int hdcPF = 1; /* We can only use the Wine's main visual which has an index of 1 */
+    int hdcPF = 1; /* We can only use Wine's main visual which has an index of 1 */
     int tmp = 0;
     int fmt_index = 0;
     int nCfgs_fmt = 0;
@@ -1230,7 +1230,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     /* First, get the visual in use by the X11DRV */
     if (!gdi_display) return 0;
 
-    /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the correspondig GLX format.
+    /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the corresponding GLX format.
     * If this fails something is very wrong on the system. */
     if(!ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, &fmt_index, &tmp)) {
         ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
@@ -2469,7 +2469,7 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
         SetLastError(ERROR_INVALID_HANDLE);
         return GL_FALSE;
     }
-/* Disable WGL_ARB_render_texture support untill it is implemented properly
+/* Disable WGL_ARB_render_texture support until it is implemented properly
  * using pbuffers or FBOs */
 #if 0
     if (!use_render_texture_ati && 1 == use_render_texture_emulation) {

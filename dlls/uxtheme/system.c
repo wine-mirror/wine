@@ -206,7 +206,7 @@ static void UXTHEME_LoadTheme(void)
     }
     if(!bThemeActive) {
         MSSTYLES_SetActiveTheme(NULL, FALSE);
-        TRACE("Themeing not active\n");
+        TRACE("Theming not active\n");
     }
 }
 

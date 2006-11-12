@@ -120,7 +120,7 @@ HGLOBAL16 WINAPI OleMetaFilePictFromIconAndLabel16(
     mf16 = (METAFILEPICT16 *)GlobalLock16(hmf16);
     mf16->mm = MM_ANISOTROPIC;
     mf16->xExt = 20; /* FIXME: bogus */
-    mf16->yExt = 20; /* dito */
+    mf16->yExt = 20; /* ditto */
     mfSize = GetMetaFileBitsEx(hmf, 0, 0);
     mf16->hMF = GlobalAlloc16(GMEM_MOVEABLE, mfSize);
     if(mf16->hMF)

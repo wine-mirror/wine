@@ -3788,7 +3788,7 @@ static UINT ACTION_InstallFinalize(MSIPACKAGE *package)
 {
     UINT rc;
 
-    /* turn off scheduleing */
+    /* turn off scheduling */
     package->script->CurrentlyScripting= FALSE;
 
     /* first do the same as an InstallExecute */

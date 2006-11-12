@@ -829,7 +829,7 @@ static void convert_888_to_0888_asis(int width, int height,
     for (y=0; y<height; y++) {
         srcpixel=srcbits;
         dstpixel=dstbits;
-        /* advance  w1 pixels to make srcpixel 32 bit alignd */
+        /* advance  w1 pixels to make srcpixel 32 bit aligned */
         srcpixel = (const DWORD*)((INT_PTR)srcpixel & ~3);
         srcpixel += w1;
         dstpixel += w1;
@@ -894,7 +894,7 @@ static void convert_888_to_0888_reverse(int width, int height,
     for (y=0; y<height; y++) {
         srcpixel=srcbits;
         dstpixel=dstbits;
-        /* advance w1 pixels to make srcpixel 32 bit alignd */
+        /* advance w1 pixels to make srcpixel 32 bit aligned */
         srcpixel =  (const DWORD*)((INT_PTR)srcpixel & ~3);
         srcpixel += w1;
         dstpixel += w1;

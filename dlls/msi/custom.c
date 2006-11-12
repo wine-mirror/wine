@@ -243,7 +243,7 @@ UINT ACTION_CustomAction(MSIPACKAGE *package,LPCWSTR action, BOOL execute)
         case 1: /* DLL file stored in a Binary table stream */
             rc = HANDLE_CustomType1(package,source,target,type,action);
             break;
-        case 2: /* EXE file stored in a Binary table strem */
+        case 2: /* EXE file stored in a Binary table stream */
             rc = HANDLE_CustomType2(package,source,target,type,action);
             break;
         case 18: /*EXE file installed with package */
@@ -511,7 +511,7 @@ static DWORD WINAPI DllThread(LPVOID info)
     rc = ACTION_CallDllFunction(stuff);
 
     TRACE("MSI Thread (%x) finished (rc %i)\n",GetCurrentThreadId(), rc);
-    /* clse all handles for this thread */
+    /* close all handles for this thread */
     MsiCloseAllHandles();
     return rc;
 }

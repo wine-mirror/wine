@@ -153,7 +153,7 @@ end_of_thread:
   return 0;
 }
 
-/* DP messageing stuff */
+/* DP messaging stuff */
 static HANDLE DP_MSG_BuildAndLinkReplyStruct( IDirectPlay2Impl* This,
                                               LPDP_MSG_REPLY_STRUCT_LIST lpReplyStructList,
                                               WORD wReplyCommandId );

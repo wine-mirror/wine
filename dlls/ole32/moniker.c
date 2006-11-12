@@ -808,7 +808,7 @@ static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
 
     ref = InterlockedDecrement(&This->ref);
 
-    /* unitialize rot structure if there's no more reference to it*/
+    /* uninitialize rot structure if there's no more reference to it*/
     if (ref == 0)
     {
         ULONG i;

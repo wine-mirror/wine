@@ -657,7 +657,7 @@ static HRESULT WINAPI IDsCaptureDriverBufferImpl_Stop(PIDSCDRIVERBUFFER iface)
     if (!This->is_capturing)
         return DS_OK;
 
-    /* no more captureing */
+    /* no more capturing */
     WInDev[This->drv->wDevID].ossdev->bInputEnabled = FALSE;
     enable = getEnables(WInDev[This->drv->wDevID].ossdev);
     if (ioctl(WInDev[This->drv->wDevID].ossdev->fd, SNDCTL_DSP_SETTRIGGER, &enable) < 0) {

@@ -470,7 +470,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
     /* (WS) The field szDriver should be initialized because the driver 
      * is not obliged and often will not do it. Some applications, like
      * VirtualDub, rely on this field and will occasionally crash if it
-     * goes unitialized.
+     * goes uninitialized.
      */
     if (cb >= sizeof(ICINFO)) picinfo->szDriver[0] = '\0';
 
