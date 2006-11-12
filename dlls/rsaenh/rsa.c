@@ -62,12 +62,6 @@ int rand_prime(mp_int *N, long len)
 {
    int type;
 
-   /* allow sizes between 2 and 256 bytes for a prime size */
-   if (len < 16 || len > 8192) {
-	  printf("Invalid prime size!\n");
-      return CRYPT_INVALID_PRIME_SIZE;
-   }
-   
    /* get type */
    if (len < 0) {
       type = LTM_PRIME_BBS;
@@ -78,6 +72,12 @@ int rand_prime(mp_int *N, long len)
       /* Original LibTomCrypt: type = 0; */
    }
 
+   /* allow sizes between 2 and 256 bytes for a prime size */
+   if (len < 16 || len > 8192) {
+      printf("Invalid prime size!\n");
+      return CRYPT_INVALID_PRIME_SIZE;
+   }
+   
    /* New prime generation makes the code even more cryptoish-insane.  Do you know what this means!!!
       -- Gir:  Yeah, oh wait, er, no.
     */
