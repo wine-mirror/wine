@@ -492,7 +492,11 @@ static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
     return ret;
 }
 
-/* retrieve the GLX drawable to use on a given DC */
+/**
+ * get_drawable (internal)
+ *
+ * Retrieve the GLX drawable to use on a given DC.
+ */
 inline static Drawable get_drawable( HDC hdc )
 {
     GLXDrawable drawable;
@@ -516,7 +520,11 @@ inline static void set_drawable( HDC hdc, Drawable drawable )
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
 }
 
-/** for use of wglGetCurrentReadDCARB */
+/**
+ * get_hdc_from_Drawable (internal)
+ *
+ * For use by wglGetCurrentReadDCARB.
+ */
 inline static HDC get_hdc_from_Drawable(GLXDrawable d)
 {
     Wine_GLContext *ret;
@@ -845,7 +853,7 @@ static BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *
 /**
  * X11DRV_ChoosePixelFormat
  *
- * Equivalent of glXChooseVisual
+ * Equivalent to glXChooseVisual.
  */
 int X11DRV_ChoosePixelFormat(X11DRV_PDEVICE *physDev, 
 			     const PIXELFORMATDESCRIPTOR *ppfd) {
@@ -1194,7 +1202,11 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
   return TRUE;
 }
 
-/* OpenGL32 wglCreateContext */
+/**
+ * X11DRV_wglCreateContext
+ *
+ * For OpenGL32 wglCreateContext.
+ */
 HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 {
     Wine_GLContext *ret;
@@ -1262,7 +1274,11 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     return (HGLRC) ret;
 }
 
-/* OpenGL32 wglDeleteContext */
+/**
+ * X11DRV_wglDeleteContext
+ *
+ * For OpenGL32 wglDeleteContext.
+ */
 BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
@@ -1294,7 +1310,11 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
     return ret;
 }
 
-/* OpenGL32 wglGetCurrentReadDCARB */
+/**
+ * X11DRV_wglGetCurrentReadDCARB
+ *
+ * For OpenGL32 wglGetCurrentReadDCARB.
+ */
 static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void) 
 {
     GLXDrawable gl_d;
@@ -1311,7 +1331,11 @@ static HDC WINAPI X11DRV_wglGetCurrentReadDCARB(void)
     return ret;
 }
 
-/* OpenGL32: wglGetProcAddress */
+/**
+ * X11DRV_wglGetProcAddress
+ *
+ * For OpenGL32 wglGetProcAddress.
+ */
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
 {
     int i, j;
@@ -1348,7 +1372,11 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
 }
 
 
-/* OpenGL32 wglMakeCurrent */
+/**
+ * X11DRV_wglMakeCurrent
+ *
+ * For OpenGL32 wglMakeCurrent.
+ */
 BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     BOOL ret;
     HDC hdc = physDev->hdc;
@@ -1407,7 +1435,11 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     return ret;
 }
 
-/* OpenGL32 wglMakeContextCurrentARB */
+/**
+ * X11DRV_wglMakeContextCurrentARB
+ *
+ * For OpenGL32 wglMakeContextCurrentARB
+ */
 BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* hReadDev, HGLRC hglrc) 
 {
     BOOL ret;
@@ -1444,7 +1476,11 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
     return ret;
 }
 
-/* OpenGL32 wglShaderLists */
+/**
+ * X11DRV_wglShareLists
+ *
+ * For OpenGL32 wglShaderLists.
+ */
 BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     Wine_GLContext *org  = (Wine_GLContext *) hglrc1;
     Wine_GLContext *dest = (Wine_GLContext *) hglrc2;
@@ -1588,7 +1624,11 @@ static BOOL internal_wglUseFontBitmaps(HDC hdc, DWORD first, DWORD count, DWORD 
      return FALSE;
 }
 
-/* OpenGL32 wglUseFontBitmapsA */
+/**
+ * X11DRV_wglUseFontBitmapsA
+ *
+ * For OpenGL32 wglUseFontBitmapsA.
+ */
 BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
      Font fid = physDev->font;
@@ -1611,7 +1651,11 @@ BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count
      return TRUE;
 }
 
-/* OpenGL32 wglUseFontBitmapsW */
+/**
+ * X11DRV_wglUseFontBitmapsW
+ *
+ * For OpenGL32 wglUseFontBitmapsW.
+ */
 BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
      Font fid = physDev->font;
@@ -1663,13 +1707,21 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
     }
 }
 
-/* WGL_ARB_extensions_string: wglGetExtensionsStringARB */
+/**
+ * X11DRV_wglGetExtensionsStringARB
+ *
+ * WGL_ARB_extensions_string: wglGetExtensionsStringARB
+ */
 static const char * WINAPI X11DRV_wglGetExtensionsStringARB(HDC hdc) {
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
     return WineGLInfo.wglExtensions;
 }
 
-/* WGL_ARB_pbuffer: wglCreatePbufferARB */
+/**
+ * X11DRV_wglCreatePbufferARB
+ *
+ * WGL_ARB_pbuffer: wglCreatePbufferARB
+ */
 static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, int iWidth, int iHeight, const int *piAttribList)
 {
     Wine_GLPBuffer* object = NULL;
@@ -1857,7 +1909,11 @@ create_failed:
     return (HPBUFFERARB) NULL;
 }
 
-/* WGL_ARB_pbuffer: wglDestroyPbufferARB */
+/**
+ * X11DRV_wglDestroyPbufferARB
+ *
+ * WGL_ARB_pbuffer: wglDestroyPbufferARB
+ */
 static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
@@ -1871,7 +1927,10 @@ static GLboolean WINAPI X11DRV_wglDestroyPbufferARB(HPBUFFERARB hPbuffer)
     return GL_TRUE;
 }
 
-/* WGL_ARB_pbuffer: wglGetPbufferDCARB
+/**
+ * X11DRV_wglGetPbufferDCARB
+ *
+ * WGL_ARB_pbuffer: wglGetPbufferDCARB
  * The function wglGetPbufferDCARB returns a device context for a pbuffer.
  * Gdi32 implements the part of this function which creates a device context.
  * This part associates the physDev with the X drawable of the pbuffer.
@@ -1893,7 +1952,11 @@ HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffer)
     return physDev->hdc;
 }
 
-/* WGL_ARB_pbuffer: wglQueryPbufferARB */
+/**
+ * X11DRV_wglQueryPbufferARB
+ *
+ * WGL_ARB_pbuffer: wglQueryPbufferARB
+ */
 static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAttribute, int *piValue)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
@@ -1988,7 +2051,11 @@ static GLboolean WINAPI X11DRV_wglQueryPbufferARB(HPBUFFERARB hPbuffer, int iAtt
     return GL_TRUE;
 }
 
-/* WGL_ARB_pbuffer: wglReleasePbufferDCARB */
+/**
+ * X11DRV_wglReleasePbufferDCARB
+ *
+ * WGL_ARB_pbuffer: wglReleasePbufferDCARB
+ */
 static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
 {
     TRACE("(%p, %p)\n", hPbuffer, hdc);
@@ -1996,7 +2063,11 @@ static int WINAPI X11DRV_wglReleasePbufferDCARB(HPBUFFERARB hPbuffer, HDC hdc)
     return 0;
 }
 
-/* WGL_ARB_pbuffer: wglSetPbufferAttribARB */
+/**
+ * X11DRV_wglSetPbufferAttribARB
+ *
+ * WGL_ARB_pbuffer: wglSetPbufferAttribARB
+ */
 static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, const int *piAttribList)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
@@ -2021,7 +2092,11 @@ static GLboolean WINAPI X11DRV_wglSetPbufferAttribARB(HPBUFFERARB hPbuffer, cons
     return GL_FALSE;
 }
 
-/* WGL_ARB_pixel_format: wglChoosePixelFormatARB */
+/**
+ * X11DRV_wglChoosePixelFormatARB
+ *
+ * WGL_ARB_pixel_format: wglChoosePixelFormatARB
+ */
 static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAttribIList, const FLOAT *pfAttribFList, UINT nMaxFormats, int *piFormats, UINT *nNumFormats)
 {
     int gl_test = 0;
@@ -2147,14 +2222,22 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
     return GL_TRUE;
 }
 
-/* WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB */
+/**
+ * X11DRV_wglGetPixelFormatAttribfvARB
+ *
+ * WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB
+ */
 static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
 {
     FIXME("(%p, %d, %d, %d, %p, %p): stub\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
     return GL_FALSE;
 }
 
-/* WGL_ARB_pixel_format: wglGetPixelFormatAttribivARB */
+/**
+ * X11DRV_wglGetPixelFormatAttribivARB
+ *
+ * WGL_ARB_pixel_format: wglGetPixelFormatAttribivARB
+ */
 static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, int *piValues)
 {
     UINT i;
@@ -2369,7 +2452,11 @@ pix_error:
     return GL_FALSE;
 }
 
-/* WGL_ARB_render_texture: wglBindTexImageARB */
+/**
+ * X11DRV_wglBindTexImageARB
+ *
+ * WGL_ARB_render_texture: wglBindTexImageARB
+ */
 static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
@@ -2419,7 +2506,11 @@ static GLboolean WINAPI X11DRV_wglBindTexImageARB(HPBUFFERARB hPbuffer, int iBuf
     return GL_FALSE;
 }
 
-/* WGL_ARB_render_texture: wglReleaseTexImageARB */
+/**
+ * X11DRV_wglReleaseTexImageARB
+ *
+ * WGL_ARB_render_texture: wglReleaseTexImageARB
+ */
 static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int iBuffer)
 {
     Wine_GLPBuffer* object = (Wine_GLPBuffer*) hPbuffer;
@@ -2461,19 +2552,31 @@ static GLboolean WINAPI X11DRV_wglReleaseTexImageARB(HPBUFFERARB hPbuffer, int i
     return GL_FALSE;
 }
 
-/* WGL_EXT_extensions_string: wglGetExtensionsStringEXT */
+/**
+ * X11DRV_wglGetExtensionsStringEXT
+ *
+ * WGL_EXT_extensions_string: wglGetExtensionsStringEXT
+ */
 static const char * WINAPI X11DRV_wglGetExtensionsStringEXT(void) {
     TRACE("() returning \"%s\"\n", WineGLInfo.wglExtensions);
     return WineGLInfo.wglExtensions;
 }
 
-/* WGL_EXT_swap_control: wglGetSwapIntervalEXT */
+/**
+ * X11DRV_wglGetSwapIntervalEXT
+ *
+ * WGL_EXT_swap_control: wglGetSwapIntervalEXT
+ */
 static int WINAPI X11DRV_wglGetSwapIntervalEXT(VOID) {
     FIXME("(),stub!\n");
     return swap_interval;
 }
 
-/* WGL_EXT_swap_control: wglSwapIntervalEXT */
+/**
+ * X11DRV_wglSwapIntervalEXT
+ *
+ * WGL_EXT_swap_control: wglSwapIntervalEXT
+ */
 static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
     TRACE("(%d)\n", interval);
     swap_interval = interval;
@@ -2484,7 +2587,11 @@ static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
     return TRUE;
 }
 
-/* Check if the supported GLX version matches requiredVersion */
+/**
+ * glxRequireVersion (internal)
+ *
+ * Check if the supported GLX version matches requiredVersion.
+ */
 static BOOL glxRequireVersion(int requiredVersion)
 {
     /* Both requiredVersion and glXVersion[1] contains the minor GLX version */
@@ -2823,19 +2930,31 @@ BOOL X11DRV_SwapBuffers(X11DRV_PDEVICE *physDev) {
   return FALSE;
 }
 
-/* OpenGL32 wglCreateContext */
+/**
+ * X11DRV_wglCreateContext
+ *
+ * For OpenGL32 wglCreateContext.
+ */
 HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return NULL;
 }
 
-/* OpenGL32 wglDeleteContext */
+/**
+ * X11DRV_wglDeleteContext
+ *
+ * For OpenGL32 wglDeleteContext.
+ */
 BOOL X11DRV_wglDeleteContext(HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
-/* OpenGL32: wglGetProcAddress */
+/**
+ * X11DRV_wglGetProcAddress
+ *
+ * For OpenGL32 wglGetProcAddress.
+ */
 PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return NULL;
@@ -2852,26 +2971,42 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
     return FALSE;
 }
 
-/* OpenGL32 wglMakeCurrent */
+/**
+ * X11DRV_wglMakeCurrent
+ *
+ * For OpenGL32 wglMakeCurrent.
+ */
 BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
-/* OpenGL32 wglShaderLists */
+/**
+ * X11DRV_wglShareLists
+ *
+ * For OpenGL32 wglShaderLists.
+ */
 BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
-/* OpenGL32 wglUseFontBitmapsA */
+/**
+ * X11DRV_wglUseFontBitmapsA
+ *
+ * For OpenGL32 wglUseFontBitmapsA.
+ */
 BOOL X11DRV_wglUseFontBitmapsA(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
     return FALSE;
 }
 
-/* OpenGL32 wglUseFontBitmapsW */
+/**
+ * X11DRV_wglUseFontBitmapsW
+ *
+ * For OpenGL32 wglUseFontBitmapsW.
+ */
 BOOL X11DRV_wglUseFontBitmapsW(X11DRV_PDEVICE *physDev, DWORD first, DWORD count, DWORD listBase)
 {
     ERR_(opengl)("No OpenGL support compiled in.\n");
