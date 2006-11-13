@@ -669,12 +669,9 @@ void RPC_UnregisterInterface(REFIID riid)
         {
             if (!--rif->refs)
             {
-#if 0 /* this is a stub in builtin and spams the console with FIXME's */
-                IID iid = *riid; /* RpcServerUnregisterIf doesn't take const IID */
-                RpcServerUnregisterIf((RPC_IF_HANDLE)&rif->If, &iid, 0);
+                RpcServerUnregisterIf((RPC_IF_HANDLE)&rif->If, NULL, TRUE);
                 list_remove(&rif->entry);
                 HeapFree(GetProcessHeap(), 0, rif);
-#endif
             }
             break;
         }
