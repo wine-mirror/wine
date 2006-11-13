@@ -47,6 +47,7 @@ interface IXTLRuntime;
 interface IXSLTemplate;
 interface IXSLProcessor;
 
+cpp_quote("#ifndef __WIDL_XMLDOM_H")
 typedef enum tagDOMNodeType 
 {  
     NODE_INVALID  		= 0,
@@ -63,6 +64,7 @@ typedef enum tagDOMNodeType
     NODE_DOCUMENT_FRAGMENT 	= 11,
     NODE_NOTATION 		= 12
 } DOMNodeType;
+cpp_quote("#endif   /* __WIDL_XMLDOM_H */")
 
 [
 local,
