@@ -391,6 +391,7 @@ static void test_summary_binary(void)
     ok( sz == 0, "length wrong\n");
     }
 
+    ival = -1;
     r = MsiSummaryInfoGetProperty(hsuminfo, PID_WORDCOUNT, &type, &ival, NULL, NULL, NULL);
     ok(r == ERROR_SUCCESS, "MsiSummaryInfoGetProperty failed\n");
     todo_wine ok( ival == 0, "value incorrect\n");
