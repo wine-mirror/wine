@@ -54,7 +54,7 @@ typedef struct _SecHandle
 #define SecInvalidateHandle(x) do { \
  ((PSecHandle)(x))->dwLower = ((ULONG_PTR)((INT_PTR)-1)); \
  ((PSecHandle)(x))->dwUpper = ((ULONG_PTR)((INT_PTR)-1)); \
- while (0)
+ } while (0)
 
 #define SecIsValidHandle(x) \
  ((((PSecHandle)(x))->dwLower != ((ULONG_PTR)(INT_PTR)-1)) && \
