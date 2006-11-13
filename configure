@@ -18185,6 +18185,7 @@ fi
 
 
 
+
 for ac_func in \
 	_pclose \
 	_popen \
@@ -18209,6 +18210,7 @@ for ac_func in \
 	futimes \
 	futimesat \
 	getaddrinfo \
+	getdirentries \
 	gethostbyname \
 	getnameinfo \
 	getnetbyname \

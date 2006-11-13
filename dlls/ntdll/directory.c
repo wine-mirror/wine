@@ -135,6 +135,8 @@ static inline int getdents64( int fd, KERNEL_DIRENT64 *de, unsigned int size )
 
 #define MAX_DIR_ENTRY_LEN 255  /* max length of a directory entry in chars */
 
+static const unsigned int max_dir_info_size = FIELD_OFFSET( FILE_BOTH_DIR_INFORMATION, FileName[MAX_DIR_ENTRY_LEN] );
+
 static int show_dot_files = -1;
 
 /* at some point we may want to allow Winelib apps to set this */
@@ -971,7 +973,6 @@ static int read_directory_vfat( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG
     size_t len;
     KERNEL_DIRENT *de;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
-    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
 
     io->u.Status = STATUS_SUCCESS;
 
@@ -1063,7 +1064,6 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     char local_buffer[8192];
     KERNEL_DIRENT64 *data, *de;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
-    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
 
     if (size <= sizeof(local_buffer) || !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
     {
@@ -1135,7 +1135,111 @@ done:
     if ((char *)data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
     return res;
 }
-#endif  /* USE_GETDENTS */
+
+#elif defined HAVE_GETDIRENTRIES
+
+/***********************************************************************
+ *           read_directory_getdirentries
+ *
+ * Read a directory using the BSD getdirentries system call; helper for NtQueryDirectoryFile.
+ */
+static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buffer, ULONG length,
+                                         BOOLEAN single_entry, const UNICODE_STRING *mask,
+                                         BOOLEAN restart_scan )
+{
+    long restart_pos;
+    ULONG_PTR restart_info_pos = 0;
+    size_t size, initial_size = length;
+    int res;
+    char *data, local_buffer[8192];
+    struct dirent *de;
+    FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL, *restart_last_info = NULL;
+
+    size = initial_size;
+    data = local_buffer;
+    if (size > sizeof(local_buffer) && !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
+    {
+        io->u.Status = STATUS_NO_MEMORY;
+        return io->u.Status;
+    }
+
+    if (restart_scan) lseek( fd, 0, SEEK_SET );
+
+    io->u.Status = STATUS_SUCCESS;
+
+    /* FIXME: should make sure size is larger than filesystem block size */
+    res = getdirentries( fd, data, size, &restart_pos );
+    if (res == -1)
+    {
+        io->u.Status = FILE_GetNtStatus();
+        res = 0;
+        goto done;
+    }
+
+    de = (struct dirent *)data;
+
+    while (res > 0)
+    {
+        res -= de->d_reclen;
+        if (de->d_fileno &&
+            ((info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask ))))
+        {
+            last_info = info;
+            if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
+            {
+                lseek( fd, (unsigned long)restart_pos, SEEK_SET );
+                if (restart_info_pos)  /* if we have a complete read already, return it */
+                {
+                    io->Information = restart_info_pos;
+                    last_info = restart_last_info;
+                    break;
+                }
+                /* otherwise restart from the start with a smaller size */
+                size = (char *)de - data;
+                if (!size)
+                {
+                    io->u.Status = STATUS_BUFFER_OVERFLOW;
+                    break;
+                }
+                io->Information = 0;
+                last_info = NULL;
+                goto restart;
+            }
+            /* if we have to return but the buffer contains more data, restart with a smaller size */
+            if (res > 0 && (single_entry || io->Information + max_dir_info_size > length))
+            {
+                lseek( fd, (unsigned long)restart_pos, SEEK_SET );
+                size = (char *)de - data;
+                io->Information = restart_info_pos;
+                last_info = restart_last_info;
+                goto restart;
+            }
+        }
+        /* move on to the next entry */
+        if (res > 0)
+        {
+            de = (struct dirent *)((char *)de + de->d_reclen);
+            continue;
+        }
+        if (size < initial_size) break;  /* already restarted once, give up now */
+        size = min( size, length - io->Information );
+        /* if size is too small don't bother to continue */
+        if (size < max_dir_info_size && last_info) break;
+        restart_last_info = last_info;
+        restart_info_pos = io->Information;
+    restart:
+        res = getdirentries( fd, data, size, &restart_pos );
+        de = (struct dirent *)data;
+    }
+
+    if (last_info) last_info->NextEntryOffset = 0;
+    else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
+    res = 0;
+done:
+    if (data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
+    return res;
+}
+#endif  /* HAVE_GETDIRENTRIES */
 
 
 /***********************************************************************
@@ -1151,7 +1255,6 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     off_t i, old_pos = 0;
     struct dirent *de;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
-    static const unsigned int max_dir_info_size = sizeof(*info) + (MAX_DIR_ENTRY_LEN-1) * sizeof(WCHAR);
 
     if (!(dir = opendir( "." )))
     {
@@ -1325,6 +1428,9 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 #endif
 #ifdef USE_GETDENTS
         if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
+            goto done;
+#elif defined HAVE_GETDIRENTRIES
+        if ((read_directory_getdirentries( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
             goto done;
 #endif
         read_directory_readdir( fd, io, buffer, length, single_entry, mask, restart_scan );

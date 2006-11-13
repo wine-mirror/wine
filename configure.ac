@@ -1200,6 +1200,7 @@ AC_CHECK_FUNCS(\
 	futimes \
 	futimesat \
 	getaddrinfo \
+	getdirentries \
 	gethostbyname \
 	getnameinfo \
 	getnetbyname \
