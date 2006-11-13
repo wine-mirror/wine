@@ -291,13 +291,13 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
         '`','B','i' ,'n','a','r','y','`',' ','W','H','E','R','E',' ',
         '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0};
-    UINT rc;
     MSIRECORD *row = 0;
     HANDLE file;
     CHAR buffer[1024];
     static const WCHAR f1[] = {'m','s','i',0};
     WCHAR fmt[MAX_PATH];
     DWORD sz = MAX_PATH;
+    UINT r;
 
     if (MSI_GetPropertyW(package, cszTempFolder, fmt, &sz) != ERROR_SUCCESS)
         GetTempPathW(MAX_PATH, fmt);
@@ -309,34 +309,35 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
     }
     track_tempfile(package, tmp_file, tmp_file);
 
-    /* write out the file */
-    file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                       FILE_ATTRIBUTE_NORMAL, NULL);
-    if (file == INVALID_HANDLE_VALUE)
-        return ERROR_FUNCTION_FAILED;
-
     row = MSI_QueryGetRecord(package->db, query, source);
     if (!row)
         return ERROR_FUNCTION_FAILED;
 
-    do
+    /* write out the file */
+    file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        r = ERROR_FUNCTION_FAILED;
+    else
     {
-        DWORD write;
-        sz = sizeof buffer;
-        rc = MSI_RecordReadStream(row, 2, buffer, &sz);
-        if (rc != ERROR_SUCCESS)
+        do
         {
-            ERR("Failed to get stream\n");
-            CloseHandle(file);
-            break;
-        }
-        WriteFile(file, buffer, sz, &write, NULL);
-    } while (sz == sizeof buffer);
+            DWORD write;
+            sz = sizeof buffer;
+            r = MSI_RecordReadStream(row, 2, buffer, &sz);
+            if (r != ERROR_SUCCESS)
+            {
+                ERR("Failed to get stream\n");
+                break;
+            }
+            WriteFile(file, buffer, sz, &write, NULL);
+        } while (sz == sizeof buffer);
+        CloseHandle(file);
+    }
 
-    CloseHandle(file);
     msiobj_release(&row->hdr);
 
-    return ERROR_SUCCESS;
+    return r;
 }
 
 static void file_running_action(MSIPACKAGE* package, HANDLE Handle, 
