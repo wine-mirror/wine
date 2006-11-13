@@ -151,7 +151,7 @@ void SECUR32_CalcNTLMv2Subkey(PBYTE session_key, const char *magic, PBYTE subkey
 
     MD5Init(&ctx);
     MD5Update(&ctx, session_key, 16);
-    MD5Update(&ctx, (unsigned char*)magic, lstrlenA(magic)+1);
+    MD5Update(&ctx, (const unsigned char*)magic, lstrlenA(magic)+1);
     MD5Final(&ctx);
     memcpy(subkey, ctx.digest, 16);
 }
