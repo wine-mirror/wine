@@ -68,7 +68,7 @@ static RpcObjTypeMap *RpcObjTypeMaps;
 
 /* list of type RpcServerProtseq */
 static struct list protseqs = LIST_INIT(protseqs);
-static RpcServerInterface* ifs;
+static struct list server_interfaces = LIST_INIT(server_interfaces);
 
 static CRITICAL_SECTION server_cs;
 static CRITICAL_SECTION_DEBUG server_cs_debug =
@@ -124,20 +124,19 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
                                                  BOOL check_object)
 {
   UUID* MgrType = NULL;
-  RpcServerInterface* cif = NULL;
+  RpcServerInterface* cif;
   RPC_STATUS status;
 
   if (check_object)
     MgrType = LookupObjType(object);
   EnterCriticalSection(&server_cs);
-  cif = ifs;
-  while (cif) {
+  LIST_FOR_EACH_ENTRY(cif, &server_interfaces, RpcServerInterface, entry) {
     if (!memcmp(if_id, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER)) &&
         (check_object == FALSE || UuidEqual(MgrType, &cif->MgrTypeUuid, &status)) &&
         std_listen) break;
-    cif = cif->Next;
   }
   LeaveCriticalSection(&server_cs);
+  if (&cif->entry == &server_interfaces) cif = NULL;
   TRACE("returning %p for %s\n", cif, debugstr_guid(object));
   return cif;
 }
@@ -177,7 +176,8 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         response = RPCRT4_BuildBindNackHeader(NDR_LOCAL_DATA_REPRESENTATION,
                                               RPC_VER_MAJOR, RPC_VER_MINOR);
       } else {
-        TRACE("accepting bind request on connection %p\n", conn);
+        TRACE("accepting bind request on connection %p for %s\n", conn,
+              debugstr_guid(&hdr->bind.abstract.SyntaxGUID));
 
         /* accept. */
         response = RPCRT4_BuildBindAckHeader(NDR_LOCAL_DATA_REPRESENTATION,
@@ -784,8 +784,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
   sif->IfCallbackFn = IfCallbackFn;
 
   EnterCriticalSection(&server_cs);
-  sif->Next = ifs;
-  ifs = sif;
+  list_add_head(&server_interfaces, &sif->entry);
   LeaveCriticalSection(&server_cs);
 
   if (sif->Flags & RPC_IF_AUTOLISTEN)

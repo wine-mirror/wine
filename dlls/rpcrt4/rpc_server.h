@@ -61,7 +61,7 @@ struct protseq_ops
 
 typedef struct _RpcServerInterface
 {
-  struct _RpcServerInterface* Next;
+  struct list entry;
   RPC_SERVER_INTERFACE* If;
   UUID MgrTypeUuid;
   RPC_MGR_EPV* MgrEpv;
