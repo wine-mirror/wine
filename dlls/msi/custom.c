@@ -561,7 +561,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
     PROCESS_INFORMATION info;
     BOOL rc;
     INT len;
-    WCHAR *deformated;
+    WCHAR *deformated = NULL;
     WCHAR *cmd;
     static const WCHAR spc[] = {' ',0};
     UINT r = ERROR_SUCCESS;
@@ -595,15 +595,13 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
 
     rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
                   c_collen, &si, &info);
-
+    msi_free(cmd);
 
     if ( !rc )
     {
         ERR("Unable to execute command %s\n", debugstr_w(cmd));
-        msi_free(cmd);
         return ERROR_SUCCESS;
     }
-    msi_free(cmd);
 
     r = process_handle(package, type, info.hThread, info.hProcess, action,
                           &finished);
