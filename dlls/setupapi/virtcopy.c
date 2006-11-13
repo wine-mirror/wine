@@ -91,6 +91,7 @@ VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
     VHSTR n;
     VHSTR index = 0xffff;
     HANDLE heap;
+    LPSTR str;
 
     TRACE("add string '%s'\n", lpszName);
     /* search whether string already inserted */
@@ -137,8 +138,9 @@ VHSTR WINAPI vsmStringAdd16(LPCSTR lpszName)
     if (!vhstrlist[index])
 	vhstrlist[index] = HeapAlloc(heap, HEAP_ZERO_MEMORY, sizeof(VHSTR_STRUCT));
     vhstrlist[index]->refcount = 1;
-    vhstrlist[index]->pStr = HeapAlloc(heap, 0, strlen(lpszName)+1);
-    strcpy((LPSTR)vhstrlist[index]->pStr, lpszName);
+    str = HeapAlloc(heap, 0, strlen(lpszName)+1);
+    strcpy(str, lpszName);
+    vhstrlist[index]->pStr = str;
     return index;
 }
 
