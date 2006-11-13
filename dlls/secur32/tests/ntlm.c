@@ -550,7 +550,215 @@ static void communicate(SspiData *from, SspiData *to)
         }
     }
 }
-   
+
+/**********************************************************************/
+static void testInitializeSecurityContextFlags()
+{
+    SECURITY_STATUS         sec_status;
+    PSecPkgInfo             pkg_info = NULL;
+    SspiData                client;
+    SEC_WINNT_AUTH_IDENTITY id;
+    static char             sec_pkg_name[] = "NTLM";
+    ULONG                   req_attr, ctxt_attr;
+    TimeStamp               ttl;
+    PBYTE                   packet;
+
+    if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info) != SEC_E_OK)
+    {
+        trace("Package not installed, skipping test!\n");
+        return;
+    }
+
+    pFreeContextBuffer(pkg_info);
+    id.User = (unsigned char*) "testuser";
+    id.UserLength = strlen((char *) id.User);
+    id.Domain = (unsigned char *) "WORKGROUP";
+    id.DomainLength = strlen((char *) id.Domain);
+    id.Password = (unsigned char*) "testpass";
+    id.PasswordLength = strlen((char *) id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+
+    client.id = &id;
+
+    if((sec_status = setupClient(&client, sec_pkg_name)) != SEC_E_OK)
+    {
+        trace("Setting up the client returned %s, skipping test!\n",
+                getSecError(sec_status));
+        return;
+    }
+
+    packet = client.out_buf->pBuffers[0].pvBuffer;
+
+    /* Due to how the requesting of the flags is implemented in ntlm_auth,
+     * the tests need to be in this order, as there is no way to specify
+     * "I request no special features" in ntlm_auth */
+
+    /* Without any flags, the lowest byte should not have bits 0x20 or 0x10 set*/
+    req_attr = 0;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
+            "With req_attr == 0, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_CONNECTION, the lowest byte should not have bits 0x20 or 0x10 set*/
+    req_attr = ISC_REQ_CONNECTION;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
+            "For ISC_REQ_CONNECTION, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_EXTENDED_ERROR, the lowest byte should not have bits 0x20 or 0x10 set*/
+    req_attr = ISC_REQ_EXTENDED_ERROR;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
+            "For ISC_REQ_EXTENDED_ERROR, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_MUTUAL_AUTH, the lowest byte should not have bits 0x20 or 0x10 set*/
+    req_attr = ISC_REQ_MUTUAL_AUTH;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
+            "For ISC_REQ_MUTUAL_AUTH, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_USE_DCE_STYLE, the lowest byte should not have bits 0x20 or 0x10 set*/
+    req_attr = ISC_REQ_USE_DCE_STYLE;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
+            "For ISC_REQ_USE_DCE_STYLE, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_DELEGATE, the lowest byte should not have bits 0x20 or 0x10 set*/
+    req_attr = ISC_REQ_DELEGATE;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok(((packet[12] & 0x10) == 0) && ((packet[12] & 0x20) == 0),
+            "For ISC_REQ_DELEGATE, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_INTEGRITY, the lowest byte should have bit 0x10 set */
+    req_attr = ISC_REQ_INTEGRITY;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok((packet[12] & 0x10) != 0,
+            "For ISC_REQ_INTEGRITY, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_REPLAY_DETECT, the lowest byte should have bit 0x10 set */
+    req_attr = ISC_REQ_REPLAY_DETECT;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok((packet[12] & 0x10) != 0,
+            "For ISC_REQ_REPLAY_DETECT, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_SEQUENCE_DETECT, the lowest byte should have bit 0x10 set */
+    req_attr = ISC_REQ_SEQUENCE_DETECT;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok((packet[12] & 0x10) != 0,
+            "For ISC_REQ_SEQUENCE_DETECT, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+    /* With ISC_REQ_CONFIDENTIALITY, the lowest byte should have bit 0x20 set */
+    req_attr = ISC_REQ_CONFIDENTIALITY;
+
+    if((sec_status = pInitializeSecurityContextA(client.cred, NULL, NULL, req_attr,
+        0, SECURITY_NETWORK_DREP, NULL, 0, client.ctxt, client.out_buf,
+        &ctxt_attr, &ttl)) != SEC_I_CONTINUE_NEEDED)
+    {
+        trace("InitializeSecurityContext returned %s not SEC_I_CONTINUE_NEEDED, aborting.\n",
+                getSecError(sec_status));
+        goto tISCFend;
+    }
+
+    ok((packet[12] & 0x20) != 0,
+            "For ISC_REQ_CONFIDENTIALITY, flags are 0x%02x%02x%02x%02x.\n",
+            packet[15], packet[14], packet[13], packet[12]);
+
+tISCFend:
+    cleanupBuffers(&client);
+    pFreeCredentialsHandle(client.cred);
+
+}
+
 /**********************************************************************/
 
 static void testAuth(ULONG data_rep, BOOL fake)
@@ -906,9 +1114,10 @@ START_TEST(ntlm)
 
     if(pFreeCredentialsHandle && pDeleteSecurityContext &&
        pDeleteSecurityContext && pAcquireCredentialsHandleA &&
-       pInitializeSecurityContextA && pCompleteAuthToken && 
+       pInitializeSecurityContextA && pCompleteAuthToken &&
        pQuerySecurityPackageInfoA)
     {
+        testInitializeSecurityContextFlags();
         if(pAcceptSecurityContext)
         {
             testAuth(SECURITY_NATIVE_DREP, TRUE);

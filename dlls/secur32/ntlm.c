@@ -443,29 +443,41 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
         }
         lstrcpyA(want_flags, "SF");
         if(fContextReq & ISC_REQ_CONFIDENTIALITY)
-            lstrcatA(want_flags, " NTLMSSP_FEATURE_SEAL");
-        if(fContextReq & ISC_REQ_CONNECTION)
         {
-            /* This is default, so we'll enable it */
-            ctxt_attr |= ISC_RET_CONNECTION;
-            /* Work around a bug in ntlm_auth that sets the
-             * NTLMSSP_FEATURE_SIGN flag for this want flag, which
-             * breaks RPC. */
-            if(0)
-                lstrcatA(want_flags, " NTLMSSP_FEATURE_SESSION_KEY");
+            char *ptr;
+            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SEAL")) == NULL)
+                lstrcatA(want_flags, " NTLMSSP_FEATURE_SEAL");
         }
+        if(fContextReq & ISC_REQ_CONNECTION)
+            ctxt_attr |= ISC_RET_CONNECTION;
         if(fContextReq & ISC_REQ_EXTENDED_ERROR)
-            FIXME("ISC_REQ_EXTENDED_ERROR\n");
+            ctxt_attr |= ISC_RET_EXTENDED_ERROR;
         if(fContextReq & ISC_REQ_INTEGRITY)
-            lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
+        {
+            char *ptr;
+            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SIGN")) == NULL)
+                lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
+        }
         if(fContextReq & ISC_REQ_MUTUAL_AUTH)
-            FIXME("ISC_REQ_MUTUAL_AUTH\n");
+            ctxt_attr |= ISC_RET_MUTUAL_AUTH;
         if(fContextReq & ISC_REQ_REPLAY_DETECT)
-            FIXME("ISC_REQ_REPLAY_DETECT\n");
+        {
+            char *ptr;
+            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SIGN")) == NULL)
+                lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
+        }
         if(fContextReq & ISC_REQ_SEQUENCE_DETECT)
-            FIXME("ISC_REQ_SEQUENCE_DETECT\n");
+        {
+            char *ptr;
+            if((ptr = strstr(want_flags, "NTLMSSP_FEATURE_SIGN")) == NULL)
+                lstrcatA(want_flags, " NTLMSSP_FEATURE_SIGN");
+        }
         if(fContextReq & ISC_REQ_STREAM)
             FIXME("ISC_REQ_STREAM\n");
+        if(fContextReq & ISC_REQ_USE_DCE_STYLE)
+            ctxt_attr |= ISC_RET_USED_DCE_STYLE;
+        if(fContextReq & ISC_REQ_DELEGATE)
+            ctxt_attr |= ISC_RET_DELEGATE;
 
         /* If no password is given, try to use cached credentials. Fall back to an empty
          * password if this failed. */
@@ -533,6 +545,8 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                         max_len-1, &bin_len)) != SEC_E_OK)
             goto isc_end;
 
+        /* We need to set NTLMSSP_NEGOTIATE_ALWAYS_SIGN manually for now */
+        bin[13] |= 0x80;
         /* put the decoded client blob into the out buffer */
 
         ret = SEC_I_CONTINUE_NEEDED;
