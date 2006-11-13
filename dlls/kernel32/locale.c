@@ -2592,7 +2592,7 @@ void LOCALE_Init(void)
 #endif
     setlocale( LC_ALL, "" );
 
-    lcid = get_env_lcid( NULL, LC_ALL );
+    lcid = get_env_lcid( NULL, LC_NUMERIC );
     NtSetDefaultLocale( TRUE, lcid );
 
     lcid = get_env_lcid( NULL, LC_MESSAGES );
