@@ -133,12 +133,26 @@ static RpcServerInterface* RPCRT4_find_interface(UUID* object,
   LIST_FOR_EACH_ENTRY(cif, &server_interfaces, RpcServerInterface, entry) {
     if (!memcmp(if_id, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER)) &&
         (check_object == FALSE || UuidEqual(MgrType, &cif->MgrTypeUuid, &status)) &&
-        std_listen) break;
+        std_listen) {
+      InterlockedIncrement(&cif->CurrentCalls);
+      break;
+    }
   }
   LeaveCriticalSection(&server_cs);
   if (&cif->entry == &server_interfaces) cif = NULL;
   TRACE("returning %p for %s\n", cif, debugstr_guid(object));
   return cif;
+}
+
+static void RPCRT4_release_server_interface(RpcServerInterface *sif)
+{
+  if (!InterlockedDecrement(&sif->CurrentCalls) &&
+      sif->CallsCompletedEvent) {
+    /* sif must have been removed from server_interfaces before
+     * CallsCompletedEvent is set */
+    SetEvent(sif->CallsCompletedEvent);
+    HeapFree(GetProcessHeap(), 0, sif);
+  }
 }
 
 static WINE_EXCEPTION_FILTER(rpc_filter)
@@ -190,6 +204,8 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
         /* save the interface for later use */
         conn->ActiveInterface = hdr->bind.abstract;
         conn->MaxTransmissionSize = hdr->bind.max_tsize;
+
+        RPCRT4_release_server_interface(sif);
       }
 
       status = RPCRT4_Send(conn, response, NULL, 0);
@@ -219,6 +235,10 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       }
 
       sif = RPCRT4_find_interface(object_uuid, &conn->ActiveInterface, TRUE);
+      if (!sif) {
+        /* FIXME: send fault packet? */
+        break;
+      }
       msg->RpcInterfaceInformation = sif->If;
       /* copy the endpoint vector from sif to msg so that midl-generated code will use it */
       msg->ManagerEpv = sif->MgrEpv;
@@ -262,6 +282,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       I_RpcSend(msg);
 
       msg->RpcInterfaceInformation = NULL;
+      RPCRT4_release_server_interface(sif);
 
       break;
 
@@ -798,8 +819,45 @@ RPC_STATUS WINAPI RpcServerRegisterIf2( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
  */
 RPC_STATUS WINAPI RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid, UINT WaitForCallsToComplete )
 {
-  FIXME("(IfSpec == (RPC_IF_HANDLE)^%p, MgrTypeUuid == %s, WaitForCallsToComplete == %u): stub\n",
-    IfSpec, debugstr_guid(MgrTypeUuid), WaitForCallsToComplete);
+  PRPC_SERVER_INTERFACE If = (PRPC_SERVER_INTERFACE)IfSpec;
+  HANDLE event = NULL;
+  BOOL found = FALSE;
+  BOOL completed = TRUE;
+  RpcServerInterface *cif;
+  RPC_STATUS status;
+
+  TRACE("(IfSpec == (RPC_IF_HANDLE)^%p (%s), MgrTypeUuid == %s, WaitForCallsToComplete == %u)\n",
+    IfSpec, debugstr_guid(&If->InterfaceId.SyntaxGUID), debugstr_guid(MgrTypeUuid), WaitForCallsToComplete);
+
+  EnterCriticalSection(&server_cs);
+  LIST_FOR_EACH_ENTRY(cif, &server_interfaces, RpcServerInterface, entry) {
+    if (!memcmp(&If->InterfaceId, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER)) &&
+        UuidEqual(MgrTypeUuid, &cif->MgrTypeUuid, &status)) {
+      list_remove(&cif->entry);
+      if (cif->CurrentCalls) {
+        completed = FALSE;
+        if (WaitForCallsToComplete)
+          cif->CallsCompletedEvent = event = CreateEventW(NULL, FALSE, FALSE, NULL);
+      }
+      found = TRUE;
+      break;
+    }
+  }
+  LeaveCriticalSection(&server_cs);
+
+  if (!found) {
+    ERR("not found for object %s\n", debugstr_guid(MgrTypeUuid));
+    return RPC_S_UNKNOWN_IF;
+  }
+
+  if (completed)
+    HeapFree(GetProcessHeap(), 0, cif);
+  else if (event) {
+    /* sif will be freed when the last call is completed, so be careful not to
+     * touch that memory here as that could happen before we get here */
+    WaitForSingleObject(event, INFINITE);
+    CloseHandle(event);
+  }
 
   return RPC_S_OK;
 }

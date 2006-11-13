@@ -69,6 +69,10 @@ typedef struct _RpcServerInterface
   UINT MaxCalls;
   UINT MaxRpcSize;
   RPC_IF_CALLBACK_FN* IfCallbackFn;
+  LONG CurrentCalls; /* number of calls currently executing */
+  /* set when unregistering interface to let the caller of
+   * RpcServerUnregisterIf* know that all calls have finished */
+  HANDLE CallsCompletedEvent;
 } RpcServerInterface;
 
 void RPCRT4_new_client(RpcConnection* conn);
