@@ -289,6 +289,7 @@ WINDOWS_INCLUDES = \
 	vfwmsgs.h \
 	winbase.h \
 	wincon.h \
+	wincred.h \
 	wincrypt.h \
 	windef.h \
 	windns.h \
