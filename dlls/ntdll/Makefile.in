@@ -45,10 +45,10 @@ C_SRCS = \
 	string.c \
 	sync.c \
 	tape.c \
-	version.c \
 	thread.c \
 	threadpool.c \
 	time.c \
+	version.c \
 	virtual.c \
 	wcstring.c
 
