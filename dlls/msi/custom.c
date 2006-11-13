@@ -284,62 +284,57 @@ end:
 }
 
 
-static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source, 
+static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
                                 LPWSTR tmp_file)
 {
-    DWORD sz=MAX_PATH;
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        '`','B','i' ,'n','a','r','y','`',' ','W','H','E','R','E',' ',
+        '`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0};
+    UINT rc;
+    MSIRECORD *row = 0;
+    HANDLE file;
+    CHAR buffer[1024];
     static const WCHAR f1[] = {'m','s','i',0};
     WCHAR fmt[MAX_PATH];
+    DWORD sz = MAX_PATH;
 
     if (MSI_GetPropertyW(package, cszTempFolder, fmt, &sz) != ERROR_SUCCESS)
-        GetTempPathW(MAX_PATH,fmt);
+        GetTempPathW(MAX_PATH, fmt);
 
-    if (GetTempFileNameW(fmt,f1,0,tmp_file) == 0)
+    if (GetTempFileNameW(fmt, f1, 0, tmp_file) == 0)
     {
         TRACE("Unable to create file\n");
         return ERROR_FUNCTION_FAILED;
     }
-    else
+
+    /* write out the file */
+    file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
+                       FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return ERROR_FUNCTION_FAILED;
+
+    row = MSI_QueryGetRecord(package->db, query, source);
+    if (!row)
+        return ERROR_FUNCTION_FAILED;
+
+    do
     {
-        /* write out the file */
-        UINT rc;
-        MSIRECORD * row = 0;
-        static const WCHAR fmt[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','B','i' ,'n','a','r','y','`',' ','W','H','E','R','E',
-         ' ','`','N','a','m','e','`',' ','=',' ','\'','%','s','\'',0};
-        HANDLE the_file;
-        CHAR buffer[1024];
-
-        the_file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
-                           FILE_ATTRIBUTE_NORMAL, NULL);
-    
-        if (the_file == INVALID_HANDLE_VALUE)
-            return ERROR_FUNCTION_FAILED;
-
-        row = MSI_QueryGetRecord(package->db, fmt, source);
-        if (!row)
-            return ERROR_FUNCTION_FAILED;
-
-        do 
+        DWORD write;
+        sz = sizeof buffer;
+        rc = MSI_RecordReadStream(row, 2, buffer, &sz);
+        if (rc != ERROR_SUCCESS)
         {
-            DWORD write;
-            sz = 1024;
-            rc = MSI_RecordReadStream(row,2,buffer,&sz);
-            if (rc != ERROR_SUCCESS)
-            {
-                ERR("Failed to get stream\n");
-                CloseHandle(the_file);  
-                DeleteFileW(tmp_file);
-                break;
-            }
-            WriteFile(the_file,buffer,sz,&write,NULL);
-        } while (sz == 1024);
+            ERR("Failed to get stream\n");
+            CloseHandle(file);
+            DeleteFileW(tmp_file);
+            break;
+        }
+        WriteFile(file, buffer, sz, &write, NULL);
+    } while (sz == sizeof buffer);
 
-        CloseHandle(the_file);
-
-        msiobj_release(&row->hdr);
-    }
+    CloseHandle(file);
+    msiobj_release(&row->hdr);
 
     return ERROR_SUCCESS;
 }
