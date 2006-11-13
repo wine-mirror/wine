@@ -307,6 +307,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         TRACE("Unable to create file\n");
         return ERROR_FUNCTION_FAILED;
     }
+    track_tempfile(package, tmp_file, tmp_file);
 
     /* write out the file */
     file = CreateFileW(tmp_file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
@@ -327,7 +328,6 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         {
             ERR("Failed to get stream\n");
             CloseHandle(file);
-            DeleteFileW(tmp_file);
             break;
         }
         WriteFile(file, buffer, sz, &write, NULL);
@@ -549,11 +549,6 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
 
     r = process_handle(package, type, ThreadHandle, NULL, action, &finished );
 
-    if (!finished)
-        track_tempfile(package, tmp_file, tmp_file);
-    else
-        DeleteFileW(tmp_file);
-
     return r;
 }
 
@@ -611,11 +606,6 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
 
     r = process_handle(package, type, info.hThread, info.hProcess, action,
                           &finished);
-
-    if (!finished)
-        track_tempfile(package, tmp_file, tmp_file);
-    else
-        DeleteFileW(tmp_file);
 
     return r;
 }
