@@ -141,7 +141,9 @@ HRESULT WINAPI DllGetClassObject( REFCLSID rclsid, REFIID iid, LPVOID *ppv )
 
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(iid), ppv );
 
-    if( IsEqualGUID( rclsid, &CLSID_DOMDocument ) )
+    if( IsEqualGUID( rclsid, &CLSID_DOMDocument ) ||   /* Version indep. v 2.x */
+        IsEqualGUID( rclsid, &CLSID_DOMDocument2 ) ||  /* Version indep. v 3.0 */
+        IsEqualGUID( rclsid, &CLSID_DOMDocument30 ) )  /* Version dep.   v 3.0 */
         cf = (IClassFactory*) &domdoccf.lpVtbl;
 
     if ( !cf )
