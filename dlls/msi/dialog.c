@@ -3505,12 +3505,16 @@ UINT msi_spawn_error_dialog( MSIPACKAGE *package, LPWSTR error_dialog, LPWSTR er
     DWORD size = MAX_PATH;
     int res;
 
+    static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR pn_prop[] = {'P','r','o','d','u','c','t','N','a','m','e',0};
     static const WCHAR title_fmt[] = {'%','s',' ','W','a','r','n','i','n','g',0};
     static const WCHAR error_abort[] = {'E','r','r','o','r','A','b','o','r','t',0};
     static const WCHAR result_prop[] = {
         'M','S','I','E','r','r','o','r','D','i','a','l','o','g','R','e','s','u','l','t',0
     };
+
+    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE )
+        return ERROR_SUCCESS;
 
     if ( !error_dialog )
     {

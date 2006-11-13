@@ -69,20 +69,30 @@ struct media_info {
 
 static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi )
 {
+    LPSTR msg;
     LPWSTR error, error_dialog;
     UINT r = ERROR_SUCCESS;
 
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
 
-    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE )
+    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE && !gUIHandlerA )
         return ERROR_SUCCESS;
 
     error = generate_error_string( package, 1302, 1, mi->disk_prompt );
     error_dialog = msi_dup_property( package, error_prop );
 
     while ( r == ERROR_SUCCESS && GetFileAttributesW( mi->source ) == INVALID_FILE_ATTRIBUTES )
+    {
         r = msi_spawn_error_dialog( package, error_dialog, error );
+
+        if (gUIHandlerA)
+        {
+            msg = strdupWtoA( error );
+            gUIHandlerA( gUIContext, MB_RETRYCANCEL | INSTALLMESSAGE_ERROR, msg );
+            msi_free(msg);
+        }
+    }
 
     msi_free( error );
     msi_free( error_dialog );
