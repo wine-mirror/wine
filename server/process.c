@@ -517,7 +517,7 @@ static void terminate_process( struct process *process, struct thread *skip, int
 {
     struct list *ptr;
 
-    if (skip)  /* move it to the end of the list */
+    if (skip && skip->process == process)  /* move it to the end of the list */
     {
         assert( skip->state != TERMINATED );
         list_remove( &skip->proc_entry );
