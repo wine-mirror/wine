@@ -814,6 +814,9 @@ BOOL     WINAPI SetupGetLineTextW( PINFCONTEXT context, HINF hinf, PCWSTR sectio
 BOOL     WINAPI SetupGetMultiSzFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, LPDWORD required );
 BOOL     WINAPI SetupGetMultiSzFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, LPDWORD required );
 #define         SetupGetMultiSzField WINELIB_NAME_AW(SetupGetMultiSzField)
+BOOL     WINAPI SetupGetSourceFileLocationA( HINF hinf, PINFCONTEXT context, PCSTR filename, PUINT source_id, PSTR buffer, DWORD buffer_size, PDWORD required_size );
+BOOL     WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR filename, PUINT source_id, PWSTR buffer, DWORD buffer_size, PDWORD required_size );
+#define         SetupGetSourceFileLocation WINELIB_NAME_AW(SetupGetSourceFileLocation)
 BOOL     WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, PDWORD required );
 BOOL     WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, PDWORD required );
 #define         SetupGetStringField WINELIB_NAME_AW(SetupGetStringField)
