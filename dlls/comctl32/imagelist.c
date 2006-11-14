@@ -2123,12 +2123,12 @@ ImageList_Remove (HIMAGELIST himl, INT i)
 
             SelectObject (hdcBmp, hbmNewImage);
             imagelist_copy_images( himl, himl->hdcImage, hdcBmp, i,
-                                   (himl->cCurImage - i - 1), i + 1 );
+                                   (himl->cCurImage - i - 1), i - 1 );
 
             if (himl->hbmMask) {
                 SelectObject (hdcBmp, hbmNewMask);
                 imagelist_copy_images( himl, himl->hdcMask, hdcBmp, i,
-                                       (himl->cCurImage - i - 1), i + 1 );
+                                       (himl->cCurImage - i - 1), i - 1 );
             }
         }
 
