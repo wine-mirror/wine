@@ -2243,10 +2243,9 @@ ImageList_Replace (HIMAGELIST himl, INT i, HBITMAP hbmImage,
  */
 
 INT WINAPI
-ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
+ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
 {
     HDC     hdcImage;
-    INT     nIndex;
     HICON   hBestFitIcon;
     HBITMAP hbmOldSrc;
     ICONINFO  ii;
@@ -2255,14 +2254,14 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
     POINT   pt;
     INT     i;
 
-    TRACE("(%p %d %p)\n", himl, i, hIcon);
+    TRACE("(%p %d %p)\n", himl, nIndex, hIcon);
 
     if (!is_valid(himl)) {
         ERR("invalid image list\n");
         return -1;
     }
-    if ((i >= himl->cMaxImage) || (i < -1)) {
-        ERR("invalid image index %d / %d\n", i, himl->cMaxImage);
+    if ((nIndex >= himl->cMaxImage) || (nIndex < -1)) {
+        ERR("invalid image index %d / %d\n", nIndex, himl->cMaxImage);
         return -1;
     }
 
@@ -2299,15 +2298,13 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT i, HICON hIcon)
         return -1;
     }
 
-    if (i == -1) {
+    if (nIndex == -1) {
         if (himl->cCurImage + 1 > himl->cMaxImage)
             IMAGELIST_InternalExpandBitmaps (himl, 1, 0, 0);
 
         nIndex = himl->cCurImage;
         himl->cCurImage++;
     }
-    else
-        nIndex = i;
 
     hdcImage = CreateCompatibleDC (0);
     TRACE("hdcImage=%p\n", hdcImage);
