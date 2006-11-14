@@ -498,13 +498,14 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
 static LPCWSTR copy_package_to_temp( LPCWSTR szPackage, LPWSTR filename )
 {
     WCHAR path[MAX_PATH];
-    static const WCHAR szMSI[] = {'M','S','I',0};
+    static const WCHAR szMSI[] = {'m','s','i',0};
 
     GetTempPathW( MAX_PATH, path );
     GetTempFileNameW( path, szMSI, 0, filename );
 
     if( !CopyFileW( szPackage, filename, FALSE ) )
     {
+        DeleteFileW( filename );
         ERR("failed to copy package %s\n", debugstr_w(szPackage) );
         return szPackage;
     }
