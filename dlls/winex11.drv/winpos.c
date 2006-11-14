@@ -1224,17 +1224,36 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
     else WIN_ReleasePtr( win );
 }
 
+struct desktop_resize_data
+{
+    RECT  old_screen_rect;
+    RECT  old_virtual_rect;
+};
 
-static BOOL CALLBACK update_windows_fullscreen_state( HWND hwnd, LPARAM lparam )
+static BOOL CALLBACK update_windows_on_desktop_resize( HWND hwnd, LPARAM lparam )
 {
     struct x11drv_win_data *data;
     Display *display = thread_display();
-    RECT *old_screen_rect = (RECT *)lparam;
+    struct desktop_resize_data *resize_data = (struct desktop_resize_data *)lparam;
+    int mask = 0;
 
-    if ((data = X11DRV_get_win_data( hwnd )) &&
-        (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
+    if (!(data = X11DRV_get_win_data( hwnd ))) return TRUE;
+
+    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
+        update_fullscreen_state( display, data, &data->client_rect, &resize_data->old_screen_rect );
+
+    if (resize_data->old_virtual_rect.left != virtual_screen_rect.left) mask |= CWX;
+    if (resize_data->old_virtual_rect.top != virtual_screen_rect.top) mask |= CWY;
+    if (mask && data->whole_window)
     {
-        update_fullscreen_state( display, data, &data->client_rect, old_screen_rect );
+        XWindowChanges changes;
+
+        wine_tsx11_lock();
+        changes.x = data->whole_rect.left - virtual_screen_rect.left;
+        changes.y = data->whole_rect.top - virtual_screen_rect.top;
+        XReconfigureWMWindow( display, data->whole_window,
+                              DefaultScreen(display), mask, &changes );
+        wine_tsx11_unlock();
     }
     return TRUE;
 }
@@ -1245,15 +1264,14 @@ static BOOL CALLBACK update_windows_fullscreen_state( HWND hwnd, LPARAM lparam )
  */
 void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
 {
-    unsigned int old_screen_width, old_screen_height;
-    RECT rect;
     HWND hwnd = GetDesktopWindow();
     struct x11drv_win_data *data;
+    struct desktop_resize_data resize_data;
 
     if (!(data = X11DRV_get_win_data( hwnd ))) return;
 
-    old_screen_width = screen_width;
-    old_screen_height = screen_height;
+    SetRect( &resize_data.old_screen_rect, 0, 0, screen_width, screen_height );
+    resize_data.old_virtual_rect = virtual_screen_rect;
 
     screen_width  = width;
     screen_height = height;
@@ -1266,8 +1284,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
 
-    SetRect( &rect, 0, 0, old_screen_width, old_screen_height );
-    EnumWindows( update_windows_fullscreen_state, (LPARAM)&rect );
+    EnumWindows( update_windows_on_desktop_resize, (LPARAM)&resize_data );
 }
 
 
