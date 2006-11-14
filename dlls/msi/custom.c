@@ -307,7 +307,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
         TRACE("Unable to create file\n");
         return ERROR_FUNCTION_FAILED;
     }
-    track_tempfile(package, tmp_file, tmp_file);
+    track_tempfile(package, tmp_file);
 
     row = MSI_QueryGetRecord(package->db, query, source);
     if (!row)

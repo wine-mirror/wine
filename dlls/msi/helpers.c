@@ -108,31 +108,22 @@ MSIFILE* get_loaded_file( MSIPACKAGE* package, LPCWSTR key )
     return NULL;
 }
 
-int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
+int track_tempfile( MSIPACKAGE *package, LPCWSTR path )
 {
     MSITEMPFILE *temp;
 
+    TRACE("%s\n", debugstr_w(path));
+
     LIST_FOR_EACH_ENTRY( temp, &package->tempfiles, MSITEMPFILE, entry )
-    {
-        if (lstrcmpW( name, temp->File )==0)
-        {
-            TRACE("tempfile %s already exists with path %s\n",
-                debugstr_w(temp->File), debugstr_w(temp->Path));
-            return -1;
-        }
-    }
+        if (!lstrcmpW( path, temp->Path ))
+            return 0;
 
     temp = msi_alloc_zero( sizeof (MSITEMPFILE) );
     if (!temp)
         return -1;
 
     list_add_head( &package->tempfiles, &temp->entry );
-
-    temp->File = strdupW( name );
     temp->Path = strdupW( path );
-
-    TRACE("adding tempfile %s with path %s\n",
-           debugstr_w(temp->File), debugstr_w(temp->Path));
 
     return 0;
 }
@@ -140,7 +131,7 @@ int track_tempfile( MSIPACKAGE *package, LPCWSTR name, LPCWSTR path )
 MSIFOLDER *get_loaded_folder( MSIPACKAGE *package, LPCWSTR dir )
 {
     MSIFOLDER *folder;
-    
+
     LIST_FOR_EACH_ENTRY( folder, &package->folders, MSIFOLDER, entry )
     {
         if (lstrcmpW( dir, folder->Directory )==0)
@@ -407,7 +398,6 @@ static void remove_tracked_tempfiles(MSIPACKAGE* package)
         TRACE("deleting temp file %s\n", debugstr_w( temp->Path ));
         if (!DeleteFileW( temp->Path ))
             ERR("failed to delete %s\n", debugstr_w( temp->Path ));
-        msi_free( temp->File );
         msi_free( temp->Path );
         msi_free( temp );
     }

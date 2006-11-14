@@ -123,7 +123,7 @@ static UINT writeout_cabinet_stream(MSIPACKAGE *package, LPCWSTR stream_name,
 
     GetTempFileNameW(tmp,stream_name,0,source);
 
-    track_tempfile(package,strrchrW(source,'\\'), source);
+    track_tempfile(package, source);
     the_file = CreateFileW(source, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                            FILE_ATTRIBUTE_NORMAL, NULL);
 
