@@ -667,7 +667,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
 
             r = pf_output_format_A( out, x, -1, &flags );
             if( x != number )
-                HeapFree( GetProcessHeap(), 0, number );
+                HeapFree( GetProcessHeap(), 0, x );
         }
 
         /* deal with integers and floats using libc's printf */
@@ -687,7 +687,7 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
 
             r = pf_output_stringA( out, x, -1 );
             if( x != number )
-                HeapFree( GetProcessHeap(), 0, number );
+                HeapFree( GetProcessHeap(), 0, x );
         }
         else
             continue;
