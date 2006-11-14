@@ -292,6 +292,7 @@ static void test_fgetc( void )
   ret = fgetc(tempfh);
   ok(ich == ret, "Second fgetc expected %x got %x\n", ich, ret);
   fclose(tempfh);
+  unlink(tempf);
 }
 
 static void test_fgetwc( void )
