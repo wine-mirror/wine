@@ -738,7 +738,7 @@
 @ cdecl vfprintf(ptr str long) MSVCRT_vfprintf
 @ cdecl vfwprintf(ptr wstr long) MSVCRT_vfwprintf
 @ cdecl vprintf(str long) MSVCRT_vprintf
-@ cdecl vsprintf(ptr str ptr) ntdll.vsprintf
+@ cdecl vsprintf(ptr str ptr) MSVCRT_vsprintf
 @ cdecl vswprintf(ptr wstr long) MSVCRT_vswprintf
 @ cdecl vwprintf(wstr long) MSVCRT_vwprintf
 @ cdecl wcscat(wstr wstr) ntdll.wcscat

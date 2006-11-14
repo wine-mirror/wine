@@ -759,6 +759,14 @@ int CDECL MSVCRT_vsnprintf( char *str, unsigned int len,
 }
 
 /*********************************************************************
+ *		vsprintf (MSVCRT.@)
+ */
+int CDECL MSVCRT_vsprintf( char *str, const char *format, va_list valist)
+{
+    return MSVCRT_vsnprintf(str, INT_MAX, format, valist);
+}
+
+/*********************************************************************
  *		_snprintf (MSVCRT.@)
  */
 int CDECL MSVCRT__snprintf(char *str, unsigned int len, const char *format, ...)
