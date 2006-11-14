@@ -427,34 +427,20 @@ static UINT msi_get_word_count( MSIPACKAGE *package )
     return word_count;
 }
 
-MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
+static MSIPACKAGE *msi_alloc_package( void )
 {
-    static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
-    static const WCHAR szpi[] = {'%','i',0};
-    static const WCHAR szProductCode[] = {
-        'P','r','o','d','u','c','t','C','o','d','e',0};
-    MSIPACKAGE *package = NULL;
-    WCHAR uilevel[10];
+    MSIPACKAGE *package;
     int i;
-
-    TRACE("%p\n", db);
 
     package = alloc_msiobject( MSIHANDLETYPE_PACKAGE, sizeof (MSIPACKAGE),
                                MSI_FreePackage );
     if( package )
     {
-        msiobj_addref( &db->hdr );
-
-        package->db = db;
         list_init( &package->components );
         list_init( &package->features );
         list_init( &package->files );
         list_init( &package->tempfiles );
         list_init( &package->folders );
-        package->ActionFormat = NULL;
-        package->LastAction = NULL;
-        package->dialog = NULL;
-        package->next_dialog = NULL;
         list_init( &package->subscriptions );
         list_init( &package->appids );
         list_init( &package->classes );
@@ -463,15 +449,38 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
         list_init( &package->progids );
         list_init( &package->RunningActions );
 
+        for (i=0; i<PROPERTY_HASH_SIZE; i++)
+            list_init( &package->props[i] );
+
+        package->ActionFormat = NULL;
+        package->LastAction = NULL;
+        package->dialog = NULL;
+        package->next_dialog = NULL;
+    }
+
+    return package;
+}
+
+MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
+{
+    static const WCHAR szLevel[] = { 'U','I','L','e','v','e','l',0 };
+    static const WCHAR szpi[] = {'%','i',0};
+    static const WCHAR szProductCode[] = {
+        'P','r','o','d','u','c','t','C','o','d','e',0};
+    MSIPACKAGE *package;
+    WCHAR uilevel[10];
+
+    TRACE("%p\n", db);
+
+    package = msi_alloc_package();
+    if (package)
+    {
+        msiobj_addref( &db->hdr );
+        package->db = db;
+
         package->WordCount = msi_get_word_count( package );
         package->PackagePath = strdupW( db->path );
         package->BaseURL = strdupW( base_url );
-
-        /* OK, here is where we do a slew of things to the database to 
-         * prep for all that is to come as a package */
-
-        for (i=0; i<PROPERTY_HASH_SIZE; i++)
-            list_init( &package->props[i] );
 
         clone_properties( package );
         set_installer_properties(package);
