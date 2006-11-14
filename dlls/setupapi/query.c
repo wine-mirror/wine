@@ -425,3 +425,94 @@ BOOL WINAPI SetupGetSourceFileLocationW( HINF hinf, PINFCONTEXT context, PCWSTR 
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *            SetupGetSourceInfoA  (SETUPAPI.@)
+ */
+
+BOOL WINAPI SetupGetSourceInfoA( HINF hinf, UINT source_id, UINT info,
+                                 PSTR buffer, DWORD buffer_size, LPDWORD required_size )
+{
+    BOOL ret = FALSE;
+    WCHAR *bufferW = NULL;
+    DWORD required;
+    INT size;
+
+    TRACE("%p, %d, %d, %p, %d, %p\n", hinf, source_id, info, buffer, buffer_size,
+          required_size);
+
+    if (!SetupGetSourceInfoW( hinf, source_id, info, NULL, 0, &required ))
+        return FALSE;
+
+    if (!(bufferW = HeapAlloc( GetProcessHeap(), 0, required * sizeof(WCHAR) )))
+        return FALSE;
+
+    if (!SetupGetSourceInfoW( hinf, source_id, info, bufferW, required, NULL ))
+        goto done;
+
+    size = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
+    if (required_size) *required_size = size;
+
+    if (buffer)
+    {
+        if (buffer_size >= size)
+            WideCharToMultiByte( CP_ACP, 0, bufferW, -1, buffer, buffer_size, NULL, NULL );
+        else
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            goto done;
+        }
+    }
+    ret = TRUE;
+
+ done:
+    HeapFree( GetProcessHeap(), 0, bufferW );
+    return ret;
+}
+
+/***********************************************************************
+ *            SetupGetSourceInfoW  (SETUPAPI.@)
+ */
+
+BOOL WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info,
+                                 PWSTR buffer, DWORD buffer_size, LPDWORD required_size )
+{
+    INFCONTEXT ctx;
+    WCHAR source_id_str[11];
+    static const WCHAR fmt[] = {'%','d',0};
+    DWORD index;
+
+    TRACE("%p, %d, %d, %p, %d, %p\n", hinf, source_id, info, buffer, buffer_size,
+          required_size);
+
+    sprintfW( source_id_str, fmt, source_id );
+
+    if (!SetupFindFirstLineW( hinf, source_disks_names_platform, source_id_str, &ctx ) &&
+        !SetupFindFirstLineW( hinf, source_disks_names, source_id_str, &ctx ))
+        return FALSE;
+
+    switch (info)
+    {
+    case SRCINFO_PATH:          index = 4; break;
+    case SRCINFO_TAGFILE:       index = 2; break;
+    case SRCINFO_DESCRIPTION:   index = 1; break;
+    default:
+        WARN("unknown info level: %d\n", info);
+        return FALSE;
+    }
+
+    if (SetupGetStringFieldW( &ctx, index, buffer, buffer_size, required_size ))
+        return TRUE;
+
+    if (required_size) *required_size = 1;
+    if (buffer)
+    {
+        if (buffer_size >= 1) buffer[0] = 0;
+        else
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+    }
+    return TRUE;
+}

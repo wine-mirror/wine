@@ -417,8 +417,8 @@
 @ stdcall SetupGetSourceFileLocationW(ptr ptr wstr ptr ptr long ptr)
 @ stub SetupGetSourceFileSizeA
 @ stub SetupGetSourceFileSizeW
-@ stdcall SetupGetSourceInfoA(ptr long long str long ptr)
-@ stdcall SetupGetSourceInfoW(ptr long long wstr long ptr)
+@ stdcall SetupGetSourceInfoA(ptr long long ptr long ptr)
+@ stdcall SetupGetSourceInfoW(ptr long long ptr long ptr)
 @ stdcall SetupGetStringFieldA(ptr long ptr long ptr)
 @ stdcall SetupGetStringFieldW(ptr long ptr long ptr)
 @ stub SetupGetTargetPathA
