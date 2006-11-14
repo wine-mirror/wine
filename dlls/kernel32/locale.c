@@ -1524,6 +1524,7 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 {
     const union cptable *table;
     int ret;
+    static int once;
 
     if (!src || (!dst && dstlen))
     {
@@ -1533,7 +1534,11 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
 
     if (srclen < 0) srclen = strlen(src) + 1;
 
-    if (flags & MB_USEGLYPHCHARS) FIXME("MB_USEGLYPHCHARS not supported\n");
+    if (!once && (flags & MB_USEGLYPHCHARS))
+    {
+        once = 1;
+        FIXME("MB_USEGLYPHCHARS not supported\n");
+    }
 
     switch(page)
     {
