@@ -3114,8 +3114,13 @@ BOOL WINAPI UpdateLayeredWindow( HWND hwnd, HDC hdcDst, POINT *pptDst, SIZE *psi
                                  HDC hdcSrc, POINT *pptSrc, COLORREF crKey, BLENDFUNCTION *pblend,
                                  DWORD dwFlags)
 {
-    FIXME("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%d): stub!\n",
-          hwnd, hdcDst, pptDst, psize, hdcSrc, pptSrc, crKey, pblend, dwFlags);
+    static int once;
+    if (!once)
+    {
+        once = 1;
+        FIXME("(%p,%p,%p,%p,%p,%p,0x%08x,%p,%d): stub!\n",
+              hwnd, hdcDst, pptDst, psize, hdcSrc, pptSrc, crKey, pblend, dwFlags);
+    }
     return 0;
 }
 
