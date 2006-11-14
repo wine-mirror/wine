@@ -505,10 +505,10 @@ static HANDLE msi_load_image( MSIDATABASE *db, LPCWSTR name, UINT type,
         if( r == ERROR_SUCCESS )
         {
             himage = LoadImageW( 0, tmp, type, cx, cy, flags );
-            DeleteFileW( tmp );
         }
         msiobj_release( &rec->hdr );
     }
+    DeleteFileW( tmp );
 
     msi_free( tmp );
     return himage;
