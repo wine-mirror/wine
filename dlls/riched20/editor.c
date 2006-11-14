@@ -1465,8 +1465,20 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case WM_GETDLGCODE:
   {
     UINT code = DLGC_WANTCHARS|DLGC_WANTARROWS;
-    if (GetWindowLongW(hWnd, GWL_STYLE)&ES_WANTRETURN)
-      code |= 0; /* FIXME what can we do here ? ask for messages and censor them ? */
+    if(lParam && (((LPMSG)lParam)->message == WM_KEYDOWN))
+    {
+      int vk = (int)((LPMSG)lParam)->wParam;
+      /* if style says we want return key */
+      if((vk == VK_RETURN) && (GetWindowLongW(hWnd, GWL_STYLE) & ES_WANTRETURN))
+      {
+        code |= DLGC_WANTMESSAGE;
+      }
+      /* we always handle ctrl-tab */
+      if((vk == VK_TAB) && (GetKeyState(VK_CONTROL) & 0x8000))
+      {
+        code |= DLGC_WANTMESSAGE;
+      }
+    }
     return code;
   }
   case WM_NCCREATE:
