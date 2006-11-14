@@ -54,11 +54,10 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
 
     if( package->dialog )
         msi_dialog_destroy( package->dialog );
-    ACTION_free_package_structures(package);
-
-    msi_free_properties( package );
 
     msiobj_release( &package->db->hdr );
+    ACTION_free_package_structures(package);
+    msi_free_properties( package );
 }
 
 static UINT clone_properties( MSIPACKAGE *package )
@@ -548,15 +547,16 @@ LPCWSTR msi_download_file( LPCWSTR szUrl, LPWSTR filename )
 
 UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
 {
+    static const WCHAR OriginalDatabase[] =
+        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
+    static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
     MSIDATABASE *db = NULL;
     MSIPACKAGE *package;
     MSIHANDLE handle;
     LPWSTR ptr, base_url = NULL;
     UINT r;
-
-    static const WCHAR OriginalDatabase[] =
-        {'O','r','i','g','i','n','a','l','D','a','t','a','b','a','s','e',0};
-    static const WCHAR Database[] = {'D','A','T','A','B','A','S','E',0};
+    WCHAR temppath[MAX_PATH];
+    LPCWSTR file = szPackage;
 
     TRACE("%s %p\n", debugstr_w(szPackage), pPackage);
 
@@ -569,9 +569,6 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     }
     else
     {
-        WCHAR temppath[MAX_PATH];
-        LPCWSTR file;
-
         if ( UrlIsW( szPackage, URLIS_URL ) )
         {
             file = msi_download_file( szPackage, temppath );
@@ -587,14 +584,12 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
             file = copy_package_to_temp( szPackage, temppath );
 
         r = MSI_OpenDatabaseW( file, MSIDBOPEN_READONLY, &db );
-
-        if (file != szPackage)
-            DeleteFileW( file );
-
         if( r != ERROR_SUCCESS )
         {
             if (GetLastError() == ERROR_FILE_NOT_FOUND)
                 msi_ui_error( 4, MB_OK | MB_ICONWARNING );
+            if (file != szPackage)
+                DeleteFileW( file );
 
             return r;
         }
@@ -604,7 +599,14 @@ UINT MSI_OpenPackageW(LPCWSTR szPackage, MSIPACKAGE **pPackage)
     msi_free( base_url );
     msiobj_release( &db->hdr );
     if( !package )
+    {
+        if (file != szPackage)
+            DeleteFileW( file );
         return ERROR_FUNCTION_FAILED;
+    }
+
+    if( file != szPackage )
+        track_tempfile( package, file );
 
     if( szPackage[0] != '#' )
     {
