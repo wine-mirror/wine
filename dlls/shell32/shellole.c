@@ -122,7 +122,7 @@ HRESULT WINAPI SHCoCreateInstance(
 {
 	DWORD	hres;
 	IID	iid;
-	CLSID * myclsid = (CLSID*)clsid;
+	const	CLSID * myclsid = clsid;
 	WCHAR	sKeyName[MAX_PATH];
 	const	WCHAR sCLSID[7] = {'C','L','S','I','D','\\','\0'};
 	WCHAR	sClassID[60];
