@@ -455,7 +455,7 @@ int WINAPI PathParseIconLocationAW(LPVOID lpszPath);
 
 BOOL WINAPI PathIsSameRootAW(LPCVOID lpszPath1, LPCVOID lpszPath2);
 
-BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs);
+BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID *sOtherDirs);
 
 /****************************************************************************
  * Shell Namespace Routines

@@ -550,7 +550,7 @@ BOOL WINAPI PathYetAnotherMakeUniqueName(
 /*************************************************************************
  * PathFindOnPath	[SHELL32.145]
  */
-BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID sOtherDirs)
+BOOL WINAPI PathFindOnPathAW(LPVOID sFile, LPCVOID *sOtherDirs)
 {
 	if (SHELL_OsIsUnicode())
 	  return PathFindOnPathW(sFile, (LPCWSTR *)sOtherDirs);
