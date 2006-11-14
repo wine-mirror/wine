@@ -327,9 +327,21 @@ static void test_refcount(void)
         todo_wine CHECK_REFCOUNT( pRenderTarget, 2);
         todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
         todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
-        pRenderTarget = NULL;
     }
     CHECK_REFCOUNT( pDevice, --refcount);
+
+    /* Render target and back buffer are identical. */
+    hr = IDirect3DDevice8_GetBackBuffer(pDevice, 0, 0, &pBackBuffer);
+    todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
+    if(pBackBuffer)
+    {
+        todo_wine CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+        ok(pRenderTarget == pBackBuffer, "RenderTarget=%p and BackBuffer=%p should be the same.\n",
+           pRenderTarget, pBackBuffer);
+        pBackBuffer = NULL;
+    }
+    CHECK_REFCOUNT( pDevice, --refcount);
+    pRenderTarget = NULL;
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(pDevice, &pStencilSurface);
     todo_wine CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
@@ -339,17 +351,6 @@ static void test_refcount(void)
         todo_wine CHECK_REFCOUNT( pStencilSurface, 1);
         todo_wine CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
         pStencilSurface = NULL;
-    }
-    CHECK_REFCOUNT( pDevice, --refcount);
-
-    hr = IDirect3DDevice8_GetBackBuffer(pDevice, 0, 0, &pBackBuffer);
-    todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
-    if(pBackBuffer)
-    {
-        todo_wine CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DDevice8, pDevice);
-        todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
-        todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
-        pBackBuffer = NULL;
     }
     CHECK_REFCOUNT( pDevice, --refcount);
 
