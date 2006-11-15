@@ -61,6 +61,13 @@ static int get_refcount(IUnknown *object)
         ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
     }
 
+#define CHECK_ADDREF_REFCOUNT(obj,rc) \
+    { \
+        int rc_new = rc; \
+        int count = IUnknown_AddRef( (IUnknown *)obj ); \
+        ok(count == rc_new, "Invalid refcount. Expected %d got %d\n", rc_new, count); \
+    }
+
 #define CHECK_SURFACE_CONTAINER(obj,iid,expected) \
     { \
         void *container_ptr = (void *)0x1337c0d3; \
@@ -284,9 +291,12 @@ static void test_refcount(void)
     IDirect3DCubeTexture9       *pCubeTexture       = NULL;
     IDirect3DTexture9           *pTexture           = NULL;
     IDirect3DVolumeTexture9     *pVolumeTexture     = NULL;
+    IDirect3DVolume9            *pVolumeLevel       = NULL;
     IDirect3DSurface9           *pStencilSurface    = NULL;
     IDirect3DSurface9           *pOffscreenSurface  = NULL;
     IDirect3DSurface9           *pRenderTarget      = NULL;
+    IDirect3DSurface9           *pRenderTarget2     = NULL;
+    IDirect3DSurface9           *pRenderTarget3     = NULL;
     IDirect3DSurface9           *pTextureLevel      = NULL;
     IDirect3DSurface9           *pBackBuffer        = NULL;
     IDirect3DStateBlock9        *pStateBlock        = NULL;
@@ -340,10 +350,12 @@ static void test_refcount(void)
     ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
 
     /**
-     * Check refcount of implicit surfaces. Findings:
+     * Check refcount of implicit surfaces and implicit swapchain. Findings:
      *   - the container is the device OR swapchain
      *   - they hold a refernce to the device
      *   - they are created with a refcount of 0 (Get/Release returns orignial refcount)
+     *   - they are not freed if refcount reaches 0.
+     *   - the refcount is not forwarded to the container.
      */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapChain);
     todo_wine CHECK_CALL( hr, "GetSwapChain", pDevice, ++refcount);
@@ -353,43 +365,75 @@ static void test_refcount(void)
 
         hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget);
         todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
+        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
         if(pRenderTarget)
         {
             CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DSwapChain9, pSwapChain);
             todo_wine CHECK_REFCOUNT( pRenderTarget, 1);
+
+            todo_wine CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
+            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+            todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget, 1);
+            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+
             hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget);
             todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, refcount);
             todo_wine CHECK_REFCOUNT( pRenderTarget, 2);
             todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
             todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
-            pRenderTarget = NULL;
+            todo_wine CHECK_REFCOUNT( pDevice, --refcount);
+
+            /* The render target is released with the device, so AddRef with refcount=0 is fine here. */
+            todo_wine CHECK_ADDREF_REFCOUNT(pRenderTarget, 1);
+            todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
+            todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
+            todo_wine CHECK_REFCOUNT(pDevice, --refcount);
+        }
+
+        /* Render target and back buffer are identical. */
+        hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, 0, &pBackBuffer);
+        todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
+        if(pBackBuffer)
+        {
+            todo_wine CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+            ok(pRenderTarget == pBackBuffer, "RenderTarget=%p and BackBuffer=%p should be the same.\n",
+            pRenderTarget, pBackBuffer);
+            pBackBuffer = NULL;
         }
         todo_wine CHECK_REFCOUNT( pDevice, --refcount);
 
         hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pStencilSurface);
         todo_wine CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
+        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
         if(pStencilSurface)
         {
             CHECK_SURFACE_CONTAINER( pStencilSurface, IID_IDirect3DDevice9, pDevice);
             todo_wine CHECK_REFCOUNT( pStencilSurface, 1);
+
+            todo_wine CHECK_ADDREF_REFCOUNT(pStencilSurface, 2);
+            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+            todo_wine CHECK_RELEASE_REFCOUNT(pStencilSurface, 1);
+            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+
             todo_wine CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
+            todo_wine CHECK_REFCOUNT( pDevice, --refcount);
+
+            /* The stencil surface is released with the device, so AddRef with refcount=0 is fine here. */
+            todo_wine CHECK_ADDREF_REFCOUNT(pStencilSurface, 1);
+            todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
+            todo_wine CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
+            todo_wine CHECK_REFCOUNT(pDevice, --refcount);
             pStencilSurface = NULL;
         }
-        todo_wine CHECK_REFCOUNT( pDevice, --refcount);
-
-        hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, 0, &pBackBuffer);
-        todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
-        if(pBackBuffer)
-        {
-            CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DSwapChain9, pSwapChain);
-            todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
-            todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
-            pBackBuffer = NULL;
-        }
-        todo_wine CHECK_REFCOUNT( pDevice, --refcount);
 
         todo_wine CHECK_RELEASE_REFCOUNT( pSwapChain, 0);
         CHECK_REFCOUNT( pDevice, --refcount);
+
+        /* The implicit swapchwin is released with the device, so AddRef with refcount=0 is fine here. */
+        todo_wine CHECK_ADDREF_REFCOUNT(pSwapChain, 1);
+        todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
+        todo_wine CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
+        CHECK_REFCOUNT(pDevice, --refcount);
         pSwapChain = NULL;
     }
 
@@ -441,18 +485,50 @@ static void test_refcount(void)
         hr = IDirect3DTexture9_GetSurfaceLevel( pTexture, 1, &pTextureLevel );
         CHECK_CALL( hr, "GetSurfaceLevel", pDevice, refcount );
         /* But should increment texture's refcount */
-        CHECK_CALL( hr, "GetSurfaceLevel", pTexture, tmp+1 );
+        CHECK_REFCOUNT( pTexture, tmp+1 );
+        /* Because the texture and surface refcount are identical */
+        if (pTextureLevel)
+        {
+            CHECK_REFCOUNT        ( pTextureLevel, tmp+1 );
+            CHECK_ADDREF_REFCOUNT ( pTextureLevel, tmp+2 );
+            CHECK_REFCOUNT        ( pTexture     , tmp+2 );
+            CHECK_RELEASE_REFCOUNT( pTextureLevel, tmp+1 );
+            CHECK_REFCOUNT        ( pTexture     , tmp+1 );
+            CHECK_RELEASE_REFCOUNT( pTexture     , tmp   );
+            CHECK_REFCOUNT        ( pTextureLevel, tmp   );
+        }
     }
     hr = IDirect3DDevice9_CreateCubeTexture( pDevice, 32, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pCubeTexture, NULL );
     CHECK_CALL( hr, "CreateCubeTexture", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateVolumeTexture( pDevice, 32, 32, 2, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pVolumeTexture, NULL );
     CHECK_CALL( hr, "CreateVolumeTexture", pDevice, ++refcount );
+    if (pVolumeTexture)
+    {
+        tmp = get_refcount( (IUnknown *)pVolumeTexture );
+
+        /* This should not increment device refcount */
+        hr = IDirect3DVolumeTexture9_GetVolumeLevel(pVolumeTexture, 0, &pVolumeLevel);
+        CHECK_CALL( hr, "GetVolumeLevel", pDevice, refcount );
+        /* But should increment volume texture's refcount */
+        CHECK_REFCOUNT( pVolumeTexture, tmp+1 );
+        /* Because the volume texture and volume refcount are identical */
+        if (pVolumeLevel)
+        {
+            CHECK_REFCOUNT        ( pVolumeLevel  , tmp+1 );
+            CHECK_ADDREF_REFCOUNT ( pVolumeLevel  , tmp+2 );
+            CHECK_REFCOUNT        ( pVolumeTexture, tmp+2 );
+            CHECK_RELEASE_REFCOUNT( pVolumeLevel  , tmp+1 );
+            CHECK_REFCOUNT        ( pVolumeTexture, tmp+1 );
+            CHECK_RELEASE_REFCOUNT( pVolumeTexture, tmp   );
+            CHECK_REFCOUNT        ( pVolumeLevel  , tmp   );
+        }
+    }
     /* Surfaces */
     hr = IDirect3DDevice9_CreateDepthStencilSurface( pDevice, 32, 32, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &pStencilSurface, NULL );
     CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, ++refcount );
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pOffscreenSurface, NULL );
     CHECK_CALL( hr, "CreateOffscreenPlainSurface", pDevice, ++refcount );
-    hr = IDirect3DDevice9_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &pRenderTarget, NULL );
+    hr = IDirect3DDevice9_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &pRenderTarget3, NULL );
     CHECK_CALL( hr, "CreateRenderTarget", pDevice, ++refcount );
     /* Misc */
     hr = IDirect3DDevice9_CreateStateBlock( pDevice, D3DSBT_ALL, &pStateBlock );
@@ -470,10 +546,16 @@ static void test_refcount(void)
             CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DSwapChain9, pSwapChain);
             todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
             todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
+            CHECK_REFCOUNT( pDevice, --refcount);
+
+            /* The back buffer is released with the swapchain, so AddRef with refcount=0 is fine here. */
+            todo_wine CHECK_ADDREF_REFCOUNT(pBackBuffer, 1);
+            todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
+            todo_wine CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+            CHECK_REFCOUNT(pDevice, --refcount);
             pBackBuffer = NULL;
         }
         CHECK_REFCOUNT( pSwapChain, 1);
-        CHECK_REFCOUNT( pDevice, --refcount);
     }
     hr = IDirect3DDevice9_CreateQuery( pDevice, D3DQUERYTYPE_EVENT, &pQuery );
     CHECK_CALL( hr, "CreateQuery", pDevice, ++refcount );
@@ -482,6 +564,20 @@ static void test_refcount(void)
     CHECK_CALL( hr, "BeginStateBlock", pDevice, refcount );
     hr = IDirect3DDevice9_EndStateBlock( pDevice, &pStateBlock1 );
     CHECK_CALL( hr, "EndStateBlock", pDevice, ++refcount );
+
+    /* The implicit render target is not freed if refcount reaches 0.
+     * Otherwise GetRenderTarget would re-allocate it and the pointer would change.*/
+    hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget2);
+    todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
+    if(pRenderTarget2)
+    {
+        todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
+        ok(pRenderTarget == pRenderTarget2, "RenderTarget=%p and RenderTarget2=%p should be the same.\n",
+           pRenderTarget, pRenderTarget2);
+        CHECK_REFCOUNT( pDevice, --refcount);
+        pRenderTarget2 = NULL;
+    }
+    pRenderTarget = NULL;
 
 cleanup:
     CHECK_RELEASE(pDevice,              pDevice, --refcount);
@@ -494,15 +590,13 @@ cleanup:
     CHECK_RELEASE(pVertexShader,        pDevice, --refcount);
     CHECK_RELEASE(pPixelShader,         pDevice, --refcount);
     /* Textures */
-    /* pTextureLevel is holding a reference to the pTexture */
-    CHECK_RELEASE(pTexture,             pDevice,   refcount);
     CHECK_RELEASE(pTextureLevel,        pDevice, --refcount);
     CHECK_RELEASE(pCubeTexture,         pDevice, --refcount);
     CHECK_RELEASE(pVolumeTexture,       pDevice, --refcount);
     /* Surfaces */
     CHECK_RELEASE(pStencilSurface,      pDevice, --refcount);
     CHECK_RELEASE(pOffscreenSurface,    pDevice, --refcount);
-    CHECK_RELEASE(pRenderTarget,        pDevice, --refcount);
+    CHECK_RELEASE(pRenderTarget3,       pDevice, --refcount);
     /* Misc */
     CHECK_RELEASE(pStateBlock,          pDevice, --refcount);
     CHECK_RELEASE(pSwapChain,           pDevice, --refcount);
