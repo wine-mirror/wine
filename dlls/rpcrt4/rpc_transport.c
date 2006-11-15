@@ -1309,7 +1309,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   memset(&NewConnection->ActiveInterface, 0, sizeof(NewConnection->ActiveInterface));
   NewConnection->NextCallId = 1;
 
-  memset(&NewConnection->ctx, 0, sizeof(NewConnection->ctx));
+  SecInvalidateHandle(&NewConnection->ctx);
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
   list_init(&NewConnection->conn_pool_entry);

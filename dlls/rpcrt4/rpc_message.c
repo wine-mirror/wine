@@ -485,8 +485,7 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
   out_desc.pBuffers = out;
 
   conn->attr = 0;
-  conn->ctx.dwLower = 0;
-  conn->ctx.dwUpper = 0;
+  SecInvalidateHandle(&conn->ctx);
 
   r = InitializeSecurityContextA(&conn->AuthInfo->cred, NULL, NULL,
         context_req, 0, SECURITY_NETWORK_DREP,
@@ -567,7 +566,7 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
   if (!Connection->AuthInfo ||
       Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_DEFAULT ||
       Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE ||
-      (Connection->ctx.dwUpper || Connection->ctx.dwLower))
+      SecIsValidHandle(&Connection->ctx))
   {
     return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
   }
