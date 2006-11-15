@@ -1924,12 +1924,14 @@ WDML_CONV*	WDML_GetConv(HCONV hConv, BOOL checkConnected)
 
     if (checkConnected && !(pConv->wStatus & ST_CONNECTED))
     {
-	FIXME("found conv but ain't connected\n");
+        WARN("found conv but ain't connected\n");
+        pConv->instance->lastError = DMLERR_NO_CONV_ESTABLISHED;
 	return NULL;
     }
     if (!pConv->instance || GetCurrentThreadId() != pConv->instance->threadID)
     {
-	FIXME("wrong thread ID\n");
+        WARN("wrong thread ID\n");
+        pConv->instance->lastError = DMLERR_INVALIDPARAMETER; /* FIXME: check */
 	return NULL;
     }
 
@@ -1980,6 +1982,7 @@ BOOL		WDML_PostAck(WDML_CONV* pConv, WDML_SIDE side, WORD appRetCode,
     if (!PostMessageW(to, WM_DDE_ACK, (WPARAM)from, lParam))
     {
 	pConv->wStatus &= ~ST_CONNECTED;
+        pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
         FreeDDElParam(WM_DDE_ACK, lParam);
         return FALSE;
     }

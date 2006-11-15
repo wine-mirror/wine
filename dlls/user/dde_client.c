@@ -1166,7 +1166,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	pXAct = WDML_ClientQueueRequest(pConv, wFmt, hszItem);
 	break;
     default:
-	FIXME("Unknown transation\n");
+        FIXME("Unknown transaction type %04x\n", wType);
 	/* unknown transaction type */
 	pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
 	goto theError;
@@ -1187,6 +1187,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	pConv->wStatus &= ~ST_CONNECTED;
 	WDML_UnQueueTransaction(pConv, pXAct);
 	WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
+        pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
 	goto theError;
     }
     pXAct->dwTimeout = dwTimeout;
@@ -1393,10 +1394,16 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
                     LeaveCriticalSection(&WDML_CritSect);
                 if (PostMessageW(pConv->hwndServer, pXAct->ddeMsg,
                                  (WPARAM)pConv->hwndClient, pXAct->lParam))
+                {
                     WDML_SyncWaitTransactionReply(hConv, 10000, pXAct, NULL);
+                    ret = TRUE;
+                }
                 for (i = 0; i < count; i++)
                     EnterCriticalSection(&WDML_CritSect);
-                ret = TRUE;
+
+                if (!ret)
+                    pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
+
                 WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
                 /* still have to destroy data assosiated with conversation */
                 WDML_RemoveConv(pConv, WDML_CLIENT_SIDE);

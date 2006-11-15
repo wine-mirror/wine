@@ -136,6 +136,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
 		{
 		    ERR("post message failed\n");
                     pConv->wStatus &= ~ST_CONNECTED;
+                    pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
 		    if (!WDML_IsAppOwned(hDdeData))  DdeFreeDataHandle(hDdeData);
 		    GlobalFree(hItemData);
 		    goto theError;
@@ -587,6 +588,7 @@ static	WDML_QUEUE_STATE WDML_ServerHandleRequest(WDML_CONV* pConv, WDML_XACT* pX
 			      ReuseDDElParam(pXAct->lParam, WM_DDE_REQUEST, WM_DDE_DATA,
 					     (UINT_PTR)hMem, (UINT_PTR)pXAct->atom)))
 	    {
+                pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
 		DdeFreeDataHandle(hDdeData);
 		GlobalFree(hMem);
 		fAck = FALSE;
