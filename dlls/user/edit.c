@@ -5335,7 +5335,7 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
 
     dwBufLen = ImmGetCompositionStringW(hIMC, GCS_COMPSTR, NULL, 0);
 
-    if (dwBufLen <= 0)
+    if (dwBufLen < 0)
     {
         ImmReleaseContext(hwnd, hIMC);
         return;
@@ -5349,7 +5349,8 @@ static void EDIT_GetCompositionStr(HWND hwnd, LPARAM CompFlag, EDITSTATE *es)
         return;
     }
 
-    ImmGetCompositionStringW(hIMC, GCS_COMPSTR, lpCompStr, dwBufLen);
+    if (dwBufLen)
+        ImmGetCompositionStringW(hIMC, GCS_COMPSTR, lpCompStr, dwBufLen);
     lpCompStr[dwBufLen/sizeof(WCHAR)] = 0;
 
     if (CompFlag & GCS_COMPATTR)
