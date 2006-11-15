@@ -51,6 +51,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(rpc);
     (((alignment) - (((value) % (alignment)))) % (alignment))
 #define ROUND_UP(value, alignment) (((value) + ((alignment) - 1)) & ~((alignment)-1))
 
+enum secure_packet_direction
+{
+  SECURE_PACKET_SEND,
+  SECURE_PACKET_RECEIVE
+};
+
 static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg);
 
 static DWORD RPCRT4_GetHeaderSize(RpcPktHdr *Header)
@@ -74,6 +80,19 @@ static DWORD RPCRT4_GetHeaderSize(RpcPktHdr *Header)
   }
 
   return ret;
+}
+
+static int packet_has_body(RpcPktHdr *Header)
+{
+    return (Header->common.ptype == PKT_FAULT) ||
+           (Header->common.ptype == PKT_REQUEST) ||
+           (Header->common.ptype == PKT_RESPONSE);
+}
+
+static int packet_has_auth_verifier(RpcPktHdr *Header)
+{
+    return !(Header->common.ptype == PKT_BIND_NACK) &&
+           !(Header->common.ptype == PKT_SHUTDOWN);
 }
 
 static VOID RPCRT4_BuildCommonHeader(RpcPktHdr *Header, unsigned char PacketType,
@@ -264,6 +283,80 @@ VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
   HeapFree(GetProcessHeap(), 0, Header);
 }
 
+static RPC_STATUS RPCRT4_SecurePacket(RpcConnection *Connection,
+    enum secure_packet_direction dir,
+    RpcPktHdr *hdr, unsigned int hdr_size,
+    unsigned char *stub_data, unsigned int stub_data_size,
+    RpcAuthVerifier *auth_hdr,
+    unsigned char *auth_value, unsigned int auth_value_size)
+{
+    SecBufferDesc message;
+    SecBuffer buffers[4];
+    SECURITY_STATUS sec_status;
+
+    message.ulVersion = SECBUFFER_VERSION;
+    message.cBuffers = sizeof(buffers)/sizeof(buffers[0]);
+    message.pBuffers = buffers;
+
+    buffers[0].cbBuffer = hdr_size;
+    buffers[0].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+    buffers[0].pvBuffer = hdr;
+    buffers[1].cbBuffer = stub_data_size;
+    buffers[1].BufferType = SECBUFFER_DATA;
+    buffers[1].pvBuffer = stub_data;
+    buffers[2].cbBuffer = sizeof(*auth_hdr);
+    buffers[2].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+    buffers[2].pvBuffer = auth_hdr;
+    buffers[3].cbBuffer = auth_value_size;
+    buffers[3].BufferType = SECBUFFER_TOKEN;
+    buffers[3].pvBuffer = auth_value;
+
+    if (dir == SECURE_PACKET_SEND)
+    {
+        if ((auth_hdr->auth_level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY) && packet_has_body(hdr))
+        {
+            sec_status = EncryptMessage(&Connection->ctx, 0, &message, 0 /* FIXME */);
+            if (sec_status != SEC_E_OK)
+            {
+                ERR("EncryptMessage failed with 0x%08x\n", sec_status);
+                return RPC_S_SEC_PKG_ERROR;
+            }
+        }
+        else if (auth_hdr->auth_level != RPC_C_AUTHN_LEVEL_NONE)
+        {
+            sec_status = MakeSignature(&Connection->ctx, 0, &message, 0 /* FIXME */);
+            if (sec_status != SEC_E_OK)
+            {
+                ERR("MakeSignature failed with 0x%08x\n", sec_status);
+                return RPC_S_SEC_PKG_ERROR;
+            }
+        }
+    }
+    else if (dir == SECURE_PACKET_RECEIVE)
+    {
+        if ((auth_hdr->auth_level == RPC_C_AUTHN_LEVEL_PKT_PRIVACY) && packet_has_body(hdr))
+        {
+            sec_status = DecryptMessage(&Connection->ctx, &message, 0 /* FIXME */, 0);
+            if (sec_status != SEC_E_OK)
+            {
+                ERR("EncryptMessage failed with 0x%08x\n", sec_status);
+                return RPC_S_SEC_PKG_ERROR;
+            }
+        }
+        else if (auth_hdr->auth_level != RPC_C_AUTHN_LEVEL_NONE)
+        {
+            sec_status = VerifySignature(&Connection->ctx, &message, 0 /* FIXME */, NULL);
+            if (sec_status != SEC_E_OK)
+            {
+                ERR("VerifySignature failed with 0x%08x\n", sec_status);
+                return RPC_S_SEC_PKG_ERROR;
+            }
+        }
+    }
+
+    return RPC_S_OK;
+}
+         
 /***********************************************************************
  *           RPCRT4_SendAuth (internal)
  * 
@@ -277,16 +370,25 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
   DWORD hdr_size;
   LONG count;
   unsigned char *pkt;
-  LONG alen = AuthLength ? (AuthLength + sizeof(RpcAuthVerifier)) : 0;
+  LONG alen;
+  RPC_STATUS status;
 
   buffer_pos = Buffer;
   /* The packet building functions save the packet header size, so we can use it. */
   hdr_size = Header->common.frag_len;
-  Header->common.auth_len = AuthLength;
+  if (AuthLength)
+    Header->common.auth_len = AuthLength;
+  else if (Connection->AuthInfo && packet_has_auth_verifier(Header))
+    Header->common.auth_len = 16 /* FIXME */;
+  else
+    Header->common.auth_len = 0;
   Header->common.flags |= RPC_FLG_FIRST;
   Header->common.flags &= ~RPC_FLG_LAST;
+
+  alen = RPC_AUTH_VERIFIER_LEN(&Header->common);
+
   while (!(Header->common.flags & RPC_FLG_LAST)) {
-    unsigned char auth_pad_len = AuthLength ? ROUND_UP_AMOUNT(BufferLength, AUTH_ALIGNMENT) : 0;
+    unsigned char auth_pad_len = Header->common.auth_len ? ROUND_UP_AMOUNT(BufferLength, AUTH_ALIGNMENT) : 0;
     unsigned int pkt_size = BufferLength + hdr_size + alen + auth_pad_len;
 
     /* decide if we need to split the packet into fragments */
@@ -312,7 +414,7 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
     memcpy(pkt + hdr_size, buffer_pos, Header->common.frag_len - hdr_size - auth_pad_len - alen);
 
     /* add the authorization info */
-    if (Connection->AuthInfo && AuthLength)
+    if (Connection->AuthInfo && packet_has_auth_verifier(Header))
     {
       RpcAuthVerifier *auth_hdr = (RpcAuthVerifier *)&pkt[Header->common.frag_len - alen];
 
@@ -323,7 +425,21 @@ static RPC_STATUS RPCRT4_SendAuth(RpcConnection *Connection, RpcPktHdr *Header,
       /* a unique number... */
       auth_hdr->auth_context_id = (unsigned long)Connection;
 
-      memcpy(auth_hdr + 1, Auth, AuthLength);
+      if (AuthLength)
+        memcpy(auth_hdr + 1, Auth, AuthLength);
+      else
+      {
+        status = RPCRT4_SecurePacket(Connection, SECURE_PACKET_SEND,
+            (RpcPktHdr *)pkt, hdr_size,
+            pkt + hdr_size, Header->common.frag_len - hdr_size - alen,
+            auth_hdr,
+            (unsigned char *)(auth_hdr + 1), Header->common.auth_len);
+        if (status != RPC_S_OK)
+        {
+          HeapFree(GetProcessHeap(), 0, pkt);
+          return status;
+        }
+      }
     }
 
 write:
@@ -350,6 +466,13 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
   SECURITY_STATUS r;
   SecBufferDesc out_desc;
   unsigned char *buffer;
+  ULONG context_req = ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE |
+                      ISC_REQ_MUTUAL_AUTH | ISC_REQ_DELEGATE;
+
+  if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_INTEGRITY)
+    context_req |= ISC_REQ_INTEGRITY;
+  else if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
+    context_req |= ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY;
 
   buffer = HeapAlloc(GetProcessHeap(), 0, 0x100);
 
@@ -366,8 +489,7 @@ static void RPCRT4_AuthNegotiate(RpcConnection *conn, SecBuffer *out)
   conn->ctx.dwUpper = 0;
 
   r = InitializeSecurityContextA(&conn->AuthInfo->cred, NULL, NULL,
-        ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE | ISC_REQ_MUTUAL_AUTH |
-        ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
+        context_req, 0, SECURITY_NETWORK_DREP,
         NULL, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
 
   TRACE("r = %08x cbBuffer = %ld attr = %08x\n", r, out->cbBuffer, conn->attr);
@@ -385,8 +507,15 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
   unsigned char buffer[0x100];
   RpcPktHdr *resp_hdr;
   RPC_STATUS status;
+  ULONG context_req = ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE |
+                      ISC_REQ_MUTUAL_AUTH | ISC_REQ_DELEGATE;
 
   TRACE("challenge %s, %d bytes\n", challenge, count);
+
+  if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_INTEGRITY)
+    context_req |= ISC_REQ_INTEGRITY;
+  else if (conn->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
+    context_req |= ISC_REQ_CONFIDENTIALITY | ISC_REQ_INTEGRITY;
 
   out.BufferType = SECBUFFER_TOKEN;
   out.cbBuffer = sizeof buffer;
@@ -405,8 +534,7 @@ static RPC_STATUS RPCRT_AuthorizeConnection(RpcConnection* conn,
   inp_desc.ulVersion = 0;
 
   r = InitializeSecurityContextA(&conn->AuthInfo->cred, &conn->ctx, NULL,
-        ISC_REQ_CONNECTION | ISC_REQ_USE_DCE_STYLE | ISC_REQ_MUTUAL_AUTH |
-        ISC_REQ_DELEGATE, 0, SECURITY_NETWORK_DREP,
+        context_req, 0, SECURITY_NETWORK_DREP,
         &inp_desc, 0, &conn->ctx, &out_desc, &conn->attr, &conn->exp);
   if (r)
   {
@@ -436,20 +564,10 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
   RPC_STATUS r;
   SecBuffer out;
 
-  /* if we've already authenticated, just send the context */
-  if (Connection->ctx.dwUpper || Connection->ctx.dwLower)
-  {
-    unsigned char buffer[0x10];
-
-    memset(buffer, 0, sizeof buffer);
-    buffer[0] = 1; /* version number lsb */
-
-    return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, buffer, sizeof buffer);
-  }
-
   if (!Connection->AuthInfo ||
       Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_DEFAULT ||
-      Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE)
+      Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE ||
+      (Connection->ctx.dwUpper || Connection->ctx.dwLower))
   {
     return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
   }
@@ -595,6 +713,12 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
     }
 
     if (header_auth_len) {
+      if (header_auth_len < sizeof(RpcAuthVerifier)) {
+        WARN("bad auth verifier length %d\n", header_auth_len);
+        status = RPC_S_PROTOCOL_ERROR;
+        goto fail;
+      }
+
       /* FIXME: we should accumulate authentication data for the bind,
        * bind_ack, alter_context and alter_context_response if necessary.
        * however, the details of how this is done is very sketchy in the
@@ -607,6 +731,18 @@ RPC_STATUS RPCRT4_Receive(RpcConnection *Connection, RpcPktHdr **Header,
         status = RPC_S_PROTOCOL_ERROR;
         goto fail;
       }
+
+      /* these packets are handled specially, not by the generic SecurePacket
+       * function */
+      if ((common_hdr.ptype != PKT_BIND) &&
+          (common_hdr.ptype != PKT_BIND_ACK) &&
+          (common_hdr.ptype != PKT_AUTH3))
+        status = RPCRT4_SecurePacket(Connection, SECURE_PACKET_RECEIVE,
+            *Header, hdr_length,
+            (unsigned char *)pMsg->Buffer + buffer_length, data_length,
+            (RpcAuthVerifier *)auth_data,
+            (unsigned char *)auth_data + sizeof(RpcAuthVerifier),
+            header_auth_len - sizeof(RpcAuthVerifier));
     }
 
     buffer_length += data_length;
