@@ -2252,7 +2252,6 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     BITMAP  bmp;
     BOOL    ret;
     POINT   pt;
-    INT     i;
 
     TRACE("(%p %d %p)\n", himl, nIndex, hIcon);
 
@@ -2315,17 +2314,14 @@ ImageList_ReplaceIcon (HIMAGELIST himl, INT nIndex, HICON hIcon)
     SetBkColor  (himl->hdcImage, RGB(255,255,255));
     hbmOldSrc = SelectObject (hdcImage, ii.hbmColor);
 
-    for (i=0; i<(bmp.bmWidth/himl->cx); i++) {
+    imagelist_point_from_index(himl, nIndex, &pt);
+    StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
+                  hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
 
-        imagelist_point_from_index(himl, nIndex+i, &pt);
-        StretchBlt (himl->hdcImage, pt.x, pt.y, himl->cx, himl->cy,
-                      hdcImage, 0, 0, himl->cx*i, bmp.bmHeight, SRCCOPY);
-
-        if (himl->hbmMask) {
-            SelectObject (hdcImage, ii.hbmMask);
-            StretchBlt   (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
-                          hdcImage, 0, 0, himl->cx*i, bmp.bmHeight, SRCCOPY);
-        }
+    if (himl->hbmMask) {
+        SelectObject (hdcImage, ii.hbmMask);
+        StretchBlt   (himl->hdcMask, pt.x, pt.y, himl->cx, himl->cy,
+                      hdcImage, 0, 0, bmp.bmWidth, bmp.bmHeight, SRCCOPY);
     }
 
     SelectObject (hdcImage, hbmOldSrc);
