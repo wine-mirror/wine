@@ -83,8 +83,8 @@ static DWORD get_ports_from_reg(DWORD level, LPBYTE pPorts, DWORD cbBuf, LPDWORD
     LPWSTR  ptr;
     LPPORT_INFO_2W out;
     WCHAR   portname[MAX_PATH];
-    WCHAR   res_PortW[32];
-    WCHAR   res_MonitorW[32];
+    WCHAR   res_PortW[IDS_LOCALPORT_MAXLEN];
+    WCHAR   res_MonitorW[IDS_LOCALMONITOR_MAXLEN];
     INT     reslen_PortW;
     INT     reslen_MonitorW;
     DWORD   len;
@@ -113,8 +113,8 @@ static DWORD get_ports_from_reg(DWORD level, LPBYTE pPorts, DWORD cbBuf, LPDWORD
     }
 
     /* "+1" for '\0' */
-    reslen_MonitorW = LoadStringW(LOCALSPL_hInstance, IDS_LOCALMONITOR, res_MonitorW, 32) + 1;  
-    reslen_PortW = LoadStringW(LOCALSPL_hInstance, IDS_LOCALPORT, res_PortW, 32) + 1;  
+    reslen_MonitorW = LoadStringW(LOCALSPL_hInstance, IDS_LOCALMONITOR, res_MonitorW, IDS_LOCALMONITOR_MAXLEN) + 1;  
+    reslen_PortW = LoadStringW(LOCALSPL_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN) + 1;  
 
     res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_PortsW, &hroot);
     if (res == ERROR_SUCCESS) {
