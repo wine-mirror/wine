@@ -49,6 +49,24 @@ static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'P','o','r','t','s',0};
 
 /******************************************************************
+ * display the Dialog "Nothing to configure"
+ * 
+ */
+
+static void dlg_nothingtoconfig(HWND hWnd)
+{
+    WCHAR res_PortW[IDS_LOCALPORT_MAXLEN];
+    WCHAR res_nothingW[IDS_NOTHINGTOCONFIG_MAXLEN];
+
+    res_PortW[0] = '\0';
+    res_nothingW[0] = '\0';
+    LoadStringW(LOCALSPL_hInstance, IDS_LOCALPORT, res_PortW, IDS_LOCALPORT_MAXLEN);  
+    LoadStringW(LOCALSPL_hInstance, IDS_NOTHINGTOCONFIG, res_nothingW, IDS_NOTHINGTOCONFIG_MAXLEN);  
+
+    MessageBoxW(hWnd, res_nothingW, res_PortW, MB_OK | MB_ICONINFORMATION);
+}
+
+/******************************************************************
  * enumerate the local Ports from the Registry (internal)  
  *
  * See localmon_EnumPortsW.
@@ -155,6 +173,30 @@ getports_cleanup:
 }
 
 /*****************************************************
+ *   localmon_ConfigurePortW [exported through MONITOREX]
+ *
+ * Display the Configuration-Dialog for a specific Port
+ *
+ * PARAMS
+ *  pName     [I] Servername or NULL (local Computer)
+ *  hWnd      [I] Handle to parent Window for the Dialog-Box
+ *  pPortName [I] Name of the Port, that should be configured
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+BOOL WINAPI localmon_ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
+{
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+    /* ToDo: Dialogs by Portname ("LPTx:", "COMx:") */
+
+    dlg_nothingtoconfig(hWnd);
+    return ROUTER_SUCCESS;
+}
+
+/*****************************************************
  *   localmon_EnumPortsW [exported through MONITOREX]
  *
  * Enumerate all local Ports
@@ -238,7 +280,17 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
     {
         sizeof(MONITOREX) - sizeof(DWORD),
         {
-            localmon_EnumPortsW
+            localmon_EnumPortsW,
+            NULL,       /* localmon_OpenPortW */ 
+            NULL,       /* localmon_OpenPortExW */ 
+            NULL,       /* localmon_StartDocPortW */
+            NULL,       /* localmon_WritePortW */
+            NULL,       /* localmon_ReadPortW */
+            NULL,       /* localmon_EndDocPortW */
+            NULL,       /* localmon_ClosePortW */
+            NULL,       /* localmon_AddPortW */
+            NULL,       /* localmon_AddPortExW */
+            localmon_ConfigurePortW
         }
     };
 
