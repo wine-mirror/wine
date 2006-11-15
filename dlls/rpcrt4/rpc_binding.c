@@ -255,9 +255,13 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   }
   
   /* create a new connection */
-  RPCRT4_CreateConnection(&NewConnection, Binding->server, Binding->Protseq,
-                          Binding->NetworkAddr, Binding->Endpoint, NULL,
-                          Binding->AuthInfo, Binding);
+  status = RPCRT4_CreateConnection(&NewConnection, Binding->server,
+                                   Binding->Protseq, Binding->NetworkAddr,
+                                   Binding->Endpoint, NULL, Binding->AuthInfo,
+                                   Binding);
+  if (status != RPC_S_OK)
+    return status;
+
   status = RPCRT4_OpenClientConnection(NewConnection);
   if (status != RPC_S_OK)
   {
