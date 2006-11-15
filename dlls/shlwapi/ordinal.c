@@ -370,7 +370,7 @@ HANDLE WINAPI SHMapHandle(HANDLE hShared, DWORD dwDstProcId, DWORD dwSrcProcId,
  */
 HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
 {
-  static const WCHAR szProperty[] = { '{','D','0','F','C','A','4','2','0',
+  static WCHAR szProperty[] = { '{','D','0','F','C','A','4','2','0',
       '-','D','3','F','5','-','1','1','C','F', '-','B','2','1','1','-','0',
       '0','A','A','0','0','4','A','E','8','3','7','}','\0' };
   IEnumFORMATETC* pIEnumFormatEtc = NULL;
@@ -4283,7 +4283,7 @@ HRESULT WINAPI SHCoCreateInstanceAC(REFCLSID rclsid, LPUNKNOWN pUnkOuter,
  */
 BOOL WINAPI SHSkipJunction(IBindCtx *pbc, const CLSID *pclsid)
 {
-  static const WCHAR szSkipBinding[] = { 'S','k','i','p',' ',
+  static WCHAR szSkipBinding[] = { 'S','k','i','p',' ',
     'B','i','n','d','i','n','g',' ','C','L','S','I','D','\0' };
   BOOL bRet = FALSE;
 
