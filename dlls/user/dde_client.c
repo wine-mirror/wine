@@ -103,20 +103,16 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 
     TRACE("(0x%x,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
 
-    EnterCriticalSection(&WDML_CritSect);
-
     pInstance = WDML_GetInstance(idInst);
     if (!pInstance)
-    {
-	goto theEnd;
-    }
+        return NULL;
 
     /* make sure this conv is never created */
     pConv = WDML_FindConv(pInstance, WDML_CLIENT_SIDE, hszService, hszTopic);
     if (pConv != NULL)
     {
 	ERR("This Conv already exists: (%p)\n", pConv);
-	goto theEnd;
+	return NULL;
     }
 
     /* we need to establish a conversation with
@@ -178,13 +174,9 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
 	if (!aTpc) goto theEnd;
     }
 
-    LeaveCriticalSection(&WDML_CritSect);
-
     /* note: sent messages shall not use packing */
     SendMessageTimeoutW( HWND_BROADCAST, WM_DDE_INITIATE, (WPARAM)hwndClient, MAKELPARAM(aSrv, aTpc),
                          SMTO_ABORTIFHUNG, 2000, NULL );
-
-    EnterCriticalSection(&WDML_CritSect);
 
     pInstance = WDML_GetInstance(idInst);
     if (!pInstance)
@@ -218,7 +210,6 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     }
 
  theEnd:
-    LeaveCriticalSection(&WDML_CritSect);
 
     if (aSrv) GlobalDeleteAtom(aSrv);
     if (aTpc) GlobalDeleteAtom(aTpc);
@@ -237,7 +228,6 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 
     TRACE("(%p)\n", hConv);
 
-    EnterCriticalSection(&WDML_CritSect);
     pConv = WDML_GetConv(hConv, FALSE);
     if (pConv != NULL && (pConv->wStatus & ST_CLIENT))
     {
@@ -261,13 +251,9 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
 	    aTpc = WDML_MakeAtomFromHsz(pConv->hszTopic);
 	    if (!aSrv || !aTpc)	goto theEnd;
 
-	    LeaveCriticalSection(&WDML_CritSect);
-
             /* note: sent messages shall not use packing */
 	    ret = SendMessageW(hwndServer, WM_DDE_INITIATE, (WPARAM)hwndClient,
                                MAKELPARAM(aSrv, aTpc));
-
-	    EnterCriticalSection(&WDML_CritSect);
 
 	    pConv = WDML_GetConv(hConv, FALSE);
 	    if (pConv == NULL)
@@ -300,7 +286,6 @@ HCONV WINAPI DdeReconnect(HCONV hConv)
     }
 
  theEnd:
-    LeaveCriticalSection(&WDML_CritSect);
 
     if (aSrv) GlobalDeleteAtom(aSrv);
     if (aTpc) GlobalDeleteAtom(aTpc);
@@ -1037,12 +1022,9 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
 	    {
                 HDDEDATA hdd;
 
-                EnterCriticalSection(&WDML_CritSect);
-
                 pConv = WDML_GetConv(hConv, FALSE);
                 if (pConv == NULL)
                 {
-                    LeaveCriticalSection(&WDML_CritSect);
                     /* conversation no longer available... return failure */
                     return 0;
                 }
@@ -1061,13 +1043,11 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
                     if (ret)
                     {
                         pConv->instance->lastError = hdd ? DMLERR_NO_ERROR : DMLERR_NOTPROCESSED;
-                        LeaveCriticalSection(&WDML_CritSect);
                         return hdd;
                     }
                 }
                 else
                 {
-                    LeaveCriticalSection(&WDML_CritSect);
                     DispatchMessageW(&msg);
                 }
             }
@@ -1075,8 +1055,6 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
     }
 
     TRACE("Timeout !!\n");
-
-    EnterCriticalSection(&WDML_CritSect);
 
     pConv = WDML_GetConv(hConv, FALSE);
     if (pConv != NULL)
@@ -1096,7 +1074,6 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
 	    pConv->instance->lastError = err;
 	}
     }
-    LeaveCriticalSection(&WDML_CritSect);
 
     return 0;
 }
@@ -1120,13 +1097,11 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	return 0;
     }
 
-    EnterCriticalSection(&WDML_CritSect);
-
     pConv = WDML_GetConv(hConv, TRUE);
     if (pConv == NULL)
     {
 	/* cannot set error... cannot get back to DDE instance */
-	goto theError;
+        return 0;
     }
 
     switch (wType)
@@ -1145,7 +1120,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	if (pData)
 	{
 	    pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
-	    goto theError;
+            return 0;
 	}
 	pXAct = WDML_ClientQueueAdvise(pConv, wType, wFmt, hszItem);
 	break;
@@ -1153,7 +1128,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	if (pData)
 	{
 	    pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
-	    goto theError;
+            return 0;
 	}
 	pXAct = WDML_ClientQueueUnadvise(pConv, wFmt, hszItem);
 	break;
@@ -1161,7 +1136,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	if (pData)
 	{
 	    pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
-	    goto theError;
+            return 0;
 	}
 	pXAct = WDML_ClientQueueRequest(pConv, wFmt, hszItem);
 	break;
@@ -1169,13 +1144,13 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
         FIXME("Unknown transaction type %04x\n", wType);
 	/* unknown transaction type */
 	pConv->instance->lastError = DMLERR_INVALIDPARAMETER;
-	goto theError;
+        return 0;
     }
 
     if (pXAct == NULL)
     {
 	pConv->instance->lastError = DMLERR_MEMORY_ERROR;
-	goto theError;
+        return 0;
     }
 
     WDML_QueueTransaction(pConv, pXAct);
@@ -1188,7 +1163,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	WDML_UnQueueTransaction(pConv, pXAct);
 	WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
         pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
-	goto theError;
+        return 0;
     }
     pXAct->dwTimeout = dwTimeout;
     /* FIXME: should set the app bits on *pdwResult */
@@ -1202,22 +1177,9 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 	hDdeData = (HDDEDATA)1;
     }
     else
-    {
-	DWORD	count, i;
-
-	count = WDML_CritSect.RecursionCount;
-	for (i = 0; i < count; i++)
-	    LeaveCriticalSection(&WDML_CritSect);
-	hDdeData = WDML_SyncWaitTransactionReply((HCONV)pConv, dwTimeout, pXAct, pdwResult);
-	for (i = 0; i < count; i++)
-	    EnterCriticalSection(&WDML_CritSect);
-    }
-    LeaveCriticalSection(&WDML_CritSect);
+        hDdeData = WDML_SyncWaitTransactionReply(hConv, dwTimeout, pXAct, pdwResult);
 
     return hDdeData;
- theError:
-    LeaveCriticalSection(&WDML_CritSect);
-    return 0;
 }
 
 /*****************************************************************
@@ -1231,7 +1193,6 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
 
     TRACE("(%08x,%p,%08x);\n", idInst, hConv, idTransaction);
 
-    EnterCriticalSection(&WDML_CritSect);
     if ((pInstance = WDML_GetInstance(idInst)))
     {
         if (hConv)
@@ -1265,7 +1226,6 @@ BOOL WINAPI DdeAbandonTransaction(DWORD idInst, HCONV hConv, DWORD idTransaction
             }
         }
     }
-    LeaveCriticalSection(&WDML_CritSect);
 
     return TRUE;
 }
@@ -1336,8 +1296,6 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 
     if (iMsg >= WM_DDE_FIRST && iMsg <= WM_DDE_LAST)
     {
-	EnterCriticalSection(&WDML_CritSect);
-
 	pConv = WDML_GetConvFromWnd(hwnd);
 
 	if (pConv)
@@ -1353,7 +1311,6 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
 	    WDML_HandleReply(pConv, &msg, &hdd, NULL);
 	}
 
-	LeaveCriticalSection(&WDML_CritSect);
 	return 0;
     }
 
@@ -1368,7 +1325,6 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
 {
     WDML_CONV*	pConv = NULL;
     WDML_XACT*	pXAct;
-    DWORD	count, i;
     BOOL	ret = FALSE;
 
     TRACE("(%p)\n", hConv);
@@ -1379,7 +1335,6 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
 	return FALSE;
     }
 
-    EnterCriticalSection(&WDML_CritSect);
     pConv = WDML_GetConv(hConv, TRUE);
     if (pConv != NULL)
     {
@@ -1389,19 +1344,13 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
             pXAct = WDML_ClientQueueTerminate(pConv);
             if (pXAct != NULL)
             {
-                count = WDML_CritSect.RecursionCount;
-                for (i = 0; i < count; i++)
-                    LeaveCriticalSection(&WDML_CritSect);
                 if (PostMessageW(pConv->hwndServer, pXAct->ddeMsg,
                                  (WPARAM)pConv->hwndClient, pXAct->lParam))
                 {
                     WDML_SyncWaitTransactionReply(hConv, 10000, pXAct, NULL);
                     ret = TRUE;
                 }
-                for (i = 0; i < count; i++)
-                    EnterCriticalSection(&WDML_CritSect);
-
-                if (!ret)
+                else
                     pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
 
                 WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
@@ -1414,7 +1363,6 @@ BOOL WINAPI DdeDisconnect(HCONV hConv)
             }
         }
     }
-    LeaveCriticalSection(&WDML_CritSect);
 
     return ret;
 }
@@ -1429,12 +1377,10 @@ BOOL WINAPI DdeImpersonateClient(HCONV hConv)
 
     TRACE("(%p)\n", hConv);
 
-    EnterCriticalSection(&WDML_CritSect);
     pConv = WDML_GetConv(hConv, TRUE);
     if (pConv)
     {
 	ret = ImpersonateDdeClientWindow(pConv->hwndClient, pConv->hwndServer);
     }
-    LeaveCriticalSection(&WDML_CritSect);
     return ret;
 }

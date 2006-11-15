@@ -169,8 +169,6 @@ typedef struct tagWDML_INSTANCE
     WDML_LINK*			links[2];	/* active links for this instance (client and server) */
 } WDML_INSTANCE;
 
-extern CRITICAL_SECTION WDML_CritSect;		/* protection for instance list */
-
 /* header for the DDE Data objects */
 typedef struct tagDDE_DATAHANDLE_HEAD
 {
