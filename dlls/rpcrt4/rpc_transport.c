@@ -1293,7 +1293,10 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
 
   ops = rpcrt4_get_conn_protseq_ops(Protseq);
   if (!ops)
+  {
+    FIXME("not supported for protseq %s\n", Protseq);
     return RPC_S_PROTSEQ_NOT_SUPPORTED;
+  }
 
   NewConnection = ops->alloc();
   NewConnection->Next = NULL;
