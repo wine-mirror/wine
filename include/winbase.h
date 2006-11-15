@@ -710,6 +710,18 @@ typedef struct _BY_HANDLE_FILE_INFORMATION
 #define NMPWAIT_NOWAIT			0x00000001
 #define NMPWAIT_USE_DEFAULT_WAIT	0x00000000
 
+/* Security flags for dwFlagsAndAttributes of CreateFile */
+#define SECURITY_ANONYMOUS          (SecurityAnonymous << 16)
+#define SECURITY_IDENTIFICATION     (SecurityIdentification << 16)
+#define SECURITY_IMPERSONATION      (SecurityImpersonation << 16)
+#define SECURITY_DELEGATION         (SecurityDelegation << 16)
+
+#define SECURITY_CONTEXT_TRACKING   0x00040000
+#define SECURITY_EFFECTIVE_ONLY     0x00080000
+
+#define SECURITY_SQOS_PRESENT       0x00100000
+#define SECURITY_VALID_SQOS_FLAGS   0x001f0000
+
 typedef struct _SYSTEM_POWER_STATUS
 {
   BYTE    ACLineStatus;
