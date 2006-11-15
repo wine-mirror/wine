@@ -265,6 +265,8 @@ static void test_refcount(void)
     IDirect3DSurface8           *pStencilSurface    = NULL;
     IDirect3DSurface8           *pImageSurface      = NULL;
     IDirect3DSurface8           *pRenderTarget      = NULL;
+    IDirect3DSurface8           *pRenderTarget2     = NULL;
+    IDirect3DSurface8           *pRenderTarget3     = NULL;
     IDirect3DSurface8           *pTextureLevel      = NULL;
     IDirect3DSurface8           *pBackBuffer        = NULL;
     DWORD                       dStateBlock         = -1;
@@ -323,6 +325,7 @@ static void test_refcount(void)
      *   - the container is the device
      *   - they hold a refernce to the device
      *   - they are created with a refcount of 0 (Get/Release returns orignial refcount)
+     *   - they are not freed if refcount reaches 0.
      *   - the refcount is not forwarded to the container.
      */
     hr = IDirect3DDevice8_GetRenderTarget(pDevice, &pRenderTarget);
@@ -362,7 +365,6 @@ static void test_refcount(void)
         pBackBuffer = NULL;
     }
     CHECK_REFCOUNT( pDevice, --refcount);
-    pRenderTarget = NULL;
 
     hr = IDirect3DDevice8_GetDepthStencilSurface(pDevice, &pStencilSurface);
     todo_wine CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
@@ -476,7 +478,7 @@ static void test_refcount(void)
     CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, ++refcount );
     hr = IDirect3DDevice8_CreateImageSurface( pDevice, 32, 32, D3DFMT_X8R8G8B8, &pImageSurface );
     CHECK_CALL( hr, "CreateImageSurface", pDevice, ++refcount );
-    hr = IDirect3DDevice8_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, TRUE, &pRenderTarget );
+    hr = IDirect3DDevice8_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, TRUE, &pRenderTarget3 );
     CHECK_CALL( hr, "CreateRenderTarget", pDevice, ++refcount );
     /* Misc */
     hr = IDirect3DDevice8_CreateStateBlock( pDevice, D3DSBT_ALL, &dStateBlock );
@@ -520,6 +522,20 @@ static void test_refcount(void)
         ok(hr == D3D_OK, "IDirect3DVertexBuffer8::Unlock failed with %08x\n", hr);
     }
 
+    /* The implicit render target is not freed if refcount reaches 0.
+     * Otherwise GetRenderTarget would re-allocate it and the pointer would change.*/
+    hr = IDirect3DDevice8_GetRenderTarget(pDevice, &pRenderTarget2);
+    todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
+    if(pRenderTarget2)
+    {
+        todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
+        ok(pRenderTarget == pRenderTarget2, "RenderTarget=%p and RenderTarget2=%p should be the same.\n",
+           pRenderTarget, pRenderTarget2);
+        CHECK_REFCOUNT( pDevice, --refcount);
+        pRenderTarget2 = NULL;
+    }
+    pRenderTarget = NULL;
+
 cleanup:
     CHECK_RELEASE(pDevice,              pDevice, --refcount);
 
@@ -536,7 +552,7 @@ cleanup:
     /* Surfaces */
     CHECK_RELEASE(pStencilSurface,      pDevice, --refcount);
     CHECK_RELEASE(pImageSurface,        pDevice, --refcount);
-    CHECK_RELEASE(pRenderTarget,        pDevice, --refcount);
+    CHECK_RELEASE(pRenderTarget3,       pDevice, --refcount);
     /* Misc */
     if (dStateBlock != -1)    IDirect3DDevice8_DeleteStateBlock( pDevice, dStateBlock );
     /* This will destroy device - cannot check the refcount here */
