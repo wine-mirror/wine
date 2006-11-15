@@ -47,7 +47,7 @@ static char**   myARGV;
 
 /* ---------------- portable memory allocation thingie */
 
-static char     memory[1024*32];
+static char     memory[1024*256];
 static char*    memory_index = memory;
 
 static char*    grab_memory(size_t len)
