@@ -2646,7 +2646,7 @@ DWORD WINAPI GetProcessVersion( DWORD processid )
 BOOL WINAPI SetProcessWorkingSetSize(HANDLE hProcess, SIZE_T minset,
                                      SIZE_T maxset)
 {
-    FIXME("(%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
+    WARN("(%p,%ld,%ld): stub - harmless\n",hProcess,minset,maxset);
     if(( minset == (SIZE_T)-1) && (maxset == (SIZE_T)-1)) {
         /* Trim the working set to zero */
         /* Swap the process out of physical RAM */
