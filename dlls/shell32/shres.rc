@@ -732,6 +732,11 @@ IDI_SHELL_FOLDER_OPEN ICON folder_open.ico
  '00 00 C0 7F A0 9A E0 FF 00 00 FF FF 9A A0'
 } */
 
+/* FIXME: Following three resources are not yet added */
+IDI_SHELL_FOLDER_OPEN_SMALL ICON folder_open.ico
+IDI_SHELL_FOLDER_OPEN_LARGE ICON folder_open.ico
+IDI_SHELL_FOLDER_SMALL_XP ICON folder_open.ico
+
 /* BINRES floppy.ico */
 IDI_SHELL_FLOPPY ICON floppy.ico
 /* {
