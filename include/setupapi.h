@@ -827,6 +827,9 @@ BOOL     WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info, PWSTR
 BOOL     WINAPI SetupGetStringFieldA( PINFCONTEXT context, DWORD index, PSTR buffer, DWORD size, PDWORD required );
 BOOL     WINAPI SetupGetStringFieldW( PINFCONTEXT context, DWORD index, PWSTR buffer, DWORD size, PDWORD required );
 #define         SetupGetStringField WINELIB_NAME_AW(SetupGetStringField)
+BOOL     WINAPI SetupGetTargetPathA( HINF hinf, PINFCONTEXT context, PCSTR section, PSTR buffer, DWORD buffer_size, PDWORD required_size );
+BOOL     WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section, PWSTR buffer, DWORD buffer_size, PDWORD required_size );
+#define         SetupGetTargetPath WINELIB_NAME_AW(SetupGetTargetPath)
 PVOID    WINAPI SetupInitDefaultQueueCallback( HWND );
 PVOID    WINAPI SetupInitDefaultQueueCallbackEx( HWND, HWND, UINT, DWORD, PVOID );
 BOOL     WINAPI SetupInstallFilesFromInfSectionA( HINF, HINF, HSPFILEQ, PCSTR, PCSTR, UINT );

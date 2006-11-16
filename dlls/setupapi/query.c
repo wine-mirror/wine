@@ -516,3 +516,94 @@ BOOL WINAPI SetupGetSourceInfoW( HINF hinf, UINT source_id, UINT info,
     }
     return TRUE;
 }
+
+/***********************************************************************
+ *            SetupGetTargetPathA   (SETUPAPI.@)
+ */
+
+BOOL WINAPI SetupGetTargetPathA( HINF hinf, PINFCONTEXT context, PCSTR section, PSTR buffer,
+                                 DWORD buffer_size, PDWORD required_size )
+{
+    BOOL ret = FALSE;
+    WCHAR *sectionW = NULL, *bufferW = NULL;
+    DWORD required;
+    INT size;
+
+    TRACE("%p, %p, %s, %p, 0x%08x, %p\n", hinf, context, debugstr_a(section), buffer,
+          buffer_size, required_size);
+
+    if (section && !(sectionW = strdupAtoW( section )))
+        return FALSE;
+
+    if (!SetupGetTargetPathW( hinf, context, sectionW, NULL, 0, &required ))
+        goto done;
+
+    if (!(bufferW = HeapAlloc( GetProcessHeap(), 0, required * sizeof(WCHAR) )))
+        goto done;
+
+    if (!SetupGetTargetPathW( hinf, context, sectionW, bufferW, required, NULL ))
+        goto done;
+
+    size = WideCharToMultiByte( CP_ACP, 0, bufferW, -1, NULL, 0, NULL, NULL );
+    if (required_size) *required_size = size;
+
+    if (buffer)
+    {
+        if (buffer_size >= size)
+            WideCharToMultiByte( CP_ACP, 0, bufferW, -1, buffer, buffer_size, NULL, NULL );
+        else
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            goto done;
+        }
+    }
+    ret = TRUE;
+
+ done:
+    HeapFree( GetProcessHeap(), 0, sectionW );
+    HeapFree( GetProcessHeap(), 0, bufferW );
+    return ret;
+}
+
+/***********************************************************************
+ *            SetupGetTargetPathW   (SETUPAPI.@)
+ */
+
+BOOL WINAPI SetupGetTargetPathW( HINF hinf, PINFCONTEXT context, PCWSTR section, PWSTR buffer,
+                                 DWORD buffer_size, PDWORD required_size )
+{
+    static const WCHAR destination_dirs[] =
+        {'D','e','s','t','i','n','a','t','i','o','n','D','i','r','s',0};
+    static const WCHAR default_dest_dir[]  =
+        {'D','e','f','a','u','l','t','D','e','s','t','D','i','r',0};
+
+    INFCONTEXT ctx;
+    WCHAR *dir;
+    INT size;
+
+    TRACE("%p, %p, %s, %p, 0x%08x, %p\n", hinf, context, debugstr_w(section), buffer,
+          buffer_size, required_size);
+
+    if (context && !SetupFindFirstLineW( hinf, destination_dirs, NULL, context )) return FALSE;
+    else if (section && !SetupFindFirstLineW( hinf, section, NULL, &ctx )) return FALSE;
+    else if (!SetupFindFirstLineW( hinf, destination_dirs, default_dest_dir, &ctx )) return FALSE;
+
+    if (!(dir = PARSER_get_dest_dir( context ? context : &ctx ))) return FALSE;
+
+    size = lstrlenW( dir ) + 1;
+    if (required_size) *required_size = size;
+
+    if (buffer)
+    {
+        if (buffer_size >= size)
+            lstrcpyW( buffer, dir );
+        else
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            HeapFree( GetProcessHeap(), 0, dir );
+            return FALSE;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, dir );
+    return TRUE;
+}

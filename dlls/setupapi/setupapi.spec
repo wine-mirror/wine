@@ -421,8 +421,8 @@
 @ stdcall SetupGetSourceInfoW(ptr long long ptr long ptr)
 @ stdcall SetupGetStringFieldA(ptr long ptr long ptr)
 @ stdcall SetupGetStringFieldW(ptr long ptr long ptr)
-@ stub SetupGetTargetPathA
-@ stub SetupGetTargetPathW
+@ stdcall SetupGetTargetPathA(ptr ptr str ptr long ptr)
+@ stdcall SetupGetTargetPathW(ptr ptr wstr ptr long ptr)
 @ stdcall SetupInitDefaultQueueCallback(long)
 @ stdcall SetupInitDefaultQueueCallbackEx(long long long long ptr)
 @ stdcall SetupInitializeFileLogA (str long)
