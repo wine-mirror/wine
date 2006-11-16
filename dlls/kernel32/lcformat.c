@@ -299,6 +299,8 @@ static const NLS_FORMAT_NODE *NLS_GetFormats(LCID lcid, DWORD dwFlags)
  */
 BOOL NLS_IsUnicodeOnlyLcid(LCID lcid)
 {
+  lcid = ConvertDefaultLocale(lcid);
+
   switch (PRIMARYLANGID(lcid))
   {
   case LANG_ARMENIAN:

@@ -603,8 +603,6 @@ int WINAPI GetCalendarInfoA(LCID lcid, CALID Calendar, CALTYPE CalType,
     int ret;
     LPWSTR lpCalDataW = NULL;
 
-    lcid = ConvertDefaultLocale(lcid);
-
     if (NLS_IsUnicodeOnlyLcid(lcid))
     {
       SetLastError(ERROR_INVALID_PARAMETER);

@@ -406,6 +406,158 @@ done:
 
 
 /***********************************************************************
+ *           convert_default_lcid
+ *
+ * Get the default LCID to use for a given lctype in GetLocaleInfo.
+ */
+static LCID convert_default_lcid( LCID lcid, LCTYPE lctype )
+{
+    if (lcid == LOCALE_SYSTEM_DEFAULT ||
+        lcid == LOCALE_USER_DEFAULT ||
+        lcid == LOCALE_NEUTRAL)
+    {
+        LCID default_id = 0;
+
+        switch(lctype & 0xffff)
+        {
+        case LOCALE_SSORTNAME:
+            default_id = lcid_LC_COLLATE;
+            break;
+
+        case LOCALE_FONTSIGNATURE:
+        case LOCALE_IDEFAULTANSICODEPAGE:
+        case LOCALE_IDEFAULTCODEPAGE:
+        case LOCALE_IDEFAULTEBCDICCODEPAGE:
+        case LOCALE_IDEFAULTMACCODEPAGE:
+        case LOCALE_IDEFAULTUNIXCODEPAGE:
+            default_id = lcid_LC_CTYPE;
+            break;
+
+        case LOCALE_ICURRDIGITS:
+        case LOCALE_ICURRENCY:
+        case LOCALE_IINTLCURRDIGITS:
+        case LOCALE_INEGCURR:
+        case LOCALE_INEGSEPBYSPACE:
+        case LOCALE_INEGSIGNPOSN:
+        case LOCALE_INEGSYMPRECEDES:
+        case LOCALE_IPOSSEPBYSPACE:
+        case LOCALE_IPOSSIGNPOSN:
+        case LOCALE_IPOSSYMPRECEDES:
+        case LOCALE_SCURRENCY:
+        case LOCALE_SINTLSYMBOL:
+        case LOCALE_SMONDECIMALSEP:
+        case LOCALE_SMONGROUPING:
+        case LOCALE_SMONTHOUSANDSEP:
+        case LOCALE_SNATIVECURRNAME:
+            default_id = lcid_LC_MONETARY;
+            break;
+
+        case LOCALE_IDIGITS:
+        case LOCALE_IDIGITSUBSTITUTION:
+        case LOCALE_ILZERO:
+        case LOCALE_INEGNUMBER:
+        case LOCALE_SDECIMAL:
+        case LOCALE_SGROUPING:
+        case LOCALE_SNAN:
+        case LOCALE_SNATIVEDIGITS:
+        case LOCALE_SNEGATIVESIGN:
+        case LOCALE_SNEGINFINITY:
+        case LOCALE_SPOSINFINITY:
+        case LOCALE_SPOSITIVESIGN:
+        case LOCALE_STHOUSAND:
+            default_id = lcid_LC_NUMERIC;
+            break;
+
+        case LOCALE_ICALENDARTYPE:
+        case LOCALE_ICENTURY:
+        case LOCALE_IDATE:
+        case LOCALE_IDAYLZERO:
+        case LOCALE_IFIRSTDAYOFWEEK:
+        case LOCALE_IFIRSTWEEKOFYEAR:
+        case LOCALE_ILDATE:
+        case LOCALE_IMONLZERO:
+        case LOCALE_IOPTIONALCALENDAR:
+        case LOCALE_ITIME:
+        case LOCALE_ITIMEMARKPOSN:
+        case LOCALE_ITLZERO:
+        case LOCALE_S1159:
+        case LOCALE_S2359:
+        case LOCALE_SABBREVDAYNAME1:
+        case LOCALE_SABBREVDAYNAME2:
+        case LOCALE_SABBREVDAYNAME3:
+        case LOCALE_SABBREVDAYNAME4:
+        case LOCALE_SABBREVDAYNAME5:
+        case LOCALE_SABBREVDAYNAME6:
+        case LOCALE_SABBREVDAYNAME7:
+        case LOCALE_SABBREVMONTHNAME1:
+        case LOCALE_SABBREVMONTHNAME2:
+        case LOCALE_SABBREVMONTHNAME3:
+        case LOCALE_SABBREVMONTHNAME4:
+        case LOCALE_SABBREVMONTHNAME5:
+        case LOCALE_SABBREVMONTHNAME6:
+        case LOCALE_SABBREVMONTHNAME7:
+        case LOCALE_SABBREVMONTHNAME8:
+        case LOCALE_SABBREVMONTHNAME9:
+        case LOCALE_SABBREVMONTHNAME10:
+        case LOCALE_SABBREVMONTHNAME11:
+        case LOCALE_SABBREVMONTHNAME12:
+        case LOCALE_SABBREVMONTHNAME13:
+        case LOCALE_SDATE:
+        case LOCALE_SDAYNAME1:
+        case LOCALE_SDAYNAME2:
+        case LOCALE_SDAYNAME3:
+        case LOCALE_SDAYNAME4:
+        case LOCALE_SDAYNAME5:
+        case LOCALE_SDAYNAME6:
+        case LOCALE_SDAYNAME7:
+        case LOCALE_SDURATION:
+        case LOCALE_SLONGDATE:
+        case LOCALE_SMONTHNAME1:
+        case LOCALE_SMONTHNAME2:
+        case LOCALE_SMONTHNAME3:
+        case LOCALE_SMONTHNAME4:
+        case LOCALE_SMONTHNAME5:
+        case LOCALE_SMONTHNAME6:
+        case LOCALE_SMONTHNAME7:
+        case LOCALE_SMONTHNAME8:
+        case LOCALE_SMONTHNAME9:
+        case LOCALE_SMONTHNAME10:
+        case LOCALE_SMONTHNAME11:
+        case LOCALE_SMONTHNAME12:
+        case LOCALE_SMONTHNAME13:
+        case LOCALE_SSHORTDATE:
+        case LOCALE_SSHORTESTDAYNAME1:
+        case LOCALE_SSHORTESTDAYNAME2:
+        case LOCALE_SSHORTESTDAYNAME3:
+        case LOCALE_SSHORTESTDAYNAME4:
+        case LOCALE_SSHORTESTDAYNAME5:
+        case LOCALE_SSHORTESTDAYNAME6:
+        case LOCALE_SSHORTESTDAYNAME7:
+        case LOCALE_STIME:
+        case LOCALE_STIMEFORMAT:
+        case LOCALE_SYEARMONTH:
+            default_id = lcid_LC_TIME;
+            break;
+
+        case LOCALE_IPAPERSIZE:
+            default_id = lcid_LC_PAPER;
+            break;
+
+        case LOCALE_IMEASURE:
+            default_id = lcid_LC_MEASUREMENT;
+            break;
+
+        case LOCALE_ICOUNTRY:
+            default_id = lcid_LC_TELEPHONE;
+            break;
+        }
+        if (default_id) lcid = default_id;
+    }
+    return ConvertDefaultLocale( lcid );
+}
+
+
+/***********************************************************************
  *		create_registry_key
  *
  * Create the Control Panel\\International registry key.
@@ -434,6 +586,41 @@ inline static HANDLE create_registry_key(void)
 }
 
 
+/* update the registry settings for a given locale parameter */
+/* return TRUE if an update was needed */
+static BOOL locale_update_registry( HKEY hkey, const WCHAR *name, LCID lcid,
+                                    const LCTYPE *values, UINT nb_values )
+{
+    static const WCHAR formatW[] = { '%','0','8','x',0 };
+    WCHAR bufferW[40];
+    UNICODE_STRING nameW;
+    DWORD count, i;
+
+    RtlInitUnicodeString( &nameW, name );
+    count = sizeof(bufferW);
+    if (!NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation, (LPBYTE)bufferW, count, &count))
+    {
+        const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
+        LPCWSTR text = (LPCWSTR)info->Data;
+
+        if (strtoulW( text, NULL, 16 ) == lcid) return FALSE; /* already set correctly */
+        TRACE( "updating registry, locale %s changed %s -> %08x\n",
+               debugstr_w(name), debugstr_w(text), lcid );
+    }
+    else TRACE( "updating registry, locale %s changed none -> %08x\n", debugstr_w(name), lcid );
+    sprintfW( bufferW, formatW, lcid );
+    NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, (strlenW(bufferW) + 1) * sizeof(WCHAR) );
+
+    for (i = 0; i < nb_values; i++)
+    {
+        GetLocaleInfoW( lcid, values[i] | LOCALE_NOUSEROVERRIDE, bufferW,
+                        sizeof(bufferW)/sizeof(WCHAR) );
+        SetLocaleInfoW( lcid, values[i], bufferW );
+    }
+    return TRUE;
+}
+
+
 /***********************************************************************
  *		LOCALE_InitRegistry
  *
@@ -446,6 +633,13 @@ void LOCALE_InitRegistry(void)
     static const WCHAR acpW[] = {'A','C','P',0};
     static const WCHAR oemcpW[] = {'O','E','M','C','P',0};
     static const WCHAR maccpW[] = {'M','A','C','C','P',0};
+    static const WCHAR lc_ctypeW[] = { 'L','C','_','C','T','Y','P','E',0 };
+    static const WCHAR lc_messagesW[] = { 'L','C','_','M','E','S','S','A','G','E','S',0 };
+    static const WCHAR lc_monetaryW[] = { 'L','C','_','M','O','N','E','T','A','R','Y',0 };
+    static const WCHAR lc_numericW[] = { 'L','C','_','N','U','M','E','R','I','C',0 };
+    static const WCHAR lc_timeW[] = { 'L','C','_','T','I','M','E',0 };
+    static const WCHAR lc_measurementW[] = { 'L','C','_','M','E','A','S','U','R','E','M','E','N','T',0 };
+    static const WCHAR lc_telephoneW[] = { 'L','C','_','T','E','L','E','P','H','O','N','E',0 };
     static const struct
     {
         LPCWSTR name;
@@ -455,32 +649,37 @@ void LOCALE_InitRegistry(void)
         { oemcpW, LOCALE_IDEFAULTCODEPAGE },
         { maccpW, LOCALE_IDEFAULTMACCODEPAGE }
     };
-    static const USHORT updateValues[] = {
+    static const LCTYPE lc_messages_values[] = {
       LOCALE_SLANGUAGE,
-      LOCALE_SCOUNTRY, LOCALE_ICOUNTRY,
-      LOCALE_S1159, LOCALE_S2359,
-      LOCALE_STIME, LOCALE_ITIME,
+      LOCALE_SCOUNTRY,
+      LOCALE_SLIST };
+    static const LCTYPE lc_monetary_values[] = {
+      LOCALE_SCURRENCY,
+      LOCALE_ICURRENCY,
+      LOCALE_INEGCURR,
+      LOCALE_ICURRDIGITS,
+      LOCALE_ILZERO };
+    static const LCTYPE lc_numeric_values[] = {
+      LOCALE_SDECIMAL,
+      LOCALE_STHOUSAND,
+      LOCALE_IDIGITS,
+      LOCALE_IDIGITSUBSTITUTION,
+      LOCALE_SNATIVEDIGITS };
+    static const LCTYPE lc_time_values[] = {
+      LOCALE_S1159,
+      LOCALE_S2359,
+      LOCALE_STIME,
+      LOCALE_ITIME,
       LOCALE_ITLZERO,
       LOCALE_SSHORTDATE,
       LOCALE_SLONGDATE,
       LOCALE_SDATE,
-      LOCALE_SCURRENCY, LOCALE_ICURRENCY,
-      LOCALE_INEGCURR,
-      LOCALE_ICURRDIGITS,
-      LOCALE_SDECIMAL,
-      LOCALE_SLIST,
-      LOCALE_STHOUSAND,
-      LOCALE_IDIGITS,
-      LOCALE_IDIGITSUBSTITUTION,
-      LOCALE_SNATIVEDIGITS,
       LOCALE_ITIMEMARKPOSN,
-      LOCALE_ICALENDARTYPE,
-      LOCALE_ILZERO,
-      LOCALE_IMEASURE
-    };
-    static const WCHAR LocaleW[] = {'L','o','c','a','l','e',0};
+      LOCALE_ICALENDARTYPE };
+    static const LCTYPE lc_measurement_values[] = { LOCALE_IMEASURE };
+    static const LCTYPE lc_telephone_values[] = { LOCALE_ICOUNTRY };
+
     UNICODE_STRING nameW;
-    char buffer[20];
     WCHAR bufferW[80];
     DWORD count, i;
     HANDLE hkey;
@@ -489,43 +688,31 @@ void LOCALE_InitRegistry(void)
     if (!(hkey = create_registry_key()))
         return;  /* don't do anything if we can't create the registry key */
 
-    RtlInitUnicodeString( &nameW, LocaleW );
-    count = sizeof(bufferW);
-    if (!NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation, (LPBYTE)bufferW, count, &count))
-    {
-        const KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)bufferW;
-        LPCWSTR szValueText = (LPCWSTR)info->Data;
+    locale_update_registry( hkey, lc_messagesW, lcid_LC_MESSAGES, lc_messages_values,
+                            sizeof(lc_messages_values)/sizeof(lc_messages_values[0]) );
+    locale_update_registry( hkey, lc_monetaryW, lcid_LC_MONETARY, lc_monetary_values,
+                            sizeof(lc_monetary_values)/sizeof(lc_monetary_values[0]) );
+    locale_update_registry( hkey, lc_numericW, lcid_LC_NUMERIC, lc_numeric_values,
+                            sizeof(lc_numeric_values)/sizeof(lc_numeric_values[0]) );
+    locale_update_registry( hkey, lc_timeW, lcid_LC_TIME, lc_time_values,
+                            sizeof(lc_time_values)/sizeof(lc_time_values[0]) );
+    locale_update_registry( hkey, lc_measurementW, lcid_LC_MEASUREMENT, lc_measurement_values,
+                            sizeof(lc_measurement_values)/sizeof(lc_measurement_values[0]) );
+    locale_update_registry( hkey, lc_telephoneW, lcid_LC_TELEPHONE, lc_telephone_values,
+                            sizeof(lc_telephone_values)/sizeof(lc_telephone_values[0]) );
 
-        if (strtoulW( szValueText, NULL, 16 ) == lcid)  /* already set correctly */
+    if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
+    {
+        HKEY nls_key = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), CodepageW );
+
+        for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
         {
-            NtClose( hkey );
-            return;
+            count = GetLocaleInfoW( lcid, update_cp_values[i].value | LOCALE_NOUSEROVERRIDE,
+                                    bufferW, sizeof(bufferW)/sizeof(WCHAR) );
+            RtlInitUnicodeString( &nameW, update_cp_values[i].name );
+            NtSetValueKey( nls_key, &nameW, 0, REG_SZ, bufferW, count * sizeof(WCHAR) );
         }
-        TRACE( "updating registry, locale changed %s -> %08x\n", debugstr_w(szValueText), lcid );
-    }
-    else TRACE( "updating registry, locale changed none -> %08x\n", lcid );
-
-    sprintf( buffer, "%08x", lcid );
-    /* Note: '9' constant below is strlen(buffer) + 1 */
-    RtlMultiByteToUnicodeN( bufferW, sizeof(bufferW), NULL, buffer, 9 );
-    NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, 9 * sizeof(WCHAR) );
-    NtClose( hkey );
-
-    for (i = 0; i < sizeof(updateValues)/sizeof(updateValues[0]); i++)
-    {
-        GetLocaleInfoW( lcid, updateValues[i] | LOCALE_NOUSEROVERRIDE, bufferW,
-                        sizeof(bufferW)/sizeof(WCHAR) );
-        SetLocaleInfoW( lcid, updateValues[i], bufferW );
-    }
-
-    hkey = NLS_RegOpenSubKey( NLS_RegOpenKey( 0, szNlsKeyName ), CodepageW );
-
-    for (i = 0; i < sizeof(update_cp_values)/sizeof(update_cp_values[0]); i++)
-    {
-        count = GetLocaleInfoW( lcid, update_cp_values[i].value | LOCALE_NOUSEROVERRIDE,
-                                bufferW, sizeof(bufferW)/sizeof(WCHAR) );
-        RtlInitUnicodeString( &nameW, update_cp_values[i].name );
-        NtSetValueKey( hkey, &nameW, 0, REG_SZ, bufferW, count * sizeof(WCHAR) );
+        NtClose( nls_key );
     }
 
     NtClose( hkey );
@@ -998,7 +1185,7 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
     }
     if (!len) buffer = NULL;
 
-    lcid = ConvertDefaultLocale(lcid);
+    lcid = convert_default_lcid( lcid, lctype );
 
     lcflags = lctype & LOCALE_LOCALEINFOFLAGSMASK;
     lctype &= 0xffff;
@@ -1136,8 +1323,6 @@ BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
     DWORD len;
     BOOL ret;
 
-    lcid = ConvertDefaultLocale(lcid);
-
     if (!(lctype & LOCALE_USE_CP_ACP)) codepage = get_lcid_codepage( lcid );
 
     if (!data)
@@ -1171,8 +1356,6 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     NTSTATUS status;
     HANDLE hkey;
 
-    lcid = ConvertDefaultLocale(lcid);
-
     lctype &= 0xffff;
     value = get_locale_value_name( lctype );
 
@@ -1186,13 +1369,6 @@ BOOL WINAPI SetLocaleInfoW( LCID lcid, LCTYPE lctype, LPCWSTR data )
     {
         SetLastError( ERROR_INVALID_FLAGS );
         return FALSE;
-    }
-
-    if (lcid != GetUserDefaultLCID())
-    {
-        /* Windows does not check that the lcid matches the current lcid */
-        WARN("locale 0x%08x isn't the current locale (0x%08x), setting anyway!\n",
-             lcid, GetUserDefaultLCID());
     }
 
     TRACE("setting %x (%s) to %s\n", lctype, debugstr_w(value), debugstr_w(data) );
