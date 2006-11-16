@@ -1498,7 +1498,7 @@ AC_CONFIG_COMMANDS([include/stamp-h], [echo timestamp > include/stamp-h])
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/enhmfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/gdi32/mfdrv)
 WINE_CONFIG_EXTRA_DIR(dlls/kernel32/nls)
-WINE_CONFIG_EXTRA_DIR(dlls/user/resources)
+WINE_CONFIG_EXTRA_DIR(dlls/user32/resources)
 WINE_CONFIG_EXTRA_DIR(dlls/wineps.drv/data)
 WINE_CONFIG_EXTRA_DIR(include/wine)
 
@@ -1729,8 +1729,8 @@ dlls/unicows/Makefile
 dlls/url/Makefile
 dlls/urlmon/Makefile
 dlls/urlmon/tests/Makefile
-dlls/user/Makefile
-dlls/user/tests/Makefile
+dlls/user32/Makefile
+dlls/user32/tests/Makefile
 dlls/userenv/Makefile
 dlls/usp10/Makefile
 dlls/usp10/tests/Makefile

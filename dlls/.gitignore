@@ -17,7 +17,6 @@
 /imm.dll16
 /keyboard.drv16
 /krnl386.exe16
-/libuser32.def
 /libwinspool.def
 /lzexpand.dll16
 /mmsystem.dll16
@@ -155,7 +154,7 @@ tapi32/libtapi32.def
 unicows/libunicows.def
 url/liburl.def
 urlmon/liburlmon.def
-user/libuser32.def
+user32/libuser32.def
 usp10/libusp10.def
 uxtheme/libuxtheme.def
 vdmdbg/libvdmdbg.def

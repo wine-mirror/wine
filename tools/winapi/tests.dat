@@ -1294,7 +1294,7 @@ REMSECURITY_ATTRIBUTES
 RemBINDINFO
 RemFORMATETC
 
-%%%dlls/user/tests
+%%%dlls/user32/tests
 
 %%pack
 

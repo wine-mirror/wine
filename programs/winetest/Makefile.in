@@ -168,8 +168,8 @@ shlwapi_test.exe: $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 urlmon_test.exe: $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT)
 	cp $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT) $@ && $(STRIP) $@
-user32_test.exe: $(DLLDIR)/user/tests/user32_test.exe$(DLLEXT)
-	cp $(DLLDIR)/user/tests/user32_test.exe$(DLLEXT) $@ && $(STRIP) $@
+user32_test.exe: $(DLLDIR)/user32/tests/user32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/user32/tests/user32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 usp10_test.exe: $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT)
 	cp $(DLLDIR)/usp10/tests/usp10_test.exe$(DLLEXT) $@ && $(STRIP) $@
 uxtheme_test.exe: $(DLLDIR)/uxtheme/tests/uxtheme_test.exe$(DLLEXT)

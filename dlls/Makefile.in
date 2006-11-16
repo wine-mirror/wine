@@ -169,7 +169,7 @@ BASEDIRS = \
 	unicows \
 	url \
 	urlmon \
-	user \
+	user32 \
 	userenv \
 	usp10 \
 	uxtheme \
@@ -261,7 +261,7 @@ TESTSUBDIRS = \
 	shell32/tests \
 	shlwapi/tests \
 	urlmon/tests \
-	user/tests \
+	user32/tests \
 	usp10/tests \
 	uxtheme/tests \
 	version/tests \
@@ -344,7 +344,6 @@ WIN16_FILES = \
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
 	joystick.drv.so \
-	user32.dll.so \
 	winealsa.drv.so \
 	winearts.drv.so \
 	wineaudioio.drv.so \
@@ -368,9 +367,6 @@ symlinks: $(BUILDSUBDIRS)
 
 joystick.drv.so: winmm/joystick/joystick.drv.so
 	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
-
-user32.dll.so: user/user32.dll.so
-	$(RM) $@ && $(LN_S) user/user32.dll.so $@
 
 winealsa.drv.so: winmm/winealsa/winealsa.drv.so
 	$(RM) $@ && $(LN_S) winmm/winealsa/winealsa.drv.so $@
@@ -484,7 +480,6 @@ winsock.dll16:
 STATIC_IMPLIBEXT = $(IMPLIBEXT:def=def.a)
 
 IMPORT_SYMLINKS = \
-	libuser32.$(IMPLIBEXT) \
 	libwinspool.$(IMPLIBEXT)
 
 IMPORT_LIBS = \
@@ -596,7 +591,7 @@ IMPORT_LIBS = \
 	unicows/libunicows.$(IMPLIBEXT) \
 	url/liburl.$(IMPLIBEXT) \
 	urlmon/liburlmon.$(IMPLIBEXT) \
-	user/libuser32.$(IMPLIBEXT) \
+	user32/libuser32.$(IMPLIBEXT) \
 	usp10/libusp10.$(IMPLIBEXT) \
 	uxtheme/libuxtheme.$(IMPLIBEXT) \
 	vdmdbg/libvdmdbg.$(IMPLIBEXT) \
@@ -921,8 +916,8 @@ url/liburl.$(IMPLIBEXT): url/url.spec $(WINEBUILD)
 urlmon/liburlmon.$(IMPLIBEXT): urlmon/urlmon.spec $(WINEBUILD)
 	@cd urlmon && $(MAKE) liburlmon.$(IMPLIBEXT)
 
-user/libuser32.$(IMPLIBEXT): user/user32.spec $(WINEBUILD)
-	@cd user && $(MAKE) libuser32.$(IMPLIBEXT)
+user32/libuser32.$(IMPLIBEXT): user32/user32.spec $(WINEBUILD)
+	@cd user32 && $(MAKE) libuser32.$(IMPLIBEXT)
 
 usp10/libusp10.$(IMPLIBEXT): usp10/usp10.spec $(WINEBUILD)
 	@cd usp10 && $(MAKE) libusp10.$(IMPLIBEXT)
@@ -978,9 +973,6 @@ wsock32/libwsock32.$(IMPLIBEXT): wsock32/wsock32.spec $(WINEBUILD)
 wtsapi32/libwtsapi32.$(IMPLIBEXT): wtsapi32/wtsapi32.spec $(WINEBUILD)
 	@cd wtsapi32 && $(MAKE) libwtsapi32.$(IMPLIBEXT)
 
-libuser32.$(IMPLIBEXT): user/libuser32.$(IMPLIBEXT)
-	$(RM) $@ && $(LN_S) user/libuser32.$(IMPLIBEXT) $@
-
 libwinspool.$(IMPLIBEXT): winspool.drv/libwinspool.$(IMPLIBEXT)
 	$(RM) $@ && $(LN_S) winspool.drv/libwinspool.$(IMPLIBEXT) $@
 
@@ -990,7 +982,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 # Map library name to the corresponding directory
 
 winmm/joystick/joystick.drv.so: winmm/joystick
-user/user32.dll.so: user
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
 winmm/wineaudioio/wineaudioio.drv.so: winmm/wineaudioio
