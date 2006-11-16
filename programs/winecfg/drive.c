@@ -21,6 +21,9 @@
  *
  */
 
+#include "config.h"
+#include "wine/port.h"
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -35,6 +38,7 @@
 #include <shlguid.h>
 #include <shlwapi.h>
 #include <shlobj.h>
+#include <wine/library.h>
 
 #include "winecfg.h"
 #include "resource.h"
@@ -263,11 +267,10 @@ void load_drives()
     int drivecount = 0, i;
     int retval;
     static const int arraysize = 512;
+    const char *config_dir = wine_get_config_dir();
+    char *path;
 
     WINE_TRACE("\n");
-
-    /* FIXME: broken symlinks in $WINEPREFIX/dosdevices will not be
-       returned by this API, so we need to handle that  */
 
     /* setup the drives array */
     dev = devices = HeapAlloc(GetProcessHeap(), 0, arraysize);
@@ -360,8 +363,37 @@ void load_drives()
         drivecount++;
     }
 
+    /* Find all the broken symlinks we might have and add them as well. */
+
+    len = strlen(config_dir) + sizeof("/dosdevices/a:");
+    if (!(path = HeapAlloc(GetProcessHeap(), 0, len)))
+        return;
+
+    strcpy(path, config_dir);
+    strcat(path, "/dosdevices/a:");
+
+    for (i = 0; i < 26; i++)
+    {
+        char buff[MAX_PATH];
+        struct stat st;
+        int cnt;
+
+        if (drives[i].in_use) continue;
+        path[len - 3] = 'a' + i;
+
+        if (lstat(path, &st) == -1 || !S_ISLNK(st.st_mode)) continue;
+        if ((cnt = readlink(path, buff, sizeof(buff))) == -1) continue;
+        buff[cnt] = '\0';
+
+        WINE_TRACE("found broken symlink %s -> %s\n", path, buff);
+        add_drive('A' + i, buff, "", "0", DRIVE_UNKNOWN);
+
+        drivecount++;
+    }
+
     WINE_TRACE("found %d drives\n", drivecount);
 
+    HeapFree(GetProcessHeap(), 0, path);
     HeapFree(GetProcessHeap(), 0, dev);
 }
 
@@ -421,9 +453,8 @@ void apply_drive_changes(void)
             if(!retval)
             {
                 WINE_TRACE("  GetVolumeInformation() for '%s' failed\n", devicename);
-                WINE_TRACE("  Skipping this drive\n");
                 PRINTERROR();
-                continue; /* skip this drive */
+                volumeNameBuffer[0] = '\0';
             }
 
             WINE_TRACE("  current path:   '%s', new path:   '%s'\n",
