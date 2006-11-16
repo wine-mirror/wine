@@ -19,6 +19,7 @@ C_SRCS = \
 	nodelist.c \
 	nodemap.c \
 	parseerror.c \
+	pi.c \
 	regsvr.c \
 	text.c \
 	uuid.c

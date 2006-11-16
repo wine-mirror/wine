@@ -744,8 +744,23 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     BSTR data,
     IXMLDOMProcessingInstruction** pi )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlNodePtr xmlnode;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    xmlChar *xml_target, *xml_content;
+
+    TRACE("%p->(%s %s %p)\n", iface, debugstr_w(target), debugstr_w(data), pi);
+
+    xml_target = xmlChar_from_wchar((WCHAR*)target);
+    xml_content = xmlChar_from_wchar((WCHAR*)data);
+
+    xmlnode = xmlNewDocPI(get_doc(This), xml_target, xml_content);
+    TRACE("created xmlptr %p\n", xmlnode);
+    *pi = (IXMLDOMProcessingInstruction*)create_pi(xmlnode);
+
+    HeapFree(GetProcessHeap(), 0, xml_content);
+    HeapFree(GetProcessHeap(), 0, xml_target);
+
+    return S_OK;
 }
 
 
