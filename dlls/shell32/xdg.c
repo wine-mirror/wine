@@ -148,7 +148,7 @@ const char *XDG_GetPath(int path_id)
 }
 
 /******************************************************************************
- * XDG_GetPath    [internal]
+ * XDG_BuildPath    [internal]
  *
  * Build a string with a subpath of one of the XDG standard paths.
  * The root can be one of XDG_DATA_HOME, XDG_CONFIG_HOME and XDG_CACHE_HOME.
