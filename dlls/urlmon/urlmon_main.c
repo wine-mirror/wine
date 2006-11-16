@@ -452,7 +452,7 @@ static BOOL image_bmp_filter(const BYTE const *b, DWORD size)
 {
     return size >= 14
         && b[0] == 0x42 && b[1] == 0x4d
-        && *(DWORD*)(b+6) == 0;
+        && *(const DWORD *)(b+6) == 0;
 }
 
 static BOOL video_avi_filter(const BYTE const *b, DWORD size)
