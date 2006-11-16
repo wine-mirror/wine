@@ -2671,9 +2671,9 @@ HRESULT WINAPI CoRegisterMessageFilter(
     apt = COM_CurrentApt();
 
     /* can't set a message filter in a multi-threaded apartment */
-    if (apt->multi_threaded)
+    if (!apt || apt->multi_threaded)
     {
-        ERR("can't set message filter in MTA\n");
+        WARN("can't set message filter in MTA or uninitialized apt\n");
         return CO_E_NOT_SUPPORTED;
     }
 

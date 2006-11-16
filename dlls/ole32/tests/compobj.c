@@ -250,9 +250,10 @@ static void test_CoRegisterMessageFilter(void)
     HRESULT hr;
     IMessageFilter *prev_filter;
 
-#if 0 /* crashes without an apartment! */
     hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
-#endif
+    ok(hr == CO_E_NOT_SUPPORTED,
+        "CoRegisterMessageFilter should have failed with CO_E_NOT_SUPPORTED instead of 0x%08x\n",
+        hr);
 
     pCoInitializeEx(NULL, COINIT_MULTITHREADED);
     prev_filter = (IMessageFilter *)0xdeadbeef;
