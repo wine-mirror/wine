@@ -1664,6 +1664,15 @@ void X11DRV_InitKeyboard(void)
 		vkey = (*lvkey)[maxval];
 	      }
 	    }
+        }
+        TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
+        keyc2vkey[e2.keycode] = vkey;
+        keyc2scan[e2.keycode] = scan;
+        if ((vkey & 0xff) && vkey_used[(vkey & 0xff)])
+            WARN("vkey %04x is being used by more than one keycode\n", vkey);
+        vkey_used[(vkey & 0xff)] = 1;
+    } /* for */
+
 #if 0 /* this breaks VK_OEM_x VKeys in some layout tables by inserting
        * a VK code into a not appropriate place.
        */
@@ -1729,14 +1738,6 @@ void X11DRV_InitKeyboard(void)
                 }
             }
 #endif
-        }
-        TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
-        keyc2vkey[e2.keycode] = vkey;
-        keyc2scan[e2.keycode] = scan;
-        if ((vkey & 0xff) && vkey_used[(vkey & 0xff)])
-            WARN("vkey %04x is being used by more than one keycode\n", vkey);
-        vkey_used[(vkey & 0xff)] = 1;
-    } /* for */
 
     /* If some keys still lack scancodes, assign some arbitrary ones to them now */
     for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
