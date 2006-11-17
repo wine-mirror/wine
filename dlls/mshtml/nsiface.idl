@@ -110,6 +110,8 @@ typedef nsISupports nsIDOMHTMLCollection;
 typedef nsISupports nsIDOMRange;
 typedef nsISupports nsIEditor;
 typedef nsISupports nsIWebProgressListener;
+typedef nsISupports nsIDOMCSSValue;
+typedef nsISupports nsIDOMCSSRule;
 
 [
     object,
@@ -377,6 +379,25 @@ interface nsIUploadChannel : nsISupports
 
 [
     object,
+    uuid(a6cf90be-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMCSSStyleDeclaration : nsISupports
+{
+    nsresult GetCssText(nsAString *aCssText);
+    nsresult SetCssText(const nsAString *aCssText);
+    nsresult GetPropertyValue(const nsAString *propertyName, nsAString *_retval);
+    nsresult GetPropertyCSSValue(const nsAString *propertyName, nsIDOMCSSValue **_retval);
+    nsresult RemoveProperty(const nsAString *propertyName, nsAString *_retval);
+    nsresult GetPropertyPriority(const nsAString *propertyName, nsAString *_retval);
+    nsresult SetProperty(const nsAString *propertyName, const nsAString *value,
+                         const nsAString *priority);
+    nsresult GetLength(PRUint32 *aLength);
+    nsresult Item(PRUint32 index, nsAString *_retval);
+    nsresult GetParentRule(nsIDOMCSSRule **aParentRule);
+}
+
+[
+    object,
     uuid(a6cf907d-15b3-11d2-932e-00805f8add32)
 ]
 interface nsIDOMNodeList : nsISupports
@@ -460,6 +481,15 @@ interface nsIDOMElement : nsIDOMNode
     nsresult HasAttribute(const nsAString *name, PRBool *_retval);
     nsresult HasAttributeNS(const nsAString *namespaceURI, const nsAString *localName,
                             PRBool *_retval);
+}
+
+[
+    object,
+    uuid(99715845-95fc-4a56-aa53-214b65c26e22)
+]
+interface nsIDOMElementCSSInlineStyle : nsISupports
+{
+    nsresult GetStyle(nsIDOMCSSStyleDeclaration **aStyle);
 }
 
 cpp_quote("#undef GetClassName");

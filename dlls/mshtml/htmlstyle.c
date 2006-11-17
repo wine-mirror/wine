@@ -40,6 +40,8 @@ typedef struct {
     const IHTMLStyleVtbl *lpHTMLStyleVtbl;
 
     LONG ref;
+
+    nsIDOMCSSStyleDeclaration *nsstyle;
 } HTMLStyle;
 
 #define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl);
@@ -1578,12 +1580,15 @@ static const IHTMLStyleVtbl HTMLStyleVtbl = {
     HTMLStyle_toString
 };
 
-IHTMLStyle *HTMLStyle_Create(void)
+IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration *nsstyle)
 {
     HTMLStyle *ret = mshtml_alloc(sizeof(HTMLStyle));
 
     ret->lpHTMLStyleVtbl = &HTMLStyleVtbl;
     ret->ref = 1;
+    ret->nsstyle = nsstyle;
+
+    nsIDOMCSSStyleDeclaration_AddRef(nsstyle);
 
     return HTMLSTYLE(ret);
 }

@@ -243,11 +243,30 @@ static HRESULT WINAPI HTMLElement_get_parentElement(IHTMLElement *iface, IHTMLEl
 static HRESULT WINAPI HTMLElement_get_style(IHTMLElement *iface, IHTMLStyle **p)
 {
     HTMLElement *This = HTMLELEM_THIS(iface);
+    nsIDOMElementCSSInlineStyle *nselemstyle;
+    nsIDOMCSSStyleDeclaration *nsstyle;
+    nsresult nsres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    /* FIXME: Store IHTMLStyle instead of creating a new instance in every call. */
-    *p = HTMLStyle_Create();
+    nsres = nsIDOMHTMLElement_QueryInterface(This->nselem, &IID_nsIDOMElementCSSInlineStyle,
+                                             (void**)&nselemstyle);
+    if(NS_FAILED(nsres)) {
+        ERR("Coud not get nsIDOMCSSStyleDeclaration interface: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMElementCSSInlineStyle_GetStyle(nselemstyle, &nsstyle);
+    nsIDOMElementCSSInlineStyle_Release(nselemstyle);
+    if(NS_FAILED(nsres)) {
+        ERR("GetStyle failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    /* FIXME: Store style instead of creating a new instance in each call */
+    *p = HTMLStyle_Create(nsstyle);
+
+    nsIDOMCSSStyleDeclaration_Release(nsstyle);
     return S_OK;
 }
 
