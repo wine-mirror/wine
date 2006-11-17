@@ -3122,6 +3122,39 @@ static void test_update(void)
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 }
 
+void test_special_tables(void)
+{
+    const char *query;
+    MSIHANDLE hdb = 0;
+    UINT r;
+
+    r = MsiOpenDatabase(msifile, MSIDBOPEN_CREATE, &hdb);
+    ok(r == ERROR_SUCCESS, "MsiOpenDatabase failed\n");
+
+    query = "CREATE TABLE `_Properties` ( "
+        "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    query = "CREATE TABLE `_Streams` ( "
+        "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
+    r = run_query(hdb, 0, query);
+    todo_wine ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Streams table\n");
+
+    query = "CREATE TABLE `_Tables` ( "
+        "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Tables table\n");
+
+    query = "CREATE TABLE `_Columns` ( "
+        "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
+    r = run_query(hdb, 0, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "created _Columns table\n");
+
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -3144,4 +3177,5 @@ START_TEST(db)
     test_alter();
     test_integers();
     test_update();
+    test_special_tables();
 }
