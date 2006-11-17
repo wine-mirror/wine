@@ -195,7 +195,9 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
             a pixel (See comment above glTranslate below)                         */
         glTranslatef(0.375, 0.375, 0);
         checkGLcall("glTranslatef(0.375, 0.375, 0)");
-        if (This->renderUpsideDown) {
+        /* D3D texture coordinates are flipped compared to OpenGL ones, so
+         * render everything upside down when rendering offscreen. */
+        if (This->render_offscreen) {
             glMultMatrixf(invymat);
             checkGLcall("glMultMatrixf(invymat)");
         }
@@ -301,7 +303,9 @@ static void primitiveInitState(
             glTranslatef(0.9 / This->stateBlock->viewport.Width, -0.9 / This->stateBlock->viewport.Height, 0);
             checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
 
-            if (This->renderUpsideDown) {
+            /* D3D texture coordinates are flipped compared to OpenGL ones, so
+             * render everything upside down when rendering offscreen. */
+            if (This->render_offscreen) {
                 glMultMatrixf(invymat);
                 checkGLcall("glMultMatrixf(invymat)");
             }
@@ -311,7 +315,7 @@ static void primitiveInitState(
 
         /* Vertex Shader output is already transformed, so set up identity matrices */
         if (useVS) {
-            This->posFixup[1] = This->renderUpsideDown ? -1.0 : 1.0;
+            This->posFixup[1] = This->render_offscreen ? -1.0 : 1.0;
             This->posFixup[2] = 0.9 / This->stateBlock->viewport.Width;
             This->posFixup[3] = -0.9 / This->stateBlock->viewport.Height;
         }

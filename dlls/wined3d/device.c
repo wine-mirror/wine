@@ -3484,7 +3484,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         case WINED3DCULL_CW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            if (This->renderUpsideDown) {
+            if (This->render_offscreen) {
                 glFrontFace(GL_CW);
                 checkGLcall("glFrontFace GL_CW");
             } else {
@@ -3496,7 +3496,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         case WINED3DCULL_CCW:
             glEnable(GL_CULL_FACE);
             checkGLcall("glEnable GL_CULL_FACE");
-            if (This->renderUpsideDown) {
+            if (This->render_offscreen) {
                 glFrontFace(GL_CCW);
                 checkGLcall("glFrontFace GL_CCW");
             } else {
@@ -7199,9 +7199,12 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
     This->updateStateBlock = oldUpdateStateBlock;
 }
 
-/* Set the device to render to a texture, or not.
- * This involves changing renderUpsideDown */
-
+/* Set offscreen rendering. When rendering offscreen the surface will be
+ * rendered upside down to compensate for the fact that D3D texture coordinates
+ * are flipped compared to GL texture coordinates. The cullmode is affected by
+ * this, so it must be updated. To update the cullmode stateblock recording has
+ * to be temporarily disabled. The new state management code will hopefully
+ * make this unnecessary */
 static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
 
     DWORD cullMode;
@@ -7214,9 +7217,7 @@ static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
     This->isRecordingState = FALSE;
     This->updateStateBlock = This->stateBlock;
 
-    /* Set upside-down rendering, and update the cull mode */
-    /* The surface must be rendered upside down to cancel the flip produced by glCopyTexImage */
-    This->renderUpsideDown = isTexture;
+    This->render_offscreen = isTexture;
     This->last_was_rhw = FALSE;
     This->proj_valid = FALSE;
     IWineD3DDevice_GetRenderState((IWineD3DDevice*) This, WINED3DRS_CULLMODE, &cullMode);
@@ -7501,7 +7502,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
             implicitSwapchainImpl->render_ctx = newContext->context;
         }
     } else {
-        /* Same context, but update renderUpsideDown and cull mode */
+        /* Same context, but update render_offscreen and cull mode */
         device_render_to_texture(This, TRUE);
     }
 

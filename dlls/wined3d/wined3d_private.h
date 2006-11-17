@@ -545,7 +545,7 @@ typedef struct IWineD3DDeviceImpl
     UINT                    currentPalette;
 
     /* For rendering to a texture using glCopyTexImage */
-    BOOL                    renderUpsideDown;
+    BOOL                    render_offscreen;
 
     /* Cursor management */
     BOOL                    bCursorVisible;
