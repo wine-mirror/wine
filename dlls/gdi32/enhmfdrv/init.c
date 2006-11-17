@@ -152,6 +152,7 @@ static const DC_FUNCTIONS EMFDRV_Funcs =
     EMFDRV_StrokeAndFillPath,        /* pStrokeAndFillPath */
     EMFDRV_StrokePath,               /* pStrokePath */
     NULL,                            /* pSwapBuffers */
+    NULL,                            /* pUnrealizePalette */
     EMFDRV_WidenPath                 /* pWidenPath */
 };
 

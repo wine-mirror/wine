@@ -66,16 +66,7 @@ typedef struct tagGDIOBJHDR
     struct hdc_list *hdcs;
 } GDIOBJHDR;
 
-/* palette object */
-
 #define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */
-
-typedef struct tagPALETTEOBJ
-{
-    GDIOBJHDR                    header;
-    int                          *mapping;
-    LOGPALETTE                   logpalette; /* _MUST_ be the last field */
-} PALETTEOBJ;
 
   /* GDI local heap */
 

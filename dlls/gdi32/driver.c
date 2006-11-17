@@ -193,6 +193,7 @@ static struct graphics_driver *create_driver( HMODULE module )
         GET_FUNC(StrokeAndFillPath);
         GET_FUNC(StrokePath);
         GET_FUNC(SwapBuffers);
+        GET_FUNC(UnrealizePalette);
         GET_FUNC(WidenPath);
 
         /* OpenGL32 */

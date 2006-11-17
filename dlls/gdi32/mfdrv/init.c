@@ -152,6 +152,7 @@ static const DC_FUNCTIONS MFDRV_Funcs =
     MFDRV_StrokeAndFillPath,         /* pStrokeAndFillPath */
     MFDRV_StrokePath,                /* pStrokePath */
     NULL,                            /* pSwapBuffers */
+    NULL,                            /* pUnrealizePalette */
     MFDRV_WidenPath                  /* pWidenPath */
 };
 

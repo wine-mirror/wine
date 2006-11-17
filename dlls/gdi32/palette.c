@@ -39,6 +39,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(palette);
 
+typedef struct tagPALETTEOBJ
+{
+    GDIOBJHDR           header;
+    const DC_FUNCTIONS *funcs;      /* DC function table */
+    LOGPALETTE          logpalette; /* _MUST_ be the last field */
+} PALETTEOBJ;
+
 static INT PALETTE_GetObject( HGDIOBJ handle, void *obj, INT count, LPVOID buffer );
 static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj );
 static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj );
@@ -62,7 +69,6 @@ static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
 static HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
 static HPALETTE hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
-static const DC_FUNCTIONS *pLastRealizedDC;
 
 static const PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS] =
 {
@@ -106,7 +112,6 @@ HPALETTE PALETTE_Init(void)
 {
     HPALETTE          hpalette;
     LOGPALETTE *        palPtr;
-    PALETTEOBJ*         palObj;
 
     /* create default palette (20 system colors) */
 
@@ -119,14 +124,6 @@ HPALETTE PALETTE_Init(void)
     memcpy( palPtr->palPalEntry, sys_pal_template, sizeof(sys_pal_template) );
     hpalette = CreatePalette( palPtr );
     HeapFree( GetProcessHeap(), 0, palPtr );
-
-    palObj = (PALETTEOBJ*) GDI_GetObjPtr( hpalette, PALETTE_MAGIC );
-    if (palObj)
-    {
-        if (!(palObj->mapping = HeapAlloc( GetProcessHeap(), 0, sizeof(int) * NB_RESERVED_COLORS )))
-            ERR("Cannot create palette mapping -- out of memory!\n");
-        GDI_ReleaseObj( hpalette );
-    }
     return hpalette;
 }
 
@@ -156,7 +153,7 @@ HPALETTE WINAPI CreatePalette(
                                         PALETTE_MAGIC, (HGDIOBJ *)&hpalette,
 					&palette_funcs ))) return 0;
     memcpy( &palettePtr->logpalette, palette, size );
-    palettePtr->mapping = NULL;
+    palettePtr->funcs = NULL;
     GDI_ReleaseObj( hpalette );
 
     TRACE("   returning %p\n", hpalette);
@@ -368,7 +365,6 @@ BOOL WINAPI ResizePalette(
     PALETTEOBJ * palPtr = (PALETTEOBJ *) GDI_GetObjPtr( hPal, PALETTE_MAGIC );
     UINT	 cPrevEnt, prevVer;
     int		 prevsize, size = sizeof(LOGPALETTE) + (cEntries - 1) * sizeof(PALETTEENTRY);
-    int*	 mapping = NULL;
 
     TRACE("hpal = %p, prev = %i, new = %i\n",
           hPal, palPtr ? palPtr->logpalette.palNumEntries : -1, cEntries );
@@ -378,28 +374,12 @@ BOOL WINAPI ResizePalette(
     prevsize = sizeof(LOGPALETTE) + (cPrevEnt - 1) * sizeof(PALETTEENTRY) +
 	      				sizeof(int*) + sizeof(GDIOBJHDR);
     size += sizeof(int*) + sizeof(GDIOBJHDR);
-    mapping = palPtr->mapping;
 
     if (!(palPtr = GDI_ReallocObject( size, hPal, palPtr ))) return FALSE;
 
-    if( mapping )
-    {
-        int *newMap = HeapReAlloc(GetProcessHeap(), 0, mapping, cEntries * sizeof(int) );
-	if(newMap == NULL)
-        {
-            ERR("Cannot resize mapping -- out of memory!\n");
-            GDI_ReleaseObj( hPal );
-            return FALSE;
-        }
-        palPtr->mapping = newMap;
-    }
+    PALETTE_UnrealizeObject( hPal, palPtr );
 
-    if( cEntries > cPrevEnt )
-    {
-	if( mapping )
-	    memset(palPtr->mapping + cPrevEnt, 0, (cEntries - cPrevEnt)*sizeof(int));
-	memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
-    }
+    if( cEntries > cPrevEnt ) memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
     palPtr->logpalette.palNumEntries = cEntries;
     palPtr->logpalette.palVersion = prevVer;
     GDI_ReleaseObj( hPal );
@@ -458,14 +438,10 @@ BOOL WINAPI AnimatePalette(
             TRACE("Not animating entry %d -- not PC_RESERVED\n", StartIndex);
           }
         }
-        
-        GDI_ReleaseObj( hPal );
-        
-        TRACE("pLastRealizedDC %p -- pLastRealizedDC->pRealizePalette %p\n",
-          pLastRealizedDC, pLastRealizedDC ? pLastRealizedDC->pRealizePalette : 0);
+        if (palPtr->funcs && palPtr->funcs->pRealizePalette)
+            palPtr->funcs->pRealizePalette( NULL, hPal, hPal == hPrimaryPalette );
 
-        if (pLastRealizedDC && pLastRealizedDC->pRealizePalette)
-            pLastRealizedDC->pRealizePalette( NULL, hPal, hPal == hPrimaryPalette );
+        GDI_ReleaseObj( hPal );
     }
     return TRUE;
 }
@@ -678,14 +654,17 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
 {
     PALETTEOBJ *palette = obj;
 
-    HeapFree( GetProcessHeap(), 0, palette->mapping );
-    palette->mapping = NULL;
+    if (palette->funcs)
+    {
+        if (palette->funcs->pUnrealizePalette)
+            palette->funcs->pUnrealizePalette( handle );
+        palette->funcs = NULL;
+    }
 
     if (hLastRealizedPalette == handle)
     {
         TRACE("unrealizing palette %p\n", handle);
         hLastRealizedPalette = 0;
-        pLastRealizedDC = NULL;
     }
     return TRUE;
 }
@@ -696,15 +675,7 @@ static BOOL PALETTE_UnrealizeObject( HGDIOBJ handle, void *obj )
  */
 static BOOL PALETTE_DeleteObject( HGDIOBJ handle, void *obj )
 {
-    PALETTEOBJ *palette = obj;
-
-    HeapFree( GetProcessHeap(), 0, palette->mapping );
-    if (hLastRealizedPalette == handle)
-    {
-        TRACE("unrealizing palette %p\n", handle);
-        hLastRealizedPalette = 0;
-        pLastRealizedDC = NULL;
-    }
+    PALETTE_UnrealizeObject( handle, obj );
     return GDI_FreeObject( handle, obj );
 }
 
@@ -758,10 +729,17 @@ UINT WINAPI GDIRealizePalette( HDC hdc )
     else if(dc->hPalette != hLastRealizedPalette )
     {
         if (dc->funcs->pRealizePalette)
-            realized = dc->funcs->pRealizePalette( dc->physDev, dc->hPalette,
-                                                   (dc->hPalette == hPrimaryPalette) );
+        {
+            PALETTEOBJ *palPtr = GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC );
+            if (palPtr)
+            {
+                realized = dc->funcs->pRealizePalette( dc->physDev, dc->hPalette,
+                                                       (dc->hPalette == hPrimaryPalette) );
+                palPtr->funcs = dc->funcs;
+                GDI_ReleaseObj( dc->hPalette );
+            }
+        }
         hLastRealizedPalette = dc->hPalette;
-        pLastRealizedDC = dc->funcs;
     }
     else TRACE("  skipping (hLastRealizedPalette = %p)\n", hLastRealizedPalette);
 

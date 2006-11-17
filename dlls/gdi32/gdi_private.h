@@ -181,6 +181,7 @@ typedef struct tagDC_FUNCS
     BOOL     (*pStrokeAndFillPath)(PHYSDEV);
     BOOL     (*pStrokePath)(PHYSDEV);
     BOOL     (*pSwapBuffers)(PHYSDEV);
+    BOOL     (*pUnrealizePalette)(HPALETTE);
     BOOL     (*pWidenPath)(PHYSDEV);
 
     /* OpenGL32 */
