@@ -46,6 +46,33 @@ typedef struct {
 
 #define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl);
 
+static const WCHAR attrFontFamily[] =
+    {'f','o','n','t','-','f','a','m','i','l','y',0};
+
+static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value)
+{
+    nsAString str_name, str_value, str_empty;
+    nsresult nsres;
+
+    static const PRUnichar wszEmpty[] = {0};
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(name), debugstr_w(value));
+
+    nsAString_Init(&str_name, name);
+    nsAString_Init(&str_value, value);
+    nsAString_Init(&str_empty, wszEmpty);
+
+    nsres = nsIDOMCSSStyleDeclaration_SetProperty(This->nsstyle, &str_name, &str_value, &str_empty);
+    if(NS_FAILED(nsres))
+        ERR("SetProperty failed: %08x\n", nsres);
+
+    nsAString_Finish(&str_name);
+    nsAString_Finish(&str_value);
+    nsAString_Finish(&str_empty);
+
+    return S_OK;
+}
+
 #define HTMLSTYLE_THIS(iface) DEFINE_THIS(HTMLStyle, HTMLStyle, iface)
 
 static HRESULT WINAPI HTMLStyle_QueryInterface(IHTMLStyle *iface, REFIID riid, void **ppv)
@@ -135,8 +162,10 @@ static HRESULT WINAPI HTMLStyle_Invoke(IHTMLStyle *iface, DISPID dispIdMember,
 static HRESULT WINAPI HTMLStyle_put_fontFamily(IHTMLStyle *iface, BSTR v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+
+    return set_style_attr(This, attrFontFamily, v);
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontFamily(IHTMLStyle *iface, BSTR *p)
