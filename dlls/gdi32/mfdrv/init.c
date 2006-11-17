@@ -24,7 +24,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wine/winbase16.h"
-#include "gdi.h"
 #include "wownt32.h"
 #include "gdi_private.h"
 #include "mfdrv/metafiledrv.h"

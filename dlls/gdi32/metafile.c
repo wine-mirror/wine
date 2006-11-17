@@ -47,10 +47,13 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
 
-#include "gdi.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "winreg.h"
 #include "winternl.h"
 #include "gdi_private.h"

@@ -20,7 +20,6 @@
 
 #include <string.h>
 
-#include "gdi.h"
 #include "mfdrv/metafiledrv.h"
 #include "wine/debug.h"
 

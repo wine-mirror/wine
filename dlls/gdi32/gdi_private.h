@@ -21,6 +21,9 @@
 #ifndef __WINE_GDI_PRIVATE_H
 #define __WINE_GDI_PRIVATE_H
 
+#include <math.h>
+#include "wine/wingdi16.h"
+
 /* Metafile defines */
 #define META_EOF 0x0000
 /* values of mtType in METAHEADER.  Note however that the disk image of a disk

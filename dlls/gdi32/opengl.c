@@ -33,7 +33,6 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winnt.h"
-#include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 

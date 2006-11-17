@@ -20,6 +20,7 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <string.h>
 #include <X11/Xlib.h>
 
@@ -28,7 +29,8 @@
 #include "x11drv.h"
 
 #include "windef.h"
-#include "gdi.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);

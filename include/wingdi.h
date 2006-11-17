@@ -1287,6 +1287,10 @@ typedef struct
 #define GGO_GRAY8_BITMAP    6
 #define GGO_GLYPH_INDEX     0x80
 
+#ifdef __WINESRC__
+#define WINE_GGO_GRAY16_BITMAP 0x7f
+#endif
+
 typedef struct
 {
     WORD    fract;
@@ -1409,6 +1413,10 @@ typedef struct
 
 #define TT_AVAILABLE        0x0001
 #define TT_ENABLED          0x0002
+
+#ifdef __WINESRC__
+#define WINE_TT_HINTER_ENABLED 0x8000
+#endif
 
 #define TT_PRIM_LINE    1
 #define TT_PRIM_QSPLINE 2

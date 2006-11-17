@@ -18,7 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "gdi.h"
 #include "gdi_private.h"
 #include "mfdrv/metafiledrv.h"
 

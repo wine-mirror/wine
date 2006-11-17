@@ -30,7 +30,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-#include "gdi.h"
 #include "gdi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);

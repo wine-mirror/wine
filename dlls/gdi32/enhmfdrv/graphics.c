@@ -21,10 +21,13 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "gdi.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
 #include "enhmfdrv/enhmetafiledrv.h"
 #include "wine/debug.h"
 

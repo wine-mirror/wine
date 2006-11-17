@@ -24,7 +24,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi.h"
 #include "enhmetafiledrv.h"
 #include "wine/debug.h"
 

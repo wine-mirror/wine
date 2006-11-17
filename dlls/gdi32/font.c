@@ -32,7 +32,6 @@
 #include "winbase.h"
 #include "winnls.h"
 #include "wownt32.h"
-#include "gdi.h"
 #include "gdi_private.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"

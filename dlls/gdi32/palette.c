@@ -32,7 +32,6 @@
 #include "wingdi.h"
 #include "wownt32.h"
 #include "wine/winuser16.h"
-#include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 #include "winerror.h"
@@ -69,6 +68,8 @@ static UINT SystemPaletteUse = SYSPAL_STATIC;  /* currently not considered */
 
 static HPALETTE hPrimaryPalette = 0; /* used for WM_PALETTECHANGED */
 static HPALETTE hLastRealizedPalette = 0; /* UnrealizeObject() needs it */
+
+#define NB_RESERVED_COLORS  20   /* number of fixed colors in system palette */
 
 static const PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS] =
 {

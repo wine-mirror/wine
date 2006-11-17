@@ -100,7 +100,6 @@ SOFTWARE.
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
-#include "gdi.h"
 #include "gdi_private.h"
 #include "wine/debug.h"
 

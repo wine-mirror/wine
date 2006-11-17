@@ -23,10 +23,14 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "gdi.h"
+#include "windef.h"
+#include "winbase.h"
+#include "wingdi.h"
+#include "wine/wingdi16.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
