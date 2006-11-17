@@ -1604,6 +1604,7 @@ void X11DRV_InitKeyboard(void)
     e2.state = 0;
 
     OEMvkey = VK_OEM_8; /* next is available.  */
+    memset(keyc2vkey, 0, sizeof(keyc2vkey));
     for (keyc = min_keycode; keyc <= max_keycode; keyc++)
     {
         char buf[30];
