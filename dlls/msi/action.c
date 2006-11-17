@@ -1527,15 +1527,15 @@ static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
 
     TRACE("Working to load %s\n",debugstr_w(dir));
 
+    row = MSI_QueryGetRecord(package->db, Query, dir);
+    if (!row)
+        return NULL;
+
     folder = msi_alloc_zero( sizeof (MSIFOLDER) );
     if (!folder)
         return NULL;
 
     folder->Directory = strdupW(dir);
-
-    row = MSI_QueryGetRecord(package->db, Query, dir);
-    if (!row)
-        return NULL;
 
     p = msi_dup_record_field(row, 3);
 
