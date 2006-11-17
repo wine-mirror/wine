@@ -23,6 +23,13 @@
 #ifndef __WINE_WINED3D_TYPES_INTERNAL_H
 #define __WINE_WINED3D_TYPES_INTERNAL_H
 
+/* Depth copy state */
+typedef enum {
+    WINED3D_DCS_INITIAL = 0,
+    WINED3D_DCS_COPY    = 1,
+    WINED3D_DCS_NO_COPY = 2
+} WINED3D_DEPTHCOPYSTATE;
+
 /** DCL usage masks **/
 #define WINED3DSP_DCL_USAGE_SHIFT 0
 #define WINED3DSP_DCL_USAGE_MASK  0x0000000f

@@ -551,6 +551,7 @@ typedef struct IWineD3DDeviceImpl
 
     /* For rendering to a texture using glCopyTexImage */
     BOOL                    render_offscreen;
+    WINED3D_DEPTHCOPYSTATE  depth_copy_state;
     GLuint                  fbo;
 
     /* Cursor management */

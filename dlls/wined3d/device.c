@@ -7006,6 +7006,8 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
 
+    This->depth_copy_state = WINED3D_DCS_NO_COPY;
+
     bind_fbo(iface);
 
     if (depth_stencil_impl) {
@@ -7275,6 +7277,9 @@ static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
     BOOL oldRecording;
     IWineD3DStateBlockImpl *oldUpdateStateBlock;
 
+    /* Nothing to update, return. */
+    if (This->render_offscreen == isTexture) return;
+
     /* Disable recording */
     oldUpdateStateBlock = This->updateStateBlock;
     oldRecording= This->isRecordingState;
@@ -7282,6 +7287,9 @@ static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
     This->updateStateBlock = This->stateBlock;
 
     This->render_offscreen = isTexture;
+    if (This->depth_copy_state != WINED3D_DCS_NO_COPY) {
+        This->depth_copy_state = WINED3D_DCS_COPY;
+    }
     This->last_was_rhw = FALSE;
     This->proj_valid = FALSE;
     IWineD3DDevice_GetRenderState((IWineD3DDevice*) This, WINED3DRS_CULLMODE, &cullMode);
