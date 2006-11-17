@@ -201,7 +201,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
                       BOOL set_prop, MSIFOLDER **folder)
 {
     MSIFOLDER *f;
-    LPWSTR p, path = NULL;
+    LPWSTR p, path = NULL, parent;
 
     TRACE("Working to resolve %s\n",debugstr_w(name));
 
@@ -267,60 +267,61 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         return path;
     }
 
-    if (f->Parent)
+    if (!f->Parent)
+        return path;
+
+    parent = f->Parent->Directory;
+
+    TRACE(" ! Parent is %s\n", debugstr_w(parent));
+
+    p = resolve_folder(package, parent, source, set_prop, NULL);
+    if (!source)
     {
-        LPWSTR parent = f->Parent->Directory;
+        TRACE("   TargetDefault = %s\n", debugstr_w(f->TargetDefault));
 
-        TRACE(" ! Parent is %s\n", debugstr_w(parent));
-
-        p = resolve_folder(package, parent, source, set_prop, NULL);
-        if (!source)
-        {
-            TRACE("   TargetDefault = %s\n", debugstr_w(f->TargetDefault));
-
-            path = build_directory_name( 3, p, f->TargetDefault, NULL );
-            clean_spaces_from_path( path );
-            f->ResolvedTarget = strdupW( path );
-            TRACE("target -> %s\n", debugstr_w(path));
-            if (set_prop)
-                MSI_SetPropertyW(package,name,path);
-        }
-        else 
-        {
-            /* source may be in a few different places ... check each of them */
-            path = NULL;
-
-            /* try the long path directory */
-            if (f->SourceLongPath)
-            {
-                path = build_directory_name( 3, p, f->SourceLongPath, NULL );
-                if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
-                {
-                    msi_free( path );
-                    path = NULL;
-                }
-            }
-
-            /* try the short path directory */
-            if (!path && f->SourceShortPath)
-            {
-                path = build_directory_name( 3, p, f->SourceShortPath, NULL );
-                if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
-                {
-                    msi_free( path );
-                    path = NULL;
-                }
-            }
-
-            /* try the root of the install */
-            if (!path)
-                path = get_source_root( package );
-
-            TRACE("source -> %s\n", debugstr_w(path));
-            f->ResolvedSource = strdupW( path );
-        }
-        msi_free(p);
+        path = build_directory_name( 3, p, f->TargetDefault, NULL );
+        clean_spaces_from_path( path );
+        f->ResolvedTarget = strdupW( path );
+        TRACE("target -> %s\n", debugstr_w(path));
+        if (set_prop)
+            MSI_SetPropertyW(package,name,path);
     }
+    else
+    {
+        /* source may be in a few different places ... check each of them */
+        path = NULL;
+
+        /* try the long path directory */
+        if (f->SourceLongPath)
+        {
+            path = build_directory_name( 3, p, f->SourceLongPath, NULL );
+            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+            {
+                msi_free( path );
+                path = NULL;
+            }
+        }
+
+        /* try the short path directory */
+        if (!path && f->SourceShortPath)
+        {
+            path = build_directory_name( 3, p, f->SourceShortPath, NULL );
+            if (INVALID_FILE_ATTRIBUTES == GetFileAttributesW( path ))
+            {
+                msi_free( path );
+                path = NULL;
+            }
+        }
+
+        /* try the root of the install */
+        if (!path)
+            path = get_source_root( package );
+
+        TRACE("source -> %s\n", debugstr_w(path));
+        f->ResolvedSource = strdupW( path );
+    }
+    msi_free(p);
+
     return path;
 }
 
