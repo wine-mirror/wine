@@ -135,6 +135,9 @@ static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
 #define NP2_REPACK 1
 #define NP2_NATIVE 2
 
+#define ORM_BACKBUFFER  0
+#define ORM_PBUFFER     1
+
 #define SHADER_SW   0
 #define SHADER_ARB  1
 #define SHADER_GLSL 2
@@ -160,6 +163,7 @@ typedef struct wined3d_settings_s {
   BOOL glslRequested;
 /* nonpower 2 function */
   int nonpower2_mode;
+  int offscreen_rendering_mode;
   int rendertargetlock_mode;
 /* Memory tracking and object counting */
   unsigned int emulated_textureram;

@@ -71,9 +71,6 @@ inline static Display *get_display( HDC hdc )
     return display;
 }
 
-/* TODO: setup some flags in the regestry to enable, disable pbuffer support */
-/* enable pbuffer support for offscreen textures */
-BOOL pbuffer_support     = FALSE;
 /* allocate one pbuffer per surface */
 BOOL pbuffer_per_surface = FALSE;
 
@@ -7414,7 +7411,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
 
     /* Offscreen rendering: PBuffers (currently disabled).
      * Also note that this path is never reached if FBOs are supported */
-    } else if (pbuffer_support &&
+    } else if (wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER &&
                (cfgs = device_find_fbconfigs(This, implicitSwapchainImpl, RenderSurface)) != NULL) {
 
         /** ********************************************************************

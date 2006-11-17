@@ -41,6 +41,7 @@ wined3d_settings_t wined3d_settings =
     VBO_HW,         /* Hardware by default */
     FALSE,          /* Use of GLSL disabled by default */
     NP2_NATIVE,     /* Use native NPOT textures, when available */
+    ORM_BACKBUFFER, /* Use the backbuffer to do offscreen rendering */
     RTL_AUTO,       /* Automatically determine best locking method */
     64*1024*1024    /* 64MB texture memory by default */
 };
@@ -201,6 +202,19 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     wined3d_settings.nonpower2_mode = NP2_REPACK;
                 }
                 /* There will be a couple of other choices for nonpow2, they are: TextureRecrangle and OpenGL 2 */
+            }
+            if ( !get_config_key( hkey, appkey, "OffscreenRenderingMode", buffer, size) )
+            {
+                if (!strcmp(buffer,"backbuffer"))
+                {
+                    TRACE("Using the backbuffer for offscreen rendering\n");
+                    wined3d_settings.offscreen_rendering_mode = ORM_BACKBUFFER;
+                }
+                else if (!strcmp(buffer,"pbuffer"))
+                {
+                    TRACE("Using PBuffers for offscreen rendering\n");
+                    wined3d_settings.offscreen_rendering_mode = ORM_PBUFFER;
+                }
             }
             if ( !get_config_key( hkey, appkey, "RenderTargetLockMode", buffer, size) )
             {
