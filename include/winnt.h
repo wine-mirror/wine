@@ -2845,6 +2845,25 @@ typedef struct _IMAGE_RELOCATION
 #define IMAGE_REL_IA64_RESERVED_16	0x0016
 #define IMAGE_REL_IA64_ADDEND		0x001F
 
+/* AMD64 relocation types */
+#define IMAGE_REL_AMD64_ABSOLUTE        0x0000
+#define IMAGE_REL_AMD64_ADDR64          0x0001
+#define IMAGE_REL_AMD64_ADDR32          0x0002
+#define IMAGE_REL_AMD64_ADDR32NB        0x0003
+#define IMAGE_REL_AMD64_REL32           0x0004
+#define IMAGE_REL_AMD64_REL32_1         0x0005
+#define IMAGE_REL_AMD64_REL32_2         0x0006
+#define IMAGE_REL_AMD64_REL32_3         0x0007
+#define IMAGE_REL_AMD64_REL32_4         0x0008
+#define IMAGE_REL_AMD64_REL32_5         0x0009
+#define IMAGE_REL_AMD64_SECTION         0x000A
+#define IMAGE_REL_AMD64_SECREL          0x000B
+#define IMAGE_REL_AMD64_SECREL7         0x000C
+#define IMAGE_REL_AMD64_TOKEN           0x000D
+#define IMAGE_REL_AMD64_SREL32          0x000E
+#define IMAGE_REL_AMD64_PAIR            0x000F
+#define IMAGE_REL_AMD64_SSPAN32         0x0010
+
 /* archive format */
 
 #define IMAGE_ARCHIVE_START_SIZE             8
