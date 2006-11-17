@@ -249,16 +249,18 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
         TRACE("   already resolved to %s\n",debugstr_w(path));
         return path;
     }
-    else if (source && f->ResolvedSource)
+
+    if (source && f->ResolvedSource)
     {
         path = strdupW( f->ResolvedSource );
         TRACE("   (source)already resolved to %s\n",debugstr_w(path));
         return path;
     }
-    else if (!source && f->Property)
+
+    if (!source && f->Property)
     {
         path = build_directory_name( 2, f->Property, NULL );
-                    
+
         TRACE("   internally set to %s\n",debugstr_w(path));
         if (set_prop)
             MSI_SetPropertyW( package, name, path );
