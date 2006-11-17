@@ -1672,8 +1672,8 @@ void X11DRV_InitKeyboard(void)
             for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
             {
                 keysym = XLookupKeysym(&e2, i);
-                if ((keysym >= VK_0 && keysym <= VK_9)
-                    || (keysym >= VK_A && keysym <= VK_Z)) {
+                if ((keysym >= XK_0 && keysym <= XK_9)
+                    || (keysym >= XK_A && keysym <= XK_Z)) {
 		    vkey = keysym;
 		}
             }
