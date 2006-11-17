@@ -1561,6 +1561,7 @@ void X11DRV_InitKeyboard(void)
     int keyc, i, keyn, syms;
     char ckey[4]={0,0,0,0};
     const char (*lkey)[MAIN_LEN][4];
+    char vkey_used[256] = { 0 };
 
     wine_tsx11_lock();
     XDisplayKeycodes(display, &min_keycode, &max_keycode);
@@ -1732,6 +1733,9 @@ void X11DRV_InitKeyboard(void)
         TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
         keyc2vkey[e2.keycode] = vkey;
         keyc2scan[e2.keycode] = scan;
+        if ((vkey & 0xff) && vkey_used[(vkey & 0xff)])
+            WARN("vkey %04x is being used by more than one keycode\n", vkey);
+        vkey_used[(vkey & 0xff)] = 1;
     } /* for */
 
     /* If some keys still lack scancodes, assign some arbitrary ones to them now */
