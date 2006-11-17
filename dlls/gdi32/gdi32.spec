@@ -528,9 +528,3 @@
 
 # GDI objects
 @ cdecl __wine_make_gdi_object_system(long long)
-
-################################################################
-# Wine dll separation hacks, these will go away, don't use them
-#
-@ cdecl GDI_GetObjPtr(long long)
-@ cdecl GDI_ReleaseObj(long)
