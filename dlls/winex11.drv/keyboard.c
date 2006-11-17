@@ -1676,67 +1676,67 @@ void X11DRV_InitKeyboard(void)
 #if 0 /* this breaks VK_OEM_x VKeys in some layout tables by inserting
        * a VK code into a not appropriate place.
        */
-            /* find a suitable layout-dependent VK code */
-	    /* (most Winelib apps ought to be able to work without layout tables!) */
-            for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
+        /* find a suitable layout-dependent VK code */
+        /* (most Winelib apps ought to be able to work without layout tables!) */
+        for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
+        {
+            keysym = XLookupKeysym(&e2, i);
+            if ((keysym >= XK_0 && keysym <= XK_9)
+                || (keysym >= XK_A && keysym <= XK_Z)) {
+                vkey = keysym;
+            }
+        }
+
+        for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
+        {
+            keysym = XLookupKeysym(&e2, i);
+            switch (keysym)
             {
-                keysym = XLookupKeysym(&e2, i);
-                if ((keysym >= XK_0 && keysym <= XK_9)
-                    || (keysym >= XK_A && keysym <= XK_Z)) {
-		    vkey = keysym;
-		}
+            case ';':             vkey = VK_OEM_1; break;
+            case '/':             vkey = VK_OEM_2; break;
+            case '`':             vkey = VK_OEM_3; break;
+            case '[':             vkey = VK_OEM_4; break;
+            case '\\':            vkey = VK_OEM_5; break;
+            case ']':             vkey = VK_OEM_6; break;
+            case '\'':            vkey = VK_OEM_7; break;
+            case ',':             vkey = VK_OEM_COMMA; break;
+            case '.':             vkey = VK_OEM_PERIOD; break;
+            case '-':             vkey = VK_OEM_MINUS; break;
+            case '+':             vkey = VK_OEM_PLUS; break;
+            }
+        }
+
+        if (!vkey)
+        {
+            /* Others keys: let's assign OEM virtual key codes in the allowed range,
+             * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6 (given up) et [0xe9,0xf5]) */
+            switch (++OEMvkey)
+            {
+            case 0xc1 : OEMvkey=0xdb; break;
+            case 0xe5 : OEMvkey=0xe9; break;
+            case 0xf6 : OEMvkey=0xf5; WARN("No more OEM vkey available!\n");
             }
 
-            for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
+            vkey = OEMvkey;
+
+            if (TRACE_ON(keyboard))
             {
-                keysym = XLookupKeysym(&e2, i);
-		switch (keysym)
-		{
-		case ';':             vkey = VK_OEM_1; break;
-		case '/':             vkey = VK_OEM_2; break;
-		case '`':             vkey = VK_OEM_3; break;
-		case '[':             vkey = VK_OEM_4; break;
-		case '\\':            vkey = VK_OEM_5; break;
-		case ']':             vkey = VK_OEM_6; break;
-		case '\'':            vkey = VK_OEM_7; break;
-		case ',':             vkey = VK_OEM_COMMA; break;
-		case '.':             vkey = VK_OEM_PERIOD; break;
-		case '-':             vkey = VK_OEM_MINUS; break;
-		case '+':             vkey = VK_OEM_PLUS; break;
-		}
-	    }
-
-            if (!vkey)
-            {
-                /* Others keys: let's assign OEM virtual key codes in the allowed range,
-                 * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6 (given up) et [0xe9,0xf5]) */
-                switch (++OEMvkey)
+                TRACE("OEM specific virtual key %X assigned to keycode %X:\n",
+                                 OEMvkey, e2.keycode);
+                TRACE("(");
+                for (i = 0; i < keysyms_per_keycode; i += 1)
                 {
-                case 0xc1 : OEMvkey=0xdb; break;
-                case 0xe5 : OEMvkey=0xe9; break;
-                case 0xf6 : OEMvkey=0xf5; WARN("No more OEM vkey available!\n");
+                    const char *ksname;
+
+                    keysym = XLookupKeysym(&e2, i);
+                    ksname = XKeysymToString(keysym);
+                    if (!ksname)
+                        ksname = "NoSymbol";
+                    TRACE( "%lX (%s) ", keysym, ksname);
                 }
-
-                vkey = OEMvkey;
-
-                if (TRACE_ON(keyboard))
-                {
-                    TRACE("OEM specific virtual key %X assigned to keycode %X:\n",
-                                     OEMvkey, e2.keycode);
-                    TRACE("(");
-                    for (i = 0; i < keysyms_per_keycode; i += 1)
-                    {
-                        const char *ksname;
-
-                        keysym = XLookupKeysym(&e2, i);
-                        ksname = XKeysymToString(keysym);
-                        if (!ksname)
-			    ksname = "NoSymbol";
-                        TRACE( "%lX (%s) ", keysym, ksname);
-                    }
-                    TRACE(")\n");
-                }
+                TRACE(")\n");
             }
+        }
 #endif
 
     /* If some keys still lack scancodes, assign some arbitrary ones to them now */
