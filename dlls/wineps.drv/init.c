@@ -22,6 +22,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#include <stdarg.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -33,13 +34,14 @@
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
-#include "wine/debug.h"
+#include "windef.h"
+#include "winbase.h"
 #include "winerror.h"
 #include "wownt32.h"
-#include "heap.h"
 #include "winreg.h"
 #include "psdrv.h"
 #include "winspool.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
@@ -353,7 +355,9 @@ BOOL PSDRV_CreateDC( HDC hdc, PSDRV_PDEVICE **pdev, LPCWSTR driver, LPCWSTR devi
     physDev->logPixelsY = physDev->pi->ppd->DefaultResolution;
 
     if (output) {
-        physDev->job.output = HEAP_strdupWtoA( PSDRV_Heap, 0, output );
+        INT len = WideCharToMultiByte( CP_ACP, 0, output, -1, NULL, 0, NULL, NULL );
+        if ((physDev->job.output = HeapAlloc( PSDRV_Heap, 0, len )))
+            WideCharToMultiByte( CP_ACP, 0, output, -1, physDev->job.output, len, NULL, NULL );
     } else
         physDev->job.output = NULL;
     physDev->job.hJob = 0;

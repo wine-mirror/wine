@@ -58,7 +58,6 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "heap.h"
 #include "winnls.h"
 
 #include "ddk/winsplp.h"
@@ -329,6 +328,18 @@ static LPWSTR strdupW(LPCWSTR p)
     len = (strlenW(p) + 1) * sizeof(WCHAR);
     ret = HeapAlloc(GetProcessHeap(), 0, len);
     memcpy(ret, p, len);
+    return ret;
+}
+
+static LPSTR strdupWtoA( LPCWSTR str )
+{
+    LPSTR ret;
+    INT len;
+
+    if (!str) return NULL;
+    len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+    ret = HeapAlloc( GetProcessHeap(), 0, len );
+    if(ret) WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
     return ret;
 }
 
@@ -1589,8 +1600,8 @@ INT WINAPI DeviceCapabilitiesW(LPCWSTR pDevice, LPCWSTR pPort,
 			       const DEVMODEW *pDevMode)
 {
     LPDEVMODEA dmA = DEVMODEdupWtoA(GetProcessHeap(), pDevMode);
-    LPSTR pDeviceA = HEAP_strdupWtoA(GetProcessHeap(),0,pDevice);
-    LPSTR pPortA = HEAP_strdupWtoA(GetProcessHeap(),0,pPort);
+    LPSTR pDeviceA = strdupWtoA(pDevice);
+    LPSTR pPortA = strdupWtoA(pPort);
     INT ret;
 
     if(pOutput && (fwCapability == DC_BINNAMES ||
@@ -1653,7 +1664,7 @@ LONG WINAPI DocumentPropertiesA(HWND hWnd,HANDLE hPrinter,
                 SetLastError(ERROR_INVALID_HANDLE);
 		return -1;
 	}
-	lpName = HEAP_strdupWtoA(GetProcessHeap(),0,lpNameW);
+	lpName = strdupWtoA(lpNameW);
     }
 
     if (!GDI_CallExtDeviceMode16)
@@ -1685,7 +1696,7 @@ LONG WINAPI DocumentPropertiesW(HWND hWnd, HANDLE hPrinter,
 				LPDEVMODEW pDevModeInput, DWORD fMode)
 {
 
-    LPSTR pDeviceNameA = HEAP_strdupWtoA(GetProcessHeap(),0,pDeviceName);
+    LPSTR pDeviceNameA = strdupWtoA(pDeviceName);
     LPDEVMODEA pDevModeInputA = DEVMODEdupWtoA(GetProcessHeap(),pDevModeInput);
     LPDEVMODEA pDevModeOutputA = NULL;
     LONG ret;
@@ -3228,7 +3239,7 @@ static BOOL WINSPOOL_GetStringFromReg(HKEY hkey, LPCWSTR ValueName, LPBYTE ptr,
     if(unicode)
         ret = RegQueryValueExW(hkey, ValueName, 0, &type, ptr, &sz);
     else {
-        LPSTR ValueNameA = HEAP_strdupWtoA(GetProcessHeap(),0,ValueName);
+        LPSTR ValueNameA = strdupWtoA(ValueName);
         ret = RegQueryValueExA(hkey, ValueNameA, 0, &type, ptr, &sz);
 	HeapFree(GetProcessHeap(),0,ValueNameA);
     }
