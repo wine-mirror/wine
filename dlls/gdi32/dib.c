@@ -638,33 +638,33 @@ INT WINAPI GetDIBits(
         else {
             if(bpp >= bmp->bitmap.bmBitsPixel) {
                 /* Generate the color map from the selected palette */
-                PALETTEENTRY * palEntry;
-                PALETTEOBJ * palette;
-                if (!(palette = (PALETTEOBJ*)GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC ))) {
+                PALETTEENTRY palEntry[256];
+
+                memset( palEntry, 0, sizeof(palEntry) );
+                if (!GetPaletteEntries( dc->hPalette, 0, 1 << bmp->bitmap.bmBitsPixel, palEntry ))
+                {
                     GDI_ReleaseObj( hdc );
                     GDI_ReleaseObj( hbitmap );
                     return 0;
                 }
-                palEntry = palette->logpalette.palPalEntry;
-                for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++, palEntry++) {
+                for (i = 0; i < (1 << bmp->bitmap.bmBitsPixel); i++) {
                     if (coloruse == DIB_RGB_COLORS) {
                         if (core_header)
                         {
-                            rgbTriples[i].rgbtRed   = palEntry->peRed;
-                            rgbTriples[i].rgbtGreen = palEntry->peGreen;
-                            rgbTriples[i].rgbtBlue  = palEntry->peBlue;
+                            rgbTriples[i].rgbtRed   = palEntry[i].peRed;
+                            rgbTriples[i].rgbtGreen = palEntry[i].peGreen;
+                            rgbTriples[i].rgbtBlue  = palEntry[i].peBlue;
                         }
                         else
                         {
-                            rgbQuads[i].rgbRed      = palEntry->peRed;
-                            rgbQuads[i].rgbGreen    = palEntry->peGreen;
-                            rgbQuads[i].rgbBlue     = palEntry->peBlue;
+                            rgbQuads[i].rgbRed      = palEntry[i].peRed;
+                            rgbQuads[i].rgbGreen    = palEntry[i].peGreen;
+                            rgbQuads[i].rgbBlue     = palEntry[i].peBlue;
                             rgbQuads[i].rgbReserved = 0;
                         }
                     }
                     else ((WORD *)colorPtr)[i] = (WORD)i;
                 }
-                GDI_ReleaseObj( dc->hPalette );
             } else {
                 switch (bpp) {
                 case 1:
@@ -1189,21 +1189,17 @@ static void DIB_CopyColorTable( DC *dc, BITMAPOBJ *bmp, WORD coloruse, const BIT
     }
     else
     {
-        PALETTEOBJ *palette;
+        PALETTEENTRY entries[256];
         const WORD *index = (const WORD*) ((const BYTE*) info + (WORD) info->bmiHeader.biSize);
+        UINT count = GetPaletteEntries( dc->hPalette, 0, colors, entries );
 
-        if ((palette = GDI_GetObjPtr( dc->hPalette, PALETTE_MAGIC )))
+        for (i = 0; i < colors; i++, index++)
         {
-            UINT entries = palette->logpalette.palNumEntries;
-            for (i = 0; i < colors; i++, index++)
-            {
-                PALETTEENTRY *entry = &palette->logpalette.palPalEntry[*index % entries];
-                colorTable[i].rgbRed = entry->peRed;
-                colorTable[i].rgbGreen = entry->peGreen;
-                colorTable[i].rgbBlue = entry->peBlue;
-                colorTable[i].rgbReserved = 0;
-            }
-            GDI_ReleaseObj( dc->hPalette );
+            PALETTEENTRY *entry = &entries[*index % count];
+            colorTable[i].rgbRed = entry->peRed;
+            colorTable[i].rgbGreen = entry->peGreen;
+            colorTable[i].rgbBlue = entry->peBlue;
+            colorTable[i].rgbReserved = 0;
         }
     }
     bmp->color_table = colorTable;
