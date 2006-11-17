@@ -34,9 +34,7 @@ typedef REFIID nsIIDRef;
 typedef nsIIDRef nsCIDRef;
 
 typedef void** nsQIResult;
-typedef LPCSTR nscstring;
 typedef WCHAR PRUnichar;
-typedef LPCWSTR nscwstring;
 typedef ULONG PRUint32;
 typedef LONG PRInt32;
 typedef WORD PRUint16;
@@ -120,9 +118,9 @@ typedef nsISupports nsIDOMCSSRule;
 interface nsIServiceManager : nsISupports
 {
     nsresult GetService(nsCIDRef aClass, nsIIDRef aIID, void **result);
-    nsresult GetServiceByContactID(nscstring aContactID, nsIIDRef aIID, void **result);
+    nsresult GetServiceByContactID(const char *aContactID, nsIIDRef aIID, void **result);
     nsresult IsServiceInstantiated(nsCIDRef aClass, nsIIDRef aIID, BOOL *_retval);
-    nsresult IsServiceInstantiatedByContractID(nscstring aContractID, nsIIDRef aIID, BOOL *_retval);
+    nsresult IsServiceInstantiatedByContractID(const char *aContractID, nsIIDRef aIID, BOOL *_retval);
 }
 
 [
@@ -141,7 +139,7 @@ interface nsIFactory : nsISupports
 ]
 interface nsIObserver : nsISupports
 {
-    nsresult Observe(nsISupports *aSubject, nscstring aTopic, nscwstring aData);
+    nsresult Observe(nsISupports *aSubject, const char *aTopic, const PRUnichar *aData);
 }
 
 [
@@ -151,10 +149,10 @@ interface nsIObserver : nsISupports
 interface nsIComponentManager : nsISupports
 {
     nsresult GetClassObject(nsCIDRef aClass, nsIIDRef aIID, nsQIResult result);
-    nsresult GetClassObjectByContractID(nscstring aContractID, nsIIDRef aIID, nsQIResult result);
+    nsresult GetClassObjectByContractID(const char *aContractID, nsIIDRef aIID, nsQIResult result);
     nsresult CreateInstance(nsCIDRef aClass, nsISupports *aDelegate, nsIIDRef aIID,
             nsQIResult result);
-    nsresult CreateInstanceByContractID(nscstring aContractID, nsISupports *aDelegate,
+    nsresult CreateInstanceByContractID(const char *aContractID, nsISupports *aDelegate,
             nsIIDRef aIID, nsQIResult result);
 }
 
