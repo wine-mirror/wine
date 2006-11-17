@@ -20,11 +20,12 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "gdi.h"
 #include "windef.h"
+#include "winbase.h"
 #include "winreg.h"
 #include "x11drv.h"
 #include "wine/debug.h"
@@ -47,6 +48,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
  * Windows palette manager is described in the
  * http://premium.microsoft.com/msdn/library/techart/f30/f34/f40/d4d/sa942.htm
  */
+
+#define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */
 
 #define PC_SYS_USED            0x80 /* palentry is used (both system and logical) */
 #define PC_SYS_RESERVED        0x40 /* system palentry is not to be mapped to */
@@ -81,6 +84,8 @@ static int palette_size;
 static int           X11DRV_PALETTE_firstFree = 0;
 static unsigned char X11DRV_PALETTE_freeList[256];
 
+static XContext palette_context;  /* X context to associate a color mapping to a palette */
+
 /**********************************************************************/
 
    /* Map an EGA index (0..15) to a pixel value in the system color space.  */
@@ -114,14 +119,11 @@ static int X11DRV_PALETTE_LookupSystemXPixel(COLORREF col);
  */
 static int *palette_get_mapping( HPALETTE hpal )
 {
-    int *mapping = NULL;
-    PALETTEOBJ *ptr;
+    int *mapping;
 
-    if ((ptr = GDI_GetObjPtr( hpal, PALETTE_MAGIC )))
-    {
-        mapping = ptr->mapping;
-        GDI_ReleaseObj( hpal );
-    }
+    wine_tsx11_lock();
+    if (XFindContext( gdi_display, (XID)hpal, palette_context, (char **)&mapping )) mapping = NULL;
+    wine_tsx11_unlock();
     return mapping;
 }
 
@@ -129,18 +131,11 @@ static int *palette_get_mapping( HPALETTE hpal )
 /***********************************************************************
  *           palette_set_mapping
  */
-static int *palette_set_mapping( HPALETTE hpal, int *mapping )
+static void palette_set_mapping( HPALETTE hpal, int *mapping )
 {
-    int *old_mapping = NULL;
-    PALETTEOBJ *ptr;
-
-    if ((ptr = GDI_GetObjPtr( hpal, PALETTE_MAGIC )))
-    {
-        old_mapping = ptr->mapping;
-        ptr->mapping = mapping;
-        GDI_ReleaseObj( hpal );
-    }
-    return old_mapping;
+    wine_tsx11_lock();
+    XSaveContext( gdi_display, (XID)hpal, palette_context, (char *)mapping );
+    wine_tsx11_unlock();
 }
 
 
@@ -153,10 +148,14 @@ int X11DRV_PALETTE_Init(void)
 {
     int	mask, white, black;
     int monoPlane;
+    int *mapping;
     PALETTEENTRY sys_pal_template[NB_RESERVED_COLORS];
 
     TRACE("initializing palette manager...\n");
 
+    wine_tsx11_lock();
+    palette_context = XUniqueContext();
+    wine_tsx11_unlock();
     white = WhitePixel( gdi_display, DefaultScreen(gdi_display) );
     black = BlackPixel( gdi_display, DefaultScreen(gdi_display) );
     monoPlane = 1;
@@ -243,6 +242,9 @@ int X11DRV_PALETTE_Init(void)
     TRACE(" visual class %i (%i)\n",  visual->class, monoPlane);
 
     GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
+
+    if ((mapping = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * NB_RESERVED_COLORS )))
+        palette_set_mapping( GetStockObject(DEFAULT_PALETTE), mapping );
 
     if( X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL )
     {
@@ -1194,6 +1196,25 @@ UINT X11DRV_RealizePalette( X11DRV_PDEVICE *physDev, HPALETTE hpal, BOOL primary
     }
     return iRemapped;
 }
+
+
+/***********************************************************************
+ *              UnrealizePalette    (X11DRV.@)
+ */
+BOOL X11DRV_UnrealizePalette( HPALETTE hpal )
+{
+    int *mapping = palette_get_mapping( hpal );
+
+    if (mapping)
+    {
+        wine_tsx11_lock();
+        XDeleteContext( gdi_display, (XID)hpal, palette_context );
+        wine_tsx11_unlock();
+        HeapFree( GetProcessHeap(), 0, mapping );
+    }
+    return TRUE;
+}
+
 
 /***********************************************************************
  *              GetSystemPaletteEntries   (X11DRV.@)

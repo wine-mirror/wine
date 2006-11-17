@@ -59,6 +59,7 @@
 @ cdecl SetTextColor(ptr long) X11DRV_SetTextColor
 @ cdecl StretchBlt(ptr long long long long ptr long long long long long) X11DRV_StretchBlt
 @ cdecl SwapBuffers(ptr) X11DRV_SwapBuffers
+@ cdecl UnrealizePalette(long) X11DRV_UnrealizePalette
 
 # USER driver
 
