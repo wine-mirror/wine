@@ -48,6 +48,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(palette);
  * http://premium.microsoft.com/msdn/library/techart/f30/f34/f40/d4d/sa942.htm
  */
 
+#define PC_SYS_USED            0x80 /* palentry is used (both system and logical) */
+#define PC_SYS_RESERVED        0x40 /* system palentry is not to be mapped to */
+
 static PALETTEENTRY *COLOR_sysPal; /* current system palette */
 
 static int COLOR_gapStart = 256;
@@ -1160,7 +1163,6 @@ static UINT X11DRV_PALETTE_SetMapping( PALETTEOBJ* palPtr, UINT uStart, UINT uNu
 
                 index = X11DRV_SysPaletteLookupPixel( *(COLORREF*)(palPtr->logpalette.palPalEntry + uStart), TRUE);
             }
-	    palPtr->logpalette.palPalEntry[uStart].peFlags |= PC_SYS_USED;
 
             if( X11DRV_PALETTE_PaletteToXPixel ) index = X11DRV_PALETTE_PaletteToXPixel[index];
         }

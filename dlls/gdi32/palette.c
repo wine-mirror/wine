@@ -130,16 +130,6 @@ HPALETTE PALETTE_Init(void)
     return hpalette;
 }
 
-/***********************************************************************
- *           PALETTE_ValidateFlags
- */
-static void PALETTE_ValidateFlags(PALETTEENTRY* lpPalE, int size)
-{
-    int i = 0;
-    for( ; i<size ; i++ )
-        lpPalE[i].peFlags = PC_SYS_USED | (lpPalE[i].peFlags & 0x07);
-}
-
 
 /***********************************************************************
  * CreatePalette [GDI32.@]
@@ -166,8 +156,6 @@ HPALETTE WINAPI CreatePalette(
                                         PALETTE_MAGIC, (HGDIOBJ *)&hpalette,
 					&palette_funcs ))) return 0;
     memcpy( &palettePtr->logpalette, palette, size );
-    PALETTE_ValidateFlags(palettePtr->logpalette.palPalEntry,
-			  palettePtr->logpalette.palNumEntries);
     palettePtr->mapping = NULL;
     GDI_ReleaseObj( hpalette );
 
@@ -358,8 +346,6 @@ UINT WINAPI SetPaletteEntries(
     if (start+count > numEntries) count = numEntries - start;
     memcpy( &palPtr->logpalette.palPalEntry[start], entries,
 	    count * sizeof(PALETTEENTRY) );
-    PALETTE_ValidateFlags(palPtr->logpalette.palPalEntry,
-			  palPtr->logpalette.palNumEntries);
     UnrealizeObject( hpalette );
     GDI_ReleaseObj( hpalette );
     return count;
@@ -413,8 +399,6 @@ BOOL WINAPI ResizePalette(
 	if( mapping )
 	    memset(palPtr->mapping + cPrevEnt, 0, (cEntries - cPrevEnt)*sizeof(int));
 	memset( (BYTE*)palPtr + prevsize, 0, size - prevsize );
-        PALETTE_ValidateFlags((PALETTEENTRY*)((BYTE*)palPtr + prevsize),
-						     cEntries - cPrevEnt );
     }
     palPtr->logpalette.palNumEntries = cEntries;
     palPtr->logpalette.palVersion = prevVer;
@@ -470,7 +454,6 @@ BOOL WINAPI AnimatePalette(
               pptr->peRed, pptr->peGreen, pptr->peBlue);
             memcpy( &palPtr->logpalette.palPalEntry[StartIndex], pptr,
                     sizeof(PALETTEENTRY) );
-            PALETTE_ValidateFlags(&palPtr->logpalette.palPalEntry[StartIndex], 1);
           } else {
             TRACE("Not animating entry %d -- not PC_RESERVED\n", StartIndex);
           }
@@ -592,8 +575,6 @@ UINT WINAPI GetNearestPaletteIndex(
 
         for( i = 0; i < palObj->logpalette.palNumEntries && diff ; i++, entry++)
         {
-            if (!(entry->peFlags & PC_SYS_USED)) continue;
-
             r = entry->peRed - GetRValue(color);
             g = entry->peGreen - GetGValue(color);
             b = entry->peBlue - GetBValue(color);

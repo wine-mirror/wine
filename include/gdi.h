@@ -70,9 +70,6 @@ typedef struct tagGDIOBJHDR
 
 #define NB_RESERVED_COLORS     20   /* number of fixed colors in system palette */
 
-#define PC_SYS_USED            0x80 /* palentry is used (both system and logical) */
-#define PC_SYS_RESERVED        0x40 /* system palentry is not to be mapped to */
-
 typedef struct tagPALETTEOBJ
 {
     GDIOBJHDR                    header;
