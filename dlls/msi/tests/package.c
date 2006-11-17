@@ -1344,6 +1344,50 @@ static void test_props(void)
     DeleteFile(msifile);
 }
 
+static void test_properties_table(void)
+{
+    const char *query;
+    UINT r;
+    MSIHANDLE hpkg, hdb;
+    char buffer[0x10];
+    DWORD sz;
+
+    hdb = create_package_db();
+    ok( hdb, "failed to create package\n");
+
+    hpkg = package_from_db(hdb);
+    ok( hpkg, "failed to create package\n");
+
+    query = "CREATE TABLE `_Properties` ( "
+        "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
+    r = run_query(hdb, query);
+    ok(r == ERROR_INVALID_HANDLE, "failed to create table\n");
+
+    MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
+
+    hdb = create_package_db();
+    ok( hdb, "failed to create package\n");
+
+    query = "CREATE TABLE `_Properties` ( "
+        "`foo` INT NOT NULL, `bar` INT LOCALIZABLE PRIMARY KEY `foo`)";
+    r = run_query(hdb, query);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    hpkg = package_from_db(hdb);
+    ok( hpkg, "failed to create package\n");
+
+    r = MsiSetProperty( hpkg, "foo", "bar");
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    sz = sizeof buffer;
+    r = MsiGetProperty( hpkg, "foo", buffer, &sz);
+    ok(r == ERROR_SUCCESS, "failed to create table\n");
+
+    MsiCloseHandle( hpkg );
+    DeleteFile(msifile);
+}
+
 static UINT try_query_param( MSIHANDLE hdb, LPCSTR szQuery, MSIHANDLE hrec )
 {
     MSIHANDLE htab = 0;
@@ -2858,6 +2902,7 @@ START_TEST(package)
     test_gettargetpath_bad();
     test_settargetpath();
     test_props();
+    test_properties_table();
     test_condition();
     test_msipackage();
     test_formatrecord2();
