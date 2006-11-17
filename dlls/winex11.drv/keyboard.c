@@ -1673,9 +1673,18 @@ void X11DRV_InitKeyboard(void)
         vkey_used[(vkey & 0xff)] = 1;
     } /* for */
 
-#if 0 /* this breaks VK_OEM_x VKeys in some layout tables by inserting
-       * a VK code into a not appropriate place.
-       */
+#define VKEY_IF_NOT_USED(vkey) (vkey_used[(vkey)] ? 0 : (vkey_used[(vkey)] = 1, (vkey)))
+    for (keyc = min_keycode; keyc <= max_keycode; keyc++)
+    {
+        vkey = keyc2vkey[keyc] & 0xff;
+        if (vkey)
+            continue;
+
+        e2.keycode = (KeyCode)keyc;
+        keysym = XLookupKeysym(&e2, 0);
+        if (!keysym)
+           continue;
+
         /* find a suitable layout-dependent VK code */
         /* (most Winelib apps ought to be able to work without layout tables!) */
         for (i = 0; (i < keysyms_per_keycode) && (!vkey); i++)
@@ -1683,7 +1692,7 @@ void X11DRV_InitKeyboard(void)
             keysym = XLookupKeysym(&e2, i);
             if ((keysym >= XK_0 && keysym <= XK_9)
                 || (keysym >= XK_A && keysym <= XK_Z)) {
-                vkey = keysym;
+                vkey = VKEY_IF_NOT_USED(keysym);
             }
         }
 
@@ -1692,17 +1701,17 @@ void X11DRV_InitKeyboard(void)
             keysym = XLookupKeysym(&e2, i);
             switch (keysym)
             {
-            case ';':             vkey = VK_OEM_1; break;
-            case '/':             vkey = VK_OEM_2; break;
-            case '`':             vkey = VK_OEM_3; break;
-            case '[':             vkey = VK_OEM_4; break;
-            case '\\':            vkey = VK_OEM_5; break;
-            case ']':             vkey = VK_OEM_6; break;
-            case '\'':            vkey = VK_OEM_7; break;
-            case ',':             vkey = VK_OEM_COMMA; break;
-            case '.':             vkey = VK_OEM_PERIOD; break;
-            case '-':             vkey = VK_OEM_MINUS; break;
-            case '+':             vkey = VK_OEM_PLUS; break;
+            case ';':             vkey = VKEY_IF_NOT_USED(VK_OEM_1); break;
+            case '/':             vkey = VKEY_IF_NOT_USED(VK_OEM_2); break;
+            case '`':             vkey = VKEY_IF_NOT_USED(VK_OEM_3); break;
+            case '[':             vkey = VKEY_IF_NOT_USED(VK_OEM_4); break;
+            case '\\':            vkey = VKEY_IF_NOT_USED(VK_OEM_5); break;
+            case ']':             vkey = VKEY_IF_NOT_USED(VK_OEM_6); break;
+            case '\'':            vkey = VKEY_IF_NOT_USED(VK_OEM_7); break;
+            case ',':             vkey = VKEY_IF_NOT_USED(VK_OEM_COMMA); break;
+            case '.':             vkey = VKEY_IF_NOT_USED(VK_OEM_PERIOD); break;
+            case '-':             vkey = VKEY_IF_NOT_USED(VK_OEM_MINUS); break;
+            case '+':             vkey = VKEY_IF_NOT_USED(VK_OEM_PLUS); break;
             }
         }
 
@@ -1710,14 +1719,17 @@ void X11DRV_InitKeyboard(void)
         {
             /* Others keys: let's assign OEM virtual key codes in the allowed range,
              * that is ([0xba,0xc0], [0xdb,0xe4], 0xe6 (given up) et [0xe9,0xf5]) */
-            switch (++OEMvkey)
+            do
             {
-            case 0xc1 : OEMvkey=0xdb; break;
-            case 0xe5 : OEMvkey=0xe9; break;
-            case 0xf6 : OEMvkey=0xf5; WARN("No more OEM vkey available!\n");
-            }
+                switch (++OEMvkey)
+                {
+                case 0xc1 : OEMvkey=0xdb; break;
+                case 0xe5 : OEMvkey=0xe9; break;
+                case 0xf6 : OEMvkey=0xf5; WARN("No more OEM vkey available!\n");
+                }
+            } while (OEMvkey < 0xf5 && vkey_used[OEMvkey]);
 
-            vkey = OEMvkey;
+            vkey = VKEY_IF_NOT_USED(OEMvkey);
 
             if (TRACE_ON(keyboard))
             {
@@ -1737,7 +1749,14 @@ void X11DRV_InitKeyboard(void)
                 TRACE(")\n");
             }
         }
-#endif
+
+        if (vkey)
+        {
+            TRACE("keycode %04x => vkey %04x\n", e2.keycode, vkey);
+            keyc2vkey[e2.keycode] = vkey;
+        }
+    } /* for */
+#undef VKEY_IF_NOT_USED
 
     /* If some keys still lack scancodes, assign some arbitrary ones to them now */
     for (scan = 0x60, keyc = min_keycode; keyc <= max_keycode; keyc++)
