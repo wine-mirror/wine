@@ -196,6 +196,9 @@ static inline void print_dllflags(const char *title, WORD value)
 {
     printf("  %-34s 0x%X\n", title, value);
 #define X(f,s) if (value & f) printf("    %s\n", s)
+    X(IMAGE_DLLCHARACTERISTICS_DYNAMIC_BASE,          "DYNAMIC_BASE");
+    X(IMAGE_DLLCHARACTERISTICS_FORCE_INTEGRITY,       "FORCE_INTEGRITY");
+    X(IMAGE_DLLCHARACTERISTICS_NX_COMPAT,             "NX_COMPAT");
     X(IMAGE_DLLCHARACTERISTICS_NO_ISOLATION,          "NO_ISOLATION");
     X(IMAGE_DLLCHARACTERISTICS_NO_SEH,                "NO_SEH");
     X(IMAGE_DLLCHARACTERISTICS_NO_BIND,               "NO_BIND");
