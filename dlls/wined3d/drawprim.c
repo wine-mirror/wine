@@ -2078,6 +2078,16 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
     }
 }
 
+static void check_fbo_status(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    GLenum status = GL_EXTCALL(glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT));
+    switch(status) {
+        case GL_FRAMEBUFFER_COMPLETE_EXT: TRACE("FBO complete.\n"); break;
+        default: TRACE("FBO status %#x.\n", status); break;
+    }
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
                    int PrimitiveType,
@@ -2100,6 +2110,10 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          fixup = FALSE;
 
     BOOL lighting_changed, lighting_original = FALSE;
+
+    if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        check_fbo_status(iface);
+    }
 
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
      * here simply check whether a shader was set, or the user disabled shaders */

@@ -215,6 +215,11 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     TRACE("Using PBuffers for offscreen rendering\n");
                     wined3d_settings.offscreen_rendering_mode = ORM_PBUFFER;
                 }
+                else if (!strcmp(buffer,"fbo"))
+                {
+                    TRACE("Using FBOs for offscreen rendering\n");
+                    wined3d_settings.offscreen_rendering_mode = ORM_FBO;
+                }
             }
             if ( !get_config_key( hkey, appkey, "RenderTargetLockMode", buffer, size) )
             {

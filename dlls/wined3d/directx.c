@@ -791,6 +791,12 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
         wined3d_settings.nonpower2_mode = NP2_NONE;
     }
 
+    /* We can only use ORM_FBO when the hardware supports it. */
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !gl_info->supported[EXT_FRAMEBUFFER_OBJECT]) {
+        WARN_(d3d_caps)("GL_EXT_framebuffer_object not supported, falling back to PBuffer offscreen rendering mode.\n");
+        wined3d_settings.offscreen_rendering_mode = ORM_PBUFFER;
+    }
+
     /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of different GPUs with roughly the same
      * features. In most cases GPUs from a certain family differ in clockspeeds, the amount of video memory and
      * in case of the latest videocards in the number of pixel/vertex pipelines.

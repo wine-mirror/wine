@@ -137,6 +137,7 @@ static WINED3DGLTYPE const glTypeLookup[WINED3DDECLTYPE_UNUSED] = {
 
 #define ORM_BACKBUFFER  0
 #define ORM_PBUFFER     1
+#define ORM_FBO         2
 
 #define SHADER_SW   0
 #define SHADER_ARB  1
@@ -550,6 +551,7 @@ typedef struct IWineD3DDeviceImpl
 
     /* For rendering to a texture using glCopyTexImage */
     BOOL                    render_offscreen;
+    GLuint                  fbo;
 
     /* Cursor management */
     BOOL                    bCursorVisible;

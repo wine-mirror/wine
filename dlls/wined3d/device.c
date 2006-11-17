@@ -5985,7 +5985,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
     checkGLcall("glFlush");
 
     TRACE("End Scene\n");
-    if(This->renderTarget != NULL) {
+    /* If we're using FBOs this isn't needed */
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->renderTarget != NULL) {
 
         /* If the container of the rendertarget is a texture then we need to save the data from the pbuffer */
         IUnknown *targetContainer = NULL;
@@ -6989,6 +6990,66 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
     return WINED3D_OK;
 }
 
+static void bind_fbo(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    if (!This->fbo) {
+        GL_EXTCALL(glGenFramebuffersEXT(1, &This->fbo));
+        checkGLcall("glGenFramebuffersEXT()");
+    }
+    GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, This->fbo));
+    checkGLcall("glBindFramebuffer()");
+}
+
+/* TODO: Handle stencil attachments */
+static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *depth_stencil_impl = (IWineD3DSurfaceImpl *)depth_stencil;
+
+    bind_fbo(iface);
+
+    if (depth_stencil_impl) {
+        IWineD3DSurface_PreLoad(depth_stencil);
+        glBindTexture (GL_TEXTURE_2D, depth_stencil_impl->glDescription.textureName);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_stencil_impl->glDescription.textureName, 0));
+        checkGLcall("glFramebufferTexture2DEXT()");
+    } else {
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
+        checkGLcall("glFramebufferTexture2DEXT()");
+    }
+
+    if (!This->render_offscreen) {
+        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        checkGLcall("glBindFramebuffer()");
+    }
+}
+
+static void set_render_target_fbo(IWineD3DDevice *iface, IWineD3DSurface *render_target) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    IWineD3DSurfaceImpl *rtimpl = (IWineD3DSurfaceImpl *)render_target;
+
+    if (This->render_offscreen) {
+        bind_fbo(iface);
+
+        IWineD3DSurface_PreLoad(render_target);
+
+        glBindTexture (GL_TEXTURE_2D, rtimpl->glDescription.textureName);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, rtimpl->glDescription.textureName, 0));
+        checkGLcall("glFramebufferTexture2DEXT()");
+    } else {
+        GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        checkGLcall("glBindFramebuffer()");
+    }
+}
+
 /* internal static helper functions */
 static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
                                                 IWineD3DSurface *RenderSurface);
@@ -7040,6 +7101,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
         stencil buffer and incure an extra memory overhead */
         hr = IWineD3DDeviceImpl_ActiveRender(iface, pRenderTarget);
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+            set_render_target_fbo(iface, pRenderTarget);
+        }
     }
 
     if (SUCCEEDED(hr)) {
@@ -7086,6 +7150,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
         /** TODO: glEnable/glDisable on depth/stencil    depending on
          *   pNewZStencil is NULL and the depth/stencil is enabled in d3d
           **********************************************************/
+        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+            set_depth_stencil_fbo(iface, pNewZStencil);
+        }
     }
 
     return hr;
