@@ -50,6 +50,8 @@ static const WCHAR attrBackgroundColor[] =
     {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR attrFontFamily[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
+static const WCHAR attrFontSize[] =
+    {'f','o','n','t','-','s','i','z','e',0};
 
 static HRESULT set_style_attr(HTMLStyle *This, LPCWSTR name, LPCWSTR value)
 {
@@ -222,8 +224,17 @@ static HRESULT WINAPI HTMLStyle_get_fontWeight(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_fontSize(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        return set_style_attr(This, attrFontSize, V_BSTR(&v));
+    default:
+        FIXME("not supported vt %d\n", V_VT(&v));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_fontSize(IHTMLStyle *iface, VARIANT *p)
