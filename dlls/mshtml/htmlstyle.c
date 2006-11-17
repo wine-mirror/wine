@@ -46,6 +46,8 @@ typedef struct {
 
 #define HTMLSTYLE(x)  ((IHTMLStyle*) &(x)->lpHTMLStyleVtbl);
 
+static const WCHAR attrBackgroundColor[] =
+    {'b','a','c','k','g','r','o','u','n','d','-','c','o','l','o','r',0};
 static const WCHAR attrFontFamily[] =
     {'f','o','n','t','-','f','a','m','i','l','y',0};
 
@@ -276,8 +278,24 @@ static HRESULT WINAPI HTMLStyle_get_background(IHTMLStyle *iface, BSTR *p)
 static HRESULT WINAPI HTMLStyle_put_backgroundColor(IHTMLStyle *iface, VARIANT v)
 {
     HTMLStyle *This = HTMLSTYLE_THIS(iface);
-    FIXME("(%p)->(v%d)\n", This, V_VT(&v));
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(v%d)\n", This, V_VT(&v));
+
+    switch(V_VT(&v)) {
+    case VT_BSTR:
+        return set_style_attr(This, attrBackgroundColor, V_BSTR(&v));
+    case VT_I4: {
+        WCHAR value[10];
+        static const WCHAR format[] = {'#','%','0','6','x',0};
+
+        wsprintfW(value, format, V_I4(&v));
+        return set_style_attr(This, attrBackgroundColor, value);
+    }
+    default:
+        FIXME("unsupported vt %d\n", V_VT(&v));
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLStyle_get_backgroundColor(IHTMLStyle *iface, VARIANT *p)
