@@ -694,8 +694,25 @@ static HRESULT WINAPI domdoc_createElement(
     BSTR tagname,
     IXMLDOMElement** element )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlNodePtr xmlnode;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+    xmlChar *xml_name;
+    IUnknown *elem_unk;
+    HRESULT hr;
+
+    TRACE("%p->(%s,%p)\n", iface, debugstr_w(tagname), element);
+
+    xml_name = xmlChar_from_wchar((WCHAR*)tagname);
+    xmlnode = xmlNewDocNode(get_doc(This), NULL, xml_name, NULL);
+
+    TRACE("created xmlptr %p\n", xmlnode);
+    elem_unk = create_element(xmlnode, NULL);
+    HeapFree(GetProcessHeap(), 0, xml_name);
+
+    hr = IUnknown_QueryInterface(elem_unk, &IID_IXMLDOMElement, (void **)element);
+    IUnknown_Release(elem_unk);
+    TRACE("returning %p\n", *element);
+    return hr;
 }
 
 
