@@ -30,11 +30,11 @@
 #define COBJMACROS
 #include "windef.h"
 #include "winbase.h"
+#include "wingdi.h"
 #include "winuser.h"
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-#include "gdi.h"
 #include "d3d9.h"
 #include "ddraw.h"
 #include "wine/wined3d_interface.h"
