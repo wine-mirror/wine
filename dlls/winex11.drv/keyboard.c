@@ -1651,6 +1651,7 @@ void X11DRV_InitKeyboard(void)
 	      for (keyn=0; keyn<MAIN_LEN; keyn++) {
 		for (ok=(*lkey)[keyn][i=0]; ok&&(i<4); i++)
 		  if ((*lkey)[keyn][i] && (*lkey)[keyn][i]!=ckey[i]) ok=0;
+		if (!ok) i--; /* we overshot */
 		if (ok||(i>maxlen)) {
 		  maxlen=i; maxval=keyn;
 		}
