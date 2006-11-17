@@ -18,35 +18,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/*
- * Pages I need
- *
-http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/summary_list_of_all_custom_action_types.asp
- */
-
-#include <stdarg.h>
-#include <stdio.h>
-
 #define COBJMACROS
 
+#include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "winreg.h"
-#include "wine/debug.h"
-#include "fdi.h"
-#include "msi.h"
 #include "msidefs.h"
-#include "msiquery.h"
-#include "msvcrt/fcntl.h"
-#include "objbase.h"
-#include "objidl.h"
 #include "msipriv.h"
-#include "winnls.h"
 #include "winuser.h"
-#include "shlobj.h"
+#include "wine/debug.h"
 #include "wine/unicode.h"
-#include "winver.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msi);
 
