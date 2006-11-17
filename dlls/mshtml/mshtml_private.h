@@ -330,6 +330,7 @@ IHlink *Hlink_Create(void);
 IHTMLSelectionObject *HTMLSelectionObject_Create(nsISelection*);
 IHTMLTxtRange *HTMLTxtRange_Create(nsISelection*);
 IHTMLStyle *HTMLStyle_Create(nsIDOMCSSStyleDeclaration*);
+IHTMLStyleSheet *HTMLStyleSheet_Create(void);
 
 void HTMLElement_Create(HTMLDOMNode*);
 void HTMLBodyElement_Create(HTMLElement*);

@@ -964,8 +964,12 @@ static HRESULT WINAPI HTMLDocument_toString(IHTMLDocument2 *iface, BSTR *String)
 static HRESULT WINAPI HTMLDocument_createStyleSheet(IHTMLDocument2 *iface, BSTR bstrHref,
                                             long lIndex, IHTMLStyleSheet **ppnewStyleSheet)
 {
-    FIXME("(%p)->(%s %ld %p)\n", iface, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+
+    FIXME("(%p)->(%s %ld %p) semi-stub\n", This, debugstr_w(bstrHref), lIndex, ppnewStyleSheet);
+
+    *ppnewStyleSheet = HTMLStyleSheet_Create();
+    return S_OK;
 }
 
 static const IHTMLDocument2Vtbl HTMLDocumentVtbl = {
