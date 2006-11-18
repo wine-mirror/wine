@@ -187,6 +187,14 @@ BEGIN
     COMBOBOX        IDC_THEME_COLORCOMBO,15,48,112,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Размер:",IDC_THEME_SIZETEXT,135,40,110,8
     COMBOBOX        IDC_THEME_SIZECOMBO,135,48,110,14,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    LTEXT           "Элемент:",IDC_STATIC,15,64,112,8
+    COMBOBOX        IDC_SYSPARAM_COMBO,15,74,112,120,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP | CBS_SORT
+    LTEXT           "Цвет:",IDC_SYSPARAM_COLOR_TEXT,135,64,25,8,WS_DISABLED
+    PUSHBUTTON      "",IDC_SYSPARAM_COLOR,135,74,25,13,WS_DISABLED | BS_OWNERDRAW
+    LTEXT           "Размер:",IDC_SYSPARAM_SIZE_TEXT,166,64,30,8,WS_DISABLED
+    EDITTEXT        IDC_SYSPARAM_SIZE,166,74,23,13,ES_AUTOHSCROLL | WS_TABSTOP | WS_DISABLED
+    CONTROL         "",IDC_SYSPARAM_SIZE_UD,UPDOWN_CLASS,UDS_SETBUDDYINT | WS_DISABLED,187,74,15,13
+    PUSHBUTTON      "Шрифт",IDC_SYSPARAM_FONT,208,74,37,13,WS_DISABLED
     GROUPBOX        " Стандартные папки ",IDC_STATIC,8,114,244,100
     CONTROL         "Listview",IDC_LIST_SFPATHS,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                      LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,126,230,64
@@ -278,4 +286,24 @@ BEGIN
     IDS_DEVICES_MIXER           "Устройство микширования"
     IDS_UNAVAILABLE_DRIVER      "Драйвер, указанный в реестре, не найден!\n\nУдалить \"%s\" из реестра?"
     IDS_WARNING                 "Внимание"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Элементы управления - фон"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Элементы управления - текст"
+    IDC_SYSPARAMS_DESKTOP           "Стол"
+    IDC_SYSPARAMS_MENU              "Меню - фон"
+    IDC_SYSPARAMS_MENU_TEXT         "Меню - текст"
+    IDC_SYSPARAMS_SCROLLBAR         "Полоса прокрутки"
+    IDC_SYSPARAMS_SELECTION         "Выделение - фон"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Выделение - текст"
+    IDC_SYSPARAMS_TOOLTIP           "Подсказка - фон"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Подсказка - текст"
+    IDC_SYSPARAMS_WINDOW            "Содержимое окна - фон"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Содержимое окна - текст"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Активное окно"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Активное окно - текст"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Пассивное окно"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Пассивное окно - текст"
 END
