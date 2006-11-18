@@ -2187,6 +2187,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,riched20.dll
 11,,riched32.dll
 11,,rpcrt4.dll
+11,,setupapi.dll
 11,,shdocvw.dll
 11,,shell32.dll
 11,,shfolder.dll
