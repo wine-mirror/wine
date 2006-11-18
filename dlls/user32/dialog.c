@@ -285,20 +285,24 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
         }
         else
         {
-            LPSTR class = (LPSTR)info.className;
-            LPSTR caption = (LPSTR)info.windowName;
+            LPCSTR class = (LPCSTR)info.className;
+            LPCSTR caption = (LPCSTR)info.windowName;
+            LPSTR class_tmp = NULL;
+            LPSTR caption_tmp = NULL;
 
             if (HIWORD(class))
             {
                 DWORD len = WideCharToMultiByte( CP_ACP, 0, info.className, -1, NULL, 0, NULL, NULL );
-                class = HeapAlloc( GetProcessHeap(), 0, len );
-                WideCharToMultiByte( CP_ACP, 0, info.className, -1, class, len, NULL, NULL );
+                class_tmp = HeapAlloc( GetProcessHeap(), 0, len );
+                WideCharToMultiByte( CP_ACP, 0, info.className, -1, class_tmp, len, NULL, NULL );
+                class = class_tmp;
             }
             if (HIWORD(caption))
             {
                 DWORD len = WideCharToMultiByte( CP_ACP, 0, info.windowName, -1, NULL, 0, NULL, NULL );
-                caption = HeapAlloc( GetProcessHeap(), 0, len );
-                WideCharToMultiByte( CP_ACP, 0, info.windowName, -1, caption, len, NULL, NULL );
+                caption_tmp = HeapAlloc( GetProcessHeap(), 0, len );
+                WideCharToMultiByte( CP_ACP, 0, info.windowName, -1, caption_tmp, len, NULL, NULL );
+                caption = caption_tmp;
             }
             hwndCtrl = CreateWindowExA( info.exStyle | WS_EX_NOPARENTNOTIFY,
                                         class, caption, info.style | WS_CHILD,
@@ -308,8 +312,8 @@ static BOOL DIALOG_CreateControls32( HWND hwnd, LPCSTR template, const DLG_TEMPL
                                         MulDiv(info.cy, dlgInfo->yBaseUnit, 8),
                                         hwnd, (HMENU)info.id,
                                         hInst, (LPVOID)info.data );
-            if (HIWORD(class)) HeapFree( GetProcessHeap(), 0, class );
-            if (HIWORD(caption)) HeapFree( GetProcessHeap(), 0, caption );
+            HeapFree( GetProcessHeap(), 0, class_tmp );
+            HeapFree( GetProcessHeap(), 0, caption_tmp );
         }
         if (!hwndCtrl)
         {
@@ -595,26 +599,30 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     }
     else
     {
-        LPSTR class = (LPSTR)template.className;
-        LPSTR caption = (LPSTR)template.caption;
+        LPCSTR class = (LPCSTR)template.className;
+        LPCSTR caption = (LPCSTR)template.caption;
+        LPSTR class_tmp = NULL;
+        LPSTR caption_tmp = NULL;
 
         if (HIWORD(class))
         {
             DWORD len = WideCharToMultiByte( CP_ACP, 0, template.className, -1, NULL, 0, NULL, NULL );
-            class = HeapAlloc( GetProcessHeap(), 0, len );
-            WideCharToMultiByte( CP_ACP, 0, template.className, -1, class, len, NULL, NULL );
+            class_tmp = HeapAlloc( GetProcessHeap(), 0, len );
+            WideCharToMultiByte( CP_ACP, 0, template.className, -1, class_tmp, len, NULL, NULL );
+            class = class_tmp;
         }
         if (HIWORD(caption))
         {
             DWORD len = WideCharToMultiByte( CP_ACP, 0, template.caption, -1, NULL, 0, NULL, NULL );
-            caption = HeapAlloc( GetProcessHeap(), 0, len );
-            WideCharToMultiByte( CP_ACP, 0, template.caption, -1, caption, len, NULL, NULL );
+            caption_tmp = HeapAlloc( GetProcessHeap(), 0, len );
+            WideCharToMultiByte( CP_ACP, 0, template.caption, -1, caption_tmp, len, NULL, NULL );
+            caption = caption_tmp;
         }
         hwnd = CreateWindowExA(template.exStyle, class, caption,
                                template.style & ~WS_VISIBLE, pos.x, pos.y, size.cx, size.cy,
                                owner, hMenu, hInst, NULL );
-        if (HIWORD(class)) HeapFree( GetProcessHeap(), 0, class );
-        if (HIWORD(caption)) HeapFree( GetProcessHeap(), 0, caption );
+        HeapFree( GetProcessHeap(), 0, class_tmp );
+        HeapFree( GetProcessHeap(), 0, caption_tmp );
     }
 
     if (!hwnd)
