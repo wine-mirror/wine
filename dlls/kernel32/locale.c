@@ -1588,7 +1588,7 @@ BOOL WINAPI GetCPInfo( UINT codepage, LPCPINFO cpinfo )
     }
     if (table->info.def_char & 0xff00)
     {
-        cpinfo->DefaultChar[0] = table->info.def_char & 0xff00;
+        cpinfo->DefaultChar[0] = (table->info.def_char & 0xff00) >> 8;
         cpinfo->DefaultChar[1] = table->info.def_char & 0x00ff;
     }
     else
