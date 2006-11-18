@@ -5014,11 +5014,12 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
  */
 static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
 {
+    LPWSTR textW = NULL;
     if (!unicode && text)
     {
 	LPCSTR textA = (LPCSTR)text;
 	INT countW = MultiByteToWideChar(CP_ACP, 0, textA, -1, NULL, 0);
-        LPWSTR textW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR));
+        textW = HeapAlloc(GetProcessHeap(), 0, countW * sizeof(WCHAR));
 	if (textW)
 	    MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, countW);
 	text = textW;
@@ -5035,7 +5036,7 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
 	TRACE("%s\n", debugstr_w(text));
 	EDIT_EM_ReplaceSel(es, FALSE, text, FALSE, FALSE);
 	if(!unicode)
-	    HeapFree(GetProcessHeap(), 0, (LPWSTR)text);
+	    HeapFree(GetProcessHeap(), 0, textW);
     } 
     else 
     {
