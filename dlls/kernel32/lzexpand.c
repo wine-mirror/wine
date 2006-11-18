@@ -58,14 +58,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(file);
  */
 #define	GETLEN	2048
 
+#define LZ_MAGIC_LEN    8
+#define LZ_HEADER_LEN   14
+
 /* Format of first 14 byte of LZ compressed file */
 struct lzfileheader {
-	BYTE	magic[8];
+	BYTE	magic[LZ_MAGIC_LEN];
 	BYTE	compressiontype;
 	CHAR	lastchar;
 	DWORD	reallength;
 };
-static BYTE LZMagic[8]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
+static BYTE LZMagic[LZ_MAGIC_LEN]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
+
+#define LZ_TABLE_SIZE    0x1000
 
 struct lzstate {
 	HFILE	realfd;		/* the real filedescriptor */
@@ -75,7 +80,7 @@ struct lzstate {
 	DWORD	realcurrent;	/* the position the decompressor currently is */
 	DWORD	realwanted;	/* the position the user wants to read from */
 
-	BYTE	table[0x1000];	/* the rotating LZ table */
+	BYTE	table[LZ_TABLE_SIZE];	/* the rotating LZ table */
 	UINT	curtabent;	/* CURrent TABle ENTry */
 
 	BYTE	stringlen;	/* length and position of current string */
@@ -92,8 +97,9 @@ struct lzstate {
 #define MAX_LZSTATES 16
 static struct lzstate *lzstates[MAX_LZSTATES];
 
-#define IS_LZ_HANDLE(h) (((h) >= 0x400) && ((h) < 0x400+MAX_LZSTATES))
-#define GET_LZ_STATE(h) (IS_LZ_HANDLE(h) ? lzstates[(h)-0x400] : NULL)
+#define LZ_MIN_HANDLE  0x400
+#define IS_LZ_HANDLE(h) (((h) >= LZ_MIN_HANDLE) && ((h) < LZ_MIN_HANDLE+MAX_LZSTATES))
+#define GET_LZ_STATE(h) (IS_LZ_HANDLE(h) ? lzstates[(h)-LZ_MIN_HANDLE] : NULL)
 
 /* reads one compressed byte, including buffering */
 #define GET(lzs,b)	_lzget(lzs,&b)
@@ -124,7 +130,7 @@ _lzget(struct lzstate *lzs,BYTE *b) {
  */
 static INT read_header(HFILE fd,struct lzfileheader *head)
 {
-	BYTE	buf[14];
+	BYTE	buf[LZ_HEADER_LEN];
 
 	if (_llseek(fd,0,SEEK_SET)==-1)
 		return LZERROR_BADINHANDLE;
@@ -132,16 +138,16 @@ static INT read_header(HFILE fd,struct lzfileheader *head)
 	/* We can't directly read the lzfileheader struct due to
 	 * structure element alignment
 	 */
-	if (_lread(fd,buf,14)<14)
+	if (_lread(fd,buf,LZ_HEADER_LEN)<LZ_HEADER_LEN)
 		return 0;
-	memcpy(head->magic,buf,8);
-	memcpy(&(head->compressiontype),buf+8,1);
-	memcpy(&(head->lastchar),buf+9,1);
+	memcpy(head->magic,buf,LZ_MAGIC_LEN);
+	memcpy(&(head->compressiontype),buf+LZ_MAGIC_LEN,1);
+	memcpy(&(head->lastchar),buf+LZ_MAGIC_LEN+1,1);
 
 	/* FIXME: consider endianess on non-intel architectures */
-	memcpy(&(head->reallength),buf+10,4);
+	memcpy(&(head->reallength),buf+LZ_MAGIC_LEN+2,4);
 
-	if (memcmp(head->magic,LZMagic,8))
+	if (memcmp(head->magic,LZMagic,LZ_MAGIC_LEN))
 		return 0;
 	if (head->compressiontype!='A')
 		return LZERROR_UNKNOWNALG;
@@ -205,10 +211,10 @@ HFILE WINAPI LZInit( HFILE hfSrc )
 	}
 
 	/* Yes, preinitialize with spaces */
-	memset(lzs->table,' ',0x1000);
+	memset(lzs->table,' ',LZ_TABLE_SIZE);
 	/* Yes, start 16 byte from the END of the table */
 	lzs->curtabent	= 0xff0;
-	return 0x400 + i;
+	return LZ_MIN_HANDLE + i;
 }
 
 
@@ -384,12 +390,12 @@ INT WINAPI LZRead( HFILE fd, LPSTR vbuf, INT toread )
 		 */
 		if (lzs->realcurrent>lzs->realwanted) {
 			/* flush decompressor state */
-			_llseek(lzs->realfd,14,SEEK_SET);
+			_llseek(lzs->realfd,LZ_HEADER_LEN,SEEK_SET);
 			GET_FLUSH(lzs);
 			lzs->realcurrent= 0;
 			lzs->bytetype	= 0;
 			lzs->stringlen	= 0;
-			memset(lzs->table,' ',0x1000);
+			memset(lzs->table,' ',LZ_TABLE_SIZE);
 			lzs->curtabent	= 0xFF0;
 		}
 		while (lzs->realcurrent<lzs->realwanted) {
@@ -578,7 +584,7 @@ void WINAPI LZClose( HFILE fd )
         {
             HeapFree( GetProcessHeap(), 0, lzs->get );
             CloseHandle((HANDLE)lzs->realfd);
-            lzstates[fd - 0x400] = NULL;
+            lzstates[fd - LZ_MIN_HANDLE] = NULL;
             HeapFree( GetProcessHeap(), 0, lzs );
         }
 }
