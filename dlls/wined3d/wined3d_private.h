@@ -215,8 +215,6 @@ extern int num_lock;
   (vec)[2] = D3DCOLOR_B(dw); \
   (vec)[3] = D3DCOLOR_A(dw);
 
-#define GLTEXTURECUBEMAP GL_TEXTURE_CUBE_MAP_ARB
-
 /* DirectX Device Limits */
 /* --------------------- */
 #define MAX_LEVELS  256  /* Maximum number of mipmap levels. Guessed at 256 */

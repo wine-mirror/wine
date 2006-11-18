@@ -319,7 +319,7 @@ HRESULT shader_get_registers_used(
                             reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_VOLUME;
                             break;
 
-                        case GLTEXTURECUBEMAP:
+                        case GL_TEXTURE_CUBE_MAP_ARB:
                             reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_CUBE;
                             break;
 

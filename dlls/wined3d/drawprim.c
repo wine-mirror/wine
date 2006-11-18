@@ -1940,7 +1940,7 @@ static void drawPrimitiveUploadTexturesPS(IWineD3DDeviceImpl* This) {
                 glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                 glDisable(GL_TEXTURE_2D);
                 break;
-            case GLTEXTURECUBEMAP:
+            case GL_TEXTURE_CUBE_MAP_ARB:
                 glDisable(GL_TEXTURE_2D);
                 glDisable(GL_TEXTURE_3D);
                 break;
@@ -2005,7 +2005,7 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
                     glDisable(GL_TEXTURE_CUBE_MAP_ARB);
                     glDisable(GL_TEXTURE_2D);
                     break;
-                case GLTEXTURECUBEMAP:
+                case GL_TEXTURE_CUBE_MAP_ARB:
                     glDisable(GL_TEXTURE_2D);
                     glDisable(GL_TEXTURE_3D);
                     break;
