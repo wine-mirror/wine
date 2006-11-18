@@ -7011,14 +7011,18 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     bind_fbo(iface);
 
     if (depth_stencil_impl) {
+        GLenum texttarget, target;
+
         IWineD3DSurface_PreLoad(depth_stencil);
-        glBindTexture (GL_TEXTURE_2D, depth_stencil_impl->glDescription.textureName);
+        texttarget = depth_stencil_impl->glDescription.target;
+        target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+        glBindTexture(target, depth_stencil_impl->glDescription.textureName);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, depth_stencil_impl->glDescription.textureName, 0));
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget, depth_stencil_impl->glDescription.textureName, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     } else {
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, GL_TEXTURE_2D, 0, 0));
@@ -7036,15 +7040,19 @@ static void set_render_target_fbo(IWineD3DDevice *iface, IWineD3DSurface *render
     IWineD3DSurfaceImpl *rtimpl = (IWineD3DSurfaceImpl *)render_target;
 
     if (This->render_offscreen) {
+        GLenum texttarget, target;
+
         bind_fbo(iface);
 
         IWineD3DSurface_PreLoad(render_target);
+        texttarget = rtimpl->glDescription.target;
+        target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
 
-        glBindTexture (GL_TEXTURE_2D, rtimpl->glDescription.textureName);
-        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glBindTexture(target, rtimpl->glDescription.textureName);
+        glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_TEXTURE_2D, rtimpl->glDescription.textureName, 0));
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, texttarget, rtimpl->glDescription.textureName, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
     } else {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
