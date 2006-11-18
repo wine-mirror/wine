@@ -626,7 +626,7 @@ static	HGLOBAL	WDML_BuildExecuteCommand(WDML_CONV* pConv, LPCVOID pData, DWORD c
  *
  *
  */
-static WDML_XACT*	WDML_ClientQueueExecute(WDML_CONV* pConv, LPCVOID pData, DWORD cbData)
+static WDML_XACT*	WDML_ClientQueueExecute(WDML_CONV* pConv, LPVOID pData, DWORD cbData)
 {
     WDML_XACT*	pXAct;
 
@@ -638,7 +638,7 @@ static WDML_XACT*	WDML_ClientQueueExecute(WDML_CONV* pConv, LPCVOID pData, DWORD
 
     if (cbData == (DWORD)-1)
     {
-	HDDEDATA	hDdeData = (HDDEDATA)pData;
+	HDDEDATA	hDdeData = pData;
 
 	pData = DdeAccessData(hDdeData, &cbData);
 	if (pData)
@@ -695,7 +695,7 @@ static WDML_QUEUE_STATE WDML_HandleExecuteReply(WDML_CONV* pConv, MSG* msg, WDML
  *
  *
  */
-static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPCVOID pData, DWORD cbData,
+static WDML_XACT*	WDML_ClientQueuePoke(WDML_CONV* pConv, LPVOID pData, DWORD cbData,
 					     UINT wFmt, HSZ hszItem)
 {
     WDML_XACT*	pXAct;
