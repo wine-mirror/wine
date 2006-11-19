@@ -32,6 +32,7 @@ WINDOWS_IDL_SRCS = \
 	objidl.idl \
 	objsafe.idl \
 	ocidl.idl \
+	ocmm.idl \
 	oledb.idl \
 	oleidl.idl \
 	optary.idl \
