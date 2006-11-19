@@ -31,6 +31,10 @@
 #include "wincon.h"
 #include "winnls.h"
 
+static HINSTANCE hkernel32;
+static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
+static LPVOID (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
+
 static char     base[MAX_PATH];
 static char     selfname[MAX_PATH];
 static char     resfile[MAX_PATH];
@@ -147,12 +151,17 @@ static WCHAR*   decodeW(const char* str)
  * generates basic information like:
  *      base:           absolute path to curr dir
  *      selfname:       the way to reinvoke ourselves
+ * function-pointers, which are not implemented in all windows versions
  */
 static int     init(void)
 {
     myARGC = winetest_get_mainargs( &myARGV );
     if (!GetCurrentDirectoryA(sizeof(base), base)) return 0;
     strcpy(selfname, myARGV[0]);
+
+    hkernel32 = GetModuleHandleA("kernel32");
+    pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
+    pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
     return 1;
 }
 
@@ -1273,12 +1282,15 @@ static void test_OpenProcess(void)
     MEMORY_BASIC_INFORMATION info;
     SIZE_T dummy, read_bytes;
 
+    /* Not implemented in all windows versions */
+    if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) return;
+
     /* without PROCESS_VM_OPERATION */
     hproc = OpenProcess(PROCESS_ALL_ACCESS & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
     ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = pVirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
 todo_wine {
     ok(!addr1, "VirtualAllocEx should fail\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
@@ -1295,12 +1307,12 @@ todo_wine {
     hproc = OpenProcess(PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
     ok(hproc != NULL, "OpenProcess error %d\n", GetLastError());
 
-    addr1 = VirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = pVirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
 todo_wine {
     ok(addr1 != NULL, "VirtualAllocEx error %d\n", GetLastError());
 }
     if (addr1 == NULL) /* FIXME: remove once Wine is fixed */
-        addr1 = VirtualAllocEx(GetCurrentProcess(), 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+        addr1 = pVirtualAllocEx(GetCurrentProcess(), 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
 
     /* without PROCESS_QUERY_INFORMATION */
     SetLastError(0xdeadbeef);
@@ -1337,7 +1349,7 @@ todo_wine {
 
     SetLastError(0xdeadbeef);
 todo_wine {
-    ok(!VirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
+    ok(!pVirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
        "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
     ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
 }
