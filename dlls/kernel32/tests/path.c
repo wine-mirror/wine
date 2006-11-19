@@ -935,10 +935,11 @@ static void test_GetLongPathNameW(void)
     DWORD length; 
     WCHAR empty[MAX_PATH];
 
-    SetLastError(0xdeadbeef); 
-    length = pGetLongPathNameW(NULL,NULL,0);
+    /* Not present in all windows versions */
     if(pGetLongPathNameW) 
     {
+    SetLastError(0xdeadbeef); 
+    length = pGetLongPathNameW(NULL,NULL,0);
     ok(0==length,"GetLongPathNameW returned %d but expected 0\n",length);
     ok(GetLastError()==ERROR_INVALID_PARAMETER,"GetLastError returned %x but expected ERROR_INVALID_PARAMETER\n",GetLastError());
 
