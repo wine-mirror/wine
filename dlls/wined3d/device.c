@@ -1608,7 +1608,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
             /* TODO: don't use Impl structures outside of create functions! (a context manager will replace the ->glCtx) */
             /* and create a new context with the implicit swapchains context as the shared context */
             object->glCtx = glXCreateContext(object->display, object->visInfo, ((IWineD3DSwapChainImpl *)implSwapChain)->glCtx, GL_TRUE);
-            IWineD3DSwapChain_Release(implSwapChain);
         }
     }
 
@@ -1926,7 +1925,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetSwapChain(IWineD3DDevice *iface, U
 
     if(iSwapChain < This->NumberOfSwapChains) {
         *pSwapChain = This->swapchains[iSwapChain];
-        IWineD3DSwapChain_AddRef(*pSwapChain);
         TRACE("(%p) returning %p\n", This, *pSwapChain);
         return WINED3D_OK;
     } else {
@@ -5842,7 +5840,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetBackBuffer(IWineD3DDevice *iface, UI
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, &swapChain);
     if (hr == WINED3D_OK) {
         hr = IWineD3DSwapChain_GetBackBuffer(swapChain, BackBuffer, Type, ppBackBuffer);
-            IWineD3DSwapChain_Release(swapChain);
     } else {
         *ppBackBuffer = NULL;
     }
@@ -5864,7 +5861,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDisplayMode(IWineD3DDevice *iface, U
         hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
         if (hr == WINED3D_OK) {
             hr = IWineD3DSwapChain_GetDisplayMode(swapChain, pMode);
-            IWineD3DSwapChain_Release(swapChain);
         } else {
             FIXME("(%p) Error getting display mode\n", This);
         }
@@ -6019,7 +6015,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Present(IWineD3DDevice *iface,
         IWineD3DDeviceImpl_GetSwapChain(iface, i , (IWineD3DSwapChain **)&swapChain);
         TRACE("presentinng chain %d, %p\n", i, swapChain);
         IWineD3DSwapChain_Present(swapChain, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, 0);
-        IWineD3DSwapChain_Release(swapChain);
     }
 
     return WINED3D_OK;
@@ -6488,7 +6483,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetFrontBufferData(IWineD3DDevice *if
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
     if(hr == WINED3D_OK) {
         hr = IWineD3DSwapChain_GetFrontBufferData(swapChain, pDestSurface);
-                IWineD3DSwapChain_Release(swapChain);
     }
     return hr;
 }
@@ -6597,7 +6591,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRasterStatus(IWineD3DDevice *iface
     hr = IWineD3DDeviceImpl_GetSwapChain(iface,  iSwapChain, (IWineD3DSwapChain **)&swapChain);
     if(hr == WINED3D_OK){
         hr = IWineD3DSwapChain_GetRasterStatus(swapChain, pRasterStatus);
-        IWineD3DSwapChain_Release(swapChain);
     }else{
         FIXME("(%p) IWineD3DSwapChain_GetRasterStatus returned in error\n", This);
     }
@@ -6902,9 +6895,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFrontBackBuffers(IWineD3DDevice *ifa
         ERR("Can't get the swapchain\n");
         return hr;
     }
-
-    /* Make sure to release the swapchain */
-    IWineD3DSwapChain_Release((IWineD3DSwapChain *) Swapchain);
 
     if(FrontImpl && !(FrontImpl->resource.usage & WINED3DUSAGE_RENDERTARGET) ) {
         ERR("Trying to set a front buffer which doesn't have WINED3DUSAGE_RENDERTARGET usage\n");
@@ -7432,8 +7422,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     IWineD3DDevice_GetSwapChain(iface, 0, &implicitSwapchain);
     IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void**) &renderSurfaceSwapchain);
     IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain);
-    if (currentSwapchain == NULL)
+    if (currentSwapchain == NULL) {
         IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
+        /* GetContainer currently AddRefs, but GetSwapChain doesn't.
+         * Like this the release code for both is the same. */
+        IWineD3DDevice_AddRef(currentSwapchain);
+    }
 
     currentSwapchainImpl = (IWineD3DSwapChainImpl*) currentSwapchain;
     implicitSwapchainImpl = (IWineD3DSwapChainImpl*) implicitSwapchain;
@@ -7585,7 +7579,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     }
 
     if (cfgs != NULL)                   XFree(cfgs);
-    if (implicitSwapchain != NULL)       IWineD3DSwapChain_Release(implicitSwapchain);
     if (currentSwapchain != NULL)       IWineD3DSwapChain_Release(currentSwapchain);
     if (renderSurfaceSwapchain != NULL) IWineD3DSwapChain_Release(renderSurfaceSwapchain);
     LEAVE_GL();
@@ -7740,7 +7733,6 @@ static void WINAPI IWineD3DDeviceImpl_SetGammaRamp(IWineD3DDevice * iface, UINT 
 
     if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == WINED3D_OK) {
         IWineD3DSwapChain_SetGammaRamp(swapchain, Flags, (WINED3DGAMMARAMP *)pRamp);
-        IWineD3DSwapChain_Release(swapchain);
     }
     return;
 }
@@ -7753,7 +7745,6 @@ static void WINAPI IWineD3DDeviceImpl_GetGammaRamp(IWineD3DDevice *iface, UINT i
 
     if ((hrc = IWineD3DDeviceImpl_GetSwapChain(iface, iSwapChain, &swapchain)) == WINED3D_OK) {
         hrc =IWineD3DSwapChain_GetGammaRamp(swapchain, pRamp);
-        IWineD3DSwapChain_Release(swapchain);
     }
     return;
 }

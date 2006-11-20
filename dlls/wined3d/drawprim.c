@@ -2329,7 +2329,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         IWineD3DDevice_GetSwapChain(iface, i, (IWineD3DSwapChain **) &swapchain);
         if(swapchain) {
             if(swapchain->backBuffer) ((IWineD3DSurfaceImpl *) swapchain->backBuffer[0])->Flags |= SFLAG_GLDIRTY;
-            IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
         }
     }
 

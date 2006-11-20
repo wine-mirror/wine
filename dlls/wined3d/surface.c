@@ -750,7 +750,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                     notInContext = TRUE;
                     /* TODO: check the contexts, to see if were shared with the current context */
                 }
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
             }
             if (swapchain != NULL)       IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
             if (targetSwapChain != NULL) IWineD3DSwapChain_Release((IWineD3DSwapChain *)targetSwapChain);
@@ -1238,7 +1237,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         } else {
             FIXME("unsupported unlocking to Rendering surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
         }
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
 
     } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
 
@@ -2704,7 +2702,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
-        IWineD3DSwapChain_Release( (IWineD3DSwapChain *) implSwapChain );
         if(implSwapChain->backBuffer && This == (IWineD3DSurfaceImpl*) implSwapChain->backBuffer[0]) {
             glDrawBuffer(GL_BACK);
             checkGLcall("glDrawBuffer(GL_BACK)");
