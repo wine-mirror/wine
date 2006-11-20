@@ -4034,6 +4034,7 @@ static const struct message WmSetFocusButtonSeq[] =
 {
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_CTLCOLORBTN, sent|defwinproc },
@@ -4046,12 +4047,14 @@ static const struct message WmKillFocusButtonSeq[] =
     { WM_KILLFOCUS, sent|wparam, 0 },
     { WM_CTLCOLORBTN, sent|defwinproc },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
     { 0 }
 };
 static const struct message WmSetFocusStaticSeq[] =
 {
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam, 0 },
     { WM_CTLCOLORSTATIC, sent|defwinproc },
@@ -4064,6 +4067,7 @@ static const struct message WmKillFocusStaticSeq[] =
     { WM_KILLFOCUS, sent|wparam, 0 },
     { WM_CTLCOLORSTATIC, sent|defwinproc },
     { WM_IME_SETCONTEXT, sent|wparam|optional, 0 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 1 },
     { 0 }
 };
 static const struct message WmLButtonDownSeq[] =
@@ -4072,6 +4076,7 @@ static const struct message WmLButtonDownSeq[] =
     { EVENT_SYSTEM_CAPTURESTART, winevent_hook|wparam|lparam, 0, 0 },
     { HCBT_SETFOCUS, hook },
     { WM_IME_SETCONTEXT, sent|wparam|defwinproc|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
     { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     { WM_CTLCOLORBTN, sent|defwinproc },
@@ -4180,7 +4185,7 @@ static void test_button_messages(void)
 	ok(hwnd != 0, "Failed to create button window\n");
 
 	dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
-	ok(dlg_code == button[i].dlg_code, "%d: wrong dlg_code %08x\n", i, dlg_code);
+	ok(dlg_code == button[i].dlg_code, "%u: wrong dlg_code %08x\n", i, dlg_code);
 
 	ShowWindow(hwnd, SW_SHOW);
 	UpdateWindow(hwnd);
