@@ -2022,7 +2022,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 
     piosb->Information = 0;
 
-    if ((status = server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL ))) goto error;
+    if ((status = server_get_unix_fd( hDevice, 0, &fd, &needs_close, NULL, NULL ))) goto error;
     if ((status = CDROM_Open(fd, &dev)))
     {
         if (needs_close) close( fd );

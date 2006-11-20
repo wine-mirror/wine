@@ -1408,7 +1408,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
         return io->u.Status = STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((io->u.Status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL )) != STATUS_SUCCESS)
+    if ((io->u.Status = server_get_unix_fd( handle, FILE_LIST_DIRECTORY, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
 
     io->Information = 0;
@@ -1935,7 +1935,7 @@ NTSTATUS DIR_unmount_device( HANDLE handle )
     SERVER_END_REQ;
     if (status) return status;
 
-    if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL )))
+    if (!(status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )))
     {
         struct stat st;
         char *mount_point = NULL;
@@ -2017,7 +2017,7 @@ NTSTATUS DIR_get_unix_cwd( char **cwd )
         if (status != STATUS_SUCCESS) goto done;
     }
 
-    if ((status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL )) == STATUS_SUCCESS)
+    if ((status = server_get_unix_fd( handle, 0, &unix_fd, &needs_close, NULL, NULL )) == STATUS_SUCCESS)
     {
         RtlEnterCriticalSection( &dir_section );
 

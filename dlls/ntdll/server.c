@@ -443,7 +443,13 @@ inline static unsigned int handle_to_index( obj_handle_t handle )
     return ((unsigned long)handle >> 2) - 1;
 }
 
-static int *fd_cache;
+struct fd_cache_entry
+{
+    int fd;
+    enum server_fd_type type;
+};
+
+static struct fd_cache_entry *fd_cache;
 static unsigned int fd_cache_size;
 
 /***********************************************************************
@@ -451,14 +457,14 @@ static unsigned int fd_cache_size;
  *
  * Caller must hold fd_cache_section.
  */
-static int add_fd_to_cache( obj_handle_t handle, int fd )
+static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type type )
 {
     unsigned int idx = handle_to_index( handle );
 
     if (idx >= fd_cache_size)
     {
         unsigned int i, size = max( 32, fd_cache_size * 2 );
-        int *new_cache;
+        struct fd_cache_entry *new_cache;
 
         if (size <= idx) size = idx + 1;
         if (fd_cache)
@@ -468,16 +474,17 @@ static int add_fd_to_cache( obj_handle_t handle, int fd )
 
         if (new_cache)
         {
-            for (i = fd_cache_size; i < size; i++) new_cache[i] = -1;
+            for (i = fd_cache_size; i < size; i++) new_cache[i].fd = -1;
             fd_cache = new_cache;
             fd_cache_size = size;
         }
     }
     if (idx < fd_cache_size)
     {
-        assert( fd_cache[idx] == -1 );
-        fd_cache[idx] = fd;
-        TRACE("added %p (%d) to cache\n", handle, fd );
+        assert( fd_cache[idx].fd == -1 );
+        fd_cache[idx].fd   = fd;
+        fd_cache[idx].type = type;
+        TRACE("added %p (%d) type %d to cache\n", handle, fd, type );
         return 1;
     }
     return 0;
@@ -489,12 +496,16 @@ static int add_fd_to_cache( obj_handle_t handle, int fd )
  *
  * Caller must hold fd_cache_section.
  */
-static inline int get_cached_fd( obj_handle_t handle )
+static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type )
 {
     unsigned int idx = handle_to_index( handle );
     int fd = -1;
 
-    if (idx < fd_cache_size) fd = fd_cache[idx];
+    if (idx < fd_cache_size)
+    {
+        fd = fd_cache[idx].fd;
+        if (type) *type = fd_cache[idx].type;
+    }
     return fd;
 }
 
@@ -510,8 +521,8 @@ int server_remove_fd_from_cache( obj_handle_t handle )
     RtlEnterCriticalSection( &fd_cache_section );
     if (idx < fd_cache_size)
     {
-        fd = fd_cache[idx];
-        fd_cache[idx] = -1;
+        fd = fd_cache[idx].fd;
+        fd_cache[idx].fd = -1;
     }
     RtlLeaveCriticalSection( &fd_cache_section );
 
@@ -530,7 +541,7 @@ int server_remove_fd_from_cache( obj_handle_t handle )
  * The returned unix_fd should be closed iff needs_close is non-zero.
  */
 int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
-                        int *needs_close, int *flags )
+                        int *needs_close, enum server_fd_type *type, int *flags )
 {
     obj_handle_t fd_handle;
     int ret = 0, removable = 0, fd;
@@ -540,7 +551,7 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
 
     RtlEnterCriticalSection( &fd_cache_section );
 
-    fd = get_cached_fd( handle );
+    fd = get_cached_fd( handle, type );
     if (fd != -1 && !flags) goto done;
 
     SERVER_START_REQ( get_handle_fd )
@@ -551,23 +562,20 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
         if (!(ret = wine_server_call( req )))
         {
             removable = reply->flags & FD_FLAG_REMOVABLE;
+            if (type) *type = reply->type;
             if (flags) *flags = reply->flags;
+            if (fd == -1)
+            {
+                if ((fd = receive_fd( &fd_handle )) != -1)
+                {
+                    assert( fd_handle == handle );
+                    if (!removable) add_fd_to_cache( handle, fd, reply->type );
+                }
+                else ret = STATUS_TOO_MANY_OPENED_FILES;
+            }
         }
     }
     SERVER_END_REQ;
-
-    if (!ret && fd == -1)
-    {
-        /* it wasn't in the cache, get it from the server */
-        fd = receive_fd( &fd_handle );
-        if (fd == -1)
-        {
-            ret = STATUS_TOO_MANY_OPENED_FILES;
-            goto done;
-        }
-        assert( fd_handle == handle );
-        *needs_close = removable || !add_fd_to_cache( handle, fd );
-    }
 
 done:
     RtlLeaveCriticalSection( &fd_cache_section );
@@ -625,7 +633,7 @@ int wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attribut
  */
 int wine_server_handle_to_fd( obj_handle_t handle, unsigned int access, int *unix_fd, int *flags )
 {
-    int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, flags );
+    int needs_close, ret = server_get_unix_fd( handle, access, unix_fd, &needs_close, NULL, flags );
 
     if (!ret && !needs_close)
     {

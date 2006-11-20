@@ -982,7 +982,7 @@ static DWORD CALLBACK wait_for_event(LPVOID arg)
     async_commio *commio = (async_commio*) arg;
     int fd, needs_close;
 
-    if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL ))
+    if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
         DWORD new_mstat, new_evtmask;
@@ -1130,7 +1130,7 @@ static inline NTSTATUS io_control(HANDLE hDevice,
     piosb->Information = 0;
 
     if (dwIoControlCode != IOCTL_SERIAL_GET_TIMEOUTS)
-        if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, NULL )))
+        if ((status = server_get_unix_fd( hDevice, access, &fd, &needs_close, NULL, NULL )))
             goto error;
 
     switch (dwIoControlCode)

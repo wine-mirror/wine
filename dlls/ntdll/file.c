@@ -396,7 +396,8 @@ static void WINAPI FILE_AsyncReadService(void *user, PIO_STATUS_BLOCK iosb, ULON
     case STATUS_ALERTED: /* got some new data */
         if (iosb->u.Status != STATUS_PENDING) FIXME("unexpected status %08x\n", iosb->u.Status);
         /* check to see if the data is ready (non-blocking) */
-        if ((iosb->u.Status = server_get_unix_fd( fileio->handle, FILE_READ_DATA, &fd, &needs_close, NULL )))
+        if ((iosb->u.Status = server_get_unix_fd( fileio->handle, FILE_READ_DATA, &fd,
+                                                  &needs_close, NULL, NULL )))
         {
             fileio_terminate(fileio, iosb);
             break;
@@ -494,7 +495,8 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     io_status->Information = 0;
-    io_status->u.Status = server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle, &needs_close, &flags );
+    io_status->u.Status = server_get_unix_fd( hFile, FILE_READ_DATA, &unix_handle,
+                                              &needs_close, NULL, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_RECV_SHUTDOWN)
@@ -637,7 +639,8 @@ static void WINAPI FILE_AsyncWriteService(void *ovp, IO_STATUS_BLOCK *iosb, ULON
     {
     case STATUS_ALERTED:
         /* write some data (non-blocking) */
-        if ((iosb->u.Status = server_get_unix_fd( fileio->handle, FILE_WRITE_DATA, &fd, &needs_close, NULL )))
+        if ((iosb->u.Status = server_get_unix_fd( fileio->handle, FILE_WRITE_DATA, &fd,
+                                                  &needs_close, NULL, NULL )))
         {
             fileio_terminate(fileio, iosb);
             break;
@@ -713,7 +716,8 @@ NTSTATUS WINAPI NtWriteFile(HANDLE hFile, HANDLE hEvent,
     if (!io_status) return STATUS_ACCESS_VIOLATION;
 
     io_status->Information = 0;
-    io_status->u.Status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle, &needs_close, &flags );
+    io_status->u.Status = server_get_unix_fd( hFile, FILE_WRITE_DATA, &unix_handle,
+                                              &needs_close, NULL, &flags );
     if (io_status->u.Status) return io_status->u.Status;
 
     if (flags & FD_FLAG_SEND_SHUTDOWN)
@@ -1028,7 +1032,8 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
                 break;
             }
 
-            if ((io->u.Status = server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, &flags )))
+            if ((io->u.Status = server_get_unix_fd( handle, FILE_READ_DATA, &fd,
+                                                    &needs_close, NULL, &flags )))
                 break;
 
             if (flags & FD_FLAG_RECV_SHUTDOWN)
@@ -1217,7 +1222,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
 
     if (class != FilePipeLocalInformation)
     {
-        if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL )))
+        if ((io->u.Status = server_get_unix_fd( hFile, 0, &fd, &needs_close, NULL, NULL )))
             return io->u.Status;
     }
 
@@ -1366,7 +1371,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
                 if (tmpbuf)
                 {
                     int fd, needs_close;
-                    if (!server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL ))
+                    if (!server_get_unix_fd( hFile, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
                     {
                         int res = recv( fd, tmpbuf, size, MSG_PEEK );
                         info->MessagesAvailable = (res > 0);
@@ -1438,7 +1443,7 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
 
     TRACE("(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class);
 
-    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL )))
+    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )))
         return io->u.Status;
 
     io->u.Status = STATUS_SUCCESS;
@@ -1827,7 +1832,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, PIO_STATUS_BLOCK io
     int fd, needs_close;
     struct stat st;
 
-    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL )) != STATUS_SUCCESS)
+    if ((io->u.Status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL )) != STATUS_SUCCESS)
         return io->u.Status;
 
     io->u.Status = STATUS_NOT_IMPLEMENTED;

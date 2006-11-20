@@ -1810,7 +1810,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
-    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, &flags ))) return res;
+    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, &flags ))) return res;
     removable = (flags & FD_FLAG_REMOVABLE) != 0;
 
     if (prot & VPROT_IMAGE)
@@ -1820,7 +1820,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             int shared_fd, shared_needs_close;
 
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
-                                           &shared_fd, &shared_needs_close, NULL ))) goto done;
+                                           &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size_low, mask, header_size,
                              shared_fd, removable, addr_ptr );
             if (shared_needs_close) close( shared_fd );
