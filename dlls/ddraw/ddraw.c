@@ -1212,9 +1212,6 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
         return DDERR_NOTFOUND;
     }
 
-    /* GetBackBuffer AddRef()ed the surface, release it */
-    IWineD3DSurface_Release(Surf);
-
     IWineD3DSurface_GetParent(Surf,
                               (IUnknown **) &ddsurf);
     IDirectDrawSurface7_Release(ddsurf);  /* For the GetParent */

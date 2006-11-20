@@ -461,8 +461,6 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetBackBuffer(IWineD3DSwapChain *ifa
     *ppBackBuffer = This->backBuffer[iBackBuffer];
     TRACE("(%p) : BackBuf %d Type %d  returning %p\n", This, iBackBuffer, Type, *ppBackBuffer);
 
-    /* Note inc ref on returned surface */
-    if(*ppBackBuffer) IWineD3DSurface_AddRef(*ppBackBuffer);
     return WINED3D_OK;
 
 }
