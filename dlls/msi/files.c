@@ -243,9 +243,8 @@ static void msi_file_update_ui( MSIPACKAGE *package, MSIFILE *f, const WCHAR *ac
     ui_progress( package, 2, f->FileSize, 0, 0);
 }
 
-static UINT msi_media_get_disk_info( CabData *data )
+static UINT msi_media_get_disk_info( MSIPACKAGE *package, struct media_info *mi )
 {
-    MSIPACKAGE *package = data->package;
     MSIRECORD *row;
     LPWSTR ptr;
 
@@ -254,18 +253,18 @@ static UINT msi_media_get_disk_info( CabData *data )
          '`','M','e','d','i','a','`',' ','W','H','E','R','E',' ',
          '`','D','i','s','k','I','d','`',' ','=',' ','%','i',0};
 
-    row = MSI_QueryGetRecord(package->db, query, data->mi->disk_id);
+    row = MSI_QueryGetRecord(package->db, query, mi->disk_id);
     if (!row)
     {
         TRACE("Unable to query row\n");
         return ERROR_FUNCTION_FAILED;
     }
 
-    data->mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
-    data->mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
+    mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
+    mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
 
-    ptr = strrchrW(data->mi->source, '\\') + 1;
-    lstrcpyW(ptr, data->mi->cabinet);
+    ptr = strrchrW(mi->source, '\\') + 1;
+    lstrcpyW(ptr, mi->cabinet);
     msiobj_release(&row->hdr);
 
     return ERROR_SUCCESS;
@@ -295,7 +294,7 @@ static INT_PTR cabinet_notify(FDINOTIFICATIONTYPE fdint, PFDINOTIFICATION pfdin)
         mi->disk_id++;
         mi->is_continuous = TRUE;
 
-        rc = msi_media_get_disk_info(data);
+        rc = msi_media_get_disk_info(data->package, mi);
         if (rc != ERROR_SUCCESS)
         {
             ERR("Failed to get next cabinet information: %d\n", rc);
