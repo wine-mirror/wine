@@ -2458,7 +2458,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, 
         return  WINED3DERR_INVALIDCALL;
     }
 
-    IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     return WINED3D_OK;
 }
 
