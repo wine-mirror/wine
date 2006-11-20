@@ -2130,7 +2130,6 @@ IDirect3DDeviceImpl_7_GetRenderState(IDirect3DDevice7 *iface,
                     *Value = texImpl->Handle;
                     IDirectDrawSurface7_Release(parent);
                 }
-                IWineD3DBaseTexture_Release(tex);
             }
             return hr;
         }

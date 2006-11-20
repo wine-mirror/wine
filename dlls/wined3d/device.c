@@ -5827,8 +5827,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
         return WINED3DERR_INVALIDCALL;
     }
     *ppTexture=This->stateBlock->textures[Stage];
-    if (*ppTexture)
-        IWineD3DBaseTexture_AddRef(*ppTexture);
 
     return WINED3D_OK;
 }

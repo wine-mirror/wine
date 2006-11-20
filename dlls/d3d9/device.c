@@ -595,7 +595,6 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetTexture(LPDIRECT3DDEVICE9 iface,
     rc = IWineD3DDevice_GetTexture(This->WineD3DDevice, Stage, (IWineD3DBaseTexture **)&retTexture);
     if (rc == D3D_OK && NULL != retTexture) {
         IWineD3DBaseTexture_GetParent(retTexture, (IUnknown **)ppTexture);
-        IWineD3DBaseTexture_Release(retTexture);
     }else{
         FIXME("Call to get texture  (%d) failed (%p)\n", Stage, retTexture);
         *ppTexture = NULL;
