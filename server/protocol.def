@@ -661,8 +661,21 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
     unsigned int access;        /* wanted access rights */
     int          cached;        /* is it cached on the client already? */
 @REPLY
+    int          type;          /* file type (see below) */
     int          flags;         /* file read/write flags (see below) */
 @END
+enum server_fd_type
+{
+    FD_TYPE_INVALID,  /* invalid file (no associated fd) */
+    FD_TYPE_FILE,     /* regular file */
+    FD_TYPE_DIR,      /* directory */
+    FD_TYPE_SOCKET,   /* socket */
+    FD_TYPE_SERIAL,   /* serial port */
+    FD_TYPE_PIPE,     /* named pipe */
+    FD_TYPE_MAILSLOT, /* mailslot */
+    FD_TYPE_DEVICE,   /* Windows device file */
+    FD_TYPE_NB_TYPES
+};
 #define FD_FLAG_OVERLAPPED         0x01 /* fd opened in overlapped mode */
 #define FD_FLAG_TIMEOUT            0x02 /* read/write is synchronous */
 #define FD_FLAG_RECV_SHUTDOWN      0x04

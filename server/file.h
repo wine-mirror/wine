@@ -37,7 +37,7 @@ struct fd_ops
     /* flush the object buffers */
     int  (*flush)(struct fd *, struct event **);
     /* get file information */
-    int  (*get_file_info)(struct fd *);
+    enum server_fd_type (*get_file_info)(struct fd *fd, int *flags);
     /* queue an async operation */
     void (*queue_async)(struct fd *, void* apc, void* user, void* io_sb, int type, int count);
     /* cancel an async operation */
@@ -72,7 +72,7 @@ extern void fd_queue_async_timeout( struct fd *fd, void *apc, void *user, void *
 extern void default_fd_queue_async( struct fd *fd, void *apc, void *user, void *io_sb, int type, int count );
 extern void default_fd_cancel_async( struct fd *fd );
 extern int no_flush( struct fd *fd, struct event **event );
-extern int no_get_file_info( struct fd *fd );
+extern enum server_fd_type no_get_file_info( struct fd *fd, int *flags );
 extern void no_queue_async( struct fd *fd, void* apc, void* user, void* io_sb, int type, int count);
 extern void no_cancel_async( struct fd *fd );
 extern void main_loop(void);

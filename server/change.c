@@ -182,7 +182,7 @@ static const struct object_ops dir_ops =
 };
 
 static int dir_get_poll_events( struct fd *fd );
-static int dir_get_info( struct fd *fd );
+static enum server_fd_type dir_get_info( struct fd *fd, int *flags );
 static void dir_cancel_async( struct fd *fd );
 
 static const struct fd_ops dir_fd_ops =
@@ -372,9 +372,10 @@ static int dir_get_poll_events( struct fd *fd )
     return 0;
 }
 
-static int dir_get_info( struct fd *fd )
+static enum server_fd_type dir_get_info( struct fd *fd, int *flags )
 {
-    return 0;
+    *flags = 0;
+    return FD_TYPE_DIR;
 }
 
 static void dir_cancel_async( struct fd *fd )
@@ -550,14 +551,13 @@ static struct inode *inode_from_name( struct inode *inode, const char *name )
 
 static int inotify_get_poll_events( struct fd *fd );
 static void inotify_poll_event( struct fd *fd, int event );
-static int inotify_get_info( struct fd *fd );
 
 static const struct fd_ops inotify_fd_ops =
 {
     inotify_get_poll_events,  /* get_poll_events */
     inotify_poll_event,       /* poll_event */
     no_flush,                 /* flush */
-    inotify_get_info,         /* get_file_info */
+    no_get_file_info,         /* get_file_info */
     default_fd_queue_async,   /* queue_async */
     default_fd_cancel_async,  /* cancel_async */
 };
@@ -821,11 +821,6 @@ static void inotify_poll_event( struct fd *fd, int event )
         if (ofs > r) break;
         inotify_notify_all( ie );
     }
-}
-
-static int inotify_get_info( struct fd *fd )
-{
-    return 0;
 }
 
 static inline struct fd *create_inotify_fd( void )

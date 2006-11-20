@@ -84,7 +84,7 @@ static const struct object_ops mailslot_ops =
     mailslot_destroy           /* destroy */
 };
 
-static int mailslot_get_info( struct fd * );
+static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags );
 static void mailslot_queue_async( struct fd *, void*, void*, void*, int, int );
 
 static const struct fd_ops mailslot_fd_ops =
@@ -128,7 +128,7 @@ static const struct object_ops mail_writer_ops =
     mail_writer_destroy         /* destroy */
 };
 
-static int mail_writer_get_info( struct fd *fd );
+static enum server_fd_type mail_writer_get_info( struct fd *fd, int *flags );
 
 static const struct fd_ops mail_writer_fd_ops =
 {
@@ -153,7 +153,7 @@ static struct fd *mailslot_device_get_fd( struct object *obj );
 static struct object *mailslot_device_lookup_name( struct object *obj, struct unicode_str *name,
                                                    unsigned int attr );
 static void mailslot_device_destroy( struct object *obj );
-static int mailslot_device_get_file_info( struct fd *fd );
+static enum server_fd_type mailslot_device_get_file_info( struct fd *fd, int *flags );
 
 static const struct object_ops mailslot_device_ops =
 {
@@ -212,11 +212,12 @@ static int mailslot_message_count(struct mailslot *mailslot)
     return (poll( &pfd, 1, 0 ) == 1) ? 1 : 0;
 }
 
-static int mailslot_get_info( struct fd *fd )
+static enum server_fd_type mailslot_get_info( struct fd *fd, int *flags )
 {
     struct mailslot *mailslot = get_fd_user( fd );
     assert( mailslot->obj.ops == &mailslot_ops );
-    return FD_FLAG_TIMEOUT | FD_FLAG_AVAILABLE;
+    *flags = FD_FLAG_TIMEOUT | FD_FLAG_AVAILABLE;
+    return FD_TYPE_MAILSLOT;
 }
 
 static struct fd *mailslot_get_fd( struct object *obj )
@@ -298,9 +299,10 @@ static void mailslot_device_destroy( struct object *obj )
     free( device->mailslots );
 }
 
-static int mailslot_device_get_file_info( struct fd *fd )
+static enum server_fd_type mailslot_device_get_file_info( struct fd *fd, int *flags )
 {
-    return 0;
+    *flags = 0;
+    return FD_TYPE_DEVICE;
 }
 
 void create_mailslot_device( struct directory *root, const struct unicode_str *name )
@@ -396,9 +398,10 @@ static void mail_writer_destroy( struct object *obj)
     release_object( writer->mailslot );
 }
 
-static int mail_writer_get_info( struct fd *fd )
+static enum server_fd_type mail_writer_get_info( struct fd *fd, int *flags )
 {
-    return 0;
+    *flags = 0;
+    return FD_TYPE_MAILSLOT;
 }
 
 static struct fd *mail_writer_get_fd( struct object *obj )

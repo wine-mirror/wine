@@ -63,7 +63,7 @@ static void serial_destroy(struct object *obj);
 
 static int serial_get_poll_events( struct fd *fd );
 static void serial_poll_event( struct fd *fd, int event );
-static int serial_get_info( struct fd *fd );
+static enum server_fd_type serial_get_info( struct fd *fd, int *flags );
 static int serial_flush( struct fd *fd, struct event **event );
 static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb, int type, int count );
 static void serial_cancel_async( struct fd *fd );
@@ -205,22 +205,22 @@ static int serial_get_poll_events( struct fd *fd )
     return events;
 }
 
-static int serial_get_info( struct fd *fd )
+static enum server_fd_type serial_get_info( struct fd *fd, int *flags )
 {
-    int flags = 0;
     struct serial *serial = get_fd_user( fd );
     assert( serial->obj.ops == &serial_ops );
 
+    *flags = 0;
     if (!(serial->options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
-        flags |= FD_FLAG_OVERLAPPED;
+        *flags |= FD_FLAG_OVERLAPPED;
     else if (!(serial->readinterval == MAXDWORD &&
                serial->readmult == 0 && serial->readconst == 0))
-        flags |= FD_FLAG_TIMEOUT;
+        *flags |= FD_FLAG_TIMEOUT;
     if (serial->readinterval == MAXDWORD &&
         serial->readmult == 0 && serial->readconst == 0)
-        flags |= FD_FLAG_AVAILABLE;
+        *flags |= FD_FLAG_AVAILABLE;
 
-    return flags;
+    return FD_TYPE_SERIAL;
 }
 
 static void serial_poll_event(struct fd *fd, int event)

@@ -844,7 +844,20 @@ struct get_handle_fd_request
 struct get_handle_fd_reply
 {
     struct reply_header __header;
+    int          type;
     int          flags;
+};
+enum server_fd_type
+{
+    FD_TYPE_INVALID,
+    FD_TYPE_FILE,
+    FD_TYPE_DIR,
+    FD_TYPE_SOCKET,
+    FD_TYPE_SERIAL,
+    FD_TYPE_PIPE,
+    FD_TYPE_MAILSLOT,
+    FD_TYPE_DEVICE,
+    FD_TYPE_NB_TYPES
 };
 #define FD_FLAG_OVERLAPPED         0x01
 #define FD_FLAG_TIMEOUT            0x02
@@ -4404,6 +4417,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 259
+#define SERVER_PROTOCOL_VERSION 260
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
