@@ -3235,9 +3235,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWine
 
     *ppIndexData = This->stateBlock->pIndexData;
 
-    /* up ref count on ppindexdata */
     if (*ppIndexData) {
-        IWineD3DIndexBuffer_AddRef(*ppIndexData);
         *pBaseVertexIndex = This->stateBlock->baseVertexIndex;
         TRACE("(%p) index data set to %p + %u\n", This, ppIndexData, This->stateBlock->baseVertexIndex);
     }else{
