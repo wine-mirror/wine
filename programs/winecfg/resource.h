@@ -50,7 +50,6 @@
 #define IDD_GRAPHCFG                    110
 #define IDD_DLLCFG                      111
 #define IDD_DRIVECFG                    112
-#define IDD_DRIVE_EDIT                  114
 #define IDD_DESKTOP_INTEGRATION         115
 #define IDB_WINE_LOGO                   200
 #define IDC_TABABOUT                    1001
@@ -114,7 +113,6 @@
 #define IDC_EDIT_LABEL                  1060
 #define IDC_EDIT_PATH                   1061
 #define IDC_EDIT_SERIAL                 1062
-#define IDC_COMBO_LETTER                1063
 #define IDC_COMBO_TYPE                  1065
 #define IDC_EDIT_DEVICE                 1066
 #define IDC_BUTTON_BROWSE_PATH          1067

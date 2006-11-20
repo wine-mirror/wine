@@ -168,48 +168,6 @@ static const struct drive_typemap type_pairs[] = {
 
 #define DRIVE_TYPE_DEFAULT 0
 
-static void fill_drive_droplist(long mask, char curletter, HWND dialog)
-{
-    int i;
-    int selection;
-    int count;
-    int next_letter;
-    char sName[4];
-
-    strcpy(sName, "A:");
-    for (i = 0, count = 0, selection = -1, next_letter = -1; i <= 'Z'-'A'; ++i)
-    {
-        if (mask & DRIVE_MASK_BIT('A' + i))
-        {
-            int index;
-
-            sName[0] = 'A' + i;
-            index = SendDlgItemMessage(dialog, IDC_COMBO_LETTER, CB_ADDSTRING, 0, (LPARAM) sName);
-
-            if (toupper(curletter) == 'A' + i)
-            {
-                selection = count;
-            }
-
-            if (i >= 2 && next_letter == -1)
-            {
-                /* default drive is first one of C-Z */
-                next_letter = count;
-            }
-
-            count++;
-        }
-    }
-
-    if (selection == -1)
-    {
-        selection = next_letter;
-    }
-
-    SendDlgItemMessage(dialog, IDC_COMBO_LETTER, CB_SETCURSEL, selection, 0);
-}
-
-
 static void enable_labelserial_box(HWND dialog, int mode)
 {
     WINE_TRACE("mode=%d\n", mode);
@@ -443,9 +401,6 @@ static void update_controls(HWND dialog)
     current_drive = (struct drive *) item.lParam;
 
     WINE_TRACE("Updating sheet for drive %c\n", current_drive->letter);
-
-    /* Drive letters */
-    fill_drive_droplist(drive_available_mask(current_drive->letter), current_drive->letter, dialog);
 
     /* path */
     path = current_drive->unixpath;
@@ -770,7 +725,6 @@ DriveDlgProc (HWND dialog, UINT msg, WPARAM wParam, LPARAM lParam)
                     if (HIWORD(wParam) != BN_CLICKED) break;
                     item = SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES),  LB_GETCURSEL, 0, 0);
                     drive = (struct drive *) SendMessage(GetDlgItem(dialog, IDC_LIST_DRIVES), LB_GETITEMDATA, item, 0);
-                    /*DialogBoxParam(NULL, MAKEINTRESOURCE(IDD_DRIVE_EDIT), NULL, (DLGPROC) DriveEditDlgProc, (LPARAM) drive); */
                     break;
 
                 case IDC_BUTTON_AUTODETECT:
