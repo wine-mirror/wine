@@ -3856,10 +3856,10 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
     DWORD attrib, len;
     LPWSTR ptr, source;
     UINT rc;
-    
+
     /*
-     * we are currently doing what should be done here in the top level Install
-     * however for Adminastrative and uninstalls this step will be needed
+     * We are currently doing what should be done here in the top level Install
+     * however for Administrative and uninstalls this step will be needed
      */
     if (!package->PackagePath)
         return ERROR_SUCCESS;
