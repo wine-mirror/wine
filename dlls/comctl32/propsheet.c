@@ -1703,6 +1703,8 @@ static BOOL PROPSHEET_Finish(HWND hwndDlg)
   if (msgResult != 0)
     return FALSE;
 
+  if (psInfo->result == 0)
+      psInfo->result = IDOK;
   if (psInfo->isModeless)
     psInfo->activeValid = FALSE;
   else
