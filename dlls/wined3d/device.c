@@ -6981,10 +6981,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetDepthStencilSurface(IWineD3DDevice
     *ppZStencilSurface = This->depthStencilBuffer;
     TRACE("(%p) : zStencilSurface  returning %p\n", This,  *ppZStencilSurface);
 
-    if(*ppZStencilSurface != NULL) {
-        /* Note inc ref on returned surface */
-        IWineD3DSurface_AddRef(*ppZStencilSurface);
-    }
     return WINED3D_OK;
 }
 

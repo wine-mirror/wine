@@ -698,7 +698,6 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_GetDepthStencilSurface(LPDIRECT3DDE
     hr=IWineD3DDevice_GetDepthStencilSurface(This->WineD3DDevice,&pZStencilSurface);
     if(hr == D3D_OK && pZStencilSurface != NULL){
         IWineD3DResource_GetParent((IWineD3DResource *)pZStencilSurface,(IUnknown**)ppZStencilSurface);
-        IWineD3DResource_Release((IWineD3DResource *)pZStencilSurface);
     }else{
         FIXME("Call to IWineD3DDevice_GetDepthStencilSurface failed\n");
         *ppZStencilSurface = NULL;
