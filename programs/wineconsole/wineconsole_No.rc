@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Alexander N. Sørnes <alex@thehandofagony.com>
+ * Copyright 2005-2006 Alexander N. Sørnes <alex@thehandofagony.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,6 +36,20 @@ IDS_DLG_TIT_DEFAULT,    "Standardinnstillinger"
 IDS_DLG_TIT_CURRENT,    "Gjeldende innstillinger"
 IDS_DLG_TIT_ERROR,	"Oppsettsfeil"
 IDS_DLG_ERR_SBWINSIZE,	"Skjermens hurtigminnestørrelse må være større eller lik vinduets"
+
+IDS_CMD_INVALID_EVENT_ID   "wineconsole: Klarte ikke lese hendelses-id\n"
+IDS_CMD_INVALID_BACKEND    "wineconsole: Ugyldig motor\n"
+IDS_CMD_INVALID_OPTION     "wineconsole: Ukjent kommandolinjevalg\n"
+IDS_CMD_ABOUT              "Starter et program i en Wine-konsoll\n"
+IDS_CMD_LAUNCH_FAILED      "wineconsole: Klarte ikke starte programmet «%sx.\n"\
+                           "Kommandoen er ugyldig.\n"
+
+IDS_USAGE_HEADER           "\nBruk:\n  wineconsole [alternativer] <kommando>\n\nAlternativer:\n"
+IDS_USAGE_BACKEND          "  --backend={user|ncurses}  «user» lager et nyttt vindu, mens «ncurses»\n"\
+                           "                            prøve å bruke gjeldende terminal som Wine-konsoll\n"
+IDS_USAGE_COMMAND          "  <kommando>                 Wine-programmet som skal kjøres i konsollet\n"
+IDS_USAGE_FOOTER           "\nEksempel:\n  wineconsole cmd\nStarter Wine-ledeteksten i et Wine-konsoll\n\n"
+
 END
 
 IDD_OPTION DIALOG LOADONCALL MOVEABLE DISCARDABLE 36, 24, 140, 105
