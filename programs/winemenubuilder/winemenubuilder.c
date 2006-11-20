@@ -897,6 +897,8 @@ static HRESULT get_cmdline( IShellLinkW *sl, LPWSTR szPath, DWORD pathSize,
 
 static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
 {
+    static const WCHAR startW[] = {'\\','c','o','m','m','a','n','d',
+                                   '\\','s','t','a','r','t','.','e','x','e',0};
     char *link_name = NULL, *icon_name = NULL, *work_dir = NULL;
     char *escaped_path = NULL, *escaped_args = NULL, *escaped_description = NULL;
     WCHAR szDescription[INFOTIPSIZE], szPath[MAX_PATH], szWorkDir[MAX_PATH];
@@ -970,9 +972,28 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
         WCHAR *p;
 
         /* check for .exe extension */
-        if (!(p = strrchrW( szPath, '.' ))) return FALSE;
-        if (strchrW( p, '\\' ) || strchrW( p, '/' )) return FALSE;
-        if (lstrcmpiW( p, exeW )) return FALSE;
+        if (!(p = strrchrW( szPath, '.' )) ||
+            strchrW( p, '\\' ) || strchrW( p, '/' ) ||
+            lstrcmpiW( p, exeW ))
+        {
+            /* Not .exe - use 'start.exe' to launch this file */
+            p = szArgs + lstrlenW(szPath) + 2;
+            if (szArgs[0])
+            {
+                p[0] = ' ';
+                memmove( p+1, szArgs, min( (lstrlenW(szArgs) + 1) * sizeof(szArgs[0]),
+                                           sizeof(szArgs) - (p + 1 - szArgs) * sizeof(szArgs[0]) ) );
+            }
+            else
+                p[0] = 0;
+
+            szArgs[0] = '"';
+            lstrcpyW(szArgs + 1, szPath);
+            p[-1] = '"';
+
+            GetWindowsDirectoryW(szPath, MAX_PATH);
+            lstrcatW(szPath, startW);
+        }
 
         /* convert app working dir */
         if (szWorkDir[0])
@@ -980,10 +1001,6 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
     }
     else
     {
-        static const WCHAR startW[] = {
-            '\\','c','o','m','m','a','n','d',
-            '\\','s','t','a','r','t','.','e','x','e',0};
-
         /* if there's no path... try run the link itself */
         lstrcpynW(szArgs, link, MAX_PATH);
         GetWindowsDirectoryW(szPath, MAX_PATH);
