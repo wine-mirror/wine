@@ -518,8 +518,11 @@ static UINT load_media_info(MSIPACKAGE *package, MSIFILE *file, struct media_inf
 
     mi->disk_id = MSI_RecordGetInteger(row, 1);
     mi->last_sequence = MSI_RecordGetInteger(row, 2);
+    msi_free(mi->disk_prompt);
     mi->disk_prompt = strdupW(MSI_RecordGetString(row, 3));
+    msi_free(mi->cabinet);
     mi->cabinet = strdupW(MSI_RecordGetString(row, 4));
+    msi_free(mi->volume_label);
     mi->volume_label = strdupW(MSI_RecordGetString(row, 5));
     msiobj_release(&row->hdr);
 
