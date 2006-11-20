@@ -68,11 +68,10 @@ BEGIN
 
     CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,235,8
     CONTROL	    "Включить двойную буферизацию рабочего стола",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
-    CONTROL	    "Разрешить менеджеру окон управлять окнами",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,34,230,8
+    CONTROL	    "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,34,230,8
 
-    /* FIXME: the wording of this explanation could be a lot better */
-    LTEXT           "Если включить эмуляцию рабочего стола, то все окна будут отображаться в одном 'виртуальном экране', иначе окна размещаются как обычные, на стандартном рабочем столе.",
-                    IDC_STATIC,15,125,228,28
+    LTEXT           "Если включить эмуляцию рабочего стола, то все окна будут отображаться в одном 'виртуальном экране' заданного размера. Иначе окна размещаются, как обычно, на стандартном рабочем столе.",
+                    IDC_STATIC,15,117,228,36
     LTEXT           "Размер рабочего стола:",IDC_DESKTOP_SIZE,15,167,44,8,WS_DISABLED
     LTEXT           "X",IDC_DESKTOP_BY,108,167,8,8,WS_DISABLED
     CONTROL         "Эмулировать виртуальный рабочий стол",IDC_ENABLE_DESKTOP,"Button",
@@ -214,13 +213,14 @@ BEGIN
     IDS_SHOW_ADVANCED       "Показать дополнительные"
     IDS_NOTHEME             "(без темы)"
     IDS_TAB_GRAPHICS        "Графика"
-    IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
+    IDS_TAB_DESKTOP_INTEGRATION "Вид и интеграция"
     IDS_TAB_AUDIO           "Аудио"
     IDS_TAB_ABOUT           "О программе"
     IDS_WINECFG_TITLE       "Настройка Wine"
     IDS_WINECFG_TITLE_APP   "Настройка Wine для %s"
     IDS_THEMEFILE           "Файлы тем"
     IDS_THEMEFILE_SELECT    "Выберите файл с темой"
+    IDS_AUDIO_MISSING       "Конфигурация звукового драйвера не найдена.\n\nВыбран драйвер по умолчанию. Если необходимо, вы можете выбрать другой из списка доступных драйверов.\n\nДля сохранения изменений нажмите кнопку Применить."
     IDS_SHELL_FOLDER        "Стандартные папки"
     IDS_LINKS_TO            "Связано с"
 END
