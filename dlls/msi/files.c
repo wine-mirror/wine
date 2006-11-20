@@ -266,6 +266,7 @@ static UINT msi_media_get_disk_info( CabData *data )
 
     ptr = strrchrW(data->mi->source, '\\') + 1;
     lstrcpyW(ptr, data->mi->cabinet);
+    msiobj_release(&row->hdr);
 
     return ERROR_SUCCESS;
 }
