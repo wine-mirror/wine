@@ -3851,10 +3851,30 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     return ERROR_INSTALL_SUSPEND;
 }
 
+UINT msi_set_sourcedir_props(MSIPACKAGE *package)
+{
+    LPWSTR p, source;
+    DWORD len;
+
+    p = strrchrW( package->PackagePath, '\\' );
+    if (!p)
+        return ERROR_SUCCESS;
+
+    len = p - package->PackagePath + 2;
+    source = msi_alloc( len * sizeof(WCHAR) );
+    lstrcpynW( source, package->PackagePath, len );
+
+    MSI_SetPropertyW( package, cszSourceDir, source );
+    MSI_SetPropertyW( package, cszSOURCEDIR, source );
+
+    msi_free( source );
+
+    return ERROR_SUCCESS;
+}
+
 static UINT ACTION_ResolveSource(MSIPACKAGE* package)
 {
-    DWORD attrib, len;
-    LPWSTR ptr, source;
+    DWORD attrib;
     UINT rc;
 
     /*
@@ -3864,18 +3884,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
     if (!package->PackagePath)
         return ERROR_SUCCESS;
 
-    ptr = strrchrW(package->PackagePath, '\\');
-    if (!ptr)
-        return ERROR_SUCCESS;
-
-    len = ptr - package->PackagePath + 2;
-    source = msi_alloc(len * sizeof(WCHAR));
-    lstrcpynW(source,  package->PackagePath, len);
-
-    MSI_SetPropertyW(package, cszSourceDir, source);
-    MSI_SetPropertyW(package, cszSOURCEDIR, source);
-
-    msi_free(source);
+    msi_set_sourcedir_props(package);
 
     attrib = GetFileAttributesW(package->PackagePath);
     if (attrib == INVALID_FILE_ATTRIBUTES)
