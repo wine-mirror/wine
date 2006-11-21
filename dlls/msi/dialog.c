@@ -175,6 +175,8 @@ static msi_control *msi_dialog_find_control( msi_dialog *dialog, LPCWSTR name )
 
     if( !name )
         return NULL;
+    if( !dialog->hwnd )
+        return NULL;
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( !strcmpW( control->name, name ) ) /* FIXME: case sensitive? */
             return control;
@@ -187,6 +189,8 @@ static msi_control *msi_dialog_find_control_by_type( msi_dialog *dialog, LPCWSTR
 
     if( !type )
         return NULL;
+    if( !dialog->hwnd )
+        return NULL;
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( !strcmpW( control->type, type ) ) /* FIXME: case sensitive? */
             return control;
@@ -197,6 +201,8 @@ static msi_control *msi_dialog_find_control_by_hwnd( msi_dialog *dialog, HWND hw
 {
     msi_control *control;
 
+    if( !dialog->hwnd )
+        return NULL;
     LIST_FOR_EACH_ENTRY( control, &dialog->controls, msi_control, entry )
         if( hwnd == control->hwnd )
             return control;
