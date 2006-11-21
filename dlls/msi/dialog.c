@@ -373,6 +373,23 @@ static UINT msi_dialog_build_font_list( msi_dialog *dialog )
     return r;
 }
 
+static void msi_destroy_control( msi_control *t )
+{
+    list_remove( &t->entry );
+    /* leave dialog->hwnd - destroying parent destroys child windows */
+    msi_free( t->property );
+    msi_free( t->value );
+    if( t->hBitmap )
+        DeleteObject( t->hBitmap );
+    if( t->hIcon )
+        DestroyIcon( t->hIcon );
+    msi_free( t->tabnext );
+    msi_free( t->type );
+    if (t->hDll)
+        FreeLibrary( t->hDll );
+    msi_free( t );
+}
+
 static msi_control *msi_dialog_create_window( msi_dialog *dialog,
                 MSIRECORD *rec, DWORD exstyle, LPCWSTR szCls, LPCWSTR name, LPCWSTR text,
                 DWORD style, HWND parent )
@@ -3150,7 +3167,7 @@ static LRESULT WINAPI MSIDialog_WndProc( HWND hwnd, UINT msg,
         dialog->package->center_x = LOWORD(lParam) + dialog->size.cx / 2.0;
         dialog->package->center_y = HIWORD(lParam) + dialog->size.cy / 2.0;
         break;
-        
+
     case WM_CREATE:
         return msi_dialog_oncreate( hwnd, (LPCREATESTRUCTW)lParam );
 
@@ -3370,28 +3387,18 @@ void msi_dialog_destroy( msi_dialog *dialog )
 
     if( dialog->hwnd )
         ShowWindow( dialog->hwnd, SW_HIDE );
-    
+
     if( dialog->hwnd )
         DestroyWindow( dialog->hwnd );
 
     /* destroy the list of controls */
     while( !list_empty( &dialog->controls ) )
     {
-        msi_control *t = LIST_ENTRY( list_head( &dialog->controls ),
-                                     msi_control, entry );
-        list_remove( &t->entry );
-        /* leave dialog->hwnd - destroying parent destroys child windows */
-        msi_free( t->property );
-        msi_free( t->value );
-        if( t->hBitmap )
-            DeleteObject( t->hBitmap );
-        if( t->hIcon )
-            DestroyIcon( t->hIcon );
-        msi_free( t->tabnext );
-        msi_free( t->type );
-        if (t->hDll)
-            FreeLibrary( t->hDll );
-        msi_free( t );
+        msi_control *t;
+
+        t = LIST_ENTRY( list_head( &dialog->controls ),
+                        msi_control, entry );
+        msi_destroy_control( t );
     }
 
     /* destroy the list of fonts */
