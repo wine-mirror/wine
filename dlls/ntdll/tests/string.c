@@ -733,8 +733,6 @@ static void one_ui64tow_test(int test_num, const ulonglong2str_t *ulonglong2str)
 static void test_ulonglongtow(void)
 {
     int test_num;
-    int pos;
-    WCHAR expected_wstr[LARGE_STRI_BUFFER_LENGTH + 1];
     LPWSTR result;
 
     for (test_num = 0; test_num < NB_ULONGLONG2STR; test_num++) {
@@ -748,11 +746,6 @@ static void test_ulonglongtow(void)
 	} /* if */
     } /* for */
 
-    for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
-	expected_wstr[pos] = ulong2str[0].Buffer[pos];
-    } /* for */
-    expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-
     if (0) {
         /* Crashes on XP and W2K3 */
         result = p_i64tow(ulonglong2str[0].value, NULL, 10);
@@ -762,11 +755,6 @@ static void test_ulonglongtow(void)
     }
 
     if (p_ui64tow) {
-        for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
-	    expected_wstr[pos] = ulong2str[0].Buffer[pos];
-	} /* for */
-	expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-
         if (0) {
             /* Crashes on XP and W2K3 */
 	    result = p_ui64tow(ulonglong2str[0].value, NULL, 10);
