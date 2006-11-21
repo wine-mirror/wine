@@ -54,18 +54,18 @@ BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA pnid)
     nidW.hIcon  = pnid->hIcon;
 
     /* szTip */
-    MultiByteToWideChar(CP_ACP, 0, pnid->szTip, sizeof(pnid->szTip), nidW.szTip, sizeof(nidW.szTip));
+    MultiByteToWideChar(CP_ACP, 0, pnid->szTip, -1, nidW.szTip, sizeof(nidW.szTip)/sizeof(WCHAR));
 
     nidW.dwState      = pnid->dwState;
     nidW.dwStateMask  = pnid->dwStateMask;
 
     /* szInfo */
-    MultiByteToWideChar(CP_ACP, 0, pnid->szInfo, sizeof(pnid->szInfo),  nidW.szInfo, sizeof(nidW.szInfo));
+    MultiByteToWideChar(CP_ACP, 0, pnid->szInfo, -1,  nidW.szInfo, sizeof(nidW.szInfo)/sizeof(WCHAR));
 
     nidW.u.uTimeout = pnid->u.uTimeout;
 
     /* szInfoTitle */
-    MultiByteToWideChar(CP_ACP, 0, pnid->szInfoTitle, sizeof(pnid->szInfoTitle), nidW.szInfoTitle, sizeof(nidW.szInfoTitle));
+    MultiByteToWideChar(CP_ACP, 0, pnid->szInfoTitle, -1, nidW.szInfoTitle, sizeof(nidW.szInfoTitle)/sizeof(WCHAR));
     
     nidW.dwInfoFlags = pnid->dwInfoFlags;
 
