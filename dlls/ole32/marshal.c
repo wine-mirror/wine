@@ -1755,7 +1755,7 @@ HRESULT WINAPI CoReleaseMarshalData(IStream *pStream)
  * PARAMS
  *  riid  [I] Identifier of the interface to be marshalled.
  *  pUnk  [I] Pointer to IUnknown-derived interface that will be marshalled.
- *  ppStm [O] Pointer to IStream object that is created and then used to store the marshalled inteface.
+ *  ppStm [O] Pointer to IStream object that is created and then used to store the marshalled interface.
  *
  * RETURNS
  *  Success: S_OK
@@ -1794,10 +1794,10 @@ HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(
 /***********************************************************************
  *		CoGetInterfaceAndReleaseStream	[OLE32.@]
  *
- * Unmarshalls an inteface from a stream and then releases the stream.
+ * Unmarshalls an interface from a stream and then releases the stream.
  *
  * PARAMS
- *  pStm [I] Stream that contains the marshalled inteface.
+ *  pStm [I] Stream that contains the marshalled interface.
  *  riid [I] Interface identifier of the object to unmarshall.
  *  ppv  [O] Address of pointer where the requested interface object will be stored.
  *
@@ -1806,7 +1806,7 @@ HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(
  *  Failure: A COM error code
  *
  * SEE ALSO
- *  CoMarshalInterThreadInterfaceInStream() and CoUnmarshalInteface()
+ *  CoMarshalInterThreadInterfaceInStream() and CoUnmarshalInterface()
  */
 HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID riid,
                                               LPVOID *ppv)

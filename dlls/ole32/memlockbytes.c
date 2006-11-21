@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 /******************************************************************************
  * HGLOBALLockBytesImpl definition.
  *
- * This class imlements the ILockBytes inteface and represents a byte array
+ * This class implements the ILockBytes interface and represents a byte array
  * object supported by an HGLOBAL pointer.
  */
 struct HGLOBALLockBytesImpl

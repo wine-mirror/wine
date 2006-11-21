@@ -49,7 +49,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(storage);
 /****************************************************************************
  * HGLOBALStreamImpl definition.
  *
- * This class imlements the IStream inteface and represents a stream
+ * This class implements the IStream interface and represents a stream
  * supported by an HGLOBAL pointer.
  */
 struct HGLOBALStreamImpl
