@@ -563,10 +563,7 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
   RPC_STATUS r;
   SecBuffer out;
 
-  if (!Connection->AuthInfo ||
-      Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_DEFAULT ||
-      Connection->AuthInfo->AuthnLevel == RPC_C_AUTHN_LEVEL_NONE ||
-      SecIsValidHandle(&Connection->ctx))
+  if (!Connection->AuthInfo || SecIsValidHandle(&Connection->ctx))
   {
     return RPCRT4_SendAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
   }
