@@ -792,7 +792,7 @@ static WDML_XACT*	WDML_ClientQueueTerminate(WDML_CONV* pConv)
  *
  * handles the reply to a terminate request
  */
-static WDML_QUEUE_STATE WDML_HandleTerminateReply(WDML_CONV* pConv, MSG* msg, WDML_XACT* pXAct)
+static WDML_QUEUE_STATE WDML_HandleTerminateReply(WDML_CONV* pConv, MSG* msg)
 {
     if (msg->message != WM_DDE_TERMINATE)
     {
@@ -815,7 +815,7 @@ static WDML_QUEUE_STATE WDML_HandleTerminateReply(WDML_CONV* pConv, MSG* msg, WD
 }
 
 /******************************************************************
- *		WDML_HandleReplyData
+ *		WDML_HandleIncomingData
  *
  *
  */
@@ -934,7 +934,7 @@ static WDML_QUEUE_STATE WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
 	    qs = WDML_HandlePokeReply(pConv, msg, pXAct, ack);
 	    break;
 	case WM_DDE_TERMINATE:
-	    qs = WDML_HandleTerminateReply(pConv, msg, pXAct);
+	    qs = WDML_HandleTerminateReply(pConv, msg);
 	    break;
 	default:
 	    qs = WDML_QS_ERROR;
@@ -955,9 +955,8 @@ static WDML_QUEUE_STATE WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
 	break;
     case WDML_QS_HANDLED:
 	/* ok, we have resolved a pending transaction
-	 * notify callback if asynchronous, and remove it in any case
+	 * notify callback if asynchronous.
 	 */
-	WDML_UnQueueTransaction(pConv, pXAct);
 	if (pXAct->dwTimeout == TIMEOUT_ASYNC && pXAct->ddeMsg != WM_DDE_TERMINATE)
 	{
 	    WDML_InvokeCallback(pConv->instance, XTYP_XACT_COMPLETE, pXAct->wFmt,
@@ -969,7 +968,6 @@ static WDML_QUEUE_STATE WDML_HandleReply(WDML_CONV* pConv, MSG* msg, HDDEDATA* h
 	{
 	    *hdd = pXAct->hDdeData;
 	}
-	WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
 	break;
     case WDML_QS_PASS:
 	/* no pending transaction found, try a warm/hot link or a termination request */
@@ -1078,6 +1076,39 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, WDML
     return 0;
 }
 
+
+/*****************************************************************
+ *            WDML_ClientHandle
+ */
+HDDEDATA WDML_ClientHandle(WDML_CONV *pConv, WDML_XACT *pXAct, DWORD dwTimeout, LPDWORD pdwResult)
+{
+    HDDEDATA hDdeData;
+
+    if (!PostMessageW(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
+    {
+        WARN("Failed posting message %x to %p (error=0x%x)\n",
+              pXAct->ddeMsg, pConv->hwndServer, GetLastError());
+        pConv->wStatus &= ~ST_CONNECTED;
+        pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
+        return 0;
+    }
+    pXAct->dwTimeout = dwTimeout;
+    /* FIXME: should set the app bits on *pdwResult */
+
+    if (dwTimeout == TIMEOUT_ASYNC)
+    {
+        if (pdwResult)
+            *pdwResult = MAKELONG(0, pXAct->xActID);
+
+        hDdeData = (HDDEDATA)1;
+    }
+    else
+        hDdeData = WDML_SyncWaitTransactionReply((HCONV)pConv, dwTimeout, pXAct, pdwResult);
+
+    return hDdeData;
+}
+
+
 /*****************************************************************
  *            DdeClientTransaction  (USER32.@)
  */
@@ -1155,29 +1186,20 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     WDML_QueueTransaction(pConv, pXAct);
 
-    if (!PostMessageW(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
-    {
-	WARN("Failed posting message %x to %p (error=0x%x)\n",
-	      pXAct->ddeMsg, pConv->hwndServer, GetLastError());
-	pConv->wStatus &= ~ST_CONNECTED;
-	WDML_UnQueueTransaction(pConv, pXAct);
-	WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
-        pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
-        return 0;
-    }
-    pXAct->dwTimeout = dwTimeout;
-    /* FIXME: should set the app bits on *pdwResult */
+    TRACE("pConv->wStatus %04x\n", pConv->wStatus);
 
-    if (dwTimeout == TIMEOUT_ASYNC)
+    if (pConv->wStatus & ST_BLOCKED)
     {
-	if (pdwResult)
-	{
-	    *pdwResult = MAKELONG(0, pXAct->xActID);
-	}
-	hDdeData = (HDDEDATA)1;
+        TRACE("Transactions are blocked, add to the queue and exit\n");
+        return (HDDEDATA)1;
     }
-    else
-        hDdeData = WDML_SyncWaitTransactionReply(hConv, dwTimeout, pXAct, pdwResult);
+
+    hDdeData = WDML_ClientHandle(pConv, pXAct, dwTimeout, pdwResult);
+    if (dwTimeout != TIMEOUT_ASYNC)
+    {
+        WDML_UnQueueTransaction(pConv, pXAct);
+        WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
+    }
 
     return hDdeData;
 }

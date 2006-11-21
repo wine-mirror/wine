@@ -164,6 +164,7 @@ typedef struct tagWDML_INSTANCE
     DWORD           		monitorFlags;
     DWORD			lastError;
     HWND			hwndEvent;
+    DWORD			wStatus;	/* global instance status */
     WDML_SERVER*		servers;	/* list of registered servers */
     WDML_CONV*			convs[2];	/* active conversations for this instance (client and server) */
     WDML_LINK*			links[2];	/* active links for this instance (client and server) */
@@ -196,6 +197,8 @@ extern	void		WDML_RemoveServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hsz
 extern	WDML_SERVER*	WDML_FindServer(WDML_INSTANCE* pInstance, HSZ hszService, HSZ hszTopic);
 /* transaction handler on the server side */
 extern WDML_QUEUE_STATE WDML_ServerHandle(WDML_CONV* pConv, WDML_XACT* pXAct);
+/* transaction handler on the client side */
+HDDEDATA WDML_ClientHandle(WDML_CONV *pConv, WDML_XACT *pXAct, DWORD dwTimeout, LPDWORD pdwResult);
 /* called both in DdeClientTransaction and server side. */
 extern	UINT		WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
 					DWORD afCmd, DWORD ulRes, BOOL bUnicode, BOOL b16);

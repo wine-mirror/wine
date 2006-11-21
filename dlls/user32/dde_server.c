@@ -1051,13 +1051,16 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
 
     default:
 	FIXME("Unsupported message %x\n", iMsg);
+        break;
     }
 
     if (pXAct)
     {
 	pXAct->lParam = lParam;
-	if (WDML_ServerHandle(pConv, pXAct) == WDML_QS_BLOCK)
+
+	if ((pConv->wStatus & ST_BLOCKED) || WDML_ServerHandle(pConv, pXAct) == WDML_QS_BLOCK)
 	{
+            TRACE("Transactions are blocked, add to the queue and exit\n");
 	    WDML_QueueTransaction(pConv, pXAct);
 	}
 	else
@@ -1065,6 +1068,8 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
 	    WDML_FreeTransaction(pInstance, pXAct, TRUE);
 	}
     }
+    else
+        pConv->instance->lastError = DMLERR_MEMORY_ERROR;
 
     return 0;
 }

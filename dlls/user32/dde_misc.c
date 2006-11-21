@@ -382,6 +382,7 @@ UINT WDML_Initialize(LPDWORD pidInst, PFNCALLBACK pfnCallback,
     pInstance->win16 = b16;
     pInstance->nodeList = NULL; /* node will be added later */
     pInstance->monitorFlags = afCmd & MF_MASK;
+    pInstance->wStatus = 0;
     pInstance->servers = NULL;
     pInstance->convs[0] = NULL;
     pInstance->convs[1] = NULL;
@@ -1740,6 +1741,7 @@ WDML_CONV*	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
     pConv->transactions = NULL;
     pConv->hUser = 0;
     pConv->wStatus = (side == WDML_CLIENT_SIDE) ? ST_CLIENT : 0L;
+    pConv->wStatus |= pInstance->wStatus;
     /* check if both side of the conversation are of the same instance */
     if (GetWindowThreadProcessId(hwndClient, NULL) == GetWindowThreadProcessId(hwndServer, NULL) &&
 	WDML_GetInstanceFromWnd(hwndClient) == WDML_GetInstanceFromWnd(hwndServer))
@@ -1750,6 +1752,8 @@ WDML_CONV*	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 
     pConv->next = pInstance->convs[side];
     pInstance->convs[side] = pConv;
+
+    TRACE("pConv->wStatus %04x\n", pConv->wStatus);
 
     return pConv;
 }
@@ -1842,7 +1846,8 @@ static BOOL WDML_EnableCallback(WDML_CONV *pConv, UINT wCmd)
 {
     if (wCmd == EC_DISABLE)
     {
-        FIXME("EC_DISABLE is not implemented\n");
+        pConv->wStatus |= ST_BLOCKED;
+        TRACE("EC_DISABLE: conv %p status flags %04x\n", pConv, pConv->wStatus);
         return TRUE;
     }
 
@@ -1855,18 +1860,28 @@ static BOOL WDML_EnableCallback(WDML_CONV *pConv, UINT wCmd)
         return FALSE;
     }
 
+    if (wCmd == EC_ENABLEALL)
+    {
+        pConv->wStatus &= ~ST_BLOCKED;
+        TRACE("EC_ENABLEALL: conv %p status flags %04x\n", pConv, pConv->wStatus);
+    }
+
     while (pConv->transactions)
     {
         WDML_XACT *pXAct = pConv->transactions;
-        WDML_UnQueueTransaction(pConv, pXAct);
 
         if (pConv->wStatus & ST_CLIENT)
         {
-            /*WDML_ClientHandle(pConv, pXAct);*/
-            FIXME("Client delayed transaction queue handling is not supported\n");
+            /* transaction should be in the queue until handled */
+            WDML_ClientHandle(pConv, pXAct, 0, NULL);
+            WDML_UnQueueTransaction(pConv, pXAct);
         }
         else
+        {
+            /* transaction should be removed from the queue before handling */
+            WDML_UnQueueTransaction(pConv, pXAct);
             WDML_ServerHandle(pConv, pXAct);
+        }
 
         WDML_FreeTransaction(pConv->instance, pXAct, TRUE);
 
@@ -1885,10 +1900,42 @@ BOOL WINAPI DdeEnableCallback(DWORD idInst, HCONV hConv, UINT wCmd)
 
     TRACE("(%d, %p, %04x)\n", idInst, hConv, wCmd);
 
-    pConv = WDML_GetConv(hConv, TRUE);
+    if (hConv)
+    {
+        pConv = WDML_GetConv(hConv, TRUE);
 
-    if (pConv && pConv->instance->instanceID == idInst)
-        ret = WDML_EnableCallback(pConv, wCmd);
+        if (pConv && pConv->instance->instanceID == idInst)
+            ret = WDML_EnableCallback(pConv, wCmd);
+    }
+    else
+    {
+        WDML_INSTANCE *pInstance = WDML_GetInstance(idInst);
+
+        if (!pInstance)
+            return FALSE;
+
+        TRACE("adding flags %04x to instance %p\n", wCmd, pInstance);
+        pInstance->wStatus |= wCmd;
+
+        if (wCmd == EC_DISABLE)
+        {
+            pInstance->wStatus |= ST_BLOCKED;
+            TRACE("EC_DISABLE: inst %p status flags %04x\n", pInstance, pInstance->wStatus);
+        }
+        else if (wCmd == EC_ENABLEALL)
+        {
+            pInstance->wStatus &= ~ST_BLOCKED;
+            TRACE("EC_ENABLEALL: inst %p status flags %04x\n", pInstance, pInstance->wStatus);
+        }
+
+        ret = TRUE;
+
+        for (pConv = pInstance->convs[WDML_CLIENT_SIDE]; pConv != NULL; pConv = pConv->next)
+        {
+            ret = WDML_EnableCallback(pConv, wCmd);
+            if (ret && wCmd == EC_QUERYWAITING) break;
+        }
+    }
 
     return ret;
 }
