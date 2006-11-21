@@ -3389,9 +3389,9 @@ void msi_dialog_destroy( msi_dialog *dialog )
             DestroyIcon( t->hIcon );
         msi_free( t->tabnext );
         msi_free( t->type );
-        msi_free( t );
         if (t->hDll)
             FreeLibrary( t->hDll );
+        msi_free( t );
     }
 
     /* destroy the list of fonts */
