@@ -1815,6 +1815,7 @@ HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID riid,
 
     TRACE("(%p, %s, %p)\n", pStm, debugstr_guid(riid), ppv);
 
+    if(!pStm) return E_INVALIDARG;
     hres = CoUnmarshalInterface(pStm, riid, ppv);
     IStream_Release(pStm);
     return hres;

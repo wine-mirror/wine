@@ -2253,6 +2253,15 @@ static void test_marshal_HENHMETAFILE(void)
     HENHMETAFILE_UserFree(&flags, &hemf2);
 }
 
+static void test_CoGetInterfaceAndReleaseStream(void)
+{
+    HRESULT hr;
+    IUnknown *pUnk;
+
+    hr = CoGetInterfaceAndReleaseStream(NULL, &IID_IUnknown, (void**)&pUnk);
+    ok(hr == E_INVALIDARG, "hr %08x\n", hr);
+}
+
 START_TEST(marshal)
 {
     WNDCLASS wndclass;
@@ -2312,6 +2321,8 @@ START_TEST(marshal)
     test_marshal_HWND();
     test_marshal_HGLOBAL();
     test_marshal_HENHMETAFILE();
+
+    test_CoGetInterfaceAndReleaseStream();
 
     CoUninitialize();
     return;
