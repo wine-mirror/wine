@@ -2325,7 +2325,7 @@ void LookupInit(void)
 {
 	RTFKey	*rp;
 
-	memset(rtfHashTable, 0, RTF_KEY_COUNT * 2 * sizeof(*rtfHashTable));
+	memset(rtfHashTable, 0, sizeof rtfHashTable);
 	for (rp = rtfKey; rp->rtfKStr != NULL; rp++)
 	{
 		int index;
