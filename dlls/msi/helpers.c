@@ -67,9 +67,32 @@ LPWSTR build_icon_path(MSIPACKAGE *package, LPCWSTR icon_name )
     return FilePath;
 }
 
-LPWSTR msi_dup_record_field( MSIRECORD *row, INT index )
+LPWSTR msi_dup_record_field( MSIRECORD *rec, INT field )
 {
-    return strdupW( MSI_RecordGetString(row,index) );
+    DWORD sz = 0;
+    LPWSTR str;
+    UINT r;
+
+    if (MSI_RecordIsNull( rec, field ))
+        return NULL;
+
+    r = MSI_RecordGetStringW( rec, field, NULL, &sz );
+    if (r != ERROR_SUCCESS)
+        return NULL;
+
+    sz ++;
+    str = msi_alloc( sz * sizeof (WCHAR) );
+    if (!str)
+        return str;
+    str[0] = 0;
+    r = MSI_RecordGetStringW( rec, field, str, &sz );
+    if (r != ERROR_SUCCESS)
+    {
+        ERR("failed to get string!\n");
+        msi_free( str );
+        return NULL;
+    }
+    return str;
 }
 
 MSICOMPONENT* get_loaded_component( MSIPACKAGE* package, LPCWSTR Component )
