@@ -569,7 +569,7 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
                 if ((fd = receive_fd( &fd_handle )) != -1)
                 {
                     assert( fd_handle == handle );
-                    if (!removable) add_fd_to_cache( handle, fd, reply->type );
+                    *needs_close = removable || !add_fd_to_cache( handle, fd, reply->type );
                 }
                 else ret = STATUS_TOO_MANY_OPENED_FILES;
             }
