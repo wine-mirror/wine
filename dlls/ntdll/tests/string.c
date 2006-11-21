@@ -411,28 +411,40 @@ static void test_ulongtow(void)
 	expected_wstr[pos] = ulong2str[0].Buffer[pos];
     } /* for */
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-    result = p_itow(ulong2str[0].value, NULL, 10);
-    ok(result == NULL,
-       "(test a): _itow(%d, NULL, 10) has result %p, expected: NULL\n",
-       ulong2str[0].value, result);
+
+    if (0) {
+        /* Crashes on XP and W2K3 */
+        result = p_itow(ulong2str[0].value, NULL, 10);
+        ok(result == NULL,
+           "(test a): _itow(%d, NULL, 10) has result %p, expected: NULL\n",
+           ulong2str[0].value, result);
+    }
 
     for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
 	expected_wstr[pos] = ulong2str[0].Buffer[pos];
     } /* for */
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-    result = p_ltow(ulong2str[0].value, NULL, 10);
-    ok(result == NULL,
-       "(test b): _ltow(%d, NULL, 10) has result %p, expected: NULL\n",
-       ulong2str[0].value, result);
+
+    if (0) {
+        /* Crashes on XP and W2K3 */
+        result = p_ltow(ulong2str[0].value, NULL, 10);
+        ok(result == NULL,
+           "(test b): _ltow(%d, NULL, 10) has result %p, expected: NULL\n",
+           ulong2str[0].value, result);
+    }
 
     for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
 	expected_wstr[pos] = ulong2str[0].Buffer[pos];
     } /* for */
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-    result = p_ultow(ulong2str[0].value, NULL, 10);
-    ok(result == NULL,
-       "(test c): _ultow(%d, NULL, 10) has result %p, expected: NULL\n",
-       ulong2str[0].value, result);
+
+    if (0) {
+        /* Crashes on XP and W2K3 */
+        result = p_ultow(ulong2str[0].value, NULL, 10);
+        ok(result == NULL,
+           "(test c): _ultow(%d, NULL, 10) has result %p, expected: NULL\n",
+           ulong2str[0].value, result);
+    }
 }
 
 #define ULL(a,b) (((ULONGLONG)(a) << 32) | (b))
