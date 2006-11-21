@@ -4217,6 +4217,98 @@ static void test_button_messages(void)
     DestroyWindow(hwnd);
 }
 
+/****************** static message test *************************/
+static const struct message WmSetFontStaticSeq[] =
+{
+    { WM_SETFONT, sent },
+    { WM_PAINT, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_CTLCOLORSTATIC, sent|defwinproc },
+    { 0 }
+};
+
+static WNDPROC old_static_proc;
+
+static LRESULT CALLBACK static_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("static: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    /* explicitly ignore WM_GETICON message */
+    if (message == WM_GETICON) return 0;
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(&msg);
+
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(old_static_proc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static void subclass_static(void)
+{
+    WNDCLASSA cls;
+
+    if (!GetClassInfoA(0, "static", &cls)) assert(0);
+
+    old_static_proc = cls.lpfnWndProc;
+
+    cls.hInstance = GetModuleHandle(0);
+    cls.lpfnWndProc = static_hook_proc;
+    cls.lpszClassName = "my_static_class";
+    if (!RegisterClassA(&cls)) assert(0);
+}
+
+static void test_static_messages(void)
+{
+    /* FIXME: make as comprehensive as the button message test */
+    static const struct
+    {
+	DWORD style;
+	DWORD dlg_code;
+	const struct message *setfont;
+    } static_ctrl[] = {
+	{ SS_LEFT, DLGC_STATIC,
+	  WmSetFontStaticSeq }
+    };
+    unsigned int i;
+    HWND hwnd;
+    DWORD dlg_code;
+
+    subclass_static();
+
+    for (i = 0; i < sizeof(static_ctrl)/sizeof(static_ctrl[0]); i++)
+    {
+	hwnd = CreateWindowExA(0, "my_static_class", "test", static_ctrl[i].style | WS_POPUP,
+			       0, 0, 50, 14, 0, 0, 0, NULL);
+	ok(hwnd != 0, "Failed to create static window\n");
+
+	dlg_code = SendMessageA(hwnd, WM_GETDLGCODE, 0, 0);
+	ok(dlg_code == static_ctrl[i].dlg_code, "%u: wrong dlg_code %08x\n", i, dlg_code);
+
+	ShowWindow(hwnd, SW_SHOW);
+	UpdateWindow(hwnd);
+	SetFocus(0);
+	flush_sequence();
+
+	trace("static style %08x\n", static_ctrl[i].style);
+	SendMessage(hwnd, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), TRUE);
+	ok_sequence(static_ctrl[i].setfont, "WM_SETFONT on a static", FALSE);
+
+	DestroyWindow(hwnd);
+    }
+}
+
 /************* painting message test ********************/
 
 void dump_region(HRGN hrgn)
@@ -8137,6 +8229,7 @@ START_TEST(msg)
     invisible_parent_tests();
     test_mdi_messages();
     test_button_messages();
+    test_static_messages();
     test_paint_messages();
     test_interthread_messages();
     test_message_conversion();

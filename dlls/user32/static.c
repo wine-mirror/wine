@@ -323,13 +323,17 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
 
 static HBRUSH STATIC_SendWmCtlColorStatic(HWND hwnd, HDC hdc)
 {
-    HBRUSH hBrush = (HBRUSH) SendMessageW( GetParent(hwnd),
+    HBRUSH hBrush;
+    HWND parent = GetParent(hwnd);
+
+    if (!parent) parent = hwnd;
+    hBrush = (HBRUSH) SendMessageW( parent,
                     WM_CTLCOLORSTATIC, (WPARAM)hdc, (LPARAM)hwnd );
     if (!hBrush) /* did the app forget to call DefWindowProc ? */
     {
         /* FIXME: DefWindowProc should return different colors if a
                   manifest is present */
-        hBrush = (HBRUSH)DefWindowProcW(GetParent(hwnd), WM_CTLCOLORSTATIC,
+        hBrush = (HBRUSH)DefWindowProcW( parent, WM_CTLCOLORSTATIC,
                                         (WPARAM)hdc, (LPARAM)hwnd);
     }
     return hBrush;
@@ -398,6 +402,10 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         }
         else return unicode ? DefWindowProcW(hwnd, uMsg, wParam, lParam) :
                               DefWindowProcA(hwnd, uMsg, wParam, lParam);
+
+    case WM_ERASEBKGND:
+        /* do all painting in WM_PAINT like Windows does */
+        return 1;
 
     case WM_PRINTCLIENT:
     case WM_PAINT:
@@ -496,7 +504,7 @@ static LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam,
         {
             SetWindowLongPtrW( hwnd, HFONT_GWL_OFFSET, wParam );
             if (LOWORD(lParam))
-                STATIC_TryPaintFcn( hwnd, full_style );
+                RedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
         }
         break;
 
@@ -612,7 +620,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     HBRUSH hBrush;
     HFONT hFont, hOldFont = NULL;
     WORD wFormat;
-    INT len;
+    INT len, buf_size;
     WCHAR *text;
 
     GetClientRect( hwnd, &rc);
@@ -645,7 +653,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
 
     if (style & SS_NOPREFIX)
         wFormat |= DT_NOPREFIX;
-    
+
     if ((style & SS_TYPEMASK) != SS_SIMPLE)
     {
         if (style & SS_CENTERIMAGE)
@@ -666,17 +674,22 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     /* SS_SIMPLE controls: WM_CTLCOLORSTATIC is sent, but the returned
                            brush is not used */
     hBrush = STATIC_SendWmCtlColorStatic(hwnd, hdc);
-    
+
     if ((style & SS_TYPEMASK) != SS_SIMPLE)
     {
         FillRect( hdc, &rc, hBrush );
         if (!IsWindowEnabled(hwnd)) SetTextColor(hdc, GetSysColor(COLOR_GRAYTEXT));
     }
 
-    if (!(len = SendMessageW( hwnd, WM_GETTEXTLENGTH, 0, 0 ))) return;
-    if (!(text = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return;
-    SendMessageW( hwnd, WM_GETTEXT, len + 1, (LPARAM)text );
-    
+    buf_size = 256;
+    if (!(text = HeapAlloc( GetProcessHeap(), 0, buf_size * sizeof(WCHAR) ))) return;
+
+    while ((len = InternalGetWindowText( hwnd, text, buf_size )) == buf_size - 1)
+    {
+        buf_size *= 2;
+        if (!(text = HeapReAlloc( GetProcessHeap(), 0, text, buf_size * sizeof(WCHAR) ))) return;
+    }
+
     if (((style & SS_TYPEMASK) == SS_SIMPLE) && (style & SS_NOPREFIX))
     {
         /* Windows uses the faster ExtTextOut() to draw the text and
@@ -689,9 +702,9 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     {
         DrawTextW( hdc, text, -1, &rc, wFormat );
     }
-    
+
     HeapFree( GetProcessHeap(), 0, text );
-    
+
     if (hFont)
         SelectObject( hdc, hOldFont );
 }
