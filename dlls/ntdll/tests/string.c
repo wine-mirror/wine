@@ -755,7 +755,7 @@ static void test_ulonglongtow(void)
 
     if (0) {
         /* Crashes on XP and W2K3 */
-        result = p_i64tow(ulong2str[0].value, NULL, 10);
+        result = p_i64tow(ulonglong2str[0].value, NULL, 10);
         ok(result == NULL,
            "(test d): _i64tow(0x%x%08x, NULL, 10) has result %p, expected: NULL\n",
            (DWORD)(ulonglong2str[0].value >> 32), (DWORD)ulonglong2str[0].value, result);
@@ -769,7 +769,7 @@ static void test_ulonglongtow(void)
 
         if (0) {
             /* Crashes on XP and W2K3 */
-	    result = p_ui64tow(ulong2str[0].value, NULL, 10);
+	    result = p_ui64tow(ulonglong2str[0].value, NULL, 10);
 	    ok(result == NULL,
                "(test e): _ui64tow(0x%x%08x, NULL, 10) has result %p, expected: NULL\n",
 	       (DWORD)(ulonglong2str[0].value >> 32), (DWORD)ulonglong2str[0].value, result);
