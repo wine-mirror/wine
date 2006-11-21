@@ -391,8 +391,6 @@ static void one_ultow_test(int test_num, const ulong2str_t *ulong2str)
 static void test_ulongtow(void)
 {
     int test_num;
-    int pos;
-    WCHAR expected_wstr[LARGE_STRI_BUFFER_LENGTH + 1];
     LPWSTR result;
 
     for (test_num = 0; test_num < NB_ULONG2STR; test_num++) {
@@ -407,11 +405,6 @@ static void test_ulongtow(void)
 	} /* if */
     } /* for */
 
-    for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
-	expected_wstr[pos] = ulong2str[0].Buffer[pos];
-    } /* for */
-    expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-
     if (0) {
         /* Crashes on XP and W2K3 */
         result = p_itow(ulong2str[0].value, NULL, 10);
@@ -420,11 +413,6 @@ static void test_ulongtow(void)
            ulong2str[0].value, result);
     }
 
-    for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
-	expected_wstr[pos] = ulong2str[0].Buffer[pos];
-    } /* for */
-    expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-
     if (0) {
         /* Crashes on XP and W2K3 */
         result = p_ltow(ulong2str[0].value, NULL, 10);
@@ -432,11 +420,6 @@ static void test_ulongtow(void)
            "(test b): _ltow(%d, NULL, 10) has result %p, expected: NULL\n",
            ulong2str[0].value, result);
     }
-
-    for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
-	expected_wstr[pos] = ulong2str[0].Buffer[pos];
-    } /* for */
-    expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
 
     if (0) {
         /* Crashes on XP and W2K3 */
