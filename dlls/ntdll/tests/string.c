@@ -752,20 +752,28 @@ static void test_ulonglongtow(void)
 	expected_wstr[pos] = ulong2str[0].Buffer[pos];
     } /* for */
     expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-    result = p_i64tow(ulong2str[0].value, NULL, 10);
-    ok(result == NULL,
-       "(test d): _i64tow(0x%x%08x, NULL, 10) has result %p, expected: NULL\n",
-       (DWORD)(ulonglong2str[0].value >> 32), (DWORD)ulonglong2str[0].value, result);
+
+    if (0) {
+        /* Crashes on XP and W2K3 */
+        result = p_i64tow(ulong2str[0].value, NULL, 10);
+        ok(result == NULL,
+           "(test d): _i64tow(0x%x%08x, NULL, 10) has result %p, expected: NULL\n",
+           (DWORD)(ulonglong2str[0].value >> 32), (DWORD)ulonglong2str[0].value, result);
+    }
 
     if (p_ui64tow) {
         for (pos = 0; pos < LARGE_STRI_BUFFER_LENGTH; pos++) {
 	    expected_wstr[pos] = ulong2str[0].Buffer[pos];
 	} /* for */
 	expected_wstr[LARGE_STRI_BUFFER_LENGTH] = '\0';
-	result = p_ui64tow(ulong2str[0].value, NULL, 10);
-	ok(result == NULL,
-           "(test e): _ui64tow(0x%x%08x, NULL, 10) has result %p, expected: NULL\n",
-	   (DWORD)(ulonglong2str[0].value >> 32), (DWORD)ulonglong2str[0].value, result);
+
+        if (0) {
+            /* Crashes on XP and W2K3 */
+	    result = p_ui64tow(ulong2str[0].value, NULL, 10);
+	    ok(result == NULL,
+               "(test e): _ui64tow(0x%x%08x, NULL, 10) has result %p, expected: NULL\n",
+	       (DWORD)(ulonglong2str[0].value >> 32), (DWORD)ulonglong2str[0].value, result);
+        }
     } /* if */
 }
 
