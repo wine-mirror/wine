@@ -273,7 +273,7 @@ UINT MSI_RecordSetInteger( MSIRECORD *rec, unsigned int iField, int iVal )
 
     if( iField > rec->count )
         return ERROR_INVALID_PARAMETER;
- 
+
     MSI_FreeField( &rec->fields[iField] );
     rec->fields[iField].type = MSIFIELD_INT;
     rec->fields[iField].u.iVal = iVal;
@@ -346,7 +346,8 @@ UINT MSI_RecordGetStringA(MSIRECORD *rec, unsigned int iField,
     case MSIFIELD_INT:
         wsprintfA(buffer, "%d", rec->fields[iField].u.iVal);
         len = lstrlenA( buffer );
-        lstrcpynA(szValue, buffer, *pcchValue);
+        if (szValue)
+            lstrcpynA(szValue, buffer, *pcchValue);
         break;
     case MSIFIELD_WSTR:
         len = WideCharToMultiByte( CP_ACP, 0, rec->fields[iField].u.szwVal, -1,
@@ -421,11 +422,13 @@ UINT MSI_RecordGetStringW(MSIRECORD *rec, unsigned int iField,
     case MSIFIELD_INT:
         wsprintfW(buffer, szFormat, rec->fields[iField].u.iVal);
         len = lstrlenW( buffer );
-        lstrcpynW(szValue, buffer, *pcchValue);
+        if (szValue)
+            lstrcpynW(szValue, buffer, *pcchValue);
         break;
     case MSIFIELD_WSTR:
         len = lstrlenW( rec->fields[iField].u.szwVal );
-        lstrcpynW(szValue, rec->fields[iField].u.szwVal, *pcchValue);
+        if (szValue)
+            lstrcpynW(szValue, rec->fields[iField].u.szwVal, *pcchValue);
         break;
     case MSIFIELD_NULL:
         len = 1;
