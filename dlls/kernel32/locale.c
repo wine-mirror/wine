@@ -2866,6 +2866,8 @@ void LOCALE_Init(void)
     TRACE( "ansi=%03d oem=%03d mac=%03d unix=%03d\n",
            ansi_cptable->info.codepage, oem_cptable->info.codepage,
            mac_cptable->info.codepage, unix_cp );
+
+    setlocale(LC_NUMERIC, "C");  /* FIXME: oleaut32 depends on this */
 }
 
 static HANDLE NLS_RegOpenKey(HANDLE hRootKey, LPCWSTR szKeyName)
