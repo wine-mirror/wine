@@ -2060,35 +2060,32 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                     INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 else
                 {
+                    LPWSTR proxy = (LPWSTR)((LPBYTE)lpBuffer +
+                                            sizeof(INTERNET_PROXY_INFOW));
+                    LPWSTR proxy_bypass = (LPWSTR)((LPBYTE)lpBuffer +
+                                                   sizeof(INTERNET_PROXY_INFOW) +
+                                                   proxyBytesRequired);
+
                     pPI->dwAccessType = lpwai->dwAccessType;
                     if (lpwai->lpszProxy)
                     {
-                        pPI->lpszProxy = (LPWSTR)((LPBYTE)lpBuffer +
-                                                  sizeof(INTERNET_PROXY_INFOW));
-                        lstrcpyW((LPWSTR)pPI->lpszProxy, lpwai->lpszProxy);
+                        lstrcpyW(proxy, lpwai->lpszProxy);
                     }
                     else
                     {
-                        pPI->lpszProxy = (LPWSTR)((LPBYTE)lpBuffer +
-                                                  sizeof(INTERNET_PROXY_INFOW));
-                        *((LPWSTR)(pPI->lpszProxy)) = 0;
+                        *proxy = 0;
                     }
+                    pPI->lpszProxy = proxy;
 
                     if (lpwai->lpszProxyBypass)
                     {
-                        pPI->lpszProxyBypass = (LPWSTR)((LPBYTE)lpBuffer +
-                                                        sizeof(INTERNET_PROXY_INFOW) +
-                                                        proxyBytesRequired);
-                        lstrcpyW((LPWSTR)pPI->lpszProxyBypass,
-                         lpwai->lpszProxyBypass);
+                        lstrcpyW(proxy_bypass, lpwai->lpszProxyBypass);
                     }
                     else
                     {
-                        pPI->lpszProxyBypass = (LPWSTR)((LPBYTE)lpBuffer +
-                                                        sizeof(INTERNET_PROXY_INFOW) +
-                                                        proxyBytesRequired);
-                        *((LPWSTR)(pPI->lpszProxyBypass)) = 0;
+                        *proxy_bypass = 0;
                     }
+                    pPI->lpszProxyBypass = proxy_bypass;
                     bSuccess = TRUE;
                 }
                 *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOW) +
@@ -2110,37 +2107,35 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
                     INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
                 else
                 {
+                    LPSTR proxy = (LPSTR)((LPBYTE)lpBuffer +
+                                          sizeof(INTERNET_PROXY_INFOA));
+                    LPSTR proxy_bypass = (LPSTR)((LPBYTE)lpBuffer +
+                                                 sizeof(INTERNET_PROXY_INFOA) +
+                                                 proxyBytesRequired);
+
                     pPI->dwAccessType = lpwai->dwAccessType;
                     if (lpwai->lpszProxy)
                     {
-                        pPI->lpszProxy = (LPSTR)((LPBYTE)lpBuffer +
-                                                 sizeof(INTERNET_PROXY_INFOA));
                         WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxy, -1,
-                         (LPSTR)pPI->lpszProxy, proxyBytesRequired, NULL, NULL);
+                                            proxy, proxyBytesRequired, NULL, NULL);
                     }
                     else
                     {
-                        pPI->lpszProxy = (LPSTR)((LPBYTE)lpBuffer +
-                                                 sizeof(INTERNET_PROXY_INFOA));
-                        *((LPSTR)(pPI->lpszProxy)) = '\0';
+                        *proxy = '\0';
                     }
-                    
+                    pPI->lpszProxy = proxy;
+
                     if (lpwai->lpszProxyBypass)
                     {
-                        pPI->lpszProxyBypass = (LPSTR)((LPBYTE)lpBuffer +
-                         sizeof(INTERNET_PROXY_INFOA) + proxyBytesRequired);
                         WideCharToMultiByte(CP_ACP, 0, lpwai->lpszProxyBypass,
-                         -1, (LPSTR)pPI->lpszProxyBypass,
-                         proxyBypassBytesRequired,
-                         NULL, NULL);
+                                            -1, proxy_bypass, proxyBypassBytesRequired,
+                                            NULL, NULL);
                     }
                     else
                     {
-                        pPI->lpszProxyBypass = (LPSTR)((LPBYTE)lpBuffer +
-                                                       sizeof(INTERNET_PROXY_INFOA) +
-                                                       proxyBytesRequired);
-                        *((LPSTR)(pPI->lpszProxyBypass)) = '\0';
+                        *proxy_bypass = '\0';
                     }
+                    pPI->lpszProxyBypass = proxy_bypass;
                     bSuccess = TRUE;
                 }
                 *lpdwBufferLength = sizeof(INTERNET_PROXY_INFOA) +
@@ -2595,7 +2590,8 @@ BOOL WINAPI InternetTimeToSystemTimeA( LPCSTR string, SYSTEMTIME* time, DWORD re
 BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD reserved )
 {
     unsigned int i;
-    WCHAR *s = (LPWSTR)string;
+    const WCHAR *s = string;
+    WCHAR       *end;
 
     TRACE( "%s %p 0x%08x\n", debugstr_w(string), time, reserved );
 
@@ -2625,7 +2621,8 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
 
     if (time->wDayOfWeek > 6) return TRUE;
     while (*s && !isdigitW( *s )) s++;
-    time->wDay = strtolW( s, &s, 10 );
+    time->wDay = strtolW( s, &end, 10 );
+    s = end;
 
     while (*s && !isalphaW( *s )) s++;
     if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;
@@ -2645,19 +2642,23 @@ BOOL WINAPI InternetTimeToSystemTimeW( LPCWSTR string, SYSTEMTIME* time, DWORD r
 
     while (*s && !isdigitW( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wYear = strtolW( s, &s, 10 );
+    time->wYear = strtolW( s, &end, 10 );
+    s = end;
 
     while (*s && !isdigitW( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wHour = strtolW( s, &s, 10 );
+    time->wHour = strtolW( s, &end, 10 );
+    s = end;
 
     while (*s && !isdigitW( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wMinute = strtolW( s, &s, 10 );
+    time->wMinute = strtolW( s, &end, 10 );
+    s = end;
 
     while (*s && !isdigitW( *s )) s++;
     if (*s == '\0') return TRUE;
-    time->wSecond = strtolW( s, &s, 10 );
+    time->wSecond = strtolW( s, &end, 10 );
+    s = end;
 
     time->wMilliseconds = 0;
     return TRUE;
