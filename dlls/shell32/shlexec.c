@@ -490,7 +490,7 @@ end:
     return found;
 }
 
-static UINT SHELL_FindExecutableByOperation(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation, LPWSTR key, LPWSTR filetype, LPWSTR command, LONG commandlen)
+static UINT SHELL_FindExecutableByOperation(LPCWSTR lpOperation, LPWSTR key, LPWSTR filetype, LPWSTR command, LONG commandlen)
 {
     static const WCHAR wCommand[] = {'\\','c','o','m','m','a','n','d',0};
     HKEY hkeyClass;
@@ -684,7 +684,7 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     {
         /* pass the operation string to SHELL_FindExecutableByOperation() */
         filetype[filetypelen] = '\0';
-        retval = SHELL_FindExecutableByOperation(lpPath, lpFile, lpOperation, key, filetype, command, sizeof(command));
+        retval = SHELL_FindExecutableByOperation(lpOperation, key, filetype, command, sizeof(command));
 
 	if (retval > 32)
 	{
