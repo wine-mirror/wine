@@ -2939,10 +2939,8 @@ static void test_prop_path(void)
     sz = sizeof buffer;
     buffer[0] = 0;
     r = MsiGetSourcePath(hpkg, "SourceDir", buffer, &sz );
-    todo_wine {
     ok( r == ERROR_SUCCESS, "failed to get source path\n");
     ok( !lstrcmpi(cwd, buffer), "SourceDir (%s) should be current dir (%s)\n", buffer, cwd);
-    }
 
     sz = sizeof buffer;
     buffer[0] = 0;

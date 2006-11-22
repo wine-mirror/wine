@@ -231,12 +231,15 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     if (!name)
         return NULL;
 
+    if (!lstrcmpW(name,cszSourceDir))
+        name = cszTargetDir;
+
     f = get_loaded_folder( package, name );
     if (!f)
         return NULL;
 
     /* special resolving for Target and Source root dir */
-    if (strcmpW(name,cszTargetDir)==0 || strcmpW(name,cszSourceDir)==0)
+    if (!strcmpW(name,cszTargetDir))
     {
         if (!f->ResolvedTarget && !f->Property)
         {
