@@ -1439,6 +1439,89 @@ static UINT load_all_files(MSIPACKAGE *package)
     return ERROR_SUCCESS;
 }
 
+static UINT load_folder( MSIRECORD *row, LPVOID param )
+{
+    MSIPACKAGE *package = param;
+    static const WCHAR szDot[] = { '.',0 };
+    static WCHAR szEmpty[] = { 0 };
+    LPWSTR p, tgt_short, tgt_long, src_short, src_long;
+    MSIFOLDER *folder;
+
+    folder = msi_alloc_zero( sizeof (MSIFOLDER) );
+    if (!folder)
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    folder->Directory = msi_dup_record_field( row, 1 );
+
+    TRACE("%s\n", debugstr_w(folder->Directory));
+
+    p = msi_dup_record_field(row, 3);
+
+    /* split src and target dir */
+    tgt_short = p;
+    src_short = folder_split_path( p, ':' );
+
+    /* split the long and short paths */
+    tgt_long = folder_split_path( tgt_short, '|' );
+    src_long = folder_split_path( src_short, '|' );
+
+    /* check for no-op dirs */
+    if (!lstrcmpW(szDot, tgt_short))
+        tgt_short = szEmpty;
+    if (!lstrcmpW(szDot, src_short))
+        src_short = szEmpty;
+
+    if (!tgt_long)
+        tgt_long = tgt_short;
+
+    if (!src_short) {
+        src_short = tgt_short;
+        src_long = tgt_long;
+    }
+
+    if (!src_long)
+        src_long = src_short;
+
+    /* FIXME: use the target short path too */
+    folder->TargetDefault = strdupW(tgt_long);
+    folder->SourceShortPath = strdupW(src_short);
+    folder->SourceLongPath = strdupW(src_long);
+    msi_free(p);
+
+    TRACE("TargetDefault = %s\n",debugstr_w( folder->TargetDefault ));
+    TRACE("SourceLong = %s\n", debugstr_w( folder->SourceLongPath ));
+    TRACE("SourceShort = %s\n", debugstr_w( folder->SourceShortPath ));
+
+    folder->Parent = msi_dup_record_field( row, 2 );
+
+    folder->Property = msi_dup_property( package, folder->Directory );
+
+    list_add_tail( &package->folders, &folder->entry );
+
+    TRACE("returning %p\n", folder);
+
+    return ERROR_SUCCESS;
+}
+
+static UINT load_all_folders( MSIPACKAGE *package )
+{
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R', 'O','M',' ',
+         '`','D','i','r','e','c','t','o','r','y','`',0 };
+    MSIQUERY *view;
+    UINT r;
+
+    if (!list_empty(&package->folders))
+        return ERROR_SUCCESS;
+
+    r = MSI_DatabaseOpenViewW( package->db, query, &view );
+    if (r != ERROR_SUCCESS)
+        return r;
+
+    r = MSI_IterateRecords(view, NULL, load_folder, package);
+    msiobj_release(&view->hdr);
+    return r;
+}
 
 /*
  * I am not doing any of the costing functionality yet.
@@ -1468,6 +1551,7 @@ static UINT ACTION_CostInitialize(MSIPACKAGE *package)
     load_all_components( package );
     load_all_features( package );
     load_all_files( package );
+    load_all_folders( package );
 
     return ERROR_SUCCESS;
 }
@@ -1502,98 +1586,6 @@ static UINT execute_script(MSIPACKAGE *package, UINT script )
 static UINT ACTION_FileCost(MSIPACKAGE *package)
 {
     return ERROR_SUCCESS;
-}
-
-static MSIFOLDER *load_folder( MSIPACKAGE *package, LPCWSTR dir )
-{
-    static const WCHAR Query[] =
-        {'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
-         '`','D','i','r','e','c', 't','o','r','y','`',' ',
-         'W','H','E','R','E',' ', '`', 'D','i','r','e','c','t', 'o','r','y','`',
-         ' ','=',' ','\'','%','s','\'',
-         0};
-    static const WCHAR szDot[] = { '.',0 };
-    static WCHAR szEmpty[] = { 0 };
-    LPWSTR p, tgt_short, tgt_long, src_short, src_long;
-    LPCWSTR parent;
-    MSIRECORD *row;
-    MSIFOLDER *folder;
-
-    TRACE("Looking for dir %s\n",debugstr_w(dir));
-
-    folder = get_loaded_folder( package, dir );
-    if (folder)
-        return folder;
-
-    TRACE("Working to load %s\n",debugstr_w(dir));
-
-    row = MSI_QueryGetRecord(package->db, Query, dir);
-    if (!row)
-        return NULL;
-
-    folder = msi_alloc_zero( sizeof (MSIFOLDER) );
-    if (!folder)
-        return NULL;
-
-    folder->Directory = strdupW(dir);
-
-    p = msi_dup_record_field(row, 3);
-
-    /* split src and target dir */
-    tgt_short = p;
-    src_short = folder_split_path( p, ':' );
-
-    /* split the long and short paths */
-    tgt_long = folder_split_path( tgt_short, '|' );
-    src_long = folder_split_path( src_short, '|' );
-
-    /* check for no-op dirs */
-    if (!lstrcmpW(szDot, tgt_short))
-        tgt_short = szEmpty;
-    if (!lstrcmpW(szDot, src_short))
-        src_short = szEmpty;
-
-    if (!tgt_long)
-        tgt_long = tgt_short;
-	
-    if (!src_short) {
-        src_short = tgt_short;
-        src_long = tgt_long;
-    }
-    
-    if (!src_long)
-        src_long = src_short;
-
-    /* FIXME: use the target short path too */
-    folder->TargetDefault = strdupW(tgt_long);
-    folder->SourceShortPath = strdupW(src_short);
-    folder->SourceLongPath = strdupW(src_long);
-    msi_free(p);
-
-    TRACE("TargetDefault = %s\n",debugstr_w( folder->TargetDefault ));
-    TRACE("SourceLong = %s\n", debugstr_w( folder->SourceLongPath ));
-    TRACE("SourceShort = %s\n", debugstr_w( folder->SourceShortPath ));
-
-    parent = MSI_RecordGetString(row, 2);
-    if (parent) 
-    {
-        folder->Parent = load_folder( package, parent );
-        if ( folder->Parent )
-            TRACE("loaded parent %p %s\n", folder->Parent,
-                  debugstr_w(folder->Parent->Directory));
-        else
-            ERR("failed to load parent folder %s\n", debugstr_w(parent));
-    }
-
-    folder->Property = msi_dup_property( package, dir );
-
-    msiobj_release(&row->hdr);
-
-    list_add_tail( &package->folders, &folder->entry );
-
-    TRACE("%s returning %p\n",debugstr_w(dir),folder);
-
-    return folder;
 }
 
 static void ACTION_GetComponentInstallStates(MSIPACKAGE *package)
@@ -1873,7 +1865,6 @@ static UINT ITERATE_CostFinalizeDirectories(MSIRECORD *row, LPVOID param)
 
     /* This helper function now does ALL the work */
     TRACE("Dir %s ...\n",debugstr_w(name));
-    load_folder(package,name);
     path = resolve_folder(package,name,FALSE,TRUE,NULL);
     TRACE("resolves to %s\n",debugstr_w(path));
     msi_free(path);

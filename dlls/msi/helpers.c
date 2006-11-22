@@ -293,7 +293,7 @@ LPWSTR resolve_folder(MSIPACKAGE *package, LPCWSTR name, BOOL source,
     if (!f->Parent)
         return path;
 
-    parent = f->Parent->Directory;
+    parent = f->Parent;
 
     TRACE(" ! Parent is %s\n", debugstr_w(parent));
 
@@ -496,6 +496,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
         MSIFOLDER *folder = LIST_ENTRY( item, MSIFOLDER, entry );
 
         list_remove( &folder->entry );
+        msi_free( folder->Parent );
         msi_free( folder->Directory );
         msi_free( folder->TargetDefault );
         msi_free( folder->SourceLongPath );
@@ -509,7 +510,7 @@ void ACTION_free_package_structures( MSIPACKAGE* package)
     LIST_FOR_EACH_SAFE( item, cursor, &package->components )
     {
         MSICOMPONENT *comp = LIST_ENTRY( item, MSICOMPONENT, entry );
-        
+
         list_remove( &comp->entry );
         msi_free( comp->Component );
         msi_free( comp->ComponentId );

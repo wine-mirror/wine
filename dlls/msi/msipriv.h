@@ -318,6 +318,7 @@ typedef struct tagMSIFOLDER
 {
     struct list entry;
     LPWSTR Directory;
+    LPWSTR Parent;
     LPWSTR TargetDefault;
     LPWSTR SourceLongPath;
     LPWSTR SourceShortPath;
@@ -325,7 +326,6 @@ typedef struct tagMSIFOLDER
     LPWSTR ResolvedTarget;
     LPWSTR ResolvedSource;
     LPWSTR Property;   /* initially set property */
-    struct tagMSIFOLDER *Parent;
     INT   State;
         /* 0 = uninitialized */
         /* 1 = existing */
