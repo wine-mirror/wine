@@ -220,10 +220,10 @@ static WINE_PLAYSOUND*  PlaySound_Alloc(const void* pszSound, HMODULE hmod,
         {
             if (fdwSound & SND_ASYNC)
             {
-                wps->pszSound = HeapAlloc(GetProcessHeap(), 0,
-                                          (lstrlenW(pszSound)+1) * sizeof(WCHAR));
-                if (!wps->pszSound) goto oom_error;
-                lstrcpyW((LPWSTR)wps->pszSound, pszSound);
+                LPWSTR sound = HeapAlloc(GetProcessHeap(), 0,
+                                         (lstrlenW(pszSound)+1) * sizeof(WCHAR));
+                if (!sound) goto oom_error;
+                wps->pszSound = lstrcpyW(sound, pszSound);
                 wps->bAlloc = TRUE;
             }
             else
