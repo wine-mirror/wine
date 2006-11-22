@@ -367,9 +367,9 @@ static UINT process_action_return_value(UINT type, HANDLE ThreadHandle)
     }
 }
 
-static UINT process_handle(MSIPACKAGE* package, UINT type, 
+static UINT process_handle(MSIPACKAGE* package, UINT type,
                            HANDLE ThreadHandle, HANDLE ProcessHandle,
-                           LPCWSTR Name, BOOL *finished)
+                           LPCWSTR Name)
 {
     UINT rc = ERROR_SUCCESS;
 
@@ -393,8 +393,6 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
         CloseHandle(ThreadHandle);
         if (ProcessHandle)
             CloseHandle(ProcessHandle);
-        if (finished)
-            *finished = TRUE;
     }
     else 
     {
@@ -416,8 +414,6 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
             if (ProcessHandle)
                 CloseHandle(ProcessHandle);
         }
-        if (finished)
-            *finished = FALSE;
     }
 
     return rc;
@@ -512,7 +508,6 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
 {
     WCHAR tmp_file[MAX_PATH];
     UINT r = ERROR_SUCCESS;
-    BOOL finished = FALSE;
     HANDLE ThreadHandle;
 
     r = store_binary_to_temp(package, source, tmp_file);
@@ -530,7 +525,7 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
 
     ThreadHandle = do_msidbCustomActionTypeDll( package, tmp_file, target );
 
-    r = process_handle(package, type, ThreadHandle, NULL, action, &finished );
+    r = process_handle(package, type, ThreadHandle, NULL, action);
 
     return r;
 }
@@ -547,7 +542,6 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
     WCHAR *cmd;
     static const WCHAR spc[] = {' ',0};
     UINT r = ERROR_SUCCESS;
-    BOOL finished = FALSE;
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
@@ -585,8 +579,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
 
-    r = process_handle(package, type, info.hThread, info.hProcess, action,
-                          &finished);
+    r = process_handle(package, type, info.hThread, info.hProcess, action);
 
     return r;
 }
@@ -608,7 +601,7 @@ static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
 
     hThread = do_msidbCustomActionTypeDll( package, file->TargetPath, target );
 
-    return process_handle(package, type, hThread, NULL, action, NULL );
+    return process_handle(package, type, hThread, NULL, action);
 }
 
 static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
@@ -662,8 +655,7 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
     }
     msi_free(cmd);
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action, 
-                         NULL);
+    prc = process_handle(package, type, info.hThread, info.hProcess, action);
 
     return prc;
 }
@@ -748,7 +740,7 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
     }
     msi_free(cmd);
 
-    return process_handle(package, type, info.hThread, info.hProcess, action, NULL);
+    return process_handle(package, type, info.hThread, info.hProcess, action);
 }
 
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
@@ -788,8 +780,7 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
     }
     msi_free(deformated);
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action,
-                         NULL);
+    prc = process_handle(package, type, info.hThread, info.hProcess, action);
 
     return prc;
 }
