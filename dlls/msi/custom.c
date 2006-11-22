@@ -336,21 +336,21 @@ static void file_running_action(MSIPACKAGE* package, HANDLE Handle,
     list_add_tail( &package->RunningActions, &action->entry );
 }
 
-static UINT process_action_return_value(UINT type, HANDLE ThreadHandle)
+static UINT custom_get_process_return( HANDLE process )
 {
-    DWORD rc=0;
-    
-    if (type == 2)
-    {
-        GetExitCodeProcess(ThreadHandle,&rc);
-    
-        if (rc == 0)
-            return ERROR_SUCCESS;
-        else
-            return ERROR_FUNCTION_FAILED;
-    }
+    DWORD rc = 0;
 
-    GetExitCodeThread(ThreadHandle,&rc);
+    GetExitCodeProcess( process, &rc );
+    if (rc != 0)
+        return ERROR_FUNCTION_FAILED;
+    return ERROR_SUCCESS;
+}
+
+static UINT custom_get_thread_return( HANDLE thread )
+{
+    DWORD rc = 0;
+
+    GetExitCodeThread( thread, &rc );
 
     switch (rc)
     {
@@ -385,16 +385,16 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
         if (!(type & msidbCustomActionTypeContinue))
         {
             if (ProcessHandle)
-                rc = process_action_return_value(2,ProcessHandle);
+                rc = custom_get_process_return(ProcessHandle);
             else
-                rc = process_action_return_value(1,ThreadHandle);
+                rc = custom_get_thread_return(ThreadHandle);
         }
 
         CloseHandle(ThreadHandle);
         if (ProcessHandle)
             CloseHandle(ProcessHandle);
     }
-    else 
+    else
     {
         TRACE("Asynchronous Execution of action %s\n",debugstr_w(Name));
         /* asynchronous */
