@@ -682,13 +682,17 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
     }
 
     buf_size = 256;
-    if (!(text = HeapAlloc( GetProcessHeap(), 0, buf_size * sizeof(WCHAR) ))) return;
+    if (!(text = HeapAlloc( GetProcessHeap(), 0, buf_size * sizeof(WCHAR) )))
+        goto no_TextOut;
 
     while ((len = InternalGetWindowText( hwnd, text, buf_size )) == buf_size - 1)
     {
         buf_size *= 2;
-        if (!(text = HeapReAlloc( GetProcessHeap(), 0, text, buf_size * sizeof(WCHAR) ))) return;
+        if (!(text = HeapReAlloc( GetProcessHeap(), 0, text, buf_size * sizeof(WCHAR) )))
+            goto no_TextOut;
     }
+
+    if (!len) goto no_TextOut;
 
     if (((style & SS_TYPEMASK) == SS_SIMPLE) && (style & SS_NOPREFIX))
     {
@@ -703,6 +707,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, DWORD style )
         DrawTextW( hdc, text, -1, &rc, wFormat );
     }
 
+no_TextOut:
     HeapFree( GetProcessHeap(), 0, text );
 
     if (hFont)
