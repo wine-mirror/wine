@@ -398,7 +398,7 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
     {
         TRACE("Asynchronous Execution of action %s\n",debugstr_w(Name));
         /* asynchronous */
-        if (type & msidbCustomActionTypeContinue)
+        if (!(type & msidbCustomActionTypeContinue))
         {
             if (ProcessHandle)
             {
@@ -406,7 +406,7 @@ static UINT process_handle(MSIPACKAGE* package, UINT type,
                 CloseHandle(ThreadHandle);
             }
             else
-            file_running_action(package, ThreadHandle, FALSE, Name);
+                file_running_action(package, ThreadHandle, FALSE, Name);
         }
         else
         {
