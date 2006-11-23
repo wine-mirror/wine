@@ -101,6 +101,13 @@ static void test_null_source(void)
     ok(!len && GLE == ERROR_INVALID_PARAMETER,
         "WideCharToMultiByte returned %d with GLE=%d (expected 0 with ERROR_INVALID_PARAMETER)\n",
         len, GLE);
+
+    SetLastError(0);
+    len = WideCharToMultiByte(CP_ACP, 0, NULL, -1, NULL, 0, NULL, NULL);
+    GLE = GetLastError();
+    ok(!len && GLE == ERROR_INVALID_PARAMETER,
+        "WideCharToMultiByte returned %d with GLE=%d (expected 0 with ERROR_INVALID_PARAMETER)\n",
+        len, GLE);
 }
 
 /* lstrcmpW is not supported on Win9x! */
