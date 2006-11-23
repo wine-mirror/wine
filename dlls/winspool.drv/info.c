@@ -383,7 +383,7 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     }
 }
 
-BOOL add_printer_driver(const char *name)
+static BOOL add_printer_driver(char *name)
 {
     DRIVER_INFO_3A di3a;
 
