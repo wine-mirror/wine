@@ -1568,6 +1568,12 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
                                             WINED3DFORMAT DisplayFormat, WINED3DFORMAT BackBufferFormat, BOOL Windowed) {
 
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
+    GLXFBConfig* cfgs = NULL;
+    int nCfgs = 0;
+    int it;
+    HRESULT hr = WINED3DERR_NOTAVAILABLE;
+    WineD3D_Context* ctx;
+
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n",
           This,
           Adapter,
@@ -1581,29 +1587,24 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
         return WINED3DERR_INVALIDCALL;
     }
 
-    {
-      GLXFBConfig* cfgs = NULL;
-      int nCfgs = 0;
-      int it;
-      HRESULT hr = WINED3DERR_NOTAVAILABLE;
-
-      WineD3D_Context* ctx = WineD3D_CreateFakeGLContext();
-      if (NULL != ctx) {
-        cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
-        for (it = 0; it < nCfgs; ++it) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx->display, cfgs[it], DisplayFormat)) {
-                hr = WINED3D_OK;
-                break ;
-            }
-        }
-        XFree(cfgs);
-
-        WineD3D_ReleaseFakeGLContext(ctx);
-        return hr;
+    ctx = WineD3D_CreateFakeGLContext();
+    if (NULL != ctx) {
+      cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
+      for (it = 0; it < nCfgs; ++it) {
+          if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx->display, cfgs[it], DisplayFormat)) {
+              hr = WINED3D_OK;
+              TRACE_(d3d_caps)("OK\n");
+              break ;
+          }
       }
+      XFree(cfgs);
+      WineD3D_ReleaseFakeGLContext(ctx);
     }
 
-    return WINED3DERR_NOTAVAILABLE;
+    if(hr != WINED3D_OK)
+        TRACE_(d3d_caps)("returning something different from WINED3D_OK\n");
+
+    return hr;
 }
 
 static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapter, WINED3DDEVTYPE DeviceType, 
