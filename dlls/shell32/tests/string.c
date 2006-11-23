@@ -21,8 +21,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define WINE_NOWINSOCK
 #include "windef.h"
 #include "winbase.h"
@@ -67,21 +65,21 @@ static void test_StrRetToStringNW(void)
     trace("StrRetToStringNAW is Unicode\n");
 
     strret.uType = STRRET_WSTR;
-    strret.u.pOleStr = CoDupStrW("Test");
+    U(strret).pOleStr = CoDupStrW("Test");
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, sizeof(buff)/sizeof(WCHAR), &strret, NULL);
     ok(ret == TRUE && !strcmpW(buff, szTestW),
        "STRRET_WSTR: dup failed, ret=%d\n", ret);
 
     strret.uType = STRRET_CSTR;
-    lstrcpyA(strret.u.cStr, "Test");
+    lstrcpyA(U(strret).cStr, "Test");
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, sizeof(buff)/sizeof(WCHAR), &strret, NULL);
     ok(ret == TRUE && !strcmpW(buff, szTestW),
        "STRRET_CSTR: dup failed, ret=%d\n", ret);
 
     strret.uType = STRRET_OFFSET;
-    strret.u.uOffset = 1;
+    U(strret).uOffset = 1;
     strcpy((char*)&iidl, " Test");
     memset(buff, 0xff, sizeof(buff));
     ret = pStrRetToStrNAW(buff, sizeof(buff)/sizeof(WCHAR), &strret, iidl);
@@ -92,7 +90,7 @@ static void test_StrRetToStringNW(void)
 #if 0
     /* Invalid dest - should return FALSE, except NT4 does not, so we don't check. */
     strret.uType = STRRET_WSTR;
-    strret.u.pOleStr = CoDupStrW("Test");
+    U(strret).pOleStr = CoDupStrW("Test");
     pStrRetToStrNAW(NULL, sizeof(buff)/sizeof(WCHAR), &strret, NULL);
     trace("NULL dest: ret=%d\n", ret);
 #endif
