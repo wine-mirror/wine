@@ -1510,9 +1510,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
             }
         }
         XFree(cfgs);
-        cfgs = NULL;
     } else {
-        /* If there's a current context then we cannot create a fake one so pass everything */
+        ERR_(d3d_caps)("returning WINED3D_OK even so CreateFakeGLContext or glXGetFBConfigs failed\n");
         hr = WINED3D_OK;
     }
 
