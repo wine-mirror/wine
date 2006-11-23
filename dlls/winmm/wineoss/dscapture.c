@@ -853,7 +853,7 @@ static void * my_memcpy(void * dst, const void * src, int length)
 {
     int i;
     for (i = 0; i < length; i++)
-        ((char *)dst)[i] = ((char *)src)[i];
+        ((char *)dst)[i] = ((const char *)src)[i];
     return dst;
 }
 
