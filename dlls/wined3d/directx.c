@@ -28,6 +28,7 @@
 
 
 #include "config.h"
+#include <assert.h>
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
@@ -66,105 +67,115 @@ DWORD *stateLookup[MAX_LOOKUPS];
 DWORD minMipLookup[WINED3DTEXF_ANISOTROPIC + 1][WINED3DTEXF_LINEAR + 1];
 
 
-typedef struct _WineD3D_GLContext {
-  GLXContext   glCtx;
-  Display*     display;
-  LONG         ref;
-} WineD3D_Context;
-
-
 /**
  * Note: GL seems to trap if GetDeviceCaps is called before any HWND's created
  * ie there is no GL Context - Get a default rendering context to enable the
  * function query some info from GL
  */
-static WineD3D_Context* WineD3D_CreateFakeGLContext(void) {
-    static WineD3D_Context ctx;
-    WineD3D_Context* ret = NULL;
 
-    if (glXGetCurrentContext() == NULL) {
-       BOOL         gotContext  = FALSE;
-       BOOL         created     = FALSE;
-       XVisualInfo  template;
-       HDC          device_context;
-       Visual*      visual;
-       BOOL         failed = FALSE;
-       int          num;
-       XVisualInfo *visInfo;
-       Drawable drawable;
-       XWindowAttributes win_attr;
-       TRACE_(d3d_caps)("Creating Fake GL Context\n");
+static int             wined3d_fake_gl_context_ref = 0;
+static BOOL            wined3d_fake_gl_context_foreign;
+static BOOL            wined3d_fake_gl_context_available = FALSE;
+static Display*        wined3d_fake_gl_context_display = NULL;
 
-       drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
+static void WineD3D_ReleaseFakeGLContext(void) {
+    GLXContext glCtx;
 
-       /* Get the display */
-       device_context = GetDC(0);
-       ctx.display = get_display(device_context);
-       ReleaseDC(0, device_context);
+    if(!wined3d_fake_gl_context_available) {
+        TRACE_(d3d_caps)("context not available\n");
+        return;
+    }
 
-       /* Get the X visual */
-       ENTER_GL();
-       if (XGetWindowAttributes(ctx.display, drawable, &win_attr)) {
-           visual = win_attr.visual;
-       } else {
-           visual = DefaultVisual(ctx.display, DefaultScreen(ctx.display));
-       }
-       template.visualid = XVisualIDFromVisual(visual);
-       visInfo = XGetVisualInfo(ctx.display, VisualIDMask, &template, &num);
-       if (visInfo == NULL) {
-           LEAVE_GL();
-           WARN_(d3d_caps)("Error creating visual info for capabilities initialization\n");
-           failed = TRUE;
-       }
+    glCtx = glXGetCurrentContext();
 
-       /* Create a GL context */
-       if (!failed) {
-           ctx.glCtx = glXCreateContext(ctx.display, visInfo, NULL, GL_TRUE);
-           XFree( visInfo );
+    TRACE_(d3d_caps)("decrementing ref from %i\n", wined3d_fake_gl_context_ref);
+    if (0 == (--wined3d_fake_gl_context_ref) ) {
+        if(!wined3d_fake_gl_context_foreign && glCtx) {
+            TRACE_(d3d_caps)("destroying fake GL context\n");
+            glXMakeCurrent(wined3d_fake_gl_context_display, None, NULL);
+            glXDestroyContext(wined3d_fake_gl_context_display, glCtx);
+        }
+        LEAVE_GL();
+        wined3d_fake_gl_context_available = FALSE;
+    }
+    assert(wined3d_fake_gl_context_ref >= 0);
 
-           if (ctx.glCtx == NULL) {
-               LEAVE_GL();
-               WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
-               failed = TRUE;
-           }
-       }
-
-       /* Make it the current GL context */
-       if (!failed && glXMakeCurrent(ctx.display, drawable, ctx.glCtx) == False) {
-           glXDestroyContext(ctx.display, ctx.glCtx);
-           LEAVE_GL();
-           WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
-           failed = TRUE;
-       }
-
-       /* It worked! Wow... */
-       if (!failed) {
-           gotContext = TRUE;
-           created = TRUE;
-           ret = &ctx;
-       } else {
-           ret = NULL;
-       }
-
-   } else {
-     if (ctx.ref > 0) ret = &ctx;
-   }
-
-   if (NULL != ret) InterlockedIncrement(&ret->ref);
-   return ret;
 }
 
-static void WineD3D_ReleaseFakeGLContext(WineD3D_Context* ctx) {
-    /* If we created a dummy context, throw it away */
-    if (NULL != ctx) {
-        if (0 == InterlockedDecrement(&ctx->ref)) {
-            glXMakeCurrent(ctx->display, None, NULL);
-            glXDestroyContext(ctx->display, ctx->glCtx);
-            ctx->display = NULL;
-            ctx->glCtx = NULL;
-            LEAVE_GL();
-        }
+static BOOL WineD3D_CreateFakeGLContext(void) {
+    XVisualInfo* visInfo;
+    GLXContext   glCtx;
+
+    TRACE_(d3d_caps)("getting context...\n");
+    if(wined3d_fake_gl_context_ref > 0) goto ret;
+    assert(0 == wined3d_fake_gl_context_ref);
+
+    wined3d_fake_gl_context_foreign = TRUE;
+
+    if(!wined3d_fake_gl_context_display) {
+        HDC        device_context = GetDC(0);
+
+        wined3d_fake_gl_context_display = get_display(device_context);
+        ReleaseDC(0, device_context);
     }
+
+    ENTER_GL();
+
+    visInfo = NULL;
+    glCtx = glXGetCurrentContext();
+
+    if (!glCtx) {
+        Drawable     drawable;
+        XVisualInfo  template;
+        Visual*      visual;
+        int          num;
+        XWindowAttributes win_attr;
+
+        wined3d_fake_gl_context_foreign = FALSE;
+        drawable = (Drawable) GetPropA(GetDesktopWindow(), "__wine_x11_whole_window");
+
+        TRACE_(d3d_caps)("Creating Fake GL Context\n");
+
+        /* Get the X visual */
+        if (XGetWindowAttributes(wined3d_fake_gl_context_display, drawable, &win_attr)) {
+            visual = win_attr.visual;
+        } else {
+            visual = DefaultVisual(wined3d_fake_gl_context_display, DefaultScreen(wined3d_fake_gl_context_display));
+        }
+        template.visualid = XVisualIDFromVisual(visual);
+        visInfo = XGetVisualInfo(wined3d_fake_gl_context_display, VisualIDMask, &template, &num);
+        if (!visInfo) {
+            WARN_(d3d_caps)("Error creating visual info for capabilities initialization\n");
+            goto fail;
+        }
+
+        /* Create a GL context */
+        glCtx = glXCreateContext(wined3d_fake_gl_context_display, visInfo, NULL, GL_TRUE);
+        if (!glCtx) {
+            WARN_(d3d_caps)("Error creating default context for capabilities initialization\n");
+            goto fail;
+        }
+
+        /* Make it the current GL context */
+        if (!glXMakeCurrent(wined3d_fake_gl_context_display, drawable, glCtx)) {
+            WARN_(d3d_caps)("Error setting default context as current for capabilities initialization\n");
+            goto fail;
+        }
+
+        XFree(visInfo);
+
+    }
+
+  ret:
+    TRACE_(d3d_caps)("incrementing ref from %i\n", wined3d_fake_gl_context_ref);
+    wined3d_fake_gl_context_ref++;
+    wined3d_fake_gl_context_available = TRUE;
+    return TRUE;
+  fail:
+    if(visInfo) XFree(visInfo);
+    if(glCtx) glXDestroyContext(wined3d_fake_gl_context_display, glCtx);
+    LEAVE_GL();
+    return FALSE;
 }
 
 /**********************************************************
@@ -304,18 +315,14 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
     GLfloat     gl_floatv[2];
     Bool        test = 0;
     int         major, minor;
-    WineD3D_Context *fake_ctx = NULL;
-    BOOL        gotContext    = FALSE;
+    BOOL        return_value = TRUE;
     int         i;
 
     /* Make sure that we've got a context */
-    if (glXGetCurrentContext() == NULL) {
-        /* TODO: CreateFakeGLContext should really take a display as a parameter  */
-        fake_ctx = WineD3D_CreateFakeGLContext();
-        if (NULL != fake_ctx) gotContext = TRUE;
-    } else {
-        gotContext = TRUE;
-    }
+    /* TODO: CreateFakeGLContext should really take a display as a parameter  */
+    /* Only save the values obtained when a display is provided */
+    if (!WineD3D_CreateFakeGLContext() || wined3d_fake_gl_context_foreign)
+        return_value = FALSE;
 
     TRACE_(d3d_caps)("(%p, %p)\n", gl_info, display);
 
@@ -1015,15 +1022,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
         }
     }
 
-    /* If we created a dummy context, throw it away */
-    if (NULL != fake_ctx) WineD3D_ReleaseFakeGLContext(fake_ctx);
 
-    /* Only save the values obtained when a display is provided */
-    if (fake_ctx == NULL) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
+    WineD3D_ReleaseFakeGLContext();
+    return return_value;
 }
 
 /**********************************************************
@@ -1294,11 +1295,8 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
            reuse the values once we have a context which is valid. Values from
            a temporary context may differ from the final ones                 */
         if (!isGLInfoValid) {
-            WineD3D_Context *fake_ctx = NULL;
-            if (glXGetCurrentContext() == NULL) fake_ctx = WineD3D_CreateFakeGLContext();
             /* If we don't know the device settings, go query them now */
             isGLInfoValid = IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
-            if (fake_ctx != NULL) WineD3D_ReleaseFakeGLContext(fake_ctx);
         }
 
         /* If it worked, return the information requested */
@@ -1483,7 +1481,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
                                                    WINED3DFORMAT DepthStencilFormat) {
     IWineD3DImpl *This = (IWineD3DImpl *)iface;
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
-    WineD3D_Context* ctx = NULL;
     GLXFBConfig* cfgs = NULL;
     int nCfgs = 0;
     int it;
@@ -1499,18 +1496,14 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         TRACE("(%p) Failed: Atapter (%u) higher than supported adapters (%u) returning WINED3DERR_INVALIDCALL\n", This, Adapter, IWineD3D_GetAdapterCount(iface));
         return WINED3DERR_INVALIDCALL;
     }
-    /* TODO: use the real context if it's available */
-    ctx = WineD3D_CreateFakeGLContext();
-    if(NULL !=  ctx) {
-        cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
-    } else {
-        TRACE_(d3d_caps)("(%p) : Unable to create a fake context at this time (there may already be an active context)\n", This);
-    }
 
-    if (NULL != cfgs) {
+    if(WineD3D_CreateFakeGLContext())
+        cfgs = glXGetFBConfigs(wined3d_fake_gl_context_display, DefaultScreen(wined3d_fake_gl_context_display), &nCfgs);
+
+    if (cfgs) {
         for (it = 0; it < nCfgs; ++it) {
-            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx->display, cfgs[it], RenderTargetFormat)) {
-                if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(ctx->display, cfgs[it], DepthStencilFormat)) {
+            if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(wined3d_fake_gl_context_display, cfgs[it], RenderTargetFormat)) {
+                if (IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(wined3d_fake_gl_context_display, cfgs[it], DepthStencilFormat)) {
                     hr = WINED3D_OK;
                     break ;
                 }
@@ -1523,8 +1516,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
         hr = WINED3D_OK;
     }
 
-    if (ctx != NULL)
-        WineD3D_ReleaseFakeGLContext(ctx);
+    WineD3D_ReleaseFakeGLContext();
 
     if (hr != WINED3D_OK)
         TRACE_(d3d_caps)("Failed to match stencil format to device\n");
@@ -1572,7 +1564,6 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
     int nCfgs = 0;
     int it;
     HRESULT hr = WINED3DERR_NOTAVAILABLE;
-    WineD3D_Context* ctx;
 
     TRACE_(d3d_caps)("(%p)-> (STUB) (Adptr:%d, CheckType:(%x,%s), DispFmt:(%x,%s), BackBuf:(%x,%s), Win?%d): stub\n",
           This,
@@ -1587,18 +1578,17 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
         return WINED3DERR_INVALIDCALL;
     }
 
-    ctx = WineD3D_CreateFakeGLContext();
-    if (NULL != ctx) {
-      cfgs = glXGetFBConfigs(ctx->display, DefaultScreen(ctx->display), &nCfgs);
+    if (WineD3D_CreateFakeGLContext()) {
+      cfgs = glXGetFBConfigs(wined3d_fake_gl_context_display, DefaultScreen(wined3d_fake_gl_context_display), &nCfgs);
       for (it = 0; it < nCfgs; ++it) {
-          if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(ctx->display, cfgs[it], DisplayFormat)) {
+          if (IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(wined3d_fake_gl_context_display, cfgs[it], DisplayFormat)) {
               hr = WINED3D_OK;
               TRACE_(d3d_caps)("OK\n");
               break ;
           }
       }
       if(cfgs) XFree(cfgs);
-      WineD3D_ReleaseFakeGLContext(ctx);
+      WineD3D_ReleaseFakeGLContext();
     }
 
     if(hr != WINED3D_OK)
