@@ -860,7 +860,7 @@ static struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int w
 #endif
     case WS_AF_INET6: {
         struct sockaddr_in6* uin6;
-        const struct WS_sockaddr_in6* win6 = (struct WS_sockaddr_in6*)wsaddr;
+        const struct WS_sockaddr_in6* win6 = (const struct WS_sockaddr_in6*)wsaddr;
 
         /* Note: Windows has 2 versions of the sockaddr_in6 struct, one with
          * scope_id, one without. Check:
@@ -883,7 +883,7 @@ static struct sockaddr* ws_sockaddr_ws2u(const struct WS_sockaddr* wsaddr, int w
     }
     case WS_AF_INET: {
         struct sockaddr_in* uin;
-        const struct WS_sockaddr_in* win = (struct WS_sockaddr_in*)wsaddr;
+        const struct WS_sockaddr_in* win = (const struct WS_sockaddr_in*)wsaddr;
 
         if (wsaddrlen<sizeof(struct WS_sockaddr_in))
             return NULL;
@@ -988,7 +988,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
         break;
 #endif
     case AF_INET6: {
-        const struct sockaddr_in6* uin6 = (struct sockaddr_in6*)uaddr;
+        const struct sockaddr_in6* uin6 = (const struct sockaddr_in6*)uaddr;
         struct WS_sockaddr_in6_old* win6old = (struct WS_sockaddr_in6_old*)wsaddr;
 
         if (*wsaddrlen < sizeof(struct WS_sockaddr_in6_old))
@@ -1008,7 +1008,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
         return 0;
     }
     case AF_INET: {
-        struct sockaddr_in* uin = (struct sockaddr_in*)uaddr;
+        const struct sockaddr_in* uin = (const struct sockaddr_in*)uaddr;
         struct WS_sockaddr_in* win = (struct WS_sockaddr_in*)wsaddr;
 
         if (*wsaddrlen < sizeof(struct WS_sockaddr_in))
@@ -2699,8 +2699,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
             SetLastError(WSAEFAULT);
             return SOCKET_ERROR;
         }
-        get_per_thread_data()->opentype = *(int *)optval;
-        TRACE("setting global SO_OPENTYPE to 0x%x\n", *(int *)optval );
+        get_per_thread_data()->opentype = *(const int *)optval;
+        TRACE("setting global SO_OPENTYPE to 0x%x\n", *(const int *)optval );
         return 0;
     }
 
@@ -2721,7 +2721,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
 	{
 	    case IPX_PTYPE:
 		fd = get_sock_fd( s, 0, NULL );
-		TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", *(int*)optval, fd);
+		TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", *(const int*)optval, fd);
 		
 		/* We try to set the ipx type on ipx socket level. */
 #ifdef SOL_IPX
@@ -2758,13 +2758,13 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     /* Is a privileged and useless operation, so we don't. */
     if ((optname == WS_SO_DEBUG) && (level == WS_SOL_SOCKET))
     {
-        FIXME("(%d,SOL_SOCKET,SO_DEBUG,%p(%d)) attempted (is privileged). Ignoring.\n",s,optval,*(DWORD*)optval);
+        FIXME("(%d,SOL_SOCKET,SO_DEBUG,%p(%d)) attempted (is privileged). Ignoring.\n",s,optval,*(const DWORD*)optval);
         return 0;
     }
 
     if(optname == WS_SO_DONTLINGER && level == WS_SOL_SOCKET) {
         /* This is unique to WinSock and takes special conversion */
-        linger.l_onoff  = *((int*)optval) ? 0: 1;
+        linger.l_onoff  = *((const int*)optval) ? 0: 1;
         linger.l_linger = 0;
         optname=SO_LINGER;
         optval = (char*)&linger;
@@ -2788,7 +2788,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         }
         else if (optval && optlen < sizeof(int))
         {
-            woptval= *((INT16 *) optval);
+            woptval= *((const INT16 *) optval);
             optval= (char*) &woptval;
             optlen=sizeof(int);
         }
@@ -2796,8 +2796,8 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         {
             if (optlen == sizeof(UINT32)) {
                 /* WinSock passes miliseconds instead of struct timeval */
-                tval.tv_usec = (*(PUINT32)optval % 1000) * 1000;
-                tval.tv_sec = *(PUINT32)optval / 1000;
+                tval.tv_usec = (*(const UINT32*)optval % 1000) * 1000;
+                tval.tv_sec = *(const UINT32*)optval / 1000;
                 /* min of 500 milisec */
                 if (tval.tv_sec == 0 && tval.tv_usec < 500000)
                     tval.tv_usec = 500000;
@@ -2810,9 +2810,9 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 return 0;
             }
         }
-        if (level == SOL_SOCKET && optname == SO_RCVBUF && *(int*)optval < 2048)
+        if (level == SOL_SOCKET && optname == SO_RCVBUF && *(const int*)optval < 2048)
         {
-            WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(int*)optval );
+            WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(const int*)optval );
             return 0;
         }
     }
