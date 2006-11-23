@@ -77,7 +77,7 @@ MAIN_MENU MENU
   MENUITEM "&Novo...",		CMD_NEW
   MENUITEM "A&brir",		CMD_OPEN
   MENUITEM "&Gravar",		CMD_SAVE
-  MENUITEM "gravar &como...",	CMD_SAVE_AS
+  MENUITEM "Gravar &como...",	CMD_SAVE_AS
   MENUITEM SEPARATOR
   MENUITEM "&Imprimir",		CMD_PRINT
   MENUITEM "C&onfigurar página...",	CMD_PAGE_SETUP
@@ -88,12 +88,12 @@ MAIN_MENU MENU
 POPUP "&Editar" {
   MENUITEM "&Desfazer\tCtrl+Z", CMD_UNDO
   MENUITEM SEPARATOR
-  MENUITEM "&Recortar\tCtrl+X",	CMD_CUT
+  MENUITEM "&Cortar\tCtrl+X",	CMD_CUT
   MENUITEM "&Copiar\tCtrl+C",	CMD_COPY
   MENUITEM "C&olar\tCtrl+V",	CMD_PASTE
   MENUITEM "E&xcluir\tDel",	CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "Selecionar &tudo",	CMD_SELECT_ALL
+  MENUITEM "Seleccionar &tudo",	CMD_SELECT_ALL
   MENUITEM "&Data/Hora\tF5",	CMD_TIME_DATE
   MENUITEM SEPARATOR
   MENUITEM "&Quebrar automática de linha",	CMD_WRAP

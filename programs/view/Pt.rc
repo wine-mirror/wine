@@ -57,7 +57,7 @@ BEGIN
     END
     POPUP "&Pan"
     BEGIN
-      MENUITEM "Ajustar a &janela",              IDM_SET_EXT_TO_WIN
+      MENUITEM "Ajustar &janela",              IDM_SET_EXT_TO_WIN
       MENUITEM SEPARATOR
       MENUITEM "&Esquerda",				IDM_LEFT
       MENUITEM "&Direita",			IDM_RIGHT
