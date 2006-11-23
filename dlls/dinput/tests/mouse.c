@@ -20,8 +20,6 @@
 #define DIRECTINPUT_VERSION 0x0700
 
 #define COBJMACROS
-#define NONAMELESSSTRUCT
-#define NONAMELESSUNION
 #include <windows.h>
 
 #include <math.h>
