@@ -32,7 +32,6 @@
 #include <winnls.h>
 #include <process.h>
 #include <errno.h>
-#include "msvcrt.h"
 
 static void test_fdopen( void )
 {
@@ -139,20 +138,20 @@ static void test_readmode( BOOL ascii_mode )
     static const char outbuffer[] = "0,1,2,3,4,5,6,7,8,9\r\n\r\nA,B,C,D,E\r\nX,Y,Z";
     static const char padbuffer[] = "ghjghjghjghj";
     static const char nlbuffer[] = "\r\n";
-    char buffer[2*MSVCRT_BUFSIZ+256], *optr;
+    char buffer[2*BUFSIZ+256], *optr;
     int fd;
     FILE *file;
     int i, j, m, fp, ao, *ip, pl;
     long l;
 
     fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
-    /* an internal buffer of MSVCRT_BUFSIZ is maintained, so make a file big
+    /* an internal buffer of BUFSIZ is maintained, so make a file big
      * enough to test operations that cross the buffer boundary 
      */
-    j = (2*MSVCRT_BUFSIZ-4)/strlen(padbuffer);
+    j = (2*BUFSIZ-4)/strlen(padbuffer);
     for (i=0; i<j; i++)
         write (fd, padbuffer, strlen(padbuffer));
-    j = (2*MSVCRT_BUFSIZ-4)%strlen(padbuffer);
+    j = (2*BUFSIZ-4)%strlen(padbuffer);
     for (i=0; i<j; i++)
         write (fd, &padbuffer[i], 1);
     write (fd, nlbuffer, strlen(nlbuffer));
@@ -173,9 +172,9 @@ static void test_readmode( BOOL ascii_mode )
     
     /* first is a test of fgets, ftell, fseek */
     ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
-    ok(fgets(buffer,2*MSVCRT_BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    ok(fgets(buffer,2*BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     l = ftell(file);
-    pl = 2*MSVCRT_BUFSIZ-2;
+    pl = 2*BUFSIZ-2;
     ok(l == pl,"padding line ftell got %ld should be %d in %s\n", l, pl, IOMODE);
     ok(lstrlenA(buffer) == pl+ao,"padding line fgets got size %d should be %d in %s\n",
      lstrlenA(buffer), pl+ao, IOMODE);
@@ -207,15 +206,15 @@ static void test_readmode( BOOL ascii_mode )
     /* test fread across buffer boundary */
     rewind(file);
     ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
-    ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    ok(fgets(buffer,BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     j=strlen(outbuffer);
-    i=fread(buffer,1,MSVCRT_BUFSIZ+strlen(outbuffer),file);
-    ok(i==MSVCRT_BUFSIZ+j,"fread failed, expected %d got %d in %s\n", MSVCRT_BUFSIZ+j, i, IOMODE);
+    i=fread(buffer,1,BUFSIZ+strlen(outbuffer),file);
+    ok(i==BUFSIZ+j,"fread failed, expected %d got %d in %s\n", BUFSIZ+j, i, IOMODE);
     l = ftell(file);
     ok(l == pl+j-(ao*4)-5,"ftell after fread got %ld should be %d in %s\n", l, pl+j-(ao*4)-5, IOMODE);
     for (m=0; m<3; m++)
-        ok(buffer[m]==padbuffer[m+(MSVCRT_BUFSIZ-4)%strlen(padbuffer)],"expected %c got %c\n", padbuffer[m], buffer[m]);
-    m+=MSVCRT_BUFSIZ+2+ao;
+        ok(buffer[m]==padbuffer[m+(BUFSIZ-4)%strlen(padbuffer)],"expected %c got %c\n", padbuffer[m], buffer[m]);
+    m+=BUFSIZ+2+ao;
     optr = (char *)outbuffer;
     for (; m<i; m++) {
         ok(buffer[m]==*optr,"char %d expected %c got %c in %s\n", m, *optr, buffer[m], IOMODE);
@@ -226,7 +225,7 @@ static void test_readmode( BOOL ascii_mode )
     /* fread should return the requested number of bytes if available */
     rewind(file);
     ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
-    ok(fgets(buffer,MSVCRT_BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    ok(fgets(buffer,BUFSIZ-6,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     j = fp+10;
     i=fread(buffer,1,j,file);
     ok(i==j,"fread failed, expected %d got %d in %s\n", j, i, IOMODE);
@@ -245,7 +244,7 @@ static void test_readmode( BOOL ascii_mode )
     /* test some additional functions */
     rewind(file);
     ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
-    ok(fgets(buffer,2*MSVCRT_BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
+    ok(fgets(buffer,2*BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     i = _getw(file);
     ip = (int *)outbuffer;
     ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
@@ -302,7 +301,7 @@ static void test_fgetwc( void )
   char* tempf;
   FILE *tempfh;
   static const char mytext[]= "This is test_fgetwc\r\n";
-  WCHAR wtextW[MSVCRT_BUFSIZ+LLEN+1];
+  WCHAR wtextW[BUFSIZ+LLEN+1];
   WCHAR *mytextW = NULL, *aptr, *wptr;
   BOOL diff_found = FALSE;
   int i, j;
@@ -312,7 +311,7 @@ static void test_fgetwc( void )
   tempfh = fopen(tempf,"wb");
   j = 'a';
   /* pad to almost the length of the internal buffer */
-  for (i=0; i<MSVCRT_BUFSIZ-4; i++)
+  for (i=0; i<BUFSIZ-4; i++)
     fputc(j,tempfh);
   j = '\r';
   fputc(j,tempfh);
@@ -325,11 +324,11 @@ static void test_fgetwc( void )
   tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
-  ok(l==MSVCRT_BUFSIZ-2, "ftell expected %d got %ld\n", MSVCRT_BUFSIZ-2, l);
+  ok(l==BUFSIZ-2, "ftell expected %d got %ld\n", BUFSIZ-2, l);
   fgetws(wtextW,LLEN,tempfh);
   l=ftell(tempfh);
-  ok(l==MSVCRT_BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n",
-   MSVCRT_BUFSIZ-2+strlen(mytext), l);
+  ok(l==BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n",
+   BUFSIZ-2+strlen(mytext), l);
   mytextW = AtoW ((char*)mytext);
   aptr = mytextW;
   wptr = wtextW;
@@ -347,7 +346,7 @@ static void test_fgetwc( void )
   /* pad to almost the length of the internal buffer. Use an odd number of bytes
      to test that we can read wchars that are split across the internal buffer
      boundary */
-  for (i=0; i<MSVCRT_BUFSIZ-3-strlen(mytext)*sizeof(WCHAR); i++)
+  for (i=0; i<BUFSIZ-3-strlen(mytext)*sizeof(WCHAR); i++)
     fputc(j,tempfh);
   j = '\r';
   fputwc(j,tempfh);
@@ -358,7 +357,7 @@ static void test_fgetwc( void )
   fclose(tempfh);
   /* in binary mode, getws/c expects wide characters */
   tempfh = fopen(tempf,"rb"); /* open in BINARY mode */
-  j=(MSVCRT_BUFSIZ-2)/sizeof(WCHAR)-strlen(mytext);
+  j=(BUFSIZ-2)/sizeof(WCHAR)-strlen(mytext);
   fgetws(wtextW,j,tempfh);
   l=ftell(tempfh);
   j=(j-1)*sizeof(WCHAR);
