@@ -23,9 +23,6 @@
 /* To get ICON_SMALL2 with the MSVC headers */
 #define _WIN32_WINNT 0x0501
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
