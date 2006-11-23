@@ -17,9 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include <windows.h>
 #include <commctrl.h>
 
@@ -81,8 +78,8 @@ static void test_title(void)
     psp.dwSize = sizeof(psp);
     psp.dwFlags = 0;
     psp.hInstance = GetModuleHandleW(NULL);
-    psp.u.pszTemplate = "prop_page1";
-    psp.u2.pszIcon = NULL;
+    U(psp).pszTemplate = "prop_page1";
+    U2(psp).pszIcon = NULL;
     psp.pfnDlgProc = page_dlg_proc;
     psp.lParam = 0;
 
@@ -94,7 +91,7 @@ static void test_title(void)
     psh.pszCaption = "test caption";
     psh.nPages = 1;
     psh.hwndParent = GetDesktopWindow();
-    psh.u3.phpage = hpsp;
+    U3(psh).phpage = hpsp;
     psh.pfnCallback = sheet_callback;
 
     hdlg = (HWND)PropertySheetA(&psh);
