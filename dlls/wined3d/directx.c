@@ -1597,7 +1597,7 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
               break ;
           }
       }
-      XFree(cfgs);
+      if(cfgs) XFree(cfgs);
       WineD3D_ReleaseFakeGLContext(ctx);
     }
 
