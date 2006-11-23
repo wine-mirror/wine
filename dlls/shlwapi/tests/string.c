@@ -19,8 +19,6 @@
 
 #include <stdio.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
