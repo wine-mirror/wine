@@ -244,13 +244,13 @@ struct module* module_get_containee(const struct process* pcs,
  *   container (and also force the ELF container's debug info loading if deferred)
  * - otherwise return the module itself if it has some debug info
  */
-BOOL module_get_debug(const struct process* pcs, struct module_pair* pair)
+BOOL module_get_debug(struct module_pair* pair)
 {
     IMAGEHLP_DEFERRED_SYMBOL_LOAD64     idsl64;
 
     if (!pair->requested) return FALSE;
     /* for a PE builtin, always get info from container */
-    if (!(pair->effective = module_get_container(pcs, pair->requested)))
+    if (!(pair->effective = module_get_container(pair->pcs, pair->requested)))
         pair->effective = pair->requested;
     /* if deferred, force loading */
     if (pair->effective->module.SymType == SymDeferred)
@@ -272,9 +272,9 @@ BOOL module_get_debug(const struct process* pcs, struct module_pair* pair)
             idsl64.Reparse = FALSE;
             idsl64.hFile = INVALID_HANDLE_VALUE;
 
-            pcs_callback(pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idsl64);
-            ret = pe_load_debug_info(pcs, pair->effective);
-            pcs_callback(pcs,
+            pcs_callback(pair->pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idsl64);
+            ret = pe_load_debug_info(pair->pcs, pair->effective);
+            pcs_callback(pair->pcs,
                          ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
                          &idsl64);
             break;

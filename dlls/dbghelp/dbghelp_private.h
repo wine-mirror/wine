@@ -333,6 +333,7 @@ struct line_info
 
 struct module_pair
 {
+    struct process*             pcs;
     struct module*              requested; /* in:  to module_get_debug() */
     struct module*              effective; /* out: module with debug info */
 };
@@ -389,7 +390,7 @@ extern struct module*
 extern struct module*
                     module_find_by_name(const struct process* pcs, 
                                         const char* name, enum module_type type);
-extern BOOL         module_get_debug(const struct process* pcs, struct module_pair*);
+extern BOOL         module_get_debug(struct module_pair*);
 extern struct module*
                     module_new(struct process* pcs, const char* name, 
                                enum module_type type, BOOL virtual,

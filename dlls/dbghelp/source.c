@@ -116,26 +116,25 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
                                PSYM_ENUMSOURCEFILES_CALLBACK cbSrcFiles,
                                PVOID UserContext)
 {
-    struct process*     pcs;
     struct module_pair  pair;
     SOURCEFILE          sf;
     char*               ptr;
     
     if (!cbSrcFiles) return FALSE;
-    pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
          
     if (ModBase)
     {
-        pair.requested = module_find_by_addr(pcs, ModBase, DMT_UNKNOWN);
-        if (!module_get_debug(pcs, &pair)) return FALSE;
+        pair.requested = module_find_by_addr(pair.pcs, ModBase, DMT_UNKNOWN);
+        if (!module_get_debug(&pair)) return FALSE;
     }
     else
     {
         if (Mask[0] == '!')
         {
-            pair.requested = module_find_by_name(pcs, Mask + 1, DMT_UNKNOWN);
-            if (!module_get_debug(pcs, &pair)) return FALSE;
+            pair.requested = module_find_by_name(pair.pcs, Mask + 1, DMT_UNKNOWN);
+            if (!module_get_debug(&pair)) return FALSE;
         }
         else
         {
@@ -162,7 +161,6 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
 BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
                          PCSTR srcfile, PSYM_ENUMLINES_CALLBACK cb, PVOID user)
 {
-    struct process*             pcs;
     struct module_pair          pair;
     struct hash_table_iter      hti;
     struct symt_ht*             sym;
@@ -173,8 +171,6 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
     const char*                 file;
 
     if (!cb) return FALSE;
-    pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
     if (!(dbghelp_options & SYMOPT_LOAD_LINES)) return TRUE;
     if (regcomp(&re, srcfile, REG_NOSUB))
     {
@@ -182,9 +178,11 @@ BOOL WINAPI SymEnumLines(HANDLE hProcess, ULONG64 base, PCSTR compiland,
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
     if (compiland) FIXME("Unsupported yet (filtering on compiland %s)\n", compiland);
-    pair.requested = module_find_by_addr(pcs, base, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, base, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
 
     sci.SizeOfStruct = sizeof(sci);
     sci.ModBase      = base;

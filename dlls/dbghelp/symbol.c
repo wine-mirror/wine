@@ -695,13 +695,13 @@ int symt_find_nearest(struct module* module, DWORD addr)
     return low;
 }
 
-static BOOL symt_enum_locals_helper(struct process* pcs, struct module_pair* pair,
+static BOOL symt_enum_locals_helper(struct module_pair* pair,
                                     regex_t* preg, const struct sym_enum* se,
                                     struct vector* v)
 {
     struct symt**       plsym = NULL;
     struct symt*        lsym = NULL;
-    DWORD               pc = pcs->ctx_frame.InstructionOffset;
+    DWORD               pc = pair->pcs->ctx_frame.InstructionOffset;
 
     while ((plsym = vector_iter_up(v, plsym)))
     {
@@ -713,7 +713,7 @@ static BOOL symt_enum_locals_helper(struct process* pcs, struct module_pair* pai
                 struct symt_block*  block = (struct symt_block*)lsym;
                 if (pc < block->address || block->address + block->size <= pc)
                     continue;
-                if (!symt_enum_locals_helper(pcs, pair, preg, se, &block->vchildren))
+                if (!symt_enum_locals_helper(pair, preg, se, &block->vchildren))
                     return FALSE;
             }
             break;
@@ -746,8 +746,9 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
     se->sym_info->SizeOfStruct = sizeof(*se->sym_info);
     se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
 
-    pair.requested = module_find_by_addr(pcs, pc, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    pair.pcs = pcs;
+    pair.requested = module_find_by_addr(pair.pcs, pc, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
     if ((idx = symt_find_nearest(pair.effective, pc)) == -1) return FALSE;
 
     sym = pair.effective->addr_sorttab[idx];
@@ -758,7 +759,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 
         compile_regex(mask ? mask : "*", -1, &preg,
                       dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-        ret = symt_enum_locals_helper(pcs, &pair, &preg, se, 
+        ret = symt_enum_locals_helper(&pair, &preg, se, 
                                       &((struct symt_function*)sym)->vchildren);
         regfree(&preg);
         return ret;
@@ -801,16 +802,16 @@ static void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
 static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                      const struct sym_enum* se)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
     const char*         bang;
     regex_t             mod_regex, sym_regex;
 
+    pair.pcs = process_find_by_handle(hProcess);
     if (BaseOfDll == 0)
     {
         /* do local variables ? */
         if (!Mask || !(bang = strchr(Mask, '!')))
-            return symt_enum_locals(pcs, Mask, se);
+            return symt_enum_locals(pair.pcs, Mask, se);
 
         if (bang == Mask) return FALSE;
 
@@ -818,9 +819,9 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         compile_regex(bang + 1, -1, &sym_regex, 
                       dbghelp_options & SYMOPT_CASE_INSENSITIVE);
         
-        for (pair.requested = pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
+        for (pair.requested = pair.pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
         {
-            if (pair.requested->type == DMT_PE && module_get_debug(pcs, &pair))
+            if (pair.requested->type == DMT_PE && module_get_debug(&pair))
             {
                 if (regexec(&mod_regex, pair.requested->module.ModuleName, 0, NULL, 0) == 0 &&
                     symt_enum_module(&pair, &sym_regex, se))
@@ -831,11 +832,11 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
          */
         if (!pair.requested && (dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES))
         {
-            for (pair.requested = pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
+            for (pair.requested = pair.pcs->lmodules; pair.requested; pair.requested = pair.requested->next)
             {
                 if (pair.requested->type == DMT_ELF &&
-                    !module_get_containee(pcs, pair.requested) &&
-                    module_get_debug(pcs, &pair))
+                    !module_get_containee(pair.pcs, pair.requested) &&
+                    module_get_debug(&pair))
                 {
                     if (regexec(&mod_regex, pair.requested->module.ModuleName, 0, NULL, 0) == 0 &&
                         symt_enum_module(&pair, &sym_regex, se))
@@ -847,8 +848,8 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         regfree(&sym_regex);
         return TRUE;
     }
-    pair.requested = module_find_by_addr(pcs, BaseOfDll, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair))
+    pair.requested = module_find_by_addr(pair.pcs, BaseOfDll, DMT_UNKNOWN);
+    if (!module_get_debug(&pair))
         return FALSE;
 
     /* we always ignore module name from Mask when BaseOfDll is defined */
@@ -978,14 +979,14 @@ BOOL WINAPI SymEnumerateSymbols(HANDLE hProcess, DWORD BaseOfDll,
 BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address, 
                         DWORD64* Displacement, PSYMBOL_INFO Symbol)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
     struct symt_ht*     sym;
     int                 idx;
 
-    if (!pcs) return FALSE;
-    pair.requested = module_find_by_addr(pcs, Address, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, Address, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
     if ((idx = symt_find_nearest(pair.effective, Address)) == -1) return FALSE;
 
     sym = pair.effective->addr_sorttab[idx];
@@ -1084,8 +1085,9 @@ static BOOL find_name(struct process* pcs, struct module* module, const char* na
     struct symt_ht*             sym = NULL;
     struct module_pair          pair;
 
+    pair.pcs = pcs;
     if (!(pair.requested = module)) return FALSE;
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    if (!module_get_debug(&pair)) return FALSE;
 
     hash_table_iter_init(&pair.effective->ht_symbols, &hti, name);
     while ((ptr = hash_table_iter_up(&hti)))
@@ -1232,7 +1234,6 @@ BOOL WINAPI SymGetSymPrev(HANDLE hProcess, PIMAGEHLP_SYMBOL Symbol)
 BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr, 
                                PDWORD pdwDisplacement, PIMAGEHLP_LINE Line)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
     int                 idx;
 
@@ -1240,9 +1241,10 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
 
-    if (!pcs) return FALSE;
-    pair.requested = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, dwAddr, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
     if ((idx = symt_find_nearest(pair.effective, dwAddr)) == -1) return FALSE;
 
     if (pair.effective->addr_sorttab[idx]->symt.tag != SymTagFunction) return FALSE;
@@ -1339,7 +1341,6 @@ BOOL WINAPI SymGetLineFromAddrW64(HANDLE hProcess, DWORD64 dwAddr,
  */
 BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
     struct line_info*   li;
     BOOL                in_search = FALSE;
@@ -1348,9 +1349,10 @@ BOOL WINAPI SymGetLinePrev(HANDLE hProcess, PIMAGEHLP_LINE Line)
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
 
-    if (!pcs) return FALSE;
-    pair.requested = module_find_by_addr(pcs, Line->Address, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, Line->Address, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
 
     if (Line->Key == 0) return FALSE;
     li = (struct line_info*)Line->Key;
@@ -1425,15 +1427,15 @@ BOOL symt_get_func_line_next(struct module* module, PIMAGEHLP_LINE line)
  */
 BOOL WINAPI SymGetLineNext(HANDLE hProcess, PIMAGEHLP_LINE Line)
 {
-    struct process*     pcs = process_find_by_handle(hProcess);
     struct module_pair  pair;
 
     TRACE("(%p %p)\n", hProcess, Line);
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
-    if (!pcs) return FALSE;
-    pair.requested = module_find_by_addr(pcs, Line->Address, DMT_UNKNOWN);
-    if (!module_get_debug(pcs, &pair)) return FALSE;
+    pair.pcs = process_find_by_handle(hProcess);
+    if (!pair.pcs) return FALSE;
+    pair.requested = module_find_by_addr(pair.pcs, Line->Address, DMT_UNKNOWN);
+    if (!module_get_debug(&pair)) return FALSE;
 
     if (symt_get_func_line_next(pair.effective, Line)) return TRUE;
     SetLastError(ERROR_NO_MORE_ITEMS); /* FIXME */
