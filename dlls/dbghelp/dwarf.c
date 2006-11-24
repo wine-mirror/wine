@@ -721,7 +721,6 @@ static BOOL compute_location(dwarf2_traverse_context_t* ctx, struct location* lo
             break;
         default:
             FIXME("Unhandled attr op: %x\n", op);
-            loc->offset = 0;
             return FALSE;
         }
     }
@@ -764,7 +763,19 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
         lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
         lctx.word_size = ctx->word_size;
 
-        compute_location(&lctx, loc, frame);
+        if (!compute_location(&lctx, loc, frame))
+        {
+            loc->kind = loc_error;
+            loc->reg = loc_err_too_complex;
+        }
+        else if (loc->kind == loc_dwarf2_block)
+        {
+            unsigned*   ptr = pool_alloc(&ctx->module->pool,
+                                         sizeof(unsigned) + xloc.u.block.size);
+            *ptr = xloc.u.block.size;
+            memcpy(ptr + 1, xloc.u.block.ptr, xloc.u.block.size);
+            loc->offset = (unsigned long)ptr;
+        }
     }
     return TRUE;
 }
@@ -1216,23 +1227,10 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     {
         struct attribute ext;
 
-        if (loc.kind >= loc_user)
-        {
-            FIXME("Unsupported yet location list in %s on variable %s\n",
-                  subpgm->func->hash_elt.name, name.u.string);
-            return;
-        }
-
-        if (subpgm->frame.kind >= loc_user)
-        {
-            FIXME("Unsupported yet location list in %s on frame for var %s\n",
-                  subpgm->func->hash_elt.name, name.u.string);
-            return;
-        }
-
-	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
-              name.u.string, loc.offset, loc.reg,
+	TRACE("found parameter %s (kind=%d, offset=%ld, reg=%d) at %s\n",
+              name.u.string, loc.kind, loc.offset, loc.reg,
               dwarf2_debug_ctx(subpgm->ctx));
+
         switch (loc.kind)
         {
         case loc_absolute:
@@ -1245,6 +1243,8 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                      subpgm->ctx->module->module.BaseOfImage + loc.offset,
                                      0, param_type);
             break;
+        default:
+            /* fall through */
         case loc_register:
         case loc_regrel:
             /* either a pmt/variable relative to frame pointer or
@@ -1255,8 +1255,6 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                 is_pmt ? DataIsParam : DataIsLocal,
                                 &loc, block, param_type, name.u.string);
             break;
-        default:
-            FIXME("Unsupported\n");
         }
     }
     if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_const_value, &value))
@@ -1893,6 +1891,17 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     return ret;
 }
 
+static void dwarf2_location_compute(struct process* pcs,
+                                    const struct module* module,
+                                    const struct symt_function* func,
+                                    struct location* loc)
+{
+    FIXME("Not implemented yet\n");
+    loc->kind = loc_register;
+    loc->reg = -1;
+    loc->offset = 0;
+}
+
 BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
                   const struct elf_thunk_area* thunks,
 		  const unsigned char* debug, unsigned int debug_size,
@@ -1905,6 +1914,8 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     unsigned char*      ptr;
     const unsigned char*comp_unit_cursor = debug;
     const unsigned char*end_debug = debug + debug_size;
+
+    module->loc_compute = dwarf2_location_compute;
 
     section[section_debug].address = debug;
     section[section_debug].size = debug_size;

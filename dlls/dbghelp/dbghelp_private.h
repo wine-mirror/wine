@@ -305,6 +305,8 @@ enum module_type
     DMT_PDB,            /* PDB file */
 };
 
+struct process;
+
 struct module
 {
     IMAGEHLP_MODULE64           module;
@@ -317,10 +319,14 @@ struct module
     /* memory allocation pool */
     struct pool                 pool;
 
-    /* symbol tables */
+    /* symbols & symbol tables */
     int                         sortlist_valid;
     struct symt_ht**            addr_sorttab;
     struct hash_table           ht_symbols;
+    void                        (*loc_compute)(struct process* pcs,
+                                               const struct module* module,
+                                               const struct symt_function* func,
+                                               struct location* loc);
 
     /* types */
     struct hash_table           ht_types;

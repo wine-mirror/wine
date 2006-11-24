@@ -477,19 +477,34 @@ static void symt_fill_sym_info(const struct module_pair* pair,
             case DataIsParam:
                 sym_info->Flags |= SYMFLAG_PARAMETER;
                 /* fall through */
-            case DataIsLocal: 
-                if (data->u.var.kind == loc_register)
+            case DataIsLocal:
                 {
-                    sym_info->Flags |= SYMFLAG_REGISTER;
-                    sym_info->Register = data->u.var.reg;
-                    sym_info->Address = 0;
-                }
-                else
-                {
-                    sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
-                    /* FIXME: it's i386 dependent !!! */
-                    sym_info->Register = data->u.var.reg ? data->u.var.reg : CV_REG_EBP;
-                    sym_info->Address = data->u.var.offset;
+                    struct location loc = data->u.var;
+
+                    if (loc.kind >= loc_user)
+                        pair->effective->loc_compute(pair->pcs, pair->effective, func, &loc);
+
+                    switch (loc.kind)
+                    {
+                    case loc_error:
+                        /* for now we report error cases as a negative register number */
+                        sym_info->Flags |= SYMFLAG_LOCAL;
+                        /* fall through */
+                    case loc_register:
+                        sym_info->Flags |= SYMFLAG_REGISTER;
+                        sym_info->Register = loc.reg;
+                        sym_info->Address = 0;
+                        break;
+                    case loc_regrel:
+                        sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
+                        /* FIXME: it's i386 dependent !!! */
+                        sym_info->Register = loc.reg ? loc.reg : CV_REG_EBP;
+                        sym_info->Address = loc.offset;
+                        break;
+                    default:
+                        FIXME("Shouldn't happen (kind=%d), debug reader backend is broken\n", loc.kind);
+                        assert(0);
+                    }
                 }
                 break;
             case DataIsGlobal:
