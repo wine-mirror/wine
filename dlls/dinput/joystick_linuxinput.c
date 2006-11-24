@@ -154,7 +154,7 @@ static void fake_current_js_state(JoystickImpl *ji);
 static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph);
 static DWORD map_pov(int event_value, int is_x);
 static void find_joydevs(void);
-static int lxinput_to_djoy2_offset(int ie_type, int ie_code);
+static int lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code);
 static int offset_to_object(JoystickImpl *This, int offset);
 static void calculate_ids(LPDIDATAFORMAT df);
 
@@ -761,41 +761,42 @@ static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph)
 
 /* defines how the linux input system offset mappings into c_dfDIJoystick2 */
 static int
-lxinput_to_djoy2_offset( int ie_type, int ie_code )
+lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code )
 {
+  int offset = -1;
   switch (ie_type) {
     case EV_ABS:
       switch (ie_code) {
-        case ABS_X:             return 0;
-        case ABS_Y:             return 1;
-        case ABS_Z:             return 2;
-        case ABS_RX:            return 3;
-        case ABS_RY:            return 4;
-        case ABS_RZ:            return 5;
-        case ABS_THROTTLE:      return 6;
-        case ABS_RUDDER:        return 7;
-        case ABS_HAT0X:
-        case ABS_HAT0Y:         return 8;
-        case ABS_HAT1X: 
-        case ABS_HAT1Y:         return 9;
-        case ABS_HAT2X: 
-        case ABS_HAT2Y:         return 10;
-        case ABS_HAT3X:
-        case ABS_HAT3Y:         return 11;
+        case ABS_X:                     offset = 0; break;
+        case ABS_Y:                     offset = 1; break;
+        case ABS_Z:                     offset = 2; break;
+        case ABS_RX:                    offset = 3; break;
+        case ABS_RY:                    offset = 4; break;
+        case ABS_RZ:                    offset = 5; break;
+        case ABS_THROTTLE:              offset = 6; break;
+        case ABS_RUDDER:                offset = 7; break;
+        case ABS_HAT0X: case ABS_HAT0Y: offset = 8; break;
+        case ABS_HAT1X: case ABS_HAT1Y: offset = 9; break;
+        case ABS_HAT2X: case ABS_HAT2Y: offset = 10; break;
+        case ABS_HAT3X: case ABS_HAT3Y: offset = 11; break;
+        /* XXX when adding new axes here also fix the offset for the buttons bellow */
         default:
           FIXME("Unhandled EV_ABS(0x%02X)\n", ie_code);
           return -1;
       }
+      break;
     case EV_KEY:
-      if (ie_code < 128) {
-        return 12 + ie_code;
-      } else {
+      if (ie_code >= 128) {
         WARN("DX8 does not support more than 128 buttons\n");
+        return -1;
       }
+      offset = 12 + ie_code; /* XXX */
+      break;
+    default:
+      FIXME("Unhandled type(0x%02X)\n", ie_type);
       return -1;
   }
-  FIXME("Unhandled type(0x%02X)\n", ie_type);
-  return -1;
+  return This->offsets[offset];
 }
 
 /* convert wine format offset to user format object index */
@@ -888,14 +889,7 @@ static void joy_polldev(JoystickImpl *This) {
             TRACE("(%p) %d -> %d\n", This, ie.code, btn);
             if (btn&0x80) {
               btn &= 0x7F;
-	      /* see if there is a mapping */
-	      offset = lxinput_to_djoy2_offset(ie.type, btn);
-	      if (offset==-1) {
-		return;
-	      }
-	      /* and see if there is an offset in the df */
-	      offset = This->offsets[offset];
-	      if (offset==-1) {
+	      if ((offset = lxinput_to_user_offset(This, ie.type, btn)) == -1) {
 		return;
 	      }
               This->js.rgbButtons[btn] = ie.value?0x80:0x00;
@@ -903,14 +897,7 @@ static void joy_polldev(JoystickImpl *This) {
             }
             break;
 	case EV_ABS:
-            /* see if there is a mapping */
-            offset = lxinput_to_djoy2_offset(ie.type, ie.code);
-            if (offset==-1) {
-              return;
-            }
-            /* and see if there is an offset in the df */
-            offset = This->offsets[offset];
-            if (offset==-1) {
+            if ((offset = lxinput_to_user_offset(This, ie.type, ie.code)) == -1) {
               return;
             }
 	    switch (ie.code) {
@@ -1289,8 +1276,6 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	ddoi.guidType = GUID_RzAxis;
 	break;
       case ABS_THROTTLE:
-	ddoi.guidType = GUID_Slider;
-	break;
       case ABS_RUDDER:
 	ddoi.guidType = GUID_Slider;
 	break;
@@ -1304,12 +1289,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
   	FIXME("unhandled abs axis 0x%02x, ignoring!\n",i);
 	continue;
       }
-      user_offset = lxinput_to_djoy2_offset(EV_ABS, i);
-      if (user_offset == -1) {
-        continue;
-      }
-      user_offset = This->offsets[user_offset];
-      if (user_offset == -1) {
+      if ((user_offset = lxinput_to_user_offset(This, EV_ABS, i)) == -1) {
         continue;
       }
       user_object = offset_to_object(This, user_offset);
@@ -1334,12 +1314,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
     ddoi.guidType = GUID_POV;
     for (i=0; i<4; i++) {
       if (test_bit(This->joydev->absbits,ABS_HAT0X+(i<<1)) && test_bit(This->joydev->absbits,ABS_HAT0Y+(i<<1))) {
-        user_offset = lxinput_to_djoy2_offset(EV_ABS, ABS_HAT0X+i);
-        if (user_offset == -1) {
-          continue;
-        }
-        user_offset = This->offsets[user_offset];
-        if (user_offset == -1) {
+        if ((user_offset = lxinput_to_user_offset(This, EV_ABS, ABS_HAT0X+i))== -1) {
           continue;
         }
         user_object = offset_to_object(This, user_offset);
@@ -1364,12 +1339,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
     for (i = 0; i < KEY_MAX; i++) {
       if (!test_bit(This->joydev->keybits,i)) continue;
-      user_offset = lxinput_to_djoy2_offset(EV_KEY, btncount);
-      if (user_offset == -1) {
-        continue;
-      }
-      user_offset = This->offsets[user_offset];
-      if (user_offset == -1) {
+      if ((user_offset = lxinput_to_user_offset(This, EV_KEY, btncount)) == -1) {
         continue;
       }
       user_object = offset_to_object(This, user_offset);
