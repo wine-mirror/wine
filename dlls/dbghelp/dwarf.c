@@ -979,7 +979,8 @@ static struct symt* dwarf2_parse_pointer_type(dwarf2_parse_context_t* ctx,
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
     if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
-    ref_type = dwarf2_lookup_type(ctx, di);
+    if (!(ref_type = dwarf2_lookup_type(ctx, di)))
+        ref_type = &symt_new_basic(ctx->module, btVoid, "void", 0)->symt;
 
     di->symt = &symt_new_pointer(ctx->module, ref_type)->symt;
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
@@ -1496,7 +1497,8 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     if (!dwarf2_find_attribute(ctx, di, DW_AT_declaration, &is_decl))
         is_decl.u.uvalue = 0;
         
-    ret_type = dwarf2_lookup_type(ctx, di);
+    if (!(ret_type = dwarf2_lookup_type(ctx, di)))
+        ret_type = &symt_new_basic(ctx->module, btVoid, "void", 0)->symt;
 
     /* FIXME: assuming C source code */
     sig_type = symt_new_function_signature(ctx->module, ret_type, CV_CALL_FAR_C);
@@ -1588,7 +1590,8 @@ static struct symt* dwarf2_parse_subroutine_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    ret_type = dwarf2_lookup_type(ctx, di);
+    if (!(ret_type = dwarf2_lookup_type(ctx, di)))
+        ret_type = &symt_new_basic(ctx->module, btVoid, "void", 0)->symt;
 
     /* FIXME: assuming C source code */
     sig_type = symt_new_function_signature(ctx->module, ret_type, CV_CALL_FAR_C);
