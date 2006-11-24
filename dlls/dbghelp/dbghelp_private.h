@@ -367,6 +367,7 @@ extern BOOL         pcs_callback(const struct process* pcs, ULONG action, void* 
 extern void*        fetch_buffer(struct process* pcs, unsigned size);
 
 /* elf_module.c */
+#define ELF_NO_MAP      ((const void*)0xffffffff)
 typedef BOOL (*elf_enum_modules_cb)(const char*, unsigned long addr, void* user);
 extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);
 extern BOOL         elf_fetch_file_info(const char* name, DWORD* base, DWORD* size, DWORD* checksum);

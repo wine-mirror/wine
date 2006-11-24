@@ -98,7 +98,6 @@ struct elf_info
     const char*                 module_name;    /* OUT found module name (if ELF_INFO_NAME is set) */
 };
 
-#define NO_MAP                  ((const void*)0xffffffff)
 /* structure holding information while handling an ELF image
  * allows one by one section mapping for memory savings
  */
@@ -145,13 +144,13 @@ static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
 
     if (sidx < 0 || sidx >= fmap->elfhdr.e_shnum ||
         fmap->sect[sidx].shdr.sh_type == SHT_NOBITS)
-        return NO_MAP;
+        return ELF_NO_MAP;
     /* align required information on page size (we assume pagesize is a power of 2) */
     ofst = fmap->sect[sidx].shdr.sh_offset & ~(pgsz - 1);
     size = (fmap->sect[sidx].shdr.sh_offset + 
             fmap->sect[sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1);
     fmap->sect[sidx].mapped = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fmap->fd, ofst);
-    if (fmap->sect[sidx].mapped == NO_MAP) return NO_MAP;
+    if (fmap->sect[sidx].mapped == ELF_NO_MAP) return ELF_NO_MAP;
     return fmap->sect[sidx].mapped + (fmap->sect[sidx].shdr.sh_offset & (pgsz - 1));
 }
 
@@ -162,11 +161,23 @@ static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
  */
 static void elf_unmap_section(struct elf_file_map* fmap, int sidx)
 {
-    if (sidx >= 0 && sidx < fmap->elfhdr.e_shnum && fmap->sect[sidx].mapped != NO_MAP)
+    if (sidx >= 0 && sidx < fmap->elfhdr.e_shnum && fmap->sect[sidx].mapped != ELF_NO_MAP)
     {
         munmap((char*)fmap->sect[sidx].mapped, fmap->sect[sidx].shdr.sh_size);
-        fmap->sect[sidx].mapped = NO_MAP;
+        fmap->sect[sidx].mapped = ELF_NO_MAP;
     }
+}
+
+/******************************************************************
+ *		elf_get_map_size
+ *
+ * Get the size of an ELF section
+ */
+static inline unsigned elf_get_map_size(struct elf_file_map* fmap, int sidx)
+{
+    if (sidx < 0 || sidx >= fmap->elfhdr.e_shnum)
+        return 0;
+    return fmap->sect[sidx].shdr.sh_size;
 }
 
 /******************************************************************
@@ -206,7 +217,7 @@ static BOOL elf_map_file(const char* filename, struct elf_file_map* fmap)
     for (i = 0; i < fmap->elfhdr.e_shnum; i++)
     {
         read(fmap->fd, &fmap->sect[i].shdr, sizeof(fmap->sect[i].shdr));
-        fmap->sect[i].mapped = NO_MAP;
+        fmap->sect[i].mapped = ELF_NO_MAP;
     }
 
     /* grab size of module once loaded in memory */
@@ -287,9 +298,9 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
 
     symp = (const Elf32_Sym*)elf_map_section(fmap, symtab_idx);
     strp = elf_map_section(fmap, fmap->sect[symtab_idx].shdr.sh_link);
-    if (symp == NO_MAP || strp == NO_MAP) return;
+    if (symp == ELF_NO_MAP || strp == ELF_NO_MAP) return;
 
-    nsym = fmap->sect[symtab_idx].shdr.sh_size / sizeof(*symp);
+    nsym = elf_get_map_size(fmap, symtab_idx) / sizeof(*symp);
 
     for (j = 0; thunks[j].symname; j++)
         thunks[j].rva_start = thunks[j].rva_end = 0;
@@ -806,7 +817,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
      * table.
      */
     shstrtab = elf_map_section(fmap, fmap->elfhdr.e_shstrndx);
-    if (shstrtab == NO_MAP) return FALSE;
+    if (shstrtab == ELF_NO_MAP) return FALSE;
 
     symtab_sect = dynsym_sect = stab_sect = stabstr_sect = -1;
     debug_sect = debug_str_sect = debug_abbrev_sect = debug_line_sect = -1;
@@ -862,12 +873,12 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
 
             stab = elf_map_section(fmap, stab_sect);
             stabstr = elf_map_section(fmap, stabstr_sect);
-            if (stab != NO_MAP && stabstr != NO_MAP)
+            if (stab != ELF_NO_MAP && stabstr != ELF_NO_MAP)
             {
                 /* OK, now just parse all of the stabs. */
                 lret = stabs_parse(module, module->elf_info->elf_addr,
-                                   stab, fmap->sect[stab_sect].shdr.sh_size,
-                                   stabstr, fmap->sect[stabstr_sect].shdr.sh_size);
+                                   stab, elf_get_map_size(fmap, stab_sect),
+                                   stabstr, elf_get_map_size(fmap, stabstr_sect));
                 if (lret)
                     /* and fill in the missing information for stabs */
                     elf_finish_stabs_info(module, ht_symtab);
@@ -894,14 +905,14 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             dw2_debug_abbrev = (const BYTE*) elf_map_section(fmap, debug_abbrev_sect);
             dw2_debug_str = (const BYTE*) elf_map_section(fmap, debug_str_sect);
             dw2_debug_line = (const BYTE*) elf_map_section(fmap, debug_line_sect);
-            if (dw2_debug != NO_MAP && NO_MAP != dw2_debug_abbrev && dw2_debug_str != NO_MAP)
+            if (dw2_debug != ELF_NO_MAP && ELF_NO_MAP != dw2_debug_abbrev && dw2_debug_str != ELF_NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */
                 lret = dwarf2_parse(module, module->elf_info->elf_addr, thunks,
-                                    dw2_debug, fmap->sect[debug_sect].shdr.sh_size,
-                                    dw2_debug_abbrev, fmap->sect[debug_abbrev_sect].shdr.sh_size,
-                                    dw2_debug_str, fmap->sect[debug_str_sect].shdr.sh_size,
-                                    dw2_debug_line, dw2_debug_line != NO_MAP ? fmap->sect[debug_line_sect].shdr.sh_size : 0);
+                                    dw2_debug, elf_get_map_size(fmap, debug_sect),
+                                    dw2_debug_abbrev, elf_get_map_size(fmap, debug_abbrev_sect),
+                                    dw2_debug_str, elf_get_map_size(fmap, debug_str_sect),
+                                    dw2_debug_line, elf_get_map_size(fmap, debug_line_sect));
                 if (!lret)
                     WARN("Couldn't correctly read stabs\n");
                 ret = ret || lret;
@@ -923,7 +934,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
              * 2/ padding on 4 byte boundary
              * 3/ CRC of the linked ELF file
              */
-            if (dbg_link != NO_MAP && elf_map_file(dbg_link, &fmap_link))
+            if (dbg_link != ELF_NO_MAP && elf_map_file(dbg_link, &fmap_link))
             {
                 fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
                 fmap_link.with_crc = 1;
@@ -1066,7 +1077,7 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
     if (elf_info->flags & ELF_INFO_DEBUG_HEADER)
     {
         const char* shstrtab = elf_map_section(&fmap, fmap.elfhdr.e_shstrndx);
-        if (shstrtab == NO_MAP) goto leave;
+        if (shstrtab == ELF_NO_MAP) goto leave;
         for (i = 0; i < fmap.elfhdr.e_shnum; i++)
         {
             if (strcmp(shstrtab + fmap.sect[i].shdr.sh_name, ".dynamic") == 0 &&
