@@ -583,24 +583,6 @@ static BOOL dwarf2_find_attribute(const dwarf2_parse_context_t* ctx,
     return FALSE;
 }
 
-static void dwarf2_find_name(dwarf2_parse_context_t* ctx,
-                             const dwarf2_debug_info_t* di,
-                             struct attribute* attr, const char* pfx)
-{
-    static      int index;
-
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, attr))
-    {
-        if (pfx)
-        {
-            char* tmp = pool_alloc(&ctx->pool, strlen(pfx) + 16);
-            if (tmp) sprintf(tmp, "%s_%d", pfx, index++);
-            attr->u.string = tmp;
-        }
-        else attr->u.string = NULL;
-    }
-}
-
 static void dwarf2_load_one_entry(dwarf2_parse_context_t*, dwarf2_debug_info_t*,
                                   struct symt_compiland*);
 
@@ -944,7 +926,8 @@ static struct symt* dwarf2_parse_base_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    dwarf2_find_name(ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name))
+        name.u.string = NULL;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_encoding, &encoding)) encoding.u.uvalue = DW_ATE_void;
 
@@ -976,7 +959,7 @@ static struct symt* dwarf2_parse_typedef(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %lu\n", dwarf2_debug_ctx(ctx), di->abbrev->entry_code); 
 
-    dwarf2_find_name(ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
     ref_type = dwarf2_lookup_type(ctx, di);
 
     if (name.u.string)
@@ -1111,7 +1094,7 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
-    dwarf2_find_name(ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
     elt_type = dwarf2_lookup_type(ctx, di);
     if (dwarf2_compute_location_attr(ctx, di, DW_AT_data_member_location, &loc, NULL))
     {
@@ -1160,7 +1143,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    dwarf2_find_name(ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
 
     di->symt = &symt_new_udt(ctx->module, name.u.string, size.u.uvalue, udt)->symt;
@@ -1208,7 +1191,7 @@ static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    dwarf2_find_name(ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_const_value, &value)) value.u.svalue = 0;
     symt_add_enum_element(ctx->module, parent, name.u.string, value.u.svalue);
 
@@ -1225,7 +1208,7 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    dwarf2_find_name(ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
 
     di->symt = &symt_new_enum(ctx->module, name.u.string)->symt;
@@ -1283,7 +1266,8 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     is_pmt = !block && di->abbrev->tag == DW_TAG_formal_parameter;
     param_type = dwarf2_lookup_type(subpgm->ctx, di);
         
-    dwarf2_find_name(subpgm->ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_name, &name))
+        name.u.string = NULL;
     if (dwarf2_compute_location_attr(subpgm->ctx, di, DW_AT_location,
                                      &loc, &subpgm->frame))
     {
@@ -1342,7 +1326,8 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
     TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_low_pc, &low_pc)) low_pc.u.uvalue = 0;
-    dwarf2_find_name(subpgm->ctx, di, &name, NULL);
+    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_name, &name))
+        name.u.string = NULL;
 
     loc.kind = loc_absolute;
     loc.offset = subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue,
@@ -1488,14 +1473,14 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di));
 
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
     /* if it's an abstract representation of an inline function, there should be
      * a concrete object that we'll handle
      */
     if (dwarf2_find_attribute(ctx, di, DW_AT_inline, &inline_flags))
     {
-        dwarf2_find_name(ctx, di, &name, "subprogram");
         TRACE("Function %s declared as inlined (%ld)... skipping\n",
-              name.u.string, inline_flags.u.uvalue);
+              name.u.string ? name.u.string : "(null)", inline_flags.u.uvalue);
         return NULL;
     }
 
@@ -1511,7 +1496,6 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
     if (!dwarf2_find_attribute(ctx, di, DW_AT_declaration, &is_decl))
         is_decl.u.uvalue = 0;
         
-    dwarf2_find_name(ctx, di, &name, NULL);
     ret_type = dwarf2_lookup_type(ctx, di);
 
     /* FIXME: assuming C source code */
@@ -1945,7 +1929,8 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         struct attribute            stmt_list, low_pc;
         struct attribute            comp_dir;
 
-        dwarf2_find_name(&ctx, di, &name, NULL);
+        if (!dwarf2_find_attribute(&ctx, di, DW_AT_name, &name))
+            name.u.string = NULL;
 
         /* get working directory of current compilation unit */
         if (!dwarf2_find_attribute(&ctx, di, DW_AT_comp_dir, &comp_dir))
