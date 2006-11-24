@@ -701,7 +701,7 @@ void shader_generate_main(
             if (shader_is_comment(*pToken)) {
                 DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
-                TRACE("#%s\n", (char*)pToken);
+                TRACE("#%s\n", (const char*)pToken);
                 pToken += comment_len;
                 continue;
             }
@@ -834,7 +834,7 @@ void shader_trace_init(
             if (shader_is_comment(*pToken)) { /** comment */
                 DWORD comment_len = (*pToken & WINED3DSI_COMMENTSIZE_MASK) >> WINED3DSI_COMMENTSIZE_SHIFT;
                 ++pToken;
-                TRACE("//%s\n", (char*)pToken);
+                TRACE("//%s\n", (const char*)pToken);
                 pToken += comment_len;
                 len += comment_len + 1;
                 continue;
@@ -868,10 +868,10 @@ void shader_trace_init(
                         unsigned int offset = shader_get_float_offset(*pToken);
 
                         TRACE("def c%u = %f, %f, %f, %f", offset,
-                            *(float *)(pToken + 1),
-                            *(float *)(pToken + 2),
-                            *(float *)(pToken + 3),
-                            *(float *)(pToken + 4));
+                            *(const float *)(pToken + 1),
+                            *(const float *)(pToken + 2),
+                            *(const float *)(pToken + 3),
+                            *(const float *)(pToken + 4));
 
                         pToken += 5;
                         len += 5;
