@@ -106,12 +106,10 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
         break;
     case SymTagArrayType:
     case SymTagUDT:
-        assert(lvalue->cookie == DLV_TARGET);
         if (!memory_read_value(lvalue, sizeof(rtn), &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagEnum:
-        assert(lvalue->cookie == DLV_TARGET);
         if (!memory_read_value(lvalue, sizeof(rtn), &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;

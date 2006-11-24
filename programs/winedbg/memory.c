@@ -394,7 +394,6 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         break;
     case SymTagArrayType:
     case SymTagUDT:
-        assert(lvalue->cookie == DLV_TARGET);
         if (!memory_read_value(lvalue, sizeof(val_ptr), &val_ptr)) return;
         dbg_printf("%p", val_ptr);
         break;
@@ -402,7 +401,6 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         {
             BOOL        ok = FALSE;
 
-            assert(lvalue->cookie == DLV_TARGET);
             /* FIXME: it depends on underlying type for enums 
              * (not supported yet in dbghelp)
              * Assuming 4 as for an int
