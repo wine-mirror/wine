@@ -1214,9 +1214,12 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
 
     /* copy the function ... because it will certainly be released by application */
     if (NULL != pFunction) {
-        This->baseShader.function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
-        if (!This->baseShader.function) return E_OUTOFMEMORY;
-        memcpy((void *)This->baseShader.function, pFunction, This->baseShader.functionLength);
+        void *function;
+
+        function = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->baseShader.functionLength);
+        if (!function) return E_OUTOFMEMORY;
+        memcpy(function, pFunction, This->baseShader.functionLength);
+        This->baseShader.function = function;
     } else {
         This->baseShader.function = NULL;
     }
