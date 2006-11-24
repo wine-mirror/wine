@@ -213,20 +213,23 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     assert(udt_type->symt.tag == SymTagUDT);
 
     TRACE_(dbghelp_symt)("Adding %s to UDT %s\n", name, udt_type->hash_elt.name);
-    p = NULL;
-    while ((p = vector_iter_up(&udt_type->vchildren, p)))
+    if (name)
     {
-        m = (struct symt_data*)*p;
-        assert(m);
-        assert(m->symt.tag == SymTagData);
-        if (m->hash_elt.name[0] == name[0] && strcmp(m->hash_elt.name, name) == 0)
-            return TRUE;
+        p = NULL;
+        while ((p = vector_iter_up(&udt_type->vchildren, p)))
+        {
+            m = (struct symt_data*)*p;
+            assert(m);
+            assert(m->symt.tag == SymTagData);
+            if (strcmp(m->hash_elt.name, name) == 0)
+                return TRUE;
+        }
     }
 
     if ((m = pool_alloc(&module->pool, sizeof(*m))) == NULL) return FALSE;
     memset(m, 0, sizeof(*m));
     m->symt.tag      = SymTagData;
-    m->hash_elt.name = pool_strdup(&module->pool, name);
+    m->hash_elt.name = name ? pool_strdup(&module->pool, name) : "";
     m->hash_elt.next = NULL;
 
     m->kind            = DataIsMember;
