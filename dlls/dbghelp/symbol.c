@@ -197,7 +197,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         sym->kind          = is_static ? DataIsFileStatic : DataIsGlobal;
         sym->container     = compiland ? &compiland->symt : NULL;
         sym->type          = type;
-        sym->u.address     = addr;
+        sym->u.var.offset  = addr;
         if (type && size && symt_get_info(type, TI_GET_LENGTH, &tsz))
         {
             if (tsz != size)
@@ -302,7 +302,7 @@ void symt_add_func_line(struct module* module, struct symt_function* func,
 struct symt_data* symt_add_func_local(struct module* module, 
                                       struct symt_function* func, 
                                       enum DataKind dt,
-                                      int regno, BOOL regrel, long offset,
+                                      const struct location* loc,
                                       struct symt_block* block, 
                                       struct symt* type, const char* name)
 {
@@ -324,10 +324,7 @@ struct symt_data* symt_add_func_local(struct module* module,
     locsym->kind          = dt;
     locsym->container     = &block->symt;
     locsym->type          = type;
-    locsym->u.s.reg_id    = regno;
-    locsym->u.s.reg_rel   = regrel ? TRUE : FALSE;
-    locsym->u.s.offset    = offset * 8;
-    locsym->u.s.length    = 0;
+    locsym->u.var         = *loc;
     if (block)
         p = vector_add(&block->vchildren, &module->pool);
     else
@@ -481,18 +478,18 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                 sym_info->Flags |= SYMFLAG_PARAMETER;
                 /* fall through */
             case DataIsLocal: 
-                if (!data->u.s.reg_rel)
+                if (data->u.var.kind == loc_register)
                 {
                     sym_info->Flags |= SYMFLAG_REGISTER;
-                    sym_info->Register = data->u.s.reg_id;
+                    sym_info->Register = data->u.var.reg;
                     sym_info->Address = 0;
                 }
                 else
                 {
                     sym_info->Flags |= SYMFLAG_LOCAL | SYMFLAG_REGREL;
                     /* FIXME: it's i386 dependent !!! */
-                    sym_info->Register = data->u.s.reg_id ? data->u.s.reg_id : CV_REG_EBP;
-                    sym_info->Address = data->u.s.offset / 8;
+                    sym_info->Register = data->u.var.reg ? data->u.var.reg : CV_REG_EBP;
+                    sym_info->Address = data->u.var.offset;
                 }
                 break;
             case DataIsGlobal:

@@ -1253,8 +1253,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             assert(subpgm->func);
             symt_add_func_local(subpgm->ctx->module, subpgm->func, 
                                 is_pmt ? DataIsParam : DataIsLocal,
-                                loc.reg, loc.kind == loc_regrel,
-                                loc.offset, block, param_type, name.u.string);
+                                &loc, block, param_type, name.u.string);
             break;
         default:
             FIXME("Unsupported\n");

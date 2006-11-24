@@ -229,12 +229,11 @@ BOOL symt_add_udt_element(struct module* module, struct symt_udt* udt_type,
     m->hash_elt.name = pool_strdup(&module->pool, name);
     m->hash_elt.next = NULL;
 
-    m->kind          = DataIsMember;
-    m->container     = &udt_type->symt;
-    m->type          = elt_type;
-    m->u.s.offset    = offset;
-    m->u.s.length    = ((offset & 7) || (size & 7)) ? size : 0;
-    m->u.s.reg_id    = 0;
+    m->kind            = DataIsMember;
+    m->container       = &udt_type->symt;
+    m->type            = elt_type;
+    m->u.member.offset = offset;
+    m->u.member.length = ((offset & 7) || (size & 7)) ? size : 0;
     p = vector_add(&udt_type->vchildren, &module->pool);
     *p = &m->symt;
 
@@ -470,7 +469,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             {
             case DataIsGlobal:
             case DataIsFileStatic:
-                X(ULONG64) = ((const struct symt_data*)type)->u.address;
+                X(ULONG64) = ((const struct symt_data*)type)->u.var.offset;
                 break;
             default: return FALSE;
             }
@@ -515,11 +514,11 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         break;
 
     case TI_GET_BITPOSITION:
-        if (type->tag != SymTagData || 
-            ((const struct symt_data*)type)->kind != DataIsMember ||
-            ((const struct symt_data*)type)->u.s.length == 0)
-            return FALSE;
-        X(DWORD) = ((const struct symt_data*)type)->u.s.offset & 7;
+        if (type->tag == SymTagData &&
+            ((const struct symt_data*)type)->kind == DataIsMember &&
+            ((const struct symt_data*)type)->u.member.length != 0)
+            X(DWORD) = ((const struct symt_data*)type)->u.member.offset & 7;
+        else return FALSE;
         break;
 
     case TI_GET_CHILDRENCOUNT:
@@ -595,9 +594,9 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             break;
         case SymTagData:
             if (((const struct symt_data*)type)->kind != DataIsMember ||
-                !((const struct symt_data*)type)->u.s.length)
+                !((const struct symt_data*)type)->u.member.length)
                 return FALSE;
-            X(DWORD64) = ((const struct symt_data*)type)->u.s.length;
+            X(DWORD64) = ((const struct symt_data*)type)->u.member.length;
             break;
         case SymTagArrayType:   
             if (!symt_get_info(((const struct symt_array*)type)->base_type, 
@@ -668,8 +667,10 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
             {
             case DataIsParam:
             case DataIsLocal:
+                X(ULONG) = ((const struct symt_data*)type)->u.var.offset; 
+                break;
             case DataIsMember:
-                X(ULONG) = ((const struct symt_data*)type)->u.s.offset >> 3; 
+                X(ULONG) = ((const struct symt_data*)type)->u.member.offset >> 3; 
                 break;
             default:
                 FIXME("Unknown kind (%u) for get-offset\n",     

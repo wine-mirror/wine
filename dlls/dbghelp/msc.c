@@ -1239,6 +1239,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
     struct symt*                        symt;
     const char*                         name;
     struct symt_compiland*              compiland = NULL;
+    struct location                     loc;
 
     /*
      * Loop over the different types of records and whenever we
@@ -1372,36 +1373,51 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
          * Function parameters and stack variables.
          */
 	case S_BPREL_V1:
+            loc.kind = loc_regrel;
+            loc.reg = 0; /* FIXME */
+            loc.offset = sym->stack_v1.offset;
             symt_add_func_local(msc_dbg->module, curr_func, 
                                 sym->stack_v1.offset > 0 ? DataIsParam : DataIsLocal, 
-                                0, TRUE, sym->stack_v1.offset, block,
+                                &loc, block,
                                 codeview_get_type(sym->stack_v1.symtype, FALSE),
                                 terminate_string(&sym->stack_v1.p_name));
             break;
 	case S_BPREL_V2:
+            loc.kind = loc_regrel;
+            loc.reg = 0; /* FIXME */
+            loc.offset = sym->stack_v2.offset;
             symt_add_func_local(msc_dbg->module, curr_func, 
                                 sym->stack_v2.offset > 0 ? DataIsParam : DataIsLocal, 
-                                0, TRUE, sym->stack_v2.offset, block,
+                                &loc, block,
                                 codeview_get_type(sym->stack_v2.symtype, FALSE),
                                 terminate_string(&sym->stack_v2.p_name));
             break;
 	case S_BPREL_V3:
+            loc.kind = loc_regrel;
+            loc.reg = 0; /* FIXME */
+            loc.offset = sym->stack_v3.offset;
             symt_add_func_local(msc_dbg->module, curr_func, 
                                 sym->stack_v3.offset > 0 ? DataIsParam : DataIsLocal, 
-                                0, TRUE, sym->stack_v3.offset, block,
+                                &loc, block,
                                 codeview_get_type(sym->stack_v3.symtype, FALSE),
                                 sym->stack_v3.name);
             break;
 
         case S_REGISTER_V1:
+            loc.kind = loc_register;
+            loc.reg = sym->register_v1.reg;
+            loc.offset = 0;
             symt_add_func_local(msc_dbg->module, curr_func, 
-                                DataIsLocal, sym->register_v1.reg, FALSE, 0,
+                                DataIsLocal, &loc,
                                 block, codeview_get_type(sym->register_v1.type, FALSE),
                                 terminate_string(&sym->register_v1.p_name));
             break;
         case S_REGISTER_V2:
+            loc.kind = loc_register;
+            loc.reg = sym->register_v2.reg;
+            loc.offset = 0;
             symt_add_func_local(msc_dbg->module, curr_func, 
-                                DataIsLocal, sym->register_v2.reg, FALSE, 0,
+                                DataIsLocal, &loc,
                                 block, codeview_get_type(sym->register_v2.type, FALSE),
                                 terminate_string(&sym->register_v2.p_name));
             break;

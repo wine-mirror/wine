@@ -172,15 +172,25 @@ struct symt_data
     struct symt*                type;
     union                                       /* depends on kind */
     {
-        unsigned long           address;        /* DataIs{Global, FileStatic} */
+        /* DataIs{Global, FileStatic}:
+         *      loc.kind is loc_absolute
+         *      loc.offset is address
+         * DataIs{Local,Param}:
+         *      with loc.kind
+         *              loc_absolute    not supported
+         *              loc_register    location is in register loc.reg
+         *              loc_regrel      location is at address loc.reg + loc.offset
+         *              >= loc_user     ask debug info provider for resolution
+         */
+        struct location         var;
+        /* DataIs{Member} (all values are in bits, not bytes) */
         struct
         {
-            long                        offset; /* DataIs{Member,Local,Param} in bits */
-            unsigned long               length; /* DataIs{Member} in bits */
-            unsigned long               reg_rel : 1, /* DataIs{Local}: 0 in register, 1 deref */
-                                        reg_id; /* DataIs{Local} (0 if frame relative) */
-        } s;
-        VARIANT                 value;          /* DataIsConstant */
+            long                        offset;
+            unsigned long               length;
+        } member;
+        /* DataIsConstant */
+        VARIANT                 value;
     } u;
 };
 
@@ -500,7 +510,7 @@ extern void         symt_add_func_line(struct module* module,
 extern struct symt_data*
                     symt_add_func_local(struct module* module, 
                                         struct symt_function* func, 
-                                        enum DataKind dt, BOOL regrel, int regno, long offset,
+                                        enum DataKind dt, const struct location* loc,
                                         struct symt_block* block,
                                         struct symt* type, const char* name);
 extern struct symt_block*

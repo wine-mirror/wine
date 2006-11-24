@@ -502,18 +502,18 @@ static void elf_finish_stabs_info(struct module* module, struct hash_table* symt
             {
             case DataIsGlobal:
             case DataIsFileStatic:
-                if (((struct symt_data*)sym)->u.address != module->elf_info->elf_addr)
+                if (((struct symt_data*)sym)->u.var.offset != module->elf_info->elf_addr)
                     break;
                 symp = elf_lookup_symtab(module, symtab, sym->hash_elt.name, 
                                          ((struct symt_data*)sym)->container);
                 if (symp)
                 {
-                if (((struct symt_data*)sym)->u.address != module->elf_info->elf_addr &&
-                    ((struct symt_data*)sym)->u.address != module->elf_info->elf_addr + symp->st_value)
+                if (((struct symt_data*)sym)->u.var.offset != module->elf_info->elf_addr &&
+                    ((struct symt_data*)sym)->u.var.offset != module->elf_info->elf_addr + symp->st_value)
                     FIXME("Changing address for %p/%s!%s from %08lx to %08lx\n", 
                           sym, module->module.ModuleName, sym->hash_elt.name, 
                           ((struct symt_function*)sym)->address, module->elf_info->elf_addr + symp->st_value);
-                    ((struct symt_data*)sym)->u.address = module->elf_info->elf_addr +
+                    ((struct symt_data*)sym)->u.var.offset = module->elf_info->elf_addr +
                                                           symp->st_value;
                     ((struct symt_data*)sym)->kind = (ELF32_ST_BIND(symp->st_info) == STB_LOCAL) ?
                         DataIsFileStatic : DataIsGlobal;
