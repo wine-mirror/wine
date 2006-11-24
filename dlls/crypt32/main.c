@@ -188,10 +188,12 @@ BOOL WINAPI I_CryptReadTrustedPublisherDWORDValueFromRegistry(LPCWSTR name,
     return ret;
 }
 
-BOOL WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
+int WINAPI I_CryptInstallOssGlobal(DWORD x, DWORD y, DWORD z)
 {
-    FIXME("%08x %08x %08x\n", x, y, z);
-    return FALSE;
+    static int ret = 8;
+    ret++;
+    FIXME("%08x %08x %08x, return value %d\n", x, y, z,ret);
+    return ret;
 }
 
 BOOL WINAPI I_CryptInstallAsn1Module(void *x, DWORD y, DWORD z)
