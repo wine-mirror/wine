@@ -281,6 +281,7 @@ struct module
     enum module_type		type : 16;
     unsigned short              is_virtual : 1;
     struct elf_module_info*	elf_info;
+    struct dwarf2_module_info_s*dwarf2_info;
     
     /* memory allocation pool */
     struct pool                 pool;
@@ -441,7 +442,8 @@ extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offse
 				 const unsigned char* debug, unsigned int debug_size, 
 				 const unsigned char* abbrev, unsigned int abbrev_size, 
 				 const unsigned char* str, unsigned int str_size,
-                                 const unsigned char* line, unsigned int line_size);
+                                 const unsigned char* line, unsigned int line_size,
+                                 const unsigned char* loclist, unsigned int loclist_size);
 
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);

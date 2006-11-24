@@ -179,6 +179,12 @@ typedef struct dwarf2_parse_context_s
     unsigned char               word_size;
 } dwarf2_parse_context_t;
 
+/* stored in the dbghelp's module internal structure for later reuse */
+struct dwarf2_module_info_s
+{
+    dwarf2_section_t            debug_loc;
+};
+
 /* forward declarations */
 static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_debug_info_t* entry);
 
@@ -1846,9 +1852,11 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 		  const unsigned char* debug, unsigned int debug_size,
 		  const unsigned char* abbrev, unsigned int abbrev_size,
 		  const unsigned char* str, unsigned int str_size,
-		  const unsigned char* line, unsigned int line_size)
+		  const unsigned char* line, unsigned int line_size,
+		  const unsigned char* loclist, unsigned int loclist_size)
 {
     dwarf2_section_t    section[section_max];
+    char*               ptr;
     const unsigned char*comp_unit_cursor = debug;
     const unsigned char*end_debug = debug + debug_size;
 
@@ -1860,6 +1868,20 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
     section[section_string].size = str_size;
     section[section_line].address = line;
     section[section_line].size = line_size;
+
+    if (loclist_size)
+    {
+        /* initialize the dwarf2 specific info block for this module.
+         * As we'll need later on the .debug_loc section content, we copy it in
+         * the module structure for later reuse
+         */
+        module->dwarf2_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*module->dwarf2_info) + loclist_size);
+        if (!module->dwarf2_info) return FALSE;
+        ptr = (char*)(module->dwarf2_info + 1);
+        memcpy(ptr, loclist, loclist_size);
+        module->dwarf2_info->debug_loc.address = ptr;
+        module->dwarf2_info->debug_loc.size    = loclist_size;
+    }
 
     while (comp_unit_cursor < end_debug)
     {

@@ -794,7 +794,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     const char*	        shstrtab;
     int	       	        i;
     int                 symtab_sect, dynsym_sect, stab_sect, stabstr_sect;
-    int                 debug_sect, debug_str_sect, debug_abbrev_sect, debug_line_sect;
+    int                 debug_sect, debug_str_sect, debug_abbrev_sect;
+    int                 debug_line_sect, debug_loclist_sect;
     int                 debuglink_sect;
     struct elf_thunk_area thunks[] = 
     {
@@ -824,7 +825,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     if (shstrtab == ELF_NO_MAP) return FALSE;
 
     symtab_sect = dynsym_sect = stab_sect = stabstr_sect = -1;
-    debug_sect = debug_str_sect = debug_abbrev_sect = debug_line_sect = -1;
+    debug_sect = debug_str_sect = debug_abbrev_sect = -1;
+    debug_line_sect = debug_loclist_sect = -1;
     debuglink_sect = -1;
 
     for (i = 0; i < fmap->elfhdr.e_shnum; i++)
@@ -841,6 +843,8 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
 	    debug_abbrev_sect = i;
 	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".debug_line") == 0)
 	    debug_line_sect = i;
+	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".debug_loc") == 0)
+	    debug_loclist_sect = i;
 	if (strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".gnu_debuglink") == 0)
 	    debuglink_sect = i;
 	if ((strcmp(shstrtab + fmap->sect[i].shdr.sh_name, ".symtab") == 0) &&
@@ -902,6 +906,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             const BYTE* dw2_debug_abbrev;
             const BYTE* dw2_debug_str;
             const BYTE* dw2_debug_line;
+            const BYTE* dw2_debug_loclist;
 
             FIXME("Alpha-support for Dwarf2 information for %s\n", module->module.ModuleName);
 
@@ -909,14 +914,17 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             dw2_debug_abbrev = (const BYTE*) elf_map_section(fmap, debug_abbrev_sect);
             dw2_debug_str = (const BYTE*) elf_map_section(fmap, debug_str_sect);
             dw2_debug_line = (const BYTE*) elf_map_section(fmap, debug_line_sect);
-            if (dw2_debug != ELF_NO_MAP && ELF_NO_MAP != dw2_debug_abbrev && dw2_debug_str != ELF_NO_MAP)
+            dw2_debug_loclist = (const BYTE*) elf_map_section(fmap, debug_loclist_sect);
+            if (dw2_debug != ELF_NO_MAP && dw2_debug_abbrev != ELF_NO_MAP && dw2_debug_str != ELF_NO_MAP)
             {
                 /* OK, now just parse dwarf2 debug infos. */
                 lret = dwarf2_parse(module, module->elf_info->elf_addr, thunks,
                                     dw2_debug, elf_get_map_size(fmap, debug_sect),
                                     dw2_debug_abbrev, elf_get_map_size(fmap, debug_abbrev_sect),
                                     dw2_debug_str, elf_get_map_size(fmap, debug_str_sect),
-                                    dw2_debug_line, elf_get_map_size(fmap, debug_line_sect));
+                                    dw2_debug_line, elf_get_map_size(fmap, debug_line_sect),
+                                    dw2_debug_loclist, elf_get_map_size(fmap, debug_loclist_sect));
+
                 if (!lret)
                     WARN("Couldn't correctly read stabs\n");
                 ret = ret || lret;
@@ -925,6 +933,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             elf_unmap_section(fmap, debug_abbrev_sect);
             elf_unmap_section(fmap, debug_str_sect);
             elf_unmap_section(fmap, debug_line_sect);
+            elf_unmap_section(fmap, debug_loclist_sect);
         }
         if (debuglink_sect != -1)
         {
