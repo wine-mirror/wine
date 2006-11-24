@@ -1354,7 +1354,8 @@ static void dwarf2_parse_inlined_subroutine(dwarf2_subprogram_t* subpgm,
     if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_high_pc, &high_pc)) high_pc.u.uvalue = 0;
 
     block = symt_open_func_block(subpgm->ctx->module, subpgm->func, parent_block,
-                                 low_pc.u.uvalue, high_pc.u.uvalue - low_pc.u.uvalue);
+                                 subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue - subpgm->func->address,
+                                 high_pc.u.uvalue - low_pc.u.uvalue);
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
@@ -1406,7 +1407,8 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
         high_pc.u.uvalue = 0;
 
     block = symt_open_func_block(subpgm->ctx->module, subpgm->func, parent_block,
-                                 low_pc.u.uvalue, high_pc.u.uvalue - low_pc.u.uvalue);
+                                 subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue - subpgm->func->address,
+                                 high_pc.u.uvalue - low_pc.u.uvalue);
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
