@@ -434,10 +434,14 @@ static void setperusersecvalues_test(void)
     peruser.bRollback = FALSE;
 
     /* try a NULL pPerUser */
-    hr = pSetPerUserSecValues(NULL);
-    todo_wine
-    ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
-    ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
+    if (0)
+    {
+        /* This crashes on systems with IE7 */
+        hr = pSetPerUserSecValues(NULL);
+        todo_wine
+        ok(hr == S_OK, "Expected S_OK, got %d\n", hr);
+        ok(!OPEN_GUID_KEY(), "Expected guid key to not exist\n");
+    }
 
     /* at the very least, szGUID must be valid */
     peruser.szGUID[0] = '\0';
