@@ -343,6 +343,24 @@ static void test_getDefaultCryptProv(void)
     CryptReleaseContext(prov, 0);
 }
 
+typedef int (WINAPI *I_CryptInstallOssGlobal)(DWORD,DWORD,DWORD);
+
+static void test_CryptInstallOssGlobal(void)
+{
+    int ret,i;
+    I_CryptInstallOssGlobal pI_CryptInstallOssGlobal;
+
+    if (!hCrypt) return;
+
+    pI_CryptInstallOssGlobal= (I_CryptInstallOssGlobal)GetProcAddress(hCrypt,"I_CryptInstallOssGlobal");
+    /* passing in some random values to I_CryptInstallOssGlobal, it always returns 9 the first time, then 10, 11 etc.*/
+    for(i=0;i<30;i++)
+    {
+      ret =  pI_CryptInstallOssGlobal(rand(),rand(),rand());
+      ok((9+i) == ret,"Expected %d, got %d\n",(9+i),ret);
+    }
+}
+
 START_TEST(main)
 {
     hCrypt = LoadLibraryA("crypt32.dll");
@@ -354,4 +372,5 @@ START_TEST(main)
     test_cryptTls();
     test_readTrustedPublisherDWORD();
     test_getDefaultCryptProv();
+    test_CryptInstallOssGlobal();
 }
