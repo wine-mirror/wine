@@ -4,6 +4,7 @@
 # This is used by the IShellLink interface
 #
 # Copyright 2000 Alexandre Julliard
+# Copyright 2006 Vitaliy Margolen
 #
 # This library is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,8 +23,7 @@
 
 # Note that the link is a relative unix-style path name.  Since the / character
 # is not valid in Windows filenames it is an adequate separator to show the
-# menu structure.  (This program may need to split the menu structure out for
-# implementing xdg-style menus)
+# menu structure.
 
 mode=""
 args=""
@@ -82,176 +82,142 @@ if [ -z "$link" ] ; then
     usage
 fi
 
-kde_entry()
+desktop_entry()
 {
-    xname=`basename "$link"`
-    cat <<EOF
-# KDE Config File
-[KDE Desktop Entry]
-Name=$xname
-Exec=wine '$path' $args
-Type=Application
-Comment=$descr
-EOF
-    [ -z "$workdir" ] || echo "Path=\"$workdir\""
-    [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
-}
-
-gnome_entry()
-{
-    xname=`basename "$link"`
     cat <<EOF
 [Desktop Entry]
-Name=$xname
+Name=$linkname
 Exec=wine "$path" $args
 Type=Application
-Comment=$descr
 EOF
+    [ -z "$descr"   ] || echo "Comment=$descr"
     [ -z "$workdir" ] || echo "Path=$workdir"
     [ -z "$xpmicon" ] || echo "Icon=$xpmicon"
 }
 
-mdk_entry()
+directory_entry()
 {
-    base=`basename "$link"`
-    section=`dirname "$link"`
-    [ -z "$icon" ] || xicon="icon=\"$xpmicon\""
-    pathmenu=`echo "$path" | sed 's+\\\\+\\\\\\\\+g'`
-    echo "?package(local.Wine):needs=x11 section=\"/Wine/$section\" title=\"$base\" longtitle=\"$descr\" command=\"wine '$pathmenu' $args\" $xicon"
+    cat <<EOF
+[Desktop Entry]
+Type=Directory
+EOF
+    if [ "$1" == "wine" ] ; then
+        echo "Name=Wine"
+        echo "Icon=wine"
+    else
+        echo "Name=$1"
+        echo "Icon=folder"
+    fi
 }
 
 # copy the icon file to a specified dir and set xpmicon to the resulting path
 copy_icon()
 {
-  dir="$1"
-  mkdir -p "$dir"
-  mkdir -p "$dir/""`dirname "$link"`" || true
-  if [ -f "$icon" ]
-  then
-    cp "$icon" "$dir/$link.xpm"
-    xpmicon="$dir/$link.xpm"
-  else
-    xpmicon=""
-  fi
+    if [ -f "$icon" ]
+    then
+        xpmicon=`basename "$icon" .xpm`
+
+        mkdir -p "$1"
+        cp "$icon" "$1/$xpmicon.xpm"
+    else
+        xpmicon=""
+    fi
 }
 
-# Debian/Mandrake
+# XDG
 
-type update-menus > /dev/null 2>&1
-if [ $? = 0 -a $mode = "menu" ]
-then
-  iconname="`basename "$link"`.xpm"
-  dir="$HOME/.menu/icons"
-  if [ -f "$icon" ]
-  then
-    mkdir -p "$dir"
-    cp "$icon" "$dir/$iconname"
-    xpmicon="$dir/$iconname"
-  else
-    xpmicon=""
-  fi
-  mdk_entry >> "$HOME/.menu/wine"
-  if [ -d "/usr/lib/menu" ] && [ -w "/usr/lib/menu" ]
-  then
-    mdk_entry >> "/usr/lib/menu/wine"
-  fi
-  update-menus > /dev/null 2>&1
-fi
+xdg_config_dir="${XDG_CONFIG_HOME:-$HOME/.config}/menus/applications-merged"
+xdg_data_dir="${XDG_DATA_HOME:-$HOME/.local/share}"
 
-# KDE
+# Create common directories
+mkdir -p "$xdg_config_dir"
+mkdir -p "$xdg_data_dir/desktop-directories"
 
-if [ -d "$HOME/.kde" ]
-then
-  kdeversion=0
-  if type kde-config >/dev/null 2>&1
-  then
-    kdeversion=`kde-config -v | grep KDE: | sed -n "s/^KDE: \([^.]*\)\..*$/\1/p"`
-  fi
+get_menu_entries()
+{
+    tmp="$xdg_config_dir/$1.menu"
 
-  if [ $kdeversion -ge 2 ]
-  then
-    copy_icon "$HOME/.kde/share/applnk/Wine"
-    if [ $mode = "menu" ]
-    then
-      gnome_entry > "$HOME/.kde/share/applnk/Wine/$link.desktop"
-    elif [ -d "$HOME/Desktop" ]
-    then
-      gnome_entry > "$HOME/Desktop/$link.desktop"
+    if [ -r "$tmp" ] ; then
+        awk '
+BEGIN {  RS="<" }
+/^Filename/ {
+  if (match($0,/>/)) {
+     print substr($0,RSTART+1)
+  }
+}' $tmp
     fi
-  else
-    copy_icon "$HOME/.kde/share/applnk/Wine"
-    if [ $mode = "menu" ]
-    then
-      kde_entry > "$HOME/.kde/share/applnk/Wine/$link.kdelnk"
+}
 
-      # KDE 1.x kludge.  Wake up KDE, if we can find kpanel running
-      type kwmcom >/dev/null 2>/dev/null && \
-        ps u -C kpanel >/dev/null 2>/dev/null && \
-          kwmcom kpanel:restart
+# Input
+#   menu file name
+#   new item
+write_menu_file()
+{
+    tmpfile=`mktemp`
+    (
+        echo '<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"'
+        echo '"http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd">'
+        echo '<Menu>'
+        echo '  <Name>Applications</Name>'
 
-    elif [ -d "$HOME/Desktop" ]
-    then
-      kde_entry > "$HOME/Desktop/$link.kdelnk"
-      #   KDE 1.x kludge:  wake up KDE, if we can find kfm running...
-      type kfmclient >/dev/null 2>/dev/null && \
-        ps u -C kfm >/dev/null 2>/dev/null  && \
-          kfmclient refreshDesktop
-    fi
-  fi
-fi
+        IFS="-"
 
-if [ -d "$HOME/.kde2" ]
-then
-  copy_icon "$HOME/.kde2/share/applnk/Wine"
-  if [ $mode = "menu" ]
-  then
-    gnome_entry > "$HOME/.kde2/share/applnk/Wine/$link.desktop"
-  else
-    if [ -d "$HOME/Desktop2" ]
-    then
-      gnome_entry > "$HOME/Desktop2/$link.desktop"
-    fi
-    if [ -d "$HOME/Desktop" ]
-    then
-      gnome_entry > "$HOME/Desktop/$link.desktop"
-    fi
-  fi
-fi
+        fullname='wine'
+        for i in $1; do
+            echo "  <Menu>"
+            echo "    <Name>$fullname-$i</Name>"
+            echo "    <Directory>$fullname-$i.directory</Directory>"
 
-if [ -d "$HOME/.kde3/share/applnk" ]
-then
-  copy_icon "$HOME/.kde3/share/applnk/Wine"
-  if [ $mode = "menu" ]
-  then
-    gnome_entry > "$HOME/.kde3/share/applnk/Wine/$link.desktop"
-  else
-    if [ -d "$HOME/Desktop3" ]
-    then
-      gnome_entry > "$HOME/Desktop3/$link.desktop"
-    fi
-    if [ -d "$HOME/Desktop2" ]
-    then
-      gnome_entry > "$HOME/Desktop2/$link.desktop"
-    fi
-    if [ -d "$HOME/Desktop" ]
-    then
-      gnome_entry > "$HOME/Desktop/$link.desktop"
-    fi
-  fi
-fi
+            dir_file_name="$xdg_data_dir/desktop-directories/$fullname-$i.directory"
+            if [ ! -f "$dir_file_name" ] ; then
+                directory_entry "$i" > "$dir_file_name"
+            fi
+            test "$i" = "wine" || fullname="$fullname-$i"
+        done
 
-# Gnome
+        echo "    <Include>"
 
-if [ -d "$HOME/.gnome" ]
-then
-  copy_icon "$HOME/.gnome/apps/Wine"
-  if [ $mode = "menu" ]
-  then
-    gnome_entry > "$HOME/.gnome/apps/Wine/$link.desktop"
-  elif [ -d "$HOME/.gnome-desktop" ]
-  then
-    gnome_entry > "$HOME/.gnome-desktop/$link.desktop"
-  fi
+        IFS="
+"
+        for i in $(get_menu_entries "$1"); do
+            test "$i" = "$2" && continue
+            echo "      <Filename>$i</Filename>"
+        done
+
+        # New record
+        echo "      <Filename>$2</Filename>"
+        echo "    </Include>"
+
+        IFS='-'
+        for i in $1; do
+            echo "  </Menu>"
+        done
+        echo '</Menu>'                        
+    ) > $tmpfile
+    chmod 0600 $tmpfile
+
+    mv -f $tmpfile "$xdg_config_dir/$1.menu"
+}
+
+
+copy_icon "$xdg_data_dir/icons"
+
+linkname=`basename "$link"`
+
+if [ $mode = "menu" ] ; then
+    mkdir -p "$xdg_data_dir/applications/wine/`dirname "$link"`"
+
+    linkpath=`dirname "$link" | sed 's!/!-!g'`
+    if [ "$linkpath" == "." ] ; then 
+        linkpath=""
+    else
+        linkpath="-$linkpath"
+    fi
+
+    desktop_entry > "$xdg_data_dir/applications/wine/$link.desktop"
+    write_menu_file "wine$linkpath" "wine$linkpath-$linkname.desktop"
+else
+    desktop_entry > "$HOME/Desktop/$linkname.desktop"
 fi
 
 exit 0
