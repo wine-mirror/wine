@@ -1423,6 +1423,9 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
                  * Skip it for now
                  */
                 break;
+            case DW_TAG_label:
+                dwarf2_parse_subprogram_label(subpgm, child);
+                break;
             case DW_TAG_class_type:
             case DW_TAG_structure_type:
             case DW_TAG_union_type:
