@@ -325,7 +325,11 @@ static void elf_hash_symtab(struct module* module, struct pool* pool,
         switch (ELF32_ST_TYPE(symp->st_info))
         {
         case STT_FILE:
-            compiland = symname ? symt_new_compiland(module, source_new(module, NULL, symname)) : NULL;
+            if (symname)
+                compiland = symt_new_compiland(module, symp->st_value,
+                                               source_new(module, NULL, symname));
+            else
+                compiland = NULL;
             continue;
         case STT_NOTYPE:
             /* we are only interested in wine markers inserted by winebuild */

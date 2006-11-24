@@ -137,6 +137,7 @@ struct symt_block
 struct symt_compiland
 {
     struct symt                 symt;
+    unsigned long               address;
     unsigned                    source;
     struct vector               vchildren;      /* global variables & functions */
 };
@@ -447,7 +448,8 @@ extern const char*  symt_get_name(const struct symt* sym);
 extern int          symt_cmp_addr(const void* p1, const void* p2);
 extern int          symt_find_nearest(struct module* module, DWORD addr);
 extern struct symt_compiland*
-                    symt_new_compiland(struct module* module, unsigned src_idx);
+                    symt_new_compiland(struct module* module, unsigned long address,
+                                       unsigned src_idx);
 extern struct symt_public*
                     symt_new_public(struct module* module, 
                                     struct symt_compiland* parent, 

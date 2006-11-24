@@ -1465,7 +1465,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 
         case S_OBJNAME_V1:
             TRACE("S-ObjName %s\n", terminate_string(&sym->objname_v1.p_name));
-            compiland = symt_new_compiland(msc_dbg->module, 
+            compiland = symt_new_compiland(msc_dbg->module, 0 /* FIXME */,
                                            source_new(msc_dbg->module, NULL,
                                                       terminate_string(&sym->objname_v1.p_name)));
             break;

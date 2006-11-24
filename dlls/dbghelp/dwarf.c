@@ -1807,7 +1807,7 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     {
         struct attribute            name;
         dwarf2_debug_info_t**       pdi = NULL;
-        struct attribute            stmt_list;
+        struct attribute            stmt_list, low_pc;
         struct attribute            comp_dir;
 
         dwarf2_find_name(&ctx, di, &name, "compiland");
@@ -1816,7 +1816,11 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
         if (!dwarf2_find_attribute(&ctx, di, DW_AT_comp_dir, &comp_dir))
             comp_dir.u.string = NULL;
 
-        di->symt = &symt_new_compiland(module, source_new(module, comp_dir.u.string, name.u.string))->symt;
+        if (!dwarf2_find_attribute(&ctx, di, DW_AT_low_pc, &low_pc))
+            low_pc.u.uvalue = 0;
+        di->symt = &symt_new_compiland(module, 
+                                       module->module.BaseOfImage + low_pc.u.uvalue,
+                                       source_new(module, comp_dir.u.string, name.u.string))->symt;
 
         if (di->abbrev->have_child)
         {

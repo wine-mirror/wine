@@ -125,7 +125,8 @@ static void compile_regex(const char* str, int numchar, regex_t* re, BOOL _case)
     HeapFree(GetProcessHeap(), 0, mask);
 }
 
-struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_idx)
+struct symt_compiland* symt_new_compiland(struct module* module, 
+                                          unsigned long address, unsigned src_idx)
 {
     struct symt_compiland*    sym;
 
@@ -134,6 +135,7 @@ struct symt_compiland* symt_new_compiland(struct module* module, unsigned src_id
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagCompiland;
+        sym->address  = address;
         sym->source   = src_idx;
         vector_init(&sym->vchildren, sizeof(struct symt*), 32);
     }

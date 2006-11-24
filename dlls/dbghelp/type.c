@@ -490,6 +490,9 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagThunk:
             X(ULONG64) = ((const struct symt_thunk*)type)->address;
             break;
+        case SymTagCompiland:
+            X(ULONG64) = ((const struct symt_compiland*)type)->address;
+            break;
         default:
             FIXME("Unsupported sym-tag %s for get-address\n", 
                   symt_get_tag_str(type->tag));
