@@ -113,6 +113,27 @@ extern unsigned dbghelp_options;
 /* some more Wine extensions */
 #define SYMOPT_WINE_WITH_ELF_MODULES 0x40000000
 
+enum location_kind {loc_error,          /* reg is the error code */
+                    loc_absolute,       /* offset is the location */
+                    loc_register,       /* reg is the location */
+                    loc_regrel,         /* [reg+offset] is the location */
+                    loc_user,           /* value is debug information dependent,
+                                           reg & offset can be used ad libidem */
+};
+
+enum location_error {loc_err_internal = -1,     /* internal while computing */
+                     loc_err_too_complex = -2,  /* couldn't compute location (even at runtime) */
+                     loc_err_out_of_scope = -3, /* variable isn't available at current address */
+                     loc_err_cant_read = -4,    /* couldn't read memory at given address */
+};
+
+struct location
+{
+    unsigned            kind : 8,
+                        reg;
+    unsigned long       offset;
+};
+
 struct symt
 {
     enum SymTagEnum             tag;

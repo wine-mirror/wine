@@ -185,6 +185,9 @@ struct dwarf2_module_info_s
     dwarf2_section_t            debug_loc;
 };
 
+#define loc_dwarf2_location_list        (loc_user + 0)
+#define loc_dwarf2_block                (loc_user + 1)
+
 /* forward declarations */
 static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx, dwarf2_debug_info_t* entry);
 
@@ -573,121 +576,196 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t*, dwarf2_debug_info_t*,
                                   struct symt_compiland*);
 
 #define Wine_DW_no_register     0x7FFFFFFF
-#define Wine_DW_frame_register  0x7FFFFFFE
-#define Wine_DW_register_deref  0x80000000
 
-static BOOL dwarf2_compute_location(dwarf2_parse_context_t* ctx,
-                                    dwarf2_debug_info_t* di,
-                                    unsigned long dw,
-                                    unsigned long* offset, int* in_register)
+static unsigned dwarf2_map_register(int regno)
 {
-    unsigned long loc[64];
+    unsigned    reg;
+
+    switch (regno)
+    {
+    case Wine_DW_no_register: FIXME("What the heck map reg 0x%x\n",regno); reg = 0; break;
+    case  0: reg = CV_REG_EAX; break;
+    case  1: reg = CV_REG_ECX; break;
+    case  2: reg = CV_REG_EDX; break;
+    case  3: reg = CV_REG_EBX; break;
+    case  4: reg = CV_REG_ESP; break;
+    case  5: reg = CV_REG_EBP; break;
+    case  6: reg = CV_REG_ESI; break;
+    case  7: reg = CV_REG_EDI; break;
+    case  8: reg = CV_REG_EIP; break;
+    case  9: reg = CV_REG_EFLAGS; break;
+    case 10: reg = CV_REG_CS;  break;
+    case 11: reg = CV_REG_SS;  break;
+    case 12: reg = CV_REG_DS;  break;
+    case 13: reg = CV_REG_ES;  break;
+    case 14: reg = CV_REG_FS;  break;
+    case 15: reg = CV_REG_GS;  break;
+    case 16: case 17: case 18: case 19:
+    case 20: case 21: case 22: case 23:
+        reg = CV_REG_ST0 + regno - 16; break;
+    case 24: reg = CV_REG_CTRL; break;
+    case 25: reg = CV_REG_STAT; break;
+    case 26: reg = CV_REG_TAG; break;
+/*
+reg: fiseg 27
+reg: fioff 28
+reg: foseg 29
+reg: fooff 30
+reg: fop   31
+*/
+    case 32: case 33: case 34: case 35:
+    case 36: case 37: case 38: case 39:
+        reg = CV_REG_XMM0 + regno - 32; break;
+    case 40: reg = CV_REG_MXCSR; break;
+    default:
+        FIXME("Don't know how to map register %d\n", regno);
+        return 0;
+    }
+    return reg;
+}
+
+static BOOL compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
+                             const struct location* frame)
+{
+    unsigned long stack[64];
     unsigned stk;
+    unsigned char op;
+    BOOL piece_found = FALSE;
+
+    stack[stk = 0] = 0;
+
+    loc->kind = loc_absolute;
+    loc->reg = Wine_DW_no_register;
+
+    while (ctx->data < ctx->end_data)
+    {
+        op = dwarf2_parse_byte(ctx);
+        switch (op)
+        {
+        case DW_OP_addr:    stack[++stk] = dwarf2_parse_addr(ctx); break;
+        case DW_OP_const1u: stack[++stk] = dwarf2_parse_byte(ctx); break;
+        case DW_OP_const1s: stack[++stk] = (long)(signed char)dwarf2_parse_byte(ctx); break;
+        case DW_OP_const2u: stack[++stk] = dwarf2_parse_u2(ctx); break;
+        case DW_OP_const2s: stack[++stk] = (long)(short)dwarf2_parse_u2(ctx); break;
+        case DW_OP_const4u: stack[++stk] = dwarf2_parse_u4(ctx); break;
+        case DW_OP_const4s: stack[++stk] = dwarf2_parse_u4(ctx); break;
+        case DW_OP_constu:  stack[++stk] = dwarf2_leb128_as_unsigned(ctx); break;
+        case DW_OP_consts:  stack[++stk] = dwarf2_leb128_as_signed(ctx); break;
+        case DW_OP_plus_uconst:
+            stack[stk] += dwarf2_leb128_as_unsigned(ctx); break;
+        case DW_OP_reg0:  case DW_OP_reg1:  case DW_OP_reg2:  case DW_OP_reg3:
+        case DW_OP_reg4:  case DW_OP_reg5:  case DW_OP_reg6:  case DW_OP_reg7:
+        case DW_OP_reg8:  case DW_OP_reg9:  case DW_OP_reg10: case DW_OP_reg11:
+        case DW_OP_reg12: case DW_OP_reg13: case DW_OP_reg14: case DW_OP_reg15:
+        case DW_OP_reg16: case DW_OP_reg17: case DW_OP_reg18: case DW_OP_reg19:
+        case DW_OP_reg20: case DW_OP_reg21: case DW_OP_reg22: case DW_OP_reg23:
+        case DW_OP_reg24: case DW_OP_reg25: case DW_OP_reg26: case DW_OP_reg27:
+        case DW_OP_reg28: case DW_OP_reg29: case DW_OP_reg30: case DW_OP_reg31:
+        case DW_OP_breg0:  case DW_OP_breg1:  case DW_OP_breg2:  case DW_OP_breg3:
+        case DW_OP_breg4:  case DW_OP_breg5:  case DW_OP_breg6:  case DW_OP_breg7:
+        case DW_OP_breg8:  case DW_OP_breg9:  case DW_OP_breg10: case DW_OP_breg11:
+        case DW_OP_breg12: case DW_OP_breg13: case DW_OP_breg14: case DW_OP_breg15:
+        case DW_OP_breg16: case DW_OP_breg17: case DW_OP_breg18: case DW_OP_breg19:
+        case DW_OP_breg20: case DW_OP_breg21: case DW_OP_breg22: case DW_OP_breg23:
+        case DW_OP_breg24: case DW_OP_breg25: case DW_OP_breg26: case DW_OP_breg27:
+        case DW_OP_breg28: case DW_OP_breg29: case DW_OP_breg30: case DW_OP_breg31:
+            /* dbghelp APIs don't know how to cope with this anyway
+             * (for example 'long long' stored in two registers)
+             * FIXME: We should tell winedbg how to deal with it (sigh)
+             */
+            if (!piece_found || (op - DW_OP_reg0 != loc->reg + 1))
+            {
+                if (loc->reg != Wine_DW_no_register)
+                    FIXME("Only supporting one reg (%d -> %d)\n", 
+                          loc->reg, op - DW_OP_reg0);
+                loc->reg = dwarf2_map_register(op - DW_OP_reg0);
+            }
+            if (op >= DW_OP_breg0 && op <= DW_OP_breg31)
+            {
+                stack[++stk] = dwarf2_leb128_as_signed(ctx);
+                loc->kind = loc_regrel;
+            }
+            else
+                loc->kind = loc_register;
+            break;
+        case DW_OP_fbreg:
+            if (loc->reg != Wine_DW_no_register)
+                FIXME("Only supporting one reg (%d -> -2)\n", loc->reg);
+            if (frame && frame->kind == loc_register)
+            {
+                loc->kind = loc_regrel;
+                loc->reg = frame->reg;
+                stack[++stk] = dwarf2_leb128_as_signed(ctx);
+            }
+            else if (frame && frame->kind == loc_regrel)
+            {
+                loc->kind = loc_regrel;
+                loc->reg = frame->reg;
+                stack[++stk] = dwarf2_leb128_as_signed(ctx) + frame->offset;
+            }
+            else
+            {
+                /* FIXME: this could be later optimized by not recomputing
+                 * this very location expression
+                 */
+                loc->kind = loc_dwarf2_block;
+                stack[++stk] = dwarf2_leb128_as_signed(ctx);
+            }
+            break;
+        case DW_OP_piece:
+            {
+                unsigned sz = dwarf2_leb128_as_unsigned(ctx);
+                WARN("Not handling OP_piece directly (size=%d)\n", sz);
+                piece_found = TRUE;
+            }
+            break;
+        default:
+            FIXME("Unhandled attr op: %x\n", op);
+            loc->offset = 0;
+            return FALSE;
+        }
+    }
+    loc->offset = stack[stk];
+    return TRUE;
+}
+
+static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
+                                         dwarf2_debug_info_t* di,
+                                         unsigned long dw,
+                                         struct location* loc,
+                                         const struct location* frame)
+{
     struct attribute xloc;
 
     if (!dwarf2_find_attribute(ctx, di, dw, &xloc)) return FALSE;
 
-    if (in_register) *in_register = Wine_DW_no_register;
-
     switch (xloc.form)
     {
     case DW_FORM_data1: case DW_FORM_data2:
-    case DW_FORM_data4: case DW_FORM_data8:
     case DW_FORM_udata: case DW_FORM_sdata:
-        /* we've got a constant */
-        *offset = xloc.u.uvalue;
+        loc->kind = loc_absolute;
+        loc->reg = 0;
+        loc->offset = xloc.u.uvalue;
+        return TRUE;
+    case DW_FORM_data4: case DW_FORM_data8:
+        loc->kind = loc_dwarf2_location_list;
+        loc->reg = Wine_DW_no_register;
+        loc->offset = xloc.u.uvalue;
         return TRUE;
     }
+
     /* assume we have a block form */
-    loc[stk = 0] = 0;
 
     if (xloc.u.block.size)
     {
         dwarf2_traverse_context_t  lctx;
-        unsigned char op;
-        BOOL piece_found = FALSE;
 
         lctx.data = xloc.u.block.ptr;
         lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
         lctx.word_size = ctx->word_size;
 
-        while (lctx.data < lctx.end_data)
-        {
-            op = dwarf2_parse_byte(&lctx);
-            switch (op)
-            {
-            case DW_OP_addr:    loc[++stk] = dwarf2_parse_addr(&lctx); break;
-            case DW_OP_const1u: loc[++stk] = dwarf2_parse_byte(&lctx); break;
-            case DW_OP_const1s: loc[++stk] = (long)(signed char)dwarf2_parse_byte(&lctx); break;
-            case DW_OP_const2u: loc[++stk] = dwarf2_parse_u2(&lctx); break;
-            case DW_OP_const2s: loc[++stk] = (long)(short)dwarf2_parse_u2(&lctx); break;
-            case DW_OP_const4u: loc[++stk] = dwarf2_parse_u4(&lctx); break;
-            case DW_OP_const4s: loc[++stk] = dwarf2_parse_u4(&lctx); break;
-            case DW_OP_constu:  loc[++stk] = dwarf2_leb128_as_unsigned(&lctx); break;
-            case DW_OP_consts:  loc[++stk] = dwarf2_leb128_as_signed(&lctx); break;
-            case DW_OP_plus_uconst:
-                                loc[stk] += dwarf2_leb128_as_unsigned(&lctx); break;
-            case DW_OP_reg0:  case DW_OP_reg1:  case DW_OP_reg2:  case DW_OP_reg3:
-            case DW_OP_reg4:  case DW_OP_reg5:  case DW_OP_reg6:  case DW_OP_reg7:
-            case DW_OP_reg8:  case DW_OP_reg9:  case DW_OP_reg10: case DW_OP_reg11:
-            case DW_OP_reg12: case DW_OP_reg13: case DW_OP_reg14: case DW_OP_reg15:
-            case DW_OP_reg16: case DW_OP_reg17: case DW_OP_reg18: case DW_OP_reg19:
-            case DW_OP_reg20: case DW_OP_reg21: case DW_OP_reg22: case DW_OP_reg23:
-            case DW_OP_reg24: case DW_OP_reg25: case DW_OP_reg26: case DW_OP_reg27:
-            case DW_OP_reg28: case DW_OP_reg29: case DW_OP_reg30: case DW_OP_reg31:
-            case DW_OP_breg0:  case DW_OP_breg1:  case DW_OP_breg2:  case DW_OP_breg3:
-            case DW_OP_breg4:  case DW_OP_breg5:  case DW_OP_breg6:  case DW_OP_breg7:
-            case DW_OP_breg8:  case DW_OP_breg9:  case DW_OP_breg10: case DW_OP_breg11:
-            case DW_OP_breg12: case DW_OP_breg13: case DW_OP_breg14: case DW_OP_breg15:
-            case DW_OP_breg16: case DW_OP_breg17: case DW_OP_breg18: case DW_OP_breg19:
-            case DW_OP_breg20: case DW_OP_breg21: case DW_OP_breg22: case DW_OP_breg23:
-            case DW_OP_breg24: case DW_OP_breg25: case DW_OP_breg26: case DW_OP_breg27:
-            case DW_OP_breg28: case DW_OP_breg29: case DW_OP_breg30: case DW_OP_breg31:
-                if (in_register)
-                {
-                    /* dbghelp APIs don't know how to cope with this anyway
-                     * (for example 'long long' stored in two registers)
-                     * FIXME: We should tell winedbg how to deal with it (sigh)
-                     */
-                    if (!piece_found || (op - DW_OP_reg0 != *in_register + 1))
-                    {
-                        if (*in_register != Wine_DW_no_register)
-                            FIXME("Only supporting one reg (%d -> %d)\n", 
-                                  *in_register, op - DW_OP_reg0);
-                        *in_register = op - DW_OP_reg0;
-                    }
-                }
-                else FIXME("Found register, while not expecting it\n");
-                if (op >= DW_OP_breg0 && op <= DW_OP_breg31)
-                {
-                    loc[++stk] = dwarf2_leb128_as_signed(&lctx);
-                    if (in_register) *in_register |= Wine_DW_register_deref;
-                }
-                break;
-            case DW_OP_fbreg:
-                if (in_register)
-                {
-                    if (*in_register != Wine_DW_no_register)
-                        FIXME("Only supporting one reg (%d -> -2)\n", *in_register);
-                    *in_register = Wine_DW_frame_register | Wine_DW_register_deref;
-                }
-                else FIXME("Found register, while not expecting it\n");
-                loc[++stk] = dwarf2_leb128_as_signed(&lctx);
-                break;
-            case DW_OP_piece:
-                {
-                    unsigned sz = dwarf2_leb128_as_unsigned(&lctx);
-                    WARN("Not handling OP_piece directly (size=%d)\n", sz);
-                    piece_found = TRUE;
-                }
-                break;
-            default:
-                FIXME("Unhandled attr op: %x\n", op);
-                return loc[stk];
-            }
-        }
+        compute_location(&lctx, loc, frame);
     }
-    *offset = loc[stk];
     return TRUE;
 }
 
@@ -956,9 +1034,9 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 {
     struct symt* elt_type;
     struct attribute name;
-    unsigned long offset = 0;
     struct attribute bit_size;
     struct attribute bit_offset;
+    struct location  loc;
 
     assert(parent);
 
@@ -966,8 +1044,19 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
 
     dwarf2_find_name(ctx, di, &name, "udt_member");
     elt_type = dwarf2_lookup_type(ctx, di);
-    if (dwarf2_compute_location(ctx, di, DW_AT_data_member_location, &offset, NULL))
-	TRACE("found member_location at %s -> %lu\n", dwarf2_debug_ctx(ctx), offset);
+    if (dwarf2_compute_location_attr(ctx, di, DW_AT_data_member_location, &loc, NULL))
+    {
+        if (loc.kind != loc_absolute)
+        {
+           FIXME("Found register, while not expecting it\n");
+           loc.offset = 0;
+        }
+        else
+            TRACE("found member_location at %s -> %lu\n",
+                  dwarf2_debug_ctx(ctx), loc.offset);
+    }
+    else
+        loc.offset = 0;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_bit_size, &bit_size))   bit_size.u.uvalue = 0;
     if (dwarf2_find_attribute(ctx, di, DW_AT_bit_offset, &bit_offset))
     {
@@ -984,7 +1073,8 @@ static void dwarf2_parse_udt_member(dwarf2_parse_context_t* ctx,
     }
     else bit_offset.u.uvalue = 0;
     symt_add_udt_element(ctx->module, parent, name.u.string, elt_type,    
-                         (offset << 3) + bit_offset.u.uvalue, bit_size.u.uvalue);
+                         (loc.offset << 3) + bit_offset.u.uvalue,
+                         bit_size.u.uvalue);
 
     if (di->abbrev->have_child) FIXME("Unsupported children\n");
 }
@@ -1094,63 +1184,13 @@ static struct symt* dwarf2_parse_enumeration_type(dwarf2_parse_context_t* ctx,
     return di->symt;
 }
 
-static unsigned dwarf2_map_register(int regno)
-{
-    unsigned    reg;
-
-    switch (regno)
-    {
-    case Wine_DW_no_register: FIXME("What the heck map reg 0x%x\n",regno); reg = 0; break;
-    /* FIXME: this is a dirty hack */
-    case Wine_DW_frame_register: reg = 0;          break;
-    case  0: reg = CV_REG_EAX; break;
-    case  1: reg = CV_REG_ECX; break;
-    case  2: reg = CV_REG_EDX; break;
-    case  3: reg = CV_REG_EBX; break;
-    case  4: reg = CV_REG_ESP; break;
-    case  5: reg = CV_REG_EBP; break;
-    case  6: reg = CV_REG_ESI; break;
-    case  7: reg = CV_REG_EDI; break;
-    case  8: reg = CV_REG_EIP; break;
-    case  9: reg = CV_REG_EFLAGS; break;
-    case 10: reg = CV_REG_CS;  break;
-    case 11: reg = CV_REG_SS;  break;
-    case 12: reg = CV_REG_DS;  break;
-    case 13: reg = CV_REG_ES;  break;
-    case 14: reg = CV_REG_FS;  break;
-    case 15: reg = CV_REG_GS;  break;
-    case 16: case 17: case 18: case 19:
-    case 20: case 21: case 22: case 23:
-        reg = CV_REG_ST0 + regno - 16; break;
-    case 24: reg = CV_REG_CTRL; break;
-    case 25: reg = CV_REG_STAT; break;
-    case 26: reg = CV_REG_TAG; break;
-/*
-reg: fiseg 27
-reg: fioff 28
-reg: foseg 29
-reg: fooff 30
-reg: fop   31
-*/
-    case 32: case 33: case 34: case 35:
-    case 36: case 37: case 38: case 39:
-        reg = CV_REG_XMM0 + regno - 32; break;
-    case 40: reg = CV_REG_MXCSR; break;
-    default:
-        FIXME("Don't know how to map register %d\n", regno);
-        return 0;
-    }
-    return reg;
-}
-
 /* structure used to pass information around when parsing a subprogram */
 typedef struct dwarf2_subprogram_s
 {
     dwarf2_parse_context_t*     ctx;
     struct symt_compiland*      compiland;
     struct symt_function*       func;
-    unsigned long               frame_offset;
-    int                         frame_reg;
+    struct location             frame;
 } dwarf2_subprogram_t;
 
 /******************************************************************
@@ -1164,47 +1204,60 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
 {
     struct symt* param_type;
     struct attribute name, value;
-    unsigned long offset;
-    int in_reg;
+    struct location loc;
     BOOL is_pmt = di->abbrev->tag == DW_TAG_formal_parameter;
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     param_type = dwarf2_lookup_type(subpgm->ctx, di);
     dwarf2_find_name(subpgm->ctx, di, &name, "parameter");
-    if (dwarf2_compute_location(subpgm->ctx, di, DW_AT_location, &offset, &in_reg))
+    if (dwarf2_compute_location_attr(subpgm->ctx, di, DW_AT_location,
+                                     &loc, &subpgm->frame))
     {
         struct attribute ext;
 
-	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
-              name.u.string, offset, in_reg, dwarf2_debug_ctx(subpgm->ctx));
-        switch (in_reg & ~Wine_DW_register_deref)
+        if (loc.kind >= loc_user)
         {
-        case Wine_DW_no_register:
+            FIXME("Unsupported yet location list in %s on variable %s\n",
+                  subpgm->func->hash_elt.name, name.u.string);
+            return;
+        }
+
+        if (subpgm->frame.kind >= loc_user)
+        {
+            FIXME("Unsupported yet location list in %s on frame for var %s\n",
+                  subpgm->func->hash_elt.name, name.u.string);
+            return;
+        }
+
+	TRACE("found parameter %s/%ld (reg=%d) at %s\n",
+              name.u.string, loc.offset, loc.reg,
+              dwarf2_debug_ctx(subpgm->ctx));
+        switch (loc.kind)
+        {
+        case loc_absolute:
             /* it's a global variable */
             /* FIXME: we don't handle it's scope yet */
             if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_external, &ext))
                 ext.u.uvalue = 0;
             symt_new_global_variable(subpgm->ctx->module, subpgm->compiland,
                                      name.u.string, !ext.u.uvalue,
-                                     subpgm->ctx->module->module.BaseOfImage + offset,
+                                     subpgm->ctx->module->module.BaseOfImage + loc.offset,
                                      0, param_type);
             break;
-        case Wine_DW_frame_register:
-            in_reg = subpgm->frame_reg | Wine_DW_register_deref;
-            offset += subpgm->frame_offset;
-            /* fall through */
-        default:
+        case loc_register:
+        case loc_regrel:
             /* either a pmt/variable relative to frame pointer or
              * pmt/variable in a register
              */
             assert(subpgm->func);
             symt_add_func_local(subpgm->ctx->module, subpgm->func, 
                                 is_pmt ? DataIsParam : DataIsLocal,
-                                dwarf2_map_register(in_reg & ~Wine_DW_register_deref),
-                                in_reg & Wine_DW_register_deref,
-                                offset, block, param_type, name.u.string);
+                                loc.reg, loc.kind == loc_regrel,
+                                loc.offset, block, param_type, name.u.string);
             break;
+        default:
+            FIXME("Unsupported\n");
         }
     }
     if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_const_value, &value))
@@ -1399,20 +1452,13 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 
     subpgm.ctx = ctx;
     subpgm.compiland = compiland;
-    if (dwarf2_compute_location(ctx, di, DW_AT_frame_base, &subpgm.frame_offset, &subpgm.frame_reg)) {
-        TRACE("For %s got %ld/%d\n", name.u.string, subpgm.frame_offset, subpgm.frame_reg);
-	if (subpgm.frame_reg == Wine_DW_no_register) {
-	   /* Likely a constant, meaning a location list offset.
-	      We do not handle those yet. */
-           /*FIXME("need to handle location lists\n"); */
-           subpgm.frame_reg = 0;
-           subpgm.frame_offset = 0;
-	}
-    }
-    else /* on stack !! */
+    if (!dwarf2_compute_location_attr(ctx, di, DW_AT_frame_base,
+                                      &subpgm.frame, NULL))
     {
-        subpgm.frame_reg = 0;
-        subpgm.frame_offset = 0;
+        /* on stack !! */
+        subpgm.frame.kind = loc_regrel;
+        subpgm.frame.reg = 0;
+        subpgm.frame.offset = 0;
     }
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
@@ -1558,8 +1604,9 @@ static void dwarf2_load_one_entry(dwarf2_parse_context_t* ctx,
             subpgm.ctx = ctx;
             subpgm.compiland = compiland;
             subpgm.func = NULL;
-            subpgm.frame_offset = 0;
-            subpgm.frame_reg = 0;
+            subpgm.frame.kind = loc_absolute;
+            subpgm.frame.offset = 0;
+            subpgm.frame.reg = Wine_DW_no_register;
             dwarf2_parse_variable(&subpgm, NULL, di);
         }
         break;
@@ -1856,7 +1903,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
 		  const unsigned char* loclist, unsigned int loclist_size)
 {
     dwarf2_section_t    section[section_max];
-    char*               ptr;
+    unsigned char*      ptr;
     const unsigned char*comp_unit_cursor = debug;
     const unsigned char*end_debug = debug + debug_size;
 
@@ -1877,7 +1924,7 @@ BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
          */
         module->dwarf2_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*module->dwarf2_info) + loclist_size);
         if (!module->dwarf2_info) return FALSE;
-        ptr = (char*)(module->dwarf2_info + 1);
+        ptr = (unsigned char*)(module->dwarf2_info + 1);
         memcpy(ptr, loclist, loclist_size);
         module->dwarf2_info->debug_loc.address = ptr;
         module->dwarf2_info->debug_loc.size    = loclist_size;
