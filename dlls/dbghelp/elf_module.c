@@ -908,7 +908,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             const BYTE* dw2_debug_line;
             const BYTE* dw2_debug_loclist;
 
-            FIXME("Alpha-support for Dwarf2 information for %s\n", module->module.ModuleName);
+            TRACE("Loading Dwarf2 information for %s\n", module->module.ModuleName);
 
             dw2_debug = (const BYTE*) elf_map_section(fmap, debug_sect);
             dw2_debug_abbrev = (const BYTE*) elf_map_section(fmap, debug_abbrev_sect);
