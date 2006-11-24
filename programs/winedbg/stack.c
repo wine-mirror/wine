@@ -184,37 +184,18 @@ unsigned stack_fetch_frames(void)
 
 struct sym_enum
 {
-    char*       tmp;
     DWORD       frame;
+    BOOL        first;
 };
 
 static BOOL WINAPI sym_enum_cb(SYMBOL_INFO* sym_info, ULONG size, void* user)
 {
     struct sym_enum*    se = (struct sym_enum*)user;
-    char                tmp[32];
 
     if (sym_info->Flags & SYMFLAG_PARAMETER)
     {
-        if (se->tmp[0]) strcat(se->tmp, ", ");
-    
-        if (sym_info->Flags & SYMFLAG_REGREL)
-        {
-            unsigned    val;
-            DWORD       addr = se->frame + sym_info->Address;
-
-            if (!dbg_read_memory((char*)addr, &val, sizeof(val)))
-                snprintf(tmp, sizeof(tmp), "<*** cannot read at 0x%lx ***>", addr);
-            else
-                snprintf(tmp, sizeof(tmp), "0x%x", val);
-        }
-        else if (sym_info->Flags & SYMFLAG_REGISTER)
-        {
-            DWORD* pval;
-
-            if (memory_get_register(sym_info->Register, &pval, tmp, sizeof(tmp)))
-                snprintf(tmp, sizeof(tmp), "0x%lx", *pval);
-        }
-        sprintf(se->tmp + strlen(se->tmp), "%s=%s", sym_info->Name, tmp);
+        if (!se->first) dbg_printf(", "); else se->first = FALSE;
+        symbol_print_local(sym_info, se->frame, FALSE);
     }
     return TRUE;
 }
@@ -242,18 +223,17 @@ static void stack_print_addr_and_args(int nf)
     if (SymFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset, &disp64, si))
     {
         struct sym_enum se;
-        char            tmp[1024];
         DWORD           disp;
 
         dbg_printf(" %s", si->Name);
         if (disp64) dbg_printf("+0x%lx", (DWORD_PTR)disp64);
 
         SymSetContext(dbg_curr_process->handle, &ihsf, NULL);
-        se.tmp = tmp;
+        se.first = TRUE;
         se.frame = ihsf.FrameOffset;
-        tmp[0] = '\0';
+        dbg_printf("(");
         SymEnumSymbols(dbg_curr_process->handle, 0, NULL, sym_enum_cb, &se);
-        if (tmp[0]) dbg_printf("(%s)", tmp);
+        dbg_printf(")");
 
         il.SizeOfStruct = sizeof(il);
         if (SymGetLineFromAddr(dbg_curr_process->handle, ihsf.InstructionOffset,

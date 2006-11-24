@@ -518,10 +518,71 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
     return TRUE;
 }
 
+/******************************************************************
+ *		symbol_print_local
+ *
+ * Overall format is:
+ * <name>=<value>                       in non detailed form
+ * <name>=<value> (local|pmt <where>)   in detailed form
+ * Note <value> can be an error message in case of error
+ */
+void symbol_print_local(const SYMBOL_INFO* sym, ULONG base, 
+                        BOOL detailed)
+{
+    struct dbg_lvalue   lvalue;
+    BOOL                valtodo = FALSE;
+    char                buffer[64];
+
+    dbg_printf("%s=", sym->Name);
+
+    if (sym->Flags & SYMFLAG_REGISTER)
+    {
+        DWORD* pval;
+
+        if (memory_get_register(sym->Register, &pval, buffer + 13, sizeof(buffer) - 13))
+        {
+            lvalue.cookie = DLV_HOST;
+            lvalue.addr.Mode = AddrModeFlat;
+            lvalue.addr.Offset = (DWORD_PTR)pval;
+            valtodo = TRUE;
+            memcpy(buffer, " in register ", 13);
+        }
+        else
+        {
+            dbg_printf(buffer + 13);
+            buffer[0] = '\0';
+        }
+    }
+    else if (sym->Flags & SYMFLAG_LOCAL)
+    {
+        lvalue.cookie = DLV_TARGET;
+        lvalue.addr.Mode = AddrModeFlat;
+        lvalue.addr.Offset = base + sym->Address;
+        valtodo = TRUE;
+        buffer[0] = '\0';
+    }
+    else
+    {
+        dbg_printf("<unexpected symbol flags %lx>\n", sym->Flags);
+        buffer[0] = '\0';
+    }
+
+    if (valtodo)
+    {
+        lvalue.type.module = sym->ModBase;
+        lvalue.type.id = sym->TypeIndex;
+        print_value(&lvalue, 'x', 1);
+    }
+
+    if (detailed)
+    {
+        dbg_printf(" (%s%s)",
+                   (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local", buffer);
+    }
+}
+
 static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
-    ULONG               v, val;
-    char                buf[128];
     struct dbg_type     type;
 
     dbg_printf("\t");
@@ -529,35 +590,9 @@ static BOOL CALLBACK info_locals_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     type.id = sym->TypeIndex;
     types_print_type(&type, FALSE);
 
-    buf[0] = '\0';
-
-    if (sym->Flags & SYMFLAG_REGISTER)
-    {
-        char tmp[32];
-        DWORD* pval;
-        if (!memory_get_register(sym->Register, &pval, tmp, sizeof(tmp)))
-        {
-            dbg_printf(" %s (register): %s\n", sym->Name, tmp);
-            return TRUE;
-        }
-        sprintf(buf, " in register %s", tmp);
-        val = *pval;
-    }
-    else if (sym->Flags & SYMFLAG_LOCAL)
-    {
-        type.id = sym->TypeIndex;
-        v = (ULONG)ctx + sym->Address;
-
-        if (!dbg_read_memory((void*)v, &val, sizeof(val)))
-        {
-            dbg_printf(" %s (%s) *** cannot read at 0x%08lx\n", 
-                       sym->Name, (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local",
-                       v);
-            return TRUE;
-        }
-    }
-    dbg_printf(" %s = 0x%8.8lx (%s%s)\n", sym->Name, val, 
-               (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local", buf);
+    dbg_printf(" ");
+    symbol_print_local(sym, (ULONG)ctx, TRUE);
+    dbg_printf("\n");
 
     return TRUE;
 }

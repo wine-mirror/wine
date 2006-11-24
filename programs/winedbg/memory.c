@@ -221,7 +221,7 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
 #define DO_DUMP(_t,_l,_f) DO_DUMP2(_t,_l,_f,_v)
 
     case 'x': DO_DUMP(int, 4, " %8.8x");
-    case 'd': DO_DUMP(unsigned int, 4, " %10d");
+    case 'd': DO_DUMP(unsigned int, 4, " %4.4d");
     case 'w': DO_DUMP(unsigned short, 8, " %04x");
     case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v);
     case 'b': DO_DUMP2(char, 16, " %02x", (_v) & 0xff);
@@ -482,11 +482,7 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
     switch (format)
     {
     case 'x':
-        if (lvalue->addr.Mode == AddrMode1616 || 
-            lvalue->addr.Mode == AddrModeReal)
-            dbg_printf("0x%04lx", res);
-        else
-            dbg_printf("0x%08lx", res);
+        dbg_printf("0x%lx", res);
         break;
 
     case 'd':
@@ -620,6 +616,24 @@ BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
 {
     const struct dbg_internal_var*  div;
 
+    /* negative register values are wine's dbghelp hacks
+     * see dlls/dbghelp/dbghelp_internal.h for the details      
+     */
+    switch (regno)
+    {
+    case -1:
+        if (buffer) snprintf(buffer, len, "<internal error>");
+        return FALSE;
+    case -2:
+        if (buffer) snprintf(buffer, len, "<couldn't compute location>");
+        return FALSE;
+    case -3:
+        if (buffer) snprintf(buffer, len, "<is not available>");
+        return FALSE;
+    case -4:
+        if (buffer) snprintf(buffer, len, "<couldn't read memory>");
+        return FALSE;
+    }
     if (dbg_curr_thread->curr_frame != 0)
     {
         if (buffer) snprintf(buffer, len, "<register not in topmost frame>");

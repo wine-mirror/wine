@@ -370,6 +370,7 @@ extern void             symbol_read_symtable(const char* filename, unsigned long
 extern enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr);
 extern BOOL             symbol_get_line(const char* filename, const char* func, IMAGEHLP_LINE* ret);
 extern void             symbol_info(const char* str);
+extern void             symbol_print_local(const SYMBOL_INFO* sym, ULONG base, BOOL detailed);
 extern int              symbol_info_locals(void);
 extern BOOL             symbol_is_local(const char* name);
 
