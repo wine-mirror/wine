@@ -48,15 +48,14 @@ BOOL types_get_real_type(struct dbg_type* type, DWORD* tag)
 }
 
 /******************************************************************
- *		types_extract_as_integer
+ *		types_extract_as_longlong
  *
  * Given a lvalue, try to get an integral (or pointer/address) value
  * out of it
  */
-long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
+LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue)
 {
-    long int            rtn;
-    LONGLONG            val;
+    LONGLONG            rtn;
     DWORD               tag, bt;
     DWORD64             size;
     struct dbg_type     type = lvalue->type;
@@ -87,30 +86,29 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
         {
         case btChar:
         case btInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, TRUE, &val))
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, TRUE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-            rtn = (long)val;
             break;
         case btUInt:
-            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, FALSE, &val))
+            if (!be_cpu->fetch_integer(lvalue, (unsigned)size, FALSE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
-            rtn = (DWORD)(DWORD64)val;
             break;
         case btFloat:
             RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
         }
         break;
     case SymTagPointerType:
-        if (!memory_read_value(lvalue, sizeof(void*), &rtn))
+        if (!be_cpu->fetch_integer(lvalue, sizeof(void*), FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagArrayType:
     case SymTagUDT:
-        if (!memory_read_value(lvalue, sizeof(rtn), &rtn))
+        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagEnum:
-        if (!memory_read_value(lvalue, sizeof(rtn), &rtn))
+        /* FIXME: we don't handle enum size */
+        if (!be_cpu->fetch_integer(lvalue, sizeof(unsigned), FALSE, &rtn))
             RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     case SymTagFunctionType:
@@ -123,6 +121,17 @@ long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
     }
 
     return rtn;
+}
+
+/******************************************************************
+ *		types_extract_as_integer
+ *
+ * Given a lvalue, try to get an integral (or pointer/address) value
+ * out of it
+ */
+long int types_extract_as_integer(const struct dbg_lvalue* lvalue)
+{
+    return types_extract_as_longlong(lvalue);
 }
 
 /******************************************************************
@@ -139,7 +148,7 @@ void types_extract_as_address(const struct dbg_lvalue* lvalue, ADDRESS64* addr)
     else
     {
         addr->Mode = AddrModeFlat;
-        addr->Offset = types_extract_as_integer( lvalue );
+        addr->Offset = types_extract_as_longlong( lvalue );
     }
 }
 

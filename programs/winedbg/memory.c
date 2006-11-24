@@ -466,7 +466,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
  */
 void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
 {
-    long int    res;
+    LONGLONG res;
 
     if (lvalue->type.id == dbg_itype_none)
     {
@@ -474,17 +474,18 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
         return;
     }
 
-    res = types_extract_as_integer(lvalue);
+    res = types_extract_as_longlong(lvalue);
 
     /* FIXME: this implies i386 byte ordering */
     switch (format)
     {
     case 'x':
-        dbg_printf("0x%lx", res);
+        dbg_printf("0x%lx", (DWORD)(ULONG64)res);
         break;
 
     case 'd':
-        dbg_printf("%ld\n", res);
+        dbg_print_longlong(res, TRUE);
+        dbg_printf("\n");
         break;
 
     case 'c':
@@ -507,7 +508,10 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
         dbg_printf("Format specifier '%c' is meaningless in 'print' command\n", format);
     case 0:
         if (lvalue->type.id == dbg_itype_segptr)
-            dbg_printf("%ld", res);
+        {
+            dbg_print_longlong(res, TRUE);
+            dbg_printf("\n");
+        }
         else 
             print_typed_basic(lvalue);
         break;
