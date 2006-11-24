@@ -626,7 +626,7 @@ reg: fop   31
 
 static enum location_error
 compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
-                 const struct location* frame)
+                 HANDLE hproc, const struct location* frame)
 {
     unsigned long stack[64];
     unsigned stk;
@@ -720,6 +720,34 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
                 piece_found = TRUE;
             }
             break;
+        case DW_OP_deref:
+            if (!stk)
+            {
+                FIXME("Unexpected empty stack\n");
+                return loc_err_internal;
+            }
+            if (loc->reg != Wine_DW_no_register)
+            {
+                WARN("Too complex expression for deref\n");
+                return loc_err_too_complex;
+            }
+            if (hproc)
+            {
+                DWORD   addr = stack[stk--];
+                DWORD   deref;
+
+                if (!ReadProcessMemory(hproc, (void*)addr, &deref, sizeof(deref), NULL))
+                {
+                    WARN("Couldn't read memory at %lx\n", addr);
+                    return loc_err_cant_read;
+                }
+                stack[++stk] = deref;
+            }
+            else
+            {
+               loc->kind = loc_dwarf2_block;
+            }
+            break;
         default:
             FIXME("Unhandled attr op: %x\n", op);
             return loc_err_internal;
@@ -765,7 +793,7 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
         lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
         lctx.word_size = ctx->word_size;
 
-        err = compute_location(&lctx, loc, frame);
+        err = compute_location(&lctx, loc, NULL, frame);
         if (err < 0)
         {
             loc->kind = loc_error;
@@ -1932,7 +1960,8 @@ static BOOL dwarf2_lookup_loclist(const struct module* module, const BYTE* start
     return FALSE;
 }
 
-static enum location_error loc_compute_frame(const struct module* module,
+static enum location_error loc_compute_frame(struct process* pcs,
+                                             const struct module* module,
                                              const struct symt_function* func,
                                              DWORD ip, struct location* frame)
 {
@@ -1960,7 +1989,7 @@ static enum location_error loc_compute_frame(const struct module* module,
                                            module->dwarf2_info->debug_loc.address + pframe->offset,
                                            ip, &lctx))
                     return loc_err_out_of_scope;
-                if ((err = compute_location(&lctx, frame, NULL)) < 0) return err;
+                if ((err = compute_location(&lctx, frame, pcs->handle, NULL)) < 0) return err;
                 if (frame->kind >= loc_user)
                 {
                     WARN("Couldn't compute runtime frame location\n");
@@ -1998,7 +2027,7 @@ static void dwarf2_location_compute(struct process* pcs,
         /* instruction pointer relative to compiland's start */
         ip = pcs->ctx_frame.InstructionOffset - ((struct symt_compiland*)func->container)->address;
 
-        if ((err = loc_compute_frame(module, func, ip, &frame)) == 0)
+        if ((err = loc_compute_frame(pcs, module, func, ip, &frame)) == 0)
         {
             switch (loc->kind)
             {
@@ -2021,7 +2050,7 @@ static void dwarf2_location_compute(struct process* pcs,
                 }
             do_compute:
                 /* now get the variable */
-                err = compute_location(&lctx, loc, &frame);
+                err = compute_location(&lctx, loc, pcs->handle, &frame);
                 break;
             case loc_register:
             case loc_regrel:
