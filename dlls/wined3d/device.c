@@ -2574,7 +2574,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
         glMatrixMode(GL_MODELVIEW);
         checkGLcall("glMatrixMode(GL_MODELVIEW)");
         glPushMatrix();
-        glLoadMatrixf((float *)lpmatrix);
+        glLoadMatrixf((const float *)lpmatrix);
         checkGLcall("glLoadMatrixf(...)");
 
         /* Reset lights */
@@ -2629,7 +2629,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
         FIXME("Unhandled transform state!!\n");
     }
 
-    multiply_matrix(&temp, mat, (WINED3DMATRIX *) pMatrix);
+    multiply_matrix(&temp, mat, (const WINED3DMATRIX *) pMatrix);
 
     /* Apply change via set transform - will reapply to eg. lights this way */
     return IWineD3DDeviceImpl_SetTransform(iface, State, &temp);
@@ -6720,7 +6720,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         int j;
 
         /* hopefully using pointer addtion will be quicker than using a point + j * rowoffset */
-        unsigned char* data =((unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
+        const unsigned char* data =((const unsigned char *)IWineD3DSurface_GetData(pSourceSurface)) + offset;
 
         for(j = destTop ; j < (srcHeight + destTop) ; j++){
 

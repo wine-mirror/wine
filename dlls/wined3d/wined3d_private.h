@@ -1272,7 +1272,7 @@ void   set_texture_matrix(const float *smat, DWORD flags, BOOL calculatedCoords)
 int D3DFmtMakeGlCfg(WINED3DFORMAT BackBufferFormat, WINED3DFORMAT StencilBufferFormat, int *attribs, int* nAttribs, BOOL alternate);
 
 /* Math utils */
-void multiply_matrix(WINED3DMATRIX *dest, WINED3DMATRIX *src1, WINED3DMATRIX *src2);
+void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2);
 
 /*****************************************************************************
  * To enable calling of inherited functions, requires prototypes 

@@ -2450,7 +2450,7 @@ WINED3DFORMAT pixelformat_for_depth(DWORD depth) {
     }
 }
 
-void multiply_matrix(WINED3DMATRIX *dest, WINED3DMATRIX *src1, WINED3DMATRIX *src2) {
+void multiply_matrix(WINED3DMATRIX *dest, const WINED3DMATRIX *src1, const WINED3DMATRIX *src2) {
     WINED3DMATRIX temp;
 
     /* Now do the multiplication 'by hand'.
