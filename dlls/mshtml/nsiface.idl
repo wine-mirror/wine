@@ -105,7 +105,6 @@ typedef nsISupports nsIDOMEntityReference;
 typedef nsISupports nsIDOMHTMLFormElement;
 typedef nsISupports nsIDOMHTMLOptionsCollection;
 typedef nsISupports nsIDOMHTMLCollection;
-typedef nsISupports nsIDOMRange;
 typedef nsISupports nsIEditor;
 typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
@@ -613,6 +612,38 @@ interface nsIDOMHTMLDocument : nsIDOMDocument
     nsresult Write(const nsAString *text);
     nsresult Writeln(const nsAString *text);
     nsresult GetElementsByName(const nsAString *elementName, nsIDOMNodeList **_retval);
+}
+
+[
+    object,
+    uuid(a6cf90ce-15b3-11d2-932e-00805f8add32)
+]
+interface nsIDOMRange : nsISupports
+{
+    nsresult GetStartContainer(nsIDOMNode **aStartContainer);
+    nsresult GetStartOffset(PRInt32 *aStartOffset);
+    nsresult GetEndContainer(nsIDOMNode **aEndContainer);
+    nsresult GetEndOffset(PRInt32 *aEndOffset);
+    nsresult GetCollapsed(PRBool *aCollapsed);
+    nsresult GetCommonAncestorContainer(nsIDOMNode **aCommonAncestorContainer);
+    nsresult SetStart(nsIDOMNode *refNode, PRInt32 offset);
+    nsresult SetEnd(nsIDOMNode *refNode, PRInt32 offset);
+    nsresult SetStartBefore(nsIDOMNode *refNode);
+    nsresult SetStartAfter(nsIDOMNode *refNode);
+    nsresult SetEndBefore(nsIDOMNode *refNode);
+    nsresult SetEndAfter(nsIDOMNode *refNode);
+    nsresult Collapse(PRBool toStart);
+    nsresult SelectNode(nsIDOMNode *refNode);
+    nsresult SelectNodeContents(nsIDOMNode *refNode);
+    nsresult CompareBoundaryPoints(PRUint16 how, nsIDOMRange *sourceRange, PRInt16 *_retval);
+    nsresult DeleteContents();
+    nsresult ExtractContents(nsIDOMDocumentFragment **_retval);
+    nsresult CloneContents(nsIDOMDocumentFragment **_retval);
+    nsresult InsertNode(nsIDOMNode *newNode);
+    nsresult SurroundContents(nsIDOMNode *newParent);
+    nsresult CloneRange(nsIDOMRange **_retval);
+    nsresult ToString(nsAString *_retval);
+    nsresult Detach();
 }
 
 [

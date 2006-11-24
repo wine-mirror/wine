@@ -34,6 +34,7 @@
 #include "mshtmcid.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "mshtml_private.h"
 
@@ -464,8 +465,43 @@ static HRESULT exec_forecolor(HTMLDocument *This, VARIANT *in, VARIANT *out)
 
 static HRESULT exec_fontsize(HTMLDocument *This, VARIANT *in, VARIANT *out)
 {
-    FIXME("(%p)->(%p %p)\n", This, in, out);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p %p)\n", This, in, out);
+
+    if(out) {
+        WCHAR val[10] = {0};
+
+        switch(V_VT(out)) {
+        case VT_I4:
+            get_font_size(This, val);
+            V_I4(out) = strtolW(val, NULL, 10);
+            break;
+        case VT_BSTR:
+            get_font_size(This, val);
+            V_BSTR(out) = SysAllocString(val);
+            break;
+        default:
+            FIXME("unsupported vt %d\n", V_VT(out));
+        }
+    }
+
+    if(in) {
+        switch(V_VT(in)) {
+        case VT_I4: {
+            WCHAR size[10];
+            static const WCHAR format[] = {'%','d',0};
+            wsprintfW(size, format, V_I4(in));
+            set_font_size(This, size);
+            break;
+        }
+        case VT_BSTR:
+            set_font_size(This, V_BSTR(in));
+            break;
+        default:
+            FIXME("unsupported vt %d\n", V_VT(out));
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT exec_bold(HTMLDocument *This)

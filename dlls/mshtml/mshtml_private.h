@@ -350,6 +350,10 @@ void release_nodes(HTMLDocument*);
 
 void install_wine_gecko(void);
 
+/* editor */
+void get_font_size(HTMLDocument*,WCHAR*);
+void set_font_size(HTMLDocument*,LPCWSTR);
+
 extern DWORD mshtml_tls;
 
 typedef struct task_t {
