@@ -278,7 +278,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
     hModule = LoadLibraryExW(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
     if (!hModule)
     {
-        WINE_ERR("LoadLibraryExW (%s) failed, error %d\n",
+        WINE_WARN("LoadLibraryExW (%s) failed, error %d\n",
                  wine_dbgstr_w(szFileName), GetLastError());
         return FALSE;
     }
@@ -327,7 +327,7 @@ static BOOL extract_icon32(LPCWSTR szFileName, int nIndex, const char *szXPMFile
     }
     else
     {
-        WINE_ERR("found no icon\n");
+        WINE_WARN("found no icon\n");
         FreeLibrary(hModule);
         return FALSE;
     }
@@ -379,7 +379,7 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
     if (fread(&iconDir, sizeof (ICONDIR), 1, fICOFile) != 1 ||
         (iconDir.idReserved != 0) || (iconDir.idType != 1))
     {
-        WINE_ERR("Invalid ico file format\n");
+        WINE_WARN("Invalid ico file format\n");
         goto error2;
     }
 
@@ -962,7 +962,8 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
             WINE_WARN("Unable to extract icon, deferring.\n");
             goto cleanup;
         }
-        WINE_ERR("failed to extract icon.\n");
+        WINE_ERR("failed to extract icon from %s\n",
+                 wine_dbgstr_w( szIconPath[0] ? szIconPath : szPath ));
     }
 
     /* check the path */
