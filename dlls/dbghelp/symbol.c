@@ -449,6 +449,7 @@ struct symt_thunk* symt_new_thunk(struct module* module,
 
 /* expect sym_info->MaxNameLen to be set before being called */
 static void symt_fill_sym_info(const struct module_pair* pair, 
+                               const struct symt_function* func,
                                const struct symt* sym, SYMBOL_INFO* sym_info)
 {
     const char* name;
@@ -564,9 +565,9 @@ struct sym_enum
 };
 
 static BOOL send_symbol(const struct sym_enum* se, struct module_pair* pair,
-                        const struct symt* sym)
+                        const struct symt_function* func, const struct symt* sym)
 {
-    symt_fill_sym_info(pair, sym, se->sym_info);
+    symt_fill_sym_info(pair, func, sym, se->sym_info);
     if (se->index && se->sym_info->info != se->index) return FALSE;
     if (se->tag && se->sym_info->Tag != se->tag) return FALSE;
     if (se->addr && !(se->addr >= se->sym_info->Address && se->addr < se->sym_info->Address + se->sym_info->Size)) return FALSE;
@@ -589,7 +590,7 @@ static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
         {
             se->sym_info->SizeOfStruct = sizeof(SYMBOL_INFO);
             se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
-            if (send_symbol(se, pair, &sym->symt)) return TRUE;
+            if (send_symbol(se, pair, NULL, &sym->symt)) return TRUE;
         }
     }   
     return FALSE;
@@ -697,7 +698,7 @@ int symt_find_nearest(struct module* module, DWORD addr)
 
 static BOOL symt_enum_locals_helper(struct module_pair* pair,
                                     regex_t* preg, const struct sym_enum* se,
-                                    struct vector* v)
+                                    struct symt_function* func, struct vector* v)
 {
     struct symt**       plsym = NULL;
     struct symt*        lsym = NULL;
@@ -713,14 +714,14 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
                 struct symt_block*  block = (struct symt_block*)lsym;
                 if (pc < block->address || block->address + block->size <= pc)
                     continue;
-                if (!symt_enum_locals_helper(pair, preg, se, &block->vchildren))
+                if (!symt_enum_locals_helper(pair, preg, se, func, &block->vchildren))
                     return FALSE;
             }
             break;
         case SymTagData:
             if (regexec(preg, symt_get_name(lsym), 0, NULL, 0) == 0)
             {
-                if (send_symbol(se, pair, lsym)) return FALSE;
+                if (send_symbol(se, pair, func, lsym)) return FALSE;
             }
             break;
         case SymTagLabel:
@@ -759,13 +760,13 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
 
         compile_regex(mask ? mask : "*", -1, &preg,
                       dbghelp_options & SYMOPT_CASE_INSENSITIVE);
-        ret = symt_enum_locals_helper(&pair, &preg, se, 
+        ret = symt_enum_locals_helper(&pair, &preg, se, (struct symt_function*)sym,
                                       &((struct symt_function*)sym)->vchildren);
         regfree(&preg);
         return ret;
         
     }
-    return send_symbol(se, &pair, &sym->symt);
+    return send_symbol(se, &pair, NULL, &sym->symt);
 }
 
 /******************************************************************
@@ -991,7 +992,7 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
 
     sym = pair.effective->addr_sorttab[idx];
 
-    symt_fill_sym_info(&pair, &sym->symt, Symbol);
+    symt_fill_sym_info(&pair, NULL, &sym->symt, Symbol);
     *Displacement = Address - Symbol->Address;
     return TRUE;
 }
@@ -1096,7 +1097,7 @@ static BOOL find_name(struct process* pcs, struct module* module, const char* na
 
         if (!strcmp(sym->hash_elt.name, name))
         {
-            symt_fill_sym_info(&pair, &sym->symt, symbol);
+            symt_fill_sym_info(&pair, NULL, &sym->symt, symbol);
             return TRUE;
         }
     }
