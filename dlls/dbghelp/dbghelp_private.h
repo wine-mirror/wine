@@ -210,7 +210,7 @@ struct symt_function_point
 {
     struct symt                 symt;           /* either SymTagFunctionDebugStart, SymTagFunctionDebugEnd, SymTagLabel */
     struct symt_function*       parent;
-    unsigned long               offset;
+    struct location             loc;
     const char*                 name;           /* for labels */
 };
 
@@ -532,7 +532,8 @@ extern struct symt_function_point*
                     symt_add_function_point(struct module* module, 
                                             struct symt_function* func,
                                             enum SymTagEnum point, 
-                                            unsigned offset, const char* name);
+                                            const struct location* loc,
+                                            const char* name);
 extern BOOL         symt_fill_func_line_info(struct module* module,
                                              struct symt_function* func, 
                                              DWORD addr, IMAGEHLP_LINE* line);

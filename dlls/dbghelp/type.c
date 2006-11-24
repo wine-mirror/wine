@@ -484,7 +484,7 @@ BOOL symt_get_info(const struct symt* type, IMAGEHLP_SYMBOL_TYPE_INFO req,
         case SymTagFuncDebugEnd:
         case SymTagLabel:
             X(ULONG64) = ((const struct symt_function_point*)type)->parent->address + 
-                ((const struct symt_function_point*)type)->offset;
+                ((const struct symt_function_point*)type)->loc.offset;
             break;
         case SymTagThunk:
             X(ULONG64) = ((const struct symt_thunk*)type)->address;

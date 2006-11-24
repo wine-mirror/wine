@@ -1338,8 +1338,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                           codeview_get_type(sym->proc_v1.proctype, FALSE));
             codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
                                       sym->proc_v1.offset, sym->proc_v1.proc_len);
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, sym->proc_v1.debug_start, NULL);
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, sym->proc_v1.debug_end, NULL);
+            loc.kind = loc_absolute;
+            loc.offset = sym->proc_v1.debug_start;
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+            loc.offset = sym->proc_v1.debug_end;
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
 	    break;
 	case S_GPROC_V2:
 	case S_LPROC_V2:
@@ -1352,8 +1355,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                           codeview_get_type(sym->proc_v2.proctype, FALSE));
             codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
                                       sym->proc_v2.offset, sym->proc_v2.proc_len);
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, sym->proc_v2.debug_start, NULL);
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, sym->proc_v2.debug_end, NULL);
+            loc.kind = loc_absolute;
+            loc.offset = sym->proc_v2.debug_start;
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+            loc.offset = sym->proc_v2.debug_end;
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
 	    break;
 	case S_GPROC_V3:
 	case S_LPROC_V3:
@@ -1366,8 +1372,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                                           codeview_get_type(sym->proc_v3.proctype, FALSE));
             codeview_add_func_linenum(msc_dbg->module, curr_func, flt, 
                                       sym->proc_v3.offset, sym->proc_v3.proc_len);
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, sym->proc_v3.debug_start, NULL);
-            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, sym->proc_v3.debug_end, NULL);
+            loc.kind = loc_absolute;
+            loc.offset = sym->proc_v3.debug_start;
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugStart, &loc, NULL);
+            loc.offset = sym->proc_v3.debug_end;
+            symt_add_function_point(msc_dbg->module, curr_func, SymTagFuncDebugEnd, &loc, NULL);
 	    break;
         /*
          * Function parameters and stack variables.
@@ -1489,8 +1498,9 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
         case S_LABEL_V1:
             if (curr_func)
             {
-                symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, 
-                                        codeview_get_address(msc_dbg, sym->label_v1.segment, sym->label_v1.offset) - curr_func->address,
+                loc.kind = loc_absolute;
+                loc.offset = codeview_get_address(msc_dbg, sym->label_v1.segment, sym->label_v1.offset) - curr_func->address;
+                symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, &loc,
                                         terminate_string(&sym->label_v1.p_name));
             }
             else
@@ -1500,9 +1510,10 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
         case S_LABEL_V3:
             if (curr_func)
             {
+                loc.kind = loc_absolute;
+                loc.offset = codeview_get_address(msc_dbg, sym->label_v3.segment, sym->label_v3.offset) - curr_func->address;
                 symt_add_function_point(msc_dbg->module, curr_func, SymTagLabel, 
-                                        codeview_get_address(msc_dbg, sym->label_v3.segment, sym->label_v3.offset) - curr_func->address,
-                                        sym->label_v3.name);
+                                        &loc, sym->label_v3.name);
             }
             else
                 FIXME("No current function for label %s\n", sym->label_v3.name);

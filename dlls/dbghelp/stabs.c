@@ -1153,7 +1153,8 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
                                     unsigned long size)
 {
     IMAGEHLP_LINE       il;
-   
+    struct location     loc;
+
     if (!func) return;
     symt_normalize_function(module, func);
     /* To define the debug-start of the function, we use the second line number.
@@ -1162,8 +1163,10 @@ static void stabs_finalize_function(struct module* module, struct symt_function*
     if (symt_fill_func_line_info(module, func, func->address, &il) &&
         symt_get_func_line_next(module, &il))
     {
+        loc.kind = loc_absolute;
+        loc.offset = il.Address - func->address;
         symt_add_function_point(module, func, SymTagFuncDebugStart, 
-                                il.Address - func->address, NULL);
+                                &loc, NULL);
     }
     if (size) func->size = size;
 }

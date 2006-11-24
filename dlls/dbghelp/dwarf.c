@@ -1274,15 +1274,17 @@ static void dwarf2_parse_subprogram_label(dwarf2_subprogram_t* subpgm,
 {
     struct attribute    name;
     struct attribute    low_pc;
+    struct location     loc;
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(subpgm->ctx), dwarf2_debug_di(di));
 
     if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_low_pc, &low_pc)) low_pc.u.uvalue = 0;
     dwarf2_find_name(subpgm->ctx, di, &name, "label");
 
+    loc.kind = loc_absolute;
+    loc.offset = subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue,
     symt_add_function_point(subpgm->ctx->module, subpgm->func, SymTagLabel,
-                            subpgm->ctx->module->module.BaseOfImage + low_pc.u.uvalue,
-                            name.u.string);
+                            &loc, name.u.string);
 }
 
 static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,

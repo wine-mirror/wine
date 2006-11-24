@@ -376,7 +376,8 @@ struct symt_block* symt_close_func_block(struct module* module,
 struct symt_function_point* symt_add_function_point(struct module* module, 
                                                     struct symt_function* func,
                                                     enum SymTagEnum point, 
-                                                    unsigned offset, const char* name)
+                                                    const struct location* loc,
+                                                    const char* name)
 {
     struct symt_function_point* sym;
     struct symt**               p;
@@ -385,7 +386,7 @@ struct symt_function_point* symt_add_function_point(struct module* module,
     {
         sym->symt.tag = point;
         sym->parent   = func;
-        sym->offset   = offset;
+        sym->loc      = *loc;
         sym->name     = name ? pool_strdup(&module->pool, name) : NULL;
         p = vector_add(&func->vchildren, &module->pool);
         *p = &sym->symt;
@@ -741,6 +742,7 @@ static BOOL symt_enum_locals_helper(struct module_pair* pair,
         case SymTagLabel:
         case SymTagFuncDebugStart:
         case SymTagFuncDebugEnd:
+        case SymTagCustom:
             break;
         default:
             FIXME("Unknown type: %u (%x)\n", lsym->tag, lsym->tag);
