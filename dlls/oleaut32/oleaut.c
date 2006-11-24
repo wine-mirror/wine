@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 #include <string.h>
+#include <limits.h>
 
 #define COBJMACROS
 
@@ -217,6 +218,9 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
     DWORD* newBuffer;
     WCHAR* stringBuffer;
 
+    /* Detect integer overflow. */
+    if (len >= ((UINT_MAX-sizeof(WCHAR)-sizeof(DWORD))/sizeof(WCHAR)))
+	return NULL;
     /*
      * Find the length of the buffer passed-in, in bytes.
      */
@@ -234,8 +238,8 @@ BSTR WINAPI SysAllocStringLen(const OLECHAR *str, unsigned int len)
     /*
      * If the memory allocation failed, return a null pointer.
      */
-    if (newBuffer==0)
-      return 0;
+    if (!newBuffer)
+      return NULL;
 
     /*
      * Copy the length of the string in the placeholder.
