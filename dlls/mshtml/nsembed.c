@@ -530,6 +530,7 @@ static void nsnode_to_nsstring_rec(nsIContentSerializer *serializer, nsIDOMNode 
         nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMDocument, (void**)&nsdoc);
         nsIContentSerializer_AppendDocumentStart(serializer, nsdoc, str);
         nsIDOMDocument_Release(nsdoc);
+        break;
     }
     default:
         FIXME("Unhandled type %u\n", type);
