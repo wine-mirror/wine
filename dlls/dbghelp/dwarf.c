@@ -624,8 +624,9 @@ reg: fop   31
     return reg;
 }
 
-static BOOL compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
-                             const struct location* frame)
+static enum location_error
+compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
+                 const struct location* frame)
 {
     unsigned long stack[64];
     unsigned stk;
@@ -721,11 +722,11 @@ static BOOL compute_location(dwarf2_traverse_context_t* ctx, struct location* lo
             break;
         default:
             FIXME("Unhandled attr op: %x\n", op);
-            return FALSE;
+            return loc_err_internal;
         }
     }
     loc->offset = stack[stk];
-    return TRUE;
+    return 0;
 }
 
 static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
@@ -757,16 +758,18 @@ static BOOL dwarf2_compute_location_attr(dwarf2_parse_context_t* ctx,
 
     if (xloc.u.block.size)
     {
-        dwarf2_traverse_context_t  lctx;
+        dwarf2_traverse_context_t       lctx;
+        enum location_error             err;
 
         lctx.data = xloc.u.block.ptr;
         lctx.end_data = xloc.u.block.ptr + xloc.u.block.size;
         lctx.word_size = ctx->word_size;
 
-        if (!compute_location(&lctx, loc, frame))
+        err = compute_location(&lctx, loc, frame);
+        if (err < 0)
         {
             loc->kind = loc_error;
-            loc->reg = loc_err_too_complex;
+            loc->reg = err;
         }
         else if (loc->kind == loc_dwarf2_block)
         {
@@ -1201,6 +1204,7 @@ typedef struct dwarf2_subprogram_s
     dwarf2_parse_context_t*     ctx;
     struct symt_compiland*      compiland;
     struct symt_function*       func;
+    BOOL                        non_computed_variable;
     struct location             frame;
 } dwarf2_subprogram_t;
 
@@ -1235,7 +1239,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
         {
         case loc_absolute:
             /* it's a global variable */
-            /* FIXME: we don't handle it's scope yet */
+            /* FIXME: we don't handle its scope yet */
             if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_external, &ext))
                 ext.u.uvalue = 0;
             symt_new_global_variable(subpgm->ctx->module, subpgm->compiland,
@@ -1244,6 +1248,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
                                      0, param_type);
             break;
         default:
+            subpgm->non_computed_variable = TRUE;
             /* fall through */
         case loc_register:
         case loc_regrel:
@@ -1459,6 +1464,7 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         subpgm.frame.reg = 0;
         subpgm.frame.offset = 0;
     }
+    subpgm.non_computed_variable = FALSE;
 
     if (di->abbrev->have_child) /** any interest to not have child ? */
     {
@@ -1506,6 +1512,11 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
 	}
     }
 
+    if (subpgm.non_computed_variable || subpgm.frame.kind >= loc_user)
+    {
+        symt_add_function_point(ctx->module, subpgm.func, SymTagCustom,
+                                &subpgm.frame, NULL);
+    }
     symt_normalize_function(subpgm.ctx->module, subpgm.func);
 
     return di->symt;
@@ -1893,15 +1904,140 @@ static BOOL dwarf2_parse_compilation_unit(const dwarf2_section_t* sections,
     return ret;
 }
 
+static BOOL dwarf2_lookup_loclist(const struct module* module, const BYTE* start,
+                                  unsigned long ip,
+                                  dwarf2_traverse_context_t*  lctx)
+{
+    DWORD                       beg, end;
+    const BYTE*                 ptr = start;
+    DWORD                       len;
+
+    while (ptr < module->dwarf2_info->debug_loc.address + module->dwarf2_info->debug_loc.size)
+    {
+        beg = dwarf2_get_u4(ptr); ptr += 4;
+        end = dwarf2_get_u4(ptr); ptr += 4;
+        if (!beg && !end) break;
+        len = dwarf2_get_u2(ptr); ptr += 2;
+
+        if (beg <= ip && ip < end)
+        {
+            lctx->data = ptr;
+            lctx->end_data = ptr + len;
+            lctx->word_size = 4; /* FIXME word size !!! */
+            return TRUE;
+        }
+        ptr += len;
+    }
+    WARN("Couldn't find ip in location list\n");
+    return FALSE;
+}
+
+static enum location_error loc_compute_frame(const struct module* module,
+                                             const struct symt_function* func,
+                                             DWORD ip, struct location* frame)
+{
+    struct symt**               psym = NULL;
+    struct location*            pframe;
+    dwarf2_traverse_context_t   lctx;
+    enum location_error         err;
+
+    while ((psym = vector_iter_up(&func->vchildren, psym)))
+    {
+        if ((*psym)->tag == SymTagCustom)
+        {
+            pframe = &((struct symt_function_point*)*psym)->loc;
+
+            /* First, recompute the frame information, if needed */
+            switch (pframe->kind)
+            {
+            case loc_regrel:
+            case loc_register:
+                *frame = *pframe;
+                break;
+            case loc_dwarf2_location_list:
+                WARN("Searching loclist for %s\n", func->hash_elt.name);
+                if (!dwarf2_lookup_loclist(module, 
+                                           module->dwarf2_info->debug_loc.address + pframe->offset,
+                                           ip, &lctx))
+                    return loc_err_out_of_scope;
+                if ((err = compute_location(&lctx, frame, NULL)) < 0) return err;
+                if (frame->kind >= loc_user)
+                {
+                    WARN("Couldn't compute runtime frame location\n");
+                    return loc_err_too_complex;
+                }
+                break;
+            default:
+                WARN("Unsupported frame kind %d\n", pframe->kind);
+                return loc_err_internal;
+            }
+            return 0;
+        }
+    }
+    WARN("Couldn't find Custom function point, whilst location list offset is searched\n");
+    return loc_err_internal;
+}
+
 static void dwarf2_location_compute(struct process* pcs,
                                     const struct module* module,
                                     const struct symt_function* func,
                                     struct location* loc)
 {
-    FIXME("Not implemented yet\n");
-    loc->kind = loc_register;
-    loc->reg = -1;
-    loc->offset = 0;
+    struct location             frame;
+    DWORD                       ip;
+    int                         err;
+    dwarf2_traverse_context_t   lctx;
+
+    if (!func->container || func->container->tag != SymTagCompiland)
+    {
+        WARN("We'd expect function %s's container to exist and be a compiland\n", func->hash_elt.name);
+        err = loc_err_internal;
+    }
+    else
+    {
+        /* instruction pointer relative to compiland's start */
+        ip = pcs->ctx_frame.InstructionOffset - ((struct symt_compiland*)func->container)->address;
+
+        if ((err = loc_compute_frame(module, func, ip, &frame)) == 0)
+        {
+            switch (loc->kind)
+            {
+            case loc_dwarf2_location_list:
+                /* Then, if the variable has a location list, find it !! */
+                if (dwarf2_lookup_loclist(module, 
+                                          module->dwarf2_info->debug_loc.address + loc->offset,
+                                          ip, &lctx))
+                    goto do_compute;
+                err = loc_err_out_of_scope;
+                break;
+            case loc_dwarf2_block:
+                /* or if we have a copy of an existing block, get ready for it */
+                {
+                    unsigned*   ptr = (unsigned*)loc->offset;
+
+                    lctx.data = (const BYTE*)(ptr + 1);
+                    lctx.end_data = lctx.data + *ptr;
+                    lctx.word_size = 4; /* FIXME !! */
+                }
+            do_compute:
+                /* now get the variable */
+                err = compute_location(&lctx, loc, &frame);
+                break;
+            case loc_register:
+            case loc_regrel:
+                /* nothing to do */
+                break;
+            default:
+                WARN("Unsupported local kind %d\n", loc->kind);
+                err = loc_err_internal;
+            }
+        }
+    }
+    if (err < 0)
+    {
+        loc->kind = loc_register;
+        loc->reg = err;
+    }
 }
 
 BOOL dwarf2_parse(struct module* module, unsigned long load_offset,
