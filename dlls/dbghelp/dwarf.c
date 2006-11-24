@@ -674,7 +674,7 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
              * (for example 'long long' stored in two registers)
              * FIXME: We should tell winedbg how to deal with it (sigh)
              */
-            if (!piece_found || (op - DW_OP_reg0 != loc->reg + 1))
+            if (!piece_found)
             {
                 if (loc->reg != Wine_DW_no_register)
                     FIXME("Only supporting one reg (%d -> %d)\n", 
@@ -716,7 +716,7 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
         case DW_OP_piece:
             {
                 unsigned sz = dwarf2_leb128_as_unsigned(ctx);
-                WARN("Not handling OP_piece directly (size=%d)\n", sz);
+                WARN("Not handling OP_piece (size=%d)\n", sz);
                 piece_found = TRUE;
             }
             break;
