@@ -1447,6 +1447,7 @@ static void dwarf2_parse_subprogram_block(dwarf2_subprogram_t* subpgm,
             case DW_TAG_structure_type:
             case DW_TAG_union_type:
             case DW_TAG_enumeration_type:
+            case DW_TAG_typedef:
                 /* the type referred to will be loaded when we need it, so skip it */
                 break;
             default:
