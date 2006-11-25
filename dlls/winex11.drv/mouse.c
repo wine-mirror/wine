@@ -97,8 +97,7 @@ static inline void update_button_state( unsigned int state )
     key_state_table[VK_LBUTTON] = (state & Button1Mask ? 0x80 : 0);
     key_state_table[VK_MBUTTON] = (state & Button2Mask ? 0x80 : 0);
     key_state_table[VK_RBUTTON] = (state & Button3Mask ? 0x80 : 0);
-    key_state_table[VK_XBUTTON1]= (state & Button6Mask ? 0x80 : 0);
-    key_state_table[VK_XBUTTON2]= (state & Button7Mask ? 0x80 : 0);
+    /* X-buttons are not reported from XQueryPointer */
 }
 
 
