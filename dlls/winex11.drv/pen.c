@@ -25,18 +25,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
-static const char PEN_dash[]       = { 16,8 };
-static const char PEN_dot[]        = { 4,4 };
-static const char PEN_dashdot[]    = { 12,8,4,8 };
-static const char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
-static const char PEN_alternate[]  = { 1,1 };
-
 /***********************************************************************
  *           SelectPen   (X11DRV.@)
  */
 HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
 {
     LOGPEN logpen;
+    static char PEN_dash[]       = { 16,8 };
+    static char PEN_dot[]        = { 4,4 };
+    static char PEN_dashdot[]    = { 12,8,4,8 };
+    static char PEN_dashdotdot[] = { 12,4,4,4,4,4 };
+    static char PEN_alternate[]  = { 1,1 };
 
     if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
     {
@@ -77,23 +76,23 @@ HPEN X11DRV_SelectPen( X11DRV_PDEVICE *physDev, HPEN hpen )
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
       case PS_DASH:
-	physDev->pen.dashes = (char *)PEN_dash;
+	physDev->pen.dashes = PEN_dash;
 	physDev->pen.dash_len = sizeof(PEN_dash)/sizeof(*PEN_dash);
 	break;
       case PS_DOT:
-	physDev->pen.dashes = (char *)PEN_dot;
+	physDev->pen.dashes = PEN_dot;
 	physDev->pen.dash_len = sizeof(PEN_dot)/sizeof(*PEN_dot);
 	break;
       case PS_DASHDOT:
-	physDev->pen.dashes = (char *)PEN_dashdot;
+	physDev->pen.dashes = PEN_dashdot;
 	physDev->pen.dash_len = sizeof(PEN_dashdot)/sizeof(*PEN_dashdot);
 	break;
       case PS_DASHDOTDOT:
-	physDev->pen.dashes = (char *)PEN_dashdotdot;
+	physDev->pen.dashes = PEN_dashdotdot;
 	physDev->pen.dash_len = sizeof(PEN_dashdotdot)/sizeof(*PEN_dashdotdot);
 	break;
       case PS_ALTERNATE:
-	physDev->pen.dashes = (char *)PEN_alternate;
+	physDev->pen.dashes = PEN_alternate;
 	physDev->pen.dash_len = sizeof(PEN_alternate)/sizeof(*PEN_alternate);
 	break;
       case PS_USERSTYLE:
