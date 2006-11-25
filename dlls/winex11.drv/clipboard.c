@@ -511,7 +511,8 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatNam
 {
     LPWINE_CLIPFORMAT lpFormat;
     LPWINE_CLIPFORMAT lpNewFormat;
-   
+    LPWSTR new_name;
+
     /* allocate storage for new format entry */
     lpNewFormat = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_CLIPFORMAT));
 
@@ -521,14 +522,14 @@ static WINE_CLIPFORMAT *X11DRV_CLIPBOARD_InsertClipboardFormat(LPCWSTR FormatNam
         return NULL;
     }
 
-    if (!(lpNewFormat->Name = HeapAlloc(GetProcessHeap(), 0, (strlenW(FormatName)+1)*sizeof(WCHAR))))
+    if (!(new_name = HeapAlloc(GetProcessHeap(), 0, (strlenW(FormatName)+1)*sizeof(WCHAR))))
     {
         WARN("No more memory for the new format name!\n");
         HeapFree(GetProcessHeap(), 0, lpNewFormat);
         return NULL;
     }
 
-    strcpyW((LPWSTR)lpNewFormat->Name, FormatName);
+    lpNewFormat->Name = strcpyW(new_name, FormatName);
     lpNewFormat->wFlags = 0;
     lpNewFormat->wFormatID = GlobalAddAtomW(lpNewFormat->Name);
     lpNewFormat->drvData = prop;
