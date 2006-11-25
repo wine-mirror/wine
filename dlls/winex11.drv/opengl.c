@@ -342,7 +342,7 @@ static BOOL has_opengl(void)
         return FALSE;
     }
 
-#define LOAD_FUNCPTR(f) if((p##f = (void*)pglXGetProcAddressARB((unsigned char*)#f)) == NULL) goto sym_not_found;
+#define LOAD_FUNCPTR(f) if((p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f)) == NULL) goto sym_not_found;
 /* GLX 1.0 */
 LOAD_FUNCPTR(glXChooseVisual)
 LOAD_FUNCPTR(glXCreateContext)
@@ -1404,7 +1404,7 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
     /* Check the table of WGL extensions to see if we need to return a WGL extension
      * or a function pointer to a native OpenGL function. */
     if(strncmp(lpszProc, "wgl", 3) != 0) {
-        return pglXGetProcAddressARB((GLubyte*)lpszProc);
+        return pglXGetProcAddressARB((const GLubyte*)lpszProc);
     } else {
         TRACE("('%s'):%*s", lpszProc, padding, " ");
         for (i = 0; i < WineGLExtensionListSize; ++i) {
