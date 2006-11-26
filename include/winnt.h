@@ -22,6 +22,7 @@
 #define _WINNT_
 
 #include <basetsd.h>
+#include <guiddef.h>
 
 #ifndef RC_INVOKED
 #include <ctype.h>
@@ -604,6 +605,7 @@ typedef struct _SINGLE_LIST_ENTRY {
 #define HEAP_DISABLE_COALESCE_ON_FREE   0x00000080
 #define HEAP_CREATE_ALIGN_16            0x00010000
 #define HEAP_CREATE_ENABLE_TRACING      0x00020000
+#define HEAP_CREATE_ENABLE_EXECUTE      0x00040000
 
 /* This flag allows it to create heaps shared by all processes under win95,
    FIXME: correct name */
@@ -2595,6 +2597,7 @@ typedef struct _IMAGE_IMPORT_BY_NAME {
 	BYTE	Name[1];
 } IMAGE_IMPORT_BY_NAME,*PIMAGE_IMPORT_BY_NAME;
 
+#include <pshpack8.h>
 /* Import thunk */
 typedef struct _IMAGE_THUNK_DATA64 {
 	union {
@@ -2604,6 +2607,7 @@ typedef struct _IMAGE_THUNK_DATA64 {
 		ULONGLONG AddressOfData;
 	} u1;
 } IMAGE_THUNK_DATA64,*PIMAGE_THUNK_DATA64;
+#include <poppack.h>
 
 typedef struct _IMAGE_THUNK_DATA32 {
 	union {
@@ -2885,6 +2889,52 @@ typedef struct _IMAGE_ARCHIVE_MEMBER_HEADER
 } IMAGE_ARCHIVE_MEMBER_HEADER, *PIMAGE_ARCHIVE_MEMBER_HEADER;
 
 #define IMAGE_SIZEOF_ARCHIVE_MEMBER_HDR 60
+
+typedef struct _IMPORT_OBJECT_HEADER
+{
+    WORD     Sig1;
+    WORD     Sig2;
+    WORD     Version;
+    WORD     Machine;
+    DWORD    TimeDateStamp;
+    DWORD    SizeOfData;
+    union
+    {
+        WORD Ordinal;
+        WORD Hint;
+    } DUMMYUNIONNAME;
+    WORD     Type : 2;
+    WORD     NameType : 3;
+    WORD     Reserved : 11;
+} IMPORT_OBJECT_HEADER;
+
+#define IMPORT_OBJECT_HDR_SIG2  0xffff
+
+typedef enum IMPORT_OBJECT_TYPE
+{
+    IMPORT_OBJECT_CODE = 0,
+    IMPORT_OBJECT_DATA = 1,
+    IMPORT_OBJECT_CONST = 2
+} IMPORT_OBJECT_TYPE;
+
+typedef enum IMPORT_OBJECT_NAME_TYPE
+{
+    IMPORT_OBJECT_ORDINAL = 0,
+    IMPORT_OBJECT_NAME = 1,
+    IMPORT_OBJECT_NAME_NO_PREFIX = 2,
+    IMPORT_OBJECT_NAME_UNDECORATE = 3
+} IMPORT_OBJECT_NAME_TYPE;
+
+typedef struct _ANON_OBJECT_HEADER
+{
+    WORD     Sig1;
+    WORD     Sig2;
+    WORD     Version;
+    WORD     Machine;
+    DWORD    TimeDateStamp;
+    CLSID    ClassID;
+    DWORD    SizeOfData;
+} ANON_OBJECT_HEADER;
 
 /*
  * Resource directory stuff
