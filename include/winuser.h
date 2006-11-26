@@ -3742,6 +3742,88 @@ typedef struct tagTRACKMOUSEEVENT {
 #define HSHELL_WINDOWCREATED       1
 #define HSHELL_WINDOWDESTROYED     2
 #define HSHELL_ACTIVATESHELLWINDOW 3
+#define HSHELL_WINDOWACTIVATED     4
+#define HSHELL_GETMINRECT          5
+#define HSHELL_REDRAW              6
+#define HSHELL_TASKMAN             7
+#define HSHELL_LANGUAGE            8
+#define HSHELL_SYSMENU             9
+#define HSHELL_ENDTASK             10
+#define HSHELL_ACCESSIBILITYSTATE  11
+#define HSHELL_APPCOMMAND          12
+#define HSHELL_WINDOWREPLACED      13
+#define HSHELL_WINDOWREPLACING     14
+
+#define HSHELL_HIGHBIT             0x8000
+#define HSHELL_FLASH               (HSHELL_REDRAW|HSHELL_HIGHBIT)
+#define HSHELL_RUDEAPPACTIVATED    (HSHELL_WINDOWACTIVATED|HSHELL_HIGHBIT)
+
+/* App commands */
+#define APPCOMMAND_BROWSER_BACKWARD                  1
+#define APPCOMMAND_BROWSER_FORWARD                   2
+#define APPCOMMAND_BROWSER_REFRESH                   3
+#define APPCOMMAND_BROWSER_STOP                      4
+#define APPCOMMAND_BROWSER_SEARCH                    5
+#define APPCOMMAND_BROWSER_FAVORITES                 6
+#define APPCOMMAND_BROWSER_HOME                      7
+#define APPCOMMAND_VOLUME_MUTE                       8
+#define APPCOMMAND_VOLUME_DOWN                       9
+#define APPCOMMAND_VOLUME_UP                         10
+#define APPCOMMAND_MEDIA_NEXTTRACK                   11
+#define APPCOMMAND_MEDIA_PREVIOUSTRACK               12
+#define APPCOMMAND_MEDIA_STOP                        13
+#define APPCOMMAND_MEDIA_PLAY_PAUSE                  14
+#define APPCOMMAND_LAUNCH_MAIL                       15
+#define APPCOMMAND_LAUNCH_MEDIA_SELECT               16
+#define APPCOMMAND_LAUNCH_APP1                       17
+#define APPCOMMAND_LAUNCH_APP2                       18
+#define APPCOMMAND_BASS_DOWN                         19
+#define APPCOMMAND_BASS_BOOST                        20
+#define APPCOMMAND_BASS_UP                           21
+#define APPCOMMAND_TREBLE_DOWN                       22
+#define APPCOMMAND_TREBLE_UP                         23
+#define APPCOMMAND_MICROPHONE_VOLUME_MUTE            24
+#define APPCOMMAND_MICROPHONE_VOLUME_DOWN            25
+#define APPCOMMAND_MICROPHONE_VOLUME_UP              26
+#define APPCOMMAND_HELP                              27
+#define APPCOMMAND_FIND                              28
+#define APPCOMMAND_NEW                               29
+#define APPCOMMAND_OPEN                              30
+#define APPCOMMAND_CLOSE                             31
+#define APPCOMMAND_SAVE                              32
+#define APPCOMMAND_PRINT                             33
+#define APPCOMMAND_UNDO                              34
+#define APPCOMMAND_REDO                              35
+#define APPCOMMAND_COPY                              36
+#define APPCOMMAND_CUT                               37
+#define APPCOMMAND_PASTE                             38
+#define APPCOMMAND_REPLY_TO_MAIL                     39
+#define APPCOMMAND_FORWARD_MAIL                      40
+#define APPCOMMAND_SEND_MAIL                         41
+#define APPCOMMAND_SPELL_CHECK                       42
+#define APPCOMMAND_DICTATE_OR_COMMAND_CONTROL_TOGGLE 43
+#define APPCOMMAND_MIC_ON_OFF_TOGGLE                 44
+#define APPCOMMAND_CORRECTION_LIST                   45
+#define APPCOMMAND_MEDIA_PLAY                        46
+#define APPCOMMAND_MEDIA_PAUSE                       47
+#define APPCOMMAND_MEDIA_RECORD                      48
+#define APPCOMMAND_MEDIA_FAST_FORWARD                49
+#define APPCOMMAND_MEDIA_REWIND                      50
+#define APPCOMMAND_MEDIA_CHANNEL_UP                  51
+#define APPCOMMAND_MEDIA_CHANNEL_DOWN                52
+#define APPCOMMAND_DELETE                            53
+#define APPCOMMAND_DWM_FLIP3D                        54
+
+#define FAPPCOMMAND_MOUSE 0x8000
+#define FAPPCOMMAND_KEY   0
+#define FAPPCOMMAND_OEM   0x1000
+#define FAPPCOMMAND_MASK  0xF000
+
+#define GET_APPCOMMAND_LPARAM(lParam) ((short)(HIWORD(lParam) & ~FAPPCOMMAND_MASK))
+#define GET_DEVICE_LPARAM(lParam)     ((WORD)(HIWORD(lParam) & FAPPCOMMAND_MASK))
+#define GET_MOUSEORKEY_LPARAM         GET_DEVICE_LPARAM
+#define GET_FLAGS_LPARAM(lParam)      (LOWORD(lParam))
+#define GET_KEYSTATE_LPARAM(lParam)   GET_FLAGS_LPARAM(lParam)
 
 /* Predefined Clipboard Formats */
 #define CF_TEXT              1
