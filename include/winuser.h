@@ -3615,7 +3615,27 @@ typedef struct tagCOMPAREITEMSTRUCT
 #define VK_RCONTROL         0xA3
 #define VK_LMENU            0xA4
 #define VK_RMENU            0xA5
-/*                          0xA6-0xB9  Unassigned */
+
+#define VK_BROWSER_BACK        0xA6
+#define VK_BROWSER_FORWARD     0xA7
+#define VK_BROWSER_REFRESH     0xA8
+#define VK_BROWSER_STOP        0xA9
+#define VK_BROWSER_SEARCH      0xAA
+#define VK_BROWSER_FAVORITES   0xAB
+#define VK_BROWSER_HOME        0xAC
+#define VK_VOLUME_MUTE         0xAD
+#define VK_VOLUME_DOWN         0xAE
+#define VK_VOLUME_UP           0xAF
+#define VK_MEDIA_NEXT_TRACK    0xB0
+#define VK_MEDIA_PREV_TRACK    0xB1
+#define VK_MEDIA_STOP          0xB2
+#define VK_MEDIA_PLAY_PAUSE    0xB3
+#define VK_LAUNCH_MAIL         0xB4
+#define VK_LAUNCH_MEDIA_SELECT 0xB5
+#define VK_LAUNCH_APP1         0xB6
+#define VK_LAUNCH_APP2         0xB7
+
+/*                          0xB8-0xB9  Unassigned */
 #define VK_OEM_1            0xBA
 #define VK_OEM_PLUS         0xBB
 #define VK_OEM_COMMA        0xBC

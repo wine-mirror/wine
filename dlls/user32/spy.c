@@ -1233,24 +1233,24 @@ static const char * const VK_KeyNames[SPY_MAX_VKKEYSNUM + 1] =
     "VK_RCONTROL",      /* 0xA3 */
     "VK_LMENU",         /* 0xA4 */
     "VK_RMENU",         /* 0xA5 */
-    NULL,               /* 0xA6 */
-    NULL,               /* 0xA7 */
-    NULL,               /* 0xA8 */
-    NULL,               /* 0xA9 */
-    NULL,               /* 0xAA */
-    NULL,               /* 0xAB */
-    NULL,               /* 0xAC */
-    NULL,               /* 0xAD */
-    NULL,               /* 0xAE */
-    NULL,               /* 0xAF */
-    NULL,               /* 0xB0 */
-    NULL,               /* 0xB1 */
-    NULL,               /* 0xB2 */
-    NULL,               /* 0xB3 */
-    NULL,               /* 0xB4 */
-    NULL,               /* 0xB5 */
-    NULL,               /* 0xB6 */
-    NULL,               /* 0xB7 */
+    "VK_BROWSER_BACK",        /* 0xA6 */
+    "VK_BROWSER_FORWARD",     /* 0xA7 */
+    "VK_BROWSER_REFRESH",     /* 0xA8 */
+    "VK_BROWSER_STOP",        /* 0xA9 */
+    "VK_BROWSER_SEARCH",      /* 0xAA */
+    "VK_BROWSER_FAVORITES",   /* 0xAB */
+    "VK_BROWSER_HOME",        /* 0xAC */
+    "VK_VOLUME_MUTE",         /* 0xAD */
+    "VK_VOLUME_DOWN",         /* 0xAE */
+    "VK_VOLUME_UP",           /* 0xAF */
+    "VK_MEDIA_NEXT_TRACK",    /* 0xB0 */
+    "VK_MEDIA_PREV_TRACK",    /* 0xB1 */
+    "VK_MEDIA_STOP",          /* 0xB2 */
+    "VK_MEDIA_PLAY_PAUSE",    /* 0xB3 */
+    "VK_LAUNCH_MAIL",         /* 0xB4 */
+    "VK_LAUNCH_MEDIA_SELECT", /* 0xB5 */
+    "VK_LAUNCH_APP1",         /* 0xB6 */
+    "VK_LAUNCH_APP2",         /* 0xB7 */
     NULL,               /* 0xB8 */
     NULL,               /* 0xB9 */
     "VK_OEM_1",         /* 0xBA */
