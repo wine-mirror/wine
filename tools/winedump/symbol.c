@@ -27,7 +27,7 @@
 /* Items that are swapped in arguments after the symbol structure
  * has been populated
  */
-static const char *swap_after[] =
+static const char * const swap_after[] =
 {
   "\r", " ", /* Remove whitespace, normalise pointers and brackets */
   "\t", " ",
@@ -49,7 +49,7 @@ static const char *swap_after[] =
  * strings, unless they contain more that one '*'. A preceding 'LP'
  * counts as a '*', so 'LPWCSTR *' is a pointer, not a string
  */
-static const char *wide_strings[] =
+static const char * const wide_strings[] =
 {
   "WSTR", "WCSTR", NULL
 };
@@ -58,7 +58,7 @@ static const char *wide_strings[] =
  * unless they contain one '*'. A preceding 'LP' counts as a '*',
  * so 'WCHAR *' is string, while 'LPWCHAR *' is a pointer
  */
-static const char *wide_chars[] =
+static const char * const wide_chars[] =
 {
   "WCHAR", NULL
 };
@@ -66,7 +66,7 @@ static const char *wide_chars[] =
 /* Items containing these substrings are assumed to be ASCII character
  * strings, as above
  */
-static const char *ascii_strings[] =
+static const char * const ascii_strings[] =
 {
   "STR", "CSTR", NULL
 };
@@ -75,7 +75,7 @@ static const char *ascii_strings[] =
 /* Items containing these substrings are assumed to be ASCII characters,
  * as above
  */
-static const char *ascii_chars[] =
+static const char * const ascii_chars[] =
 {
   "CHAR", "char", NULL
 };
@@ -83,7 +83,7 @@ static const char *ascii_chars[] =
 /* Any type other than the following will produce a FIXME warning with -v
  * when mapped to a long, to allow fixups
  */
-static const char *known_longs[] =
+static const char * const known_longs[] =
 {
   "char", "CHAR", "float", "int", "INT", "short", "SHORT", "long", "LONG",
   "WCHAR", "BOOL", "bool", "INT16", "WORD", "DWORD", NULL
@@ -194,7 +194,7 @@ const char *symbol_get_spec_type (const parsed_symbol *sym, size_t arg)
 int   symbol_get_type (const char *string)
 {
   const char *iter = string;
-  const char **tab;
+  const char * const *tab;
   int ptrs = 0;
 
   while (*iter && isspace(*iter))
@@ -289,7 +289,7 @@ int   symbol_get_type (const char *string)
  */
 void  symbol_clean_string (const char *string)
 {
-  const char **tab = swap_after;
+  const char * const *tab = swap_after;
   char *str = (char *)string;
 
 #define SWAP(i, p, x, y) do { i = p; while ((i = str_replace (i, x, y))); } while(0)
