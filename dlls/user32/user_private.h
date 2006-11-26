@@ -149,7 +149,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (*pScrollDC)(HDC, INT, INT, const RECT *, const RECT *, HRGN, LPRECT);
     void   (*pSetFocus)(HWND);
     HWND   (*pSetParent)(HWND,HWND);
-    BOOL   (*pSetWindowPos)(WINDOWPOS *);
+    BOOL   (*pSetWindowPos)(HWND,HWND,const RECT *,const RECT *,UINT,const RECT *);
     int    (*pSetWindowRgn)(HWND,HRGN,BOOL);
     void   (*pSetWindowIcon)(HWND,UINT,HICON);
     void   (*pSetWindowStyle)(HWND,DWORD);
@@ -220,6 +220,8 @@ extern HPEN SYSCOLOR_GetPen( INT index );
 extern void SYSPARAMS_Init(void);
 extern void USER_CheckNotLock(void);
 extern BOOL USER_IsExitingThread( DWORD tid );
+
+extern BOOL USER_SetWindowPos( WINDOWPOS * winpos );
 
 /* message spy definitions */
 

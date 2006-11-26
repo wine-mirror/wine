@@ -370,7 +370,8 @@ static HWND nulldrv_SetParent( HWND hwnd, HWND parent )
     return 0;
 }
 
-static BOOL nulldrv_SetWindowPos( WINDOWPOS *pos )
+static BOOL nulldrv_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
+                                  const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
 {
     return FALSE;
 }
@@ -688,9 +689,10 @@ static HWND loaderdrv_SetParent( HWND hwnd, HWND parent )
     return load_driver()->pSetParent( hwnd, parent );
 }
 
-static BOOL loaderdrv_SetWindowPos( WINDOWPOS *pos )
+static BOOL loaderdrv_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
+                                    const RECT *rectClient, UINT swp_flags, const RECT *valid_rects )
 {
-    return load_driver()->pSetWindowPos( pos );
+    return load_driver()->pSetWindowPos( hwnd, insert_after, rectWindow, rectClient, swp_flags, valid_rects );
 }
 
 static int loaderdrv_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )

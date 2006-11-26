@@ -105,7 +105,7 @@
 @ cdecl SetFocus(long) X11DRV_SetFocus
 @ cdecl SetParent(long long) X11DRV_SetParent
 @ cdecl SetWindowIcon(long long long) X11DRV_SetWindowIcon
-@ cdecl SetWindowPos(ptr) X11DRV_SetWindowPos
+@ cdecl SetWindowPos(ptr ptr ptr ptr long ptr) X11DRV_SetWindowPos
 @ cdecl SetWindowRgn(long long long) X11DRV_SetWindowRgn
 @ cdecl SetWindowStyle(ptr long) X11DRV_SetWindowStyle
 @ cdecl SetWindowText(long wstr) X11DRV_SetWindowText

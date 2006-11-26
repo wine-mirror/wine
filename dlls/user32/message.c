@@ -1187,7 +1187,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return WIN_DestroyWindow( hwnd );
     case WM_WINE_SETWINDOWPOS:
         if (hwnd == GetDesktopWindow()) return 0;
-        return USER_Driver->pSetWindowPos( (WINDOWPOS *)lparam );
+        return USER_SetWindowPos( (WINDOWPOS *)lparam );
     case WM_WINE_SHOWWINDOW:
         if (hwnd == GetDesktopWindow()) return 0;
         return ShowWindow( hwnd, wparam );
