@@ -1076,6 +1076,45 @@ static const WORD nonchar_key_scan[256] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x153              /* FFF8 */
 };
 
+static const WORD xfree86_vendor_key_vkey[256] =
+{
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF00 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF08 */
+    0, VK_VOLUME_DOWN, VK_VOLUME_MUTE, VK_VOLUME_UP,            /* 1008FF10 */
+    VK_MEDIA_PLAY_PAUSE, VK_MEDIA_STOP,
+    VK_MEDIA_PREV_TRACK, VK_MEDIA_NEXT_TRACK,
+    0, VK_LAUNCH_MAIL, 0, VK_BROWSER_SEARCH,                    /* 1008FF18 */
+    0, 0, 0, VK_BROWSER_HOME,
+    0, 0, 0, 0, 0, 0, VK_BROWSER_BACK, VK_BROWSER_FORWARD,      /* 1008FF20 */
+    VK_BROWSER_STOP, VK_BROWSER_REFRESH, 0, 0, 0, 0, 0, 0,      /* 1008FF28 */
+    VK_BROWSER_FAVORITES, 0, VK_LAUNCH_MEDIA_SELECT, 0,         /* 1008FF30 */
+    0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF38 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF40 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF48 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF50 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF58 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF60 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF68 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF70 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF78 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF80 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF88 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF90 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FF98 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFA0 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFA8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFB0 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFB8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFC0 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFC8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFD0 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFD8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFE0 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFE8 */
+    0, 0, 0, 0, 0, 0, 0, 0,                                     /* 1008FFF0 */
+    0, 0, 0, 0, 0, 0, 0, 0                                      /* 1008FFF8 */
+};
 
 /* Returns the Windows virtual key code associated with the X event <e> */
 /* x11 lock must be held */
@@ -1623,6 +1662,11 @@ void X11DRV_InitKeyboard(void)
                 scan = nonchar_key_scan[keysym & 0xff];
 		/* set extended bit when necessary */
 		if (scan & 0x100) vkey |= 0x100;
+            } else if ((keysym >> 8) == 0x1008FF) { /* XFree86 vendor keys */
+                vkey = xfree86_vendor_key_vkey[keysym & 0xff];
+                /* All vendor keys are extended with a scan code of 0 per testing on WinXP */
+                scan = 0x100;
+		vkey |= 0x100;
             } else if (keysym == 0x20) {                 /* Spacebar */
 	        vkey = VK_SPACE;
 		scan = 0x39;
@@ -2484,6 +2528,11 @@ INT X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, LPBYTE lpKeyState,
             /* Unicode direct mapping */
             bufW[0] = keysym & 0xffff;
             ret = 1;
+            goto found;
+        }
+        else if ((keysym >> 8) == 0x1008FF) {
+            bufW[0] = 0;
+            ret = 0;
             goto found;
         }
 	else
