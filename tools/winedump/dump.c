@@ -79,7 +79,7 @@ void dump_data( const unsigned char *ptr, unsigned int size, const char *prefix 
     printf( "\n" );
 }
 
-const char *get_time_str(const unsigned long _t)
+const char *get_time_str(unsigned long _t)
 {
     const time_t    t = (const time_t)_t;
     const char      *str = ctime(&t);
