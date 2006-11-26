@@ -117,7 +117,11 @@ void ME_UpdateRepaint(ME_TextEditor *editor)
   pCursor = &editor->pCursors[0];
   ME_EnsureVisible(editor, pCursor->pRun);
   
-  ME_SendOldNotify(editor, EN_CHANGE);
+  /* send EN_CHANGE if the event mask asks for it */
+  if(editor->nEventMask & ENM_CHANGE)
+  {
+    ME_SendOldNotify(editor, EN_CHANGE);
+  }
   ME_Repaint(editor);
   ME_SendSelChange(editor);
 }
