@@ -3555,7 +3555,8 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 {
   ULONG bbHeadOfChain = BLOCK_END_OF_CHAIN;
   ULARGE_INTEGER size, offset;
-  ULONG cbRead, cbWritten, cbTotalRead, cbTotalWritten;
+  ULONG cbRead, cbWritten;
+  ULARGE_INTEGER cbTotalRead;
   ULONG propertyIndex;
   HRESULT resWrite = S_OK;
   HRESULT resRead;
@@ -3585,8 +3586,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
    */
   offset.u.LowPart = 0;
   offset.u.HighPart = 0;
-  cbTotalRead = 0;
-  cbTotalWritten = 0;
+  cbTotalRead.QuadPart = 0;
 
   buffer = HeapAlloc(GetProcessHeap(),0,DEF_SMALL_BLOCK_SIZE);
   do
@@ -3601,7 +3601,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 
     if (cbRead > 0)
     {
-        cbTotalRead += cbRead;
+        cbTotalRead.QuadPart += cbRead;
 
         resWrite = BlockChainStream_WriteAt(bbTempChain,
                                             offset,
@@ -3612,10 +3612,9 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
         if (FAILED(resWrite))
             break;
 
-        cbTotalWritten += cbWritten;
         offset.u.LowPart += This->smallBlockSize;
     }
-  } while (cbRead > 0);
+  } while (cbTotalRead.QuadPart < size.QuadPart);
   HeapFree(GetProcessHeap(),0,buffer);
 
   if (FAILED(resRead) || FAILED(resWrite))
