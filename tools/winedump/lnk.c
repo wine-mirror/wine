@@ -454,11 +454,11 @@ static int dump_lnk_fd(int fd)
     return 0;
 }
 
-int dump_lnk(const char *emf)
+int dump_lnk(const char *lnk)
 {
     int fd;
 
-    fd = open(emf,O_RDONLY);
+    fd = open(lnk,O_RDONLY);
     if (fd<0)
         return -1;
     dump_lnk_fd(fd);
