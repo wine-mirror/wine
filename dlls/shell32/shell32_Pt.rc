@@ -1,6 +1,7 @@
 /*
  * Copyright 1998 Juergen Schmied
  * Copyright 2003 Marcelo Duarte
+ * Copyright 2006 Américo José Melo
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,9 +28,12 @@ BEGIN
 	MENUITEM "&Detalhes",		FCIDM_SHVIEW_REPORTVIEW
 END
 
+
 /*
  shellview background menu
 */
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 MENU_002 MENU DISCARDABLE
 BEGIN
 	POPUP ""
@@ -69,9 +73,53 @@ BEGIN
 	END
 END
 
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+MENU_002 MENU DISCARDABLE
+BEGIN
+	POPUP ""
+	BEGIN
+	  POPUP "&Mostrar"
+	  BEGIN
+	    MENUITEM "Ícones &grandes",	FCIDM_SHVIEW_BIGICON
+	    MENUITEM "Ícones &pequenos",	FCIDM_SHVIEW_SMALLICON
+	    MENUITEM "&Lista",		FCIDM_SHVIEW_LISTVIEW
+	    MENUITEM "&Detalhes",	FCIDM_SHVIEW_REPORTVIEW
+	  END
+	  MENUITEM SEPARATOR
+	  POPUP "O&rganizar ícones"
+	  BEGIN
+	    MENUITEM "Por &nome",	0x30	/* column 0 */
+	    MENUITEM "Por &tipo",	0x32	/* column 2 */
+	    MENUITEM "Por ta&manho",	0x31	/* ... */
+	    MENUITEM "Por &data",	0x33
+	    MENUITEM SEPARATOR
+	    MENUITEM "Auto organi&zar",	FCIDM_SHVIEW_AUTOARRANGE
+	  END
+	  MENUITEM "Alin&har ícones",	FCIDM_SHVIEW_SNAPTOGRID
+	  MENUITEM SEPARATOR
+	  MENUITEM "&Actualizar",		FCIDM_SHVIEW_REFRESH
+	  MENUITEM SEPARATOR
+	  MENUITEM "Co&lar",		FCIDM_SHVIEW_INSERT
+	  MENUITEM "Colar a&talho",	FCIDM_SHVIEW_INSERTLINK
+	  MENUITEM SEPARATOR
+	  POPUP "Novo"
+	  BEGIN
+	    MENUITEM "&Pasta",	FCIDM_SHVIEW_NEWFOLDER
+	    MENUITEM "&Atalho",	FCIDM_SHVIEW_NEWLINK
+	    MENUITEM SEPARATOR
+	  END
+	  MENUITEM SEPARATOR
+	  MENUITEM "Propriedades",	FCIDM_SHVIEW_PROPERTIES
+	END
+END
+
+
 /*
  shellview item menu
 */
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 MENU_SHV_FILE MENU DISCARDABLE
 BEGIN
 	POPUP ""
@@ -90,6 +138,9 @@ BEGIN
 	END
 END
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 SHBRSFORFOLDER_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 188, 192
 STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU | DS_MODALFRAME | DS_SETFONT | DS_3DLOOK
 CAPTION "Procurar pasta"
@@ -105,6 +156,9 @@ FONT 8, "MS Shell Dlg"
 	4, 40, 180, 120
 }
 
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
+
 SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
 CAPTION "Sobre %s"
@@ -117,6 +171,24 @@ FONT 10, "MS Shell Dlg"
  LTEXT "", 101, 30, 22, 137, 10
  LTEXT "Wine foi disponibilizado por:", 98, 8, 55, 137, 10
 }
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+SHELL_ABOUT_MSGBOX DIALOG LOADONCALL MOVEABLE DISCARDABLE 15, 40, 210, 152
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Acerca do %s"
+FONT 10, "MS Shell Dlg"
+{
+ DEFPUSHBUTTON "OK", IDOK, 153, 133, 50, 12, WS_TABSTOP
+ LISTBOX 99, 8, 65, 137, 82, LBS_NOTIFY | WS_VSCROLL | WS_BORDER
+ ICON "", 1088, 10, 10, 14, 16
+ LTEXT "", 100, 30, 10, 137, 10
+ LTEXT "", 101, 30, 22, 137, 10
+ LTEXT "Wine disponibilizado por:", 98, 8, 55, 137, 10
+}
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
 STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
@@ -131,6 +203,25 @@ FONT 8, "MS Shell Dlg"
  PUSHBUTTON "Cancelar", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
  PUSHBUTTON "&Procurar...", 12288, 170, 63, 50, 14, WS_TABSTOP
 }
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+SHELL_RUN_DLG DIALOG LOADONCALL MOVEABLE DISCARDABLE 0, 0, 227, 95
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION ""
+FONT 8, "MS Shell Dlg"
+{
+ ICON "", 12297, 7, 11, 18, 20, WS_VISIBLE
+ LTEXT "Digite o nome do programa, pasta, documento, ou endereço Internet, que o Wine irá abrí-lo.", 12289, 36, 11, 182, 18
+ LTEXT "&Abrir:", 12305, 7, 39, 24, 10
+ CONTROL "", 12298, "COMBOBOX", WS_TABSTOP | WS_GROUP | WS_VSCROLL | WS_VISIBLE | CBS_DISABLENOSCROLL | CBS_AUTOHSCROLL | CBS_DROPDOWN, 36, 37, 183, 100
+ DEFPUSHBUTTON "OK", IDOK, 62, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "Cancelar", IDCANCEL, 116, 63, 50, 14, WS_TABSTOP
+ PUSHBUTTON "&Procurar...", 12288, 170, 63, 50, 14, WS_TABSTOP
+}
+
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 STRINGTABLE DISCARDABLE
 {
@@ -202,4 +293,78 @@ STRINGTABLE DISCARDABLE
 	IDS_COMMON_PICTURES         "Documentos\\Minhas Imagens"
 	IDS_COMMON_VIDEO            "Documentos\\Meus Vídeos"
 	IDS_CDBURN_AREA             "Configurações locais\\Dados de aplicativos\\Microsoft\\CD Burning"
+}
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+STRINGTABLE DISCARDABLE
+{
+        /* columns in the shellview */
+	IDS_SHV_COLUMN1		"Ficheiro"
+	IDS_SHV_COLUMN2		"Tamanho"
+	IDS_SHV_COLUMN3		"Tipo"
+	IDS_SHV_COLUMN4		"Modificado"
+	IDS_SHV_COLUMN5		"Atributos"
+	IDS_SHV_COLUMN6		"Tamanho"
+	IDS_SHV_COLUMN7		"Disponível"
+	IDS_SHV_COLUMN8		"Nome"
+	IDS_SHV_COLUMN9		"Comentários"
+	IDS_SHV_COLUMN10	"Dono"
+	IDS_SHV_COLUMN11	"Grupo"
+
+        /* special folders */
+	IDS_DESKTOP		"Área de trabalho"
+	IDS_MYCOMPUTER		"O Meu Computador"
+
+        /* context menus */
+	IDS_VIEW_LARGE		"Ícones &grandes"
+	IDS_VIEW_SMALL		"Ícones &pequenos"
+	IDS_VIEW_LIST		"&Lista"
+	IDS_VIEW_DETAILS	"&Detalhes"
+	IDS_SELECT		"Seleccionar"
+	IDS_OPEN		"Abrir"
+
+	IDS_CREATEFOLDER_DENIED "Não pode criar nova pasta: Permissão negada."
+	IDS_CREATEFOLDER_CAPTION "Erro durante a criação da nova pasta"
+	IDS_DELETEITEM_CAPTION "Confirmar exclusão de ficheiro"
+	IDS_DELETEFOLDER_CAPTION "Confirmar exclusão de pasta"
+	IDS_DELETEITEM_TEXT "VTem certeza que deseja excluir '%1'?"
+	IDS_DELETEMULTIPLE_TEXT "Tem certeza que deseja excluir estes %1 itens?"
+	IDS_OVERWRITEFILE_TEXT "Sobreescrever ficheiro %1?"
+	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescrever ficheiro"
+
+        /* message box strings */
+	IDS_RESTART_TITLE       "Reiniciar"
+	IDS_RESTART_PROMPT      "Deseja simular a reinicialização do Windows?"
+	IDS_SHUTDOWN_TITLE      "Desligar"
+	IDS_SHUTDOWN_PROMPT     "Deseja finalizar a sessão no Wine?"
+
+        /* shell folder path default values */
+	IDS_PROGRAMS                "Menu Iniciar\\Programas"
+	IDS_PERSONAL                "OS Meus Documentos"
+	IDS_FAVORITES               "Favoritos"
+	IDS_STARTUP                 "Menu Iniciar\\Programas\\Iniciar"
+	IDS_RECENT                  "Recente"
+	IDS_SENDTO                  "Enviar Para"
+	IDS_STARTMENU               "Menu Iniciar"
+	IDS_MYMUSIC                 "As Minhas Músicas"
+	IDS_MYVIDEO                 "Os Meus Vídeos"
+	IDS_DESKTOPDIRECTORY        "Ecrã"
+	IDS_NETHOOD                 "NetHood"
+	IDS_TEMPLATES               "Modelos"
+	IDS_APPDATA                 "Dados de aplicação"
+	IDS_PRINTHOOD               "PrintHood"
+	IDS_LOCAL_APPDATA           "Configurações locais\\Dados de aplicativos"
+	IDS_INTERNET_CACHE          "Configurações locais\\Temporary Internet Files"
+	IDS_COOKIES                 "Cookies"
+	IDS_HISTORY                 "Configurações locais\\Histórico"
+	IDS_PROGRAM_FILES           "Ficheiros de programas"
+	IDS_MYPICTURES              "As Minhas Imagens"
+	IDS_PROGRAM_FILES_COMMON    "Ficheiros de programas\\Ficheiros comuns"
+	IDS_COMMON_DOCUMENTS        "Documentos"
+	IDS_ADMINTOOLS              "Menu Iniciar\\Programas\\Ferramentas Administrativas"
+	IDS_COMMON_MUSIC            "Documentos\\As Minhas Músicas"
+	IDS_COMMON_PICTURES         "Documentos\\As Minhas Imagens"
+	IDS_COMMON_VIDEO            "Documentos\\Os Meus Vídeos"
+	IDS_CDBURN_AREA             "Configurações locais\\Dados de aplicativos\\Microsoft\\Gravação de CD"
 }
