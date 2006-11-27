@@ -781,13 +781,15 @@ void pshader_hw_texm3x3tex(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
+    char dst_str[8];
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.z, T%u, %s;\n", reg, src0_name);
 
-    /* Cubemap textures will be more used than 3D ones. */
-    shader_addline(buffer, "TEX T%u, TMP, texture[%u], CUBE;\n", reg, reg);
+    /* Sample the texture using the calculated coordinates */
+    sprintf(dst_str, "T%u", reg);
+    shader_hw_sample(arg, reg, dst_str, "TMP");
     current_state->current_row = 0;
 }
 

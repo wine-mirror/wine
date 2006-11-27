@@ -1560,33 +1560,22 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 }
 
 /** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
- * Perform the 3rd row of a 3x3 matrix multiply, then sample the texture using the calculate coordinates */
+ * Perform the 3rd row of a 3x3 matrix multiply, then sample the texture using the calculated coordinates */
 void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
-
+    char dst_str[8];
     char src0_str[100];
     char src0_name[50];
     char src0_mask[6];
-    char dimensions[5];
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
-    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
-    DWORD stype = arg->reg_maps->samplers[src0_regnum] & WINED3DSP_TEXTURETYPE_MASK;
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
-    
-    switch (stype) {
-        case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;
-        case WINED3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
-        case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
-        default:
-            strcpy(dimensions, "");
-            FIXME("Unrecognized sampler type: %#x\n", stype);
-            break;
-    }
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
-    shader_addline(arg->buffer, "T%u = texture%s(Psampler%u, tmp0.%s);\n", 
-            reg, dimensions, reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz");
+
+    /* Sample the texture using the calculated coordinates */
+    sprintf(dst_str, "T%u", reg);
+    shader_glsl_sample(arg, reg, dst_str, "tmp0");
     current_state->current_row = 0;
 }
 
