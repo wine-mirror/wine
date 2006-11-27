@@ -74,6 +74,35 @@ static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
 static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
 
 /* ########################### */
+
+static void test_AddPort(void)
+{
+    DWORD   res;
+
+    /* moved to localui.dll since w2k */
+    if (!pAddPort) return;
+
+#if 0
+    /* NT4 crash on this test */
+    res = pAddPort(NULL, 0, NULL);
+#endif
+
+    /*  Testing-Results (localmon.dll from NT4.0):
+        - The Servername is ignored
+        - Case of MonitorName is ignored
+    */
+
+    SetLastError(0xdeadbeef);
+    res = pAddPort(NULL, 0, emptyW);
+    ok(!res, "returned %d with 0x%x (expected '0')\n", res, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = pAddPort(NULL, 0, does_not_existW);
+    ok(!res, "returned %d with 0x%x (expected '0')\n", res, GetLastError());
+
+}
+
+/* ########################### */
                                        
 static void test_ConfigurePort(void)
 {
@@ -319,6 +348,7 @@ START_TEST(localmon)
     }
     test_InitializePrintMonitor();
 
+    test_AddPort();
     test_ConfigurePort();
     test_DeletePort();
     test_EnumPorts();
