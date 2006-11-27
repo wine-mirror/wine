@@ -2,7 +2,7 @@
 @ stub AddMiniIconToList
 @ stub AddTagToGroupOrderListEntry
 @ stub AppendStringToMultiSz
-@ stub AssertFail
+@ stdcall AssertFail(str long str)
 @ stub CMP_Init_Detection
 @ stub CMP_RegisterNotification
 @ stub CMP_Report_LogOn

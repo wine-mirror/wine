@@ -861,3 +861,19 @@ DWORD WINAPI CMP_WaitNoPendingInstallEvents( DWORD dwTimeout )
     FIXME("%d\n", dwTimeout);
     return WAIT_OBJECT_0;
 }
+
+/***********************************************************************
+ *              AssertFail  (SETUPAPI.@)
+ *
+ * Shows an assert fail error messagebox
+ *
+ * PARAMS
+ *   lpFile [I]         file where assert failed
+ *   uLine [I]          line number in file
+ *   lpMessage [I]      assert message
+ *
+ */
+void WINAPI AssertFail(LPCSTR lpFile, UINT uLine, LPCSTR lpMessage)
+{
+    FIXME("%s %u %s\n", lpFile, uLine, lpMessage);
+}
