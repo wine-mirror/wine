@@ -327,6 +327,46 @@ static void test_AddMonitor(void)
 
 /* ########################### */
 
+static void test_AddPort(void)
+{
+    DWORD   res;
+
+    SetLastError(0xdeadbeef);
+    res = AddPortA(NULL, 0, NULL);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+
+    SetLastError(0xdeadbeef);
+    res = AddPortA(NULL, 0, empty);
+    /* Allowed only for (Printer-)Administrators */
+    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
+        trace("skip tests (ACCESS_DENIED)\n");
+        return;
+    }
+    /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+
+    SetLastError(0xdeadbeef);
+    res = AddPortA(NULL, 0, does_not_exist);
+    /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+}
+
+/* ########################### */
+
 static void test_ConfigurePort(void)
 {
     DWORD   res;
@@ -1609,6 +1649,7 @@ START_TEST(info)
     default_printer = find_default_printer();
 
     test_AddMonitor();
+    test_AddPort();
     test_ConfigurePort();
     test_DeleteMonitor();
     test_DeletePort();
