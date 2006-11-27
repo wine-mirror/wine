@@ -934,6 +934,7 @@ void server_init_process(void)
         fd_socket = atoi( env_socket );
         if (fcntl( fd_socket, F_SETFD, 1 ) == -1)
             fatal_perror( "Bad server socket %d", fd_socket );
+        unsetenv( "WINESERVERSOCKET" );
     }
     else
     {
