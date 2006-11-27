@@ -2147,13 +2147,33 @@ BOOL WINAPI DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorNa
  * See DeletePortW.
  *
  */
-BOOL WINAPI
-DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
+BOOL WINAPI DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
 {
-    FIXME("(%s,%p,%s):stub\n",debugstr_a(pName),hWnd,
-          debugstr_a(pPortName));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    LPWSTR  nameW = NULL;
+    LPWSTR  portW = NULL;
+    INT     len;
+    DWORD   res;
+
+    TRACE("(%s, %p, %s)\n", debugstr_a(pName), hWnd, debugstr_a(pPortName));
+
+    /* convert servername to unicode */
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    /* convert portname to unicode */
+    if (pPortName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pPortName, -1, NULL, 0);
+        portW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pPortName, -1, portW, len);
+    }
+
+    res = DeletePortW(nameW, hWnd, portW);
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, portW);
+    return res;
 }
 
 /******************************************************************
