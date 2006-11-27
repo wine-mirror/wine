@@ -5772,14 +5772,47 @@ BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
  *  Success: TRUE
  *  Failure: FALSE
  *
- * BUGS
- *  only a Stub
- *
  */
 BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 {
-    FIXME("(%s, %p, %s), stub!\n",debugstr_w(pName),hWnd,debugstr_w(pMonitorName));
-    return FALSE;
+    monitor_t * pm;
+    DWORD   res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pMonitorName));
+
+    if (pName && pName[0]) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!pMonitorName) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    /* an empty Monitorname is Invalid */
+    if (!pMonitorName[0]) goto cleanup;
+
+    pm = monitor_load(pMonitorName, NULL);
+    if (pm && pm->monitor) {
+        if (pm->monitor->pfnAddPort != NULL) {
+            res = pm->monitor->pfnAddPort(pName, hWnd, pMonitorName);
+            TRACE("got %d with %d\n", res, GetLastError());
+        }
+        else if (pm->monitor->pfnXcvOpenPort != NULL)
+        {
+            FIXME("XcvOpenPort not implemented (dwMonitorSize: %d)\n", pm->dwMonitorSize);
+        }
+        /* invalidate cached PORT_INFO_2W */
+        if (res == ROUTER_SUCCESS) monitor_flush(pm);
+    }
+    monitor_unload(pm);
+
+cleanup:
+    /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
+    if (res == ROUTER_UNKNOWN) SetLastError(ERROR_NOT_SUPPORTED);
+    TRACE("returning %d with %d\n", (res == ROUTER_SUCCESS), GetLastError());
+    return (res == ROUTER_SUCCESS);
 }
 
 /******************************************************************************
