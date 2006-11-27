@@ -2438,6 +2438,13 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     IWineD3DImpl_FillGLCaps(iface, IWineD3DImpl_GetAdapterDisplay(iface, Adapter));
     LEAVE_GL();
     select_shader_mode(&This->gl_info, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
+    if (object->ps_selected_mode == SHADER_GLSL || object->vs_selected_mode == SHADER_GLSL) {
+        object->shader_backend = &glsl_shader_backend;
+    } else if (object->ps_selected_mode == SHADER_ARB || object->vs_selected_mode == SHADER_ARB) {
+        object->shader_backend = &arb_program_shader_backend;
+    } else {
+        object->shader_backend = &none_shader_backend;
+    }
 
     /* This function should *not* be modifying GL caps
      * TODO: move the functionality where it belongs */

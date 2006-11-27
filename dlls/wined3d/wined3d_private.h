@@ -515,6 +515,7 @@ typedef struct IWineD3DDeviceImpl
     /* Selected capabilities */
     int vs_selected_mode;
     int ps_selected_mode;
+    const shader_backend_t *shader_backend;
 
     /* Optimization */
     BOOL                    modelview_valid;

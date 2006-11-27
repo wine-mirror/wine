@@ -1802,18 +1802,10 @@ inline static void drawPrimitiveDrawStrided(
     }
 
     /* Make any shaders active */
-    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
-        glsl_shader_backend.shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
-    } else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB) {
-        arb_program_shader_backend.shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
-    }
+    This->shader_backend->shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
 
     /* Load any global constants/uniforms that may have been set by the application */
-    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
-        glsl_shader_backend.shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
-    } else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB) {
-        arb_program_shader_backend.shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
-    }
+    This->shader_backend->shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
 
     /* Draw vertex-by-vertex */
     if (useDrawStridedSlow)
@@ -1822,11 +1814,7 @@ inline static void drawPrimitiveDrawStrided(
         drawStridedFast(iface, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx);
 
     /* Cleanup any shaders */
-    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
-        glsl_shader_backend.shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
-    } else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB) {
-        arb_program_shader_backend.shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
-    }
+    This->shader_backend->shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
 
     /* Unload vertex data */
     if (useVertexShaderFunction) {
@@ -2046,7 +2034,6 @@ static void check_fbo_status(IWineD3DDevice *iface) {
 
 static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    BOOL glsl_mode = This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL;
 
     glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -2061,8 +2048,7 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glBindTexture(GL_TEXTURE_2D, texture);
     glEnable(GL_TEXTURE_2D);
 
-    if (glsl_mode) glsl_shader_backend.shader_select_depth_blt(iface);
-    else arb_program_shader_backend.shader_select_depth_blt(iface);
+    This->shader_backend->shader_select_depth_blt(iface);
 
     glBegin(GL_TRIANGLE_STRIP);
     glVertex2f(-1.0f, -1.0f);
