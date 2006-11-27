@@ -235,139 +235,112 @@ static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
 static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
  LPCWSTR path, int depth, LPWSTR *appValue);
 
-static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue,
- MSISIGNATURE *sig)
+static UINT ACTION_AppSearchReg(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATURE *sig)
 {
-    MSIQUERY *view;
+    static const WCHAR query[] =  {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'R','e','g','L','o','c','a','t','o','r',' ',
+        'w','h','e','r','e',' ',
+        'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
+    LPWSTR keyPath = NULL, valueName = NULL;
+    int root, type;
+    HKEY rootKey, key = NULL;
+    DWORD sz = 0, regType;
+    LPBYTE value = NULL;
+    MSIRECORD *row;
     UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-   'R','e','g','L','o','c','a','t','o','r',' ',
-   'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
-   '\'','%','s','\'',0};
 
-    TRACE("(package %p, appValue %p, sig %p)\n", package, appValue, sig);
+    TRACE("%s\n", debugstr_w(sig->Name));
+
     *appValue = NULL;
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
-    if (rc == ERROR_SUCCESS)
+
+    row = MSI_QueryGetRecord( package->db, query, sig->Name );
+    if (!row)
     {
-        MSIRECORD *row = 0;
-        LPWSTR keyPath = NULL, valueName = NULL;
-        int root, type;
-        HKEY rootKey, key = NULL;
-        DWORD sz = 0, regType;
-        LPBYTE value = NULL;
+        TRACE("failed to query RegLocator for %s\n", debugstr_w(sig->Name));
+        return ERROR_SUCCESS;
+    }
 
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewExecute returned %d\n", rc);
-            goto end;
-        }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewFetch returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
+    root = MSI_RecordGetInteger(row,2);
+    keyPath = msi_dup_record_field(row,3);
+    /* FIXME: keyPath needs to be expanded for properties */
+    valueName = msi_dup_record_field(row,4);
+    /* FIXME: valueName probably does too */
+    type = MSI_RecordGetInteger(row,5);
 
-        root = MSI_RecordGetInteger(row,2);
-        keyPath = msi_dup_record_field(row,3);
-        /* FIXME: keyPath needs to be expanded for properties */
-        valueName = msi_dup_record_field(row,4);
-        /* FIXME: valueName probably does too */
-        type = MSI_RecordGetInteger(row,5);
+    switch (root)
+    {
+    case msidbRegistryRootClassesRoot:
+        rootKey = HKEY_CLASSES_ROOT;
+        break;
+    case msidbRegistryRootCurrentUser:
+        rootKey = HKEY_CURRENT_USER;
+        break;
+    case msidbRegistryRootLocalMachine:
+        rootKey = HKEY_LOCAL_MACHINE;
+        break;
+    case msidbRegistryRootUsers:
+        rootKey = HKEY_USERS;
+        break;
+    default:
+        WARN("Unknown root key %d\n", root);
+        goto end;
+    }
 
-        switch (root)
-        {
-            case msidbRegistryRootClassesRoot:
-                rootKey = HKEY_CLASSES_ROOT;
-                break;
-            case msidbRegistryRootCurrentUser:
-                rootKey = HKEY_CURRENT_USER;
-                break;
-            case msidbRegistryRootLocalMachine:
-                rootKey = HKEY_LOCAL_MACHINE;
-                break;
-            case msidbRegistryRootUsers:
-                rootKey = HKEY_USERS;
-                break;
-            default:
-                WARN("Unknown root key %d\n", root);
-                goto end;
-        }
+    rc = RegOpenKeyW(rootKey, keyPath, &key);
+    if (rc)
+    {
+        TRACE("RegOpenKeyW returned %d\n", rc);
+        goto end;
+    }
 
-        rc = RegOpenKeyW(rootKey, keyPath, &key);
-        if (rc)
-        {
-            TRACE("RegOpenKeyW returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
-        rc = RegQueryValueExW(key, valueName, NULL, NULL, NULL, &sz);
-        if (rc)
-        {
-            TRACE("RegQueryValueExW returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
-        /* FIXME: sanity-check sz before allocating (is there an upper-limit
-         * on the value of a property?)
-         */
-        value = msi_alloc( sz);
-        rc = RegQueryValueExW(key, valueName, NULL, &regType, value, &sz);
-        if (rc)
-        {
-            TRACE("RegQueryValueExW returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
+    rc = RegQueryValueExW(key, valueName, NULL, NULL, NULL, &sz);
+    if (rc)
+    {
+        TRACE("RegQueryValueExW returned %d\n", rc);
+        goto end;
+    }
+    /* FIXME: sanity-check sz before allocating (is there an upper-limit
+     * on the value of a property?)
+     */
+    value = msi_alloc( sz );
+    rc = RegQueryValueExW(key, valueName, NULL, &regType, value, &sz);
+    if (rc)
+    {
+        TRACE("RegQueryValueExW returned %d\n", rc);
+        goto end;
+    }
 
-        /* bail out if the registry key is empty */
-        if (sz == 0)
-        {
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
+    /* bail out if the registry key is empty */
+    if (sz == 0)
+        goto end;
 
-        switch (type & 0x0f)
-        {
-        case msidbLocatorTypeDirectory:
-            rc = ACTION_SearchDirectory(package, sig, (LPCWSTR)value, 0,
-             appValue);
-            break;
-        case msidbLocatorTypeFileName:
-            *appValue = strdupW((LPCWSTR)value);
-            break;
-        case msidbLocatorTypeRawValue:
-            ACTION_ConvertRegValue(regType, value, sz, appValue);
-            break;
-        default:
-            FIXME("AppSearch unimplemented for type %d (key path %s, value %s)\n",
-             type, debugstr_w(keyPath), debugstr_w(valueName));
-        }
+    switch (type & 0x0f)
+    {
+    case msidbLocatorTypeDirectory:
+        rc = ACTION_SearchDirectory(package, sig, (LPWSTR)value, 0, appValue);
+        break;
+    case msidbLocatorTypeFileName:
+        *appValue = strdupW((LPWSTR)value);
+        break;
+    case msidbLocatorTypeRawValue:
+        ACTION_ConvertRegValue(regType, value, sz, appValue);
+        break;
+    default:
+        FIXME("AppSearch unimplemented for type %d (key path %s, value %s)\n",
+              type, debugstr_w(keyPath), debugstr_w(valueName));
+    }
 end:
-        msi_free( value);
-        RegCloseKey(key);
+    msi_free( value );
+    RegCloseKey( key );
 
-        msi_free( keyPath);
-        msi_free( valueName);
+    msi_free( keyPath );
+    msi_free( valueName );
 
-        if (row)
-            msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-    }
-    else
-    {
-        TRACE("MSI_OpenQuery returned %d\n", rc);
-        rc = ERROR_SUCCESS;
-    }
+    msiobj_release(&row->hdr);
 
-    TRACE("returning %d\n", rc);
-    return rc;
+    return ERROR_SUCCESS;
 }
 
 static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
