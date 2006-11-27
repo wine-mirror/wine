@@ -172,6 +172,19 @@ typedef struct wined3d_settings_s {
 
 extern wined3d_settings_t wined3d_settings;
 
+/* Shader backends */
+
+typedef struct {
+    void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
+    void (*shader_select_depth_blt)(IWineD3DDevice *iface);
+    void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
+    void (*shader_cleanup)(BOOL usePS, BOOL useVS);
+} shader_backend_t;
+
+extern const shader_backend_t glsl_shader_backend;
+extern const shader_backend_t arb_program_shader_backend;
+extern const shader_backend_t none_shader_backend;
+
 /* X11 locking */
 
 extern void (*wine_tsx11_lock_ptr)(void);

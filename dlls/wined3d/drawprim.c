@@ -1800,85 +1800,40 @@ inline static void drawPrimitiveDrawStrided(
          */
         IWineD3DPixelShader_CompileShader(This->stateBlock->pixelShader);
     }
-    /* If GLSL is used for either pixel or vertex shaders, make a GLSL program 
-     * Otherwise set NULL, to restore fixed function */
-    if ((This->vs_selected_mode == SHADER_GLSL && useVertexShaderFunction) ||
-        (This->ps_selected_mode == SHADER_GLSL && usePixelShaderFunction)) 
-        set_glsl_shader_program(iface);
-    else
-        This->stateBlock->glsl_program = NULL;
 
-    /* If GLSL is used now, or might have been used before, (re)set the program */
+    /* Make any shaders active */
     if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
-
-        GLhandleARB progId = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->programId : 0;
-        if (progId)
-            TRACE_(d3d_shader)("Using GLSL program %u\n", progId);
-        GL_EXTCALL(glUseProgramObjectARB(progId));
-        checkGLcall("glUseProgramObjectARB");
-    }
-        
-    if (useVertexShaderFunction) {
-
-        TRACE("Using vertex shader\n");
-
-        if (This->vs_selected_mode == SHADER_ARB) {
-            /* Bind the vertex program */
-            GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB,
-                ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId));
-            checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vertexShader->prgId);");
-
-            /* Enable OpenGL vertex programs */
-            glEnable(GL_VERTEX_PROGRAM_ARB);
-            checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-            TRACE_(d3d_shader)("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n",
-                This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId);
-        }
+        glsl_shader_backend.shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
+    } else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB) {
+        arb_program_shader_backend.shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
     }
 
-    if (usePixelShaderFunction) {
-
-        TRACE("Using pixel shader\n");
-
-        if (This->ps_selected_mode == SHADER_ARB) {
-             /* Bind the fragment program */
-             GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB,
-                 ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId));
-             checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, pixelShader->prgId);");
-
-             /* Enable OpenGL fragment programs */
-             glEnable(GL_FRAGMENT_PROGRAM_ARB);
-             checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
-             TRACE_(d3d_shader)("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
-                 This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
-        }
-    }
-       
     /* Load any global constants/uniforms that may have been set by the application */
-    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL)
-        shader_glsl_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
-    else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB)
-        shader_arb_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction); 
-        
+    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
+        glsl_shader_backend.shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
+    } else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB) {
+        arb_program_shader_backend.shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
+    }
+
     /* Draw vertex-by-vertex */
     if (useDrawStridedSlow)
         drawStridedSlow(iface, dataLocations, numberOfIndicies, glPrimType, idxData, idxSize, minIndex,  StartIdx);
     else
         drawStridedFast(iface, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx);
 
-    /* Cleanup vertex program */
+    /* Cleanup any shaders */
+    if (This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL) {
+        glsl_shader_backend.shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
+    } else if (This->vs_selected_mode == SHADER_ARB || This->ps_selected_mode == SHADER_ARB) {
+        arb_program_shader_backend.shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
+    }
+
+    /* Unload vertex data */
     if (useVertexShaderFunction) {
         unloadNumberedArrays(iface);
-
-        if (This->vs_selected_mode == SHADER_ARB)
-            glDisable(GL_VERTEX_PROGRAM_ARB);
     } else {
         unloadVertexData(iface);
     }
-
-    /* Cleanup fragment program */
-    if (usePixelShaderFunction && This->ps_selected_mode == SHADER_ARB) 
-        glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
 inline void drawPrimitiveTraceDataLocations(
@@ -2089,99 +2044,6 @@ static void check_fbo_status(IWineD3DDevice *iface) {
     }
 }
 
-static GLuint create_arb_blt_vertex_program(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    GLuint program_id = 0;
-    const char *blt_vprogram =
-        "!!ARBvp1.0\n"
-        "PARAM c[1] = { { 1, 0.5 } };\n"
-        "MOV result.position, vertex.position;\n"
-        "MOV result.color, c[0].x;\n"
-        "MAD result.texcoord[0].y, -vertex.position, c[0], c[0];\n"
-        "MAD result.texcoord[0].x, vertex.position, c[0].y, c[0].y;\n"
-        "END\n";
-
-    GL_EXTCALL(glGenProgramsARB(1, &program_id));
-    GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, program_id));
-    GL_EXTCALL(glProgramStringARB(GL_VERTEX_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(blt_vprogram), blt_vprogram));
-
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint pos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
-        FIXME("Vertex program error at position %d: %s\n", pos,
-            debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-    }
-
-    return program_id;
-}
-
-static GLuint create_arb_blt_fragment_program(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    GLuint program_id = 0;
-    const char *blt_fprogram =
-        "!!ARBfp1.0\n"
-        "TEMP R0;\n"
-        "TEX R0.x, fragment.texcoord[0], texture[0], 2D;\n"
-        "MOV result.depth.z, R0.x;\n"
-        "END\n";
-
-    GL_EXTCALL(glGenProgramsARB(1, &program_id));
-    GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, program_id));
-    GL_EXTCALL(glProgramStringARB(GL_FRAGMENT_PROGRAM_ARB, GL_PROGRAM_FORMAT_ASCII_ARB, strlen(blt_fprogram), blt_fprogram));
-
-    if (glGetError() == GL_INVALID_OPERATION) {
-        GLint pos;
-        glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &pos);
-        FIXME("Fragment program error at position %d: %s\n", pos,
-            debugstr_a((const char *)glGetString(GL_PROGRAM_ERROR_STRING_ARB)));
-    }
-
-    return program_id;
-}
-
-static GLhandleARB create_glsl_blt_shader(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    GLhandleARB program_id;
-    GLhandleARB vshader_id, pshader_id;
-    const char *blt_vshader[] = {
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = gl_Vertex;\n"
-        "    gl_FrontColor = vec4(1.0);\n"
-        "    gl_TexCoord[0].x = (gl_Vertex.x * 0.5) + 0.5;\n"
-        "    gl_TexCoord[0].y = (-gl_Vertex.y * 0.5) + 0.5;\n"
-        "}\n"
-    };
-
-    const char *blt_pshader[] = {
-        "uniform sampler2D sampler;\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
-        "}\n"
-    };
-
-    vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
-    GL_EXTCALL(glShaderSourceARB(vshader_id, 1, blt_vshader, NULL));
-    GL_EXTCALL(glCompileShaderARB(vshader_id));
-
-    pshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
-    GL_EXTCALL(glShaderSourceARB(pshader_id, 1, blt_pshader, NULL));
-    GL_EXTCALL(glCompileShaderARB(pshader_id));
-
-    program_id = GL_EXTCALL(glCreateProgramObjectARB());
-    GL_EXTCALL(glAttachObjectARB(program_id, vshader_id));
-    GL_EXTCALL(glAttachObjectARB(program_id, pshader_id));
-    GL_EXTCALL(glLinkProgramARB(program_id));
-
-    print_glsl_info_log(&GLINFO_LOCATION, program_id);
-
-    return program_id;
-}
-
 static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     BOOL glsl_mode = This->vs_selected_mode == SHADER_GLSL || This->ps_selected_mode == SHADER_GLSL;
@@ -2199,29 +2061,8 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glBindTexture(GL_TEXTURE_2D, texture);
     glEnable(GL_TEXTURE_2D);
 
-    if (glsl_mode) {
-        static GLhandleARB program_id = 0;
-        static GLhandleARB loc = -1;
-
-        if (!program_id) {
-            program_id = create_glsl_blt_shader(iface);
-            loc = GL_EXTCALL(glGetUniformLocationARB(program_id, "sampler"));
-        }
-
-        GL_EXTCALL(glUseProgramObjectARB(program_id));
-        GL_EXTCALL(glUniform1iARB(loc, 0));
-    } else {
-        static GLuint vprogram_id = 0;
-        static GLuint fprogram_id = 0;
-
-        if (!vprogram_id) vprogram_id = create_arb_blt_vertex_program(iface);
-        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, vprogram_id));
-        glEnable(GL_VERTEX_PROGRAM_ARB);
-
-        if (!fprogram_id) fprogram_id = create_arb_blt_fragment_program(iface);
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, fprogram_id));
-        glEnable(GL_FRAGMENT_PROGRAM_ARB);
-    }
+    if (glsl_mode) glsl_shader_backend.shader_select_depth_blt(iface);
+    else arb_program_shader_backend.shader_select_depth_blt(iface);
 
     glBegin(GL_TRIANGLE_STRIP);
     glVertex2f(-1.0f, -1.0f);

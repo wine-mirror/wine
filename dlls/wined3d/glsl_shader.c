@@ -1901,3 +1901,82 @@ void vshader_glsl_output_unpack(
        }
     }
 }
+
+static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {
+    GLhandleARB program_id;
+    GLhandleARB vshader_id, pshader_id;
+    const char *blt_vshader[] = {
+        "void main(void)\n"
+        "{\n"
+        "    gl_Position = gl_Vertex;\n"
+        "    gl_FrontColor = vec4(1.0);\n"
+        "    gl_TexCoord[0].x = (gl_Vertex.x * 0.5) + 0.5;\n"
+        "    gl_TexCoord[0].y = (-gl_Vertex.y * 0.5) + 0.5;\n"
+        "}\n"
+    };
+
+    const char *blt_pshader[] = {
+        "uniform sampler2D sampler;\n"
+        "void main(void)\n"
+        "{\n"
+        "    gl_FragDepth = texture2D(sampler, gl_TexCoord[0].xy).x;\n"
+        "}\n"
+    };
+
+    vshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB));
+    GL_EXTCALL(glShaderSourceARB(vshader_id, 1, blt_vshader, NULL));
+    GL_EXTCALL(glCompileShaderARB(vshader_id));
+
+    pshader_id = GL_EXTCALL(glCreateShaderObjectARB(GL_FRAGMENT_SHADER_ARB));
+    GL_EXTCALL(glShaderSourceARB(pshader_id, 1, blt_pshader, NULL));
+    GL_EXTCALL(glCompileShaderARB(pshader_id));
+
+    program_id = GL_EXTCALL(glCreateProgramObjectARB());
+    GL_EXTCALL(glAttachObjectARB(program_id, vshader_id));
+    GL_EXTCALL(glAttachObjectARB(program_id, pshader_id));
+    GL_EXTCALL(glLinkProgramARB(program_id));
+
+    print_glsl_info_log(&GLINFO_LOCATION, program_id);
+
+    return program_id;
+}
+
+static void shader_glsl_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    GLhandleARB program_id = 0;
+
+    if (useVS || usePS) set_glsl_shader_program(iface);
+    else This->stateBlock->glsl_program = NULL;
+
+    program_id = This->stateBlock->glsl_program ? This->stateBlock->glsl_program->programId : 0;
+    if (program_id) TRACE("Using GLSL program %u\n", program_id);
+    GL_EXTCALL(glUseProgramObjectARB(program_id));
+    checkGLcall("glUseProgramObjectARB");
+}
+
+static void shader_glsl_select_depth_blt(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    static GLhandleARB program_id = 0;
+    static GLhandleARB loc = -1;
+
+    if (!program_id) {
+        program_id = create_glsl_blt_shader(gl_info);
+        loc = GL_EXTCALL(glGetUniformLocationARB(program_id, "sampler"));
+    }
+
+    GL_EXTCALL(glUseProgramObjectARB(program_id));
+    GL_EXTCALL(glUniform1iARB(loc, 0));
+}
+
+static void shader_glsl_cleanup(BOOL usePS, BOOL useVS) {
+    /* Nothing to do */
+}
+
+const shader_backend_t glsl_shader_backend = {
+    &shader_glsl_select,
+    &shader_glsl_select_depth_blt,
+    &shader_glsl_load_constants,
+    &shader_glsl_cleanup
+};
