@@ -855,6 +855,47 @@ static inline const char* shader_get_comp_op(
     }
 }
 
+static void shader_glsl_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg) {
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    const char sampler_prefix = shader_is_pshader_version(This->baseShader.hex_version) ? 'P' : 'V';
+    SHADER_BUFFER* buffer = arg->buffer;
+
+    if(deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
+        /* Note that there's no such thing as a projected cube texture. */
+        switch(sampler_type) {
+            case WINED3DSTT_2D:
+                shader_addline(buffer, "%s = texture2DProj(%cshader%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                break;
+            case WINED3DSTT_VOLUME:
+                shader_addline(buffer, "%s = texture3DProj(%cshader%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                break;
+            default:
+                shader_addline(buffer, "%s = unrecognized_stype(%cshader%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
+                break;
+        }
+    } else {
+        switch(sampler_type) {
+            case WINED3DSTT_2D:
+                shader_addline(buffer, "%s = texture2D(%csampler%u, %s.xy);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                break;
+            case WINED3DSTT_CUBE:
+                shader_addline(buffer, "%s = textureCube(%csampler%u, %s.xyz);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                break;
+            case WINED3DSTT_VOLUME:
+                shader_addline(buffer, "%s = texture3D(%csampler%u, %s.xyz);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                break;
+            default:
+                shader_addline(buffer, "%s = unrecognized_stype(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
+                break;
+        }
+    }
+}
+
+
 /*****************************************************************************
  * 
  * Begin processing individual instruction opcodes
@@ -1356,20 +1397,12 @@ void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
  * Pixel Shader Specific Code begins here
  ********************************************/
 void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
-
-    /* FIXME: Make this work for more than just 2D textures */
-    
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
 
-    SHADER_BUFFER* buffer = arg->buffer;
     DWORD hex_version = This->baseShader.hex_version;
 
     char dst_str[100],   dst_reg[50],  dst_mask[6];
     char coord_str[100], coord_reg[50], coord_mask[6];
-    char sampler_str[100], sampler_reg[50], sampler_mask[6];
-    DWORD reg_dest_code = arg->dst & WINED3DSP_REGNUM_MASK;
-    DWORD sampler_code, sampler_type;
 
     /* All versions have a destination register */
     shader_glsl_add_param(arg, arg->dst, 0, FALSE, dst_reg, dst_mask, dst_str);
@@ -1381,53 +1414,14 @@ void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     else
        shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, coord_reg, coord_mask, coord_str);
 
-    /* 1.0-1.4: Use destination register as coordinate source.
-     * 2.0+: Use provided coordinate source register. */
+    /* 1.0-1.4: Use destination register as sampler source.
+     * 2.0+: Use provided sampler source. */
     if (hex_version < WINED3DPS_VERSION(2,0)) {
-        sprintf(sampler_str, "Psampler%u", reg_dest_code); 
-        sampler_code = reg_dest_code;
-    }       
-    else {
-        shader_glsl_add_param(arg, arg->src[1], arg->src_addr[1], TRUE, sampler_reg, sampler_mask, sampler_str);
-        sampler_code = arg->src[1] & WINED3DSP_REGNUM_MASK;
-    }         
-
-    sampler_type = arg->reg_maps->samplers[sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
-    if(deviceImpl->stateBlock->textureState[sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
-        switch(sampler_type) {
-
-            case WINED3DSTT_2D:
-                shader_addline(buffer, "%s = texture2DProj(%s, %s);\n", dst_str, sampler_str, coord_reg);
-                break;
-            case WINED3DSTT_CUBE:
-                shader_addline(buffer, "%s = textureCubeProj(%s, %s);\n", dst_str, sampler_str, coord_reg);
-                break;
-            case WINED3DSTT_VOLUME:
-                shader_addline(buffer, "%s = texture3DProj(%s, %s);\n", dst_str, sampler_str, coord_reg);
-                break;
-            default:
-                shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
-                break;
-        }
+        shader_glsl_sample(arg, arg->dst & WINED3DSP_REGNUM_MASK, dst_str, coord_reg);
     } else {
-        switch(sampler_type) {
-
-            case WINED3DSTT_2D:
-                shader_addline(buffer, "%s = texture2D(%s, %s.st);\n", dst_str, sampler_str, coord_reg);
-                break;
-            case WINED3DSTT_CUBE:
-                shader_addline(buffer, "%s = textureCube(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-                break;
-            case WINED3DSTT_VOLUME:
-                shader_addline(buffer, "%s = texture3D(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-                break;
-            default:
-                shader_addline(buffer, "%s = unrecognized_stype(%s, %s.stp);\n", dst_str, sampler_str, coord_reg);
-                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
-                break;
-        }
+        shader_glsl_sample(arg, arg->src[1] & WINED3DSP_REGNUM_MASK, dst_str, coord_reg);
     }
+
 }
 
 void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {

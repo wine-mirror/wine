@@ -423,6 +423,44 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   }
 }
 
+static void shader_hw_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg) {
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    const char *tex_type;
+
+    switch(sampler_type) {
+        case WINED3DSTT_1D:
+            tex_type = "1D";
+            break;
+
+        case WINED3DSTT_2D:
+            tex_type = "2D";
+            break;
+
+        case WINED3DSTT_VOLUME:
+            tex_type = "3D";
+            break;
+
+        case WINED3DSTT_CUBE:
+            tex_type = "CUBE";
+            break;
+
+        default:
+            ERR("Unexpected texture type %d\n", sampler_type);
+            tex_type = "";
+    }
+
+    if (deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
+        shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    } else {
+        shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n", dst_str, coord_reg, sampler_idx, tex_type);
+    }
+}
+
+
 static void pshader_gen_input_modifier_line (
     SHADER_BUFFER* buffer,
     const DWORD instr,
@@ -618,7 +656,6 @@ void pshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
 void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
 
     DWORD dst = arg->dst;
     DWORD* src = arg->src;
@@ -627,10 +664,8 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
 
     char reg_dest[40];
     char reg_coord[40];
-    const char *tex_type;
     DWORD reg_dest_code;
     DWORD reg_sampler_code;
-    DWORD sampler_type;
 
     /* All versions have a destination register */
     reg_dest_code = dst & WINED3DSP_REGNUM_MASK;
@@ -650,36 +685,7 @@ void pshader_hw_tex(SHADER_OPCODE_ARG* arg) {
   else
      reg_sampler_code = src[1] & WINED3DSP_REGNUM_MASK;
 
-  sampler_type = arg->reg_maps->samplers[reg_sampler_code] & WINED3DSP_TEXTURETYPE_MASK;
-  switch(sampler_type) {
-     case WINED3DSTT_1D:
-         tex_type = "1D";
-         break;
-
-     case WINED3DSTT_2D:
-         tex_type = "2D";
-         break;
-
-     case WINED3DSTT_VOLUME:
-         tex_type = "3D";
-         break;
-
-     case WINED3DSTT_CUBE:
-         tex_type = "CUBE";
-         break;
-
-     default:
-         ERR("Unexpected texture type %d\n", sampler_type);
-         tex_type = "2D";
-  }
-
-  if (deviceImpl->stateBlock->textureState[reg_sampler_code][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
-      shader_addline(buffer, "TXP %s, %s, texture[%u], %s;\n",
-          reg_dest, reg_coord, reg_sampler_code, tex_type);
-  } else {
-      shader_addline(buffer, "TEX %s, %s, texture[%u], %s;\n",
-                     reg_dest, reg_coord, reg_sampler_code, tex_type);
-  }
+  shader_hw_sample(arg, reg_sampler_code, reg_dest, reg_coord);
 }
 
 void pshader_hw_texcoord(SHADER_OPCODE_ARG* arg) {
