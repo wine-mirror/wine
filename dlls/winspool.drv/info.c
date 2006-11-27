@@ -887,6 +887,28 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
 }
 
 /******************************************************************
+ * monitor_flush [internal]
+ *
+ * flush the cached PORT_INFO_2W - data
+ */
+
+void monitor_flush(monitor_t * pm)
+{
+    if (!pm) return;
+
+    EnterCriticalSection(&monitor_handles_cs);
+
+    TRACE("%p (%s) cache: %p (%d, %d)\n", pm, debugstr_w(pm->name), pm->cache, pm->pi1_needed, pm->pi2_needed);
+
+    HeapFree(GetProcessHeap(), 0, pm->cache);
+    pm->cache = NULL;
+    pm->pi1_needed = 0;
+    pm->pi2_needed = 0;
+    pm->returned = 0;
+    LeaveCriticalSection(&monitor_handles_cs);
+}
+
+/******************************************************************
  * monitor_unload [internal]
  *
  * release a printmonitor and unload it from memory, when needed
@@ -2148,17 +2170,48 @@ DeletePortA (LPSTR pName, HWND hWnd, LPSTR pPortName)
  *  Success: TRUE
  *  Failure: FALSE
  *
- * BUGS
- *  only a Stub
- *
  */
-BOOL WINAPI
-DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
+BOOL WINAPI DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 {
-    FIXME("(%s,%p,%s):stub\n",debugstr_w(pName),hWnd,
-          debugstr_w(pPortName));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    monitor_t * pm;
+    DWORD   res = ROUTER_UNKNOWN;
+
+    TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
+
+    if (pName && pName[0]) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!pPortName) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    /* an empty Portname is Invalid */
+    if (!pPortName[0]) goto cleanup;
+
+    pm = monitor_load_by_port(pPortName);
+    if (pm && pm->monitor) {
+        if (pm->monitor->pfnDeletePort != NULL) {
+            TRACE("Using %s for %s:\n", debugstr_w(pm->name), debugstr_w(pPortName));
+            res = pm->monitor->pfnDeletePort(pName, hWnd, pPortName);
+            TRACE("got %d with %d\n", res, GetLastError());
+        }
+        else if (pm->monitor->pfnXcvOpenPort)
+        {
+            FIXME("XcvOpenPort not implemented (dwMonitorSize: %d)\n", pm->dwMonitorSize);
+        }
+        /* invalidate cached PORT_INFO_2W */
+        if (res == ROUTER_SUCCESS) monitor_flush(pm);
+    }
+    monitor_unload(pm);
+
+cleanup:
+    /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
+    if (res == ROUTER_UNKNOWN) SetLastError(ERROR_NOT_SUPPORTED);
+    TRACE("returning %d with %d\n", (res == ROUTER_SUCCESS), GetLastError());
+    return (res == ROUTER_SUCCESS);
 }
 
 /******************************************************************************
