@@ -566,6 +566,10 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     TRACE("(%p) : Releasing from %d\n", This, refCount + 1);
 
     if (!refCount) {
+        if (This->fbo) {
+            GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->fbo));
+        }
+
         /* TODO: Clean up all the surfaces and textures! */
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
