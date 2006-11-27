@@ -714,9 +714,12 @@ void pshader_hw_texreg2ar(SHADER_OPCODE_ARG* arg) {
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
+     char dst_str[8];
+
+     sprintf(dst_str, "T%u", reg1);
      shader_addline(buffer, "MOV TMP.r, T%u.a;\n", reg2);
      shader_addline(buffer, "MOV TMP.g, T%u.r;\n", reg2);
-     shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
+     shader_hw_sample(arg, reg1, dst_str, "TMP");
 }
 
 void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
@@ -725,9 +728,12 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 
      DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
+     char dst_str[8];
+
+     sprintf(dst_str, "T%u", reg1);
      shader_addline(buffer, "MOV TMP.r, T%u.g;\n", reg2);
      shader_addline(buffer, "MOV TMP.g, T%u.b;\n", reg2);
-     shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
+     shader_hw_sample(arg, reg1, dst_str, "TMP");
 }
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
@@ -735,10 +741,12 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
      SHADER_BUFFER* buffer = arg->buffer;
      DWORD reg1 = arg->dst  & WINED3DSP_REGNUM_MASK;
      DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
+     char dst_str[8];
 
      /* FIXME: Should apply the BUMPMAPENV matrix */
+     sprintf(dst_str, "T%u", reg1);
      shader_addline(buffer, "ADD TMP.rg, fragment.texcoord[%u], T%u;\n", reg1, reg2);
-     shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg1, reg1);
+     shader_hw_sample(arg, reg1, dst_str, "TMP");
 }
 
 void pshader_hw_texm3x2pad(SHADER_OPCODE_ARG* arg) {
@@ -755,11 +763,13 @@ void pshader_hw_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
+    char dst_str[8];
     char src0_name[50];
 
+    sprintf(dst_str, "T%u", reg);
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
     shader_addline(buffer, "DP3 TMP.y, T%u, %s;\n", reg, src0_name);
-    shader_addline(buffer, "TEX T%u, TMP, texture[%u], 2D;\n", reg, reg);
+    shader_hw_sample(arg, reg, dst_str, "TMP");
 }
 
 void pshader_hw_texm3x3pad(SHADER_OPCODE_ARG* arg) {
@@ -799,6 +809,7 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
+    char dst_str[8];
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
@@ -814,8 +825,9 @@ void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
     shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -TMP2;\n");
 
-    /* Cubemap textures will be more used than 3D ones. */
-    shader_addline(buffer, "TEX T%u, TMP, texture[%u], CUBE;\n", reg, reg);
+    /* Sample the texture using the calculated coordinates */
+    sprintf(dst_str, "T%u", reg);
+    shader_hw_sample(arg, reg, dst_str, "TMP");
     current_state->current_row = 0;
 }
 
@@ -826,6 +838,7 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     DWORD reg3 = arg->src[1] & WINED3DSP_REGNUM_MASK;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
     SHADER_BUFFER* buffer = arg->buffer;
+    char dst_str[8];
     char src0_name[50];
 
     pshader_gen_input_modifier_line(buffer, arg->src[0], 0, src0_name);
@@ -836,8 +849,9 @@ void pshader_hw_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "MUL TMP, TMP.w, TMP;\n");
     shader_addline(buffer, "MAD TMP, coefmul.x, TMP, -C[%u];\n", reg3);
 
-    /* Cubemap textures will be more used than 3D ones. */
-    shader_addline(buffer, "TEX T%u, TMP, texture[%u], CUBE;\n", reg, reg);
+    /* Sample the texture using the calculated coordinates */
+    sprintf(dst_str, "T%u", reg);
+    shader_hw_sample(arg, reg, dst_str, "TMP");
     current_state->current_row = 0;
 }
 
