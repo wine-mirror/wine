@@ -5754,8 +5754,28 @@ BOOL WINAPI AbortPrinter( HANDLE hPrinter )
  */
 BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
 {
-    FIXME("(%s, %p, %s), stub!\n",debugstr_a(pName),hWnd,debugstr_a(pMonitorName));
-    return FALSE;
+    LPWSTR  nameW = NULL;
+    LPWSTR  monitorW = NULL;
+    DWORD   len;
+    BOOL    res;
+
+    TRACE("(%s, %p, %s)\n",debugstr_a(pName), hWnd, debugstr_a(pMonitorName));
+
+    if (pName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pName, -1, NULL, 0);
+        nameW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pName, -1, nameW, len);
+    }
+
+    if (pMonitorName) {
+        len = MultiByteToWideChar(CP_ACP, 0, pMonitorName, -1, NULL, 0);
+        monitorW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, pMonitorName, -1, monitorW, len);
+    }
+    res = AddPortW(nameW, hWnd, monitorW);
+    HeapFree(GetProcessHeap(), 0, nameW);
+    HeapFree(GetProcessHeap(), 0, monitorW);
+    return res;
 }
 
 /******************************************************************************
