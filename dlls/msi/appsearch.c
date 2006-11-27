@@ -80,96 +80,71 @@ static void ACTION_VerStrToInteger(LPCWSTR verStr, PDWORD ms, PDWORD ls)
  * Returns ERROR_SUCCESS upon success (where not finding the record counts as
  * success), something else on error.
  */
-static UINT ACTION_AppSearchGetSignature(MSIPACKAGE *package, MSISIGNATURE *sig,
- LPCWSTR name)
+static UINT ACTION_AppSearchGetSignature(MSIPACKAGE *package, MSISIGNATURE *sig, LPCWSTR name)
 {
-    MSIQUERY *view;
-    UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-   'S','i','g','n','a','t','u','r','e',' ',
-   'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e',' ','=',' ',
-   '\'','%','s','\'',0};
+    static const WCHAR query[] = {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'S','i','g','n','a','t','u','r','e',' ',
+        'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e',' ','=',' ',
+        '\'','%','s','\'',0};
+    LPWSTR minVersion, maxVersion;
+    MSIRECORD *row;
+    DWORD time;
 
-    TRACE("(package %p, sig %p)\n", package, sig);
+    TRACE("package %p, sig %p\n", package, sig);
+
     memset(sig, 0, sizeof(*sig));
     sig->Name = name;
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, name);
-    if (rc == ERROR_SUCCESS)
+    row = MSI_QueryGetRecord( package->db, query, name );
+    if (!row)
     {
-        MSIRECORD *row = 0;
-        DWORD time;
-        WCHAR *minVersion, *maxVersion;
-
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewExecute returned %d\n", rc);
-            goto end;
-        }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewFetch returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
-
-        /* get properties */
-        sig->File = msi_dup_record_field(row,2);
-        minVersion = msi_dup_record_field(row,3);
-        if (minVersion)
-        {
-            ACTION_VerStrToInteger(minVersion, &sig->MinVersionMS,
-             &sig->MinVersionLS);
-            msi_free( minVersion);
-        }
-        maxVersion = msi_dup_record_field(row,4);
-        if (maxVersion)
-        {
-            ACTION_VerStrToInteger(maxVersion, &sig->MaxVersionMS,
-             &sig->MaxVersionLS);
-            msi_free( maxVersion);
-        }
-        sig->MinSize = MSI_RecordGetInteger(row,5);
-        if (sig->MinSize == MSI_NULL_INTEGER)
-            sig->MinSize = 0;
-        sig->MaxSize = MSI_RecordGetInteger(row,6);
-        if (sig->MaxSize == MSI_NULL_INTEGER)
-            sig->MaxSize = 0;
-        sig->Languages = msi_dup_record_field(row,9);
-        time = MSI_RecordGetInteger(row,7);
-        if (time != MSI_NULL_INTEGER)
-            DosDateTimeToFileTime(HIWORD(time), LOWORD(time), &sig->MinTime);
-        time = MSI_RecordGetInteger(row,8);
-        if (time != MSI_NULL_INTEGER)
-            DosDateTimeToFileTime(HIWORD(time), LOWORD(time), &sig->MaxTime);
-        TRACE("Found file name %s for Signature_ %s;\n",
-         debugstr_w(sig->File), debugstr_w(name));
-        TRACE("MinVersion is %d.%d.%d.%d\n", HIWORD(sig->MinVersionMS),
-         LOWORD(sig->MinVersionMS), HIWORD(sig->MinVersionLS),
-         LOWORD(sig->MinVersionLS));
-        TRACE("MaxVersion is %d.%d.%d.%d\n", HIWORD(sig->MaxVersionMS),
-         LOWORD(sig->MaxVersionMS), HIWORD(sig->MaxVersionLS),
-         LOWORD(sig->MaxVersionLS));
-        TRACE("MinSize is %d, MaxSize is %d;\n", sig->MinSize, sig->MaxSize);
-        TRACE("Languages is %s\n", debugstr_w(sig->Languages));
-
-end:
-        if (row)
-            msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-    }
-    else
-    {
-        TRACE("MSI_OpenQuery returned %d\n", rc);
-        rc = ERROR_SUCCESS;
+        TRACE("failed to query signature for %s\n", debugstr_w(name));
+        return ERROR_SUCCESS;
     }
 
-    TRACE("returning %d\n", rc);
-    return rc;
+    /* get properties */
+    sig->File = msi_dup_record_field(row,2);
+    minVersion = msi_dup_record_field(row,3);
+    if (minVersion)
+    {
+        ACTION_VerStrToInteger(minVersion, &sig->MinVersionMS, &sig->MinVersionLS);
+        msi_free( minVersion );
+    }
+    maxVersion = msi_dup_record_field(row,4);
+    if (maxVersion)
+    {
+        ACTION_VerStrToInteger(maxVersion, &sig->MaxVersionMS, &sig->MaxVersionLS);
+        msi_free( maxVersion );
+    }
+    sig->MinSize = MSI_RecordGetInteger(row,5);
+    if (sig->MinSize == MSI_NULL_INTEGER)
+        sig->MinSize = 0;
+    sig->MaxSize = MSI_RecordGetInteger(row,6);
+    if (sig->MaxSize == MSI_NULL_INTEGER)
+        sig->MaxSize = 0;
+    sig->Languages = msi_dup_record_field(row,9);
+    time = MSI_RecordGetInteger(row,7);
+    if (time != MSI_NULL_INTEGER)
+        DosDateTimeToFileTime(HIWORD(time), LOWORD(time), &sig->MinTime);
+    time = MSI_RecordGetInteger(row,8);
+    if (time != MSI_NULL_INTEGER)
+        DosDateTimeToFileTime(HIWORD(time), LOWORD(time), &sig->MaxTime);
+
+    TRACE("Found file name %s for Signature_ %s;\n",
+          debugstr_w(sig->File), debugstr_w(name));
+    TRACE("MinVersion is %d.%d.%d.%d\n", HIWORD(sig->MinVersionMS),
+          LOWORD(sig->MinVersionMS), HIWORD(sig->MinVersionLS),
+          LOWORD(sig->MinVersionLS));
+    TRACE("MaxVersion is %d.%d.%d.%d\n", HIWORD(sig->MaxVersionMS),
+          LOWORD(sig->MaxVersionMS), HIWORD(sig->MaxVersionLS),
+          LOWORD(sig->MaxVersionLS));
+    TRACE("MinSize is %d, MaxSize is %d;\n", sig->MinSize, sig->MaxSize);
+    TRACE("Languages is %s\n", debugstr_w(sig->Languages));
+
+    msiobj_release( &row->hdr );
+
+    return ERROR_SUCCESS;
 }
 
 /* Frees any memory allocated in sig */
