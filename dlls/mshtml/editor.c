@@ -140,7 +140,7 @@ void get_font_size(HTMLDocument *This, WCHAR *ret)
                 nsAString size_str, val_str;
                 LPCWSTR val;
 
-                TRACE("found font tag %p", elem);
+                TRACE("found font tag %p\n", elem);
 
                 nsAString_Init(&size_str, wszSize);
                 nsAString_Init(&val_str, NULL);
