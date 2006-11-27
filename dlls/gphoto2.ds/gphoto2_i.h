@@ -24,7 +24,7 @@
 # error You must include config.h first
 #endif
 
-#if !defined(HAVE_JPEGLIB_H)
+#if defined(HAVE_GPHOTO2) && !defined(HAVE_JPEGLIB_H)
 # warning "gphoto2 support in twain needs jpeg development headers"
 # undef HAVE_GPHOTO2
 #endif
