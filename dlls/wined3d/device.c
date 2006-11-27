@@ -79,6 +79,8 @@ static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3
 
 static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type);
 
+static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil);
+
 /* helper macros */
 #define D3DMEMCHECK(object, ppResult) if(NULL == object) { *ppResult = NULL; WARN("Out of memory\n"); return WINED3DERR_OUTOFVIDEOMEMORY;}
 
@@ -2090,6 +2092,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     IWineD3DSurface_AddRef(This->renderTarget);
     /* Depth Stencil support */
     This->stencilBufferTarget = This->depthStencilBuffer;
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        set_depth_stencil_fbo(iface, This->depthStencilBuffer);
+    }
     if (NULL != This->stencilBufferTarget) {
         IWineD3DSurface_AddRef(This->stencilBufferTarget);
     }
