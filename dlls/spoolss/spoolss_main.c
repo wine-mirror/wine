@@ -47,6 +47,35 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /******************************************************************
+ *   AllocSplStr   [SPOOLSS.@]
+ *
+ * Create a copy from the String on the Spooler-Heap
+ *
+ * PARAMS
+ *  pwstr [I] PTR to the String to copy
+ *
+ * RETURNS
+ *  Failure: NULL
+ *  Success: PTR to the copied String
+ *
+ */
+LPWSTR WINAPI AllocSplStr(LPCWSTR pwstr)
+{
+    LPWSTR  res = NULL;
+    DWORD   len;
+
+    TRACE("(%s)\n", debugstr_w(pwstr));
+    if (!pwstr) return NULL;
+
+    len = (lstrlenW(pwstr) + 1) * sizeof(WCHAR);
+    res = HeapAlloc(GetProcessHeap(), 0, len);
+    if (res) lstrcpyW(res, pwstr);
+        
+    TRACE("returning %p\n", res);
+    return res;
+}
+
+/******************************************************************
  *   DllAllocSplMem   [SPOOLSS.@]
  *
  * Allocate cleared memory from the spooler heap
@@ -92,4 +121,24 @@ BOOL WINAPI DllFreeSplMem(LPBYTE memory)
 {
     TRACE("(%p)\n", memory);
     return HeapFree(GetProcessHeap(), 0, memory);
+}
+
+/******************************************************************
+ *   DllFreeSplStr   [SPOOLSS.@]
+ *
+ * Free the allocated Spooler-String
+ *
+ * PARAMS
+ *  pwstr [I] PTR to the WSTR, allocated by AllocSplStr
+ *
+ * RETURNS
+ *  Failure: FALSE
+ *  Success: TRUE
+ *
+ */
+
+BOOL WINAPI DllFreeSplStr(LPWSTR pwstr)
+{
+    TRACE("(%s) PTR: %p\n", debugstr_w(pwstr), pwstr);
+    return HeapFree(GetProcessHeap(), 0, pwstr);
 }
