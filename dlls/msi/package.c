@@ -60,45 +60,33 @@ static void MSI_FreePackage( MSIOBJECTHDR *arg)
     msi_free_properties( package );
 }
 
+static UINT iterate_clone_props(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = param;
+    LPCWSTR name, value;
+
+    name = MSI_RecordGetString( row, 1 );
+    value = MSI_RecordGetString( row, 2 );
+    MSI_SetPropertyW( package, name, value );
+
+    return ERROR_SUCCESS;
+}
+
 static UINT clone_properties( MSIPACKAGE *package )
 {
-    MSIQUERY * view = NULL;
-    UINT rc;
     static const WCHAR Query[] = {
-       'S','E','L','E','C','T',' ','*',' ',
-       'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
+        'S','E','L','E','C','T',' ','*',' ',
+        'F','R','O','M',' ','`','P','r','o','p','e','r','t','y','`',0};
+    MSIQUERY *view = NULL;
+    UINT r;
 
-    /* clone the existing properties */
-    rc = MSI_DatabaseOpenViewW( package->db, Query, &view );
-    if (rc != ERROR_SUCCESS)
-        return rc;
-
-    rc = MSI_ViewExecute(view, 0);
-    if (rc != ERROR_SUCCESS)
+    r = MSI_OpenQuery( package->db, &view, Query );
+    if (r == ERROR_SUCCESS)
     {
-        MSI_ViewClose(view);
+        r = MSI_IterateRecords( view, NULL, iterate_clone_props, package );
         msiobj_release(&view->hdr);
-        return rc;
     }
-    while (1)
-    {
-        MSIRECORD * row;
-        LPCWSTR name, value;
-
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-            break;
-
-        name = MSI_RecordGetString( row, 1 );
-        value = MSI_RecordGetString( row, 2 );
-        MSI_SetPropertyW( package, name, value );
-
-        msiobj_release( &row->hdr );
-    }
-    MSI_ViewClose(view);
-    msiobj_release(&view->hdr);
-
-    return rc;
+    return r;
 }
 
 /*
