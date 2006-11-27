@@ -1545,9 +1545,7 @@ void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 }
 
 void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
-
-    /* FIXME: Make this work for more than just 2D textures */
-    
+    char dst_str[8];
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_str[100];
@@ -1556,7 +1554,10 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
     shader_addline(buffer, "tmp0.y = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
-    shader_addline(buffer, "T%u = texture2D(Psampler%u, tmp0.st);\n", reg, reg);
+
+    /* Sample the texture using the calculated coordinates */
+    sprintf(dst_str, "T%u", reg);
+    shader_glsl_sample(arg, reg, dst_str, "tmp0");
 }
 
 /** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
@@ -1604,6 +1605,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     char dimensions[5];
+    char dst_str[8];
     char src0_str[100], src0_name[50], src0_mask[6];
     char src1_str[100], src1_name[50], src1_mask[6];
     SHADER_BUFFER* buffer = arg->buffer;
@@ -1630,8 +1632,8 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "tmp0.xyz = reflect(-vec3(%s), vec3(tmp0));\n", src1_str);
 
     /* Sample the texture */
-    shader_addline(buffer, "T%u = texture%s(Psampler%u, tmp0.%s);\n", 
-            reg, dimensions, reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz");
+    sprintf(dst_str, "T%u", reg);
+    shader_glsl_sample(arg, reg, dst_str, "tmp0");
     current_state->current_row = 0;
 }
 
@@ -1643,6 +1645,7 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
+    char dst_str[8];
     char src0_str[100], src0_name[50], src0_mask[6];
 
     shader_glsl_add_param(arg, arg->src[0], arg->src_addr[0], TRUE, src0_name, src0_mask, src0_str);
@@ -1660,14 +1663,9 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "tmp0 = tmp0.w * tmp0;\n");
     shader_addline(buffer, "tmp0 = (2.0 * tmp0) - tmp1;\n");
 
-    /* FIXME:
-     * We don't really know if a Cube or a Volume texture is being sampled, but since Cube textures
-     * are used more commonly, we'll default to that.
-     * We probably need to push back the pixel shader generation code until drawPrimitive() for 
-     * shader versions < 2.0, since that's the only time we can guarantee that we're sampling
-     * the correct type of texture because we can lookup what textures are bound at that point.
-     */
-    shader_addline(buffer, "T%u = textureCube(Psampler%u, tmp0.xyz);\n", reg, reg);
+    /* Sample the texture using the calculated coordinates */
+    sprintf(dst_str, "T%u", reg);
+    shader_glsl_sample(arg, reg, dst_str, "tmp0");
     current_state->current_row = 0;
 }
 
