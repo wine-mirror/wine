@@ -2212,6 +2212,10 @@ INT WINAPI WSAIoctl(SOCKET s,
         * with WSA_FLAG_OVERLAPPED, but there is no easy way to get this */
        break;
 
+   case WS_SIO_ADDRESS_LIST_QUERY:
+        FIXME("-> SIO_ADDRESS_LIST_QUERY request: stub\n");
+        break;
+
    case WS_SIO_FLUSH:
 	FIXME("SIO_FLUSH: stub.\n");
 	break;
