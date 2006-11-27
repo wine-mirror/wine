@@ -154,67 +154,34 @@ static void ACTION_FreeSignature(MSISIGNATURE *sig)
     msi_free(sig->Languages);
 }
 
-static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue,
- MSISIGNATURE *sig)
+static UINT ACTION_AppSearchComponents(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATURE *sig)
 {
-    MSIQUERY *view;
-    UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-   'C','o','m','p','L','o','c','a','t','o','r',' ',
-   'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
-   '\'','%','s','\'',0};
+    static const WCHAR query[] =  {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'C','o','m','p','L','o','c','a','t','o','r',' ',
+        'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
+        '\'','%','s','\'',0};
+    MSIRECORD *row;
+    LPWSTR guid;
 
-    TRACE("(package %p, appValue %p, sig %p)\n", package, appValue, sig);
+    TRACE("%s\n", debugstr_w(sig->Name));
+
     *appValue = NULL;
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
-    if (rc == ERROR_SUCCESS)
+
+    row = MSI_QueryGetRecord( package->db, query, sig->Name );
+    if (!row)
     {
-        MSIRECORD *row = 0;
-        WCHAR guid[50];
-        DWORD sz;
-
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewExecute returned %d\n", rc);
-            goto end;
-        }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewFetch returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
-
-        /* get GUID */
-        guid[0] = 0;
-        sz=sizeof(guid)/sizeof(guid[0]);
-        rc = MSI_RecordGetStringW(row,2,guid,&sz);
-        if (rc != ERROR_SUCCESS)
-        {
-            ERR("Error is %x\n",rc);
-            goto end;
-        }
-        FIXME("AppSearch unimplemented for CompLocator table (GUID %s)\n",
-         debugstr_w(guid));
-
-end:
-        if (row)
-            msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-    }
-    else
-    {
-        TRACE("MSI_OpenQuery returned %d\n", rc);
-        rc = ERROR_SUCCESS;
+        TRACE("failed to query CompLocator for %s\n", debugstr_w(sig->Name));
+        return ERROR_SUCCESS;
     }
 
-    TRACE("returning %d\n", rc);
-    return rc;
+    guid = msi_dup_record_field( row, 2 );
+    FIXME("AppSearch CompLocator (%s) unimplemented\n", debugstr_w(guid));
+    msi_free( guid );
+    msiobj_release( &row->hdr );
+
+    return ERROR_SUCCESS;
 }
 
 static void ACTION_ConvertRegValue(DWORD regType, const BYTE *value, DWORD sz,
