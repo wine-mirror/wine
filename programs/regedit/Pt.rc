@@ -149,7 +149,7 @@ BEGIN
     END
     POPUP "E&xibir"
     BEGIN
-        MENUITEM "&Barra de status",                 ID_VIEW_STATUSBAR
+        MENUITEM "&Barra de estado",                 ID_VIEW_STATUSBAR
         MENUITEM SEPARATOR
         MENUITEM "&Dividir",                         ID_VIEW_SPLIT
         MENUITEM SEPARATOR
@@ -206,7 +206,7 @@ END
  * Dialog
  */
 
-LANGUAGE LANG_PORTUGUESE, SUBLANG_NEUTRAL
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN
 
 IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
 STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
@@ -217,6 +217,20 @@ BEGIN
     LTEXT           "ReactOS regedit Version 1.0",IDC_STATIC,49,10,119,8,
                     SS_NOPREFIX
     LTEXT           "Copyright (C) 2002 ReactOS Team",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+END
+
+LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
+
+IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
+STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
+CAPTION "Acerca"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
+    LTEXT           "ReactOS regedit Versão 1.0",IDC_STATIC,49,10,119,8,
+                    SS_NOPREFIX
+    LTEXT           "Direitos de autor (C) 2002 A equipa ReactOS",IDC_STATIC,49,20,119,8
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
@@ -308,7 +322,7 @@ BEGIN
     ID_REGISTRY_MENU        "Contém comandos para trabalhar com o Registo inteiro."
     ID_EDIT_MENU            "Contém comandos para edição de valores ou chaves."
     ID_VIEW_MENU            "Contém comandos para personalização da janela do Registo."
-    ID_FAVORITES_MENU       "Contém comandos para aceder chaves frequentemente usadas."
+    ID_FAVORITES_MENU       "Contém comandos para aceder a chaves frequentemente usadas."
     ID_HELP_MENU            "Contém comandos para exibição da ajuda e informações sobre o Editor do Registo."
     ID_EDIT_NEW_MENU        "Contém comandos para criação de novas chaves ou valores"
 END
@@ -353,7 +367,7 @@ BEGIN
                             "Desconecta de um registo um computador remoto."
     ID_REGISTRY_PRINT       "Imprime todo ou parte do registo."
 /*    ID_HELP_HELPTOPICS      "Abre a ajuda do Editor de Registo." */
-    ID_HELP_ABOUT           "Exibe informações do programa, número da versão e copyright."
+    ID_HELP_ABOUT           "Exibe informações do programa, número da versão e direitos de autor."
 END
 
 
@@ -379,16 +393,16 @@ LANGUAGE LANG_PORTUGUESE, SUBLANG_PORTUGUESE
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_REGISTRY_EXIT        "Encerra o Editor de Registo."
-    ID_FAVORITES_ADDTOFAVORITES "Adiciona chaves a lista de favoritos."
+    ID_FAVORITES_ADDTOFAVORITES "Adiciona chaves à lista de favoritos."
     ID_FAVORITES_REMOVEFAVORITE "Remove chaves da lista de favoritos."
     ID_VIEW_STATUSBAR       "Mostra ou oculta a barra de status."
     ID_VIEW_SPLIT           "Altera a posição da divisão entre os painéis."
     ID_VIEW_REFRESH         "Actualiza a janela."
     ID_EDIT_DELETE          "Exclui a selecção."
     ID_EDIT_RENAME          "Renomeia a selecção."
-    ID_EDIT_COPYKEYNAME     "Copia o nome da chave selecionada para a Área de transferência."
+    ID_EDIT_COPYKEYNAME     "Copia o nome da chave seleccionada para a Área de transferência."
     ID_EDIT_FIND            "Localiza um texto numa chave, valor ou dado."
-    ID_EDIT_FINDNEXT        "Localiza a próxima ocorrência do texto especificado na pesquisa anterior."
+    ID_EDIT_FINDNEXT        "Localiza a próxima ocorrência do texto indicado na pesquisa anterior."
 END
 
 
@@ -457,7 +471,7 @@ END
  *STRINGTABLE DISCARDABLE
  *BEGIN
  *    ID_HELP_HELPTOPICS      "Abre a ajuda do Editor de Registos."
- *    ID_HELP_ABOUT           "Mostra informação do programa, número da versão, e copyright."
+ *    ID_HELP_ABOUT           "Mostra informação do programa, número da versão, e direitos de autor."
  *END
  */
 
