@@ -472,7 +472,41 @@ static void test_DeleteMonitor(void)
     DeleteMonitorA(NULL, entry->env, winetest_monitor);
 }
 
-/* ######## */
+/* ########################### */
+
+static void test_DeletePort(void)
+{
+    DWORD   res;
+
+    SetLastError(0xdeadbeef);
+    res = DeletePortA(NULL, 0, NULL);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+
+    SetLastError(0xdeadbeef);
+    res = DeletePortA(NULL, 0, empty);
+    /* Allowed only for (Printer-)Administrators */
+    if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
+        trace("skip tests (ACCESS_DENIED)\n");
+        return;
+    }
+    /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+
+    SetLastError(0xdeadbeef);
+    res = DeletePortA(NULL, 0, does_not_exist);
+    /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
+    ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
+                 (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
+
+}
+
+/* ########################### */
 
 static void test_EnumForms(LPSTR pName)
 {
@@ -1577,6 +1611,7 @@ START_TEST(info)
     test_AddMonitor();
     test_ConfigurePort();
     test_DeleteMonitor();
+    test_DeletePort();
     test_DocumentProperties();
     test_EnumForms(NULL);
     if (default_printer) test_EnumForms(default_printer);
