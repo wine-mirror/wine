@@ -110,12 +110,51 @@ extern "C" {
 #define SD_BOTH                    0x02
 
 /* Constants for WSAIoctl() */
-#undef IOC_VOID  /* for Darwin */
+#ifdef USE_WS_PREFIX
+#define WS_IOC_UNIX                0x00000000
+#define WS_IOC_WS2                 0x08000000
+#define WS_IOC_PROTOCOL            0x10000000
+#define WS_IOC_VENDOR              0x18000000
+#define WS_IOC_VOID                0x20000000
+#define WS_IOC_OUT                 0x40000000
+#define WS_IOC_IN                  0x80000000
+#define WS_IOC_INOUT               (WS_IOC_IN|WS_IOC_OUT)
+#define _WSAIO(x,y)                (WS_IOC_VOID|(x)|(y))
+#define _WSAIOR(x,y)               (WS_IOC_OUT|(x)|(y))
+#define _WSAIOW(x,y)               (WS_IOC_IN|(x)|(y))
+#define _WSAIORW(x,y)              (WS_IOC_INOUT|(x)|(y))
+#define WS_SIO_ASSOCIATE_HANDLE               _WSAIOW(WS_IOC_WS2,1)
+#define WS_SIO_ENABLE_CIRCULAR_QUEUEING       _WSAIO(WS_IOC_WS2,2)
+#define WS_SIO_FIND_ROUTE                     _WSAIOR(WS_IOC_WS2,3)
+#define WS_SIO_FLUSH                          _WSAIO(WS_IOC_WS2,4)
+#define WS_SIO_GET_BROADCAST_ADDRESS          _WSAIOR(WS_IOC_WS2,5)
+#define WS_SIO_GET_EXTENSION_FUNCTION_POINTER _WSAIORW(WS_IOC_WS2,6)
+#define WS_SIO_GET_QOS                        _WSAIORW(WS_IOC_WS2,7)
+#define WS_SIO_GET_GROUP_QOS                  _WSAIORW(WS_IOC_WS2,8)
+#define WS_SIO_MULTIPOINT_LOOPBACK            _WSAIOW(WS_IOC_WS2,9)
+#define WS_SIO_MULTICAST_SCOPE                _WSAIOW(WS_IOC_WS2,10)
+#define WS_SIO_SET_QOS                        _WSAIOW(WS_IOC_WS2,11)
+#define WS_SIO_SET_GROUP_QOS                  _WSAIOW(WS_IOC_WS2,12)
+#define WS_SIO_TRANSLATE_HANDLE               _WSAIORW(WS_IOC_WS2,13)
+#define WS_SIO_ROUTING_INTERFACE_QUERY        _WSAIORW(WS_IOC_WS2,20)
+#define WS_SIO_ROUTING_INTERFACE_CHANGE       _WSAIOW(WS_IOC_WS2,21)
+#define WS_SIO_ADDRESS_LIST_QUERY             _WSAIOR(WS_IOC_WS2,22)
+#define WS_SIO_ADDRESS_LIST_CHANGE            _WSAIO(WS_IOC_WS2,23)
+#define WS_SIO_QUERY_TARGET_PNP_HANDLE        _WSAIOR(WS_IOC_WS2,24)
+#define WS_SIO_GET_INTERFACE_LIST             WS__IOR('t', 127, WS_u_long)
+#else /* USE_WS_PREFIX */
+#undef IOC_VOID
+#undef IOC_IN
+#undef IOC_OUT
+#undef IOC_INOUT
 #define IOC_UNIX                   0x00000000
 #define IOC_WS2                    0x08000000
 #define IOC_PROTOCOL               0x10000000
 #define IOC_VENDOR                 0x18000000
 #define IOC_VOID                   0x20000000
+#define IOC_OUT                    0x40000000
+#define IOC_IN                     0x80000000
+#define IOC_INOUT                  (IOC_IN|IOC_OUT)
 #define _WSAIO(x,y)                (IOC_VOID|(x)|(y))
 #define _WSAIOR(x,y)               (IOC_OUT|(x)|(y))
 #define _WSAIOW(x,y)               (IOC_IN|(x)|(y))
@@ -138,11 +177,8 @@ extern "C" {
 #define SIO_ADDRESS_LIST_QUERY     _WSAIOR(IOC_WS2,22)
 #define SIO_ADDRESS_LIST_CHANGE    _WSAIO(IOC_WS2,23)
 #define SIO_QUERY_TARGET_PNP_HANDLE _WSAIOR(IOC_WS2,24)
-#ifndef USE_WS_PREFIX
 #define SIO_GET_INTERFACE_LIST     _IOR ('t', 127, u_long)
-#else
-#define SIO_GET_INTERFACE_LIST     WS__IOR ('t', 127, WS_u_long)
-#endif
+#endif /* USE_WS_PREFIX */
 
 /* Constants for WSAIoctl() */
 #define WSA_FLAG_OVERLAPPED        0x01

@@ -76,8 +76,11 @@ extern "C" {
 #define WS_TCP_BSDURGENT              0x7000
 #endif
 
+#ifndef USE_WS_PREFIX
 #define SIO_UDP_CONNRESET _WSAIOW(IOC_VENDOR,12)
-
+#else
+#define WS_SIO_UDP_CONNRESET _WSAIOW(WS_IOC_VENDOR,12)
+#endif
 
 #define DE_REUSE_SOCKET TF_REUSE_SOCKET
 

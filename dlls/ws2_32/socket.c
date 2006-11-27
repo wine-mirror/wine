@@ -2077,7 +2077,7 @@ INT WINAPI WSAIoctl(SOCKET s,
         }
         return WS_ioctlsocket( s, WS_FIONREAD, lpbOutBuffer);
 
-   case SIO_GET_INTERFACE_LIST:
+   case WS_SIO_GET_INTERFACE_LIST:
        {
            INTERFACE_INFO* intArray = (INTERFACE_INFO*)lpbOutBuffer;
            DWORD size, numInt, apiReturn;
@@ -2206,13 +2206,13 @@ INT WINAPI WSAIoctl(SOCKET s,
            break;
        }
 
-   case SIO_ADDRESS_LIST_CHANGE:
+   case WS_SIO_ADDRESS_LIST_CHANGE:
        FIXME("-> SIO_ADDRESS_LIST_CHANGE request: stub\n");
        /* FIXME: error and return code depend on whether socket was created
         * with WSA_FLAG_OVERLAPPED, but there is no easy way to get this */
        break;
 
-   case SIO_FLUSH:
+   case WS_SIO_FLUSH:
 	FIXME("SIO_FLUSH: stub.\n");
 	break;
 
