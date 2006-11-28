@@ -130,7 +130,7 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION IconCrst = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-static WORD ICON_HOTSPOT = 0x4242;
+static const WORD ICON_HOTSPOT = 0x4242;
 
 
 /***********************************************************************

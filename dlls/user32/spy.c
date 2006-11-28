@@ -1567,7 +1567,7 @@ static const USER_MSG propsht_array[] = {
           USM(PSM_SETTITLEW           ,0),
           USM(PSM_SETFINISHTEXTW      ,0),
           {0,0,0} };
-const WCHAR PropSheetInfoStr[] =
+static const WCHAR PropSheetInfoStr[] =
     {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0 };
 
 static const USER_MSG updown_array[] = {

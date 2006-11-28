@@ -73,7 +73,7 @@ static COLORREF color_3dshadow, color_3ddkshadow, color_3dhighlight;
 
 typedef void (*pfPaint)( HWND hwnd, HDC hdc, DWORD style );
 
-static pfPaint staticPaintFunc[SS_TYPEMASK+1] =
+static const pfPaint staticPaintFunc[SS_TYPEMASK+1] =
 {
     STATIC_PaintTextfn,      /* SS_LEFT */
     STATIC_PaintTextfn,      /* SS_CENTER */
