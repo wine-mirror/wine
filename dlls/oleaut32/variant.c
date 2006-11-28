@@ -44,7 +44,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
-const char* wine_vtypes[VT_CLSID+1] =
+const char * const wine_vtypes[VT_CLSID+1] =
 {
   "VT_EMPTY","VT_NULL","VT_I2","VT_I4","VT_R4","VT_R8","VT_CY","VT_DATE",
   "VT_BSTR","VT_DISPATCH","VT_ERROR","VT_BOOL","VT_VARIANT","VT_UNKNOWN",
@@ -57,7 +57,7 @@ const char* wine_vtypes[VT_CLSID+1] =
   "VT_STREAMED_OBJECT","VT_STORED_OBJECT","VT_BLOB_OBJECT","VT_CF","VT_CLSID"
 };
 
-const char* wine_vflags[16] =
+const char * const wine_vflags[16] =
 {
  "",
  "|VT_VECTOR",
@@ -3094,12 +3094,12 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
                       vt_R8, vt_CY, vt_DATE, vt_DECIMAL, vt_DISPATCH, vt_NULL,
                       vt_ERROR };
     /* Mapping from priority to variant type. Keep in sync with coerceprio! */
-    VARTYPE prio2vt[] = { VT_EMPTY, VT_UI1, VT_I2, VT_I4, VT_I8, VT_BSTR, VT_R4,
+    static const VARTYPE prio2vt[] = { VT_EMPTY, VT_UI1, VT_I2, VT_I4, VT_I8, VT_BSTR, VT_R4,
                           VT_R8, VT_CY, VT_DATE, VT_DECIMAL, VT_DISPATCH,
                           VT_NULL, VT_ERROR };
 
     /* Mapping for coercion from input variant to priority of result variant. */
-    static VARTYPE coerce[] = {
+    static const VARTYPE coerce[] = {
         /* VT_EMPTY, VT_NULL, VT_I2, VT_I4, VT_R4 */
         vt_EMPTY, vt_NULL, vt_I2, vt_I4, vt_R4,
         /* VT_R8, VT_CY, VT_DATE, VT_BSTR, VT_DISPATCH */
@@ -3285,11 +3285,11 @@ HRESULT WINAPI VarMul(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     enum coerceprio { vt_UI1 = 0, vt_I2, vt_I4, vt_I8, vt_CY, vt_R4, vt_R8,
                       vt_DECIMAL, vt_NULL, vt_ERROR };
     /* Mapping from priority to variant type. Keep in sync with coerceprio! */
-    VARTYPE prio2vt[] = { VT_UI1, VT_I2, VT_I4, VT_I8, VT_CY, VT_R4, VT_R8,
+    static const VARTYPE prio2vt[] = { VT_UI1, VT_I2, VT_I4, VT_I8, VT_CY, VT_R4, VT_R8,
                           VT_DECIMAL, VT_NULL, VT_ERROR };
 
     /* Mapping for coercion from input variant to priority of result variant. */
-    static VARTYPE coerce[] = {
+    static const VARTYPE coerce[] = {
         /* VT_EMPTY, VT_NULL, VT_I2, VT_I4, VT_R4 */
         vt_UI1, vt_NULL, vt_I2, vt_I4, vt_R4,
         /* VT_R8, VT_CY, VT_DATE, VT_BSTR, VT_DISPATCH */

@@ -1149,7 +1149,7 @@ static void dump_FUNCDESC(const FUNCDESC *funcdesc) {
   dump_ELEMDESC(&funcdesc->elemdescFunc);
 }
 
-static const char * typekind_desc[] =
+static const char * const typekind_desc[] =
 {
 	"TKIND_ENUM",
 	"TKIND_RECORD",

@@ -51,7 +51,7 @@ CSTDSTUBBUFFERRELEASE(&PSFactoryBuffer)
 
 extern const ExtendedProxyFileInfo oaidl_ProxyFileInfo;
 
-const ProxyFileInfo* OLEAUT32_ProxyFileList[] = {
+static const ProxyFileInfo *OLEAUT32_ProxyFileList[] = {
   &oaidl_ProxyFileInfo,
   NULL
 };
