@@ -2196,7 +2196,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_EXLIMITTEXT:
   {
-    if (wParam != 0 || lParam < 0)
+    if ((int)lParam < 0)
      return 0;
     if (lParam == 0)
       editor->nTextLimit = 65536;
