@@ -346,86 +346,62 @@ end:
 static UINT ACTION_AppSearchIni(MSIPACKAGE *package, LPWSTR *appValue,
  MSISIGNATURE *sig)
 {
-    MSIQUERY *view;
-    UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-   'I','n','i','L','o','c','a','t','o','r',' ',
-   'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
-   '\'','%','s','\'',0};
+    static const WCHAR query[] =  {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'I','n','i','L','o','c','a','t','o','r',' ',
+        'w','h','e','r','e',' ',
+        'S','i','g','n','a','t','u','r','e','_',' ','=',' ','\'','%','s','\'',0};
+    MSIRECORD *row;
+    LPWSTR fileName, section, key;
+    int field, type;
+    WCHAR buf[MAX_PATH];
 
-    TRACE("(package %p, appValue %p, sig %p)\n", package, appValue, sig);
+    TRACE("%s\n", debugstr_w(sig->Name));
+
     *appValue = NULL;
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
-    if (rc == ERROR_SUCCESS)
+
+    row = MSI_QueryGetRecord( package->db, query, sig->Name );
+    if (!row)
     {
-        MSIRECORD *row = 0;
-        LPWSTR fileName, section, key;
-        int field, type;
-        WCHAR buf[MAX_PATH];
-
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewExecute returned %d\n", rc);
-            goto end;
-        }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewFetch returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
-
-        fileName = msi_dup_record_field(row, 2);
-        section = msi_dup_record_field(row, 3);
-        key = msi_dup_record_field(row, 4);
-        if ((field = MSI_RecordGetInteger(row, 5)) == MSI_NULL_INTEGER)
-            field = 0;
-        if ((type = MSI_RecordGetInteger(row, 6)) == MSI_NULL_INTEGER)
-            type = 0;
-
-        GetPrivateProfileStringW(section, key, NULL, buf,
-         sizeof(buf) / sizeof(WCHAR), fileName);
-        if (buf[0])
-        {
-            switch (type & 0x0f)
-            {
-            case msidbLocatorTypeDirectory:
-                FIXME("unimplemented for type Directory (dir: %s)\n",
-                 debugstr_w(buf));
-                break;
-            case msidbLocatorTypeFileName:
-                FIXME("unimplemented for type File (file: %s)\n",
-                 debugstr_w(buf));
-                break;
-            case msidbLocatorTypeRawValue:
-                *appValue = strdupW(buf);
-                break;
-            }
-        }
-
-        msi_free(fileName);
-        msi_free(section);
-        msi_free(key);
-
-end:
-        if (row)
-            msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-    }
-    else
-    {
-        TRACE("MSI_OpenQuery returned %d\n", rc);
-        rc = ERROR_SUCCESS;
+        TRACE("failed to query IniLocator for %s\n", debugstr_w(sig->Name));
+        return ERROR_SUCCESS;
     }
 
+    fileName = msi_dup_record_field(row, 2);
+    section = msi_dup_record_field(row, 3);
+    key = msi_dup_record_field(row, 4);
+    field = MSI_RecordGetInteger(row, 5);
+    type = MSI_RecordGetInteger(row, 6);
+    if (field == MSI_NULL_INTEGER)
+        field = 0;
+    if (type == MSI_NULL_INTEGER)
+        type = 0;
 
-    TRACE("returning %d\n", rc);
-    return rc;
+    GetPrivateProfileStringW(section, key, NULL, buf, MAX_PATH, fileName);
+    if (buf[0])
+    {
+        switch (type & 0x0f)
+        {
+        case msidbLocatorTypeDirectory:
+            FIXME("unimplemented for Directory (%s)\n", debugstr_w(buf));
+            break;
+        case msidbLocatorTypeFileName:
+            FIXME("unimplemented for File (%s)\n", debugstr_w(buf));
+            break;
+        case msidbLocatorTypeRawValue:
+            *appValue = strdupW(buf);
+            break;
+        }
+    }
+
+    msi_free(fileName);
+    msi_free(section);
+    msi_free(key);
+
+    msiobj_release(&row->hdr);
+
+    return ERROR_SUCCESS;
 }
 
 /* Expands the value in src into a path without property names and only
