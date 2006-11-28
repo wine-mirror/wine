@@ -1881,7 +1881,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 
     ME_CommitUndo(editor);
     if (bRepaint)
-      ME_UpdateRepaint(editor);
+      ME_RewrapRepaint(editor);
     return 0;
   }
   case WM_SETTEXT:
