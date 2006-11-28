@@ -138,6 +138,7 @@ typedef struct {
 /* ############################### */
 
 static struct list monitor_handles = LIST_INIT( monitor_handles );
+static monitor_t * pm_localport;
 
 static opened_printer_t **printer_handles;
 static int nb_printer_handles;
@@ -1097,6 +1098,10 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
         }
     }
 cleanup:
+    if ((pm_localport ==  NULL) && (pm != NULL) && (lstrcmpW(pm->name, LocalPortW) == 0)) {
+        pm->refcount++;
+        pm_localport = pm;
+    }
     LeaveCriticalSection(&monitor_handles_cs);
     if (driver != dllname) HeapFree(GetProcessHeap(), 0, driver);
     HeapFree(GetProcessHeap(), 0, regroot);
