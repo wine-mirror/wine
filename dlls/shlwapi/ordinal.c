@@ -370,9 +370,10 @@ HANDLE WINAPI SHMapHandle(HANDLE hShared, DWORD dwDstProcId, DWORD dwSrcProcId,
  */
 HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
 {
-  static WCHAR szProperty[] = { '{','D','0','F','C','A','4','2','0',
+  static const WCHAR szProperty[] = { '{','D','0','F','C','A','4','2','0',
       '-','D','3','F','5','-','1','1','C','F', '-','B','2','1','1','-','0',
       '0','A','A','0','0','4','A','E','8','3','7','}','\0' };
+  BSTR property;
   IEnumFORMATETC* pIEnumFormatEtc = NULL;
   VARIANTARG var;
   HRESULT hRet;
@@ -388,7 +389,9 @@ HRESULT WINAPI RegisterDefaultAcceptHeaders(LPBC lpBC, IUnknown *lpUnknown)
   V_VT(&var) = VT_EMPTY;
 
   /* The property we get is the browsers clipboard enumerator */
-  hRet = IWebBrowserApp_GetProperty(pBrowser, (BSTR)szProperty, &var);
+  property = SysAllocString(szProperty);
+  hRet = IWebBrowserApp_GetProperty(pBrowser, property, &var);
+  SysFreeString(property);
   if (FAILED(hRet))
     return hRet;
 
@@ -2577,7 +2580,7 @@ HRESULT WINAPI IUnknown_GetSite(LPUNKNOWN lpUnknown, REFIID iid, PVOID *lppSite)
 HWND WINAPI SHCreateWorkerWindowA(LONG wndProc, HWND hWndParent, DWORD dwExStyle,
                         DWORD dwStyle, HMENU hMenu, LONG z)
 {
-  static const char* szClass = "WorkerA";
+  static const char szClass[] = "WorkerA";
   WNDCLASSA wc;
   HWND hWnd;
 
@@ -2814,7 +2817,7 @@ BOOL WINAPI GUIDFromStringW(LPCWSTR idstr, CLSID *id)
  */
 DWORD WINAPI WhichPlatform(void)
 {
-  static LPCSTR szIntegratedBrowser = "IntegratedBrowser";
+  static const char szIntegratedBrowser[] = "IntegratedBrowser";
   static DWORD dwState = 0;
   HKEY hKey;
   DWORD dwRet, dwData, dwSize;

@@ -33,16 +33,16 @@
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
 
 /* Key/Value names for MIME content types */
-static const char *lpszContentTypeA = "Content Type";
+static const char lpszContentTypeA[] = "Content Type";
 static const WCHAR lpszContentTypeW[] = { 'C','o','n','t','e','n','t',' ','T','y','p','e','\0'};
 
-static const char *szMimeDbContentA = "MIME\\Database\\Content Type\\";
+static const char szMimeDbContentA[] = "MIME\\Database\\Content Type\\";
 static const WCHAR szMimeDbContentW[] = { 'M', 'I', 'M','E','\\',
   'D','a','t','a','b','a','s','e','\\','C','o','n','t','e','n','t',
   ' ','T','y','p','e','\\', 0 };
 static const DWORD dwLenMimeDbContent = 27; /* strlen of szMimeDbContentA/W */
 
-static const char *szExtensionA = "Extension";
+static const char szExtensionA[] = "Extension";
 static const WCHAR szExtensionW[] = { 'E', 'x', 't','e','n','s','i','o','n','\0' };
 
 /* internal structure of what the HUSKEY points to */
