@@ -597,7 +597,7 @@ struct stab_nlist
     unsigned long       n_value;
 };
 
-static const char* stabs_defs[] = {
+static const char * const stabs_defs[] = {
     NULL,NULL,NULL,NULL,                /* 00 */
     NULL,NULL,NULL,NULL,                /* 08 */
     NULL,NULL,NULL,NULL,                /* 10 */

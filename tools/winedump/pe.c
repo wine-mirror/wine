@@ -830,7 +830,7 @@ void	dump_separate_dbg(void)
 
 static const char *get_resource_type( unsigned int id )
 {
-    static const char *types[] =
+    static const char * const types[] =
     {
         NULL,
         "CURSOR",
