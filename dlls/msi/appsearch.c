@@ -844,65 +844,50 @@ static UINT ACTION_AppSearchSigName(MSIPACKAGE *package, LPCWSTR sigName,
     return rc;
 }
 
+static UINT iterate_appsearch(MSIRECORD *row, LPVOID param)
+{
+    MSIPACKAGE *package = param;
+    LPWSTR propName, sigName, value = NULL;
+    MSISIGNATURE sig;
+    UINT r;
+
+    /* get property and signature */
+    propName = msi_dup_record_field(row,1);
+    sigName = msi_dup_record_field(row,2);
+
+    TRACE("%s %s\n", debugstr_w(propName), debugstr_w(sigName));
+
+    r = ACTION_AppSearchSigName(package, sigName, &sig, &value);
+    if (value)
+    {
+        MSI_SetPropertyW(package, propName, value);
+        msi_free(value);
+    }
+    ACTION_FreeSignature(&sig);
+    msi_free(propName);
+    msi_free(sigName);
+
+    return r;
+}
+
 /* http://msdn.microsoft.com/library/en-us/msi/setup/appsearch_table.asp
  * is the best reference for the AppSearch table and how it's used.
  */
 UINT ACTION_AppSearch(MSIPACKAGE *package)
 {
-    MSIQUERY *view;
-    UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-   'A','p','p','S','e','a','r','c','h',0};
+    static const WCHAR query[] =  {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'A','p','p','S','e','a','r','c','h',0};
+    MSIQUERY *view = NULL;
+    UINT r;
 
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery);
-    if (rc == ERROR_SUCCESS)
-    {
-        MSIRECORD *row = 0;
-        LPWSTR propName, sigName;
+    r = MSI_OpenQuery( package->db, &view, query );
+    if (r != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
 
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
-            goto end;
+    r = MSI_IterateRecords( view, NULL, iterate_appsearch, package );
+    msiobj_release( &view->hdr );
 
-        while (!rc)
-        {
-            MSISIGNATURE sig;
-            LPWSTR value = NULL;
-
-            rc = MSI_ViewFetch(view,&row);
-            if (rc != ERROR_SUCCESS)
-            {
-                rc = ERROR_SUCCESS;
-                break;
-            }
-
-            /* get property and signature */
-            propName = msi_dup_record_field(row,1);
-            sigName = msi_dup_record_field(row,2);
-
-            TRACE("Searching for Property %s, Signature_ %s\n",
-             debugstr_w(propName), debugstr_w(sigName));
-
-            rc = ACTION_AppSearchSigName(package, sigName, &sig, &value);
-            if (value)
-            {
-                MSI_SetPropertyW(package, propName, value);
-                msi_free(value);
-            }
-            ACTION_FreeSignature(&sig);
-            msi_free(propName);
-            msi_free(sigName);
-            msiobj_release(&row->hdr);
-        }
-
-end:
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
-    }
-    else
-        rc = ERROR_SUCCESS;
-
-    return rc;
+    return r;
 }
