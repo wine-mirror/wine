@@ -1308,10 +1308,8 @@ static void test_EM_GETMODIFY(void)
   SendMessage(hwndRichEdit, EM_STREAMIN, 
               (WPARAM)(SF_TEXT), (LPARAM)&es);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  todo_wine {
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero for EM_STREAM\n");
-  }
 
   DestroyWindow(hwndRichEdit);
 }
