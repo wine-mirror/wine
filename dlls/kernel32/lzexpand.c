@@ -68,7 +68,7 @@ struct lzfileheader {
 	CHAR	lastchar;
 	DWORD	reallength;
 };
-static BYTE LZMagic[LZ_MAGIC_LEN]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
+static const BYTE LZMagic[LZ_MAGIC_LEN]={'S','Z','D','D',0x88,0xf0,0x27,0x33};
 
 #define LZ_TABLE_SIZE    0x1000
 
