@@ -364,8 +364,8 @@ static int dskentry_decode(const char *value, int len, char *output)
  */
 static int url_encode(const char *value, char *output)
 {
-    static const char *unsafechars = "^&`{}|[]'<>\\#%\"+";
-    static const char *hexchars = "0123456789ABCDEF";
+    static const char unsafechars[] = "^&`{}|[]'<>\\#%\"+";
+    static const char hexchars[] = "0123456789ABCDEF";
     int num_written = 0;
     const char *c;
 
@@ -400,7 +400,7 @@ static int decode_url_code(const char *c)
 {
     const char *p1, *p2;
     int v1, v2;
-    static const char *hexchars = "0123456789ABCDEF";
+    static const char hexchars[] = "0123456789ABCDEF";
     if (*c == 0)
         return -1;
 

@@ -133,7 +133,7 @@ static const char strNoClose[] = {"NoClose"};
 static const char strNoRun[] = {"NoRun"};
 
 /* policy data array */
-POLICYDATA sh32_policy_table[] =
+static POLICYDATA sh32_policy_table[] =
 {
   {
     REST_NORUN,
@@ -796,7 +796,7 @@ POLICYDATA sh32_policy_table[] =
     0,
     0,
     SHELL_NO_POLICY
-	}
+  }
 };
 
 /*************************************************************************

@@ -63,8 +63,6 @@ typedef struct {
     const IShellFolder2Vtbl *lpVtbl;
     LONG ref;
 
-    CLSID *pclsid;
-
     /* both paths are parsible from the desktop */
     LPWSTR sPathTarget;     /* complete path to target used for enumeration and ChangeNotify */
     LPITEMIDLIST pidlRoot;  /* absolute pidl */
@@ -76,7 +74,7 @@ typedef struct {
 #define _IUnknown_(This)    (IShellFolder*)&(This->lpVtbl)
 #define _IShellFolder_(This)    (IShellFolder*)&(This->lpVtbl)
 
-static shvheader DesktopSFHeader[] = {
+static const shvheader DesktopSFHeader[] = {
     {IDS_SHV_COLUMN1, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},
     {IDS_SHV_COLUMN2, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},
     {IDS_SHV_COLUMN3, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 10},

@@ -60,9 +60,9 @@ typedef struct {     /* structure for dropped files */
  /* memory block with filenames follows */
 } DROPFILESTRUCT16, *LPDROPFILESTRUCT16;
 
-static const char*	lpstrMsgWndCreated = "OTHERWINDOWCREATED";
-static const char*	lpstrMsgWndDestroyed = "OTHERWINDOWDESTROYED";
-static const char*	lpstrMsgShellActivate = "ACTIVATESHELLWINDOW";
+static const char lpstrMsgWndCreated[] = "OTHERWINDOWCREATED";
+static const char lpstrMsgWndDestroyed[] = "OTHERWINDOWDESTROYED";
+static const char lpstrMsgShellActivate[] = "ACTIVATESHELLWINDOW";
 
 static HWND	SHELL_hWnd = 0;
 static HHOOK	SHELL_hHook = 0;

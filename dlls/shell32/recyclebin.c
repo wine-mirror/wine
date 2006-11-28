@@ -73,7 +73,7 @@ static const columninfo RecycleBinColumns[] =
 
 #define COLUMNS_COUNT  6
 
-HRESULT FormatDateTime(LPWSTR buffer, int size, FILETIME ft)
+static HRESULT FormatDateTime(LPWSTR buffer, int size, FILETIME ft)
 {
     FILETIME lft;
     SYSTEMTIME time;
@@ -99,22 +99,22 @@ HRESULT FormatDateTime(LPWSTR buffer, int size, FILETIME ft)
 
 typedef struct tagRecycleBin
 {
-    IShellFolder2Vtbl *lpVtbl;
-    IPersistFolder2Vtbl *lpPersistFolderVtbl;
+    const IShellFolder2Vtbl *lpVtbl;
+    const IPersistFolder2Vtbl *lpPersistFolderVtbl;
     LONG refCount;
 
     LPITEMIDLIST pidl;
 } RecycleBin;
 
-static IShellFolder2Vtbl recycleBinVtbl;
-static IPersistFolder2Vtbl recycleBinPersistVtbl;
+static const IShellFolder2Vtbl recycleBinVtbl;
+static const IPersistFolder2Vtbl recycleBinPersistVtbl;
 
 static RecycleBin *impl_from_IPersistFolder(IPersistFolder2 *iface)
 {
-    return (RecycleBin *)((char*)iface - FIELD_OFFSET(RecycleBin, lpPersistFolderVtbl));
+    return (RecycleBin *)((char *)iface - FIELD_OFFSET(RecycleBin, lpPersistFolderVtbl));
 }
 
-void RecycleBin_Destructor(RecycleBin *This);
+static void RecycleBin_Destructor(RecycleBin *This);
 
 HRESULT WINAPI RecycleBin_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *ppOutput)
 {
@@ -138,7 +138,7 @@ HRESULT WINAPI RecycleBin_Constructor(IUnknown *pUnkOuter, REFIID riid, LPVOID *
     return S_OK;
 }
 
-void RecycleBin_Destructor(RecycleBin *This)
+static void RecycleBin_Destructor(RecycleBin *This)
 {
 /*    InterlockedDecrement(&objCount);*/
     SHFree(This->pidl);
@@ -454,7 +454,7 @@ static HRESULT WINAPI RecycleBin_MapColumnToSCID(IShellFolder2 *iface, UINT iCol
     return S_OK;
 }
 
-static IShellFolder2Vtbl recycleBinVtbl = 
+static const IShellFolder2Vtbl recycleBinVtbl = 
 {
     /* IUnknown */
     RecycleBin_QueryInterface,
@@ -498,7 +498,7 @@ static ULONG WINAPI RecycleBin_IPersistFolder2_Release(IPersistFolder2 *This)
     return RecycleBin_Release((IShellFolder2 *)impl_from_IPersistFolder(This));
 }
 
-static IPersistFolder2Vtbl recycleBinPersistVtbl =
+static const IPersistFolder2Vtbl recycleBinPersistVtbl =
 {
     /* IUnknown */
     RecycleBin_IPersistFolder2_QueryInterface,

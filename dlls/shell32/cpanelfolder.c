@@ -109,7 +109,7 @@ static inline ICPanelImpl *impl_from_IShellExecuteHookA( IShellExecuteHookA *ifa
 *   IShellFolder [ControlPanel] implementation
 */
 
-static shvheader ControlPanelSFHeader[] = {
+static const shvheader ControlPanelSFHeader[] = {
     {IDS_SHV_COLUMN8, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 15},/*FIXME*/
     {IDS_SHV_COLUMN9, SHCOLSTATE_TYPE_STR | SHCOLSTATE_ONBYDEFAULT, LVCFMT_RIGHT, 200},/*FIXME*/
 };
