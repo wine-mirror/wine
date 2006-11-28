@@ -13,6 +13,7 @@ C_SRCS = \
 	dump.c \
 	emf.c \
 	le.c \
+	lib.c \
 	lnk.c \
 	main.c \
 	minidump.c \

@@ -48,7 +48,7 @@
 
 static const IMAGE_NT_HEADERS32*        PE_nt_headers;
 
-static	const char* get_machine_str(DWORD mach)
+const char *get_machine_str(int mach)
 {
     switch (mach)
     {

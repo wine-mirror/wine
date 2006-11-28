@@ -221,8 +221,10 @@ const char *str_find_set (const char *str, const char *findset);
 
 char *str_toupper (char *str);
 
+const char *get_machine_str(int mach);
+
 /* file dumping functions */
-enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP};
+enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP, SIG_COFFLIB};
 
 const void*	PRD(unsigned long prd, unsigned long len);
 unsigned long	Offset(const void* ptr);
@@ -238,6 +240,7 @@ void            dump_unicode_str( const unsigned short *str, int len );
 void            ne_dump( const void *exe, size_t exe_size );
 void            le_dump( const void *exe, size_t exe_size );
 void            mdmp_dump( void );
+void            lib_dump( const char *lib_base, unsigned long lib_size );
 
 void dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 

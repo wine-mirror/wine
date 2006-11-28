@@ -163,6 +163,7 @@ static	void	do_dump( enum FileSig sig, const void* pmt )
 
 static enum FileSig check_headers(void)
 {
+    const char *p;
     const WORD*		pw;
     const DWORD*		pdw;
     const IMAGE_DOS_HEADER*	dh;
@@ -204,23 +205,27 @@ static enum FileSig check_headers(void)
 		printf("Can't get the extented signature, aborting\n");
 	    }
 	}
-	break;
+        return sig;
+
     case 0x4944: /* "DI" */
-	sig = SIG_DBG;
-	break;
+	return SIG_DBG;
+
     case 0x444D: /* "MD" */
         pdw = PRD(0, sizeof(DWORD));
         if (pdw && *pdw == 0x504D444D) /* "MDMP" */
-            sig = SIG_MDMP;
-        else
-            sig = SIG_UNKNOWN;
-        break;
+            return SIG_MDMP;
+        return SIG_UNKNOWN;
+
     default:
-	printf("No known main signature (%.2s/%x), aborting\n", (const char *)pw, *pw);
-	sig = SIG_UNKNOWN;
+        break;
     }
 
-    return sig;
+    p = PRD(0, IMAGE_ARCHIVE_START_SIZE);
+    if (p && !strncmp(p, IMAGE_ARCHIVE_START, IMAGE_ARCHIVE_START_SIZE))
+        return SIG_COFFLIB;
+
+    printf("No known main signature (%.2s/%x), aborting\n", (const char *)pw, *pw);
+    return SIG_UNKNOWN;
 }
 
 int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
@@ -268,6 +273,11 @@ int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
 	    ret = 0; break;
         case SIG_MDMP:
             mdmp_dump();
+            break;
+
+        case SIG_COFFLIB:
+            printf("Contents of \"%s\": %ld bytes\n\n", name, dump_total_len);
+            lib_dump(dump_base, dump_total_len);
             break;
 	}
     }

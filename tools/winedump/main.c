@@ -230,7 +230,7 @@ static const struct my_option option_table[] = {
   {"-S",    SPEC, 1, do_symfile,  "-S symfile   Search only prototype names found in 'symfile'"},
   {"-q",    SPEC, 0, do_quiet,    "-q           Don't show progress (quiet)."},
   {"-v",    SPEC, 0, do_verbose,  "-v           Show lots of detail while working (verbose)."},
-  {"dump",  DUMP, 0, do_dump,     "dump <mod>   Dumps the content of the module (dll, exe...) named <mod>"},
+  {"dump",  DUMP, 0, do_dump,     "dump <file>  Dumps the contents of the file (dll, exe, lib...)"},
   {"-C",    DUMP, 0, do_symdmngl, "-C           Turns on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f           Dumps file header information"},
   {"-G",    DUMP, 0, do_rawdebug, "-G           Dumps raw debug information"},
@@ -244,7 +244,7 @@ static const struct my_option option_table[] = {
 void do_usage (void)
 {
     const struct my_option *opt;
-    printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <dll> | emf <emf> | lnk <lnk>]\n");
+    printf ("Usage: winedump [-h | sym <sym> | spec <dll> | dump <file> | emf <emf> | lnk <lnk>]\n");
     printf ("Mode options (can be put as the mode (sym/spec/dump...) is declared):\n");
     printf ("\tWhen used in --help mode\n");
     for (opt = option_table; opt->name; opt++)
