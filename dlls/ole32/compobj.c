@@ -1001,7 +1001,7 @@ HRESULT WINE_StringFromCLSID(
 	const CLSID *id,	/* [in] GUID to be converted */
 	LPSTR idstr		/* [out] pointer to buffer to contain converted guid */
 ) {
-  static const char *hex = "0123456789ABCDEF";
+  static const char hex[] = "0123456789ABCDEF";
   char *s;
   int	i;
 
