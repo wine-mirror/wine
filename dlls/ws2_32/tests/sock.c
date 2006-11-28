@@ -1410,6 +1410,47 @@ static void test_select(void)
 
 }
 
+static void test_extendedSocketOptions()
+{
+    WSADATA wsa;
+    SOCKET sock;
+    struct sockaddr_in sa;
+    int sa_len = sizeof(struct sockaddr_in);
+    int optval, optlen = sizeof(int), ret;
+
+    if(WSAStartup(MAKEWORD(2,0), &wsa)){
+        trace("Winsock failed: 0x%08x. Aborting test\n", WSAGetLastError());
+        return;
+    }
+
+    memset(&sa, 0, sa_len);
+
+    sa.sin_family = AF_INET;
+    sa.sin_port = htons(0);
+    sa.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0){
+        trace("Creating the socket failed: 0x%08x\n", WSAGetLastError());
+        WSACleanup();
+        return;
+    }
+
+    if(bind(sock, (struct sockaddr *) &sa, sa_len) < 0){
+        trace("Failed to bind socket: 0x%08x\n", WSAGetLastError());
+        closesocket(sock);
+        WSACleanup();
+        return;
+    }
+
+    ret = getsockopt(sock, SOL_SOCKET, SO_MAX_MSG_SIZE, (char *)&optval, (int *)&optlen);
+
+    ok(ret == 0, "getsockopt failed to query SO_MAX_MSG_SIZE, return value is 0x%08x\n", ret);
+    ok(optval == 65507, "SO_MAX_MSG_SIZE reported %d, expected 65507\n", optval);
+
+    closesocket(sock);
+    WSACleanup();
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1419,6 +1460,7 @@ START_TEST( sock )
 
     test_set_getsockopt();
     test_so_reuseaddr();
+    test_extendedSocketOptions();
 
     for (i = 0; i < NUM_TESTS; i++)
     {
@@ -1438,6 +1480,6 @@ START_TEST( sock )
     test_WSAStringToAddressW();
 
     test_select();
-    
+
     Exit();
 }

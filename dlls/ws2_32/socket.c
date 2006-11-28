@@ -1828,6 +1828,19 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
         return 0;
     }
 
+    if (level == WS_SOL_SOCKET && optname == WS_SO_MAX_MSG_SIZE)
+    {
+        if(!optlen || *optlen < sizeof(int) || !optval)
+        {
+            SetLastError(WSAEFAULT);
+            return SOCKET_ERROR;
+        }
+        TRACE("getting global SO_MAX_MSG_SIZE = 65507\n");
+        *(int *)optval = 65507;
+        *optlen = sizeof(int);
+        return 0;
+    }
+
 #ifdef HAVE_IPX
     if(level == NSPROTO_IPX)
     {
