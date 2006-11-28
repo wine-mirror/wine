@@ -775,87 +775,70 @@ static UINT ACTION_SearchDirectory(MSIPACKAGE *package, MSISIGNATURE *sig,
 static UINT ACTION_AppSearchSigName(MSIPACKAGE *package, LPCWSTR sigName,
  MSISIGNATURE *sig, LPWSTR *appValue);
 
-static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue,
- MSISIGNATURE *sig)
+static UINT ACTION_AppSearchDr(MSIPACKAGE *package, LPWSTR *appValue, MSISIGNATURE *sig)
 {
-    MSIQUERY *view;
+    static const WCHAR query[] =  {
+        's','e','l','e','c','t',' ','*',' ',
+        'f','r','o','m',' ',
+        'D','r','L','o','c','a','t','o','r',' ',
+        'w','h','e','r','e',' ',
+        'S','i','g','n','a','t','u','r','e','_',' ','=',' ', '\'','%','s','\'',0};
+    LPWSTR parentName = NULL, path = NULL, parent = NULL;
+    WCHAR expanded[MAX_PATH];
+    MSIRECORD *row;
+    int depth;
     UINT rc;
-    static const WCHAR ExecSeqQuery[] =  {
-   's','e','l','e','c','t',' ','*',' ',
-   'f','r','o','m',' ',
-   'D','r','L','o','c','a','t','o','r',' ',
-   'w','h','e','r','e',' ','S','i','g','n','a','t','u','r','e','_',' ','=',' ',
-   '\'','%','s','\'',0};
 
-    TRACE("(package %p, sig %p)\n", package, sig);
-    rc = MSI_OpenQuery(package->db, &view, ExecSeqQuery, sig->Name);
-    if (rc == ERROR_SUCCESS)
+    TRACE("%s\n", debugstr_w(sig->Name));
+
+    *appValue = NULL;
+
+    row = MSI_QueryGetRecord( package->db, query, sig->Name );
+    if (!row)
     {
-        MSIRECORD *row = 0;
-        WCHAR expanded[MAX_PATH];
-        LPWSTR parentName = NULL, path = NULL, parent = NULL;
-        int depth;
+        TRACE("failed to query DrLocator for %s\n", debugstr_w(sig->Name));
+        return ERROR_SUCCESS;
+    }
 
-        rc = MSI_ViewExecute(view, 0);
-        if (rc != ERROR_SUCCESS)
+    /* check whether parent is set */
+    parentName = msi_dup_record_field(row,2);
+    if (parentName)
+    {
+        MSISIGNATURE parentSig;
+
+        rc = ACTION_AppSearchSigName(package, parentName, &parentSig, &parent);
+        ACTION_FreeSignature(&parentSig);
+        msi_free(parentName);
+    }
+    /* now look for path */
+    path = msi_dup_record_field(row,3);
+    if (MSI_RecordIsNull(row,4))
+        depth = 0;
+    else
+        depth = MSI_RecordGetInteger(row,4);
+    ACTION_ExpandAnyPath(package, path, expanded, MAX_PATH);
+    msi_free(path);
+    if (parent)
+    {
+        path = msi_alloc((strlenW(parent) + strlenW(expanded) + 1) * sizeof(WCHAR));
+        if (!path)
         {
-            TRACE("MSI_ViewExecute returned %d\n", rc);
+            rc = ERROR_OUTOFMEMORY;
             goto end;
         }
-        rc = MSI_ViewFetch(view,&row);
-        if (rc != ERROR_SUCCESS)
-        {
-            TRACE("MSI_ViewFetch returned %d\n", rc);
-            rc = ERROR_SUCCESS;
-            goto end;
-        }
-
-        /* check whether parent is set */
-        parentName = msi_dup_record_field(row,2);
-        if (parentName)
-        {
-            MSISIGNATURE parentSig;
-
-            rc = ACTION_AppSearchSigName(package, parentName, &parentSig,
-             &parent);
-            ACTION_FreeSignature(&parentSig);
-            msi_free(parentName);
-        }
-        /* now look for path */
-        path = msi_dup_record_field(row,3);
-        if (MSI_RecordIsNull(row,4))
-            depth = 0;
-        else
-            depth = MSI_RecordGetInteger(row,4);
-        ACTION_ExpandAnyPath(package, path, expanded,
-         sizeof(expanded) / sizeof(expanded[0]));
-        msi_free(path);
-        if (parent)
-        {
-            path = msi_alloc((strlenW(parent) + strlenW(expanded) + 1) * sizeof(WCHAR));
-            if (!path)
-                goto end;
-            strcpyW(path, parent);
-            strcatW(path, expanded);
-        }
-        else
-            path = expanded;
-        rc = ACTION_SearchDirectory(package, sig, path, depth, appValue);
-
-end:
-        if (path != expanded)
-            msi_free(path);
-        msi_free(parent);
-        if (row)
-            msiobj_release(&row->hdr);
-        MSI_ViewClose(view);
-        msiobj_release(&view->hdr);
+        strcpyW(path, parent);
+        strcatW(path, expanded);
     }
     else
-    {
-        TRACE("MSI_OpenQuery returned %d\n", rc);
-        rc = ERROR_SUCCESS;
-    }
+        path = expanded;
+
+    rc = ACTION_SearchDirectory(package, sig, path, depth, appValue);
+
+end:
+    if (path != expanded)
+        msi_free(path);
+    msi_free(parent);
+    msiobj_release(&row->hdr);
 
     TRACE("returning %d\n", rc);
     return rc;
