@@ -33,12 +33,14 @@
 #define CP_UNICODE 1200
 #endif
 
-/*#define DUMP_CP_INFO*/
-/*#define DUMP_SCRIPT_INFO*/
+#if 0
+#define DUMP_CP_INFO
+#define DUMP_SCRIPT_INFO
 
 #if defined DUMP_CP_INFO || defined DUMP_SCRIPT_INFO
 #include "wine/debug.h"
 #endif
+#endif /* 0 */
 
 #define TRACE_2 OutputDebugStringA
 
@@ -314,8 +316,8 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
 	static const WCHAR autoW[] = {'_','a','u','t','o',0};
 
 #ifdef DUMP_CP_INFO
-	trace("MIMECPINFO #%lu:\n"
-	      "dwFlags %08lx %s\n"
+	trace("MIMECPINFO #%u:\n"
+	      "dwFlags %08x %s\n"
 	      "uiCodePage %u\n"
 	      "uiFamilyCodePage %u\n"
 	      "wszDescription %s\n"
@@ -554,7 +556,7 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     {
 	CPINFOEXA cpinfoex;
 #ifdef DUMP_SCRIPT_INFO
-	trace("SCRIPTINFO #%lu:\n"
+	trace("SCRIPTINFO #%u:\n"
 	      "ScriptId %08x\n"
 	      "uiCodePage %u\n"
 	      "wszDescription %s\n"
@@ -657,7 +659,7 @@ static void test_rfc1766(IMultiLanguage2 *iML2)
         if (ret != S_OK) break;
 
 #ifdef DUMP_CP_INFO
-        trace("lcid %04lx rfc_name %s locale_name %s\n",
+        trace("lcid %04x rfc_name %s locale_name %s\n",
               info.lcid, wine_dbgstr_w(info.wszRfc1766), wine_dbgstr_w(info.wszLocaleName));
 #endif
 
