@@ -1768,7 +1768,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_SETPARAFORMAT:
     ME_SetSelectionParaFormat(editor, (PARAFORMAT2 *)lParam);
-    ME_UpdateRepaint(editor);
+    ME_RewrapRepaint(editor);
     ME_CommitUndo(editor);
     return 0;
   case EM_GETPARAFORMAT:
