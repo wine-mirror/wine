@@ -35,6 +35,7 @@ http://msdn.microsoft.com/library/default.asp?url=/library/en-us/msi/setup/stand
 #include "winerror.h"
 #include "winreg.h"
 #include "winsvc.h"
+#include "odbcinst.h"
 #include "wine/debug.h"
 #include "msidefs.h"
 #include "msipriv.h"
@@ -4163,6 +4164,104 @@ static UINT ACTION_InstallServices( MSIPACKAGE *package )
     return rc;
 }
 
+static MSIFILE *msi_find_file( MSIPACKAGE *package, LPCWSTR filename )
+{
+    MSIFILE *file;
+
+    LIST_FOR_EACH_ENTRY(file, &package->files, MSIFILE, entry)
+    {
+        if (!lstrcmpW(file->File, filename))
+            return file;
+    }
+
+    return NULL;
+}
+
+static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
+{
+    MSIPACKAGE *package = (MSIPACKAGE*)param;
+    LPWSTR driver, driver_path, ptr;
+    WCHAR outpath[MAX_PATH];
+    MSIFILE *driver_file, *setup_file;
+    LPCWSTR desc;
+    DWORD len, usage;
+    UINT r = ERROR_SUCCESS;
+
+    static const WCHAR driver_fmt[] = {
+        'D','r','i','v','e','r','=','%','s',0};
+    static const WCHAR setup_fmt[] = {
+        'S','e','t','u','p','=','%','s',0};
+    static const WCHAR usage_fmt[] = {
+        'F','i','l','e','U','s','a','g','e','=','1',0};
+
+    desc = MSI_RecordGetString(rec, 3);
+
+    driver_file = msi_find_file(package, MSI_RecordGetString(rec, 4));
+    setup_file = msi_find_file(package, MSI_RecordGetString(rec, 5));
+
+    if (!driver_file || !setup_file)
+    {
+        ERR("ODBC Driver entry not found!\n");
+        return ERROR_FUNCTION_FAILED;
+    }
+
+    len = lstrlenW(desc) + lstrlenW(driver_fmt) + lstrlenW(driver_file->FileName) +
+          lstrlenW(setup_fmt) + lstrlenW(setup_file->FileName) +
+          lstrlenW(usage_fmt) + 1;
+    driver = msi_alloc(len * sizeof(WCHAR));
+    if (!driver)
+        return ERROR_OUTOFMEMORY;
+
+    ptr = driver;
+    lstrcpyW(ptr, desc);
+    ptr += lstrlenW(ptr) + 1;
+
+    sprintfW(ptr, driver_fmt, driver_file->FileName);
+    ptr += lstrlenW(ptr) + 1;
+
+    sprintfW(ptr, setup_fmt, setup_file->FileName);
+    ptr += lstrlenW(ptr) + 1;
+
+    lstrcpyW(ptr, usage_fmt);
+    ptr += lstrlenW(ptr) + 1;
+    *ptr = '\0';
+
+    driver_path = strdupW(driver_file->TargetPath);
+    ptr = strrchrW(driver_path, '\\');
+    if (ptr) *ptr = '\0';
+
+    if (!SQLInstallDriverExW(driver, driver_path, outpath, MAX_PATH,
+                             NULL, ODBC_INSTALL_COMPLETE, &usage))
+    {
+        ERR("Failed to install SQL driver!\n");
+        r = ERROR_FUNCTION_FAILED;
+    }
+
+    msi_free(driver);
+    msi_free(driver_path);
+
+    return r;
+}
+
+static UINT ACTION_InstallODBC( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'O','D','B','C','D','r','i','v','e','r',0 };
+
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_InstallODBCDriver, package);
+    msiobj_release(&view->hdr);
+
+    return rc;
+}
+
 static UINT msi_unimplemented_action_stub( MSIPACKAGE *package,
                                            LPCSTR action, LPCWSTR table )
 {
@@ -4346,7 +4445,7 @@ static const struct _actions StandardActions[] = {
     { szMoveFiles, ACTION_MoveFiles },
     { szMsiPublishAssemblies, ACTION_MsiPublishAssemblies },
     { szMsiUnpublishAssemblies, ACTION_MsiUnpublishAssemblies },
-    { szInstallODBC, NULL},
+    { szInstallODBC, ACTION_InstallODBC },
     { szInstallServices, ACTION_InstallServices },
     { szPatchFiles, ACTION_PatchFiles },
     { szProcessComponents, ACTION_ProcessComponents },
