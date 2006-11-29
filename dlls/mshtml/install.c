@@ -263,7 +263,7 @@ static HRESULT WINAPI InstallCallback_OnObjectAvailable(IBindStatusCallback *ifa
     return E_NOTIMPL;
 }
 
-static IBindStatusCallbackVtbl InstallCallbackVtbl = {
+static const IBindStatusCallbackVtbl InstallCallbackVtbl = {
     InstallCallback_QueryInterface,
     InstallCallback_AddRef,
     InstallCallback_Release,
