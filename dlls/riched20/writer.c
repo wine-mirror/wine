@@ -390,7 +390,7 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, ME_DisplayItem *para)
     sprintf(props + strlen(props), "\\s%d", fmt->sStyle);
 
   if (fmt->dwMask & PFM_TABSTOPS) {
-    static const char *leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
+    static const char * const leader[6] = { "", "\\tldot", "\\tlhyph", "\\tlul", "\\tlth", "\\tleq" };
     
     for (i = 0; i < fmt->cTabCount; i++) {
       switch ((fmt->rgxTabs[i] >> 24) & 0xF) {
@@ -415,7 +415,7 @@ ME_StreamOutRTFParaProps(ME_OutStream *pStream, ME_DisplayItem *para)
     
   
   if (fmt->dwMask & PFM_SHADING) {
-    static const char *style[16] = { "", "\\bgdkhoriz", "\\bgdkvert", "\\bgdkfdiag",
+    static const char * const style[16] = { "", "\\bgdkhoriz", "\\bgdkvert", "\\bgdkfdiag",
                                      "\\bgdkbdiag", "\\bgdkcross", "\\bgdkdcross",
                                      "\\bghoriz", "\\bgvert", "\\bgfdiag",
                                      "\\bgbdiag", "\\bgcross", "\\bgdcross",
