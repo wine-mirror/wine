@@ -896,7 +896,7 @@ DWORD WINAPI RtlGetLongestNtPathLength(void)
 BOOLEAN WINAPI RtlIsNameLegalDOS8Dot3( const UNICODE_STRING *unicode,
                                        OEM_STRING *oem, BOOLEAN *spaces )
 {
-    static const char* illegal = "*?<>|\"+=,;[]:/\\\345";
+    static const char illegal[] = "*?<>|\"+=,;[]:/\\\345";
     int dot = -1;
     int i;
     char buffer[12];
