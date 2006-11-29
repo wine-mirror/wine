@@ -731,7 +731,7 @@ static HRESULT register_typelib(void)
     ITypeLib *typelib;
     HRESULT hres;
 
-    static WCHAR wszSHDocVw[] = {'s','h','d','o','c','v','w','.','d','l','l',0};
+    static const WCHAR wszSHDocVw[] = {'s','h','d','o','c','v','w','.','d','l','l',0};
 
     hres = LoadTypeLibEx(wszSHDocVw, REGKIND_REGISTER, &typelib);
     if(FAILED(hres)) {
