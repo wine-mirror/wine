@@ -18,6 +18,7 @@ C_SRCS = \
 	main.c \
 	minidump.c \
 	misc.c \
+	msc.c \
 	msmangle.c \
 	ne.c \
 	output.c \

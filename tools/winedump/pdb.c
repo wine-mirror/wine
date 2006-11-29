@@ -286,12 +286,12 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
 
     /* Read global symbol table */
     modimage = reader->read_file(reader, symbols->gsym_file);
-/* EPP     if (modimage) */
-/* EPP     { */
-/* EPP         printf("\t------------globals-------------\n"); */
-/* EPP         codeview_dump_symbols(modimage, pdb_get_file_size(reader, symbols->gsym_file)); */
-/* EPP         free((char*)modimage); */
-/* EPP     }  */
+    if (modimage)
+    {
+        printf("\t------------globals-------------\n"); 
+        codeview_dump_symbols(modimage, pdb_get_file_size(reader, symbols->gsym_file));
+        free((char*)modimage);
+    }
 
     /* Read per-module symbol / linenumber tables */
     file = (const char*)symbols + sizeof(PDB_SYMBOLS);
@@ -307,7 +307,39 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             file_name   = sym_file->filename;
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
-            printf("\tgot symbol_file %s (SIMPLE)\n", file_name);
+            printf("\t--------symbol file----------- %s\n", file_name);
+            printf("\tgot symbol_file\n"
+                   "\t\tunknown1:   %08x \n"
+                   "\t\trange\n"
+                   "\t\t\tsegment:         %04x\n"
+                   "\t\t\tpad1:            %04x\n"
+                   "\t\t\toffset:          %08x\n"
+                   "\t\t\tsize:            %08x\n"
+                   "\t\t\tcharacteristics: %08x\n"
+                   "\t\t\tindex:           %04x\n"
+                   "\t\t\tpad2:            %04x\n"
+                   "\t\tflag:       %04x\n"
+                   "\t\tfile:       %04x\n"
+                   "\t\tsymb size:  %08x\n"
+                   "\t\tline size:  %08x\n"
+                   "\t\tunknown2:   %08x\n"
+                   "\t\tnSrcFiles:  %08x\n"
+                   "\t\tattribute:  %08x\n",
+                   sym_file->unknown1,
+                   sym_file->range.segment,
+                   sym_file->range.pad1,
+                   sym_file->range.offset,
+                   sym_file->range.size,
+                   sym_file->range.characteristics,
+                   sym_file->range.index,
+                   sym_file->range.pad2,
+                   sym_file->flag,
+                   sym_file->file,
+                   sym_file->symbol_size,
+                   sym_file->lineno_size,
+                   sym_file->unknown2,
+                   sym_file->nSrcFiles,
+                   sym_file->attribute);
         }
         else
         {
@@ -316,8 +348,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             file_name   = sym_file->filename;
             symbol_size = sym_file->symbol_size;
             lineno_size = sym_file->lineno_size;
-            printf("\tgot symbol_file_ex %s\n"
-                   "\t\tunknown1:   %08x \n"
+            printf("\t--------symbol file----------- %s\n", file_name);
+            printf("\t\tunknown1:   %08x \n"
                    "\t\trange\n"
                    "\t\t\tsegment:         %04x\n"
                    "\t\t\tpad1:            %04x\n"
@@ -337,7 +369,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                    "\t\tattribute:  %08x\n"
                    "\t\treserved/0: %08x\n"
                    "\t\treserved/1: %08x\n",
-                   sym_file->filename,
                    sym_file->unknown1,
                    sym_file->range.segment,
                    sym_file->range.pad1,
@@ -362,15 +393,13 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
         if (modimage)
         {
             int total_size = pdb_get_file_size(reader, file_nr);
-            printf("\t------------module-------------\n");
-            dump_data(modimage, total_size, "");
-            printf("\t\tGot module: size:%08x symbol:%08x(%08x) lineno:%08x(%08x)\n",
-                   total_size, symbol_size, symbol_size, lineno_size, symbol_size + lineno_size);
-            /* what's that ??? */
-            dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "\t\t\t");
-/* EPP                 if (symbol_size) */
-/* EPP                     codeview_snarf((const char*)modimage + sizeof(DWORD), symbol_size); */
+
+            if (symbol_size)
+                codeview_dump_symbols((const char*)modimage + sizeof(DWORD), symbol_size);
                 
+            /* what's that part ??? */
+            if (0)
+                dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "\t\t\t");
             free((char*)modimage);
         }
             
@@ -429,7 +458,7 @@ static void pdb_dump_types(struct pdb_reader* reader)
            types->search_len,
            types->unknown_offset,
            types->unknown_len);
-/* codeview_parse_type_table((const char*)types + types->type_offset, types->type_size); */
+    codeview_dump_types((const char*)types + types->type_offset, types->type_size);
     free((char*)types);
 }
 
