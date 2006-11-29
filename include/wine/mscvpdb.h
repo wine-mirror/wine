@@ -343,7 +343,7 @@ union codeview_type
     {
         unsigned short int      len;
         short int               id;
-        unsigned                unknown1; /* could be this_type ??? */
+        unsigned                this_type;
         unsigned int            class_type;
         unsigned int            rvtype;
         unsigned char           call;
@@ -540,6 +540,14 @@ union codeview_fieldtype
     struct
     {
         short int		id;
+        short int		attribute;
+        unsigned int	        type;
+        char                    name[1];
+    } stmember_v3;
+
+    struct
+    {
+        short int		id;
         short int		count;
         short int		mlist;
         struct p_string         p_name;
@@ -556,7 +564,15 @@ union codeview_fieldtype
     struct
     {
         short int		id;
-        short int		index;
+        short int		count;
+        unsigned int	        mlist;
+        char                    name[1];
+    } method_v3;
+
+    struct
+    {
+        short int		id;
+        short int		type;
         struct p_string         p_name;
     } nesttype_v1;
 
@@ -564,9 +580,17 @@ union codeview_fieldtype
     {
         short int		id;
         short int		_pad0;
-        unsigned int	        index;
+        unsigned int	        type;
         struct p_string         p_name;
     } nesttype_v2;
+
+    struct
+    {
+        short int		id;
+        short int		_pad0;
+        unsigned int	        type;
+        char                    name[1];
+    } nesttype_v3;
 
     struct
     {
@@ -606,6 +630,22 @@ union codeview_fieldtype
     {
         short int		id;
         short int		attribute;
+        unsigned int 	        type;
+        struct p_string         p_name;
+    } onemethod_v2;
+
+    struct
+    {
+        short int		id;
+        short int		attribute;
+        unsigned int 	        type;
+        char                    name[1];
+    } onemethod_v3;
+
+    struct
+    {
+        short int		id;
+        short int		attribute;
         short int		type;
         unsigned int	        vtab_offset;
         struct p_string         p_name;
@@ -615,9 +655,10 @@ union codeview_fieldtype
     {
         short int		id;
         short int		attribute;
-        unsigned int 	        type;
+        unsigned int	        type;
+        unsigned int	        vtab_offset;
         struct p_string         p_name;
-    } onemethod_v2;
+    } onemethod_virt_v2;
 
     struct
     {
@@ -625,8 +666,8 @@ union codeview_fieldtype
         short int		attribute;
         unsigned int	        type;
         unsigned int	        vtab_offset;
-        struct p_string         p_name;
-    } onemethod_virt_v2;
+        char                    name[1];
+    } onemethod_virt_v3;
 
     struct
     {
@@ -647,7 +688,7 @@ union codeview_fieldtype
     {
         short int		id;
         short int		attribute;
-        short int		index;
+        short int		type;
         struct p_string         p_name;
     } nesttypeex_v1;
 
@@ -655,7 +696,7 @@ union codeview_fieldtype
     {
         short int		id;
         short int		attribute;
-        unsigned int	        index;
+        unsigned int	        type;
         struct p_string         p_name;
     } nesttypeex_v2;
 
@@ -817,6 +858,10 @@ union codeview_fieldtype
 #define LF_UNION_V3             0x1506
 #define LF_ENUM_V3              0x1507
 #define LF_MEMBER_V3            0x150d
+#define LF_STMEMBER_V3          0x150e
+#define LF_METHOD_V3            0x150f
+#define LF_NESTTYPE_V3          0x1510
+#define LF_ONEMETHOD_V3         0x1511
 
 #define LF_NUMERIC              0x8000    /* numeric leaf types */
 #define LF_CHAR                 0x8000
@@ -960,6 +1005,26 @@ union codeview_symbol
 
     struct
     {
+        short int               len;
+        short int               id;
+        unsigned int            symtype;
+        unsigned int            offset;
+        unsigned short          segment;
+        struct p_string         p_name;
+    } public_v2;
+
+    struct
+    {
+        short int               len;
+        short int               id;
+        unsigned int            symtype;
+        unsigned int            offset;
+        unsigned short          segment;
+        char                    name[1];
+    } public_v3;
+
+    struct
+    {
 	short int	        len;	        /* Total length of this entry */
 	short int	        id;		/* Always S_BPREL_V1 */
 	unsigned int	        offset;	        /* Stack offset relative to BP */
@@ -1004,6 +1069,16 @@ union codeview_symbol
         struct p_string         p_name;
         /* don't handle register tracking */
     } register_v2;
+
+    struct
+    {
+	short int	        len;	        /* Total length of this entry */
+	short int	        id;		/* Always S_REGISTER_V3 */
+        unsigned int            type;           /* check whether type & reg are correct */
+        unsigned short          reg;
+        char                    name[1];
+        /* don't handle register tracking */
+    } register_v3;
 
     struct
     {
@@ -1120,7 +1195,7 @@ union codeview_symbol
         short int               id;
         unsigned int            unknown;
         struct p_string         p_name;
-    } compile_v1;
+    } compiland_v1;
 
     struct
     {
@@ -1129,7 +1204,7 @@ union codeview_symbol
         unsigned                unknown1[4];
         unsigned short          unknown2;
         struct p_string         p_name;
-    } compile_v2;
+    } compiland_v2;
 
     struct
     {
@@ -1137,7 +1212,7 @@ union codeview_symbol
         short int               id;
         unsigned int            unknown;
         char                    name[1];
-    } compile_v3;
+    } compiland_v3;
 
     struct
     {
@@ -1148,7 +1223,7 @@ union codeview_symbol
     } ssearch_v1;
 };
 
-#define S_COMPILE_V1    0x0001
+#define S_COMPILAND_V1  0x0001
 #define S_REGISTER_V1   0x0002
 #define S_CONSTANT_V1   0x0003
 #define S_UDT_V1        0x0004
@@ -1202,18 +1277,19 @@ union codeview_symbol
 #if 0
 #define S_XXXXXXXXX_32  0x1012  /* seems linked to a function, content unknown */
 #endif
-#define S_COMPILE_V2    0x1013
+#define S_COMPILAND_V2  0x1013
 
-#define S_COMPILE_V3    0x1101
+#define S_COMPILAND_V3  0x1101
 #define S_THUNK_V3      0x1102
 #define S_BLOCK_V3      0x1103
 #define S_LABEL_V3      0x1105
+#define S_REGISTER_V3   0x1106
 #define S_CONSTANT_V3   0x1107
 #define S_UDT_V3        0x1108
 #define S_BPREL_V3      0x110B
 #define S_LDATA_V3      0x110C
 #define S_GDATA_V3      0x110D
-#define S_PUB_DATA_V3   0x110E
+#define S_PUB_V3        0x110E
 #define S_LPROC_V3      0x110F
 #define S_GPROC_V3      0x1110
 #define S_MSTOOL_V3     0x1116  /* not really understood */

@@ -1454,16 +1454,16 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             }
             break;
 
-        case S_COMPILE_V1:
-            TRACE("S-Compile-V1 %x %s\n", 
-                  sym->compile_v1.unknown, terminate_string(&sym->compile_v1.p_name));
+        case S_COMPILAND_V1:
+            TRACE("S-Compiland-V1 %x %s\n",
+                  sym->compiland_v1.unknown, terminate_string(&sym->compiland_v1.p_name));
             break;
 
-        case S_COMPILE_V2:
-            TRACE("S-Compile-V2 %s\n", terminate_string(&sym->compile_v2.p_name));
+        case S_COMPILAND_V2:
+            TRACE("S-Compiland-V2 %s\n", terminate_string(&sym->compiland_v2.p_name));
             if (TRACE_ON(dbghelp_msc))
             {
-                const char* ptr1 = sym->compile_v2.p_name.name + sym->compile_v2.p_name.namelen;
+                const char* ptr1 = sym->compiland_v2.p_name.name + sym->compiland_v2.p_name.namelen;
                 const char* ptr2;
                 while (*ptr1)
                 {
@@ -1473,11 +1473,11 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
                 }
             }
             break;
-        case S_COMPILE_V3:
-            TRACE("S-Compile-V3 %s\n", sym->compile_v3.name);
+        case S_COMPILAND_V3:
+            TRACE("S-Compiland-V3 %s\n", sym->compiland_v3.name);
             if (TRACE_ON(dbghelp_msc))
             {
-                const char* ptr1 = sym->compile_v3.name + strlen(sym->compile_v3.name);
+                const char* ptr1 = sym->compiland_v3.name + strlen(sym->compiland_v3.name);
                 const char* ptr2;
                 while (*ptr1)
                 {
@@ -1622,7 +1622,7 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
             length += (*name + 1 + 3) & ~3;
             break;
 
-        case S_PUB_DATA_V3:
+        case S_PUB_V3:
             if (!(dbghelp_options & SYMOPT_NO_PUBLICS))
             {
                 symt_new_public(msc_dbg->module, compiland,
