@@ -300,13 +300,13 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
 
 static void dump_BINDINFO(BINDINFO *bi)
 {
-    static const char *BINDINFOF_str[] = {
+    static const char * const BINDINFOF_str[] = {
         "#0",
         "BINDINFOF_URLENCODESTGMEDDATA",
         "BINDINFOF_URLENCODEDEXTRAINFO"
     };
 
-    static const char *BINDVERB_str[] = {
+    static const char * const BINDVERB_str[] = {
         "BINDVERB_GET",
         "BINDVERB_POST",
         "BINDVERB_PUT",
