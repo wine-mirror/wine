@@ -485,7 +485,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
     case CBA_EVENT:
     case CBA_READ_MEMORY:
     default:
-        FIXME("No mapping for action %lu\n", action);
+        FIXME("No mapping for action %u\n", action);
         return FALSE;
     }
     return cb32(hProcess, action, (PVOID)data32, (PVOID)user32);
@@ -496,7 +496,7 @@ static BOOL CALLBACK reg_cb64to32(HANDLE hProcess, ULONG action, ULONG64 data, U
  */
 BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
 {
-    TRACE("%p %lu %p\n", pcs, action, data);
+    TRACE("%p %u %p\n", pcs, action, data);
 
     if (!pcs->reg_cb) return FALSE;
     if (pcs->reg_is_unicode)
@@ -529,7 +529,7 @@ BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
         case CBA_EVENT:
         case CBA_READ_MEMORY:
         default:
-            FIXME("No mapping for action %lu\n", action);
+            FIXME("No mapping for action %u\n", action);
             return FALSE;
         }
     }

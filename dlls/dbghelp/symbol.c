@@ -563,7 +563,7 @@ static void symt_fill_sym_info(const struct module_pair* pair,
             sym_info->Name[sym_info->NameLen] = '\0';
         }
     }
-    TRACE_(dbghelp_symt)("%p => %s %lu %s\n",
+    TRACE_(dbghelp_symt)("%p => %s %u %s\n",
                          sym, sym_info->Name, sym_info->Size,
                          wine_dbgstr_longlong(sym_info->Address));
 }
@@ -1254,7 +1254,7 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
     struct module_pair  pair;
     int                 idx;
 
-    TRACE("%p %08lx %p %p\n", hProcess, dwAddr, pdwDisplacement, Line);
+    TRACE("%p %08x %p %p\n", hProcess, dwAddr, pdwDisplacement, Line);
 
     if (Line->SizeOfStruct < sizeof(*Line)) return FALSE;
 
@@ -1479,7 +1479,7 @@ BOOL WINAPI SymGetLineNext64(HANDLE hProcess, PIMAGEHLP_LINE64 Line)
  */
 PVOID WINAPI SymFunctionTableAccess(HANDLE hProcess, DWORD AddrBase)
 {
-    WARN("(%p, 0x%08lx): stub\n", hProcess, AddrBase);
+    WARN("(%p, 0x%08x): stub\n", hProcess, AddrBase);
     return NULL;
 }
 
@@ -1497,8 +1497,8 @@ PVOID WINAPI SymFunctionTableAccess64(HANDLE hProcess, DWORD64 AddrBase)
  */
 BOOL WINAPI SymUnDName(PIMAGEHLP_SYMBOL sym, LPSTR UnDecName, DWORD UnDecNameLength)
 {
-    TRACE("(%p %s %lu)\n", sym, UnDecName, UnDecNameLength);
-    return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength, 
+    TRACE("(%p %s %u)\n", sym, UnDecName, UnDecNameLength);
+    return UnDecorateSymbolName(sym->Name, UnDecName, UnDecNameLength,
                                 UNDNAME_COMPLETE) != 0;
 }
 
@@ -1515,7 +1515,7 @@ DWORD WINAPI UnDecorateSymbolName(LPCSTR DecoratedName, LPSTR UnDecoratedName,
     static char* (*p_undname)(char*, const char*, int, void* (*)(size_t), void (*)(void*), unsigned short);
     static const WCHAR szMsvcrt[] = {'m','s','v','c','r','t','.','d','l','l',0};
 
-    TRACE("(%s, %p, %ld, 0x%08lx)\n",
+    TRACE("(%s, %p, %d, 0x%08x)\n",
           debugstr_a(DecoratedName), UnDecoratedName, UndecoratedLength, Flags);
 
     if (!p_undname)
@@ -1559,14 +1559,14 @@ BOOL WINAPI SymSearch(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
 {
     struct sym_enum     se;
 
-    TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask, 
+    TRACE("(%p %s %u %u %s %s %p %p %x)\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, Mask,
           wine_dbgstr_longlong(Address), EnumSymbolsCallback,
           UserContext, Options);
 
     if (Options != SYMSEARCH_GLOBALSONLY)
     {
-        FIXME("Unsupported searching with options (%lx)\n", Options);
+        FIXME("Unsupported searching with options (%x)\n", Options);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
@@ -1593,8 +1593,8 @@ BOOL WINAPI SymSearchW(HANDLE hProcess, ULONG64 BaseOfDll, DWORD Index,
     BOOL                ret = FALSE;
     char*               maskA = NULL;
 
-    TRACE("(%p %s %lu %lu %s %s %p %p %lx)\n",
-          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, debugstr_w(Mask), 
+    TRACE("(%p %s %u %u %s %s %p %p %x)\n",
+          hProcess, wine_dbgstr_longlong(BaseOfDll), Index, SymTag, debugstr_w(Mask),
           wine_dbgstr_longlong(Address), EnumSymbolsCallback,
           UserContext, Options);
 

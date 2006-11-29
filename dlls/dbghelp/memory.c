@@ -55,7 +55,7 @@ DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr)
         FIXME("Unsupported (yet) mode (%x)\n", addr->Mode);
         return 0;
     }
-    FIXME("Failed to linearize address %04x:%08lx (mode %x)\n",
+    FIXME("Failed to linearize address %04x:%08x (mode %x)\n",
           addr->Segment, addr->Offset, addr->Mode);
     return 0;
 }

@@ -270,7 +270,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
         {
             if (checksum != (DWORD_PTR)s->id)
             {
-                WARN("Found %s, but wrong checksums: %08lx %08lx\n",
+                WARN("Found %s, but wrong checksums: %08x %08lx\n",
                       buffer, checksum, (DWORD_PTR)s->id);
                 return FALSE;
             }
@@ -298,7 +298,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
                 }
                 if (pdb_lookup.u.jg.timestamp != (DWORD_PTR)s->id)
                 {
-                    WARN("Found %s, but wrong signature: %08lx %08lx\n",
+                    WARN("Found %s, but wrong signature: %08x %08lx\n",
                          buffer, pdb_lookup.u.jg.timestamp, (DWORD_PTR)s->id);
                     return FALSE;
                 }
@@ -320,7 +320,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             }
             if (pdb_lookup.age != s->two)
             {
-                WARN("Found %s, but wrong age: %08lx %08lx\n",
+                WARN("Found %s, but wrong age: %08x %08x\n",
                      buffer, pdb_lookup.age, s->two);
                 return FALSE;
             }
@@ -353,8 +353,8 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
     const char*         filename;
     const char*         searchPath = inSearchPath;
 
-    TRACE("(%p %s %s %p %08lx %08lx %08lx %p %p %p)\n",
-          hProcess, searchPath, full_path, id, two, three, flags, 
+    TRACE("(%p %s %s %p %08x %08x %08x %p %p %p)\n",
+          hProcess, searchPath, full_path, id, two, three, flags,
           buffer, cb, user);
 
     if (!pcs) return FALSE;

@@ -749,7 +749,7 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
 
                 if (!ReadProcessMemory(hproc, (void*)addr, &deref, sizeof(deref), NULL))
                 {
-                    WARN("Couldn't read memory at %lx\n", addr);
+                    WARN("Couldn't read memory at %x\n", addr);
                     return loc_err_cant_read;
                 }
                 stack[++stk] = deref;

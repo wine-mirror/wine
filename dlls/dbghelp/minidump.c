@@ -140,7 +140,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
 
     if ((hThread = OpenThread(THREAD_ALL_ACCESS, FALSE, tid)) == NULL)
     {
-        FIXME("Couldn't open thread %lu (%lu)\n", 
+        FIXME("Couldn't open thread %u (%u)\n",
               dc->spi->ti[thd_idx].dwThreadID, GetLastError());
         return FALSE;
     }
@@ -247,16 +247,16 @@ static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base,
                                      void* user)
 {
     struct dump_context*        dc = (struct dump_context*)user;
-    DWORD size, checksum;
+    DWORD rbase, size, checksum;
 
     /* FIXME: there's no relevant timestamp on ELF modules */
     /* NB: if we have a non-null base from the live-target use it (whenever
      * the ELF module is relocatable or not). If we have a null base (ELF
      * module isn't relocatable) then grab its base address from ELF file
      */
-    if (!elf_fetch_file_info(name, base ? NULL : &base, &size, &checksum))
+    if (!elf_fetch_file_info(name, &rbase, &size, &checksum))
         size = checksum = 0;
-    add_module(dc, name, base, size, 0 /* FIXME */, checksum, TRUE);
+    add_module(dc, name, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
     return TRUE;
 }
 

@@ -45,13 +45,13 @@ static const char* wine_dbgstr_addr(const ADDRESS* addr)
     switch (addr->Mode)
     {
     case AddrModeFlat:
-        return wine_dbg_sprintf("flat<%08lx>", addr->Offset);
+        return wine_dbg_sprintf("flat<%08x>", addr->Offset);
     case AddrMode1616:
-        return wine_dbg_sprintf("1616<%04x:%04lx>", addr->Segment, addr->Offset);
+        return wine_dbg_sprintf("1616<%04x:%04x>", addr->Segment, addr->Offset);
     case AddrMode1632:
-        return wine_dbg_sprintf("1632<%04x:%08lx>", addr->Segment, addr->Offset);
+        return wine_dbg_sprintf("1632<%04x:%08x>", addr->Segment, addr->Offset);
     case AddrModeReal:
-        return wine_dbg_sprintf("real<%04x:%04lx>", addr->Segment, addr->Offset);
+        return wine_dbg_sprintf("real<%04x:%04x>", addr->Segment, addr->Offset);
     default:
         return "unknown";
     }
@@ -60,13 +60,19 @@ static const char* wine_dbgstr_addr(const ADDRESS* addr)
 static BOOL CALLBACK read_mem(HANDLE hProcess, DWORD addr, void* buffer,
                               DWORD size, LPDWORD nread)
 {
-    return ReadProcessMemory(hProcess, (void*)addr, buffer, size, nread);
+    SIZE_T      r;
+    if (!ReadProcessMemory(hProcess, (void*)addr, buffer, size, &r)) return FALSE;
+    *nread = r;
+    return TRUE;
 }
 
 static BOOL CALLBACK read_mem64(HANDLE hProcess, DWORD64 addr, void* buffer,
                                 DWORD size, LPDWORD nread)
 {
-    return ReadProcessMemory(hProcess, (void*)(DWORD_PTR)addr, buffer, size, nread);
+    SIZE_T      r;
+    if (!ReadProcessMemory(hProcess, (void*)(DWORD_PTR)addr, buffer, size, &r)) return FALSE;
+    *nread = r;
+    return TRUE;
 }
 
 /* indexes in Reserved array */
@@ -167,8 +173,8 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
     /* sanity check */
     if (curr_mode >= stm_done) return FALSE;
 
-    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08lx nSwitch=%08lx\n",
-          wine_dbgstr_addr(&frame->AddrPC), 
+    TRACE("Enter: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08x nSwitch=%08x\n",
+          wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack), 
@@ -206,7 +212,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
             {
                 if (!sw_read_mem(cb, next_switch, &frame32, sizeof(frame32)))
                 {
-                    WARN("Bad stack frame 0x%08lx\n", next_switch);
+                    WARN("Bad stack frame 0x%08x\n", next_switch);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame32.frame16;
@@ -224,7 +230,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                 p = sw_xlat_addr(cb, &tmp);
                 if (!sw_read_mem(cb, p, &frame16, sizeof(frame16)))
                 {
-                    WARN("Bad stack frame 0x%08lx\n", p);
+                    WARN("Bad stack frame 0x%08x\n", p);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame16.frame32;
@@ -266,7 +272,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
             {
                 if (!sw_read_mem(cb, next_switch, &frame32, sizeof(frame32)))
                 {
-                    WARN("Bad stack frame 0x%08lx\n", next_switch);
+                    WARN("Bad stack frame 0x%08x\n", next_switch);
                     goto done_err;
                 }
 
@@ -290,7 +296,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
 
                 if (!sw_read_mem(cb, p, &frame16, sizeof(frame16)))
                 {
-                    WARN("Bad stack frame 0x%08lx\n", p);
+                    WARN("Bad stack frame 0x%08x\n", p);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame16.frame32;
@@ -307,16 +313,16 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
 
                 if (!sw_read_mem(cb, p, &frame16, sizeof(frame16)))
                 {
-                    WARN("Bad stack frame 0x%08lx\n", p);
+                    WARN("Bad stack frame 0x%08x\n", p);
                     goto done_err;
                 }
 
                 TRACE("Got a 16 bit stack switch:"
                       "\n\tframe32: %08lx"
-                      "\n\tedx:%08lx ecx:%08lx ebp:%08lx"
+                      "\n\tedx:%08x ecx:%08x ebp:%08x"
                       "\n\tds:%04x es:%04x fs:%04x gs:%04x"
-                      "\n\tcall_from_ip:%08lx module_cs:%04lx relay=%08lx"
-                      "\n\tentry_ip:%04x entry_point:%08lx"
+                      "\n\tcall_from_ip:%08x module_cs:%04x relay=%08x"
+                      "\n\tentry_ip:%04x entry_point:%08x"
                       "\n\tbp:%04x ip:%04x cs:%04x\n",
                       (unsigned long)frame16.frame32,
                       frame16.edx, frame16.ecx, frame16.ebp,
@@ -343,7 +349,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
                 next_switch = curr_switch;
                 if (!sw_read_mem(cb, next_switch, &frame32, sizeof(frame32)))
                 {
-                    WARN("Bad stack frame 0x%08lx\n", next_switch);
+                    WARN("Bad stack frame 0x%08x\n", next_switch);
                     goto done_err;
                 }
                 curr_switch = (DWORD)frame32.frame16;
@@ -427,10 +433,10 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
         if (!sw_read_mem(cb, frame->AddrFrame.Offset + sizeof(DWORD),
                          &frame->AddrReturn.Offset, sizeof(DWORD)))
         {
-            WARN("Cannot read new frame offset %08lx\n", frame->AddrFrame.Offset + sizeof(DWORD));
+            WARN("Cannot read new frame offset %08x\n", frame->AddrFrame.Offset + sizeof(DWORD));
             goto done_err;
         }
-        sw_read_mem(cb, frame->AddrFrame.Offset + 2 * sizeof(DWORD), 
+        sw_read_mem(cb, frame->AddrFrame.Offset + 2 * sizeof(DWORD),
                     frame->Params, sizeof(frame->Params));
     }
 
@@ -442,8 +448,8 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
     else
         frame->FuncTableEntry = NULL;
 
-    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08lx nSwitch=%08lx FuncTable=%p\n",
-          wine_dbgstr_addr(&frame->AddrPC), 
+    TRACE("Leave: PC=%s Frame=%s Return=%s Stack=%s Mode=%s cSwitch=%08x nSwitch=%08x FuncTable=%p\n",
+          wine_dbgstr_addr(&frame->AddrPC),
           wine_dbgstr_addr(&frame->AddrFrame),
           wine_dbgstr_addr(&frame->AddrReturn),
           wine_dbgstr_addr(&frame->AddrStack), 
@@ -468,7 +474,7 @@ BOOL WINAPI StackWalk(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 {
     struct stack_walk_callback  swcb;
 
-    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p)\n",
           MachineType, hProcess, hThread, frame, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr);
@@ -506,7 +512,7 @@ BOOL WINAPI StackWalk64(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
     STACKFRAME                  frame32;
     BOOL                        ret;
 
-    TRACE("(%ld, %p, %p, %p, %p, %p, %p, %p, %p)\n",
+    TRACE("(%d, %p, %p, %p, %p, %p, %p, %p, %p)\n",
           MachineType, hProcess, hThread, frame64, ctx,
           f_read_mem, FunctionTableAccessRoutine,
           GetModuleBaseRoutine, f_xlat_adr);

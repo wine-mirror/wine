@@ -610,9 +610,9 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                  * Also, we check that we don't have two symbols, one local, the other 
                  * global which is legal
                  */
-                if ((xsize || ste->symp->st_size) && 
+                if ((xsize || ste->symp->st_size) &&
                     (kind == (ELF32_ST_BIND(ste->symp->st_info) == STB_LOCAL) ? DataIsFileStatic : DataIsGlobal))
-                    FIXME("Duplicate in %s: %s<%08lx-%08x> %s<%s-%s>\n", 
+                    FIXME("Duplicate in %s: %s<%08x-%08x> %s<%s-%s>\n",
                           module->module.ModuleName,
                           ste->ht_elt.name, addr, ste->symp->st_size,
                           module->addr_sorttab[idx]->hash_elt.name,
@@ -810,7 +810,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
 
     if (fmap->with_crc && (fmap->crc != calc_crc32(fmap)))
     {
-        ERR("Bad CRC for module %s (got %08lx while expecting %08lx)\n",
+        ERR("Bad CRC for module %s (got %08x while expecting %08lx)\n",
             module->module.ImageName, calc_crc32(fmap), fmap->crc);
         /* we don't tolerate mis-matched files */
         return FALSE;

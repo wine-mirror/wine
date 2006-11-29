@@ -1728,7 +1728,7 @@ static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
 
     if (toc->file_size[file_nr] == 0 || toc->file_size[file_nr] == 0xFFFFFFFF)
     {
-        FIXME(">>> requesting NULL stream (%lu)\n", file_nr);
+        FIXME(">>> requesting NULL stream (%u)\n", file_nr);
         return NULL;
     }
     block_list = &toc->file_size[toc->num_files];
@@ -1925,7 +1925,7 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
         case 19990903:
             break;
         default:
-            ERR("-Unknown type info version %ld\n", types.version);
+            ERR("-Unknown type info version %d\n", types.version);
         }
 
         ctp.module = msc_dbg->module;
@@ -1989,7 +1989,7 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
         case 19970604:      /* VC 6.0 */
             break;
         default:
-            ERR("-Unknown root block version %ld\n", root->Version);
+            ERR("-Unknown root block version %d\n", root->Version);
         }
         if (do_fill)
         {
@@ -2001,7 +2001,7 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
                  pdb_lookup->u.jg.timestamp != root->TimeDateStamp ||
                  pdb_lookup->age != root->Age)
             ret = FALSE;
-        TRACE("found JG/%c for %s: age=%lx timestamp=%lx\n",
+        TRACE("found JG/%c for %s: age=%x timestamp=%x\n",
               do_fill ? 'f' : '-', pdb_lookup->filename, root->Age,
               root->TimeDateStamp);
         pdb_free(root);
@@ -2026,7 +2026,7 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
         case 20000404:
             break;
         default:
-            ERR("-Unknown root block version %ld\n", root->Version);
+            ERR("-Unknown root block version %d\n", root->Version);
         }
         if (do_fill)
         {
@@ -2038,7 +2038,7 @@ static BOOL pdb_init(struct pdb_lookup* pdb_lookup, const char* image, BOOL do_f
                  memcmp(&pdb_lookup->u.ds.guid, &root->guid, sizeof(GUID)) ||
                  pdb_lookup->age != root->Age)
             ret = FALSE;
-        TRACE("found DS/%c for %s: age=%lx guid=%s\n",
+        TRACE("found DS/%c for %s: age=%x guid=%s\n",
               do_fill ? 'f' : '-', pdb_lookup->filename, root->Age,
               debugstr_guid(&root->guid));
         pdb_free(root);
@@ -2111,7 +2111,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
                 imp_pdb_lookup.kind = PDB_JG;
                 imp_pdb_lookup.u.jg.timestamp = imp->TimeDateStamp;
                 imp_pdb_lookup.age = imp->Age;
-                TRACE("got for %s: age=%lu ts=%lx\n",
+                TRACE("got for %s: age=%u ts=%x\n",
                       imp->filename, imp->Age, imp->TimeDateStamp);
                 pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, i);
             }
@@ -2164,7 +2164,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         case 19990903:
             break;
         default:
-            ERR("-Unknown symbol info version %ld %08lx\n", 
+            ERR("-Unknown symbol info version %d %08x\n",
                 symbols.version, symbols.version);
         }
 
@@ -2404,7 +2404,7 @@ static BOOL codeview_process_info(const struct process* pcs,
     {
         const CODEVIEW_HEADER_RSDS* rsds = (const CODEVIEW_HEADER_RSDS*)msc_dbg->root;
 
-        TRACE("Got RSDS type of PDB file: guid=%s unk=%08lx name=%s\n",
+        TRACE("Got RSDS type of PDB file: guid=%s unk=%08x name=%s\n",
               wine_dbgstr_guid(&rsds->guid), rsds->unknown, rsds->name);
         pdb_lookup.filename = rsds->name;
         pdb_lookup.kind = PDB_DS;
@@ -2415,7 +2415,7 @@ static BOOL codeview_process_info(const struct process* pcs,
         break;
     }
     default:
-        ERR("Unknown CODEVIEW signature %08lX in module %s\n",
+        ERR("Unknown CODEVIEW signature %08X in module %s\n",
             cv->dwSignature, msc_dbg->module->module.ModuleName);
         break;
     }

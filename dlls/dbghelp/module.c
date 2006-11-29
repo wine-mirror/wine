@@ -393,8 +393,8 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
     struct process*     pcs;
     struct module*	module = NULL;
 
-    TRACE("(%p %p %s %s %08lx %08lx)\n", 
-          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName), 
+    TRACE("(%p %p %s %s %08x %08x)\n",
+          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
           BaseOfDll, SizeOfDll);
 
     pcs = process_find_by_handle(hProcess);
@@ -448,8 +448,8 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
                                 PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
                                 PMODLOAD_DATA Data, DWORD Flags)
 {
-    TRACE("(%p %p %s %s %s %08lx %p %08lx)\n", 
-          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName), 
+    TRACE("(%p %p %s %s %s %08x %p %08x)\n",
+          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
           wine_dbgstr_longlong(BaseOfDll), DllSize, Data, Flags);
 
     if (Data)
@@ -471,7 +471,7 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
         return TRUE;
     }
     if (Flags & ~(SLMFLAG_VIRTUAL))
-        FIXME("Unsupported Flags %08lx for %s\n", Flags, ImageName);
+        FIXME("Unsupported Flags %08x for %s\n", Flags, ImageName);
 
     return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, DllSize);
 }
