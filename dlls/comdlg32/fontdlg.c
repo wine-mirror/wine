@@ -88,7 +88,7 @@ static const WCHAR stIso88594[]={'A','a','B','b',0}; /* ISO-8859-4 */
 static const WCHAR stIso885910[]={'A','a','B','b',0}; /* ISO-8859-10 */
 static const WCHAR stCeltic[]={'A','a','B','b',0};/* Celtic */
 
-static const WCHAR *sample_lang_text[]={
+static const WCHAR * const sample_lang_text[]={
     stWestern,stSymbol,stShiftJis,stHangul,stGB2312,
     stBIG5,stGreek,stTurkish,stHebrew,stArabic,
     stBaltic,stVietname,stCyrillic,stEastEur,stThai,

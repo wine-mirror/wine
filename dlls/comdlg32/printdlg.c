@@ -51,7 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 #define MAX_COPIES 9999
 
 /* Debugging info */
-static struct pd_flags psd_flags[] = {
+static const struct pd_flags psd_flags[] = {
   {PSD_MINMARGINS,"PSD_MINMARGINS"},
   {PSD_MARGINS,"PSD_MARGINS"},
   {PSD_INTHOUSANDTHSOFINCHES,"PSD_INTHOUSANDTHSOFINCHES"},
@@ -1999,7 +1999,7 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
-	struct pd_flags *pflag = pd_flags;
+	const struct pd_flags *pflag = pd_flags;
 	for( ; pflag->name; pflag++) {
 	    if(lppd->Flags & pflag->flag)
 	        strcat(flagstr, pflag->name);
@@ -2141,7 +2141,7 @@ BOOL WINAPI PrintDlgW(
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
-	struct pd_flags *pflag = pd_flags;
+	const struct pd_flags *pflag = pd_flags;
 	for( ; pflag->name; pflag++) {
 	    if(lppd->Flags & pflag->flag)
 	        strcat(flagstr, pflag->name);
@@ -3335,7 +3335,7 @@ BOOL WINAPI PageSetupDlgA(LPPAGESETUPDLGA setupdlg) {
     /* TRACE */
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
-	struct pd_flags *pflag = psd_flags;
+	const struct pd_flags *pflag = psd_flags;
 	for( ; pflag->name; pflag++) {
 	    if(setupdlg->Flags & pflag->flag) {
 	        strcat(flagstr, pflag->name);
@@ -3437,7 +3437,7 @@ BOOL WINAPI PageSetupDlgW(LPPAGESETUPDLGW setupdlg) {
     FIXME("Unicode implementation is not done yet\n");
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
-	struct pd_flags *pflag = psd_flags;
+	const struct pd_flags *pflag = psd_flags;
 	for( ; pflag->name; pflag++) {
 	    if(setupdlg->Flags & pflag->flag) {
 	        strcat(flagstr, pflag->name);

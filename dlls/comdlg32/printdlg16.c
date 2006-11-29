@@ -349,7 +349,7 @@ BOOL16 WINAPI PrintDlg16(
 
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
-	struct pd_flags *pflag = pd_flags;
+	const struct pd_flags *pflag = pd_flags;
 	for( ; pflag->name; pflag++) {
 	    if(lppd->Flags & pflag->flag)
 	        strcat(flagstr, pflag->name);

@@ -175,8 +175,8 @@ typedef struct tagFD32_PRIVATE
 #define CBSetExtendedUI(hwnd,flag) \
   SendMessageA(hwnd,CB_SETEXTENDEDUI,(WPARAM)(flag),0)
 
-const char *FileOpenDlgInfosStr = "FileOpenDlgInfos"; /* windows property description string */
-const char *LookInInfosStr = "LookInInfos"; /* LOOKIN combo box property */
+const char FileOpenDlgInfosStr[] = "FileOpenDlgInfos"; /* windows property description string */
+static const char LookInInfosStr[] = "LookInInfos"; /* LOOKIN combo box property */
 
 /***********************************************************************
  * Prototypes
