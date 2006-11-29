@@ -154,6 +154,7 @@ dumpers[] =
     {SIG_DOS,           get_kind_exec,  NULL},
     {SIG_PE,            get_kind_exec,  pe_dump},
     {SIG_DBG,           get_kind_dbg,   dbg_dump},
+    {SIG_PDB,           get_kind_pdb,   pdb_dump},
     {SIG_NE,            get_kind_exec,  ne_dump},
     {SIG_LE,            get_kind_exec,  le_dump},
     {SIG_COFFLIB,       get_kind_lib,   lib_dump},

@@ -21,6 +21,7 @@ C_SRCS = \
 	msmangle.c \
 	ne.c \
 	output.c \
+	pdb.c \
 	pe.c \
 	search.c \
 	symbol.c
