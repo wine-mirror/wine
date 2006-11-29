@@ -83,7 +83,7 @@ static void WINAPI con_strategy(CONTEXT86*ctx);
 static void WINAPI con_interrupt(CONTEXT86*ctx);
 
 /* devices */
-static WINEDEV devs[] =
+static const WINEDEV devs[] =
 {
   { "NUL     ",
     ATTR_CHAR|ATTR_NUL|ATTR_DEVICE,
