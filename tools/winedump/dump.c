@@ -158,6 +158,7 @@ dumpers[] =
     {SIG_LE,            get_kind_exec,  le_dump},
     {SIG_COFFLIB,       get_kind_lib,   lib_dump},
     {SIG_MDMP,          get_kind_mdmp,  mdmp_dump},
+    {SIG_LNK,           get_kind_lnk,   lnk_dump},
     {SIG_UNKNOWN,       NULL,           NULL} /* sentinel */
 };
 

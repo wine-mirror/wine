@@ -93,7 +93,8 @@ typedef struct _LOCAL_VOLUME_INFO
     DWORD dwVolLabelOfs;
 } LOCAL_VOLUME_INFO;
 
-typedef struct lnk_string_tag {
+typedef struct lnk_string_tag
+{
     unsigned short size;
     union {
         unsigned short w[1];
@@ -103,7 +104,9 @@ typedef struct lnk_string_tag {
 
 #include "poppack.h"
 
-static void guid_to_string(LPGUID guid, char *str)
+static unsigned offset;
+
+static void guid_to_string(const GUID* guid, char *str)
 {
     sprintf(str, "{%08x-%04x-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}",
             guid->Data1, guid->Data2, guid->Data3,
@@ -111,91 +114,35 @@ static void guid_to_string(LPGUID guid, char *str)
             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
 }
 
-/* the size is a short integer */
-static void* load_pidl(int fd)
+static const void* fetch_block(void)
 {
-    int r;
-    unsigned char *data;
-    unsigned short size = 0;
+    const unsigned*     u;
+    const void*         ret;
 
-    r = read( fd, &size, sizeof size );
-    if (r != sizeof size)
-        return NULL;
-    if (size<sizeof size)
-        return NULL;
-
-    data = malloc(size + sizeof size);
-    memcpy(data, &size, sizeof size);
-    r = read( fd, data + sizeof size, size );
-    if (r != size)
-    {
-        free(data);
-        return NULL;
-    }
-    return (void*)data;
+    if (!(u = PRD(offset, sizeof(*u)))) return 0;
+    if ((ret = PRD(offset, *u)))   offset += *u;
+    return ret;
 }
 
-/* size is an integer */
-static void* load_long_section(int fd)
+static const lnk_string* fetch_string(int unicode)
 {
-    int r, size = 0;
-    unsigned char *data;
+    const unsigned short*       s;
+    unsigned short              len;
+    const void*                 ret;
 
-    r = read( fd, &size, sizeof size );
-    if (r != sizeof size)
-        return NULL;
-    if (size<sizeof size)
-        return NULL;
-
-    data = malloc(size);
-    memcpy(data, &size, sizeof size);
-    r = read( fd, data + sizeof size, size - sizeof size);
-    if (r != (size - sizeof size))
-    {
-        free(data);
-        return NULL;
-    }
-    return (void*)data;
-}
-
-/* the size is a character count in a short integer */
-static lnk_string* load_string(int fd, int unicode)
-{
-    int r;
-    lnk_string *data;
-    unsigned short size = 0, bytesize;
-
-    r = read( fd, &size, sizeof size );
-    if (r != sizeof size)
-        return NULL;
-    if ( size == 0 )
-        return NULL;
-
-    bytesize = size;
-    if (unicode)
-        bytesize *= sizeof(WCHAR);
-    data = malloc(sizeof *data + bytesize);
-    data->size = size;
-    if (unicode)
-        data->str.w[size] = 0;
-    else
-        data->str.a[size] = 0;
-    r = read(fd, &data->str, bytesize);
-    if (r != bytesize)
-    {
-        free(data);
-        return NULL;
-    }
-    return data;
+    if (!(s = PRD(offset, sizeof(*s)))) return 0;
+    len = *s * (unicode ? sizeof(WCHAR) : sizeof(char));
+    if ((ret = PRD(offset, sizeof(*s) + len)))  offset += sizeof(*s) + len;
+    return ret;
 }
 
 
-static int dump_pidl(int fd)
+static int dump_pidl(void)
 {
-    lnk_string *pidl;
+    const lnk_string *pidl;
     int i, n = 0, sz = 0;
 
-    pidl = load_pidl(fd);
+    pidl = fetch_string(FALSE);
     if (!pidl)
         return -1;
 
@@ -222,47 +169,37 @@ static int dump_pidl(int fd)
     }
     printf("\n");
 
-    free(pidl);
-
     return 0;
 }
 
-static void print_unicode_string(const unsigned short *str)
+static int dump_string(const char *what, int unicode)
 {
-    while(*str)
-    {
-        printf("%c", *str);
-        str++;
-    }
-    printf("\n");
-}
+    const lnk_string *data;
+    unsigned sz;
 
-static int dump_string(int fd, const char *what, int unicode)
-{
-    lnk_string *data;
-
-    data = load_string(fd, unicode);
+    data = fetch_string(unicode);
     if (!data)
         return -1;
     printf("%s : ", what);
+    sz = data->size;
     if (unicode)
-        print_unicode_string(data->str.w);
+        while (sz) printf("%c", data->str.w[data->size - sz--]);
     else
-        printf("%s",data->str.a);
+        while (sz) printf("%c", data->str.a[data->size - sz--]);
     printf("\n");
-    free(data);
+
     return 0;
 }
 
-static int dump_location(int fd)
+static int dump_location(void)
 {
-    LOCATION_INFO *loc;
-    char *p;
+    const LOCATION_INFO *loc;
+    const char *p;
 
-    loc = load_long_section(fd);
+    loc = fetch_block();
     if (!loc)
         return -1;
-    p = (char*)loc;
+    p = (const char*)loc;
 
     printf("Location\n");
     printf("--------\n\n");
@@ -295,8 +232,6 @@ static int dump_location(int fd)
         printf("(\"%s\")", &p[loc->dwFinalPathOfs]);
     printf("\n");
     printf("\n");
-
-    free(loc);
 
     return 0;
 }
@@ -338,11 +273,11 @@ static int base85_to_guid( const char *str, LPGUID guid )
     return 1;
 }
 
-static int dump_advertise_info(int fd, const char *type)
+static int dump_advertise_info(const char *type)
 {
-    LINK_ADVERTISEINFO *avt;
+    const LINK_ADVERTISEINFO *avt;
 
-    avt = load_long_section(fd);
+    avt = fetch_block();
     if (!avt)
         return -1;
 
@@ -353,7 +288,7 @@ static int dump_advertise_info(int fd, const char *type)
     if (avt->magic == 0xa0000006)
     {
         char prod_str[40], comp_str[40], feat_str[40];
-        char *feat, *comp;
+        const char *feat, *comp;
         GUID guid;
 
         if (base85_to_guid(avt->bufA, &guid))
@@ -389,14 +324,26 @@ static int dump_advertise_info(int fd, const char *type)
     return 0;
 }
 
-static int dump_lnk_fd(int fd)
+static const GUID CLSID_ShellLink = {0x00021401L, 0, 0, {0xC0,0,0,0,0,0,0,0x46}};
+
+enum FileSig get_kind_lnk(void)
 {
-    LINK_HEADER *hdr;
+    const LINK_HEADER*        hdr;
+
+    hdr = PRD(0, sizeof(*hdr));
+    if (hdr && hdr->dwSize == sizeof(LINK_HEADER) &&
+        !memcmp(&hdr->MagicGuid, &CLSID_ShellLink, sizeof(GUID)))
+        return SIG_LNK;
+    return SIG_UNKNOWN;
+}
+
+void lnk_dump(void)
+{
+    const LINK_HEADER*        hdr;
     char guid[40];
 
-    hdr = load_long_section( fd );
-    if (!hdr)
-        return -1;
+    offset = 0;
+    hdr = fetch_block();
 
     guid_to_string(&hdr->MagicGuid, guid);
 
@@ -433,35 +380,21 @@ static int dump_lnk_fd(int fd)
     printf("\n");
 
     if (hdr->dwFlags & SCF_PIDL)
-        dump_pidl(fd);
+        dump_pidl();
     if (hdr->dwFlags & SCF_LOCATION)
-        dump_location(fd);
+        dump_location();
     if (hdr->dwFlags & SCF_DESCRIPTION)
-        dump_string(fd, "Description", hdr->dwFlags & SCF_UNICODE);
+        dump_string("Description", hdr->dwFlags & SCF_UNICODE);
     if (hdr->dwFlags & SCF_RELATIVE)
-        dump_string(fd, "Relative path", hdr->dwFlags & SCF_UNICODE);
+        dump_string("Relative path", hdr->dwFlags & SCF_UNICODE);
     if (hdr->dwFlags & SCF_WORKDIR)
-        dump_string(fd, "Working directory", hdr->dwFlags & SCF_UNICODE);
+        dump_string("Working directory", hdr->dwFlags & SCF_UNICODE);
     if (hdr->dwFlags & SCF_ARGS)
-        dump_string(fd, "Arguments", hdr->dwFlags & SCF_UNICODE);
+        dump_string("Arguments", hdr->dwFlags & SCF_UNICODE);
     if (hdr->dwFlags & SCF_CUSTOMICON)
-        dump_string(fd, "Icon path", hdr->dwFlags & SCF_UNICODE);
+        dump_string("Icon path", hdr->dwFlags & SCF_UNICODE);
     if (hdr->dwFlags & SCF_PRODUCT)
-        dump_advertise_info(fd, "product");
+        dump_advertise_info("product");
     if (hdr->dwFlags & SCF_COMPONENT)
-        dump_advertise_info(fd, "msi string");
-
-    return 0;
-}
-
-int dump_lnk(const char *lnk)
-{
-    int fd;
-
-    fd = open(lnk,O_RDONLY);
-    if (fd<0)
-        return -1;
-    dump_lnk_fd(fd);
-    close(fd);
-    return 0;
+        dump_advertise_info("msi string");
 }

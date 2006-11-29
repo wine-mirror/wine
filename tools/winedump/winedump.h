@@ -72,7 +72,7 @@
 #define SYM_THISCALL        0x4
 #define SYM_DATA            0x8 /* Data, not a function */
 
-typedef enum {NONE, DMGL, SPEC, DUMP, EMF, LNK} Mode;
+typedef enum {NONE, DMGL, SPEC, DUMP, EMF} Mode;
 
 /* Structure holding a parsed symbol */
 typedef struct __parsed_symbol
@@ -159,9 +159,6 @@ extern _globals globals;
 /* EMF functions */
 int   dump_emf (const char *emf);
 
-/* LNK functions */
-int   dump_lnk (const char *lnk);
-
 /* Image functions */
 void	dump_file(const char* name);
 
@@ -224,7 +221,7 @@ char *str_toupper (char *str);
 const char *get_machine_str(int mach);
 
 /* file dumping functions */
-enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP, SIG_COFFLIB};
+enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP, SIG_COFFLIB, SIG_LNK};
 
 const void*	PRD(unsigned long prd, unsigned long len);
 unsigned long	Offset(const void* ptr);
@@ -247,6 +244,8 @@ enum FileSig    get_kind_lib(void);
 void            lib_dump( void );
 enum FileSig    get_kind_dbg(void);
 void	        dbg_dump( void );
+enum FileSig    get_kind_lnk(void);
+void	        lnk_dump( void );
 
 void            dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 void		dump_codeview(unsigned long ptr, unsigned long len);

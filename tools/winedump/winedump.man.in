@@ -8,7 +8,7 @@ winedump \- A Wine DLL tool
 |
 .BI "spec " "<dll> "
 |
-.BI "dump " "<dll>"
+.BI "dump " "<file>"
 .RI "] [" "mode_options" ]
 .SH DESCRIPTION
 .B winedump
@@ -46,7 +46,7 @@ program determines the mode winedump will run in.
 Help mode.
 Basic usage help is printed.
 .IP \fBdump\fR
-To dump the contents of a PE file.
+To dump the contents of a file.
 .IP \fBspec\fR
 For generating .spec files and stub DLLs.
 .IP \fBsym\fR
@@ -61,8 +61,9 @@ No options are used.
 The program prints the help info and than exits.
 .PP
 .B Dump mode:
-.IP \fI<dll>\fR
-Dumps the content of the dll named \fI<dll>\fR.
+.IP \fI<file>\fR
+Dumps the content of the file named \fI<file>\fR. Various file
+formats are supported (PE, NE, LE, Minidumps, .lnk).
 .IP \fB-C\fR
 Turns on symbol demangling.
 .IP \fB-f\fR
