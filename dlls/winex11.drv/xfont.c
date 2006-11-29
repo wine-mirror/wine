@@ -77,15 +77,15 @@ typedef struct __fontAlias
 
 static fontAlias *aliasTable = NULL;
 
-static const char*	INIFontMetrics = "cachedmetrics.";
-static const char*	INIFontSection = "Software\\Wine\\X11 Driver\\Fonts";
-static const char*	INIAliasSection = "Alias";
-static const char*	INIIgnoreSection = "Ignore";
-static const char*	INIDefault = "Default";
-static const char*	INIDefaultFixed = "DefaultFixed";
-static const char*	INIGlobalMetrics = "FontMetrics";
-static const char*	INIDefaultSerif = "DefaultSerif";
-static const char*	INIDefaultSansSerif = "DefaultSansSerif";
+static const char INIFontMetrics[] = "cachedmetrics.";
+static const char INIFontSection[] = "Software\\Wine\\X11 Driver\\Fonts";
+static const char INIAliasSection[] = "Alias";
+static const char INIIgnoreSection[] = "Ignore";
+static const char INIDefault[] = "Default";
+static const char INIDefaultFixed[] = "DefaultFixed";
+static const char INIGlobalMetrics[] = "FontMetrics";
+static const char INIDefaultSerif[] = "DefaultSerif";
+static const char INIDefaultSansSerif[] = "DefaultSansSerif";
 
 
 /* FIXME - are there any more Latin charsets ? */
@@ -229,39 +229,38 @@ typedef struct __fet
 {
   LPCSTR	 prefix;
   const SuffixCharset* sufch;
-  struct __fet*  next;
+  const struct __fet*  next;
 } fontEncodingTemplate;
 
 /* Note: we can attach additional encoding mappings to the end
  *       of this table at runtime.
  */
-static fontEncodingTemplate __fETTable[] = {
-			{ "ansi",         sufch_ansi,         &__fETTable[1] },
-			{ "ascii",        sufch_ansi,         &__fETTable[2] },
-			{ "iso646.1991",  sufch_iso646,       &__fETTable[3] },
-			{ "iso8859",      sufch_iso8859,      &__fETTable[4] },
-			{ "microsoft",    sufch_microsoft,    &__fETTable[5] },
-			{ "tcvn",         sufch_tcvn,         &__fETTable[6] },
-			{ "tis620.2533",  sufch_tis620,       &__fETTable[7] },
-			{ "viscii1.1",    sufch_viscii,       &__fETTable[8] },
-			{ "windows",      sufch_windows,      &__fETTable[9] },
-			{ "koi8",         sufch_koi8,         &__fETTable[10]},
-			{ "jisx0201.1976",sufch_jisx0201,     &__fETTable[11]},
-			{ "jisc6226.1978",sufch_jisx0208,     &__fETTable[12]},
-			{ "jisx0208.1983",sufch_jisx0208,     &__fETTable[13]},
-			{ "jisx0208.1990",sufch_jisx0208,     &__fETTable[14]},
-			{ "jisx0212.1990",sufch_jisx0212,     &__fETTable[15]},
-			{ "ksc5601.1987", sufch_ksc5601,      &__fETTable[16]},
-			{ "gb2312.1980",  sufch_gb2312,       &__fETTable[17]},
-			{ "big5",	  sufch_big5,         &__fETTable[18]},
-			{ "unicode",      sufch_unicode,      &__fETTable[19]},
-			{ "iso10646",     sufch_iso10646,     &__fETTable[20]},
-			{ "cp",           sufch_windows,      &__fETTable[21]},
-			{ "dec",          sufch_dec,          &__fETTable[22]},
+static const fontEncodingTemplate fETTable[] = {
+			{ "ansi",         sufch_ansi,         &fETTable[1] },
+			{ "ascii",        sufch_ansi,         &fETTable[2] },
+			{ "iso646.1991",  sufch_iso646,       &fETTable[3] },
+			{ "iso8859",      sufch_iso8859,      &fETTable[4] },
+			{ "microsoft",    sufch_microsoft,    &fETTable[5] },
+			{ "tcvn",         sufch_tcvn,         &fETTable[6] },
+			{ "tis620.2533",  sufch_tis620,       &fETTable[7] },
+			{ "viscii1.1",    sufch_viscii,       &fETTable[8] },
+			{ "windows",      sufch_windows,      &fETTable[9] },
+			{ "koi8",         sufch_koi8,         &fETTable[10]},
+			{ "jisx0201.1976",sufch_jisx0201,     &fETTable[11]},
+			{ "jisc6226.1978",sufch_jisx0208,     &fETTable[12]},
+			{ "jisx0208.1983",sufch_jisx0208,     &fETTable[13]},
+			{ "jisx0208.1990",sufch_jisx0208,     &fETTable[14]},
+			{ "jisx0212.1990",sufch_jisx0212,     &fETTable[15]},
+			{ "ksc5601.1987", sufch_ksc5601,      &fETTable[16]},
+			{ "gb2312.1980",  sufch_gb2312,       &fETTable[17]},
+			{ "big5",	  sufch_big5,         &fETTable[18]},
+			{ "unicode",      sufch_unicode,      &fETTable[19]},
+			{ "iso10646",     sufch_iso10646,     &fETTable[20]},
+			{ "cp",           sufch_windows,      &fETTable[21]},
+			{ "dec",          sufch_dec,          &fETTable[22]},
 			/* NULL prefix matches anything so put it last */
 			{   NULL,         sufch_any,          NULL },
 };
-static fontEncodingTemplate* fETTable = __fETTable;
 
 /* a charset database for known facenames */
 struct CharsetBindingInfo
@@ -628,7 +627,7 @@ static void LFD_GetStyle( fontInfo* fi, LPCSTR lpstr, int dec_style_check)
 static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 {
    int    	i, j, dec_style_check, scalability;
-   fontEncodingTemplate* boba;
+   const fontEncodingTemplate* boba;
    const char* ridiculous = "font '%s' has ridiculous %s\n";
    const char* lpstr;
 
@@ -759,7 +758,7 @@ static int LFD_InitFontInfo( fontInfo* fi, const LFD* lfd, LPCSTR fullname )
 
    fi->df.dfCharSet = ANSI_CHARSET;
 
-   for( i = 0, boba = fETTable; boba; boba = boba->next, i++ )
+   for( i = 0, boba = &fETTable[0]; boba; boba = boba->next, i++ )
    {
        if (!boba->prefix || !strcasecmp(lpstr, boba->prefix))
        {
@@ -1004,7 +1003,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 
    if (uRelax <= 5)
    {
-       fontEncodingTemplate* boba = fETTable;
+       const fontEncodingTemplate* boba = &fETTable[0];
 
        for(i = fo->fi->fi_encoding >> 8; i; i--) boba = boba->next;
        aLFD.charset_registry = boba->prefix ? boba->prefix : any;
