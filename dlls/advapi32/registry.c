@@ -73,7 +73,7 @@ static const WCHAR name_CURRENT_CONFIG[] =
 static const WCHAR name_DYN_DATA[] =
     {'D','y','n','D','a','t','a',0};
 
-static const WCHAR *root_key_names[NB_SPECIAL_ROOT_KEYS] =
+static const WCHAR * const root_key_names[NB_SPECIAL_ROOT_KEYS] =
 {
     name_CLASSES_ROOT,
     NULL,         /* HKEY_CURRENT_USER is determined dynamically */
