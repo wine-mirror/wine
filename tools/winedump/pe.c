@@ -44,7 +44,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
-#include "pe.h"
 
 static const IMAGE_NT_HEADERS32*        PE_nt_headers;
 

@@ -44,7 +44,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
-#include "pe.h"
 
 static void*			dump_base;
 static unsigned long		dump_total_len;

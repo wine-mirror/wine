@@ -44,7 +44,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
-#include "pe.h"
 #include "cvinclude.h"
 
 /*

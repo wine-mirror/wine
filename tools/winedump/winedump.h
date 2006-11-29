@@ -244,7 +244,10 @@ void            lib_dump( const char *lib_base, unsigned long lib_size );
 void	        dbg_dump( void );
 void            pe_dump( void );
 
-void dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
+void            dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
+void		dump_codeview(unsigned long ptr, unsigned long len);
+void		dump_coff(unsigned long coffbase, unsigned long len, const void* sect_map);
+void		dump_frame_pointer_omission(unsigned long base, unsigned long len);
 
 FILE *open_file (const char *name, const char *ext, const char *mode);
 
