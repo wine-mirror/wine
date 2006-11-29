@@ -87,18 +87,22 @@ static const void*	RVA(unsigned long rva, unsigned long len)
     return NULL;
 }
 
-static const IMAGE_NT_HEADERS32 *get_nt_header( const void *pmt )
+static const IMAGE_NT_HEADERS32 *get_nt_header( void )
 {
-    const IMAGE_DOS_HEADER *dos = pmt;
-    return (const IMAGE_NT_HEADERS32 *)((const BYTE *)dos + dos->e_lfanew);
+    const IMAGE_DOS_HEADER *dos;
+    dos = PRD(0, sizeof(*dos));
+    if (!dos) return NULL;
+    return PRD(dos->e_lfanew, sizeof(IMAGE_NT_HEADERS32));
 }
 
-static int is_fake_dll( const void *base )
+static int is_fake_dll( void )
 {
     static const char fakedll_signature[] = "Wine placeholder DLL";
-    const IMAGE_DOS_HEADER *dos = base;
+    const IMAGE_DOS_HEADER *dos;
 
-    if (dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
+    dos = PRD(0, sizeof(*dos) + sizeof(fakedll_signature));
+
+    if (dos && dos->e_lfanew >= sizeof(*dos) + sizeof(fakedll_signature) &&
         !memcmp( dos + 1, fakedll_signature, sizeof(fakedll_signature) )) return TRUE;
     return FALSE;
 }
@@ -781,7 +785,7 @@ static void dump_dir_tls(void)
     printf(" }\n\n");
 }
 
-void	dump_separate_dbg(void)
+void	dbg_dump(void)
 {
     const IMAGE_SEPARATE_DEBUG_HEADER*  separateDebugHead;
     unsigned			        nb_dbg;
@@ -1108,12 +1112,12 @@ static void dump_debug(void)
         dump_stabs(stabs, szstabs, stabstr, szstr);
 }
 
-void pe_dump(const void* pmt)
+void pe_dump(void)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
 
-    PE_nt_headers = get_nt_header(pmt);
-    if (is_fake_dll(pmt)) printf( "*** This is a Wine fake DLL ***\n\n" );
+    PE_nt_headers = get_nt_header();
+    if (is_fake_dll()) printf( "*** This is a Wine fake DLL ***\n\n" );
 
     if (globals.do_dumpheader)
     {
@@ -1188,7 +1192,7 @@ static void dll_close (void)
 }
 */
 
-static	void	do_grab_sym( enum FileSig sig, const void* pmt )
+static	void	do_grab_sym( enum FileSig sig )
 {
     const IMAGE_EXPORT_DIRECTORY*exportDir;
     unsigned			i, j;
@@ -1198,7 +1202,7 @@ static	void	do_grab_sym( enum FileSig sig, const void* pmt )
     const char*			ptr;
     DWORD*			map;
 
-    PE_nt_headers = get_nt_header(pmt);
+    PE_nt_headers = get_nt_header();
     if (!(exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY))) return;
 
     pName = RVA(exportDir->AddressOfNames, exportDir->NumberOfNames * sizeof(DWORD));

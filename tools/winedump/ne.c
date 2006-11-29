@@ -95,7 +95,7 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
     printf( "Expected version:    %d.%d\n", HIBYTE(ne->ne_expver), LOBYTE(ne->ne_expver) );
 }
 
-static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
+static void dump_ne_names( const IMAGE_OS2_HEADER *ne )
 {
     const unsigned char *pstr = (const unsigned char *)ne + ne->ne_restab;
 
@@ -108,7 +108,7 @@ static void dump_ne_names( const void *base, const IMAGE_OS2_HEADER *ne )
     if (ne->ne_cbnrestab)
     {
         printf( "\nNon-resident name table:\n" );
-        pstr = (const unsigned char *)base + ne->ne_nrestab;
+        pstr = PRD(ne->ne_nrestab, 0);
         while (*pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr, pstr + 1 );
@@ -140,7 +140,7 @@ static const char *get_resource_type( WORD id )
     }
 }
 
-static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
+static void dump_ne_resources( const IMAGE_OS2_HEADER *ne )
 {
     const NE_NAMEINFO *name;
     const void *res_ptr = (const char *)ne + ne->ne_rsrctab;
@@ -161,14 +161,14 @@ static void dump_ne_resources( const void *base, const IMAGE_OS2_HEADER *ne )
             else printf( " %.*s", *((const unsigned char *)res_ptr + info->type_id),
                          (const char *)res_ptr + info->type_id + 1 );
             printf(" flags %04x length %04x\n", name->flags, name->length << size_shift);
-            dump_data( (const unsigned char *)base + (name->offset << size_shift),
+            dump_data( PRD(name->offset << size_shift, name->length << size_shift),
                        name->length << size_shift, "    " );
         }
         info = (const NE_TYPEINFO *)name;
     }
 }
 
-static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne, int ordinal )
+static const char *get_export_name( const IMAGE_OS2_HEADER *ne, int ordinal )
 {
     static char name[256];
     const BYTE *pstr;
@@ -186,7 +186,7 @@ static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne
         else  /* non-resident names */
         {
             if (!ne->ne_cbnrestab) break;
-            pstr = (const BYTE *)base + ne->ne_nrestab;
+            pstr = PRD(ne->ne_nrestab, 0);
         }
         while (*pstr)
         {
@@ -205,7 +205,7 @@ static const char *get_export_name( const void *base, const IMAGE_OS2_HEADER *ne
     return name;
 }
 
-static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
+static void dump_ne_exports( const IMAGE_OS2_HEADER *ne )
 {
     const BYTE *ptr = (const BYTE *)ne + ne->ne_enttab;
     const BYTE *end = ptr + ne->ne_cbenttab;
@@ -229,7 +229,7 @@ static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
             {
                 printf( " %4d MOVABLE %d:%04x %s\n",
                         ordinal + i, ptr[3], get_word(ptr + 4),
-                        get_export_name( base, ne, ordinal + i ) );
+                        get_export_name( ne, ordinal + i ) );
                 ptr += 6;
             }
             ordinal += count;
@@ -239,7 +239,7 @@ static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
             {
                 printf( " %4d CONST     %04x %s\n",
                         ordinal + i, get_word(ptr + 1),
-                        get_export_name( base, ne, ordinal + i ) );
+                        get_export_name( ne, ordinal + i ) );
                 ptr += 3;
             }
             ordinal += count;
@@ -249,7 +249,7 @@ static void dump_ne_exports( const void *base, const IMAGE_OS2_HEADER *ne )
             {
                 printf( " %4d FIXED   %d:%04x %s\n",
                         ordinal + i, type, get_word(ptr + 1),
-                        get_export_name( base, ne, ordinal + i ) );
+                        get_export_name( ne, ordinal + i ) );
                 ptr += 3;
             }
             ordinal += count;
@@ -300,7 +300,7 @@ static const char *get_seg_flags( WORD flags )
     return buffer;
 }
 
-static void dump_relocations( const void *base, const IMAGE_OS2_HEADER *ne, WORD count,
+static void dump_relocations( const IMAGE_OS2_HEADER *ne, WORD count,
                               const struct relocation_entry *rep )
 {
     const WORD *modref = (const WORD *)((const BYTE *)ne + ne->ne_modtab);
@@ -354,7 +354,7 @@ static void dump_relocations( const void *base, const IMAGE_OS2_HEADER *ne, WORD
     }
 }
 
-static void dump_ne_segment( const void *base, const IMAGE_OS2_HEADER *ne, int segnum )
+static void dump_ne_segment( const IMAGE_OS2_HEADER *ne, int segnum )
 {
     const struct ne_segtable_entry *table = (const struct ne_segtable_entry *)((const BYTE *)ne + ne->ne_segtab);
     const struct ne_segtable_entry *seg = table + segnum - 1;
@@ -366,23 +366,27 @@ static void dump_ne_segment( const void *base, const IMAGE_OS2_HEADER *ne, int s
     printf( "  Alloc size:  %08x\n", seg->min_alloc );
     if (seg->seg_flags & NE_SEGFLAGS_RELOC_DATA)
     {
-        const BYTE *ptr = (const BYTE *)base + (seg->seg_data_offset << ne->ne_align) + seg->seg_data_length;
+        const BYTE *ptr = PRD((seg->seg_data_offset << ne->ne_align) + seg->seg_data_length, 0);
         WORD count = get_word(ptr);
         ptr += sizeof(WORD);
         printf( "  Relocations:\n" );
-        dump_relocations( base, ne, count, (const struct relocation_entry *)ptr );
+        dump_relocations( ne, count, (const struct relocation_entry *)ptr );
     }
 }
 
-void ne_dump( const void *exe, size_t exe_size )
+void ne_dump( void )
 {
     unsigned int i;
-    const IMAGE_DOS_HEADER *dos = exe;
-    const IMAGE_OS2_HEADER *ne = (const IMAGE_OS2_HEADER *)((const char *)dos + dos->e_lfanew);
+    const IMAGE_DOS_HEADER *dos;
+    const IMAGE_OS2_HEADER *ne;
+
+    dos = PRD(0, sizeof(*dos));
+    if (!dos) return;
+    ne = PRD(dos->e_lfanew, sizeof(*ne));
 
     dump_ne_header( ne );
-    dump_ne_names( exe, ne );
-    dump_ne_resources( exe, ne );
-    dump_ne_exports( exe, ne );
-    for (i = 1; i <= ne->ne_cseg; i++) dump_ne_segment( exe, ne, i );
+    dump_ne_names( ne );
+    dump_ne_resources( ne );
+    dump_ne_exports( ne );
+    for (i = 1; i <= ne->ne_cseg; i++) dump_ne_segment( ne, i );
 }

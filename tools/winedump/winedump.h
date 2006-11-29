@@ -229,7 +229,7 @@ enum FileSig {SIG_UNKNOWN, SIG_DOS, SIG_PE, SIG_DBG, SIG_NE, SIG_LE, SIG_MDMP, S
 const void*	PRD(unsigned long prd, unsigned long len);
 unsigned long	Offset(const void* ptr);
 
-typedef void (*file_dumper)(enum FileSig, const void*);
+typedef void (*file_dumper)(enum FileSig sig);
 int             dump_analysis(const char*, file_dumper, enum FileSig);
 
 void            dump_data( const unsigned char *ptr, unsigned int size, const char *prefix );
@@ -237,10 +237,12 @@ const char*	get_time_str( unsigned long );
 unsigned int    strlenW( const unsigned short *str );
 void            dump_unicode_str( const unsigned short *str, int len );
 
-void            ne_dump( const void *exe, size_t exe_size );
-void            le_dump( const void *exe, size_t exe_size );
+void            ne_dump( void );
+void            le_dump( void );
 void            mdmp_dump( void );
 void            lib_dump( const char *lib_base, unsigned long lib_size );
+void	        dbg_dump( void );
+void            pe_dump( void );
 
 void dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 

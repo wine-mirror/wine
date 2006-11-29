@@ -144,21 +144,21 @@ unsigned long Offset(const void* ptr)
     return (const char *)ptr - (const char *)dump_base;
 }
 
-static	void	do_dump( enum FileSig sig, const void* pmt )
+static	void	do_dump( enum FileSig sig )
 {
     if (sig == SIG_NE)
     {
-        ne_dump( dump_base, dump_total_len );
+        ne_dump();
         return;
     }
 
     if (sig == SIG_LE)
     {
-        le_dump( dump_base, dump_total_len );
+        le_dump();
         return;
     }
 
-    pe_dump(pmt);
+    pe_dump();
 }
 
 static enum FileSig check_headers(void)
@@ -264,10 +264,10 @@ int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
 	case SIG_NE:
 	case SIG_LE:
 	    printf("Contents of \"%s\": %ld bytes\n\n", name, dump_total_len);
-	    (*fn)(effective_sig, dump_base);
+	    (*fn)(effective_sig);
 	    break;
 	case SIG_DBG:
-	    dump_separate_dbg();
+	    dbg_dump();
 	    break;
 	case SIG_DOS:
 	    ret = 0; break;

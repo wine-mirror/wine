@@ -225,7 +225,7 @@ static void dump_le_header( const IMAGE_VXD_HEADER *le )
             le->e32_ddkver);
 }
 
-static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_objects( const IMAGE_VXD_HEADER *le )
 {
     const struct o32_obj *pobj;
     unsigned int i;
@@ -285,7 +285,7 @@ static void dump_le_objects( const void *base, const IMAGE_VXD_HEADER *le )
     }
 }
 
-static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_names( const IMAGE_VXD_HEADER *le )
 {
     const unsigned char *pstr = (const unsigned char *)le + le->e32_restab;
 
@@ -299,7 +299,7 @@ static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
     if (le->e32_cbnrestab)
     {
         printf( "\nNon-resident name table:\n" );
-        pstr = (const unsigned char *)base + le->e32_nrestab;
+        pstr = PRD(le->e32_nrestab, 0);
         while (*pstr)
         {
             printf( " %4d: %*.*s\n", get_word(pstr + *pstr + 1), *pstr, *pstr,
@@ -309,49 +309,51 @@ static void dump_le_names( const void *base, const IMAGE_VXD_HEADER *le )
     }
 }
 
-static void dump_le_resources( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_resources( const IMAGE_VXD_HEADER *le )
 {
     printf( "\nResources:\n" );
     printf( "    Not Implemented\n" );
 }
 
-static void dump_le_modules( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_modules( const IMAGE_VXD_HEADER *le )
 {
     printf( "\nImported modulename table:\n" );
     printf( "    Not Implemented\n" );
 }
 
-static void dump_le_entries( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_entries( const IMAGE_VXD_HEADER *le )
 {
     printf( "\nEntry table:\n" );
     printf( "    Not Implemented\n" );
 }
 
-static void dump_le_fixups( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_fixups( const IMAGE_VXD_HEADER *le )
 {
     printf( "\nFixup table:\n" );
     printf( "    Not Implemented\n" );
 }
 
-static void dump_le_VxD( const void *base, const IMAGE_VXD_HEADER *le )
+static void dump_le_VxD( const IMAGE_VXD_HEADER *le )
 {
     printf( "\nVxD descriptor:\n" );
     printf( "    Not Implemented\n" );
 }
 
-void le_dump( const void *exe, size_t exe_size )
+void le_dump( void )
 {
-    const IMAGE_DOS_HEADER *dos = exe;
+    const IMAGE_DOS_HEADER *dos;
     const IMAGE_VXD_HEADER *le;
 
-    le = (const IMAGE_VXD_HEADER*)((const char *)dos + dos->e_lfanew);
+    dos = PRD(0, sizeof(*dos));
+    if (!dos) return;
+    le = PRD(dos->e_lfanew, sizeof(*le));
 
     dump_le_header( le );
-    dump_le_objects( exe, le );
-    dump_le_resources( exe, le );
-    dump_le_names( exe, le );
-    dump_le_entries( exe, le );
-    dump_le_modules( exe, le );
-    dump_le_fixups( exe, le );
-    dump_le_VxD( exe, le );
+    dump_le_objects( le );
+    dump_le_resources( le );
+    dump_le_names( le );
+    dump_le_entries( le );
+    dump_le_modules( le );
+    dump_le_fixups( le );
+    dump_le_VxD( le );
 }
