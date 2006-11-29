@@ -65,7 +65,9 @@ typedef struct _NegoHelper {
     int pwlen;
     int pipe_in;
     int pipe_out;
-    int version;
+    int major;
+    int minor;
+    int micro;
     char *com_buf;
     int com_buf_size;
     int com_buf_offset;

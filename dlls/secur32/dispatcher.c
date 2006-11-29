@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include <stdarg.h>
+#include <stdio.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -109,7 +110,7 @@ SECURITY_STATUS fork_helper(PNegoHelper *new_helper, const char *prog,
     else
     {
         *new_helper = helper;
-        helper->version = -1;
+        helper->major = helper->minor = helper->micro = -1;
         helper->password = NULL;
         helper->com_buf = NULL;
         helper->com_buf_size = 0;
@@ -273,6 +274,7 @@ void check_version(PNegoHelper helper)
 {
     char temp[80];
     char *newline;
+    int major = 0, minor = 0, micro = 0, ret;
 
     TRACE("Checking version of helper\n");
     if(helper != NULL)
@@ -286,18 +288,18 @@ void check_version(PNegoHelper helper)
                 temp[len] = 0;
 
             TRACE("Exact version is %s\n", debugstr_a(temp));
-            if(strncmp(temp+8, "4", 1) == 0)
+            ret = sscanf(temp, "Version %d.%d.%d", &major, &minor, &micro);
+            if(ret != 3)
             {
-                helper->version = 4;
-            }
-            else if(strncmp(temp+8, "3", 1) == 0)
-            {
-                helper->version = 3;
+                ERR("Failed to get the helper version.\n");
+                helper->major = helper->minor = helper->micro = -1;
             }
             else
             {
-                TRACE("Unknown version!\n");
-                helper->version = -1;
+                TRACE("Version recognized: %d.%d.%d\n", major, minor, micro);
+                helper->major = major;
+                helper->minor = minor;
+                helper->micro = micro;
             }
         }
     }

@@ -34,7 +34,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
 #define NTLM_MAX_BUF 1904
-
+#define MIN_NTLM_AUTH_MAJOR_VERSION 3
+#define MIN_NTLM_AUTH_MINOR_VERSION 0
+#define MIN_NTLM_AUTH_MICRO_VERSION 24
 
 static CHAR ntlm_auth[] = "ntlm_auth";
 
@@ -524,7 +526,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                     != SEC_E_OK)
                 goto isc_end;
             if(!strncmp(buffer, "BH", 2))
-                TRACE("Helper doesn't understand new command set\n");
+                ERR("Helper doesn't understand new command set. Expect more things to fail.\n");
         }
 
         lstrcpynA(buffer, "YR", max_len-1);
@@ -545,8 +547,6 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
                         max_len-1, &bin_len)) != SEC_E_OK)
             goto isc_end;
 
-        /* We need to set NTLMSSP_NEGOTIATE_ALWAYS_SIGN manually for now */
-        bin[13] |= 0x80;
         /* put the decoded client blob into the out buffer */
 
         ret = SEC_I_CONTINUE_NEEDED;
@@ -653,7 +653,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         if(buffer_len < 3)
         {
-            TRACE("No flags negotiated, or helper does not support GF command\n");
+            TRACE("No flags negotiated.\n");
             helper->neg_flags = 0l;
         }
         else
@@ -670,7 +670,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         if(strncmp(buffer, "BH", 2) == 0)
         {
-            TRACE("Helper does not understand command or no key negotiated.\n");
+            TRACE("No key negotiated.\n");
             helper->valid_session_key = FALSE;
             helper->session_key = HeapAlloc(GetProcessHeap(), 0, 16);
             /*Generate the dummy session key = MD4(MD4(password))*/
@@ -1753,12 +1753,15 @@ void SECUR32_initNTLMSP(void)
     {
         /* Cheat and allocate a helper anyway, so cleanup later will work. */
         helper = HeapAlloc(GetProcessHeap(),0, sizeof(PNegoHelper));
-        helper->version = -1;
+        helper->major = helper->minor = helper->micro = -1;
     }
     else
         check_version(helper);
 
-    if(helper->version > 2)
+    if( (helper->major >  MIN_NTLM_AUTH_MAJOR_VERSION) ||
+        (helper->major  = MIN_NTLM_AUTH_MAJOR_VERSION  &&
+         helper->minor >= MIN_NTLM_AUTH_MINOR_VERSION  &&
+         helper->micro >= MIN_NTLM_AUTH_MICRO_VERSION) )
     {
         SecureProvider *provider = SECUR32_addProvider(&ntlmTableA, &ntlmTableW, NULL);
         SECUR32_addPackages(provider, 1L, &infoA, &infoW);
@@ -1766,7 +1769,7 @@ void SECUR32_initNTLMSP(void)
     else
     {
         ERR("%s was not found or is outdated. "
-            "Make sure that ntlm_auth >= 3.x is in your path.\n",
+            "Make sure that ntlm_auth >= 3.0.24 is in your path.\n",
             ntlm_auth);
     }
     cleanup_helper(helper);
