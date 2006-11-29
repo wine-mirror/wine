@@ -55,7 +55,7 @@
 #include "wine/debug.h"
 #include "excpt.h"
 #include "dbghelp_private.h"
-#include "mscvpdb.h"
+#include "wine/mscvpdb.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp_coff);
 

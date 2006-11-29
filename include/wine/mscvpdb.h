@@ -29,7 +29,7 @@
  *      MSVC 2.0        Inclusion in link of debug info (PDB v2)
  *      MSVC 5.0        Types are 24 bits (instead of 16 for <= 4.x)
  *      MSVC x.0        PDB (change in internal streams layout)
- *        
+ *
  *      .DBG            Contains COFF, FPO and Codeview info
  *      .PDB            New format for debug info (information is
  *                      derived from Codeview information)
@@ -39,14 +39,14 @@
  * Debug information can either be found in the debug section of a PE
  * module (in something close to a .DBG file), or the debug section
  * can actually refer to an external file, which can be in turn,
- * either a .DBG or .PDB file. 
+ * either a .DBG or .PDB file.
  *
  * Regarding PDB files:
  * -------------------
  * They are implemented as a set of internal files (as a small file
  * system). The file is split into blocks, an internal file is made
  * of a set of blocks. Internal files are accessed through
- * numbers. For example, 
+ * numbers. For example,
  * 1/ is the ROOT (basic information on the file)
  * 2/ is the Symbol information (global symbols, local variables...)
  * 3/ is the Type internal file (each the symbols can have type
@@ -68,7 +68,7 @@
  * evolutions:
  * - the first flavor (suffixed by V1 in this file), where the types
  *   and subtypes are 16 bit entities; and where strings are in Pascal
- *   format (first char is their length and are not 0 terminated) 
+ *   format (first char is their length and are not 0 terminated)
  * - the second flavor (suffixed by V2) differs from first flavor with
  *   types and subtypes as 32 bit entities. This forced some
  *   reordering of fields in some types
@@ -77,7 +77,7 @@
  *   length prefixed)
  * The different flavors can coexist in the same file (is this really
  * true ??)
- * 
+ *
  * For the evolution of types, the need of the second flavor was the
  * number of types to be defined (limited to 0xFFFF, including the C
  * basic types); the need of the third flavor is the increase of
@@ -88,7 +88,7 @@
  * disk because:
  * - some integral values are stored as numeric leaf, which size is
  *   variable depending on its value
- * 
+ *
  * Symbols internal stream
  * -----------------------
  * Here also we find three flavors (that we've suffixed with _V1, _V2
@@ -377,7 +377,7 @@ union codeview_reftype
         unsigned char           bitoff;
         unsigned short          type;
     } bitfield_v1;
-    
+
     struct
     {
         unsigned short int      len;
