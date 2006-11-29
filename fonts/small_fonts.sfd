@@ -53,10 +53,10 @@ NameList: Adobe Glyph List
 DisplaySize: 11
 AntiAlias: 1
 FitToEm: 1
-WinInfo: 696 24 22
+WinInfo: 704 32 21
 OnlyBitmaps: 1
 TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 406
+BeginChars: 65536 412
 StartChar: A
 Encoding: 65 65 0
 Width: 7
@@ -2487,8 +2487,44 @@ Width: 5
 Flags: HW
 TeX: 97 0 0 0
 EndChar
+StartChar: afii10101
+Encoding: 1108 1108 406
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10053
+Encoding: 1028 1028 407
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10103
+Encoding: 1110 1110 408
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10104
+Encoding: 1111 1111 409
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10055
+Encoding: 1030 1030 410
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10056
+Encoding: 1031 1031 411
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
 EndChars
-BitmapFont: 11 406 9 2 1 
+BitmapFont: 11 412 9 2 1 
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -3301,5 +3337,17 @@ BDFChar: 404 1025 5 1 4 0 8
 O9"d#JFJ)>n,NFg
 BDFChar: 405 1105 5 1 4 0 6
 O8r[Mn:4mH
+BDFChar: 406 1108 5 0 3 0 4
+E.HksDu]k<
+BDFChar: 407 1028 7 0 5 0 6
+G_CV:J:r.I
+BDFChar: 408 1110 3 1 1 0 6
+J,k+MJ:N.M
+BDFChar: 409 1111 3 0 2 0 6
+TE%5B5X7R7
+BDFChar: 410 1030 2 1 1 0 6
+J:N0#J:N.M
+BDFChar: 411 1031 3 0 2 0 8
+TE"sW5X7S"5QCca
 EndBitmapFont
 EndSplineFont
