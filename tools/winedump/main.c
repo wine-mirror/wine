@@ -306,6 +306,9 @@ static void parse_options (char *argv[])
 
   if (VERBOSE && QUIET)
     fatal ("Options -v and -q are mutually exclusive");
+
+  if (globals.mode == NONE)
+      do_dump("");
 }
 
 static void set_module_name(unsigned setUC)
