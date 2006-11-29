@@ -36,7 +36,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 
-static unsigned int read_int(unsigned char *buffer)
+static unsigned int read_int(const unsigned char *buffer)
 {
     return buffer[0]
      + (buffer[1]<<8)
@@ -46,18 +46,18 @@ static unsigned int read_int(unsigned char *buffer)
 
 #define EMRCASE(x) case x: printf("%-20s %08x\n", #x, length); break
 
-static int dump_emfrecord(int fd)
+static unsigned offset = 0;
+
+static int dump_emfrecord(void)
 {
-    unsigned char buffer[8];
-    int r;
+    const unsigned char*        ptr;
     unsigned int type, length, i;
 
-    r = read(fd, buffer, 8);
-    if(r!=8)
-        return -1;
+    ptr = PRD(offset, 8);
+    if (!ptr) return -1;
 
-    type = read_int(buffer);
-    length = read_int(buffer+4);
+    type = read_int(ptr);
+    length = read_int(ptr + 4);
 
     switch(type)
     {
@@ -96,36 +96,34 @@ static int dump_emfrecord(int fd)
 
     length -= 8;
 
+    offset += 8;
+
     for(i=0; i<length; i+=4)
     {
          if (i%16 == 0)
              printf("   ");
-         memset(buffer,0,sizeof buffer);
-         r = read(fd,buffer,4);
-         if(r!=4)
-             return -1;
-         printf("%08x ", read_int(buffer));
-         if ( (i%16 == 12) || ((i+4)==length) )
+         if (!(ptr = PRD(offset, 4))) return -1;
+         offset += 4;
+         printf("%08x ", read_int(ptr));
+         if ( (i % 16 == 12) || (i + 4 == length))
              printf("\n");
     }
 
     return 0;
 }
 
-static int dump_emf_records(int fd)
+enum FileSig get_kind_emf(void)
 {
-    while(!dump_emfrecord(fd))
-        ;
-    return 0;
+    const ENHMETAHEADER*        hdr;
+
+    hdr = PRD(0, sizeof(*hdr));
+    if (hdr && hdr->iType == EMR_HEADER && hdr->dSignature == ENHMETA_SIGNATURE)
+        return SIG_EMF;
+    return SIG_UNKNOWN;
 }
 
-int dump_emf(const char *emf)
+void emf_dump(void)
 {
-    int fd;
-
-    fd = open(emf,O_RDONLY);
-    if (fd<0) return -1;
-    dump_emf_records(fd);
-    close(fd);
-    return 0;
+    offset = 0;
+    while (!dump_emfrecord());
 }
