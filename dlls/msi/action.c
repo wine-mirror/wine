@@ -240,7 +240,7 @@ struct _actions {
     STANDARDACTIONHANDLER handler;
 };
 
-static struct _actions StandardActions[];
+static const struct _actions StandardActions[];
 
 
 /********************************************************
@@ -4316,7 +4316,7 @@ static UINT ACTION_UnregisterComPlus( MSIPACKAGE *package )
     return msi_unimplemented_action_stub( package, "UnregisterComPlus", table );
 }
 
-static struct _actions StandardActions[] = {
+static const struct _actions StandardActions[] = {
     { szAllocateRegistrySpace, ACTION_AllocateRegistrySpace },
     { szAppSearch, ACTION_AppSearch },
     { szBindImage, ACTION_BindImage },

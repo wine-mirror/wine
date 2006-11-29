@@ -2399,7 +2399,7 @@ static BOOL str_is_number( LPCWSTR str )
     return TRUE;
 }
 
-WCHAR column_keys[][80] =
+static const WCHAR column_keys[][80] =
 {
     {'V','o','l','u','m','e','C','o','s','t','V','o','l','u','m','e',0},
     {'V','o','l','u','m','e','C','o','s','t','S','i','z','e',0},

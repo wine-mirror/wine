@@ -137,7 +137,7 @@ static LPWSTR load_ttfname_from(LPCWSTR filename)
         {
             int nPos;
             LPSTR buf;
-            static LPCSTR tt = " (TrueType)";
+            static const char tt[] = " (TrueType)";
 
             ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
             ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);

@@ -171,7 +171,7 @@ static UINT UPDATE_find_matching_rows( struct tagMSIVIEW *view, UINT col, UINT v
 }
 
 
-static MSIVIEWOPS update_ops =
+static const MSIVIEWOPS update_ops =
 {
     UPDATE_fetch_int,
     NULL,
