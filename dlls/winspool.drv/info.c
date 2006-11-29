@@ -170,7 +170,7 @@ static const WCHAR PrintersW[] = {'S','y','s','t','e','m','\\',
                                   'P','r','i','n','t','\\',
                                   'P','r','i','n','t','e','r','s',0};
 
-static       WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
+static const WCHAR LocalPortW[] = {'L','o','c','a','l',' ','P','o','r','t',0};
 
 static const WCHAR user_default_reg_key[] = { 'S','o','f','t','w','a','r','e','\\',
                                               'M','i','c','r','o','s','o','f','t','\\',
@@ -940,7 +940,7 @@ static void monitor_unloadall(void)
  * On failure, SetLastError() is called and NULL is returned
  */
 
-static monitor_t * monitor_load(LPWSTR name, LPWSTR dllname)
+static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
 {
     LPMONITOR2  (WINAPI *pInitializePrintMonitor2) (PMONITORINIT, LPHANDLE);
     PMONITORUI  (WINAPI *pInitializePrintMonitorUI)(VOID);
