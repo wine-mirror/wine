@@ -43,9 +43,9 @@ NameList: Adobe Glyph List
 DisplaySize: 16
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 1360 20 13
+WinInfo: 960 20 13
 OnlyBitmaps: 1
-BeginChars: 65536 465
+BeginChars: 65536 471
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -2555,11 +2555,47 @@ EndChar
 StartChar: afii57689
 Encoding: 1513 1513 464
 Width: 11
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10055
+Encoding: 1030 1030 465
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10056
+Encoding: 1031 1031 466
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10103
+Encoding: 1110 1110 467
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10104
+Encoding: 1111 1111 468
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10101
+Encoding: 1108 1108 469
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10053
+Encoding: 1028 1028 470
+Width: 16
 Flags: HW
 TeX: 0 0 0 0
 EndChar
 EndChars
-BitmapFont: 16 465 13 3 1 
+BitmapFont: 16 471 13 3 1 
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -3490,5 +3526,17 @@ BDFChar: 463 1510 10 1 9 0 9
 _Z7RS@fSCe)upBI"on`*!J(3#
 BDFChar: 464 1513 11 1 10 0 9
 ^qe10beVH<beVH<beVH<beX7o
+BDFChar: 465 1030 4 1 2 0 12
+^q]rc^qdb$^qdb$^]4?7
+BDFChar: 466 1031 4 0 3 0 12
+OH9HM?smAM?smAM?iU0,
+BDFChar: 467 1110 4 1 2 0 9
+^q]rc^qdb$^q]pM
+BDFChar: 468 1111 4 0 3 0 9
+OH9HM?smAM?sis7
+BDFChar: 469 1108 7 0 5 0 6
+Gg*tm^s%$'
+BDFChar: 470 1028 9 1 8 0 9
+4D)LHpqX\_Aip%n
 EndBitmapFont
 EndSplineFont
