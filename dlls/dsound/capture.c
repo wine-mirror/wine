@@ -78,7 +78,7 @@ DirectSoundCaptureDevice * DSOUND_capture[MAXWAVEDRIVERS];
 
 static HRESULT DirectSoundCaptureDevice_Create(DirectSoundCaptureDevice ** ppDevice);
 
-static const char * captureStateString[] = {
+static const char * const captureStateString[] = {
     "STATE_STOPPED",
     "STATE_STARTING",
     "STATE_CAPTURING",
