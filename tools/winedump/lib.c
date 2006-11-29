@@ -80,29 +80,33 @@ static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
     }
 }
 
-void lib_dump(const char *lib_base, unsigned long lib_size)
+enum FileSig get_kind_lib(void)
+{
+    const char*         arch = PRD(0, IMAGE_ARCHIVE_START_SIZE);
+    if (arch && !strncmp(arch, IMAGE_ARCHIVE_START, IMAGE_ARCHIVE_START_SIZE))
+        return SIG_COFFLIB;
+    return SIG_UNKNOWN;
+}
+
+void lib_dump(void)
 {
     long cur_file_pos;
-    IMAGE_ARCHIVE_MEMBER_HEADER *iamh;
+    const IMAGE_ARCHIVE_MEMBER_HEADER *iamh;
 
-    if (strncmp(lib_base, IMAGE_ARCHIVE_START, IMAGE_ARCHIVE_START_SIZE))
-    {
-        printf("Not a valid COFF library file");
-        return;
-    }
-
-    iamh = (IMAGE_ARCHIVE_MEMBER_HEADER *)(lib_base + IMAGE_ARCHIVE_START_SIZE);
     cur_file_pos = IMAGE_ARCHIVE_START_SIZE;
 
-    while (cur_file_pos < lib_size)
+    for (;;)
     {
-        IMPORT_OBJECT_HEADER *ioh;
+        const IMPORT_OBJECT_HEADER *ioh;
         long size;
+
+        if (!(iamh = PRD(cur_file_pos, sizeof(*iamh)))) break;
+        cur_file_pos += sizeof(IMAGE_ARCHIVE_MEMBER_HEADER);
 
 #if 0 /* left here for debugging purposes, also should be helpful for
        * adding support for new library formats.
        */
-        printf("cur_file_pos %08lx\n", (ULONG_PTR)iamh - (ULONG_PTR)lib_base);
+        printf("cur_file_pos %08lx\n", Offset(iamh));
 
         printf("Name %.16s", iamh->Name);
         if (!strncmp(iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
@@ -121,7 +125,7 @@ void lib_dump(const char *lib_base, unsigned long lib_size)
         /* FIXME: only import library contents with the short format are
          * recognized.
          */
-        ioh = (IMPORT_OBJECT_HEADER *)((char *)iamh + sizeof(IMAGE_ARCHIVE_MEMBER_HEADER));
+        if (!(ioh = PRD(cur_file_pos + sizeof(*iamh), sizeof(*ioh)))) break;
         if (ioh->Sig1 == IMAGE_FILE_MACHINE_UNKNOWN && ioh->Sig2 == IMPORT_OBJECT_HDR_SIG2)
         {
             dump_import_object(ioh);
@@ -130,7 +134,6 @@ void lib_dump(const char *lib_base, unsigned long lib_size)
         size = strtoul((const char *)iamh->Size, NULL, 10);
         size = (size + 1) & ~1; /* align to an even address */
 
-        cur_file_pos += size + sizeof(IMAGE_ARCHIVE_MEMBER_HEADER);
-        iamh = (IMAGE_ARCHIVE_MEMBER_HEADER *)((char *)iamh + size + sizeof(IMAGE_ARCHIVE_MEMBER_HEADER));
+        cur_file_pos += size;
     }
 }

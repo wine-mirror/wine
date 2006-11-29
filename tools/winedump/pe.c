@@ -784,6 +784,17 @@ static void dump_dir_tls(void)
     printf(" }\n\n");
 }
 
+enum FileSig get_kind_dbg(void)
+{
+    const WORD*                pw;
+
+    pw = PRD(0, sizeof(WORD));
+    if (!pw) {printf("Can't get main signature, aborting\n"); return 0;}
+
+    if (*pw == 0x4944 /* "DI" */) return SIG_DBG;
+    return SIG_UNKNOWN;
+}
+
 void	dbg_dump(void)
 {
     const IMAGE_SEPARATE_DEBUG_HEADER*  separateDebugHead;
@@ -1111,6 +1122,32 @@ static void dump_debug(void)
         dump_stabs(stabs, szstabs, stabstr, szstr);
 }
 
+enum FileSig get_kind_exec(void)
+{
+    const WORD*                pw;
+    const DWORD*               pdw;
+    const IMAGE_DOS_HEADER*    dh;
+
+    pw = PRD(0, sizeof(WORD));
+    if (!pw) {printf("Can't get main signature, aborting\n"); return 0;}
+
+    if (*pw != IMAGE_DOS_SIGNATURE) return SIG_UNKNOWN;
+
+    if ((dh = PRD(0, sizeof(IMAGE_DOS_HEADER))))
+    {
+        /* the signature is the first DWORD */
+        pdw = PRD(dh->e_lfanew, sizeof(DWORD));
+        if (pdw)
+        {
+            if (*pdw == IMAGE_NT_SIGNATURE)                     return SIG_PE;
+            if (*(const WORD *)pdw == IMAGE_OS2_SIGNATURE)      return SIG_NE;
+            if (*(const WORD *)pdw == IMAGE_VXD_SIGNATURE)      return SIG_LE;
+            return SIG_DOS;
+        }
+    }
+    return 0;
+}
+
 void pe_dump(void)
 {
     int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
@@ -1191,7 +1228,7 @@ static void dll_close (void)
 }
 */
 
-static	void	do_grab_sym( enum FileSig sig )
+static	void	do_grab_sym( void )
 {
     const IMAGE_EXPORT_DIRECTORY*exportDir;
     unsigned			i, j;

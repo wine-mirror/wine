@@ -59,6 +59,17 @@ static const MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, int st
     return NULL;
 }
 
+enum FileSig get_kind_mdmp(void)
+{
+    const DWORD*        pdw;
+
+    pdw = PRD(0, sizeof(DWORD));
+    if (!pdw) {printf("Can't get main signature, aborting\n"); return SIG_UNKNOWN;}
+
+    if (*pdw == 0x444D /* "MDMP" */) return SIG_MDMP;
+    return SIG_UNKNOWN;
+}
+
 void mdmp_dump(void)
 {
     const MINIDUMP_HEADER*      hdr = (const MINIDUMP_HEADER*)PRD(0, sizeof(MINIDUMP_HEADER));
