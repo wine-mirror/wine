@@ -2700,7 +2700,7 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             continue;
 
         squash_guid(comp->ComponentId,squished_cc);
-           
+
         msi_free(comp->FullKeypath);
         comp->FullKeypath = resolve_keypath( package, comp );
 
@@ -2738,14 +2738,6 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             }
 
             RegCloseKey(hkey2);
-
-            /* UI stuff */
-            uirow = MSI_CreateRecord(3);
-            MSI_RecordSetStringW(uirow,1,package->ProductCode);
-            MSI_RecordSetStringW(uirow,2,comp->ComponentId);
-            MSI_RecordSetStringW(uirow,3,comp->FullKeypath);
-            ui_actiondata(package,szProcessComponents,uirow);
-            msiobj_release( &uirow->hdr );
         }
         else if (ACTION_VerifyComponentForAction( comp, INSTALLSTATE_ABSENT))
         {
@@ -2763,14 +2755,16 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
             if (res == ERROR_NO_MORE_ITEMS)
                 RegDeleteKeyW(hkey,squished_cc);
 
-            /* UI stuff */
-            uirow = MSI_CreateRecord(2);
-            MSI_RecordSetStringW(uirow,1,package->ProductCode);
-            MSI_RecordSetStringW(uirow,2,comp->ComponentId);
-            ui_actiondata(package,szProcessComponents,uirow);
-            msiobj_release( &uirow->hdr );
         }
-    } 
+
+        /* UI stuff */
+        uirow = MSI_CreateRecord(3);
+        MSI_RecordSetStringW(uirow,1,package->ProductCode);
+        MSI_RecordSetStringW(uirow,2,comp->ComponentId);
+        MSI_RecordSetStringW(uirow,3,comp->FullKeypath);
+        ui_actiondata(package,szProcessComponents,uirow);
+        msiobj_release( &uirow->hdr );
+    }
     RegCloseKey(hkey);
     return rc;
 }
