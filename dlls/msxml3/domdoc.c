@@ -761,6 +761,7 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     BSTR data,
     IXMLDOMProcessingInstruction** pi )
 {
+#ifdef HAVE_XMLNEWDOCPI
     xmlNodePtr xmlnode;
     domdoc *This = impl_from_IXMLDOMDocument( iface );
     xmlChar *xml_target, *xml_content;
@@ -778,6 +779,10 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
     HeapFree(GetProcessHeap(), 0, xml_target);
 
     return S_OK;
+#else
+    FIXME("Libxml 2.6.15 or greater required.");
+    return E_NOTIMPL;
+#endif
 }
 
 

@@ -936,6 +936,9 @@
 /* Define if you have the XKB extension */
 #undef HAVE_XKB
 
+/* Define if libxml2 has the xmlNewDocPI function */
+#undef HAVE_XMLNEWDOCPI
+
 /* Define if libxml2 has the xmlReadMemory function */
 #undef HAVE_XMLREADMEMORY
 
