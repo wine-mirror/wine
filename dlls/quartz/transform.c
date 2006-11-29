@@ -173,7 +173,7 @@ static HRESULT TransformFilter_OutputPin_Construct(const PIN_INFO * pPinInfo, AL
     return E_FAIL;
 }
 
-HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, TransformFuncsTable* pFuncsTable)
+HRESULT TransformFilter_Create(TransformFilterImpl* pTransformFilter, const CLSID* pClsid, const TransformFuncsTable* pFuncsTable)
 {
     HRESULT hr;
     PIN_INFO piInput;

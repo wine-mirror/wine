@@ -257,7 +257,7 @@ static HRESULT AVIDec_Cleanup(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-TransformFuncsTable AVIDec_FuncsTable = {
+static const TransformFuncsTable AVIDec_FuncsTable = {
     AVIDec_ProcessBegin,
     AVIDec_ProcessSampleData,
     AVIDec_ProcessEnd,

@@ -234,7 +234,7 @@ static HRESULT ACMWrapper_Cleanup(TransformFilterImpl* pTransformFilter)
     return S_OK;
 }
 
-TransformFuncsTable ACMWrapper_FuncsTable = {
+static const TransformFuncsTable ACMWrapper_FuncsTable = {
     NULL,
     ACMWrapper_ProcessSampleData,
     NULL,

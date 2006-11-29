@@ -42,7 +42,7 @@ struct TransformFilterImpl
 
     IPin ** ppPins;
 
-    TransformFuncsTable * pFuncsTable;
+    const TransformFuncsTable * pFuncsTable;
 };
 
-HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, TransformFuncsTable* pFuncsTable);
+HRESULT TransformFilter_Create(TransformFilterImpl*, const CLSID*, const TransformFuncsTable* pFuncsTable);
