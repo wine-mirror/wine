@@ -6898,7 +6898,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface
 
     *ppRenderTarget = This->renderTarget;
     TRACE("(%p) : RenderTarget %d Index returning %p\n", This, RenderTargetIndex, *ppRenderTarget);
-
+    /* Note inc ref on returned surface */
+    if(*ppRenderTarget != NULL)
+        IWineD3DSurface_AddRef(*ppRenderTarget);
     return WINED3D_OK;
 }
 
