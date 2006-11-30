@@ -667,14 +667,18 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
 
     case WGL_SUPPORT_GDI_ARB:
       pop = iWGLAttr[++cur];
-      PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
-      TRACE("pAttr[%d] = GLX_RENDERABLE: %d\n", cur, pop);
+      /* We only support a limited number of formats which are all renderable by X (similar to GDI).
+       * Ignore this attribute to prevent us from not finding a match due to the limited
+       * amount of formats supported right now. This option could be matched to GLX_X_RENDERABLE
+       * but the issue is that when a program asks for no GDI support, there's no format we can return
+       * as all our supported formats are renderable by X.
+       */
+      TRACE("pAttr[%d] = WGL_SUPPORT_GDI_ARB: %d\n", cur, pop);
       break;
 
     case WGL_DRAW_TO_BITMAP_ARB:
       pop = iWGLAttr[++cur];
-      PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
-      TRACE("pAttr[%d] = GLX_RENDERABLE: %d\n", cur, pop);
+      TRACE("pAttr[%d] = WGL_DRAW_TO_BITMAP_ARB: %d\n", cur, pop);
       if (pop) {
         PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT);
         TRACE("pAttr[%d] = GLX_DRAWABLE_TYPE: GLX_PIXMAP_BIT\n", cur);
@@ -691,8 +695,6 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
 
     case WGL_DRAW_TO_PBUFFER_ARB:
       pop = iWGLAttr[++cur];
-      PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
-      TRACE("pAttr[%d] = GLX_RENDERABLE: %d\n", cur, pop);
       if (pop) {
         PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
         TRACE("pAttr[%d] = GLX_DRAWABLE_TYPE: GLX_PBUFFER_BIT\n", cur);
@@ -2399,13 +2401,17 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
             case WGL_AUX_BUFFERS_ARB:
                 curGLXAttr = GLX_AUX_BUFFERS;
                 break;
-
             case WGL_SUPPORT_GDI_ARB:
             case WGL_DRAW_TO_WINDOW_ARB:
             case WGL_DRAW_TO_BITMAP_ARB:
+                /* We only supported a limited number of formats right now which are all renderable by X 'GLX_X_RENDERABLE' */
+                piValues[i] = GL_TRUE;
+                continue;
             case WGL_DRAW_TO_PBUFFER_ARB:
-                curGLXAttr = GLX_X_RENDERABLE;
-                break;
+                hTest = pglXGetFBConfigAttrib(gdi_display, curCfg, GLX_DRAWABLE_TYPE, &tmp);
+                if (hTest) goto get_error;
+                    piValues[i] = (tmp & GLX_PBUFFER_BIT) ? GL_TRUE : GL_FALSE;
+                continue;
 
             case WGL_PBUFFER_LARGEST_ARB:
                 curGLXAttr = GLX_LARGEST_PBUFFER;
