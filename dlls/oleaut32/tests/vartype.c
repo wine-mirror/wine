@@ -4911,6 +4911,8 @@ static void test_VarBstrCmp(void)
     static const WCHAR sz2[] = { 'A',0 };
     static const WCHAR s1[] = { 'a',0 };
     static const WCHAR s2[] = { 'a',0,'b' };
+    static const char sb1[] = {1,0,1};
+    static const char sb2[] = {1,0,2};
     BSTR bstr, bstrempty, bstr2;
 
     CHECKPTR(VarBstrCmp);
@@ -4947,6 +4949,16 @@ static void test_VarBstrCmp(void)
     VARBSTRCMP(bstr,bstr2,0,VARCMP_LT);
     SysFreeString(bstr2);
 
+    SysFreeString(bstr);
+
+    /* When (LCID == 0) it should be a binary comparison
+     * so these two strings could not match.
+     */
+    bstr = SysAllocStringByteLen(sb1, sizeof(sb1));
+    bstr2 = SysAllocStringByteLen(sb2, sizeof(sb2));
+    lcid = 0;
+    VARBSTRCMP(bstr,bstr2,0,VARCMP_LT);
+    SysFreeString(bstr2);
     SysFreeString(bstr);
 }
 

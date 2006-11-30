@@ -6630,10 +6630,12 @@ HRESULT WINAPI VarBstrCat(BSTR pbstrLeft, BSTR pbstrRight, BSTR *pbstrOut)
  * NOTES
  *  VARCMP_NULL is NOT returned if either string is NULL unlike MSDN
  *  states. A NULL BSTR pointer is equivalent to an empty string.
+ *  If LCID is equal to 0, a byte by byte comparison is performed.
  */
 HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFlags)
 {
     HRESULT hres;
+    int ret;
 
     TRACE("%s,%s,%d,%08x\n",
      debugstr_wn(pbstrLeft, SysStringLen(pbstrLeft)),
@@ -6648,10 +6650,26 @@ HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFl
     else if (!pbstrRight || !*pbstrRight)
         return VARCMP_GT;
 
-    hres = CompareStringW(lcid, dwFlags, pbstrLeft, SysStringLen(pbstrLeft),
-            pbstrRight, SysStringLen(pbstrRight)) - 1;
-    TRACE("%d\n", hres);
-    return hres;
+    if (lcid == 0)
+    {
+      ret = memcmp(pbstrLeft, pbstrRight, min(SysStringByteLen(pbstrLeft), SysStringByteLen(pbstrRight)));
+      if (ret < 0)
+        return VARCMP_LT;
+      if (ret > 0)
+        return VARCMP_GT;
+      if (SysStringByteLen(pbstrLeft) < SysStringByteLen(pbstrRight))
+        return VARCMP_LT;
+      if (SysStringByteLen(pbstrLeft) > SysStringByteLen(pbstrRight))
+        return VARCMP_GT;
+      return VARCMP_EQ;
+    }
+    else
+    {
+      hres = CompareStringW(lcid, dwFlags, pbstrLeft, SysStringLen(pbstrLeft),
+              pbstrRight, SysStringLen(pbstrRight)) - 1;
+      TRACE("%d\n", hres);
+      return hres;
+    }
 }
 
 /*
