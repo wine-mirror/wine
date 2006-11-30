@@ -2722,12 +2722,10 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     }
 
     /* For some reason the game GrandPrixLegends does set SO_DONTROUTE on its
-     * socket. This will either not happen under windows or it is ignored in
-     * windows (but it works in linux and therefore prevents the game from
-     * finding games outside the current network) */
+     * socket. According to MSDN, this option is silently ignored.*/
     if ( level==WS_SOL_SOCKET && optname==WS_SO_DONTROUTE ) 
     {
-        FIXME("Does windows ignore SO_DONTROUTE?\n");
+        TRACE("Ignoring SO_DONTROUTE.\n");
         return 0;
     }
 
