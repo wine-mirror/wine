@@ -38,6 +38,7 @@
 
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
+static void *code_mem;
 
 /* Test various instruction combinations that cause a protection fault on the i386,
  * and check what the resulting exception looks like.
@@ -162,17 +163,20 @@ static const struct exception
 
 static int got_exception;
 
-static void run_exception_test(const void *handler, const void* context, const void *code)
+static void run_exception_test(const void *handler, const void* context,
+                               const void *code, unsigned int code_size)
 {
     struct {
         EXCEPTION_REGISTRATION_RECORD frame;
         const void *context;
     } exc_frame;
-    void (*func)(void) = code;
+    void (*func)(void) = code_mem;
 
     exc_frame.frame.Handler = handler;
     exc_frame.frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
     exc_frame.context = context;
+
+    memcpy(code_mem, code, code_size);
 
     pNtCurrentTeb()->Tib.ExceptionList = &exc_frame.frame;
     func();
@@ -191,9 +195,9 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
 
     ok( rec->ExceptionCode == except->status,
         "%u: Wrong exception code %x/%x\n", entry, rec->ExceptionCode, except->status );
-    ok( rec->ExceptionAddress == except->code + except->offset,
+    ok( rec->ExceptionAddress == (char*)code_mem + except->offset,
         "%u: Wrong exception address %p/%p\n", entry,
-        rec->ExceptionAddress, except->code + except->offset );
+        rec->ExceptionAddress, (char*)code_mem + except->offset );
 
     ok( rec->NumberParameters == except->nb_params,
         "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
@@ -203,7 +207,7 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
             entry, i, rec->ExceptionInformation[i], except->params[i] );
 
     /* don't handle exception if it's not the address we expected */
-    if (rec->ExceptionAddress != except->code + except->offset) return ExceptionContinueSearch;
+    if (rec->ExceptionAddress != (char*)code_mem + except->offset) return ExceptionContinueSearch;
 
     context->Eip += except->length;
     return ExceptionContinueExecution;
@@ -216,7 +220,8 @@ static void test_prot_fault(void)
     for (i = 0; i < sizeof(exceptions)/sizeof(exceptions[0]); i++)
     {
         got_exception = 0;
-        run_exception_test(handler, &exceptions[i], &exceptions[i].code);
+        run_exception_test(handler, &exceptions[i], &exceptions[i].code,
+                           sizeof(exceptions[i].code));
         if (!i && !got_exception)
         {
             trace( "No exception, assuming win9x, no point in testing further\n" );
@@ -309,7 +314,7 @@ static void test_exceptions(void)
     }
 
     /* test handling of debug registers */
-    run_exception_test(dreg_handler, NULL, &segfault_code);
+    run_exception_test(dreg_handler, NULL, &segfault_code, sizeof(segfault_code));
 
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
@@ -319,12 +324,12 @@ static void test_exceptions(void)
 
     /* test single stepping behavior */
     got_exception = 0;
-    run_exception_test(single_step_handler, NULL, &single_stepcode);
+    run_exception_test(single_step_handler, NULL, &single_stepcode, sizeof(single_stepcode));
     ok(got_exception == 1, "expected 1 single step exceptions, got %d\n", got_exception);
 
     /* test alignment exceptions */
     got_exception = 0;
-    run_exception_test(align_check_handler, NULL, align_check_code);
+    run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code));
     ok(got_exception == 0, "got %d alignment faults, expected 0\n", got_exception);
 }
 
@@ -340,7 +345,15 @@ START_TEST(exception)
         return;
     }
 
+    /* 1024 byte should be sufficient */
+    code_mem = VirtualAlloc(NULL, 1024, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    if(!code_mem) {
+        trace("VirtualAlloc failed\n");
+        return;
+    }
     test_prot_fault();
     test_exceptions();
+
+    VirtualFree(code_mem, 1024, MEM_RELEASE);
 #endif
 }
