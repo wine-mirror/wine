@@ -38,6 +38,7 @@
 
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
+static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static void *code_mem;
 
 /* Test various instruction combinations that cause a protection fault on the i386,
@@ -258,6 +259,16 @@ static DWORD single_step_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_
 {
     got_exception++;
     ok (!(context->EFlags & 0x100), "eflags has single stepping bit set\n");
+
+    if( got_exception < 3)
+        context->EFlags |= 0x100;  /* single step until popf instruction */
+    else {
+        /* show that the last single step exception on the popf instruction
+         * (which removed the TF bit), still is a EXCEPTION_SINGLE_STEP exception */
+        todo_wine { ok( rec->ExceptionCode == EXCEPTION_SINGLE_STEP,
+            "exception is not EXCEPTION_SINGLE_STEP: %x\n", rec->ExceptionCode); };
+    }
+
     return ExceptionContinueExecution;
 }
 
@@ -301,15 +312,78 @@ static DWORD align_check_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_
     return ExceptionContinueExecution;
 }
 
+/* test single stepping over hardware breakpoint */
+static DWORD bpx_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                          CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    got_exception++;
+    ok( rec->ExceptionCode == EXCEPTION_SINGLE_STEP,
+        "wrong exception code: %x\n", rec->ExceptionCode);
+
+    if(got_exception == 1) {
+        /* hw bp exception on first nop */
+        ok( context->Eip == (DWORD)code_mem, "eip is wrong:  %x instead of %x\n",
+                                             context->Eip, (DWORD)code_mem);
+        ok( (context->Dr6 & 0xf) == 1, "B0 flag is not set in Dr6\n");
+        ok( !(context->Dr6 & 0x4000), "BS flag is set in Dr6\n");
+        context->Dr0 = context->Dr0 + 1;  /* set hw bp again on next instruction */
+        context->EFlags |= 0x100;       /* enable single stepping */
+    } else if(  got_exception == 2) {
+        /* single step exception on second nop */
+        ok( context->Eip == (DWORD)code_mem + 1, "eip is wrong: %x instead of %x\n",
+                                                 context->Eip, (DWORD)code_mem + 1);
+        todo_wine{ ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n"); };
+        ok( (context->Dr6 & 0xf) == 0, "B0...3 flags in Dr6 shouldn't be set\n");
+        context->EFlags |= 0x100;
+    } else if( got_exception == 3) {
+        /* hw bp exception on second nop */
+        ok( context->Eip == (DWORD)code_mem + 1, "eip is wrong: %x instead of %x\n",
+                                                 context->Eip, (DWORD)code_mem + 1);
+        todo_wine{ ok( (context->Dr6 & 0xf) == 1, "B0 flag is not set in Dr6\n"); };
+        ok( !(context->Dr6 & 0x4000), "BS flag is set in Dr6\n");
+        context->Dr0 = 0;       /* clear breakpoint */
+        context->EFlags |= 0x100;
+    } else {
+        /* single step exception on ret */
+        ok( context->Eip == (DWORD)code_mem + 2, "eip is wrong: %x instead of %x\n",
+                                                 context->Eip, (DWORD)code_mem + 2);
+        ok( (context->Dr6 & 0xf) == 0, "B0...3 flags in Dr6 shouldn't be set\n");
+        todo_wine{ ok( (context->Dr6 & 0x4000), "BS flag is not set in Dr6\n"); };
+    }
+
+    context->Dr6 = 0;  /* clear status register */
+    return ExceptionContinueExecution;
+}
+
+static const BYTE dummy_code[] = { 0x90, 0x90, 0xc3 };  /* nop, nop, ret */
+
+/* test int3 handling */
+static DWORD int3_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                           CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    ok( rec->ExceptionAddress == code_mem, "exception address not at: %p, but at %p\n",
+                                           code_mem,  rec->ExceptionAddress);
+    todo_wine {
+        ok( context->Eip == (DWORD)code_mem, "eip not at: %p, but at %#x\n", code_mem, context->Eip);
+    }
+    if(context->Eip == (DWORD)code_mem) context->Eip++; /* skip breakpoint */
+
+    return ExceptionContinueExecution;
+}
+
+static const BYTE int3_code[] = { 0xCC, 0xc3 };  /* int 3, ret */
+
+
 static void test_exceptions(void)
 {
     CONTEXT ctx;
     NTSTATUS res;
 
     pNtGetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtGetContextThread" );
-    if (!pNtGetContextThread)
+    pNtSetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtSetContextThread" );
+    if (!pNtGetContextThread || !pNtSetContextThread)
     {
-        trace( "NtGetContextThread not found, skipping tests\n" );
+        trace( "NtGetContextThread/NtSetContextThread not found, skipping tests\n" );
         return;
     }
 
@@ -325,12 +399,27 @@ static void test_exceptions(void)
     /* test single stepping behavior */
     got_exception = 0;
     run_exception_test(single_step_handler, NULL, &single_stepcode, sizeof(single_stepcode));
-    ok(got_exception == 1, "expected 1 single step exceptions, got %d\n", got_exception);
+    ok(got_exception == 3, "expected 3 single step exceptions, got %d\n", got_exception);
 
     /* test alignment exceptions */
     got_exception = 0;
     run_exception_test(align_check_handler, NULL, align_check_code, sizeof(align_check_code));
     ok(got_exception == 0, "got %d alignment faults, expected 0\n", got_exception);
+
+    /* test single stepping over hardware breakpoint */
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.Dr0 = (DWORD) code_mem;  /* set hw bp on first nop */
+    ctx.Dr7 = 3;
+    ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+    res = pNtSetContextThread( GetCurrentThread(), &ctx);
+    ok( res == STATUS_SUCCESS, "NtSetContextThread faild with %x\n", res);
+
+    got_exception = 0;
+    run_exception_test(bpx_handler, NULL, dummy_code, sizeof(dummy_code));
+    ok( got_exception == 4,"expected 4 exceptions, got %d\n", got_exception);
+
+    /* test int3 handling */
+    run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code));
 }
 
 #endif  /* __i386__ */
