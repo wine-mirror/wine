@@ -474,22 +474,15 @@ error:
 		pProv->dwMagic = 0;
 		if (pProv->hModule)
 			FreeLibrary(pProv->hModule);
-		if (pProv->pVTable)
-			CRYPT_Free(pProv->pVTable);
-		if (pProv->pFuncs)
-			CRYPT_Free(pProv->pFuncs);
+		CRYPT_Free(pProv->pVTable);
+		CRYPT_Free(pProv->pFuncs);
 		CRYPT_Free(pProv);
 	}
-	if (pszContainerA)
-		CRYPT_Free(pszContainerA);
-	if (provnameA)
-		CRYPT_Free(provnameA);
-	if (provname)
-		CRYPT_Free(provname);
-	if (temp)
-		CRYPT_Free(temp);
-	if (imagepath)
-		CRYPT_Free(imagepath);
+	CRYPT_Free(pszContainerA);
+	CRYPT_Free(provnameA);
+	CRYPT_Free(provname);
+	CRYPT_Free(temp);
+	CRYPT_Free(imagepath);
 	return FALSE;
 }
 
@@ -517,10 +510,8 @@ BOOL WINAPI CryptAcquireContextA (HCRYPTPROV *phProv, LPCSTR pszContainer,
 
 	ret = CryptAcquireContextW(phProv, pContainer, pProvider, dwProvType, dwFlags);
 
-	if (pContainer)
-		CRYPT_Free(pContainer);
-	if (pProvider)
-		CRYPT_Free(pProvider);
+	CRYPT_Free(pContainer);
+	CRYPT_Free(pProvider);
 
 	return ret;
 }
@@ -1663,7 +1654,7 @@ BOOL WINAPI CryptSignHashA (HCRYPTHASH hHash, DWORD dwKeySpec, LPCSTR sDescripti
 
 	CRYPT_ANSIToUnicode(sDescription, &wsDescription, -1);
 	result = CryptSignHashW(hHash, dwKeySpec, wsDescription, dwFlags, pbSignature, pdwSigLen);
-	if (wsDescription) CRYPT_Free(wsDescription);
+	CRYPT_Free(wsDescription);
 
 	return result;
 }
@@ -1962,7 +1953,7 @@ BOOL WINAPI CryptVerifySignatureA (HCRYPTHASH hHash, BYTE *pbSignature, DWORD dw
 
 	CRYPT_ANSIToUnicode(sDescription, &wsDescription, -1);
 	result = CryptVerifySignatureW(hHash, pbSignature, dwSigLen, hPubKey, wsDescription, dwFlags);
-	if (wsDescription) CRYPT_Free(wsDescription);
+	CRYPT_Free(wsDescription);
 
 	return result;
 }
