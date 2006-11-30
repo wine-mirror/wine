@@ -2486,10 +2486,6 @@ create_device_error:
         IWineD3DSurface_Release(object->stencilBufferTarget);
         object->stencilBufferTarget = NULL;
     }
-    if (object->stencilBufferTarget != NULL) {
-        IWineD3DSurface_Release(object->stencilBufferTarget);
-        object->stencilBufferTarget = NULL;
-    }
     HeapFree(GetProcessHeap(), 0, object);
     *ppReturnedDeviceInterface = NULL;
     return WINED3DERR_INVALIDCALL;
