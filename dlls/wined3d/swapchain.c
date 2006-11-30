@@ -294,6 +294,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 glXDestroyContext(oldDisplay, oldContext); /* Should this happen on an active context? seems a bad idea */
                 LEAVE_GL();
             }
+            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapChainImpl);
 
         }
 
