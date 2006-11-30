@@ -1311,6 +1311,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
     rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData, &tmp);
     if (D3D_OK == rc && NULL != retIndexData) {
         IWineD3DVertexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
+        IWineD3DVertexBuffer_Release(retIndexData);
     } else {
         if(rc != D3D_OK)  FIXME("Call to GetIndices failed\n");
         *ppIndexData = NULL;
