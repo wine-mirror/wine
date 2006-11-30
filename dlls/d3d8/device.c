@@ -139,6 +139,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetDirect3D(LPDIRECT3DDEVICE8 iface, 
     if (hr == D3D_OK && pWineD3D != NULL)
     {
         IWineD3DResource_GetParent((IWineD3DResource *)pWineD3D,(IUnknown **)ppD3D8);
+        IWineD3DResource_Release((IWineD3DResource *)pWineD3D);
     } else {
         FIXME("Call to IWineD3DDevice_GetDirect3D failed\n");
         *ppD3D8 = NULL;
