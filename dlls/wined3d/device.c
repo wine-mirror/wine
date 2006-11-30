@@ -2305,6 +2305,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetDirect3D(IWineD3DDevice *iface, IWin
    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
    *ppD3D= This->wineD3D;
    TRACE("(%p) : wineD3D returning %p\n", This,  *ppD3D);
+   IWineD3D_AddRef(*ppD3D);
    return WINED3D_OK;
 }
 
