@@ -321,8 +321,8 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_GetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
     *ppDecl = NULL;
     hr = IWineD3DDevice_GetVertexDeclaration(This->WineD3DDevice, &pTest);
     if (hr == D3D_OK && NULL != pTest) {
-        IWineD3DResource_GetParent(pTest, (IUnknown **)ppDecl);
-        IWineD3DResource_Release(pTest);
+        IWineD3DVertexDeclaration_GetParent(pTest, (IUnknown **)ppDecl);
+        IWineD3DVertexDeclaration_Release(pTest);
     } else {
         *ppDecl = NULL;
     }
