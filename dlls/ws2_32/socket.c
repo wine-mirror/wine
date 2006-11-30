@@ -2729,6 +2729,15 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
         return 0;
     }
 
+    /* SO_EXCLUSIVEADDRUSE stops applications from binding to a port that is
+     * already used. This never works on Unix systems, so just ignore this
+     * setting*/
+    if ( level == WS_SOL_SOCKET && optname == WS_SO_EXCLUSIVEADDRUSE )
+    {
+        TRACE("Ignoring SO_EXCLUSIVEADDRUSE\n");
+        return 0;
+    }
+
 #ifdef HAVE_IPX
     if(level == NSPROTO_IPX)
     {

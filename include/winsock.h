@@ -663,6 +663,7 @@ typedef struct WS(WSAData)
 #define SO_DEBUG                   0x0001
 #define SO_ACCEPTCONN              0x0002
 #define SO_REUSEADDR               0x0004
+#define SO_EXCLUSIVEADDRUSE        ((u_int)(~SO_REUSEADDR))
 #define SO_KEEPALIVE               0x0008
 #define SO_DONTROUTE               0x0010
 #define SO_BROADCAST               0x0020
@@ -696,6 +697,7 @@ typedef struct WS(WSAData)
 #define WS_SO_DEBUG                0x0001
 #define WS_SO_ACCEPTCONN           0x0002
 #define WS_SO_REUSEADDR            0x0004
+#define WS_SO_EXCLUSIVEADDRUSE     ((WS_u_int)(~WS_SO_REUSEADDR))
 #define WS_SO_KEEPALIVE            0x0008
 #define WS_SO_DONTROUTE            0x0010
 #define WS_SO_BROADCAST            0x0020
