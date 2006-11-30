@@ -30,6 +30,7 @@
 #include "winnt.h"
 #include "sddl.h"
 #include "ntsecapi.h"
+#include "lmcons.h"
 
 #include "wine/test.h"
 
@@ -1164,6 +1165,152 @@ static void test_LookupAccountSid(void)
     }
 }
 
+static void get_sid_info(PSID psid, LPSTR *user, LPSTR *dom)
+{
+    static CHAR account[UNLEN + 1];
+    static CHAR domain[UNLEN + 1];
+    DWORD size, dom_size;
+    SID_NAME_USE use;
+
+    *user = account;
+    *dom = domain;
+
+    size = dom_size = UNLEN + 1;
+    account[0] = '\0';
+    domain[0] = '\0';
+    LookupAccountSidA(NULL, psid, account, &size, domain, &dom_size, &use);
+}
+
+static void test_LookupAccountName(void)
+{
+    DWORD sid_size, domain_size, user_size;
+    DWORD sid_save, domain_save;
+    CHAR user_name[UNLEN + 1];
+    SID_NAME_USE sid_use;
+    LPSTR domain, account, sid_dom;
+    PSID psid;
+    BOOL ret;
+
+    /* native crashes if (assuming all other parameters correct):
+     *  - peUse is NULL
+     *  - Sid is NULL and cbSid is > 0
+     *  - cbSid or cchReferencedDomainName are NULL
+     *  - ReferencedDomainName is NULL and cchReferencedDomainName is the correct size
+     */
+
+    user_size = UNLEN + 1;
+    ret = GetUserNameA(user_name, &user_size);
+    ok(ret, "Failed to get user name\n");
+
+    /* get sizes */
+    sid_size = 0;
+    domain_size = 0;
+    sid_use = 0xcafebabe;
+    SetLastError(0xdeadbeef);
+    ret = LookupAccountNameA(NULL, user_name, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(sid_size != 0, "Expected non-zero sid size\n");
+    ok(domain_size != 0, "Expected non-zero domain size\n");
+    ok(sid_use == 0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
+
+    sid_save = sid_size;
+    domain_save = domain_size;
+
+    psid = HeapAlloc(GetProcessHeap(), 0, sid_size);
+    domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
+
+    /* try valid account name */
+    ret = LookupAccountNameA(NULL, user_name, psid, &sid_size, domain, &domain_size, &sid_use);
+    get_sid_info(psid, &account, &sid_dom);
+    ok(ret, "Failed to lookup account name\n");
+    ok(sid_size == GetLengthSid(psid), "Expected %d, got %d\n", GetLengthSid(psid), sid_size);
+    todo_wine
+    {
+        ok(!lstrcmp(account, user_name), "Expected %s, got %s\n", user_name, account);
+        ok(!lstrcmp(domain, sid_dom), "Expected %s, got %s\n", sid_dom, domain);
+        ok(domain_size == domain_save - 1, "Expected %d, got %d\n", domain_save - 1, domain_size);
+        ok(lstrlen(domain) == domain_size, "Expected %d\n", lstrlen(domain));
+        ok(sid_use == SidTypeUser, "Expected SidTypeUser, got %d\n", SidTypeUser);
+    }
+    domain_size = domain_save;
+
+    /* NULL Sid with zero sid size */
+    SetLastError(0xdeadbeef);
+    sid_size = 0;
+    ret = LookupAccountNameA(NULL, user_name, NULL, &sid_size, domain, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(sid_size == sid_save, "Expected %d, got %d\n", sid_save, sid_size);
+    ok(domain_size == domain_save, "Expected %d, got %d\n", domain_save, domain_size);
+
+    /* try cchReferencedDomainName - 1 */
+    SetLastError(0xdeadbeef);
+    domain_size--;
+    ret = LookupAccountNameA(NULL, user_name, NULL, &sid_size, domain, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(sid_size == sid_save, "Expected %d, got %d\n", sid_save, sid_size);
+    ok(domain_size == domain_save, "Expected %d, got %d\n", domain_save, domain_size);
+
+    /* NULL ReferencedDomainName with zero domain name size */
+    SetLastError(0xdeadbeef);
+    domain_size = 0;
+    ret = LookupAccountNameA(NULL, user_name, psid, &sid_size, NULL, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(sid_size == sid_save, "Expected %d, got %d\n", sid_save, sid_size);
+    ok(domain_size == domain_save, "Expected %d, got %d\n", domain_save, domain_size);
+
+    HeapFree(GetProcessHeap(), 0, psid);
+    HeapFree(GetProcessHeap(), 0, domain);
+
+    /* get sizes for NULL account name */
+    sid_size = 0;
+    domain_size = 0;
+    sid_use = 0xcafebabe;
+    SetLastError(0xdeadbeef);
+    ret = LookupAccountNameA(NULL, NULL, NULL, &sid_size, NULL, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+    ok(sid_size != 0, "Expected non-zero sid size\n");
+    ok(domain_size != 0, "Expected non-zero domain size\n");
+    ok(sid_use == 0xcafebabe, "Expected 0xcafebabe, got %d\n", sid_use);
+
+    psid = HeapAlloc(GetProcessHeap(), 0, sid_size);
+    domain = HeapAlloc(GetProcessHeap(), 0, domain_size);
+
+    /* try NULL account name */
+    ret = LookupAccountNameA(NULL, NULL, psid, &sid_size, domain, &domain_size, &sid_use);
+    get_sid_info(psid, &account, &sid_dom);
+    ok(ret, "Failed to lookup account name\n");
+    todo_wine
+    {
+        ok(!lstrcmp(account, "BUILTIN"), "Expected BUILTIN, got %s\n", account);
+        ok(!lstrcmp(domain, "BUILTIN"), "Expected BUILTIN, got %s\n", domain);
+        ok(sid_use == SidTypeDomain, "Expected SidTypeDomain, got %d\n", SidTypeDomain);
+    }
+
+    /* try an invalid account name */
+    SetLastError(0xdeadbeef);
+    sid_size = 0;
+    domain_size = 0;
+    ret = LookupAccountNameA(NULL, "oogabooga", NULL, &sid_size, NULL, &domain_size, &sid_use);
+    ok(!ret, "Expected 0, got %d\n", ret);
+    todo_wine
+    {
+        ok(GetLastError() == ERROR_NONE_MAPPED,
+           "Expected ERROR_NONE_MAPPED, got %d\n", GetLastError());
+        ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
+        ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
+    }
+}
+
 START_TEST(security)
 {
     init();
@@ -1175,4 +1322,5 @@ START_TEST(security)
     test_AccessCheck();
     test_token_attr();
     test_LookupAccountSid();
+    test_LookupAccountName();
 }
