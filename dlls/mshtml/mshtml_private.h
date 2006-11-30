@@ -117,6 +117,7 @@ struct NSContainer {
     const nsIInterfaceRequestorVtbl     *lpInterfaceRequestorVtbl;
     const nsIWeakReferenceVtbl          *lpWeakReferenceVtbl;
     const nsISupportsWeakReferenceVtbl  *lpSupportsWeakReferenceVtbl;
+    const nsIDOMEventListenerVtbl       *lpDOMEventListenerVtbl;
 
     nsIWebBrowser *webbrowser;
     nsIWebNavigation *navigation;
@@ -253,6 +254,7 @@ typedef struct {
 #define NSEMBWNDS(x)     ((nsIEmbeddingSiteWindow*)       &(x)->lpEmbeddingSiteWindowVtbl)
 #define NSIFACEREQ(x)    ((nsIInterfaceRequestor*)        &(x)->lpInterfaceRequestorVtbl)
 #define NSTOOLTIP(x)     ((nsITooltipListener*)           &(x)->lpTooltipListenerVtbl)
+#define NSEVENTLIST(x)   ((nsIDOMEventListener*)          &(x)->lpDOMEventListenerVtbl)
 #define NSWEAKREF(x)     ((nsIWeakReference*)             &(x)->lpWeakReferenceVtbl)
 #define NSSUPWEAKREF(x)  ((nsISupportsWeakReference*)     &(x)->lpSupportsWeakReferenceVtbl)
 
@@ -351,6 +353,8 @@ void release_nodes(HTMLDocument*);
 void install_wine_gecko(void);
 
 /* editor */
+void handle_edit_event(HTMLDocument*,nsIDOMEvent*);
+
 void get_font_size(HTMLDocument*,WCHAR*);
 void set_font_size(HTMLDocument*,LPCWSTR);
 

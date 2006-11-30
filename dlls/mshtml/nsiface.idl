@@ -67,6 +67,7 @@ interface nsIWebBrowserChrome;
 interface nsILoadGroup;
 interface nsIDOMNode;
 interface nsIDOMDocument;
+interface nsIDOMEvent;
 
 interface IMoniker;
 
@@ -86,7 +87,6 @@ typedef nsISupports nsISHistory;
 typedef nsISupports nsISimpleEnumerator;
 typedef nsISupports nsIWidget;
 typedef nsISupports nsIProtocolHandler;
-typedef nsISupports nsIDOMEventTarget;
 typedef nsISupports nsIDOMAbstractView;
 typedef nsISupports nsIHttpHeaderVisitor;
 typedef nsISupports nsIDOMBarProp;
@@ -1047,6 +1047,26 @@ interface nsIWebBrowserChrome : nsISupports
 
 [
     object,
+    uuid(df31c120-ded6-11d1-bd85-00805f8ae3f4)
+]
+interface nsIDOMEventListener : nsISupports
+{
+    nsresult HandleEvent(nsIDOMEvent *event);
+}
+
+[
+    object,
+    uuid(1c773b30-d1cf-11d2-bd95-00805f8ae3f4)
+]
+interface nsIDOMEventTarget : nsISupports
+{
+    nsresult AddEventListener(const nsAString *type, nsIDOMEventListener *listener, PRBool useCapture);
+    nsresult RemoveEventListener(const nsAString *type, nsIDOMEventListener *listener, PRBool useCapture);
+    nsresult DispatchEvent(nsIDOMEvent *evt, PRBool *_retval);
+}
+
+[
+    object,
     uuid(a66b7b80-ff46-bd97-0080-5f8ae38add32)
 ]
 interface nsIDOMEvent : nsISupports
@@ -1113,6 +1133,24 @@ interface nsIDOMMouseEvent : nsIDOMUIEvent
             PRInt32 clientXArg, PRInt32 clientYArg, PRBool ctrlKeyArg, PRBool altKeyArg,
             PRBool shiftKeyArg, PRBool metaKeyArg, PRUint16 buttonArg,
             nsIDOMEventTarget *relatedTargetArg);
+}
+
+[
+    object,
+    uuid(028e0e6e-8b01-11d3-aae7-0010838a3123)
+]
+interface nsIDOMKeyEvent : nsIDOMUIEvent
+{
+    nsresult GetCharCode(PRUint32 *aCharCode);
+    nsresult GetKeyCode(PRUint32 *aKeyCode);
+    nsresult GetAltKey(PRBool *aAltKey);
+    nsresult GetCtrlKey(PRBool *aCtrlKey);
+    nsresult GetShiftKey(PRBool *aShiftKey);
+    nsresult GetMetaKey(PRBool *aMetaKey);
+    nsresult InitKeyEvent(const nsAString *typeArg, PRBool canBubbleArg,
+            PRBool cancelableArg, nsIDOMAbstractView *viewArg, PRBool ctrlKeyArg,
+            PRBool altKeyArg, PRBool shiftKeyArg, PRBool metaKeyArg, PRUint32 keyCodeArg,
+            PRUint32 charCodeArg);
 }
 
 [

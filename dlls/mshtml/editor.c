@@ -36,6 +36,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define DOM_VK_LEFT  VK_LEFT
+#define DOM_VK_UP    VK_UP
+#define DOM_VK_RIGHT VK_RIGHT
+#define DOM_VK_DOWN  VK_DOWN
+
 static const WCHAR wszFont[] = {'f','o','n','t',0};
 static const WCHAR wszSize[] = {'s','i','z','e',0};
 
@@ -230,4 +235,203 @@ void set_font_size(HTMLDocument *This, LPCWSTR size)
 
     nsISelection_Release(nsselection);
     nsIDOMDocument_Release(nsdoc);
+}
+
+static BOOL is_visible_text_node(nsIDOMNode *node)
+{
+    nsIDOMCharacterData *char_data;
+    nsAString data_str;
+    LPCWSTR data, ptr;
+    PRUint32 len;
+
+    nsIDOMNode_QueryInterface(node, &IID_nsIDOMCharacterData, (void**)&char_data);
+
+    nsIDOMCharacterData_GetLength(char_data, &len);
+
+    nsAString_Init(&data_str, NULL);
+    nsIDOMCharacterData_GetData(char_data, &data_str);
+    nsAString_GetData(&data_str, &data, NULL);
+
+    if(*data == '\n') {
+        len--;
+        for(ptr=data+1; ptr && isspaceW(*ptr); ptr++)
+            len--;
+    }
+
+    nsAString_Finish(&data_str);
+
+    nsIDOMCharacterData_Release(char_data);
+
+    return len != 0;
+}
+
+static nsIDOMNode *get_child_text_node(nsIDOMNode *node, BOOL first)
+{
+    nsIDOMNode *iter, *iter2;
+
+    if(first)
+        nsIDOMNode_GetFirstChild(node, &iter);
+    else
+        nsIDOMNode_GetLastChild(node, &iter);
+
+    while(iter) {
+        PRUint16 node_type;
+
+        nsIDOMNode_GetNodeType(iter, &node_type);
+        switch(node_type) {
+        case TEXT_NODE:
+            if(is_visible_text_node(iter))
+                return iter;
+        case ELEMENT_NODE:
+            iter2 = get_child_text_node(iter, first);
+            if(iter2) {
+                nsIDOMNode_Release(iter);
+                return iter2;
+            }
+        }
+
+        if(first)
+            nsIDOMNode_GetNextSibling(iter, &iter2);
+        else
+            nsIDOMNode_GetPreviousSibling(iter, &iter2);
+
+        nsIDOMNode_Release(iter);
+        iter = iter2;
+    }
+
+    return NULL;
+}
+
+static nsIDOMNode *get_next_text_node(nsIDOMNode *node, BOOL next)
+{
+    nsIDOMNode *iter, *iter2 = NULL, *parent = NULL;
+    PRUint16 node_type;
+
+    iter = node;
+    nsIDOMNode_AddRef(iter);
+
+    while(1) {
+        if(next)
+            nsIDOMNode_GetNextSibling(iter, &iter2);
+        else
+            nsIDOMNode_GetPreviousSibling(iter, &iter2);
+
+        while(!iter2) {
+            nsIDOMNode_GetParentNode(iter, &parent);
+            nsIDOMNode_Release(iter);
+            if(!parent)
+                return NULL;
+
+            iter = parent;
+
+            if(next)
+                nsIDOMNode_GetNextSibling(iter, &iter2);
+            else
+                nsIDOMNode_GetPreviousSibling(iter, &iter2);
+        }
+
+        nsIDOMNode_Release(iter);
+        iter = iter2;
+
+        nsIDOMNode_GetNodeType(iter, &node_type);
+
+        switch(node_type) {
+        case TEXT_NODE:
+            if(is_visible_text_node(iter))
+                return iter;
+        case ELEMENT_NODE:
+            iter2 = get_child_text_node(iter, next);
+            if(iter2) {
+                nsIDOMNode_Release(iter);
+                return iter2;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+static void collapse_end_node(nsISelection *selection, nsIDOMNode *node)
+{
+    nsIDOMCharacterData *char_data;
+    PRUint32 len;
+
+    nsIDOMNode_QueryInterface(node, &IID_nsIDOMCharacterData, (void**)&char_data);
+    nsIDOMCharacterData_GetLength(char_data, &len);
+    nsIDOMCharacterData_Release(char_data);
+
+    nsISelection_Collapse(selection, node, len);
+}
+
+static void collapse_next_char(HTMLDocument *doc, nsIDOMKeyEvent *event, BOOL next)
+{
+    nsISelection *selection = get_ns_selection(doc);
+    nsIDOMNode *node;
+    PRBool collapsed, b;
+    PRUint16 node_type;
+    nsIDOMNode *text_node;
+
+    nsIDOMKeyEvent_GetCtrlKey(event, &b);
+    if(b) return;
+
+    nsIDOMKeyEvent_GetShiftKey(event, &b);
+    if(b) return;
+
+    nsISelection_GetIsCollapsed(selection, &collapsed);
+    if(!collapsed)
+        nsISelection_CollapseToEnd(selection);
+
+    nsISelection_GetFocusNode(selection, &node);
+    nsIDOMNode_GetNodeType(node, &node_type);
+
+    if(node_type == TEXT_NODE) {
+        nsIDOMCharacterData *char_data;
+        PRInt32 offset;
+        PRUint32 len;
+
+        nsISelection_GetFocusOffset(selection, &offset);
+
+        nsIDOMNode_QueryInterface(node, &IID_nsIDOMCharacterData, (void**)&char_data);
+        nsIDOMCharacterData_GetLength(char_data, &len);
+        nsIDOMCharacterData_Release(char_data);
+
+        if(next ? offset != len : offset) {
+            nsISelection_Collapse(selection, node, offset + (next?1:-1));
+            return;
+        }
+    }
+
+    text_node = get_next_text_node(node, next);
+    if(text_node) {
+        if(next)
+            nsISelection_Collapse(selection, text_node, 1);
+        else
+            collapse_end_node(selection, text_node);
+        nsIDOMNode_Release(text_node);
+    }
+
+    nsIDOMNode_Release(node);
+    nsISelection_Release(selection);
+}
+
+void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
+{
+    nsIDOMKeyEvent *key_event;
+    PRUint32 code;
+
+    nsIDOMEvent_QueryInterface(event, &IID_nsIDOMKeyEvent, (void**)&key_event);
+
+    nsIDOMKeyEvent_GetKeyCode(key_event, &code);
+
+    switch(code) {
+    case DOM_VK_LEFT:
+        TRACE("left");
+        collapse_next_char(This, key_event, FALSE);
+        break;
+    case DOM_VK_RIGHT:
+        TRACE("right\n");
+        collapse_next_char(This, key_event, TRUE);
+    };
+
+    nsIDOMKeyEvent_Release(key_event);
 }
