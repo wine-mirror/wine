@@ -187,6 +187,8 @@ int dump_analysis(const char *name, file_dumper fn, enum FileSig wanted_sig)
         if ((unsigned long)read( fd, dump_base, dump_total_len ) != dump_total_len) fatal( "Cannot read file" );
     }
 
+    printf("Contents of %s: %ld bytes\n\n", name, dump_total_len);
+
     for (dpr = dumpers; dpr->kind != SIG_UNKNOWN; dpr++)
     {
         if (dpr->get_kind() == dpr->kind &&

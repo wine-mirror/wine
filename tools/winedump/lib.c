@@ -125,7 +125,7 @@ void lib_dump(void)
         /* FIXME: only import library contents with the short format are
          * recognized.
          */
-        if (!(ioh = PRD(cur_file_pos + sizeof(*iamh), sizeof(*ioh)))) break;
+        if (!(ioh = PRD(cur_file_pos, sizeof(*ioh)))) break;
         if (ioh->Sig1 == IMAGE_FILE_MACHINE_UNKNOWN && ioh->Sig2 == IMPORT_OBJECT_HDR_SIG2)
         {
             dump_import_object(ioh);
