@@ -363,7 +363,7 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
     FILE *fICOFile;
     ICONDIR iconDir;
     ICONDIRENTRY *pIconDirEntry;
-    int nMax = 0;
+    int nMax = 0, nMaxBits = 0;
     int nIndex = 0;
     void *pIcon;
     int i;
@@ -389,10 +389,12 @@ static int ExtractFromICO(LPCWSTR szFileName, const char *szXPMFileName)
         goto error3;
 
     for (i = 0; i < iconDir.idCount; i++)
-        if ((pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth) > nMax)
+        if (pIconDirEntry[i].wBitCount <= 8 && pIconDirEntry[i].wBitCount >= nMaxBits &&
+            (pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth) >= nMax)
         {
             nIndex = i;
             nMax = pIconDirEntry[i].bHeight * pIconDirEntry[i].bWidth;
+            nMaxBits = pIconDirEntry[i].wBitCount;
         }
     if ((pIcon = HeapAlloc(GetProcessHeap(), 0, pIconDirEntry[nIndex].dwBytesInRes)) == NULL)
         goto error3;
