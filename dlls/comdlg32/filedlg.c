@@ -221,7 +221,7 @@ static void    FILEDLG95_LOOKIN_Clean(HWND hwnd);
 static HRESULT GetName(LPSHELLFOLDER lpsf, LPITEMIDLIST pidl,DWORD dwFlags,LPSTR lpstrFileName);
 IShellFolder* GetShellFolderFromPidl(LPITEMIDLIST pidlAbs);
 LPITEMIDLIST  GetParentPidl(LPITEMIDLIST pidl);
-LPITEMIDLIST  GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
+static LPITEMIDLIST GetPidlFromName(IShellFolder *psf,LPWSTR lpcstrFileName);
 
 /* Shell memory allocation */
 static void *MemAlloc(UINT size);
@@ -3391,7 +3391,7 @@ LPITEMIDLIST GetParentPidl(LPITEMIDLIST pidl)
  * returns the pidl of the file name relative to folder
  * NULL if an error occurred
  */
-LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPWSTR lpcstrFileName)
+static LPITEMIDLIST GetPidlFromName(IShellFolder *lpsf,LPWSTR lpcstrFileName)
 {
   LPITEMIDLIST pidl = NULL;
   ULONG ulEaten;

@@ -78,19 +78,6 @@ static const IServiceProviderVtbl IShellBrowserImpl_IServiceProvider_Vtbl;
 
 static HRESULT IShellBrowserImpl_ICommDlgBrowser_OnSelChange(ICommDlgBrowser *iface, IShellView *ppshv);
 
-/**************************************************************************
-*   External Prototypes
-*/
-extern const char *FileOpenDlgInfosStr;
-
-extern IShellFolder*    GetShellFolderFromPidl(LPITEMIDLIST pidlAbs);
-extern LPITEMIDLIST     GetParentPidl(LPITEMIDLIST pidl);
-extern LPITEMIDLIST     GetPidlFromName(IShellFolder *psf,LPCSTR lpcstrFileName);
-
-extern int     FILEDLG95_LOOKIN_SelectItem(HWND hwnd,LPITEMIDLIST pidl);
-extern LRESULT SendCustomDlgNotificationMessage(HWND hwndParentDlg, UINT uCode);
-
-
 /*
  *   Helper functions
  */
