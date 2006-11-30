@@ -2824,6 +2824,9 @@ INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA lppsh)
     }
   }
 
+  if (psInfo->active_page >= psInfo->nPages) psInfo->active_page = 0;
+  TRACE("startpage: %d of %d pages\n", psInfo->active_page, psInfo->nPages);
+
   psInfo->unicode = FALSE;
   psInfo->ended = FALSE;
 
@@ -2874,6 +2877,9 @@ INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW lppsh)
 	psInfo->nPages--;
     }
   }
+
+  if (psInfo->active_page >= psInfo->nPages) psInfo->active_page = 0;
+  TRACE("startpage: %d of %d pages\n", psInfo->active_page, psInfo->nPages);
 
   psInfo->unicode = TRUE;
   psInfo->ended = FALSE;
