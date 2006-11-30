@@ -137,11 +137,11 @@ send_file (const char *name)
     }
     fseek (f, 0, SEEK_END);
     filesize = ftell (f);
-    if (filesize > 1024*1024) {
+    if (filesize > 1.5*1024*1024) {
         report (R_WARNING,
-                "File too big (%.1f MB > 1 MB); submitting partial report.",
+                "File too big (%.1f MB > 1.5 MB); submitting partial report.",
                 filesize/1024.0/1024);
-        filesize = 1024*1024;
+        filesize = 1.5*1024*1024;
     }
     fseek (f, 0, SEEK_SET);
 
