@@ -133,7 +133,6 @@ struct SysMouseImpl
      * reach window borders (for e.g. shooters, "surface movement" games) */
     WARP_STATUS		            need_warp;
     DWORD                           last_warped;
-    CRITICAL_SECTION		    crit;
     
     /* This is for mouse reporting. */
     Wine_InternalMouseData          m_state;
@@ -249,7 +248,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     newDevice->base.ref = 1;
     newDevice->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
-    InitializeCriticalSection(&(newDevice->crit));
+    InitializeCriticalSection(&newDevice->base.crit);
 
     /* Per default, Wine uses its internal data format */
     newDevice->df = (DIDATAFORMAT *) &Wine_InternalMouseFormat;
@@ -329,7 +328,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 
     /* Free the data queue */
     HeapFree(GetProcessHeap(),0,This->data_queue);
-    DeleteCriticalSection(&(This->crit));
+    DeleteCriticalSection(&This->base.crit);
     
     /* Free the DataFormat */
     if (This->df != &(Wine_InternalMouseFormat)) {
@@ -385,7 +384,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 
     if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
-    EnterCriticalSection(&(This->crit));
+    EnterCriticalSection(&This->base.crit);
     dwCoop = This->base.dwCoopLevel;
 
     if (wparam == WM_MOUSEMOVE) {
@@ -495,7 +494,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     /* Mouse moved -> send event if asked */
     if (This->base.hEvent) SetEvent(This->base.hEvent);
     
-    LeaveCriticalSection(&(This->crit));
+    LeaveCriticalSection(&This->base.crit);
     
     /* Ignore message */
     if (dwCoop & DISCL_EXCLUSIVE) return 1;
@@ -631,7 +630,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
-    EnterCriticalSection(&(This->crit));
+    EnterCriticalSection(&This->base.crit);
     TRACE("(this=%p,0x%08x,%p):\n", This, len, ptr);
     TRACE("(X: %d - Y: %d - Z: %d  L: %02x M: %02x R: %02x)\n",
 	  This->m_state.lX, This->m_state.lY, This->m_state.lZ,
@@ -651,7 +650,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
         if(!dinput_window_check(This))
         {
-            LeaveCriticalSection(&(This->crit));
+            LeaveCriticalSection(&This->base.crit);
             return DIERR_GENERIC;
         }
 	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
@@ -665,7 +664,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 #endif
     }
     
-    LeaveCriticalSection(&(This->crit));
+    LeaveCriticalSection(&This->base.crit);
     
     return DI_OK;
 }
@@ -692,7 +691,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 	return DIERR_NOTACQUIRED;
     }
     
-    EnterCriticalSection(&(This->crit));
+    EnterCriticalSection(&This->base.crit);
 
     len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0)
 	+ (This->queue_head - This->queue_tail);
@@ -713,7 +712,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     } else {
 	if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
 	    ERR("Wrong structure size !\n");
-	    LeaveCriticalSection(&(This->crit));
+	    LeaveCriticalSection(&This->base.crit);
 	    return DIERR_INVALIDPARAM;
 	}
 	
@@ -743,7 +742,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
     if (!(flags & DIGDD_PEEK))
 	This->queue_tail = nqtail;
     
-    LeaveCriticalSection(&(This->crit));
+    LeaveCriticalSection(&This->base.crit);
     
     /* Check if we need to do a mouse warping */
     if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {

@@ -57,7 +57,6 @@ struct SysKeyboardImpl
     int                         queue_head;  /* position to write new event into queue      */
     int                         queue_tail;  /* next event to read from queue               */
     BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
-    CRITICAL_SECTION            crit;
 };
 
 static SysKeyboardImpl* current_lock = NULL; 
@@ -94,9 +93,9 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
     DInputKeyState[dik_code] = new_diks;
     TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
       
-    EnterCriticalSection(&This->crit);
+    EnterCriticalSection(&This->base.crit);
     GEN_EVENT(dik_code, new_diks, hook->time, This->dinput->evsequence++);
-    LeaveCriticalSection(&This->crit);
+    LeaveCriticalSection(&This->base.crit);
 
     if (This->base.hEvent) SetEvent(This->base.hEvent);
     
@@ -203,7 +202,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     newDevice->base.ref = 1;
     memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
     newDevice->dinput = dinput;
-    InitializeCriticalSection(&(newDevice->crit));
+    InitializeCriticalSection(&newDevice->base.crit);
 
     return newDevice;
 }
@@ -266,7 +265,7 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     /* Free the data queue */
     HeapFree(GetProcessHeap(), 0, This->data_queue);
 
-    DeleteCriticalSection(&(This->crit));
+    DeleteCriticalSection(&This->base.crit);
 
     HeapFree(GetProcessHeap(),0,This);
     return DI_OK;
@@ -348,7 +347,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
 
     MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
 
-    EnterCriticalSection(&(This->crit));
+    EnterCriticalSection(&This->base.crit);
 
     if (TRACE_ON(dinput)) {
 	int i;
@@ -360,7 +359,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     }
     
     memcpy(ptr, DInputKeyState, WINE_DINPUT_KEYBOARD_MAX_KEYS);
-    LeaveCriticalSection(&(This->crit));
+    LeaveCriticalSection(&This->base.crit);
 
     return DI_OK;
 }
@@ -387,7 +386,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
         return DIERR_INVALIDPARAM;
 
     MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
-    EnterCriticalSection(&This->crit);
+    EnterCriticalSection(&This->base.crit);
 
     len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0) +
             This->queue_head - This->queue_tail;
@@ -414,7 +413,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
         This->overflow = FALSE;
     }
 
-    LeaveCriticalSection(&This->crit);
+    LeaveCriticalSection(&This->base.crit);
 
     TRACE("Returning %d events queued\n", *entries);
     return ret;

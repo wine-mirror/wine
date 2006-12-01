@@ -33,6 +33,7 @@ struct IDirectInputDevice2AImpl
     const void                 *lpVtbl;
     LONG                        ref;
     GUID                        guid;
+    CRITICAL_SECTION            crit;
     HANDLE                      hEvent;
     DWORD                       dwCoopLevel;
     HWND                        win;

@@ -377,6 +377,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   newDevice->base.lpVtbl = jvt;
   newDevice->base.ref = 1;
   memcpy(&newDevice->base.guid, rguid, sizeof(*rguid));
+  InitializeCriticalSection(&newDevice->base.crit);
   newDevice->joyfd = -1;
   newDevice->dinput = dinput;
   newDevice->joydev = joydev;
@@ -542,6 +543,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
         
         /* release the data transform filter */
         release_DataFormat(This->transform);
+
+        DeleteCriticalSection(&This->base.crit);
         
         HeapFree(GetProcessHeap(),0,This);
         return 0;

@@ -454,11 +454,14 @@ BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) 
 HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+    HRESULT res;
 
-    if (This->acquired) return S_FALSE;
+    EnterCriticalSection(&This->crit);
+    res = This->acquired ? S_FALSE : DI_OK;
     This->acquired = 1;
+    LeaveCriticalSection(&This->crit);
 
-    return DI_OK;
+    return res;
 }
 
 /******************************************************************************
@@ -468,11 +471,14 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+    HRESULT res;
 
-    if (!This->acquired) return DI_NOEFFECT;
+    EnterCriticalSection(&This->crit);
+    res = !This->acquired ? DI_NOEFFECT : DI_OK;
     This->acquired = 0;
+    LeaveCriticalSection(&This->crit);
 
-    return DI_OK;
+    return res;
 }
 
 /******************************************************************************
@@ -524,8 +530,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(
         return DIERR_UNSUPPORTED;
 
     /* Store the window which asks for the mouse */
+    EnterCriticalSection(&This->crit);
     This->win = hwnd;
     This->dwCoopLevel = dwflags;
+    LeaveCriticalSection(&This->crit);
 
     return DI_OK;
 }
@@ -540,7 +548,9 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetEventNotification(
 
     TRACE("(%p) %p\n", This, event);
 
+    EnterCriticalSection(&This->crit);
     This->hEvent = event;
+    LeaveCriticalSection(&This->crit);
     return DI_OK;
 }
 

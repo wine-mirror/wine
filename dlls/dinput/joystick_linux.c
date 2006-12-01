@@ -115,7 +115,6 @@ struct JoystickImpl
 	int				axes;
 	int				buttons;
 	POV				povs[4];
-	CRITICAL_SECTION		crit;
 	BOOL				overflow;
 };
 
@@ -500,6 +499,8 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->dinput = dinput;
     newDevice->overflow = FALSE;
     CopyMemory(&newDevice->base.guid, rguid, sizeof(*rguid));
+    InitializeCriticalSection(&newDevice->base.crit);
+    newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)"DINPUT_joystick";
 
     /* setup_dinput_options may change these */
     newDevice->deadzone = 5000;
@@ -560,8 +561,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     calculate_ids(newDevice);
 
     IDirectInputDevice_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
-    InitializeCriticalSection(&(newDevice->crit));
-    newDevice->crit.DebugInfo->Spare[0] = (DWORD_PTR)"DINPUT_Mouse";
 
     newDevice->devcaps.dwSize = sizeof(newDevice->devcaps);
     newDevice->devcaps.dwFlags = DIDC_ATTACHED;
@@ -697,8 +696,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     /* release the data transform filter */
     release_DataFormat(This->transform);
 
-    This->crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&(This->crit));
+    This->base.crit.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&This->base.crit);
     IDirectInputDevice_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
 
     HeapFree(GetProcessHeap(),0,This);
@@ -1040,7 +1039,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(
         return DIERR_NOTACQUIRED;
     }
 
-    EnterCriticalSection(&(This->crit));
+    EnterCriticalSection(&This->base.crit);
 
     joy_polldev(This);
 
@@ -1060,7 +1059,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(
     } else {
         if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
             ERR("Wrong structure size !\n");
-            LeaveCriticalSection(&(This->crit));
+            LeaveCriticalSection(&This->base.crit);
             return DIERR_INVALIDPARAM;
         }
 
@@ -1091,7 +1090,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceData(
     if (!(flags & DIGDD_PEEK))
         This->queue_tail = nqtail;
 
-    LeaveCriticalSection(&(This->crit));
+    LeaveCriticalSection(&This->base.crit);
 
     return hr;
 }
