@@ -1503,9 +1503,7 @@ static HRESULT WINAPI DataCache_SetAdvise(
    */
   if (advf & ADVF_PRIMEFIRST)
   {
-    DataCache_FireOnViewChange(this,
-			       DVASPECT_CONTENT,
-			       -1);
+    DataCache_FireOnViewChange(this, aspects, -1);
   }
 
   return S_OK;
