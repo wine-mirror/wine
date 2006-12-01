@@ -44,6 +44,11 @@ extern "C" {
 #define OLEIVERB_DISCARDUNDOSTATE   (-6L)
 #define OLEIVERB_PROPERTIES         (-7L)
 
+#define EMBDHLP_INPROC_HANDLER  0x00000000
+#define EMBDHLP_INPROC_SERVER   0x00000001
+#define EMBDHLP_CREATENOW       0x00000000
+#define EMBDHLP_DELAYCREATE     0x00010000
+
 /*
  * API declarations
  */
@@ -96,6 +101,8 @@ HRESULT     WINAPI GetHGlobalFromILockBytes(LPLOCKBYTES plkbyt, HGLOBAL* phgloba
 HRESULT     WINAPI CreateILockBytesOnHGlobal(HGLOBAL hGlobal, BOOL fDeleteOnRelease, LPLOCKBYTES* pplkbyt);
 HRESULT     WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
 HGLOBAL     WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseTypeAsLabel);
+HGLOBAL     WINAPI OleGetIconOfFile(LPOLESTR lpszPath, BOOL fUseFileAsLabel);
+HGLOBAL     WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel, LPOLESTR lpszSourceFile, UINT iIconIndex);
 HRESULT     WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses);
 HRESULT     WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID riid,
                 DWORD renderopt, LPFORMATETC lpFormatEtc, LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
@@ -115,6 +122,12 @@ HRESULT     WINAPI OleCreateFromData(LPDATAOBJECT pSrcDataObj, REFIID riid, DWOR
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
 HRESULT     WINAPI OleCreateDefaultHandler(REFCLSID  clsid,
 					   LPUNKNOWN pUnkOuter,
+					   REFIID    riid,
+					   LPVOID*   ppvObj);
+HRESULT     WINAPI OleCreateEmbeddingHelper(REFCLSID  clsid,
+					   LPUNKNOWN pUnkOuter,
+					   DWORD     flags,
+					   IClassFactory *pCF,
 					   REFIID    riid,
 					   LPVOID*   ppvObj);
 HRESULT     WINAPI CreateOleAdviseHolder (LPOLEADVISEHOLDER *ppOAHolder);
