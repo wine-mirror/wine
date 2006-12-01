@@ -32,6 +32,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+#define HIMETRIC_INCHES 2540
+
 /***********************************************************************
  *		OleMetafilePictFromIconAndLabel (OLE32.@)
  */
@@ -120,7 +122,10 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 	}
 
 	mfp.mm = MM_ANISOTROPIC;
-	mfp.xExt = mfp.yExt = 0; /* FIXME ? */
+	hdcScreen = GetDC(NULL);
+	mfp.xExt = MulDiv(width, HIMETRIC_INCHES, GetDeviceCaps(hdcScreen, LOGPIXELSX));
+	mfp.yExt = MulDiv(label_offset + text_size.cy, HIMETRIC_INCHES, GetDeviceCaps(hdcScreen, LOGPIXELSY));
+	ReleaseDC(NULL, hdcScreen);
 	mfp.hMF = CloseMetaFile(hdc);
 	DeleteObject(font);
 	if( !mfp.hMF )
