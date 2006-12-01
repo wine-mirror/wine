@@ -41,6 +41,7 @@
 #include "wine/unicode.h"
 #include "objbase.h"
 #include "msidefs.h"
+#include "sddl.h"
 
 #include "msipriv.h"
 
@@ -109,6 +110,56 @@ static UINT set_installed_prop( MSIPACKAGE *package )
         RegCloseKey( hkey );
         MSI_SetPropertyW( package, szInstalled, val );
     }
+
+    return r;
+}
+
+static UINT set_user_sid_prop( MSIPACKAGE *package )
+{
+    SID_NAME_USE use;
+    LPWSTR user_name;
+    LPWSTR sid_str, dom = NULL;
+    DWORD size, dom_size;
+    PSID psid = NULL;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    static const WCHAR user_sid[] = {'U','s','e','r','S','I','D',0};
+
+    size = 0;
+    GetUserNameW( NULL, &size );
+
+    user_name = msi_alloc( (size + 1) * sizeof(WCHAR) );
+    if (!user_name)
+        return ERROR_OUTOFMEMORY;
+
+    if (!GetUserNameW( user_name, &size ))
+        goto done;
+
+    size = 0;
+    dom_size = 0;
+    LookupAccountNameW( NULL, user_name, NULL, &size, NULL, &dom_size, &use );
+
+    psid = msi_alloc( size );
+    dom = msi_alloc( dom_size );
+    if (!psid || !dom)
+    {
+        r = ERROR_OUTOFMEMORY;
+        goto done;
+    }
+
+    if (!LookupAccountNameW( NULL, user_name, psid, &size, dom, &dom_size, &use ))
+        goto done;
+
+    if (!ConvertSidToStringSidW( psid, &sid_str ))
+        goto done;
+
+    r = MSI_SetPropertyW( package, user_sid, sid_str );
+
+done:
+    LocalFree( sid_str );
+    msi_free( dom );
+    msi_free( psid );
+    msi_free( user_name );
 
     return r;
 }
@@ -378,6 +429,9 @@ static VOID set_installer_properties(MSIPACKAGE *package)
         MSI_SetPropertyW( package, szCOMPANYNAME, company );
         msi_free( company );
     }
+
+    if ( set_user_sid_prop( package ) != ERROR_SUCCESS)
+        ERR("Failed to set the UserSID property\n");
 
     msi_free( check );
     CloseHandle( hkey );
