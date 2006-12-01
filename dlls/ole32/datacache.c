@@ -43,7 +43,6 @@
  *     header. I was able to figure-out where the extent of the object
  *     was stored and the aspect, but that's about it.
  */
-#include <assert.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -58,6 +57,7 @@
 #include "winerror.h"
 #include "wine/unicode.h"
 #include "ole2.h"
+#include "wine/list.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -85,6 +85,21 @@ typedef struct PresentationDataHeader
   DWORD dwSize;
 } PresentationDataHeader;
 
+typedef struct DataCacheEntry
+{
+  struct list entry;
+
+  /* format of this entry */
+  FORMATETC fmtetc;
+
+  /*
+   * This storage pointer is set through a call to
+   * IPersistStorage_Load. This is where the visual
+   * representation of the object is stored.
+   */
+  IStorage *storage;
+} DataCacheEntry;
+
 /****************************************************************************
  * DataCache
  */
@@ -111,13 +126,6 @@ struct DataCache
   IUnknown* outerUnknown;
 
   /*
-   * This storage pointer is set through a call to
-   * IPersistStorage_Load. This is where the visual
-   * representation of the object is stored.
-   */
-  IStorage* presentationStorage;
-
-  /*
    * The user of this object can setup ONE advise sink
    * connection with the object. These parameters describe
    * that connection.
@@ -125,7 +133,9 @@ struct DataCache
   DWORD        sinkAspects;
   DWORD        sinkAdviseFlag;
   IAdviseSink* sinkInterface;
+  IStorage *presentationStorage;
 
+  struct list cache_list;
 };
 
 typedef struct DataCache DataCache;
@@ -173,13 +183,14 @@ static inline DataCache *impl_from_IOleCacheControl( IOleCacheControl *iface )
  */
 static DataCache* DataCache_Construct(REFCLSID  clsid,
 				      LPUNKNOWN pUnkOuter);
-static HRESULT    DataCache_OpenPresStream(DataCache *this,
-					   DWORD      drawAspect,
+static HRESULT    DataCacheEntry_OpenPresStream(DataCacheEntry *This,
 					   IStream  **pStm);
 
 static void DataCache_Destroy(
   DataCache* ptrToDestroy)
 {
+  DataCacheEntry *cache_entry, *next_cache_entry;
+
   TRACE("()\n");
 
   if (ptrToDestroy->sinkInterface != NULL)
@@ -188,16 +199,46 @@ static void DataCache_Destroy(
     ptrToDestroy->sinkInterface = NULL;
   }
 
-  if (ptrToDestroy->presentationStorage != NULL)
+  LIST_FOR_EACH_ENTRY_SAFE(cache_entry, next_cache_entry, &ptrToDestroy->cache_list, DataCacheEntry, entry)
   {
-    IStorage_Release(ptrToDestroy->presentationStorage);
-    ptrToDestroy->presentationStorage = NULL;
+    IStorage_Release(cache_entry->storage);
+    HeapFree(GetProcessHeap(), 0, cache_entry->fmtetc.ptd);
+    HeapFree(GetProcessHeap(), 0, cache_entry);
   }
 
   /*
    * Free the datacache pointer.
    */
   HeapFree(GetProcessHeap(), 0, ptrToDestroy);
+}
+
+static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FORMATETC *formatetc)
+{
+    DataCacheEntry *cache_entry;
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+    {
+        /* FIXME: also compare DVTARGETDEVICEs */
+        if ((!cache_entry->fmtetc.cfFormat || !formatetc->cfFormat || (formatetc->cfFormat == cache_entry->fmtetc.cfFormat)) &&
+            (formatetc->dwAspect == cache_entry->fmtetc.dwAspect) &&
+            (formatetc->lindex == cache_entry->fmtetc.lindex) &&
+            (!cache_entry->fmtetc.tymed || !formatetc->tymed || (formatetc->tymed == cache_entry->fmtetc.tymed)))
+            return cache_entry;
+    }
+    return NULL;
+}
+
+static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry)
+{
+    *cache_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(**cache_entry));
+    (*cache_entry)->fmtetc = *formatetc;
+    if (formatetc->ptd)
+    {
+        (*cache_entry)->fmtetc.ptd = HeapAlloc(GetProcessHeap(), 0, formatetc->ptd->tdSize);
+        memcpy((*cache_entry)->fmtetc.ptd, formatetc->ptd, formatetc->ptd->tdSize);
+    }
+    (*cache_entry)->storage = NULL;
+    list_add_tail(&This->cache_list, &(*cache_entry)->entry);
+    return S_OK;
 }
 
 /************************************************************************
@@ -208,13 +249,13 @@ static void DataCache_Destroy(
  *
  * Param:
  *   this       - Pointer to the DataCache object
- *   drawAspect - The aspect of the object that we wish to draw.
+ *   cache_entry - The entry that we wish to draw.
  *   header     - The structure containing information about this
  *                aspect of the object.
  */
 static HRESULT DataCache_ReadPresentationData(
   DataCache*              this,
-  DWORD                   drawAspect,
+  DataCacheEntry*         cache_entry,
   PresentationDataHeader* header)
 {
   IStream* presStream = NULL;
@@ -223,9 +264,8 @@ static HRESULT DataCache_ReadPresentationData(
   /*
    * Open the presentation stream.
    */
-  hres = DataCache_OpenPresStream(
-           this,
-	   drawAspect,
+  hres = DataCacheEntry_OpenPresStream(
+           cache_entry,
 	   &presStream);
 
   if (FAILED(hres))
@@ -300,7 +340,7 @@ static void DataCache_FireOnViewChange(
   }
 }
 
-/* Helper for DataCache_OpenPresStream */
+/* Helper for DataCacheEntry_OpenPresStream */
 static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
 {
     /* The presentation streams have names of the form "\002OlePresXXX",
@@ -319,7 +359,7 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
 }
 
 /************************************************************************
- * DataCache_OpenPresStream
+ * DataCacheEntry_OpenPresStream
  *
  * This method will find the stream for the given presentation. It makes
  * no attempt at fallback.
@@ -343,9 +383,8 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
  *   If a fallback is desired, just opening the first presentation stream
  *   is a possibility.
  */
-static HRESULT DataCache_OpenPresStream(
-  DataCache *this,
-  DWORD      drawAspect,
+static HRESULT DataCacheEntry_OpenPresStream(
+  DataCacheEntry *This,
   IStream  **ppStm)
 {
     STATSTG elem;
@@ -354,7 +393,7 @@ static HRESULT DataCache_OpenPresStream(
 
     if (!ppStm) return E_POINTER;
 
-    hr = IStorage_EnumElements(this->presentationStorage, 0, NULL, 0, &pEnum);
+    hr = IStorage_EnumElements(This->storage, 0, NULL, 0, &pEnum);
     if (FAILED(hr)) return hr;
 
     while ((hr = IEnumSTATSTG_Next(pEnum, 1, &elem, NULL)) == S_OK)
@@ -363,7 +402,7 @@ static HRESULT DataCache_OpenPresStream(
 	{
 	    IStream *pStm;
 
-	    hr = IStorage_OpenStream(this->presentationStorage, elem.pwcsName,
+	    hr = IStorage_OpenStream(This->storage, elem.pwcsName,
 				     NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0,
 				     &pStm);
 	    if (SUCCEEDED(hr))
@@ -375,7 +414,7 @@ static HRESULT DataCache_OpenPresStream(
 
 		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
 		if (hr == S_OK && actual_read == sizeof(header)
-		    && header.dvAspect == drawAspect)
+		    && header.dvAspect == This->fmtetc.dwAspect)
 		{
 		    /* Rewind the stream before returning it. */
 		    LARGE_INTEGER offset;
@@ -404,14 +443,14 @@ static HRESULT DataCache_OpenPresStream(
 }
 
 /************************************************************************
- * DataCache_ReadPresentationData
+ * DataCache_ReadPresMetafile
  *
  * This method will read information for the requested presentation
  * into the given structure.
  *
  * Param:
  *   this       - Pointer to the DataCache object
- *   drawAspect - The aspect of the object that we wish to draw.
+ *   cache_entry - The entry that we wish to draw.
  *
  * Returns:
  *   This method returns a metafile handle if it is successful.
@@ -419,7 +458,7 @@ static HRESULT DataCache_OpenPresStream(
  */
 static HMETAFILE DataCache_ReadPresMetafile(
   DataCache* this,
-  DWORD      drawAspect)
+  DataCacheEntry *cache_entry)
 {
   LARGE_INTEGER offset;
   IStream*      presStream = NULL;
@@ -431,9 +470,8 @@ static HMETAFILE DataCache_ReadPresMetafile(
   /*
    * Open the presentation stream.
    */
-  hres = DataCache_OpenPresStream(
-           this,
-	   drawAspect,
+  hres = DataCacheEntry_OpenPresStream(
+           cache_entry,
 	   &presStream);
 
   if (FAILED(hres))
@@ -954,21 +992,27 @@ static HRESULT WINAPI DataCache_GetClassID(
 	    CLSID*           pClassID)
 {
   DataCache *This = impl_from_IPersistStorage(iface);
-  HRESULT hr = S_OK;
+  DataCacheEntry *cache_entry;
 
   TRACE("(%p, %p)\n", iface, pClassID);
 
-  if (This->presentationStorage != NULL)
+  LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
   {
-    STATSTG statstg;
-    hr = IStorage_Stat(This->presentationStorage, &statstg, STATFLAG_NONAME);
-    if (SUCCEEDED(hr))
-      memcpy(pClassID, &statstg.clsid, sizeof(*pClassID));
+    if (cache_entry->storage != NULL)
+    {
+      STATSTG statstg;
+      HRESULT hr = IStorage_Stat(cache_entry->storage, &statstg, STATFLAG_NONAME);
+      if (SUCCEEDED(hr))
+      {
+        memcpy(pClassID, &statstg.clsid, sizeof(*pClassID));
+        return S_OK;
+      }
+    }
   }
-  else
-    memcpy(pClassID, &CLSID_NULL, sizeof(*pClassID));
 
-  return hr;
+  memcpy(pClassID, &CLSID_NULL, sizeof(*pClassID));
+
+  return S_OK;
 }
 
 /************************************************************************
@@ -1018,22 +1062,71 @@ static HRESULT WINAPI DataCache_Load(
             IPersistStorage* iface,
 	    IStorage*        pStg)
 {
-  DataCache *this = impl_from_IPersistStorage(iface);
+    DataCache *This = impl_from_IPersistStorage(iface);
+    STATSTG elem;
+    IEnumSTATSTG *pEnum;
+    HRESULT hr;
 
-  TRACE("(%p, %p)\n", iface, pStg);
+    TRACE("(%p, %p)\n", iface, pStg);
 
-  if (this->presentationStorage != NULL)
-  {
-    IStorage_Release(this->presentationStorage);
-  }
+    if (This->presentationStorage != NULL)
+      IStorage_Release(This->presentationStorage);
 
-  this->presentationStorage = pStg;
+    This->presentationStorage = pStg;
 
-  if (this->presentationStorage != NULL)
-  {
-    IStorage_AddRef(this->presentationStorage);
-  }
-  return S_OK;
+    hr = IStorage_EnumElements(pStg, 0, NULL, 0, &pEnum);
+    if (FAILED(hr)) return hr;
+
+    while ((hr = IEnumSTATSTG_Next(pEnum, 1, &elem, NULL)) == S_OK)
+    {
+	if (DataCache_IsPresentationStream(&elem))
+	{
+	    IStream *pStm;
+
+	    hr = IStorage_OpenStream(This->presentationStorage, elem.pwcsName,
+				     NULL, STGM_READ | STGM_SHARE_EXCLUSIVE, 0,
+				     &pStm);
+	    if (SUCCEEDED(hr))
+	    {
+		PresentationDataHeader header;
+		ULONG actual_read;
+
+		hr = IStream_Read(pStm, &header, sizeof(header), &actual_read);
+
+		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
+		if (hr == S_OK && actual_read == sizeof(header))
+		{
+		    DataCacheEntry *cache_entry;
+		    FORMATETC fmtetc;
+
+		    fmtetc.cfFormat = header.unknown2;
+		    fmtetc.ptd = NULL; /* FIXME */
+		    fmtetc.dwAspect = header.dvAspect;
+		    fmtetc.lindex = header.unknown5;
+		    fmtetc.tymed = header.unknown6;
+
+                    cache_entry = DataCache_GetEntryForFormatEtc(This, &fmtetc);
+                    if (!cache_entry)
+                        hr = DataCache_CreateEntry(This, &fmtetc, &cache_entry);
+                    if (SUCCEEDED(hr))
+                    {
+                        if (cache_entry->storage) IStorage_Release(cache_entry->storage);
+                        cache_entry->storage = pStg;
+                        IStorage_AddRef(pStg);
+                    }
+		}
+
+		IStream_Release(pStm);
+	    }
+	}
+
+	CoTaskMemFree(elem.pwcsName);
+    }
+
+    IEnumSTATSTG_Release(pEnum);
+
+    IStorage_AddRef(This->presentationStorage);
+    return S_OK;
 }
 
 /************************************************************************
@@ -1191,11 +1284,11 @@ static HRESULT WINAPI DataCache_Draw(
 	    BOOL  (CALLBACK *pfnContinue)(ULONG_PTR dwContinue),
 	    ULONG_PTR        dwContinue)
 {
+  DataCache *This = impl_from_IViewObject2(iface);
   PresentationDataHeader presData;
   HMETAFILE              presMetafile = 0;
   HRESULT                hres;
-
-  DataCache *this = impl_from_IViewObject2(iface);
+  DataCacheEntry        *cache_entry;
 
   TRACE("(%p, %x, %d, %p, %p, %p, %p, %p, %p, %lx)\n",
 	iface,
@@ -1215,77 +1308,86 @@ static HRESULT WINAPI DataCache_Draw(
   if (lprcBounds==NULL)
     return E_INVALIDARG;
 
-  /*
-   * First, we need to retrieve the dimensions of the
-   * image in the metafile.
-   */
-  hres = DataCache_ReadPresentationData(this,
-					dwDrawAspect,
+  LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+  {
+    /* FIXME: compare ptd too */
+    if ((cache_entry->fmtetc.dwAspect != dwDrawAspect) ||
+        (cache_entry->fmtetc.lindex != lindex))
+      continue;
+
+    /*
+     * First, we need to retrieve the dimensions of the
+     * image in the metafile.
+     */
+    hres = DataCache_ReadPresentationData(This,
+					cache_entry,
 					&presData);
 
-  if (FAILED(hres))
-    return hres;
+    if (FAILED(hres))
+      return hres;
 
-  /*
-   * Then, we can extract the metafile itself from the cached
-   * data.
-   *
-   * FIXME Unless it isn't a metafile. I think it could be any CF_XXX type,
-   * particularly CF_DIB.
-   */
-  presMetafile = DataCache_ReadPresMetafile(this,
-					    dwDrawAspect);
+    /*
+    * Then, we can extract the metafile itself from the cached
+     * data.
+     *
+     * FIXME Unless it isn't a metafile. I think it could be any CF_XXX type,
+     * particularly CF_DIB.
+     */
+    presMetafile = DataCache_ReadPresMetafile(This,
+					    cache_entry);
 
-  /*
-   * If we have a metafile, just draw baby...
-   * We have to be careful not to modify the state of the
-   * DC.
-   */
-  if (presMetafile!=0)
-  {
-    INT   prevMapMode = SetMapMode(hdcDraw, MM_ANISOTROPIC);
-    SIZE  oldWindowExt;
-    SIZE  oldViewportExt;
-    POINT oldViewportOrg;
+    /*
+     * If we have a metafile, just draw baby...
+     * We have to be careful not to modify the state of the
+     * DC.
+     */
+    if (presMetafile!=0)
+    {
+      INT   prevMapMode = SetMapMode(hdcDraw, MM_ANISOTROPIC);
+      SIZE  oldWindowExt;
+      SIZE  oldViewportExt;
+      POINT oldViewportOrg;
 
-    SetWindowExtEx(hdcDraw,
+      SetWindowExtEx(hdcDraw,
 		   presData.dwObjectExtentX,
 		   presData.dwObjectExtentY,
 		   &oldWindowExt);
 
-    SetViewportExtEx(hdcDraw,
+      SetViewportExtEx(hdcDraw,
 		     lprcBounds->right - lprcBounds->left,
 		     lprcBounds->bottom - lprcBounds->top,
 		     &oldViewportExt);
 
-    SetViewportOrgEx(hdcDraw,
+      SetViewportOrgEx(hdcDraw,
 		     lprcBounds->left,
 		     lprcBounds->top,
 		     &oldViewportOrg);
 
-    PlayMetaFile(hdcDraw, presMetafile);
+      PlayMetaFile(hdcDraw, presMetafile);
 
-    SetWindowExtEx(hdcDraw,
+      SetWindowExtEx(hdcDraw,
 		   oldWindowExt.cx,
 		   oldWindowExt.cy,
 		   NULL);
 
-    SetViewportExtEx(hdcDraw,
+      SetViewportExtEx(hdcDraw,
 		     oldViewportExt.cx,
 		     oldViewportExt.cy,
 		     NULL);
 
-    SetViewportOrgEx(hdcDraw,
+      SetViewportOrgEx(hdcDraw,
 		     oldViewportOrg.x,
 		     oldViewportOrg.y,
 		     NULL);
 
-    SetMapMode(hdcDraw, prevMapMode);
+      SetMapMode(hdcDraw, prevMapMode);
 
-    DeleteMetaFile(presMetafile);
+      DeleteMetaFile(presMetafile);
+    }
+    return S_OK;
   }
 
-  return S_OK;
+  return OLE_E_BLANK;
 }
 
 static HRESULT WINAPI DataCache_GetColorSet(
@@ -1428,10 +1530,10 @@ static HRESULT WINAPI DataCache_GetExtent(
 	    DVTARGETDEVICE* ptd,
 	    LPSIZEL         lpsizel)
 {
+  DataCache *This = impl_from_IViewObject2(iface);
   PresentationDataHeader presData;
   HRESULT                hres = E_FAIL;
-
-  DataCache *this = impl_from_IViewObject2(iface);
+  DataCacheEntry        *cache_entry;
 
   TRACE("(%p, %x, %d, %p, %p)\n",
 	iface, dwDrawAspect, lindex, ptd, lpsizel);
@@ -1461,27 +1563,34 @@ static HRESULT WINAPI DataCache_GetExtent(
   if (ptd!=NULL)
     FIXME("Unimplemented ptd = %p\n", ptd);
 
-  /*
-   * Get the presentation information from the
-   * cache.
-   */
-  hres = DataCache_ReadPresentationData(this,
-					dwDrawAspect,
+  LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+  {
+    /* FIXME: compare ptd too */
+    if ((cache_entry->fmtetc.dwAspect != dwDrawAspect) ||
+        (cache_entry->fmtetc.lindex != lindex))
+      continue;
+
+    /*
+     * Get the presentation information from the
+     * cache.
+     */
+    hres = DataCache_ReadPresentationData(This,
+					cache_entry,
 					&presData);
 
-  if (SUCCEEDED(hres))
-  {
-    lpsizel->cx = presData.dwObjectExtentX;
-    lpsizel->cy = presData.dwObjectExtentY;
+    if (SUCCEEDED(hres))
+    {
+      lpsizel->cx = presData.dwObjectExtentX;
+      lpsizel->cy = presData.dwObjectExtentY;
+
+      return S_OK;
+    }
   }
 
   /*
    * This method returns OLE_E_BLANK when it fails.
    */
-  if (FAILED(hres))
-    hres = OLE_E_BLANK;
-
-  return hres;
+  return OLE_E_BLANK;
 }
 
 
@@ -1834,10 +1943,11 @@ static DataCache* DataCache_Construct(
   /*
    * Initialize the other members of the structure.
    */
-  newObject->presentationStorage = NULL;
   newObject->sinkAspects = 0;
   newObject->sinkAdviseFlag = 0;
   newObject->sinkInterface = 0;
+  newObject->presentationStorage = NULL;
+  list_init(&newObject->cache_list);
 
   return newObject;
 }
