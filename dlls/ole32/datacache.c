@@ -953,8 +953,22 @@ static HRESULT WINAPI DataCache_GetClassID(
             IPersistStorage* iface,
 	    CLSID*           pClassID)
 {
+  DataCache *This = impl_from_IPersistStorage(iface);
+  HRESULT hr = S_OK;
+
   TRACE("(%p, %p)\n", iface, pClassID);
-  return E_NOTIMPL;
+
+  if (This->presentationStorage != NULL)
+  {
+    STATSTG statstg;
+    hr = IStorage_Stat(This->presentationStorage, &statstg, STATFLAG_NONAME);
+    if (SUCCEEDED(hr))
+      memcpy(pClassID, &statstg.clsid, sizeof(*pClassID));
+  }
+  else
+    memcpy(pClassID, &CLSID_NULL, sizeof(*pClassID));
+
+  return hr;
 }
 
 /************************************************************************
