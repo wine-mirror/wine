@@ -40,10 +40,15 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 {
 	METAFILEPICT mfp;
 	HDC hdc;
-	UINT dy;
 	HGLOBAL hmem = NULL;
 	LPVOID mfdata;
 	static const char szIconOnly[] = "IconOnly";
+	SIZE text_size = { 0, 0 };
+	INT width;
+	INT icon_width;
+	INT icon_height;
+	INT label_offset;
+	HDC hdcScreen;
 
 	TRACE("%p %p %s %d\n", hIcon, lpszLabel, debugstr_w(lpszSourceFile), iIconIndex);
 
@@ -56,11 +61,28 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 
 	ExtEscape(hdc, MFCOMMENT, sizeof(szIconOnly), szIconOnly, 0, NULL);
 
-	/* FIXME: things are drawn in the wrong place */
-	DrawIcon(hdc, 0, 0, hIcon);
-	dy = GetSystemMetrics(SM_CXICON);
+	icon_width = GetSystemMetrics(SM_CXICON);
+	icon_height = GetSystemMetrics(SM_CYICON);
+	/* FIXME: should we give the label a bit of padding here? */
+	label_offset = icon_height;
+	if (lpszLabel)
+	{
+		/* metafile DCs don't support GetTextExtentPoint32, so size the font
+		 * using the desktop window DC */
+		hdcScreen = GetDC(NULL);
+		GetTextExtentPoint32W(hdcScreen, lpszLabel, lstrlenW(lpszLabel), &text_size);
+		ReleaseDC(NULL, hdcScreen);
+	}
+	width = max(text_size.cx, icon_width);
+
+	SetWindowOrgEx(hdc, 0, 0, NULL);
+	SetWindowExtEx(hdc, width, label_offset + text_size.cy, NULL);
+
+	/* draw the icon centred */
+	DrawIcon(hdc, (width-icon_width) / 2, 0, hIcon);
 	if(lpszLabel)
-		TextOutW(hdc, 0, dy, lpszLabel, lstrlenW(lpszLabel));
+		/* draw the label centred too, if provided */
+		TextOutW(hdc, (width-text_size.cx) / 2, label_offset, lpszLabel, lstrlenW(lpszLabel));
 
 	if (lpszSourceFile)
 	{
