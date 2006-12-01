@@ -578,16 +578,19 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
 
     TRACE("%s\n", (lpFile != NULL) ? debugstr_w(lpFile) : "-");
 
+    if (!lpResult)
+        return ERROR_INVALID_PARAMETER;
+
     xlpFile[0] = '\0';
     lpResult[0] = '\0'; /* Start off with an empty return string */
     if (key) *key = '\0';
 
     /* trap NULL parameters on entry */
-    if ((lpFile == NULL) || (lpResult == NULL))
+    if (!lpFile)
     {
         WARN("(lpFile=%s,lpResult=%s): NULL parameter\n",
              debugstr_w(lpFile), debugstr_w(lpResult));
-        return 2; /* File not found. Close enough, I guess. */
+        return ERROR_FILE_NOT_FOUND; /* File not found. Close enough, I guess. */
     }
 
     if (SHELL_TryAppPathW( lpFile, lpResult, env ))
