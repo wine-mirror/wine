@@ -98,6 +98,8 @@ typedef struct DataCacheEntry
    * representation of the object is stored.
    */
   IStorage *storage;
+
+  DWORD id;
 } DataCacheEntry;
 
 /****************************************************************************
@@ -136,6 +138,9 @@ struct DataCache
   IStorage *presentationStorage;
 
   struct list cache_list;
+
+  /* last id assigned to an object */
+  DWORD last_cache_id;
 };
 
 typedef struct DataCache DataCache;
@@ -186,6 +191,15 @@ static DataCache* DataCache_Construct(REFCLSID  clsid,
 static HRESULT    DataCacheEntry_OpenPresStream(DataCacheEntry *This,
 					   IStream  **pStm);
 
+static void DataCacheEntry_Destroy(DataCacheEntry *This)
+{
+    list_remove(&This->entry);
+    if (This->storage)
+        IStorage_Release(This->storage);
+    HeapFree(GetProcessHeap(), 0, This->fmtetc.ptd);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
 static void DataCache_Destroy(
   DataCache* ptrToDestroy)
 {
@@ -200,11 +214,7 @@ static void DataCache_Destroy(
   }
 
   LIST_FOR_EACH_ENTRY_SAFE(cache_entry, next_cache_entry, &ptrToDestroy->cache_list, DataCacheEntry, entry)
-  {
-    IStorage_Release(cache_entry->storage);
-    HeapFree(GetProcessHeap(), 0, cache_entry->fmtetc.ptd);
-    HeapFree(GetProcessHeap(), 0, cache_entry);
-  }
+    DataCacheEntry_Destroy(cache_entry);
 
   /*
    * Free the datacache pointer.
@@ -237,6 +247,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
         memcpy((*cache_entry)->fmtetc.ptd, formatetc->ptd, formatetc->ptd->tdSize);
     }
     (*cache_entry)->storage = NULL;
+    (*cache_entry)->id = This->last_cache_id++;
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
     return S_OK;
 }
@@ -1646,16 +1657,46 @@ static HRESULT WINAPI DataCache_Cache(
 	    DWORD           advf,
 	    DWORD*          pdwConnection)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCache2(iface);
+    DataCacheEntry *cache_entry;
+    HRESULT hr;
+
+    TRACE("(%p, 0x%x, %p)\n", pformatetc, advf, pdwConnection);
+
+    *pdwConnection = 0;
+
+    cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetc);
+    if (cache_entry)
+    {
+        *pdwConnection = cache_entry->id;
+        return CACHE_S_SAMECACHE;
+    }
+
+    hr = DataCache_CreateEntry(This, pformatetc, &cache_entry);
+
+    if (SUCCEEDED(hr))
+        *pdwConnection = cache_entry->id;
+
+    return hr;
 }
 
 static HRESULT WINAPI DataCache_Uncache(
 	    IOleCache2*     iface,
 	    DWORD           dwConnection)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCache2(iface);
+    DataCacheEntry *cache_entry;
+
+    TRACE("(%d)\n", dwConnection);
+
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+        if (cache_entry->id == dwConnection)
+        {
+            DataCacheEntry_Destroy(cache_entry);
+            return S_OK;
+        }
+
+    return OLE_E_NOCONNECTION;
 }
 
 static HRESULT WINAPI DataCache_EnumCache(
