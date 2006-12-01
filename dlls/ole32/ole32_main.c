@@ -49,15 +49,29 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 	INT icon_height;
 	INT label_offset;
 	HDC hdcScreen;
+	LOGFONTW lf;
+	HFONT font;
 
 	TRACE("%p %p %s %d\n", hIcon, lpszLabel, debugstr_w(lpszSourceFile), iIconIndex);
 
 	if( !hIcon )
 		return NULL;
 
+	if (!SystemParametersInfoW(SPI_GETICONTITLELOGFONT, sizeof(lf), &lf, 0))
+		return NULL;
+
+	font = CreateFontIndirectW(&lf);
+	if (!font)
+		return NULL;
+
 	hdc = CreateMetaFileW(NULL);
 	if( !hdc )
+	{
+		DeleteObject(font);
 		return NULL;
+	}
+
+	SelectObject(hdc, font);
 
 	ExtEscape(hdc, MFCOMMENT, sizeof(szIconOnly), szIconOnly, 0, NULL);
 
@@ -67,10 +81,13 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 	label_offset = icon_height;
 	if (lpszLabel)
 	{
+		HFONT screen_old_font;
 		/* metafile DCs don't support GetTextExtentPoint32, so size the font
 		 * using the desktop window DC */
 		hdcScreen = GetDC(NULL);
+		screen_old_font = SelectObject(hdcScreen, font);
 		GetTextExtentPoint32W(hdcScreen, lpszLabel, lstrlenW(lpszLabel), &text_size);
+		SelectObject(hdcScreen, screen_old_font);
 		ReleaseDC(NULL, hdcScreen);
 	}
 	width = max(text_size.cx, icon_width);
@@ -105,6 +122,7 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 	mfp.mm = MM_ANISOTROPIC;
 	mfp.xExt = mfp.yExt = 0; /* FIXME ? */
 	mfp.hMF = CloseMetaFile(hdc);
+	DeleteObject(font);
 	if( !mfp.hMF )
 		return NULL;
 
