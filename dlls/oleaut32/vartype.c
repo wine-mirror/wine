@@ -6652,14 +6652,16 @@ HRESULT WINAPI VarBstrCmp(BSTR pbstrLeft, BSTR pbstrRight, LCID lcid, DWORD dwFl
 
     if (lcid == 0)
     {
-      ret = memcmp(pbstrLeft, pbstrRight, min(SysStringByteLen(pbstrLeft), SysStringByteLen(pbstrRight)));
+      unsigned int lenLeft = SysStringByteLen(pbstrLeft);
+      unsigned int lenRight = SysStringByteLen(pbstrRight);
+      ret = memcmp(pbstrLeft, pbstrRight, min(lenLeft, lenRight));
       if (ret < 0)
         return VARCMP_LT;
       if (ret > 0)
         return VARCMP_GT;
-      if (SysStringByteLen(pbstrLeft) < SysStringByteLen(pbstrRight))
+      if (lenLeft < lenRight)
         return VARCMP_LT;
-      if (SysStringByteLen(pbstrLeft) > SysStringByteLen(pbstrRight))
+      if (lenLeft > lenRight)
         return VARCMP_GT;
       return VARCMP_EQ;
     }
