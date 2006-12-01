@@ -43,12 +43,12 @@ LangName: 1033 "" "" "" "FontForge 1.0 : MS Sans Serif : 14-6-2004" "" "" "" "" 
 Encoding: UnicodeBmp
 UnicodeInterp: none
 NameList: Adobe Glyph List
-DisplaySize: 20
+DisplaySize: 13
 AntiAlias: 0
 FitToEm: 1
-WinInfo: 754 29 22
+WinInfo: 870 29 21
 OnlyBitmaps: 1
-BeginChars: 65536 360
+BeginChars: 65536 364
 StartChar: space
 Encoding: 32 32 0
 Width: 2
@@ -1978,11 +1978,35 @@ EndChar
 StartChar: afii10056
 Encoding: 1031 1031 359
 Width: 13
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10062
+Encoding: 1038 1038 360
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10110
+Encoding: 1118 1118 361
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10050
+Encoding: 1168 1168 362
+Width: 13
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10098
+Encoding: 1169 1169 363
+Width: 13
 Flags: HW
 TeX: 0 0 0 0
 EndChar
 EndChars
-BitmapFont: 13 360 11 2 1 
+BitmapFont: 13 364 11 2 1
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 8
@@ -2701,8 +2725,16 @@ BDFChar: 358 1030 3 1 1 0 8
 J:N0#J:N0#J,fQL
 BDFChar: 359 1031 3 0 2 0 10
 TE%5B5X7S"5X7R7
+BDFChar: 360 1038 8 0 6 0 10
+,T),b6mO#p#RE*a
+BDFChar: 361 1118 5 1 4 -2 9
+OC/%gOH>QcODkch
+BDFChar: 362 1168 6 1 5 0 9
+#l&q#J:N0#J:IV"
+BDFChar: 363 1169 5 1 4 0 6
+&Fb4#J:N.M
 EndBitmapFont
-BitmapFont: 16 360 13 3 1 FontForge
+BitmapFont: 16 364 13 3 1 FontForge
 BDFChar: 0 32 3 0 0 0 0
 z
 BDFChar: 1 33 3 1 1 0 9
@@ -3421,8 +3453,16 @@ BDFChar: 358 1030 3 1 1 0 9
 J:N0#J:N0#J:IV"
 BDFChar: 359 1031 3 0 2 0 11
 TE%5B5X7S"5X7S"
+BDFChar: 360 1038 9 1 8 0 12
++rgT6JO2[K,T$du?iU0,
+BDFChar: 361 1118 8 0 6 -3 10
+6oY/HJq?BY-n#W<+M[sW
+BDFChar: 362 1168 7 1 6 0 11
+"9eXQJ:N0#J:N0#
+BDFChar: 363 1169 6 1 5 0 7
+#l&q#J:N0#
 EndBitmapFont
-BitmapFont: 20 360 16 4 1 FontForge
+BitmapFont: 20 364 16 4 1 FontForge
 BDFChar: 0 32 4 0 0 0 0
 z
 BDFChar: 1 33 4 2 2 0 11
@@ -4041,5 +4081,13 @@ BDFChar: 358 1030 5 2 2 0 11
 J:N0#J:N0#J:N0#
 BDFChar: 359 1031 5 1 3 0 13
 TE%5B5X7S"5X7S"5X5;L
+BDFChar: 360 1038 10 1 9 0 15
++oiS_zJ:N0#5la1N+oiee)up*A#QP,1&--)<
+BDFChar: 361 1118 7 0 6 -4 12
+6oY/HJqASB6msGp&.fs,^]4?7
+BDFChar: 362 1168 9 2 8 0 13
+!Wr@OJ:N0#J:N0#J:IV"
+BDFChar: 363 1169 7 1 6 0 9
+"T3e#J:N0#J:IV"
 EndBitmapFont
 EndSplineFont
