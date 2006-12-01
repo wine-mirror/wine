@@ -4164,6 +4164,132 @@ static UINT ACTION_InstallServices( MSIPACKAGE *package )
     return rc;
 }
 
+/* converts arg1[~]arg2[~]arg3 to a list of ptrs to the strings */
+static LPCWSTR *msi_service_args_to_vector(LPCWSTR name, LPWSTR args, DWORD *numargs)
+{
+    LPCWSTR *vector;
+    LPWSTR p, q;
+    DWORD sep_len;
+
+    static const WCHAR separator[] = {'[','~',']',0};
+
+    *numargs = 0;
+    sep_len = sizeof(separator) / sizeof(WCHAR) - 1;
+
+    if (!args)
+        return NULL;
+
+    vector = msi_alloc(sizeof(LPWSTR));
+    if (!vector)
+        return NULL;
+
+    p = args;
+    do
+    {
+        (*numargs)++;
+        vector[*numargs - 1] = p;
+
+        if ((q = strstrW(p, separator)))
+        {
+            *q = '\0';
+
+            vector = msi_realloc(vector, (*numargs + 1) * sizeof(LPWSTR));
+            if (!vector)
+                return NULL;
+
+            p = q + sep_len;
+        }
+    } while (q);
+
+    return vector;
+}
+
+static MSICOMPONENT *msi_find_component( MSIPACKAGE *package, LPCWSTR component )
+{
+    MSICOMPONENT *comp;
+
+    LIST_FOR_EACH_ENTRY(comp, &package->components, MSICOMPONENT, entry)
+    {
+        if (!lstrcmpW(comp->Component, component))
+            return comp;
+    }
+
+    return NULL;
+}
+
+static UINT ITERATE_StartService(MSIRECORD *rec, LPVOID param)
+{
+    MSIPACKAGE *package = (MSIPACKAGE *)param;
+    MSICOMPONENT *comp;
+    SC_HANDLE scm, service = NULL;
+    LPCWSTR name, *vector = NULL;
+    LPWSTR args;
+    DWORD event, numargs;
+    UINT r = ERROR_FUNCTION_FAILED;
+
+    comp = msi_find_component(package, MSI_RecordGetString(rec, 6));
+    if (!comp || comp->Action == INSTALLSTATE_UNKNOWN || comp->Action == INSTALLSTATE_ABSENT)
+        return ERROR_SUCCESS;
+
+    name = MSI_RecordGetString(rec, 2);
+    event = MSI_RecordGetInteger(rec, 3);
+    args = strdupW(MSI_RecordGetString(rec, 4));
+
+    if (!(event & msidbServiceControlEventStart))
+        return ERROR_SUCCESS;
+
+    scm = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
+    if (!scm)
+    {
+        ERR("Failed to open the service control manager\n");
+        goto done;
+    }
+
+    service = OpenServiceW(scm, name, SERVICE_START);
+    if (!service)
+    {
+        ERR("Failed to open service '%s'\n", debugstr_w(name));
+        goto done;
+    }
+
+    vector = msi_service_args_to_vector(name, args, &numargs);
+
+    if (!StartServiceW(service, numargs, vector))
+    {
+        ERR("Failed to start service '%s'\n", debugstr_w(name));
+        goto done;
+    }
+
+    r = ERROR_SUCCESS;
+
+done:
+    CloseServiceHandle(service);
+    CloseServiceHandle(scm);
+
+    msi_free(args);
+    msi_free(vector);
+    return r;
+}
+
+static UINT ACTION_StartServices( MSIPACKAGE *package )
+{
+    UINT rc;
+    MSIQUERY *view;
+
+    static const WCHAR query[] = {
+        'S','E','L','E','C','T',' ','*',' ','F','R','O','M',' ',
+        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
+
+    rc = MSI_DatabaseOpenViewW(package->db, query, &view);
+    if (rc != ERROR_SUCCESS)
+        return ERROR_SUCCESS;
+
+    rc = MSI_IterateRecords(view, NULL, ITERATE_StartService, package);
+    msiobj_release(&view->hdr);
+
+    return rc;
+}
+
 static MSIFILE *msi_find_file( MSIPACKAGE *package, LPCWSTR filename )
 {
     MSIFILE *file;
@@ -4334,13 +4460,6 @@ static UINT ACTION_SelfUnregModules( MSIPACKAGE *package )
 {
     static const WCHAR table[] = { 'S','e','l','f','R','e','g',0 };
     return msi_unimplemented_action_stub( package, "SelfUnregModules", table );
-}
-
-static UINT ACTION_StartServices( MSIPACKAGE *package )
-{
-    static const WCHAR table[] = {
-        'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
-    return msi_unimplemented_action_stub( package, "StartServices", table );
 }
 
 static UINT ACTION_StopServices( MSIPACKAGE *package )
