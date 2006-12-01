@@ -1937,6 +1937,24 @@ static const IOleCacheControlVtbl DataCache_IOleCacheControl_VTable =
 
 /******************************************************************************
  *              CreateDataCache        [OLE32.@]
+ *
+ * Creates a data cache to allow an object to render one or more of its views,
+ * whether running or not.
+ *
+ * PARAMS
+ *  pUnkOuter [I] Outer unknown for the object.
+ *  rclsid    [I]
+ *  riid      [I] IID of interface to return.
+ *  ppvObj    [O] Address where the data cache object will be stored on return.
+ *
+ * RETURNS
+ *  Success: S_OK.
+ *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  The following interfaces are supported by the returned data cache object:
+ *  IOleCache, IOleCache2, IOleCacheControl, IPersistStorae, IDataObject,
+ *  IViewObject and IViewObject2.
  */
 HRESULT WINAPI CreateDataCache(
   LPUNKNOWN pUnkOuter,
