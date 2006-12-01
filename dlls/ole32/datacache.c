@@ -515,6 +515,59 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
   return hres;
 }
 
+/* helper for copying STGMEDIUM of type bitmap, MF, EMF or HGLOBAL.
+* does no checking of whether src_stgm has a supported tymed, so this should be
+* done in the caller */
+static HRESULT copy_stg_medium(CLIPFORMAT cf, STGMEDIUM *dest_stgm,
+                               const STGMEDIUM *src_stgm)
+{
+    if (src_stgm->tymed == TYMED_MFPICT)
+    {
+        const METAFILEPICT *src_mfpict = GlobalLock(src_stgm->u.hMetaFilePict);
+        METAFILEPICT *dest_mfpict;
+
+        if (!src_mfpict)
+            return DV_E_STGMEDIUM;
+        dest_stgm->u.hMetaFilePict = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
+        dest_mfpict = GlobalLock(dest_stgm->u.hMetaFilePict);
+        if (!dest_mfpict)
+        {
+            GlobalUnlock(src_stgm->u.hMetaFilePict);
+            return E_OUTOFMEMORY;
+        }
+        *dest_mfpict = *src_mfpict;
+        dest_mfpict->hMF = CopyMetaFileW(src_mfpict->hMF, NULL);
+        GlobalUnlock(src_stgm->u.hMetaFilePict);
+        GlobalUnlock(dest_stgm->u.hMetaFilePict);
+    }
+    else if (src_stgm->tymed != TYMED_NULL)
+    {
+        dest_stgm->u.hGlobal = OleDuplicateData(src_stgm->u.hGlobal, cf,
+                                                GMEM_MOVEABLE);
+        if (!dest_stgm->u.hGlobal)
+            return E_OUTOFMEMORY;
+    }
+    dest_stgm->tymed = src_stgm->tymed;
+    dest_stgm->pUnkForRelease = src_stgm->pUnkForRelease;
+    if (dest_stgm->pUnkForRelease)
+        IUnknown_AddRef(dest_stgm->pUnkForRelease);
+    return S_OK;
+}
+
+static HRESULT DataCacheEntry_SetData(DataCacheEntry *This,
+                                      STGMEDIUM *stgmedium, BOOL fRelease)
+{
+    ReleaseStgMedium(&This->stgmedium);
+    if (fRelease)
+    {
+        This->stgmedium = *stgmedium;
+        return S_OK;
+    }
+    else
+        return copy_stg_medium(This->fmtetc.cfFormat,
+                               &This->stgmedium, stgmedium);
+}
+
 /*********************************************************
  * Method implementation for the  non delegating IUnknown
  * part of the DataCache class.
@@ -1706,8 +1759,25 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
 	    STGMEDIUM*      pmedium,
 	    BOOL            fRelease)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCache2(iface);
+    DataCacheEntry *cache_entry;
+    HRESULT hr;
+
+    TRACE("(%p, %p, %s)\n", pformatetc, pmedium, fRelease ? "TRUE" : "FALSE");
+
+    cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetc);
+    if (cache_entry)
+    {
+        hr = DataCacheEntry_SetData(cache_entry, pmedium, fRelease);
+
+        if (SUCCEEDED(hr))
+            DataCache_FireOnViewChange(This, cache_entry->fmtetc.dwAspect,
+                                       cache_entry->fmtetc.lindex);
+
+        return hr;
+    }
+
+    return OLE_E_BLANK;
 }
 
 static HRESULT WINAPI DataCache_UpdateCache(
