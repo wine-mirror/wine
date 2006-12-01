@@ -831,6 +831,439 @@ static void test_OleLoad(IStorage *pStorage)
     ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
 }
 
+static BOOL STDMETHODCALLTYPE draw_continue(ULONG_PTR param)
+{
+    CHECK_EXPECTED_METHOD("draw_continue");
+    return TRUE;
+}
+
+static HRESULT WINAPI AdviseSink_QueryInterface(IAdviseSink *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IAdviseSink) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI AdviseSink_AddRef(IAdviseSink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI AdviseSink_Release(IAdviseSink *iface)
+{
+    return 1;
+}
+
+
+static void WINAPI AdviseSink_OnDataChange(
+    IAdviseSink *iface,
+    FORMATETC *pFormatetc,
+    STGMEDIUM *pStgmed)
+{
+    CHECK_EXPECTED_METHOD("AdviseSink_OnDataChange");
+}
+
+static void WINAPI AdviseSink_OnViewChange(
+    IAdviseSink *iface,
+    DWORD dwAspect,
+    LONG lindex)
+{
+    CHECK_EXPECTED_METHOD("AdviseSink_OnViewChange");
+}
+
+static void WINAPI AdviseSink_OnRename(
+    IAdviseSink *iface,
+    IMoniker *pmk)
+{
+    CHECK_EXPECTED_METHOD("AdviseSink_OnRename");
+}
+
+static void WINAPI AdviseSink_OnSave(IAdviseSink *iface)
+{
+    CHECK_EXPECTED_METHOD("AdviseSink_OnSave");
+}
+
+static void WINAPI AdviseSink_OnClose(IAdviseSink *iface)
+{
+    CHECK_EXPECTED_METHOD("AdviseSink_OnClose");
+}
+
+static IAdviseSinkVtbl AdviseSinkVtbl =
+{
+    AdviseSink_QueryInterface,
+    AdviseSink_AddRef,
+    AdviseSink_Release,
+    AdviseSink_OnDataChange,
+    AdviseSink_OnViewChange,
+    AdviseSink_OnRename,
+    AdviseSink_OnSave,
+    AdviseSink_OnClose
+};
+
+static IAdviseSink AdviseSink = { &AdviseSinkVtbl };
+
+static HRESULT WINAPI DataObject_QueryInterface(
+            IDataObject*     iface,
+            REFIID           riid,
+            void**           ppvObject)
+{
+    if (IsEqualIID(riid, &IID_IDataObject) || IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppvObject = iface;
+        return S_OK;
+    }
+    *ppvObject = NULL;
+    return S_OK;
+}
+
+static ULONG WINAPI DataObject_AddRef(
+            IDataObject*     iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DataObject_Release(
+            IDataObject*     iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DataObject_GetData(
+        IDataObject*     iface,
+        LPFORMATETC      pformatetcIn,
+        STGMEDIUM*       pmedium)
+{
+    CHECK_EXPECTED_METHOD("DataObject_GetData");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_GetDataHere(
+        IDataObject*     iface,
+        LPFORMATETC      pformatetc,
+        STGMEDIUM*       pmedium)
+{
+    CHECK_EXPECTED_METHOD("DataObject_GetDataHere");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_QueryGetData(
+        IDataObject*     iface,
+        LPFORMATETC      pformatetc)
+{
+    CHECK_EXPECTED_METHOD("DataObject_QueryGetData");
+    return S_OK;
+}
+
+static HRESULT WINAPI DataObject_GetCanonicalFormatEtc(
+        IDataObject*     iface,
+        LPFORMATETC      pformatectIn,
+        LPFORMATETC      pformatetcOut)
+{
+    CHECK_EXPECTED_METHOD("DataObject_GetCanonicalFormatEtc");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_SetData(
+        IDataObject*     iface,
+        LPFORMATETC      pformatetc,
+        STGMEDIUM*       pmedium,
+        BOOL             fRelease)
+{
+    CHECK_EXPECTED_METHOD("DataObject_SetData");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_EnumFormatEtc(
+        IDataObject*     iface,
+        DWORD            dwDirection,
+        IEnumFORMATETC** ppenumFormatEtc)
+{
+    CHECK_EXPECTED_METHOD("DataObject_EnumFormatEtc");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DataObject_DAdvise(
+        IDataObject*     iface,
+        FORMATETC*       pformatetc,
+        DWORD            advf,
+        IAdviseSink*     pAdvSink,
+        DWORD*           pdwConnection)
+{
+    CHECK_EXPECTED_METHOD("DataObject_DAdvise");
+    *pdwConnection = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI DataObject_DUnadvise(
+        IDataObject*     iface,
+        DWORD            dwConnection)
+{
+    CHECK_EXPECTED_METHOD("DataObject_DUnadvise");
+    return S_OK;
+}
+
+static HRESULT WINAPI DataObject_EnumDAdvise(
+        IDataObject*     iface,
+        IEnumSTATDATA**  ppenumAdvise)
+{
+    CHECK_EXPECTED_METHOD("DataObject_EnumDAdvise");
+    return OLE_E_ADVISENOTSUPPORTED;
+}
+
+static IDataObjectVtbl DataObjectVtbl =
+{
+    DataObject_QueryInterface,
+    DataObject_AddRef,
+    DataObject_Release,
+    DataObject_GetData,
+    DataObject_GetDataHere,
+    DataObject_QueryGetData,
+    DataObject_GetCanonicalFormatEtc,
+    DataObject_SetData,
+    DataObject_EnumFormatEtc,
+    DataObject_DAdvise,
+    DataObject_DUnadvise,
+    DataObject_EnumDAdvise
+};
+
+static IDataObject DataObject = { &DataObjectVtbl };
+
+static void test_data_cache(void)
+{
+    HRESULT hr;
+    IOleCache2 *pOleCache;
+    IStorage *pStorage;
+    IPersistStorage *pPS;
+    IViewObject *pViewObject;
+    IOleCacheControl *pOleCacheControl;
+    FORMATETC fmtetc;
+    STGMEDIUM stgmedium;
+    DWORD dwConnection;
+    DWORD dwFreeze;
+    RECTL rcBounds;
+    HDC hdcMem;
+    CLSID clsid;
+    char szSystemDir[MAX_PATH];
+    WCHAR wszPath[MAX_PATH];
+    static const WCHAR wszShell32[] = {'\\','s','h','e','l','l','3','2','.','d','l','l',0};
+
+    static const char *methods_cacheinitnew[] =
+    {
+        "AdviseSink_OnViewChange",
+        "AdviseSink_OnViewChange",
+        "draw_continue",
+        "DataObject_DAdvise",
+        "DataObject_DAdvise",
+        "DataObject_DUnadvise",
+        "DataObject_DUnadvise",
+        NULL
+    };
+    static const char *methods_cacheload[] =
+    {
+        "AdviseSink_OnViewChange",
+        "draw_continue",
+        "draw_continue",
+        "draw_continue",
+        "DataObject_GetData",
+        "DataObject_GetData",
+        NULL
+    };
+
+    GetSystemDirectory(szSystemDir, sizeof(szSystemDir)/sizeof(szSystemDir[0]));
+
+    expected_method_list = methods_cacheinitnew;
+    fmtetc.cfFormat = CF_METAFILEPICT;
+    fmtetc.dwAspect = DVASPECT_ICON;
+    fmtetc.lindex = -1;
+    fmtetc.ptd = NULL;
+    fmtetc.tymed = TYMED_MFPICT;
+
+    hr = StgCreateDocfile(NULL, STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &pStorage);
+    ok_ole_success(hr, "StgCreateDocfile");
+
+    /* Test with new data */
+
+    hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IOleCache2, (LPVOID *)&pOleCache);
+    ok_ole_success(hr, "CreateDataCache");
+
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IPersistStorage, (LPVOID *)&pPS);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IPersistStorage)");
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IViewObject, (LPVOID *)&pViewObject);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IViewObject)");
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IOleCacheControl, (LPVOID *)&pOleCacheControl);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IOleCacheControl)");
+
+    hr = IViewObject_SetAdvise(pViewObject, DVASPECT_ICON, ADVF_PRIMEFIRST, &AdviseSink);
+    ok_ole_success(hr, "IViewObject_SetAdvise");
+
+    hr = IPersistStorage_InitNew(pPS, pStorage);
+    ok_ole_success(hr, "IPersistStorage_InitNew");
+
+    hr = IPersistStorage_IsDirty(pPS);
+    todo_wine {
+    ok_ole_success(hr, "IPersistStorage_IsDirty");
+    }
+
+    hr = IPersistStorage_GetClassID(pPS, &clsid);
+    ok_ole_success(hr, "IPersistStorage_GetClassID");
+    ok(IsEqualCLSID(&clsid, &IID_NULL), "clsid should be blank\n");
+
+    hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+    ok_ole_success(hr, "IOleCache_Cache");
+
+    fmtetc.dwAspect = DVASPECT_THUMBNAIL;
+    hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+    ok_ole_success(hr, "IOleCache_Cache");
+
+    MultiByteToWideChar(CP_ACP, 0, szSystemDir, -1, wszPath, sizeof(wszPath)/sizeof(wszPath[0]));
+    memcpy(wszPath+lstrlenW(wszPath), wszShell32, sizeof(wszShell32));
+
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.cfFormat = CF_METAFILEPICT;
+    stgmedium.tymed = TYMED_MFPICT;
+    stgmedium.hMetaFilePict = OleMetafilePictFromIconAndLabel(
+        LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION)), wszPath, wszPath, 0);
+    stgmedium.pUnkForRelease = NULL;
+    hr = IOleCache_SetData(pOleCache, &fmtetc, &stgmedium, FALSE);
+    ok(hr == OLE_E_BLANK, "IOleCache_SetData for aspect not in cache should have return OLE_E_BLANK instead of 0x%x\n", hr);
+
+    fmtetc.dwAspect = DVASPECT_ICON;
+    hr = IOleCache_SetData(pOleCache, &fmtetc, &stgmedium, FALSE);
+    ok_ole_success(hr, "IOleCache_SetData");
+
+    hr = IViewObject_Freeze(pViewObject, DVASPECT_ICON, -1, NULL, &dwFreeze);
+    todo_wine {
+    ok_ole_success(hr, "IViewObject_Freeze");
+    hr = IViewObject_Freeze(pViewObject, DVASPECT_CONTENT, -1, NULL, &dwFreeze);
+    ok(hr == OLE_E_BLANK, "IViewObject_Freeze with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
+    }
+
+    rcBounds.left = 0;
+    rcBounds.top = 0;
+    rcBounds.right = 100;
+    rcBounds.bottom = 100;
+    hdcMem = CreateCompatibleDC(NULL);
+
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    ok_ole_success(hr, "IViewObject_Draw");
+
+    hr = IViewObject_Draw(pViewObject, DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
+
+    DeleteDC(hdcMem);
+
+    hr = IOleCacheControl_OnRun(pOleCacheControl, &DataObject);
+    todo_wine {
+    ok_ole_success(hr, "IOleCacheControl_OnRun");
+    }
+
+    hr = IPersistStorage_Save(pPS, pStorage, TRUE);
+    ok_ole_success(hr, "IPersistStorage_Save");
+
+    hr = IPersistStorage_SaveCompleted(pPS, NULL);
+    ok_ole_success(hr, "IPersistStorage_SaveCompleted");
+
+    hr = IPersistStorage_IsDirty(pPS);
+    ok(hr == S_FALSE, "IPersistStorage_IsDirty should have returned S_FALSE instead of 0x%x\n", hr);
+
+    IPersistStorage_Release(pPS);
+    IViewObject_Release(pViewObject);
+    IOleCache_Release(pOleCache);
+    IOleCacheControl_Release(pOleCacheControl);
+
+    todo_wine {
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+    }
+
+    /* Test with loaded data */
+    trace("Testing loaded data with CreateDataCache:\n");
+    expected_method_list = methods_cacheload;
+
+    hr = CreateDataCache(NULL, &CLSID_NULL, &IID_IOleCache2, (LPVOID *)&pOleCache);
+    ok_ole_success(hr, "CreateDataCache");
+
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IPersistStorage, (LPVOID *)&pPS);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IPersistStorage)");
+    hr = IOleCache_QueryInterface(pOleCache, &IID_IViewObject, (LPVOID *)&pViewObject);
+    ok_ole_success(hr, "IOleCache_QueryInterface(IID_IViewObject)");
+
+    hr = IViewObject_SetAdvise(pViewObject, DVASPECT_ICON, ADVF_PRIMEFIRST, &AdviseSink);
+    ok_ole_success(hr, "IViewObject_SetAdvise");
+
+    hr = IPersistStorage_Load(pPS, pStorage);
+    ok_ole_success(hr, "IPersistStorage_Load");
+
+    hr = IPersistStorage_IsDirty(pPS);
+    ok(hr == S_FALSE, "IPersistStorage_IsDirty should have returned S_FALSE instead of 0x%x\n", hr);
+
+    fmtetc.cfFormat = 0;
+    fmtetc.dwAspect = DVASPECT_ICON;
+    fmtetc.lindex = -1;
+    fmtetc.ptd = NULL;
+    fmtetc.tymed = TYMED_MFPICT;
+    hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+    todo_wine {
+    ok(hr == CACHE_S_SAMECACHE, "IOleCache_Cache with already loaded data format type should return CACHE_S_SAMECACHE instead of 0x%x\n", hr);
+    }
+
+    rcBounds.left = 0;
+    rcBounds.top = 0;
+    rcBounds.right = 100;
+    rcBounds.bottom = 100;
+    hdcMem = CreateCompatibleDC(NULL);
+
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    todo_wine {
+    ok_ole_success(hr, "IViewObject_Draw");
+    }
+
+    hr = IViewObject_Draw(pViewObject, DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
+
+    /* unload the cached storage object, causing it to be reloaded */
+    hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
+    todo_wine {
+    ok_ole_success(hr, "IOleCache2_DiscardCache");
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    ok_ole_success(hr, "IViewObject_Draw");
+    }
+
+    /* unload the cached storage object, but don't allow it to be reloaded */
+    hr = IPersistStorage_HandsOffStorage(pPS);
+    ok_ole_success(hr, "IPersistStorage_HandsOffStorage");
+    todo_wine {
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    ok_ole_success(hr, "IViewObject_Draw");
+    hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
+    ok_ole_success(hr, "IOleCache2_DiscardCache");
+    }
+    hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
+
+    DeleteDC(hdcMem);
+
+    todo_wine {
+    hr = IOleCache_InitCache(pOleCache, &DataObject);
+    ok(hr == CACHE_E_NOCACHE_UPDATED, "IOleCache_InitCache should have returned CACHE_E_NOCACHE_UPDATED instead of 0x%08x\n", hr);
+    }
+
+    IPersistStorage_Release(pPS);
+    IViewObject_Release(pViewObject);
+    IOleCache_Release(pOleCache);
+
+    todo_wine {
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+    }
+
+    IStorage_Release(pStorage);
+    ReleaseStgMedium(&stgmedium);
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -858,6 +1291,8 @@ START_TEST(ole2)
 
     hr = CoRevokeClassObject(dwRegister);
     ok_ole_success(hr, "CoRevokeClassObject");
+
+    test_data_cache();
 
     CoUninitialize();
 }
