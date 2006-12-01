@@ -90,7 +90,7 @@ typedef struct tagAcmPcmData {
 /* table to list all supported formats... those are the basic ones. this
  * also helps given a unique index to each of the supported formats
  */
-static	struct {
+static const struct {
     int		nChannels;
     int		nBits;
     int		rate;
@@ -374,7 +374,10 @@ static	void cvtSS168K(const unsigned char* src, int ns, unsigned char* dst)
     }
 }
 
-static	void (*PCM_ConvertKeepRate[16])(const unsigned char*, int, unsigned char*) = {
+
+typedef void (*PCM_CONVERT_KEEP_RATE)(const unsigned char*, int, unsigned char*);
+
+static const PCM_CONVERT_KEEP_RATE PCM_ConvertKeepRate[16] = {
     cvtSS88K,	cvtSM88K,   cvtMS88K,   cvtMM88K,
     cvtSS816K,	cvtSM816K,  cvtMS816K,  cvtMM816K,
     cvtSS168K,	cvtSM168K,  cvtMS168K,  cvtMM168K,
@@ -701,8 +704,9 @@ static	void cvtMM1616C(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
     }
 }
 
-static	void (*PCM_ConvertChangeRate[16])(DWORD srcRate, const unsigned char* src, LPDWORD nsrc,
-					  DWORD dstRate, unsigned char* dst, LPDWORD ndst) = {
+typedef void (*PCM_CONVERT_CHANGE_RATE)(DWORD, const unsigned char*, LPDWORD, DWORD, unsigned char*, LPDWORD);
+
+static const PCM_CONVERT_CHANGE_RATE PCM_ConvertChangeRate[16] = {
     cvtSS88C,   cvtSM88C,   cvtMS88C,   cvtMM88C,
     cvtSS816C,	cvtSM816C,  cvtMS816C,  cvtMM816C,
     cvtSS168C,	cvtSM168C,  cvtMS168C,  cvtMM168C,
