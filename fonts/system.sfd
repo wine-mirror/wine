@@ -45,7 +45,7 @@ AntiAlias: 0
 FitToEm: 1
 WinInfo: 960 20 13
 OnlyBitmaps: 1
-BeginChars: 65536 471
+BeginChars: 65536 475
 StartChar: space
 Encoding: 32 32 0
 Width: 4
@@ -2591,11 +2591,35 @@ EndChar
 StartChar: afii10053
 Encoding: 1028 1028 470
 Width: 16
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10110
+Encoding: 1118 1118 471
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10062
+Encoding: 1038 1038 472
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10050
+Encoding: 1168 1168 473
+Width: 16
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10098
+Encoding: 1169 1169 474
+Width: 16
 Flags: HW
 TeX: 0 0 0 0
 EndChar
 EndChars
-BitmapFont: 16 471 13 3 1 
+BitmapFont: 16 475 13 3 1
 BDFChar: 0 32 4 14 14 0 0
 z
 BDFChar: 1 33 4 1 2 0 9
@@ -3538,5 +3562,13 @@ BDFChar: 469 1108 7 0 5 0 6
 Gg*tm^s%$'
 BDFChar: 470 1028 9 1 8 0 9
 4D)LHpqX\_Aip%n
+BDFChar: 471 1118 8 0 7 -3 10
+,T$L]_o$(u4?OGt0OOk\
+BDFChar: 472 1038 9 1 7 0 12
+,T$O$`o_)R4?OJ5Du]k<
+BDFChar: 473 1168 8 1 7 0 11
+!WrA:^qdb$^qdb$
+BDFChar: 474 1169 6 1 5 0 7
+#l)3N^qdb$
 EndBitmapFont
 EndSplineFont
