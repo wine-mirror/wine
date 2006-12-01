@@ -97,6 +97,7 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 	else
 		width = icon_width;
 
+	SetMapMode(hdc, MM_ANISOTROPIC);
 	SetWindowOrgEx(hdc, 0, 0, NULL);
 	SetWindowExtEx(hdc, width, label_offset + text_size.cy, NULL);
 
