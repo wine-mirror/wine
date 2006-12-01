@@ -91,8 +91,11 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 		GetTextExtentPoint32W(hdcScreen, lpszLabel, lstrlenW(lpszLabel), &text_size);
 		SelectObject(hdcScreen, screen_old_font);
 		ReleaseDC(NULL, hdcScreen);
+
+		width = 3 * icon_width;
 	}
-	width = max(text_size.cx, icon_width);
+	else
+		width = icon_width;
 
 	SetWindowOrgEx(hdc, 0, 0, NULL);
 	SetWindowExtEx(hdc, width, label_offset + text_size.cy, NULL);
