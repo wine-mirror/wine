@@ -88,21 +88,20 @@ typedef struct PresentationDataHeader
 typedef struct DataCacheEntry
 {
   struct list entry;
-
   /* format of this entry */
   FORMATETC fmtetc;
-
   /* cached data */
   STGMEDIUM stgmedium;
-
   /*
    * This storage pointer is set through a call to
    * IPersistStorage_Load. This is where the visual
    * representation of the object is stored.
    */
   IStorage *storage;
-
+  /* connection ID */
   DWORD id;
+  /* dirty flag */
+  BOOL dirty;
 } DataCacheEntry;
 
 /****************************************************************************
@@ -140,10 +139,12 @@ struct DataCache
   IAdviseSink* sinkInterface;
   IStorage *presentationStorage;
 
+  /* list of cache entries */
   struct list cache_list;
-
   /* last id assigned to an entry */
   DWORD last_cache_id;
+  /* dirty flag */
+  BOOL dirty;
 };
 
 typedef struct DataCache DataCache;
@@ -257,6 +258,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     (*cache_entry)->stgmedium.pUnkForRelease = NULL;
     (*cache_entry)->storage = NULL;
     (*cache_entry)->id = This->last_cache_id++;
+    (*cache_entry)->dirty = TRUE;
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
     return S_OK;
 }
@@ -557,6 +559,7 @@ static HRESULT copy_stg_medium(CLIPFORMAT cf, STGMEDIUM *dest_stgm,
 static HRESULT DataCacheEntry_SetData(DataCacheEntry *This,
                                       STGMEDIUM *stgmedium, BOOL fRelease)
 {
+    This->dirty = TRUE;
     ReleaseStgMedium(&This->stgmedium);
     if (fRelease)
     {
@@ -1052,17 +1055,24 @@ static HRESULT WINAPI DataCache_GetClassID(
 /************************************************************************
  * DataCache_IsDirty (IPersistStorage)
  *
- * Until we actually connect to a running object and retrieve new
- * information to it, we never get dirty.
- *
  * See Windows documentation for more details on IPersistStorage methods.
  */
 static HRESULT WINAPI DataCache_IsDirty(
             IPersistStorage* iface)
 {
-  TRACE("(%p)\n", iface);
+    DataCache *This = impl_from_IPersistStorage(iface);
+    DataCacheEntry *cache_entry;
 
-  return S_FALSE;
+    TRACE("(%p)\n", iface);
+
+    if (This->dirty)
+        return S_OK;
+
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+        if (cache_entry->dirty)
+            return S_OK;
+
+    return S_FALSE;
 }
 
 /************************************************************************
@@ -1077,9 +1087,19 @@ static HRESULT WINAPI DataCache_InitNew(
             IPersistStorage* iface,
 	    IStorage*        pStg)
 {
-  TRACE("(%p, %p)\n", iface, pStg);
+    DataCache *This = impl_from_IPersistStorage(iface);
 
-  return IPersistStorage_Load(iface, pStg);
+    TRACE("(%p, %p)\n", iface, pStg);
+
+    if (This->presentationStorage != NULL)
+        IStorage_Release(This->presentationStorage);
+
+    This->presentationStorage = pStg;
+
+    IStorage_AddRef(This->presentationStorage);
+    This->dirty = TRUE;
+
+    return S_OK;
 }
 
 /************************************************************************
@@ -1148,6 +1168,7 @@ static HRESULT WINAPI DataCache_Load(
                         if (cache_entry->storage) IStorage_Release(cache_entry->storage);
                         cache_entry->storage = pStg;
                         IStorage_AddRef(pStg);
+                        cache_entry->dirty = FALSE;
                     }
 		}
 
@@ -1157,6 +1178,8 @@ static HRESULT WINAPI DataCache_Load(
 
 	CoTaskMemFree(elem.pwcsName);
     }
+
+    This->dirty = FALSE;
 
     IEnumSTATSTG_Release(pEnum);
 
@@ -1179,21 +1202,37 @@ static HRESULT WINAPI DataCache_Save(
 	    IStorage*        pStg,
 	    BOOL             fSameAsLoad)
 {
-  DataCache *this = impl_from_IPersistStorage(iface);
+    DataCache *This = impl_from_IPersistStorage(iface);
+    DataCacheEntry *cache_entry;
+    BOOL dirty = FALSE;
 
-  TRACE("(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
+    TRACE("(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
 
-  if ( (!fSameAsLoad) &&
-       (this->presentationStorage!=NULL) )
-  {
-    return IStorage_CopyTo(this->presentationStorage,
-			   0,
-			   NULL,
-			   NULL,
-			   pStg);
-  }
+    dirty = This->dirty;
+    if (!dirty)
+    {
+        LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+        {
+            dirty = cache_entry->dirty;
+            if (dirty)
+                break;
+        }
+    }
 
-  return S_OK;
+    /* this is a shortcut if nothing changed */
+    if (!dirty && !fSameAsLoad && This->presentationStorage)
+    {
+        return IStorage_CopyTo(This->presentationStorage, 0, NULL, NULL, pStg);
+    }
+
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+    {
+        /* FIXME: actually do the save here */
+        cache_entry->dirty = FALSE;
+    }
+
+    This->dirty = FALSE;
+    return S_OK;
 }
 
 /************************************************************************
@@ -2060,6 +2099,8 @@ static DataCache* DataCache_Construct(
   newObject->sinkInterface = 0;
   newObject->presentationStorage = NULL;
   list_init(&newObject->cache_list);
+  newObject->last_cache_id = 1;
+  newObject->dirty = FALSE;
 
   return newObject;
 }

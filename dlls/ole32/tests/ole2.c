@@ -1105,9 +1105,7 @@ static void test_data_cache(void)
     ok_ole_success(hr, "IPersistStorage_InitNew");
 
     hr = IPersistStorage_IsDirty(pPS);
-    todo_wine {
     ok_ole_success(hr, "IPersistStorage_IsDirty");
-    }
 
     hr = IPersistStorage_GetClassID(pPS, &clsid);
     ok_ole_success(hr, "IPersistStorage_GetClassID");
