@@ -73,12 +73,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 typedef struct PresentationDataHeader
 {
   DWORD unknown1;	/* -1 */
-  DWORD unknown2;	/* 3, possibly CF_METAFILEPICT */
+  DWORD clipformat;
   DWORD unknown3;	/* 4, possibly TYMED_ISTREAM */
   DVASPECT dvAspect;
-  DWORD unknown5;	/* -1 */
-
-  DWORD unknown6;
+  DWORD lindex;
+  DWORD tymed;
   DWORD unknown7;	/* 0 */
   DWORD dwObjectExtentX;
   DWORD dwObjectExtentY;
@@ -102,6 +101,8 @@ typedef struct DataCacheEntry
   DWORD id;
   /* dirty flag */
   BOOL dirty;
+  /* stream number (-1 if not set ) */
+  unsigned short stream_number;
 } DataCacheEntry;
 
 /****************************************************************************
@@ -186,6 +187,12 @@ static inline DataCache *impl_from_IOleCacheControl( IOleCacheControl *iface )
     return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIOleCacheControl));
 }
 
+static void dump_FORMATETC(const FORMATETC *formatetc)
+{
+    TRACE("{ cfFormat = 0x%x, ptd = %p, dwAspect = %d, lindex = %d, tymed = %d }",
+          formatetc->cfFormat, formatetc->ptd, formatetc->dwAspect,
+          formatetc->lindex, formatetc->tymed);
+}
 
 /*
  * Prototypes for the methods of the DataCache class.
@@ -259,6 +266,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     (*cache_entry)->storage = NULL;
     (*cache_entry)->id = This->last_cache_id++;
     (*cache_entry)->dirty = TRUE;
+    (*cache_entry)->stream_number = -1;
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
     return S_OK;
 }
@@ -515,6 +523,117 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
   IStream_Release(presStream);
 
   return hres;
+}
+
+static HRESULT DataCacheEntry_CreateStream(DataCacheEntry *This,
+                                           IStorage *storage, IStream **stream)
+{
+    HRESULT hr;
+    WCHAR wszName[] = {2,'O','l','e','P','r','e','s',
+        '0' + (This->stream_number / 100) % 10,
+        '0' + (This->stream_number / 10) % 10,
+        '0' + This->stream_number % 10, 0};
+
+    /* FIXME: cache the created stream in This? */
+    hr = IStorage_CreateStream(storage, wszName,
+                               STGM_READWRITE | STGM_SHARE_EXCLUSIVE | STGM_CREATE,
+                               0, 0, stream);
+    return hr;
+}
+
+static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,
+                                   BOOL same_as_load)
+{
+    PresentationDataHeader header;
+    HRESULT hr;
+    IStream *pres_stream;
+    void *data = NULL;
+
+    TRACE("stream_number = %d, fmtetc = ", This->stream_number); dump_FORMATETC(&This->fmtetc); TRACE("\n");
+
+    hr = DataCacheEntry_CreateStream(This, storage, &pres_stream);
+    if (FAILED(hr))
+        return hr;
+
+    /* custom clipformat */
+    if (This->fmtetc.cfFormat > 0xc000)
+        FIXME("custom clipboard format not serialized properly\n");
+    header.unknown1 = -1;
+    header.clipformat = This->fmtetc.cfFormat;
+    if (This->fmtetc.ptd)
+        FIXME("ptd not serialized\n");
+    header.unknown3 = 4;
+    header.dvAspect = This->fmtetc.dwAspect;
+    header.lindex = This->fmtetc.lindex;
+    header.tymed = This->fmtetc.tymed;
+    header.unknown7 = 0;
+    header.dwObjectExtentX = 0;
+    header.dwObjectExtentY = 0;
+    header.dwSize = 0;
+
+    /* size the data */
+    switch (This->fmtetc.cfFormat)
+    {
+        case CF_METAFILEPICT:
+        {
+            if (This->stgmedium.tymed != TYMED_NULL)
+            {
+                const METAFILEPICT *mfpict = GlobalLock(This->stgmedium.u.hMetaFilePict);
+                if (!mfpict)
+                {
+                    IStream_Release(pres_stream);
+                    return DV_E_STGMEDIUM;
+                }
+                header.dwObjectExtentX = mfpict->xExt;
+                header.dwObjectExtentY = mfpict->yExt;
+                header.dwSize = GetMetaFileBitsEx(mfpict->hMF, 0, NULL);
+                GlobalUnlock(This->stgmedium.u.hMetaFilePict);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    /*
+     * Write the header.
+     */
+    hr = IStream_Write(pres_stream, &header, sizeof(PresentationDataHeader),
+                       NULL);
+    if (FAILED(hr))
+    {
+        IStream_Release(pres_stream);
+        return hr;
+    }
+
+    /* get the data */
+    switch (This->fmtetc.cfFormat)
+    {
+        case CF_METAFILEPICT:
+        {
+            if (This->stgmedium.tymed != TYMED_NULL)
+            {
+                const METAFILEPICT *mfpict = GlobalLock(This->stgmedium.u.hMetaFilePict);
+                if (!mfpict)
+                {
+                    IStream_Release(pres_stream);
+                    return DV_E_STGMEDIUM;
+                }
+                data = HeapAlloc(GetProcessHeap(), 0, header.dwSize);
+                GetMetaFileBitsEx(mfpict->hMF, header.dwSize, data);
+                GlobalUnlock(This->stgmedium.u.hMetaFilePict);
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (data)
+        hr = IStream_Write(pres_stream, data, header.dwSize, NULL);
+
+    IStream_Release(pres_stream);
+    return hr;
 }
 
 /* helper for copying STGMEDIUM of type bitmap, MF, EMF or HGLOBAL.
@@ -1153,11 +1272,13 @@ static HRESULT WINAPI DataCache_Load(
 		    DataCacheEntry *cache_entry;
 		    FORMATETC fmtetc;
 
-		    fmtetc.cfFormat = header.unknown2;
+		    fmtetc.cfFormat = header.clipformat;
 		    fmtetc.ptd = NULL; /* FIXME */
 		    fmtetc.dwAspect = header.dvAspect;
-		    fmtetc.lindex = header.unknown5;
-		    fmtetc.tymed = header.unknown6;
+		    fmtetc.lindex = header.lindex;
+		    fmtetc.tymed = header.tymed;
+
+                    TRACE("loading entry with formatetc: "); dump_FORMATETC(&fmtetc); TRACE("\n");
 
                     cache_entry = DataCache_GetEntryForFormatEtc(This, &fmtetc);
                     if (!cache_entry)
@@ -1205,6 +1326,8 @@ static HRESULT WINAPI DataCache_Save(
     DataCache *This = impl_from_IPersistStorage(iface);
     DataCacheEntry *cache_entry;
     BOOL dirty = FALSE;
+    HRESULT hr = S_OK;
+    unsigned short stream_number = 0;
 
     TRACE("(%p, %p, %d)\n", iface, pStg, fSameAsLoad);
 
@@ -1225,14 +1348,32 @@ static HRESULT WINAPI DataCache_Save(
         return IStorage_CopyTo(This->presentationStorage, 0, NULL, NULL, pStg);
     }
 
+    /* assign stream numbers to the cache entries */
     LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
     {
-        /* FIXME: actually do the save here */
-        cache_entry->dirty = FALSE;
+        if (cache_entry->stream_number != stream_number)
+        {
+            cache_entry->dirty = TRUE; /* needs to be written out again */
+            cache_entry->stream_number = stream_number;
+        }
+        stream_number++;
+    }
+
+    /* write out the cache entries */
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+    {
+        if (!fSameAsLoad || cache_entry->dirty)
+        {
+            hr = DataCacheEntry_Save(cache_entry, pStg, fSameAsLoad);
+            if (FAILED(hr))
+                break;
+
+            cache_entry->dirty = FALSE;
+        }
     }
 
     This->dirty = FALSE;
-    return S_OK;
+    return hr;
 }
 
 /************************************************************************
@@ -1737,6 +1878,7 @@ static HRESULT WINAPI DataCache_Cache(
     HRESULT hr;
 
     TRACE("(%p, 0x%x, %p)\n", pformatetc, advf, pdwConnection);
+    TRACE("pformatetc = "); dump_FORMATETC(pformatetc); TRACE("\n");
 
     *pdwConnection = 0;
 

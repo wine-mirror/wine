@@ -1205,9 +1205,7 @@ static void test_data_cache(void)
     fmtetc.ptd = NULL;
     fmtetc.tymed = TYMED_MFPICT;
     hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
-    todo_wine {
     ok(hr == CACHE_S_SAMECACHE, "IOleCache_Cache with already loaded data format type should return CACHE_S_SAMECACHE instead of 0x%x\n", hr);
-    }
 
     rcBounds.left = 0;
     rcBounds.top = 0;
@@ -1216,9 +1214,7 @@ static void test_data_cache(void)
     hdcMem = CreateCompatibleDC(NULL);
 
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
-    todo_wine {
     ok_ole_success(hr, "IViewObject_Draw");
-    }
 
     hr = IViewObject_Draw(pViewObject, DVASPECT_CONTENT, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
@@ -1227,21 +1223,21 @@ static void test_data_cache(void)
     hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
     todo_wine {
     ok_ole_success(hr, "IOleCache2_DiscardCache");
+    }
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok_ole_success(hr, "IViewObject_Draw");
-    }
 
     /* unload the cached storage object, but don't allow it to be reloaded */
     hr = IPersistStorage_HandsOffStorage(pPS);
     ok_ole_success(hr, "IPersistStorage_HandsOffStorage");
-    todo_wine {
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok_ole_success(hr, "IViewObject_Draw");
+    todo_wine {
     hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
     ok_ole_success(hr, "IOleCache2_DiscardCache");
-    }
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
+    }
 
     DeleteDC(hdcMem);
 
