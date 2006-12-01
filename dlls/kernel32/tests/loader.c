@@ -321,7 +321,7 @@ todo_wine {
             ok(FreeLibrary(hlib), "FreeLibrary error %d\n", GetLastError());
         }
         else
-        {
+        {   /* LoadLibrary has failed */
             if (hlib) /* remove completely once Wine is fixed */
             {
                 todo_wine ok(!hlib, "%d: LoadLibrary should fail\n", i);
@@ -331,6 +331,13 @@ todo_wine {
             }
 
             ok(!hlib, "%d: LoadLibrary should fail\n", i);
+
+            if (GetLastError() == ERROR_GEN_FAILURE) /* Win9x, broken behaviour */
+            {
+                trace("skipping the loader test on Win9x\n");
+                DeleteFile(dll_name);
+                return;
+            }
 
             ok(td[i].error == GetLastError(), "%d: expected error %d, got %d\n",
                i, td[i].error, GetLastError());
