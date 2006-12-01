@@ -1504,7 +1504,7 @@ BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
     return FALSE;
 }
 
-struct module*  elf_load_module(struct process* pcs, const char* name, DWORD addr)
+struct module*  elf_load_module(struct process* pcs, const char* name, unsigned long addr)
 {
     return NULL;
 }
