@@ -92,6 +92,9 @@ typedef struct DataCacheEntry
   /* format of this entry */
   FORMATETC fmtetc;
 
+  /* cached data */
+  STGMEDIUM stgmedium;
+
   /*
    * This storage pointer is set through a call to
    * IPersistStorage_Load. This is where the visual
@@ -139,7 +142,7 @@ struct DataCache
 
   struct list cache_list;
 
-  /* last id assigned to an object */
+  /* last id assigned to an entry */
   DWORD last_cache_id;
 };
 
@@ -197,6 +200,7 @@ static void DataCacheEntry_Destroy(DataCacheEntry *This)
     if (This->storage)
         IStorage_Release(This->storage);
     HeapFree(GetProcessHeap(), 0, This->fmtetc.ptd);
+    ReleaseStgMedium(&This->stgmedium);
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -240,71 +244,21 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
 static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry)
 {
     *cache_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(**cache_entry));
+    if (!*cache_entry)
+        return E_OUTOFMEMORY;
+
     (*cache_entry)->fmtetc = *formatetc;
     if (formatetc->ptd)
     {
         (*cache_entry)->fmtetc.ptd = HeapAlloc(GetProcessHeap(), 0, formatetc->ptd->tdSize);
         memcpy((*cache_entry)->fmtetc.ptd, formatetc->ptd, formatetc->ptd->tdSize);
     }
+    (*cache_entry)->stgmedium.tymed = TYMED_NULL;
+    (*cache_entry)->stgmedium.pUnkForRelease = NULL;
     (*cache_entry)->storage = NULL;
     (*cache_entry)->id = This->last_cache_id++;
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
     return S_OK;
-}
-
-/************************************************************************
- * DataCache_ReadPresentationData
- *
- * This method will read information for the requested presentation
- * into the given structure.
- *
- * Param:
- *   this       - Pointer to the DataCache object
- *   cache_entry - The entry that we wish to draw.
- *   header     - The structure containing information about this
- *                aspect of the object.
- */
-static HRESULT DataCache_ReadPresentationData(
-  DataCache*              this,
-  DataCacheEntry*         cache_entry,
-  PresentationDataHeader* header)
-{
-  IStream* presStream = NULL;
-  HRESULT  hres;
-
-  /*
-   * Open the presentation stream.
-   */
-  hres = DataCacheEntry_OpenPresStream(
-           cache_entry,
-	   &presStream);
-
-  if (FAILED(hres))
-    return hres;
-
-  /*
-   * Read the header.
-   */
-
-  hres = IStream_Read(
-           presStream,
-	   header,
-	   sizeof(PresentationDataHeader),
-	   NULL);
-
-  /*
-   * Cleanup.
-   */
-  IStream_Release(presStream);
-
-  /*
-   * We don't want to propagate any other error
-   * code than a failure.
-   */
-  if (hres!=S_OK)
-    hres = E_FAIL;
-
-  return hres;
 }
 
 /************************************************************************
@@ -454,39 +408,37 @@ static HRESULT DataCacheEntry_OpenPresStream(
 }
 
 /************************************************************************
- * DataCache_ReadPresMetafile
+ * DataCacheEntry_LoadData
  *
  * This method will read information for the requested presentation
  * into the given structure.
  *
  * Param:
- *   this       - Pointer to the DataCache object
- *   cache_entry - The entry that we wish to draw.
+ *   This - The entry to load the data from.
  *
  * Returns:
  *   This method returns a metafile handle if it is successful.
  *   it will return 0 if not.
  */
-static HMETAFILE DataCache_ReadPresMetafile(
-  DataCache* this,
-  DataCacheEntry *cache_entry)
+static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
 {
-  LARGE_INTEGER offset;
   IStream*      presStream = NULL;
   HRESULT       hres;
-  void*         metafileBits;
   STATSTG       streamInfo;
-  HMETAFILE     newMetafile = 0;
+  void*         metafileBits;
+  METAFILEPICT *mfpict;
+  HGLOBAL       hmfpict;
+  PresentationDataHeader header;
 
   /*
    * Open the presentation stream.
    */
   hres = DataCacheEntry_OpenPresStream(
-           cache_entry,
+           This,
 	   &presStream);
 
   if (FAILED(hres))
-    return (HMETAFILE)hres;
+    return hres;
 
   /*
    * Get the size of the stream.
@@ -496,18 +448,24 @@ static HMETAFILE DataCache_ReadPresMetafile(
 		      STATFLAG_NONAME);
 
   /*
-   * Skip the header
+   * Read the header.
    */
-  offset.u.HighPart = 0;
-  offset.u.LowPart  = sizeof(PresentationDataHeader);
 
-  hres = IStream_Seek(
-           presStream,
-	   offset,
-	   STREAM_SEEK_SET,
-	   NULL);
+  hres = IStream_Read(
+                      presStream,
+                      &header,
+                      sizeof(PresentationDataHeader),
+                      NULL);
 
-  streamInfo.cbSize.u.LowPart -= offset.u.LowPart;
+  streamInfo.cbSize.QuadPart -= sizeof(PresentationDataHeader);
+
+  hmfpict = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
+  if (!hmfpict)
+  {
+      IStream_Release(presStream);
+      return E_OUTOFMEMORY;
+  }
+  mfpict = GlobalLock(hmfpict);
 
   /*
    * Allocate a buffer for the metafile bits.
@@ -530,8 +488,23 @@ static HMETAFILE DataCache_ReadPresMetafile(
    */
   if (SUCCEEDED(hres))
   {
-    newMetafile = SetMetaFileBitsEx(streamInfo.cbSize.u.LowPart, metafileBits);
+    /* FIXME: get this from the stream */
+    mfpict->mm = MM_ANISOTROPIC;
+    mfpict->xExt = header.dwObjectExtentX;
+    mfpict->yExt = header.dwObjectExtentY;
+    mfpict->hMF = SetMetaFileBitsEx(streamInfo.cbSize.u.LowPart, metafileBits);
+    if (!mfpict->hMF)
+      hres = E_FAIL;
   }
+
+  GlobalUnlock(hmfpict);
+  if (SUCCEEDED(hres))
+  {
+    This->stgmedium.tymed = TYMED_MFPICT;
+    This->stgmedium.u.hMetaFilePict = hmfpict;
+  }
+  else
+    GlobalFree(hmfpict);
 
   /*
    * Cleanup.
@@ -539,10 +512,7 @@ static HMETAFILE DataCache_ReadPresMetafile(
   HeapFree(GetProcessHeap(), 0, metafileBits);
   IStream_Release(presStream);
 
-  if (newMetafile==0)
-    hres = E_FAIL;
-
-  return newMetafile;
+  return hres;
 }
 
 /*********************************************************
@@ -1121,6 +1091,7 @@ static HRESULT WINAPI DataCache_Load(
                         hr = DataCache_CreateEntry(This, &fmtetc, &cache_entry);
                     if (SUCCEEDED(hr))
                     {
+                        ReleaseStgMedium(&cache_entry->stgmedium);
                         if (cache_entry->storage) IStorage_Release(cache_entry->storage);
                         cache_entry->storage = pStg;
                         IStorage_AddRef(pStg);
@@ -1296,8 +1267,6 @@ static HRESULT WINAPI DataCache_Draw(
 	    ULONG_PTR        dwContinue)
 {
   DataCache *This = impl_from_IViewObject2(iface);
-  PresentationDataHeader presData;
-  HMETAFILE              presMetafile = 0;
   HRESULT                hres;
   DataCacheEntry        *cache_entry;
 
@@ -1326,76 +1295,77 @@ static HRESULT WINAPI DataCache_Draw(
         (cache_entry->fmtetc.lindex != lindex))
       continue;
 
-    /*
-     * First, we need to retrieve the dimensions of the
-     * image in the metafile.
-     */
-    hres = DataCache_ReadPresentationData(This,
-					cache_entry,
-					&presData);
-
-    if (FAILED(hres))
-      return hres;
-
-    /*
-    * Then, we can extract the metafile itself from the cached
-     * data.
-     *
-     * FIXME Unless it isn't a metafile. I think it could be any CF_XXX type,
-     * particularly CF_DIB.
-     */
-    presMetafile = DataCache_ReadPresMetafile(This,
-					    cache_entry);
-
-    /*
-     * If we have a metafile, just draw baby...
-     * We have to be careful not to modify the state of the
-     * DC.
-     */
-    if (presMetafile!=0)
+    /* if the data hasn't been loaded yet, do it now */
+    if ((cache_entry->stgmedium.tymed == TYMED_NULL) && cache_entry->storage)
     {
-      INT   prevMapMode = SetMapMode(hdcDraw, MM_ANISOTROPIC);
-      SIZE  oldWindowExt;
-      SIZE  oldViewportExt;
-      POINT oldViewportOrg;
-
-      SetWindowExtEx(hdcDraw,
-		   presData.dwObjectExtentX,
-		   presData.dwObjectExtentY,
-		   &oldWindowExt);
-
-      SetViewportExtEx(hdcDraw,
-		     lprcBounds->right - lprcBounds->left,
-		     lprcBounds->bottom - lprcBounds->top,
-		     &oldViewportExt);
-
-      SetViewportOrgEx(hdcDraw,
-		     lprcBounds->left,
-		     lprcBounds->top,
-		     &oldViewportOrg);
-
-      PlayMetaFile(hdcDraw, presMetafile);
-
-      SetWindowExtEx(hdcDraw,
-		   oldWindowExt.cx,
-		   oldWindowExt.cy,
-		   NULL);
-
-      SetViewportExtEx(hdcDraw,
-		     oldViewportExt.cx,
-		     oldViewportExt.cy,
-		     NULL);
-
-      SetViewportOrgEx(hdcDraw,
-		     oldViewportOrg.x,
-		     oldViewportOrg.y,
-		     NULL);
-
-      SetMapMode(hdcDraw, prevMapMode);
-
-      DeleteMetaFile(presMetafile);
+      hres = DataCacheEntry_LoadData(cache_entry);
+      if (FAILED(hres))
+        continue;
     }
-    return S_OK;
+
+    /* no data */
+    if (cache_entry->stgmedium.tymed == TYMED_NULL)
+      continue;
+
+    switch (cache_entry->fmtetc.cfFormat)
+    {
+      case CF_METAFILEPICT:
+      {
+        /*
+         * We have to be careful not to modify the state of the
+         * DC.
+         */
+        INT   prevMapMode;
+        SIZE  oldWindowExt;
+        SIZE  oldViewportExt;
+        POINT oldViewportOrg;
+        METAFILEPICT *mfpict;
+
+        if ((cache_entry->stgmedium.tymed != TYMED_MFPICT) ||
+            !((mfpict = GlobalLock(cache_entry->stgmedium.u.hMetaFilePict))))
+          continue;
+
+        prevMapMode = SetMapMode(hdcDraw, mfpict->mm);
+
+        SetWindowExtEx(hdcDraw,
+		       mfpict->xExt,
+		       mfpict->yExt,
+		       &oldWindowExt);
+
+        SetViewportExtEx(hdcDraw,
+		         lprcBounds->right - lprcBounds->left,
+		         lprcBounds->bottom - lprcBounds->top,
+		         &oldViewportExt);
+
+        SetViewportOrgEx(hdcDraw,
+		         lprcBounds->left,
+		         lprcBounds->top,
+		         &oldViewportOrg);
+
+        PlayMetaFile(hdcDraw, mfpict->hMF);
+
+        SetWindowExtEx(hdcDraw,
+		       oldWindowExt.cx,
+		       oldWindowExt.cy,
+		       NULL);
+
+        SetViewportExtEx(hdcDraw,
+		         oldViewportExt.cx,
+		         oldViewportExt.cy,
+		         NULL);
+
+        SetViewportOrgEx(hdcDraw,
+		         oldViewportOrg.x,
+		         oldViewportOrg.y,
+		         NULL);
+
+        SetMapMode(hdcDraw, prevMapMode);
+
+        GlobalUnlock(cache_entry->stgmedium.u.hMetaFilePict);
+
+        return S_OK;
+      }
+    }
   }
 
   return OLE_E_BLANK;
@@ -1542,7 +1512,6 @@ static HRESULT WINAPI DataCache_GetExtent(
 	    LPSIZEL         lpsizel)
 {
   DataCache *This = impl_from_IViewObject2(iface);
-  PresentationDataHeader presData;
   HRESULT                hres = E_FAIL;
   DataCacheEntry        *cache_entry;
 
@@ -1581,20 +1550,36 @@ static HRESULT WINAPI DataCache_GetExtent(
         (cache_entry->fmtetc.lindex != lindex))
       continue;
 
-    /*
-     * Get the presentation information from the
-     * cache.
-     */
-    hres = DataCache_ReadPresentationData(This,
-					cache_entry,
-					&presData);
-
-    if (SUCCEEDED(hres))
+    /* if the data hasn't been loaded yet, do it now */
+    if ((cache_entry->stgmedium.tymed == TYMED_NULL) && cache_entry->storage)
     {
-      lpsizel->cx = presData.dwObjectExtentX;
-      lpsizel->cy = presData.dwObjectExtentY;
+      hres = DataCacheEntry_LoadData(cache_entry);
+      if (FAILED(hres))
+        continue;
+    }
 
-      return S_OK;
+    /* no data */
+    if (cache_entry->stgmedium.tymed == TYMED_NULL)
+      continue;
+
+
+    switch (cache_entry->fmtetc.cfFormat)
+    {
+      case CF_METAFILEPICT:
+      {
+          METAFILEPICT *mfpict;
+
+          if ((cache_entry->stgmedium.tymed != TYMED_MFPICT) ||
+              !((mfpict = GlobalLock(cache_entry->stgmedium.u.hMetaFilePict))))
+            continue;
+
+        lpsizel->cx = mfpict->xExt;
+        lpsizel->cy = mfpict->yExt;
+
+        GlobalUnlock(cache_entry->stgmedium.u.hMetaFilePict);
+
+        return S_OK;
+      }
     }
   }
 
