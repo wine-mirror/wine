@@ -1677,20 +1677,34 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
         CloseHandle( info->handle );
         info->handle = 0;
     }
-    else if (!FindNextFileW( (HANDLE)info, data ))
+    else
     {
-        TRACE( "%s not found\n", debugstr_w(filename) );
-        FindClose( (HANDLE)info );
-        SetLastError( ERROR_FILE_NOT_FOUND );
-        return INVALID_HANDLE_VALUE;
+        IO_STATUS_BLOCK io;
+
+        NtQueryDirectoryFile( info->handle, 0, NULL, NULL, &io, info->data, sizeof(info->data),
+                              FileBothDirectoryInformation, FALSE, &info->mask, TRUE );
+        if (io.u.Status)
+        {
+            FindClose( info );
+            SetLastError( RtlNtStatusToDosError( io.u.Status ) );
+            return INVALID_HANDLE_VALUE;
+        }
+        info->data_len = io.Information;
+        if (!FindNextFileW( info, data ))
+        {
+            TRACE( "%s not found\n", debugstr_w(filename) );
+            FindClose( info );
+            SetLastError( ERROR_FILE_NOT_FOUND );
+            return INVALID_HANDLE_VALUE;
+        }
+        if (!strpbrkW( info->mask.Buffer, wildcardsW ))
+        {
+            /* we can't find two files with the same name */
+            CloseHandle( info->handle );
+            info->handle = 0;
+        }
     }
-    else if (!strpbrkW( info->mask.Buffer, wildcardsW ))
-    {
-        /* we can't find two files with the same name */
-        CloseHandle( info->handle );
-        info->handle = 0;
-    }
-    return (HANDLE)info;
+    return info;
 
 error:
     HeapFree( GetProcessHeap(), 0, info );

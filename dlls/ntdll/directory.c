@@ -107,7 +107,7 @@ typedef struct
     char           d_name[256];
 } KERNEL_DIRENT64;
 
-static inline int getdents64( int fd, KERNEL_DIRENT64 *de, unsigned int size )
+static inline int getdents64( int fd, char *de, unsigned int size )
 {
     int ret;
     __asm__( "pushl %%ebx; movl %2,%%ebx; int $0x80; popl %%ebx"
@@ -1060,15 +1060,15 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
 {
     off_t old_pos = 0;
     size_t size = length;
-    int res;
-    char local_buffer[8192];
-    KERNEL_DIRENT64 *data, *de;
+    int res, fake_dot_dot = 1;
+    char *data, local_buffer[8192];
+    KERNEL_DIRENT64 *de;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL;
 
     if (size <= sizeof(local_buffer) || !(data = RtlAllocateHeap( GetProcessHeap(), 0, size )))
     {
         size = sizeof(local_buffer);
-        data = (KERNEL_DIRENT64 *)local_buffer;
+        data = local_buffer;
     }
 
     if (restart_scan) lseek( fd, 0, SEEK_SET );
@@ -1096,13 +1096,52 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         goto done;
     }
 
-    de = data;
+    de = (KERNEL_DIRENT64 *)data;
+
+    if (restart_scan)
+    {
+        /* check if we got . and .. from getdents */
+        if (res > 0)
+        {
+            if (!strcmp( de->d_name, "." ) && res > de->d_reclen)
+            {
+                KERNEL_DIRENT64 *next_de = (KERNEL_DIRENT64 *)(data + de->d_reclen);
+                if (!strcmp( next_de->d_name, ".." )) fake_dot_dot = 0;
+            }
+        }
+        /* make sure we have enough room for both entries */
+        if (fake_dot_dot)
+        {
+            static const ULONG min_info_size = (FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[1]) +
+                                                FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[2]) + 3) & ~3;
+            if (length < min_info_size || single_entry)
+            {
+                FIXME( "not enough room %u/%u for fake . and .. entries\n", length, single_entry );
+                fake_dot_dot = 0;
+            }
+        }
+
+        if (fake_dot_dot)
+        {
+            if ((info = append_entry( buffer, &io->Information, length, ".", NULL, mask )))
+                last_info = info;
+            if ((info = append_entry( buffer, &io->Information, length, "..", NULL, mask )))
+                last_info = info;
+
+            /* check if we still have enough space for the largest possible entry */
+            if (last_info && io->Information + max_dir_info_size > length)
+            {
+                lseek( fd, 0, SEEK_SET );  /* reset pos to first entry */
+                res = 0;
+            }
+        }
+    }
 
     while (res > 0)
     {
         res -= de->d_reclen;
-        info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask );
-        if (info)
+        if (!(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
+            (info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask )))
         {
             last_info = info;
             if ((char *)info->FileName + info->FileNameLength > (char *)buffer + length)
@@ -1124,7 +1163,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
         else
         {
             res = getdents64( fd, data, size );
-            de = data;
+            de = (KERNEL_DIRENT64 *)data;
         }
     }
 
@@ -1132,7 +1171,7 @@ static int read_directory_getdents( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     else io->u.Status = restart_scan ? STATUS_NO_SUCH_FILE : STATUS_NO_MORE_FILES;
     res = 0;
 done:
-    if ((char *)data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
+    if (data != local_buffer) RtlFreeHeap( GetProcessHeap(), 0, data );
     return res;
 }
 
@@ -1150,7 +1189,7 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
     long restart_pos;
     ULONG_PTR restart_info_pos = 0;
     size_t size, initial_size = length;
-    int res;
+    int res, fake_dot_dot = 1;
     char *data, local_buffer[8192];
     struct dirent *de;
     FILE_BOTH_DIR_INFORMATION *info, *last_info = NULL, *restart_last_info = NULL;
@@ -1178,10 +1217,53 @@ static int read_directory_getdirentries( int fd, IO_STATUS_BLOCK *io, void *buff
 
     de = (struct dirent *)data;
 
+    if (restart_scan)
+    {
+        /* check if we got . and .. from getdirentries */
+        if (res > 0)
+        {
+            if (!strcmp( de->d_name, "." ) && res > de->d_reclen)
+            {
+                struct dirent *next_de = (struct dirent *)(data + de->d_reclen);
+                if (!strcmp( next_de->d_name, ".." )) fake_dot_dot = 0;
+            }
+        }
+        /* make sure we have enough room for both entries */
+        if (fake_dot_dot)
+        {
+            static const ULONG min_info_size = (FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[1]) +
+                                                FIELD_OFFSET(FILE_BOTH_DIR_INFORMATION, FileName[2]) + 3) & ~3;
+            if (length < min_info_size || single_entry)
+            {
+                FIXME( "not enough room %u/%u for fake . and .. entries\n", length, single_entry );
+                fake_dot_dot = 0;
+            }
+        }
+
+        if (fake_dot_dot)
+        {
+            if ((info = append_entry( buffer, &io->Information, length, ".", NULL, mask )))
+                last_info = info;
+            if ((info = append_entry( buffer, &io->Information, length, "..", NULL, mask )))
+                last_info = info;
+
+            restart_last_info = last_info;
+            restart_info_pos = io->Information;
+
+            /* check if we still have enough space for the largest possible entry */
+            if (last_info && io->Information + max_dir_info_size > length)
+            {
+                lseek( fd, 0, SEEK_SET );  /* reset pos to first entry */
+                res = 0;
+            }
+        }
+    }
+
     while (res > 0)
     {
         res -= de->d_reclen;
         if (de->d_fileno &&
+            !(fake_dot_dot && (!strcmp( de->d_name, "." ) || !strcmp( de->d_name, ".." ))) &&
             ((info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask ))))
         {
             last_info = info;
@@ -1266,7 +1348,7 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     {
         old_pos = lseek( fd, 0, SEEK_CUR );
         /* skip the right number of entries */
-        for (i = 0; i < old_pos; i++)
+        for (i = 0; i < old_pos - 2; i++)
         {
             if (!readdir( dir ))
             {
@@ -1278,10 +1360,22 @@ static void read_directory_readdir( int fd, IO_STATUS_BLOCK *io, void *buffer, U
     }
     io->u.Status = STATUS_SUCCESS;
 
-    while ((de = readdir( dir )))
+    for (;;)
     {
+        if (old_pos == 0)
+            info = append_entry( buffer, &io->Information, length, ".", NULL, mask );
+        else if (old_pos == 1)
+            info = append_entry( buffer, &io->Information, length, "..", NULL, mask );
+        else if ((de = readdir( dir )))
+        {
+            if (strcmp( de->d_name, "." ) && strcmp( de->d_name, ".." ))
+                info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask );
+            else
+                info = NULL;
+        }
+        else
+            break;
         old_pos++;
-        info = append_entry( buffer, &io->Information, length, de->d_name, NULL, mask );
         if (info)
         {
             last_info = info;
