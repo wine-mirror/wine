@@ -145,96 +145,76 @@ BOOL WINAPI ImageUnload(PLOADED_IMAGE pLoadedImage)
 /***********************************************************************
  *		MapAndLoad (IMAGEHLP.@)
  */
-BOOL WINAPI MapAndLoad(
-  LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoadedImage,
-  BOOL bDotDll, BOOL bReadOnly)
+BOOL WINAPI MapAndLoad(LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoadedImage,
+                       BOOL bDotDll, BOOL bReadOnly)
 {
-  CHAR szFileName[MAX_PATH];
-  HANDLE hFile = NULL;
-  HANDLE hFileMapping = NULL;
-  HMODULE hModule = NULL;
-  PIMAGE_NT_HEADERS pNtHeader = NULL;
+    CHAR szFileName[MAX_PATH];
+    HANDLE hFile = INVALID_HANDLE_VALUE;
+    HANDLE hFileMapping = NULL;
+    PVOID mapping = NULL;
+    PIMAGE_NT_HEADERS pNtHeader = NULL;
 
-  TRACE("(%s, %s, %p, %d, %d)\n", pszImageName, pszDllPath, pLoadedImage,
-                                    bDotDll, bReadOnly);
-  
-  /* PathCombine(&szFileName, pszDllPath, pszImageName); */
-  /* PathRenameExtension(&szFileName, bDotDll?:"dll":"exe"); */
+    TRACE("(%s, %s, %p, %d, %d)\n",
+          pszImageName, pszDllPath, pLoadedImage, bDotDll, bReadOnly);
 
-  /* FIXME: Check if the file already loaded (use IMAGEHLP_pFirstLoadedImage) */
-  if(!(hFile = CreateFileA(
-    szFileName, GENERIC_READ, 1, /* FIXME: FILE_SHARE_READ not defined */
-    NULL, OPEN_EXISTING, 0, NULL)))
+    if (!SearchPathA(pszDllPath, pszImageName, bDotDll ? ".DLL" : ".EXE",
+                     sizeof(szFileName), szFileName, NULL))
     {
-      SetLastError(ERROR_FILE_NOT_FOUND);
-      goto Error;
+        SetLastError(ERROR_FILE_NOT_FOUND);
+        goto Error;
     }
 
-  if(!(hFileMapping = CreateFileMappingA(
-    hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL)))
+    hFile = CreateFileA(szFileName, GENERIC_READ, 1, /* FIXME: FILE_SHARE_READ not defined */
+                        NULL, OPEN_EXISTING, 0, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
     {
-      DWORD dwLastError = GetLastError();
-      WARN("CreateFileMapping: Error = %d\n", dwLastError);
-      SetLastError(dwLastError);
-      goto Error;
-    }
-  CloseHandle(hFile);
-  hFile = NULL;
-
-  if(!(hModule = (HMODULE) MapViewOfFile(
-    hFileMapping, FILE_MAP_READ, 0, 0, 0)))
-    {
-      DWORD dwLastError = GetLastError();
-      WARN("MapViewOfFile: Error = %d\n", dwLastError);
-      SetLastError(dwLastError);
-      goto Error;
+        WARN("CreateFile: Error = %d\n", GetLastError());
+        goto Error;
     }
 
-  CloseHandle(hFileMapping);
-  hFileMapping=NULL;
+    hFileMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
+    if (!hFileMapping)
+    {
+        WARN("CreateFileMapping: Error = %d\n", GetLastError());
+        goto Error;
+    }
 
-  pLoadedImage = HeapAlloc(IMAGEHLP_hHeap, 0, sizeof(LOADED_IMAGE));
+    mapping = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
+    CloseHandle(hFileMapping);
+    if (!mapping)
+    {
+        WARN("MapViewOfFile: Error = %d\n", GetLastError());
+        goto Error;
+    }
 
-  pNtHeader = RtlImageNtHeader(hModule);
+    pNtHeader = RtlImageNtHeader(mapping);
 
-  pLoadedImage->ModuleName = HeapAlloc(IMAGEHLP_hHeap, 0, strlen(pszDllPath)+1); /* FIXME: Correct? */
-  strcpy( pLoadedImage->ModuleName, pszDllPath );
-  pLoadedImage->hFile = hFile;
-  pLoadedImage->MappedAddress = (PUCHAR) hModule;
-  pLoadedImage->FileHeader = pNtHeader;
-  pLoadedImage->Sections = (PIMAGE_SECTION_HEADER)
-    ((LPBYTE) &pNtHeader->OptionalHeader +
-      pNtHeader->FileHeader.SizeOfOptionalHeader);
-  pLoadedImage->NumberOfSections =
-    pNtHeader->FileHeader.NumberOfSections;
-  pLoadedImage->SizeOfImage =
-    pNtHeader->OptionalHeader.SizeOfImage;
-  pLoadedImage->Characteristics =
-    pNtHeader->FileHeader.Characteristics;
-  pLoadedImage->LastRvaSection = pLoadedImage->Sections;
+    pLoadedImage->ModuleName       = HeapAlloc(GetProcessHeap(), 0,
+                                               strlen(szFileName) + 1);
+    if (pLoadedImage->ModuleName) strcpy(pLoadedImage->ModuleName, szFileName);
+    pLoadedImage->hFile            = hFile;
+    pLoadedImage->MappedAddress    = mapping;
+    pLoadedImage->FileHeader       = pNtHeader;
+    pLoadedImage->Sections         = (PIMAGE_SECTION_HEADER)
+        ((LPBYTE) &pNtHeader->OptionalHeader +
+         pNtHeader->FileHeader.SizeOfOptionalHeader);
+    pLoadedImage->NumberOfSections = pNtHeader->FileHeader.NumberOfSections;
+    pLoadedImage->SizeOfImage      = pNtHeader->OptionalHeader.SizeOfImage;
+    pLoadedImage->Characteristics  = pNtHeader->FileHeader.Characteristics;
+    pLoadedImage->LastRvaSection   = pLoadedImage->Sections;
 
-  pLoadedImage->fSystemImage = FALSE; /* FIXME */
-  pLoadedImage->fDOSImage = FALSE;    /* FIXME */
+    pLoadedImage->fSystemImage     = FALSE; /* FIXME */
+    pLoadedImage->fDOSImage        = FALSE; /* FIXME */
 
-  /* FIXME: Make thread safe */
-  pLoadedImage->Links.Flink = NULL;
-  pLoadedImage->Links.Blink = &IMAGEHLP_pLastLoadedImage->Links;
-  if(IMAGEHLP_pLastLoadedImage)
-    IMAGEHLP_pLastLoadedImage->Links.Flink = &pLoadedImage->Links;
-  IMAGEHLP_pLastLoadedImage = pLoadedImage;
-  if(!IMAGEHLP_pFirstLoadedImage)
-    IMAGEHLP_pFirstLoadedImage = pLoadedImage;
+    pLoadedImage->Links.Flink      = &pLoadedImage->Links;
+    pLoadedImage->Links.Blink      = &pLoadedImage->Links;
 
-  return TRUE;
+    return TRUE;
 
 Error:
-  if(hModule)
-    UnmapViewOfFile((PVOID) hModule);
-  if(hFileMapping)
-    CloseHandle(hFileMapping);
-  if(hFile)
-    CloseHandle(hFile);
-  return FALSE;
+    if (mapping) UnmapViewOfFile(mapping);
+    if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
+    return FALSE;
 }
 
 /***********************************************************************
@@ -254,9 +234,11 @@ BOOL WINAPI SetImageConfigInformation(
 /***********************************************************************
  *		UnMapAndLoad (IMAGEHLP.@)
  */
-BOOL WINAPI UnMapAndLoad(PLOADED_IMAGE LoadedImage)
+BOOL WINAPI UnMapAndLoad(PLOADED_IMAGE pLoadedImage)
 {
-  FIXME("(%p): stub\n", LoadedImage);
-  SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-  return FALSE;
+    HeapFree(GetProcessHeap(), 0, pLoadedImage->ModuleName);
+    /* FIXME: MSDN states that a new checksum is computed and stored into the file */
+    if (pLoadedImage->MappedAddress) UnmapViewOfFile(pLoadedImage->MappedAddress);
+    if (pLoadedImage->hFile != INVALID_HANDLE_VALUE) CloseHandle(pLoadedImage->hFile);
+    return TRUE;
 }
