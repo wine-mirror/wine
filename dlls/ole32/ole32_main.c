@@ -102,7 +102,7 @@ HGLOBAL WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLabel,
 		ExtEscape(hdc, MFCOMMENT, strlen(szIconIndex)+1, szIconIndex, 0, NULL);
 	}
 
-	mfp.mm = MM_ISOTROPIC;
+	mfp.mm = MM_ANISOTROPIC;
 	mfp.xExt = mfp.yExt = 0; /* FIXME ? */
 	mfp.hMF = CloseMetaFile(hdc);
 	if( !mfp.hMF )
