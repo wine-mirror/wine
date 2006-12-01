@@ -56,7 +56,7 @@ FitToEm: 1
 WinInfo: 704 32 21
 OnlyBitmaps: 1
 TeXData: 1 0 0 189792 94896 63264 0 1048576 63264 783286 444596 497025 792723 393216 433062 380633 303038 157286 324010 404750 52429 2506097 1059062 262144
-BeginChars: 65536 412
+BeginChars: 65536 416
 StartChar: A
 Encoding: 65 65 0
 Width: 7
@@ -2520,11 +2520,35 @@ EndChar
 StartChar: afii10056
 Encoding: 1031 1031 411
 Width: 11
+Flags: W
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10050
+Encoding: 1168 1168 412
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10098
+Encoding: 1169 1169 413
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10110
+Encoding: 1118 1118 414
+Width: 11
+Flags: HW
+TeX: 0 0 0 0
+EndChar
+StartChar: afii10062
+Encoding: 1038 1038 415
+Width: 11
 Flags: HW
 TeX: 0 0 0 0
 EndChar
 EndChars
-BitmapFont: 11 412 9 2 1 
+BitmapFont: 11 416 9 2 1
 BDFChar: 0 65 7 1 6 0 6
 0JH$gG_C_M
 BDFChar: 1 33 2 1 1 0 6
@@ -3349,5 +3373,13 @@ BDFChar: 410 1030 2 1 1 0 6
 J:N0#J:N.M
 BDFChar: 411 1031 3 0 2 0 8
 TE"sW5X7S"5QCca
+BDFChar: 412 1168 6 1 5 0 7
+#l&q#J:N0#
+BDFChar: 413 1169 4 1 3 0 5
++Q.d#J:IV"
+BDFChar: 414 1118 4 1 3 -2 7
+TKiLMTV.rc+M[sW
+BDFChar: 415 1038 6 1 5 0 8
+:`tRMLj02]Du]k<
 EndBitmapFont
 EndSplineFont
