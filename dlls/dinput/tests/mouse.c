@@ -68,6 +68,27 @@ static void test_set_coop(LPDIRECTINPUT pDI, HWND hwnd)
     if (pMouse) IUnknown_Release(pMouse);
 }
 
+static void test_acquire(LPDIRECTINPUT pDI, HWND hwnd)
+{
+    HRESULT hr;
+    LPDIRECTINPUTDEVICE pMouse = NULL;
+
+    hr = IDirectInput_CreateDevice(pDI, &GUID_SysMouse, &pMouse, NULL);
+    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %s\n", DXGetErrorString8(hr));
+    if (FAILED(hr)) return;
+
+    hr = IDirectInputDevice_SetDataFormat(pMouse, &c_dfDIMouse);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_Unacquire(pMouse);
+    ok(hr == S_FALSE, "IDirectInputDevice_Unacquire() should have failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(SUCCEEDED(hr), "IDirectInputDevice_Acquire() failed: %s\n", DXGetErrorString8(hr));
+    hr = IDirectInputDevice_Acquire(pMouse);
+    ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have failed: %s\n", DXGetErrorString8(hr));
+
+    if (pMouse) IUnknown_Release(pMouse);
+}
+
 static void mouse_tests(void)
 {
     HRESULT hr;
@@ -82,13 +103,15 @@ static void mouse_tests(void)
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
     ok(hwnd != NULL, "err: %d\n", GetLastError());
-    if (!hwnd) return;
+    if (hwnd)
+    {
+        ShowWindow(hwnd, SW_SHOW);
 
-    ShowWindow(hwnd, SW_SHOW);
+        test_set_coop(pDI, hwnd);
+        test_acquire(pDI, hwnd);
 
-    test_set_coop(pDI, hwnd);
-
-    DestroyWindow(hwnd);
+        DestroyWindow(hwnd);
+    }
     if (pDI) IUnknown_Release(pDI);
 }
 

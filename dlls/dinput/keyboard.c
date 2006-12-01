@@ -51,8 +51,6 @@ struct SysKeyboardImpl
     IDirectInputImpl*           dinput;
 
     /* SysKeyboardAImpl */
-    int                         acquired;
-
     LPDIDEVICEOBJECTDATA        data_queue;  /* buffer for 'GetDeviceData'. Alloc at
                                                 'Acquire', Free at 'Unacquire'              */
     int                         queue_len;   /* size of the queue - set in 'SetProperty'    */
@@ -290,7 +288,7 @@ static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
 
 			TRACE("(buffersize=%d)\n", pd->dwData);
 
-                        if (This->acquired)
+                        if (This->base.acquired)
                            return DIERR_INVALIDPARAM;
 
                         This->queue_len = pd->dwData;
@@ -321,7 +319,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetProperty(
 
 			TRACE("(buffersize=%d)\n", pd->dwData);
 
-                        if (This->acquired)
+                        if (This->base.acquired)
                            return DIERR_INVALIDPARAM;
 
                         pd->dwData = This->queue_len;
@@ -343,7 +341,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
     TRACE("(%p)->(%d,%p)\n", This, len, ptr);
 
-    if (This->acquired == 0) return DIERR_NOTACQUIRED;
+    if (!This->base.acquired) return DIERR_NOTACQUIRED;
 
     if (len != WINE_DINPUT_KEYBOARD_MAX_KEYS)
       return DIERR_INVALIDPARAM;
@@ -379,7 +377,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
     TRACE("(%p) %p -> %p(%d) x%d, 0x%08x\n",
           This, dod, entries, entries ? *entries : 0, dodsize, flags);
 
-    if (!This->acquired)
+    if (!This->base.acquired)
         return DIERR_NOTACQUIRED;
 
     if (!This->data_queue)
@@ -476,11 +474,11 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface);
 static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    HRESULT res;
 
     TRACE("(%p)\n",This);
 
-    if (This->acquired) return DI_NOEFFECT;
-    This->acquired = 1;
+    if ((res = IDirectInputDevice2AImpl_Acquire(iface)) != DI_OK) return res;
 
     if (current_lock != NULL) {
         FIXME("Not more than one keyboard can be acquired at the same time.\n");
@@ -505,22 +503,20 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
 static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
-	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-	TRACE("(this=%p)\n",This);
+    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
+    HRESULT res;
 
-        if (This->acquired == 0)
-          return DI_NOEFFECT;
+    TRACE("(this=%p)\n",This);
 
-        set_dinput_hook(WH_KEYBOARD_LL, NULL);
+    if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
 
-	/* No more locks */
-        if (current_lock == This)
-          current_lock = NULL;
-        else
-          ERR("this != current_lock\n");
+    set_dinput_hook(WH_KEYBOARD_LL, NULL);
 
-	/* Unacquire device */
-        This->acquired = 0;
+    /* No more locks */
+    if (current_lock == This)
+        current_lock = NULL;
+    else
+        ERR("this != current_lock\n");
 
     if (This->queue_len >= 0) {
         HeapFree(GetProcessHeap(), 0, This->data_queue);

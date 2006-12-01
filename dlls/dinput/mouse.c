@@ -133,7 +133,6 @@ struct SysMouseImpl
      * reach window borders (for e.g. shooters, "surface movement" games) */
     WARP_STATUS		            need_warp;
     DWORD                           last_warped;
-    int				    acquired;
     CRITICAL_SECTION		    crit;
     
     /* This is for mouse reporting. */
@@ -533,13 +532,11 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     SysMouseImpl *This = (SysMouseImpl *)iface;
     RECT  rect;
     POINT point;
+    HRESULT res;
     
     TRACE("(this=%p)\n",This);
-    
-    if (This->acquired)
-      return S_FALSE;
-    
-    This->acquired = 1;
+
+    if ((res = IDirectInputDevice2AImpl_Acquire(iface)) != DI_OK) return res;
 
     /* Store (in a global variable) the current lock */
     current_lock = (IDirectInputDevice8A*)This;
@@ -596,12 +593,11 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
     SysMouseImpl *This = (SysMouseImpl *)iface;
+    HRESULT res;
     
     TRACE("(this=%p)\n",This);
-    
-    if (0 == This->acquired) {
-	return DI_NOEFFECT;
-    }
+
+    if ((res = IDirectInputDevice2AImpl_Unacquire(iface)) != DI_OK) return res;
 
     set_dinput_hook(WH_MOUSE_LL, NULL);
     if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
@@ -613,9 +609,6 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
     else
       ERR("this(%p) != current_lock(%p)\n", This, current_lock);
 
-    /* Unacquire device */
-    This->acquired = 0;
-    
     /* And put the mouse cursor back where it was at acquire time */
     if (This->absolute == 0) {
       TRACE(" warping mouse back to (%d , %d)\n", This->org_coords.x, This->org_coords.y);
@@ -636,7 +629,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 ) {
     SysMouseImpl *This = (SysMouseImpl *)iface;
 
-    if(This->acquired == 0) return DIERR_NOTACQUIRED;
+    if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
     EnterCriticalSection(&(This->crit));
     TRACE("(this=%p,0x%08x,%p):\n", This, len, ptr);
@@ -694,7 +687,7 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 	  entries, *entries,*entries == INFINITE ? " (INFINITE)" : "",
 	  flags, (flags & DIGDD_PEEK) ? " (DIGDD_PEEK)": "" );
     
-    if (This->acquired == 0) {
+    if (This->base.acquired == 0) {
 	WARN(" application tries to get data from an unacquired device !\n");
 	return DIERR_NOTACQUIRED;
     }

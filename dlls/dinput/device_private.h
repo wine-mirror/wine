@@ -36,6 +36,7 @@ struct IDirectInputDevice2AImpl
     HANDLE                      hEvent;
     DWORD                       dwCoopLevel;
     HWND                        win;
+    int                         acquired;
 };
 
 /* Routines to do DataFormat / WineFormat conversions */
@@ -99,6 +100,8 @@ extern void _dump_DIDATAFORMAT(const DIDATAFORMAT *df) ;
 extern const char *_dump_dinput_GUID(const GUID *guid) ;
 
 /* And the stubs */
+extern HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface);
+extern HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface);
 extern HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
 	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df ) ;
 extern HRESULT WINAPI IDirectInputDevice2AImpl_SetCooperativeLevel(

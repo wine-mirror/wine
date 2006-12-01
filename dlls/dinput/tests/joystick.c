@@ -271,11 +271,19 @@ static BOOL CALLBACK EnumJoysticks(
     ok(hr==DI_OK,"IDirectInputDevice_GetDeviceInfo() failed: %s\n",
        DXGetErrorString8(hr));
 
+    hr = IDirectInputDevice_Unacquire(pJoystick);
+    ok(hr == S_FALSE, "IDirectInputDevice_Unacquire() should have returned S_FALSE, got: %s\n",
+       DXGetErrorString8(hr));
+
     hr = IDirectInputDevice_Acquire(pJoystick);
     ok(hr==DI_OK,"IDirectInputDevice_Acquire() failed: %s\n",
        DXGetErrorString8(hr));
     if (hr != DI_OK)
         goto RELEASE;
+
+    hr = IDirectInputDevice_Acquire(pJoystick);
+    ok(hr == S_FALSE, "IDirectInputDevice_Acquire() should have returned S_FALSE, got: %s\n",
+       DXGetErrorString8(hr));
 
     if (winetest_interactive) {
         trace("You have 30 seconds to test all axes, sliders, POVs and buttons\n");

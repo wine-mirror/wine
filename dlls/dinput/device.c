@@ -448,6 +448,34 @@ BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) 
 }
 
 /******************************************************************************
+ *	Acquire
+ */
+
+HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
+{
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+
+    if (This->acquired) return S_FALSE;
+    This->acquired = 1;
+
+    return DI_OK;
+}
+
+/******************************************************************************
+ *	Unacquire
+ */
+
+HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
+{
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+
+    if (!This->acquired) return DI_NOEFFECT;
+    This->acquired = 0;
+
+    return DI_OK;
+}
+
+/******************************************************************************
  *	IDirectInputDeviceA
  */
 
