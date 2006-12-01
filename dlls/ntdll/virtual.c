@@ -1430,6 +1430,9 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
 
+    /* avoid freeing the DOS area when a broken app passes a NULL pointer */
+    if (!base && !(type & MEM_SYSTEM)) return STATUS_INVALID_PARAMETER;
+
     RtlEnterCriticalSection(&csVirtual);
 
     if (!(view = VIRTUAL_FindView( base )) ||
