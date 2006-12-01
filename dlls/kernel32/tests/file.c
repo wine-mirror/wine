@@ -1205,6 +1205,24 @@ static void test_FindFirstFileA(void)
     strcat(buffer2, "*");
     handle = FindFirstFileA(buffer2, &data);
     ok ( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s should succeed\n", buffer2 );
+    ok ( strcmp( data.cFileName, "." ) && strcmp( data.cFileName, ".." ),
+         "FindFirstFile shouldn't return '%s' in drive root\n", data.cFileName );
+    if (FindNextFileA( handle, &data ))
+        ok ( strcmp( data.cFileName, "." ) && strcmp( data.cFileName, ".." ),
+             "FindNextFile shouldn't return '%s' in drive root\n", data.cFileName );
+    ok ( FindClose(handle) == TRUE, "Failed to close handle %s\n", buffer2 );
+
+    /* try FindFirstFileA on windows dir */
+    GetWindowsDirectory( buffer2, sizeof(buffer2) );
+    strcat(buffer2, "\\*");
+    handle = FindFirstFileA(buffer2, &data);
+    ok( handle != INVALID_HANDLE_VALUE, "FindFirstFile on %s should succeed\n", buffer2 );
+    ok( !strcmp( data.cFileName, "." ), "FindFirstFile should return '.' first\n" );
+    ok( FindNextFileA( handle, &data ), "FindNextFile failed\n" );
+    ok( !strcmp( data.cFileName, ".." ), "FindNextFile should return '..' as second entry\n" );
+    while (FindNextFileA( handle, &data ))
+        ok ( strcmp( data.cFileName, "." ) && strcmp( data.cFileName, ".." ),
+             "FindNextFile shouldn't return '%s'\n", data.cFileName );
     ok ( FindClose(handle) == TRUE, "Failed to close handle %s\n", buffer2 );
 
     /* try FindFirstFileA on "C:\foo\" */
