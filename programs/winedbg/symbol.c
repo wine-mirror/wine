@@ -65,6 +65,45 @@ static BOOL symbol_get_debug_start(const struct dbg_type* func, ULONG64* start)
     return FALSE;
 }
 
+static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG base,
+                            struct dbg_lvalue* lvalue, char* buffer, size_t sz)
+{
+    if (buffer) buffer[0] = '\0';
+    if (sym->Flags & SYMFLAG_REGISTER)
+    {
+        DWORD* pval;
+
+        if (!memory_get_register(sym->Register, &pval, buffer, sz))
+            return FALSE;
+        lvalue->cookie = DLV_HOST;
+        lvalue->addr.Offset = (DWORD_PTR)pval;
+    }
+    else if (sym->Flags & SYMFLAG_REGREL)
+    {
+        DWORD* pval;
+
+        if (!memory_get_register(sym->Register, &pval, buffer, sz))
+            return FALSE;
+        lvalue->cookie = DLV_TARGET;
+        lvalue->addr.Offset = (ULONG)((ULONG64)*pval + sym->Address);
+    }
+    else if (sym->Flags & SYMFLAG_LOCAL)
+    {
+        lvalue->cookie = DLV_TARGET;
+        lvalue->addr.Offset = base + sym->Address;
+    }
+    else
+    {
+        lvalue->cookie = DLV_TARGET;
+        lvalue->addr.Offset = sym->Address;
+    }
+    lvalue->addr.Mode = AddrModeFlat;
+    lvalue->type.module = sym->ModBase;
+    lvalue->type.id = sym->TypeIndex;
+
+    return TRUE;
+}
+
 struct sgv_data
 {
 #define NUMDBGV                 100
@@ -85,34 +124,13 @@ struct sgv_data
 static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
     struct sgv_data*    sgv = (struct sgv_data*)ctx;
-    ULONG64             addr;
-    unsigned            cookie = DLV_TARGET, insp;
+    unsigned            insp;
+    char                tmp[32];
 
-    if (sym->Flags & SYMFLAG_REGISTER)
-    {
-        char    tmp[32];
-        DWORD*  val;
-        if (!memory_get_register(sym->Register, &val, tmp, sizeof(tmp)))
-        {
-            dbg_printf(" %s (register): %s\n", sym->Name, tmp);
-            return TRUE;
-        }
-        addr = (ULONG64)(DWORD_PTR)val;
-        cookie = DLV_HOST;
-    }
-    else if (sym->Flags & SYMFLAG_LOCAL) /* covers both local & parameters */
-    {
-        addr = sgv->frame_offset + sym->Address;
-    }
-    else if (sym->Flags & SYMFLAG_THUNK)
+    if (sym->Flags & SYMFLAG_THUNK)
     {
         if (!sgv->do_thunks) return TRUE;
         sgv->num_thunks++;
-        addr = sym->Address;
-    }
-    else
-    {
-        addr = sym->Address;
     }
 
     if (sgv->num >= NUMDBGV)
@@ -139,11 +157,11 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
         memmove(&sgv->syms[insp + 1], &sgv->syms[insp],
                 sizeof(sgv->syms[0]) * sgv->num_thunks);
     }
-    sgv->syms[insp].lvalue.cookie      = cookie;
-    sgv->syms[insp].lvalue.addr.Mode   = AddrModeFlat;
-    sgv->syms[insp].lvalue.addr.Offset = addr;
-    sgv->syms[insp].lvalue.type.module = sym->ModBase;
-    sgv->syms[insp].lvalue.type.id     = sym->TypeIndex;
+    if (!fill_sym_lvalue(sym, sgv->frame_offset, &sgv->syms[insp].lvalue, tmp, sizeof(tmp)))
+    {
+        dbg_printf("%s: %s\n", sym->Name, tmp);
+        return TRUE;
+    }
     sgv->syms[insp].flags              = sym->Flags;
     sgv->syms[insp].sym_info           = sym->info;
     sgv->num++;
@@ -545,54 +563,24 @@ void symbol_print_local(const SYMBOL_INFO* sym, ULONG base,
                         BOOL detailed)
 {
     struct dbg_lvalue   lvalue;
-    BOOL                valtodo = FALSE;
     char                buffer[64];
 
     dbg_printf("%s=", sym->Name);
 
-    if (sym->Flags & SYMFLAG_REGISTER)
+    if (fill_sym_lvalue(sym, base, &lvalue, buffer, sizeof(buffer)))
     {
-        DWORD* pval;
-
-        if (memory_get_register(sym->Register, &pval, buffer + 13, sizeof(buffer) - 13))
-        {
-            lvalue.cookie = DLV_HOST;
-            lvalue.addr.Mode = AddrModeFlat;
-            lvalue.addr.Offset = (DWORD_PTR)pval;
-            valtodo = TRUE;
-            memcpy(buffer, " in register ", 13);
-        }
-        else
-        {
-            dbg_printf(buffer + 13);
-            buffer[0] = '\0';
-        }
-    }
-    else if (sym->Flags & SYMFLAG_LOCAL)
-    {
-        lvalue.cookie = DLV_TARGET;
-        lvalue.addr.Mode = AddrModeFlat;
-        lvalue.addr.Offset = base + sym->Address;
-        valtodo = TRUE;
-        buffer[0] = '\0';
+        print_value(&lvalue, 'x', 1);
+        if (detailed)
+            dbg_printf(" (%s%s)",
+                       (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local",
+                       buffer);
     }
     else
     {
-        dbg_printf("<unexpected symbol flags %lx>\n", sym->Flags);
-        buffer[0] = '\0';
-    }
-
-    if (valtodo)
-    {
-        lvalue.type.module = sym->ModBase;
-        lvalue.type.id = sym->TypeIndex;
-        print_value(&lvalue, 'x', 1);
-    }
-
-    if (detailed)
-    {
-        dbg_printf(" (%s%s)",
-                   (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local", buffer);
+        dbg_printf(buffer);
+        if (detailed)
+            dbg_printf(" (%s)",
+                       (sym->Flags & SYMFLAG_PARAMETER) ? "parameter" : "local");
     }
 }
 
