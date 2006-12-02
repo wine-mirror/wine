@@ -436,6 +436,7 @@ BOOL WINAPI SymSetContext(HANDLE hProcess, PIMAGEHLP_STACK_FRAME StackFrame,
               wine_dbgstr_longlong(pcs->ctx_frame.ReturnOffset),
               wine_dbgstr_longlong(pcs->ctx_frame.FrameOffset),
               wine_dbgstr_longlong(pcs->ctx_frame.StackOffset));
+        pcs->ctx_frame.InstructionOffset = StackFrame->InstructionOffset;
         SetLastError(ERROR_ACCESS_DENIED); /* latest MSDN says ERROR_SUCCESS */
         return FALSE;
     }
