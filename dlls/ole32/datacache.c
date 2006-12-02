@@ -1643,6 +1643,8 @@ static HRESULT WINAPI DataCache_Draw(
     }
   }
 
+  WARN("no data could be found to be drawn\n");
+
   return OLE_E_BLANK;
 }
 
@@ -1856,6 +1858,8 @@ static HRESULT WINAPI DataCache_GetExtent(
     }
   }
 
+  WARN("no data could be found to get the extents from\n");
+
   /*
    * This method returns OLE_E_BLANK when it fails.
    */
@@ -1927,6 +1931,7 @@ static HRESULT WINAPI DataCache_Cache(
     cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetc);
     if (cache_entry)
     {
+        TRACE("found an existing cache entry\n");
         *pdwConnection = cache_entry->id;
         return CACHE_S_SAMECACHE;
     }
@@ -1954,6 +1959,8 @@ static HRESULT WINAPI DataCache_Uncache(
             DataCacheEntry_Destroy(cache_entry);
             return S_OK;
         }
+
+    WARN("no connection found for %d\n", dwConnection);
 
     return OLE_E_NOCONNECTION;
 }
