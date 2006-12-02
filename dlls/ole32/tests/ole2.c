@@ -1071,12 +1071,14 @@ static void test_data_cache(void)
         "draw_continue",
         "DataObject_GetData",
         "DataObject_GetData",
+        "DataObject_GetData",
         NULL
     };
 
     GetSystemDirectory(szSystemDir, sizeof(szSystemDir)/sizeof(szSystemDir[0]));
 
     expected_method_list = methods_cacheinitnew;
+
     fmtetc.cfFormat = CF_METAFILEPICT;
     fmtetc.dwAspect = DVASPECT_ICON;
     fmtetc.lindex = -1;
@@ -1111,24 +1113,62 @@ static void test_data_cache(void)
     ok_ole_success(hr, "IPersistStorage_GetClassID");
     ok(IsEqualCLSID(&clsid, &IID_NULL), "clsid should be blank\n");
 
+    hr = IOleCache_Uncache(pOleCache, 0xdeadbeef);
+    ok(hr == OLE_E_NOCONNECTION, "IOleCache_Uncache with invalid value should return OLE_E_NOCONNECTION instead of 0x%x\n", hr);
+
+    for (fmtetc.cfFormat = CF_TEXT; fmtetc.cfFormat < CF_MAX; fmtetc.cfFormat++)
+    {
+        int i;
+        fmtetc.dwAspect = DVASPECT_THUMBNAIL;
+        for (i = 0; i < 7; i++)
+        {
+            fmtetc.tymed = 1 << i;
+            hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
+            if ((fmtetc.cfFormat == CF_METAFILEPICT && fmtetc.tymed == TYMED_MFPICT) ||
+                (fmtetc.cfFormat == CF_BITMAP && fmtetc.tymed == TYMED_GDI) ||
+                (fmtetc.cfFormat == CF_DIB && fmtetc.tymed == TYMED_HGLOBAL) ||
+                (fmtetc.cfFormat == CF_ENHMETAFILE && fmtetc.tymed == TYMED_ENHMF))
+                ok(hr == S_OK, "IOleCache_Cache cfFormat = %d, tymed = %d should have returned S_OK instead of 0x%08x\n",
+                    fmtetc.cfFormat, fmtetc.tymed, hr);
+            else if (fmtetc.tymed == TYMED_HGLOBAL)
+                ok(hr == CACHE_S_FORMATETC_NOTSUPPORTED,
+                    "IOleCache_Cache cfFormat = %d, tymed = %d should have returned CACHE_S_FORMATETC_NOTSUPPORTED instead of 0x%08x\n",
+                    fmtetc.cfFormat, fmtetc.tymed, hr);
+            else
+                ok(hr == DV_E_TYMED, "IOleCache_Cache cfFormat = %d, tymed = %d should have returned DV_E_TYMED instead of 0x%08x\n",
+                    fmtetc.cfFormat, fmtetc.tymed, hr);
+            if (SUCCEEDED(hr))
+            {
+                hr = IOleCache_Uncache(pOleCache, dwConnection);
+                ok_ole_success(hr, "IOleCache_Uncache");
+            }
+        }
+    }
+
+    fmtetc.cfFormat = CF_BITMAP;
+    fmtetc.dwAspect = DVASPECT_THUMBNAIL;
+    fmtetc.tymed = TYMED_GDI;
     hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
     ok_ole_success(hr, "IOleCache_Cache");
 
-    fmtetc.dwAspect = DVASPECT_THUMBNAIL;
+    fmtetc.cfFormat = 0;
+    fmtetc.dwAspect = DVASPECT_ICON;
+    fmtetc.tymed = TYMED_MFPICT;
     hr = IOleCache_Cache(pOleCache, &fmtetc, 0, &dwConnection);
     ok_ole_success(hr, "IOleCache_Cache");
 
     MultiByteToWideChar(CP_ACP, 0, szSystemDir, -1, wszPath, sizeof(wszPath)/sizeof(wszPath[0]));
     memcpy(wszPath+lstrlenW(wszPath), wszShell32, sizeof(wszShell32));
 
-    fmtetc.dwAspect = DVASPECT_CONTENT;
     fmtetc.cfFormat = CF_METAFILEPICT;
     stgmedium.tymed = TYMED_MFPICT;
     stgmedium.hMetaFilePict = OleMetafilePictFromIconAndLabel(
         LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION)), wszPath, wszPath, 0);
     stgmedium.pUnkForRelease = NULL;
+
+    fmtetc.dwAspect = DVASPECT_CONTENT;
     hr = IOleCache_SetData(pOleCache, &fmtetc, &stgmedium, FALSE);
-    ok(hr == OLE_E_BLANK, "IOleCache_SetData for aspect not in cache should have return OLE_E_BLANK instead of 0x%x\n", hr);
+    ok(hr == OLE_E_BLANK, "IOleCache_SetData for aspect not in cache should have return OLE_E_BLANK instead of 0x%08x\n", hr);
 
     fmtetc.dwAspect = DVASPECT_ICON;
     hr = IOleCache_SetData(pOleCache, &fmtetc, &stgmedium, FALSE);
