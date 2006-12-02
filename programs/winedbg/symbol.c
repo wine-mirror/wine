@@ -32,33 +32,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winedbg);
 
-static BOOL symbol_get_debug_start(DWORD mod_base, DWORD typeid, ULONG64* start)
+static BOOL symbol_get_debug_start(const struct dbg_type* func, ULONG64* start)
 {
     DWORD                       count, tag;
     char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
     TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
     int                         i;
-    struct dbg_type             type;
+    struct dbg_type             child;
 
-    if (!typeid) return FALSE; /* native dbghelp not always fills the info field */
-    type.module = mod_base;
-    type.id = typeid;
+    if (!func->id) return FALSE; /* native dbghelp not always fills the info field */
 
-    if (!types_get_info(&type, TI_GET_CHILDRENCOUNT, &count)) return FALSE;
+    if (!types_get_info(func, TI_GET_CHILDRENCOUNT, &count)) return FALSE;
     fcp->Start = 0;
     while (count)
     {
         fcp->Count = min(count, 256);
-        if (types_get_info(&type, TI_FINDCHILDREN, fcp))
+        if (types_get_info(func, TI_FINDCHILDREN, fcp))
         {
             for (i = 0; i < min(fcp->Count, count); i++)
             {
-                type.id = fcp->ChildId[i];
-                types_get_info(&type, TI_GET_SYMTAG, &tag);
+                child.module = func->module;
+                child.id = fcp->ChildId[i];
+                types_get_info(&child, TI_GET_SYMTAG, &tag);
                 if (tag != SymTagFuncDebugStart) continue;
-                return types_get_info(&type, TI_GET_ADDRESS, start);
+                return types_get_info(&child, TI_GET_ADDRESS, start);
             }
             count -= min(count, 256);
+            fcp->Start += 256;
             fcp->Start += 256;
         }
     }
@@ -73,13 +73,12 @@ struct sgv_data
         /* FIXME: NUMDBGV should be made variable */
         struct dbg_lvalue               lvalue;
         DWORD                           flags;
+        DWORD                           sym_info;
     }                           syms[NUMDBGV];  /* out     : will be filled in with various found symbols */
     int		                num;            /* out     : number of found symbols */
     int                         num_thunks;     /* out     : number of thunks found */
     const char*                 name;           /* in      : name of symbol to look up */
-    int                         lineno;         /* in (opt): line number in filename where to look up symbol */
-    unsigned                    bp_disp : 1,    /* in      : whether if we take into account func address or func first displayable insn */
-                                do_thunks : 1;  /* in      : whether we return thunks tags */
+    unsigned                    do_thunks : 1;  /* in      : whether we return thunks tags */
     ULONG64                     frame_offset;   /* in      : frame for local & parameter variables look up */
 };
 
@@ -87,7 +86,6 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
     struct sgv_data*    sgv = (struct sgv_data*)ctx;
     ULONG64             addr;
-    IMAGEHLP_LINE       il;
     unsigned            cookie = DLV_TARGET, insp;
 
     if (sym->Flags & SYMFLAG_REGISTER)
@@ -114,34 +112,7 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     }
     else
     {
-        DWORD disp;
-        il.SizeOfStruct = sizeof(il);
-        SymGetLineFromAddr(dbg_curr_process->handle, sym->Address, &disp, &il);
-
-        if (sgv->lineno == -1)
-        {
-            if (!sgv->bp_disp || 
-                !symbol_get_debug_start(sym->ModBase, sym->info, &addr))
-                addr = sym->Address;
-        }
-        else
-        {
-            addr = 0;
-            do
-            {
-                if (sgv->lineno == il.LineNumber)
-                {
-                    addr = il.Address;
-                    break;
-                }
-            } while (SymGetLineNext(dbg_curr_process->handle, &il));
-            if (!addr)
-            {
-                WINE_FIXME("No line (%d) found for %s (setting to symbol)\n", 
-                           sgv->lineno, sgv->name);
-                addr = sym->Address;
-            }
-        }
+        addr = sym->Address;
     }
 
     if (sgv->num >= NUMDBGV)
@@ -174,8 +145,9 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
     sgv->syms[insp].lvalue.type.module = sym->ModBase;
     sgv->syms[insp].lvalue.type.id     = sym->TypeIndex;
     sgv->syms[insp].flags              = sym->Flags;
+    sgv->syms[insp].sym_info           = sym->info;
     sgv->num++;
-  
+
     return TRUE;
 }
 
@@ -193,7 +165,7 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
                                     struct dbg_lvalue* rtn, BOOL bp_disp)
 {
     struct sgv_data             sgv;
-    int		                i = 0;
+    int		                i;
     char                        buffer[512];
     DWORD                       opt;
     IMAGEHLP_STACK_FRAME        ihsf;
@@ -207,8 +179,6 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = &buffer[2];
-    sgv.lineno     = lineno;
-    sgv.bp_disp    = bp_disp ? TRUE : FALSE;
     sgv.do_thunks  = DBG_IVAR(AlwaysShowThunks);
 
     if (strchr(name, '!'))
@@ -261,6 +231,48 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
         return sglv_unknown;
     }
 
+    /* recompute potential offsets for functions (linenumber, skip prolog) */
+    for (i = 0; i < sgv.num; i++)
+    {
+        if (sgv.syms[i].flags & (SYMFLAG_REGISTER|SYMFLAG_REGREL|SYMFLAG_LOCAL|SYMFLAG_THUNK))
+            continue;
+
+        if (lineno == -1)
+        {
+            struct dbg_type     type;
+            ULONG64             addr;
+
+            type.module = sgv.syms[i].lvalue.type.module;
+            type.id     = sgv.syms[i].sym_info;
+            if (bp_disp && symbol_get_debug_start(&type, &addr))
+                sgv.syms[i].lvalue.addr.Offset = addr;
+        }
+        else
+        {
+            DWORD               disp;
+            IMAGEHLP_LINE       il;
+            BOOL                found = FALSE;
+
+            il.SizeOfStruct = sizeof(il);
+            SymGetLineFromAddr(dbg_curr_process->handle,
+                               (DWORD)memory_to_linear_addr(&sgv.syms[i].lvalue.addr),
+                               &disp, &il);
+            do
+            {
+                if (lineno == il.LineNumber)
+                {
+                    sgv.syms[i].lvalue.addr.Offset = il.Address;
+                    found = TRUE;
+                    break;
+                }
+            } while (SymGetLineNext(dbg_curr_process->handle, &il));
+            if (!found)
+                WINE_FIXME("No line (%d) found for %s (setting to symbol start)\n",
+                           lineno, name);
+        }
+    }
+
+    i = 0;
     if (dbg_interactiveP)
     {
         if (sgv.num - sgv.num_thunks > 1 || /* many symbols non thunks (and showing only non thunks) */
@@ -329,8 +341,6 @@ BOOL symbol_is_local(const char* name)
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = name;
-    sgv.lineno     = 0;
-    sgv.bp_disp    = FALSE;
     sgv.do_thunks  = FALSE;
 
     if (stack_get_current_frame(&ihsf))
@@ -411,6 +421,7 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
     DWORD               lin = (DWORD)memory_to_linear_addr(addr);
     char                buffer[sizeof(SYMBOL_INFO) + 256];
     SYMBOL_INFO*        sym = (SYMBOL_INFO*)buffer;
+    struct dbg_type     func;
 
     il.SizeOfStruct = sizeof(il);
     sym->SizeOfStruct = sizeof(SYMBOL_INFO);
@@ -438,8 +449,12 @@ enum dbg_line_status symbol_get_function_line_status(const ADDRESS64* addr)
     if (!SymGetLineFromAddr(dbg_curr_process->handle, lin, &disp, &il))
         return dbg_no_line_info;
 
-    if (symbol_get_debug_start(sym->ModBase, sym->info, &start) && lin < start)
+    func.module = sym->ModBase;
+    func.id     = sym->info;
+
+    if (symbol_get_debug_start(&func, &start) && lin < start)
         return dbg_not_on_a_line_number;
+
     if (!sym->Size) sym->Size = 0x100000;
     if (il.FileName && il.FileName[0] && disp < sym->Size)
         return (disp == 0) ? dbg_on_a_line_number : dbg_not_on_a_line_number;
@@ -465,8 +480,6 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = &buffer[2];
-    sgv.lineno     = -1;
-    sgv.bp_disp    = FALSE;
     sgv.do_thunks  = FALSE;
 
     buffer[0] = '*';
