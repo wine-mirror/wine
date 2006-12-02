@@ -176,6 +176,10 @@ struct dbg_thread
     {
         ADDRESS64               addr_pc;
         ADDRESS64               addr_frame;
+        ADDRESS64               addr_stack;
+        DWORD                   linear_pc;
+        DWORD                   linear_frame;
+        DWORD                   linear_stack;
     }*                          frames;
     int                         num_frames;
     int                         curr_frame;
@@ -361,6 +365,7 @@ extern void             stack_info(void);
 extern void             stack_backtrace(DWORD threadID);
 extern BOOL             stack_set_frame(int newframe);
 extern BOOL             stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf);
+extern BOOL             stack_get_register_current_frame(unsigned regno, DWORD** pval);
 extern unsigned         stack_fetch_frames(void);
 extern BOOL             stack_get_current_symbol(SYMBOL_INFO* sym);
 

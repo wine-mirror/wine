@@ -38,6 +38,12 @@ static unsigned be_ppc_get_addr(HANDLE hThread, const CONTEXT* ctx,
     return FALSE;
 }
 
+static unsigned be_ppc_get_register_info(int regno, enum be_cpu_addr* kind)
+{
+    dbg_printf("not done\n");
+    return FALSE;
+}
+
 static void be_ppc_single_step(CONTEXT* ctx, unsigned enable)
 {
 #ifndef MSR_SE
@@ -172,6 +178,7 @@ struct backend_cpu be_ppc =
     be_cpu_linearize,
     be_cpu_build_addr,
     be_ppc_get_addr,
+    be_ppc_get_register_info,
     be_ppc_single_step,
     be_ppc_print_context,
     be_ppc_print_segment_info,

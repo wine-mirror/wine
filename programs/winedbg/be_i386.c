@@ -111,6 +111,17 @@ static unsigned be_i386_get_addr(HANDLE hThread, const CONTEXT* ctx,
     return FALSE;
 }
 
+static unsigned be_i386_get_register_info(int regno, enum be_cpu_addr* kind)
+{
+    switch (regno)
+    {
+    case CV_REG_EIP: *kind = be_cpu_addr_pc; return TRUE;
+    case CV_REG_EBP: *kind = be_cpu_addr_frame; return TRUE;
+    case CV_REG_ESP: *kind = be_cpu_addr_stack; return TRUE;
+    }
+    return FALSE;
+}
+
 static void be_i386_single_step(CONTEXT* ctx, unsigned enable)
 {
     if (enable) ctx->EFlags |= STEP_FLAG;
@@ -739,6 +750,7 @@ struct backend_cpu be_i386 =
     be_i386_linearize,
     be_i386_build_addr,
     be_i386_get_addr,
+    be_i386_get_register_info,
     be_i386_single_step,
     be_i386_print_context,
     be_i386_print_segment_info,

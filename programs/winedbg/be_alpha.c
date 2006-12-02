@@ -29,6 +29,12 @@ static unsigned be_alpha_get_addr(HANDLE hThread, const CONTEXT* ctx,
     return FALSE;
 }
 
+static unsigned be_alpha_get_register_info(int regno, enum be_cpu_addr* kind)
+{
+    dbg_printf("not done\n");
+    return FALSE;
+}
+
 static void be_alpha_single_step(CONTEXT* ctx, unsigned enable)
 {
     dbg_printf("not done\n");
@@ -148,6 +154,7 @@ struct backend_cpu be_alpha =
     be_cpu_linearize,
     be_cpu_build_addr,
     be_alpha_get_addr,
+    be_alpha_get_register_info,
     be_alpha_single_step,
     be_alpha_print_context,
     be_alpha_print_segment_info,

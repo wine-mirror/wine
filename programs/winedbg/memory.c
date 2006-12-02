@@ -636,16 +636,22 @@ BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
         if (buffer) snprintf(buffer, len, "<couldn't read memory>");
         return FALSE;
     }
-    if (dbg_curr_thread->curr_frame != 0)
-    {
-        if (buffer) snprintf(buffer, len, "<register not in topmost frame>");
-        return FALSE;
-    }
+
     for (div = dbg_context_vars; div->name; div++)
     {
         if (div->val == regno)
         {
-            *value = div->pval;
+            if (dbg_curr_thread->curr_frame != 0)
+            {
+                if (!stack_get_register_current_frame(regno, value))
+                {
+                    if (buffer) snprintf(buffer, len, "<register %s not in topmost frame>", div->name);
+                    return FALSE;
+                }
+            }
+            else
+                *value = div->pval;
+
             snprintf(buffer, len, div->name);
             return TRUE;
         }

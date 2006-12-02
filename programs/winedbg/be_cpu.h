@@ -43,6 +43,10 @@ struct backend_cpu
      */
     unsigned            (*get_addr)(HANDLE hThread, const CONTEXT* ctx, 
                                     enum be_cpu_addr, ADDRESS64* addr);
+
+    /* returns which kind of information a given register number refers to */
+    unsigned            (*get_register_info)(int regno, enum be_cpu_addr* kind);
+
     /* -------------------------------------------------------------------------------
      * context manipulation 
      * ------------------------------------------------------------------------------- */

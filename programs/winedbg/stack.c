@@ -82,8 +82,8 @@ static BOOL stack_set_frame_internal(int newframe)
 static BOOL stack_get_frame(int nf, IMAGEHLP_STACK_FRAME* ihsf)
 {
     memset(ihsf, 0, sizeof(*ihsf));
-    ihsf->InstructionOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_pc);
-    ihsf->FrameOffset = (unsigned long)memory_to_linear_addr(&dbg_curr_thread->frames[nf].addr_frame);
+    ihsf->InstructionOffset = dbg_curr_thread->frames[nf].linear_pc;
+    ihsf->FrameOffset = dbg_curr_thread->frames[nf].linear_frame;
     return TRUE;
 }
 
@@ -94,6 +94,29 @@ BOOL stack_get_current_frame(IMAGEHLP_STACK_FRAME* ihsf)
      */
     if (dbg_curr_thread->frames == NULL) return FALSE;
     return stack_get_frame(dbg_curr_thread->curr_frame, ihsf);
+}
+
+BOOL stack_get_register_current_frame(unsigned regno, DWORD** pval)
+{
+    enum be_cpu_addr            kind;
+
+    if (dbg_curr_thread->frames == NULL) return FALSE;
+
+    if (!be_cpu->get_register_info(regno, &kind)) return FALSE;
+
+    switch (kind)
+    {
+    case be_cpu_addr_pc:
+        *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_pc;
+        break;
+    case be_cpu_addr_stack:
+        *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_stack;
+        break;
+    case be_cpu_addr_frame:
+        *pval = &dbg_curr_thread->frames[dbg_curr_thread->curr_frame].linear_frame;
+        break;
+    }
+    return TRUE;
 }
 
 BOOL stack_set_frame(int newframe)
@@ -170,8 +193,12 @@ unsigned stack_fetch_frames(void)
         dbg_curr_thread->frames = dbg_heap_realloc(dbg_curr_thread->frames, 
                                                    (nf + 1) * sizeof(dbg_curr_thread->frames[0]));
 
-        dbg_curr_thread->frames[nf].addr_pc = sf.AddrPC;
-        dbg_curr_thread->frames[nf].addr_frame = sf.AddrFrame;
+        dbg_curr_thread->frames[nf].addr_pc      = sf.AddrPC;
+        dbg_curr_thread->frames[nf].linear_pc    = (DWORD)memory_to_linear_addr(&sf.AddrPC);
+        dbg_curr_thread->frames[nf].addr_frame   = sf.AddrFrame;
+        dbg_curr_thread->frames[nf].linear_frame = (DWORD)memory_to_linear_addr(&sf.AddrFrame);
+        dbg_curr_thread->frames[nf].addr_stack   = sf.AddrStack;
+        dbg_curr_thread->frames[nf].linear_stack = (DWORD)memory_to_linear_addr(&sf.AddrStack);
         nf++;
         /* we've probably gotten ourselves into an infinite loop so bail */
         if (nf > 200) break;

@@ -46,6 +46,18 @@ static unsigned be_x86_64_get_addr(HANDLE hThread, const CONTEXT* ctx,
     }
 }
 
+static unsigned be_x86_64_get_register_info(int regno, enum be_cpu_addr* kind)
+{
+    /* this is true when running in 32bit mode... and wrong in 64 :-/ */
+    switch (regno)
+    {
+    case CV_AMD64_EIP: *kind = be_cpu_addr_pc; return TRUE;
+    case CV_AMD64_EBP: *kind = be_cpu_addr_frame; return TRUE;
+    case CV_AMD64_ESP: *kind = be_cpu_addr_stack; return TRUE;
+    }
+    return FALSE;
+}
+
 static void be_x86_64_single_step(CONTEXT* ctx, unsigned enable)
 {
     dbg_printf("not done single_step\n");
@@ -210,6 +222,7 @@ struct backend_cpu be_x86_64 =
     be_cpu_linearize,
     be_cpu_build_addr,
     be_x86_64_get_addr,
+    be_x86_64_get_register_info,
     be_x86_64_single_step,
     be_x86_64_print_context,
     be_x86_64_print_segment_info,
