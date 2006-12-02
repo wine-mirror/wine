@@ -143,13 +143,14 @@ static unsigned dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
     /* this will resynchronize builtin dbghelp's internal ELF module list */
     SymLoadModule(dbg_curr_process->handle, 0, 0, 0, 0, 0);
 
+    if (is_debug) break_adjust_pc(&addr, rec->ExceptionCode, &is_break);
     /*
      * Do a quiet backtrace so that we have an idea of what the situation
      * is WRT the source files.
      */
     stack_fetch_frames();
-    if (is_debug &&
-	break_should_continue(&addr, rec->ExceptionCode, &dbg_curr_thread->exec_count, &is_break))
+
+    if (is_debug && !is_break && break_should_continue(&addr, rec->ExceptionCode))
 	return FALSE;
 
     if (addr.Mode != dbg_curr_thread->addr_mode)

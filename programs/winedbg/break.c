@@ -723,59 +723,31 @@ static	BOOL should_stop(int bpnum)
  * Determine if we should continue execution after a SIGTRAP signal when
  * executing in the given mode.
  */
-BOOL break_should_continue(ADDRESS64* addr, DWORD code, int* count, BOOL* is_break)
+BOOL break_should_continue(ADDRESS64* addr, DWORD code)
 {
     DWORD	        oldval = 0;
     enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
 
-    *is_break = FALSE;
-    /* If not single-stepping, back up to the break instruction */
-    if (code == EXCEPTION_BREAKPOINT)
-        addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
-
-    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_break);
-    dbg_curr_process->bp[0].enabled = FALSE;  /* disable the step-over breakpoint */
 
     if (dbg_curr_thread->stopped_xpoint > 0)
     {
         if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
 
-        dbg_printf("Stopped on breakpoint %d at ", dbg_curr_thread->stopped_xpoint);
-        print_address(&dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].addr, TRUE);
-        dbg_printf("\n");
-        return FALSE;
-    }
-
-    if(dbg_curr_thread->stopped_xpoint < 0)
-        dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_watch_exec);
-    if (dbg_curr_thread->stopped_xpoint > 0)
-    {
-        /* If not single-stepping, do not back up over the break instruction */
-        if (code == EXCEPTION_BREAKPOINT)
-            addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
-
-        if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
-
-        dbg_printf("Stopped on breakpoint %d at ", dbg_curr_thread->stopped_xpoint);
-        print_address(&dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].addr, TRUE);
-        dbg_printf("\n");
-        return FALSE;
-    }
-
-    if(dbg_curr_thread->stopped_xpoint < 0)
-        dbg_curr_thread->stopped_xpoint = find_triggered_watch(&oldval);
-    if (dbg_curr_thread->stopped_xpoint > 0)
-    {
-        /* If not single-stepping, do not back up over the break instruction */
-        if (code == EXCEPTION_BREAKPOINT)
-            addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
-
-        if (!should_stop(dbg_curr_thread->stopped_xpoint)) return TRUE;
-
-        dbg_printf("Stopped on watchpoint %d at ", dbg_curr_thread->stopped_xpoint);
-        print_address(addr, TRUE);
-        dbg_printf(" values: old=%lu new=%lu\n",
-                   oldval, dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval);
+        switch (dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].xpoint_type)
+        {
+        case be_xpoint_break:
+        case be_xpoint_watch_exec:
+            dbg_printf("Stopped on breakpoint %d at ", dbg_curr_thread->stopped_xpoint);
+            print_address(&dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].addr, TRUE);
+            dbg_printf("\n");
+            break;
+        case be_xpoint_watch_read:
+        case be_xpoint_watch_write:
+            dbg_printf("Stopped on watchpoint %d at ", dbg_curr_thread->stopped_xpoint);
+            print_address(addr, TRUE);
+            dbg_printf(" values: old=%lu new=%lu\n",
+                       oldval, dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval);
+        }
         return FALSE;
     }
 
@@ -787,21 +759,56 @@ BOOL break_should_continue(ADDRESS64* addr, DWORD code, int* count, BOOL* is_bre
     if (mode == dbg_exec_step_over_line || mode == dbg_exec_step_into_line)
     {
 	if (symbol_get_function_line_status(addr) == dbg_on_a_line_number)
-	{
-	    (*count)--;
-	}
+            dbg_curr_thread->exec_count--;
     }
     else if (mode == dbg_exec_step_over_insn || mode == dbg_exec_step_into_insn)
-    {
-	(*count)--;
-    }
+        dbg_curr_thread->exec_count--;
 
-    if (*count > 0 || mode == dbg_exec_finish)
+    if (dbg_curr_thread->exec_count > 0 || mode == dbg_exec_finish)
     {
 	/*
 	 * We still need to execute more instructions.
 	 */
 	return TRUE;
+    }
+
+    /* no breakpoint, continue if in continuous mode */
+    return mode == dbg_exec_cont || mode == dbg_exec_finish;
+}
+
+/***********************************************************************
+ *           break_ajust_pc
+ *
+ * Adjust PC to the address where the trap (if any) actually occured
+ * Also sets dbg_curr_thread->stopped_xpoint
+ */
+void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL* is_break)
+{
+    DWORD	        oldval = 0;
+
+    *is_break = FALSE;
+
+    /* If not single-stepping, back up to the break instruction */
+    if (code == EXCEPTION_BREAKPOINT)
+        addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, TRUE);
+
+    dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_break);
+    dbg_curr_process->bp[0].enabled = FALSE;  /* disable the step-over breakpoint */
+
+    if (dbg_curr_thread->stopped_xpoint > 0) return;
+
+    if (dbg_curr_thread->stopped_xpoint < 0)
+    {
+        dbg_curr_thread->stopped_xpoint = find_xpoint(addr, be_xpoint_watch_exec);
+        if (dbg_curr_thread->stopped_xpoint < 0)
+            dbg_curr_thread->stopped_xpoint = find_triggered_watch(&oldval);
+        if (dbg_curr_thread->stopped_xpoint > 0)
+        {
+            /* If not single-stepping, do not back up over the break instruction */
+            if (code == EXCEPTION_BREAKPOINT)
+                addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
+            return;
+        }
     }
 
     /* If there's no breakpoint and we are not single-stepping, then
@@ -812,11 +819,7 @@ BOOL break_should_continue(ADDRESS64* addr, DWORD code, int* count, BOOL* is_bre
     {
         *is_break = TRUE;
         addr->Offset += be_cpu->adjust_pc_for_break(&dbg_context, FALSE);
-        return FALSE;
     }
-
-    /* no breakpoint, continue if in continuous mode */
-    return mode == dbg_exec_cont || mode == dbg_exec_finish;
 }
 
 /***********************************************************************
