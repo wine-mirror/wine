@@ -89,6 +89,8 @@ typedef struct DataCacheEntry
   struct list entry;
   /* format of this entry */
   FORMATETC fmtetc;
+  /* the clipboard format of the data */
+  CLIPFORMAT data_cf;
   /* cached data */
   STGMEDIUM stgmedium;
   /*
@@ -538,6 +540,7 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
   GlobalUnlock(hmfpict);
   if (SUCCEEDED(hres))
   {
+    This->data_cf = This->fmtetc.cfFormat;
     This->stgmedium.tymed = TYMED_MFPICT;
     This->stgmedium.u.hMetaFilePict = hmfpict;
   }
@@ -584,23 +587,23 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,
         return hr;
 
     /* custom clipformat */
-    if (This->fmtetc.cfFormat > 0xc000)
+    if (This->data_cf >= 0xc000)
         FIXME("custom clipboard format not serialized properly\n");
     header.unknown1 = -1;
-    header.clipformat = This->fmtetc.cfFormat;
+    header.clipformat = This->data_cf;
     if (This->fmtetc.ptd)
         FIXME("ptd not serialized\n");
     header.unknown3 = 4;
     header.dvAspect = This->fmtetc.dwAspect;
     header.lindex = This->fmtetc.lindex;
-    header.tymed = This->fmtetc.tymed;
+    header.tymed = This->stgmedium.tymed;
     header.unknown7 = 0;
     header.dwObjectExtentX = 0;
     header.dwObjectExtentY = 0;
     header.dwSize = 0;
 
     /* size the data */
-    switch (This->fmtetc.cfFormat)
+    switch (This->data_cf)
     {
         case CF_METAFILEPICT:
         {
@@ -635,7 +638,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,
     }
 
     /* get the data */
-    switch (This->fmtetc.cfFormat)
+    switch (This->data_cf)
     {
         case CF_METAFILEPICT:
         {
@@ -704,17 +707,28 @@ static HRESULT copy_stg_medium(CLIPFORMAT cf, STGMEDIUM *dest_stgm,
 }
 
 static HRESULT DataCacheEntry_SetData(DataCacheEntry *This,
-                                      STGMEDIUM *stgmedium, BOOL fRelease)
+                                      const FORMATETC *formatetc,
+                                      const STGMEDIUM *stgmedium,
+                                      BOOL fRelease)
 {
+    if ((!This->fmtetc.cfFormat && !formatetc->cfFormat) ||
+        (This->fmtetc.tymed == TYMED_NULL && formatetc->tymed == TYMED_NULL) ||
+        stgmedium->tymed == TYMED_NULL)
+    {
+        WARN("invalid formatetc\n");
+        return DV_E_FORMATETC;
+    }
+
     This->dirty = TRUE;
     ReleaseStgMedium(&This->stgmedium);
+    This->data_cf = This->fmtetc.cfFormat ? This->fmtetc.cfFormat : formatetc->cfFormat;
     if (fRelease)
     {
         This->stgmedium = *stgmedium;
         return S_OK;
     }
     else
-        return copy_stg_medium(This->fmtetc.cfFormat,
+        return copy_stg_medium(This->data_cf,
                                &This->stgmedium, stgmedium);
 }
 
@@ -1568,7 +1582,7 @@ static HRESULT WINAPI DataCache_Draw(
     if (cache_entry->stgmedium.tymed == TYMED_NULL)
       continue;
 
-    switch (cache_entry->fmtetc.cfFormat)
+    switch (cache_entry->data_cf)
     {
       case CF_METAFILEPICT:
       {
@@ -1822,7 +1836,7 @@ static HRESULT WINAPI DataCache_GetExtent(
       continue;
 
 
-    switch (cache_entry->fmtetc.cfFormat)
+    switch (cache_entry->data_cf)
     {
       case CF_METAFILEPICT:
       {
@@ -1971,11 +1985,12 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
     HRESULT hr;
 
     TRACE("(%p, %p, %s)\n", pformatetc, pmedium, fRelease ? "TRUE" : "FALSE");
+    TRACE("formatetc = "); dump_FORMATETC(pformatetc); TRACE("\n");
 
     cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetc);
     if (cache_entry)
     {
-        hr = DataCacheEntry_SetData(cache_entry, pmedium, fRelease);
+        hr = DataCacheEntry_SetData(cache_entry, pformatetc, pmedium, fRelease);
 
         if (SUCCEEDED(hr))
             DataCache_FireOnViewChange(This, cache_entry->fmtetc.dwAspect,
@@ -1983,6 +1998,7 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
 
         return hr;
     }
+    WARN("cache entry not found\n");
 
     return OLE_E_BLANK;
 }
