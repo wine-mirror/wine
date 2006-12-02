@@ -673,6 +673,19 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
         case DW_OP_reg20: case DW_OP_reg21: case DW_OP_reg22: case DW_OP_reg23:
         case DW_OP_reg24: case DW_OP_reg25: case DW_OP_reg26: case DW_OP_reg27:
         case DW_OP_reg28: case DW_OP_reg29: case DW_OP_reg30: case DW_OP_reg31:
+            /* dbghelp APIs don't know how to cope with this anyway
+             * (for example 'long long' stored in two registers)
+             * FIXME: We should tell winedbg how to deal with it (sigh)
+             */
+            if (!piece_found)
+            {
+                if (loc->reg != Wine_DW_no_register)
+                    FIXME("Only supporting one reg (%d -> %d)\n",
+                          loc->reg, dwarf2_map_register(op - DW_OP_reg0));
+                loc->reg = dwarf2_map_register(op - DW_OP_reg0);
+            }
+            loc->kind = loc_register;
+            break;
         case DW_OP_breg0:  case DW_OP_breg1:  case DW_OP_breg2:  case DW_OP_breg3:
         case DW_OP_breg4:  case DW_OP_breg5:  case DW_OP_breg6:  case DW_OP_breg7:
         case DW_OP_breg8:  case DW_OP_breg9:  case DW_OP_breg10: case DW_OP_breg11:
@@ -688,17 +701,12 @@ compute_location(dwarf2_traverse_context_t* ctx, struct location* loc,
             if (!piece_found)
             {
                 if (loc->reg != Wine_DW_no_register)
-                    FIXME("Only supporting one reg (%d -> %d)\n", 
-                          loc->reg, op - DW_OP_reg0);
-                loc->reg = dwarf2_map_register(op - DW_OP_reg0);
+                    FIXME("Only supporting one reg (%d -> %d)\n",
+                          loc->reg, dwarf2_map_register(op - DW_OP_breg0));
+                loc->reg = dwarf2_map_register(op - DW_OP_breg0);
             }
-            if (op >= DW_OP_breg0 && op <= DW_OP_breg31)
-            {
-                stack[++stk] = dwarf2_leb128_as_signed(ctx);
-                loc->kind = loc_regrel;
-            }
-            else
-                loc->kind = loc_register;
+            stack[++stk] = dwarf2_leb128_as_signed(ctx);
+            loc->kind = loc_regrel;
             break;
         case DW_OP_fbreg:
             if (loc->reg != Wine_DW_no_register)
