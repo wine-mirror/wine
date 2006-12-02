@@ -77,7 +77,6 @@ struct sgv_data
     int		                num;            /* out     : number of found symbols */
     int                         num_thunks;     /* out     : number of thunks found */
     const char*                 name;           /* in      : name of symbol to look up */
-    const char*                 filename;       /* in (opt): filename where to look up symbol */
     int                         lineno;         /* in (opt): line number in filename where to look up symbol */
     unsigned                    bp_disp : 1,    /* in      : whether if we take into account func address or func first displayable insn */
                                 do_thunks : 1;  /* in      : whether we return thunks tags */
@@ -118,11 +117,6 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
         DWORD disp;
         il.SizeOfStruct = sizeof(il);
         SymGetLineFromAddr(dbg_curr_process->handle, sym->Address, &disp, &il);
-        if (sgv->filename && strcmp(sgv->filename, il.FileName))
-        {
-            WINE_FIXME("File name mismatch (%s / %s)\n", sgv->filename, il.FileName);
-            return TRUE;
-        }
 
         if (sgv->lineno == -1)
         {
@@ -213,7 +207,6 @@ enum sym_get_lval symbol_get_lvalue(const char* name, const int lineno,
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = &buffer[2];
-    sgv.filename   = NULL;
     sgv.lineno     = lineno;
     sgv.bp_disp    = bp_disp ? TRUE : FALSE;
     sgv.do_thunks  = DBG_IVAR(AlwaysShowThunks);
@@ -336,7 +329,6 @@ BOOL symbol_is_local(const char* name)
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = name;
-    sgv.filename   = NULL;
     sgv.lineno     = 0;
     sgv.bp_disp    = FALSE;
     sgv.do_thunks  = FALSE;
@@ -466,12 +458,13 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
 {
     struct sgv_data     sgv;
     char                buffer[512];
-    DWORD               opt, disp;
+    DWORD               opt, disp, linear;
+    unsigned            i, found = FALSE;
+    IMAGEHLP_LINE       il;
 
     sgv.num        = 0;
     sgv.num_thunks = 0;
     sgv.name       = &buffer[2];
-    sgv.filename   = filename;
     sgv.lineno     = -1;
     sgv.bp_disp    = FALSE;
     sgv.do_thunks  = FALSE;
@@ -487,7 +480,7 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
     if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
     {
         SymSetOptions(opt);
-        return sglv_unknown;
+        return FALSE;
     }
 
     if (!sgv.num && (name[0] != '_'))
@@ -497,23 +490,32 @@ BOOL symbol_get_line(const char* filename, const char* name, IMAGEHLP_LINE* line
         if (!SymEnumSymbols(dbg_curr_process->handle, 0, buffer, sgv_cb, (void*)&sgv))
         {
             SymSetOptions(opt);
-            return sglv_unknown;
+            return FALSE;
         }
     }
     SymSetOptions(opt);
 
-    switch (sgv.num)
+    for (i = 0; i < sgv.num; i++)
     {
-    case 0:
+        linear = (DWORD)memory_to_linear_addr(&sgv.syms[i].lvalue.addr);
+
+        il.SizeOfStruct = sizeof(il);
+        if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
+            continue;
+        if (filename && strcmp(line->FileName, filename)) continue;
+        if (found)
+        {
+            WINE_FIXME("Several found, returning first (may not be what you want)...\n");
+            break;
+        }
+        found = TRUE;
+        *line = il;
+    }
+    if (!found)
+    {
         if (filename)   dbg_printf("No such function %s in %s\n", name, filename);
 	else            dbg_printf("No such function %s\n", name);
         return FALSE;
-    default:
-        WINE_FIXME("Several found, returning first (may not be what you want)...\n");
-    case 1:
-        return SymGetLineFromAddr(dbg_curr_process->handle, 
-                                  (DWORD)memory_to_linear_addr(&sgv.syms[0].lvalue.addr), 
-                                  &disp, line);
     }
     return TRUE;
 }
