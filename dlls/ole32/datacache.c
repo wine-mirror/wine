@@ -249,8 +249,36 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
     return NULL;
 }
 
+/* checks that the clipformat and tymed are valid and returns an error if they
+* aren't and CACHE_S_NOTSUPPORTED if they are valid, but can't be rendered by
+* DataCache_Draw */
+static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed)
+{
+    if (!cfFormat || !tymed ||
+        (cfFormat == CF_METAFILEPICT && tymed == TYMED_MFPICT) ||
+        (cfFormat == CF_BITMAP && tymed == TYMED_GDI) ||
+        (cfFormat == CF_DIB && tymed == TYMED_HGLOBAL) ||
+        (cfFormat == CF_ENHMETAFILE && tymed == TYMED_ENHMF))
+        return S_OK;
+    else if (tymed == TYMED_HGLOBAL)
+        return CACHE_S_FORMATETC_NOTSUPPORTED;
+    else
+    {
+        WARN("invalid clipformat/tymed combination: %d/%d\n", cfFormat, tymed);
+        return DV_E_TYMED;
+    }
+}
+
 static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry)
 {
+    HRESULT hr;
+
+    hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed);
+    if (FAILED(hr))
+        return hr;
+    if (hr == CACHE_S_FORMATETC_NOTSUPPORTED)
+        TRACE("creating unsupported format %d\n", formatetc->cfFormat);
+
     *cache_entry = HeapAlloc(GetProcessHeap(), 0, sizeof(**cache_entry));
     if (!*cache_entry)
         return E_OUTOFMEMORY;
@@ -268,7 +296,7 @@ static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc
     (*cache_entry)->dirty = TRUE;
     (*cache_entry)->stream_number = -1;
     list_add_tail(&This->cache_list, &(*cache_entry)->entry);
-    return S_OK;
+    return hr;
 }
 
 /************************************************************************
