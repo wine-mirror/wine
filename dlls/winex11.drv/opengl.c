@@ -244,6 +244,10 @@ static BOOL  (*pglXReleaseTexImageARB)(Display *dpy, GLXPbuffer pbuffer, int buf
 static BOOL  (*pglXDrawableAttribARB)(Display *dpy, GLXDrawable draw, const int *attribList);
 static int   (*pglXSwapIntervalSGI)(int);
 
+/* NV GLX Extension */
+static void* (*pglXAllocateMemoryNV)(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority);
+static void  (*pglXFreeMemoryNV)(GLvoid *pointer);
+
 /* Standard OpenGL */
 MAKE_FUNCPTR(glBindTexture)
 MAKE_FUNCPTR(glBitmap)
@@ -369,6 +373,10 @@ LOAD_FUNCPTR(glXDestroyPbuffer)
 LOAD_FUNCPTR(glXMakeContextCurrent)
 LOAD_FUNCPTR(glXGetCurrentReadDrawable)
 LOAD_FUNCPTR(glXGetFBConfigs)
+
+/* NV GLX Extension */
+LOAD_FUNCPTR(glXAllocateMemoryNV)
+LOAD_FUNCPTR(glXFreeMemoryNV)
 
 /* Standard OpenGL calls */
 LOAD_FUNCPTR(glBindTexture)
@@ -2589,6 +2597,32 @@ static BOOL WINAPI X11DRV_wglSwapIntervalEXT(int interval) {
 }
 
 /**
+ * X11DRV_wglAllocateMemoryNV
+ *
+ * WGL_NV_vertex_array_range: wglAllocateMemoryNV
+ */
+static void* WINAPI X11DRV_wglAllocateMemoryNV(GLsizei size, GLfloat readfreq, GLfloat writefreq, GLfloat priority) {
+    TRACE("(%d, %f, %f, %f)\n", size, readfreq, writefreq, priority );
+    if (pglXAllocateMemoryNV == NULL)
+        return NULL;
+
+    return pglXAllocateMemoryNV(size, readfreq, writefreq, priority);
+}
+
+/**
+ * X11DRV_wglFreeMemoryNV
+ *
+ * WGL_NV_vertex_array_range: wglFreeMemoryNV
+ */
+static void WINAPI X11DRV_wglFreeMemoryNV(GLvoid* pointer) {
+    TRACE("(%p)\n", pointer);
+    if (pglXFreeMemoryNV == NULL)
+        return;
+
+    pglXFreeMemoryNV(pointer);
+}
+
+/**
  * glxRequireVersion (internal)
  *
  * Check if the supported GLX version matches requiredVersion.
@@ -2709,6 +2743,14 @@ static const WineGLExtension WGL_EXT_swap_control =
   }
 };
 
+static const WineGLExtension WGL_NV_vertex_array_range =
+{
+  "WGL_NV_vertex_array_range",
+  {
+    { "wglAllocateMemoryNV", X11DRV_wglAllocateMemoryNV },
+    { "wglFreeMemoryNV", X11DRV_wglFreeMemoryNV },
+  }
+};
 
 /**
  * X11DRV_WineGL_LoadExtensions
@@ -2745,6 +2787,10 @@ static void X11DRV_WineGL_LoadExtensions(void)
 
     if (glxRequireExtension("GLX_SGI_swap_control"))
         register_extension(&WGL_EXT_swap_control);
+
+    /* The OpenGL extension GL_NV_vertex_array_range adds wgl/glX functions which aren't exported as 'real' wgl/glX extensions. */
+    if(strstr(WineGLInfo.glExtensions, "GL_NV_vertex_array_range") != NULL)
+        register_extension(&WGL_NV_vertex_array_range);
 }
 
 
