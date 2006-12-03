@@ -211,7 +211,7 @@ static int dump_location(void)
     printf("Volume ofs    = %08x ", loc->dwVolTableOfs);
     if (loc->dwVolTableOfs && (loc->dwVolTableOfs<loc->dwTotalSize))
     {
-        LOCAL_VOLUME_INFO *vol = (LOCAL_VOLUME_INFO *) &p[loc->dwVolTableOfs];
+        const LOCAL_VOLUME_INFO *vol = (const LOCAL_VOLUME_INFO *)&p[loc->dwVolTableOfs];
 
         printf("size %d  type %d  serial %08x  label %d ",
                vol->dwSize, vol->dwType, vol->dwVolSerial, vol->dwVolLabelOfs);
