@@ -1491,6 +1491,9 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
  *
  * Delete a registry key and any sub keys/values present
  *
+ * This function forwards to the unicode version directly, to avoid
+ * handling subkeys that are not representable in ASCII.
+ *
  * PARAMS
  *   hKey       [I] Handle to registry key
  *   lpszSubKey [I] Name of sub key to delete
@@ -1502,48 +1505,10 @@ DWORD WINAPI SHQueryValueExW(HKEY hKey, LPCWSTR lpszValue,
  */
 DWORD WINAPI SHDeleteKeyA(HKEY hKey, LPCSTR lpszSubKey)
 {
-  DWORD dwRet, dwMaxSubkeyLen = 0, dwSize;
-  CHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
-  HKEY hSubKey = 0;
+  WCHAR subkeyW[MAX_PATH];
 
-  TRACE("(hkey=%p,%s)\n", hKey, debugstr_a(lpszSubKey));
-
-  dwRet = RegOpenKeyExA(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
-  if(!dwRet)
-  {
-    /* Find the maximum subkey length so that we can allocate a buffer */
-    dwRet = RegQueryInfoKeyA(hSubKey, NULL, NULL, NULL, NULL,
-                             &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
-    if(!dwRet)
-    {
-      dwMaxSubkeyLen++;
-      if (dwMaxSubkeyLen > sizeof(szNameBuf))
-        /* Name too big: alloc a buffer for it */
-        lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(CHAR));
-
-      if(!lpszName)
-        dwRet = ERROR_NOT_ENOUGH_MEMORY;
-      else
-      {
-        while (dwRet == ERROR_SUCCESS)
-        {
-          dwSize = dwMaxSubkeyLen;
-          dwRet = RegEnumKeyExA(hSubKey, 0, lpszName, &dwSize, NULL, NULL, NULL, NULL);
-          if (dwRet == ERROR_SUCCESS || dwRet == ERROR_MORE_DATA)
-            dwRet = SHDeleteKeyA(hSubKey, lpszName);
-        }
-        if (dwRet == ERROR_NO_MORE_ITEMS)
-          dwRet = ERROR_SUCCESS;
-        if (lpszName != szNameBuf)
-          HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
-      }
-    }
-
-    RegCloseKey(hSubKey);
-    if(!dwRet)
-      dwRet = RegDeleteKeyA(hKey, lpszSubKey);
-  }
-  return dwRet;
+  MultiByteToWideChar (CP_ACP, 0, lpszSubKey, -1, subkeyW, sizeof(subkeyW)/sizeof(WCHAR));
+  return SHDeleteKeyW(hKey, subkeyW);
 }
 
 /*************************************************************************
