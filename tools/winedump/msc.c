@@ -716,8 +716,8 @@ int codeview_dump_types(const void* table, unsigned long len)
 
         case LF_METHODLIST_V1:
             {
-                unsigned short* pattr = (unsigned short*)((const char*)type + 4);
-                
+                const unsigned short* pattr = (const unsigned short*)((const char*)type + 4);
+
                 printf("\t%x => Method list\n", curr_type);
                 while ((const char*)pattr < (const char*)type + type->generic.len + 2)
                 {
@@ -726,7 +726,7 @@ int codeview_dump_types(const void* table, unsigned long len)
                     case 4: case 6:
                         printf("\t\t\tattr:%s type:%x vtab-offset:%x\n",
                                get_attr(pattr[0]), pattr[1],
-                               *(unsigned*)(&pattr[2]));
+                               *(const unsigned*)(&pattr[2]));
                         pattr += 3;
                         break;
                     default:
@@ -740,8 +740,8 @@ int codeview_dump_types(const void* table, unsigned long len)
 
         case LF_METHODLIST_V2:
             {
-                unsigned* pattr = (unsigned*)((const char*)type + 4);
-                
+                const unsigned* pattr = (const unsigned*)((const char*)type + 4);
+
                 printf("\t%x => Method list\n", curr_type);
                 while ((const char*)pattr < (const char*)type + type->generic.len + 2)
                 {
@@ -763,7 +763,7 @@ int codeview_dump_types(const void* table, unsigned long len)
 
         case LF_VTSHAPE_V1:
             {
-                int count = *(unsigned short*)((const char*)type + 4);
+                int count = *(const unsigned short*)((const char*)type + 4);
                 int shift = 0;
                 const char* ptr = (const char*)type + 6;
                 const char* desc[] = {"Near", "Far", "Thin", "Disp to outtermost",
@@ -799,9 +799,9 @@ int codeview_dump_types(const void* table, unsigned long len)
 
 int codeview_dump_symbols(const void* root, unsigned long size)
 {
-    int                                 i, length;
-    const char*                         curr_func = NULL;
-    int         nest_block = 0;
+    int     i, length;
+    char*   curr_func = NULL;
+    int     nest_block = 0;
     /*
      * Loop over the different types of records and whenever we
      * find something we are interested in, record it and move on.
@@ -1002,7 +1002,7 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             else
             {
                 printf("\tS-End-Of %s\n", curr_func);
-                free((void*)curr_func);
+                free(curr_func);
                 curr_func = NULL;
             }
             break;
@@ -1141,8 +1141,8 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 
                 pname = PSTRING(sym, length);
                 length += (pname->namelen + 1 + 3) & ~3;
-                printf("\t%08x %08x %08x '%s'\n",      
-                       *(((DWORD*)sym) + 1), *(((DWORD*)sym) + 2), *(((DWORD*)sym) + 3), 
+                printf("\t%08x %08x %08x '%s'\n",
+                       *(((const DWORD*)sym) + 1), *(((const DWORD*)sym) + 2), *(((const DWORD*)sym) + 3),
                        p_string(pname));
             }
             break;
@@ -1151,9 +1151,9 @@ int codeview_dump_symbols(const void* root, unsigned long size)
                 const unsigned short*     ptr = ((const unsigned short*)sym) + 2;
 
                 /* FIXME: what are all those values for ? */
-                printf("\tTool V3 ??? %x-%x-%x-%x-%x-%x-%x-%x-%x %s\n", 
-                       ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7], 
-                       ptr[8], (char*)(&ptr[9]));
+                printf("\tTool V3 ??? %x-%x-%x-%x-%x-%x-%x-%x-%x %s\n",
+                       ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7],
+                       ptr[8], (const char*)(&ptr[9]));
                 dump_data((const void*)sym, sym->generic.len + 2, "\t\t");
             }
             break;
