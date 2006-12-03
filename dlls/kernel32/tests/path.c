@@ -1012,6 +1012,66 @@ static void test_GetSystemDirectory(void)
         res, GetLastError(), buffer, total);
 }
 
+static void test_GetWindowsDirectory(void)
+{
+    CHAR    buffer[MAX_PATH + 4];
+    DWORD   res;
+    DWORD   total;
+
+    SetLastError(0xdeadbeef);
+    res = GetWindowsDirectory(NULL, 0);
+    /* res includes the terminating Zero */
+    ok(res > 0, "returned %d with 0x%x (expected '>0')\n", res, GetLastError());
+
+    total = res;
+#if 0
+    /* this test crash on XP */
+    res = GetWindowsDirectory(NULL, total);
+#endif
+
+    SetLastError(0xdeadbeef);
+    res = GetWindowsDirectory(NULL, total-1);
+    /* 95+NT: total (includes the terminating Zero)
+       98+ME: 0 with ERROR_INVALID_PARAMETER */
+    ok( (res == total) || (!res && (GetLastError() == ERROR_INVALID_PARAMETER)),
+        "returned %d with 0x%x (expected '%d' or: '0' with " \
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError(), total);
+
+    if (total > MAX_PATH) return;
+
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetWindowsDirectory(buffer, total);
+    /* res does not include the terminating Zero */
+    ok( (res == (total-1)) && (buffer[0]),
+        "returned %d with 0x%x and '%s' (expected '%d' and a string)\n",
+        res, GetLastError(), buffer, total-1);
+
+    buffer[0] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetWindowsDirectory(buffer, total + 1);
+    /* res does not include the terminating Zero */
+    ok( (res == (total-1)) && (buffer[0]),
+        "returned %d with 0x%x and '%s' (expected '%d' and a string)\n",
+        res, GetLastError(), buffer, total-1);
+
+    memset(buffer, '#', total + 1);
+    buffer[total + 2] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetWindowsDirectory(buffer, total-1);
+    /* res includes the terminating Zero) */
+    ok( res == total, "returned %d with 0x%x and '%s' (expected '%d')\n",
+        res, GetLastError(), buffer, total);
+
+    memset(buffer, '#', total + 1);
+    buffer[total + 2] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetWindowsDirectory(buffer, total-2);
+    /* res includes the terminating Zero) */
+    ok( res == total, "returned %d with 0x%x and '%s' (expected '%d')\n",
+        res, GetLastError(), buffer, total);
+}
+
 START_TEST(path)
 {
     CHAR origdir[MAX_PATH],curdir[MAX_PATH], curDrive, otherDrive;
@@ -1026,4 +1086,5 @@ START_TEST(path)
     test_GetTempPath();
     test_GetLongPathNameW();
     test_GetSystemDirectory();
+    test_GetWindowsDirectory();
 }
