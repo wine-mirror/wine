@@ -1314,53 +1314,82 @@ static void test_EM_GETMODIFY(void)
   DestroyWindow(hwndRichEdit);
 }
 
+struct exsetsel_s {
+  long min;
+  long max;
+  long expected_retval;
+  int expected_getsel_start;
+  int expected_getsel_end;
+  int _exsetsel_todo_wine;
+  int _getsel_todo_wine;
+};
+
+const struct exsetsel_s exsetsel_tests[] = {
+  /* sanity tests */
+  {5, 10, 10, 5, 10, 0, 0},
+  {15, 17, 17, 15, 17, 0, 0},
+  /* test cpMax > strlen() */
+  {0, 100, 18, 0, 18, 0, 1},
+  /* test cpMin == cpMax */
+  {5, 5, 5, 5, 5, 0, 0},
+  /* test cpMin < 0 && cpMax >= 0 (bug 4462) */
+  {-1, 0, 5, 5, 5, 0, 0},
+  {-1, 17, 5, 5, 5, 0, 0},
+  {-1, 18, 5, 5, 5, 0, 0},
+  /* test cpMin < 0 && cpMax < 0 */
+  {-1, -1, 17, 17, 17, 0, 0},
+  {-4, -5, 17, 17, 17, 0, 0},
+  /* test cMin >=0 && cpMax < 0 (bug 6814) */
+  {0, -1, 18, 0, 18, 0, 1},
+  {17, -5, 18, 17, 18, 0, 1},
+  {18, -3, 17, 17, 17, 0, 0},
+  /* test if cpMin > cpMax */
+  {15, 19, 18, 15, 18, 0, 1},
+  {19, 15, 18, 15, 18, 0, 1}
+};
+
+static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) {
+    CHARRANGE cr;
+    long result;
+    int start, end;
+
+    cr.cpMin = setsel->min;
+    cr.cpMax = setsel->max;
+    result = SendMessage(hwnd, EM_EXSETSEL, 0, (LPARAM) &cr);
+
+    if (setsel->_exsetsel_todo_wine) {
+        todo_wine {
+            ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
+        }
+    } else {
+        ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
+    }
+
+    SendMessage(hwnd, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
+
+    if (setsel->_getsel_todo_wine) {
+        todo_wine {
+            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
+        }
+    } else {
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
+    }
+}
+
 static void test_EM_EXSETSEL(void)
 {
     HWND hwndRichEdit = new_richedit(NULL);
-    long result;
-    CHARRANGE cr;
-    int start,end;
+    int i;
+    const int num_tests = sizeof(exsetsel_tests)/sizeof(struct exsetsel_s);
 
     /* sending some text to the window */
     SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) "testing selection");
     /*                                                 01234567890123456*/
     /*                                                          10      */
 
-    /* EM_EXSETSEL returns (cr.cpMax < strlen+1 ? cr.cpMax:strlen+1 if cpMin is positive */
-    cr.cpMin = 0;
-    cr.cpMax = 100;
-    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-    ok(result == 18, "EM_EXSETSEL: expected: 18 actual: %ld\n", result);
-    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
-
-    /* FIXME: EM_GETSEL needs to return proper ending value */
-    todo_wine
-    {
-        ok(start == 0 && end == 18, "EM_EXSETSEL: expected (0,18) actual:(%d,%d)\n", start,end);
+    for (i = 0; i < num_tests; i++) {
+        check_EM_EXSETSEL(hwndRichEdit, &exsetsel_tests[i], i);
     }
-
-    cr.cpMin = 5;
-    cr.cpMax = 10;
-    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-    ok(result == 10, "EM_EXSETSEL: expected: 10 actual: %ld\n", result);
-    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
-    ok(start == 5 && end == 10, "EM_EXSETSEL: expected (5,10) actual:(%d,%d)\n", start,end);
-
-    cr.cpMin = 15;
-    cr.cpMax = 17;
-    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-    ok(result == 17, "EM_EXSETSEL: expected: 17 actual: %ld\n", result);
-    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
-    ok(start == 15 && end == 17, "EM_EXSETSEL: expected (15,17) actual:(%d,%d)\n", start,end);
-
-    /* bug 4462 - the following values get used in FileZilla */
-    /* when min < 0, selection is deselected and caret is moved to end of last selection */
-    cr.cpMin = -3;
-    cr.cpMax = 0;
-    result = SendMessage(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM) &cr);
-    ok(result == 17, "EM_EXSETSEL: expected: 17 actual: %ld\n", result);
-    SendMessage(hwndRichEdit, EM_GETSEL, (WPARAM) &start, (LPARAM) &end);
-    ok(start == 17 && end == 17, "EM_EXSETSEL: expected (17,17) actual:(%d,%d)\n", start,end);
 
     DestroyWindow(hwndRichEdit);
 }
