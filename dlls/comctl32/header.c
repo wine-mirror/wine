@@ -1502,10 +1502,17 @@ HEADER_Create (HWND hwnd, WPARAM wParam, LPARAM lParam)
 static LRESULT
 HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
+    HTHEME theme = GetWindowTheme(hwnd);
+    CloseThemeData(theme);
+    return 0;
+}
+
+static LRESULT
+HEADER_NCDestroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
+{
     HEADER_INFO *infoPtr = HEADER_GetInfoPtr (hwnd);
     HEADER_ITEM *lpItem;
     INT nItem;
-    HTHEME theme;
 
     if (infoPtr->items) {
         lpItem = infoPtr->items;
@@ -1519,13 +1526,11 @@ HEADER_Destroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
         Free(infoPtr->order);
 
     if (infoPtr->himl)
-	ImageList_Destroy (infoPtr->himl);
+      ImageList_Destroy (infoPtr->himl);
 
     SetWindowLongPtrW (hwnd, 0, 0);
     Free (infoPtr);
 
-    theme = GetWindowTheme(hwnd);
-    CloseThemeData(theme);
     return 0;
 }
 
@@ -2077,6 +2082,9 @@ HEADER_WindowProc (HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
         case WM_DESTROY:
             return HEADER_Destroy (hwnd, wParam, lParam);
+
+        case WM_NCDESTROY:
+            return HEADER_NCDestroy (hwnd, wParam, lParam);
 
         case WM_ERASEBKGND:
             return 1;
