@@ -265,8 +265,8 @@ static DWORD single_step_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_
     else {
         /* show that the last single step exception on the popf instruction
          * (which removed the TF bit), still is a EXCEPTION_SINGLE_STEP exception */
-        todo_wine { ok( rec->ExceptionCode == EXCEPTION_SINGLE_STEP,
-            "exception is not EXCEPTION_SINGLE_STEP: %x\n", rec->ExceptionCode); };
+        ok( rec->ExceptionCode == EXCEPTION_SINGLE_STEP,
+            "exception is not EXCEPTION_SINGLE_STEP: %x\n", rec->ExceptionCode);
     }
 
     return ExceptionContinueExecution;

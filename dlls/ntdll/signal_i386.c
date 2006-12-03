@@ -1019,11 +1019,15 @@ static void WINAPI raise_trap_exception( EXCEPTION_RECORD *rec, CONTEXT *context
         {
             context->ContextFlags = CONTEXT_DEBUG_REGISTERS;
             NtGetContextThread(GetCurrentThread(), context);
-            /* do we really have a bp from a debug register ?
-             * if not, then someone did a kill(SIGTRAP) on us, and we
-             * shall return a breakpoint, not a single step exception
+            /* we have either:
+             *    - a bp from a debug register
+             *    - a single step interrupt at popf instruction, which just has
+             *      removed the TF.
+             *    - someone did a kill(SIGTRAP) on us, and we shall return
+             *      a breakpoint, not a single step exception
              */
-            if (!(context->Dr6 & 0xf)) rec->ExceptionCode = EXCEPTION_BREAKPOINT;
+            if ( !(context->Dr6 & 0xf) && !(context->Dr6 & 0x4000) )
+                rec->ExceptionCode = EXCEPTION_BREAKPOINT;
             context->ContextFlags |= CONTEXT_FULL;  /* restore flags */
         }
     }
