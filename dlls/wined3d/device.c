@@ -1200,7 +1200,7 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateTexture(IWineD3DDevice *iface, U
     for (i = 0; i < object->baseTexture.levels; i++)
     {
         /* use the callback to create the texture surface */
-        hr = D3DCB_CreateSurface(This->parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
+        hr = D3DCB_CreateSurface(This->parent, parent, tmpW, tmpH, Format, Usage, Pool, i, &object->surfaces[i],NULL);
         if (hr!= WINED3D_OK || ( (IWineD3DSurfaceImpl *) object->surfaces[i])->Flags & SFLAG_OVERSIZE) {
             FIXME("Failed to create surface  %p\n", object);
             /* clean up */
@@ -1277,7 +1277,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
     for (i = 0; i < object->baseTexture.levels; i++)
     {
         /* Create the volume */
-        D3DCB_CreateVolume(This->parent, Width, Height, Depth, Format, Pool, Usage,
+        D3DCB_CreateVolume(This->parent, parent, Width, Height, Depth, Format, Pool, Usage,
                            (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
 
         /* Set its container to this object */
@@ -1379,7 +1379,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
         /* Create the 6 faces */
         for (j = 0; j < 6; j++) {
 
-            hr=D3DCB_CreateSurface(This->parent, tmpW, tmpW, Format, Usage, Pool,
+            hr=D3DCB_CreateSurface(This->parent, parent, tmpW, tmpW, Format, Usage, Pool,
                                    i /* Level */, &object->surfaces[j][i],pSharedHandle);
 
             if(hr!= WINED3D_OK) {
@@ -1725,6 +1725,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     TRACE("calling rendertarget CB\n");
     hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+                             parent,
                              object->presentParms.BackBufferWidth,
                              object->presentParms.BackBufferHeight,
                              object->presentParms.BackBufferFormat,
@@ -1758,6 +1759,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
             TRACE("calling rendertarget CB\n");
             hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+                                    parent,
                                     object->presentParms.BackBufferWidth,
                                     object->presentParms.BackBufferHeight,
                                     object->presentParms.BackBufferFormat,
@@ -1794,6 +1796,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         TRACE("Creating depth stencil buffer\n");
         if (This->depthStencilBuffer == NULL ) {
             hr = D3DCB_CreateDepthStencil((IUnknown *) This->parent,
+                                    parent,
                                     object->presentParms.BackBufferWidth,
                                     object->presentParms.BackBufferHeight,
                                     object->presentParms.AutoDepthStencilFormat,

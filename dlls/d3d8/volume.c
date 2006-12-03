@@ -200,7 +200,7 @@ static const IDirect3DVolume8Vtbl Direct3DVolume8_Vtbl =
 
 
 /* Internal function called back during the CreateVolumeTexture */
-HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
+HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, IUnknown *pSuperior, UINT Width, UINT Height, UINT Depth,
                                    WINED3DFORMAT  Format, WINED3DPOOL Pool, DWORD Usage,
                                    IWineD3DVolume **ppVolume,
                                    HANDLE   * pSharedHandle) {

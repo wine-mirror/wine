@@ -991,10 +991,10 @@ const IDirect3DDevice9Vtbl Direct3DDevice9_Vtbl =
 
 
 /* Internal function called back during the CreateDevice to create a render target  */
-HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, UINT Width, UINT Height, 
+HRESULT WINAPI D3D9CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
                                          WINED3DFORMAT Format, DWORD Usage, WINED3DPOOL Pool, UINT Level,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
-    
+
     HRESULT res = D3D_OK;
     IDirect3DSurface9Impl *d3dSurface = NULL;
     BOOL Lockable = TRUE;

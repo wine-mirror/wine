@@ -1656,6 +1656,7 @@ IDirectDrawImpl_RecreateAllSurfaces(IDirectDrawImpl *This)
  *****************************************************************************/
 static HRESULT WINAPI
 D3D7CB_CreateSurface(IUnknown *device,
+                     IUnknown *pSuperior,
                      UINT Width, UINT Height,
                      WINED3DFORMAT Format,
                      DWORD Usage, WINED3DPOOL Pool, UINT level,
@@ -2640,7 +2641,8 @@ IDirectDrawImpl_EnumSurfaces(IDirectDraw7 *iface,
  *
  *****************************************************************************/
 static HRESULT WINAPI
-D3D7CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height,
+D3D7CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior,
+                          UINT Width, UINT Height,
                           WINED3DFORMAT Format,
                           WINED3DMULTISAMPLE_TYPE MultiSample,
                           DWORD MultisampleQuality,
@@ -2674,6 +2676,7 @@ D3D7CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height,
 
 static HRESULT WINAPI
 D3D7CB_CreateDepthStencilSurface(IUnknown *device,
+                                 IUnknown *pSuperior,
                                  UINT Width,
                                  UINT Height,
                                  WINED3DFORMAT Format,

@@ -186,9 +186,9 @@ static HMONITOR WINAPI  IDirect3D8Impl_GetAdapterMonitor(LPDIRECT3D8 iface, UINT
 }
 
 /* Internal function called back during the CreateDevice to create a render target */
-HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, UINT Width, UINT Height, 
-                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample, 
-                                         DWORD MultisampleQuality, BOOL Lockable, 
+HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
+                                         WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
+                                         DWORD MultisampleQuality, BOOL Lockable,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {
     HRESULT res = D3D_OK;
     IDirect3DSurface8Impl *d3dSurface = NULL;
@@ -267,7 +267,7 @@ static HRESULT WINAPI D3D8CB_CreateAdditionalSwapChain(IUnknown *device,
 }
 
 /* Internal function called back during the CreateDevice to create a render target */
-HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, UINT Width, UINT Height,
+HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
                                          WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,
                                          DWORD MultisampleQuality, BOOL Discard,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle) {

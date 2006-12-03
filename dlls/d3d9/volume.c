@@ -201,9 +201,9 @@ static const IDirect3DVolume9Vtbl Direct3DVolume9_Vtbl =
 
 
 /* Internal function called back during the CreateVolumeTexture */
-HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, UINT Width, UINT Height, UINT Depth, 
+HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, IUnknown *pSuperior, UINT Width, UINT Height, UINT Depth,
                                    WINED3DFORMAT  Format, WINED3DPOOL Pool, DWORD Usage,
-                                   IWineD3DVolume **ppVolume, 
+                                   IWineD3DVolume **ppVolume,
                                    HANDLE   * pSharedHandle) {
     IDirect3DVolume9Impl *object;
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)pDevice;
