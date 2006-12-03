@@ -876,20 +876,26 @@ static BOOL init_formats(Display *display, int screen, Visual *visual)
  */
 static BOOL ConvertPixelFormatWGLtoGLX(Display *display, int iPixelFormat, int *fmt_index, int *fmt_count)
 {
+    int ret;
+
     /* Init the list of pixel formats when we need it */
     if(!WineGLPixelFormatListSize)
         init_formats(display, DefaultScreen(display), visual);
 
     if((iPixelFormat <= 0) || (iPixelFormat > WineGLPixelFormatListSize)) {
         ERR("invalid iPixelFormat %d\n", iPixelFormat);
-        return FALSE;
+        ret = FALSE;
+        *fmt_index = -1;
+    }
+    else {
+        ret = TRUE;
+        *fmt_index = WineGLPixelFormatList[iPixelFormat-1].fmt_index;
     }
 
-    *fmt_index = WineGLPixelFormatList[iPixelFormat-1].fmt_index;
     *fmt_count = WineGLPixelFormatListSize;
     TRACE("Returning fmt_index=%d, fmt_count=%d for iPixelFormat=%d\n", *fmt_index, *fmt_count, iPixelFormat);
 
-    return TRUE;
+    return ret;
 }
 
 /* Search our internal pixelformat list for the WGL format corresponding to the given fbconfig */
@@ -2272,7 +2278,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
     * We don't have to fail yet as a program can specify an invaled iPixelFormat (lets say 0) if it wants to query
     * the number of supported WGL formats. Whether the iPixelFormat is valid is handled in the for-loop below. */
     if(!ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &nWGLFormats)) {
-        ERR("Unable to convert iPixelFormat %d to a GLX one, expect problems!\n", iPixelFormat);
+        WARN("Unable to convert iPixelFormat %d to a GLX one!\n", iPixelFormat);
     }
 
     for (i = 0; i < nAttributes; ++i) {
