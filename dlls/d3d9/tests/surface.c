@@ -17,6 +17,7 @@
  */
 #define COBJMACROS
 #include <d3d9.h>
+#include <dxerr9.h>
 #include "wine/test.h"
 
 static HWND create_window(void)
@@ -117,6 +118,7 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
 {
     IDirect3DSurface9 *surface_ptr = 0;
     HRESULT hr;
+    int i;
 
     /* Test a sysmem surface as those aren't affected by the hardware's np2 restrictions */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device_ptr, 5, 5, D3DFMT_R5G6B5, D3DPOOL_SYSTEMMEM, &surface_ptr, 0);
@@ -136,6 +138,34 @@ static void test_surface_alignment(IDirect3DDevice9 *device_ptr)
 #endif
         hr = IDirect3DSurface9_UnlockRect(surface_ptr);
         IDirect3DSurface9_Release(surface_ptr);
+    }
+
+    for (i = 0; i < 5; i++)
+    {
+        IDirect3DTexture9 *pTexture;
+        int j, pitch;
+
+        hr = IDirect3DDevice9_CreateTexture(device_ptr, 64, 64, 0, 0, MAKEFOURCC('D', 'X', 'T', '1'+i),
+                                            D3DPOOL_MANAGED, &pTexture, NULL);
+        ok(SUCCEEDED(hr), "IDirect3DDevice9_CreateTexture: %s\n", DXGetErrorString9(hr));
+        if (FAILED(hr)) continue;
+
+        for (j = IDirect3DBaseTexture9_GetLevelCount(pTexture) - 1; j >= 0; j--)
+        {
+            D3DLOCKED_RECT rc;
+            D3DSURFACE_DESC descr;
+
+            IDirect3DTexture9_GetLevelDesc(pTexture, j, &descr);
+            hr = IDirect3DTexture9_LockRect(pTexture, j, &rc, NULL, 0);
+            ok(SUCCEEDED(hr), "IDirect3DTexture9_LockRect: %s\n", DXGetErrorString9(hr));
+            IDirect3DTexture9_UnlockRect(pTexture, j);
+
+            pitch = ((descr.Width + 3) >> 2) << 3;
+            if (i > 0) pitch <<= 1;
+            ok(rc.Pitch == pitch, "Wrong pitch for DXT%d lvl[%d (%dx%d)]: expected %d got %d\n",
+               i + 1, j, descr.Width, descr.Height, pitch, rc.Pitch);
+        }
+        IUnknown_Release( pTexture );
     }
 }
 

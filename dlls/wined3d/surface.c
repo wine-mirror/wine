@@ -3023,10 +3023,10 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
          where each block is 4x4 pixels, 8 bytes (dxt1) and 16 bytes (dxt2/3/4/5)
           ie pitch = (width/4) * bytes per block                                  */
     if (This->resource.format == WINED3DFMT_DXT1) /* DXT1 is 8 bytes per block */
-        ret = (This->currentDesc.Width >> 2) << 3;
+        ret = ((This->currentDesc.Width + 3) >> 2) << 3;
     else if (This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
              This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
-        ret = (This->currentDesc.Width >> 2) << 4;
+        ret = ((This->currentDesc.Width + 3) >> 2) << 4;
     else {
         if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
             /* Front and back buffers are always lockes/unlocked on currentDesc.Width */
