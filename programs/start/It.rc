@@ -21,9 +21,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
+LANGUAGE LANG_ITALIAN, SUBLANG_NEUTRAL
 
-STRINGTABLE DISCARDABLE LANGUAGE LANG_ITALIAN, SUBLANG_DEFAULT
+STRINGTABLE DISCARDABLE
 {
 STRING_USAGE,                                   "Avvia un programma, o apri un documento con il programma normalmente usato per i files con quell'estensione \n\
 Usage: \n\
