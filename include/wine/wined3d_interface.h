@@ -245,6 +245,8 @@ typedef HRESULT WINAPI (*D3DCB_ENUMDISPLAYMODESCALLBACK) (IUnknown *pDevice,
  */
 typedef ULONG WINAPI (*D3DCB_DESTROYSURFACEFN) (struct IWineD3DSurface *pSurface);
 
+typedef ULONG WINAPI (*D3DCB_DESTROYVOLUMEFN) (struct IWineD3DVolume *pVolume);
+
 /*****************************************************************************
  * IWineD3DBase interface
  */
@@ -1025,6 +1027,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
     STDMETHOD_(void, ApplyStateChanges)(THIS_ const DWORD textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DVolumeTexture methods ***/
+    STDMETHOD_(void, Destroy)(THIS_ D3DCB_DESTROYVOLUMEFN pFn) PURE;
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level, WINED3DVOLUME_DESC *pDesc) PURE;
     STDMETHOD(GetVolumeLevel)(THIS_ UINT Level, struct IWineD3DVolume** ppVolumeLevel) PURE;
     STDMETHOD(LockBox)(THIS_ UINT Level, WINED3DLOCKED_BOX* pLockedVolume, CONST WINED3DBOX* pBox, DWORD Flags) PURE;
@@ -1063,6 +1066,7 @@ DECLARE_INTERFACE_(IWineD3DVolumeTexture,IWineD3DBaseTexture)
 #define IWineD3DVolumeTexture_GetTextureDimensions(p)     (p)->lpVtbl->GetTextureDimensions(p)
 #define IWineD3DVolumeTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DVolumeTexture methods ***/
+#define IWineD3DVolumeTexture_Destroy(p,a)               (p)->lpVtbl->Destroy(p,a)
 #define IWineD3DVolumeTexture_GetLevelDesc(p,a,b)        (p)->lpVtbl->GetLevelDesc(p,a,b)
 #define IWineD3DVolumeTexture_GetVolumeLevel(p,a,b)      (p)->lpVtbl->GetVolumeLevel(p,a,b)
 #define IWineD3DVolumeTexture_LockBox(p,a,b,c,d)         (p)->lpVtbl->LockBox(p,a,b,c,d)

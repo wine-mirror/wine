@@ -55,29 +55,10 @@ static ULONG WINAPI IWineD3DVolumeTextureImpl_AddRef(IWineD3DVolumeTexture *ifac
 static ULONG WINAPI IWineD3DVolumeTextureImpl_Release(IWineD3DVolumeTexture *iface) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     ULONG ref;
-    int i;
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        for (i = 0; i < This->baseTexture.levels; i++) {
-            if (This->volumes[i] != NULL) {
-                /* Since the volumes were created by callback, the texture is
-                 * keeping the reference to the parent, so the texture should
-                 * release it. */
-                IUnknown *volumeParent = NULL;
-
-                TRACE("(%p) : Releasing volume %p\n", This, This->volumes[i]);
-
-                /* Cleanup the container */
-                IWineD3DVolume_SetContainer(This->volumes[i], 0);
-                /* Now, release the parent, which will take care of cleaning up the volume for us */
-                IWineD3DVolume_GetParent(This->volumes[i], &volumeParent);
-                IUnknown_Release(volumeParent); /* Once for the reference GetParent added */
-                IUnknown_Release(volumeParent); /* Once for the reference we're keeping */
-            }
-        }
-        IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        IWineD3DVolumeTexture_Destroy(iface, D3DCB_DefaultDestroyVolume);
     }
     return ref;
 }
@@ -207,6 +188,21 @@ static void WINAPI IWineD3DVolumeTextureImpl_ApplyStateChanges(IWineD3DVolumeTex
 /* *******************************************
    IWineD3DVolumeTexture IWineD3DVolumeTexture parts follow
    ******************************************* */
+static void WINAPI IWineD3DVolumeTextureImpl_Destroy(IWineD3DVolumeTexture *iface, D3DCB_DESTROYVOLUMEFN D3DCB_DestroyVolume) {
+    IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
+    int i;
+    TRACE("(%p) : Cleaning up\n",This);
+    for (i = 0; i < This->baseTexture.levels; i++) {
+        if (This->volumes[i] != NULL) {
+            /* Cleanup the container */
+            IWineD3DVolume_SetContainer(This->volumes[i], 0);
+            D3DCB_DestroyVolume(This->volumes[i]);
+        }
+    }
+    IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *) iface);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
 static HRESULT WINAPI IWineD3DVolumeTextureImpl_GetLevelDesc(IWineD3DVolumeTexture *iface, UINT Level,WINED3DVOLUME_DESC *pDesc) {
     IWineD3DVolumeTextureImpl *This = (IWineD3DVolumeTextureImpl *)iface;
     if (Level < This->baseTexture.levels) {
@@ -298,6 +294,7 @@ const IWineD3DVolumeTextureVtbl IWineD3DVolumeTexture_Vtbl =
     IWineD3DVolumeTextureImpl_GetTextureDimensions,
     IWineD3DVolumeTextureImpl_ApplyStateChanges,
     /* volume texture */
+    IWineD3DVolumeTextureImpl_Destroy,
     IWineD3DVolumeTextureImpl_GetLevelDesc,
     IWineD3DVolumeTextureImpl_GetVolumeLevel,
     IWineD3DVolumeTextureImpl_LockBox,

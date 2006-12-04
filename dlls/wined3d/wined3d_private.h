@@ -419,6 +419,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
 /* Default callbacks for implicit object destruction */
 extern ULONG WINAPI D3DCB_DefaultDestroySurface(IWineD3DSurface *pSurface);
 
+extern ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pSurface);
+
 /*****************************************************************************
  * Internal representation of a light
  */

@@ -2500,6 +2500,16 @@ ULONG WINAPI D3DCB_DefaultDestroySurface(IWineD3DSurface *pSurface) {
     return IUnknown_Release(surfaceParent);
 }
 
+ULONG WINAPI D3DCB_DefaultDestroyVolume(IWineD3DVolume *pVolume) {
+    IUnknown* volumeParent;
+    TRACE("(%p) call back\n", pVolume);
+
+    /* Now, release the parent, which will take care of cleaning up the volume for us */
+    IWineD3DVolume_GetParent(pVolume, &volumeParent);
+    IUnknown_Release(volumeParent);
+    return IUnknown_Release(volumeParent);
+}
+
 /**********************************************************
  * IWineD3D VTbl follows
  **********************************************************/
