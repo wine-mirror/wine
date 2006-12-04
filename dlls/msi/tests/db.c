@@ -656,6 +656,39 @@ static void test_msibadqueries(void)
     r = try_query( hdb, "CREATE TABLE `c` (`b` CHAR NOT NULL PRIMARY KEY `b`)");
     ok(r == ERROR_SUCCESS , "query 8 failed\n");
 
+    r = try_query( hdb, "select * from c");
+    ok(r == ERROR_SUCCESS , "query failed\n");
+
+    r = try_query( hdb, "select * from c where b = 'x");
+    todo_wine ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+
+    r = try_query( hdb, "select * from 'c'");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+
+    r = try_query( hdb, "select * from ''");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+
+    r = try_query( hdb, "select * from c where b = x");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+
+    r = try_query( hdb, "select * from c where b = \"x\"");
+    todo_wine ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+
+    r = try_query( hdb, "select * from c where b = 'x'");
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
+    r = try_query( hdb, "select * from c where b = '\"x'");
+    ok(r == ERROR_SUCCESS, "query failed\n");
+
+    if (0)  /* FIXME: this query causes trouble with other tests */
+    {
+        r = try_query( hdb, "select * from c where b = '\\\'x'");
+        ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+    }
+
+    r = try_query( hdb, "select * from 'c'");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+
     r = MsiCloseHandle( hdb );
     ok(r == ERROR_SUCCESS , "Failed to close database transact\n");
 
