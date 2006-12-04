@@ -57,7 +57,7 @@ static ULONG WINAPI IDirect3DCubeTexture8Impl_Release(LPDIRECT3DCUBETEXTURE8 ifa
 
     if (ref == 0) {
         TRACE("Releasing child %p\n", This->wineD3DCubeTexture);
-        IWineD3DCubeTexture_Release(This->wineD3DCubeTexture);
+        IWineD3DCubeTexture_Destroy(This->wineD3DCubeTexture, D3D8CB_DestroySurface);
         IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }

@@ -57,7 +57,7 @@ static ULONG WINAPI IDirect3DTexture8Impl_Release(LPDIRECT3DTEXTURE8 iface) {
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IWineD3DTexture_Release(This->wineD3DTexture);
+        IWineD3DTexture_Destroy(This->wineD3DTexture, D3D8CB_DestroySurface);
         IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }

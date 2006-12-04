@@ -1622,8 +1622,20 @@ HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT 
         *ppSurface = d3dSurface->wineD3DSurface;
         IUnknown_Release(d3dSurface->parentDevice);
         d3dSurface->parentDevice = NULL;
+        d3dSurface->forwardReference = pSuperior;
     } else {
         FIXME("(%p) IDirect3DDevice8_CreateSurface failed\n", device);
     }
     return res;
+}
+
+ULONG WINAPI D3D8CB_DestroySurface(IWineD3DSurface *pSurface) {
+    IDirect3DSurface8Impl* surfaceParent;
+    TRACE("(%p) call back\n", pSurface);
+
+    IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
+    /* GetParent's AddRef was forwarded to an object in destruction.
+     * Releasing it here again would cause an endless recursion. */
+    surfaceParent->forwardReference = NULL;
+    return IDirect3DSurface8_Release((IDirect3DSurface8*) surfaceParent);
 }

@@ -246,6 +246,9 @@ struct IDirect3DSurface8Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE8                  parentDevice;
+
+    /* If set forward refcounting to this object */
+    IUnknown                    *forwardReference;
 };
 
 /* ------------------ */
@@ -592,5 +595,7 @@ extern HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 extern ULONG WINAPI D3D8CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
+
+extern ULONG WINAPI D3D8CB_DestroySurface(IWineD3DSurface *pSurface);
 
 #endif /* __WINE_D3DX8_PRIVATE_H */

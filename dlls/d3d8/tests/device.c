@@ -490,7 +490,7 @@ static void test_refcount(void)
         /* check implicit back buffer */
         hr = IDirect3DSwapChain8_GetBackBuffer(pSwapChain, 0, 0, &pBackBuffer);
         todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
-        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_REFCOUNT( pSwapChain, 1);
         if(pBackBuffer)
         {
             todo_wine CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DDevice8, pDevice);
