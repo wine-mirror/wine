@@ -633,8 +633,8 @@ void LOCALE_InitRegistry(void)
     static const WCHAR acpW[] = {'A','C','P',0};
     static const WCHAR oemcpW[] = {'O','E','M','C','P',0};
     static const WCHAR maccpW[] = {'M','A','C','C','P',0};
+    static const WCHAR localeW[] = {'L','o','c','a','l','e',0};
     static const WCHAR lc_ctypeW[] = { 'L','C','_','C','T','Y','P','E',0 };
-    static const WCHAR lc_messagesW[] = { 'L','C','_','M','E','S','S','A','G','E','S',0 };
     static const WCHAR lc_monetaryW[] = { 'L','C','_','M','O','N','E','T','A','R','Y',0 };
     static const WCHAR lc_numericW[] = { 'L','C','_','N','U','M','E','R','I','C',0 };
     static const WCHAR lc_timeW[] = { 'L','C','_','T','I','M','E',0 };
@@ -688,7 +688,7 @@ void LOCALE_InitRegistry(void)
     if (!(hkey = create_registry_key()))
         return;  /* don't do anything if we can't create the registry key */
 
-    locale_update_registry( hkey, lc_messagesW, lcid_LC_MESSAGES, lc_messages_values,
+    locale_update_registry( hkey, localeW, lcid_LC_MESSAGES, lc_messages_values,
                             sizeof(lc_messages_values)/sizeof(lc_messages_values[0]) );
     locale_update_registry( hkey, lc_monetaryW, lcid_LC_MONETARY, lc_monetary_values,
                             sizeof(lc_monetary_values)/sizeof(lc_monetary_values[0]) );
