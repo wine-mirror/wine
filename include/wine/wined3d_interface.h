@@ -942,6 +942,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
     STDMETHOD_(UINT, GetTextureDimensions)(THIS) PURE;
     STDMETHOD_(void, ApplyStateChanges)(THIS_ DWORD const textureStates[WINED3D_HIGHEST_TEXTURE_STATE + 1], const DWORD samplerStates[WINED3D_HIGHEST_SAMPLER_STATE + 1]) PURE;
     /*** IWineD3DCubeTexture methods ***/
+    STDMETHOD_(void, Destroy)(THIS_ D3DCB_DESTROYSURFACEFN pFn) PURE;
     STDMETHOD(GetLevelDesc)(THIS_ UINT Level,WINED3DSURFACE_DESC* pDesc) PURE;
     STDMETHOD(GetCubeMapSurface)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, struct IWineD3DSurface** ppCubeMapSurface) PURE;
     STDMETHOD(LockRect)(THIS_ WINED3DCUBEMAP_FACES FaceType, UINT Level, WINED3DLOCKED_RECT* pLockedRect, CONST RECT* pRect, DWORD Flags) PURE;
@@ -980,6 +981,7 @@ DECLARE_INTERFACE_(IWineD3DCubeTexture,IWineD3DBaseTexture)
 #define IWineD3DCubeTexture_GetTextureDimensions(p)     (p)->lpVtbl->GetTextureDimensions(p)
 #define IWineD3DCubeTexture_ApplyStateChanges(p,a,b)   (p)->lpVtbl->ApplyStateChanges(p,a,b)
 /*** IWineD3DCubeTexture methods ***/
+#define IWineD3DCubeTexture_Destroy(p,a)               (p)->lpVtbl->Destroy(p,a)
 #define IWineD3DCubeTexture_GetLevelDesc(p,a,b)        (p)->lpVtbl->GetLevelDesc(p,a,b)
 #define IWineD3DCubeTexture_GetCubeMapSurface(p,a,b,c) (p)->lpVtbl->GetCubeMapSurface(p,a,b,c)
 #define IWineD3DCubeTexture_LockRect(p,a,b,c,d,e)      (p)->lpVtbl->LockRect(p,a,b,c,d,e)
