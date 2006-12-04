@@ -49,14 +49,6 @@ struct SysKeyboardImpl
     struct IDirectInputDevice2AImpl base;
 
     IDirectInputImpl*           dinput;
-
-    /* SysKeyboardAImpl */
-    LPDIDEVICEOBJECTDATA        data_queue;  /* buffer for 'GetDeviceData'. Alloc at
-                                                'Acquire', Free at 'Unacquire'              */
-    int                         queue_len;   /* size of the queue - set in 'SetProperty'    */
-    int                         queue_head;  /* position to write new event into queue      */
-    int                         queue_tail;  /* next event to read from queue               */
-    BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
 };
 
 static SysKeyboardImpl* current_lock = NULL; 
@@ -94,7 +86,7 @@ LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
     TRACE(" setting %02X to %02X\n", dik_code, DInputKeyState[dik_code]);
       
     EnterCriticalSection(&This->base.crit);
-    GEN_EVENT(dik_code, new_diks, hook->time, This->dinput->evsequence++);
+    queue_event((LPDIRECTINPUTDEVICE8A)This, dik_code, new_diks, hook->time, This->dinput->evsequence++);
     LeaveCriticalSection(&This->base.crit);
 
     if (This->base.hEvent) SetEvent(This->base.hEvent);
@@ -262,75 +254,11 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 
     set_dinput_hook(WH_KEYBOARD_LL, NULL);
 
-    /* Free the data queue */
-    HeapFree(GetProcessHeap(), 0, This->data_queue);
-
     DeleteCriticalSection(&This->base.crit);
+    HeapFree(GetProcessHeap(), 0, This->base.data_queue);
+    HeapFree(GetProcessHeap(), 0, This);
 
-    HeapFree(GetProcessHeap(),0,This);
     return DI_OK;
-}
-
-static HRESULT WINAPI SysKeyboardAImpl_SetProperty(
-	LPDIRECTINPUTDEVICE8A iface,REFGUID rguid,LPCDIPROPHEADER ph
-)
-{
-	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-
-	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-        TRACE("(size=%d,headersize=%d,obj=%d,how=%d\n",
-              ph->dwSize, ph->dwHeaderSize, ph->dwObj, ph->dwHow);
-	if (!HIWORD(rguid)) {
-		switch (LOWORD(rguid)) {
-		case (DWORD) DIPROP_BUFFERSIZE: {
-			LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
-
-			TRACE("(buffersize=%d)\n", pd->dwData);
-
-                        if (This->base.acquired)
-                           return DIERR_INVALIDPARAM;
-
-                        This->queue_len = pd->dwData;
-
-			break;
-		}
-		default:
-			WARN("Unknown type %p\n",rguid);
-			break;
-		}
-	}
-	return DI_OK;
-}
-
-static HRESULT WINAPI SysKeyboardAImpl_GetProperty(
-	LPDIRECTINPUTDEVICE8A iface,REFGUID rguid,LPDIPROPHEADER ph
-)
-{
-	SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-
-	TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-        TRACE("(size=%d,headersize=%d,obj=%d,how=%d\n",
-              ph->dwSize, ph->dwHeaderSize, ph->dwObj, ph->dwHow);
-	if (!HIWORD(rguid)) {
-		switch (LOWORD(rguid)) {
-		case (DWORD) DIPROP_BUFFERSIZE: {
-			LPDIPROPDWORD	pd = (LPDIPROPDWORD)ph;
-
-			TRACE("(buffersize=%d)\n", pd->dwData);
-
-                        if (This->base.acquired)
-                           return DIERR_INVALIDPARAM;
-
-                        pd->dwData = This->queue_len;
-
-			break;
-		}
-		default:
-			WARN("Unknown type %p\n",rguid);
-			break;
-		}
-	}
-	return DI_OK;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
@@ -362,61 +290,6 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     LeaveCriticalSection(&This->base.crit);
 
     return DI_OK;
-}
-
-static HRESULT WINAPI SysKeyboardAImpl_GetDeviceData(
-	LPDIRECTINPUTDEVICE8A iface,DWORD dodsize,LPDIDEVICEOBJECTDATA dod,
-	LPDWORD entries,DWORD flags
-)
-{
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    HRESULT ret = DI_OK;
-    int len;
-
-    TRACE("(%p) %p -> %p(%d) x%d, 0x%08x\n",
-          This, dod, entries, entries ? *entries : 0, dodsize, flags);
-
-    if (!This->base.acquired)
-        return DIERR_NOTACQUIRED;
-
-    if (!This->data_queue)
-        return DIERR_NOTBUFFERED;
-
-    if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3))
-        return DIERR_INVALIDPARAM;
-
-    MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
-    EnterCriticalSection(&This->base.crit);
-
-    len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0) +
-            This->queue_head - This->queue_tail;
-    if ((*entries != INFINITE) && (len > *entries)) len = *entries;
-
-    if (dod)
-    {
-        int i;
-        for(i = 0; i < len; i++)
-        {
-            int n = (This->queue_tail + i) % This->queue_len;
-            memcpy((char *)dod + dodsize * i, This->data_queue + n, dodsize);
-        }
-    }
-    *entries = len;
-
-    if (This->overflow)
-        ret = DI_BUFFEROVERFLOW;
-
-    if (!(flags & DIGDD_PEEK))
-    {
-        /* Empty buffer */
-        This->queue_tail = (This->queue_tail + len) % This->queue_len;
-        This->overflow = FALSE;
-    }
-
-    LeaveCriticalSection(&This->base.crit);
-
-    TRACE("Returning %d events queued\n", *entries);
-    return ret;
 }
 
 static HRESULT WINAPI SysKeyboardAImpl_EnumObjects(
@@ -485,16 +358,6 @@ static HRESULT WINAPI SysKeyboardAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     }
     current_lock = This;
 
-    if (This->queue_len > 0)
-    {
-        This->data_queue = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                     This->queue_len * sizeof(*(This->data_queue)));
-        This->queue_head = 0;
-        This->queue_tail = 0;
-        This->overflow = FALSE;
-    } else
-        This->data_queue = NULL;
-
     set_dinput_hook(WH_KEYBOARD_LL, KeyboardCallback);
 
     return DI_OK;
@@ -516,11 +379,6 @@ static HRESULT WINAPI SysKeyboardAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
         current_lock = NULL;
     else
         ERR("this != current_lock\n");
-
-    if (This->queue_len >= 0) {
-        HeapFree(GetProcessHeap(), 0, This->data_queue);
-        This->data_queue = NULL;
-    }
 
     return DI_OK;
 }
@@ -688,12 +546,12 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 	SysKeyboardAImpl_Release,
 	SysKeyboardAImpl_GetCapabilities,
 	SysKeyboardAImpl_EnumObjects,
-	SysKeyboardAImpl_GetProperty,
-	SysKeyboardAImpl_SetProperty,
+	IDirectInputDevice2AImpl_GetProperty,
+	IDirectInputDevice2AImpl_SetProperty,
 	SysKeyboardAImpl_Acquire,
 	SysKeyboardAImpl_Unacquire,
 	SysKeyboardAImpl_GetDeviceState,
-	SysKeyboardAImpl_GetDeviceData,
+	IDirectInputDevice2AImpl_GetDeviceData,
 	IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
@@ -730,12 +588,12 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 	XCAST(Release)SysKeyboardAImpl_Release,
 	XCAST(GetCapabilities)SysKeyboardAImpl_GetCapabilities,
 	SysKeyboardWImpl_EnumObjects,
-	XCAST(GetProperty)SysKeyboardAImpl_GetProperty,
-	XCAST(SetProperty)SysKeyboardAImpl_SetProperty,
+	XCAST(GetProperty)IDirectInputDevice2AImpl_GetProperty,
+	XCAST(SetProperty)IDirectInputDevice2AImpl_SetProperty,
 	XCAST(Acquire)SysKeyboardAImpl_Acquire,
 	XCAST(Unacquire)SysKeyboardAImpl_Unacquire,
 	XCAST(GetDeviceState)SysKeyboardAImpl_GetDeviceState,
-	XCAST(GetDeviceData)SysKeyboardAImpl_GetDeviceData,
+	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
 	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
