@@ -2490,6 +2490,16 @@ static HRESULT WINAPI IWineD3DImpl_GetParent(IWineD3D *iface, IUnknown **pParent
     return WINED3D_OK;
 }
 
+ULONG WINAPI D3DCB_DefaultDestroySurface(IWineD3DSurface *pSurface) {
+    IUnknown* surfaceParent;
+    TRACE("(%p) call back\n", pSurface);
+
+    /* Now, release the parent, which will take care of cleaning up the surface for us */
+    IWineD3DSurface_GetParent(pSurface, &surfaceParent);
+    IUnknown_Release(surfaceParent);
+    return IUnknown_Release(surfaceParent);
+}
+
 /**********************************************************
  * IWineD3D VTbl follows
  **********************************************************/

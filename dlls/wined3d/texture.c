@@ -58,30 +58,11 @@ static ULONG WINAPI IWineD3DTextureImpl_Release(IWineD3DTexture *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->resource.ref);
     ref = InterlockedDecrement(&This->resource.ref);
     if (ref == 0) {
-        int i;
-
-        TRACE("(%p) : Cleaning up\n",This);
-        for (i = 0; i < This->baseTexture.levels; i++) {
-            if (This->surfaces[i] != NULL) {
-                /* Because the surfaces were created using a callback we need to release there parent otehrwise we leave the parent hanging */
-                IUnknown* surfaceParent;
-                /* Clean out the texture name we gave to the surface so that the surface doesn't try and release it */
-                IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], 0, 0);
-                /* Cleanup the container */
-                IWineD3DSurface_SetContainer(This->surfaces[i], 0);
-                /* Now, release the parent, which will take care of cleaning up the surface for us */
-                IWineD3DSurface_GetParent(This->surfaces[i], &surfaceParent);
-                IUnknown_Release(surfaceParent);
-                IUnknown_Release(surfaceParent);
-            }
-        }
-        TRACE("(%p) : cleaning up base texture\n", This);
-        IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *)iface);
-        /* free the object */
-        HeapFree(GetProcessHeap(), 0, This);
+        IWineD3DTexture_Destroy(iface, D3DCB_DefaultDestroySurface);
     }
     return ref;
 }
+
 
 /* ****************************************************
    IWineD3DTexture IWineD3DResource parts follow
@@ -246,6 +227,25 @@ static void WINAPI IWineD3DTextureImpl_ApplyStateChanges(IWineD3DTexture *iface,
 /* *******************************************
    IWineD3DTexture IWineD3DTexture parts follow
    ******************************************* */
+static void WINAPI IWineD3DTextureImpl_Destroy(IWineD3DTexture *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroySurface) {
+    IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
+    int i;
+
+    TRACE("(%p) : Cleaning up\n",This);
+    for (i = 0; i < This->baseTexture.levels; i++) {
+        if (This->surfaces[i] != NULL) {
+            /* Clean out the texture name we gave to the surface so that the surface doesn't try and release it */
+            IWineD3DSurface_SetGlTextureDesc(This->surfaces[i], 0, 0);
+            IWineD3DSurface_SetContainer(This->surfaces[i], 0);
+            D3DCB_DestroySurface(This->surfaces[i]);
+        }
+    }
+    TRACE("(%p) : cleaning up base texture\n", This);
+    IWineD3DBaseTextureImpl_CleanUp((IWineD3DBaseTexture *)iface);
+    /* free the object */
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
 static HRESULT WINAPI IWineD3DTextureImpl_GetLevelDesc(IWineD3DTexture *iface, UINT Level, WINED3DSURFACE_DESC* pDesc) {
     IWineD3DTextureImpl *This = (IWineD3DTextureImpl *)iface;
 
@@ -343,6 +343,7 @@ const IWineD3DTextureVtbl IWineD3DTexture_Vtbl =
     IWineD3DTextureImpl_GetTextureDimensions,
     IWineD3DTextureImpl_ApplyStateChanges,
     /* IWineD3DTexture */
+    IWineD3DTextureImpl_Destroy,
     IWineD3DTextureImpl_GetLevelDesc,
     IWineD3DTextureImpl_GetSurfaceLevel,
     IWineD3DTextureImpl_LockRect,

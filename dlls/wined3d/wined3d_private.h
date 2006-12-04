@@ -416,6 +416,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
 #define WINE_D3D8_CAPABLE(gl_info) WINE_D3D7_CAPABLE(gl_info) && (gl_info->supported[ARB_MULTISAMPLE] && gl_info->supported[ARB_TEXTURE_BORDER_CLAMP])
 #define WINE_D3D9_CAPABLE(gl_info) WINE_D3D8_CAPABLE(gl_info) && (gl_info->supported[ARB_FRAGMENT_PROGRAM] && gl_info->supported[ARB_VERTEX_SHADER])
 
+/* Default callbacks for implicit object destruction */
+extern ULONG WINAPI D3DCB_DefaultDestroySurface(IWineD3DSurface *pSurface);
+
 /*****************************************************************************
  * Internal representation of a light
  */
