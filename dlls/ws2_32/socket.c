@@ -1814,139 +1814,301 @@ INT WINAPI WS_getsockopt(SOCKET s, INT level,
 
     TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, *optlen);
-    /* SO_OPENTYPE does not require a valid socket handle. */
-    if (level == WS_SOL_SOCKET && optname == WS_SO_OPENTYPE)
-    {
-        if (!optlen || *optlen < sizeof(int) || !optval)
-        {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
-        *(int *)optval = get_per_thread_data()->opentype;
-        *optlen = sizeof(int);
-        TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
-        return 0;
-    }
 
-    if (level == WS_SOL_SOCKET && optname == WS_SO_MAX_MSG_SIZE)
+    switch(level)
     {
-        if(!optlen || *optlen < sizeof(int) || !optval)
+    case WS_SOL_SOCKET:
+    {
+        switch(optname)
         {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
-        TRACE("getting global SO_MAX_MSG_SIZE = 65507\n");
-        *(int *)optval = 65507;
-        *optlen = sizeof(int);
-        return 0;
-    }
+        /* Handle common cases. The special cases are below, sorted
+         * alphabetically */
+        case WS_SO_ACCEPTCONN:
+        case WS_SO_BROADCAST:
+        case WS_SO_DEBUG:
+        case WS_SO_ERROR:
+        case WS_SO_KEEPALIVE:
+        case WS_SO_OOBINLINE:
+        case WS_SO_RCVBUF:
+        case WS_SO_SNDBUF:
+        case WS_SO_TYPE:
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+            convert_sockopt(&level, &optname);
+            if (getsockopt(fd,(int) level, optname, optval,
+                        (unsigned int *)optlen) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            release_sock_fd( s, fd );
+            return ret;
 
+        case WS_SO_DONTLINGER:
+        {
+            struct linger lingval;
+            unsigned int len = sizeof(struct linger);
+
+            if (!optlen || *optlen < sizeof(BOOL)|| !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+
+            if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            else
+            {
+                *(BOOL *)optval = (lingval.l_onoff) ? FALSE : TRUE;
+                *optlen = sizeof(BOOL);
+            }
+
+            release_sock_fd( s, fd );
+            return ret;
+        }
+
+        /* As mentioned in setsockopt, Windows ignores this, so we
+         * always return true here */
+        case WS_SO_DONTROUTE:
+            if (!optlen || *optlen < sizeof(BOOL) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            *(BOOL *)optval = TRUE;
+            *optlen = sizeof(BOOL);
+            return 0;
+
+        case WS_SO_LINGER:
+        {
+            struct linger lingval;
+            unsigned int len = sizeof(struct linger);
+
+            /* struct linger and LINGER have different sizes */
+            if (!optlen || *optlen < sizeof(LINGER) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+
+            if (getsockopt(fd, SOL_SOCKET, SO_LINGER, &lingval, &len) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            else
+            {
+                ((LINGER *)optval)->l_onoff = lingval.l_onoff;
+                ((LINGER *)optval)->l_linger = lingval.l_linger;
+                *optlen = sizeof(struct linger);
+            }
+
+            release_sock_fd( s, fd );
+            return ret;
+        }
+
+        case WS_SO_MAX_MSG_SIZE:
+            if (!optlen || *optlen < sizeof(int) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            TRACE("getting global SO_MAX_MSG_SIZE = 65507\n");
+            *(int *)optval = 65507;
+            *optlen = sizeof(int);
+            return 0;
+
+        /* SO_OPENTYPE does not require a valid socket handle. */
+        case WS_SO_OPENTYPE:
+            if (!optlen || *optlen < sizeof(int) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            *(int *)optval = get_per_thread_data()->opentype;
+            *optlen = sizeof(int);
+            TRACE("getting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
+            return 0;
+
+#ifdef SO_RCVTIMEO
+        case WS_SO_RCVTIMEO:
+#endif
+#ifdef SO_SNDTIMEO
+        case WS_SO_SNDTIMEO:
+#endif
+#if defined(SO_RCVTIMEO) || defined(SO_SNDTIMEO)
+        {
+            struct timeval tv;
+            unsigned int len = sizeof(struct timeval);
+
+            if (!optlen || *optlen < sizeof(int)|| !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+
+            convert_sockopt(&level, &optname);
+            if (getsockopt(fd,(int) level, optname, &tv, &len) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            else
+            {
+                *(int *)optval = tv.tv_sec * 1000 + tv.tv_usec / 1000;
+                *optlen = sizeof(int);
+            }
+
+            release_sock_fd( s, fd );
+            return ret;
+        }
+#endif
+        /* As mentioned in setsockopt, the windows style SO_REUSEADDR is
+         * not possible in Unix, so always return false here. */
+        case WS_SO_REUSEADDR:
+            if (!optlen || *optlen < sizeof(int) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            *(int *)optval = 0;
+            *optlen = sizeof(int);
+            return 0;
+
+        default:
+            TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
+            SetLastError(WSAENOPROTOOPT);
+            return SOCKET_ERROR;
+        } /* end switch(optname) */
+    }/* end case WS_SOL_SOCKET */
 #ifdef HAVE_IPX
-    if(level == NSPROTO_IPX)
+    case NSPROTO_IPX:
     {
-    	struct WS_sockaddr_ipx addr;
-	IPX_ADDRESS_DATA *data;
-	int namelen;
-	switch(optname)
-	{
-	    case IPX_PTYPE:
-		fd = get_sock_fd( s, 0, NULL );
+        struct WS_sockaddr_ipx addr;
+        IPX_ADDRESS_DATA *data;
+        int namelen;
+        switch(optname)
+        {
+        case IPX_PTYPE:
+            if ((fd = get_sock_fd( s, 0, NULL )) == -1) return SOCKET_ERROR;
 #ifdef SOL_IPX
-		if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, (unsigned int*)optlen) == -1)
-		{
-		    return SOCKET_ERROR;
-		}
+            if(getsockopt(fd, SOL_IPX, IPX_TYPE, optval, (unsigned int*)optlen) == -1)
+            {
+                ret = SOCKET_ERROR;
+            }
 #else
-                {
-                    struct ipx val;
-                    socklen_t len=sizeof(struct ipx);
-
-                    if(getsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, &len) == -1 )
-                        return SOCKET_ERROR;
+            {
+                struct ipx val;
+                socklen_t len=sizeof(struct ipx);
+                if(getsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, &len) == -1 )
+                    ret = SOCKET_ERROR;
+                else
                     *optval = (int)val.ipx_pt;
-                }
+            }
 #endif
-		TRACE("ptype: %d (fd: %d)\n", *(int*)optval, fd);
-    		release_sock_fd( s, fd );
-	
-		return 0;
-	    case IPX_ADDRESS:
-		/*
-		*  On a Win2000 system with one network card there are usually three ipx devices one with a speed of 28.8kbps, 10Mbps and 100Mbps.
-		*  Using this call you can then retrieve info about this all. In case of Linux it is a bit different. Usually you have
-		*  only "one" device active and further it is not possible to query things like the linkspeed.
-		*/
-		FIXME("IPX_ADDRESS\n");
-		namelen = sizeof(struct WS_sockaddr_ipx);
-		memset(&addr, 0, sizeof(struct WS_sockaddr_ipx));
-		WS_getsockname(s, (struct WS_sockaddr*)&addr, &namelen);
+            TRACE("ptype: %d (fd: %d)\n", *(int*)optval, fd);
+            release_sock_fd( s, fd );
+            return ret;
 
-		data = (IPX_ADDRESS_DATA*)optval;
-                memcpy(data->nodenum,&addr.sa_nodenum,sizeof(data->nodenum));
-                memcpy(data->netnum,&addr.sa_netnum,sizeof(data->netnum));
-		data->adapternum = 0;
-		data->wan = FALSE; /* We are not on a wan for now .. */
-		data->status = FALSE; /* Since we are not on a wan, the wan link isn't up */
-		data->maxpkt = 1467; /* This value is the default one, at least on Win2k/WinXP */
-		data->linkspeed = 100000; /* Set the line speed in 100bit/s to 10 Mbit; note 1MB = 1000kB in this case */
-		return 0;	
-	    case IPX_MAX_ADAPTER_NUM:
-		FIXME("IPX_MAX_ADAPTER_NUM\n");
-    		*(int*)optval = 1; /* As noted under IPX_ADDRESS we have just one card. */
+        case IPX_ADDRESS:
+            /*
+            *  On a Win2000 system with one network card there are usually
+            *  three ipx devices one with a speed of 28.8kbps, 10Mbps and 100Mbps.
+            *  Using this call you can then retrieve info about this all.
+            *  In case of Linux it is a bit different. Usually you have
+            *  only "one" device active and further it is not possible to
+            *  query things like the linkspeed.
+            */
+            FIXME("IPX_ADDRESS\n");
+            namelen = sizeof(struct WS_sockaddr_ipx);
+            memset(&addr, 0, sizeof(struct WS_sockaddr_ipx));
+            WS_getsockname(s, (struct WS_sockaddr*)&addr, &namelen);
 
-		return 0;
-	    default:
-		FIXME("IPX optname:%x\n", optname);
-		return SOCKET_ERROR;
-	}
-    }
+            data = (IPX_ADDRESS_DATA*)optval;
+                    memcpy(data->nodenum,&addr.sa_nodenum,sizeof(data->nodenum));
+                    memcpy(data->netnum,&addr.sa_netnum,sizeof(data->netnum));
+            data->adapternum = 0;
+            data->wan = FALSE; /* We are not on a wan for now .. */
+            data->status = FALSE; /* Since we are not on a wan, the wan link isn't up */
+            data->maxpkt = 1467; /* This value is the default one, at least on Win2k/WinXP */
+            data->linkspeed = 100000; /* Set the line speed in 100bit/s to 10 Mbit;
+                                       * note 1MB = 1000kB in this case */
+            return 0;
+
+        case IPX_MAX_ADAPTER_NUM:
+            FIXME("IPX_MAX_ADAPTER_NUM\n");
+            *(int*)optval = 1; /* As noted under IPX_ADDRESS we have just one card. */
+            return 0;
+
+        default:
+            FIXME("IPX optname:%x\n", optname);
+            return SOCKET_ERROR;
+        }/* end switch(optname) */
+    } /* end case NSPROTO_IPX */
 #endif
-
-    if( (fd = get_sock_fd( s, 0, NULL )) == -1)
+    /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */
+    case WS_IPPROTO_TCP:
+        switch(optname)
+        {
+        case WS_TCP_NODELAY:
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+            convert_sockopt(&level, &optname);
+            if (getsockopt(fd,(int) level, optname, optval,
+                        (unsigned int *)optlen) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
+                ret = SOCKET_ERROR;
+            }
+            release_sock_fd( s, fd );
+            return ret;
+        }
+        FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);
         return SOCKET_ERROR;
 
-    if (!convert_sockopt(&level, &optname)) {
-        SetLastError(WSAENOPROTOOPT);	/* Unknown option */
-        ret = SOCKET_ERROR;
-    } else {
-        struct timeval tv;
-        struct linger lingval;
-        unsigned int len, *plen = (unsigned int*)optlen;
-        char *pval = optval;
-        if(level == SOL_SOCKET && is_timeout_option(optname)) {
-            len = sizeof(tv);
-            plen = &len;
-            pval = (char *) &tv;
-        } else if( level == SOL_SOCKET && optname == SO_LINGER) {
-            len = sizeof(lingval);
-            plen = &len;
-            pval = (char *) &lingval;
-        }
-        if (getsockopt(fd, (int) level, optname, pval, plen) != 0 ) {
-            SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
-            ret = SOCKET_ERROR;
-        } else if(level == SOL_SOCKET && is_timeout_option(optname)) {
-            if( *optlen >= sizeof(INT) ) {
-                *optlen = sizeof(INT);
-                *(INT*)optval = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-            } else {
-                SetLastError(WSAEFAULT);
+    case WS_IPPROTO_IP:
+        switch(optname)
+        {
+        case WS_IP_ADD_MEMBERSHIP:
+        case WS_IP_DROP_MEMBERSHIP:
+#ifdef IP_HDRINCL
+        case WS_IP_HDRINCL:
+#endif
+        case WS_IP_MULTICAST_IF:
+        case WS_IP_MULTICAST_LOOP:
+        case WS_IP_MULTICAST_TTL:
+        case WS_IP_OPTIONS:
+        case WS_IP_TOS:
+        case WS_IP_TTL:
+            if ( (fd = get_sock_fd( s, 0, NULL )) == -1)
+                return SOCKET_ERROR;
+            convert_sockopt(&level, &optname);
+            if (getsockopt(fd,(int) level, optname, optval,
+                        (unsigned int *)optlen) != 0 )
+            {
+                SetLastError((errno == EBADF) ? WSAENOTSOCK : wsaErrno());
                 ret = SOCKET_ERROR;
             }
-        } else if( level == SOL_SOCKET && optname == SO_LINGER) {
-            if( *optlen >=  sizeof( LINGER) ) {
-                (( LINGER *) optval)->l_onoff = lingval.l_onoff;
-                (( LINGER *) optval)->l_linger = lingval.l_linger;
-            } else {
-                SetLastError(WSAEFAULT);
-                ret = SOCKET_ERROR;
-            }
+            release_sock_fd( s, fd );
+            return ret;
         }
-    }
-    release_sock_fd( s, fd );
-    return ret;
-}
+        FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
+        return SOCKET_ERROR;
 
+    default:
+        FIXME("Unknown level: 0x%08x\n", level);
+        return SOCKET_ERROR;
+    } /* end switch(level) */
+}
 
 /***********************************************************************
  *		htonl			(WINSOCK.8)

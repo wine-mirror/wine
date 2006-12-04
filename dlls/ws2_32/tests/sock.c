@@ -1417,6 +1417,8 @@ static void test_extendedSocketOptions()
     struct sockaddr_in sa;
     int sa_len = sizeof(struct sockaddr_in);
     int optval, optlen = sizeof(int), ret;
+    BOOL bool_opt_val;
+    LINGER linger_val;
 
     if(WSAStartup(MAKEWORD(2,0), &wsa)){
         trace("Winsock failed: 0x%08x. Aborting test\n", WSAGetLastError());
@@ -1442,10 +1444,41 @@ static void test_extendedSocketOptions()
         return;
     }
 
-    ret = getsockopt(sock, SOL_SOCKET, SO_MAX_MSG_SIZE, (char *)&optval, (int *)&optlen);
+    ret = getsockopt(sock, SOL_SOCKET, SO_MAX_MSG_SIZE, (char *)&optval, &optlen);
 
     ok(ret == 0, "getsockopt failed to query SO_MAX_MSG_SIZE, return value is 0x%08x\n", ret);
     ok(optval == 65507, "SO_MAX_MSG_SIZE reported %d, expected 65507\n", optval);
+
+    optlen = sizeof(LINGER);
+    ret = getsockopt(sock, SOL_SOCKET, SO_LINGER, (char *)&linger_val, &optlen);
+    todo_wine{
+    ok(ret == SOCKET_ERROR, "getsockopt should fail for UDP sockets but return value is 0x%08x\n", ret);
+    }
+
+    closesocket(sock);
+
+    if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
+        trace("Creating the socket failed: 0x%08x\n", WSAGetLastError());
+        WSACleanup();
+        return;
+    }
+
+    if(bind(sock, (struct sockaddr *) &sa, sa_len) < 0){
+        trace("Failed to bind socket: 0x%08x\n", WSAGetLastError());
+        closesocket(sock);
+        WSACleanup();
+        return;
+    }
+
+    ret = getsockopt(sock, SOL_SOCKET, SO_LINGER, (char *)&linger_val, &optlen);
+    ok(ret == 0, "getsockopt failed to query SO_LINGER, return value is 0x%08x\n", ret);
+
+    optlen = sizeof(BOOL);
+    ret = getsockopt(sock, SOL_SOCKET, SO_DONTLINGER, (char *)&bool_opt_val, &optlen);
+    ok(ret == 0, "getsockopt failed to query SO_DONTLINGER, return value is 0x%08x\n", ret);
+    ok((linger_val.l_onoff && !bool_opt_val) || (!linger_val.l_onoff && bool_opt_val),
+            "Return value of SO_DONTLINGER is %d, but SO_LINGER returned l_onoff == %d.\n",
+            bool_opt_val, linger_val.l_onoff);
 
     closesocket(sock);
     WSACleanup();
