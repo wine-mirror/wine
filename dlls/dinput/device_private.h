@@ -64,28 +64,6 @@ extern DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAF
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 
-/* Used to fill events in the queue */
-#define GEN_EVENT(offset,data,xtime,seq)					\
-{										\
-  /* If queue_len > 0, queuing is requested -> TRACE the event queued */	\
-  if (This->queue_len > 0) {							\
-    int nq;									\
-    TRACE(" queueing %d at offset %d (queue head %d / size %d)\n", 		\
-	  (int) (data), (int) (offset),                           		\
-	  (int) (This->queue_head), (int) (This->queue_len));			\
-										\
-    nq = (This->queue_head+1) % This->queue_len;				\
-    if ((offset >= 0) && (nq != This->queue_tail)) {				\
-      This->data_queue[This->queue_head].dwOfs = offset;			\
-      This->data_queue[This->queue_head].dwData = data;				\
-      This->data_queue[This->queue_head].dwTimeStamp = xtime;			\
-      This->data_queue[This->queue_head].dwSequence = seq;			\
-      This->queue_head = nq;							\
-    } else                                                                      \
-      This->overflow = TRUE;                                                    \
-  }										\
-}
-
 /**
  * Callback Data used by specific callback 
  *  for EnumObject on 'W' interfaces
