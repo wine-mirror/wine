@@ -140,9 +140,6 @@ struct JoystickImpl
 	LPDIDATAFORMAT			df;
 	DataFormat			*transform;	/* wine to user format converter */
 	int				*offsets;	/* object offsets */
-        LPDIDEVICEOBJECTDATA 		data_queue;
-        int				queue_head, queue_tail, queue_len;
-	BOOL				overflow;
 	DIJOYSTATE2			js;
 
 	/* Force feedback variables */
@@ -532,7 +529,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	IDirectInputDevice8_SendForceFeedbackCommand(iface, DISFFC_RESET);
 
 	/* Free the data queue */
-	HeapFree(GetProcessHeap(),0,This->data_queue);
+	HeapFree(GetProcessHeap(), 0, This->base.data_queue);
 
 	/* Free the DataFormat */
 	HeapFree(GetProcessHeap(), 0, This->df->rgodf);
@@ -896,7 +893,8 @@ static void joy_polldev(JoystickImpl *This) {
 		return;
 	      }
               This->js.rgbButtons[btn] = ie.value?0x80:0x00;
-              GEN_EVENT(offset,This->js.rgbButtons[btn],ie.time.tv_usec,(This->dinput->evsequence)++);
+              queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgbButtons[btn],
+                          ie.time.tv_usec, This->dinput->evsequence++);
             }
             break;
 	case EV_ABS:
@@ -906,55 +904,67 @@ static void joy_polldev(JoystickImpl *This) {
 	    switch (ie.code) {
 	    case ABS_X:
 		This->js.lX = map_axis(This,ABS_X,ie.value);
-		GEN_EVENT(offset,This->js.lX,ie.time.tv_usec,(This->dinput->evsequence)++);
+		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lX,
+                            ie.time.tv_usec, This->dinput->evsequence++);
 		break;
 	    case ABS_Y:
 		This->js.lY = map_axis(This,ABS_Y,ie.value);
-		GEN_EVENT(offset,This->js.lY,ie.time.tv_usec,(This->dinput->evsequence)++);
+		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lY,
+                            ie.time.tv_usec, This->dinput->evsequence++);
 		break;
 	    case ABS_Z:
 		This->js.lZ = map_axis(This,ABS_Z,ie.value);
-		GEN_EVENT(offset,This->js.lZ,ie.time.tv_usec,(This->dinput->evsequence)++);
+		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lZ,
+                            ie.time.tv_usec, This->dinput->evsequence++);
 		break;
 	    case ABS_RX:
 		This->js.lRx = map_axis(This,ABS_RX,ie.value);
-		GEN_EVENT(offset,This->js.lRx,ie.time.tv_usec,(This->dinput->evsequence)++);
+		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lRx,
+                            ie.time.tv_usec, This->dinput->evsequence++);
 		break;
 	    case ABS_RY:
 		This->js.lRy = map_axis(This,ABS_RY,ie.value);
-		GEN_EVENT(offset,This->js.lRy,ie.time.tv_usec,(This->dinput->evsequence)++);
+		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lRy,
+                            ie.time.tv_usec, This->dinput->evsequence++);
 		break;
 	    case ABS_RZ:
 		This->js.lRz = map_axis(This,ABS_RZ,ie.value);
-		GEN_EVENT(offset,This->js.lRz,ie.time.tv_usec,(This->dinput->evsequence)++);
+		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lRz,
+                            ie.time.tv_usec, This->dinput->evsequence++);
 		break;
 	    case ABS_THROTTLE:
                 This->js.rglSlider[0] = map_axis(This,ABS_THROTTLE,ie.value);
-                GEN_EVENT(offset,This->js.rglSlider[0],ie.time.tv_usec,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rglSlider[0],
+                            ie.time.tv_usec, This->dinput->evsequence++);
                 break;
 	    case ABS_RUDDER:
                 This->js.rglSlider[1] = map_axis(This,ABS_RUDDER,ie.value);
-                GEN_EVENT(offset,This->js.rglSlider[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rglSlider[1],
+                            ie.time.tv_usec, This->dinput->evsequence++);
                 break;
 	    case ABS_HAT0X:
 	    case ABS_HAT0Y:
                 This->js.rgdwPOV[0] = map_pov(ie.value,ie.code==ABS_HAT0X);
-                GEN_EVENT(offset,This->js.rgdwPOV[0],ie.time.tv_usec,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[0],
+                            ie.time.tv_usec, This->dinput->evsequence++);
                 break;
 	    case ABS_HAT1X:
 	    case ABS_HAT1Y:
                 This->js.rgdwPOV[1] = map_pov(ie.value,ie.code==ABS_HAT1X);
-                GEN_EVENT(offset,This->js.rgdwPOV[1],ie.time.tv_usec,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[1],
+                            ie.time.tv_usec, This->dinput->evsequence++);
                 break;
 	    case ABS_HAT2X:
 	    case ABS_HAT2Y:
                 This->js.rgdwPOV[2] = map_pov(ie.value,ie.code==ABS_HAT2X);
-                GEN_EVENT(offset,This->js.rgdwPOV[2],ie.time.tv_usec,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[2],
+                            ie.time.tv_usec, This->dinput->evsequence++);
                 break;
 	    case ABS_HAT3X:
 	    case ABS_HAT3Y:
                 This->js.rgdwPOV[3] = map_pov(ie.value,ie.code==ABS_HAT3X);
-                GEN_EVENT(offset,This->js.rgdwPOV[3],ie.time.tv_usec,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[3],
+                            ie.time.tv_usec, This->dinput->evsequence++);
                 break;
 	    default:
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
@@ -1003,80 +1013,6 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
 }
 
 /******************************************************************************
-  *     GetDeviceData : gets buffered input data.
-  */
-static HRESULT WINAPI JoystickAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
-					      DWORD dodsize,
-					      LPDIDEVICEOBJECTDATA dod,
-					      LPDWORD entries,
-					      DWORD flags
-) {
-  JoystickImpl *This = (JoystickImpl *)iface;
-  DWORD len;
-  int nqtail;
-  HRESULT hr = DI_OK;
-
-  TRACE("(%p)->(dods=%d,entries=%d,fl=0x%08x)\n", This, dodsize, *entries, flags);
-
-  if (This->joyfd==-!1) {
-    WARN("not acquired\n");
-    return DIERR_NOTACQUIRED;
-  }
-
-  joy_polldev(This);
-  if (flags & DIGDD_PEEK)
-    FIXME("DIGDD_PEEK\n");
-
-  len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0)
-    + (This->queue_head - This->queue_tail);
-  if (len > *entries)
-    len = *entries;
-
-  if (dod == NULL) {
-    if (len)
-      TRACE("Application discarding %d event(s).\n", len);
-
-    *entries = len;
-    nqtail = This->queue_tail + len;
-    while (nqtail >= This->queue_len)
-      nqtail -= This->queue_len;
-  } else {
-    if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
-      ERR("Wrong structure size !\n");
-      return DIERR_INVALIDPARAM;
-  }
-
-    if (len)
-      TRACE("Application retrieving %d event(s).\n", len);
-
-    *entries = 0;
-    nqtail = This->queue_tail;
-    while (len) {
-      /* Copy the buffered data into the application queue */
-      memcpy((char *)dod + *entries * dodsize, This->data_queue + nqtail, dodsize);
-      /* Advance position */
-      nqtail++;
-      if (nqtail >= This->queue_len)
-        nqtail -= This->queue_len;
-      (*entries)++;
-      len--;
-    }
-  }
-
-  if (This->overflow) {
-    hr = DI_BUFFEROVERFLOW;
-    if (!(flags & DIGDD_PEEK)) {
-      This->overflow = FALSE;
-    }
-  }
-
-  if (!(flags & DIGDD_PEEK))
-    This->queue_tail = nqtail;
-
-  return hr;
-}
-
-/******************************************************************************
   *     SetProperty : change input device properties
   */
 static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
@@ -1096,20 +1032,6 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
 
   if (!HIWORD(rguid)) {
     switch (LOWORD(rguid)) {
-    case (DWORD) DIPROP_BUFFERSIZE: {
-      LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
-
-      TRACE("buffersize = %d\n", pd->dwData);
-      if (This->data_queue) {
-        This->data_queue = HeapReAlloc(GetProcessHeap(),0, This->data_queue, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
-      } else {
-        This->data_queue = HeapAlloc(GetProcessHeap(),0, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
-      }
-      This->queue_head = 0;
-      This->queue_tail = 0;
-      This->queue_len  = pd->dwData;
-      break;
-    }
     case (DWORD)DIPROP_RANGE: {
       LPCDIPROPRANGE	pr = (LPCDIPROPRANGE)ph;
 
@@ -1129,7 +1051,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
         }
       }
       fake_current_js_state(This);
-      return DI_OK;
+      break;
     }
     case (DWORD)DIPROP_DEADZONE: {
       LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
@@ -1147,14 +1069,13 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
         }
       }
       fake_current_js_state(This);
-      return DI_OK;
-    }
-    default:
-      FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
       break;
     }
+    default:
+      return IDirectInputDevice2AImpl_SetProperty(iface, rguid, ph);
+    }
   }
-  return 0;
+  return DI_OK;
 }
 
 static HRESULT WINAPI JoystickAImpl_GetCapabilities(
@@ -1392,14 +1313,6 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 
   if (!HIWORD(rguid)) {
     switch (LOWORD(rguid)) {
-    case (DWORD) DIPROP_BUFFERSIZE: {
-      LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-
-      TRACE(" return buffersize = %d\n",This->queue_len);
-      pd->dwData = This->queue_len;
-      break;
-    }
-
     case (DWORD) DIPROP_RANGE: {
       LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
       int obj = find_property_offset(This, pdiph);
@@ -1407,14 +1320,12 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 	pr->lMin = This->joydev->havemin[obj];
 	pr->lMax = This->joydev->havemax[obj];
 	TRACE("range(%d, %d) obj=%d\n", pr->lMin, pr->lMax, obj);
-	return DI_OK;
       }
       break;
     }
 
     default:
-      FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
-      break;
+      return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
     }
   }
 
@@ -1766,7 +1677,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAImpl_Acquire,
 	JoystickAImpl_Unacquire,
 	JoystickAImpl_GetDeviceState,
-	JoystickAImpl_GetDeviceData,
+	IDirectInputDevice2AImpl_GetDeviceData,
 	JoystickAImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
@@ -1808,7 +1719,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(Acquire)JoystickAImpl_Acquire,
 	XCAST(Unacquire)JoystickAImpl_Unacquire,
 	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
-	XCAST(GetDeviceData)JoystickAImpl_GetDeviceData,
+	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
 	XCAST(SetDataFormat)JoystickAImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,

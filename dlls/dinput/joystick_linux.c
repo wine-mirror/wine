@@ -106,8 +106,6 @@ struct JoystickImpl
 	DataFormat			*transform;	/* wine to user format converter */
 	int				*offsets;	/* object offsets */
 	ObjProps			*props;
-        LPDIDEVICEOBJECTDATA 		data_queue;
-        int				queue_head, queue_tail, queue_len;
 	char				*name;
 	DIDEVCAPS			devcaps;
 	LONG				deadzone;
@@ -681,7 +679,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     HeapFree(GetProcessHeap(),0,This->axis_map);
 
     /* Free the data queue */
-    HeapFree(GetProcessHeap(),0,This->data_queue);
+    HeapFree(GetProcessHeap(), 0, This->base.data_queue);
 
     /* Free the DataFormat */
     HeapFree(GetProcessHeap(), 0, This->user_df->rgodf);
@@ -916,7 +914,7 @@ static void joy_polldev(JoystickImpl *This) {
             int value = jse.value?0x80:0x00;
 
             This->js.rgbButtons[jse.number] = value;
-            GEN_EVENT(offset,value,jse.time,(This->dinput->evsequence)++);
+            queue_event((LPDIRECTINPUTDEVICE8A)This, offset, value, jse.time, This->dinput->evsequence++);
         } else if (jse.type & JS_EVENT_AXIS) {
             int number = This->axis_map[jse.number];	/* wine format object index */
             if (number < 12) {
@@ -983,7 +981,7 @@ static void joy_polldev(JoystickImpl *This) {
                     break;
                 }
 
-                GEN_EVENT(offset,value,jse.time,(This->dinput->evsequence)++);
+                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, value, jse.time, This->dinput->evsequence++);
             } else
                 WARN("axis %d not supported\n", number);
         }
@@ -1015,84 +1013,6 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     fill_DataFormat(ptr, &This->js, This->transform);
 
     return DI_OK;
-}
-
-/******************************************************************************
-  *     GetDeviceData : gets buffered input data.
-  */
-static HRESULT WINAPI JoystickAImpl_GetDeviceData(
-    LPDIRECTINPUTDEVICE8A iface,
-    DWORD dodsize,
-    LPDIDEVICEOBJECTDATA dod,
-    LPDWORD entries,
-    DWORD flags)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-    DWORD len;
-    int nqtail;
-    HRESULT hr = DI_OK;
-
-    TRACE("(%p)->(dods=%d,entries=%d,fl=0x%08x)\n", This, dodsize, *entries, flags);
-
-    if (!This->base.acquired) {
-        WARN("not acquired\n");
-        return DIERR_NOTACQUIRED;
-    }
-
-    EnterCriticalSection(&This->base.crit);
-
-    joy_polldev(This);
-
-    len = ((This->queue_head < This->queue_tail) ? This->queue_len : 0)
-        + (This->queue_head - This->queue_tail);
-    if (len > *entries)
-        len = *entries;
-
-    if (dod == NULL) {
-        if (len)
-            TRACE("Application discarding %d event(s).\n", len);
-
-        *entries = len;
-        nqtail = This->queue_tail + len;
-        while (nqtail >= This->queue_len)
-            nqtail -= This->queue_len;
-    } else {
-        if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3)) {
-            ERR("Wrong structure size !\n");
-            LeaveCriticalSection(&This->base.crit);
-            return DIERR_INVALIDPARAM;
-        }
-
-        if (len)
-            TRACE("Application retrieving %d event(s).\n", len);
-
-        *entries = 0;
-        nqtail = This->queue_tail;
-        while (len) {
-            /* Copy the buffered data into the application queue */
-            memcpy((char *)dod + *entries * dodsize, This->data_queue + nqtail, dodsize);
-            /* Advance position */
-            nqtail++;
-            if (nqtail >= This->queue_len)
-                nqtail -= This->queue_len;
-            (*entries)++;
-            len--;
-        }
-    }
-
-    if (This->overflow) {
-        hr = DI_BUFFEROVERFLOW;
-        if (!(flags & DIGDD_PEEK)) {
-            This->overflow = FALSE;
-        }
-    }
-
-    if (!(flags & DIGDD_PEEK))
-        This->queue_tail = nqtail;
-
-    LeaveCriticalSection(&This->base.crit);
-
-    return hr;
 }
 
 static int find_property(JoystickImpl * This, LPCDIPROPHEADER ph)
@@ -1134,18 +1054,6 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
 
     if (!HIWORD(rguid)) {
         switch (LOWORD(rguid)) {
-        case (DWORD) DIPROP_BUFFERSIZE: {
-            LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
-            TRACE("buffersize = %d\n", pd->dwData);
-            if (This->data_queue)
-                This->data_queue = HeapReAlloc(GetProcessHeap(),0, This->data_queue, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
-            else
-                This->data_queue = HeapAlloc(GetProcessHeap(),0, pd->dwData * sizeof(DIDEVICEOBJECTDATA));
-            This->queue_head = 0;
-            This->queue_tail = 0;
-            This->queue_len  = pd->dwData;
-            break;
-        }
         case (DWORD)DIPROP_RANGE: {
             LPCDIPROPRANGE	pr = (LPCDIPROPRANGE)ph;
             if (ph->dwHow == DIPH_DEVICE) {
@@ -1198,8 +1106,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
             break;
         }
         default:
-            FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
-            break;
+            return IDirectInputDevice2AImpl_SetProperty(iface, rguid, ph);
         }
     }
 
@@ -1417,12 +1324,6 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
 
     if (!HIWORD(rguid)) {
         switch (LOWORD(rguid)) {
-        case (DWORD) DIPROP_BUFFERSIZE: {
-            LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-            TRACE(" return buffersize = %d\n",This->queue_len);
-            pd->dwData = This->queue_len;
-            break;
-        }
         case (DWORD) DIPROP_RANGE: {
             LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
             int obj = find_property(This, pdiph);
@@ -1457,8 +1358,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
             break;
         }
         default:
-            FIXME("Unknown type %p (%s)\n",rguid,debugstr_guid(rguid));
-            break;
+            return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
         }
     }
 
@@ -1640,7 +1540,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAImpl_Acquire,
 	JoystickAImpl_Unacquire,
 	JoystickAImpl_GetDeviceState,
-	JoystickAImpl_GetDeviceData,
+	IDirectInputDevice2AImpl_GetDeviceData,
 	JoystickAImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
@@ -1682,7 +1582,7 @@ static const IDirectInputDevice8WVtbl SysJoystickWvt =
 	XCAST(Acquire)JoystickAImpl_Acquire,
 	XCAST(Unacquire)JoystickAImpl_Unacquire,
 	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
-	XCAST(GetDeviceData)JoystickAImpl_GetDeviceData,
+	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
 	XCAST(SetDataFormat)JoystickAImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
