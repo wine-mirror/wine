@@ -1261,9 +1261,7 @@ static void test_data_cache(void)
 
     /* unload the cached storage object, causing it to be reloaded */
     hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
-    todo_wine {
     ok_ole_success(hr, "IOleCache2_DiscardCache");
-    }
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok_ole_success(hr, "IViewObject_Draw");
 
@@ -1272,10 +1270,10 @@ static void test_data_cache(void)
     ok_ole_success(hr, "IPersistStorage_HandsOffStorage");
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
     ok_ole_success(hr, "IViewObject_Draw");
-    todo_wine {
     hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
     ok_ole_success(hr, "IOleCache2_DiscardCache");
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
+    todo_wine {
     ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
     }
 

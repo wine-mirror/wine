@@ -732,6 +732,13 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *This,
                                &This->stgmedium, stgmedium);
 }
 
+static inline HRESULT DataCacheEntry_DiscardData(DataCacheEntry *This)
+{
+    ReleaseStgMedium(&This->stgmedium);
+    This->data_cf = This->fmtetc.cfFormat;
+    return S_OK;
+}
+
 /*********************************************************
  * Method implementation for the  non delegating IUnknown
  * part of the DataCache class.
@@ -1327,7 +1334,7 @@ static HRESULT WINAPI DataCache_Load(
                         hr = DataCache_CreateEntry(This, &fmtetc, &cache_entry);
                     if (SUCCEEDED(hr))
                     {
-                        ReleaseStgMedium(&cache_entry->stgmedium);
+                        DataCacheEntry_DiscardData(cache_entry);
                         if (cache_entry->storage) IStorage_Release(cache_entry->storage);
                         cache_entry->storage = pStg;
                         IStorage_AddRef(pStg);
@@ -2016,7 +2023,7 @@ static HRESULT WINAPI DataCache_UpdateCache(
 	    DWORD           grfUpdf,
 	    LPVOID          pReserved)
 {
-  FIXME("stub\n");
+  FIXME("(%p, 0x%x, %p): stub\n", pDataObject, grfUpdf, pReserved);
   return E_NOTIMPL;
 }
 
@@ -2024,8 +2031,24 @@ static HRESULT WINAPI DataCache_DiscardCache(
             IOleCache2*     iface,
 	    DWORD           dwDiscardOptions)
 {
-  FIXME("stub\n");
-  return E_NOTIMPL;
+    DataCache *This = impl_from_IOleCache2(iface);
+    DataCacheEntry *cache_entry;
+    HRESULT hr = S_OK;
+
+    TRACE("(%d)\n", dwDiscardOptions);
+
+    if (dwDiscardOptions == DISCARDCACHE_SAVEIFDIRTY)
+        hr = DataCache_Save((IPersistStorage *)&This->lpvtblIPersistStorage,
+                            This->presentationStorage, TRUE);
+
+    LIST_FOR_EACH_ENTRY(cache_entry, &This->cache_list, DataCacheEntry, entry)
+    {
+        hr = DataCacheEntry_DiscardData(cache_entry);
+        if (FAILED(hr))
+            break;
+    }
+
+    return hr;
 }
 
 
