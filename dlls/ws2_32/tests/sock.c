@@ -1399,15 +1399,96 @@ static void test_select(void)
     ok ( (thread_handle != NULL), "CreateThread failed unexpectedly: %d\n", GetLastError());
 
     WaitForSingleObject (server_ready, INFINITE);
-    Sleep(2000);
+    Sleep(200);
     ret = closesocket(fdRead);
     ok ( (ret == 0), "closesocket failed unexpectedly: %d\n", ret);
 
-    WaitForSingleObject (thread_handle, TEST_TIMEOUT * 1000);
-    todo_wine {
+    WaitForSingleObject (thread_handle, 1000);
     ok ( (thread_params.ReadKilled), "closesocket did not wakeup select\n");
+
+}
+
+static DWORD WINAPI AcceptKillThread(select_thread_params *par)
+{
+    struct sockaddr_in address;
+    int len = sizeof(address);
+    SOCKET client_socket;
+
+    SetEvent(server_ready);
+    client_socket = accept(par->s, (struct sockaddr*) &address, &len);
+    if (client_socket != INVALID_SOCKET)
+        closesocket(client_socket);
+    par->ReadKilled = (client_socket == INVALID_SOCKET);
+    return 0;
+}
+
+static void test_accept(void)
+{
+    int ret;
+    SOCKET server_socket = INVALID_SOCKET;
+    struct sockaddr_in address;
+    select_thread_params thread_params;
+    HANDLE thread_handle = NULL;
+
+    server_socket = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_socket == INVALID_SOCKET)
+    {
+        trace("error creating server socket: %d\n", WSAGetLastError());
+        goto done;
     }
 
+    memset(&address, 0, sizeof(address));
+    address.sin_family = AF_INET;
+    ret = bind(server_socket, (struct sockaddr*) &address, sizeof(address));
+    if (ret != 0)
+    {
+        trace("error binding server socket: %d\n", WSAGetLastError());
+        goto done;
+    }
+
+    ret = listen(server_socket, 1);
+    if (ret != 0)
+    {
+        trace("error making server socket listen: %d\n", WSAGetLastError());
+        goto done;
+    }
+
+    server_ready = CreateEventW(NULL, TRUE, FALSE, NULL);
+    if (server_ready == INVALID_HANDLE_VALUE)
+    {
+        trace("error creating event: %d\n", GetLastError());
+        goto done;
+    }
+
+    thread_params.s = server_socket;
+    thread_params.ReadKilled = FALSE;
+    thread_handle = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) AcceptKillThread,
+        &thread_params, 0, NULL);
+    if (thread_handle == NULL)
+    {
+        trace("error creating thread: %d\n", GetLastError());
+        goto done;
+    }
+
+    WaitForSingleObject(server_ready, INFINITE);
+    Sleep(200);
+    ret = closesocket(server_socket);
+    if (ret != 0)
+    {
+        trace("closesocket failed: %d\n", WSAGetLastError());
+        goto done;
+    }
+
+    WaitForSingleObject(thread_handle, 1000);
+    ok(thread_params.ReadKilled, "closesocket did not wakeup accept\n");
+
+done:
+    if (thread_handle != NULL)
+        CloseHandle(thread_handle);
+    if (server_ready != INVALID_HANDLE_VALUE)
+        CloseHandle(server_ready);
+    if (server_socket != INVALID_SOCKET)
+        closesocket(server_socket);
 }
 
 static void test_extendedSocketOptions()
@@ -1513,6 +1594,7 @@ START_TEST( sock )
     test_WSAStringToAddressW();
 
     test_select();
+    test_accept();
 
     Exit();
 }
