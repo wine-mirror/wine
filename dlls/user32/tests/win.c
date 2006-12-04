@@ -3943,6 +3943,128 @@ static void test_SetWindowLong(void)
     }
 }
 
+static void test_ShowWindow(void)
+{
+    HWND hwnd;
+    DWORD style;
+    RECT rcMain, rc;
+    LPARAM ret;
+
+    SetRect(&rcMain, 120, 120, 210, 210);
+
+    hwnd = CreateWindowEx(0, "MainWindowClass", NULL,
+                          WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                          WS_MAXIMIZEBOX | WS_POPUP,
+                          rcMain.left, rcMain.top,
+                          rcMain.right - rcMain.left, rcMain.bottom - rcMain.top,
+                          0, 0, 0, NULL);
+    assert(hwnd);
+
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(style & WS_DISABLED), "window should not be disabled\n");
+    ok(!(style & WS_VISIBLE), "window should not be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+
+    ret = ShowWindow(hwnd, SW_SHOW);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(style & WS_DISABLED), "window should not be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+
+    ret = ShowWindow(hwnd, SW_MINIMIZE);
+    ok(ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(style & WS_DISABLED), "window should not be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(style & WS_MINIMIZE, "window should be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(!EqualRect(&rcMain, &rc), "rects shouldn't match\n");
+
+    ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(!(style & WS_DISABLED), "window should not be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+
+    ret = EnableWindow(hwnd, FALSE);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_DISABLED, "window should be disabled\n");
+
+    ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_MINIMIZE, 0);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_DISABLED, "window should be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+
+    ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_MAXIMIZE, 0);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_DISABLED, "window should be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+
+    ret = ShowWindow(hwnd, SW_MINIMIZE);
+    ok(ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_DISABLED, "window should be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(style & WS_MINIMIZE, "window should be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(!EqualRect(&rcMain, &rc), "rects shouldn't match\n");
+
+    ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_DISABLED, "window should be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(style & WS_MINIMIZE, "window should be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(!EqualRect(&rcMain, &rc), "rects shouldn't match\n");
+
+    ret = ShowWindow(hwnd, SW_RESTORE);
+    ok(ret, "not expected ret: %lu\n", ret);
+    style = GetWindowLong(hwnd, GWL_STYLE);
+    ok(style & WS_DISABLED, "window should be disabled\n");
+    ok(style & WS_VISIBLE, "window should be visible\n");
+    ok(!(style & WS_MINIMIZE), "window should not be minimized\n");
+    ok(!(style & WS_MAXIMIZE), "window should not be maximized\n");
+    GetWindowRect(hwnd, &rc);
+    ok(EqualRect(&rcMain, &rc), "rects should match\n");
+
+    ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    ok(IsWindow(hwnd), "window should exist\n");
+
+    ret = EnableWindow(hwnd, TRUE);
+    ok(ret, "not expected ret: %lu\n", ret);
+
+    ret = DefWindowProc(hwnd, WM_SYSCOMMAND, SC_CLOSE, 0);
+    ok(!ret, "not expected ret: %lu\n", ret);
+    ok(!IsWindow(hwnd), "window should not exist\n");
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -4019,6 +4141,7 @@ START_TEST(win)
     test_redrawnow();
     test_csparentdc();
     test_SetWindowLong();
+    test_ShowWindow();
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);

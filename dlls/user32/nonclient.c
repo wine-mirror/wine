@@ -1541,7 +1541,9 @@ LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
  */
 LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    TRACE("Handling WM_SYSCOMMAND %x %lx\n", wParam, lParam );
+    TRACE("hwnd %p WM_SYSCOMMAND %x %lx\n", hwnd, wParam, lParam );
+
+    if (!IsWindowEnabled( hwnd )) return 0;
 
     if (HOOK_CallHooks( WH_CBT, HCBT_SYSCOMMAND, wParam, lParam, TRUE ))
         return 0;
