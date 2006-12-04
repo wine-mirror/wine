@@ -139,6 +139,30 @@ inline static void list_init( struct list *list )
     list->next = list->prev = list;
 }
 
+/* move all elements from src to the tail of dst */
+inline static void list_move_tail( struct list *dst, struct list *src )
+{
+    if (list_empty(src)) return;
+
+    dst->prev->next = src->next;
+    src->next->prev = dst->prev;
+    dst->prev = src->prev;
+    src->prev->next = dst;
+    list_init(src);
+}
+
+/* move all elements from src to the head of dst */
+inline static void list_move_head( struct list *dst, struct list *src )
+{
+    if (list_empty(src)) return;
+
+    dst->next->prev = src->prev;
+    src->prev->next = dst->next;
+    dst->next = src->next;
+    src->next->prev = dst;
+    list_init(src);
+}
+
 /* iterate through the list */
 #define LIST_FOR_EACH(cursor,list) \
     for ((cursor) = (list)->next; (cursor) != (list); (cursor) = (cursor)->next)
