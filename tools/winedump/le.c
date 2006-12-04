@@ -253,7 +253,7 @@ static void dump_le_objects( const IMAGE_VXD_HEADER *le )
         if(pobj->o32_flags & 0x0001)
             printf("\tReadable\n");
         if(pobj->o32_flags & 0x0002)
-            printf("\tWriteable\n");
+            printf("\tWritable\n");
         if(pobj->o32_flags & 0x0004)
             printf("\tExecutable\n");
         if(pobj->o32_flags & 0x0008)

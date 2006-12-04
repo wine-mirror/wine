@@ -1024,7 +1024,7 @@ __ASM_GLOBAL_FUNC(call_server_func,
     "pushl %esi\n\t"
     "movl 16(%ebp), %eax\n\t"   /* Get stack size */
     "subl %eax, %esp\n\t"       /* Make room in stack for arguments */
-    "andl $~15, %esp\n\t"	/* Make sure stack has 16-byte alignment for MacOS X */
+    "andl $~15, %esp\n\t"	/* Make sure stack has 16-byte alignment for Mac OS X */
     "movl %esp, %edi\n\t"
     "movl %eax, %ecx\n\t"
     "movl 12(%ebp), %esi\n\t"

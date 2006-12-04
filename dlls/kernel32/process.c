@@ -1806,7 +1806,7 @@ UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
     startup.dwFlags = STARTF_USESHOWWINDOW;
     startup.wShowWindow = nCmdShow;
 
-    /* cmdline needs to be writeable for CreateProcess */
+    /* cmdline needs to be writable for CreateProcess */
     if (!(cmdline = HeapAlloc( GetProcessHeap(), 0, strlen(lpCmdLine)+1 ))) return 0;
     strcpy( cmdline, lpCmdLine );
 

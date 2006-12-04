@@ -499,7 +499,7 @@ extern HPALETTE PALETTE_Init(void);
 /* region.c */
 extern BOOL REGION_FrameRgn( HRGN dest, HRGN src, INT x, INT y );
 
-/* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal enties */
+/* Undocumented value for DIB's iUsage: Indicates a mono DIB w/o pal entries */
 #define DIB_PAL_MONO 2
 #endif /* __WINE_GDI_PRIVATE_H */
 

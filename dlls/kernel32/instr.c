@@ -643,10 +643,10 @@ DWORD INSTR_EmulateInstruction( EXCEPTION_RECORD *rec, CONTEXT86 *context )
 	      int seg = outp ? context->SegDs : context->SegEs;  /* FIXME: is this right? */
 
 	      if (outp)
-		/* FIXME: Check segment readable.  */
+		/* FIXME: Check segment is readable.  */
 		(void)0;
 	      else
-		/* FIXME: Check segment writeable.  */
+		/* FIXME: Check segment is writable.  */
 		(void)0;
 
 	      if (repX)

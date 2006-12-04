@@ -90,7 +90,7 @@ static inline int get_fdzero(void)
  * the address argument in this case.
  *
  * As Wine code occasionally relies on the Linux behaviour, e.g. to
- * be able to map non-relocateable PE executables to their proper
+ * be able to map non-relocatable PE executables to their proper
  * start addresses, or to map the DOS memory to 0, this routine
  * emulates the Linux behaviour by checking whether the desired
  * address range is still available, and placing the mapping there

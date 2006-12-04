@@ -327,7 +327,7 @@ BlockChainStream* Storage32Impl_SmallBlocksToBigBlocks(
 /****************************************************************************
  * StgStreamImpl definitions.
  *
- * This class imlements the IStream32 inteface and represents a stream
+ * This class implements the IStream32 interface and represents a stream
  * located inside a storage object.
  */
 struct StgStreamImpl

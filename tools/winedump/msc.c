@@ -843,7 +843,7 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 	    break;
 
 	case S_PUB_V3:
-        /* not completly sure of those two anyway */
+        /* not completely sure of those two anyway */
 	case S_PUB_FUNC1_V3:
 	case S_PUB_FUNC2_V3:
             printf("\tS-Public%s V3 '%s' %04x:%08x type:%08x\n",

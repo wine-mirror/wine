@@ -326,7 +326,7 @@ VOID WINAPI GetSystemInfo(
 	memset(PF,0,sizeof(PF));
 
 	/* choose sensible defaults ...
-	 * FIXME: perhaps overrideable with precompiler flags?
+	 * FIXME: perhaps overridable with precompiler flags?
 	 */
 	cachedsi.u.s.wProcessorArchitecture     = PROCESSOR_ARCHITECTURE_INTEL;
 	cachedsi.dwPageSize 			= getpagesize();
@@ -341,7 +341,7 @@ VOID WINAPI GetSystemInfo(
 	cachedsi.wProcessorLevel		= 5; /* 586 */
 	cachedsi.wProcessorRevision		= 0;
 
-	cache = 1; /* even if there is no more info, we now have a cacheentry */
+	cache = 1; /* even if there is no more info, we now have a cache entry */
 	memcpy(si,&cachedsi,sizeof(*si));
 
 	/* Hmm, reasonable processor feature defaults? */

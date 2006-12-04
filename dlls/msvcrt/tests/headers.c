@@ -17,7 +17,7 @@
  *
  * This file contains tests to ensure the consistency between symbols
  * defined in the regular msvcrt headers, and the corresponding duplicated
- * symbol defined in msvcrt.h (prefixed by MSVCRT_).
+ * symbols defined in msvcrt.h (prefixed by MSVCRT_).
  */
 
 #include "dos.h"

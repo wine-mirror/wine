@@ -219,7 +219,7 @@ static BOOL is_close_enabled(HWND hwnd, HMENU hSysMenu)
 /**********************************************************************
  * 			MDI_GetWindow
  *
- * returns "activateable" child different from the current or zero
+ * returns "activatable" child different from the current or zero
  */
 static HWND MDI_GetWindow(MDICLIENTINFO *clientInfo, HWND hWnd, BOOL bNext,
                             DWORD dwStyleMask )

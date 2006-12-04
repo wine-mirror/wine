@@ -385,7 +385,7 @@ BOOL16 WINAPI IsBadHugeWritePtr16( SEGPTR ptr, DWORD size )
     if (!sel) return TRUE;
     wine_ldt_get_entry( sel, &entry );
     if (wine_ldt_is_empty( &entry )) return TRUE;
-    /* check for writeable data segment, ignoring expand-down and accessed flags */
+    /* check for writable data segment, ignoring expand-down and accessed flags */
     if ((entry.HighWord.Bits.Type ^ WINE_LDT_FLAGS_DATA) & ~5) return TRUE;
     if (size && (OFFSETOF(ptr) + size - 1 > wine_ldt_get_limit( &entry ))) return TRUE;
     return FALSE;

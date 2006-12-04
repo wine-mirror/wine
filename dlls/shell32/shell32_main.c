@@ -120,7 +120,7 @@ LPWSTR* WINAPI CommandLineToArgvW(LPCWSTR lpCmdline, int* numargs)
         return argv;
     }
 
-    /* to get a writeable copy */
+    /* to get a writable copy */
     argc=0;
     bcount=0;
     in_quotes=0;
@@ -356,7 +356,7 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
          (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
         return FALSE;
 
-    /* windows initializes this values regardless of the flags */
+    /* windows initializes these values regardless of the flags */
     if (psfi != NULL)
     {
         psfi->szDisplayName[0] = '\0';
