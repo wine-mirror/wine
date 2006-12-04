@@ -328,13 +328,18 @@ static FARPROC find_forwarded_export( HMODULE module, const char *forward )
     DWORD exp_size;
     WINE_MODREF *wm;
     WCHAR mod_name[32];
-    const char *end = strchr(forward, '.');
+    const char *end = strrchr(forward, '.');
     FARPROC proc = NULL;
 
     if (!end) return NULL;
-    if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name) - sizeof(dllW)) return NULL;
+    if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name)) return NULL;
     ascii_to_unicode( mod_name, forward, end - forward );
-    memcpy( mod_name + (end - forward), dllW, sizeof(dllW) );
+    mod_name[end - forward] = 0;
+    if (!strchrW( mod_name, '.' ))
+    {
+        if ((end - forward) * sizeof(WCHAR) >= sizeof(mod_name) - sizeof(dllW)) return NULL;
+        memcpy( mod_name + (end - forward), dllW, sizeof(dllW) );
+    }
 
     if (!(wm = find_basename_module( mod_name )))
     {
