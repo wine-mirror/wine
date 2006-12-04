@@ -200,12 +200,23 @@ HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior, 
 
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
-        IUnknown_Release(d3dSurface->parentDevice);
-        d3dSurface->parentDevice = NULL;
+        d3dSurface->isImplicit = TRUE;
+        /* Implicit surfaces are created with an refcount of 0 */
+        IUnknown_Release((IUnknown *)d3dSurface);
     } else {
         *ppSurface = NULL;
     }
     return res;
+}
+
+ULONG WINAPI D3D8CB_DestroyRenderTarget(IWineD3DSurface *pSurface) {
+    IDirect3DSurface8Impl* surfaceParent;
+    TRACE("(%p) call back\n", pSurface);
+
+    IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
+    surfaceParent->isImplicit = FALSE;
+    /* Surface had refcount of 0 GetParent addrefed to 1, so 1 Release is enough */
+    return IDirect3DSurface8_Release((IDirect3DSurface8*) surfaceParent);
 }
 
 /* Callback for creating the inplicite swapchain when the device is created */
@@ -279,8 +290,9 @@ HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, IUnknown *pSup
                                          (D3DFORMAT)Format, MultiSample, (IDirect3DSurface8 **)&d3dSurface);
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
-        IUnknown_Release(d3dSurface->parentDevice);
-        d3dSurface->parentDevice = NULL;
+        d3dSurface->isImplicit = TRUE;
+        /* Implicit surfaces are created with an refcount of 0 */
+        IUnknown_Release((IUnknown *)d3dSurface);
     }
     return res;
 }
@@ -290,7 +302,8 @@ ULONG WINAPI D3D8CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
     TRACE("(%p) call back\n", pSurface);
 
     IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
-    IDirect3DSurface8_Release((IDirect3DSurface8*) surfaceParent);
+    surfaceParent->isImplicit = FALSE;
+    /* Surface had refcount of 0 GetParent addrefed to 1, so 1 Release is enough */
     return IDirect3DSurface8_Release((IDirect3DSurface8*) surfaceParent);
 }
 

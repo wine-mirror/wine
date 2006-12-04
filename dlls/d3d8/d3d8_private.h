@@ -179,6 +179,9 @@ struct IDirect3DDevice8Impl
 
 /* FIXME: Move *baseVertexIndex somewhere sensible like wined3d */
     UINT                          baseVertexIndex;
+
+    /* Avoids recursion with nested ReleaseRef to 0 */
+    BOOL                          inDestruction;
 };
 
 /* ---------------- */
@@ -252,6 +255,9 @@ struct IDirect3DSurface8Impl
 
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
+
+    /* Flags an implicit surface */
+    BOOL                        isImplicit;
 };
 
 /* ------------------ */
@@ -598,6 +604,8 @@ extern HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 extern ULONG WINAPI D3D8CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
+
+extern ULONG WINAPI D3D8CB_DestroyRenderTarget (IWineD3DSurface *pSurface);
 
 extern ULONG WINAPI D3D8CB_DestroySurface(IWineD3DSurface *pSurface);
 
