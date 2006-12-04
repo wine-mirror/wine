@@ -864,6 +864,7 @@ static void test_token_attr(void)
         LookupPrivilegeName(NULL, &Privileges->Privileges[i].Luid, Name, &NameLen);
         trace("\t%s, 0x%x\n", Name, Privileges->Privileges[i].Attributes);
     }
+    HeapFree(GetProcessHeap(), 0, Privileges);
 }
 
 typedef union _MAX_SID
@@ -1309,6 +1310,9 @@ static void test_LookupAccountName(void)
         ok(sid_size == 0, "Expected 0, got %d\n", sid_size);
         ok(domain_size == 0, "Expected 0, got %d\n", domain_size);
     }
+
+    HeapFree(GetProcessHeap(), 0, psid);
+    HeapFree(GetProcessHeap(), 0, domain);
 }
 
 START_TEST(security)
