@@ -780,7 +780,7 @@ static HRESULT WINAPI domdoc_createProcessingInstruction(
 
     return S_OK;
 #else
-    FIXME("Libxml 2.6.15 or greater required.");
+    FIXME("Libxml 2.6.15 or greater required.\n");
     return E_NOTIMPL;
 #endif
 }
