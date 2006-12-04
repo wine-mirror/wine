@@ -1273,9 +1273,7 @@ static void test_data_cache(void)
     hr = IOleCache2_DiscardCache(pOleCache, DISCARDCACHE_NOSAVE);
     ok_ole_success(hr, "IOleCache2_DiscardCache");
     hr = IViewObject_Draw(pViewObject, DVASPECT_ICON, -1, NULL, NULL, NULL, hdcMem, &rcBounds, NULL, draw_continue, 0xdeadbeef);
-    todo_wine {
     ok(hr == OLE_E_BLANK, "IViewObject_Draw with uncached aspect should have returned OLE_E_BLANK instead of 0x%08x\n", hr);
-    }
 
     DeleteDC(hdcMem);
 

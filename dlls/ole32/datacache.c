@@ -739,6 +739,15 @@ static inline HRESULT DataCacheEntry_DiscardData(DataCacheEntry *This)
     return S_OK;
 }
 
+static inline void DataCacheEntry_HandsOffStorage(DataCacheEntry *This)
+{
+    if (This->storage)
+    {
+        IStorage_Release(This->storage);
+        This->storage = NULL;
+    }
+}
+
 /*********************************************************
  * Method implementation for the  non delegating IUnknown
  * part of the DataCache class.
@@ -1469,6 +1478,7 @@ static HRESULT WINAPI DataCache_HandsOffStorage(
             IPersistStorage* iface)
 {
   DataCache *this = impl_from_IPersistStorage(iface);
+  DataCacheEntry *cache_entry;
 
   TRACE("(%p)\n", iface);
 
@@ -1477,6 +1487,9 @@ static HRESULT WINAPI DataCache_HandsOffStorage(
     IStorage_Release(this->presentationStorage);
     this->presentationStorage = NULL;
   }
+
+  LIST_FOR_EACH_ENTRY(cache_entry, &this->cache_list, DataCacheEntry, entry)
+    DataCacheEntry_HandsOffStorage(cache_entry);
 
   return S_OK;
 }
