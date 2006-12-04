@@ -46,6 +46,9 @@ static FILE *input_file;
 static const char *separator_chars;
 static const char *comment_chars;
 
+/* valid characters in ordinal names */
+static const char valid_ordname_chars[] = "/$:-_@?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
 static const char * const TypeNames[TYPE_NBTYPES] =
 {
     "variable",     /* TYPE_VARIABLE */
@@ -447,6 +450,7 @@ static const char *parse_spec_flags( ORDDEF *odp )
 static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
 {
     const char *token;
+    size_t len;
 
     ORDDEF *odp = add_entry_point( spec );
     memset( odp, 0, sizeof(*odp) );
@@ -469,6 +473,13 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     odp->name = xstrdup( token );
     odp->lineno = current_line;
     odp->ordinal = ordinal;
+
+    len = strspn( odp->name, valid_ordname_chars );
+    if (len < strlen( odp->name ))
+    {
+        error( "Character '%c' is not allowed in exported name '%s'\n", odp->name[len], odp->name );
+        goto error;
+    }
 
     switch(odp->type)
     {
