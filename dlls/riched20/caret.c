@@ -78,41 +78,81 @@ int ME_GetTextLengthEx(ME_TextEditor *editor, GETTEXTLENGTHEX *how)
 }
 
 
-void ME_SetSelection(ME_TextEditor *editor, int from, int to)
+int ME_SetSelection(ME_TextEditor *editor, int from, int to)
 {
+  int selectionEnd = 0;
+  const int len = ME_GetTextLength(editor);
+
+  /* all negative values are effectively the same */
+  if (from < 0)
+    from = -1;
+  if (to < 0)
+    to = -1;
+
+  /* select all */
   if (from == 0 && to == -1)
   {
-    editor->pCursors[1].pRun = ME_FindItemFwd(editor->pBuffer->pFirst, diRun); 
+    editor->pCursors[1].pRun = ME_FindItemFwd(editor->pBuffer->pFirst, diRun);
     editor->pCursors[1].nOffset = 0; 
     editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun); 
-    editor->pCursors[0].nOffset = 0; 
+    editor->pCursors[0].nOffset = 0;
     ME_InvalidateSelection(editor);
     ME_ClearTempStyle(editor);
-    return;
+    return len + 1;
   }
-  if (from == -1 && to == -1)	/*-1,-1 means put the selection at the end of the text */
+
+  /* if both values are equal and also out of bound, that means to */
+  /* put the selection at the end of the text */
+  if ((from == to) && (to < 0 || to > len))
+  {
+    selectionEnd = 1;
+  }
+  else
+  {
+    /* if from is negative and to is positive then selection is */
+    /* deselected and caret moved to end of the current selection */
+    if (from < 0)
+    {
+      int start, end;
+      ME_GetSelection(editor, &start, &end);
+      editor->pCursors[1] = editor->pCursors[0];
+      ME_Repaint(editor);
+      ME_ClearTempStyle(editor);
+      return end;
+    }
+
+    /* adjust to if it's a negative value */
+    if (to < 0)
+      to = len + 1;
+
+    /* flip from and to if they are reversed */
+    if (from>to)
+    {
+      int tmp = from;
+      from = to;
+      to = tmp;
+    }
+
+    /* after fiddling with the values, we find from > len && to > len */
+    if (from > len)
+      selectionEnd = 1;
+    /* special case with to too big */
+    else if (to > len)
+      to = len + 1;
+  }
+
+  if (selectionEnd)
   {
     editor->pCursors[1].pRun = editor->pCursors[0].pRun = ME_FindItemBack(editor->pBuffer->pLast, diRun);
     editor->pCursors[1].nOffset = editor->pCursors[0].nOffset = 0;
     ME_InvalidateSelection(editor);
     ME_ClearTempStyle(editor);
-    return;
+    return len;
   }
-  if (from == -1)
-  {
-    editor->pCursors[1] = editor->pCursors[0]; 
-    ME_Repaint(editor);
-    ME_ClearTempStyle(editor);
-    return;
-  }
-  if (from>to)
-  {
-    int tmp = from;
-    from = to;
-    to = tmp;
-  }
+
   ME_RunOfsFromCharOfs(editor, from, &editor->pCursors[1].pRun, &editor->pCursors[1].nOffset);
-  ME_RunOfsFromCharOfs(editor, to, &editor->pCursors[0].pRun, &editor->pCursors[0].nOffset);  
+  ME_RunOfsFromCharOfs(editor, to, &editor->pCursors[0].pRun, &editor->pCursors[0].nOffset);
+  return to;
 }
 
 

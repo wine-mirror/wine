@@ -1615,70 +1615,17 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   }
   case EM_EXSETSEL:
   {
-    int start, end;
-    int swap;
+    int end;
     CHARRANGE range = *(CHARRANGE *)lParam;
 
     TRACE("EM_EXSETSEL (%d,%d)\n", range.cpMin, range.cpMax);
 
-    /* all negative values are effectively the same */
-    if (range.cpMin < 0)
-      range.cpMin = -1;
-    if (range.cpMax < 0)
-      range.cpMax = -1;
-
-    if (range.cpMin != range.cpMax)
-    {
-      /* if cpMin is negative and cpMax is positive then selection is */
-      /* deselected and caret moved to end of the current selection */
-      if (range.cpMin < 0)
-      {
-        ME_GetSelection(editor, &start, &end);
-        range.cpMin = end;
-        range.cpMax = end;
-      }
-      else
-      {
-        /* adjust cpMax if it's a negative value */
-        if (range.cpMax < 0)
-          range.cpMax = ME_GetTextLength(editor) + 1;
-
-        /* flip cpMin and cpMax if they are reversed */
-        if (range.cpMin > range.cpMax)
-        {
-          swap = range.cpMin;
-          range.cpMin = range.cpMax;
-          range.cpMax = swap;
-        }
-
-        /* special case with cpMin too big */
-        if (range.cpMin > ME_GetTextLength(editor))
-        {
-          range.cpMin = ME_GetTextLength(editor);
-          range.cpMax = ME_GetTextLength(editor);
-        }
-        /* special case with cpMax too big */
-        else if (range.cpMax > ME_GetTextLength(editor))
-          range.cpMax = ME_GetTextLength(editor) + 1;
-      }
-    }
-    else
-    {
-      /* special case with cpMin == cpMax */
-      /* make sure both values are within bounds */
-      if (range.cpMax < 0 || range.cpMax > ME_GetTextLength(editor))
-      {
-        range.cpMin = ME_GetTextLength(editor);
-        range.cpMax = range.cpMin;
-      }
-    }
-
     ME_InvalidateSelection(editor);
-    ME_SetSelection(editor, range.cpMin, range.cpMax);
+    end = ME_SetSelection(editor, range.cpMin, range.cpMax);
     ME_InvalidateSelection(editor);
     ME_SendSelChange(editor);
 
-    return range.cpMax;
+    return end;
   }
   case EM_SHOWSCROLLBAR:
   {
