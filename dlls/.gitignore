@@ -91,7 +91,6 @@ dpnet/libdpnet.def
 dsound/libdsound.def
 gdi32/libgdi32.def
 glu32/libglu32.def
-glut32/libglut32.def
 hid/libhid.def
 hlink/libhlink.def
 icmp/libicmp.def

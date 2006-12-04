@@ -440,12 +440,6 @@ then
 			     $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXext -lX11 -lm $X_EXTRA_LIBS
 		)
 	     fi
-
-             dnl Check for glut32 library.
-             AC_CHECK_LIB(glut,glutMainLoop,
-                       [AC_SUBST(GLUT_LIBS,"-lglut -lXmu -lXi")
-                        AC_SUBST(GLUT32FILES,'$(GLUT32FILES)')],,
-                        $OPENGL_LIBS $X_LIBS $X_PRE_LIBS -lXmu -lXi -lX11 $X_EXTRA_LIBS)
          else
              wine_cv_opengl_headers_found="no"
 	 fi
@@ -1596,7 +1590,6 @@ dlls/dxguid/Makefile
 dlls/gdi32/Makefile
 dlls/gdi32/tests/Makefile
 dlls/glu32/Makefile
-dlls/glut32/Makefile
 dlls/gphoto2.ds/Makefile
 dlls/hhctrl.ocx/Makefile
 dlls/hid/Makefile

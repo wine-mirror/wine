@@ -32,7 +32,6 @@ my %altnames = ();
 my %special_dlls =
 (
   "glu32"    => "GLU32FILES",
-  "glut32"   => "GLUT32FILES",
   "opengl32" => "OPENGLFILES",
   "wined3d"  => "OPENGLFILES",
   "winex11.drv" => "XFILES",
