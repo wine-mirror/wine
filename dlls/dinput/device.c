@@ -448,6 +448,35 @@ BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) 
 }
 
 /******************************************************************************
+ *	queue_event - add new event to the ring queue
+ */
+
+void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq)
+{
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+    int next_pos;
+
+    if (!This->queue_len || This->overflow || ofs < 0) return;
+
+    next_pos = (This->queue_head + 1) % This->queue_len;
+    if (next_pos == This->queue_tail)
+    {
+        TRACE(" queue overflowed\n");
+        This->overflow = TRUE;
+        return;
+    }
+
+    TRACE(" queueing %d at offset %d (queue head %d / size %d)\n",
+          data, ofs, This->queue_head, This->queue_len);
+
+    This->data_queue[This->queue_head].dwOfs       = ofs;
+    This->data_queue[This->queue_head].dwData      = data;
+    This->data_queue[This->queue_head].dwTimeStamp = time;
+    This->data_queue[This->queue_head].dwSequence  = seq;
+    This->queue_head = next_pos;
+}
+
+/******************************************************************************
  *	Acquire
  */
 
@@ -459,6 +488,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     EnterCriticalSection(&This->crit);
     res = This->acquired ? S_FALSE : DI_OK;
     This->acquired = 1;
+    if (res == DI_OK)
+        This->queue_head = This->queue_tail = This->overflow = 0;
     LeaveCriticalSection(&This->crit);
 
     return res;
@@ -558,10 +589,15 @@ ULONG WINAPI IDirectInputDevice2AImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     ULONG ref;
+
     ref = InterlockedDecrement(&(This->ref));
-    if (ref == 0)
-        HeapFree(GetProcessHeap(),0,This);
-    return ref;
+    if (ref) return ref;
+
+    DeleteCriticalSection(&This->crit);
+    HeapFree(GetProcessHeap(), 0, This->data_queue);
+    HeapFree(GetProcessHeap(), 0, This);
+
+    return DI_OK;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_QueryInterface(
@@ -675,17 +711,81 @@ HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(
     return DI_OK;
 }
 
+/******************************************************************************
+ *	GetProperty
+ */
+
 HRESULT WINAPI IDirectInputDevice2AImpl_GetProperty(
-	LPDIRECTINPUTDEVICE8A iface,
-	REFGUID rguid,
-	LPDIPROPHEADER pdiph)
+	LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPDIPROPHEADER pdiph)
 {
-    FIXME("(this=%p,%s,%p): stub!\n",
-	  iface, debugstr_guid(rguid), pdiph);
-    
-    if (TRACE_ON(dinput))
-	_dump_DIPROPHEADER(pdiph);
-    
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+
+    TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
+    _dump_DIPROPHEADER(pdiph);
+
+    if (HIWORD(rguid)) return DI_OK;
+
+    switch (LOWORD(rguid))
+    {
+        case (DWORD) DIPROP_BUFFERSIZE:
+        {
+            LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+
+            if (pdiph->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+
+            pd->dwData = This->queue_len;
+            TRACE("buffersize = %d\n", pd->dwData);
+            break;
+        }
+        default:
+            WARN("Unknown property %s\n", debugstr_guid(rguid));
+            break;
+    }
+
+    return DI_OK;
+}
+
+/******************************************************************************
+ *	SetProperty
+ */
+
+HRESULT WINAPI IDirectInputDevice2AImpl_SetProperty(
+        LPDIRECTINPUTDEVICE8A iface, REFGUID rguid, LPCDIPROPHEADER pdiph)
+{
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+
+    TRACE("(%p) %s,%p\n", iface, debugstr_guid(rguid), pdiph);
+    _dump_DIPROPHEADER(pdiph);
+
+    if (HIWORD(rguid)) return DI_OK;
+
+    switch (LOWORD(rguid))
+    {
+        case (DWORD) DIPROP_BUFFERSIZE:
+        {
+            LPCDIPROPDWORD pd = (LPCDIPROPDWORD)pdiph;
+
+            if (pdiph->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+            if (This->acquired) return DIERR_ACQUIRED;
+
+            TRACE("buffersize = %d\n", pd->dwData);
+
+            EnterCriticalSection(&This->crit);
+            HeapFree(GetProcessHeap(), 0, This->data_queue);
+
+            This->data_queue = !pd->dwData ? NULL : HeapAlloc(GetProcessHeap(), 0,
+                                pd->dwData * sizeof(DIDEVICEOBJECTDATA));
+            This->queue_head = This->queue_tail = This->overflow = 0;
+            This->queue_len  = pd->dwData;
+
+            LeaveCriticalSection(&This->crit);
+            break;
+        }
+        default:
+            WARN("Unknown property %s\n", debugstr_guid(rguid));
+            return DIERR_UNSUPPORTED;
+    }
+
     return DI_OK;
 }
 
@@ -711,6 +811,59 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 	  iface, pdidoi, dwObj, dwHow);
     
     return DI_OK;
+}
+
+HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceData(
+        LPDIRECTINPUTDEVICE8A iface, DWORD dodsize, LPDIDEVICEOBJECTDATA dod,
+        LPDWORD entries, DWORD flags)
+{
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+    HRESULT ret = DI_OK;
+    int len;
+
+    TRACE("(%p) %p -> %p(%d) x%d, 0x%08x\n",
+          This, dod, entries, entries ? *entries : 0, dodsize, flags);
+
+    if (!This->acquired)
+        return DIERR_NOTACQUIRED;
+    if (!This->queue_len)
+        return DIERR_NOTBUFFERED;
+    if (dodsize < sizeof(DIDEVICEOBJECTDATA_DX3))
+        return DIERR_INVALIDPARAM;
+
+    IDirectInputDevice2_Poll(iface);
+    EnterCriticalSection(&This->crit);
+
+    len = This->queue_head - This->queue_tail;
+    if (len < 0) len += This->queue_len;
+
+    if ((*entries != INFINITE) && (len > *entries)) len = *entries;
+
+    if (dod)
+    {
+        int i;
+        for (i = 0; i < len; i++)
+        {
+            int n = (This->queue_tail + i) % This->queue_len;
+            memcpy((char *)dod + dodsize * i, This->data_queue + n, dodsize);
+        }
+    }
+    *entries = len;
+
+    if (This->overflow)
+        ret = DI_BUFFEROVERFLOW;
+
+    if (!(flags & DIGDD_PEEK))
+    {
+        /* Advance reading position */
+        This->queue_tail = (This->queue_tail + len) % This->queue_len;
+        This->overflow = FALSE;
+    }
+
+    LeaveCriticalSection(&This->crit);
+
+    TRACE("Returning %d events queued\n", *entries);
+    return ret;
 }
 
 HRESULT WINAPI IDirectInputDevice2AImpl_GetDeviceInfo(
