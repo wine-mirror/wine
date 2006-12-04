@@ -612,6 +612,8 @@ static void InternetCreateUrlA_test(void)
 	ok(len == strlen(CREATE_URL1), "Expected len %d, got %d\n", lstrlenA(CREATE_URL1), len);
 	ok(!strcmp(szUrl, CREATE_URL1), "Expected %s, got %s\n", CREATE_URL1, szUrl);
 
+	HeapFree(GetProcessHeap(), 0, szUrl);
+
 	memset(&urlComp, 0, sizeof(urlComp));
 	urlComp.dwStructSize = sizeof(URL_COMPONENTS);
 	urlComp.lpszScheme = https;
