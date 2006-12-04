@@ -214,12 +214,12 @@ static void test_info(void)
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, pVersionInfo );
     ok (boolret, "GetFileVersionInfoA failed: GetLastError = 0x%08x\n", GetLastError());
     if (!boolret)
-        return;
+        goto cleanup;
 
     boolret = VerQueryValueA( pVersionInfo, backslash, (LPVOID *)&pFixedVersionInfo, &uiLength );
     ok (boolret, "VerQueryValueA failed: GetLastError = 0x%08x\n", GetLastError());
     if (!boolret)
-        return;
+        goto cleanup;
 
     dwlVersion = (((DWORDLONG)pFixedVersionInfo->dwFileVersionMS) << 32) +
         pFixedVersionInfo->dwFileVersionLS;
@@ -234,6 +234,9 @@ static void test_info(void)
     boolret = VerQueryValueA( pVersionInfo, "\\", (LPVOID *)&pFixedVersionInfo, 0);
     ok (boolret, "VerQueryValue failed: GetLastError = 0x%08lx\n", GetLastError());
 #endif
+
+cleanup:
+    HeapFree( GetProcessHeap(), 0, pVersionInfo);
 }
 
 static void test_32bit_win(void)
