@@ -732,6 +732,20 @@ static HRESULT DataCacheEntry_SetData(DataCacheEntry *This,
                                &This->stgmedium, stgmedium);
 }
 
+static HRESULT DataCacheEntry_GetData(DataCacheEntry *This,
+                                      STGMEDIUM *stgmedium)
+{
+    if (stgmedium->tymed == TYMED_NULL && This->storage)
+    {
+        HRESULT hr = DataCacheEntry_LoadData(This);
+        if (FAILED(hr))
+            return hr;
+    }
+    if (stgmedium->tymed == TYMED_NULL)
+        return OLE_E_BLANK;
+    return copy_stg_medium(This->data_cf, stgmedium, &This->stgmedium);
+}
+
 static inline HRESULT DataCacheEntry_DiscardData(DataCacheEntry *This)
 {
     ReleaseStgMedium(&This->stgmedium);
@@ -921,104 +935,22 @@ static ULONG WINAPI DataCache_IDataObject_Release(
  *
  * Get Data from a source dataobject using format pformatetcIn->cfFormat
  * See Windows documentation for more details on GetData.
- * TODO: Currently only CF_METAFILEPICT is implemented
  */
 static HRESULT WINAPI DataCache_GetData(
 	    IDataObject*     iface,
 	    LPFORMATETC      pformatetcIn,
 	    STGMEDIUM*       pmedium)
 {
-  HRESULT hr = 0;
-  HRESULT hrRet = E_UNEXPECTED;
-  IPersistStorage *pPersistStorage = 0;
-  IStorage *pStorage = 0;
-  IStream *pStream = 0;
-  OLECHAR name[]={ 2, 'O', 'l', 'e', 'P', 'r', 'e', 's', '0', '0', '0', 0};
-  HGLOBAL hGlobalMF = 0;
-  void *mfBits = 0;
-  PresentationDataHeader pdh;
-  METAFILEPICT *mfPict;
-  HMETAFILE hMetaFile = 0;
+    DataCache *This = impl_from_IDataObject(iface);
+    DataCacheEntry *cache_entry;
 
-  if (pformatetcIn->cfFormat == CF_METAFILEPICT)
-  {
-    /* Get the Persist Storage */
+    memset(pmedium, 0, sizeof(*pmedium));
 
-    hr = IDataObject_QueryInterface(iface, &IID_IPersistStorage, (void**)&pPersistStorage);
+    cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetcIn);
+    if (!cache_entry)
+        return OLE_E_BLANK;
 
-    if (hr != S_OK)
-      goto cleanup;
-
-    /* Create a doc file to copy the doc to a storage */
-
-    hr = StgCreateDocfile(NULL, STGM_CREATE | STGM_READWRITE | STGM_SHARE_EXCLUSIVE, 0, &pStorage);
-
-    if (hr != S_OK)
-      goto cleanup;
-
-    /* Save it to storage */
-
-    hr = OleSave(pPersistStorage, pStorage, FALSE);
-
-    if (hr != S_OK)
-      goto cleanup;
-
-    /* Open the Presentation data srteam */
-
-    hr = IStorage_OpenStream(pStorage, name, 0, STGM_CREATE|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &pStream);
-
-    if (hr != S_OK)
-      goto cleanup;
-
-    /* Read the presentation header */
-
-    hr = IStream_Read(pStream, &pdh, sizeof(PresentationDataHeader), NULL);
-
-    if (hr != S_OK)
-      goto cleanup;
-
-    mfBits = HeapAlloc(GetProcessHeap(), 0, pdh.dwSize);
-
-    /* Read the Metafile bits */
-
-    hr = IStream_Read(pStream, mfBits, pdh.dwSize, NULL);
-
-    if (hr != S_OK)
-      goto cleanup;
-
-    /* Create the metafile and place it in the STGMEDIUM structure */
-
-    hMetaFile = SetMetaFileBitsEx(pdh.dwSize, mfBits);
-
-    hGlobalMF = GlobalAlloc(GMEM_SHARE|GMEM_MOVEABLE, sizeof(METAFILEPICT));
-    mfPict = (METAFILEPICT *)GlobalLock(hGlobalMF);
-    mfPict->hMF = hMetaFile;
-
-    GlobalUnlock(hGlobalMF);
-
-    pmedium->u.hGlobal = hGlobalMF;
-    pmedium->tymed = TYMED_MFPICT;
-    hrRet = S_OK;
-
-cleanup:
-
-    HeapFree(GetProcessHeap(), 0, mfBits);
-
-    if (pStream)
-      IStream_Release(pStream);
-
-    if (pStorage)
-      IStorage_Release(pStorage);
-
-    if (pPersistStorage)
-      IPersistStorage_Release(pPersistStorage);
-
-    return hrRet;
-  }
-
-  /* TODO: Other formats are not implemented */
-
-  return E_NOTIMPL;
+    return DataCacheEntry_GetData(cache_entry, pmedium);
 }
 
 static HRESULT WINAPI DataCache_GetDataHere(
