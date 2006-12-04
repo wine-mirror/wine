@@ -1367,6 +1367,7 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
     /*** IWineD3DBase methods ***/
     STDMETHOD(GetParent)(THIS_ IUnknown **pParent) PURE;
     /*** IDirect3DSwapChain9 methods ***/
+    STDMETHOD_(void, Destroy)(THIS_ D3DCB_DESTROYSURFACEFN pFn) PURE;
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice **ppDevice) PURE;
     STDMETHOD(Present)(THIS_ CONST RECT *pSourceRect, CONST RECT *pDestRect, HWND hDestWindowOverride, CONST RGNDATA *pDirtyRegion, DWORD dwFlags) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ IWineD3DSurface *pDestSurface) PURE;
@@ -1387,7 +1388,7 @@ DECLARE_INTERFACE_(IWineD3DSwapChain,IWineD3DBase)
 /*** IWineD3DBase methods ***/
 #define IWineD3DSwapChain_GetParent(p,a)               (p)->lpVtbl->GetParent(p,a)
 /*** IWineD3DSwapChain methods ***/
-
+#define IWineD3DSwapChain_Destroy(p,a)                 (p)->lpVtbl->Destroy(p,a)
 #define IWineD3DSwapChain_GetDevice(p,a)               (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DSwapChain_Present(p,a,b,c,d,e)         (p)->lpVtbl->Present(p,a,b,c,d,e)
 #define IWineD3DSwapChain_GetFrontBufferData(p,a)      (p)->lpVtbl->GetFrontBufferData(p,a)
