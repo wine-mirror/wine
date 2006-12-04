@@ -425,7 +425,7 @@ void handle_edit_event(HTMLDocument *This, nsIDOMEvent *event)
 
     switch(code) {
     case DOM_VK_LEFT:
-        TRACE("left");
+        TRACE("left\n");
         collapse_next_char(This, key_event, FALSE);
         break;
     case DOM_VK_RIGHT:
