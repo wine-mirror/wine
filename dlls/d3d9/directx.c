@@ -269,6 +269,14 @@ HRESULT WINAPI D3D9CB_CreateDepthStencilSurface(IUnknown *device, IUnknown *pSup
     return res;
 }
 
+ULONG WINAPI D3D9CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
+    IDirect3DSurface9Impl* surfaceParent;
+    TRACE("(%p) call back\n", pSurface);
+
+    IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
+    IDirect3DSurface9_Release((IDirect3DSurface9*) surfaceParent);
+    return IDirect3DSurface9_Release((IDirect3DSurface9*) surfaceParent);
+}
 
 HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
                                             DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,

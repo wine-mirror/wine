@@ -2148,10 +2148,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
+static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     int sampler;
-    IUnknown* stencilBufferParent;
     IUnknown* swapChainParent;
     uint i;
     TRACE("(%p)\n", This);
@@ -2186,10 +2185,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface) {
     This->renderTarget = NULL;
 
     if (This->depthStencilBuffer) {
-        IWineD3DSurface_GetParent(This->depthStencilBuffer, &stencilBufferParent);
-        IUnknown_Release(stencilBufferParent);          /* once for the get parent */
-        if(IUnknown_Release(stencilBufferParent)  >0){  /* the second time for when it was created */
-            FIXME("(%p) Something's still holding the depthStencilBuffer\n",This);
+        if(D3DCB_DestroyDepthStencilSurface > 0) {
+            FIXME("(%p) Something's still holding the depthStencilBuffer\n", This);
         }
         This->depthStencilBuffer = NULL;
     }

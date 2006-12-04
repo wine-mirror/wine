@@ -359,7 +359,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(CreatePixelShader)(THIS_ CONST DWORD* pFunction, struct IWineD3DPixelShader** ppShader, IUnknown *pParent) PURE;
     STDMETHOD_(HRESULT,CreatePalette)(THIS_ DWORD Flags, PALETTEENTRY *PalEnt, struct IWineD3DPalette **Palette, IUnknown *Parent);
     STDMETHOD(Init3D)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain);
-    STDMETHOD(Uninit3D)(THIS);
+    STDMETHOD(Uninit3D)(THIS, D3DCB_DESTROYSURFACEFN pFn);
     STDMETHOD_(void, SetFullscreen)(THIS_ BOOL fullscreen);
     STDMETHOD(EnumDisplayModes)(THIS_ DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT Format, void *context, D3DCB_ENUMDISPLAYMODESCALLBACK cb) PURE;
     STDMETHOD(EvictManagedResources)(THIS) PURE;
@@ -499,7 +499,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_CreatePixelShader(p,a,b,c)               (p)->lpVtbl->CreatePixelShader(p,a,b,c)
 #define IWineD3DDevice_CreatePalette(p, a, b, c, d)             (p)->lpVtbl->CreatePalette(p, a, b, c, d)
 #define IWineD3DDevice_Init3D(p, a, b)                          (p)->lpVtbl->Init3D(p, a, b)
-#define IWineD3DDevice_Uninit3D(p)                              (p)->lpVtbl->Uninit3D(p)
+#define IWineD3DDevice_Uninit3D(p, a)                           (p)->lpVtbl->Uninit3D(p, a)
 #define IWineD3DDevice_SetFullscreen(p, a)                      (p)->lpVtbl->SetFullscreen(p, a)
 #define IWineD3DDevice_EnumDisplayModes(p,a,b,c,d,e,f)          (p)->lpVtbl->EnumDisplayModes(p,a,b,c,d,e,f)
 #define IWineD3DDevice_EvictManagedResources(p)                 (p)->lpVtbl->EvictManagedResources(p)

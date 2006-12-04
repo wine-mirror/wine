@@ -591,4 +591,6 @@ extern HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
                                          DWORD MultisampleQuality, BOOL Lockable,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
+extern ULONG WINAPI D3D8CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
+
 #endif /* __WINE_D3DX8_PRIVATE_H */

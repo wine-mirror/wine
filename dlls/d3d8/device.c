@@ -95,7 +95,7 @@ static ULONG WINAPI IDirect3DDevice8Impl_Release(LPDIRECT3DDEVICE8 iface) {
 
     if (ref == 0) {
         TRACE("Releasing wined3d device %p\n", This->WineD3DDevice);
-        IWineD3DDevice_Uninit3D(This->WineD3DDevice);
+        IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D8CB_DestroyDepthStencilSurface);
         IWineD3DDevice_Release(This->WineD3DDevice);
         HeapFree(GetProcessHeap(), 0, This->shader_handles);
         HeapFree(GetProcessHeap(), 0, This);

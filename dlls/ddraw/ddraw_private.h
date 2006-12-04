@@ -75,6 +75,9 @@ typedef struct IDirect3DExecuteBufferImpl IDirect3DExecuteBufferImpl;
 typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
 typedef struct IParentImpl                IParentImpl;
 
+/* Callbacks for implicit object destruction */
+extern ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface);
+
 /*****************************************************************************
  * IDirectDraw implementation structure
  *****************************************************************************/

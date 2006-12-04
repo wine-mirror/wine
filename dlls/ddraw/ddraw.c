@@ -1621,7 +1621,7 @@ IDirectDrawImpl_RecreateAllSurfaces(IDirectDrawImpl *This)
         /* Should happen almost never */
         FIXME("(%p) Switching to non-opengl surfaces with d3d started. Is this a bug?\n", This);
         /* Shutdown d3d */
-        IWineD3DDevice_Uninit3D(This->wineD3DDevice);
+        IWineD3DDevice_Uninit3D(This->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface);
     }
     /* Contrary: D3D starting is handled by the caller, because it knows the render target */
 
@@ -1677,6 +1677,15 @@ D3D7CB_CreateSurface(IUnknown *device,
 
     TRACE("Returning wineD3DSurface %p, it belongs to surface %p\n", *Surface, surf);
     return D3D_OK;
+}
+
+ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
+    IUnknown* surfaceParent;
+    TRACE("(%p) call back\n", pSurface);
+
+    IWineD3DSurface_GetParent(pSurface, (IUnknown **) &surfaceParent);
+    IUnknown_Release(surfaceParent);
+    return IUnknown_Release(surfaceParent);
 }
 
 /*****************************************************************************
