@@ -4039,13 +4039,14 @@ BOOL WINAPI EnumPrintersA(DWORD dwType, LPSTR lpszName,
 			  DWORD cbBuf, LPDWORD lpdwNeeded,
 			  LPDWORD lpdwReturned)
 {
-    BOOL ret;
+    BOOL ret, unicode = FALSE;
     UNICODE_STRING lpszNameW;
     PWSTR pwstrNameW;
-    
+
     pwstrNameW = asciitounicode(&lpszNameW,lpszName);
+    if(!cbBuf) unicode = TRUE; /* return a buffer that's big enough for the unicode version */
     ret = WINSPOOL_EnumPrinters(dwType, pwstrNameW, dwLevel, lpbPrinters, cbBuf,
-				lpdwNeeded, lpdwReturned, FALSE);
+				lpdwNeeded, lpdwReturned, unicode);
     RtlFreeUnicodeString(&lpszNameW);
     return ret;
 }

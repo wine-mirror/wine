@@ -1638,6 +1638,28 @@ static void test_DocumentProperties(void)
     ok(ret, "ClosePrinter error %d\n", GetLastError());
 }
 
+static void test_EnumPrinters(void)
+{
+    DWORD neededA, neededW, num;
+    DWORD ret;
+
+    SetLastError(0xdeadbeef);
+    ret = EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededA, &num);
+    ok(ret == 0, "ret %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
+    ok(num == 0, "num %d\n", num);
+
+    SetLastError(0xdeadbeef);
+    EnumPrintersW(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededW, &num);
+    ok(ret == 0, "ret %d\n", ret);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
+    ok(num == 0, "num %d\n", num);
+
+    /* Outlook2003 relies on the buffer size returned by EnumPrintersA being big enough
+       to hold the buffer returned by EnumPrintersW */
+    ok(neededA == neededW, "neededA %d neededW %d\n", neededA, neededW);
+}
+
 START_TEST(info)
 {
     LPSTR   default_printer;
@@ -1664,4 +1686,6 @@ START_TEST(info)
     test_OpenPrinter();
     test_GetPrinterDriver();
     test_SetDefaultPrinter();
+
+    test_EnumPrinters();
 }
