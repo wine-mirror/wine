@@ -106,7 +106,7 @@ static const char * const VMM_Service_Name[N_VMM_SERVICE] =
 #define PC_FIXED      0x00000008 /* pages are permanently locked */
 #define PC_LOCKED     0x00000080 /* pages are made present and locked */
 #define PC_LOCKEDIFDP 0x00000100 /* pages are locked if swap via DOS */
-#define PC_WRITEABLE  0x00020000 /* make the pages writeable */
+#define PC_WRITABLE   0x00020000 /* make the pages writable */
 #define PC_USER       0x00040000 /* make the pages ring 3 accessible */
 #define PC_INCR       0x40000000 /* increment "pagerdata" each page */
 #define PC_PRESENT    0x80000000 /* make pages initially present */
@@ -185,7 +185,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
               page, npages, hpd, pagerdata, flags );
 
         if ( flags & PC_USER )
-          if ( flags & PC_WRITEABLE )
+          if ( flags & PC_WRITABLE )
             virt_perm = PAGE_EXECUTE_READWRITE;
           else
             virt_perm = PAGE_EXECUTE_READ;
@@ -247,7 +247,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         case PAGE_WRITECOPY:
         case PAGE_EXECUTE_READWRITE:
         case PAGE_EXECUTE_WRITECOPY:
-          pg_old_perm = PC_USER | PC_WRITEABLE;
+          pg_old_perm = PC_USER | PC_WRITABLE;
           break;
         case PAGE_NOACCESS:
         default:
@@ -261,7 +261,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT86 *context )
         virt_new_perm = ( virt_old_perm )  & ~0xff;
         if ( pg_new_perm & PC_USER )
         {
-          if ( pg_new_perm & PC_WRITEABLE )
+          if ( pg_new_perm & PC_WRITABLE )
             virt_new_perm |= PAGE_EXECUTE_READWRITE;
           else
             virt_new_perm |= PAGE_EXECUTE_READ;
