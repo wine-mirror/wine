@@ -583,7 +583,12 @@ static void sock_destroy( struct object *obj )
         async_terminate_queue( &sock->write_q, STATUS_CANCELLED );
     }
     if (sock->event) release_object( sock->event );
-    if (sock->fd) release_object( sock->fd );
+    if (sock->fd)
+    {
+        /* shut the socket down to force pending poll() calls in the client to return */
+        shutdown( get_unix_fd(sock->fd), SHUT_RDWR );
+        release_object( sock->fd );
+    }
 }
 
 /* create a new and unconnected socket */
