@@ -255,7 +255,7 @@ int sqliteGetToken(const WCHAR *z, int *tokenType){
     case ',':
       *tokenType = TK_COMMA;
       return 1;
-    case '`': case '\'': case '"': {
+    case '`': case '\'': {
       int delim = z[0];
       for(i=1; z[i]; i++){
         if( z[i]==delim ){

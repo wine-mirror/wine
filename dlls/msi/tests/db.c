@@ -672,7 +672,7 @@ static void test_msibadqueries(void)
     ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
 
     r = try_query( hdb, "select * from c where b = \"x\"");
-    todo_wine ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "query failed\n");
 
     r = try_query( hdb, "select * from c where b = 'x'");
     ok(r == ERROR_SUCCESS, "query failed\n");
