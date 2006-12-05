@@ -407,6 +407,18 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
+/* Routines and structures related to state management */
+typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock);
+
+struct StateEntry
+{
+    DWORD           representative;
+    APPLYSTATEFUNC  apply;
+};
+
+/* Global state table */
+extern const struct StateEntry StateTable[];
+
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
 
