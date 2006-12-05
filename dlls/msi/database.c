@@ -136,7 +136,7 @@ UINT MSI_OpenDatabaseW(LPCWSTR szDBPath, LPCWSTR szPersist, MSIDATABASE **pdb)
         return ERROR_INVALID_PARAMETER;
     }
 
-    if( FAILED( r ) )
+    if( FAILED( r ) || !stg )
     {
         FIXME("open failed r = %08x!\n",r);
         return ERROR_FUNCTION_FAILED;
