@@ -4,6 +4,7 @@
  *
  * Copyright (C) 1993,1994,1996,1997 John Brezak, Erik Bos, Alex Korobka.
  * Copyright (C) 2005 Marcus Meissner
+ * Copyright (C) 2006 Kai Blin
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2870,117 +2871,100 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     TRACE("socket: %04x, level %d, name %d, ptr %p, len %d\n",
           s, level, optname, optval, optlen);
 
-    /* SO_OPENTYPE does not require a valid socket handle. */
-    if (level == WS_SOL_SOCKET && optname == WS_SO_OPENTYPE)
+    switch(level)
     {
-        if (optlen < sizeof(int) || !optval)
+    case WS_SOL_SOCKET:
+        switch(optname)
         {
-            SetLastError(WSAEFAULT);
-            return SOCKET_ERROR;
-        }
-        get_per_thread_data()->opentype = *(const int *)optval;
-        TRACE("setting global SO_OPENTYPE to 0x%x\n", *(const int *)optval );
-        return 0;
-    }
+        /* Some options need some conversion before they can be sent to
+         * setsockopt. The conversions are done here, then they will fall though
+         * to the general case. Special options that are not passed to
+         * setsockopt follow below that.*/
 
-    /* For some reason the game GrandPrixLegends does set SO_DONTROUTE on its
-     * socket. According to MSDN, this option is silently ignored.*/
-    if ( level==WS_SOL_SOCKET && optname==WS_SO_DONTROUTE ) 
-    {
-        TRACE("Ignoring SO_DONTROUTE.\n");
-        return 0;
-    }
+        case WS_SO_DONTLINGER:
+            linger.l_onoff  = *((const int*)optval) ? 0: 1;
+            linger.l_linger = 0;
+            level = SOL_SOCKET;
+            optname = SO_LINGER;
+            optval = (char*)&linger;
+            optlen = sizeof(struct linger);
+            break;
 
-    /* SO_EXCLUSIVEADDRUSE stops applications from binding to a port that is
-     * already used. This never works on Unix systems, so just ignore this
-     * setting*/
-    if ( level == WS_SOL_SOCKET && optname == WS_SO_EXCLUSIVEADDRUSE )
-    {
-        TRACE("Ignoring SO_EXCLUSIVEADDRUSE\n");
-        return 0;
-    }
-
-#ifdef HAVE_IPX
-    if(level == NSPROTO_IPX)
-    {
-	switch(optname)
-	{
-	    case IPX_PTYPE:
-		fd = get_sock_fd( s, 0, NULL );
-		TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", *(const int*)optval, fd);
-		
-		/* We try to set the ipx type on ipx socket level. */
-#ifdef SOL_IPX
-		if(setsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
-		{
-		    ERR("IPX: could not set ipx option type; expect weird behaviour\n");
-		    return SOCKET_ERROR;
-		}
-#else
-                {
-                    struct ipx val;
-                    /* Should we retrieve val using a getsockopt call and then
-                     * set the modified one? */
-                    val.ipx_pt = *optval;
-                    setsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, sizeof(struct ipx));
-                }
-#endif
-    		release_sock_fd( s, fd );
-		return 0;
-	    case IPX_FILTERPTYPE:
-		/* Sets the receive filter packet type, at the moment we don't support it */
-		FIXME("IPX_FILTERPTYPE: %x\n", *optval);
-		
-		/* Returning 0 is better for now than returning a SOCKET_ERROR */
-		return 0;
-	    default:
-		FIXME("opt_name:%x\n", optname);
-		return SOCKET_ERROR;
-	}
-	return 0;
-    }
-#endif
-
-    /* Is a privileged and useless operation, so we don't. */
-    if ((optname == WS_SO_DEBUG) && (level == WS_SOL_SOCKET))
-    {
-        FIXME("(%d,SOL_SOCKET,SO_DEBUG,%p(%d)) attempted (is privileged). Ignoring.\n",s,optval,*(const DWORD*)optval);
-        return 0;
-    }
-
-    if(optname == WS_SO_DONTLINGER && level == WS_SOL_SOCKET) {
-        /* This is unique to WinSock and takes special conversion */
-        linger.l_onoff  = *((const int*)optval) ? 0: 1;
-        linger.l_linger = 0;
-        optname=SO_LINGER;
-        optval = (char*)&linger;
-        optlen = sizeof(struct linger);
-        level = SOL_SOCKET;
-    }
-    else
-    {
-        if (!convert_sockopt(&level, &optname)) {
-            ERR("Invalid level (%d) or optname (%d)\n", level, optname);
-            SetLastError(WSAENOPROTOOPT);
-            return SOCKET_ERROR;
-        }
-        if (optname == SO_LINGER && optval) {
+        case WS_SO_LINGER:
             linger.l_onoff  = ((LINGER*)optval)->l_onoff;
             linger.l_linger  = ((LINGER*)optval)->l_linger;
             /* FIXME: what is documented behavior if SO_LINGER optval
                is null?? */
+            level = SOL_SOCKET;
+            optname = SO_LINGER;
             optval = (char*)&linger;
             optlen = sizeof(struct linger);
-        }
-        else if (optval && optlen < sizeof(int))
-        {
-            woptval= *((const INT16 *) optval);
-            optval= (char*) &woptval;
-            optlen=sizeof(int);
-        }
-        if (level == SOL_SOCKET && is_timeout_option(optname))
-        {
-            if (optlen == sizeof(UINT32)) {
+            break;
+
+        case WS_SO_RCVBUF:
+            if (*(const int*)optval < 2048)
+            {
+                WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(const int*)optval );
+                return 0;
+            }
+            /* Fall through */
+
+        /* The options listed here don't need any special handling. Thanks to
+         * the conversion happening above, options from there will fall through
+         * to this, too.*/
+        case WS_SO_ACCEPTCONN:
+        case WS_SO_BROADCAST:
+        case WS_SO_ERROR:
+        case WS_SO_KEEPALIVE:
+        case WS_SO_OOBINLINE:
+        case WS_SO_SNDBUF:
+        case WS_SO_TYPE:
+            convert_sockopt(&level, &optname);
+            break;
+
+        /* SO_DEBUG is a privileged operation, ignore it. */
+        case WS_SO_DEBUG:
+            TRACE("Ignoring SO_DEBUG\n");
+            return 0;
+
+        /* For some reason the game GrandPrixLegends does set SO_DONTROUTE on its
+         * socket. According to MSDN, this option is silently ignored.*/
+        case WS_SO_DONTROUTE:
+            TRACE("Ignoring SO_DONTROUTE\n");
+            return 0;
+
+        /* Stops two sockets from being bound to the same port. Always happens
+         * on unix systems, so just drop it. */
+        case WS_SO_EXCLUSIVEADDRUSE:
+            TRACE("Ignoring SO_EXCLUSIVEADDRUSE, is always set.\n");
+            return 0;
+
+        /* SO_OPENTYPE does not require a valid socket handle. */
+        case WS_SO_OPENTYPE:
+            if (!optlen || optlen < sizeof(int) || !optval)
+            {
+                SetLastError(WSAEFAULT);
+                return SOCKET_ERROR;
+            }
+            get_per_thread_data()->opentype = *(const int *)optval;
+            TRACE("setting global SO_OPENTYPE = 0x%x\n", *((int*)optval) );
+            return 0;
+
+        /* SO_REUSEADDR allows two applications to bind to the same port at at
+         * same time. There is no direct way to do that in unix. While Wineserver
+         * might do this, it does not seem useful for now, so just ignore it.*/
+        case WS_SO_REUSEADDR:
+            FIXME("Ignoring SO_REUSEADDR, does not translate\n");
+            return 0;
+
+#ifdef SO_RCVTIMEO
+        case WS_SO_RCVTIMEO:
+#endif
+#ifdef SO_SNDTIMEO
+        case WS_SO_SNDTIMEO:
+#endif
+#if defined(SO_RCVTIMEO) || defined(SO_SNDTIMEO)
+            if (optval && optlen == sizeof(UINT32)) {
                 /* WinSock passes miliseconds instead of struct timeval */
                 tval.tv_usec = (*(const UINT32*)optval % 1000) * 1000;
                 tval.tv_sec = *(const UINT32*)optval / 1000;
@@ -2995,15 +2979,105 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
                 WARN("SO_SND/RCVTIMEO for %d bytes is weird: ignored\n", optlen);
                 return 0;
             }
+            convert_sockopt(&level, &optname);
+            break;
+#endif
+
+        default:
+            TRACE("Unknown SOL_SOCKET optname: 0x%08x\n", optname);
+            SetLastError(WSAENOPROTOOPT);
+            return SOCKET_ERROR;
         }
-        if (level == SOL_SOCKET && optname == SO_RCVBUF && *(const int*)optval < 2048)
+        break; /* case WS_SOL_SOCKET */
+
+#ifdef HAVE_IPX
+    case NSPROTO_IPX:
+        switch(optname)
         {
-            WARN("SO_RCVBF for %d bytes is too small: ignored\n", *(const int*)optval );
+        case IPX_PTYPE:
+            fd = get_sock_fd( s, 0, NULL );
+            TRACE("trying to set IPX_PTYPE: %d (fd: %d)\n", *(const int*)optval, fd);
+
+            /* We try to set the ipx type on ipx socket level. */
+#ifdef SOL_IPX
+            if(setsockopt(fd, SOL_IPX, IPX_TYPE, optval, optlen) == -1)
+            {
+                ERR("IPX: could not set ipx option type; expect weird behaviour\n");
+                release_sock_fd( s, fd );
+                return SOCKET_ERROR;
+            }
+#else
+            {
+                struct ipx val;
+                /* Should we retrieve val using a getsockopt call and then
+                 * set the modified one? */
+                val.ipx_pt = *optval;
+                setsockopt(fd, 0, SO_DEFAULT_HEADERS, &val, sizeof(struct ipx));
+            }
+#endif
+            release_sock_fd( s, fd );
             return 0;
+
+        case IPX_FILTERPTYPE:
+            /* Sets the receive filter packet type, at the moment we don't support it */
+            FIXME("IPX_FILTERPTYPE: %x\n", *optval);
+            /* Returning 0 is better for now than returning a SOCKET_ERROR */
+            return 0;
+
+        default:
+            FIXME("opt_name:%x\n", optname);
+            return SOCKET_ERROR;
         }
+        break; /* case NSPROTO_IPX */
+#endif
+
+    /* Levels WS_IPPROTO_TCP and WS_IPPROTO_IP convert directly */
+    case WS_IPPROTO_TCP:
+        switch(optname)
+        {
+        case WS_TCP_NODELAY:
+            convert_sockopt(&level, &optname);
+            break;
+        default:
+            FIXME("Unknown IPPROTO_TCP optname 0x%08x\n", optname);
+            return SOCKET_ERROR;
+        }
+        break;
+
+    case WS_IPPROTO_IP:
+        switch(optname)
+        {
+        case WS_IP_ADD_MEMBERSHIP:
+        case WS_IP_DROP_MEMBERSHIP:
+#ifdef IP_HDRINCL
+        case WS_IP_HDRINCL:
+#endif
+        case WS_IP_MULTICAST_IF:
+        case WS_IP_MULTICAST_LOOP:
+        case WS_IP_MULTICAST_TTL:
+        case WS_IP_OPTIONS:
+        case WS_IP_TOS:
+        case WS_IP_TTL:
+            convert_sockopt(&level, &optname);
+            break;
+        default:
+            FIXME("Unknown IPPROTO_IP optname 0x%08x\n", optname);
+            return SOCKET_ERROR;
+        }
+        break;
+
+    default:
+        FIXME("Unknown level: 0x%08x\n", level);
+        return SOCKET_ERROR;
+    } /* end switch(level) */
+
+    /* avoid endianness issues if argument is a 16-bit int */
+    if (optval && optlen < sizeof(int))
+    {
+        woptval= *((const INT16 *) optval);
+        optval= (char*) &woptval;
+        optlen=sizeof(int);
     }
-
-
     fd = get_sock_fd( s, 0, NULL );
     if (fd == -1) return SOCKET_ERROR;
 
@@ -3015,6 +3089,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     TRACE("Setting socket error, %d\n", wsaErrno());
     SetLastError(wsaErrno());
     release_sock_fd( s, fd );
+
     return SOCKET_ERROR;
 }
 
