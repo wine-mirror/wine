@@ -1030,32 +1030,6 @@ BOOL elf_fetch_file_info(const char* name, DWORD* base,
 }
 
 /******************************************************************
- *		is_dt_flag_valid
- * returns true iff the section tag is valid 
- */
-static unsigned is_dt_flag_valid(unsigned d_tag)
-{
-#ifndef DT_PROCNUM
-#define DT_PROCNUM 0
-#endif
-#ifndef DT_EXTRANUM
-#define DT_EXTRANUM 0
-#endif
-#ifndef DT_GNU_HASH
-#define DT_GNU_HASH 0x6ffffef5
-#endif
-    return (d_tag >= 0 && d_tag < DT_NUM + DT_PROCNUM + DT_EXTRANUM)
-        || (d_tag == DT_GNU_HASH)
-#if defined(DT_LOOS) && defined(DT_HIOS)
-        || (d_tag >= DT_LOOS && d_tag < DT_HIOS)
-#endif
-#if defined(DT_LOPROC) && defined(DT_HIPROC)
-        || (d_tag >= DT_LOPROC && d_tag < DT_HIPROC)
-#endif
-        ;
-}
-
-/******************************************************************
  *		elf_load_file
  *
  * Loads the information for ELF module stored in 'filename'
@@ -1107,12 +1081,16 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
                 do
                 {
                     if (!ReadProcessMemory(pcs->handle, ptr, &dyn, sizeof(dyn), &len) ||
-                        len != sizeof(dyn) || !is_dt_flag_valid(dyn.d_tag))
-                        dyn.d_tag = DT_NULL;
+                        len != sizeof(dyn))
+                        goto leave;
+                    if (dyn.d_tag == DT_DEBUG)
+                    {
+                        elf_info->dbg_hdr_addr = dyn.d_un.d_ptr;
+                        break;
+                    }
                     ptr += sizeof(dyn);
-                } while (dyn.d_tag != DT_DEBUG && dyn.d_tag != DT_NULL);
+                } while (dyn.d_tag != DT_NULL);
                 if (dyn.d_tag == DT_NULL) goto leave;
-                elf_info->dbg_hdr_addr = dyn.d_un.d_ptr;
             }
 	}
         elf_unmap_section(&fmap, fmap.elfhdr.e_shstrndx);
