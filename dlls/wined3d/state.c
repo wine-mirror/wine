@@ -58,6 +58,27 @@ static void state_undefined(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     WARN("undefined state %d\n", state);
 }
 
+static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    D3DFILLMODE Value = stateblock->renderState[WINED3DRS_FILLMODE];
+
+    switch(Value) {
+        case D3DFILL_POINT:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+            checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_POINT)");
+            break;
+        case D3DFILL_WIREFRAME:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)");
+            break;
+        case D3DFILL_SOLID:
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
+            break;
+        default:
+            FIXME("Unrecognized WINED3DRS_FILLMODE value %d\n", Value);
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -69,7 +90,7 @@ const struct StateEntry StateTable[] =
     { /* 5,  WINED3DRS_WRAPU                        */      STATE_RENDER(WINED3DRS_WRAPU),                      state_unknown       },
     { /* 6,  WINED3DRS_WRAPV                        */      STATE_RENDER(WINED3DRS_WRAPV),                      state_unknown       },
     { /* 7,  WINED3DRS_ZENABLE                      */      STATE_RENDER(WINED3DRS_ZENABLE),                    state_unknown       },
-    { /* 8,  WINED3DRS_FILLMODE                     */      STATE_RENDER(WINED3DRS_FILLMODE),                   state_unknown       },
+    { /* 8,  WINED3DRS_FILLMODE                     */      STATE_RENDER(WINED3DRS_FILLMODE),                   state_fillmode      },
     { /* 9,  WINED3DRS_SHADEMODE                    */      STATE_RENDER(WINED3DRS_SHADEMODE),                  state_unknown       },
     { /* 10, WINED3DRS_LINEPATTERN                  */      STATE_RENDER(WINED3DRS_LINEPATTERN),                state_unknown       },
     { /* 11, WINED3DRS_MONOENABLE                   */      STATE_RENDER(WINED3DRS_MONOENABLE),                 state_unknown       },

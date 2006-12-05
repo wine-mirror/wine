@@ -3437,14 +3437,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
     switch (State) {
     case WINED3DRS_FILLMODE                  :
-        switch ((WINED3DFILLMODE) Value) {
-        case WINED3DFILL_POINT               : glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); break;
-        case WINED3DFILL_WIREFRAME           : glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); break;
-        case WINED3DFILL_SOLID               : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); break;
-        default:
-            FIXME("Unrecognized WINED3DRS_FILLMODE value %d\n", Value);
-        }
-        checkGLcall("glPolygonMode (fillmode)");
+        StateTable[STATE_RENDER(WINED3DRS_FILLMODE)].apply(STATE_RENDER(WINED3DRS_FILLMODE), This->stateBlock);
         break;
 
     case WINED3DRS_LIGHTING                  :
