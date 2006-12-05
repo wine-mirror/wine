@@ -1464,28 +1464,17 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
         Wine_GLContext *ctx = (Wine_GLContext *) hglrc;
         Drawable drawable = physDev->drawable;
         if (ctx->ctx == NULL) {
-            int draw_vis_id, ctx_vis_id;
-            VisualID visualid = (VisualID)GetPropA( GetDesktopWindow(), "__wine_x11_visual_id" );
-            TRACE(" Wine desktop VISUAL_ID is 0x%x\n", (unsigned int) visualid);
-            draw_vis_id = describeDrawable(ctx, drawable);
-            ctx_vis_id = describeContext(ctx);
-
-            if (-1 == draw_vis_id || (draw_vis_id == visualid && draw_vis_id != ctx_vis_id)) {
-                /**
-                * Inherits from root window so reuse desktop visual
-                */
-                XVisualInfo template;
-                XVisualInfo *vis;
-                int num;
-                template.visualid = visualid;
-                vis = XGetVisualInfo(ctx->display, VisualIDMask, &template, &num);
-
-                TRACE(" Creating GLX Context\n");
-                ctx->ctx = pglXCreateContext(ctx->display, vis, NULL, type == OBJ_MEMDC ? False : True);
-            } else {
-                TRACE(" Creating GLX Context\n");
-                ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
+            /* The describe lines below are for debugging purposes only */
+            if (TRACE_ON(wgl)) {
+                describeDrawable(ctx, drawable);
+                describeContext(ctx);
             }
+
+            /* Create a GLX context using the same visual as chosen earlier in wglCreateContext.
+             * We are certain that the drawable and context are compatible as we only allow compatible formats.
+             */
+            TRACE(" Creating GLX Context\n");
+            ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
             TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
         }
         TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
