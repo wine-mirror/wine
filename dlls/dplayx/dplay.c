@@ -4227,7 +4227,7 @@ static HRESULT WINAPI DP_IF_InitializeConnection
 
   if( hServiceProvider == 0 )
   {
-    ERR( "Unable to load service provider\n" );
+    ERR( "Unable to load service provider %s\n", debugstr_guid(&guidSP) );
     return DPERR_UNAVAILABLE;
   }
 
