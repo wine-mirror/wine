@@ -112,6 +112,7 @@ extern NTSTATUS DIR_get_unix_cwd( char **cwd );
 /* virtual memory */
 extern NTSTATUS VIRTUAL_HandleFault(LPCVOID addr);
 extern BOOL VIRTUAL_HasMapping( LPCVOID addr );
+extern void VIRTUAL_SetForceExec( BOOL enable );
 extern void VIRTUAL_UseLargeAddressSpace(void);
 
 extern BOOL is_current_process( HANDLE handle );
