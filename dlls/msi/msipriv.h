@@ -300,6 +300,10 @@ typedef struct tagMSICOMPONENT
     INT  RefCount;
     LPWSTR FullKeypath;
     LPWSTR AdvertiseString;
+
+    int hasAdvertiseFeature:1;
+    int hasLocalFeature:1;
+    int hasSourceFeature:1;
 } MSICOMPONENT;
 
 typedef struct tagComponentList

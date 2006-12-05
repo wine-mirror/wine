@@ -1786,7 +1786,19 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
         ComponentList *cl;
 
         TRACE("Examining Feature %s (Installed %i, Action %i)\n",
-            debugstr_w(feature->Feature), feature->Installed, feature->Action);
+              debugstr_w(feature->Feature), feature->Installed, feature->Action);
+
+        /* features with components that have compressed files are made local */
+        LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
+        {
+            if (cl->component->Enabled &&
+                cl->component->ForceLocalState &&
+                feature->Action == INSTALLSTATE_SOURCE)
+            {
+                msi_feature_set_state( feature, INSTALLSTATE_LOCAL );
+                break;
+            }
+        }
 
         LIST_FOR_EACH_ENTRY( cl, &feature->Components, ComponentList, entry )
         {
@@ -1795,53 +1807,69 @@ UINT MSI_SetFeatureStates(MSIPACKAGE *package)
             if (!component->Enabled)
                 continue;
 
-            if (component->Attributes & msidbComponentAttributesOptional)
-                msi_component_set_state( component, INSTALLSTATE_DEFAULT );
-            else
+            switch (feature->Action)
             {
-                if (component->Attributes & msidbComponentAttributesSourceOnly)
-                    msi_component_set_state( component, INSTALLSTATE_SOURCE );
+            case INSTALLSTATE_ADVERTISED:
+                component->hasAdvertiseFeature = 1;
+                break;
+            case INSTALLSTATE_SOURCE:
+                component->hasSourceFeature = 1;
+                break;
+            case INSTALLSTATE_LOCAL:
+                component->hasLocalFeature = 1;
+                break;
+            case INSTALLSTATE_DEFAULT:
+                if (feature->Attributes & msidbFeatureAttributesFavorAdvertise)
+                    component->hasAdvertiseFeature = 1;
+                else if (feature->Attributes & msidbFeatureAttributesFavorSource)
+                    component->hasSourceFeature = 1;
                 else
-                    msi_component_set_state( component, INSTALLSTATE_LOCAL );
+                    component->hasLocalFeature = 1;
+                break;
+            default:
+                break;
             }
-
-            if (component->ForceLocalState)
-                msi_component_set_state( component, INSTALLSTATE_LOCAL );
-
-            if (feature->Attributes == msidbFeatureAttributesFavorAdvertise)
-            {
-                msi_component_set_state( component, INSTALLSTATE_ADVERTISED );
-            }
-            else if (feature->Attributes == msidbFeatureAttributesFavorLocal)
-            {
-                if (!(component->Attributes & msidbComponentAttributesSourceOnly))
-                    msi_component_set_state( component, INSTALLSTATE_LOCAL );
-            }
-            else if (feature->Attributes == msidbFeatureAttributesFavorSource)
-            {
-                if ((component->Action == INSTALLSTATE_UNKNOWN) ||
-                    (component->Action == INSTALLSTATE_ABSENT) ||
-                    (component->Action == INSTALLSTATE_ADVERTISED) ||
-                    (component->Action == INSTALLSTATE_DEFAULT))
-                    msi_component_set_state( component, INSTALLSTATE_SOURCE );
-            }
-            else if (feature->ActionRequest == INSTALLSTATE_ADVERTISED)
-            {
-                if ((component->Action == INSTALLSTATE_UNKNOWN) ||
-                    (component->Action == INSTALLSTATE_ABSENT))
-                    msi_component_set_state( component, INSTALLSTATE_ADVERTISED );
-            }
-            else if (feature->ActionRequest == INSTALLSTATE_ABSENT)
-            {
-                if (component->Action == INSTALLSTATE_UNKNOWN)
-                    msi_component_set_state( component, INSTALLSTATE_ABSENT );
-            }
-            else if (feature->ActionRequest == INSTALLSTATE_UNKNOWN)
-                msi_component_set_state( component, INSTALLSTATE_UNKNOWN );
-
-            if (component->ForceLocalState && feature->Action == INSTALLSTATE_SOURCE)
-                msi_feature_set_state( feature, INSTALLSTATE_LOCAL );
         }
+    }
+
+    LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
+    {
+        /* if the component isn't enabled, leave it alone */
+        if (!component->Enabled)
+            continue;
+
+        /* check if it's local or source */
+        if (!(component->Attributes & msidbComponentAttributesOptional) &&
+             (component->hasLocalFeature || component->hasSourceFeature))
+        {
+            if ((component->Attributes & msidbComponentAttributesSourceOnly) &&
+                 !component->ForceLocalState)
+                msi_component_set_state( component, INSTALLSTATE_SOURCE );
+            else
+                msi_component_set_state( component, INSTALLSTATE_LOCAL );
+            continue;
+        }
+
+        /* if any feature is local, the component must be local too */
+        if (component->hasLocalFeature)
+        {
+            msi_component_set_state( component, INSTALLSTATE_LOCAL );
+            continue;
+        }
+
+        if (component->hasSourceFeature)
+        {
+            msi_component_set_state( component, INSTALLSTATE_SOURCE );
+            continue;
+        }
+
+        if (component->hasAdvertiseFeature)
+        {
+            msi_component_set_state( component, INSTALLSTATE_ADVERTISED );
+            continue;
+        }
+
+        TRACE("nobody wants component %s\n", debugstr_w(component->Component));
     }
 
     LIST_FOR_EACH_ENTRY( component, &package->components, MSICOMPONENT, entry )
