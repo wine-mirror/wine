@@ -118,7 +118,7 @@ static UINT set_user_sid_prop( MSIPACKAGE *package )
 {
     SID_NAME_USE use;
     LPWSTR user_name;
-    LPWSTR sid_str, dom = NULL;
+    LPWSTR sid_str = NULL, dom = NULL;
     DWORD size, dom_size;
     PSID psid = NULL;
     UINT r = ERROR_FUNCTION_FAILED;
