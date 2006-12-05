@@ -87,6 +87,29 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG base,
         lvalue->cookie = DLV_TARGET;
         lvalue->addr.Offset = (ULONG)((ULONG64)*pval + sym->Address);
     }
+    else if (sym->Flags & SYMFLAG_VALUEPRESENT)
+    {
+        struct dbg_type type;
+        VARIANT         v;
+        DWORD*          pdw;
+
+        type.module = sym->ModBase;
+        type.id = sym->info;
+
+        /* FIXME: this won't work for pointers, as we always for the
+         * dereference to be in debuggee address space while here
+         * it's in debugger address space
+         */
+        if (!types_get_info(&type, TI_GET_VALUE, &v) || (v.n1.n2.vt & VT_BYREF))
+        {
+            snprintf(buffer, sz, "Couldn't dereference pointer for const value");
+            return FALSE;
+        }
+        pdw = (DWORD*)lexeme_alloc_size(sizeof(*pdw));
+        lvalue->cookie = DLV_HOST;
+        lvalue->addr.Offset = (ULONG)(DWORD_PTR)pdw;
+        *pdw = sym->Value;
+    }
     else if (sym->Flags & SYMFLAG_LOCAL)
     {
         lvalue->cookie = DLV_TARGET;
@@ -125,7 +148,7 @@ static BOOL CALLBACK sgv_cb(SYMBOL_INFO* sym, ULONG size, void* ctx)
 {
     struct sgv_data*    sgv = (struct sgv_data*)ctx;
     unsigned            insp;
-    char                tmp[32];
+    char                tmp[64];
 
     if (sym->Flags & SYMFLAG_THUNK)
     {
