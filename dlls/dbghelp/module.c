@@ -284,7 +284,7 @@ BOOL module_get_debug(struct module_pair* pair)
         }
         if (!ret) pair->effective->module.SymType = SymNone;
         assert(pair->effective->module.SymType != SymDeferred);
-        module_compute_num_syms(pair->effective);
+        pair->effective->module.NumSyms = pair->effective->ht_symbols.num_elts;
     }
     return pair->effective->module.SymType != SymNone;
 }
@@ -372,18 +372,6 @@ enum module_type module_get_type_by_name(const char* name)
     return DMT_PE;
 }
 
-int module_compute_num_syms(struct module* module)
-{
-    struct hash_table_iter      hti;
-    void*                       ptr;
-
-    module->module.NumSyms = 0;
-    hash_table_iter_init(&module->ht_symbols, &hti, NULL);
-    while ((ptr = hash_table_iter_up(&hti)))
-         module->module.NumSyms++;
-    return module->module.NumSyms;
-}
-
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
@@ -429,7 +417,7 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
         WARN("Couldn't locate %s\n", ImageName);
         return 0;
     }
-    module_compute_num_syms(module);
+    module->module.NumSyms = module->ht_symbols.num_elts;
 done:
     /* by default pe_load_module fills module.ModuleName from a derivation 
      * of ImageName. Overwrite it, if we have better information

@@ -327,6 +327,7 @@ unsigned hash_table_hash(const char* name, unsigned num_buckets)
 
 void hash_table_init(struct pool* pool, struct hash_table* ht, unsigned num_buckets)
 {
+    ht->num_elts = 0;
     ht->buckets = pool_alloc(pool, num_buckets * sizeof(struct hash_table_elt*));
     assert(ht->buckets);
     ht->num_buckets = num_buckets;
@@ -338,7 +339,7 @@ void hash_table_destroy(struct hash_table* ht)
 #if defined(USE_STATS)
     int                         i;
     unsigned                    len;
-    unsigned                    num = 0, min = 0xffffffff, max = 0, sq = 0;
+    unsigned                    min = 0xffffffff, max = 0, sq = 0;
     struct hash_table_elt*      elt;
     double                      mean, variance;
 
@@ -347,13 +348,12 @@ void hash_table_destroy(struct hash_table* ht)
         for (len = 0, elt = ht->buckets[i]; elt; elt = elt->next) len++;
         if (len < min) min = len;
         if (len > max) max = len;
-        num += len;
         sq += len * len;
     }
-    mean = (double)num / ht->num_buckets;
+    mean = (double)ht->num_elts / ht->num_buckets;
     variance = (double)sq / ht->num_buckets - mean * mean;
     FIXME("STATS: elts[num:%-4u size:%u mean:%f] buckets[min:%-4u variance:%+f max:%-4u]\n",
-          num, ht->num_buckets, mean, min, variance, max);
+          ht->num_elts, ht->num_buckets, mean, min, variance, max);
 #if 1
     for (i = 0; i < ht->num_buckets; i++)
     {
@@ -382,6 +382,7 @@ void hash_table_add(struct hash_table* ht, struct hash_table_elt* elt)
     for (p = &ht->buckets[hash]; *p; p = &((*p)->next));
     *p = elt;
     elt->next = NULL;
+    ht->num_elts++;
 }
 
 void* hash_table_find(const struct hash_table* ht, const char* name)

@@ -623,7 +623,8 @@ static BOOL resort_symbols(struct module* module)
     struct symt_ht*             sym;
     struct hash_table_iter      hti;
 
-    if (!module_compute_num_syms(module)) return FALSE;
+    if (!(module->module.NumSyms = module->ht_symbols.num_elts))
+        return FALSE;
     
     if (module->addr_sorttab)
         module->addr_sorttab = HeapReAlloc(GetProcessHeap(), 0,

@@ -82,6 +82,7 @@ struct hash_table_elt
 
 struct hash_table
 {
+    unsigned                    num_elts;
     unsigned                    num_buckets;
     struct hash_table_elt**     buckets;
 };
@@ -422,7 +423,6 @@ extern int          elf_is_in_thunk_area(unsigned long addr, const struct elf_th
 extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* addr);
 
 /* module.c */
-extern int          module_compute_num_syms(struct module* module);
 extern struct module*
                     module_find_by_addr(const struct process* pcs, unsigned long addr,
                                         enum module_type type);
