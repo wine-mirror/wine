@@ -543,7 +543,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
     struct hash_table_iter      hti;
     struct symtab_elt*          ste;
     DWORD                       addr;
-    int                         idx;
+    struct symt_ht*             symt;
 
     hash_table_iter_init(ht_symtab, &hti, NULL);
     while ((ste = hash_table_iter_up(&hti)))
@@ -562,11 +562,10 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
         {
             ULONG64     ref_addr;
 
-            idx = symt_find_nearest(module, addr);
-            if (idx != -1)
-                symt_get_info(&module->addr_sorttab[idx]->symt, 
-                              TI_GET_ADDRESS, &ref_addr);
-            if (idx == -1 || addr != ref_addr)
+            symt = symt_find_nearest(module, addr);
+            if (symt)
+                symt_get_info(&symt->symt, TI_GET_ADDRESS, &ref_addr);
+            if (!symt || addr != ref_addr)
             {
                 /* creating public symbols for all the ELF symbols which haven't been
                  * used yet (ie we have no debug information on them)
@@ -596,14 +595,14 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                  */
                 module->sortlist_valid = TRUE;
             }
-            else if (strcmp(ste->ht_elt.name, module->addr_sorttab[idx]->hash_elt.name))
+            else if (strcmp(ste->ht_elt.name, symt->hash_elt.name))
             {
                 ULONG64 xaddr = 0, xsize = 0;
                 DWORD   kind = -1;
 
-                symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_ADDRESS,  &xaddr);
-                symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_LENGTH,   &xsize);
-                symt_get_info(&module->addr_sorttab[idx]->symt, TI_GET_DATAKIND, &kind);
+                symt_get_info(&symt->symt, TI_GET_ADDRESS,  &xaddr);
+                symt_get_info(&symt->symt, TI_GET_LENGTH,   &xsize);
+                symt_get_info(&symt->symt, TI_GET_DATAKIND, &kind);
 
                 /* If none of symbols has a correct size, we consider they are both markers
                  * Hence, we can silence this warning
@@ -615,7 +614,7 @@ static int elf_new_wine_thunks(struct module* module, struct hash_table* ht_symt
                     FIXME("Duplicate in %s: %s<%08x-%08x> %s<%s-%s>\n",
                           module->module.ModuleName,
                           ste->ht_elt.name, addr, ste->symp->st_size,
-                          module->addr_sorttab[idx]->hash_elt.name,
+                          symt->hash_elt.name,
                           wine_dbgstr_longlong(xaddr), wine_dbgstr_longlong(xsize));
             }
         }

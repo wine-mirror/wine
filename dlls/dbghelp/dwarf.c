@@ -1700,15 +1700,15 @@ static void dwarf2_set_line_number(struct module* module, unsigned long address,
                                    struct vector* v, unsigned file, unsigned line)
 {
     struct symt_function*       func;
-    int                         idx;
+    struct symt_ht*             symt;
     unsigned*                   psrc;
 
     if (!file || !(psrc = vector_at(v, file - 1))) return;
 
     TRACE("%s %lx %s %u\n", module->module.ModuleName, address, source_get(module, *psrc), line);
-    if ((idx = symt_find_nearest(module, address)) == -1 ||
-        module->addr_sorttab[idx]->symt.tag != SymTagFunction) return;
-    func = (struct symt_function*)module->addr_sorttab[idx];
+    if (!(symt = symt_find_nearest(module, address)) ||
+        symt->symt.tag != SymTagFunction) return;
+    func = (struct symt_function*)symt;
     symt_add_func_line(module, func, *psrc, line, address - func->address);
 }
 

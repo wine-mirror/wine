@@ -485,7 +485,8 @@ extern BOOL         dwarf2_parse(struct module* module, unsigned long load_offse
 /* symbol.c */
 extern const char*  symt_get_name(const struct symt* sym);
 extern int          symt_cmp_addr(const void* p1, const void* p2);
-extern int          symt_find_nearest(struct module* module, DWORD addr);
+extern struct symt_ht*
+                    symt_find_nearest(struct module* module, DWORD addr);
 extern struct symt_compiland*
                     symt_new_compiland(struct module* module, unsigned long address,
                                        unsigned src_idx);

@@ -154,7 +154,7 @@ struct symt_public* symt_new_public(struct module* module,
     TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n", 
                          module->module.ModuleName, name, address);
     if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) && 
-        symt_find_nearest(module, address) != -1)
+        symt_find_nearest(module, address) != NULL)
         return NULL;
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -648,14 +648,14 @@ static BOOL resort_symbols(struct module* module)
 }
 
 /* assume addr is in module */
-int symt_find_nearest(struct module* module, DWORD addr)
+struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
 {
     int         mid, high, low;
     ULONG64     ref_addr, ref_size;
 
     if (!module->sortlist_valid || !module->addr_sorttab)
     {
-        if (!resort_symbols(module)) return -1;
+        if (!resort_symbols(module)) return NULL;
     }
 
     /*
@@ -665,13 +665,13 @@ int symt_find_nearest(struct module* module, DWORD addr)
     high = module->module.NumSyms;
 
     symt_get_info(&module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref_addr);
-    if (addr < ref_addr) return -1;
+    if (addr < ref_addr) return NULL;
     if (high)
     {
         symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_ADDRESS, &ref_addr);
         if (!symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_LENGTH, &ref_size) || !ref_size)
             ref_size = 0x1000; /* arbitrary value */
-        if (addr >= ref_addr + ref_size) return -1;
+        if (addr >= ref_addr + ref_size) return NULL;
     }
     
     while (high > low + 1)
@@ -703,12 +703,12 @@ int symt_find_nearest(struct module* module, DWORD addr)
     }
     /* finally check that we fit into the found symbol */
     symt_get_info(&module->addr_sorttab[low]->symt, TI_GET_ADDRESS, &ref_addr);
-    if (addr < ref_addr) return -1;
+    if (addr < ref_addr) return NULL;
     if (!symt_get_info(&module->addr_sorttab[high - 1]->symt, TI_GET_LENGTH, &ref_size) || !ref_size)
         ref_size = 0x1000; /* arbitrary value */
-    if (addr >= ref_addr + ref_size) return -1;
+    if (addr >= ref_addr + ref_size) return NULL;
 
-    return low;
+    return module->addr_sorttab[low];
 }
 
 static BOOL symt_enum_locals_helper(struct module_pair* pair,
@@ -758,7 +758,6 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
     struct module_pair  pair;
     struct symt_ht*     sym;
     DWORD               pc = pcs->ctx_frame.InstructionOffset;
-    int                 idx;
 
     se->sym_info->SizeOfStruct = sizeof(*se->sym_info);
     se->sym_info->MaxNameLen = sizeof(se->buffer) - sizeof(SYMBOL_INFO);
@@ -766,9 +765,8 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
     pair.pcs = pcs;
     pair.requested = module_find_by_addr(pair.pcs, pc, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
-    if ((idx = symt_find_nearest(pair.effective, pc)) == -1) return FALSE;
+    if ((sym = symt_find_nearest(pair.effective, pc)) == NULL) return FALSE;
 
-    sym = pair.effective->addr_sorttab[idx];
     if (sym->symt.tag == SymTagFunction)
     {
         BOOL            ret;
@@ -998,15 +996,12 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
 {
     struct module_pair  pair;
     struct symt_ht*     sym;
-    int                 idx;
 
     pair.pcs = process_find_by_handle(hProcess);
     if (!pair.pcs) return FALSE;
     pair.requested = module_find_by_addr(pair.pcs, Address, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
-    if ((idx = symt_find_nearest(pair.effective, Address)) == -1) return FALSE;
-
-    sym = pair.effective->addr_sorttab[idx];
+    if ((sym = symt_find_nearest(pair.effective, Address)) == NULL) return FALSE;
 
     symt_fill_sym_info(&pair, NULL, &sym->symt, Symbol);
     *Displacement = Address - Symbol->Address;
@@ -1252,7 +1247,7 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
                                PDWORD pdwDisplacement, PIMAGEHLP_LINE Line)
 {
     struct module_pair  pair;
-    int                 idx;
+    struct symt_ht*     symt;
 
     TRACE("%p %08x %p %p\n", hProcess, dwAddr, pdwDisplacement, Line);
 
@@ -1262,11 +1257,10 @@ BOOL WINAPI SymGetLineFromAddr(HANDLE hProcess, DWORD dwAddr,
     if (!pair.pcs) return FALSE;
     pair.requested = module_find_by_addr(pair.pcs, dwAddr, DMT_UNKNOWN);
     if (!module_get_debug(&pair)) return FALSE;
-    if ((idx = symt_find_nearest(pair.effective, dwAddr)) == -1) return FALSE;
+    if ((symt = symt_find_nearest(pair.effective, dwAddr)) == NULL) return FALSE;
 
-    if (pair.effective->addr_sorttab[idx]->symt.tag != SymTagFunction) return FALSE;
-    if (!symt_fill_func_line_info(pair.effective, 
-                                  (struct symt_function*)pair.effective->addr_sorttab[idx],
+    if (symt->symt.tag != SymTagFunction) return FALSE;
+    if (!symt_fill_func_line_info(pair.effective, (struct symt_function*)symt,
                                   dwAddr, Line)) return FALSE;
     *pdwDisplacement = dwAddr - Line->Address;
     return TRUE;
