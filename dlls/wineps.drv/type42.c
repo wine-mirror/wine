@@ -161,7 +161,10 @@ TYPE42 *T42_download_header(PSDRV_PDEVICE *physDev, char *ps_name,
     static const char storage[] ="]\nhavetype42gdir{pop}{{string} forall}ifelse\n";
     static const char end[] = "] def\n"
       "havetype42gdir{/GlyphDirectory 256 dict def\n"
-      " sfnts 0 get dup %d (locx) putinterval %d (glfx) putinterval}if\n"
+      " sfnts 0 get dup\n"
+      "  %d <6c6f6378000000000000000000000000> putinterval\n" /* replace loca entry with dummy locx */
+      "  %d <676c6678000000000000000000000000> putinterval\n" /* replace glyf entry with dummy glfx */
+      " }if\n"
       "currentdict end dup /FontName get exch definefont pop\n";
 
 
