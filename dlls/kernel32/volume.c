@@ -222,7 +222,7 @@ static UINT get_registry_drive_type( const WCHAR *root )
 static DWORD VOLUME_FindCdRomDataBestVoldesc( HANDLE handle )
 {
     BYTE cur_vd_type, max_vd_type = 0;
-    BYTE buffer[16];
+    BYTE buffer[0x800];
     DWORD size, offs, best_offs = 0, extra_offs = 0;
 
     for (offs = 0x8000; offs <= 0x9800; offs += 0x800)
