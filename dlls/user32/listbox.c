@@ -1169,7 +1169,7 @@ static void LISTBOX_InvalidateItemRect( LB_DESCR *descr, INT index )
  */
 static LRESULT LISTBOX_GetItemHeight( LB_DESCR *descr, INT index )
 {
-    if (descr->style & LBS_OWNERDRAWVARIABLE)
+    if (descr->style & LBS_OWNERDRAWVARIABLE && descr->nb_items > 0)
     {
         if ((index < 0) || (index >= descr->nb_items))
         {

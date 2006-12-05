@@ -214,6 +214,16 @@ static void check_item_height(void)
     ok (itemHeight == tm.tmHeight, "Item height wrong, got %d, expecting %d\n", itemHeight, tm.tmHeight);
 
     DestroyWindow (hLB);
+
+    hLB = CreateWindow ("LISTBOX", "TestList", LBS_OWNERDRAWVARIABLE,
+                         0, 0, 100, 100, NULL, NULL, NULL, 0);
+    itemHeight = SendMessage(hLB, LB_GETITEMHEIGHT, 0, 0);
+    ok(itemHeight == tm.tmHeight, "itemHeight %d\n", itemHeight);
+    itemHeight = SendMessage(hLB, LB_GETITEMHEIGHT, 5, 0);
+    ok(itemHeight == tm.tmHeight, "itemHeight %d\n", itemHeight);
+    itemHeight = SendMessage(hLB, LB_GETITEMHEIGHT, -5, 0);
+    ok(itemHeight == tm.tmHeight, "itemHeight %d\n", itemHeight);
+    DestroyWindow (hLB);
 }
 
 static LRESULT WINAPI main_window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
