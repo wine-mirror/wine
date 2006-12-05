@@ -447,8 +447,38 @@ struct symt_thunk* symt_new_thunk(struct module* module,
     return sym;
 }
 
+struct symt_data* symt_new_constant(struct module* module,
+                                    struct symt_compiland* compiland,
+                                    const char* name, struct symt* type,
+                                    const VARIANT* v)
+{
+    struct symt_data*  sym;
+
+    TRACE_(dbghelp_symt)("Adding constant value %s:%s\n",
+                         module->module.ModuleName, name);
+
+    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
+    {
+        sym->symt.tag      = SymTagData;
+        sym->hash_elt.name = pool_strdup(&module->pool, name);
+        hash_table_add(&module->ht_symbols, &sym->hash_elt);
+        module->sortlist_valid = FALSE;
+        sym->kind          = DataIsConstant;
+        sym->container     = compiland ? &compiland->symt : NULL;
+        sym->type          = type;
+        sym->u.value       = *v;
+        if (compiland)
+        {
+            struct symt**       p;
+            p = vector_add(&compiland->vchildren, &module->pool);
+            *p = &sym->symt;
+        }
+    }
+    return sym;
+}
+
 /* expect sym_info->MaxNameLen to be set before being called */
-static void symt_fill_sym_info(const struct module_pair* pair, 
+static void symt_fill_sym_info(const struct module_pair* pair,
                                const struct symt_function* func,
                                const struct symt* sym, SYMBOL_INFO* sym_info)
 {
@@ -523,8 +553,11 @@ static void symt_fill_sym_info(const struct module_pair* pair,
                 case VT_UI4: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.ulVal; break;
                 case VT_UI2: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.uiVal; break;
                 case VT_UI1: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.bVal; break;
-                default:        
+                case VT_I1 | VT_BYREF: sym_info->Value = (ULONG)data->u.value.n1.n2.n3.byref; break;
+                default:
                     FIXME("Unsupported variant type (%u)\n", data->u.value.n1.n2.vt);
+                    sym_info->Value = 0;
+                    break;
                 }
                 break;
             default:
@@ -618,10 +651,10 @@ static BOOL symt_enum_module(struct module_pair* pair, regex_t* regex,
  */
 static BOOL resort_symbols(struct module* module)
 {
-    int                         nsym;
     void*                       ptr;
     struct symt_ht*             sym;
     struct hash_table_iter      hti;
+    ULONG64                     addr;
 
     if (!(module->module.NumSyms = module->ht_symbols.num_elts))
         return FALSE;
@@ -635,16 +668,21 @@ static BOOL resort_symbols(struct module* module)
                                          module->module.NumSyms * sizeof(struct symt_ht*));
     if (!module->addr_sorttab) return FALSE;
 
-    nsym = 0;
+    module->num_sorttab = 0;
     hash_table_iter_init(&module->ht_symbols, &hti, NULL);
     while ((ptr = hash_table_iter_up(&hti)))
     {
         sym = GET_ENTRY(ptr, struct symt_ht, hash_elt);
         assert(sym);
-        module->addr_sorttab[nsym++] = sym;
+        /* Don't store in sorttab symbol without address, they are of
+         * no use here (e.g. constant values)
+         * As the number of those symbols is very couple (a couple per module)
+         * we don't bother for the unused spots at the end of addr_sorttab
+         */
+        if (symt_get_info(&sym->symt, TI_GET_ADDRESS, &addr))
+            module->addr_sorttab[module->num_sorttab++] = sym;
     }
-    
-    qsort(module->addr_sorttab, nsym, sizeof(struct symt_ht*), symt_cmp_addr);
+    qsort(module->addr_sorttab, module->num_sorttab, sizeof(struct symt_ht*), symt_cmp_addr);
     return module->sortlist_valid = TRUE;
 }
 
@@ -663,7 +701,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
      * Binary search to find closest symbol.
      */
     low = 0;
-    high = module->module.NumSyms;
+    high = module->num_sorttab;
 
     symt_get_info(&module->addr_sorttab[0]->symt, TI_GET_ADDRESS, &ref_addr);
     if (addr < ref_addr) return NULL;
@@ -683,7 +721,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
         else
             high = mid;
     }
-    if (low != high && high != module->module.NumSyms && 
+    if (low != high && high != module->num_sorttab &&
         cmp_sorttab_addr(module, high, addr) <= 0)
         low = high;
 
@@ -697,7 +735,7 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD addr)
             module->addr_sorttab[low - 1]->symt.tag != SymTagPublicSymbol &&
             !cmp_sorttab_addr(module, low - 1, ref_addr))
             low--;
-        else if (low < module->module.NumSyms - 1 && 
+        else if (low < module->num_sorttab - 1 &&
                  module->addr_sorttab[low + 1]->symt.tag != SymTagPublicSymbol &&
                  !cmp_sorttab_addr(module, low + 1, ref_addr))
             low++;

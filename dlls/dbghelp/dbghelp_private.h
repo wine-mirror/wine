@@ -322,6 +322,7 @@ struct module
 
     /* symbols & symbol tables */
     int                         sortlist_valid;
+    unsigned                    num_sorttab;    /* number of symbols with addresses */
     struct symt_ht**            addr_sorttab;
     struct hash_table           ht_symbols;
     void                        (*loc_compute)(struct process* pcs,
@@ -544,6 +545,11 @@ extern struct symt_thunk*
                                    struct symt_compiland* parent,
                                    const char* name, THUNK_ORDINAL ord,
                                    unsigned long addr, unsigned long size);
+extern struct symt_data*
+                    symt_new_constant(struct module* module,
+                                      struct symt_compiland* parent,
+                                      const char* name, struct symt* type,
+                                      const VARIANT* v);
 
 /* type.c */
 extern void         symt_init_basic(struct module* module);

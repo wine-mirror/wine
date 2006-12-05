@@ -46,6 +46,9 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "winnls.h"
+#include "winuser.h"
+#include "ole2.h"
+#include "oleauto.h"
 
 #include "dbghelp_private.h"
 
@@ -1313,9 +1316,48 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
             break;
         }
     }
-    if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_const_value, &value))
+    else if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_const_value, &value))
     {
-        FIXME("NIY: const value %08lx for %s\n", value.u.uvalue, name.u.string);
+        VARIANT v;
+        if (subpgm->func) FIXME("Unsupported constant %s in function\n", name.u.string);
+        if (is_pmt)       FIXME("Unsupported constant (parameter) %s in function\n", name.u.string);
+        switch (value.form)
+        {
+        case DW_FORM_data1:
+        case DW_FORM_data2:
+        case DW_FORM_data4:
+        case DW_FORM_udata:
+            v.n1.n2.vt = VT_UI4;
+            v.n1.n2.n3.lVal = value.u.uvalue;
+            break;
+
+        case DW_FORM_sdata:
+            v.n1.n2.vt = VT_I4;
+            v.n1.n2.n3.lVal = value.u.svalue;
+            break;
+
+        case DW_FORM_strp:
+        case DW_FORM_string:
+            /* FIXME: native doesn't report const strings from here !!
+             * however, the value of the string is in the code somewhere
+             */
+            v.n1.n2.vt = VT_I1 | VT_BYREF;
+            v.n1.n2.n3.byref = pool_strdup(&subpgm->ctx->module->pool, value.u.string);
+            break;
+
+        case DW_FORM_data8:
+        case DW_FORM_block:
+        case DW_FORM_block1:
+        case DW_FORM_block2:
+        case DW_FORM_block4:
+
+        default:
+            FIXME("Unsupported form for const value %s (%lx)\n",
+                  name.u.string, value.form);
+            v.n1.n2.vt = VT_EMPTY;
+        }
+        di->symt = &symt_new_constant(subpgm->ctx->module, subpgm->compiland,
+                                      name.u.string, param_type, &v)->symt;
     }
     if (is_pmt && subpgm->func && subpgm->func->type)
         symt_add_function_signature_parameter(subpgm->ctx->module,

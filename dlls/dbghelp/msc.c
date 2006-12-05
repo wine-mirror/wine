@@ -1521,58 +1521,54 @@ static int codeview_snarf(const struct msc_debug_info* msc_dbg, const BYTE* root
 
         case S_CONSTANT_V1:
             {
-                int                     val, vlen;
+                int                     vlen;
                 const struct p_string*  name;
-                const char*             x;
                 struct symt*            se;
+                VARIANT                 v;
 
-                vlen = numeric_leaf(&val, &sym->constant_v1.cvalue);
+                v.n1.n2.vt = VT_I4;
+                vlen = numeric_leaf(&v.n1.n2.n3.intVal, &sym->constant_v1.cvalue);
                 name = (const struct p_string*)((const char*)&sym->constant_v1.cvalue + vlen);
                 se = codeview_get_type(sym->constant_v1.type, FALSE);
-                if (!se) x = "---";
-                else if (se->tag == SymTagEnum) x = ((struct symt_enum*)se)->name;
-                else x = "###";
-                    
-                TRACE("S-Constant-V1 %u %s %x (%s)\n", 
-                      val, terminate_string(name), sym->constant_v1.type, x);
-                /* FIXME: we should add this as a constant value */
+
+                TRACE("S-Constant-V1 %u %s %x\n",
+                      v.n1.n2.n3.intVal, terminate_string(name), sym->constant_v1.type);
+                symt_new_constant(msc_dbg->module, compiland, terminate_string(name),
+                                  se, &v);
             }
             break;
         case S_CONSTANT_V2:
             {
-                int                     val, vlen;
+                int                     vlen;
                 const struct p_string*  name;
-                const char*             x;
                 struct symt*            se;
+                VARIANT                 v;
 
-                vlen = numeric_leaf(&val, &sym->constant_v2.cvalue);
+                v.n1.n2.vt = VT_I4;
+                vlen = numeric_leaf(&v.n1.n2.n3.intVal, &sym->constant_v2.cvalue);
                 name = (const struct p_string*)((const char*)&sym->constant_v2.cvalue + vlen);
                 se = codeview_get_type(sym->constant_v2.type, FALSE);
-                if (!se) x = "---";
-                else if (se->tag == SymTagEnum) x = ((struct symt_enum*)se)->name;
-                else x = "###";
-                    
-                TRACE("S-Constant-V2 %u %s %x (%s)\n", 
-                      val, terminate_string(name), sym->constant_v2.type, x);
-                /* FIXME: we should add this as a constant value */
+
+                TRACE("S-Constant-V2 %u %s %x\n",
+                      v.n1.n2.n3.intVal, terminate_string(name), sym->constant_v2.type);
+                symt_new_constant(msc_dbg->module, compiland, terminate_string(name),
+                                  se, &v);
             }
             break;
         case S_CONSTANT_V3:
             {
-                int                     val, vlen;
+                int                     vlen;
                 const char*             name;
-                const char*             x;
                 struct symt*            se;
+                VARIANT                 v;
 
-                vlen = numeric_leaf(&val, &sym->constant_v3.cvalue);
+                v.n1.n2.vt = VT_I4;
+                vlen = numeric_leaf(&v.n1.n2.n3.intVal, &sym->constant_v3.cvalue);
                 name = (const char*)&sym->constant_v3.cvalue + vlen;
                 se = codeview_get_type(sym->constant_v3.type, FALSE);
-                if (!se) x = "---";
-                else if (se->tag == SymTagEnum) x = ((struct symt_enum*)se)->name;
-                else x = "###";
-                    
-                TRACE("S-Constant-V3 %u %s %x (%s)\n", 
-                      val, name, sym->constant_v3.type, x);
+
+                TRACE("S-Constant-V3 %u %s %x\n",
+                      v.n1.n2.n3.intVal, name, sym->constant_v3.type);
                 /* FIXME: we should add this as a constant value */
             }
             break;
