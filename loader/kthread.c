@@ -237,8 +237,7 @@ static int create_thread( struct wine_pthread_thread_info *info )
 {
     if (!info->stack_base)
     {
-        info->stack_base = wine_anon_mmap( NULL, info->stack_size,
-                                           PROT_READ | PROT_WRITE | PROT_EXEC, 0 );
+        info->stack_base = wine_anon_mmap( NULL, info->stack_size, PROT_READ | PROT_WRITE, 0 );
         if (info->stack_base == (void *)-1) return -1;
     }
 #ifdef HAVE_CLONE
