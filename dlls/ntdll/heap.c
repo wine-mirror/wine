@@ -201,6 +201,12 @@ static inline unsigned int get_freelist_index( SIZE_T size )
     return i;
 }
 
+/* get the memory protection type to use for a given heap */
+static inline ULONG get_protection_type( DWORD flags )
+{
+    return (flags & HEAP_CREATE_ENABLE_EXECUTE) ? PAGE_EXECUTE_READWRITE : PAGE_READWRITE;
+}
+
 static RTL_CRITICAL_SECTION_DEBUG process_heap_critsect_debug =
 {
     0, 0, NULL,  /* will be set later */
@@ -411,7 +417,7 @@ static inline BOOL HEAP_Commit( SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T da
     size -= subheap->commitSize;
     ptr = (char *)subheap + subheap->commitSize;
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0,
-                                 &size, MEM_COMMIT, PAGE_READWRITE ))
+                                 &size, MEM_COMMIT, get_protection_type( subheap->heap->flags ) ))
     {
         WARN("Could not commit %08lx bytes at %p for heap %p\n",
                  size, ptr, subheap->heap );
@@ -594,7 +600,7 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
     if (flags & HEAP_SHARED)
         commitSize = totalSize;  /* always commit everything in a shared heap */
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
-                                 &commitSize, MEM_COMMIT, PAGE_READWRITE ))
+                                 &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
     {
         WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
         return FALSE;
@@ -690,7 +696,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, void *base, DWORD flags,
     {
         /* allocate the memory block */
         if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
-                                     MEM_RESERVE, PAGE_READWRITE ))
+                                     MEM_RESERVE, get_protection_type( flags ) ))
         {
             WARN("Could not allocate %08lx bytes\n", totalSize );
             return NULL;
