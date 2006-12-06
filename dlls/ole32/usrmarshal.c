@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -43,20 +44,33 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
 
-static void dump_user_flags(ULONG *pFlags)
+static const char* debugstr_user_flags(ULONG *pFlags)
 {
-    if (HIWORD(*pFlags) == NDR_LOCAL_DATA_REPRESENTATION)
-        TRACE("MAKELONG(NDR_LOCAL_REPRESENTATION, ");
-    else
-        TRACE("MAKELONG(0x%04x, ", HIWORD(*pFlags));
+    char buf[12];
+    const char* loword;
     switch (LOWORD(*pFlags))
     {
-    case MSHCTX_LOCAL: TRACE("MSHCTX_LOCAL)"); break;
-    case MSHCTX_NOSHAREDMEM: TRACE("MSHCTX_NOSHAREDMEM)"); break;
-    case MSHCTX_DIFFERENTMACHINE: TRACE("MSHCTX_DIFFERENTMACHINE)"); break;
-    case MSHCTX_INPROC: TRACE("MSHCTX_INPROC)"); break;
-    default: TRACE("%d)", LOWORD(*pFlags));
+    case MSHCTX_LOCAL:
+        loword="MSHCTX_LOCAL";
+        break;
+    case MSHCTX_NOSHAREDMEM:
+        loword="MSHCTX_NOSHAREDMEM";
+        break;
+    case MSHCTX_DIFFERENTMACHINE:
+        loword="MSHCTX_DIFFERENTMACHINE";
+        break;
+    case MSHCTX_INPROC:
+        loword="MSHCTX_INPROC";
+        break;
+    default:
+        sprintf(buf, "%d", LOWORD(*pFlags));
+        loword=buf;
     }
+
+    if (HIWORD(*pFlags) == NDR_LOCAL_DATA_REPRESENTATION)
+        return wine_dbg_sprintf("MAKELONG(NDR_LOCAL_REPRESENTATION, %s)", loword);
+    else
+        return wine_dbg_sprintf("MAKELONG(0x%04x, %s)", HIWORD(*pFlags), loword);
 }
 
 /******************************************************************************
@@ -83,7 +97,7 @@ ULONG __RPC_USER CLIPFORMAT_UserSize(ULONG *pFlags, ULONG StartingSize, CLIPFORM
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, pCF);
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, pCF);
 
     size += sizeof(userCLIPFORMAT);
 
@@ -128,7 +142,7 @@ unsigned char * __RPC_USER CLIPFORMAT_UserMarshal(ULONG *pFlags, unsigned char *
 {
     wireCLIPFORMAT wirecf = (wireCLIPFORMAT)pBuffer;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &0x%04x\n", pBuffer, *pCF);
+    TRACE("(%s, %p, &0x%04x\n", debugstr_user_flags(pFlags), pBuffer, *pCF);
 
     wirecf->u.dwValue = *pCF;
     pBuffer += sizeof(*wirecf);
@@ -185,7 +199,7 @@ unsigned char * __RPC_USER CLIPFORMAT_UserUnmarshal(ULONG *pFlags, unsigned char
 {
     wireCLIPFORMAT wirecf = (wireCLIPFORMAT)pBuffer;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, pCF);
+    TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, pCF);
 
     pBuffer += sizeof(*wirecf);
     if (wirecf->fContext == WDT_INPROC_CALL)
@@ -282,25 +296,25 @@ static void __RPC_USER handle_UserFree(ULONG *pFlags, HANDLE *phMenu)
 #define IMPL_WIREM_HANDLE(type) \
     ULONG __RPC_USER type##_UserSize(ULONG *pFlags, ULONG StartingSize, type *handle) \
     { \
-        TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, handle); \
+        TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, handle); \
         return handle_UserSize(pFlags, StartingSize, (HANDLE *)handle); \
     } \
     \
     unsigned char * __RPC_USER type##_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
     { \
-        TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *handle); \
+        TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *handle); \
         return handle_UserMarshal(pFlags, pBuffer, (HANDLE *)handle); \
     } \
     \
     unsigned char * __RPC_USER type##_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, type *handle) \
     { \
-        TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, handle); \
+        TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, handle); \
         return handle_UserUnmarshal(pFlags, pBuffer, (HANDLE *)handle); \
     } \
     \
     void __RPC_USER type##_UserFree(ULONG *pFlags, type *handle) \
     { \
-        TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *handle); \
+        TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *handle); \
         return handle_UserFree(pFlags, (HANDLE *)handle); \
     }
 
@@ -315,7 +329,7 @@ ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *ph
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, phGlobal);
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, phGlobal);
 
     ALIGN_LENGTH(size, 3);
 
@@ -340,7 +354,7 @@ ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *ph
 
 unsigned char * __RPC_USER HGLOBAL_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
 {
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *phGlobal);
+    TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phGlobal);
 
     ALIGN_POINTER(pBuffer, 3);
 
@@ -385,7 +399,7 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *p
 {
     ULONG fContext;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *phGlobal);
+    TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phGlobal);
 
     ALIGN_POINTER(pBuffer, 3);
 
@@ -451,7 +465,7 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *p
  */
 void __RPC_USER HGLOBAL_UserFree(ULONG *pFlags, HGLOBAL *phGlobal)
 {
-    TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *phGlobal);
+    TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *phGlobal);
 
     if (LOWORD(*pFlags != MSHCTX_INPROC) && *phGlobal)
         GlobalFree(*phGlobal);
@@ -531,7 +545,7 @@ ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHME
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, *phEmf);
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, *phEmf);
 
     size += sizeof(ULONG);
     if (LOWORD(*pFlags) == MSHCTX_INPROC)
@@ -555,7 +569,7 @@ ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHME
 
 unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
 {
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, &%p\n", pBuffer, *phEmf);
+    TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phEmf);
 
     if (LOWORD(*pFlags) == MSHCTX_INPROC)
     {
@@ -594,7 +608,7 @@ unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned ch
 {
     ULONG fContext;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, phEmf);
+    TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, phEmf);
 
     fContext = *(ULONG *)pBuffer;
     pBuffer += sizeof(ULONG);
@@ -637,7 +651,7 @@ unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned ch
 
 void __RPC_USER HENHMETAFILE_UserFree(ULONG *pFlags, HENHMETAFILE *phEmf)
 {
-    TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *phEmf);
+    TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *phEmf);
 
     if (LOWORD(*pFlags) != MSHCTX_INPROC)
         DeleteEnhMetaFile(*phEmf);
@@ -647,7 +661,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
 {
     ULONG size = StartingSize;
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %d, %p\n", StartingSize, pStgMedium);
+    TRACE("(%s, %d, %p\n", debugstr_user_flags(pFlags), StartingSize, pStgMedium);
 
     ALIGN_LENGTH(size, 3);
 
@@ -695,7 +709,7 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
 
 unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
 {
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, pStgMedium);
+    TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, pStgMedium);
 
     ALIGN_POINTER(pBuffer, 3);
 
@@ -754,7 +768,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
 
     ALIGN_POINTER(pBuffer, 3);
 
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p, %p\n", pBuffer, pStgMedium);
+    TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, pStgMedium);
 
     pStgMedium->tymed = *(DWORD *)pBuffer;
     pBuffer += sizeof(DWORD);
@@ -807,7 +821,7 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
 
 void __RPC_USER STGMEDIUM_UserFree(ULONG *pFlags, STGMEDIUM *pStgMedium)
 {
-    TRACE("("); dump_user_flags(pFlags); TRACE(", %p\n", pStgMedium);
+    TRACE("(%s, %p\n", debugstr_user_flags(pFlags), pStgMedium);
 
     ReleaseStgMedium(pStgMedium);
 }
