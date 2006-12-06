@@ -469,6 +469,11 @@ static BOOL video_mpeg_filter(const BYTE const *b, DWORD size)
         && (b[3] == 0xb3 || b[3] == 0xba);
 }
 
+static BOOL application_xzip_filter(const BYTE const *b, DWORD size)
+{
+    return size > 2 && b[0] == 0x50 && b[1] == 0x4b;
+}
+
 static BOOL application_xgzip_filter(const BYTE const *b, DWORD size)
 {
     return size > 2 && b[0] == 0x1f && b[1] == 0x8b;
@@ -534,6 +539,8 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
         static const WCHAR wszImageBmp[] = {'i','m','a','g','e','/','b','m','p',0};
         static const WCHAR wszVideoAvi[] = {'v','i','d','e','o','/','a','v','i',0};
         static const WCHAR wszVideoMpeg[] = {'v','i','d','e','o','/','m','p','e','g',0};
+        static const WCHAR wszAppXZip[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+            'x','-','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
         static const WCHAR wszAppXGzip[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
             'x','-','g','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
@@ -552,6 +559,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             {wszImageBmp,       image_bmp_filter},
             {wszVideoAvi,       video_avi_filter},
             {wszVideoMpeg,      video_mpeg_filter},
+            {wszAppXZip,        application_xzip_filter},
             {wszAppXGzip,       application_xgzip_filter},
             {wszTextPlain,      text_plain_filter},
             {wszAppOctetStream, application_octet_stream_filter}
