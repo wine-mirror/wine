@@ -374,10 +374,6 @@ LOAD_FUNCPTR(glXMakeContextCurrent)
 LOAD_FUNCPTR(glXGetCurrentReadDrawable)
 LOAD_FUNCPTR(glXGetFBConfigs)
 
-/* NV GLX Extension */
-LOAD_FUNCPTR(glXAllocateMemoryNV)
-LOAD_FUNCPTR(glXFreeMemoryNV)
-
 /* Standard OpenGL calls */
 LOAD_FUNCPTR(glBindTexture)
 LOAD_FUNCPTR(glBitmap)
@@ -390,6 +386,15 @@ LOAD_FUNCPTR(glGetIntegerv)
 LOAD_FUNCPTR(glGetString)
 LOAD_FUNCPTR(glNewList)
 LOAD_FUNCPTR(glPixelStorei)
+#undef LOAD_FUNCPTR
+
+/* It doesn't matter if these fail. They'll only be used if the driver reports
+   the associated extension is available (and if a driver reports the extension
+   is available but fails to provide the functions, it's quite broken) */
+#define LOAD_FUNCPTR(f) p##f = (void*)pglXGetProcAddressARB((const unsigned char*)#f);
+/* NV GLX Extension */
+LOAD_FUNCPTR(glXAllocateMemoryNV)
+LOAD_FUNCPTR(glXFreeMemoryNV)
 #undef LOAD_FUNCPTR
 
     if(!X11DRV_WineGL_InitOpenglInfo()) {
