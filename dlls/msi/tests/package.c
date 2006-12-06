@@ -2901,6 +2901,11 @@ static void test_sourcedirprop(void)
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     ok( !lstrcmpA(source_dir, path), "Expected %s, got %s\n", path, source_dir);
 
+    size = MAX_PATH;
+    r = MsiGetProperty( hpkg, "SoUrCeDiR", source_dir, &size );
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    ok( !lstrlenA(source_dir), "Expected emtpy source dir, got %s\n", source_dir);
+
     MsiCloseHandle(hpkg);
     DeleteFileA(msifile);
 }
@@ -2974,6 +2979,27 @@ static void test_prop_path(void)
     todo_wine {
     ok( !lstrcmpi(cwd, buffer), "SourceDir (%s) should be current dir (%s)\n", buffer, cwd);
     }
+
+    r = MsiSetProperty(hpkg, "SourceDir", "goo");
+    ok( r == ERROR_SUCCESS, "property not set\n");
+
+    sz = sizeof buffer;
+    buffer[0] = 0;
+    r = MsiGetProperty(hpkg, "SourceDir", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "property not set\n");
+    ok( !lstrcmpi(buffer, "goo"), "SourceDir (%s) should be goo\n", buffer);
+
+    sz = sizeof buffer;
+    buffer[0] = 0;
+    r = MsiGetSourcePath(hpkg, "SourceDir", buffer, &sz );
+    ok( r == ERROR_SUCCESS, "failed to get source path\n");
+    ok( !lstrcmpi(buffer, cwd), "SourceDir (%s) should be goo\n", buffer);
+
+    sz = sizeof buffer;
+    buffer[0] = 0;
+    r = MsiGetProperty(hpkg, "SourceDir", buffer, &sz);
+    ok( r == ERROR_SUCCESS, "property not set\n");
+    ok( !lstrcmpi(buffer, "goo"), "SourceDir (%s) should be goo\n", buffer);
 
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
