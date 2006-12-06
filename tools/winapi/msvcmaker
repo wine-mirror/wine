@@ -519,6 +519,7 @@ sub _generate_dsp($$) {
     print OUT "CPP=cl.exe\r\n";
     print OUT "MTL=midl.exe\r\n" if !$lib && !$exe;
     print OUT "RSC=rc.exe\r\n";
+    print OUT "\r\n";
 
     my $n = 0;
 
@@ -591,12 +592,15 @@ sub _generate_dsp($$) {
 	}
 
 	foreach my $define (@defines) {
-	    print OUT " /D \"$define\"";
+	    if ($define !~ /=/) {
+		print OUT " /D \"$define\"";
+	    } else {
+		print OUT " /D $define";
+	    }
 	}
 	print OUT " /YX" if $lib || $exe;
 	print OUT " /FD";
 	print OUT " /GZ" if $debug;
-	print OUT " " if $debug && ($lib || $exe);
 	print OUT " /c";
 	print OUT "\r\n";
 
@@ -647,7 +651,7 @@ sub _generate_dsp($$) {
 	}
 
 	foreach my $define (@defines2) {
-	    if ($define !~ /[\\\"]/) {
+	    if ($define !~ /=/) {
 		print OUT " /D \"$define\"";
 	    } else {
 		print OUT " /D $define";
@@ -660,7 +664,6 @@ sub _generate_dsp($$) {
 	print OUT " /FR" if !$lib;
 	print OUT " /FD";
 	print OUT " /GZ" if $debug;
-	print OUT " " if $debug && $lib;
 	print OUT " /c";
 	print OUT " /TP" if !$no_cpp;
 	print OUT "\r\n";
@@ -696,12 +699,12 @@ sub _generate_dsp($$) {
 
 	if($exe || $dll) {
 	    print OUT "LINK32=link.exe\r\n";
-	    print OUT "# ADD BASE LINK32 ";
+	    print OUT "# ADD BASE LINK32";
 	    my @libraries = qw(kernel32.lib user32.lib gdi32.lib winspool.lib
 			       comdlg32.lib advapi32.lib shell32.lib ole32.lib
 			       oleaut32.lib uuid.lib odbc32.lib odbccp32.lib);
 	    foreach my $library (@libraries) {
-		print OUT "$library ";
+		print OUT " $library";
 	    }
 	    print OUT " /nologo";
 	    print OUT " /dll" if $dll;
@@ -712,11 +715,11 @@ sub _generate_dsp($$) {
 	    print OUT "\r\n";
 
 	    print OUT "# ADD LINK32";
-	    print OUT " /nologo";
 	    print OUT " libcmt.lib" if $project =~ /^ntdll$/; # FIXME: Kludge
 	    foreach my $import (@imports) {
 		print OUT " $import.lib" if ($import ne "msvcrt");
 	    }
+	    print OUT " /nologo";
 	    print OUT " /dll" if $dll;
             print OUT " /subsystem:console" if $console;
 	    print OUT " /debug" if $debug;
