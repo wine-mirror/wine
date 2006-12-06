@@ -52,6 +52,15 @@ typedef struct HTMLDOMNode HTMLDOMNode;
 typedef struct ConnectionPoint ConnectionPoint;
 typedef struct BSCallback BSCallback;
 
+typedef struct {
+    const IHTMLWindow2Vtbl *lpHTMLWindow2Vtbl;
+
+    LONG ref;
+
+    HTMLDocument *doc;
+    nsIDOMWindow *nswindow;
+} HTMLWindow;
+
 typedef enum {
     UNKNOWN_USERMODE,
     BROWSEMODE,
@@ -80,6 +89,7 @@ struct HTMLDocument {
     LONG ref;
 
     NSContainer *nscontainer;
+    HTMLWindow *window;
 
     IOleClientSite *client;
     IDocHostUIHandler *hostui;
@@ -226,6 +236,8 @@ typedef struct {
     HTMLElement *element;
 } HTMLTextContainer;
 
+#define HTMLWINDOW2(x)   ((IHTMLWindow2*)                 &(x)->lpHTMLWindow2Vtbl)
+
 #define HTMLDOC(x)       ((IHTMLDocument2*)               &(x)->lpHTMLDocument2Vtbl)
 #define HTMLDOC3(x)      ((IHTMLDocument3*)               &(x)->lpHTMLDocument3Vtbl)
 #define PERSIST(x)       ((IPersist*)                     &(x)->lpPersistFileVtbl)
@@ -276,6 +288,9 @@ typedef struct {
 
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**);
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**);
+
+HTMLWindow *HTMLWindow_Create(HTMLDocument*);
+HTMLWindow *nswindow_to_window(nsIDOMWindow*);
 
 void HTMLDocument_HTMLDocument3_Init(HTMLDocument*);
 void HTMLDocument_Persist_Init(HTMLDocument*);

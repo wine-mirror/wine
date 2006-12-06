@@ -162,6 +162,7 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->hwnd)
             DestroyWindow(This->hwnd);
 
+        IHTMLWindow2_Release(HTMLWINDOW2(This->window));
         release_nodes(This);
 
         HTMLDocument_ConnectionPoints_Destroy(This);
@@ -920,8 +921,13 @@ static HRESULT WINAPI HTMLDocument_elementFromPoint(IHTMLDocument2 *iface, long 
 
 static HRESULT WINAPI HTMLDocument_get_parentWindow(IHTMLDocument2 *iface, IHTMLWindow2 **p)
 {
-    FIXME("(%p)->(%p)\n", iface, p);
-    return E_NOTIMPL;
+    HTMLDocument *This = HTMLDOC_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = HTMLWINDOW2(This->window);
+    IHTMLWindow2_AddRef(*p);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_styleSheets(IHTMLDocument2 *iface,
@@ -1124,6 +1130,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     HTMLDocument_ConnectionPoints_Init(ret);
 
     ret->nscontainer = NSContainer_Create(ret, NULL);
+    ret->window = HTMLWindow_Create(ret);
 
     get_thread_hwnd();
 

@@ -24,6 +24,7 @@ C_SRCS = \
 	htmlstylesheet.c \
 	htmltextcont.c \
 	htmltextarea.c \
+	htmlwindow.c \
 	install.c \
 	loadopts.c \
 	main.c \
