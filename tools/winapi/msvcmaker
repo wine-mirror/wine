@@ -627,8 +627,8 @@ sub _generate_dsp($$) {
 	    	push @defines2, qw(__WINE_USE_NATIVE_HEADERS);
 	    }
 	    my $output_dir2 = $output_dir;
-	    $output_dir =~ s/\\/\\\\/g;
-	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir\\\"";
+	    $output_dir2 =~ s/\\/\\\\/g;
+	    push @defines2, "__WINETEST_OUTPUT_DIR=\\\"$output_dir2\\\"";
 	    push @defines2, qw(__i386__ _X86_);
 
 	    if($project eq "msvcrt_test") {
