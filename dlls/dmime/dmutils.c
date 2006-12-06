@@ -233,20 +233,6 @@ HRESULT IDirectMusicUtils_IPersistStream_ParseReference (LPPERSISTSTREAM iface, 
   return S_OK;
 }
 
-/* translate STREAM_SEEK flag to string */
-const char *resolve_STREAM_SEEK (DWORD flag) {
-	switch (flag) {
-		case STREAM_SEEK_SET:
-			return wine_dbg_sprintf ("STREAM_SEEK_SET");
-		case STREAM_SEEK_CUR:
-			return wine_dbg_sprintf ("STREAM_SEEK_CUR");
-		case STREAM_SEEK_END:
-			return wine_dbg_sprintf ("STREAM_SEEK_END");
-		default:
-			return wine_dbg_sprintf ("()");			
-	}
-}
-
 /* FOURCC to string conversion for debug messages */
 const char *debugstr_fourcc (DWORD fourcc) {
     if (!fourcc) return "'null'";

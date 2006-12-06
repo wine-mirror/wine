@@ -64,8 +64,6 @@ typedef struct {
 extern int even_or_odd (DWORD number);
 /* check whether chunkID is valid dmobject form chunk */
 extern BOOL IS_VALID_DMFORM (FOURCC chunkID);
-/* translate STREAM_SEEK flag to string */
-extern const char *resolve_STREAM_SEEK (DWORD flag);
 /* FOURCC to string conversion for debug messages */
 extern const char *debugstr_fourcc (DWORD fourcc);
 /* DMUS_VERSION struct to string conversion for debug messages */
