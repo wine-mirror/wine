@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_STAT_H
 # include <sys/stat.h>
 #endif
+#ifdef HAVE_SYS_MMAN_H
+# include <sys/mman.h>
+#endif
 #include <string.h>
 #include <dirent.h>
 #include <stdio.h>
@@ -125,6 +128,7 @@ MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_Matrix_Multiply);
 MAKE_FUNCPTR(FT_MulFix);
 MAKE_FUNCPTR(FT_New_Face);
+MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
@@ -253,6 +257,7 @@ typedef struct {
 struct tagGdiFont {
     struct list entry;
     FT_Face ft_face;
+    struct font_mapping *mapping;
     LPWSTR name;
     int charset;
     int codepage;
@@ -384,6 +389,18 @@ typedef struct tagFontSubst {
     NameCs from;
     NameCs to;
 } FontSubst;
+
+struct font_mapping
+{
+    struct list entry;
+    int         refcount;
+    dev_t       dev;
+    ino_t       ino;
+    void       *data;
+    size_t      size;
+};
+
+static struct list mappings_list = LIST_INIT( mappings_list );
 
 static BOOL have_installed_roman_font = FALSE; /* CreateFontInstance will fail if this is still FALSE */
 
@@ -1644,6 +1661,7 @@ BOOL WineEngInit(void)
     LOAD_FUNCPTR(FT_Matrix_Multiply)
     LOAD_FUNCPTR(FT_MulFix)
     LOAD_FUNCPTR(FT_New_Face)
+    LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
@@ -1867,6 +1885,57 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
     return ppem;
 }
 
+static struct font_mapping *map_font( const char *name )
+{
+    struct font_mapping *mapping;
+    struct stat st;
+    int fd;
+
+    if ((fd = open( name, O_RDONLY )) == -1) return NULL;
+    if (fstat( fd, &st ) == -1) goto error;
+
+    LIST_FOR_EACH_ENTRY( mapping, &mappings_list, struct font_mapping, entry )
+    {
+        if (mapping->dev == st.st_dev && mapping->ino == st.st_ino)
+        {
+            mapping->refcount++;
+            close( fd );
+            return mapping;
+        }
+    }
+    if (!(mapping = HeapAlloc( GetProcessHeap(), 0, sizeof(*mapping) )))
+        goto error;
+
+    mapping->data = mmap( NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0 );
+    close( fd );
+
+    if (mapping->data == MAP_FAILED)
+    {
+        HeapFree( GetProcessHeap(), 0, mapping );
+        return NULL;
+    }
+    mapping->refcount = 1;
+    mapping->dev = st.st_dev;
+    mapping->ino = st.st_ino;
+    mapping->size = st.st_size;
+    list_add_tail( &mappings_list, &mapping->entry );
+    return mapping;
+
+error:
+    close( fd );
+    return NULL;
+}
+
+static void unmap_font( struct font_mapping *mapping )
+{
+    if (!--mapping->refcount)
+    {
+        list_remove( &mapping->entry );
+        munmap( mapping->data, mapping->size );
+        HeapFree( GetProcessHeap(), 0, mapping );
+    }
+}
+
 static LONG load_VDMX(GdiFont*, LONG);
 
 static FT_Face OpenFontFile(GdiFont *font, char *file, FT_Long face_index, LONG width, LONG height)
@@ -1875,7 +1944,14 @@ static FT_Face OpenFontFile(GdiFont *font, char *file, FT_Long face_index, LONG 
     FT_Face ft_face;
 
     TRACE("%s, %ld, %d x %d\n", debugstr_a(file), face_index, width, height);
-    err = pFT_New_Face(library, file, face_index, &ft_face);
+
+    if (!(font->mapping = map_font( file )))
+    {
+        WARN("failed to map %s\n", debugstr_a(file));
+        return 0;
+    }
+
+    err = pFT_New_Memory_Face(library, font->mapping->data, font->mapping->size, face_index, &ft_face);
     if(err) {
         ERR("FT_New_Face rets %d\n", err);
 	return 0;
@@ -1973,6 +2049,7 @@ static void free_font(GdiFont *font)
     }
 
     if (font->ft_face) pFT_Done_Face(font->ft_face);
+    if (font->mapping) unmap_font( font->mapping );
     HeapFree(GetProcessHeap(), 0, font->kern_pairs);
     HeapFree(GetProcessHeap(), 0, font->potm);
     HeapFree(GetProcessHeap(), 0, font->name);
