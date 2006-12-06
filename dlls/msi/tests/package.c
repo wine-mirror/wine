@@ -1374,6 +1374,18 @@ static void test_properties_table(void)
     r = run_query(hdb, query);
     ok(r == ERROR_SUCCESS, "failed to create table\n");
 
+    query = "ALTER `_Properties` ADD `foo` INTEGER";
+    r = run_query(hdb, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to add column\n");
+
+    query = "ALTER TABLE `_Properties` ADD `foo` INTEGER";
+    r = run_query(hdb, query);
+    ok(r == ERROR_BAD_QUERY_SYNTAX, "failed to add column\n");
+
+    query = "ALTER TABLE `_Properties` ADD `extra` INTEGER";
+    r = run_query(hdb, query);
+    todo_wine ok(r == ERROR_SUCCESS, "failed to add column\n");
+
     hpkg = package_from_db(hdb);
     ok( hpkg, "failed to create package\n");
 
