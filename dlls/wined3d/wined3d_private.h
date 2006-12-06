@@ -410,6 +410,9 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 /* Routines and structures related to state management */
 typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock);
 
+#define STATE_RENDER(a) (a)
+#define STATE_IS_RENDER(a) ((a) >= STATE_RENDER(1) && (a) <= STATE_RENDER(WINEHIGHEST_RENDER_STATE))
+
 struct StateEntry
 {
     DWORD           representative;
