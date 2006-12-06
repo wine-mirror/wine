@@ -425,12 +425,11 @@ sub _generate_dsp($$) {
     my @header_files = @{$modules{$module}{header_files}};
     my @resource_files = @{$modules{$module}{resource_files}};
 
-    if ($project !~ /^wine(?:_unicode|build|runtests|test)?$/ &&
+    if ($project !~ /^wine(?:build|runtests|test)?$/ &&
         $project !~ /^(?:gdi32)_.+?$/ &&
         $project !~ /_test$/)
     {
 	push @source_files, "$project.spec";
-	# push @source_files, "$project.spec.c";
 	@source_files = sort(@source_files);
     }
 
@@ -746,10 +745,9 @@ sub _generate_dsp($$) {
     if ($project eq "winebuild") {
 	print OUT "# Begin Special Build Tool\r\n";
 	print OUT "SOURCE=\"\$(InputPath)\"\r\n";
-        print OUT "PostBuild_Desc=Copying wine.lib and wine_unicode.lib ...\r\n";
+        print OUT "PostBuild_Desc=Copying wine.lib ...\r\n";
 	print OUT "PostBuild_Cmds=";
-	print OUT "copy ..\\..\\libs\\wine\\$output_dir\\wine.lib \$(OutDir)\t";
-	print OUT "copy ..\\..\\libs\\unicode\\$output_dir\\wine_unicode.lib \$(OutDir)\r\n";
+	print OUT "copy ..\\..\\libs\\wine\\$output_dir\\wine.lib \$(OutDir)\r\n";
 	print OUT "# End Special Build Tool\r\n";
     }
     print OUT "# Begin Target\r\n";
@@ -978,14 +976,14 @@ sub _generate_wine_dsw($) {
 	my $dsp_file = $modules{$module}{dsp_file};
 
 	my @dependencies;
-	if($project =~ /^wine(?:_unicode)?$/) {
+	if($project eq "wine") {
 	    @dependencies = ();
-	} elsif($project =~ /^winebuild$/) {
-	    @dependencies = ("wine", "wine_unicode");
+	} elsif($project eq "winebuild") {
+	    @dependencies = ("wine");
 	} elsif($project =~ /^(?:gdi32)_.+?$/) {
 	    @dependencies = ();
 	} else {
-	    @dependencies = ("wine", "wine_unicode", "winebuild");
+	    @dependencies = ("wine", "winebuild");
 	}
 
         if($project =~ /^gdi32$/) {
