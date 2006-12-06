@@ -431,59 +431,104 @@ static INT compare_substring( LPCWSTR a, INT operator, LPCWSTR b )
     case COND_ISS:
         return strstriW( a, b ) ? 1 : 0;
     case COND_LHS:
-    	return 0 == strncmpW( a, b, lstrlenW( b ) );
+        return 0 == strncmpW( a, b, lstrlenW( b ) );
     case COND_RHS:
-    	return 0 == lstrcmpW( a + (lstrlenW( a ) - lstrlenW( b )), b );
+        return 0 == lstrcmpW( a + (lstrlenW( a ) - lstrlenW( b )), b );
     case COND_ILHS:
-    	return 0 == strncmpiW( a, b, lstrlenW( b ) );
+        return 0 == strncmpiW( a, b, lstrlenW( b ) );
     case COND_IRHS:
         return 0 == lstrcmpiW( a + (lstrlenW( a ) - lstrlenW( b )), b );
     default:
-    	ERR("invalid substring operator\n");
+        ERR("invalid substring operator\n");
         return 0;
     }
     return 0;
 }
 
+static BOOL is_empty( LPCWSTR p )
+{
+    return !p || !p[0];
+}
+
+static BOOL is_alphaless( LPCWSTR p )
+{
+    while (*p)
+    {
+        if (isalphaW( *p ) || (*p == '_'))
+             return FALSE;
+        p++;
+    }
+    return TRUE;
+}
+
 static INT compare_string( LPCWSTR a, INT operator, LPCWSTR b )
 {
+    int r;
+
     if (operator >= COND_SS && operator <= COND_RHS)
         return compare_substring( a, operator, b );
-	
-    /* null and empty string are equivalent */
-    if (!a) a = szEmpty;
-    if (!b) b = szEmpty;
 
-    /* a or b may be NULL */
+    if (is_empty( a ) && is_empty( b ))
+        r = 0;
+
+    else if (is_empty( a ) && is_alphaless( b ))
+        r = 1;
+
+    else if (is_empty( b ) && is_alphaless( a ))
+        r = -1;
+
+    else
+    {
+        /* null and empty string are equivalent */
+        if (!a) a = szEmpty;
+        if (!b) b = szEmpty;
+
+        switch (operator)
+        {
+        case COND_LT:
+        case COND_GT:
+        case COND_EQ:
+        case COND_NE:
+        case COND_GE:
+        case COND_LE:
+            r = lstrcmpW( a, b );
+            break;
+        case COND_ILT:
+        case COND_IGT:
+        case COND_IEQ:
+        case COND_INE:
+        case COND_IGE:
+        case COND_ILE:
+            r = lstrcmpiW( a, b );
+            break;
+        default:
+            ERR("invalid string operator\n");
+            return 0;
+        }
+    }
+
     switch (operator)
     {
     case COND_LT:
-        return -1 == lstrcmpW( a, b );
-    case COND_GT:
-        return  1 == lstrcmpW( a, b );
-    case COND_EQ:
-        return  0 == lstrcmpW( a, b );
-    case COND_NE:
-        return  0 != lstrcmpW( a, b );
-    case COND_GE:
-        return -1 != lstrcmpW( a, b );
-    case COND_LE:
-        return  1 != lstrcmpW( a, b );
     case COND_ILT:
-        return -1 == lstrcmpiW( a, b );
+        return -1 == r;
+    case COND_GT:
     case COND_IGT:
-        return  1 == lstrcmpiW( a, b );
+        return  1 == r;
+    case COND_EQ:
     case COND_IEQ:
-        return  0 == lstrcmpiW( a, b );
+        return  0 == r;
+    case COND_NE:
     case COND_INE:
-        return  0 != lstrcmpiW( a, b );
+        return  0 != r;
+    case COND_GE:
     case COND_IGE:
-        return -1 != lstrcmpiW( a, b );
+        return -1 != r;
+    case COND_LE:
     case COND_ILE:
-        return  1 != lstrcmpiW( a, b );
+        return  1 != r;
     default:
         ERR("invalid string operator\n");
-        return 0;
     }
     return 0;
 }
