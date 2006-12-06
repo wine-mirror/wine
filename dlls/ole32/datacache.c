@@ -189,11 +189,11 @@ static inline DataCache *impl_from_IOleCacheControl( IOleCacheControl *iface )
     return (DataCache *)((char*)iface - FIELD_OFFSET(DataCache, lpvtblIOleCacheControl));
 }
 
-static void dump_FORMATETC(const FORMATETC *formatetc)
+static const char * debugstr_formatetc(const FORMATETC *formatetc)
 {
-    TRACE("{ cfFormat = 0x%x, ptd = %p, dwAspect = %d, lindex = %d, tymed = %d }",
-          formatetc->cfFormat, formatetc->ptd, formatetc->dwAspect,
-          formatetc->lindex, formatetc->tymed);
+    return wine_dbg_sprintf("{ cfFormat = 0x%x, ptd = %p, dwAspect = %d, lindex = %d, tymed = %d }",
+        formatetc->cfFormat, formatetc->ptd, formatetc->dwAspect,
+        formatetc->lindex, formatetc->tymed);
 }
 
 /*
@@ -580,7 +580,7 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,
     IStream *pres_stream;
     void *data = NULL;
 
-    TRACE("stream_number = %d, fmtetc = ", This->stream_number); dump_FORMATETC(&This->fmtetc); TRACE("\n");
+    TRACE("stream_number = %d, fmtetc = %s\n", This->stream_number, debugstr_formatetc(&This->fmtetc));
 
     hr = DataCacheEntry_CreateStream(This, storage, &pres_stream);
     if (FAILED(hr))
@@ -1268,7 +1268,7 @@ static HRESULT WINAPI DataCache_Load(
 		    fmtetc.lindex = header.lindex;
 		    fmtetc.tymed = header.tymed;
 
-                    TRACE("loading entry with formatetc: "); dump_FORMATETC(&fmtetc); TRACE("\n");
+                    TRACE("loading entry with formatetc: %s\n", debugstr_formatetc(&fmtetc));
 
                     cache_entry = DataCache_GetEntryForFormatEtc(This, &fmtetc);
                     if (!cache_entry)
@@ -1876,7 +1876,7 @@ static HRESULT WINAPI DataCache_Cache(
     HRESULT hr;
 
     TRACE("(%p, 0x%x, %p)\n", pformatetc, advf, pdwConnection);
-    TRACE("pformatetc = "); dump_FORMATETC(pformatetc); TRACE("\n");
+    TRACE("pformatetc = %s\n", debugstr_formatetc(pformatetc));
 
     *pdwConnection = 0;
 
@@ -1944,7 +1944,7 @@ static HRESULT WINAPI DataCache_IOleCache2_SetData(
     HRESULT hr;
 
     TRACE("(%p, %p, %s)\n", pformatetc, pmedium, fRelease ? "TRUE" : "FALSE");
-    TRACE("formatetc = "); dump_FORMATETC(pformatetc); TRACE("\n");
+    TRACE("formatetc = %s\n", debugstr_formatetc(pformatetc));
 
     cache_entry = DataCache_GetEntryForFormatEtc(This, pformatetc);
     if (cache_entry)
