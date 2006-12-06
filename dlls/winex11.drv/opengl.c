@@ -2228,17 +2228,6 @@ static GLboolean WINAPI X11DRV_wglChoosePixelFormatARB(HDC hdc, const int *piAtt
 }
 
 /**
- * X11DRV_wglGetPixelFormatAttribfvARB
- *
- * WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB
- */
-static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
-{
-    FIXME("(%p, %d, %d, %d, %p, %p): stub\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
-    return GL_FALSE;
-}
-
-/**
  * X11DRV_wglGetPixelFormatAttribivARB
  *
  * WGL_ARB_pixel_format: wglGetPixelFormatAttribivARB
@@ -2459,6 +2448,40 @@ pix_error:
     ERR("(%p): unexpected iPixelFormat(%d) vs nFormats(%d), returns FALSE\n", hdc, iPixelFormat, nCfgs);
     XFree(cfgs);
     return GL_FALSE;
+}
+
+/**
+ * X11DRV_wglGetPixelFormatAttribfvARB
+ *
+ * WGL_ARB_pixel_format: wglGetPixelFormatAttribfvARB
+ */
+static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int iLayerPlane, UINT nAttributes, const int *piAttributes, FLOAT *pfValues)
+{
+    int *attr;
+    int ret;
+    int i;
+
+    TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
+
+    /* Allocate a temporary array to store integer values */
+    attr = HeapAlloc(GetProcessHeap(), 0, nAttributes * sizeof(int));
+    if (!attr) {
+        ERR("couldn't allocate %d array\n", nAttributes);
+        return GL_FALSE;
+    }
+
+    /* Piggy-back on wglGetPixelFormatAttribivARB */
+    ret = X11DRV_wglGetPixelFormatAttribivARB(hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, attr);
+    if (ret) {
+        /* Convert integer values to float. Should also check for attributes
+           that can give decimal values here */
+        for (i=0; i<nAttributes;i++) {
+            pfValues[i] = attr[i];
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, attr);
+    return ret;
 }
 
 /**
