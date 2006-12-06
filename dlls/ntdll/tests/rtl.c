@@ -340,7 +340,7 @@ static void test_RtlUniform(void)
     expected = seed * 0xffffffed + 0x7fffffc3 + (seed & 1);
     result = pRtlUniform(&seed);
     ok(result == expected,
-        "RtlUniform(&seed (seed == 2)) returns %x, expected %x\n",
+        "RtlUniform(&seed (seed == 3)) returns %x, expected %x\n",
         result, expected);
 
     seed = 0x6bca1aa;
