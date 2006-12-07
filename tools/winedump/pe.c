@@ -375,7 +375,7 @@ void dump_section(const IMAGE_SECTION_HEADER *sectHead)
 	printf("  %-8.8s   VirtSize: %-8u  VirtAddr:  %-8u 0x%08x\n",
 	       sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress,
 	       sectHead->VirtualAddress);
-	printf("    raw data offs: %-8u raw data size: %-8u\n",
+	printf("    raw data offs:   %-8u  raw data size: %-8u\n",
 	       sectHead->PointerToRawData, sectHead->SizeOfRawData);
 	printf("    relocation offs: %-8u  relocations:   %-8u\n",
 	       sectHead->PointerToRelocations, sectHead->NumberOfRelocations);
@@ -453,6 +453,12 @@ static void dump_sections(const void *base, const void* addr, unsigned num_sect)
     for (i = 0; i < num_sect; i++, sectHead++)
     {
         dump_section(sectHead);
+
+        if (globals.do_dump_rawdata)
+        {
+            dump_data((const unsigned char *)base + sectHead->PointerToRawData, sectHead->SizeOfRawData, "    " );
+            printf("\n");
+        }
     }
 }
 

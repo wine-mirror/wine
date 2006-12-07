@@ -186,6 +186,7 @@ static void do_rawdebug (void)
 static void do_dumpall(void)
 {
     globals.do_dumpheader = 1;
+    globals.do_dump_rawdata = 1;
     globals.dumpsect = "ALL";
 }
 

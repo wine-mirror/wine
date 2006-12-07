@@ -128,6 +128,7 @@ typedef struct __globals
   /* Options: dump mode */
   int   do_demangle;        /* -d */
   int   do_dumpheader;      /* -f */
+  int   do_dump_rawdata;    /* -x */
   int   do_debug;           /* -G == 1, -g == 2 */
 
   /* Option arguments: spec mode */
