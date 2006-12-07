@@ -171,6 +171,16 @@ START_TEST(loader)
           0,
           ERROR_SUCCESS
         },
+        { 0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 4, 4,
+          1,
+          0,
+          ERROR_SUCCESS
+        },
+        { 0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 1, 1,
+          1,
+          0,
+          ERROR_SUCCESS
+        },
         { 0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x200, 0x200,
           0,
           0,
@@ -192,10 +202,11 @@ START_TEST(loader)
     SetErrorMode(SEM_FAILCRITICALERRORS);
 
     GetTempPath(MAX_PATH, temp_path);
-    GetTempFileName(temp_path, "ldr", 0, dll_name);
 
     for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
     {
+        GetTempFileName(temp_path, "ldr", 0, dll_name);
+
         /*trace("creating %s\n", dll_name);*/
         hfile = CreateFileA(dll_name, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
         if (hfile == INVALID_HANDLE_VALUE)
