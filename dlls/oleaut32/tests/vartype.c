@@ -824,14 +824,14 @@ static void test_VarI1FromStr(void)
   CONVERT_STR(VarI1FromStr,"127", 0);  EXPECT(127);
   CONVERT_STR(VarI1FromStr,"128", 0);  EXPECT_OVERFLOW;
 
-  CONVERT_STR(VarI1FromStr,"-1.5", 0); EXPECT(-2);
-  CONVERT_STR(VarI1FromStr,"-0.6", 0); EXPECT(-1);
-  CONVERT_STR(VarI1FromStr,"-0.5", 0); EXPECT(0);
-  CONVERT_STR(VarI1FromStr,"-0.4", 0); EXPECT(0);
-  CONVERT_STR(VarI1FromStr,"0.4", 0);  EXPECT(0);
-  CONVERT_STR(VarI1FromStr,"0.5", 0);  EXPECT(0);
-  CONVERT_STR(VarI1FromStr,"0.6", 0);  EXPECT(1);
-  CONVERT_STR(VarI1FromStr,"1.5", 0);  EXPECT(2);
+  CONVERT_STR(VarI1FromStr,"-1.5", LOCALE_NOUSEROVERRIDE); EXPECT(-2);
+  CONVERT_STR(VarI1FromStr,"-0.6", LOCALE_NOUSEROVERRIDE); EXPECT(-1);
+  CONVERT_STR(VarI1FromStr,"-0.5", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarI1FromStr,"-0.4", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarI1FromStr,"0.4", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarI1FromStr,"0.5", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarI1FromStr,"0.6", LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarI1FromStr,"1.5", LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarI1Copy(void)
@@ -1067,14 +1067,14 @@ static void test_VarUI1FromStr(void)
   CONVERT_STR(VarUI1FromStr,"256", 0);  EXPECT_OVERFLOW;
 
   /* Rounding */
-  CONVERT_STR(VarUI1FromStr,"-1.5", 0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI1FromStr,"-0.6", 0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI1FromStr,"-0.5", 0); EXPECT(0);
-  CONVERT_STR(VarUI1FromStr,"-0.4", 0); EXPECT(0);
-  CONVERT_STR(VarUI1FromStr,"0.4", 0);  EXPECT(0);
-  CONVERT_STR(VarUI1FromStr,"0.5", 0);  EXPECT(0);
-  CONVERT_STR(VarUI1FromStr,"0.6", 0);  EXPECT(1);
-  CONVERT_STR(VarUI1FromStr,"1.5", 0);  EXPECT(2);
+  CONVERT_STR(VarUI1FromStr,"-1.5", LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI1FromStr,"-0.6", LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI1FromStr,"-0.5", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI1FromStr,"-0.4", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI1FromStr,"0.4", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI1FromStr,"0.5", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI1FromStr,"0.6", LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarUI1FromStr,"1.5", LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarUI1FromDisp(void)
@@ -1360,14 +1360,14 @@ static void test_VarI2FromStr(void)
   CONVERT_STR(VarI2FromStr,"32768", 0);  EXPECT_OVERFLOW;
 
   /* Rounding */
-  CONVERT_STR(VarI2FromStr,"-1.5", 0); EXPECT(-2);
-  CONVERT_STR(VarI2FromStr,"-0.6", 0); EXPECT(-1);
-  CONVERT_STR(VarI2FromStr,"-0.5", 0); EXPECT(0);
-  CONVERT_STR(VarI2FromStr,"-0.4", 0); EXPECT(0);
-  CONVERT_STR(VarI2FromStr,"0.4", 0);  EXPECT(0);
-  CONVERT_STR(VarI2FromStr,"0.5", 0);  EXPECT(0);
-  CONVERT_STR(VarI2FromStr,"0.6", 0);  EXPECT(1);
-  CONVERT_STR(VarI2FromStr,"1.5", 0);  EXPECT(2);
+  CONVERT_STR(VarI2FromStr,"-1.5", LOCALE_NOUSEROVERRIDE); EXPECT(-2);
+  CONVERT_STR(VarI2FromStr,"-0.6", LOCALE_NOUSEROVERRIDE); EXPECT(-1);
+  CONVERT_STR(VarI2FromStr,"-0.5", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarI2FromStr,"-0.4", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarI2FromStr,"0.4", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarI2FromStr,"0.5", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarI2FromStr,"0.6", LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarI2FromStr,"1.5", LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarI2Copy(void)
@@ -1596,14 +1596,14 @@ static void test_VarUI2FromStr(void)
   CONVERT_STR(VarUI2FromStr,"65536", 0); EXPECT_OVERFLOW;
 
   /* Rounding */
-  CONVERT_STR(VarUI2FromStr,"-1.5", 0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI2FromStr,"-0.6", 0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI2FromStr,"-0.5", 0); EXPECT(0);
-  CONVERT_STR(VarUI2FromStr,"-0.4", 0); EXPECT(0);
-  CONVERT_STR(VarUI2FromStr,"0.4", 0);  EXPECT(0);
-  CONVERT_STR(VarUI2FromStr,"0.5", 0);  EXPECT(0);
-  CONVERT_STR(VarUI2FromStr,"0.6", 0);  EXPECT(1);
-  CONVERT_STR(VarUI2FromStr,"1.5", 0);  EXPECT(2);
+  CONVERT_STR(VarUI2FromStr,"-1.5", LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI2FromStr,"-0.6", LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI2FromStr,"-0.5", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI2FromStr,"-0.4", LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI2FromStr,"0.4", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI2FromStr,"0.5", LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI2FromStr,"0.6", LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarUI2FromStr,"1.5", LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarUI2Copy(void)
@@ -1854,14 +1854,14 @@ static void test_VarI4FromStr(void)
   CONVERT_STR(VarI4FromStr,"2147483648",0);  EXPECT_OVERFLOW;
 
   /* Rounding */
-  CONVERT_STR(VarI4FromStr,"-1.5",0); EXPECT(-2);
-  CONVERT_STR(VarI4FromStr,"-0.6",0); EXPECT(-1);
-  CONVERT_STR(VarI4FromStr,"-0.5",0); EXPECT(0);
-  CONVERT_STR(VarI4FromStr,"-0.4",0); EXPECT(0);
-  CONVERT_STR(VarI4FromStr,"0.4",0);  EXPECT(0);
-  CONVERT_STR(VarI4FromStr,"0.5",0);  EXPECT(0);
-  CONVERT_STR(VarI4FromStr,"0.6",0);  EXPECT(1);
-  CONVERT_STR(VarI4FromStr,"1.5",0);  EXPECT(2);
+  CONVERT_STR(VarI4FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT(-2);
+  CONVERT_STR(VarI4FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECT(-1);
+  CONVERT_STR(VarI4FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarI4FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarI4FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarI4FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarI4FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarI4FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarI4Copy(void)
@@ -2085,14 +2085,14 @@ static void test_VarUI4FromStr(void)
   CONVERT_STR(VarUI4FromStr,"4294967296",0); EXPECT_OVERFLOW;
 
   /* Rounding */
-  CONVERT_STR(VarUI4FromStr,"-1.5",0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI4FromStr,"-0.6",0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI4FromStr,"-0.5",0); EXPECT(0);
-  CONVERT_STR(VarUI4FromStr,"-0.4",0); EXPECT(0);
-  CONVERT_STR(VarUI4FromStr,"0.4",0);  EXPECT(0);
-  CONVERT_STR(VarUI4FromStr,"0.5",0);  EXPECT(0);
-  CONVERT_STR(VarUI4FromStr,"0.6",0);  EXPECT(1);
-  CONVERT_STR(VarUI4FromStr,"1.5",0);  EXPECT(2);
+  CONVERT_STR(VarUI4FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI4FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI4FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI4FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECT(0);
+  CONVERT_STR(VarUI4FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI4FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECT(0);
+  CONVERT_STR(VarUI4FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECT(1);
+  CONVERT_STR(VarUI4FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECT(2);
 }
 
 static void test_VarUI4Copy(void)
@@ -2339,14 +2339,14 @@ static void test_VarI8FromStr(void)
   CONVERT_STR(VarI8FromStr,"-1",0);         EXPECTI8(-1);
   CONVERT_STR(VarI8FromStr,"2147483647",0); EXPECTI8(2147483647);
 
-  CONVERT_STR(VarI8FromStr,"-1.5",0); EXPECTI8(-2);
-  CONVERT_STR(VarI8FromStr,"-0.6",0); EXPECTI8(-1);
-  CONVERT_STR(VarI8FromStr,"-0.5",0); EXPECTI8(0);
-  CONVERT_STR(VarI8FromStr,"-0.4",0); EXPECTI8(0);
-  CONVERT_STR(VarI8FromStr,"0.4",0);  EXPECTI8(0);
-  CONVERT_STR(VarI8FromStr,"0.5",0);  EXPECTI8(0);
-  CONVERT_STR(VarI8FromStr,"0.6",0);  EXPECTI8(1);
-  CONVERT_STR(VarI8FromStr,"1.5",0);  EXPECTI8(2);
+  CONVERT_STR(VarI8FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECTI8(-2);
+  CONVERT_STR(VarI8FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECTI8(-1);
+  CONVERT_STR(VarI8FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECTI8(0);
+  CONVERT_STR(VarI8FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECTI8(0);
+  CONVERT_STR(VarI8FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECTI8(0);
+  CONVERT_STR(VarI8FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECTI8(0);
+  CONVERT_STR(VarI8FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECTI8(1);
+  CONVERT_STR(VarI8FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECTI8(2);
 }
 
 static void test_VarI8Copy(void)
@@ -2593,14 +2593,14 @@ static void test_VarUI8FromStr(void)
   CONVERT_STR(VarUI8FromStr,"-1",0);         EXPECT_OVERFLOW;
   CONVERT_STR(VarUI8FromStr,"2147483647",0); EXPECTI8(2147483647);
 
-  CONVERT_STR(VarUI8FromStr,"-1.5",0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI8FromStr,"-0.6",0); EXPECT_OVERFLOW;
-  CONVERT_STR(VarUI8FromStr,"-0.5",0); EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"-0.4",0); EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"0.4",0);  EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"0.5",0);  EXPECTI8(0);
-  CONVERT_STR(VarUI8FromStr,"0.6",0);  EXPECTI8(1);
-  CONVERT_STR(VarUI8FromStr,"1.5",0);  EXPECTI8(2);
+  CONVERT_STR(VarUI8FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI8FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECT_OVERFLOW;
+  CONVERT_STR(VarUI8FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECTI8(0);
+  CONVERT_STR(VarUI8FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECTI8(0);
+  CONVERT_STR(VarUI8FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECTI8(0);
+  CONVERT_STR(VarUI8FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECTI8(0);
+  CONVERT_STR(VarUI8FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECTI8(1);
+  CONVERT_STR(VarUI8FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECTI8(2);
 }
 
 static void test_VarUI8Copy(void)
@@ -2820,14 +2820,14 @@ static void test_VarR4FromStr(void)
   CONVERT_STR(VarR4FromStr,"0", 0);    EXPECT(0.0f);
   CONVERT_STR(VarR4FromStr,"1", 0);    EXPECT(1.0f);
 
-  CONVERT_STR(VarR4FromStr,"-1.5",0); EXPECT(-1.5f);
-  CONVERT_STR(VarR4FromStr,"-0.6",0); EXPECT(-0.6f);
-  CONVERT_STR(VarR4FromStr,"-0.5",0); EXPECT(-0.5f);
-  CONVERT_STR(VarR4FromStr,"-0.4",0); EXPECT(-0.4f);
-  CONVERT_STR(VarR4FromStr,"0.4",0);  EXPECT(0.4f);
-  CONVERT_STR(VarR4FromStr,"0.5",0);  EXPECT(0.5f);
-  CONVERT_STR(VarR4FromStr,"0.6",0);  EXPECT(0.6f);
-  CONVERT_STR(VarR4FromStr,"1.5",0);  EXPECT(1.5f);
+  CONVERT_STR(VarR4FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT(-1.5f);
+  CONVERT_STR(VarR4FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECT(-0.6f);
+  CONVERT_STR(VarR4FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECT(-0.5f);
+  CONVERT_STR(VarR4FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECT(-0.4f);
+  CONVERT_STR(VarR4FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECT(0.4f);
+  CONVERT_STR(VarR4FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECT(0.5f);
+  CONVERT_STR(VarR4FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECT(0.6f);
+  CONVERT_STR(VarR4FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECT(1.5f);
 }
 
 static void test_VarR4Copy(void)
@@ -3028,15 +3028,15 @@ static void test_VarR8FromStr(void)
   CONVERT_STR(VarR8FromStr,"",0);     EXPECT_MISMATCH;
   CONVERT_STR(VarR8FromStr," ",0);    EXPECT_MISMATCH;
 
-  CONVERT_STR(VarR8FromStr,"0",0);    EXPECT(0.0);
-  CONVERT_STR(VarR8FromStr,"-1.5",0); EXPECT(-1.5);
-  CONVERT_STR(VarR8FromStr,"-0.6",0); EXPECT(-0.6);
-  CONVERT_STR(VarR8FromStr,"-0.5",0); EXPECT(-0.5);
-  CONVERT_STR(VarR8FromStr,"-0.4",0); EXPECT(-0.4);
-  CONVERT_STR(VarR8FromStr,"0.4",0);  EXPECT(0.4);
-  CONVERT_STR(VarR8FromStr,"0.5",0);  EXPECT(0.5);
-  CONVERT_STR(VarR8FromStr,"0.6",0);  EXPECT(0.6);
-  CONVERT_STR(VarR8FromStr,"1.5",0);  EXPECT(1.5);
+  CONVERT_STR(VarR8FromStr,"0",LOCALE_NOUSEROVERRIDE);    EXPECT(0.0);
+  CONVERT_STR(VarR8FromStr,"-1.5",LOCALE_NOUSEROVERRIDE); EXPECT(-1.5);
+  CONVERT_STR(VarR8FromStr,"-0.6",LOCALE_NOUSEROVERRIDE); EXPECT(-0.6);
+  CONVERT_STR(VarR8FromStr,"-0.5",LOCALE_NOUSEROVERRIDE); EXPECT(-0.5);
+  CONVERT_STR(VarR8FromStr,"-0.4",LOCALE_NOUSEROVERRIDE); EXPECT(-0.4);
+  CONVERT_STR(VarR8FromStr,"0.4",LOCALE_NOUSEROVERRIDE);  EXPECT(0.4);
+  CONVERT_STR(VarR8FromStr,"0.5",LOCALE_NOUSEROVERRIDE);  EXPECT(0.5);
+  CONVERT_STR(VarR8FromStr,"0.6",LOCALE_NOUSEROVERRIDE);  EXPECT(0.6);
+  CONVERT_STR(VarR8FromStr,"1.5",LOCALE_NOUSEROVERRIDE);  EXPECT(1.5);
 
   /* We already have exhaustive tests for number parsing, so skip those tests here */
 }
@@ -4648,12 +4648,12 @@ static void test_VarBoolFromStr(void)
   {
     /* Numeric strings are read as floating point numbers. The line below fails
      * because '.' is not a valid decimal separator for Polish numbers */
-    CONVERT_STR(VarBoolFromStr,"0.1",0); EXPECT_MISMATCH;
+    CONVERT_STR(VarBoolFromStr,"0.1",LOCALE_NOUSEROVERRIDE); EXPECT_MISMATCH;
   }
 
   /* Changing the lcid back to US English reads the r8 correctly */
   in = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
-  CONVERT_STR(VarBoolFromStr,"0.1",0); EXPECT(VARIANT_TRUE);
+  CONVERT_STR(VarBoolFromStr,"0.1",LOCALE_NOUSEROVERRIDE); EXPECT(VARIANT_TRUE);
 }
 
 static void test_VarBoolCopy(void)
@@ -4752,14 +4752,14 @@ static void test_VarBstrFromR4(void)
   
   /* The following tests that lcid is used for decimal separator even without LOCALE_USE_NLS */
   f = 0.5;
-  hres = pVarBstrFromR4(f, lcid, 0, &bstr);
+  hres = pVarBstrFromR4(f, lcid, LOCALE_NOUSEROVERRIDE, &bstr);
   ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
     ok(memcmp(bstr, szOneHalf_English, sizeof(szOneHalf_English)) == 0, "English locale failed (got %s)\n", wtoascii(bstr));
   }
   f = 0.5;
-  hres = pVarBstrFromR4(f, lcid_spanish, 0, &bstr);
+  hres = pVarBstrFromR4(f, lcid_spanish, LOCALE_NOUSEROVERRIDE, &bstr);
   ok(hres == S_OK, "got hres 0x%08x\n", hres);
   if (bstr)
   {
@@ -4795,7 +4795,7 @@ static void test_VarBstrFromDate(void)
 
 #define BSTR_DEC(l, a, b, c, d, e) \
   SETDEC(l, a,b,c,d);\
-  hres = VarBstrFromDec(&l, lcid, 0, &bstr);\
+  hres = VarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
   ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
@@ -4804,7 +4804,7 @@ static void test_VarBstrFromDate(void)
 
 #define BSTR_DEC64(l, a, b, c, x, d, e) \
   SETDEC64(l, a,b,c,x,d);\
-  hres = VarBstrFromDec(&l, lcid, 0, &bstr);\
+  hres = VarBstrFromDec(&l, lcid, LOCALE_NOUSEROVERRIDE, &bstr);\
   ok(hres == S_OK, "got hres 0x%08x\n", hres);\
   if (hres== S_OK && bstr)\
   {\
