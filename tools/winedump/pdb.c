@@ -145,7 +145,7 @@ static void pdb_exit(struct pdb_reader* reader)
         size = pdb_get_file_size(reader, i);
 
         printf("File --unused-- #%d (%x)\n", i, size);
-        dump_data(file, size, "\t");
+        dump_data(file, size, "    ");
         free((char*)file);
     }
 #endif
@@ -204,7 +204,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
 
         printf("\t----------offsets------------\n");
         src = (const BYTE*)((const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size);
-        dump_data(src, symbols->offset_size, "\t\t");
+        dump_data(src, symbols->offset_size, "    ");
     }
 
     if (symbols->srcmodule_size)
@@ -396,13 +396,13 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
 
             if (symbol_size)
                 codeview_dump_symbols((const char*)modimage + sizeof(DWORD), symbol_size);
-                
+
             /* what's that part ??? */
             if (0)
-                dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "\t\t\t");
+                dump_data(modimage + symbol_size + lineno_size, total_size - (symbol_size + lineno_size), "    ");
             free((char*)modimage);
         }
-            
+
         file_name += strlen(file_name) + 1;
         file = (char*)((DWORD)(file_name + strlen(file_name) + 1 + 3) & ~3);
     }
