@@ -153,6 +153,10 @@ KRNL386.EXE. It shouldn't be needed otherwise.
 Specify the command to use to get the list of undefined symbols; the
 default is \fBnm\fR.
 .TP
+.BI --nxcompat= yes|no
+Specify whether the module is compatible with no-exec support. The
+default is yes.
+.TP
 .BI \-o,\ --output= file
 Set the name of the output file (default is standard output). If the
 output file name end in \fB.o\fR, the text output is sent to a

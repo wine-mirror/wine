@@ -31,6 +31,8 @@
 # include <unistd.h>
 #endif
 
+#include "windef.h"
+#include "winnt.h"
 #include "build.h"
 
 #define MAX_TMP_FILES 8
@@ -332,6 +334,7 @@ DLLSPEC *alloc_dll_spec(void)
     spec->nb_names           = 0;
     spec->nb_resources       = 0;
     spec->characteristics    = 0;
+    spec->dll_characteristics = IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
     spec->subsystem          = 0;
     spec->subsystem_major    = 4;
     spec->subsystem_minor    = 0;

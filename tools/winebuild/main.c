@@ -260,6 +260,7 @@ static const char usage_str[] =
 "   -L, --library-path=DIR   Look for imports libraries in DIR\n"
 "   -M, --main-module=MODULE Set the name of the main module for a Win16 dll\n"
 "       --nm-cmd=NM          Command to use to get undefined symbols (default: nm)\n"
+"       --nxcompat=y|n       Set the NX compatibility flag (default: yes)\n"
 "   -N, --dll-name=DLLNAME   Set the DLL name (default: from input file name)\n"
 "   -o, --output=NAME        Set the output file name (default: stdout)\n"
 "   -r, --res=RSRC.RES       Load resources from RSRC.RES\n"
@@ -287,6 +288,7 @@ enum long_options_values
     LONG_OPT_EXTERNAL_SYMS,
     LONG_OPT_LDCMD,
     LONG_OPT_NMCMD,
+    LONG_OPT_NXCOMPAT,
     LONG_OPT_RELAY16,
     LONG_OPT_RELAY32,
     LONG_OPT_SAVE_TEMPS,
@@ -306,6 +308,7 @@ static const struct option long_options[] =
     { "external-symbols", 0, 0, LONG_OPT_EXTERNAL_SYMS },
     { "ld-cmd",        1, 0, LONG_OPT_LDCMD },
     { "nm-cmd",        1, 0, LONG_OPT_NMCMD },
+    { "nxcompat",      1, 0, LONG_OPT_NXCOMPAT },
     { "relay16",       0, 0, LONG_OPT_RELAY16 },
     { "relay32",       0, 0, LONG_OPT_RELAY32 },
     { "save-temps",    0, 0, LONG_OPT_SAVE_TEMPS },
@@ -475,6 +478,10 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             break;
         case LONG_OPT_NMCMD:
             nm_command = xstrdup( optarg );
+            break;
+        case LONG_OPT_NXCOMPAT:
+            if (optarg[0] == 'n' || optarg[0] == 'N')
+                spec->dll_characteristics &= ~IMAGE_DLLCHARACTERISTICS_NX_COMPAT;
             break;
         case LONG_OPT_RELAY16:
             set_exec_mode( MODE_RELAY16 );

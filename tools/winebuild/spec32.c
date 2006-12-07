@@ -426,8 +426,8 @@ void BuildSpec32File( DLLSPEC *spec )
     output( "\t.long 0\n" );              /* CheckSum */
     output( "\t%s 0x%04x\n",              /* Subsystem */
              get_asm_short_keyword(), spec->subsystem );
-    output( "\t%s 0\n",                   /* DllCharacteristics */
-             get_asm_short_keyword() );
+    output( "\t%s 0x%04x\n",              /* DllCharacteristics */
+            get_asm_short_keyword(), spec->dll_characteristics );
     output( "\t%s %u,%u\n",               /* SizeOfStackReserve/Commit */
              get_asm_ptr_keyword(), (spec->stack_size ? spec->stack_size : 1024) * 1024, page_size );
     output( "\t%s %u,%u\n",               /* SizeOfHeapReserve/Commit */

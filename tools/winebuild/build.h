@@ -99,6 +99,7 @@ typedef struct
     int              nb_names;           /* number of entry points with names */
     unsigned int     nb_resources;       /* number of resources */
     int              characteristics;    /* characteristics for the PE header */
+    int              dll_characteristics;/* DLL characteristics for the PE header */
     int              subsystem;          /* subsystem id */
     int              subsystem_major;    /* subsystem version major number */
     int              subsystem_minor;    /* subsystem version minor number */
