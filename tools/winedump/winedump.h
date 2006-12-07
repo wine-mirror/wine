@@ -47,6 +47,11 @@
 #include <assert.h>
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
+#include "windef.h"
+#include "winbase.h"
+
 /* Argument type constants */
 #define MAX_FUNCTION_ARGS   32
 
@@ -230,6 +235,8 @@ void            dump_data( const unsigned char *ptr, unsigned int size, const ch
 const char*	get_time_str( unsigned long );
 unsigned int    strlenW( const unsigned short *str );
 void            dump_unicode_str( const unsigned short *str, int len );
+void            dump_file_header(const IMAGE_FILE_HEADER *);
+void            dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *, UINT);
 
 enum FileSig    get_kind_exec(void);
 void            pe_dump( void );

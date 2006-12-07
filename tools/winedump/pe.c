@@ -91,7 +91,7 @@ static const IMAGE_NT_HEADERS32 *get_nt_header( void )
     const IMAGE_DOS_HEADER *dos;
     dos = PRD(0, sizeof(*dos));
     if (!dos) return NULL;
-    return PRD(dos->e_lfanew, sizeof(IMAGE_NT_HEADERS32));
+    return PRD(dos->e_lfanew, sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER));
 }
 
 static int is_fake_dll( void )
@@ -223,8 +223,16 @@ static inline void print_datadirectory(DWORD n, const IMAGE_DATA_DIRECTORY *dire
     }
 }
 
-static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *optionalHeader)
+static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *image_oh, UINT header_size)
 {
+    IMAGE_OPTIONAL_HEADER32 oh;
+    const IMAGE_OPTIONAL_HEADER32 *optionalHeader;
+
+    /* in case optional header is missing or partial */
+    memset(&oh, 0, sizeof(oh));
+    memcpy(&oh, image_oh, min(header_size, sizeof(oh)));
+    optionalHeader = &oh;
+
     print_word("Magic", optionalHeader->Magic);
     print_ver("linker version",
               optionalHeader->MajorLinkerVersion, optionalHeader->MinorLinkerVersion);
@@ -257,10 +265,19 @@ static void dump_optional_header32(const IMAGE_OPTIONAL_HEADER32 *optionalHeader
     print_dword("RVAs & sizes", optionalHeader->NumberOfRvaAndSizes);
     printf("\n");
     print_datadirectory(optionalHeader->NumberOfRvaAndSizes, optionalHeader->DataDirectory);
+    printf("\n");
 }
 
-static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *optionalHeader)
+static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *image_oh, UINT header_size)
 {
+    IMAGE_OPTIONAL_HEADER64 oh;
+    const IMAGE_OPTIONAL_HEADER64 *optionalHeader;
+
+    /* in case optional header is missing or partial */
+    memset(&oh, 0, sizeof(oh));
+    memcpy(&oh, image_oh, min(header_size, sizeof(oh)));
+    optionalHeader = &oh;
+
     print_word("Magic", optionalHeader->Magic);
     print_ver("linker version",
               optionalHeader->MajorLinkerVersion, optionalHeader->MinorLinkerVersion);
@@ -292,14 +309,29 @@ static void dump_optional_header64(const IMAGE_OPTIONAL_HEADER64 *optionalHeader
     print_dword("RVAs & sizes", optionalHeader->NumberOfRvaAndSizes);
     printf("\n");
     print_datadirectory(optionalHeader->NumberOfRvaAndSizes, optionalHeader->DataDirectory);
+    printf("\n");
 }
 
-static	void	dump_pe_header(void)
+void dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *optionalHeader, UINT header_size)
 {
-    const IMAGE_FILE_HEADER     *fileHeader;
+    printf("Optional Header (%s)\n", get_magic_type(optionalHeader->Magic));
 
+    switch(optionalHeader->Magic) {
+        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            dump_optional_header32(optionalHeader, header_size);
+            break;
+        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            dump_optional_header64((const IMAGE_OPTIONAL_HEADER64 *)optionalHeader, header_size);
+            break;
+        default:
+            printf("  Unknown optional header magic: 0x%-4X\n", optionalHeader->Magic);
+            break;
+    }
+}
+
+void dump_file_header(const IMAGE_FILE_HEADER *fileHeader)
+{
     printf("File Header\n");
-    fileHeader = &PE_nt_headers->FileHeader;
 
     printf("  Machine:                      %04X (%s)\n",
 	   fileHeader->Machine, get_machine_str(fileHeader->Machine));
@@ -330,21 +362,12 @@ static	void	dump_pe_header(void)
     X(IMAGE_FILE_BYTES_REVERSED_HI, 	"BYTES_REVERSED_HI");
 #undef X
     printf("\n");
+}
 
-    /* hope we have the right size */
-    printf("Optional Header (%s)\n", get_magic_type(PE_nt_headers->OptionalHeader.Magic));
-    switch(PE_nt_headers->OptionalHeader.Magic) {
-        case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            dump_optional_header32((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader);
-            break;
-        case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            dump_optional_header64((const IMAGE_OPTIONAL_HEADER64*)&PE_nt_headers->OptionalHeader);
-            break;
-        default:
-            printf("  Unknown header magic: 0x%-4X\n", PE_nt_headers->OptionalHeader.Magic);
-            break;
-    }
-    printf("\n");
+static	void	dump_pe_header(void)
+{
+    dump_file_header(&PE_nt_headers->FileHeader);
+    dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader, PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 }
 
 static	void	dump_sections(const void* addr, unsigned num_sect)
