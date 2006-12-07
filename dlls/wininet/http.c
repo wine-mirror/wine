@@ -964,6 +964,31 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
     return TRUE;
 }
 
+static BOOL HTTP_ResolveName(LPWININETHTTPREQW lpwhr)
+{
+    char szaddr[32];
+    LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
+
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                          INTERNET_STATUS_RESOLVING_NAME,
+                          lpwhs->lpszServerName,
+                          strlenW(lpwhs->lpszServerName)+1);
+
+    if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
+                    &lpwhs->socketAddress))
+    {
+        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
+        return FALSE;
+    }
+
+    inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
+              szaddr, sizeof(szaddr));
+    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                          INTERNET_STATUS_NAME_RESOLVED,
+                          szaddr, strlen(szaddr)+1);
+    return TRUE;
+}
+
 /***********************************************************************
  *           HTTP_HttpOpenRequestW (internal)
  *
@@ -988,7 +1013,6 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     static const WCHAR szUrlForm[] = {'h','t','t','p',':','/','/','%','s',0};
     DWORD len;
     LPHTTPHEADERW Host;
-    char szaddr[32];
 
     TRACE("-->\n");
 
@@ -1135,28 +1159,11 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
      * A STATUS_REQUEST_COMPLETE is NOT sent here as per my tests on windows
      */
 
-    /*
-     * According to my tests. The name is not resolved until a request is Opened
-     */
-    INTERNET_SendCallback(&lpwhr->hdr, dwContext,
-                          INTERNET_STATUS_RESOLVING_NAME,
-                          lpwhs->lpszServerName,
-                          strlenW(lpwhs->lpszServerName)+1);
-
-    if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
-                    &lpwhs->socketAddress))
+    if (!HTTP_ResolveName(lpwhr))
     {
-        INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
         InternetCloseHandle( handle );
         handle = NULL;
-        goto lend;
     }
-
-    inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
-              szaddr, sizeof(szaddr));
-    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                          INTERNET_STATUS_NAME_RESOLVED,
-                          szaddr, strlen(szaddr)+1);
 
 lend:
     if( lpwhr )
@@ -1933,7 +1940,6 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
     WCHAR path[2048];
-    char szaddr[32];
 
     if(lpszUrl[0]=='/')
     {
@@ -2090,23 +2096,8 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
             lpwhs->lpszUserName = WININET_strdupW(userName);
         lpwhs->nServerPort = urlComponents.nPort;
 
-        INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                              INTERNET_STATUS_RESOLVING_NAME,
-                              lpwhs->lpszServerName,
-                              strlenW(lpwhs->lpszServerName)+1);
-
-        if (!GetAddress(lpwhs->lpszServerName, lpwhs->nServerPort,
-                    &lpwhs->socketAddress))
-        {
-            INTERNET_SetLastError(ERROR_INTERNET_NAME_NOT_RESOLVED);
+        if (!HTTP_ResolveName(lpwhr))
             return FALSE;
-        }
-
-        inet_ntop(lpwhs->socketAddress.sin_family, &lpwhs->socketAddress.sin_addr,
-              szaddr, sizeof(szaddr));
-        INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                              INTERNET_STATUS_NAME_RESOLVED,
-                              szaddr, strlen(szaddr)+1);
 
         NETCON_close(&lpwhr->netConnection);
 
