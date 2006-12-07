@@ -131,6 +131,7 @@ BOOL PSDRV_SelectDownloadFont(PSDRV_PDEVICE *physDev)
     LPOUTLINETEXTMETRICA potm;
     DWORD len = GetOutlineTextMetricsA(physDev->hdc, 0, NULL);
 
+    if(!len) return FALSE;
     potm = HeapAlloc(GetProcessHeap(), 0, len);
     GetOutlineTextMetricsA(physDev->hdc, len, potm);
     get_download_name(physDev, potm, &ps_name);
