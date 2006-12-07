@@ -2954,7 +2954,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
          * same time. There is no direct way to do that in unix. While Wineserver
          * might do this, it does not seem useful for now, so just ignore it.*/
         case WS_SO_REUSEADDR:
-            FIXME("Ignoring SO_REUSEADDR, does not translate\n");
+            TRACE("Ignoring SO_REUSEADDR, does not translate\n");
             return 0;
 
 #ifdef SO_RCVTIMEO
