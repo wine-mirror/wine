@@ -671,9 +671,15 @@ void pdb_dump(void)
 /*    init_types(); */
     head = PRD(0, sizeof(pdb2) - 1);
     if (head && !memcmp(head, pdb2, sizeof(pdb2) - 1))
-        return pdb_jg_dump();
+    {
+        pdb_jg_dump();
+        return;
+    }
     head = PRD(0, sizeof(pdb7) - 1);
     if (head && !memcmp(head, pdb7, sizeof(pdb7) - 1))
-        return pdb_ds_dump();
+    {
+        pdb_ds_dump();
+        return;
+    }
     printf("Unrecognized header %s\n", head);
 }
