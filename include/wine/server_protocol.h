@@ -2828,10 +2828,8 @@ struct get_visible_region_reply
 {
     struct reply_header __header;
     user_handle_t  top_win;
-    int            top_org_x;
-    int            top_org_y;
-    int            win_org_x;
-    int            win_org_y;
+    rectangle_t    top_rect;
+    rectangle_t    win_rect;
     data_size_t    total_size;
     /* VARARG(region,rectangles); */
 };
@@ -4417,6 +4415,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 260
+#define SERVER_PROTOCOL_VERSION 261
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -2012,10 +2012,8 @@ enum message_type
     unsigned int   flags;         /* DCX flags */
 @REPLY
     user_handle_t  top_win;       /* top window to clip against */
-    int            top_org_x;     /* top window visible rect origin in screen coords */
-    int            top_org_y;
-    int            win_org_x;     /* window rect origin in screen coords */
-    int            win_org_y;
+    rectangle_t    top_rect;      /* top window visible rect with screen coords */
+    rectangle_t    win_rect;      /* window rect in screen coords */
     data_size_t    total_size;    /* total size of the resulting region */
     VARARG(region,rectangles);    /* list of rectangles for the region (in screen coords) */
 @END

@@ -81,7 +81,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, physDev->backgroundPixel );
         XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                        physDev->org.x + lprect->left, physDev->org.y + lprect->top,
+                        physDev->dc_rect.left + lprect->left, physDev->dc_rect.top + lprect->top,
                         lprect->right - lprect->left, lprect->bottom - lprect->top );
         wine_tsx11_unlock();
     }
@@ -124,7 +124,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         {
             X11DRV_cptable[pfo->fi->cptable].pDrawString(
                            pfo, gdi_display, physDev->drawable, physDev->gc,
-                           physDev->org.x + x, physDev->org.y + y, str2b, count );
+                           physDev->dc_rect.left + x, physDev->dc_rect.top + y, str2b, count );
         }
         else
         {
@@ -145,7 +145,7 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
 
             X11DRV_cptable[pfo->fi->cptable].pDrawText( pfo, gdi_display,
                                   physDev->drawable, physDev->gc,
-                                  physDev->org.x + x, physDev->org.y + y, items, pitem - items );
+                                  physDev->dc_rect.left + x, physDev->dc_rect.top + y, items, pitem - items );
             HeapFree( GetProcessHeap(), 0, items );
         }
     }
@@ -159,9 +159,9 @@ X11DRV_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flags,
         {
             int char_metric_offset = str2b[i].byte2 + (str2b[i].byte1 << 8)
                 - font->min_char_or_byte2;
-            int x_i = IROUND((double) (physDev->org.x + x) + offset *
+            int x_i = IROUND((double) (physDev->dc_rect.left + x) + offset *
                              pfo->lpX11Trans->a / pfo->lpX11Trans->pixelsize );
-            int y_i = IROUND((double) (physDev->org.y + y) - offset *
+            int y_i = IROUND((double) (physDev->dc_rect.top + y) - offset *
                              pfo->lpX11Trans->b / pfo->lpX11Trans->pixelsize );
 
             X11DRV_cptable[pfo->fi->cptable].pDrawString(

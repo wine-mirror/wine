@@ -123,9 +123,9 @@ typedef struct
     HDC           hdc;
     GC            gc;          /* X Window GC */
     Drawable      drawable;
-    POINT         org;          /* DC origin relative to drawable */
-    POINT         drawable_org; /* Origin of drawable relative to screen */
-    HRGN          region;       /* Device region (visible region & clip region) */
+    RECT          dc_rect;       /* DC rectangle relative to drawable */
+    RECT          drawable_rect; /* Drawable rectangle relative to screen */
+    HRGN          region;        /* Device region (visible region & clip region) */
     X_PHYSFONT    font;
     X_PHYSPEN     pen;
     X_PHYSBRUSH   brush;
@@ -480,8 +480,8 @@ struct x11drv_escape_set_drawable
     enum x11drv_escape_codes code;         /* escape code (X11DRV_SET_DRAWABLE) */
     Drawable                 drawable;     /* X drawable */
     int                      mode;         /* ClipByChildren or IncludeInferiors */
-    POINT                    org;          /* origin of DC relative to drawable */
-    POINT                    drawable_org; /* origin of drawable relative to screen */
+    RECT                     dc_rect;      /* DC rectangle relative to drawable */
+    RECT                     drawable_rect;/* Drawable rectangle relative to screen */
 };
 
 struct x11drv_escape_set_dce

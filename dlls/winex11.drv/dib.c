@@ -3462,7 +3462,7 @@ static void X11DRV_DIB_SetImageBits_GetSubImage(
              descr->xDest + descr->width , descr->yDest + descr->height );
     GetRgnBox( descr->physDev->region, &rc );
     /* convert from dc to drawable origin */
-    OffsetRect( &rc, descr->physDev->org.x, descr->physDev->org.y);
+    OffsetRect( &rc, descr->physDev->dc_rect.left, descr->physDev->dc_rect.top);
     /* clip visible rect with bitmap */
     if( IntersectRect( &rc, &rc, &bmprc))
     {
@@ -3833,8 +3833,8 @@ INT X11DRV_SetDIBitsToDevice( X11DRV_PDEVICE *physDev, INT xDest, INT yDest, DWO
     descr.gc        = physDev->gc;
     descr.xSrc      = xSrc;
     descr.ySrc      = ySrc;
-    descr.xDest     = physDev->org.x + pt.x;
-    descr.yDest     = physDev->org.y + pt.y;
+    descr.xDest     = physDev->dc_rect.left + pt.x;
+    descr.yDest     = physDev->dc_rect.top + pt.y;
     descr.width     = cx;
     descr.height    = cy;
     descr.useShm    = FALSE;
@@ -4229,7 +4229,7 @@ void X11DRV_DIB_CopyDIBSection(X11DRV_PDEVICE *physDevSrc, X11DRV_PDEVICE *physD
     /* perform the copy */
     X11DRV_DIB_DoCopyDIBSection(physBitmap, FALSE, colorMap, nColorMap,
 				physDevDst->drawable, physDevDst->gc, xSrc, ySrc,
-                                physDevDst->org.x + xDest, physDevDst->org.y + yDest,
+                                physDevDst->dc_rect.left + xDest, physDevDst->dc_rect.top + yDest,
 				width, height);
     /* free color mapping */
     if (aColorMap)

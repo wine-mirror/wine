@@ -327,9 +327,9 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                 {
                     const struct x11drv_escape_set_drawable *data = (const struct x11drv_escape_set_drawable *)in_data;
                     if(physDev->xrender) X11DRV_XRender_UpdateDrawable( physDev );
-                    physDev->org = data->org;
+                    physDev->dc_rect = data->dc_rect;
                     physDev->drawable = data->drawable;
-                    physDev->drawable_org = data->drawable_org;
+                    physDev->drawable_rect = data->drawable_rect;
                     wine_tsx11_lock();
                     XSetSubwindowMode( gdi_display, physDev->gc, data->mode );
                     wine_tsx11_unlock();
@@ -359,8 +359,8 @@ INT X11DRV_ExtEscape( X11DRV_PDEVICE *physDev, INT escape, INT in_count, LPCVOID
                             if (event.type == NoExpose) break;
                             if (event.type == GraphicsExpose)
                             {
-                                int x = event.xgraphicsexpose.x - physDev->org.x;
-                                int y = event.xgraphicsexpose.y - physDev->org.y;
+                                int x = event.xgraphicsexpose.x - physDev->dc_rect.left;
+                                int y = event.xgraphicsexpose.y - physDev->dc_rect.top;
 
                                 TRACE( "got %d,%d %dx%d count %d\n", x, y,
                                        event.xgraphicsexpose.width,

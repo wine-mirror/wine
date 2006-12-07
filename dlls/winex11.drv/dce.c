@@ -126,10 +126,14 @@ static void update_visible_region( struct dce *dce )
                 vis_rgn = ExtCreateRegion( NULL, size, data );
 
                 top = reply->top_win;
-                escape.org.x = reply->win_org_x - reply->top_org_x;
-                escape.org.y = reply->win_org_y - reply->top_org_y;
-                escape.drawable_org.x = reply->top_org_x;
-                escape.drawable_org.y = reply->top_org_y;
+                escape.dc_rect.left = reply->win_rect.left - reply->top_rect.left;
+                escape.dc_rect.top = reply->win_rect.top - reply->top_rect.top;
+                escape.dc_rect.right = reply->win_rect.right - reply->top_rect.left;
+                escape.dc_rect.bottom = reply->win_rect.bottom - reply->top_rect.top;
+                escape.drawable_rect.left = reply->top_rect.left;
+                escape.drawable_rect.top = reply->top_rect.top;
+                escape.drawable_rect.right = reply->top_rect.right;
+                escape.drawable_rect.bottom = reply->top_rect.bottom;
             }
             else size = reply->total_size;
         }
@@ -154,8 +158,8 @@ static void update_visible_region( struct dce *dce )
 
     /* map region to DC coordinates */
     OffsetRgn( vis_rgn,
-               -(escape.drawable_org.x + escape.org.x),
-               -(escape.drawable_org.y + escape.org.y) );
+               -(escape.drawable_rect.left + escape.dc_rect.left),
+               -(escape.drawable_rect.top + escape.dc_rect.top) );
     SelectVisRgn16( HDC_16(dce->hdc), HRGN_16(vis_rgn) );
     DeleteObject( vis_rgn );
 }
@@ -178,8 +182,9 @@ static void release_dce( struct dce *dce )
     escape.code = X11DRV_SET_DRAWABLE;
     escape.drawable = root_window;
     escape.mode = IncludeInferiors;
-    escape.org.x = escape.org.y = 0;
-    escape.drawable_org.x = escape.drawable_org.y = 0;
+    escape.drawable_rect = virtual_screen_rect;
+    SetRect( &escape.dc_rect, 0, 0, virtual_screen_rect.right - virtual_screen_rect.left,
+             virtual_screen_rect.bottom - virtual_screen_rect.top );
     ExtEscape( dce->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 

@@ -537,8 +537,8 @@ inline static void set_drawable( HDC hdc, Drawable drawable )
     escape.code = X11DRV_SET_DRAWABLE;
     escape.drawable = drawable;
     escape.mode = IncludeInferiors;
-    escape.org.x = escape.org.y = 0;
-    escape.drawable_org.x = escape.drawable_org.y = 0;
+    ZeroMemory(&escape.dc_rect, sizeof(escape.dc_rect));
+    ZeroMemory(&escape.drawable_rect, sizeof(escape.drawable_rect));
 
     ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
 }

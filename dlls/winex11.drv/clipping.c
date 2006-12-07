@@ -115,7 +115,7 @@ void X11DRV_SetDeviceClipping( X11DRV_PDEVICE *physDev, HRGN vis_rgn, HRGN clip_
     if (!(data = X11DRV_GetRegionData( physDev->region, 0 ))) return;
 
     wine_tsx11_lock();
-    XSetClipRectangles( gdi_display, physDev->gc, physDev->org.x, physDev->org.y,
+    XSetClipRectangles( gdi_display, physDev->gc, physDev->dc_rect.left, physDev->dc_rect.top,
                         (XRectangle *)data->Buffer, data->rdh.nCount, YXBanded );
     wine_tsx11_unlock();
     HeapFree( GetProcessHeap(), 0, data );

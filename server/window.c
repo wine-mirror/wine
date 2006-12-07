@@ -756,6 +756,18 @@ static inline void client_to_screen( struct window *win, int *x, int *y )
     }
 }
 
+/* convert coordinates from client to screen coords */
+static inline void client_to_screen_rect( struct window *win, rectangle_t *rect )
+{
+    for ( ; win && !is_desktop_window(win); win = win->parent)
+    {
+        rect->left   += win->client_rect.left;
+        rect->right  += win->client_rect.left;
+        rect->top    += win->client_rect.top;
+        rect->bottom += win->client_rect.top;
+    }
+}
+
 /* map the region from window to screen coordinates */
 static inline void map_win_region_to_screen( struct window *win, struct region *region )
 {
@@ -1826,18 +1838,22 @@ DECL_HANDLER(get_visible_region)
         data = get_region_data_and_free( region, get_reply_max_size(), &reply->total_size );
         if (data) set_reply_data_ptr( data, reply->total_size );
     }
-    reply->top_win   = top->handle;
-    reply->top_org_x = top->visible_rect.left;
-    reply->top_org_y = top->visible_rect.top;
+    reply->top_win  = top->handle;
+    reply->top_rect = top->visible_rect;
 
-    if (!is_desktop_window(top))
+    if (!is_desktop_window(win))
     {
-        reply->win_org_x = (req->flags & DCX_WINDOW) ? win->window_rect.left : win->client_rect.left;
-        reply->win_org_y = (req->flags & DCX_WINDOW) ? win->window_rect.top : win->client_rect.top;
-        client_to_screen( top->parent, &reply->top_org_x, &reply->top_org_y );
-        client_to_screen( win->parent, &reply->win_org_x, &reply->win_org_y );
+        reply->win_rect = (req->flags & DCX_WINDOW) ? win->window_rect : win->client_rect;
+        client_to_screen_rect( top->parent, &reply->top_rect );
+        client_to_screen_rect( win->parent, &reply->win_rect );
     }
-    else reply->win_org_x = reply->win_org_y = 0;
+    else
+    {
+        reply->win_rect.left   = 0;
+        reply->win_rect.top    = 0;
+        reply->win_rect.right  = win->client_rect.right - win->client_rect.left;
+        reply->win_rect.bottom = win->client_rect.bottom - win->client_rect.top;
+    }
 }
 
 

@@ -1118,7 +1118,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
         wine_tsx11_lock();
         XSetForeground( gdi_display, physDev->gc, backgroundPixel );
         XFillRectangle( gdi_display, physDev->drawable, physDev->gc,
-                        physDev->org.x + lprect->left, physDev->org.y + lprect->top,
+                        physDev->dc_rect.left + lprect->left, physDev->dc_rect.top + lprect->top,
                         lprect->right - lprect->left, lprect->bottom - lprect->top );
         wine_tsx11_unlock();
     }
@@ -1175,7 +1175,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	{
 	    wine_tsx11_lock();
 	    pXRenderSetPictureClipRectangles( gdi_display, physDev->xrender->pict,
-					      physDev->org.x, physDev->org.y,
+					      physDev->dc_rect.left, physDev->dc_rect.top,
 					      (XRectangle *)data->Buffer, data->rdh.nCount );
 	    wine_tsx11_unlock();
 	    HeapFree( GetProcessHeap(), 0, data );
@@ -1261,7 +1261,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
     assert(formatEntry);
 
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
-          physDev->org.x + x, physDev->org.y + y);
+          physDev->dc_rect.left + x, physDev->dc_rect.top + y);
 
     if(X11DRV_XRender_Installed) {
         wine_tsx11_lock();
@@ -1270,7 +1270,7 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 				      physDev->xrender->tile_pict,
 				      physDev->xrender->pict,
 				      formatEntry->font_format, formatEntry->glyphset,
-				      0, 0, physDev->org.x + x, physDev->org.y + y,
+				      0, 0, physDev->dc_rect.left + x, physDev->dc_rect.top + y,
 				      wstr, count);
 	else {
 	    INT offset = 0, xoff = 0, yoff = 0;
@@ -1279,8 +1279,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 					  physDev->xrender->tile_pict,
 					  physDev->xrender->pict,
 					  formatEntry->font_format, formatEntry->glyphset,
-					  0, 0, physDev->org.x + x + xoff,
-					  physDev->org.y + y + yoff,
+					  0, 0, physDev->dc_rect.left + x + xoff,
+					  physDev->dc_rect.top + y + yoff,
 					  wstr + idx, 1);
                 offset += lpDx[idx];
 		xoff = offset * cosEsc;
@@ -1296,8 +1296,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 
 	if(antialias == AA_None) {
 	    for(idx = 0; idx < count; idx++) {
-	        SharpGlyphMono(physDev, physDev->org.x + x + xoff,
-			       physDev->org.y + y + yoff,
+	        SharpGlyphMono(physDev, physDev->dc_rect.left + x + xoff,
+			       physDev->dc_rect.top + y + yoff,
 			       formatEntry->bitmaps[wstr[idx]],
 			       &formatEntry->gis[wstr[idx]]);
 		if(lpDx) {
@@ -1311,8 +1311,8 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    }
 	} else if(physDev->depth == 1) {
 	    for(idx = 0; idx < count; idx++) {
-	        SharpGlyphGray(physDev, physDev->org.x + x + xoff,
-			       physDev->org.y + y + yoff,
+	        SharpGlyphGray(physDev, physDev->dc_rect.left + x + xoff,
+			       physDev->dc_rect.top + y + yoff,
 			       formatEntry->bitmaps[wstr[idx]],
 			       &formatEntry->gis[wstr[idx]]);
 		if(lpDx) {
@@ -1358,28 +1358,28 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 		}
 	    }
 	    TRACE("glyph extents %d,%d - %d,%d drawable x,y %d,%d\n", extents.left, extents.top,
-		  extents.right, extents.bottom, physDev->org.x + x, physDev->org.y + y);
+		  extents.right, extents.bottom, physDev->dc_rect.left + x, physDev->dc_rect.top + y);
 
-	    if(physDev->org.x + x + extents.left >= 0) {
-	        image_x = physDev->org.x + x + extents.left;
+	    if(physDev->dc_rect.left + x + extents.left >= 0) {
+	        image_x = physDev->dc_rect.left + x + extents.left;
 		image_off_x = 0;
 	    } else {
 	        image_x = 0;
-		image_off_x = physDev->org.x + x + extents.left;
+		image_off_x = physDev->dc_rect.left + x + extents.left;
 	    }
-	    if(physDev->org.y + y + extents.top >= 0) {
-	        image_y = physDev->org.y + y + extents.top;
+	    if(physDev->dc_rect.top + y + extents.top >= 0) {
+	        image_y = physDev->dc_rect.top + y + extents.top;
 		image_off_y = 0;
 	    } else {
 	        image_y = 0;
-		image_off_y = physDev->org.y + y + extents.top;
+		image_off_y = physDev->dc_rect.top + y + extents.top;
 	    }
-	    if(physDev->org.x + x + extents.right < w)
-	        image_w = physDev->org.x + x + extents.right - image_x;
+	    if(physDev->dc_rect.left + x + extents.right < w)
+	        image_w = physDev->dc_rect.left + x + extents.right - image_x;
 	    else
 	        image_w = w - image_x;
-	    if(physDev->org.y + y + extents.bottom < h)
-	        image_h = physDev->org.y + y + extents.bottom - image_y;
+	    if(physDev->dc_rect.top + y + extents.bottom < h)
+	        image_h = physDev->dc_rect.top + y + extents.bottom - image_y;
 	    else
 	        image_h = h - image_y;
 
@@ -1608,7 +1608,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
     if ((rgndata = X11DRV_GetRegionData( devDst->region, 0 )))
     {
         pXRenderSetPictureClipRectangles( gdi_display, dst_pict,
-                                          devDst->org.x, devDst->org.y,
+                                          devDst->dc_rect.left, devDst->dc_rect.top,
                                           (XRectangle *)rgndata->Buffer, 
                                           rgndata->rdh.nCount );
         HeapFree( GetProcessHeap(), 0, rgndata );
@@ -1628,7 +1628,7 @@ BOOL X11DRV_AlphaBlend(X11DRV_PDEVICE *devDst, INT xDst, INT yDst, INT widthDst,
 #endif
     pXRenderComposite(gdi_display, PictOpOver, src_pict, 0, dst_pict,
                       0, 0, 0, 0,
-                      xDst + devDst->org.x, yDst + devDst->org.y, widthDst, heightDst);
+                      xDst + devDst->dc_rect.left, yDst + devDst->dc_rect.top, widthDst, heightDst);
 
 
     pXRenderFreePicture(gdi_display, src_pict);
