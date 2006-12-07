@@ -4160,7 +4160,7 @@ HRESULT WINAPI VarDecFromR4(FLOAT fltIn, DECIMAL* pDecOut)
   WCHAR buff[256];
 
   sprintfW( buff, szFloatFormatW, fltIn );
-  return VarDecFromStr(buff, LOCALE_EN_US, 0, pDecOut);
+  return VarDecFromStr(buff, LOCALE_EN_US, LOCALE_NOUSEROVERRIDE, pDecOut);
 }
 
 /************************************************************************
@@ -4180,7 +4180,7 @@ HRESULT WINAPI VarDecFromR8(double dblIn, DECIMAL* pDecOut)
   WCHAR buff[256];
 
   sprintfW( buff, szDoubleFormatW, dblIn );
-  return VarDecFromStr(buff, LOCALE_EN_US, 0, pDecOut);
+  return VarDecFromStr(buff, LOCALE_EN_US, LOCALE_NOUSEROVERRIDE, pDecOut);
 }
 
 /************************************************************************
@@ -6070,7 +6070,8 @@ static BSTR VARIANT_BstrReplaceDecimal(WCHAR * buff, LCID lcid, ULONG dwFlags)
      the need to replace the decimal separator, and if so, will prepare an
      appropriate NUMBERFMTW structure to do the job via GetNumberFormatW().
    */
-  GetLocaleInfoW(lcid, LOCALE_SDECIMAL, lpDecimalSep, sizeof(lpDecimalSep) / sizeof(WCHAR));
+  GetLocaleInfoW(lcid, LOCALE_SDECIMAL | (dwFlags & LOCALE_NOUSEROVERRIDE),
+                 lpDecimalSep, sizeof(lpDecimalSep) / sizeof(WCHAR));
   if (lpDecimalSep[0] == '.' && lpDecimalSep[1] == '\0')
   {
     /* locale is compatible with English - return original string */
@@ -6095,8 +6096,7 @@ static BSTR VARIANT_BstrReplaceDecimal(WCHAR * buff, LCID lcid, ULONG dwFlags)
     if (p) minFormat.NumDigits = strlenW(p + 1);
 
     numbuff[0] = '\0';
-    if (!GetNumberFormatW(lcid, dwFlags & LOCALE_NOUSEROVERRIDE,
-                   buff, &minFormat, numbuff, sizeof(numbuff) / sizeof(WCHAR)))
+    if (!GetNumberFormatW(lcid, 0, buff, &minFormat, numbuff, sizeof(numbuff) / sizeof(WCHAR)))
     {
       WARN("GetNumberFormatW() failed, returning raw number string instead\n");
       bstrOut = SysAllocString(buff);
