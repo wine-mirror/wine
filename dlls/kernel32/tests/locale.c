@@ -177,15 +177,15 @@ static void test_GetTimeFormatA(void)
   curtime.wSecond = 13;
   curtime.wMilliseconds = 22;
   STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Valid time */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("tt HH':'mm'@'ss", "A"); /* Insufficent buffer */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
+  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
   EXPECT_BUFFER; EXPECT_LEN(0); EXPECT_EQA;
 
   STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Calculate length only */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, NULL, 0);
+  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, NULL, 0);
   EXPECT_VALID; EXPECT_LENA;
 
   STRINGSA("", "8 AM"); /* TIME_NOMINUTESORSECONDS, default format */
@@ -202,11 +202,11 @@ static void test_GetTimeFormatA(void)
 
   STRINGSA("h:m:s tt", "8:56 AM"); /* TIME_NOSECONDS */
   strcpy(Expected, "8:56 AM");
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO|TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("h.@:m.@:s.@:tt", "8.@:56AM"); /* Multiple delimiters */
-  ret = GetTimeFormatA(lcid, TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO|TIME_NOSECONDS, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("s1s2s3", ""); /* Duplicate tokens */
@@ -214,12 +214,12 @@ static void test_GetTimeFormatA(void)
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("t/tt", "A/AM"); /* AM time marker */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   curtime.wHour = 13;
   STRINGSA("t/tt", "P/PM"); /* PM time marker */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("h1t2tt3m", "156"); /* TIME_NOTIMEMARKER: removes text around time marker token */
@@ -227,7 +227,7 @@ static void test_GetTimeFormatA(void)
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("h:m:s tt", "13:56:13 PM"); /* TIME_FORCE24HOURFORMAT */
-  ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("h:m:s", "13:56:13"); /* TIME_FORCE24HOURFORMAT doesn't add time marker */
@@ -238,7 +238,7 @@ static void test_GetTimeFormatA(void)
   curtime.wMinute = 5;
   curtime.wSecond = 3;
   STRINGSA("h hh H HH m mm s ss t tt", "2 02 14 14 5 05 3 03 P PM"); /* 24 hrs, leading 0 */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   curtime.wHour = 0;
@@ -247,7 +247,7 @@ static void test_GetTimeFormatA(void)
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("h:m:s tt", "12:5:3 AM"); /* non-zero flags should fail with format, doesn't */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   /* try to convert formatting strings with more than two letters
@@ -272,7 +272,7 @@ static void test_GetTimeFormatA(void)
 
   STRINGSA("h 'h' H 'H' HH 'HH' m 'm' s 's' t 't' tt 'tt'",
            "8 h 8 H 08 HH 56 m 13 s A t AM tt"); /* "'" preserves tokens */
-  ret = GetTimeFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
+  ret = GetTimeFormatA(lcid, NUO, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
   STRINGSA("'''", "'"); /* invalid quoted string */
