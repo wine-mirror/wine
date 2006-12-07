@@ -49,7 +49,12 @@ WINE_DECLARE_DEBUG_CHANNEL(opengl);
 typedef struct wine_wgl_s {
     PROC WINAPI  (*p_wglGetProcAddress)(LPCSTR  lpszProc);
 
+    void WINAPI  (*p_wglDisable)(GLenum cap);
+    void WINAPI  (*p_wglEnable)(GLenum cap);
     void WINAPI  (*p_wglGetIntegerv)(GLenum pname, GLint* params);
+    GLboolean WINAPI (*p_wglIsEnabled)(GLenum cap);
+    void WINAPI  (*p_wglScissor)(GLint x, GLint y, GLsizei width, GLsizei height);
+    void WINAPI  (*p_wglViewport)(GLint x, GLint y, GLsizei width, GLsizei height);
 } wine_wgl_t;
 
 /** global wgl object */
@@ -86,8 +91,7 @@ typedef struct wine_glcontext {
   GLXFBConfig fb_conf;
   GLXContext ctx;
   BOOL do_escape;
-  struct wine_glcontext *next;
-  struct wine_glcontext *prev;
+  /* ... more stuff here */
 } Wine_GLContext;
 
 void enter_gl(void)
@@ -557,9 +561,34 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
     return wglUseFontOutlines_common(hdc, first, count, listBase, deviation, extrusion, format, lpgmf, TRUE);
 }
 
+void internal_glEnable(GLenum cap)
+{
+  wine_wgl.p_wglEnable(cap);
+}
+
+GLboolean internal_glIsEnabled(GLenum cap)
+{
+    return wine_wgl.p_wglIsEnabled(cap);
+}
+
+void internal_glDisable(GLenum cap)
+{
+    wine_wgl.p_wglDisable(cap);
+}
+
+void internal_glScissor( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    wine_wgl.p_wglScissor(x, y, width, height);
+}
+
+void internal_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
+{
+    wine_wgl.p_wglViewport(x, y, width, height);
+}
+
 const GLubyte * internal_glGetString(GLenum name) {
   const char* GL_Extensions = NULL;
-  
+
   if (GL_EXTENSIONS != name) {
     return glGetString(name);
   }
@@ -641,7 +670,12 @@ static BOOL process_attach(void)
   wine_wgl.p_wglGetProcAddress = (void *)GetProcAddress(mod_gdi32, "wglGetProcAddress");
 
   /* Interal WGL function */
+  wine_wgl.p_wglDisable = (void *)wine_wgl.p_wglGetProcAddress("wglDisable");
+  wine_wgl.p_wglEnable = (void *)wine_wgl.p_wglGetProcAddress("wglEnable");
   wine_wgl.p_wglGetIntegerv = (void *)wine_wgl.p_wglGetProcAddress("wglGetIntegerv");
+  wine_wgl.p_wglIsEnabled = (void *)wine_wgl.p_wglGetProcAddress("wglIsEnabled");
+  wine_wgl.p_wglScissor = (void *)wine_wgl.p_wglGetProcAddress("wglScissor");
+  wine_wgl.p_wglViewport = (void *)wine_wgl.p_wglGetProcAddress("wglViewport");
 
   internal_gl_disabled_extensions[0] = 0;
   if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey)) {

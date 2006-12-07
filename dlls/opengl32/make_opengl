@@ -266,6 +266,21 @@ sub GenerateThunk($$$$$)
     if ( $func_ref->[0] eq "glGetIntegerv" ) {
 	$wine_func_ref_name = "internal_glGetIntegerv";
     }
+    if ( $func_ref->[0] eq "glEnable" ) {
+	$wine_func_ref_name = "internal_glEnable";
+    }
+    if ( $func_ref->[0] eq "glIsEnabled" ) {
+	$wine_func_ref_name = "internal_glIsEnabled";
+    }
+    if ( $func_ref->[0] eq "glDisable" ) {
+	$wine_func_ref_name = "internal_glDisable";
+    }
+    if ( $func_ref->[0] eq "glScissor" ) {
+	$wine_func_ref_name = "internal_glScissor";
+    }
+    if ( $func_ref->[0] eq "glViewport" ) {
+	$wine_func_ref_name = "internal_glViewport";
+    }
     $ret = "$ret$prefix$wine_func_ref_name( $call_arg);\n";
     if ($thread_safe) {
 	$ret = "$ret  LEAVE_GL();\n";

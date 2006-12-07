@@ -815,7 +815,7 @@ void WINAPI wine_glDepthRange( GLclampd nearParam, GLclampd farParam ) {
 void WINAPI wine_glDisable( GLenum cap ) {
   TRACE("(%d)\n", cap );
   ENTER_GL();
-  glDisable( cap );
+  internal_glDisable( cap );
   LEAVE_GL();
 }
 
@@ -915,7 +915,7 @@ void WINAPI wine_glEdgeFlagv( GLboolean* flag ) {
 void WINAPI wine_glEnable( GLenum cap ) {
   TRACE("(%d)\n", cap );
   ENTER_GL();
-  glEnable( cap );
+  internal_glEnable( cap );
   LEAVE_GL();
 }
 
@@ -1772,7 +1772,7 @@ GLboolean WINAPI wine_glIsEnabled( GLenum cap ) {
   GLboolean ret_value;
   TRACE("(%d)\n", cap );
   ENTER_GL();
-  ret_value = glIsEnabled( cap );
+  ret_value = internal_glIsEnabled( cap );
   LEAVE_GL();
   return ret_value;
 }
@@ -2889,7 +2889,7 @@ void WINAPI wine_glScalef( GLfloat x, GLfloat y, GLfloat z ) {
 void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
   ENTER_GL();
-  glScissor( x, y, width, height );
+  internal_glScissor( x, y, width, height );
   LEAVE_GL();
 }
 
@@ -3759,6 +3759,6 @@ void WINAPI wine_glVertexPointer( GLint size, GLenum type, GLsizei stride, GLvoi
 void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height ) {
   TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
   ENTER_GL();
-  glViewport( x, y, width, height );
+  internal_glViewport( x, y, width, height );
   LEAVE_GL();
 }
