@@ -1021,6 +1021,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
                                 removable ) != STATUS_SUCCESS) goto error;
 
         /* check that all sections are loaded at the right offset */
+        if (nt->OptionalHeader.FileAlignment != nt->OptionalHeader.SectionAlignment) goto error;
         for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
         {
             if (sec[i].VirtualAddress != sec[i].PointerToRawData)
@@ -1710,7 +1711,8 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     if (!view)
     {
         info->State             = MEM_FREE;
-        info->Protect           = 0;
+        info->Protect           = PAGE_NOACCESS;
+        info->AllocationBase    = 0;
         info->AllocationProtect = 0;
         info->Type              = 0;
     }
@@ -1719,6 +1721,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         BYTE vprot = view->prot[(base - alloc_base) >> page_shift];
         info->State = (vprot & VPROT_COMMITTED) ? MEM_COMMIT : MEM_RESERVE;
         info->Protect = VIRTUAL_GetWin32Prot( vprot );
+        info->AllocationBase = alloc_base;
         info->AllocationProtect = VIRTUAL_GetWin32Prot( view->protect );
         if (view->protect & VPROT_IMAGE) info->Type = MEM_IMAGE;
         else if (view->flags & VFLAG_VALLOC) info->Type = MEM_PRIVATE;
@@ -1728,8 +1731,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     }
     RtlLeaveCriticalSection(&csVirtual);
 
-    info->BaseAddress    = (LPVOID)base;
-    info->AllocationBase = (LPVOID)alloc_base;
+    info->BaseAddress    = base;
     info->RegionSize     = size - (base - alloc_base);
     if (res_len) *res_len = sizeof(*info);
     return STATUS_SUCCESS;

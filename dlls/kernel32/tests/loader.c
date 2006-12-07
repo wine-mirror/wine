@@ -294,16 +294,12 @@ START_TEST(loader)
             {
                 ok(info.BaseAddress == (char *)hlib + ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, si.dwPageSize), "%d: %p != %p\n",
                    i, info.BaseAddress, (char *)hlib + ALIGN_SIZE(nt_header.OptionalHeader.SizeOfImage, si.dwPageSize));
-todo_wine {
                 ok(info.AllocationBase == 0, "%d: %p != 0\n", i, info.AllocationBase);
-}
                 ok(info.AllocationProtect == 0, "%d: %x != 0\n", i, info.AllocationProtect);
                 /*ok(info.RegionSize == not_practical_value, "%d: %lx != not_practical_value\n", i, info.RegionSize);*/
                 ok(info.State == MEM_FREE, "%d: %x != MEM_FREE\n", i, info.State);
                 ok(info.Type == 0, "%d: %x != 0\n", i, info.Type);
-todo_wine {
                 ok(info.Protect == PAGE_NOACCESS, "%d: %x != PAGE_NOACCESS\n", i, info.Protect);
-}
             }
             else
             {
@@ -322,14 +318,6 @@ todo_wine {
         }
         else
         {   /* LoadLibrary has failed */
-            if (hlib) /* remove completely once Wine is fixed */
-            {
-                todo_wine ok(!hlib, "%d: LoadLibrary should fail\n", i);
-                FreeLibrary(hlib);
-                DeleteFile(dll_name);
-                continue;
-            }
-
             ok(!hlib, "%d: LoadLibrary should fail\n", i);
 
             if (GetLastError() == ERROR_GEN_FAILURE) /* Win9x, broken behaviour */
