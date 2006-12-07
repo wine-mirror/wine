@@ -370,16 +370,10 @@ static	void	dump_pe_header(void)
     dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader, PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 }
 
-static	void	dump_sections(const void* addr, unsigned num_sect)
+void dump_section(const IMAGE_SECTION_HEADER *sectHead)
 {
-    const IMAGE_SECTION_HEADER*	sectHead = addr;
-    unsigned			i;
-
-    printf("Section Table\n");
-    for (i = 0; i < num_sect; i++, sectHead++)
-    {
-	printf("  %02d %-8.8s   VirtSize: %-8u  VirtAddr:  %-8u 0x%08x\n",
-	       i + 1, sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress,
+	printf("  %-8.8s   VirtSize: %-8u  VirtAddr:  %-8u 0x%08x\n",
+	       sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress,
 	       sectHead->VirtualAddress);
 	printf("    raw data offs: %-8u raw data size: %-8u\n",
 	       sectHead->PointerToRawData, sectHead->SizeOfRawData);
@@ -448,8 +442,18 @@ static	void	dump_sections(const void* addr, unsigned num_sect)
 	X(IMAGE_SCN_MEM_WRITE, 			"MEM_WRITE");
 #undef X
 	printf("\n\n");
+}
+
+static void dump_sections(const void *base, const void* addr, unsigned num_sect)
+{
+    const IMAGE_SECTION_HEADER*	sectHead = addr;
+    unsigned			i;
+
+    printf("Section Table\n");
+    for (i = 0; i < num_sect; i++, sectHead++)
+    {
+        dump_section(sectHead);
     }
-    printf("\n");
 }
 
 static	void	dump_dir_exported_functions(void)
@@ -858,7 +862,7 @@ void	dbg_dump(void)
 	     separateDebugHead->NumberOfSections * sizeof(IMAGE_SECTION_HEADER)))
     {printf("Can't get the sections, aborting\n"); return;}
 
-    dump_sections(separateDebugHead + 1, separateDebugHead->NumberOfSections);
+    dump_sections(separateDebugHead, separateDebugHead + 1, separateDebugHead->NumberOfSections);
 
     nb_dbg = separateDebugHead->DebugDirectorySize / sizeof(IMAGE_DEBUG_DIRECTORY);
     debugDir = PRD(sizeof(IMAGE_SEPARATE_DEBUG_HEADER) +
@@ -1193,7 +1197,7 @@ void pe_dump(void)
     {
 	dump_pe_header();
 	/* FIXME: should check ptr */
-	dump_sections((const char*)PE_nt_headers + sizeof(DWORD) +
+	dump_sections(PRD(0, 1), (const char*)PE_nt_headers + sizeof(DWORD) +
 		      sizeof(IMAGE_FILE_HEADER) + PE_nt_headers->FileHeader.SizeOfOptionalHeader,
 		      PE_nt_headers->FileHeader.NumberOfSections);
     }
