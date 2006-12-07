@@ -18,10 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* FIXME: Add support for import library with the long format described in
- * Microsoft Portable Executable and Common Object File Format Specification.
- */
-
 #include "config.h"
 #include "wine/port.h"
 
@@ -80,6 +76,70 @@ static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
     }
 }
 
+static void dump_long_import(const void *base, const IMAGE_SECTION_HEADER *ish, unsigned num_sect)
+{
+    unsigned i;
+    const DWORD *imp_data5 = NULL;
+    const WORD *imp_data6 = NULL;
+
+    if (globals.do_dumpheader)
+        printf("Section Table\n");
+
+    for (i = 0; i < num_sect; i++)
+    {
+        if (globals.do_dumpheader)
+            dump_section(&ish[i]);
+
+        if (globals.do_dump_rawdata)
+        {
+            dump_data((const unsigned char *)base + ish[i].PointerToRawData, ish[i].SizeOfRawData, "    " );
+            printf("\n");
+        }
+
+        if (!strcmp((const char *)ish[i].Name, ".idata$5"))
+        {
+            imp_data5 = (const DWORD *)((const char *)base + ish[i].PointerToRawData);
+        }
+        else if (!strcmp((const char *)ish[i].Name, ".idata$6"))
+        {
+            imp_data6 = (const WORD *)((const char *)base + ish[i].PointerToRawData);
+        }
+        else if (globals.do_debug && !strcmp((const char *)ish[i].Name, ".debug$S"))
+        {
+            const char *imp_debug$ = (const char *)base + ish[i].PointerToRawData;
+
+            codeview_dump_symbols(imp_debug$, ish[i].SizeOfRawData);
+            printf("\n");
+        }
+    }
+
+    if (imp_data5)
+    {
+        WORD ordinal = 0;
+        const char *name = NULL;
+
+        if (imp_data5[0] & 0x80000000)
+            ordinal = (WORD)(imp_data5[0] & ~0x80000000);
+
+        if (imp_data6)
+        {
+            if (!ordinal) ordinal = imp_data6[0];
+            name = (const char *)(imp_data6 + 1);
+        }
+        else
+        {
+            /* FIXME: find out a name in the section's data */
+        }
+
+        if (ordinal)
+        {
+            printf("  Symbol name  : %s\n", name ? name : "(ordinal import) /* FIXME */");
+            printf("  %-13s: %u\n", (imp_data5[0] & 0x80000000) ? "Ordinal" : "Hint", ordinal);
+            printf("\n");
+        }
+    }
+}
+
 enum FileSig get_kind_lib(void)
 {
     const char*         arch = PRD(0, IMAGE_ARCHIVE_START_SIZE);
@@ -101,27 +161,28 @@ void lib_dump(void)
         long size;
 
         if (!(iamh = PRD(cur_file_pos, sizeof(*iamh)))) break;
+
+        if (globals.do_dumpheader)
+        {
+            printf("Archive member name at %08lx\n", Offset(iamh));
+
+            printf("Name %.16s", iamh->Name);
+            if (!strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
+            {
+                printf(" - %s archive linker member\n",
+                       cur_file_pos == IMAGE_ARCHIVE_START_SIZE ? "1st" : "2nd");
+            }
+            else
+                printf("\n");
+            printf("Date %.12s %s\n", iamh->Date, get_time_str(strtoul((const char *)iamh->Date, NULL, 10)));
+            printf("UserID %.6s\n", iamh->UserID);
+            printf("GroupID %.6s\n", iamh->GroupID);
+            printf("Mode %.8s\n", iamh->Mode);
+            printf("Size %.10s\n\n", iamh->Size);
+        }
+
         cur_file_pos += sizeof(IMAGE_ARCHIVE_MEMBER_HEADER);
 
-#if 0 /* left here for debugging purposes, also should be helpful for
-       * adding support for new library formats.
-       */
-        printf("cur_file_pos %08lx\n", Offset(iamh));
-
-        printf("Name %.16s", iamh->Name);
-        if (!strncmp(iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
-        {
-            printf(" - %s archive linker member\n",
-                   cur_file_pos == IMAGE_ARCHIVE_START_SIZE ? "1st" : "2nd");
-        }
-        else
-            printf("\n");
-        printf("Date %.12s\n", iamh->Date);
-        printf("UserID %.6s\n", iamh->UserID);
-        printf("GroupID %.6s\n", iamh->GroupID);
-        printf("Mode %.8s\n", iamh->Mode);
-        printf("Size %.10s\n", iamh->Size);
-#endif
         /* FIXME: only import library contents with the short format are
          * recognized.
          */
@@ -129,6 +190,21 @@ void lib_dump(void)
         if (ioh->Sig1 == IMAGE_FILE_MACHINE_UNKNOWN && ioh->Sig2 == IMPORT_OBJECT_HDR_SIG2)
         {
             dump_import_object(ioh);
+        }
+        else if (strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
+        {
+            const IMAGE_FILE_HEADER *fh = (const IMAGE_FILE_HEADER *)ioh;
+
+            if (globals.do_dumpheader)
+            {
+                dump_file_header(fh);
+                if (fh->SizeOfOptionalHeader)
+                {
+                    const IMAGE_OPTIONAL_HEADER32 *oh = (const IMAGE_OPTIONAL_HEADER32 *)((const char *)fh + sizeof(*fh));
+                    dump_optional_header(oh, fh->SizeOfOptionalHeader);
+                }
+            }
+            dump_long_import(fh, (const IMAGE_SECTION_HEADER *)((const char *)fh + sizeof(*fh) + fh->SizeOfOptionalHeader), fh->NumberOfSections);
         }
 
         size = strtoul((const char *)iamh->Size, NULL, 10);
