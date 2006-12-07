@@ -2107,6 +2107,34 @@ HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid)
 
 /***********************************************************************
  *           CoCreateInstance [OLE32.@]
+ *
+ * Creates an instance of the specified class.
+ *
+ * PARAMS
+ *  rclsid       [I] Class ID to create an instance of.
+ *  pUnkOuter    [I] Optional outer unknown to allow aggregation with another object.
+ *  dwClsContext [I] Flags to restrict the location of the created instance.
+ *  iid          [I] The ID of the interface of the instance to return.
+ *  ppv          [O] On returns, contains a pointer to the specified interface of the instance.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: HRESULT code.
+ *
+ * NOTES
+ *  The dwClsContext parameter can be one or more of the following:
+ *| CLSCTX_INPROC_SERVER - Use an in-process server, such as from a DLL.
+ *| CLSCTX_INPROC_HANDLER - Use an in-process object which handles certain functions for an object running in another process.
+ *| CLSCTX_LOCAL_SERVER - Connect to an object running in another process.
+ *| CLSCTX_REMOTE_SERVER - Connect to an object running on another machine.
+ *
+ * Aggregation is the concept of deferring the IUnknown of an object to another
+ * object. This allows a separate object to behave as though it was part of
+ * the object and to allow this the pUnkOuter parameter can be set. Note that
+ * not all objects support having an outer of unknown.
+ *
+ * SEE ALSO
+ *  CoGetClassObject()
  */
 HRESULT WINAPI CoCreateInstance(
 	REFCLSID rclsid,
