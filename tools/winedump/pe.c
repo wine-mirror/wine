@@ -365,8 +365,8 @@ static	void	dump_sections(const void* addr, unsigned num_sect)
 	printf("    line # offs:     %-8u  line #'s:      %-8u\n",
 	       sectHead->PointerToLinenumbers, sectHead->NumberOfLinenumbers);
 	printf("    characteristics: 0x%08x\n", sectHead->Characteristics);
-	printf("      ");
-#define X(b,s)	if (sectHead->Characteristics & b) printf(s "  ")
+	printf("    ");
+#define X(b,s)	if (sectHead->Characteristics & b) printf("  " s)
 /* #define IMAGE_SCN_TYPE_REG			0x00000000 - Reserved */
 /* #define IMAGE_SCN_TYPE_DSECT			0x00000001 - Reserved */
 /* #define IMAGE_SCN_TYPE_NOLOAD		0x00000002 - Reserved */
@@ -394,14 +394,25 @@ static	void	dump_sections(const void* addr, unsigned num_sect)
 	X(IMAGE_SCN_MEM_LOCKED, 		"MEM_LOCKED");
 	X(IMAGE_SCN_MEM_PRELOAD, 		"MEM_PRELOAD");
 
-	X(IMAGE_SCN_ALIGN_1BYTES, 		"ALIGN_1BYTES");
-	X(IMAGE_SCN_ALIGN_2BYTES, 		"ALIGN_2BYTES");
-	X(IMAGE_SCN_ALIGN_4BYTES, 		"ALIGN_4BYTES");
-	X(IMAGE_SCN_ALIGN_8BYTES, 		"ALIGN_8BYTES");
-	X(IMAGE_SCN_ALIGN_16BYTES, 		"ALIGN_16BYTES");
-	X(IMAGE_SCN_ALIGN_32BYTES, 		"ALIGN_32BYTES");
-	X(IMAGE_SCN_ALIGN_64BYTES, 		"ALIGN_64BYTES");
-/* 						0x00800000 - Unused */
+        switch (sectHead->Characteristics & IMAGE_SCN_ALIGN_MASK)
+        {
+#define X2(b,s)	case b: printf("  " s); break;
+        X2(IMAGE_SCN_ALIGN_1BYTES, 		"ALIGN_1BYTES");
+        X2(IMAGE_SCN_ALIGN_2BYTES, 		"ALIGN_2BYTES");
+        X2(IMAGE_SCN_ALIGN_4BYTES, 		"ALIGN_4BYTES");
+        X2(IMAGE_SCN_ALIGN_8BYTES, 		"ALIGN_8BYTES");
+        X2(IMAGE_SCN_ALIGN_16BYTES, 		"ALIGN_16BYTES");
+        X2(IMAGE_SCN_ALIGN_32BYTES, 		"ALIGN_32BYTES");
+        X2(IMAGE_SCN_ALIGN_64BYTES, 		"ALIGN_64BYTES");
+        X2(IMAGE_SCN_ALIGN_128BYTES, 		"ALIGN_128BYTES");
+        X2(IMAGE_SCN_ALIGN_256BYTES, 		"ALIGN_256BYTES");
+        X2(IMAGE_SCN_ALIGN_512BYTES, 		"ALIGN_512BYTES");
+        X2(IMAGE_SCN_ALIGN_1024BYTES, 		"ALIGN_1024BYTES");
+        X2(IMAGE_SCN_ALIGN_2048BYTES, 		"ALIGN_2048BYTES");
+        X2(IMAGE_SCN_ALIGN_4096BYTES, 		"ALIGN_4096BYTES");
+        X2(IMAGE_SCN_ALIGN_8192BYTES, 		"ALIGN_8192BYTES");
+#undef X2
+        }
 
 	X(IMAGE_SCN_LNK_NRELOC_OVFL, 		"LNK_NRELOC_OVFL");
 
