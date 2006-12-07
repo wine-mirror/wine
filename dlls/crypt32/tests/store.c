@@ -667,7 +667,7 @@ static void testRegStore(void)
                     {
                         ok(hdr->cb == sizeof(bigCert2),
                            "Wrong size %d of cert property\n", hdr->cb);
-                        ok(!memcmp((BYTE *)hdr + sizeof(*hdr), bigCert2,
+                        ok(!memcmp((const BYTE *)hdr + sizeof(*hdr), bigCert2,
                          hdr->cb), "Unexpected cert in cert property\n");
                     }
                     hdr = findPropID(buf, size, CERT_HASH_PROP_ID);
@@ -676,7 +676,7 @@ static void testRegStore(void)
                     {
                         ok(hdr->cb == sizeof(hash),
                            "Wrong size %d of hash property\n", hdr->cb);
-                        ok(!memcmp((BYTE *)hdr + sizeof(*hdr), hash,
+                        ok(!memcmp((const BYTE *)hdr + sizeof(*hdr), hash,
                          hdr->cb), "Unexpected hash in cert property\n");
                     }
                 }
