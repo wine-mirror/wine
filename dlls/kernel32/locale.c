@@ -1194,7 +1194,8 @@ INT WINAPI GetLocaleInfoW( LCID lcid, LCTYPE lctype, LPWSTR buffer, INT len )
 
     /* first check for overrides in the registry */
 
-    if (!(lcflags & LOCALE_NOUSEROVERRIDE) && lcid == GetUserDefaultLCID())
+    if (!(lcflags & LOCALE_NOUSEROVERRIDE) &&
+        lcid == convert_default_lcid( LOCALE_USER_DEFAULT, lctype ))
     {
         const WCHAR *value = get_locale_value_name(lctype);
 
