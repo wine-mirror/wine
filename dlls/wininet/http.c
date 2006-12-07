@@ -102,9 +102,7 @@ static BOOL HTTP_InsertProxyAuthorization( LPWININETHTTPREQW lpwhr,
 static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD
         dwInfoLevel, LPVOID lpBuffer, LPDWORD lpdwBufferLength, LPDWORD
         lpdwIndex);
-static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl,
-        LPCWSTR lpszHeaders, DWORD dwHeaderLength, LPVOID lpOptional, DWORD
-        dwOptionalLength, DWORD dwContentLength);
+static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl);
 
 
 LPHTTPHEADERW HTTP_GetHeader(LPWININETHTTPREQW req, LPCWSTR head)
@@ -636,7 +634,9 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
                 /* redirects are always GETs */
                 HeapFree(GetProcessHeap(),0,lpwhr->lpszVerb);
 	            lpwhr->lpszVerb = WININET_strdupW(szGET);
-                return HTTP_HandleRedirect(lpwhr, szNewLocation, NULL, 0, NULL, 0, 0);
+                rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
+                if (rc)
+                    rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
             }
         }
     }
@@ -1928,9 +1928,7 @@ BOOL WINAPI HttpSendRequestA(HINTERNET hHttpRequest, LPCSTR lpszHeaders,
 /***********************************************************************
  *           HTTP_HandleRedirect (internal)
  */
-static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWSTR lpszHeaders,
-                                DWORD dwHeaderLength, LPVOID lpOptional, DWORD dwOptionalLength,
-                                DWORD dwContentLength)
+static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl)
 {
     LPWININETHTTPSESSIONW lpwhs = lpwhr->lpHttpSession;
     LPWININETAPPINFOW hIC = lpwhs->lpAppInfo;
@@ -2136,8 +2134,7 @@ static BOOL HTTP_HandleRedirect(LPWININETHTTPREQW lpwhr, LPCWSTR lpszUrl, LPCWST
         }
     }
 
-    return HTTP_HttpSendRequestW(lpwhr, lpszHeaders, dwHeaderLength, lpOptional,
-                                 dwOptionalLength, dwContentLength, TRUE);
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2225,7 +2222,6 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     INT responseLen;
     BOOL loop_next = FALSE;
     INTERNET_ASYNC_RESULT iar;
-    LPHTTPHEADERW Host;
 
     TRACE("--> %p\n", lpwhr);
 
@@ -2247,14 +2243,16 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                 HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
     }
 
-    Host = HTTP_GetHeader(lpwhr,szHost);
     do
     {
         DWORD len;
         char *ascii_req;
 
-        TRACE("Going to url %s %s\n", debugstr_w(Host->lpszValue), debugstr_w(lpwhr->lpszPath));
-        loop_next = FALSE;
+        if (TRACE_ON(wininet))
+        {
+            LPHTTPHEADERW Host = HTTP_GetHeader(lpwhr,szHost);
+            TRACE("Going to url %s %s\n", debugstr_w(Host->lpszValue), debugstr_w(lpwhr->lpszPath));
+        }
 
         HTTP_FixURL(lpwhr);
 
@@ -2315,8 +2313,30 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                 INTERNET_STATUS_RESPONSE_RECEIVED, &responseLen,
                                 sizeof(DWORD));
-    
+
             HTTP_ProcessHeaders(lpwhr);
+
+            if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
+            {
+                DWORD dwCode,dwCodeLength=sizeof(DWORD),dwIndex=0;
+                WCHAR szNewLocation[2048];
+                DWORD dwBufferSize=2048;
+                if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
+                    (dwCode==HTTP_STATUS_REDIRECT || dwCode==HTTP_STATUS_MOVED) &&
+                    HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
+                {
+                    INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
+                                          INTERNET_STATUS_REDIRECT, szNewLocation,
+                                          dwBufferSize);
+                    bSuccess = HTTP_HandleRedirect(lpwhr, szNewLocation);
+                    if (bSuccess)
+                    {
+                        HeapFree(GetProcessHeap(), 0, requestString);
+                        loop_next = TRUE;
+                    }
+                }
+            }
+
         }
         else
             bSuccess = TRUE;
@@ -2328,28 +2348,6 @@ lend:
     HeapFree(GetProcessHeap(), 0, requestString);
 
     /* TODO: send notification for P3P header */
-    
-    if(!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess && bEndRequest)
-    {
-        DWORD dwCode,dwCodeLength=sizeof(DWORD),dwIndex=0;
-        if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
-            (dwCode==302 || dwCode==301))
-        {
-            WCHAR szNewLocation[2048];
-            DWORD dwBufferSize=2048;
-            dwIndex=0;
-            if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
-            {
-                INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
-                                      INTERNET_STATUS_REDIRECT, szNewLocation,
-                                      dwBufferSize);
-                return HTTP_HandleRedirect(lpwhr, szNewLocation, lpszHeaders,
-                                           dwHeaderLength, lpOptional, dwOptionalLength,
-                                           dwContentLength);
-            }
-        }
-    }
-
 
     iar.dwResult = (DWORD)bSuccess;
     iar.dwError = bSuccess ? ERROR_SUCCESS : INTERNET_GetLastError();
