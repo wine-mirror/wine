@@ -217,7 +217,7 @@ static inline void print_datadirectory(DWORD n, const IMAGE_DATA_DIRECTORY *dire
 
     for (i = 0; i < n && i < 16; i++)
     {
-        printf("  %-12s rva: 0x%-8X  size: %8u\n",
+        printf("  %-12s rva: 0x%-8x  size: 0x%-8x\n",
                DirectoryNames[i], directory[i].VirtualAddress,
                directory[i].Size);
     }
@@ -372,12 +372,11 @@ static	void	dump_pe_header(void)
 
 void dump_section(const IMAGE_SECTION_HEADER *sectHead)
 {
-	printf("  %-8.8s   VirtSize: %-8u  VirtAddr:  %-8u 0x%08x\n",
-	       sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress,
-	       sectHead->VirtualAddress);
-	printf("    raw data offs:   %-8u  raw data size: %-8u\n",
+	printf("  %-8.8s   VirtSize: 0x%08x  VirtAddr:  0x%08x\n",
+               sectHead->Name, sectHead->Misc.VirtualSize, sectHead->VirtualAddress);
+	printf("    raw data offs:   0x%08x  raw data size: 0x%08x\n",
 	       sectHead->PointerToRawData, sectHead->SizeOfRawData);
-	printf("    relocation offs: %-8u  relocations:   %-8u\n",
+	printf("    relocation offs: 0x%08x  relocations:   0x%08x\n",
 	       sectHead->PointerToRelocations, sectHead->NumberOfRelocations);
 	printf("    line # offs:     %-8u  line #'s:      %-8u\n",
 	       sectHead->PointerToLinenumbers, sectHead->NumberOfLinenumbers);
