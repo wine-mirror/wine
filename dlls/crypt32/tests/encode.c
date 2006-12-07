@@ -234,12 +234,12 @@ static void test_decodeInt(DWORD dwEncoding)
         /* When the output buffer is NULL, this always succeeds */
         SetLastError(0xdeadbeef);
         ret = CryptDecodeObjectEx(dwEncoding, X509_INTEGER,
-         (BYTE *)ints[i].encoded, ints[i].encoded[1] + 2, 0, NULL, NULL,
+         ints[i].encoded, ints[i].encoded[1] + 2, 0, NULL, NULL,
          &bufSize);
         ok(ret && GetLastError() == NOERROR,
          "Expected success and NOERROR, got %d\n", GetLastError());
         ret = CryptDecodeObjectEx(dwEncoding, X509_INTEGER,
-         (BYTE *)ints[i].encoded, ints[i].encoded[1] + 2,
+         ints[i].encoded, ints[i].encoded[1] + 2,
          CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
         ok(ret, "CryptDecodeObjectEx failed: %d\n", GetLastError());
         ok(bufSize == sizeof(int), "Wrong size %d\n", bufSize);
@@ -254,12 +254,12 @@ static void test_decodeInt(DWORD dwEncoding)
     for (i = 0; i < sizeof(bigInts) / sizeof(bigInts[0]); i++)
     {
         ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER,
-         (BYTE *)bigInts[i].encoded, bigInts[i].encoded[1] + 2, 0, NULL, NULL,
+         bigInts[i].encoded, bigInts[i].encoded[1] + 2, 0, NULL, NULL,
          &bufSize);
         ok(ret && GetLastError() == NOERROR,
          "Expected success and NOERROR, got %d\n", GetLastError());
         ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_INTEGER,
-         (BYTE *)bigInts[i].encoded, bigInts[i].encoded[1] + 2,
+         bigInts[i].encoded, bigInts[i].encoded[1] + 2,
          CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
         ok(ret, "CryptDecodeObjectEx failed: %d\n", GetLastError());
         ok(bufSize >= sizeof(CRYPT_INTEGER_BLOB), "Wrong size %d\n", bufSize);
@@ -279,12 +279,12 @@ static void test_decodeInt(DWORD dwEncoding)
     for (i = 0; i < sizeof(bigUInts) / sizeof(bigUInts[0]); i++)
     {
         ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_UINT,
-         (BYTE *)bigUInts[i].encoded, bigUInts[i].encoded[1] + 2, 0, NULL, NULL,
+         bigUInts[i].encoded, bigUInts[i].encoded[1] + 2, 0, NULL, NULL,
          &bufSize);
         ok(ret && GetLastError() == NOERROR,
          "Expected success and NOERROR, got %d\n", GetLastError());
         ret = CryptDecodeObjectEx(dwEncoding, X509_MULTI_BYTE_UINT,
-         (BYTE *)bigUInts[i].encoded, bigUInts[i].encoded[1] + 2,
+         bigUInts[i].encoded, bigUInts[i].encoded[1] + 2,
          CRYPT_DECODE_ALLOC_FLAG, NULL, (BYTE *)&buf, &bufSize);
         ok(ret, "CryptDecodeObjectEx failed: %d\n", GetLastError());
         ok(bufSize >= sizeof(CRYPT_INTEGER_BLOB), "Wrong size %d\n", bufSize);
