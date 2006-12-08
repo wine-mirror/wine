@@ -1257,6 +1257,7 @@ typedef struct IWineD3DSwapChainImpl
     IWineD3DSurface          *frontBuffer;
     BOOL                      wantsDepthStencilBuffer;
     D3DPRESENT_PARAMETERS     presentParms;
+    DWORD                     orig_width, orig_height;
 
     /* TODO: move everything up to drawable off into a context manager
       and store the 'data' in the contextManagerData interface.

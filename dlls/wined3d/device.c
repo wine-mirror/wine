@@ -1538,6 +1538,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         WARN("Failed to get a valid XVisuial ID for the window %p\n", object->win_handle);
         return WINED3DERR_NOTAVAILABLE;
     }
+
+    object->orig_width = GetSystemMetrics(SM_CXSCREEN);
+    object->orig_height = GetSystemMetrics(SM_CYSCREEN);
+
     /**
     * Create an opengl context for the display visual
     *  NOTE: the visual is chosen as the window is created and the glcontext cannot
@@ -7514,14 +7518,152 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_EvictManagedResources(IWineD3DDevice*
     return WINED3D_OK;
 }
 
+void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
+    /* Reallocate proper memory for the front and back buffer and adjust their sizes */
+    if(surface->Flags & SFLAG_DIBSECTION) {
+        /* Release the DC */
+        SelectObject(surface->hDC, surface->dib.holdbitmap);
+        DeleteDC(surface->hDC);
+        /* Release the DIB section */
+        DeleteObject(surface->dib.DIBsection);
+        surface->dib.bitmap_data = NULL;
+        surface->resource.allocatedMemory = NULL;
+        surface->Flags &= ~SFLAG_DIBSECTION;
+    }
+    surface->currentDesc.Width = *pPresentationParameters->BackBufferWidth;
+    surface->currentDesc.Height = *pPresentationParameters->BackBufferHeight;
+    if (wined3d_settings.nonpower2_mode == NP2_NATIVE) {
+        surface->pow2Width = *pPresentationParameters->BackBufferWidth;
+        surface->pow2Height = *pPresentationParameters->BackBufferHeight;
+    } else {
+        surface->pow2Width = surface->pow2Height = 1;
+        while (surface->pow2Width < *pPresentationParameters->BackBufferWidth) surface->pow2Width <<= 1;
+        while (surface->pow2Height < *pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
+    }
+    if(surface->glDescription.textureName) {
+        ENTER_GL();
+        glDeleteTextures(1, &surface->glDescription.textureName);
+        LEAVE_GL();
+        surface->glDescription.textureName = 0;
+    }
+    if(surface->pow2Width != *pPresentationParameters->BackBufferWidth ||
+       surface->pow2Height != *pPresentationParameters->BackBufferHeight) {
+        surface->Flags |= SFLAG_NONPOW2;
+    } else  {
+        surface->Flags &= ~SFLAG_NONPOW2;
+    }
+    HeapFree(GetProcessHeap(), 0, surface->resource.allocatedMemory);
+    surface->resource.size = IWineD3DSurface_GetPitch((IWineD3DSurface *) surface) * surface->pow2Width;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
-    /** FIXME: Resource trascking needs to be done.
-    * in effect this pulls all non only default
-    * textures out of video memory and deletes all glTextures (glDeleteTextures)
-    * and should clear down the context and set it up according to pPresentationParameters
-     ***********************************************************/
-    FIXME("(%p) : stub\n", This);
+    IWineD3DSwapChainImpl *swapchain;
+    HRESULT hr;
+    BOOL DisplayModeChanged = FALSE;
+    WINED3DDISPLAYMODE mode;
+    TRACE("(%p)\n", This);
+
+    hr = IWineD3DDevice_GetSwapChain(iface, 0, (IWineD3DSwapChain **) &swapchain);
+    if(FAILED(hr)) {
+        ERR("Failed to get the first implicit swapchain\n");
+        return hr;
+    }
+
+    /* Is it necessary to recreate the gl context? Actually every setting can be changed
+     * on an existing gl context, so there's no real need for recreation.
+     *
+     * TODO: Figure out how Reset influences resources in D3DPOOL_DEFAULT, D3DPOOL_SYSTEMMEMORY and D3DPOOL_MANAGED
+     *
+     * TODO: Figure out what happens to explicit swapchains, or if we have more than one implicit swapchain
+     */
+    TRACE("New params:\n");
+    TRACE("BackBufferWidth = %d\n", *pPresentationParameters->BackBufferWidth);
+    TRACE("BackBufferHeight = %d\n", *pPresentationParameters->BackBufferHeight);
+    TRACE("BackBufferFormat = %s\n", debug_d3dformat(*pPresentationParameters->BackBufferFormat));
+    TRACE("BackBufferCount = %d\n", *pPresentationParameters->BackBufferCount);
+    TRACE("MultiSampleType = %d\n", *pPresentationParameters->MultiSampleType);
+    TRACE("MultiSampleQuality = %d\n", *pPresentationParameters->MultiSampleQuality);
+    TRACE("SwapEffect = %d\n", *pPresentationParameters->SwapEffect);
+    TRACE("hDeviceWindow = %p\n", *pPresentationParameters->hDeviceWindow);
+    TRACE("Windowed = %s\n", *pPresentationParameters->Windowed ? "true" : "false");
+    TRACE("EnableAutoDepthStencil = %s\n", *pPresentationParameters->EnableAutoDepthStencil ? "true" : "false");
+    TRACE("Flags = %08x\n", *pPresentationParameters->Flags);
+    TRACE("FullScreen_RefreshRateInHz = %d\n", *pPresentationParameters->FullScreen_RefreshRateInHz);
+    TRACE("PresentationInterval = %d\n", *pPresentationParameters->PresentationInterval);
+
+    /* No special treatment of these parameters. Just store them */
+    swapchain->presentParms.SwapEffect = *pPresentationParameters->SwapEffect;
+    swapchain->presentParms.Flags = *pPresentationParameters->Flags;
+    swapchain->presentParms.PresentationInterval = *pPresentationParameters->PresentationInterval;
+    swapchain->presentParms.FullScreen_RefreshRateInHz = *pPresentationParameters->FullScreen_RefreshRateInHz;
+
+    /* What to do about these? */
+    if(*pPresentationParameters->BackBufferCount != 0 &&
+        *pPresentationParameters->BackBufferCount != swapchain->presentParms.BackBufferCount) {
+        ERR("Cannot change the back buffer count yet\n");
+    }
+    if(*pPresentationParameters->BackBufferFormat != WINED3DFMT_UNKNOWN &&
+        *pPresentationParameters->BackBufferFormat != swapchain->presentParms.BackBufferFormat) {
+        ERR("Cannot change the back buffer format yet\n");
+    }
+    if(*pPresentationParameters->hDeviceWindow != NULL &&
+        *pPresentationParameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow) {
+        ERR("Cannot change the device window yet\n");
+    }
+    if(*pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
+        ERR("What do do about a changed auto depth stencil parameter?\n");
+    }
+
+    if(*pPresentationParameters->Windowed) {
+        mode.Width = swapchain->orig_width;
+        mode.Height = swapchain->orig_height;
+        mode.RefreshRate = 0;
+        mode.Format = swapchain->presentParms.BackBufferFormat;
+    } else {
+        mode.Width = *pPresentationParameters->BackBufferWidth;
+        mode.Height = *pPresentationParameters->BackBufferHeight;
+        mode.RefreshRate = *pPresentationParameters->FullScreen_RefreshRateInHz;
+        mode.Format = swapchain->presentParms.BackBufferFormat;
+    }
+
+    /* Should Width == 800 && Height == 0 set 800x600? */
+    if(*pPresentationParameters->BackBufferWidth != 0 && *pPresentationParameters->BackBufferHeight != 0 &&
+       (*pPresentationParameters->BackBufferWidth != swapchain->presentParms.BackBufferWidth ||
+        *pPresentationParameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
+    {
+        WINED3DVIEWPORT vp;
+        int i;
+
+        vp.X = 0;
+        vp.Y = 0;
+        vp.Width = *pPresentationParameters->BackBufferWidth;
+        vp.Height = *pPresentationParameters->BackBufferHeight;
+        vp.MinZ = 0;
+        vp.MaxZ = 1;
+
+        if(!*pPresentationParameters->Windowed) {
+            DisplayModeChanged = TRUE;
+        }
+        swapchain->presentParms.BackBufferWidth = *pPresentationParameters->BackBufferWidth;
+        swapchain->presentParms.BackBufferHeight = *pPresentationParameters->BackBufferHeight;
+
+        updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->frontBuffer, pPresentationParameters);
+        for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
+            updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->backBuffer[i], pPresentationParameters);
+        }
+
+        /* Now set the new viewport */
+        IWineD3DDevice_SetViewport(iface, &vp);
+    }
+
+    if((*pPresentationParameters->Windowed && !swapchain->presentParms.Windowed) ||
+       (swapchain->presentParms.Windowed && !*pPresentationParameters->Windowed) ||
+        DisplayModeChanged) {
+        IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
+    }
+
+    IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
     return WINED3D_OK;
 }
 
