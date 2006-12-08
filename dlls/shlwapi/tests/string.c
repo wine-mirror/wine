@@ -761,8 +761,8 @@ START_TEST(string)
   TCHAR decimalDelim[8];
   CoInitialize(0);
 
-  GetLocaleInfo(GetUserDefaultLCID(), LOCALE_STHOUSAND, thousandDelim, 8);
-  GetLocaleInfo(GetUserDefaultLCID(), LOCALE_SDECIMAL, decimalDelim, 8);
+  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, thousandDelim, 8);
+  GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, decimalDelim, 8);
 
   hShlwapi = GetModuleHandleA("shlwapi");
   if (!hShlwapi)
@@ -787,11 +787,13 @@ START_TEST(string)
     test_StrFormatKBSizeA();
     test_StrFormatKBSizeW();
   }
-  if (0)
-  {
-    /* language-dependent test. FIXME: how to detect the language? */
+
+  /* language-dependent test */
+  if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_ENGLISH)
+    trace("Skipping StrFromTimeInterval test for non English language\n");
+  else
     test_StrFromTimeIntervalA();
-  }
+
   test_StrCmpA();
   test_StrCmpW();
   test_StrRetToBSTR();
