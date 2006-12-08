@@ -1171,9 +1171,6 @@ struct IWineD3DStateBlockImpl
     INT                        pixelShaderConstantI[MAX_CONST_I * 4];
     float                     *pixelShaderConstantF;
 
-    /* Indexed Vertex Blending */
-    FLOAT                     tween_factor;
-
     /* RenderState */
     DWORD                     renderState[WINEHIGHEST_RENDER_STATE + 1];
 

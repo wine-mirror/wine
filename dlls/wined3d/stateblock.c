@@ -167,7 +167,6 @@ void stateblock_copy(
     Dest->viewport = This->viewport;
     Dest->material = This->material;
     Dest->pixelShader = This->pixelShader;
-    Dest->tween_factor = This->tween_factor;
     Dest->glsl_program = This->glsl_program;
 
     /* Fixed size arrays */
