@@ -195,6 +195,15 @@ static void state_zwritenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_zfunc(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    int glParm = CompareFunc(stateblock->renderState[WINED3DRS_ZFUNC]);
+
+    if(glParm) {
+        glDepthFunc(glParm);
+        checkGLcall("glDepthFunc");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -221,7 +230,7 @@ const struct StateEntry StateTable[] =
     { /* 20, WINED3DRS_DESTBLEND                    */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
     { /* 21, WINED3DRS_TEXTUREMAPBLEND              */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 22, WINED3DRS_CULLMODE                     */      STATE_RENDER(WINED3DRS_CULLMODE),                   state_cullmode      },
-    { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_unknown       },
+    { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_zfunc         },
     { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
