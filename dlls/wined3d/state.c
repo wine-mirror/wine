@@ -318,6 +318,52 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     checkGLcall("glBlendColor");
 }
 
+static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    int glParm = 0;
+    float ref;
+    BOOL enable_ckey = FALSE;
+
+    IWineD3DSurfaceImpl *surf;
+
+    /* Find out if the texture on the first stage has a ckey set
+     * The alpha state func reads the texture settings, even though alpha and texture are not grouped
+     * together. This is to avoid making a huge alpha+texture+texture stage+ckey block due to the hardly
+     * used WINED3DRS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
+     * in case it finds some texture+colorkeyenable combination which needs extra care.
+     */
+    if(stateblock->textures[0]) {
+        surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
+        if(surf->CKeyFlags & DDSD_CKSRCBLT) enable_ckey = TRUE;
+    }
+
+    if (stateblock->renderState[WINED3DRS_ALPHATESTENABLE] ||
+        (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey)) {
+        glEnable(GL_ALPHA_TEST);
+        checkGLcall("glEnable GL_ALPHA_TEST");
+    } else {
+        glDisable(GL_ALPHA_TEST);
+        checkGLcall("glDisable GL_ALPHA_TEST");
+        /* Alpha test is disabled, don't bother setting the params - it will happen on the next
+         * enable call
+         */
+        return;
+    }
+
+    if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey) {
+        glParm = GL_NOTEQUAL;
+        ref = 0.0;
+    } else {
+        ref = ((float) stateblock->renderState[WINED3DRS_ALPHAREF]) / 255.0f;
+        glParm = CompareFunc(stateblock->renderState[WINED3DRS_ALPHAFUNC]);
+    }
+    if(glParm) {
+        stateblock->wineD3DDevice->alphafunc = glParm; /* Remove when state management done */
+        glAlphaFunc(glParm, ref);
+        checkGLcall("glAlphaFunc");
+    }
+    /* TODO: Some texture blending operations seem to affect the alpha test */
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -336,7 +382,7 @@ const struct StateEntry StateTable[] =
     { /* 12, WINED3DRS_ROP2                         */      STATE_RENDER(WINED3DRS_ROP2),                       state_unknown       },
     { /* 13, WINED3DRS_PLANEMASK                    */      STATE_RENDER(WINED3DRS_PLANEMASK),                  state_unknown       },
     { /* 14, WINED3DRS_ZWRITEENABLE                 */      STATE_RENDER(WINED3DRS_ZWRITEENABLE),               state_zwritenable   },
-    { /* 15, WINED3DRS_ALPHATESTENABLE              */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
+    { /* 15, WINED3DRS_ALPHATESTENABLE              */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_unknown       },
     { /* 17, WINED3DRS_TEXTUREMAG                   */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 18, WINED3DRS_TEXTUREMIN                   */      0 /* Handled in ddraw */,                           state_undefined     },
@@ -345,8 +391,8 @@ const struct StateEntry StateTable[] =
     { /* 21, WINED3DRS_TEXTUREMAPBLEND              */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 22, WINED3DRS_CULLMODE                     */      STATE_RENDER(WINED3DRS_CULLMODE),                   state_cullmode      },
     { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_zfunc         },
-    { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
-    { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
+    { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
+    { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
     { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
@@ -362,7 +408,7 @@ const struct StateEntry StateTable[] =
     { /* 38, WINED3DRS_FOGDENSITY                   */      STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_unknown       },
     { /* 39, WINED3DRS_STIPPLEENABLE                */      STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_unknown       },
     { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
-    { /* 41, WINED3DRS_COLORKEYENABLE               */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
+    { /* 41, WINED3DRS_COLORKEYENABLE               */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 42, undefined                              */      0,                                                  state_undefined     },
     { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_unknown       },
     { /* 44, WINED3DRS_TEXTUREADDRESSU              */      0, /* Handled in ddraw */                           state_undefined     },

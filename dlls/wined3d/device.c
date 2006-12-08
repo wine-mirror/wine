@@ -3454,52 +3454,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_DESTBLEND                 :
     case WINED3DRS_ANTIALIASEDLINEENABLE     :
     case WINED3DRS_BLENDFACTOR               :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_ALPHATESTENABLE           :
     case WINED3DRS_ALPHAFUNC                 :
     case WINED3DRS_ALPHAREF                  :
     case WINED3DRS_COLORKEYENABLE            :
-        {
-            int glParm = 0;
-            float ref;
-            BOOL enable_ckey = FALSE;
-
-            IWineD3DSurfaceImpl *surf;
-
-            /* Find out if the texture on the first stage has a ckey set */
-            if(This->stateBlock->textures[0]) {
-                surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)This->stateBlock->textures[0])->surfaces[0];
-                if(surf->CKeyFlags & DDSD_CKSRCBLT) enable_ckey = TRUE;
-            }
-
-            if (This->stateBlock->renderState[WINED3DRS_ALPHATESTENABLE] ||
-                (This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey)) {
-                glEnable(GL_ALPHA_TEST);
-                checkGLcall("glEnable GL_ALPHA_TEST");
-            } else {
-                glDisable(GL_ALPHA_TEST);
-                checkGLcall("glDisable GL_ALPHA_TEST");
-                /* Alpha test is disabled, don't bother setting the params - it will happen on the next
-                 * enable call
-                 */
-                 break;
-            }
-
-            if(This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey) {
-                glParm = GL_NOTEQUAL;
-                ref = 0.0;
-            } else {
-                ref = ((float) This->stateBlock->renderState[WINED3DRS_ALPHAREF]) / 255.0f;
-                glParm = CompareFunc(This->stateBlock->renderState[WINED3DRS_ALPHAFUNC]);
-            }
-            if(glParm) {
-                This->alphafunc = glParm;
-                glAlphaFunc(glParm, ref);
-                checkGLcall("glAlphaFunc");
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_CLIPPLANEENABLE           :
