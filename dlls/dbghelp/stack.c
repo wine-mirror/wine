@@ -433,7 +433,7 @@ static BOOL stack_walk(struct stack_walk_callback* cb, LPSTACKFRAME frame)
         if (!sw_read_mem(cb, frame->AddrFrame.Offset + sizeof(DWORD),
                          &frame->AddrReturn.Offset, sizeof(DWORD)))
         {
-            WARN("Cannot read new frame offset %08x\n", frame->AddrFrame.Offset + sizeof(DWORD));
+            WARN("Cannot read new frame offset %08x\n", frame->AddrFrame.Offset + (int)sizeof(DWORD));
             goto done_err;
         }
         sw_read_mem(cb, frame->AddrFrame.Offset + 2 * sizeof(DWORD),
