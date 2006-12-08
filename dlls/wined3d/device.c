@@ -3441,18 +3441,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_ZENABLE                   :
     case WINED3DRS_CULLMODE                  :
     case WINED3DRS_SHADEMODE                 :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
-
     case WINED3DRS_DITHERENABLE              :
-        if (Value) {
-            glEnable(GL_DITHER);
-            checkGLcall("glEnable GL_DITHER");
-        } else {
-            glDisable(GL_DITHER);
-            checkGLcall("glDisable GL_DITHER");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_ZWRITEENABLE              :

@@ -172,6 +172,16 @@ static void state_shademode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_ditherenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if (stateblock->renderState[WINED3DRS_DITHERENABLE]) {
+        glEnable(GL_DITHER);
+        checkGLcall("glEnable GL_DITHER");
+    } else {
+        glDisable(GL_DITHER);
+        checkGLcall("glDisable GL_DITHER");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -201,7 +211,7 @@ const struct StateEntry StateTable[] =
     { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_unknown       },
     { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
-    { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_unknown       },
+    { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
     { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
     { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
     { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_unknown       },
