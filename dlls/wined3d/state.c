@@ -79,6 +79,21 @@ static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+
+    /* TODO: Lighting is only enabled if Vertex normals are passed by the application,
+     * so merge the lighting render state with the vertex declaration once it is available
+     */
+
+    if (stateblock->renderState[WINED3DRS_LIGHTING]) {
+        glEnable(GL_LIGHTING);
+        checkGLcall("glEnable GL_LIGHTING");
+    } else {
+        glDisable(GL_LIGHTING);
+        checkGLcall("glDisable GL_LIGHTING");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -221,7 +236,7 @@ const struct StateEntry StateTable[] =
     { /*134, WINED3DRS_WRAP6                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
     { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
     { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_unknown       },
-    { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_unknown       },
+    { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_lighting      },
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_unknown       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_unknown       },
     { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },

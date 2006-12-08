@@ -3437,17 +3437,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
     switch (State) {
     case WINED3DRS_FILLMODE                  :
-        StateTable[STATE_RENDER(WINED3DRS_FILLMODE)].apply(STATE_RENDER(WINED3DRS_FILLMODE), This->stateBlock);
-        break;
-
     case WINED3DRS_LIGHTING                  :
-        if (Value) {
-            glEnable(GL_LIGHTING);
-            checkGLcall("glEnable GL_LIGHTING");
-        } else {
-            glDisable(GL_LIGHTING);
-            checkGLcall("glDisable GL_LIGHTING");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_ZENABLE                   :
