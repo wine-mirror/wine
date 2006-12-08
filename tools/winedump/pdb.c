@@ -479,7 +479,7 @@ static void pdb_jg_dump(void)
            "\tblock_size: %08x\n"
            "\tfree_list:  %04x\n"
            "\ttotal_alloc:%04x\n",
-           sizeof(pdb2) - 1, reader.u.jg.header->ident,
+           (int)sizeof(pdb2) - 1, reader.u.jg.header->ident,
            reader.u.jg.header->signature,
            reader.u.jg.header->block_size,
            reader.u.jg.header->free_list,
@@ -607,7 +607,7 @@ static void pdb_ds_dump(void)
            "\ttoc_size:         %08x\n"
            "\tunknown2:         %08x\n"
            "\ttoc_page:         %08x\n",
-           sizeof(pdb7) - 1, reader.u.ds.header->signature,
+           (int)sizeof(pdb7) - 1, reader.u.ds.header->signature,
            reader.u.ds.header->block_size,
            reader.u.ds.header->unknown1,
            reader.u.ds.header->num_pages,
