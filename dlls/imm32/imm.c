@@ -1566,7 +1566,7 @@ static LRESULT WINAPI IME_WindowProc(HWND hwnd, UINT msg, WPARAM wParam,
             TRACE("IME message %s, 0x%x, 0x%x (%i)\n",
                     "WM_IME_COMPOSITION", (UINT)wParam, (UINT)lParam,
                      root_context->bRead);
-            if ((lParam & GCS_RESULTSTR) && (!root_context->bRead))
+            if (lParam & GCS_RESULTSTR)
                     IMM_PostResult(root_context);
             else
                  UpdateDataInDefaultIMEWindow(hwnd);
