@@ -3373,19 +3373,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_CCW_STENCILPASS :
     case WINED3DRS_EDGEANTIALIAS             :
     case WINED3DRS_STENCILWRITEMASK          :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_FOGENABLE                 :
-        {
-          if (Value) {
-               glEnable(GL_FOG);
-               checkGLcall("glEnable GL_FOG");
-            } else {
-               glDisable(GL_FOG);
-               checkGLcall("glDisable GL_FOG");
-            }
-        }
+    case WINED3DRS_FOGTABLEMODE              :
+    case WINED3DRS_FOGVERTEXMODE             :
+    case WINED3DRS_FOGSTART                  :
+    case WINED3DRS_FOGEND                    :
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_RANGEFOGENABLE            :
@@ -3405,142 +3398,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
             /* Set the default alpha blend color */
             glFogfv(GL_FOG_COLOR, &col[0]);
             checkGLcall("glFog GL_FOG_COLOR");
-        }
-        break;
-
-    case WINED3DRS_FOGTABLEMODE              :
-    case WINED3DRS_FOGVERTEXMODE             :
-        {
-          /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes, the system will apply only pixel(=table) fog effects." */
-          if(This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
-              glHint(GL_FOG_HINT, GL_FASTEST);
-              checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
-              switch (This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE]) {
-                  /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
-                   * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
-                   */
-                  case WINED3DFOG_EXP:  {
-                      if(!This->last_was_rhw) {
-                          glFogi(GL_FOG_MODE, GL_EXP);
-                          checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
-                          if(GL_SUPPORT(EXT_FOG_COORD)) {
-                              glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                              checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
-                              IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                              IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                          }
-                          break;
-                      }
-                  }
-                  case WINED3DFOG_EXP2: {
-                      if(!This->last_was_rhw) {
-                          glFogi(GL_FOG_MODE, GL_EXP2);
-                          checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
-                          if(GL_SUPPORT(EXT_FOG_COORD)) {
-                              glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                              checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
-                              IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                              IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                          }
-                          break;
-                      }
-                  }
-                  case WINED3DFOG_LINEAR: {
-                      if(!This->last_was_rhw) {
-                          glFogi(GL_FOG_MODE, GL_LINEAR);
-                          checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
-                          if(GL_SUPPORT(EXT_FOG_COORD)) {
-                              glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                              checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
-                              IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                              IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                          }
-                          break;
-                      }
-                  }
-                  case WINED3DFOG_NONE: {
-                      /* Both are none? According to msdn the alpha channel of the specular
-                       * color contains a fog factor. Set it in drawStridedSlow.
-                       * Same happens with Vertexfog on transformed vertices
-                       */
-                      if(GL_SUPPORT(EXT_FOG_COORD)) {
-                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)\n");
-                          glFogi(GL_FOG_MODE, GL_LINEAR);
-                          checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-                          glFogf(GL_FOG_START, (float) 0xff);
-                          checkGLcall("glFogfv GL_FOG_START");
-                          glFogf(GL_FOG_END, 0.0);
-                          checkGLcall("glFogfv GL_FOG_END");
-                      } else {
-                          /* Disable GL fog, handle this in software in drawStridedSlow */
-                          glDisable(GL_FOG);
-                          checkGLcall("glDisable(GL_FOG)");
-                      }
-                  break;
-                  }
-                  default: FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE]);
-              }
-          } else {
-              glHint(GL_FOG_HINT, GL_NICEST);
-              checkGLcall("glHint(GL_FOG_HINT, GL_NICEST)");
-              switch (This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]) {
-                  case WINED3DFOG_EXP:
-                                      glFogi(GL_FOG_MODE, GL_EXP);
-                                      checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
-                                      if(GL_SUPPORT(EXT_FOG_COORD)) {
-                                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
-                                          IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                                          IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                                      }
-                                      break;
-                  case WINED3DFOG_EXP2:
-                                      glFogi(GL_FOG_MODE, GL_EXP2);
-                                      checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
-                                      if(GL_SUPPORT(EXT_FOG_COORD)) {
-                                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
-                                          IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                                          IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                                      }
-                                      break;
-                  case WINED3DFOG_LINEAR:
-                                      glFogi(GL_FOG_MODE, GL_LINEAR);
-                                      checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
-                                      if(GL_SUPPORT(EXT_FOG_COORD)) {
-                                          glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                                          checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
-                                          IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                                          IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                                      }
-                                      break;
-                  case WINED3DFOG_NONE:
-                  default:            /* Won't happen */
-                                      FIXME("Unexpected WINED3DRS_FOGTABLEMODE %d\n", This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]);
-              }
-          }
-          if (GL_SUPPORT(NV_FOG_DISTANCE)) {
-            glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
-          }
-        }
-        break;
-
-    case WINED3DRS_FOGSTART                  :
-        {
-            tmpvalue.d = Value;
-            glFogfv(GL_FOG_START, &tmpvalue.f);
-            checkGLcall("glFogf(GL_FOG_START, (float) Value)");
-            TRACE("Fog Start == %f\n", tmpvalue.f);
-        }
-        break;
-
-    case WINED3DRS_FOGEND                    :
-        {
-            tmpvalue.d = Value;
-            glFogfv(GL_FOG_END, &tmpvalue.f);
-            checkGLcall("glFogf(GL_FOG_END, (float) Value)");
-            TRACE("Fog End == %f\n", tmpvalue.f);
         }
         break;
 

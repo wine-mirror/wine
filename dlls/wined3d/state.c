@@ -632,6 +632,166 @@ static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock) 
     checkGLcall("glStencilMask");
 }
 
+static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /* TODO: Put this into the vertex type block once that is in the state table */
+    BOOL fogenable = stateblock->renderState[WINED3DRS_FOGENABLE];
+    float fogstart, fogend;
+
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    if (!fogenable) {
+        /* No fog? Disable it, and we're done :-) */
+        glDisable(GL_FOG);
+        checkGLcall("glDisable GL_FOG");
+    }
+
+    tmpvalue.d = stateblock->renderState[WINED3DRS_FOGSTART];
+    fogstart = tmpvalue.f;
+    tmpvalue.d = stateblock->renderState[WINED3DRS_FOGEND];
+    fogend = tmpvalue.f;
+
+#if 0
+    /* Activate when vertex shaders are in the state table */
+    if(stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function &&
+       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
+        glFogi(GL_FOG_MODE, GL_LINEAR);
+        checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
+        fogstart = 1.0;
+        fogend = 0.0;
+        stateblock->wineD3DDevice->last_was_foggy_shader = TRUE;
+    }
+#endif
+
+    /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
+     * the system will apply only pixel(=table) fog effects."
+     */
+    /* else */ if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+        glHint(GL_FOG_HINT, GL_FASTEST);
+        checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
+#if 0
+        stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
+#endif
+        switch (stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
+            /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
+             * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
+             */
+            case D3DFOG_EXP:  {
+                if(!stateblock->wineD3DDevice->last_was_rhw) {
+                    glFogi(GL_FOG_MODE, GL_EXP);
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
+                    if(GL_SUPPORT(EXT_FOG_COORD)) {
+                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    }
+                    break;
+                }
+            }
+            case D3DFOG_EXP2: {
+                if(!stateblock->wineD3DDevice->last_was_rhw) {
+                    glFogi(GL_FOG_MODE, GL_EXP2);
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
+                    if(GL_SUPPORT(EXT_FOG_COORD)) {
+                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    }
+                    break;
+                }
+            }
+            case D3DFOG_LINEAR: {
+                if(!stateblock->wineD3DDevice->last_was_rhw) {
+                    glFogi(GL_FOG_MODE, GL_LINEAR);
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
+                    if(GL_SUPPORT(EXT_FOG_COORD)) {
+                        glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                        checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                    }
+                    break;
+                }
+            }
+            case D3DFOG_NONE: {
+                /* Both are none? According to msdn the alpha channel of the specular
+                 * color contains a fog factor. Set it in drawStridedSlow.
+                 * Same happens with Vertexfog on transformed vertices
+                 */
+                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)\n");
+                    glFogi(GL_FOG_MODE, GL_LINEAR);
+                    checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
+                    fogstart = 0xff;
+                    fogend = 0x0;
+                } else {
+                    /* Disable GL fog, handle this in software in drawStridedSlow */
+                    fogenable = FALSE;
+                }
+                break;
+            }
+            default: FIXME("Unexpected WINED3DRS_FOGVERTEXMODE %d\n", stateblock->renderState[WINED3DRS_FOGVERTEXMODE]);
+        }
+    } else {
+        glHint(GL_FOG_HINT, GL_NICEST);
+        checkGLcall("glHint(GL_FOG_HINT, GL_NICEST)");
+#if 0
+        stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
+#endif
+        switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
+            case D3DFOG_EXP:
+                glFogi(GL_FOG_MODE, GL_EXP);
+                checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
+                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                }
+                break;
+
+            case D3DFOG_EXP2:
+                glFogi(GL_FOG_MODE, GL_EXP2);
+                checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
+                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                }
+                break;
+
+            case D3DFOG_LINEAR:
+                glFogi(GL_FOG_MODE, GL_LINEAR);
+                checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
+                if(GL_SUPPORT(EXT_FOG_COORD)) {
+                    glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
+                    checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT");
+                }
+                break;
+
+            case D3DFOG_NONE:   /* Won't happen */
+            default:
+                FIXME("Unexpected WINED3DRS_FOGTABLEMODE %d\n", stateblock->renderState[WINED3DRS_FOGTABLEMODE]);
+        }
+    }
+
+    if(fogenable) {
+        glEnable(GL_FOG);
+        checkGLcall("glEnable GL_FOG");
+
+        glFogfv(GL_FOG_START, &fogstart);
+        checkGLcall("glFogf(GL_FOG_START, fogstart");
+        TRACE("Fog Start == %f\n", fogstart);
+
+        glFogfv(GL_FOG_END, &fogend);
+        checkGLcall("glFogf(GL_FOG_END, fogend");
+        TRACE("Fog End == %f\n", fogend);
+    } else {
+        glDisable(GL_FOG);
+        checkGLcall("glDisable GL_FOG");
+    }
+
+    if (GL_SUPPORT(NV_FOG_DISTANCE)) {
+        glFogi(GL_FOG_DISTANCE_MODE_NV, GL_EYE_PLANE_ABSOLUTE_NV);
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -663,16 +823,16 @@ const struct StateEntry StateTable[] =
     { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
     { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
-    { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
+    { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
     { /* 30, WINED3DRS_ZVISIBLE                     */      0 /* Not supported according to the msdn */,        state_nogl          },
     { /* 31, WINED3DRS_SUBPIXEL                     */      STATE_RENDER(WINED3DRS_SUBPIXEL),                   state_unknown       },
     { /* 32, WINED3DRS_SUBPIXELX                    */      STATE_RENDER(WINED3DRS_SUBPIXELX),                  state_unknown       },
     { /* 33, WINED3DRS_STIPPLEDALPHA                */      STATE_RENDER(WINED3DRS_STIPPLEDALPHA),              state_unknown       },
     { /* 34, WINED3DRS_FOGCOLOR                     */      STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_unknown       },
-    { /* 35, WINED3DRS_FOGTABLEMODE                 */      STATE_RENDER(WINED3DRS_FOGENABLE)/*vertex type*/,   state_unknown       },
-    { /* 36, WINED3DRS_FOGSTART                     */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
-    { /* 37, WINED3DRS_FOGEND                       */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
+    { /* 35, WINED3DRS_FOGTABLEMODE                 */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
+    { /* 36, WINED3DRS_FOGSTART                     */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
+    { /* 37, WINED3DRS_FOGEND                       */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 38, WINED3DRS_FOGDENSITY                   */      STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_unknown       },
     { /* 39, WINED3DRS_STIPPLEENABLE                */      STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_unknown       },
     { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
@@ -777,7 +937,7 @@ const struct StateEntry StateTable[] =
     { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_lighting      },
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_unknown       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       },
-    { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
+    { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /*141, WINED3DRS_COLORVERTEX                  */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_unknown       },
     { /*142, WINED3DRS_LOCALVIEWER                  */      STATE_RENDER(WINED3DRS_LOCALVIEWER),                state_unknown       },
     { /*143, WINED3DRS_NORMALIZENORMALS             */      STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           state_unknown       },
