@@ -3444,18 +3444,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_DITHERENABLE              :
     case WINED3DRS_ZWRITEENABLE              :
     case WINED3DRS_ZFUNC                     :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_AMBIENT                   :
-        {
-            float col[4];
-            D3DCOLORTOGLFLOAT4(Value, col);
-            TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0], col[1], col[2], col[3]);
-            glLightModelfv(GL_LIGHT_MODEL_AMBIENT, col);
-            checkGLcall("glLightModel for MODEL_AMBIENT");
-
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_ALPHABLENDENABLE          :
