@@ -549,7 +549,7 @@ int CDECL _setmbcp(int cp)
   }
   else if(cp == _MB_CP_LOCALE)
   {
-    GetLocaleInfoW( GetUserDefaultLCID(), LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER, 
+    GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER,
                     (WCHAR *)&msvcrt_current_lc_all_cp, sizeof(INT)/sizeof(WCHAR) );
   }
   else if(cp == _MB_CP_SBCS)
