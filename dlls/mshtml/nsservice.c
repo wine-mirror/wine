@@ -146,8 +146,22 @@ static nsrefcnt NSAPI nsPromptService_Release(nsIPromptService *iface)
 static nsresult NSAPI nsPromptService_Alert(nsIPromptService *iface, nsIDOMWindow *aParent,
         const PRUnichar *aDialogTitle, const PRUnichar *aText)
 {
-    FIXME("(%p %s %s)\n", aParent, debugstr_w(aDialogTitle), debugstr_w(aText));
-    return NS_ERROR_NOT_IMPLEMENTED;
+    HTMLWindow *window;
+    BSTR text;
+
+    TRACE("(%p %s %s)\n", aParent, debugstr_w(aDialogTitle), debugstr_w(aText));
+
+    window = nswindow_to_window(aParent);
+    if(!window) {
+        WARN("Could not find HTMLWindow for nsIDOMWindow %p\n", aParent);
+        return NS_ERROR_UNEXPECTED;
+    }
+
+    text = SysAllocString(aText);
+    IHTMLWindow2_alert(HTMLWINDOW2(window), text);
+    SysFreeString(text);
+
+    return NS_OK;
 }
 
 static nsresult NSAPI nsPromptService_AlertCheck(nsIPromptService *iface,

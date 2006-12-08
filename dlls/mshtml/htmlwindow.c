@@ -39,6 +39,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 #define HTMLWINDOW2_THIS(iface) DEFINE_THIS(HTMLWindow, HTMLWindow2, iface)
 
+static struct list window_list = LIST_INIT(window_list);
+
 static HRESULT WINAPI HTMLWindow2_QueryInterface(IHTMLWindow2 *iface, REFIID riid, void **ppv)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
@@ -85,8 +87,10 @@ static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
 
     TRACE("(%p) ref=%d\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        list_remove(&This->entry);
         mshtml_free(This);
+    }
 
     return ref;
 }
@@ -734,10 +738,19 @@ HTMLWindow *HTMLWindow_Create(HTMLDocument *doc)
             ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
 
+    list_add_head(&window_list, &ret->entry);
+
     return ret;
 }
 
 HTMLWindow *nswindow_to_window(nsIDOMWindow *nswindow)
 {
+    HTMLWindow *iter;
+
+    LIST_FOR_EACH_ENTRY(iter, &window_list, HTMLWindow, entry) {
+        if(iter->nswindow == nswindow)
+            return iter;
+    }
+
     return NULL;
 }

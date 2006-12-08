@@ -21,6 +21,8 @@
 #include "mshtmhst.h"
 #include "hlink.h"
 
+#include "wine/list.h"
+
 #ifdef INIT_GUID
 #include "initguid.h"
 #endif
@@ -59,6 +61,8 @@ typedef struct {
 
     HTMLDocument *doc;
     nsIDOMWindow *nswindow;
+
+    struct list entry;
 } HTMLWindow;
 
 typedef enum {
