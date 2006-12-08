@@ -114,6 +114,46 @@ static void state_zenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_cullmode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /* TODO: Put this into the offscreen / onscreen rendering block due to device->render_offscreen */
+
+    /* If we are culling "back faces with clockwise vertices" then
+       set front faces to be counter clockwise and enable culling
+       of back faces                                               */
+    switch ((WINED3DCULL) stateblock->renderState[WINED3DRS_CULLMODE]) {
+        case WINED3DCULL_NONE:
+            glDisable(GL_CULL_FACE);
+            checkGLcall("glDisable GL_CULL_FACE");
+            break;
+        case WINED3DCULL_CW:
+            glEnable(GL_CULL_FACE);
+            checkGLcall("glEnable GL_CULL_FACE");
+            if (stateblock->wineD3DDevice->render_offscreen) {
+                glFrontFace(GL_CW);
+                checkGLcall("glFrontFace GL_CW");
+            } else {
+                glFrontFace(GL_CCW);
+                checkGLcall("glFrontFace GL_CCW");
+            }
+            glCullFace(GL_BACK);
+            break;
+        case WINED3DCULL_CCW:
+            glEnable(GL_CULL_FACE);
+            checkGLcall("glEnable GL_CULL_FACE");
+            if (stateblock->wineD3DDevice->render_offscreen) {
+                glFrontFace(GL_CCW);
+                checkGLcall("glFrontFace GL_CCW");
+            } else {
+                glFrontFace(GL_CW);
+                checkGLcall("glFrontFace GL_CW");
+            }
+            glCullFace(GL_BACK);
+            break;
+        default:
+            FIXME("Unrecognized/Unhandled WINED3DCULL value %d\n", stateblock->renderState[WINED3DRS_CULLMODE]);
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -139,7 +179,7 @@ const struct StateEntry StateTable[] =
     { /* 19, WINED3DRS_SRCBLEND                     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
     { /* 20, WINED3DRS_DESTBLEND                    */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
     { /* 21, WINED3DRS_TEXTUREMAPBLEND              */      0 /* Handled in ddraw */,                           state_undefined     },
-    { /* 22, WINED3DRS_CULLMODE                     */      STATE_RENDER(WINED3DRS_CULLMODE),                   state_unknown       },
+    { /* 22, WINED3DRS_CULLMODE                     */      STATE_RENDER(WINED3DRS_CULLMODE),                   state_cullmode      },
     { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_unknown       },
     { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },

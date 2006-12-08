@@ -3439,46 +3439,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_FILLMODE                  :
     case WINED3DRS_LIGHTING                  :
     case WINED3DRS_ZENABLE                   :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_CULLMODE                  :
-
-        /* If we are culling "back faces with clockwise vertices" then
-           set front faces to be counter clockwise and enable culling
-           of back faces                                               */
-        switch ((WINED3DCULL) Value) {
-        case WINED3DCULL_NONE:
-            glDisable(GL_CULL_FACE);
-            checkGLcall("glDisable GL_CULL_FACE");
-            break;
-        case WINED3DCULL_CW:
-            glEnable(GL_CULL_FACE);
-            checkGLcall("glEnable GL_CULL_FACE");
-            if (This->render_offscreen) {
-                glFrontFace(GL_CW);
-                checkGLcall("glFrontFace GL_CW");
-            } else {
-                glFrontFace(GL_CCW);
-                checkGLcall("glFrontFace GL_CCW");
-            }
-            glCullFace(GL_BACK);
-            break;
-        case WINED3DCULL_CCW:
-            glEnable(GL_CULL_FACE);
-            checkGLcall("glEnable GL_CULL_FACE");
-            if (This->render_offscreen) {
-                glFrontFace(GL_CCW);
-                checkGLcall("glFrontFace GL_CCW");
-            } else {
-                glFrontFace(GL_CW);
-                checkGLcall("glFrontFace GL_CW");
-            }
-            glCullFace(GL_BACK);
-            break;
-        default:
-            FIXME("Unrecognized/Unhandled WINED3DCULL value %d\n", Value);
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_SHADEMODE                 :
