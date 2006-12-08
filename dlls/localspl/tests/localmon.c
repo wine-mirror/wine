@@ -291,6 +291,38 @@ static void test_InitializePrintMonitor(void)
         "returned %p with %d (expected %p)\n", res, GetLastError(), pm);
 }
 
+/* ########################### */
+
+static void test_XcvClosePort(void)
+{
+    DWORD   res;
+    HANDLE hXcv;
+
+    if ((pXcvOpenPort == NULL) || (pXcvClosePort == NULL)) return;
+
+#if 0
+    /* crash with native localspl.dll (w2k+xp) */
+    res = pXcvClosePort(NULL);
+    res = pXcvClosePort(INVALID_HANDLE_VALUE);
+#endif
+
+
+    SetLastError(0xdeadbeef);
+    hXcv = (HANDLE) 0xdeadbeef;
+    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+    ok(res, "returned %d with 0x%x and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+
+    if (res) {
+        SetLastError(0xdeadbeef);
+        res = pXcvClosePort(hXcv);
+        ok( res, "returned %d with 0x%x(expected '!= 0')\n", res, GetLastError());
+
+#if 0
+        /* test for "Double Free": crash with native localspl.dll (w2k+xp) */
+        res = pXcvClosePort(hXcv);
+#endif
+    }
+}
 
 /* ########################### */
 
@@ -400,5 +432,6 @@ START_TEST(localmon)
     test_ConfigurePort();
     test_DeletePort();
     test_EnumPorts();
+    test_XcvClosePort();
     test_XcvOpenPort();
 }
