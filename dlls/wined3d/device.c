@@ -3379,17 +3379,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_FOGSTART                  :
     case WINED3DRS_FOGEND                    :
     case WINED3DRS_RANGEFOGENABLE            :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_FOGCOLOR                  :
-        {
-            float col[4];
-            D3DCOLORTOGLFLOAT4(Value, col);
-            /* Set the default alpha blend color */
-            glFogfv(GL_FOG_COLOR, &col[0]);
-            checkGLcall("glFog GL_FOG_COLOR");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_FOGDENSITY                :
