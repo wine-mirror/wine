@@ -3460,35 +3460,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_CLIPPLANEENABLE           :
     case WINED3DRS_CLIPPING                  :
     case WINED3DRS_BLENDOP                   :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_TEXTUREFACTOR             :
-        {
-            unsigned int i;
-
-            /* Note the texture color applies to all textures whereas
-               GL_TEXTURE_ENV_COLOR applies to active only */
-            float col[4];
-            D3DCOLORTOGLFLOAT4(Value, col);
-
-            if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-                /* And now the default texture color as well */
-                for (i = 0; i < GL_LIMITS(texture_stages); i++) {
-                    /* Note the WINED3DRS value applies to all textures, but GL has one
-                       per texture, so apply it now ready to be used!               */
-                    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-                        checkGLcall("glActiveTextureARB");
-                    } else if (i>0) {
-                        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-                    }
-
-                    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-                    checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
-                }
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_SPECULARENABLE            :

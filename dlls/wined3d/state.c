@@ -432,6 +432,34 @@ static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     checkGLcall("glBlendEquation");
 }
 
+static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    unsigned int i;
+
+    /* Note the texture color applies to all textures whereas
+     * GL_TEXTURE_ENV_COLOR applies to active only
+     */
+    float col[4];
+    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+
+    if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        /* And now the default texture color as well */
+        for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+            /* Note the WINED3DRS value applies to all textures, but GL has one
+             * per texture, so apply it now ready to be used!
+             */
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+                checkGLcall("glActiveTextureARB");
+            } else if (i>0) {
+                FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            }
+
+            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+            checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
+        }
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -495,7 +523,7 @@ const struct StateEntry StateTable[] =
     { /* 57, WINED3DRS_STENCILREF                   */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_unknown       },
     { /* 58, WINED3DRS_STENCILMASK                  */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_unknown       },
     { /* 59, WINED3DRS_STENCILWRITEMASK             */      STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_unknown       },
-    { /* 60, WINED3DRS_TEXTUREFACTOR                */      STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_unknown       },
+    { /* 60, WINED3DRS_TEXTUREFACTOR                */      STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     },
     /* A BIG hole. If wanted, 'fixed' states like the vertex type or the bound shaders can be put here */
     { /* 61, Undefined                              */      0,                                                  state_undefined     },
     { /* 62, Undefined                              */      0,                                                  state_undefined     },
