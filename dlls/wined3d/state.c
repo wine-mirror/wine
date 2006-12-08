@@ -364,6 +364,49 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* TODO: Some texture blending operations seem to affect the alpha test */
 }
 
+static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    DWORD enable  = 0xFFFFFFFF;
+    DWORD disable = 0x00000000;
+
+    /* TODO: Keep track of previously enabled clipplanes to avoid unneccessary resetting
+     * of already set values
+     */
+
+    /* If enabling / disabling all
+     * TODO: Is this correct? Doesn't D3DRS_CLIPPING disable clipping on the viewport frustrum?
+     */
+    if (stateblock->renderState[WINED3DRS_CLIPPING]) {
+        enable  = stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+        disable = ~stateblock->renderState[WINED3DRS_CLIPPLANEENABLE];
+    } else {
+        disable = 0xffffffff;
+        enable  = 0x00;
+    }
+
+    if (enable & WINED3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
+    if (enable & WINED3DCLIPPLANE1)  { glEnable(GL_CLIP_PLANE1);  checkGLcall("glEnable(clip plane 1)"); }
+    if (enable & WINED3DCLIPPLANE2)  { glEnable(GL_CLIP_PLANE2);  checkGLcall("glEnable(clip plane 2)"); }
+    if (enable & WINED3DCLIPPLANE3)  { glEnable(GL_CLIP_PLANE3);  checkGLcall("glEnable(clip plane 3)"); }
+    if (enable & WINED3DCLIPPLANE4)  { glEnable(GL_CLIP_PLANE4);  checkGLcall("glEnable(clip plane 4)"); }
+    if (enable & WINED3DCLIPPLANE5)  { glEnable(GL_CLIP_PLANE5);  checkGLcall("glEnable(clip plane 5)"); }
+
+    if (disable & WINED3DCLIPPLANE0) { glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)"); }
+    if (disable & WINED3DCLIPPLANE1) { glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)"); }
+    if (disable & WINED3DCLIPPLANE2) { glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)"); }
+    if (disable & WINED3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
+    if (disable & WINED3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
+    if (disable & WINED3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
+
+    /** update clipping status */
+    if (enable) {
+        stateblock->clip_status.ClipUnion = 0;
+        stateblock->clip_status.ClipIntersection = 0xFFFFFFFF;
+    } else {
+        stateblock->clip_status.ClipUnion = 0;
+        stateblock->clip_status.ClipIntersection = 0;
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -505,7 +548,7 @@ const struct StateEntry StateTable[] =
     { /*133, WINED3DRS_WRAP5                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
     { /*134, WINED3DRS_WRAP6                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
     { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_unknown       },
+    { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_lighting      },
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_unknown       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       },
@@ -521,7 +564,7 @@ const struct StateEntry StateTable[] =
     { /*149, Undefined                              */      0,                                                  state_undefined     },
     { /*150, Undefined                              */      0,                                                  state_undefined     },
     { /*151, WINED3DRS_VERTEXBLEND                  */      0,                                                  state_nogl          },
-    { /*152, WINED3DRS_CLIPPLANEENABLE              */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_unknown       },
+    { /*152, WINED3DRS_CLIPPLANEENABLE              */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*153, WINED3DRS_SOFTWAREVERTEXPROCESSING     */      0,                                                  state_nogl          },
     { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_unknown       },
     { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_unknown       },

@@ -3418,7 +3418,6 @@ static void renderstate_stencil(IWineD3DDeviceImpl *This, WINED3DRENDERSTATETYPE
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD Value) {
 
     IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
-    DWORD                OldValue = This->stateBlock->renderState[State];
 
     /* Simple way of referring to either a DWORD or a 4 byte float */
     union {
@@ -3458,53 +3457,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_ALPHAFUNC                 :
     case WINED3DRS_ALPHAREF                  :
     case WINED3DRS_COLORKEYENABLE            :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_CLIPPLANEENABLE           :
     case WINED3DRS_CLIPPING                  :
-        {
-            /* Ensure we only do the changed clip planes */
-            DWORD enable  = 0xFFFFFFFF;
-            DWORD disable = 0x00000000;
-
-            /* If enabling / disabling all */
-            if (State == WINED3DRS_CLIPPING) {
-                if (Value) {
-                    enable  = This->stateBlock->renderState[WINED3DRS_CLIPPLANEENABLE];
-                    disable = 0x00;
-                } else {
-                    disable = This->stateBlock->renderState[WINED3DRS_CLIPPLANEENABLE];
-                    enable  = 0x00;
-                }
-            } else {
-                enable =   Value & ~OldValue;
-                disable = ~Value &  OldValue;
-            }
-
-            if (enable & WINED3DCLIPPLANE0)  { glEnable(GL_CLIP_PLANE0);  checkGLcall("glEnable(clip plane 0)"); }
-            if (enable & WINED3DCLIPPLANE1)  { glEnable(GL_CLIP_PLANE1);  checkGLcall("glEnable(clip plane 1)"); }
-            if (enable & WINED3DCLIPPLANE2)  { glEnable(GL_CLIP_PLANE2);  checkGLcall("glEnable(clip plane 2)"); }
-            if (enable & WINED3DCLIPPLANE3)  { glEnable(GL_CLIP_PLANE3);  checkGLcall("glEnable(clip plane 3)"); }
-            if (enable & WINED3DCLIPPLANE4)  { glEnable(GL_CLIP_PLANE4);  checkGLcall("glEnable(clip plane 4)"); }
-            if (enable & WINED3DCLIPPLANE5)  { glEnable(GL_CLIP_PLANE5);  checkGLcall("glEnable(clip plane 5)"); }
-
-            if (disable & WINED3DCLIPPLANE0) { glDisable(GL_CLIP_PLANE0); checkGLcall("glDisable(clip plane 0)"); }
-            if (disable & WINED3DCLIPPLANE1) { glDisable(GL_CLIP_PLANE1); checkGLcall("glDisable(clip plane 1)"); }
-            if (disable & WINED3DCLIPPLANE2) { glDisable(GL_CLIP_PLANE2); checkGLcall("glDisable(clip plane 2)"); }
-            if (disable & WINED3DCLIPPLANE3) { glDisable(GL_CLIP_PLANE3); checkGLcall("glDisable(clip plane 3)"); }
-            if (disable & WINED3DCLIPPLANE4) { glDisable(GL_CLIP_PLANE4); checkGLcall("glDisable(clip plane 4)"); }
-            if (disable & WINED3DCLIPPLANE5) { glDisable(GL_CLIP_PLANE5); checkGLcall("glDisable(clip plane 5)"); }
-
-            /** update clipping status */
-            if (enable) {
-              This->stateBlock->clip_status.ClipUnion = 0;
-              This->stateBlock->clip_status.ClipIntersection = 0xFFFFFFFF;
-            } else {
-              This->stateBlock->clip_status.ClipUnion = 0;
-              This->stateBlock->clip_status.ClipIntersection = 0;
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_BLENDOP                   :
