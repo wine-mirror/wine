@@ -71,8 +71,7 @@ typedef struct _MONITOR {
                 LPWSTR lpOutBuffer, DWORD cbOutBuffer, LPDWORD lpcbReturned);
  BOOL  (WINAPI *pfnSetPortTimeOuts)(HANDLE hPort, LPCOMMTIMEOUTS lpCTO,
                 DWORD reserved);
- BOOL  (WINAPI *pfnXcvOpenPort)(HANDLE hMonitor, LPCWSTR pszObject,
-                ACCESS_MASK GrantedAccess, PHANDLE phXcv);
+ BOOL  (WINAPI *pfnXcvOpenPort)(LPCWSTR pszObject, ACCESS_MASK GrantedAccess, PHANDLE phXcv);
  DWORD (WINAPI *pfnXcvDataPort)(HANDLE hXcv, LPCWSTR pszDataName,
                 PBYTE pInputData, DWORD cbInputData,
                 PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded);
