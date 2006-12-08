@@ -154,6 +154,24 @@ static void state_cullmode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_shademode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    switch ((WINED3DSHADEMODE) stateblock->renderState[WINED3DRS_SHADEMODE]) {
+        case WINED3DSHADE_FLAT:
+            glShadeModel(GL_FLAT);
+            checkGLcall("glShadeModel(GL_FLAT)");
+            break;
+        case WINED3DSHADE_GOURAUD:
+            glShadeModel(GL_SMOOTH);
+            checkGLcall("glShadeModel(GL_SMOOTH)");
+            break;
+        case WINED3DSHADE_PHONG:
+            FIXME("WINED3DSHADE_PHONG isn't supported\n");
+            break;
+        default:
+            FIXME("Unrecognized/Unhandled WINED3DSHADEMODE value %d\n", stateblock->renderState[WINED3DRS_SHADEMODE]);
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -166,7 +184,7 @@ const struct StateEntry StateTable[] =
     { /* 6,  WINED3DRS_WRAPV                        */      STATE_RENDER(WINED3DRS_WRAPV),                      state_unknown       },
     { /* 7,  WINED3DRS_ZENABLE                      */      STATE_RENDER(WINED3DRS_ZENABLE),                    state_zenable       },
     { /* 8,  WINED3DRS_FILLMODE                     */      STATE_RENDER(WINED3DRS_FILLMODE),                   state_fillmode      },
-    { /* 9,  WINED3DRS_SHADEMODE                    */      STATE_RENDER(WINED3DRS_SHADEMODE),                  state_unknown       },
+    { /* 9,  WINED3DRS_SHADEMODE                    */      STATE_RENDER(WINED3DRS_SHADEMODE),                  state_shademode     },
     { /* 10, WINED3DRS_LINEPATTERN                  */      STATE_RENDER(WINED3DRS_LINEPATTERN),                state_unknown       },
     { /* 11, WINED3DRS_MONOENABLE                   */      STATE_RENDER(WINED3DRS_MONOENABLE),                 state_unknown       },
     { /* 12, WINED3DRS_ROP2                         */      STATE_RENDER(WINED3DRS_ROP2),                       state_unknown       },

@@ -3440,26 +3440,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_LIGHTING                  :
     case WINED3DRS_ZENABLE                   :
     case WINED3DRS_CULLMODE                  :
+    case WINED3DRS_SHADEMODE                 :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
-    case WINED3DRS_SHADEMODE                 :
-        switch ((WINED3DSHADEMODE) Value) {
-        case WINED3DSHADE_FLAT:
-            glShadeModel(GL_FLAT);
-            checkGLcall("glShadeModel");
-            break;
-        case WINED3DSHADE_GOURAUD:
-            glShadeModel(GL_SMOOTH);
-            checkGLcall("glShadeModel");
-            break;
-        case WINED3DSHADE_PHONG:
-            FIXME("WINED3DSHADE_PHONG isn't supported\n");
-            break;
-        default:
-            FIXME("Unrecognized/Unhandled WINED3DSHADEMODE value %d\n", Value);
-        }
-        break;
 
     case WINED3DRS_DITHERENABLE              :
         if (Value) {
