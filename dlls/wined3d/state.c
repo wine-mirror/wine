@@ -982,7 +982,7 @@ const struct StateEntry StateTable[] =
     { /*164, WINED3DRS_PATCHSEGMENTS                */      STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              state_unknown       },
     { /*165, WINED3DRS_DEBUGMONITORTOKEN            */      STATE_RENDER(WINED3DRS_DEBUGMONITORTOKEN),          state_unknown       },
     { /*166, WINED3DRS_POINTSIZE_MAX                */      STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_unknown       },
-    { /*167, WINED3DRS_INDEXEDVERTEXBLENDENABLE     */      STATE_RENDER(WINED3DRS_INDEXEDVERTEXBLENDENABLE),   state_unknown       },
+    { /*167, WINED3DRS_INDEXEDVERTEXBLENDENABLE     */      0,                                                  state_nogl          },
     { /*168, WINED3DRS_COLORWRITEENABLE             */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
     { /*169, Undefined                              */      0,                                                  state_undefined     },
     { /*170, WINED3DRS_TWEENFACTOR                  */      0,                                                  state_nogl          },

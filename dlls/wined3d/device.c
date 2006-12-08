@@ -3383,13 +3383,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_FOGDENSITY                :
     case WINED3DRS_VERTEXBLEND               :
     case WINED3DRS_TWEENFACTOR               :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_INDEXEDVERTEXBLENDENABLE  :
-        {
-          TRACE("Indexed Vertex Blend Enable to %u\n", (BOOL) Value);
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_COLORVERTEX               :
