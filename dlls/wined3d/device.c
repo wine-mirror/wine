@@ -3461,76 +3461,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_CLIPPING                  :
     case WINED3DRS_BLENDOP                   :
     case WINED3DRS_TEXTUREFACTOR             :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_SPECULARENABLE            :
-        {
-            /* Originally this used glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL,GL_SEPARATE_SPECULAR_COLOR)
-               and (GL_LIGHT_MODEL_COLOR_CONTROL,GL_SINGLE_COLOR) to swap between enabled/disabled
-               specular color. This is wrong:
-               Separate specular color means the specular colour is maintained separately, whereas
-               single color means it is merged in. However in both cases they are being used to
-               some extent.
-               To disable specular color, set it explicitly to black and turn off GL_COLOR_SUM_EXT
-               NOTE: If not supported don't give FIXMEs the impact is really minimal and very few people are
-                  running 1.4 yet!
-             */
-            /*
-             * If register combiners are enabled, enabling / disabling GL_COLOR_SUM has no effect.
-             * Instead, we need to setup the FinalCombiner properly.
-             *
-             * The default setup for the FinalCombiner is:
-             *
-             * <variable>       <input>                             <mapping>               <usage>
-             * GL_VARIABLE_A_NV GL_FOG,                             GL_UNSIGNED_IDENTITY_NV GL_ALPHA
-             * GL_VARIABLE_B_NV GL_SPARE0_PLUS_SECONDARY_COLOR_NV   GL_UNSIGNED_IDENTITY_NV GL_RGB
-             * GL_VARIABLE_C_NV GL_FOG                              GL_UNSIGNED_IDENTITY_NV GL_RGB
-             * GL_VARIABLE_D_NV GL_ZERO                             GL_UNSIGNED_IDENTITY_NV GL_RGB
-             * GL_VARIABLE_E_NV GL_ZERO                             GL_UNSIGNED_IDENTITY_NV GL_RGB
-             * GL_VARIABLE_F_NV GL_ZERO                             GL_UNSIGNED_IDENTITY_NV GL_RGB
-             * GL_VARIABLE_G_NV GL_SPARE0_NV                        GL_UNSIGNED_IDENTITY_NV GL_ALPHA
-             *
-             * That's pretty much fine as it is, except for variable B, which needs to take
-             * either GL_SPARE0_PLUS_SECONDARY_COLOR_NV or GL_SPARE0_NV, depending on
-             * whether WINED3DRS_SPECULARENABLE is enabled or not.
-             */
-
-              if (Value) {
-                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->updateStateBlock->material.Specular);
-                checkGLcall("glMaterialfv");
-                if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-                  glEnable(GL_COLOR_SUM_EXT);
-                } else {
-                  TRACE("Specular colors cannot be enabled in this version of opengl\n");
-                }
-                checkGLcall("glEnable(GL_COLOR_SUM)");
-
-                if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-                    GL_EXTCALL(glFinalCombinerInputNV(GL_VARIABLE_B_NV, GL_SPARE0_PLUS_SECONDARY_COLOR_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB));
-                    checkGLcall("glFinalCombinerInputNV()");
-                }
-              } else {
-                float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-                /* for the case of enabled lighting: */
-                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
-                checkGLcall("glMaterialfv");
-
-                /* for the case of disabled lighting: */
-                if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-                  glDisable(GL_COLOR_SUM_EXT);
-                } else {
-                  TRACE("Specular colors cannot be disabled in this version of opengl\n");
-                }
-                checkGLcall("glDisable(GL_COLOR_SUM)");
-
-                if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-                    GL_EXTCALL(glFinalCombinerInputNV(GL_VARIABLE_B_NV, GL_SPARE0_NV, GL_UNSIGNED_IDENTITY_NV, GL_RGB));
-                    checkGLcall("glFinalCombinerInputNV()");
-                }
-              }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_STENCILENABLE :
