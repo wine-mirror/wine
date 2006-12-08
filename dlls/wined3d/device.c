@@ -3438,27 +3438,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     switch (State) {
     case WINED3DRS_FILLMODE                  :
     case WINED3DRS_LIGHTING                  :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_ZENABLE                   :
-        switch ((WINED3DZBUFFERTYPE) Value) {
-        case WINED3DZB_FALSE:
-            glDisable(GL_DEPTH_TEST);
-            checkGLcall("glDisable GL_DEPTH_TEST");
-            break;
-        case WINED3DZB_TRUE:
-            glEnable(GL_DEPTH_TEST);
-            checkGLcall("glEnable GL_DEPTH_TEST");
-            break;
-        case WINED3DZB_USEW:
-            glEnable(GL_DEPTH_TEST);
-            checkGLcall("glEnable GL_DEPTH_TEST");
-            FIXME("W buffer is not well handled\n");
-            break;
-        default:
-            FIXME("Unrecognized WINED3DZBUFFERTYPE value %d\n", Value);
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_CULLMODE                  :
