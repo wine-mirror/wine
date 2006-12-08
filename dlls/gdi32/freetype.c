@@ -1558,35 +1558,34 @@ static void add_font_list(HKEY hkey, const struct nls_update_font_list *fl)
 
 static void update_font_info(void)
 {
-    char buf[80];
+    char buf[40], cpbuf[40];
     DWORD len, type;
     HKEY hkey = 0;
     UINT i, ansi_cp = 0, oem_cp = 0;
-    LCID lcid = GetUserDefaultLCID();
 
     if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts", &hkey) != ERROR_SUCCESS)
         return;
 
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER|LOCALE_NOUSEROVERRIDE,
+                   (WCHAR *)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR));
+    GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IDEFAULTCODEPAGE|LOCALE_RETURN_NUMBER|LOCALE_NOUSEROVERRIDE,
+                   (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR));
+    sprintf( cpbuf, "%u,%u", ansi_cp, oem_cp );
+
     len = sizeof(buf);
-    if (RegQueryValueExA(hkey, "Locale", 0, &type, (BYTE *)buf, &len) == ERROR_SUCCESS && type == REG_SZ)
+    if (RegQueryValueExA(hkey, "Codepages", 0, &type, (BYTE *)buf, &len) == ERROR_SUCCESS && type == REG_SZ)
     {
-        if (strtoul(buf, NULL, 16 ) == lcid)  /* already set correctly */
+        if (!strcmp( buf, cpbuf ))  /* already set correctly */
         {
             RegCloseKey(hkey);
             return;
         }
-        TRACE("updating registry, locale changed %s -> %08x\n", debugstr_a(buf), lcid);
+        TRACE("updating registry, codepages changed %s -> %u,%u\n", buf, ansi_cp, oem_cp);
     }
-    else TRACE("updating registry, locale changed none -> %08x\n", lcid);
+    else TRACE("updating registry, codepages changed none -> %u,%u\n", ansi_cp, oem_cp);
 
-    sprintf(buf, "%08x", lcid);
-    RegSetValueExA(hkey, "Locale", 0, REG_SZ, (const BYTE *)buf, strlen(buf)+1);
+    RegSetValueExA(hkey, "Codepages", 0, REG_SZ, (const BYTE *)cpbuf, strlen(cpbuf)+1);
     RegCloseKey(hkey);
-
-    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER|LOCALE_NOUSEROVERRIDE,
-                   (WCHAR *)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR));
-    GetLocaleInfoW(lcid, LOCALE_IDEFAULTCODEPAGE|LOCALE_RETURN_NUMBER|LOCALE_NOUSEROVERRIDE,
-                   (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR));
 
     for (i = 0; i < sizeof(nls_update_font_list)/sizeof(nls_update_font_list[0]); i++)
     {
@@ -1612,7 +1611,7 @@ static void update_font_info(void)
             return;
         }
     }
-    FIXME("there is no font defaults for lcid %04x/ansi_cp %u\n", lcid, ansi_cp);
+    FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
 }
 
 /*************************************************************
