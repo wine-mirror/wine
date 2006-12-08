@@ -111,7 +111,7 @@ static const IUnknownVtbl COMCAT_IUnknown_Vtbl =
 /**********************************************************************
  * static ComCatMgr instance
  */
-const ComCatMgrImpl COMCAT_ComCatMgr =
+ComCatMgrImpl COMCAT_ComCatMgr =
 {
     &COMCAT_IUnknown_Vtbl,
     &COMCAT_ICatRegister_Vtbl,

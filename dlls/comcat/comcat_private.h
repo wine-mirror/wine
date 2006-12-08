@@ -63,7 +63,7 @@ typedef struct
     LONG ref;
 } ComCatMgrImpl;
 
-extern const ComCatMgrImpl COMCAT_ComCatMgr;
+extern ComCatMgrImpl COMCAT_ComCatMgr;
 extern const ICatRegisterVtbl COMCAT_ICatRegister_Vtbl;
 extern const ICatInformationVtbl COMCAT_ICatInformation_Vtbl;
 
