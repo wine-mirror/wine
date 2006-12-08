@@ -213,6 +213,111 @@ static void state_ambient(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     checkGLcall("glLightModel for MODEL_AMBIENT");
 }
 
+static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    int srcBlend = GL_ZERO;
+    int dstBlend = GL_ZERO;
+    float col[4];
+
+    /* GL_LINE_SMOOTH needs GL_BLEND to work, according to the red book, and special blending params */
+    /* TODO: Is enabling blending really affected by the blendfactor??? */
+    if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]      ||
+        stateblock->renderState[WINED3DRS_EDGEANTIALIAS]         ||
+        stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE] ||
+        stateblock->renderState[WINED3DRS_BLENDFACTOR] != 0xFFFFFFFF) {
+        glEnable(GL_BLEND);
+        checkGLcall("glEnable GL_BLEND");
+    } else {
+        glDisable(GL_BLEND);
+        checkGLcall("glDisable GL_BLEND");
+        /* Nothing more to do - get out */
+        return;
+    };
+
+    switch (stateblock->renderState[WINED3DRS_SRCBLEND]) {
+        case WINED3DBLEND_ZERO               : srcBlend = GL_ZERO;  break;
+        case WINED3DBLEND_ONE                : srcBlend = GL_ONE;  break;
+        case WINED3DBLEND_SRCCOLOR           : srcBlend = GL_SRC_COLOR;  break;
+        case WINED3DBLEND_INVSRCCOLOR        : srcBlend = GL_ONE_MINUS_SRC_COLOR;  break;
+        case WINED3DBLEND_SRCALPHA           : srcBlend = GL_SRC_ALPHA;  break;
+        case WINED3DBLEND_INVSRCALPHA        : srcBlend = GL_ONE_MINUS_SRC_ALPHA;  break;
+        case WINED3DBLEND_DESTALPHA          : srcBlend = GL_DST_ALPHA;  break;
+        case WINED3DBLEND_INVDESTALPHA       : srcBlend = GL_ONE_MINUS_DST_ALPHA;  break;
+        case WINED3DBLEND_DESTCOLOR          : srcBlend = GL_DST_COLOR;  break;
+        case WINED3DBLEND_INVDESTCOLOR       : srcBlend = GL_ONE_MINUS_DST_COLOR;  break;
+        case WINED3DBLEND_SRCALPHASAT        : srcBlend = GL_SRC_ALPHA_SATURATE;  break;
+
+        case WINED3DBLEND_BOTHSRCALPHA       : srcBlend = GL_SRC_ALPHA;
+            dstBlend = GL_SRC_ALPHA;
+            break;
+
+        case WINED3DBLEND_BOTHINVSRCALPHA    : srcBlend = GL_ONE_MINUS_SRC_ALPHA;
+            dstBlend = GL_ONE_MINUS_SRC_ALPHA;
+            break;
+
+        case WINED3DBLEND_BLENDFACTOR        : srcBlend = GL_CONSTANT_COLOR;   break;
+        case WINED3DBLEND_INVBLENDFACTOR     : srcBlend = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+        default:
+            FIXME("Unrecognized src blend value %d\n", stateblock->renderState[WINED3DRS_SRCBLEND]);
+    }
+
+    switch (stateblock->renderState[WINED3DRS_DESTBLEND]) {
+        case WINED3DBLEND_ZERO               : dstBlend = GL_ZERO;  break;
+        case WINED3DBLEND_ONE                : dstBlend = GL_ONE;  break;
+        case WINED3DBLEND_SRCCOLOR           : dstBlend = GL_SRC_COLOR;  break;
+        case WINED3DBLEND_INVSRCCOLOR        : dstBlend = GL_ONE_MINUS_SRC_COLOR;  break;
+        case WINED3DBLEND_SRCALPHA           : dstBlend = GL_SRC_ALPHA;  break;
+        case WINED3DBLEND_INVSRCALPHA        : dstBlend = GL_ONE_MINUS_SRC_ALPHA;  break;
+        case WINED3DBLEND_DESTALPHA          : dstBlend = GL_DST_ALPHA;  break;
+        case WINED3DBLEND_INVDESTALPHA       : dstBlend = GL_ONE_MINUS_DST_ALPHA;  break;
+        case WINED3DBLEND_DESTCOLOR          : dstBlend = GL_DST_COLOR;  break;
+        case WINED3DBLEND_INVDESTCOLOR       : dstBlend = GL_ONE_MINUS_DST_COLOR;  break;
+        case WINED3DBLEND_SRCALPHASAT        : dstBlend = GL_SRC_ALPHA_SATURATE;  break;
+
+        case WINED3DBLEND_BOTHSRCALPHA       : dstBlend = GL_SRC_ALPHA;
+            srcBlend = GL_SRC_ALPHA;
+            break;
+
+        case WINED3DBLEND_BOTHINVSRCALPHA    : dstBlend = GL_ONE_MINUS_SRC_ALPHA;
+            srcBlend = GL_ONE_MINUS_SRC_ALPHA;
+            break;
+
+        case D3DBLEND_BLENDFACTOR        : dstBlend = GL_CONSTANT_COLOR;   break;
+        case D3DBLEND_INVBLENDFACTOR     : dstBlend = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+        default:
+            FIXME("Unrecognized dst blend value %d\n", stateblock->renderState[WINED3DRS_DESTBLEND]);
+    }
+
+    if(stateblock->renderState[WINED3DRS_EDGEANTIALIAS] ||
+       stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE]) {
+        glEnable(GL_LINE_SMOOTH);
+        checkGLcall("glEnable(GL_LINE_SMOOTH)");
+        if(srcBlend != GL_SRC_ALPHA) {
+            FIXME("WINED3DRS_EDGEANTIALIAS enabled, but incompatible src blending param - what to do?\n");
+            srcBlend = GL_SRC_ALPHA;
+        }
+        if(dstBlend != GL_ONE_MINUS_SRC_ALPHA) {
+            FIXME("WINED3DRS_EDGEANTIALIAS enabled, but incompatible dst blending param - what to do?\n");
+            dstBlend = GL_ONE_MINUS_SRC_ALPHA;
+        }
+    } else {
+        glDisable(GL_LINE_SMOOTH);
+        checkGLcall("glDisable(GL_LINE_SMOOTH)");
+    }
+
+    TRACE("glBlendFunc src=%x, dst=%x\n", srcBlend, dstBlend);
+    glBlendFunc(srcBlend, dstBlend);
+    checkGLcall("glBlendFunc");
+
+    /* TODO: Remove when state management done */
+    stateblock->wineD3DDevice->dstBlend = dstBlend;
+    stateblock->wineD3DDevice->srcBlend = srcBlend;
+
+    TRACE("Setting BlendFactor to %d\n", stateblock->renderState[WINED3DRS_BLENDFACTOR]);
+    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_BLENDFACTOR], col);
+    glBlendColor (col[0],col[1],col[2],col[3]);
+    checkGLcall("glBlendColor");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -235,15 +340,15 @@ const struct StateEntry StateTable[] =
     { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_unknown       },
     { /* 17, WINED3DRS_TEXTUREMAG                   */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 18, WINED3DRS_TEXTUREMIN                   */      0 /* Handled in ddraw */,                           state_undefined     },
-    { /* 19, WINED3DRS_SRCBLEND                     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
-    { /* 20, WINED3DRS_DESTBLEND                    */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
+    { /* 19, WINED3DRS_SRCBLEND                     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
+    { /* 20, WINED3DRS_DESTBLEND                    */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /* 21, WINED3DRS_TEXTUREMAPBLEND              */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 22, WINED3DRS_CULLMODE                     */      STATE_RENDER(WINED3DRS_CULLMODE),                   state_cullmode      },
     { /* 23, WINED3DRS_ZFUNC                        */      STATE_RENDER(WINED3DRS_ZFUNC),                      state_zfunc         },
     { /* 24, WINED3DRS_ALPHAREF                     */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 25, WINED3DRS_ALPHAFUNC                    */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 26, WINED3DRS_DITHERENABLE                 */      STATE_RENDER(WINED3DRS_DITHERENABLE),               state_ditherenable  },
-    { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
+    { /* 27, WINED3DRS_ALPHABLENDENABLE             */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
     { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_unknown       },
     { /* 30, WINED3DRS_ZVISIBLE                     */      0 /* Not supported according to the msdn */,        state_nogl          },
@@ -256,7 +361,7 @@ const struct StateEntry StateTable[] =
     { /* 37, WINED3DRS_FOGEND                       */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_unknown       },
     { /* 38, WINED3DRS_FOGDENSITY                   */      STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_unknown       },
     { /* 39, WINED3DRS_STIPPLEENABLE                */      STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_unknown       },
-    { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
+    { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /* 41, WINED3DRS_COLORKEYENABLE               */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 42, undefined                              */      0,                                                  state_undefined     },
     { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_unknown       },
@@ -396,7 +501,7 @@ const struct StateEntry StateTable[] =
       /*173, WINED3DRS_NORMALORDER                  */      /* Value assigned to 2 state names */
     { /*174, WINED3DRS_SCISSORTESTENABLE            */      STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_unknown       },
     { /*175, WINED3DRS_SLOPESCALEDEPTHBIAS          */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },
-    { /*176, WINED3DRS_ANTIALIASEDLINEENABLE        */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
+    { /*176, WINED3DRS_ANTIALIASEDLINEENABLE        */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /*177, undefined                              */      0,                                                  state_undefined     },
     { /*178, WINED3DRS_MINTESSELLATIONLEVEL         */      STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_unknown       },
     { /*179, WINED3DRS_MAXTESSELLATIONLEVEL         */      STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_unknown       },
@@ -413,7 +518,7 @@ const struct StateEntry StateTable[] =
     { /*190, WINED3DRS_COLORWRITEENABLE1            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
     { /*191, WINED3DRS_COLORWRITEENABLE2            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
     { /*192, WINED3DRS_COLORWRITEENABLE3            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
-    { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_unknown       },
+    { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /*194, WINED3DRS_SRGBWRITEENABLE              */      0,                                                  state_nogl          },
     { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },
     { /*196, undefined                              */      0,                                                  state_undefined     },

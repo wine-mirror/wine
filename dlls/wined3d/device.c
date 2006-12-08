@@ -3445,58 +3445,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_ZWRITEENABLE              :
     case WINED3DRS_ZFUNC                     :
     case WINED3DRS_AMBIENT                   :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_ALPHABLENDENABLE          :
-        if (Value) {
-            glEnable(GL_BLEND);
-            checkGLcall("glEnable GL_BLEND");
-        } else {
-            glDisable(GL_BLEND);
-            checkGLcall("glDisable GL_BLEND");
-        };
-        break;
-
     case WINED3DRS_SRCBLEND                  :
     case WINED3DRS_DESTBLEND                 :
-        {
-            int newVal = GL_ZERO;
-            switch (Value) {
-            case WINED3DBLEND_ZERO               : newVal = GL_ZERO;  break;
-            case WINED3DBLEND_ONE                : newVal = GL_ONE;  break;
-            case WINED3DBLEND_SRCCOLOR           : newVal = GL_SRC_COLOR;  break;
-            case WINED3DBLEND_INVSRCCOLOR        : newVal = GL_ONE_MINUS_SRC_COLOR;  break;
-            case WINED3DBLEND_SRCALPHA           : newVal = GL_SRC_ALPHA;  break;
-            case WINED3DBLEND_INVSRCALPHA        : newVal = GL_ONE_MINUS_SRC_ALPHA;  break;
-            case WINED3DBLEND_DESTALPHA          : newVal = GL_DST_ALPHA;  break;
-            case WINED3DBLEND_INVDESTALPHA       : newVal = GL_ONE_MINUS_DST_ALPHA;  break;
-            case WINED3DBLEND_DESTCOLOR          : newVal = GL_DST_COLOR;  break;
-            case WINED3DBLEND_INVDESTCOLOR       : newVal = GL_ONE_MINUS_DST_COLOR;  break;
-            case WINED3DBLEND_SRCALPHASAT        : newVal = GL_SRC_ALPHA_SATURATE;  break;
-
-            case WINED3DBLEND_BOTHSRCALPHA       : newVal = GL_SRC_ALPHA;
-                This->srcBlend = newVal;
-                This->dstBlend = newVal;
-                break;
-
-            case WINED3DBLEND_BOTHINVSRCALPHA    : newVal = GL_ONE_MINUS_SRC_ALPHA;
-                This->srcBlend = newVal;
-                This->dstBlend = newVal;
-                break;
-            case WINED3DBLEND_BLENDFACTOR        : newVal = GL_CONSTANT_COLOR;   break;
-            case WINED3DBLEND_INVBLENDFACTOR     : newVal = GL_ONE_MINUS_CONSTANT_COLOR;  break;
-            default:
-                FIXME("Unrecognized src/dest blend value %d (%d)\n", Value, State);
-            }
-
-            if (State == WINED3DRS_SRCBLEND) This->srcBlend = newVal;
-            if (State == WINED3DRS_DESTBLEND) This->dstBlend = newVal;
-            TRACE("glBlendFunc src=%x, dst=%x\n", This->srcBlend, This->dstBlend);
-            glBlendFunc(This->srcBlend, This->dstBlend);
-
-            checkGLcall("glBlendFunc");
-        }
+    case WINED3DRS_ANTIALIASEDLINEENABLE     :
+    case WINED3DRS_BLENDFACTOR               :
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_ALPHATESTENABLE           :
@@ -3723,6 +3677,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_CCW_STENCILFAIL :
     case WINED3DRS_CCW_STENCILZFAIL :
     case WINED3DRS_CCW_STENCILPASS :
+    case WINED3DRS_EDGEANTIALIAS             :
         renderstate_stencil(This, State, Value);
         break;
     case WINED3DRS_STENCILWRITEMASK          :
@@ -4186,24 +4141,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         }
         break;
     }
-    case WINED3DRS_EDGEANTIALIAS             :
-    {
-        if(Value) {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
-            checkGLcall("glEnable(GL_BLEND)");
-            glEnable(GL_LINE_SMOOTH);
-            checkGLcall("glEnable(GL_LINE_SMOOTH)");
-        } else {
-            if(!This->stateBlock->renderState[WINED3DRS_ALPHABLENDENABLE]) {
-                glDisable(GL_BLEND);
-                checkGLcall("glDisable(GL_BLEND)");
-            }
-            glDisable(GL_LINE_SMOOTH);
-            checkGLcall("glDisable(GL_LINE_SMOOTH)");
-        }
-        break;
-    }
+
     case WINED3DRS_WRAP0                     :
     case WINED3DRS_WRAP1                     :
     case WINED3DRS_WRAP2                     :
@@ -4279,7 +4217,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         }
         break;
     }
-    case WINED3DRS_ANTIALIASEDLINEENABLE :
     {
         if(Value) {
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -4295,6 +4232,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         }
         break;
     }
+
     case WINED3DRS_DEPTHBIAS :
     {
         if(Value) {
@@ -4411,25 +4349,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         /* depends on WINED3DRS_COLORWRITEENABLE. */
         if(0x0000000F != Value)
             ERR("(%p)->(%s,%d) not yet implemented. Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
-
-    case WINED3DRS_BLENDFACTOR               :
-    {
-        float col[4];
-
-        TRACE("Setting BlendFactor to %d\n", Value);
-
-        D3DCOLORTOGLFLOAT4(Value, col);
-        if (0xFFFFFFFF != Value) {
-            glEnable(GL_BLEND);
-            checkGLcall("glEnable(GL_BLEND)");
-        }
-        else {
-           glDisable(GL_BLEND);
-           checkGLcall("glDisable(GL_BLEND)");
-        }
-        glBlendColor (col[0],col[1],col[2],col[3]);
         break;
     }
 
