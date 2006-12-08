@@ -3442,17 +3442,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_CULLMODE                  :
     case WINED3DRS_SHADEMODE                 :
     case WINED3DRS_DITHERENABLE              :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_ZWRITEENABLE              :
-        if (Value) {
-            glDepthMask(1);
-            checkGLcall("glDepthMask");
-        } else {
-            glDepthMask(0);
-            checkGLcall("glDepthMask");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_ZFUNC                     :

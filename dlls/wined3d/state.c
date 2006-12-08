@@ -182,6 +182,19 @@ static void state_ditherenable(DWORD state, IWineD3DStateBlockImpl *stateblock) 
     }
 }
 
+static void state_zwritenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /* TODO: Test if in d3d z writing is enabled even if ZENABLE is off. If yes,
+     * this has to be merged with ZENABLE and ZFUNC
+     */
+    if (stateblock->renderState[WINED3DRS_ZWRITEENABLE]) {
+        glDepthMask(1);
+        checkGLcall("glDepthMask(1)");
+    } else {
+        glDepthMask(0);
+        checkGLcall("glDepthMask(0)");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -199,7 +212,7 @@ const struct StateEntry StateTable[] =
     { /* 11, WINED3DRS_MONOENABLE                   */      STATE_RENDER(WINED3DRS_MONOENABLE),                 state_unknown       },
     { /* 12, WINED3DRS_ROP2                         */      STATE_RENDER(WINED3DRS_ROP2),                       state_unknown       },
     { /* 13, WINED3DRS_PLANEMASK                    */      STATE_RENDER(WINED3DRS_PLANEMASK),                  state_unknown       },
-    { /* 14, WINED3DRS_ZWRITEENABLE                 */      STATE_RENDER(WINED3DRS_ZWRITEENABLE),               state_unknown       },
+    { /* 14, WINED3DRS_ZWRITEENABLE                 */      STATE_RENDER(WINED3DRS_ZWRITEENABLE),               state_zwritenable   },
     { /* 15, WINED3DRS_ALPHATESTENABLE              */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_unknown       },
     { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_unknown       },
     { /* 17, WINED3DRS_TEXTUREMAG                   */      0 /* Handled in ddraw */,                           state_undefined     },
