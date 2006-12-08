@@ -627,6 +627,11 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_stencilwrite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    glStencilMask(stateblock->renderState[WINED3DRS_STENCILWRITEMASK]);
+    checkGLcall("glStencilMask");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -689,7 +694,7 @@ const struct StateEntry StateTable[] =
     { /* 56, WINED3DRS_STENCILFUNC                  */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
     { /* 57, WINED3DRS_STENCILREF                   */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
     { /* 58, WINED3DRS_STENCILMASK                  */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
-    { /* 59, WINED3DRS_STENCILWRITEMASK             */      STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_unknown       },
+    { /* 59, WINED3DRS_STENCILWRITEMASK             */      STATE_RENDER(WINED3DRS_STENCILWRITEMASK),           state_stencilwrite  },
     { /* 60, WINED3DRS_TEXTUREFACTOR                */      STATE_RENDER(WINED3DRS_TEXTUREFACTOR),              state_texfactor     },
     /* A BIG hole. If wanted, 'fixed' states like the vertex type or the bound shaders can be put here */
     { /* 61, Undefined                              */      0,                                                  state_undefined     },

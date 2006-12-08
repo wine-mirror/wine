@@ -3372,15 +3372,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_CCW_STENCILZFAIL :
     case WINED3DRS_CCW_STENCILPASS :
     case WINED3DRS_EDGEANTIALIAS             :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_STENCILWRITEMASK          :
-        {
-            glStencilMask(Value);
-            TRACE("glStencilMask(%u)\n", Value);
-            checkGLcall("glStencilMask");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_FOGENABLE                 :
