@@ -843,7 +843,7 @@ const struct StateEntry StateTable[] =
     { /* 45, WINED3DRS_TEXTUREADDRESSV              */      0, /* Handled in ddraw */                           state_undefined     },
     { /* 46, WINED3DRS_MIPMAPLODBIAS                */      STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_unknown       },
     { /* 47, WINED3DRS_ZBIAS                        */      STATE_RENDER(WINED3DRS_ZBIAS),                      state_unknown       },
-    { /* 48, WINED3DRS_RANGEFOGENABLE               */      STATE_RENDER(WINED3DRS_RANGEFOGENABLE),             state_unknown       },
+    { /* 48, WINED3DRS_RANGEFOGENABLE               */      0,                                                  state_nogl          },
     { /* 49, WINED3DRS_ANISOTROPY                   */      STATE_RENDER(WINED3DRS_ANISOTROPY),                 state_unknown       },
     { /* 50, WINED3DRS_FLUSHBATCH                   */      STATE_RENDER(WINED3DRS_FLUSHBATCH),                 state_unknown       },
     { /* 51, WINED3DRS_TRANSLUCENTSORTINDEPENDENT   */      STATE_RENDER(WINED3DRS_TRANSLUCENTSORTINDEPENDENT), state_unknown       },

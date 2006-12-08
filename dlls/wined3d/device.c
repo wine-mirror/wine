@@ -3378,17 +3378,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_FOGVERTEXMODE             :
     case WINED3DRS_FOGSTART                  :
     case WINED3DRS_FOGEND                    :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_RANGEFOGENABLE            :
-        {
-            if (Value) {
-              TRACE("Enabled RANGEFOG\n");
-            } else {
-              TRACE("Disabled RANGEFOG\n");
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_FOGCOLOR                  :
