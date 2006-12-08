@@ -27,6 +27,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+#define GLINFO_LOCATION ((IWineD3DImpl *)(stateblock->wineD3DDevice->wineD3D))->gl_info
+
 static void state_unknown(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* State which does exist, but wined3d doesn't know about */
     if(STATE_IS_RENDER(state)) {
@@ -407,6 +409,29 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_blendop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    int glParm = GL_FUNC_ADD;
+
+    if(!GL_SUPPORT(EXT_BLEND_MINMAX)) {
+        WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
+        return;
+    }
+
+    switch ((WINED3DBLENDOP) stateblock->renderState[WINED3DRS_BLENDOP]) {
+        case WINED3DBLENDOP_ADD              : glParm = GL_FUNC_ADD;              break;
+        case WINED3DBLENDOP_SUBTRACT         : glParm = GL_FUNC_SUBTRACT;         break;
+        case WINED3DBLENDOP_REVSUBTRACT      : glParm = GL_FUNC_REVERSE_SUBTRACT; break;
+        case WINED3DBLENDOP_MIN              : glParm = GL_MIN;                   break;
+        case WINED3DBLENDOP_MAX              : glParm = GL_MAX;                   break;
+        default:
+            FIXME("Unrecognized/Unhandled D3DBLENDOP value %d\n", stateblock->renderState[WINED3DRS_BLENDOP]);
+    }
+
+    TRACE("glBlendEquation(%x)\n", glParm);
+    GL_EXTCALL(glBlendEquation(glParm));
+    checkGLcall("glBlendEquation");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -583,7 +608,7 @@ const struct StateEntry StateTable[] =
     { /*168, WINED3DRS_COLORWRITEENABLE             */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
     { /*169, Undefined                              */      0,                                                  state_undefined     },
     { /*170, WINED3DRS_TWEENFACTOR                  */      0,                                                  state_nogl          },
-    { /*171, WINED3DRS_BLENDOP                      */      STATE_RENDER(WINED3DRS_BLENDOP),                    state_unknown       },
+    { /*171, WINED3DRS_BLENDOP                      */      STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       },
     { /*172, WINED3DRS_POSITIONDEGREE               */      STATE_RENDER(WINED3DRS_POSITIONDEGREE),             state_unknown       },
     { /*173, WINED3DRS_NORMALDEGREE                 */      STATE_RENDER(WINED3DRS_NORMALDEGREE),               state_unknown       },
       /*172, WINED3DRS_POSITIONORDER                */      /* Value assigned to 2 state names */

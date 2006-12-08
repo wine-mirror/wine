@@ -3459,31 +3459,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_COLORKEYENABLE            :
     case WINED3DRS_CLIPPLANEENABLE           :
     case WINED3DRS_CLIPPING                  :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_BLENDOP                   :
-        {
-            int glParm = GL_FUNC_ADD;
-
-            switch ((WINED3DBLENDOP) Value) {
-            case WINED3DBLENDOP_ADD              : glParm = GL_FUNC_ADD;              break;
-            case WINED3DBLENDOP_SUBTRACT         : glParm = GL_FUNC_SUBTRACT;         break;
-            case WINED3DBLENDOP_REVSUBTRACT      : glParm = GL_FUNC_REVERSE_SUBTRACT; break;
-            case WINED3DBLENDOP_MIN              : glParm = GL_MIN;                   break;
-            case WINED3DBLENDOP_MAX              : glParm = GL_MAX;                   break;
-            default:
-                FIXME("Unrecognized/Unhandled WINED3DBLENDOP value %d\n", Value);
-            }
-
-            if(GL_SUPPORT(EXT_BLEND_MINMAX)) {
-                TRACE("glBlendEquation(%x)\n", glParm);
-                GL_EXTCALL(glBlendEquation(glParm));
-                checkGLcall("glBlendEquation");
-            } else {
-                WARN("Unsupported in local OpenGL implementation: glBlendEquation\n");
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_TEXTUREFACTOR             :
