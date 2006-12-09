@@ -1340,24 +1340,24 @@ const char *strings[] =
 
 static int compare_string1(const void *e1, const void *e2)
 {
-    const char *s1 = *(const char **)e1;
-    const char *s2 = *(const char **)e2;
+    const char *s1 = *(const char *const *)e1;
+    const char *s2 = *(const char *const *)e2;
 
     return lstrcmpA(s1, s2);
 }
 
 static int compare_string2(const void *e1, const void *e2)
 {
-    const char *s1 = *(const char **)e1;
-    const char *s2 = *(const char **)e2;
+    const char *s1 = *(const char *const *)e1;
+    const char *s2 = *(const char *const *)e2;
 
     return CompareStringA(0, 0, s1, -1, s2, -1) - 2;
 }
 
 static int compare_string3(const void *e1, const void *e2)
 {
-    const char *s1 = *(const char **)e1;
-    const char *s2 = *(const char **)e2;
+    const char *s1 = *(const char *const *)e1;
+    const char *s2 = *(const char *const *)e2;
     char key1[256], key2[256];
 
     LCMapStringA(0, LCMAP_SORTKEY, s1, -1, key1, sizeof(key1));
