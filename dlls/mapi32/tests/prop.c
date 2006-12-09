@@ -81,8 +81,8 @@ static inline int strcmpW(const WCHAR *str1, const WCHAR *str2)
 
 static void test_PropCopyMore(void)
 {
-    static const char *szHiA = "Hi!";
-    static const WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
+    static char szHiA[] = "Hi!";
+    static WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
     SPropValue *lpDest = NULL, *lpSrc = NULL;
     ULONG i;
     SCODE scode;
@@ -107,10 +107,10 @@ static void test_PropCopyMore(void)
         switch (ptTypes[i])
         {
         case PT_STRING8:
-            lpSrc->Value.lpszA = (char*)szHiA;
+            lpSrc->Value.lpszA = szHiA;
             break;
         case PT_UNICODE:
-            lpSrc->Value.lpszW = (WCHAR*)szHiW;
+            lpSrc->Value.lpszW = szHiW;
             break;
         case PT_BINARY:
             lpSrc->Value.bin.cb = 4;
@@ -151,8 +151,8 @@ static void test_PropCopyMore(void)
 
 static void test_UlPropSize(void)
 {
-    static const char *szHiA = "Hi!";
-    static const WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
+    static char szHiA[] = "Hi!";
+    static WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
     LPSTR  buffa[2];
     LPWSTR buffw[2];
     SBinary buffbin[2];
@@ -202,11 +202,11 @@ static void test_UlPropSize(void)
 #endif
         case PT_CLSID:       exp *= sizeof(GUID); break;
         case PT_STRING8:
-            pv.Value.lpszA = (LPSTR)szHiA;
+            pv.Value.lpszA = szHiA;
             exp = 4;
             break;
         case PT_UNICODE:
-            pv.Value.lpszW = (LPWSTR)szHiW;
+            pv.Value.lpszW = szHiW;
             exp = 4 * sizeof(WCHAR);
             break;
         case PT_BINARY:
@@ -215,15 +215,15 @@ static void test_UlPropSize(void)
         case PT_MV_STRING8:
             pv.Value.MVszA.cValues = 2;
             pv.Value.MVszA.lppszA = buffa;
-            buffa[0] = (LPSTR)szHiA;
-            buffa[1] = (LPSTR)szHiA;
+            buffa[0] = szHiA;
+            buffa[1] = szHiA;
             exp = 8;
             break;
         case PT_MV_UNICODE:
             pv.Value.MVszW.cValues = 2;
             pv.Value.MVszW.lppszW = buffw;
-            buffw[0] = (LPWSTR)szHiW;
-            buffw[1] = (LPWSTR)szHiW;
+            buffw[0] = szHiW;
+            buffw[1] = szHiW;
             exp = 8 * sizeof(WCHAR);
             break;
         case PT_MV_BINARY:
@@ -244,12 +244,12 @@ static void test_UlPropSize(void)
 
 static void test_FPropContainsProp(void)
 {
-    static const char *szFull = "Full String";
-    static const char *szFullLower = "full string";
-    static const char *szPrefix = "Full";
-    static const char *szPrefixLower = "full";
-    static const char *szSubstring = "ll St";
-    static const char *szSubstringLower = "ll st";
+    static char szFull[] = "Full String";
+    static char szFullLower[] = "full string";
+    static char szPrefix[] = "Full";
+    static char szPrefixLower[] = "full";
+    static char szSubstring[] = "ll St";
+    static char szSubstringLower[] = "ll st";
     SPropValue pvLeft, pvRight;
     ULONG pt;
     BOOL bRet;
@@ -275,19 +275,19 @@ static void test_FPropContainsProp(void)
 
     /* test the various flag combinations */
     pvLeft.ulPropTag = pvRight.ulPropTag = PT_STRING8;
-    pvLeft.Value.lpszA = (LPSTR)szFull;
-    pvRight.Value.lpszA = (LPSTR)szFull;
+    pvLeft.Value.lpszA = szFull;
+    pvRight.Value.lpszA = szFull;
 
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_FULLSTRING);
     ok(bRet == TRUE, "(full,full)[] match failed\n");
-    pvRight.Value.lpszA = (LPSTR)szPrefix;
+    pvRight.Value.lpszA = szPrefix;
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_FULLSTRING);
     ok(bRet == FALSE, "(full,prefix)[] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_PREFIX);
     ok(bRet == TRUE, "(full,prefix)[PREFIX] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_SUBSTRING);
     ok(bRet == TRUE, "(full,prefix)[SUBSTRING] match failed\n");
-    pvRight.Value.lpszA = (LPSTR)szPrefixLower;
+    pvRight.Value.lpszA = szPrefixLower;
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_PREFIX);
     ok(bRet == FALSE, "(full,prefixlow)[PREFIX] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_SUBSTRING);
@@ -296,14 +296,14 @@ static void test_FPropContainsProp(void)
     ok(bRet == TRUE, "(full,prefixlow)[PREFIX|IGNORECASE] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_SUBSTRING|FL_IGNORECASE);
     ok(bRet == TRUE, "(full,prefixlow)[SUBSTRING|IGNORECASE] match failed\n");
-    pvRight.Value.lpszA = (LPSTR)szSubstring;
+    pvRight.Value.lpszA = szSubstring;
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_FULLSTRING);
     ok(bRet == FALSE, "(full,substr)[] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_PREFIX);
     ok(bRet == FALSE, "(full,substr)[PREFIX] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_SUBSTRING);
     ok(bRet == TRUE, "(full,substr)[SUBSTRING] match failed\n");
-    pvRight.Value.lpszA = (LPSTR)szSubstringLower;
+    pvRight.Value.lpszA = szSubstringLower;
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_PREFIX);
     ok(bRet == FALSE, "(full,substrlow)[PREFIX] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_SUBSTRING);
@@ -312,7 +312,7 @@ static void test_FPropContainsProp(void)
     ok(bRet == FALSE, "(full,substrlow)[PREFIX|IGNORECASE] match failed\n");
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_SUBSTRING|FL_IGNORECASE);
     ok(bRet == TRUE, "(full,substrlow)[SUBSTRING|IGNORECASE] match failed\n");
-    pvRight.Value.lpszA = (LPSTR)szFullLower;
+    pvRight.Value.lpszA = szFullLower;
     bRet = pFPropContainsProp(&pvLeft, &pvRight, FL_FULLSTRING|FL_IGNORECASE);
     ok(bRet == TRUE, "(full,fulllow)[IGNORECASE] match failed\n");
 
@@ -662,8 +662,8 @@ static void test_PpropFindProp(void)
 
 static void test_ScCountProps(void)
 {
-    static const char *szHiA = "Hi!";
-    static const WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
+    static char szHiA[] = "Hi!";
+    static WCHAR szHiW[] = { 'H', 'i', '!', '\0' };
     static const ULONG ULHILEN = 4; /* chars in szHiA/W incl. NUL */
     LPSTR  buffa[3];
     LPWSTR buffw[3];
@@ -705,11 +705,11 @@ static void test_ScCountProps(void)
             exp = sizeof(GUID) + sizeof(pv);
             break;
         case PT_STRING8:
-            pv.Value.lpszA = (LPSTR)szHiA;
+            pv.Value.lpszA = szHiA;
             exp = 4 + sizeof(pv);
             break;
         case PT_UNICODE:
-            pv.Value.lpszW = (LPWSTR)szHiW;
+            pv.Value.lpszW = szHiW;
             exp = 4 * sizeof(WCHAR) + sizeof(pv);
             break;
         case PT_BINARY:
@@ -756,17 +756,17 @@ static void test_ScCountProps(void)
         case PT_MV_STRING8:
             pv.Value.MVszA.cValues = 3;
             pv.Value.MVszA.lppszA = buffa;
-            buffa[0] = (LPSTR)szHiA;
-            buffa[1] = (LPSTR)szHiA;
-            buffa[2] = (LPSTR)szHiA;
+            buffa[0] = szHiA;
+            buffa[1] = szHiA;
+            buffa[2] = szHiA;
             exp = ULHILEN * 3 + 3 * sizeof(char*) + sizeof(pv);
             break;
         case PT_MV_UNICODE:
             pv.Value.MVszW.cValues = 3;
             pv.Value.MVszW.lppszW = buffw;
-            buffw[0] = (LPWSTR)szHiW;
-            buffw[1] = (LPWSTR)szHiW;
-            buffw[2] = (LPWSTR)szHiW;
+            buffw[0] = szHiW;
+            buffw[1] = szHiW;
+            buffw[2] = szHiW;
             exp = ULHILEN * 3 * sizeof(WCHAR) + 3 * sizeof(WCHAR*) + sizeof(pv);
             break;
         case PT_MV_BINARY:
@@ -802,7 +802,7 @@ static void test_ScCountProps(void)
 
 static void test_ScCopyRelocProps(void)
 {
-    static const char* szTestA = "Test";
+    static char szTestA[] = "Test";
     char buffer[512], buffer2[512], *lppszA[1];
     SPropValue pvProp, *lpResProp = (LPSPropValue)buffer;
     ULONG ulCount;
@@ -816,7 +816,7 @@ static void test_ScCopyRelocProps(void)
 
     pvProp.ulPropTag = PROP_TAG(PT_MV_STRING8, 1u);
 
-    lppszA[0] = (char *)szTestA;
+    lppszA[0] = szTestA;
     pvProp.Value.MVszA.cValues = 1;
     pvProp.Value.MVszA.lppszA = lppszA;
     ulCount = 0;
