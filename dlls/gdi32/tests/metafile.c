@@ -280,7 +280,7 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
 
     case EMR_RESTOREDC:
         {
-            EMRRESTOREDC *restoredc = (EMRRESTOREDC *)emr;
+            const EMRRESTOREDC *restoredc = (const EMRRESTOREDC *)emr;
             switch(++restore_no)
             {
             case 1:
