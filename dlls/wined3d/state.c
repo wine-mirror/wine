@@ -1160,12 +1160,18 @@ static void state_stippledalpha(DWORD state, IWineD3DStateBlockImpl *stateblock)
         ERR(" Stippled Alpha not supported yet.\n");
 }
 
+static void state_antialias(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    TRACE("Stub\n");
+    if (stateblock->renderState[WINED3DRS_ANTIALIAS])
+        ERR(" Antialias not supported yet.\n");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
     { /* 0,  Undefined                              */      0,                                                  state_undefined     },
     { /* 1,  WINED3DRS_TEXTUREHANDLE                */      0 /* Handled in ddraw */,                           state_undefined     },
-    { /* 2,  WINED3DRS_ANTIALIAS                    */      STATE_RENDER(WINED3DRS_ANTIALIAS),                  state_unknown       },
+    { /* 2,  WINED3DRS_ANTIALIAS                    */      STATE_RENDER(WINED3DRS_ANTIALIAS),                  state_antialias     },
     { /* 3,  WINED3DRS_TEXTUREADDRESS               */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 4,  WINED3DRS_TEXTUREPERSPECTIVE           */      STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_perspective   },
     { /* 5,  WINED3DRS_WRAPU                        */      STATE_RENDER(WINED3DRS_WRAPU),                      state_unknown       },

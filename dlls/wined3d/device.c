@@ -3429,6 +3429,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_DEPTHBIAS :
     case WINED3DRS_TEXTUREPERSPECTIVE    :
     case WINED3DRS_STIPPLEDALPHA    :
+    case WINED3DRS_ANTIALIAS :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3438,13 +3439,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_ANTIALIAS :
-    {
-        if (Value)
-            ERR(" Antialias not supported yet.\n");
-        break;
-    }
 
     case WINED3DRS_MULTISAMPLEMASK :
     {
