@@ -3430,6 +3430,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_DEBUGMONITORTOKEN :
     case WINED3DRS_POSITIONDEGREE :
     case WINED3DRS_NORMALDEGREE :
+    case WINED3DRS_MINTESSELLATIONLEVEL :
+    case WINED3DRS_MAXTESSELLATIONLEVEL :
+    case WINED3DRS_ADAPTIVETESS_X :
+    case WINED3DRS_ADAPTIVETESS_Y :
+    case WINED3DRS_ADAPTIVETESS_Z :
+    case WINED3DRS_ADAPTIVETESS_W :
+    case WINED3DRS_ENABLEADAPTIVETESSELLATION:
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3439,27 +3446,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_MINTESSELLATIONLEVEL :
-    case WINED3DRS_MAXTESSELLATIONLEVEL :
-    case WINED3DRS_ADAPTIVETESS_X :
-    case WINED3DRS_ADAPTIVETESS_Y :
-    case WINED3DRS_ADAPTIVETESS_Z :
-    case WINED3DRS_ADAPTIVETESS_W :
-    {
-        if(This->stateBlock->renderState[WINED3DRS_ENABLEADAPTIVETESSELLATION])
-            FIXME("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        else
-            TRACE("(%p)->(%s,%d): recording state but WINED3DRS_ENABLEADAPTIVETESSELLATION is not enabled\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
-
-    case WINED3DRS_ENABLEADAPTIVETESSELLATION:
-    {
-        if(Value)
-            ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
 
     case WINED3DRS_SRGBWRITEENABLE           :
     {
