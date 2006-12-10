@@ -3316,12 +3316,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
 
     IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
 
-    /* Simple way of referring to either a DWORD or a 4 byte float */
-    union {
-        DWORD d;
-        float f;
-    } tmpvalue;
-
     TRACE("(%p)->state = %s(%d), value = %d\n", This, debug_d3drenderstate(State), State, Value);
     This->updateStateBlock->changed.renderState[State] = TRUE;
     This->updateStateBlock->set.renderState[State] = TRUE;
@@ -3432,6 +3426,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_ANTIALIAS :
     case WINED3DRS_MULTISAMPLEMASK :
     case WINED3DRS_PATCHEDGESTYLE :
+    case WINED3DRS_PATCHSEGMENTS :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3441,15 +3436,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_PATCHSEGMENTS :
-    {
-        /* available in d3d8 but in d3d9 it was replaced by IDirect3DDevice9::SetNPatchMode */
-        tmpvalue.f = 1.0f;
-        if(tmpvalue.d != Value)
-            ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
 
     case WINED3DRS_DEBUGMONITORTOKEN :
     {

@@ -1178,6 +1178,18 @@ static void state_patchededge(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         ERR("(WINED3DRS_PATCHEDGESTYLE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_PATCHEDGESTYLE]);
 }
 
+static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+    tmpvalue.f = 1.0f;
+
+    TRACE("Stub\n");
+    if (stateblock->renderState[WINED3DRS_PATCHSEGMENTS] != tmpvalue.d)
+        ERR("(WINED3DRS_PATCHSEGMENTS,%d) not yet implemented\n", tmpvalue.d);
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1347,7 +1359,7 @@ const struct StateEntry StateTable[] =
     { /*161, WINED3DRS_MULTISAMPLEANTIALIAS         */      STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_multisampleaa },
     { /*162, WINED3DRS_MULTISAMPLEMASK              */      STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            state_multisampmask },
     { /*163, WINED3DRS_PATCHEDGESTYLE               */      STATE_RENDER(WINED3DRS_PATCHEDGESTYLE),             state_patchededge   },
-    { /*164, WINED3DRS_PATCHSEGMENTS                */      STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              state_unknown       },
+    { /*164, WINED3DRS_PATCHSEGMENTS                */      STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              state_patchsegments },
     { /*165, WINED3DRS_DEBUGMONITORTOKEN            */      STATE_RENDER(WINED3DRS_DEBUGMONITORTOKEN),          state_unknown       },
     { /*166, WINED3DRS_POINTSIZE_MAX                */      STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax      },
     { /*167, WINED3DRS_INDEXEDVERTEXBLENDENABLE     */      0,                                                  state_nogl          },
