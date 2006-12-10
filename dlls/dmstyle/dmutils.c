@@ -682,7 +682,7 @@ const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
 
 const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 	if (pDesc) {
-		char buffer[1024] = "", *ptr = &buffer[0];
+		char buffer[1024], *ptr = buffer;
 		
 		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
 		ptr += sprintf(ptr, " - dwSize = 0x%08X\n", pDesc->dwSize);
@@ -698,8 +698,7 @@ const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 		                                                     wine_dbgstr_longlong(pDesc->llMemLength), pDesc->pbMemData);
 		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, " - pStream = %p\n", pDesc->pStream);
 		
-		ptr = &buffer[0];
-		return ptr;
+		return wine_dbg_sprintf("%s", buffer);
 	} else {
 		return wine_dbg_sprintf("(NULL)");
 	}
@@ -727,13 +726,12 @@ void debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
 
 const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader) {
 	if (pHeader) {
-		char buffer[1024] = "", *ptr = &buffer[0];
+		char buffer[1024], *ptr = buffer;
 		
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINER_HEADER (%p):\n", pHeader);
 		ptr += sprintf(ptr, " - dwFlags = %s\n", debugstr_DMUS_CONTAINER_FLAGS(pHeader->dwFlags));
 		
-		ptr = &buffer[0];
-		return ptr;
+		return wine_dbg_sprintf("%s", buffer);
 	} else {
 		return wine_dbg_sprintf("(NULL)");
 	}
@@ -741,7 +739,7 @@ const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeade
 
 const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader) {
 	if (pHeader) {
-		char buffer[1024] = "", *ptr = &buffer[0];
+		char buffer[1024], *ptr = buffer;
 		
 		ptr += sprintf(ptr, "DMUS_IO_CONTAINED_OBJECT_HEADER (%p):\n", pHeader);
 		ptr += sprintf(ptr, " - guidClassID = %s\n", debugstr_dmguid(&pHeader->guidClassID));
@@ -749,8 +747,7 @@ const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT
 		ptr += sprintf(ptr, " - ckid = %s\n", debugstr_fourcc (pHeader->ckid));
 		ptr += sprintf(ptr, " - fccType = %s\n", debugstr_fourcc (pHeader->fccType));
 
-		ptr = &buffer[0];
-		return ptr;
+		return wine_dbg_sprintf("%s", buffer);
 	} else {
 		return wine_dbg_sprintf("(NULL)");
 	}
