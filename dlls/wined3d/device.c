@@ -3431,6 +3431,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_STIPPLEDALPHA    :
     case WINED3DRS_ANTIALIAS :
     case WINED3DRS_MULTISAMPLEMASK :
+    case WINED3DRS_PATCHEDGESTYLE :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3440,13 +3441,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_PATCHEDGESTYLE :
-    {
-        if(WINED3DPATCHEDGE_DISCRETE != Value)
-            ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
 
     case WINED3DRS_PATCHSEGMENTS :
     {
