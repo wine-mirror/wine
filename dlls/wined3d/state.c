@@ -1036,6 +1036,14 @@ static void state_localviewer(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_lastpixel(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_LASTPIXEL]) {
+        TRACE("Last Pixel Drawing Enabled\n");
+    } else {
+        FIXME("Last Pixel Drawing Disabled, not handled yet\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1055,7 +1063,7 @@ const struct StateEntry StateTable[] =
     { /* 13, WINED3DRS_PLANEMASK                    */      STATE_RENDER(WINED3DRS_PLANEMASK),                  state_unknown       },
     { /* 14, WINED3DRS_ZWRITEENABLE                 */      STATE_RENDER(WINED3DRS_ZWRITEENABLE),               state_zwritenable   },
     { /* 15, WINED3DRS_ALPHATESTENABLE              */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
-    { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_unknown       },
+    { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_lastpixel     },
     { /* 17, WINED3DRS_TEXTUREMAG                   */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 18, WINED3DRS_TEXTUREMIN                   */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 19, WINED3DRS_SRCBLEND                     */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },

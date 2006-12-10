@@ -3404,18 +3404,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_COLORWRITEENABLE2         :
     case WINED3DRS_COLORWRITEENABLE3         :
     case WINED3DRS_LOCALVIEWER               :
+    case WINED3DRS_LASTPIXEL                 :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
-
-    case WINED3DRS_LASTPIXEL                 :
-      {
-        if (Value) {
-          TRACE("Last Pixel Drawing Enabled\n");
-        } else {
-          FIXME("Last Pixel Drawing Disabled, not handled yet\n");
-        }
-      }
-      break;
 
     case WINED3DRS_SOFTWAREVERTEXPROCESSING  :
       {
