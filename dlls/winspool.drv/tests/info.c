@@ -1650,7 +1650,7 @@ static void test_EnumPrinters(void)
     ok(num == 0, "num %d\n", num);
 
     SetLastError(0xdeadbeef);
-    EnumPrintersW(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededW, &num);
+    ret = EnumPrintersW(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededW, &num);
     ok(ret == 0, "ret %d\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
     ok(num == 0, "num %d\n", num);
