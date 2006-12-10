@@ -3407,16 +3407,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_LASTPIXEL                 :
     case WINED3DRS_SOFTWAREVERTEXPROCESSING  :
     case WINED3DRS_POINTSPRITEENABLE         :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
-      /** not supported */
-    case WINED3DRS_ZVISIBLE                  :
-      {
-        LEAVE_GL();
-        return WINED3DERR_INVALIDCALL;
-      }
-
     case WINED3DRS_WRAP0                     :
     case WINED3DRS_WRAP1                     :
     case WINED3DRS_WRAP2                     :
@@ -3433,21 +3423,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_WRAP13                    :
     case WINED3DRS_WRAP14                    :
     case WINED3DRS_WRAP15                    :
-    /**
-    http://www.cosc.brocku.ca/Offerings/3P98/course/lectures/texture/
-    http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/FixedFunction/Textures/texturewrapping.asp
-    http://www.gamedev.net/reference/programming/features/rendererdll3/page2.asp
-    Descussion that ways to turn on WRAPing to solve an opengl conversion problem.
-    http://www.flipcode.org/cgi-bin/fcmsg.cgi?thread_show=10248
-
-    so far as I can tell, wrapping and texture-coordinate generate go hand in hand,
-    */
-    {
-        if(Value) {
-            ERR("(%p)->(%s,%d) Texture wraping not yet supported\n",This, debug_d3drenderstate(State), Value);
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
-    }
+
+      /** not supported */
+    case WINED3DRS_ZVISIBLE                  :
+      {
+        LEAVE_GL();
+        return WINED3DERR_INVALIDCALL;
+      }
 
     case WINED3DRS_MULTISAMPLEANTIALIAS      :
     {

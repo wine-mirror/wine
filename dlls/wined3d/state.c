@@ -1068,6 +1068,37 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /**
+     http://www.cosc.brocku.ca/Offerings/3P98/course/lectures/texture/
+     http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/FixedFunction/Textures/texturewrapping.asp
+     http://www.gamedev.net/reference/programming/features/rendererdll3/page2.asp
+     Descussion that ways to turn on WRAPing to solve an opengl conversion problem.
+     http://www.flipcode.org/cgi-bin/fcmsg.cgi?thread_show=10248
+
+     so far as I can tell, wrapping and texture-coordinate generate go hand in hand,
+     */
+    TRACE("Stub\n");
+    if(stateblock->renderState[WINED3DRS_WRAP0] ||
+       stateblock->renderState[WINED3DRS_WRAP1] ||
+       stateblock->renderState[WINED3DRS_WRAP2] ||
+       stateblock->renderState[WINED3DRS_WRAP3] ||
+       stateblock->renderState[WINED3DRS_WRAP4] ||
+       stateblock->renderState[WINED3DRS_WRAP5] ||
+       stateblock->renderState[WINED3DRS_WRAP6] ||
+       stateblock->renderState[WINED3DRS_WRAP7] ||
+       stateblock->renderState[WINED3DRS_WRAP8] ||
+       stateblock->renderState[WINED3DRS_WRAP9] ||
+       stateblock->renderState[WINED3DRS_WRAP10] ||
+       stateblock->renderState[WINED3DRS_WRAP11] ||
+       stateblock->renderState[WINED3DRS_WRAP12] ||
+       stateblock->renderState[WINED3DRS_WRAP13] ||
+       stateblock->renderState[WINED3DRS_WRAP14] ||
+       stateblock->renderState[WINED3DRS_WRAP15] ) {
+        ERR("(WINED3DRS_WRAP0) Texture wraping not yet supported\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1201,14 +1232,14 @@ const struct StateEntry StateTable[] =
     { /*126, Undefined                              */      0,                                                  state_undefined     },
     { /*127, Undefined                              */      0,                                                  state_undefined     },
     /* Big hole ends */
-    { /*128, WINED3DRS_WRAP0                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*129, WINED3DRS_WRAP1                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*130, WINED3DRS_WRAP2                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*131, WINED3DRS_WRAP3                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*132, WINED3DRS_WRAP4                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*133, WINED3DRS_WRAP5                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*134, WINED3DRS_WRAP6                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
+    { /*128, WINED3DRS_WRAP0                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*129, WINED3DRS_WRAP1                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*130, WINED3DRS_WRAP2                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*131, WINED3DRS_WRAP3                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*132, WINED3DRS_WRAP4                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*133, WINED3DRS_WRAP5                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*134, WINED3DRS_WRAP6                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_lighting      },
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_unknown       },
@@ -1273,14 +1304,14 @@ const struct StateEntry StateTable[] =
     { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },
     { /*196, undefined                              */      0,                                                  state_undefined     },
     { /*197, undefined                              */      0,                                                  state_undefined     },
-    { /*198, WINED3DRS_WRAP8                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*199, WINED3DRS_WRAP9                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*200, WINED3DRS_WRAP10                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*201, WINED3DRS_WRAP11                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*202, WINED3DRS_WRAP12                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*203, WINED3DRS_WRAP13                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*204, WINED3DRS_WRAP14                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
-    { /*205, WINED3DRS_WRAP15                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_unknown       },
+    { /*198, WINED3DRS_WRAP8                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*199, WINED3DRS_WRAP9                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*200, WINED3DRS_WRAP10                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*201, WINED3DRS_WRAP11                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*202, WINED3DRS_WRAP12                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*203, WINED3DRS_WRAP13                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*204, WINED3DRS_WRAP14                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
+    { /*205, WINED3DRS_WRAP15                       */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*206, WINED3DRS_SEPARATEALPHABLENDENABLE     */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_unknown       },
     { /*207, WINED3DRS_SRCBLENDALPHA                */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_unknown       },
     { /*208, WINED3DRS_DESTBLENDALPHA               */      STATE_RENDER(WINED3DRS_SEPARATEALPHABLENDENABLE),   state_unknown       },
