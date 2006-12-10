@@ -1065,7 +1065,9 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
   GLXFBConfig cur;
   int nCfgs = 0;
   int ret = 0;
+  int fmt_count = 0;
   int fmt_index = 0;
+  BOOL res = FALSE;
 
   if (!has_opengl()) {
     ERR("No libGL on this box - disabling OpenGL support !\n");
@@ -1083,20 +1085,21 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     return 0; /* unespected error */
   }
 
-  /* This function always reports the total number of supported pixel formats.
-   * At the moment we only support the pixel format corresponding to the main
-   * visual which got created at x11drv initialization. More formats could be
-   * supported if there was a way to recreate x11 windows in x11drv. 
-   * Because we only support one format nCfgs needs to be set to 1.
-   */
-  nCfgs = 1;
+  /* Look for the iPixelFormat in our list of supported formats. If it is supported we get the index in the FBConfig table and the number of supported formats back */
+  res = ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &fmt_count);
 
   if (ppfd == NULL) {
-    /* The application is only querying the number of visuals */
-    wine_tsx11_lock();
-    if (NULL != cfgs) XFree(cfgs);
-    wine_tsx11_unlock();
-    return nCfgs;
+      /* The application is only querying the number of visuals */
+      wine_tsx11_lock();
+      if (NULL != cfgs) XFree(cfgs);
+      wine_tsx11_unlock();
+      return fmt_count;
+  } else if(res == FALSE) {
+      WARN("unexpected iPixelFormat(%d): not >=1 and <=nFormats(%d), returning NULL!\n", iPixelFormat, fmt_count);
+      wine_tsx11_lock();
+      if (NULL != cfgs) XFree(cfgs);
+      wine_tsx11_unlock();
+      return 0;
   }
 
   if (nBytes < sizeof(PIXELFORMATDESCRIPTOR)) {
@@ -1105,18 +1108,7 @@ int X11DRV_DescribePixelFormat(X11DRV_PDEVICE *physDev,
     return 0;
   }
 
-  if (nCfgs < iPixelFormat || 1 > iPixelFormat) {
-    WARN("unexpected iPixelFormat(%d): not >=1 and <=nFormats(%d), returning NULL\n", iPixelFormat, nCfgs);
-    return 0;
-  }
-
-  /* Retrieve the index in the FBConfig table corresponding to the visual ID from the main visual */
-  if(!ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &value)) {
-      ERR("Can't find a valid pixel format index from the main visual, expect problems!\n");
-      return 0;
-  }
-
-  ret = nCfgs;
+  ret = fmt_count;
   cur = cfgs[fmt_index];
 
   memset(ppfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
@@ -1218,6 +1210,9 @@ int X11DRV_GetPixelFormat(X11DRV_PDEVICE *physDev) {
 BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
 			   int iPixelFormat,
 			   const PIXELFORMATDESCRIPTOR *ppfd) {
+  int fmt_index = 0;
+  int value;
+
   TRACE("(%p,%d,%p)\n", physDev, iPixelFormat, ppfd);
 
   if (!has_opengl()) {
@@ -1225,12 +1220,9 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     return 0;
   }
 
-  /* At the moment we only support the pixelformat corresponding to the main
-   * x11drv visual which got created at x11drv initialization. More formats
-   * could be supported if there was a way to recreate x11 windows in x11drv
-   */
-  if(iPixelFormat != 1) {
-    TRACE("Invalid iPixelFormat: %d\n", iPixelFormat);
+  /* Check if iPixelFormat is in our list of supported formats to see if it is supported. */
+  if(!ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &value)) {
+    ERR("Invalid iPixelFormat: %d\n", iPixelFormat);
     return 0;
   }
 
@@ -1240,14 +1232,7 @@ BOOL X11DRV_SetPixelFormat(X11DRV_PDEVICE *physDev,
     int nCfgs_fmt = 0;
     GLXFBConfig* cfgs_fmt = NULL;
     GLXFBConfig cur_cfg;
-    int value;
     int gl_test = 0;
-    int fmt_index = 0;
-
-    if(!ConvertPixelFormatWGLtoGLX(gdi_display, iPixelFormat, &fmt_index, &value)) {
-      ERR("Can't find a valid pixel format index from the main visual, expect problems!\n");
-      return TRUE; /* Return true because the SetPixelFormat stuff itself passed */
-    }
 
     /*
      * How to test if hdc current drawable is compatible (visual/FBConfig) ?
@@ -1293,8 +1278,8 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     Wine_GLContext *ret;
     GLXFBConfig* cfgs_fmt = NULL;
     GLXFBConfig cur_cfg;
-    int hdcPF = 1; /* We can only use Wine's main visual which has an index of 1 */
-    int tmp = 0;
+    int hdcPF = physDev->current_pf;
+    int fmt_count = 0;
     int fmt_index = 0;
     int nCfgs_fmt = 0;
     int value = 0;
@@ -1313,7 +1298,7 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
 
     /* We can only render using the iPixelFormat (1) of Wine's Main visual, we need to get the corresponding GLX format.
     * If this fails something is very wrong on the system. */
-    if(!ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, &fmt_index, &tmp)) {
+    if(!ConvertPixelFormatWGLtoGLX(gdi_display, hdcPF, &fmt_index, &fmt_count)) {
         ERR("Cannot get FB Config for main iPixelFormat 1, expect problems!\n");
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
@@ -1326,8 +1311,8 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
         return NULL;
     }
 
-    if (nCfgs_fmt < fmt_index) {
-        ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, fmt_index, nCfgs_fmt);
+    if (fmt_count < hdcPF) {
+        ERR("(%p): unexpected pixelFormat(%d) > nFormats(%d), returns NULL\n", hdc, hdcPF, fmt_count);
         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
         return NULL;
     }
@@ -1833,6 +1818,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     object->display = gdi_display;
     object->width = iWidth;
     object->height = iHeight;
+    object->pixelFormat = iPixelFormat;
 
     nAttribs = ConvertAttribWGLtoGLX(piAttribList, attribs, object);
     if (-1 == nAttribs) {
@@ -2014,8 +2000,8 @@ HDC X11DRV_wglGetPbufferDCARB(X11DRV_PDEVICE *physDev, HPBUFFERARB hPbuffer)
     }
 
     /* The function wglGetPbufferDCARB returns a DC to which the pbuffer can be connected.
-     * We only support one onscreen rendering format (the one from the main visual), so use that. */
-    physDev->current_pf = 1;
+     * All formats in our pixelformat list are compatible with each other and the main drawable. */
+    physDev->current_pf = object->pixelFormat;
     physDev->drawable = object->drawable;
 
     TRACE("(%p)->(%p)\n", hPbuffer, physDev->hdc);
