@@ -63,6 +63,9 @@ extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
 extern DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, int *offset);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
+/* Helper functions to work with data format */
+extern int offset_to_object(LPCDIDATAFORMAT df, int offset);
+extern int find_property(LPCDIDATAFORMAT df, LPCDIPROPHEADER ph);
 
 /**
  * Callback Data used by specific callback 

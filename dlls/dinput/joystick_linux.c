@@ -791,19 +791,6 @@ static LONG map_axis(JoystickImpl * This, short val, short index)
     return fret;
 }
 
-/* convert wine format offset to user format object index */
-static int offset_to_object(JoystickImpl *This, int offset)
-{
-    int i;
-
-    for (i = 0; i < This->user_df->dwNumObjs; i++) {
-        if (This->user_df->rgodf[i].dwOfs == offset)
-            return i;
-    }
-
-    return -1;
-}
-
 static LONG calculate_pov(JoystickImpl *This, int index)
 {
     if (This->povs[index].lX < -16384) {
@@ -862,7 +849,7 @@ static void joy_polldev(JoystickImpl *This) {
             int number = This->axis_map[jse.number];	/* wine format object index */
             if (number < 12) {
                 int offset = This->offsets[number];
-                int index = offset_to_object(This, offset);
+                int index = offset_to_object(This->user_df, offset);
                 LONG value = map_axis(This, jse.value, index);
 
                 /* FIXME do deadzone and saturation here */
@@ -958,22 +945,6 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     return DI_OK;
 }
 
-static int find_property(JoystickImpl * This, LPCDIPROPHEADER ph)
-{
-    int i;
-    if (ph->dwHow == DIPH_BYOFFSET) {
-        return offset_to_object(This, ph->dwObj);
-    } else if (ph->dwHow == DIPH_BYID) {
-        for (i = 0; i < This->user_df->dwNumObjs; i++) {
-            if ((This->user_df->rgodf[i].dwType & 0x00ffffff) == (ph->dwObj & 0x00ffffff)) {
-                return i;
-            }
-        }
-    }
-
-    return -1;
-}
-
 /******************************************************************************
   *     SetProperty : change input device properties
   */
@@ -1006,7 +977,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
                     This->props[i].lMax = pr->lMax;
                 }
             } else {
-                int obj = find_property(This, ph);
+                int obj = find_property(This->user_df, ph);
                 TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
                 if (obj >= 0) {
                     This->props[obj].lMin = pr->lMin;
@@ -1023,7 +994,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
                 for (i = 0; i < This->user_df->dwNumObjs; i++)
                     This->props[i].lDeadZone  = pd->dwData;
             } else {
-                int obj = find_property(This, ph);
+                int obj = find_property(This->user_df, ph);
                 TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
                 if (obj >= 0) {
                     This->props[obj].lDeadZone  = pd->dwData;
@@ -1039,7 +1010,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
                 for (i = 0; i < This->user_df->dwNumObjs; i++)
                     This->props[i].lSaturation = pd->dwData;
             } else {
-                int obj = find_property(This, ph);
+                int obj = find_property(This->user_df, ph);
                 TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);
                 if (obj >= 0) {
                     This->props[obj].lSaturation = pd->dwData;
@@ -1184,7 +1155,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       }
       if (wine_obj < 8) {
           user_offset = This->offsets[wine_obj];	/* get user offset from wine index */
-          user_object = offset_to_object(This, user_offset);
+          user_object = offset_to_object(This->user_df, user_offset);
 
           ddoi.dwType = This->user_df->rgodf[user_object].dwType & 0x00ffffff;
           ddoi.dwOfs =  This->user_df->rgodf[user_object].dwOfs;
@@ -1193,7 +1164,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       } else {
           if (pov[wine_obj - 8] < 2) {
               user_offset = This->offsets[wine_obj];	/* get user offset from wine index */
-              user_object = offset_to_object(This, user_offset);
+              user_object = offset_to_object(This->user_df, user_offset);
 
               ddoi.dwType = This->user_df->rgodf[user_object].dwType & 0x00ffffff;
               ddoi.dwOfs =  This->user_df->rgodf[user_object].dwOfs;
@@ -1218,7 +1189,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 
     for (i = 0; i < This->buttons; i++) {
       user_offset = This->offsets[i + 12];	/* get user offset from wine index */
-      user_object = offset_to_object(This, user_offset);
+      user_object = offset_to_object(This->user_df, user_offset);
       ddoi.guidType = GUID_Button;
       ddoi.dwType = This->user_df->rgodf[user_object].dwType & 0x00ffffff;
       ddoi.dwOfs =  This->user_df->rgodf[user_object].dwOfs;
@@ -1269,7 +1240,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
         switch (LOWORD(rguid)) {
         case (DWORD) DIPROP_RANGE: {
             LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-            int obj = find_property(This, pdiph);
+            int obj = find_property(This->user_df, pdiph);
             /* The app is querying the current range of the axis
              * return the lMin and lMax values */
             if (obj >= 0) {
@@ -1282,7 +1253,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
         }
         case (DWORD) DIPROP_DEADZONE: {
             LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-            int obj = find_property(This, pdiph);
+            int obj = find_property(This->user_df, pdiph);
             if (obj >= 0) {
                 pd->dwData = This->props[obj].lDeadZone;
                 TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
@@ -1292,7 +1263,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
         }
         case (DWORD) DIPROP_SATURATION: {
             LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-            int obj = find_property(This, pdiph);
+            int obj = find_property(This->user_df, pdiph);
             if (obj >= 0) {
                 pd->dwData = This->props[obj].lSaturation;
                 TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);

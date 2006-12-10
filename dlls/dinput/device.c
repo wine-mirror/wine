@@ -453,6 +453,42 @@ DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_
     return ret;
 }
 
+/* find an object by it's offset in a data format */
+int offset_to_object(LPCDIDATAFORMAT df, int offset)
+{
+    int i;
+
+    for (i = 0; i < df->dwNumObjs; i++)
+        if (df->rgodf[i].dwOfs == offset)
+            return i;
+
+    return -1;
+}
+
+static int id_to_object(LPCDIDATAFORMAT df, int id)
+{
+    int i;
+
+    for (i = 0; i < df->dwNumObjs; i++)
+        if ((df->rgodf[i].dwType & 0x00ffffff) == (id & 0x00ffffff))
+            return i;
+
+    return -1;
+}
+
+int find_property(LPCDIDATAFORMAT df, LPCDIPROPHEADER ph)
+{
+    switch (ph->dwHow)
+    {
+        case DIPH_BYID:     return id_to_object(df, ph->dwObj);
+        case DIPH_BYOFFSET: return offset_to_object(df, ph->dwObj);
+    }
+    FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
+
+    return -1;
+}
+
+
 BOOL DIEnumDevicesCallbackAtoW(LPCDIDEVICEOBJECTINSTANCEA lpddi, LPVOID lpvRef) {
     DIDEVICEOBJECTINSTANCEW ddtmp;
     device_enumobjects_AtoWcb_data* data;

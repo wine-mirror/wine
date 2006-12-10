@@ -147,11 +147,9 @@ struct JoystickImpl
 };
 
 static void fake_current_js_state(JoystickImpl *ji);
-static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph);
 static DWORD map_pov(int event_value, int is_x);
 static void find_joydevs(void);
 static int lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code);
-static int offset_to_object(JoystickImpl *This, int offset);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
 static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf7 */
@@ -709,39 +707,6 @@ static DWORD map_pov(int event_value, int is_x)
 	return ret;
 }
 
-static int find_property_offset(JoystickImpl *This, LPCDIPROPHEADER ph)
-{
-  int i, ofs = -1;
-  switch (ph->dwHow) {
-    case DIPH_BYOFFSET:
-      for (i=0; i<This->df->dwNumObjs; i++) {
-	if (This->offsets[i]==ph->dwObj) {
-	  return i;
-	}
-      }
-      break;
-    case DIPH_BYID:
-      for (i=0; i<This->df->dwNumObjs; i++) {
-	if ((This->df->rgodf[i].dwType & 0x00ffffff) == (ph->dwObj & 0x00ffffff)) {
-	  ofs = This->df->rgodf[i].dwOfs;
-	  break;
-	}
-      }
-      if (ofs!=-1) {
-	for (i=0; i<This->df->dwNumObjs; i++) {
-	  if (This->offsets[i]==ofs) {
-	    return i;
-	  }
-	}
-      }
-      break;
-    default:
-      FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
-  }
-
-  return -1;
-}
-
 /* defines how the linux input system offset mappings into c_dfDIJoystick2 */
 static int
 lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code )
@@ -783,18 +748,6 @@ lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code )
 }
 
 /* convert wine format offset to user format object index */
-static int offset_to_object(JoystickImpl *This, int offset)
-{
-    int i;
-
-    for (i = 0; i < This->df->dwNumObjs; i++) {
-        if (This->df->rgodf[i].dwOfs == offset)
-            return i;
-    }
-
-    return -1;
-}
-
 static void joy_polldev(JoystickImpl *This) {
     struct pollfd plfd;
     struct	input_event ie;
@@ -975,7 +928,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
           This->wantmax[i] = pr->lMax;
         }
       } else {
-        int obj = find_property_offset(This, ph);
+        int obj = find_property(This->df, ph);
         TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
         if (obj >= 0) {
           This->wantmin[obj] = pr->lMin;
@@ -994,7 +947,7 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
           This->deadz[i] = pd->dwData;
         }
       } else {
-        int obj = find_property_offset(This, ph);
+        int obj = find_property(This->df, ph);
         TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
         if (obj >= 0) {
           This->deadz[obj] = pd->dwData;
@@ -1153,7 +1106,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       if ((user_offset = lxinput_to_user_offset(This, EV_ABS, i)) == -1) {
         continue;
       }
-      user_object = offset_to_object(This, user_offset);
+      user_object = offset_to_object(This->df, user_offset);
       ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
       ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
       /* Linux event force feedback supports only (and always) x and y axes */
@@ -1178,7 +1131,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
         if ((user_offset = lxinput_to_user_offset(This, EV_ABS, ABS_HAT0X+i))== -1) {
           continue;
         }
-        user_object = offset_to_object(This, user_offset);
+        user_object = offset_to_object(This->df, user_offset);
         ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
         ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
         sprintf(ddoi.tszName, "%d-POV", i);
@@ -1203,7 +1156,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       if ((user_offset = lxinput_to_user_offset(This, EV_KEY, btncount)) == -1) {
         continue;
       }
-      user_object = offset_to_object(This, user_offset);
+      user_object = offset_to_object(This->df, user_offset);
       ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
       ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
       sprintf(ddoi.tszName, "%d-Button", btncount);
@@ -1252,7 +1205,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     switch (LOWORD(rguid)) {
     case (DWORD) DIPROP_RANGE: {
       LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-      int obj = find_property_offset(This, pdiph);
+      int obj = find_property(This->df, pdiph);
       if (obj >= 0) {
 	pr->lMin = This->joydev->havemin[obj];
 	pr->lMax = This->joydev->havemax[obj];
