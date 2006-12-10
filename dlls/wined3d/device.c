@@ -3392,15 +3392,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_LINEPATTERN               :
     case WINED3DRS_ZBIAS                     : /* D3D8 only */
     case WINED3DRS_NORMALIZENORMALS          :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_POINTSIZE                 :
-        /* FIXME: check that pointSize isn't outside glGetFloatv( GL_POINT_SIZE_MAX_ARB, &maxSize ); or -ve */
-        tmpvalue.d = Value;
-        TRACE("Set point size to %f\n", tmpvalue.f);
-        glPointSize(tmpvalue.f);
-        checkGLcall("glPointSize(...);");
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_POINTSIZE_MIN             :

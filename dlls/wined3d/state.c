@@ -907,6 +907,19 @@ static void state_normalize(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_psize(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    /* FIXME: check that pointSize isn't outside glGetFloatv( GL_POINT_SIZE_MAX_ARB, &maxSize ); or -ve */
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE];
+    TRACE("Set point size to %f\n", tmpvalue.f);
+    glPointSize(tmpvalue.f);
+    checkGLcall("glPointSize(...);");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1066,7 +1079,7 @@ const struct StateEntry StateTable[] =
     { /*151, WINED3DRS_VERTEXBLEND                  */      0,                                                  state_nogl          },
     { /*152, WINED3DRS_CLIPPLANEENABLE              */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*153, WINED3DRS_SOFTWAREVERTEXPROCESSING     */      0,                                                  state_nogl          },
-    { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_unknown       },
+    { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_psize         },
     { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_unknown       },
     { /*156, WINED3DRS_POINTSPRITEENABLE            */      STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_unknown       },
     { /*157, WINED3DRS_POINTSCALEENABLE             */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
