@@ -1001,6 +1001,31 @@ static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_colorwrite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    DWORD Value = stateblock->renderState[WINED3DRS_COLORWRITEENABLE];
+
+    TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
+        Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
+        Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
+        Value & D3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
+        Value & D3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
+    glColorMask(Value & D3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
+                Value & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                Value & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                Value & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+    checkGLcall("glColorMask(...)");
+
+    /* depends on WINED3DRS_COLORWRITEENABLE. */
+    if(stateblock->renderState[WINED3DRS_COLORWRITEENABLE1] != 0x0000000F ||
+       stateblock->renderState[WINED3DRS_COLORWRITEENABLE2] != 0x0000000F ||
+       stateblock->renderState[WINED3DRS_COLORWRITEENABLE3] != 0x0000000F ) {
+        ERR("(WINED3DRS_COLORWRITEENABLE1/2/3,%d,%d,%d) not yet implemented. Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n",
+            stateblock->renderState[WINED3DRS_COLORWRITEENABLE1],
+            stateblock->renderState[WINED3DRS_COLORWRITEENABLE2],
+            stateblock->renderState[WINED3DRS_COLORWRITEENABLE3]);
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1174,7 +1199,7 @@ const struct StateEntry StateTable[] =
     { /*165, WINED3DRS_DEBUGMONITORTOKEN            */      STATE_RENDER(WINED3DRS_DEBUGMONITORTOKEN),          state_unknown       },
     { /*166, WINED3DRS_POINTSIZE_MAX                */      STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax      },
     { /*167, WINED3DRS_INDEXEDVERTEXBLENDENABLE     */      0,                                                  state_nogl          },
-    { /*168, WINED3DRS_COLORWRITEENABLE             */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
+    { /*168, WINED3DRS_COLORWRITEENABLE             */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*169, Undefined                              */      0,                                                  state_undefined     },
     { /*170, WINED3DRS_TWEENFACTOR                  */      0,                                                  state_nogl          },
     { /*171, WINED3DRS_BLENDOP                      */      STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       },
@@ -1198,9 +1223,9 @@ const struct StateEntry StateTable[] =
     { /*187, WINED3DRS_CCW_STENCILZFAIL             */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
     { /*188, WINED3DRS_CCW_STENCILPASS              */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
     { /*189, WINED3DRS_CCW_STENCILFUNC              */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
-    { /*190, WINED3DRS_COLORWRITEENABLE1            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
-    { /*191, WINED3DRS_COLORWRITEENABLE2            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
-    { /*192, WINED3DRS_COLORWRITEENABLE3            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
+    { /*190, WINED3DRS_COLORWRITEENABLE1            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
+    { /*191, WINED3DRS_COLORWRITEENABLE2            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
+    { /*192, WINED3DRS_COLORWRITEENABLE3            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /*194, WINED3DRS_SRGBWRITEENABLE              */      0,                                                  state_nogl          },
     { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },

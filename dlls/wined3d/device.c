@@ -3399,23 +3399,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_POINTSCALE_B              :
     case WINED3DRS_POINTSCALE_C              :
     case WINED3DRS_POINTSCALEENABLE          :
+    case WINED3DRS_COLORWRITEENABLE          :
+    case WINED3DRS_COLORWRITEENABLE1         :
+    case WINED3DRS_COLORWRITEENABLE2         :
+    case WINED3DRS_COLORWRITEENABLE3         :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
-
-    case WINED3DRS_COLORWRITEENABLE          :
-      {
-        TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
-              Value & WINED3DCOLORWRITEENABLE_RED   ? 1 : 0,
-              Value & WINED3DCOLORWRITEENABLE_GREEN ? 1 : 0,
-              Value & WINED3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
-              Value & WINED3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
-        glColorMask(Value & WINED3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
-                    Value & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                    Value & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                    Value & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
-        checkGLcall("glColorMask(...)");
-      }
-      break;
 
     case WINED3DRS_LOCALVIEWER               :
       {
@@ -3674,16 +3663,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     {
         if(Value)
             ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
-
-    case WINED3DRS_COLORWRITEENABLE1         :
-    case WINED3DRS_COLORWRITEENABLE2         :
-    case WINED3DRS_COLORWRITEENABLE3         :
-    {
-        /* depends on WINED3DRS_COLORWRITEENABLE. */
-        if(0x0000000F != Value)
-            ERR("(%p)->(%s,%d) not yet implemented. Missing of cap D3DPMISCCAPS_INDEPENDENTWRITEMASKS wasn't honored?\n", This, debug_d3drenderstate(State), Value);
         break;
     }
 
