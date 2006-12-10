@@ -152,7 +152,6 @@ static DWORD map_pov(int event_value, int is_x);
 static void find_joydevs(void);
 static int lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code);
 static int offset_to_object(JoystickImpl *This, int offset);
-static void calculate_ids(LPDIDATAFORMAT df);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
 static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf7 */
@@ -414,7 +413,6 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
   /* create the default transform filter */
   newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->df, newDevice->offsets);
-  calculate_ids(newDevice->df);
 
   return newDevice;
 
@@ -577,7 +575,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
 
   This->transform = create_DataFormat(&c_dfDIJoystick2, This->df, This->offsets);
-  calculate_ids(This->df);
 
   return DI_OK;
 }
@@ -796,57 +793,6 @@ static int offset_to_object(JoystickImpl *This, int offset)
     }
 
     return -1;
-}
-
-static void calculate_ids(LPDIDATAFORMAT df)
-{
-    int i;
-    int axis = 0;
-    int button = 0;
-    int pov = 0;
-    int axis_base;
-    int pov_base;
-    int button_base;
-
-    /* Make two passes over the format. The first counts the number
-     * for each type and the second sets the id */
-    for (i = 0; i < df->dwNumObjs; i++) {
-        if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_AXIS)
-            axis++;
-        else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_POV)
-            pov++;
-        else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_BUTTON)
-            button++;
-    }
-
-    axis_base = 0;
-    pov_base = axis;
-    button_base = axis + pov;
-
-    axis = 0;
-    button = 0;
-    pov = 0;
-
-    for (i = 0; i < df->dwNumObjs; i++) {
-        DWORD type = 0;
-        if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_AXIS) {
-            axis++;
-            type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
-                DIDFT_MAKEINSTANCE(axis + axis_base);
-            TRACE("axis type = 0x%08x\n", type);
-        } else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_POV) {
-            pov++;
-            type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
-                DIDFT_MAKEINSTANCE(pov + pov_base);
-            TRACE("POV type = 0x%08x\n", type);
-        } else if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_BUTTON) {
-            button++;
-            type = DIDFT_GETTYPE(df->rgodf[i].dwType) |
-                DIDFT_MAKEINSTANCE(button + button_base);
-            TRACE("button type = 0x%08x\n", type);
-        }
-        df->rgodf[i].dwType = type;
-    }
 }
 
 static void joy_polldev(JoystickImpl *This) {

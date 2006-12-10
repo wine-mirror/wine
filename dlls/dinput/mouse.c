@@ -366,7 +366,7 @@ static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
     memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
     
     /* Prepare all the data-conversion filters */
-    This->wine_df = create_DataFormat(&(Wine_InternalMouseFormat), df, This->offset_array);
+    This->wine_df = create_DataFormat(&Wine_InternalMouseFormat, This->df, This->offset_array);
     
     return DI_OK;
 }

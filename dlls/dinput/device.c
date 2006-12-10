@@ -287,7 +287,50 @@ void release_DataFormat(DataFormat * format)
     HeapFree(GetProcessHeap(), 0, format->dt);
 }
 
-DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) {
+/* Make all instances sequential */
+static void calculate_ids(LPDIDATAFORMAT df)
+{
+    int i, axis = 0, pov = 0, button = 0;
+    int axis_base, pov_base, button_base;
+    DWORD type;
+
+    /* Make two passes over the format. The first counts the number
+     * for each type and the second sets the id */
+    for (i = 0; i < df->dwNumObjs; i++)
+    {
+        type = DIDFT_GETTYPE(df->rgodf[i].dwType);
+        if      (type & DIDFT_AXIS)   axis++;
+        else if (type & DIDFT_POV)    pov++;
+        else if (type & DIDFT_BUTTON) button++;
+    }
+
+    axis_base   = 0;
+    pov_base    = axis_base + axis;
+    button_base = pov_base + pov;
+    axis = pov = button = 0;
+
+    for (i = 0; i < df->dwNumObjs; i++)
+    {
+        type = DIDFT_GETTYPE(df->rgodf[i].dwType);
+        if (type & DIDFT_AXIS)
+        {
+            type |= DIDFT_MAKEINSTANCE(axis_base + axis++);
+            TRACE("axis type = 0x%08x\n", type);
+        } else if (type & DIDFT_POV)
+        {
+            type |= DIDFT_MAKEINSTANCE(pov_base + pov++);
+            TRACE("POV type = 0x%08x\n", type);
+        } else if (type & DIDFT_BUTTON)
+        {
+            type |= DIDFT_MAKEINSTANCE(button_base + button++);
+            TRACE("button type = 0x%08x\n", type);
+        }
+        df->rgodf[i].dwType = type;
+    }
+}
+
+DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, int *offset)
+{
     DataFormat *ret;
     DataTransform *dt;
     unsigned int i, j;
@@ -404,7 +447,9 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
     }
     
     HeapFree(GetProcessHeap(), 0, done);
-    
+
+    /* Last step - reset all instances of the new format */
+    calculate_ids(asked_format);
     return ret;
 }
 

@@ -393,57 +393,6 @@ static HRESULT setup_dinput_options(JoystickImpl * device)
     return DI_OK;
 }
 
-static void calculate_ids(JoystickImpl* device)
-{
-    int i;
-    int axis = 0;
-    int button = 0;
-    int pov = 0;
-    int axis_base;
-    int pov_base;
-    int button_base;
-
-    /* Make two passes over the format. The first counts the number
-     * for each type and the second sets the id */
-    for (i = 0; i < device->user_df->dwNumObjs; i++) {
-        if (DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) & DIDFT_AXIS)
-            axis++;
-        else if (DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) & DIDFT_POV)
-            pov++;
-        else if (DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) & DIDFT_BUTTON)
-            button++;
-    }
-
-    axis_base = 0;
-    pov_base = axis;
-    button_base = axis + pov;
-
-    axis = 0;
-    button = 0;
-    pov = 0;
-
-    for (i = 0; i < device->user_df->dwNumObjs; i++) {
-        DWORD type = 0;
-        if (DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) & DIDFT_AXIS) {
-            axis++;
-            type = DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) |
-                DIDFT_MAKEINSTANCE(axis + axis_base);
-            TRACE("axis type = 0x%08x\n", type);
-        } else if (DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) & DIDFT_POV) {
-            pov++;
-            type = DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) |
-                DIDFT_MAKEINSTANCE(pov + pov_base);
-            TRACE("POV type = 0x%08x\n", type);
-        } else if (DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) & DIDFT_BUTTON) {
-            button++;
-            type = DIDFT_GETTYPE(device->user_df->rgodf[i].dwType) |
-                DIDFT_MAKEINSTANCE(button + button_base);
-            TRACE("button type = 0x%08x\n", type);
-        }
-        device->user_df->rgodf[i].dwType = type;
-    }
-}
-
 static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *dinput, LPDIRECTINPUTDEVICEA* pdev)
 {
     DWORD i;
@@ -553,8 +502,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
 
     /* create the default transform filter */
     newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->user_df, newDevice->offsets);
-
-    calculate_ids(newDevice);
 
     IDirectInputDevice_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
 
@@ -764,8 +711,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
         This->props[i].lSaturation = 0;
     }
     This->transform = create_DataFormat(&c_dfDIJoystick2, This->user_df, This->offsets);
-
-    calculate_ids(This);
 
     return DI_OK;
 

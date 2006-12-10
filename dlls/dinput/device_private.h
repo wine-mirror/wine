@@ -60,7 +60,7 @@ typedef struct {
   DataTransform *dt;
 } DataFormat;
 extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
-extern DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT asked_format, int *offset) ;
+extern DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, int *offset);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 
