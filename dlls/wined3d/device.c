@@ -3428,6 +3428,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_SLOPESCALEDEPTHBIAS :
     case WINED3DRS_DEPTHBIAS :
     case WINED3DRS_TEXTUREPERSPECTIVE    :
+    case WINED3DRS_STIPPLEDALPHA    :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3438,12 +3439,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         return WINED3DERR_INVALIDCALL;
       }
 
-    case WINED3DRS_STIPPLEDALPHA    :
-    {
-        if (Value)
-            ERR(" Stippled Alpha not supported yet.\n");
-        break;
-    }
     case WINED3DRS_ANTIALIAS :
     {
         if (Value)
