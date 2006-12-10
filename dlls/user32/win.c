@@ -2531,6 +2531,10 @@ HWND WINAPI GetAncestor( HWND hwnd, UINT type )
 HWND WINAPI SetParent( HWND hwnd, HWND parent )
 {
     HWND full_handle;
+    HWND old_parent = 0;
+    BOOL was_visible;
+    WND *wndPtr;
+    BOOL ret;
 
     if (is_broadcast(hwnd) || is_broadcast(parent))
     {
@@ -2557,7 +2561,40 @@ HWND WINAPI SetParent( HWND hwnd, HWND parent )
     if (!(full_handle = WIN_IsCurrentThread( hwnd )))
         return (HWND)SendMessageW( hwnd, WM_WINE_SETPARENT, (WPARAM)parent, 0 );
 
-    return USER_Driver->pSetParent( full_handle, parent );
+    /* Windows hides the window first, then shows it again
+     * including the WM_SHOWWINDOW messages and all */
+    was_visible = ShowWindow( hwnd, SW_HIDE );
+
+    wndPtr = WIN_GetPtr( hwnd );
+    if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return 0;
+
+    SERVER_START_REQ( set_parent )
+    {
+        req->handle = hwnd;
+        req->parent = parent;
+        if ((ret = !wine_server_call( req )))
+        {
+            old_parent = reply->old_parent;
+            wndPtr->parent = parent = reply->full_parent;
+        }
+
+    }
+    SERVER_END_REQ;
+    WIN_ReleasePtr( wndPtr );
+    if (!ret) return 0;
+
+    USER_Driver->pSetParent( full_handle, parent, old_parent );
+
+    /* SetParent additionally needs to make hwnd the topmost window
+       in the x-order and send the expected WM_WINDOWPOSCHANGING and
+       WM_WINDOWPOSCHANGED notification messages.
+    */
+    SetWindowPos( hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                  SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE | (was_visible ? SWP_SHOWWINDOW : 0) );
+    /* FIXME: a WM_MOVE is also generated (in the DefWindowProc handler
+     * for WM_WINDOWPOSCHANGED) in Windows, should probably remove SWP_NOMOVE */
+
+    return old_parent;
 }
 
 

@@ -365,9 +365,8 @@ static void nulldrv_SetFocus( HWND hwnd )
 {
 }
 
-static HWND nulldrv_SetParent( HWND hwnd, HWND parent )
+static void nulldrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
-    return 0;
 }
 
 static BOOL nulldrv_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
@@ -684,9 +683,9 @@ static void loaderdrv_SetFocus( HWND hwnd )
     load_driver()->pSetFocus( hwnd );
 }
 
-static HWND loaderdrv_SetParent( HWND hwnd, HWND parent )
+static void loaderdrv_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
-    return load_driver()->pSetParent( hwnd, parent );
+    load_driver()->pSetParent( hwnd, parent, old_parent );
 }
 
 static BOOL loaderdrv_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
