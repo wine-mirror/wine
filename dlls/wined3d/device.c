@@ -3427,6 +3427,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_MULTISAMPLEMASK :
     case WINED3DRS_PATCHEDGESTYLE :
     case WINED3DRS_PATCHSEGMENTS :
+    case WINED3DRS_DEBUGMONITORTOKEN :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3436,20 +3437,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_DEBUGMONITORTOKEN :
-    {
-        /* Only useful for "debug builds". */
-        if(0xbaadcafe != Value) {
-            /* MSDN says the default is D3DDMT_ENABLE but our tests confirm 0xbaadcafe is the default. */
-            /* MSDN says anything other than D3DDMT_ENABLE or DISABLE does not change the state,
-             * but our tests disagree.
-             * We do not claim to implement a debugging lib, so do not write an ERR
-             */
-            WARN("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        }
-        break;
-    }
 
     case WINED3DRS_POSITIONDEGREE :
     {
