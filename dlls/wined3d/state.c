@@ -920,6 +920,21 @@ static void state_psize(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     checkGLcall("glPointSize(...);");
 }
 
+static void state_psizemin(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+        tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
+        GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
+        checkGLcall("glPointParameterfEXT(...);");
+    } else {
+        FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1080,7 +1095,7 @@ const struct StateEntry StateTable[] =
     { /*152, WINED3DRS_CLIPPLANEENABLE              */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*153, WINED3DRS_SOFTWAREVERTEXPROCESSING     */      0,                                                  state_nogl          },
     { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_psize         },
-    { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_unknown       },
+    { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin      },
     { /*156, WINED3DRS_POINTSPRITEENABLE            */      STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_unknown       },
     { /*157, WINED3DRS_POINTSCALEENABLE             */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
     { /*158, WINED3DRS_POINTSCALE_A                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
