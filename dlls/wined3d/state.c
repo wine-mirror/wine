@@ -1115,6 +1115,16 @@ static void state_multisampleaa(DWORD state, IWineD3DStateBlockImpl *stateblock)
     }
 }
 
+static void state_scissor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_SCISSORTESTENABLE]) {
+        glEnable(GL_SCISSOR_TEST);
+        checkGLcall("glEnable(GL_SCISSOR_TEST)");
+    } else {
+        glDisable(GL_SCISSOR_TEST);
+        checkGLcall("glDisable(GL_SCISSOR_TEST)");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1296,7 +1306,7 @@ const struct StateEntry StateTable[] =
     { /*173, WINED3DRS_NORMALDEGREE                 */      STATE_RENDER(WINED3DRS_NORMALDEGREE),               state_unknown       },
       /*172, WINED3DRS_POSITIONORDER                */      /* Value assigned to 2 state names */
       /*173, WINED3DRS_NORMALORDER                  */      /* Value assigned to 2 state names */
-    { /*174, WINED3DRS_SCISSORTESTENABLE            */      STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_unknown       },
+    { /*174, WINED3DRS_SCISSORTESTENABLE            */      STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_scissor       },
     { /*175, WINED3DRS_SLOPESCALEDEPTHBIAS          */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },
     { /*176, WINED3DRS_ANTIALIASEDLINEENABLE        */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /*177, undefined                              */      0,                                                  state_undefined     },
