@@ -3406,6 +3406,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_LOCALVIEWER               :
     case WINED3DRS_LASTPIXEL                 :
     case WINED3DRS_SOFTWAREVERTEXPROCESSING  :
+    case WINED3DRS_POINTSPRITEENABLE         :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3415,31 +3416,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-    case WINED3DRS_POINTSPRITEENABLE         :
-    {
-        /* TODO: NV_POINT_SPRITE */
-        if (!GL_SUPPORT(ARB_POINT_SPRITE)) {
-            TRACE("Point sprites not supported\n");
-            break;
-        }
-
-        /*
-         * Point sprites are always enabled. Value controls texture coordinate
-         * replacement mode. Must be set true for point sprites to use
-         * textures.
-         */
-        glEnable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
-
-        if (Value) {
-            glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, TRUE);
-            checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, TRUE)");
-        } else {
-            glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, FALSE);
-            checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, FALSE)");
-        }
-        break;
-    }
 
     case WINED3DRS_WRAP0                     :
     case WINED3DRS_WRAP1                     :

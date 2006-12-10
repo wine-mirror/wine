@@ -1044,6 +1044,30 @@ static void state_lastpixel(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /* TODO: NV_POINT_SPRITE */
+    if (!GL_SUPPORT(ARB_POINT_SPRITE)) {
+        TRACE("Point sprites not supported\n");
+        return;
+    }
+
+    /*
+     * Point sprites are always enabled. Value controls texture coordinate
+     * replacement mode. Must be set true for point sprites to use
+     * textures.
+     */
+    glEnable(GL_POINT_SPRITE_ARB);
+    checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
+
+    if (stateblock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
+        glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, TRUE);
+        checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, TRUE)");
+    } else {
+        glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, FALSE);
+        checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, FALSE)");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1205,7 +1229,7 @@ const struct StateEntry StateTable[] =
     { /*153, WINED3DRS_SOFTWAREVERTEXPROCESSING     */      0,                                                  state_nogl          },
     { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_psize         },
     { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin      },
-    { /*156, WINED3DRS_POINTSPRITEENABLE            */      STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_unknown       },
+    { /*156, WINED3DRS_POINTSPRITEENABLE            */      STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_pointsprite   },
     { /*157, WINED3DRS_POINTSCALEENABLE             */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
     { /*158, WINED3DRS_POINTSCALE_A                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
     { /*159, WINED3DRS_POINTSCALE_B                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
