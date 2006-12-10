@@ -3389,29 +3389,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_SPECULARMATERIALSOURCE    :
     case WINED3DRS_AMBIENTMATERIALSOURCE     :
     case WINED3DRS_EMISSIVEMATERIALSOURCE    :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_LINEPATTERN               :
-        {
-            union {
-                DWORD                 d;
-                WINED3DLINEPATTERN    lp;
-            } tmppattern;
-            tmppattern.d = Value;
-
-            TRACE("Line pattern: repeat %d bits %x\n", tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
-
-            if (tmppattern.lp.wRepeatFactor) {
-                glLineStipple(tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
-                checkGLcall("glLineStipple(repeat, linepattern)");
-                glEnable(GL_LINE_STIPPLE);
-                checkGLcall("glEnable(GL_LINE_STIPPLE);");
-            } else {
-                glDisable(GL_LINE_STIPPLE);
-                checkGLcall("glDisable(GL_LINE_STIPPLE);");
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_ZBIAS                     : /* D3D8 only */

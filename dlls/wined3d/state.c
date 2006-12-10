@@ -849,6 +849,26 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_linepattern(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD                 d;
+        WINED3DLINEPATTERN    lp;
+    } tmppattern;
+    tmppattern.d = stateblock->renderState[WINED3DRS_LINEPATTERN];
+
+    TRACE("Line pattern: repeat %d bits %x\n", tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+
+    if (tmppattern.lp.wRepeatFactor) {
+        glLineStipple(tmppattern.lp.wRepeatFactor, tmppattern.lp.wLinePattern);
+        checkGLcall("glLineStipple(repeat, linepattern)");
+        glEnable(GL_LINE_STIPPLE);
+        checkGLcall("glEnable(GL_LINE_STIPPLE);");
+    } else {
+        glDisable(GL_LINE_STIPPLE);
+        checkGLcall("glDisable(GL_LINE_STIPPLE);");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -862,7 +882,7 @@ const struct StateEntry StateTable[] =
     { /* 7,  WINED3DRS_ZENABLE                      */      STATE_RENDER(WINED3DRS_ZENABLE),                    state_zenable       },
     { /* 8,  WINED3DRS_FILLMODE                     */      STATE_RENDER(WINED3DRS_FILLMODE),                   state_fillmode      },
     { /* 9,  WINED3DRS_SHADEMODE                    */      STATE_RENDER(WINED3DRS_SHADEMODE),                  state_shademode     },
-    { /* 10, WINED3DRS_LINEPATTERN                  */      STATE_RENDER(WINED3DRS_LINEPATTERN),                state_unknown       },
+    { /* 10, WINED3DRS_LINEPATTERN                  */      STATE_RENDER(WINED3DRS_LINEPATTERN),                state_linepattern   },
     { /* 11, WINED3DRS_MONOENABLE                   */      STATE_RENDER(WINED3DRS_MONOENABLE),                 state_unknown       },
     { /* 12, WINED3DRS_ROP2                         */      STATE_RENDER(WINED3DRS_ROP2),                       state_unknown       },
     { /* 13, WINED3DRS_PLANEMASK                    */      STATE_RENDER(WINED3DRS_PLANEMASK),                  state_unknown       },
