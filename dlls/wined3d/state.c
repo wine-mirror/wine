@@ -1099,6 +1099,22 @@ static void state_wrap(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_multisampleaa(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if( GL_SUPPORT(ARB_MULTISAMPLE) ) {
+        if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
+            glEnable(GL_MULTISAMPLE_ARB);
+            checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
+        } else {
+            glDisable(GL_MULTISAMPLE_ARB);
+            checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
+        }
+    } else {
+        if(stateblock->renderState[WINED3DRS_MULTISAMPLEANTIALIAS]) {
+            ERR("Multisample antialiasing not supported by gl\n");
+        }
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1265,7 +1281,7 @@ const struct StateEntry StateTable[] =
     { /*158, WINED3DRS_POINTSCALE_A                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
     { /*159, WINED3DRS_POINTSCALE_B                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
     { /*160, WINED3DRS_POINTSCALE_C                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
-    { /*161, WINED3DRS_MULTISAMPLEANTIALIAS         */      STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_unknown       },
+    { /*161, WINED3DRS_MULTISAMPLEANTIALIAS         */      STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_multisampleaa },
     { /*162, WINED3DRS_MULTISAMPLEMASK              */      STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            state_unknown       },
     { /*163, WINED3DRS_PATCHEDGESTYLE               */      STATE_RENDER(WINED3DRS_PATCHEDGESTYLE),             state_unknown       },
     { /*164, WINED3DRS_PATCHSEGMENTS                */      STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              state_unknown       },

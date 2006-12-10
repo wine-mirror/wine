@@ -3423,6 +3423,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_WRAP13                    :
     case WINED3DRS_WRAP14                    :
     case WINED3DRS_WRAP15                    :
+    case WINED3DRS_MULTISAMPLEANTIALIAS      :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3432,24 +3433,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_MULTISAMPLEANTIALIAS      :
-    {
-        if( GL_SUPPORT(ARB_MULTISAMPLE) ) {
-            if(Value) {
-                glEnable(GL_MULTISAMPLE_ARB);
-                checkGLcall("glEnable(GL_MULTISAMPLE_ARB)");
-            } else {
-                glDisable(GL_MULTISAMPLE_ARB);
-                checkGLcall("glDisable(GL_MULTISAMPLE_ARB)");
-            }
-        } else {
-            if(Value) {
-                ERR("Multisample antialiasing not supported by gl\n");
-            }
-        }
-        break;
-    }
 
     case WINED3DRS_SCISSORTESTENABLE :
     {
