@@ -3390,31 +3390,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_AMBIENTMATERIALSOURCE     :
     case WINED3DRS_EMISSIVEMATERIALSOURCE    :
     case WINED3DRS_LINEPATTERN               :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_ZBIAS                     : /* D3D8 only */
-        {
-            if (Value) {
-                tmpvalue.d = Value;
-                TRACE("ZBias value %f\n", tmpvalue.f);
-                glPolygonOffset(0, -tmpvalue.f);
-                checkGLcall("glPolygonOffset(0, -Value)");
-                glEnable(GL_POLYGON_OFFSET_FILL);
-                checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL);");
-                glEnable(GL_POLYGON_OFFSET_LINE);
-                checkGLcall("glEnable(GL_POLYGON_OFFSET_LINE);");
-                glEnable(GL_POLYGON_OFFSET_POINT);
-                checkGLcall("glEnable(GL_POLYGON_OFFSET_POINT);");
-            } else {
-                glDisable(GL_POLYGON_OFFSET_FILL);
-                checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL);");
-                glDisable(GL_POLYGON_OFFSET_LINE);
-                checkGLcall("glDisable(GL_POLYGON_OFFSET_LINE);");
-                glDisable(GL_POLYGON_OFFSET_POINT);
-                checkGLcall("glDisable(GL_POLYGON_OFFSET_POINT);");
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_NORMALIZENORMALS          :

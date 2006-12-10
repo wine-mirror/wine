@@ -869,6 +869,33 @@ static void state_linepattern(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_zbias(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    if (stateblock->renderState[WINED3DRS_ZBIAS]) {
+        tmpvalue.d = stateblock->renderState[WINED3DRS_ZBIAS];
+        TRACE("ZBias value %f\n", tmpvalue.f);
+        glPolygonOffset(0, -tmpvalue.f);
+        checkGLcall("glPolygonOffset(0, -Value)");
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL);");
+        glEnable(GL_POLYGON_OFFSET_LINE);
+        checkGLcall("glEnable(GL_POLYGON_OFFSET_LINE);");
+        glEnable(GL_POLYGON_OFFSET_POINT);
+        checkGLcall("glEnable(GL_POLYGON_OFFSET_POINT);");
+    } else {
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL);");
+        glDisable(GL_POLYGON_OFFSET_LINE);
+        checkGLcall("glDisable(GL_POLYGON_OFFSET_LINE);");
+        glDisable(GL_POLYGON_OFFSET_POINT);
+        checkGLcall("glDisable(GL_POLYGON_OFFSET_POINT);");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -919,7 +946,7 @@ const struct StateEntry StateTable[] =
     { /* 44, WINED3DRS_TEXTUREADDRESSU              */      0, /* Handled in ddraw */                           state_undefined     },
     { /* 45, WINED3DRS_TEXTUREADDRESSV              */      0, /* Handled in ddraw */                           state_undefined     },
     { /* 46, WINED3DRS_MIPMAPLODBIAS                */      STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_unknown       },
-    { /* 47, WINED3DRS_ZBIAS                        */      STATE_RENDER(WINED3DRS_ZBIAS),                      state_unknown       },
+    { /* 47, WINED3DRS_ZBIAS                        */      STATE_RENDER(WINED3DRS_ZBIAS),                      state_zbias         },
     { /* 48, WINED3DRS_RANGEFOGENABLE               */      0,                                                  state_nogl          },
     { /* 49, WINED3DRS_ANISOTROPY                   */      STATE_RENDER(WINED3DRS_ANISOTROPY),                 state_unknown       },
     { /* 50, WINED3DRS_FLUSHBATCH                   */      STATE_RENDER(WINED3DRS_FLUSHBATCH),                 state_unknown       },
