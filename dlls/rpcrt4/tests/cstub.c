@@ -112,12 +112,12 @@ static const MIDL_STUB_DESC Object_StubDesc =
     0   /* Reserved5 */
     };
 
-HRESULT WINAPI if1_fn1_Proxy(void *This)
+static HRESULT WINAPI if1_fn1_Proxy(void *This)
 {
     return S_OK;
 }
 
-void __RPC_STUB if1_fn1_Stub(
+static void __RPC_STUB if1_fn1_Stub(
     IRpcStubBuffer *This,
     IRpcChannelBuffer *_pRpcChannelBuffer,
     PRPC_MESSAGE _pRpcMessage,
@@ -126,12 +126,12 @@ void __RPC_STUB if1_fn1_Stub(
     trace("fn1 stub\n");
 }
 
-HRESULT WINAPI if1_fn2_Proxy(void *This)
+static HRESULT WINAPI if1_fn2_Proxy(void *This)
 {
     return S_OK;
 }
 
-void __RPC_STUB if1_fn2_Stub(
+static void __RPC_STUB if1_fn2_Stub(
     IRpcStubBuffer *This,
     IRpcChannelBuffer *_pRpcChannelBuffer,
     PRPC_MESSAGE _pRpcMessage,
@@ -140,7 +140,7 @@ void __RPC_STUB if1_fn2_Stub(
     trace("fn2 stub\n");
 }
 
-CINTERFACE_PROXY_VTABLE(5) if1_proxy_vtbl =
+static CINTERFACE_PROXY_VTABLE(5) if1_proxy_vtbl =
 {
     { &IID_if1 },
     {   IUnknown_QueryInterface_Proxy,
@@ -176,7 +176,7 @@ static const PRPC_STUB_FUNCTION if1_table[] =
     if1_fn2_Stub
 };
 
-CInterfaceStubVtbl if1_stub_vtbl =
+static CInterfaceStubVtbl if1_stub_vtbl =
 {
     {
         &IID_if1,
@@ -187,7 +187,7 @@ CInterfaceStubVtbl if1_stub_vtbl =
     { CStdStubBuffer_METHODS }
 };
 
-CINTERFACE_PROXY_VTABLE(13) if2_proxy_vtbl =
+static CINTERFACE_PROXY_VTABLE(13) if2_proxy_vtbl =
 {
     { &IID_if2 },
     {   IUnknown_QueryInterface_Proxy,
@@ -247,7 +247,7 @@ static const PRPC_STUB_FUNCTION if2_table[] =
     STUB_FORWARDING_FUNCTION
 };
 
-CInterfaceStubVtbl if2_stub_vtbl =
+static CInterfaceStubVtbl if2_stub_vtbl =
 {
     {
         &IID_if2,
@@ -258,7 +258,7 @@ CInterfaceStubVtbl if2_stub_vtbl =
     { CStdStubBuffer_DELEGATING_METHODS }
 };
 
-CINTERFACE_PROXY_VTABLE(4) if3_proxy_vtbl =
+static CINTERFACE_PROXY_VTABLE(4) if3_proxy_vtbl =
 {
     { &IID_if3 },
     {   IUnknown_QueryInterface_Proxy,
@@ -292,7 +292,7 @@ static const PRPC_STUB_FUNCTION if3_table[] =
     if1_fn1_Stub
 };
 
-CInterfaceStubVtbl if3_stub_vtbl =
+static CInterfaceStubVtbl if3_stub_vtbl =
 {
     {
         &IID_if3,
@@ -303,7 +303,7 @@ CInterfaceStubVtbl if3_stub_vtbl =
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-CINTERFACE_PROXY_VTABLE(7) if4_proxy_vtbl =
+static CINTERFACE_PROXY_VTABLE(7) if4_proxy_vtbl =
 {
     { &IID_if4 },
     {   IUnknown_QueryInterface_Proxy,
@@ -345,7 +345,7 @@ static const PRPC_STUB_FUNCTION if4_table[] =
     STUB_FORWARDING_FUNCTION,
 };
 
-CInterfaceStubVtbl if4_stub_vtbl =
+static CInterfaceStubVtbl if4_stub_vtbl =
 {
     {
         &IID_if4,
@@ -356,7 +356,7 @@ CInterfaceStubVtbl if4_stub_vtbl =
     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
-const CInterfaceProxyVtbl *cstub_ProxyVtblList[] =
+static const CInterfaceProxyVtbl *cstub_ProxyVtblList[] =
 {
     (const CInterfaceProxyVtbl *) &if1_proxy_vtbl,
     (const CInterfaceProxyVtbl *) &if2_proxy_vtbl,
@@ -365,7 +365,7 @@ const CInterfaceProxyVtbl *cstub_ProxyVtblList[] =
     NULL
 };
 
-const CInterfaceStubVtbl *cstub_StubVtblList[] =
+static const CInterfaceStubVtbl *cstub_StubVtblList[] =
 {
     (const CInterfaceStubVtbl *) &if1_stub_vtbl,
     (const CInterfaceStubVtbl *) &if2_stub_vtbl,
@@ -374,7 +374,7 @@ const CInterfaceStubVtbl *cstub_StubVtblList[] =
     NULL
 };
 
-PCInterfaceName const if_name_list[] =
+static PCInterfaceName const if_name_list[] =
 {
     "if1",
     "if2",
@@ -383,7 +383,7 @@ PCInterfaceName const if_name_list[] =
     NULL
 };
 
-const IID *base_iid_list[] = 
+static const IID *base_iid_list[] =
 {
     NULL,
     &IID_ITypeLib,
@@ -394,7 +394,7 @@ const IID *base_iid_list[] =
 
 #define cstub_CHECK_IID(n)     IID_GENERIC_CHECK_IID( cstub, pIID, n)
 
-int __stdcall iid_lookup( const IID * pIID, int * pIndex )
+static int __stdcall iid_lookup( const IID * pIID, int * pIndex )
 {
     IID_BS_LOOKUP_SETUP
 
@@ -406,7 +406,7 @@ int __stdcall iid_lookup( const IID * pIID, int * pIndex )
 }
 
 
-const ExtendedProxyFileInfo my_proxy_file_info =
+static const ExtendedProxyFileInfo my_proxy_file_info =
 {
     (const PCInterfaceProxyVtblList *) &cstub_ProxyVtblList,
     (const PCInterfaceStubVtblList *) &cstub_StubVtblList,
@@ -421,7 +421,7 @@ const ExtendedProxyFileInfo my_proxy_file_info =
     0
 };
 
-const ProxyFileInfo *proxy_file_list[] = {
+static const ProxyFileInfo *proxy_file_list[] = {
     &my_proxy_file_info,
     NULL
 };

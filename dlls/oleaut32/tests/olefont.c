@@ -114,7 +114,7 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	IFont_Release(ifnt);
 }
 
-void test_QueryInterface(void)
+static void test_QueryInterface(void)
 {
         LPVOID pvObj = NULL;
         HRESULT hres;
@@ -143,7 +143,7 @@ void test_QueryInterface(void)
         IFont_Release(font);
 }
 
-void test_type_info(void)
+static void test_type_info(void)
 {
         LPVOID pvObj = NULL;
         HRESULT hres;
@@ -324,7 +324,7 @@ static void test_font_events_disp(void)
     IFont_Release(pFont2);
 }
 
-void test_names_ids(WCHAR* w_name_1, const char* a_name_1,
+static void test_names_ids(WCHAR* w_name_1, const char* a_name_1,
                     WCHAR* w_name_2, const char* a_name_2,
                     LCID lcid, DISPID id_1, DISPID id_2,
                     HRESULT hres_expect, int numnames)
@@ -362,7 +362,7 @@ void test_names_ids(WCHAR* w_name_1, const char* a_name_1,
    IFontDisp_Release(fontdisp);
 }
 
-void test_GetIDsOfNames(void)
+static void test_GetIDsOfNames(void)
 {
     WCHAR name_Name[] = {'N','a','m','e',0};
     WCHAR name_Italic[] = {'I','t','a','l','i','c',0};

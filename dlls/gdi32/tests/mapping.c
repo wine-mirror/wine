@@ -29,7 +29,7 @@
 #include "winerror.h"
 
 
-void test_modify_world_transform(void)
+static void test_modify_world_transform(void)
 {
     HDC hdc = GetDC(0);
     int ret;
@@ -53,7 +53,7 @@ void test_modify_world_transform(void)
     ReleaseDC(0, hdc);
 }
 
-void test_SetWindowExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG expected_vp_cy)
+static void test_SetWindowExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG expected_vp_cy)
 {
     SIZE windowExt, viewportExt;
     POINT windowOrg, windowOrgAfter, viewportOrg, viewportOrgAfter;
@@ -83,7 +83,7 @@ void test_SetWindowExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG expe
         viewportOrg.x, viewportOrg.y, viewportOrgAfter.x, viewportOrgAfter.y);
 }
 
-void test_SetViewportExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG expected_vp_cy)
+static void test_SetViewportExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG expected_vp_cy)
 {
     SIZE windowExt, windowExtAfter, viewportExt;
     POINT windowOrg, windowOrgAfter, viewportOrg, viewportOrgAfter;
@@ -114,7 +114,7 @@ void test_SetViewportExt(HDC hdc, LONG cx, LONG cy, LONG expected_vp_cx, LONG ex
         viewportOrg.x, viewportOrg.y, viewportOrgAfter.x, viewportOrgAfter.y);
 }
 
-void test_isotropic_mapping(void)
+static void test_isotropic_mapping(void)
 {
     SIZE win, vp;
     HDC hdc = GetDC(0);

@@ -215,7 +215,7 @@ static HRESULT WINAPI OleObject_IsUpToDate
     return S_OK;
 }
 
-HRESULT WINAPI OleObject_GetUserClassID
+static HRESULT WINAPI OleObject_GetUserClassID
 (
     IOleObject *iface,
     CLSID *pClsid
@@ -225,7 +225,7 @@ HRESULT WINAPI OleObject_GetUserClassID
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OleObject_GetUserType
+static HRESULT WINAPI OleObject_GetUserType
 (
     IOleObject *iface,
     DWORD dwFormOfType,
@@ -236,7 +236,7 @@ HRESULT WINAPI OleObject_GetUserType
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OleObject_SetExtent
+static HRESULT WINAPI OleObject_SetExtent
 (
     IOleObject *iface,
     DWORD dwDrawAspect,
@@ -247,7 +247,7 @@ HRESULT WINAPI OleObject_SetExtent
     return S_OK;
 }
 
-HRESULT WINAPI OleObject_GetExtent
+static HRESULT WINAPI OleObject_GetExtent
 (
     IOleObject *iface,
     DWORD dwDrawAspect,
@@ -258,7 +258,7 @@ HRESULT WINAPI OleObject_GetExtent
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OleObject_Advise
+static HRESULT WINAPI OleObject_Advise
 (
     IOleObject *iface,
     IAdviseSink *pAdvSink,
@@ -269,7 +269,7 @@ HRESULT WINAPI OleObject_Advise
     return S_OK;
 }
 
-HRESULT WINAPI OleObject_Unadvise
+static HRESULT WINAPI OleObject_Unadvise
 (
     IOleObject *iface,
     DWORD dwConnection
@@ -279,7 +279,7 @@ HRESULT WINAPI OleObject_Unadvise
     return S_OK;
 }
 
-HRESULT WINAPI OleObject_EnumAdvise
+static HRESULT WINAPI OleObject_EnumAdvise
 (
     IOleObject *iface,
     IEnumSTATDATA **ppenumAdvise
@@ -289,7 +289,7 @@ HRESULT WINAPI OleObject_EnumAdvise
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OleObject_GetMiscStatus
+static HRESULT WINAPI OleObject_GetMiscStatus
 (
     IOleObject *iface,
     DWORD dwAspect,
@@ -301,7 +301,7 @@ HRESULT WINAPI OleObject_GetMiscStatus
     return S_OK;
 }
 
-HRESULT WINAPI OleObject_SetColorScheme
+static HRESULT WINAPI OleObject_SetColorScheme
 (
     IOleObject *iface,
     LOGPALETTE *pLogpal
@@ -365,7 +365,7 @@ static HRESULT WINAPI OleObjectPersistStg_GetClassId(IPersistStorage *iface, CLS
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OleObjectPersistStg_IsDirty
+static HRESULT WINAPI OleObjectPersistStg_IsDirty
 (
     IPersistStorage *iface
 )
@@ -374,7 +374,7 @@ HRESULT WINAPI OleObjectPersistStg_IsDirty
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectPersistStg_InitNew
+static HRESULT WINAPI OleObjectPersistStg_InitNew
 (
     IPersistStorage *iface,
     IStorage *pStg
@@ -384,7 +384,7 @@ HRESULT WINAPI OleObjectPersistStg_InitNew
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectPersistStg_Load
+static HRESULT WINAPI OleObjectPersistStg_Load
 (
     IPersistStorage *iface,
     IStorage *pStg
@@ -394,7 +394,7 @@ HRESULT WINAPI OleObjectPersistStg_Load
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectPersistStg_Save
+static HRESULT WINAPI OleObjectPersistStg_Save
 (
     IPersistStorage *iface,
     IStorage *pStgSave,
@@ -405,7 +405,7 @@ HRESULT WINAPI OleObjectPersistStg_Save
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectPersistStg_SaveCompleted
+static HRESULT WINAPI OleObjectPersistStg_SaveCompleted
 (
     IPersistStorage *iface,
     IStorage *pStgNew
@@ -415,7 +415,7 @@ HRESULT WINAPI OleObjectPersistStg_SaveCompleted
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectPersistStg_HandsOffStorage
+static HRESULT WINAPI OleObjectPersistStg_HandsOffStorage
 (
     IPersistStorage *iface
 )
@@ -457,7 +457,7 @@ static ULONG WINAPI OleObjectCache_Release(IOleCache *iface)
     return 1;
 }
 
-HRESULT WINAPI OleObjectCache_Cache
+static HRESULT WINAPI OleObjectCache_Cache
 (
     IOleCache *iface,
     FORMATETC *pformatetc,
@@ -469,7 +469,7 @@ HRESULT WINAPI OleObjectCache_Cache
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectCache_Uncache
+static HRESULT WINAPI OleObjectCache_Uncache
 (
     IOleCache *iface,
     DWORD dwConnection
@@ -479,7 +479,7 @@ HRESULT WINAPI OleObjectCache_Uncache
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectCache_EnumCache
+static HRESULT WINAPI OleObjectCache_EnumCache
 (
     IOleCache *iface,
     IEnumSTATDATA **ppenumSTATDATA
@@ -490,7 +490,7 @@ HRESULT WINAPI OleObjectCache_EnumCache
 }
 
 
-HRESULT WINAPI OleObjectCache_InitCache
+static HRESULT WINAPI OleObjectCache_InitCache
 (
     IOleCache *iface,
     IDataObject *pDataObject
@@ -501,7 +501,7 @@ HRESULT WINAPI OleObjectCache_InitCache
 }
 
 
-HRESULT WINAPI OleObjectCache_SetData
+static HRESULT WINAPI OleObjectCache_SetData
 (
     IOleCache *iface,
     FORMATETC *pformatetc,
@@ -588,7 +588,7 @@ static ULONG WINAPI OleObjectRunnable_Release(IRunnableObject *iface)
     return 1;
 }
 
-HRESULT WINAPI OleObjectRunnable_GetRunningClass(
+static HRESULT WINAPI OleObjectRunnable_GetRunningClass(
     IRunnableObject *iface,
     LPCLSID lpClsid)
 {
@@ -596,7 +596,7 @@ HRESULT WINAPI OleObjectRunnable_GetRunningClass(
     return E_NOTIMPL;
 }
 
-HRESULT WINAPI OleObjectRunnable_Run(
+static HRESULT WINAPI OleObjectRunnable_Run(
     IRunnableObject *iface,
     LPBINDCTX pbc)
 {
@@ -604,13 +604,13 @@ HRESULT WINAPI OleObjectRunnable_Run(
     return S_OK;
 }
 
-BOOL WINAPI OleObjectRunnable_IsRunning(IRunnableObject *iface)
+static BOOL WINAPI OleObjectRunnable_IsRunning(IRunnableObject *iface)
 {
     CHECK_EXPECTED_METHOD("OleObjectRunnable_IsRunning");
     return TRUE;
 }
 
-HRESULT WINAPI OleObjectRunnable_LockRunning(
+static HRESULT WINAPI OleObjectRunnable_LockRunning(
     IRunnableObject *iface,
     BOOL fLock,
     BOOL fLastUnlockCloses)
@@ -619,7 +619,7 @@ HRESULT WINAPI OleObjectRunnable_LockRunning(
     return S_OK;
 }
 
-HRESULT WINAPI OleObjectRunnable_SetContainedObject(
+static HRESULT WINAPI OleObjectRunnable_SetContainedObject(
     IRunnableObject *iface,
     BOOL fContained)
 {

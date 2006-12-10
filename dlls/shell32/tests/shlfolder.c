@@ -1016,11 +1016,11 @@ static const IPropertyBagVtbl InitPropertyBag_IPropertyBagVtbl = {
     InitPropertyBag_IPropertyBag_Write
 };
 
-struct IPropertyBag InitPropertyBag = {
+static struct IPropertyBag InitPropertyBag = {
     &InitPropertyBag_IPropertyBagVtbl
 };
 
-void test_FolderShortcut(void) {
+static void test_FolderShortcut(void) {
     IPersistPropertyBag *pPersistPropertyBag;
     IShellFolder *pShellFolder, *pDesktopFolder;
     IPersistFolder3 *pPersistFolder3;
@@ -1210,7 +1210,7 @@ struct FileStructW {
 };
 #include "poppack.h"
 
-void test_ITEMIDLIST_format(void) {
+static void test_ITEMIDLIST_format(void) {
     WCHAR wszPersonal[MAX_PATH];
     LPSHELLFOLDER psfDesktop, psfPersonal;
     LPITEMIDLIST pidlPersonal, pidlFile;

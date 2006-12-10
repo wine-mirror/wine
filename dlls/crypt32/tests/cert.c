@@ -1553,7 +1553,7 @@ static const BYTE int5[] = { 0x7f };
 static const BYTE int6[] = { 0x80, 0x00, 0x00, 0x00 };
 static const BYTE int7[] = { 0x80, 0x00 };
 
-struct IntBlobTest
+static struct IntBlobTest
 {
     CRYPT_INTEGER_BLOB blob1;
     CRYPT_INTEGER_BLOB blob2;
@@ -1662,7 +1662,7 @@ static void testHashPublicKeyInfo(void)
     }
 }
 
-void testCompareCert(void)
+static void testCompareCert(void)
 {
     CERT_INFO info1 = { 0 }, info2 = { 0 };
     BOOL ret;

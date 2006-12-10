@@ -3155,7 +3155,7 @@ static void test_update(void)
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 }
 
-void test_special_tables(void)
+static void test_special_tables(void)
 {
     const char *query;
     MSIHANDLE hdb = 0;

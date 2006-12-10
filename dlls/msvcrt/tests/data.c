@@ -36,7 +36,7 @@ static unsigned int (*p_initterm)(_INITTERMFUN *start, _INITTERMFUN *end);
 
 static int callbacked;
 
-void initcallback(void)
+static void initcallback(void)
 {
    callbacked++;
 }
@@ -47,7 +47,7 @@ void initcallback(void)
     ok(expected == rc, "_initterm: return result mismatch: got %i, expected %i\n", rc, expected); \
     ok(expected == callbacked,"_initterm: callbacks count mismatch: got %i, expected %i\n", callbacked, expected);
 
-void test_initterm(void)
+static void test_initterm(void)
 {
     int i;
     int rc;

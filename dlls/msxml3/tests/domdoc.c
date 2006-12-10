@@ -99,7 +99,7 @@ static const WCHAR szstr2[] = { 's','t','r','2',0 };
 static const WCHAR szstar[] = { '*',0 };
 static const WCHAR szfn1_txt[] = {'f','n','1','.','t','x','t',0};
 
-void test_domdoc( void )
+static void test_domdoc( void )
 {
     HRESULT r;
     IXMLDOMDocument *doc = NULL;
@@ -269,7 +269,7 @@ void test_domdoc( void )
 
 }
 
-void test_domnode( void )
+static void test_domnode( void )
 {
     HRESULT r;
     IXMLDOMDocument *doc = NULL, *owner = NULL;

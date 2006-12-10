@@ -1331,7 +1331,7 @@ static int get_tmheight( LOGFONTA *plf, int flag)
     return tm.tmHeight + (flag ? tm.tmExternalLeading : 0);
 }
 
-void test_GetSystemMetrics( void);
+static void test_GetSystemMetrics( void);
 
 static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
 {
@@ -2234,7 +2234,7 @@ static LONG _GdiGetCharDimensions(HDC hdc, LPTEXTMETRICA lptm, LONG *height)
 
 /* get text metrics and/or "average" char width of the specified logfont
  * for the specified dc */
-void get_text_metr_size( HDC hdc, LOGFONTA *plf, TEXTMETRICA * ptm, UINT *psz)
+static void get_text_metr_size( HDC hdc, LOGFONTA *plf, TEXTMETRICA * ptm, UINT *psz)
 {
     HFONT hfont, hfontsav;
     TEXTMETRICA tm;
@@ -2282,7 +2282,7 @@ static UINT smcxsmsize = 999999999;
     ok( !( exp1 != act && exp2 != act && exp3 != act),"GetSystemMetrics(%s): expected %d or %d or %d actual %d\n", #i, exp1, exp2, exp3, act);\
 }
 
-void test_GetSystemMetrics( void)
+static void test_GetSystemMetrics( void)
 {
     TEXTMETRICA tmMenuFont;
     UINT IconSpacing, IconVerticalSpacing;

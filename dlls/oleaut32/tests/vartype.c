@@ -67,15 +67,6 @@ static HMODULE hOleaut32;
 #define IS_MODERN_VTYPE(vt) (vt==VT_VARIANT||vt==VT_DECIMAL|| \
     vt==VT_I1||vt==VT_UI2||vt==VT_UI4||vt == VT_INT||vt == VT_UINT)
 
-/* Macro for setting typ and initializing */
-/* First some dummy definitions*/
-int val_empty, val_null; 
-
-#define V_EMPTY(x) val_empty
-#define V_NULL(x) val_null
-
-#define VARINIT( A, type, value)  V_VT(A) = VT##type; V##type(A) = value
-
 /* Macros for converting and testing results */
 #define CONVVARS(typ) HRESULT hres; CONV_TYPE out; typ in
 

@@ -877,7 +877,7 @@ do { \
     edit_pos_ok(test_left, format_rect.left - left_margin, left); \
 } while(0)
 
-void test_text_position_style(DWORD style)
+static void test_text_position_style(DWORD style)
 {
     HWND hwEdit;
     HFONT font, oldFont;
@@ -995,7 +995,7 @@ void test_text_position_style(DWORD style)
     DestroyWindow(hwEdit);
 }
 
-void test_text_position(void)
+static void test_text_position(void)
 {
     trace("EDIT: Text position (Single line)\n");
     test_text_position_style(ES_AUTOHSCROLL | ES_AUTOVSCROLL);

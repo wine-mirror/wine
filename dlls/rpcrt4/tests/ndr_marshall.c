@@ -33,13 +33,13 @@
 
 static int my_alloc_called;
 static int my_free_called;
-void * CALLBACK my_alloc(size_t size)
+static void * CALLBACK my_alloc(size_t size)
 {
     my_alloc_called++;
     return NdrOleAllocate(size);
 }
 
-void CALLBACK my_free(void *ptr)
+static void CALLBACK my_free(void *ptr)
 {
     my_free_called++;
     NdrOleFree(ptr);

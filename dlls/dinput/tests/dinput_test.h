@@ -16,5 +16,4 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-extern HWND get_hwnd(void);
 extern const char * get_file_version(const char * file_name);

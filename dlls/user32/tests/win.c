@@ -98,7 +98,7 @@ static void check_parents( HWND hwnd, HWND ga_parent, HWND gwl_parent, HWND get_
     }
 }
 
-BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam) 
+static BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
 {
     (*(LPINT)lParam)++;
     trace("EnumChildProc on %p\n", hwndChild);
@@ -107,7 +107,7 @@ BOOL CALLBACK EnumChildProc( HWND hwndChild, LPARAM lParam)
 }
 
 /* will search for the given window */
-BOOL CALLBACK EnumChildProc1( HWND hwndChild, LPARAM lParam) 
+static BOOL CALLBACK EnumChildProc1( HWND hwndChild, LPARAM lParam)
 {
     trace("EnumChildProc1 on %p\n", hwndChild);
     if ((HWND)lParam == hwndChild) return FALSE;

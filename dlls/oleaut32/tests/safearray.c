@@ -64,7 +64,7 @@ static SAFEARRAY* (WINAPI *pSafeArrayCreateVector)(VARTYPE,LONG,ULONG);
 /* Have the decimal type? */
 #define HAVE_OLEAUT32_DECIMAL HAVE_FUNC(VarDecAdd)
 /* Have INT_PTR/UINT_PTR type? */
-BOOL HAVE_OLEAUT32_INT_PTR;
+static BOOL HAVE_OLEAUT32_INT_PTR;
 
 /* very old version? */
 #define IS_ANCIENT (!HAVE_FUNC(VarI1FromI2))

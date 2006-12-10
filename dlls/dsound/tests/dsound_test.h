@@ -62,5 +62,4 @@ extern void test_buffer8(LPDIRECTSOUND8,LPDIRECTSOUNDBUFFER*,
 extern const char * getDSBCAPS(DWORD xmask);
 extern int align(int length, int align);
 extern const char * get_file_version(const char * file_name);
-extern const char * get_format_str(WORD format);
 extern const char * format_string(const WAVEFORMATEX* wfx);

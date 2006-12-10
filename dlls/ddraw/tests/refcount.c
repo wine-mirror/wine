@@ -37,7 +37,7 @@ static void init_function_pointers(void)
     }
 }
 
-unsigned long getRefcount(IUnknown *iface)
+static unsigned long getRefcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
     return IUnknown_Release(iface);

@@ -86,13 +86,13 @@ static struct {
         { NULL }
 };
 
-unsigned int MOD_maxid;
-RECT MOD_rc[MOD_NRMENUS];
-int MOD_avec, MOD_hic;
-int MOD_odheight;
-SIZE MODsizes[MOD_NRMENUS]= { {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE},
+static unsigned int MOD_maxid;
+static RECT MOD_rc[MOD_NRMENUS];
+static int MOD_avec, MOD_hic;
+static int MOD_odheight;
+static SIZE MODsizes[MOD_NRMENUS]= { {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE},
     {MOD_SIZE, MOD_SIZE},{MOD_SIZE, MOD_SIZE}};
-int MOD_GotDrawItemMsg = FALSE;
+static int MOD_GotDrawItemMsg = FALSE;
 /* wndproc used by test_menu_ownerdraw() */
 static LRESULT WINAPI menu_ownerdraw_wnd_proc(HWND hwnd, UINT msg,
         WPARAM wparam, LPARAM lparam)
@@ -1259,10 +1259,10 @@ static void test_menu_iteminfo( void )
 }
 
 /* 
-   The following tests try to confirm the algorithm used to return the menu items 
+   The following tests try to confirm the algorithm used to return the menu items
    when there is a collision between a menu item and a popup menu
  */
-void test_menu_search_bycommand( void )
+static void test_menu_search_bycommand( void )
 {
     HMENU        hmenu, hmenuSub, hmenuSub2;
     MENUITEMINFO info;
@@ -1774,7 +1774,7 @@ static void test_menu_input(void) {
     DestroyWindow(hWnd);
 }
 
-void test_menu_flags( void )
+static void test_menu_flags( void )
 {
     HMENU hMenu, hPopupMenu;
 
@@ -1805,7 +1805,7 @@ void test_menu_flags( void )
     DestroyMenu(hMenu);
 }
 
-void test_menu_hilitemenuitem( void )
+static void test_menu_hilitemenuitem( void )
 {
     HMENU hMenu, hPopupMenu;
 

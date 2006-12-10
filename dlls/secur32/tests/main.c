@@ -47,7 +47,7 @@ static SECURITY_STATUS (SEC_ENTRY * pFreeCredentialsHandle)(PCredHandle);
 static SECURITY_STATUS (SEC_ENTRY * pDeleteSecurityContext)(PCtxtHandle);
 static SECURITY_STATUS (SEC_ENTRY * pQueryContextAttributesA)(PCtxtHandle, ULONG, PVOID);
 
-void InitFunctionPtrs(void)
+static void InitFunctionPtrs(void)
 {
     secdll = LoadLibraryA("secur32.dll");
     if(!secdll)

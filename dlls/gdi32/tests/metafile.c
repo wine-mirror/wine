@@ -304,10 +304,10 @@ static int CALLBACK savedc_emf_enum_proc(HDC hdc, HANDLETABLE *handle_table,
     }
 
 
-    return 1;        
+    return 1;
 }
 
-void test_SaveDC(void)
+static void test_SaveDC(void)
 {
     HDC hdcMetafile, hdcDisplay;
     HENHMETAFILE hMetafile;

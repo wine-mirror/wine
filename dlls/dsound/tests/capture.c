@@ -36,7 +36,7 @@
 static HRESULT (WINAPI *pDirectSoundCaptureCreate)(LPCGUID,LPDIRECTSOUNDCAPTURE*,LPUNKNOWN)=NULL;
 static HRESULT (WINAPI *pDirectSoundCaptureEnumerateA)(LPDSENUMCALLBACKA,LPVOID)=NULL;
 
-const char * get_format_str(WORD format)
+static const char * get_format_str(WORD format)
 {
     static char msg[32];
 #define WAVE_FORMAT(f) case f: return #f

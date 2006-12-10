@@ -729,9 +729,9 @@ static void test_dibsections(void)
 
     DeleteDC(hdcmem);
     ReleaseDC(0, hdc);
-}    
+}
 
-void test_mono_dibsection(void)
+static void test_mono_dibsection(void)
 {
     HDC hdc, memdc;
     HBITMAP old_bm, mono_ds;
