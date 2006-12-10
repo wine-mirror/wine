@@ -950,6 +950,57 @@ static void state_psizemax(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_pscale(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /* TODO: Group this with the viewport */
+    /*
+     * POINTSCALEENABLE controls how point size value is treated. If set to
+     * true, the point size is scaled with respect to height of viewport.
+     * When set to false point size is in pixels.
+     *
+     * http://msdn.microsoft.com/library/en-us/directx9_c/point_sprites.asp
+     */
+
+    /* Default values */
+    GLfloat att[3] = {1.0f, 0.0f, 0.0f};
+
+    /*
+     * Minimum valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
+     * This means that OpenGL will clamp really small point sizes to 1.0f.
+     * To correct for this we need to multiply by the scale factor when sizes
+     * are less than 1.0f. scale_factor =  1.0f / point_size.
+     */
+    GLfloat pointSize = *((float*)&stateblock->renderState[WINED3DRS_POINTSIZE]);
+    if(pointSize > 0.0f) {
+        GLfloat scaleFactor;
+
+        if(pointSize < 1.0f) {
+            scaleFactor = pointSize * pointSize;
+        } else {
+            scaleFactor = 1.0f;
+        }
+
+        if(stateblock->renderState[WINED3DRS_POINTSCALEENABLE]) {
+            att[0] = *((float*)&stateblock->renderState[WINED3DRS_POINTSCALE_A]) /
+                    (stateblock->viewport.Height * stateblock->viewport.Height * scaleFactor);
+            att[1] = *((float*)&stateblock->renderState[WINED3DRS_POINTSCALE_B]) /
+                    (stateblock->viewport.Height * stateblock->viewport.Height * scaleFactor);
+            att[2] = *((float*)&stateblock->renderState[WINED3DRS_POINTSCALE_C]) /
+                    (stateblock->viewport.Height * stateblock->viewport.Height * scaleFactor);
+        }
+    }
+
+    if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
+        GL_EXTCALL(glPointParameterfvARB)(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
+        checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...");
+    }
+    else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+        GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
+        checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...");
+    } else {
+        TRACE("POINT_PARAMETERS not supported in this version of opengl\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1112,10 +1163,10 @@ const struct StateEntry StateTable[] =
     { /*154, WINED3DRS_POINTSIZE                    */      STATE_RENDER(WINED3DRS_POINTSIZE),                  state_psize         },
     { /*155, WINED3DRS_POINTSIZE_MIN                */      STATE_RENDER(WINED3DRS_POINTSIZE_MIN),              state_psizemin      },
     { /*156, WINED3DRS_POINTSPRITEENABLE            */      STATE_RENDER(WINED3DRS_POINTSPRITEENABLE),          state_unknown       },
-    { /*157, WINED3DRS_POINTSCALEENABLE             */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
-    { /*158, WINED3DRS_POINTSCALE_A                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
-    { /*159, WINED3DRS_POINTSCALE_B                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
-    { /*160, WINED3DRS_POINTSCALE_C                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_unknown       },
+    { /*157, WINED3DRS_POINTSCALEENABLE             */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
+    { /*158, WINED3DRS_POINTSCALE_A                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
+    { /*159, WINED3DRS_POINTSCALE_B                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
+    { /*160, WINED3DRS_POINTSCALE_C                 */      STATE_RENDER(WINED3DRS_POINTSCALEENABLE),           state_pscale        },
     { /*161, WINED3DRS_MULTISAMPLEANTIALIAS         */      STATE_RENDER(WINED3DRS_MULTISAMPLEANTIALIAS),       state_unknown       },
     { /*162, WINED3DRS_MULTISAMPLEMASK              */      STATE_RENDER(WINED3DRS_MULTISAMPLEMASK),            state_unknown       },
     { /*163, WINED3DRS_PATCHEDGESTYLE               */      STATE_RENDER(WINED3DRS_PATCHEDGESTYLE),             state_unknown       },

@@ -3402,56 +3402,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
-    {
-        /*
-         * POINTSCALEENABLE controls how point size value is treated. If set to
-         * true, the point size is scaled with respect to height of viewport.
-         * When set to false point size is in pixels.
-         *
-         * http://msdn.microsoft.com/library/en-us/directx9_c/point_sprites.asp
-         */
-
-        /* Default values */
-        GLfloat att[3] = {1.0f, 0.0f, 0.0f};
-
-        /*
-         * Minimum valid point size for OpenGL is 1.0f. For Direct3D it is 0.0f.
-         * This means that OpenGL will clamp really small point sizes to 1.0f.
-         * To correct for this we need to multiply by the scale factor when sizes
-         * are less than 1.0f. scale_factor =  1.0f / point_size.
-         */
-        GLfloat pointSize = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSIZE]);
-        if(pointSize > 0.0f) {
-            GLfloat scaleFactor;
-
-            if(pointSize < 1.0f) {
-                scaleFactor = pointSize * pointSize;
-            } else {
-                scaleFactor = 1.0f;
-            }
-
-            if(This->stateBlock->renderState[WINED3DRS_POINTSCALEENABLE]) {
-                att[0] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_A]) /
-                    (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height * scaleFactor);
-                att[1] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_B]) /
-                    (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height * scaleFactor);
-                att[2] = *((float*)&This->stateBlock->renderState[WINED3DRS_POINTSCALE_C]) /
-                    (This->stateBlock->viewport.Height * This->stateBlock->viewport.Height * scaleFactor);
-            }
-        }
-
-        if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-            GL_EXTCALL(glPointParameterfvARB)(GL_POINT_DISTANCE_ATTENUATION_ARB, att);
-            checkGLcall("glPointParameterfvARB(GL_DISTANCE_ATTENUATION_ARB, ...");
-        }
-        else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-            GL_EXTCALL(glPointParameterfvEXT)(GL_DISTANCE_ATTENUATION_EXT, att);
-            checkGLcall("glPointParameterfvEXT(GL_DISTANCE_ATTENUATION_EXT, ...");
-        } else {
-            TRACE("POINT_PARAMETERS not supported in this version of opengl\n");
-        }
-	break;
-    }
     case WINED3DRS_COLORWRITEENABLE          :
       {
         TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
