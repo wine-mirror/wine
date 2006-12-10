@@ -3380,15 +3380,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_FOGEND                    :
     case WINED3DRS_RANGEFOGENABLE            :
     case WINED3DRS_FOGCOLOR                  :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_FOGDENSITY                :
-        {
-            tmpvalue.d = Value;
-            glFogfv(GL_FOG_DENSITY, &tmpvalue.f);
-            checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_VERTEXBLEND               :
