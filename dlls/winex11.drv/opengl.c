@@ -615,6 +615,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   int nAttribs = 0;
   unsigned cur = 0; 
   int pop;
+  int drawattrib = 0;
   int isColor = 0;
   int wantColorBits = 0;
   int sz_alpha = 0;
@@ -692,25 +693,27 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
     case WGL_DRAW_TO_BITMAP_ARB:
       pop = iWGLAttr[++cur];
       TRACE("pAttr[%d] = WGL_DRAW_TO_BITMAP_ARB: %d\n", cur, pop);
+      /* GLX_DRAWABLE_TYPE flags need to be OR'd together. See below. */
       if (pop) {
-        PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, GLX_PIXMAP_BIT);
-        TRACE("pAttr[%d] = GLX_DRAWABLE_TYPE: GLX_PIXMAP_BIT\n", cur);
+        drawattrib |= GLX_PIXMAP_BIT;
       }
       break;
 
     case WGL_DRAW_TO_WINDOW_ARB:
       pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = WGL_DRAW_TO_WINDOW_ARB: %d\n", cur, pop);
+      /* GLX_DRAWABLE_TYPE flags need to be OR'd together. See below. */
       if (pop) {
-        PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, GLX_WINDOW_BIT);
-        TRACE("pAttr[%d] = GLX_DRAWABLE_TYPE: GLX_WINDOW_BIT\n", cur);
+        drawattrib |= GLX_WINDOW_BIT;
       }
       break;
 
     case WGL_DRAW_TO_PBUFFER_ARB:
       pop = iWGLAttr[++cur];
+      TRACE("pAttr[%d] = WGL_DRAW_TO_PBUFFER_ARB: %d\n", cur, pop);
+      /* GLX_DRAWABLE_TYPE flags need to be OR'd together. See below. */
       if (pop) {
-        PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
-        TRACE("pAttr[%d] = GLX_DRAWABLE_TYPE: GLX_PBUFFER_BIT\n", cur);
+        drawattrib |= GLX_PBUFFER_BIT;
       }
       break;
 
@@ -756,7 +759,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
           return -1; /** error: don't support it */
         } else {
           PUSH2(oGLXAttr, GLX_X_RENDERABLE, pop);
-          PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
+          drawattrib |= GLX_PBUFFER_BIT;
         }
       }
       break ;
@@ -805,6 +808,12 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
     }
     PUSH2(oGLXAttr, GLX_BUFFER_SIZE, wantColorBits);
     TRACE("pAttr[%d] = WGL_COLOR_BITS_ARB: %d\n", cur, wantColorBits);
+  }
+
+  /* Apply the OR'd drawable type bitmask now. */
+  if (drawattrib) {
+    PUSH2(oGLXAttr, GLX_DRAWABLE_TYPE, drawattrib);
+    TRACE("pAttr[?] = GLX_DRAWABLE_TYPE: %#x\n", drawattrib);
   }
 
   return nAttribs;
@@ -2433,6 +2442,7 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 curCfg = cfgs[fmt_index];
             hTest = pglXGetFBConfigAttrib(gdi_display, curCfg, curGLXAttr, piValues + i);
             if (hTest) goto get_error;
+            curGLXAttr = 0;
         } else { 
             piValues[i] = GL_FALSE; 
         }
