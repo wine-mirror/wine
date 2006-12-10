@@ -810,6 +810,45 @@ static void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     checkGLcall("glFogf(GL_FOG_DENSITY, (float) Value)");
 }
 
+/* TODO: Merge with primitive type + init_materials()!! */
+static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
+
+    if (stateblock->renderState[WINED3DRS_COLORVERTEX]) {
+        TRACE("diff %d, amb %d, emis %d, spec %d\n",
+              stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE],
+              stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE],
+              stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE],
+              stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE]);
+
+        if (stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
+            if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+                Parm = GL_AMBIENT_AND_DIFFUSE;
+            } else {
+                Parm = GL_DIFFUSE;
+            }
+        } else if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+            Parm = GL_AMBIENT;
+        } else if (stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
+            Parm = GL_EMISSION;
+        } else if (stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
+            Parm = GL_SPECULAR;
+        } else {
+            Parm = -1;
+        }
+
+        if (Parm == -1) {
+            if (stateblock->wineD3DDevice->tracking_color != DISABLED_TRACKING) stateblock->wineD3DDevice->tracking_color = NEEDS_DISABLE;
+        } else {
+            stateblock->wineD3DDevice->tracking_color = NEEDS_TRACKING;
+            stateblock->wineD3DDevice->tracking_parm  = Parm;
+        }
+
+    } else {
+        if (stateblock->wineD3DDevice->tracking_color != DISABLED_TRACKING) stateblock->wineD3DDevice->tracking_color = NEEDS_DISABLE;
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -956,14 +995,14 @@ const struct StateEntry StateTable[] =
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_unknown       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       },
     { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
-    { /*141, WINED3DRS_COLORVERTEX                  */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_unknown       },
+    { /*141, WINED3DRS_COLORVERTEX                  */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*142, WINED3DRS_LOCALVIEWER                  */      STATE_RENDER(WINED3DRS_LOCALVIEWER),                state_unknown       },
     { /*143, WINED3DRS_NORMALIZENORMALS             */      STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           state_unknown       },
     { /*144, WINED3DRS_COLORKEYBLENDENABLE          */      STATE_RENDER(WINED3DRS_COLORKEYBLENDENABLE),        state_unknown       },
-    { /*145, WINED3DRS_DIFFUSEMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_unknown       },
-    { /*146, WINED3DRS_SPECULARMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_unknown       },
-    { /*147, WINED3DRS_AMBIENTMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_unknown       },
-    { /*148, WINED3DRS_EMISSIVEMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_unknown       },
+    { /*145, WINED3DRS_DIFFUSEMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
+    { /*146, WINED3DRS_SPECULARMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
+    { /*147, WINED3DRS_AMBIENTMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
+    { /*148, WINED3DRS_EMISSIVEMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*149, Undefined                              */      0,                                                  state_undefined     },
     { /*150, Undefined                              */      0,                                                  state_undefined     },
     { /*151, WINED3DRS_VERTEXBLEND                  */      0,                                                  state_nogl          },

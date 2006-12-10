@@ -3384,51 +3384,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_VERTEXBLEND               :
     case WINED3DRS_TWEENFACTOR               :
     case WINED3DRS_INDEXEDVERTEXBLENDENABLE  :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_COLORVERTEX               :
     case WINED3DRS_DIFFUSEMATERIALSOURCE     :
     case WINED3DRS_SPECULARMATERIALSOURCE    :
     case WINED3DRS_AMBIENTMATERIALSOURCE     :
     case WINED3DRS_EMISSIVEMATERIALSOURCE    :
-        {
-            GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
-
-            if (This->stateBlock->renderState[WINED3DRS_COLORVERTEX]) {
-                TRACE("diff %d, amb %d, emis %d, spec %d\n",
-                      This->stateBlock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE],
-                      This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE],
-                      This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE],
-                      This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE]);
-
-                if (This->stateBlock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
-                    if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
-                        Parm = GL_AMBIENT_AND_DIFFUSE;
-                    } else {
-                        Parm = GL_DIFFUSE;
-                    }
-                } else if (This->stateBlock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
-                    Parm = GL_AMBIENT;
-                } else if (This->stateBlock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
-                    Parm = GL_EMISSION;
-                } else if (This->stateBlock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
-                    Parm = GL_SPECULAR;
-                } else {
-                    Parm = -1;
-                }
-
-                if (Parm == -1) {
-                    if (This->tracking_color != DISABLED_TRACKING) This->tracking_color = NEEDS_DISABLE;
-                } else {
-                    This->tracking_color = NEEDS_TRACKING;
-                    This->tracking_parm  = Parm;
-                }
-
-            } else {
-                if (This->tracking_color != DISABLED_TRACKING) This->tracking_color = NEEDS_DISABLE;
-            }
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_LINEPATTERN               :
