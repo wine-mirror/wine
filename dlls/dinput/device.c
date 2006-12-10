@@ -327,8 +327,8 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == DIDFT_GETINSTANCE(wine_format->rgodf[i].dwType)))
 		&&
 		( /* Then if the asked type matches the one Wine provides */
-		 wine_format->rgodf[i].dwType & asked_format->rgodf[j].dwType)) {
-		
+                 DIDFT_GETTYPE(asked_format->rgodf[j].dwType) & wine_format->rgodf[i].dwType))
+            {
 		done[j] = 1;
 		
 		TRACE("Matching :\n");
@@ -1009,6 +1009,9 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Escape(
 HRESULT WINAPI IDirectInputDevice2AImpl_Poll(
 	LPDIRECTINPUTDEVICE8A iface)
 {
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+
+    if (!This->acquired) return DIERR_NOTACQUIRED;
     /* Because wine devices do not need to be polled, just return DI_NOEFFECT */
     return DI_NOEFFECT;
 }

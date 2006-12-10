@@ -113,7 +113,6 @@ struct JoystickImpl
 	int				axes;
 	int				buttons;
 	POV				povs[4];
-	BOOL				overflow;
 };
 
 static GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
@@ -495,7 +494,6 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->base.lpVtbl = jvt;
     newDevice->base.ref = 1;
     newDevice->dinput = dinput;
-    newDevice->overflow = FALSE;
     CopyMemory(&newDevice->base.guid, rguid, sizeof(*rguid));
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)"DINPUT_joystick";
