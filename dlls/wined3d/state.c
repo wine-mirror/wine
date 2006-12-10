@@ -935,6 +935,21 @@ static void state_psizemin(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_psizemax(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
+        tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
+        GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
+        checkGLcall("glPointParameterfEXT(...);");
+    } else {
+        FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1106,7 +1121,7 @@ const struct StateEntry StateTable[] =
     { /*163, WINED3DRS_PATCHEDGESTYLE               */      STATE_RENDER(WINED3DRS_PATCHEDGESTYLE),             state_unknown       },
     { /*164, WINED3DRS_PATCHSEGMENTS                */      STATE_RENDER(WINED3DRS_PATCHSEGMENTS),              state_unknown       },
     { /*165, WINED3DRS_DEBUGMONITORTOKEN            */      STATE_RENDER(WINED3DRS_DEBUGMONITORTOKEN),          state_unknown       },
-    { /*166, WINED3DRS_POINTSIZE_MAX                */      STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_unknown       },
+    { /*166, WINED3DRS_POINTSIZE_MAX                */      STATE_RENDER(WINED3DRS_POINTSIZE_MAX),              state_psizemax      },
     { /*167, WINED3DRS_INDEXEDVERTEXBLENDENABLE     */      0,                                                  state_nogl          },
     { /*168, WINED3DRS_COLORWRITEENABLE             */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_unknown       },
     { /*169, Undefined                              */      0,                                                  state_undefined     },

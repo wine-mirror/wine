@@ -3394,23 +3394,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_NORMALIZENORMALS          :
     case WINED3DRS_POINTSIZE                 :
     case WINED3DRS_POINTSIZE_MIN             :
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_POINTSIZE_MAX             :
-        if (GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-          tmpvalue.d = Value;
-          GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
-          checkGLcall("glPointParameterfEXT(...);");
-        } else {
-          FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl\n");
-        }
-        break;
-
     case WINED3DRS_POINTSCALE_A              :
     case WINED3DRS_POINTSCALE_B              :
     case WINED3DRS_POINTSCALE_C              :
     case WINED3DRS_POINTSCALEENABLE          :
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
+        break;
+
     {
         /*
          * POINTSCALEENABLE controls how point size value is treated. If set to
