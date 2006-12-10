@@ -3405,18 +3405,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_COLORWRITEENABLE3         :
     case WINED3DRS_LOCALVIEWER               :
     case WINED3DRS_LASTPIXEL                 :
+    case WINED3DRS_SOFTWAREVERTEXPROCESSING  :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
-
-    case WINED3DRS_SOFTWAREVERTEXPROCESSING  :
-      {
-        if (Value) {
-          TRACE("Software Processing Enabled\n");
-        } else {
-          TRACE("Software Processing Disabled\n");
-        }
-      }
-      break;
 
       /** not supported */
     case WINED3DRS_ZVISIBLE                  :
