@@ -3403,16 +3403,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_COLORWRITEENABLE1         :
     case WINED3DRS_COLORWRITEENABLE2         :
     case WINED3DRS_COLORWRITEENABLE3         :
+    case WINED3DRS_LOCALVIEWER               :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
-
-    case WINED3DRS_LOCALVIEWER               :
-      {
-        GLint state = (Value) ? 1 : 0;
-        TRACE("Local Viewer Enable to %ul\n", (BOOL) Value);
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, state);
-      }
-      break;
 
     case WINED3DRS_LASTPIXEL                 :
       {
