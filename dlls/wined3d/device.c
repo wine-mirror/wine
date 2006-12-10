@@ -3425,6 +3425,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_WRAP15                    :
     case WINED3DRS_MULTISAMPLEANTIALIAS      :
     case WINED3DRS_SCISSORTESTENABLE :
+    case WINED3DRS_SLOPESCALEDEPTHBIAS :
+    case WINED3DRS_DEPTHBIAS :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3434,51 +3436,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_SLOPESCALEDEPTHBIAS :
-    {
-        if(Value) {
-            tmpvalue.d = Value;
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
-            glPolygonOffset(tmpvalue.f, *((float*)&This->stateBlock->renderState[WINED3DRS_DEPTHBIAS]));
-            checkGLcall("glPolygonOffset(...)");
-        } else {
-            glDisable(GL_POLYGON_OFFSET_FILL);
-            checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
-        }
-        break;
-    }
-    {
-        if(Value) {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glEnable(GL_BLEND);
-            checkGLcall("glEnable(GL_BLEND)");
-            glEnable(GL_LINE_SMOOTH);
-            checkGLcall("glEnable(GL_LINE_SMOOTH)");
-        } else {
-            glDisable(GL_BLEND);
-            checkGLcall("glDisable(GL_BLEND)");
-            glDisable(GL_LINE_SMOOTH);
-            checkGLcall("glDisable(GL_LINE_SMOOTH)");
-        }
-        break;
-    }
-
-    case WINED3DRS_DEPTHBIAS :
-    {
-        if(Value) {
-            tmpvalue.d = Value;
-            glEnable(GL_POLYGON_OFFSET_FILL);
-            checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
-            glPolygonOffset(*((float*)&This->stateBlock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS]), tmpvalue.f);
-            checkGLcall("glPolygonOffset(...)");
-        } else {
-            glDisable(GL_POLYGON_OFFSET_FILL);
-            checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
-        }
-        break;
-    }
 
     case WINED3DRS_TEXTUREPERSPECTIVE    :
     {

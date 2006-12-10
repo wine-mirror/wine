@@ -1125,6 +1125,25 @@ static void state_scissor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_depthbias(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    if(stateblock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS] ||
+       stateblock->renderState[WINED3DRS_DEPTHBIAS]) {
+        tmpvalue.d = stateblock->renderState[WINED3DRS_SLOPESCALEDEPTHBIAS];
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        checkGLcall("glEnable(GL_POLYGON_OFFSET_FILL)");
+        glPolygonOffset(tmpvalue.f, *((float*)&stateblock->renderState[WINED3DRS_DEPTHBIAS]));
+        checkGLcall("glPolygonOffset(...)");
+    } else {
+        glDisable(GL_POLYGON_OFFSET_FILL);
+        checkGLcall("glDisable(GL_POLYGON_OFFSET_FILL)");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1307,7 +1326,7 @@ const struct StateEntry StateTable[] =
       /*172, WINED3DRS_POSITIONORDER                */      /* Value assigned to 2 state names */
       /*173, WINED3DRS_NORMALORDER                  */      /* Value assigned to 2 state names */
     { /*174, WINED3DRS_SCISSORTESTENABLE            */      STATE_RENDER(WINED3DRS_SCISSORTESTENABLE),          state_scissor       },
-    { /*175, WINED3DRS_SLOPESCALEDEPTHBIAS          */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },
+    { /*175, WINED3DRS_SLOPESCALEDEPTHBIAS          */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     },
     { /*176, WINED3DRS_ANTIALIASEDLINEENABLE        */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /*177, undefined                              */      0,                                                  state_undefined     },
     { /*178, WINED3DRS_MINTESSELLATIONLEVEL         */      STATE_RENDER(WINED3DRS_ENABLEADAPTIVETESSELLATION), state_unknown       },
@@ -1327,7 +1346,7 @@ const struct StateEntry StateTable[] =
     { /*192, WINED3DRS_COLORWRITEENABLE3            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /*194, WINED3DRS_SRGBWRITEENABLE              */      0,                                                  state_nogl          },
-    { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_unknown       },
+    { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     },
     { /*196, undefined                              */      0,                                                  state_undefined     },
     { /*197, undefined                              */      0,                                                  state_undefined     },
     { /*198, WINED3DRS_WRAP8                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
