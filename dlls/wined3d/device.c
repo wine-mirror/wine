@@ -3391,17 +3391,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_EMISSIVEMATERIALSOURCE    :
     case WINED3DRS_LINEPATTERN               :
     case WINED3DRS_ZBIAS                     : /* D3D8 only */
-        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-        break;
-
     case WINED3DRS_NORMALIZENORMALS          :
-        if (Value) {
-            glEnable(GL_NORMALIZE);
-            checkGLcall("glEnable(GL_NORMALIZE);");
-        } else {
-            glDisable(GL_NORMALIZE);
-            checkGLcall("glDisable(GL_NORMALIZE);");
-        }
+        StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
     case WINED3DRS_POINTSIZE                 :

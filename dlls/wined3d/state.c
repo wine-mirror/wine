@@ -896,6 +896,17 @@ static void state_zbias(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+
+static void state_normalize(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if (stateblock->renderState[WINED3DRS_NORMALIZENORMALS]) {
+        glEnable(GL_NORMALIZE);
+        checkGLcall("glEnable(GL_NORMALIZE);");
+    } else {
+        glDisable(GL_NORMALIZE);
+        checkGLcall("glDisable(GL_NORMALIZE);");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1044,7 +1055,7 @@ const struct StateEntry StateTable[] =
     { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /*141, WINED3DRS_COLORVERTEX                  */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*142, WINED3DRS_LOCALVIEWER                  */      STATE_RENDER(WINED3DRS_LOCALVIEWER),                state_unknown       },
-    { /*143, WINED3DRS_NORMALIZENORMALS             */      STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           state_unknown       },
+    { /*143, WINED3DRS_NORMALIZENORMALS             */      STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           state_normalize     },
     { /*144, WINED3DRS_COLORKEYBLENDENABLE          */      STATE_RENDER(WINED3DRS_COLORKEYBLENDENABLE),        state_unknown       },
     { /*145, WINED3DRS_DIFFUSEMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*146, WINED3DRS_SPECULARMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
