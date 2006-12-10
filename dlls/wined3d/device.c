@@ -3428,6 +3428,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_PATCHEDGESTYLE :
     case WINED3DRS_PATCHSEGMENTS :
     case WINED3DRS_DEBUGMONITORTOKEN :
+    case WINED3DRS_POSITIONDEGREE :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3437,13 +3438,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_POSITIONDEGREE :
-    {
-        if(WINED3DDEGREE_CUBIC != Value)
-            ERR("(%p)->(%s,%d) not yet implemented\n", This, debug_d3drenderstate(State), Value);
-        break;
-    }
 
     case WINED3DRS_NORMALDEGREE :
     {

@@ -1190,6 +1190,12 @@ static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock)
         ERR("(WINED3DRS_PATCHSEGMENTS,%d) not yet implemented\n", tmpvalue.d);
 }
 
+static void state_positiondegree(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    TRACE("Stub\n");
+    if (stateblock->renderState[WINED3DRS_POSITIONDEGREE] != D3DDEGREE_CUBIC)
+        ERR("(WINED3DRS_POSITIONDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_POSITIONDEGREE]);
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1367,7 +1373,7 @@ const struct StateEntry StateTable[] =
     { /*169, Undefined                              */      0,                                                  state_undefined     },
     { /*170, WINED3DRS_TWEENFACTOR                  */      0,                                                  state_nogl          },
     { /*171, WINED3DRS_BLENDOP                      */      STATE_RENDER(WINED3DRS_BLENDOP),                    state_blendop       },
-    { /*172, WINED3DRS_POSITIONDEGREE               */      STATE_RENDER(WINED3DRS_POSITIONDEGREE),             state_unknown       },
+    { /*172, WINED3DRS_POSITIONDEGREE               */      STATE_RENDER(WINED3DRS_POSITIONDEGREE),             state_positiondegree},
     { /*173, WINED3DRS_NORMALDEGREE                 */      STATE_RENDER(WINED3DRS_NORMALDEGREE),               state_unknown       },
       /*172, WINED3DRS_POSITIONORDER                */      /* Value assigned to 2 state names */
       /*173, WINED3DRS_NORMALORDER                  */      /* Value assigned to 2 state names */
