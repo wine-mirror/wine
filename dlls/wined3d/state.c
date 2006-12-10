@@ -1208,6 +1208,12 @@ static void state_tessellation(DWORD state, IWineD3DStateBlockImpl *stateblock) 
         FIXME("(WINED3DRS_ENABLEADAPTIVETESSELLATION,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_ENABLEADAPTIVETESSELLATION]);
 }
 
+
+static void state_srgbwrite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_SRGBWRITEENABLE])
+        ERR("Render state WINED3DRS_SRGBWRITEENABLE not yet implemented\n");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1409,7 +1415,7 @@ const struct StateEntry StateTable[] =
     { /*191, WINED3DRS_COLORWRITEENABLE2            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*192, WINED3DRS_COLORWRITEENABLE3            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
-    { /*194, WINED3DRS_SRGBWRITEENABLE              */      0,                                                  state_nogl          },
+    { /*194, WINED3DRS_SRGBWRITEENABLE              */      STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            state_srgbwrite     },
     { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     },
     { /*196, undefined                              */      0,                                                  state_undefined     },
     { /*197, undefined                              */      0,                                                  state_undefined     },
