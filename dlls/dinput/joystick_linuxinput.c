@@ -136,7 +136,6 @@ struct JoystickImpl
 
 	int				joyfd;
 
-	LPDIDATAFORMAT			internal_df;
 	LPDIDATAFORMAT			df;
 	DataFormat			*transform;	/* wine to user format converter */
 	int				*offsets;	/* object offsets */
@@ -408,27 +407,13 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     goto FAILED;
   CopyMemory(newDevice->df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
 
-  /* no do the same for the internal df */
-  newDevice->internal_df = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwSize);
-  if (newDevice->internal_df == 0)
-    goto FAILED;
-  CopyMemory(newDevice->internal_df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
-
-  /* copy default objects */
-  newDevice->internal_df->rgodf = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
-  if (newDevice->internal_df->rgodf == 0)
-    goto FAILED;
-  CopyMemory(newDevice->internal_df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
-
   /* create an offsets array */
   newDevice->offsets = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,c_dfDIJoystick2.dwNumObjs*sizeof(int));
   if (newDevice->offsets == 0)
     goto FAILED;
 
-  calculate_ids(newDevice->internal_df);
-
   /* create the default transform filter */
-  newDevice->transform = create_DataFormat(newDevice->internal_df, newDevice->df, newDevice->offsets);
+  newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->df, newDevice->offsets);
   calculate_ids(newDevice->df);
 
   return newDevice;
@@ -436,8 +421,6 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 FAILED:
   HeapFree(GetProcessHeap(),0,newDevice->df->rgodf);
   HeapFree(GetProcessHeap(),0,newDevice->df);
-  HeapFree(GetProcessHeap(),0,newDevice->internal_df->rgodf);
-  HeapFree(GetProcessHeap(),0,newDevice->internal_df);
   HeapFree(GetProcessHeap(),0,newDevice);
   return NULL;
 }
@@ -593,7 +576,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   }
   memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
 
-  This->transform = create_DataFormat(This->internal_df, This->df, This->offsets);
+  This->transform = create_DataFormat(&c_dfDIJoystick2, This->df, This->offsets);
   calculate_ids(This->df);
 
   return DI_OK;
