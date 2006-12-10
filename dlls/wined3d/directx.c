@@ -1391,7 +1391,6 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithRenderFmt(Display *display, 
     if (type & GLX_COLOR_INDEX_BIT && 8 == buf_sz) return TRUE;
     break;
   default:
-    ERR("unsupported format %s\n", debug_d3dformat(Format));
     break;
   }
   return FALSE;
@@ -1409,7 +1408,6 @@ switch (Format) {
   case WINED3DFMT_P8:
 return TRUE;
   default:
-    ERR("unsupported format %s\n", debug_d3dformat(Format));
     break;
   }
 return FALSE;
@@ -1451,7 +1449,6 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(Display *display, G
     if (32 == db) return TRUE;
     break;
   default:
-    ERR("unsupported format %s\n", debug_d3dformat(Format));
     break;
   }
   return FALSE;
@@ -1468,7 +1465,6 @@ static BOOL IWineD3DImpl_IsGLXFBConfigCompatibleWithDepthFmt(Display *display, G
   case WINED3DFMT_D32F_LOCKABLE:
     return TRUE;
   default:
-    ERR("unsupported format %s\n", debug_d3dformat(Format));
     break;
   }
   return FALSE;
@@ -1510,6 +1506,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDepthStencilMatch(IWineD3D *iface, UINT 
             }
         }
         XFree(cfgs);
+        if(hr != WINED3D_OK)
+            ERR("unsupported format pair: %s and %s\n", debug_d3dformat(RenderTargetFormat), debug_d3dformat(DepthStencilFormat));
     } else {
         ERR_(d3d_caps)("returning WINED3D_OK even so CreateFakeGLContext or glXGetFBConfigs failed\n");
         hr = WINED3D_OK;
@@ -1587,6 +1585,8 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceType(IWineD3D *iface, UINT Adapter
           }
       }
       if(cfgs) XFree(cfgs);
+      if(hr != WINED3D_OK)
+          ERR("unsupported format %s\n", debug_d3dformat(DisplayFormat));
       WineD3D_ReleaseFakeGLContext();
     }
 
