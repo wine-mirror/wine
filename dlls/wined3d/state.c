@@ -1144,6 +1144,16 @@ static void state_depthbias(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void state_perspective(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if (stateblock->renderState[WINED3DRS_TEXTUREPERSPECTIVE]) {
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+        checkGLcall("glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)");
+    } else {
+        glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
+        checkGLcall("glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST)");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1151,7 +1161,7 @@ const struct StateEntry StateTable[] =
     { /* 1,  WINED3DRS_TEXTUREHANDLE                */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 2,  WINED3DRS_ANTIALIAS                    */      STATE_RENDER(WINED3DRS_ANTIALIAS),                  state_unknown       },
     { /* 3,  WINED3DRS_TEXTUREADDRESS               */      0 /* Handled in ddraw */,                           state_undefined     },
-    { /* 4,  WINED3DRS_TEXTUREPERSPECTIVE           */      STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_unknown       },
+    { /* 4,  WINED3DRS_TEXTUREPERSPECTIVE           */      STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_perspective   },
     { /* 5,  WINED3DRS_WRAPU                        */      STATE_RENDER(WINED3DRS_WRAPU),                      state_unknown       },
     { /* 6,  WINED3DRS_WRAPV                        */      STATE_RENDER(WINED3DRS_WRAPV),                      state_unknown       },
     { /* 7,  WINED3DRS_ZENABLE                      */      STATE_RENDER(WINED3DRS_ZENABLE),                    state_zenable       },

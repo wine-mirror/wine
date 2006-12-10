@@ -3427,6 +3427,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_SCISSORTESTENABLE :
     case WINED3DRS_SLOPESCALEDEPTHBIAS :
     case WINED3DRS_DEPTHBIAS :
+    case WINED3DRS_TEXTUREPERSPECTIVE    :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
 
@@ -3436,15 +3437,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         LEAVE_GL();
         return WINED3DERR_INVALIDCALL;
       }
-
-    case WINED3DRS_TEXTUREPERSPECTIVE    :
-    {
-        if (Value)
-            glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-        else
-            glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
-        break;
-    }
 
     case WINED3DRS_STIPPLEDALPHA    :
     {
