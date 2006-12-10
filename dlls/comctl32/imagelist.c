@@ -1980,7 +1980,6 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 {
     ILHEAD	ilHead;
     HIMAGELIST	himl;
-    HBITMAP	hbmColor=0;
     int		i;
 
     TRACE("%p\n", pstm);
@@ -1994,7 +1993,6 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
 
     himl = ImageList_Create(ilHead.cx, ilHead.cy, ilHead.flags, ilHead.cCurImage, ilHead.cMaxImage);
     if (!himl) {
-	DeleteObject(hbmColor);
 	return NULL;
     }
     if (!_read_bitmap(himl, himl->hdcImage, pstm, ilHead.flags & ~ILC_MASK)) {
@@ -2003,14 +2001,10 @@ HIMAGELIST WINAPI ImageList_Read (LPSTREAM pstm)
     }
     if (ilHead.flags & ILC_MASK) {
 	if (!_read_bitmap(himl, himl->hdcMask, pstm, 0)) {
-	    DeleteObject(hbmColor);
 	    return NULL;
 	}
     }
 
-    SelectObject(himl->hdcImage, hbmColor);
-    DeleteObject(himl->hbmImage);
-    himl->hbmImage = hbmColor;
     himl->cCurImage = ilHead.cCurImage;
     himl->cMaxImage = ilHead.cMaxImage;
 
