@@ -353,14 +353,8 @@ DataFormat *create_DataFormat(const DIDATAFORMAT *wine_format, LPCDIDATAFORMAT a
 		else
 		    dt[index].size = sizeof(DWORD);
 		dt[index].offset_in = wine_format->rgodf[i].dwOfs;
-                if (asked_format->rgodf[j].dwOfs < next) {
-                    WARN("bad format: dwOfs=%d, changing to %d\n", asked_format->rgodf[j].dwOfs, next);
-		    dt[index].offset_out = next;
-		    offset[i] = next;
-                } else {
-		    dt[index].offset_out = asked_format->rgodf[j].dwOfs;
-                    offset[i] = asked_format->rgodf[j].dwOfs;
-                }
+                dt[index].offset_out = asked_format->rgodf[j].dwOfs;
+                offset[i] = asked_format->rgodf[j].dwOfs;
 		dt[index].value = 0;
                 next = next + dt[index].size;
 		
