@@ -140,7 +140,7 @@ inline static void* do_call_func1(void *func, void *_this)
   return (void*)retval;
 }
 
-inline static void* do_call_func2(void *func, void *_this, void* arg)
+inline static void* do_call_func2(void *func, void *_this, const void* arg)
 {
   volatile void* retval = 0;
   __asm
@@ -164,7 +164,7 @@ static void* do_call_func1(void *func, void *_this)
                         : "memory" );
   return ret;
 }
-static void* do_call_func2(void *func, void *_this, void* arg)
+static void* do_call_func2(void *func, void *_this, const void* arg)
 {
   void* ret;
   __asm__ __volatile__ ("pushl %2\n\tcall *%1"
@@ -176,7 +176,7 @@ static void* do_call_func2(void *func, void *_this, void* arg)
 #endif
 
 #define call_func1(x,y)   do_call_func1((void*)x,(void*)y)
-#define call_func2(x,y,z) do_call_func2((void*)x,(void*)y,(void*)z)
+#define call_func2(x,y,z) do_call_func2((void*)x,(void*)y,(const void*)z)
 
 /* Some exports are only available in later versions */
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(hMsvcrt,y)
