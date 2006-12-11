@@ -361,7 +361,7 @@
 @ stub SHInvokePrinterCommandW
 @ stdcall SHIsFileAvailableOffline(wstr ptr)
 @ stdcall SHLoadInProc(long)
-@ stub SHLoadNonloadedIconOverlayIdentifiers
+@ stdcall SHLoadNonloadedIconOverlayIdentifiers()
 @ stub SHPathPrepareForWriteA
 @ stub SHPathPrepareForWriteW
 @ stdcall SHQueryRecycleBinA(str ptr)

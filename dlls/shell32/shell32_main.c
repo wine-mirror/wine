@@ -1076,6 +1076,14 @@ void WINAPI FreeIconList( DWORD dw )
     FIXME("%x: stub\n",dw);
 }
 
+/*************************************************************************
+ * SHLoadNonloadedIconOverlayIdentifiers (SHELL32.@)
+ */
+HRESULT SHLoadNonloadedIconOverlayIdentifiers( VOID )
+{
+    FIXME("stub\n");
+    return S_OK;
+}
 
 /***********************************************************************
  * DllGetVersion [SHELL32.@]
