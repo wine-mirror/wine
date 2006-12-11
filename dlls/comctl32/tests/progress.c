@@ -29,14 +29,14 @@
 #include "wine/test.h"
 
 
-HWND hProgressParentWnd, hProgressWnd;
+static HWND hProgressParentWnd, hProgressWnd;
 static const char progressTestClass[] = "ProgressBarTestClass";
 
 
-LRESULT CALLBACK ProgressTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK ProgressTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
-    
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -52,7 +52,7 @@ static WNDPROC progress_wndproc;
 static BOOL erased;
 static RECT last_paint_rect;
 
-LRESULT CALLBACK ProgressSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK ProgressSubclassProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     if (msg == WM_PAINT)
     {

@@ -172,10 +172,10 @@ static void test_comboboxex(void) {
 
 }
 
-LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK ComboExTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
-    
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

@@ -28,7 +28,7 @@
 
 #include "wine/test.h"
 
-void test_monthcal(void)
+static void test_monthcal(void)
 {
     HWND hwnd;
     SYSTEMTIME st[2], st1[2];

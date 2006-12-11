@@ -32,11 +32,11 @@
 
 #include "wine/test.h"
 
-HWND hMainWnd;
-BOOL g_fBlockHotItemChange;
-BOOL g_fReceivedHotItemChange;
-BOOL g_fExpectedHotItemOld;
-BOOL g_fExpectedHotItemNew;
+static HWND hMainWnd;
+static BOOL g_fBlockHotItemChange;
+static BOOL g_fReceivedHotItemChange;
+static BOOL g_fExpectedHotItemOld;
+static BOOL g_fExpectedHotItemNew;
 
 #define check_rect(name, val, exp) ok(val.top == exp.top && val.bottom == exp.bottom && \
     val.left == exp.left && val.right == exp.right, "invalid rect (" name ") (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d)\n", \
@@ -147,7 +147,7 @@ static void rebuild_toolbar(HWND *hToolbar)
     ok(SendMessage(*hToolbar, WM_SETFONT, (WPARAM)GetStockObject(SYSTEM_FONT), 0)==1, "WM_SETFONT\n");
 }
 
-void rebuild_toolbar_with_buttons(HWND *hToolbar)
+static void rebuild_toolbar_with_buttons(HWND *hToolbar)
 {
     TBBUTTON buttons[5];
     rebuild_toolbar(hToolbar);
@@ -393,7 +393,7 @@ static void test_add_bitmap(void)
             "Too many string in table\n"); \
     }
 
-void test_add_string()
+static void test_add_string(void)
 {
     LPCSTR test1 = "a\0b\0";
     LPCSTR test2 = "|a|b||\0";
@@ -456,7 +456,7 @@ static void expect_hot_notify(int idold, int idnew)
     ok(g_fReceivedHotItemChange, "TBN_HOTITEMCHANGE not received\n"); \
     g_fExpectedHotItemOld = g_fExpectedHotItemNew = 0;
 
-void test_hotitem()
+static void test_hotitem(void)
 {
     HWND hToolbar = NULL;
     TBBUTTONINFO tbinfo;
@@ -551,7 +551,7 @@ void test_hotitem()
 
 #if 0  /* use this to generate more tests*/
 
-void dump_sizes(HWND hToolbar)
+static void dump_sizes(HWND hToolbar)
 {
     SIZE sz;
     RECT r;
@@ -583,7 +583,7 @@ typedef struct
     RECT rcButtons[100];
 } tbsize_result_t;
 
-tbsize_result_t tbsize_results[] = 
+static tbsize_result_t tbsize_results[] =
 {
   { {0, 0, 672, 26}, {100, 22}, 5, {
     {  0,   2,  23,  24}, { 23,   2,  46,  24}, { 46,   2,  54,  24},
@@ -687,7 +687,7 @@ tbsize_result_t tbsize_results[] =
   }, },
 };
 
-int tbsize_numtests = 0;
+static int tbsize_numtests = 0;
 
 #define check_sizes_todo(todomask) { \
         RECT rc; \
@@ -714,22 +714,22 @@ int tbsize_numtests = 0;
 
 #endif
 
-TBBUTTON buttons1[] = {
+static TBBUTTON buttons1[] = {
     {0, 10, TBSTATE_WRAP|TBSTATE_ENABLED, 0, {0, }, 0, -1},
     {0, 11, 0, 0, {0, }, 0, -1},
 };
-TBBUTTON buttons2[] = {
+static TBBUTTON buttons2[] = {
     {0, 20, TBSTATE_ENABLED, 0, {0, }, 0, -1},
     {0, 21, TBSTATE_ENABLED, 0, {0, }, 0, -1},
 };
-TBBUTTON buttons3[] = {
+static TBBUTTON buttons3[] = {
     {0, 30, TBSTATE_ENABLED, 0, {0, }, 0, 0},
     {0, 31, TBSTATE_ENABLED, 0, {0, }, 0, 1},
     {0, 32, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, 1},
     {0, 33, TBSTATE_ENABLED, BTNS_AUTOSIZE, {0, }, 0, (UINT_PTR)"Tst"}
 };
 
-void test_sizes()
+static void test_sizes(void)
 {
     HWND hToolbar = NULL;
     int style;

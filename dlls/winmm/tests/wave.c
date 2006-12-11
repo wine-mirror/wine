@@ -287,7 +287,7 @@ const char * wave_open_flags(DWORD flags)
     return msg;
 }
 
-const char * wave_header_flags(DWORD flags)
+static const char * wave_header_flags(DWORD flags)
 {
 #define WHDR_MASK (WHDR_BEGINLOOP|WHDR_DONE|WHDR_ENDLOOP|WHDR_INQUEUE|WHDR_PREPARED)
     static char msg[1024];

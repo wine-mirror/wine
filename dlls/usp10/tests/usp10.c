@@ -256,7 +256,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
                                        pItem[0].a.s.uBidiLevel);
 }
 
-void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
+static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
 {
     HRESULT         hr;
     SCRIPT_CACHE    psc = NULL;
@@ -312,7 +312,7 @@ void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
 
 }
 
-void test_ScriptGetFontProperties(void)
+static void test_ScriptGetFontProperties(void)
 {
     HRESULT         hr;
     HDC             hdc;
@@ -388,7 +388,7 @@ void test_ScriptGetFontProperties(void)
     DestroyWindow(hwnd);
 }
 
-void test_ScriptTextOut(void)
+static void test_ScriptTextOut(void)
 {
     HRESULT         hr;
     HWND            hwnd;
@@ -700,7 +700,7 @@ static void test_ScriptString(void)
     }
 }
 
-void test_ScriptStringXtoCP_CPtoX(HDC hdc)
+static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
 {
 /*****************************************************************************************
  *
@@ -872,10 +872,10 @@ void test_ScriptStringXtoCP_CPtoX(HDC hdc)
          * ScriptStringCPtoX should free ssa, hence ScriptStringFree should fail
          */
         todo_wine ok(hr == E_INVALIDARG, "ScriptStringFree should return E_INVALIDARG not %08x\n", hr);
-    }   
+    }
 }
 
-void test_ScriptCacheGetHeight(HDC hdc)
+static void test_ScriptCacheGetHeight(HDC hdc)
 {
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
@@ -898,7 +898,7 @@ void test_ScriptCacheGetHeight(HDC hdc)
     ok(height > 0, "expected height > 0\n");
 }
 
-void test_ScriptGetGlyphABCWidth(HDC hdc)
+static void test_ScriptGetGlyphABCWidth(HDC hdc)
 {
     HRESULT hr;
     LOGFONTA lf;
@@ -927,7 +927,7 @@ void test_ScriptGetGlyphABCWidth(HDC hdc)
     ok(hr == S_OK, "expected S_OK, got 0x%08x\n", hr);
 }
 
-void test_ScriptLayout(void)
+static void test_ScriptLayout(void)
 {
     HRESULT hr;
     static const BYTE levels[][5] =

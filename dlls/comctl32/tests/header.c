@@ -33,16 +33,16 @@ typedef struct tagEXPECTEDNOTIFY
 
 typedef LRESULT (*CUSTOMDRAWPROC)(int n, NMCUSTOMDRAW *nm);
 
-CUSTOMDRAWPROC g_CustomDrawProc;
-int g_CustomDrawCount;
-DRAWITEMSTRUCT g_DrawItem;
-BOOL g_DrawItemReceived;
+static CUSTOMDRAWPROC g_CustomDrawProc;
+static int g_CustomDrawCount;
+static DRAWITEMSTRUCT g_DrawItem;
+static BOOL g_DrawItemReceived;
 
-EXPECTEDNOTIFY expectedNotify[10];
-INT nExpectedNotify = 0;
-INT nReceivedNotify = 0;
-INT unexpectedNotify[10];
-INT nUnexpectedNotify = 0;
+static EXPECTEDNOTIFY expectedNotify[10];
+static INT nExpectedNotify = 0;
+static INT nReceivedNotify = 0;
+static INT unexpectedNotify[10];
+static INT nUnexpectedNotify = 0;
 
 static HWND hHeaderParentWnd;
 static HWND hWndHeader;
@@ -611,7 +611,7 @@ static void run_customdraw_scenario(CUSTOMDRAWPROC proc)
     g_CustomDrawProc = NULL;
 }
 
-void test_customdraw()
+static void test_customdraw(void)
 {
     int i;
     HDITEM item;
@@ -735,7 +735,7 @@ static void test_header_order (void)
     DestroyWindow(hWndHeader);
 }
 
-LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+static LRESULT CALLBACK HeaderTestWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     DRAWITEMSTRUCT *di;
     switch(msg) {
