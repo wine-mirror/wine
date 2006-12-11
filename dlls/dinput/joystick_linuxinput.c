@@ -1071,6 +1071,11 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       fake_current_js_state(This);
       break;
     }
+    case (DWORD)DIPROP_CALIBRATIONMODE: {
+      LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
+      FIXME("DIPROP_CALIBRATIONMODE(%d)\n", pd->dwData);
+      break;
+    }
     default:
       return IDirectInputDevice2AImpl_SetProperty(iface, rguid, ph);
     }
