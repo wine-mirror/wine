@@ -824,6 +824,8 @@ static void parse_wildcard_files(FILE_LIST *flList, LPWSTR szFile, LPDWORD pdwLi
     LPWSTR szFullPath;
     BOOL res;
 
+    if (hFile == INVALID_HANDLE_VALUE) return;
+
     for (res = TRUE; res; res = FindNextFileW(hFile, &wfd))
     {
         if (IsDotDir(wfd.cFileName)) continue;
