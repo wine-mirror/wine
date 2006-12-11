@@ -1097,7 +1097,7 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	return E_POINTER;
     }
 
-    if (lpDIDevCaps->dwSize != sizeof(DIDEVCAPS)) {
+    if (lpDIDevCaps->dwSize < sizeof(DIDEVCAPS)) {
         WARN("invalid argument\n");
         return DIERR_INVALIDPARAM;
     }
