@@ -504,7 +504,8 @@ static void test_fwprintf( void )
     const char *string="not a wide string";
     todo_wine
       {
-        ok(fwprintf(fopen("nul","r+"),(wchar_t *)string) == -1,"Non-wide string should not be printed by fwprintf\n");
+        ok(fwprintf(fopen("nul","r+"),(const wchar_t *)string) == -1,
+           "Non-wide string should not be printed by fwprintf\n");
       }
 }
 
