@@ -605,26 +605,29 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
+    HRESULT res;
 
     TRACE("(this=%p)\n",This);
-    if (This->joyfd!=-1)
-    	return S_FALSE;
+
     if (This->df==NULL) {
       return DIERR_INVALIDPARAM;
     }
-
-    if (-1==(This->joyfd=open(This->joydev->device,O_RDWR))) { 
-      if (-1==(This->joyfd=open(This->joydev->device,O_RDONLY))) {
-        /* Couldn't open the device at all */ 
-        perror(This->joydev->device);
-        return DIERR_NOTFOUND;
-      } else {
-        /* Couldn't open in r/w but opened in read-only. */
-        WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
+    res = IDirectInputDevice2AImpl_Acquire(iface);
+    if (res==DI_OK) {
+      if (-1==(This->joyfd=open(This->joydev->device,O_RDWR))) {
+        if (-1==(This->joyfd=open(This->joydev->device,O_RDONLY))) {
+          /* Couldn't open the device at all */
+          perror(This->joydev->device);
+          IDirectInputDevice2AImpl_Unacquire(iface);
+          return DIERR_NOTFOUND;
+        } else {
+          /* Couldn't open in r/w but opened in read-only. */
+          WARN("Could not open %s in read-write mode.  Force feedback will be disabled.\n", This->joydev->device);
+        }
       }
     }
 
-    return 0;
+    return res;
 }
 
 /******************************************************************************
@@ -633,15 +636,15 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
+    HRESULT res;
 
     TRACE("(this=%p)\n",This);
-    if (This->joyfd!=-1) {
-  	close(This->joyfd);
-	This->joyfd = -1;
-	return DI_OK;
+    res = IDirectInputDevice2AImpl_Unacquire(iface);
+    if (res==DI_OK && This->joyfd!=-1) {
+      close(This->joyfd);
+      This->joyfd = -1;
     }
-    else 
-    	return DI_NOEFFECT;
+    return res;
 }
 
 /*
