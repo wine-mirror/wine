@@ -22,7 +22,7 @@
 @ stub CorBindToRuntimeEx
 @ stdcall CorBindToRuntimeHost(wstr wstr wstr ptr long ptr ptr ptr)
 @ stub CorDllMainWorker
-@ stub CorExitProcess
+@ stdcall CorExitProcess(long)
 @ stub CorGetSvc
 @ stub CorIsLatestSvc
 @ stub CorMarkThreadInThreadPool
@@ -57,7 +57,7 @@
 @ stub GetPrivateContextsPerfCounters
 @ stub GetProcessExecutableHeap
 @ stub GetRealProcAddress
-@ stub GetRequestedRuntimeInfo
+@ stdcall GetRequestedRuntimeInfo(wstr wstr wstr long long ptr long ptr ptr long ptr)
 @ stub GetRequestedRuntimeVersion
 @ stub GetRequestedRuntimeVersionForCLSID
 @ stub GetStartupFlags

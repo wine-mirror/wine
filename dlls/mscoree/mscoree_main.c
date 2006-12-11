@@ -175,6 +175,12 @@ int WINAPI _CorExeMain2(PBYTE ptrMemory, DWORD cntMemory, LPCWSTR imageName, LPC
     return -1;
 }
 
+void WINAPI CorExitProcess(int exitCode)
+{
+    FIXME("(%x) stub\n", exitCode);
+    ExitProcess(exitCode);
+}
+
 void WINAPI _CorImageUnloading(LPCVOID* imageBase)
 {
     TRACE("(%p): stub\n", imageBase);
@@ -206,10 +212,21 @@ HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
     return S_OK;
 }
 
+HRESULT WINAPI GetRequestedRuntimeInfo(LPCWSTR pExe, LPCWSTR pwszVersion, LPCWSTR pConfigurationFile,
+    DWORD startupFlags, DWORD runtimeInfoFlags, LPWSTR pDirectory, DWORD dwDirectory, DWORD *dwDirectoryLength,
+    LPWSTR pVersion, DWORD cchBuffer, DWORD *dwlength)
+{
+    FIXME("(%s, %s, %s, 0x%08x, 0x%08x, %p, 0x%08x, %p, %p, 0x%08x, %p) stub\n", debugstr_w(pExe),
+          debugstr_w(pwszVersion), debugstr_w(pConfigurationFile), startupFlags, runtimeInfoFlags, pDirectory,
+          dwDirectory, dwDirectoryLength, pVersion, cchBuffer, dwlength);
+    return GetCORVersion(pVersion, cchBuffer, dwlength);
+}
+
 HRESULT WINAPI LoadLibraryShim( LPCWSTR szDllName, LPCWSTR szVersion, LPVOID pvReserved, HMODULE * phModDll)
 {
-    *phModDll = LoadLibraryW(szDllName);
     FIXME("(%p %s, %p, %p, %p): semi-stub\n", szDllName, debugstr_w(szDllName), szVersion, pvReserved, phModDll);
+
+    if (phModDll) *phModDll = LoadLibraryW(szDllName);
     return S_OK;
 }
 
