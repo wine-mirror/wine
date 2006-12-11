@@ -811,6 +811,7 @@ static void create_cc_test_files(void)
     CCAB cabParams;
     HFCI hfci;
     ERF erf;
+    static CHAR cab_context[] = "test%d.cab";
     BOOL res;
 
     create_file("maximus", 500);
@@ -821,7 +822,7 @@ static void create_cc_test_files(void)
 
     hfci = FCICreate(&erf, file_placed, mem_alloc, mem_free, fci_open,
                       fci_read, fci_write, fci_close, fci_seek, fci_delete,
-                      get_temp_file, &cabParams, (void*)"test%d.cab");
+                      get_temp_file, &cabParams, cab_context);
     ok(hfci != NULL, "Failed to create an FCI context\n");
 
     /* spews out hundreds of cab files.  re-enable when cabinet.dll is fixed */
