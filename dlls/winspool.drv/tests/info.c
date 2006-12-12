@@ -1637,15 +1637,37 @@ static void test_EnumPrinters(void)
     DWORD ret;
 
     SetLastError(0xdeadbeef);
+    neededA = -1;
     ret = EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededA, &num);
-    ok(ret == 0, "ret %d\n", ret);
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
+    if (!ret)
+    {
+        /* We have 1 or more printers */
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
+        ok(neededA > 0, "Expected neededA to show the number of needed bytes\n");
+    }
+    else
+    {
+        /* We don't have any printers defined */
+        ok(GetLastError() == S_OK, "gle %d\n", GetLastError());
+        ok(neededA == 0, "Expected neededA to be zero\n");
+    }
     ok(num == 0, "num %d\n", num);
 
     SetLastError(0xdeadbeef);
+    neededW = -1;
     ret = EnumPrintersW(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededW, &num);
-    ok(ret == 0, "ret %d\n", ret);
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
+    if (!ret)
+    {
+        /* We have 1 or more printers */
+        ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "gle %d\n", GetLastError());
+        ok(neededW > 0, "Expected neededW to show the number of needed bytes\n");
+    }
+    else
+    {
+        /* We don't have any printers defined */
+        ok(GetLastError() == S_OK, "gle %d\n", GetLastError());
+        ok(neededW == 0, "Expected neededW to be zero\n");
+    }
     ok(num == 0, "num %d\n", num);
 
     /* Outlook2003 relies on the buffer size returned by EnumPrintersA being big enough
