@@ -136,7 +136,6 @@ struct JoystickImpl
 
 	int				joyfd;
 
-	LPDIDATAFORMAT			df;
 	DIJOYSTATE2			js;
 
 	/* Force feedback variables */
@@ -389,26 +388,13 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   }
   fake_current_js_state(newDevice);
 
-  /* wine uses DIJOYSTATE2 as it's internal format so copy
-   * the already defined format c_dfDIJoystick2 */
-  newDevice->df = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwSize);
-  if (newDevice->df == 0)
-    goto FAILED;
-  CopyMemory(newDevice->df, &c_dfDIJoystick2, c_dfDIJoystick2.dwSize);
-
-  /* copy default objects */
-  newDevice->df->rgodf = HeapAlloc(GetProcessHeap(),0,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
-  if (newDevice->df->rgodf == 0)
-    goto FAILED;
-  CopyMemory(newDevice->df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
+  /* wine uses DIJOYSTATE2 as it's internal format */
+  newDevice->base.data_format.wine_df = &c_dfDIJoystick2;
 
   /* create the default transform filter */
-  if (create_DataFormat(&c_dfDIJoystick2, newDevice->df, &newDevice->base.data_format) == DI_OK)
+  if (create_DataFormat(&c_dfDIJoystick2, &c_dfDIJoystick2, &newDevice->base.data_format) == DI_OK)
     return newDevice;
 
-FAILED:
-  HeapFree(GetProcessHeap(),0,newDevice->df->rgodf);
-  HeapFree(GetProcessHeap(),0,newDevice->df);
   HeapFree(GetProcessHeap(),0,newDevice);
   return NULL;
 }
@@ -502,10 +488,6 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	/* Free the data queue */
 	HeapFree(GetProcessHeap(), 0, This->base.data_queue);
 
-	/* Free the DataFormat */
-	HeapFree(GetProcessHeap(), 0, This->df->rgodf);
-	HeapFree(GetProcessHeap(), 0, This->df);
-
         /* release the data transform filter */
         release_DataFormat(&This->base.data_format);
 
@@ -513,55 +495,6 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
         
         HeapFree(GetProcessHeap(),0,This);
         return 0;
-}
-
-/******************************************************************************
-  *   SetDataFormat : the application can choose the format of the data
-  *   the device driver sends back with GetDeviceState.
-  */
-static HRESULT WINAPI JoystickAImpl_SetDataFormat(
-	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df
-)
-{
-  JoystickImpl *This = (JoystickImpl *)iface;
-
-  TRACE("(this=%p,%p)\n",This,df);
-
-  if (df == NULL) {
-    WARN("invalid pointer\n");
-    return E_POINTER;
-  }
-
-  if (df->dwSize != sizeof(*df)) {
-    WARN("invalid argument\n");
-    return DIERR_INVALIDPARAM;
-  }
-
-  _dump_DIDATAFORMAT(df);
-
-  if (This->joyfd!=-1) {
-    WARN("acquired\n");
-    return DIERR_ACQUIRED;
-  }
-
-  HeapFree(GetProcessHeap(),0,This->df->rgodf);
-  HeapFree(GetProcessHeap(),0,This->df);
-  release_DataFormat(&This->base.data_format);
-
-  /* Store the new data format */
-  This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
-  if (This->df==NULL) {
-    return DIERR_OUTOFMEMORY;
-  }
-  memcpy(This->df, df, df->dwSize);
-  This->df->rgodf = HeapAlloc(GetProcessHeap(),0,df->dwNumObjs*df->dwObjSize);
-  if (This->df->rgodf==NULL) {
-    HeapFree(GetProcessHeap(), 0, This->df);
-    return DIERR_OUTOFMEMORY;
-  }
-  memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
-
-  return create_DataFormat(&c_dfDIJoystick2, This->df, &This->base.data_format);
 }
 
 /******************************************************************************
@@ -574,9 +507,6 @@ static HRESULT WINAPI JoystickAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
 
     TRACE("(this=%p)\n",This);
 
-    if (This->df==NULL) {
-      return DIERR_INVALIDPARAM;
-    }
     res = IDirectInputDevice2AImpl_Acquire(iface);
     if (res==DI_OK) {
       if (-1==(This->joyfd=open(This->joydev->device,O_RDWR))) {
@@ -910,12 +840,12 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       if (ph->dwHow == DIPH_DEVICE) {
         int i;
         TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
-        for (i = 0; i < This->df->dwNumObjs; i++) {
+        for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++) {
           This->wantmin[i] = pr->lMin;
           This->wantmax[i] = pr->lMax;
         }
       } else {
-        int obj = find_property(This->df, ph);
+        int obj = find_property(This->base.data_format.user_df, ph);
         TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
         if (obj >= 0) {
           This->wantmin[obj] = pr->lMin;
@@ -930,11 +860,11 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
       if (ph->dwHow == DIPH_DEVICE) {
         int i;
         TRACE("deadzone(%d) all\n", pd->dwData);
-        for (i = 0; i < This->df->dwNumObjs; i++) {
+        for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++) {
           This->deadz[i] = pd->dwData;
         }
       } else {
-        int obj = find_property(This->df, ph);
+        int obj = find_property(This->base.data_format.user_df, ph);
         TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
         if (obj >= 0) {
           This->deadz[obj] = pd->dwData;
@@ -1093,9 +1023,9 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       if ((user_offset = lxinput_to_user_offset(This, EV_ABS, i)) == -1) {
         continue;
       }
-      user_object = offset_to_object(This->df, user_offset);
-      ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
-      ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
+      user_object = offset_to_object(This->base.data_format.user_df, user_offset);
+      ddoi.dwType = This->base.data_format.user_df->rgodf[user_object].dwType & 0x00ffffff;
+      ddoi.dwOfs =  This->base.data_format.user_df->rgodf[user_object].dwOfs;
       /* Linux event force feedback supports only (and always) x and y axes */
       if (i == ABS_X || i == ABS_Y) {
 	if (This->joydev->has_ff)
@@ -1118,9 +1048,9 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
         if ((user_offset = lxinput_to_user_offset(This, EV_ABS, ABS_HAT0X+i))== -1) {
           continue;
         }
-        user_object = offset_to_object(This->df, user_offset);
-        ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
-        ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
+        user_object = offset_to_object(This->base.data_format.user_df, user_offset);
+        ddoi.dwType = This->base.data_format.user_df->rgodf[user_object].dwType & 0x00ffffff;
+        ddoi.dwOfs =  This->base.data_format.user_df->rgodf[user_object].dwOfs;
         sprintf(ddoi.tszName, "%d-POV", i);
         _dump_OBJECTINSTANCEA(&ddoi);
         if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) {
@@ -1143,9 +1073,9 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
       if ((user_offset = lxinput_to_user_offset(This, EV_KEY, btncount)) == -1) {
         continue;
       }
-      user_object = offset_to_object(This->df, user_offset);
-      ddoi.dwType = This->df->rgodf[user_object].dwType & 0x00ffffff;
-      ddoi.dwOfs =  This->df->rgodf[user_object].dwOfs;
+      user_object = offset_to_object(This->base.data_format.user_df, user_offset);
+      ddoi.dwType = This->base.data_format.user_df->rgodf[user_object].dwType & 0x00ffffff;
+      ddoi.dwOfs =  This->base.data_format.user_df->rgodf[user_object].dwOfs;
       sprintf(ddoi.tszName, "%d-Button", btncount);
       btncount++;
       _dump_OBJECTINSTANCEA(&ddoi);
@@ -1192,7 +1122,7 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     switch (LOWORD(rguid)) {
     case (DWORD) DIPROP_RANGE: {
       LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-      int obj = find_property(This->df, pdiph);
+      int obj = find_property(This->base.data_format.user_df, pdiph);
       if (obj >= 0) {
 	pr->lMin = This->joydev->havemin[obj];
 	pr->lMax = This->joydev->havemax[obj];
@@ -1555,7 +1485,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAImpl_Unacquire,
 	JoystickAImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
-	JoystickAImpl_SetDataFormat,
+        IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
 	IDirectInputDevice2AImpl_GetObjectInfo,
@@ -1597,7 +1527,7 @@ static const IDirectInputDevice8WVtbl JoystickWvt =
 	XCAST(Unacquire)JoystickAImpl_Unacquire,
 	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
 	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
-	XCAST(SetDataFormat)JoystickAImpl_SetDataFormat,
+        XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
 	IDirectInputDevice2WImpl_GetObjectInfo,
