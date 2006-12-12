@@ -208,7 +208,14 @@ sub GenerateThunk($$$$$)
     my $ret = "";
     my $call_arg = "";
     my $trace_arg = "";
-    my $wine_func_ref_name = "";
+
+    return "" if $func_ref->[0] eq "glGetString";
+    return "" if $func_ref->[0] eq "glGetIntegerv";
+    return "" if $func_ref->[0] eq "glEnable";
+    return "" if $func_ref->[0] eq "glIsEnabled";
+    return "" if $func_ref->[0] eq "glDisable";
+    return "" if $func_ref->[0] eq "glScissor";
+    return "" if $func_ref->[0] eq "glViewport";
 
     # If for opengl_norm.c, generate a nice heading otherwise Patrik won't be happy :-)
     # Patrik says: Well I would be even happier if a (OPENGL32.@) was added as well. Done. :-)
@@ -259,29 +266,7 @@ sub GenerateThunk($$$$$)
     if ($func_ref->[1] ne "void") {
 	$ret = $ret . "ret_value = ";
     }
-    $wine_func_ref_name = $func_ref->[0];
-    if ( $func_ref->[0] eq "glGetString" ) {
-	$wine_func_ref_name = "internal_glGetString";
-    }
-    if ( $func_ref->[0] eq "glGetIntegerv" ) {
-	$wine_func_ref_name = "internal_glGetIntegerv";
-    }
-    if ( $func_ref->[0] eq "glEnable" ) {
-	$wine_func_ref_name = "internal_glEnable";
-    }
-    if ( $func_ref->[0] eq "glIsEnabled" ) {
-	$wine_func_ref_name = "internal_glIsEnabled";
-    }
-    if ( $func_ref->[0] eq "glDisable" ) {
-	$wine_func_ref_name = "internal_glDisable";
-    }
-    if ( $func_ref->[0] eq "glScissor" ) {
-	$wine_func_ref_name = "internal_glScissor";
-    }
-    if ( $func_ref->[0] eq "glViewport" ) {
-	$wine_func_ref_name = "internal_glViewport";
-    }
-    $ret = "$ret$prefix$wine_func_ref_name( $call_arg);\n";
+    $ret = "$ret$prefix$func_ref->[0]( $call_arg);\n";
     if ($thread_safe) {
 	$ret = "$ret  LEAVE_GL();\n";
     }
@@ -614,34 +599,6 @@ close(REGISTRY);
 #
 open(SPEC, ">$spec_file");
 
-print SPEC "@  stdcall wglCreateContext(long)
-@  stdcall wglCreateLayerContext(long long)
-@  stdcall wglCopyContext(long long long)
-@  stdcall wglDeleteContext(long)
-@  stdcall wglDescribeLayerPlane(long long long long ptr)
-@  stdcall wglGetCurrentContext()
-@  stdcall wglGetCurrentDC()
-@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
-@  stdcall wglGetProcAddress(str)
-@  stdcall wglMakeCurrent(long long)
-@  stdcall wglRealizeLayerPalette(long long long)
-@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
-@  stdcall wglShareLists(long long)
-@  stdcall wglSwapLayerBuffers(long long)
-@  stdcall wglUseFontBitmapsA(long long long long)
-@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
-@  stub    glGetLevelParameterfv
-@  stub    glGetLevelParameteriv
-@  stdcall wglUseFontBitmapsW(long long long long)
-@  stub    wglUseFontOutlinesW
-@  stub    wglGetDefaultProcAddress
-@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
-@  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
-@  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
-@  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
-@  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
-";
-
 foreach (sort keys %norm_functions) {
     my $func_name = $norm_functions{$_}->[0];
     print SPEC "@  stdcall $func_name( ";
@@ -657,6 +614,35 @@ foreach (sort keys %norm_functions) {
     }
     print SPEC ") wine_$func_name\n";
 }
+
+print SPEC "@  stub    glGetLevelParameterfv
+@  stub    glGetLevelParameteriv
+@  stdcall wglChoosePixelFormat(long ptr) gdi32.ChoosePixelFormat
+@  stdcall wglCopyContext(long long long)
+@  stdcall wglCreateContext(long) gdi32.wglCreateContext
+@  stdcall wglCreateLayerContext(long long)
+@  stdcall wglDeleteContext(long) gdi32.wglDeleteContext
+@  stdcall wglDescribeLayerPlane(long long long long ptr)
+@  stdcall wglDescribePixelFormat(long long long ptr) gdi32.DescribePixelFormat
+@  stdcall wglGetCurrentContext() gdi32.wglGetCurrentContext
+@  stdcall wglGetCurrentDC() gdi32.wglGetCurrentDC
+@  stub    wglGetDefaultProcAddress
+@  stdcall wglGetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglGetPixelFormat(long) gdi32.GetPixelFormat
+@  stdcall wglGetProcAddress(str)
+@  stdcall wglMakeCurrent(long long) gdi32.wglMakeCurrent
+@  stdcall wglRealizeLayerPalette(long long long)
+@  stdcall wglSetLayerPaletteEntries(long long long long ptr)
+@  stdcall wglSetPixelFormat(long long ptr) gdi32.SetPixelFormat
+@  stdcall wglShareLists(long long) gdi32.wglShareLists
+@  stdcall wglSwapBuffers(long) gdi32.SwapBuffers
+@  stdcall wglSwapLayerBuffers(long long)
+@  stdcall wglUseFontBitmapsA(long long long long) gdi32.wglUseFontBitmapsA
+@  stdcall wglUseFontBitmapsW(long long long long) gdi32.wglUseFontBitmapsW
+@  stdcall wglUseFontOutlinesA(long long long long long long long ptr)
+@  stdcall wglUseFontOutlinesW(long long long long long long long ptr)
+";
+
 close(SPEC);
 
 #
@@ -675,7 +661,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 foreach (sort keys %norm_functions) {
     my $string = GenerateThunk($norm_functions{$_}, 1, "", $gen_thread_safe, "");
 
-    print NORM "\n$string";
+    print NORM "\n$string" if $string;
 }
 close(NORM);
 

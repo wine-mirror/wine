@@ -62,12 +62,4 @@ extern void *extension_funcs[];
 extern const OpenGL_extension extension_registry[];
 extern const int extension_registry_size;
 
-const GLubyte* internal_glGetString(GLenum name);
-void internal_glGetIntegerv(GLenum pname, GLint* params);
-void internal_glDisable(GLenum cap);
-void internal_glEnable(GLenum cap);
-GLboolean internal_glIsEnabled(GLenum cap);
-void internal_glScissor(GLint x, GLint y, GLsizei width, GLsizei height);
-void internal_glViewport(GLint x, GLint y, GLsizei width, GLsizei height);
-
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */

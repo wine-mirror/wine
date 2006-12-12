@@ -108,6 +108,8 @@ void enter_gl(void)
     return;
 }
 
+const GLubyte * WINAPI wine_glGetString( GLenum name );
+
 /***********************************************************************
  *		wglCreateLayerContext (OPENGL32.@)
  */
@@ -168,7 +170,7 @@ static int compar(const void *elt_a, const void *elt_b) {
 /* Check if a GL extension is supported */
 static BOOL is_extension_supported(const char* extension)
 {
-    const char *gl_ext_string = (const char*)internal_glGetString(GL_EXTENSIONS);
+    const char *gl_ext_string = (const char*)wine_glGetString(GL_EXTENSIONS);
 
     TRACE("Checking for extension '%s'\n", extension);
 
@@ -561,58 +563,97 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
     return wglUseFontOutlines_common(hdc, first, count, listBase, deviation, extrusion, format, lpgmf, TRUE);
 }
 
-void internal_glEnable(GLenum cap)
+/***********************************************************************
+ *              glEnable (OPENGL32.@)
+ */
+void WINAPI wine_glEnable( GLenum cap )
 {
-  wine_wgl.p_wglEnable(cap);
+    TRACE("(%d)\n", cap );
+    ENTER_GL();
+    wine_wgl.p_wglEnable(cap);
+    LEAVE_GL();
 }
 
-GLboolean internal_glIsEnabled(GLenum cap)
+/***********************************************************************
+ *              glIsEnabled (OPENGL32.@)
+ */
+GLboolean WINAPI wine_glIsEnabled( GLenum cap )
 {
-    return wine_wgl.p_wglIsEnabled(cap);
+    GLboolean ret_value;
+    TRACE("(%d)\n", cap );
+    ENTER_GL();
+    ret_value = wine_wgl.p_wglIsEnabled(cap);
+    LEAVE_GL();
+    return ret_value;
 }
 
-void internal_glDisable(GLenum cap)
+/***********************************************************************
+ *              glDisable (OPENGL32.@)
+ */
+void WINAPI wine_glDisable( GLenum cap )
 {
+    TRACE("(%d)\n", cap );
+    ENTER_GL();
     wine_wgl.p_wglDisable(cap);
+    LEAVE_GL();
 }
 
-void internal_glScissor( GLint x, GLint y, GLsizei width, GLsizei height )
+/***********************************************************************
+ *              glScissor (OPENGL32.@)
+ */
+void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
+    TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
+    ENTER_GL();
     wine_wgl.p_wglScissor(x, y, width, height);
+    LEAVE_GL();
 }
 
-void internal_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
+/***********************************************************************
+ *              glViewport (OPENGL32.@)
+ */
+void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
+    TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
+    ENTER_GL();
     wine_wgl.p_wglViewport(x, y, width, height);
+    LEAVE_GL();
 }
 
-const GLubyte * internal_glGetString(GLenum name) {
+/***********************************************************************
+ *              glGetString (OPENGL32.@)
+ */
+const GLubyte * WINAPI wine_glGetString( GLenum name )
+{
+  const GLubyte *ret;
   const char* GL_Extensions = NULL;
 
   if (GL_EXTENSIONS != name) {
-    return glGetString(name);
+    ENTER_GL();
+    ret = glGetString(name);
+    LEAVE_GL();
+    return ret;
   }
 
   if (NULL == internal_gl_extensions) {
+    ENTER_GL();
     GL_Extensions = (const char *) glGetString(GL_EXTENSIONS);
 
-    TRACE("GL_EXTENSIONS reported:\n");  
-    if (NULL == GL_Extensions) {
-      ERR("GL_EXTENSIONS returns NULL\n");      
-      return NULL;
-    } else {
+    if (GL_Extensions)
+    {
       size_t len = strlen(GL_Extensions);
       internal_gl_extensions = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len + 2);
 
+      TRACE("GL_EXTENSIONS reported:\n");
       while (*GL_Extensions != 0x00) {
 	const char* Start = GL_Extensions;
 	char        ThisExtn[256];
-	 
-	memset(ThisExtn, 0x00, sizeof(ThisExtn));
+
 	while (*GL_Extensions != ' ' && *GL_Extensions != 0x00) {
 	  GL_Extensions++;
 	}
 	memcpy(ThisExtn, Start, (GL_Extensions - Start));
+        ThisExtn[GL_Extensions - Start] = 0;
 	TRACE("- %s:", ThisExtn);
 	
 	/* test if supported API is disabled by config */
@@ -627,15 +668,21 @@ const GLubyte * internal_glGetString(GLenum name) {
 	if (*GL_Extensions == ' ') GL_Extensions++;
       }
     }
+    LEAVE_GL();
   }
   return (const GLubyte *) internal_gl_extensions;
 }
 
-void internal_glGetIntegerv(GLenum pname, GLint* params) {
-  TRACE("pname: 0x%x, params %p\n", pname, params);
-  glGetIntegerv(pname, params);
-  /* A few parameters like GL_DEPTH_BITS differ between WGL and GLX, the wglGetIntegerv helper function handles those */
-  wine_wgl.p_wglGetIntegerv(pname, params);
+/***********************************************************************
+ *              glGetIntegerv (OPENGL32.@)
+ */
+void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
+{
+    ENTER_GL();
+    glGetIntegerv(pname, params);
+    /* A few parameters like GL_DEPTH_BITS differ between WGL and GLX, the wglGetIntegerv helper function handles those */
+    wine_wgl.p_wglGetIntegerv(pname, params);
+    LEAVE_GL();
 }
 
 
