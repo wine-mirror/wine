@@ -193,8 +193,18 @@ static HRESULT WINAPI HTMLWindow2_clearTimeout(IHTMLWindow2 *iface, long timerID
 static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
 {
     HTMLWindow *This = HTMLWINDOW2_THIS(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(message));
-    return E_NOTIMPL;
+    WCHAR wszTitle[100];
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(message));
+
+    if(!LoadStringW(get_shdoclc(), IDS_MESSAGE_BOX_TITLE, wszTitle,
+                    sizeof(wszTitle)/sizeof(WCHAR))) {
+        WARN("Could not load message box title: %d\n", GetLastError());
+        return S_OK;
+    }
+
+    MessageBoxW(This->doc->hwnd, message, wszTitle, MB_ICONWARNING);
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLWindow2_confirm(IHTMLWindow2 *iface, BSTR message,

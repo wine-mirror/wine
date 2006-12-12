@@ -26,6 +26,8 @@
 #define ID_DWL_INSTALL      7602
 #define ID_DWL_STATUS       7603
 
+#define IDS_MESSAGE_BOX_TITLE  2213
+
 #define IDR_BROWSE_CONTEXT_MENU  24641
 
 #define IDM_TRACETAGS           6004
