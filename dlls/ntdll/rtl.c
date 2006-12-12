@@ -583,7 +583,7 @@ VOID WINAPI RtlFillMemoryUlong(ULONG* lpDest, ULONG ulCount, ULONG ulValue)
  * RETURNS
  *  The cumulative CRC32 of dwInitial and iLen bytes of the pData block.
  */
-DWORD WINAPI RtlComputeCrc32(DWORD dwInitial, PBYTE pData, INT iLen)
+DWORD WINAPI RtlComputeCrc32(DWORD dwInitial, const BYTE *pData, INT iLen)
 {
   DWORD crc = ~dwInitial;
 

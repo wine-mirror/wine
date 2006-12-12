@@ -844,7 +844,7 @@ static void test_RtlComputeCrc32(void)
   if (!pRtlComputeCrc32)
     return;
 
-  crc = pRtlComputeCrc32(crc, (LPBYTE)src, LEN);
+  crc = pRtlComputeCrc32(crc, (const BYTE *)src, LEN);
   ok(crc == 0x40861dc2,"Expected 0x40861dc2, got %8x\n", crc);
 }
 
