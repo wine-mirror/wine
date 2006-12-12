@@ -647,8 +647,8 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         return 0;
     }
 
-    dc->hVisRgn = CreateRectRgn( 0, 0, GetDeviceCaps( hdc, HORZRES ),
-                                 GetDeviceCaps( hdc, VERTRES ) );
+    dc->hVisRgn = CreateRectRgn( 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ),
+                                 GetDeviceCaps( hdc, DESKTOPVERTRES ) );
 
     DC_InitDC( dc );
     GDI_ReleaseObj( hdc );

@@ -194,6 +194,10 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
         return screen_width;
     case VERTRES:
         return screen_height;
+    case DESKTOPHORZRES:
+        return virtual_screen_rect.right - virtual_screen_rect.left;
+    case DESKTOPVERTRES:
+        return virtual_screen_rect.bottom - virtual_screen_rect.top;
     case BITSPIXEL:
         return screen_depth;
     case PLANES:
@@ -258,8 +262,6 @@ INT X11DRV_GetDeviceCaps( X11DRV_PDEVICE *physDev, INT cap )
     case SCALINGFACTORX:
     case SCALINGFACTORY:
     case VREFRESH:
-    case DESKTOPVERTRES:
-    case DESKTOPHORZRES:
     case BLTALIGNMENT:
         return 0;
     default:
