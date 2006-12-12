@@ -109,6 +109,7 @@ typedef nsISupports nsIEditor;
 typedef nsISupports nsIWebProgressListener;
 typedef nsISupports nsIDOMCSSValue;
 typedef nsISupports nsIDOMCSSRule;
+typedef nsISupports nsIPrintSession;
 
 [
     object,
@@ -938,6 +939,145 @@ interface nsIWebNavigation : nsISupports
     nsresult GetReferringURI(nsIURI **aReferringURI);
     nsresult GetSessionHistory(nsISHistory **aSessionHistory);
     nsresult SetSessionHistory(nsISHistory *aSessionHistory);
+}
+
+[
+    object,
+    uuid(f1094df6-ce0e-42c9-9847-2f663172c38d)
+]
+interface nsIPrintSettings : nsISupports
+{
+    typedef struct {} nsMargin;
+
+    nsresult SetPrintOptions(PRInt32 aType, PRBool aTurnOnOff);
+    nsresult GetPrintOptions(PRInt32 aType, PRBool *_retval);
+    nsresult GetPrintOptionsBits(PRInt32 *_retval);
+    nsresult GetPageSizeInTwips(PRInt32 *aWidth, PRInt32 *aHeight);
+    nsresult Clone(nsIPrintSettings **_retval);
+    nsresult Assign(nsIPrintSettings *aPS);
+    nsresult GetPrintSession(nsIPrintSession **aPrintSession);
+    nsresult SetPrintSession(nsIPrintSession *aPrintSession);
+    nsresult GetStartPageRange(PRInt32 *aStartPageRange);
+    nsresult SetStartPageRange(PRInt32 aStartPageRange);
+    nsresult GetEndPageRange(PRInt32 *aEndPageRange);
+    nsresult SetEndPageRange(PRInt32 aEndPageRange);
+    nsresult GetMarginTop(double *aMarginTop);
+    nsresult SetMarginTop(double aMarginTop);
+    nsresult GetMarginLeft(double *aMarginLeft);
+    nsresult SetMarginLeft(double aMarginLeft);
+    nsresult GetMarginBottom(double *aMarginBottom);
+    nsresult SetMarginBottom(double aMarginBottom);
+    nsresult GetMarginRight(double *aMarginRight);
+    nsresult SetMarginRight(double aMarginRight);
+    nsresult GetScaling(double *aScaling);
+    nsresult SetScaling(double aScaling);
+    nsresult GetPrintBGColors(PRBool *aPrintBGColors);
+    nsresult SetPrintBGColors(PRBool aPrintBGColors);
+    nsresult GetPrintBGImages(PRBool *aPrintBGImages);
+    nsresult SetPrintBGImages(PRBool aPrintBGImages);
+    nsresult GetPrintRange(PRInt16 *aPrintRange);
+    nsresult SetPrintRange(PRInt16 aPrintRange);
+    nsresult GetTitle(PRUnichar **aTitle);
+    nsresult SetTitle(const PRUnichar *aTitle);
+    nsresult GetDocURL(PRUnichar **aDocURL);
+    nsresult SetDocURL(const PRUnichar *aDocURL);
+    nsresult GetHeaderStrLeft(PRUnichar **aHeaderStrLeft);
+    nsresult SetHeaderStrLeft(const PRUnichar *aHeaderStrLeft);
+    nsresult GetHeaderStrCenter(PRUnichar **aHeaderStrCenter);
+    nsresult SetHeaderStrCenter(const PRUnichar *aHeaderStrCenter);
+    nsresult GetHeaderStrRight(PRUnichar **aHeaderStrRight);
+    nsresult SetHeaderStrRight(const PRUnichar *aHeaderStrRight);
+    nsresult GetFooterStrLeft(PRUnichar **aFooterStrLeft);
+    nsresult SetFooterStrLeft(const PRUnichar *aFooterStrLeft);
+    nsresult GetFooterStrCenter(PRUnichar **aFooterStrCenter);
+    nsresult SetFooterStrCenter(const PRUnichar *aFooterStrCenter);
+    nsresult GetFooterStrRight(PRUnichar **aFooterStrRight);
+    nsresult SetFooterStrRight(const PRUnichar *aFooterStrRight);
+    nsresult GetHowToEnableFrameUI(PRInt16 *aHowToEnableFrameUI);
+    nsresult SetHowToEnableFrameUI(PRInt16 aHowToEnableFrameUI);
+    nsresult GetIsCancelled(PRBool *aIsCancelled);
+    nsresult SetIsCancelled(PRBool aIsCancelled);
+    nsresult GetPrintFrameTypeUsage(PRInt16 *aPrintFrameTypeUsage);
+    nsresult SetPrintFrameTypeUsage(PRInt16 aPrintFrameTypeUsage);
+    nsresult GetPrintFrameType(PRInt16 *aPrintFrameType);
+    nsresult SetPrintFrameType(PRInt16 aPrintFrameType);
+    nsresult GetPrintSilent(PRBool *aPrintSilent);
+    nsresult SetPrintSilent(PRBool aPrintSilent);
+    nsresult GetShrinkToFit(PRBool *aShrinkToFit);
+    nsresult SetShrinkToFit(PRBool aShrinkToFit);
+    nsresult GetShowPrintProgress(PRBool *aShowPrintProgress);
+    nsresult SetShowPrintProgress(PRBool aShowPrintProgress);
+    nsresult GetPaperName(PRUnichar **aPaperName);
+    nsresult SetPaperName(const PRUnichar *aPaperName);
+    nsresult GetPaperSizeType(PRInt16 *aPaperSizeType);
+    nsresult SetPaperSizeType(PRInt16 aPaperSizeType);
+    nsresult GetPaperData(PRInt16 *aPaperData);
+    nsresult SetPaperData(PRInt16 aPaperData);
+    nsresult GetPaperWidth(double *aPaperWidth);
+    nsresult SetPaperWidth(double aPaperWidth);
+    nsresult GetPaperHeight(double *aPaperHeight);
+    nsresult SetPaperHeight(double aPaperHeight);
+    nsresult GetPaperSizeUnit(PRInt16 *aPaperSizeUnit);
+    nsresult SetPaperSizeUnit(PRInt16 aPaperSizeUnit);
+    nsresult GetPlexName(PRUnichar **aPlexName);
+    nsresult SetPlexName(const PRUnichar *aPlexName);
+    nsresult GetColorspace(PRUnichar **aColorspace);
+    nsresult SetColorspace(const PRUnichar *aColorspace);
+    nsresult GetResolutionName(PRUnichar **aResolutionName);
+    nsresult SetResolutionName(const PRUnichar aResolutionName);
+    nsresult GetDownloadFonts(PRBool *aDownloadFonts);
+    nsresult SetDownloadFonts(PRBool aDownloadFonts);
+    nsresult GetPrintReversed(PRBool *aPrintReversed);
+    nsresult SetPrintReversed(PRBool aPrintReversed);
+    nsresult GetPrintInColor(PRBool *aPrintInColor);
+    nsresult SetPrintInColor(PRBool aPrintInColor);
+    nsresult GetPaperSize(PRInt32 *aPaperSize);
+    nsresult SetPaperSize(PRInt32 aPaperSize);
+    nsresult GetOrientation(PRInt32 *aOrientation);
+    nsresult SetOrientation(PRInt32 aOrientation);
+    nsresult GetPrintCommand(PRUnichar **aPrintCommand);
+    nsresult SetPrintCommand(const PRUnichar *aPrintCommand);
+    nsresult GetNumCopies(PRInt32 *aNumCopies);
+    nsresult SetNumCopies(PRInt32 aNumCopies);
+    nsresult GetPrinterName(PRUnichar **aPrinterName);
+    nsresult SetPrinterName(const PRUnichar *aPrinterName);
+    nsresult GetPrintToFile(PRBool *aPrintToFile);
+    nsresult SetPrintToFile(PRBool aPrintToFile);
+    nsresult GetToFileName(PRUnichar **aToFileName);
+    nsresult SetToFileName(const PRUnichar *aToFileName);
+    nsresult GetPrintPageDelay(PRInt32 *aPrintPageDelay);
+    nsresult SetPrintPageDelay(PRInt32 aPrintPageDelay);
+    nsresult GetIsInitializedFromPrinter(PRBool *aIsInitializedFromPrinter);
+    nsresult SetIsInitializedFromPrinter(PRBool aIsInitializedFromPrinter);
+    nsresult GetIsInitializedFromPrefs(PRBool *aIsInitializedFromPrefs);
+    nsresult SetIsInitializedFromPrefs(PRBool aIsInitializedFromPrefs);
+    nsresult SetMarginInTwips(nsMargin *aMargin);
+    nsresult GetMarginInTwips(nsMargin *aMargin);
+}
+
+[
+    object,
+    uuid(9a7ca4b0-fbba-11d4-a869-00105a183419)
+]
+interface nsIWebBrowserPrint : nsISupports
+{
+    nsresult GetGlobalPrintSettings(nsIPrintSettings **aGlobalPrintSettings);
+    nsresult GetCurrentPrintSettings(nsIPrintSettings **aCurrentPrintSettings);
+    nsresult GetCurrentChildDOMWindow(nsIDOMWindow **aCurrentChildDOMWindow);
+    nsresult GetDoingPrint(PRBool *aDoingPrint);
+    nsresult GetDoingPrintPreview(PRBool *aDoingPrintPreview);
+    nsresult GetIsFramesetDocument(PRBool *aIsFramesetDocument);
+    nsresult GetIsFramesetFrameSelected(PRBool *aIsFramesetFrameSelected);
+    nsresult GetIsIFrameSelected(PRBool *aIsIFrameSelected);
+    nsresult GetIsRangeSelection(PRBool *aIsRangeSelection);
+    nsresult GetPrintPreviewNumPages(PRInt32 *aPrintPreviewNumPages);
+    nsresult Print(nsIPrintSettings *aThePrintSettings, nsIWebProgressListener *aWPListener);
+    nsresult PrintPreview(nsIPrintSettings *aThePrintSettings, nsIDOMWindow *aChildDOMWin,
+                          nsIWebProgressListener *aWPListener);
+    nsresult PrintPreviewNavigate(PRInt16 aNavType, PRInt32 aPageNum);
+    nsresult Cancel();
+    nsresult EnumerateDocumentNames(PRUint32 *aCount, PRUnichar ***aResult);
+    nsresult ExitPrintPreview();
 }
 
 [

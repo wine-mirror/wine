@@ -97,8 +97,42 @@ static HRESULT exec_save_copy_as(HTMLDocument *This, DWORD nCmdexecopt, VARIANT 
 
 static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
-    FIXME("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
-    return E_NOTIMPL;
+    nsIInterfaceRequestor *iface_req;
+    nsIWebBrowserPrint *nsprint;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
+
+    if(pvaOut)
+        FIXME("unsupported pvaOut\n");
+    if(pvaIn)
+        FIXME("unsupported pvaIn\n");
+
+    if(!This->nscontainer)
+        return S_OK;
+
+    nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser,
+            &IID_nsIInterfaceRequestor, (void**)&iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIInterfaceRequestor: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsres = nsIInterfaceRequestor_GetInterface(iface_req, &IID_nsIWebBrowserPrint,
+            (void**)&nsprint);
+    nsIInterfaceRequestor_Release(iface_req);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIWebBrowserPrint: %08x\n", nsres);
+        return S_OK;
+    }
+
+    nsres = nsIWebBrowserPrint_Print(nsprint, NULL, NULL);
+    if(NS_FAILED(nsres))
+        ERR("Print failed: %08x\n", nsres);
+
+    nsIWebBrowserPrint_Release(nsprint);
+
+    return S_OK;
 }
 
 static HRESULT exec_print_preview(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
@@ -837,6 +871,10 @@ static HRESULT WINAPI OleCommandTarget_QueryStatus(IOleCommandTarget *iface, con
                 TRACE("CGID_MSHTML: IDM_FONTSIZE\n");
                 prgCmds[i].cmdf = query_edit_status(This, NULL);
                 break;
+            case IDM_PRINT:
+                FIXME("CGID_MSHTML: IDM_PRINT\n");
+                prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
+                break;
             case IDM_PASTE:
                 FIXME("CGID_MSHTML: IDM_PASTE\n");
                 prgCmds[i].cmdf = OLECMDF_SUPPORTED|OLECMDF_ENABLED;
@@ -940,6 +978,8 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return exec_fontname(This, pvaIn, pvaOut);
         case IDM_FONTSIZE:
             return exec_fontsize(This, pvaIn, pvaOut);
+        case IDM_PRINT:
+            return exec_print(This, nCmdexecopt, pvaIn, pvaOut);
         case IDM_BOLD:
             if(pvaIn || pvaOut)
                 FIXME("unsupported arguments\n");
