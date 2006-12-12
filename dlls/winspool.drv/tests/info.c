@@ -70,7 +70,7 @@ static DWORD report_deactivated_spooler = 1;
     }
 
 
-static LPSTR find_default_printer(VOID)
+static void find_default_printer(VOID)
 {
     static  char    buffer[DEFAULT_PRINTER_SIZE];
     DWORD   needed;
@@ -122,7 +122,6 @@ static LPSTR find_default_printer(VOID)
         }
         trace("default_printer: '%s'\n", default_printer);
     }
-    return default_printer;
 }
 
 
@@ -1681,7 +1680,7 @@ START_TEST(info)
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
 
-    default_printer = find_default_printer();
+    find_default_printer();
 
     test_AddMonitor();
     test_AddPort();
