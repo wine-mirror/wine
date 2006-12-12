@@ -112,10 +112,6 @@ struct SysMouseImpl
     
     IDirectInputImpl               *dinput;
     
-    /* The current data format and the conversion between internal
-       and external data formats */
-    DIDATAFORMAT	           *df;
-    
     /* SysMouseAImpl */
     BYTE                            absolute;
     /* Previous position for relative moves */
@@ -240,23 +236,10 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->dinput = dinput;
 
-    newDevice->df = HeapAlloc(GetProcessHeap(), 0, Wine_InternalMouseFormat.dwSize);
-    if (!newDevice->df) goto FAILED;
-    memcpy(newDevice->df, &Wine_InternalMouseFormat, Wine_InternalMouseFormat.dwSize);
-
-    /* copy default objects */
-    newDevice->df->rgodf = HeapAlloc(GetProcessHeap(), 0, Wine_InternalMouseFormat.dwNumObjs*Wine_InternalMouseFormat.dwObjSize);
-    if (!newDevice->df->rgodf) goto FAILED;
-    memcpy(newDevice->df->rgodf, Wine_InternalMouseFormat.rgodf, Wine_InternalMouseFormat.dwNumObjs*Wine_InternalMouseFormat.dwObjSize);
-
-    if (create_DataFormat(&Wine_InternalMouseFormat, newDevice->df, &newDevice->base.data_format) == DI_OK)
+    newDevice->base.data_format.wine_df = &Wine_InternalMouseFormat;
+    if (create_DataFormat(&Wine_InternalMouseFormat, &Wine_InternalMouseFormat, &newDevice->base.data_format) == DI_OK)
         return newDevice;
 
-FAILED:
-    if (newDevice->df)
-        HeapFree(GetProcessHeap(), 0, newDevice->df->rgodf);
-    HeapFree(GetProcessHeap(), 0, newDevice->df);
-    HeapFree(GetProcessHeap(), 0, newDevice);
     return NULL;
 }
 
@@ -328,48 +311,12 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 
     /* Free the data queue */
     HeapFree(GetProcessHeap(), 0, This->base.data_queue);
+
+    release_DataFormat(&This->base.data_format);
+
     DeleteCriticalSection(&This->base.crit);
-    
-    /* Free the DataFormat */
-    if (This->df != &(Wine_InternalMouseFormat)) {
-	HeapFree(GetProcessHeap(), 0, This->df->rgodf);
-	HeapFree(GetProcessHeap(), 0, This->df);
-    }
-    
     HeapFree(GetProcessHeap(),0,This);
     return 0;
-}
-
-/******************************************************************************
-  *     SetDataFormat : the application can choose the format of the data
-  *   the device driver sends back with GetDeviceState.
-  *
-  *   For the moment, only the "standard" configuration (c_dfDIMouse) is supported
-  *   in absolute and relative mode.
-  */
-static HRESULT WINAPI SysMouseAImpl_SetDataFormat(
-	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df
-)
-{
-    SysMouseImpl *This = (SysMouseImpl *)iface;
-    
-    TRACE("(this=%p,%p)\n",This,df);
-    
-    _dump_DIDATAFORMAT(df);
-    
-    /* Tests under windows show that a call to SetDataFormat always sets the mouse
-       in relative mode whatever the dwFlags value (DIDF_ABSAXIS/DIDF_RELAXIS).
-       To switch in absolute mode, SetProperty must be used. */
-    This->absolute = 0;
-    
-    /* Store the new data format */
-    This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
-    memcpy(This->df, df, df->dwSize);
-    This->df->rgodf = HeapAlloc(GetProcessHeap(),0,df->dwNumObjs*df->dwObjSize);
-    memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
-    
-    /* Prepare all the data-conversion filters */
-    return create_DataFormat(&Wine_InternalMouseFormat, This->df, &This->base.data_format);
 }
 
 /* low-level mouse hook */
@@ -949,7 +896,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     SysMouseAImpl_Unacquire,
     SysMouseAImpl_GetDeviceState,
     SysMouseAImpl_GetDeviceData,
-    SysMouseAImpl_SetDataFormat,
+    IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2AImpl_GetObjectInfo,
@@ -991,7 +938,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     XCAST(Unacquire)SysMouseAImpl_Unacquire,
     XCAST(GetDeviceState)SysMouseAImpl_GetDeviceState,
     XCAST(GetDeviceData)SysMouseAImpl_GetDeviceData,
-    XCAST(SetDataFormat)SysMouseAImpl_SetDataFormat,
+    XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
     XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
     XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
     IDirectInputDevice2WImpl_GetObjectInfo,
