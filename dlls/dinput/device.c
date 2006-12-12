@@ -336,7 +336,7 @@ static void calculate_ids(LPDIDATAFORMAT df)
     }
 }
 
-HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_format, DataFormat *format)
+HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
 {
     DataTransform *dt;
     unsigned int i, j;
@@ -344,12 +344,13 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_for
     int *done;
     int index = 0;
     DWORD next = 0;
-    
+
+    if (!format->wine_df) return DIERR_INVALIDPARAM;
     done = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, asked_format->dwNumObjs * sizeof(int));
     dt = HeapAlloc(GetProcessHeap(), 0, asked_format->dwNumObjs * sizeof(DataTransform));
     if (!dt || !done) goto failed;
 
-    if (!(format->offsets = HeapAlloc(GetProcessHeap(), 0, wine_format->dwNumObjs * sizeof(int))))
+    if (!(format->offsets = HeapAlloc(GetProcessHeap(), 0, format->wine_df->dwNumObjs * sizeof(int))))
         goto failed;
 
     if (!(format->user_df = HeapAlloc(GetProcessHeap(), 0, asked_format->dwSize)))
@@ -362,7 +363,8 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_for
 
     TRACE("Creating DataTransform :\n");
     
-    for (i = 0; i < wine_format->dwNumObjs; i++) {
+    for (i = 0; i < format->wine_df->dwNumObjs; i++)
+    {
         format->offsets[i] = -1;
 
 	for (j = 0; j < asked_format->dwNumObjs; j++) {
@@ -373,18 +375,18 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_for
 		 * the GUID of the Wine object.
 		 */
 		((asked_format->rgodf[j].pguid == NULL) ||
-		 (wine_format->rgodf[i].pguid == NULL) ||
-		 (IsEqualGUID(wine_format->rgodf[i].pguid, asked_format->rgodf[j].pguid)))
+		 (format->wine_df->rgodf[i].pguid == NULL) ||
+		 (IsEqualGUID(format->wine_df->rgodf[i].pguid, asked_format->rgodf[j].pguid)))
 		&&
 		(/* Then check if it accepts any instance id, and if not, if it matches Wine's
 		  * instance id.
 		  */
 		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == 0xFFFF) ||
 		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == 0x00FF) || /* This is mentionned in no DX docs, but it works fine - tested on WinXP */
-		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == DIDFT_GETINSTANCE(wine_format->rgodf[i].dwType)))
+		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == DIDFT_GETINSTANCE(format->wine_df->rgodf[i].dwType)))
 		&&
 		( /* Then if the asked type matches the one Wine provides */
-                 DIDFT_GETTYPE(asked_format->rgodf[j].dwType) & wine_format->rgodf[i].dwType))
+                 DIDFT_GETTYPE(asked_format->rgodf[j].dwType) & format->wine_df->rgodf[i].dwType))
             {
 		done[j] = 1;
 		
@@ -399,23 +401,23 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_for
 		
 		TRACE("   - Wine  (%d) :\n", i);
 		TRACE("       * GUID: %s ('%s')\n",
-		      debugstr_guid(wine_format->rgodf[i].pguid),
-		      _dump_dinput_GUID(wine_format->rgodf[i].pguid));
-                TRACE("       * Offset: %3d\n", wine_format->rgodf[i].dwOfs);
-                TRACE("       * dwType: %08x\n", wine_format->rgodf[i].dwType);
-		TRACE("         "); _dump_EnumObjects_flags(wine_format->rgodf[i].dwType); TRACE("\n");
+                      debugstr_guid(format->wine_df->rgodf[i].pguid),
+                      _dump_dinput_GUID(format->wine_df->rgodf[i].pguid));
+                TRACE("       * Offset: %3d\n", format->wine_df->rgodf[i].dwOfs);
+                TRACE("       * dwType: %08x\n", format->wine_df->rgodf[i].dwType);
+                TRACE("         "); _dump_EnumObjects_flags(format->wine_df->rgodf[i].dwType); TRACE("\n");
 		
-		if (wine_format->rgodf[i].dwType & DIDFT_BUTTON)
+                if (format->wine_df->rgodf[i].dwType & DIDFT_BUTTON)
 		    dt[index].size = sizeof(BYTE);
 		else
 		    dt[index].size = sizeof(DWORD);
-		dt[index].offset_in = wine_format->rgodf[i].dwOfs;
+                dt[index].offset_in = format->wine_df->rgodf[i].dwOfs;
                 dt[index].offset_out = asked_format->rgodf[j].dwOfs;
                 format->offsets[i]   = asked_format->rgodf[j].dwOfs;
 		dt[index].value = 0;
                 next = next + dt[index].size;
 		
-		if (wine_format->rgodf[i].dwOfs != dt[index].offset_out)
+                if (format->wine_df->rgodf[i].dwOfs != dt[index].offset_out)
 		    same = 0;
 		
 		index++;
@@ -451,7 +453,7 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_for
 	}
     }
     
-    format->internal_format_size = wine_format->dwDataSize;
+    format->internal_format_size = format->wine_df->dwDataSize;
     format->size = index;
     if (same) {
 	HeapFree(GetProcessHeap(), 0, dt);
@@ -635,7 +637,7 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
     EnterCriticalSection(&This->crit);
 
     release_DataFormat(&This->data_format);
-    res = create_DataFormat(This->data_format.wine_df, df, &This->data_format);
+    res = create_DataFormat(df, &This->data_format);
 
     LeaveCriticalSection(&This->crit);
     return res;

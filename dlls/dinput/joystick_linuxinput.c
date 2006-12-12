@@ -392,7 +392,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
   newDevice->base.data_format.wine_df = &c_dfDIJoystick2;
 
   /* create the default transform filter */
-  if (create_DataFormat(&c_dfDIJoystick2, &c_dfDIJoystick2, &newDevice->base.data_format) == DI_OK)
+  if (create_DataFormat(&c_dfDIJoystick2, &newDevice->base.data_format) == DI_OK)
     return newDevice;
 
   HeapFree(GetProcessHeap(),0,newDevice);

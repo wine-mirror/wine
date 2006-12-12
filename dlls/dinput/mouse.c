@@ -237,7 +237,7 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     newDevice->dinput = dinput;
 
     newDevice->base.data_format.wine_df = &Wine_InternalMouseFormat;
-    if (create_DataFormat(&Wine_InternalMouseFormat, &Wine_InternalMouseFormat, &newDevice->base.data_format) == DI_OK)
+    if (create_DataFormat(&Wine_InternalMouseFormat, &newDevice->base.data_format) == DI_OK)
         return newDevice;
 
     return NULL;

@@ -481,7 +481,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->base.data_format.wine_df = &c_dfDIJoystick2;
 
     /* create the default transform filter */
-    hr = create_DataFormat(&c_dfDIJoystick2, &c_dfDIJoystick2, &newDevice->base.data_format);
+    hr = create_DataFormat(&c_dfDIJoystick2, &newDevice->base.data_format);
     if (hr != DI_OK) goto FAILED;
 
     IDirectInputDevice_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);

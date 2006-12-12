@@ -197,7 +197,7 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
     InitializeCriticalSection(&newDevice->base.crit);
 
     newDevice->base.data_format.wine_df = &c_dfDIKeyboard;
-    if (create_DataFormat(&c_dfDIKeyboard, &c_dfDIKeyboard, &newDevice->base.data_format) == DI_OK)
+    if (create_DataFormat(&c_dfDIKeyboard, &newDevice->base.data_format) == DI_OK)
         return newDevice;
     return NULL;
 }
