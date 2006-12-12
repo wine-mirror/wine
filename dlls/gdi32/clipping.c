@@ -86,9 +86,22 @@ void CLIPPING_UpdateGCRegion( DC * dc )
  */
 static inline void create_default_clip_region( DC * dc )
 {
-    dc->hClipRgn = CreateRectRgn(0, 0,
-        GetDeviceCaps( dc->hSelf, HORZRES ),
-        GetDeviceCaps( dc->hSelf, VERTRES ));
+    UINT width, height;
+
+    if (GDIMAGIC( dc->header.wMagic ) == MEMORY_DC_MAGIC)
+    {
+        BITMAP bitmap;
+
+        GetObjectW( dc->hBitmap, sizeof(bitmap), &bitmap );
+        width = bitmap.bmWidth;
+        height = bitmap.bmHeight;
+    }
+    else
+    {
+        width = GetDeviceCaps( dc->hSelf, DESKTOPHORZRES );
+        height = GetDeviceCaps( dc->hSelf, DESKTOPVERTRES );
+    }
+    dc->hClipRgn = CreateRectRgn( 0, 0, width, height );
 }
 
 
