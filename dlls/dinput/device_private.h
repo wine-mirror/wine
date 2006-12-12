@@ -40,7 +40,9 @@ typedef struct
     int                         internal_format_size;
     DataTransform              *dt;
 
-    int                        *offsets;    /* object offsets */
+    int                        *offsets;     /* object offsets */
+    LPCDIDATAFORMAT             wine_df;     /* wine internal data format */
+    LPDIDATAFORMAT              user_df;     /* user defined data format */
 } DataFormat;
 
 /* Device implementation */
@@ -67,7 +69,7 @@ struct IDirectInputDevice2AImpl
 
 /* Routines to do DataFormat / WineFormat conversions */
 extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
-extern HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, DataFormat *format);
+extern HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_format, DataFormat *format);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 /* Helper functions to work with data format */

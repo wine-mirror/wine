@@ -288,6 +288,10 @@ void release_DataFormat(DataFormat * format)
     format->dt = NULL;
     HeapFree(GetProcessHeap(), 0, format->offsets);
     format->offsets = NULL;
+    if (format->user_df)
+        HeapFree(GetProcessHeap(), 0, format->user_df->rgodf);
+    HeapFree(GetProcessHeap(), 0, format->user_df);
+    format->user_df = NULL;
 }
 
 /* Make all instances sequential */
@@ -332,7 +336,7 @@ static void calculate_ids(LPDIDATAFORMAT df)
     }
 }
 
-HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, DataFormat *format)
+HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPCDIDATAFORMAT asked_format, DataFormat *format)
 {
     DataTransform *dt;
     unsigned int i, j;
@@ -347,6 +351,14 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_form
 
     if (!(format->offsets = HeapAlloc(GetProcessHeap(), 0, wine_format->dwNumObjs * sizeof(int))))
         goto failed;
+
+    if (!(format->user_df = HeapAlloc(GetProcessHeap(), 0, asked_format->dwSize)))
+        goto failed;
+    memcpy(format->user_df, asked_format, asked_format->dwSize);
+
+    if (!(format->user_df->rgodf = HeapAlloc(GetProcessHeap(), 0, asked_format->dwNumObjs*asked_format->dwObjSize)))
+        goto failed;
+    memcpy(format->user_df->rgodf, asked_format->rgodf, asked_format->dwNumObjs*asked_format->dwObjSize);
 
     TRACE("Creating DataTransform :\n");
     
@@ -450,7 +462,7 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_form
     HeapFree(GetProcessHeap(), 0, done);
 
     /* Last step - reset all instances of the new format */
-    calculate_ids(asked_format);
+    calculate_ids(format->user_df);
     return DI_OK;
 
 failed:
@@ -459,6 +471,10 @@ failed:
     format->dt = NULL;
     HeapFree(GetProcessHeap(), 0, format->offsets);
     format->offsets = NULL;
+    if (format->user_df)
+        HeapFree(GetProcessHeap(), 0, format->user_df->rgodf);
+    HeapFree(GetProcessHeap(), 0, format->user_df);
+    format->user_df = NULL;
 
     return DIERR_OUTOFMEMORY;
 }
@@ -570,6 +586,8 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     HRESULT res;
 
+    if (!This->data_format.user_df) return DIERR_INVALIDPARAM;
+
     EnterCriticalSection(&This->crit);
     res = This->acquired ? S_FALSE : DI_OK;
     This->acquired = 1;
@@ -602,15 +620,25 @@ HRESULT WINAPI IDirectInputDevice2AImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
  */
 
 HRESULT WINAPI IDirectInputDevice2AImpl_SetDataFormat(
-	LPDIRECTINPUTDEVICE8A iface,LPCDIDATAFORMAT df
-) {
+        LPDIRECTINPUTDEVICE8A iface, LPCDIDATAFORMAT df)
+{
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    
-    TRACE("(this=%p,%p)\n",This,df);
-    
+    HRESULT res = DI_OK;
+
+    if (!df) return E_POINTER;
+    TRACE("(%p) %p\n", This, df);
     _dump_DIDATAFORMAT(df);
-    
-    return DI_OK;
+
+    if (df->dwSize != sizeof(DIDATAFORMAT)) return DIERR_INVALIDPARAM;
+    if (This->acquired) return DIERR_ACQUIRED;
+
+    EnterCriticalSection(&This->crit);
+
+    release_DataFormat(&This->data_format);
+    res = create_DataFormat(This->data_format.wine_df, df, &This->data_format);
+
+    LeaveCriticalSection(&This->crit);
+    return res;
 }
 
 /******************************************************************************
