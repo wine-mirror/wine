@@ -26,6 +26,23 @@
 #include "winbase.h"
 #include "dinput.h"
 
+typedef struct
+{
+    int size;
+    int offset_in;
+    int offset_out;
+    int value;
+} DataTransform;
+
+typedef struct
+{
+    int                         size;
+    int                         internal_format_size;
+    DataTransform              *dt;
+
+    int                        *offsets;    /* object offsets */
+} DataFormat;
+
 /* Device implementation */
 typedef struct IDirectInputDevice2AImpl IDirectInputDevice2AImpl;
 struct IDirectInputDevice2AImpl
@@ -44,23 +61,13 @@ struct IDirectInputDevice2AImpl
     int                         queue_head;  /* position to write new event into queue      */
     int                         queue_tail;  /* next event to read from queue               */
     BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
+
+    DataFormat                  data_format; /* user data format and wine to user format converter */
 };
 
 /* Routines to do DataFormat / WineFormat conversions */
-typedef struct {
-  int size;
-  int offset_in;
-  int offset_out;
-  int value;
-} DataTransform;
-
-typedef struct {
-  int size;
-  int internal_format_size;
-  DataTransform *dt;
-} DataFormat;
 extern void fill_DataFormat(void *out, const void *in, DataFormat *df) ;
-extern DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, int *offset);
+extern HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, DataFormat *format);
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 /* Helper functions to work with data format */

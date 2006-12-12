@@ -137,8 +137,6 @@ struct JoystickImpl
 	int				joyfd;
 
 	LPDIDATAFORMAT			df;
-	DataFormat			*transform;	/* wine to user format converter */
-	int				*offsets;	/* object offsets */
 	DIJOYSTATE2			js;
 
 	/* Force feedback variables */
@@ -404,15 +402,9 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     goto FAILED;
   CopyMemory(newDevice->df->rgodf,c_dfDIJoystick2.rgodf,c_dfDIJoystick2.dwNumObjs*c_dfDIJoystick2.dwObjSize);
 
-  /* create an offsets array */
-  newDevice->offsets = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,c_dfDIJoystick2.dwNumObjs*sizeof(int));
-  if (newDevice->offsets == 0)
-    goto FAILED;
-
   /* create the default transform filter */
-  newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->df, newDevice->offsets);
-
-  return newDevice;
+  if (create_DataFormat(&c_dfDIJoystick2, newDevice->df, &newDevice->base.data_format) == DI_OK)
+    return newDevice;
 
 FAILED:
   HeapFree(GetProcessHeap(),0,newDevice->df->rgodf);
@@ -514,11 +506,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 	HeapFree(GetProcessHeap(), 0, This->df->rgodf);
 	HeapFree(GetProcessHeap(), 0, This->df);
 
-        /* Free the offsets array */
-        HeapFree(GetProcessHeap(),0,This->offsets);
-        
         /* release the data transform filter */
-        release_DataFormat(This->transform);
+        release_DataFormat(&This->base.data_format);
 
         DeleteCriticalSection(&This->base.crit);
         
@@ -557,7 +546,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 
   HeapFree(GetProcessHeap(),0,This->df->rgodf);
   HeapFree(GetProcessHeap(),0,This->df);
-  release_DataFormat(This->transform);
+  release_DataFormat(&This->base.data_format);
 
   /* Store the new data format */
   This->df = HeapAlloc(GetProcessHeap(),0,df->dwSize);
@@ -572,9 +561,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
   }
   memcpy(This->df->rgodf,df->rgodf,df->dwNumObjs*df->dwObjSize);
 
-  This->transform = create_DataFormat(&c_dfDIJoystick2, This->df, This->offsets);
-
-  return DI_OK;
+  return create_DataFormat(&c_dfDIJoystick2, This->df, &This->base.data_format);
 }
 
 /******************************************************************************
@@ -744,7 +731,7 @@ lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code )
       FIXME("Unhandled type(0x%02X)\n", ie_type);
       return -1;
   }
-  return This->offsets[offset];
+  return This->base.data_format.offsets[offset];
 }
 
 /* convert wine format offset to user format object index */
@@ -892,7 +879,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     joy_polldev(This);
 
     /* convert and copy data to user supplied buffer */
-    fill_DataFormat(ptr, &This->js, This->transform);
+    fill_DataFormat(ptr, &This->js, &This->base.data_format);
 
     return DI_OK;
 }

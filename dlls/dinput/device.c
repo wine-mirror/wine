@@ -282,9 +282,12 @@ void fill_DataFormat(void *out, const void *in, DataFormat *df) {
 
 void release_DataFormat(DataFormat * format)
 {
-    TRACE("Deleting DataTransform :\n");
+    TRACE("Deleting DataFormat: %p\n", format);
 
     HeapFree(GetProcessHeap(), 0, format->dt);
+    format->dt = NULL;
+    HeapFree(GetProcessHeap(), 0, format->offsets);
+    format->offsets = NULL;
 }
 
 /* Make all instances sequential */
@@ -329,9 +332,8 @@ static void calculate_ids(LPDIDATAFORMAT df)
     }
 }
 
-DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, int *offset)
+HRESULT create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_format, DataFormat *format)
 {
-    DataFormat *ret;
     DataTransform *dt;
     unsigned int i, j;
     int same = 1;
@@ -339,18 +341,18 @@ DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_
     int index = 0;
     DWORD next = 0;
     
-    ret = HeapAlloc(GetProcessHeap(), 0, sizeof(DataFormat));
-    
-    done = HeapAlloc(GetProcessHeap(), 0, sizeof(int) * asked_format->dwNumObjs);
-    memset(done, 0, sizeof(int) * asked_format->dwNumObjs);
-    
+    done = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, asked_format->dwNumObjs * sizeof(int));
     dt = HeapAlloc(GetProcessHeap(), 0, asked_format->dwNumObjs * sizeof(DataTransform));
-    
+    if (!dt || !done) goto failed;
+
+    if (!(format->offsets = HeapAlloc(GetProcessHeap(), 0, wine_format->dwNumObjs * sizeof(int))))
+        goto failed;
+
     TRACE("Creating DataTransform :\n");
     
     for (i = 0; i < wine_format->dwNumObjs; i++) {
-	offset[i] = -1;
-	
+        format->offsets[i] = -1;
+
 	for (j = 0; j < asked_format->dwNumObjs; j++) {
 	    if (done[j] == 1)
 		continue;
@@ -397,7 +399,7 @@ DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_
 		    dt[index].size = sizeof(DWORD);
 		dt[index].offset_in = wine_format->rgodf[i].dwOfs;
                 dt[index].offset_out = asked_format->rgodf[j].dwOfs;
-                offset[i] = asked_format->rgodf[j].dwOfs;
+                format->offsets[i]   = asked_format->rgodf[j].dwOfs;
 		dt[index].value = 0;
                 next = next + dt[index].size;
 		
@@ -437,20 +439,28 @@ DataFormat *create_DataFormat(LPCDIDATAFORMAT wine_format, LPDIDATAFORMAT asked_
 	}
     }
     
-    ret->internal_format_size = wine_format->dwDataSize;
-    ret->size = index;
+    format->internal_format_size = wine_format->dwDataSize;
+    format->size = index;
     if (same) {
-	ret->dt = NULL;
 	HeapFree(GetProcessHeap(), 0, dt);
-    } else {
-	ret->dt = dt;
+        dt = NULL;
     }
-    
+    format->dt = dt;
+
     HeapFree(GetProcessHeap(), 0, done);
 
     /* Last step - reset all instances of the new format */
     calculate_ids(asked_format);
-    return ret;
+    return DI_OK;
+
+failed:
+    HeapFree(GetProcessHeap(), 0, done);
+    HeapFree(GetProcessHeap(), 0, dt);
+    format->dt = NULL;
+    HeapFree(GetProcessHeap(), 0, format->offsets);
+    format->offsets = NULL;
+
+    return DIERR_OUTOFMEMORY;
 }
 
 /* find an object by it's offset in a data format */

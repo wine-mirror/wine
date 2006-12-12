@@ -103,8 +103,6 @@ struct JoystickImpl
 	int				joyfd;
 	DIJOYSTATE2			js;		/* wine data */
 	LPDIDATAFORMAT			user_df;	/* user defined format */
-	DataFormat			*transform;	/* wine to user format converter */
-	int				*offsets;	/* object offsets */
 	ObjProps			*props;
 	char				*name;
 	DIDEVCAPS			devcaps;
@@ -495,13 +493,9 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
         newDevice->props[i].lSaturation = 0;
     }
 
-    /* create an offsets array */
-    newDevice->offsets = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,c_dfDIJoystick2.dwNumObjs*sizeof(int));
-    if (newDevice->offsets == 0)
-        goto FAILED;
-
     /* create the default transform filter */
-    newDevice->transform = create_DataFormat(&c_dfDIJoystick2, newDevice->user_df, newDevice->offsets);
+    hr = create_DataFormat(&c_dfDIJoystick2, newDevice->user_df, &newDevice->base.data_format);
+    if (hr != DI_OK) goto FAILED;
 
     IDirectInputDevice_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
 
@@ -633,11 +627,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     /* Free the properties */
     HeapFree(GetProcessHeap(), 0, This->props);
 
-    /* Free the offsets array */
-    HeapFree(GetProcessHeap(),0,This->offsets);
-
     /* release the data transform filter */
-    release_DataFormat(This->transform);
+    release_DataFormat(&This->base.data_format);
 
     This->base.crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->base.crit);
@@ -697,7 +688,7 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     HeapFree(GetProcessHeap(),0,This->user_df);
     HeapFree(GetProcessHeap(),0,This->user_df->rgodf);
     HeapFree(GetProcessHeap(),0,This->props);
-    release_DataFormat(This->transform);
+    release_DataFormat(&This->base.data_format);
 
     This->user_df = new_df;
     CopyMemory(This->user_df, df, df->dwSize);
@@ -710,9 +701,8 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
         This->props[i].lDeadZone = 1000;
         This->props[i].lSaturation = 0;
     }
-    This->transform = create_DataFormat(&c_dfDIJoystick2, This->user_df, This->offsets);
-
-    return DI_OK;
+    if (create_DataFormat(&c_dfDIJoystick2, This->user_df, &This->base.data_format) == DI_OK)
+        return DI_OK;
 
 FAILED:
     WARN("out of memory\n");
@@ -840,7 +830,7 @@ static void joy_polldev(JoystickImpl *This) {
         TRACE("js_event: type 0x%x, number %d, value %d\n",
               jse.type,jse.number,jse.value);
         if (jse.type & JS_EVENT_BUTTON) {
-            int offset = This->offsets[jse.number + 12];
+            int offset = This->base.data_format.offsets[jse.number + 12];
             int value = jse.value?0x80:0x00;
 
             This->js.rgbButtons[jse.number] = value;
@@ -848,7 +838,7 @@ static void joy_polldev(JoystickImpl *This) {
         } else if (jse.type & JS_EVENT_AXIS) {
             int number = This->axis_map[jse.number];	/* wine format object index */
             if (number < 12) {
-                int offset = This->offsets[number];
+                int offset = This->base.data_format.offsets[number];
                 int index = offset_to_object(This->user_df, offset);
                 LONG value = map_axis(This, jse.value, index);
 
@@ -940,7 +930,7 @@ static HRESULT WINAPI JoystickAImpl_GetDeviceState(
     joy_polldev(This);
 
     /* convert and copy data to user supplied buffer */
-    fill_DataFormat(ptr, &This->js, This->transform);
+    fill_DataFormat(ptr, &This->js, &This->base.data_format);
 
     return DI_OK;
 }
@@ -1154,7 +1144,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
 	ddoi.guidType = GUID_Unknown;
       }
       if (wine_obj < 8) {
-          user_offset = This->offsets[wine_obj];	/* get user offset from wine index */
+          user_offset = This->base.data_format.offsets[wine_obj];	/* get user offset from wine index */
           user_object = offset_to_object(This->user_df, user_offset);
 
           ddoi.dwType = This->user_df->rgodf[user_object].dwType & 0x00ffffff;
@@ -1163,7 +1153,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
           axes++;
       } else {
           if (pov[wine_obj - 8] < 2) {
-              user_offset = This->offsets[wine_obj];	/* get user offset from wine index */
+              user_offset = This->base.data_format.offsets[wine_obj];	/* get user offset from wine index */
               user_object = offset_to_object(This->user_df, user_offset);
 
               ddoi.dwType = This->user_df->rgodf[user_object].dwType & 0x00ffffff;
@@ -1188,7 +1178,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
     ddoi.guidType = GUID_Button;
 
     for (i = 0; i < This->buttons; i++) {
-      user_offset = This->offsets[i + 12];	/* get user offset from wine index */
+      user_offset = This->base.data_format.offsets[i + 12];	/* get user offset from wine index */
       user_object = offset_to_object(This->user_df, user_offset);
       ddoi.guidType = GUID_Button;
       ddoi.dwType = This->user_df->rgodf[user_object].dwType & 0x00ffffff;
