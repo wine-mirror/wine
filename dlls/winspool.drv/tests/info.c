@@ -55,6 +55,8 @@ struct monitor_entry {
     CHAR  dllname[32];
 };
 
+static LPSTR   default_printer = NULL;
+
 /* report common behavior only once */
 static DWORD report_deactivated_spooler = 1;
 #define RETURN_ON_DEACTIVATED_SPOOLER(res) \
@@ -70,7 +72,6 @@ static DWORD report_deactivated_spooler = 1;
 
 static LPSTR find_default_printer(VOID)
 {
-    static  LPSTR   default_printer = NULL;
     static  char    buffer[DEFAULT_PRINTER_SIZE];
     DWORD   needed;
     DWORD   res;
@@ -1218,7 +1219,6 @@ static void test_OpenPrinter(void)
 {
     PRINTER_DEFAULTSA   defaults;
     HANDLE              hprinter;
-    LPSTR               default_printer;
     DWORD               res;
     DWORD               size;
     CHAR                buffer[DEFAULT_PRINTER_SIZE];
@@ -1311,7 +1311,7 @@ static void test_OpenPrinter(void)
 
 
     /* Get Handle for the default Printer */
-    if ((default_printer = find_default_printer()))
+    if (default_printer)
     {
         hprinter = (HANDLE) MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
@@ -1386,7 +1386,6 @@ static void test_OpenPrinter(void)
 static void test_SetDefaultPrinter(void)
 {
     DWORD   res;
-    LPSTR   default_printer;
     DWORD   size = DEFAULT_PRINTER_SIZE;
     CHAR    buffer[DEFAULT_PRINTER_SIZE];
     CHAR    org_value[DEFAULT_PRINTER_SIZE];
@@ -1394,8 +1393,6 @@ static void test_SetDefaultPrinter(void)
 
     if (!pSetDefaultPrinterA)  return;
 	/* only supported on win2k and above */
-
-    default_printer = find_default_printer();
 
     /* backup the original value */
     org_value[0] = '\0';
@@ -1486,14 +1483,12 @@ static void test_SetDefaultPrinter(void)
 
 static void test_GetPrinterDriver(void)
 {
-    LPSTR default_printer;
     HANDLE hprn;
     BOOL ret;
     BYTE *buf;
     INT level;
     DWORD needed, filled;
 
-    default_printer = find_default_printer();
     if (!default_printer)
     {
         trace("There is no default printer installed, skiping the test\n");
@@ -1599,12 +1594,10 @@ static void test_DEVMODE(const DEVMODE *dm, LONG dmSize, LPCSTR exp_prn_name)
 
 static void test_DocumentProperties(void)
 {
-    LPSTR default_printer;
     HANDLE hprn;
     LONG dm_size, ret;
     DEVMODE *dm;
 
-    default_printer = find_default_printer();
     if (!default_printer)
     {
         trace("There is no default printer installed, skiping the test\n");
@@ -1662,8 +1655,6 @@ static void test_EnumPrinters(void)
 
 START_TEST(info)
 {
-    LPSTR   default_printer;
-
     hwinspool = GetModuleHandleA("winspool.drv");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
