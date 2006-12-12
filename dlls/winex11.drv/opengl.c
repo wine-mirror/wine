@@ -1457,7 +1457,8 @@ static void sync_current_drawable(void)
     {
         GetClipBox(ctx->physDev->hdc, &rc); /* Make sure physDev is up to date */
 
-        dy = ctx->physDev->drawable_rect.bottom - ctx->physDev->dc_rect.bottom;
+        dy = ctx->physDev->drawable_rect.bottom - ctx->physDev->drawable_rect.top -
+            ctx->physDev->dc_rect.bottom;
         width = ctx->physDev->dc_rect.right - ctx->physDev->dc_rect.left;
         height = ctx->physDev->dc_rect.bottom - ctx->physDev->dc_rect.top;
 
