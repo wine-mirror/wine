@@ -62,39 +62,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define WINE_MOUSE_R_POSITION 4
 #define WINE_MOUSE_M_POSITION 5
 
-typedef struct {
-    LONG lX;
-    LONG lY;
-    LONG lZ;
-    BYTE rgbButtons[4];
-} Wine_InternalMouseData;
-
-#define WINE_INTERNALMOUSE_NUM_OBJS 6
-
-static const DIOBJECTDATAFORMAT Wine_InternalMouseObjectFormat[WINE_INTERNALMOUSE_NUM_OBJS] = {
-    { &GUID_XAxis,   FIELD_OFFSET(Wine_InternalMouseData, lX),
-	  DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS, 0 },
-    { &GUID_YAxis,   FIELD_OFFSET(Wine_InternalMouseData, lY),
-	  DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS, 0 },
-    { &GUID_ZAxis,   FIELD_OFFSET(Wine_InternalMouseData, lZ),
-	  DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS, 0 },
-    { &GUID_Button, (FIELD_OFFSET(Wine_InternalMouseData, rgbButtons)) + 0,
-	  DIDFT_MAKEINSTANCE(WINE_MOUSE_L_BUTTON_INSTANCE) | DIDFT_PSHBUTTON, 0 },
-    { &GUID_Button, (FIELD_OFFSET(Wine_InternalMouseData, rgbButtons)) + 1,
-	  DIDFT_MAKEINSTANCE(WINE_MOUSE_R_BUTTON_INSTANCE) | DIDFT_PSHBUTTON, 0 },
-    { &GUID_Button, (FIELD_OFFSET(Wine_InternalMouseData, rgbButtons)) + 2,
-	  DIDFT_MAKEINSTANCE(WINE_MOUSE_M_BUTTON_INSTANCE) | DIDFT_PSHBUTTON, 0 }
-};
-
-static const DIDATAFORMAT Wine_InternalMouseFormat = {
-    sizeof(DIDATAFORMAT),
-    sizeof(DIOBJECTDATAFORMAT),
-    DIDF_RELAXIS,
-    sizeof(Wine_InternalMouseData),
-    WINE_INTERNALMOUSE_NUM_OBJS, /* dwNumObjs */
-    (LPDIOBJECTDATAFORMAT) Wine_InternalMouseObjectFormat
-};
-
 static const IDirectInputDevice8AVtbl SysMouseAvt;
 static const IDirectInputDevice8WVtbl SysMouseWvt;
 
@@ -126,7 +93,7 @@ struct SysMouseImpl
     DWORD                           last_warped;
     
     /* This is for mouse reporting. */
-    Wine_InternalMouseData          m_state;
+    DIMOUSESTATE2                   m_state;
 };
 
 /* FIXME: This is ugly and not thread safe :/ */
@@ -236,8 +203,8 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->dinput = dinput;
 
-    newDevice->base.data_format.wine_df = &Wine_InternalMouseFormat;
-    if (create_DataFormat(&Wine_InternalMouseFormat, &newDevice->base.data_format) == DI_OK)
+    newDevice->base.data_format.wine_df = &c_dfDIMouse2;
+    if (create_DataFormat(&c_dfDIMouse2, &newDevice->base.data_format) == DI_OK)
         return newDevice;
 
     return NULL;
