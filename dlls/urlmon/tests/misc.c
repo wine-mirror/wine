@@ -347,6 +347,8 @@ static const WCHAR mimeAppXGzip[] = {'a','p','p','l','i','c','a','t','i','o','n'
                                     'x','-','g','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
 static const WCHAR mimeAppJava[] = {'a','p','p','l','i','c','a','t','i','o','n','/','j','a','v','a',0};
 static const WCHAR mimeAppPdf[] = {'a','p','p','l','i','c','a','t','i','o','n','/','p','d','f',0};
+static const WCHAR mimeAppXMSDownload[] =
+    {'a','p','p','l','i','c','a','t','i','o','n','/','x','-','m','s','d','o','w','n','l','o','a','d',0};
 
 static const struct {
     LPCWSTR url;
@@ -428,6 +430,9 @@ static BYTE data64[] = {0xca,0xfe,0xba,0xbe,'<','h','t','m','l','>',0};
 static BYTE data65[] = {0x25,0x50,0x44,0x46,'x'};
 static BYTE data66[] = {0x25,0x50,0x44,0x46};
 static BYTE data67[] = {0x25,0x50,0x44,0x46,'x','<','h','t','m','l','>'};
+static BYTE data68[] = {'M','Z','x'};
+static BYTE data69[] = {'M','Z'};
+static BYTE data70[] = {'M','Z','<','h','t','m','l','>',0xff};
 
 static const struct {
     BYTE *data;
@@ -500,7 +505,10 @@ static const struct {
     {data64, sizeof(data64), mimeTextHtml},
     {data65, sizeof(data65), mimeAppPdf},
     {data66, sizeof(data66), mimeTextPlain},
-    {data67, sizeof(data67), mimeTextHtml}
+    {data67, sizeof(data67), mimeTextHtml},
+    {data68, sizeof(data68), mimeAppXMSDownload},
+    {data69, sizeof(data69), mimeTextPlain},
+    {data70, sizeof(data70), mimeTextHtml}
 };
 
 static void test_FindMimeFromData(void)

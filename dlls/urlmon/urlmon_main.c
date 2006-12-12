@@ -489,6 +489,11 @@ static BOOL application_java_filter(const BYTE const *b, DWORD size)
     return size > 4 && b[0] == 0xca && b[1] == 0xfe && b[2] == 0xba && b[3] == 0xbe;
 }
 
+static BOOL application_xmsdownload(const BYTE const *b, DWORD size)
+{
+    return size > 2 && b[0] == 'M' && b[1] == 'Z';
+}
+
 static BOOL text_plain_filter(const BYTE const *b, DWORD size)
 {
     const BYTE *ptr;
@@ -557,6 +562,8 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             'x','-','g','z','i','p','-','c','o','m','p','r','e','s','s','e','d',0};
         static const WCHAR wszAppJava[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
             'j','a','v','a',0};
+        static const WCHAR wszAppXMSDownload[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
+            'x','-','m','s','d','o','w','n','l','o','a','d',0};
         static const WCHAR wszTextPlain[] = {'t','e','x','t','/','p','l','a','i','n','\0'};
         static const WCHAR wszAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
             'o','c','t','e','t','-','s','t','r','e','a','m','\0'};
@@ -577,6 +584,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
             {wszAppXZip,        application_xzip_filter},
             {wszAppXGzip,       application_xgzip_filter},
             {wszAppJava,        application_java_filter},
+            {wszAppXMSDownload, application_xmsdownload},
             {wszTextPlain,      text_plain_filter},
             {wszAppOctetStream, application_octet_stream_filter}
         };
