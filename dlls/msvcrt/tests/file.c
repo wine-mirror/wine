@@ -138,10 +138,12 @@ static void test_readmode( BOOL ascii_mode )
     static const char outbuffer[] = "0,1,2,3,4,5,6,7,8,9\r\n\r\nA,B,C,D,E\r\nX,Y,Z";
     static const char padbuffer[] = "ghjghjghjghj";
     static const char nlbuffer[] = "\r\n";
-    char buffer[2*BUFSIZ+256], *optr;
+    char buffer[2*BUFSIZ+256];
+    const char *optr;
     int fd;
     FILE *file;
-    int i, j, m, fp, ao, *ip, pl;
+    const int *ip;
+    int i, j, m, fp, ao, pl;
     long l;
 
     fd = open ("fdopen.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
@@ -215,7 +217,7 @@ static void test_readmode( BOOL ascii_mode )
     for (m=0; m<3; m++)
         ok(buffer[m]==padbuffer[m+(BUFSIZ-4)%strlen(padbuffer)],"expected %c got %c\n", padbuffer[m], buffer[m]);
     m+=BUFSIZ+2+ao;
-    optr = (char *)outbuffer;
+    optr = outbuffer;
     for (; m<i; m++) {
         ok(buffer[m]==*optr,"char %d expected %c got %c in %s\n", m, *optr, buffer[m], IOMODE);
         optr++;
@@ -246,7 +248,7 @@ static void test_readmode( BOOL ascii_mode )
     ok(ftell(file) == 0,"Did not start at beginning of file in %s\n", IOMODE);
     ok(fgets(buffer,2*BUFSIZ+256,file) !=0,"padding line fgets failed unexpected in %s\n", IOMODE);
     i = _getw(file);
-    ip = (int *)outbuffer;
+    ip = (const int *)outbuffer;
     ok(i == *ip,"_getw failed, expected %08x got %08x in %s\n", *ip, i, IOMODE);
     for (fp=0; fp<strlen(outbuffer); fp++)
         if (outbuffer[fp] == '\n') break;
@@ -266,7 +268,7 @@ static void test_readmode( BOOL ascii_mode )
 }
 
 
-static WCHAR* AtoW( char* p )
+static WCHAR* AtoW( const char* p )
 {
     WCHAR* buffer;
     DWORD len = MultiByteToWideChar( CP_ACP, 0, p, -1, NULL, 0 );
@@ -329,7 +331,7 @@ static void test_fgetwc( void )
   l=ftell(tempfh);
   ok(l==BUFSIZ-2+strlen(mytext), "ftell expected %d got %ld\n",
    BUFSIZ-2+strlen(mytext), l);
-  mytextW = AtoW ((char*)mytext);
+  mytextW = AtoW (mytext);
   aptr = mytextW;
   wptr = wtextW;
   for (i=0; i<strlen(mytext)-2; i++, aptr++, wptr++)
@@ -493,7 +495,7 @@ static void test_file_put_get( void )
   fclose(tempfh);
   tempfh = fopen(tempf,"rt"); /* open in TEXT mode */
   fgetws(wtextW,LLEN,tempfh);
-  mytextW = AtoW ((char*)mytext);
+  mytextW = AtoW (mytext);
   aptr = mytextW;
   wptr = wtextW;
 
