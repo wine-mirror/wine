@@ -1463,6 +1463,8 @@ static void sync_current_drawable(void)
         width = ctx->physDev->dc_rect.right - ctx->physDev->dc_rect.left;
         height = ctx->physDev->dc_rect.bottom - ctx->physDev->dc_rect.top;
 
+        wine_tsx11_lock();
+
         pglViewport(ctx->physDev->dc_rect.left + ctx->viewport.left,
             dy + ctx->viewport.top,
             ctx->viewport.right ? (ctx->viewport.right - ctx->viewport.left) : width,
@@ -1478,6 +1480,7 @@ static void sync_current_drawable(void)
         else
             pglScissor(ctx->physDev->dc_rect.left, dy, width, height);
 
+        wine_tsx11_unlock();
     }
 }
 
@@ -1796,7 +1799,9 @@ static void WINAPI X11DRV_wglDisable(GLenum cap)
     }
     else
     {
-       pglDisable(cap);
+        wine_tsx11_lock();
+        pglDisable(cap);
+        wine_tsx11_unlock();
     }
 }
 
@@ -1809,35 +1814,49 @@ static void WINAPI X11DRV_wglEnable(GLenum cap)
     }
     else
     {
-       pglEnable(cap);
+        wine_tsx11_lock();
+        pglEnable(cap);
+        wine_tsx11_unlock();
     }
 }
 
 /* WGL helper function which handles differences in glGetIntegerv from WGL and GLX */
-static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params) {
-    TRACE("pname: 0x%x, params: %p\n", pname, params);
-    if (pname == GL_DEPTH_BITS) { 
-        GLXContext gl_ctx = pglXGetCurrentContext();
-        Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
-        /*TRACE("returns Wine Ctx as %p\n", ret);*/
-        /** 
-        * if we cannot find a Wine Context
-        * we only have the default wine desktop context, 
-        * so if we have only a 24 depth say we have 32
-        */
-        if (NULL == ret && 24 == *params) { 
-            *params = 32;
+static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
+{
+    wine_tsx11_lock();
+    switch(pname)
+    {
+    case GL_DEPTH_BITS:
+        {
+            GLXContext gl_ctx = pglXGetCurrentContext();
+            Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+
+            pglGetIntegerv(pname, params);
+            /**
+             * if we cannot find a Wine Context
+             * we only have the default wine desktop context,
+             * so if we have only a 24 depth say we have 32
+             */
+            if (NULL == ret && 24 == *params) {
+                *params = 32;
+            }
+            TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
+            break;
         }
-        TRACE("returns GL_DEPTH_BITS as '%d'\n", *params);
+    case GL_ALPHA_BITS:
+        {
+            GLXContext gl_ctx = pglXGetCurrentContext();
+            Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
+
+            pglXGetFBConfigAttrib(ret->display, ret->fb_conf, GLX_ALPHA_SIZE, params);
+            TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
+            break;
+        }
+    default:
+        pglGetIntegerv(pname, params);
+        break;
     }
-    if (pname == GL_ALPHA_BITS) {
-        GLint tmp;
-        GLXContext gl_ctx = pglXGetCurrentContext();
-        Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
-        pglXGetFBConfigAttrib(ret->display, ret->fb_conf, GLX_ALPHA_SIZE, &tmp);
-        TRACE("returns GL_ALPHA_BITS as '%d'\n", tmp);
-        *params = tmp;
-    }
+    wine_tsx11_unlock();
 }
 
 static GLboolean WINAPI X11DRV_wglIsEnabled(GLenum cap)
@@ -1851,9 +1870,10 @@ static GLboolean WINAPI X11DRV_wglIsEnabled(GLenum cap)
     }
     else
     {
-       enabled = pglIsEnabled(cap);
+        wine_tsx11_lock();
+        enabled = pglIsEnabled(cap);
+        wine_tsx11_unlock();
     }
-
     return enabled;
 }
 

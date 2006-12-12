@@ -569,9 +569,7 @@ BOOL WINAPI wglUseFontOutlinesW(HDC hdc,
 void WINAPI wine_glEnable( GLenum cap )
 {
     TRACE("(%d)\n", cap );
-    ENTER_GL();
     wine_wgl.p_wglEnable(cap);
-    LEAVE_GL();
 }
 
 /***********************************************************************
@@ -579,12 +577,8 @@ void WINAPI wine_glEnable( GLenum cap )
  */
 GLboolean WINAPI wine_glIsEnabled( GLenum cap )
 {
-    GLboolean ret_value;
     TRACE("(%d)\n", cap );
-    ENTER_GL();
-    ret_value = wine_wgl.p_wglIsEnabled(cap);
-    LEAVE_GL();
-    return ret_value;
+    return wine_wgl.p_wglIsEnabled(cap);
 }
 
 /***********************************************************************
@@ -593,9 +587,7 @@ GLboolean WINAPI wine_glIsEnabled( GLenum cap )
 void WINAPI wine_glDisable( GLenum cap )
 {
     TRACE("(%d)\n", cap );
-    ENTER_GL();
     wine_wgl.p_wglDisable(cap);
-    LEAVE_GL();
 }
 
 /***********************************************************************
@@ -604,9 +596,7 @@ void WINAPI wine_glDisable( GLenum cap )
 void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height )
 {
     TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
-    ENTER_GL();
     wine_wgl.p_wglScissor(x, y, width, height);
-    LEAVE_GL();
 }
 
 /***********************************************************************
@@ -615,9 +605,7 @@ void WINAPI wine_glScissor( GLint x, GLint y, GLsizei width, GLsizei height )
 void WINAPI wine_glViewport( GLint x, GLint y, GLsizei width, GLsizei height )
 {
     TRACE("(%d, %d, %d, %d)\n", x, y, width, height );
-    ENTER_GL();
     wine_wgl.p_wglViewport(x, y, width, height);
-    LEAVE_GL();
 }
 
 /***********************************************************************
@@ -678,11 +666,7 @@ const GLubyte * WINAPI wine_glGetString( GLenum name )
  */
 void WINAPI wine_glGetIntegerv( GLenum pname, GLint* params )
 {
-    ENTER_GL();
-    glGetIntegerv(pname, params);
-    /* A few parameters like GL_DEPTH_BITS differ between WGL and GLX, the wglGetIntegerv helper function handles those */
     wine_wgl.p_wglGetIntegerv(pname, params);
-    LEAVE_GL();
 }
 
 
