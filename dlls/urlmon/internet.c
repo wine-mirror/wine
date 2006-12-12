@@ -236,3 +236,24 @@ HRESULT WINAPI CoInternetCombineUrl(LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl,
 
     return hres;
 }
+
+/**************************************************************************
+ *          CoInternetCompareUrl    (URLMON.@)
+ */
+HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    IInternetProtocolInfo *protocol_info;
+    HRESULT hres;
+
+    TRACE("(%s,%s,%08x)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
+
+    protocol_info = get_protocol_info(pwzUrl1);
+
+    if(protocol_info) {
+        hres = IInternetProtocolInfo_CompareUrl(protocol_info, pwzUrl1, pwzUrl2, dwCompareFlags);
+        if(SUCCEEDED(hres))
+            return hres;
+    }
+
+    return UrlCompareW(pwzUrl1, pwzUrl2, dwCompareFlags) ? S_FALSE : S_OK;
+}

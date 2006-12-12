@@ -328,6 +328,20 @@ static void test_CoInternetParseUrl(void)
     }
 }
 
+static void test_CoInternetCompareUrl(void)
+{
+    HRESULT hres;
+
+    hres = CoInternetCompareUrl(url1, url1, 0);
+    ok(hres == S_OK, "CoInternetParseUrl failed: %08x\n", hres);
+
+    hres = CoInternetCompareUrl(url1, url3, 0);
+    ok(hres == S_FALSE, "CoInternetParseUrl failed: %08x\n", hres);
+
+    hres = CoInternetCompareUrl(url3, url1, 0);
+    ok(hres == S_FALSE, "CoInternetParseUrl failed: %08x\n", hres);
+}
+
 static const WCHAR mimeTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
 static const WCHAR mimeTextPlain[] = {'t','e','x','t','/','p','l','a','i','n',0};
 static const WCHAR mimeAppOctetStream[] = {'a','p','p','l','i','c','a','t','i','o','n','/',
@@ -1081,6 +1095,7 @@ START_TEST(misc)
     test_CreateFormatEnum();
     test_RegisterFormatEnumerator();
     test_CoInternetParseUrl();
+    test_CoInternetCompareUrl();
     test_FindMimeFromData();
     test_SecurityManager();
     test_ZoneManager();

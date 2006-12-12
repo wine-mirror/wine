@@ -303,12 +303,6 @@ HRESULT WINAPI ObtainUserAgentString(DWORD dwOption, LPSTR pcszUAOut, DWORD *cbS
     return S_OK;
 }
 
-HRESULT WINAPI CoInternetCompareUrl(LPCWSTR pwzUrl1, LPCWSTR pwzUrl2, DWORD dwCompareFlags)
-{
-    TRACE("(%s,%s,%08x)\n", debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
-    return UrlCompareW(pwzUrl1, pwzUrl2, dwCompareFlags)==0?S_OK:S_FALSE;
-}
-
 /**************************************************************************
  *                 IsValidURL (URLMON.@)
  * 
