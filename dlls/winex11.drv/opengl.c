@@ -530,19 +530,6 @@ inline static Drawable get_drawable( HDC hdc )
     return drawable;
 }
 
-inline static void set_drawable( HDC hdc, Drawable drawable )
-{
-    struct x11drv_escape_set_drawable escape;
-
-    escape.code = X11DRV_SET_DRAWABLE;
-    escape.drawable = drawable;
-    escape.mode = IncludeInferiors;
-    ZeroMemory(&escape.dc_rect, sizeof(escape.dc_rect));
-    ZeroMemory(&escape.drawable_rect, sizeof(escape.drawable_rect));
-
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape, 0, NULL );
-}
-
 /**
  * get_hdc_from_Drawable (internal)
  *
