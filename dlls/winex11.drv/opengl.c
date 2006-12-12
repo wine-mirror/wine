@@ -69,7 +69,6 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 typedef struct wine_glcontext {
     HDC hdc;
-    Display *display;
     XVisualInfo *vis;
     GLXFBConfig fb_conf;
     GLXContext ctx;
@@ -571,9 +570,9 @@ static int describeContext(Wine_GLContext* ctx) {
     int tmp;
     int ctx_vis_id;
     TRACE(" Context %p have (vis:%p):\n", ctx, ctx->vis);
-    pglXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, ctx->fb_conf, GLX_FBCONFIG_ID, &tmp);
     TRACE(" - FBCONFIG_ID 0x%x\n", tmp);
-    pglXGetFBConfigAttrib(ctx->display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, ctx->fb_conf, GLX_VISUAL_ID, &tmp);
     TRACE(" - VISUAL_ID 0x%x\n", tmp);
     ctx_vis_id = tmp;
     return ctx_vis_id;
@@ -591,20 +590,20 @@ static int describeDrawable(Wine_GLContext* ctx, Drawable drawable) {
     }
 
     TRACE(" Drawable %p have :\n", (void*) drawable);
-    pglXQueryDrawable(ctx->display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
+    pglXQueryDrawable(gdi_display, drawable, GLX_WIDTH, (unsigned int*) &tmp);
     TRACE(" - WIDTH as %d\n", tmp);
-    pglXQueryDrawable(ctx->display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
+    pglXQueryDrawable(gdi_display, drawable, GLX_HEIGHT, (unsigned int*) &tmp);
     TRACE(" - HEIGHT as %d\n", tmp);
-    pglXQueryDrawable(ctx->display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
+    pglXQueryDrawable(gdi_display, drawable, GLX_FBCONFIG_ID, (unsigned int*) &tmp);
     TRACE(" - FBCONFIG_ID as 0x%x\n", tmp);
 
     attribList[1] = tmp;
-    fbCfgs = pglXChooseFBConfig(ctx->display, DefaultScreen(ctx->display), attribList, &nElements);
+    fbCfgs = pglXChooseFBConfig(gdi_display, DefaultScreen(gdi_display), attribList, &nElements);
     if (fbCfgs == NULL) {
         return -1;
     }
 
-    pglXGetFBConfigAttrib(ctx->display, fbCfgs[0], GLX_VISUAL_ID, &tmp);
+    pglXGetFBConfigAttrib(gdi_display, fbCfgs[0], GLX_VISUAL_ID, &tmp);
     TRACE(" - VISUAL_ID as 0x%x\n", tmp);
 
     XFree(fbCfgs);
@@ -1333,7 +1332,6 @@ HGLRC X11DRV_wglCreateContext(X11DRV_PDEVICE *physDev)
     wine_tsx11_unlock();
     ret->hdc = hdc;
     ret->physDev = physDev;
-    ret->display = gdi_display;
     ret->fb_conf = cur_cfg;
     /*ret->vis = vis;*/
     ret->vis = pglXGetVisualFromFBConfig(gdi_display, cur_cfg);
@@ -1364,7 +1362,7 @@ BOOL X11DRV_wglDeleteContext(HGLRC hglrc)
     * so make sure it is valid first */
     if (is_valid_context( ctx ))
     {
-        if (ctx->ctx) pglXDestroyContext(ctx->display, ctx->ctx);
+        if (ctx->ctx) pglXDestroyContext(gdi_display, ctx->ctx);
         free_context(ctx);
     }
     else
@@ -1519,11 +1517,11 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
              * We are certain that the drawable and context are compatible as we only allow compatible formats.
              */
             TRACE(" Creating GLX Context\n");
-            ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
+            ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, type == OBJ_MEMDC ? False : True);
             TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
         }
-        TRACE(" make current for dis %p, drawable %p, ctx %p\n", ctx->display, (void*) drawable, ctx->ctx);
-        ret = pglXMakeCurrent(ctx->display, drawable, ctx->ctx);
+        TRACE(" make current for dis %p, drawable %p, ctx %p\n", gdi_display, (void*) drawable, ctx->ctx);
+        ret = pglXMakeCurrent(gdi_display, drawable, ctx->ctx);
         NtCurrentTeb()->glContext = ctx;
         if(ret)
         {
@@ -1573,10 +1571,10 @@ BOOL X11DRV_wglMakeContextCurrentARB(X11DRV_PDEVICE* hDrawDev, X11DRV_PDEVICE* h
             Drawable d_read = get_glxdrawable(hReadDev);
 
             if (ctx->ctx == NULL) {
-                ctx->ctx = pglXCreateContext(ctx->display, ctx->vis, NULL, GetObjectType(hDrawDev->hdc) == OBJ_MEMDC ? False : True);
+                ctx->ctx = pglXCreateContext(gdi_display, ctx->vis, NULL, GetObjectType(hDrawDev->hdc) == OBJ_MEMDC ? False : True);
                 TRACE(" created a delayed OpenGL context (%p)\n", ctx->ctx);
             }
-            ret = pglXMakeContextCurrent(ctx->display, d_draw, d_read, ctx->ctx);
+            ret = pglXMakeContextCurrent(gdi_display, d_draw, d_read, ctx->ctx);
             NtCurrentTeb()->glContext = ctx;
         }
     }
@@ -1609,7 +1607,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
         if (org->ctx == NULL) {
             wine_tsx11_lock();
             describeContext(org);
-            org->ctx = pglXCreateContext(org->display, org->vis, NULL, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+            org->ctx = pglXCreateContext(gdi_display, org->vis, NULL, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p\n", org->ctx, org);
         }
@@ -1617,7 +1615,7 @@ BOOL X11DRV_wglShareLists(HGLRC hglrc1, HGLRC hglrc2) {
             wine_tsx11_lock();
             describeContext(dest);
             /* Create the destination context with display lists shared */
-            dest->ctx = pglXCreateContext(org->display, dest->vis, org->ctx, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
+            dest->ctx = pglXCreateContext(gdi_display, dest->vis, org->ctx, GetObjectType(org->physDev->hdc) == OBJ_MEMDC ? False : True);
             wine_tsx11_unlock();
             TRACE(" created a delayed OpenGL context (%p) for Wine context %p sharing lists with OpenGL ctx %p\n", dest->ctx, dest, org->ctx);
             return TRUE;
@@ -1848,7 +1846,7 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
             GLXContext gl_ctx = pglXGetCurrentContext();
             Wine_GLContext* ret = get_context_from_GLXContext(gl_ctx);
 
-            pglXGetFBConfigAttrib(ret->display, ret->fb_conf, GLX_ALPHA_SIZE, params);
+            pglXGetFBConfigAttrib(gdi_display, ret->fb_conf, GLX_ALPHA_SIZE, params);
             TRACE("returns GL_ALPHA_BITS as '%d'\n", *params);
             break;
         }

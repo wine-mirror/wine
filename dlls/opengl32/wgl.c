@@ -86,7 +86,6 @@ static char* internal_gl_extensions = NULL;
 
 typedef struct wine_glcontext {
   HDC hdc;
-  Display *display;
   XVisualInfo *vis;
   GLXFBConfig fb_conf;
   GLXContext ctx;
