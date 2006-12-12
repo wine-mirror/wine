@@ -568,7 +568,7 @@ static LRESULT CALLBACK hook_proc2( int code, WPARAM wparam, LPARAM lparam )
     if (code == HC_ACTION)
     {
         ok(hook->pt.x == pt_new.x && hook->pt.y == pt_new.y,
-           "Wrong hook coords: (%d,%d)\n", pt_new.x, pt_new.y);
+           "Wrong hook coords: (%d %d) != (%d,%d)\n", hook->pt.x, hook->pt.y, pt_new.x, pt_new.y);
 
         /* Should match position set above */
         GetCursorPos(&pt);
@@ -582,7 +582,7 @@ static void test_mouse_ll_hook(void)
 {
     HWND hwnd;
     HHOOK hook1, hook2;
-    POINT pt_org;
+    POINT pt_org, pt;
 
     GetCursorPos(&pt_org);
     hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
@@ -607,6 +607,27 @@ static void test_mouse_ll_hook(void)
     ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
 
     UnhookWindowsHookEx(hook1);
+
+    /* Now check that mouse buttons do not change mouse position
+       if we don't have MOUSEEVENTF_MOVE flag specified. */
+
+    /* We reusing the same hook callback, so make it happy */
+    pt_old.x = pt_new.x - STEP;
+    pt_old.y = pt_new.y - STEP;
+    mouse_event(MOUSEEVENTF_LEFTUP, 123, 456, 0, 0);
+    GetCursorPos(&pt);
+    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%d,%d)\n", pt.x, pt.y);
+    mouse_event(MOUSEEVENTF_RIGHTUP, 456, 123, 0, 0);
+    GetCursorPos(&pt);
+    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%d,%d)\n", pt.x, pt.y);
+
+    mouse_event(MOUSEEVENTF_LEFTUP | MOUSEEVENTF_ABSOLUTE, 123, 456, 0, 0);
+    GetCursorPos(&pt);
+    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%d,%d)\n", pt.x, pt.y);
+    mouse_event(MOUSEEVENTF_RIGHTUP | MOUSEEVENTF_ABSOLUTE, 456, 123, 0, 0);
+    GetCursorPos(&pt);
+    ok(pt.x == pt_new.x && pt.y == pt_new.y, "Position changed: (%d,%d)\n", pt.x, pt.y);
+
     UnhookWindowsHookEx(hook2);
     DestroyWindow(hwnd);
     SetCursorPos(pt_org.x, pt_org.y);

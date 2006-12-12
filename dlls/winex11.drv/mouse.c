@@ -216,7 +216,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
 {
     POINT pt;
 
-    if (flags & MOUSEEVENTF_ABSOLUTE)
+    if (flags & MOUSEEVENTF_MOVE && flags & MOUSEEVENTF_ABSOLUTE)
     {
         if (injected_flags & LLMHF_INJECTED)
         {
@@ -227,6 +227,9 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         {
             pt.x = x;
             pt.y = y;
+            wine_tsx11_lock();
+            if (cursor_pos.x == x && cursor_pos.y == y) flags &= ~MOUSEEVENTF_MOVE;
+            wine_tsx11_unlock();
         }
         wine_tsx11_lock();
         cursor_pos = pt;
@@ -748,7 +751,7 @@ void X11DRV_ButtonPress( HWND hwnd, XEvent *xev )
 
     update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
 
-    X11DRV_send_mouse_input( hwnd, button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
+    X11DRV_send_mouse_input( hwnd, button_down_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                              pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
 
@@ -778,7 +781,7 @@ void X11DRV_ButtonRelease( HWND hwnd, XEvent *xev )
 
     update_mouse_state( hwnd, event->window, event->x, event->y, event->state, &pt );
 
-    X11DRV_send_mouse_input( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE,
+    X11DRV_send_mouse_input( hwnd, button_up_flags[buttonNum] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,
                              pt.x, pt.y, wData, EVENT_x11_time_to_win32_time(event->time), 0, 0 );
 }
 
