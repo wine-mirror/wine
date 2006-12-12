@@ -72,6 +72,9 @@ void X11DRV_BITMAP_Init(void)
 HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 {
     X_PHYSBITMAP *physBitmap;
+    BITMAP bitmap;
+
+    if (!GetObjectW( hbitmap, sizeof(bitmap), &bitmap )) return 0;
 
     if(physDev->xrender)
         X11DRV_XRender_UpdateDrawable( physDev );
@@ -81,6 +84,8 @@ HBITMAP X11DRV_SelectBitmap( X11DRV_PDEVICE *physDev, HBITMAP hbitmap )
 
     physDev->bitmap = physBitmap;
     physDev->drawable = physBitmap->pixmap;
+    SetRect( &physDev->drawable_rect, 0, 0, bitmap.bmWidth, bitmap.bmHeight );
+    physDev->dc_rect = physDev->drawable_rect;
 
       /* Change GC depth if needed */
 

@@ -1149,13 +1149,9 @@ static BOOL BITBLT_GetVisRectangles( X11DRV_PDEVICE *physDevDst, INT xDst, INT y
     if (heightSrc < 0) SWAP_INT32( &rect.top, &rect.bottom );
     /* Apparently the clipping and visible regions are only for output,
        so just check against dc extent here to avoid BadMatch errors */
-    if (physDevSrc->bitmap)
-    {
-        BITMAP bm;
-        GetObjectW( physDevSrc->bitmap->hbitmap, sizeof(bm), &bm );
-        SetRect( &clipRect, 0, 0, bm.bmWidth, bm.bmHeight );
-    }
-    else clipRect = virtual_screen_rect;
+    clipRect = physDevSrc->drawable_rect;
+    OffsetRect( &clipRect, -(physDevSrc->drawable_rect.left + physDevSrc->dc_rect.left),
+                -(physDevSrc->drawable_rect.top + physDevSrc->dc_rect.top) );
     if (!IntersectRect( visRectSrc, &rect, &clipRect ))
         return FALSE;
 

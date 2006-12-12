@@ -1327,16 +1327,12 @@ BOOL X11DRV_XRender_ExtTextOut( X11DRV_PDEVICE *physDev, INT x, INT y, UINT flag
 	    }
 	} else {
 	    XImage *image;
-	    unsigned int w, h, dummy_uint;
-	    Window dummy_window;
-	    int dummy_int;
 	    int image_x, image_y, image_off_x, image_off_y, image_w, image_h;
 	    RECT extents = {0, 0, 0, 0};
 	    POINT cur = {0, 0};
-	    
-	    
-	    XGetGeometry(gdi_display, physDev->drawable, &dummy_window, &dummy_int, &dummy_int,
-			 &w, &h, &dummy_uint, &dummy_uint);
+            int w = physDev->drawable_rect.right - physDev->drawable_rect.left;
+            int h = physDev->drawable_rect.bottom - physDev->drawable_rect.top;
+
 	    TRACE("drawable %dx%d\n", w, h);
 
 	    for(idx = 0; idx < count; idx++) {
