@@ -301,18 +301,6 @@ static const struct
 };
 
 
-/* Maps equivalent X properties. It is assumed that lpszProperty must already 
-   be in ClipFormats or PropertyFormatMap. */
-static const struct
-{
-    UINT drvDataProperty;
-    UINT drvDataAlias;
-} PropertyAliasMap[] =
-{
-    /* DataProperty,     DataAlias */
-};
-
-
 /*
  * Cached clipboard data.
  */
