@@ -561,7 +561,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                            int *piTrailing)
 {
     int item;
-    int iPosX = 1;
+    int iPosX;
     float fMaxPosX = 1;
     float fAvePosX;
     TRACE("(%d,%d,%d,%p,%p,%p,%p,%p,%p)\n",
@@ -585,8 +585,9 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     }        
 
     fAvePosX = fMaxPosX / cGlyphs;
-    for (item = 0; item < cGlyphs  && iPosX < iX; item++)
-        iPosX = fAvePosX * (item +1);
+    iPosX = fAvePosX;
+    for (item = 1; item < cGlyphs  && iPosX < iX; item++)
+        iPosX += fAvePosX;
     if  (iPosX - iX > fAvePosX/2)
         *piTrailing = 0;
     else

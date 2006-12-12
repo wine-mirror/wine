@@ -574,6 +574,25 @@ static void test_ScriptXtoX(void)
     ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
     ok(piCP == 4, "iX=%d should return piCP=4 not %d\n", iX, piCP);
 
+    iX = 0;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
+    ok(piCP == 0, "iX=%d should return piCP=0 not %d\n", iX, piCP);
+    iX = 195;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
+    ok(piCP == 0, "iX=%d should return piCP=0 not %d\n", iX, piCP);
+    iX = 196;
+    cChars = 10;
+    cGlyphs = 10;
+    hr = ScriptXtoCP(iX, cChars, cGlyphs, pwLogClust, psva, piAdvance, &psa, &piCP, &piTrailing);
+    ok(hr == S_OK, "ScriptXtoCP should return S_OK not %08x\n", hr);
+    ok(piCP == 1, "iX=%d should return piCP=1 not %d\n", iX, piCP);
+
     iCP=5;
     fTrailing = FALSE;
     cChars = 10;
