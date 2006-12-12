@@ -71,6 +71,8 @@ static const UINT button_up_flags[NB_BUTTONS] =
 
 POINT cursor_pos;
 
+BOOL X11DRV_SetCursorPos( INT x, INT y );
+
 /***********************************************************************
  *		get_coords
  *
@@ -231,9 +233,6 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
             if (cursor_pos.x == x && cursor_pos.y == y) flags &= ~MOUSEEVENTF_MOVE;
             wine_tsx11_unlock();
         }
-        wine_tsx11_lock();
-        cursor_pos = pt;
-        wine_tsx11_unlock();
     }
     else if (flags & MOUSEEVENTF_MOVE)
     {
@@ -262,7 +261,6 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         else if (pt.x >= screen_width) pt.x = screen_width - 1;
         if (pt.y < 0) pt.y = 0;
         else if (pt.y >= screen_height) pt.y = screen_height - 1;
-        cursor_pos = pt;
         wine_tsx11_unlock();
     }
     else
@@ -279,10 +277,12 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         if ((injected_flags & LLMHF_INJECTED) &&
             ((flags & MOUSEEVENTF_ABSOLUTE) || x || y))  /* we have to actually move the cursor */
         {
-            TRACE( "warping to (%d,%d)\n", pt.x, pt.y );
+            X11DRV_SetCursorPos( pt.x, pt.y );
+        }
+        else
+        {
             wine_tsx11_lock();
-            XWarpPointer( thread_display(), root_window, root_window, 0, 0, 0, 0,
-                          pt.x - virtual_screen_rect.left, pt.y - virtual_screen_rect.top );
+            cursor_pos = pt;
             wine_tsx11_unlock();
         }
     }
