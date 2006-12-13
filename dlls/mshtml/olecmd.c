@@ -37,6 +37,7 @@
 #include "wine/unicode.h"
 
 #include "mshtml_private.h"
+#include "resource.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -95,10 +96,126 @@ static HRESULT exec_save_copy_as(HTMLDocument *This, DWORD nCmdexecopt, VARIANT 
     return E_NOTIMPL;
 }
 
+static nsresult set_head_text(nsIPrintSettings *settings, LPCWSTR template, BOOL head, int pos)
+{
+    if(head) {
+        switch(pos) {
+        case 0:
+            return nsIPrintSettings_SetHeaderStrLeft(settings, template);
+        case 1:
+            return nsIPrintSettings_SetHeaderStrRight(settings, template);
+        case 2:
+            return nsIPrintSettings_SetHeaderStrCenter(settings, template);
+        }
+    }else {
+        switch(pos) {
+        case 0:
+            return nsIPrintSettings_SetFooterStrLeft(settings, template);
+        case 1:
+            return nsIPrintSettings_SetFooterStrRight(settings, template);
+        case 2:
+            return nsIPrintSettings_SetFooterStrCenter(settings, template);
+        }
+    }
+
+    return NS_OK;
+}
+
+static void set_print_template(nsIPrintSettings *settings, LPCWSTR template, BOOL head)
+{
+    PRUnichar nstemplate[200]; /* FIXME: Use dynamic allocation */
+    PRUnichar *p = nstemplate;
+    LPCWSTR ptr=template;
+    int pos=0;
+
+    while(*ptr) {
+        if(*ptr != '&') {
+            *p++ = *ptr++;
+            continue;
+        }
+
+        switch(*++ptr) {
+        case '&':
+            *p++ = '&';
+            *p++ = '&';
+            ptr++;
+            break;
+        case 'b': /* change align */
+            ptr++;
+            *p = 0;
+            set_head_text(settings, nstemplate, head, pos);
+            p = nstemplate;
+            pos++;
+            break;
+        case 'd': { /* short date */
+            SYSTEMTIME systime;
+            GetLocalTime(&systime);
+            GetDateFormatW(LOCALE_SYSTEM_DEFAULT, 0, &systime, NULL, p,
+                    sizeof(nstemplate)-(p-nstemplate)*sizeof(WCHAR));
+            p += strlenW(p);
+            ptr++;
+            break;
+        }
+        case 'p': /* page number */
+            *p++ = '&';
+            *p++ = 'P';
+            ptr++;
+            break;
+        case 'P': /* page count */
+            *p++ = '?'; /* FIXME */
+            ptr++;
+            break;
+        case 'u':
+            *p++ = '&';
+            *p++ = 'U';
+            ptr++;
+            break;
+        case 'w':
+            /* FIXME: set window title */
+            ptr++;
+            break;
+        default:
+            *p++ = '&';
+            *p++ = *ptr++;
+        }
+    }
+
+    *p = 0;
+    set_head_text(settings, nstemplate, head, pos);
+
+    while(++pos < 3)
+        set_head_text(settings, p, head, pos);
+}
+
+static void set_default_templates(nsIPrintSettings *settings)
+{
+    WCHAR buf[64];
+
+    static const PRUnichar empty[] = {0};
+
+    nsIPrintSettings_SetHeaderStrLeft(settings, empty);
+    nsIPrintSettings_SetHeaderStrRight(settings, empty);
+    nsIPrintSettings_SetHeaderStrCenter(settings, empty);
+    nsIPrintSettings_SetFooterStrLeft(settings, empty);
+    nsIPrintSettings_SetFooterStrRight(settings, empty);
+    nsIPrintSettings_SetFooterStrCenter(settings, empty);
+
+    if(LoadStringW(get_shdoclc(), IDS_PRINT_HEADER_TEMPLATE, buf,
+                   sizeof(buf)/sizeof(WCHAR)))
+        set_print_template(settings, buf, TRUE);
+
+
+    if(LoadStringW(get_shdoclc(), IDS_PRINT_FOOTER_TEMPLATE, buf,
+                   sizeof(buf)/sizeof(WCHAR)))
+        set_print_template(settings, buf, FALSE);
+
+}
+
 static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     nsIInterfaceRequestor *iface_req;
     nsIWebBrowserPrint *nsprint;
+    nsIPrintSettings *settings;
     nsresult nsres;
 
     TRACE("(%p)->(%d %p %p)\n", This, nCmdexecopt, pvaIn, pvaOut);
@@ -126,7 +243,13 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
         return S_OK;
     }
 
-    nsres = nsIWebBrowserPrint_Print(nsprint, NULL, NULL);
+    nsres = nsIWebBrowserPrint_GetGlobalPrintSettings(nsprint, &settings);
+    if(NS_FAILED(nsres))
+        ERR("GetCurrentPrintSettings failed: %08x\n", nsres);
+
+    set_default_templates(settings);
+
+    nsres = nsIWebBrowserPrint_Print(nsprint, settings, NULL);
     if(NS_FAILED(nsres))
         ERR("Print failed: %08x\n", nsres);
 
