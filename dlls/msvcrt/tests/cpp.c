@@ -184,7 +184,9 @@ static void* do_call_func2(void *func, void *_this, const void* arg)
 
 static void InitFunctionPtrs(void)
 {
-  hMsvcrt = LoadLibraryA("msvcrt.dll");
+  hMsvcrt = GetModuleHandleA("msvcrt.dll");
+  if (!hMsvcrt)
+    hMsvcrt = GetModuleHandleA("msvcrtd.dll");
   ok(hMsvcrt != 0, "LoadLibraryA failed\n");
   if (hMsvcrt)
   {

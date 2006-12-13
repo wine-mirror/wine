@@ -111,8 +111,12 @@ START_TEST(string)
 {
     void *mem;
     static const char xilstring[]="c:/xilinx";
-    int nLen=strlen(xilstring);
-    HMODULE hMsvcrt = LoadLibraryA("msvcrt.dll");
+    int nLen;
+    HMODULE hMsvcrt;
+
+    hMsvcrt = GetModuleHandleA("msvcrt.dll");
+    if (!hMsvcrt)
+        hMsvcrt = GetModuleHandleA("msvcrtd.dll");
     ok(hMsvcrt != 0, "LoadLibraryA failed\n");
     SET(pmemcpy,"memcpy");
     SET(pmemcmp,"memcmp");
@@ -122,6 +126,7 @@ START_TEST(string)
     mem = malloc(100);
     ok(mem != NULL, "memory not allocated for size 0\n");
     strcpy((char*)mem,xilstring);
+    nLen=strlen(xilstring);
     pmemcpy((char*)mem+5, mem,nLen+1);
     ok(pmemcmp((char*)mem+5,xilstring, nLen) == 0, 
        "Got result %s\n",(char*)mem+5);
