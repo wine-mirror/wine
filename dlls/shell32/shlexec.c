@@ -981,6 +981,28 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
 
 /*************************************************************************
  * FindExecutableW			[SHELL32.@]
+ *
+ * This function returns the executable associated with the specified file
+ * for the default verb.
+ *
+ * PARAMS
+ *  lpFile   [I] The file to find the association for. This must refer to
+ *               an existing file otherwise FindExecutable fails and returns
+ *               SE_ERR_FNF.
+ *  lpResult [O] Points to a buffer into which the executable path is
+ *               copied. This parameter must not be NULL otherwise
+ *               FindExecutable() segfaults. The buffer must be of size at
+ *               least MAX_PATH characters.
+ *
+ * RETURNS
+ *  A value greater than 32 on success, less than or equal to 32 otherwise.
+ *  See the SE_ERR_* constants.
+ *
+ * NOTES
+ *  On Windows XP and 2003, FindExecutable() seems to first convert the
+ *  filename into 8.3 format, thus taking into account only the first three
+ *  characters of the extension, and expects to find an association for those.
+ *  However other Windows versions behave sanely.
  */
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpResult)
 {
