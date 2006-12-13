@@ -1711,6 +1711,8 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         nsACString base_uri_str;
         const char *base_uri = NULL;
 
+        static const char szChrome[] = "chrome:";
+
         nsACString_Init(&base_uri_str, NULL);
 
         nsres = nsIURI_GetSpec(aBaseURI, &base_uri_str);
@@ -1722,6 +1724,9 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         }
 
         nsACString_Finish(&base_uri_str);
+
+        if(!strncmp(spec, szChrome, sizeof(szChrome)-1))
+            aBaseURI = NULL;
     }
 
     nsres = nsIIOService_NewURI(nsio, aSpec, aOriginCharset, aBaseURI, &uri);
