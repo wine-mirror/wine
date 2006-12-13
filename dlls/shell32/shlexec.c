@@ -1013,13 +1013,8 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
           (lpFile != NULL ? debugstr_w(lpFile) : "-"), (lpDirectory != NULL ? debugstr_w(lpDirectory) : "-"));
 
     lpResult[0] = '\0'; /* Start off with an empty return string */
-
-    /* trap NULL parameters on entry */
-    if ((lpFile == NULL) || (lpResult == NULL))
-    {
-        /* FIXME - should throw a warning, perhaps! */
-	return (HINSTANCE)2; /* File not found. Close enough, I guess. */
-    }
+    if (lpFile == NULL)
+	return (HINSTANCE)SE_ERR_FNF;
 
     if (lpDirectory)
     {
