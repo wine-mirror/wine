@@ -1162,7 +1162,7 @@ static void test_data_cache(void)
 
     fmtetc.cfFormat = CF_METAFILEPICT;
     stgmedium.tymed = TYMED_MFPICT;
-    stgmedium.hMetaFilePict = OleMetafilePictFromIconAndLabel(
+    U(stgmedium).hMetaFilePict = OleMetafilePictFromIconAndLabel(
         LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION)), wszPath, wszPath, 0);
     stgmedium.pUnkForRelease = NULL;
 
