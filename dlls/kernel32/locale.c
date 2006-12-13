@@ -31,12 +31,10 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <sys/types.h>
 
 #ifdef __APPLE__
 # include <CoreFoundation/CFBundle.h>
 # include <CoreFoundation/CFLocale.h>
-# include <CoreFoundation/CFPreferences.h>
 # include <CoreFoundation/CFString.h>
 #endif
 
