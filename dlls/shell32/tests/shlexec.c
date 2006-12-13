@@ -109,7 +109,7 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
     rc=(int)ShellExecute(NULL, operation, file, parameters, directory,
                          SW_SHOWNORMAL);
 
-    if (rc>=32)
+    if (rc > 32)
     {
         int wait_rc;
         wait_rc=WaitForSingleObject(hEvent, 5000);
@@ -119,7 +119,7 @@ static int shell_execute(LPCSTR operation, LPCSTR file, LPCSTR parameters, LPCST
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
-    if (rc>=32)
+    if (rc > 32)
         dump_child();
 
     return rc;
@@ -164,10 +164,10 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
     SetLastError(0xcafebabe);
     success=ShellExecuteEx(&sei);
     rc=(int)sei.hInstApp;
-    ok((success && rc >= 32) || (!success && rc < 32),
+    ok((success && rc > 32) || (!success && rc <= 32),
        "%s rc=%d and hInstApp=%d is not allowed\n", shell_call, success, rc);
 
-    if (rc>=32)
+    if (rc > 32)
     {
         int wait_rc;
         if (sei.hProcess!=NULL)
@@ -182,7 +182,7 @@ static int shell_execute_ex(DWORD mask, LPCSTR operation, LPCSTR file,
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
-    if (rc>=32)
+    if (rc > 32)
         dump_child();
 
     return rc;
@@ -477,47 +477,47 @@ typedef struct
 {
     const char* verb;
     const char* basename;
-    int rc;
     int todo;
+    int rc;
 } filename_tests_t;
 
 static filename_tests_t filename_tests[]=
 {
     /* Test bad / nonexistent filenames */
-    {NULL,           "%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 0x1},
-    {NULL,           "%s\\nonexistent.noassoc", ERROR_FILE_NOT_FOUND, 0x1},
+    {NULL,           "%s\\nonexistent.shlexec", 0x1, ERROR_FILE_NOT_FOUND},
+    {NULL,           "%s\\nonexistent.noassoc", 0x1, ERROR_FILE_NOT_FOUND},
 
     /* Standard tests */
-    {NULL,           "%s\\test file.shlexec",   0, 0x0},
-    {NULL,           "%s\\test file.shlexec.",  0, 0x0},
-    {NULL,           "%s\\%%nasty%% $file.shlexec", 0, 0x0},
-    {NULL,           "%s/test file.shlexec",    0, 0x0},
+    {NULL,           "%s\\test file.shlexec",   0x0, 33},
+    {NULL,           "%s\\test file.shlexec.",  0x0, 33},
+    {NULL,           "%s\\%%nasty%% $file.shlexec", 0x0, 33},
+    {NULL,           "%s/test file.shlexec",    0x0, 33},
 
     /* Test filenames with no association */
-    {NULL,           "%s\\test file.noassoc",   SE_ERR_NOASSOC, 0x0},
+    {NULL,           "%s\\test file.noassoc",   0x0, SE_ERR_NOASSOC},
 
     /* Test double extensions */
-    {NULL,           "%s\\test file.noassoc.shlexec", 0, 0},
-    {NULL,           "%s\\test file.shlexec.noassoc", SE_ERR_NOASSOC, 0x0},
+    {NULL,           "%s\\test file.noassoc.shlexec", 0x0, 33},
+    {NULL,           "%s\\test file.shlexec.noassoc", 0x0, SE_ERR_NOASSOC},
 
     /* Test alternate verbs */
-    {"LowerL",       "%s\\nonexistent.shlexec", ERROR_FILE_NOT_FOUND, 0x1},
-    {"LowerL",       "%s\\test file.noassoc",   SE_ERR_NOASSOC, 0x0},
+    {"LowerL",       "%s\\nonexistent.shlexec", 0x1, ERROR_FILE_NOT_FOUND},
+    {"LowerL",       "%s\\test file.noassoc",   0x0, SE_ERR_NOASSOC},
 
-    {"QuotedLowerL", "%s\\test file.shlexec",   0, 0x0},
-    {"QuotedUpperL", "%s\\test file.shlexec",   0, 0x0},
+    {"QuotedLowerL", "%s\\test file.shlexec",   0x0, 33},
+    {"QuotedUpperL", "%s\\test file.shlexec",   0x0, 33},
 
-    {NULL, NULL, 0, 0}
+    {NULL, NULL, 0}
 };
 
 static filename_tests_t noquotes_tests[]=
 {
     /* Test unquoted '%1' thingies */
-    {"NoQuotes",     "%s\\test file.shlexec",   0, 0xa},
-    {"LowerL",       "%s\\test file.shlexec",   0, 0x0},
-    {"UpperL",       "%s\\test file.shlexec",   0, 0x0},
+    {"NoQuotes",     "%s\\test file.shlexec",   0xa, 33},
+    {"LowerL",       "%s\\test file.shlexec",   0xa, 33},
+    {"UpperL",       "%s\\test file.shlexec",   0xa, 33},
 
-    {NULL, NULL, 0, 0}
+    {NULL, NULL, 0}
 };
 
 static void test_filename(void)
@@ -542,8 +542,8 @@ static void test_filename(void)
             }
         }
         rc=shell_execute(test->verb, filename, NULL, NULL);
-        if (rc>=32)
-            rc=0;
+        if (rc > 32)
+            rc=33;
         if ((test->todo & 0x1)==0)
         {
             ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
@@ -554,7 +554,7 @@ static void test_filename(void)
             ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
                rc, GetLastError());
         }
-        if (rc==0)
+        if (rc == 33)
         {
             const char* verb;
             if ((test->todo & 0x2)==0)
@@ -591,8 +591,8 @@ static void test_filename(void)
     {
         sprintf(filename, test->basename, tmpdir);
         rc=shell_execute(test->verb, filename, NULL, NULL);
-        if (rc>=32)
-            rc=0;
+        if (rc > 32)
+            rc=33;
         if ((test->todo & 0x1)==0)
         {
             ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
@@ -664,7 +664,7 @@ static void test_filename(void)
          */
         sprintf(filename, "\"%s\\test file.shlexec\"", tmpdir);
         rc=shell_execute(NULL, filename, NULL, NULL);
-        ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+        ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
@@ -677,17 +677,17 @@ static void test_filename(void)
 static filename_tests_t lnk_tests[]=
 {
     /* Pass bad / nonexistent filenames as a parameter */
-    {NULL, "%s\\nonexistent.shlexec", 0, 0xa},
-    {NULL, "%s\\nonexistent.noassoc", 0, 0xa},
+    {NULL, "%s\\nonexistent.shlexec",    0xa, 33},
+    {NULL, "%s\\nonexistent.noassoc",    0xa, 33},
 
     /* Pass regular paths as a parameter */
-    {NULL, "%s\\test file.shlexec",   0, 0xa},
-    {NULL, "%s/%%nasty%% $file.shlexec", 0, 0xa},
+    {NULL, "%s\\test file.shlexec",      0xa, 33},
+    {NULL, "%s/%%nasty%% $file.shlexec", 0xa, 33},
 
     /* Pass filenames with no association as a parameter */
-    {NULL, "%s\\test file.noassoc",   0, 0xa},
+    {NULL, "%s\\test file.noassoc",      0xa, 33},
 
-    {NULL, NULL, 0, 0}
+    {NULL, NULL, 0}
 };
 
 static void test_lnks(void)
@@ -699,7 +699,7 @@ static void test_lnks(void)
 
     sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+    ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
        GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
@@ -708,7 +708,7 @@ static void test_lnks(void)
 
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-    ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+    ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
        GetLastError());
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
@@ -728,7 +728,7 @@ static void test_lnks(void)
             c++;
         }
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL);
-        ok(rc>=32, "%s failed: rc=%d err=%d\n", shell_call, rc,
+        ok(rc > 32, "%s failed: rc=%d err=%d\n", shell_call, rc,
            GetLastError());
         okChildInt("argcA", 4);
         okChildString("argvA3", "Lnk");
@@ -743,8 +743,8 @@ static void test_lnks(void)
         strcat(params,"\"");
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, params,
                             NULL);
-        if (rc>=32)
-            rc=0;
+        if (rc > 32)
+            rc=33;
         if ((test->todo & 0x1)==0)
         {
             ok(rc==test->rc, "%s failed: rc=%d err=%d\n", shell_call,
@@ -799,7 +799,7 @@ static void test_exes(void)
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL);
-    ok(rc>=32, "%s returned %d\n", shell_call, rc);
+    ok(rc > 32, "%s returned %d\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
 
@@ -830,7 +830,7 @@ static void test_exes_long(void)
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL);
-    ok(rc>=32, "%s returned %d\n", shell_call, rc);
+    ok(rc > 32, "%s returned %d\n", shell_call, rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", longparam);
 
