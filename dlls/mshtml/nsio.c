@@ -475,7 +475,7 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
     TRACE("(%p)->(%p)\n", This, aContentType);
 
     if(This->content) {
-        nsACString_Init(aContentType, This->content);
+        nsACString_SetData(aContentType, This->content);
         return S_OK;
     }
 
@@ -483,7 +483,7 @@ static nsresult NSAPI nsChannel_GetContentType(nsIHttpChannel *iface, nsACString
         return nsIChannel_GetContentType(This->channel, aContentType);
 
     TRACE("returning default text/html\n");
-    nsACString_Init(aContentType, "text/html");
+    nsACString_SetData(aContentType, "text/html");
     return NS_OK;
 }
 
@@ -1154,7 +1154,7 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
         return nsIURI_GetSpec(This->uri, aSpec);
 
     if(This->spec) {
-        nsACString_Init(aSpec, This->spec);
+        nsACString_SetData(aSpec, This->spec);
         return NS_OK;
     }
 

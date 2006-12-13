@@ -422,7 +422,12 @@ void nsACString_Init(nsACString *str, const char *data)
 {
     NS_CStringContainerInit(str);
     if(data)
-        NS_CStringSetData(str, data, PR_UINT32_MAX);
+        nsACString_SetData(str, data);
+}
+
+void nsACString_SetData(nsACString *str, const char *data)
+{
+    NS_CStringSetData(str, data, PR_UINT32_MAX);
 }
 
 PRUint32 nsACString_GetData(const nsACString *str, const char **data, PRBool *termited)
