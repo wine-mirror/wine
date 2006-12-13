@@ -1524,6 +1524,8 @@ static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aCont
     TRACE("(%p)->(%p)\n", This, aContainer);
 
     if(This->container) {
+        if(This->container == aContainer)
+            return NS_OK;
         WARN("Container already set: %p\n", This->container);
         nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
     }
