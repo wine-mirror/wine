@@ -224,7 +224,7 @@ todo_wine {
 
 static int deref_cmp(const void *s1, const void *s2, size_t num)
 {
-    return memcmp(*(void**)s1, *(void**)s2, num);
+    return memcmp(*(const void *const *)s1, *(const void *const *)s2, num);
 }
 
 

@@ -605,7 +605,7 @@ static void test_CreateStub(IPSFactoryBuffer *ppsf)
     IUnknown *obj = (IUnknown*)&vtbl;
     IRpcStubBuffer *pstub = create_stub(ppsf, &IID_if1, obj, S_OK);
     CStdStubBuffer *cstd_stub = (CStdStubBuffer*)pstub;
-    CInterfaceStubHeader *header = ((CInterfaceStubHeader *)cstd_stub->lpVtbl) - 1;
+    const CInterfaceStubHeader *header = ((const CInterfaceStubHeader *)cstd_stub->lpVtbl) - 1;
 
     ok(IsEqualIID(header->piid, &IID_if1), "header iid differs\n");
     ok(cstd_stub->RefCount == 1, "ref count %d\n", cstd_stub->RefCount);
