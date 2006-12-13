@@ -636,7 +636,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
                 return WINE_NS_LOAD_FROM_MONIKER;
             }
-        }else {
+        }else if(container->doc) {
             BOOL cont = before_async_open(This, container);
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
 
@@ -644,6 +644,11 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                 TRACE("canceled\n");
                 return NS_ERROR_UNEXPECTED;
             }
+        }else {
+            nsIWebBrowserChrome_Release(NSWBCHROME(container));
+            return This->channel
+                ?  nsIChannel_AsyncOpen(This->channel, aListener, aContext)
+                : NS_ERROR_UNEXPECTED;
         }
     }
 
