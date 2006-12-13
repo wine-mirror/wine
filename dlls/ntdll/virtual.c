@@ -974,11 +974,12 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     status = STATUS_INVALID_IMAGE_FORMAT;  /* generic error */
     if (!st.st_size) goto error;
     header_size = min( header_size, st.st_size );
-    if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ,
+    if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
                             removable ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     header_end = ptr + ROUND_SIZE( 0, header_size );
+    memset( ptr + header_size, 0, header_end - (ptr + header_size) );
     if ((char *)(nt + 1) > header_end) goto error;
     sec = (IMAGE_SECTION_HEADER*)((char*)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     if ((char *)(sec + nt->FileHeader.NumberOfSections) > header_end) goto error;
@@ -1067,8 +1068,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         end = sec->VirtualAddress + ROUND_SIZE( sec->VirtualAddress, map_size );
         if (sec->VirtualAddress > total_size || end > total_size || end < sec->VirtualAddress)
         {
-            ERR_(module)( "Section %.8s too large (%x+%lx/%lx)\n",
-                          sec->Name, sec->VirtualAddress, map_size, total_size );
+            WARN_(module)( "Section %.8s too large (%x+%lx/%lx)\n",
+                           sec->Name, sec->VirtualAddress, map_size, total_size );
             goto error;
         }
 
@@ -1165,6 +1166,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     }
 
     /* set the image protections */
+
+    VIRTUAL_SetProt( view, ptr, ROUND_SIZE( 0, header_size ), VPROT_COMMITTED | VPROT_READ );
 
     sec = (IMAGE_SECTION_HEADER*)((char *)&nt->OptionalHeader+nt->FileHeader.SizeOfOptionalHeader);
     for (i = 0; i < nt->FileHeader.NumberOfSections; i++, sec++)

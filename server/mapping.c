@@ -243,11 +243,11 @@ static int get_image_params( struct mapping *mapping )
 
     mapping->size        = ROUND_SIZE( nt.OptionalHeader.SizeOfImage );
     mapping->base        = (void *)nt.OptionalHeader.ImageBase;
-    mapping->header_size = pos + size;
+    mapping->header_size = max( pos + size, nt.OptionalHeader.SizeOfHeaders );
     mapping->protect     = VPROT_IMAGE;
 
     /* sanity check */
-    if (mapping->header_size > mapping->size) goto error;
+    if (pos + size > mapping->size) goto error;
 
     free( sec );
     release_object( fd );

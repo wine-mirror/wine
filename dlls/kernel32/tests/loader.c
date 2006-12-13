@@ -360,12 +360,6 @@ START_TEST(loader)
 
                 start = (const char *)hlib + nt_header.OptionalHeader.SizeOfHeaders;
                 size = ALIGN_SIZE((ULONG_PTR)start, si.dwPageSize) - (ULONG_PTR)start;
-                /* remove next 'if' and todo_wine once Wine is fixed */
-                if (nt_header.OptionalHeader.SizeOfHeaders < nt_header.OptionalHeader.FileAlignment)
-                {
-todo_wine       ok(!memcmp(start, filler, size), "%d: header alignment is not cleared\n", i);
-                }
-                else
                 ok(!memcmp(start, filler, size), "%d: header alignment is not cleared\n", i);
             }
 
