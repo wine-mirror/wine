@@ -707,6 +707,16 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
 		}
 		*p = '\0';
 	    }
+            else
+            {
+                /* Truncate on first space, like Windows:
+                 * http://support.microsoft.com/?scid=kb%3Ben-us%3B140724
+                 */
+		WCHAR *p = lpResult;
+		while (*p != ' ' && *p != '\0')
+                    p++;
+                *p='\0';
+            }
 	}
     }
     else /* Check win.ini */

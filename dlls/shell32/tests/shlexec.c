@@ -498,24 +498,24 @@ static filename_tests_t filename_tests[]=
     {NULL,           "%s\\nonexistent.noassoc", 0x11, SE_ERR_FNF},
 
     /* Standard tests */
-    {NULL,           "%s\\test file.shlexec",   0x20, 33},
-    {NULL,           "%s\\test file.shlexec.",  0x20, 33},
-    {NULL,           "%s\\%%nasty%% $file.shlexec", 0x20, 33},
-    {NULL,           "%s/test file.shlexec",    0x20, 33},
+    {NULL,           "%s\\test file.shlexec",   0x0, 33},
+    {NULL,           "%s\\test file.shlexec.",  0x0, 33},
+    {NULL,           "%s\\%%nasty%% $file.shlexec", 0x0, 33},
+    {NULL,           "%s/test file.shlexec",    0x0, 33},
 
     /* Test filenames with no association */
     {NULL,           "%s\\test file.noassoc",   0x0,  SE_ERR_NOASSOC},
 
     /* Test double extensions */
-    {NULL,           "%s\\test file.noassoc.shlexec", 0x20, 33},
+    {NULL,           "%s\\test file.noassoc.shlexec", 0x0, 33},
     {NULL,           "%s\\test file.shlexec.noassoc", 0x0, SE_ERR_NOASSOC},
 
     /* Test alternate verbs */
     {"LowerL",       "%s\\nonexistent.shlexec", 0x11, SE_ERR_FNF},
     {"LowerL",       "%s\\test file.noassoc",   0x0,  SE_ERR_NOASSOC},
 
-    {"QuotedLowerL", "%s\\test file.shlexec",   0x20, 33},
-    {"QuotedUpperL", "%s\\test file.shlexec",   0x20, 33},
+    {"QuotedLowerL", "%s\\test file.shlexec",   0x0, 33},
+    {"QuotedUpperL", "%s\\test file.shlexec",   0x0, 33},
 
     {NULL, NULL, 0}
 };
