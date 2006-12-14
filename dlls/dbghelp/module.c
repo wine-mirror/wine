@@ -34,11 +34,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-static const char* ext[] = {".acm", ".dll", ".drv", ".exe", ".ocx", ".vxd", NULL};
+static const char * const ext[] = {".acm", ".dll", ".drv", ".exe", ".ocx", ".vxd", NULL};
 
 static int match_ext(const char* ptr, size_t len)
 {
-    const char**e;
+    const char * const *e;
     size_t      l;
 
     for (e = ext; *e; e++)
