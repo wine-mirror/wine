@@ -1291,8 +1291,8 @@ IDirectDrawSurfaceImpl_GetColorKey(IDirectDrawSurface7 *iface,
     /* There is a DDERR_NOCOLORKEY error, but how do we know if a color key
      * isn't there? That's like saying that an int isn't there. (Which MS
      * has done in other docs.) */
-
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    TRACE("(%p)->(%08x,%p)\n", This, Flags, CKey);
 
     if(!CKey)
         return DDERR_INVALIDPARAMS;
