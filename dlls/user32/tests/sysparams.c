@@ -552,7 +552,9 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
         }
     }
 
-#if 0  /* FIXME: this always fails for me  - AJ */
+    if (0)
+    {
+    /* FIXME: this always fails for me  - AJ */
     for (i = 0; i < nchange; i++)
     {
         POINT mv;
@@ -562,7 +564,7 @@ static void run_spi_setmouse_test( int curr_val[], POINT *req_change, POINT *pro
         ok( proj_change[i].x == mv.x, "Projected dx and real dx comparison. May fail under high load.\n" );
         ok( proj_change[i].y == mv.y, "Projected dy equals real dy. May fail under high load.\n" );
     }
-#endif
+    }
 }
 
 static void test_SPI_SETMOUSE( void )                  /*      4 */
@@ -1536,7 +1538,9 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     eq( lpMm_new.iVertGap, 0, "iVertGap", "%d" );
     eq( lpMm_new.iArrange, 0xf & lpMm_cur.iArrange, "iArrange", "%d" );
     /* test registry */
-#if 0 /* FIXME: cannot understand the results of this (11, 11, 11, 0) */
+    if (0)
+    {
+    /* FIXME: cannot understand the results of this (11, 11, 11, 0) */
     regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINWIDTH_VALNAME, dpi);
     ok( regval == lpMm_new.iWidth, "wrong value in registry %d, expected %d\n",
         regval, lpMm_new.iWidth);
@@ -1549,7 +1553,7 @@ static void test_SPI_SETMINIMIZEDMETRICS( void )               /*     44 */
     regval = metricfromreg( SPI_MINIMIZEDMETRICS_REGKEY, SPI_MINARRANGE_VALNAME, dpi);
     ok( regval == lpMm_new.iArrange, "wrong value in registry %d, expected %d\n",
         regval, lpMm_new.iArrange);
-#endif
+    }
     /* test some system metrics */
     eq( GetSystemMetrics( SM_CXMINIMIZED ) - 6,
         lpMm_new.iWidth,   "iWidth",   "%d" );

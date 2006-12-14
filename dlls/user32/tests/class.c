@@ -90,7 +90,8 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
             "GetClassLongW failed!\n");
     }
 
-#if 0
+    if (0)
+    {
     /*
      *  GetClassLongW(hTestWnd, NUMCLASSWORDS*sizeof(DWORD))
      *  does not fail on Win 98, though MSDN says it should
@@ -99,7 +100,7 @@ static void ClassTest(HINSTANCE hInstance, BOOL global)
     GetClassLongW(hTestWnd, NUMCLASSWORDS*sizeof(DWORD));
     ok(GetLastError(),
         "GetClassLongW() with invalid offset did not fail\n");
-#endif
+    }
 
     /* set values of valid class words */
     for(i=0; i<NUMCLASSWORDS; i++)

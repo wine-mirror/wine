@@ -129,7 +129,8 @@ todo_wine
     ok(atom_id == 0, "FindAtomA should fail\n");
     test_last_error(ERROR_FILE_NOT_FOUND);
 
-#if 0
+    if (0)
+    {
     /* this relies on the clipboard and global atom table being different */
     SetLastError(0xdeadbeef);
     atom_id = GlobalFindAtomA("my_cool_clipboard_format");
@@ -154,7 +155,7 @@ todo_wine
                 test_last_error(ERROR_INVALID_HANDLE);
         }
     }
-#endif
+    }
 
     ret = OpenClipboard(0);
     ok( ret, "OpenClipboard error %d\n", GetLastError());
