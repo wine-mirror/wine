@@ -110,11 +110,12 @@ static void test_SystemFunction007(void)
                             0x56, 0xeb, 0x6b, 0x96, 0x55, 0xec, 0xcf, 0x0a };
     WCHAR szFoo[] = {'f','o','o',0 };
 
-#if 0
-    /* crashes */
+    if (0)
+    {
+    /* crashes on Windows */
     r = pSystemFunction007(NULL, NULL);
     ok( r == STATUS_UNSUCCESSFUL, "wrong error code\n");
-#endif
+    }
 
     str.Buffer = szFoo;
     str.Length = 4*sizeof(WCHAR);
