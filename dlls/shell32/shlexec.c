@@ -342,7 +342,7 @@ static UINT_PTR SHELL_ExecuteW(const WCHAR *lpCmd, WCHAR *env, BOOL shWait,
 {
     STARTUPINFOW  startup;
     PROCESS_INFORMATION info;
-    UINT_PTR retval = 31;
+    UINT_PTR retval = SE_ERR_NOASSOC;
     UINT gcdret = 0;
     WCHAR curdir[MAX_PATH];
 
@@ -497,9 +497,9 @@ static UINT SHELL_FindExecutableByOperation(LPCWSTR lpOperation, LPWSTR key, LPW
     WCHAR verb[MAX_PATH];
 
     if (RegOpenKeyExW(HKEY_CLASSES_ROOT, filetype, 0, 0x02000000, &hkeyClass))
-        return 31; /* default - 'No association was found' */
+        return SE_ERR_NOASSOC;
     if (!HCR_GetDefaultVerbW(hkeyClass, lpOperation, verb, sizeof(verb)))
-        return 31; /* default - 'No association was found' */
+        return SE_ERR_NOASSOC;
     RegCloseKey(hkeyClass);
 
     /* Looking for ...buffer\shell\<verb>\command */
@@ -543,7 +543,7 @@ static UINT SHELL_FindExecutableByOperation(LPCWSTR lpOperation, LPWSTR key, LPW
 	return 33; /* FIXME see SHELL_FindExecutable() */
     }
 
-    return 31;	/* default - 'No association was found' */
+    return SE_ERR_NOASSOC;
 }
 
 /*************************************************************************
@@ -571,7 +571,7 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     LONG  filetypelen = sizeof(filetype); /* length of above */
     WCHAR command[1024];     /* command from registry */
     WCHAR wBuffer[256];      /* Used to GetProfileString */
-    UINT  retval = 31;       /* default - 'No association was found' */
+    UINT  retval = SE_ERR_NOASSOC;
     WCHAR *tok;              /* token pointer */
     WCHAR xlpFile[256];      /* result of SearchPath */
     DWORD attribs;           /* file attributes */
@@ -622,8 +622,8 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
 
         if (extension == NULL || extension[1]==0)
         {
-            WARN("Returning 31 - No association\n");
-            return 31; /* no association */
+            WARN("Returning SE_ERR_NOASSOC\n");
+            return SE_ERR_NOASSOC;
         }
 
         /* Three places to check: */
@@ -790,7 +790,7 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
     HSZ         hszApp, hszTopic;
     HCONV       hConv;
     HDDEDATA    hDdeData;
-    unsigned    ret = 31;
+    unsigned    ret = SE_ERR_NOASSOC;
     BOOL unicode = !(GetVersion() & 0x80000000);
 
     strcpyW(endkey, wApplication);
@@ -830,7 +830,7 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
         static const WCHAR wIfexec[] = {'\\','i','f','e','x','e','c',0};
         TRACE("Launching '%s'\n", debugstr_w(start));
         ret = execfunc(start, env, TRUE, psei, psei_out);
-        if (ret < 32)
+        if (ret <= 32)
         {
             TRACE("Couldn't launch\n");
             goto error;
@@ -895,7 +895,7 @@ static UINT_PTR execute_from_key(LPWSTR key, LPCWSTR lpFile, WCHAR *env, LPCWSTR
 {
     WCHAR cmd[256];
     LONG cmdlen = sizeof(cmd);
-    UINT_PTR retval = 31;
+    UINT_PTR retval = SE_ERR_NOASSOC;
 
     TRACE("%s %s %s %s %s\n", debugstr_w(key), debugstr_w(lpFile), debugstr_w(env),
            debugstr_w(szCommandline), debugstr_w(executable_name));
@@ -1006,7 +1006,7 @@ HINSTANCE WINAPI FindExecutableA(LPCSTR lpFile, LPCSTR lpDirectory, LPSTR lpResu
  */
 HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpResult)
 {
-    UINT_PTR retval = 31;    /* default - 'No association was found' */
+    UINT_PTR retval = SE_ERR_NOASSOC;
     WCHAR old_dir[1024];
 
     TRACE("File %s, Dir %s\n",
@@ -1311,7 +1311,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     WCHAR *env;
     WCHAR lpstrProtocol[256];
     LPCWSTR lpFile;
-    UINT_PTR retval = 31;
+    UINT_PTR retval = SE_ERR_NOASSOC;
     WCHAR wcmd[1024];
     WCHAR buffer[MAX_PATH];
     BOOL done;
