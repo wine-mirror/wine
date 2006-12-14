@@ -210,7 +210,7 @@ static DWORD wodDsCreate(UINT wDevID, PIDSDRIVER* drv);
 static DWORD wodDsDesc(UINT wDevID, PDSDRIVERDESC desc);
 
 /* These strings used only for tracing */
-static const char *wodPlayerCmdString[] = {
+static const char * const wodPlayerCmdString[] = {
     "WINE_WM_PAUSING",
     "WINE_WM_RESTARTING",
     "WINE_WM_RESETTING",
