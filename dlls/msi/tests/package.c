@@ -1196,23 +1196,25 @@ static void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "one >> two");
     ok( r == MSICONDITION_TRUE, "wrong return val\n");
 
+    MsiSetProperty(hpkg, "MsiNetAssemblySupport", NULL);  /* make sure it's empty */
+
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport > \"1.1.4322\"");
-    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport >= \"1.1.4322\"");
-    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport <= \"1.1.4322\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport <> \"1.1.4322\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport ~< \"1.1.4322\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"abcd\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
@@ -1224,13 +1226,13 @@ static void test_condition(void)
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"0000001.1.4322\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322.1\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1.4322.1.1\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "\"2\" < \"1.1");
     ok( r == MSICONDITION_ERROR, "wrong return val (%d)\n", r);
@@ -1248,31 +1250,31 @@ static void test_condition(void)
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1.1\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"1\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"0\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"-1\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"!\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"!\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"/\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \" \"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"azAZ_\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
@@ -1283,22 +1285,20 @@ static void test_condition(void)
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a[a]a\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
-    todo_wine {
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"[a]\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"[a]a\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"{a}\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"{a\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"[a\"");
-    ok( r == MSICONDITION_FALSE, "wrong return val (%d)\n", r);
-    }
+    ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
 
     r = MsiEvaluateCondition(hpkg, "MsiNetAssemblySupport < \"a{\"");
     ok( r == MSICONDITION_TRUE, "wrong return val (%d)\n", r);
