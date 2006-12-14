@@ -710,6 +710,7 @@ static void test_CommandLine(void)
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
     DWORD               len;
+    BOOL                ret;
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -758,7 +759,9 @@ static void test_CommandLine(void)
     /* Test for Bug1330 to show that XP doesn't change '/' to '\\' in argv[0]*/
     get_file_name(resfile);
     sprintf(buffer, "./%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
-    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
@@ -770,7 +773,9 @@ static void test_CommandLine(void)
 
     get_file_name(resfile);
     sprintf(buffer, ".\\%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
-    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
@@ -787,7 +792,9 @@ static void test_CommandLine(void)
     p = strrchr(fullpath, '\\');
     assert (p);
     sprintf(buffer, "..%s/%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", p, selfname, resfile);
-    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess\n");
+    SetLastError(0xdeadbeef);
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
+    ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
     /* wait for child to terminate */
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
