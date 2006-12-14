@@ -193,7 +193,7 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
 static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
 {
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
+  static const char prefix[] = "\\\\.\\pipe\\lrpc\\";
   RPC_STATUS r;
   LPSTR pname;
 
@@ -213,7 +213,7 @@ static RPC_STATUS rpcrt4_ncalrpc_open(RpcConnection* Connection)
 
 static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq, LPSTR endpoint)
 {
-  static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
+  static const char prefix[] = "\\\\.\\pipe\\lrpc\\";
   RPC_STATUS r;
   LPSTR pname;
   RpcConnection *Connection;
@@ -241,7 +241,7 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
 static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
 {
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  static LPCSTR prefix = "\\\\.";
+  static const char prefix[] = "\\\\.";
   RPC_STATUS r;
   LPSTR pname;
 
@@ -260,7 +260,7 @@ static RPC_STATUS rpcrt4_ncacn_np_open(RpcConnection* Connection)
 
 static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protseq, LPSTR endpoint)
 {
-  static LPCSTR prefix = "\\\\.";
+  static const char prefix[] = "\\\\.";
   RPC_STATUS r;
   LPSTR pname;
   RpcConnection *Connection;
@@ -295,7 +295,7 @@ static RPC_STATUS rpcrt4_ncacn_np_handoff(RpcConnection *old_conn, RpcConnection
 {
   RPC_STATUS status;
   LPSTR pname;
-  static LPCSTR prefix = "\\\\.";
+  static const char prefix[] = "\\\\.";
 
   rpcrt4_conn_np_handoff((RpcConnection_np *)old_conn, (RpcConnection_np *)new_conn);
 
@@ -311,7 +311,7 @@ static RPC_STATUS rpcrt4_ncalrpc_handoff(RpcConnection *old_conn, RpcConnection 
 {
   RPC_STATUS status;
   LPSTR pname;
-  static LPCSTR prefix = "\\\\.\\pipe\\lrpc\\";
+  static const char prefix[] = "\\\\.\\pipe\\lrpc\\";
 
   TRACE("%s\n", old_conn->Endpoint);
 
