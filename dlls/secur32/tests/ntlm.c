@@ -558,7 +558,10 @@ static void testInitializeSecurityContextFlags()
     PSecPkgInfo             pkg_info = NULL;
     SspiData                client;
     SEC_WINNT_AUTH_IDENTITY id;
-    static char             sec_pkg_name[] = "NTLM";
+    static char             sec_pkg_name[] = "NTLM",
+                            test_user[]    = "testuser",
+                            workgroup[]    = "WORKGROUP",
+                            test_pass[]    = "testpass";
     ULONG                   req_attr, ctxt_attr;
     TimeStamp               ttl;
     PBYTE                   packet;
@@ -570,11 +573,11 @@ static void testInitializeSecurityContextFlags()
     }
 
     pFreeContextBuffer(pkg_info);
-    id.User = (unsigned char*) "testuser";
+    id.User = (unsigned char*) test_user;
     id.UserLength = strlen((char *) id.User);
-    id.Domain = (unsigned char *) "WORKGROUP";
+    id.Domain = (unsigned char *) workgroup;
     id.DomainLength = strlen((char *) id.Domain);
-    id.Password = (unsigned char*) "testpass";
+    id.Password = (unsigned char*) test_pass;
     id.PasswordLength = strlen((char *) id.Password);
     id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
@@ -775,12 +778,16 @@ static void testAuth(ULONG data_rep, BOOL fake)
 
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)== SEC_E_OK)
     {
+        static char test_user[] = "testuser",
+                    workgroup[] = "WORKGROUP",
+                    test_pass[] = "testpass";
+
         pFreeContextBuffer(pkg_info);
-        id.User = (unsigned char*) "testuser";
+        id.User = (unsigned char*) test_user;
         id.UserLength = strlen((char *) id.User);
-        id.Domain = (unsigned char *) "WORKGROUP";
+        id.Domain = (unsigned char *) workgroup;
         id.DomainLength = strlen((char *) id.Domain);
-        id.Password = (unsigned char*) "testpass";
+        id.Password = (unsigned char*) test_pass;
         id.PasswordLength = strlen((char *) id.Password);
         id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
@@ -912,12 +919,16 @@ static void testSignSeal()
      */
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)== SEC_E_OK)
     {
+        static char test_user[] = "testuser",
+                    workgroup[] = "WORKGROUP",
+                    test_pass[] = "testpass";
+
         pFreeContextBuffer(pkg_info);
-        id.User = (unsigned char*) "testuser";
+        id.User = (unsigned char*) test_user;
         id.UserLength = strlen((char *) id.User);
-        id.Domain = (unsigned char *) "WORKGROUP";
+        id.Domain = (unsigned char *) workgroup;
         id.DomainLength = strlen((char *) id.Domain);
-        id.Password = (unsigned char*) "testpass";
+        id.Password = (unsigned char*) test_pass;
         id.PasswordLength = strlen((char *) id.Password);
         id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
