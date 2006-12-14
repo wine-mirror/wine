@@ -475,6 +475,17 @@ out:
     IDirect3DVertexBuffer7_Release(lpVBufDest2);
 }
 
+static void StateTest( void )
+{
+    HRESULT rc;
+
+    /* The msdn says its undocumented, does it return an error too? */
+    rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_ZVISIBLE, TRUE);
+    ok(rc == D3D_OK, "IDirect3DDevice7_SetRenderState(D3DRENDERSTATE_ZVISIBLE, TRUE) returned %08x\n", rc);
+    rc = IDirect3DDevice7_SetRenderState(lpD3DDevice, D3DRENDERSTATE_ZVISIBLE, FALSE);
+    ok(rc == D3D_OK, "IDirect3DDevice7_SetRenderState(D3DRENDERSTATE_ZVISIBLE, FALSE) returned %08x\n", rc);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -489,5 +500,6 @@ START_TEST(d3d)
     }
     LightTest();
     ProcessVerticesTest();
+    StateTest();
     ReleaseDirect3D();
 }

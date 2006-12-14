@@ -3442,15 +3442,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
     case WINED3DRS_SRCBLENDALPHA             :
     case WINED3DRS_DESTBLENDALPHA            :
     case WINED3DRS_BLENDOPALPHA              :
+    case WINED3DRS_ZVISIBLE                  :
         StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
         break;
-
-      /** not supported */
-    case WINED3DRS_ZVISIBLE                  :
-      {
-        LEAVE_GL();
-        return WINED3DERR_INVALIDCALL;
-      }
 
     default:
         FIXME("(%p)->(%s,%d) unknown state\n", This, debug_d3drenderstate(State), Value);
