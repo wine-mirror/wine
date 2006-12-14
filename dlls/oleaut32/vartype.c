@@ -4143,6 +4143,21 @@ HRESULT WINAPI VarDecFromI4(LONG lIn, DECIMAL* pDecOut)
 
 #define LOCALE_EN_US		(MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT))
 
+/* internal representation of the value stored in a DECIMAL. The bytes are
+   stored from LSB at index 0 to MSB at index 11
+ */
+typedef struct DECIMAL_internal
+{
+    DWORD bitsnum[3];  /* 96 significant bits, unsigned */
+    unsigned char scale;      /* number scaled * 10 ^ -(scale) */
+    unsigned int  sign : 1;   /* 0 - positive, 1 - negative */
+} VARIANT_DI;
+
+static HRESULT VARIANT_DI_FromR4(float source, VARIANT_DI * dest);
+static HRESULT VARIANT_DI_FromR8(double source, VARIANT_DI * dest);
+static void VARIANT_DIFromDec(const DECIMAL * from, VARIANT_DI * to);
+static void VARIANT_DecFromDI(VARIANT_DI * from, DECIMAL * to);
+
 /************************************************************************
  * VarDecFromR4 (OLEAUT32.193)
  *
@@ -4157,10 +4172,12 @@ HRESULT WINAPI VarDecFromI4(LONG lIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecFromR4(FLOAT fltIn, DECIMAL* pDecOut)
 {
-  WCHAR buff[256];
+  VARIANT_DI di;
+  HRESULT hres;
 
-  sprintfW( buff, szFloatFormatW, fltIn );
-  return VarDecFromStr(buff, LOCALE_EN_US, LOCALE_NOUSEROVERRIDE, pDecOut);
+  hres = VARIANT_DI_FromR4(fltIn, &di);
+  if (hres == S_OK) VARIANT_DecFromDI(&di, pDecOut);
+  return hres;
 }
 
 /************************************************************************
@@ -4177,10 +4194,12 @@ HRESULT WINAPI VarDecFromR4(FLOAT fltIn, DECIMAL* pDecOut)
  */
 HRESULT WINAPI VarDecFromR8(double dblIn, DECIMAL* pDecOut)
 {
-  WCHAR buff[256];
+  VARIANT_DI di;
+  HRESULT hres;
 
-  sprintfW( buff, szDoubleFormatW, dblIn );
-  return VarDecFromStr(buff, LOCALE_EN_US, LOCALE_NOUSEROVERRIDE, pDecOut);
+  hres = VARIANT_DI_FromR8(dblIn, &di);
+  if (hres == S_OK) VARIANT_DecFromDI(&di, pDecOut);
+  return hres;
 }
 
 /************************************************************************
@@ -4595,16 +4614,6 @@ VarDecAdd_AsPositive:
   }
   return hRet;
 }
-
-/* internal representation of the value stored in a DECIMAL. The bytes are
-   stored from LSB at index 0 to MSB at index 11
- */
-typedef struct DECIMAL_internal
-{
-    DWORD bitsnum[3];  /* 96 significant bits, unsigned */
-    unsigned char scale;      /* number scaled * 10 ^ -(scale) */
-    unsigned int  sign : 1;   /* 0 - positive, 1 - negative */
-} VARIANT_DI;
 
 /* translate from external DECIMAL format into an internal representation */
 static void VARIANT_DIFromDec(const DECIMAL * from, VARIANT_DI * to)
@@ -5188,6 +5197,284 @@ static HRESULT VARIANT_DI_div(VARIANT_DI * dividend, VARIANT_DI * divisor, VARIA
         }
     }
     return r_overflow;
+}
+
+/* This procedure receives a VARIANT_DI with a defined mantissa and sign, but
+   with an undefined scale, which will be assigned to (if possible). It also
+   receives an exponent of 2. This procedure will then manipulate the mantissa
+   and calculate a corresponding scale, so that the exponent2 value is assimilated
+   into the VARIANT_DI and is therefore no longer necessary. Returns S_OK if
+   successful, or DISP_E_OVERFLOW if the represented value is too big to fit into
+   a DECIMAL. */
+static HRESULT VARIANT_DI_normalize(VARIANT_DI * val, int exponent2, int isDouble)
+{
+    HRESULT hres = S_OK;
+    int exponent5, exponent10;
+
+    /* A factor of 2^exponent2 is equivalent to (10^exponent2)/(5^exponent2), and
+       thus equal to (5^-exponent2)*(10^exponent2). After all manipulations,
+       exponent10 might be used to set the VARIANT_DI scale directly. However,
+       the value of 5^-exponent5 must be assimilated into the VARIANT_DI. */
+    exponent5 = -exponent2;
+    exponent10 = exponent2;
+
+    /* Handle exponent5 > 0 */
+    while (exponent5 > 0) {
+        char bPrevCarryBit;
+        char bCurrCarryBit;
+
+        /* In order to multiply the value represented by the VARIANT_DI by 5, it
+           is best to multiply by 10/2. Therefore, exponent10 is incremented, and
+           somehow the mantissa should be divided by 2.  */
+        if ((val->bitsnum[0] & 1) == 0) {
+            /* The mantissa is divisible by 2. Therefore the division can be done
+               without losing significant digits. */
+            exponent10++; exponent5--;
+
+            /* Shift right */
+            bPrevCarryBit = val->bitsnum[2] & 1;
+            val->bitsnum[2] >>= 1;
+            bCurrCarryBit = val->bitsnum[1] & 1;
+            val->bitsnum[1] = (val->bitsnum[1] >> 1) | (bPrevCarryBit ? 0x80000000 : 0);
+            val->bitsnum[0] = (val->bitsnum[0] >> 1) | (bCurrCarryBit ? 0x80000000 : 0);
+        } else {
+            /* The mantissa is NOT divisible by 2. Therefore the mantissa should
+               be multiplied by 5, unless the multiplication overflows. */
+            DWORD temp_bitsnum[3];
+
+            exponent5--;
+
+            memcpy(temp_bitsnum, val->bitsnum, 3 * sizeof(DWORD));
+            if (0 == VARIANT_int_mulbychar(temp_bitsnum, 3, 5)) {
+                /* Multiplication succeeded without overflow, so copy result back
+                   into VARIANT_DI */
+                memcpy(val->bitsnum, temp_bitsnum, 3 * sizeof(DWORD));
+
+                /* Mask out 3 extraneous bits introduced by the multiply */
+            } else {
+                /* Multiplication by 5 overflows. The mantissa should be divided
+                   by 2, and therefore will lose significant digits. */
+                exponent10++;
+
+                /* Shift right */
+                bPrevCarryBit = val->bitsnum[2] & 1;
+                val->bitsnum[2] >>= 1;
+                bCurrCarryBit = val->bitsnum[1] & 1;
+                val->bitsnum[1] = (val->bitsnum[1] >> 1) | (bPrevCarryBit ? 0x80000000 : 0);
+                val->bitsnum[0] = (val->bitsnum[0] >> 1) | (bCurrCarryBit ? 0x80000000 : 0);
+            }
+        }
+    }
+
+    /* Handle exponent5 < 0 */
+    while (exponent5 < 0) {
+        /* In order to divide the value represented by the VARIANT_DI by 5, it
+           is best to multiply by 2/10. Therefore, exponent10 is decremented,
+           and the mantissa should be multiplied by 2 */
+        if ((val->bitsnum[2] & 0x80000000) == 0) {
+            /* The mantissa can withstand a shift-left without overflowing */
+            exponent10--; exponent5++;
+            VARIANT_int_shiftleft(val->bitsnum, 3, 1);
+        } else {
+            /* The mantissa would overflow if shifted. Therefore it should be
+               directly divided by 5. This will lose significant digits, unless
+               by chance the mantissa happens to be divisible by 5 */
+            exponent5++;
+            VARIANT_int_divbychar(val->bitsnum, 3, 5);
+        }
+    }
+
+    /* At this point, the mantissa has assimilated the exponent5, but the
+       exponent10 might not be suitable for assignment. The exponent10 must be
+       in the range [-DEC_MAX_SCALE..0], so the mantissa must be scaled up or
+       down appropriately. */
+    while (hres == S_OK && exponent10 > 0) {
+        /* In order to bring exponent10 down to 0, the mantissa should be
+           multiplied by 10 to compensate. If the exponent10 is too big, this
+           will cause the mantissa to overflow. */
+        if (0 == VARIANT_int_mulbychar(val->bitsnum, 3, 10)) {
+            exponent10--;
+        } else {
+            hres = DISP_E_OVERFLOW;
+        }
+    }
+    while (exponent10 < -DEC_MAX_SCALE) {
+        int rem10;
+        /* In order to bring exponent up to -DEC_MAX_SCALE, the mantissa should
+           be divided by 10 to compensate. If the exponent10 is too small, this
+           will cause the mantissa to underflow and become 0 */
+        rem10 = VARIANT_int_divbychar(val->bitsnum, 3, 10);
+        exponent10++;
+        if (VARIANT_int_iszero(val->bitsnum, 3)) {
+            /* Underflow, unable to keep dividing */
+            exponent10 = 0;
+        } else if (rem10 >= 5) {
+            DWORD x = 1;
+            VARIANT_int_add(val->bitsnum, 3, &x, 1);
+        }
+    }
+    /* This step is requierd in order to remove excess bits of precision from the
+       end of the bit representation, down to the precision guaranteed by the
+       floating point number. */
+    if (isDouble) {
+        while (exponent10 < 0 && (val->bitsnum[2] != 0 || (val->bitsnum[2] == 0 && (val->bitsnum[1] & 0xFFE00000) != 0))) {
+            int rem10;
+
+            rem10 = VARIANT_int_divbychar(val->bitsnum, 3, 10);
+            exponent10++;
+            if (rem10 >= 5) {
+                DWORD x = 1;
+                VARIANT_int_add(val->bitsnum, 3, &x, 1);
+            }
+        }
+    } else {
+        while (exponent10 < 0 && (val->bitsnum[2] != 0 || val->bitsnum[1] != 0 ||
+            (val->bitsnum[2] == 0 && val->bitsnum[1] == 0 && (val->bitsnum[0] & 0xFF000000) != 0))) {
+            int rem10;
+
+            rem10 = VARIANT_int_divbychar(val->bitsnum, 3, 10);
+            exponent10++;
+            if (rem10 >= 5) {
+                DWORD x = 1;
+                VARIANT_int_add(val->bitsnum, 3, &x, 1);
+            }
+        }
+    }
+    /* Remove multiples of 10 from the representation */
+    while (exponent10 < 0) {
+        DWORD temp_bitsnum[3];
+
+        memcpy(temp_bitsnum, val->bitsnum, 3 * sizeof(DWORD));
+        if (0 == VARIANT_int_divbychar(temp_bitsnum, 3, 10)) {
+            exponent10++;
+            memcpy(val->bitsnum, temp_bitsnum, 3 * sizeof(DWORD));
+        } else break;
+    }
+
+    /* Scale assignment */
+    if (hres == S_OK) val->scale = -exponent10;
+
+    return hres;
+}
+
+typedef union
+{
+    struct
+    {
+        unsigned long m : 23;
+        unsigned int exp_bias : 8;
+        unsigned int sign : 1;
+    } i;
+    float f;
+} R4_FIELDS;
+
+/* Convert a 32-bit floating point number into a DECIMAL, without using an
+   intermediate string step. */
+static HRESULT VARIANT_DI_FromR4(float source, VARIANT_DI * dest)
+{
+    HRESULT hres = S_OK;
+    R4_FIELDS fx;
+
+    fx.f = source;
+
+    /* Detect special cases */
+    if (fx.i.m == 0 && fx.i.exp_bias == 0) {
+        /* Floating-point zero */
+        VARIANT_DI_clear(dest);
+    } else if (fx.i.m == 0  && fx.i.exp_bias == 0xFF) {
+        /* Floating-point infinity */
+        hres = DISP_E_OVERFLOW;
+    } else if (fx.i.exp_bias == 0xFF) {
+        /* Floating-point NaN */
+        hres = DISP_E_BADVARTYPE;
+    } else {
+        int exponent2;
+        VARIANT_DI_clear(dest);
+
+        exponent2 = fx.i.exp_bias - 127;   /* Get unbiased exponent */
+        dest->sign = fx.i.sign;             /* Sign is simply copied */
+
+        /* Copy significant bits to VARIANT_DI mantissa */
+        dest->bitsnum[0] = fx.i.m;
+        dest->bitsnum[0] &= 0x007FFFFF;
+        if (fx.i.exp_bias == 0) {
+            /* Denormalized number - correct exponent */
+            exponent2++;
+        } else {
+            /* Add hidden bit to mantissa */
+            dest->bitsnum[0] |= 0x00800000;
+        }
+
+        /* The act of copying a FP mantissa as integer bits is equivalent to
+           shifting left the mantissa 23 bits. The exponent2 is reduced to
+           compensate. */
+        exponent2 -= 23;
+
+        hres = VARIANT_DI_normalize(dest, exponent2, 0);
+    }
+
+    return hres;
+}
+
+typedef union
+{
+    struct
+    {
+        unsigned long m_lo : 32;    /* 52 bits of precision */
+        unsigned int m_hi : 20;
+        unsigned int exp_bias : 11; /* bias == 1023 */
+        unsigned int sign : 1;
+    } i;
+    double d;
+} R8_FIELDS;
+
+/* Convert a 64-bit floating point number into a DECIMAL, without using an
+   intermediate string step. */
+static HRESULT VARIANT_DI_FromR8(double source, VARIANT_DI * dest)
+{
+    HRESULT hres = S_OK;
+    R8_FIELDS fx;
+
+    fx.d = source;
+
+    /* Detect special cases */
+    if (fx.i.m_lo == 0 && fx.i.m_hi == 0 && fx.i.exp_bias == 0) {
+        /* Floating-point zero */
+        VARIANT_DI_clear(dest);
+    } else if (fx.i.m_lo == 0 && fx.i.m_hi == 0 && fx.i.exp_bias == 0x7FF) {
+        /* Floating-point infinity */
+        hres = DISP_E_OVERFLOW;
+    } else if (fx.i.exp_bias == 0x7FF) {
+        /* Floating-point NaN */
+        hres = DISP_E_BADVARTYPE;
+    } else {
+        int exponent2;
+        VARIANT_DI_clear(dest);
+
+        exponent2 = fx.i.exp_bias - 1023;   /* Get unbiased exponent */
+        dest->sign = fx.i.sign;             /* Sign is simply copied */
+
+        /* Copy significant bits to VARIANT_DI mantissa */
+        dest->bitsnum[0] = fx.i.m_lo;
+        dest->bitsnum[1] = fx.i.m_hi;
+        dest->bitsnum[1] &= 0x000FFFFF;
+        if (fx.i.exp_bias == 0) {
+            /* Denormalized number - correct exponent */
+            exponent2++;
+        } else {
+            /* Add hidden bit to mantissa */
+            dest->bitsnum[1] |= 0x00100000;
+        }
+
+        /* The act of copying a FP mantissa as integer bits is equivalent to
+           shifting left the mantissa 52 bits. The exponent2 is reduced to
+           compensate. */
+        exponent2 -= 52;
+
+        hres = VARIANT_DI_normalize(dest, exponent2, 1);
+    }
+
+    return hres;
 }
 
 /************************************************************************
