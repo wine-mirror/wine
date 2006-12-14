@@ -82,10 +82,11 @@ static void test_AddPort(void)
     /* moved to localui.dll since w2k */
     if (!pAddPort) return;
 
-#if 0
+    if (0)
+    {
     /* NT4 crash on this test */
     res = pAddPort(NULL, 0, NULL);
-#endif
+    }
 
     /*  Testing-Results (localmon.dll from NT4.0):
         - The Servername is ignored
@@ -111,10 +112,11 @@ static void test_ConfigurePort(void)
     /* moved to localui.dll since w2k */
     if (!pConfigurePort) return;
 
-#if 0
+    if (0)
+    {
     /* NT4 crash on this test */
     res = pConfigurePort(NULL, 0, NULL);
-#endif
+    }
 
     /*  Testing-Results (localmon.dll from NT4.0):
         - Case of Portname is ignored
@@ -151,10 +153,11 @@ static void test_DeletePort(void)
     /* moved to localui.dll since w2k */
     if (!pDeletePort) return;
 
-#if 0
+    if (0)
+    {
     /* NT4 crash on this test */
     res = pDeletePort(NULL, 0, NULL);
-#endif
+    }
 
     /*  Testing-Results (localmon.dll from NT4.0):
         - Case of Portname is ignored (returned '1' on Success)
@@ -237,12 +240,13 @@ static void test_EnumPorts(void)
             "ERROR_INSUFFICIENT_BUFFER)\n",
             level, res, GetLastError(), cbBuf, pcReturned);
 
-#if 0
+        if (0)
+        {
         /* The following tests crash this app with native localmon/localspl */
         res = pEnumPorts(NULL, level, NULL, cbBuf, &pcbNeeded, &pcReturned);
         res = pEnumPorts(NULL, level, buffer, cbBuf, NULL, &pcReturned);
         res = pEnumPorts(NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
-#endif
+        }
 
         /* The Servername is ignored */
         pcbNeeded = 0xdeadbeef;
@@ -300,11 +304,12 @@ static void test_XcvClosePort(void)
 
     if ((pXcvOpenPort == NULL) || (pXcvClosePort == NULL)) return;
 
-#if 0
+    if (0)
+    {
     /* crash with native localspl.dll (w2k+xp) */
     res = pXcvClosePort(NULL);
     res = pXcvClosePort(INVALID_HANDLE_VALUE);
-#endif
+    }
 
 
     SetLastError(0xdeadbeef);
@@ -317,10 +322,11 @@ static void test_XcvClosePort(void)
         res = pXcvClosePort(hXcv);
         ok( res, "returned %d with 0x%x(expected '!= 0')\n", res, GetLastError());
 
-#if 0
+        if (0)
+        {
         /* test for "Double Free": crash with native localspl.dll (w2k+xp) */
         res = pXcvClosePort(hXcv);
-#endif
+        }
     }
 }
 
@@ -333,11 +339,12 @@ static void test_XcvOpenPort(void)
 
     if ((pXcvOpenPort == NULL) || (pXcvClosePort == NULL)) return;
 
-#if 0
+    if (0)
+    {
     /* crash with native localspl.dll (w2k+xp) */
     res = pXcvOpenPort(NULL, SERVER_ACCESS_ADMINISTER, &hXcv);
     res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, NULL);
-#endif
+    }
 
 
     /* The returned handle is the result from a previous "spoolss.dll,DllAllocSplMem" */
