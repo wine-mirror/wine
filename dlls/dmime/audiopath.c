@@ -622,7 +622,7 @@ static HRESULT WINAPI IDirectMusicAudioPathImpl_IPersistStream_GetSizeMax (LPPER
 	return E_NOTIMPL;
 }
 
-IPersistStreamVtbl DirectMusicAudioPath_PersistStream_Vtbl = {
+static const IPersistStreamVtbl DirectMusicAudioPath_PersistStream_Vtbl = {
 	IDirectMusicAudioPathImpl_IPersistStream_QueryInterface,
 	IDirectMusicAudioPathImpl_IPersistStream_AddRef,
 	IDirectMusicAudioPathImpl_IPersistStream_Release,
