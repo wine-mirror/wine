@@ -46,15 +46,12 @@ static void test_PrintDlgA(void)
     if (!pDlg) return;
 
 
-#if 0
     /* will crash with unpatched wine */
     SetLastError(0xdeadbeef);
     res = PrintDlgA(NULL);
     ok( !res && (CommDlgExtendedError() == CDERR_INITIALIZATION),
-        "returned %ld with 0x%lx and 0x%lx (expected '0' and " \
+        "returned %d with 0x%x and 0x%x (expected '0' and " \
         "CDERR_INITIALIZATION)\n", res, GetLastError(), CommDlgExtendedError());
-    }
-#endif
 
     ZeroMemory(pDlg, sizeof(PRINTDLGA));
     pDlg->lStructSize = sizeof(PRINTDLGA) - 1;

@@ -1994,9 +1994,16 @@ static BOOL PRINTDLG_CreateDCW(LPPRINTDLGW lppd)
 BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
 {
     BOOL      bRet = FALSE;
-    LPVOID   ptr;
-    HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrA( lppd->hwndOwner, GWLP_HINSTANCE );
+    LPVOID    ptr;
+    HINSTANCE hInst;
 
+    if (!lppd)
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
+        return FALSE;
+    }
+
+    hInst = (HINSTANCE)GetWindowLongPtrA( lppd->hwndOwner, GWLP_HINSTANCE );
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
 	const struct pd_flags *pflag = pd_flags;
@@ -2131,14 +2138,19 @@ BOOL WINAPI PrintDlgA(LPPRINTDLGA lppd)
  *
  * See PrintDlgA.
  */
-BOOL WINAPI PrintDlgW(
-		      LPPRINTDLGW lppd /* [in/out] ptr to PRINTDLG32 struct */
-		      )
+BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
 {
     BOOL      bRet = FALSE;
-    LPVOID   ptr;
-    HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW( lppd->hwndOwner, GWLP_HINSTANCE );
+    LPVOID    ptr;
+    HINSTANCE hInst;
 
+    if (!lppd)
+    {
+        COMDLG32_SetCommDlgExtendedError(CDERR_INITIALIZATION);
+        return FALSE;
+    }
+
+    hInst = (HINSTANCE)GetWindowLongPtrW( lppd->hwndOwner, GWLP_HINSTANCE );
     if(TRACE_ON(commdlg)) {
         char flagstr[1000] = "";
 	const struct pd_flags *pflag = pd_flags;
