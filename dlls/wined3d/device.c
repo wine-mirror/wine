@@ -2254,6 +2254,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     LONG ret;
     const PixelFormatDesc *formatDesc  = getFormatDescEntry(pMode->Format);
+    RECT clip_rc;
 
     TRACE("(%p)->(%d,%p) Mode=%dx%dx@%d, %s\n", This, iSwapChain, pMode, pMode->Width, pMode->Height, pMode->RefreshRate, debug_d3dformat(pMode->Format));
 
@@ -2303,6 +2304,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
     /* Only do this with a window of course */
     if(This->ddraw_window)
       MoveWindow(This->ddraw_window, 0, 0, pMode->Width, pMode->Height, TRUE);
+
+    /* And finally clip mouse to our screen */
+    SetRect(&clip_rc, 0, 0, pMode->Width, pMode->Height);
+    ClipCursor(&clip_rc);
 
     return WINED3D_OK;
 }
