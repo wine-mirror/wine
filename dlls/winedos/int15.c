@@ -151,7 +151,7 @@ void WINAPI DOSVM_Int15Handler( CONTEXT86 *context )
 	FIXME("INT15: 0xc3\n");
 	SET_AH( context , 0x86 );
 	break;
-    case 0xc4: /*  BIOS POS Programm option select  */
+    case 0xc4: /*  BIOS POS Program option select  */
 	FIXME("INT15: option 0xc4 not handled!\n");
 	break;
 

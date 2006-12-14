@@ -1069,7 +1069,7 @@ static void test_GetPrinterDriverDirectory(void)
         "'len > 0' or '0' with ERROR_INVALID_ENVIRONMENT)\n",
         res, GetLastError(), lstrlenA((char *)buffer));
 
-    /* A Setup-Programm (PDFCreator_0.8.0) use empty strings */
+    /* A setup program (PDFCreator_0.8.0) use empty strings */
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA(empty, empty, 1, buffer, cbBuf*2, &pcbNeeded);
     ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError() );
@@ -1097,7 +1097,7 @@ static void test_GetPrintProcessorDirectory(void)
 
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, NULL, 1, NULL, 0, &cbBuf);
-    /* The deactivated Spooler is catched here on NT3.51 */
+    /* The deactivated Spooler is caught here on NT3.51 */
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "returned %d with %d (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
@@ -1125,7 +1125,7 @@ static void test_GetPrintProcessorDirectory(void)
         res, GetLastError());
 
 #if 0
-    /* XPsp2: the programm will crash here, when the spooler is not running  */
+    /* XPsp2: the program will crash here, when the spooler is not running  */
     /*        GetPrinterDriverDirectory has the same bug */
     pcbNeeded = 0;
     SetLastError(0xdeadbeef);
@@ -1226,7 +1226,7 @@ static void test_OpenPrinter(void)
 
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, NULL, NULL);    
-    /* The deactivated Spooler is catched here on NT3.51 */
+    /* The deactivated Spooler is caught here on NT3.51 */
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok(!res && (GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %d with %d (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -1237,7 +1237,7 @@ static void test_OpenPrinter(void)
     hprinter = (HANDLE) MAGIC_DEAD;
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, &hprinter, NULL);
-    /* The deactivated Spooler is catched here on XPsp2 */
+    /* The deactivated Spooler is caught here on XPsp2 */
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
         "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",

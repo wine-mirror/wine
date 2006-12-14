@@ -591,7 +591,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     if  (iPosX - iX > fAvePosX/2)
         *piTrailing = 0;
     else
-        *piTrailing = 1;                            /* yep we are over half way  */
+        *piTrailing = 1;                            /* yep we are over halfway */
     
     *piCP = item -1;                                /* Return character position */
     TRACE("*piCP=%d iPposX=%d\n", *piCP, iPosX);

@@ -728,7 +728,7 @@ static BOOL WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
                          &startup.hStdError, GENERIC_READ|GENERIC_WRITE, TRUE, 0))
     {
 	WINE_ERR("Can't dup handles\n");
-	/* no need to delete handles, we're exiting the programm anyway */
+	/* no need to delete handles, we're exiting the program anyway */
 	return FALSE;
     }
 

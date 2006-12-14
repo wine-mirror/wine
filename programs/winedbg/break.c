@@ -779,7 +779,7 @@ BOOL break_should_continue(ADDRESS64* addr, DWORD code)
 /***********************************************************************
  *           break_ajust_pc
  *
- * Adjust PC to the address where the trap (if any) actually occured
+ * Adjust PC to the address where the trap (if any) actually occurred
  * Also sets dbg_curr_thread->stopped_xpoint
  */
 void break_adjust_pc(ADDRESS64* addr, DWORD code, BOOL* is_break)

@@ -132,7 +132,7 @@ START_TEST(heap)
         "MAGIC_DEAD)\n", res, GetLastError());
  
     GlobalFree(gbl);
-    /* invalid handles are catched in windows: */
+    /* invalid handles are caught in windows: */
     SetLastError(MAGIC_DEAD);
     hsecond = GlobalFree(gbl);      /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
@@ -237,7 +237,7 @@ START_TEST(heap)
         "MAGIC_DEAD)\n", res, GetLastError());
 
     LocalFree(gbl);
-    /* invalid handles are catched in windows: */
+    /* invalid handles are caught in windows: */
     SetLastError(MAGIC_DEAD);
     hsecond = LocalFree(gbl);       /* invalid handle: free memory twice */
     ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
