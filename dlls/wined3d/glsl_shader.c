@@ -481,7 +481,7 @@ static void shader_glsl_add_param(
     char *out_str);
 
 /** Used for opcode modifiers - They multiply the result by the specified amount */
-static const char* shift_glsl_tab[] = {
+static const char * const shift_glsl_tab[] = {
     "",           /*  0 (none) */ 
     "2.0 * ",     /*  1 (x2)   */ 
     "4.0 * ",     /*  2 (x4)   */ 
@@ -596,7 +596,7 @@ static void shader_glsl_get_register_name(
     SHADER_OPCODE_ARG* arg) {
 
     /* oPos, oFog and oPts in D3D */
-    const char* hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
+    static const char * const hwrastout_reg_names[] = { "gl_Position", "gl_FogFragCoord", "gl_PointSize" };
 
     DWORD reg = param & WINED3DSP_REGNUM_MASK;
     DWORD regtype = shader_get_regtype(param);

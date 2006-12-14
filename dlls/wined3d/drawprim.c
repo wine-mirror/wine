@@ -149,7 +149,7 @@ static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
 
 }
 
-static GLfloat invymat[16] = {
+static const GLfloat invymat[16] = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, -1.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 1.0f, 0.0f,

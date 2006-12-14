@@ -187,7 +187,7 @@ void shader_generate_arb_declarations(
                    max_constantsF, max_constantsF - 1);
 }
 
-static const char* shift_tab[] = {
+static const char * const shift_tab[] = {
     "dummy",     /*  0 (none) */
     "coefmul.x", /*  1 (x2)   */
     "coefmul.y", /*  2 (x4)   */
@@ -361,7 +361,7 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
   IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) arg->shader;
 
   /* oPos, oFog and oPts in D3D */
-  static const char* hwrastout_reg_names[] = { "TMP_OUT", "TMP_FOG", "result.pointsize" };
+  static const char * const hwrastout_reg_names[] = { "TMP_OUT", "TMP_FOG", "result.pointsize" };
 
   DWORD reg = param & WINED3DSP_REGNUM_MASK;
   DWORD regtype = shader_get_regtype(param);

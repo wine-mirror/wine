@@ -564,7 +564,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetGammaRamp(IWineD3DSwapChain *ifac
 }
 
 
-IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
+const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl =
 {
     /* IUnknown */
     IWineD3DSwapChainImpl_QueryInterface,

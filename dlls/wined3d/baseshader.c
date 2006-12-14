@@ -502,7 +502,7 @@ void shader_dump_param(
     int input) {
 
     IWineD3DBaseShaderImpl* This = (IWineD3DBaseShaderImpl*) iface;
-    static const char* rastout_reg_names[] = { "oPos", "oFog", "oPts" };
+    static const char * const rastout_reg_names[] = { "oPos", "oFog", "oPts" };
     char swizzle_reg_chars[4];
 
     DWORD reg = param & WINED3DSP_REGNUM_MASK;

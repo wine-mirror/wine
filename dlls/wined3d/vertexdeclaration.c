@@ -61,7 +61,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
 /** Vertex Shader Declaration 8 data types tokens */
 #define MAX_VSHADER_DECL_TYPES 8
 
-static CONST char* VertexDecl8_DataTypes[] = {
+static const char * const VertexDecl8_DataTypes[] = {
   "D3DVSDT_FLOAT1",
   "D3DVSDT_FLOAT2",
   "D3DVSDT_FLOAT3",
@@ -73,7 +73,7 @@ static CONST char* VertexDecl8_DataTypes[] = {
   NULL
 };
 
-static CONST char* VertexDecl8_Registers[] = {
+static const char * const VertexDecl8_Registers[] = {
   "D3DVSDE_POSITION",
   "D3DVSDE_BLENDWEIGHT",
   "D3DVSDE_BLENDINDICES",

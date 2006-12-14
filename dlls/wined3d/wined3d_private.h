@@ -1242,7 +1242,7 @@ typedef struct  WineQueryOcclusionData {
 typedef struct IWineD3DSwapChainImpl
 {
     /*IUnknown part*/
-    IWineD3DSwapChainVtbl    *lpVtbl;
+    const IWineD3DSwapChainVtbl *lpVtbl;
     LONG                      ref;     /* Note: Ref counting not required */
 
     IUnknown                 *parent;
@@ -1271,7 +1271,7 @@ typedef struct IWineD3DSwapChainImpl
     Drawable                drawable;
 } IWineD3DSwapChainImpl;
 
-extern IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
+extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;
 
 /*****************************************************************************
  * Utility function prototypes 
