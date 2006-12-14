@@ -843,6 +843,7 @@ void X11DRV_handle_desktop_resize( unsigned int width, unsigned int height )
     X11DRV_SetWindowPos( hwnd, 0, &virtual_screen_rect, &virtual_screen_rect,
                            SWP_NOZORDER|SWP_NOMOVE, NULL );
     data->lock_changes--;
+    ClipCursor(NULL);
     SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_depth,
                          MAKELPARAM( width, height ), SMTO_ABORTIFHUNG, 2000, NULL );
 

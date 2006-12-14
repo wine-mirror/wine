@@ -141,6 +141,33 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmFields           = vid_modes_test[i].fields;
         res = ChangeDisplaySettingsEx(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
         ok(res == vid_modes_test[i].res, "Failed to change resolution[%d]: %d\n", i, res);
+
+        if (res == DISP_CHANGE_SUCCESSFUL)
+        {
+            RECT r, r1, virt;
+
+            SetRect(&virt, 0, 0, GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN));
+            OffsetRect(&virt, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN));
+
+            /* Resolution change resets clip rect */
+            ok(GetClipCursor(&r), "GetClipCursor() failed\n");
+            ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
+
+            ok(ClipCursor(NULL), "ClipCursor() failed\n");
+            ok(GetClipCursor(&r), "GetClipCursor() failed\n");
+            ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
+
+            /* This should always work. Primary monitor is at (0,0) */
+            SetRect(&r1, 10, 10, 20, 20);
+            ok(ClipCursor(&r1), "ClipCursor() failed\n");
+            ok(GetClipCursor(&r), "GetClipCursor() failed\n");
+            ok(EqualRect(&r, &r1), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
+
+            SetRect(&r1, virt.left - 10, virt.top - 10, virt.right + 20, virt.bottom + 20);
+            ok(ClipCursor(&r1), "ClipCursor() failed\n");
+            ok(GetClipCursor(&r), "GetClipCursor() failed\n");
+            ok(EqualRect(&r, &virt), "Invalid clip rect: (%d %d) x (%d %d)\n", r.left, r.top, r.right, r.bottom);
+        }
     }
     res = ChangeDisplaySettingsEx(NULL, NULL, NULL, CDS_RESET, NULL);
     ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %d\n", res);

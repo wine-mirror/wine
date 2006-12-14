@@ -1558,8 +1558,16 @@ HCURSOR WINAPI GetCursor(void)
  */
 BOOL WINAPI ClipCursor( const RECT *rect )
 {
-    if (!rect) SetRectEmpty( &CURSOR_ClipRect );
-    else CopyRect( &CURSOR_ClipRect, rect );
+    RECT virt;
+
+    SetRect( &virt, 0, 0, GetSystemMetrics( SM_CXVIRTUALSCREEN ),
+                          GetSystemMetrics( SM_CYVIRTUALSCREEN ) );
+    OffsetRect( &virt, GetSystemMetrics( SM_XVIRTUALSCREEN ),
+                       GetSystemMetrics( SM_YVIRTUALSCREEN ) );
+
+    if (!IntersectRect( &CURSOR_ClipRect, &virt, rect ))
+        CURSOR_ClipRect = virt;
+
     return TRUE;
 }
 
@@ -1569,12 +1577,7 @@ BOOL WINAPI ClipCursor( const RECT *rect )
  */
 BOOL WINAPI GetClipCursor( RECT *rect )
 {
-    if (rect)
-    {
-       CopyRect( rect, &CURSOR_ClipRect );
-       return TRUE;
-    }
-    return FALSE;
+    return CopyRect( rect, &CURSOR_ClipRect );
 }
 
 
