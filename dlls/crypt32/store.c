@@ -1057,7 +1057,7 @@ static void CRYPT_RegReadSerializedFromReg(PWINE_REGSTOREINFO store, HKEY key,
 
 static void CRYPT_RegReadFromReg(PWINE_REGSTOREINFO store)
 {
-    static const WCHAR *subKeys[] = { CertsW, CRLsW, CTLsW };
+    static const WCHAR * const subKeys[] = { CertsW, CRLsW, CTLsW };
     static const DWORD contextFlags[] = { CERT_STORE_CERTIFICATE_CONTEXT_FLAG,
      CERT_STORE_CRL_CONTEXT_FLAG, CERT_STORE_CTL_CONTEXT_FLAG };
     DWORD i;
@@ -1146,8 +1146,8 @@ static BOOL CRYPT_SerializeContextsToReg(HKEY key,
 
 static BOOL CRYPT_RegWriteToReg(PWINE_REGSTOREINFO store)
 {
-    static const WCHAR *subKeys[] = { CertsW, CRLsW, CTLsW };
-    static const WINE_CONTEXT_INTERFACE *interfaces[] = { &gCertInterface,
+    static const WCHAR * const subKeys[] = { CertsW, CRLsW, CTLsW };
+    static const WINE_CONTEXT_INTERFACE * const interfaces[] = { &gCertInterface,
      &gCRLInterface, &gCTLInterface };
     struct list *listToDelete[] = { &store->certsToDelete, &store->crlsToDelete,
      NULL };
