@@ -1634,7 +1634,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_DecryptMessage(PCtxtHandle phContext,
     return ret;
 }
 
-static SecurityFunctionTableA ntlmTableA = {
+static const SecurityFunctionTableA ntlmTableA = {
     1,
     NULL,   /* EnumerateSecurityPackagesA */
     ntlm_QueryCredentialsAttributesA,   /* QueryCredentialsAttributesA */
@@ -1665,7 +1665,7 @@ static SecurityFunctionTableA ntlmTableA = {
     NULL,   /* SetContextAttributesA */
 };
 
-static SecurityFunctionTableW ntlmTableW = {
+static const SecurityFunctionTableW ntlmTableW = {
     1,
     NULL,   /* EnumerateSecurityPackagesW */
     ntlm_QueryCredentialsAttributesW,   /* QueryCredentialsAttributesW */

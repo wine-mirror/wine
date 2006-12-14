@@ -290,7 +290,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     return ret;
 }
 
-static SecurityFunctionTableA schanTableA = {
+static const SecurityFunctionTableA schanTableA = {
     1,
     NULL, /* EnumerateSecurityPackagesA */
     schan_QueryCredentialsAttributesA,
@@ -321,7 +321,7 @@ static SecurityFunctionTableA schanTableA = {
     NULL, /* SetContextAttributesA */
 };
 
-static SecurityFunctionTableW schanTableW = {
+static const SecurityFunctionTableW schanTableW = {
     1,
     NULL, /* EnumerateSecurityPackagesW */
     schan_QueryCredentialsAttributesW,
