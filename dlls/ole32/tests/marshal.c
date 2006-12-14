@@ -1456,9 +1456,11 @@ static void test_proxybuffer(REFIID riid)
     ok(refs == 1, "Ref count of outer unknown should have been 1 instead of %d\n", refs);
 
     refs = IPSFactoryBuffer_Release(psfb);
-#if 0 /* not reliable on native. maybe it leaks references! */
-    ok(refs == 0, "Ref-count leak of %ld on IPSFactoryBuffer\n", refs);
-#endif
+    if (0)
+    {
+    /* not reliable on native. maybe it leaks references! */
+    ok(refs == 0, "Ref-count leak of %d on IPSFactoryBuffer\n", refs);
+    }
 
     refs = IUnknown_Release((IUnknown *)lpvtbl);
     ok(refs == 0, "Ref-count leak of %d on IRpcProxyBuffer\n", refs);
@@ -1487,9 +1489,11 @@ static void test_stubbuffer(REFIID riid)
     ok_ole_success(hr, IPSFactoryBuffer_CreateStub);
 
     refs = IPSFactoryBuffer_Release(psfb);
-#if 0 /* not reliable on native. maybe it leaks references */
-    ok(refs == 0, "Ref-count leak of %ld on IPSFactoryBuffer\n", refs);
-#endif
+    if (0)
+    {
+    /* not reliable on native. maybe it leaks references */
+    ok(refs == 0, "Ref-count leak of %d on IPSFactoryBuffer\n", refs);
+    }
 
     ok_more_than_one_lock();
 
@@ -1732,11 +1736,12 @@ static void test_freethreadedmarshaler(void)
 
 /* native doesn't allow us to unmarshal or release the stream data,
  * presumably because it wants us to call CoMarshalInterface instead */
-#if 0
+    if (0)
+    {
     /* local normal marshaling */
 
     IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
-    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
+    hr = IMarshal_MarshalInterface(pFTMarshal, pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHCTX_LOCAL, NULL, MSHLFLAGS_NORMAL);
     ok_ole_success(hr, IMarshal_MarshalInterface);
 
     ok_more_than_one_lock();
@@ -1748,7 +1753,7 @@ static void test_freethreadedmarshaler(void)
     ok_ole_success(hr, IMarshal_ReleaseMarshalData);
 
     ok_no_locks();
-#endif
+    }
 
     /* inproc table-strong marshaling */
 
