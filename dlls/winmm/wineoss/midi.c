@@ -1000,8 +1000,8 @@ typedef struct sFMextra {
      */
 } sFMextra;
 
-extern	unsigned char midiFMInstrumentPatches[16 * 128];
-extern	unsigned char midiFMDrumsPatches     [16 * 128];
+extern const unsigned char midiFMInstrumentPatches[16 * 128];
+extern const unsigned char midiFMDrumsPatches     [16 * 128];
 
 /**************************************************************************
  * 			modFMLoad				[internal]
