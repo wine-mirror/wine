@@ -165,9 +165,11 @@ static void test_MRUListA(void)
     if (!pCreateMRUListA || !pFreeMRUList || !pAddMRUStringA)
         return;
 
-#if 0 /* Create (NULL) - crashes native */
+    if (0)
+    {
+    /* Create (NULL) - crashes native */
     hMRU = pCreateMRUListA(NULL);
-#endif
+    }
 
     /* Create (size too small) */
     mruA.cbSize = sizeof(mruA) - 2;
@@ -224,14 +226,15 @@ static void test_MRUListA(void)
            iRet, GetLastError());
 
         /* Add (NULL string) */
-#if 0
+        if (0)
+        {
 	/* Some native versions crash when passed NULL or fail to SetLastError()  */
         SetLastError(0);
         iRet = pAddMRUStringA(hMRU, NULL);
         ok(iRet == 0 && GetLastError() == ERROR_INVALID_PARAMETER,
-           "AddMRUStringA(NULL str) expected 0,ERROR_INVALID_PARAMETER got %d,%ld\n",
+           "AddMRUStringA(NULL str) expected 0,ERROR_INVALID_PARAMETER got %d,%d\n",
            iRet, GetLastError());
-#endif
+        }
 
         /* Add 3 strings. Check the registry is correct after each add */
         SetLastError(0);
