@@ -69,7 +69,7 @@ static HRESULT WINAPI WaveCF_LockServer(LPCLASSFACTORY iface,BOOL dolock) {
 	return S_OK;
 }
 
-static IClassFactoryVtbl WaveCF_Vtbl = {
+static const IClassFactoryVtbl WaveCF_Vtbl = {
 	WaveCF_QueryInterface,
 	WaveCF_AddRef,
 	WaveCF_Release,
