@@ -39,6 +39,7 @@ DEFINE_GUID( CLSID_DirectDraw7,         0x3C305196,0x50DB,0x11D3,0x9C,0xFE,0x00,
 DEFINE_GUID( CLSID_DirectDrawClipper,	0x593817A0,0x7DB3,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xb9,0x33,0x56 );
 DEFINE_GUID( IID_IDirectDraw,		0x6C14DB80,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
 DEFINE_GUID( IID_IDirectDraw2,		0xB3A6F3E0,0x2B43,0x11CF,0xA2,0xDE,0x00,0xAA,0x00,0xB9,0x33,0x56 );
+DEFINE_GUID( IID_IDirectDraw3,		0x618f8ad4,0x8b7a,0x11d0,0x8f,0xcc,0x0,0xc0,0x4f,0xd9,0x18,0x9d );
 DEFINE_GUID( IID_IDirectDraw4,          0x9c59509a,0x39bd,0x11d1,0x8c,0x4a,0x00,0xc0,0x4f,0xd9,0x30,0xc5 );
 DEFINE_GUID( IID_IDirectDraw7,          0x15e65ec0,0x3b9c,0x11d2,0xb9,0x2f,0x00,0x60,0x97,0x97,0xea,0x5b );
 DEFINE_GUID( IID_IDirectDrawSurface,	0x6C14DB81,0xA733,0x11CE,0xA5,0x21,0x00,0x20,0xAF,0x0B,0xE5,0x60 );
@@ -54,6 +55,7 @@ DEFINE_GUID( IID_IDirectDrawGammaControl,0x69C11C3E,0xB46B,0x11D1,0xAD,0x7A,0x00
 
 typedef struct IDirectDraw *LPDIRECTDRAW;
 typedef struct IDirectDraw2 *LPDIRECTDRAW2;
+typedef struct IDirectDraw3 *LPDIRECTDRAW3;
 typedef struct IDirectDraw4 *LPDIRECTDRAW4;
 typedef struct IDirectDraw7 *LPDIRECTDRAW7;
 typedef struct IDirectDrawClipper *LPDIRECTDRAWCLIPPER;
@@ -1488,6 +1490,107 @@ DECLARE_INTERFACE_(IDirectDraw2,IUnknown)
 #define IDirectDraw2_WaitForVerticalBlank(p,a,b) (p)->WaitForVerticalBlank(a,b)
 /*** IDirectDraw2 methods ***/
 #define IDirectDraw2_GetAvailableVidMem(p,a,b,c) (p)->GetAvailableVidMem(a,b,c)
+#endif
+
+
+/*****************************************************************************
+ * IDirectDraw3 interface
+ */
+#define INTERFACE IDirectDraw3
+DECLARE_INTERFACE_(IDirectDraw3,IUnknown)
+{
+          /*** IUnknown methods ***/
+/*00*/    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObject) PURE;
+/*04*/    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+/*08*/    STDMETHOD_(ULONG,Release)(THIS) PURE;
+          /*** IDirectDraw2 methods ***/
+/*0c*/    STDMETHOD(Compact)(THIS) PURE;
+/*10*/    STDMETHOD(CreateClipper)(THIS_ DWORD dwFlags, LPDIRECTDRAWCLIPPER *lplpDDClipper, IUnknown *pUnkOuter) PURE;
+/*14*/    STDMETHOD(CreatePalette)(THIS_ DWORD dwFlags, LPPALETTEENTRY lpColorTable, LPDIRECTDRAWPALETTE *lplpDDPalette, IUnknown *pUnkOuter) PURE;
+/*18*/    STDMETHOD(CreateSurface)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc, LPDIRECTDRAWSURFACE *lplpDDSurface, IUnknown *pUnkOuter) PURE;
+/*1c*/    STDMETHOD(DuplicateSurface)(THIS_ LPDIRECTDRAWSURFACE lpDDSurface, LPDIRECTDRAWSURFACE *lplpDupDDSurface) PURE;
+/*20*/    STDMETHOD(EnumDisplayModes)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSurfaceDesc, LPVOID lpContext, LPDDENUMMODESCALLBACK lpEnumModesCallback) PURE;
+/*24*/    STDMETHOD(EnumSurfaces)(THIS_ DWORD dwFlags, LPDDSURFACEDESC lpDDSD, LPVOID lpContext, LPDDENUMSURFACESCALLBACK lpEnumSurfacesCallback) PURE;
+/*28*/    STDMETHOD(FlipToGDISurface)(THIS) PURE;
+/*2c*/    STDMETHOD(GetCaps)(THIS_ LPDDCAPS lpDDDriverCaps, LPDDCAPS lpDDHELCaps) PURE;
+/*30*/    STDMETHOD(GetDisplayMode)(THIS_ LPDDSURFACEDESC lpDDSurfaceDesc) PURE;
+/*34*/    STDMETHOD(GetFourCCCodes)(THIS_ LPDWORD lpNumCodes, LPDWORD lpCodes) PURE;
+/*38*/    STDMETHOD(GetGDISurface)(THIS_ LPDIRECTDRAWSURFACE *lplpGDIDDSurface) PURE;
+/*3c*/    STDMETHOD(GetMonitorFrequency)(THIS_ LPDWORD lpdwFrequency) PURE;
+/*40*/    STDMETHOD(GetScanLine)(THIS_ LPDWORD lpdwScanLine) PURE;
+/*44*/    STDMETHOD(GetVerticalBlankStatus)(THIS_ BOOL *lpbIsInVB) PURE;
+/*48*/    STDMETHOD(Initialize)(THIS_ GUID *lpGUID) PURE;
+/*4c*/    STDMETHOD(RestoreDisplayMode)(THIS) PURE;
+/*50*/    STDMETHOD(SetCooperativeLevel)(THIS_ HWND hWnd, DWORD dwFlags) PURE;
+/*54*/    STDMETHOD(SetDisplayMode)(THIS_ DWORD dwWidth, DWORD dwHeight, DWORD dwBPP, DWORD dwRefreshRate, DWORD dwFlags) PURE;
+/*58*/    STDMETHOD(WaitForVerticalBlank)(THIS_ DWORD dwFlags, HANDLE hEvent) PURE;
+          /* added in v2 */
+/*5c*/    STDMETHOD(GetAvailableVidMem)(THIS_ LPDDSCAPS lpDDCaps, LPDWORD lpdwTotal, LPDWORD lpdwFree) PURE;
+          /* added in v3 */
+/*60*/    STDMETHOD(GetSurfaceFromDC)(THIS_ HDC hdc, LPDIRECTDRAWSURFACE *pSurf) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IDirectDraw3_QueryInterface(p,a,b) (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirectDraw3_AddRef(p)             (p)->lpVtbl->AddRef(p)
+#define IDirectDraw3_Release(p)            (p)->lpVtbl->Release(p)
+/*** IDirectDraw methods ***/
+#define IDirectDraw3_Compact(p)                  (p)->lpVtbl->Compact(p)
+#define IDirectDraw3_CreateClipper(p,a,b,c)      (p)->lpVtbl->CreateClipper(p,a,b,c)
+#define IDirectDraw3_CreatePalette(p,a,b,c,d)    (p)->lpVtbl->CreatePalette(p,a,b,c,d)
+#define IDirectDraw3_CreateSurface(p,a,b,c)      (p)->lpVtbl->CreateSurface(p,a,b,c)
+#define IDirectDraw3_DuplicateSurface(p,a,b)     (p)->lpVtbl->DuplicateSurface(p,a,b)
+#define IDirectDraw3_EnumDisplayModes(p,a,b,c,d) (p)->lpVtbl->EnumDisplayModes(p,a,b,c,d)
+#define IDirectDraw3_EnumSurfaces(p,a,b,c,d)     (p)->lpVtbl->EnumSurfaces(p,a,b,c,d)
+#define IDirectDraw3_FlipToGDISurface(p)         (p)->lpVtbl->FlipToGDISurface(p)
+#define IDirectDraw3_GetCaps(p,a,b)              (p)->lpVtbl->GetCaps(p,a,b)
+#define IDirectDraw3_GetDisplayMode(p,a)         (p)->lpVtbl->GetDisplayMode(p,a)
+#define IDirectDraw3_GetFourCCCodes(p,a,b)       (p)->lpVtbl->GetFourCCCodes(p,a,b)
+#define IDirectDraw3_GetGDISurface(p,a)          (p)->lpVtbl->GetGDISurface(p,a)
+#define IDirectDraw3_GetMonitorFrequency(p,a)    (p)->lpVtbl->GetMonitorFrequency(p,a)
+#define IDirectDraw3_GetScanLine(p,a)            (p)->lpVtbl->GetScanLine(p,a)
+#define IDirectDraw3_GetVerticalBlankStatus(p,a) (p)->lpVtbl->GetVerticalBlankStatus(p,a)
+#define IDirectDraw3_Initialize(p,a)             (p)->lpVtbl->Initialize(p,a)
+#define IDirectDraw3_RestoreDisplayMode(p)       (p)->lpVtbl->RestoreDisplayMode(p)
+#define IDirectDraw3_SetCooperativeLevel(p,a,b)  (p)->lpVtbl->SetCooperativeLevel(p,a,b)
+#define IDirectDraw3_SetDisplayMode(p,a,b,c,d,e) (p)->lpVtbl->SetDisplayMode(p,a,b,c,d,e)
+#define IDirectDraw3_WaitForVerticalBlank(p,a,b) (p)->lpVtbl->WaitForVerticalBlank(p,a,b)
+/*** IDirectDraw2 methods ***/
+#define IDirectDraw3_GetAvailableVidMem(p,a,b,c) (p)->lpVtbl->GetAvailableVidMem(p,a,b,c)
+/*** IDirectDraw3 methods ***/
+#define IDirectDraw3_GetSurfaceFromDC(p,a,b)    (p)->lpVtbl->GetSurfaceFromDC(p,a,b)
+#else
+/*** IUnknown methods ***/
+#define IDirectDraw3_QueryInterface(p,a,b) (p)->QueryInterface(a,b)
+#define IDirectDraw3_AddRef(p)             (p)->AddRef()
+#define IDirectDraw3_Release(p)            (p)->Release()
+/*** IDirectDraw methods ***/
+#define IDirectDraw3_Compact(p)                  (p)->Compact()
+#define IDirectDraw3_CreateClipper(p,a,b,c)      (p)->CreateClipper(a,b,c)
+#define IDirectDraw3_CreatePalette(p,a,b,c,d)    (p)->CreatePalette(a,b,c,d)
+#define IDirectDraw3_CreateSurface(p,a,b,c)      (p)->CreateSurface(a,b,c)
+#define IDirectDraw3_DuplicateSurface(p,a,b)     (p)->DuplicateSurface(a,b)
+#define IDirectDraw3_EnumDisplayModes(p,a,b,c,d) (p)->EnumDisplayModes(a,b,c,d)
+#define IDirectDraw3_EnumSurfaces(p,a,b,c,d)     (p)->EnumSurfaces(a,b,c,d)
+#define IDirectDraw3_FlipToGDISurface(p)         (p)->FlipToGDISurface()
+#define IDirectDraw3_GetCaps(p,a,b)              (p)->GetCaps(a,b)
+#define IDirectDraw3_GetDisplayMode(p,a)         (p)->GetDisplayMode(a)
+#define IDirectDraw3_GetFourCCCodes(p,a,b)       (p)->GetFourCCCodes(a,b)
+#define IDirectDraw3_GetGDISurface(p,a)          (p)->GetGDISurface(a)
+#define IDirectDraw3_GetMonitorFrequency(p,a)    (p)->GetMonitorFrequency(a)
+#define IDirectDraw3_GetScanLine(p,a)            (p)->GetScanLine(a)
+#define IDirectDraw3_GetVerticalBlankStatus(p,a) (p)->GetVerticalBlankStatus(a)
+#define IDirectDraw3_Initialize(p,a)             (p)->Initialize(a)
+#define IDirectDraw3_RestoreDisplayMode(p)       (p)->RestoreDisplayMode()
+#define IDirectDraw3_SetCooperativeLevel(p,a,b)  (p)->SetCooperativeLevel(a,b)
+#define IDirectDraw3_SetDisplayMode(p,a,b,c,d,e) (p)->SetDisplayMode(a,b,c,d,e)
+#define IDirectDraw3_WaitForVerticalBlank(p,a,b) (p)->WaitForVerticalBlank(a,b)
+/*** IDirectDraw2 methods ***/
+#define IDirectDraw3_GetAvailableVidMem(p,a,b,c) (p)->GetAvailableVidMem(a,b,c)
+/*** IDirectDraw3 methods ***/
+#define IDirectDraw3_GetSurfaceFromDC(p,a,b)    (p)->GetSurfaceFromDC(a,b)
 #endif
 
 

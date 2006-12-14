@@ -117,6 +117,11 @@ IDirectDrawImpl_QueryInterface(IDirectDraw7 *iface,
         *obj = ICOM_INTERFACE(This, IDirectDraw4);
         TRACE("(%p) Returning IDirectDraw4 interface at %p\n", This, *obj);
     }
+    else if ( IsEqualGUID( &IID_IDirectDraw3, refiid ) )
+    {
+        *obj = ICOM_INTERFACE(This, IDirectDraw3);
+        TRACE("(%p) Returning IDirectDraw3 interface at %p\n", This, *obj);
+    }
     else if ( IsEqualGUID( &IID_IDirectDraw2, refiid ) )
     {
         *obj = ICOM_INTERFACE(This, IDirectDraw2);

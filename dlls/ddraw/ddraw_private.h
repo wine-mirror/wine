@@ -87,6 +87,7 @@ struct IDirectDrawImpl
     /* IUnknown fields */
     ICOM_VFIELD_MULTI(IDirectDraw7);
     ICOM_VFIELD_MULTI(IDirectDraw4);
+    ICOM_VFIELD_MULTI(IDirectDraw3);
     ICOM_VFIELD_MULTI(IDirectDraw2);
     ICOM_VFIELD_MULTI(IDirectDraw);
     ICOM_VFIELD_MULTI(IDirect3D7);
@@ -154,6 +155,7 @@ struct IDirectDrawImpl
 /* Declare the VTables. They can be found ddraw.c */
 const IDirectDraw7Vtbl IDirectDraw7_Vtbl;
 const IDirectDraw4Vtbl IDirectDraw4_Vtbl;
+const IDirectDraw3Vtbl IDirectDraw3_Vtbl;
 const IDirectDraw2Vtbl IDirectDraw2_Vtbl;
 const IDirectDrawVtbl  IDirectDraw1_Vtbl;
 
