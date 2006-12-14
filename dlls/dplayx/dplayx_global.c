@@ -51,10 +51,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dplay);
 /* FIXME: Need to do all that fun other dll referencing type of stuff */
 
 /* Static data for all processes */
-static LPCSTR lpszDplayxSemaName = "WINE_DPLAYX_SM";
+static const char lpszDplayxSemaName[] = "WINE_DPLAYX_SM";
 static HANDLE hDplayxSema;
 
-static LPCSTR lpszDplayxFileMapping = "WINE_DPLAYX_FM";
+static const char lpszDplayxFileMapping[] = "WINE_DPLAYX_FM";
 static HANDLE hDplayxSharedMem;
 
 static LPVOID lpSharedStaticData = NULL;
