@@ -65,7 +65,7 @@ extern unsigned char MSVCRT_mbctype[257];
 /* Friendly country strings & iso codes for synonym support.
  * Based on MS documentation for setlocale().
  */
-static const char* _country_synonyms[] =
+static const char * const _country_synonyms[] =
 {
   "Hong Kong","HK",
   "Hong-Kong","HK",
@@ -484,7 +484,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__wsetlocale(int category, const MSVCRT_wchar_t* loc
  */
 const char* CDECL _Getdays(void)
 {
-  static const char *MSVCRT_days = ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:"
+  static const char MSVCRT_days[] = ":Sun:Sunday:Mon:Monday:Tue:Tuesday:Wed:"
                             "Wednesday:Thu:Thursday:Fri:Friday:Sat:Saturday";
   /* FIXME: Use locale */
   TRACE("(void) semi-stub\n");
@@ -496,7 +496,7 @@ const char* CDECL _Getdays(void)
  */
 const char* CDECL _Getmonths(void)
 {
-  static const char *MSVCRT_months = ":Jan:January:Feb:February:Mar:March:Apr:"
+  static const char MSVCRT_months[] = ":Jan:January:Feb:February:Mar:March:Apr:"
                 "April:May:May:Jun:June:Jul:July:Aug:August:Sep:September:Oct:"
                 "October:Nov:November:Dec:December";
   /* FIXME: Use locale */

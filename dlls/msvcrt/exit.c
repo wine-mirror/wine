@@ -33,7 +33,7 @@ static MSVCRT__onexit_t *MSVCRT_atexit_table = NULL;
 static int MSVCRT_atexit_table_size = 0;
 static int MSVCRT_atexit_registered = 0; /* Points to free slot */
 
-static LPCSTR szMsgBoxTitle = "Wine C++ Runtime Library";
+static const char szMsgBoxTitle[] = "Wine C++ Runtime Library";
 
 extern int MSVCRT_app_type;
 extern char *MSVCRT__pgmptr;
