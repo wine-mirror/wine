@@ -222,8 +222,6 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
 
     if(pvaOut)
         FIXME("unsupported pvaOut\n");
-    if(pvaIn)
-        FIXME("unsupported pvaIn\n");
 
     if(!This->nscontainer)
         return S_OK;
@@ -248,6 +246,55 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
         ERR("GetCurrentPrintSettings failed: %08x\n", nsres);
 
     set_default_templates(settings);
+
+    if(pvaIn) {
+        switch(V_VT(pvaIn)) {
+        case VT_BYREF|VT_ARRAY: {
+            VARIANT *opts;
+            DWORD opts_cnt;
+
+            if(V_ARRAY(pvaIn)->cDims != 1)
+                WARN("cDims = %d\n", V_ARRAY(pvaIn)->cDims);
+
+            SafeArrayAccessData(V_ARRAY(pvaIn), (void**)&opts);
+            opts_cnt = V_ARRAY(pvaIn)->rgsabound[0].cElements;
+
+            if(opts_cnt >= 1) {
+                switch(V_VT(opts)) {
+                case VT_BSTR:
+                    TRACE("setting footer %s\n", debugstr_w(V_BSTR(opts)));
+                    set_print_template(settings, V_BSTR(opts), TRUE);
+                    break;
+                case VT_NULL:
+                    break;
+                default:
+                    WARN("V_VT(opts) = %d\n", V_VT(opts));
+                }
+            }
+
+            if(opts_cnt >= 2) {
+                switch(V_VT(opts+1)) {
+                case VT_BSTR:
+                    TRACE("setting footer %s\n", debugstr_w(V_BSTR(opts+1)));
+                    set_print_template(settings, V_BSTR(opts+1), FALSE);
+                    break;
+                case VT_NULL:
+                    break;
+                default:
+                    WARN("V_VT(opts) = %d\n", V_VT(opts+1));
+                }
+            }
+
+            if(opts_cnt >= 3)
+                FIXME("Unsuported opts_cnt %d\n", opts_cnt);
+
+            SafeArrayUnaccessData(V_ARRAY(pvaIn));
+            break;
+        }
+        default:
+            FIXME("unsupported vt %x\n", V_VT(pvaIn));
+        }
+    }
 
     nsres = nsIWebBrowserPrint_Print(nsprint, settings, NULL);
     if(NS_FAILED(nsres))
