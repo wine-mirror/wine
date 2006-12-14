@@ -46,6 +46,7 @@ BASEDIRS = \
 	dbghelp \
 	dciman32 \
 	ddraw \
+	ddrawex \
 	devenum \
 	dinput \
 	dinput8 \

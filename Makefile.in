@@ -197,6 +197,7 @@ ALL_MAKEFILES = \
 	dlls/dciman32/Makefile \
 	dlls/ddraw/Makefile \
 	dlls/ddraw/tests/Makefile \
+	dlls/ddrawex/Makefile \
 	dlls/devenum/Makefile \
 	dlls/dinput/Makefile \
 	dlls/dinput/tests/Makefile \
@@ -520,6 +521,7 @@ dlls/dbghelp/Makefile: dlls/dbghelp/Makefile.in dlls/Makedll.rules
 dlls/dciman32/Makefile: dlls/dciman32/Makefile.in dlls/Makedll.rules
 dlls/ddraw/Makefile: dlls/ddraw/Makefile.in dlls/Makedll.rules
 dlls/ddraw/tests/Makefile: dlls/ddraw/tests/Makefile.in dlls/Maketest.rules
+dlls/ddrawex/Makefile: dlls/ddrawex/Makefile.in dlls/Makedll.rules
 dlls/devenum/Makefile: dlls/devenum/Makefile.in dlls/Makedll.rules
 dlls/dinput/Makefile: dlls/dinput/Makefile.in dlls/Makedll.rules
 dlls/dinput/tests/Makefile: dlls/dinput/tests/Makefile.in dlls/Maketest.rules

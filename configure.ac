@@ -1561,6 +1561,7 @@ dlls/dbghelp/Makefile
 dlls/dciman32/Makefile
 dlls/ddraw/Makefile
 dlls/ddraw/tests/Makefile
+dlls/ddrawex/Makefile
 dlls/devenum/Makefile
 dlls/dinput/Makefile
 dlls/dinput/tests/Makefile
