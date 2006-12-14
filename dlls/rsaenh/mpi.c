@@ -31,6 +31,14 @@
 #include <stdarg.h>
 #include "tomcrypt.h"
 
+/* Known optimal configurations
+ CPU                    /Compiler     /MUL CUTOFF/SQR CUTOFF
+-------------------------------------------------------------
+ Intel P4 Northwood     /GCC v3.4.1   /        88/       128/LTM 0.32 ;-)
+*/
+static const int KARATSUBA_MUL_CUTOFF = 88,  /* Min. number of digits before Karatsuba multiplication is used. */
+                 KARATSUBA_SQR_CUTOFF = 128; /* Min. number of digits before Karatsuba squaring is used. */
+
 /* computes the modular inverse via binary extended euclidean algorithm, 
  * that is c = 1/a mod b 
  *
@@ -4409,14 +4417,3 @@ s_mp_sub (mp_int * a, mp_int * b, mp_int * c)
   mp_clamp (c);
   return MP_OKAY;
 }
-
-/* Known optimal configurations
-
- CPU                    /Compiler     /MUL CUTOFF/SQR CUTOFF
--------------------------------------------------------------
- Intel P4 Northwood     /GCC v3.4.1   /        88/       128/LTM 0.32 ;-)
- 
-*/
-
-int     KARATSUBA_MUL_CUTOFF = 88,      /* Min. number of digits before Karatsuba multiplication is used. */
-        KARATSUBA_SQR_CUTOFF = 128;     /* Min. number of digits before Karatsuba squaring is used. */

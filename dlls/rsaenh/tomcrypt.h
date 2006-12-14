@@ -204,10 +204,6 @@ typedef ulong64            mp_word;
 
 typedef int           mp_err;
 
-/* you'll have to tune these... */
-extern int KARATSUBA_MUL_CUTOFF,
-           KARATSUBA_SQR_CUTOFF;
-
 /* define this to use lower memory usage routines (exptmods mostly) */
 /* #define MP_LOW_MEM */
 

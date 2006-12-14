@@ -156,7 +156,7 @@ typedef struct tagKEYCONTAINER
  */
 #define RSAENH_MAX_ENUMALGS 20
 #define RSAENH_PCT1_SSL2_SSL3_TLS1 (CRYPT_FLAG_PCT1|CRYPT_FLAG_SSL2|CRYPT_FLAG_SSL3|CRYPT_FLAG_TLS1)
-PROV_ENUMALGS_EX aProvEnumAlgsEx[4][RSAENH_MAX_ENUMALGS+1] =
+static const PROV_ENUMALGS_EX aProvEnumAlgsEx[4][RSAENH_MAX_ENUMALGS+1] =
 {
  {
   {CALG_RC2,       40, 40,   56,0,                    4,"RC2",     24,"RSA Data Security's RC2"},
@@ -395,7 +395,7 @@ static inline BOOL copy_param(
  *  Failure: NULL (algid not supported)
  */
 static inline const PROV_ENUMALGS_EX* get_algid_info(HCRYPTPROV hProv, ALG_ID algid) {
-    PROV_ENUMALGS_EX *iterator;
+    const PROV_ENUMALGS_EX *iterator;
     KEYCONTAINER *pKeyContainer;
 
     if (!lookup_handle(&handle_table, hProv, RSAENH_MAGIC_CONTAINER, (OBJECTHDR**)&pKeyContainer)) {
