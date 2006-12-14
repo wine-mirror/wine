@@ -169,7 +169,7 @@ BOOL WINAPI wglMakeCurrent(HDC hdc, HGLRC hglrc)
     if(hglrc == NULL)
         dc = OPENGL_GetDefaultDC();
     else
-        dc = DC_GetDCPtr( hdc );
+        dc = DC_GetDCUpdate( hdc );
 
     TRACE("hdc: (%p), hglrc: (%p)\n", hdc, hglrc);
 

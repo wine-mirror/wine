@@ -1443,7 +1443,7 @@ PROC X11DRV_wglGetProcAddress(LPCSTR lpszProc)
  * Adjust the current viewport and scissor in order to position
  * and size the current drawable correctly on the parent window.
  */
-static void sync_current_drawable(void)
+static void sync_current_drawable(BOOL updatedc)
 {
     int dy;
     int width;
@@ -1455,7 +1455,8 @@ static void sync_current_drawable(void)
 
     if (ctx && ctx->physDev)
     {
-        GetClipBox(ctx->physDev->hdc, &rc); /* Make sure physDev is up to date */
+        if (updatedc)
+            GetClipBox(ctx->physDev->hdc, &rc); /* Make sure physDev is up to date */
 
         dy = ctx->physDev->drawable_rect.bottom - ctx->physDev->drawable_rect.top -
             ctx->physDev->dc_rect.bottom;
@@ -1535,7 +1536,7 @@ BOOL X11DRV_wglMakeCurrent(X11DRV_PDEVICE *physDev, HGLRC hglrc) {
             }
             else
             {
-                sync_current_drawable();
+                sync_current_drawable(FALSE);
             }
         }
     }
@@ -1885,7 +1886,7 @@ static void WINAPI X11DRV_wglScissor(GLint x, GLint y, GLsizei width, GLsizei he
     ctx->scissor.right = x + width;
     ctx->scissor.bottom = y + height;
 
-    sync_current_drawable();
+    sync_current_drawable(TRUE);
 }
 
 static void WINAPI X11DRV_wglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
@@ -1897,7 +1898,7 @@ static void WINAPI X11DRV_wglViewport(GLint x, GLint y, GLsizei width, GLsizei h
     ctx->viewport.right = x + width;
     ctx->viewport.bottom = y + height;
 
-    sync_current_drawable();
+    sync_current_drawable(TRUE);
 }
 
 /**
