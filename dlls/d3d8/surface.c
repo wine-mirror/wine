@@ -72,11 +72,13 @@ static ULONG WINAPI IDirect3DSurface8Impl_Release(LPDIRECT3DSURFACE8 iface) {
         ULONG ref = InterlockedDecrement(&This->ref);
         TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
-        if (ref == 0 && This->parentDevice) IUnknown_Release(This->parentDevice);
-        /* Implicit surfaces are destroyed with the device, not if refcount reaches 0. */
-        if (ref >= 0 && !This->isImplicit) {
-            IWineD3DSurface_Release(This->wineD3DSurface);
-            HeapFree(GetProcessHeap(), 0, This);
+        if (ref == 0) {
+            if (This->parentDevice) IUnknown_Release(This->parentDevice);
+            /* Implicit surfaces are destroyed with the device, not if refcount reaches 0. */
+            if (!This->isImplicit) {
+                IWineD3DSurface_Release(This->wineD3DSurface);
+                HeapFree(GetProcessHeap(), 0, This);
+            }
         }
 
         return ref;

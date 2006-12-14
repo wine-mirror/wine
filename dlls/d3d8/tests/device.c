@@ -476,10 +476,13 @@ static void test_refcount(void)
     /* Surfaces */
     hr = IDirect3DDevice8_CreateDepthStencilSurface( pDevice, 32, 32, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, &pStencilSurface );
     CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, ++refcount );
+    CHECK_REFCOUNT( pStencilSurface, 1);
     hr = IDirect3DDevice8_CreateImageSurface( pDevice, 32, 32, D3DFMT_X8R8G8B8, &pImageSurface );
     CHECK_CALL( hr, "CreateImageSurface", pDevice, ++refcount );
+    CHECK_REFCOUNT( pImageSurface, 1);
     hr = IDirect3DDevice8_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, TRUE, &pRenderTarget3 );
     CHECK_CALL( hr, "CreateRenderTarget", pDevice, ++refcount );
+    CHECK_REFCOUNT( pRenderTarget3, 1);
     /* Misc */
     hr = IDirect3DDevice8_CreateStateBlock( pDevice, D3DSBT_ALL, &dStateBlock );
     CHECK_CALL( hr, "CreateStateBlock", pDevice, refcount );
