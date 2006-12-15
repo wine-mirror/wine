@@ -332,20 +332,8 @@ static void primitiveInitState(
 
         } else if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] 
                   && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != WINED3DFOG_NONE) {
-            
-            if(GL_SUPPORT(EXT_FOG_COORD)) {
-                glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT);
-                checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FRAGMENT_DEPTH_EXT)\n");
-                /* Reapply the fog range */
-                IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGSTART, This->stateBlock->renderState[WINED3DRS_FOGSTART]);
-                IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGEND, This->stateBlock->renderState[WINED3DRS_FOGEND]);
-                /* Restore the fog mode */
-                IWineD3DDevice_SetRenderState(iface, WINED3DRS_FOGTABLEMODE, This->stateBlock->renderState[WINED3DRS_FOGTABLEMODE]);
-            } else {
-                /* Enable GL_FOG again because we disabled it above */
-                glEnable(GL_FOG);
-                checkGLcall("glEnable(GL_FOG)");
-            }
+            /* Reapply the fog */
+            StateTable[STATE_RENDER(WINED3DRS_FOGENABLE)].apply(STATE_RENDER(WINED3DRS_FOGSTART), This->stateBlock);
         }
     }
 }

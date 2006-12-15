@@ -2068,6 +2068,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreatePalette(IWineD3DDevice *iface, DW
 static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DSwapChainImpl *swapchain;
+    DWORD state;
 
     TRACE("(%p)->(%p,%p)\n", This, pPresentationParameters, D3DCB_CreateAdditionalSwapChain);
     if(This->d3d_initialized) return WINED3DERR_INVALIDCALL;
@@ -2147,6 +2148,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Clear the screen */
     IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER|WINED3DCLEAR_TARGET, 0x00, 1.0, 0);
+
+    /* Mark all states dirty. The Setters will not mark a state dirty when the new value is equal to the old value
+     * This might create a problem in 2 situations:
+     * ->The D3D default value is 0, but the opengl default value is something else
+     * ->D3D7 unintialized D3D and reinitializes it. This way the context is destroyed, be the stateblock unchanged
+     */
+    for(state = 0; state <= STATE_HIGHEST; state++) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, state);
+    }
 
     This->d3d_initialized = TRUE;
     return WINED3D_OK;
@@ -3316,8 +3326,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetViewport(IWineD3DDevice *iface, WINE
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, WINED3DRENDERSTATETYPE State, DWORD Value) {
 
     IWineD3DDeviceImpl  *This     = (IWineD3DDeviceImpl *)iface;
+    DWORD oldValue = This->stateBlock->renderState[State];
 
     TRACE("(%p)->state = %s(%d), value = %d\n", This, debug_d3drenderstate(State), State, Value);
+
     This->updateStateBlock->changed.renderState[State] = TRUE;
     This->updateStateBlock->set.renderState[State] = TRUE;
     This->updateStateBlock->renderState[State] = Value;
@@ -3328,7 +3340,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         return WINED3D_OK;
     }
 
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(State));
+    /* Compared here and not before the assignment to allow proper stateblock recording */
+    if(Value == oldValue) {
+        TRACE("Application is setting the old value over, nothing to do\n");
+    } else {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(State));
+    }
 
     return WINED3D_OK;
 }
@@ -4546,19 +4563,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
         IWineD3DBaseTexture_Release(oldTexture);
     }
 
-    /* Reset color keying */
+    /* Color keying is affected by the texture. Temporarily mark the color key state (=alpha test)
+     * dirty until textures are integrated with the state management
+     */
     if(Stage == 0 && This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE]) {
-        BOOL enable_ckey = FALSE;
-
-        if(pTexture) {
-            IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)pTexture)->surfaces[0];
-            if(surf->CKeyFlags & DDSD_CKSRCBLT) enable_ckey = TRUE;
-        }
-
-        if(enable_ckey) {
-            glAlphaFunc(GL_NOTEQUAL, 0.0);
-            checkGLcall("glAlphaFunc");
-        }
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORKEYENABLE));
     }
 
     return WINED3D_OK;
@@ -6007,6 +6016,7 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
 
     BOOL oldRecording;  
     IWineD3DStateBlockImpl *oldUpdateStateBlock;
+    DWORD i;
 
     /* Disable recording */
     oldUpdateStateBlock = This->updateStateBlock;
@@ -6016,6 +6026,13 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
 
     /* Reapply the state block */ 
     IWineD3DStateBlock_Apply((IWineD3DStateBlock *)This->stateBlock);
+
+    /* Temporaryily mark all render states dirty to force reapplication
+     * until the context management for is integrated with the state management
+     */
+    for(i = 1; i < WINEHIGHEST_RENDER_STATE; i++) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(i));
+    }
 
     /* Restore recording */
     This->isRecordingState = oldRecording;
@@ -6030,7 +6047,6 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
  * make this unnecessary */
 static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
 
-    DWORD cullMode;
     BOOL oldRecording;
     IWineD3DStateBlockImpl *oldUpdateStateBlock;
 
@@ -6049,8 +6065,7 @@ static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
     }
     This->last_was_rhw = FALSE;
     This->proj_valid = FALSE;
-    IWineD3DDevice_GetRenderState((IWineD3DDevice*) This, WINED3DRS_CULLMODE, &cullMode);
-    IWineD3DDevice_SetRenderState((IWineD3DDevice*) This, WINED3DRS_CULLMODE, cullMode);
+    IWineD3DDeviceImpl_MarkStateDirty(This, WINED3DRS_CULLMODE);
 
     /* Restore recording */
     This->isRecordingState = oldRecording;
