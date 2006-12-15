@@ -259,7 +259,7 @@ int CDECL _abnormal_termination(void)
 
 #ifdef __i386__
 #define MSVCRT_JMP_MAGIC 0x56433230 /* ID value for new jump structure */
-typedef void (*MSVCRT_unwind_function)(const void*);
+typedef void (__stdcall *MSVCRT_unwind_function)(const struct MSVCRT___JUMP_BUFFER *);
 
 /* define an entrypoint for setjmp/setjmp3 that stores the registers in the jmp buf */
 /* and then jumps to the C backend function */

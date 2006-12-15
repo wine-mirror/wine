@@ -469,3 +469,17 @@ unsigned int CDECL __CxxQueryExceptionSize(void)
 {
   return sizeof(cxx_exception_type);
 }
+
+/*********************************************************************
+ *		__CxxLongjmpUnwind (MSVCRT.@)
+ *
+ * Callback meant to be used as UnwindFunc for setjmp/longjmp.
+ */
+void __stdcall __CxxLongjmpUnwind( const struct MSVCRT___JUMP_BUFFER *buf )
+{
+    cxx_exception_frame *frame = (cxx_exception_frame *)buf->Registration;
+    const cxx_function_descr *descr = (const cxx_function_descr *)buf->UnwindData[0];
+
+    TRACE( "unwinding frame %p descr %p trylevel %ld\n", frame, descr, buf->TryLevel );
+    cxx_local_unwind( frame, descr, buf->TryLevel );
+}
