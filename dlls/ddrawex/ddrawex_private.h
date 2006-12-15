@@ -48,7 +48,7 @@ DECLARE_INTERFACE_(IDirectDrawFactory, IUnknown)
  ******************************************************************************/
 typedef struct
 {
-    IClassFactory *lpVtbl;
+    const IClassFactoryVtbl *lpVtbl;
     LONG ref;
     HRESULT (*pfnCreateInstance)(IUnknown *pUnkOuter, REFIID iid, LPVOID *ppObj);
 } IClassFactoryImpl;
@@ -59,7 +59,7 @@ typedef struct
  ******************************************************************************/
 typedef struct
 {
-    IDirectDrawFactory *lpVtbl;
+    const IDirectDrawFactoryVtbl *lpVtbl;
     LONG ref;
 } IDirectDrawFactoryImpl;
 

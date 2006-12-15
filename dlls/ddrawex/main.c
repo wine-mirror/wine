@@ -272,9 +272,9 @@ CreateDirectDrawFactory(IUnknown* UnkOuter, REFIID iid, void **obj)
         return E_OUTOFMEMORY;
     }
 
-    This->lpVtbl = (IDirectDrawFactory*) &IDirectDrawFactory_Vtbl;
+    This->lpVtbl = &IDirectDrawFactory_Vtbl;
 
-    hr = IDirectDrawFactory_QueryInterface(This->lpVtbl, iid,  obj);
+    hr = IDirectDrawFactory_QueryInterface((IDirectDrawFactory *)This, iid,  obj);
 
     if (FAILED(hr))
         HeapFree(GetProcessHeap(), 0, This);
@@ -315,7 +315,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
     factory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*factory));
     if (factory == NULL) return E_OUTOFMEMORY;
 
-    factory->lpVtbl = (IClassFactory*) &IClassFactory_Vtbl;
+    factory->lpVtbl = &IClassFactory_Vtbl;
     factory->ref = 1;
 
     factory->pfnCreateInstance = CreateDirectDrawFactory;
