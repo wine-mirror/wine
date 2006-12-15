@@ -110,9 +110,9 @@ static ULONG WINAPI
 IDirectDraw3Impl_AddRef(LPDIRECTDRAW3 iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw3, iface);
-    ULONG ref = InterlockedIncrement(&This->ref4);
+    ULONG ref = InterlockedIncrement(&This->ref3);
 
-    TRACE("(%p) : incrementing IDirectDraw4 refcount from %u.\n", This, ref -1);
+    TRACE("(%p) : incrementing IDirectDraw3 refcount from %u.\n", This, ref -1);
 
     if(ref == 1) InterlockedIncrement(&This->numIfaces);
 
@@ -170,9 +170,9 @@ static ULONG WINAPI
 IDirectDraw3Impl_Release(LPDIRECTDRAW3 iface)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw3, iface);
-    ULONG ref = InterlockedDecrement(&This->ref4);
+    ULONG ref = InterlockedDecrement(&This->ref3);
 
-    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw4 refcount from %u.\n", This, ref +1);
+    TRACE_(ddraw)("(%p)->() decrementing IDirectDraw3 refcount from %u.\n", This, ref +1);
 
     if(ref == 0)
     {

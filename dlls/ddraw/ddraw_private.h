@@ -96,7 +96,7 @@ struct IDirectDrawImpl
     ICOM_VFIELD_MULTI(IDirect3D);
 
     /* See comment in IDirectDraw::AddRef */
-    LONG                    ref7, ref4, ref2, ref1, numIfaces;
+    LONG                    ref7, ref4, ref2, ref3, ref1, numIfaces;
 
     /* WineD3D linkage */
     IWineD3D                *wineD3D;
