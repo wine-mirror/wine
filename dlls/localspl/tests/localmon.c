@@ -58,6 +58,8 @@ static BOOL  (WINAPI *pXcvOpenPort)(LPCWSTR, ACCESS_MASK, PHANDLE phXcv);
 static DWORD (WINAPI *pXcvDataPort)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD);
 static BOOL  (WINAPI *pXcvClosePort)(HANDLE);
 
+static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
+static WCHAR cmd_MonitorUI_lcaseW[] = {'m','o','n','i','t','o','r','u','i',0};
 static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
 static WCHAR emptyW[] = {0};
 static WCHAR invalid_serverW[] = {'\\','\\','i','n','v','a','l','i','d','_','s','e','r','v','e','r',0};
@@ -332,6 +334,95 @@ static void test_XcvClosePort(void)
 
 /* ########################### */
 
+static void test_XcvDataPort(void)
+{
+    DWORD   res;
+    HANDLE  hXcv;
+    BYTE    buffer[MAX_PATH + 2];
+    DWORD   needed;
+    DWORD   len;
+
+
+    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
+
+    hXcv = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+    ok(res, "returned %d with 0x%x and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+    /* ask for needed size */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, NULL, 0, &needed);
+    ok( (res == ERROR_INSUFFICIENT_BUFFER) && (needed <= MAX_PATH),
+        "returned %d with 0x%x and 0x%x (expected 'ERROR_INSUFFICIENT_BUFFER' " \
+        " and '<= MAX_PATH')\n", res, GetLastError(), needed);
+
+    if (needed > MAX_PATH) goto xcv_cleanup;
+    len = needed;
+
+    /* the command is required */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, emptyW, NULL, 0, NULL, 0, &needed);
+    ok( res == ERROR_INVALID_PARAMETER, "returned %d with 0x%x and 0x%x " \
+        "(expected 'ERROR_INVALID_PARAMETER')\n", res, GetLastError(), needed);
+
+    if (0) {
+    /* crash with native localspl.dll (w2k+xp) */
+    res = pXcvDataPort(hXcv, NULL, NULL, 0, buffer, MAX_PATH, &needed);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, NULL, len, &needed);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len, NULL);
+    }
+
+
+    /* hXcv is ignored for the command "MonitorUI" */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(NULL, cmd_MonitorUIW, NULL, 0, buffer, len, &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with 0x%x and 0x%x " \
+        "(expected 'ERROR_SUCCESS')\n", res, GetLastError(), needed);
+
+
+    /* pszDataName is case-sensitive */
+    memset(buffer, 0, len);
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_MonitorUI_lcaseW, NULL, 0, buffer, len, &needed);
+    ok( res == ERROR_INVALID_PARAMETER, "returned %d with 0x%x and 0x%x " \
+        "(expected 'ERROR_INVALID_PARAMETER')\n", res, GetLastError(), needed);
+
+    /* off by one: larger  */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len+1, &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with 0x%x and 0x%x " \
+        "(expected 'ERROR_SUCCESS')\n", res, GetLastError(), needed);
+
+
+    /* off by one: smaller */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len-1, &needed);
+    ok( res == ERROR_INSUFFICIENT_BUFFER, "returned %d with 0x%x and 0x%x " \
+        "(expected 'ERROR_INSUFFICIENT_BUFFER')\n", res, GetLastError(), needed);
+
+    /* Normal use. The DLL-Name without a Path is returned */
+    memset(buffer, 0, len);
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len, &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with 0x%x and 0x%x " \
+        "(expected 'ERROR_SUCCESS')\n", res, GetLastError(), needed);
+
+xcv_cleanup:
+    pXcvClosePort(hXcv);
+
+}
+
+/* ########################### */
+
 static void test_XcvOpenPort(void)
 {
     DWORD   res;
@@ -440,5 +531,6 @@ START_TEST(localmon)
     test_DeletePort();
     test_EnumPorts();
     test_XcvClosePort();
+    test_XcvDataPort();
     test_XcvOpenPort();
 }
