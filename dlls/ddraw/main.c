@@ -149,6 +149,7 @@ DDRAW_Create(GUID *guid,
      */
     ICOM_INIT_INTERFACE(This, IDirectDraw,  IDirectDraw1_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirectDraw2, IDirectDraw2_Vtbl);
+    ICOM_INIT_INTERFACE(This, IDirectDraw3, IDirectDraw3_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirectDraw4, IDirectDraw4_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirectDraw7, IDirectDraw7_Vtbl);
     ICOM_INIT_INTERFACE(This, IDirect3D,  IDirect3D1_Vtbl);
