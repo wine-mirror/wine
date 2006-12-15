@@ -4102,6 +4102,16 @@ static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 	/* select all */
 	EnableMenuItem(popup, 7, MF_BYPOSITION | (start || (end != strlenW(es->text)) ? MF_ENABLED : MF_GRAYED));
 
+        if (x == -1 && y == -1) /* passed via VK_APPS press/release */
+        {
+            RECT rc;
+            /* Windows places the menu at the edit's center in this case */
+            GetClientRect(es->hwndSelf, &rc);
+            MapWindowPoints(es->hwndSelf, 0, (POINT *)&rc, 2);
+            x = rc.left + (rc.right - rc.left) / 2;
+            y = rc.top + (rc.bottom - rc.top) / 2;
+        }
+
 	TrackPopupMenu(popup, TPM_LEFTALIGN | TPM_RIGHTBUTTON, x, y, 0, es->hwndSelf, NULL);
 	DestroyMenu(menu);
 }
