@@ -29,16 +29,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 #define GLINFO_LOCATION ((IWineD3DImpl *)(stateblock->wineD3DDevice->wineD3D))->gl_info
 
-static void state_unknown(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    /* State which does exist, but wined3d doesn't know about */
-    if(STATE_IS_RENDER(state)) {
-        WINED3DRENDERSTATETYPE RenderState = state - STATE_RENDER(0);
-        FIXME("(%s, %d) Unknown renderstate\n", debug_d3drenderstate(RenderState), stateblock->renderState[RenderState]);
-    } else {
-        FIXME("(%d) Unknown state with unknown type\n", state);
-    }
-}
-
 static void state_nogl(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* Used for states which are not mapped to a gl state as-is, but used somehow different,
      * e.g as a parameter for drawing, or which are unimplemented in windows d3d
@@ -1220,6 +1210,96 @@ static void state_seperateblend(DWORD state, IWineD3DStateBlockImpl *stateblock)
         FIXME("(WINED3DRS_SEPARATEALPHABLENDENABLE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_SEPARATEALPHABLENDENABLE]);
 }
 
+static void state_wrapu(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_WRAPU]) {
+        FIXME("Render state WINED3DRS_WRAPU not implemented yet\n");
+    }
+}
+
+static void state_wrapv(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_WRAPV]) {
+        FIXME("Render state WINED3DRS_WRAPV not implemented yet\n");
+    }
+}
+
+static void state_monoenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_MONOENABLE]) {
+        FIXME("Render state WINED3DRS_MONOENABLE not implemented yet\n");
+    }
+}
+
+static void state_rop2(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_ROP2]) {
+        FIXME("Render state WINED3DRS_ROP2 not implemented yet\n");
+    }
+}
+
+static void state_planemask(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_PLANEMASK]) {
+        FIXME("Render state WINED3DRS_PLANEMASK not implemented yet\n");
+    }
+}
+
+static void state_subpixel(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_SUBPIXEL]) {
+        FIXME("Render state WINED3DRS_SUBPIXEL not implemented yet\n");
+    }
+}
+
+static void state_subpixelx(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_SUBPIXELX]) {
+        FIXME("Render state WINED3DRS_SUBPIXELX not implemented yet\n");
+    }
+}
+
+static void state_stippleenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_STIPPLEENABLE]) {
+        FIXME("Render state WINED3DRS_STIPPLEENABLE not implemented yet\n");
+    }
+}
+
+static void state_bordercolor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_BORDERCOLOR]) {
+        FIXME("Render state WINED3DRS_BORDERCOLOR not implemented yet\n");
+    }
+}
+
+static void state_mipmaplodbias(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_MIPMAPLODBIAS]) {
+        FIXME("Render state WINED3DRS_MIPMAPLODBIAS not implemented yet\n");
+    }
+}
+
+static void state_anisotropy(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_ANISOTROPY]) {
+        FIXME("Render state WINED3DRS_ANISOTROPY not implemented yet\n");
+    }
+}
+
+static void state_flushbatch(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_FLUSHBATCH]) {
+        FIXME("Render state WINED3DRS_FLUSHBATCH not implemented yet\n");
+    }
+}
+
+static void state_translucentsi(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_TRANSLUCENTSORTINDEPENDENT]) {
+        FIXME("Render state WINED3DRS_TRANSLUCENTSORTINDEPENDENT not implemented yet\n");
+    }
+}
+
+static void state_extents(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_EXTENTS]) {
+        FIXME("Render state WINED3DRS_EXTENTS not implemented yet\n");
+    }
+}
+
+static void state_ckeyblend(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    if(stateblock->renderState[WINED3DRS_COLORKEYBLENDENABLE]) {
+        FIXME("Render state WINED3DRS_COLORKEYBLENDENABLE not implemented yet\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1228,15 +1308,15 @@ const struct StateEntry StateTable[] =
     { /* 2,  WINED3DRS_ANTIALIAS                    */      STATE_RENDER(WINED3DRS_ANTIALIAS),                  state_antialias     },
     { /* 3,  WINED3DRS_TEXTUREADDRESS               */      0 /* Handled in ddraw */,                           state_undefined     },
     { /* 4,  WINED3DRS_TEXTUREPERSPECTIVE           */      STATE_RENDER(WINED3DRS_TEXTUREPERSPECTIVE),         state_perspective   },
-    { /* 5,  WINED3DRS_WRAPU                        */      STATE_RENDER(WINED3DRS_WRAPU),                      state_unknown       },
-    { /* 6,  WINED3DRS_WRAPV                        */      STATE_RENDER(WINED3DRS_WRAPV),                      state_unknown       },
+    { /* 5,  WINED3DRS_WRAPU                        */      STATE_RENDER(WINED3DRS_WRAPU),                      state_wrapu         },
+    { /* 6,  WINED3DRS_WRAPV                        */      STATE_RENDER(WINED3DRS_WRAPV),                      state_wrapv         },
     { /* 7,  WINED3DRS_ZENABLE                      */      STATE_RENDER(WINED3DRS_ZENABLE),                    state_zenable       },
     { /* 8,  WINED3DRS_FILLMODE                     */      STATE_RENDER(WINED3DRS_FILLMODE),                   state_fillmode      },
     { /* 9,  WINED3DRS_SHADEMODE                    */      STATE_RENDER(WINED3DRS_SHADEMODE),                  state_shademode     },
     { /* 10, WINED3DRS_LINEPATTERN                  */      STATE_RENDER(WINED3DRS_LINEPATTERN),                state_linepattern   },
-    { /* 11, WINED3DRS_MONOENABLE                   */      STATE_RENDER(WINED3DRS_MONOENABLE),                 state_unknown       },
-    { /* 12, WINED3DRS_ROP2                         */      STATE_RENDER(WINED3DRS_ROP2),                       state_unknown       },
-    { /* 13, WINED3DRS_PLANEMASK                    */      STATE_RENDER(WINED3DRS_PLANEMASK),                  state_unknown       },
+    { /* 11, WINED3DRS_MONOENABLE                   */      STATE_RENDER(WINED3DRS_MONOENABLE),                 state_monoenable    },
+    { /* 12, WINED3DRS_ROP2                         */      STATE_RENDER(WINED3DRS_ROP2),                       state_rop2          },
+    { /* 13, WINED3DRS_PLANEMASK                    */      STATE_RENDER(WINED3DRS_PLANEMASK),                  state_planemask     },
     { /* 14, WINED3DRS_ZWRITEENABLE                 */      STATE_RENDER(WINED3DRS_ZWRITEENABLE),               state_zwritenable   },
     { /* 15, WINED3DRS_ALPHATESTENABLE              */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 16, WINED3DRS_LASTPIXEL                    */      STATE_RENDER(WINED3DRS_LASTPIXEL),                  state_lastpixel     },
@@ -1254,27 +1334,27 @@ const struct StateEntry StateTable[] =
     { /* 28, WINED3DRS_FOGENABLE                    */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 29, WINED3DRS_SPECULARENABLE               */      STATE_RENDER(WINED3DRS_SPECULARENABLE),             state_specularenable},
     { /* 30, WINED3DRS_ZVISIBLE                     */      0 /* Not supported according to the msdn */,        state_nogl          },
-    { /* 31, WINED3DRS_SUBPIXEL                     */      STATE_RENDER(WINED3DRS_SUBPIXEL),                   state_unknown       },
-    { /* 32, WINED3DRS_SUBPIXELX                    */      STATE_RENDER(WINED3DRS_SUBPIXELX),                  state_unknown       },
+    { /* 31, WINED3DRS_SUBPIXEL                     */      STATE_RENDER(WINED3DRS_SUBPIXEL),                   state_subpixel      },
+    { /* 32, WINED3DRS_SUBPIXELX                    */      STATE_RENDER(WINED3DRS_SUBPIXELX),                  state_subpixelx     },
     { /* 33, WINED3DRS_STIPPLEDALPHA                */      STATE_RENDER(WINED3DRS_STIPPLEDALPHA),              state_stippledalpha },
     { /* 34, WINED3DRS_FOGCOLOR                     */      STATE_RENDER(WINED3DRS_FOGCOLOR),                   state_fogcolor      },
     { /* 35, WINED3DRS_FOGTABLEMODE                 */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 36, WINED3DRS_FOGSTART                     */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 37, WINED3DRS_FOGEND                       */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /* 38, WINED3DRS_FOGDENSITY                   */      STATE_RENDER(WINED3DRS_FOGDENSITY),                 state_fogdensity    },
-    { /* 39, WINED3DRS_STIPPLEENABLE                */      STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_unknown       },
+    { /* 39, WINED3DRS_STIPPLEENABLE                */      STATE_RENDER(WINED3DRS_STIPPLEENABLE),              state_stippleenable },
     { /* 40, WINED3DRS_EDGEANTIALIAS                */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
     { /* 41, WINED3DRS_COLORKEYENABLE               */      STATE_RENDER(WINED3DRS_ALPHATESTENABLE),            state_alpha         },
     { /* 42, undefined                              */      0,                                                  state_undefined     },
-    { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_unknown       },
+    { /* 43, WINED3DRS_BORDERCOLOR                  */      STATE_RENDER(WINED3DRS_BORDERCOLOR),                state_bordercolor   },
     { /* 44, WINED3DRS_TEXTUREADDRESSU              */      0, /* Handled in ddraw */                           state_undefined     },
     { /* 45, WINED3DRS_TEXTUREADDRESSV              */      0, /* Handled in ddraw */                           state_undefined     },
-    { /* 46, WINED3DRS_MIPMAPLODBIAS                */      STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_unknown       },
+    { /* 46, WINED3DRS_MIPMAPLODBIAS                */      STATE_RENDER(WINED3DRS_MIPMAPLODBIAS),              state_mipmaplodbias },
     { /* 47, WINED3DRS_ZBIAS                        */      STATE_RENDER(WINED3DRS_ZBIAS),                      state_zbias         },
     { /* 48, WINED3DRS_RANGEFOGENABLE               */      0,                                                  state_nogl          },
-    { /* 49, WINED3DRS_ANISOTROPY                   */      STATE_RENDER(WINED3DRS_ANISOTROPY),                 state_unknown       },
-    { /* 50, WINED3DRS_FLUSHBATCH                   */      STATE_RENDER(WINED3DRS_FLUSHBATCH),                 state_unknown       },
-    { /* 51, WINED3DRS_TRANSLUCENTSORTINDEPENDENT   */      STATE_RENDER(WINED3DRS_TRANSLUCENTSORTINDEPENDENT), state_unknown       },
+    { /* 49, WINED3DRS_ANISOTROPY                   */      STATE_RENDER(WINED3DRS_ANISOTROPY),                 state_anisotropy    },
+    { /* 50, WINED3DRS_FLUSHBATCH                   */      STATE_RENDER(WINED3DRS_FLUSHBATCH),                 state_flushbatch    },
+    { /* 51, WINED3DRS_TRANSLUCENTSORTINDEPENDENT   */      STATE_RENDER(WINED3DRS_TRANSLUCENTSORTINDEPENDENT), state_translucentsi },
     { /* 52, WINED3DRS_STENCILENABLE                */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
     { /* 53, WINED3DRS_STENCILFAIL                  */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
     { /* 54, WINED3DRS_STENCILZFAIL                 */      STATE_RENDER(WINED3DRS_STENCILENABLE),              state_stencil       },
@@ -1363,13 +1443,13 @@ const struct StateEntry StateTable[] =
     { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
     { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_lighting      },
-    { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_unknown       },
+    { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_extents       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       },
     { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
     { /*141, WINED3DRS_COLORVERTEX                  */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*142, WINED3DRS_LOCALVIEWER                  */      STATE_RENDER(WINED3DRS_LOCALVIEWER),                state_localviewer   },
     { /*143, WINED3DRS_NORMALIZENORMALS             */      STATE_RENDER(WINED3DRS_NORMALIZENORMALS),           state_normalize     },
-    { /*144, WINED3DRS_COLORKEYBLENDENABLE          */      STATE_RENDER(WINED3DRS_COLORKEYBLENDENABLE),        state_unknown       },
+    { /*144, WINED3DRS_COLORKEYBLENDENABLE          */      STATE_RENDER(WINED3DRS_COLORKEYBLENDENABLE),        state_ckeyblend     },
     { /*145, WINED3DRS_DIFFUSEMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*146, WINED3DRS_SPECULARMATERIALSOURCE       */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
     { /*147, WINED3DRS_AMBIENTMATERIALSOURCE        */      STATE_RENDER(WINED3DRS_COLORVERTEX),                state_colormat      },
