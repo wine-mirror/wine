@@ -5288,6 +5288,17 @@ static const struct message WmF1Seq[] = {
     { WM_KEYUP, sent|wparam|lparam, VK_F1, 0xc0000001 },
     { 0 }
 };
+static const struct message WmVkAppsSeq[] = {
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_APPS, 1 }, /* XP */
+    { WM_KEYDOWN, wparam|lparam, VK_APPS, 1 },
+    { WM_KEYDOWN, sent|wparam|lparam, VK_APPS, 0x00000001 },
+    { HCBT_KEYSKIPPED, hook|wparam|lparam|optional, VK_APPS, 0xc0000001 }, /* XP */
+    { WM_KEYUP, wparam|lparam, VK_APPS, 0xc0000001 },
+    { WM_KEYUP, sent|wparam|lparam, VK_APPS, 0xc0000001 },
+    { WM_CONTEXTMENU, lparam, /*hwnd*/0, (LPARAM)-1 },
+    { WM_CONTEXTMENU, sent|lparam, /*hwnd*/0, (LPARAM)-1 },
+    { 0 }
+};
 
 static void pump_msg_loop(HWND hwnd, HACCEL hAccel)
 {
@@ -5495,10 +5506,17 @@ static void test_accelerators(void)
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmAltMouseButton, "Alt+MouseButton press/release", FALSE);
 
+    trace("testing VK_F1 press/release\n");
     keybd_event(VK_F1, 0, 0, 0);
     keybd_event(VK_F1, 0, KEYEVENTF_KEYUP, 0);
     pump_msg_loop(hwnd, 0);
     ok_sequence(WmF1Seq, "F1 press/release", TRUE);
+
+    trace("testing VK_APPS press/release\n");
+    keybd_event(VK_APPS, 0, 0, 0);
+    keybd_event(VK_APPS, 0, KEYEVENTF_KEYUP, 0);
+    pump_msg_loop(hwnd, 0);
+    ok_sequence(WmVkAppsSeq, "VK_APPS press/release", FALSE);
 
     DestroyWindow(hwnd);
 }

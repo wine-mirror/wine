@@ -1660,6 +1660,12 @@ static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
                 SendMessageW(msg->hwnd, WM_APPCOMMAND, (WPARAM)msg->hwnd, MAKELPARAM(0, (FAPPCOMMAND_KEY | (msg->wParam - VK_BROWSER_BACK + 1))));
             }
         }
+        else if (msg->message == WM_KEYUP)
+        {
+            /* Handle VK_APPS key by posting a WM_CONTEXTMENU message */
+            if (msg->wParam == VK_APPS && !MENU_IsMenuActive())
+                PostMessageW(msg->hwnd, WM_CONTEXTMENU, (WPARAM)msg->hwnd, (LPARAM)-1);
+        }
     }
 
     if (HOOK_CallHooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
