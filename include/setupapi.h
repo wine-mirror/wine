@@ -851,6 +851,7 @@ HINF     WINAPI SetupOpenInfFileA( PCSTR name, PCSTR pszclass, DWORD style, UINT
 HINF     WINAPI SetupOpenInfFileW( PCWSTR name, PCWSTR pszclass, DWORD style, UINT *error );
 #define         SetupOpenInfFile WINELIB_NAME_AW(SetupOpenInfFile)
 HINF     WINAPI SetupOpenMasterInf( VOID );
+INT      WINAPI SetupPromptReboot( HSPFILEQ, HWND, BOOL);
 BOOL     WINAPI SetupQueryInfFileInformationA(PSP_INF_INFORMATION, UINT, PSTR, DWORD, PDWORD);
 BOOL     WINAPI SetupQueryInfFileInformationW(PSP_INF_INFORMATION, UINT, PWSTR, DWORD, PDWORD);
 #define         SetupQueryInfFileInformation WINELIB_NAME_AW(SetupQueryInFileInformation)

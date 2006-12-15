@@ -200,3 +200,12 @@ BOOL WINAPI SetupOpenLog(BOOL Reserved)
     FIXME("(%d) stub\n", Reserved);
     return TRUE;
 }
+
+/***********************************************************************
+ *      SetupPromptReboot(SETUPAPI.@)
+ */
+INT WINAPI SetupPromptReboot( HSPFILEQ file_queue, HWND owner, BOOL scan_only )
+{
+    FIXME("%p, %p, %d\n", file_queue, owner, scan_only);
+    return 0;
+}
