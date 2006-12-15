@@ -2809,6 +2809,17 @@ BOOL __cdecl FDICopy(
       err = fdi_decomp(file, 1, decomp_state, pszCabPath, pfnfdin, pvUser);
       if (err) CAB(current) = NULL; else CAB(offset) += file->length;
 
+      /* fdintCLOSE_FILE_INFO notification */
+      ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
+      fdin.pv = pvUser;
+      fdin.psz1 = (char *)file->filename;
+      fdin.hf = filehf;
+      fdin.cb = (file->attribs & cffile_A_EXEC) ? TRUE : FALSE; /* FIXME: is that right? */
+      fdin.date = file->date;
+      fdin.time = file->time;
+      fdin.attribs = file->attribs; /* FIXME: filter _A_EXEC? */
+      ((*pfnfdin)(fdintCLOSE_FILE_INFO, &fdin));
+
       switch (err) {
         case DECR_OK:
           break;
@@ -2828,28 +2839,6 @@ BOOL __cdecl FDICopy(
           PFDI_INT(hfdi)->perf->erfOper = 0;
           PFDI_INT(hfdi)->perf->fError = TRUE;
           goto bail_and_fail;
-      }
-
-      /* fdintCLOSE_FILE_INFO notification */
-      ZeroMemory(&fdin, sizeof(FDINOTIFICATION));
-      fdin.pv = pvUser;
-      fdin.psz1 = (char *)file->filename;
-      fdin.hf = filehf;
-      fdin.cb = (file->attribs & cffile_A_EXEC) ? TRUE : FALSE; /* FIXME: is that right? */
-      fdin.date = file->date;
-      fdin.time = file->time;
-      fdin.attribs = file->attribs; /* FIXME: filter _A_EXEC? */
-      err = ((*pfnfdin)(fdintCLOSE_FILE_INFO, &fdin));
-      if (err == FALSE || err == -1) {
-        /*
-         * SDK states that even though they indicated failure,
-         * we are not supposed to try and close the file, so we
-         * just treat this like all the others
-         */
-        PFDI_INT(hfdi)->perf->erfOper = FDIERROR_USER_ABORT;
-        PFDI_INT(hfdi)->perf->erfType = 0;
-        PFDI_INT(hfdi)->perf->fError = TRUE;
-        goto bail_and_fail;
       }
     }
   }
