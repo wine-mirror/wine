@@ -3328,10 +3328,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderState(IWineD3DDevice *iface, W
         return WINED3D_OK;
     }
 
-    ENTER_GL();
-    /* TODO: Mark the state dirty instead of immediate applying */
-    StateTable[STATE_RENDER(State)].apply(STATE_RENDER(State), This->stateBlock);
-    LEAVE_GL();
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(State));
 
     return WINED3D_OK;
 }
