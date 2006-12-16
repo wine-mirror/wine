@@ -595,8 +595,39 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
  *      ScriptStringFree (USP10.@)
  *
  */
-HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa) {
-    FIXME("(%p): stub\n",pssa);
+HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
+{
+    StringAnalysis* analysis;
+    BOOL invalid;
+    int i;
+    TRACE("(%p)\n",pssa);
+
+    if(!pssa)
+        return E_INVALIDARG;
+
+    analysis = *pssa;
+    if(!analysis)
+        return E_INVALIDARG;
+
+    invalid = analysis->invalid;
+
+    for(i=0; i<analysis->numItems; i++)
+    {
+        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].glyphs);
+        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].pwLogClust);
+        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].piAdvance);
+        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].psva);
+        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].pGoffset);
+        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].abc);
+    }
+
+    HeapFree(GetProcessHeap(), 0, analysis->glyphs);
+    HeapFree(GetProcessHeap(), 0, analysis->pItem);
+    HeapFree(GetProcessHeap(), 0, analysis);
+
+    if(invalid)
+        return E_INVALIDARG;
+
     return S_OK;
 }
 
