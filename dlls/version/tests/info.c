@@ -233,7 +233,7 @@ static void test_info(void)
     {
     /* this test crashes on WinNT4
      */
-    boolret = VerQueryValueA( pVersionInfo, "\\", (LPVOID *)&pFixedVersionInfo, 0);
+    boolret = VerQueryValueA( pVersionInfo, backslash, (LPVOID *)&pFixedVersionInfo, 0);
     ok (boolret, "VerQueryValue failed: GetLastError = 0x%08x\n", GetLastError());
     }
 
