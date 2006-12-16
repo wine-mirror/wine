@@ -452,10 +452,12 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigned off
     while (ptr < page->lpszTitle + titlesize)
     {
         unsigned len = strlen(ptr);
+        char*    macro_str;
+
         WINE_TRACE("macro: %s\n", ptr);
         macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + len + 1);
-        macro->lpszMacro = (char*)(macro + 1);
-        memcpy((char*)macro->lpszMacro, ptr, len + 1);
+        macro->lpszMacro = macro_str = (char*)(macro + 1);
+        memcpy(macro_str, ptr, len + 1);
         /* FIXME: shall we really link macro in reverse order ??
          * may produce strange results when played at page opening
          */
@@ -822,6 +824,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
                                              BOOL clrChange, unsigned wnd)
 {
     HLPFILE_LINK*  link;
+    char*          link_str;
 
     /* FIXME: should build a string table for the attributes.link.lpszPath
      * they are reallocated for each link
@@ -830,8 +833,8 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(int cookie, const char* str, LONG h
     if (!link) return NULL;
 
     link->cookie     = cookie;
-    link->lpszString = (char*)link + sizeof(HLPFILE_LINK);
-    strcpy((char*)link->lpszString, str);
+    link->lpszString = link_str = (char*)link + sizeof(HLPFILE_LINK);
+    strcpy(link_str, str);
     link->lHash      = hash;
     link->bClrChange = clrChange ? 1 : 0;
     link->window     = wnd;
