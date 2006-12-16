@@ -795,11 +795,8 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
             ok(hr == S_OK, "ScriptStringCPtoX should return S_OK not %08x\n", hr);
             hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
             ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-            if(Cp == 0)
-              ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
-            else
-              todo_wine ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
-            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+            ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
+            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
                                   iTrailing, X);
             fTrailing = TRUE;
             hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
@@ -812,11 +809,10 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
              * one input to ScriptStringCPtoX.  This means that the Cp to X position and back
              * again works
              */
-            todo_wine ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
-            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+            ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
+            ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
                                    iTrailing, X);
         }
-
         /*
          * This test is to check that if the X position is just inside the trailing edge of the
          * character then iTrailing will indicate the trailing edge, ie. TRUE
@@ -828,8 +824,8 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         X--;                                /* put X just inside the trailing edge */
         hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
         ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-        todo_wine ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
-        ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
+        ok(Cp == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp, Ch, X);
+        ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n", 
                                   iTrailing, X);
 
         /*
@@ -844,8 +840,8 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         X++;                                /* put X just outside the trailing edge */
         hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
         ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-        todo_wine ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
-        ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n",
+        ok(Cp + 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp + 1, Ch, X);
+        ok(iTrailing == FALSE, "ScriptStringXtoCP should return iTrailing = 0 not %d for X = %d\n", 
                                   iTrailing, X);
 
         /*
@@ -860,8 +856,8 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         X--;                                /* put X just outside the leading edge */
         hr = ScriptStringXtoCP(ssa, X, &Ch, &iTrailing);
         ok(hr == S_OK, "ScriptStringXtoCP should return S_OK not %08x\n", hr);
-        todo_wine ok(Cp - 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp - 1, Ch, X);
-        ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n",
+        ok(Cp - 1 == Ch, "ScriptStringXtoCP should return Ch = %d not %d for X = %d\n", Cp - 1, Ch, X);
+        ok(iTrailing == TRUE, "ScriptStringXtoCP should return iTrailing = 1 not %d for X = %d\n", 
                                   iTrailing, X);
 
         /*
@@ -887,13 +883,13 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
         fTrailing = FALSE;
         Cp = String_len + 1; 
         hr = ScriptStringCPtoX(ssa, Cp, fTrailing, &X);
-        todo_wine ok(hr == E_INVALIDARG, "ScriptStringCPtoX should return E_INVALIDARG not %08x\n", hr);
+        ok(hr == E_INVALIDARG, "ScriptStringCPtoX should return E_INVALIDARG not %08x\n", hr);
 
         hr = ScriptStringFree(&ssa);
         /*
          * ScriptStringCPtoX should free ssa, hence ScriptStringFree should fail
          */
-        todo_wine ok(hr == E_INVALIDARG, "ScriptStringFree should return E_INVALIDARG not %08x\n", hr);
+        ok(hr == E_INVALIDARG, "ScriptStringFree should return E_INVALIDARG not %08x\n", hr);
     }
 }
 

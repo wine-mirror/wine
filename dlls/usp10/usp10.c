@@ -574,9 +574,46 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
  */
 HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrailing, int* pX)
 {
-    FIXME("(%p), %d, %d, (%p): stub\n", ssa, icp, fTrailing, pX);
-    *pX = 0;                             /* Set a reasonable value */
-    return S_OK;
+    int i, j;
+    int runningX = 0;
+    int runningCp = 0;
+    StringAnalysis* analysis = ssa;
+    TRACE("(%p), %d, %d, (%p)\n", ssa, icp, fTrailing, pX);
+
+    if(!ssa || !pX)
+    {
+        return 1;
+    }
+
+    /* icp out of range */
+    if(icp < 0)
+    {
+        analysis->invalid = TRUE;
+        return E_INVALIDARG;
+    }
+
+    for(i=0; i<analysis->numItems; i++)
+    {
+        for(j=0; j<analysis->glyphs[i].numGlyphs; j++)
+        {
+            if(runningCp == icp && fTrailing == FALSE)
+            {
+                *pX = runningX;
+                return S_OK;
+            }
+            runningX += analysis->glyphs[i].piAdvance[j];
+            if(runningCp == icp && fTrailing == TRUE)
+            {
+                *pX = runningX;
+                return S_OK;
+            }
+            runningCp++;
+        }
+    }
+
+    /* icp out of range */
+    analysis->invalid = TRUE;
+    return E_INVALIDARG;
 }
 
 /***********************************************************************
