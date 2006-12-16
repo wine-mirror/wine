@@ -585,11 +585,54 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
  */
 HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, int* piTrailing) 
 {
-    FIXME("(%p), %d, (%p), (%p): stub\n", ssa, iX, piCh, piTrailing);
-    *piCh = 0;                          /* Set a reasonable value */
-    *piTrailing = 0;
+    StringAnalysis* analysis = ssa;
+    int i;
+    int j;
+    int runningX = 0;
+    int runningCp = 0;
+    int width;
+
+    TRACE("(%p), %d, (%p), (%p)\n", ssa, iX, piCh, piTrailing);
+
+    if(!ssa || !piCh || !piTrailing)
+    {
+        return 1;
+    }
+
+    /* out of range */
+    if(iX < 0)
+    {
+        *piCh = -1;
+        *piTrailing = TRUE;
+    return S_OK;
+    }
+
+    for(i=0; i<analysis->numItems; i++)
+    {
+        for(j=0; j<analysis->glyphs[i].numGlyphs; j++)
+        {
+            width = analysis->glyphs[i].piAdvance[j];
+            if(iX < (runningX + width))
+            {
+                *piCh = runningCp;
+                if((iX - runningX) > width/2)
+                    *piTrailing = TRUE;
+                else
+                    *piTrailing = FALSE;
+                return S_OK;
+            }
+            runningX += width;
+            runningCp++;
+        }
+    }
+
+    /* out of range */
+    *piCh = analysis->pItem[analysis->numItems].iCharPos;
+    *piTrailing = FALSE;
+
     return S_OK;
 }
+
 
 /***********************************************************************
  *      ScriptStringFree (USP10.@)
