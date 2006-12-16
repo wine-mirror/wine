@@ -704,7 +704,6 @@ XML2INCL
 XSLTLIBS
 XSLTINCL
 HALINCL
-CURSESLIBS
 sane_devel
 SANELIBS
 SANEINCL
@@ -1362,7 +1361,6 @@ Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --without-opengl        do not use OpenGL
-  --without-curses        do not use curses
   --with-wine-tools=<dir> use Wine tools from directory <dir>
   --with-x                use the X Window System
 
@@ -1860,12 +1858,6 @@ fi
 # Check whether --with-opengl was given.
 if test "${with_opengl+set}" = set; then
   withval=$with_opengl;
-fi
-
-
-# Check whether --with-curses was given.
-if test "${with_curses+set}" = set; then
-  withval=$with_curses;
 fi
 
 
@@ -10915,11 +10907,9 @@ fi
 fi
 
 CURSESLIBS=""
-if test "x$with_curses" != "xno"
+if test "$ac_cv_header_ncurses_h" = "yes"
 then
-    if test "$ac_cv_header_ncurses_h" = "yes"
-    then
-        { echo "$as_me:$LINENO: checking for waddch in -lncurses" >&5
+    { echo "$as_me:$LINENO: checking for waddch in -lncurses" >&5
 echo $ECHO_N "checking for waddch in -lncurses... $ECHO_C" >&6; }
 if test "${ac_cv_lib_ncurses_waddch+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -10997,17 +10987,12 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_ncurses_waddch" >&5
 echo "${ECHO_T}$ac_cv_lib_ncurses_waddch" >&6; }
 if test $ac_cv_lib_ncurses_waddch = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LIBNCURSES 1
-_ACEOF
-
-             CURSESLIBS="-lncurses"
+  CURSESLIBS="-lncurses"
 fi
 
-    elif test "$ac_cv_header_curses_h" = "yes"
-    then
-        { echo "$as_me:$LINENO: checking for waddch in -lcurses" >&5
+elif test "$ac_cv_header_curses_h" = "yes"
+then
+    { echo "$as_me:$LINENO: checking for waddch in -lcurses" >&5
 echo $ECHO_N "checking for waddch in -lcurses... $ECHO_C" >&6; }
 if test "${ac_cv_lib_curses_waddch+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -11085,17 +11070,12 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_curses_waddch" >&5
 echo "${ECHO_T}$ac_cv_lib_curses_waddch" >&6; }
 if test $ac_cv_lib_curses_waddch = yes; then
-
-cat >>confdefs.h <<\_ACEOF
-#define HAVE_LIBCURSES 1
-_ACEOF
-
-             CURSESLIBS="-lcurses"
+  CURSESLIBS="-lcurses"
 fi
 
-    fi
-    ac_save_LIBS="$LIBS"
-    LIBS="$LIBS $CURSESLIBS"
+fi
+ac_save_LIBS="$LIBS"
+LIBS="$LIBS $CURSESLIBS"
 
 for ac_func in mousemask
 do
@@ -11206,9 +11186,7 @@ _ACEOF
 fi
 done
 
-    LIBS="$ac_save_LIBS"
-fi
-
+LIBS="$ac_save_LIBS"
 
 # Extract the first word of "sane-config", so it can be a program name with args.
 set dummy sane-config; ac_word=$2
@@ -24821,7 +24799,6 @@ XML2INCL!$XML2INCL$ac_delim
 XSLTLIBS!$XSLTLIBS$ac_delim
 XSLTINCL!$XSLTINCL$ac_delim
 HALINCL!$HALINCL$ac_delim
-CURSESLIBS!$CURSESLIBS$ac_delim
 sane_devel!$sane_devel$ac_delim
 SANELIBS!$SANELIBS$ac_delim
 SANEINCL!$SANEINCL$ac_delim
@@ -24878,7 +24855,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 76; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
