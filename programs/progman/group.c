@@ -169,7 +169,7 @@ HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
   group->hActiveProgram = 0;
 
   cs.szClass = STRING_GROUP_WIN_CLASS_NAME;
-  cs.szTitle = (LPSTR)lpszName;
+  cs.szTitle = lpszName;
   cs.hOwner  = 0;
   cs.x       = x;
   cs.y       = y;
