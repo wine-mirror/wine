@@ -59,9 +59,9 @@ typedef BOOL (CALLBACK *EnumThemeProc)(LPVOID lpReserved,
 				       LPCWSTR pszToolTip, LPVOID lpReserved2,
                                        LPVOID lpData);
 
-HRESULT WINAPI EnumThemeColors (LPWSTR pszThemeFileName, LPWSTR pszSizeName,
+HRESULT WINAPI EnumThemeColors (LPCWSTR pszThemeFileName, LPWSTR pszSizeName,
 				DWORD dwColorNum, PTHEMENAMES pszColorNames);
-HRESULT WINAPI EnumThemeSizes (LPWSTR pszThemeFileName, LPWSTR pszColorName,
+HRESULT WINAPI EnumThemeSizes (LPCWSTR pszThemeFileName, LPWSTR pszColorName,
 			       DWORD dwSizeNum, PTHEMENAMES pszSizeNames);
 HRESULT WINAPI ApplyTheme (HTHEMEFILE hThemeFile, char* unknown, HWND hWnd);
 HRESULT WINAPI OpenThemeFile (LPCWSTR pszThemeFileName, LPCWSTR pszColorName,
@@ -171,7 +171,7 @@ static void free_theme_files(void)
     themeFilesCount = 0;
 }
 
-typedef HRESULT (WINAPI * EnumTheme) (LPWSTR, LPWSTR, DWORD, PTHEMENAMES);
+typedef HRESULT (WINAPI * EnumTheme) (LPCWSTR, LPWSTR, DWORD, PTHEMENAMES);
 
 /* fill a string list with either colors or sizes of a theme */
 static void fill_theme_string_array (const WCHAR* filename, 
@@ -183,7 +183,7 @@ static void fill_theme_string_array (const WCHAR* filename,
 
     WINE_TRACE ("%s %p %p\n", wine_dbgstr_w (filename), wdsa, enumTheme);
 
-    while (SUCCEEDED (enumTheme ((WCHAR*)filename, NULL, index++, &names)))
+    while (SUCCEEDED (enumTheme (filename, NULL, index++, &names)))
     {
 	WINE_TRACE ("%s: %s\n", wine_dbgstr_w (names.szName), 
             wine_dbgstr_w (names.szDisplayName));
