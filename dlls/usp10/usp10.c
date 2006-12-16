@@ -73,6 +73,27 @@ typedef struct scriptcache {
        HDC hdc;
 } Scriptcache;
 
+typedef struct {
+    int numGlyphs;
+    WORD* glyphs;
+    WORD* pwLogClust;
+    int* piAdvance;
+    SCRIPT_VISATTR* psva;
+    GOFFSET* pGoffset;
+    ABC* abc;
+} StringGlyphs;
+
+typedef struct {
+    BOOL invalid;
+    HDC hdc;
+    int cItems;
+    int cMaxGlyphs;
+    SCRIPT_ITEM* pItem;
+    int numItems;
+    StringGlyphs* glyphs;
+    SIZE* sz;
+} StringAnalysis;
+
 /***********************************************************************
  *      DllMain
  *
@@ -448,9 +469,16 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 				   const BYTE *pbInClass,
 				   SCRIPT_STRING_ANALYSIS *pssa)
 {
-  FIXME("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p): stub\n",
-	hdc, pString, cString, cGlyphs, iCharset, dwFlags,
-	iReqWidth, psControl, psState, piDx, pTabdef, pbInClass, pssa);
+    HRESULT hr;
+    StringAnalysis* analysis;
+    int numItemizedItems;
+    int i;
+    SCRIPT_CACHE* sc = 0;
+
+    TRACE("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p)\n",
+      hdc, pString, cString, cGlyphs, iCharset, dwFlags,
+      iReqWidth, psControl, psState, piDx, pTabdef, pbInClass, pssa);
+
   if (1 > cString || NULL == pString) {
     return E_INVALIDARG;
   }
@@ -458,7 +486,64 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
     return E_PENDING;
   }
 
-  return E_NOTIMPL;
+    analysis = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                       sizeof(StringAnalysis));
+
+    analysis->hdc = hdc;
+    numItemizedItems = 255;
+    analysis->pItem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                              numItemizedItems*sizeof(SCRIPT_ITEM)+1);
+
+    hr = ScriptItemize(pString, cString, numItemizedItems, psControl,
+                     psState, analysis->pItem, &analysis->numItems);
+
+    while(hr == E_OUTOFMEMORY)
+    {
+        numItemizedItems *= 2;
+        HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, analysis->pItem,
+                    numItemizedItems*sizeof(SCRIPT_ITEM)+1);
+        hr = ScriptItemize(pString, cString, numItemizedItems, psControl,
+                           psState, analysis->pItem, &analysis->numItems);
+    }
+
+    analysis->glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+                                 sizeof(StringGlyphs)*analysis->numItems);
+    sc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SCRIPT_CACHE));
+
+    for(i=0; i<analysis->numItems; i++)
+    {
+        int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
+        int numGlyphs = 1.5 * cChar + 16;
+        WORD* glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WORD)*numGlyphs);
+        WORD* pwLogClust = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WORD)*cChar);
+        int* piAdvance = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int)*numGlyphs);
+        SCRIPT_VISATTR* psva = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SCRIPT_VISATTR)*cChar);
+        GOFFSET* pGoffset = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GOFFSET)*numGlyphs);
+        ABC* abc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ABC));
+        int numGlyphsReturned;
+
+        /* FIXME: non unicode strings */
+        WCHAR* pStr = (WCHAR*)pString;
+        hr = ScriptShape(hdc, sc, &pStr[analysis->pItem[i].iCharPos],
+                         cChar, numGlyphs, &analysis->pItem[i].a,
+                         glyphs, pwLogClust, psva, &numGlyphsReturned);
+        hr = ScriptPlace(hdc, sc, glyphs, numGlyphsReturned, psva, &analysis->pItem[i].a,
+                         piAdvance, pGoffset, abc);
+
+        analysis->glyphs[i].numGlyphs = numGlyphsReturned;
+        analysis->glyphs[i].glyphs = glyphs;
+        analysis->glyphs[i].pwLogClust = pwLogClust;
+        analysis->glyphs[i].piAdvance = piAdvance;
+        analysis->glyphs[i].psva = psva;
+        analysis->glyphs[i].pGoffset = pGoffset;
+        analysis->glyphs[i].abc = abc;
+    }
+
+    HeapFree(GetProcessHeap(), 0, sc);
+
+    *pssa = analysis;
+
+    return S_OK;
 }
 
 /***********************************************************************
