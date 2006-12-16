@@ -515,7 +515,7 @@ static ACL *create_default_dacl( const SID *user )
     memcpy( sid, &local_system_sid, sizeof(local_system_sid) );
 
     /* GENERIC_ALL for specified user */
-    aaa = (ACCESS_ALLOWED_ACE *)((const char *)aaa + aaa->Header.AceSize);
+    aaa = (ACCESS_ALLOWED_ACE *)((char *)aaa + aaa->Header.AceSize);
     aaa->Header.AceType = ACCESS_ALLOWED_ACE_TYPE;
     aaa->Header.AceFlags = 0;
     aaa->Header.AceSize = (sizeof(ACCESS_ALLOWED_ACE) - sizeof(DWORD)) +
