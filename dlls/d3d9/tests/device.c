@@ -369,24 +369,24 @@ static void test_refcount(void)
         if(pRenderTarget)
         {
             CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DSwapChain9, pSwapChain);
-            todo_wine CHECK_REFCOUNT( pRenderTarget, 1);
+            CHECK_REFCOUNT( pRenderTarget, 1);
 
-            todo_wine CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
+            CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
             todo_wine CHECK_REFCOUNT(pDevice, refcount);
-            todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget, 1);
+            CHECK_RELEASE_REFCOUNT(pRenderTarget, 1);
             todo_wine CHECK_REFCOUNT(pDevice, refcount);
 
             hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget);
             todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, refcount);
-            todo_wine CHECK_REFCOUNT( pRenderTarget, 2);
-            todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
-            todo_wine CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
+            CHECK_REFCOUNT( pRenderTarget, 2);
+            CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
+            CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
             todo_wine CHECK_REFCOUNT( pDevice, --refcount);
 
             /* The render target is released with the device, so AddRef with refcount=0 is fine here. */
-            todo_wine CHECK_ADDREF_REFCOUNT(pRenderTarget, 1);
+            CHECK_ADDREF_REFCOUNT(pRenderTarget, 1);
             todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
-            todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
+            CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
             todo_wine CHECK_REFCOUNT(pDevice, --refcount);
         }
 
@@ -395,7 +395,7 @@ static void test_refcount(void)
         todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
         if(pBackBuffer)
         {
-            todo_wine CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+            CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
             ok(pRenderTarget == pBackBuffer, "RenderTarget=%p and BackBuffer=%p should be the same.\n",
             pRenderTarget, pBackBuffer);
             pBackBuffer = NULL;
@@ -408,20 +408,20 @@ static void test_refcount(void)
         if(pStencilSurface)
         {
             CHECK_SURFACE_CONTAINER( pStencilSurface, IID_IDirect3DDevice9, pDevice);
-            todo_wine CHECK_REFCOUNT( pStencilSurface, 1);
+            CHECK_REFCOUNT( pStencilSurface, 1);
 
-            todo_wine CHECK_ADDREF_REFCOUNT(pStencilSurface, 2);
+            CHECK_ADDREF_REFCOUNT(pStencilSurface, 2);
             todo_wine CHECK_REFCOUNT(pDevice, refcount);
-            todo_wine CHECK_RELEASE_REFCOUNT(pStencilSurface, 1);
+            CHECK_RELEASE_REFCOUNT(pStencilSurface, 1);
             todo_wine CHECK_REFCOUNT(pDevice, refcount);
 
-            todo_wine CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
+            CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
             todo_wine CHECK_REFCOUNT( pDevice, --refcount);
 
             /* The stencil surface is released with the device, so AddRef with refcount=0 is fine here. */
-            todo_wine CHECK_ADDREF_REFCOUNT(pStencilSurface, 1);
+            CHECK_ADDREF_REFCOUNT(pStencilSurface, 1);
             todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
-            todo_wine CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
+            CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
             todo_wine CHECK_REFCOUNT(pDevice, --refcount);
             pStencilSurface = NULL;
         }
@@ -526,10 +526,13 @@ static void test_refcount(void)
     /* Surfaces */
     hr = IDirect3DDevice9_CreateDepthStencilSurface( pDevice, 32, 32, D3DFMT_D24S8, D3DMULTISAMPLE_NONE, 0, TRUE, &pStencilSurface, NULL );
     CHECK_CALL( hr, "CreateDepthStencilSurface", pDevice, ++refcount );
+    CHECK_REFCOUNT( pStencilSurface, 1 );
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &pOffscreenSurface, NULL );
     CHECK_CALL( hr, "CreateOffscreenPlainSurface", pDevice, ++refcount );
+    CHECK_REFCOUNT( pOffscreenSurface, 1 );
     hr = IDirect3DDevice9_CreateRenderTarget( pDevice, 32, 32, D3DFMT_X8R8G8B8, D3DMULTISAMPLE_NONE, 0, TRUE, &pRenderTarget3, NULL );
     CHECK_CALL( hr, "CreateRenderTarget", pDevice, ++refcount );
+    CHECK_REFCOUNT( pRenderTarget3, 1 );
     /* Misc */
     hr = IDirect3DDevice9_CreateStateBlock( pDevice, D3DSBT_ALL, &pStateBlock );
     CHECK_CALL( hr, "CreateStateBlock", pDevice, ++refcount );
@@ -539,19 +542,19 @@ static void test_refcount(void)
     {
         /* check implicit back buffer */
         hr = IDirect3DSwapChain9_GetBackBuffer(pSwapChain, 0, 0, &pBackBuffer);
-        todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
+        CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
         CHECK_REFCOUNT( pSwapChain, 1);
         if(pBackBuffer)
         {
             CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DSwapChain9, pSwapChain);
-            todo_wine CHECK_REFCOUNT( pBackBuffer, 1);
-            todo_wine CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
+            CHECK_REFCOUNT( pBackBuffer, 1);
+            CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
             CHECK_REFCOUNT( pDevice, --refcount);
 
             /* The back buffer is released with the swapchain, so AddRef with refcount=0 is fine here. */
-            todo_wine CHECK_ADDREF_REFCOUNT(pBackBuffer, 1);
-            todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
-            todo_wine CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
+            CHECK_ADDREF_REFCOUNT(pBackBuffer, 1);
+            CHECK_REFCOUNT(pDevice, ++refcount);
+            CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
             CHECK_REFCOUNT(pDevice, --refcount);
             pBackBuffer = NULL;
         }
@@ -568,10 +571,10 @@ static void test_refcount(void)
     /* The implicit render target is not freed if refcount reaches 0.
      * Otherwise GetRenderTarget would re-allocate it and the pointer would change.*/
     hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget2);
-    todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
+    CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
     if(pRenderTarget2)
     {
-        todo_wine CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
+        CHECK_RELEASE_REFCOUNT(pRenderTarget2, 0);
         ok(pRenderTarget == pRenderTarget2, "RenderTarget=%p and RenderTarget2=%p should be the same.\n",
            pRenderTarget, pRenderTarget2);
         CHECK_REFCOUNT( pDevice, --refcount);

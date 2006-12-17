@@ -176,6 +176,9 @@ typedef struct IDirect3DDevice9Impl
     /* IDirect3DDevice9 fields */
     IWineD3DDevice               *WineD3DDevice;
 
+    /* Avoids recursion with nested ReleaseRef to 0 */
+    BOOL                          inDestruction;
+
 } IDirect3DDevice9Impl;
 
 
@@ -306,6 +309,9 @@ typedef struct IDirect3DSurface9Impl
 
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
+
+    /* Flags an implicit surface */
+    BOOL                        isImplicit;
 } IDirect3DSurface9Impl;
 
 /* ---------------------- */
@@ -547,6 +553,8 @@ extern HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 extern ULONG WINAPI D3D9CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
+
+extern ULONG WINAPI D3D9CB_DestroyRenderTarget (IWineD3DSurface *pSurface);
 
 extern ULONG WINAPI D3D9CB_DestroySurface(IWineD3DSurface *pSurface);
 

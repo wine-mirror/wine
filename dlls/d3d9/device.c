@@ -53,11 +53,15 @@ static ULONG WINAPI IDirect3DDevice9Impl_AddRef(LPDIRECT3DDEVICE9 iface) {
 
 static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
-    ULONG ref = InterlockedDecrement(&This->ref);
+    ULONG ref;
+
+    if (This->inDestruction) return 0;
+    ref = InterlockedDecrement(&This->ref);
 
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
+      This->inDestruction = TRUE;
       IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D9CB_DestroyDepthStencilSurface);
       IWineD3DDevice_Release(This->WineD3DDevice);
       HeapFree(GetProcessHeap(), 0, This);
