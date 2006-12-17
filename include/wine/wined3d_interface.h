@@ -1096,7 +1096,6 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD_(void,PreLoad)(THIS) PURE;
     STDMETHOD_(WINED3DRESOURCETYPE,GetType)(THIS) PURE;
     /*** IWineD3DSurface methods ***/
-    STDMETHOD(GetContainerParent)(THIS_ IUnknown **ppContainerParent) PURE;
     STDMETHOD(GetContainer)(THIS_ REFIID  riid, void ** ppContainer) PURE;
     STDMETHOD(GetDesc)(THIS_ WINED3DSURFACE_DESC * pDesc) PURE;
     STDMETHOD(LockRect)(THIS_ WINED3DLOCKED_RECT * pLockedRect, CONST RECT * pRect,DWORD  Flags) PURE;
@@ -1152,7 +1151,6 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_PreLoad(p)                   (p)->lpVtbl->PreLoad(p)
 #define IWineD3DSurface_GetType(p)                   (p)->lpVtbl->GetType(p)
 /*** IWineD3DSurface methods ***/
-#define IWineD3DSurface_GetContainerParent(p,a)      (p)->lpVtbl->GetContainerParent(p,a)
 #define IWineD3DSurface_GetContainer(p,a,b)          (p)->lpVtbl->GetContainer(p,a,b)
 #define IWineD3DSurface_GetDesc(p,a)                 (p)->lpVtbl->GetDesc(p,a)
 #define IWineD3DSurface_LockRect(p,a,b,c)            (p)->lpVtbl->LockRect(p,a,b,c)
