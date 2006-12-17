@@ -111,35 +111,17 @@ static HRESULT WINAPI IDirect3DVolume8Impl_FreePrivateData(LPDIRECT3DVOLUME8 ifa
 
 static HRESULT WINAPI IDirect3DVolume8Impl_GetContainer(LPDIRECT3DVOLUME8 iface, REFIID riid, void **ppContainer) {
     IDirect3DVolume8Impl *This = (IDirect3DVolume8Impl *)iface;
-    IWineD3DBase *wineD3DContainer = NULL;
-    IUnknown *wineD3DContainerParent = NULL;
     HRESULT res;
 
     TRACE("(This %p, riid %s, ppContainer %p)\n", This, debugstr_guid(riid), ppContainer);
+
+    if (!This->container) return E_NOINTERFACE;
 
     if (!ppContainer) {
         ERR("Called without a valid ppContainer.\n");
     }
 
-    /* Get the WineD3D container. */
-    res = IWineD3DVolume_GetContainer(This->wineD3DVolume, &IID_IWineD3DBase, (void **)&wineD3DContainer);
-    if (res != D3D_OK) return res;
-
-    if (!wineD3DContainer) {
-        ERR("IWineD3DSurface_GetContainer should never return NULL\n");
-    }
-
-    /* Get the parent */
-    IWineD3DBase_GetParent(wineD3DContainer, &wineD3DContainerParent);
-    IUnknown_Release(wineD3DContainer);
-
-    if (!wineD3DContainerParent) {
-        ERR("IWineD3DBase_GetParent should never return NULL\n");
-    }
-
-    /* Now, query the interface of the parent for the riid */
-    res = IUnknown_QueryInterface(wineD3DContainerParent, riid, ppContainer);
-    IUnknown_Release(wineD3DContainerParent);
+    res = IUnknown_QueryInterface(This->container, riid, ppContainer);
 
     TRACE("Returning ppContainer %p, *ppContainer %p\n", ppContainer, *ppContainer);
 
@@ -223,6 +205,7 @@ HRESULT WINAPI D3D8CB_CreateVolume(IUnknown  *pDevice, IUnknown *pSuperior, UINT
         *ppVolume = NULL;
     } else {
         *ppVolume = (IWineD3DVolume *)object->wineD3DVolume;
+        object->container = pSuperior;
         object->forwardReference = pSuperior;
     }
     TRACE("(%p) Created volume %p\n", This, *ppVolume);

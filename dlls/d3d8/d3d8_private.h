@@ -200,6 +200,9 @@ struct IDirect3DVolume8Impl
     /* IDirect3DVolume8 fields */
     IWineD3DVolume             *wineD3DVolume;
 
+    /* The volume container */
+    IUnknown                    *container;
+
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 };
