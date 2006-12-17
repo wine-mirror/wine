@@ -310,6 +310,9 @@ typedef struct IDirect3DSurface9Impl
     /* Parent reference */
     LPDIRECT3DDEVICE9       parentDevice;
 
+    /* The surface container */
+    IUnknown                    *container;
+
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 
