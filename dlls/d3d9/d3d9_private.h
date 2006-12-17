@@ -239,6 +239,9 @@ typedef struct IDirect3DVolume9Impl
     /* IDirect3DVolume9 fields */
     IWineD3DVolume         *wineD3DVolume;
 
+    /* The volume container */
+    IUnknown                    *container;
+
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 } IDirect3DVolume9Impl;
