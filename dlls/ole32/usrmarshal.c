@@ -324,6 +324,23 @@ IMPL_WIREM_HANDLE(HWND)
 
 /******************************************************************************
  *           HGLOBAL_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal an HGLOBAL.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phGlobal     [I] HGLOBAL to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal an HGLOBAL plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
  */
 ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *phGlobal)
 {
@@ -352,6 +369,25 @@ ULONG __RPC_USER HGLOBAL_UserSize(ULONG *pFlags, ULONG StartingSize, HGLOBAL *ph
     return size;
 }
 
+/******************************************************************************
+ *           HGLOBAL_UserMarshal [OLE32.@]
+ *
+ * Marshals an HGLOBAL into a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format into.
+ *  phGlobal [I] HGLOBAL to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HGLOBAL_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
 {
     TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phGlobal);
@@ -395,6 +431,25 @@ unsigned char * __RPC_USER HGLOBAL_UserMarshal(ULONG *pFlags, unsigned char *pBu
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HGLOBAL_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals an HGLOBAL from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phGlobal [O] Address that receive the unmarshaled HGLOBAL.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HGLOBAL *phGlobal)
 {
     ULONG fContext;
@@ -462,6 +517,21 @@ unsigned char * __RPC_USER HGLOBAL_UserUnmarshal(ULONG *pFlags, unsigned char *p
 
 /******************************************************************************
  *           HGLOBAL_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled HGLOBAL.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phGlobal [I] HGLOBAL to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
  */
 void __RPC_USER HGLOBAL_UserFree(ULONG *pFlags, HGLOBAL *phGlobal)
 {
@@ -471,76 +541,324 @@ void __RPC_USER HGLOBAL_UserFree(ULONG *pFlags, HGLOBAL *phGlobal)
         GlobalFree(*phGlobal);
 }
 
+/******************************************************************************
+ *           HBITMAP_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal a bitmap.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phBmp        [I] Bitmap to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal an bitmap plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 ULONG __RPC_USER HBITMAP_UserSize(ULONG *pFlags, ULONG StartingSize, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
     return StartingSize;
 }
 
+/******************************************************************************
+*           HBITMAP_UserMarshal [OLE32.@]
+*
+* Marshals a bitmap into a buffer.
+*
+* PARAMS
+*  pFlags  [I] Flags. See notes.
+*  pBuffer [I] Buffer to marshal the clip format into.
+*  phBmp   [I] Bitmap to marshal.
+*
+* RETURNS
+*  The end of the marshaled data in the buffer.
+*
+* NOTES
+*  Even though the function is documented to take a pointer to a ULONG in
+*  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+*  the first parameter is a ULONG.
+*  This function is only intended to be called by the RPC runtime.
+*/
 unsigned char * __RPC_USER HBITMAP_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HBITMAP_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals a bitmap from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phBmp    [O] Address that receive the unmarshaled bitmap.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HBITMAP_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HBITMAP_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled bitmap.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phBmp    [I] Bitmap to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 void __RPC_USER HBITMAP_UserFree(ULONG *pFlags, HBITMAP *phBmp)
 {
     FIXME(":stub\n");
 }
 
+/******************************************************************************
+ *           HDC_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal an HDC.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phGlobal     [I] HDC to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal an HDC plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 ULONG __RPC_USER HDC_UserSize(ULONG *pFlags, ULONG StartingSize, HDC *phdc)
 {
     FIXME(":stub\n");
     return StartingSize;
 }
 
+/******************************************************************************
+ *           HDC_UserMarshal [OLE32.@]
+ *
+ * Marshals an HDC into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  phdc    [I] HDC to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HDC_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HDC *phdc)
 {
     FIXME(":stub\n");
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HDC_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals an HDC from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phdc     [O] Address that receive the unmarshaled HDC.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HDC_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HDC *phdc)
 {
     FIXME(":stub\n");
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HDC_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled HDC.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phdc     [I] HDC to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 void __RPC_USER HDC_UserFree(ULONG *pFlags, HDC *phdc)
 {
     FIXME(":stub\n");
 }
 
+/******************************************************************************
+ *           HPALETTE_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal a palette.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phPal        [I] Palette to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal a palette plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 ULONG __RPC_USER HPALETTE_UserSize(ULONG *pFlags, ULONG StartingSize, HPALETTE *phPal)
 {
     FIXME(":stub\n");
     return StartingSize;
 }
 
+/******************************************************************************
+ *           HPALETTE_UserMarshal [OLE32.@]
+ *
+ * Marshals a palette into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  phPal   [I] Palette to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HPALETTE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HPALETTE *phPal)
 {
     FIXME(":stub\n");
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HPALETTE_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals a palette from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phPal    [O] Address that receive the unmarshaled palette.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HPALETTE_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HPALETTE *phPal)
 {
     FIXME(":stub\n");
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HPALETTE_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled palette.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phPal    [I] Palette to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 void __RPC_USER HPALETTE_UserFree(ULONG *pFlags, HPALETTE *phPal)
 {
     FIXME(":stub\n");
 }
 
 
+/******************************************************************************
+*           HENHMETAFILE_UserSize [OLE32.@]
+*
+* Calculates the buffer size required to marshal an enhanced metafile.
+*
+* PARAMS
+*  pFlags       [I] Flags. See notes.
+*  StartingSize [I] Starting size of the buffer. This value is added on to
+*                   the buffer size required for the clip format.
+*  phEmf        [I] Enhanced metafile to size.
+*
+* RETURNS
+*  The buffer size required to marshal an enhanced metafile plus the starting size.
+*
+* NOTES
+*  Even though the function is documented to take a pointer to a ULONG in
+*  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+*  the first parameter is a ULONG.
+*  This function is only intended to be called by the RPC runtime.
+*/
 ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHMETAFILE *phEmf)
 {
     ULONG size = StartingSize;
@@ -567,6 +885,25 @@ ULONG __RPC_USER HENHMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HENHME
     return size;
 }
 
+/******************************************************************************
+ *           HENHMETAFILE_UserMarshal [OLE32.@]
+ *
+ * Marshals an enhance metafile into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  phEmf   [I] Enhanced metafile to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
 {
     TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phEmf);
@@ -604,6 +941,25 @@ unsigned char * __RPC_USER HENHMETAFILE_UserMarshal(ULONG *pFlags, unsigned char
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HENHMETAFILE_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals an enhanced metafile from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phEmf    [O] Address that receive the unmarshaled enhanced metafile.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HENHMETAFILE *phEmf)
 {
     ULONG fContext;
@@ -649,6 +1005,24 @@ unsigned char * __RPC_USER HENHMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned ch
     return pBuffer;
 }
 
+/******************************************************************************
+ *           HENHMETAFILE_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled enhanced metafile.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phEmf    [I] Enhanced metafile to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 void __RPC_USER HENHMETAFILE_UserFree(ULONG *pFlags, HENHMETAFILE *phEmf)
 {
     TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *phEmf);
@@ -657,6 +1031,26 @@ void __RPC_USER HENHMETAFILE_UserFree(ULONG *pFlags, HENHMETAFILE *phEmf)
         DeleteEnhMetaFile(*phEmf);
 }
 
+/******************************************************************************
+*           STGMEDIUM_UserSize [OLE32.@]
+*
+* Calculates the buffer size required to marshal an STGMEDIUM.
+*
+* PARAMS
+*  pFlags       [I] Flags. See notes.
+*  StartingSize [I] Starting size of the buffer. This value is added on to
+*                   the buffer size required for the clip format.
+*  pStgMedium   [I] STGMEDIUM to size.
+*
+* RETURNS
+*  The buffer size required to marshal an STGMEDIUM plus the starting size.
+*
+* NOTES
+*  Even though the function is documented to take a pointer to a ULONG in
+*  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+*  the first parameter is a ULONG.
+*  This function is only intended to be called by the RPC runtime.
+*/
 ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM *pStgMedium)
 {
     ULONG size = StartingSize;
@@ -707,6 +1101,25 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
     return size;
 }
 
+/******************************************************************************
+ *           STGMEDIUM_UserMarshal [OLE32.@]
+ *
+ * Marshals a STGMEDIUM into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  pCF     [I] STGMEDIUM to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
 {
     TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, pStgMedium);
@@ -761,6 +1174,25 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
     return pBuffer;
 }
 
+/******************************************************************************
+ *           STGMEDIUM_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals a STGMEDIUM from a buffer.
+ *
+ * PARAMS
+ *  pFlags     [I] Flags. See notes.
+ *  pBuffer    [I] Buffer to marshal the clip format from.
+ *  pStgMedium [O] Address that receive the unmarshaled STGMEDIUM.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, STGMEDIUM *pStgMedium)
 {
     DWORD content;
@@ -819,6 +1251,24 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
     return pBuffer;
 }
 
+/******************************************************************************
+ *           STGMEDIUM_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled STGMEDIUM.
+ *
+ * PARAMS
+ *  pFlags     [I] Flags. See notes.
+ *  pStgmedium [I] STGMEDIUM to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
 void __RPC_USER STGMEDIUM_UserFree(ULONG *pFlags, STGMEDIUM *pStgMedium)
 {
     TRACE("(%s, %p\n", debugstr_user_flags(pFlags), pStgMedium);
