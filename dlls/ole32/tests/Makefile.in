@@ -15,7 +15,8 @@ CTESTS = \
 	ole2.c \
 	propvariant.c \
 	stg_prop.c \
-	storage32.c
+	storage32.c \
+	usrmarshal.c
 
 @MAKE_TEST_RULES@
 
