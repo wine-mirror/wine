@@ -365,6 +365,12 @@ HGLOBAL WINAPI GlobalAlloc(
    }
    else  /* HANDLE */
    {
+      if (size > INT_MAX-HGLOBAL_STORAGE)
+      {
+          SetLastError(ERROR_OUTOFMEMORY);
+          return 0;
+      }
+
       RtlLockHeap(GetProcessHeap());
 
       pintern = HeapAlloc(GetProcessHeap(), 0, sizeof(GLOBAL32_INTERN));
@@ -658,7 +664,12 @@ HGLOBAL WINAPI GlobalReAlloc(
             hnew=hmem;
             if(pintern->Pointer)
             {
-               if((palloc = HeapReAlloc(GetProcessHeap(), heap_flags,
+               if(size > INT_MAX-HGLOBAL_STORAGE)
+               {
+                   SetLastError(ERROR_OUTOFMEMORY);
+                   hnew = 0;
+               }
+               else if((palloc = HeapReAlloc(GetProcessHeap(), heap_flags,
                                    (char *) pintern->Pointer-HGLOBAL_STORAGE,
                                    size+HGLOBAL_STORAGE)) == NULL)
                    hnew = 0; /* Block still valid */
@@ -667,7 +678,12 @@ HGLOBAL WINAPI GlobalReAlloc(
             }
             else
             {
-                if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+HGLOBAL_STORAGE))
+                if(size > INT_MAX-HGLOBAL_STORAGE)
+                {
+                    SetLastError(ERROR_OUTOFMEMORY);
+                    hnew = 0;
+                }
+                else if((palloc=HeapAlloc(GetProcessHeap(), heap_flags, size+HGLOBAL_STORAGE))
                    == NULL)
                     hnew = 0;
                 else
