@@ -27,6 +27,8 @@ static HMODULE hdll;
 static BOOL (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,LPDISPLAY_DEVICEA,DWORD);
 static BOOL (WINAPI *pEnumDisplayMonitors)(HDC,LPRECT,MONITORENUMPROC,LPARAM);
 static BOOL (WINAPI *pGetMonitorInfoA)(HMONITOR,LPMONITORINFO);
+static HMONITOR (WINAPI *pMonitorFromPoint)(POINT,DWORD);
+static HMONITOR (WINAPI *pMonitorFromWindow)(HWND,DWORD);
 
 static void init_function_pointers(void)
 {
@@ -37,6 +39,8 @@ static void init_function_pointers(void)
        pEnumDisplayDevicesA = (void*)GetProcAddress(hdll, "EnumDisplayDevicesA");
        pEnumDisplayMonitors = (void*)GetProcAddress(hdll, "EnumDisplayMonitors");
        pGetMonitorInfoA = (void*)GetProcAddress(hdll, "GetMonitorInfoA");
+       pMonitorFromPoint = (void*)GetProcAddress(hdll, "MonitorFromPoint");
+       pMonitorFromWindow = (void*)GetProcAddress(hdll, "MonitorFromWindow");
     }
 }
 
@@ -179,14 +183,14 @@ static void test_monitors(void)
     POINT pt;
 
     pt.x = pt.y = 0;
-    primary = MonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY );
+    primary = pMonitorFromPoint( pt, MONITOR_DEFAULTTOPRIMARY );
     ok( primary != 0, "couldn't get primary monitor\n" );
 
-    monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTONULL );
+    monitor = pMonitorFromWindow( 0, MONITOR_DEFAULTTONULL );
     ok( !monitor, "got %p, should not get a monitor for an invalid window\n", monitor );
-    monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
+    monitor = pMonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
     ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTOPRIMARY\n", monitor, primary );
-    monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTONEAREST );
+    monitor = pMonitorFromWindow( 0, MONITOR_DEFAULTTONEAREST );
     ok( monitor == primary, "got %p, should get primary %p for MONITOR_DEFAULTTONEAREST\n", monitor, primary );
 }
 
@@ -197,5 +201,6 @@ START_TEST(monitor)
     test_enumdisplaydevices();
     if (winetest_interactive)
         test_ChangeDisplaySettingsEx();
-    test_monitors();
+    if (pMonitorFromPoint && pMonitorFromWindow)
+        test_monitors();
 }
