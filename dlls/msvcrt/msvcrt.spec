@@ -166,7 +166,7 @@
 @ cdecl _assert(str str long) MSVCRT__assert
 @ stub _atodbl #(ptr str)
 @ cdecl -ret64 _atoi64(str) ntdll._atoi64
-@ stub _atoldbl #(ptr str)
+@ cdecl _atoldbl(ptr str) MSVCRT__atoldbl
 @ cdecl _beep(long long)
 @ cdecl _beginthread (ptr long ptr)
 @ cdecl _beginthreadex (ptr long ptr ptr long ptr)

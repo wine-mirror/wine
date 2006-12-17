@@ -70,6 +70,8 @@ typedef void (*MSVCRT__beginthread_start_routine_t)(void *);
 typedef unsigned int (__stdcall *MSVCRT__beginthreadex_start_routine_t)(void *);
 typedef int (*MSVCRT__onexit_t)(void);
 
+typedef struct {long double x;} _LDOUBLE;
+
 struct MSVCRT_tm {
     int tm_sec;
     int tm_min;

@@ -21,6 +21,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define _ISOC99_SOURCE
+#include "config.h"
+
 #include <stdlib.h>
 #include "msvcrt.h"
 #include "wine/debug.h"
@@ -183,4 +186,19 @@ int CDECL MSVCRT__stricoll( const char* str1, const char* str2 )
   /* FIXME: handle collates */
   TRACE("str1 %s str2 %s\n", debugstr_a(str1), debugstr_a(str2));
   return lstrcmpiA( str1, str2 );
+}
+
+/********************************************************************
+ *		_atoldbl (MSVCRT.@)
+ */
+int CDECL MSVCRT__atoldbl(_LDOUBLE * value, char * str)
+{
+  /* FIXME needs error checking for huge/small values */
+#ifdef HAVE_STRTOLD
+  TRACE("str %s value %p\n",str,value);
+  value->x = strtold(str,0);
+#else
+  FIXME("stub, str %s value %p\n",str,value);
+#endif
+  return 0;
 }

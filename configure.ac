@@ -1228,6 +1228,7 @@ AC_CHECK_FUNCS(\
 	strcasecmp \
 	strerror \
 	strncasecmp \
+	strtold \
 	tcgetattr \
 	timegm \
 	usleep \

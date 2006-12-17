@@ -666,6 +666,9 @@
 /* Define to 1 if you have the `strncasecmp' function. */
 #undef HAVE_STRNCASECMP
 
+/* Define to 1 if you have the `strtold' function. */
+#undef HAVE_STRTOLD
+
 /* Define to 1 if `direction' is member of `struct ff_effect'. */
 #undef HAVE_STRUCT_FF_EFFECT_DIRECTION
 
