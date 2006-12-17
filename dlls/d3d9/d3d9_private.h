@@ -301,6 +301,9 @@ typedef struct IDirect3DSurface9Impl
 
     /* Parent reference */
     LPDIRECT3DDEVICE9       parentDevice;
+
+    /* If set forward refcounting to this object */
+    IUnknown                    *forwardReference;
 } IDirect3DSurface9Impl;
 
 /* ---------------------- */
@@ -542,5 +545,7 @@ extern HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
 extern ULONG WINAPI D3D9CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
+
+extern ULONG WINAPI D3D9CB_DestroySurface(IWineD3DSurface *pSurface);
 
 #endif /* __WINE_D3D9_PRIVATE_H */
