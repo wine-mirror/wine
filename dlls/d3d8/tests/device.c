@@ -332,7 +332,7 @@ static void test_refcount(void)
     CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
     if(pRenderTarget)
     {
-        todo_wine CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DDevice8, pDevice);
+        CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DDevice8, pDevice);
         CHECK_REFCOUNT( pRenderTarget, 1);
 
         CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
@@ -496,7 +496,7 @@ static void test_refcount(void)
         CHECK_REFCOUNT( pSwapChain, 1);
         if(pBackBuffer)
         {
-            todo_wine CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DDevice8, pDevice);
+            CHECK_SURFACE_CONTAINER( pBackBuffer, IID_IDirect3DDevice8, pDevice);
             CHECK_REFCOUNT( pBackBuffer, 1);
             CHECK_RELEASE_REFCOUNT( pBackBuffer, 0);
             CHECK_REFCOUNT( pDevice, --refcount);

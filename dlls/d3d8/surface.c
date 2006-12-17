@@ -113,45 +113,14 @@ static HRESULT WINAPI IDirect3DSurface8Impl_FreePrivateData(LPDIRECT3DSURFACE8 i
 static HRESULT WINAPI IDirect3DSurface8Impl_GetContainer(LPDIRECT3DSURFACE8 iface, REFIID riid, void **ppContainer) {
     IDirect3DSurface8Impl *This = (IDirect3DSurface8Impl *)iface;
     HRESULT res;
-    IUnknown *IWineContainer = NULL;
 
     TRACE("(%p) Relay\n", This);
 
-    /* The container returned from IWineD3DSurface_GetContainer is either an IWineD3DDevice,
-       one of the subclasses of IWineD3DBaseTexture or an IWineD3DSwapChain  */
-    /* Get the IUnknown container. */
-    res = IWineD3DSurface_GetContainer(This->wineD3DSurface, &IID_IUnknown, (void **)&IWineContainer);
-    if (res == D3D_OK && IWineContainer != NULL) {
+    if (!This->container) return E_NOINTERFACE;
 
-        /* Now find out what kind of container it is (so that we can get its parent)*/
-        IUnknown  *IUnknownParent = NULL;
-        IUnknown  *myContainer    = NULL;
-        if (D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DDevice, (void **)&myContainer)) {
-            IWineD3DDevice_GetParent((IWineD3DDevice *)IWineContainer, &IUnknownParent);
-            IUnknown_Release(myContainer);
-        } else 
-        if (D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DBaseTexture, (void **)&myContainer)) {
-            IWineD3DBaseTexture_GetParent((IWineD3DBaseTexture *)IWineContainer, &IUnknownParent);
-            IUnknown_Release(myContainer);
-        } else
-        if (D3D_OK == IUnknown_QueryInterface(IWineContainer, &IID_IWineD3DSwapChain, (void **)&myContainer)) {
-            IWineD3DSwapChain_GetParent((IWineD3DSwapChain *)IWineContainer, &IUnknownParent);
-            IUnknown_Release(myContainer);
-        } else {
-            FIXME("Container is of unknown interface\n");
-        }
-        /* Tidy up.. */
-        IUnknown_Release((IWineD3DDevice *)IWineContainer);
+    res = IUnknown_QueryInterface(This->container, riid, ppContainer);
 
-        /* Now, query the interface of the parent for the riid */
-        if (IUnknownParent != NULL) {
-            res = IUnknown_QueryInterface(IUnknownParent, riid, ppContainer);
-            /* Tidy up.. */
-            IUnknown_Release(IUnknownParent);
-        }
-    }
-
-    TRACE("(%p) : returning %p\n", This, *ppContainer);    
+    TRACE("(%p) : returning %p\n", This, *ppContainer);
     return res;
 }
 

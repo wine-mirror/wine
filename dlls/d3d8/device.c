@@ -1624,6 +1624,7 @@ HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT 
 
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
+        d3dSurface->container = pSuperior;
         IUnknown_Release(d3dSurface->parentDevice);
         d3dSurface->parentDevice = NULL;
         d3dSurface->forwardReference = pSuperior;

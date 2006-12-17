@@ -200,6 +200,7 @@ HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSuperior, 
 
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
+        d3dSurface->container = device;
         d3dSurface->isImplicit = TRUE;
         /* Implicit surfaces are created with an refcount of 0 */
         IUnknown_Release((IUnknown *)d3dSurface);
@@ -299,6 +300,7 @@ HRESULT WINAPI D3D8CB_CreateDepthStencilSurface(IUnknown *device, IUnknown *pSup
                                          (D3DFORMAT)Format, MultiSample, (IDirect3DSurface8 **)&d3dSurface);
     if (SUCCEEDED(res)) {
         *ppSurface = d3dSurface->wineD3DSurface;
+        d3dSurface->container = device;
         d3dSurface->isImplicit = TRUE;
         /* Implicit surfaces are created with an refcount of 0 */
         IUnknown_Release((IUnknown *)d3dSurface);

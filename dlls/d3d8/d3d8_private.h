@@ -253,6 +253,9 @@ struct IDirect3DSurface8Impl
     /* Parent reference */
     LPDIRECT3DDEVICE8                  parentDevice;
 
+    /* The surface container */
+    IUnknown                    *container;
+
     /* If set forward refcounting to this object */
     IUnknown                    *forwardReference;
 
