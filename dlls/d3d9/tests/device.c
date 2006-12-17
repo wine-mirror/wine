@@ -358,41 +358,41 @@ static void test_refcount(void)
      *   - the refcount is not forwarded to the container.
      */
     hr = IDirect3DDevice9_GetSwapChain(pDevice, 0, &pSwapChain);
-    todo_wine CHECK_CALL( hr, "GetSwapChain", pDevice, ++refcount);
+    CHECK_CALL( hr, "GetSwapChain", pDevice, ++refcount);
     if (pSwapChain)
     {
-        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_REFCOUNT( pSwapChain, 1);
 
         hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget);
-        todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
-        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_CALL( hr, "GetRenderTarget", pDevice, ++refcount);
+        CHECK_REFCOUNT( pSwapChain, 1);
         if(pRenderTarget)
         {
             CHECK_SURFACE_CONTAINER( pRenderTarget, IID_IDirect3DSwapChain9, pSwapChain);
             CHECK_REFCOUNT( pRenderTarget, 1);
 
             CHECK_ADDREF_REFCOUNT(pRenderTarget, 2);
-            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+            CHECK_REFCOUNT(pDevice, refcount);
             CHECK_RELEASE_REFCOUNT(pRenderTarget, 1);
-            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+            CHECK_REFCOUNT(pDevice, refcount);
 
             hr = IDirect3DDevice9_GetRenderTarget(pDevice, 0, &pRenderTarget);
-            todo_wine CHECK_CALL( hr, "GetRenderTarget", pDevice, refcount);
+            CHECK_CALL( hr, "GetRenderTarget", pDevice, refcount);
             CHECK_REFCOUNT( pRenderTarget, 2);
             CHECK_RELEASE_REFCOUNT( pRenderTarget, 1);
             CHECK_RELEASE_REFCOUNT( pRenderTarget, 0);
-            todo_wine CHECK_REFCOUNT( pDevice, --refcount);
+            CHECK_REFCOUNT( pDevice, --refcount);
 
             /* The render target is released with the device, so AddRef with refcount=0 is fine here. */
             CHECK_ADDREF_REFCOUNT(pRenderTarget, 1);
-            todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
+            CHECK_REFCOUNT(pDevice, ++refcount);
             CHECK_RELEASE_REFCOUNT(pRenderTarget, 0);
-            todo_wine CHECK_REFCOUNT(pDevice, --refcount);
+            CHECK_REFCOUNT(pDevice, --refcount);
         }
 
         /* Render target and back buffer are identical. */
         hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, 0, &pBackBuffer);
-        todo_wine CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
+        CHECK_CALL( hr, "GetBackBuffer", pDevice, ++refcount);
         if(pBackBuffer)
         {
             CHECK_RELEASE_REFCOUNT(pBackBuffer, 0);
@@ -400,39 +400,39 @@ static void test_refcount(void)
             pRenderTarget, pBackBuffer);
             pBackBuffer = NULL;
         }
-        todo_wine CHECK_REFCOUNT( pDevice, --refcount);
+        CHECK_REFCOUNT( pDevice, --refcount);
 
         hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pStencilSurface);
-        todo_wine CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
-        todo_wine CHECK_REFCOUNT( pSwapChain, 1);
+        CHECK_CALL( hr, "GetDepthStencilSurface", pDevice, ++refcount);
+        CHECK_REFCOUNT( pSwapChain, 1);
         if(pStencilSurface)
         {
             CHECK_SURFACE_CONTAINER( pStencilSurface, IID_IDirect3DDevice9, pDevice);
             CHECK_REFCOUNT( pStencilSurface, 1);
 
             CHECK_ADDREF_REFCOUNT(pStencilSurface, 2);
-            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+            CHECK_REFCOUNT(pDevice, refcount);
             CHECK_RELEASE_REFCOUNT(pStencilSurface, 1);
-            todo_wine CHECK_REFCOUNT(pDevice, refcount);
+            CHECK_REFCOUNT(pDevice, refcount);
 
             CHECK_RELEASE_REFCOUNT( pStencilSurface, 0);
-            todo_wine CHECK_REFCOUNT( pDevice, --refcount);
+            CHECK_REFCOUNT( pDevice, --refcount);
 
             /* The stencil surface is released with the device, so AddRef with refcount=0 is fine here. */
             CHECK_ADDREF_REFCOUNT(pStencilSurface, 1);
-            todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
+            CHECK_REFCOUNT(pDevice, ++refcount);
             CHECK_RELEASE_REFCOUNT(pStencilSurface, 0);
-            todo_wine CHECK_REFCOUNT(pDevice, --refcount);
+            CHECK_REFCOUNT(pDevice, --refcount);
             pStencilSurface = NULL;
         }
 
-        todo_wine CHECK_RELEASE_REFCOUNT( pSwapChain, 0);
+        CHECK_RELEASE_REFCOUNT( pSwapChain, 0);
         CHECK_REFCOUNT( pDevice, --refcount);
 
         /* The implicit swapchwin is released with the device, so AddRef with refcount=0 is fine here. */
-        todo_wine CHECK_ADDREF_REFCOUNT(pSwapChain, 1);
-        todo_wine CHECK_REFCOUNT(pDevice, ++refcount);
-        todo_wine CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
+        CHECK_ADDREF_REFCOUNT(pSwapChain, 1);
+        CHECK_REFCOUNT(pDevice, ++refcount);
+        CHECK_RELEASE_REFCOUNT(pSwapChain, 0);
         CHECK_REFCOUNT(pDevice, --refcount);
         pSwapChain = NULL;
     }

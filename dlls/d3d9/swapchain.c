@@ -48,6 +48,8 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_AddRef(LPDIRECT3DSWAPCHAIN9 iface) {
 
     TRACE("(%p) : AddRef from %d\n", This, ref - 1);
 
+    if(ref == 1 && This->parentDevice) IUnknown_AddRef(This->parentDevice);
+
     return ref;
 }
 
@@ -58,9 +60,11 @@ static ULONG WINAPI IDirect3DSwapChain9Impl_Release(LPDIRECT3DSWAPCHAIN9 iface) 
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IWineD3DSwapChain_Destroy(This->wineD3DSwapChain, D3D9CB_DestroyRenderTarget);
         if (This->parentDevice) IUnknown_Release(This->parentDevice);
-        HeapFree(GetProcessHeap(), 0, This);
+        if (!This->isImplicit) {
+            IWineD3DSwapChain_Destroy(This->wineD3DSwapChain, D3D9CB_DestroyRenderTarget);
+            HeapFree(GetProcessHeap(), 0, This);
+        }
     }
     return ref;
 }

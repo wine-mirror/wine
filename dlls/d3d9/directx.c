@@ -236,8 +236,9 @@ HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
 
     if (SUCCEEDED(res)) {
         *ppSwapChain = d3dSwapChain->wineD3DSwapChain;
-        IUnknown_Release(d3dSwapChain->parentDevice);
-        d3dSwapChain->parentDevice = NULL;
+        d3dSwapChain->isImplicit = TRUE;
+        /* Implicit swap chains are created with an refcount of 0 */
+        IUnknown_Release((IUnknown *)d3dSwapChain);
     } else {
         *ppSwapChain = NULL;
     }
@@ -261,12 +262,13 @@ HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
 }
 
 ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
-    IUnknown* swapChainParent;
+    IDirect3DSwapChain9Impl* swapChainParent;
     TRACE("(%p) call back\n", pSwapChain);
 
-    IWineD3DSwapChain_GetParent(pSwapChain, &swapChainParent);
-    IUnknown_Release(swapChainParent);
-    return IUnknown_Release(swapChainParent);
+    IWineD3DSwapChain_GetParent(pSwapChain,(IUnknown **) &swapChainParent);
+    swapChainParent->isImplicit = FALSE;
+    /* Swap chain had refcount of 0 GetParent addrefed to 1, so 1 Release is enough */
+    return IDirect3DSwapChain9_Release((IDirect3DSwapChain9*) swapChainParent);
 }
 
 /* Internal function called back during the CreateDevice to create a render target */
