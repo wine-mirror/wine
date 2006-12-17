@@ -1237,11 +1237,22 @@ static void test_digit_substitution(void)
         LGRPID_GEORGIAN,
         LGRPID_ARMENIAN
     };
+    HMODULE hKernel32;
+    static BOOL (WINAPI * pEnumLanguageGroupLocalesA)(LANGGROUPLOCALE_ENUMPROC,LGRPID,DWORD,LONG_PTR);
+
+    hKernel32 = GetModuleHandleA("kernel32.dll");
+    pEnumLanguageGroupLocalesA = (void*)GetProcAddress(hKernel32, "EnumLanguageGroupLocalesA");
+
+    if (!pEnumLanguageGroupLocalesA)
+    {
+        trace("EnumLanguageGroupLocalesA not available on this platform\n");
+        return;
+    }
 
     for (i = 0; i < sizeof(groups)/sizeof(groups[0]); i++)
     {
-        ret = EnumLanguageGroupLocales(enum_proc, groups[i], 0, 0);
-        ok(ret, "EnumLanguageGroupLocales failed unexpectedly: 0x%08x\n", GetLastError());
+        ret = pEnumLanguageGroupLocalesA(enum_proc, groups[i], 0, 0);
+        ok(ret, "EnumLanguageGroupLocalesA failed unexpectedly: 0x%08x\n", GetLastError());
     }
 }
 
