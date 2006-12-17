@@ -260,6 +260,15 @@ HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
    return res;
 }
 
+ULONG WINAPI D3D9CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain) {
+    IUnknown* swapChainParent;
+    TRACE("(%p) call back\n", pSwapChain);
+
+    IWineD3DSwapChain_GetParent(pSwapChain, &swapChainParent);
+    IUnknown_Release(swapChainParent);
+    return IUnknown_Release(swapChainParent);
+}
+
 /* Internal function called back during the CreateDevice to create a render target */
 HRESULT WINAPI D3D9CB_CreateDepthStencilSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,
                                          WINED3DFORMAT Format, WINED3DMULTISAMPLE_TYPE MultiSample,

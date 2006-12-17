@@ -603,6 +603,8 @@ extern HRESULT WINAPI D3D8CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
                                          DWORD MultisampleQuality, BOOL Lockable,
                                          IWineD3DSurface** ppSurface, HANDLE* pSharedHandle);
 
+extern ULONG WINAPI D3D8CB_DestroySwapChain (IWineD3DSwapChain *pSwapChain);
+
 extern ULONG WINAPI D3D8CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
 
 extern ULONG WINAPI D3D8CB_DestroyRenderTarget (IWineD3DSurface *pSurface);

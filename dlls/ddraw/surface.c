@@ -311,7 +311,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
             IWineD3DDevice_SetIndices(ddraw->wineD3DDevice, NULL, 0);
             IWineD3DDevice_SetDepthStencilSurface(ddraw->wineD3DDevice, NULL);
 
-            if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface) != D3D_OK)
+            if(IWineD3DDevice_Uninit3D(ddraw->wineD3DDevice, D3D7CB_DestroyDepthStencilSurface, D3D7CB_DestroySwapChain) != D3D_OK)
             {
                 /* Not good */
                 ERR("(%p) Failed to uninit 3D\n", This);

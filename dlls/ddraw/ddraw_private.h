@@ -76,6 +76,8 @@ typedef struct IDirect3DVertexBufferImpl  IDirect3DVertexBufferImpl;
 typedef struct IParentImpl                IParentImpl;
 
 /* Callbacks for implicit object destruction */
+extern ULONG WINAPI D3D7CB_DestroySwapChain(IWineD3DSwapChain *pSwapChain);
+
 extern ULONG WINAPI D3D7CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface);
 
 /*****************************************************************************

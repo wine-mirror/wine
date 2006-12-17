@@ -2152,10 +2152,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface) {
+static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyDepthStencilSurface, D3DCB_DESTROYSWAPCHAINFN D3DCB_DestroySwapChain) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     int sampler;
-    IUnknown* swapChainParent;
     uint i;
     TRACE("(%p)\n", This);
 
@@ -2197,10 +2196,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 
     for(i=0; i < This->NumberOfSwapChains; i++) {
         TRACE("Releasing the implicit swapchain %d\n", i);
-        /* Swapchain 0 is special because it's created in startup with a hanging parent, so we have to release its parent now */
-        IWineD3DSwapChain_GetParent(This->swapchains[i], &swapChainParent);
-        IUnknown_Release(swapChainParent);           /* once for the get parent */
-        if (IUnknown_Release(swapChainParent)  > 0) {  /* the second time for when it was created */
+        if (D3DCB_DestroySwapChain(This->swapchains[i])  > 0) {
             FIXME("(%p) Something's still holding the implicit swapchain\n", This);
         }
     }
