@@ -67,13 +67,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
  *
  * This structure represents the header of the \002OlePresXXX stream in
  * the OLE object strorage.
- *
- * Most fields are still unknown.
  */
 typedef struct PresentationDataHeader
 {
-  DWORD unknown1;	/* -1 */
-  DWORD clipformat;
+  /* clipformat:
+   *  - standard clipformat:
+   *  DWORD length = 0xffffffff;
+   *  DWORD cfFormat;
+   *  - or custom clipformat:
+   *  DWORD length;
+   *  CHAR format_name[length]; (null-terminated)
+   */
   DWORD unknown3;	/* 4, possibly TYMED_ISTREAM */
   DVASPECT dvAspect;
   DWORD lindex;
@@ -355,12 +359,76 @@ static BOOL DataCache_IsPresentationStream(const STATSTG *elem)
     LPCWSTR name = elem->pwcsName;
 
     return (elem->type == STGTY_STREAM)
-	&& (elem->cbSize.u.LowPart >= sizeof(PresentationDataHeader))
 	&& (strlenW(name) == 11)
 	&& (strncmpW(name, OlePres, 8) == 0)
 	&& (name[8] >= '0') && (name[8] <= '9')
 	&& (name[9] >= '0') && (name[9] <= '9')
 	&& (name[10] >= '0') && (name[10] <= '9');
+}
+
+static HRESULT read_clipformat(IStream *stream, CLIPFORMAT *clipformat)
+{
+    DWORD length;
+    HRESULT hr;
+    ULONG read;
+
+    *clipformat = 0;
+
+    hr = IStream_Read(stream, &length, sizeof(length), &read);
+    if (hr != S_OK || read != sizeof(length))
+        return DV_E_CLIPFORMAT;
+    if (length == -1)
+    {
+        DWORD cf;
+        hr = IStream_Read(stream, &cf, sizeof(cf), 0);
+        if (hr != S_OK || read != sizeof(cf))
+            return DV_E_CLIPFORMAT;
+        *clipformat = cf;
+    }
+    else
+    {
+        char *format_name = HeapAlloc(GetProcessHeap(), 0, length);
+        if (!format_name)
+            return E_OUTOFMEMORY;
+        hr = IStream_Read(stream, format_name, length, &read);
+        if (hr != S_OK || read != length || format_name[length - 1] != '\0')
+        {
+            HeapFree(GetProcessHeap(), 0, format_name);
+            return DV_E_CLIPFORMAT;
+        }
+        *clipformat = RegisterClipboardFormatA(format_name);
+        HeapFree(GetProcessHeap(), 0, format_name);
+    }
+    return S_OK;
+}
+
+static HRESULT write_clipformat(IStream *stream, CLIPFORMAT clipformat)
+{
+    DWORD length;
+    HRESULT hr;
+
+    if (clipformat < 0xc000)
+        length = -1;
+    else
+        length = GetClipboardFormatNameA(clipformat, NULL, 0);
+    hr = IStream_Write(stream, &length, sizeof(length), NULL);
+    if (FAILED(hr))
+        return hr;
+    if (clipformat < 0xc000)
+    {
+        DWORD cf = clipformat;
+        hr = IStream_Write(stream, &cf, sizeof(cf), NULL);
+    }
+    else
+    {
+        char *format_name = HeapAlloc(GetProcessHeap(), 0, length);
+        if (!format_name)
+            return E_OUTOFMEMORY;
+        GetClipboardFormatNameA(clipformat, format_name, length);
+        hr = IStream_Write(stream, format_name, length, NULL);
+        HeapFree(GetProcessHeap(), 0, format_name);
+    }
+    return hr;
 }
 
 /************************************************************************
@@ -414,8 +482,12 @@ static HRESULT DataCacheEntry_OpenPresStream(
 	    {
 		PresentationDataHeader header;
 		ULONG actual_read;
+                CLIPFORMAT clipformat;
 
-		hr = IStream_Read(pStm, &header, sizeof(header), &actual_read);
+                hr = read_clipformat(pStm, &clipformat);
+
+                if (hr == S_OK)
+                    hr = IStream_Read(pStm, &header, sizeof(header), &actual_read);
 
 		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
 		if (hr == S_OK && actual_read == sizeof(header)
@@ -464,11 +536,14 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
 {
   IStream*      presStream = NULL;
   HRESULT       hres;
+  ULARGE_INTEGER current_pos;
   STATSTG       streamInfo;
   void*         metafileBits;
   METAFILEPICT *mfpict;
   HGLOBAL       hmfpict;
   PresentationDataHeader header;
+  CLIPFORMAT    clipformat;
+  static const LARGE_INTEGER offset_zero;
 
   /*
    * Open the presentation stream.
@@ -491,13 +566,27 @@ static HRESULT DataCacheEntry_LoadData(DataCacheEntry *This)
    * Read the header.
    */
 
+  hres = read_clipformat(presStream, &clipformat);
+  if (FAILED(hres))
+  {
+      IStream_Release(presStream);
+      return hres;
+  }
+
   hres = IStream_Read(
                       presStream,
                       &header,
                       sizeof(PresentationDataHeader),
                       NULL);
+  if (hres != S_OK)
+  {
+      IStream_Release(presStream);
+      return E_FAIL;
+  }
 
-  streamInfo.cbSize.QuadPart -= sizeof(PresentationDataHeader);
+  hres = IStream_Seek(presStream, offset_zero, STREAM_SEEK_CUR, &current_pos);
+
+  streamInfo.cbSize.QuadPart -= current_pos.QuadPart;
 
   hmfpict = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
   if (!hmfpict)
@@ -586,11 +675,10 @@ static HRESULT DataCacheEntry_Save(DataCacheEntry *This, IStorage *storage,
     if (FAILED(hr))
         return hr;
 
-    /* custom clipformat */
-    if (This->data_cf >= 0xc000)
-        FIXME("custom clipboard format not serialized properly\n");
-    header.unknown1 = -1;
-    header.clipformat = This->data_cf;
+    hr = write_clipformat(pres_stream, This->data_cf);
+    if (FAILED(hr))
+        return hr;
+
     if (This->fmtetc.ptd)
         FIXME("ptd not serialized\n");
     header.unknown3 = 4;
@@ -1251,10 +1339,15 @@ static HRESULT WINAPI DataCache_Load(
 				     &pStm);
 	    if (SUCCEEDED(hr))
 	    {
-		PresentationDataHeader header;
-		ULONG actual_read;
+                PresentationDataHeader header;
+                ULONG actual_read;
+                CLIPFORMAT clipformat;
 
-		hr = IStream_Read(pStm, &header, sizeof(header), &actual_read);
+                hr = read_clipformat(pStm, &clipformat);
+
+                if (hr == S_OK)
+                    hr = IStream_Read(pStm, &header, sizeof(header),
+                                      &actual_read);
 
 		/* can't use SUCCEEDED(hr): S_FALSE counts as an error */
 		if (hr == S_OK && actual_read == sizeof(header))
@@ -1262,7 +1355,7 @@ static HRESULT WINAPI DataCache_Load(
 		    DataCacheEntry *cache_entry;
 		    FORMATETC fmtetc;
 
-		    fmtetc.cfFormat = header.clipformat;
+		    fmtetc.cfFormat = clipformat;
 		    fmtetc.ptd = NULL; /* FIXME */
 		    fmtetc.dwAspect = header.dvAspect;
 		    fmtetc.lindex = header.lindex;
