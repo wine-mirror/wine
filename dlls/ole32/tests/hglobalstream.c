@@ -79,9 +79,7 @@ static void test_streamonhglobal(IStream *pStream)
     ull.u.HighPart = -1;
     ull.u.LowPart = -1;
     hr = IStream_SetSize(pStream, ull);
-    todo_wine {
     ok(hr == E_OUTOFMEMORY, "IStream_SetSize with large size should have returned E_OUTOFMEMORY instead of 0x%08x\n", hr);
-    }
 }
 
 START_TEST(hglobalstream)

@@ -426,7 +426,7 @@ static HRESULT WINAPI HGLOBALStreamImpl_SetSize(
   supportHandle = GlobalReAlloc(This->supportHandle, libNewSize.u.LowPart, 0);
 
   if (supportHandle == 0)
-    return STG_E_MEDIUMFULL;
+    return E_OUTOFMEMORY;
 
   This->supportHandle = supportHandle;
   This->streamSize.u.LowPart = libNewSize.u.LowPart;
