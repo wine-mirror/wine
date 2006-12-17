@@ -42,15 +42,13 @@ static HRESULT WINAPI IDirect3DVolume9Impl_QueryInterface(LPDIRECT3DVOLUME9 ifac
 
 static ULONG WINAPI IDirect3DVolume9Impl_AddRef(LPDIRECT3DVOLUME9 iface) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
-    IUnknown *containerParent = NULL;
 
     TRACE("(%p)\n", This);
 
-    IWineD3DVolume_GetContainerParent(This->wineD3DVolume, &containerParent);
-    if (containerParent) {
-        /* Forward to the containerParent */
-        TRACE("(%p) : Forwarding to %p\n", This, containerParent);
-        return IUnknown_AddRef(containerParent);
+    if (This->forwardReference) {
+        /* Forward refcounting */
+        TRACE("(%p) : Forwarding to %p\n", This, This->forwardReference);
+        return IUnknown_AddRef(This->forwardReference);
     } else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedIncrement(&This->ref);
@@ -61,15 +59,13 @@ static ULONG WINAPI IDirect3DVolume9Impl_AddRef(LPDIRECT3DVOLUME9 iface) {
 
 static ULONG WINAPI IDirect3DVolume9Impl_Release(LPDIRECT3DVOLUME9 iface) {
     IDirect3DVolume9Impl *This = (IDirect3DVolume9Impl *)iface;
-    IUnknown *containerParent = NULL;
 
     TRACE("(%p)\n", This);
 
-    IWineD3DVolume_GetContainerParent(This->wineD3DVolume, &containerParent);
-    if (containerParent) {
-        /* Forward to the containerParent */
-        TRACE("(%p) : Forwarding to %p\n", This, containerParent);
-        return IUnknown_Release(containerParent);
+    if (This->forwardReference) {
+        /* Forward refcounting */
+        TRACE("(%p) : Forwarding to %p\n", This, This->forwardReference);
+        return IUnknown_Release(This->forwardReference);
     } else {
         /* No container, handle our own refcounting */
         ULONG ref = InterlockedDecrement(&This->ref);
@@ -228,7 +224,18 @@ HRESULT WINAPI D3D9CB_CreateVolume(IUnknown  *pDevice, IUnknown *pSuperior, UINT
         *ppVolume = NULL;
     } else {
         *ppVolume = (IWineD3DVolume *)object->wineD3DVolume;
+        object->forwardReference = pSuperior;
     }
     TRACE("(%p) Created volume %p\n", This, *ppVolume);
     return hrc;
+}
+
+ULONG WINAPI D3D9CB_DestroyVolume(IWineD3DVolume *pVolume) {
+    IDirect3DVolume9Impl* volumeParent;
+
+    IWineD3DVolume_GetParent(pVolume, (IUnknown **) &volumeParent);
+    /* GetParent's AddRef was forwarded to an object in destruction.
+     * Releasing it here again would cause an endless recursion. */
+    volumeParent->forwardReference = NULL;
+    return IDirect3DVolume9_Release((IDirect3DVolume9*) volumeParent);
 }

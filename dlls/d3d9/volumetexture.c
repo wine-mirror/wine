@@ -58,7 +58,7 @@ static ULONG WINAPI IDirect3DVolumeTexture9Impl_Release(LPDIRECT3DVOLUMETEXTURE9
     TRACE("(%p) : ReleaseRef to %d\n", This, ref);
 
     if (ref == 0) {
-        IWineD3DVolumeTexture_Release(This->wineD3DVolumeTexture);
+        IWineD3DVolumeTexture_Destroy(This->wineD3DVolumeTexture, D3D9CB_DestroyVolume);
         IUnknown_Release(This->parentDevice);
         HeapFree(GetProcessHeap(), 0, This);
     }

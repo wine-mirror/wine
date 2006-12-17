@@ -235,7 +235,9 @@ typedef struct IDirect3DVolume9Impl
 
     /* IDirect3DVolume9 fields */
     IWineD3DVolume         *wineD3DVolume;
-    
+
+    /* If set forward refcounting to this object */
+    IUnknown                    *forwardReference;
 } IDirect3DVolume9Impl;
 
 /* ------------------- */
@@ -547,5 +549,7 @@ extern HRESULT WINAPI D3D9CB_CreateRenderTarget(IUnknown *device, IUnknown *pSup
 extern ULONG WINAPI D3D9CB_DestroyDepthStencilSurface (IWineD3DSurface *pSurface);
 
 extern ULONG WINAPI D3D9CB_DestroySurface(IWineD3DSurface *pSurface);
+
+extern ULONG WINAPI D3D9CB_DestroyVolume(IWineD3DVolume *pVolume);
 
 #endif /* __WINE_D3D9_PRIVATE_H */
