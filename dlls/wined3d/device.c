@@ -2189,7 +2189,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     This->renderTarget = NULL;
 
     if (This->depthStencilBuffer) {
-        if(D3DCB_DestroyDepthStencilSurface > 0) {
+        if(D3DCB_DestroyDepthStencilSurface(This->depthStencilBuffer) > 0) {
             FIXME("(%p) Something's still holding the depthStencilBuffer\n", This);
         }
         This->depthStencilBuffer = NULL;
