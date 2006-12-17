@@ -1280,6 +1280,11 @@ RPC_STATUS RPCRT4_OpenClientConnection(RpcConnection* Connection)
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
 {
   TRACE("(Connection == ^%p)\n", Connection);
+  if (SecIsValidHandle(&Connection->ctx))
+  {
+    DeleteSecurityContext(&Connection->ctx);
+    SecInvalidateHandle(&Connection->ctx);
+  }
   rpcrt4_conn_close(Connection);
   return RPC_S_OK;
 }
