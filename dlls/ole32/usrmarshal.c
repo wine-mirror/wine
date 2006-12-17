@@ -44,6 +44,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define ALIGN_LENGTH(_Len, _Align) _Len = ALIGNED_LENGTH(_Len, _Align)
 #define ALIGN_POINTER(_Ptr, _Align) _Ptr = ALIGNED_POINTER(_Ptr, _Align)
 
+#define USER_MARSHAL_PTR_PREFIX \
+  ( (DWORD)'U'         | ( (DWORD)'s' << 8 ) | \
+  ( (DWORD)'e' << 16 ) | ( (DWORD)'r' << 24 ) )
+
 static const char* debugstr_user_flags(ULONG *pFlags)
 {
     char buf[12];
@@ -840,6 +844,204 @@ void __RPC_USER HPALETTE_UserFree(ULONG *pFlags, HPALETTE *phPal)
 
 
 /******************************************************************************
+ *           HMETAFILE_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal a metafile.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phmf         [I] Metafile to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal a metafile plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+ULONG __RPC_USER HMETAFILE_UserSize(ULONG *pFlags, ULONG StartingSize, HMETAFILE *phmf)
+{
+    ULONG size = StartingSize;
+
+    TRACE("(%s, %d, &%p\n", debugstr_user_flags(pFlags), StartingSize, *phmf);
+
+    ALIGN_LENGTH(size, 3);
+
+    size += sizeof(ULONG);
+    if (LOWORD(*pFlags) == MSHCTX_INPROC)
+        size += sizeof(ULONG_PTR);
+    else
+    {
+        size += sizeof(ULONG);
+
+        if (*phmf)
+        {
+            UINT mfsize;
+
+            size += 2 * sizeof(ULONG);
+            mfsize = GetMetaFileBitsEx(*phmf, 0, NULL);
+            size += mfsize;
+        }
+    }
+
+    return size;
+}
+
+/******************************************************************************
+ *           HMETAFILE_UserMarshal [OLE32.@]
+ *
+ * Marshals a metafile into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  phEmf   [I] Metafile to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+unsigned char * __RPC_USER HMETAFILE_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HMETAFILE *phmf)
+{
+    TRACE("(%s, %p, &%p\n", debugstr_user_flags(pFlags), pBuffer, *phmf);
+
+    ALIGN_POINTER(pBuffer, 3);
+
+    if (LOWORD(*pFlags) == MSHCTX_INPROC)
+    {
+        if (sizeof(*phmf) == 8)
+            *(ULONG *)pBuffer = WDT_INPROC64_CALL;
+        else
+            *(ULONG *)pBuffer = WDT_INPROC_CALL;
+        pBuffer += sizeof(ULONG);
+        *(HMETAFILE *)pBuffer = *phmf;
+        pBuffer += sizeof(HMETAFILE);
+    }
+    else
+    {
+        *(ULONG *)pBuffer = WDT_REMOTE_CALL;
+        pBuffer += sizeof(ULONG);
+        *(ULONG *)pBuffer = (ULONG)(ULONG_PTR)*phmf;
+        pBuffer += sizeof(ULONG);
+
+        if (*phmf)
+        {
+            UINT mfsize = GetMetaFileBitsEx(*phmf, 0, NULL);
+
+            *(ULONG *)pBuffer = mfsize;
+            pBuffer += sizeof(ULONG);
+            *(ULONG *)pBuffer = mfsize;
+            pBuffer += sizeof(ULONG);
+            GetMetaFileBitsEx(*phmf, mfsize, pBuffer);
+            pBuffer += mfsize;
+        }
+    }
+
+    return pBuffer;
+}
+
+/******************************************************************************
+ *           HMETAFILE_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals a metafile from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phmf     [O] Address that receive the unmarshaled metafile.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+unsigned char * __RPC_USER HMETAFILE_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HMETAFILE *phmf)
+{
+    ULONG fContext;
+
+    TRACE("(%s, %p, %p\n", debugstr_user_flags(pFlags), pBuffer, phmf);
+
+    ALIGN_POINTER(pBuffer, 3);
+
+    fContext = *(ULONG *)pBuffer;
+    pBuffer += sizeof(ULONG);
+
+    if (((fContext == WDT_INPROC_CALL) && (sizeof(*phmf) < 8)) ||
+        ((fContext == WDT_INPROC64_CALL) && (sizeof(*phmf) == 8)))
+    {
+        *phmf = *(HMETAFILE *)pBuffer;
+        pBuffer += sizeof(*phmf);
+    }
+    else if (fContext == WDT_REMOTE_CALL)
+    {
+        ULONG handle;
+
+        handle = *(ULONG *)pBuffer;
+        pBuffer += sizeof(ULONG);
+
+        if (handle)
+        {
+            ULONG size;
+            size = *(ULONG *)pBuffer;
+            pBuffer += sizeof(ULONG);
+            if (size != *(ULONG *)pBuffer)
+            {
+                RaiseException(RPC_X_BAD_STUB_DATA, 0, 0, NULL);
+                return pBuffer;
+            }
+            pBuffer += sizeof(ULONG);
+            *phmf = SetMetaFileBitsEx(size, pBuffer);
+            pBuffer += size;
+        }
+        else
+            *phmf = NULL;
+    }
+    else
+        RaiseException(RPC_S_INVALID_TAG, 0, 0, NULL);
+
+    return pBuffer;
+}
+
+/******************************************************************************
+ *           HMETAFILE_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled metafile.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phmf     [I] Metafile to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+void __RPC_USER HMETAFILE_UserFree(ULONG *pFlags, HMETAFILE *phmf)
+{
+    TRACE("(%s, &%p\n", debugstr_user_flags(pFlags), *phmf);
+
+    if (LOWORD(*pFlags) != MSHCTX_INPROC)
+        DeleteMetaFile(*phmf);
+}
+
+/******************************************************************************
 *           HENHMETAFILE_UserSize [OLE32.@]
 *
 * Calculates the buffer size required to marshal an enhanced metafile.
@@ -1032,6 +1234,202 @@ void __RPC_USER HENHMETAFILE_UserFree(ULONG *pFlags, HENHMETAFILE *phEmf)
 }
 
 /******************************************************************************
+ *           HMETAFILEPICT_UserSize [OLE32.@]
+ *
+ * Calculates the buffer size required to marshal an metafile pict.
+ *
+ * PARAMS
+ *  pFlags       [I] Flags. See notes.
+ *  StartingSize [I] Starting size of the buffer. This value is added on to
+ *                   the buffer size required for the clip format.
+ *  phMfp        [I] Metafile pict to size.
+ *
+ * RETURNS
+ *  The buffer size required to marshal a metafile pict plus the starting size.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+ULONG __RPC_USER HMETAFILEPICT_UserSize(ULONG *pFlags, ULONG StartingSize, HMETAFILEPICT *phMfp)
+{
+    ULONG size = StartingSize;
+
+    TRACE("(%s, %d, &%p)\n", debugstr_user_flags(pFlags), StartingSize, *phMfp);
+
+    size += sizeof(ULONG);
+    size += sizeof(HMETAFILEPICT);
+
+    if ((LOWORD(*pFlags) != MSHCTX_INPROC) && *phMfp)
+    {
+        METAFILEPICT *mfpict = GlobalLock(*phMfp);
+
+        /* FIXME: raise an exception if mfpict is NULL? */
+        size += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+        size += sizeof(ULONG);
+
+        size = HMETAFILE_UserSize(pFlags, size, &mfpict->hMF);
+
+        GlobalUnlock(*phMfp);
+    }
+
+    return size;
+}
+
+/******************************************************************************
+ *           HMETAFILEPICT_UserMarshal [OLE32.@]
+ *
+ * Marshals a metafile pict into a buffer.
+ *
+ * PARAMS
+ *  pFlags  [I] Flags. See notes.
+ *  pBuffer [I] Buffer to marshal the clip format into.
+ *  phMfp   [I] Metafile pict to marshal.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+unsigned char * __RPC_USER HMETAFILEPICT_UserMarshal(ULONG *pFlags, unsigned char *pBuffer, HMETAFILEPICT *phMfp)
+{
+    TRACE("(%s, %p, &%p)\n", debugstr_user_flags(pFlags), pBuffer, *phMfp);
+
+    if (LOWORD(*pFlags) == MSHCTX_INPROC)
+        *(ULONG *)pBuffer = WDT_INPROC_CALL;
+    else
+        *(ULONG *)pBuffer = WDT_REMOTE_CALL;
+    pBuffer += sizeof(ULONG);
+
+    *(HMETAFILEPICT *)pBuffer = *phMfp;
+    pBuffer += sizeof(HMETAFILEPICT);
+
+    if ((LOWORD(*pFlags) != MSHCTX_INPROC) && *phMfp)
+    {
+        METAFILEPICT *mfpict = GlobalLock(*phMfp);
+        remoteMETAFILEPICT * remmfpict = (remoteMETAFILEPICT *)pBuffer;
+
+        /* FIXME: raise an exception if mfpict is NULL? */
+        remmfpict->mm = mfpict->mm;
+        remmfpict->xExt = mfpict->xExt;
+        remmfpict->yExt = mfpict->yExt;
+        pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+        *(ULONG *)pBuffer = USER_MARSHAL_PTR_PREFIX;
+        pBuffer += sizeof(ULONG);
+
+        pBuffer = HMETAFILE_UserMarshal(pFlags, pBuffer, &mfpict->hMF);
+
+        GlobalUnlock(*phMfp);
+    }
+
+    return pBuffer;
+}
+
+/******************************************************************************
+ *           HMETAFILEPICT_UserUnmarshal [OLE32.@]
+ *
+ * Unmarshals an metafile pict from a buffer.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  pBuffer  [I] Buffer to marshal the clip format from.
+ *  phMfp    [O] Address that receive the unmarshaled metafile pict.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to an ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of which
+ *  the first parameter is an ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+unsigned char * __RPC_USER HMETAFILEPICT_UserUnmarshal(ULONG *pFlags, unsigned char *pBuffer, HMETAFILEPICT *phMfp)
+{
+    ULONG fContext;
+
+    TRACE("(%s, %p, %p)\n", debugstr_user_flags(pFlags), pBuffer, phMfp);
+
+    fContext = *(ULONG *)pBuffer;
+    pBuffer += sizeof(ULONG);
+
+    if ((fContext == WDT_INPROC_CALL) || !*(HMETAFILEPICT *)pBuffer)
+    {
+        *phMfp = *(HMETAFILEPICT *)pBuffer;
+        pBuffer += sizeof(HMETAFILEPICT);
+    }
+    else
+    {
+        METAFILEPICT *mfpict;
+        const remoteMETAFILEPICT *remmfpict;
+        ULONG user_marshal_prefix;
+
+        pBuffer += sizeof(HMETAFILEPICT);
+        remmfpict = (const remoteMETAFILEPICT *)pBuffer;
+
+        *phMfp = GlobalAlloc(GMEM_MOVEABLE, sizeof(METAFILEPICT));
+        if (!*phMfp)
+            RpcRaiseException(E_OUTOFMEMORY);
+
+        mfpict = GlobalLock(*phMfp);
+        mfpict->mm = remmfpict->mm;
+        mfpict->xExt = remmfpict->xExt;
+        mfpict->yExt = remmfpict->yExt;
+        pBuffer += FIELD_OFFSET(remoteMETAFILEPICT, hMF);
+        user_marshal_prefix = *(ULONG *)pBuffer;
+        pBuffer += sizeof(ULONG);
+
+        if (user_marshal_prefix != USER_MARSHAL_PTR_PREFIX)
+            RpcRaiseException(RPC_X_INVALID_TAG);
+
+        pBuffer = HMETAFILE_UserUnmarshal(pFlags, pBuffer, &mfpict->hMF);
+
+        GlobalUnlock(*phMfp);
+    }
+
+    return pBuffer;
+}
+
+/******************************************************************************
+ *           HMETAFILEPICT_UserFree [OLE32.@]
+ *
+ * Frees an unmarshaled metafile pict.
+ *
+ * PARAMS
+ *  pFlags   [I] Flags. See notes.
+ *  phMfp    [I] Metafile pict to free.
+ *
+ * RETURNS
+ *  The end of the marshaled data in the buffer.
+ *
+ * NOTES
+ *  Even though the function is documented to take a pointer to a ULONG in
+ *  pFlags, it actually takes a pointer to a USER_MARSHAL_CB structure, of
+ *  which the first parameter is a ULONG.
+ *  This function is only intended to be called by the RPC runtime.
+ */
+void __RPC_USER HMETAFILEPICT_UserFree(ULONG *pFlags, HMETAFILEPICT *phMfp)
+{
+    TRACE("(%s, &%p)\n", debugstr_user_flags(pFlags), *phMfp);
+
+    if ((LOWORD(*pFlags) == MSHCTX_INPROC) && *phMfp)
+    {
+        METAFILEPICT *mfpict;
+
+        mfpict = GlobalLock(*phMfp);
+        /* FIXME: raise an exception if mfpict is NULL? */
+
+        GlobalUnlock(*phMfp);
+    }
+}
+
+/******************************************************************************
 *           STGMEDIUM_UserSize [OLE32.@]
 *
 * Calculates the buffer size required to marshal an STGMEDIUM.
@@ -1085,7 +1483,8 @@ ULONG __RPC_USER STGMEDIUM_UserSize(ULONG *pFlags, ULONG StartingSize, STGMEDIUM
         FIXME("TYMED_GDI\n");
         break;
     case TYMED_MFPICT:
-        FIXME("TYMED_MFPICT\n");
+        TRACE("TYMED_MFPICT\n");
+        size = HMETAFILEPICT_UserSize(pFlags, size, &pStgMedium->u.hMetaFilePict);
         break;
     case TYMED_ENHMF:
         TRACE("TYMED_ENHMF\n");
@@ -1158,7 +1557,8 @@ unsigned char * __RPC_USER STGMEDIUM_UserMarshal(ULONG *pFlags, unsigned char *p
         FIXME("TYMED_GDI\n");
         break;
     case TYMED_MFPICT:
-        FIXME("TYMED_MFPICT\n");
+        TRACE("TYMED_MFPICT\n");
+        pBuffer = HMETAFILEPICT_UserMarshal(pFlags, pBuffer, &pStgMedium->u.hMetaFilePict);
         break;
     case TYMED_ENHMF:
         TRACE("TYMED_ENHMF\n");
@@ -1234,7 +1634,8 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
         FIXME("TYMED_GDI\n");
         break;
     case TYMED_MFPICT:
-        FIXME("TYMED_MFPICT\n");
+        TRACE("TYMED_MFPICT\n");
+        pBuffer = HMETAFILEPICT_UserUnmarshal(pFlags, pBuffer, &pStgMedium->u.hMetaFilePict);
         break;
     case TYMED_ENHMF:
         TRACE("TYMED_ENHMF\n");

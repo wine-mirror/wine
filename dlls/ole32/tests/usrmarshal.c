@@ -29,6 +29,11 @@
 
 #include "wine/test.h"
 
+ULONG __RPC_USER HMETAFILE_UserSize(ULONG *, unsigned long, HMETAFILE *);
+unsigned char * __RPC_USER HMETAFILE_UserMarshal(ULONG *, unsigned char *, HMETAFILE *);
+unsigned char * __RPC_USER HMETAFILE_UserUnmarshal(ULONG *, unsigned char *, HMETAFILE *);
+void __RPC_USER HMETAFILE_UserFree(ULONG *, HMETAFILE *);
+
 static const char cf_marshaled[] =
 {
     0x9, 0x0, 0x0, 0x0,
@@ -213,6 +218,154 @@ static void test_marshal_HENHMETAFILE(void)
     HENHMETAFILE_UserFree(&flags, &hemf2);
 }
 
+static HMETAFILE create_mf(void)
+{
+    RECT rect = {0, 0, 100, 100};
+    HDC hdc = CreateMetaFile(NULL);
+    ExtTextOut(hdc, 0, 0, ETO_OPAQUE, &rect, "Test String", strlen("Test String"), NULL);
+    return CloseMetaFile(hdc);
+}
+
+static void test_marshal_HMETAFILE(void)
+{
+    unsigned char *buffer;
+    ULONG size;
+    ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+    HMETAFILE hmf;
+    HMETAFILE hmf2 = NULL;
+    unsigned char *wirehmf;
+
+    hmf = create_mf();
+
+    size = HMETAFILE_UserSize(&flags, 0, &hmf);
+    ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
+    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    HMETAFILE_UserMarshal(&flags, buffer, &hmf);
+    wirehmf = buffer;
+    ok(*(DWORD *)wirehmf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+    ok(*(DWORD *)wirehmf == (DWORD)(DWORD_PTR)hmf, "wirestgm + 0x4 should be hmf instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+    ok(*(DWORD *)wirehmf == (size - 0x10), "wirestgm + 0x8 should be size - 0x10 instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+    ok(*(DWORD *)wirehmf == (size - 0x10), "wirestgm + 0xc should be size - 0x10 instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+    ok(*(WORD *)wirehmf == 1, "wirestgm + 0x10 should be 1 instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+    /* ... rest of data not tested - refer to tests for GetMetaFileBits
+     * at this point */
+
+    HMETAFILE_UserUnmarshal(&flags, buffer, &hmf2);
+    ok(hmf2 != NULL, "HMETAFILE didn't unmarshal\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+    HMETAFILE_UserFree(&flags, &hmf2);
+    DeleteMetaFile(hmf);
+
+    /* test NULL emf */
+    hmf = NULL;
+
+    size = HMETAFILE_UserSize(&flags, 0, &hmf);
+    ok(size == 8, "size should be 8 bytes, not %d\n", size);
+    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    HMETAFILE_UserMarshal(&flags, buffer, &hmf);
+    wirehmf = buffer;
+    ok(*(DWORD *)wirehmf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+    ok(*(DWORD *)wirehmf == (DWORD)(DWORD_PTR)hmf, "wirestgm + 0x4 should be hmf instead of 0x%08x\n", *(DWORD *)wirehmf);
+    wirehmf += sizeof(DWORD);
+
+    HMETAFILE_UserUnmarshal(&flags, buffer, &hmf2);
+    ok(hmf2 == NULL, "NULL HMETAFILE didn't unmarshal\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+    HMETAFILE_UserFree(&flags, &hmf2);
+}
+
+#define USER_MARSHAL_PTR_PREFIX \
+  ( (DWORD)'U'         | ( (DWORD)'s' << 8 ) | \
+  ( (DWORD)'e' << 16 ) | ( (DWORD)'r' << 24 ) )
+
+static void test_marshal_HMETAFILEPICT(void)
+{
+    unsigned char *buffer;
+    ULONG size;
+    ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
+    HMETAFILEPICT hmfp;
+    HMETAFILEPICT hmfp2 = NULL;
+    METAFILEPICT *pmfp;
+    unsigned char *wirehmfp;
+
+    hmfp = GlobalAlloc(GMEM_MOVEABLE, sizeof(*pmfp));
+    pmfp = GlobalLock(hmfp);
+    pmfp->mm = MM_ISOTROPIC;
+    pmfp->xExt = 1;
+    pmfp->yExt = 2;
+    pmfp->hMF = create_mf();
+    GlobalUnlock(hmfp);
+
+    size = HMETAFILEPICT_UserSize(&flags, 0, &hmfp);
+    ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
+    trace("size is %d\n", size);
+    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    HMETAFILEPICT_UserMarshal(&flags, buffer, &hmfp);
+    wirehmfp = buffer;
+    ok(*(DWORD *)wirehmfp == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == (DWORD)(DWORD_PTR)hmfp, "wirestgm + 0x4 should be hmf instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == MM_ISOTROPIC, "wirestgm + 0x8 should be MM_ISOTROPIC instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == 1, "wirestgm + 0xc should be 1 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == 2, "wirestgm + 0x10 should be 2 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == USER_MARSHAL_PTR_PREFIX, "wirestgm + 0x14 should be \"User\" instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == WDT_REMOTE_CALL, "wirestgm + 0x18 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    pmfp = GlobalLock(hmfp);
+    ok(*(DWORD *)wirehmfp == (DWORD)(DWORD_PTR)pmfp->hMF, "wirestgm + 0x1c should be pmfp->hMF instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    GlobalUnlock(hmfp);
+    wirehmfp += sizeof(DWORD);
+    todo_wine {
+    ok(*(DWORD *)wirehmfp == (size - 0x34), "wirestgm + 0x20 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == (size - 0x34), "wirestgm + 0x24 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    }
+    ok(*(WORD *)wirehmfp == 1, "wirehmfp + 0x28 should be 1 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    /* ... rest of data not tested - refer to tests for GetMetaFileBits
+     * at this point */
+
+    HMETAFILEPICT_UserUnmarshal(&flags, buffer, &hmfp2);
+    ok(hmfp2 != NULL, "HMETAFILEPICT didn't unmarshal\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+    HMETAFILEPICT_UserFree(&flags, &hmfp2);
+    pmfp = GlobalLock(hmfp);
+    DeleteMetaFile(pmfp->hMF);
+    GlobalUnlock(hmfp);
+    GlobalFree(hmfp);
+
+    /* test NULL emf */
+    hmfp = NULL;
+
+    size = HMETAFILEPICT_UserSize(&flags, 0, &hmfp);
+    ok(size == 8, "size should be 8 bytes, not %d\n", size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    HMETAFILEPICT_UserMarshal(&flags, buffer, &hmfp);
+    wirehmfp = buffer;
+    ok(*(DWORD *)wirehmfp == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+    ok(*(DWORD *)wirehmfp == (DWORD)(DWORD_PTR)hmfp, "wirestgm + 0x4 should be hmf instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    wirehmfp += sizeof(DWORD);
+
+    hmfp2 = NULL;
+    HMETAFILEPICT_UserUnmarshal(&flags, buffer, &hmfp2);
+    ok(hmfp2 == NULL, "NULL HMETAFILE didn't unmarshal\n");
+    HeapFree(GetProcessHeap(), 0, buffer);
+    HMETAFILEPICT_UserFree(&flags, &hmfp2);
+}
+
 START_TEST(usrmarshal)
 {
     CoInitialize(NULL);
@@ -221,6 +374,8 @@ START_TEST(usrmarshal)
     test_marshal_HWND();
     test_marshal_HGLOBAL();
     test_marshal_HENHMETAFILE();
+    test_marshal_HMETAFILE();
+    test_marshal_HMETAFILEPICT();
 
     CoUninitialize();
 }
