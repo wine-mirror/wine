@@ -185,6 +185,14 @@ START_TEST(loader)
           0,
           ERROR_SUCCESS
         },
+#if 0 /* not power of 2 alignments need more test cases */
+        { &dos_header, sizeof(dos_header),
+          0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 0x300, 0x300,
+          1,
+          0,
+          ERROR_BAD_EXE_FORMAT /* alignment is not power of 2 */
+        },
+#endif
         { &dos_header, sizeof(dos_header),
           0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum), 4, 4,
           1,
@@ -210,6 +218,14 @@ START_TEST(loader)
           0x200,
           ERROR_SUCCESS
         },
+        /* Minimal PE image that XP is able to load: 92 bytes */
+        { &dos_header, 0x04,
+          0, FIELD_OFFSET(IMAGE_OPTIONAL_HEADER, CheckSum),
+          0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
+          1,
+          0,
+          ERROR_SUCCESS
+        }
     };
     static const char filler[0x1000];
     static const char section_data[0x10] = "section data";
@@ -412,7 +428,7 @@ todo_wine {
             ok(FreeLibrary(hlib), "FreeLibrary error %d\n", GetLastError());
         }
         else
-        {   /* LoadLibrary has failed */
+        {   /* LoadLibrary is expected to fail */
             ok(!hlib, "%d: LoadLibrary should fail\n", i);
 
             if (GetLastError() == ERROR_GEN_FAILURE) /* Win9x, broken behaviour */
