@@ -973,18 +973,25 @@ static void test_caborder(void)
 START_TEST(install)
 {
     DWORD len;
+    char temp_path[MAX_PATH], prev_path[MAX_PATH];
 
-    get_program_files_dir(PROG_FILES_DIR);
+    GetCurrentDirectoryA(MAX_PATH, prev_path);
+    GetTempPath(MAX_PATH, temp_path);
+    SetCurrentDirectoryA(temp_path);
 
-    GetCurrentDirectoryA(MAX_PATH, CURR_DIR);
+    lstrcpyA(CURR_DIR, temp_path);
     len = lstrlenA(CURR_DIR);
 
-    if(len && (CURR_DIR[len-1] == '\\'))
+    if(len && (CURR_DIR[len - 1] == '\\'))
         CURR_DIR[len - 1] = 0;
+
+    get_program_files_dir(PROG_FILES_DIR);
 
     test_MsiInstallProduct();
     test_MsiSetComponentState();
     test_packagecoltypes();
     test_continuouscabs();
     test_caborder();
+
+    SetCurrentDirectoryA(prev_path);
 }
