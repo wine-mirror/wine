@@ -608,7 +608,7 @@ static	void	dump_dir_imported_functions(void)
 
 	printf("  offset %08lx %s\n", Offset(importDesc), (const char*)RVA(importDesc->Name, sizeof(DWORD)));
 	printf("  Hint/Name Table: %08X\n", (DWORD)importDesc->u.OriginalFirstThunk);
-	printf("  TimeDataStamp:   %08X (%s)\n",
+	printf("  TimeDateStamp:   %08X (%s)\n",
 	       importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 	printf("  ForwarderChain:  %08X\n", importDesc->ForwarderChain);
 	printf("  First thunk RVA: %08X\n", (DWORD)importDesc->FirstThunk);
@@ -673,7 +673,7 @@ static void dump_dir_delay_imported_functions(void)
         printf("  grAttrs %08x offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
                use_rva ? (const char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
         printf("  Hint/Name Table: %08x\n", importDesc->pINT);
-        printf("  TimeDataStamp:   %08X (%s)\n",
+        printf("  TimeDateStamp:   %08X (%s)\n",
                importDesc->dwTimeStamp, get_time_str(importDesc->dwTimeStamp));
 
         printf("  Ordn  Name\n");
