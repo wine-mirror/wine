@@ -825,17 +825,11 @@ static void create_cc_test_files(void)
                       get_temp_file, &cabParams, cab_context);
     ok(hfci != NULL, "Failed to create an FCI context\n");
 
-    /* spews out hundreds of cab files.  re-enable when cabinet.dll is fixed */
-#if 0
     res = add_file(hfci, "maximus", tcompTYPE_MSZIP);
     ok(res, "Failed to add file maximus\n");
 
     res = add_file(hfci, "augustus", tcompTYPE_MSZIP);
-    todo_wine
-    {
-        ok(res, "Failed to add file augustus\n");
-    }
-#endif
+    ok(res, "Failed to add file augustus\n");
 
     res = FCIFlushCabinet(hfci, FALSE, get_next_cabinet, progress);
     ok(res, "Failed to flush the cabinet\n");
@@ -850,6 +844,23 @@ static void create_cc_test_files(void)
     DeleteFile("caesar");
 }
 
+static void delete_cab_files(void)
+{
+    SHFILEOPSTRUCT shfl;
+    CHAR path[MAX_PATH];
+
+    lstrcpyA(path, CURR_DIR);
+    lstrcatA(path, "\\*.cab\0");
+
+    shfl.hwnd = NULL;
+    shfl.wFunc = FO_DELETE;
+    shfl.pFrom = (LPCSTR)path;
+    shfl.pTo = NULL;
+    shfl.fFlags = FOF_FILESONLY | FOF_NOCONFIRMATION | FOF_NORECURSION | FOF_SILENT;
+
+    SHFileOperation(&shfl);
+}
+
 static void test_continuouscabs(void)
 {
     UINT r;
@@ -860,22 +871,16 @@ static void test_continuouscabs(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-    }
-
-    todo_wine
-    {
-        ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     }
-    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    DeleteFile("test1.cab");
-    DeleteFile("test2.cab");
-    DeleteFile("test3.cab");
+    delete_cab_files();
     DeleteFile(msifile);
 }
 
@@ -902,13 +907,11 @@ static void test_caborder(void)
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
     todo_wine
     {
-    	ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
-    	ok(!delete_pf("msitest", FALSE), "File is installed\n");
+        ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
+        ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
 
-    DeleteFile("test1.cab");
-    DeleteFile("test2.cab");
-    DeleteFile("test3.cab");
+    delete_cab_files();
 
     create_cab_file("test1.cab", MEDIA_SIZE, "imperator\0");
     create_cab_file("test2.cab", MEDIA_SIZE, "maximus\0augustus\0");
@@ -921,12 +924,10 @@ static void test_caborder(void)
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
     todo_wine
     {
-    	ok(!delete_pf("msitest", FALSE), "File is installed\n");
+        ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
 
-    DeleteFile("test1.cab");
-    DeleteFile("test2.cab");
-    DeleteFile("test3.cab");
+    delete_cab_files();
     DeleteFile(msifile);
 
     create_cc_test_files();
@@ -934,17 +935,15 @@ static void test_caborder(void)
 
     r = MsiInstallProductA(msifile, NULL);
     ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
-    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
+    ok(!delete_pf("msitest", FALSE), "File is installed\n");
     todo_wine
     {
+        ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
         ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
-        ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
 
-    DeleteFile("test1.cab");
-    DeleteFile("test2.cab");
-    DeleteFile("test3.cab");
+    delete_cab_files();
     DeleteFile(msifile);
 
     create_cc_test_files();
@@ -952,17 +951,15 @@ static void test_caborder(void)
 
     r = MsiInstallProductA(msifile, NULL);
     ok(!delete_pf("msitest\\augustus", TRUE), "File is installed\n");
-    ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
     ok(!delete_pf("msitest\\caesar", TRUE), "File is installed\n");
     todo_wine
     {
         ok(r == ERROR_INSTALL_FAILURE, "Expected ERROR_INSTALL_FAILURE, got %u\n", r);
+        ok(!delete_pf("msitest\\maximus", TRUE), "File is installed\n");
         ok(!delete_pf("msitest", FALSE), "File is installed\n");
     }
 
-    DeleteFile("test1.cab");
-    DeleteFile("test2.cab");
-    DeleteFile("test3.cab");
+    delete_cab_files();
     DeleteFile("imperator");
     DeleteFile("maximus");
     DeleteFile("augustus");
