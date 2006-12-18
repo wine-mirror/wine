@@ -614,6 +614,16 @@ void msi_dialog_handle_event( msi_dialog* dialog, LPCWSTR control,
         MSIFEATURE *feature = msi_seltree_get_selected_feature( ctrl );
         MSI_SetPropertyW( dialog->package, ctrl->property, feature->Directory );
     }
+    else if ( !lstrcmpW(attribute, szSelectionPath) )
+    {
+        LPWSTR prop = msi_dialog_dup_property( dialog, ctrl->property, TRUE );
+        LPWSTR path;
+        if (!prop) return;
+        path = msi_dup_property( dialog->package, prop );
+        SetWindowTextW( ctrl->hwnd, path );
+        msi_free(prop);
+        msi_free(path);
+    }
     else
     {
         FIXME("Attribute %s not being set\n", debugstr_w(attribute));
@@ -730,7 +740,7 @@ static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     msi_control *control;
     struct msi_text_info *info;
-    LPCWSTR text, ptr;
+    LPCWSTR text, ptr, prop;
     LPWSTR font_name;
 
     TRACE("%p %p\n", dialog, rec);
@@ -742,6 +752,10 @@ static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
     info = msi_alloc( sizeof *info );
     if( !info )
         return ERROR_SUCCESS;
+
+    control->attributes = MSI_RecordGetInteger( rec, 8 );
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
 
     text = MSI_RecordGetString( rec, 10 );
     font_name = msi_dialog_get_style( text, &ptr );
@@ -755,6 +769,9 @@ static UINT msi_dialog_text_control( msi_dialog *dialog, MSIRECORD *rec )
     info->oldproc = (WNDPROC) SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
                                           (LONG_PTR)MSIText_WndProc );
     SetPropW( control->hwnd, szButtonData, info );
+
+    ControlEvent_SubscribeToEvent( dialog->package, dialog,
+                                   szSelectionPath, control->name, szSelectionPath );
 
     return ERROR_SUCCESS;
 }
