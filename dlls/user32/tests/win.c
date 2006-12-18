@@ -2501,6 +2501,15 @@ static void test_mouse_input(HWND hwnd)
     GetCursorPos(&pt);
     ok(x == pt.x && y == pt.y, "wrong cursor pos (%d,%d), expected (%d,%d)\n", pt.x, pt.y, x, y);
 
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    /* Check that setting the same position will generate WM_MOUSEMOVE */
+    SetCursorPos(x, y);
+    msg.message = 0;
+    ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "no message available\n");
+    ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE, "hwnd %p message %04x\n", msg.hwnd, msg.message);
+    ok(msg.pt.x == x && msg.pt.y == y, "wrong message coords (%d,%d)/(%d,%d)\n", x, y, msg.pt.x, msg.pt.y);
+
     /* force the system to update its internal queue mouse position,
      * otherwise it won't generate relative mouse movements below.
      */

@@ -70,6 +70,7 @@ static const UINT button_up_flags[NB_BUTTONS] =
 };
 
 POINT cursor_pos;
+static DWORD last_time_modified;
 
 BOOL X11DRV_SetCursorPos( INT x, INT y );
 
@@ -190,6 +191,7 @@ static void queue_raw_mouse_message( UINT message, HWND hwnd, DWORD x, DWORD y,
     hook.time        = time;
     hook.dwExtraInfo = extra_info;
 
+    last_time_modified = GetTickCount();
     if (HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, message, (LPARAM)&hook, TRUE )) return;
 
     SERVER_START_REQ( send_hardware_message )
@@ -685,6 +687,14 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
     TRACE( "warping to (%d,%d)\n", x, y );
 
     wine_tsx11_lock();
+    if (cursor_pos.x == x && cursor_pos.y == y)
+    {
+        wine_tsx11_unlock();
+        /* We still need to generate WM_MOUSEMOVE */
+        queue_raw_mouse_message( WM_MOUSEMOVE, NULL, x, y, 0, GetCurrentTime(), 0, 0 );
+        return TRUE;
+    }
+
     XWarpPointer( display, root_window, root_window, 0, 0, 0, 0,
                   x - virtual_screen_rect.left, y - virtual_screen_rect.top );
     XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
@@ -705,7 +715,8 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
     unsigned int xstate;
 
     wine_tsx11_lock();
-    if (XQueryPointer( display, root_window, &root, &child,
+    if ((GetTickCount() - last_time_modified > 100) &&
+        XQueryPointer( display, root_window, &root, &child,
                        &rootX, &rootY, &winX, &winY, &xstate ))
     {
         update_button_state( xstate );
