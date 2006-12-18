@@ -39,8 +39,8 @@
 @ stdcall GetAssemblyMDImport(ptr ptr ptr)
 @ stub GetCORRequiredVersion
 @ stub GetCORRootDirectory
-@ stub GetCORSystemDirectory
-@ stdcall GetCORVersion(wstr long ptr)
+@ stdcall GetCORSystemDirectory(ptr long ptr)
+@ stdcall GetCORVersion(ptr long ptr)
 @ stub GetCompileInfo
 @ stub GetFileVersion
 @ stub GetHashFromAssemblyFile

@@ -192,6 +192,18 @@ DWORD _CorValidateImage(LPCVOID* imageBase, LPCWSTR imageName)
     return E_FAIL;
 }
 
+HRESULT WINAPI GetCORSystemDirectory(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
+{
+    FIXME("(%p, %d, %p): stub!\n", pbuffer, cchBuffer, dwLength);
+
+    if (!dwLength)
+        return E_POINTER;
+
+    *dwLength = 0;
+
+    return S_OK;
+}
+
 HRESULT WINAPI GetCORVersion(LPWSTR pbuffer, DWORD cchBuffer, DWORD *dwLength)
 {
     static const WCHAR version[] = {'v','1','.','1','.','4','3','2','2',0};
