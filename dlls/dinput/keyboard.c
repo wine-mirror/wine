@@ -316,12 +316,13 @@ static HRESULT WINAPI SysKeyboardAImpl_EnumObjects(
     memset(&ddoi, 0, sizeof(ddoi));
     ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
 
-    for (i = 0; i < WINE_DINPUT_KEYBOARD_MAX_KEYS; i++) {
-        /* Report 255 keys :-) */
+    for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
+    {
+        if (!GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName)))
+            continue;
         ddoi.guidType = GUID_Key;
 	ddoi.dwOfs = i;
 	ddoi.dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_BUTTON;
-	GetKeyNameTextA(((i & 0x7f) << 16) | ((i & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName));
 	_dump_OBJECTINSTANCEA(&ddoi);
 	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
     }
@@ -452,7 +453,8 @@ SysKeyboardAImpl_GetObjectInfo(
     ddoi.guidType = GUID_Key;
     ddoi.dwOfs = dwObj;
     ddoi.dwType = DIDFT_MAKEINSTANCE(dwObj) | DIDFT_BUTTON;
-    GetKeyNameTextA(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName));
+    if (!GetKeyNameTextA(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName)))
+        return DIERR_OBJECTNOTFOUND;
 
     /* And return our just filled device object instance structure */
     memcpy(pdidoi, &ddoi, (dwSize < sizeof(ddoi) ? dwSize : sizeof(ddoi)));
@@ -485,7 +487,8 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
     ddoi.guidType = GUID_Key;
     ddoi.dwOfs = dwObj;
     ddoi.dwType = DIDFT_MAKEINSTANCE(dwObj) | DIDFT_BUTTON;
-    GetKeyNameTextW(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName));
+    if (!GetKeyNameTextW(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName)))
+        return DIERR_OBJECTNOTFOUND;
 
     /* And return our just filled device object instance structure */
     memcpy(pdidoi, &ddoi, (dwSize < sizeof(ddoi) ? dwSize : sizeof(ddoi)));
