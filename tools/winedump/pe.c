@@ -412,7 +412,7 @@ void dump_section(const IMAGE_SECTION_HEADER *sectHead)
 
         switch (sectHead->Characteristics & IMAGE_SCN_ALIGN_MASK)
         {
-#define X2(b,s)	case b: printf("  " s); break;
+#define X2(b,s)	case b: printf("  " s); break
         X2(IMAGE_SCN_ALIGN_1BYTES, 		"ALIGN_1BYTES");
         X2(IMAGE_SCN_ALIGN_2BYTES, 		"ALIGN_2BYTES");
         X2(IMAGE_SCN_ALIGN_4BYTES, 		"ALIGN_4BYTES");
