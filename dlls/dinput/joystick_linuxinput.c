@@ -975,6 +975,7 @@ static HRESULT WINAPI JoystickAImpl_EnumObjects(
     TRACE("\n");
   }
 
+  memset(&ddoi, 0, sizeof(ddoi));
   /* Only the fields till dwFFMaxForce are relevant */
   ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
 
