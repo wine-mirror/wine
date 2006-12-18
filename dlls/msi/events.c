@@ -54,6 +54,7 @@ struct subscriber {
 };
 
 UINT ControlEvent_HandleControlEvent(MSIPACKAGE *, LPCWSTR, LPCWSTR, msi_dialog*);
+static VOID ControlEvent_CleanupDialogSubscriptions(MSIPACKAGE *package, LPWSTR dialog);
 
 /*
  * Create a dialog box and run it if it's modal
@@ -123,7 +124,7 @@ static UINT ControlEvent_EndDialog(MSIPACKAGE* package, LPCWSTR argument,
         package->CurrentInstallState = ERROR_FUNCTION_FAILED;
     }
 
-    ControlEvent_CleanupSubscriptions(package);
+    ControlEvent_CleanupDialogSubscriptions(package, msi_dialog_get_name( dialog ));
     msi_dialog_end_dialog( dialog );
     return ERROR_SUCCESS;
 }
@@ -317,6 +318,23 @@ VOID ControlEvent_FireSubscribedEvent( MSIPACKAGE *package, LPCWSTR event,
             continue;
         msi_dialog_handle_event( sub->dialog, sub->control,
                                  sub->attribute, rec );
+    }
+}
+
+static VOID ControlEvent_CleanupDialogSubscriptions(MSIPACKAGE *package, LPWSTR dialog)
+{
+    struct list *i, *t;
+    struct subscriber *sub;
+
+    LIST_FOR_EACH_SAFE( i, t, &package->subscriptions )
+    {
+        sub = LIST_ENTRY( i, struct subscriber, entry );
+
+        if ( lstrcmpW( msi_dialog_get_name( sub->dialog ), dialog ))
+            continue;
+
+        list_remove( &sub->entry );
+        free_subscriber( sub );
     }
 }
 
