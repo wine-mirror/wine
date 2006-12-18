@@ -876,6 +876,25 @@ HRESULT WINAPI IDirectInputDevice2AImpl_SetProperty(
 
     switch (LOWORD(rguid))
     {
+        case (DWORD) DIPROP_AXISMODE:
+        {
+            LPCDIPROPDWORD pd = (LPCDIPROPDWORD)pdiph;
+
+            if (pdiph->dwSize != sizeof(DIPROPDWORD)) return DIERR_INVALIDPARAM;
+            if (pdiph->dwHow == DIPH_DEVICE && pdiph->dwObj) return DIERR_INVALIDPARAM;
+            if (This->acquired) return DIERR_ACQUIRED;
+            if (pdiph->dwHow != DIPH_DEVICE) return DIERR_UNSUPPORTED;
+
+            TRACE("Axis mode: %s\n", pd->dwData == DIPROPAXISMODE_ABS ? "absolute" :
+                                                                        "relative");
+
+            EnterCriticalSection(&This->crit);
+            This->data_format.user_df->dwFlags &= ~DIDFT_AXIS;
+            This->data_format.user_df->dwFlags |= pd->dwData == DIPROPAXISMODE_ABS ?
+                                                  DIDF_ABSAXIS : DIDF_RELAXIS;
+            LeaveCriticalSection(&This->crit);
+            break;
+        }
         case (DWORD) DIPROP_BUFFERSIZE:
         {
             LPCDIPROPDWORD pd = (LPCDIPROPDWORD)pdiph;
