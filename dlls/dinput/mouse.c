@@ -80,7 +80,6 @@ struct SysMouseImpl
     IDirectInputImpl               *dinput;
     
     /* SysMouseAImpl */
-    BYTE                            absolute;
     /* Previous position for relative moves */
     LONG			    prevX, prevY;
     /* These are used in case of relative -> absolute transitions */
@@ -300,7 +299,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     dwCoop = This->base.dwCoopLevel;
 
     if (wparam == WM_MOUSEMOVE) {
-	if (This->absolute) {
+	if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS) {
 	    if (hook->pt.x != This->prevX)
                 queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_X_POSITION],
                             hook->pt.x, hook->time, This->dinput->evsequence);
@@ -345,7 +344,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	This->prevX = hook->pt.x;
 	This->prevY = hook->pt.y;
 	
-	if (This->absolute) {
+	if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS) {
 	    This->m_state.lX = hook->pt.x;
 	    This->m_state.lY = hook->pt.y;
 	} else {
@@ -355,7 +354,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     }
     
     TRACE(" msg %x pt %d %d (W=%d)\n",
-          wparam, hook->pt.x, hook->pt.y, (!This->absolute) && This->need_warp );
+          wparam, hook->pt.x, hook->pt.y, !(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS) && This->need_warp );
     
     switch(wparam) {
         case WM_LBUTTONDOWN:
@@ -454,7 +453,8 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     
     /* Init the mouse state */
     GetCursorPos( &point );
-    if (This->absolute) {
+    if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
+    {
       This->m_state.lX = point.x;
       This->m_state.lY = point.y;
       This->prevX = point.x;
@@ -480,7 +480,8 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     This->win_centerY = (rect.bottom - rect.top ) / 2;
     
     /* Warp the mouse to the center of the window */
-    if (This->absolute == 0) {
+    if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
+    {
       This->mapped_center.x = This->win_centerX;
       This->mapped_center.y = This->win_centerY;
       MapWindowPoints(This->base.win, HWND_DESKTOP, &This->mapped_center, 1);
@@ -521,7 +522,8 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
       ERR("this(%p) != current_lock(%p)\n", This, current_lock);
 
     /* And put the mouse cursor back where it was at acquire time */
-    if (This->absolute == 0) {
+    if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
+    {
       TRACE(" warping mouse back to (%d , %d)\n", This->org_coords.x, This->org_coords.y);
       SetCursorPos(This->org_coords.x, This->org_coords.y);
     }
@@ -552,7 +554,8 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
     fill_DataFormat(ptr, &(This->m_state), &This->base.data_format);
     
     /* Initialize the buffer when in relative mode */
-    if (This->absolute == 0) {
+    if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
+    {
 	This->m_state.lX = 0;
 	This->m_state.lY = 0;
 	This->m_state.lZ = 0;
@@ -608,33 +611,6 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 #endif
     }
     return res;
-}
-
-/******************************************************************************
-  *     SetProperty : change input device properties
-  */
-static HRESULT WINAPI SysMouseAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
-					    REFGUID rguid,
-					    LPCDIPROPHEADER ph)
-{
-    SysMouseImpl *This = (SysMouseImpl *)iface;
-    
-    TRACE("(this=%p,%s,%p)\n",This,debugstr_guid(rguid),ph);
-    
-    if (!HIWORD(rguid)) {
-	switch (LOWORD(rguid)) {
-	    case (DWORD) DIPROP_AXISMODE: {
-		LPCDIPROPDWORD    pd = (LPCDIPROPDWORD)ph;
-		This->absolute = !(pd->dwData);
-		TRACE("Using %s coordinates mode now\n", This->absolute ? "absolute" : "relative");
-		break;
-	    }
-	    default:
-                return IDirectInputDevice2AImpl_SetProperty(iface, rguid, ph);
-	}
-    }
-    
-    return DI_OK;
 }
 
 /******************************************************************************
@@ -858,7 +834,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     SysMouseAImpl_GetCapabilities,
     SysMouseAImpl_EnumObjects,
     SysMouseAImpl_GetProperty,
-    SysMouseAImpl_SetProperty,
+    IDirectInputDevice2AImpl_SetProperty,
     SysMouseAImpl_Acquire,
     SysMouseAImpl_Unacquire,
     SysMouseAImpl_GetDeviceState,
@@ -900,7 +876,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     XCAST(GetCapabilities)SysMouseAImpl_GetCapabilities,
     SysMouseWImpl_EnumObjects,
     XCAST(GetProperty)SysMouseAImpl_GetProperty,
-    XCAST(SetProperty)SysMouseAImpl_SetProperty,
+    XCAST(SetProperty)IDirectInputDevice2AImpl_SetProperty,
     XCAST(Acquire)SysMouseAImpl_Acquire,
     XCAST(Unacquire)SysMouseAImpl_Unacquire,
     XCAST(GetDeviceState)SysMouseAImpl_GetDeviceState,
