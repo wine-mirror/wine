@@ -1290,7 +1290,7 @@ static void test_message_filter(void)
     ok_more_than_one_lock();
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
-    todo_wine { ok(hr == RPC_E_CALL_REJECTED, "Call should have returned RPC_E_CALL_REJECTED, but return 0x%08x instead\n", hr); }
+    ok(hr == RPC_E_CALL_REJECTED, "Call should have returned RPC_E_CALL_REJECTED, but return 0x%08x instead\n", hr);
     if (proxy) IUnknown_Release(proxy);
     proxy = NULL;
 

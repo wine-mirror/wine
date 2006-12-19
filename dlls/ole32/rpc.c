@@ -931,12 +931,14 @@ static HRESULT unmarshal_ORPCTHIS(RPC_MESSAGE *msg, ORPCTHIS *orpcthis,
 
 void RPC_ExecuteCall(struct dispatch_params *params)
 {
-    struct message_state *message_state;
+    struct message_state *message_state = NULL;
     RPC_MESSAGE *msg = (RPC_MESSAGE *)params->msg;
     char *original_buffer = msg->Buffer;
     ORPCTHIS orpcthis;
     ORPC_EXTENT_ARRAY orpc_ext_array;
     WIRE_ORPC_EXTENT *first_wire_orpc_extent;
+
+    /* handle ORPCTHIS and server extensions */
 
     params->hr = unmarshal_ORPCTHIS(msg, &orpcthis, &orpc_ext_array, &first_wire_orpc_extent);
     if (params->hr != S_OK)
@@ -966,6 +968,41 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     msg->Handle = message_state;
     msg->BufferLength -= message_state->prefix_data_len;
 
+    /* call message filter */
+
+    if (COM_CurrentApt()->filter)
+    {
+        DWORD handlecall;
+        INTERFACEINFO interface_info;
+
+        interface_info.pUnk = NULL; /* FIXME */
+        interface_info.iid = IID_NULL; /* FIXME */
+        interface_info.wMethod = msg->ProcNum;
+        handlecall = IMessageFilter_HandleInComingCall(COM_CurrentApt()->filter,
+                                                       CALLTYPE_TOPLEVEL /* FIXME */,
+                                                       (HTASK)GetCurrentProcessId(),
+                                                       0 /* FIXME */,
+                                                       &interface_info);
+        TRACE("IMessageFilter_HandleInComingCall returned %d\n", handlecall);
+        switch (handlecall)
+        {
+        case SERVERCALL_REJECTED:
+            params->hr = RPC_E_CALL_REJECTED;
+            goto exit;
+        case SERVERCALL_RETRYLATER:
+#if 0 /* FIXME: handle retries on the client side before enabling this code */
+            params->hr = RPC_E_RETRY;
+            goto exit;
+#else
+            FIXME("retry call later not implemented\n");
+            break;
+#endif
+        case SERVERCALL_ISHANDLED:
+        default:
+            break;
+        }
+    }
+
     /* invoke the method */
 
     params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
@@ -974,9 +1011,9 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     msg->Handle = message_state->binding_handle;
     msg->Buffer = (char *)msg->Buffer - message_state->prefix_data_len;
     msg->BufferLength += message_state->prefix_data_len;
-    HeapFree(GetProcessHeap(), 0, message_state);
 
 exit:
+    HeapFree(GetProcessHeap(), 0, message_state);
     IRpcStubBuffer_Release(params->stub);
     IRpcChannelBuffer_Release(params->chan);
     if (params->handle) SetEvent(params->handle);
