@@ -5871,6 +5871,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
         stencil buffer and incure an extra memory overhead */
         hr = IWineD3DDeviceImpl_ActiveRender(iface, pRenderTarget);
+
+        /* Replace the render target */
+        if (This->render_targets[RenderTargetIndex]) IWineD3DSurface_Release(This->render_targets[RenderTargetIndex]);
+        This->render_targets[RenderTargetIndex] = pRenderTarget;
+        if (pRenderTarget) IWineD3DSurface_AddRef(pRenderTarget);
+
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
             set_render_target_fbo(iface, pRenderTarget);
         }
@@ -6350,13 +6356,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     } else {
         /* Same context, but update render_offscreen and cull mode */
         device_render_to_texture(This, TRUE);
-    }
-
-    /* Replace the render target */
-    if (This->render_targets[0] != RenderSurface) {
-        IWineD3DSurface_Release(This->render_targets[0]);
-        This->render_targets[0] = RenderSurface;
-        IWineD3DSurface_AddRef(RenderSurface);
     }
 
     if (cfgs != NULL)                   XFree(cfgs);
