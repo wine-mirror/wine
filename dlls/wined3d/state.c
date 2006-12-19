@@ -1895,7 +1895,7 @@ const struct StateEntry StateTable[] =
     { /*0, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*0, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(0, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*0, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*1, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*1, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1928,7 +1928,7 @@ const struct StateEntry StateTable[] =
     { /*1, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*1, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(1, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*1, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*2, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*2, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1961,7 +1961,7 @@ const struct StateEntry StateTable[] =
     { /*2, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*2, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(2, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*2, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*3, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*3, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1994,7 +1994,7 @@ const struct StateEntry StateTable[] =
     { /*3, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*3, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(3, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*3, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*4, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*4, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2027,7 +2027,7 @@ const struct StateEntry StateTable[] =
     { /*4, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*4, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(4, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*4, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*5, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*5, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2060,7 +2060,7 @@ const struct StateEntry StateTable[] =
     { /*5, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*5, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(5, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*5, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*6, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*6, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2093,7 +2093,7 @@ const struct StateEntry StateTable[] =
     { /*6, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*6, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(6, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*6, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 
     { /*7, 01, WINED3DTSS_COLOROP                   */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*7, 02, WINED3DTSS_COLORARG1                 */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2126,5 +2126,5 @@ const struct StateEntry StateTable[] =
     { /*7, 29, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 30, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
-    { /*7, 32, WINED3DTSS_CONSTANT                  */      STATE_TEXTURESTAGE(7, WINED3DTSS_CONSTANT),         state_undefined     },
+    { /*7, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
 };
