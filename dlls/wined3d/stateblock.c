@@ -756,7 +756,8 @@ should really perform a delta so that only the changes get updated*/
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.samplerState[j][i] = TRUE;
                 }
             }
-
+            /* SetTexture catches nop changes, so the above call does not assure that the sampler is updated */
+            IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_SAMPLER(j));
         }
 
     } else if (This->blockType == WINED3DSBT_PIXELSTATE) {
