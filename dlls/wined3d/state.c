@@ -1626,6 +1626,19 @@ static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    union {
+        DWORD d;
+        float f;
+    } tmpvalue;
+
+    tmpvalue.d = stateblock->textureState[stage][WINED3DTSS_BUMPENVLOFFSET];
+    if(tmpvalue.f != 0.0) {
+        ERR("WINED3DTSS_BUMPENVLOFFSET not supported yet\n");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1865,7 +1878,7 @@ const struct StateEntry StateTable[] =
     { /*0, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*0, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*0, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*0, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(0, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*0, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1898,7 +1911,7 @@ const struct StateEntry StateTable[] =
     { /*1, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*1, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*1, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*1, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(1, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*1, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1931,7 +1944,7 @@ const struct StateEntry StateTable[] =
     { /*2, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*2, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*2, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*2, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(2, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*2, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1964,7 +1977,7 @@ const struct StateEntry StateTable[] =
     { /*3, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*3, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*3, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*3, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(3, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*3, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -1997,7 +2010,7 @@ const struct StateEntry StateTable[] =
     { /*4, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*4, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*4, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*4, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(4, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*4, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2030,7 +2043,7 @@ const struct StateEntry StateTable[] =
     { /*5, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*5, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*5, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*5, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(5, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*5, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2063,7 +2076,7 @@ const struct StateEntry StateTable[] =
     { /*6, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*6, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*6, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*6, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(6, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*6, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
@@ -2096,7 +2109,7 @@ const struct StateEntry StateTable[] =
     { /*7, 20, WINED3DTSS_MAXMIPLEVEL               */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
-    { /*7, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLOFFSET),   state_undefined     },
+    { /*7, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
     { /*7, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TEXTURESTAGE(7, WINED3DTSS_TEXTURETRANSFORMFLAGS), state_undefined},
     { /*7, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
