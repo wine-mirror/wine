@@ -1845,126 +1845,6 @@ inline void drawPrimitiveTraceDataLocations(
 
 }
 
-static void drawPrimitiveUploadTexturesPS(IWineD3DDeviceImpl* This) {
-    INT i;
-
-    for (i = 0; i < GL_LIMITS(samplers); ++i) {
-        /* Pixel shader support should imply multitexture support. */
-        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-            checkGLcall("glActiveTextureARB");
-        } else if (i) {
-            WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-        }
-
-        if (!This->stateBlock->textures[i]) continue;
-
-        /* Enable the correct target. Is this required for GLSL? For ARB_fragment_program it isn't, afaik. */
-        glDisable(GL_TEXTURE_1D);
-        This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
-        switch(This->stateBlock->textureDimensions[i]) {
-            case GL_TEXTURE_2D:
-                glDisable(GL_TEXTURE_3D);
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                break;
-            case GL_TEXTURE_3D:
-                glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                glDisable(GL_TEXTURE_2D);
-                break;
-            case GL_TEXTURE_CUBE_MAP_ARB:
-                glDisable(GL_TEXTURE_2D);
-                glDisable(GL_TEXTURE_3D);
-                break;
-        }
-        glEnable(This->stateBlock->textureDimensions[i]);
-
-        /* Upload texture, apply states */
-        IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
-        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, i, REAPPLY_ALPHAOP);
-        IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
-    }
-}
-
-/* uploads textures and setup texture states ready for rendering */
-static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
-    INT current_sampler = 0;
-    float constant_color[4];
-    unsigned int i;
-
-    /* ARB_texture_env_combine is limited to GL_MAX_TEXTURE_UNITS stages. On
-     * nVidia cards GL_MAX_TEXTURE_UNITS is generally not larger than 4.
-     * Register combiners however provide up to 8 combiner stages. In order to
-     * take advantage of this, we need to be separate D3D texture stages from
-     * GL texture units. When using register combiners GL_MAX_TEXTURE_UNITS
-     * corresponds to MaxSimultaneousTextures and GL_MAX_GENERAL_COMBINERS_NV
-     * corresponds to MaxTextureBlendStages in the caps. */
-
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], constant_color);
-        GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &constant_color[0]));
-    }
-
-    for (i = 0; i < GL_LIMITS(texture_stages); ++i) {
-        INT texture_idx = -1;
-
-        /* WINED3DTOP_DISABLE disables the current & any higher texture stages */
-        if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) break;
-
-        if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[i]*/ TRUE) {
-            texture_idx = current_sampler++;
-
-            /* Active the texture unit corresponding to the current texture stage */
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
-                checkGLcall("glActiveTextureARB");
-            } else if (i) {
-                WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-            }
-        }
-
-        if (This->stateBlock->textures[i]) {
-            /* Enable the correct target. This has to stay here until samplers are moved over to the state table */
-            glDisable(GL_TEXTURE_1D);
-            This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
-            switch(This->stateBlock->textureDimensions[i]) {
-                case GL_TEXTURE_2D:
-                    glDisable(GL_TEXTURE_3D);
-                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                    break;
-                case GL_TEXTURE_3D:
-                    glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-                    glDisable(GL_TEXTURE_2D);
-                    break;
-                case GL_TEXTURE_CUBE_MAP_ARB:
-                    glDisable(GL_TEXTURE_2D);
-                    glDisable(GL_TEXTURE_3D);
-                    break;
-            }
-
-            /* imply GL_SUPPORT(NV_TEXTURE_SHADER) when setting texture_shader_active */
-            if (This->texture_shader_active && This->stateBlock->textureDimensions[i] == GL_TEXTURE_2D) {
-                glTexEnvi(GL_TEXTURE_SHADER_NV, GL_SHADER_OPERATION_NV, GL_TEXTURE_2D);
-            } else {
-                glEnable(This->stateBlock->textureDimensions[i]);
-            }
-
-            /* Upload texture, apply states */
-            IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) This->stateBlock->textures[i]);
-            IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)This, i, texture_idx, REAPPLY_ALPHAOP);
-            IWineD3DBaseTexture_ApplyStateChanges(This->stateBlock->textures[i], This->stateBlock->textureState[i], This->stateBlock->samplerState[i]);
-        } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-            /* ARB_texture_env_combine needs a valid texture bound to the
-             * texture unit, even if it isn't used. Bind a dummy texture. */
-            glDisable(GL_TEXTURE_2D);
-            glDisable(GL_TEXTURE_3D);
-            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-            glEnable(GL_TEXTURE_1D);
-            This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
-            glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
-        }
-    }
-}
-
 static void check_fbo_status(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -2169,12 +2049,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* Now initialize the materials state */
     init_materials(iface, (dataLocations->u.s.diffuse.lpData != NULL || dataLocations->u.s.diffuse.VBO != 0));
-
-    if (usePixelShaderFunction) {
-        drawPrimitiveUploadTexturesPS(This);
-    } else {
-        drawPrimitiveUploadTextures(This);
-    }
 
     {
         GLenum glPrimType;

@@ -798,7 +798,8 @@ typedef struct IWineD3DBaseTextureClass
     UINT                    LOD;
     WINED3DTEXTUREFILTERTYPE filterType;
     DWORD                   states[MAX_WINETEXTURESTATES];
-
+    LONG                    bindCount;
+    DWORD                   sampler;
 } IWineD3DBaseTextureClass;
 
 typedef struct IWineD3DBaseTextureImpl

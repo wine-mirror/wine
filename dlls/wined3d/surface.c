@@ -1119,10 +1119,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     }
 
     if (0 == This->resource.usage) { /* classic surface */
-        /**
-         * nothing to do
-         * waiting to reload the surface via IDirect3DDevice8::UpdateTexture
+        IWineD3DBaseTextureImpl *impl;
+        /* Check if the texture is bound, if yes dirtify the sampler to force a re-upload of the texture
+         * Can't load the texture here because PreLoad may destroy and recreate the gl texture, so sampler
+         * states need resetting
          */
+        if(IWineD3DSurface_GetContainer(iface, &IID_IWineD3DBaseTexture, (void **)&impl) == WINED3D_OK) {
+            if(impl->baseTexture.bindCount) {
+                IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_SAMPLER(impl->baseTexture.sampler));
+            }
+            IWineD3DBaseTexture_Release((IWineD3DBaseTexture *) impl);
+        }
     } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) { /* render surfaces */
 
         /****************************
@@ -1158,6 +1165,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + tex));
                     checkGLcall("glActiveTextureARB");
                 }
+                IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(tex));
                 glDisable(GL_TEXTURE_2D);
                 checkGLcall("glDisable GL_TEXTURE_2D");
                 glDisable(GL_TEXTURE_1D);
@@ -1168,6 +1176,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
                 checkGLcall("glActiveTextureARB");
             }
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
 
             /* And back buffers are not blended. Disable the depth test, 
                that helps performance */
@@ -2394,6 +2403,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             /* Unbind the old texture */
             glBindTexture(GL_TEXTURE_2D, 0);
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
 
             if (GL_SUPPORT(ARB_MULTITEXTURE)) {
             /* We use texture unit 0 for blts */

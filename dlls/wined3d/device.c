@@ -3401,6 +3401,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
         return WINED3D_OK;
     }
 
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(Sampler));
+
     return WINED3D_OK;
 }
 
@@ -3681,6 +3683,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
 
     if (NULL != pShader) {
         IWineD3DPixelShader_AddRef(pShader);
+        if(oldShader == NULL) {
+            /* Fixed function color ops deactivate the texture dimensions from the first stage which has colorop = disable
+             * Pixel shaders require that this is enabled, so dirtify all samplers, they will enable the dimensions.
+             * do not dirtify the colorop - it won't do anything when a ashader is bound
+             * This is temporary until pixel shaders are handled by the state table too
+             */
+            int i;
+            for(i = 0; i < MAX_SAMPLERS; i++) {
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
+            }
+        }
     }
     if (NULL != oldShader) {
         IWineD3DPixelShader_Release(oldShader);
@@ -4471,6 +4484,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
             WARN("(%p) Attempt to set scratch texture rejected\n", pTexture);
             return WINED3DERR_INVALIDCALL;
         }
+        This->stateBlock->textureDimensions[Stage] = IWineD3DBaseTexture_GetTextureDimensions(pTexture);
     }
 
     oldTexture = This->updateStateBlock->textures[Stage];
@@ -4493,6 +4507,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     * This means we should pass the refcount up to the parent
      *******************************/
     if (NULL != This->updateStateBlock->textures[Stage]) {
+        IWineD3DBaseTextureImpl *new = (IWineD3DBaseTextureImpl *) This->updateStateBlock->textures[Stage];
+        ULONG bindCount = InterlockedIncrement(&new->baseTexture.bindCount);
+
         IWineD3DBaseTexture_AddRef(This->updateStateBlock->textures[Stage]);
         if(oldTexture == NULL) {
             /* The source arguments for color and alpha ops have different meanings when a NULL texture is bound,
@@ -4501,22 +4518,39 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_COLOROP));
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_ALPHAOP));
         }
+        if(bindCount == 1) {
+            new->baseTexture.sampler = Stage;
+        }
+        /* More than one assignment? Doesn't matter, we only need one gl texture unit to use for uploading */
+
     }
 
     if (NULL != oldTexture) {
+        IWineD3DBaseTextureImpl *old = (IWineD3DBaseTextureImpl *) oldTexture;
+        LONG bindCount = InterlockedDecrement(&old->baseTexture.bindCount);
+
         IWineD3DBaseTexture_Release(oldTexture);
         if(pTexture == NULL) {
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_COLOROP));
             IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_ALPHAOP));
         }
+
+        if(bindCount && old->baseTexture.sampler == Stage) {
+            int i;
+            /* Have to do a search for the other sampler(s) where the texture is bound to
+             * Shouldn't happen as long as apps bind a texture only to one stage
+             */
+            TRACE("Searcing for other sampler / stage id where the texture is bound to\n");
+            for(i = 0; i < GL_LIMITS(sampler_stages); i++) {
+                if(This->updateStateBlock->textures[i] == oldTexture) {
+                    old->baseTexture.sampler = i;
+                    break;
+                }
+            }
+        }
     }
 
-    /* Color keying is affected by the texture. Temporarily mark the color key state (=alpha test)
-     * dirty until textures are integrated with the state management
-     */
-    if(Stage == 0 && This->stateBlock->renderState[WINED3DRS_COLORKEYENABLE]) {
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_COLORKEYENABLE));
-    }
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(Stage));
 
     return WINED3D_OK;
 }

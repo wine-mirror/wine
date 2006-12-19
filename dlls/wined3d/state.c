@@ -517,6 +517,8 @@ static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
             glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
             checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
         }
+    } else {
+        GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
     }
 }
 
@@ -1647,6 +1649,64 @@ static void tex_resultarg(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    DWORD sampler = state - STATE_SAMPLER(0);
+
+    TRACE("Sampler: %d\n", sampler);
+    /* Enabling and disabling texture dimensions is done by texture stage state / pixel shader setup, this function
+     * only has to bind textures and set the per texture states
+     */
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        /* TODO: register combiners! */
+        if(sampler >= GL_LIMITS(sampler_stages)) {
+            return;
+        }
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + sampler));
+        checkGLcall("glActiveTextureARB");
+    } else if (sampler > 0) {
+        /* We can't do anything here */
+        WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+        return;
+    }
+
+    if(stateblock->textures[sampler]) {
+        IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) stateblock->textures[sampler]);
+        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)stateblock->wineD3DDevice, sampler, sampler, REAPPLY_ALPHAOP);
+        IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
+
+        if (stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader &&
+            ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function) {
+            /* Using a pixel shader? Verify the sampler types */
+
+            /* Make sure that the texture dimensions are enabled. I don't have to disable the other
+             * dimensions because the shader knows from which texture type to sample from. For the sake of
+             * debugging all dimensions could be enabled and a texture with some ugly pink bound to the unused
+             * dimensions. This should make wrong sampling sources visible :-)
+             */
+            glEnable(stateblock->textureDimensions[sampler]);
+            checkGLcall("glEnable(stateblock->textureDimensions[sampler])");
+        } else if(sampler < stateblock->lowest_disabled_stage) {
+            activate_dimensions(sampler, stateblock);
+
+            if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
+                /* If color keying is enabled update the alpha test, it depends on the existance
+                 * of a color key in stage 0
+                 */
+                state_alpha(WINED3DRS_COLORKEYENABLE, stateblock);
+            }
+        }
+    } else if(sampler < GL_LIMITS(texture_stages)) {
+        if(sampler < stateblock->lowest_disabled_stage) {
+            /* TODO: Check if the colorop is dirty to do that job
+             * TODO: What should I do with pixel shaders here ???
+             */
+            activate_dimensions(sampler, stateblock);
+        } /* Otherwise tex_colorop disables the stage */
+        glBindTexture(GL_TEXTURE_1D, stateblock->wineD3DDevice->dummyTextureName[sampler]);
+        checkGLcall("glBindTexture(GL_TEXTURE_1D, stateblock->wineD3DDevice->dummyTextureName[sampler])");
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -2128,20 +2188,20 @@ const struct StateEntry StateTable[] =
     { /*7, 31, undefined                            */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 32, WINED3DTSS_CONSTANT                  */      0 /* As long as we don't support D3DTA_CONSTANT */, state_nogl          },
     /* Sampler states */
-    { /* 0, Sampler 0                               */      STATE_SAMPLER(0),                                   state_undefined     },
-    { /* 1, Sampler 1                               */      STATE_SAMPLER(1),                                   state_undefined     },
-    { /* 2, Sampler 2                               */      STATE_SAMPLER(2),                                   state_undefined     },
-    { /* 3, Sampler 3                               */      STATE_SAMPLER(3),                                   state_undefined     },
-    { /* 4, Sampler 3                               */      STATE_SAMPLER(4),                                   state_undefined     },
-    { /* 5, Sampler 5                               */      STATE_SAMPLER(5),                                   state_undefined     },
-    { /* 6, Sampler 6                               */      STATE_SAMPLER(6),                                   state_undefined     },
-    { /* 7, Sampler 7                               */      STATE_SAMPLER(7),                                   state_undefined     },
-    { /* 8, Sampler 8                               */      STATE_SAMPLER(8),                                   state_undefined     },
-    { /* 9, Sampler 9                               */      STATE_SAMPLER(9),                                   state_undefined     },
-    { /*10, Sampler 10                              */      STATE_SAMPLER(10),                                  state_undefined     },
-    { /*11, Sampler 11                              */      STATE_SAMPLER(11),                                  state_undefined     },
-    { /*12, Sampler 12                              */      STATE_SAMPLER(12),                                  state_undefined     },
-    { /*13, Sampler 13                              */      STATE_SAMPLER(13),                                  state_undefined     },
-    { /*14, Sampler 14                              */      STATE_SAMPLER(14),                                  state_undefined     },
-    { /*15, Sampler 15                              */      STATE_SAMPLER(15),                                  state_undefined     },
+    { /* 0, Sampler 0                               */      STATE_SAMPLER(0),                                   sampler             },
+    { /* 1, Sampler 1                               */      STATE_SAMPLER(1),                                   sampler             },
+    { /* 2, Sampler 2                               */      STATE_SAMPLER(2),                                   sampler             },
+    { /* 3, Sampler 3                               */      STATE_SAMPLER(3),                                   sampler             },
+    { /* 4, Sampler 3                               */      STATE_SAMPLER(4),                                   sampler             },
+    { /* 5, Sampler 5                               */      STATE_SAMPLER(5),                                   sampler             },
+    { /* 6, Sampler 6                               */      STATE_SAMPLER(6),                                   sampler             },
+    { /* 7, Sampler 7                               */      STATE_SAMPLER(7),                                   sampler             },
+    { /* 8, Sampler 8                               */      STATE_SAMPLER(8),                                   sampler             },
+    { /* 9, Sampler 9                               */      STATE_SAMPLER(9),                                   sampler             },
+    { /*10, Sampler 10                              */      STATE_SAMPLER(10),                                  sampler             },
+    { /*11, Sampler 11                              */      STATE_SAMPLER(11),                                  sampler             },
+    { /*12, Sampler 12                              */      STATE_SAMPLER(12),                                  sampler             },
+    { /*13, Sampler 13                              */      STATE_SAMPLER(13),                                  sampler             },
+    { /*14, Sampler 14                              */      STATE_SAMPLER(14),                                  sampler             },
+    { /*15, Sampler 15                              */      STATE_SAMPLER(15),                                  sampler             },
 };
