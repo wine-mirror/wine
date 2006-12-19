@@ -3684,6 +3684,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
     }
     if (NULL != oldShader) {
         IWineD3DPixelShader_Release(oldShader);
+        if(pShader == NULL) {
+            /* Fixed function pipeline color args conflict with pixel shader setup, so we do not apply them when a pshader is
+             * bound. Due to that we have to reapply all color ops when disabling pixel shaders.
+             * When pixel shaders are handled by the state table too, the pshader function will take care for that, and this
+             * will also handle draw -> SetPixelShader(NULL) -> SetPixelShader(!= NULL) -> draw cases better
+             */
+            int i;
+            for(i = 0; i < MAX_TEXTURES; i++) {
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+            }
+        }
     }
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
@@ -4482,6 +4493,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    DWORD oldColorOp = This->updateStateBlock->textureState[Stage][WINED3DTSS_COLOROP];
 
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
 
@@ -4496,6 +4508,59 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
     This->updateStateBlock->set.textureState[Stage][Type]     = TRUE;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
+
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return WINED3D_OK;
+    }
+
+    if(Stage > This->stateBlock->lowest_disabled_stage &&
+       StateTable[STATE_TEXTURESTAGE(0, Type)].representative == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP)) {
+        /* Colorop change above lowest disabled stage? That won't change anything in the gl setup
+         * Changes in other states are important on disabled stages too
+         */
+        return WINED3D_OK;
+    }
+
+    if(Type == WINED3DTSS_COLOROP) {
+        int i;
+
+        if(Value == WINED3DTOP_DISABLE && oldColorOp != WINED3DTOP_DISABLE) {
+            /* Previously enabled stage disabled now. Make sure to dirtify all enabled stages above Stage,
+             * they have to be disabled
+             *
+             * The current stage is dirtified below.
+             */
+            for(i = Stage + 1; i < This->stateBlock->lowest_disabled_stage; i++) {
+                TRACE("Additionally dirtifying stage %d\n", i);
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+            }
+            This->stateBlock->lowest_disabled_stage = Stage;
+            TRACE("New lowest disabled: %d\n", Stage);
+        } else if(Value != WINED3DTOP_DISABLE && oldColorOp == WINED3DTOP_DISABLE) {
+            /* Previously disabled stage enabled. Stages above it may need enabling
+             * stage must be lowest_disabled_stage here, if it's bigger success is returned above,
+             * and stages below the lowest disabled stage can't be enabled(because they are enabled already).
+             *
+             * Again stage Stage doesn't need to be dirtified here, it is handled below.
+             */
+
+            for(i = Stage + 1; i < GL_LIMITS(texture_stages); i++) {
+                if(This->updateStateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
+                    break;
+                }
+                TRACE("Additionally dirtifying stage %d due to enable\n", i);
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
+            }
+            This->stateBlock->lowest_disabled_stage = i;
+            TRACE("New lowest disabled: %d\n", i);
+        }
+        if(GL_SUPPORT(NV_REGISTER_COMBINERS) && !This->stateBlock->pixelShader) {
+            /* TODO: Built a stage -> texture unit mapping for register combiners */
+        }
+    }
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, Type));
 
     return WINED3D_OK;
 }
@@ -4561,10 +4626,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
      *******************************/
     if (NULL != This->updateStateBlock->textures[Stage]) {
         IWineD3DBaseTexture_AddRef(This->updateStateBlock->textures[Stage]);
+        if(oldTexture == NULL) {
+            /* The source arguments for color and alpha ops have different meanings when a NULL texture is bound,
+             * so the COLOROP has to be dirtified.(Alphaop is not in the state table yet)
+             */
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_COLOROP));
+        }
     }
 
     if (NULL != oldTexture) {
         IWineD3DBaseTexture_Release(oldTexture);
+        if(pTexture == NULL) {
+            IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, WINED3DTSS_COLOROP));
+        }
     }
 
     /* Color keying is affected by the texture. Temporarily mark the color key state (=alpha test)

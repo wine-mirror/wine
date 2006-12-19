@@ -1203,6 +1203,7 @@ struct IWineD3DStateBlockImpl
 
     /* Texture State Stage */
     DWORD                     textureState[MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    DWORD                     lowest_disabled_stage;
     /* Sampler States */
     DWORD                     samplerState[MAX_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
 

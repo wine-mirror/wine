@@ -737,6 +737,8 @@ should really perform a delta so that only the changes get updated*/
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][i]         = This->textureState[j][i];
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->set.textureState[j][i]     = TRUE;
                     ((IWineD3DDeviceImpl *)pDevice)->stateBlock->changed.textureState[j][i] = TRUE;
+                    /* TODO: Record a display list to apply all gl states. For now apply by brute force */
+                    IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_TEXTURESTAGE(j, i));
                 }
             }
         }
@@ -768,6 +770,7 @@ should really perform a delta so that only the changes get updated*/
         for (j = 0; j < GL_LIMITS(texture_stages); j++) {
             for (i = 0; i < NUM_SAVEDPIXELSTATES_T; i++) {
                 ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][SavedPixelStates_T[i]] = This->textureState[j][SavedPixelStates_T[i]];
+                IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_TEXTURESTAGE(j, SavedPixelStates_T[i]));
             }
         }
 
@@ -787,6 +790,7 @@ should really perform a delta so that only the changes get updated*/
         for (j = 0; j < GL_LIMITS(texture_stages); j++) {
             for (i = 0; i < NUM_SAVEDVERTEXSTATES_T; i++) {
                 ((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][SavedVertexStates_T[i]] = This->textureState[j][SavedVertexStates_T[i]];
+                IWineD3DDeviceImpl_MarkStateDirty((IWineD3DDeviceImpl *)pDevice, STATE_TEXTURESTAGE(j, SavedVertexStates_T[i]));
             }
         }
 
@@ -801,6 +805,13 @@ should really perform a delta so that only the changes get updated*/
         FIXME("Unrecognized state block type %d\n", This->blockType);
     }
     stateblock_savedstates_copy(iface, &((IWineD3DDeviceImpl*)pDevice)->stateBlock->changed, &This->changed);
+    ((IWineD3DDeviceImpl *)pDevice)->stateBlock->lowest_disabled_stage = MAX_TEXTURES - 1;
+    for(j = 0; j < MAX_TEXTURES - 1; j++) {
+        if(((IWineD3DDeviceImpl *)pDevice)->stateBlock->textureState[j][D3DTSS_COLOROP] == WINED3DTOP_DISABLE) {
+            ((IWineD3DDeviceImpl *)pDevice)->stateBlock->lowest_disabled_stage = j;
+            break;
+        }
+    }
     TRACE("(%p) : Applied state block %p ------------------^\n", This, pDevice);
 
     return WINED3D_OK;
@@ -1002,6 +1013,7 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
         This->textureState[i][WINED3DTSS_ALPHAARG0             ] = WINED3DTA_CURRENT;
         This->textureState[i][WINED3DTSS_RESULTARG             ] = WINED3DTA_CURRENT;
     }
+    This->lowest_disabled_stage = 1;
 
         /* Sampler states*/
     for (i = 0 ; i <  GL_LIMITS(sampler_stages); i++) {

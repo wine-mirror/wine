@@ -1900,7 +1900,6 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
      * corresponds to MaxTextureBlendStages in the caps. */
 
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        glEnable(GL_REGISTER_COMBINERS_NV);
         D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], constant_color);
         GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &constant_color[0]));
     }
@@ -1924,7 +1923,7 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
         }
 
         if (This->stateBlock->textures[i]) {
-            /* Enable the correct target. */
+            /* Enable the correct target. This has to stay here until samplers are moved over to the state table */
             glDisable(GL_TEXTURE_1D);
             This->stateBlock->textureDimensions[i] = IWineD3DBaseTexture_GetTextureDimensions(This->stateBlock->textures[i]);
             switch(This->stateBlock->textureDimensions[i]) {
@@ -1967,11 +1966,6 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
         /** these ops apply to the texture unit, so they are preserved between texture changes, but for now brute force and reapply all
           dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
         if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-            set_tex_op_nvrc((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
-                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],
-                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG2],
-                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG0],
-                    texture_idx);
             /* alphaop */
             set_tex_op_nvrc((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
                     This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
@@ -1979,34 +1973,12 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
                     This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0],
                     texture_idx);
         } else {
-            set_tex_op((IWineD3DDevice *)This, FALSE, i, This->stateBlock->textureState[i][WINED3DTSS_COLOROP],
-                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG1],
-                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG2],
-                    This->stateBlock->textureState[i][WINED3DTSS_COLORARG0]);
             /* alphaop */
             set_tex_op((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
                     This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
                     This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
                     This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0]);
         }
-    }
-
-    /* If we're using register combiners, set the amount of *used* combiners.
-     * Ie, the number of stages below the first stage to have a color op of
-     * WINED3DTOP_DISABLE. */
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        /* NUM_GENERAL_COMBINERS_NV should be > 0 */
-        if (!i) glDisable(GL_REGISTER_COMBINERS_NV);
-        else GL_EXTCALL(glCombinerParameteriNV(GL_NUM_GENERAL_COMBINERS_NV, i));
-    }
-
-    /* Disable the remaining texture units. */
-    for (i = current_sampler; i < GL_LIMITS(textures); ++i) {
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-        glDisable(GL_TEXTURE_1D);
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_TEXTURE_3D);
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
     }
 }
 
