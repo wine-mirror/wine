@@ -1707,6 +1707,60 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    int i;
+
+    if(stateblock->pixelShader && ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.function != NULL) {
+        if(!stateblock->wineD3DDevice->last_was_pshader) {
+            /* Former draw without a pixel shader, some samplers
+             * may be disabled because of WINED3DTSS_COLOROP = WINED3DTOP_DISABLE
+             * make sure to enable them
+             */
+            for(i=0; i < MAX_SAMPLERS; i++) {
+                if(!isStateDirty(stateblock->wineD3DDevice, STATE_SAMPLER(i))) {
+                    sampler(STATE_SAMPLER(i), stateblock);
+                }
+            }
+        } else {
+           /* Otherwise all samplers were activated by the code above in earlier draws, or by sampler()
+            * if a different texture was bound. I don't have to do anything.
+            */
+        }
+
+        /* Compile and bind the shader */
+        IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
+
+#if 0
+        /* Can't do that here right now, because glsl shaders depend on having both pixel and vertex shader
+         * setup at the same time. The shader_select call will be done by drawprim until vertex shaders are
+         * moved to the state table too
+         */
+        stateblock->wineD3DDevice->shader_backend->shader_select(
+                (IWineD3DDevice *) stateblock->wineD3DDevice,
+                TRUE,
+                !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+#endif
+        stateblock->wineD3DDevice->last_was_pshader = TRUE;
+    } else {
+        /* Disabled the pixel shader - color ops weren't applied
+         * while it was enabled, so re-apply them.
+         */
+        for(i=0; i < MAX_TEXTURES; i++) {
+            if(!isStateDirty(stateblock->wineD3DDevice, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP))) {
+                tex_colorop(STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock);
+            }
+        }
+        stateblock->wineD3DDevice->last_was_pshader = FALSE;
+
+#if 0
+        stateblock->wineD3DDevice->shader_backend->shader_select(
+                (IWineD3DDevice *) stateblock->wineD3DDevice,
+                FALSE,
+                !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+#endif
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -2204,4 +2258,6 @@ const struct StateEntry StateTable[] =
     { /*13, Sampler 13                              */      STATE_SAMPLER(13),                                  sampler             },
     { /*14, Sampler 14                              */      STATE_SAMPLER(14),                                  sampler             },
     { /*15, Sampler 15                              */      STATE_SAMPLER(15),                                  sampler             },
+    /* Pixel shader */
+    { /*  , Pixel Shader                            */      STATE_PIXELSHADER,                                  pixelshader         },
 };

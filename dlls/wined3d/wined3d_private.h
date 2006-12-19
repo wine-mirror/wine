@@ -420,7 +420,10 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock);
 #define STATE_SAMPLER(num) (STATE_TEXTURESTAGE(MAX_TEXTURES - 1, WINED3D_HIGHEST_TEXTURE_STATE) + 1 + (num))
 #define STATE_IS_SAMPLER(num) ((num) >= STATE_SAMPLER(0) && (num) <= STATE_SAMPLER(MAX_SAMPLERS - 1))
 
-#define STATE_HIGHEST (STATE_SAMPLER(MAX_SAMPLERS - 1))
+#define STATE_PIXELSHADER (STATE_SAMPLER(MAX_SAMPLERS - 1) + 1)
+#define STATE_IS_PIXELSHADER(a) ((a) == STATE_PIXELSHADER)
+
+#define STATE_HIGHEST (STATE_PIXELSHADER)
 
 struct StateEntry
 {
@@ -564,6 +567,7 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
     BOOL                    last_was_notclipped;
     BOOL                    untransformed;
+    BOOL                    last_was_pshader;
 
     /* State block related */
     BOOL                    isRecordingState;

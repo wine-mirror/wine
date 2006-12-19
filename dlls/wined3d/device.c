@@ -3690,37 +3690,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
 
     if (NULL != pShader) {
         IWineD3DPixelShader_AddRef(pShader);
-        if(oldShader == NULL) {
-            /* Fixed function color ops deactivate the texture dimensions from the first stage which has colorop = disable
-             * Pixel shaders require that this is enabled, so dirtify all samplers, they will enable the dimensions.
-             * do not dirtify the colorop - it won't do anything when a ashader is bound
-             * This is temporary until pixel shaders are handled by the state table too
-             */
-            int i;
-            for(i = 0; i < MAX_SAMPLERS; i++) {
-                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
-            }
-        }
     }
     if (NULL != oldShader) {
         IWineD3DPixelShader_Release(oldShader);
-        if(pShader == NULL) {
-            /* Fixed function pipeline color args conflict with pixel shader setup, so we do not apply them when a pshader is
-             * bound. Due to that we have to reapply all color ops when disabling pixel shaders.
-             * When pixel shaders are handled by the state table too, the pshader function will take care for that, and this
-             * will also handle draw -> SetPixelShader(NULL) -> SetPixelShader(!= NULL) -> draw cases better
-             */
-            int i;
-            for(i = 0; i < MAX_TEXTURES; i++) {
-                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
-            }
-        }
+    }
+
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return WINED3D_OK;
     }
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
-    /**
-     * TODO: merge HAL shaders context switching from prototype
-     */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
     return WINED3D_OK;
 }
 
