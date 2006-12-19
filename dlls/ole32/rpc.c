@@ -118,6 +118,8 @@ struct dispatch_params
     RPCOLEMESSAGE     *msg; /* message */
     IRpcStubBuffer    *stub; /* stub buffer, if applicable */
     IRpcChannelBuffer *chan; /* server channel buffer, if applicable */
+    IID                iid; /* ID of interface being called */
+    IUnknown          *iface; /* interface being called */
     HANDLE             handle; /* handle that will become signaled when call finishes */
     RPC_STATUS         status; /* status (out) */
     HRESULT            hr; /* hresult (out) */
@@ -586,7 +588,8 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
      * from DllMain */
 
     RpcBindingInqObject(message_state->binding_handle, &ipid);
-    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
+    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan,
+                                  &params->iid, &params->iface);
     params->handle = ClientRpcChannelBuffer_GetEventHandle(This);
     if ((hr == S_OK) && !apt->multi_threaded)
     {
@@ -954,12 +957,12 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     message_state->prefix_data_len = original_buffer - (char *)msg->Buffer;
     message_state->binding_handle = msg->Handle;
 
-    message_state->channel_hook_info.iid = IID_NULL; /* FIXME */
+    message_state->channel_hook_info.iid = params->iid;
     message_state->channel_hook_info.cbSize = sizeof(message_state->channel_hook_info);
     message_state->channel_hook_info.uCausality = orpcthis.cid;
     message_state->channel_hook_info.dwServerPid = GetCurrentProcessId();
     message_state->channel_hook_info.iMethod = msg->ProcNum;
-    message_state->channel_hook_info.pObject = NULL; /* FIXME */
+    message_state->channel_hook_info.pObject = params->iface;
 
     if (orpcthis.extensions && first_wire_orpc_extent &&
         orpcthis.extensions->size)
@@ -975,8 +978,8 @@ void RPC_ExecuteCall(struct dispatch_params *params)
         DWORD handlecall;
         INTERFACEINFO interface_info;
 
-        interface_info.pUnk = NULL; /* FIXME */
-        interface_info.iid = IID_NULL; /* FIXME */
+        interface_info.pUnk = params->iface;
+        interface_info.iid = params->iid;
         interface_info.wMethod = msg->ProcNum;
         handlecall = IMessageFilter_HandleInComingCall(COM_CurrentApt()->filter,
                                                        CALLTYPE_TOPLEVEL /* FIXME */,
@@ -1033,7 +1036,8 @@ static void __RPC_STUB dispatch_rpc(RPC_MESSAGE *msg)
     params = HeapAlloc(GetProcessHeap(), 0, sizeof(*params));
     if (!params) return RpcRaiseException(E_OUTOFMEMORY);
 
-    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan);
+    hr = ipid_get_dispatch_params(&ipid, &apt, &params->stub, &params->chan,
+                                  &params->iid, &params->iface);
     if (hr != S_OK)
     {
         ERR("no apartment found for ipid %s\n", debugstr_guid(&ipid));

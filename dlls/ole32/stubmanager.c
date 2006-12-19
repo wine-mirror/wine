@@ -366,10 +366,11 @@ HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, struct stub
 }
 
 /* gets the apartment, stub and channel of an object. the caller must
- * release the references to all objects if the function returned success,
- * otherwise no references are returned. */
+ * release the references to all objects (except iface) if the function
+ * returned success, otherwise no references are returned. */
 HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt,
-                                 IRpcStubBuffer **stub, IRpcChannelBuffer **chan)
+                                 IRpcStubBuffer **stub, IRpcChannelBuffer **chan,
+                                 IID *iid, IUnknown **iface)
 {
     struct stub_manager *stubmgr;
     struct ifstub *ifstub;
@@ -387,6 +388,8 @@ HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt,
         *chan = ifstub->chan;
         IRpcChannelBuffer_AddRef(*chan);
         *stub_apt = apt;
+        *iid = ifstub->iid;
+        *iface = ifstub->iface;
 
         stub_manager_int_release(stubmgr);
         return S_OK;
