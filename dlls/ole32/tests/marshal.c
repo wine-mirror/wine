@@ -1296,7 +1296,6 @@ static void test_message_filter(void)
 
     hr = CoRegisterMessageFilter(&MessageFilter, &prev_filter);
     ok_ole_success(hr, CoRegisterMessageFilter);
-    if (prev_filter) IMessageFilter_Release(prev_filter);
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
     ok_ole_success(hr, IClassFactory_CreateInstance);
@@ -1308,6 +1307,9 @@ static void test_message_filter(void)
     ok_no_locks();
 
     end_host_object(tid, thread);
+
+    hr = CoRegisterMessageFilter(prev_filter, NULL);
+    ok_ole_success(hr, CoRegisterMessageFilter);
 }
 
 /* test failure case of trying to unmarshal from bad stream */
