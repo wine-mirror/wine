@@ -2947,7 +2947,18 @@ static void X11DRV_WineGL_LoadExtensions(void)
     if (glxRequireExtension("GLX_ARB_multisample"))
         register_extension(&WGL_ARB_multisample);
 
-    if (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer"))
+    /* In general pbuffer functionality requires support in the X-server. The functionality is
+     * available either when the GLX_SGIX_pbuffer is present or when the GLX server version is 1.3.
+     * All display drivers except for Nvidia's use the GLX module from Xfree86/Xorg which only
+     * supports GLX 1.2. The endresult is that only Nvidia's drivers support pbuffers.
+     *
+     * The only other drive which has pbuffer support is Ati's FGLRX driver. They provide clientside GLX 1.3 support
+     * without support in the X-server (which other Mesa based drivers require).
+     *
+     * Support pbuffers when the GLX version is 1.3 and GLX_SGIX_pbuffer is available. Further pbuffers can
+     * also be supported when GLX_ATI_render_texture is available. This extension depends on pbuffers, so when it
+     * is available pbuffers must be available too. */
+    if ( (glxRequireVersion(3) && glxRequireExtension("GLX_SGIX_pbuffer")) || glxRequireExtension("GLX_ATI_render_texture"))
         register_extension(&WGL_ARB_pbuffer);
 
     register_extension(&WGL_ARB_pixel_format);
