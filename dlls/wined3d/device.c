@@ -5643,11 +5643,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ColorFill(IWineD3DDevice *iface, IWineD
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface,DWORD RenderTargetIndex, IWineD3DSurface **ppRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    /* FIXME: Implelent RenderTargetIndex >0 */
-    if(RenderTargetIndex > 0)
-        FIXME("(%p) : RenderTargetIndex %d >0 not currently supported\n", This, RenderTargetIndex);
+    if (RenderTargetIndex >= GL_LIMITS(buffers)) {
+        ERR("(%p) : Only %d render targets are supported.\n", This, GL_LIMITS(buffers));
+        return WINED3DERR_INVALIDCALL;
+    }
 
-    *ppRenderTarget = This->render_targets[0];
+    *ppRenderTarget = This->render_targets[RenderTargetIndex];
     TRACE("(%p) : RenderTarget %d Index returning %p\n", This, RenderTargetIndex, *ppRenderTarget);
     /* Note inc ref on returned surface */
     if(*ppRenderTarget != NULL)
@@ -5849,10 +5850,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     HRESULT  hr = WINED3D_OK;
     WINED3DVIEWPORT viewport;
 
-    TRACE("(%p) Swapping rendertarget\n",This);
-    if (RenderTargetIndex > 0) {
-        FIXME("(%p) Render targets other than the first are not supported\n",This);
-        RenderTargetIndex = 0;
+    TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
+
+    if (RenderTargetIndex >= GL_LIMITS(buffers)) {
+        ERR("(%p) : Only %d render targets are supported.\n", This, GL_LIMITS(buffers));
+        return WINED3DERR_INVALIDCALL;
     }
 
     /* MSDN says that null disables the render target
@@ -5867,7 +5869,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         return WINED3DERR_INVALIDCALL;
     }
     /* TODO: replace Impl* usage with interface usage */
-    if (!((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & WINED3DUSAGE_RENDERTARGET) {
+    if (pRenderTarget && !((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         FIXME("(%p)Trying to set the render target to a surface(%p) that wasn't created with a usage of WINED3DUSAGE_RENDERTARGET\n",This ,pRenderTarget);
         return WINED3DERR_INVALIDCALL;
     }
@@ -5875,7 +5877,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
      *        builds, but I think wine counts as a 'debug' build for now.
       ******************************/
     /* If we are trying to set what we already have, don't bother */
-    if (pRenderTarget == This->render_targets[0]) {
+    if (pRenderTarget == This->render_targets[RenderTargetIndex]) {
         TRACE("Trying to do a NOP SetRenderTarget operation\n");
     } else {
         /* Otherwise, set the render target up */
@@ -5890,7 +5892,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         A shared context implementation will share all buffers between all rendertargets (including swapchains),
         implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
         stencil buffer and incure an extra memory overhead */
-        hr = IWineD3DDeviceImpl_ActiveRender(iface, pRenderTarget);
+        if (RenderTargetIndex == 0) {
+            hr = IWineD3DDeviceImpl_ActiveRender(iface, pRenderTarget);
+        } else {
+            hr = WINED3D_OK;
+        }
 
         /* Replace the render target */
         if (This->render_targets[RenderTargetIndex]) IWineD3DSurface_Release(This->render_targets[RenderTargetIndex]);

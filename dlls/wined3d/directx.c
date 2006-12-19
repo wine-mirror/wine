@@ -804,6 +804,11 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
         wined3d_settings.offscreen_rendering_mode = ORM_PBUFFER;
     }
 
+    /* MRTs are currently only supported when FBOs are used. */
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) {
+        gl_info->max_buffers = 1;
+    }
+
     /* Below is a list of Nvidia and ATI GPUs. Both vendors have dozens of different GPUs with roughly the same
      * features. In most cases GPUs from a certain family differ in clockspeeds, the amount of video memory and
      * in case of the latest videocards in the number of pixel/vertex pipelines.
@@ -2284,12 +2289,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         } else
             *pCaps->DeclTypes                         = 0;
 
-#if 0 /* We don't properly support multiple render targets yet, so disable this for now */
-        if (GL_SUPPORT(ARB_DRAWBUFFERS)) {
-            *pCaps->NumSimultaneousRTs = GL_LIMITS(buffers);
-        } else    
-#endif
-            *pCaps->NumSimultaneousRTs = 1;
+        *pCaps->NumSimultaneousRTs = GL_LIMITS(buffers);
+
             
         *pCaps->StretchRectFilterCaps             = 0;
         *pCaps->VertexTextureFilterCaps           = 0;

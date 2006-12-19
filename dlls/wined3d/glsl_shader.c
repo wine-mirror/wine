@@ -680,17 +680,13 @@ static void shader_glsl_get_register_name(
             sprintf(tmpStr, "Vsampler%u", reg);
     break;
     case WINED3DSPR_COLOROUT:
+        if (reg >= GL_LIMITS(buffers)) {
+            WARN("Write to render target %u, only %d supported\n", reg, 4);
+        }
         if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
             sprintf(tmpStr, "gl_FragData[%u]", reg);
-            if (reg > 0) {
-                /* TODO: See GL_ARB_draw_buffers */
-                FIXME("Unsupported write to render target %u\n", reg);
-            }
         } else { /* On older cards with GLSL support like the GeforceFX there's only one buffer. */
-            if (reg > 0)
-                WARN("This OpenGL implementation doesn't support writing to multiple render targets!\n");
-            else
-                sprintf(tmpStr, "gl_FragColor");
+            sprintf(tmpStr, "gl_FragColor");
         }
     break;
     case WINED3DSPR_RASTOUT:
