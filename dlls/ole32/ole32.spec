@@ -52,7 +52,7 @@
 @ stdcall CoQueryClientBlanket(ptr ptr ptr ptr ptr ptr ptr)
 @ stdcall CoQueryProxyBlanket(ptr ptr ptr ptr ptr ptr ptr ptr)
 @ stub CoQueryReleaseObject
-@ stub CoRegisterChannelHook
+@ stdcall CoRegisterChannelHook(ptr ptr)
 @ stdcall CoRegisterClassObject(ptr ptr long long ptr)
 @ stdcall CoRegisterMallocSpy (ptr)
 @ stdcall CoRegisterMessageFilter(ptr ptr)

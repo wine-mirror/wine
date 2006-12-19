@@ -219,6 +219,8 @@ HRESULT RPC_RegisterInterface(REFIID riid);
 void    RPC_UnregisterInterface(REFIID riid);
 void    RPC_StartLocalServer(REFCLSID clsid, IStream *stream);
 HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv);
+HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook);
+void    RPC_UnregisterAllChannelHooks(void);
 
 /* This function initialize the Running Object Table */
 HRESULT WINAPI RunningObjectTableImpl_Initialize(void);
