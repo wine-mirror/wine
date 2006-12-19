@@ -204,7 +204,7 @@ static void test_marshal_HENHMETAFILE(void)
 
     size = HENHMETAFILE_UserSize(&flags, 0, &hemf);
     ok(size == 8, "size should be 8 bytes, not %d\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HENHMETAFILE_UserMarshal(&flags, buffer, &hemf);
     wirehemf = buffer;
     ok(*(DWORD *)wirehemf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehemf);
@@ -239,7 +239,7 @@ static void test_marshal_HMETAFILE(void)
 
     size = HMETAFILE_UserSize(&flags, 0, &hmf);
     ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HMETAFILE_UserMarshal(&flags, buffer, &hmf);
     wirehmf = buffer;
     ok(*(DWORD *)wirehmf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmf);
@@ -266,7 +266,7 @@ static void test_marshal_HMETAFILE(void)
 
     size = HMETAFILE_UserSize(&flags, 0, &hmf);
     ok(size == 8, "size should be 8 bytes, not %d\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
     HMETAFILE_UserMarshal(&flags, buffer, &hmf);
     wirehmf = buffer;
     ok(*(DWORD *)wirehmf == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmf);
@@ -286,7 +286,7 @@ static void test_marshal_HMETAFILE(void)
 
 static void test_marshal_HMETAFILEPICT(void)
 {
-    unsigned char *buffer;
+    unsigned char *buffer, *buffer_end;
     ULONG size;
     ULONG flags = MAKELONG(MSHCTX_DIFFERENTMACHINE, NDR_LOCAL_DATA_REPRESENTATION);
     HMETAFILEPICT hmfp;
@@ -305,8 +305,8 @@ static void test_marshal_HMETAFILEPICT(void)
     size = HMETAFILEPICT_UserSize(&flags, 0, &hmfp);
     ok(size > 20, "size should be at least 20 bytes, not %d\n", size);
     trace("size is %d\n", size);
-    buffer = (unsigned char *)HeapAlloc(GetProcessHeap(), 0, size);
-    HMETAFILEPICT_UserMarshal(&flags, buffer, &hmfp);
+    buffer = HeapAlloc(GetProcessHeap(), 0, size);
+    buffer_end = HMETAFILEPICT_UserMarshal(&flags, buffer, &hmfp);
     wirehmfp = buffer;
     ok(*(DWORD *)wirehmfp == WDT_REMOTE_CALL, "wirestgm + 0x0 should be WDT_REMOTE_CALL instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
@@ -326,12 +326,12 @@ static void test_marshal_HMETAFILEPICT(void)
     ok(*(DWORD *)wirehmfp == (DWORD)(DWORD_PTR)pmfp->hMF, "wirestgm + 0x1c should be pmfp->hMF instead of 0x%08x\n", *(DWORD *)wirehmfp);
     GlobalUnlock(hmfp);
     wirehmfp += sizeof(DWORD);
-    todo_wine {
-    ok(*(DWORD *)wirehmfp == (size - 0x34), "wirestgm + 0x20 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    /* Note use (buffer_end - buffer) instead of size here, because size is an
+     * overestimate with native */
+    ok(*(DWORD *)wirehmfp == (buffer_end - buffer - 0x28), "wirestgm + 0x20 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
-    ok(*(DWORD *)wirehmfp == (size - 0x34), "wirestgm + 0x24 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
+    ok(*(DWORD *)wirehmfp == (buffer_end - buffer - 0x28), "wirestgm + 0x24 should be size - 0x34 instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
-    }
     ok(*(WORD *)wirehmfp == 1, "wirehmfp + 0x28 should be 1 instead of 0x%08x\n", *(DWORD *)wirehmfp);
     wirehmfp += sizeof(DWORD);
     /* ... rest of data not tested - refer to tests for GetMetaFileBits
