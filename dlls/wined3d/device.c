@@ -3700,6 +3700,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
         return WINED3D_OK;
     }
 
+    if(pShader == oldShader) {
+        TRACE("App is setting the old pixel shader over, nothing to do\n");
+        return WINED3D_OK;
+    }
+
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
     return WINED3D_OK;
@@ -6033,10 +6038,13 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
 
     /* Temporaryily mark all render states dirty to force reapplication
      * until the context management for is integrated with the state management
+     * The same for the pixel shader, sampler states and texture stage states are marked
+     * dirty my StateBlock::Apply already
      */
     for(i = 1; i < WINEHIGHEST_RENDER_STATE; i++) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(i));
     }
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
 
     /* Restore recording */
     This->isRecordingState = oldRecording;
