@@ -2448,6 +2448,8 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     if (WINED3D_OK != temp_result)
         return temp_result;
 
+    object->render_targets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IWineD3DSurface *) * GL_LIMITS(buffers));
+
     /* set the state of the device to valid */
     object->state = WINED3D_OK;
 
@@ -2472,9 +2474,9 @@ create_device_error:
         IWineD3DStateBlock_Release((IWineD3DStateBlock *)object->stateBlock);
         object->stateBlock = NULL;
     }
-    if (object->renderTarget != NULL) {
-        IWineD3DSurface_Release(object->renderTarget);
-        object->renderTarget = NULL;
+    if (object->render_targets[0] != NULL) {
+        IWineD3DSurface_Release(object->render_targets[0]);
+        object->render_targets[0] = NULL;
     }
     if (object->stencilBufferTarget != NULL) {
         IWineD3DSurface_Release(object->stencilBufferTarget);

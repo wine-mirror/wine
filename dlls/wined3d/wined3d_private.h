@@ -574,9 +574,9 @@ typedef struct IWineD3DDeviceImpl
     ResourceList           *resources; /* a linked list to track resources created by the device */
 
     /* Render Target Support */
+    IWineD3DSurface       **render_targets;
     IWineD3DSurface        *depthStencilBuffer;
 
-    IWineD3DSurface        *renderTarget;
     IWineD3DSurface        *stencilBufferTarget;
 
     /* palettes texture management */

@@ -572,6 +572,8 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->fbo));
         }
 
+        HeapFree(GetProcessHeap(), 0, This->render_targets);
+
         /* TODO: Clean up all the surfaces and textures! */
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
@@ -2093,13 +2095,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     if(swapchain->backBuffer && swapchain->backBuffer[0]) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
-        This->renderTarget = swapchain->backBuffer[0];
+        This->render_targets[0] = swapchain->backBuffer[0];
     }
     else {
         TRACE("Setting rendertarget to %p\n", swapchain->frontBuffer);
-        This->renderTarget = swapchain->frontBuffer;
+        This->render_targets[0] = swapchain->frontBuffer;
     }
-    IWineD3DSurface_AddRef(This->renderTarget);
+    IWineD3DSurface_AddRef(This->render_targets[0]);
     /* Depth Stencil support */
     This->stencilBufferTarget = This->depthStencilBuffer;
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
@@ -2190,12 +2192,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     }
     This->stencilBufferTarget = NULL;
 
-    TRACE("Releasing the render target at %p\n", This->renderTarget);
-    if(IWineD3DSurface_Release(This->renderTarget) >0){
+    TRACE("Releasing the render target at %p\n", This->render_targets[0]);
+    if(IWineD3DSurface_Release(This->render_targets[0]) >0){
           /* This check is a bit silly, itshould be in swapchain_release FIXME("(%p) Something's still holding the renderTarget\n",This); */
     }
     TRACE("Setting rendertarget to NULL\n");
-    This->renderTarget = NULL;
+    This->render_targets[0] = NULL;
 
     if (This->depthStencilBuffer) {
         if(D3DCB_DestroyDepthStencilSurface(This->depthStencilBuffer) > 0) {
@@ -3301,7 +3303,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
     /* Note: GL requires lower left, DirectX supplies upper left */
     /* TODO: replace usage of renderTarget with context management */
     glViewport(pViewport->X,
-               (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - (pViewport->Y + pViewport->Height)),
+               (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - (pViewport->Y + pViewport->Height)),
                pViewport->Width, pViewport->Height);
 
     checkGLcall("glViewport");
@@ -4742,21 +4744,21 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
 
     TRACE("End Scene\n");
     /* If we're using FBOs this isn't needed */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->renderTarget != NULL) {
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_targets[0] != NULL) {
 
         /* If the container of the rendertarget is a texture then we need to save the data from the pbuffer */
         IUnknown *targetContainer = NULL;
-        if (WINED3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DBaseTexture, (void **)&targetContainer)
-            || WINED3D_OK == IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DDevice, (void **)&targetContainer)) {
-            TRACE("(%p) : Texture rendertarget %p\n", This ,This->renderTarget);
+        if (WINED3D_OK == IWineD3DSurface_GetContainer(This->render_targets[0], &IID_IWineD3DBaseTexture, (void **)&targetContainer)
+            || WINED3D_OK == IWineD3DSurface_GetContainer(This->render_targets[0], &IID_IWineD3DDevice, (void **)&targetContainer)) {
+            TRACE("(%p) : Texture rendertarget %p\n", This ,This->render_targets[0]);
             /** always dirtify for now. we must find a better way to see that surface have been modified
             (Modifications should will only occur via draw-primitive, but we do need better locking
             switching to render-to-texture should remove the overhead though.
             */
-            IWineD3DSurface_SetPBufferState(This->renderTarget, TRUE /* inPBuffer */, FALSE /* inTexture */);
-            IWineD3DSurface_AddDirtyRect(This->renderTarget, NULL);
-            IWineD3DSurface_PreLoad(This->renderTarget);
-            IWineD3DSurface_SetPBufferState(This->renderTarget, FALSE /* inPBuffer */, FALSE /* inTexture */);
+            IWineD3DSurface_SetPBufferState(This->render_targets[0], TRUE /* inPBuffer */, FALSE /* inTexture */);
+            IWineD3DSurface_AddDirtyRect(This->render_targets[0], NULL);
+            IWineD3DSurface_PreLoad(This->render_targets[0]);
+            IWineD3DSurface_SetPBufferState(This->render_targets[0], FALSE /* inPBuffer */, FALSE /* inTexture */);
             IUnknown_Release(targetContainer);
         }
     }
@@ -4854,14 +4856,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
             /* Note gl uses lower left, width/height */
             TRACE("(%p) %p Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This, curRect,
                   curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - curRect->y2),
+                  curRect->x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect->y2),
                   curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - curRect->y2),
+            glScissor(curRect->x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect->y2),
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
         } else {
             glScissor(This->stateBlock->viewport.X,
-                      (((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height - 
+                      (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
                       (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
                       This->stateBlock->viewport.Width,
                       This->stateBlock->viewport.Height);
@@ -5191,11 +5193,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *i
     IWineD3DSurface_GetContainer(pRenderTarget, &IID_IWineD3DSwapChain, (void **)&container);
     ENTER_GL();
     /* TODO: opengl Context switching for swapchains etc... */
-    if (NULL != container  || pRenderTarget == This->renderTarget || pRenderTarget == This->depthStencilBuffer) {
+    if (NULL != container  || pRenderTarget == This->render_targets[0] || pRenderTarget == This->depthStencilBuffer) {
         if (NULL != container  && (pRenderTarget == container->backBuffer[0])) {
             glReadBuffer(GL_BACK);
             vcheckGLcall("glReadBuffer(GL_BACK)");
-        } else if ((NULL != container  && (pRenderTarget == container->frontBuffer)) || (pRenderTarget == This->renderTarget)) {
+        } else if ((NULL != container  && (pRenderTarget == container->frontBuffer)) || (pRenderTarget == This->render_targets[0])) {
             glReadBuffer(GL_FRONT);
             vcheckGLcall("glReadBuffer(GL_FRONT)");
         } else if (pRenderTarget == This->depthStencilBuffer) {
@@ -5643,7 +5645,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTarget(IWineD3DDevice* iface
     if(RenderTargetIndex > 0)
         FIXME("(%p) : RenderTargetIndex %d >0 not currently supported\n", This, RenderTargetIndex);
 
-    *ppRenderTarget = This->renderTarget;
+    *ppRenderTarget = This->render_targets[0];
     TRACE("(%p) : RenderTarget %d Index returning %p\n", This, RenderTargetIndex, *ppRenderTarget);
     /* Note inc ref on returned surface */
     if(*ppRenderTarget != NULL)
@@ -5853,7 +5855,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
      *        builds, but I think wine counts as a 'debug' build for now.
       ******************************/
     /* If we are trying to set what we already have, don't bother */
-    if (pRenderTarget == This->renderTarget) {
+    if (pRenderTarget == This->render_targets[0]) {
         TRACE("Trying to do a NOP SetRenderTarget operation\n");
     } else {
         /* Otherwise, set the render target up */
@@ -5877,8 +5879,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     if (SUCCEEDED(hr)) {
         /* Finally, reset the viewport as the MSDN states. */
         /* TODO: Replace impl usage */
-        viewport.Height = ((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Height;
-        viewport.Width  = ((IWineD3DSurfaceImpl *)This->renderTarget)->currentDesc.Width;
+        viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
+        viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;
         viewport.X      = 0;
         viewport.Y      = 0;
         viewport.MaxZ   = 1.0f;
@@ -6204,7 +6206,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
      * Fallback to device implicit swapchain if the current render target doesn't have one */
     IWineD3DDevice_GetSwapChain(iface, 0, &implicitSwapchain);
     IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void**) &renderSurfaceSwapchain);
-    IWineD3DSurface_GetContainer(This->renderTarget, &IID_IWineD3DSwapChain, (void **)&currentSwapchain);
+    IWineD3DSurface_GetContainer(This->render_targets[0], &IID_IWineD3DSwapChain, (void **)&currentSwapchain);
     if (currentSwapchain == NULL)
         IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
 
@@ -6223,7 +6225,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
         /* We also need to make sure that the lights &co are also in the context of the swapchains */
         /* FIXME: If the render target gets sent to the frontBuffer, should we be presenting it raw? */
         TRACE("making swapchain active\n");
-        if (RenderSurface != This->renderTarget) {
+        if (RenderSurface != This->render_targets[0]) {
             BOOL backbuf = FALSE;
             int i;
 
@@ -6351,9 +6353,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
     }
 
     /* Replace the render target */
-    if (This->renderTarget != RenderSurface) {
-        IWineD3DSurface_Release(This->renderTarget);
-        This->renderTarget = RenderSurface;
+    if (This->render_targets[0] != RenderSurface) {
+        IWineD3DSurface_Release(This->render_targets[0]);
+        This->render_targets[0] = RenderSurface;
         IWineD3DSurface_AddRef(RenderSurface);
     }
 
