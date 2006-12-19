@@ -1454,6 +1454,165 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        /* TODO: register combiners! */
+        if(stage >= GL_LIMITS(sampler_stages)) {
+            return;
+        }
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage));
+        checkGLcall("glActiveTextureARB");
+    } else if (stage > 0) {
+        /* We can't do anything here */
+        WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+        return;
+    }
+
+    /* Values 0-7 are indexes into the FVF tex coords - See comments in DrawPrimitive
+     *
+     * FIXME: From MSDN: The WINED3DTSS_TCI_* flags are mutually exclusive. If you include
+     * one flag, you can still specify an index value, which the system uses to
+     * determine the texture wrapping mode.
+     * eg. SetTextureStageState( 0, WINED3DTSS_TEXCOORDINDEX, WINED3DTSS_TCI_CAMERASPACEPOSITION | 1 );
+     * means use the vertex position (camera-space) as the input texture coordinates
+     * for this texture stage, and the wrap mode set in the WINED3DRS_WRAP1 render
+     * state. We do not (yet) support the WINED3DRENDERSTATE_WRAPx values, nor tie them up
+     * to the TEXCOORDINDEX value
+     */
+
+    /*
+     * Be careful the value of the mask 0xF0000 come from d3d8types.h infos
+     */
+    switch (stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) {
+    case WINED3DTSS_TCI_PASSTHRU:
+        /*Use the specified texture coordinates contained within the vertex format. This value resolves to zero.*/
+        glDisable(GL_TEXTURE_GEN_S);
+        glDisable(GL_TEXTURE_GEN_T);
+        glDisable(GL_TEXTURE_GEN_R);
+        glDisable(GL_TEXTURE_GEN_Q);
+        checkGLcall("glDisable(GL_TEXTURE_GEN_S,T,R,Q)");
+        break;
+
+    case WINED3DTSS_TCI_CAMERASPACEPOSITION:
+        /* CameraSpacePosition means use the vertex position, transformed to camera space,
+         * as the input texture coordinates for this stage's texture transformation. This
+         * equates roughly to EYE_LINEAR
+         */
+        {
+            float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+            float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+            float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+            float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+            TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set eye plane\n");
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+            glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+            glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+            glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+            glPopMatrix();
+
+            TRACE("WINED3DTSS_TCI_CAMERASPACEPOSITION - Set GL_TEXTURE_GEN_x and GL_x, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR\n");
+            glEnable(GL_TEXTURE_GEN_S);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+            checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+            glEnable(GL_TEXTURE_GEN_T);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+            checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+            glEnable(GL_TEXTURE_GEN_R);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+            checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR)");
+        }
+        break;
+
+    case WINED3DTSS_TCI_CAMERASPACENORMAL:
+        {
+            if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+                float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+                float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+                float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+                float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+                TRACE("WINED3DTSS_TCI_CAMERASPACENORMAL - Set eye plane\n");
+
+                glMatrixMode(GL_MODELVIEW);
+                glPushMatrix();
+                glLoadIdentity();
+                glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+                glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+                glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+                glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+                glPopMatrix();
+
+                glEnable(GL_TEXTURE_GEN_S);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+                glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                glEnable(GL_TEXTURE_GEN_T);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+                glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+                glEnable(GL_TEXTURE_GEN_R);
+                checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+                glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV);
+                checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_NORMAL_MAP_NV)");
+            }
+        }
+        break;
+
+    case WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR:
+        {
+            if (GL_SUPPORT(NV_TEXGEN_REFLECTION)) {
+            float s_plane[] = { 1.0, 0.0, 0.0, 0.0 };
+            float t_plane[] = { 0.0, 1.0, 0.0, 0.0 };
+            float r_plane[] = { 0.0, 0.0, 1.0, 0.0 };
+            float q_plane[] = { 0.0, 0.0, 0.0, 1.0 };
+            TRACE("WINED3DTSS_TCI_CAMERASPACEREFLECTIONVECTOR - Set eye plane\n");
+
+            glMatrixMode(GL_MODELVIEW);
+            glPushMatrix();
+            glLoadIdentity();
+            glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+            glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+            glTexGenfv(GL_R, GL_EYE_PLANE, r_plane);
+            glTexGenfv(GL_Q, GL_EYE_PLANE, q_plane);
+            glPopMatrix();
+
+            glEnable(GL_TEXTURE_GEN_S);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_S);");
+            glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+            checkGLcall("glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+            glEnable(GL_TEXTURE_GEN_T);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_T);");
+            glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+            checkGLcall("glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+            glEnable(GL_TEXTURE_GEN_R);
+            checkGLcall("glEnable(GL_TEXTURE_GEN_R);");
+            glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV);
+            checkGLcall("glTexGeni(GL_R, GL_TEXTURE_GEN_MODE, GL_REFLECTION_MAP_NV)");
+            }
+        }
+        break;
+
+    /* Unhandled types: */
+    default:
+        /* Todo: */
+        /* ? disable GL_TEXTURE_GEN_n ? */
+        glDisable(GL_TEXTURE_GEN_S);
+        glDisable(GL_TEXTURE_GEN_T);
+        glDisable(GL_TEXTURE_GEN_R);
+        glDisable(GL_TEXTURE_GEN_Q);
+        FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %x\n", stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX]);
+        break;
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -1681,7 +1840,7 @@ const struct StateEntry StateTable[] =
     { /*0, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*0, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*0, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*0, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(0, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*0, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(0, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*0, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1714,7 +1873,7 @@ const struct StateEntry StateTable[] =
     { /*1, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*1, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*1, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*1, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(1, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*1, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(1, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*1, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1747,7 +1906,7 @@ const struct StateEntry StateTable[] =
     { /*2, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*2, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*2, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*2, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(2, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*2, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(2, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*2, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1780,7 +1939,7 @@ const struct StateEntry StateTable[] =
     { /*3, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*3, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*3, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*3, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(3, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*3, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(3, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*3, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1813,7 +1972,7 @@ const struct StateEntry StateTable[] =
     { /*4, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          state_undefined     },
     { /*4, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          state_undefined     },
     { /*4, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          state_undefined     },
-    { /*4, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(4, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*4, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(4, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*4, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1846,7 +2005,7 @@ const struct StateEntry StateTable[] =
     { /*5, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*5, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*5, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*5, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(5, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*5, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(5, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*5, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1879,7 +2038,7 @@ const struct StateEntry StateTable[] =
     { /*6, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*6, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*6, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*6, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(6, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*6, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(6, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*6, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
@@ -1912,7 +2071,7 @@ const struct StateEntry StateTable[] =
     { /*7, 08, WINED3DTSS_BUMPENVMAT01              */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*7, 09, WINED3DTSS_BUMPENVMAT10              */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*7, 10, WINED3DTSS_BUMPENVMAT11              */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
-    { /*7, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(7, WINED3DTSS_TEXCOORDINDEX),    state_undefined     },
+    { /*7, 11, WINED3DTSS_TEXCOORDINDEX             */      STATE_TEXTURESTAGE(7, WINED3DTSS_TEXCOORDINDEX),    tex_coordindex      },
     { /*7, 12, WINED3DTSS_ADDRESS                   */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 13, WINED3DTSS_ADDRESSU                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 14, WINED3DTSS_ADDRESSV                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
