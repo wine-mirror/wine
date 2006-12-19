@@ -7084,3 +7084,16 @@ const DWORD SavedVertexStates_T[NUM_SAVEDVERTEXSTATES_T] = {
 const DWORD SavedVertexStates_S[NUM_SAVEDVERTEXSTATES_S] = {
     WINED3DSAMP_DMAPOFFSET
 };
+
+void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
+    DWORD rep = StateTable[state].representative;
+    DWORD idx;
+    BYTE shift;
+
+    if(!rep || isStateDirty(This, rep)) return;
+
+    This->dirtyArray[This->numDirtyEntries++] = rep;
+    idx = rep >> 5;
+    shift = rep & 0x1f;
+    This->isStateDirty[idx] |= (1 << shift);
+}

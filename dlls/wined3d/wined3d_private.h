@@ -413,6 +413,8 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock);
 #define STATE_RENDER(a) (a)
 #define STATE_IS_RENDER(a) ((a) >= STATE_RENDER(1) && (a) <= STATE_RENDER(WINEHIGHEST_RENDER_STATE))
 
+#define STATE_HIGHEST (STATE_RENDER(WINEHIGHEST_RENDER_STATE))
+
 struct StateEntry
 {
     DWORD           representative;
@@ -627,9 +629,27 @@ typedef struct IWineD3DDeviceImpl
 
     /* Final position fixup constant */
     float                       posFixup[4];
+
+    /* State dirtification
+     * dirtyArray is an array that contains markers for dirty states. numDirtyEntries states are dirty, their numbers are in indices
+     * 0...numDirtyEntries - 1. isStateDirty is a redundant copy of the dirtyArray. Technically only one of them would be needed,
+     * but with the help of both it is easy to find out if a state is dirty(just check the array index), and for applying dirty states
+     * only numDirtyEntries array elements have to be checked, not STATE_HIGHEST states.
+     */
+    DWORD                   dirtyArray[STATE_HIGHEST + 1]; /* Won't get bigger than that, a state is never marked dirty 2 times */
+    DWORD                   numDirtyEntries;
+    DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
+
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
+
+void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state);
+static inline BOOL isStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
+    DWORD idx = state >> 5;
+    BYTE shift = state & 0x1f;
+    return This->isStateDirty[idx] & (1 << shift);
+}
 
 /* Support for IWineD3DResource ::Set/Get/FreePrivateData. I don't think
  * anybody uses it for much so a good implementation is optional. */

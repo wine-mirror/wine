@@ -2129,6 +2129,8 @@ void drawPrimitive(IWineD3DDevice *iface,
     IWineD3DSwapChainImpl         *swapchain;
     int                           i;
     BOOL                          fixup = FALSE;
+    DWORD                         dirtyState, idx;
+    BYTE                          shift;
 
     BOOL lighting_changed, lighting_original = FALSE;
 
@@ -2162,6 +2164,16 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
+
+    /* Apply dirty states */
+    for(i=0; i < This->numDirtyEntries; i++) {
+        dirtyState = This->dirtyArray[i];
+        idx = dirtyState >> 5;
+        shift = dirtyState & 0x1f;
+        This->isStateDirty[idx] &= ~(1 << shift);
+        StateTable[dirtyState].apply(dirtyState, This->stateBlock);
+    }
+    This->numDirtyEntries = 0; /* This makes the whole list clean */
 
     if(DrawPrimStrideData) {
 
