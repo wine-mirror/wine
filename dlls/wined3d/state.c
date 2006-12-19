@@ -1362,14 +1362,15 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
         /* TODO: register combiners! */
-        if(stage >= GL_LIMITS(sampler_stages)) {
+        if(stage != stateblock->wineD3DDevice->texUnitMap[stage]) ERR("Foo: %d is %d!\n", stage, stateblock->wineD3DDevice->texUnitMap[stage]);
+        if(stateblock->wineD3DDevice->texUnitMap[stage] >= GL_LIMITS(sampler_stages)) {
             if(stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
               stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
                 FIXME("Attempt to enable unsupported stage!\n");
             }
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[stage]));
         checkGLcall("glActiveTextureARB");
     } else if (stage > 0) {
         WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
@@ -1408,7 +1409,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                          stateblock->textureState[stage][WINED3DTSS_COLORARG1],
                          stateblock->textureState[stage][WINED3DTSS_COLORARG2],
                          stateblock->textureState[stage][WINED3DTSS_COLORARG0],
-                         stage);
+                         stateblock->wineD3DDevice->texUnitMap[stage]);
     } else {
         set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, stage,
                     stateblock->textureState[stage][WINED3DTSS_COLOROP],
@@ -1432,7 +1433,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
             }
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[stage]));
         checkGLcall("glActiveTextureARB");
     } else if (stage > 0) {
         /* We can't do anything here */
@@ -1447,7 +1448,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                          stateblock->textureState[stage][WINED3DTSS_ALPHAARG1],
                          stateblock->textureState[stage][WINED3DTSS_ALPHAARG2],
                          stateblock->textureState[stage][WINED3DTSS_ALPHAARG0],
-                         stage);
+                         stateblock->wineD3DDevice->texUnitMap[stage]);
     } else {
         set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage, stateblock->textureState[stage][WINED3DTSS_ALPHAOP],
                     stateblock->textureState[stage][WINED3DTSS_ALPHAARG1],
@@ -1464,7 +1465,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         if(stage >= GL_LIMITS(sampler_stages)) {
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stage));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[stage]));
         checkGLcall("glActiveTextureARB");
     } else if (stage > 0) {
         /* We can't do anything here */
@@ -1661,7 +1662,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         if(sampler >= GL_LIMITS(sampler_stages)) {
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + sampler));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[sampler]));
         checkGLcall("glActiveTextureARB");
     } else if (sampler > 0) {
         /* We can't do anything here */

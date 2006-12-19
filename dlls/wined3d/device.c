@@ -2079,6 +2079,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* TODO: Test if OpenGL is compiled in and loaded */
 
+    /* Initialize the texture unit mapping to a 1:1 mapping */
+    for(state = 0; state < MAX_SAMPLERS; state++) {
+        This->texUnitMap[state] = state;
+    }
+    This->oneToOneTexUnitMap = TRUE;
+
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
     if (D3D_OK != D3DCB_CreateAdditionalSwapChain((IUnknown *) This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) || swapchain == NULL) {
@@ -3676,6 +3682,72 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetVertexShaderConstantF(
     return WINED3D_OK;
 }
 
+static inline void markTextureStagesDirty(IWineD3DDeviceImpl *This, DWORD stage) {
+    DWORD i;
+    for(i = 0; i < WINED3D_HIGHEST_TEXTURE_STATE; i++) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(stage, i));
+    }
+}
+
+static void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
+    DWORD i, tex;
+    /* This code can assume that GL_NV_register_combiners are supported, otherwise
+     * it is never called.
+     *
+     * Rules are:
+     * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but
+     * that would be really messy and require shader recompilation
+     * -> When the mapping of a stage is changed, sampler and ALL texture stage states have
+     * to be reset. Because of that try to work with a 1:1 mapping as much as possible
+     * -> Whith a 1:1 mapping oneToOneTexUnitMap is set to avoid checking MAX_SAMPLERS array
+     * entries to make pixel shaders cheaper. MAX_SAMPLERS will be 128 in dx10
+     */
+    if(This->stateBlock->pixelShader || This->stateBlock->lowest_disabled_stage <= GL_LIMITS(textures)) {
+        if(This->oneToOneTexUnitMap) {
+            TRACE("Not touching 1:1 map\n");
+            return;
+        }
+        TRACE("Restoring 1:1 texture unit mapping\n");
+        /* Restore a 1:1 mapping */
+        for(i = 0; i < MAX_SAMPLERS; i++) {
+            if(This->texUnitMap[i] != i) {
+                This->texUnitMap[i] = i;
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
+                markTextureStagesDirty(This, i);
+            }
+        }
+        This->oneToOneTexUnitMap = TRUE;
+        return;
+    } else {
+        /* No pixel shader, and we do not have enought texture units available. Try to skip NULL textures
+         * First, see if we can succeed at all
+         */
+        tex = 0;
+        for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
+            if(This->stateBlock->textures[i] == NULL) tex++;
+        }
+
+        if(GL_LIMITS(textures) + tex < This->stateBlock->lowest_disabled_stage) {
+            FIXME("Too many bound textures to support the combiner settings\n");
+            return;
+        }
+
+        /* Now work out the mapping */
+        tex = 0;
+        This->oneToOneTexUnitMap = FALSE;
+        FIXME("Non 1:1 mapping UNTESTED!\n");
+        for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
+            if(This->stateBlock->textures[i] == NULL) tex++;
+            TRACE("Mapping texture stage %d to unit %d\n", i, tex);
+            if(This->texUnitMap[i] != tex) {
+                This->texUnitMap[i] = tex;
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
+                markTextureStagesDirty(This, i);
+            }
+        }
+    }
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, IWineD3DPixelShader *pShader) {
     IWineD3DDeviceImpl *This        = (IWineD3DDeviceImpl *)iface;
     IWineD3DPixelShader *oldShader  = This->updateStateBlock->pixelShader;
@@ -3707,6 +3779,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
+
+    /* Rebuild the texture unit mapping if nvrc's are supported */
+    if(GL_SUPPORT(NV_REGISTER_COMBINERS)) {
+        IWineD3DDeviceImpl_FindTexUnitMap(This);
+    }
+
     return WINED3D_OK;
 }
 
@@ -4436,6 +4514,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TEXTURESTAGE(Stage, Type));
 
+    /* Rebuild the stage -> gl texture unit mapping if register combiners are supported
+     * If there is a pixel shader there will be a 1:1 mapping, no need to touch it. SetPixelShader
+     * will call FindTexUnitMap too.
+     */
+    if(GL_SUPPORT(NV_REGISTER_COMBINERS) && !This->stateBlock->pixelShader) {
+        IWineD3DDeviceImpl_FindTexUnitMap(This);
+    }
     return WINED3D_OK;
 }
 
@@ -4548,6 +4633,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(Stage));
+
+    /* Verify the texture unit mapping(and rebuild it if needed) if we use nvrcs and no
+     * pixel shader is used
+     */
+    if(GL_SUPPORT(NV_REGISTER_COMBINERS) && !This->stateBlock->pixelShader) {
+        IWineD3DDeviceImpl_FindTexUnitMap(This);
+    }
 
     return WINED3D_OK;
 }

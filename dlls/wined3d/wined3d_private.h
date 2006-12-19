@@ -652,6 +652,10 @@ typedef struct IWineD3DDeviceImpl
     DWORD                   numDirtyEntries;
     DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
 
+    /* With register combiners we can skip junk texture stages */
+    DWORD                     texUnitMap[MAX_SAMPLERS];
+    BOOL                      oneToOneTexUnitMap;
+
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
