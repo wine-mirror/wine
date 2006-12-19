@@ -127,6 +127,7 @@ struct message_state
 {
     RPC_BINDING_HANDLE binding_handle;
     ULONG prefix_data_len;
+    SChannelHookCallInfo channel_hook_info;
 };
 
 typedef struct
@@ -241,6 +242,36 @@ static unsigned char * ChannelHooks_ClientFillBuffer(SChannelHookCallInfo *info,
     HeapFree(GetProcessHeap(), 0, data);
 
     return buffer;
+}
+
+static void ChannelHooks_ServerNotify(SChannelHookCallInfo *info,
+    DWORD lDataRep, WIRE_ORPC_EXTENT *first_wire_orpc_extent,
+    ULONG extension_count)
+{
+    struct channel_hook_entry *entry;
+    ULONG i;
+
+    EnterCriticalSection(&csChannelHook);
+
+    LIST_FOR_EACH_ENTRY(entry, &channel_hooks, struct channel_hook_entry, entry)
+    {
+        WIRE_ORPC_EXTENT *wire_orpc_extent;
+        for (i = 0, wire_orpc_extent = first_wire_orpc_extent;
+             i < extension_count;
+             i++, wire_orpc_extent = (WIRE_ORPC_EXTENT *)&wire_orpc_extent->data[wire_orpc_extent->conformance])
+        {
+            if (IsEqualGUID(&entry->id, &wire_orpc_extent->id))
+                break;
+        }
+        if (i == extension_count) wire_orpc_extent = NULL;
+
+        IChannelHook_ServerNotify(entry->hook, &entry->id, &info->iid,
+            wire_orpc_extent ? wire_orpc_extent->size : 0,
+            wire_orpc_extent ? wire_orpc_extent->data : NULL,
+            lDataRep);
+    }
+
+    LeaveCriticalSection(&csChannelHook);
 }
 
 HRESULT RPC_RegisterChannelHook(REFGUID rguid, IChannelHook *hook)
@@ -360,7 +391,6 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     struct channel_hook_buffer_data *channel_hook_data;
     unsigned int channel_hook_count;
     ULONG extension_count;
-    SChannelHookCallInfo channel_hook_info;
 
     TRACE("(%p)->(%p,%s)\n", This, olemsg, debugstr_guid(riid));
 
@@ -384,14 +414,14 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
     msg->Handle = This->bind;
     msg->RpcInterfaceInformation = cif;
 
-    channel_hook_info.iid = *riid;
-    channel_hook_info.cbSize = sizeof(channel_hook_info);
-    channel_hook_info.uCausality = GUID_NULL; /* FIXME */
-    channel_hook_info.dwServerPid = 0; /* FIXME */
-    channel_hook_info.iMethod = msg->ProcNum;
-    channel_hook_info.pObject = NULL; /* only present on server-side */
+    message_state->channel_hook_info.iid = *riid;
+    message_state->channel_hook_info.cbSize = sizeof(message_state->channel_hook_info);
+    message_state->channel_hook_info.uCausality = GUID_NULL; /* FIXME */
+    message_state->channel_hook_info.dwServerPid = 0; /* FIXME */
+    message_state->channel_hook_info.iMethod = msg->ProcNum;
+    message_state->channel_hook_info.pObject = NULL; /* only present on server-side */
 
-    extensions_size = ChannelHooks_ClientGetSize(&channel_hook_info,
+    extensions_size = ChannelHooks_ClientGetSize(&message_state->channel_hook_info,
         &channel_hook_data, &channel_hook_count, &extension_count);
 
     msg->BufferLength += FIELD_OFFSET(ORPCTHIS, extensions) + 4;
@@ -415,9 +445,9 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
 
         orpcthis->version.MajorVersion = COM_MAJOR_VERSION;
         orpcthis->version.MinorVersion = COM_MINOR_VERSION;
-        orpcthis->flags = channel_hook_info.dwServerPid ? ORPCF_LOCAL : ORPCF_NULL;
+        orpcthis->flags = message_state->channel_hook_info.dwServerPid ? ORPCF_LOCAL : ORPCF_NULL;
         orpcthis->reserved1 = 0;
-        orpcthis->cid = channel_hook_info.uCausality;
+        orpcthis->cid = message_state->channel_hook_info.uCausality;
 
         /* NDR representation of orpcthis->extensions */
         *(DWORD *)msg->Buffer = extensions_size ? 1 : 0;
@@ -436,7 +466,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
             *(DWORD *)msg->Buffer = (extension_count + 1) & ~1;
             msg->Buffer = (char *)msg->Buffer + sizeof(DWORD);
 
-            msg->Buffer = ChannelHooks_ClientFillBuffer(&channel_hook_info,
+            msg->Buffer = ChannelHooks_ClientFillBuffer(&message_state->channel_hook_info,
                 msg->Buffer, channel_hook_data, channel_hook_count);
 
             /* we must add a dummy extension if there is an odd extension
@@ -921,6 +951,18 @@ void RPC_ExecuteCall(struct dispatch_params *params)
 
     message_state->prefix_data_len = original_buffer - (char *)msg->Buffer;
     message_state->binding_handle = msg->Handle;
+
+    message_state->channel_hook_info.iid = IID_NULL; /* FIXME */
+    message_state->channel_hook_info.cbSize = sizeof(message_state->channel_hook_info);
+    message_state->channel_hook_info.uCausality = orpcthis.cid;
+    message_state->channel_hook_info.dwServerPid = GetCurrentProcessId();
+    message_state->channel_hook_info.iMethod = msg->ProcNum;
+    message_state->channel_hook_info.pObject = NULL; /* FIXME */
+
+    if (orpcthis.extensions && first_wire_orpc_extent &&
+        orpcthis.extensions->size)
+        ChannelHooks_ServerNotify(&message_state->channel_hook_info, msg->DataRepresentation, first_wire_orpc_extent, orpcthis.extensions->size);
+
     msg->Handle = message_state;
     msg->BufferLength -= message_state->prefix_data_len;
 
