@@ -1166,7 +1166,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             continue;
         }
 
-        if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]) {
+        if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]*/ TRUE) {
             /* Select the correct texture stage */
             GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
         }
@@ -1204,7 +1204,7 @@ static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
             glDisableClientState(GL_TEXTURE_COORD_ARRAY);
             GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
         }
-        if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]) ++texture_idx;
+        if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]*/ TRUE) ++texture_idx;
     }
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
         for (textureNo = texture_idx; textureNo < GL_LIMITS(textures); ++textureNo) {
@@ -1479,7 +1479,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     }
                 }
             }
-            if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]) ++texture_idx;
+            if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]*/TRUE) ++texture_idx;
         } /* End of textures */
 
         /* Diffuse -------------------------------- */
@@ -1911,7 +1911,7 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
         /* WINED3DTOP_DISABLE disables the current & any higher texture stages */
         if (This->stateBlock->textureState[i][WINED3DTSS_COLOROP] == WINED3DTOP_DISABLE) break;
 
-        if (!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[i]) {
+        if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[i]*/ TRUE) {
             texture_idx = current_sampler++;
 
             /* Active the texture unit corresponding to the current texture stage */
