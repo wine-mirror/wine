@@ -139,7 +139,7 @@ static const char * const DirectoryNames[16] = {
     "EXPORT",		"IMPORT",	"RESOURCE", 	"EXCEPTION",
     "SECURITY", 	"BASERELOC", 	"DEBUG", 	"ARCHITECTURE",
     "GLOBALPTR", 	"TLS", 		"LOAD_CONFIG",	"Bound IAT",
-    "IAT", 		"Delay IAT",	"COM Descript", ""
+    "IAT", 		"Delay IAT",	"CLR Header", ""
 };
 
 static const char *get_magic_type(WORD magic)
@@ -786,6 +786,47 @@ static void	dump_dir_debug(void)
     printf("\n");
 }
 
+static inline void print_clrflags(const char *title, WORD value)
+{
+    printf("  %-34s 0x%X\n", title, value);
+#define X(f,s) if (value & f) printf("    %s\n", s)
+    X(COMIMAGE_FLAGS_ILONLY,           "ILONLY");
+    X(COMIMAGE_FLAGS_32BITREQUIRED,    "32BITREQUIRED");
+    X(COMIMAGE_FLAGS_IL_LIBRARY,       "IL_LIBRARY");
+    X(COMIMAGE_FLAGS_STRONGNAMESIGNED, "STRONGNAMESIGNED");
+    X(COMIMAGE_FLAGS_TRACKDEBUGDATA,   "TRACKDEBUGDATA");
+#undef X
+}
+
+static inline void print_clrdirectory(const char *title, const IMAGE_DATA_DIRECTORY *dir)
+{
+    printf("  %-23s rva: 0x%-8x  size: 0x%-8x\n", title, dir->VirtualAddress, dir->Size);
+}
+
+static void dump_dir_clr_header(void)
+{
+    unsigned int size = 0;
+    const IMAGE_COR20_HEADER *dir = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_COM_DESCRIPTOR, &size);
+
+    if (!dir) return;
+
+    printf( "CLR Header\n" );
+    print_dword( "Header Size", dir->cb );
+    print_ver( "Required runtime version", dir->MajorRuntimeVersion, dir->MinorRuntimeVersion );
+    print_clrflags( "Flags", dir->Flags );
+    print_dword( "EntryPointToken", dir->EntryPointToken );
+    printf("\n");
+    printf( "CLR Data Directory\n" );
+    print_clrdirectory( "MetaData", &dir->MetaData );
+    print_clrdirectory( "Resources", &dir->Resources );
+    print_clrdirectory( "StrongNameSignature", &dir->StrongNameSignature );
+    print_clrdirectory( "CodeManagerTable", &dir->CodeManagerTable );
+    print_clrdirectory( "VTableFixups", &dir->VTableFixups );
+    print_clrdirectory( "ExportAddressTableJumps", &dir->ExportAddressTableJumps );
+    print_clrdirectory( "ManagedNativeHeader", &dir->ManagedNativeHeader );
+    printf("\n");
+}
+
 static void dump_dir_tls(void)
 {
     IMAGE_TLS_DIRECTORY64 dir;
@@ -1227,6 +1268,8 @@ void pe_dump(void)
 	    dump_dir_resource();
 	if (all || !strcmp(globals.dumpsect, "tls"))
 	    dump_dir_tls();
+	if (all || !strcmp(globals.dumpsect, "clr"))
+	    dump_dir_clr_header();
 #if 0
 	/* FIXME: not implemented yet */
 	if (all || !strcmp(globals.dumpsect, "reloc"))

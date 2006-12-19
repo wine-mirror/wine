@@ -72,10 +72,10 @@ This option dumps only the standard PE header structures,
 along with the COFF sections available in the file.
 .IP "\fB-j \fIsect_name\fR"
 Dumps only the content of section sect_name (import,
-export, debug).
+export, debug, resource, tls, clr).
 To dump only a given directory, specify them using this
-option. Currently only the import, export and debug
-directories are implemented.
+option. Currently the import, export, debug, resource,
+tls and clr directories are implemented.
 .IP \fB-x\fR
 Dumps everything.
 This command prints all available information about the
