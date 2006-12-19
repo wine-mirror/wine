@@ -490,12 +490,13 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
         else wndPtr->flags &= ~WIN_RESTORE_MAX;
         WIN_ReleasePtr( wndPtr );
 
-        WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
+        old_style = WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
 
         X11DRV_set_iconic_state( hwnd );
 
         wpl.ptMinPosition = WINPOS_FindIconPos( hwnd, wpl.ptMinPosition );
 
+        if (!(old_style & WS_MINIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
                  GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON) );
         swpFlags |= SWP_NOCOPYBITS;
@@ -513,9 +514,12 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
             WINPOS_ShowIconTitle( hwnd, FALSE );
             X11DRV_set_iconic_state( hwnd );
         }
+        if (!(old_style & WS_MAXIMIZE)) swpFlags |= SWP_STATECHANGED;
         SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
         break;
 
+    case SW_SHOWNOACTIVATE:
+    case SW_SHOWNORMAL:
     case SW_RESTORE:
         old_style = WIN_SetStyle( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
         if (old_style & WS_MINIMIZE)
@@ -533,11 +537,14 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
                 /* Restore to maximized position */
                 WINPOS_GetMinMaxInfo( hwnd, &size, &wpl.ptMaxPosition, NULL, NULL);
                 WIN_SetStyle( hwnd, WS_MAXIMIZE, 0 );
+                swpFlags |= SWP_STATECHANGED;
                 SetRect( rect, wpl.ptMaxPosition.x, wpl.ptMaxPosition.y, size.x, size.y );
                 break;
             }
         }
         else if (!(old_style & WS_MAXIMIZE)) break;
+
+        swpFlags |= SWP_STATECHANGED;
 
         /* Restore to normal position */
 
@@ -561,7 +568,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     HWND parent;
     LONG style = GetWindowLongW( hwnd, GWL_STYLE );
     BOOL wasVisible = (style & WS_VISIBLE) != 0;
-    BOOL showFlag = TRUE, state_change = FALSE;
+    BOOL showFlag = TRUE;
     RECT newPos = {0, 0, 0, 0};
     UINT swp = 0;
 
@@ -588,14 +595,13 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
             if (style & WS_MINIMIZE) return wasVisible;
-            state_change = TRUE;
 	    break;
 
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
-            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+            if (!wasVisible) swp |= SWP_SHOWWINDOW;
+            swp |= SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
             if ((style & WS_MAXIMIZE) && wasVisible) return wasVisible;
-            state_change = TRUE;
             break;
 
 	case SW_SHOWNA:
@@ -608,52 +614,45 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
 
-	case SW_RESTORE:
-	    swp |= SWP_FRAMECHANGED;
-            state_change = TRUE;
-            /* fall through */
 	case SW_SHOWNOACTIVATE:
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
+	case SW_RESTORE:
+	    swp |= SWP_FRAMECHANGED;
+	    if (!wasVisible) swp |= SWP_SHOWWINDOW;
+            /* fall through */
 	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
 	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
-	    swp |= SWP_SHOWWINDOW;
             if (style & (WS_MINIMIZE | WS_MAXIMIZE))
-		 swp |= WINPOS_MinMaximize( hwnd, SW_RESTORE, &newPos );
-            else swp |= SWP_NOSIZE | SWP_NOMOVE;
-            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+            {
+                swp |= SWP_FRAMECHANGED;
+                swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
+            }
+            else
+            {
+                if (!wasVisible) swp |= SWP_SHOWWINDOW;
+                swp |= SWP_NOSIZE | SWP_NOMOVE;
+            }
+            if (style & WS_CHILD && !(swp & SWP_STATECHANGED)) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
 	    break;
     }
 
-    if ((showFlag != wasVisible || cmd == SW_SHOWNA) && !state_change)
+    if ((showFlag != wasVisible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED && !(swp & SWP_STATECHANGED))
     {
         SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
         if (!IsWindow( hwnd )) return wasVisible;
     }
 
     parent = GetAncestor( hwnd, GA_PARENT );
-    if (parent && !IsWindowVisible( parent ) && !state_change)
+    if (parent && !IsWindowVisible( parent ) && !(swp & SWP_STATECHANGED))
     {
         /* if parent is not visible simply toggle WS_VISIBLE and return */
         if (showFlag) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
         else WIN_SetStyle( hwnd, 0, WS_VISIBLE );
     }
     else
-    {
-        if (style & WS_CHILD)
-        {
-            if (state_change)
-            {
-                /* it appears that Windows always adds an undocumented 0x8000
-                 * flag if the state of a window changes.
-                 */
-                swp |= SWP_STATECHANGED;
-            }
-        }
-
         SetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
                       newPos.right, newPos.bottom, LOWORD(swp) );
-    }
 
     if (cmd == SW_HIDE)
     {
@@ -745,7 +744,7 @@ void X11DRV_MapNotify( HWND hwnd, XEvent *event )
         SendMessageW( hwnd, WM_SHOWWINDOW, SW_RESTORE, 0 );
         data->lock_changes++;
         SetWindowPos( hwnd, 0, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
-                      SWP_NOZORDER | SWP_FRAMECHANGED );
+                      SWP_NOZORDER | SWP_FRAMECHANGED | SWP_STATECHANGED );
         data->lock_changes--;
     }
     else WIN_ReleasePtr( win );
@@ -780,7 +779,7 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
         SendMessageW( hwnd, WM_SHOWWINDOW, SW_MINIMIZE, 0 );
         data->lock_changes++;
         SetWindowPos( hwnd, 0, 0, 0, GetSystemMetrics(SM_CXICON), GetSystemMetrics(SM_CYICON),
-                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER );
+                      SWP_NOMOVE | SWP_NOACTIVATE | SWP_NOZORDER | SWP_STATECHANGED );
         data->lock_changes--;
     }
     else WIN_ReleasePtr( win );

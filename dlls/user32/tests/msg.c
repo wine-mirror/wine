@@ -369,9 +369,9 @@ static const struct message WmCreateMaxPopupSeq[] = {
     { WM_MOVE, sent },
     { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
-    { WM_WINDOWPOSCHANGING, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000*/ },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, TRUE },
-    { WM_WINDOWPOSCHANGED, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOZORDER|0x8000*/ },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOZORDER|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
     { WM_SHOWWINDOW, sent|wparam, 1 },
@@ -400,9 +400,9 @@ static const struct message WmCreateInvisibleMaxPopupSeq[] = {
     { WM_MOVE, sent },
     { HCBT_MINMAX, hook|lparam, 0, SW_MAXIMIZE },
     { WM_GETMINMAXINFO, sent },
-    { WM_WINDOWPOSCHANGING, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000*/ },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000 },
     { WM_NCCALCSIZE, sent|wparam, TRUE },
-    { WM_WINDOWPOSCHANGED, sent /*|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOZORDER|0x8000*/ },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOREDRAW|SWP_NOZORDER|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|defwinproc },
     { 0 }
@@ -2996,7 +2996,7 @@ static void test_mdi_messages(void)
 
     trace("call ShowWindow(mdi_child, SW_MAXIMIZE)\n");
     ShowWindow(mdi_child2, SW_MAXIMIZE);
-    ok_sequence(WmMaximizeMDIchildInvisibleSeq2, "ShowWindow(SW_MAXIMIZE):invisible maximized MDI child", TRUE);
+    ok_sequence(WmMaximizeMDIchildInvisibleSeq2, "ShowWindow(SW_MAXIMIZE):invisible maximized MDI child", FALSE);
     ok(IsZoomed(mdi_child2), "MDI child should be maximized\n");
     ok(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
     ok(IsWindowVisible(mdi_child2), "MDI child should be visible\n");
@@ -3492,7 +3492,7 @@ static void test_showwindow(void)
     trace("calling ShowWindow( SW_SHOWMAXIMIZE ) for visible popup window\n");
     ShowWindow(hwnd, SW_SHOWMAXIMIZED);
     ok(IsZoomed(hwnd), "window should be maximized\n");
-    ok_sequence(WmShowVisMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", TRUE);
+    ok_sequence(WmShowVisMaxPopupSeq, "ShowWindow(SW_SHOWMAXIMIZED):popup", FALSE);
     trace("done\n");
     DestroyWindow(hwnd);
     flush_sequence();
@@ -3641,7 +3641,7 @@ static void test_messages(void)
     hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD | WS_MAXIMIZE,
                              0, 0, 10, 10, hparent, 0, 0, NULL);
     ok (hchild != 0, "Failed to create child window\n");
-    ok_sequence(WmCreateMaximizedChildSeq, "CreateWindow:maximized child", TRUE);
+    ok_sequence(WmCreateMaximizedChildSeq, "CreateWindow:maximized child", FALSE);
     DestroyWindow(hchild);
     flush_sequence();
 
@@ -3920,6 +3920,16 @@ static void invisible_parent_tests(void)
     flush_events();
     ShowWindow( hchild, SW_MAXIMIZE );
     ok_sequence(WmShowChildInvisibleParentSeq_2r, "ShowWindow(SW_MAXIMIZE) child with invisible parent", FALSE);
+
+    DestroyWindow(hchild);
+    hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
+                             0, 0, 10, 10, hparent, 0, 0, NULL);
+    flush_sequence();
+
+    ShowWindow( hchild, SW_RESTORE );
+    ok_sequence(WmShowChildInvisibleParentSeq_5, "ShowWindow(SW_RESTORE) child with invisible parent", FALSE);
+    ok(GetWindowLongA(hchild, GWL_STYLE) & WS_VISIBLE, "WS_VISIBLE should be set\n");
+    ok(!IsWindowVisible(hchild), "IsWindowVisible() should return FALSE\n");
 
     DestroyWindow(hchild);
     hchild = CreateWindowExA(0, "TestWindowClass", "Test child", WS_CHILD,
