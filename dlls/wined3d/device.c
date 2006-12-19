@@ -4355,7 +4355,7 @@ static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *ifac
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type, DWORD Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    DWORD oldColorOp = This->updateStateBlock->textureState[Stage][WINED3DTSS_COLOROP];
+    DWORD oldValue = This->updateStateBlock->textureState[Stage][Type];
 
     /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
 
@@ -4376,6 +4376,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
         return WINED3D_OK;
     }
 
+    /* Checked after the assignments to allow proper stateblock recording */
+    if(oldValue == Value) {
+        TRACE("App is setting the old value over, nothing to do\n");
+        return WINED3D_OK;
+    }
+
     if(Stage > This->stateBlock->lowest_disabled_stage &&
        StateTable[STATE_TEXTURESTAGE(0, Type)].representative == STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP)) {
         /* Colorop change above lowest disabled stage? That won't change anything in the gl setup
@@ -4387,7 +4393,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
     if(Type == WINED3DTSS_COLOROP) {
         int i;
 
-        if(Value == WINED3DTOP_DISABLE && oldColorOp != WINED3DTOP_DISABLE) {
+        if(Value == WINED3DTOP_DISABLE && oldValue != WINED3DTOP_DISABLE) {
             /* Previously enabled stage disabled now. Make sure to dirtify all enabled stages above Stage,
              * they have to be disabled
              *
@@ -4399,7 +4405,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
             }
             This->stateBlock->lowest_disabled_stage = Stage;
             TRACE("New lowest disabled: %d\n", Stage);
-        } else if(Value != WINED3DTOP_DISABLE && oldColorOp == WINED3DTOP_DISABLE) {
+        } else if(Value != WINED3DTOP_DISABLE && oldValue == WINED3DTOP_DISABLE) {
             /* Previously disabled stage enabled. Stages above it may need enabling
              * stage must be lowest_disabled_stage here, if it's bigger success is returned above,
              * and stages below the lowest disabled stage can't be enabled(because they are enabled already).
