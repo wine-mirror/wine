@@ -155,6 +155,7 @@ MAKE_FUNCPTR(FcObjectSetCreate);
 MAKE_FUNCPTR(FcObjectSetDestroy);
 MAKE_FUNCPTR(FcPatternCreate);
 MAKE_FUNCPTR(FcPatternDestroy);
+MAKE_FUNCPTR(FcPatternGetBool);
 MAKE_FUNCPTR(FcPatternGetString);
 #ifndef SONAME_LIBFONTCONFIG
 #define SONAME_LIBFONTCONFIG "libfontconfig.so"
@@ -1221,6 +1222,7 @@ LOAD_FUNCPTR(FcObjectSetCreate);
 LOAD_FUNCPTR(FcObjectSetDestroy);
 LOAD_FUNCPTR(FcPatternCreate);
 LOAD_FUNCPTR(FcPatternDestroy);
+LOAD_FUNCPTR(FcPatternGetBool);
 LOAD_FUNCPTR(FcPatternGetString);
 #undef LOAD_FUNCPTR
 
@@ -1230,20 +1232,30 @@ LOAD_FUNCPTR(FcPatternGetString);
     pat = pFcPatternCreate();
     os = pFcObjectSetCreate();
     pFcObjectSetAdd(os, FC_FILE);
+    pFcObjectSetAdd(os, FC_SCALABLE);
     fontset = pFcFontList(config, pat, os);
     if(!fontset) return;
     for(i = 0; i < fontset->nfont; i++) {
+        FcBool scalable;
+
         if(pFcPatternGetString(fontset->fonts[i], FC_FILE, 0, (FcChar8**)&file) != FcResultMatch)
             continue;
         TRACE("fontconfig: %s\n", file);
 
         /* We're just interested in OT/TT fonts for now, so this hack just
-           picks up the standard extensions to save time loading every other
-           font */
+           picks up the scalable fonts without extensions .pf[ab] to save time
+           loading every other font */
+
+        if(pFcPatternGetBool(fontset->fonts[i], FC_SCALABLE, 0, &scalable) == FcResultMatch && !scalable)
+        {
+            TRACE("not scalable\n");
+            continue;
+        }
+
         len = strlen( file );
         if(len < 4) continue;
         ext = &file[ len - 3 ];
-        if(!strcasecmp(ext, "ttf") || !strcasecmp(ext, "ttc") || !strcasecmp(ext, "otf"))
+        if(strcasecmp(ext, "pfa") && strcasecmp(ext, "pfb"))
             AddFontFileToList(file, NULL, ADDFONT_EXTERNAL_FONT);
     }
     pFcFontSetDestroy(fontset);
