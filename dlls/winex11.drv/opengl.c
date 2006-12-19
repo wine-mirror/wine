@@ -1795,7 +1795,9 @@ static void WINAPI X11DRV_wglDisable(GLenum cap)
     if (cap == GL_SCISSOR_TEST)
     {
        Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-       ctx->scissor_enabled = FALSE;
+
+       if (ctx)
+          ctx->scissor_enabled = FALSE;
     }
     else
     {
@@ -1810,7 +1812,9 @@ static void WINAPI X11DRV_wglEnable(GLenum cap)
     if (cap == GL_SCISSOR_TEST)
     {
        Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-       ctx->scissor_enabled = TRUE;
+
+       if (ctx)
+           ctx->scissor_enabled = TRUE;
     }
     else
     {
@@ -1861,12 +1865,14 @@ static void WINAPI X11DRV_wglGetIntegerv(GLenum pname, GLint* params)
 
 static GLboolean WINAPI X11DRV_wglIsEnabled(GLenum cap)
 {
-    GLboolean enabled;
+    GLboolean enabled = False;
 
     if (cap == GL_SCISSOR_TEST)
     {
        Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
-       enabled = ctx->scissor_enabled;
+
+       if (ctx)
+           enabled = ctx->scissor_enabled;
     }
     else
     {
@@ -1881,24 +1887,30 @@ static void WINAPI X11DRV_wglScissor(GLint x, GLint y, GLsizei width, GLsizei he
 {
     Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
 
-    ctx->scissor.left = x;
-    ctx->scissor.top = y;
-    ctx->scissor.right = x + width;
-    ctx->scissor.bottom = y + height;
+    if (ctx)
+    {
+        ctx->scissor.left = x;
+        ctx->scissor.top = y;
+        ctx->scissor.right = x + width;
+        ctx->scissor.bottom = y + height;
 
-    sync_current_drawable(TRUE);
+        sync_current_drawable(TRUE);
+    }
 }
 
 static void WINAPI X11DRV_wglViewport(GLint x, GLint y, GLsizei width, GLsizei height)
 {
     Wine_GLContext *ctx = (Wine_GLContext *) NtCurrentTeb()->glContext;
 
-    ctx->viewport.left = x;
-    ctx->viewport.top = y;
-    ctx->viewport.right = x + width;
-    ctx->viewport.bottom = y + height;
+    if (ctx)
+    {
+        ctx->viewport.left = x;
+        ctx->viewport.top = y;
+        ctx->viewport.right = x + width;
+        ctx->viewport.bottom = y + height;
 
-    sync_current_drawable(TRUE);
+        sync_current_drawable(TRUE);
+    }
 }
 
 /**
