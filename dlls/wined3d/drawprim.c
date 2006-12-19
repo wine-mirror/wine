@@ -1962,23 +1962,6 @@ static void drawPrimitiveUploadTextures(IWineD3DDeviceImpl* This) {
             This->stateBlock->textureDimensions[i] = GL_TEXTURE_1D;
             glBindTexture(GL_TEXTURE_1D, This->dummyTextureName[i]);
         }
-
-        /** these ops apply to the texture unit, so they are preserved between texture changes, but for now brute force and reapply all
-          dx9_1pass_emboss_bump_mapping and dx9_2pass_emboss_bump_mapping are good texts to make sure the states are being applied when needed **/
-        if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-            /* alphaop */
-            set_tex_op_nvrc((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
-                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
-                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
-                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0],
-                    texture_idx);
-        } else {
-            /* alphaop */
-            set_tex_op((IWineD3DDevice *)This, TRUE, i, This->stateBlock->textureState[i][WINED3DTSS_ALPHAOP],
-                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG1],
-                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG2],
-                    This->stateBlock->textureState[i][WINED3DTSS_ALPHAARG0]);
-        }
     }
 }
 
