@@ -236,11 +236,6 @@ HRESULT WINAPI IWineD3DBaseTextureImpl_BindTexture(IWineD3DBaseTexture *iface) {
 
     textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(iface);
     ENTER_GL();
-#if 0 /* TODO: context manager support */
-     IWineD3DContextManager_PushState(This->contextManager, textureDimensions, ENABLED, NOW /* make sure the state is applied now */);
-#else
-    glEnable(textureDimensions);
-#endif
 
     /* Generate a texture name if we don't already have one */
     if (This->baseTexture.textureName == 0) {
