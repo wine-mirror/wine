@@ -75,13 +75,6 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static SYSLEVEL GDI_level = { { &critsect_debug, -1, 0, 0, 0, 0 }, 3 };
 
-inline static BOOL get_bool(char *buffer)
-{
-    return (buffer[0] == 'y' || buffer[0] == 'Y' ||
-            buffer[0] == 't' || buffer[0] == 'T' ||
-            buffer[0] == '1');
-}
-
 
 /****************************************************************************
  *
