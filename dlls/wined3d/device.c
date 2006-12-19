@@ -574,6 +574,8 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 
         HeapFree(GetProcessHeap(), 0, This->render_targets);
 
+        HeapFree(GetProcessHeap(), 0, This->draw_buffers);
+
         /* TODO: Clean up all the surfaces and textures! */
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
@@ -5794,14 +5796,18 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     }
 }
 
-static void set_render_target_fbo(IWineD3DDevice *iface, IWineD3DSurface *render_target) {
+static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *rtimpl = (IWineD3DSurfaceImpl *)render_target;
 
-    if (This->render_offscreen) {
-        GLenum texttarget, target;
+    if (idx >= GL_LIMITS(buffers)) {
+        ERR("%p : Trying to set render target %d, but only %d supported\n", This, idx, GL_LIMITS(buffers));
+    }
 
-        bind_fbo(iface);
+    bind_fbo(iface);
+
+    if (rtimpl) {
+        GLenum texttarget, target;
 
         IWineD3DSurface_PreLoad(render_target);
         texttarget = rtimpl->glDescription.target;
@@ -5812,9 +5818,23 @@ static void set_render_target_fbo(IWineD3DDevice *iface, IWineD3DSurface *render
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(target, 0);
 
-        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, texttarget, rtimpl->glDescription.textureName, 0));
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, rtimpl->glDescription.textureName, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
+
+        This->draw_buffers[idx] = GL_COLOR_ATTACHMENT0_EXT + idx;
     } else {
+        GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, GL_TEXTURE_2D, 0, 0));
+        checkGLcall("glFramebufferTexture2DEXT()");
+
+        This->draw_buffers[idx] = GL_NONE;
+    }
+
+    if (GL_SUPPORT(ARB_DRAW_BUFFERS)) {
+        GL_EXTCALL(glDrawBuffersARB(GL_LIMITS(buffers), This->draw_buffers));
+        checkGLcall("glDrawBuffers()");
+    }
+
+    if (!This->render_offscreen) {
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
         checkGLcall("glBindFramebuffer()");
     }
@@ -5878,7 +5898,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         if (pRenderTarget) IWineD3DSurface_AddRef(pRenderTarget);
 
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-            set_render_target_fbo(iface, pRenderTarget);
+            set_render_target_fbo(iface, RenderTargetIndex, pRenderTarget);
         }
     }
 

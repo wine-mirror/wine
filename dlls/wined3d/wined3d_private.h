@@ -587,6 +587,7 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    render_offscreen;
     WINED3D_DEPTHCOPYSTATE  depth_copy_state;
     GLuint                  fbo;
+    GLenum                  *draw_buffers;
 
     /* Cursor management */
     BOOL                    bCursorVisible;
