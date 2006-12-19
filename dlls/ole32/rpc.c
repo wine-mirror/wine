@@ -418,7 +418,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_GetBuffer(LPRPCCHANNELBUFFER iface,
 
     message_state->channel_hook_info.iid = *riid;
     message_state->channel_hook_info.cbSize = sizeof(message_state->channel_hook_info);
-    message_state->channel_hook_info.uCausality = GUID_NULL; /* FIXME */
+    message_state->channel_hook_info.uCausality = COM_CurrentCausalityId();
     message_state->channel_hook_info.dwServerPid = 0; /* FIXME */
     message_state->channel_hook_info.iMethod = msg->ProcNum;
     message_state->channel_hook_info.pObject = NULL; /* only present on server-side */
@@ -940,6 +940,7 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     ORPCTHIS orpcthis;
     ORPC_EXTENT_ARRAY orpc_ext_array;
     WIRE_ORPC_EXTENT *first_wire_orpc_extent;
+    GUID old_causality_id;
 
     /* handle ORPCTHIS and server extensions */
 
@@ -977,12 +978,17 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     {
         DWORD handlecall;
         INTERFACEINFO interface_info;
+        CALLTYPE calltype;
 
         interface_info.pUnk = params->iface;
         interface_info.iid = params->iid;
         interface_info.wMethod = msg->ProcNum;
+        if (IsEqualGUID(&orpcthis.cid, &COM_CurrentInfo()->causality_id))
+            calltype = CALLTYPE_NESTED;
+        else /* FIXME: also detect CALLTYPE_TOPLEVEL_CALLPENDING */
+            calltype = CALLTYPE_TOPLEVEL;
         handlecall = IMessageFilter_HandleInComingCall(COM_CurrentApt()->filter,
-                                                       CALLTYPE_TOPLEVEL /* FIXME */,
+                                                       calltype,
                                                        (HTASK)GetCurrentProcessId(),
                                                        0 /* FIXME */,
                                                        &interface_info);
@@ -1008,7 +1014,13 @@ void RPC_ExecuteCall(struct dispatch_params *params)
 
     /* invoke the method */
 
+    /* save the old causality ID - note: any calls executed while processing
+     * messages received during the SendReceive will appear to originate from
+     * this call - this should be checked with what Windows does */
+    old_causality_id = COM_CurrentInfo()->causality_id;
+    COM_CurrentInfo()->causality_id = orpcthis.cid;
     params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
+    COM_CurrentInfo()->causality_id = old_causality_id;
 
     message_state = (struct message_state *)msg->Handle;
     msg->Handle = message_state->binding_handle;

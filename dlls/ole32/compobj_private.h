@@ -168,6 +168,7 @@ struct oletls
     IErrorInfo       *errorinfo;   /* see errorinfo.c */
     IUnknown         *state;       /* see CoSetState */
     DWORD            inits;        /* number of times CoInitializeEx called */
+    GUID             causality_id; /* unique identifier for each COM call */
 };
 
 
@@ -271,6 +272,16 @@ static inline struct oletls *COM_CurrentInfo(void)
 static inline APARTMENT* COM_CurrentApt(void)
 {  
     return COM_CurrentInfo()->apt;
+}
+
+static inline GUID COM_CurrentCausalityId(void)
+{
+    struct oletls *info = COM_CurrentInfo();
+    if (!info)
+        return GUID_NULL;
+    if (IsEqualGUID(&info->causality_id, &GUID_NULL))
+        CoCreateGuid(&info->causality_id);
+    return info->causality_id;
 }
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
