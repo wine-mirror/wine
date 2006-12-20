@@ -268,7 +268,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     {
         if (p->handle != 0)
         {
-            WINE_ERR("Process (%lu) is already defined\n", pid);
+            WINE_ERR("Process (%04x) is already defined\n", pid);
         }
         else
         {
@@ -401,7 +401,7 @@ struct dbg_thread* dbg_add_thread(struct dbg_process* p, DWORD tid,
     t->curr_frame = -1;
     t->addr_mode = AddrModeFlat;
 
-    snprintf(t->name, sizeof(t->name), "0x%08lx", tid);
+    snprintf(t->name, sizeof(t->name), "%04x", tid);
 
     t->next = p->threads;
     t->prev = NULL;
@@ -547,7 +547,7 @@ int main(int argc, char** argv)
             hFile = parser_generate_command_file(argv[0], NULL);
             if (hFile == INVALID_HANDLE_VALUE)
             {
-                dbg_printf("Couldn't open temp file (%lu)\n", GetLastError());
+                dbg_printf("Couldn't open temp file (%u)\n", GetLastError());
                 return 1;
             }
             argc--; argv++;
@@ -560,7 +560,7 @@ int main(int argc, char** argv)
                                 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
             if (hFile == INVALID_HANDLE_VALUE)
             {
-                dbg_printf("Couldn't open file %s (%lu)\n", argv[0], GetLastError());
+                dbg_printf("Couldn't open file %s (%u)\n", argv[0], GetLastError());
                 return 1;
             }
             argc--; argv++;
@@ -586,7 +586,7 @@ int main(int argc, char** argv)
 
     if (dbg_curr_process)
     {
-        dbg_printf("WineDbg starting on pid 0x%lx\n", dbg_curr_pid);
+        dbg_printf("WineDbg starting on pid %04x\n", dbg_curr_pid);
         if (dbg_curr_process->active_debuggee) dbg_active_wait_for_first_exception();
     }
 

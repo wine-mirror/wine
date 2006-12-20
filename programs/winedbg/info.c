@@ -263,7 +263,7 @@ void info_win32_module(DWORD64 base)
     HeapFree(GetProcessHeap(), 0, im.mi);
 
     if (base && !num_printed)
-        dbg_printf("'0x%lx%08lx' is not a valid module address\n", (DWORD)(base >> 32), (DWORD)base);
+        dbg_printf("'0x%x%08x' is not a valid module address\n", (DWORD)(base >> 32), (DWORD)base);
 }
 
 struct class_walker
@@ -330,10 +330,10 @@ void info_win32_class(HWND hWnd, const char* name)
     }
 
     dbg_printf("Class '%s':\n", name);
-    dbg_printf("style=0x%08x  wndProc=0x%08lx\n"
+    dbg_printf("style=0x%08x  wndProc=%p\n"
                "inst=%p  icon=%p  cursor=%p  bkgnd=%p\n"
                "clsExtra=%d  winExtra=%d\n",
-               wca.style, (DWORD)wca.lpfnWndProc, wca.hInstance,
+               wca.style, wca.lpfnWndProc, wca.hInstance,
                wca.hIcon, wca.hCursor, wca.hbrBackground,
                wca.cbClsExtra, wca.cbWndExtra);
 
@@ -371,8 +371,8 @@ static void info_window(HWND hWnd, int indent)
         if (!GetWindowText(hWnd, wndName, sizeof(wndName)))
             strcpy(wndName, "-- Empty --");
 
-        dbg_printf("%*s%08x%*s %-17.17s %08lx %08lx %08lx %.14s\n",
-                   indent, "", (UINT)hWnd, 12 - indent, "",
+        dbg_printf("%*s%08lx%*s %-17.17s %08x %08x %08x %.14s\n",
+                   indent, "", (DWORD_PTR)hWnd, 12 - indent, "",
                    clsName, GetWindowLong(hWnd, GWL_STYLE),
                    GetWindowLongPtr(hWnd, GWLP_WNDPROC),
                    GetWindowThreadProcessId(hWnd, NULL), wndName);
@@ -413,9 +413,9 @@ void info_win32_window(HWND hWnd, BOOL detailed)
 
     /* FIXME missing fields: hmemTaskQ, hrgnUpdate, dce, flags, pProp, scroll */
     dbg_printf("next=%p  child=%p  parent=%p  owner=%p  class='%s'\n"
-               "inst=%p  active=%p  idmenu=%08lx\n"
-               "style=0x%08lx  exstyle=0x%08lx  wndproc=0x%08lx  text='%s'\n"
-               "client=%ld,%ld-%ld,%ld  window=%ld,%ld-%ld,%ld sysmenu=%p\n",
+               "inst=%p  active=%p  idmenu=%08x\n"
+               "style=0x%08x  exstyle=0x%08x  wndproc=0x%08x  text='%s'\n"
+               "client=%d,%d-%d,%d  window=%d,%d-%d,%d sysmenu=%p\n",
                GetWindow(hWnd, GW_HWNDNEXT),
                GetWindow(hWnd, GW_CHILD),
                GetParent(hWnd),
@@ -463,7 +463,7 @@ void info_win32_processes(void)
         while (ok)
         {
             if (entry.th32ProcessID != GetCurrentProcessId())
-                dbg_printf("%c%08lx %-8ld %08lx '%s'\n",
+                dbg_printf("%c%08x %-8d %08x '%s'\n",
                            (entry.th32ProcessID == current) ? '>' : ' ',
                            entry.th32ProcessID, entry.cntThreads,
                            entry.th32ParentProcessID, entry.szExeFile);
@@ -499,11 +499,11 @@ void info_win32_threads(void)
 		{
 		    struct dbg_process*	p = dbg_get_process(entry.th32OwnerProcessID);
 
-		    dbg_printf("%08lx%s %s\n",
+		    dbg_printf("%08x%s %s\n",
                                entry.th32OwnerProcessID, p ? " (D)" : "", p ? p->imageName : "");
 		    lastProcessId = entry.th32OwnerProcessID;
 		}
-                dbg_printf("\t%08lx %4ld%s\n",
+                dbg_printf("\t%08x %4d%s\n",
                            entry.th32ThreadID, entry.tpBasePri,
                            (entry.th32ThreadID == dbg_curr_tid) ? " <==" : "");
 
@@ -540,12 +540,12 @@ void info_win32_exceptions(DWORD tid)
 
         if (!thread)
         {
-            dbg_printf("Unknown thread id (0x%08lx) in current process\n", tid);
+            dbg_printf("Unknown thread id (%04x) in current process\n", tid);
             return;
         }
         if (SuspendThread(thread->handle) == -1)
         {
-            dbg_printf("Can't suspend thread id (0x%08lx)\n", tid);
+            dbg_printf("Can't suspend thread id (%04x)\n", tid);
             return;
         }
     }
@@ -598,7 +598,7 @@ void info_win32_segments(DWORD start, int length)
             flags[1] = (le.HighWord.Bits.Type & 0x2) ? 'w' : '-';
             flags[2] = '-';
         }
-        dbg_printf("%04lx: sel=%04lx base=%08x limit=%08x %d-bit %c%c%c\n",
+        dbg_printf("%04x: sel=%04x base=%08x limit=%08x %d-bit %c%c%c\n",
                    i, (i << 3) | 7,
                    (le.HighWord.Bits.BaseHi << 24) +
                    (le.HighWord.Bits.BaseMid << 16) + le.BaseLow,
@@ -632,7 +632,7 @@ void info_win32_virtual(DWORD pid)
         hProc = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
         if (hProc == NULL)
         {
-            dbg_printf("Cannot open process <%lu>\n", pid);
+            dbg_printf("Cannot open process <%04x>\n", pid);
             return;
         }
     }
@@ -675,7 +675,7 @@ void info_win32_virtual(DWORD pid)
             prot[0] = '\0';
         }
         dbg_printf("%08lx %08lx %s %s %s\n",
-                   (DWORD)addr, (DWORD)addr + mbi.RegionSize - 1, state, type, prot);
+                   (DWORD_PTR)addr, (DWORD_PTR)addr + mbi.RegionSize - 1, state, type, prot);
         if (addr + mbi.RegionSize < addr) /* wrap around ? */
             break;
         addr += mbi.RegionSize;

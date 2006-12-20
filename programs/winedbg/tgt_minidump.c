@@ -193,7 +193,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         const char *str;
         char tmp[128];
 
-        dbg_printf("WineDbg starting on minidump on pid %lu\n", pid);
+        dbg_printf("WineDbg starting on minidump on pid %04x\n", pid);
         switch (msi->ProcessorArchitecture)
         {
         case PROCESSOR_ARCHITECTURE_UNKNOWN: 
@@ -271,7 +271,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             break;
         default: str = "???"; break;
         }
-        dbg_printf(" on Windows %s (%lu)\n", str, msi->BuildNumber);
+        dbg_printf(" on Windows %s (%u)\n", str, msi->BuildNumber);
         /* FIXME CSD: msi->CSDVersionRva */
     }
 

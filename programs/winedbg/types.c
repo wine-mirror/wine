@@ -115,7 +115,7 @@ LONGLONG types_extract_as_longlong(const struct dbg_lvalue* lvalue)
         rtn = (unsigned)memory_to_linear_addr(&lvalue->addr);
         break;
     default:
-        WINE_FIXME("Unsupported tag %lu\n", tag);
+        WINE_FIXME("Unsupported tag %u\n", tag);
         RaiseException(DEBUG_STATUS_NOT_AN_INTEGER, 0, 0, NULL);
         break;
     }
@@ -545,7 +545,7 @@ void print_value(const struct dbg_lvalue* lvalue, char format, int level)
         print_value(&lvalue_field, format, level);
         break;
     default:
-        WINE_FIXME("Unknown tag (%lu)\n", tag);
+        WINE_FIXME("Unknown tag (%u)\n", tag);
         RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
         break;
     }
@@ -560,7 +560,7 @@ static BOOL CALLBACK print_types_cb(PSYMBOL_INFO sym, ULONG size, void* ctx)
     struct dbg_type     type;
     type.module = sym->ModBase;
     type.id = sym->TypeIndex;
-    dbg_printf("Mod: %08lx ID: %08lx \n", type.module, type.id);
+    dbg_printf("Mod: %08x ID: %08lx \n", type.module, type.id);
     types_print_type(&type, TRUE);
     dbg_printf("\n");
     return TRUE;
@@ -617,7 +617,7 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         case UdtStruct: dbg_printf("struct %s", name); break;
         case UdtUnion:  dbg_printf("union %s", name); break;
         case UdtClass:  dbg_printf("class %s", name); break;
-        default:        WINE_ERR("Unsupported UDT type (%ld) for %s\n", udt, name); break;
+        default:        WINE_ERR("Unsupported UDT type (%d) for %s\n", udt, name); break;
         }
         if (details &&
             types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
@@ -704,7 +704,7 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         dbg_printf(name);
         break;
     default:
-        WINE_ERR("Unknown type %lu for %s\n", tag, name);
+        WINE_ERR("Unknown type %u for %s\n", tag, name);
         break;
     }
     
@@ -750,7 +750,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
             case btLong:        name = longW; break;
             case btULong:       name = ulongW; break;
             case btComplex:     name = complexW; break;
-            default:            WINE_FIXME("Unsupported basic type %ld\n", bt); return FALSE;
+            default:            WINE_FIXME("Unsupported basic type %u\n", bt); return FALSE;
             }
             X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
             if (X(WCHAR*))

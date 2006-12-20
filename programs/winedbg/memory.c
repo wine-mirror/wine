@@ -186,7 +186,7 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
                 memory_report_invalid_addr(linear);
                 break;
             }
-            dbg_printf("{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+            dbg_printf("{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
                        guid.Data1, guid.Data2, guid.Data3,
                        guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
                        guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
@@ -360,7 +360,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
                 dbg_printf("'%c'", (char)val_int);
             break;
         default:
-            WINE_FIXME("Unsupported basetype %lu\n", bt);
+            WINE_FIXME("Unsupported basetype %u\n", bt);
             break;
         }
         break;
@@ -454,7 +454,7 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         }
         break;
     default:
-        WINE_FIXME("Unsupported tag %lu\n", tag);
+        WINE_FIXME("Unsupported tag %u\n", tag);
         break;
     }
 }
@@ -480,7 +480,7 @@ void print_basic(const struct dbg_lvalue* lvalue, int count, char format)
     switch (format)
     {
     case 'x':
-        dbg_printf("0x%lx", (DWORD)(ULONG64)res);
+        dbg_printf("0x%x", (DWORD)(ULONG64)res);
         break;
 
     case 'd':
@@ -568,7 +568,7 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
 
         il.SizeOfStruct = sizeof(il);
         if (SymGetLineFromAddr(dbg_curr_process->handle, (DWORD_PTR)lin, &disp, &il))
-            dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
+            dbg_printf(" [%s:%u]", il.FileName, il.LineNumber);
         im.SizeOfStruct = sizeof(im);
         if (SymGetModuleInfo(dbg_curr_process->handle, (DWORD_PTR)lin, &im))
             dbg_printf(" in %s", im.ModuleName);
@@ -656,6 +656,6 @@ BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
             return TRUE;
         }
     }
-    if (buffer) snprintf(buffer, len, "<unknown register %lu>", regno);
+    if (buffer) snprintf(buffer, len, "<unknown register %u>", regno);
     return FALSE;
 }

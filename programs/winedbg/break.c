@@ -307,9 +307,8 @@ void	break_add_break_from_lineno(int lineno, BOOL swbp)
 
         il.SizeOfStruct = sizeof(il);
         if (!SymGetLineFromAddr(dbg_curr_process->handle, linear, &disp, &il))
-
         {
-            dbg_printf("Unable to add breakpoint (unknown address %lx)\n", linear);
+            dbg_printf("Unable to add breakpoint (unknown address %x)\n", linear);
             return;
         }
         bkln.addr.Offset = 0;
@@ -725,7 +724,6 @@ static	BOOL should_stop(int bpnum)
  */
 BOOL break_should_continue(ADDRESS64* addr, DWORD code)
 {
-    DWORD	        oldval = 0;
     enum dbg_exec_mode  mode = dbg_curr_thread->exec_mode;
 
 
@@ -745,8 +743,8 @@ BOOL break_should_continue(ADDRESS64* addr, DWORD code)
         case be_xpoint_watch_write:
             dbg_printf("Stopped on watchpoint %d at ", dbg_curr_thread->stopped_xpoint);
             print_address(addr, TRUE);
-            dbg_printf(" values: old=%lu new=%lu\n",
-                       oldval, dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval);
+            dbg_printf(" new value %u\n",
+                       dbg_curr_process->bp[dbg_curr_thread->stopped_xpoint].w.oldval);
         }
         return FALSE;
     }

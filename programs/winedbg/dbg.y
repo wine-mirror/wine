@@ -434,7 +434,7 @@ static WINE_EXCEPTION_FILTER(wine_dbg_cmd)
         dbg_interrupt_debuggee();
         return EXCEPTION_CONTINUE_EXECUTION;
     default:
-        dbg_printf("\nException %lx\n", GetExceptionCode());
+        dbg_printf("\nException %x\n", GetExceptionCode());
         break;
     }
 

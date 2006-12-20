@@ -465,7 +465,7 @@ static BOOL handle_exception(struct gdb_context* gdbctx, EXCEPTION_DEBUG_INFO* e
         break;
     default:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "Unhandled exception code 0x%08lx\n", rec->ExceptionCode);
+            fprintf(stderr, "Unhandled exception code 0x%08x\n", rec->ExceptionCode);
         gdbctx->last_sig = SIGABRT;
         ret = TRUE;
         break;
@@ -492,10 +492,10 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
         dbg_set_process_name(gdbctx->process, buffer);
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: create process '%s'/%p @%08lx (%ld<%ld>)\n",
+            fprintf(stderr, "%04x:%04x: create process '%s'/%p @%p (%u<%u>)\n",
                     de->dwProcessId, de->dwThreadId,
                     buffer, de->u.CreateProcessInfo.lpImageName,
-                    (unsigned long)(void*)de->u.CreateProcessInfo.lpStartAddress,
+                    de->u.CreateProcessInfo.lpStartAddress,
                     de->u.CreateProcessInfo.dwDebugInfoFileOffset,
                     de->u.CreateProcessInfo.nDebugInfoSize);
 
@@ -504,9 +504,9 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
             fprintf(stderr, "Couldn't initiate DbgHelp\n");
 
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: create thread I @%08lx\n",
+            fprintf(stderr, "%04x:%04x: create thread I @%p\n",
                     de->dwProcessId, de->dwThreadId,
-                    (unsigned long)(void*)de->u.CreateProcessInfo.lpStartAddress);
+                    de->u.CreateProcessInfo.lpStartAddress);
 
         assert(dbg_curr_thread == NULL); /* shouldn't be there */
         dbg_add_thread(gdbctx->process, de->dwThreadId,
@@ -521,9 +521,9 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                                    de->u.LoadDll.fUnicode,
                                    buffer, sizeof(buffer));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: loads DLL %s @%08lx (%ld<%ld>)\n",
+            fprintf(stderr, "%04x:%04x: loads DLL %s @%p (%u<%u>)\n",
                     de->dwProcessId, de->dwThreadId,
-                    buffer, (unsigned long)de->u.LoadDll.lpBaseOfDll,
+                    buffer, de->u.LoadDll.lpBaseOfDll,
                     de->u.LoadDll.dwDebugInfoFileOffset,
                     de->u.LoadDll.nDebugInfoSize);
         SymLoadModule(gdbctx->process->handle, de->u.LoadDll.hFile, buffer, NULL,
@@ -532,8 +532,8 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case UNLOAD_DLL_DEBUG_EVENT:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: unload DLL @%08lx\n",
-                    de->dwProcessId, de->dwThreadId, (unsigned long)de->u.UnloadDll.lpBaseOfDll);
+            fprintf(stderr, "%08x:%08x: unload DLL @%p\n",
+                    de->dwProcessId, de->dwThreadId, de->u.UnloadDll.lpBaseOfDll);
         SymUnloadModule(gdbctx->process->handle, 
                         (unsigned long)de->u.UnloadDll.lpBaseOfDll);
         break;
@@ -541,7 +541,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     case EXCEPTION_DEBUG_EVENT:
         assert(dbg_curr_thread);
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: exception code=0x%08lx\n",
+            fprintf(stderr, "%08x:%08x: exception code=0x%08x\n",
                     de->dwProcessId, de->dwThreadId,
                     de->u.Exception.ExceptionRecord.ExceptionCode);
 
@@ -553,8 +553,8 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case CREATE_THREAD_DEBUG_EVENT:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: create thread D @%08lx\n",
-                    de->dwProcessId, de->dwThreadId, (unsigned long)(void*)de->u.CreateThread.lpStartAddress);
+            fprintf(stderr, "%08x:%08x: create thread D @%p\n",
+                    de->dwProcessId, de->dwThreadId, de->u.CreateThread.lpStartAddress);
 
         dbg_add_thread(gdbctx->process,
                        de->dwThreadId,
@@ -564,7 +564,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case EXIT_THREAD_DEBUG_EVENT:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: exit thread (%ld)\n",
+            fprintf(stderr, "%08x:%08x: exit thread (%u)\n",
                     de->dwProcessId, de->dwThreadId, de->u.ExitThread.dwExitCode);
 
         assert(dbg_curr_thread);
@@ -575,7 +575,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
 
     case EXIT_PROCESS_DEBUG_EVENT:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: exit process (%ld)\n",
+            fprintf(stderr, "%08x:%08x: exit process (%u)\n",
                     de->dwProcessId, de->dwThreadId, de->u.ExitProcess.dwExitCode);
 
         dbg_del_process(gdbctx->process);
@@ -591,20 +591,20 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
                           de->u.DebugString.lpDebugStringData, TRUE,
                           de->u.DebugString.fUnicode, buffer, sizeof(buffer));
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: output debug string (%s)\n",
+            fprintf(stderr, "%08x:%08x: output debug string (%s)\n",
                     de->dwProcessId, de->dwThreadId, buffer);
         break;
 
     case RIP_EVENT:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: rip error=%ld type=%ld\n",
+            fprintf(stderr, "%08x:%08x: rip error=%u type=%u\n",
                     de->dwProcessId, de->dwThreadId, de->u.RipInfo.dwError,
                     de->u.RipInfo.dwType);
         break;
 
     default:
         if (gdbctx->trace & GDBPXY_TRC_WIN32_EVENT)
-            fprintf(stderr, "%08lx:%08lx: unknown event (%ld)\n",
+            fprintf(stderr, "%08x:%08x: unknown event (%u)\n",
                     de->dwProcessId, de->dwThreadId, de->dwDebugEventCode);
     }
 }
@@ -615,10 +615,10 @@ static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
     {
         if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context))
             if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                fprintf(stderr, "Cannot set context on thread %lu\n", dbg_curr_thread->tid);
+                fprintf(stderr, "Cannot set context on thread %04x\n", dbg_curr_thread->tid);
         if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
             if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                fprintf(stderr, "Cannot continue on %lu (%lu)\n",
+                fprintf(stderr, "Cannot continue on %04x (%x)\n",
                         dbg_curr_thread->tid, cont);
     }
     else if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
@@ -635,10 +635,10 @@ static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsig
             /* Windows debug and GDB don't seem to work well here, windows only likes ContinueDebugEvent being used on the reporter of the event */
             if (!SetThreadContext(dbg_curr_thread->handle, &gdbctx->context))
                 if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                    fprintf(stderr, "Cannot set context on thread %lu\n", dbg_curr_thread->tid);
+                    fprintf(stderr, "Cannot set context on thread %04x\n", dbg_curr_thread->tid);
             if (!ContinueDebugEvent(gdbctx->process->pid, dbg_curr_thread->tid, cont))
                 if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-                    fprintf(stderr, "Cannot continue on %lu (%lu)\n",
+                    fprintf(stderr, "Cannot continue on %04x (%x)\n",
                             dbg_curr_thread->tid, cont);
         }
     }
@@ -737,7 +737,7 @@ static void get_process_info(struct gdb_context* gdbctx, char* buffer, size_t le
         strcpy(buffer, "Running");
     }
     else
-        snprintf(buffer, len, "Terminated (%lu)", status);
+        snprintf(buffer, len, "Terminated (%u)", status);
 
     switch (GetPriorityClass(gdbctx->process->handle))
     {
@@ -779,12 +779,12 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
             {
             case -1: break;
             case 0:  strcpy(buffer, "Running"); break;
-            default: snprintf(buffer, len, "Suspended (%lu)", status - 1);
+            default: snprintf(buffer, len, "Suspended (%u)", status - 1);
             }
             ResumeThread(thd->handle);
         }
         else
-            snprintf(buffer, len, "Terminated (exit code = %lu)", status);
+            snprintf(buffer, len, "Terminated (exit code = %u)", status);
     }
     else
     {
@@ -980,7 +980,7 @@ static enum packet_return packet_continue(struct gdb_context* gdbctx)
     assert(gdbctx->in_packet_len == 0);
     if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
-            fprintf(stderr, "NIY: cont on %lu, while last thread is %lu\n",
+            fprintf(stderr, "NIY: cont on %04x, while last thread is %04x\n",
                     gdbctx->exec_thread->tid, dbg_curr_thread->tid);
     resume_debuggee(gdbctx, DBG_CONTINUE);
     wait_for_debuggee(gdbctx);
@@ -1092,7 +1092,7 @@ static enum packet_return packet_verbose(struct gdb_context* gdbctx)
      * left */
     if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
     if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
-        fprintf(stderr, "NIY: cont on %lu, while last thread is %lu\n",
+        fprintf(stderr, "NIY: cont on %04x, while last thread is %04x\n",
                 gdbctx->exec_thread->tid, dbg_curr_thread->tid);
 
     /* deal with the threaded stuff first */
@@ -1193,7 +1193,7 @@ static enum packet_return packet_continue_signal(struct gdb_context* gdbctx)
     assert(gdbctx->in_packet_len == 2);
     if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
-            fprintf(stderr, "NIY: cont/sig on %lu, while last thread is %lu\n",
+            fprintf(stderr, "NIY: cont/sig on %04x, while last thread is %04x\n",
                     gdbctx->exec_thread->tid, dbg_curr_thread->tid);
     hex_from(&sig, gdbctx->in_packet, 1);
     /* cannot change signals on the fly */
@@ -1254,7 +1254,7 @@ static enum packet_return packet_write_registers(struct gdb_context* gdbctx)
     if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-            fprintf(stderr, "Cannot set context on thread %lu\n", gdbctx->other_thread->tid);
+            fprintf(stderr, "Cannot set context on thread %04x\n", gdbctx->other_thread->tid);
         return packet_error;
     }
     return packet_ok;
@@ -1429,7 +1429,7 @@ static enum packet_return packet_write_register(struct gdb_context* gdbctx)
     if (pctx != &gdbctx->context && !SetThreadContext(gdbctx->other_thread->handle, pctx))
     {
         if (gdbctx->trace & GDBPXY_TRC_WIN32_ERROR)
-            fprintf(stderr, "Cannot set context for thread %lu\n", gdbctx->other_thread->tid);
+            fprintf(stderr, "Cannot set context for thread %04x\n", gdbctx->other_thread->tid);
         return packet_error;
     }
 
@@ -1451,9 +1451,9 @@ static void packet_query_monitor_wnd_helper(struct gdb_context* gdbctx, HWND hWn
 
        packet_reply_open(gdbctx);
        packet_reply_catc(gdbctx, 'O');
-       snprintf(buffer, sizeof(buffer), 
-                "%*s%04x%*s%-17.17s %08lx %08lx %.14s\n",
-                indent, "", (UINT)hWnd, 13 - indent, "",
+       snprintf(buffer, sizeof(buffer),
+                "%*s%04lx%*s%-17.17s %08x %08x %.14s\n",
+                indent, "", (ULONG_PTR)hWnd, 13 - indent, "",
                 clsName, GetWindowLong(hWnd, GWL_STYLE),
                 GetWindowLongPtr(hWnd, GWLP_WNDPROC), wndName);
        packet_reply_hex_to_str(gdbctx, buffer);
@@ -1515,7 +1515,7 @@ static void packet_query_monitor_process(struct gdb_context* gdbctx, int len, co
         packet_reply_open(gdbctx);
         packet_reply_catc(gdbctx, 'O');
         snprintf(buffer, sizeof(buffer),
-                 "%c%08lx %-8ld %08lx '%s'\n",
+                 "%c%08x %-8d %08x '%s'\n",
                  deco, entry.th32ProcessID, entry.cntThreads,
                  entry.th32ParentProcessID, entry.szExeFile);
         packet_reply_hex_to_str(gdbctx, buffer);
@@ -1578,9 +1578,8 @@ static void packet_query_monitor_mem(struct gdb_context* gdbctx, int len, const 
             prot[0] = '\0';
         }
         packet_reply_open(gdbctx);
-        snprintf(buffer, sizeof(buffer), 
-                 "%08lx %08lx %s %s %s\n",
-                 (DWORD)addr, mbi.RegionSize, state, type, prot);
+        snprintf(buffer, sizeof(buffer), "%08lx %08lx %s %s %s\n",
+                 (DWORD_PTR)addr, mbi.RegionSize, state, type, prot);
         packet_reply_catc(gdbctx, 'O');
         packet_reply_hex_to_str(gdbctx, buffer);
         packet_reply_close(gdbctx);
@@ -1772,7 +1771,7 @@ static enum packet_return packet_step(struct gdb_context* gdbctx)
     assert(gdbctx->in_packet_len == 0);
     if (dbg_curr_thread != gdbctx->exec_thread && gdbctx->exec_thread)
         if (gdbctx->trace & GDBPXY_TRC_COMMAND_FIXME)
-            fprintf(stderr, "NIY: step on %lu, while last thread is %lu\n",
+            fprintf(stderr, "NIY: step on %04x, while last thread is %04x\n",
                     gdbctx->exec_thread->tid, dbg_curr_thread->tid);
     be_cpu->single_step(&gdbctx->context, TRUE);
     resume_debuggee(gdbctx, DBG_CONTINUE);

@@ -141,10 +141,10 @@ static void be_i386_all_print_context(HANDLE hThread, const CONTEXT* ctx)
     dbg_printf(" FLSW:%04x", LOWORD(ctx->FloatSave.StatusWord));
 
     /* Isolate the condition code bits - note they are not contiguous */
-    dbg_printf("(CC:%ld%ld%ld%ld", (ctx->FloatSave.StatusWord & 0x00004000) >> 14, 
-                                   (ctx->FloatSave.StatusWord & 0x00000400) >> 10,
-                                   (ctx->FloatSave.StatusWord & 0x00000200) >> 9,
-                                   (ctx->FloatSave.StatusWord & 0x00000100) >> 8);
+    dbg_printf("(CC:%d%d%d%d", (ctx->FloatSave.StatusWord & 0x00004000) >> 14,
+               (ctx->FloatSave.StatusWord & 0x00000400) >> 10,
+               (ctx->FloatSave.StatusWord & 0x00000200) >> 9,
+               (ctx->FloatSave.StatusWord & 0x00000100) >> 8);
 
     /* Now pull out hte 3 bit of the TOP stack pointer */
     dbg_printf(" TOP:%01x", (unsigned int) (ctx->FloatSave.StatusWord & 0x00003800) >> 11);
@@ -244,11 +244,11 @@ static void be_i386_print_context(HANDLE hThread, const CONTEXT* ctx, int all_re
         break;
     case AddrModeFlat:
     case AddrMode1632:
-        dbg_printf("\n EIP:%08lx ESP:%08lx EBP:%08lx EFLAGS:%08lx(%s)\n",
+        dbg_printf("\n EIP:%08x ESP:%08x EBP:%08x EFLAGS:%08x(%s)\n",
                    ctx->Eip, ctx->Esp, ctx->Ebp, ctx->EFlags, buf);
-	dbg_printf(" EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n",
+        dbg_printf(" EAX:%08x EBX:%08x ECX:%08x EDX:%08x\n",
                    ctx->Eax, ctx->Ebx, ctx->Ecx, ctx->Edx);
-	dbg_printf(" ESI:%08lx EDI:%08lx\n",
+        dbg_printf(" ESI:%08x EDI:%08x\n",
                    ctx->Esi, ctx->Edi);
         break;
     }
