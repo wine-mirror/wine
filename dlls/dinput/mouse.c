@@ -37,8 +37,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-#define MOUSE_HACK
-
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 /* Wine mouse driver object instances */
@@ -67,30 +65,22 @@ static const IDirectInputDevice8WVtbl SysMouseWvt;
 
 typedef struct SysMouseImpl SysMouseImpl;
 
-typedef enum {
-    WARP_DONE,   /* Warping has been done */
-    WARP_NEEDED, /* Warping is needed */
-    WARP_STARTED /* Warping has been done, waiting for the warp event */
-} WARP_STATUS;
-
 struct SysMouseImpl
 {
     struct IDirectInputDevice2AImpl base;
     
     IDirectInputImpl               *dinput;
-    
+
     /* SysMouseAImpl */
-    /* Previous position for relative moves */
-    LONG			    prevX, prevY;
     /* These are used in case of relative -> absolute transitions */
     POINT                           org_coords;
     POINT      			    mapped_center;
     DWORD			    win_centerX, win_centerY;
     /* warping: whether we need to move mouse back to middle once we
      * reach window borders (for e.g. shooters, "surface movement" games) */
-    WARP_STATUS		            need_warp;
+    BOOL                            need_warp;
     DWORD                           last_warped;
-    
+
     /* This is for mouse reporting. */
     DIMOUSESTATE2                   m_state;
 };
@@ -298,65 +288,32 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     EnterCriticalSection(&This->base.crit);
     dwCoop = This->base.dwCoopLevel;
 
-    if (wparam == WM_MOUSEMOVE) {
-	if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS) {
-	    if (hook->pt.x != This->prevX)
-                queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_X_POSITION],
-                            hook->pt.x, hook->time, This->dinput->evsequence);
-	    if (hook->pt.y != This->prevY)
-                queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Y_POSITION],
-                            hook->pt.y, hook->time, This->dinput->evsequence);
-	} else {
-	    /* Now, warp handling */
-	    if ((This->need_warp == WARP_STARTED) &&
-		(hook->pt.x == This->mapped_center.x) && (hook->pt.y == This->mapped_center.y)) {
-		/* Warp has been done... */
-		This->need_warp = WARP_DONE;
-		goto end;
-	    }
-	    
-	    /* Relative mouse input with absolute mouse event : the real fun starts here... */
-	    if ((This->need_warp == WARP_NEEDED) ||
-		(This->need_warp == WARP_STARTED)) {
-		if (hook->pt.x != This->prevX)
-                    queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_X_POSITION],
-                                hook->pt.x - This->prevX, hook->time, This->dinput->evsequence);
-		if (hook->pt.y != This->prevY)
-                    queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Y_POSITION],
-                                hook->pt.y - This->prevY, hook->time, This->dinput->evsequence);
-	    } else {
-		/* This is the first time the event handler has been called after a
-		   GetDeviceData or GetDeviceState. */
-		if (hook->pt.x != This->mapped_center.x) {
-                    queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_X_POSITION],
-                                hook->pt.x - This->mapped_center.x, hook->time, This->dinput->evsequence);
-		    This->need_warp = WARP_NEEDED;
-		}
-		
-		if (hook->pt.y != This->mapped_center.y) {
-                    queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Y_POSITION],
-                                hook->pt.y - This->mapped_center.y, hook->time, This->dinput->evsequence);
-		    This->need_warp = WARP_NEEDED;
-		}
-	    }
-	}
-	
-	This->prevX = hook->pt.x;
-	This->prevY = hook->pt.y;
-	
-	if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS) {
-	    This->m_state.lX = hook->pt.x;
-	    This->m_state.lY = hook->pt.y;
-	} else {
-	    This->m_state.lX = hook->pt.x - This->mapped_center.x;
-	    This->m_state.lY = hook->pt.y - This->mapped_center.y;
-	}
-    }
-    
-    TRACE(" msg %x pt %d %d (W=%d)\n",
-          wparam, hook->pt.x, hook->pt.y, !(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS) && This->need_warp );
-    
     switch(wparam) {
+        case WM_MOUSEMOVE:
+        {
+            POINT pt, pt1;
+
+            GetCursorPos(&pt);
+            This->m_state.lX += pt.x = hook->pt.x - pt.x;
+            This->m_state.lY += pt.y = hook->pt.y - pt.y;
+
+            if (This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS)
+            {
+                pt1.x = This->m_state.lX;
+                pt1.y = This->m_state.lY;
+            } else
+                pt1 = pt;
+
+            if (pt.x)
+                queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_X_POSITION],
+                            pt1.x, hook->time, This->dinput->evsequence);
+            if (pt.y)
+                queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Y_POSITION],
+                            pt1.y, hook->time, This->dinput->evsequence);
+
+            This->need_warp = (pt.x || pt.y);
+            break;
+        }
         case WM_LBUTTONDOWN:
             queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_L_POSITION],
                         0x80, hook->time, This->dinput->evsequence);
@@ -394,17 +351,16 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
 	    This->m_state.lZ += wdata;
 	    break;
     }
-    
-    TRACE("(X: %d - Y: %d   L: %02x M: %02x R: %02x)\n",
-	  This->m_state.lX, This->m_state.lY,
+
+    TRACE("msg %x @ (%d %d): (X: %d - Y: %d   L: %02x M: %02x R: %02x)\n",
+          wparam, hook->pt.x, hook->pt.y, This->m_state.lX, This->m_state.lY,
 	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
-    
+
     This->dinput->evsequence++;
 
-  end:
     /* Mouse moved -> send event if asked */
     if (This->base.hEvent) SetEvent(This->base.hEvent);
-    
+
     LeaveCriticalSection(&This->base.crit);
     
     /* Ignore message */
@@ -457,8 +413,6 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     {
       This->m_state.lX = point.x;
       This->m_state.lY = point.y;
-      This->prevX = point.x;
-      This->prevY = point.y;
     } else {
       This->m_state.lX = 0;
       This->m_state.lY = 0;
@@ -489,13 +443,9 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
       SetCursorPos( This->mapped_center.x, This->mapped_center.y );
       This->last_warped = GetCurrentTime();
 
-#ifdef MOUSE_HACK
-      This->need_warp = WARP_DONE;
-#else
-      This->need_warp = WARP_STARTED;
-#endif
+      This->need_warp = FALSE;
     }
-	
+
     return DI_OK;
 }
 
@@ -560,9 +510,10 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	This->m_state.lY = 0;
 	This->m_state.lZ = 0;
     }
-    
+
     /* Check if we need to do a mouse warping */
-    if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
+    if (This->need_warp && (GetCurrentTime() - This->last_warped > 10))
+    {
         if(!dinput_window_check(This))
         {
             LeaveCriticalSection(&This->base.crit);
@@ -572,13 +523,9 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
 
-#ifdef MOUSE_HACK
-	This->need_warp = WARP_DONE;
-#else
-	This->need_warp = WARP_STARTED;
-#endif
+        This->need_warp = FALSE;
     }
-    
+
     LeaveCriticalSection(&This->base.crit);
     
     return DI_OK;
@@ -595,20 +542,17 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceData(LPDIRECTINPUTDEVICE8A iface,
 
     res = IDirectInputDevice2AImpl_GetDeviceData(iface, dodsize, dod, entries, flags);
     if (FAILED(res)) return res;
-    
+
     /* Check if we need to do a mouse warping */
-    if (This->need_warp == WARP_NEEDED && (GetCurrentTime() - This->last_warped > 10)) {
+    if (This->need_warp && (GetCurrentTime() - This->last_warped > 10))
+    {
         if(!dinput_window_check(This))
             return DIERR_GENERIC;
 	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
 
-#ifdef MOUSE_HACK
-	This->need_warp = WARP_DONE;
-#else
-	This->need_warp = WARP_STARTED;
-#endif
+        This->need_warp = FALSE;
     }
     return res;
 }
