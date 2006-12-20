@@ -273,23 +273,23 @@ static HRESULT register_coclasses(struct regsvr_coclass const *list)
 	}
 
         if (list->idName) {
-            char buffer[64] = "@%SYSTEMROOT%\\system32\\shell32.dll,-";
-            sprintf(buffer+strlen(buffer), "%u", list->idName);
-            res = RegSetValueExA(clsid_key, localized_valuename, 0, REG_EXPAND_SZ,
+            char buffer[64];
+            sprintf(buffer, "@shell32.dll,-%u", list->idName);
+            res = RegSetValueExA(clsid_key, localized_valuename, 0, REG_SZ,
                                  (CONST BYTE*)(buffer), strlen(buffer)+1);
             if (res != ERROR_SUCCESS) goto error_close_clsid_key;
         }
         
         if (list->idDefaultIcon) {
             HKEY icon_key;
-            char buffer[64] = "%SYSTEMROOT%\\system32\\shell32.dll,-";
+            char buffer[64];
 
             res = RegCreateKeyExW(clsid_key, defaulticon_keyname, 0, NULL, 0,
                         KEY_READ | KEY_WRITE, NULL, &icon_key, NULL);
             if (res != ERROR_SUCCESS) goto error_close_clsid_key;
 
-            sprintf(buffer+strlen(buffer), "%u", list->idDefaultIcon);
-            res = RegSetValueExA(icon_key, NULL, 0, REG_EXPAND_SZ,
+            sprintf(buffer, "shell32.dll,-%u", list->idDefaultIcon);
+            res = RegSetValueExA(icon_key, NULL, 0, REG_SZ,
                                  (CONST BYTE*)(buffer), strlen(buffer)+1);
             RegCloseKey(icon_key);
             if (res != ERROR_SUCCESS) goto error_close_clsid_key;
