@@ -37,6 +37,7 @@ static LPVOID (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 
 static char     base[MAX_PATH];
 static char     selfname[MAX_PATH];
+static char*    exename;
 static char     resfile[MAX_PATH];
 
 static int      myARGC;
@@ -151,13 +152,22 @@ static WCHAR*   decodeW(const char* str)
  * generates basic information like:
  *      base:           absolute path to curr dir
  *      selfname:       the way to reinvoke ourselves
+ *      exename:        executable without the path
  * function-pointers, which are not implemented in all windows versions
  */
 static int     init(void)
 {
+    char *p;
+
     myARGC = winetest_get_mainargs( &myARGV );
     if (!GetCurrentDirectoryA(sizeof(base), base)) return 0;
     strcpy(selfname, myARGV[0]);
+
+    /* Strip the path of selfname */
+    if ((p = strrchr(selfname, '\\')) != NULL) exename = p + 1;
+    else exename = selfname;
+
+    if ((p = strrchr(exename, '/')) != NULL) exename = p + 1;
 
     hkernel32 = GetModuleHandleA("kernel32");
     pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
@@ -758,7 +768,8 @@ static void test_CommandLine(void)
 
     /* Test for Bug1330 to show that XP doesn't change '/' to '\\' in argv[0]*/
     get_file_name(resfile);
-    sprintf(buffer, "./%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
+    /* Use exename to avoid buffer containing things like 'C:' */
+    sprintf(buffer, "./%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -766,13 +777,14 @@ static void test_CommandLine(void)
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    sprintf(buffer, "./%s", selfname);
+    sprintf(buffer, "./%s", exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
 
     get_file_name(resfile);
-    sprintf(buffer, ".\\%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", selfname, resfile);
+    /* Use exename to avoid buffer containing things like 'C:' */
+    sprintf(buffer, ".\\%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -780,7 +792,7 @@ static void test_CommandLine(void)
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    sprintf(buffer, ".\\%s", selfname);
+    sprintf(buffer, ".\\%s", exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
@@ -791,7 +803,8 @@ static void test_CommandLine(void)
     *(lpFilePart -1 ) = 0;
     p = strrchr(fullpath, '\\');
     assert (p);
-    sprintf(buffer, "..%s/%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", p, selfname, resfile);
+    /* Use exename to avoid buffer containing things like 'C:' */
+    sprintf(buffer, "..%s/%s tests/process.c %s \"a\\\"b\\\\\" c\\\" d", p, exename, resfile);
     SetLastError(0xdeadbeef);
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info);
     ok(ret, "CreateProcess (%s) failed : %d\n", buffer, GetLastError());
@@ -799,7 +812,7 @@ static void test_CommandLine(void)
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
     /* child process has changed result file, so let profile functions know about it */
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
-    sprintf(buffer, "..%s/%s", p, selfname);
+    sprintf(buffer, "..%s/%s", p, exename);
     okChildString("Arguments", "argvA0", buffer);
     release_memory();
     assert(DeleteFileA(resfile) != 0);
