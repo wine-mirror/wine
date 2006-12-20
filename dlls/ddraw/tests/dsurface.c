@@ -167,6 +167,7 @@ static void SrcColorKey32BlitTest(void)
     LPDIRECTDRAWSURFACE lpDst;
     DDSURFACEDESC ddsd;
     DDSURFACEDESC ddsd2;
+    DDCOLORKEY DDColorKey;
     LPDWORD lpData;
     HRESULT rc;
 
@@ -222,6 +223,27 @@ static void SrcColorKey32BlitTest(void)
        "Destination data after blitting is not correct\n");
     rc = IDirectDrawSurface_Unlock(lpDst, NULL);
     ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Also test SetColorKey */
+    IDirectDrawSurface_GetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+    ok(DDColorKey.dwColorSpaceLowValue == 0xFF00FF && DDColorKey.dwColorSpaceHighValue == 0xFF00FF,
+       "GetColorKey does not return the colorkey used at surface creation\n");
+
+    DDColorKey.dwColorSpaceLowValue = 0x00FF00;
+    DDColorKey.dwColorSpaceHighValue = 0x00FF00;
+    IDirectDrawSurface_SetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+
+    DDColorKey.dwColorSpaceLowValue = 0;
+    DDColorKey.dwColorSpaceHighValue = 0;
+    IDirectDrawSurface_GetColorKey(lpSrc, DDCKEY_SRCBLT, &DDColorKey);
+    ok(DDColorKey.dwColorSpaceLowValue == 0x00FF00 && DDColorKey.dwColorSpaceHighValue == 0x00FF00,
+       "GetColorKey does not return the colorkey set with SetColorKey\n");
+
+    ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0;
+    ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0;
+    IDirectDrawSurface_GetSurfaceDesc(lpSrc, &ddsd);
+    ok(ddsd.ddckCKSrcBlt.dwColorSpaceLowValue == 0x00FF00 && ddsd.ddckCKSrcBlt.dwColorSpaceHighValue == 0x00FF00,
+       "GetSurfaceDesc does not return the colorkey set with SetColorKey\n");
 
     IDirectDrawSurface_Release(lpSrc);
     IDirectDrawSurface_Release(lpDst);
