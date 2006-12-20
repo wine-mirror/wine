@@ -311,7 +311,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
                 queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Y_POSITION],
                             pt1.y, hook->time, This->dinput->evsequence);
 
-            This->need_warp = (pt.x || pt.y);
+            This->need_warp = (pt.x || pt.y) && dwCoop & DISCL_EXCLUSIVE;
             break;
         }
         case WM_LBUTTONDOWN:
@@ -434,7 +434,7 @@ static HRESULT WINAPI SysMouseAImpl_Acquire(LPDIRECTINPUTDEVICE8A iface)
     This->win_centerY = (rect.bottom - rect.top ) / 2;
     
     /* Warp the mouse to the center of the window */
-    if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
+    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
       This->mapped_center.x = This->win_centerX;
       This->mapped_center.y = This->win_centerY;
@@ -472,7 +472,7 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
       ERR("this(%p) != current_lock(%p)\n", This, current_lock);
 
     /* And put the mouse cursor back where it was at acquire time */
-    if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
+    if (This->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
       TRACE(" warping mouse back to (%d , %d)\n", This->org_coords.x, This->org_coords.y);
       SetCursorPos(This->org_coords.x, This->org_coords.y);
