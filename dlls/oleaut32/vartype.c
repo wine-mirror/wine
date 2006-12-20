@@ -6499,13 +6499,26 @@ HRESULT WINAPI VarBstrFromR8(double dblIn, LCID lcid, ULONG dwFlags, BSTR* pbstr
 HRESULT WINAPI VarBstrFromCy(CY cyIn, LCID lcid, ULONG dwFlags, BSTR *pbstrOut)
 {
   WCHAR buff[256];
-  double dblVal;
+  VARIANT_DI decVal;
 
   if (!pbstrOut)
     return E_INVALIDARG;
 
-  VarR8FromCy(cyIn, &dblVal);
-  sprintfW(buff, szDoubleFormatW, dblVal);
+  decVal.scale = 4;
+  decVal.sign = 0;
+  decVal.bitsnum[0] = cyIn.s.Lo;
+  decVal.bitsnum[1] = cyIn.s.Hi;
+  if (cyIn.s.Hi & 0x80000000UL) {
+    DWORD one = 1;
+
+    /* Negative number! */
+    decVal.sign = 1;
+    decVal.bitsnum[0] = ~decVal.bitsnum[0];
+    decVal.bitsnum[1] = ~decVal.bitsnum[1];
+    VARIANT_int_add(decVal.bitsnum, 3, &one, 1);
+  }
+  decVal.bitsnum[2] = 0;
+  VARIANT_DI_tostringW(&decVal, buff, sizeof(buff));
 
   if (dwFlags & LOCALE_USE_NLS)
   {
