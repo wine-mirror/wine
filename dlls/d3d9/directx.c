@@ -103,6 +103,10 @@ static UINT WINAPI IDirect3D9Impl_GetAdapterModeCount(LPDIRECT3D9 iface, UINT Ad
 
 static HRESULT WINAPI IDirect3D9Impl_EnumAdapterModes(LPDIRECT3D9 iface, UINT Adapter, D3DFORMAT Format, UINT Mode, D3DDISPLAYMODE* pMode) {
     IDirect3D9Impl *This = (IDirect3D9Impl *)iface;
+    /* We can't pass this to WineD3D, otherwise it'll think it came from D3D8.
+       It's supposed to fail anyway, so no harm returning failure. */
+    if(Format == D3DFMT_UNKNOWN)
+        return D3DERR_INVALIDCALL;
     return IWineD3D_EnumAdapterModes(This->WineD3D, Adapter, Format, Mode, (WINED3DDISPLAYMODE *) pMode);
 }
 

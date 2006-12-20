@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
+ * Copyright (C) 2006 Chris Robinson
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -686,6 +687,35 @@ cleanup:
     if(pDevice) IDirect3D8_Release(pDevice);
 }
 
+/* Test adapter display modes */
+static void test_display_modes(void)
+{
+    UINT max_modes, i;
+    D3DDISPLAYMODE dmode;
+    HRESULT res;
+    IDirect3D8 *pD3d;
+
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    if(!pD3d) return;
+
+    max_modes = IDirect3D8_GetAdapterModeCount(pD3d, D3DADAPTER_DEFAULT);
+    ok(max_modes > 0, "GetAdapterModeCount(D3DADAPTER_DEFAULT) returned 0!\n");
+
+    for(i=0; i<max_modes;i++) {
+        res = IDirect3D8_EnumAdapterModes(pD3d, D3DADAPTER_DEFAULT, i, &dmode);
+        ok(res==D3D_OK, "EnumAdapterModes returned %s for mode %u!\n", DXGetErrorString8(res), i);
+        if(res != D3D_OK)
+            continue;
+
+        ok(dmode.Format==D3DFMT_X8R8G8B8 || dmode.Format==D3DFMT_R5G6B5,
+           "Unexpected display mode returned for mode %u: %#x\n", i , dmode.Format);
+    }
+
+    IDirect3D8_Release(pD3d);
+}
+
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -693,6 +723,7 @@ START_TEST(device)
     pDirect3DCreate8 = (void *)GetProcAddress( d3d8_handle, "Direct3DCreate8" );
     if (pDirect3DCreate8)
     {
+        test_display_modes();
         test_swapchain();
         test_refcount();
         test_mipmap_levels();

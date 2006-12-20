@@ -1080,31 +1080,23 @@ static UINT     WINAPI IWineD3DImpl_GetAdapterModeCount(IWineD3D *iface, UINT Ad
 #if !defined( DEBUG_SINGLE_MODE )
         DEVMODEW DevModeW;
 
-        /* Work out the current screen bpp */
-        HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        int bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        DeleteDC(hdc);
-
         while (EnumDisplaySettingsExW(NULL, j, &DevModeW, 0)) {
             j++;
             switch (Format)
             {
-            case WINED3DFMT_UNKNOWN:
-                   i++;
-                   break;
-            case WINED3DFMT_X8R8G8B8:
-            case WINED3DFMT_A8R8G8B8:
-                   if (min(DevModeW.dmBitsPerPel, bpp) == 32) i++;
-                   if (min(DevModeW.dmBitsPerPel, bpp) == 24) i++;
-                   break;
-            case WINED3DFMT_X1R5G5B5:
-            case WINED3DFMT_A1R5G5B5:
-            case WINED3DFMT_R5G6B5:
-                   if (min(DevModeW.dmBitsPerPel, bpp) == 16) i++;
-                   break;
-            default:
-                   /* Skip other modes as they do not match the requested format */
-                   break;
+                case WINED3DFMT_UNKNOWN:
+                    if (DevModeW.dmBitsPerPel == 32 ||
+                        DevModeW.dmBitsPerPel == 16) i++;
+                    break;
+                case WINED3DFMT_X8R8G8B8:
+                    if (DevModeW.dmBitsPerPel == 32) i++;
+                    break;
+                case WINED3DFMT_R5G6B5:
+                    if (DevModeW.dmBitsPerPel == 16) i++;
+                    break;
+                default:
+                    /* Skip other modes as they do not match the requested format */
+                    break;
             }
         }
 #else
@@ -1132,79 +1124,67 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
     }
 
     if (Adapter == 0) { /* Display */
-        int bpp;
 #if !defined( DEBUG_SINGLE_MODE )
         DEVMODEW DevModeW;
         int ModeIdx = 0;
+        int i = 0;
+        int j = 0;
 
-        /* Work out the current screen bpp */
-        HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
-        bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        DeleteDC(hdc);
-
-        /* If we are filtering to a specific format, then need to skip all unrelated
-           modes, but if mode is irrelevant, then we can use the index directly      */
-        if (Format == WINED3DFMT_UNKNOWN)
-        {
-            ModeIdx = Mode;
-        } else {
-            int i = 0;
-            int j = 0;
-            DEVMODEW DevModeWtmp;
-
-
-            while (i<(Mode) && EnumDisplaySettingsExW(NULL, j, &DevModeWtmp, 0)) {
-                j++;
-                switch (Format)
-                {
+        /* If we are filtering to a specific format (D3D9), then need to skip
+           all unrelated modes, but if mode is irrelevant (D3D8), then we can
+           just count through the ones with valid bit depths */
+        while ((i<=Mode) && EnumDisplaySettingsExW(NULL, j++, &DevModeW, 0)) {
+            switch (Format)
+            {
                 case WINED3DFMT_UNKNOWN:
-                       i++;
-                       break;
+                    if (DevModeW.dmBitsPerPel == 32 ||
+                        DevModeW.dmBitsPerPel == 16) i++;
+                    break;
                 case WINED3DFMT_X8R8G8B8:
-                case WINED3DFMT_A8R8G8B8:
-                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 32) i++;
-                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 24) i++;
-                       break;
-                case WINED3DFMT_X1R5G5B5:
-                case WINED3DFMT_A1R5G5B5:
+                    if (DevModeW.dmBitsPerPel == 32) i++;
+                    break;
                 case WINED3DFMT_R5G6B5:
-                       if (min(DevModeWtmp.dmBitsPerPel, bpp) == 16) i++;
-                       break;
+                    if (DevModeW.dmBitsPerPel == 16) i++;
+                    break;
                 default:
-                       /* Skip other modes as they do not match requested format */
-                       break;
-                }
+                    /* Modes that don't match what we support can get an early-out */
+                    TRACE_(d3d_caps)("Searching for %s, returning D3DERR_INVALIDCALL\n", debug_d3dformat(Format));
+                    return WINED3DERR_INVALIDCALL;
             }
-            ModeIdx = j;
         }
 
+        if (i == 0) {
+            TRACE_(d3d_caps)("No modes found for format (%x - %s)\n", Format, debug_d3dformat(Format));
+            return WINED3DERR_INVALIDCALL;
+        }
+        ModeIdx = j - 1;
+
         /* Now get the display mode via the calculated index */
-        if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0))
-        {
+        if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0)) {
             pMode->Width        = DevModeW.dmPelsWidth;
             pMode->Height       = DevModeW.dmPelsHeight;
-            bpp                 = min(DevModeW.dmBitsPerPel, bpp);
             pMode->RefreshRate  = D3DADAPTER_DEFAULT;
             if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
-            {
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
-            }
 
             if (Format == WINED3DFMT_UNKNOWN)
             {
-                switch (bpp) {
-                case  8: pMode->Format = WINED3DFMT_R3G3B2;   break;
-                case 16: pMode->Format = WINED3DFMT_R5G6B5;   break;
-                case 24: /* Robots and EVE Online need 24 and 32 bit as A8R8G8B8 to start */
-                case 32: pMode->Format = WINED3DFMT_A8R8G8B8; break;
-                default: pMode->Format = WINED3DFMT_UNKNOWN;
+                switch (DevModeW.dmBitsPerPel)
+                {
+                    case 16:
+                        pMode->Format = WINED3DFMT_R5G6B5;
+                        break;
+                    case 32:
+                        pMode->Format = WINED3DFMT_X8R8G8B8;
+                        break;
+                    default:
+                        pMode->Format = WINED3DFMT_UNKNOWN;
+                        ERR("Unhandled bit depth (%u) in mode list!\n", DevModeW.dmBitsPerPel);
                 }
             } else {
                 pMode->Format = Format;
             }
-        }
-        else
-        {
+        } else {
             TRACE_(d3d_caps)("Requested mode out of range %d\n", Mode);
             return WINED3DERR_INVALIDCALL;
         }
@@ -1215,11 +1195,11 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
         pMode->Width        = 800;
         pMode->Height       = 600;
         pMode->RefreshRate  = D3DADAPTER_DEFAULT;
-        pMode->Format       = (Format == WINED3DFMT_UNKNOWN) ? WINED3DFMT_A8R8G8B8 : Format;
-        bpp = 32;
+        pMode->Format       = (Format == WINED3DFMT_UNKNOWN) ? WINED3DFMT_X8R8G8B8 : Format;
 #endif
         TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x - %s) bpp %u\n", pMode->Width, pMode->Height,
-                 pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format), bpp);
+                 pMode->RefreshRate, pMode->Format, debug_d3dformat(pMode->Format),
+                 DevModeW.dmBitsPerPel);
 
     } else {
         FIXME_(d3d_caps)("Adapter not primary display\n");
