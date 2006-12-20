@@ -179,7 +179,7 @@ static void testNestedLoadLibraryA(void)
 
     /* Try to load the dll again, if refcounting is ok, this should work */
     hModule1 = LoadLibraryA(path1);
-    todo_wine ok(hModule1 != NULL, "LoadLibrary(%s) failed\n", path1);
+    ok(hModule1 != NULL, "LoadLibrary(%s) failed\n", path1);
     if (hModule1 != NULL)
         ok(FreeLibrary(hModule1), "FreeLibrary() failed\n");
 }

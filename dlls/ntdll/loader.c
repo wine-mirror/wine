@@ -1553,7 +1553,11 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
         }
     }
 
-    if (info.status != STATUS_SUCCESS) return info.status;
+    if (info.status != STATUS_SUCCESS)
+    {
+        wine_dll_unload( handle );
+        return info.status;
+    }
 
     if (!info.wm)
     {
@@ -1574,6 +1578,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
                 break;
             }
         }
+        wine_dll_unload( handle );  /* release the libdl refcount */
         if (!info.wm) return STATUS_INVALID_IMAGE_FORMAT;
         if (info.wm->ldr.LoadCount != -1) info.wm->ldr.LoadCount++;
     }
