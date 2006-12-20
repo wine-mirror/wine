@@ -903,6 +903,14 @@ void __pthread_initialize(void)
     if (!done)
     {
         done = 1;
+        /* check for exported epoll_create to detect glibc versions that we cannot support */
+        if (wine_dlsym( RTLD_DEFAULT, "epoll_create", NULL, 0 ))
+        {
+            static const char warning[] =
+                "wine: glibc >= 2.3 without NPTL or TLS is not a supported combination.\n"
+                "      It will most likely crash. Please upgrade to a glibc with NPTL support.\n";
+            write( 2, warning, sizeof(warning)-1 );
+        }
         libc_fork = wine_dlsym( RTLD_NEXT, "fork", NULL, 0 );
         libc_sigaction = wine_dlsym( RTLD_NEXT, "sigaction", NULL, 0 );
         libc_uselocale = wine_dlsym( RTLD_DEFAULT, "uselocale", NULL, 0 );
