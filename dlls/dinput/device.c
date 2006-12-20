@@ -381,7 +381,7 @@ HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *format)
 		(/* Then check if it accepts any instance id, and if not, if it matches Wine's
 		  * instance id.
 		  */
-		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == 0xFFFF) ||
+		 ((asked_format->rgodf[j].dwType & DIDFT_INSTANCEMASK) == DIDFT_ANYINSTANCE) ||
 		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == 0x00FF) || /* This is mentionned in no DX docs, but it works fine - tested on WinXP */
 		 (DIDFT_GETINSTANCE(asked_format->rgodf[j].dwType) == DIDFT_GETINSTANCE(format->wine_df->rgodf[i].dwType)))
 		&&
