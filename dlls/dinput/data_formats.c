@@ -74,7 +74,7 @@ const DIDATAFORMAT c_dfDIJoystick = {
     sizeof(DIDATAFORMAT),
     sizeof(DIOBJECTDATAFORMAT),
     DIDF_ABSAXIS,
-    sizeof(DIJOYSTATE2),
+    sizeof(DIJOYSTATE),
     numObjects(dfDIJoystick),
     (LPDIOBJECTDATAFORMAT)dfDIJoystick
 };
