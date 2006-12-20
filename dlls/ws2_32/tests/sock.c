@@ -1565,6 +1565,53 @@ static void test_extendedSocketOptions()
     WSACleanup();
 }
 
+static void test_getsockname()
+{
+    WSADATA wsa;
+    SOCKET sock;
+    struct sockaddr_in sa_set, sa_get;
+    int sa_set_len = sizeof(struct sockaddr_in);
+    int sa_get_len = sa_set_len;
+    static const unsigned char null_padding[] = {0,0,0,0,0,0,0,0};
+
+    if(WSAStartup(MAKEWORD(2,0), &wsa)){
+        trace("Winsock failed: 0x%08x. Aborting test\n", WSAGetLastError());
+        return;
+    }
+
+    memset(&sa_set, 0, sa_set_len);
+
+    sa_set.sin_family = AF_INET;
+    sa_set.sin_port = htons(0);
+    sa_set.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
+        trace("Creating the socket failed: 0x%08x\n", WSAGetLastError());
+        WSACleanup();
+        return;
+    }
+
+    if(bind(sock, (struct sockaddr *) &sa_set, sa_set_len) < 0){
+        trace("Failed to bind socket: 0x%08x\n", WSAGetLastError());
+        closesocket(sock);
+        WSACleanup();
+        return;
+    }
+
+    if(getsockname(sock, (struct sockaddr *) &sa_get, &sa_get_len) != 0){
+        trace("Failed to call getsockname: 0x%08X\n", WSAGetLastError());
+        closesocket(sock);
+        WSACleanup();
+        return;
+    }
+
+    ok(memcmp(sa_get.sin_zero, null_padding, 8) == 0,
+            "getsockname did not zero the sockaddr_in structure\n");
+
+    closesocket(sock);
+    WSACleanup();
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1595,6 +1642,7 @@ START_TEST( sock )
 
     test_select();
     test_accept();
+    test_getsockname();
 
     Exit();
 }

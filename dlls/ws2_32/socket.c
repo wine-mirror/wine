@@ -1017,6 +1017,7 @@ static int ws_sockaddr_u2ws(const struct sockaddr* uaddr, int uaddrlen, struct W
         win->sin_family = WS_AF_INET;
         win->sin_port   = uin->sin_port;
         memcpy(&win->sin_addr,&uin->sin_addr,4); /* 4 bytes = 32 address bits */
+        memset(&win->sin_zero, 0, 8); /* Make sure the null padding is null */
         *wsaddrlen = sizeof(struct WS_sockaddr_in);
         return 0;
     }
