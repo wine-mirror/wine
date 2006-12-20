@@ -187,11 +187,7 @@ static inline const char *wine_dbgstr_guid( const GUID *id )
 {
     if (!id) return "(null)";
     if (!((INT_PTR)id >> 16)) return wine_dbg_sprintf( "<guid-0x%04x>", (INT_PTR)id & 0xffff );
-#if defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64)
-    return wine_dbg_sprintf( "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-#else
     return wine_dbg_sprintf( "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-#endif
                              id->Data1, id->Data2, id->Data3,
                              id->Data4[0], id->Data4[1], id->Data4[2], id->Data4[3],
                              id->Data4[4], id->Data4[5], id->Data4[6], id->Data4[7] );
@@ -200,32 +196,20 @@ static inline const char *wine_dbgstr_guid( const GUID *id )
 static inline const char *wine_dbgstr_point( const POINT *pt )
 {
     if (!pt) return "(null)";
-#if defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64)
-    return wine_dbg_sprintf( "(%ld,%ld)", pt->x, pt->y );
-#else
     return wine_dbg_sprintf( "(%d,%d)", pt->x, pt->y );
-#endif
 }
 
 static inline const char *wine_dbgstr_size( const SIZE *size )
 {
     if (!size) return "(null)";
-#if defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64)
-    return wine_dbg_sprintf( "(%ld,%ld)", size->cx, size->cy );
-#else
     return wine_dbg_sprintf( "(%d,%d)", size->cx, size->cy );
-#endif
 }
 
 static inline const char *wine_dbgstr_rect( const RECT *rect )
 {
     if (!rect) return "(null)";
-#if defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64)
-    return wine_dbg_sprintf( "(%ld,%ld)-(%ld,%ld)", rect->left, rect->top, rect->right, rect->bottom );
-#else
     return wine_dbg_sprintf( "(%d,%d)-(%d,%d)", rect->left, rect->top,
                              rect->right, rect->bottom );
-#endif
 }
 
 static inline const char *wine_dbgstr_longlong( ULONGLONG ll )

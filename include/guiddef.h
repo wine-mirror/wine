@@ -20,7 +20,7 @@
 #define GUID_DEFINED
 typedef struct _GUID
 {
-#if defined(_MSC_VER) || (defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64))
+#ifdef _MSC_VER
     unsigned long  Data1;
 #else
     unsigned int   Data1;

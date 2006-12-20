@@ -319,7 +319,7 @@ typedef VOID           *PVOID64;
 typedef BYTE            BOOLEAN,    *PBOOLEAN;
 typedef char            CHAR,       *PCHAR;
 typedef short           SHORT,      *PSHORT;
-#if defined(_MSC_VER) || (defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64))
+#ifdef _MSC_VER
 typedef long            LONG,       *PLONG;
 #else
 typedef int             LONG,       *PLONG;

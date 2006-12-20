@@ -196,7 +196,7 @@ typedef int             INT,        *PINT,     *LPINT;
 typedef unsigned int    UINT,       *PUINT;
 typedef float           FLOAT,      *PFLOAT;
 typedef char                        *PSZ;
-#if defined(_MSC_VER) || (defined(WINE_NO_LONG_AS_INT) && !defined(_WIN64))
+#ifdef _MSC_VER
 typedef long                                   *LPLONG;
 typedef unsigned long   DWORD,      *PDWORD,   *LPDWORD;
 typedef unsigned long   ULONG,      *PULONG;
