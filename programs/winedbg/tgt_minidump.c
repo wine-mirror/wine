@@ -85,7 +85,7 @@ static inline struct tgt_process_minidump_data* PRIVATE(struct dbg_process* pcs)
 }
 
 static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr, 
-                                             void* buffer, DWORD len, DWORD* rlen)
+                                             void* buffer, SIZE_T len, SIZE_T* rlen)
 {
     ULONG               size;
     MINIDUMP_DIRECTORY* dir;
@@ -127,7 +127,7 @@ static BOOL WINAPI tgt_process_minidump_read(HANDLE hProcess, const void* addr,
 }
 
 static BOOL WINAPI tgt_process_minidump_write(HANDLE hProcess, void* addr,
-                                             const void* buffer, DWORD len, DWORD* wlen)
+                                             const void* buffer, SIZE_T len, SIZE_T* wlen)
 {
     return FALSE;
 }

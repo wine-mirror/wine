@@ -132,7 +132,7 @@ struct dbg_breakpoint
                         xpoint_type : 2,
                         refcount : 13,
                         skipcount : 16;
-    DWORD               info;
+    unsigned long       info;
     struct              /* only used for watchpoints */
     {
         BYTE		len : 2;
@@ -325,7 +325,7 @@ extern int              expr_print(const struct expr* exp);
   /* info.c */
 extern void             print_help(void);
 extern void             info_help(void);
-extern void             info_win32_module(DWORD mod);
+extern void             info_win32_module(DWORD64 mod);
 extern void             info_win32_class(HWND hWnd, const char* clsName);
 extern void             info_win32_window(HWND hWnd, BOOL detailed);
 extern void             info_win32_processes(void);

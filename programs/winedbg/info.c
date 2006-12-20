@@ -198,7 +198,7 @@ static BOOL CALLBACK info_mod_cb(PSTR mod_name, DWORD64 base, void* ctx)
  *
  * Display information about a given module (DLL or EXE), or about all modules
  */
-void info_win32_module(DWORD base)
+void info_win32_module(DWORD64 base)
 {
     struct info_module  im;
     int                 i, j, num_printed = 0;
@@ -263,7 +263,7 @@ void info_win32_module(DWORD base)
     HeapFree(GetProcessHeap(), 0, im.mi);
 
     if (base && !num_printed)
-        dbg_printf("'0x%08lx' is not a valid module address\n", base);
+        dbg_printf("'0x%lx%08lx' is not a valid module address\n", (DWORD)(base >> 32), (DWORD)base);
 }
 
 struct class_walker

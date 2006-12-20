@@ -609,7 +609,7 @@ static	void	handle_debug_event(struct gdb_context* gdbctx, DEBUG_EVENT* de)
     }
 }
 
-static void    resume_debuggee(struct gdb_context* gdbctx, unsigned long cont)
+static void resume_debuggee(struct gdb_context* gdbctx, DWORD cont)
 {
     if (dbg_curr_thread)
     {
@@ -626,7 +626,7 @@ static void    resume_debuggee(struct gdb_context* gdbctx, unsigned long cont)
 }
 
 
-static void    resume_debuggee_thread(struct gdb_context* gdbctx, unsigned long cont, unsigned int threadid)
+static void resume_debuggee_thread(struct gdb_context* gdbctx, DWORD cont, unsigned int threadid)
 {
 
     if (dbg_curr_thread)
@@ -725,7 +725,7 @@ static void detach_debuggee(struct gdb_context* gdbctx, BOOL kill)
 
 static void get_process_info(struct gdb_context* gdbctx, char* buffer, size_t len)
 {
-    unsigned long       status;
+    DWORD status;
 
     if (!GetExitCodeProcess(gdbctx->process->handle, &status))
     {
@@ -760,7 +760,7 @@ static void get_thread_info(struct gdb_context* gdbctx, unsigned tid,
                             char* buffer, size_t len)
 {
     struct dbg_thread*  thd;
-    unsigned long       status;
+    DWORD               status;
     int                 prio;
 
     /* FIXME: use the size of buffer */
