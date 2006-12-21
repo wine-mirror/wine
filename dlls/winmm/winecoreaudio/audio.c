@@ -148,6 +148,10 @@ typedef struct {
     DWORD                       tickCountMS; /* time in MS of last AudioUnit callback */
 
     pthread_mutex_t             lock;         /* synchronization stuff */
+
+    BOOL trace_on;
+    BOOL warn_on;
+    BOOL err_on;
 } WINE_WAVEOUT;
 
 typedef struct {
@@ -721,7 +725,11 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
     
     wwo->dwPlayedTotal = 0;
     wwo->dwWrittenTotal = 0;
-        
+
+    wwo->trace_on = TRACE_ON(wave);
+    wwo->warn_on  = WARN_ON(wave);
+    wwo->err_on   = ERR_ON(wave);
+
     pthread_mutex_unlock(&wwo->lock);
     
     retval = wodNotifyClient(wwo, WOM_OPEN, 0L, 0L);
@@ -846,7 +854,7 @@ static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
         {
             wwo->state = WINE_WS_STOPPED;
             status = AudioOutputUnitStop(wwo->audioUnit);
-            if (status)
+            if (status && wwo->err_on)
                 fprintf(stderr, "err:winecoreaudio:wodHelper_BeginWaveHdr AudioOutputUnitStop return %c%c%c%c\n",
                         (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
         }
@@ -857,8 +865,9 @@ static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
     {
         status = AudioOutputUnitStart(wwo->audioUnit);
         if (status) {
-            fprintf(stderr, "err:winecoreaudio:AudioOutputUnitStart return %c%c%c%c\n",
-                    (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+            if (wwo->err_on)
+                fprintf(stderr, "err:winecoreaudio:AudioOutputUnitStart return %c%c%c%c\n",
+                        (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
         }
         else wwo->state = WINE_WS_PLAYING;
     }
@@ -867,10 +876,12 @@ static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
     {
         if (wwo->lpLoopPtr)
         {
-            fprintf(stderr, "trace:winecoreaudio:wodHelper_BeginWaveHdr Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
+            if (wwo->warn_on)
+                fprintf(stderr, "warn:winecoreaudio:wodHelper_BeginWaveHdr Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
         } else
         {
-            fprintf(stderr, "trace:winecoreaudio:wodHelper_BeginWaveHdr Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+            if (wwo->trace_on)
+                fprintf(stderr, "trace:winecoreaudio:wodHelper_BeginWaveHdr Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 
             wwo->lpLoopPtr = lpWaveHdr;
             /* Windows does not touch WAVEHDR.dwLoops,
