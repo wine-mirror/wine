@@ -883,58 +883,6 @@ static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
 
 
 /**************************************************************************
-* 				wodHelper_BeginWaveHdrPlay          [internal]
-*
-* Makes the specified lpWaveHdr the currently playing wave header.
-* If the specified wave header is a begin loop and we're not already in
-* a loop, setup the loop.
-* Call from AudioUnit IO thread can't use Wine debug channels.
-*/
-static void wodHelper_BeginWaveHdrPlay(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
-{
-    wwo->lpPlayPtr = lpWaveHdr;
-
-    if (!lpWaveHdr)
-    {
-        OSStatus status;
-        wwo->state = WINE_WS_STOPPED;
-        status = AudioOutputUnitStop(wwo->audioUnit);
-        if (status && wwo->err_on)
-            fprintf(stderr, "err:winecoreaudio:wodHelper_BeginWaveHdrPlay AudioOutputUnitStop return %c%c%c%c\n",
-                    (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-    }
-    else
-        wodHelper_CheckForLoopBegin(wwo);
-}
-
-
-/**************************************************************************
-* 				wodHelper_BeginWaveHdrWrite          [internal]
-*
-* Makes the specified lpWaveHdr the currently playing wave header.
-* If the specified wave header is a begin loop and we're not already in
-* a loop, setup the loop.
-*/
-static void wodHelper_BeginWaveHdrWrite(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
-{
-    wwo->lpPlayPtr = lpWaveHdr;
-
-    if (wwo->state == WINE_WS_STOPPED)
-    {
-        OSStatus status = AudioOutputUnitStart(wwo->audioUnit);
-        if (status) {
-            ERR("AudioOutputUnitStart return %c%c%c%c\n", (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-        }
-        else wwo->state = WINE_WS_PLAYING;
-    }
-
-    wodHelper_CheckForLoopBegin(wwo);
-
-    wwo->dwPartialOffset = 0;
-}
-
-
-/**************************************************************************
 * 				wodHelper_PlayPtrNext	        [internal]
 *
 * Advance the play pointer to the next waveheader, looping if required.
@@ -969,15 +917,27 @@ static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
             wwo->lpLoopPtr = NULL;
         }
     }
-
     if (!didLoopBack)
     {
         /* We didn't loop back.  Advance to the next wave header */
-        wodHelper_BeginWaveHdrPlay(wwo, lpWaveHdr = lpWaveHdr->lpNext);
-    }
+        lpWaveHdr = lpWaveHdr->lpNext;
 
-    pthread_mutex_unlock(&wwo->lock);
+        wwo->lpPlayPtr = lpWaveHdr;
+
+        if (!lpWaveHdr)
+        {
+            OSStatus status;
+            wwo->state = WINE_WS_STOPPED;
+            status = AudioOutputUnitStop(wwo->audioUnit);
+            if (status && wwo->err_on)
+                fprintf(stderr, "err:winecoreaudio:wodHelper_PlayPtrNext AudioOutputUnitStop return %c%c%c%c\n",
+                        (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        }
+        else
+            wodHelper_CheckForLoopBegin(wwo);
+    }
     
+    pthread_mutex_unlock(&wwo->lock);
     return lpWaveHdr;
 }
 
@@ -1128,11 +1088,26 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     for (wh = &(wwo->lpQueuePtr); *wh; wh = &((*wh)->lpNext))
         /* Do nothing */;
     *wh = lpWaveHdr;
-
+    
     if (!wwo->lpPlayPtr)
-        wodHelper_BeginWaveHdrWrite(wwo,lpWaveHdr);
-    pthread_mutex_unlock(&wwo->lock);
+    {
+        wwo->lpPlayPtr = lpWaveHdr;
 
+        if (wwo->state == WINE_WS_STOPPED)
+        {
+            OSStatus status = AudioOutputUnitStart(wwo->audioUnit);
+            if (status) {
+                ERR("AudioOutputUnitStart return %c%c%c%c\n", (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+            }
+            else wwo->state = WINE_WS_PLAYING;
+        }
+
+        wodHelper_CheckForLoopBegin(wwo);
+
+        wwo->dwPartialOffset = 0;
+    }
+    pthread_mutex_unlock(&wwo->lock);
+    
     return MMSYSERR_NOERROR;
 }
 
