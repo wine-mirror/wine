@@ -179,7 +179,7 @@ static WINE_WAVEOUT WOutDev   [MAX_WAVEOUTDRV];
 
 static CFMessagePortRef Port_SendToMessageThread;
 
-static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
+static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
 static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
 
 extern int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au);
@@ -888,22 +888,14 @@ static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
 * Advance the play pointer to the next waveheader, looping if required.
 * Call from AudioUnit IO thread can't use Wine debug channels.
 */
-static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
+static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
 {
-    LPWAVEHDR lpWaveHdr;
     BOOL didLoopBack = FALSE;
 
     pthread_mutex_lock(&wwo->lock);
     
-    lpWaveHdr = wwo->lpPlayPtr;
-    if (!lpWaveHdr)
-    {
-        pthread_mutex_unlock(&wwo->lock);
-        return NULL;
-    }
-
     wwo->dwPartialOffset = 0;
-    if ((lpWaveHdr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr)
+    if ((wwo->lpPlayPtr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr)
     {
         /* We're at the end of a loop, loop if required */
         if (wwo->dwLoops > 1)
@@ -920,11 +912,9 @@ static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
     if (!didLoopBack)
     {
         /* We didn't loop back.  Advance to the next wave header */
-        lpWaveHdr = lpWaveHdr->lpNext;
+        wwo->lpPlayPtr = wwo->lpPlayPtr->lpNext;
 
-        wwo->lpPlayPtr = lpWaveHdr;
-
-        if (!lpWaveHdr)
+        if (!wwo->lpPlayPtr)
         {
             OSStatus status;
             wwo->state = WINE_WS_STOPPED;
@@ -938,7 +928,6 @@ static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
     }
     
     pthread_mutex_unlock(&wwo->lock);
-    return lpWaveHdr;
 }
 
 /* if force is TRUE then notify the client that all the headers were completed
