@@ -32,17 +32,17 @@
 #define MAGIC_DEAD  0xdeadbeef
 #define DEFAULT_PRINTER_SIZE 1000
 
-static CHAR does_not_exist_dll[]= "does_not_exists.dll";
-static CHAR does_not_exist[]    = "does_not_exists";
+static CHAR does_not_exist_dll[]= "does_not_exist.dll";
+static CHAR does_not_exist[]    = "does_not_exist";
 static CHAR empty[]             = "";
 static CHAR env_x86[]           = "Windows NT x86";
 static CHAR env_win9x_case[]    = "windowS 4.0";
 static CHAR illegal_name[]      = "illegal,name";
 static CHAR invalid_env[]       = "invalid_env";
-static CHAR invalid_server[]    = "\\invalid_server";
 static CHAR portname_com1[]     = "COM1:";
 static CHAR portname_file[]     = "FILE:";
 static CHAR portname_lpt1[]     = "LPT1:";
+static CHAR server_does_not_exist[] = "\\does_not_exist";
 static CHAR version_dll[]       = "version.dll";
 static CHAR winetest_monitor[]  = "winetest";
 
@@ -1204,7 +1204,7 @@ static void test_GetPrintProcessorDirectory(void)
     /* invalid on all Systems */
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
-    res = GetPrintProcessorDirectoryA(invalid_server, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
+    res = GetPrintProcessorDirectoryA(server_does_not_exist, NULL, 1, buffer, cbBuf*2, &pcbNeeded);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER), 
         "returned %d with %d (expected '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
