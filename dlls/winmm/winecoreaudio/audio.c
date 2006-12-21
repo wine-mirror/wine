@@ -935,6 +935,7 @@ static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
 static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
 {
     LPWAVEHDR lpWaveHdr;
+    BOOL didLoopBack = FALSE;
 
     pthread_mutex_lock(&wwo->lock);
     
@@ -953,24 +954,17 @@ static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
         {
             wwo->dwLoops--;
             wwo->lpPlayPtr = wwo->lpLoopPtr;
-        } else
-        {
-            /* Handle overlapping loops correctly */
-            if (wwo->lpLoopPtr != lpWaveHdr && (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)) {
-                /* shall we consider the END flag for the closing loop or for
-                * the opening one or for both ???
-                * code assumes for closing loop only
-                */
-            } else
-            {
-                lpWaveHdr = lpWaveHdr->lpNext;
-            }
-            wwo->lpLoopPtr = NULL;
-            wodHelper_BeginWaveHdr(wwo, lpWaveHdr);
+            didLoopBack = TRUE;
         }
-    } else
+        else
+        {
+            wwo->lpLoopPtr = NULL;
+        }
+    }
+
+    if (!didLoopBack)
     {
-        /* We're not in a loop.  Advance to the next wave header */
+        /* We didn't loop back.  Advance to the next wave header */
         wodHelper_BeginWaveHdr(wwo, lpWaveHdr = lpWaveHdr->lpNext);
     }
     
