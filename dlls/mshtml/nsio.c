@@ -607,8 +607,8 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
         nsIWineURI_GetNSContainer(This->uri, &container);
         if(!container) {
-            ERR("container = NULL\n");
-            return NS_ERROR_UNEXPECTED;
+            TRACE("container = NULL\n");
+            return nsIChannel_AsyncOpen(This->channel, aListener, aContext);
         }
 
         if(container->bscallback) {
