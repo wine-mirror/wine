@@ -798,23 +798,22 @@ static DWORD wodClose(WORD wDevID)
         
         wwo->state = WINE_WS_CLOSED; /* mark the device as closed */
         
+        pthread_mutex_unlock(&wwo->lock);
+
         err = AudioUnitUninitialize(wwo->audioUnit);
         if (err) {
             ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
                                                             (char) (err >> 16),
                                                             (char) (err >> 8),
                                                             (char) err);
-            pthread_mutex_unlock(&wwo->lock);
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }
         
         if ( !AudioUnit_CloseAudioUnit(wwo->audioUnit) )
         {
             ERR("Can't close AudioUnit\n");
-            pthread_mutex_unlock(&wwo->lock);
             return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
         }  
-        pthread_mutex_unlock(&wwo->lock);
         
         ret = wodNotifyClient(wwo, WOM_CLOSE, 0L, 0L);
     }
@@ -1239,13 +1238,9 @@ static DWORD wodGetVolume(WORD wDevID, LPDWORD lpdwVol)
     }    
     
     TRACE("(%u, %p);\n", wDevID, lpdwVol);
-    
-    pthread_mutex_lock(&WOutDev[wDevID].lock);
-    
+
     AudioUnit_GetVolume(WOutDev[wDevID].audioUnit, &left, &right); 
-        
-    pthread_mutex_unlock(&WOutDev[wDevID].lock);
-        
+
     *lpdwVol = ((WORD) left * 0xFFFFl) + (((WORD) right * 0xFFFFl) << 16);
     
     return MMSYSERR_NOERROR;
@@ -1269,13 +1264,9 @@ static DWORD wodSetVolume(WORD wDevID, DWORD dwParam)
     right = HIWORD(dwParam) / 65535.0f;
     
     TRACE("(%u, %08x);\n", wDevID, dwParam);
-    
-    pthread_mutex_lock(&WOutDev[wDevID].lock);
-    
+
     AudioUnit_SetVolume(WOutDev[wDevID].audioUnit, left, right); 
-        
-    pthread_mutex_unlock(&WOutDev[wDevID].lock);
-    
+
     return MMSYSERR_NOERROR;
 }
 
