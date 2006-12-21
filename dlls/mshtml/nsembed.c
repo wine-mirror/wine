@@ -931,6 +931,7 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
     }
 
     nsIWineURI_SetNSContainer(wine_uri, This);
+    nsIWineURI_SetIsDocumentURI(wine_uri, TRUE);
 
     if(This->bscallback && This->bscallback->mon) {
         LPWSTR url = NULL;

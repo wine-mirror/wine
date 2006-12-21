@@ -1531,4 +1531,6 @@ interface nsIWineURI : nsIURI
     nsresult SetNSContainer(NSContainer *aNSContainer);
     nsresult GetMoniker(IMoniker **aMoniker);
     nsresult SetMoniker(IMoniker *aMoniker);
+    nsresult GetIsDocumentURI(PRBool *aIsDocumentURI);
+    nsresult SetIsDocumentURI(PRBool aIsDocumentURI);
 }

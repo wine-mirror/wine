@@ -54,6 +54,7 @@ typedef struct {
     NSContainer *container;
     IMoniker *mon;
     LPSTR spec;
+    PRBool is_doc_uri;
 } nsURI;
 
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
@@ -598,11 +599,14 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     BSCallback *bscallback;
     nsIWineURI *wine_uri;
     IMoniker *mon;
+    PRBool is_doc_uri;
     nsresult nsres;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
 
-    if(This->load_flags & LOAD_INITIAL_DOCUMENT_URI) {
+    nsIWineURI_GetIsDocumentURI(This->uri, &is_doc_uri);
+
+    if(is_doc_uri && (This->load_flags & LOAD_INITIAL_DOCUMENT_URI)) {
         NSContainer *container;
 
         nsIWineURI_GetNSContainer(This->uri, &container);
@@ -633,7 +637,6 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                     if(NS_FAILED(nsres))
                         ERR("AddRequest failed:%08x\n", nsres);
                 }
-
                 return WINE_NS_LOAD_FROM_MONIKER;
             }
         }else if(container->doc) {
@@ -1589,6 +1592,26 @@ static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
     return NS_OK;
 }
 
+static nsresult NSAPI nsURI_GetIsDocumentURI(nsIWineURI *iface, PRBool *aIsDocumentURI)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aIsDocumentURI);
+
+    *aIsDocumentURI = This->is_doc_uri;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURI_SetIsDocumentURI(nsIWineURI *iface, PRBool aIsDocumentURI)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%x)\n", This, aIsDocumentURI);
+
+    This->is_doc_uri = aIsDocumentURI;
+    return NS_OK;
+}
+
 #undef NSURI_THIS
 
 static const nsIWineURIVtbl nsWineURIVtbl = {
@@ -1624,7 +1647,9 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_GetNSContainer,
     nsURI_SetNSContainer,
     nsURI_GetMoniker,
-    nsURI_SetMoniker
+    nsURI_SetMoniker,
+    nsURI_GetIsDocumentURI,
+    nsURI_SetIsDocumentURI
 };
 
 static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval)
@@ -1637,6 +1662,7 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval
     ret->container = container;
     ret->mon = NULL;
     ret->spec = NULL;
+    ret->is_doc_uri = FALSE;
 
     if(container)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(container));
