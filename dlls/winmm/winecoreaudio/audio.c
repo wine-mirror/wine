@@ -177,7 +177,7 @@ typedef struct {
 
 static WINE_WAVEOUT WOutDev   [MAX_WAVEOUTDRV];
 
-static CFStringRef MessageThreadPortName;
+static CFMessagePortRef Port_SendToMessageThread;
 
 static LPWAVEHDR wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
 static DWORD wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
@@ -255,7 +255,7 @@ static const char * getMessage(UINT msg)
 #define kWaveInCallbackMessage 2
 
 /* Mach Message Handling */
-static CFDataRef wodMessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataRef data, void *info)
+static CFDataRef wodMessageHandler(CFMessagePortRef port_ReceiveInMessageThread, SInt32 msgid, CFDataRef data, void *info)
 {
     UInt32 *buffer = NULL;
     WINE_WAVEOUT* wwo = NULL;
@@ -283,23 +283,17 @@ static CFDataRef wodMessageHandler(CFMessagePortRef local, SInt32 msgid, CFDataR
 
 static DWORD WINAPI messageThread(LPVOID p)
 {
-    CFMessagePortRef local;
+    CFMessagePortRef port_ReceiveInMessageThread = (CFMessagePortRef) p;
     CFRunLoopSourceRef source;
-    Boolean info;
     
-    local = CFMessagePortCreateLocal(kCFAllocatorDefault, MessageThreadPortName,
-                                        &wodMessageHandler, NULL, &info);
-                                        
-    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, local, (CFIndex)0);
+    source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, port_ReceiveInMessageThread, (CFIndex)0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
         
     CFRunLoopRun();
 
     CFRunLoopSourceInvalidate(source);
     CFRelease(source);
-    CFRelease(local);
-    CFRelease(MessageThreadPortName);
-    MessageThreadPortName = NULL;
+    CFRelease(port_ReceiveInMessageThread);
 
     return 0;
 }
@@ -310,9 +304,6 @@ static DWORD wodSendDriverCallbackMessage(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dw
     UInt32 buffer[4];
     SInt32 ret;
     
-    CFMessagePortRef messagePort;
-    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MessageThreadPortName);
-        
     buffer[0] = (UInt32) wwo->woID;
     buffer[1] = (UInt32) wMsg;
     buffer[2] = (UInt32) dwParam1;
@@ -322,9 +313,8 @@ static DWORD wodSendDriverCallbackMessage(WINE_WAVEOUT* wwo, WORD wMsg, DWORD dw
     if (!data)
         return 0;
     
-    ret = CFMessagePortSendRequest(messagePort, kWaveOutCallbackMessage, data, 0.0, 0.0, NULL, NULL);
+    ret = CFMessagePortSendRequest(Port_SendToMessageThread, kWaveOutCallbackMessage, data, 0.0, 0.0, NULL, NULL);
     CFRelease(data);
-    CFRelease(messagePort);
     
     return (ret == kCFMessagePortSuccess)?1:0;
 }
@@ -455,6 +445,8 @@ LONG CoreAudio_WaveInit(void)
     pthread_mutexattr_t mutexattr;
     int i;
     HANDLE hThread;
+    CFStringRef  messageThreadPortName;
+    CFMessagePortRef port_ReceiveInMessageThread;
 
     TRACE("()\n");
     
@@ -528,35 +520,57 @@ LONG CoreAudio_WaveInit(void)
     
     /* create mach messages handler */
     srandomdev();
-    MessageThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL,
+    messageThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL,
         CFSTR("WaveMessagePort.%d.%lu"), getpid(), (unsigned long)random());
-    if (!MessageThreadPortName)
+    if (!messageThreadPortName)
     {
         ERR("Can't create message thread port name\n");
         return 1;
     }
 
-    hThread = CreateThread(NULL, 0, messageThread, NULL, 0, NULL);
+    port_ReceiveInMessageThread = CFMessagePortCreateLocal(kCFAllocatorDefault, messageThreadPortName,
+                                        &wodMessageHandler, NULL, NULL);
+    if (!port_ReceiveInMessageThread)
+    {
+        ERR("Can't create message thread local port\n");
+        CFRelease(messageThreadPortName);
+        return 1;
+    }
+
+    Port_SendToMessageThread = CFMessagePortCreateRemote(kCFAllocatorDefault, messageThreadPortName);
+    CFRelease(messageThreadPortName);
+    if (!Port_SendToMessageThread)
+    {
+        ERR("Can't create port for sending to message thread\n");
+        CFRelease(port_ReceiveInMessageThread);
+        return 1;
+    }
+
+    hThread = CreateThread(NULL, 0, messageThread, (LPVOID)port_ReceiveInMessageThread, 0, NULL);
     if ( !hThread )
     {
         ERR("Can't create message thread\n");
+        CFRelease(port_ReceiveInMessageThread);
+        CFRelease(Port_SendToMessageThread);
+        Port_SendToMessageThread = NULL;
         return 1;
     }
-    
+
+    /* The message thread is responsible for releasing port_ReceiveInMessageThread. */
+
     return 0;
 }
 
 void CoreAudio_WaveRelease(void)
 {
     /* Stop CFRunLoop in messageThread */
-    CFMessagePortRef messagePort;
     int i;
 
     TRACE("()\n");
 
-    messagePort = CFMessagePortCreateRemote(kCFAllocatorDefault, MessageThreadPortName);
-    CFMessagePortSendRequest(messagePort, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
-    CFRelease(messagePort);
+    CFMessagePortSendRequest(Port_SendToMessageThread, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
+    CFRelease(Port_SendToMessageThread);
+    Port_SendToMessageThread = NULL;
 
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
