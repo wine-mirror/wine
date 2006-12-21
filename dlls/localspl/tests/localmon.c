@@ -223,7 +223,7 @@ static void test_EnumPorts(void)
         SetLastError(0xdeadbeef);
         res = pEnumPorts(NULL, level, buffer, cbBuf, &pcbNeeded, &pcReturned);
         ok( res, "(%d) returned %d with %d and %d, %d (expected '!= 0')\n",
-            level, res, GetLastError(), cbBuf, pcReturned);
+            level, res, GetLastError(), pcbNeeded, pcReturned);
         /* We can compare the returned Data with the Registry / "win.ini",[Ports] here */
 
         pcbNeeded = 0xdeadbeef;
@@ -231,7 +231,7 @@ static void test_EnumPorts(void)
         SetLastError(0xdeadbeef);
         res = pEnumPorts(NULL, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
         ok( res, "(%d) returned %d with %d and %d, %d (expected '!= 0')\n",
-            level, res, GetLastError(), cbBuf, pcReturned);
+            level, res, GetLastError(), pcbNeeded, pcReturned);
 
         pcbNeeded = 0xdeadbeef;
         pcReturned = 0xdeadbeef;
@@ -240,7 +240,7 @@ static void test_EnumPorts(void)
         ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
             "(%d) returned %d with %d and %d, %d (expected '0' with " \
             "ERROR_INSUFFICIENT_BUFFER)\n",
-            level, res, GetLastError(), cbBuf, pcReturned);
+            level, res, GetLastError(), pcbNeeded, pcReturned);
 
         if (0)
         {
@@ -256,14 +256,14 @@ static void test_EnumPorts(void)
         SetLastError(0xdeadbeef);
         res = pEnumPorts(emptyW, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
         ok( res, "(%d) returned %d with %d and %d, %d (expected '!= 0')\n",
-            level, res, GetLastError(), cbBuf, pcReturned);
+            level, res, GetLastError(), pcbNeeded, pcReturned);
 
         pcbNeeded = 0xdeadbeef;
         pcReturned = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = pEnumPorts(invalid_serverW, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
         ok( res, "(%d) returned %d with %d and %d, %d (expected '!= 0')\n",
-            level, res, GetLastError(), cbBuf, pcReturned);
+            level, res, GetLastError(), pcbNeeded, pcReturned);
 
         HeapFree(GetProcessHeap(), 0, buffer);
     }
