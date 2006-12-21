@@ -1365,46 +1365,45 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
 
     pthread_mutex_lock(&wwo->lock);
 
-    while (dataNeeded > 0)
+    while (dataNeeded > 0 && wwo->state == WINE_WS_PLAYING && wwo->lpPlayPtr)
     {
-        if (wwo->state == WINE_WS_PLAYING && wwo->lpPlayPtr)
-        {
-            unsigned int available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
-            unsigned int toCopy;
+        unsigned int available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
+        unsigned int toCopy;
 
-            if (available >= dataNeeded)
-                toCopy = dataNeeded;
-            else
-                toCopy = available;
-
-            if (toCopy > 0)
-            {
-                memcpy((char*)ioData->mBuffers[0].mData + dataProvided,
-                    wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toCopy);
-                wwo->dwPartialOffset += toCopy;
-                wwo->dwPlayedTotal += toCopy;
-                dataProvided += toCopy;
-                dataNeeded -= toCopy;
-                available -= toCopy;
-            }
-
-            if (available == 0)
-            {
-                wodHelper_PlayPtrNext(wwo);
-                needNotify = 1;
-            }
-        }
+        if (available >= dataNeeded)
+            toCopy = dataNeeded;
         else
+            toCopy = available;
+
+        if (toCopy > 0)
         {
-            if (!dataProvided)
-                *ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
-            memset((char*)ioData->mBuffers[0].mData + dataProvided, 0, dataNeeded);
-            dataProvided += dataNeeded;
-            dataNeeded = 0;
+            memcpy((char*)ioData->mBuffers[0].mData + dataProvided,
+                wwo->lpPlayPtr->lpData + wwo->dwPartialOffset, toCopy);
+            wwo->dwPartialOffset += toCopy;
+            wwo->dwPlayedTotal += toCopy;
+            dataProvided += toCopy;
+            dataNeeded -= toCopy;
+            available -= toCopy;
+        }
+
+        if (available == 0)
+        {
+            wodHelper_PlayPtrNext(wwo);
+            needNotify = 1;
         }
     }
 
     pthread_mutex_unlock(&wwo->lock);
+
+    /* We can't provide any more wave data.  Fill the rest with silence. */
+    if (dataNeeded > 0)
+    {
+        if (!dataProvided)
+            *ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
+        memset((char*)ioData->mBuffers[0].mData + dataProvided, 0, dataNeeded);
+        dataProvided += dataNeeded;
+        dataNeeded = 0;
+    }
 
     /* We only fill buffer 0.  Set any others that might be requested to 0. */
     for (buffer = 1; buffer < ioData->mNumberBuffers; buffer++)
