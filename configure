@@ -759,6 +759,7 @@ IOKITLIB
 LDEXECFLAGS
 DISKARBITRATIONLIB
 COREAUDIO
+CARBONLIB
 CROSSTEST
 CROSSCC
 CROSSWINDRES
@@ -13462,6 +13463,8 @@ fi
     esac
         if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
+        CARBONLIB="-framework Carbon"
+
         QUARTZFILES='$(QUARTZFILES)'
     fi
     ;;
@@ -21426,6 +21429,7 @@ IOKITLIB!$IOKITLIB$ac_delim
 LDEXECFLAGS!$LDEXECFLAGS$ac_delim
 DISKARBITRATIONLIB!$DISKARBITRATIONLIB$ac_delim
 COREAUDIO!$COREAUDIO$ac_delim
+CARBONLIB!$CARBONLIB$ac_delim
 CROSSTEST!$CROSSTEST$ac_delim
 CROSSCC!$CROSSCC$ac_delim
 CROSSWINDRES!$CROSSWINDRES$ac_delim
@@ -21442,7 +21446,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 76; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 77; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

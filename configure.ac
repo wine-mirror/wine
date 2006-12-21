@@ -1023,6 +1023,7 @@ case $host_os in
     dnl Enable quartz driver on Mac OS X
     if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
     then
+        AC_SUBST(CARBONLIB,"-framework Carbon")
         QUARTZFILES='$(QUARTZFILES)'
     fi
     ;;

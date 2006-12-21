@@ -37,6 +37,44 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifdef HAVE_CARBON_CARBON_H
+#define LoadResource __carbon_LoadResource
+#define CompareString __carbon_CompareString
+#define GetCurrentThread __carbon_GetCurrentThread
+#define GetCurrentProcess __carbon_GetCurrentProcess
+#define AnimatePalette __carbon_AnimatePalette
+#define EqualRgn __carbon_EqualRgn
+#define FillRgn __carbon_FillRgn
+#define FrameRgn __carbon_FrameRgn
+#define GetPixel __carbon_GetPixel
+#define InvertRgn __carbon_InvertRgn
+#define LineTo __carbon_LineTo
+#define OffsetRgn __carbon_OffsetRgn
+#define PaintRgn __carbon_PaintRgn
+#define Polygon __carbon_Polygon
+#define ResizePalette __carbon_ResizePalette
+#define SetRectRgn __carbon_SetRectRgn
+#include <Carbon/Carbon.h>
+#undef LoadResource
+#undef CompareString
+#undef GetCurrentThread
+#undef _CDECL
+#undef DPRINTF
+#undef GetCurrentProcess
+#undef AnimatePalette
+#undef EqualRgn
+#undef FillRgn
+#undef FrameRgn
+#undef GetPixel
+#undef InvertRgn
+#undef LineTo
+#undef OffsetRgn
+#undef PaintRgn
+#undef Polygon
+#undef ResizePalette
+#undef SetRectRgn
+#endif /* HAVE_CARBON_CARBON_H */
+
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
@@ -438,6 +476,204 @@ static const WCHAR font_mutex_nameW[] = {'_','_','W','I','N','E','_','F','O','N'
  * cga40woa.fon=cga40850.fon
  */
 
+#ifdef HAVE_CARBON_CARBON_H
+static char *find_cache_dir(void)
+{
+    FSRef ref;
+    OSErr err;
+    static char cached_path[MAX_PATH];
+    static const char *wine = "/Wine", *fonts = "/Fonts";
+
+    if(*cached_path) return cached_path;
+
+    err = FSFindFolder(kUserDomain, kCachedDataFolderType, kCreateFolder, &ref);
+    if(err != noErr)
+    {
+        WARN("can't create cached data folder\n");
+        return NULL;
+    }
+    err = FSRefMakePath(&ref, (unsigned char*)cached_path, sizeof(cached_path));
+    if(err != noErr)
+    {
+        WARN("can't create cached data path\n");
+        *cached_path = '\0';
+        return NULL;
+    }
+    if(strlen(cached_path) + strlen(wine) + strlen(fonts) + 1 > sizeof(cached_path))
+    {
+        ERR("Could not create full path\n");
+        *cached_path = '\0';
+        return NULL;
+    }
+    strcat(cached_path, wine);
+
+    if(mkdir(cached_path, 0700) == -1 && errno != EEXIST)
+    {
+        WARN("Couldn't mkdir %s\n", cached_path);
+        *cached_path = '\0';
+        return NULL;
+    }
+    strcat(cached_path, fonts);
+    if(mkdir(cached_path, 0700) == -1 && errno != EEXIST)
+    {
+        WARN("Couldn't mkdir %s\n", cached_path);
+        *cached_path = '\0';
+        return NULL;
+    }
+    return cached_path;
+}
+
+/******************************************************************
+ *            expand_mac_font
+ *
+ * Extracts individual TrueType font files from a Mac suitcase font
+ * and saves them into the user's caches directory (see
+ * find_cache_dir()).
+ * Returns a NULL terminated array of filenames.
+ *
+ * We do this because they are apps that try to read ttf files
+ * themselves and they don't like Mac suitcase files.
+ */
+static char **expand_mac_font(const char *path)
+{
+    FSRef ref;
+    SInt16 res_ref;
+    OSStatus s;
+    unsigned int idx;
+    const char *out_dir;
+    const char *filename;
+    int output_len;
+    struct {
+        char **array;
+        unsigned int size, max_size;
+    } ret;
+
+    TRACE("path %s\n", path);
+
+    s = FSPathMakeRef((unsigned char*)path, &ref, FALSE);
+    if(s != noErr)
+    {
+        WARN("failed to get ref\n");
+        return NULL;
+    }
+
+    s = FSOpenResourceFile(&ref, 0, NULL, fsRdPerm, &res_ref);
+    if(s != noErr)
+    {
+        TRACE("no data fork, so trying resource fork\n");
+        res_ref = FSOpenResFile(&ref, fsRdPerm);
+        if(res_ref == -1)
+        {
+            TRACE("unable to open resource fork\n");
+            return NULL;
+        }
+    }
+
+    ret.size = 0;
+    ret.max_size = 10;
+    ret.array = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ret.max_size * sizeof(*ret.array));
+    if(!ret.array)
+    {
+        CloseResFile(res_ref);
+        return NULL;
+    }
+
+    out_dir = find_cache_dir();
+
+    filename = strrchr(path, '/');
+    if(!filename) filename = path;
+    else filename++;
+
+    /* output filename has the form out_dir/filename_%04x.ttf */
+    output_len = strlen(out_dir) + 1 + strlen(filename) + 5 + 5;
+
+    UseResFile(res_ref);
+    idx = 1;
+    while(1)
+    {
+        FamRec *fam_rec;
+        unsigned short *num_faces_ptr, num_faces, face;
+        AsscEntry *assoc;
+        Handle fond;
+
+        fond = Get1IndResource('FOND', idx);
+        if(!fond) break;
+        TRACE("got fond resource %d\n", idx);
+        HLock(fond);
+
+        fam_rec = *(FamRec**)fond;
+        num_faces_ptr = (unsigned short *)(fam_rec + 1);
+        num_faces = GET_BE_WORD(*num_faces_ptr);
+        num_faces++;
+        assoc = (AsscEntry*)(num_faces_ptr + 1);
+        TRACE("num faces %04x\n", num_faces);
+        for(face = 0; face < num_faces; face++, assoc++)
+        {
+            Handle sfnt;
+            unsigned short size, font_id;
+            char *output;
+
+            size = GET_BE_WORD(assoc->fontSize);
+            font_id = GET_BE_WORD(assoc->fontID);
+            if(size != 0)
+            {
+                TRACE("skipping id %04x because it's not scalable (fixed size %d)\n", font_id, size);
+                continue;
+            }
+
+            TRACE("trying to load sfnt id %04x\n", font_id);
+            sfnt = GetResource('sfnt', font_id);
+            if(!sfnt)
+            {
+                TRACE("can't get sfnt resource %04x\n", font_id);
+                continue;
+            }
+
+            output = HeapAlloc(GetProcessHeap(), 0, output_len);
+            if(output)
+            {
+                int fd;
+
+                sprintf(output, "%s/%s_%04x.ttf", out_dir, filename, font_id);
+
+                fd = open(output, O_CREAT | O_EXCL | O_WRONLY, 0600);
+                if(fd != -1 || errno == EEXIST)
+                {
+                    if(fd != -1)
+                    {
+                        unsigned char *sfnt_data;
+
+                        HLock(sfnt);
+                        sfnt_data = *(unsigned char**)sfnt;
+                        write(fd, sfnt_data, GetHandleSize(sfnt));
+                        HUnlock(sfnt);
+                        close(fd);
+                    }
+                    if(ret.size >= ret.max_size - 1) /* Always want the last element to be NULL */
+                    {
+                        ret.max_size *= 2;
+                        ret.array = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, ret.array, ret.max_size * sizeof(*ret.array));
+                    }
+                    ret.array[ret.size++] = output;
+                }
+                else
+                {
+                    WARN("unable to create %s\n", output);
+                    HeapFree(GetProcessHeap(), 0, output);
+                }
+            }
+            ReleaseResource(sfnt);
+        }
+        HUnlock(fond);
+        ReleaseResource(fond);
+        idx++;
+    }
+    CloseResFile(res_ref);
+
+    return ret.array;
+}
+
+#endif /* HAVE_CARBON_CARBON_H */
 
 static inline BOOL is_win9x(void)
 {
@@ -721,6 +957,27 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
 #endif
     int i, bitmap_num, internal_leading;
     FONTSIGNATURE fs;
+
+#ifdef HAVE_CARBON_CARBON_H
+    if(!fake_family)
+    {
+        char **mac_list = expand_mac_font(file);
+        if(mac_list)
+        {
+            BOOL had_one = FALSE;
+            char **cursor;
+            for(cursor = mac_list; *cursor; cursor++)
+            {
+                had_one = TRUE;
+                AddFontFileToList(*cursor, NULL, flags);
+                HeapFree(GetProcessHeap(), 0, *cursor);
+            }
+            HeapFree(GetProcessHeap(), 0, mac_list);
+            if(had_one)
+                return TRUE;
+        }
+    }
+#endif /* HAVE_CARBON_CARBON_H */
 
     do {
         char *family_name = fake_family;
