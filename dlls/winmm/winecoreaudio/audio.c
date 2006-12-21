@@ -970,75 +970,6 @@ static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force)
     }
 }
 
-/**************************************************************************
-* 				wodHelper_Reset			[internal]
-*
-* Resets current output stream.
-*/
-static  DWORD  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
-{
-    OSStatus status;
-
-    FIXME("\n");
-   
-    /* updates current notify list */
-    /* if resetting, remove all wave headers and notify client that all headers were completed */
-    wodHelper_NotifyCompletions(wwo, reset);
-    
-    pthread_mutex_lock(&wwo->lock);
-    
-    if (reset)
-    {
-        wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
-        wwo->state = WINE_WS_STOPPED;
-        wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
-        
-        wwo->dwPartialOffset = 0;        /* Clear partial wavehdr */
-    } 
-    else
-    {
-        if (wwo->lpLoopPtr)
-        {
-            /* complicated case, not handled yet (could imply modifying the loop counter) */
-            FIXME("Pausing while in loop isn't correctly handled yet, except strange results\n");
-            wwo->lpPlayPtr = wwo->lpLoopPtr;
-            wwo->dwPartialOffset = 0;
-            wwo->dwWrittenTotal = wwo->dwPlayedTotal; /* this is wrong !!! */
-        } else
-        {
-            LPWAVEHDR   ptr;
-            DWORD       sz = wwo->dwPartialOffset;
-            
-            /* reset all the data as if we had written only up to lpPlayedTotal bytes */
-            /* compute the max size playable from lpQueuePtr */
-            for (ptr = wwo->lpQueuePtr; ptr && ptr != wwo->lpPlayPtr; ptr = ptr->lpNext)
-            {
-                sz += ptr->dwBufferLength;
-            }
-            
-            /* because the reset lpPlayPtr will be lpQueuePtr */
-            if (wwo->dwWrittenTotal > wwo->dwPlayedTotal + sz) ERR("doh\n");
-            wwo->dwPartialOffset = sz - (wwo->dwWrittenTotal - wwo->dwPlayedTotal);
-            wwo->dwWrittenTotal = wwo->dwPlayedTotal;
-            wwo->lpPlayPtr = wwo->lpQueuePtr;
-        }
-        
-        wwo->state = WINE_WS_PAUSED;
-    }
-
-    pthread_mutex_unlock(&wwo->lock);
-
-    status = AudioOutputUnitStart(wwo->audioUnit);
-
-    if (status) {
-        ERR( "AudioOutputUnitStart return %c%c%c%c\n",
-             (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
-    }
-
-    return MMSYSERR_NOERROR;
-}
-
 
 /**************************************************************************
 * 				wodWrite			[internal]
@@ -1183,15 +1114,44 @@ static DWORD wodRestart(WORD wDevID)
 */
 static DWORD wodReset(WORD wDevID)
 {
+    WINE_WAVEOUT* wwo;
+    OSStatus status;
+
     TRACE("(%u);\n", wDevID);
-    
+
     if (wDevID >= MAX_WAVEOUTDRV)
     {
         WARN("bad device ID !\n");
         return MMSYSERR_BADDEVICEID;
     }
-    
-    return wodHelper_Reset(&WOutDev[wDevID], TRUE);
+
+    wwo = &WOutDev[wDevID];
+
+    FIXME("\n");
+
+    /* updates current notify list */
+    /* if resetting, remove all wave headers and notify client that all headers were completed */
+    wodHelper_NotifyCompletions(wwo, TRUE);
+
+    pthread_mutex_lock(&wwo->lock);
+
+    wwo->lpPlayPtr = wwo->lpQueuePtr = wwo->lpLoopPtr = NULL;
+    wwo->state = WINE_WS_STOPPED;
+    wwo->dwPlayedTotal = wwo->dwWrittenTotal = 0;
+
+    wwo->dwPartialOffset = 0;        /* Clear partial wavehdr */
+
+    pthread_mutex_unlock(&wwo->lock);
+
+    status = AudioOutputUnitStart(wwo->audioUnit);
+
+    if (status) {
+        ERR( "AudioOutputUnitStart return %c%c%c%c\n",
+             (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+    }
+
+    return MMSYSERR_NOERROR;
 }
 
 /**************************************************************************
