@@ -404,9 +404,7 @@ START_TEST(loader)
                 ok(info.Type == SEC_IMAGE, "%d: %x != SEC_IMAGE\n", i, info.Type);
 
                 if (nt_header.OptionalHeader.SectionAlignment >= si.dwPageSize)
-todo_wine {
                     ok(!memcmp((const char *)hlib + section.VirtualAddress + section.PointerToRawData, &nt_header, section.SizeOfRawData), "wrong section data\n");
-}
                 else
                     ok(!memcmp((const char *)hlib + section.PointerToRawData, section_data, section.SizeOfRawData), "wrong section data\n");
 
@@ -418,9 +416,7 @@ todo_wine {
 
                     start = (const char *)hlib + section.VirtualAddress + section.PointerToRawData + section.SizeOfRawData;
                     size = ALIGN_SIZE((ULONG_PTR)start, si.dwPageSize) - (ULONG_PTR)start;
-todo_wine {
                     ok(memcmp(start, filler, size), "%d: alignment should not be not cleared\n", i);
-}
                 }
             }
 

@@ -119,25 +119,26 @@ static struct file *get_shared_file( struct mapping *mapping )
     return NULL;
 }
 
-/* return the size of the memory mapping of a given section */
-static inline unsigned int get_section_map_size( const IMAGE_SECTION_HEADER *sec )
+/* return the size of the memory mapping and file range of a given section */
+static inline void get_section_sizes( const IMAGE_SECTION_HEADER *sec, size_t *map_size,
+                                      off_t *file_start, size_t *file_size )
 {
-    if (!sec->Misc.VirtualSize) return ROUND_SIZE( sec->SizeOfRawData );
-    else return ROUND_SIZE( sec->Misc.VirtualSize );
-}
+    static const unsigned int sector_align = 0x1ff;
 
-/* return the size of the file mapping of a given section */
-static inline unsigned int get_section_filemap_size( const IMAGE_SECTION_HEADER *sec )
-{
-    if (!sec->Misc.VirtualSize) return sec->SizeOfRawData;
-    else return min( sec->SizeOfRawData, ROUND_SIZE( sec->Misc.VirtualSize ) );
+    if (!sec->Misc.VirtualSize) *map_size = ROUND_SIZE( sec->SizeOfRawData );
+    else *map_size = ROUND_SIZE( sec->Misc.VirtualSize );
+
+    *file_start = sec->PointerToRawData & ~sector_align;
+    *file_size = (sec->SizeOfRawData + (sec->PointerToRawData & sector_align) + sector_align) & ~sector_align;
+    if (*file_size > *map_size) *file_size = *map_size;
 }
 
 /* allocate and fill the temp file for a shared PE image mapping */
 static int build_shared_mapping( struct mapping *mapping, int fd,
                                  IMAGE_SECTION_HEADER *sec, unsigned int nb_sec )
 {
-    unsigned int i, size, max_size, total_size;
+    unsigned int i;
+    size_t file_size, map_size, max_size, total_size;
     off_t shared_pos, read_pos, write_pos;
     char *buffer = NULL;
     int shared_fd;
@@ -151,9 +152,9 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         if ((sec[i].Characteristics & IMAGE_SCN_MEM_SHARED) &&
             (sec[i].Characteristics & IMAGE_SCN_MEM_WRITE))
         {
-            size = get_section_filemap_size( &sec[i] );
-            if (size > max_size) max_size = size;
-            total_size += get_section_map_size( &sec[i] );
+            get_section_sizes( &sec[i], &map_size, &read_pos, &file_size );
+            if (file_size > max_size) max_size = file_size;
+            total_size += map_size;
         }
     }
     if (!(mapping->shared_size = total_size)) return 1;  /* nothing to do */
@@ -175,20 +176,19 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
     {
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_SHARED)) continue;
         if (!(sec[i].Characteristics & IMAGE_SCN_MEM_WRITE)) continue;
+        get_section_sizes( &sec[i], &map_size, &read_pos, &file_size );
         write_pos = shared_pos;
-        shared_pos += get_section_map_size( &sec[i] );
-        read_pos = sec[i].PointerToRawData;
-        size = get_section_filemap_size( &sec[i] );
-        if (!read_pos || !size) continue;
-        toread = size;
+        shared_pos += map_size;
+        if (!sec[i].PointerToRawData || !file_size) continue;
+        toread = file_size;
         while (toread)
         {
-            long res = pread( fd, buffer + sec[i].SizeOfRawData - toread, toread, read_pos );
+            long res = pread( fd, buffer + file_size - toread, toread, read_pos );
             if (res <= 0) goto error;
             toread -= res;
             read_pos += res;
         }
-        if (pwrite( shared_fd, buffer, size, write_pos ) != size) goto error;
+        if (pwrite( shared_fd, buffer, file_size, write_pos ) != file_size) goto error;
     }
     free( buffer );
     return 1;
