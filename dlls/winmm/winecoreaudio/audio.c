@@ -63,6 +63,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
 typedef void *AudioUnit;
 
 /* From AudioUnit/AUComponents.h */
+enum
+{
+    kAudioUnitRenderAction_OutputIsSilence  = (1 << 4),
+        /* provides hint on return from Render(): if set the buffer contains all zeroes */
+};
 typedef UInt32 AudioUnitRenderActionFlags;
 
 /* only allow 10 output devices through this driver, this ought to be adequate */
@@ -1441,6 +1446,8 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
         }
         else
         {
+            if (!dataProvided)
+                *ioActionFlags |= kAudioUnitRenderAction_OutputIsSilence;
             memset((char*)ioData->mBuffers[0].mData + dataProvided, 0, dataNeeded);
             dataProvided += dataNeeded;
             dataNeeded = 0;
