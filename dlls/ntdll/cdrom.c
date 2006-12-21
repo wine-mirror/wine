@@ -77,7 +77,9 @@
 
 #ifdef HAVE_IOKIT_IOKITLIB_H
 # ifndef SENSEBUFLEN
+#  include <sys/disk.h>
 #  include <IOKit/IOKitLib.h>
+#  include <IOKit/storage/IOMedia.h>
 #  include <IOKit/scsi/SCSICmds_REQUEST_SENSE_Defs.h>
 #  define SENSEBUFLEN kSenseDefaultSize
 # endif
@@ -301,6 +303,82 @@ static int CDROM_MediaChanged(int dev)
    return 0;
 }
 #endif
+
+
+/******************************************************************
+ *		open_parent_device
+ *
+ * On Mac OS, open the device for the whole disk from a fd that points to a partition.
+ * This is ugly and inefficient, but we have no choice since the partition fd doesn't
+ * support the eject ioctl.
+ */
+#ifdef __APPLE__
+static int open_parent_device( int fd )
+{
+    struct stat st;
+    int i, parent_fd = -1;
+    io_service_t service;
+    CFMutableDictionaryRef dict;
+    CFTypeRef val;
+
+    if (fstat( fd, &st ) == -1) return -1;
+    if (!S_ISCHR( st.st_mode )) return -1;
+
+    /* create a dictionary with the right major/minor numbers */
+
+    if (!(dict = IOServiceMatching( kIOMediaClass ))) return -1;
+
+    i = major( st.st_rdev );
+    val = CFNumberCreate( NULL, kCFNumberIntType, &i );
+    CFDictionaryAddValue( dict, CFSTR( "BSD Major" ), val );
+    CFRelease( val );
+
+    i = minor( st.st_rdev );
+    val = CFNumberCreate( NULL, kCFNumberIntType, &i );
+    CFDictionaryAddValue( dict, CFSTR( "BSD Minor" ), val );
+    CFRelease( val );
+
+    CFDictionaryAddValue( dict, CFSTR("Removable"), kCFBooleanTrue );
+
+    service = IOServiceGetMatchingService( kIOMasterPortDefault, dict );
+
+    /* now look for the parent that has the "Whole" attribute set to TRUE */
+
+    while (service)
+    {
+        io_service_t parent = 0;
+        CFBooleanRef whole;
+        CFStringRef str;
+        int ok;
+
+        if (!IOObjectConformsTo( service, kIOMediaClass ))
+            goto next;
+        if (!(whole = IORegistryEntryCreateCFProperty( service, CFSTR("Whole"), NULL, 0 )))
+            goto next;
+        ok = (whole == kCFBooleanTrue);
+        CFRelease( whole );
+        if (!ok) goto next;
+
+        if ((str = IORegistryEntryCreateCFProperty( service, CFSTR("BSD Name"), NULL, 0 )))
+        {
+            char name[100];
+            strcpy( name, "/dev/r" );
+            CFStringGetCString( str, name + 6, sizeof(name) - 6, kCFStringEncodingUTF8 );
+            CFRelease( str );
+            parent_fd = open( name, O_RDONLY );
+        }
+        IOObjectRelease( service );
+        break;
+
+next:
+        IORegistryEntryGetParentEntry( service, kIOServicePlane, &parent );
+        IOObjectRelease( service );
+        service = parent;
+    }
+    return parent_fd;
+}
+#endif
+
 
 /******************************************************************
  *		CDROM_SyncCache                          [internal]
@@ -628,6 +706,9 @@ static NTSTATUS CDROM_SetTray(int fd, BOOL doEject)
     return CDROM_GetStatusCode((ioctl(fd, CDIOCALLOW, NULL)) ||
                                (ioctl(fd, doEject ? CDIOCEJECT : CDIOCCLOSE, NULL)) ||
                                (ioctl(fd, CDIOCPREVENT, NULL)));
+#elif defined(__APPLE__)
+    if (doEject) return CDROM_GetStatusCode( ioctl( fd, DKIOCEJECT, NULL ) );
+    else return STATUS_NOT_SUPPORTED;
 #else
     return STATUS_NOT_SUPPORTED;
 #endif
@@ -2059,7 +2140,23 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 	CDROM_ClearCacheEntry(dev);
         if (lpInBuffer != NULL || nInBufferSize != 0 || lpOutBuffer != NULL || nOutBufferSize != 0)
             status = STATUS_INVALID_PARAMETER;
-        else status = CDROM_SetTray(fd, TRUE);
+        else
+        {
+#ifdef __APPLE__
+            int parent_fd = open_parent_device( fd );
+            if (parent_fd != -1)
+            {
+                /* This is ugly as hell, but Mac OS is unable to eject from the device fd,
+                 * it wants an fd for the whole device, and it also requires the device fd
+                 * to be closed first, so we have to close the handle that the caller gave us */
+                NtClose( hDevice );
+                if (needs_close) close( fd );
+                fd = parent_fd;
+                needs_close = 1;
+            }
+#endif
+            status = CDROM_SetTray(fd, TRUE);
+        }
         break;
 
     case IOCTL_CDROM_MEDIA_REMOVAL:
