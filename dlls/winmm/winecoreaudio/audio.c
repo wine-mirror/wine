@@ -722,6 +722,17 @@ static DWORD wodOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return WAVERR_BADFORMAT; /* FIXME return an error based on the OSStatus */
     }
     wwo->streamDescription = streamFormat;
+
+    ret = AudioOutputUnitStart(wwo->audioUnit);
+    if (ret)
+    {
+        ERR("AudioOutputUnitStart failed: %08x\n", ret);
+        AudioUnitUninitialize(wwo->audioUnit);
+        AudioUnit_CloseAudioUnit(wwo->audioUnit);
+        pthread_mutex_unlock(&wwo->lock);
+        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+    }
+
     wwo->state = WINE_WS_STOPPED;
                 
     wwo->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
@@ -915,14 +926,7 @@ static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
         wwo->lpPlayPtr = wwo->lpPlayPtr->lpNext;
 
         if (!wwo->lpPlayPtr)
-        {
-            OSStatus status;
             wwo->state = WINE_WS_STOPPED;
-            status = AudioOutputUnitStop(wwo->audioUnit);
-            if (status && wwo->err_on)
-                fprintf(stderr, "err:winecoreaudio:wodHelper_PlayPtrNext AudioOutputUnitStop return %c%c%c%c\n",
-                        (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-        }
         else
             wodHelper_CheckForLoopBegin(wwo);
     }
@@ -1022,12 +1026,12 @@ static  DWORD  wodHelper_Reset(WINE_WAVEOUT* wwo, BOOL reset)
         wwo->state = WINE_WS_PAUSED;
     }
 
-    status = AudioOutputUnitStop(wwo->audioUnit);
-
     pthread_mutex_unlock(&wwo->lock);
 
+    status = AudioOutputUnitStart(wwo->audioUnit);
+
     if (status) {
-        ERR( "AudioOutputUnitStop return %c%c%c%c\n",
+        ERR( "AudioOutputUnitStart return %c%c%c%c\n",
              (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
         return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
     }
@@ -1083,13 +1087,7 @@ static DWORD wodWrite(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
         wwo->lpPlayPtr = lpWaveHdr;
 
         if (wwo->state == WINE_WS_STOPPED)
-        {
-            OSStatus status = AudioOutputUnitStart(wwo->audioUnit);
-            if (status) {
-                ERR("AudioOutputUnitStart return %c%c%c%c\n", (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-            }
-            else wwo->state = WINE_WS_PLAYING;
-        }
+            wwo->state = WINE_WS_PLAYING;
 
         wodHelper_CheckForLoopBegin(wwo);
 
@@ -1114,21 +1112,26 @@ static DWORD wodPause(WORD wDevID)
         WARN("bad device ID !\n");
         return MMSYSERR_BADDEVICEID;
     }
-    
+
+    /* The order of the following operations is important since we can't hold
+     * the mutex while we make an Audio Unit call.  Stop the Audio Unit before
+     * setting the PAUSED state.  In wodRestart, the order is reversed.  This
+     * guarantees that we can't get into a situation where the state is
+     * PLAYING or STOPPED but the Audio Unit isn't running.  Although we can
+     * be in PAUSED state with the Audio Unit still running, that's harmless
+     * because the render callback will just produce silence.
+     */
+    status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
+    if (status) {
+        WARN("AudioOutputUnitStop return %c%c%c%c\n",
+             (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+    }
+
     pthread_mutex_lock(&WOutDev[wDevID].lock);
     if (WOutDev[wDevID].state == WINE_WS_PLAYING || WOutDev[wDevID].state == WINE_WS_STOPPED)
-    {
         WOutDev[wDevID].state = WINE_WS_PAUSED;
-        status = AudioOutputUnitStop(WOutDev[wDevID].audioUnit);
-        if (status) {
-            ERR( "AudioOutputUnitStop return %c%c%c%c\n",
-                 (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-            pthread_mutex_unlock(&WOutDev[wDevID].lock);
-            return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
-        }
-    }
     pthread_mutex_unlock(&WOutDev[wDevID].lock);
-    
+
     return MMSYSERR_NOERROR;
 }
 
@@ -1137,6 +1140,8 @@ static DWORD wodPause(WORD wDevID)
 */
 static DWORD wodRestart(WORD wDevID)
 {
+    OSStatus status;
+
     TRACE("(%u);\n", wDevID);
     
     if (wDevID >= MAX_WAVEOUTDRV )
@@ -1144,26 +1149,32 @@ static DWORD wodRestart(WORD wDevID)
         WARN("bad device ID !\n");
         return MMSYSERR_BADDEVICEID;
     }
-    
+
+    /* The order of the following operations is important since we can't hold
+     * the mutex while we make an Audio Unit call.  Set the PLAYING/STOPPED
+     * state before starting the Audio Unit.  In wodPause, the order is
+     * reversed.  This guarantees that we can't get into a situation where
+     * the state is PLAYING or STOPPED but the Audio Unit isn't running.
+     * Although we can be in PAUSED state with the Audio Unit still running,
+     * that's harmless because the render callback will just produce silence.
+     */
     pthread_mutex_lock(&WOutDev[wDevID].lock);
     if (WOutDev[wDevID].state == WINE_WS_PAUSED)
     {
         if (WOutDev[wDevID].lpPlayPtr)
-        {
-            OSStatus status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
-            if (status) {
-                ERR("AudioOutputUnitStart return %c%c%c%c\n",
-                    (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
-                pthread_mutex_unlock(&WOutDev[wDevID].lock);
-                return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
-            }
             WOutDev[wDevID].state = WINE_WS_PLAYING;
-        }
         else
             WOutDev[wDevID].state = WINE_WS_STOPPED;
     }
     pthread_mutex_unlock(&WOutDev[wDevID].lock);
-    
+
+    status = AudioOutputUnitStart(WOutDev[wDevID].audioUnit);
+    if (status) {
+        ERR("AudioOutputUnitStart return %c%c%c%c\n",
+            (char) (status >> 24), (char) (status >> 16), (char) (status >> 8), (char) status);
+        return MMSYSERR_ERROR; /* FIXME return an error based on the OSStatus */
+    }
+
     return MMSYSERR_NOERROR;
 }
 
