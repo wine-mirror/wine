@@ -62,7 +62,6 @@ static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static WCHAR cmd_MonitorUI_lcaseW[] = {'m','o','n','i','t','o','r','u','i',0};
 static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
 static WCHAR emptyW[] = {0};
-static WCHAR invalid_serverW[] = {'\\','\\','i','n','v','a','l','i','d','_','s','e','r','v','e','r',0};
 static WCHAR Monitors_LocalPortW[] = { \
                                 'S','y','s','t','e','m','\\',
                                 'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
@@ -74,6 +73,8 @@ static WCHAR Monitors_LocalPortW[] = { \
 static WCHAR portname_com1W[] = {'C','O','M','1',':',0};
 static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
 static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
+
+static WCHAR server_does_not_existW[] = {'\\','\\','d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
 
 /* ########################### */
 
@@ -261,7 +262,7 @@ static void test_EnumPorts(void)
         pcbNeeded = 0xdeadbeef;
         pcReturned = 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res = pEnumPorts(invalid_serverW, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
+        res = pEnumPorts(server_does_not_existW, level, buffer, cbBuf+1, &pcbNeeded, &pcReturned);
         ok( res, "(%d) returned %d with %d and %d, %d (expected '!= 0')\n",
             level, res, GetLastError(), pcbNeeded, pcReturned);
 
