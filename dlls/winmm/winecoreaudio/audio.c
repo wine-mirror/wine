@@ -848,6 +848,40 @@ static DWORD wodUnprepare(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
     return MMSYSERR_NOERROR;
 }
 
+
+/**************************************************************************
+* 				wodHelper_CheckForLoopBegin	        [internal]
+*
+* Check if the new waveheader is the beginning of a loop, and set up
+* state if so.
+* This is called with the WAVEOUT lock held.
+* Call from AudioUnit IO thread can't use Wine debug channels.
+*/
+static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
+{
+    LPWAVEHDR lpWaveHdr = wwo->lpPlayPtr;
+
+    if (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)
+    {
+        if (wwo->lpLoopPtr)
+        {
+            if (wwo->warn_on)
+                fprintf(stderr, "warn:winecoreaudio:wodHelper_CheckForLoopBegin Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
+        }
+        else
+        {
+            if (wwo->trace_on)
+                fprintf(stderr, "trace:winecoreaudio:wodHelper_CheckForLoopBegin Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
+
+            wwo->lpLoopPtr = lpWaveHdr;
+            /* Windows does not touch WAVEHDR.dwLoops,
+                * so we need to make an internal copy */
+            wwo->dwLoops = lpWaveHdr->dwLoops;
+        }
+    }
+}
+
+
 /**************************************************************************
 * 				wodHelper_BeginWaveHdr          [internal]
 *
@@ -885,24 +919,9 @@ static void wodHelper_BeginWaveHdr(WINE_WAVEOUT* wwo, LPWAVEHDR lpWaveHdr)
         }
         else wwo->state = WINE_WS_PLAYING;
     }
-    
-    if (lpWaveHdr->dwFlags & WHDR_BEGINLOOP)
-    {
-        if (wwo->lpLoopPtr)
-        {
-            if (wwo->warn_on)
-                fprintf(stderr, "warn:winecoreaudio:wodHelper_BeginWaveHdr Already in a loop. Discarding loop on this header (%p)\n", lpWaveHdr);
-        } else
-        {
-            if (wwo->trace_on)
-                fprintf(stderr, "trace:winecoreaudio:wodHelper_BeginWaveHdr Starting loop (%dx) with %p\n", lpWaveHdr->dwLoops, lpWaveHdr);
 
-            wwo->lpLoopPtr = lpWaveHdr;
-            /* Windows does not touch WAVEHDR.dwLoops,
-                * so we need to make an internal copy */
-            wwo->dwLoops = lpWaveHdr->dwLoops;
-        }
-    }
+    wodHelper_CheckForLoopBegin(wwo);
+
     wwo->dwPartialOffset = 0;
 }
 
