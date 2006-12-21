@@ -690,7 +690,7 @@ static DWORD enumIPAddresses(PDWORD pcAddresses, struct ifconf *ifc)
       ifc->ifc_buf = HeapAlloc(GetProcessHeap(), 0, ifc->ifc_len);
       ioctlRet = ioctl(fd, SIOCGIFCONF, ifc);
     } while (ioctlRet == 0 &&
-     ifc->ifc_len == (sizeof(struct ifreq) * guessedNumAddresses));
+     ifc->ifc_len > (sizeof(struct ifreq) * (guessedNumAddresses - 2)));
 
     if (ioctlRet == 0) {
       ifPtr = ifc->ifc_buf;
