@@ -438,7 +438,6 @@ LONG CoreAudio_WaveInit(void)
     OSStatus status;
     UInt32 propertySize;
     CHAR szPname[MAXPNAMELEN];
-    pthread_mutexattr_t mutexattr;
     int i;
     HANDLE hThread;
     CFStringRef  messageThreadPortName;
@@ -472,9 +471,6 @@ LONG CoreAudio_WaveInit(void)
     CoreAudio_DefaultDevice.interface_name=HeapAlloc(GetProcessHeap(),0,strlen(CoreAudio_DefaultDevice.dev_name)+1);
     sprintf(CoreAudio_DefaultDevice.interface_name, "%s", CoreAudio_DefaultDevice.dev_name);
     
-    pthread_mutexattr_init(&mutexattr);
-    pthread_mutexattr_settype(&mutexattr, PTHREAD_MUTEX_RECURSIVE);
-
     for (i = 0; i < MAX_WAVEOUTDRV; ++i)
     {
         WOutDev[i].state = WINE_WS_CLOSED;
@@ -509,10 +505,8 @@ LONG CoreAudio_WaveInit(void)
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
 
-        pthread_mutex_init(&WOutDev[i].lock, &mutexattr); /* initialize the mutex */
+        pthread_mutex_init(&WOutDev[i].lock, NULL); /* initialize the mutex */
     }
-
-    pthread_mutexattr_destroy(&mutexattr);
     
     /* create mach messages handler */
     srandomdev();
