@@ -56,6 +56,7 @@ struct monitor_entry {
 };
 
 static LPSTR   default_printer = NULL;
+static LPSTR   local_server = NULL;
 
 /* report common behavior only once */
 static DWORD report_deactivated_spooler = 1;
@@ -177,6 +178,30 @@ static struct monitor_entry * find_installed_monitor(void)
         }
     }
     return entry;
+}
+
+
+/* ########################### */
+
+static void find_local_server(VOID)
+{
+    static  char    buffer[MAX_PATH];
+    DWORD   res;
+    DWORD   size;
+
+    size = sizeof(buffer) - 3 ;
+    buffer[0] = '\\';
+    buffer[1] = '\\';
+    buffer[2] = '\0';
+
+    SetLastError(0xdeadbeef);
+    res = GetComputerNameA(&buffer[2], &size);
+    trace("returned %d with %d and %d: '%s'\n", res, GetLastError(), size, buffer);
+
+    ok( res != 0, "returned %d with %d and %d: '%s' (expected '!= 0')\n",
+        res, GetLastError(), size, buffer);
+
+    if (res) local_server = buffer;
 }
 
 /* ########################### */
@@ -1219,10 +1244,6 @@ static void test_OpenPrinter(void)
     PRINTER_DEFAULTSA   defaults;
     HANDLE              hprinter;
     DWORD               res;
-    DWORD               size;
-    CHAR                buffer[DEFAULT_PRINTER_SIZE];
-    LPSTR               ptr;
-
 
     SetLastError(MAGIC_DEAD);
     res = OpenPrinter(NULL, NULL, NULL);    
@@ -1268,17 +1289,11 @@ static void test_OpenPrinter(void)
 
     }
 
-    size = sizeof(buffer) - 3 ;
-    ptr = buffer;
-    ptr[0] = '\\';
-    ptr++;
-    ptr[0] = '\\';
-    ptr++;
-    if (GetComputerNameA(ptr, &size)) {
 
-        hprinter = (HANDLE) MAGIC_DEAD;
-        SetLastError(MAGIC_DEAD);
-        res = OpenPrinter(buffer, &hprinter, NULL);
+    if (local_server != NULL) {
+        hprinter = (HANDLE) 0xdeadbeef;
+        SetLastError(0xdeadbeef);
+        res = OpenPrinter(local_server, &hprinter, NULL);
         todo_wine {
         ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
             "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
@@ -1681,6 +1696,7 @@ START_TEST(info)
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
 
     find_default_printer();
+    find_local_server();
 
     test_AddMonitor();
     test_AddPort();
