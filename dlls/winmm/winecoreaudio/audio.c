@@ -897,14 +897,13 @@ static void wodHelper_CheckForLoopBegin(WINE_WAVEOUT* wwo)
 * 				wodHelper_PlayPtrNext	        [internal]
 *
 * Advance the play pointer to the next waveheader, looping if required.
+* This is called with the WAVEOUT lock held.
 * Call from AudioUnit IO thread can't use Wine debug channels.
 */
 static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
 {
     BOOL didLoopBack = FALSE;
 
-    pthread_mutex_lock(&wwo->lock);
-    
     wwo->dwPartialOffset = 0;
     if ((wwo->lpPlayPtr->dwFlags & WHDR_ENDLOOP) && wwo->lpLoopPtr)
     {
@@ -930,8 +929,6 @@ static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo)
         else
             wodHelper_CheckForLoopBegin(wwo);
     }
-    
-    pthread_mutex_unlock(&wwo->lock);
 }
 
 /* if force is TRUE then notify the client that all the headers were completed
@@ -1406,16 +1403,15 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
 {
     UInt32 buffer;
     WINE_WAVEOUT *wwo = (WINE_WAVEOUT *) inRefCon;
-    int nextPtr = 0;
     int needNotify = 0;
 
     unsigned int dataNeeded = ioData->mBuffers[0].mDataByteSize;
     unsigned int dataProvided = 0;
 
+    pthread_mutex_lock(&wwo->lock);
+
     while (dataNeeded > 0)
     {
-        pthread_mutex_lock(&wwo->lock);
-
         if (wwo->state == WINE_WS_PLAYING && wwo->lpPlayPtr)
         {
             unsigned int available = wwo->lpPlayPtr->dwBufferLength - wwo->dwPartialOffset;
@@ -1438,9 +1434,10 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
             }
 
             if (available == 0)
-                nextPtr = 1;
-
-            needNotify = 1;
+            {
+                wodHelper_PlayPtrNext(wwo);
+                needNotify = 1;
+            }
         }
         else
         {
@@ -1448,15 +1445,9 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
             dataProvided += dataNeeded;
             dataNeeded = 0;
         }
-
-        pthread_mutex_unlock(&wwo->lock);
-
-        if (nextPtr)
-        {
-            wodHelper_PlayPtrNext(wwo);
-            nextPtr = 0;
-        }
     }
+
+    pthread_mutex_unlock(&wwo->lock);
 
     /* We only fill buffer 0.  Set any others that might be requested to 0. */
     for (buffer = 1; buffer < ioData->mNumberBuffers; buffer++)
