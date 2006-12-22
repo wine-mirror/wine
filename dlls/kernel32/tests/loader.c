@@ -416,7 +416,7 @@ START_TEST(loader)
 
                     start = (const char *)hlib + section.VirtualAddress + section.PointerToRawData + section.SizeOfRawData;
                     size = ALIGN_SIZE((ULONG_PTR)start, si.dwPageSize) - (ULONG_PTR)start;
-                    ok(memcmp(start, filler, size), "%d: alignment should not be not cleared\n", i);
+                    ok(memcmp(start, filler, size), "%d: alignment should not be cleared\n", i);
                 }
             }
 
