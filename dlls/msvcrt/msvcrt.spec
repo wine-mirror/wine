@@ -386,7 +386,7 @@
 @ cdecl _mbsrev(str)
 @ cdecl _mbsset(str long)
 @ cdecl _mbsspn(str str)
-@ stub _mbsspnp #(str str)
+@ cdecl _mbsspnp(str str)
 @ cdecl _mbsstr(str str)
 @ cdecl _mbstok(str str)
 @ cdecl _mbstrlen(str)

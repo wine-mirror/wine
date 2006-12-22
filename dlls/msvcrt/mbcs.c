@@ -1196,6 +1196,40 @@ MSVCRT_size_t CDECL _mbsspn(const unsigned char* string, const unsigned char* se
 }
 
 /*********************************************************************
+ *              _mbsspnp (MSVCRT.@)
+ */
+const unsigned char* CDECL _mbsspnp(const unsigned char* string, const unsigned char* set)
+{
+    const unsigned char *p, *q;
+
+    for (p = string; *p; p++)
+    {
+        if (MSVCRT_isleadbyte(*p))
+        {
+            for (q = set; *q; q++)
+            {
+                if (!q[1])
+                    break;
+                if ((*p == *q) &&  (p[1] == q[1]))
+                    break;
+                q++;
+            }
+            if (!q[0] || !q[1]) break;
+        }
+        else
+        {
+            for (q = set; *q; q++)
+                if (*p == *q)
+                    break;
+            if (!*q) break;
+        }
+    }
+    if (*p == '\0')
+        return NULL;
+    return p;
+}
+
+/*********************************************************************
  *		_mbscspn(MSVCRT.@)
  */
 MSVCRT_size_t CDECL _mbscspn(const unsigned char* str, const unsigned char* cmp)

@@ -99,6 +99,24 @@ static void test_mbsspn( void)
     ok( ret==0, "_mbsspn returns %d should be 0\n", ret);
 }
 
+static void test_mbsspnp( void)
+{
+    unsigned char str1[]="cabernet";
+    unsigned char str2[]="shiraz";
+    unsigned char set[]="abc";
+    unsigned char empty[]="";
+    unsigned char full[]="abcenrt";
+    unsigned char* ret;
+    ret=_mbsspnp( str1, set);
+    ok( ret[0]=='e', "_mbsspnp returns %c should be e\n", ret[0]);
+    ret=_mbsspnp( str2, set);
+    ok( ret[0]=='s', "_mbsspnp returns %c should be s\n", ret[0]);
+    ret=_mbsspnp( str1, empty);
+    ok( ret[0]=='c', "_mbsspnp returns %c should be c\n", ret[0]);
+    ret=_mbsspnp( str1, full);
+    ok( ret==NULL, "_mbsspnp returns %p should be NULL\n", ret);
+}
+
 static void test_strdup(void)
 {
    char *str;
@@ -138,6 +156,7 @@ START_TEST(string)
     test_ismbblead();
    /* test _mbsspn */
     test_mbsspn();
+    test_mbsspnp();
    /* test _strdup */
     test_strdup();
 }
