@@ -194,8 +194,12 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
 
     newDevice->base.data_format.wine_df = &c_dfDIMouse2;
     if (create_DataFormat(&c_dfDIMouse2, &newDevice->base.data_format) == DI_OK)
+    {
+        IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
         return newDevice;
+    }
 
+    HeapFree(GetProcessHeap(), 0, newDevice);
     return NULL;
 }
 
@@ -270,6 +274,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 
     release_DataFormat(&This->base.data_format);
 
+    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
     DeleteCriticalSection(&This->base.crit);
     HeapFree(GetProcessHeap(),0,This);
     return 0;

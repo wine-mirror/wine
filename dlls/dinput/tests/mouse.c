@@ -95,6 +95,7 @@ static void mouse_tests(void)
     LPDIRECTINPUT pDI = NULL;
     HINSTANCE hInstance = GetModuleHandle(NULL);
     HWND hwnd;
+    ULONG ref = 0;
 
     hr = DirectInputCreate(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
     ok(SUCCEEDED(hr), "DirectInputCreate() failed: %s\n", DXGetErrorString8(hr));
@@ -112,7 +113,8 @@ static void mouse_tests(void)
 
         DestroyWindow(hwnd);
     }
-    if (pDI) IUnknown_Release(pDI);
+    if (pDI) ref = IUnknown_Release(pDI);
+    ok(!ref, "IDirectInput_Release() reference count = %d\n", ref);
 }
 
 START_TEST(mouse)

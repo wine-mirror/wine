@@ -198,7 +198,12 @@ static SysKeyboardImpl *alloc_device(REFGUID rguid, const void *kvt, IDirectInpu
 
     newDevice->base.data_format.wine_df = &c_dfDIKeyboard;
     if (create_DataFormat(&c_dfDIKeyboard, &newDevice->base.data_format) == DI_OK)
+    {
+        IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
         return newDevice;
+    }
+
+    HeapFree(GetProcessHeap(), 0, newDevice);
     return NULL;
 }
 
@@ -214,6 +219,7 @@ static HRESULT keyboarddev_create_deviceA(IDirectInputImpl *dinput, REFGUID rgui
 	IsEqualGUID(&IID_IDirectInputDevice8A,riid)) {
       *pdev = (IDirectInputDeviceA*) alloc_device(rguid, &SysKeyboardAvt, dinput);
       TRACE("Creating a Keyboard device (%p)\n", *pdev);
+      if (!*pdev) return DIERR_OUTOFMEMORY;
       return DI_OK;
     } else
       return DIERR_NOINTERFACE;
@@ -232,6 +238,7 @@ static HRESULT keyboarddev_create_deviceW(IDirectInputImpl *dinput, REFGUID rgui
 	IsEqualGUID(&IID_IDirectInputDevice8W,riid)) {
       *pdev = (IDirectInputDeviceW*) alloc_device(rguid, &SysKeyboardWvt, dinput);
       TRACE("Creating a Keyboard device (%p)\n", *pdev);
+      if (!*pdev) return DIERR_OUTOFMEMORY;
       return DI_OK;
     } else
       return DIERR_NOINTERFACE;
@@ -257,8 +264,9 @@ static ULONG WINAPI SysKeyboardAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 
     set_dinput_hook(WH_KEYBOARD_LL, NULL);
 
-    DeleteCriticalSection(&This->base.crit);
     HeapFree(GetProcessHeap(), 0, This->base.data_queue);
+    IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
+    DeleteCriticalSection(&This->base.crit);
     HeapFree(GetProcessHeap(), 0, This);
 
     return DI_OK;

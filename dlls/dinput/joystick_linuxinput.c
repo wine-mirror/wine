@@ -393,7 +393,10 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
   /* create the default transform filter */
   if (create_DataFormat(&c_dfDIJoystick2, &newDevice->base.data_format) == DI_OK)
+  {
+    IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
     return newDevice;
+  }
 
   HeapFree(GetProcessHeap(),0,newDevice);
   return NULL;
@@ -491,6 +494,7 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
         /* release the data transform filter */
         release_DataFormat(&This->base.data_format);
 
+        IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
         DeleteCriticalSection(&This->base.crit);
         
         HeapFree(GetProcessHeap(),0,This);

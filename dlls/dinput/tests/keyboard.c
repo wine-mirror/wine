@@ -94,6 +94,8 @@ static void acquire_tests(LPDIRECTINPUT pDI, HWND hwnd)
     ok(hr == DIERR_INVALIDPARAM, "IDirectInputDevice_GetDeviceState(10,) should have failed: %s\n", DXGetErrorString8(hr));
     hr = IDirectInputDevice_GetDeviceState(pKeyboard, sizeof(kbd_state), kbd_state);
     ok(SUCCEEDED(hr), "IDirectInputDevice_GetDeviceState() failed: %s\n", DXGetErrorString8(hr));
+
+    if (pKeyboard) IUnknown_Release(pKeyboard);
 }
 
 static const HRESULT SetCoop_null_window[16] =  {
