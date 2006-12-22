@@ -594,14 +594,14 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
 	case SW_SHOWMINIMIZED:
             swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
-            if (style & WS_MINIMIZE) return wasVisible;
+            if ((style & WS_MINIMIZE) && wasVisible) return TRUE;
 	    break;
 
 	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
             if (!wasVisible) swp |= SWP_SHOWWINDOW;
             swp |= SWP_FRAMECHANGED;
             swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
-            if ((style & WS_MAXIMIZE) && wasVisible) return wasVisible;
+            if ((style & WS_MAXIMIZE) && wasVisible) return TRUE;
             break;
 
 	case SW_SHOWNA:
@@ -769,7 +769,7 @@ void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
     {
         if (win->dwStyle & WS_MAXIMIZE)
             win->flags |= WIN_RESTORE_MAX;
-        else
+        else if (!(win->dwStyle & WS_MINIMIZE))
             win->flags &= ~WIN_RESTORE_MAX;
 
         WIN_SetStyle( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
