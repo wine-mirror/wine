@@ -703,6 +703,7 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
 
     HeapFree(GetProcessHeap(), 0, analysis->glyphs);
     HeapFree(GetProcessHeap(), 0, analysis->pItem);
+    HeapFree(GetProcessHeap(), 0, analysis->sz);
     HeapFree(GetProcessHeap(), 0, analysis);
 
     if(invalid)
@@ -1248,7 +1249,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
  *  Success: S_OK
  *  Failure: Non-zero HRESULT value.
  */
-HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, long *height)
+HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, LONG *height)
 {
     HDC phdc;
     Scriptcache *pScriptcache;
@@ -1387,4 +1388,51 @@ HRESULT WINAPI ScriptStringValidate(SCRIPT_STRING_ANALYSIS ssa)
 {
     FIXME("(%p): stub\n", ssa);
     return S_OK;
+}
+
+/***********************************************************************
+ *      ScriptString_pSize (USP10.@)
+ *
+ * Retrieve width and height of an analysed string.
+ *
+ * PARAMS
+ *  ssa [I] string analysis.
+ *
+ * RETURNS
+ *  Success: Pointer to a SIZE structure.
+ *  Failure: NULL
+ */
+const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
+{
+    unsigned int i, j;
+    StringAnalysis *analysis = ssa;
+    TEXTMETRICW metric;
+
+    TRACE("(%p)\n", ssa);
+
+    if (!analysis) return NULL;
+
+    if (!analysis->sz)
+    {
+        if (!(analysis->sz = HeapAlloc(GetProcessHeap(), 0, sizeof(SIZE))))
+            return NULL;
+
+        /* FIXME: These values should be calculated at a more
+         * appropriate place so that we can just pass cached
+         * values here.
+         */
+        if (!GetTextMetricsW(analysis->hdc, &metric))
+        {
+            HeapFree(GetProcessHeap(), 0, analysis->sz);
+            analysis->sz = NULL;
+            return NULL;
+        }
+        analysis->sz->cy = metric.tmHeight;
+
+        analysis->sz->cx = 0;
+        for (i = 0; i < analysis->numItems; i++)
+            for (j = 0; j < analysis->glyphs[i].numGlyphs; j++)
+                analysis->sz->cx += analysis->glyphs[i].piAdvance[j];
+    }
+    return analysis->sz;
 }

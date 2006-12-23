@@ -897,7 +897,7 @@ static void test_ScriptCacheGetHeight(HDC hdc)
 {
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
-    long height;
+    LONG height;
 
     hr = ScriptCacheGetHeight(NULL, NULL, NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);

@@ -26,7 +26,7 @@
 @ stdcall ScriptStringValidate(ptr)
 @ stdcall ScriptStringXtoCP(ptr long ptr ptr)
 @ stub ScriptString_pLogAttr
-@ stub ScriptString_pSize
+@ stdcall ScriptString_pSize(ptr)
 @ stub ScriptString_pcOutChars
 @ stdcall ScriptTextOut(ptr ptr long long long ptr ptr ptr long ptr long ptr ptr ptr)
 @ stdcall ScriptXtoCP(long long long ptr ptr ptr ptr ptr ptr)
