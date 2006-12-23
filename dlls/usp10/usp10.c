@@ -165,6 +165,7 @@ typedef struct {
     SCRIPT_ITEM* pItem;
     int numItems;
     StringGlyphs* glyphs;
+    SCRIPT_LOGATTR* logattrs;
     SIZE* sz;
 } StringAnalysis;
 
@@ -589,6 +590,9 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
                            psState, analysis->pItem, &analysis->numItems);
     }
 
+    if ((analysis->logattrs = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPT_LOGATTR) * cString)))
+        ScriptBreak(pString, cString, (SCRIPT_STRING_ANALYSIS)analysis, analysis->logattrs);
+
     analysis->glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                  sizeof(StringGlyphs)*analysis->numItems);
     sc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SCRIPT_CACHE));
@@ -786,6 +790,7 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
 
     HeapFree(GetProcessHeap(), 0, analysis->glyphs);
     HeapFree(GetProcessHeap(), 0, analysis->pItem);
+    HeapFree(GetProcessHeap(), 0, analysis->logattrs);
     HeapFree(GetProcessHeap(), 0, analysis->sz);
     HeapFree(GetProcessHeap(), 0, analysis);
 
@@ -1537,4 +1542,26 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
                 analysis->sz->cx += analysis->glyphs[i].piAdvance[j];
     }
     return analysis->sz;
+}
+
+/***********************************************************************
+ *      ScriptString_pLogAttr (USP10.@)
+ *
+ * Retrieve logical attributes of an analysed string.
+ *
+ * PARAMS
+ *  ssa [I] string analysis.
+ *
+ * RETURNS
+ *  Success: Pointer to an array of SCRIPT_LOGATTR structures.
+ *  Failure: NULL
+ */
+const SCRIPT_LOGATTR * WINAPI ScriptString_pLogAttr(SCRIPT_STRING_ANALYSIS ssa)
+{
+    StringAnalysis *analysis = ssa;
+
+    TRACE("(%p)\n", ssa);
+
+    if (!analysis) return NULL;
+    return analysis->logattrs;
 }
