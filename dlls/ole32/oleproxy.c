@@ -181,12 +181,19 @@ CFStub_Invoke(
 	    FIXME("Failed to create stream on hglobal\n");
 	    goto getbuffer;
 	}
-	hres = CoMarshalInterface(pStm,&iid,ppv,0,NULL,0);
-	IUnknown_Release((IUnknown*)ppv);
+	hres = IStream_Write(pStm, &ppv, sizeof(ppv), NULL);
 	if (hres) {
-	    FIXME("CoMarshalInterface failed, %x!\n",hres);
-	    goto getbuffer;
+	   ERR("IStream_Write failed, 0x%08x\n", hres);
+	   goto getbuffer;
 	}
+	if (ppv) {
+        hres = CoMarshalInterface(pStm,&iid,ppv,0,NULL,0);
+        IUnknown_Release(ppv);
+        if (hres) {
+            FIXME("CoMarshalInterface failed, %x!\n",hres);
+            goto getbuffer;
+        }
+    }
 	hres = IStream_Stat(pStm,&ststg,0);
 	if (hres) {
 	    FIXME("Stat failed.\n");
@@ -401,11 +408,16 @@ static HRESULT WINAPI CFProxy_CreateInstance(
 	IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
 	return hres;
     }
-    hres = CoUnmarshalInterface(
-	    pStream,
-	    riid,
-	    ppv
-    );
+    hres = IStream_Read(pStream, ppv, sizeof(*ppv), NULL);
+    if (hres != S_OK)
+        hres = E_FAIL;
+    else if (*ppv) {
+        hres = CoUnmarshalInterface(
+	       pStream,
+	       riid,
+	       ppv
+        );
+    }
     IStream_Release(pStream); /* Does GlobalFree hGlobal too. */
 
     IRpcChannelBuffer_FreeBuffer(This->chanbuf,&msg);
