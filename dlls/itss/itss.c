@@ -93,13 +93,13 @@ ITSSCF_QueryInterface(LPCLASSFACTORY iface,REFIID riid,LPVOID *ppobj)
 
 static ULONG WINAPI ITSSCF_AddRef(LPCLASSFACTORY iface)
 {
-    InterlockedIncrement(&dll_count);
+    ITSS_LockModule();
     return 2;
 }
 
 static ULONG WINAPI ITSSCF_Release(LPCLASSFACTORY iface)
 {
-    InterlockedDecrement(&dll_count);
+    ITSS_UnlockModule();
     return 1;
 }
 
@@ -127,9 +127,9 @@ static HRESULT WINAPI ITSSCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
     TRACE("(%p)->(%d)\n", iface, dolock);
 
     if (dolock)
-        InterlockedIncrement(&dll_count);
+        ITSS_LockModule();
     else
-        InterlockedDecrement(&dll_count);
+        ITSS_UnlockModule();
 
     return S_OK;
 }
@@ -210,7 +210,7 @@ static ULONG WINAPI ITStorageImpl_Release(
 
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
-        InterlockedDecrement(&dll_count);
+        ITSS_UnlockModule();
     }
 
     return ref;
@@ -364,8 +364,8 @@ static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("-> %p\n", its);
     *ppObj = (LPVOID) its;
-    InterlockedIncrement(&dll_count);
 
+    ITSS_LockModule();
     return S_OK;
 }
 

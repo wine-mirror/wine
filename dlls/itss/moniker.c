@@ -44,8 +44,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
-extern LONG dll_count;
-
 /*****************************************************************************/
 
 typedef struct {
@@ -91,7 +89,7 @@ static ULONG WINAPI ITS_IMonikerImpl_Release(
 
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
-        InterlockedDecrement(&dll_count);
+        ITSS_UnlockModule();
     }
 
     return ref;
@@ -369,8 +367,8 @@ static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPWSTR name, DWORD n )
     TRACE("-> %p %s %s\n", itsmon,
           debugstr_w(itsmon->szFile), debugstr_w(itsmon->szHtml) );
     *ppObj = (IMoniker*) itsmon;
-    InterlockedIncrement(&dll_count);
 
+    ITSS_LockModule();
     return S_OK;
 }
 
@@ -416,7 +414,7 @@ static ULONG WINAPI ITS_IParseDisplayNameImpl_Release(
 
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This);
-        InterlockedDecrement(&dll_count);
+        ITSS_UnlockModule();
     }
 
     return ref;
@@ -480,7 +478,7 @@ HRESULT ITS_IParseDisplayName_create(IUnknown *pUnkOuter, LPVOID *ppObj)
 
     TRACE("-> %p\n", its);
     *ppObj = (LPVOID) its;
-    InterlockedIncrement(&dll_count);
 
+    ITSS_LockModule();
     return S_OK;
 }

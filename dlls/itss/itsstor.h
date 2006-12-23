@@ -35,4 +35,9 @@ extern HRESULT ITS_IParseDisplayName_create(
     IUnknown *pUnkOuter,
     LPVOID *ppObj);
 
+extern LONG dll_count;
+static inline void ITSS_LockModule(void) { InterlockedIncrement(&dll_count); }
+static inline void ITSS_UnlockModule(void) { InterlockedDecrement(&dll_count); }
+
+
 #endif /* __WINE_ITS_STORAGE_PRIVATE__ */
