@@ -2,6 +2,7 @@
  * Implementation of Uniscribe Script Processor (usp10.dll)
  *
  * Copyright 2005 Steven Edwards for CodeWeavers
+ * Copyright 2006 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -41,34 +42,106 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(uniscribe);
 
-#define MAX_SCRIPTS  8
+static const SCRIPT_PROPERTIES props[] =
+{
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 8, 0, 0, 0, 0, 161, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 25, 0, 0, 0, 0, 204, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 43, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 42, 0, 0, 0, 0, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 18, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 18, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 9, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 13, 0, 1, 0, 1, 177, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 13, 0, 1, 0, 0, 177, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 1, 0, 1, 0, 0, 178, 0, 0, 0, 0, 0, 0, 1, 1, 0 },
+    { 1, 1, 1, 0, 0, 178, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    { 41, 1, 1, 0, 0, 178, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 32, 1, 1, 0, 0, 178, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 90, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0 },
+    { 30, 0, 1, 1, 1, 222, 0, 0, 1, 0, 1, 0, 0, 0, 1 },
+    { 30, 1, 1, 0, 0, 222, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 30, 0, 1, 0, 0, 222, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 57, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 57, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 73, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 73, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 69, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 69, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 69, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 70, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 70, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 71, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 71, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 72, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 72, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 74, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 74, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 75, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 75, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 76, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 76, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 81, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
+    { 81, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 84, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0 },
+    { 84, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 83, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 83, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 85, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    { 85, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 80, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 80, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 94, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 94, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 101, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 93, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 92, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 91, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 9, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 },
+    { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+};
 
-/*  Set up a default for ScriptGetProperties    */
-static const SCRIPT_PROPERTIES Default_Script_0 = {0, 0, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 0, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_1 = {0, 0, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 0, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_2 = {0, 0, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 0, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_3 = {9, 0, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 0, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_4 = {9, 1, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 0, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_5 = {9, 0, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 1, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_6 = {9, 1, 0, 0, 0, 0, 0, 0, 
-                                            0, 0, 0, 0, 1, 0, 0};
-static const SCRIPT_PROPERTIES Default_Script_7 = {8, 0, 0, 0, 0, 161, 0, 0, 
-                                            0, 0, 0, 0, 0, 0, 0};
-static const SCRIPT_PROPERTIES *Global_Script[MAX_SCRIPTS] =
-                                      {&Default_Script_0,
-                                       &Default_Script_1,
-                                       &Default_Script_2,
-                                       &Default_Script_3,
-                                       &Default_Script_4,
-                                       &Default_Script_5,
-                                       &Default_Script_6,
-                                       &Default_Script_7};
+static const SCRIPT_PROPERTIES *script_props[] =
+{
+    &props[0], &props[1], &props[2], &props[3],
+    &props[4], &props[5], &props[6], &props[7],
+    &props[8], &props[9], &props[11], &props[12],
+    &props[13], &props[14], &props[15], &props[16],
+    &props[17], &props[18], &props[19], &props[20],
+    &props[21], &props[22], &props[23], &props[24],
+    &props[25], &props[26], &props[27], &props[28],
+    &props[29], &props[30], &props[31], &props[32],
+    &props[33], &props[34], &props[35], &props[36],
+    &props[37], &props[38], &props[39], &props[40],
+    &props[41], &props[42], &props[43], &props[44],
+    &props[45], &props[46], &props[47], &props[48],
+    &props[49], &props[50], &props[51], &props[52],
+    &props[53], &props[54], &props[55], &props[56],
+    &props[57], &props[58], &props[59], &props[60],
+    &props[61], &props[62], &props[63], &props[64],
+    &props[65], &props[66], &props[67], &props[68],
+    &props[69], &props[70], &props[71], &props[72],
+    &props[73]
+};
 
 typedef struct scriptcache {
        HDC hdc;
@@ -129,20 +202,29 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
 /***********************************************************************
  *      ScriptGetProperties (USP10.@)
  *
+ * Retrieve a list of script properties.
+ *
+ * PARAMS
+ *  props [I] Pointer to an array of SCRIPT_PROPERTIES pointers.
+ *  num   [I] Pointer to the number of scripts.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
+ *
+ * NOTES
+ *  Behaviour matches WinXP.
  */
-HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***ppSp, int *piNumScripts)
+HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***props, int *num)
 {
-    TRACE("%p,%p\n", ppSp, piNumScripts);
+    TRACE("(%p,%p)\n", props, num);
 
-    if (!ppSp && !piNumScripts) return E_INVALIDARG;
+    if (!props && !num) return E_INVALIDARG;
 
-    /* Set up a sensible default and intialise pointers  */
-    if (piNumScripts) *piNumScripts = MAX_SCRIPTS;
-    if (ppSp) *ppSp = Global_Script;
-    TRACE("ppSp:%p, *ppSp:%p, **ppSp:%p, %d\n",
-          ppSp, ppSp ? *ppSp : NULL, (ppSp && *ppSp) ? **ppSp : NULL,
-          piNumScripts ? *piNumScripts : -1);
-    return 0;
+    if (num) *num = sizeof(script_props)/sizeof(script_props[0]);
+    if (props) *props = script_props;
+
+    return S_OK;
 }
 
 /***********************************************************************

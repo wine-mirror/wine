@@ -2,6 +2,7 @@
  * Tests for usp10 dll
  *
  * Copyright 2006 Jeff Latimer
+ * Copyright 2006 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1255,6 +1256,25 @@ static void test_digit_substitution(void)
     }
 }
 
+static void test_ScriptGetProperties(void)
+{
+    const SCRIPT_PROPERTIES **props;
+    HRESULT hr;
+    int num;
+
+    hr = ScriptGetProperties(NULL, NULL);
+    ok(hr == E_INVALIDARG, "ScriptGetProperties succeeded\n");
+
+    hr = ScriptGetProperties(NULL, &num);
+    ok(hr == S_OK, "ScriptGetProperties failed: 0x%08x\n", hr);
+
+    hr = ScriptGetProperties(&props, NULL);
+    ok(hr == S_OK, "ScriptGetProperties failed: 0x%08x\n", hr);
+
+    hr = ScriptGetProperties(&props, &num);
+    ok(hr == S_OK, "ScriptGetProperties failed: 0x%08x\n", hr);
+}
+
 START_TEST(usp10)
 {
     HWND            hwnd;
@@ -1286,6 +1306,7 @@ START_TEST(usp10)
 
     test_ScriptLayout();
     test_digit_substitution();
+    test_ScriptGetProperties();
 
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
