@@ -32,6 +32,7 @@
 #include "usp10.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 /**
  * some documentation here:
@@ -798,13 +799,32 @@ HRESULT WINAPI ScriptXtoCP(int iX,
 /***********************************************************************
  *      ScriptBreak (USP10.@)
  *
+ *  Retrieve line break information.
+ *
+ *  PARAMS
+ *   chars [I] Array of characters.
+ *   sa    [I] String analysis.
+ *   la    [I] Array of logical attribute structures.
+ *
+ *  RETURNS
+ *   Success: S_OK
+ *   Failure: S_FALSE
  */
-HRESULT WINAPI ScriptBreak(const WCHAR *pwcChars, int cChars,  const SCRIPT_ANALYSIS *psa,
-                    SCRIPT_LOGATTR *psla)
+HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS *sa, SCRIPT_LOGATTR *la)
 {
-    FIXME("(%p,%d,%p,%p): stub\n",
-          pwcChars, cChars, psa, psla);
+    unsigned int i;
 
+    FIXME("(%p, %d, %p, %p) stub\n", chars, count, sa, la);
+
+    if (!la) return S_FALSE;
+
+    for (i = 0; i < count; i++)
+    {
+        memset(&la[i], 0, sizeof(SCRIPT_LOGATTR));
+
+        la[i].fWhiteSpace = isspaceW(chars[i]);
+        la[i].fCharStop = 1;
+    }
     return S_OK;
 }
 
