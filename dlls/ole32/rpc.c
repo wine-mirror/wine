@@ -983,10 +983,14 @@ void RPC_ExecuteCall(struct dispatch_params *params)
         interface_info.pUnk = params->iface;
         interface_info.iid = params->iid;
         interface_info.wMethod = msg->ProcNum;
+
         if (IsEqualGUID(&orpcthis.cid, &COM_CurrentInfo()->causality_id))
             calltype = CALLTYPE_NESTED;
-        else /* FIXME: also detect CALLTYPE_TOPLEVEL_CALLPENDING */
+        else if (COM_CurrentInfo()->pending_call_count == 0)
             calltype = CALLTYPE_TOPLEVEL;
+        else
+            calltype = CALLTYPE_TOPLEVEL_CALLPENDING;
+
         handlecall = IMessageFilter_HandleInComingCall(COM_CurrentApt()->filter,
                                                        calltype,
                                                        (HTASK)GetCurrentProcessId(),
@@ -1019,7 +1023,9 @@ void RPC_ExecuteCall(struct dispatch_params *params)
      * this call - this should be checked with what Windows does */
     old_causality_id = COM_CurrentInfo()->causality_id;
     COM_CurrentInfo()->causality_id = orpcthis.cid;
+    COM_CurrentInfo()->pending_call_count++;
     params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
+    COM_CurrentInfo()->pending_call_count--;
     COM_CurrentInfo()->causality_id = old_causality_id;
 
     message_state = (struct message_state *)msg->Handle;

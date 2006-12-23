@@ -169,6 +169,7 @@ struct oletls
     IUnknown         *state;       /* see CoSetState */
     DWORD            inits;        /* number of times CoInitializeEx called */
     GUID             causality_id; /* unique identifier for each COM call */
+    LONG             pending_call_count; /* number of calls pending */
 };
 
 
