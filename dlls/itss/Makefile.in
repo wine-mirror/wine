@@ -12,9 +12,12 @@ C_SRCS = \
 	lzx.c \
 	itss.c \
 	moniker.c \
-	regsvr.c \
 	storage.c
 
+RC_SRCS = rsrc.rc
+
 @MAKE_DLL_RULES@
+
+rsrc.res: itss.inf
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

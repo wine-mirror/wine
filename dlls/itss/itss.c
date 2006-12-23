@@ -34,6 +34,7 @@
 #include "winnls.h"
 #include "winreg.h"
 #include "ole2.h"
+#include "advpub.h"
 
 #include "uuids.h"
 
@@ -50,12 +51,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(itss);
 static HRESULT ITSS_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 
 LONG dll_count = 0;
+static HINSTANCE hInst;
 
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
     switch(fdwReason) {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(hInstDLL);
+        hInst = hInstDLL;
         break;
     case DLL_PROCESS_DETACH:
         break;
@@ -372,4 +375,73 @@ HRESULT WINAPI DllCanUnloadNow(void)
 {
     TRACE("dll_count = %u\n", dll_count);
     return dll_count ? S_FALSE : S_OK;
+}
+
+#define INF_SET_ID(id)            \
+    do                            \
+    {                             \
+        static CHAR name[] = #id; \
+                                  \
+        pse[i].pszName = name;    \
+        clsids[i++] = &id;        \
+    } while (0)
+
+#define INF_SET_CLSID(clsid) INF_SET_ID(CLSID_ ## clsid)
+
+static HRESULT register_server(BOOL do_register)
+{
+    HRESULT hres;
+    HMODULE hAdvpack;
+    typeof(RegInstallA) *pRegInstall;
+    STRTABLEA strtable;
+    STRENTRYA pse[4];
+    static CLSID const *clsids[4];
+    int i = 0;
+
+    static const WCHAR wszAdvpack[] = {'a','d','v','p','a','c','k','.','d','l','l',0};
+
+    INF_SET_CLSID(ITStorage);
+    INF_SET_CLSID(MSFSStore);
+    INF_SET_CLSID(MSITStore);
+    INF_SET_CLSID(ITSProtocol);
+
+    strtable.cEntries = sizeof(pse)/sizeof(pse[0]);
+    strtable.pse = pse;
+
+    for(i=0; i < strtable.cEntries; i++) {
+        pse[i].pszValue = HeapAlloc(GetProcessHeap(), 0, 39);
+        sprintf(pse[i].pszValue, "{%08X-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
+                clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
+                clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
+                clsids[i]->Data4[5], clsids[i]->Data4[6], clsids[i]->Data4[7]);
+    }
+
+    hAdvpack = LoadLibraryW(wszAdvpack);
+    pRegInstall = (typeof(RegInstallA)*)GetProcAddress(hAdvpack, "RegInstall");
+
+    hres = pRegInstall(hInst, do_register ? "RegisterDll" : "UnregisterDll", &strtable);
+
+    for(i=0; i < sizeof(pse)/sizeof(pse[0]); i++)
+        HeapFree(GetProcessHeap(), 0, pse[i].pszValue);
+
+    return hres;
+}
+
+#undef INF_SET_CLSID
+#undef INF_SET_ID
+
+/***********************************************************************
+ *          DllRegisterServer (ITSS.@)
+ */
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return register_server(TRUE);
+}
+
+/***********************************************************************
+ *          DllUnregisterServer (ITSS.@)
+ */
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return register_server(FALSE);
 }
