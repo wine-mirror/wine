@@ -1614,6 +1614,38 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 
         return 0;
     }
+    case WM_USER+2:
+    {
+        HRESULT hr;
+        IStream *pStream = NULL;
+        IClassFactory *proxy = NULL;
+        IUnknown *object;
+        DWORD tid;
+        HANDLE thread;
+
+        hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+        ok_ole_success(hr, CreateStreamOnHGlobal);
+        tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+        IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+        hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&proxy);
+        ok_ole_success(hr, CoReleaseMarshalData);
+        IStream_Release(pStream);
+
+        /* shows that COM calls executed during the processing of sent
+         * messages should fail */
+        hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
+        ok(hr == RPC_E_CANTCALLOUT_ININPUTSYNCCALL,
+           "COM call during processing of sent message should return RPC_E_CANTCALLOUT_ININPUTSYNCCALL instead of 0x%08x\n", hr);
+
+        IClassFactory_Release(proxy);
+
+        end_host_object(tid, thread);
+
+        PostQuitMessage(0);
+
+        return 0;
+    }
     default:
         return DefWindowProc(hwnd, msg, wparam, lparam);
     }
@@ -1634,6 +1666,73 @@ static void test_message_reentrancy(void)
 
     /* start message re-entrancy test */
     PostMessage(hwnd_app, WM_USER, 0, 0);
+
+    while (GetMessage(&msg, NULL, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+}
+
+static HRESULT WINAPI TestMsg_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    *ppvObj = NULL;
+    SendMessage(hwnd_app, WM_USER+2, 0, 0);
+    return S_OK;
+}
+
+static IClassFactoryVtbl TestMsgClassFactory_Vtbl =
+{
+    Test_IClassFactory_QueryInterface,
+    Test_IClassFactory_AddRef,
+    Test_IClassFactory_Release,
+    TestMsg_IClassFactory_CreateInstance,
+    Test_IClassFactory_LockServer
+};
+
+IClassFactory TestMsg_ClassFactory = { &TestMsgClassFactory_Vtbl };
+
+static void test_call_from_message(void)
+{
+    MSG msg;
+    IStream *pStream;
+    HRESULT hr;
+    IClassFactory *proxy;
+    DWORD tid;
+    HANDLE thread;
+    IUnknown *object;
+
+    hwnd_app = CreateWindow("WineCOMTest", NULL, 0, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, NULL, 0);
+    ok(hwnd_app != NULL, "Window creation failed\n");
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object(pStream, &IID_IClassFactory, (IUnknown*)&TestMsg_ClassFactory, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&proxy);
+    ok_ole_success(hr, CoReleaseMarshalData);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    hr = CoRegisterMessageFilter(&MessageFilter, NULL);
+
+    /* start message re-entrancy test */
+    hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+
+    IClassFactory_Release(proxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
 
     while (GetMessage(&msg, NULL, 0, 0))
     {
@@ -2131,6 +2230,7 @@ START_TEST(marshal)
     test_stubbuffer(&IID_IClassFactory);
     test_proxybuffer(&IID_IClassFactory);
     test_message_reentrancy();
+    test_call_from_message();
     test_WM_QUIT_handling();
     test_freethreadedmarshaler();
 

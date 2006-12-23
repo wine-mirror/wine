@@ -566,6 +566,18 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
             wine_dbgstr_longlong(This->oxid));
         return RPC_E_WRONG_THREAD;
     }
+    /* this situation should be impossible in multi-threaded apartments,
+     * because the calling thread isn't re-entrable.
+     * Note: doing a COM call during the processing of a sent message is
+     * only disallowed if a client call is already being waited for
+     * completion */
+    if (!COM_CurrentApt()->multi_threaded &&
+        COM_CurrentInfo()->pending_call_count_client &&
+        InSendMessage())
+    {
+        ERR("can't make an outgoing COM call in response to a sent message\n");
+        return RPC_E_CANTCALLOUT_ININPUTSYNCCALL;
+    }
 
     params = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*params));
     if (!params) return E_OUTOFMEMORY;
@@ -632,7 +644,11 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     if (hr == S_OK)
     {
         if (WaitForSingleObject(params->handle, 0))
+        {
+            COM_CurrentInfo()->pending_call_count_client++;
             hr = CoWaitForMultipleHandles(0, INFINITE, 1, &params->handle, &index);
+            COM_CurrentInfo()->pending_call_count_client--;
+        }
     }
     ClientRpcChannelBuffer_ReleaseEventHandle(This, params->handle);
 
@@ -986,7 +1002,7 @@ void RPC_ExecuteCall(struct dispatch_params *params)
 
         if (IsEqualGUID(&orpcthis.cid, &COM_CurrentInfo()->causality_id))
             calltype = CALLTYPE_NESTED;
-        else if (COM_CurrentInfo()->pending_call_count == 0)
+        else if (COM_CurrentInfo()->pending_call_count_server == 0)
             calltype = CALLTYPE_TOPLEVEL;
         else
             calltype = CALLTYPE_TOPLEVEL_CALLPENDING;
@@ -1023,9 +1039,9 @@ void RPC_ExecuteCall(struct dispatch_params *params)
      * this call - this should be checked with what Windows does */
     old_causality_id = COM_CurrentInfo()->causality_id;
     COM_CurrentInfo()->causality_id = orpcthis.cid;
-    COM_CurrentInfo()->pending_call_count++;
+    COM_CurrentInfo()->pending_call_count_server++;
     params->hr = IRpcStubBuffer_Invoke(params->stub, params->msg, params->chan);
-    COM_CurrentInfo()->pending_call_count--;
+    COM_CurrentInfo()->pending_call_count_server--;
     COM_CurrentInfo()->causality_id = old_causality_id;
 
     message_state = (struct message_state *)msg->Handle;

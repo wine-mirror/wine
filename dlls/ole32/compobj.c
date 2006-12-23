@@ -3190,10 +3190,12 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
 
                 if (COM_CurrentApt()->filter)
                 {
+                    PENDINGTYPE pendingtype =
+                        COM_CurrentInfo()->pending_call_count_server ?
+                            PENDINGTYPE_NESTED : PENDINGTYPE_TOPLEVEL;
                     DWORD be_handled = IMessageFilter_MessagePending(
                         COM_CurrentApt()->filter, 0 /* FIXME */,
-                        now - start_time,
-                        COM_CurrentInfo()->pending_call_count ? PENDINGTYPE_NESTED : PENDINGTYPE_TOPLEVEL);
+                        now - start_time, pendingtype);
                     TRACE("IMessageFilter_MessagePending returned %d\n", be_handled);
                     switch (be_handled)
                     {
