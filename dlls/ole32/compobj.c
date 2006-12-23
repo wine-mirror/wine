@@ -34,8 +34,6 @@
  *   - Implement the OXID resolver so we don't need magic endpoint names for
  *     clients and servers to meet up
  *
- *   - Call IMessageFilter functions.
- *
  *   - Make all ole interface marshaling use NDR to be wire compatible with
  *     native DCOM
  *   - Use & interpret ORPCTHIS & ORPCTHAT.
@@ -2720,9 +2718,6 @@ HRESULT WINAPI CoRegisterMessageFilter(
     else if (lpOldMessageFilter)
         IMessageFilter_Release(lpOldMessageFilter);
 
-    if (lpMessageFilter)
-        FIXME("message filter has been registered, but will not be used\n");
-
     return S_OK;
 }
 
@@ -3190,6 +3185,32 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
             if (res == WAIT_OBJECT_0 + cHandles)  /* messages available */
             {
                 MSG msg;
+
+                /* call message filter */
+
+                if (COM_CurrentApt()->filter)
+                {
+                    DWORD be_handled = IMessageFilter_MessagePending(
+                        COM_CurrentApt()->filter, 0 /* FIXME */,
+                        now - start_time,
+                        COM_CurrentInfo()->pending_call_count ? PENDINGTYPE_NESTED : PENDINGTYPE_TOPLEVEL);
+                    TRACE("IMessageFilter_MessagePending returned %d\n", be_handled);
+                    switch (be_handled)
+                    {
+                    case PENDINGMSG_CANCELCALL:
+                        WARN("call canceled\n");
+                        hr = RPC_E_CALL_CANCELED;
+                        break;
+                    case PENDINGMSG_WAITNOPROCESS:
+                    case PENDINGMSG_WAITDEFPROCESS:
+                    default:
+                        /* FIXME: MSDN is very vague about the difference
+                         * between WAITNOPROCESS and WAITDEFPROCESS - there
+                         * appears to be none, so it is possibly a left-over
+                         * from the 16-bit world. */
+                        break;
+                    }
+                }
 
                 /* note: using "if" here instead of "while" might seem less
                  * efficient, but only if we are optimising for quick delivery
