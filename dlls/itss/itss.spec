@@ -3,4 +3,4 @@
 @ stub DllInstall
 @ stdcall -private DllMain(long long ptr)
 @ stdcall -private DllRegisterServer()
-@ stub DllUnregisterServer
+@ stdcall -private DllUnregisterServer()
