@@ -176,6 +176,15 @@ static HRESULT  WINAPI  IDirect3D8Impl_GetDeviceCaps(LPDIRECT3D8 iface, UINT Ada
     D3D8CAPSTOWINECAPS(pCaps, pWineCaps)
     hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
     HeapFree(GetProcessHeap(), 0, pWineCaps);
+
+    /* D3D8 doesn't support SM 2.0 or higher, so clamp to 1.x */
+    if(pCaps->PixelShaderVersion > D3DPS_VERSION(1,4)){
+        pCaps->PixelShaderVersion = D3DPS_VERSION(1,4);
+    }
+    if(pCaps->VertexShaderVersion > D3DVS_VERSION(1,1)){
+        pCaps->VertexShaderVersion = D3DVS_VERSION(1,1);
+    }
+
     TRACE("(%p) returning %p\n", This, pCaps);
     return hrc;
 }

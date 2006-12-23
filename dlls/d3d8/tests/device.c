@@ -696,6 +696,26 @@ cleanup:
     if(pDevice) IDirect3D8_Release(pDevice);
 }
 
+static void test_shader_versions(void)
+{
+    HRESULT                      hr;
+    IDirect3D8                  *pD3d               = NULL;
+    D3DCAPS8                     d3dcaps;
+
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    if (pD3d != NULL) {
+        hr = IDirect3D8_GetDeviceCaps(pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, &d3dcaps);
+        ok(SUCCEEDED(hr), "Failed to get D3D8 caps (%s)\n", DXGetErrorString8(hr));
+        if (SUCCEEDED(hr)) {
+            ok(d3dcaps.VertexShaderVersion <= D3DVS_VERSION(1,1), "Unexpected VertexShaderVersion (%#x > %#x)\n", d3dcaps.VertexShaderVersion, D3DVS_VERSION(1,1));
+            ok(d3dcaps.PixelShaderVersion <= D3DPS_VERSION(1,4), "Unexpected PixelShaderVersion (%#x > %#x)\n", d3dcaps.PixelShaderVersion, D3DPS_VERSION(1,4));
+        }
+        IDirect3D8_Release(pD3d);
+    }
+}
+
+
 /* Test adapter display modes */
 static void test_display_modes(void)
 {
@@ -733,6 +753,7 @@ START_TEST(device)
     if (pDirect3DCreate8)
     {
         test_display_modes();
+        test_shader_versions();
         test_swapchain();
         test_refcount();
         test_mipmap_levels();
