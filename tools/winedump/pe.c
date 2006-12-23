@@ -563,7 +563,7 @@ static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il)
     }
 }
 
-static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il)
+static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset)
 {
     const IMAGE_IMPORT_BY_NAME* iibn;
     for (; il->u1.Ordinal; il++)
@@ -572,7 +572,7 @@ static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il)
             printf("  %4u  <by ordinal>\n", IMAGE_ORDINAL32(il->u1.Ordinal));
         else
         {
-            iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
+            iibn = RVA((DWORD)il->u1.AddressOfData - offset, sizeof(DWORD));
             if (!iibn)
                 printf("Can't grab import by name info, skipping to next ordinal\n");
             else
@@ -626,7 +626,7 @@ static	void	dump_dir_imported_functions(void)
             if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
                 dump_image_thunk_data64((const IMAGE_THUNK_DATA64*)il);
             else
-                dump_image_thunk_data32(il);
+                dump_image_thunk_data32(il, 0);
             printf("\n");
         }
 	importDesc++;
@@ -665,20 +665,20 @@ static void dump_dir_delay_imported_functions(void)
 
     for (;;)
     {
-        BOOL                            use_rva = importDesc->grAttrs & 1;
         const IMAGE_THUNK_DATA32*       il;
+        int                             offset = (importDesc->grAttrs & 1) ? 0 : PE_nt_headers->OptionalHeader.ImageBase;
 
         if (!importDesc->szName || !importDesc->pIAT || !importDesc->pINT) break;
 
         printf("  grAttrs %08x offset %08lx %s\n", importDesc->grAttrs, Offset(importDesc),
-               use_rva ? (const char *)RVA(importDesc->szName, sizeof(DWORD)) : (char *)importDesc->szName);
+               (const char *)RVA(importDesc->szName - offset, sizeof(DWORD)));
         printf("  Hint/Name Table: %08x\n", importDesc->pINT);
         printf("  TimeDateStamp:   %08X (%s)\n",
                importDesc->dwTimeStamp, get_time_str(importDesc->dwTimeStamp));
 
         printf("  Ordn  Name\n");
 
-        il = use_rva ? (const IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT, sizeof(DWORD)) : (const IMAGE_THUNK_DATA32 *)importDesc->pINT;
+        il = (const IMAGE_THUNK_DATA32 *)RVA(importDesc->pINT - offset, sizeof(DWORD));
 
         if (!il)
             printf("Can't grab thunk data, going to next imported DLL\n");
@@ -687,7 +687,7 @@ static void dump_dir_delay_imported_functions(void)
             if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
                 dump_image_thunk_data64((const IMAGE_THUNK_DATA64 *)il);
             else
-                dump_image_thunk_data32(il);
+                dump_image_thunk_data32(il, offset);
             printf("\n");
         }
         importDesc++;
