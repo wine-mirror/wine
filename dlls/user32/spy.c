@@ -44,6 +44,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(message);
 
 #define DEBUG_SPY 0
 
+static const char * const ClassLongOffsetNames[] =
+{
+    "GCLP_MENUNAME",      /*  -8 */
+    "GCLP_HBRBACKGROUND", /* -10 */
+    "GCLP_HCURSOR",       /* -12 */
+    "GCLP_HICON",         /* -14 */
+    "GCLP_HMODULE",       /* -16 */
+    "GCL_CBWNDEXTRA",     /* -18 */
+    "GCL_CBCLSEXTRA",     /* -20 */
+    "?",
+    "GCLP_WNDPROC",       /* -24 */
+    "GCL_STYLE",          /* -26 */
+    "?",
+    "?",
+    "GCW_ATOM",           /* -32 */
+    "GCLP_HICONSM",       /* -34 */
+};
+
 static const char * const MessageTypeNames[SPY_MAX_MSGNUM + 1] =
 {
     "WM_NULL",                  /* 0x00 */
@@ -2023,6 +2041,23 @@ static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *first, const USER_MSG *l
             first = test + 1;
     }
     return NULL;
+}
+
+/***********************************************************************
+ *           SPY_GetClassLongOffsetName
+ *
+ * Gets the name of a class long offset.
+ */
+const char *SPY_GetClassLongOffsetName( INT offset )
+{
+    INT index;
+    if (offset < 0 && offset % 2 == 0 && ((index = -(offset + 8) / 2) <
+	sizeof(ClassLongOffsetNames) / sizeof(*ClassLongOffsetNames)))
+    {
+        return ClassLongOffsetNames[index];
+    }
+
+    return "?";
 }
 
 /***********************************************************************

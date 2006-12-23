@@ -673,7 +673,8 @@ static ULONG_PTR CLASS_GetClassLong( HWND hwnd, INT offset, UINT size,
                 case GCLP_HICONSM:
                 case GCLP_WNDPROC:
                 case GCLP_MENUNAME:
-                    FIXME( "offset %d not supported on other process window %p\n", offset, hwnd );
+                    FIXME( "offset %d (%s) not supported on other process window %p\n",
+			   offset, SPY_GetClassLongOffsetName(offset), hwnd );
                     SetLastError( ERROR_INVALID_HANDLE );
                     break;
                 case GCL_STYLE:
