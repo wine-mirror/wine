@@ -5350,9 +5350,9 @@ static void test_VarAnd(void)
                 V_VT(&right) = rightvt | ExtraFlags[i];
                 V_VT(&result) = VT_EMPTY;
                 resvt = VT_EMPTY;
-                if (leftvt == VT_BSTR)
+                if ((leftvt | ExtraFlags[i]) == VT_BSTR)
                     V_BSTR(&left) = true_str;
-                if (rightvt == VT_BSTR)
+                if ((rightvt | ExtraFlags[i]) == VT_BSTR)
                     V_BSTR(&right) = true_str;
 
                 /* Native VarAnd always returns a error when using any extra
