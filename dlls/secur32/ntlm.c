@@ -1769,8 +1769,11 @@ void SECUR32_initNTLMSP(void)
     else
     {
         ERR("%s was not found or is outdated. "
-            "Make sure that ntlm_auth >= 3.0.24 is in your path.\n",
-            ntlm_auth);
+            "Make sure that ntlm_auth >= %d.%d.%d is in your path.\n",
+            ntlm_auth,
+	    MIN_NTLM_AUTH_MAJOR_VERSION,
+	    MIN_NTLM_AUTH_MINOR_VERSION,
+	    MIN_NTLM_AUTH_MICRO_VERSION);
     }
     cleanup_helper(helper);
 }
