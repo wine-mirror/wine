@@ -141,7 +141,7 @@ static const IClassFactoryVtbl ITSSCF_Vtbl =
 };
 
 static const IClassFactoryImpl ITStorage_factory = { &ITSSCF_Vtbl, ITSS_create };
-static const IClassFactoryImpl ITSProtocol_factory = { &ITSSCF_Vtbl, ITS_IParseDisplayName_create };
+static const IClassFactoryImpl MSITStore_factory = { &ITSSCF_Vtbl, ITS_IParseDisplayName_create };
 
 /***********************************************************************
  *		DllGetClassObject	(ITSS.@)
@@ -154,8 +154,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv)
 
     if (IsEqualGUID(&CLSID_ITStorage, rclsid))
         factory = &ITStorage_factory;
-    else if (IsEqualGUID(&CLSID_ITSProtocol, rclsid))
-        factory = &ITSProtocol_factory;
+    else if (IsEqualGUID(&CLSID_MSITStore, rclsid))
+        factory = &MSITStore_factory;
     else
     {
 	FIXME("%s: no class found.\n", debugstr_guid(rclsid));

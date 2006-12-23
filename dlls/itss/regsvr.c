@@ -513,7 +513,7 @@ static struct regsvr_coclass const coclass_list[] = {
         "itss.dll",
         "Both"
     },
-    {   &CLSID_ITSProtocol,
+    {   &CLSID_MSITStore,
         "Microsoft InforTech Protocol for IE 3.0",
         NULL,
         "itss.dll",
