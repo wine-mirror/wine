@@ -1891,6 +1891,10 @@ MONTHCAL_Create(HWND hwnd, WPARAM wParam, LPARAM lParam)
   infoPtr->bk          = GetSysColor(COLOR_WINDOW);
   infoPtr->txt	       = GetSysColor(COLOR_WINDOWTEXT);
 
+  /* set the current day for highlighing */
+  infoPtr->minSel.wDay = infoPtr->todaysDate.wDay;
+  infoPtr->maxSel.wDay = infoPtr->todaysDate.wDay;
+
   /* call MONTHCAL_UpdateSize to set all of the dimensions */
   /* of the control */
   MONTHCAL_UpdateSize(infoPtr);
