@@ -248,8 +248,8 @@ extern int num_lock;
        TRACE("%s call ok %s / %d\n", A, __FILE__, __LINE__);    \
                                                                 \
     } else do {                                                 \
-       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n",        \
-		err, A, __FILE__, __LINE__);                    \
+       FIXME(">>>>>>>>>>>>>>>>> %#x from %s @ %s / %d\n",       \
+        err, A, __FILE__, __LINE__);                            \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
 } 
@@ -332,7 +332,7 @@ extern const float identity[16];
        VTRACE(("%s call ok %s / %d\n", A, __FILE__, __LINE__)); \
                                                                 \
     } else do {                                                 \
-       FIXME(">>>>>>>>>>>>>>>>> %x from %s @ %s / %d\n",        \
+       FIXME(">>>>>>>>>>>>>>>>> %#x from %s @ %s / %d\n",       \
                 err, A, __FILE__, __LINE__);                    \
        err = glGetError();                                      \
     } while (err != GL_NO_ERROR);                               \
