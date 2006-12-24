@@ -142,9 +142,15 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var};
             next;
         }
-        if (/^(MODULE|IMPORTLIB|IMPLIB_SRCS|SPEC_SRCS16)\s*=\s*(.*)/)
+        if (/^(MODULE|IMPORTLIB)\s*=\s*(.*)/)
         {
             $make{$1} = $2;
+            next;
+        }
+        if (/^(IDL_H_SRCS|IMPLIB_SRCS|SPEC_SRCS16)\s*=\s*(.*)/)
+        {
+            my @list = split(/\s+/, $2);
+            $make{$1} = \@list;
             next;
         }
         if (/^\#\s*MKDLL_SKIP/ || /^\#\s*MKPROG_SKIP/)
@@ -294,15 +300,16 @@ sub update_dlls(@)
 
         next unless defined $makefile{"MODULE"};
         my $module = $makefile{"MODULE"};
+        (my $dir = $make) =~ s/^dlls\/(.*)\/[^\/]+$/$1/;
 
         if ($module =~ /^lib.*\.a$/)
         {
-            ($staticlib_dirs{$module} = $make) =~ s/^dlls\/(.*)\/[^\/]+$/$1/;
+            $staticlib_dirs{$module} = $dir;
             die "invalid module $module in dir $staticlib_dirs{$module}\n" if "lib$staticlib_dirs{$module}.a" ne $module;
         }
         else
         {
-            ($directories{$module} = $make) =~ s/^dlls\/(.*)\/[^\/]+$/$1/;
+            $directories{$module} = $dir;
         }
 
         if (defined $makefile{"IMPORTLIB"})
@@ -321,9 +328,13 @@ sub update_dlls(@)
 
         if (defined $makefile{"SPEC_SRCS16"})
         {
-            my @list = split(/\s+/, $makefile{"SPEC_SRCS16"});
-            @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @list;
+            my @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @{$makefile{"SPEC_SRCS16"}};
             $altnames{$module} = \@list;
+        }
+
+        if (defined $makefile{"IDL_H_SRCS"})
+        {
+            push @ignores, map { $_ =~ s/(.*)\.idl$/$dir\/$1.h/; $_; } @{$makefile{"IDL_H_SRCS"}};
         }
     }
 

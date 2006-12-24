@@ -57,6 +57,7 @@
 activeds/libactiveds.def
 advapi32/libadvapi32.def
 advpack/libadvpack.def
+atl/atliface.h
 atl/libatl.def
 avicap32/libavicap32.def
 avifil32/libavifil32.def
@@ -107,6 +108,7 @@ msacm32/libmsacm32.def
 mscms/libmscms.def
 msdmo/libmsdmo.def
 mshtml/libmshtml.def
+mshtml/nsiface.h
 msi/libmsi.def
 msimg32/libmsimg32.def
 msvcrt/libmsvcrt.def
@@ -122,6 +124,7 @@ ntdll/libntdll.def
 ntdsapi/libntdsapi.def
 odbc32/libodbc32.def
 odbccp32/libodbccp32.def
+ole32/dcom.h
 ole32/libole32.def
 oleacc/liboleacc.def
 oleaut32/liboleaut32.def
