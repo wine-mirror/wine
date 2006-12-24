@@ -12,6 +12,7 @@ C_SRCS = \
 	lzx.c \
 	itss.c \
 	moniker.c \
+	protocol.c \
 	storage.c
 
 RC_SRCS = rsrc.rc
