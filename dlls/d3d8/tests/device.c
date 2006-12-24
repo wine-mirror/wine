@@ -407,13 +407,22 @@ static void test_refcount(void)
     CHECK_CALL( hr, "CreateVertexBuffer", pDevice, ++refcount );
     if(pVertexBuffer)
     {
+        IDirect3DVertexBuffer8 *pVBuf = (void*)~0;
+        UINT stride = ~0;
+
         tmp = get_refcount( (IUnknown *)pVertexBuffer );
 
         hr = IDirect3DDevice8_SetStreamSource(pDevice, 0, pVertexBuffer, 3 * sizeof(float));
         CHECK_CALL( hr, "SetStreamSource", pVertexBuffer, tmp);
         hr = IDirect3DDevice8_SetStreamSource(pDevice, 0, NULL, 0);
         CHECK_CALL( hr, "SetStreamSource", pVertexBuffer, tmp);
+
+        hr = IDirect3DDevice8_GetStreamSource(pDevice, 0, &pVBuf, &stride);
+        ok(SUCCEEDED(hr), "GetStreamSource did not succeed with NULL stream!\n");
+        ok(pVBuf==NULL, "pVBuf not NULL (%p)!\n", pVBuf);
+        ok(stride==3*sizeof(float), "stride not %u (got %u)!\n", 3*sizeof(float), stride);
     }
+
     /* Shaders */
     hr = IDirect3DDevice8_CreateVertexShader( pDevice, decl, simple_vs, &dVertexShader, 0 );
     CHECK_CALL( hr, "CreateVertexShader", pDevice, refcount );

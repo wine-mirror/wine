@@ -2421,9 +2421,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
 
     This->updateStateBlock->changed.streamSource[StreamNumber] = TRUE;
     This->updateStateBlock->set.streamSource[StreamNumber]     = TRUE;
-    This->updateStateBlock->streamStride[StreamNumber]         = Stride;
     This->updateStateBlock->streamSource[StreamNumber]         = pStreamData;
-    This->updateStateBlock->streamOffset[StreamNumber]         = OffsetInBytes;
+    if (pStreamData) {
+        This->updateStateBlock->streamStride[StreamNumber]     = Stride;
+        This->updateStateBlock->streamOffset[StreamNumber]     = OffsetInBytes;
+    }
     This->updateStateBlock->streamFlags[StreamNumber]          = streamFlags;
 
     /* Handle recording of state blocks */
@@ -2487,12 +2489,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, 
         *pOffset = This->stateBlock->streamOffset[StreamNumber];
     }
 
-     if (*pStream == NULL) {
-        FIXME("Attempting to get an empty stream %d, returning WINED3DERR_INVALIDCALL\n", StreamNumber);
-        return  WINED3DERR_INVALIDCALL;
+    if (*pStream != NULL) {
+        IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     }
-
-    IWineD3DVertexBuffer_AddRef(*pStream); /* We have created a new reference to the VB */
     return WINED3D_OK;
 }
 

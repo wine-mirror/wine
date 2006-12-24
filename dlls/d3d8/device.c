@@ -1498,7 +1498,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetStreamSource(LPDIRECT3DDEVICE8 ifa
         IWineD3DVertexBuffer_GetParent(retStream, (IUnknown **)pStream);
         IWineD3DVertexBuffer_Release(retStream);
     }else{
-         FIXME("Call to GetStreamSource failed %p\n",  pStride);
+        if (rc != D3D_OK){
+            FIXME("Call to GetStreamSource failed %p\n",  pStride);
+        }
         *pStream = NULL;
     }
 
