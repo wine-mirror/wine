@@ -2261,12 +2261,12 @@ static void test_VarMod(void)
 	case VT_BOOL:
 	case VT_DATE:
 	case VT_CY:
+	case VT_DECIMAL:
 	  hexpected = S_OK;
 	  break;
 	case VT_ERROR:
 	case VT_VARIANT:
 	case VT_UNKNOWN:
-	case VT_DECIMAL:
 	case VT_RECORD:
 	  lValid = FALSE;
 	  break;
@@ -2296,13 +2296,13 @@ static void test_VarMod(void)
 	case VT_R8:
 	case VT_BOOL:
 	case VT_DATE:
+	case VT_DECIMAL:
 	case VT_CY:
 	  hexpected = S_OK;
 	  break;
 	case VT_ERROR:
 	case VT_VARIANT:
 	case VT_UNKNOWN:
-	case VT_DECIMAL:
 	case VT_RECORD:
 	  rValid = FALSE;
 	  break;
@@ -2341,18 +2341,18 @@ static void test_VarMod(void)
       } else if((l == VT_NULL) && (r == VT_RECORD))
       {
 	hexpected = DISP_E_TYPEMISMATCH;
-      } else if((l == VT_NULL) && (r == VT_DECIMAL))
+      } else if((l == VT_I8) && (r == VT_DECIMAL))
       {
-	hexpected = E_INVALIDARG;
+	hexpected = S_OK;
+      } else if((l == VT_DECIMAL) && (r == VT_I8))
+      {
+	hexpected = S_OK;
       } else if((l == VT_UNKNOWN) || ((r == VT_UNKNOWN) && lFound && lValid))
       {
 	hexpected = DISP_E_TYPEMISMATCH;
       } else if((l == VT_NULL) && rFound)
       {
 	hexpected = S_OK;
-      } else if((l == VT_DECIMAL) || ((r == VT_DECIMAL) && lFound && lValid))
-      {
-	hexpected = E_INVALIDARG;
       } else if(l == VT_RECORD)
       {
 	hexpected = DISP_E_TYPEMISMATCH;
@@ -2399,8 +2399,16 @@ static void test_VarMod(void)
 	V_R8(&v1) = 100;
       else if(l == VT_UI8)
 	V_UI8(&v1) = 100;
+      else if(l == VT_I8)
+	V_I8(&v1) = 100;
       else if(l == VT_DATE)
 	V_DATE(&v1) = 1000;
+      else if (l == VT_DECIMAL)
+      {
+	V_DECIMAL(&v1).Hi32 = 0;
+	V_DECIMAL(&v1).Lo64 = 100;
+	V_DECIMAL(&v1).signscale = 0;
+      }
       else
 	V_I4(&v1) = 10000;
 
@@ -2412,8 +2420,16 @@ static void test_VarMod(void)
 	V_R8(&v2) = 100;
       else if(r == VT_UI8)
 	V_UI8(&v2) = 100;
+      else if(r == VT_I8)
+	V_I8(&v2) = 100;
       else if(r == VT_DATE)
 	V_DATE(&v2) = 1000;
+      else if (r == VT_DECIMAL)
+      {
+	V_DECIMAL(&v2).Hi32 = 0;
+	V_DECIMAL(&v2).Lo64 = 100;
+	V_DECIMAL(&v2).signscale = 0;
+      }
       else
 	V_I4(&v2) = 10000;
 
@@ -2478,7 +2494,6 @@ static void test_VarMod(void)
      "VarMod: expected 0x%x,%d,%d, got 0x%X,%d,%d\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
 
   /* some decimals */
-  todo_wine {
   V_VT(&v1) = VT_DECIMAL;
   V_VT(&v2) = VT_DECIMAL;
   VarDecFromI4(100, &V_DECIMAL(&v1));
@@ -2494,7 +2509,6 @@ static void test_VarMod(void)
   hres = pVarMod(&v1,&v2,&vDst);
   ok(hres == S_OK && V_VT(&vDst) == VT_I4 && V_I4(&vDst) == 0,
      "VarMod: expected 0x%x,%d,%d, got 0x%X,%d,%d\n", S_OK, VT_I4, 0, hres, V_VT(&vDst), V_I4(&vDst));
-  }
 
   VARMOD2(UINT,I4,100,10,I4,0,S_OK);
 
@@ -5170,7 +5184,7 @@ static void test_VarCat(void)
     hres = VarCat(&left,&right,&result);
     ok(hres == S_OK, "VarCat failed with error 0x%08x\n", hres);
     ok(VarCmp(&result,&expected,lcid,0) == VARCMP_EQ,
-        "VarCat: VT_INT concat with VT_BOOL (TRUE) returned inncorrect result\n");
+        "VarCat: VT_INT concat with VT_BOOL (TRUE) returned incorrect result\n");
 
     VariantClear(&left);
     VariantClear(&right);

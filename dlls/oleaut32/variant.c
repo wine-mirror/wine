@@ -5032,14 +5032,12 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     case VT_EMPTY:
     case VT_DATE :
     case VT_BSTR :
+    case VT_DECIMAL:
       break;
     case VT_VARIANT:
     case VT_UNKNOWN:
       V_VT(result) = VT_EMPTY;
       return DISP_E_TYPEMISMATCH;
-    case VT_DECIMAL:
-      V_VT(result) = VT_EMPTY;
-      return E_INVALIDARG;
     case VT_ERROR:
       return DISP_E_TYPEMISMATCH;
     case VT_RECORD:
@@ -5086,6 +5084,12 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
       }
     case VT_EMPTY:
     case VT_DATE :
+    case VT_DECIMAL:
+      if(V_VT(left) == VT_ERROR)
+      {
+	V_VT(result) = VT_EMPTY;
+	return DISP_E_TYPEMISMATCH;
+      }
     case VT_BSTR:
       if(V_VT(left) == VT_NULL)
       {
@@ -5116,16 +5120,6 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     case VT_UNKNOWN:
       V_VT(result) = VT_EMPTY;
       return DISP_E_TYPEMISMATCH;
-    case VT_DECIMAL:
-      if(V_VT(left) == VT_ERROR)
-      {
-	V_VT(result) = VT_EMPTY;
-	return DISP_E_TYPEMISMATCH;
-      } else
-      {
-	V_VT(result) = VT_EMPTY;
-        return E_INVALIDARG;
-      }
     case VT_ERROR:
       return DISP_E_TYPEMISMATCH;
     case VT_RECORD:
