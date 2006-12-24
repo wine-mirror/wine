@@ -20,7 +20,7 @@
 @ stdcall ScriptStringAnalyse(ptr ptr long long long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall ScriptStringCPtoX(ptr long long ptr)
 @ stdcall ScriptStringFree(ptr)
-@ stub ScriptStringGetLogicalWidths
+@ stdcall ScriptStringGetLogicalWidths(ptr ptr)
 @ stub ScriptStringGetOrder
 @ stdcall ScriptStringOut(ptr long long long ptr long long long)
 @ stdcall ScriptStringValidate(ptr)

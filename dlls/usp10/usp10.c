@@ -1426,6 +1426,39 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
 }
 
 /***********************************************************************
+ *      ScriptStringGetLogicalWidths (USP10.@)
+ *
+ * Returns logical widths from a string analysis.
+ *
+ * PARAMS
+ *  ssa  [I] string analysis.
+ *  piDx [O] logical widths returned.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: a non-zero HRESULT.
+ */
+HRESULT WINAPI ScriptStringGetLogicalWidths(SCRIPT_STRING_ANALYSIS ssa, int *piDx)
+{
+    int i, j, next = 0;
+    StringAnalysis *analysis = ssa;
+
+    TRACE("%p, %p\n", ssa, piDx);
+
+    if (!analysis) return S_FALSE;
+
+    for (i = 0; i < analysis->numItems; i++)
+    {
+        for (j = 0; j < analysis->glyphs[i].numGlyphs; j++)
+        {
+            piDx[next] = analysis->glyphs[i].piAdvance[j];
+            next++;
+        }
+    }
+    return S_OK;
+}
+
+/***********************************************************************
  *      ScriptStringValidate (USP10.@)
  *
  * Validate a string analysis.
