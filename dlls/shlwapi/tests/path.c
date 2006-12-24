@@ -481,7 +481,7 @@ static void test_UrlEscape(void)
     unsigned int i;
 
     ret = UrlEscapeA("/woningplan/woonkamer basis.swf", NULL, &size, URL_ESCAPE_SPACES_ONLY);
-    ok(ret == E_POINTER, "got %x, expected %x\n", ret, E_POINTER);
+    ok(ret == E_INVALIDARG, "got %x, expected %x\n", ret, E_INVALIDARG);
 
     for(i=0; i<sizeof(TEST_ESCAPE)/sizeof(TEST_ESCAPE[0]); i++) {
         test_url_escape(TEST_ESCAPE[i].url, TEST_ESCAPE[i].flags,
