@@ -412,6 +412,9 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     if (!pwcInChars || !cInChars || !pItems || cMaxItems < 2)
         return E_INVALIDARG;
 
+    pItems[index].iCharPos = 0;
+    memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
+
     if  (pwcInChars[cnt] >= Numeric_start && pwcInChars[cnt] <= Numeric_stop)
         pItems[index].a.eScript = Script_Numeric;
     else
@@ -420,31 +423,10 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     else
     if  (pwcInChars[cnt] >= Latin_start && pwcInChars[cnt] <= Latin_stop)
         pItems[index].a.eScript = Script_Latin;
-    else
-        pItems[index].a.eScript = SCRIPT_UNDEFINED;
-    pItems[index].iCharPos = 0;
-    /*  Set the SCRIPT_ANALYSIS                             */
-    pItems[index].a.fRTL = 0;
-    pItems[index].a.fLayoutRTL = 0;
-    pItems[index].a.fLinkBefore = 0;
-    pItems[index].a.fLinkAfter = 0;
-    pItems[index].a.fLogicalOrder = 0;
-    pItems[index].a.fNoGlyphIndex = 0;
-    /*  set the SCRIPT_STATE                                */
+
     if  (pItems[index].a.eScript  == Script_Arabic)
         pItems[index].a.s.uBidiLevel = 1;
-    else
-        pItems[index].a.s.uBidiLevel = 0;
-    pItems[index].a.s.fOverrideDirection = 0;
-    pItems[index].a.s.fInhibitSymSwap = FALSE;
-    pItems[index].a.s.fCharShape = 0;
-    pItems[index].a.s.fDigitSubstitute = 0;
-    pItems[index].a.s.fInhibitLigate = 0;
-    pItems[index].a.s.fDisplayZWG = 0;
-    pItems[index].a.s.fArabicNumContext = 0;
-    pItems[index].a.s.fGcpClusters = 0;
-    pItems[index].a.s.fReserved = 0;
-    pItems[index].a.s.fEngineReserved = 0;
+
     TRACE("New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
           New_Script, pItems[index].a.eScript, index, cnt,
           pItems[index].iCharPos = cnt);
@@ -470,34 +452,17 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             index++;
             if  (index+1 > cMaxItems)
                 return E_OUTOFMEMORY;
+
             pItems[index].iCharPos = cnt;
+            memset(&pItems[index].a, 0, sizeof(SCRIPT_ANALYSIS));
+
             if  (New_Script == Script_Arabic)
                 pItems[index].a.s.uBidiLevel = 1;
-            /*  Set SCRIPT_ITEM                                     */
-            pItems[index].iCharPos = cnt;
-            /*  Set the SCRIPT_ANALYSIS                             */
+
             pItems[index].a.eScript = New_Script;
-            pItems[index].a.fRTL = 0;
-            pItems[index].a.fLayoutRTL = 0;
-            pItems[index].a.fLinkBefore = 0;
-            pItems[index].a.fLinkAfter = 0;
-            pItems[index].a.fLogicalOrder = 0;
-            pItems[index].a.fNoGlyphIndex = 0;
-            /*  set the SCRIPT_STATE                                */
             if  (New_Script == Script_Arabic)
                 pItems[index].a.s.uBidiLevel = 1;
-            else
-                pItems[index].a.s.uBidiLevel = 0;
-            pItems[index].a.s.fOverrideDirection = 0;
-            pItems[index].a.s.fInhibitSymSwap = FALSE;
-            pItems[index].a.s.fCharShape = 0;
-            pItems[index].a.s.fDigitSubstitute = 0;
-            pItems[index].a.s.fInhibitLigate = 0;
-            pItems[index].a.s.fDisplayZWG = 0;
-            pItems[index].a.s.fArabicNumContext = 0;
-            pItems[index].a.s.fGcpClusters = 0;
-            pItems[index].a.s.fReserved = 0;
-            pItems[index].a.s.fEngineReserved = 0;
+
             TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos = cnt);
         }
     }
@@ -505,25 +470,8 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
     /* While not strictly necessary according to the spec, make sure the n+1
      * item is set up to prevent random behaviour if the caller erroneously
      * checks the n+1 structure                                              */
-    pItems[index+1].a.eScript = 0;
-    pItems[index+1].a.fRTL = 0;
-    pItems[index+1].a.fLayoutRTL = 0;
-    pItems[index+1].a.fLinkBefore = 0;
-    pItems[index+1].a.fLinkAfter = 0;
-    pItems[index+1].a.fLogicalOrder = 0;
-    pItems[index+1].a.fNoGlyphIndex = 0;
-    /*  set the SCRIPT_STATE                                */
-    pItems[index+1].a.s.uBidiLevel = 0;
-    pItems[index+1].a.s.fOverrideDirection = 0;
-    pItems[index+1].a.s.fInhibitSymSwap = FALSE;
-    pItems[index+1].a.s.fCharShape = 0;
-    pItems[index+1].a.s.fDigitSubstitute = 0;
-    pItems[index+1].a.s.fInhibitLigate = 0;
-    pItems[index+1].a.s.fDisplayZWG = 0;
-    pItems[index+1].a.s.fArabicNumContext = 0;
-    pItems[index+1].a.s.fGcpClusters = 0;
-    pItems[index+1].a.s.fReserved = 0;
-    pItems[index+1].a.s.fEngineReserved = 0;
+    memset(&pItems[index+1].a, 0, sizeof(SCRIPT_ANALYSIS));
+
     TRACE("index=%d cnt=%d iCharPos=%d\n", index+1, cnt, pItems[index+1].iCharPos = cnt);
 
     /*  Set one SCRIPT_STATE item being returned  */
