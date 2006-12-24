@@ -511,12 +511,11 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
       hdc, pString, cString, cGlyphs, iCharset, dwFlags,
       iReqWidth, psControl, psState, piDx, pTabdef, pbInClass, pssa);
 
-  if (1 > cString || NULL == pString) {
-    return E_INVALIDARG;
-  }
-  if ((dwFlags & SSA_GLYPHS) && NULL == hdc) {
-    return E_PENDING;
-  }
+    if (cString < 1 || !pString)
+        return E_INVALIDARG;
+
+    if ((dwFlags & SSA_GLYPHS) && !hdc)
+        return E_PENDING;
 
     analysis = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                        sizeof(StringAnalysis));

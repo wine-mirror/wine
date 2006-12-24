@@ -313,20 +313,11 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
 
 }
 
-static void test_ScriptGetFontProperties(void)
+static void test_ScriptGetFontProperties(HDC hdc)
 {
     HRESULT         hr;
-    HDC             hdc;
-    HWND            hwnd;
     SCRIPT_CACHE    psc,old_psc;
     SCRIPT_FONTPROPERTIES sfp;
-
-    /* Only do the bare minumum to get a valid hdc */
-    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,0, 0, 0, NULL);
-    assert(hwnd != 0);
-
-    hdc = GetDC(hwnd);
-    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
     /* Some sanity checks for ScriptGetFontProperties */
 
@@ -383,17 +374,11 @@ static void test_ScriptGetFontProperties(void)
     ok( psc == old_psc, "Expected psc not to be changed, was %p is now %p\n", old_psc, psc);
     ScriptFreeCache(&psc);
     ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
-
-    /* Cleanup */
-    ReleaseDC(hwnd, hdc);
-    DestroyWindow(hwnd);
 }
 
-static void test_ScriptTextOut(void)
+static void test_ScriptTextOut(HDC hdc)
 {
     HRESULT         hr;
-    HWND            hwnd;
-    HDC             hdc;
 
     int             cInChars;
     int             cMaxItems;
@@ -417,17 +402,6 @@ static void test_ScriptTextOut(void)
     BOOL            fTrailing = FALSE;
     SCRIPT_LOGATTR  *psla;
     SCRIPT_LOGATTR  sla[256];
-
-    /* We need a valid HDC to drive a lot of Script functions which requires the following    *
-     * to set up for the tests.                                                               */
-    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
-                           0, 0, 0, NULL);
-    assert(hwnd != 0);
-    ShowWindow(hwnd, SW_SHOW);
-    UpdateWindow(hwnd);
-
-    hdc = GetDC(hwnd);                                      /* We now have a hdc             */
-    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
     /* This is a valid test that will cause parsing to take place                             */
     cInChars = 5;
@@ -519,8 +493,6 @@ static void test_ScriptTextOut(void)
             ok( psc == NULL, "Expected psc to be NULL, got %p\n", psc);
         }
     }
-    ReleaseDC(hwnd, hdc);
-    DestroyWindow(hwnd);
 }
 
 static void test_ScriptXtoX(void)
@@ -632,20 +604,18 @@ static void test_ScriptXtoX(void)
 
 }
 
-static void test_ScriptString(void)
+static void test_ScriptString(HDC hdc)
 {
 /*******************************************************************************************
  *
  * This set of tests are for the string functions of uniscribe.  The ScriptStringAnalyse
- * function allocates memory pointed to by the SCRIPT_STRING_ANALYSIS ssa pointer.  This 
- * memory if freed by ScriptStringFree.  There needs to be a valid hdc for this this as 
- * ScriptStrinAnalyse calls ScriptSItemize, ScriptShape and ScriptPlace which require it.
+ * function allocates memory pointed to by the SCRIPT_STRING_ANALYSIS ssa pointer.  This
+ * memory if freed by ScriptStringFree.  There needs to be a valid hdc for this as
+ * ScriptStringAnalyse calls ScriptSItemize, ScriptShape and ScriptPlace which require it.
  *
  */
 
     HRESULT         hr;
-    HWND            hwnd;
-    HDC             hdc = 0;
     WCHAR           teststr[] = {'T','e','s','t','1',' ','a','2','b','3', '\0'};
     int             String = (sizeof(teststr)/sizeof(WCHAR))-1;
     int             Glyphs = String * 2 + 16;
@@ -668,16 +638,6 @@ static void test_ScriptString(void)
     BOOL            Disabled = FALSE;
 
     LOGFONTA        lf;
-    HFONT           zfont;
-
-    /* We need a valid HDC to drive a lot of Script functions which requires the following    *
-     * to set up for the tests.                                                               */
-    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0,100,100,
-                           0, 0, 0, NULL);
-    assert(hwnd != 0);
-
-    hdc = GetDC(hwnd);                                      /* We now have a hdc             */
-    ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
 
     lstrcpyA(lf.lfFaceName, "Symbol");
     lf.lfHeight = 10;
@@ -689,10 +649,8 @@ static void test_ScriptString(void)
     lf.lfWeight = 300;
     lf.lfWidth = 10;
 
-    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
- 
     Charset = -1;     /* this flag indicates unicode input */
-    /* Test without hdc to get E_INVALIDARG */
+    /* Test without hdc to get E_PENDING */
     hr = ScriptStringAnalyse( NULL, teststr, String, Glyphs, Charset, Flags,
                              ReqWidth, &Control, &State, Dx, &Tabdef,
                              &InClass, &ssa);
@@ -1298,10 +1256,10 @@ START_TEST(usp10)
     test_ScriptCacheGetHeight(hdc);
     test_ScriptGetGlyphABCWidth(hdc);
 
-    test_ScriptGetFontProperties();
-    test_ScriptTextOut();
+    test_ScriptGetFontProperties(hdc);
+    test_ScriptTextOut(hdc);
     test_ScriptXtoX();
-    test_ScriptString();
+    test_ScriptString(hdc);
     test_ScriptStringXtoCP_CPtoX(hdc);
 
     test_ScriptLayout();
