@@ -191,12 +191,13 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 	LARGE_INTEGER	seekto;
 	ULARGE_INTEGER	newpos1;
 	DWORD * 	header;
-	unsigned int 	i;
+	unsigned int 	i,j;
 
 	/* Let the fun begin */
 	hglob = GlobalAlloc (0, imgsize);
 	data = GlobalLock (hglob);
 	memcpy(data, imgdata, imgsize);
+	GlobalUnlock(hglob); data = NULL;
 
 	hres = CreateStreamOnHGlobal (hglob, FALSE, &stream);
 	ok (hres == S_OK, "createstreamonhglobal failed? doubt it... hres 0x%08x\n", hres);
@@ -210,34 +211,29 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 
 	/* again with Non Statable and Non Seekable stream */
 	stream = (LPSTREAM)NoStatStreamImpl_Construct(hglob);
+	hglob = 0;  /* Non-statable impl always deletes on release */
 	test_pic_with_stream(stream, 0);
 
 	IStream_Release(stream);
-	
-	/* free memory */
-	GlobalUnlock(hglob);
-	GlobalFree(hglob);
-
-	/* more fun!!! */
-	hglob = GlobalAlloc (0, imgsize + 8 * (2 * sizeof(DWORD)));
-	data = GlobalLock (hglob);
-	header = (DWORD *)data;
-	
-	/* multiple copies of header */
-	memcpy(data,"lt\0\0",4);
-	header[1] = imgsize;
-	memcpy(&(header[2]), header, 2 * sizeof(DWORD));
-	memcpy(&(header[4]), header, 4 * sizeof(DWORD));
-	memcpy(&(header[8]), header, 8 * sizeof(DWORD));
-
-	memcpy(data + 8 * (2 * sizeof(DWORD)), imgdata, imgsize);
-	
 	for (i = 1; i <= 8; i++) {
+		/* more fun!!! */
+		hglob = GlobalAlloc (0, imgsize + i * (2 * sizeof(DWORD)));
+		data = GlobalLock (hglob);
+		header = (DWORD *)data;
+
+		/* multiple copies of header */
+		memcpy(data,"lt\0\0",4);
+		header[1] = imgsize;
+		for (j = 2; j <= i; j++) {
+			memcpy(&(header[2 * (j - 1)]), header, 2 * sizeof(DWORD));
+		}
+		memcpy(data + i * (2 * sizeof(DWORD)), imgdata, imgsize);
+		GlobalUnlock(hglob); data = NULL;
+
 		hres = CreateStreamOnHGlobal (hglob, FALSE, &stream);
 		ok (hres == S_OK, "createstreamonhglobal failed? doubt it... hres 0x%08x\n", hres);
 
 		memset(&seekto,0,sizeof(seekto));
-		seekto.u.LowPart = (8 - i) * (2 * sizeof(DWORD));
 		hres = IStream_Seek(stream,seekto,SEEK_CUR,&newpos1);
 		ok (hres == S_OK, "istream seek failed? doubt it... hres 0x%08x\n", hres);
 		test_pic_with_stream(stream, imgsize);
@@ -246,14 +242,11 @@ test_pic(const unsigned char *imgdata, unsigned int imgsize)
 
 		/* again with Non Statable and Non Seekable stream */
 		stream = (LPSTREAM)NoStatStreamImpl_Construct(hglob);
+		hglob = 0;  /* Non-statable impl always deletes on release */
 		test_pic_with_stream(stream, 0);
 
-		IStream_Release(stream);		
+		IStream_Release(stream);
 	}
-
-	/* free memory */
-	GlobalUnlock(hglob);
-	GlobalFree(hglob);
 }
 
 static void test_empty_image(void) {
@@ -670,6 +663,13 @@ static HRESULT WINAPI NoStatStreamImpl_Clone(
 }
 static const IStreamVtbl NoStatStreamImpl_Vtbl;
 
+/*
+    Build an object that implements IStream, without IStream_Stat capabilities.
+    Receives a memory handle with data buffer. If memory handle is non-null,
+    it is assumed to be unlocked, otherwise an internal memory handle is allocated.
+    In any case the object takes ownership of memory handle and will free it on
+    object release.
+ */
 static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal)
 {
   NoStatStreamImpl* newStream;
@@ -678,7 +678,7 @@ static NoStatStreamImpl* NoStatStreamImpl_Construct(HGLOBAL hGlobal)
   if (newStream!=0)
   {
     newStream->lpVtbl = &NoStatStreamImpl_Vtbl;
-    newStream->ref    = 0;
+    newStream->ref    = 1;
     newStream->supportHandle = hGlobal;
 
     if (!newStream->supportHandle)
