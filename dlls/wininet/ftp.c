@@ -1198,6 +1198,20 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
  *    FALSE on failure
  *
  */
+static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPGETFILEW const *req = &workRequest->u.FtpGetFileW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpGetFileW(lpwfs, req->lpszRemoteFile,
+             req->lpszNewFile, req->fFailIfExists,
+             req->dwLocalFlagsAttribute, req->dwFlags, req->dwContext);
+    HeapFree(GetProcessHeap(), 0, req->lpszRemoteFile);
+    HeapFree(GetProcessHeap(), 0, req->lpszNewFile);
+}
+
 BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
     BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
     DWORD dwContext)
@@ -1224,8 +1238,9 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         WORKREQUEST workRequest;
         struct WORKREQ_FTPGETFILEW *req;
 
-        workRequest.asyncall = FTPGETFILEW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpGetFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpGetFileW;
         req->lpszRemoteFile = WININET_strdupW(lpszRemoteFile);
         req->lpszNewFile = WININET_strdupW(lpszNewFile);
