@@ -1949,15 +1949,6 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     BOOL lighting_changed, lighting_original = FALSE;
 
-    if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-        check_fbo_status(iface);
-    }
-
-    if (This->depth_copy_state == WINED3D_DCS_COPY) {
-        depth_copy(iface);
-    }
-    This->depth_copy_state = WINED3D_DCS_INITIAL;
-
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
      * here simply check whether a shader was set, or the user disabled shaders */
     if (This->vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader && 
@@ -1989,6 +1980,15 @@ void drawPrimitive(IWineD3DDevice *iface,
         StateTable[dirtyState].apply(dirtyState, This->stateBlock);
     }
     This->numDirtyEntries = 0; /* This makes the whole list clean */
+
+    if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        check_fbo_status(iface);
+    }
+
+    if (This->depth_copy_state == WINED3D_DCS_COPY) {
+        depth_copy(iface);
+    }
+    This->depth_copy_state = WINED3D_DCS_INITIAL;
 
     if(DrawPrimStrideData) {
 
