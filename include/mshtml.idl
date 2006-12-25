@@ -5137,4 +5137,40 @@ coclass HTMLDocument
     [source]          dispinterface HTMLDocumentEvents2;
 }
 
+/*****************************************************************************
+ *    IHTMLFrameBase2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f6db-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLFrameBase2 : IDispatch
+{
+    [propget, id(DISPID_IHTMLFRAMEBASE2_CONTENTWINDOW)]
+    HRESULT contentWindow([retval, out] IHTMLWindow2 **p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE2_ONLOAD), displaybind, bindable]
+    HRESULT onload([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE2_ONLOAD), displaybind, bindable]
+    HRESULT onload([retval, out] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE2_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE2_ONREADYSTATECHANGE), displaybind, bindable]
+    HRESULT onreadystatechange([retval, out] VARIANT *p);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE2_READYSTATE)]
+    HRESULT readyState([retval, out] BSTR *p);
+
+    [propput, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]
+    HRESULT allowTransparency([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLFRAMEBASE2_ALLOWTRANSPARENCY)]
+    HRESULT allowTransparency([retval, out] VARIANT_BOOL *p);
+}
+
 } /* library MSHTML */
