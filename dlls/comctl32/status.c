@@ -433,6 +433,8 @@ static BOOL
 STATUSBAR_GetRect (STATUS_INFO *infoPtr, INT nPart, LPRECT rect)
 {
     TRACE("part %d\n", nPart);
+    if(nPart >= infoPtr->numParts || nPart < 0)
+      return FALSE;
     if (infoPtr->simple)
 	*rect = infoPtr->part0.bound;
     else
