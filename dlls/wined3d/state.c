@@ -208,14 +208,11 @@ static void state_ambient(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     int srcBlend = GL_ZERO;
     int dstBlend = GL_ZERO;
-    float col[4];
 
     /* GL_LINE_SMOOTH needs GL_BLEND to work, according to the red book, and special blending params */
-    /* TODO: Is enabling blending really affected by the blendfactor??? */
     if (stateblock->renderState[WINED3DRS_ALPHABLENDENABLE]      ||
         stateblock->renderState[WINED3DRS_EDGEANTIALIAS]         ||
-        stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE] ||
-        stateblock->renderState[WINED3DRS_BLENDFACTOR] != 0xFFFFFFFF) {
+        stateblock->renderState[WINED3DRS_ANTIALIASEDLINEENABLE]) {
         glEnable(GL_BLEND);
         checkGLcall("glEnable GL_BLEND");
     } else {
@@ -303,6 +300,10 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* TODO: Remove when state management done */
     stateblock->wineD3DDevice->dstBlend = dstBlend;
     stateblock->wineD3DDevice->srcBlend = srcBlend;
+}
+
+static void state_blendfactor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    float col[4];
 
     TRACE("Setting BlendFactor to %d\n", stateblock->renderState[WINED3DRS_BLENDFACTOR]);
     D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_BLENDFACTOR], col);
@@ -1961,7 +1962,7 @@ const struct StateEntry StateTable[] =
     { /*190, WINED3DRS_COLORWRITEENABLE1            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*191, WINED3DRS_COLORWRITEENABLE2            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
     { /*192, WINED3DRS_COLORWRITEENABLE3            */      STATE_RENDER(WINED3DRS_COLORWRITEENABLE),           state_colorwrite    },
-    { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_ALPHABLENDENABLE),           state_blend         },
+    { /*193, WINED3DRS_BLENDFACTOR                  */      STATE_RENDER(WINED3DRS_BLENDFACTOR),                state_blendfactor   },
     { /*194, WINED3DRS_SRGBWRITEENABLE              */      STATE_RENDER(WINED3DRS_SRGBWRITEENABLE),            state_srgbwrite     },
     { /*195, WINED3DRS_DEPTHBIAS                    */      STATE_RENDER(WINED3DRS_DEPTHBIAS),                  state_depthbias     },
     { /*196, undefined                              */      0,                                                  state_undefined     },
