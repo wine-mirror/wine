@@ -3243,21 +3243,6 @@ static VOID INTERNET_ExecuteWork(void)
         workRequest.asyncproc(&workRequest);
         break;
 
-    case FTPPUTFILEW:
-        {
-        struct WORKREQ_FTPPUTFILEW *req = &workRequest.u.FtpPutFileW;
-        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
-
-        TRACE("FTPPUTFILEW %p\n", lpwfs);
-
-	FTP_FtpPutFileW(lpwfs, req->lpszLocalFile,
-                   req->lpszNewRemoteFile, req->dwFlags, req->dwContext);
-
-	HeapFree(GetProcessHeap(), 0, req->lpszLocalFile);
-	HeapFree(GetProcessHeap(), 0, req->lpszNewRemoteFile);
-        }
-	break;
-
     case FTPSETCURRENTDIRECTORYW:
         {
         struct WORKREQ_FTPSETCURRENTDIRECTORYW *req;
