@@ -1810,6 +1810,17 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
  * SEE
  *  InternetOpenUrlA(), HttpOpenRequestA()
  */
+void AsyncInternetReadFileExProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_INTERNETREADFILEEXA const *req = &workRequest->u.InternetReadFileExA;
+
+    TRACE("INTERNETREADFILEEXA %p\n", workRequest->hdr);
+
+    INTERNET_ReadFile(workRequest->hdr, req->lpBuffersOut->lpvBuffer,
+        req->lpBuffersOut->dwBufferLength,
+        &req->lpBuffersOut->dwBufferLength, TRUE, TRUE);
+}
+
 BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOut,
 	DWORD dwFlags, DWORD dwContext)
 {
@@ -1844,7 +1855,8 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
         WORKREQUEST workRequest;
         struct WORKREQ_INTERNETREADFILEEXA *req;
 
-        workRequest.asyncall = INTERNETREADFILEEXA;
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncInternetReadFileExProc;
         workRequest.hdr = WININET_AddRef( lpwh );
         req = &workRequest.u.InternetReadFileExA;
         req->lpBuffersOut = lpBuffersOut;
@@ -3376,18 +3388,6 @@ static VOID INTERNET_ExecuteWork(void)
 	FTP_FindNextFileW(lpwh, req->lpFindFileData);
         }
 	break;
-
-    case INTERNETREADFILEEXA:
-        {
-        struct WORKREQ_INTERNETREADFILEEXA *req = &workRequest.u.InternetReadFileExA;
-
-        TRACE("INTERNETREADFILEEXA %p\n", workRequest.hdr);
-
-        INTERNET_ReadFile(workRequest.hdr, req->lpBuffersOut->lpvBuffer,
-            req->lpBuffersOut->dwBufferLength,
-            &req->lpBuffersOut->dwBufferLength, TRUE, TRUE);
-        }
-        break;
     }
     WININET_Release( workRequest.hdr );
 }
