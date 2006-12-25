@@ -250,7 +250,6 @@ typedef struct
 typedef enum
 {
     CALLASYNCPROC,
-    FTPREMOVEDIRECTORYW,
     FTPRENAMEFILEW,
     FTPFINDNEXTW,
 } ASYNC_FUNC;

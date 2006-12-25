@@ -1519,6 +1519,17 @@ BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
  *    FALSE on failure
  *
  */
+static void AsyncFtpRemoveDirectoryProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPREMOVEDIRECTORYW const *req = &workRequest->u.FtpRemoveDirectoryW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpRemoveDirectoryW(lpwfs, req->lpszDirectory);
+    HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
+}
+
 BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -1538,8 +1549,9 @@ BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
         WORKREQUEST workRequest;
         struct WORKREQ_FTPREMOVEDIRECTORYW *req;
 
-        workRequest.asyncall = FTPREMOVEDIRECTORYW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpRemoveDirectoryProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpRemoveDirectoryW;
         req->lpszDirectory = WININET_strdupW(lpszDirectory);
 

@@ -3243,19 +3243,6 @@ static VOID INTERNET_ExecuteWork(void)
         workRequest.asyncproc(&workRequest);
         break;
 
-    case FTPREMOVEDIRECTORYW:
-        {
-        struct WORKREQ_FTPREMOVEDIRECTORYW *req;
-        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
-
-        TRACE("FTPREMOVEDIRECTORYW %p\n", lpwfs);
-
-        req = &workRequest.u.FtpRemoveDirectoryW;
-        FTP_FtpRemoveDirectoryW(lpwfs, req->lpszDirectory);
-	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
-        }
-	break;
-
     case FTPRENAMEFILEW:
         {
         struct WORKREQ_FTPRENAMEFILEW *req = &workRequest.u.FtpRenameFileW;
