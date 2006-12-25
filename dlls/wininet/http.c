@@ -180,6 +180,20 @@ static void HTTP_FreeTokens(LPWSTR * token_array)
  * Helper functions for the HttpSendRequest(Ex) functions
  * 
  */
+static void AsyncHttpSendRequestProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_HTTPSENDREQUESTW const *req = &workRequest->u.HttpSendRequestW;
+    LPWININETHTTPREQW lpwhr = (LPWININETHTTPREQW) workRequest->hdr;
+
+    TRACE("%p\n", lpwhr);
+
+    HTTP_HttpSendRequestW(lpwhr, req->lpszHeader,
+            req->dwHeaderLength, req->lpOptional, req->dwOptionalLength,
+            req->dwContentLength, req->bEndRequest);
+
+    HeapFree(GetProcessHeap(), 0, req->lpszHeader);
+}
+
 static void HTTP_FixVerb( LPWININETHTTPREQW lpwhr )
 {
     /* if the verb is NULL default to GET */
@@ -1778,7 +1792,8 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
         WORKREQUEST workRequest;
         struct WORKREQ_HTTPSENDREQUESTW *req;
 
-        workRequest.asyncall = HTTPSENDREQUESTW;
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncHttpSendRequestProc;
         workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;
         if (lpBuffersIn)
@@ -1873,8 +1888,9 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         WORKREQUEST workRequest;
         struct WORKREQ_HTTPSENDREQUESTW *req;
 
-        workRequest.asyncall = HTTPSENDREQUESTW;
-	workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncHttpSendRequestProc;
+        workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;
         if (lpszHeaders)
             req->lpszHeader = WININET_strdupW(lpszHeaders);
@@ -2350,7 +2366,6 @@ lend:
     TRACE("<--\n");
     return bSuccess;
 }
-
 
 /***********************************************************************
  *           HTTP_Connect  (internal)
