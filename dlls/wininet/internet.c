@@ -3243,19 +3243,6 @@ static VOID INTERNET_ExecuteWork(void)
         workRequest.asyncproc(&workRequest);
         break;
 
-    case FTPGETCURRENTDIRECTORYW:
-        {
-        struct WORKREQ_FTPGETCURRENTDIRECTORYW *req;
-        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
-
-        TRACE("FTPGETCURRENTDIRECTORYW %p\n", lpwfs);
-
-        req = &workRequest.u.FtpGetCurrentDirectoryW;
-        FTP_FtpGetCurrentDirectoryW(lpwfs,
-		req->lpszDirectory, req->lpdwDirectory);
-        }
-	break;
-
     case FTPOPENFILEW:
         {
         struct WORKREQ_FTPOPENFILEW *req = &workRequest.u.FtpOpenFileW;

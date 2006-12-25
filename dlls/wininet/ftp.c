@@ -836,6 +836,16 @@ BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDire
  *    FALSE on failure
  *
  */
+static void AsyncFtpGetCurrentDirectoryProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPGETCURRENTDIRECTORYW const *req = &workRequest->u.FtpGetCurrentDirectoryW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpGetCurrentDirectoryW(lpwfs, req->lpszDirectory, req->lpdwDirectory);
+}
+
 BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDirectory,
     LPDWORD lpdwCurrentDirectory)
 {
@@ -858,8 +868,9 @@ BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDir
         WORKREQUEST workRequest;
         struct WORKREQ_FTPGETCURRENTDIRECTORYW *req;
 
-        workRequest.asyncall =  FTPGETCURRENTDIRECTORYW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpGetCurrentDirectoryProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpGetCurrentDirectoryW;
 	req->lpszDirectory = lpszCurrentDirectory;
 	req->lpdwDirectory = lpdwCurrentDirectory;
