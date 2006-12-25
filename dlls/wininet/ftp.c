@@ -1388,6 +1388,17 @@ BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
  *    FALSE on failure
  *
  */
+static void AsyncFtpDeleteFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPDELETEFILEW const *req = &workRequest->u.FtpDeleteFileW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpDeleteFileW(lpwfs, req->lpszFilename);
+    HeapFree(GetProcessHeap(), 0, req->lpszFilename);
+}
+
 BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -1407,8 +1418,9 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
         WORKREQUEST workRequest;
         struct WORKREQ_FTPDELETEFILEW *req;
 
-        workRequest.asyncall = FTPDELETEFILEW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpDeleteFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpDeleteFileW;
         req->lpszFilename = WININET_strdupW(lpszFileName);
 
