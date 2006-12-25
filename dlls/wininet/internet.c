@@ -947,7 +947,6 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
         WORKREQUEST workRequest;
         struct WORKREQ_FTPFINDNEXTW *req;
 
-        workRequest.asyncall = CALLASYNCPROC;
         workRequest.asyncproc = AsyncFtpFindNextFileProc;
         workRequest.hdr = WININET_AddRef( &lpwh->hdr );
         req = &workRequest.u.FtpFindNextW;
@@ -1866,7 +1865,6 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
         WORKREQUEST workRequest;
         struct WORKREQ_INTERNETREADFILEEXA *req;
 
-        workRequest.asyncall = CALLASYNCPROC;
         workRequest.asyncproc = AsyncInternetReadFileExProc;
         workRequest.hdr = WININET_AddRef( lpwh );
         req = &workRequest.u.InternetReadFileExA;
@@ -2940,7 +2938,6 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	WORKREQUEST workRequest;
 	struct WORKREQ_INTERNETOPENURLW *req;
 
-	workRequest.asyncall = CALLASYNCPROC;
 	workRequest.asyncproc = AsyncInternetOpenUrlProc;
 	workRequest.hdr = WININET_AddRef( &hIC->hdr );
 	req = &workRequest.u.InternetOpenUrlW;
@@ -3248,12 +3245,8 @@ static VOID INTERNET_ExecuteWork(void)
     if (!INTERNET_GetWorkRequest(&workRequest))
         return;
 
-    switch (workRequest.asyncall)
-    {
-    case CALLASYNCPROC:
-        workRequest.asyncproc(&workRequest);
-        break;
-    }
+    workRequest.asyncproc(&workRequest);
+
     WININET_Release( workRequest.hdr );
 }
 

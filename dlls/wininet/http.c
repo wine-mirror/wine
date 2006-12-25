@@ -1792,7 +1792,6 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
         WORKREQUEST workRequest;
         struct WORKREQ_HTTPSENDREQUESTW *req;
 
-        workRequest.asyncall = CALLASYNCPROC;
         workRequest.asyncproc = AsyncHttpSendRequestProc;
         workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;
@@ -1888,7 +1887,6 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         WORKREQUEST workRequest;
         struct WORKREQ_HTTPSENDREQUESTW *req;
 
-        workRequest.asyncall = CALLASYNCPROC;
         workRequest.asyncproc = AsyncHttpSendRequestProc;
         workRequest.hdr = WININET_AddRef( &lpwhr->hdr );
         req = &workRequest.u.HttpSendRequestW;

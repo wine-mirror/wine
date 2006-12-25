@@ -247,11 +247,6 @@ typedef struct
     LPFILEPROPERTIESW lpafp;
 } WININETFTPFINDNEXTW, *LPWININETFTPFINDNEXTW;
 
-typedef enum
-{
-    CALLASYNCPROC,
-} ASYNC_FUNC;
-
 struct WORKREQ_FTPPUTFILEW
 {
     LPWSTR lpszLocalFile;
@@ -358,7 +353,6 @@ struct WORKREQ_INTERNETREADFILEEXA
 
 typedef struct WORKREQ
 {
-    ASYNC_FUNC asyncall;
     void (*asyncproc)(struct WORKREQ*);
     WININETHANDLEHEADER *hdr;
 

@@ -293,7 +293,6 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
 	    memcpy(lpvStatusInfo_copy, lpvStatusInfo, dwStatusInfoLength);
 	}
 
-	workRequest.asyncall = CALLASYNCPROC;
 	workRequest.asyncproc = SendAsyncCallbackProc;
 	workRequest.hdr = WININET_AddRef( hdr );
 	req = &workRequest.u.SendCallback;
