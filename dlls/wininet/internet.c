@@ -2875,6 +2875,19 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
  * RETURNS
  *   handle of connection or NULL on failure
  */
+static void AsyncInternetOpenUrlProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_INTERNETOPENURLW const *req = &workRequest->u.InternetOpenUrlW;
+    LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) workRequest->hdr;
+
+    TRACE("%p\n", hIC);
+
+    INTERNET_InternetOpenUrlW(hIC, req->lpszUrl,
+                              req->lpszHeaders, req->dwHeadersLength, req->dwFlags, req->dwContext);
+    HeapFree(GetProcessHeap(), 0, req->lpszUrl);
+    HeapFree(GetProcessHeap(), 0, req->lpszHeaders);
+}
+
 HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext)
 {
@@ -2903,8 +2916,9 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
     if (hIC->hdr.dwFlags & INTERNET_FLAG_ASYNC) {
 	WORKREQUEST workRequest;
 	struct WORKREQ_INTERNETOPENURLW *req;
-	
-	workRequest.asyncall = INTERNETOPENURLW;
+
+	workRequest.asyncall = CALLASYNCPROC;
+	workRequest.asyncproc = AsyncInternetOpenUrlProc;
 	workRequest.hdr = WININET_AddRef( &hIC->hdr );
 	req = &workRequest.u.InternetOpenUrlW;
 	req->lpszUrl = WININET_strdupW(lpszUrl);
@@ -3363,19 +3377,6 @@ static VOID INTERNET_ExecuteWork(void)
         }
 	break;
 
-    case INTERNETOPENURLW:
-	{
-	struct WORKREQ_INTERNETOPENURLW *req = &workRequest.u.InternetOpenUrlW;
-        LPWININETAPPINFOW hIC = (LPWININETAPPINFOW) workRequest.hdr;
-	
-        TRACE("INTERNETOPENURLW %p\n", hIC);
-
-	INTERNET_InternetOpenUrlW(hIC, req->lpszUrl,
-				  req->lpszHeaders, req->dwHeadersLength, req->dwFlags, req->dwContext);
-	HeapFree(GetProcessHeap(), 0, req->lpszUrl);
-	HeapFree(GetProcessHeap(), 0, req->lpszHeaders);
-	}
-	break;
     case INTERNETREADFILEEXA:
         {
         struct WORKREQ_INTERNETREADFILEEXA *req = &workRequest.u.InternetReadFileExA;
