@@ -1849,6 +1849,7 @@ static void check_fbo_status(IWineD3DDevice *iface) {
 
 static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    GLint old_binding = 0;
 
     glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1860,6 +1861,7 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glDepthFunc(GL_ALWAYS);
 
     GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
     glBindTexture(GL_TEXTURE_2D, texture);
     glEnable(GL_TEXTURE_2D);
 
@@ -1871,6 +1873,8 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glVertex2f(-1.0f, 1.0f);
     glVertex2f(1.0f, 1.0f);
     glEnd();
+
+    glBindTexture(GL_TEXTURE_2D, old_binding);
 
     glPopAttrib();
 }
@@ -1887,6 +1891,7 @@ static void depth_copy(IWineD3DDevice *iface) {
 
     if (This->render_offscreen) {
         static GLuint tmp_texture = 0;
+        GLint old_binding = 0;
 
         TRACE("Copying onscreen depth buffer to offscreen surface\n");
 
@@ -1897,6 +1902,7 @@ static void depth_copy(IWineD3DDevice *iface) {
         /* Note that we use depth_blt here as well, rather than glCopyTexImage2D
          * directly on the FBO texture. That's because we need to flip. */
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0));
+        glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_binding);
         glBindTexture(GL_TEXTURE_2D, tmp_texture);
         glCopyTexImage2D(depth_stencil->glDescription.target,
                 depth_stencil->glDescription.level,
@@ -1909,6 +1915,7 @@ static void depth_copy(IWineD3DDevice *iface) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+        glBindTexture(GL_TEXTURE_2D, old_binding);
 
         GL_EXTCALL(glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, This->fbo));
         checkGLcall("glBindFramebuffer()");

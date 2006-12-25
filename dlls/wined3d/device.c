@@ -5840,16 +5840,18 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
 
     if (depth_stencil_impl) {
         GLenum texttarget, target;
+        GLint old_binding = 0;
 
         IWineD3DSurface_PreLoad(depth_stencil);
         texttarget = depth_stencil_impl->glDescription.target;
         target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
 
+        glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
         glBindTexture(target, depth_stencil_impl->glDescription.textureName);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-        glBindTexture(target, 0);
+        glBindTexture(target, old_binding);
 
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT, texttarget, depth_stencil_impl->glDescription.textureName, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
@@ -5876,15 +5878,17 @@ static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurf
 
     if (rtimpl) {
         GLenum texttarget, target;
+        GLint old_binding = 0;
 
         IWineD3DSurface_PreLoad(render_target);
         texttarget = rtimpl->glDescription.target;
         target = texttarget == GL_TEXTURE_2D ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP_ARB;
 
+        glGetIntegerv(texttarget == GL_TEXTURE_2D ? GL_TEXTURE_BINDING_2D : GL_TEXTURE_BINDING_CUBE_MAP_ARB, &old_binding);
         glBindTexture(target, rtimpl->glDescription.textureName);
         glTexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glBindTexture(target, 0);
+        glBindTexture(target, old_binding);
 
         GL_EXTCALL(glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + idx, texttarget, rtimpl->glDescription.textureName, 0));
         checkGLcall("glFramebufferTexture2DEXT()");
