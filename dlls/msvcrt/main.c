@@ -28,7 +28,18 @@ DWORD msvcrt_tls_index;
 
 static inline BOOL msvcrt_init_tls(void);
 static inline BOOL msvcrt_free_tls(void);
-const char* msvcrt_get_reason(DWORD reason);
+
+static const char* msvcrt_get_reason(DWORD reason)
+{
+  switch (reason)
+  {
+  case DLL_PROCESS_ATTACH: return "DLL_PROCESS_ATTACH";
+  case DLL_PROCESS_DETACH: return "DLL_PROCESS_DETACH";
+  case DLL_THREAD_ATTACH:  return "DLL_THREAD_ATTACH";
+  case DLL_THREAD_DETACH:  return "DLL_THREAD_DETACH";
+  }
+  return "UNKNOWN";
+}
 
 /*********************************************************************
  *                  Init
@@ -105,19 +116,6 @@ static inline BOOL msvcrt_free_tls(void)
   }
   return TRUE;
 }
-
-const char* msvcrt_get_reason(DWORD reason)
-{
-  switch (reason)
-  {
-  case DLL_PROCESS_ATTACH: return "DLL_PROCESS_ATTACH";
-  case DLL_PROCESS_DETACH: return "DLL_PROCESS_DETACH";
-  case DLL_THREAD_ATTACH:  return "DLL_THREAD_ATTACH";
-  case DLL_THREAD_DETACH:  return "DLL_THREAD_DETACH";
-  }
-  return "UNKNOWN";
-}
-
 
 /*********************************************************************
  *		$I10_OUTPUT (MSVCRT.@)
