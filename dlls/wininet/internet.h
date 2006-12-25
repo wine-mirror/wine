@@ -250,7 +250,6 @@ typedef struct
 typedef enum
 {
     CALLASYNCPROC,
-    FTPFINDNEXTW,
 } ASYNC_FUNC;
 
 struct WORKREQ_FTPPUTFILEW

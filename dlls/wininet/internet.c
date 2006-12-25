@@ -915,6 +915,16 @@ BOOL WINAPI InternetFindNextFileA(HINTERNET hFind, LPVOID lpvFindData)
  *    FALSE on failure
  *
  */
+static void AsyncFtpFindNextFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPFINDNEXTW *req = &workRequest->u.FtpFindNextW;
+    LPWININETFTPFINDNEXTW lpwh = (LPWININETFTPFINDNEXTW) workRequest->hdr;
+
+    TRACE("%p\n", lpwh);
+
+    FTP_FindNextFileW(lpwh, req->lpFindFileData);
+}
+
 BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
 {
     LPWININETAPPINFOW hIC = NULL;
@@ -937,10 +947,11 @@ BOOL WINAPI InternetFindNextFileW(HINTERNET hFind, LPVOID lpvFindData)
         WORKREQUEST workRequest;
         struct WORKREQ_FTPFINDNEXTW *req;
 
-        workRequest.asyncall = FTPFINDNEXTW;
-	workRequest.hdr = WININET_AddRef( &lpwh->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpFindNextFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwh->hdr );
         req = &workRequest.u.FtpFindNextW;
-	req->lpFindFileData = lpvFindData;
+        req->lpFindFileData = lpvFindData;
 
 	bSuccess = INTERNET_AsyncCall(&workRequest);
     }
@@ -3242,18 +3253,6 @@ static VOID INTERNET_ExecuteWork(void)
     case CALLASYNCPROC:
         workRequest.asyncproc(&workRequest);
         break;
-
-    case FTPFINDNEXTW:
-        {
-        struct WORKREQ_FTPFINDNEXTW *req;
-        LPWININETFTPFINDNEXTW lpwh = (LPWININETFTPFINDNEXTW) workRequest.hdr;
-
-        TRACE("INTERNETFINDNEXTW %p\n", lpwh);
-
-        req = &workRequest.u.FtpFindNextW;
-	FTP_FindNextFileW(lpwh, req->lpFindFileData);
-        }
-	break;
     }
     WININET_Release( workRequest.hdr );
 }
