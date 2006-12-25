@@ -1654,6 +1654,18 @@ BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDes
  *    FALSE on failure
  *
  */
+static void AsyncFtpRenameFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPRENAMEFILEW const *req = &workRequest->u.FtpRenameFileW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpRenameFileW(lpwfs, req->lpszSrcFile, req->lpszDestFile);
+    HeapFree(GetProcessHeap(), 0, req->lpszSrcFile);
+    HeapFree(GetProcessHeap(), 0, req->lpszDestFile);
+}
+
 BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszDest)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -1673,8 +1685,9 @@ BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszD
         WORKREQUEST workRequest;
         struct WORKREQ_FTPRENAMEFILEW *req;
 
-        workRequest.asyncall = FTPRENAMEFILEW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpRenameFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpRenameFileW;
         req->lpszSrcFile = WININET_strdupW(lpszSrc);
         req->lpszDestFile = WININET_strdupW(lpszDest);
