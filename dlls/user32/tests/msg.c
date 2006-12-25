@@ -8345,7 +8345,7 @@ static const struct message WmShow[] = {
     { 0 }
 };
 static const struct message WmShowNoActivate_1[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNOACTIVATE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|0x8000 },
     { WM_MOVE, sent|defwinproc },
@@ -8353,7 +8353,7 @@ static const struct message WmShowNoActivate_1[] = {
     { 0 }
 };
 static const struct message WmShowNoActivate_2[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNOACTIVATE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
@@ -8376,7 +8376,7 @@ static const struct message WmShowNA_2[] = {
     { 0 }
 };
 static const struct message WmRestore_1[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { HCBT_ACTIVATE, hook },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
@@ -8393,7 +8393,7 @@ static const struct message WmRestore_2[] = {
     { 0 }
 };
 static const struct message WmRestore_3[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { HCBT_ACTIVATE, hook },
@@ -8405,7 +8405,15 @@ static const struct message WmRestore_3[] = {
     { 0 }
 };
 static const struct message WmRestore_4[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
+    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
+    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|0x8000 },
+    { WM_MOVE, sent|defwinproc },
+    { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
+    { 0 }
+};
+static const struct message WmRestore_5[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWNORMAL },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_MOVE, sent|defwinproc },
@@ -8432,7 +8440,7 @@ static const struct message WmHide_3[] = {
     { 0 }
 };
 static const struct message WmShowMinimized_1[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINIMIZED },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { HCBT_ACTIVATE, hook },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
@@ -8442,7 +8450,7 @@ static const struct message WmShowMinimized_1[] = {
     { 0 }
 };
 static const struct message WmMinimize_1[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
     { HCBT_SETFOCUS, hook },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
@@ -8451,7 +8459,7 @@ static const struct message WmMinimize_1[] = {
     { 0 }
 };
 static const struct message WmMinimize_2[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
@@ -8459,7 +8467,7 @@ static const struct message WmMinimize_2[] = {
     { 0 }
 };
 static const struct message WmMinimize_3[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
@@ -8467,17 +8475,29 @@ static const struct message WmMinimize_3[] = {
     { 0 }
 };
 static const struct message WmShowMinNoActivate[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINNOACTIVE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
-static const struct message WmMinMax[] = {
-    { HCBT_MINMAX, hook },
+static const struct message WmMinMax_1[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINIMIZED },
+    { 0 }
+};
+static const struct message WmMinMax_2[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
+    { 0 }
+};
+static const struct message WmMinMax_3[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
+    { 0 }
+};
+static const struct message WmMinMax_4[] = {
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINNOACTIVE },
     { 0 }
 };
 static const struct message WmShowMaximized_1[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { HCBT_ACTIVATE, hook },
@@ -8489,7 +8509,7 @@ static const struct message WmShowMaximized_1[] = {
     { 0 }
 };
 static const struct message WmShowMaximized_2[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
@@ -8503,7 +8523,7 @@ static const struct message WmShowMaximized_2[] = {
     { 0 }
 };
 static const struct message WmShowMaximized_3[] = {
-    { HCBT_MINMAX, hook },
+    { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|0x8000 },
@@ -8529,11 +8549,11 @@ static void test_ShowWindow(void)
 /*  3 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
 /*  4 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
 /*  5 */ { SW_SHOWMINIMIZED, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinimized_1, TRUE },
-/*  6 */ { SW_SHOWMINIMIZED, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax, FALSE },
+/*  6 */ { SW_SHOWMINIMIZED, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_1, FALSE },
 /*  7 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_1, FALSE },
 /*  8 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
 /*  9 */ { SW_SHOWMAXIMIZED, FALSE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_1, TRUE },
-/* 10 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax, FALSE },
+/* 10 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2, FALSE },
 /* 11 */ { SW_HIDE, TRUE, WS_MAXIMIZE, WmHide_1, FALSE },
 /* 12 */ { SW_HIDE, FALSE, WS_MAXIMIZE, WmEmptySeq, FALSE },
 /* 13 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_1, FALSE },
@@ -8543,10 +8563,10 @@ static void test_ShowWindow(void)
 /* 17 */ { SW_SHOW, FALSE, WS_VISIBLE, WmShow, TRUE },
 /* 18 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
 /* 19 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1, TRUE },
-/* 20 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax, FALSE },
+/* 20 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
 /* 21 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, TRUE },
 /* 22 */ { SW_SHOWMINNOACTIVE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinNoActivate, TRUE },
-/* 23 */ { SW_SHOWMINNOACTIVE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax, FALSE },
+/* 23 */ { SW_SHOWMINNOACTIVE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_4, FALSE },
 /* 24 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
 /* 25 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
 /* 26 */ { SW_SHOWNA, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_1, FALSE },
@@ -8564,16 +8584,16 @@ static void test_ShowWindow(void)
 /* 38 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq, TRUE },
 /* 39 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq, TRUE },
 /* 40 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_2, TRUE },
-/* 41 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax, FALSE },
+/* 41 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
 /* 42 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_2, TRUE },
-/* 43 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax, FALSE },
+/* 43 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2, FALSE },
 /* 44 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1, TRUE },
-/* 45 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax, FALSE },
+/* 45 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
 /* 46 */ { SW_RESTORE, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmRestore_3, TRUE },
 /* 47 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmRestore_4, FALSE },
 /* 48 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_3, FALSE },
 /* 49 */ { SW_SHOW, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmEmptySeq, FALSE },
-/* 50 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_4, FALSE },
+/* 50 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmRestore_5, FALSE },
 /* 51 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmEmptySeq, TRUE },
 /* 52 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
 /* 53 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
