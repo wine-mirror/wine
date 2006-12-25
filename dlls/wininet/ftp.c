@@ -1003,6 +1003,18 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
  *    NULL on failure
  *
  */
+static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPOPENFILEW const *req = &workRequest->u.FtpOpenFileW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpOpenFileW(lpwfs, req->lpszFilename,
+        req->dwAccess, req->dwFlags, req->dwContext);
+    HeapFree(GetProcessHeap(), 0, req->lpszFilename);
+}
+
 HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
     DWORD dwContext)
@@ -1031,8 +1043,9 @@ HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
         WORKREQUEST workRequest;
         struct WORKREQ_FTPOPENFILEW *req;
 
-        workRequest.asyncall = FTPOPENFILEW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpOpenFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpOpenFileW;
 	req->lpszFilename = WININET_strdupW(lpszFileName);
 	req->dwAccess = fdwAccess;
