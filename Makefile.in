@@ -244,6 +244,7 @@ ALL_MAKEFILES = \
 	dlls/iphlpapi/Makefile \
 	dlls/iphlpapi/tests/Makefile \
 	dlls/itss/Makefile \
+	dlls/itss/tests/Makefile \
 	dlls/kernel32/Makefile \
 	dlls/kernel32/tests/Makefile \
 	dlls/localspl/Makefile \
@@ -568,6 +569,7 @@ dlls/inseng/Makefile: dlls/inseng/Makefile.in dlls/Makedll.rules
 dlls/iphlpapi/Makefile: dlls/iphlpapi/Makefile.in dlls/Makedll.rules
 dlls/iphlpapi/tests/Makefile: dlls/iphlpapi/tests/Makefile.in dlls/Maketest.rules
 dlls/itss/Makefile: dlls/itss/Makefile.in dlls/Makedll.rules
+dlls/itss/tests/Makefile: dlls/itss/tests/Makefile.in dlls/Maketest.rules
 dlls/kernel32/Makefile: dlls/kernel32/Makefile.in dlls/Makedll.rules
 dlls/kernel32/tests/Makefile: dlls/kernel32/tests/Makefile.in dlls/Maketest.rules
 dlls/localspl/Makefile: dlls/localspl/Makefile.in dlls/Makedll.rules

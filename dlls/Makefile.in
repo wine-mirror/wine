@@ -233,6 +233,7 @@ TESTSUBDIRS = \
 	hlink/tests \
 	infosoft/tests \
 	iphlpapi/tests \
+	itss/tests \
 	kernel32/tests \
 	localspl/tests \
 	lz32/tests \

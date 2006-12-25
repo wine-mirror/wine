@@ -1,0 +1,18 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = itss.dll
+IMPORTS   = ole32 kernel32
+EXTRALIBS = -luuid
+
+CTESTS = \
+	protocol.c
+
+RC_SRCS = rsrc.rc
+RC_BINSRC = rsrc.rc
+RC_BINARIES = data.chm
+
+@MAKE_TEST_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

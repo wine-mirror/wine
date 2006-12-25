@@ -1601,6 +1601,7 @@ dlls/inseng/Makefile
 dlls/iphlpapi/Makefile
 dlls/iphlpapi/tests/Makefile
 dlls/itss/Makefile
+dlls/itss/tests/Makefile
 dlls/kernel32/Makefile
 dlls/kernel32/tests/Makefile
 dlls/localspl/Makefile
