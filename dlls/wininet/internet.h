@@ -261,7 +261,6 @@ typedef enum
     FTPREMOVEDIRECTORYW,
     FTPRENAMEFILEW,
     FTPFINDNEXTW,
-    HTTPOPENREQUESTW,
     INTERNETOPENURLW,
     INTERNETREADFILEEXA,
 } ASYNC_FUNC;
@@ -337,17 +336,6 @@ struct WORKREQ_FTPFINDNEXTW
     LPWIN32_FIND_DATAW lpFindFileData;
 };
 
-struct WORKREQ_HTTPOPENREQUESTW
-{
-    LPWSTR lpszVerb;
-    LPWSTR lpszObjectName;
-    LPWSTR lpszVersion;
-    LPWSTR lpszReferrer;
-    LPCWSTR *lpszAcceptTypes;
-    DWORD  dwFlags;
-    DWORD  dwContext;
-};
-
 struct WORKREQ_HTTPSENDREQUESTW
 {
     LPWSTR lpszHeader;
@@ -399,7 +387,6 @@ typedef struct WORKREQ
         struct WORKREQ_FTPREMOVEDIRECTORYW      FtpRemoveDirectoryW;
         struct WORKREQ_FTPRENAMEFILEW           FtpRenameFileW;
         struct WORKREQ_FTPFINDNEXTW             FtpFindNextW;
-        struct WORKREQ_HTTPOPENREQUESTW         HttpOpenRequestW;
         struct WORKREQ_HTTPSENDREQUESTW         HttpSendRequestW;
         struct WORKREQ_SENDCALLBACK             SendCallback;
 	struct WORKREQ_INTERNETOPENURLW         InternetOpenUrlW;

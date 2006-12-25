@@ -3363,24 +3363,6 @@ static VOID INTERNET_ExecuteWork(void)
         }
 	break;
 
-    case HTTPOPENREQUESTW:
-        {
-        struct WORKREQ_HTTPOPENREQUESTW *req = &workRequest.u.HttpOpenRequestW;
-        LPWININETHTTPSESSIONW lpwhs = (LPWININETHTTPSESSIONW) workRequest.hdr;
-
-        TRACE("HTTPOPENREQUESTW %p\n", lpwhs);
-
-        HTTP_HttpOpenRequestW(lpwhs, req->lpszVerb,
-            req->lpszObjectName, req->lpszVersion, req->lpszReferrer,
-            req->lpszAcceptTypes, req->dwFlags, req->dwContext);
-
-        HeapFree(GetProcessHeap(), 0, req->lpszVerb);
-        HeapFree(GetProcessHeap(), 0, req->lpszObjectName);
-        HeapFree(GetProcessHeap(), 0, req->lpszVersion);
-        HeapFree(GetProcessHeap(), 0, req->lpszReferrer);
-        }
-        break;
-
     case INTERNETOPENURLW:
 	{
 	struct WORKREQ_INTERNETOPENURLW *req = &workRequest.u.InternetOpenUrlW;
