@@ -643,6 +643,18 @@ HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
  *    NULL on failure
  *
  */
+static void AsyncFtpFindFirstFileProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPFINDFIRSTFILEW const *req = &workRequest->u.FtpFindFirstFileW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE("%p\n", lpwfs);
+
+    FTP_FtpFindFirstFileW(lpwfs, req->lpszSearchFile,
+       req->lpFindFileData, req->dwFlags, req->dwContext);
+    HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
+}
+
 HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD dwContext)
 {
@@ -663,8 +675,9 @@ HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
         WORKREQUEST workRequest;
         struct WORKREQ_FTPFINDFIRSTFILEW *req;
 
-        workRequest.asyncall = FTPFINDFIRSTFILEW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpFindFirstFileProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpFindFirstFileW;
         req->lpszSearchFile = (lpszSearchFile == NULL) ? NULL : WININET_strdupW(lpszSearchFile);
 	req->lpFindFileData = lpFindFileData;
