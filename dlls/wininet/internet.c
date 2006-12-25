@@ -3213,6 +3213,10 @@ static VOID INTERNET_ExecuteWork(void)
 
     switch (workRequest.asyncall)
     {
+    case CALLASYNCPROC:
+        workRequest.asyncproc(&workRequest);
+        break;
+
     case FTPPUTFILEW:
         {
         struct WORKREQ_FTPPUTFILEW *req = &workRequest.u.FtpPutFileW;
@@ -3389,21 +3393,6 @@ static VOID INTERNET_ExecuteWork(void)
         HeapFree(GetProcessHeap(), 0, req->lpszObjectName);
         HeapFree(GetProcessHeap(), 0, req->lpszVersion);
         HeapFree(GetProcessHeap(), 0, req->lpszReferrer);
-        }
-        break;
-
-    case SENDCALLBACK:
-        {
-        struct WORKREQ_SENDCALLBACK *req = &workRequest.u.SendCallback;
-
-        TRACE("SENDCALLBACK %p\n", workRequest.hdr);
-
-        INTERNET_SendCallback(workRequest.hdr,
-			 req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
-			 req->dwStatusInfoLength);
-
-        /* And frees the copy of the status info */
-        HeapFree(GetProcessHeap(), 0, req->lpvStatusInfo);
         }
         break;
 

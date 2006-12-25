@@ -254,7 +254,19 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
         HeapFree(GetProcessHeap(), 0, lpvNewInfo);
 }
 
+static void SendAsyncCallbackProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_SENDCALLBACK const *req = &workRequest->u.SendCallback;
 
+    TRACE("%p\n", workRequest->hdr);
+
+    INTERNET_SendCallback(workRequest->hdr,
+                          req->dwContext, req->dwInternetStatus, req->lpvStatusInfo,
+                          req->dwStatusInfoLength);
+
+    /* And frees the copy of the status info */
+    HeapFree(GetProcessHeap(), 0, req->lpvStatusInfo);
+}
 
 VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
                        DWORD dwInternetStatus, LPVOID lpvStatusInfo,
@@ -281,7 +293,8 @@ VOID SendAsyncCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
 	    memcpy(lpvStatusInfo_copy, lpvStatusInfo, dwStatusInfoLength);
 	}
 
-	workRequest.asyncall = SENDCALLBACK;
+	workRequest.asyncall = CALLASYNCPROC;
+	workRequest.asyncproc = SendAsyncCallbackProc;
 	workRequest.hdr = WININET_AddRef( hdr );
 	req = &workRequest.u.SendCallback;
 	req->dwContext = dwContext;

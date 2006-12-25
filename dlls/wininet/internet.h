@@ -249,6 +249,7 @@ typedef struct
 
 typedef enum
 {
+    CALLASYNCPROC,
     FTPPUTFILEW,
     FTPSETCURRENTDIRECTORYW,
     FTPCREATEDIRECTORYW,
@@ -262,7 +263,6 @@ typedef enum
     FTPFINDNEXTW,
     HTTPSENDREQUESTW,
     HTTPOPENREQUESTW,
-    SENDCALLBACK,
     INTERNETOPENURLW,
     INTERNETREADFILEEXA,
 } ASYNC_FUNC;
@@ -385,6 +385,7 @@ struct WORKREQ_INTERNETREADFILEEXA
 typedef struct WORKREQ
 {
     ASYNC_FUNC asyncall;
+    void (*asyncproc)(struct WORKREQ*);
     WININETHANDLEHEADER *hdr;
 
     union {
