@@ -3735,15 +3735,26 @@ static void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         /* Now work out the mapping */
         tex = 0;
         This->oneToOneTexUnitMap = FALSE;
-        FIXME("Non 1:1 mapping UNTESTED!\n");
+        WARN("Non 1:1 mapping UNTESTED!\n");
         for(i = 0; i < This->stateBlock->lowest_disabled_stage; i++) {
-            if(This->stateBlock->textures[i] == NULL) tex++;
+            /* Skip NULL textures */
+            if (!This->stateBlock->textures[i]) {
+                /* Map to -1, so the check below doesn't fail if a non-NULL
+                 * texture is set on this stage */
+                TRACE("Mapping texture stage %d to -1\n", i);
+                This->texUnitMap[i] = -1;
+
+                continue;
+            }
+
             TRACE("Mapping texture stage %d to unit %d\n", i, tex);
             if(This->texUnitMap[i] != tex) {
                 This->texUnitMap[i] = tex;
                 IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(i));
                 markTextureStagesDirty(This, i);
             }
+
+            ++tex;
         }
     }
 }
