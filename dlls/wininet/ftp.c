@@ -499,6 +499,17 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
  *    FALSE on failure
  *
  */
+static void AsyncFtpCreateDirectoryProc(WORKREQUEST *workRequest)
+{
+    struct WORKREQ_FTPCREATEDIRECTORYW const *req = &workRequest->u.FtpCreateDirectoryW;
+    LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest->hdr;
+
+    TRACE(" %p\n", lpwfs);
+
+    FTP_FtpCreateDirectoryW(lpwfs, req->lpszDirectory);
+    HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
+}
+
 BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -518,8 +529,9 @@ BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
         WORKREQUEST workRequest;
         struct WORKREQ_FTPCREATEDIRECTORYW *req;
 
-        workRequest.asyncall = FTPCREATEDIRECTORYW;
-	workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
+        workRequest.asyncall = CALLASYNCPROC;
+        workRequest.asyncproc = AsyncFtpCreateDirectoryProc;
+        workRequest.hdr = WININET_AddRef( &lpwfs->hdr );
         req = &workRequest.u.FtpCreateDirectoryW;
         req->lpszDirectory = WININET_strdupW(lpszDirectory);
 

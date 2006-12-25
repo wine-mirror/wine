@@ -3243,19 +3243,6 @@ static VOID INTERNET_ExecuteWork(void)
         workRequest.asyncproc(&workRequest);
         break;
 
-    case FTPCREATEDIRECTORYW:
-        {
-        struct WORKREQ_FTPCREATEDIRECTORYW *req;
-        LPWININETFTPSESSIONW lpwfs = (LPWININETFTPSESSIONW) workRequest.hdr;
-
-        TRACE("FTPCREATEDIRECTORYW %p\n", lpwfs);
-
-        req = &workRequest.u.FtpCreateDirectoryW;
-	FTP_FtpCreateDirectoryW(lpwfs, req->lpszDirectory);
-	HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
-        }
-	break;
-
     case FTPFINDFIRSTFILEW:
         {
         struct WORKREQ_FTPFINDFIRSTFILEW *req;
