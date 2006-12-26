@@ -68,7 +68,7 @@ typedef struct _MSVCRT_EXCEPTION_FRAME
 #if defined(__GNUC__) && defined(__i386__)
 inline static void call_finally_block( void *code_block, void *base_ptr )
 {
-    __asm__ __volatile__ ("movl %1,%%ebp; call *%%eax" \
+    __asm__ __volatile__ ("movl %1,%%ebp; call *%%eax"
                           : : "a" (code_block), "g" (base_ptr));
 }
 

@@ -1169,7 +1169,7 @@ IDirectDrawImpl_TestCooperativeLevel(IDirectDraw7 *iface)
 
         case WINED3DERR_DRIVERINTERNALERROR:
         default:
-            ERR("(%p) Unexpected return value %08x from wineD3D, " \
+            ERR("(%p) Unexpected return value %08x from wineD3D, "
                 " returning DD_OK\n", This, hr);
     }
 
