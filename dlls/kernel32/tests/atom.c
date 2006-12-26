@@ -292,7 +292,7 @@ static void test_get_atom_name(void)
             {
                 /* len == 0 with ERROR_MORE_DATA is on NT3.51 */
                 ok(len == 1 || (len == 0 && GetLastError() == ERROR_MORE_DATA),
-                         "0x%04x: got %u with %d (excepted '1' or '0' with " \
+                         "0x%04x: got %u with %d (excepted '1' or '0' with "
                          "ERROR_MORE_DATA)\n", i, len, GetLastError());
                 ok(outW[1] == DOUBLE('.'), "buffer overwrite\n");
             }

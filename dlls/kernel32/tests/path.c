@@ -974,7 +974,7 @@ static void test_GetSystemDirectory(void)
     /* 95+NT: total (includes the terminating Zero)
        98+ME: 0 with ERROR_INVALID_PARAMETER */
     ok( (res == total) || (!res && (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with 0x%x (expected '%d' or: '0' with " \
+        "returned %d with 0x%x (expected '%d' or: '0' with "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError(), total);
 
     if (total > MAX_PATH) return;
@@ -1034,7 +1034,7 @@ static void test_GetWindowsDirectory(void)
     /* 95+NT: total (includes the terminating Zero)
        98+ME: 0 with ERROR_INVALID_PARAMETER */
     ok( (res == total) || (!res && (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with 0x%x (expected '%d' or: '0' with " \
+        "returned %d with 0x%x (expected '%d' or: '0' with "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError(), total);
 
     if (total > MAX_PATH) return;

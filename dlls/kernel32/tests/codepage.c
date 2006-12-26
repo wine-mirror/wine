@@ -63,7 +63,7 @@ static void test_destination_buffer(void)
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, needed-1, NULL, NULL);
     ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "returned %d with 0x%x/%d and '%s' (expected '0' with " \
+        "returned %d with 0x%x/%d and '%s' (expected '0' with "
         "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), GetLastError(), buffer);
 
     memset(buffer, 'x', maxsize);
@@ -71,7 +71,7 @@ static void test_destination_buffer(void)
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, buffer, 1, NULL, NULL);
     ok( !len && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "returned %d with 0x%x/%d and '%s' (expected '0' with " \
+        "returned %d with 0x%x/%d and '%s' (expected '0' with "
         "ERROR_INSUFFICIENT_BUFFER)\n", len, GetLastError(), GetLastError(), buffer);
 
     SetLastError(0xdeadbeef);
@@ -82,7 +82,7 @@ static void test_destination_buffer(void)
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_ACP, 0, foobarW, -1, NULL, needed, NULL, NULL);
     ok( !len && (GetLastError() == ERROR_INVALID_PARAMETER),
-        "returned %d with 0x%x/%d (expected '0' with " \
+        "returned %d with 0x%x/%d (expected '0' with "
         "ERROR_INVALID_PARAMETER)\n", len, GetLastError(), GetLastError());
 
     HeapFree(GetProcessHeap(), 0, buffer);
