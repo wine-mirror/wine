@@ -237,11 +237,13 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
     assert( evtctr <= MAXKEYEVENTS );
     assert( evtctr == ptr_SendInput(evtctr, &inputs[0], sizeof(INPUT)));
     i = 0;
-    trace("======== key stroke sequence #%d: %s =============\n",
+    if (winetest_debug > 1)
+        trace("======== key stroke sequence #%d: %s =============\n",
             seqnr + 1, buf);
     while( PeekMessage(&msg,hwnd,WM_KEYFIRST,WM_KEYLAST,PM_REMOVE) ) {
-        trace("message[%d] %-15s wParam %04x lParam %08lx time %x\n", i,
-                MSGNAME[msg.message - WM_KEYFIRST], msg.wParam, msg.lParam, msg.time);
+        if (winetest_debug > 1)
+            trace("message[%d] %-15s wParam %04x lParam %08lx time %x\n", i,
+                  MSGNAME[msg.message - WM_KEYFIRST], msg.wParam, msg.lParam, msg.time);
         if( i < kmctr ) {
             ok( msg.message == expmsg[i].message &&
                     msg.wParam == expmsg[i].wParam &&
@@ -253,7 +255,8 @@ static void do_test( HWND hwnd, int seqnr, const KEV td[] )
         }
         i++;
     }
-    trace("%d messages retrieved\n", i);
+    if (winetest_debug > 1)
+        trace("%d messages retrieved\n", i);
     ok( i == kmctr, "message count is wrong: got %d expected: %d\n", i, kmctr);
 }
 
