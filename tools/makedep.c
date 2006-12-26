@@ -629,6 +629,63 @@ static void parse_c_file( INCL_FILE *pFile, FILE *file )
 
 
 /*******************************************************************
+ *         parse_rc_file
+ */
+static void parse_rc_file( INCL_FILE *pFile, FILE *file )
+{
+    char *buffer, *include;
+
+    input_line = 0;
+    while ((buffer = get_line( file )))
+    {
+        char quote;
+        char *p = buffer;
+        while (*p && isspace(*p)) p++;
+
+        if (p[0] == '/' && p[1] == '*')  /* check for magic makedep comment */
+        {
+            p += 2;
+            while (*p && isspace(*p)) p++;
+            if (strncmp( p, "@makedep:", 9 )) continue;
+            p += 9;
+            while (*p && isspace(*p)) p++;
+            quote = '"';
+            if (*p == quote)
+            {
+                include = ++p;
+                while (*p && *p != quote) p++;
+            }
+            else
+            {
+                include = p;
+                while (*p && !isspace(*p) && *p != '*') p++;
+            }
+            if (!*p)
+                fatal_error( "%s:%d: Malformed makedep comment\n", pFile->filename, input_line );
+            *p = 0;
+        }
+        else  /* check for #include */
+        {
+            if (*p++ != '#') continue;
+            while (*p && isspace(*p)) p++;
+            if (strncmp( p, "include", 7 )) continue;
+            p += 7;
+            while (*p && isspace(*p)) p++;
+            if (*p != '\"' && *p != '<' ) continue;
+            quote = *p++;
+            if (quote == '<') quote = '>';
+            include = p;
+            while (*p && (*p != quote)) p++;
+            if (!*p) fatal_error( "%s:%d: Malformed #include directive\n",
+                                  pFile->filename, input_line );
+            *p = 0;
+        }
+        add_include( pFile, include, input_line, (quote == '>') );
+    }
+}
+
+
+/*******************************************************************
  *         parse_generated_idl
  */
 static void parse_generated_idl( INCL_FILE *source )
@@ -688,8 +745,13 @@ static void parse_file( INCL_FILE *pFile, int src )
         parse_idl_file( pFile, file, 1 );
     else if (strendswith( pFile->filename, ".idl" ))
         parse_idl_file( pFile, file, 0 );
-    else
+    else if (strendswith( pFile->filename, ".c" ) ||
+             strendswith( pFile->filename, ".h" ) ||
+             strendswith( pFile->filename, ".l" ) ||
+             strendswith( pFile->filename, ".y" ))
         parse_c_file( pFile, file );
+    else if (strendswith( pFile->filename, ".rc" ))
+        parse_rc_file( pFile, file );
     fclose(file);
 }
 

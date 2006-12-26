@@ -25,6 +25,4 @@ RC_SRCS = rsrc.rc
 
 @MAKE_DLL_RULES@
 
-rsrc.res: urlmon.inf
-
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

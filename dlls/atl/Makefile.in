@@ -19,6 +19,4 @@ IDL_H_SRCS = \
 
 @MAKE_DLL_RULES@
 
-rsrc.res: atl.rgs
-
 @DEPENDENCIES@  # everything below this line is overwritten by make depend

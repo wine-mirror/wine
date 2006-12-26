@@ -48,6 +48,8 @@
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: mshtml.inf */
 REGINST REGINST mshtml.inf
 
+/* @makedep: blank.htm */
 blank.htm HTML "blank.htm"

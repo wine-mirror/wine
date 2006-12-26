@@ -49,6 +49,4 @@ IDL_H_SRCS = nsiface.idl
 
 @MAKE_DLL_RULES@
 
-rsrc.res: mshtml.inf blank.htm
-
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
