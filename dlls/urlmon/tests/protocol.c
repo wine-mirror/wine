@@ -118,15 +118,6 @@ static HRESULT WINAPI HttpNegotiate_BeginningTransaction(IHttpNegotiate2 *iface,
     CHECK_EXPECT(BeginningTransaction);
 
     ok(!lstrcmpW(szURL, http_url), "szURL != http_url\n");
-
-    ok(szHeaders != NULL, "szHeaders == NULL\n");
-    if(szHeaders) {
-        static const WCHAR header[] =
-            {'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g',':',
-             ' ','g','z','i','p',',',' ','d','e','f','l','a','t','e',0};
-        ok(!lstrcmpW(header, szHeaders), "Unexpected szHeaders\n");
-    }
-
     ok(!dwReserved, "dwReserved=%d, expected 0\n", dwReserved);
     ok(pszAdditionalHeaders != NULL, "pszAdditionalHeaders == NULL\n");
     if(pszAdditionalHeaders)
