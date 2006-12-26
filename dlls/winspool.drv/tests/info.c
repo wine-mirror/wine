@@ -235,7 +235,7 @@ static void test_AddMonitor(void)
     ok(!res &&
         ((GetLastError() == MAGIC_DEAD) ||
          (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
-        "returned %d with %d (expected '0' with: MAGIC_DEAD or " \
+        "returned %d with %d (expected '0' with: MAGIC_DEAD or "
         "ERROR_PRIVILEGE_NOT_HELD)\n", res, GetLastError());
 #endif
 
@@ -252,7 +252,7 @@ static void test_AddMonitor(void)
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_INVALID_ENVIRONMENT */
     ok(!res && ((GetLastError() == ERROR_INVALID_PARAMETER) ||
                 (GetLastError() == ERROR_INVALID_ENVIRONMENT)), 
-        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or "
         "ERROR_INVALID_ENVIRONMENT)\n", res, GetLastError());
 
     if (!entry) {
@@ -280,7 +280,7 @@ static void test_AddMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_INVALID_PARAMETER) ||
          (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
-        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or "
         "ERROR_PRIVILEGE_NOT_HELD)\n",
         res, GetLastError());
 
@@ -291,7 +291,7 @@ static void test_AddMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_INVALID_PARAMETER) ||
          (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
-        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or "
         "ERROR_PRIVILEGE_NOT_HELD)\n",
         res, GetLastError());
 
@@ -309,7 +309,7 @@ static void test_AddMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_MOD_NOT_FOUND) ||
         (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with: ERROR_MOD_NOT_FOUND or " \
+        "returned %d with %d (expected '0' with: ERROR_MOD_NOT_FOUND or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     mi2a.pDLLName = version_dll;
@@ -319,7 +319,7 @@ static void test_AddMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_PROC_NOT_FOUND) ||
         (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with: ERROR_PROC_NOT_FOUND or " \
+        "returned %d with %d (expected '0' with: ERROR_PROC_NOT_FOUND or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
     if (res) DeleteMonitorA(NULL, entry->env, winetest_monitor); 
 
@@ -336,7 +336,7 @@ static void test_AddMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_PRINT_MONITOR_ALREADY_INSTALLED) ||
         (GetLastError() == ERROR_ALREADY_EXISTS)), 
-        "returned %d with %d (expected '0' with: " \
+        "returned %d with %d (expected '0' with: "
         "ERROR_PRINT_MONITOR_ALREADY_INSTALLED or ERROR_ALREADY_EXISTS)\n",
         res, GetLastError());
 
@@ -362,7 +362,7 @@ static void test_AddPort(void)
     /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 
@@ -376,7 +376,7 @@ static void test_AddPort(void)
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 
@@ -385,7 +385,7 @@ static void test_AddPort(void)
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 }
@@ -403,7 +403,7 @@ static void test_ConfigurePort(void)
     /* NT: RPC_X_NULL_REF_POINTER, 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == RPC_X_NULL_REF_POINTER) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     SetLastError(0xdeadbeef);
@@ -416,7 +416,7 @@ static void test_ConfigurePort(void)
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 
@@ -425,7 +425,7 @@ static void test_ConfigurePort(void)
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 
@@ -488,7 +488,7 @@ static void test_DeleteMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_UNKNOWN_PRINT_MONITOR) ||
         (GetLastError() == ERROR_INVALID_PARAMETER)), 
-        "returned %d with %d (expected '0' with: ERROR_UNKNOWN_PRINT_MONITOR" \
+        "returned %d with %d (expected '0' with: ERROR_UNKNOWN_PRINT_MONITOR"
         " or ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
     /* the environment */
@@ -515,7 +515,7 @@ static void test_DeleteMonitor(void)
     ok( !res &&
         ((GetLastError() == ERROR_INVALID_PARAMETER) ||
         (GetLastError() == ERROR_INVALID_NAME)),
-        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or "
         "ERROR_INVALID_NAME)\n", res, GetLastError());
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
@@ -525,7 +525,7 @@ static void test_DeleteMonitor(void)
     ok( !res && 
         ((GetLastError() == ERROR_INVALID_PARAMETER) ||
         (GetLastError() == ERROR_INVALID_NAME)),
-        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or " \
+        "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or "
         "ERROR_INVALID_NAME)\n", res, GetLastError());
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
@@ -557,7 +557,7 @@ static void test_DeletePort(void)
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 
@@ -566,7 +566,7 @@ static void test_DeletePort(void)
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
     ok( !res && ((GetLastError() == ERROR_NOT_SUPPORTED) || 
                  (GetLastError() == ERROR_INVALID_PARAMETER)),
-        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or " \
+        "returned %d with %d (expected '0' with ERROR_NOT_SUPPORTED or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
 }
@@ -613,14 +613,14 @@ static void test_EnumForms(LPSTR pName)
         if(!level || (level > 2)) {
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
                 (res && (pcReturned == 0)),
-                "(%d) returned %d with %d and 0x%08x (expected '0' with " \
+                "(%d) returned %d with %d and 0x%08x (expected '0' with "
                 "ERROR_INVALID_LEVEL or '!=0' and 0x0)\n",
                 level, res, GetLastError(), pcReturned);
             continue;
         }        
 
         ok((!res) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
 
         buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf *2);
@@ -641,33 +641,33 @@ static void test_EnumForms(LPSTR pName)
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, buffer, cbBuf-1, &pcbNeeded, &pcReturned);
         ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
 
 
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, NULL, cbBuf, &pcbNeeded, &pcReturned);
         ok( !res && (GetLastError() == ERROR_INVALID_USER_BUFFER) ,
-            "(%d) returned %d with %d (expected '0' with "\
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INVALID_USER_BUFFER)\n", level, res, GetLastError());
 
 
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, buffer, cbBuf, NULL, &pcReturned);
         ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER) ,
-            "(%d) returned %d with %d (expected '0' with "\
+            "(%d) returned %d with %d (expected '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, buffer, cbBuf, &pcbNeeded, NULL);
         ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER) ,
-            "(%d) returned %d with %d (expected '0' with "\
+            "(%d) returned %d with %d (expected '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
         SetLastError(0xdeadbeef);
         res = EnumFormsA(0, level, buffer, cbBuf, &pcbNeeded, &pcReturned);
         ok( !res && (GetLastError() == ERROR_INVALID_HANDLE) ,
-            "(%d) returned %d with %d (expected '0' with "\
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INVALID_HANDLE)\n", level, res, GetLastError());
 
         HeapFree(GetProcessHeap(), 0, buffer);
@@ -704,7 +704,7 @@ static void test_EnumMonitors(void)
         if(!level || (level > 2)) {
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
                 (res && (pcReturned == 0)),
-                "(%d) returned %d with %d and 0x%08x (expected '0' with " \
+                "(%d) returned %d with %d and 0x%08x (expected '0' with "
                 "ERROR_INVALID_LEVEL or '!=0' and 0x0)\n",
                 level, res, GetLastError(), pcReturned);
             continue;
@@ -717,7 +717,7 @@ static void test_EnumMonitors(void)
         }
 
         ok((!res) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
 
         if (!cbBuf) {
@@ -751,7 +751,7 @@ static void test_EnumMonitors(void)
         pcbNeeded = MAGIC_DEAD;
         res = EnumMonitorsA(NULL, level, buffer, cbBuf-1, &pcbNeeded, &pcReturned);
         ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
 
         ok(pcbNeeded == cbBuf, "(%d) returned %d (expected %d)\n", level,
@@ -771,7 +771,7 @@ static void test_EnumMonitors(void)
         pcReturned = MAGIC_DEAD;
         res = EnumMonitorsA(NULL, level, buffer, cbBuf, NULL, &pcReturned);
         ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
-            "(%d) returned %d with %d (expected '!=0' or '0' with "\
+            "(%d) returned %d with %d (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
         pcbNeeded = MAGIC_DEAD;
@@ -779,7 +779,7 @@ static void test_EnumMonitors(void)
         SetLastError(MAGIC_DEAD);
         res = EnumMonitorsA(NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
         ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
-            "(%d) returned %d with %d (expected '!=0' or '0' with "\
+            "(%d) returned %d with %d (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
         HeapFree(GetProcessHeap(), 0, buffer);
@@ -811,7 +811,7 @@ static void test_EnumPorts(void)
             /* NT: ERROR_INVALID_LEVEL, 9x: success */
             ok( (!res && (GetLastError() == ERROR_INVALID_LEVEL)) ||
                 (res && (pcReturned == 0)),
-                "(%d) returned %d with %d and 0x%08x (expected '0' with " \
+                "(%d) returned %d with %d and 0x%08x (expected '0' with "
                 "ERROR_INVALID_LEVEL or '!=0' and 0x0)\n",
                 level, res, GetLastError(), pcReturned);
             continue;
@@ -825,7 +825,7 @@ static void test_EnumPorts(void)
         }
 
         ok((!res) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
 
         buffer = HeapAlloc(GetProcessHeap(), 0, cbBuf *2);
@@ -849,7 +849,7 @@ static void test_EnumPorts(void)
         SetLastError(0xdeadbeef);
         res = EnumPortsA(NULL, level, buffer, cbBuf-1, &pcbNeeded, &pcReturned);
         ok( !res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
         ok(pcbNeeded == cbBuf, "(%d) returned %d (expected %d)\n", level, pcbNeeded, cbBuf);
 
@@ -866,7 +866,7 @@ static void test_EnumPorts(void)
         /* NT: RPC_X_NULL_REF_POINTER (1780),  9x: success */
         ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER) ) ||
             ( res && (GetLastError() == ERROR_SUCCESS) ),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "RPC_X_NULL_REF_POINTER or '!=0' with NO_ERROR)\n",
             level, res, GetLastError());
 
@@ -876,7 +876,7 @@ static void test_EnumPorts(void)
         /* NT: RPC_X_NULL_REF_POINTER (1780),  9x: success */
         ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER) ) ||
             ( res && (GetLastError() == ERROR_SUCCESS) ),
-            "(%d) returned %d with %d (expected '0' with " \
+            "(%d) returned %d with %d (expected '0' with "
             "RPC_X_NULL_REF_POINTER or '!=0' with NO_ERROR)\n",
             level, res, GetLastError());
 
@@ -977,7 +977,7 @@ static void test_GetPrinterDriverDirectory(void)
 
     RETURN_ON_DEACTIVATED_SPOOLER(res)
     ok((res == 0) && (GetLastError() == ERROR_INSUFFICIENT_BUFFER),
-        "returned %d with lasterror=%d (expected '0' with " \
+        "returned %d with lasterror=%d (expected '0' with "
         "ERROR_INSUFFICIENT_BUFFER)\n", res, GetLastError());
 
     if (!cbBuf) {
@@ -1029,7 +1029,7 @@ static void test_GetPrinterDriverDirectory(void)
     SetLastError(MAGIC_DEAD);
     res = GetPrinterDriverDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
     ok(res || (GetLastError() == RPC_X_NULL_REF_POINTER),
-        "returned %d with %d (expected '!=0' or '0' with " \
+        "returned %d with %d (expected '!=0' or '0' with "
         "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
  
  
@@ -1046,7 +1046,7 @@ static void test_GetPrinterDriverDirectory(void)
     else
     {
         ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
-        "returned %d with lasterror=%d (expected '0' with " \
+        "returned %d with lasterror=%d (expected '0' with "
         "ERROR_INVALID_LEVEL)\n", res, GetLastError());
     }
 
@@ -1067,7 +1067,7 @@ static void test_GetPrinterDriverDirectory(void)
                                         buffer, cbBuf*2, &pcbNeeded);
     }
 
-    ok(res && buffer[0], "returned %d with " \
+    ok(res && buffer[0], "returned %d with "
         "lasterror=%d and len=%d (expected '1' with 'len > 0')\n", 
         res, GetLastError(), lstrlenA((char *)buffer));
 
@@ -1090,7 +1090,7 @@ static void test_GetPrinterDriverDirectory(void)
     /* "Windows NT x86" is invalid for win9x */
     ok( (res && buffer[0]) ||
         (!res && (GetLastError() == ERROR_INVALID_ENVIRONMENT)), 
-        "returned %d with lasterror=%d and len=%d (expected '!= 0' with " \
+        "returned %d with lasterror=%d and len=%d (expected '!= 0' with "
         "'len > 0' or '0' with ERROR_INVALID_ENVIRONMENT)\n",
         res, GetLastError(), lstrlenA((char *)buffer));
 
@@ -1162,7 +1162,7 @@ static void test_GetPrintProcessorDirectory(void)
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, buffer, cbBuf, NULL);
     /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
     ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER),
-        "returned %d with %d (expected '!= 0' or '0' with " \
+        "returned %d with %d (expected '!= 0' or '0' with "
         "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
 
 
@@ -1171,7 +1171,7 @@ static void test_GetPrintProcessorDirectory(void)
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, NULL);
     /* NT: RPC_X_NULL_REF_POINTER, 9x: res != 0  */
     ok( res || (GetLastError() == RPC_X_NULL_REF_POINTER),
-        "returned %d with %d (expected '!= 0' or '0' with " \
+        "returned %d with %d (expected '!= 0' or '0' with "
         "RPC_X_NULL_REF_POINTER)\n", res, GetLastError());
 
  
@@ -1209,7 +1209,7 @@ static void test_GetPrintProcessorDirectory(void)
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA(NULL, env_x86, 1, buffer, cbBuf*2, &pcbNeeded);
     ok( res || (GetLastError() == ERROR_INVALID_ENVIRONMENT), 
-        "returned %d with %d (expected '!= 0' or '0' with " \
+        "returned %d with %d (expected '!= 0' or '0' with "
         "ERROR_INVALID_ENVIRONMENT)\n", res, GetLastError());
 
     /* invalid on all Systems */
@@ -1308,7 +1308,7 @@ static void test_OpenPrinter(void)
     res = OpenPrinter(illegal_name, &hprinter, NULL);
     ok(!res && ((GetLastError() == ERROR_INVALID_PRINTER_NAME) || 
                 (GetLastError() == ERROR_INVALID_PARAMETER) ),
-       "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or" \
+       "returned %d with %d (expected '0' with: ERROR_INVALID_PARAMETER or"
        "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
     if(res) ClosePrinter(hprinter);
 
@@ -1319,7 +1319,7 @@ static void test_OpenPrinter(void)
     ok( !res &&
         ((GetLastError() == ERROR_INVALID_PRINTER_NAME) || 
         (GetLastError() == ERROR_INVALID_PARAMETER) ),
-        "returned %d with %d (expected '0' with: ERROR_INVALID_PRINTER_NAME" \
+        "returned %d with %d (expected '0' with: ERROR_INVALID_PRINTER_NAME"
         " or ERROR_INVALID_PARAMETER)\n", res, GetLastError());
     if(res) ClosePrinter(hprinter);
 
@@ -1342,7 +1342,7 @@ static void test_OpenPrinter(void)
         res = OpenPrinter(default_printer, NULL, NULL);
         /* NT: FALSE with ERROR_INVALID_PARAMETER, 9x: TRUE */
         ok(res || (GetLastError() == ERROR_INVALID_PARAMETER),
-            "returned %d with %d (expected '!=0' or '0' with " \
+            "returned %d with %d (expected '!=0' or '0' with "
             "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
 
         defaults.pDatatype=NULL;
@@ -1353,7 +1353,7 @@ static void test_OpenPrinter(void)
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
         ok(res || GetLastError() == ERROR_ACCESS_DENIED,
-            "returned %d with %d (expected '!=0' or '0' with " \
+            "returned %d with %d (expected '!=0' or '0' with "
             "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
@@ -1366,7 +1366,7 @@ static void test_OpenPrinter(void)
         RETURN_ON_DEACTIVATED_SPOOLER(res)
         ok(res || ((GetLastError() == ERROR_INVALID_DATATYPE) ||
                    (GetLastError() == ERROR_ACCESS_DENIED)),
-            "returned %d with %d (expected '!=0' or '0' with: " \
+            "returned %d with %d (expected '!=0' or '0' with: "
             "ERROR_INVALID_DATATYPE or ERROR_ACCESS_DENIED)\n",
             res, GetLastError());
         if(res) ClosePrinter(hprinter);
@@ -1379,7 +1379,7 @@ static void test_OpenPrinter(void)
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
         ok(res || GetLastError() == ERROR_ACCESS_DENIED,
-            "returned %d with %d (expected '!=0' or '0' with " \
+            "returned %d with %d (expected '!=0' or '0' with "
             "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
 
@@ -1389,7 +1389,7 @@ static void test_OpenPrinter(void)
         SetLastError(MAGIC_DEAD);
         res = OpenPrinter(default_printer, &hprinter, &defaults);
         ok(res || GetLastError() == ERROR_ACCESS_DENIED,
-            "returned %d with %d (expected '!=0' or '0' with " \
+            "returned %d with %d (expected '!=0' or '0' with "
             "ERROR_ACCESS_DENIED)\n", res, GetLastError());
         if(res) ClosePrinter(hprinter);
     }
@@ -1427,28 +1427,28 @@ static void test_SetDefaultPrinter(void)
     }
 
     ok(!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME),
-        "returned %d with %d (expected '0' with " \
+        "returned %d with %d (expected '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", org_value);
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA("");
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
-        "returned %d with %d (expected '!=0' or '0' with " \
+        "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", org_value);
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(NULL);
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
-        "returned %d with %d (expected '!=0' or '0' with " \
+        "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", org_value);
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(default_printer);
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
-        "returned %d with %d (expected '!=0' or '0' with " \
+        "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
 
@@ -1458,7 +1458,7 @@ static void test_SetDefaultPrinter(void)
     res = pSetDefaultPrinterA("no_printer_with_this_name");
 
     ok(!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME),
-        "returned %d with %d (expected '0' with " \
+        "returned %d with %d (expected '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", NULL);    
@@ -1466,7 +1466,7 @@ static void test_SetDefaultPrinter(void)
     res = pSetDefaultPrinterA("");
     /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
-         "returned %d with %d (expected '!=0' or '0' with " \
+         "returned %d with %d (expected '!=0' or '0' with "
          "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", NULL);    
@@ -1474,14 +1474,14 @@ static void test_SetDefaultPrinter(void)
     res = pSetDefaultPrinterA(NULL);
     /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
-        "returned %d with %d (expected '!=0' or '0' with " \
+        "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", NULL);    
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(default_printer);
     ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
-        "returned %d with %d (expected '!=0' or '0' with " \
+        "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     /* restore the original value */
@@ -1536,7 +1536,7 @@ static void test_GetPrinterDriver(void)
             /* ERROR_OUTOFMEMORY found on win9x */
             ok( ((GetLastError() == ERROR_INVALID_LEVEL) ||
                  (GetLastError() == ERROR_OUTOFMEMORY)),
-                "%d: returned %d with %d (expected '0' with: " \
+                "%d: returned %d with %d (expected '0' with: "
                 "ERROR_INVALID_LEVEL or ERROR_OUTOFMEMORY)\n",
                 level, ret, GetLastError());
             /* needed is modified in win9x. The modified Value depends on the
