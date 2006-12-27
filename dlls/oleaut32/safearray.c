@@ -228,7 +228,7 @@ static SAFEARRAY* SAFEARRAY_Create(VARTYPE vt, UINT cDims, SAFEARRAYBOUND *rgsab
     if (ulSize)
       psa->cbElements = ulSize;
 
-    if (FAILED(SafeArrayAllocData(psa)))
+    if (!psa->cbElements || FAILED(SafeArrayAllocData(psa)))
     {
       SafeArrayDestroyDescriptor(psa);
       psa = NULL;
@@ -533,19 +533,16 @@ HRESULT WINAPI SafeArrayAllocData(SAFEARRAY *psa)
   {
     ULONG ulSize = SAFEARRAY_GetCellCount(psa);
 
-    hRet = E_OUTOFMEMORY;
+    psa->pvData = SAFEARRAY_Malloc(ulSize * psa->cbElements);
 
-    if (psa->cbElements)
+    if (psa->pvData)
     {
-      psa->pvData = SAFEARRAY_Malloc(ulSize * psa->cbElements);
-
-      if (psa->pvData)
-      {
-        hRet = S_OK;
-        TRACE("%u bytes allocated for data at %p (%u objects).\n",
-              ulSize * psa->cbElements, psa->pvData, ulSize);
-      }
+      hRet = S_OK;
+      TRACE("%u bytes allocated for data at %p (%u objects).\n",
+            ulSize * psa->cbElements, psa->pvData, ulSize);
     }
+    else
+      hRet = E_OUTOFMEMORY;
   }
   return hRet;
 }

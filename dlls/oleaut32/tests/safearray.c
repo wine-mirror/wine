@@ -690,10 +690,7 @@ static void test_SafeArrayAllocDestroyDescriptor(void)
   sa->rgsabound[0].lLbound = 1;
 
   hres = SafeArrayAllocData(sa);
-  todo_wine
-  {
-      ok(hres == S_OK, "SafeArrayAllocData gave hres 0x%x\n", hres);
-  }
+  ok(hres == S_OK, "SafeArrayAllocData gave hres 0x%x\n", hres);
 }
 
 static void test_SafeArrayCreateLockDestroy(void)
