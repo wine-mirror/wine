@@ -182,6 +182,8 @@ static BOOL mousedev_enum_deviceW(DWORD dwDevType, DWORD dwFlags, LPDIDEVICEINST
 static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputImpl *dinput)
 {
     SysMouseImpl* newDevice;
+    LPDIDATAFORMAT df = NULL;
+    int i;
 
     newDevice = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(SysMouseImpl));
     if (!newDevice) return NULL;
@@ -192,13 +194,29 @@ static SysMouseImpl *alloc_device(REFGUID rguid, const void *mvt, IDirectInputIm
     InitializeCriticalSection(&newDevice->base.crit);
     newDevice->dinput = dinput;
 
-    newDevice->base.data_format.wine_df = &c_dfDIMouse2;
+    /* Create copy of default data format */
+    if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIMouse2.dwSize))) goto failed;
+    memcpy(df, &c_dfDIMouse2, c_dfDIMouse2.dwSize);
+    if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto failed;
+    memcpy(df->rgodf, c_dfDIMouse2.rgodf, df->dwNumObjs * df->dwObjSize);
+
+    /* Because we don't do any detection yet just modify instance and type */
+    for (i = 0; i < df->dwNumObjs; i++)
+        if (DIDFT_GETTYPE(df->rgodf[i].dwType) & DIDFT_AXIS)
+            df->rgodf[i].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_RELAXIS;
+        else
+            df->rgodf[i].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_PSHBUTTON;
+
+    newDevice->base.data_format.wine_df = df;
     if (create_DataFormat(&c_dfDIMouse2, &newDevice->base.data_format) == DI_OK)
     {
         IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
         return newDevice;
     }
 
+failed:
+    if (df) HeapFree(GetProcessHeap(), 0, df->rgodf);
+    HeapFree(GetProcessHeap(), 0, df);
     HeapFree(GetProcessHeap(), 0, newDevice);
     return NULL;
 }
@@ -272,6 +290,8 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     /* Free the data queue */
     HeapFree(GetProcessHeap(), 0, This->base.data_queue);
 
+    /* Free data format */
+    HeapFree(GetProcessHeap(), 0, (LPVOID)This->base.data_format.wine_df);
     release_DataFormat(&This->base.data_format);
 
     IDirectInput_Release((LPDIRECTINPUTDEVICE8A)This->dinput);
