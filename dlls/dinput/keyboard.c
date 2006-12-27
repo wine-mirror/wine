@@ -282,9 +282,7 @@ static HRESULT WINAPI SysKeyboardAImpl_GetDeviceState(
     if (!This->base.acquired) return DIERR_NOTACQUIRED;
 
     if (len != WINE_DINPUT_KEYBOARD_MAX_KEYS)
-      return DIERR_INVALIDPARAM;
-
-    MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
+        return DIERR_INVALIDPARAM;
 
     EnterCriticalSection(&This->base.crit);
 
@@ -548,9 +546,7 @@ static HRESULT WINAPI SysKeyboardAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
     TRACE("(%p)\n",This);
 
     if (!This->base.acquired) return DIERR_NOTACQUIRED;
-
-    MsgWaitForMultipleObjectsEx(0, NULL, 0, QS_ALLINPUT, 0);
-    return DI_OK;
+    return DI_NOEFFECT;
 }
 
 static const IDirectInputDevice8AVtbl SysKeyboardAvt =
