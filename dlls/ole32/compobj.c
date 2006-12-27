@@ -36,7 +36,6 @@
  *
  *   - Make all ole interface marshaling use NDR to be wire compatible with
  *     native DCOM
- *   - Use & interpret ORPCTHIS & ORPCTHAT.
  *
  */
 
