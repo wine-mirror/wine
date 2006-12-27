@@ -1722,8 +1722,6 @@ static void test_call_from_message(void)
 
     ok_more_than_one_lock();
 
-    hr = CoRegisterMessageFilter(&MessageFilter, NULL);
-
     /* start message re-entrancy test */
     hr = IClassFactory_CreateInstance(proxy, NULL, &IID_IUnknown, (void **)&object);
     ok_ole_success(hr, IClassFactory_CreateInstance);
