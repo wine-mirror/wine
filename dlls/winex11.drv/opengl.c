@@ -2572,7 +2572,16 @@ static GLboolean WINAPI X11DRV_wglGetPixelFormatAttribivARB(HDC hdc, int iPixelF
                 FIXME("unsupported %x WGL Attribute\n", curWGLAttr);
         }
 
-        if (0 != curGLXAttr) {
+        /* Retrieve a GLX FBConfigAttrib when the attribute to query is valid and
+         * iPixelFormat != 0. When iPixelFormat is 0 the only value which makes
+         * sense to query is WGL_NUMBER_PIXEL_FORMATS_ARB.
+         *
+         * TODO: properly test the behavior of wglGetPixelFormatAttrib*v on Windows
+         *       and check which options can work using iPixelFormat=0 and which not.
+         *       A problem would be that this function is an extension. This would
+         *       mean that the behavior could differ between different vendors (ATI, Nvidia, ..).
+         */
+        if (0 != curGLXAttr && iPixelFormat != 0) {
             /* Check if the format is supported by checking if iPixelFormat isn't larger than the max number of 
             * supported WGLFormats and also check if the GLX fmt_index is valid. */
             if((iPixelFormat > 0) && ((iPixelFormat > nWGLFormats) || (fmt_index > nCfgs))) goto pix_error;
