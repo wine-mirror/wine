@@ -345,8 +345,12 @@ static void test_query_value_ex(void)
     ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Nonexistent Value", NULL, &type, NULL, &size);
     ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
     ok(size == 0, "size should have been set to 0 instead of %d\n", size);
-    ok(type == (DWORD)HKEY_CLASSES_ROOT /* NT */ || type == 0 /* Win9x */,
-        "type should have been set to 0x80000000 or 0 instead of 0x%x\n", type);
+    /* the type parameter is cleared on Win9x, but is set to a random value on
+     * NT, so don't do this test there */
+    if (GetVersion() & 0x80000000)
+        ok(type == 0, "type should have been set to 0 instead of 0x%x\n", type);
+    else
+        trace("test_query_value_ex: type set to: 0x%08x\n", type);
 
     size = sizeof(buffer);
     ret = RegQueryValueExA(HKEY_CLASSES_ROOT, "Nonexistent Value", NULL, &type, buffer, &size);
