@@ -99,9 +99,11 @@ INSTALLPROGS = \
 
 INSTALLDIRS = $(DESTDIR)$(bindir)
 
+PROGRAMS = wineapploader winelauncher
+
 @MAKE_RULES@
 
-all: wineapploader winelauncher $(SUBDIRS)
+all: $(PROGRAMS) $(SUBDIRS)
 
 wineapploader: wineapploader.in
 	sed -e 's,@bindir\@,$(bindir),g' $(SRCDIR)/wineapploader.in >$@ || ($(RM) $@ && false)
@@ -130,9 +132,6 @@ install:: winelauncher install-progs$(DLLEXT) $(INSTALLDIRS)
 uninstall::
 	-cd $(DESTDIR)$(bindir) && $(RM) wineapploader winelauncher $(INSTALLPROGS)
 	-rmdir $(DESTDIR)$(dlldir)
-
-clean::
-	$(RM) wineapploader winelauncher
 
 # Rules for testing
 

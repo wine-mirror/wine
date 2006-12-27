@@ -25,6 +25,7 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 LIBEXT    = @LIBEXT@
 MODULE    = none
+PROGRAMS  = wine
 
 FONTSSUBDIRS = @FONTSSUBDIRS@
 
@@ -58,7 +59,7 @@ INSTALLSUBDIRS = $(INSTALLDEVSUBDIRS) $(INSTALLLIBSUBDIRS)
 # Sub-directories to run make test into
 TESTSUBDIRS = dlls
 
-all: Make.rules wine
+all: Make.rules $(PROGRAMS)
 	@echo "Wine build complete."
 
 WINAPI_CHECK_EXTRA_FLAGS = --global
@@ -138,9 +139,6 @@ tags ctags:
 
 manpages htmlpages sgmlpages: dummy
 	@cd documentation && $(MAKE) $@
-
-clean::
-	$(RM) wine
 
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h

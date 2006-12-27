@@ -1,8 +1,2 @@
 /version-stamp
 /version.c
-/wine
-/wine-glibc
-/wine-kthread
-/wine-preloader
-/wine-pthread
-/wine.man
