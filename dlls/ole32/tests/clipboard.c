@@ -320,27 +320,36 @@ static void test_set_clipboard(void)
     ULONG ref;
     LPDATAOBJECT data1, data2;
     hr = DataObjectImpl_CreateText("data1", &data1);
-    ok(SUCCEEDED(hr), "Failed to create data1 object: %d\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create data1 object: 0x%08x\n", hr);
     if(FAILED(hr))
         return;
     hr = DataObjectImpl_CreateText("data2", &data2);
-    ok(SUCCEEDED(hr), "Failed to create data2 object: %d\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create data2 object: 0x%08x\n", hr);
     if(FAILED(hr))
         return;
 
-    ok(OleSetClipboard(data1) == S_OK, "failed to set clipboard to data1\n");
-    ok(OleIsCurrentClipboard(data1) == S_OK, "expected current clipboard to be data1\n");
-    ok(OleIsCurrentClipboard(data2) == S_FALSE, "did not expect current clipboard to be data2\n");
+    hr = OleSetClipboard(data1);
+    ok(hr == S_OK, "failed to set clipboard to data1, hr = 0x%08x\n", hr);
+    hr = OleIsCurrentClipboard(data1);
+    ok(hr == S_OK, "expected current clipboard to be data1, hr = 0x%08x\n", hr);
+    hr = OleIsCurrentClipboard(data2);
+    ok(hr == S_FALSE, "did not expect current clipboard to be data2, hr = 0x%08x\n", hr);
 
-    ok(OleSetClipboard(data2) == S_OK, "failed to set clipboard to data2\n");
-    ok(OleIsCurrentClipboard(data1) == S_FALSE, "did not expect current clipboard to be data1\n");
-    ok(OleIsCurrentClipboard(data2) == S_OK, "expected current clipboard to be data2\n");
+    hr = OleSetClipboard(data2);
+    ok(hr == S_OK, "failed to set clipboard to data2, hr = 0x%08x\n", hr);
+    hr = OleIsCurrentClipboard(data1);
+    ok(hr == S_FALSE, "did not expect current clipboard to be data1, hr = 0x%08x\n", hr);
+    hr = OleIsCurrentClipboard(data2);
+    ok(hr == S_OK, "expected current clipboard to be data2, hr = 0x%08x\n", hr);
 
-    ok(OleFlushClipboard() == S_OK, "failed to flush clipboard\n");
-    ok(OleIsCurrentClipboard(data1) == S_FALSE, "did not expect current clipboard to be data1\n");
-    ok(OleIsCurrentClipboard(data2) == S_FALSE, "did not expect current clipboard to be data2\n");
+    hr = OleFlushClipboard();
+    ok(hr == S_OK, "failed to flush clipboard, hr = 0x%08x\n", hr);
+    hr = OleIsCurrentClipboard(data1);
+    ok(hr == S_FALSE, "did not expect current clipboard to be data1, hr = 0x%08x\n", hr);
+    hr = OleIsCurrentClipboard(data2);
+    ok(hr == S_FALSE, "did not expect current clipboard to be data2, hr = 0x%08x\n", hr);
 
-    ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard\n");
+    ok(OleSetClipboard(NULL) == S_OK, "failed to clear clipboard, hr = 0x%08x\n", hr);
 
     ref = IDataObject_Release(data1);
     ok(ref == 0, "expected data1 ref=0, got %d\n", ref);
