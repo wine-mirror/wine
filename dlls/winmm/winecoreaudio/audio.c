@@ -208,6 +208,12 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
                                      UInt32 inBusNumber, 
                                      UInt32 inNumberFrames, 
                                      AudioBufferList *ioData);
+OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
+                                     AudioUnitRenderActionFlags *ioActionFlags,
+                                     const AudioTimeStamp *inTimeStamp,
+                                     UInt32 inBusNumber,
+                                     UInt32 inNumberFrames,
+                                     AudioBufferList *ioData);
 
 /* These strings used only for tracing */
 
@@ -1683,6 +1689,17 @@ DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
     }
 
     return MMSYSERR_NOTSUPPORTED;
+}
+
+
+OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
+                                     AudioUnitRenderActionFlags *ioActionFlags,
+                                     const AudioTimeStamp *inTimeStamp,
+                                     UInt32 inBusNumber,
+                                     UInt32 inNumberFrames,
+                                     AudioBufferList *ioData)
+{
+    return noErr;
 }
 
 #else
