@@ -511,15 +511,15 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
-    EnterCriticalSection(&This->base.crit);
     TRACE("(this=%p,0x%08x,%p):\n", This, len, ptr);
     TRACE("(X: %d - Y: %d - Z: %d  L: %02x M: %02x R: %02x)\n",
 	  This->m_state.lX, This->m_state.lY, This->m_state.lZ,
 	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
-    
+
+    EnterCriticalSection(&This->base.crit);
     /* Copy the current mouse state */
     fill_DataFormat(ptr, &(This->m_state), &This->base.data_format);
-    
+
     /* Initialize the buffer when in relative mode */
     if (!(This->base.data_format.user_df->dwFlags & DIDF_ABSAXIS))
     {
@@ -527,23 +527,19 @@ static HRESULT WINAPI SysMouseAImpl_GetDeviceState(
 	This->m_state.lY = 0;
 	This->m_state.lZ = 0;
     }
+    LeaveCriticalSection(&This->base.crit);
 
     /* Check if we need to do a mouse warping */
     if (This->need_warp && (GetCurrentTime() - This->last_warped > 10))
     {
         if(!dinput_window_check(This))
-        {
-            LeaveCriticalSection(&This->base.crit);
             return DIERR_GENERIC;
-        }
 	TRACE("Warping mouse to %d - %d\n", This->mapped_center.x, This->mapped_center.y);
 	SetCursorPos( This->mapped_center.x, This->mapped_center.y );
         This->last_warped = GetCurrentTime();
 
         This->need_warp = FALSE;
     }
-
-    LeaveCriticalSection(&This->base.crit);
     
     return DI_OK;
 }
