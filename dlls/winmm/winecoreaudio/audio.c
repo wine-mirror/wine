@@ -160,6 +160,8 @@ typedef struct {
 typedef struct {
     /* Access to the following fields is synchronized across threads. */
     volatile int    state;
+    LPWAVEHDR       lpQueuePtr;
+    DWORD           dwTotalRecorded;
 
     /* Synchronization mechanism to protect above fields */
     OSSpinLock      lock;
@@ -170,15 +172,20 @@ typedef struct {
     /* Record the arguments used when opening the device. */
     WAVEOPENDESC    waveDesc;
     WORD            wFlags;
+    PCMWAVEFORMAT   format;
+
+    AudioUnit       audioUnit;
+
+    /* Record state of debug channels at open.  Used to control fprintf's since
+     * we can't use Wine debug channel calls in non-Wine AudioUnit threads. */
+    BOOL            trace_on;
+    BOOL            warn_on;
+    BOOL            err_on;
 
 /* These fields aren't used. */
 #if 0
     CoreAudio_Device *cadev;
-    PCMWAVEFORMAT   format;
-    LPWAVEHDR       lpQueuePtr;
-    DWORD           dwTotalRecorded;
 
-    AudioUnit                   audioUnit;
     AudioStreamBasicDescription streamDescription;
 #endif
 } WINE_WAVEIN;
@@ -201,6 +208,9 @@ extern OSStatus AudioUnitUninitialize(AudioUnit au);
 
 extern int AudioUnit_SetVolume(AudioUnit au, float left, float right);
 extern int AudioUnit_GetVolume(AudioUnit au, float *left, float *right);
+
+extern int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
+        WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample);
 
 OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon, 
                                      AudioUnitRenderActionFlags *ioActionFlags, 
@@ -1510,6 +1520,8 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
  */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
+    WINE_WAVEIN* wwi;
+
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
     {
@@ -1522,8 +1534,72 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_BADDEVICEID;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    TRACE("Format: tag=%04X nChannels=%d nSamplesPerSec=%d wBitsPerSample=%d !\n",
+          lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+          lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
+
+    if (lpDesc->lpFormat->wFormatTag != WAVE_FORMAT_PCM ||
+        lpDesc->lpFormat->nChannels == 0 ||
+        lpDesc->lpFormat->nSamplesPerSec == 0
+        )
+    {
+        WARN("Bad format: tag=%04X nChannels=%d nSamplesPerSec=%d wBitsPerSample=%d !\n",
+             lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+             lpDesc->lpFormat->nSamplesPerSec, lpDesc->lpFormat->wBitsPerSample);
+        return WAVERR_BADFORMAT;
+    }
+
+    if (dwFlags & WAVE_FORMAT_QUERY)
+    {
+        TRACE("Query format: tag=%04X nChannels=%d nSamplesPerSec=%d !\n",
+              lpDesc->lpFormat->wFormatTag, lpDesc->lpFormat->nChannels,
+              lpDesc->lpFormat->nSamplesPerSec);
+        return MMSYSERR_NOERROR;
+    }
+
+    wwi = &WInDev[wDevID];
+    if (!OSSpinLockTry(&wwi->lock))
+        return MMSYSERR_ALLOCATED;
+
+    if (wwi->state != WINE_WS_CLOSED)
+    {
+        OSSpinLockUnlock(&wwi->lock);
+        return MMSYSERR_ALLOCATED;
+    }
+
+    wwi->state = WINE_WS_STOPPED;
+    wwi->wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
+
+    memcpy(&wwi->waveDesc, lpDesc,              sizeof(WAVEOPENDESC));
+    memcpy(&wwi->format,   lpDesc->lpFormat,    sizeof(PCMWAVEFORMAT));
+
+    if (wwi->format.wBitsPerSample == 0)
+    {
+        WARN("Resetting zeroed wBitsPerSample\n");
+        wwi->format.wBitsPerSample = 8 *
+            (wwi->format.wf.nAvgBytesPerSec /
+            wwi->format.wf.nSamplesPerSec) /
+            wwi->format.wf.nChannels;
+    }
+
+    wwi->dwTotalRecorded = 0;
+
+    wwi->trace_on = TRACE_ON(wave);
+    wwi->warn_on  = WARN_ON(wave);
+    wwi->err_on   = ERR_ON(wave);
+
+    if (!AudioUnit_CreateInputUnit(wwi, &wwi->audioUnit,
+        wwi->format.wf.nChannels, wwi->format.wf.nSamplesPerSec,
+        wwi->format.wBitsPerSample))
+    {
+        ERR("AudioUnit_CreateInputUnit failed\n");
+        OSSpinLockUnlock(&wwi->lock);
+        return MMSYSERR_ERROR;
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
 }
 
 
@@ -1532,6 +1608,9 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
  */
 static DWORD widClose(WORD wDevID)
 {
+    DWORD           ret = MMSYSERR_NOERROR;
+    WINE_WAVEIN*    wwi;
+
     TRACE("(%u);\n", wDevID);
 
     if (wDevID >= MAX_WAVEINDRV)
@@ -1540,8 +1619,45 @@ static DWORD widClose(WORD wDevID)
         return MMSYSERR_BADDEVICEID;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    wwi = &WInDev[wDevID];
+    OSSpinLockLock(&wwi->lock);
+    if (wwi->state == WINE_WS_CLOSED)
+    {
+        WARN("Device already closed.\n");
+        ret = MMSYSERR_INVALHANDLE;
+    }
+    else if (wwi->lpQueuePtr)
+    {
+        WARN("Buffers in queue.\n");
+        ret = WAVERR_STILLPLAYING;
+    }
+    else
+    {
+        wwi->state = WINE_WS_CLOSED;
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    if (ret == MMSYSERR_NOERROR)
+    {
+        OSStatus err = AudioUnitUninitialize(wwi->audioUnit);
+        if (err)
+        {
+            ERR("AudioUnitUninitialize return %c%c%c%c\n", (char) (err >> 24),
+                                                           (char) (err >> 16),
+                                                           (char) (err >> 8),
+                                                           (char) err);
+        }
+
+        if (!AudioUnit_CloseAudioUnit(wwi->audioUnit))
+        {
+            ERR("Can't close AudioUnit\n");
+        }
+
+        ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
+    }
+
+    return ret;
 }
 
 
