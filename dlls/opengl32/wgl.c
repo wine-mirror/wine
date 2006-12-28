@@ -223,6 +223,9 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   TRACE("(%s)\n", lpszProc);
 
+  if(lpszProc == NULL);
+    return NULL;
+
   /* First, look if it's not already defined in the 'standard' OpenGL functions */
   if ((local_func = GetProcAddress(opengl32_handle, lpszProc)) != NULL) {
     TRACE(" found function in 'standard' OpenGL functions (%p)\n", local_func);
@@ -234,10 +237,14 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
   ext_ret = (const OpenGL_extension *) bsearch(&ext, extension_registry,
 					 extension_registry_size, sizeof(OpenGL_extension), compar);
 
-  /* If nothing was found, we are looking for a WGL extension */
+  /* If nothing was found, we are looking for a WGL extension or an unknown GL extension. */
   if (ext_ret == NULL) {
+    /* If the function name starts with a w it is a WGL extension */
+    if(lpszProc[0] == 'w')
+      return wine_wgl.p_wglGetProcAddress(lpszProc);
+
+    /* We are dealing with an unknown GL extension. */
     WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
-    return wine_wgl.p_wglGetProcAddress(lpszProc);
   } else { /* We are looking for an OpenGL extension */
 
     /* Check if the GL extension required by the function is available */
