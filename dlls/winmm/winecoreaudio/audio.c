@@ -1259,7 +1259,7 @@ static DWORD wodDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 }
 
 /**************************************************************************
-* 				wodMessage (WINEJACK.7)
+* 				wodMessage (WINECOREAUDIO.7)
 */
 DWORD WINAPI CoreAudio_wodMessage(UINT wDevID, UINT wMsg, DWORD dwUser, 
                                   DWORD dwParam1, DWORD dwParam2)
@@ -1406,7 +1406,258 @@ OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon,
     if (needNotify) wodSendNotifyCompletionsMessage(wwo);
     return noErr;
 }
+
+
+/*======================================================================*
+ *                  Low level WAVE IN implementation                    *
+ *======================================================================*/
+
+/**************************************************************************
+ *                      widNotifyClient                 [internal]
+ */
+static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("wMsg = 0x%04x dwParm1 = %04X dwParam2 = %04X\n", wMsg, dwParam1, dwParam2);
+
+    switch (wMsg)
+    {
+        case WIM_OPEN:
+        case WIM_CLOSE:
+        case WIM_DATA:
+            if (wwi->wFlags != DCB_NULL &&
+                !DriverCallback(wwi->waveDesc.dwCallback, wwi->wFlags,
+                                (HDRVR)wwi->waveDesc.hWave, wMsg, wwi->waveDesc.dwInstance,
+                                dwParam1, dwParam2))
+            {
+                WARN("can't notify client !\n");
+                return MMSYSERR_ERROR;
+            }
+            break;
+        default:
+            FIXME("Unknown callback message %u\n", wMsg);
+            return MMSYSERR_INVALPARAM;
+    }
+    return MMSYSERR_NOERROR;
+}
+
+
+/**************************************************************************
+ *                      widGetDevCaps                           [internal]
+ */
+static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
+{
+    TRACE("(%u, %p, %u);\n", wDevID, lpCaps, dwSize);
+
+    if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
+
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        TRACE("MAX_WAVEINDRV reached !\n");
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                              widOpen                         [internal]
+ */
+static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
+{
+    TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
+    if (lpDesc == NULL)
+    {
+        WARN("Invalid Parameter !\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        TRACE ("MAX_WAVEINDRV reached !\n");
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                              widClose                        [internal]
+ */
+static DWORD widClose(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        WARN("bad device ID !\n");
+        return MMSYSERR_BADDEVICEID;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                              widAddBuffer            [internal]
+ */
+static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
+{
+    TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
+
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        WARN("invalid device ID\n");
+        return MMSYSERR_INVALHANDLE;
+    }
+    if (!(lpWaveHdr->dwFlags & WHDR_PREPARED))
+    {
+        TRACE("never been prepared !\n");
+        return WAVERR_UNPREPARED;
+    }
+    if (lpWaveHdr->dwFlags & WHDR_INQUEUE)
+    {
+        TRACE("header already in use !\n");
+        return WAVERR_STILLPLAYING;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                      widStart                                [internal]
+ */
+static DWORD widStart(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        WARN("invalid device ID\n");
+        return MMSYSERR_INVALHANDLE;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                      widStop                                 [internal]
+ */
+static DWORD widStop(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        WARN("invalid device ID\n");
+        return MMSYSERR_INVALHANDLE;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                      widReset                                [internal]
+ */
+static DWORD widReset(WORD wDevID)
+{
+    TRACE("(%u);\n", wDevID);
+    if (wDevID >= MAX_WAVEINDRV)
+    {
+        WARN("invalid device ID\n");
+        return MMSYSERR_INVALHANDLE;
+    }
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                              widGetNumDevs                   [internal]
+ */
+static DWORD widGetNumDevs(void)
+{
+    return MAX_WAVEINDRV;
+}
+
+
+/**************************************************************************
+ *                              widDevInterfaceSize             [internal]
+ */
+static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
+{
+    TRACE("(%u, %p)\n", wDevID, dwParam1);
+
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                              widDevInterface                 [internal]
+ */
+static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
+{
+    FIXME("unimplemented\n");
+    return MMSYSERR_NOTENABLED;
+}
+
+
+/**************************************************************************
+ *                              widMessage (WINECOREAUDIO.6)
+ */
+DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
+                            DWORD dwParam1, DWORD dwParam2)
+{
+    TRACE("(%u, %04X, %08X, %08X, %08X);\n",
+            wDevID, wMsg, dwUser, dwParam1, dwParam2);
+
+    switch (wMsg)
+    {
+        case DRVM_INIT:
+        case DRVM_EXIT:
+        case DRVM_ENABLE:
+        case DRVM_DISABLE:
+            /* FIXME: Pretend this is supported */
+            return 0;
+        case WIDM_OPEN:             return widOpen          (wDevID, (LPWAVEOPENDESC)dwParam1,  dwParam2);
+        case WIDM_CLOSE:            return widClose         (wDevID);
+        case WIDM_ADDBUFFER:        return widAddBuffer     (wDevID, (LPWAVEHDR)dwParam1,       dwParam2);
+        case WIDM_PREPARE:          return MMSYSERR_NOTSUPPORTED;
+        case WIDM_UNPREPARE:        return MMSYSERR_NOTSUPPORTED;
+        case WIDM_GETDEVCAPS:       return widGetDevCaps    (wDevID, (LPWAVEINCAPSW)dwParam1,   dwParam2);
+        case WIDM_GETNUMDEVS:       return widGetNumDevs    ();
+        case WIDM_RESET:            return widReset         (wDevID);
+        case WIDM_START:            return widStart         (wDevID);
+        case WIDM_STOP:             return widStop          (wDevID);
+        case DRV_QUERYDEVICEINTERFACESIZE: return widDevInterfaceSize       (wDevID, (LPDWORD)dwParam1);
+        case DRV_QUERYDEVICEINTERFACE:     return widDevInterface           (wDevID, (PWCHAR)dwParam1, dwParam2);
+        default:
+            FIXME("unknown message %d!\n", wMsg);
+    }
+
+    return MMSYSERR_NOTSUPPORTED;
+}
+
 #else
+
+/**************************************************************************
+ *                              widMessage (WINECOREAUDIO.6)
+ */
+DWORD WINAPI CoreAudio_widMessage(WORD wDevID, WORD wMsg, DWORD dwUser,
+                            DWORD dwParam1, DWORD dwParam2)
+{
+    FIXME("(%u, %04X, %08X, %08X, %08X): CoreAudio support not compiled into wine\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    return MMSYSERR_NOTENABLED;
+}
 
 /**************************************************************************
 * 				wodMessage (WINECOREAUDIO.7)
