@@ -158,27 +158,33 @@ typedef struct {
 } WINE_WAVEOUT;
 
 typedef struct {
+    /* Access to the following fields is synchronized across threads. */
     volatile int    state;
-    CoreAudio_Device *cadev;
+
+    /* Synchronization mechanism to protect above fields */
+    OSSpinLock      lock;
+
+    /* Capabilities description */
+    WAVEINCAPSW     caps;
+
+    /* Record the arguments used when opening the device. */
     WAVEOPENDESC    waveDesc;
     WORD            wFlags;
+
+/* These fields aren't used. */
+#if 0
+    CoreAudio_Device *cadev;
     PCMWAVEFORMAT   format;
     LPWAVEHDR       lpQueuePtr;
     DWORD           dwTotalRecorded;
-    WAVEINCAPSW     caps;
-    
+
     AudioUnit                   audioUnit;
     AudioStreamBasicDescription streamDescription;
-        
-    /*  BOOL            bTriggerSupport;
-    WORD              wDevID;
-    char              interface_name[32];*/
-        
-    /* synchronization stuff */
-    OSSpinLock lock;
+#endif
 } WINE_WAVEIN;
 
 static WINE_WAVEOUT WOutDev   [MAX_WAVEOUTDRV];
+static WINE_WAVEIN  WInDev    [MAX_WAVEINDRV];
 
 static CFMessagePortRef Port_SendToMessageThread;
 
@@ -505,7 +511,39 @@ LONG CoreAudio_WaveInit(void)
 
         WOutDev[i].lock = 0; /* initialize the mutex */
     }
-    
+
+    for (i = 0; i < MAX_WAVEINDRV; ++i)
+    {
+        memset(&WInDev[i], 0, sizeof(WInDev[i]));
+
+        /* Establish preconditions for widOpen */
+        WInDev[i].state = WINE_WS_CLOSED;
+        WInDev[i].lock = 0; /* initialize the mutex */
+
+        /* Fill in capabilities.  widGetDevCaps can be called at any time. */
+        WInDev[i].caps.wMid = 0xcafe; 	/* Manufac ID */
+        WInDev[i].caps.wPid = 0x0001; 	/* Product ID */
+        WInDev[i].caps.vDriverVersion = 0x0001;
+
+        snprintf(szPname, sizeof(szPname), "CoreAudio WaveIn %d", i);
+        MultiByteToWideChar(CP_ACP, 0, szPname, -1, WInDev[i].caps.szPname, sizeof(WInDev[i].caps.szPname)/sizeof(WCHAR));
+
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S08;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M16;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M08;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S08;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M16;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S16;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M08;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
+        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+
+        WInDev[i].caps.wChannels = 2;
+    }
+
     /* create mach messages handler */
     srandomdev();
     messageThreadPortName = CFStringCreateWithFormat(kCFAllocatorDefault, NULL,
@@ -1456,8 +1494,8 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
         return MMSYSERR_BADDEVICEID;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    memcpy(lpCaps, &WInDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
+    return MMSYSERR_NOERROR;
 }
 
 
