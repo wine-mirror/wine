@@ -1885,6 +1885,11 @@ static DWORD widStart(WORD wDevID)
  */
 static DWORD widStop(WORD wDevID)
 {
+    DWORD           ret = MMSYSERR_NOERROR;
+    WINE_WAVEIN*    wwi;
+    WAVEHDR*        lpWaveHdr = NULL;
+    OSStatus        err;
+
     TRACE("(%u);\n", wDevID);
     if (wDevID >= MAX_WAVEINDRV)
     {
@@ -1892,8 +1897,51 @@ static DWORD widStop(WORD wDevID)
         return MMSYSERR_INVALHANDLE;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    wwi = &WInDev[wDevID];
+
+    /* The order of the following operations is important since we can't hold
+     * the mutex while we make an Audio Unit call.  Stop the Audio Unit before
+     * setting the STOPPED state.  In widStart, the order is reversed.  This
+     * guarantees that we can't get into a situation where the state is
+     * PLAYING but the Audio Unit isn't running.  Although we can be in STOPPED
+     * state with the Audio Unit still running, that's harmless because the
+     * input callback will just throw away the sound data.
+     */
+    err = AudioOutputUnitStop(wwi->audioUnit);
+    if (err != noErr)
+        WARN("Failed to stop AU: %08lx\n", err);
+
+    TRACE("Recording stopped.\n");
+
+    OSSpinLockLock(&wwi->lock);
+
+    if (wwi->state == WINE_WS_CLOSED)
+    {
+        WARN("Trying to stop closed device.\n");
+        ret = MMSYSERR_INVALHANDLE;
+    }
+    else if (wwi->state != WINE_WS_STOPPED)
+    {
+        wwi->state = WINE_WS_STOPPED;
+        /* If there's a buffer in progress, it's done.  Remove it from the
+         * queue so that we can return it to the app, below. */
+        if (wwi->lpQueuePtr)
+        {
+            lpWaveHdr = wwi->lpQueuePtr;
+            wwi->lpQueuePtr = lpWaveHdr->lpNext;
+        }
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    if (lpWaveHdr)
+    {
+        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+        lpWaveHdr->dwFlags |= WHDR_DONE;
+        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+    }
+
+    return ret;
 }
 
 
