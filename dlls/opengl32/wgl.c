@@ -223,7 +223,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
   TRACE("(%s)\n", lpszProc);
 
-  if(lpszProc == NULL);
+  if(lpszProc == NULL)
     return NULL;
 
   /* First, look if it's not already defined in the 'standard' OpenGL functions */
@@ -245,6 +245,7 @@ PROC WINAPI wglGetProcAddress(LPCSTR  lpszProc) {
 
     /* We are dealing with an unknown GL extension. */
     WARN("Extension '%s' not defined in opengl32.dll's function table!\n", lpszProc);
+    return NULL;
   } else { /* We are looking for an OpenGL extension */
 
     /* Check if the GL extension required by the function is available */
