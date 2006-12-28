@@ -466,7 +466,7 @@ CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar
         res=IMoniker_ComposeWith(iface,antiMk,0,&tempMk);
         IMoniker_Release(antiMk);
 
-        return CompositeMonikerImpl_Reduce(mostRigthMk,pbc,dwReduceHowFar,&tempMk, ppmkReduced);
+        return IMoniker_Reduce(mostRigthMk,pbc,dwReduceHowFar,&tempMk, ppmkReduced);
     }
     else if (*ppmkToLeft==NULL)
 
@@ -486,7 +486,7 @@ CompositeMonikerImpl_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar
         /* If any of the components  reduces itself, the method returns S_OK and passes back a composite */
         /* of the reduced components */
         if (IMoniker_Reduce(mostRigthMk,pbc,dwReduceHowFar,NULL,&mostRigthReducedMk) &&
-            CompositeMonikerImpl_Reduce(mostRigthMk,pbc,dwReduceHowFar,&tempMk,&leftReducedComposedMk)
+            IMoniker_Reduce(mostRigthMk,pbc,dwReduceHowFar,&tempMk,&leftReducedComposedMk)
            )
 
             return CreateGenericComposite(leftReducedComposedMk,mostRigthReducedMk,ppmkReduced);
