@@ -158,6 +158,9 @@ typedef struct {
 } WINE_WAVEOUT;
 
 typedef struct {
+    /* This device's device number */
+    DWORD           wiID;
+
     /* Access to the following fields is synchronized across threads. */
     volatile int    state;
     LPWAVEHDR       lpQueuePtr;
@@ -534,6 +537,7 @@ LONG CoreAudio_WaveInit(void)
     for (i = 0; i < MAX_WAVEINDRV; ++i)
     {
         memset(&WInDev[i], 0, sizeof(WInDev[i]));
+        WInDev[i].wiID = i;
 
         /* Establish preconditions for widOpen */
         WInDev[i].state = WINE_WS_CLOSED;
