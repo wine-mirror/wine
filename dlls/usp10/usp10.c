@@ -143,9 +143,9 @@ static const SCRIPT_PROPERTIES *script_props[] =
     &props[73]
 };
 
-typedef struct scriptcache {
-       HDC hdc;
-} Scriptcache;
+typedef struct {
+    HDC hdc;
+} ScriptCache;
 
 typedef struct {
     int numGlyphs;
@@ -168,6 +168,19 @@ typedef struct {
     SCRIPT_LOGATTR* logattrs;
     SIZE* sz;
 } StringAnalysis;
+
+static HRESULT get_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
+{
+    if (!psc) return E_INVALIDARG;
+    if (!*psc)
+    {
+        if (!hdc) return E_PENDING;
+        if (!(*psc = HeapAlloc(GetProcessHeap(), 0, sizeof(ScriptCache))))
+            return E_OUTOFMEMORY;
+        ((ScriptCache *)*psc)->hdc = hdc;
+    }
+    return S_OK;
+}
 
 /***********************************************************************
  *      DllMain
@@ -234,42 +247,28 @@ HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***props, int *num)
  */
 HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp)
 {
-    HDC phdc;
-    Scriptcache *pScriptcache;
+    HRESULT hr;
     TEXTMETRICW ptm;
 
     TRACE("%p,%p,%p\n", hdc, psc, sfp);
 
-    if (!psc || !sfp)
-        return E_INVALIDARG;
-    if  (!hdc && !*psc) {
-        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
-	return E_PENDING;
-    }   else 
-        if  (hdc && !*psc) {
-            pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
-            pScriptcache->hdc = (HDC) hdc;
-            phdc = hdc;
-            *psc = (Scriptcache *) pScriptcache;
-        }   else
-            if  (*psc) {
-                pScriptcache = (Scriptcache *) *psc;
-                phdc = pScriptcache->hdc;
-            }
-                
+    if (!sfp) return E_INVALIDARG;
+    if ((hr = get_script_cache(hdc, psc))) return hr;
+
     if (sfp->cBytes != sizeof(SCRIPT_FONTPROPERTIES))
         return E_INVALIDARG;
 
     /* return something sensible? */
-    sfp->wgBlank       = 0;
-    if  (GetTextMetricsW(phdc, &ptm)) 
+    sfp->wgBlank = 0;
+    if (GetTextMetricsW(((ScriptCache *)*psc)->hdc, &ptm))
         sfp->wgDefault = ptm.tmDefaultChar;
     else
         sfp->wgDefault = 0;
-    sfp->wgInvalid     = 0;
-    sfp->wgKashida     = 0xffff;
+    sfp->wgInvalid = 0;
+    sfp->wgKashida = 0xffff;
     sfp->iKashidaWidth = 0;
-    return 0;
+
+    return S_OK;
 }
 
 /***********************************************************************
@@ -1058,47 +1057,29 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
  */
 HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars, 
                            int cChars, int cMaxGlyphs,
-                           SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust, 
+                           SCRIPT_ANALYSIS *psa, WORD *pwOutGlyphs, WORD *pwLogClust,
                            SCRIPT_VISATTR *psva, int *pcGlyphs)
 {
-    /*  Note SCRIPT_CACHE (*psc) appears to be a good place to save info that needs to be 
-     *  passed between functions.                                                         */
-
-    HDC phdc;
     int cnt;
-    DWORD hr;
-    Scriptcache *pScriptcache;
+    HRESULT hr;
     *pcGlyphs = cChars;
-    TRACE("(%p, %p, %p, %d, %d, %p)\n",  hdc, psc, pwcChars,
-                                       cChars, cMaxGlyphs, psa);
+
+    TRACE("(%p, %p, %p, %d, %d, %p)\n",  hdc, psc, pwcChars, cChars, cMaxGlyphs, psa);
     if (psa) TRACE("psa values: %d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
-                                         psa->fLinkBefore, psa->fLinkAfter,
-                                         psa->fLogicalOrder, psa->fNoGlyphIndex);
+                   psa->fLinkBefore, psa->fLinkAfter, psa->fLogicalOrder, psa->fNoGlyphIndex);
 
-    if  (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
+    if (cChars > cMaxGlyphs) return E_OUTOFMEMORY;
+    if ((hr = get_script_cache(hdc, psc))) return hr;
 
-    if  (!hdc && !*psc) {
-        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
-	return E_PENDING;
-    }   else 
-        if  (hdc && !*psc) {
-            pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
-            pScriptcache->hdc = (HDC) hdc;
-            phdc = hdc;
-            *psc = (Scriptcache *) pScriptcache;
-       }   else
-            if  (*psc) {
-                pScriptcache = (Scriptcache *) *psc;
-                phdc = pScriptcache->hdc;
-            }
-                
     TRACE("Before: ");
     for (cnt = 0; cnt < cChars; cnt++)
          TRACE("%4x",pwcChars[cnt]);
     TRACE("\n");
 
     if  (!psa->fNoGlyphIndex) {                                         /* Glyph translate */
-        hr = GetGlyphIndicesW(phdc, pwcChars, cChars, pwOutGlyphs, 0);
+        if (!(GetGlyphIndicesW(((ScriptCache *)*psc)->hdc, pwcChars, cChars, pwOutGlyphs, 0)))
+            return S_FALSE;
+
         TRACE("After:  ");
         for (cnt = 0; cnt < cChars; cnt++) {
              TRACE("%04x",pwOutGlyphs[cnt]);
@@ -1123,7 +1104,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
          psva[cnt].fZeroWidth = 0;
          pwLogClust[cnt] = cnt;
     }
-    return 0; 
+    return S_OK;
 }
 
 /***********************************************************************
@@ -1134,33 +1115,14 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
                            int cGlyphs, const SCRIPT_VISATTR *psva,
                            SCRIPT_ANALYSIS *psa, int *piAdvance, GOFFSET *pGoffset, ABC *pABC )
 {
-    HDC phdc;
     int wcnt;
+    HRESULT hr;
     LPABC lpABC;
-    Scriptcache *pScriptcache;
+
     TRACE("(%p, %p, %p, %s, %d, %p, %p, %p)\n",  hdc, psc, pwGlyphs,
-                                                debugstr_wn(pwGlyphs, cGlyphs), 
-                                                cGlyphs, psva, psa, 
-                                                piAdvance);
+          debugstr_wn(pwGlyphs, cGlyphs), cGlyphs, psva, psa, piAdvance);
 
-    /*  We need a valid hdc to do any of the font calls.  The spec says that hdc is optional and 
-     *  psc will be used first.  If psc and hdc are not specified E_PENDING is returned to get 
-     *  the caller to return the hdc.  For convenience, the hdc is cached in SCRIPT_CACHE.    */
-
-    if  (!hdc && !*psc) {
-        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
-	return E_PENDING;
-    }   else 
-        if  (hdc && !*psc) {
-            pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
-            pScriptcache->hdc = hdc;
-            phdc = hdc;
-            *psc = pScriptcache;
-        }   else
-            if  (*psc) {
-                pScriptcache = *psc;
-                phdc = pScriptcache->hdc;
-            }
+    if ((hr = get_script_cache(hdc, psc))) return hr;
 
     /*   Here we need to calculate the width of the run unit.  At this point the input string
      *   has been converted to glyphs and we still need to translate back to the original chars
@@ -1169,10 +1131,10 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     /* FIXME:  set pGoffset to more reasonable values */
 
      lpABC = HeapAlloc(GetProcessHeap(), 0 , sizeof(ABC)*cGlyphs);
-     pABC->abcA = 0; 
-     pABC->abcB = 0; 
-     pABC->abcC = 0; 
-     if  (!GetCharABCWidthsI(phdc, 0, cGlyphs, (WORD *) pwGlyphs, lpABC )) 
+     pABC->abcA = 0;
+     pABC->abcB = 0;
+     pABC->abcC = 0;
+     if (!GetCharABCWidthsI(((ScriptCache *)*psc)->hdc, 0, cGlyphs, (WORD *) pwGlyphs, lpABC ))
      {
          WARN("Could not get ABC values\n");
          for (wcnt = 0; wcnt < cGlyphs; wcnt++) {
@@ -1198,10 +1160,9 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
          }
      }
      TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
-
      HeapFree(GetProcessHeap(), 0, lpABC );
 
-     return 0;
+     return S_OK;
 }
 
 /***********************************************************************
@@ -1211,44 +1172,28 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars,
 			      int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
 {
-    HDC phdc;
     int cnt;
-    DWORD hr;
-    Scriptcache *pScriptcache;
+    HRESULT hr;
+
     FIXME("(%p,%p,%s,%d,0x%x,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars),
                                                  cChars, dwFlags, pwOutGlyphs);
 
-    if  (!psc)
-        return E_INVALIDARG;
-
-    if  (!hdc && !*psc) {
-        TRACE("No Script_Cache (psc) and no hdc. Ask for one. Hdc=%p, psc=%p\n", hdc, *psc);
-	return E_PENDING;
-    }   else 
-        if  (hdc && !*psc) {
-            pScriptcache = HeapAlloc( GetProcessHeap(), 0, sizeof(Scriptcache) );
-            pScriptcache->hdc = hdc;
-            phdc = hdc;
-            *psc = pScriptcache;
-        }   else
-            if  (*psc) {
-                pScriptcache = *psc;
-                phdc = pScriptcache->hdc;
-            }
+    if ((hr = get_script_cache(hdc, psc))) return hr;
 
     TRACE("Before: ");
     for (cnt = 0; cnt < cChars; cnt++)
          TRACE("%4x",pwcInChars[cnt]);
     TRACE("\n");
 
-    hr = GetGlyphIndicesW(phdc, pwcInChars, cChars, pwOutGlyphs, 0);
+    GetGlyphIndicesW(((ScriptCache *)*psc)->hdc, pwcInChars, cChars, pwOutGlyphs, 0);
+
     TRACE("After:  ");
     for (cnt = 0; cnt < cChars; cnt++) {
          TRACE("%04x",pwOutGlyphs[cnt]);
     }
     TRACE("\n");
 
-    return 0; 
+    return S_OK;
 }
 
 /***********************************************************************
@@ -1257,40 +1202,27 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
  */
 HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UINT fuOptions, 
                              const RECT *lprc, const SCRIPT_ANALYSIS *psa, const WCHAR *pwcReserved, 
-                             int iReserved, const WORD *pwGlyphs, int cGlyphs, const int *piAdvance, 
+                             int iReserved, const WORD *pwGlyphs, int cGlyphs, const int *piAdvance,
                              const int *piJustify, const GOFFSET *pGoffset)
 {
-    HDC phdc;
-    DWORD hr;
-    Scriptcache *pScriptcache;
-    TRACE     ("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p): stub\n",
+    HRESULT hr;
+
+    TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p): stub\n",
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
          piAdvance, piJustify, pGoffset);
 
-    if  (!hdc || !psc || !piAdvance || !psa || !pwGlyphs)         /* hdc is mandatory                 */
-        return E_INVALIDARG;
-        
-    if  (!*psc) {
-        pScriptcache = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache) );
-        pScriptcache->hdc = hdc;
-        phdc = hdc;
-        *psc = pScriptcache;
-    } else {
-        pScriptcache = *psc;
-        phdc = pScriptcache->hdc;
-    }
+    if (!hdc && psc && !*psc) return E_INVALIDARG;
+    if (!piAdvance || !psa || !pwGlyphs) return E_INVALIDARG;
+    if ((hr = get_script_cache(hdc, psc))) return hr;
 
     fuOptions &= ETO_CLIPPED + ETO_OPAQUE;
     if  (!psa->fNoGlyphIndex)                                     /* Have Glyphs?                      */
         fuOptions |= ETO_GLYPH_INDEX;                             /* Say don't do translation to glyph */
 
-    hr = ExtTextOutW(phdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL);
+    if (!ExtTextOutW(((ScriptCache *)*psc)->hdc, x, y, fuOptions, lprc, pwGlyphs, cGlyphs, NULL))
+        return S_FALSE;
 
-    if  (hr) return S_OK;
-    else {
-        FIXME("ExtTextOut returned:=%d\n", hr);
-        return hr;
-    }
+    return S_OK;
 }
 
 /***********************************************************************
@@ -1309,30 +1241,16 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
  */
 HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, LONG *height)
 {
-    HDC phdc;
-    Scriptcache *pScriptcache;
+    HRESULT hr;
     TEXTMETRICW metric;
 
     TRACE("(%p, %p, %p)\n", hdc, psc, height);
 
-    if  (!psc || !height)
-        return E_INVALIDARG;
-
-    if (!hdc) return E_PENDING;
-
-    if  (!*psc) {
-        pScriptcache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache));
-        pScriptcache->hdc = hdc;
-        phdc = hdc;
-        *psc = pScriptcache;
-    } else {
-        pScriptcache = *psc;
-        phdc = pScriptcache->hdc;
-    }
+    if (!height) return E_INVALIDARG;
+    if ((hr = get_script_cache(hdc, psc))) return hr;
 
     /* FIXME: get this from the cache */
-    if (!GetTextMetricsW(phdc, &metric))
-        return E_INVALIDARG;
+    if (!GetTextMetricsW(((ScriptCache *)*psc)->hdc, &metric)) return E_INVALIDARG;
 
     *height = metric.tmHeight;
     return S_OK;
@@ -1355,30 +1273,14 @@ HRESULT WINAPI ScriptCacheGetHeight(HDC hdc, SCRIPT_CACHE *psc, LONG *height)
  */
 HRESULT WINAPI ScriptGetGlyphABCWidth(HDC hdc, SCRIPT_CACHE *psc, WORD glyph, ABC *abc)
 {
-    HDC phdc;
-    Scriptcache *pScriptcache;
+    HRESULT hr;
 
     TRACE("(%p, %p, 0x%04x, %p)\n", hdc, psc, glyph, abc);
 
-    if  (!psc)
-        return E_INVALIDARG;
-
-    if (!hdc) return E_PENDING;
-
-    if  (!*psc) {
-        pScriptcache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(Scriptcache));
-        pScriptcache->hdc = hdc;
-        phdc = hdc;
-        *psc = pScriptcache;
-    } else {
-        pScriptcache = *psc;
-        phdc = pScriptcache->hdc;
-    }
+    if ((hr = get_script_cache(hdc, psc))) return hr;
 
     /* FIXME: get this from the cache */
-    if (!GetCharABCWidthsW(phdc, glyph, glyph, abc))
-        return E_HANDLE;
-
+    if (!GetCharABCWidthsW(((ScriptCache *)*psc)->hdc, glyph, glyph, abc)) return E_HANDLE;
     return S_OK;
 }
 
