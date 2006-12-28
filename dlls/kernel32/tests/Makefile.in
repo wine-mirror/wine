@@ -27,6 +27,7 @@ CTESTS = \
 	pipe.c \
 	process.c \
 	profile.c \
+	resource.c \
 	sync.c \
 	thread.c \
 	time.c \
