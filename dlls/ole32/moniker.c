@@ -159,6 +159,19 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer
     return S_OK;
 }
 
+static HRESULT reduce_moniker(IMoniker *pmk, IMoniker **pmkReduced)
+{
+    IBindCtx *pbc;
+    HRESULT hr = CreateBindCtx(0, &pbc);
+    if (FAILED(hr))
+        return hr;
+    hr = IMoniker_Reduce(pmk, pbc, MKRREDUCE_ALL, NULL, pmkReduced);
+    if (FAILED(hr))
+        ERR("reducing moniker failed with error 0x%08x\n", hr);
+    IBindCtx_Release(pbc);
+    return hr;
+}
+
 /***********************************************************************
  *        RunningObjectTable_QueryInterface
  */
@@ -329,10 +342,19 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
         return hr;
     }
 
-    hr = get_moniker_comparison_data(pmkObjectName, &rot_entry->moniker_data);
+    hr = reduce_moniker(pmkObjectName, &pmkObjectName);
+    if (FAILED(hr))
+    {
+        rot_entry_delete(rot_entry);
+        return hr;
+    }
+
+    hr = get_moniker_comparison_data(pmkObjectName,
+                                     &rot_entry->moniker_data);
     if (hr != S_OK)
     {
         rot_entry_delete(rot_entry);
+        IMoniker_Release(pmkObjectName);
         return hr;
     }
 
@@ -340,10 +362,12 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
     if (hr != S_OK)
     {
         rot_entry_delete(rot_entry);
+        IMoniker_Release(pmkObjectName);
         return hr;
     }
     /* marshal moniker */
-    hr = CoMarshalInterface(pStream, &IID_IMoniker, (IUnknown *)pmkObjectName, MSHCTX_LOCAL | MSHCTX_NOSHAREDMEM, NULL, MSHLFLAGS_TABLESTRONG);
+    hr = CoMarshalInterface(pStream, &IID_IMoniker, (IUnknown *)pmkObjectName,
+                            MSHCTX_LOCAL | MSHCTX_NOSHAREDMEM, NULL, MSHLFLAGS_TABLESTRONG);
     /* FIXME: a cleaner way would be to create an IStream class that writes
      * directly to an MInterfacePointer */
     if (hr == S_OK)
@@ -361,6 +385,7 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
         }
     }
     IStream_Release(pStream);
+    IMoniker_Release(pmkObjectName);
     if (hr != S_OK)
     {
         rot_entry_delete(rot_entry);
@@ -433,7 +458,11 @@ RunningObjectTableImpl_IsRunning( IRunningObjectTable* iface, IMoniker *pmkObjec
 
     TRACE("(%p,%p)\n",This,pmkObjectName);
 
+    hr = reduce_moniker(pmkObjectName, &pmkObjectName);
+    if (FAILED(hr))
+        return hr;
     hr = get_moniker_comparison_data(pmkObjectName, &moniker_data);
+    IMoniker_Release(pmkObjectName);
     if (hr != S_OK)
         return hr;
 
@@ -480,7 +509,11 @@ RunningObjectTableImpl_GetObject( IRunningObjectTable* iface,
 
     *ppunkObject = NULL;
 
+    hr = reduce_moniker(pmkObjectName, &pmkObjectName);
+    if (FAILED(hr))
+        return hr;
     hr = get_moniker_comparison_data(pmkObjectName, &moniker_data);
+    IMoniker_Release(pmkObjectName);
     if (hr != S_OK)
         return hr;
 
@@ -569,7 +602,11 @@ RunningObjectTableImpl_GetTimeOfLastChange(IRunningObjectTable* iface,
     if (pmkObjectName==NULL || pfiletime==NULL)
         return E_INVALIDARG;
 
+    hr = reduce_moniker(pmkObjectName, &pmkObjectName);
+    if (FAILED(hr))
+        return hr;
     hr = get_moniker_comparison_data(pmkObjectName, &moniker_data);
+    IMoniker_Release(pmkObjectName);
     if (hr != S_OK)
         return hr;
 
