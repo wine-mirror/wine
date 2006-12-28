@@ -40,6 +40,7 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include "compobj_private.h"
 
@@ -143,22 +144,56 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer
 {
     HRESULT hr;
     IROTData *pROTData = NULL;
-    ULONG size = MAX_COMPARISON_DATA;
     hr = IMoniker_QueryInterface(pMoniker, &IID_IROTData, (void *)&pROTData);
-    if (hr != S_OK)
+    if (SUCCEEDED(hr))
     {
-        ERR("Failed to query moniker for IROTData interface, hr = 0x%08x\n", hr);
-        return hr;
+        ULONG size = MAX_COMPARISON_DATA;
+        *moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MInterfacePointer, abData[size]));
+        hr = IROTData_GetComparisonData(pROTData, (*moniker_data)->abData, size, &size);
+        if (hr != S_OK)
+        {
+            ERR("Failed to copy comparison data into buffer, hr = 0x%08x\n", hr);
+            HeapFree(GetProcessHeap(), 0, *moniker_data);
+            return hr;
+        }
+        (*moniker_data)->ulCntData = size;
     }
-    *moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MInterfacePointer, abData[size]));
-    hr = IROTData_GetComparisonData(pROTData, (*moniker_data)->abData, size, &size);
-    if (hr != S_OK)
+    else
     {
-        ERR("Failed to copy comparison data into buffer, hr = 0x%08x\n", hr);
-        HeapFree(GetProcessHeap(), 0, *moniker_data);
-        return hr;
+        IBindCtx *pbc;
+        LPOLESTR pszDisplayName;
+        CLSID clsid;
+        int len;
+
+        TRACE("generating comparison data from display name\n");
+
+        hr = CreateBindCtx(0, &pbc);
+        if (FAILED(hr))
+            return hr;
+        hr = IMoniker_GetDisplayName(pMoniker, pbc, NULL, &pszDisplayName);
+        IBindCtx_Release(pbc);
+        if (FAILED(hr))
+            return hr;
+        hr = IMoniker_GetClassID(pMoniker, &clsid);
+        if (FAILED(hr))
+        {
+            CoTaskMemFree(pszDisplayName);
+            return hr;
+        }
+
+        len = strlenW(pszDisplayName);
+        *moniker_data = HeapAlloc(GetProcessHeap(), 0,
+            FIELD_OFFSET(MInterfacePointer, abData[sizeof(CLSID) + (len+1)*sizeof(WCHAR)]));
+        if (!*moniker_data)
+        {
+            CoTaskMemFree(pszDisplayName);
+            return E_OUTOFMEMORY;
+        }
+        (*moniker_data)->ulCntData = sizeof(CLSID) + (len+1)*sizeof(WCHAR);
+
+        memcpy(&(*moniker_data)->abData[0], &clsid, sizeof(clsid));
+        memcpy(&(*moniker_data)->abData[sizeof(clsid)], pszDisplayName, (len+1)*sizeof(WCHAR));
     }
-    (*moniker_data)->ulCntData = size;
     return S_OK;
 }
 
