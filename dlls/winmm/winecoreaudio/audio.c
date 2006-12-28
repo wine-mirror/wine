@@ -1755,6 +1755,10 @@ static DWORD widStop(WORD wDevID)
  */
 static DWORD widReset(WORD wDevID)
 {
+    DWORD           ret = MMSYSERR_NOERROR;
+    WINE_WAVEIN*    wwi;
+    WAVEHDR*        lpWaveHdr = NULL;
+
     TRACE("(%u);\n", wDevID);
     if (wDevID >= MAX_WAVEINDRV)
     {
@@ -1762,8 +1766,36 @@ static DWORD widReset(WORD wDevID)
         return MMSYSERR_INVALHANDLE;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    wwi = &WInDev[wDevID];
+    OSSpinLockLock(&wwi->lock);
+
+    if (wwi->state == WINE_WS_CLOSED)
+    {
+        WARN("Trying to reset a closed device.\n");
+        ret = MMSYSERR_INVALHANDLE;
+    }
+    else
+    {
+        lpWaveHdr               = wwi->lpQueuePtr;
+        wwi->lpQueuePtr         = NULL;
+        wwi->state              = WINE_WS_STOPPED;
+        wwi->dwTotalRecorded    = 0;
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    while (lpWaveHdr)
+    {
+        WAVEHDR* lpNext = lpWaveHdr->lpNext;
+
+        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+        lpWaveHdr->dwFlags |= WHDR_DONE;
+        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+
+        lpWaveHdr = lpNext;
+    }
+
+    return ret;
 }
 
 
