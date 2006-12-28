@@ -202,6 +202,7 @@ static CFMessagePortRef Port_SendToMessageThread;
 
 static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
 static void wodHelper_NotifyCompletions(WINE_WAVEOUT* wwo, BOOL force);
+static void widHelper_NotifyCompletions(WINE_WAVEIN* wwi);
 
 extern int AudioUnit_CreateDefaultAudioUnit(void *wwo, AudioUnit *au);
 extern int AudioUnit_CloseAudioUnit(AudioUnit au);
@@ -1500,6 +1501,55 @@ static DWORD widNotifyClient(WINE_WAVEIN* wwi, WORD wMsg, DWORD dwParam1, DWORD 
             return MMSYSERR_INVALPARAM;
     }
     return MMSYSERR_NOERROR;
+}
+
+
+/**************************************************************************
+ *                      widHelper_NotifyCompletions              [internal]
+ */
+static void widHelper_NotifyCompletions(WINE_WAVEIN* wwi)
+{
+    LPWAVEHDR       lpWaveHdr;
+    LPWAVEHDR       lpFirstDoneWaveHdr = NULL;
+    LPWAVEHDR       lpLastDoneWaveHdr = NULL;
+
+    OSSpinLockLock(&wwi->lock);
+
+    /* First, excise all of the done headers from the queue into
+     * a free-standing list. */
+
+    /* Start from lpQueuePtr and keep notifying until:
+        * - we hit an unfilled wavehdr
+        * - we hit the end of the list
+        */
+    for (
+        lpWaveHdr = wwi->lpQueuePtr;
+        lpWaveHdr &&
+            lpWaveHdr->dwBytesRecorded >= lpWaveHdr->dwBufferLength;
+        lpWaveHdr = lpWaveHdr->lpNext
+        )
+    {
+        if (!lpFirstDoneWaveHdr)
+            lpFirstDoneWaveHdr = lpWaveHdr;
+        lpLastDoneWaveHdr = lpWaveHdr;
+    }
+
+    if (lpLastDoneWaveHdr)
+    {
+        wwi->lpQueuePtr = lpLastDoneWaveHdr->lpNext;
+        lpLastDoneWaveHdr->lpNext = NULL;
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    /* Now, send the "done" notification for each header in our list. */
+    for (lpWaveHdr = lpFirstDoneWaveHdr; lpWaveHdr; lpWaveHdr = lpWaveHdr->lpNext)
+    {
+        lpWaveHdr->dwFlags &= ~WHDR_INQUEUE;
+        lpWaveHdr->dwFlags |= WHDR_DONE;
+
+        widNotifyClient(wwi, WIM_DATA, (DWORD)lpWaveHdr, 0);
+    }
 }
 
 
