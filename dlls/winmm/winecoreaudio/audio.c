@@ -168,6 +168,7 @@ typedef struct {
 
     /* Capabilities description */
     WAVEINCAPSW     caps;
+    char            interface_name[32];
 
     /* Record the arguments used when opening the device. */
     WAVEOPENDESC    waveDesc;
@@ -543,6 +544,7 @@ LONG CoreAudio_WaveInit(void)
 
         snprintf(szPname, sizeof(szPname), "CoreAudio WaveIn %d", i);
         MultiByteToWideChar(CP_ACP, 0, szPname, -1, WInDev[i].caps.szPname, sizeof(WInDev[i].caps.szPname)/sizeof(WCHAR));
+        snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "winecoreaudio in: %d", i);
 
         WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
         WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S08;
@@ -1815,8 +1817,9 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
 {
     TRACE("(%u, %p)\n", wDevID, dwParam1);
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    *dwParam1 = MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                                    NULL, 0 ) * sizeof(WCHAR);
+    return MMSYSERR_NOERROR;
 }
 
 
@@ -1825,8 +1828,14 @@ static DWORD widDevInterfaceSize(UINT wDevID, LPDWORD dwParam1)
  */
 static DWORD widDevInterface(UINT wDevID, PWCHAR dwParam1, DWORD dwParam2)
 {
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    if (dwParam2 >= MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                                        NULL, 0 ) * sizeof(WCHAR))
+    {
+        MultiByteToWideChar(CP_ACP, 0, WInDev[wDevID].interface_name, -1,
+                            dwParam1, dwParam2 / sizeof(WCHAR));
+        return MMSYSERR_NOERROR;
+    }
+    return MMSYSERR_INVALPARAM;
 }
 
 
