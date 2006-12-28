@@ -284,7 +284,7 @@ static const char * getMessage(UINT msg)
 
 #define kStopLoopMessage 0
 #define kWaveOutNotifyCompletionsMessage 1
-#define kWaveInCallbackMessage 2
+#define kWaveInNotifyCompletionsMessage 2
 
 /* Mach Message Handling */
 static CFDataRef wodMessageHandler(CFMessagePortRef port_ReceiveInMessageThread, SInt32 msgid, CFDataRef data, void *info)
@@ -297,7 +297,10 @@ static CFDataRef wodMessageHandler(CFMessagePortRef port_ReceiveInMessageThread,
             buffer = (UInt32 *) CFDataGetBytePtr(data);
             wodHelper_NotifyCompletions(&WOutDev[buffer[0]], FALSE);
             break;
-        case kWaveInCallbackMessage:
+        case kWaveInNotifyCompletionsMessage:
+            buffer = (UInt32 *) CFDataGetBytePtr(data);
+            widHelper_NotifyCompletions(&WInDev[buffer[0]]);
+            break;
         default:
             CFRunLoopStop(CFRunLoopGetCurrent());
             break;
@@ -339,6 +342,25 @@ static void wodSendNotifyCompletionsMessage(WINE_WAVEOUT* wwo)
         return;
 
     CFMessagePortSendRequest(Port_SendToMessageThread, kWaveOutNotifyCompletionsMessage, data, 0.0, 0.0, NULL, NULL);
+    CFRelease(data);
+}
+
+/**************************************************************************
+*                       wodSendNotifyInputCompletionsMessage     [internal]
+*   Call from AudioUnit IO thread can't use Wine debug channels.
+*/
+static void wodSendNotifyInputCompletionsMessage(WINE_WAVEIN* wwi)
+{
+    CFDataRef data;
+    UInt32 buffer;
+
+    buffer = (UInt32) wwi->wiID;
+
+    data = CFDataCreate(kCFAllocatorDefault, (UInt8 *)&buffer, sizeof(buffer));
+    if (!data)
+        return;
+
+    CFMessagePortSendRequest(Port_SendToMessageThread, kWaveInNotifyCompletionsMessage, data, 0.0, 0.0, NULL, NULL);
     CFRelease(data);
 }
 
