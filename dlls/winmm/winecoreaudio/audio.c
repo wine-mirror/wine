@@ -68,6 +68,15 @@ enum
 };
 typedef UInt32 AudioUnitRenderActionFlags;
 
+typedef long ComponentResult;
+extern ComponentResult
+AudioUnitRender(                    AudioUnit                       ci,
+                                    AudioUnitRenderActionFlags *    ioActionFlags,
+                                    const AudioTimeStamp *          inTimeStamp,
+                                    UInt32                          inOutputBusNumber,
+                                    UInt32                          inNumberFrames,
+                                    AudioBufferList *               ioData)         AVAILABLE_MAC_OS_X_VERSION_10_2_AND_LATER;
+
 /* only allow 10 output devices through this driver, this ought to be adequate */
 #define MAX_WAVEOUTDRV  (1)
 #define MAX_WAVEINDRV   (1)
@@ -2118,7 +2127,70 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
                                      UInt32 inNumberFrames,
                                      AudioBufferList *ioData)
 {
-    return noErr;
+    WINE_WAVEIN*    wwi = (WINE_WAVEIN*)inRefCon;
+    OSStatus        err = noErr;
+    BOOL            needNotify = FALSE;
+    WAVEHDR*        lpStorePtr;
+    unsigned int    dataToStore;
+    unsigned int    dataStored = 0;
+
+
+    if (wwi->trace_on)
+        fprintf(stderr, "trace:wave:CoreAudio_wiAudioUnitIOProc (ioActionFlags = %08lx, inTimeStamp = { %f, %llu, %f, %llu, %08lx }, inBusNumber = %lu, inNumberFrames = %lu)\n",
+            *ioActionFlags, inTimeStamp->mSampleTime, inTimeStamp->mHostTime, inTimeStamp->mRateScalar, inTimeStamp->mWordClockTime, inTimeStamp->mFlags, inBusNumber, inNumberFrames);
+
+    /* Render into audio buffer */
+    err = AudioUnitRender(wwi->audioUnit, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, wwi->bufferList);
+    if (err)
+    {
+        if (wwi->err_on)
+            fprintf(stderr, "err:wave:CoreAudio_wiAudioUnitIOProc AudioUnitRender failed with error %li\n", err);
+        return err;
+    }
+
+    /* Copy from audio buffer to the wavehdrs */
+    dataToStore = wwi->bufferList->mBuffers[0].mDataByteSize;
+
+    OSSpinLockLock(&wwi->lock);
+
+    lpStorePtr = wwi->lpQueuePtr;
+
+    while (dataToStore > 0 && wwi->state == WINE_WS_PLAYING && lpStorePtr)
+    {
+        unsigned int room = lpStorePtr->dwBufferLength - lpStorePtr->dwBytesRecorded;
+        unsigned int toCopy;
+
+        if (wwi->trace_on)
+            fprintf(stderr, "trace:wave:CoreAudio_wiAudioUnitIOProc Looking to store %u bytes to wavehdr %p, which has room for %u\n",
+                dataToStore, lpStorePtr, room);
+
+        if (room >= dataToStore)
+            toCopy = dataToStore;
+        else
+            toCopy = room;
+
+        if (toCopy > 0)
+        {
+            memcpy(lpStorePtr->lpData + lpStorePtr->dwBytesRecorded,
+                (char*)wwi->bufferList->mBuffers[0].mData + dataStored, toCopy);
+            lpStorePtr->dwBytesRecorded += toCopy;
+            wwi->dwTotalRecorded += toCopy;
+            dataStored += toCopy;
+            dataToStore -= toCopy;
+            room -= toCopy;
+        }
+
+        if (room == 0)
+        {
+            lpStorePtr = lpStorePtr->lpNext;
+            needNotify = TRUE;
+        }
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    if (needNotify) wodSendNotifyInputCompletionsMessage(wwi);
+    return err;
 }
 
 #else
