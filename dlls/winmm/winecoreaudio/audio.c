@@ -176,6 +176,7 @@ typedef struct {
     PCMWAVEFORMAT   format;
 
     AudioUnit       audioUnit;
+    AudioBufferList*bufferList;
 
     /* Record state of debug channels at open.  Used to control fprintf's since
      * we can't use Wine debug channel calls in non-Wine AudioUnit threads. */
@@ -1519,12 +1520,61 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
 
 
 /**************************************************************************
+ *                    widHelper_DestroyAudioBufferList           [internal]
+ * Convenience function to dispose of our audio buffers
+ */
+static void widHelper_DestroyAudioBufferList(AudioBufferList* list)
+{
+    if (list)
+    {
+        UInt32 i;
+        for (i = 0; i < list->mNumberBuffers; i++)
+        {
+            if (list->mBuffers[i].mData)
+                HeapFree(GetProcessHeap(), 0, list->mBuffers[i].mData);
+        }
+        HeapFree(GetProcessHeap(), 0, list);
+    }
+}
+
+
+/**************************************************************************
+ *                    widHelper_AllocateAudioBufferList          [internal]
+ * Convenience function to allocate our audio buffers
+ */
+static AudioBufferList* widHelper_AllocateAudioBufferList(UInt32 numChannels, UInt32 size)
+{
+    AudioBufferList*            list;
+    UInt32                      i;
+
+    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AudioBufferList) + numChannels * sizeof(AudioBuffer));
+    if (list == NULL)
+        return NULL;
+
+    list->mNumberBuffers = numChannels;
+    for (i = 0; i < numChannels; ++i)
+    {
+        list->mBuffers[i].mNumberChannels = 1;
+        list->mBuffers[i].mDataByteSize = size;
+        list->mBuffers[i].mData = HeapAlloc(GetProcessHeap(), 0, size);
+        if (list->mBuffers[i].mData == NULL)
+        {
+            widHelper_DestroyAudioBufferList(list);
+            return NULL;
+        }
+    }
+    return list;
+}
+
+
+/**************************************************************************
  *                              widOpen                         [internal]
  */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
     WINE_WAVEIN*    wwi;
     UInt32          frameCount;
+    UInt32          bytesPerFrame;
 
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
@@ -1601,6 +1651,19 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
         return MMSYSERR_ERROR;
     }
 
+    /* Allocate our audio buffers */
+    /* For interleaved audio, we allocate one buffer for all channels. */
+    bytesPerFrame = wwi->format.wBitsPerSample * wwi->format.wf.nChannels / 8;
+    wwi->bufferList = widHelper_AllocateAudioBufferList(1, wwi->format.wf.nChannels * frameCount * bytesPerFrame);
+    if (wwi->bufferList == NULL)
+    {
+        ERR("Failed to allocate buffer list\n");
+        AudioUnitUninitialize(wwi->audioUnit);
+        AudioUnit_CloseAudioUnit(wwi->audioUnit);
+        OSSpinLockUnlock(&wwi->lock);
+        return MMSYSERR_NOMEM;
+    }
+
     OSSpinLockUnlock(&wwi->lock);
 
     return widNotifyClient(wwi, WIM_OPEN, 0L, 0L);
@@ -1657,6 +1720,10 @@ static DWORD widClose(WORD wDevID)
         {
             ERR("Can't close AudioUnit\n");
         }
+
+        /* Dellocate our audio buffers */
+        widHelper_DestroyAudioBufferList(wwi->bufferList);
+        wwi->bufferList = NULL;
 
         ret = widNotifyClient(wwi, WIM_CLOSE, 0L, 0L);
     }
