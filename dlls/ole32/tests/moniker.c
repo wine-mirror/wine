@@ -20,6 +20,7 @@
 
 #define _WIN32_DCOM
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -31,11 +32,586 @@
 
 #include "wine/test.h"
 
+#define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
+#define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %d\n", cLocks)
 #define ok_ole_success(hr, func) ok(hr == S_OK, #func " failed with error 0x%08x\n", hr)
 #define COUNTOF(x) (sizeof(x) / sizeof(x[0]))
 
+#define CHECK_EXPECTED_METHOD(method_name) \
+do { \
+    trace("%s\n", method_name); \
+        ok(*expected_method_list != NULL, "Extra method %s called\n", method_name); \
+            if (*expected_method_list) \
+            { \
+                ok(!strcmp(*expected_method_list, method_name), "Expected %s to be called instead of %s\n", \
+                   *expected_method_list, method_name); \
+                       expected_method_list++; \
+            } \
+} while(0)
+
+static char const * const *expected_method_list;
 static const WCHAR wszFileName1[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','1','.','d','o','c',0};
 static const WCHAR wszFileName2[] = {'c',':','\\','w','i','n','d','o','w','s','\\','t','e','s','t','2','.','d','o','c',0};
+
+static const CLSID CLSID_WineTest =
+{ /* 9474ba1a-258b-490b-bc13-516e9239ace0 */
+    0x9474ba1a,
+    0x258b,
+    0x490b,
+    {0xbc, 0x13, 0x51, 0x6e, 0x92, 0x39, 0xac, 0xe0}
+};
+
+static const CLSID CLSID_TestMoniker =
+{ /* b306bfbc-496e-4f53-b93e-2ff9c83223d7 */
+    0xb306bfbc,
+    0x496e,
+    0x4f53,
+    {0xb9, 0x3e, 0x2f, 0xf9, 0xc8, 0x32, 0x23, 0xd7}
+};
+
+static LONG cLocks;
+
+static void LockModule(void)
+{
+    InterlockedIncrement(&cLocks);
+}
+
+static void UnlockModule(void)
+{
+    InterlockedDecrement(&cLocks);
+}
+
+static HRESULT WINAPI Test_IClassFactory_QueryInterface(
+    LPCLASSFACTORY iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = (LPVOID)iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IClassFactory_AddRef(LPCLASSFACTORY iface)
+{
+    LockModule();
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
+{
+    UnlockModule();
+    return 1; /* non-heap-based object */
+}
+
+static HRESULT WINAPI Test_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Test_IClassFactory_LockServer(
+    LPCLASSFACTORY iface,
+    BOOL fLock)
+{
+    return S_OK;
+}
+
+static const IClassFactoryVtbl TestClassFactory_Vtbl =
+{
+    Test_IClassFactory_QueryInterface,
+    Test_IClassFactory_AddRef,
+    Test_IClassFactory_Release,
+    Test_IClassFactory_CreateInstance,
+    Test_IClassFactory_LockServer
+};
+
+static IClassFactory Test_ClassFactory = { &TestClassFactory_Vtbl };
+
+static HRESULT WINAPI
+MonikerNoROTData_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+{
+    if (!ppvObject)
+        return E_INVALIDARG;
+
+    *ppvObject = 0;
+
+    if (IsEqualIID(&IID_IUnknown, riid)      ||
+        IsEqualIID(&IID_IPersist, riid)      ||
+        IsEqualIID(&IID_IPersistStream,riid) ||
+        IsEqualIID(&IID_IMoniker, riid))
+        *ppvObject = iface;
+    if (IsEqualIID(&IID_IROTData, riid))
+        CHECK_EXPECTED_METHOD("Moniker_QueryInterface(IID_IROTData)");
+
+    if ((*ppvObject)==0)
+        return E_NOINTERFACE;
+
+    IMoniker_AddRef(iface);
+
+    return S_OK;
+}
+
+static ULONG WINAPI
+Moniker_AddRef(IMoniker* iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI
+Moniker_Release(IMoniker* iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI
+Moniker_GetClassID(IMoniker* iface, CLSID *pClassID)
+{
+    CHECK_EXPECTED_METHOD("Moniker_GetClassID");
+
+    *pClassID = CLSID_TestMoniker;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI
+Moniker_IsDirty(IMoniker* iface)
+{
+    CHECK_EXPECTED_METHOD("Moniker_IsDirty");
+
+    return S_FALSE;
+}
+
+static HRESULT WINAPI
+Moniker_Load(IMoniker* iface, IStream* pStm)
+{
+    CHECK_EXPECTED_METHOD("Moniker_Load");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_Save(IMoniker* iface, IStream* pStm, BOOL fClearDirty)
+{
+    CHECK_EXPECTED_METHOD("Moniker_Save");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_GetSizeMax(IMoniker* iface, ULARGE_INTEGER* pcbSize)
+{
+    CHECK_EXPECTED_METHOD("Moniker_GetSizeMax");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_BindToObject(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
+                             REFIID riid, VOID** ppvResult)
+{
+    CHECK_EXPECTED_METHOD("Moniker_BindToObject");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_BindToStorage(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
+                              REFIID riid, VOID** ppvObject)
+{
+    CHECK_EXPECTED_METHOD("Moniker_BindToStorage");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_Reduce(IMoniker* iface, IBindCtx* pbc, DWORD dwReduceHowFar,
+                       IMoniker** ppmkToLeft, IMoniker** ppmkReduced)
+{
+    CHECK_EXPECTED_METHOD("Moniker_Reduce");
+
+    if (ppmkReduced==NULL)
+        return E_POINTER;
+
+    IMoniker_AddRef(iface);
+
+    *ppmkReduced=iface;
+
+    return MK_S_REDUCED_TO_SELF;
+}
+
+static HRESULT WINAPI
+Moniker_ComposeWith(IMoniker* iface, IMoniker* pmkRight,
+                            BOOL fOnlyIfNotGeneric, IMoniker** ppmkComposite)
+{
+    CHECK_EXPECTED_METHOD("Moniker_ComposeWith");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_Enum(IMoniker* iface,BOOL fForward, IEnumMoniker** ppenumMoniker)
+{
+    CHECK_EXPECTED_METHOD("Moniker_Enum");
+
+    if (ppenumMoniker == NULL)
+        return E_POINTER;
+
+    *ppenumMoniker = NULL;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI
+Moniker_IsEqual(IMoniker* iface,IMoniker* pmkOtherMoniker)
+{
+    CHECK_EXPECTED_METHOD("Moniker_IsEqual");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_Hash(IMoniker* iface,DWORD* pdwHash)
+{
+    CHECK_EXPECTED_METHOD("Moniker_Hash");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_IsRunning(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
+                          IMoniker* pmkNewlyRunning)
+{
+    CHECK_EXPECTED_METHOD("Moniker_IsRunning");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_GetTimeOfLastChange(IMoniker* iface, IBindCtx* pbc,
+                                    IMoniker* pmkToLeft, FILETIME* pFileTime)
+{
+    CHECK_EXPECTED_METHOD("Moniker_GetTimeOfLastChange");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_Inverse(IMoniker* iface,IMoniker** ppmk)
+{
+    CHECK_EXPECTED_METHOD("Moniker_Inverse");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_CommonPrefixWith(IMoniker* iface,IMoniker* pmkOther,IMoniker** ppmkPrefix)
+{
+    CHECK_EXPECTED_METHOD("Moniker_CommonPrefixWith");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_RelativePathTo(IMoniker* iface,IMoniker* pmOther, IMoniker** ppmkRelPath)
+{
+    CHECK_EXPECTED_METHOD("Moniker_RelativePathTo");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_GetDisplayName(IMoniker* iface, IBindCtx* pbc,
+                               IMoniker* pmkToLeft, LPOLESTR *ppszDisplayName)
+{
+    static const WCHAR wszDisplayName[] = {'*','*','G','e','m','m','a',0};
+    CHECK_EXPECTED_METHOD("Moniker_GetDisplayName");
+    *ppszDisplayName = (LPOLESTR)CoTaskMemAlloc(sizeof(wszDisplayName));
+    memcpy(*ppszDisplayName, wszDisplayName, sizeof(wszDisplayName));
+    return S_OK;
+}
+
+static HRESULT WINAPI
+Moniker_ParseDisplayName(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft,
+                     LPOLESTR pszDisplayName, ULONG* pchEaten, IMoniker** ppmkOut)
+{
+    CHECK_EXPECTED_METHOD("Moniker_ParseDisplayName");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI
+Moniker_IsSystemMoniker(IMoniker* iface,DWORD* pwdMksys)
+{
+    CHECK_EXPECTED_METHOD("Moniker_IsSystemMoniker");
+
+    if (!pwdMksys)
+        return E_POINTER;
+
+    (*pwdMksys)=MKSYS_NONE;
+
+    return S_FALSE;
+}
+
+static const IMonikerVtbl MonikerNoROTDataVtbl =
+{
+    MonikerNoROTData_QueryInterface,
+    Moniker_AddRef,
+    Moniker_Release,
+    Moniker_GetClassID,
+    Moniker_IsDirty,
+    Moniker_Load,
+    Moniker_Save,
+    Moniker_GetSizeMax,
+    Moniker_BindToObject,
+    Moniker_BindToStorage,
+    Moniker_Reduce,
+    Moniker_ComposeWith,
+    Moniker_Enum,
+    Moniker_IsEqual,
+    Moniker_Hash,
+    Moniker_IsRunning,
+    Moniker_GetTimeOfLastChange,
+    Moniker_Inverse,
+    Moniker_CommonPrefixWith,
+    Moniker_RelativePathTo,
+    Moniker_GetDisplayName,
+    Moniker_ParseDisplayName,
+    Moniker_IsSystemMoniker
+};
+
+static IMoniker MonikerNoROTData = { &MonikerNoROTDataVtbl };
+
+static IMoniker Moniker;
+
+static HRESULT WINAPI
+ROTData_QueryInterface(IROTData *iface,REFIID riid,VOID** ppvObject)
+{
+    return IMoniker_QueryInterface(&Moniker, riid, ppvObject);
+}
+
+static ULONG WINAPI
+ROTData_AddRef(IROTData *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI
+ROTData_Release(IROTData* iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI
+ROTData_GetComparisonData(IROTData* iface, BYTE* pbData,
+                                          ULONG cbMax, ULONG* pcbData)
+{
+    CHECK_EXPECTED_METHOD("ROTData_GetComparisonData");
+
+    *pcbData = 1;
+    if (cbMax < *pcbData)
+        return E_OUTOFMEMORY;
+
+    *pbData = 0xde;
+
+    return S_OK;
+}
+
+static IROTDataVtbl ROTDataVtbl =
+{
+    ROTData_QueryInterface,
+    ROTData_AddRef,
+    ROTData_Release,
+    ROTData_GetComparisonData
+};
+
+static IROTData ROTData = { &ROTDataVtbl };
+
+static HRESULT WINAPI
+Moniker_QueryInterface(IMoniker* iface,REFIID riid,void** ppvObject)
+{
+    if (!ppvObject)
+        return E_INVALIDARG;
+
+    *ppvObject = 0;
+
+    if (IsEqualIID(&IID_IUnknown, riid)      ||
+        IsEqualIID(&IID_IPersist, riid)      ||
+        IsEqualIID(&IID_IPersistStream,riid) ||
+        IsEqualIID(&IID_IMoniker, riid))
+        *ppvObject = iface;
+    if (IsEqualIID(&IID_IROTData, riid))
+    {
+        CHECK_EXPECTED_METHOD("Moniker_QueryInterface(IID_IROTData)");
+        *ppvObject = &ROTData;
+    }
+
+    if ((*ppvObject)==0)
+        return E_NOINTERFACE;
+
+    IMoniker_AddRef(iface);
+
+    return S_OK;
+}
+
+static const IMonikerVtbl MonikerVtbl =
+{
+    Moniker_QueryInterface,
+    Moniker_AddRef,
+    Moniker_Release,
+    Moniker_GetClassID,
+    Moniker_IsDirty,
+    Moniker_Load,
+    Moniker_Save,
+    Moniker_GetSizeMax,
+    Moniker_BindToObject,
+    Moniker_BindToStorage,
+    Moniker_Reduce,
+    Moniker_ComposeWith,
+    Moniker_Enum,
+    Moniker_IsEqual,
+    Moniker_Hash,
+    Moniker_IsRunning,
+    Moniker_GetTimeOfLastChange,
+    Moniker_Inverse,
+    Moniker_CommonPrefixWith,
+    Moniker_RelativePathTo,
+    Moniker_GetDisplayName,
+    Moniker_ParseDisplayName,
+    Moniker_IsSystemMoniker
+};
+
+static IMoniker Moniker = { &MonikerVtbl };
+
+static void test_ROT(void)
+{
+    static const WCHAR wszFileName[] = {'B','E','2','0','E','2','F','5','-',
+        '1','9','0','3','-','4','A','A','E','-','B','1','A','F','-',
+        '2','0','4','6','E','5','8','6','C','9','2','5',0};
+    HRESULT hr;
+    IMoniker *pMoniker = NULL;
+    IRunningObjectTable *pROT = NULL;
+    DWORD dwCookie;
+    static const char *methods_register_no_ROTData[] =
+    {
+        "Moniker_Reduce",
+        "Moniker_GetTimeOfLastChange",
+        "Moniker_QueryInterface(IID_IROTData)",
+        "Moniker_GetDisplayName",
+        "Moniker_GetClassID",
+        NULL
+    };
+    static const char *methods_register[] =
+    {
+        "Moniker_Reduce",
+        "Moniker_GetTimeOfLastChange",
+        "Moniker_QueryInterface(IID_IROTData)",
+        "ROTData_GetComparisonData",
+        NULL
+    };
+    static const char *methods_isrunning_no_ROTData[] =
+    {
+        "Moniker_Reduce",
+        "Moniker_QueryInterface(IID_IROTData)",
+        "Moniker_GetDisplayName",
+        "Moniker_GetClassID",
+        NULL
+    };
+    static const char *methods_isrunning[] =
+    {
+        "Moniker_Reduce",
+        "Moniker_QueryInterface(IID_IROTData)",
+        "ROTData_GetComparisonData",
+        NULL
+    };
+
+    cLocks = 0;
+
+    hr = GetRunningObjectTable(0, &pROT);
+    ok_ole_success(hr, GetRunningObjectTable);
+
+    expected_method_list = methods_register_no_ROTData;
+    /* try with our own moniker that doesn't support IROTData */
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
+        (IUnknown*)&Test_ClassFactory, &MonikerNoROTData, &dwCookie);
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_ole_success(hr, IRunningObjectTable_Register);
+    }
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_more_than_one_lock();
+    }
+
+    expected_method_list = methods_isrunning_no_ROTData;
+    hr = IRunningObjectTable_IsRunning(pROT, &MonikerNoROTData);
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_ole_success(hr, IRunningObjectTable_IsRunning);
+    }
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    hr = IRunningObjectTable_Revoke(pROT, dwCookie);
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_ole_success(hr, IRunningObjectTable_Revoke);
+    }
+
+    ok_no_locks();
+
+    expected_method_list = methods_register;
+    /* try with our own moniker */
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
+        (IUnknown*)&Test_ClassFactory, &Moniker, &dwCookie);
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_ole_success(hr, IRunningObjectTable_Register);
+    }
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_more_than_one_lock();
+    }
+
+    expected_method_list = methods_isrunning;
+    hr = IRunningObjectTable_IsRunning(pROT, &Moniker);
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_ole_success(hr, IRunningObjectTable_IsRunning);
+    }
+    ok(!*expected_method_list, "Method sequence starting from %s not called\n", *expected_method_list);
+
+    hr = IRunningObjectTable_Revoke(pROT, dwCookie);
+    todo_wine { /* only fails because of lack of IMoniker marshaling */
+    ok_ole_success(hr, IRunningObjectTable_Revoke);
+    }
+
+    ok_no_locks();
+
+    hr = CreateFileMoniker(wszFileName, &pMoniker);
+    ok_ole_success(hr, CreateClassMoniker);
+
+    hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
+        (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    ok_ole_success(hr, IRunningObjectTable_Register);
+
+    ok_more_than_one_lock();
+
+    hr = IRunningObjectTable_Revoke(pROT, dwCookie);
+    ok_ole_success(hr, IRunningObjectTable_Revoke);
+
+    ok_no_locks();
+
+    /* only succeeds when process is started by SCM and has LocalService
+     * or RunAs AppId values */
+    hr = IRunningObjectTable_Register(pROT,
+        ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT,
+        (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    todo_wine {
+    ok(hr == CO_E_WRONG_SERVER_IDENTITY, "IRunningObjectTable_Register should have returned CO_E_WRONG_SERVER_IDENTITY instead of 0x%08x\n", hr);
+    }
+
+    hr = IRunningObjectTable_Register(pROT, 0xdeadbeef,
+        (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
+    ok(hr == E_INVALIDARG, "IRunningObjectTable_Register should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    IMoniker_Release(pMoniker);
+
+    IRunningObjectTable_Release(pROT);
+}
 
 static int count_moniker_matches(IBindCtx * pbc, IEnumMoniker * spEM)
 {
@@ -811,6 +1387,7 @@ START_TEST(moniker)
 {
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
 
+    test_ROT();
     test_MkParseDisplayName();
     test_class_moniker();
     test_file_monikers();
