@@ -1931,6 +1931,15 @@ static DWORD widReset(WORD wDevID)
 
     OSSpinLockUnlock(&wwi->lock);
 
+    if (ret == MMSYSERR_NOERROR)
+    {
+        OSStatus err = AudioOutputUnitStop(wwi->audioUnit);
+        if (err != noErr)
+            WARN("Failed to stop AU: %08lx\n", err);
+
+        TRACE("Recording stopped.\n");
+    }
+
     while (lpWaveHdr)
     {
         WAVEHDR* lpNext = lpWaveHdr->lpNext;
