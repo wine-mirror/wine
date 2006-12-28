@@ -197,11 +197,11 @@ static void state_zfunc(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 }
 
 static void state_ambient(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_AMBIENT], col);
+    GLint col[4];
+    D3DCOLORTOGLINT4(stateblock->renderState[WINED3DRS_AMBIENT], col);
 
-    TRACE("Setting ambient to (%f,%f,%f,%f)\n", col[0], col[1], col[2], col[3]);
-    glLightModelfv(GL_LIGHT_MODEL_AMBIENT, col);
+    TRACE("Setting ambient to (%d,%d,%d,%d)\n", col[0], col[1], col[2], col[3]);
+    glLightModeliv(GL_LIGHT_MODEL_AMBIENT, col);
     checkGLcall("glLightModel for MODEL_AMBIENT");
 }
 
@@ -499,8 +499,8 @@ static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* Note the texture color applies to all textures whereas
      * GL_TEXTURE_ENV_COLOR applies to active only
      */
-    float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+    GLint col[4];
+    D3DCOLORTOGLINT4(stateblock->renderState[WINED3DRS_TEXTUREFACTOR], col);
 
     if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
         /* And now the default texture color as well */
@@ -515,11 +515,11 @@ static void state_texfactor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                 FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
             }
 
-            glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+            glTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
             checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
         }
     } else {
-        GL_EXTCALL(glCombinerParameterfvNV(GL_CONSTANT_COLOR0_NV, &col[0]));
+        GL_EXTCALL(glCombinerParameterivNV(GL_CONSTANT_COLOR0_NV, &col[0]));
     }
 }
 
@@ -786,10 +786,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 }
 
 static void state_fogcolor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    float col[4];
-    D3DCOLORTOGLFLOAT4(stateblock->renderState[WINED3DRS_FOGCOLOR], col);
+    GLint col[4];
+    D3DCOLORTOGLINT4(stateblock->renderState[WINED3DRS_FOGCOLOR], col);
     /* Set the default alpha blend color */
-    glFogfv(GL_FOG_COLOR, &col[0]);
+    glFogiv(GL_FOG_COLOR, &col[0]);
     checkGLcall("glFog GL_FOG_COLOR");
 }
 

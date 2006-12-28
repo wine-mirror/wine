@@ -363,11 +363,11 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
             break;
             case WINED3DSAMP_BORDERCOLOR:
             {
-                float col[4];
+                GLint col[4];
                 *state = samplerStates[textureObjectSamplerStates[i].state];
-                D3DCOLORTOGLFLOAT4(*state, col);
+                D3DCOLORTOGLINT4(*state, col);
                 TRACE("Setting border color for %u to %x\n", textureDimensions, *state);
-                glTexParameterfv(textureDimensions, GL_TEXTURE_BORDER_COLOR, &col[0]);
+                glTexParameteriv(textureDimensions, GL_TEXTURE_BORDER_COLOR, &col[0]);
                 checkGLcall("glTexParameteri(..., GL_TEXTURE_BORDER_COLOR, ...)");
             }
             break;
