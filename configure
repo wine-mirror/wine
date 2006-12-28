@@ -1999,6 +1999,17 @@ then
   WIN16_INSTALL=""
 fi
 
+case "$srcdir" in
+ .) ;;
+ *) if test -f "$srcdir/Makefile" -o -f "$srcdir/include/config.h"; then
+      { { echo "$as_me:$LINENO: error: you are building out of the source tree, but the source tree contains object files.
+You need to run 'make distclean' in the source tree first." >&5
+echo "$as_me: error: you are building out of the source tree, but the source tree contains object files.
+You need to run 'make distclean' in the source tree first." >&2;}
+   { (exit 1); exit 1; }; }
+    fi ;;
+esac
+
 
 { echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6; }
