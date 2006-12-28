@@ -131,7 +131,8 @@ int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
 
 
 int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
-        WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample)
+        WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample,
+        UInt32* outFrameCount)
 {
     OSStatus                    err = noErr;
     ComponentDescription        description;
@@ -142,6 +143,12 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
     AudioDeviceID               defaultInputDevice;
     AudioStreamBasicDescription desiredFormat;
 
+
+    if (!outFrameCount)
+    {
+        ERR("Invalid parameter\n");
+        return 0;
+    }
 
     /* Open the AudioOutputUnit */
     description.componentType           = kAudioUnitType_Output;
@@ -241,6 +248,25 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
     if (err != noErr)
     {
         ERR("Couldn't set desired input format of AUHAL: %08lx\n", err);
+        goto error;
+    }
+
+    /* Get the number of frames in the IO buffer(s) */
+    param = sizeof(*outFrameCount);
+    err = AudioUnitGetProperty(au, kAudioDevicePropertyBufferFrameSize, kAudioUnitScope_Global, 0, outFrameCount, &param);
+    if (err != noErr)
+    {
+        ERR("Failed to get audio sample size: %08lx\n", err);
+        goto error;
+    }
+
+    TRACE("Frame count: %lu\n", *outFrameCount);
+
+    /* Initialize the AU */
+    err = AudioUnitInitialize(au);
+    if (err != noErr)
+    {
+        ERR("Failed to initialize AU: %08lx\n", err);
         goto error;
     }
 

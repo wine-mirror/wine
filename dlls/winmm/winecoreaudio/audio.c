@@ -211,7 +211,8 @@ extern int AudioUnit_SetVolume(AudioUnit au, float left, float right);
 extern int AudioUnit_GetVolume(AudioUnit au, float *left, float *right);
 
 extern int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
-        WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample);
+        WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample,
+        UInt32* outFrameCount);
 
 OSStatus CoreAudio_woAudioUnitIOProc(void *inRefCon, 
                                      AudioUnitRenderActionFlags *ioActionFlags, 
@@ -1522,7 +1523,8 @@ static DWORD widGetDevCaps(WORD wDevID, LPWAVEINCAPSW lpCaps, DWORD dwSize)
  */
 static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 {
-    WINE_WAVEIN* wwi;
+    WINE_WAVEIN*    wwi;
+    UInt32          frameCount;
 
     TRACE("(%u, %p, %08X);\n", wDevID, lpDesc, dwFlags);
     if (lpDesc == NULL)
@@ -1592,7 +1594,7 @@ static DWORD widOpen(WORD wDevID, LPWAVEOPENDESC lpDesc, DWORD dwFlags)
 
     if (!AudioUnit_CreateInputUnit(wwi, &wwi->audioUnit,
         wwi->format.wf.nChannels, wwi->format.wf.nSamplesPerSec,
-        wwi->format.wBitsPerSample))
+        wwi->format.wBitsPerSample, &frameCount))
     {
         ERR("AudioUnit_CreateInputUnit failed\n");
         OSSpinLockUnlock(&wwi->lock);
