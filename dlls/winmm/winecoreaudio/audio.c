@@ -1868,6 +1868,9 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
  */
 static DWORD widStart(WORD wDevID)
 {
+    DWORD           ret = MMSYSERR_NOERROR;
+    WINE_WAVEIN*    wwi;
+
     TRACE("(%u);\n", wDevID);
     if (wDevID >= MAX_WAVEINDRV)
     {
@@ -1875,8 +1878,38 @@ static DWORD widStart(WORD wDevID)
         return MMSYSERR_INVALHANDLE;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    /* The order of the following operations is important since we can't hold
+     * the mutex while we make an Audio Unit call.  Set the PLAYING state
+     * before starting the Audio Unit.  In widStop, the order is reversed.
+     * This guarantees that we can't get into a situation where the state is
+     * PLAYING but the Audio Unit isn't running.  Although we can be in STOPPED
+     * state with the Audio Unit still running, that's harmless because the
+     * input callback will just throw away the sound data.
+     */
+    wwi = &WInDev[wDevID];
+    OSSpinLockLock(&wwi->lock);
+
+    if (wwi->state == WINE_WS_CLOSED)
+    {
+        WARN("Trying to start closed device.\n");
+        ret = MMSYSERR_INVALHANDLE;
+    }
+    else
+        wwi->state = WINE_WS_PLAYING;
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    if (ret == MMSYSERR_NOERROR)
+    {
+        /* Start pulling for audio data */
+        OSStatus err = AudioOutputUnitStart(wwi->audioUnit);
+        if (err != noErr)
+            ERR("Failed to start AU: %08lx\n", err);
+
+        TRACE("Recording started...\n");
+    }
+
+    return ret;
 }
 
 
