@@ -122,7 +122,7 @@ static void update_empty_exe( void )
     CloseHandle( file );
 
     res = BeginUpdateResource( filename, TRUE );
-    todo_wine ok( res != NULL, "BeginUpdateResource failed\n");
+    ok( res != NULL, "BeginUpdateResource failed\n");
 
     /* check if it's possible to open the file now */
     test = CreateFile(filename, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
@@ -143,7 +143,7 @@ static void update_resources_none( void )
     BOOL r;
 
     res = BeginUpdateResource( filename, FALSE );
-    todo_wine ok( res != NULL, "BeginUpdateResource failed\n");
+    ok( res != NULL, "BeginUpdateResource failed\n");
 
     r = EndUpdateResource( res, FALSE );
     todo_wine ok( r, "EndUpdateResouce failed\n");
@@ -155,7 +155,7 @@ static void update_resources_delete( void )
     BOOL r;
 
     res = BeginUpdateResource( filename, TRUE );
-    todo_wine ok( res != NULL, "BeginUpdateResource failed\n");
+    ok( res != NULL, "BeginUpdateResource failed\n");
 
     r = EndUpdateResource( res, FALSE );
     todo_wine ok( r, "EndUpdateResouce failed\n");
@@ -175,10 +175,10 @@ void update_resources_version(void)
     struct verhdr hdr;
     char foo[] = "red and white";
 
-    todo_wine {
     res = BeginUpdateResource( filename, TRUE );
     ok( res != NULL, "BeginUpdateResource failed\n");
 
+    todo_wine {
     memset( &hdr, 0, sizeof hdr );
     r = UpdateResource( res,
                         RT_VERSION,

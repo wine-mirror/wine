@@ -616,60 +616,111 @@ DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
 }
 
-
 typedef struct
 {
     LPWSTR pFileName;
-    struct list resources_list;
 } QUEUEDUPDATES;
 
-typedef struct
+BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
+                          WORD Language, DWORD codepage, LPCVOID lpData, DWORD cbData )
 {
-    struct list entry;
-    LPWSTR lpType;
-    LPWSTR lpName;
-    WORD wLanguage;
-    LPVOID lpData;
-    DWORD cbData;
-} QUEUEDRESOURCE;
-
-static BOOL CALLBACK enum_resources_languages_delete_all(HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, WORD wLang, LONG_PTR lParam)
-{
-    return UpdateResourceW((HANDLE)lParam, lpType, lpName, wLang, NULL, 0);
+    FIXME("%p %s %s %04x %p %d bytes\n", updates, debugstr_w(Type), debugstr_w(Name), Language, lpData, cbData);
+    return FALSE;
 }
 
-static BOOL CALLBACK enum_resources_names_delete_all(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+IMAGE_NT_HEADERS *get_nt_header( void *base, DWORD mapping_size )
 {
-    return EnumResourceLanguagesW(hModule, lpType, lpName, enum_resources_languages_delete_all, lParam);
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_DOS_HEADER *dos;
+
+    if (mapping_size<sizeof (*dos))
+        return NULL;
+
+    dos = base;
+    if (dos->e_magic != IMAGE_DOS_SIGNATURE)
+        return NULL;
+
+    if ((dos->e_lfanew + sizeof (*nt)) > mapping_size)
+        return NULL;
+
+    nt = (void*) ((BYTE*)base + dos->e_lfanew);
+
+    if (nt->Signature != IMAGE_NT_SIGNATURE)
+        return NULL;
+
+    return nt;
 }
 
-static BOOL CALLBACK enum_resources_types_delete_all(HMODULE hModule, LPWSTR lpType, LONG_PTR lParam)
+IMAGE_SECTION_HEADER *get_section_header( void *base, DWORD mapping_size, DWORD *num_sections )
 {
-    return EnumResourceNamesW(hModule, lpType, enum_resources_names_delete_all, lParam);
+    IMAGE_NT_HEADERS *nt;
+    IMAGE_SECTION_HEADER *sec;
+    DWORD section_ofs;
+
+    nt = get_nt_header( base, mapping_size );
+    if (!nt)
+        return NULL;
+
+    /* check that we don't go over the end of the file accessing the sections */
+    section_ofs = FIELD_OFFSET(IMAGE_NT_HEADERS, OptionalHeader) + nt->FileHeader.SizeOfOptionalHeader;
+    if ((nt->FileHeader.NumberOfSections * sizeof (*sec) + section_ofs) > mapping_size)
+        return NULL;
+
+    if (num_sections)
+        *num_sections = nt->FileHeader.NumberOfSections;
+
+    /* from here we have a valid PE exe to update */
+    return (void*) ((BYTE*)nt + section_ofs);
 }
 
-static BOOL CALLBACK enum_resources_languages_add_all(HMODULE hModule, LPCWSTR lpType, LPCWSTR lpName, WORD wLang, LONG_PTR lParam)
+static BOOL load_raw_resources( HANDLE file, QUEUEDUPDATES *updates )
 {
-    DWORD size;
-    HRSRC hResource = FindResourceExW(hModule, lpType, lpName, wLang);
-    HGLOBAL hGlobal;
-    LPVOID lpData;
+    const IMAGE_NT_HEADERS *nt;
+    const IMAGE_SECTION_HEADER *sec;
+    BOOL ret = FALSE;
+    HANDLE mapping;
+    DWORD mapping_size, num_sections = 0;
+    void *base = NULL;
 
-    if(hResource == NULL) return FALSE;
-    if(!(hGlobal = LoadResource(hModule, hResource))) return FALSE;
-    if(!(lpData = LockResource(hGlobal))) return FALSE;
-    if(!(size = SizeofResource(hModule, hResource))) return FALSE;
-    return UpdateResourceW((HANDLE)lParam, lpType, lpName, wLang, lpData, size);
+    mapping_size = GetFileSize( file, NULL );
+
+    mapping = CreateFileMappingW( file, NULL, PAGE_READONLY, 0, 0, NULL );
+    if (!mapping)
+        goto done;
+
+    base = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, mapping_size );
+    if (!base)
+        goto done;
+
+    nt = get_nt_header( base, mapping_size );
+    if (!nt)
+        goto done;
+
+    TRACE("resources: %08x %08x\n",
+          nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].VirtualAddress,
+          nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size);
+
+    sec = get_section_header( base, mapping_size, &num_sections );
+    if (!sec)
+        goto done;
+
+    ret = TRUE;
+
+    FIXME("not implemented\n");
+
+done:
+    if (base)
+        UnmapViewOfFile( base );
+    if (mapping)
+        CloseHandle( mapping );
+
+    return ret;
 }
 
-static BOOL CALLBACK enum_resources_names_add_all(HMODULE hModule, LPCWSTR lpType, LPWSTR lpName, LONG_PTR lParam)
+BOOL write_raw_resources( QUEUEDUPDATES *updates )
 {
-    return EnumResourceLanguagesW(hModule, lpType, lpName, enum_resources_languages_add_all, lParam);
-}
-
-static BOOL CALLBACK enum_resources_types_add_all(HMODULE hModule, LPWSTR lpType, LONG_PTR lParam)
-{
-    return EnumResourceNamesW(hModule, lpType, enum_resources_names_add_all, lParam);
+    FIXME("not implemented\n");
+    return FALSE;
 }
 
 /***********************************************************************
@@ -677,76 +728,41 @@ static BOOL CALLBACK enum_resources_types_add_all(HMODULE hModule, LPWSTR lpType
  */
 HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResources )
 {
-    HANDLE hFile = NULL;
-    WIN32_FIND_DATAW fd;
-    HANDLE hModule = NULL;
-    HANDLE hUpdate = NULL;
-    QUEUEDUPDATES *current_updates = NULL;
-    HANDLE ret = NULL;
+    QUEUEDUPDATES *updates = NULL;
+    HANDLE hUpdate, file, ret = NULL;
 
-    TRACE("%s, %d\n",debugstr_w(pFileName),bDeleteExistingResources);
+    TRACE("%s, %d\n", debugstr_w(pFileName), bDeleteExistingResources);
 
-    hFile = FindFirstFileW(pFileName, &fd);
-    if(hFile == INVALID_HANDLE_VALUE)
-    {
-        hFile = NULL;
-        SetLastError(ERROR_FILE_NOT_FOUND);
-        goto done;
-    }
-    if(fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY)
-    {
-        SetLastError(ERROR_FILE_READ_ONLY);
-        goto done;
-    }
+    hUpdate = GlobalAlloc(GHND, sizeof(QUEUEDUPDATES));
+    if (!hUpdate)
+        return ret;
 
-    hModule = LoadLibraryW(pFileName);
-    if(hModule == NULL)
+    updates = GlobalLock(hUpdate);
+    if (updates)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        goto done;
-    }
+        updates->pFileName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pFileName)+1)*sizeof(WCHAR));
+        if (updates->pFileName)
+        {
+            lstrcpyW(updates->pFileName, pFileName);
 
-    if(!(hUpdate = GlobalAlloc(GHND, sizeof(QUEUEDUPDATES))))
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        goto done;
-    }
-    if(!(current_updates = GlobalLock(hUpdate)))
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        goto done;
-    }
-    if(!(current_updates->pFileName = HeapAlloc(GetProcessHeap(), 0, (strlenW(pFileName)+1)*sizeof(WCHAR))))
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        goto done;
-    }
-    strcpyW(current_updates->pFileName, pFileName);
-    list_init(&current_updates->resources_list);
+            file = CreateFileW( pFileName, GENERIC_READ | GENERIC_WRITE,
+                                0, NULL, OPEN_EXISTING, 0, 0 );
 
-    if(bDeleteExistingResources)
-    {
-        if(!EnumResourceTypesW(hModule, enum_resources_types_delete_all, (LONG_PTR)hUpdate))
-            goto done;
-    }
-    else
-    {
-        if(!EnumResourceTypesW(hModule, enum_resources_types_add_all, (LONG_PTR)hUpdate))
-            goto done;
-    }
-    ret = hUpdate;
+            /* if resources are deleted, only the file's presence is checked */
+            if (file != INVALID_HANDLE_VALUE &&
+                (bDeleteExistingResources || load_raw_resources( file, updates )))
+                ret = hUpdate;
+            else
+                HeapFree( GetProcessHeap(), 0, updates->pFileName );
 
-done:
-    if(!ret && current_updates)
-    {
-        HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
+            CloseHandle( file );
+        }
         GlobalUnlock(hUpdate);
-        GlobalFree(hUpdate);
-        hUpdate = NULL;
     }
-    if(hUpdate) GlobalUnlock(hUpdate);
-    if(hModule) FreeLibrary(hModule);
-    if(hFile) FindClose(hFile);
+
+    if (!ret)
+        GlobalFree(hUpdate);
+
     return ret;
 }
 
@@ -770,46 +786,21 @@ HANDLE WINAPI BeginUpdateResourceA( LPCSTR pFileName, BOOL bDeleteExistingResour
  */
 BOOL WINAPI EndUpdateResourceW( HANDLE hUpdate, BOOL fDiscard )
 {
-    QUEUEDUPDATES *current_updates = NULL;
-    BOOL found = TRUE;
-    BOOL ret = FALSE;
-    struct list *ptr = NULL;
-    QUEUEDRESOURCE *current_resource = NULL;
+    QUEUEDUPDATES *updates;
+    BOOL ret;
 
-    FIXME("(%p,%d): stub\n",hUpdate,fDiscard);
+    TRACE("%p %d\n", hUpdate, fDiscard);
 
-    if(!(current_updates = GlobalLock(hUpdate)))
-    {
-        SetLastError(ERROR_INVALID_HANDLE);
-        found = FALSE;
-        goto done;
-    }
+    updates = GlobalLock(hUpdate);
+    if (!updates)
+        return FALSE;
 
-    if(fDiscard)
-        ret = TRUE;
-    else
-    {
-        /* FIXME: This is the only missing part, an actual implementation */
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        ret = FALSE;
-    }
+    ret = fDiscard || write_raw_resources( updates );
 
-done:
-    if(found)
-    {
-        while ((ptr = list_head(&current_updates->resources_list)) != NULL)
-        {
-            current_resource = LIST_ENTRY(ptr, QUEUEDRESOURCE, entry);
-            list_remove(&current_resource->entry);
-            if(HIWORD(current_resource->lpType)) HeapFree(GetProcessHeap(), 0, current_resource->lpType);
-            if(HIWORD(current_resource->lpName)) HeapFree(GetProcessHeap(), 0, current_resource->lpName);
-            HeapFree(GetProcessHeap(), 0, current_resource->lpData);
-            HeapFree(GetProcessHeap(), 0, current_resource);
-        }
-        HeapFree(GetProcessHeap(), 0, current_updates->pFileName);
-        GlobalUnlock(hUpdate);
-        GlobalFree(hUpdate);
-    }
+    HeapFree( GetProcessHeap(), 0, updates->pFileName );
+    GlobalUnlock( hUpdate );
+    GlobalFree( hUpdate );
+
     return ret;
 }
 
@@ -829,63 +820,19 @@ BOOL WINAPI EndUpdateResourceA( HANDLE hUpdate, BOOL fDiscard )
 BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
                              WORD wLanguage, LPVOID lpData, DWORD cbData)
 {
-    QUEUEDUPDATES *current_updates = NULL;
-    BOOL found = TRUE;
-    QUEUEDRESOURCE *current_resource = NULL;
+    QUEUEDUPDATES *updates;
     BOOL ret = FALSE;
 
-    TRACE("%p %s %s %08x %p %d\n",hUpdate,debugstr_w(lpType),debugstr_w(lpName),wLanguage,lpData,cbData);
+    TRACE("%p %s %s %08x %p %d\n", hUpdate,
+          debugstr_w(lpType), debugstr_w(lpName), wLanguage, lpData, cbData);
 
-    if(!(current_updates = GlobalLock(hUpdate)))
+    updates = GlobalLock(hUpdate);
+    if (updates)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
-        found = FALSE;
-        goto done;
+        ret = update_add_resource( updates, lpType, lpName,
+                                   wLanguage, GetACP(), lpData, cbData );
+        GlobalUnlock(hUpdate);
     }
-
-    if(!(current_resource = HeapAlloc(GetProcessHeap(), 0, sizeof(QUEUEDRESOURCE))))
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        goto done;
-    }
-    if(!HIWORD(lpType))
-        current_resource->lpType = (LPWSTR)lpType;
-    else if((current_resource->lpType = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpType)+1)*sizeof(WCHAR))))
-        strcpyW(current_resource->lpType, lpType);
-    else
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        goto done;
-    }
-    if(!HIWORD(lpName))
-        current_resource->lpName = (LPWSTR)lpName;
-    else if((current_resource->lpName = HeapAlloc(GetProcessHeap(), 0, (strlenW(lpName)+1)*sizeof(WCHAR))))
-        strcpyW(current_resource->lpName, lpName);
-    else
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        goto done;
-    }
-    if(!(current_resource->lpData = HeapAlloc(GetProcessHeap(), 0, cbData)))
-    {
-        SetLastError(ERROR_OUTOFMEMORY);
-        goto done;
-    }
-    current_resource->wLanguage = wLanguage;
-    memcpy(current_resource->lpData, lpData, cbData);
-    current_resource->cbData = cbData;
-    list_add_tail(&current_updates->resources_list, &current_resource->entry);
-    ret = TRUE;
-
-done:
-    if(!ret && current_resource)
-    {
-        if(HIWORD(current_resource->lpType)) HeapFree(GetProcessHeap(), 0, current_resource->lpType);
-        if(HIWORD(current_resource->lpName)) HeapFree(GetProcessHeap(), 0, current_resource->lpName);
-        HeapFree(GetProcessHeap(), 0, current_resource->lpData);
-        HeapFree(GetProcessHeap(), 0, current_resource);
-    }
-    if(found) GlobalUnlock(hUpdate);
     return ret;
 }
 
