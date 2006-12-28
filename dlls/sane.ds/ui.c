@@ -37,9 +37,9 @@
 #include "wine/debug.h"
 #include "resource.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(twain);
-
 #ifdef HAVE_SANE
+
+WINE_DEFAULT_DEBUG_CHANNEL(twain);
 
 #define ID_BASE 0x100
 #define ID_EDIT_BASE 0x1000
