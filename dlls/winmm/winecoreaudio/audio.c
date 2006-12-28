@@ -224,6 +224,8 @@ extern OSStatus AudioUnitUninitialize(AudioUnit au);
 extern int AudioUnit_SetVolume(AudioUnit au, float left, float right);
 extern int AudioUnit_GetVolume(AudioUnit au, float *left, float *right);
 
+extern int AudioUnit_GetInputDeviceSampleRate(void);
+
 extern int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
         WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample,
         UInt32* outFrameCount);
@@ -500,6 +502,7 @@ LONG CoreAudio_WaveInit(void)
     HANDLE hThread;
     CFStringRef  messageThreadPortName;
     CFMessagePortRef port_ReceiveInMessageThread;
+    int inputSampleRate;
 
     TRACE("()\n");
     
@@ -550,6 +553,14 @@ LONG CoreAudio_WaveInit(void)
         WOutDev[i].caps.wChannels = 2;
       /*  WOutDev[i].caps.dwSupport |= WAVECAPS_LRVOLUME; */ /* FIXME */
         
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_96M08;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_96S08;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_96M16;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_96S16;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_48M08;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_48S08;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_48M16;
+        WOutDev[i].caps.dwFormats |= WAVE_FORMAT_48S16;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4S08; 
         WOutDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
@@ -565,6 +576,9 @@ LONG CoreAudio_WaveInit(void)
 
         WOutDev[i].lock = 0; /* initialize the mutex */
     }
+
+    /* FIXME: implement sample rate conversion on input */
+    inputSampleRate = AudioUnit_GetInputDeviceSampleRate();
 
     for (i = 0; i < MAX_WAVEINDRV; ++i)
     {
@@ -584,18 +598,41 @@ LONG CoreAudio_WaveInit(void)
         MultiByteToWideChar(CP_ACP, 0, szPname, -1, WInDev[i].caps.szPname, sizeof(WInDev[i].caps.szPname)/sizeof(WCHAR));
         snprintf(WInDev[i].interface_name, sizeof(WInDev[i].interface_name), "winecoreaudio in: %d", i);
 
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S08;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M16;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M08;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S08;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M16;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S16;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M08;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
-        WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+        if (inputSampleRate == 96000)
+        {
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_96M08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_96S08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_96M16;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_96S16;
+        }
+        if (inputSampleRate == 48000)
+        {
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_48M08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_48S08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_48M16;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_48S16;
+        }
+        if (inputSampleRate == 44100)
+        {
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_4M16;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_4S16;
+        }
+        if (inputSampleRate == 22050)
+        {
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_2M16;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_2S16;
+        }
+        if (inputSampleRate == 11025)
+        {
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S08;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_1M16;
+            WInDev[i].caps.dwFormats |= WAVE_FORMAT_1S16;
+        }
 
         WInDev[i].caps.wChannels = 2;
     }
@@ -2140,6 +2177,9 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
             *ioActionFlags, inTimeStamp->mSampleTime, inTimeStamp->mHostTime, inTimeStamp->mRateScalar, inTimeStamp->mWordClockTime, inTimeStamp->mFlags, inBusNumber, inNumberFrames);
 
     /* Render into audio buffer */
+    /* FIXME: implement sample rate conversion on input.  This will require
+     * a different render strategy.  We'll need to buffer the sound data
+     * received here and pass it off to an AUConverter in another thread. */
     err = AudioUnitRender(wwi->audioUnit, ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, wwi->bufferList);
     if (err)
     {

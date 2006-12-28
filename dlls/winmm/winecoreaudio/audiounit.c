@@ -130,6 +130,34 @@ int AudioUnit_GetVolume(AudioUnit au, float *left, float *right)
 }
 
 
+/* FIXME: implement sample rate conversion on input */
+int AudioUnit_GetInputDeviceSampleRate(void)
+{
+    AudioDeviceID               defaultInputDevice;
+    UInt32                      param;
+    Float64                     sampleRate;
+    OSStatus                    err;
+
+    param = sizeof(defaultInputDevice);
+    err = AudioHardwareGetProperty(kAudioHardwarePropertyDefaultInputDevice, &param, &defaultInputDevice);
+    if (err != noErr || defaultInputDevice == kAudioDeviceUnknown)
+    {
+        ERR("Couldn't get the default audio input device ID: %08lx\n", err);
+        return 0;
+    }
+
+    param = sizeof(sampleRate);
+    err = AudioDeviceGetProperty(defaultInputDevice, 0, 1, kAudioDevicePropertyNominalSampleRate, &param, &sampleRate);
+    if (err != noErr)
+    {
+        ERR("Couldn't get the device sample rate: %08lx\n", err);
+        return 0;
+    }
+
+    return sampleRate;
+}
+
+
 int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
         WORD nChannels, DWORD nSamplesPerSec, WORD wBitsPerSample,
         UInt32* outFrameCount)
@@ -232,6 +260,10 @@ int AudioUnit_CreateInputUnit(void* wwi, AudioUnit* out_au,
     }
 
     /* Setup the desired data format. */
+    /* FIXME: implement sample rate conversion on input.  We shouldn't set
+     * the mSampleRate of this to the desired sample rate.  We need to query
+     * the input device and use that.  If they don't match, we need to set up
+     * an AUConverter to do the sample rate conversion on a separate thread. */
     desiredFormat.mFormatID         = kAudioFormatLinearPCM;
     desiredFormat.mFormatFlags      = kLinearPCMFormatFlagIsPacked;
     if (wBitsPerSample != 8)
