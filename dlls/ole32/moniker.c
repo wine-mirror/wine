@@ -282,15 +282,9 @@ RunningObjectTableImpl_Register(IRunningObjectTable* iface, DWORD grfFlags,
 
     TRACE("(%p,%d,%p,%p,%p)\n",This,grfFlags,punkObject,pmkObjectName,pdwRegister);
 
-    /*
-     * there's only two types of register : strong and or weak registration
-     * (only one must be passed on parameter)
-     */
-    if ( ( (grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) || !(grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
-         (!(grfFlags & ROTFLAGS_REGISTRATIONKEEPSALIVE) ||  (grfFlags & ROTFLAGS_ALLOWANYCLIENT)) &&
-         (grfFlags) )
+    if (grfFlags & ~(ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT))
     {
-        ERR("Invalid combination of ROTFLAGS: %x\n", grfFlags);
+        ERR("Invalid grfFlags: 0x%08x\n", grfFlags & ~(ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT));
         return E_INVALIDARG;
     }
 
