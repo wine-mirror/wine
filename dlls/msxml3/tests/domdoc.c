@@ -442,6 +442,23 @@ todo_wine
         ok ( str != NULL, "str is null\n");
         ok( !lstrcmpW( str, szdl ), "incorrect node name\n");
         SysFreeString( str );
+
+        /* test sequential access of attributes */
+        node = NULL;
+        r = IXMLDOMNamedNodeMap_nextNode( map, &node );
+        ok ( r == S_OK, "nextNode (first time) wrong code\n");
+        ok ( node != NULL, "nextNode, should be attribute\n");
+
+        r = IXMLDOMNamedNodeMap_nextNode( map, &node );
+        ok ( r != S_OK, "nextNode (second time) wrong code\n");
+        ok ( node == NULL, "nextNode, there is no attribute\n");
+
+        r = IXMLDOMNamedNodeMap_reset( map );
+        ok ( r == S_OK, "reset should return S_OK\n");
+
+        r = IXMLDOMNamedNodeMap_nextNode( map, &node );
+        ok ( r == S_OK, "nextNode (third time) wrong code\n");
+        ok ( node != NULL, "nextNode, should be attribute\n");
     }
     else
         ok( FALSE, "no map\n");

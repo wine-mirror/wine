@@ -44,6 +44,7 @@ typedef struct _xmlnodemap
     const struct ISupportErrorInfoVtbl *lpSEIVtbl;
     LONG ref;
     IXMLDOMNode *node;
+    long iterator;
 } xmlnodemap;
 
 static inline xmlnodemap *impl_from_IXMLDOMNamedNodeMap( IXMLDOMNamedNodeMap *iface )
@@ -297,15 +298,42 @@ static HRESULT WINAPI xmlnodemap_nextNode(
     IXMLDOMNamedNodeMap *iface,
     IXMLDOMNode** nextItem)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+    xmlNodePtr node;
+    xmlAttrPtr curr;
+    long attrIndex;
+
+    TRACE("%p %ld\n", This, This->iterator);
+
+    *nextItem = NULL;
+
+    node = xmlNodePtr_from_domnode( This->node, 0 );
+    curr = node->properties;
+
+    for (attrIndex = 0; attrIndex < This->iterator; attrIndex++) {
+        if (curr->next == NULL)
+            return S_FALSE;
+        else
+            curr = curr->next;
+    }
+
+    This->iterator++;
+
+    *nextItem = create_node( (xmlNodePtr) curr );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap_reset(
     IXMLDOMNamedNodeMap *iface )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    xmlnodemap *This = impl_from_IXMLDOMNamedNodeMap( iface );
+
+    TRACE("%p %ld\n", This, This->iterator);
+
+    This->iterator = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI xmlnodemap__newEnum(
@@ -389,6 +417,7 @@ IXMLDOMNamedNodeMap *create_nodemap( IXMLDOMNode *node )
     nodemap->lpSEIVtbl = &support_error_vtbl;
     nodemap->node = node;
     nodemap->ref = 1;
+    nodemap->iterator = 0;
 
     IXMLDOMNode_AddRef( node );
     /* Since we AddRef a node here, we don't need to call xmldoc_add_ref() */
