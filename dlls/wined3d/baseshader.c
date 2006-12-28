@@ -295,8 +295,15 @@ HRESULT shader_get_registers_used(
             if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) == 1 && 
                 (WINED3DSIO_TEX == curOpcode->opcode ||
                  WINED3DSIO_TEXBEM == curOpcode->opcode ||
+                 WINED3DSIO_TEXBEML == curOpcode->opcode ||
+                 WINED3DSIO_TEXDP3TEX == curOpcode->opcode ||
                  WINED3DSIO_TEXM3x2TEX == curOpcode->opcode ||
-                 WINED3DSIO_TEXM3x3TEX == curOpcode->opcode)) {
+                 WINED3DSIO_TEXM3x3SPEC == curOpcode->opcode ||
+                 WINED3DSIO_TEXM3x3TEX == curOpcode->opcode ||
+                 WINED3DSIO_TEXM3x3VSPEC == curOpcode->opcode ||
+                 WINED3DSIO_TEXREG2AR == curOpcode->opcode ||
+                 WINED3DSIO_TEXREG2GB == curOpcode->opcode ||
+                 WINED3DSIO_TEXREG2RGB == curOpcode->opcode)) {
 
                 /* Fake sampler usage, only set reserved bit and ttype */
                 DWORD sampler_code = *pToken & WINED3DSP_REGNUM_MASK;
