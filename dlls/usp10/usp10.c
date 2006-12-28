@@ -848,7 +848,7 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
 {
     unsigned int i;
 
-    FIXME("(%p, %d, %p, %p) stub\n", chars, count, sa, la);
+    TRACE("(%p, %d, %p, %p)\n", chars, count, sa, la);
 
     if (!la) return S_FALSE;
 
@@ -856,6 +856,7 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
     {
         memset(&la[i], 0, sizeof(SCRIPT_LOGATTR));
 
+        /* FIXME: set the other flags */
         la[i].fWhiteSpace = isspaceW(chars[i]);
         la[i].fCharStop = 1;
     }
@@ -1068,7 +1069,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
     DWORD hr;
     Scriptcache *pScriptcache;
     *pcGlyphs = cChars;
-    FIXME("(%p, %p, %p, %d, %d, %p): semi-stub\n",  hdc, psc, pwcChars,
+    TRACE("(%p, %p, %p, %d, %d, %p)\n",  hdc, psc, pwcChars,
                                        cChars, cMaxGlyphs, psa);
     if (psa) TRACE("psa values: %d, %d, %d, %d, %d, %d, %d\n", psa->eScript, psa->fRTL, psa->fLayoutRTL,
                                          psa->fLinkBefore, psa->fLinkAfter,
@@ -1115,6 +1116,7 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 
     /*  Set up a valid SCRIPT_VISATTR and LogClust for each char in this run */     
     for (cnt = 0;  cnt < cChars; cnt++) {
+        /* FIXME:  set to better values */
          psva[cnt].uJustification = 2;
          psva[cnt].fClusterStart = 1;
          psva[cnt].fDiacritic = 0;
@@ -1136,7 +1138,7 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     int wcnt;
     LPABC lpABC;
     Scriptcache *pScriptcache;
-    FIXME("(%p, %p, %p, %s, %d, %p, %p, %p): semi-stub\n",  hdc, psc, pwGlyphs,
+    TRACE("(%p, %p, %p, %s, %d, %p, %p, %p)\n",  hdc, psc, pwGlyphs,
                                                 debugstr_wn(pwGlyphs, cGlyphs), 
                                                 cGlyphs, psva, psa, 
                                                 piAdvance);
@@ -1163,6 +1165,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
     /*   Here we need to calculate the width of the run unit.  At this point the input string
      *   has been converted to glyphs and we still need to translate back to the original chars
      *   to get the correct ABC widths.   */
+
+    /* FIXME:  set pGoffset to more reasonable values */
 
      lpABC = HeapAlloc(GetProcessHeap(), 0 , sizeof(ABC)*cGlyphs);
      pABC->abcA = 0; 
