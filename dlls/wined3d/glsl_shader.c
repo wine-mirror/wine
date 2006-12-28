@@ -66,7 +66,7 @@ void shader_glsl_load_psamplers(
            snprintf(sampler_name, sizeof(sampler_name), "Psampler%d", i);
            name_loc = GL_EXTCALL(glGetUniformLocationARB(programId, sampler_name));
            if (name_loc != -1) {
-               TRACE_(d3d_shader)("Loading %s for texture %d\n", sampler_name, i);
+               TRACE("Loading %s for texture %d\n", sampler_name, i);
                GL_EXTCALL(glUniform1iARB(name_loc, i));
                checkGLcall("glUniform1iARB");
            }
