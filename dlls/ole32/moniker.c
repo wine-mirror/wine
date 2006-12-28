@@ -45,6 +45,10 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+/* see MSDN docs for IROTData::GetComparisonData, which states what this
+ * constant is (http://msdn2.microsoft.com/en-us/library/ms693773.aspx) */
+#define MAX_COMPARISON_DATA 2048
+
 /* define the structure of the running object table elements */
 struct rot_entry
 {
@@ -139,16 +143,14 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer
 {
     HRESULT hr;
     IROTData *pROTData = NULL;
-    ULONG size = 0;
+    ULONG size = MAX_COMPARISON_DATA;
     hr = IMoniker_QueryInterface(pMoniker, &IID_IROTData, (void *)&pROTData);
     if (hr != S_OK)
     {
         ERR("Failed to query moniker for IROTData interface, hr = 0x%08x\n", hr);
         return hr;
     }
-    IROTData_GetComparisonData(pROTData, NULL, 0, &size);
     *moniker_data = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(MInterfacePointer, abData[size]));
-    (*moniker_data)->ulCntData = size;
     hr = IROTData_GetComparisonData(pROTData, (*moniker_data)->abData, size, &size);
     if (hr != S_OK)
     {
@@ -156,6 +158,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MInterfacePointer
         HeapFree(GetProcessHeap(), 0, *moniker_data);
         return hr;
     }
+    (*moniker_data)->ulCntData = size;
     return S_OK;
 }
 
