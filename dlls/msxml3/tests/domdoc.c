@@ -23,6 +23,7 @@
 
 #include "windows.h"
 #include "ole2.h"
+#include "xmldom.h"
 #include "msxml2.h"
 #include <stdio.h>
 
@@ -1090,6 +1091,52 @@ static void test_removeChild(void)
     IXMLDOMDocument_Release( doc );
 }
 
+static void test_XMLHTTP(void)
+{
+    static const WCHAR wszBody[] = {'m','o','d','e','=','T','e','s','t',0};
+    static WCHAR wszPOST[] = {'P','O','S','T',0};
+    static WCHAR wszUrl[] = {'h','t','t','p',':','/','/',
+        'c','r','o','s','s','o','v','e','r','.','c','o','d','e','w','e','a','v','e','r','s','.','c','o','m','/',
+        'p','o','s','t','t','e','s','t','.','p','h','p',0};
+    static const WCHAR wszExpectedResponse[] = {'F','A','I','L','E','D',0};
+    IXMLHttpRequest *pXMLHttpRequest;
+    BSTR bstrResponse;
+    VARIANT dummy;
+    VARIANT varfalse;
+    VARIANT varbody;
+    HRESULT hr = CoCreateInstance(&CLSID_XMLHTTPRequest, NULL,
+                                  CLSCTX_INPROC_SERVER, &IID_IXMLHttpRequest,
+                                  (void **)&pXMLHttpRequest);
+    todo_wine {
+    ok(hr == S_OK, "CoCreateInstance(CLSID_XMLHTTPRequest) should have succeeded instead of failing with 0x%08x\n", hr);
+    }
+    if (hr != S_OK)
+        return;
+
+    VariantInit(&dummy);
+    V_VT(&dummy) = VT_ERROR;
+    V_ERROR(&dummy) = DISP_E_MEMBERNOTFOUND;
+    VariantInit(&varfalse);
+    V_VT(&varfalse) = VT_BOOL;
+    V_BOOL(&varfalse) = VARIANT_FALSE;
+    V_VT(&varbody) = VT_BSTR;
+    V_BSTR(&varbody) = SysAllocString(wszBody);
+
+    hr = IXMLHttpRequest_open(pXMLHttpRequest, wszPOST, wszUrl, varfalse, dummy, dummy);
+    ok(hr == S_OK, "IXMLHttpRequest_open should have succeeded instead of failing with 0x%08x\n", hr);
+
+    hr = IXMLHttpRequest_send(pXMLHttpRequest, varbody);
+    ok(hr == S_OK, "IXMLHttpRequest_send should have succeeded instead of failing with 0x%08x\n", hr);
+    VariantClear(&varbody);
+
+    hr = IXMLHttpRequest_get_responseText(pXMLHttpRequest, &bstrResponse);
+    ok(hr == S_OK, "IXMLHttpRequest_get_responseText should have succeeded instead of failing with 0x%08x\n", hr);
+    /* the server currently returns "FAILED" because the Content-Type header is
+     * not what the server expects */
+    ok(!memcmp(bstrResponse, wszExpectedResponse, sizeof(wszExpectedResponse)), "bstrResponse differs from what was expected\n");
+    SysFreeString(bstrResponse);
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -1105,6 +1152,7 @@ START_TEST(domdoc)
     test_get_text();
     test_get_childNodes();
     test_removeChild();
+    test_XMLHTTP();
 
     CoUninitialize();
 }
