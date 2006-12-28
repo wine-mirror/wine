@@ -1141,7 +1141,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         IWineD3DSwapChainImpl *implSwapChain;
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
 
-        if (backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->render_targets[0]) {
+        if ((backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->render_targets[0]) && wined3d_settings.rendertargetlock_mode != RTL_DISABLE) {
             int tex;
 
             ENTER_GL();
@@ -1221,7 +1221,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             /** restore clean dirty state */
             IWineD3DSurface_CleanDirtyRect(iface);
 
-        } else {
+        } else if(wined3d_settings.rendertargetlock_mode != RTL_DISABLE) {
             FIXME("unsupported unlocking to Rendering surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
         }
         IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
