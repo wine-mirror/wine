@@ -1666,6 +1666,9 @@ static DWORD widClose(WORD wDevID)
  */
 static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
 {
+    DWORD           ret = MMSYSERR_NOERROR;
+    WINE_WAVEIN*    wwi;
+
     TRACE("(%u, %p, %08X);\n", wDevID, lpWaveHdr, dwSize);
 
     if (wDevID >= MAX_WAVEINDRV)
@@ -1684,8 +1687,32 @@ static DWORD widAddBuffer(WORD wDevID, LPWAVEHDR lpWaveHdr, DWORD dwSize)
         return WAVERR_STILLPLAYING;
     }
 
-    FIXME("unimplemented\n");
-    return MMSYSERR_NOTENABLED;
+    wwi = &WInDev[wDevID];
+    OSSpinLockLock(&wwi->lock);
+
+    if (wwi->state == WINE_WS_CLOSED)
+    {
+        WARN("Trying to add buffer to closed device.\n");
+        ret = MMSYSERR_INVALHANDLE;
+    }
+    else
+    {
+        LPWAVEHDR* wh;
+
+        lpWaveHdr->dwFlags |= WHDR_INQUEUE;
+        lpWaveHdr->dwFlags &= ~WHDR_DONE;
+        lpWaveHdr->dwBytesRecorded = 0;
+        lpWaveHdr->lpNext = NULL;
+
+        /* insert buffer at end of queue */
+        for (wh = &(wwi->lpQueuePtr); *wh; wh = &((*wh)->lpNext))
+            /* Do nothing */;
+        *wh = lpWaveHdr;
+    }
+
+    OSSpinLockUnlock(&wwi->lock);
+
+    return ret;
 }
 
 
