@@ -399,6 +399,7 @@ HRESULT WINAPI CoRevertToSelf(void);
 /* misc */
 HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
 HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
+HRESULT WINAPI CoAllowSetForegroundWindow(IUnknown *pUnk, LPVOID lpvReserved);
 
 HRESULT WINAPI CoCreateGuid(GUID* pguid);
 BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
@@ -407,6 +408,7 @@ BOOL WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFi
 BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
 HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
 HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
+HRESULT WINAPI CoRegisterChannelHook(REFGUID ExtensionGuid, IChannelHook *pChannelHook);
 
 typedef enum tagCOWAIT_FLAGS
 {
