@@ -7028,6 +7028,7 @@ done
 
 
 
+
 for ac_header in \
 	AudioUnit/AudioUnit.h \
 	Carbon/Carbon.h \
@@ -7067,6 +7068,7 @@ for ac_header in \
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
+	mach/mach.h \
 	mach/machine.h \
 	machine/cpu.h \
 	machine/limits.h \

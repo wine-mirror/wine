@@ -423,6 +423,9 @@
 /* Define to 1 if you have the <mach/machine.h> header file. */
 #undef HAVE_MACH_MACHINE_H
 
+/* Define to 1 if you have the <mach/mach.h> header file. */
+#undef HAVE_MACH_MACH_H
+
 /* Define to 1 if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
 

@@ -197,6 +197,7 @@ AC_CHECK_HEADERS(\
 	linux/param.h \
 	linux/serial.h \
 	linux/ucdrom.h \
+	mach/mach.h \
 	mach/machine.h \
 	machine/cpu.h \
 	machine/limits.h \
