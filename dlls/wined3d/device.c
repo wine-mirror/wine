@@ -1437,6 +1437,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         DEVMODEW devmode;
         HDC      hdc;
         int      bpp = 0;
+        RECT     clip_rc;
 
         /* Get info on the current display setup */
         hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
@@ -1462,6 +1463,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         This->ddraw_width = devmode.dmPelsWidth;
         This->ddraw_height = devmode.dmPelsHeight;
         This->ddraw_format = *(pPresentationParameters->BackBufferFormat);
+
+        /* And finally clip mouse to our screen */
+        SetRect(&clip_rc, 0, 0, devmode.dmPelsWidth, devmode.dmPelsHeight);
+        ClipCursor(&clip_rc);
     }
 
 
