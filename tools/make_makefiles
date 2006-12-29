@@ -70,18 +70,7 @@ my %special_dlls =
 # Default patterns for top-level .gitignore
 my @ignores = (
     "*.[oa]",
-    "*.avi",
-    "*.bmp",
-    "*.chm",
-    "*.cur",
-    "*.ico",
-    "*.mc.rc",
-    "*.res",
     "*.so",
-    "*.tab.[ch]",
-    "*.tlb",
-    "*.yy.c",
-    "*_[cips].c",
     "/autom4te.cache",
     "/config.cache",
     "/config.log",
@@ -89,6 +78,21 @@ my @ignores = (
     "/TAGS",
     "/tags",
     "Makefile"
+);
+
+# Source files and their resulting target to ignore
+my @ignore_srcs = (
+    [ 'BISON_SRCS',   '\.y',   '.tab.c' ],
+    [ 'BISON_SRCS',   '\.y',   '.tab.h' ],
+    [ 'LEX_SRCS',     '\.l',   '.yy.c' ],
+    [ 'MC_SRCS',      '\.mc',  '.mc.rc' ],
+    [ 'RC_SRCS',      '\.rc',  '.res' ],
+    [ 'RC_SRCS16',    '\.rc',  '.res' ],
+    [ 'IDL_TLB_SRCS', '\.idl', '.tlb' ],
+    [ 'IDL_C_SRCS',   '\.idl', '_c.c' ],
+    [ 'IDL_I_SRCS',   '\.idl', '_i.c' ],
+    [ 'IDL_P_SRCS',   '\.idl', '_p.c' ],
+    [ 'IDL_S_SRCS',   '\.idl', '_s.c' ],
 );
 
 my (@makefiles, %makefiles);
@@ -177,7 +181,7 @@ sub parse_makefile($)
             $make{$1} = $2;
             next;
         }
-        if (/^(IDL_H_SRCS|IMPLIB_SRCS|SPEC_SRCS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
+        if (/^(BISON_SRCS|LEX_SRCS|IDL_[CHIPS]_SRCS|IDL_TLB_SRCS|IMPLIB_SRCS|MC_SRCS|RC_SRCS|RC_SRCS16|RC_BINARIES|SPEC_SRCS16|MANPAGES|PROGRAMS)\s*=\s*(.*)/)
         {
             my @list = split(/\s+/, $2);
             $make{$1} = \@list;
@@ -259,36 +263,65 @@ sub update_winetest(@)
 ################################################################
 # update the makefile list in Makefile.in
 
-my @targets;
-my @depends;
-
-foreach my $file (sort values %makerules)
+sub update_makefiles(@)
 {
-    push @targets, $file;
-    my %make = %{$makefiles{$file}};
-    if (!defined($make{"=rules"})) { push @depends, "$file: $file.in"; }
-    else { push @depends, "$file: $file.in Make.rules"; }
+    my (@targets, @depends);
+
+    foreach my $file (sort values %makerules)
+    {
+        push @targets, $file;
+        my %make = %{$makefiles{$file}};
+        if (!defined($make{"=rules"})) { push @depends, "$file: $file.in"; }
+        else { push @depends, "$file: $file.in Make.rules"; }
+    }
+
+    foreach my $file (sort @_)
+    {
+        push @targets, $file unless $file eq "Makefile";
+        my %makefile = %{$makefiles{$file}};
+        my $dep = $makefile{"=rules"};
+        push @depends, "$file: $file.in $dep";
+    }
+
+
+    @lines = ();
+    push @lines, "ALL_MAKEFILES = \\\n\t";
+    push @lines, join (" \\\n\t", @targets ), "\n\n";
+    push @lines, "Makefile \$(ALL_MAKEFILES): config.status\n";
+    push @lines, "\t\@./config.status \$\@\n\n";
+    push @lines, "\$(RECURSE_TARGETS) \$(MAKEDEP): \$(ALL_MAKEFILES)\n\n";
+    push @lines, "distclean::\n";
+    push @lines, "\t\$(RM) Makefile \$(ALL_MAKEFILES)\n\n";
+    push @lines, join ("\n", @depends ), "\n";
+
+    replace_in_file( "Makefile.in", '^ALL_MAKEFILES\s*=', undef, @lines );
 }
 
-foreach my $file (sort @makefiles)
+
+################################################################
+# process ignore targets for generic source files
+
+sub update_ignores(@)
 {
-    push @targets, $file unless $file eq "Makefile";
-    my $dep = ${$makefiles{$file}}{"=rules"};
-    push @depends, "$file: $file.in $dep";
+    my @ignores;
+
+    foreach my $file (sort @_)
+    {
+        my %makefile = %{$makefiles{$file}};
+        my @list;
+
+        foreach my $src (@ignore_srcs)
+        {
+            my @pattern = @{$src};
+            next unless defined $makefile{$pattern[0]};
+            push @list, map { (my $ret = $_) =~ s/$pattern[1]$/$pattern[2]/; $ret; } @{$makefile{$pattern[0]}};
+        }
+        push @list, @{$makefile{"RC_BINARIES"}} if defined $makefile{"RC_BINARIES"};
+
+        push @ignores, map { $makefile{"=dir"} . $_; } @list;
+    }
+    return @ignores;
 }
-
-@lines = ();
-push @lines, "ALL_MAKEFILES = \\\n\t";
-push @lines, join (" \\\n\t", @targets ), "\n\n";
-push @lines, "Makefile \$(ALL_MAKEFILES): config.status\n";
-push @lines, "\t\@./config.status \$\@\n\n";
-push @lines, "\$(RECURSE_TARGETS) \$(MAKEDEP): \$(ALL_MAKEFILES)\n\n";
-push @lines, "distclean::\n";
-push @lines, "\t\$(RM) Makefile \$(ALL_MAKEFILES)\n\n";
-push @lines, join ("\n", @depends ), "\n";
-
-replace_in_file( "Makefile.in", '^ALL_MAKEFILES\s*=', undef, @lines );
-
 
 ################################################################
 # update dlls/Makefile.in
@@ -613,6 +646,8 @@ sub update_gitignore(@)
 }
 
 
+update_makefiles( @makefiles );
+push @ignores, update_ignores( @makefiles );
 push @ignores, update_winetest( @makefiles );
 push @ignores, update_dlls( sort grep /^dlls\//, @makefiles );
 push @ignores, update_progs( sort grep /^programs\/.*\/Makefile$/, @makefiles );
