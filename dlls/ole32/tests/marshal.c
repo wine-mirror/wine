@@ -47,6 +47,8 @@ static const IID IID_IWineTest =
     {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
 }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
+#define EXTENTID_WineTest IID_IWineTest
+
 static void test_cocreateinstance_proxy(void)
 {
     IUnknown *pProxy;
@@ -2182,6 +2184,221 @@ static void test_CoGetInterfaceAndReleaseStream(void)
     ok(hr == E_INVALIDARG, "hr %08x\n", hr);
 }
 
+static const char *debugstr_iid(REFIID riid)
+{
+    static char name[256];
+    HKEY hkeyInterface;
+    WCHAR bufferW[39];
+    char buffer[39];
+    LONG name_size = sizeof(name);
+    StringFromGUID2(riid, bufferW, sizeof(bufferW)/sizeof(bufferW[0]));
+    WideCharToMultiByte(CP_ACP, 0, bufferW, sizeof(bufferW)/sizeof(bufferW[0]), buffer, sizeof(buffer), NULL, NULL);
+    if (RegOpenKeyEx(HKEY_CLASSES_ROOT, "Interface", 0, KEY_QUERY_VALUE, &hkeyInterface) != ERROR_SUCCESS)
+    {
+        memcpy(name, buffer, sizeof(buffer));
+        goto done;
+    }
+    if (RegQueryValue(hkeyInterface, buffer, name, &name_size) != ERROR_SUCCESS)
+    {
+        memcpy(name, buffer, sizeof(buffer));
+        goto done;
+    }
+    RegCloseKey(hkeyInterface);
+done:
+    return name;
+}
+
+static HRESULT WINAPI TestChannelHook_QueryInterface(IChannelHook *iface, REFIID riid, void **ppv)
+{
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IChannelHook))
+    {
+        *ppv = iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TestChannelHook_AddRef(IChannelHook *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TestChannelHook_Release(IChannelHook *iface)
+{
+    return 1;
+}
+
+static void WINAPI TestChannelHook_ClientGetSize(
+    IChannelHook *iface,
+    REFGUID uExtent,
+    REFIID  riid,
+    ULONG  *pDataSize )
+{
+    SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
+    trace("TestChannelHook_ClientGetBuffer\n");
+    trace("\t%s method %d\n", debugstr_iid(riid), info->iMethod);
+    trace("\tcid: %s\n", debugstr_iid(&info->uCausality));
+    ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
+    todo_wine {
+    ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
+    }
+    ok(!info->pObject, "info->pObject should be NULL\n");
+    ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
+
+    *pDataSize = 1;
+}
+
+static void WINAPI TestChannelHook_ClientFillBuffer(
+    IChannelHook *iface,
+    REFGUID uExtent,
+    REFIID  riid,
+    ULONG  *pDataSize,
+    void   *pDataBuffer )
+{
+    SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
+    trace("TestChannelHook_ClientFillBuffer\n");
+    ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
+    todo_wine {
+    ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
+    }
+    ok(!info->pObject, "info->pObject should be NULL\n");
+    ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
+
+    *(unsigned char *)pDataBuffer = 0xcc;
+    *pDataSize = 1;
+}
+
+static void WINAPI TestChannelHook_ClientNotify(
+    IChannelHook *iface,
+    REFGUID uExtent,
+    REFIID  riid,
+    ULONG   cbDataSize,
+    void   *pDataBuffer,
+    DWORD   lDataRep,
+    HRESULT hrFault )
+{
+    SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
+    trace("TestChannelHook_ClientNotify hrFault = 0x%08x\n", hrFault);
+    ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
+    todo_wine {
+    ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
+    ok(info->pObject != NULL, "info->pObject shouldn't be NULL\n");
+    }
+    ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
+}
+
+static void WINAPI TestChannelHook_ServerNotify(
+    IChannelHook *iface,
+    REFGUID uExtent,
+    REFIID  riid,
+    ULONG   cbDataSize,
+    void   *pDataBuffer,
+    DWORD   lDataRep )
+{
+    SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
+    trace("TestChannelHook_ServerNotify\n");
+    ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
+    ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
+    ok(info->pObject != NULL, "info->pObject shouldn't be NULL\n");
+    ok(cbDataSize == 1, "cbDataSize should have been 1 instead of %d\n", cbDataSize);
+    ok(*(unsigned char *)pDataBuffer == 0xcc, "pDataBuffer should have contained 0xcc instead of 0x%x\n", *(unsigned char *)pDataBuffer);
+    ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
+}
+
+static void WINAPI TestChannelHook_ServerGetSize(
+    IChannelHook *iface,
+    REFGUID uExtent,
+    REFIID  riid,
+    HRESULT hrFault,
+    ULONG  *pDataSize )
+{
+    SChannelHookCallInfo *info = (SChannelHookCallInfo *)riid;
+    trace("TestChannelHook_ServerGetSize\n");
+    trace("\t%s method %d\n", debugstr_iid(riid), info->iMethod);
+    ok(info->cbSize == sizeof(*info), "info->cbSize was %d instead of %d\n", info->cbSize, (int)sizeof(*info));
+    ok(info->dwServerPid == GetCurrentProcessId(), "info->dwServerPid was 0x%x instead of 0x%x\n", info->dwServerPid, GetCurrentProcessId());
+    ok(info->pObject != NULL, "info->pObject shouldn't be NULL\n");
+    ok(IsEqualGUID(uExtent, &EXTENTID_WineTest), "uExtent wasn't correct\n");
+    if (hrFault != S_OK)
+        trace("\thrFault = 0x%08x\n", hrFault);
+
+    *pDataSize = 0;
+}
+
+static void WINAPI TestChannelHook_ServerFillBuffer(
+    IChannelHook *iface,
+    REFGUID uExtent,
+    REFIID  riid,
+    ULONG  *pDataSize,
+    void   *pDataBuffer,
+    HRESULT hrFault )
+{
+    trace("TestChannelHook_ServerFillBuffer\n");
+    ok(0, "TestChannelHook_ServerFillBuffer shouldn't be called\n");
+}
+
+static const IChannelHookVtbl TestChannelHookVtbl =
+{
+    TestChannelHook_QueryInterface,
+    TestChannelHook_AddRef,
+    TestChannelHook_Release,
+    TestChannelHook_ClientGetSize,
+    TestChannelHook_ClientFillBuffer,
+    TestChannelHook_ClientNotify,
+    TestChannelHook_ServerNotify,
+    TestChannelHook_ServerGetSize,
+    TestChannelHook_ServerFillBuffer,
+};
+
+static IChannelHook TestChannelHook = { &TestChannelHookVtbl };
+
+static void test_channel_hook(void)
+{
+    IStream *pStream = NULL;
+    IClassFactory *cf = NULL;
+    DWORD tid;
+    IUnknown *proxy = NULL;
+    HANDLE thread;
+    HRESULT hr;
+
+    hr = CoRegisterChannelHook(&EXTENTID_WineTest, &TestChannelHook);
+    ok_ole_success(hr, CoRegisterChannelHook);
+
+    hr = CoRegisterMessageFilter(&MessageFilter, NULL);
+    ok_ole_success(hr, CoRegisterMessageFilter);
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+    tid = start_host_object2(pStream, &IID_IClassFactory, (IUnknown*)&Test_ClassFactory, MSHLFLAGS_NORMAL, &MessageFilter, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&cf);
+    ok_ole_success(hr, CoUnmarshalInterface);
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (LPVOID*)&proxy);
+    ok_ole_success(hr, IClassFactory_CreateInstance);
+    IUnknown_Release(proxy);
+
+    IClassFactory_Release(cf);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+
+    hr = CoRegisterMessageFilter(NULL, NULL);
+    ok_ole_success(hr, CoRegisterMessageFilter);
+}
+
 START_TEST(marshal)
 {
     WNDCLASS wndclass;
@@ -2239,6 +2456,9 @@ START_TEST(marshal)
     test_globalinterfacetable();
 
     test_CoGetInterfaceAndReleaseStream();
+
+    /* must be last test as channel hooks can't be unregistered */
+    test_channel_hook();
 
     CoUninitialize();
     return;
