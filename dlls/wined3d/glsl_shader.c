@@ -718,19 +718,19 @@ static void shader_glsl_get_register_name(
     strcat(regstr, tmpStr);
 }
 
-/* Writes the GLSL writemask for the destination register */
-static void shader_glsl_get_output_register_swizzle(
-    const DWORD param,
-    char *write_mask) {
-   
-    *write_mask = 0;
+/* Get the GLSL write mask for the destination register */
+static void shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
+    char *ptr = write_mask;
+
     if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
-        strcat(write_mask, ".");
-        if (param & WINED3DSP_WRITEMASK_0) strcat(write_mask, "x");
-        if (param & WINED3DSP_WRITEMASK_1) strcat(write_mask, "y");
-        if (param & WINED3DSP_WRITEMASK_2) strcat(write_mask, "z");
-        if (param & WINED3DSP_WRITEMASK_3) strcat(write_mask, "w");
+        *ptr++ = '.';
+        if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
+        if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
+        if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
+        if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
     }
+
+    *ptr = '\0';
 }
 
 static void shader_glsl_get_input_register_swizzle(
@@ -804,7 +804,7 @@ static void shader_glsl_add_param(
         shader_glsl_get_input_register_swizzle(param, is_color, reg_mask);
         shader_glsl_gen_modifier(param, reg_name, reg_mask, out_str);
     } else {
-        shader_glsl_get_output_register_swizzle(param, reg_mask);
+        shader_glsl_get_write_mask(param, reg_mask);
         sprintf(out_str, "%s%s", reg_name, reg_mask);
     }
 }
@@ -1788,7 +1788,7 @@ void pshader_glsl_input_pack(
        if (!usage_token) continue;
        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-       shader_glsl_get_output_register_swizzle(register_token, reg_mask);
+       shader_glsl_get_write_mask(register_token, reg_mask);
 
        switch(usage) {
 
@@ -1843,7 +1843,7 @@ void vshader_glsl_output_unpack(
 
        usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
        usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-       shader_glsl_get_output_register_swizzle(register_token, reg_mask);
+       shader_glsl_get_write_mask(register_token, reg_mask);
 
        switch(usage) {
 
