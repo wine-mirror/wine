@@ -321,7 +321,7 @@ static void delete_glsl_shader_list(IWineD3DDevice* iface) {
 /* Apply the current values to the specified texture stage */
 static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Sampler, DWORD texture_idx, DWORD Flags) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint col[4];
+    float col[4];
 
     union {
         float f;
@@ -386,8 +386,8 @@ static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, 
         checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
     }
 
-    D3DCOLORTOGLINT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
-    glTexEnviv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
+    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
+    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
     checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
 
     /* TODO: NV_POINT_SPRITE */

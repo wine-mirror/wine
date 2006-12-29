@@ -228,12 +228,6 @@ extern int num_lock;
   (vec)[2] = D3DCOLOR_B(dw); \
   (vec)[3] = D3DCOLOR_A(dw);
 
-#define D3DCOLORTOGLINT4(src, dst) \
-  (dst)[0] = D3DCOLOR_B_R(src); \
-  (dst)[1] = D3DCOLOR_B_G(src); \
-  (dst)[2] = D3DCOLOR_B_B(src); \
-  (dst)[3] = D3DCOLOR_B_A(src);
-
 /* DirectX Device Limits */
 /* --------------------- */
 #define MAX_LEVELS  256  /* Maximum number of mipmap levels. Guessed at 256 */
