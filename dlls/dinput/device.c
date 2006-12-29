@@ -835,6 +835,10 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
         if      (IsEqualGUID(&ddoi.guidType, &GUID_XAxis)) strcpy(ddoi.tszName, "X-Axis");
         else if (IsEqualGUID(&ddoi.guidType, &GUID_YAxis)) strcpy(ddoi.tszName, "Y-Axis");
         else if (IsEqualGUID(&ddoi.guidType, &GUID_ZAxis)) strcpy(ddoi.tszName, "Z-Axis");
+        else if (IsEqualGUID(&ddoi.guidType, &GUID_Key  ))
+                    GetKeyNameTextA((DIDFT_GETINSTANCE(odf->dwType) & 0x80) << 17 |
+                                    (DIDFT_GETINSTANCE(odf->dwType) & 0x7f) << 16,
+                                    ddoi.tszName, sizeof(ddoi.tszName));
         else if (type & DIDFT_AXIS)   wsprintfA(ddoi.tszName, "%d-Axis", axis - 1);
         else if (type & DIDFT_BUTTON) wsprintfA(ddoi.tszName, "Button %d", button - 1);
         else FIXME("no name\n");
