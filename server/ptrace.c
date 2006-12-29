@@ -45,6 +45,8 @@
 #include "process.h"
 #include "thread.h"
 
+#ifdef USE_PTRACE
+
 #ifndef PTRACE_CONT
 #define PTRACE_CONT PT_CONTINUE
 #endif
@@ -653,3 +655,5 @@ void set_thread_context( struct thread *thread, const CONTEXT *context, unsigned
 }
 
 #endif  /* linux || __FreeBSD__ */
+
+#endif  /* USE_PTRACE */

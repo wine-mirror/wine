@@ -919,6 +919,49 @@ static void create_config_dir(void)
 }
 
 
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <mach/mach_error.h>
+#include <servers/bootstrap.h>
+
+/* send our task port to the server */
+static void send_server_task_port(void)
+{
+    mach_port_t bootstrap_port, wineserver_port;
+    kern_return_t kret;
+
+    struct {
+        mach_msg_header_t           header;
+        mach_msg_body_t             body;
+        mach_msg_port_descriptor_t  task_port;
+    } msg;
+
+    if (task_get_bootstrap_port(mach_task_self(), &bootstrap_port) != KERN_SUCCESS) return;
+
+    kret = bootstrap_look_up(bootstrap_port, (char*)wine_get_server_dir(), &wineserver_port);
+    if (kret != KERN_SUCCESS)
+        fatal_error( "cannot find the server port: 0x%08x\n", kret );
+
+    mach_port_deallocate(mach_task_self(), bootstrap_port);
+
+    msg.header.msgh_bits        = MACH_MSGH_BITS(MACH_MSG_TYPE_COPY_SEND, 0) | MACH_MSGH_BITS_COMPLEX;
+    msg.header.msgh_size        = sizeof(msg);
+    msg.header.msgh_remote_port = wineserver_port;
+    msg.header.msgh_local_port  = MACH_PORT_NULL;
+
+    msg.body.msgh_descriptor_count  = 1;
+    msg.task_port.name              = mach_task_self();
+    msg.task_port.disposition       = MACH_MSG_TYPE_COPY_SEND;
+    msg.task_port.type              = MACH_MSG_PORT_DESCRIPTOR;
+
+    kret = mach_msg_send(&msg.header);
+    if (kret != KERN_SUCCESS)
+        server_protocol_error( "mach_msg_send failed: 0x%08x\n", kret );
+
+    mach_port_deallocate(mach_task_self(), wineserver_port);
+}
+#endif  /* __APPLE__ */
+
 /***********************************************************************
  *           server_init_process
  *
@@ -962,6 +1005,10 @@ void server_init_process(void)
 
     /* receive the first thread request fd on the main socket */
     ntdll_get_thread_data()->request_fd = receive_fd( &dummy_handle );
+
+#ifdef __APPLE__
+    send_server_task_port();
+#endif
 }
 
 

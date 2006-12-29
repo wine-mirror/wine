@@ -130,6 +130,13 @@ extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
 
+/* process tracing mechanism to use */
+#ifdef __APPLE__
+#define USE_MACH
+#else
+#define USE_PTRACE
+#endif
+
 extern void init_tracing_mechanism(void);
 extern void init_process_tracing( struct process *process );
 extern void finish_process_tracing( struct process *process );
