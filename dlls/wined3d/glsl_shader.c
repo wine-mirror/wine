@@ -733,54 +733,35 @@ static void shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     *ptr = '\0';
 }
 
-static void shader_glsl_get_input_register_swizzle(
-    const DWORD param,
-    BOOL is_color,
-    char *reg_mask) {
-    
-    const char swizzle_reg_chars_color_fix[] = "zyxw";
-    const char swizzle_reg_chars[] = "xyzw";
-    const char* swizzle_regs = NULL;
-   
-    /** operand input */
-    DWORD swizzle = (param & WINED3DVS_SWIZZLE_MASK) >> WINED3DVS_SWIZZLE_SHIFT;
+static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, char *swizzle_str) {
+    /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
+     * but addressed as "rgba". To fix this we need to swap the register's x
+     * and z components. */
+    const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
+    char *ptr = swizzle_str;
+
+    /* swizzle bits fields: wwzzyyxx */
+    DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
     DWORD swizzle_w = (swizzle >> 6) & 0x03;
 
-    if (is_color) {
-      swizzle_regs = swizzle_reg_chars_color_fix;
-    } else {
-      swizzle_regs = swizzle_reg_chars;
+    /* If the swizzle is the default swizzle (ie, "xyzw"), we don't need to
+     * generate a swizzle string. Unless we need to our own swizzling. */
+    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle || fixup) {
+        *ptr++ = '.';
+        if (swizzle_x == swizzle_y && swizzle_x == swizzle_z && swizzle_x == swizzle_w) {
+            *ptr++ = swizzle_chars[swizzle_x];
+        } else {
+            *ptr++ = swizzle_chars[swizzle_x];
+            *ptr++ = swizzle_chars[swizzle_y];
+            *ptr++ = swizzle_chars[swizzle_z];
+            *ptr++ = swizzle_chars[swizzle_w];
+        }
     }
 
-    /**
-     * swizzle bits fields:
-     *  WWZZYYXX
-     */
-    if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) == swizzle) {
-      if (is_color) {
-	    sprintf(reg_mask, ".%c%c%c%c",
-		swizzle_regs[swizzle_x],
-		swizzle_regs[swizzle_y],
-		swizzle_regs[swizzle_z],
-		swizzle_regs[swizzle_w]);
-      }
-      return ;
-    }
-    if (swizzle_x == swizzle_y &&
-	swizzle_x == swizzle_z &&
-	swizzle_x == swizzle_w)
-    {
-      sprintf(reg_mask, ".%c", swizzle_regs[swizzle_x]);
-    } else {
-      sprintf(reg_mask, ".%c%c%c%c",
-	      swizzle_regs[swizzle_x],
-	      swizzle_regs[swizzle_y],
-	      swizzle_regs[swizzle_z],
-	      swizzle_regs[swizzle_w]);
-    }
+    *ptr = '\0';
 }
 
 /** From a given parameter token, generate the corresponding GLSL string.
@@ -801,7 +782,7 @@ static void shader_glsl_add_param(
     shader_glsl_get_register_name(param, addr_token, reg_name, &is_color, arg);
     
     if (is_input) {
-        shader_glsl_get_input_register_swizzle(param, is_color, reg_mask);
+        shader_glsl_get_swizzle(param, is_color, reg_mask);
         shader_glsl_gen_modifier(param, reg_name, reg_mask, out_str);
     } else {
         shader_glsl_get_write_mask(param, reg_mask);
