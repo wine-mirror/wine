@@ -3710,8 +3710,8 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
     TRACE("(hdc=%p, nItem=%d, nSubItem=%d, pos=%s)\n", hdc, nItem, nSubItem, wine_dbgstr_point(&pos));
 
     /* get information needed for drawing the item */
-    lvItem.mask = LVIF_TEXT | LVIF_IMAGE;
-    if (nSubItem == 0) lvItem.mask |= LVIF_STATE | LVIF_PARAM;
+    lvItem.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
+    if (nSubItem == 0) lvItem.mask |= LVIF_STATE;
     if (uView == LVS_REPORT) lvItem.mask |= LVIF_INDENT;
     lvItem.stateMask = LVIS_SELECTED | LVIS_FOCUSED | LVIS_STATEIMAGEMASK;
     lvItem.iItem = nItem;
@@ -5348,9 +5348,6 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
 	else textcpynT(lpLVItem->pszText, isW, pItemHdr->pszText, TRUE, lpLVItem->cchTextMax);
     }
 
-    /* if this is a subitem, we're done */
-    if (isubitem) return TRUE;
-  
     /* Next is the lParam field */
     if (dispInfo.item.mask & LVIF_PARAM)
     {
@@ -5361,8 +5358,11 @@ static BOOL LISTVIEW_GetItemT(LISTVIEW_INFO *infoPtr, LPLVITEMW lpLVItem, BOOL i
     else if (lpLVItem->mask & LVIF_PARAM)
 	lpLVItem->lParam = lpItem->lParam;
 
+    /* if this is a subitem, we're done */
+    if (isubitem) return TRUE;
+
     /* ... the state field (this one is different due to uCallbackmask) */
-    if (lpLVItem->mask & LVIF_STATE) 
+    if (lpLVItem->mask & LVIF_STATE)
     {
 	lpLVItem->state = lpItem->state & lpLVItem->stateMask;
 	if (dispInfo.item.mask & LVIF_STATE)
