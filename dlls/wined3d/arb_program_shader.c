@@ -220,82 +220,35 @@ static void shader_arb_get_write_mask(const DWORD param, char *write_mask) {
     *ptr = '\0';
 }
 
-static void pshader_get_input_register_swizzle(const DWORD instr, char *swzstring) {
-    static const char swizzle_reg_chars[] = "rgba";
-    DWORD swizzle = (instr & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
+static void shader_arb_get_swizzle(const DWORD param, BOOL fixup, char *swizzle_str) {
+    /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
+     * but addressed as "rgba". To fix this we need to swap the register's x
+     * and z components. */
+    const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
+    char *ptr = swizzle_str;
+
+    /* swizzle bits fields: wwzzyyxx */
+    DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     DWORD swizzle_x = swizzle & 0x03;
     DWORD swizzle_y = (swizzle >> 2) & 0x03;
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
     DWORD swizzle_w = (swizzle >> 6) & 0x03;
-    /**
-     * swizzle bits fields:
-     *  WWZZYYXX
-     */
-    *swzstring = 0;
-    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle) {
-        if (swizzle_x == swizzle_y &&
-        swizzle_x == swizzle_z &&
-        swizzle_x == swizzle_w) {
-            sprintf(swzstring, ".%c", swizzle_reg_chars[swizzle_x]);
+
+    /* If the swizzle is the default swizzle (ie, "xyzw"), we don't need to
+     * generate a swizzle string. Unless we need to our own swizzling. */
+    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle || fixup) {
+        *ptr++ = '.';
+        if (swizzle_x == swizzle_y && swizzle_x == swizzle_z && swizzle_x == swizzle_w) {
+            *ptr++ = swizzle_chars[swizzle_x];
         } else {
-            sprintf(swzstring, ".%c%c%c%c",
-                swizzle_reg_chars[swizzle_x],
-                swizzle_reg_chars[swizzle_y],
-                swizzle_reg_chars[swizzle_z],
-                swizzle_reg_chars[swizzle_w]);
+            *ptr++ = swizzle_chars[swizzle_x];
+            *ptr++ = swizzle_chars[swizzle_y];
+            *ptr++ = swizzle_chars[swizzle_z];
+            *ptr++ = swizzle_chars[swizzle_w];
         }
     }
-}
 
-/* TODO: merge with pixel shader */
-static void vshader_program_add_input_param_swizzle(const DWORD param, int is_color, char *hwLine) {
-    static const char swizzle_reg_chars_color_fix[] = "zyxw";
-    static const char swizzle_reg_chars[] = "xyzw";
-    const char* swizzle_regs = NULL;
-    char  tmpReg[255];
-
-    /** operand input */
-    DWORD swizzle = (param & WINED3DVS_SWIZZLE_MASK) >> WINED3DVS_SWIZZLE_SHIFT;
-    DWORD swizzle_x = swizzle & 0x03;
-    DWORD swizzle_y = (swizzle >> 2) & 0x03;
-    DWORD swizzle_z = (swizzle >> 4) & 0x03;
-    DWORD swizzle_w = (swizzle >> 6) & 0x03;
-
-    if (is_color) {
-      swizzle_regs = swizzle_reg_chars_color_fix;
-    } else {
-      swizzle_regs = swizzle_reg_chars;
-    }
-
-    /**
-     * swizzle bits fields:
-     *  WWZZYYXX
-     */
-    if ((WINED3DVS_NOSWIZZLE >> WINED3DVS_SWIZZLE_SHIFT) == swizzle) {
-      if (is_color) {
-        sprintf(tmpReg, ".%c%c%c%c",
-                swizzle_regs[swizzle_x],
-                swizzle_regs[swizzle_y],
-                swizzle_regs[swizzle_z],
-                swizzle_regs[swizzle_w]);
-        strcat(hwLine, tmpReg);
-      }
-      return ;
-    }
-    if (swizzle_x == swizzle_y &&
-        swizzle_x == swizzle_z &&
-        swizzle_x == swizzle_w)
-    {
-      sprintf(tmpReg, ".%c", swizzle_regs[swizzle_x]);
-      strcat(hwLine, tmpReg);
-    } else {
-      sprintf(tmpReg, ".%c%c%c%c",
-              swizzle_regs[swizzle_x],
-              swizzle_regs[swizzle_y],
-              swizzle_regs[swizzle_z],
-              swizzle_regs[swizzle_w]);
-      strcat(hwLine, tmpReg);
-    }
+    *ptr = '\0';
 }
 
 static void pshader_get_register_name(
@@ -412,7 +365,9 @@ static void vshader_program_add_param(SHADER_OPCODE_ARG *arg, const DWORD param,
     shader_arb_get_write_mask(param, write_mask);
     strcat(hwLine, write_mask);
   } else {
-    vshader_program_add_input_param_swizzle(param, is_color, hwLine);
+    char swizzle[6];
+    shader_arb_get_swizzle(param, is_color, swizzle);
+    strcat(hwLine, swizzle);
   }
 }
 
@@ -470,7 +425,7 @@ static void pshader_gen_input_modifier_line (
 
     /* Get register name */
     pshader_get_register_name(instr, regstr);
-    pshader_get_input_register_swizzle(instr, swzstr);
+    shader_arb_get_swizzle(instr, FALSE, swzstr);
 
     switch (instr & WINED3DSP_SRCMOD_MASK) {
     case WINED3DSPSM_NONE:
