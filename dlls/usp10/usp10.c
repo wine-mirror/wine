@@ -582,23 +582,92 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 /***********************************************************************
  *      ScriptStringOut (USP10.@)
  *
+ * This function takes the output of ScriptStringAnalyse and joins the segments
+ * of glyphs and passes the resulting string to ScriptTextOut.  ScriptStringOut
+ * only processes glyphs.
+ *
+ * Parameters:
+ *  ssa       [I] buffer to hold the analysed string components
+ *  iX        [I] X axis displacement for output
+ *  iY        [I] Y axis displacement for output
+ *  uOptions  [I] flags controling output processing
+ *  prc       [I] rectangle coordinates
+ *  iMinSel   [I] starting pos for substringing output string
+ *  iMaxSel   [I] ending pos for substringing output string
+ *  fDisabled [I] controls text highlighting
+ *
+ *  RETURNS
+ *   Success: S_OK
+ *   Failure: is the value returned by ScriptTextOut
  */
-HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa, 
-                               int iX, 
+HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
+                               int iX,
                                int iY, 
                                UINT uOptions, 
                                const RECT *prc, 
                                int iMinSel, 
-                               int iMaxSel, 
+                               int iMaxSel,
                                BOOL fDisabled)
 {
-    FIXME("(%p,%d,%d,0x%1x,%p,%d,%d,%d): stub\n",
+    StringAnalysis *analysis;
+    WORD *glyphs;
+    int   item, cnt, x;
+    HRESULT hr;
+    SCRIPT_CACHE sc = 0;
+
+    TRACE("(%p,%d,%d,0x%1x,%p,%d,%d,%d)\n",
          ssa, iX, iY, uOptions, prc, iMinSel, iMaxSel, fDisabled);
-    if  (!ssa) {
-        return E_INVALIDARG;
+
+    analysis = ssa;                             /* map ptr to string_analysis struct */
+
+    /*
+     * Get storage for the output buffer for the consolidated strings
+     */
+    cnt = 0;
+    for(item = 0; item < analysis->numItems; item++)
+    {
+        cnt += analysis->glyphs[item].numGlyphs;
+    }
+    glyphs = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * cnt );
+
+    /*
+     * ScriptStringOut only processes glyphs hence set ETO_GLYPH_INDEX
+     */
+    uOptions |= ETO_GLYPH_INDEX;
+    analysis->pItem[0].a.fNoGlyphIndex = FALSE; /* say that we have glyphs */
+
+    /*
+     * Copy the string items into the output buffer
+     */
+
+    TRACE("numItems %d\n", analysis->numItems);
+
+    cnt = 0;
+    for (item = 0; item < analysis->numItems; item++)
+    {
+        memcpy(&glyphs[cnt], analysis->glyphs[item].glyphs,
+              sizeof(WCHAR) * analysis->glyphs[item].numGlyphs);
+
+        TRACE("Item %d, Glyphs %d ", item, analysis->glyphs[item].numGlyphs);
+        for (x = cnt; x < analysis->glyphs[item].numGlyphs + cnt; x ++)
+            TRACE("%04x", glyphs[x]);
+        TRACE("\n");
+
+        cnt += analysis->glyphs[item].numGlyphs; /* point to the end of the copied text */
     }
 
-    return E_NOTIMPL;
+    hr = ScriptTextOut(analysis->hdc, &sc, iX, iY, uOptions, prc, &analysis->pItem->a,
+                       NULL, 0, glyphs, cnt, analysis->glyphs->piAdvance, NULL,
+                       analysis->glyphs->pGoffset);
+    TRACE("ScriptTextOut hr=%08x\n", hr);
+
+    /*
+     * Free the output buffer and script cache
+     */
+    HeapFree(GetProcessHeap(), 0, glyphs);
+    ScriptFreeCache(&sc);
+
+    return hr;
 }
 
 /***********************************************************************

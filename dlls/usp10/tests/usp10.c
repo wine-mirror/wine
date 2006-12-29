@@ -672,7 +672,7 @@ static void test_ScriptString(HDC hdc)
     if  (hr == 0)
     {
         hr = ScriptStringOut(ssa, X, Y, Options, &rc, MinSel, MaxSel, Disabled);
-        todo_wine ok(hr == S_OK, "ScriptStringOut should return S_OK not %08x\n", hr);
+        ok(hr == S_OK, "ScriptStringOut should return S_OK not %08x\n", hr);
         hr = ScriptStringFree(&ssa);
         ok(hr == S_OK, "ScriptStringFree should return S_OK not %08x\n", hr);
     }
