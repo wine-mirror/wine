@@ -420,7 +420,7 @@ static void test_refcount(void)
         hr = IDirect3DDevice8_GetStreamSource(pDevice, 0, &pVBuf, &stride);
         ok(SUCCEEDED(hr), "GetStreamSource did not succeed with NULL stream!\n");
         ok(pVBuf==NULL, "pVBuf not NULL (%p)!\n", pVBuf);
-        ok(stride==3*sizeof(float), "stride not %u (got %u)!\n", 3*sizeof(float), stride);
+        ok(stride==3*sizeof(float), "stride not 3 floats (got %u)!\n", stride);
     }
 
     /* Shaders */
