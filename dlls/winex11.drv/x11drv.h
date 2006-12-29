@@ -526,6 +526,7 @@ extern unsigned int screen_height;
 extern unsigned int screen_depth;
 extern RECT virtual_screen_rect;
 extern unsigned int text_caps;
+extern int dxgrab;
 extern int use_xkb;
 extern int use_take_focus;
 extern int use_primary_selection;

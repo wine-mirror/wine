@@ -46,8 +46,6 @@ typedef struct _X11DEVICE {
   LPX11DRIVERINFO	lpInfo;
 } X11DEVICE,*LPX11DEVICE;
 
-extern int dxgrab;
-
 static LPDDRAWI_DDRAWSURFACE_LCL X11DRV_DD_Primary;
 static LPDDRAWI_DDRAWSURFACE_GBL X11DRV_DD_PrimaryGbl;
 static HWND X11DRV_DD_PrimaryWnd;
