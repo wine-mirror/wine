@@ -80,6 +80,7 @@ struct process
     struct list          dlls;            /* list of loaded dlls */
     void                *peb;             /* PEB address in client address space */
     void                *ldt_copy;        /* pointer to LDT copy in client addr space */
+    unsigned int         trace_data;      /* opaque data used by the process tracing mechanism */
 };
 
 struct process_snapshot
@@ -128,6 +129,10 @@ extern void detach_debugged_processes( struct thread *debugger );
 extern struct process_snapshot *process_snap( int *count );
 extern struct module_snapshot *module_snap( struct process *process, int *count );
 extern void enum_processes( int (*cb)(struct process*, void*), void *user);
+
+extern void init_tracing_mechanism(void);
+extern void init_process_tracing( struct process *process );
+extern void finish_process_tracing( struct process *process );
 extern int read_process_memory( struct process *process, const void *ptr, data_size_t size, char *dest );
 extern int write_process_memory( struct process *process, void *ptr, data_size_t size, const char *src );
 

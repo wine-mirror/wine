@@ -223,6 +223,23 @@ static inline int tkill( int tgid, int pid, int sig )
     return -1;
 }
 
+/* initialize the process tracing mechanism */
+void init_tracing_mechanism(void)
+{
+    /* no initialization needed for ptrace */
+}
+
+/* initialize the per-process tracing mechanism */
+void init_process_tracing( struct process *process )
+{
+    /* ptrace setup is done on-demand */
+}
+
+/* terminate the per-process tracing mechanism */
+void finish_process_tracing( struct process *process )
+{
+}
+
 /* send a Unix signal to a specific thread */
 int send_thread_signal( struct thread *thread, int sig )
 {

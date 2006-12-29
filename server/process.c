@@ -284,6 +284,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->winstation      = 0;
     process->desktop         = 0;
     process->token           = token_create_admin();
+    process->trace_data      = 0;
     list_init( &process->thread_list );
     list_init( &process->locks );
     list_init( &process->classes );
@@ -343,6 +344,7 @@ data_size_t init_process( struct thread *thread )
     struct process *process = thread->process;
     struct startup_info *info = process->startup_info;
 
+    init_process_tracing( process );
     if (!info) return 0;
     return info->data_size;
 }
@@ -599,6 +601,7 @@ static void process_killed( struct process *process )
     destroy_process_classes( process );
     remove_process_locks( process );
     set_process_startup_state( process, STARTUP_ABORTED );
+    finish_process_tracing( process );
     start_sigkill_timer( process );
     wake_up( &process->obj, 0 );
 }

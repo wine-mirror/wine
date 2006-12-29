@@ -800,6 +800,9 @@ void open_master_socket(void)
 
     /* init startup time */
     gettimeofday( &server_start_time, NULL );
+
+    /* init the process tracing mechanism */
+    init_tracing_mechanism();
 }
 
 /* master socket timer expiration handler */
