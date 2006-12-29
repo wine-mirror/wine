@@ -209,14 +209,11 @@ static const char * const shift_tab[] = {
 static void shader_arb_get_write_mask(const DWORD param, char *write_mask) {
     char *ptr = write_mask;
 
-    if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
-        *ptr++ = '.';
-        if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
-        if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
-        if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
-        if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
-    }
-
+    *ptr++ = '.';
+    if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
+    if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
+    if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
+    if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
     *ptr = '\0';
 }
 
@@ -226,28 +223,15 @@ static void shader_arb_get_swizzle(const DWORD param, BOOL fixup, char *swizzle_
      * and z components. */
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
     char *ptr = swizzle_str;
-
-    /* swizzle bits fields: wwzzyyxx */
     DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
-    DWORD swizzle_x = swizzle & 0x03;
-    DWORD swizzle_y = (swizzle >> 2) & 0x03;
-    DWORD swizzle_z = (swizzle >> 4) & 0x03;
-    DWORD swizzle_w = (swizzle >> 6) & 0x03;
+    size_t i = 0;
 
-    /* If the swizzle is the default swizzle (ie, "xyzw"), we don't need to
-     * generate a swizzle string. Unless we need to our own swizzling. */
-    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle || fixup) {
-        *ptr++ = '.';
-        if (swizzle_x == swizzle_y && swizzle_x == swizzle_z && swizzle_x == swizzle_w) {
-            *ptr++ = swizzle_chars[swizzle_x];
-        } else {
-            *ptr++ = swizzle_chars[swizzle_x];
-            *ptr++ = swizzle_chars[swizzle_y];
-            *ptr++ = swizzle_chars[swizzle_z];
-            *ptr++ = swizzle_chars[swizzle_w];
-        }
+    *ptr++ = '.';
+    /* swizzle bits fields: wwzzyyxx */
+    for (i = 0; i < 4; ++i) {
+        *ptr++ = swizzle_chars[swizzle & 0x3];
+        swizzle >>= 2;
     }
-
     *ptr = '\0';
 }
 
