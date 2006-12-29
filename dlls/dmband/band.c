@@ -22,7 +22,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dmband);
 WINE_DECLARE_DEBUG_CHANNEL(dmfile);
 
-static const GUID IID_IDirectMusicBandPRIVATE = {0xda54db81,0x837d,0x11d1,{0x86,0xbc,0x00,0xc0,0x4f,0xbf,0x8f,0xef}};
 
 /*****************************************************************************
  * IDirectMusicBandImpl implementation
