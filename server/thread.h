@@ -103,6 +103,7 @@ extern struct thread *current;
 extern struct thread *create_thread( int fd, struct process *process );
 extern struct thread *get_thread_from_id( thread_id_t id );
 extern struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access );
+extern struct thread *get_thread_from_tid( int tid );
 extern struct thread *get_thread_from_pid( int pid );
 extern void stop_thread( struct thread *thread );
 extern int wake_thread( struct thread *thread );

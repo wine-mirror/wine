@@ -144,7 +144,12 @@ void sigchld_callback(void)
     for (;;)
     {
         if (!(pid = wait4_wrapper( -1, &status, WUNTRACED | WNOHANG, NULL ))) break;
-        if (pid != -1) handle_child_status( get_thread_from_pid(pid), pid, status, -1 );
+        if (pid != -1)
+        {
+            struct thread *thread = get_thread_from_tid( pid );
+            if (!thread) thread = get_thread_from_pid( pid );
+            handle_child_status( thread, pid, status, -1 );
+        }
         else break;
     }
 }

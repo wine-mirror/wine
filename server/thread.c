@@ -297,15 +297,23 @@ struct thread *get_thread_from_handle( obj_handle_t handle, unsigned int access 
                                             access, &thread_ops );
 }
 
-/* find a thread from a Unix pid */
-struct thread *get_thread_from_pid( int pid )
+/* find a thread from a Unix tid */
+struct thread *get_thread_from_tid( int tid )
 {
     struct thread *thread;
 
     LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
     {
-        if (thread->unix_tid == pid) return thread;
+        if (thread->unix_tid == tid) return thread;
     }
+    return NULL;
+}
+
+/* find a thread from a Unix pid */
+struct thread *get_thread_from_pid( int pid )
+{
+    struct thread *thread;
+
     LIST_FOR_EACH_ENTRY( thread, &thread_list, struct thread, entry )
     {
         if (thread->unix_pid == pid) return thread;
