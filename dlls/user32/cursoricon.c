@@ -1577,6 +1577,9 @@ BOOL WINAPI ClipCursor( const RECT *rect )
  */
 BOOL WINAPI GetClipCursor( RECT *rect )
 {
+    /* If this is first time - initialize the rect */
+    if (IsRectEmpty( &CURSOR_ClipRect )) ClipCursor( NULL );
+
     return CopyRect( rect, &CURSOR_ClipRect );
 }
 
