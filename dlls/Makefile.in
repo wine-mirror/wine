@@ -183,11 +183,11 @@ BASEDIRS = \
 	vwin32.vxd \
 	w32skrnl \
 	winedos \
+	winejoystick.drv \
 	winemp3.acm \
 	wineps.drv \
 	wininet \
 	winmm \
-	winmm/joystick \
 	winmm/winealsa \
 	winmm/winearts \
 	winmm/wineaudioio \
@@ -343,7 +343,6 @@ WIN16_FILES = \
 
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
-	joystick.drv.so \
 	winealsa.drv.so \
 	winearts.drv.so \
 	wineaudioio.drv.so \
@@ -364,9 +363,6 @@ symlinks.so: $(SYMLINKS_SO)
 symlinks: $(BUILDSUBDIRS)
 
 # Map symlink name to the corresponding library
-
-joystick.drv.so: winmm/joystick/joystick.drv.so
-	$(RM) $@ && $(LN_S) winmm/joystick/joystick.drv.so $@
 
 winealsa.drv.so: winmm/winealsa/winealsa.drv.so
 	$(RM) $@ && $(LN_S) winmm/winealsa/winealsa.drv.so $@
@@ -977,7 +973,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-winmm/joystick/joystick.drv.so: winmm/joystick
 winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
 winmm/wineaudioio/wineaudioio.drv.so: winmm/wineaudioio

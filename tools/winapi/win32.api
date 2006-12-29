@@ -1585,19 +1585,6 @@ LPVOID *
 REFCLSID
 REFIID
 
-%%joystick.drv
-
-%long
-
-HDRVR
-LPARAM
-LRESULT
-UINT
-
-%long --pointer
-
-DWORD_PTR
-
 %%kernel32.dll
 
 %long
@@ -4793,6 +4780,19 @@ LPARAM
 LRESULT
 UINT
 WORD
+
+%long --pointer
+
+DWORD_PTR
+
+%%winejoystick.drv
+
+%long
+
+HDRVR
+LPARAM
+LRESULT
+UINT
 
 %long --pointer
 

@@ -381,6 +381,7 @@ ALL_MAKEFILES = \
 	dlls/winecrt0/Makefile \
 	dlls/wined3d/Makefile \
 	dlls/winedos/Makefile \
+	dlls/winejoystick.drv/Makefile \
 	dlls/winemp3.acm/Makefile \
 	dlls/wineps.drv/Makefile \
 	dlls/winequartz.drv/Makefile \
@@ -388,7 +389,6 @@ ALL_MAKEFILES = \
 	dlls/wininet/Makefile \
 	dlls/wininet/tests/Makefile \
 	dlls/winmm/Makefile \
-	dlls/winmm/joystick/Makefile \
 	dlls/winmm/tests/Makefile \
 	dlls/winmm/winealsa/Makefile \
 	dlls/winmm/winearts/Makefile \
@@ -706,6 +706,7 @@ dlls/w32skrnl/Makefile: dlls/w32skrnl/Makefile.in dlls/Makedll.rules
 dlls/winecrt0/Makefile: dlls/winecrt0/Makefile.in dlls/Makeimplib.rules
 dlls/wined3d/Makefile: dlls/wined3d/Makefile.in dlls/Makedll.rules
 dlls/winedos/Makefile: dlls/winedos/Makefile.in dlls/Makedll.rules
+dlls/winejoystick.drv/Makefile: dlls/winejoystick.drv/Makefile.in dlls/Makedll.rules
 dlls/winemp3.acm/Makefile: dlls/winemp3.acm/Makefile.in dlls/Makedll.rules
 dlls/wineps.drv/Makefile: dlls/wineps.drv/Makefile.in dlls/Makedll.rules
 dlls/winequartz.drv/Makefile: dlls/winequartz.drv/Makefile.in dlls/Makedll.rules
@@ -713,7 +714,6 @@ dlls/winex11.drv/Makefile: dlls/winex11.drv/Makefile.in dlls/Makedll.rules
 dlls/wininet/Makefile: dlls/wininet/Makefile.in dlls/Makedll.rules
 dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules
 dlls/winmm/Makefile: dlls/winmm/Makefile.in dlls/Makedll.rules
-dlls/winmm/joystick/Makefile: dlls/winmm/joystick/Makefile.in dlls/Makedll.rules
 dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules
 dlls/winmm/winealsa/Makefile: dlls/winmm/winealsa/Makefile.in dlls/Makedll.rules
 dlls/winmm/winearts/Makefile: dlls/winmm/winearts/Makefile.in dlls/Makedll.rules

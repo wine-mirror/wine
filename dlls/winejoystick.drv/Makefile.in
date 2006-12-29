@@ -1,8 +1,8 @@
 TOPSRCDIR = @top_srcdir@
-TOPOBJDIR = ../../..
+TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
-MODULE    = joystick.drv
+MODULE    = winejoystick.drv
 IMPORTS   = winmm user32 kernel32
 
 C_SRCS = \

@@ -1749,6 +1749,7 @@ dlls/w32skrnl/Makefile
 dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile
+dlls/winejoystick.drv/Makefile
 dlls/winemp3.acm/Makefile
 dlls/wineps.drv/Makefile
 dlls/winequartz.drv/Makefile
@@ -1756,7 +1757,6 @@ dlls/winex11.drv/Makefile
 dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
-dlls/winmm/joystick/Makefile
 dlls/winmm/tests/Makefile
 dlls/winmm/winealsa/Makefile
 dlls/winmm/winearts/Makefile
