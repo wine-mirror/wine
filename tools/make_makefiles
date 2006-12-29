@@ -330,12 +330,7 @@ sub update_dlls(@)
 {
     my (%directories, %testdirs, %importlibs, %static_implibs, %staticlib_dirs, %altnames);
     my $text = "";
-
-    my @ignores =
-    (
-     "dlls/*/tests/testlist.c",
-     "dlls/*/tests/*.ok",
-    );
+    my @ignores = ();
 
     sub needs_symlink($$)
     {
@@ -346,12 +341,15 @@ sub update_dlls(@)
 
     foreach my $make (@_)
     {
+        my %makefile = %{$makefiles{$make}};
+
         if ($make =~ /dlls\/(.*)\/tests\/Makefile/)
         {
+            push @ignores, $makefile{"=dir"} . "testlist.c";
+            push @ignores, $makefile{"=dir"} . "*.ok";
             $testdirs{$1} = "$1/tests";
             next;
         }
-        my %makefile = %{$makefiles{$make}};
 
         next unless defined $makefile{"MODULE"};
         my $module = $makefile{"MODULE"};
