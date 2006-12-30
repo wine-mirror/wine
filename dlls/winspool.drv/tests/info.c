@@ -1670,6 +1670,13 @@ static void test_EnumPrinters(void)
     SetLastError(0xdeadbeef);
     neededW = -1;
     ret = EnumPrintersW(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededW, &num);
+    /* EnumPrintersW is not supported on all platforms */
+    if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
+    {
+        trace("EnumPrintersW is not implemented, skipping some tests\n");
+        return;
+    }
+
     if (!ret)
     {
         /* We have 1 or more printers */
