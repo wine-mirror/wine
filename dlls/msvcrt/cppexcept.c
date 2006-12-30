@@ -39,9 +39,9 @@
 
 #include "cppexcept.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(seh);
-
 #ifdef __i386__  /* CxxFrameHandler is not supported on non-i386 */
+
+WINE_DEFAULT_DEBUG_CHANNEL(seh);
 
 DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame,
                                PCONTEXT context, EXCEPTION_REGISTRATION_RECORD** dispatch,
