@@ -440,10 +440,10 @@ static VOID test_thread_priority(void)
        obey_ar(GetExitCodeThread(access_thread,&exitCode)==0);
        ok(CloseHandle(access_thread),"Error Closing thread handle\n");
      }
-#if USE_EXTENDED_PRIORITIES
-     min_priority=-7; max_priority=6;
-#endif
    }
+#if USE_EXTENDED_PRIORITIES
+   min_priority=-7; max_priority=6;
+#endif
    for(i=min_priority;i<=max_priority;i++) {
      ok(SetThreadPriority(curthread,i)!=0,
         "SetThreadPriority Failed for priority: %d\n",i);
