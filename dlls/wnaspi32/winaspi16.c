@@ -41,8 +41,6 @@
 #include "wine/winaspi.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(aspi);
-
 
 /* FIXME!
  * 1) Residual byte length reporting not handled
@@ -54,6 +52,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
 #define PTR_TO_LIN(ptr,mode) \
   ((mode) == ASPI_DOS ? ((void*)(((unsigned int)SELECTOROF(ptr) << 4) + OFFSETOF(ptr))) : MapSL(ptr))
+
+WINE_DEFAULT_DEBUG_CHANNEL(aspi);
 
 static ASPI_DEVICE_INFO *ASPI_open_devices = NULL;
 
