@@ -472,15 +472,17 @@ static VOID test_thread_priority(void)
    todo_wine
      ok(rc!=0,"error=%d\n",GetLastError());
 
+   if (pOpenThread) {
 /* check that access control is obeyed */
-   access_thread=pOpenThread(THREAD_ALL_ACCESS &
-                     (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
-                     0,curthreadId);
-   ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
-   if (access_thread!=NULL) {
-     obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
-     obey_ar(pGetThreadPriorityBoost(access_thread,&disabled)==0);
-     ok(CloseHandle(access_thread),"Error Closing thread handle\n");
+     access_thread=pOpenThread(THREAD_ALL_ACCESS &
+                       (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
+                       0,curthreadId);
+     ok(access_thread!=NULL,"OpenThread returned an invalid handle\n");
+     if (access_thread!=NULL) {
+       obey_ar(pSetThreadPriorityBoost(access_thread,1)==0);
+       obey_ar(pGetThreadPriorityBoost(access_thread,&disabled)==0);
+       ok(CloseHandle(access_thread),"Error Closing thread handle\n");
+     }
    }
 
    todo_wine {
