@@ -33,15 +33,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
 /***********************************************************************
- * OleIconToCursor (OLEAUT32.415)
- */
-HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hicon)
-{
-	FIXME("(%p,%p), not implemented (olepro32.dll)\n",hinstExe,hicon);
-	return S_OK;
-}
-
-/***********************************************************************
  * OleCreatePropertyFrameIndirect (OLEAUT32.416)
  */
 HRESULT WINAPI OleCreatePropertyFrameIndirect( LPOCPFIPARAMS lpParams)

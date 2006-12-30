@@ -837,3 +837,13 @@ BOOL WINAPI DllMain(HINSTANCE hInstDll, DWORD fdwReason, LPVOID lpvReserved)
 
   return TRUE;
 }
+
+/***********************************************************************
+ *              OleIconToCursor (OLEAUT32.415)
+ */
+HCURSOR WINAPI OleIconToCursor( HINSTANCE hinstExe, HICON hIcon)
+{
+    FIXME("(%p,%p), partially implemented.\n",hinstExe,hIcon);
+    /* FIXME: make a extended conversation from HICON to HCURSOR */
+    return CopyCursor(hIcon);
+}
