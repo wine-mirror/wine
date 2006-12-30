@@ -75,8 +75,6 @@
 #include "wine/library.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
-
 struct elf_module_info
 {
     unsigned long               elf_addr;
@@ -89,6 +87,8 @@ struct elf_module_info
 #define ELF_INFO_DEBUG_HEADER   0x0001
 #define ELF_INFO_MODULE         0x0002
 #define ELF_INFO_NAME           0x0004
+
+WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 struct elf_info
 {
