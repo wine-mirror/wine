@@ -36,10 +36,11 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(relay);
-WINE_DECLARE_DEBUG_CHANNEL(snoop);
-WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 #ifdef __i386__
+
+WINE_DECLARE_DEBUG_CHANNEL(snoop);
+WINE_DECLARE_DEBUG_CHANNEL(seh);
 
 struct relay_descr  /* descriptor for a module */
 {
