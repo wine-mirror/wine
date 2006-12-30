@@ -469,6 +469,9 @@ static VOID test_thread_priority(void)
    if (rc==0 && GetLastError()==ERROR_CALL_NOT_IMPLEMENTED)
      return; /* WinME */
 
+   todo_wine
+     ok(rc!=0,"error=%d\n",GetLastError());
+
 /* check that access control is obeyed */
    access_thread=pOpenThread(THREAD_ALL_ACCESS &
                      (~THREAD_QUERY_INFORMATION) & (~THREAD_SET_INFORMATION),
@@ -481,8 +484,6 @@ static VOID test_thread_priority(void)
    }
 
    todo_wine {
-     ok(rc!=0,"error=%d\n",GetLastError());
-
      rc = pSetThreadPriorityBoost(curthread,1);
      ok( rc != 0, "error=%d\n",GetLastError());
      rc=pGetThreadPriorityBoost(curthread,&disabled);
