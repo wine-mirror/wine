@@ -8338,9 +8338,9 @@ static const struct message WmShowNormal[] = {
 static const struct message WmShow[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
-    { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
+    { HCBT_SETFOCUS, hook|optional }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
 };
@@ -8378,12 +8378,13 @@ static const struct message WmShowNA_2[] = {
 static const struct message WmRestore_1[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
-    { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
+    { HCBT_SETFOCUS, hook|optional }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
+    { HCBT_SETFOCUS, hook|optional }, /* win2000 sends it */
     { 0 }
 };
 static const struct message WmRestore_2[] = {
@@ -8424,12 +8425,13 @@ static const struct message WmHide_1[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { HCBT_SETFOCUS, hook|optional }, /* win2000 sends it */
     { 0 }
 };
 static const struct message WmHide_2[] = {
     { WM_SHOWWINDOW, sent|wparam, 0 },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE },
-    { WM_WINDOWPOSCHANGED, sent|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
+    { WM_WINDOWPOSCHANGING, sent /*|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE*/ }, /* win2000 doesn't add SWP_NOACTIVATE */
+    { WM_WINDOWPOSCHANGED, sent /*|wparam, SWP_HIDEWINDOW|SWP_NOACTIVATE|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE*/ }, /* win2000 doesn't add SWP_NOACTIVATE */
     { 0 }
 };
 static const struct message WmHide_3[] = {
@@ -8442,8 +8444,8 @@ static const struct message WmHide_3[] = {
 static const struct message WmShowMinimized_1[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMINIMIZED },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
-    { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MINIMIZED },
@@ -8451,7 +8453,7 @@ static const struct message WmShowMinimized_1[] = {
 };
 static const struct message WmMinimize_1[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_MINIMIZE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_SETFOCUS, hook|optional }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_NOACTIVATE|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
@@ -8500,9 +8502,9 @@ static const struct message WmShowMaximized_1[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_SHOWMAXIMIZED },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
-    { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_ACTIVATE, hook|optional }, /* win2000 doesn't send it */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2000 doesn't send it */
+    { HCBT_SETFOCUS, hook|optional }, /* win2000 doesn't send it */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
@@ -8548,11 +8550,11 @@ static void test_ShowWindow(void)
 /*  2 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmEmptySeq, TRUE },
 /*  3 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
 /*  4 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/*  5 */ { SW_SHOWMINIMIZED, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinimized_1, TRUE },
+/*  5 */ { SW_SHOWMINIMIZED, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinimized_1, FALSE },
 /*  6 */ { SW_SHOWMINIMIZED, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_1, FALSE },
 /*  7 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_1, FALSE },
 /*  8 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
-/*  9 */ { SW_SHOWMAXIMIZED, FALSE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_1, TRUE },
+/*  9 */ { SW_SHOWMAXIMIZED, FALSE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_1, FALSE },
 /* 10 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2, FALSE },
 /* 11 */ { SW_HIDE, TRUE, WS_MAXIMIZE, WmHide_1, FALSE },
 /* 12 */ { SW_HIDE, FALSE, WS_MAXIMIZE, WmEmptySeq, FALSE },
@@ -8560,11 +8562,11 @@ static void test_ShowWindow(void)
 /* 14 */ { SW_SHOWNOACTIVATE, TRUE, WS_VISIBLE, WmEmptySeq, TRUE },
 /* 15 */ { SW_HIDE, TRUE, 0, WmHide_2, FALSE },
 /* 16 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
-/* 17 */ { SW_SHOW, FALSE, WS_VISIBLE, WmShow, TRUE },
+/* 17 */ { SW_SHOW, FALSE, WS_VISIBLE, WmShow, FALSE },
 /* 18 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
 /* 19 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1, TRUE },
 /* 20 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
-/* 21 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, TRUE },
+/* 21 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
 /* 22 */ { SW_SHOWMINNOACTIVE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmShowMinNoActivate, TRUE },
 /* 23 */ { SW_SHOWMINNOACTIVE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_4, FALSE },
 /* 24 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
@@ -8573,7 +8575,7 @@ static void test_ShowWindow(void)
 /* 27 */ { SW_SHOWNA, TRUE, WS_VISIBLE|WS_MINIMIZE, WmShowNA_2, FALSE },
 /* 28 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
 /* 29 */ { SW_HIDE, FALSE, WS_MINIMIZE, WmEmptySeq, FALSE },
-/* 30 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_1, TRUE },
+/* 30 */ { SW_RESTORE, FALSE, WS_VISIBLE, WmRestore_1, FALSE },
 /* 31 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmEmptySeq, TRUE },
 /* 32 */ { SW_HIDE, TRUE, 0, WmHide_3, TRUE },
 /* 33 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
@@ -8598,7 +8600,7 @@ static void test_ShowWindow(void)
 /* 52 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
 /* 53 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
 /* 54 */ { SW_MINIMIZE, FALSE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_3, TRUE },
-/* 55 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, TRUE },
+/* 55 */ { SW_HIDE, TRUE, WS_MINIMIZE, WmHide_2, FALSE },
 /* 56 */ { SW_SHOWNOACTIVATE, FALSE, WS_VISIBLE, WmShowNoActivate_2, TRUE },
 /* 57 */ { SW_SHOW, TRUE, WS_VISIBLE, WmEmptySeq, FALSE }
     };
