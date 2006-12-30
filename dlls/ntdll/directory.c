@@ -1513,13 +1513,13 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event,
 
     if ((cwd = open(".", O_RDONLY)) != -1 && fchdir( fd ) != -1)
     {
-        if (mask && !mempbrkW( mask->Buffer, wszWildcards, mask->Length / sizeof(WCHAR) ) &&
-            read_directory_stat( fd, io, buffer, length, single_entry, mask, restart_scan ) != -1)
-            goto done;
 #ifdef VFAT_IOCTL_READDIR_BOTH
         if ((read_directory_vfat( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
             goto done;
 #endif
+        if (mask && !mempbrkW( mask->Buffer, wszWildcards, mask->Length / sizeof(WCHAR) ) &&
+            read_directory_stat( fd, io, buffer, length, single_entry, mask, restart_scan ) != -1)
+            goto done;
 #ifdef USE_GETDENTS
         if ((read_directory_getdents( fd, io, buffer, length, single_entry, mask, restart_scan )) != -1)
             goto done;
