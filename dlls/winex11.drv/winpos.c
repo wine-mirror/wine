@@ -618,8 +618,6 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             swp |= SWP_NOACTIVATE | SWP_NOZORDER;
             /* fall through */
 	case SW_RESTORE:
-	    swp |= SWP_FRAMECHANGED;
-	    if (!wasVisible) swp |= SWP_SHOWWINDOW;
             /* fall through */
 	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
 	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
@@ -631,6 +629,7 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
             }
             else
             {
+                if (wasVisible) return TRUE;
                 swp |= SWP_NOSIZE | SWP_NOMOVE;
             }
             if (style & WS_CHILD && !(swp & SWP_STATECHANGED)) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
