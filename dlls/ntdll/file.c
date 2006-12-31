@@ -371,8 +371,8 @@ NTSTATUS FILE_GetNtStatus(void)
     case EOPNOTSUPP:return STATUS_NOT_SUPPORTED;
     case ECONNRESET:return STATUS_PIPE_DISCONNECTED;
     case EFAULT:    return STATUS_ACCESS_VIOLATION;
+    case ESPIPE:    return STATUS_ILLEGAL_FUNCTION;
     case ENOEXEC:   /* ?? */
-    case ESPIPE:    /* ?? */
     case EEXIST:    /* ?? */
     default:
         FIXME( "Converting errno %d to STATUS_UNSUCCESSFUL\n", err );
