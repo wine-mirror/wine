@@ -120,8 +120,11 @@ static void test_mipmap_levels(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
-    if (FAILED(hr)) goto cleanup;
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
 
     check_mipmap_levels(pDevice, 32, 32, 6);
     check_mipmap_levels(pDevice, 256, 1, 9);
@@ -162,8 +165,11 @@ static void test_swapchain(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
-    if (FAILED(hr)) goto cleanup;
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
 
     /* Check if the back buffer count was modified */
     ok(d3dpp.BackBufferCount == 1, "The back buffer count in the presentparams struct is %d\n", d3dpp.BackBufferCount);
@@ -315,8 +321,11 @@ static void test_refcount(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
-    if (FAILED(hr)) goto cleanup;
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
 
     refcount = get_refcount( (IUnknown *)pDevice );
     ok(refcount == 1, "Invalid device RefCount %d\n", refcount);
@@ -607,8 +616,11 @@ static void test_cursor(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
-    if (FAILED(hr)) goto cleanup;
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
 
     IDirect3DDevice8_CreateImageSurface(pDevice, 32, 32, D3DFMT_A8R8G8B8, &cursor);
     ok(cursor != NULL, "IDirect3DDevice8_CreateOffscreenPlainSurface failed with %08x\n", hr);
@@ -683,8 +695,11 @@ static void test_states(void)
 
     hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D8Device (%s)\n", DXGetErrorString8(hr));
-    if (FAILED(hr)) goto cleanup;
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D8_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
 
     hr = IDirect3DDevice8_SetRenderState(pDevice, D3DRS_ZVISIBLE, TRUE);
     ok(hr == D3D_OK, "IDirect3DDevice8_SetRenderState(D3DRS_ZVISIBLE, TRUE) returned %s\n", DXGetErrorString8(hr));
