@@ -54,7 +54,12 @@ static IDirect3DDevice9 *init_d3d9(HMODULE d3d9_handle)
 
     hr = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
             NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(SUCCEEDED(hr), "IDirect3D_CreateDevice returned %#x\n", hr);
+
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
+        return NULL;
+    }
 
     return device_ptr;
 }

@@ -735,8 +735,12 @@ static void test_reset(void)
 
     hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
                                   D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
-    ok(SUCCEEDED(hr), "Failed to create IDirect3D9Device (%s)\n", DXGetErrorString9(hr));
-    if (FAILED(hr)) goto cleanup;
+
+    if(FAILED(hr))
+    {
+        trace("could not create device, IDirect3D9_CreateDevice returned %#x\n", hr);
+        goto cleanup;
+    }
 
     width = GetSystemMetrics(SM_CXSCREEN);
     height = GetSystemMetrics(SM_CYSCREEN);

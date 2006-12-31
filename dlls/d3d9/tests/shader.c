@@ -55,7 +55,12 @@ static IDirect3DDevice9 *init_d3d9(void)
     present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
 
     hres = IDirect3D9_CreateDevice(d3d9_ptr, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, NULL, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device_ptr);
-    ok(hres == D3D_OK, "IDirect3D_CreateDevice returned: 0x%x\n", hres);
+
+    if(FAILED(hres))
+    {
+        trace("could not create device, IDirect3D9_CreateDevice returned %#x\n", hres);
+        return NULL;
+    }
 
     return device_ptr;
 }
