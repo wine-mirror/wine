@@ -89,8 +89,6 @@ int alloc_system_colors = 256;
 DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 int xrender_error_base = 0;
 
-static BOOL desktop_dbl_buf = TRUE;
-
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
 static void *err_callback_arg;               /* error callback argument */
@@ -351,9 +349,6 @@ static void setup_options(void)
     if (!get_config_key( hkey, appkey, "ClientSideAntiAliasWithRender", buffer, sizeof(buffer) ))
         client_side_antialias_with_render = IS_OPTION_TRUE( buffer[0] );
 
-    if (!get_config_key( hkey, appkey, "DesktopDoubleBuffered", buffer, sizeof(buffer) ))
-        desktop_dbl_buf = IS_OPTION_TRUE( buffer[0] );
-
     if (!get_config_key( hkey, appkey, "UseXIM", buffer, sizeof(buffer) ))
         use_xim = IS_OPTION_TRUE( buffer[0] );
 
@@ -419,7 +414,7 @@ static BOOL process_attach(void)
     if (!screen_depth) screen_depth = DefaultDepthOfScreen( screen );
 
     /* If OpenGL is available, change the default visual, etc as necessary */
-    if (desktop_dbl_buf && (desktop_vi = X11DRV_setup_opengl_visual( display )))
+    if ((desktop_vi = X11DRV_setup_opengl_visual( display )))
     {
         visual       = desktop_vi->visual;
         screen       = ScreenOfDisplay(display, desktop_vi->screen);
