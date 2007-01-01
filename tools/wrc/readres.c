@@ -32,7 +32,7 @@
 #include "utils.h"
 #include "genres.h"
 
-struct resheader32 {
+static const struct resheader32 {
 	DWORD	ressize;	/* 0 */
 	DWORD	hdrsize;	/* 0x20 */
 	WORD	restype1;	/* 0xffff */
