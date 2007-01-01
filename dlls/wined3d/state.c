@@ -1805,6 +1805,44 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    unsigned int k;
+
+    /* If we are changing the View matrix, reset the light and clipping planes to the new view
+     * NOTE: We have to reset the positions even if the light/plane is not currently
+     *       enabled, since the call to enable it will not reset the position.
+     * NOTE2: Apparently texture transforms do NOT need reapplying
+     */
+
+    PLIGHTINFOEL *lightChain = NULL;
+    stateblock->wineD3DDevice->modelview_valid = FALSE;
+
+    glMatrixMode(GL_MODELVIEW);
+    checkGLcall("glMatrixMode(GL_MODELVIEW)");
+    glPushMatrix();
+    checkGLcall("glPushMatrix()");
+    glLoadMatrixf((float *)(float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+    checkGLcall("glLoadMatrixf(...)");
+
+    /* Reset lights. TODO: Call light apply func */
+    lightChain = stateblock->lights;
+    while (lightChain && lightChain->glIndex != -1) {
+        glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_POSITION, lightChain->lightPosn);
+        checkGLcall("glLightfv posn");
+        glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_SPOT_DIRECTION, lightChain->lightDirn);
+        checkGLcall("glLightfv dirn");
+        lightChain = lightChain->next;
+    }
+
+    /* Reset Clipping Planes if clipping is enabled. TODO: Call clipplane apply func */
+    for (k = 0; k < GL_LIMITS(clipplanes); k++) {
+        glClipPlane(GL_CLIP_PLANE0 + k, stateblock->clipplane[k]);
+        checkGLcall("glClipPlane");
+    }
+    glPopMatrix();
+    checkGLcall("glPopMatrix()");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -2306,7 +2344,7 @@ const struct StateEntry StateTable[] =
     { /*  , Pixel Shader                            */      STATE_PIXELSHADER,                                  pixelshader         },
       /* Transform states follow                    */
     { /*  1, undefined                              */      0,                                                  state_undefined     },
-    { /*  2, WINED3DTS_VIEW                         */      STATE_TRANSFORM(WINED3DTS_VIEW),                    state_undefined     },
+    { /*  2, WINED3DTS_VIEW                         */      STATE_TRANSFORM(WINED3DTS_VIEW),                    transform_view      },
     { /*  3, WINED3DTS_PROJECTION                   */      STATE_TRANSFORM(WINED3DTS_PROJECTION),              state_undefined     },
     { /*  4, undefined                              */      0,                                                  state_undefined     },
     { /*  5, undefined                              */      0,                                                  state_undefined     },

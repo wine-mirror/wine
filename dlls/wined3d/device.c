@@ -2372,53 +2372,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
         return WINED3D_OK;
     }
 
-    /* Now we really are going to have to change a matrix */
-    ENTER_GL();
-
     if (d3dts >= WINED3DTS_TEXTURE0 && d3dts <= WINED3DTS_TEXTURE7) { /* handle texture matrices */
         /* This is now set with the texture unit states, it may be a good idea to flag the change though! */
     } else if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrice */
-        unsigned int k;
-
-        /* If we are changing the View matrix, reset the light and clipping planes to the new view
-         * NOTE: We have to reset the positions even if the light/plane is not currently
-         *       enabled, since the call to enable it will not reset the position.
-         * NOTE2: Apparently texture transforms do NOT need reapplying
-         */
-
-        PLIGHTINFOEL *lightChain = NULL;
-        This->modelview_valid = FALSE;
         This->view_ident = !memcmp(lpmatrix, identity, 16 * sizeof(float));
-
-        glMatrixMode(GL_MODELVIEW);
-        checkGLcall("glMatrixMode(GL_MODELVIEW)");
-        glPushMatrix();
-        glLoadMatrixf((const float *)lpmatrix);
-        checkGLcall("glLoadMatrixf(...)");
-
-        /* Reset lights */
-        lightChain = This->stateBlock->lights;
-        while (lightChain && lightChain->glIndex != -1) {
-            glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_POSITION, lightChain->lightPosn);
-            checkGLcall("glLightfv posn");
-            glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_SPOT_DIRECTION, lightChain->lightDirn);
-            checkGLcall("glLightfv dirn");
-            lightChain = lightChain->next;
-        }
-
-        /* Reset Clipping Planes if clipping is enabled */
-        for (k = 0; k < GL_LIMITS(clipplanes); k++) {
-            glClipPlane(GL_CLIP_PLANE0 + k, This->stateBlock->clipplane[k]);
-            checkGLcall("glClipPlane");
-        }
-        glPopMatrix();
-
+        /* Handled by the state manager */
     } else { /* What was requested!?? */
         WARN("invalid matrix specified: %i\n", d3dts);
     }
 
-    /* Release lock, all done */
-    LEAVE_GL();
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TRANSFORM(d3dts));
     return WINED3D_OK;
 
 }
