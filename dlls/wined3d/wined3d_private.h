@@ -659,6 +659,9 @@ typedef struct IWineD3DDeviceImpl
     DWORD                     texUnitMap[MAX_SAMPLERS];
     BOOL                      oneToOneTexUnitMap;
 
+    /* Stream source management */
+    WineDirect3DVertexStridedData strided_streams;
+
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;

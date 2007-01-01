@@ -1947,7 +1947,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     BOOL                          useVertexShaderFunction = FALSE;
     BOOL                          usePixelShaderFunction = FALSE;
-    WineDirect3DVertexStridedData *dataLocations;
     IWineD3DSwapChainImpl         *swapchain;
     int                           i;
     BOOL                          fixup = FALSE;
@@ -2002,8 +2001,8 @@ void drawPrimitive(IWineD3DDevice *iface,
         /* Note: this is a ddraw fixed-function code path */
 
         TRACE("================ Strided Input ===================\n");
-        dataLocations = DrawPrimStrideData;
-        drawPrimitiveTraceDataLocations(dataLocations);
+		memcpy(&This->strided_streams, DrawPrimStrideData, sizeof(This->strided_streams));
+        drawPrimitiveTraceDataLocations(&This->strided_streams);
         fixup = FALSE;
     }
 
@@ -2015,17 +2014,13 @@ void drawPrimitive(IWineD3DDevice *iface,
          * don't set any declaration at all */
 
         TRACE("================ Vertex Declaration  ===================\n");
-        dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
-        if(!dataLocations) {
-            ERR("Out of memory!\n");
-            return;
-        }
+        memset(&This->strided_streams, 0, sizeof(This->strided_streams));
 
         if (This->stateBlock->vertexDecl != NULL ||
-            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration != NULL)            
+            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration != NULL)
 
-            primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction, 
-                dataLocations, StartVertexIndex, &fixup);
+            primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction,
+                &This->strided_streams, StartVertexIndex, &fixup);
 
     } else {
 
@@ -2034,20 +2029,16 @@ void drawPrimitive(IWineD3DDevice *iface,
          * It will not work properly for shaders. */
 
         TRACE("================ FVF ===================\n");
-        dataLocations = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dataLocations));
-        if(!dataLocations) {
-            ERR("Out of memory!\n");
-            return;
-        }
-        primitiveConvertToStridedData(iface, dataLocations, StartVertexIndex, &fixup);
-        drawPrimitiveTraceDataLocations(dataLocations);
+        memset(&This->strided_streams, 0, sizeof(This->strided_streams));
+        primitiveConvertToStridedData(iface, &This->strided_streams, StartVertexIndex, &fixup);
+        drawPrimitiveTraceDataLocations(&This->strided_streams);
     }
 
     /* Setup transform matrices and sort out */
-    primitiveInitState(iface, dataLocations, useVertexShaderFunction, &lighting_changed, &lighting_original);
+    primitiveInitState(iface, &This->strided_streams, useVertexShaderFunction, &lighting_changed, &lighting_original);
 
     /* Now initialize the materials state */
-    init_materials(iface, (dataLocations->u.s.diffuse.lpData != NULL || dataLocations->u.s.diffuse.VBO != 0));
+    init_materials(iface, (This->strided_streams.u.s.diffuse.lpData != NULL || This->strided_streams.u.s.diffuse.VBO != 0));
 
     {
         GLenum glPrimType;
@@ -2058,11 +2049,9 @@ void drawPrimitive(IWineD3DDevice *iface,
             numberOfVertices = calculatedNumberOfindices;
 
         drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction,
-            dataLocations, numberOfVertices, calculatedNumberOfindices, glPrimType,
+            &This->strided_streams, numberOfVertices, calculatedNumberOfindices, glPrimType,
             idxData, idxSize, minIndex, StartIdx, fixup);
     }
-
-    if(!DrawPrimStrideData) HeapFree(GetProcessHeap(), 0, dataLocations);
 
     /* If vertex shaders or no normals, restore previous lighting state */
     if (lighting_changed) {
