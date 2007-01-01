@@ -439,7 +439,7 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
         if(SizeToLock)
             This->dirtyend = OffsetToLock + SizeToLock;
         else
-            This->dirtyend = OffsetToLock + This->resource.size;
+            This->dirtyend = This->resource.size;
     }
 
     if(This->resource.allocatedMemory) {
