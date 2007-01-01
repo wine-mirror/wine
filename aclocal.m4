@@ -131,6 +131,18 @@ else
 fi
 rm -f conf$$ conf$$.file])
 
+dnl **** Check for a mingw program, trying the various mingw prefixes ****
+dnl
+dnl Usage: WINE_CHECK_MINGW_PROG(variable,prog,[value-if-not-found],[path])
+dnl
+AC_DEFUN([WINE_CHECK_MINGW_PROG],
+[AC_CHECK_PROGS([$1],
+   m4_foreach([ac_wine_prefix],
+              [i586-mingw32msvc, i386-mingw32msvc, i386-mingw32, mingw32, mingw],
+              [ac_wine_prefix-$2 ]),
+   [$3],[$4])])
+
+
 dnl **** Create nonexistent directories from config.status ****
 dnl
 dnl Usage: WINE_CONFIG_EXTRA_DIR(dirname)
