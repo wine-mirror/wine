@@ -719,9 +719,8 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
         stol = (unsigned char *)COM[cid].unknown + COMM_MSR_OFFSET;
 	COMM_MSRUpdate( ptr->handle, stol );
 
-	if (lpStat) {
-		lpStat->status = 0;
-
+       if (lpStat) {
+               lpStat->status = 0;
 		SleepEx(1,TRUE);
 
 		lpStat->cbOutQue = comm_outbuf(ptr);
