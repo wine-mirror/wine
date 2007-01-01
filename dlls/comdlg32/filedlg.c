@@ -186,7 +186,7 @@ static const char LookInInfosStr[] = "LookInInfos"; /* LOOKIN combo box property
 static LRESULT FILEDLG95_FillControls(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static LRESULT FILEDLG95_OnWMCommand(HWND hwnd, WPARAM wParam, LPARAM lParam);
 static LRESULT FILEDLG95_OnWMGetIShellBrowser(HWND hwnd);
-       BOOL    FILEDLG95_OnOpen(HWND hwnd);
+static BOOL    FILEDLG95_OnOpen(HWND hwnd);
 static LRESULT FILEDLG95_InitControls(HWND hwnd);
 static void    FILEDLG95_Clean(HWND hwnd);
 
