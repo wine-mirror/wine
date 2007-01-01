@@ -992,6 +992,7 @@ case $host_os in
   cygwin*|mingw32*)
     AC_CHECK_TOOL(DLLTOOL,dlltool,false)
     AC_CHECK_TOOL(DLLWRAP,dllwrap,false)
+    AC_CHECK_TOOL(MINGWAR,ar,false)
     if test "$DLLWRAP" = "false"; then
       LIBEXT="a"
     else
@@ -1104,6 +1105,7 @@ case $host_os in
       WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
       WINE_CHECK_MINGW_PROG(DLLTOOL,dlltool,false)
       WINE_CHECK_MINGW_PROG(CROSSWINDRES,windres,false)
+      WINE_CHECK_MINGW_PROG(MINGWAR,ar,false)
       if test "$CROSSCC" != "false"; then CROSSTEST="\$(CROSSTEST)"; fi
     fi
     ;;
