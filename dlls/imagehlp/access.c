@@ -164,7 +164,7 @@ BOOL WINAPI MapAndLoad(LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoad
         goto Error;
     }
 
-    hFile = CreateFileA(szFileName, GENERIC_READ, 1, /* FIXME: FILE_SHARE_READ not defined */
+    hFile = CreateFileA(szFileName, GENERIC_READ, FILE_SHARE_READ,
                         NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
@@ -212,7 +212,6 @@ BOOL WINAPI MapAndLoad(LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoad
     return TRUE;
 
 Error:
-    if (mapping) UnmapViewOfFile(mapping);
     if (hFile != INVALID_HANDLE_VALUE) CloseHandle(hFile);
     return FALSE;
 }
