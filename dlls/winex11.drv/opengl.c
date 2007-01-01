@@ -529,21 +529,6 @@ static inline Wine_GLContext *get_context_from_GLXContext(GLXContext ctx)
 }
 
 /**
- * get_drawable (internal)
- *
- * Retrieve the GLX drawable to use on a given DC.
- */
-inline static Drawable get_drawable( HDC hdc )
-{
-    GLXDrawable drawable;
-    enum x11drv_escape_codes escape = X11DRV_GET_GLX_DRAWABLE;
-
-    if (!ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPCSTR)&escape,
-                    sizeof(drawable), (LPSTR)&drawable )) drawable = 0;
-    return drawable;
-}
-
-/**
  * get_hdc_from_Drawable (internal)
  *
  * For use by wglGetCurrentReadDCARB.
