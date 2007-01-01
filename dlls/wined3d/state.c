@@ -1847,6 +1847,10 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
 	WARN("World matrix 1 - 255 not supported yet\n");
 }
 
+static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
+    TRACE("To be filled later\n");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -2860,4 +2864,9 @@ const struct StateEntry StateTable[] =
     { /*509, WINED3DTS_WORLDMATRIX(253)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(253)),        transform_worldex   },
     { /*510, WINED3DTS_WORLDMATRIX(254)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(254)),        transform_worldex   },
     { /*511, WINED3DTS_WORLDMATRIX(255)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        transform_worldex   },
+      /* Various Vertex states follow */
+    { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_VDECL                            */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        vertexdeclaration   },
+
 };

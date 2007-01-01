@@ -2146,7 +2146,6 @@ static UINT WINAPI IWineD3DDeviceImpl_GetAvailableTextureMem(IWineD3DDevice *ifa
  *****/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT hr = WINED3D_OK;
 
     /* Update the current state block */
     This->updateStateBlock->fvf              = fvf;
@@ -2154,7 +2153,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf
     This->updateStateBlock->set.fvf          = TRUE;
 
     TRACE("(%p) : FVF Shader FVF set to %x\n", This, fvf);
-    return hr;
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    return WINED3D_OK;
 }
 
 
@@ -2237,6 +2237,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         ((IWineD3DVertexBufferImpl *) oldSrc)->Flags &= ~VBFLAG_STREAM;
         IWineD3DVertexBuffer_Release(oldSrc);
     }
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
 
     return WINED3D_OK;
 }
@@ -3228,6 +3230,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
     if (NULL != oldDecl) {
         IWineD3DVertexDeclaration_Release(oldDecl);
     }
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     return WINED3D_OK;
 }
 
@@ -3261,9 +3264,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
     }
 
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
-    /**
-     * TODO: merge HAL shaders context switching from prototype
-     */
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VSHADER);
+
     return WINED3D_OK;
 }
 
@@ -4718,6 +4721,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
 
+    /* Mark the state dirty until we have nicer tracking */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* start vertex */, 0  /* NumVertices */,
                   0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */, NULL);
 
@@ -4761,6 +4767,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
+    /* Mark the state dirty until we have nicer tracking */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex, NULL);
 
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
@@ -4772,7 +4781,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
 
+    /* Mark the state dirty until we have nicer tracking */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0, DrawPrimStrideData);
     return WINED3D_OK;
 }
