@@ -1069,10 +1069,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_InitStartupStateBlock(IWineD3DStat
 
         glTexImage1D(GL_TEXTURE_1D, 0, GL_LUMINANCE, 1, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, &white);
         checkGLcall("glTexImage1D");
-#if 1   /* TODO: move the setting texture states off to basetexture */
-        /* Reapply all the texture state information to this texture */
-        IWineD3DDevice_SetupTextureStates(device, i, i, REAPPLY_ALL);
-#endif
     }
 
     LEAVE_GL();

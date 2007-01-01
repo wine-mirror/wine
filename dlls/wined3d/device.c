@@ -315,84 +315,6 @@ static void delete_glsl_shader_list(IWineD3DDevice* iface) {
     }
 }
 
-
-/* Apply the current values to the specified texture stage */
-static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, DWORD Sampler, DWORD texture_idx, DWORD Flags) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    float col[4];
-
-    union {
-        float f;
-        DWORD d;
-    } tmpvalue;
-
-    /* In addition, IDirect3DDevice9::SetSamplerState will now be used for filtering, tiling,
-    clamping, MIPLOD, etc. This will work for up to 16 samplers.
-    */
-   
-    if (Sampler >= GL_LIMITS(sampler_stages)) {
-        FIXME("Trying to set the state of more samplers %d than are supported %d by this openGL implementation\n", Sampler, GL_LIMITS(sampler_stages));
-        return;
-    }
-    VTRACE(("Activating appropriate texture state %d\n", Sampler));
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        ENTER_GL();
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
-        checkGLcall("glActiveTextureARB");
-        LEAVE_GL();
-        /* Could we use bindTexture and then apply the states instead of GLACTIVETEXTURE */
-    } else if (Sampler > 0) {
-        FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-        return;
-    }
-
-    /* TODO: change this to a lookup table
-        LOOKUP_TEXTURE_STATES lists all texture states that should be applied.
-        LOOKUP_CONTEXT_SATES list all context applicable states that can be applied
-        etc.... it's a lot cleaner, quicker and possibly easier to maintain than running a switch and setting a skip flag...
-        especially when there are a number of groups of states. */
-
-    TRACE("-----------------------> Updating the texture at Sampler %d to have new texture state information\n", Sampler);
-
-    /* apply any sampler states that always need applying */
-    if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
-        tmpvalue.d = This->stateBlock->samplerState[Sampler][WINED3DSAMP_MIPMAPLODBIAS];
-        glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
-                GL_TEXTURE_LOD_BIAS_EXT,
-                tmpvalue.f);
-        checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
-    }
-
-    D3DCOLORTOGLFLOAT4(This->stateBlock->renderState[WINED3DRS_TEXTUREFACTOR], col);
-    glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, &col[0]);
-    checkGLcall("glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, color);");
-
-    /* TODO: NV_POINT_SPRITE */
-    if (GL_SUPPORT(ARB_POINT_SPRITE)) {
-        if (This->stateBlock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
-           /* Doesn't work with GL_POINT_SMOOTH on on my ATI 9600, but then ATI drivers are buggered! */
-           glDisable(GL_POINT_SMOOTH);
-
-           /* Centre the texture on the vertex */
-           VTRACE(("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n"));
-           glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-
-           VTRACE(("glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE)\n"));
-           glTexEnvf( GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, GL_TRUE);
-           checkGLcall("glTexEnvf(...)");
-           VTRACE(("glEnable( GL_POINT_SPRITE_ARB )\n"));
-           glEnable( GL_POINT_SPRITE_ARB );
-           checkGLcall("glEnable(...)");
-        } else {
-           VTRACE(("glDisable( GL_POINT_SPRITE_ARB )\n"));
-           glDisable( GL_POINT_SPRITE_ARB );
-           checkGLcall("glEnable(...)");
-        }
-    }
-
-    TRACE("-----------------------> Updated the texture at Sampler %d to have new texture state information\n", Sampler);
-}
-
 /**********************************************************
  * IUnknown parts follows
  **********************************************************/
@@ -3249,7 +3171,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
     * GL_MAX_TEXTURE_COORDS_ARB.
     * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
      ******************/
-    /** NOTE: States are appled in IWineD3DBaseTextre ApplyStateChanges and IWineD3DDevice SetupTextureStates**/
+    /** NOTE: States are applied in IWineD3DBaseTextre ApplyStateChanges the sampler state handler**/
     if(Sampler >  GL_LIMITS(sampler_stages) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
          FIXME("sampler %d type %s(%u) is out of range [max_samplers=%d, highest_state=%d]\n",
             Sampler, debug_d3dsamplerstate(Type), Type, GL_LIMITS(sampler_stages), WINED3D_HIGHEST_SAMPLER_STATE);
@@ -6864,8 +6786,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_StretchRect,
     IWineD3DDeviceImpl_GetRenderTargetData,
     IWineD3DDeviceImpl_GetFrontBufferData,
-    /*** Internal use IWineD3DDevice methods ***/
-    IWineD3DDeviceImpl_SetupTextureStates,
     /*** object tracking ***/
     IWineD3DDeviceImpl_ResourceReleased
 };

@@ -1044,18 +1044,14 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         return;
     }
 
-    /*
-     * Point sprites are always enabled. Value controls texture coordinate
-     * replacement mode. Must be set true for point sprites to use
-     * textures.
-     */
-    glEnable(GL_POINT_SPRITE_ARB);
-    checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
-
     if (stateblock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
+        glEnable(GL_POINT_SPRITE_ARB);
+        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
         glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, TRUE);
         checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, TRUE)");
     } else {
+        glDisable(GL_POINT_SPRITE_ARB);
+        checkGLcall("glDisable(GL_POINT_SPRITE_ARB)");
         glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, FALSE);
         checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, FALSE)");
     }
@@ -1679,6 +1675,10 @@ static void tex_resultarg(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD sampler = state - STATE_SAMPLER(0);
+    union {
+        float f;
+        DWORD d;
+    } tmpvalue;
 
     TRACE("Sampler: %d\n", sampler);
     /* Enabling and disabling texture dimensions is done by texture stage state / pixel shader setup, this function
@@ -1700,7 +1700,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     if(stateblock->textures[sampler]) {
 
         /* NP2 textures need the texture matrix set properly for the stage */
-        if(wined3d_settings.nonpower2_mode == NP2_NATIVE &&
+        if(wined3d_settings.nonpower2_mode == NP2_NATIVE && sampler < MAX_TEXTURES - 1 &&
            stateblock->textureDimensions[sampler] == GL_TEXTURE_2D &&
            (((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorX != 1.0 ||
             ((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorY != 1.0 ) ) {
@@ -1708,8 +1708,15 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         }
 
         IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) stateblock->textures[sampler]);
-        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)stateblock->wineD3DDevice, sampler, stateblock->wineD3DDevice->texUnitMap[sampler], REAPPLY_ALPHAOP);
         IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
+
+        if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
+            tmpvalue.d = stateblock->samplerState[sampler][WINED3DSAMP_MIPMAPLODBIAS];
+            glTexEnvf(GL_TEXTURE_FILTER_CONTROL_EXT,
+                      GL_TEXTURE_LOD_BIAS_EXT,
+                      tmpvalue.f);
+            checkGLcall("glTexEnvi GL_TEXTURE_LOD_BIAS_EXT ...");
+        }
 
         if (stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader &&
             ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function) {
