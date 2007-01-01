@@ -721,7 +721,9 @@ INT16 WINAPI GetCommError16(INT16 cid,LPCOMSTAT16 lpStat)
 
        if (lpStat) {
                lpStat->status = 0;
-		SleepEx(1,TRUE);
+
+               if (comm_inbuf(ptr) == 0)
+                       SleepEx(1,TRUE);
 
 		lpStat->cbOutQue = comm_outbuf(ptr);
 		lpStat->cbInQue = comm_inbuf(ptr);
