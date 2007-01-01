@@ -57,7 +57,6 @@ STYLE WS_CHILD | WS_DISABLED
 FONT 8, "MS Shell Dlg"
 BEGIN
     CONTROL	    "DirectX può impedira al mouse di lasciare la loro finestra?",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Abilita il doppio buffering del desktop",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     
     GROUPBOX        " Impostazioni della finestra ",IDC_STATIC,8,25,244,120
 

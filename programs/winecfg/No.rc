@@ -63,7 +63,6 @@ BEGIN
     GROUPBOX        " Vinduinnstillinger ",IDC_STATIC,8,25,244,180
 
     CONTROL	    "Tillat DirectX-programmer å hindre musen fra å forlate vinduet",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Aktiver dobbelt hurtigminne for skrivebordet",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     LTEXT 	    "Hvis vinduer kontrolleres av din standardvindusbehandler, får de vanlige rammer, og respekterer det virtuelle skrivebordet ditt og vises i vinduslisten.\n\nHvis de er ukontrollerte er de koblet fra vindusbehandleren. Dette betyr at de ikke integreres like godt med skrivebordet ditt, men emuleringen blir mer presis sånn at noen programmer virker bedre.",
     		    IDC_STATIC,15,58,228,80
     CONTROL	    "Tillat vindusbehandleren å kontrollere vinduene",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8

@@ -67,7 +67,6 @@ BEGIN
     GROUPBOX        " Настройки окна ",IDC_STATIC,8,4,244,180
 
     CONTROL	    "Разрешить приложению DirectX удерживать мышь в своём окне",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,235,8
-    CONTROL	    "Включить двойную буферизацию рабочего стола",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
     CONTROL	    "Разрешить менеджеру окон управлять окнами Wine",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,34,230,8
 
     LTEXT           "Если включить эмуляцию рабочего стола, то все окна будут отображаться в одном 'виртуальном экране' заданного размера. Иначе окна размещаются, как обычно, на стандартном рабочем столе.",

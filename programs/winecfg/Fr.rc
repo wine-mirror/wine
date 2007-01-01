@@ -63,7 +63,6 @@ BEGIN
     GROUPBOX        " Paramètres des fenêtres ",IDC_STATIC,8,4,244,180
 
     CONTROL	    "Permettre aux applications DirectX d'empêcher la souris de quitter leur fenêtre",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP | BS_MULTILINE,15,14,230,16
-    CONTROL	    "Activer la double mise en tampon du bureau",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,32,230,8
     LTEXT 	    "Si les fenêtres sont gérées par votre gestionnaire de fenêtres, elles auront des bordures standard, elles respecteront votre bureau virtuel et apparaîtront dans la liste des fenêtres.\n\nSi les fenêtres ne sont pas gérées, elles seront déconnectées de votre gestionnaire de fenêtres. Ceci signifie qu'elle ne seront pas parfaitement intégrées à votre bureau, mais que l'émulation sera plus précise ce qui permet à certains programmes de mieux fonctionner.",
 		    IDC_STATIC,15,45,228,80
     CONTROL	    "Permettre au gestionnaire de fenêtres de contrôler les fenêtres",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,140,230,8

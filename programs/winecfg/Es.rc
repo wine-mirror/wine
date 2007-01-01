@@ -63,7 +63,6 @@ BEGIN
     GROUPBOX        "Configuración de ventanas",IDC_STATIC,8,25,244,180
 
     CONTROL        "Permitir a los programas DirectX retener el ratón en sus ventanas",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL        "Habilitar doble buffer del escritorio",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     LTEXT          "Si las ventanas son gestionadas por su gestor de ventanas, tendrán los bordes estándar, respetarán su escritorio virtual y aparecerán en su lista de ventanas.\n\nSi las ventanas no son gestionadas, estarán desconectadas de su gestor de ventanas. Esto significa que las ventanas no se integrarán tanto con su escritorio, pero la emulación será más precisa por lo que puede hacer que algunos programas funcionen mejor.",
     		    IDC_STATIC,15,58,228,80
     CONTROL        "Permitir al gestor de ventanas controlar las ventanas",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8

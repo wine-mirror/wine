@@ -64,7 +64,6 @@ BEGIN
     GROUPBOX        " Ikkuna-asetukset ",IDC_STATIC,8,25,244,180
 
     CONTROL	    "&Salli DirectX -sovellusten estää kursorin poistuminen ikkunasta",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "&Työpöydän tuplapuskurointi",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     LTEXT 	    "Kun ikkunaohjelma hallitsee ikkunoita, niillä on normaalit reunat, ne noudattavat näennäistyöpöytiä ja näkyvät ikkunalistassa.\n\nMikäli ikkunaohjelma ei hallitse ikkunoita, ikkunat eivät integroidu yhtä hyvin työpöytääsi, mutta emulaatio on tarkempaa ja se voi auttaa joitain sovelluksia toimimaan paremmin.",
     IDC_STATIC,15,58,228,80
     CONTROL	    "Salli ikkunaohjelman hallita ikkunoita",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8

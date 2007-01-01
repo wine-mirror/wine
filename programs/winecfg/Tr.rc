@@ -63,7 +63,6 @@ BEGIN
     GROUPBOX        " Pencere ayarlarý ",IDC_STATIC,8,25,244,180
 
     CONTROL         "DirectX uygulamalarýnýn fareyi pencere içine kilitlemelerine izin ver",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL         "Masaüstü çift tamponlamayý etkinleþtir",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     LTEXT           "Pencereler pencere yöneticiniz tarafýndan yönetildiðinde, standart kenarlara sahip olacak, sanal masaüstünüze uygun davranacak ve pencere listenizde görünecektir. \n\nEðer pencereler yönetilmezse, pencere yöneticinizden baðýmsýz olacaklardýr. Bu, pencerelerin masaüstünüzle tam olarak bütünleþemeyeceði anlamýna gelir; ama taklit daha düzgün yapýlabiliceðinden bazý programlar daha iyi çalýþabilir.",
     		    IDC_STATIC,15,58,228,80
     CONTROL         "Pencere yöneticisinin pencereleri yönetmesine izin ver",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8

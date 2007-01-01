@@ -63,7 +63,6 @@ BEGIN
     GROUPBOX        " Ablakbeállítások ",IDC_STATIC,8,25,244,180
 
     CONTROL	    "A DirectX-es alkalmazások ablakábol nem léphet ki az egérmutató",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,35,230,8
-    CONTROL	    "Asztal dupla-pufferelés engedélyezése",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,45,230,8
     LTEXT 	    "Ha az ablakokat egy másik ablakkezelõ kezeli, akkor lesz standard keretjük, tisztelni fogják a virtuális asztalokat, és megjelennek az ablaklistában. \n\nHa az ablakok kezeletlenek, el fognak vállni az Ön ablakkezelõjétõl. Ez azt jelenti, hogy az ablakok nem fognak szorosan egybeépülni az Ön asztalával, de az emuláció hatásosabb, jobban együtt tud mûködni néhány programmal.",
     		    IDC_STATIC,15,58,228,80
     CONTROL	    "Az ablakkezelõ kezelheti az ablakokat",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,230,8

@@ -64,7 +64,6 @@ BEGIN
     GROUPBOX        " Venster-instellingen ",IDC_STATIC,8,4,244,180
 
     CONTROL	    "Een DirectX programma kan de muis in een venster vasthouden.",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
-    CONTROL	    "Schakel \"double buffering\" in.",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
     
     LTEXT           "Wanneer de vensters door de window manager worden beheerd hebben deze de standaard kaders, er wordt rekening gehouden met de virtuele desktop en ze staan in de lijst met vensters.\n\nAls de vensters niet worden beheerd, worden ze losgekoppeld van de window manager. Dit betekent dat vensters niet perfect met uw desktop integreren. De 'emulatie' is echter exacter en kan ervoor zorgen dat programma's beter werken.",
                     IDC_STATIC,15,37,228,80

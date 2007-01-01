@@ -65,7 +65,6 @@ BEGIN
     GROUPBOX        " Fenstereinstellungen ",IDC_STATIC,8,4,244,180
 
     CONTROL         "DirectX-Anwendungen können Maus einfangen",IDC_DX_MOUSE_GRAB,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,14,230,8
-    CONTROL         "Desktop-Doppelpufferung aktivieren",IDC_DOUBLE_BUFFER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,24,230,8
     LTEXT           "Wenn die Fenster durch deinen Fenstermanager kontrolliert werden, dann werden sie die gleichen Ränder haben, der eingestellte virtuelle Desktop wird respektiert und sie werden in der Fensterliste auftauchen.\nWenn die Fenster nicht kontrolliert werden, werden sie unabhängig vom verwerdeten Fenstermanager sein. Das bedeutet, dass die Fenster sich nicht an den Desktop anpassen werden. Der Vorteil ist, dass dann die Emulation akkurater ist, was einigen Anwendungen hilft, besser zu arbeiten.",
                     IDC_STATIC,15,37,228,80
     CONTROL         "Erlaube dem Fenstermanager die Fenster zu kontrollieren.",IDC_ENABLE_MANAGED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,111,230,8

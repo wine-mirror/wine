@@ -134,13 +134,6 @@ static void init_dialog(HWND dialog)
 	CheckDlgButton(dialog, IDC_DX_MOUSE_GRAB, BST_UNCHECKED);
     HeapFree(GetProcessHeap(), 0, buf);
 
-    buf = get_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "Y");
-    if (IS_OPTION_TRUE(*buf))
-	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_CHECKED);
-    else
-	CheckDlgButton(dialog, IDC_DOUBLE_BUFFER, BST_UNCHECKED);
-    HeapFree(GetProcessHeap(), 0, buf);
-
     buf = get_reg_key(config_key, keypath("X11 Driver"), "Managed", "Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_CHECKED);
@@ -233,14 +226,6 @@ static void on_dx_mouse_grab_clicked(HWND dialog) {
         set_reg_key(config_key, keypath("X11 Driver"), "DXGrab", "N");
 }
 
-
-static void on_double_buffer_clicked(HWND dialog) {
-    if (IsDlgButtonChecked(dialog, IDC_DOUBLE_BUFFER) == BST_CHECKED)
-        set_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "Y");
-    else
-        set_reg_key(config_key, keypath("X11 Driver"), "DesktopDoubleBuffered", "N");
-}
-
 static void on_d3d_vshader_mode_changed(HWND dialog) {
   int selected_mode = SendDlgItemMessage(dialog, IDC_D3D_VSHADER_MODE, CB_GETCURSEL, 0, 0);  
   set_reg_key(config_key, keypath("Direct3D"), "VertexShaderMode",
@@ -281,7 +266,6 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case IDC_ENABLE_DESKTOP: on_enable_desktop_clicked(hDlg); break;
                         case IDC_ENABLE_MANAGED: on_enable_managed_clicked(hDlg); break;
 			case IDC_DX_MOUSE_GRAB:  on_dx_mouse_grab_clicked(hDlg); break;
-                        case IDC_DOUBLE_BUFFER:  on_double_buffer_clicked(hDlg); break;
 		        case IDC_D3D_PSHADER_MODE: on_d3d_pshader_mode_clicked(hDlg); break;
 		    }
 		    break;
