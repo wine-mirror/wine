@@ -207,6 +207,7 @@ typedef struct {
 static WINE_WAVEOUT WOutDev   [MAX_WAVEOUTDRV];
 static WINE_WAVEIN  WInDev    [MAX_WAVEINDRV];
 
+static HANDLE hThread = NULL; /* Track the thread we create so we can clean it up later */
 static CFMessagePortRef Port_SendToMessageThread;
 
 static void wodHelper_PlayPtrNext(WINE_WAVEOUT* wwo);
@@ -327,7 +328,7 @@ static DWORD WINAPI messageThread(LPVOID p)
     
     source = CFMessagePortCreateRunLoopSource(kCFAllocatorDefault, port_ReceiveInMessageThread, (CFIndex)0);
     CFRunLoopAddSource(CFRunLoopGetCurrent(), source, kCFRunLoopDefaultMode);
-        
+
     CFRunLoopRun();
 
     CFRunLoopSourceInvalidate(source);
@@ -499,7 +500,6 @@ LONG CoreAudio_WaveInit(void)
     UInt32 propertySize;
     CHAR szPname[MAXPNAMELEN];
     int i;
-    HANDLE hThread;
     CFStringRef  messageThreadPortName;
     CFMessagePortRef port_ReceiveInMessageThread;
     int inputSampleRate;
@@ -665,6 +665,13 @@ LONG CoreAudio_WaveInit(void)
         return 1;
     }
 
+    /* Cannot WAIT for any events because we are called from the loader (which has a lock on loading stuff) */
+    /* We might want to wait for this thread to be created -- but we cannot -- not here at least */
+    /* Instead track the thread so we can clean it up later */
+    if ( hThread )
+    {
+        ERR("Message thread already started -- expect problems\n");
+    }
     hThread = CreateThread(NULL, 0, messageThread, (LPVOID)port_ReceiveInMessageThread, 0, NULL);
     if ( !hThread )
     {
@@ -688,6 +695,12 @@ void CoreAudio_WaveRelease(void)
     CFMessagePortSendRequest(Port_SendToMessageThread, kStopLoopMessage, NULL, 0.0, 0.0, NULL, NULL);
     CFRelease(Port_SendToMessageThread);
     Port_SendToMessageThread = NULL;
+
+    /* Wait for the thread to finish and clean it up */
+    /* This rids us of any quick start/shutdown driver crashes */
+    WaitForSingleObject(hThread, INFINITE);
+    CloseHandle(hThread);
+    hThread = NULL;
 }
 
 /*======================================================================*
