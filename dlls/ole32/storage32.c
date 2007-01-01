@@ -5945,7 +5945,6 @@ HRESULT WINAPI StgOpenStorage(
   DWORD          shareMode;
   DWORD          accessMode;
   WCHAR          fullname[MAX_PATH];
-  BOOL           newFile;
 
   TRACE("(%s, %p, %x, %p, %d, %p)\n",
 	debugstr_w(pwcsName), pstgPriority, grfMode,
@@ -6035,24 +6034,13 @@ HRESULT WINAPI StgOpenStorage(
    */
   *ppstgOpen = 0;
 
-  if ((accessMode & GENERIC_WRITE) && /* try to create a file if no yet exists */
-      ((hFile = CreateFileW( pwcsName, accessMode, shareMode, NULL, CREATE_NEW,
-                             FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS, 0))
-          != INVALID_HANDLE_VALUE))
-  {
-      newFile = TRUE;
-  }
-  else
-  {
-      newFile = FALSE;
-      hFile = CreateFileW( pwcsName,
-                           accessMode,
-                           shareMode,
-                           NULL,
-                           OPEN_EXISTING,
-                           FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
-                           0);
-  }
+  hFile = CreateFileW( pwcsName,
+                       accessMode,
+                       shareMode,
+                       NULL,
+                       OPEN_EXISTING,
+                       FILE_ATTRIBUTE_NORMAL | FILE_FLAG_RANDOM_ACCESS,
+                       0);
 
   if (hFile==INVALID_HANDLE_VALUE)
   {
@@ -6090,7 +6078,7 @@ HRESULT WINAPI StgOpenStorage(
    * Refuse to open the file if it's too small to be a structured storage file
    * FIXME: verify the file when reading instead of here
    */
-  if (!newFile && GetFileSize(hFile, NULL) < 0x100)
+  if (GetFileSize(hFile, NULL) < 0x100)
   {
     CloseHandle(hFile);
     hr = STG_E_FILEALREADYEXISTS;
@@ -6108,7 +6096,7 @@ HRESULT WINAPI StgOpenStorage(
     goto end;
   }
 
-  /* if we created new file, initialize the storage */
+  /* Initialize the storage */
   hr = StorageImpl_Construct(
          newStorage,
          hFile,
@@ -6116,7 +6104,7 @@ HRESULT WINAPI StgOpenStorage(
          NULL,
          grfMode,
          TRUE,
-         newFile );
+         FALSE );
 
   if (FAILED(hr))
   {

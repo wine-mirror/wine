@@ -388,12 +388,12 @@ static void test_open_storage(void)
 
     DeleteFileW(filename);
 
-    /* try opening a nonexistent file - it should create it */
+    /* try opening a nonexistent file - it should not create it */
     stgm = STGM_DIRECT | STGM_SHARE_EXCLUSIVE | STGM_READWRITE;
     r = StgOpenStorage( filename, NULL, stgm, NULL, 0, &stg);
-    ok(r==S_OK, "StgOpenStorage failed: 0x%08x\n", r);
+    ok(r!=S_OK, "StgOpenStorage failed: 0x%08x\n", r);
     if (r==S_OK) IStorage_Release(stg);
-    ok(is_existing_file(filename), "StgOpenStorage didn't create a file\n");
+    ok(!is_existing_file(filename), "StgOpenStorage should not create a file\n");
     DeleteFileW(filename);
 
     /* create the file */
