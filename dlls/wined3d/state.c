@@ -1458,6 +1458,27 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    DWORD texUnit = state - STATE_TRANSFORM(WINED3DTS_TEXTURE0);
+
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        if(texUnit >= GL_LIMITS(sampler_stages)) {
+            return;
+        }
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[texUnit]));
+        checkGLcall("glActiveTextureARB");
+    } else if (texUnit > 0) {
+        /* We can't do anything here */
+        WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+        return;
+    }
+
+    set_texture_matrix((float *)&stateblock->transforms[WINED3DTS_TEXTURE0 + texUnit].u.m[0][0],
+                        stateblock->textureState[texUnit][WINED3DTSS_TEXTURETRANSFORMFLAGS],
+                        (stateblock->textureState[texUnit][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU);
+
+}
+
 static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
 
@@ -1615,6 +1636,11 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         FIXME("Unhandled WINED3DTSS_TEXCOORDINDEX %x\n", stateblock->textureState[stage][WINED3DTSS_TEXCOORDINDEX]);
         break;
     }
+
+    /* Update the texture matrix */
+    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage))) {
+        transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage), stateblock);
+    }
 }
 
 static void tex_bumpenvlscale(DWORD state, IWineD3DStateBlockImpl *stateblock) {
@@ -1672,8 +1698,17 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 
     if(stateblock->textures[sampler]) {
+
+        /* NP2 textures need the texture matrix set properly for the stage */
+        if(wined3d_settings.nonpower2_mode == NP2_NATIVE &&
+           stateblock->textureDimensions[sampler] == GL_TEXTURE_2D &&
+           (((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorX != 1.0 ||
+            ((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorY != 1.0 ) ) {
+            transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock);
+        }
+
         IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) stateblock->textures[sampler]);
-        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)stateblock->wineD3DDevice, sampler, sampler, REAPPLY_ALPHAOP);
+        IWineD3DDevice_SetupTextureStates((IWineD3DDevice *)stateblock->wineD3DDevice, sampler, stateblock->wineD3DDevice->texUnitMap[sampler], REAPPLY_ALPHAOP);
         IWineD3DBaseTexture_ApplyStateChanges(stateblock->textures[sampler], stateblock->textureState[sampler], stateblock->samplerState[sampler]);
 
         if (stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader &&
@@ -2003,7 +2038,7 @@ const struct StateEntry StateTable[] =
     { /*0, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*0, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(0, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*0, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*0, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE0),                transform_texture   },
     { /*0, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*0, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(0, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*0, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2036,7 +2071,7 @@ const struct StateEntry StateTable[] =
     { /*1, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*1, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(1, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*1, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*1, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE1),                transform_texture   },
     { /*1, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*1, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(1, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*1, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(1, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2069,7 +2104,7 @@ const struct StateEntry StateTable[] =
     { /*2, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*2, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(2, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*2, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*2, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE2),                transform_texture   },
     { /*2, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*2, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(2, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*2, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(2, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2102,7 +2137,7 @@ const struct StateEntry StateTable[] =
     { /*3, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*3, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(3, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*3, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*3, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE3),                transform_texture   },
     { /*3, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*3, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(3, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*3, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(3, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2135,7 +2170,7 @@ const struct StateEntry StateTable[] =
     { /*4, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*4, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(4, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*4, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*4, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE4),                transform_texture   },
     { /*4, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*4, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(4, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*4, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(4, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2168,7 +2203,7 @@ const struct StateEntry StateTable[] =
     { /*5, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*5, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(5, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*5, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*5, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE5),                transform_texture   },
     { /*5, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*5, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(5, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*5, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(5, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2201,7 +2236,7 @@ const struct StateEntry StateTable[] =
     { /*6, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*6, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(6, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*6, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*6, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE6),                transform_texture   },
     { /*6, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*6, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(6, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*6, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(6, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2234,7 +2269,7 @@ const struct StateEntry StateTable[] =
     { /*7, 21, WINED3DTSS_MAXANISOTROPY             */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 22, WINED3DTSS_BUMPENVLSCALE             */      STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLSCALE),    tex_bumpenvlscale   },
     { /*7, 23, WINED3DTSS_BUMPENVLOFFSET            */      STATE_TEXTURESTAGE(7, WINED3DTSS_BUMPENVLOFFSET),   tex_bumpenvloffset  },
-    { /*7, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      0 /* for now, later stream sources */,              state_nogl          },
+    { /*7, 24, WINED3DTSS_TEXTURETRANSFORMFLAGS     */      STATE_TRANSFORM(WINED3DTS_TEXTURE7),                transform_texture   },
     { /*7, 25, WINED3DTSS_ADDRESSW                  */      0 /* -> sampler state in ddraw / d3d8 */,           state_undefined     },
     { /*7, 26, WINED3DTSS_COLORARG0                 */      STATE_TEXTURESTAGE(7, WINED3DTSS_COLOROP),          tex_colorop         },
     { /*7, 27, WINED3DTSS_ALPHAARG0                 */      STATE_TEXTURESTAGE(7, WINED3DTSS_ALPHAOP),          tex_alphaop         },
@@ -2278,14 +2313,14 @@ const struct StateEntry StateTable[] =
     { /* 13, undefined                              */      0,                                                  state_undefined     },
     { /* 14, undefined                              */      0,                                                  state_undefined     },
     { /* 15, undefined                              */      0,                                                  state_undefined     },
-    { /* 16, WINED3DTS_TEXTURE0                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE0),                state_undefined     },
-    { /* 17, WINED3DTS_TEXTURE1                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE1),                state_undefined     },
-    { /* 18, WINED3DTS_TEXTURE2                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE2),                state_undefined     },
-    { /* 19, WINED3DTS_TEXTURE3                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE3),                state_undefined     },
-    { /* 20, WINED3DTS_TEXTURE4                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE4),                state_undefined     },
-    { /* 21, WINED3DTS_TEXTURE5                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE5),                state_undefined     },
-    { /* 22, WINED3DTS_TEXTURE6                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE6),                state_undefined     },
-    { /* 23, WINED3DTS_TEXTURE7                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE7),                state_undefined     },
+    { /* 16, WINED3DTS_TEXTURE0                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE0),                transform_texture   },
+    { /* 17, WINED3DTS_TEXTURE1                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE1),                transform_texture   },
+    { /* 18, WINED3DTS_TEXTURE2                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE2),                transform_texture   },
+    { /* 19, WINED3DTS_TEXTURE3                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE3),                transform_texture   },
+    { /* 20, WINED3DTS_TEXTURE4                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE4),                transform_texture   },
+    { /* 21, WINED3DTS_TEXTURE5                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE5),                transform_texture   },
+    { /* 22, WINED3DTS_TEXTURE6                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE6),                transform_texture   },
+    { /* 23, WINED3DTS_TEXTURE7                     */      STATE_TRANSFORM(WINED3DTS_TEXTURE7),                transform_texture   },
       /* A huge gap between TEXTURE7 and WORLDMATRIX(0) :-( But entries are needed to catch then if a broken app sets them */
     { /* 24, undefined                              */      0,                                                  state_undefined     },
     { /* 25, undefined                              */      0,                                                  state_undefined     },

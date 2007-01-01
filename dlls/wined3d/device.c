@@ -77,8 +77,6 @@ BOOL pbuffer_per_surface = FALSE;
 /* static function declarations */
 static void WINAPI IWineD3DDeviceImpl_AddResource(IWineD3DDevice *iface, IWineD3DResource *resource);
 
-static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type);
-
 static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_stencil);
 
 /* helper macros */
@@ -355,27 +353,6 @@ static void WINAPI IWineD3DDeviceImpl_SetupTextureStates(IWineD3DDevice *iface, 
         especially when there are a number of groups of states. */
 
     TRACE("-----------------------> Updating the texture at Sampler %d to have new texture state information\n", Sampler);
-
-    /* The list of states not to apply is a big as the list of states to apply, so it makes sense to produce an inclusive list  */
-#define APPLY_STATE(_state)     IWineD3DDeviceImpl_ApplyTextureUnitState(iface, Sampler, _state)
-/* these are the only two supported states that need to be applied */
-    APPLY_STATE(WINED3DTSS_TEXCOORDINDEX);
-    APPLY_STATE(WINED3DTSS_TEXTURETRANSFORMFLAGS);
-#if 0 /* not supported at the moment */
-    APPLY_STATE(WINED3DTSS_BUMPENVMAT00);
-    APPLY_STATE(WINED3DTSS_BUMPENVMAT01);
-    APPLY_STATE(WINED3DTSS_BUMPENVMAT10);
-    APPLY_STATE(WINED3DTSS_BUMPENVMAT11);
-    APPLY_STATE(WINED3DTSS_BUMPENVLSCALE);
-    APPLY_STATE(WINED3DTSS_BUMPENVLOFFSET);
-    APPLY_STATE(WINED3DTSS_RESULTARG);
-    APPLY_STATE(WINED3DTSS_CONSTANT);
-#endif
-    /* a quick sanity check in case someone forgot to update this function */
-    if (WINED3D_HIGHEST_TEXTURE_STATE > WINED3DTSS_CONSTANT) {
-        FIXME("(%p) : There are more texture states than expected, update device.c to match\n", This);
-    }
-#undef APPLY_STATE
 
     /* apply any sampler states that always need applying */
     if (GL_SUPPORT(EXT_TEXTURE_LOD_BIAS)) {
@@ -4244,86 +4221,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_ProcessVertices(IWineD3DDevice *iface, 
     primitiveConvertFVFtoOffset(SrcImpl->fvf, get_flexible_vertex_size(SrcImpl->fvf), SrcImpl->resource.allocatedMemory + get_flexible_vertex_size(SrcImpl->fvf) * SrcStartIndex, &strided, 0);
 
     return process_vertices_strided(This, DestIndex, VertexCount, &strided, SrcImpl->fvf, (IWineD3DVertexBufferImpl *) pDestBuffer, Flags);
-}
-
-/*****
- * Apply / Get / Set Texture Stage States
- * TODO: Verify against dx9 definitions
- *****/
-
-/* NOTE: It's expected that this function is going to be called lots of times with the same stage active, so make it the callers responsibility to GLACTIVETEXTURE(Stage) for better state management. Set the correct Texture unit active before calling ApplyTextureStageState */
-static void WINAPI IWineD3DDeviceImpl_ApplyTextureUnitState(IWineD3DDevice *iface, DWORD Stage, WINED3DTEXTURESTAGESTATETYPE Type) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    DWORD Value = This->updateStateBlock->textureState[Stage][Type];
-    /* FIXME: Handle 3d textures? What if TSS value set before set texture? Need to reapply all values? */
-
-    TRACE("(%p) : Stage=%d, Type=%s(%d), Value=%d\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
-
-    /* Check that the stage is within limits  */
-    if (Stage >= GL_LIMITS(texture_stages) || Stage < 0) {
-        TRACE("Attempt to access invalid texture rejected\n");
-        return;
-    }
-
-    ENTER_GL();
-
-    switch (Type) {
-    case WINED3DTSS_ALPHAOP               :
-    case WINED3DTSS_COLOROP               :
-        /* nothing to do as moved to drawprim for now */
-        break;
-    case WINED3DTSS_ADDRESSW              :
-#if 0 /* I'm not sure what D3D does about ADDRESSW appearing twice */
-            if (Value < minLookup[WINELOOKUP_WARPPARAM] || Value > maxLookup[WINELOOKUP_WARPPARAM]) {
-                FIXME("Unrecognized or unsupported WINED3DTADDRESS_* value %d, state %d\n", Value, Type);
-
-            } else {
-                GLint wrapParm = stateLookup[WINELOOKUP_WARPPARAM][Value - minLookup[WINELOOKUP_WARPPARAM]];
-                TRACE("Setting WRAP_R to %d for %x\n", wrapParm, This->stateBlock->textureDimensions[Stage]);
-                glTexParameteri(This->stateBlock->textureDimensions[Stage], GL_TEXTURE_WRAP_R, wrapParm);
-                checkGLcall("glTexParameteri(..., GL_TEXTURE_WRAP_R, wrapParm)");
-            }
-#endif
-    case WINED3DTSS_TEXCOORDINDEX         :
-        {
-            /* Handled from the state table */
-        }
-        break;
-
-        /* Unhandled */
-    case WINED3DTSS_TEXTURETRANSFORMFLAGS :
-        set_texture_matrix((float *)&This->stateBlock->transforms[WINED3DTS_TEXTURE0 + Stage].u.m[0][0], Value, (This->stateBlock->textureState[Stage][WINED3DTSS_TEXCOORDINDEX] & 0xFFFF0000) != WINED3DTSS_TCI_PASSTHRU);
-        break;
-
-    case WINED3DTSS_BUMPENVMAT00          :
-    case WINED3DTSS_BUMPENVMAT01          :
-        TRACE("BUMPENVMAT0%u Stage=%d, Type=%d, Value =%d\n", Type - WINED3DTSS_BUMPENVMAT00, Stage, Type, Value);
-        break;
-    case WINED3DTSS_BUMPENVMAT10          :
-    case WINED3DTSS_BUMPENVMAT11          :
-        TRACE("BUMPENVMAT1%u Stage=%d, Type=%d, Value =%d\n", Type - WINED3DTSS_BUMPENVMAT10, Stage, Type, Value);
-        break;
-
-    case WINED3DTSS_BUMPENVLSCALE         :
-      TRACE("BUMPENVLSCALE Stage=%d, Type=%d, Value =%d\n", Stage, Type, Value);
-      break;
-
-    case WINED3DTSS_BUMPENVLOFFSET        :
-      TRACE("BUMPENVLOFFSET Stage=%d, Type=%d, Value =%d\n", Stage, Type, Value);
-      break;
-
-    case WINED3DTSS_RESULTARG             :
-      TRACE("RESULTARG Still a stub, Stage=%d, Type=%d, Value =%d\n", Stage, Type, Value);
-      break;
-
-    default:
-        /* Put back later: FIXME("(%p) : stub, Stage=%d, Type=%d, Value =%d\n", This, Stage, Type, Value); */
-        TRACE("Still a stub, Stage=%d, Type=%d, Value =%d\n", Stage, Type, Value);
-    }
-
-    LEAVE_GL();
-
-    return;
 }
 
 /*****
