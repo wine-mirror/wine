@@ -595,13 +595,13 @@ static NTSTATUS set_handflow(int fd, const SERIAL_HANDFLOW* shf)
     if (shf->ControlHandShake & SERIAL_DTR_HANDSHAKE)
     {
         WARN("DSR/DTR flow control not supported\n");
-    } else if (shf->ControlHandShake & SERIAL_DTR_CONTROL)
+    } else if (!(shf->ControlHandShake & SERIAL_DTR_CONTROL))
         whack_modem(fd, ~TIOCM_DTR, 0);
-    else    
+    else
         whack_modem(fd, 0, TIOCM_DTR);
 #endif
 #ifdef TIOCM_RTS
-    if (!(shf->ControlHandShake & SERIAL_DSR_HANDSHAKE))
+    if (!(shf->ControlHandShake & SERIAL_CTS_HANDSHAKE))
     {
         if ((shf->FlowReplace & (SERIAL_RTS_CONTROL|SERIAL_RTS_HANDSHAKE)) == 0)
             whack_modem(fd, ~TIOCM_RTS, 0);
