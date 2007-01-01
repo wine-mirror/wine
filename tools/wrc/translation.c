@@ -831,7 +831,7 @@ static int compare_versioninfo(versioninfo_t *versioninfo1, versioninfo_t *versi
 		}
 		if(!different &&
 		   ((ver_block1 && !ver_block2) ||
-		   (ver_block1 && !ver_block2)))
+		   (!ver_block1 && ver_block2)))
 			different = 1;
 	}
 	return different;
