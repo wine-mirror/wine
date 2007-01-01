@@ -533,6 +533,7 @@ static DNS_STATUS dns_do_query_netbios( PCSTR name, DNS_RECORDA **recp )
             DNS_RRSET_ADD( rrset, (DNS_RECORD *)record );
         }
     }
+    status = ERROR_SUCCESS;
 
 exit:
     DNS_RRSET_TERMINATE( rrset );
