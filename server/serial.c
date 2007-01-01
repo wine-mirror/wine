@@ -272,7 +272,7 @@ static void serial_queue_async( struct fd *fd, void *apc, void *user, void *iosb
     }
 
     add_timeout( &when, timeout );
-    if (!create_async( current, &when, queue, apc, user, iosb )) return;
+    if (!create_async( current, timeout ? &when : NULL, queue, apc, user, iosb )) return;
 
     /* Check if the new pending request can be served immediately */
     events = check_fd_events( fd, serial_get_poll_events( fd ) );
