@@ -843,13 +843,13 @@ static void shader_glsl_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const 
         /* Note that there's no such thing as a projected cube texture. */
         switch(sampler_type) {
             case WINED3DSTT_2D:
-                shader_addline(buffer, "%s = texture2DProj(%cshader%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                shader_addline(buffer, "%s = texture2DProj(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
                 break;
             case WINED3DSTT_VOLUME:
-                shader_addline(buffer, "%s = texture3DProj(%cshader%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                shader_addline(buffer, "%s = texture3DProj(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
                 break;
             default:
-                shader_addline(buffer, "%s = unrecognized_stype(%cshader%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
+                shader_addline(buffer, "%s = unrecognized_stype(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
                 FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
                 break;
         }
