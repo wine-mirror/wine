@@ -2856,6 +2856,22 @@ HRESULT WINAPI VarCmp(LPVARIANT left, LPVARIANT right, LCID lcid, DWORD flags)
 #undef _VARCMP
 }
 
+static HRESULT VARIANT_FetchDispatchValue(LPVARIANT pvDispatch, LPVARIANT pValue)
+{
+    HRESULT hres;
+    static DISPPARAMS emptyParams = { NULL, NULL, 0, 0 };
+
+    if ((V_VT(pvDispatch) & VT_TYPEMASK) == VT_DISPATCH) {
+        if (NULL == V_DISPATCH(pvDispatch)) return DISP_E_TYPEMISMATCH;
+        hres = IDispatch_Invoke(V_DISPATCH(pvDispatch), DISPID_VALUE, &IID_NULL,
+            LOCALE_USER_DEFAULT, DISPATCH_PROPERTYGET, &emptyParams, pValue,
+            NULL, NULL);
+    } else {
+        hres = DISP_E_TYPEMISMATCH;
+    }
+    return hres;
+}
+
 /**********************************************************************
  *              VarAnd [OLEAUT32.142]
  *
