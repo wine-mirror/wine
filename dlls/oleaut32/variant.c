@@ -2893,12 +2893,29 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     VARTYPE leftvt,rightvt;
     VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
     VARIANT varLeft, varRight;
+    VARIANT tempLeft, tempRight;
 
     VariantInit(&varLeft);
     VariantInit(&varRight);
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
           debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(left) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hres = VARIANT_FetchDispatchValue(left, &tempLeft);
+        if (FAILED(hres)) goto VarAnd_Exit;
+        left = &tempLeft;
+    }
+    if ((V_VT(right) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hres = VARIANT_FetchDispatchValue(right, &tempRight);
+        if (FAILED(hres)) goto VarAnd_Exit;
+        right = &tempRight;
+    }
 
     leftvt = V_VT(left)&VT_TYPEMASK;
     rightvt = V_VT(right)&VT_TYPEMASK;
@@ -2906,7 +2923,10 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
 
     if (leftExtraFlags != rightExtraFlags)
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto VarAnd_Exit;
+    }
     ExtraFlags = leftExtraFlags;
 
     /* Native VarAnd always returns a error when using any extra
@@ -2915,7 +2935,10 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     if ((leftvt == VT_I8 && rightvt == VT_INT) ||
         (leftvt == VT_INT && rightvt == VT_I8) ||
         ExtraFlags != 0)
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto VarAnd_Exit;
+    }
 
     /* Determine return type */
     else if (leftvt == VT_I8 || rightvt == VT_I8)
@@ -2950,7 +2973,10 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         leftvt == VT_BSTR || rightvt == VT_BSTR)
         resvt = VT_NULL;
     else
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto VarAnd_Exit;
+    }
 
     if (leftvt == VT_NULL || rightvt == VT_NULL)
     {
@@ -3068,6 +3094,8 @@ HRESULT WINAPI VarAnd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 VarAnd_Exit:
     VariantClear(&varLeft);
     VariantClear(&varRight);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
 
     return hres;
 }
