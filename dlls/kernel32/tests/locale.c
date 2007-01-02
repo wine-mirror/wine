@@ -180,7 +180,6 @@ static void test_GetTimeFormatA(void)
   curtime.wMilliseconds = 22;
   STRINGSA("tt HH':'mm'@'ss", "AM 08:56@13"); /* Valid time */
   SetLastError(0xdeadbeef);
-  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
   ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
