@@ -59,6 +59,23 @@ UINT MFDRV_AddHandle( PHYSDEV dev, HGDIOBJ obj )
 }
 
 /******************************************************************
+ *         MFDRV_RemoveHandle
+ */
+BOOL MFDRV_RemoveHandle( PHYSDEV dev, UINT index )
+{
+    METAFILEDRV_PDEVICE *physDev = (METAFILEDRV_PDEVICE *)dev;
+    BOOL ret = FALSE;
+
+    if (index < physDev->handles_size && physDev->handles[index])
+    {
+        physDev->handles[index] = 0;
+        physDev->cur_handles--;
+        ret = TRUE;
+    }
+    return ret;
+}
+
+/******************************************************************
  *         MFDRV_FindObject
  */
 static INT16 MFDRV_FindObject( PHYSDEV dev, HGDIOBJ obj )

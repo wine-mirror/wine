@@ -420,6 +420,7 @@ INT MFDRV_ExtSelectClipRgn( PHYSDEV dev, HRGN hrgn, INT mode )
     if(iRgn == -1) return ERROR;
     ret = MFDRV_MetaParam1( dev, META_SELECTCLIPREGION, iRgn ) ? NULLREGION : ERROR;
     MFDRV_MetaParam1( dev, META_DELETEOBJECT, iRgn );
+    MFDRV_RemoveHandle( dev, iRgn );
     return ret;
 }
 
