@@ -916,7 +916,7 @@ HRESULT WINAPI ScriptBreak(const WCHAR *chars, int count, const SCRIPT_ANALYSIS 
 {
     unsigned int i;
 
-    TRACE("(%p, %d, %p, %p)\n", chars, count, sa, la);
+    TRACE("(%s, %d, %p, %p)\n", debugstr_wn(chars, count), count, sa, la);
 
     if (!la) return S_FALSE;
 
@@ -1244,8 +1244,8 @@ HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars
     int cnt;
     HRESULT hr;
 
-    FIXME("(%p,%p,%s,%d,0x%x,%p): semi-stub\n", hdc, psc, debugstr_wn(pwcInChars,cChars),
-                                                 cChars, dwFlags, pwOutGlyphs);
+    TRACE("(%p,%p,%s,%d,0x%x,%p)\n", hdc, psc, debugstr_wn(pwcInChars, cChars),
+          cChars, dwFlags, pwOutGlyphs);
 
     if ((hr = get_script_cache(hdc, psc))) return hr;
 
@@ -1276,7 +1276,7 @@ HRESULT WINAPI ScriptTextOut(const HDC hdc, SCRIPT_CACHE *psc, int x, int y, UIN
 {
     HRESULT hr;
 
-    TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p): stub\n",
+    TRACE("(%p, %p, %d, %d, %04x, %p, %p, %p, %d, %p, %d, %p, %p, %p)\n",
          hdc, psc, x, y, fuOptions, lprc, psa, pwcReserved, iReserved, pwGlyphs, cGlyphs,
          piAdvance, piJustify, pGoffset);
 
@@ -1377,7 +1377,7 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
 {
     int i, j = runs - 1, k = 0;
 
-    FIXME("(%d, %p, %p, %p): stub\n", runs, level, vistolog, logtovis);
+    TRACE("(%d, %p, %p, %p)\n", runs, level, vistolog, logtovis);
 
     if (!level || (!vistolog && !logtovis))
         return E_INVALIDARG;
