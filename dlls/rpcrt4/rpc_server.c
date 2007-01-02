@@ -831,7 +831,7 @@ RPC_STATUS WINAPI RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid
 
   EnterCriticalSection(&server_cs);
   LIST_FOR_EACH_ENTRY(cif, &server_interfaces, RpcServerInterface, entry) {
-    if (!memcmp(&If->InterfaceId, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER)) &&
+    if ((!IfSpec || !memcmp(&If->InterfaceId, &cif->If->InterfaceId, sizeof(RPC_SYNTAX_IDENTIFIER))) &&
         UuidEqual(MgrTypeUuid, &cif->MgrTypeUuid, &status)) {
       list_remove(&cif->entry);
       if (cif->CurrentCalls) {
