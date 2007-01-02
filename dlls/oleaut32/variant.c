@@ -4520,6 +4520,7 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
 {
     VARTYPE vt;
     VARIANT varLeft, varRight;
+    VARIANT tempLeft, tempRight;
     double d;
     HRESULT hRet;
 
@@ -4540,6 +4541,23 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
         /* NULL XOR anything valid is NULL */
         V_VT(pVarOut) = VT_NULL;
         return S_OK;
+    }
+
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(pVarLeft) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarLeft, &tempLeft);
+        if (FAILED(hRet)) goto VarXor_Exit;
+        pVarLeft = &tempLeft;
+    }
+    if ((V_VT(pVarRight) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarRight, &tempRight);
+        if (FAILED(hRet)) goto VarXor_Exit;
+        pVarRight = &tempRight;
     }
 
     /* Copy our inputs so we don't disturb anything */
@@ -4576,7 +4594,10 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
     if (V_VT(&varLeft) == VT_I8 || V_VT(&varRight) == VT_I8)
     {
         if (V_VT(pVarLeft) == VT_INT || V_VT(pVarRight) == VT_INT)
-            return DISP_E_TYPEMISMATCH;
+        {
+            hRet = DISP_E_TYPEMISMATCH;
+            goto VarXor_Exit;
+        }
         vt = VT_I8;
     }
     else
@@ -4654,6 +4675,8 @@ HRESULT WINAPI VarXor(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut
 VarXor_Exit:
     VariantClear(&varLeft);
     VariantClear(&varRight);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
     return hRet;
 }
 
