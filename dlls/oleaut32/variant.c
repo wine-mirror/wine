@@ -3960,16 +3960,40 @@ HRESULT WINAPI VarOr(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut)
     VARTYPE vt = VT_I4;
     VARIANT varLeft, varRight, varStr;
     HRESULT hRet;
+    VARIANT tempLeft, tempRight;
+
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
+    VariantInit(&varLeft);
+    VariantInit(&varRight);
+    VariantInit(&varStr);
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", pVarLeft, debugstr_VT(pVarLeft),
           debugstr_VF(pVarLeft), pVarRight, debugstr_VT(pVarRight),
           debugstr_VF(pVarRight), pVarOut);
 
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(pVarLeft) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarLeft, &tempLeft);
+        if (FAILED(hRet)) goto VarOr_Exit;
+        pVarLeft = &tempLeft;
+    }
+    if ((V_VT(pVarRight) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hRet = VARIANT_FetchDispatchValue(pVarRight, &tempRight);
+        if (FAILED(hRet)) goto VarOr_Exit;
+        pVarRight = &tempRight;
+    }
+
     if (V_EXTRA_TYPE(pVarLeft) || V_EXTRA_TYPE(pVarRight) ||
         V_VT(pVarLeft) == VT_UNKNOWN || V_VT(pVarRight) == VT_UNKNOWN ||
         V_VT(pVarLeft) == VT_DISPATCH || V_VT(pVarRight) == VT_DISPATCH ||
         V_VT(pVarLeft) == VT_RECORD || V_VT(pVarRight) == VT_RECORD)
-        return DISP_E_BADVARTYPE;
+    {
+        hRet = DISP_E_BADVARTYPE;
+        goto VarOr_Exit;
+    }
 
     V_VT(&varLeft) = V_VT(&varRight) = V_VT(&varStr) = VT_EMPTY;
 
@@ -3987,49 +4011,62 @@ HRESULT WINAPI VarOr(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut)
         case VT_DATE: case VT_R8:
             if (V_R8(pVarLeft))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_BOOL:
             if (V_BOOL(pVarLeft))
                 *pVarOut = *pVarLeft;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
          case VT_I2: case VT_UI2:
             if (V_I2(pVarLeft))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_I1:
             if (V_I1(pVarLeft))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_UI1:
             if (V_UI1(pVarLeft))
                 *pVarOut = *pVarLeft;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_R4:
             if (V_R4(pVarLeft))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_I4: case VT_UI4: case VT_INT: case VT_UINT:
             if (V_I4(pVarLeft))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_CY:
             if (V_CY(pVarLeft).int64)
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_I8: case VT_UI8:
             if (V_I8(pVarLeft))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_DECIMAL:
             if (DEC_HI32(&V_DECIMAL(pVarLeft)) || DEC_LO64(&V_DECIMAL(pVarLeft)))
                 goto VarOr_AsEmpty;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         case VT_BSTR:
         {
             VARIANT_BOOL b;
 
             if (!V_BSTR(pVarLeft))
-                return DISP_E_BADVARTYPE;
+            {
+                hRet = DISP_E_BADVARTYPE;
+                goto VarOr_Exit;
+            }
 
             hRet = VarBoolFromStr(V_BSTR(pVarLeft), LOCALE_USER_DEFAULT, VAR_LOCALBOOL, &b);
             if (SUCCEEDED(hRet) && b)
@@ -4037,13 +4074,15 @@ HRESULT WINAPI VarOr(LPVARIANT pVarLeft, LPVARIANT pVarRight, LPVARIANT pVarOut)
                 V_VT(pVarOut) = VT_BOOL;
                 V_BOOL(pVarOut) = b;
             }
-            return hRet;
+            goto VarOr_Exit;
         }
         case VT_NULL: case VT_EMPTY:
             V_VT(pVarOut) = VT_NULL;
-            return S_OK;
+            hRet = S_OK;
+            goto VarOr_Exit;
         default:
-            return DISP_E_BADVARTYPE;
+            hRet = DISP_E_BADVARTYPE;
+            goto VarOr_Exit;
         }
     }
 
@@ -4061,7 +4100,10 @@ VarOr_AsEmpty:
         {
         case VT_BSTR:
             if (!V_BSTR(pVarLeft))
-                return DISP_E_BADVARTYPE;
+            {
+                hRet = DISP_E_BADVARTYPE;
+                goto VarOr_Exit;
+            }
 
             hRet = VariantCopy(&varStr, pVarLeft);
             if (FAILED(hRet))
@@ -4083,7 +4125,8 @@ VarOr_AsEmpty:
             V_VT(pVarOut) = VT_I8;
             break;
         default:
-            return DISP_E_BADVARTYPE;
+            hRet = DISP_E_BADVARTYPE;
+            goto VarOr_Exit;
         }
         hRet = VariantCopy(&varLeft, pVarLeft);
         if (FAILED(hRet))
@@ -4097,14 +4140,16 @@ VarOr_AsEmpty:
     {
         V_VT(pVarOut) = VT_BOOL;
         V_BOOL(pVarOut) = V_BOOL(pVarLeft) | V_BOOL(pVarRight);
-        return S_OK;
+        hRet = S_OK;
+        goto VarOr_Exit;
     }
 
     if (V_VT(pVarLeft) == VT_UI1 && V_VT(pVarRight) == VT_UI1)
     {
         V_VT(pVarOut) = VT_UI1;
         V_UI1(pVarOut) = V_UI1(pVarLeft) | V_UI1(pVarRight);
-        return S_OK;
+        hRet = S_OK;
+        goto VarOr_Exit;
     }
 
     if (V_VT(pVarLeft) == VT_BSTR)
@@ -4133,7 +4178,10 @@ VarOr_AsEmpty:
     else if (V_VT(pVarLeft) == VT_I8 || V_VT(pVarRight) == VT_I8)
     {
         if (V_VT(pVarLeft) == VT_INT || V_VT(pVarRight) == VT_INT)
-            return DISP_E_TYPEMISMATCH;
+        {
+            hRet = DISP_E_TYPEMISMATCH;
+            goto VarOr_Exit;
+        }
         vt = VT_I8;
     }
 
@@ -4193,6 +4241,8 @@ VarOr_Exit:
     VariantClear(&varStr);
     VariantClear(&varLeft);
     VariantClear(&varRight);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
     return hRet;
 }
 
