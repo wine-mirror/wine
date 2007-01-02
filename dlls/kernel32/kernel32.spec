@@ -795,8 +795,8 @@
 @ stdcall MoveFileExA(str str long)
 @ stdcall MoveFileExW(wstr wstr long)
 @ stdcall MoveFileW(wstr wstr)
-# @ stub MoveFileWithProgressA
-# @ stub MoveFileWithProgressW
+@ stdcall MoveFileWithProgressA(str str ptr ptr long)
+@ stdcall MoveFileWithProgressW(wstr wstr ptr ptr long)
 @ stdcall MulDiv(long long long)
 @ stdcall MultiByteToWideChar(long long str long ptr long)
 # @ stub NlsConvertIntegerToString

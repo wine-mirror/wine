@@ -982,9 +982,11 @@ BOOL WINAPI CopyFileExA(LPCSTR sourceFilename, LPCSTR destFilename,
 
 
 /**************************************************************************
- *           MoveFileExW   (KERNEL32.@)
+ *           MoveFileWithProgressW   (KERNEL32.@)
  */
-BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
+BOOL WINAPI MoveFileWithProgressW( LPCWSTR source, LPCWSTR dest,
+                                   LPPROGRESS_ROUTINE fnProgress,
+                                   LPVOID param, DWORD flag )
 {
     FILE_BASIC_INFORMATION info;
     UNICODE_STRING nt_name;
@@ -994,7 +996,8 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
     HANDLE source_handle = 0, dest_handle;
     ANSI_STRING source_unix, dest_unix;
 
-    TRACE("(%s,%s,%04x)\n", debugstr_w(source), debugstr_w(dest), flag);
+    TRACE("(%s,%s,%p,%p,%04x)\n",
+          debugstr_w(source), debugstr_w(dest), fnProgress, param, flag );
 
     if (flag & MOVEFILE_DELAY_UNTIL_REBOOT)
         return add_boot_rename_entry( source, dest, flag );
@@ -1087,7 +1090,10 @@ BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
             NtClose( source_handle );
             RtlFreeAnsiString( &source_unix );
             RtlFreeAnsiString( &dest_unix );
-            return (CopyFileW( source, dest, TRUE ) && DeleteFileW( source ));
+            if (!CopyFileExW( source, dest, fnProgress,
+                              param, NULL, COPY_FILE_FAIL_IF_EXISTS ))
+                return FALSE;
+            return DeleteFileW( source );
         }
         FILE_SetDosError();
         /* if we created the destination, remove it */
@@ -1124,9 +1130,11 @@ error:
 }
 
 /**************************************************************************
- *           MoveFileExA   (KERNEL32.@)
+ *           MoveFileWithProgressA   (KERNEL32.@)
  */
-BOOL WINAPI MoveFileExA( LPCSTR source, LPCSTR dest, DWORD flag )
+BOOL WINAPI MoveFileWithProgressA( LPCSTR source, LPCSTR dest,
+                                   LPPROGRESS_ROUTINE fnProgress,
+                                   LPVOID param, DWORD flag )
 {
     WCHAR *sourceW, *destW;
     BOOL ret;
@@ -1139,9 +1147,25 @@ BOOL WINAPI MoveFileExA( LPCSTR source, LPCSTR dest, DWORD flag )
     else
         destW = NULL;
 
-    ret = MoveFileExW( sourceW, destW, flag );
+    ret = MoveFileWithProgressW( sourceW, destW, fnProgress, param, flag );
     HeapFree( GetProcessHeap(), 0, destW );
     return ret;
+}
+
+/**************************************************************************
+ *           MoveFileExW   (KERNEL32.@)
+ */
+BOOL WINAPI MoveFileExW( LPCWSTR source, LPCWSTR dest, DWORD flag )
+{
+    return MoveFileWithProgressW( source, dest, NULL, NULL, flag );
+}
+
+/**************************************************************************
+ *           MoveFileExA   (KERNEL32.@)
+ */
+BOOL WINAPI MoveFileExA( LPCSTR source, LPCSTR dest, DWORD flag )
+{
+    return MoveFileWithProgressA( source, dest, NULL, NULL, flag );
 }
 
 
