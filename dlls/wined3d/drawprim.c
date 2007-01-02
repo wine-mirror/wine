@@ -158,8 +158,6 @@ static const GLfloat invymat[16] = {
 void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
     /* If the last draw was transformed as well, no need to reapply all the matrixes */
     if ( (!This->last_was_rhw) || (This->viewport_changed) ) {
-
-        double X, Y, height, width, minZ, maxZ;
         This->last_was_rhw = TRUE;
         This->viewport_changed = FALSE;
 
@@ -170,61 +168,6 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
         checkGLcall("glMatrixMode(GL_MODELVIEW)");
         glLoadIdentity();
         checkGLcall("glLoadIdentity");
-
-        glMatrixMode(GL_PROJECTION);
-        checkGLcall("glMatrixMode(GL_PROJECTION)");
-        glLoadIdentity();
-        checkGLcall("glLoadIdentity");
-
-        /* Set up the viewport to be full viewport */
-        X      = This->stateBlock->viewport.X;
-        Y      = This->stateBlock->viewport.Y;
-        height = This->stateBlock->viewport.Height;
-        width  = This->stateBlock->viewport.Width;
-        minZ   = This->stateBlock->viewport.MinZ;
-        maxZ   = This->stateBlock->viewport.MaxZ;
-        if(!This->untransformed) {
-            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
-        } else {
-            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
-            glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
-        }
-        checkGLcall("glOrtho");
-
-        /* Window Coord 0 is the middle of the first pixel, so translate by half
-            a pixel (See comment above glTranslate below)                         */
-        glTranslatef(0.375, 0.375, 0);
-        checkGLcall("glTranslatef(0.375, 0.375, 0)");
-        /* D3D texture coordinates are flipped compared to OpenGL ones, so
-         * render everything upside down when rendering offscreen. */
-        if (This->render_offscreen) {
-            glMultMatrixf(invymat);
-            checkGLcall("glMultMatrixf(invymat)");
-        }
-
-        /* Vertex fog on transformed vertices? Use the calculated fog factor stored in the specular color */
-        if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != WINED3DFOG_NONE) {
-            if(GL_SUPPORT(EXT_FOG_COORD)) {
-                glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT);
-                checkGLcall("glFogi(GL_FOG_COORDINATE_SOURCE_EXT, GL_FOG_COORDINATE_EXT)");
-                glFogi(GL_FOG_MODE, GL_LINEAR);
-                checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-                /* The dx fog range in this case is fixed to 0 - 255,
-                 * but in GL it still depends on the fog start and end (according to the ext)
-                 * Use this to turn around the fog as it's needed. That prevents some
-                 * calculations during drawing :-)
-                 */
-                glFogf(GL_FOG_START, (float) 0xff);
-                checkGLcall("glFogfv GL_FOG_END");
-                glFogf(GL_FOG_END, 0.0);
-                checkGLcall("glFogfv GL_FOG_START");
-            } else {
-                /* Disable GL fog, handle this in software in drawStridedSlow */
-                glDisable(GL_FOG);
-                checkGLcall("glDisable(GL_FOG)");
-            }
-        }
     }
 }
 

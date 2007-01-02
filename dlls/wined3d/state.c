@@ -1900,6 +1900,74 @@ static const GLfloat invymat[16] = {
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f};
 
+static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    glMatrixMode(GL_PROJECTION);
+    checkGLcall("glMatrixMode(GL_PROJECTION)");
+    glLoadIdentity();
+    checkGLcall("glLoadIdentity");
+
+    if(stateblock->wineD3DDevice->last_was_rhw) {
+        double X, Y, height, width, minZ, maxZ;
+
+        X      = stateblock->viewport.X;
+        Y      = stateblock->viewport.Y;
+        height = stateblock->viewport.Height;
+        width  = stateblock->viewport.Width;
+        minZ   = stateblock->viewport.MinZ;
+        maxZ   = stateblock->viewport.MaxZ;
+
+        if(!stateblock->wineD3DDevice->untransformed) {
+            /* Transformed vertices are supposed to bypass the whole transform pipeline including
+             * frustum clipping. This can't be done in opengl, so this code adjusts the Z range to
+             * suppress depth clipping. This can be done because it is an orthogonal projection and
+             * the Z coordinate does not affect the size of the primitives
+             */
+            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
+            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+        } else {
+            /* If the app mixes transformed and untransformed primitives we can't use the coordinate system
+             * trick above because this would mess up transformed and untransformed Z order. Pass the z position
+             * unmodified to opengl.
+             *
+             * If the app depends on mixed types and disabled clipping we're out of luck without a pipeline
+             * replacement shader.
+             */
+            TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
+            glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
+        }
+        checkGLcall("glOrtho");
+
+        /* Window Coord 0 is the middle of the first pixel, so translate by 3/8 pixels */
+        glTranslatef(0.375, 0.375, 0);
+        checkGLcall("glTranslatef(0.375, 0.375, 0)");
+        /* D3D texture coordinates are flipped compared to OpenGL ones, so
+         * render everything upside down when rendering offscreen. */
+        if (stateblock->wineD3DDevice->render_offscreen) {
+            glMultMatrixf(invymat);
+            checkGLcall("glMultMatrixf(invymat)");
+        }
+    } else {
+        /* The rule is that the window coordinate 0 does not correspond to the
+            beginning of the first pixel, but the center of the first pixel.
+            As a consequence if you want to correctly draw one line exactly from
+            the left to the right end of the viewport (with all matrices set to
+            be identity), the x coords of both ends of the line would be not
+            -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
+            instead.                                                               */
+        glTranslatef(0.9 / stateblock->viewport.Width, -0.9 / stateblock->viewport.Height, 0);
+        checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
+
+        /* D3D texture coordinates are flipped compared to OpenGL ones, so
+            * render everything upside down when rendering offscreen. */
+        if (stateblock->wineD3DDevice->render_offscreen) {
+            glMultMatrixf(invymat);
+            checkGLcall("glMultMatrixf(invymat)");
+        }
+        glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
+        checkGLcall("glLoadMatrixf");
+    }
+}
+
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
     BOOL transformed;
@@ -1993,29 +2061,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
         if (!useVertexShaderFunction) {
             device->proj_valid = TRUE;
-            glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode");
-
-            /* The rule is that the window coordinate 0 does not correspond to the
-               beginning of the first pixel, but the center of the first pixel.
-               As a consequence if you want to correctly draw one line exactly from
-               the left to the right end of the viewport (with all matrices set to
-               be identity), the x coords of both ends of the line would be not
-               -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
-               instead.                                                               */
-            glLoadIdentity();
-
-            glTranslatef(0.9 / stateblock->viewport.Width, -0.9 / stateblock->viewport.Height, 0);
-            checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
-
-            /* D3D texture coordinates are flipped compared to OpenGL ones, so
-             * render everything upside down when rendering offscreen. */
-            if (device->render_offscreen) {
-                glMultMatrixf(invymat);
-                checkGLcall("glMultMatrixf(invymat)");
-            }
-            glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
-            checkGLcall("glLoadMatrixf");
         }
 
         /* Vertex Shader output is already transformed, so set up identity matrices */
@@ -2025,6 +2070,13 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
             device->posFixup[3] = -0.9 / stateblock->viewport.Height;
         }
         device->last_was_rhw = FALSE;
+    }
+
+    /* TODO: Move this mainly to the viewport state and only apply when the vp has changed
+     * or transformed / untransformed was switched
+     */
+    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
+        transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock);
     }
 
     /* Setup fogging */
@@ -2535,7 +2587,7 @@ const struct StateEntry StateTable[] =
       /* Transform states follow                    */
     { /*  1, undefined                              */      0,                                                  state_undefined     },
     { /*  2, WINED3DTS_VIEW                         */      STATE_TRANSFORM(WINED3DTS_VIEW),                    transform_view      },
-    { /*  3, WINED3DTS_PROJECTION                   */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*  3, WINED3DTS_PROJECTION                   */      STATE_TRANSFORM(WINED3DTS_PROJECTION),              transform_projection},
     { /*  4, undefined                              */      0,                                                  state_undefined     },
     { /*  5, undefined                              */      0,                                                  state_undefined     },
     { /*  6, undefined                              */      0,                                                  state_undefined     },
