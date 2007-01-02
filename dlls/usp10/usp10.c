@@ -201,16 +201,25 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 /***********************************************************************
  *      ScriptFreeCache (USP10.@)
  *
+ * Free a script cache.
+ *
+ * PARAMS
+ *   psc [I/O] Script cache.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
  */
 HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
 {
     TRACE("%p\n", psc);
 
-    if (psc) {
-       HeapFree ( GetProcessHeap(), 0, *psc);
+    if (psc)
+    {
+       HeapFree(GetProcessHeap(), 0, *psc);
        *psc = NULL;
     }
-    return 0;
+    return S_OK;
 }
 
 /***********************************************************************
@@ -244,6 +253,12 @@ HRESULT WINAPI ScriptGetProperties(const SCRIPT_PROPERTIES ***props, int *num)
 /***********************************************************************
  *      ScriptGetFontProperties (USP10.@)
  *
+ * Get information on special glyphs.
+ *
+ * PARAMS
+ *  hdc [I]   Device context.
+ *  psc [I/O] Opaque pointer to a script cache.
+ *  sfp [O]   Font properties structure.
  */
 HRESULT WINAPI ScriptGetFontProperties(HDC hdc, SCRIPT_CACHE *psc, SCRIPT_FONTPROPERTIES *sfp)
 {
@@ -776,12 +791,21 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
 /***********************************************************************
  *      ScriptStringFree (USP10.@)
  *
+ * Free a string analysis.
+ *
+ * PARAMS
+ *  pssa [I] string analysis.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
  */
 HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
 {
     StringAnalysis* analysis;
     BOOL invalid;
     int i;
+
     TRACE("(%p)\n",pssa);
 
     if(!pssa)
@@ -1237,9 +1261,22 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 /***********************************************************************
  *      ScriptGetCMap (USP10.@)
  *
+ * Retrieve glyph indices.
+ *
+ * PARAMS
+ *  hdc         [I]   Device context.
+ *  psc         [I/O] Opaque pointer to a script cache.
+ *  pwcInChars  [I]   Array of Unicode characters.
+ *  cChars      [I]   Number of characters in pwcInChars.
+ *  dwFlags     [I]   Flags.
+ *  pwOutGlyphs [O]   Buffer to receive the array of glyph indices.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
  */
 HRESULT WINAPI ScriptGetCMap(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcInChars,
-			      int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
+                             int cChars, DWORD dwFlags, WORD *pwOutGlyphs)
 {
     int cnt;
     HRESULT hr;
