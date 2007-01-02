@@ -342,6 +342,7 @@ sub update_dlls(@)
     foreach my $make (@_)
     {
         my %makefile = %{$makefiles{$make}};
+        next if defined $makefile{"=skip"};
 
         if ($make =~ /dlls\/(.*)\/tests\/Makefile/)
         {
