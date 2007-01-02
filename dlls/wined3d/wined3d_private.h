@@ -433,7 +433,10 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock);
 #define STATE_VSHADER (STATE_VDECL + 1)
 #define STATE_IS_VSHADER(a) ((a) == STATE_VSHADER)
 
-#define STATE_HIGHEST (STATE_VSHADER)
+#define STATE_VIEWPORT (STATE_VSHADER + 1)
+#define STATE_IS_VIEWPORT(a) ((a) == STATE_VIEWPORT)
+
+#define STATE_HIGHEST (STATE_VIEWPORT)
 
 struct StateEntry
 {

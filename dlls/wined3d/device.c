@@ -3095,6 +3095,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
 
     LEAVE_GL();
 
+    /* Todo: move the gl code too */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
     return WINED3D_OK;
 
 }

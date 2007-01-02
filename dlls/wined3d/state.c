@@ -2919,5 +2919,6 @@ const struct StateEntry StateTable[] =
     { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_VIEWPORT                         */      STATE_VDECL,                                        vertexdeclaration   },
 
 };
