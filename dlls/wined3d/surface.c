@@ -633,8 +633,15 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                 This->Flags |= SFLAG_ACTIVELOCK; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
                 /* TODO: make activeLock a bit more intelligent, maybe implement a method to purge the texture memory. */
 
-                /* Make sure that the texture is loaded */
-                IWineD3DSurface_PreLoad(iface); /* Make sure there is a texture to bind! */
+                /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
+                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                    ENTER_GL();
+                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+                    checkGLcall("glActiveTextureARB");
+                    LEAVE_GL();
+                }
+                IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
+                IWineD3DSurface_PreLoad(iface);
 
                 surface_download_data(This);
             }
