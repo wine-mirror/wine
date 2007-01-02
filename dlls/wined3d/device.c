@@ -2992,6 +2992,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
                                              UINT BaseVertexIndex) {
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DIndexBuffer *oldIdxs;
+    UINT oldBaseIndex = This->updateStateBlock->baseVertexIndex;
 
     TRACE("(%p) : Setting to %p, base %d\n", This, pIndexData, BaseVertexIndex);
     oldIdxs = This->updateStateBlock->pIndexData;
@@ -3013,6 +3014,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
     if (NULL != oldIdxs) {
         IWineD3DIndexBuffer_Release(oldIdxs);
     }
+
+    /* So far only the base vertex index is tracked */
+    if(BaseVertexIndex != oldBaseIndex) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
+    }
     return WINED3D_OK;
 }
 
@@ -3031,6 +3037,26 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetIndices(IWineD3DDevice *iface, IWine
     }
     TRACE("Returning %p %d\n", *ppIndexData, *pBaseVertexIndex);
 
+    return WINED3D_OK;
+}
+
+/* Method to offer d3d9 a simple way to set the base vertex index without messing with the index buffer */
+static HRESULT WINAPI IWineD3DDeviceImpl_SetBasevertexIndex(IWineD3DDevice *iface, UINT BaseIndex) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    TRACE("(%p)->(%d)\n", This, BaseIndex);
+
+    if(This->updateStateBlock->baseVertexIndex == BaseIndex) {
+        TRACE("Application is setting the old value over, nothing to do\n");
+        return WINED3D_OK;
+    }
+
+    This->updateStateBlock->baseVertexIndex = BaseIndex;
+
+    if (This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return WINED3D_OK;
+    }
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     return WINED3D_OK;
 }
 
@@ -4669,18 +4695,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, WI
     TRACE("(%p) : Type=(%d,%s), Start=%d, Count=%d\n", This, PrimitiveType,
                                debug_d3dprimitivetype(PrimitiveType),
                                StartVertex, PrimitiveCount);
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex, 0/* NumVertices */, -1 /* indxStart */,
+
+    if(StartVertex - This->stateBlock->baseVertexIndex < 0) ERR("Drawing negative\n");
+    /* Account for the loading offset due to index buffers. Instead of reloading all sources correct it with the startvertex parameter */
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex - This->stateBlock->baseVertexIndex, 0/* NumVertices */, -1 /* indxStart */,
                   0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */, NULL);
-
-
     return WINED3D_OK;
 }
 
 /* TODO: baseVIndex needs to be provided from This->stateBlock->baseVertexIndex when called from d3d8 */
 static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *iface,
                                                            WINED3DPRIMITIVETYPE PrimitiveType,
-                                                           INT baseVIndex, UINT minIndex,
-                                                           UINT NumVertices, UINT startIndex, UINT primCount) {
+                                                           UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount) {
 
     IWineD3DDeviceImpl  *This = (IWineD3DDeviceImpl *)iface;
     UINT                 idxStride = 2;
@@ -4690,9 +4716,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     pIB = This->stateBlock->pIndexData;
     This->stateBlock->streamIsUP = FALSE;
 
-    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, baseVidx=%d, countP=%d\n", This,
+    TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d\n", This,
           PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
-          minIndex, NumVertices, startIndex, baseVIndex, primCount);
+          minIndex, NumVertices, startIndex, primCount);
 
     IWineD3DIndexBuffer_GetDesc(pIB, &IdxBufDsc);
     if (IdxBufDsc.Format == WINED3DFMT_INDEX16) {
@@ -4701,7 +4727,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
         idxStride = 4;
     }
 
-    drawPrimitive(iface, PrimitiveType, primCount, baseVIndex, NumVertices, startIndex,
+    drawPrimitive(iface, PrimitiveType, primCount, 0, NumVertices, startIndex,
                    idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex, NULL);
 
     return WINED3D_OK;
@@ -4726,10 +4752,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
 
-    /* Mark the state dirty until we have nicer tracking */
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
-
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* start vertex */, 0  /* NumVertices */,
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, -This->stateBlock->baseVertexIndex /* start vertex */, 0  /* NumVertices */,
                   0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */, NULL);
 
     /* MSDN specifies stream zero settings must be set to NULL */
@@ -4774,6 +4797,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
 
     /* Mark the state dirty until we have nicer tracking */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
+    This->stateBlock->baseVertexIndex = 0;
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex, NULL);
 
@@ -4788,8 +4813,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
 static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *iface, WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
 
-    /* Mark the state dirty until we have nicer tracking */
+    /* Mark the state dirty until we have nicer tracking
+     * its fine to change baseVertexIndex because that call is only called by ddraw which does not need
+     * that value.
+     */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    This->stateBlock->baseVertexIndex = 0;
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0, DrawPrimStrideData);
     return WINED3D_OK;
 }
@@ -6689,6 +6718,7 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_GetGammaRamp,
     IWineD3DDeviceImpl_SetIndices,
     IWineD3DDeviceImpl_GetIndices,
+    IWineD3DDeviceImpl_SetBasevertexIndex,
     IWineD3DDeviceImpl_SetLight,
     IWineD3DDeviceImpl_GetLight,
     IWineD3DDeviceImpl_SetLightEnable,

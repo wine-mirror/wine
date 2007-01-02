@@ -3697,7 +3697,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
     /* Set the index stream */
     hr = IWineD3DDevice_SetIndices(This->wineD3DDevice,
                                    This->indexbuffer,
-                                   0);
+                                   StartVertex);
 
     /* Set the vertex stream source */
     hr = IWineD3DDevice_SetStreamSource(This->wineD3DDevice,
@@ -3714,7 +3714,6 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     hr = IWineD3DDevice_DrawIndexedPrimitive(This->wineD3DDevice,
                                              PrimitiveType,
-                                             StartVertex,
                                              0 /* minIndex */,
                                              NumVertices,
                                              0 /* StartIndex */,

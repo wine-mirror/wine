@@ -397,6 +397,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD_(void, GetGammaRamp)(THIS_ UINT iSwapChain, WINED3DGAMMARAMP* pRamp) PURE;
     STDMETHOD(SetIndices)(THIS_ struct IWineD3DIndexBuffer * pIndexData,UINT  BaseVertexIndex) PURE;
     STDMETHOD(GetIndices)(THIS_ struct IWineD3DIndexBuffer ** ppIndexData,UINT * pBaseVertexIndex) PURE;
+    STDMETHOD(SetBaseVertexIndex)(THIS_ UINT baseIndex);
     STDMETHOD(SetLight)(THIS_ DWORD  Index,CONST WINED3DLIGHT * pLight) PURE;
     STDMETHOD(GetLight)(THIS_ DWORD  Index,WINED3DLIGHT * pLight) PURE;
     STDMETHOD(SetLightEnable)(THIS_ DWORD  Index,BOOL  Enable) PURE;
@@ -458,7 +459,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(Present)(THIS_ CONST RECT * pSourceRect,CONST RECT * pDestRect,HWND  hDestWindowOverride,CONST RGNDATA * pDirtyRegion) PURE;
     STDMETHOD(Clear)(THIS_ DWORD Count, CONST WINED3DRECT * pRects, DWORD Flags, WINED3DCOLOR Color, float Z, DWORD Stencil) PURE;
     STDMETHOD(DrawPrimitive)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount) PURE;
-    STDMETHOD(DrawIndexedPrimitive)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, INT baseVIdx, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount) PURE;
+    STDMETHOD(DrawIndexedPrimitive)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT minIndex, UINT NumVertices, UINT startIndex, UINT primCount) PURE;
     STDMETHOD(DrawPrimitiveUP)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, CONST void * pVertexStreamZeroData, UINT VertexStreamZeroStride) PURE;
     STDMETHOD(DrawIndexedPrimitiveUP)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT MinVertexIndex, UINT NumVertexIndices, UINT PrimitiveCount, CONST void * pIndexData, WINED3DFORMAT IndexDataFormat, CONST void * pVertexStreamZeroData, UINT VertexStreamZeroStride) PURE;
     STDMETHOD(DrawPrimitiveStrided)(THIS_ WINED3DPRIMITIVETYPE PrimitiveType, UINT PrimitiveCount, WineDirect3DVertexStridedData *DrawPrimStrideData) PURE;
@@ -533,6 +534,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_GetGammaRamp(p,a,b)                      (p)->lpVtbl->GetGammaRamp(p,a,b)
 #define IWineD3DDevice_SetIndices(p,a,b)                        (p)->lpVtbl->SetIndices(p,a,b)
 #define IWineD3DDevice_GetIndices(p,a,b)                        (p)->lpVtbl->GetIndices(p,a,b)
+#define IWineD3DDevice_SetBaseVertexIndex(p, a)                 (p)->lpVtbl->SetBaseVertexIndex(p, a)
 #define IWineD3DDevice_SetLight(p,a,b)                          (p)->lpVtbl->SetLight(p,a,b)
 #define IWineD3DDevice_GetLight(p,a,b)                          (p)->lpVtbl->GetLight(p,a,b)
 #define IWineD3DDevice_SetLightEnable(p,a,b)                    (p)->lpVtbl->SetLightEnable(p,a,b)
@@ -596,7 +598,7 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_Present(p,a,b,c,d)                       (p)->lpVtbl->Present(p,a,b,c,d)
 #define IWineD3DDevice_Clear(p,a,b,c,d,e,f)                     (p)->lpVtbl->Clear(p,a,b,c,d,e,f)
 #define IWineD3DDevice_DrawPrimitive(p,a,b,c)                   (p)->lpVtbl->DrawPrimitive(p,a,b,c)
-#define IWineD3DDevice_DrawIndexedPrimitive(p,a,b,c,d,e,f)      (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e,f)
+#define IWineD3DDevice_DrawIndexedPrimitive(p,a,b,c,d,e)        (p)->lpVtbl->DrawIndexedPrimitive(p,a,b,c,d,e)
 #define IWineD3DDevice_DrawPrimitiveUP(p,a,b,c,d)               (p)->lpVtbl->DrawPrimitiveUP(p,a,b,c,d)
 #define IWineD3DDevice_DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h) (p)->lpVtbl->DrawIndexedPrimitiveUP(p,a,b,c,d,e,f,g,h)
 #define IWineD3DDevice_DrawPrimitiveStrided(p,a,b,c)            (p)->lpVtbl->DrawPrimitiveStrided(p,a,b,c)

@@ -177,9 +177,6 @@ struct IDirect3DDevice8Impl
     shader_handle                *shader_handles;
     shader_handle                *free_shader_handles;
 
-/* FIXME: Move *baseVertexIndex somewhere sensible like wined3d */
-    UINT                          baseVertexIndex;
-
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 };

@@ -1134,7 +1134,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DrawIndexedPrimitive(LPDIRECT3DDEVICE
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n" , This);
 
-    return IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, PrimitiveType, This->baseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
+    return IWineD3DDevice_DrawIndexedPrimitive(This->WineD3DDevice, PrimitiveType, MinVertexIndex, NumVertices, startIndex, primCount);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DrawPrimitiveUP(LPDIRECT3DDEVICE8 iface, D3DPRIMITIVETYPE PrimitiveType,UINT PrimitiveCount,CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride) {
@@ -1307,18 +1307,15 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEV
 static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData, UINT baseVertexIndex) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     TRACE("(%p) Relay\n", This);
-/* FIXME: store base vertex index properly */
-    This->baseVertexIndex = baseVertexIndex;
     return IWineD3DDevice_SetIndices(This->WineD3DDevice,
                                      NULL == pIndexData ? NULL : ((IDirect3DIndexBuffer8Impl *)pIndexData)->wineD3DIndexBuffer,
-                                     0);
+                                     baseVertexIndex);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8** ppIndexData,UINT* pBaseVertexIndex) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IWineD3DIndexBuffer *retIndexData = NULL;
     HRESULT rc = D3D_OK;
-    UINT tmp;
 
     TRACE("(%p) Relay\n", This);
 
@@ -1326,7 +1323,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
         return D3DERR_INVALIDCALL;
     }
 
-    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData, &tmp);
+    rc = IWineD3DDevice_GetIndices(This->WineD3DDevice, &retIndexData, pBaseVertexIndex);
     if (D3D_OK == rc && NULL != retIndexData) {
         IWineD3DIndexBuffer_GetParent(retIndexData, (IUnknown **)ppIndexData);
         IWineD3DIndexBuffer_Release(retIndexData);
@@ -1334,8 +1331,6 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetIndices(LPDIRECT3DDEVICE8 iface, I
         if(rc != D3D_OK)  FIXME("Call to GetIndices failed\n");
         *ppIndexData = NULL;
     }
-/* FIXME: store base vertex index properly */
-    *pBaseVertexIndex = This->baseVertexIndex;
     return rc;
 }
 static HRESULT WINAPI IDirect3DDevice8Impl_CreatePixelShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pFunction, DWORD* ppShader) {

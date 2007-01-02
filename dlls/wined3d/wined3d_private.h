@@ -385,13 +385,12 @@ void drawPrimitive(IWineD3DDevice *iface,
                     int   minIndex,
                     WineDirect3DVertexStridedData *DrawPrimStrideData);
 
-void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, LONG BaseVertexIndex, BOOL *fixup);
+void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, BOOL *fixup);
 
 void primitiveDeclarationConvertToStridedData(
      IWineD3DDevice *iface,
      BOOL useVertexShaderFunction,
      WineDirect3DVertexStridedData *strided,
-     LONG BaseVertexIndex, 
      BOOL *fixup);
 
 void primitiveConvertFVFtoOffset(DWORD thisFVF,

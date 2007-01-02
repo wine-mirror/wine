@@ -204,7 +204,6 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
         primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device,
                 FALSE,
                 &strided,
-                0,
                 &ret /* buffer contains fixed data, ignored here */);
         This->Flags &= ~VBFLAG_LOAD;
 
