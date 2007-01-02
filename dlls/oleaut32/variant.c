@@ -5623,6 +5623,29 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
     VARIANT lv,rv;
     double d;
+    VARIANT tempLeft, tempRight;
+
+    VariantInit(&lv);
+    VariantInit(&rv);
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
+
+    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
+          debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(left) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hres = VARIANT_FetchDispatchValue(left, &tempLeft);
+        if (FAILED(hres)) goto VarImp_Exit;
+        left = &tempLeft;
+    }
+    if ((V_VT(right) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hres = VARIANT_FetchDispatchValue(right, &tempRight);
+        if (FAILED(hres)) goto VarImp_Exit;
+        right = &tempRight;
+    }
 
     leftvt = V_VT(left)&VT_TYPEMASK;
     rightvt = V_VT(right)&VT_TYPEMASK;
@@ -5630,25 +5653,29 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
 
     if (leftExtraFlags != rightExtraFlags)
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto VarImp_Exit;
+    }
     ExtraFlags = leftExtraFlags;
-
-    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
-          debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
 
     /* Native VarImp always returns a error when using any extra
      * flags or if the variants are I8 and INT.
      */
     if ((leftvt == VT_I8 && rightvt == VT_INT) ||
         ExtraFlags != 0)
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto VarImp_Exit;
+    }
 
     /* Determine result type */
     else if ((leftvt == VT_NULL && rightvt == VT_NULL) ||
         (leftvt == VT_NULL && rightvt == VT_EMPTY))
     {
         V_VT(result) = VT_NULL;
-        return S_OK;
+        hres = S_OK;
+        goto VarImp_Exit;
     }
     else if (leftvt == VT_I8 || rightvt == VT_I8)
         resvt = VT_I8;
@@ -5676,9 +5703,6 @@ HRESULT WINAPI VarImp(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     else if (leftvt == VT_BOOL || rightvt == VT_BOOL ||
         leftvt == VT_BSTR || rightvt == VT_BSTR)
         resvt = VT_BOOL;
-
-    VariantInit(&lv);
-    VariantInit(&rv);
 
     /* VT_NULL requires special handling for when the opposite
      * variant is equal to something other than -1.
@@ -5824,6 +5848,8 @@ VarImp_Exit:
 
     VariantClear(&lv);
     VariantClear(&rv);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
 
     return hres;
 }
