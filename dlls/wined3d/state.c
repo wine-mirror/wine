@@ -1821,25 +1821,30 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 }
 
 static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    /* Do not bother applying when we're in rhw mode. vertexdeclaration() will call
-     * transform_world if it switches out of rhw mode. This function is also called
-     * by transform_view below if the view matrix was changed
+    /* This function is called by transform_view below if the view matrix was changed too
+     *
+     * Deliberately no check if the vertex declaration is dirty because the vdecl state
+     * does not always update the world matrix, only on a switch between transformed
+     * and untrannsformed draws. It *may* happen that the world matrix is set 2 times during one
+     * draw, but that should be rather rare and cheaper in total.
      */
-    if(stateblock->wineD3DDevice->last_was_rhw) {
-        return;
-    }
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode");
 
-    /* In the general case, the view matrix is the identity matrix */
-    if (stateblock->wineD3DDevice->view_ident) {
-        glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
+    if(stateblock->wineD3DDevice->last_was_rhw) {
+        glLoadIdentity();
+        checkGLcall("glLoadIdentity()");
     } else {
-        glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-        checkGLcall("glLoadMatrixf");
-        glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
-        checkGLcall("glMultMatrixf");
+        /* In the general case, the view matrix is the identity matrix */
+        if (stateblock->wineD3DDevice->view_ident) {
+            glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
+        } else {
+            glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
+            glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+            checkGLcall("glMultMatrixf");
+        }
     }
 }
 
@@ -2037,8 +2042,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 
     if (!useVertexShaderFunction && transformed) {
-        d3ddevice_set_ortho(device);
-
+        stateblock->wineD3DDevice->last_was_rhw = TRUE;
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
@@ -2046,42 +2050,50 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         /* This turns off the Z scale trick to 'disable' viewport frustum clipping in rhw mode*/
         device->untransformed = TRUE;
 
-        /* Don't bother checking for !useVertexShaderFunction here. If shaders are always on wasrhw will never
-         * be true. If they are switched on and off then knowing that the fixed function matrices are ok makes
-         * those switches cheaper
+        /* Todo for sw shaders: Vertex Shader output is already transformed, so set up identity matrices
+         * Not needed as long as only hw shaders are supported
          */
-        if (wasrhw) {
-            /* switching out of orthogonal mode? have to reapply the modelview matrix.
-             * Only do that when it is not dirty though
-             */
-            if(!isStateDirty(device, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
-                transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock);
-            }
-        }
 
-        if (!useVertexShaderFunction) {
-            device->proj_valid = TRUE;
-        }
-
-        /* Vertex Shader output is already transformed, so set up identity matrices */
+        /* This sets the shader output position correction constants.
+         * TODO: Move to the viewport state
+         */
         if (useVertexShaderFunction) {
             device->posFixup[1] = device->render_offscreen ? -1.0 : 1.0;
             device->posFixup[2] = 0.9 / stateblock->viewport.Width;
             device->posFixup[3] = -0.9 / stateblock->viewport.Height;
         }
-        device->last_was_rhw = FALSE;
     }
 
-    /* TODO: Move this mainly to the viewport state and only apply when the vp has changed
-     * or transformed / untransformed was switched
+    /* Don't have to apply the matrices when vertex shaders are used. When vshaders are turned
+     * off this function will be called again anyway to make sure they're properly set
      */
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
-        transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock);
-    }
+    if(!useVertexShaderFunction) {
+        /* TODO: Move this mainly to the viewport state and only apply when the vp has changed
+         * or transformed / untransformed was switched
+         */
+       if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
+            transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock);
+        }
+        /* World matrix needs reapplication here only if we're switching between rhw and non-rhw
+         * mode.
+         *
+         * If a vertex shader is used, the world matrix changed and then vertex shader unbound
+         * this check will fail and the matrix not applied again. This is OK because a simple
+         * world matrix change reapplies the matrix - These checks here are only to satisfy the
+         * needs of the vertex declaration.
+         *
+         * World and view matrix go into the same gl matrix, so only apply them when neither is
+         * dirty
+         */
+        if(transformed != wasrhw &&
+           !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))) &&
+           !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_VIEW))) {
+            transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock);
+        }
+      }
 
-    /* Setup fogging */
     if(updateFog) {
-        state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock);
+    state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock);
     }
 }
 

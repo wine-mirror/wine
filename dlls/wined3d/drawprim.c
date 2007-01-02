@@ -155,22 +155,6 @@ static const GLfloat invymat[16] = {
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f};
 
-void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
-    /* If the last draw was transformed as well, no need to reapply all the matrixes */
-    if ( (!This->last_was_rhw) || (This->viewport_changed) ) {
-        This->last_was_rhw = TRUE;
-        This->viewport_changed = FALSE;
-
-        /* Transformed already into viewport coordinates, so we do not need transform
-            matrices. Reset all matrices to identity and leave the default matrix in world
-            mode.                                                                         */
-        glMatrixMode(GL_MODELVIEW);
-        checkGLcall("glMatrixMode(GL_MODELVIEW)");
-        glLoadIdentity();
-        checkGLcall("glLoadIdentity");
-    }
-}
-
 static BOOL fixed_get_input(
     BYTE usage, BYTE usage_idx,
     unsigned int* regnum) {

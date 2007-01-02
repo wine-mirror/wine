@@ -1936,7 +1936,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     }
 
     /* Initialize the current view state */
-    This->proj_valid = 0;
     This->view_ident = 1;
     This->last_was_rhw = 0;
     glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights);
@@ -5877,7 +5876,7 @@ static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
         This->depth_copy_state = WINED3D_DCS_COPY;
     }
     This->last_was_rhw = FALSE;
-    This->proj_valid = FALSE;
+    /* Viewport state will reapply the projection matrix for now */
     IWineD3DDeviceImpl_MarkStateDirty(This, WINED3DRS_CULLMODE);
 
     /* Restore recording */
