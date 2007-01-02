@@ -1943,7 +1943,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          usePixelShaderFunction = FALSE;
     IWineD3DSwapChainImpl         *swapchain;
     int                           i;
-    BOOL                          fixup = FALSE;
+    BOOL                          fixup;
     DWORD                         dirtyState, idx;
     BYTE                          shift;
 
@@ -1980,6 +1980,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         StateTable[dirtyState].apply(dirtyState, This->stateBlock);
     }
     This->numDirtyEntries = 0; /* This makes the whole list clean */
+    fixup = This->streamFixedUp;
 
     if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         check_fbo_status(iface);
@@ -1989,44 +1990,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         depth_copy(iface);
     }
     This->depth_copy_state = WINED3D_DCS_INITIAL;
-
-    if(This->up_strided) {
-
-        /* Note: this is a ddraw fixed-function code path */
-
-        TRACE("================ Strided Input ===================\n");
-		memcpy(&This->strided_streams, This->up_strided, sizeof(This->strided_streams));
-        drawPrimitiveTraceDataLocations(&This->strided_streams);
-        fixup = FALSE;
-    }
-
-    else if (This->stateBlock->vertexDecl || This->stateBlock->vertexShader) {
-
-        /* Note: This is a fixed function or shader codepath.
-         * This means it must handle both types of strided data.
-         * Shaders must go through here to zero the strided data, even if they
-         * don't set any declaration at all */
-
-        TRACE("================ Vertex Declaration  ===================\n");
-        memset(&This->strided_streams, 0, sizeof(This->strided_streams));
-
-        if (This->stateBlock->vertexDecl != NULL ||
-            ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration != NULL)
-
-            primitiveDeclarationConvertToStridedData(iface, useVertexShaderFunction,
-                &This->strided_streams, &fixup);
-
-    } else {
-
-        /* Note: This codepath is not reachable from d3d9 (see fvf->decl9 conversion)
-         * It is reachable through d3d8, but only for fixed-function.
-         * It will not work properly for shaders. */
-
-        TRACE("================ FVF ===================\n");
-        memset(&This->strided_streams, 0, sizeof(This->strided_streams));
-        primitiveConvertToStridedData(iface, &This->strided_streams, &fixup);
-        drawPrimitiveTraceDataLocations(&This->strided_streams);
-    }
 
     /* Setup transform matrices and sort out */
     primitiveInitState(iface, &This->strided_streams, useVertexShaderFunction, &lighting_changed, &lighting_original);

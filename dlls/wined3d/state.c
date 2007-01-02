@@ -1857,8 +1857,49 @@ static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
 	WARN("World matrix 1 - 255 not supported yet\n");
 }
 
-static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
-    TRACE("To be filled later\n");
+static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    BOOL useVertexShaderFunction = FALSE;
+    stateblock->wineD3DDevice->streamFixedUp = FALSE;
+ 	
+    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
+     * here simply check whether a shader was set, or the user disabled shaders
+     */
+    if (stateblock->wineD3DDevice->vs_selected_mode != SHADER_NONE && stateblock->vertexShader && 
+       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) 
+        useVertexShaderFunction = TRUE;
+
+        if(stateblock->wineD3DDevice->up_strided) {
+
+        /* Note: this is a ddraw fixed-function code path */
+        TRACE("================ Strided Input ===================\n");
+        memcpy(&stateblock->wineD3DDevice->strided_streams, stateblock->wineD3DDevice->up_strided, sizeof(stateblock->wineD3DDevice->strided_streams));
+        stateblock->wineD3DDevice->streamFixedUp = FALSE;
+    }
+    else if (stateblock->vertexDecl || stateblock->vertexShader) {
+        /* Note: This is a fixed function or shader codepath.
+         * This means it must handle both types of strided data.
+         * Shaders must go through here to zero the strided data, even if they
+         * don't set any declaration at all
+         */
+        TRACE("================ Vertex Declaration  ===================\n");
+        memset(&stateblock->wineD3DDevice->strided_streams, 0, sizeof(stateblock->wineD3DDevice->strided_streams));
+ 
+        if (stateblock->vertexDecl != NULL ||
+            ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->vertexDeclaration != NULL) {
+            
+            primitiveDeclarationConvertToStridedData((IWineD3DDevice *) stateblock->wineD3DDevice, useVertexShaderFunction, 
+                &stateblock->wineD3DDevice->strided_streams, &stateblock->wineD3DDevice->streamFixedUp);
+        }
+    } else {
+        /* Note: This codepath is not reachable from d3d9 (see fvf->decl9 conversion)
+         * It is reachable through d3d8, but only for fixed-function.
+         * It will not work properly for shaders.
+         */
+        TRACE("================ FVF ===================\n");
+        memset(&stateblock->wineD3DDevice->strided_streams, 0, sizeof(stateblock->wineD3DDevice->strided_streams));
+        primitiveConvertToStridedData((IWineD3DDevice *) stateblock->wineD3DDevice, &stateblock->wineD3DDevice->strided_streams,
+ 									   &stateblock->wineD3DDevice->streamFixedUp);
+     }
 }
 
 const struct StateEntry StateTable[] =

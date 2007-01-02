@@ -669,6 +669,7 @@ typedef struct IWineD3DDeviceImpl
     /* Stream source management */
     WineDirect3DVertexStridedData strided_streams;
     WineDirect3DVertexStridedData *up_strided;
+    BOOL                      streamFixedUp;
 
 } IWineD3DDeviceImpl;
 
