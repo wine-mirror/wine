@@ -3423,6 +3423,7 @@ BOOL        WINAPI GetCharWidth32A(HDC,UINT,UINT,LPINT);
 BOOL        WINAPI GetCharWidth32W(HDC,UINT,UINT,LPINT);
 #define     GetCharWidth32 WINELIB_NAME_AW(GetCharWidth32)
 BOOL        WINAPI GetCharWidthA(HDC,UINT,UINT,LPINT);
+BOOL        WINAPI GetCharWidthI(HDC,UINT,UINT,LPWORD,LPINT);
 BOOL        WINAPI GetCharWidthW(HDC,UINT,UINT,LPINT);
 #define     GetCharWidth WINELIB_NAME_AW(GetCharWidth)
 BOOL        WINAPI GetCharWidthFloatA(HDC,UINT,UINT,PFLOAT);

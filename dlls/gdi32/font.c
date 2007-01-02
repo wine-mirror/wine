@@ -3186,11 +3186,44 @@ BOOL WINAPI EnableEUDC(BOOL fEnableEUDC)
 
 /***********************************************************************
  *           GetCharWidthI    (GDI32.@)
+ *
+ * Retrieve widths of characters.
+ *
+ * PARAMS
+ *  hdc    [I] Handle to a device context.
+ *  first  [I] First glyph in range to query.
+ *  count  [I] Number of glyph indices to query.
+ *  glyphs [I] Array of glyphs to query.
+ *  buffer [O] Buffer to receive character widths.
+ *
+ * NOTES
+ *  Only works with TrueType fonts.
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
  */
-BOOL WINAPI GetCharWidthI(HDC hdc, UINT giFirst, UINT cgi, LPWORD pgi, LPINT lpBuffer)
+BOOL WINAPI GetCharWidthI(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPINT buffer)
 {
-    FIXME("(%p, %d, %d, %p, %p): stub\n", hdc, giFirst, cgi, pgi, lpBuffer);
-    return FALSE;
+    ABC *abc;
+    unsigned int i;
+
+    TRACE("(%p, %d, %d, %p, %p)\n", hdc, first, count, glyphs, buffer);
+
+    if (!(abc = HeapAlloc(GetProcessHeap(), 0, count * sizeof(ABC))))
+        return FALSE;
+
+    if (!GetCharABCWidthsI(hdc, first, count, glyphs, abc))
+    {
+        HeapFree(GetProcessHeap(), 0, abc);
+        return FALSE;
+    }
+
+    for (i = 0; i < count; i++)
+        buffer[i] = abc->abcA + abc->abcB + abc->abcC;
+
+    HeapFree(GetProcessHeap(), 0, abc);
+    return TRUE;
 }
 
 /***********************************************************************
