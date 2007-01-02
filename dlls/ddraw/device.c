@@ -808,7 +808,7 @@ static HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_1_AddViewport(IDirect3DDevice *iface,
                                         IDirect3DViewport *Direct3DViewport)
 {
-    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice2, iface);
+    ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
     IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, Direct3DViewport);
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DDevice3 interface.\n", This, vp);
     return IDirect3DDevice3_AddViewport(ICOM_INTERFACE(This, IDirect3DDevice3),
@@ -871,10 +871,10 @@ Thunk_IDirect3DDeviceImpl_2_DeleteViewport(IDirect3DDevice2 *iface,
 
 static HRESULT WINAPI
 Thunk_IDirect3DDeviceImpl_1_DeleteViewport(IDirect3DDevice *iface,
-                                           IDirect3DViewport *Direct3DViewport2)
+                                           IDirect3DViewport *Direct3DViewport)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice, iface);
-    IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, Direct3DViewport2);
+    IDirect3DViewportImpl *vp = ICOM_OBJECT(IDirect3DViewportImpl, IDirect3DViewport3, Direct3DViewport);
     TRACE_(ddraw_thunk)("(%p)->(%p) thunking to IDirect3DDevice3 interface.\n", This, vp);
     return IDirect3DDevice3_DeleteViewport(ICOM_INTERFACE(This, IDirect3DDevice3),
                                            ICOM_INTERFACE(vp, IDirect3DViewport3));
