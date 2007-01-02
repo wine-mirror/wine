@@ -177,11 +177,12 @@ STRING     \"[^\n"]+\"
 <INITIAL>whatis|whati|what		{ BEGIN(NOCMD); return tWHATIS; }
 <INITIAL,NOPROCESS>run|ru|r     	{ BEGIN(ASTRING_EXPECTED); return tRUN;}
 <INITIAL>detach|detac|deta|det   	{ BEGIN(NOCMD); return tDETACH; }
-<INITIAL>maintenance|maint              { BEGIN(MAINT_CMD); return tMAINTENANCE; }
+<INITIAL,NOPROCESS>maintenance|maint    { BEGIN(MAINT_CMD); return tMAINTENANCE; }
 <INITIAL>minidump|mdmp                  { BEGIN(PATH_EXPECTED); return tMINIDUMP; }
 <INITIAL>echo				{ BEGIN(ASTRING_EXPECTED); return tECHO; }
 <NOPROCESS>attach|attac|atta|att 	{ BEGIN(NOCMD); return tATTACH; }
-<INFO_CMD>share|shar|sha		{ return tSHARE; }
+<INFO_CMD>share|shar|sha                { return tSHARE; }
+<MAINT_CMD>module|modul|mod             { BEGIN(ASTRING_EXPECTED); return tMODULE; }
 <INFO_CMD>locals|local|loca|loc		{ return tLOCAL; }
 <INFO_CMD>class|clas|cla                { return tCLASS; }
 <INFO_CMD>process|proces|proce|proc   	{ return tPROCESS; }

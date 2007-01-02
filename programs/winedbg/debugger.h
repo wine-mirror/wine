@@ -393,6 +393,9 @@ extern BOOL             dbg_attach_debuggee(DWORD pid, BOOL cofe);
 extern void             minidump_write(const char*, const EXCEPTION_RECORD*);
 extern enum dbg_start   minidump_reload(int argc, char* argv[]);
 
+  /* tgt_module.c */
+extern enum dbg_start   tgt_module_load(const char* name, BOOL keep);
+
   /* types.c */
 extern void             print_value(const struct dbg_lvalue* addr, char format, int level);
 extern int              types_print_type(const struct dbg_type*, BOOL details);

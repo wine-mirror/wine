@@ -25,6 +25,7 @@ C_SRCS = \
 	stack.c \
 	tgt_active.c \
 	tgt_minidump.c \
+	tgt_module.c \
 	types.c \
 	winedbg.c
 

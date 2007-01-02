@@ -54,8 +54,8 @@ static int dbg_error(const char*);
 %token tENABLE tDISABLE tBREAK tHBREAK tWATCH tDELETE tSET tPRINT tEXAM
 %token tABORT tECHO
 %token tCLASS tMAPS tSTACK tSEGMENTS tSYMBOL tREGS tALLREGS tWND tQUEUE tLOCAL tEXCEPTION
-%token tPROCESS tTHREAD tMODREF tEOL tEOF
-%token tFRAME tSHARE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
+%token tPROCESS tTHREAD tEOL tEOF
+%token tFRAME tSHARE tMODULE tCOND tDISPLAY tUNDISPLAY tDISASSEMBLE
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
 %token <string> tPATH tIDENTIFIER tSTRING tDEBUGSTR tINTVAR
 %token <integer> tNUM tFORMAT
@@ -285,6 +285,8 @@ info_command:
 
 maintenance_command:
       tMAINTENANCE tTYPE        { print_types(); }
+    | tMAINTENANCE tMODULE tSTRING { tgt_module_load($3, FALSE); }
+    | tMAINTENANCE '*' tMODULE tSTRING { tgt_module_load($4, TRUE); }
     ;
 
 noprocess_state:
