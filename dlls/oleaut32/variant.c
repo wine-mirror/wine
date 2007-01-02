@@ -5109,6 +5109,15 @@ HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     VARTYPE leftvt,rightvt;
     VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
     VARIANT lv,rv;
+    VARIANT tempLeft, tempRight;
+
+    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
+          debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    VariantInit(&lv);
+    VariantInit(&rv);
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
 
     leftvt = V_VT(left)&VT_TYPEMASK;
     rightvt = V_VT(right)&VT_TYPEMASK;
@@ -5116,11 +5125,11 @@ HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
 
     if (leftExtraFlags != rightExtraFlags)
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto end;
+    }
     ExtraFlags = leftExtraFlags;
-
-    TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
-          debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
 
     /* Native VarIdiv always returns a error when using any extra
      * flags or if the variant combination is I8 and INT.
@@ -5129,13 +5138,17 @@ HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         (leftvt == VT_INT && rightvt == VT_I8) ||
         (rightvt == VT_EMPTY && leftvt != VT_NULL) ||
         ExtraFlags != 0)
-        return DISP_E_BADVARTYPE;
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto end;
+    }
 
     /* Determine variant type */
     else if (leftvt == VT_NULL || rightvt == VT_NULL)
     {
         V_VT(result) = VT_NULL;
-        return S_OK;
+        hres = S_OK;
+        goto end;
     }
     else if (leftvt == VT_I8 || rightvt == VT_I8)
         resvt = VT_I8;
@@ -5160,26 +5173,16 @@ HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     else if (leftvt == VT_UI1 || rightvt == VT_UI1)
         resvt = VT_UI1;
     else
-        return DISP_E_BADVARTYPE;
-
-    VariantInit(&lv);
-    VariantInit(&rv);
+    {
+        hres = DISP_E_BADVARTYPE;
+        goto end;
+    }
 
     /* coerce to the result type */
     hres = VariantChangeType(&lv, left, 0, resvt);
-    if (hres != S_OK)
-    {
-        VariantClear(&lv);
-        VariantClear(&rv);
-        return hres;
-    }
+    if (hres != S_OK) goto end;
     hres = VariantChangeType(&rv, right, 0, resvt);
-    if (hres != S_OK)
-    {
-        VariantClear(&lv);
-        VariantClear(&rv);
-        return hres;
-    }
+    if (hres != S_OK) goto end;
 
     /* do the math */
     V_VT(result) = resvt;
@@ -5226,8 +5229,11 @@ HRESULT WINAPI VarIdiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
             leftvt,rightvt);
     }
 
+end:
     VariantClear(&lv);
     VariantClear(&rv);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
 
     return hres;
 }
