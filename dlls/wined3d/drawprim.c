@@ -227,116 +227,6 @@ void d3ddevice_set_ortho(IWineD3DDeviceImpl *This) {
         }
     }
 }
-/* Setup views - Transformed & lit if RHW, else untransformed.
-       Only unlit if Normals are supplied
-    Returns: Whether to restore lighting afterwards           */
-static void primitiveInitState(
-    IWineD3DDevice *iface,
-    WineDirect3DVertexStridedData* strided,
-    BOOL useVS,
-    BOOL* lighting_changed,
-    BOOL* lighting_original) {
-
-    BOOL fixed_vtx_transformed =
-       (strided->u.s.position.lpData != NULL || strided->u.s.position.VBO != 0 ||
-        strided->u.s.position2.lpData != NULL || strided->u.s.position2.VBO != 0) && 
-        strided->u.s.position_transformed;
-
-    BOOL fixed_vtx_lit = 
-        strided->u.s.normal.lpData == NULL && strided->u.s.normal.VBO == 0 &&
-        strided->u.s.normal2.lpData == NULL && strided->u.s.normal2.VBO == 0;
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    *lighting_changed = FALSE;
-
-    /* If no normals, DISABLE lighting otherwise, don't touch lighing as it is
-       set by the appropriate render state. Note Vertex Shader output is already lit */
-    if (fixed_vtx_lit || useVS) {
-        *lighting_changed = TRUE;
-        *lighting_original = glIsEnabled(GL_LIGHTING);
-        glDisable(GL_LIGHTING);
-        checkGLcall("glDisable(GL_LIGHTING);");
-        TRACE("Disabled lighting, old state = %d\n", *lighting_original);
-    }
-
-    if (!useVS && fixed_vtx_transformed) {
-        d3ddevice_set_ortho(This);
-
-    } else {
-
-        /* Untransformed, so relies on the view and projection matrices */
-        This->untransformed = TRUE;
-
-        if (!useVS && (This->last_was_rhw || !This->modelview_valid)) {
-            /* Only reapply when have to */
-            This->modelview_valid = TRUE;
-            glMatrixMode(GL_MODELVIEW);
-            checkGLcall("glMatrixMode");
-
-            /* In the general case, the view matrix is the identity matrix */
-            if (This->view_ident) {
-                glLoadMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
-                checkGLcall("glLoadMatrixf");
-            } else {
-                glLoadMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-                checkGLcall("glLoadMatrixf");
-                glMultMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
-                checkGLcall("glMultMatrixf");
-            }
-        }
-
-        if (!useVS && (This->last_was_rhw || !This->proj_valid)) {
-            /* Only reapply when have to */
-            This->proj_valid = TRUE;
-            glMatrixMode(GL_PROJECTION);
-            checkGLcall("glMatrixMode");
-
-            /* The rule is that the window coordinate 0 does not correspond to the
-               beginning of the first pixel, but the center of the first pixel.
-               As a consequence if you want to correctly draw one line exactly from
-               the left to the right end of the viewport (with all matrices set to
-               be identity), the x coords of both ends of the line would be not
-               -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
-               instead.                                                               */
-            glLoadIdentity();
-
-            glTranslatef(0.9 / This->stateBlock->viewport.Width, -0.9 / This->stateBlock->viewport.Height, 0);
-            checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
-
-            /* D3D texture coordinates are flipped compared to OpenGL ones, so
-             * render everything upside down when rendering offscreen. */
-            if (This->render_offscreen) {
-                glMultMatrixf(invymat);
-                checkGLcall("glMultMatrixf(invymat)");
-            }
-            glMultMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
-            checkGLcall("glLoadMatrixf");
-        }
-
-        /* Vertex Shader output is already transformed, so set up identity matrices */
-        if (useVS) {
-            This->posFixup[1] = This->render_offscreen ? -1.0 : 1.0;
-            This->posFixup[2] = 0.9 / This->stateBlock->viewport.Width;
-            This->posFixup[3] = -0.9 / This->stateBlock->viewport.Height;
-        }
-        This->last_was_rhw = FALSE;
-
-        /* Setup fogging */
-        if (useVS && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->usesFog) {
-            /* In D3D vertex shader return the 'final' fog value, while in OpenGL it is the 'input' fog value.
-             * The code below 'disables' the OpenGL postprocessing by setting the formula to '1'. */
-            glFogi(GL_FOG_MODE, GL_LINEAR);
-            glFogf(GL_FOG_START, 1.0f);
-            glFogf(GL_FOG_END, 0.0f);
-
-        } else if(This->stateBlock->renderState[WINED3DRS_FOGENABLE] 
-                  && This->stateBlock->renderState[WINED3DRS_FOGVERTEXMODE] != WINED3DFOG_NONE) {
-            /* Reapply the fog */
-            StateTable[STATE_RENDER(WINED3DRS_FOGENABLE)].apply(STATE_RENDER(WINED3DRS_FOGSTART), This->stateBlock);
-        }
-    }
-}
 
 static BOOL fixed_get_input(
     BYTE usage, BYTE usage_idx,
@@ -1947,11 +1837,9 @@ void drawPrimitive(IWineD3DDevice *iface,
     DWORD                         dirtyState, idx;
     BYTE                          shift;
 
-    BOOL lighting_changed, lighting_original = FALSE;
-
-    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
+    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
      * here simply check whether a shader was set, or the user disabled shaders */
-    if (This->vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader && 
+    if (This->vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader &&
         ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL) 
         useVertexShaderFunction = TRUE;
 
@@ -1991,9 +1879,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     }
     This->depth_copy_state = WINED3D_DCS_INITIAL;
 
-    /* Setup transform matrices and sort out */
-    primitiveInitState(iface, &This->strided_streams, useVertexShaderFunction, &lighting_changed, &lighting_original);
-
     /* Now initialize the materials state */
     init_materials(iface, (This->strided_streams.u.s.diffuse.lpData != NULL || This->strided_streams.u.s.diffuse.VBO != 0));
 
@@ -2008,13 +1893,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction,
             &This->strided_streams, StartVertexIndex, numberOfVertices, calculatedNumberOfindices, glPrimType,
             idxData, idxSize, minIndex, StartIdx, fixup);
-    }
-
-    /* If vertex shaders or no normals, restore previous lighting state */
-    if (lighting_changed) {
-        if (lighting_original) glEnable(GL_LIGHTING);
-        else glDisable(GL_LIGHTING);
-        TRACE("Restored lighting to original state\n");
     }
 
     /* Finshed updating the screen, restore lock */

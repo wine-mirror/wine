@@ -71,6 +71,8 @@ static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+#if 0
+/* if 0ed because it will be revived later */
 static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
     /* TODO: Lighting is only enabled if Vertex normals are passed by the application,
@@ -85,6 +87,7 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         checkGLcall("glDisable GL_LIGHTING");
     }
 }
+#endif
 
 static void state_zenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     switch ((WINED3DZBUFFERTYPE) stateblock->renderState[WINED3DRS_ZENABLE]) {
@@ -646,7 +649,6 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     tmpvalue.d = stateblock->renderState[WINED3DRS_FOGEND];
     fogend = tmpvalue.f;
 
-#if 0
     /* Activate when vertex shaders are in the state table */
     if(stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function &&
        ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
@@ -656,17 +658,14 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         fogend = 0.0;
         stateblock->wineD3DDevice->last_was_foggy_shader = TRUE;
     }
-#endif
-
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
      */
-    /* else */ if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+	else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
         glHint(GL_FOG_HINT, GL_FASTEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
-#if 0
         stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
-#endif
+
         switch (stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
             /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
              * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
@@ -727,9 +726,8 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     } else {
         glHint(GL_FOG_HINT, GL_NICEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_NICEST)");
-#if 0
         stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
-#endif
+
         switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
             case D3DFOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
@@ -1851,29 +1849,48 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
     glPopMatrix();
     checkGLcall("glPopMatrix()");
+
+    /* Call the vdecl update. Will be tidied up later */
+    StateTable[STATE_VDECL].apply(STATE_VDECL, stateblock);
 }
 
 static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
 	WARN("World matrix 1 - 255 not supported yet\n");
 }
 
+static const GLfloat invymat[16] = {
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, -1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f};
+
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    BOOL useVertexShaderFunction = FALSE;
-    stateblock->wineD3DDevice->streamFixedUp = FALSE;
- 	
-    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software - 
+    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
+    BOOL transformed, lit;
+    /* Some stuff is in the device until we have per context tracking */
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+
+    device->streamFixedUp = FALSE;
+
+    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
      * here simply check whether a shader was set, or the user disabled shaders
      */
-    if (stateblock->wineD3DDevice->vs_selected_mode != SHADER_NONE && stateblock->vertexShader && 
-       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) 
+    if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
+       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
         useVertexShaderFunction = TRUE;
 
-        if(stateblock->wineD3DDevice->up_strided) {
+        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog != device->last_was_foggy_shader) {
+            updateFog = TRUE;
+        }
+    } else if(device->last_was_foggy_shader) {
+        updateFog = TRUE;
+    }
+
+    if(device->up_strided) {
 
         /* Note: this is a ddraw fixed-function code path */
         TRACE("================ Strided Input ===================\n");
-        memcpy(&stateblock->wineD3DDevice->strided_streams, stateblock->wineD3DDevice->up_strided, sizeof(stateblock->wineD3DDevice->strided_streams));
-        stateblock->wineD3DDevice->streamFixedUp = FALSE;
+        memcpy(&device->strided_streams, device->up_strided, sizeof(device->strided_streams));
     }
     else if (stateblock->vertexDecl || stateblock->vertexShader) {
         /* Note: This is a fixed function or shader codepath.
@@ -1882,13 +1899,13 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
          * don't set any declaration at all
          */
         TRACE("================ Vertex Declaration  ===================\n");
-        memset(&stateblock->wineD3DDevice->strided_streams, 0, sizeof(stateblock->wineD3DDevice->strided_streams));
- 
+        memset(&device->strided_streams, 0, sizeof(device->strided_streams));
+
         if (stateblock->vertexDecl != NULL ||
             ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->vertexDeclaration != NULL) {
-            
-            primitiveDeclarationConvertToStridedData((IWineD3DDevice *) stateblock->wineD3DDevice, useVertexShaderFunction, 
-                &stateblock->wineD3DDevice->strided_streams, &stateblock->wineD3DDevice->streamFixedUp);
+
+            primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device, useVertexShaderFunction,
+                &device->strided_streams, &device->streamFixedUp);
         }
     } else {
         /* Note: This codepath is not reachable from d3d9 (see fvf->decl9 conversion)
@@ -1896,10 +1913,97 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
          * It will not work properly for shaders.
          */
         TRACE("================ FVF ===================\n");
-        memset(&stateblock->wineD3DDevice->strided_streams, 0, sizeof(stateblock->wineD3DDevice->strided_streams));
-        primitiveConvertToStridedData((IWineD3DDevice *) stateblock->wineD3DDevice, &stateblock->wineD3DDevice->strided_streams,
- 									   &stateblock->wineD3DDevice->streamFixedUp);
+        memset(&device->strided_streams, 0, sizeof(device->strided_streams));
+        primitiveConvertToStridedData((IWineD3DDevice *) device, &device->strided_streams,
+									   &device->streamFixedUp);
      }
+    /* Do I have to use ? TRUE : FALSE ? Or can I rely on 15==15 beeing equal to TRUE(=1)? */
+    transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
+                    device->strided_streams.u.s.position.VBO != 0) &&
+                    device->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
+    lit = device->strided_streams.u.s.normal.lpData == NULL &&
+          device->strided_streams.u.s.normal.VBO == 0;
+
+    if(transformed != device->last_was_rhw && !useVertexShaderFunction) {
+        updateFog = TRUE;
+    }
+
+    /* TODO: The vertex declaration changes lighting, but lighting doesn't affect the vertex declaration and the
+     * stream sources. This can be handled nicer
+     */
+    if(stateblock->renderState[WINED3DRS_LIGHTING] && !lit) {
+        glEnable(GL_LIGHTING);
+        checkGLcall("glEnable(GL_LIGHTING)");
+    } else {
+        glDisable(GL_LIGHTING);
+        checkGLcall("glDisable(GL_LIGHTING");
+    }
+
+    if (!useVertexShaderFunction && transformed) {
+        d3ddevice_set_ortho(device);
+
+    } else {
+
+        /* Untransformed, so relies on the view and projection matrices */
+        device->untransformed = TRUE;
+
+        if (!useVertexShaderFunction) {
+            device->modelview_valid = TRUE;
+            glMatrixMode(GL_MODELVIEW);
+            checkGLcall("glMatrixMode");
+
+            /* In the general case, the view matrix is the identity matrix */
+            if (device->view_ident) {
+                glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+                checkGLcall("glLoadMatrixf");
+            } else {
+                glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+                checkGLcall("glLoadMatrixf");
+                glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+                checkGLcall("glMultMatrixf");
+            }
+        }
+
+        if (!useVertexShaderFunction) {
+            device->proj_valid = TRUE;
+            glMatrixMode(GL_PROJECTION);
+            checkGLcall("glMatrixMode");
+
+            /* The rule is that the window coordinate 0 does not correspond to the
+               beginning of the first pixel, but the center of the first pixel.
+               As a consequence if you want to correctly draw one line exactly from
+               the left to the right end of the viewport (with all matrices set to
+               be identity), the x coords of both ends of the line would be not
+               -1 and 1 respectively but (-1-1/viewport_widh) and (1-1/viewport_width)
+               instead.                                                               */
+            glLoadIdentity();
+
+            glTranslatef(0.9 / stateblock->viewport.Width, -0.9 / stateblock->viewport.Height, 0);
+            checkGLcall("glTranslatef (0.9 / width, -0.9 / height, 0)");
+
+            /* D3D texture coordinates are flipped compared to OpenGL ones, so
+             * render everything upside down when rendering offscreen. */
+            if (device->render_offscreen) {
+                glMultMatrixf(invymat);
+                checkGLcall("glMultMatrixf(invymat)");
+            }
+            glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_PROJECTION].u.m[0][0]);
+            checkGLcall("glLoadMatrixf");
+        }
+
+        /* Vertex Shader output is already transformed, so set up identity matrices */
+        if (useVertexShaderFunction) {
+            device->posFixup[1] = device->render_offscreen ? -1.0 : 1.0;
+            device->posFixup[2] = 0.9 / stateblock->viewport.Width;
+            device->posFixup[3] = -0.9 / stateblock->viewport.Height;
+        }
+        device->last_was_rhw = FALSE;
+    }
+
+    /* Setup fogging */
+    if(updateFog) {
+        state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock);
+    }
 }
 
 const struct StateEntry StateTable[] =
@@ -2043,7 +2147,7 @@ const struct StateEntry StateTable[] =
     { /*134, WINED3DRS_WRAP6                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
-    { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING) /* Vertex decl! */,state_lighting      },
+    { /*137, WINED3DRS_LIGHTING                     */      STATE_VDECL,                                        vertexdeclaration   },
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_extents       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       },
     { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
@@ -2404,7 +2508,7 @@ const struct StateEntry StateTable[] =
       /* Transform states follow                    */
     { /*  1, undefined                              */      0,                                                  state_undefined     },
     { /*  2, WINED3DTS_VIEW                         */      STATE_TRANSFORM(WINED3DTS_VIEW),                    transform_view      },
-    { /*  3, WINED3DTS_PROJECTION                   */      STATE_TRANSFORM(WINED3DTS_PROJECTION),              state_undefined     },
+    { /*  3, WINED3DTS_PROJECTION                   */      STATE_VDECL,                                        vertexdeclaration   },
     { /*  4, undefined                              */      0,                                                  state_undefined     },
     { /*  5, undefined                              */      0,                                                  state_undefined     },
     { /*  6, undefined                              */      0,                                                  state_undefined     },
@@ -2659,7 +2763,7 @@ const struct StateEntry StateTable[] =
     { /*254, undefined                              */      0,                                                  state_undefined     },
     { /*255, undefined                              */      0,                                                  state_undefined     },
       /* End huge gap */
-    { /*256, WINED3DTS_WORLDMATRIX(0)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)),          state_undefined     },
+    { /*256, WINED3DTS_WORLDMATRIX(0)               */      STATE_VDECL,                                        vertexdeclaration   },
     { /*257, WINED3DTS_WORLDMATRIX(1)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(1)),          transform_worldex   },
     { /*258, WINED3DTS_WORLDMATRIX(2)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(2)),          transform_worldex   },
     { /*259, WINED3DTS_WORLDMATRIX(3)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(3)),          transform_worldex   },

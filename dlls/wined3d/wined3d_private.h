@@ -581,6 +581,7 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    last_was_notclipped;
     BOOL                    untransformed;
     BOOL                    last_was_pshader;
+    BOOL                    last_was_foggy_shader;
 
     /* State block related */
     BOOL                    isRecordingState;

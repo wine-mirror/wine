@@ -2366,21 +2366,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
     /* Capture the times we can just ignore the change for now */
     if (d3dts == WINED3DTS_WORLDMATRIX(0)) {
         This->modelview_valid = FALSE;
-        return WINED3D_OK;
-
-    } else if (d3dts == WINED3DTS_PROJECTION) {
-        This->proj_valid = FALSE;
-        return WINED3D_OK;
-
-    } else if (d3dts >= WINED3DTS_WORLDMATRIX(1) && d3dts <= WINED3DTS_WORLDMATRIX(255)) {
-        /* Indexed Vertex Blending Matrices 256 -> 511  */
-        /* Use arb_vertex_blend or NV_VERTEX_WEIGHTING? */
-        FIXME("WINED3DTS_WORLDMATRIX(1..255) not handled\n");
-        return WINED3D_OK;
-    }
-
-    if (d3dts >= WINED3DTS_TEXTURE0 && d3dts <= WINED3DTS_TEXTURE7) { /* handle texture matrices */
-        /* This is now set with the texture unit states, it may be a good idea to flag the change though! */
     } else if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrice */
         This->view_ident = !memcmp(lpmatrix, identity, 16 * sizeof(float));
         /* Handled by the state manager */
