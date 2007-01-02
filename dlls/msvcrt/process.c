@@ -147,7 +147,7 @@ static char* msvcrt_valisttos(const char* arg0, va_list alist, char delim)
 # endif
 #endif
 
-  if (!arg0 && !delim)
+  if (!arg0)
   {
       /* Return NULL for an empty environment list */
       return NULL;
