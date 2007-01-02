@@ -4699,7 +4699,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, WI
     if(StartVertex - This->stateBlock->baseVertexIndex < 0) ERR("Drawing negative\n");
     /* Account for the loading offset due to index buffers. Instead of reloading all sources correct it with the startvertex parameter */
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex - This->stateBlock->baseVertexIndex, 0/* NumVertices */, -1 /* indxStart */,
-                  0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */, NULL);
+                  0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */);
     return WINED3D_OK;
 }
 
@@ -4728,7 +4728,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     }
 
     drawPrimitive(iface, PrimitiveType, primCount, 0, NumVertices, startIndex,
-                   idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex, NULL);
+                   idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
 
     return WINED3D_OK;
 }
@@ -4753,7 +4753,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamIsUP = TRUE;
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, -This->stateBlock->baseVertexIndex /* start vertex */, 0  /* NumVertices */,
-                  0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */, NULL);
+                  0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */);
 
     /* MSDN specifies stream zero settings must be set to NULL */
     This->stateBlock->streamStride[0] = 0;
@@ -4800,7 +4800,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
     This->stateBlock->baseVertexIndex = 0;
 
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex, NULL);
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex);
 
     /* MSDN specifies stream zero settings and index buffer must be set to NULL */
     This->stateBlock->streamSource[0] = NULL;
@@ -4819,7 +4819,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *i
      */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     This->stateBlock->baseVertexIndex = 0;
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0, DrawPrimStrideData);
+    This->up_strided = DrawPrimStrideData;
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0);
+    This->up_strided = NULL;
     return WINED3D_OK;
 }
  /* Yet another way to update a texture, some apps use this to load default textures instead of using surface/texture lock/unlock */

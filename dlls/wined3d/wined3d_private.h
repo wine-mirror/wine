@@ -382,8 +382,7 @@ void drawPrimitive(IWineD3DDevice *iface,
                     long  StartIdx,
                     short idxBytes,
                     const void *idxData,
-                    int   minIndex,
-                    WineDirect3DVertexStridedData *DrawPrimStrideData);
+                    int   minIndex);
 
 void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, BOOL *fixup);
 
@@ -669,6 +668,7 @@ typedef struct IWineD3DDeviceImpl
 
     /* Stream source management */
     WineDirect3DVertexStridedData strided_streams;
+    WineDirect3DVertexStridedData *up_strided;
 
 } IWineD3DDeviceImpl;
 

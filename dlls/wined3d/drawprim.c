@@ -1936,8 +1936,7 @@ void drawPrimitive(IWineD3DDevice *iface,
                    long  StartIdx,
                    short idxSize,
                    const void *idxData,
-                   int   minIndex,
-                   WineDirect3DVertexStridedData *DrawPrimStrideData) {
+                   int   minIndex) {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     BOOL                          useVertexShaderFunction = FALSE;
@@ -1991,12 +1990,12 @@ void drawPrimitive(IWineD3DDevice *iface,
     }
     This->depth_copy_state = WINED3D_DCS_INITIAL;
 
-    if(DrawPrimStrideData) {
+    if(This->up_strided) {
 
         /* Note: this is a ddraw fixed-function code path */
 
         TRACE("================ Strided Input ===================\n");
-		memcpy(&This->strided_streams, DrawPrimStrideData, sizeof(This->strided_streams));
+		memcpy(&This->strided_streams, This->up_strided, sizeof(This->strided_streams));
         drawPrimitiveTraceDataLocations(&This->strided_streams);
         fixup = FALSE;
     }
