@@ -3,8 +3,8 @@
 @ stdcall EnumDirTree(long str str ptr ptr ptr)
 @ stub EnumDirTreeW
 @ stdcall EnumerateLoadedModules(long ptr ptr)
-@ stub EnumerateLoadedModules64
-@ stub EnumerateLoadedModulesW64
+@ stdcall EnumerateLoadedModules64(long ptr ptr)
+@ stdcall EnumerateLoadedModulesW64(long ptr ptr)
 @ stdcall ExtensionApiVersion()
 @ stdcall FindDebugInfoFile(str str ptr)
 @ stdcall FindDebugInfoFileEx(str str ptr ptr ptr)

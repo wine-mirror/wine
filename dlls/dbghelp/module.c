@@ -620,12 +620,12 @@ BOOL  WINAPI SymEnumerateModules64(HANDLE hProcess,
 }
 
 /******************************************************************
- *		EnumerateLoadedModules (DBGHELP.@)
+ *		EnumerateLoadedModules64 (DBGHELP.@)
  *
  */
-BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
-                                    PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
-                                    PVOID UserContext)
+BOOL  WINAPI EnumerateLoadedModules64(HANDLE hProcess,
+                                      PENUMLOADED_MODULES_CALLBACK64 EnumLoadedModulesCallback,
+                                      PVOID UserContext)
 {
     HMODULE*    hMods;
     char        base[256], mod[256];
@@ -649,12 +649,74 @@ BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
             !GetModuleBaseNameA(hProcess, hMods[i], base, sizeof(base)))
             continue;
         module_fill_module(base, mod, sizeof(mod));
-        EnumLoadedModulesCallback(mod, (DWORD)mi.lpBaseOfDll, mi.SizeOfImage, 
+        EnumLoadedModulesCallback(mod, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage,
                                   UserContext);
     }
     HeapFree(GetProcessHeap(), 0, hMods);
 
     return sz != 0 && i == sz;
+}
+
+/******************************************************************
+ *		EnumerateLoadedModules (DBGHELP.@)
+ *
+ */
+struct enum_load_mod64_32
+{
+    PENUMLOADED_MODULES_CALLBACK        cb;
+    PVOID                               user;
+};
+
+static BOOL CALLBACK enum_load_mod64_32(PSTR name, DWORD64 base, ULONG size,
+                                        PVOID user)
+{
+    struct enum_load_mod64_32*  x = user;
+    return x->cb(name, (DWORD)base, size, x->user);
+}
+
+BOOL  WINAPI EnumerateLoadedModules(HANDLE hProcess,
+                                    PENUMLOADED_MODULES_CALLBACK EnumLoadedModulesCallback,
+                                    PVOID UserContext)
+{
+    struct enum_load_mod64_32   x;
+
+    x.cb = EnumLoadedModulesCallback;
+    x.user = UserContext;
+
+    return EnumerateLoadedModules64(hProcess, enum_load_mod64_32, &x);
+}
+
+/******************************************************************
+ *		EnumerateLoadedModulesW64 (DBGHELP.@)
+ *
+ */
+struct enum_load_mod64_W64
+{
+    PENUMLOADED_MODULES_CALLBACKW64     cb;
+    PVOID                               user;
+    WCHAR                               module[MAX_PATH];
+};
+
+static BOOL CALLBACK enum_load_mod64_W64(PSTR name, DWORD64 base, ULONG size,
+                                         PVOID user)
+{
+    struct enum_load_mod64_W64* x = user;
+
+    MultiByteToWideChar(CP_ACP, 0, name, -1,
+                        x->module, sizeof(x->module) / sizeof(WCHAR));
+    return x->cb(x->module, base, size, x->user);
+}
+
+BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
+                                       PENUMLOADED_MODULES_CALLBACKW64 EnumLoadedModulesCallback,
+                                       PVOID UserContext)
+{
+    struct enum_load_mod64_W64  x;
+
+    x.cb = EnumLoadedModulesCallback;
+    x.user = UserContext;
+
+    return EnumerateLoadedModules64(hProcess, enum_load_mod64_W64, &x);
 }
 
 /******************************************************************
