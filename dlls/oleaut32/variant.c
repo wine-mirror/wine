@@ -5502,17 +5502,34 @@ end:
  */
 HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
 {
-    HRESULT hr;
+    HRESULT hr = S_OK;
     VARIANT dl,dr;
     VARTYPE resvt = VT_EMPTY;
     VARTYPE leftvt,rightvt;
     VARTYPE rightExtraFlags,leftExtraFlags,ExtraFlags;
+    VARIANT tempLeft, tempRight;
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left), debugstr_VF(left),
           right, debugstr_VT(right), debugstr_VF(right), result);
 
     VariantInit(&dl);
     VariantInit(&dr);
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(left) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hr = VARIANT_FetchDispatchValue(left, &tempLeft);
+        if (FAILED(hr)) goto end;
+        left = &tempLeft;
+    }
+    if ((V_VT(right) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        hr = VARIANT_FetchDispatchValue(right, &tempRight);
+        if (FAILED(hr)) goto end;
+        right = &tempRight;
+    }
 
     leftvt = V_VT(left)&VT_TYPEMASK;
     rightvt = V_VT(right)&VT_TYPEMASK;
@@ -5520,17 +5537,24 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     rightExtraFlags = V_VT(right)&(~VT_TYPEMASK);
 
     if (leftExtraFlags != rightExtraFlags)
-        return DISP_E_BADVARTYPE;
+    {
+        hr = DISP_E_BADVARTYPE;
+        goto end;
+    }
     ExtraFlags = leftExtraFlags;
 
     /* Native VarPow always returns a error when using any extra flags */
     if (ExtraFlags != 0)
-        return DISP_E_BADVARTYPE;
+    {
+        hr = DISP_E_BADVARTYPE;
+        goto end;
+    }
 
     /* Determine return type */
     else if (leftvt == VT_NULL || rightvt == VT_NULL) {
         V_VT(result) = VT_NULL;
-        return S_OK;
+        hr = S_OK;
+        goto end;
     }
     else if ((leftvt == VT_EMPTY || leftvt == VT_I2 ||
         leftvt == VT_I4 || leftvt == VT_R4 ||
@@ -5546,30 +5570,35 @@ HRESULT WINAPI VarPow(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         (rightvt >= VT_I1 && rightvt <= VT_UINT)))
         resvt = VT_R8;
     else
-        return DISP_E_BADVARTYPE;
+    {
+        hr = DISP_E_BADVARTYPE;
+        goto end;
+    }
 
     hr = VariantChangeType(&dl,left,0,resvt);
     if (!SUCCEEDED(hr)) {
         ERR("Could not change passed left argument to VT_R8, handle it differently.\n");
-        VariantClear(&dl);
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
 
     hr = VariantChangeType(&dr,right,0,resvt);
     if (!SUCCEEDED(hr)) {
         ERR("Could not change passed right argument to VT_R8, handle it differently.\n");
-        VariantClear(&dl);
-        VariantClear(&dr);
-        return E_FAIL;
+        hr = E_FAIL;
+        goto end;
     }
 
     V_VT(result) = VT_R8;
     V_R8(result) = pow(V_R8(&dl),V_R8(&dr));
 
+end:
     VariantClear(&dl);
     VariantClear(&dr);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
 
-    return S_OK;
+    return hr;
 }
 
 /**********************************************************************
