@@ -1448,8 +1448,12 @@ HRESULT WINAPI ScriptStringGetLogicalWidths(SCRIPT_STRING_ANALYSIS ssa, int *piD
  */
 HRESULT WINAPI ScriptStringValidate(SCRIPT_STRING_ANALYSIS ssa)
 {
-    FIXME("(%p): stub\n", ssa);
-    return S_OK;
+    StringAnalysis *analysis = ssa;
+
+    TRACE("(%p)\n", ssa);
+
+    if (!analysis) return E_INVALIDARG;
+    return (analysis->invalid) ? S_FALSE : S_OK;
 }
 
 /***********************************************************************
