@@ -37,7 +37,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(font);
-WINE_DECLARE_DEBUG_CHANNEL(gdi);
 
   /* Device -> World size conversion */
 
@@ -3000,8 +2999,8 @@ BOOL WINAPI GetCharABCWidthsFloatW( HDC hdc, UINT first, UINT last, LPABCFLOAT a
 BOOL WINAPI GetCharWidthFloatA(HDC hdc, UINT iFirstChar,
 		                    UINT iLastChar, PFLOAT pxBuffer)
 {
-       FIXME_(gdi)("GetCharWidthFloatA, stub\n");
-       return 0;
+    FIXME("%p, %u, %u, %p: stub!\n", hdc, iFirstChar, iLastChar, pxBuffer);
+    return 0;
 }
 
 /*************************************************************************
@@ -3010,8 +3009,8 @@ BOOL WINAPI GetCharWidthFloatA(HDC hdc, UINT iFirstChar,
 BOOL WINAPI GetCharWidthFloatW(HDC hdc, UINT iFirstChar,
 		                    UINT iLastChar, PFLOAT pxBuffer)
 {
-       FIXME_(gdi)("GetCharWidthFloatW, stub\n");
-       return 0;
+    FIXME("%p, %u, %u, %p: stub!\n", hdc, iFirstChar, iLastChar, pxBuffer);
+    return 0;
 }
 
 
