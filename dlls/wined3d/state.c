@@ -71,15 +71,23 @@ static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
-#if 0
-/* if 0ed because it will be revived later */
 static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    BOOL normals;
 
-    /* TODO: Lighting is only enabled if Vertex normals are passed by the application,
-     * so merge the lighting render state with the vertex declaration once it is available
+    /* Lighting is only enabled if Vertex normals are passed by the application,
+     * but lighting does not affect the stream sources, so it is not grouped for performance reasons.
+     * This state reads the decoded vertex decl, so if it is dirty don't do anything. The
+     * vertex declaration appplying function calls this function for updating
      */
 
-    if (stateblock->renderState[WINED3DRS_LIGHTING]) {
+	if(isStateDirty(stateblock->wineD3DDevice, STATE_VDECL)) {
+		return;
+	}
+
+    normals = stateblock->wineD3DDevice->strided_streams.u.s.normal.lpData != NULL ||
+              stateblock->wineD3DDevice->strided_streams.u.s.normal.VBO != 0;
+
+    if (stateblock->renderState[WINED3DRS_LIGHTING] && normals) {
         glEnable(GL_LIGHTING);
         checkGLcall("glEnable GL_LIGHTING");
     } else {
@@ -87,7 +95,6 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         checkGLcall("glDisable GL_LIGHTING");
     }
 }
-#endif
 
 static void state_zenable(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     switch ((WINED3DZBUFFERTYPE) stateblock->renderState[WINED3DRS_ZENABLE]) {
@@ -1895,7 +1902,7 @@ static const GLfloat invymat[16] = {
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
-    BOOL transformed, lit;
+    BOOL transformed;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL wasrhw = device->last_was_rhw;
@@ -1951,22 +1958,14 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
                     device->strided_streams.u.s.position.VBO != 0) &&
                     device->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
-    lit = device->strided_streams.u.s.normal.lpData == NULL &&
-          device->strided_streams.u.s.normal.VBO == 0;
 
     if(transformed != device->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
     }
 
-    /* TODO: The vertex declaration changes lighting, but lighting doesn't affect the vertex declaration and the
-     * stream sources. This can be handled nicer
-     */
-    if(stateblock->renderState[WINED3DRS_LIGHTING] && !lit) {
-        glEnable(GL_LIGHTING);
-        checkGLcall("glEnable(GL_LIGHTING)");
-    } else {
-        glDisable(GL_LIGHTING);
-        checkGLcall("glDisable(GL_LIGHTING");
+    /* Reapply lighting if it is not sheduled for reapplication already */
+    if(!isStateDirty(device, STATE_RENDER(WINED3DRS_LIGHTING))) {
+        state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock);
     }
 
     if (!useVertexShaderFunction && transformed) {
@@ -2175,7 +2174,7 @@ const struct StateEntry StateTable[] =
     { /*134, WINED3DRS_WRAP6                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*135, WINED3DRS_WRAP7                        */      STATE_RENDER(WINED3DRS_WRAP0),                      state_wrap          },
     { /*136, WINED3DRS_CLIPPING                     */      STATE_RENDER(WINED3DRS_CLIPPING),                   state_clipping      },
-    { /*137, WINED3DRS_LIGHTING                     */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*137, WINED3DRS_LIGHTING                     */      STATE_RENDER(WINED3DRS_LIGHTING),                   state_lighting      },
     { /*138, WINED3DRS_EXTENTS                      */      STATE_RENDER(WINED3DRS_EXTENTS),                    state_extents       },
     { /*139, WINED3DRS_AMBIENT                      */      STATE_RENDER(WINED3DRS_AMBIENT),                    state_ambient       },
     { /*140, WINED3DRS_FOGVERTEXMODE                */      STATE_RENDER(WINED3DRS_FOGENABLE),                  state_fog           },
