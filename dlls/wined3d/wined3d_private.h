@@ -563,7 +563,6 @@ typedef struct IWineD3DDeviceImpl
     const shader_backend_t *shader_backend;
 
     /* Optimization */
-    BOOL                    modelview_valid;
     BOOL                    proj_valid;
     BOOL                    view_ident;        /* true iff view matrix is identity                */
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */

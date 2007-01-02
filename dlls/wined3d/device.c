@@ -1936,7 +1936,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     }
 
     /* Initialize the current view state */
-    This->modelview_valid = 1;
     This->proj_valid = 0;
     This->view_ident = 1;
     This->last_was_rhw = 0;
@@ -2364,13 +2363,9 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_SetTransform(IWineD3DDevice *iface, W
      */
 
     /* Capture the times we can just ignore the change for now */
-    if (d3dts == WINED3DTS_WORLDMATRIX(0)) {
-        This->modelview_valid = FALSE;
-    } else if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrice */
+    if (d3dts == WINED3DTS_VIEW) { /* handle the VIEW matrice */
         This->view_ident = !memcmp(lpmatrix, identity, 16 * sizeof(float));
         /* Handled by the state manager */
-    } else { /* What was requested!?? */
-        WARN("invalid matrix specified: %i\n", d3dts);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_TRANSFORM(d3dts));

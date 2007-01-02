@@ -1150,6 +1150,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
             d3ddevice_set_ortho(This->resource.wineD3DDevice);
+            IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_VDECL);
 
             if (iface ==  implSwapChain->frontBuffer) {
                 glDrawBuffer(GL_FRONT);
@@ -2473,6 +2474,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* Draw a textured quad
              */
             d3ddevice_set_ortho(This->resource.wineD3DDevice);
+            IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_VDECL);
 
             glBegin(GL_QUADS);
 

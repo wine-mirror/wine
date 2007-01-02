@@ -1813,6 +1813,29 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    /* Do not bother applying when we're in rhw mode. vertexdeclaration() will call
+     * transform_world if it switches out of rhw mode. This function is also called
+     * by transform_view below if the view matrix was changed
+     */
+    if(stateblock->wineD3DDevice->last_was_rhw) {
+        return;
+    }
+    glMatrixMode(GL_MODELVIEW);
+    checkGLcall("glMatrixMode");
+
+    /* In the general case, the view matrix is the identity matrix */
+    if (stateblock->wineD3DDevice->view_ident) {
+        glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+        checkGLcall("glLoadMatrixf");
+    } else {
+        glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+        checkGLcall("glLoadMatrixf");
+        glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
+        checkGLcall("glMultMatrixf");
+    }
+}
+
 static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     unsigned int k;
 
@@ -1823,12 +1846,9 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
      */
 
     PLIGHTINFOEL *lightChain = NULL;
-    stateblock->wineD3DDevice->modelview_valid = FALSE;
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
-    glPushMatrix();
-    checkGLcall("glPushMatrix()");
     glLoadMatrixf((float *)(float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
     checkGLcall("glLoadMatrixf(...)");
 
@@ -1847,11 +1867,20 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         glClipPlane(GL_CLIP_PLANE0 + k, stateblock->clipplane[k]);
         checkGLcall("glClipPlane");
     }
-    glPopMatrix();
-    checkGLcall("glPopMatrix()");
 
-    /* Call the vdecl update. Will be tidied up later */
-    StateTable[STATE_VDECL].apply(STATE_VDECL, stateblock);
+    if(stateblock->wineD3DDevice->last_was_rhw) {
+        glLoadIdentity();
+        checkGLcall("glLoadIdentity()");
+        /* No need to update the world matrix, the identity is fine */
+        return;
+    }
+
+    /* Call the world matrix state, this will apply the combined WORLD + VIEW matrix
+     * No need to do it here if the state is scheduled for update.
+     */
+    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
+        transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock);
+    }
 }
 
 static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
@@ -1869,9 +1898,10 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     BOOL transformed, lit;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    BOOL wasrhw = device->last_was_rhw;
 
     device->streamFixedUp = FALSE;
-
+ 	
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
      * here simply check whether a shader was set, or the user disabled shaders
      */
@@ -1945,22 +1975,20 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
+        device->last_was_rhw = FALSE;
+        /* This turns off the Z scale trick to 'disable' viewport frustum clipping in rhw mode*/
         device->untransformed = TRUE;
 
-        if (!useVertexShaderFunction) {
-            device->modelview_valid = TRUE;
-            glMatrixMode(GL_MODELVIEW);
-            checkGLcall("glMatrixMode");
-
-            /* In the general case, the view matrix is the identity matrix */
-            if (device->view_ident) {
-                glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
-                checkGLcall("glLoadMatrixf");
-            } else {
-                glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-                checkGLcall("glLoadMatrixf");
-                glMultMatrixf((float *) &stateblock->transforms[WINED3DTS_WORLDMATRIX(0)].u.m[0][0]);
-                checkGLcall("glMultMatrixf");
+        /* Don't bother checking for !useVertexShaderFunction here. If shaders are always on wasrhw will never
+         * be true. If they are switched on and off then knowing that the fixed function matrices are ok makes
+         * those switches cheaper
+         */
+        if (wasrhw) {
+            /* switching out of orthogonal mode? have to reapply the modelview matrix.
+             * Only do that when it is not dirty though
+             */
+            if(!isStateDirty(device, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
+                transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock);
             }
         }
 
@@ -2763,7 +2791,7 @@ const struct StateEntry StateTable[] =
     { /*254, undefined                              */      0,                                                  state_undefined     },
     { /*255, undefined                              */      0,                                                  state_undefined     },
       /* End huge gap */
-    { /*256, WINED3DTS_WORLDMATRIX(0)               */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*256, WINED3DTS_WORLDMATRIX(0)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)),          transform_world     },
     { /*257, WINED3DTS_WORLDMATRIX(1)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(1)),          transform_worldex   },
     { /*258, WINED3DTS_WORLDMATRIX(2)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(2)),          transform_worldex   },
     { /*259, WINED3DTS_WORLDMATRIX(3)               */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(3)),          transform_worldex   },
