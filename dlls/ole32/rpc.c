@@ -856,7 +856,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
         if (FAILED(hr2))
             hr = hr2;
 
-        message_state->prefix_data_len = original_buffer - (char *)msg->Buffer;
+        message_state->prefix_data_len = (char *)msg->Buffer - original_buffer;
         msg->BufferLength -= message_state->prefix_data_len;
     }
     else
@@ -1237,7 +1237,7 @@ void RPC_ExecuteCall(struct dispatch_params *params)
         goto exit;
     }
 
-    message_state->prefix_data_len = original_buffer - (char *)msg->Buffer;
+    message_state->prefix_data_len = (char *)msg->Buffer - original_buffer;
     message_state->binding_handle = msg->Handle;
 
     message_state->channel_hook_info.iid = params->iid;
