@@ -3130,6 +3130,7 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     HRESULT hres;
     VARTYPE lvt, rvt, resvt, tvt;
     VARIANT lv, rv, tv;
+    VARIANT tempLeft, tempRight;
     double r8res;
 
     /* Variant priority for coercion. Sorted from lowest to highest.
@@ -3161,6 +3162,26 @@ HRESULT WINAPI VarAdd(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     VariantInit(&lv);
     VariantInit(&rv);
     VariantInit(&tv);
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(left) & VT_TYPEMASK) != VT_NULL && (V_VT(right) & VT_TYPEMASK) != VT_NULL)
+    {
+        if ((V_VT(left) & VT_TYPEMASK) == VT_DISPATCH)
+        {
+            hres = VARIANT_FetchDispatchValue(left, &tempLeft);
+            if (FAILED(hres)) goto end;
+            left = &tempLeft;
+        }
+        if ((V_VT(right) & VT_TYPEMASK) == VT_DISPATCH)
+        {
+            hres = VARIANT_FetchDispatchValue(right, &tempRight);
+            if (FAILED(hres)) goto end;
+            right = &tempRight;
+        }
+    }
+
     lvt = V_VT(left)&VT_TYPEMASK;
     rvt = V_VT(right)&VT_TYPEMASK;
 
@@ -3288,6 +3309,8 @@ end:
     VariantClear(&lv);
     VariantClear(&rv);
     VariantClear(&tv);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
     TRACE("returning 0x%8x (variant type %s)\n", hres, debugstr_VT(result));
     return hres;
 }
