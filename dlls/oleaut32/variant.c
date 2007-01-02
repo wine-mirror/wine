@@ -5264,12 +5264,29 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     HRESULT      rc         = E_FAIL;
     int          resT = 0;
     VARIANT      lv,rv;
+    VARIANT tempLeft, tempRight;
 
+    VariantInit(&tempLeft);
+    VariantInit(&tempRight);
     VariantInit(&lv);
     VariantInit(&rv);
 
     TRACE("(%p->(%s%s),%p->(%s%s),%p)\n", left, debugstr_VT(left),
 		  debugstr_VF(left), right, debugstr_VT(right), debugstr_VF(right), result);
+
+    /* Handle VT_DISPATCH by storing and taking address of returned value */
+    if ((V_VT(left) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        rc = VARIANT_FetchDispatchValue(left, &tempLeft);
+        if (FAILED(rc)) goto end;
+        left = &tempLeft;
+    }
+    if ((V_VT(right) & VT_TYPEMASK) == VT_DISPATCH)
+    {
+        rc = VARIANT_FetchDispatchValue(right, &tempRight);
+        if (FAILED(rc)) goto end;
+        right = &tempRight;
+    }
 
     /* check for invalid inputs */
     lOk = TRUE;
@@ -5296,17 +5313,21 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     case VT_VARIANT:
     case VT_UNKNOWN:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_TYPEMISMATCH;
+      rc = DISP_E_TYPEMISMATCH;
+      goto end;
     case VT_ERROR:
-      return DISP_E_TYPEMISMATCH;
+      rc = DISP_E_TYPEMISMATCH;
+      goto end;
     case VT_RECORD:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_TYPEMISMATCH;
+      rc = DISP_E_TYPEMISMATCH;
+      goto end;
     case VT_NULL:
       break;
     default:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_BADVARTYPE;
+      rc = DISP_E_BADVARTYPE;
+      goto end;
     }
 
 
@@ -5320,13 +5341,15 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
       if((V_VT(left) == VT_INT) && (V_VT(right) == VT_I8))
       {
 	V_VT(result) = VT_EMPTY;
-	return DISP_E_TYPEMISMATCH;
+        rc = DISP_E_TYPEMISMATCH;
+        goto end;
       }
     case VT_INT  :
       if((V_VT(right) == VT_INT) && (V_VT(left) == VT_I8))
       {
 	V_VT(result) = VT_EMPTY;
-	return DISP_E_TYPEMISMATCH;
+        rc = DISP_E_TYPEMISMATCH;
+        goto end;
       }
     case VT_UI1  :
     case VT_UI2  :
@@ -5339,7 +5362,8 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
       if(V_VT(left) == VT_EMPTY)
       {
 	V_VT(result) = VT_I4;
-	return S_OK;
+        rc = S_OK;
+        goto end;
       }
     case VT_EMPTY:
     case VT_DATE :
@@ -5347,53 +5371,61 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
       if(V_VT(left) == VT_ERROR)
       {
 	V_VT(result) = VT_EMPTY;
-	return DISP_E_TYPEMISMATCH;
+        rc = DISP_E_TYPEMISMATCH;
+        goto end;
       }
     case VT_BSTR:
       if(V_VT(left) == VT_NULL)
       {
 	V_VT(result) = VT_NULL;
-	return S_OK;
+        rc = S_OK;
+        goto end;
       }
       break;
 
     case VT_VOID:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_BADVARTYPE;
+      rc = DISP_E_BADVARTYPE;
+      goto end;
     case VT_NULL:
       if(V_VT(left) == VT_VOID)
       {
 	V_VT(result) = VT_EMPTY;
-	return DISP_E_BADVARTYPE;
+        rc = DISP_E_BADVARTYPE;
       } else if((V_VT(left) == VT_NULL) || (V_VT(left) == VT_EMPTY) || (V_VT(left) == VT_ERROR) ||
 		lOk)
       {
         V_VT(result) = VT_NULL;
-	return S_OK;
+        rc = S_OK;
       } else
       {
 	V_VT(result) = VT_NULL;
-	return DISP_E_BADVARTYPE;
+        rc = DISP_E_BADVARTYPE;
       }
+      goto end;
     case VT_VARIANT:
     case VT_UNKNOWN:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_TYPEMISMATCH;
+      rc = DISP_E_TYPEMISMATCH;
+      goto end;
     case VT_ERROR:
-      return DISP_E_TYPEMISMATCH;
+      rc = DISP_E_TYPEMISMATCH;
+      goto end;
     case VT_RECORD:
       if((V_VT(left) == 15) || ((V_VT(left) >= 24) && (V_VT(left) <= 35)) || !lOk)
       {
 	V_VT(result) = VT_EMPTY;
-	return DISP_E_BADVARTYPE;
+        rc = DISP_E_BADVARTYPE;
       } else
       {
 	V_VT(result) = VT_EMPTY;
-	return DISP_E_TYPEMISMATCH;
+        rc = DISP_E_TYPEMISMATCH;
       }
+      goto end;
     default:
       V_VT(result) = VT_EMPTY;
-      return DISP_E_BADVARTYPE;
+      rc = DISP_E_BADVARTYPE;
+      goto end;
     }
 
     /* determine the result type */
@@ -5414,21 +5446,22 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     if(FAILED(rc))
     {
       FIXME("Could not convert left type %d to %d? rc == 0x%X\n", V_VT(left), VT_I8, rc);
-      return rc;
+      goto end;
     }
 
     rc = VariantChangeType(&rv, right, 0, VT_I8);
     if(FAILED(rc))
     {
       FIXME("Could not convert right type %d to %d? rc == 0x%X\n", V_VT(right), VT_I8, rc);
-      return rc;
+      goto end;
     }
 
     /* if right is zero set VT_EMPTY and return divide by zero */
     if(V_I8(&rv) == 0)
     {
       V_VT(result) = VT_EMPTY;
-      return DISP_E_DIVBYZERO;
+      rc = DISP_E_DIVBYZERO;
+      goto end;
     }
 
     /* perform the modulo operation */
@@ -5442,10 +5475,15 @@ HRESULT WINAPI VarMod(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     if(FAILED(rc))
     {
       FIXME("Could not convert 0x%x to %d?\n", V_VT(result), resT);
-      return rc;
+      /* fall to end of function */
     }
 
-    return S_OK;
+end:
+    VariantClear(&lv);
+    VariantClear(&rv);
+    VariantClear(&tempLeft);
+    VariantClear(&tempRight);
+    return rc;
 }
 
 /**********************************************************************
