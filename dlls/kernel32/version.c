@@ -363,3 +363,14 @@ void WINAPI DiagOutput16(LPCSTR str)
         /* FIXME */
         TRACE("DIAGOUTPUT:%s\n", debugstr_a(str));
 }
+
+/***********************************************************************
+ *           TermsrvAppInstallMode       (KERNEL32.@)
+ *
+ * Find out whether the terminal server is in INSTALL or EXECUTE mode.
+ */
+BOOL WINAPI TermsrvAppInstallMode(void)
+{
+    FIXME("stub\n");
+    return FALSE;
+}

@@ -1057,7 +1057,7 @@
 @ stub TerminateJobObject
 @ stdcall TerminateProcess(long long)
 @ stdcall TerminateThread(long long)
-@ stub TermsrvAppInstallMode
+@ stdcall TermsrvAppInstallMode()
 @ stdcall Thread32First(long ptr)
 @ stdcall Thread32Next(long ptr)
 @ stdcall ThunkConnect32(ptr str str str ptr ptr)
