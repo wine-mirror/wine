@@ -324,18 +324,41 @@ _get_typeinfo_for_iid(REFIID riid, ITypeInfo**ti) {
  * the inheritance tree I think.
  */
 static int _nroffuncs(ITypeInfo *tinfo) {
-    int 	n, max = 0;
+    int 	n, i, j;
     const FUNCDESC *fdesc;
     HRESULT	hres;
+    TYPEATTR *attr;
+    ITypeInfo *tinfo2;
 
     n=0;
+    hres = ITypeInfo_GetTypeAttr(tinfo, &attr);
+    if (hres) {
+        ERR("GetTypeAttr failed with %x\n",hres);
+        return hres;
+    }
+    /* look in inherited ifaces. */
+    for (j=0;j<attr->cImplTypes;j++) {
+        HREFTYPE href;
+        hres = ITypeInfo_GetRefTypeOfImplType(tinfo, j, &href);
+        if (hres) {
+            ERR("Did not find a reftype for interface offset %d?\n",j);
+            break;
+        }
+        hres = ITypeInfo_GetRefTypeInfo(tinfo, href, &tinfo2);
+        if (hres) {
+            ERR("Did not find a typeinfo for reftype %d?\n",href);
+            continue;
+        }
+        n += _nroffuncs(tinfo2);
+        ITypeInfo_Release(tinfo2);
+    }
+    i = 0;
     while (1) {
-	hres = ITypeInfoImpl_GetInternalFuncDesc(tinfo,n,&fdesc);
+	hres = ITypeInfoImpl_GetInternalFuncDesc(tinfo,i,&fdesc);
 	if (hres)
-	    return max+1;
-	if (fdesc->oVft/4 > max)
-	    max = fdesc->oVft/4;
+	    return n;
 	n++;
+	i++;
     }
     /*NOTREACHED*/
 }
@@ -1517,6 +1540,12 @@ PSFacBuf_CreateProxy(
         CoTaskMemFree(proxy);
         return E_OUTOFMEMORY;
     }
+    proxy->lpvtbl2	= &tmproxyvtable;
+    /* one reference for the proxy */
+    proxy->ref		= 1;
+    proxy->tinfo	= tinfo;
+    memcpy(&proxy->iid,riid,sizeof(*riid));
+    proxy->chanbuf      = 0;
 
     InitializeCriticalSection(&proxy->crit);
 
@@ -1598,6 +1627,11 @@ PSFacBuf_CreateProxy(
                     (void **)&proxy->dispatch);
                 IPSFactoryBuffer_Release(factory_buffer);
             }
+            if ((hres == S_OK) && (nroffuncs < 7))
+            {
+                ERR("nroffuncs calculated incorrectly (%d)\n", nroffuncs);
+                hres = E_UNEXPECTED;
+            }
             if (hres == S_OK)
             {
                 proxy->lpvtbl[3] = ProxyIDispatch_GetTypeInfoCount;
@@ -1609,12 +1643,6 @@ PSFacBuf_CreateProxy(
         ITypeInfo_ReleaseTypeAttr(tinfo, typeattr);
     }
 
-    proxy->lpvtbl2	= &tmproxyvtable;
-    /* one reference for the proxy */
-    proxy->ref		= 1;
-    proxy->tinfo	= tinfo;
-    memcpy(&proxy->iid,riid,sizeof(*riid));
-    proxy->chanbuf      = 0;
     if (hres == S_OK)
     {
         *ppv		= (LPVOID)proxy;
