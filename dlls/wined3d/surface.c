@@ -1370,7 +1370,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
                 break;
         }
 
-        ddc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        ddc = GetDC(0);
         if (ddc == 0) {
             HeapFree(GetProcessHeap(), 0, b_info);
             return HRESULT_FROM_WIN32(GetLastError());
@@ -1378,7 +1378,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
 
         TRACE("Creating a DIB section with size %dx%dx%d, size=%d\n", b_info->bmiHeader.biWidth, b_info->bmiHeader.biHeight, b_info->bmiHeader.biBitCount, b_info->bmiHeader.biSizeImage);
         This->dib.DIBsection = CreateDIBSection(ddc, b_info, usage, &This->dib.bitmap_data, 0 /* Handle */, 0 /* Offset */);
-        DeleteDC(ddc);
+        ReleaseDC(0, ddc);
 
         if (!This->dib.DIBsection) {
             ERR("CreateDIBSection failed!\n");

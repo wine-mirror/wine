@@ -1440,9 +1440,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         RECT     clip_rc;
 
         /* Get info on the current display setup */
-        hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+        hdc = GetDC(0);
         bpp = GetDeviceCaps(hdc, BITSPIXEL);
-        DeleteDC(hdc);
+        ReleaseDC(0, hdc);
 
         /* Change the display settings */
         memset(&devmode, 0, sizeof(DEVMODEW));

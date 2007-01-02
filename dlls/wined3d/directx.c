@@ -2439,9 +2439,9 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     /* Get the initial screen setup for ddraw */
     object->ddraw_width = GetSystemMetrics(SM_CXSCREEN);
     object->ddraw_height = GetSystemMetrics(SM_CYSCREEN);
-    hDC = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    hDC = GetDC(0);
     object->ddraw_format = pixelformat_for_depth(GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES));
-    DeleteDC(hDC);
+    ReleaseDC(0, hDC);
 
     return WINED3D_OK;
 create_device_error:

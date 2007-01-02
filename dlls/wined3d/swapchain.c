@@ -489,9 +489,9 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetDisplayMode(IWineD3DSwapChain *if
     pMode->Height       = GetSystemMetrics(SM_CYSCREEN);
     pMode->RefreshRate  = 85; /* FIXME: How to identify? */
 
-    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    hdc = GetDC(0);
     bpp = GetDeviceCaps(hdc, BITSPIXEL);
-    DeleteDC(hdc);
+    ReleaseDC(0, hdc);
 
     switch (bpp) {
     case  8: pMode->Format       = WINED3DFMT_R8G8B8; break;

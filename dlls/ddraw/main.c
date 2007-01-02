@@ -164,9 +164,9 @@ DDRAW_Create(GUID *guid,
     This->ImplType = DefaultSurfaceType;
 
     /* Get the current screen settings */
-    hDC = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    hDC = GetDC(0);
     This->orig_bpp = GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES);
-    DeleteDC(hDC);
+    ReleaseDC(0, hDC);
     This->orig_width = GetSystemMetrics(SM_CXSCREEN);
     This->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
