@@ -47,8 +47,8 @@ static const WCHAR chooseFontW[] = {'C','H','O','O','S','E','_','F','O','N','T',
 static HIMAGELIST himlTT = 0;
 #define TTBITMAP_XSIZE 20 /* x-size of the bitmaps */
 
-INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
-INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static INT_PTR CALLBACK FormatCharDlgProcA(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static INT_PTR CALLBACK FormatCharDlgProcW(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 /* There is a table here of all charsets, and the sample text for each.
  * There is a second table that translates a charset into an index into
