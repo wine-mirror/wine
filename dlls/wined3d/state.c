@@ -1438,24 +1438,26 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
 
     TRACE("Setting alpha op for stage %d\n", stage);
     /* Do not care for enabled / disabled stages, just assign the settigns. colorop disables / enables required stuff */
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        /* TODO: register combiners! */
-        if(stage >= GL_LIMITS(sampler_stages)) {
-            if(stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
-              stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
-                FIXME("Attempt to enable unsupported stage!\n");
+    if (mapped_stage != -1) {
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            if (stage >= GL_LIMITS(sampler_stages)) {
+                if (stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
+                        stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
+                    FIXME("Attempt to enable unsupported stage!\n");
+                }
+                return;
             }
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
+            checkGLcall("glActiveTextureARB");
+        } else if (stage > 0) {
+            /* We can't do anything here */
+            WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[stage]));
-        checkGLcall("glActiveTextureARB");
-    } else if (stage > 0) {
-        /* We can't do anything here */
-        WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-        return;
     }
 
     TRACE("Setting alpha op for stage %d\n", stage);
@@ -1465,7 +1467,7 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                          stateblock->textureState[stage][WINED3DTSS_ALPHAARG1],
                          stateblock->textureState[stage][WINED3DTSS_ALPHAARG2],
                          stateblock->textureState[stage][WINED3DTSS_ALPHAARG0],
-                         stateblock->wineD3DDevice->texUnitMap[stage]);
+                         mapped_stage);
     } else {
         set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage, stateblock->textureState[stage][WINED3DTSS_ALPHAOP],
                     stateblock->textureState[stage][WINED3DTSS_ALPHAARG1],
