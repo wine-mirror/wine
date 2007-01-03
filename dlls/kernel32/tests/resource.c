@@ -211,8 +211,8 @@ void check_empty( IMAGE_RESOURCE_DIRECTORY *dir )
 {
     char *pad;
 
-    ok( dir->NumberOfNamedEntries == 0, "NumberOfNamedEntries wrong\n");
-    ok( dir->NumberOfIdEntries == 0, "NumberOfIdEntries wrong\n");
+    ok( dir->NumberOfNamedEntries == 0, "NumberOfNamedEntries should be 0 instead of %d\n", dir->NumberOfNamedEntries);
+    ok( dir->NumberOfIdEntries == 0, "NumberOfIdEntries should be 0 instead of %d\n", dir->NumberOfIdEntries);
 
     pad = (char*) &dir[1];
 
@@ -221,8 +221,8 @@ void check_empty( IMAGE_RESOURCE_DIRECTORY *dir )
 
 void check_version( IMAGE_RESOURCE_DIRECTORY *dir )
 {
-    ok( dir->NumberOfNamedEntries == 0, "NumberOfNamedEntries wrong\n");
-    todo_wine ok( dir->NumberOfIdEntries == 2, "NumberOfIdEntries wrong\n");
+    ok( dir->NumberOfNamedEntries == 0, "NumberOfNamedEntries should be 0 instead of %d\n", dir->NumberOfNamedEntries);
+    todo_wine ok( dir->NumberOfIdEntries == 2, "NumberOfIdEntries should be 2 instead of %d\n", dir->NumberOfIdEntries);
 }
 
 void check_exe( res_check_func fn )
