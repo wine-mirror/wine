@@ -2151,10 +2151,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetFVF(IWineD3DDevice *iface, DWORD fvf
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     /* Update the current state block */
-    This->updateStateBlock->fvf              = fvf;
     This->updateStateBlock->changed.fvf      = TRUE;
     This->updateStateBlock->set.fvf          = TRUE;
 
+    if(This->updateStateBlock->fvf == fvf) {
+        TRACE("Application is setting the old fvf over, nothing to do\n");
+        return WINED3D_OK;
+    }
+
+    This->updateStateBlock->fvf              = fvf;
     TRACE("(%p) : FVF Shader FVF set to %x\n", This, fvf);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     return WINED3D_OK;
@@ -3218,6 +3223,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+        return WINED3D_OK;
+    } else if(pDecl == oldDecl) {
+        /* Checked after the assignment to allow proper stateblock recording */
+        TRACE("Application is setting the old declaration over, nothing to do\n");
+        return WINED3D_OK;
     }
 
     if (NULL != pDecl) {
@@ -5822,13 +5832,15 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
 
     /* Temporaryily mark all render states dirty to force reapplication
      * until the context management for is integrated with the state management
-     * The same for the pixel shader, sampler states and texture stage states are marked
-     * dirty my StateBlock::Apply already
+     * The same for the pixel shader, vertex declaration
+     * Sampler states and texture stage states are marked
+     * dirty my StateBlock::Apply already.
      */
     for(i = 1; i < WINEHIGHEST_RENDER_STATE; i++) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(i));
     }
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
 
     /* Restore recording */
     This->isRecordingState = oldRecording;
