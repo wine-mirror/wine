@@ -1499,13 +1499,18 @@ static void transform_texture(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
+
+    if (mapped_stage == -1) {
+        TRACE("No texture unit mapped to stage %d. Skipping texture coordinates.\n", stage);
+        return;
+    }
 
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        /* TODO: register combiners! */
         if(stage >= GL_LIMITS(sampler_stages)) {
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[stage]));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("glActiveTextureARB");
     } else if (stage > 0) {
         /* We can't do anything here */
