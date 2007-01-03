@@ -208,12 +208,13 @@ static HRESULT get_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
  */
 BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
 {
-    switch(fdwReason) {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hInstDLL);
-	    break;
-	case DLL_PROCESS_DETACH:
-	    break;
+    switch(fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls(hInstDLL);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
     }
     return TRUE;
 }
@@ -333,12 +334,12 @@ HRESULT WINAPI ScriptRecordDigitSubstitution(LCID locale, SCRIPT_DIGITSUBSTITUTE
      * CONTEXT or NONE in reality */
 
     if (!sds) return E_POINTER;
-    
+
     locale = ConvertDefaultLocale(locale);
 
     if (!IsValidLocale(locale, LCID_INSTALLED))
         return E_INVALIDARG;
-    
+
     plgid = PRIMARYLANGID(LANGIDFROMLCID(locale));
     sds->TraditionalDigitLanguage = plgid;
 
@@ -420,9 +421,23 @@ HRESULT WINAPI ScriptApplyDigitSubstitution(const SCRIPT_DIGITSUBSTITUTE *sds,
 /***********************************************************************
  *      ScriptItemize (USP10.@)
  *
+ * Split a Unicode string into shapeable parts.
+ *
+ * PARAMS
+ *  pwcInChars [I] String to split.
+ *  cInChars   [I] Number of characters in pwcInChars.
+ *  cMaxItems  [I] Maximum number of items to return.
+ *  psControl  [I] Pointer to a SCRIPT_CONTROL structure.
+ *  psState    [I] Pointer to a SCRIPT_STATE structure.
+ *  pItems     [O] Buffer to receive SCRIPT_ITEM structures.
+ *  pcItems    [O] Number of script items returned.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
  */
-HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems, 
-                             const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState, 
+HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItems,
+                             const SCRIPT_CONTROL *psControl, const SCRIPT_STATE *psState,
                              SCRIPT_ITEM *pItems, int *pcItems)
 {
 
@@ -479,7 +494,7 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
             New_Script = Script_Latin;
         else
             New_Script = SCRIPT_UNDEFINED;
-        
+
         if  (New_Script != pItems[index].a.eScript)
         {
             TRACE("New_Script=%d, eScript=%d ", New_Script, pItems[index].a.eScript);
@@ -714,12 +729,10 @@ HRESULT WINAPI ScriptStringCPtoX(SCRIPT_STRING_ANALYSIS ssa, int icp, BOOL fTrai
     int runningX = 0;
     int runningCp = 0;
     StringAnalysis* analysis = ssa;
+
     TRACE("(%p), %d, %d, (%p)\n", ssa, icp, fTrailing, pX);
 
-    if(!ssa || !pX)
-    {
-        return 1;
-    }
+    if (!ssa || !pX) return S_FALSE;
 
     /* icp out of range */
     if(icp < 0)
@@ -767,17 +780,14 @@ HRESULT WINAPI ScriptStringXtoCP(SCRIPT_STRING_ANALYSIS ssa, int iX, int* piCh, 
 
     TRACE("(%p), %d, (%p), (%p)\n", ssa, iX, piCh, piTrailing);
 
-    if(!ssa || !piCh || !piTrailing)
-    {
-        return 1;
-    }
+    if (!ssa || !piCh || !piTrailing) return S_FALSE;
 
     /* out of range */
     if(iX < 0)
     {
         *piCh = -1;
         *piTrailing = TRUE;
-    return S_OK;
+        return S_OK;
     }
 
     for(i=0; i<analysis->numItems; i++)
@@ -917,7 +927,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
         *piCP = cChars;
         *piTrailing = FALSE;
         return S_OK;
-    }        
+    }
 
     fAvePosX = fMaxPosX / cGlyphs;
     iPosX = fAvePosX;
@@ -927,7 +937,7 @@ HRESULT WINAPI ScriptXtoCP(int iX,
         *piTrailing = 0;
     else
         *piTrailing = 1;                            /* yep we are over halfway */
-    
+
     *piCP = item -1;                                /* Return character position */
     TRACE("*piCP=%d iPposX=%d\n", *piCP, iPosX);
     return S_OK;
