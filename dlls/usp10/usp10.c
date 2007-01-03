@@ -169,14 +169,33 @@ typedef struct {
     SIZE* sz;
 } StringAnalysis;
 
+static inline void *usp_alloc(SIZE_T size)
+{
+    return HeapAlloc(GetProcessHeap(), 0, size);
+}
+
+static inline void *usp_zero_alloc(SIZE_T size)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+}
+
+static inline void *usp_zero_realloc(LPVOID mem, SIZE_T size)
+{
+    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
+}
+
+static inline void usp_free(LPVOID mem)
+{
+    HeapFree(GetProcessHeap(), 0, mem);
+}
+
 static HRESULT get_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 {
     if (!psc) return E_INVALIDARG;
     if (!*psc)
     {
         if (!hdc) return E_PENDING;
-        if (!(*psc = HeapAlloc(GetProcessHeap(), 0, sizeof(ScriptCache))))
-            return E_OUTOFMEMORY;
+        if (!(*psc = usp_alloc(sizeof(ScriptCache)))) return E_OUTOFMEMORY;
         ((ScriptCache *)*psc)->hdc = hdc;
     }
     return S_OK;
@@ -216,7 +235,7 @@ HRESULT WINAPI ScriptFreeCache(SCRIPT_CACHE *psc)
 
     if (psc)
     {
-       HeapFree(GetProcessHeap(), 0, *psc);
+       usp_free(*psc);
        *psc = NULL;
     }
     return S_OK;
@@ -515,55 +534,56 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 				   const BYTE *pbInClass,
 				   SCRIPT_STRING_ANALYSIS *pssa)
 {
-    HRESULT hr;
-    StringAnalysis* analysis;
-    int i, numItemizedItems = 255;
+    HRESULT hr = E_OUTOFMEMORY;
+    StringAnalysis *analysis = NULL;
+    int i, num_items = 255;
 
     TRACE("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p)\n",
-      hdc, pString, cString, cGlyphs, iCharset, dwFlags,
-      iReqWidth, psControl, psState, piDx, pTabdef, pbInClass, pssa);
+          hdc, pString, cString, cGlyphs, iCharset, dwFlags, iReqWidth,
+          psControl, psState, piDx, pTabdef, pbInClass, pssa);
 
-    if (cString < 1 || !pString)
-        return E_INVALIDARG;
+    if (cString < 1 || !pString) return E_INVALIDARG;
+    if ((dwFlags & SSA_GLYPHS) && !hdc) return E_PENDING;
 
-    if ((dwFlags & SSA_GLYPHS) && !hdc)
-        return E_PENDING;
+    if (!(analysis = usp_zero_alloc(sizeof(StringAnalysis)))) return E_OUTOFMEMORY;
+    if (!(analysis->pItem = usp_zero_alloc(num_items * sizeof(SCRIPT_ITEM) + 1))) goto error;
 
-    analysis = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                       sizeof(StringAnalysis));
+    hr = ScriptItemize(pString, cString, num_items, psControl, psState, analysis->pItem,
+                       &analysis->numItems);
 
-    analysis->pItem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                              numItemizedItems*sizeof(SCRIPT_ITEM)+1);
-
-    hr = ScriptItemize(pString, cString, numItemizedItems, psControl,
-                     psState, analysis->pItem, &analysis->numItems);
-
-    while(hr == E_OUTOFMEMORY)
+    while (hr == E_OUTOFMEMORY)
     {
-        numItemizedItems *= 2;
-        HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, analysis->pItem,
-                    numItemizedItems*sizeof(SCRIPT_ITEM)+1);
-        hr = ScriptItemize(pString, cString, numItemizedItems, psControl,
-                           psState, analysis->pItem, &analysis->numItems);
+        SCRIPT_ITEM *tmp;
+
+        num_items *= 2;
+        if (!(tmp = usp_zero_realloc(analysis->pItem, num_items * sizeof(SCRIPT_ITEM) + 1)))
+            goto error;
+
+        analysis->pItem = tmp;
+        hr = ScriptItemize(pString, cString, num_items, psControl, psState, analysis->pItem,
+                           &analysis->numItems);
     }
+    if (hr) goto error;
 
-    if ((analysis->logattrs = HeapAlloc(GetProcessHeap(), 0, sizeof(SCRIPT_LOGATTR) * cString)))
+    if ((analysis->logattrs = usp_alloc(sizeof(SCRIPT_LOGATTR) * cString)))
         ScriptBreak(pString, cString, (SCRIPT_STRING_ANALYSIS)analysis, analysis->logattrs);
+    else
+        goto error;
 
-    analysis->glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                 sizeof(StringGlyphs)*analysis->numItems);
+    if (!(analysis->glyphs = usp_zero_alloc(sizeof(StringGlyphs) * analysis->numItems)))
+        goto error;
 
-    for(i=0; i<analysis->numItems; i++)
+    for (i = 0; i < analysis->numItems; i++)
     {
         SCRIPT_CACHE *sc = (SCRIPT_CACHE *)&analysis->sc;
         int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
         int numGlyphs = 1.5 * cChar + 16;
-        WORD* glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WORD)*numGlyphs);
-        WORD* pwLogClust = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WORD)*cChar);
-        int* piAdvance = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int)*numGlyphs);
-        SCRIPT_VISATTR* psva = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SCRIPT_VISATTR)*cChar);
-        GOFFSET* pGoffset = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(GOFFSET)*numGlyphs);
-        ABC* abc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ABC));
+        WORD *glyphs = usp_zero_alloc(sizeof(WORD) * numGlyphs);
+        WORD *pwLogClust = usp_zero_alloc(sizeof(WORD) * cChar);
+        int *piAdvance = usp_zero_alloc(sizeof(int) * numGlyphs);
+        SCRIPT_VISATTR *psva = usp_zero_alloc(sizeof(SCRIPT_VISATTR) * cChar);
+        GOFFSET *pGoffset = usp_zero_alloc(sizeof(GOFFSET) * numGlyphs);
+        ABC *abc = usp_zero_alloc(sizeof(ABC));
         int numGlyphsReturned;
 
         /* FIXME: non unicode strings */
@@ -585,6 +605,13 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 
     *pssa = analysis;
     return S_OK;
+
+error:
+    usp_free(analysis->glyphs);
+    usp_free(analysis->logattrs);
+    usp_free(analysis->pItem);
+    usp_free(analysis);
+    return hr;
 }
 
 /***********************************************************************
@@ -625,17 +652,17 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
     TRACE("(%p,%d,%d,0x%1x,%p,%d,%d,%d)\n",
          ssa, iX, iY, uOptions, prc, iMinSel, iMaxSel, fDisabled);
 
-    analysis = ssa;                             /* map ptr to string_analysis struct */
+    if (!(analysis = ssa)) return E_INVALIDARG;
 
     /*
      * Get storage for the output buffer for the consolidated strings
      */
     cnt = 0;
-    for(item = 0; item < analysis->numItems; item++)
+    for (item = 0; item < analysis->numItems; item++)
     {
         cnt += analysis->glyphs[item].numGlyphs;
     }
-    glyphs = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * cnt );
+    if (!(glyphs = usp_alloc(sizeof(WCHAR) * cnt))) return E_OUTOFMEMORY;
 
     /*
      * ScriptStringOut only processes glyphs hence set ETO_GLYPH_INDEX
@@ -671,7 +698,7 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
     /*
      * Free the output buffer and script cache
      */
-    HeapFree(GetProcessHeap(), 0, glyphs);
+    usp_free(glyphs);
     return hr;
 }
 
@@ -796,36 +823,28 @@ HRESULT WINAPI ScriptStringFree(SCRIPT_STRING_ANALYSIS *pssa)
     BOOL invalid;
     int i;
 
-    TRACE("(%p)\n",pssa);
+    TRACE("(%p)\n", pssa);
 
-    if(!pssa)
-        return E_INVALIDARG;
-
-    analysis = *pssa;
-    if(!analysis)
-        return E_INVALIDARG;
-
+    if (!pssa || !(analysis = *pssa)) return E_INVALIDARG;
     invalid = analysis->invalid;
 
-    for(i=0; i<analysis->numItems; i++)
+    for (i = 0; i < analysis->numItems; i++)
     {
-        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].glyphs);
-        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].pwLogClust);
-        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].piAdvance);
-        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].psva);
-        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].pGoffset);
-        HeapFree(GetProcessHeap(), 0, analysis->glyphs[i].abc);
+        usp_free(analysis->glyphs[i].glyphs);
+        usp_free(analysis->glyphs[i].pwLogClust);
+        usp_free(analysis->glyphs[i].piAdvance);
+        usp_free(analysis->glyphs[i].psva);
+        usp_free(analysis->glyphs[i].pGoffset);
+        usp_free(analysis->glyphs[i].abc);
     }
 
-    HeapFree(GetProcessHeap(), 0, analysis->glyphs);
-    HeapFree(GetProcessHeap(), 0, analysis->pItem);
-    HeapFree(GetProcessHeap(), 0, analysis->logattrs);
-    HeapFree(GetProcessHeap(), 0, analysis->sz);
-    HeapFree(GetProcessHeap(), 0, analysis);
+    usp_free(analysis->glyphs);
+    usp_free(analysis->pItem);
+    usp_free(analysis->logattrs);
+    usp_free(analysis->sz);
+    usp_free(analysis);
 
-    if(invalid)
-        return E_INVALIDARG;
-
+    if (invalid) return E_INVALIDARG;
     return S_OK;
 }
 
@@ -1211,12 +1230,9 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
      *   has been converted to glyphs and we still need to translate back to the original chars
      *   to get the correct ABC widths.   */
 
-    /* FIXME:  set pGoffset to more reasonable values */
+     if (!(lpABC = usp_zero_alloc(sizeof(ABC) * cGlyphs))) return E_OUTOFMEMORY;
 
-     lpABC = HeapAlloc(GetProcessHeap(), 0 , sizeof(ABC)*cGlyphs);
-     pABC->abcA = 0;
-     pABC->abcB = 0;
-     pABC->abcC = 0;
+    /* FIXME: set pGoffset to more reasonable values */
      if (!GetCharABCWidthsI(((ScriptCache *)*psc)->hdc, 0, cGlyphs, (WORD *) pwGlyphs, lpABC ))
      {
          WARN("Could not get ABC values\n");
@@ -1243,8 +1259,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
          }
      }
      TRACE("Total for run:   abcA=%d,  abcB=%d,  abcC=%d\n", pABC->abcA, pABC->abcB, pABC->abcC);
-     HeapFree(GetProcessHeap(), 0, lpABC );
 
+     usp_free(lpABC);
      return S_OK;
 }
 
@@ -1507,7 +1523,7 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
 
     if (!analysis->sz)
     {
-        if (!(analysis->sz = HeapAlloc(GetProcessHeap(), 0, sizeof(SIZE))))
+        if (!(analysis->sz = usp_alloc(sizeof(SIZE))))
             return NULL;
 
         /* FIXME: These values should be calculated at a more
@@ -1516,7 +1532,7 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
          */
         if (!GetTextMetricsW(analysis->sc->hdc, &metric))
         {
-            HeapFree(GetProcessHeap(), 0, analysis->sz);
+            usp_free(analysis->sz);
             analysis->sz = NULL;
             return NULL;
         }
