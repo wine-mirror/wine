@@ -2399,7 +2399,7 @@ HRESULT WINAPI OleCreate(
         }
     }
 
-    if (FAILED(hres))
+    if (FAILED(hres) && pUnk)
     {
         IUnknown_Release(pUnk);
         pUnk = NULL;
