@@ -2059,8 +2059,6 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
          */
         if (useVertexShaderFunction) {
             device->posFixup[1] = device->render_offscreen ? -1.0 : 1.0;
-            device->posFixup[2] = 0.9 / stateblock->viewport.Width;
-            device->posFixup[3] = -0.9 / stateblock->viewport.Height;
         }
     }
 
@@ -2071,7 +2069,9 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         /* TODO: Move this mainly to the viewport state and only apply when the vp has changed
          * or transformed / untransformed was switched
          */
-       if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
+       if(wasrhw != device->last_was_rhw &&
+          !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION)) &&
+          !isStateDirty(stateblock->wineD3DDevice, STATE_VIEWPORT)) {
             transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock);
         }
         /* World matrix needs reapplication here only if we're switching between rhw and non-rhw
@@ -2095,6 +2095,25 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     if(updateFog) {
     state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock);
     }
+}
+
+static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    glDepthRange(stateblock->viewport.MinZ, stateblock->viewport.MaxZ);
+    checkGLcall("glDepthRange");
+    /* Note: GL requires lower left, DirectX supplies upper left */
+    /* TODO: replace usage of renderTarget with context management */
+    glViewport(stateblock->viewport.X,
+               (((IWineD3DSurfaceImpl *)stateblock->wineD3DDevice->render_targets[0])->currentDesc.Height - (stateblock->viewport.Y + stateblock->viewport.Height)),
+               stateblock->viewport.Width, stateblock->viewport.Height);
+
+    checkGLcall("glViewport");
+
+    stateblock->wineD3DDevice->posFixup[2] = 0.9 / stateblock->viewport.Width;
+    stateblock->wineD3DDevice->posFixup[3] = -0.9 / stateblock->viewport.Height;
+    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(D3DTS_PROJECTION))) {
+        transform_projection(STATE_TRANSFORM(D3DTS_PROJECTION), stateblock);
+    }
+
 }
 
 const struct StateEntry StateTable[] =
@@ -3114,6 +3133,6 @@ const struct StateEntry StateTable[] =
     { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        vertexdeclaration   },
-    { /*   , STATE_VIEWPORT                         */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },
 
 };

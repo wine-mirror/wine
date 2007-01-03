@@ -3055,26 +3055,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetViewport(IWineD3DDevice *iface, CONS
         TRACE("Recording... not performing anything\n");
         return WINED3D_OK;
     }
-    This->viewport_changed = TRUE;
-
-    ENTER_GL();
 
     TRACE("(%p) : x=%d, y=%d, wid=%d, hei=%d, minz=%f, maxz=%f\n", This,
           pViewport->X, pViewport->Y, pViewport->Width, pViewport->Height, pViewport->MinZ, pViewport->MaxZ);
 
-    glDepthRange(pViewport->MinZ, pViewport->MaxZ);
-    checkGLcall("glDepthRange");
-    /* Note: GL requires lower left, DirectX supplies upper left */
-    /* TODO: replace usage of renderTarget with context management */
-    glViewport(pViewport->X,
-               (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - (pViewport->Y + pViewport->Height)),
-               pViewport->Width, pViewport->Height);
-
-    checkGLcall("glViewport");
-
-    LEAVE_GL();
-
-    /* Todo: move the gl code too */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VIEWPORT);
     return WINED3D_OK;
 
