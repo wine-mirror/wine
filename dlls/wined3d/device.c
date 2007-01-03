@@ -3260,6 +3260,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
 
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
+        return WINED3D_OK;
+    } else if(oldShader == pShader) {
+        /* Checked here to allow proper stateblock recording */
+        TRACE("App is setting the old shader over, nothing to do\n");
+        return WINED3D_OK;
     }
 
     if (NULL != pShader) {
@@ -5832,7 +5837,7 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
 
     /* Temporaryily mark all render states dirty to force reapplication
      * until the context management for is integrated with the state management
-     * The same for the pixel shader, vertex declaration
+     * The same for the pixel shader, vertex declaration and vertex shader
      * Sampler states and texture stage states are marked
      * dirty my StateBlock::Apply already.
      */
@@ -5841,6 +5846,7 @@ static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
     }
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VSHADER);
 
     /* Restore recording */
     This->isRecordingState = oldRecording;
