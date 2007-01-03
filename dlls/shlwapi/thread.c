@@ -180,7 +180,7 @@ HRESULT WINAPI SHSetThreadRef(IUnknown *lpUnknown)
 {
   TRACE("(%p)\n", lpUnknown);
 
-  if (!lpUnknown || SHLWAPI_ThreadRef_index  == 0xffffffff)
+  if (!lpUnknown || SHLWAPI_ThreadRef_index  == TLS_OUT_OF_INDEXES)
     return E_NOINTERFACE;
 
   TlsSetValue(SHLWAPI_ThreadRef_index, lpUnknown);
