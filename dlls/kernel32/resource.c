@@ -616,16 +616,200 @@ DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
     return ((PIMAGE_RESOURCE_DATA_ENTRY)hRsrc)->Size;
 }
 
+/*
+ *  Data structure for updating resources.
+ *  Type/Name/Language is a keyset for accessing resource data.
+ *
+ *  QUEUEDUPDATES (root) ->
+ *    list of struct resouce_dir_entry    (Type) ->
+ *      list of struct resouce_dir_entry  (Name)   ->
+ *         list of struct resouce_data    Language + Data
+ */
+
 typedef struct
 {
     LPWSTR pFileName;
+    struct list root;
 } QUEUEDUPDATES;
+
+/* this structure is shared for types and names */
+struct resource_dir_entry {
+    struct list entry;
+    LPWSTR id;
+    struct list children;
+};
+
+/* this structure is the leaf */
+struct resource_data {
+    struct list entry;
+    LANGID lang;
+    DWORD codepage;
+    DWORD cbData;
+    BYTE data[1];
+};
+
+int resource_strcmp( LPCWSTR a, LPCWSTR b )
+{
+    if ( a == b )
+        return 0;
+    if (HIWORD( a ) && HIWORD( b ) )
+        return lstrcmpW( a, b );
+    /* strings come before ids */
+    if (HIWORD( a ) && !HIWORD( b ))
+        return -1;
+    if (HIWORD( b ) && !HIWORD( a ))
+        return 1;
+    return ( a < b ) ? -1 : 1;
+}
+
+struct resource_dir_entry *find_resource_dir_entry( struct list *dir, LPCWSTR id )
+{
+    struct resource_dir_entry *ent;
+
+    /* match either IDs or strings */
+    LIST_FOR_EACH_ENTRY( ent, dir, struct resource_dir_entry, entry )
+        if (!resource_strcmp( id, ent->id ))
+            return ent;
+
+    return NULL;
+}
+
+struct resource_data *find_resource_data( struct list *dir, LANGID lang )
+{
+    struct resource_data *res_data;
+
+    /* match only languages here */
+    LIST_FOR_EACH_ENTRY( res_data, dir, struct resource_data, entry )
+        if ( lang == res_data->lang )
+             return res_data;
+
+    return NULL;
+}
+
+void add_resource_dir_entry( struct list *dir, struct resource_dir_entry *resdir )
+{
+    struct resource_dir_entry *ent;
+
+    LIST_FOR_EACH_ENTRY( ent, dir, struct resource_dir_entry, entry )
+    {
+        if (0>resource_strcmp( ent->id, resdir->id ))
+            continue;
+
+        list_add_before( &ent->entry, &resdir->entry );
+        return;
+    }
+    list_add_tail( dir, &resdir->entry );
+}
+
+void add_resource_data_entry( struct list *dir, struct resource_data *resdata )
+{
+    struct resource_data *ent;
+
+    LIST_FOR_EACH_ENTRY( ent, dir, struct resource_data, entry )
+    {
+        if (ent->lang < resdata->lang)
+            continue;
+
+        list_add_before( &ent->entry, &resdata->entry );
+        return;
+    }
+    list_add_tail( dir, &resdata->entry );
+}
+
+LPWSTR res_strdupW( LPCWSTR str )
+{
+    LPWSTR ret;
+    UINT len;
+
+    if (HIWORD(str) == 0)
+        return (LPWSTR) (UINT_PTR) LOWORD(str);
+    len = (lstrlenW( str ) + 1) * sizeof (WCHAR);
+    ret = HeapAlloc( GetProcessHeap(), 0, len );
+    memcpy( ret, str, len );
+    return ret;
+}
+
+void res_free_str( LPWSTR str )
+{
+    if (HIWORD(str))
+        HeapFree( GetProcessHeap(), 0, str );
+}
 
 BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
                           WORD Language, DWORD codepage, LPCVOID lpData, DWORD cbData )
 {
-    FIXME("%p %s %s %04x %p %d bytes\n", updates, debugstr_w(Type), debugstr_w(Name), Language, lpData, cbData);
-    return FALSE;
+    struct resource_dir_entry *restype, *resname;
+    struct resource_data *resdata;
+
+    TRACE("%p %s %s %04x %04x %p %d bytes\n", updates, debugstr_w(Type), debugstr_w(Name), Language, codepage, lpData, cbData);
+
+    if (!lpData || !cbData)
+        return FALSE;
+
+    restype = find_resource_dir_entry( &updates->root, Type );
+    if (!restype)
+    {
+        restype = HeapAlloc( GetProcessHeap(), 0, sizeof *restype );
+        restype->id = res_strdupW( Type );
+        list_init( &restype->children );
+        add_resource_dir_entry( &updates->root, restype );
+    }
+
+    resname = find_resource_dir_entry( &restype->children, Name );
+    if (!resname)
+    {
+        resname = HeapAlloc( GetProcessHeap(), 0, sizeof *resname );
+        resname->id = res_strdupW( Name );
+        list_init( &resname->children );
+        add_resource_dir_entry( &restype->children, resname );
+    }
+
+    /*
+     * If there's an existing resource entry with matching (Type,Name,Language)
+     *  it needs to be removed before adding the new data.
+     */
+    resdata = find_resource_data( &resname->children, Language );
+    if (resdata)
+    {
+        list_remove( &resdata->entry );
+        HeapFree( GetProcessHeap(), 0, resdata );
+    }
+
+    resdata = HeapAlloc( GetProcessHeap(), 0, sizeof *resdata + cbData );
+    resdata->lang = Language;
+    resdata->codepage = codepage;
+    resdata->cbData = cbData;
+    memcpy( resdata->data, lpData, cbData );
+
+    add_resource_data_entry( &resname->children, resdata );
+
+    return TRUE;
+}
+
+void free_resource_directory( struct list *head, int level )
+{
+    struct list *ptr = NULL;
+
+    while ((ptr = list_head( head )))
+    {
+        list_remove( ptr );
+        if (level)
+        {
+            struct resource_dir_entry *ent;
+
+            ent = LIST_ENTRY( ptr, struct resource_dir_entry, entry );
+            res_free_str( ent->id );
+            free_resource_directory( &ent->children, level - 1 );
+            HeapFree(GetProcessHeap(), 0, ent);
+        }
+        else
+        {
+            struct resource_data *data;
+
+            data = LIST_ENTRY( ptr, struct resource_data, entry );
+            HeapFree( GetProcessHeap(), 0, data );
+        }
+    }
 }
 
 IMAGE_NT_HEADERS *get_nt_header( void *base, DWORD mapping_size )
@@ -740,6 +924,7 @@ HANDLE WINAPI BeginUpdateResourceW( LPCWSTR pFileName, BOOL bDeleteExistingResou
     updates = GlobalLock(hUpdate);
     if (updates)
     {
+        list_init( &updates->root );
         updates->pFileName = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(pFileName)+1)*sizeof(WCHAR));
         if (updates->pFileName)
         {
@@ -796,6 +981,8 @@ BOOL WINAPI EndUpdateResourceW( HANDLE hUpdate, BOOL fDiscard )
         return FALSE;
 
     ret = fDiscard || write_raw_resources( updates );
+
+    free_resource_directory( &updates->root, 2 );
 
     HeapFree( GetProcessHeap(), 0, updates->pFileName );
     GlobalUnlock( hUpdate );

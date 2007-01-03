@@ -178,7 +178,6 @@ void update_resources_version(void)
     res = BeginUpdateResource( filename, TRUE );
     ok( res != NULL, "BeginUpdateResource failed\n");
 
-    todo_wine {
     memset( &hdr, 0, sizeof hdr );
     r = UpdateResource( res,
                         RT_VERSION,
@@ -186,7 +185,6 @@ void update_resources_version(void)
                         MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
                         &hdr, sizeof hdr );
     ok( r, "UpdateResouce failed\n");
-    }
 
     r = UpdateResource( res,
                         MAKEINTRESOURCE(0x1230),
@@ -195,7 +193,6 @@ void update_resources_version(void)
                         NULL, 0 );
     ok( r == FALSE, "UpdateResouce failed\n");
 
-    todo_wine {
     r = UpdateResource( res,
                         MAKEINTRESOURCE(0x1230),
                         MAKEINTRESOURCE(0x4567),
@@ -204,8 +201,7 @@ void update_resources_version(void)
     ok( r == TRUE, "UpdateResouce failed\n");
 
     r = EndUpdateResource( res, FALSE );
-    ok( r, "EndUpdateResouce failed\n");
-    }
+    todo_wine ok( r, "EndUpdateResouce failed\n");
 }
 
 
