@@ -4741,6 +4741,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
 
+    /* TODO: Only mark dirty if drawing from a different UP address */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
+
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, -This->stateBlock->baseVertexIndex /* start vertex */, 0  /* NumVertices */,
                   0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */);
 
@@ -4748,7 +4751,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamStride[0] = 0;
     This->stateBlock->streamSource[0] = NULL;
 
-    /*stream zero settings set to null at end, as per the msdn */
+    /* stream zero settings set to null at end, as per the msdn. No need to mark dirty here, the app has to set
+     * the new stream sources or use UP drawing again
+     */
     return WINED3D_OK;
 }
 
