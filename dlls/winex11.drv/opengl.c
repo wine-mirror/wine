@@ -605,6 +605,10 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, Wine_GLPBuf
   int wantColorBits = 0;
   int sz_alpha = 0;
 
+  /* The list of WGL attributes is allowed to be NULL, so don't return -1 (error) but just 0 */
+  if(iWGLAttr == NULL)
+    return 0;
+
   while (0 != iWGLAttr[cur]) {
     TRACE("pAttr[%d] = %x\n", cur, iWGLAttr[cur]);
 
@@ -1963,7 +1967,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     }
     PUSH2(attribs, GLX_PBUFFER_WIDTH,  iWidth);
     PUSH2(attribs, GLX_PBUFFER_HEIGHT, iHeight); 
-    while (0 != *piAttribList) {
+    while (piAttribList && 0 != *piAttribList) {
         int attr_v;
         switch (*piAttribList) {
             case WGL_TEXTURE_FORMAT_ARB: {
