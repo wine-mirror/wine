@@ -187,7 +187,12 @@ BOOL WINAPI MapAndLoad(LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoad
         goto Error;
     }
 
-    pNtHeader = RtlImageNtHeader(mapping);
+    if (!(pNtHeader = RtlImageNtHeader(mapping)))
+    {
+        WARN("Not an NT header\n");
+        UnmapViewOfFile(mapping);
+        goto Error;
+    }
 
     pLoadedImage->ModuleName       = HeapAlloc(GetProcessHeap(), 0,
                                                strlen(szFileName) + 1);
