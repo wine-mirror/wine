@@ -159,7 +159,7 @@ typedef struct {
 
 typedef struct {
     BOOL invalid;
-    HDC hdc;
+    ScriptCache *sc;
     int cItems;
     int cMaxGlyphs;
     SCRIPT_ITEM* pItem;
@@ -517,9 +517,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 {
     HRESULT hr;
     StringAnalysis* analysis;
-    int numItemizedItems;
-    int i;
-    SCRIPT_CACHE* sc = 0;
+    int i, numItemizedItems = 255;
 
     TRACE("(%p,%p,%d,%d,%d,0x%x,%d,%p,%p,%p,%p,%p,%p)\n",
       hdc, pString, cString, cGlyphs, iCharset, dwFlags,
@@ -534,8 +532,6 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
     analysis = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                        sizeof(StringAnalysis));
 
-    analysis->hdc = hdc;
-    numItemizedItems = 255;
     analysis->pItem = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                               numItemizedItems*sizeof(SCRIPT_ITEM)+1);
 
@@ -556,10 +552,10 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
 
     analysis->glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
                                  sizeof(StringGlyphs)*analysis->numItems);
-    sc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SCRIPT_CACHE));
 
     for(i=0; i<analysis->numItems; i++)
     {
+        SCRIPT_CACHE *sc = (SCRIPT_CACHE *)&analysis->sc;
         int cChar = analysis->pItem[i+1].iCharPos - analysis->pItem[i].iCharPos;
         int numGlyphs = 1.5 * cChar + 16;
         WORD* glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WORD)*numGlyphs);
@@ -587,10 +583,7 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
         analysis->glyphs[i].abc = abc;
     }
 
-    HeapFree(GetProcessHeap(), 0, sc);
-
     *pssa = analysis;
-
     return S_OK;
 }
 
@@ -628,7 +621,6 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
     WORD *glyphs;
     int   item, cnt, x;
     HRESULT hr;
-    SCRIPT_CACHE sc = 0;
 
     TRACE("(%p,%d,%d,0x%1x,%p,%d,%d,%d)\n",
          ssa, iX, iY, uOptions, prc, iMinSel, iMaxSel, fDisabled);
@@ -671,17 +663,15 @@ HRESULT WINAPI ScriptStringOut(SCRIPT_STRING_ANALYSIS ssa,
         cnt += analysis->glyphs[item].numGlyphs; /* point to the end of the copied text */
     }
 
-    hr = ScriptTextOut(analysis->hdc, &sc, iX, iY, uOptions, prc, &analysis->pItem->a,
-                       NULL, 0, glyphs, cnt, analysis->glyphs->piAdvance, NULL,
-                       analysis->glyphs->pGoffset);
+    hr = ScriptTextOut(analysis->sc->hdc, (SCRIPT_CACHE *)&analysis->sc, iX, iY,
+                       uOptions, prc, &analysis->pItem->a, NULL, 0, glyphs, cnt,
+                       analysis->glyphs->piAdvance, NULL, analysis->glyphs->pGoffset);
     TRACE("ScriptTextOut hr=%08x\n", hr);
 
     /*
      * Free the output buffer and script cache
      */
     HeapFree(GetProcessHeap(), 0, glyphs);
-    ScriptFreeCache(&sc);
-
     return hr;
 }
 
@@ -1524,7 +1514,7 @@ const SIZE * WINAPI ScriptString_pSize(SCRIPT_STRING_ANALYSIS ssa)
          * appropriate place so that we can just pass cached
          * values here.
          */
-        if (!GetTextMetricsW(analysis->hdc, &metric))
+        if (!GetTextMetricsW(analysis->sc->hdc, &metric))
         {
             HeapFree(GetProcessHeap(), 0, analysis->sz);
             analysis->sz = NULL;
