@@ -164,7 +164,9 @@ BOOL WINAPI MapAndLoad(LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoad
         goto Error;
     }
 
-    hFile = CreateFileA(szFileName, GENERIC_READ, FILE_SHARE_READ,
+    hFile = CreateFileA(szFileName,
+                        GENERIC_READ | (bReadOnly ? 0 : GENERIC_WRITE),
+                        FILE_SHARE_READ,
                         NULL, OPEN_EXISTING, 0, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
     {
@@ -172,14 +174,16 @@ BOOL WINAPI MapAndLoad(LPSTR pszImageName, LPSTR pszDllPath, PLOADED_IMAGE pLoad
         goto Error;
     }
 
-    hFileMapping = CreateFileMappingA(hFile, NULL, PAGE_READONLY | SEC_COMMIT, 0, 0, NULL);
+    hFileMapping = CreateFileMappingA(hFile, NULL, 
+                                      (bReadOnly ? PAGE_READONLY : PAGE_READWRITE) | SEC_COMMIT,
+                                      0, 0, NULL);
     if (!hFileMapping)
     {
         WARN("CreateFileMapping: Error = %d\n", GetLastError());
         goto Error;
     }
 
-    mapping = MapViewOfFile(hFileMapping, FILE_MAP_READ, 0, 0, 0);
+    mapping = MapViewOfFile(hFileMapping, bReadOnly ? FILE_MAP_READ : FILE_MAP_WRITE, 0, 0, 0);
     CloseHandle(hFileMapping);
     if (!mapping)
     {
