@@ -171,7 +171,45 @@ static HRESULT WINAPI IDirectMusicPortImpl_SetDirectSound (LPDIRECTMUSICPORT ifa
 
 static HRESULT WINAPI IDirectMusicPortImpl_GetFormat (LPDIRECTMUSICPORT iface, LPWAVEFORMATEX pWaveFormatEx, LPDWORD pdwWaveFormatExSize, LPDWORD pdwBufferSize) {
 	IDirectMusicPortImpl *This = (IDirectMusicPortImpl *)iface;
+	WAVEFORMATEX format;
 	FIXME("(%p, %p, %p, %p): stub\n", This, pWaveFormatEx, pdwWaveFormatExSize, pdwBufferSize);
+
+	if (pWaveFormatEx == NULL)
+	{
+		if (pdwWaveFormatExSize)
+			*pdwWaveFormatExSize = sizeof(format);
+		else
+			return E_POINTER;
+	}
+	else
+	{
+		if (pdwWaveFormatExSize == NULL)
+			return E_POINTER;
+
+		/* Just fill this in with something that will not crash Direct Sound for now. */
+		/* It won't be used anyway until Performances are completed */
+		format.wFormatTag = WAVE_FORMAT_PCM;
+		format.nChannels = 2; /* This->params.dwAudioChannels; */
+		format.nSamplesPerSec = 44100; /* This->params.dwSampleRate; */
+		format.wBitsPerSample = 16;	/* FIXME: check this */
+		format.nBlockAlign = (format.wBitsPerSample * format.nChannels) / 8;
+		format.nAvgBytesPerSec = format.nSamplesPerSec * format.nBlockAlign;
+		format.cbSize = 0;
+
+		if (*pdwWaveFormatExSize >= sizeof(format))
+		{
+			CopyMemory(pWaveFormatEx, &format, min(sizeof(format), *pdwWaveFormatExSize));
+			*pdwWaveFormatExSize = sizeof(format);	/* FIXME check if this is set */
+		}
+		else
+			return E_POINTER;	/* FIXME find right error */
+	}
+
+	if (pdwBufferSize)
+		*pdwBufferSize = 44100 * 2 * 2;
+	else
+		return E_POINTER;
+
 	return S_OK;
 }
 
