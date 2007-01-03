@@ -624,7 +624,7 @@ DDRAW_dump_PTR(const void *in)
 {
     DPRINTF("%p", *((const void * const*) in));
 }
-void
+static void
 DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
 {
     DPRINTF(" Low : %d  - High : %d", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
@@ -719,7 +719,7 @@ DDRAW_dump_flags_(DWORD flags,
         DPRINTF("\n");
 }
 
-void
+static void
 DDRAW_dump_pixelformat_flag(DWORD flagmask)
 {
     static const flag_info flags[] =
