@@ -1702,6 +1702,7 @@ static void tex_resultarg(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD sampler = state - STATE_SAMPLER(0);
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[sampler];
     union {
         float f;
         DWORD d;
@@ -1711,12 +1712,17 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* Enabling and disabling texture dimensions is done by texture stage state / pixel shader setup, this function
      * only has to bind textures and set the per texture states
      */
+
+    if (mapped_stage == -1) {
+        TRACE("No sampler mapped to stage %d. Returning.\n", sampler);
+        return;
+    }
+
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        /* TODO: register combiners! */
         if(sampler >= GL_LIMITS(sampler_stages)) {
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[sampler]));
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
         checkGLcall("glActiveTextureARB");
     } else if (sampler > 0) {
         /* We can't do anything here */
