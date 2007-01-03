@@ -161,30 +161,14 @@ static void update_resources_delete( void )
     todo_wine ok( r, "EndUpdateResouce failed\n");
 }
 
-struct verhdr {
-    WORD wLength;
-    WORD wValueLength;
-    WORD wType;
-    WCHAR key[1];
-};
-
 void update_resources_version(void)
 {
     HANDLE res = NULL;
     BOOL r;
-    struct verhdr hdr;
     char foo[] = "red and white";
 
     res = BeginUpdateResource( filename, TRUE );
     ok( res != NULL, "BeginUpdateResource failed\n");
-
-    memset( &hdr, 0, sizeof hdr );
-    r = UpdateResource( res,
-                        RT_VERSION,
-                        MAKEINTRESOURCE(VS_VERSION_INFO),
-                        MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL),
-                        &hdr, sizeof hdr );
-    ok( r, "UpdateResouce failed\n");
 
     r = UpdateResource( res,
                         MAKEINTRESOURCE(0x1230),
@@ -219,10 +203,10 @@ void check_empty( IMAGE_RESOURCE_DIRECTORY *dir )
     todo_wine ok( !memcmp( pad, "PADDINGXXPADDING", 16), "padding wrong\n");
 }
 
-void check_version( IMAGE_RESOURCE_DIRECTORY *dir )
+void check_not_empty( IMAGE_RESOURCE_DIRECTORY *dir )
 {
     ok( dir->NumberOfNamedEntries == 0, "NumberOfNamedEntries should be 0 instead of %d\n", dir->NumberOfNamedEntries);
-    todo_wine ok( dir->NumberOfIdEntries == 2, "NumberOfIdEntries should be 2 instead of %d\n", dir->NumberOfIdEntries);
+    todo_wine ok( dir->NumberOfIdEntries == 1, "NumberOfIdEntries should be 1 instead of %d\n", dir->NumberOfIdEntries);
 }
 
 void check_exe( res_check_func fn )
@@ -287,6 +271,6 @@ START_TEST(resource)
     update_resources_delete();
     check_exe( check_empty );
     update_resources_version();
-    check_exe( check_version );
+    check_exe( check_not_empty );
     DeleteFile( filename );
 }
