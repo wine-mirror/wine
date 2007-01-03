@@ -1363,6 +1363,7 @@ static void activate_dimensions(DWORD stage, IWineD3DStateBlockImpl *stateblock)
 
 static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+    DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
 
     TRACE("Setting color op for stage %d\n", stage);
 
@@ -1372,21 +1373,23 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         return;
     }
 
-    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        /* TODO: register combiners! */
-        if(stage != stateblock->wineD3DDevice->texUnitMap[stage]) ERR("Foo: %d is %d!\n", stage, stateblock->wineD3DDevice->texUnitMap[stage]);
-        if(stateblock->wineD3DDevice->texUnitMap[stage] >= GL_LIMITS(sampler_stages)) {
-            if(stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
-              stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
-                FIXME("Attempt to enable unsupported stage!\n");
+    if (stage != mapped_stage) WARN("Using non 1:1 mapping: %d -> %d!\n", stage, mapped_stage);
+
+    if (mapped_stage != -1) {
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            if (mapped_stage >= GL_LIMITS(sampler_stages)) {
+                if (stateblock->textureState[stage][WINED3DTSS_COLOROP] != WINED3DTOP_DISABLE &&
+                        stateblock->textureState[stage][WINED3DTSS_COLOROP] != 0) {
+                    FIXME("Attempt to enable unsupported stage!\n");
+                }
+                return;
             }
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + mapped_stage));
+            checkGLcall("glActiveTextureARB");
+        } else if (stage > 0) {
+            WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
             return;
         }
-        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + stateblock->wineD3DDevice->texUnitMap[stage]));
-        checkGLcall("glActiveTextureARB");
-    } else if (stage > 0) {
-        WARN("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-        return;
     }
 
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
@@ -1399,20 +1402,22 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
     if(stage >= stateblock->lowest_disabled_stage) {
         TRACE("Stage disabled\n");
-        /* Disable everything here */
-        glDisable(GL_TEXTURE_1D);
-        checkGLcall("glDisable(GL_TEXTURE_1D)");
-        glDisable(GL_TEXTURE_2D);
-        checkGLcall("glDisable(GL_TEXTURE_2D)");
-        glDisable(GL_TEXTURE_3D);
-        checkGLcall("glDisable(GL_TEXTURE_3D)");
-        glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-        checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+        if (mapped_stage != -1) {
+            /* Disable everything here */
+            glDisable(GL_TEXTURE_1D);
+            checkGLcall("glDisable(GL_TEXTURE_1D)");
+            glDisable(GL_TEXTURE_2D);
+            checkGLcall("glDisable(GL_TEXTURE_2D)");
+            glDisable(GL_TEXTURE_3D);
+            checkGLcall("glDisable(GL_TEXTURE_3D)");
+            glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+            checkGLcall("glDisable(GL_TEXTURE_CUBE_MAP_ARB)");
+        }
         /* All done */
         return;
     }
 
-    activate_dimensions(stage, stateblock);
+    if (mapped_stage != -1) activate_dimensions(stage, stateblock);
 
     /* Set the texture combiners */
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
@@ -1421,7 +1426,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                          stateblock->textureState[stage][WINED3DTSS_COLORARG1],
                          stateblock->textureState[stage][WINED3DTSS_COLORARG2],
                          stateblock->textureState[stage][WINED3DTSS_COLORARG0],
-                         stateblock->wineD3DDevice->texUnitMap[stage]);
+                         mapped_stage);
     } else {
         set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, FALSE, stage,
                     stateblock->textureState[stage][WINED3DTSS_COLOROP],
