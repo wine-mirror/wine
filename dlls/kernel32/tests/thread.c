@@ -22,6 +22,7 @@
 #define _WIN32_WINNT 0x0500
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "wine/test.h"
 #include <windef.h>
@@ -67,9 +68,24 @@ static SetThreadIdealProcessor_t pSetThreadIdealProcessor=NULL;
 typedef BOOL (WINAPI *SetThreadPriorityBoost_t)(HANDLE,BOOL);
 static SetThreadPriorityBoost_t pSetThreadPriorityBoost=NULL;
 
+static HANDLE create_target_process(const char *arg)
+{
+    char **argv;
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si = { 0 };
+    si.cb = sizeof(si);
+
+    winetest_get_mainargs( &argv );
+    sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
+    ok(CreateProcess(NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL,
+                     &si, &pi) != 0, "error: %u\n", GetLastError());
+    ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
+    return pi.hProcess;
+}
+
 /* Functions not tested yet:
   AttachThreadInput
-  CreateRemoteThread
   SetThreadContext
   SwitchToThread
 
@@ -174,6 +190,95 @@ static DWORD WINAPI threadFunc5(LPVOID p)
    return 0;
 }
 #endif
+
+static DWORD WINAPI threadFunc_SetEvent(LPVOID p)
+{
+    SetEvent((HANDLE) p);
+    return 0;
+}
+
+static DWORD WINAPI threadFunc_CloseHandle(LPVOID p)
+{
+    CloseHandle((HANDLE) p);
+    return 0;
+}
+
+/* check CreateRemoteThread */
+static VOID test_CreateRemoteThread(void)
+{
+    HANDLE hProcess, hThread, hEvent, hRemoteEvent;
+    DWORD tid, ret, exitcode;
+
+    hProcess = create_target_process("sleep");
+    ok(hProcess != NULL, "Can't start process\n");
+
+    hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    ok(hEvent != NULL, "Can't create event, err=%u\n", GetLastError());
+    ret = DuplicateHandle(GetCurrentProcess(), hEvent, hProcess, &hRemoteEvent,
+                          0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret != 0, "DuplicateHandle failed, err=%u\n", GetLastError());
+
+    /* create suspended remote thread with entry point SetEvent() */
+    hThread = CreateRemoteThread(hProcess, NULL, 0, threadFunc_SetEvent,
+                                 hRemoteEvent, CREATE_SUSPENDED, &tid);
+    todo_wine ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n",
+                 GetLastError());
+    ok(tid != 0, "null tid\n");
+    ret = SuspendThread(hThread);
+    todo_wine ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
+    ret = ResumeThread(hThread);
+    todo_wine ok(ret == 2, "ret=%u, err=%u\n", ret, GetLastError());
+
+    /* thread still suspended, so wait times out */
+    ret = WaitForSingleObject(hEvent, 100);
+    ok(ret == WAIT_TIMEOUT, "wait did not time out, ret=%u\n", ret);
+
+    ret = ResumeThread(hThread);
+    todo_wine ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
+
+    /* wait that doesn't time out */
+    ret = WaitForSingleObject(hEvent, 100);
+    todo_wine ok(ret == WAIT_OBJECT_0, "object not signaled, ret=%u\n", ret);
+
+    /* wait for thread end */
+    ret = WaitForSingleObject(hThread, 100);
+    todo_wine ok(ret == WAIT_OBJECT_0,
+                 "waiting for thread failed, ret=%u\n", ret);
+    CloseHandle(hThread);
+
+    /* create and wait for remote thread with entry point CloseHandle() */
+    hThread = CreateRemoteThread(hProcess, NULL, 0,
+                                 threadFunc_CloseHandle,
+                                 hRemoteEvent, 0, &tid);
+    todo_wine ok(hThread != NULL,
+                 "CreateRemoteThread failed, err=%u\n", GetLastError());
+    ret = WaitForSingleObject(hThread, 100);
+    todo_wine ok(ret == WAIT_OBJECT_0,
+                 "waiting for thread failed, ret=%u\n", ret);
+    CloseHandle(hThread);
+
+    /* create remote thread with entry point SetEvent() */
+    hThread = CreateRemoteThread(hProcess, NULL, 0,
+                                 threadFunc_SetEvent,
+                                 hRemoteEvent, 0, &tid);
+    todo_wine ok(hThread != NULL,
+                 "CreateRemoteThread failed, err=%u\n", GetLastError());
+
+    /* closed handle, so wait times out */
+    ret = WaitForSingleObject(hEvent, 100);
+    ok(ret == WAIT_TIMEOUT, "wait did not time out, ret=%u\n", ret);
+
+    /* check that remote SetEvent() failed */
+    ret = GetExitCodeThread(hThread, &exitcode);
+    todo_wine ok(ret != 0,
+                 "GetExitCodeThread failed, err=%u\n", GetLastError());
+    if (ret) todo_wine ok(exitcode == 0, "SetEvent succeeded, expected to fail\n");
+    CloseHandle(hThread);
+
+    TerminateProcess(hProcess, 0);
+    CloseHandle(hEvent);
+    CloseHandle(hProcess);
+}
 
 /* Check basic funcationality of CreateThread and Tls* functions */
 static VOID test_CreateThread_basic(void)
@@ -726,6 +831,9 @@ static void test_QueueUserWorkItem(void)
 START_TEST(thread)
 {
    HINSTANCE lib;
+   int argc;
+   char **argv;
+   argc = winetest_get_mainargs( &argv );
 /* Neither Cygwin nor mingW export OpenThread, so do a dynamic check
    so that the compile passes
 */
@@ -736,6 +844,29 @@ START_TEST(thread)
    pQueueUserWorkItem=(QueueUserWorkItem_t)GetProcAddress(lib,"QueueUserWorkItem");
    pSetThreadIdealProcessor=(SetThreadIdealProcessor_t)GetProcAddress(lib,"SetThreadIdealProcessor");
    pSetThreadPriorityBoost=(SetThreadPriorityBoost_t)GetProcAddress(lib,"SetThreadPriorityBoost");
+
+   if (argc >= 3)
+   {
+       if (!strcmp(argv[2], "sleep"))
+       {
+           Sleep(5000); /* spawned process runs for at most 5 seconds */
+           return;
+       }
+       while (1)
+       {
+           HANDLE hThread;
+           hThread = CreateThread(NULL, 0, threadFunc2, NULL, 0, NULL);
+           ok(hThread != NULL, "CreateThread failed, error %u\n",
+              GetLastError());
+           ok(WaitForSingleObject(hThread, 200) == WAIT_OBJECT_0,
+              "Thread did not exit in time\n");
+           if (hThread == NULL) break;
+           CloseHandle(hThread);
+       }
+       return;
+   }
+
+   test_CreateRemoteThread();
    test_CreateThread_basic();
    test_CreateThread_suspended();
    test_SuspendThread();
