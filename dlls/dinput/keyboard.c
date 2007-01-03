@@ -61,7 +61,7 @@ static SysKeyboardImpl* current_lock = NULL;
 
 static BYTE DInputKeyState[WINE_DINPUT_KEYBOARD_MAX_KEYS]; /* array for 'GetDeviceState' */
 
-LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
+static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam )
 {
     SysKeyboardImpl *This = (SysKeyboardImpl *)current_lock;
     int dik_code;

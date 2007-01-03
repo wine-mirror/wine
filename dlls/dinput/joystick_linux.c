@@ -1214,11 +1214,11 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
 /******************************************************************************
   *     GetObjectInfo : get object info
   */
-HRESULT WINAPI JoystickAImpl_GetObjectInfo(
-        LPDIRECTINPUTDEVICE8A iface,
-        LPDIDEVICEOBJECTINSTANCEA pdidoi,
-        DWORD dwObj,
-        DWORD dwHow)
+static HRESULT WINAPI JoystickAImpl_GetObjectInfo(
+    LPDIRECTINPUTDEVICE8A iface,
+    LPDIDEVICEOBJECTINSTANCEA pdidoi,
+    DWORD dwObj,
+    DWORD dwHow)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
     DIDEVICEOBJECTINSTANCEA didoiA;
@@ -1302,7 +1302,7 @@ HRESULT WINAPI JoystickAImpl_GetObjectInfo(
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
-HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
+static HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
     LPDIRECTINPUTDEVICE8A iface,
     LPDIDEVICEINSTANCEA pdidi)
 {
@@ -1342,7 +1342,7 @@ HRESULT WINAPI JoystickAImpl_GetDeviceInfo(
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
   */
-HRESULT WINAPI JoystickWImpl_GetDeviceInfo(
+static HRESULT WINAPI JoystickWImpl_GetDeviceInfo(
     LPDIRECTINPUTDEVICE8W iface,
     LPDIDEVICEINSTANCEW pdidi)
 {
