@@ -1053,6 +1053,9 @@ static void state_lastpixel(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 }
 
 static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    unsigned int i;
+    int val;
+
     /* TODO: NV_POINT_SPRITE */
     if (!GL_SUPPORT(ARB_POINT_SPRITE)) {
         TRACE("Point sprites not supported\n");
@@ -1060,15 +1063,26 @@ static void state_pointsprite(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 
     if (stateblock->renderState[WINED3DRS_POINTSPRITEENABLE]) {
-        glEnable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glEnable(GL_POINT_SPRITE_ARB)");
-        glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, TRUE);
-        checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, TRUE)");
+        val = GL_TRUE;
     } else {
-        glDisable(GL_POINT_SPRITE_ARB);
-        checkGLcall("glDisable(GL_POINT_SPRITE_ARB)");
-        glTexEnvf(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, FALSE);
-        checkGLcall("glTexEnvf(GL_POINT_SPRITE, GL_COORD_REPLACE, FALSE)");
+        val = GL_FALSE;
+    }
+
+    for (i = 0; i < GL_LIMITS(texture_stages); i++) {
+        /* Note the WINED3DRS value applies to all textures, but GL has one
+         * per texture, so apply it now ready to be used!
+         */
+        if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+            checkGLcall("glActiveTextureARB");
+        } else if (i==1) {
+            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
+            break;
+        }
+
+        glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, val);
+        checkGLcall((val?"glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_TRUE)":
+                         "glTexEnvi(GL_POINT_SPRITE, GL_COORD_REPLACE, GL_FALSE)"));
     }
 }
 
