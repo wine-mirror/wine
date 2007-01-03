@@ -25,4 +25,20 @@ STRINGTABLE DISCARDABLE
 {
     IDS_HTMLDISABLED  "De HTML weergave is op dit moment uitgeschakeld."
     IDS_HTMLDOCUMENT  "HTML document"
+    IDS_DOWNLOADING   "Bezig met downloaden..."
+    IDS_INSTALLING    "Bezig met installeren..."
+}
+
+ID_DWL_DIALOG DIALOG LOADONCALL MOVEABLE DISCARDABLE  0, 0, 260, 95
+STYLE DS_MODALFRAME | DS_CENTER | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "Wine-Gecko-Installatie"
+FONT 8, "MS Shell Dlg"
+{
+    LTEXT "Dit programma probeert een HTML-pagina weer te geven. Wine moet " \
+          "Gecko (Mozilla HTML-Bibliotheek) installeren om de pagina " \
+          "weer te kunnen geven. Klik op Installeren, om Gecko automatisch " \
+          "te downloaden en te installeren.", ID_DWL_STATUS, 10, 10, 240, 40, SS_LEFT
+    CONTROL "Voortgang", ID_DWL_PROGRESS, PROGRESS_CLASSA, WS_BORDER|PBS_SMOOTH, 10, 50, 240, 12
+    PUSHBUTTON "Afbreken", IDCANCEL, 140, 70, 50, 15, WS_GROUP | WS_TABSTOP
+    PUSHBUTTON "Installeren", ID_DWL_INSTALL, 200, 70, 50, 15, WS_GROUP | WS_TABSTOP
 }
