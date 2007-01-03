@@ -21,13 +21,13 @@
 @ stdcall ScriptStringCPtoX(ptr long long ptr)
 @ stdcall ScriptStringFree(ptr)
 @ stdcall ScriptStringGetLogicalWidths(ptr ptr)
-@ stub ScriptStringGetOrder
+@ stdcall ScriptStringGetOrder(ptr ptr)
 @ stdcall ScriptStringOut(ptr long long long ptr long long long)
 @ stdcall ScriptStringValidate(ptr)
 @ stdcall ScriptStringXtoCP(ptr long ptr ptr)
 @ stdcall ScriptString_pLogAttr(ptr)
 @ stdcall ScriptString_pSize(ptr)
-@ stub ScriptString_pcOutChars
+@ stdcall ScriptString_pcOutChars(ptr)
 @ stdcall ScriptTextOut(ptr ptr long long long ptr ptr ptr long ptr long ptr ptr ptr)
 @ stdcall ScriptXtoCP(long long long ptr ptr ptr ptr ptr ptr)
 @ stub UspAllocCache

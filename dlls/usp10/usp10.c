@@ -159,6 +159,7 @@ typedef struct {
 
 typedef struct {
     BOOL invalid;
+    int clip_len;
     ScriptCache *sc;
     int cItems;
     int cMaxGlyphs;
@@ -520,19 +521,12 @@ HRESULT WINAPI ScriptItemize(const WCHAR *pwcInChars, int cInChars, int cMaxItem
  *      ScriptStringAnalyse (USP10.@)
  *
  */
-HRESULT WINAPI ScriptStringAnalyse(HDC hdc, 
-				   const void *pString, 
-				   int cString, 
-				   int cGlyphs,
-				   int iCharset,
-				   DWORD dwFlags,
-				   int iReqWidth,
-				   SCRIPT_CONTROL *psControl,
-				   SCRIPT_STATE *psState,
-				   const int *piDx,
-				   SCRIPT_TABDEF *pTabdef,
-				   const BYTE *pbInClass,
-				   SCRIPT_STRING_ANALYSIS *pssa)
+HRESULT WINAPI ScriptStringAnalyse(HDC hdc, const void *pString, int cString,
+                                   int cGlyphs, int iCharset, DWORD dwFlags,
+                                   int iReqWidth, SCRIPT_CONTROL *psControl,
+                                   SCRIPT_STATE *psState, const int *piDx,
+                                   SCRIPT_TABDEF *pTabdef, const BYTE *pbInClass,
+                                   SCRIPT_STRING_ANALYSIS *pssa)
 {
     HRESULT hr = E_OUTOFMEMORY;
     StringAnalysis *analysis = NULL;
@@ -542,11 +536,19 @@ HRESULT WINAPI ScriptStringAnalyse(HDC hdc,
           hdc, pString, cString, cGlyphs, iCharset, dwFlags, iReqWidth,
           psControl, psState, piDx, pTabdef, pbInClass, pssa);
 
+    if (iCharset != -1)
+    {
+        FIXME("Only Unicode strings are supported\n");
+        return E_INVALIDARG;
+    }
     if (cString < 1 || !pString) return E_INVALIDARG;
     if ((dwFlags & SSA_GLYPHS) && !hdc) return E_PENDING;
 
     if (!(analysis = usp_zero_alloc(sizeof(StringAnalysis)))) return E_OUTOFMEMORY;
     if (!(analysis->pItem = usp_zero_alloc(num_items * sizeof(SCRIPT_ITEM) + 1))) goto error;
+
+    /* FIXME: handle clipping */
+    analysis->clip_len = cString;
 
     hr = ScriptItemize(pString, cString, num_items, psControl, psState, analysis->pItem,
                        &analysis->numItems);
@@ -1566,4 +1568,56 @@ const SCRIPT_LOGATTR * WINAPI ScriptString_pLogAttr(SCRIPT_STRING_ANALYSIS ssa)
 
     if (!analysis) return NULL;
     return analysis->logattrs;
+}
+
+/***********************************************************************
+ *      ScriptString_pcOutChars (USP10.@)
+ *
+ * Retrieve the length of a string after clipping.
+ *
+ * PARAMS
+ *  ssa [I] String analysis.
+ *
+ * RETURNS
+ *  Success: Pointer to the length.
+ *  Failure: NULL
+ */
+const int * WINAPI ScriptString_pcOutChars(SCRIPT_STRING_ANALYSIS ssa)
+{
+    StringAnalysis *analysis = ssa;
+
+    TRACE("(%p)\n", ssa);
+
+    if (!analysis) return NULL;
+    return &analysis->clip_len;
+}
+
+/***********************************************************************
+ *      ScriptStringGetOrder (USP10.@)
+ *
+ * Retrieve a glyph order map.
+ *
+ * PARAMS
+ *  ssa   [I]   String analysis.
+ *  order [I/O] Array of glyph positions.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: a non-zero HRESULT.
+ */
+HRESULT WINAPI ScriptStringGetOrder(SCRIPT_STRING_ANALYSIS ssa, UINT *order)
+{
+    unsigned int i, j, k;
+    StringAnalysis *analysis = ssa;
+
+    TRACE("(%p)\n", ssa);
+
+    if (!analysis) return S_FALSE;
+
+    /* FIXME: handle RTL scripts */
+    for (i = 0, k = 0; i < analysis->numItems; i++)
+        for (j = 0; j < analysis->glyphs[i].numGlyphs; j++, k++)
+            order[k] = k;
+
+    return S_OK;
 }
