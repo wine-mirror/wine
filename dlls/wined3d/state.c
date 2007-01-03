@@ -1973,36 +1973,15 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
     }
 }
 
-static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
-    BOOL transformed;
-    /* Some stuff is in the device until we have per context tracking */
+/* Helper for vertexdeclaration() */
+static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVertexShaderFunction) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-    BOOL wasrhw = device->last_was_rhw;
-
-    device->streamFixedUp = FALSE;
- 	
-    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
-     * here simply check whether a shader was set, or the user disabled shaders
-     */
-    if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
-       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
-        useVertexShaderFunction = TRUE;
-
-        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog != device->last_was_foggy_shader) {
-            updateFog = TRUE;
-        }
-    } else if(device->last_was_foggy_shader) {
-        updateFog = TRUE;
-    }
 
     if(device->up_strided) {
-
         /* Note: this is a ddraw fixed-function code path */
         TRACE("================ Strided Input ===================\n");
         memcpy(&device->strided_streams, device->up_strided, sizeof(device->strided_streams));
-    }
-    else if (stateblock->vertexDecl || stateblock->vertexShader) {
+    } else if (stateblock->vertexDecl || stateblock->vertexShader) {
         /* Note: This is a fixed function or shader codepath.
          * This means it must handle both types of strided data.
          * Shaders must go through here to zero the strided data, even if they
@@ -2027,6 +2006,33 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         primitiveConvertToStridedData((IWineD3DDevice *) device, &device->strided_streams,
 									   &device->streamFixedUp);
      }
+}
+
+static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
+    BOOL transformed;
+    /* Some stuff is in the device until we have per context tracking */
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+    BOOL wasrhw = device->last_was_rhw;
+
+    device->streamFixedUp = FALSE;
+
+    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
+     * here simply check whether a shader was set, or the user disabled shaders
+     */
+    if (device->vs_selected_mode != SHADER_NONE && stateblock->vertexShader &&
+       ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
+        useVertexShaderFunction = TRUE;
+
+        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog != device->last_was_foggy_shader) {
+            updateFog = TRUE;
+        }
+    } else if(device->last_was_foggy_shader) {
+        updateFog = TRUE;
+    }
+
+    handleStreams(stateblock, useVertexShaderFunction);
+
     /* Do I have to use ? TRUE : FALSE ? Or can I rely on 15==15 beeing equal to TRUE(=1)? */
     transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
                     device->strided_streams.u.s.position.VBO != 0) &&
