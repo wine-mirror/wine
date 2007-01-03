@@ -532,7 +532,12 @@ static	void	dump_dir_exported_functions(void)
         printf("\n");
     }
     pFunc = RVA(exportDir->AddressOfFunctions, exportDir->NumberOfFunctions * sizeof(DWORD));
-    if (!pFunc) {printf("Can't grab functions' address table\n"); return;}
+    if (!pFunc)
+    {
+        printf("Can't grab functions' address table\n");
+        free(map);
+        return;
+    }
     for (i = 0; i < exportDir->NumberOfFunctions; i++)
     {
 	if (pFunc[i] && !(map[i / 32] & (1 << (i % 32))))
