@@ -2211,6 +2211,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
 
     This->updateStateBlock->changed.streamSource[StreamNumber] = TRUE;
     This->updateStateBlock->set.streamSource[StreamNumber]     = TRUE;
+
+    if(oldSrc == pStreamData &&
+       This->updateStateBlock->streamStride[StreamNumber] == Stride &&
+       This->updateStateBlock->streamOffset[StreamNumber] == OffsetInBytes &&
+       This->updateStateBlock->streamFlags[StreamNumber] == streamFlags) {
+       TRACE("Application is setting the old values over, nothing to do\n");
+       return WINED3D_OK;
+    }
+
     This->updateStateBlock->streamSource[StreamNumber]         = pStreamData;
     if (pStreamData) {
         This->updateStateBlock->streamStride[StreamNumber]     = Stride;
