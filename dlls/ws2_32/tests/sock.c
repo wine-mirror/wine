@@ -1157,7 +1157,7 @@ static void test_WSAAddressToStringW(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect1 ), "Expected different address string\n" );
 
@@ -1168,7 +1168,7 @@ static void test_WSAAddressToStringW(void)
     sockaddr.sin_addr.s_addr = 0xffffffff;
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect2 ), "Expected different address string\n" );
 
@@ -1179,7 +1179,7 @@ static void test_WSAAddressToStringW(void)
     sockaddr.sin_addr.s_addr = 0;
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect3 ), "Expected different address string\n" );
 
@@ -1190,7 +1190,7 @@ static void test_WSAAddressToStringW(void)
     sockaddr.sin_addr.s_addr = 0xffffffff;
 
     ret = WSAAddressToStringW( (SOCKADDR*)&sockaddr, sizeof(sockaddr), NULL, address, &len );
-    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %x\n", WSAGetLastError() );
+    ok( !ret, "WSAAddressToStringW() failed unexpectedly: %d\n", WSAGetLastError() );
 
     ok( !lstrcmpW( address, expect4 ), "Expected different address string\n" );
 }
@@ -1211,7 +1211,7 @@ static void test_WSAStringToAddressA(void)
     sockaddr.sin_family = AF_INET;
 
     ret = WSAStringToAddressA( address1, AF_INET, NULL, (SOCKADDR*)&sockaddr, &len );
-    ok( ret == SOCKET_ERROR, "WSAStringToAddressA() succeeded unexpectedly: %x\n",
+    ok( ret == SOCKET_ERROR, "WSAStringToAddressA() succeeded unexpectedly: %d\n",
         WSAGetLastError() );
 
     len = sizeof(sockaddr);
@@ -1502,7 +1502,7 @@ static void test_extendedSocketOptions()
     LINGER linger_val;
 
     if(WSAStartup(MAKEWORD(2,0), &wsa)){
-        trace("Winsock failed: 0x%08x. Aborting test\n", WSAGetLastError());
+        trace("Winsock failed: %d. Aborting test\n", WSAGetLastError());
         return;
     }
 
@@ -1513,13 +1513,13 @@ static void test_extendedSocketOptions()
     sa.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP)) < 0){
-        trace("Creating the socket failed: 0x%08x\n", WSAGetLastError());
+        trace("Creating the socket failed: %d\n", WSAGetLastError());
         WSACleanup();
         return;
     }
 
     if(bind(sock, (struct sockaddr *) &sa, sa_len) < 0){
-        trace("Failed to bind socket: 0x%08x\n", WSAGetLastError());
+        trace("Failed to bind socket: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
         return;
@@ -1539,13 +1539,13 @@ static void test_extendedSocketOptions()
     closesocket(sock);
 
     if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
-        trace("Creating the socket failed: 0x%08x\n", WSAGetLastError());
+        trace("Creating the socket failed: %d\n", WSAGetLastError());
         WSACleanup();
         return;
     }
 
     if(bind(sock, (struct sockaddr *) &sa, sa_len) < 0){
-        trace("Failed to bind socket: 0x%08x\n", WSAGetLastError());
+        trace("Failed to bind socket: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
         return;
@@ -1575,7 +1575,7 @@ static void test_getsockname()
     static const unsigned char null_padding[] = {0,0,0,0,0,0,0,0};
 
     if(WSAStartup(MAKEWORD(2,0), &wsa)){
-        trace("Winsock failed: 0x%08x. Aborting test\n", WSAGetLastError());
+        trace("Winsock failed: %d. Aborting test\n", WSAGetLastError());
         return;
     }
 
@@ -1586,20 +1586,20 @@ static void test_getsockname()
     sa_set.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if((sock = socket(PF_INET, SOCK_STREAM, IPPROTO_IP)) < 0){
-        trace("Creating the socket failed: 0x%08x\n", WSAGetLastError());
+        trace("Creating the socket failed: %d\n", WSAGetLastError());
         WSACleanup();
         return;
     }
 
     if(bind(sock, (struct sockaddr *) &sa_set, sa_set_len) < 0){
-        trace("Failed to bind socket: 0x%08x\n", WSAGetLastError());
+        trace("Failed to bind socket: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
         return;
     }
 
     if(getsockname(sock, (struct sockaddr *) &sa_get, &sa_get_len) != 0){
-        trace("Failed to call getsockname: 0x%08X\n", WSAGetLastError());
+        trace("Failed to call getsockname: %d\n", WSAGetLastError());
         closesocket(sock);
         WSACleanup();
         return;
