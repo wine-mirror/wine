@@ -266,7 +266,7 @@ extract_test (struct wine_test *test, const char *dir, LPTSTR res_name)
    value of WaitForSingleObject.
  */
 static int
-run_ex (char *cmd, const char *out, DWORD ms)
+run_ex (char *cmd, const char *out, const char *tempdir, DWORD ms)
 {
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -289,7 +289,7 @@ run_ex (char *cmd, const char *out, DWORD ms)
     }
 
     if (!CreateProcessA (NULL, cmd, NULL, NULL, TRUE, 0,
-                         NULL, NULL, &si, &pi)) {
+                         NULL, tempdir, &si, &pi)) {
         status = -2;
     } else {
         CloseHandle (pi.hThread);
@@ -358,7 +358,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 
     extract_test (test, tempdir, res_name);
     cmd = strmake (NULL, "%s --list", test->exename);
-    run_ex (cmd, subname, 5000);
+    run_ex (cmd, subname, tempdir, 5000);
     free (cmd);
 
     subfile = fopen (subname, "r");
@@ -407,7 +407,7 @@ get_subtests (const char *tempdir, struct wine_test *test, LPTSTR res_name)
 }
 
 static void
-run_test (struct wine_test* test, const char* subtest)
+run_test (struct wine_test* test, const char* subtest, const char *tempdir)
 {
     int status;
     const char* file = get_test_source_file(test->name, subtest);
@@ -415,7 +415,7 @@ run_test (struct wine_test* test, const char* subtest)
     char *cmd = strmake (NULL, "%s %s", test->exename, subtest);
 
     xprintf ("%s:%s start %s %s\n", test->name, subtest, file, rev);
-    status = run_ex (cmd, NULL, 120000);
+    status = run_ex (cmd, NULL, tempdir, 120000);
     free (cmd);
     xprintf ("%s:%s done (%d)\n", test->name, subtest, status);
 }
@@ -538,7 +538,7 @@ run_tests (char *logname)
 	for (j = 0; j < test->subtest_count; j++) {
             report (R_STEP, "Running: %s:%s", test->name,
                     test->subtests[j]);
-	    run_test (test, test->subtests[j]);
+	    run_test (test, test->subtests[j], tempdir);
         }
     }
     report (R_DELTA, 0, "Running: Done");
