@@ -70,8 +70,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 
-#define MAX_IDLE_WORKER 1000*60*1
-#define MAX_WORKER_THREADS 10
 #define RESPONSE_TIMEOUT        30
 
 typedef struct
@@ -83,18 +81,8 @@ typedef struct
 static VOID INTERNET_CloseHandle(LPWININETHANDLEHEADER hdr);
 HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUrl,
               LPCWSTR lpszHeaders, DWORD dwHeadersLength, DWORD dwFlags, DWORD dwContext);
-static VOID INTERNET_ExecuteWork(void);
 
 static DWORD g_dwTlsErrIndex = TLS_OUT_OF_INDEXES;
-static LONG dwNumThreads;
-static LONG dwNumIdleThreads;
-static LONG dwNumJobs;
-static HANDLE hEventArray[2];
-#define hQuitEvent hEventArray[0]
-#define hWorkEvent hEventArray[1]
-static CRITICAL_SECTION csQueue;
-static LPWORKREQUEST lpHeadWorkQueue;
-static LPWORKREQUEST lpWorkQueueTail;
 static HMODULE WININET_hModule;
 
 #define HANDLE_CHUNK_SIZE 0x10
@@ -246,15 +234,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	    if (g_dwTlsErrIndex == TLS_OUT_OF_INDEXES)
 		return FALSE;
 
-	    hQuitEvent = CreateEventW(0, TRUE, FALSE, NULL);
-	    hWorkEvent = CreateEventW(0, FALSE, FALSE, NULL);
-	    InitializeCriticalSection(&csQueue);
-
             URLCacheContainers_CreateDefaults();
-
-            dwNumThreads = 0;
-            dwNumIdleThreads = 0;
-	    dwNumJobs = 0;
 
             WININET_hModule = (HMODULE)hinstDLL;
 
@@ -278,12 +258,6 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	        HeapFree(GetProcessHeap(), 0, TlsGetValue(g_dwTlsErrIndex));
 	        TlsFree(g_dwTlsErrIndex);
 	    }
-
-	    SetEvent(hQuitEvent);
-
-	    CloseHandle(hQuitEvent);
-	    CloseHandle(hWorkEvent);
-	    DeleteCriticalSection(&csQueue);
             break;
     }
 
@@ -3084,107 +3058,18 @@ DWORD INTERNET_GetLastError(void)
  */
 static DWORD CALLBACK INTERNET_WorkerThreadFunc(LPVOID lpvParam)
 {
-    DWORD dwWaitRes;
+    LPWORKREQUEST lpRequest = lpvParam;
+    WORKREQUEST workRequest;
 
-    while (1)
-    {
-	if(dwNumJobs > 0) {
-	    INTERNET_ExecuteWork();
-	    continue;
-	}
-        dwWaitRes = WaitForMultipleObjects(2, hEventArray, FALSE, MAX_IDLE_WORKER);
+    TRACE("\n");
 
-        if (dwWaitRes == WAIT_OBJECT_0 + 1)
-            INTERNET_ExecuteWork();
-        else
-            break;
+    memcpy(&workRequest, lpRequest, sizeof(WORKREQUEST));
+    HeapFree(GetProcessHeap(), 0, lpRequest);
 
-        InterlockedIncrement(&dwNumIdleThreads);
-    }
+    workRequest.asyncproc(&workRequest);
 
-    InterlockedDecrement(&dwNumIdleThreads);
-    InterlockedDecrement(&dwNumThreads);
-    TRACE("Worker thread exiting\n");
+    WININET_Release( workRequest.hdr );
     return TRUE;
-}
-
-
-/***********************************************************************
- *           INTERNET_InsertWorkRequest (internal)
- *
- * Insert work request into queue
- *
- * RETURNS
- *
- */
-static BOOL INTERNET_InsertWorkRequest(LPWORKREQUEST lpWorkRequest)
-{
-    BOOL bSuccess = FALSE;
-    LPWORKREQUEST lpNewRequest;
-
-    TRACE("\n");
-
-    lpNewRequest = HeapAlloc(GetProcessHeap(), 0, sizeof(WORKREQUEST));
-    if (lpNewRequest)
-    {
-        memcpy(lpNewRequest, lpWorkRequest, sizeof(WORKREQUEST));
-	lpNewRequest->prev = NULL;
-
-        EnterCriticalSection(&csQueue);
-
-        lpNewRequest->next = lpWorkQueueTail;
-	if (lpWorkQueueTail)
-            lpWorkQueueTail->prev = lpNewRequest;
-        lpWorkQueueTail = lpNewRequest;
-	if (!lpHeadWorkQueue)
-            lpHeadWorkQueue = lpWorkQueueTail;
-
-        LeaveCriticalSection(&csQueue);
-
-	bSuccess = TRUE;
-	InterlockedIncrement(&dwNumJobs);
-    }
-
-    return bSuccess;
-}
-
-
-/***********************************************************************
- *           INTERNET_GetWorkRequest (internal)
- *
- * Retrieves work request from queue
- *
- * RETURNS
- *
- */
-static BOOL INTERNET_GetWorkRequest(LPWORKREQUEST lpWorkRequest)
-{
-    BOOL bSuccess = FALSE;
-    LPWORKREQUEST lpRequest = NULL;
-
-    TRACE("\n");
-
-    EnterCriticalSection(&csQueue);
-
-    if (lpHeadWorkQueue)
-    {
-        lpRequest = lpHeadWorkQueue;
-        lpHeadWorkQueue = lpHeadWorkQueue->prev;
-	if (lpRequest == lpWorkQueueTail)
-            lpWorkQueueTail = lpHeadWorkQueue;
-    }
-
-    LeaveCriticalSection(&csQueue);
-
-    if (lpRequest)
-    {
-        memcpy(lpWorkRequest, lpRequest, sizeof(WORKREQUEST));
-        HeapFree(GetProcessHeap(), 0, lpRequest);
-	bSuccess = TRUE;
-	InterlockedDecrement(&dwNumJobs);
-    }
-
-    return bSuccess;
 }
 
 
@@ -3198,56 +3083,25 @@ static BOOL INTERNET_GetWorkRequest(LPWORKREQUEST lpWorkRequest)
  */
 BOOL INTERNET_AsyncCall(LPWORKREQUEST lpWorkRequest)
 {
-    HANDLE hThread;
-    DWORD dwTID;
-    BOOL bSuccess = FALSE;
+    BOOL bSuccess;
+    LPWORKREQUEST lpNewRequest;
 
     TRACE("\n");
 
-    if (InterlockedDecrement(&dwNumIdleThreads) < 0)
+    lpNewRequest = HeapAlloc(GetProcessHeap(), 0, sizeof(WORKREQUEST));
+    if (!lpNewRequest)
+        return FALSE;
+
+    memcpy(lpNewRequest, lpWorkRequest, sizeof(WORKREQUEST));
+
+    bSuccess = QueueUserWorkItem(INTERNET_WorkerThreadFunc, lpNewRequest, WT_EXECUTELONGFUNCTION);
+    if (!bSuccess)
     {
-        InterlockedIncrement(&dwNumIdleThreads);
-
-	if (InterlockedIncrement(&dwNumThreads) > MAX_WORKER_THREADS ||
-	    !(hThread = CreateThread(NULL, 0,
-            INTERNET_WorkerThreadFunc, NULL, 0, &dwTID)))
-	{
-            InterlockedDecrement(&dwNumThreads);
-            INTERNET_SetLastError(ERROR_INTERNET_ASYNC_THREAD_FAILED);
-	    goto lerror;
-	}
-
-	TRACE("Created new thread\n");
+        HeapFree(GetProcessHeap(), 0, lpNewRequest);
+        INTERNET_SetLastError(ERROR_INTERNET_ASYNC_THREAD_FAILED);
     }
 
-    bSuccess = TRUE;
-    INTERNET_InsertWorkRequest(lpWorkRequest);
-    SetEvent(hWorkEvent);
-
-lerror:
-
     return bSuccess;
-}
-
-
-/***********************************************************************
- *           INTERNET_ExecuteWork (internal)
- *
- * RETURNS
- *
- */
-static VOID INTERNET_ExecuteWork(void)
-{
-    WORKREQUEST workRequest;
-
-    TRACE("\n");
-
-    if (!INTERNET_GetWorkRequest(&workRequest))
-        return;
-
-    workRequest.asyncproc(&workRequest);
-
-    WININET_Release( workRequest.hdr );
 }
 
 

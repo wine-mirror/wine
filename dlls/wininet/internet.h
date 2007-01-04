@@ -374,9 +374,6 @@ typedef struct WORKREQ
         struct WORKREQ_INTERNETREADFILEEXA      InternetReadFileExA;
     } u;
 
-    struct WORKREQ *next;
-    struct WORKREQ *prev;
-
 } WORKREQUEST, *LPWORKREQUEST;
 
 HINTERNET WININET_AllocHandle( LPWININETHANDLEHEADER info );
