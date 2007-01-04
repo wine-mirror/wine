@@ -281,7 +281,7 @@ static void test_MapViewOfFile(void)
     /* this fails on win9x but succeeds on NT */
     ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
     if (ptr) UnmapViewOfFile( ptr );
-    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %x\n", GetLastError() );
+    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
 
     ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
     ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
@@ -304,7 +304,7 @@ static void test_MapViewOfFile(void)
     /* this fails on win9x but succeeds on NT */
     ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
     if (ptr) UnmapViewOfFile( ptr );
-    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %x\n", GetLastError() );
+    else ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
 
     ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
     ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
@@ -313,7 +313,7 @@ static void test_MapViewOfFile(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
     ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %x\n", GetLastError() );
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
     CloseHandle( mapping );
 
     /* copy-on-write mapping */
@@ -336,14 +336,14 @@ static void test_MapViewOfFile(void)
     ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
     ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %x\n", GetLastError() );
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
     CloseHandle( mapping );
 
     /* no access mapping */
 
     mapping = CreateFileMappingA( file, NULL, PAGE_NOACCESS, 0, 4096, NULL );
     /* fails on NT but succeeds on win9x */
-    if (!mapping) ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %x\n", GetLastError() );
+    if (!mapping) ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
     else
     {
         ptr = MapViewOfFile( mapping, FILE_MAP_READ, 0, 0, 4096 );
@@ -352,7 +352,7 @@ static void test_MapViewOfFile(void)
 
         ptr = MapViewOfFile( mapping, FILE_MAP_COPY, 0, 0, 4096 );
         ok( !ptr, "MapViewOfFile FILE_MAP_COPY succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %x\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
 
         ptr = MapViewOfFile( mapping, 0, 0, 0, 4096 );
         ok( ptr != NULL, "MapViewOfFile 0 failed\n" );
@@ -360,7 +360,7 @@ static void test_MapViewOfFile(void)
 
         ptr = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 4096 );
         ok( !ptr, "MapViewOfFile FILE_MAP_WRITE succeeded\n" );
-        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %x\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "Wrong error %d\n", GetLastError() );
 
         CloseHandle( mapping );
     }
@@ -375,7 +375,7 @@ static void test_MapViewOfFile(void)
     mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
     ok( !mapping, "CreateFileMapping PAGE_READWRITE succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %x\n", GetLastError() );
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
 
     mapping = CreateFileMappingA( file, NULL, PAGE_WRITECOPY, 0, 4096, NULL );
     ok( mapping != 0, "CreateFileMapping PAGE_WRITECOPY failed\n" );
@@ -394,17 +394,17 @@ static void test_MapViewOfFile(void)
     mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
     ok( !mapping, "CreateFileMapping PAGE_READWRITE succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %x\n", GetLastError() );
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
 
     mapping = CreateFileMappingA( file, NULL, PAGE_WRITECOPY, 0, 4096, NULL );
     ok( !mapping, "CreateFileMapping PAGE_WRITECOPY succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %x\n", GetLastError() );
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
 
     mapping = CreateFileMappingA( file, NULL, PAGE_READONLY, 0, 4096, NULL );
     ok( !mapping, "CreateFileMapping PAGE_READONLY succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_PARAMETER ||
-        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %x\n", GetLastError() );
+        GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
 
     CloseHandle( file );
 

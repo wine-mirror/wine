@@ -109,11 +109,11 @@ static void testLoadLibraryA(void)
     SetLastError(0xdeadbeef);
     hModule = LoadLibraryA("kernel32.dll");
     ok( hModule != NULL, "kernel32.dll should be loadable\n");
-    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08x\n", GetLastError());
+    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %d\n", GetLastError());
 
     fp = GetProcAddress(hModule, "CreateFileA");
     ok( fp != NULL, "CreateFileA should be there\n");
-    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08x\n", GetLastError());
+    ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     hModule1 = LoadLibraryA("kernel32   ");
@@ -121,7 +121,7 @@ static void testLoadLibraryA(void)
     if (GetLastError() != ERROR_DLL_NOT_FOUND)
     {
         ok( hModule1 != NULL, "\"kernel32   \" should be loadable\n");
-        ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %08x\n", GetLastError());
+        ok( GetLastError() == 0xdeadbeef, "GetLastError should be 0xdeadbeef but is %d\n", GetLastError());
         ok( hModule == hModule1, "Loaded wrong module\n");
         FreeLibrary(hModule1);
     }
@@ -175,7 +175,7 @@ static void testNestedLoadLibraryA(void)
     ok(FreeLibrary(hModule3), "FreeLibrary() failed\n");
     ok(FreeLibrary(hModule2), "FreeLibrary() failed\n");
     ok(FreeLibrary(hModule1), "FreeLibrary() failed\n");
-    ok(GetModuleHandle(dllname) == NULL, "%s was not fully unloaded", dllname);
+    ok(GetModuleHandle(dllname) == NULL, "%s was not fully unloaded\n", dllname);
 
     /* Try to load the dll again, if refcounting is ok, this should work */
     hModule1 = LoadLibraryA(path1);
@@ -193,7 +193,7 @@ static void testLoadLibraryA_Wrong(void)
     hModule = LoadLibraryA("non_ex_pv.dll");
     ok( !hModule, "non_ex_pv.dll should be not loadable\n");
     ok( GetLastError() == ERROR_MOD_NOT_FOUND || GetLastError() == ERROR_DLL_NOT_FOUND, 
-        "Expected ERROR_MOD_NOT_FOUND or ERROR_DLL_NOT_FOUND (win9x), got %08x\n", GetLastError());
+        "Expected ERROR_MOD_NOT_FOUND or ERROR_DLL_NOT_FOUND (win9x), got %d\n", GetLastError());
 
     /* Just in case */
     FreeLibrary(hModule);
@@ -207,13 +207,13 @@ static void testGetProcAddress_Wrong(void)
     fp = GetProcAddress(NULL, "non_ex_call");
     ok( !fp, "non_ex_call should not be found\n");
     ok( GetLastError() == ERROR_PROC_NOT_FOUND || GetLastError() == ERROR_INVALID_HANDLE,
-        "Expected ERROR_PROC_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %08x\n", GetLastError());
+        "Expected ERROR_PROC_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     fp = GetProcAddress((HMODULE)0xdeadbeef, "non_ex_call");
     ok( !fp, "non_ex_call should not be found\n");
     ok( GetLastError() == ERROR_MOD_NOT_FOUND || GetLastError() == ERROR_INVALID_HANDLE,
-        "Expected ERROR_MOD_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %08x\n", GetLastError());
+        "Expected ERROR_MOD_NOT_FOUND or ERROR_INVALID_HANDLE(win9x), got %d\n", GetLastError());
 }
 
 START_TEST(module)

@@ -91,10 +91,10 @@ static void test_CreateNamedPipe(int pipemode)
         /* lpSecurityAttrib */ NULL);
     ok(hnp != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
 
-    ok(WaitNamedPipeA(PIPENAME, 2000), "WaitNamedPipe failed (%08x)\n", GetLastError());
+    ok(WaitNamedPipeA(PIPENAME, 2000), "WaitNamedPipe failed (%d)\n", GetLastError());
 
     hFile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed (%08x)\n", GetLastError());
+    ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError());
 
     /* don't try to do i/o if one side couldn't be opened, as it hangs */
     if (hFile != INVALID_HANDLE_VALUE) {

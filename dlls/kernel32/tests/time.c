@@ -184,7 +184,7 @@ static void test_FileTimeToSystemTime(void)
     ft.dwLowDateTime  = 0;
     ret = FileTimeToSystemTime(&ft, &st);
     ok( ret,
-       "FileTimeToSystemTime() failed with Error 0x%08x\n",GetLastError());
+       "FileTimeToSystemTime() failed with Error %d\n",GetLastError());
     ok(((st.wYear == 1601) && (st.wMonth  == 1) && (st.wDay    == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 0) &&
 	(st.wMilliseconds == 0)),
@@ -194,7 +194,7 @@ static void test_FileTimeToSystemTime(void)
     ft.dwLowDateTime  = (UINT)time;
     ret = FileTimeToSystemTime(&ft, &st);
     ok( ret,
-       "FileTimeToSystemTime() failed with Error 0x%08x\n",GetLastError());
+       "FileTimeToSystemTime() failed with Error %d\n",GetLastError());
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&
 	(st.wMilliseconds == 0)),
@@ -221,7 +221,7 @@ static void test_FileTimeToLocalFileTime(void)
     ft.dwLowDateTime  = (UINT)time;
     ret = FileTimeToLocalFileTime(&ft, &lft);
     ok( ret,
-       "FileTimeToLocalFileTime() failed with Error 0x%08x\n",GetLastError());
+       "FileTimeToLocalFileTime() failed with Error %d\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&
@@ -235,7 +235,7 @@ static void test_FileTimeToLocalFileTime(void)
     ok(res != TIME_ZONE_ID_INVALID, "GetTimeZoneInformation failed\n");
     ret = FileTimeToLocalFileTime(&ft, &lft);
     ok( ret,
-       "FileTimeToLocalFileTime() failed with Error 0x%08x\n",GetLastError());
+       "FileTimeToLocalFileTime() failed with Error %d\n",GetLastError());
     FileTimeToSystemTime(&lft, &st);
     ok(((st.wYear == 1970) && (st.wMonth == 1) && (st.wDay == 1) &&
 	(st.wHour ==    0) && (st.wMinute == 0) && (st.wSecond == 1) &&
