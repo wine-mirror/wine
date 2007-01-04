@@ -3573,7 +3573,7 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, B
     HWND hwndSelf = infoPtr->hwndSelf;
     LPWSTR pszText = NULL;
     BOOL bResult, bChanged = FALSE;
-    
+
     TRACE("(lpLVItem=%s, isW=%d)\n", debuglvitem_t(lpLVItem, isW), isW);
 
     if (!lpLVItem || lpLVItem->iItem < 0 || lpLVItem->iItem >= infoPtr->nItemCount)
@@ -3585,10 +3585,10 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, B
 	pszText = lpLVItem->pszText;
 	((LVITEMW *)lpLVItem)->pszText = textdupTtoW(lpLVItem->pszText, isW);
     }
-    
+
     /* actually set the fields */
     if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return FALSE;
-    
+
     if (lpLVItem->iSubItem)
 	bResult = set_sub_item(infoPtr, lpLVItem, TRUE, &bChanged);
     else
@@ -3601,7 +3601,8 @@ static BOOL LISTVIEW_SetItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, B
     {
 	/* this little optimization eliminates some nasty flicker */
 	if ( uView == LVS_REPORT && !(infoPtr->dwStyle & LVS_OWNERDRAWFIXED) &&
-	     (!(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) || lpLVItem->iSubItem) )
+	     !(infoPtr->dwLvExStyle & LVS_EX_FULLROWSELECT) &&
+             lpLVItem->iSubItem > 0 && lpLVItem->iSubItem <= DPA_GetPtrCount(infoPtr->hdpaColumns) )
 	    LISTVIEW_InvalidateSubItem(infoPtr, lpLVItem->iItem, lpLVItem->iSubItem);
 	else
 	    LISTVIEW_InvalidateItem(infoPtr, lpLVItem->iItem);
