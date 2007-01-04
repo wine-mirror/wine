@@ -1684,9 +1684,9 @@ BOOL WINAPI InternetWriteFile(HINTERNET hFile, LPCVOID lpBuffer ,
 }
 
 
-static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
-                              DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
-                              BOOL bWait, BOOL bSendCompletionStatus)
+BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
+                       DWORD dwNumOfBytesToRead, LPDWORD pdwNumOfBytesRead,
+                       BOOL bWait, BOOL bSendCompletionStatus)
 {
     BOOL retval = FALSE;
     int nSocket = -1;
@@ -1698,18 +1698,31 @@ static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
     {
         case WH_HHTTPREQ:
             lpwhr = (LPWININETHTTPREQW)lpwh;
+
             if (!NETCON_recv(&lpwhr->netConnection, lpBuffer,
                              min(dwNumOfBytesToRead, lpwhr->dwContentLength - lpwhr->dwContentRead),
                              bWait ? MSG_WAITALL : 0, &bytes_read))
             {
+
+                if (((lpwhr->dwContentLength != -1) &&
+                     (lpwhr->dwContentRead != lpwhr->dwContentLength)))
+                    ERR("not all data received %d/%d\n", lpwhr->dwContentRead,
+                        lpwhr->dwContentLength);
+
+                /* always returns TRUE, even if the network layer returns an
+                 * error */
                 *pdwNumOfBytesRead = 0;
-                retval = TRUE; /* Under windows, it seems to return 0 even if nothing was read... */
+                HTTP_FinishedReading(lpwhr);
+                retval = TRUE;
             }
             else
             {
                 lpwhr->dwContentRead += bytes_read;
                 *pdwNumOfBytesRead = bytes_read;
-                retval = TRUE;
+                if (!bytes_read)
+                    retval = HTTP_FinishedReading(lpwhr);
+                else
+                    retval = TRUE;
             }
             break;
 

@@ -6,6 +6,7 @@
  * Copyright 2002 TransGaming Technologies Inc.
  * Copyright 2004 Mike McCormack for CodeWeavers
  * Copyright 2005 Aric Stewart for CodeWeavers
+ * Copyright 2006 Robert Shearman for CodeWeavers
  *
  * Ulrich Czekalla
  * David Hammerton
@@ -69,6 +70,7 @@ static const WCHAR g_szUserAgent[] = {'U','s','e','r','-','A','g','e','n','t',0}
 static const WCHAR szHost[] = { 'H','o','s','t',0 };
 static const WCHAR szProxy_Authorization[] = { 'P','r','o','x','y','-','A','u','t','h','o','r','i','z','a','t','i','o','n',0 };
 static const WCHAR szStatus[] = { 'S','t','a','t','u','s',0 };
+static const WCHAR szKeepAlive[] = {'K','e','e','p','-','A','l','i','v','e',0};
 
 #define MAXHOSTNAME 100
 #define MAX_FIELD_VALUE_LEN 256
@@ -525,6 +527,20 @@ BOOL WINAPI HttpAddRequestHeadersA(HINTERNET hHttpRequest,
     return r;
 }
 
+/* read any content returned by the server so that the connection can be
+ * resued */
+static void HTTP_DrainContent(LPWININETHTTPREQW lpwhr)
+{
+    DWORD bytes_read;
+    do
+    {
+        char buffer[2048];
+        if (!INTERNET_ReadFile(&lpwhr->hdr, buffer, sizeof(buffer), &bytes_read,
+                               TRUE, FALSE))
+            return;
+    } while (bytes_read);
+}
+
 /***********************************************************************
  *           HttpEndRequestA (WININET.@)
  *
@@ -639,6 +655,9 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
                              &lpwhr->dwContentLength,&dwBufferSize,NULL))
         lpwhr->dwContentLength = -1;
 
+    if (lpwhr->dwContentLength == 0)
+        HTTP_FinishedReading(lpwhr);
+
     if(!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
         DWORD dwCode,dwCodeLength=sizeof(DWORD);
@@ -653,6 +672,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
                 /* redirects are always GETs */
                 HeapFree(GetProcessHeap(),0,lpwhr->lpszVerb);
 	            lpwhr->lpszVerb = WININET_strdupW(szGET);
+                HTTP_DrainContent(lpwhr);
                 rc = HTTP_HandleRedirect(lpwhr, szNewLocation);
                 if (rc)
                     rc = HTTP_HttpSendRequestW(lpwhr, NULL, 0, NULL, 0, 0, TRUE);
@@ -2260,6 +2280,10 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         char *ascii_req;
 
         loop_next = FALSE;
+
+        /* like native, just in case the caller forgot to call InternetReadFile
+         * for all the data */
+        HTTP_DrainContent(lpwhr);
         lpwhr->dwContentRead = 0;
 
         if (TRACE_ON(wininet))
@@ -2340,6 +2364,9 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                                      &lpwhr->dwContentLength,&dwBufferSize,NULL))
                 lpwhr->dwContentLength = -1;
 
+            if (lpwhr->dwContentLength == 0)
+                HTTP_FinishedReading(lpwhr);
+
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
             {
                 DWORD dwCode,dwCodeLength=sizeof(DWORD);
@@ -2349,6 +2376,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                     (dwCode==HTTP_STATUS_REDIRECT || dwCode==HTTP_STATUS_MOVED) &&
                     HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
                 {
+                    HTTP_DrainContent(lpwhr);
                     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                           INTERNET_STATUS_REDIRECT, szNewLocation,
                                           dwBufferSize);
@@ -2502,6 +2530,12 @@ static BOOL HTTP_OpenConnection(LPWININETHTTPREQW lpwhr)
     if (NULL == lpwhr ||  lpwhr->hdr.htype != WH_HHTTPREQ)
     {
         INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        goto lend;
+    }
+
+    if (NETCON_connected(&lpwhr->netConnection))
+    {
+        bSuccess = TRUE;
         goto lend;
     }
 
@@ -2940,6 +2974,31 @@ static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
 }
 
+
+/***********************************************************************
+ *           HTTP_FinishedReading (internal)
+ *
+ * Called when all content from server has been read by client.
+ *
+ */
+BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
+{
+    WCHAR szConnectionResponse[20];
+    DWORD dwBufferSize = sizeof(szConnectionResponse)/sizeof(szConnectionResponse[0]);
+
+    TRACE("\n");
+
+    if (!HTTP_HttpQueryInfoW(lpwhr, HTTP_QUERY_CONNECTION, szConnectionResponse,
+                             &dwBufferSize, NULL) ||
+        strcmpiW(szConnectionResponse, szKeepAlive))
+    {
+        HTTP_CloseConnection(lpwhr);
+    }
+
+    /* FIXME: store data in the URL cache here */
+
+    return TRUE;
+}
 
 /***********************************************************************
  *           HTTP_CloseHTTPRequestHandle (internal)
