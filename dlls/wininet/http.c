@@ -3013,7 +3013,7 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
 
     TRACE("\n");
 
-    WININET_Release(&lpwhr->hdr);
+    WININET_Release(&lpwhr->lpHttpSession->hdr);
 
     HTTP_CloseConnection(lpwhr);
 
