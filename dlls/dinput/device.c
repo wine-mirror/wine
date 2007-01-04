@@ -294,6 +294,12 @@ void release_DataFormat(DataFormat * format)
     format->user_df = NULL;
 }
 
+inline LPDIOBJECTDATAFORMAT dataformat_to_odf(LPCDIDATAFORMAT df, int idx)
+{
+    if (idx < 0 || idx >= df->dwNumObjs) return NULL;
+    return (LPDIOBJECTDATAFORMAT)((LPBYTE)df->rgodf + idx * df->dwObjSize);
+}
+
 /* Make all instances sequential */
 static void calculate_ids(LPDIDATAFORMAT df)
 {
@@ -971,10 +977,29 @@ HRESULT WINAPI IDirectInputDevice2AImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-    FIXME("(this=%p,%p,%d,0x%08x): stub!\n",
-	  iface, pdidoi, dwObj, dwHow);
-    
-    return DI_OK;
+    DIDEVICEOBJECTINSTANCEW didoiW;
+    HRESULT res;
+
+    if (!pdidoi ||
+        (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA) &&
+         pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A)))
+        return DIERR_INVALIDPARAM;
+
+    didoiW.dwSize = sizeof(didoiW);
+    res = IDirectInputDevice2WImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface, &didoiW, dwObj, dwHow);
+    if (res == DI_OK)
+    {
+        DWORD dwSize = pdidoi->dwSize;
+
+        memset(pdidoi, 0, pdidoi->dwSize);
+        pdidoi->dwSize   = dwSize;
+        pdidoi->guidType = didoiW.guidType;
+        pdidoi->dwOfs    = didoiW.dwOfs;
+        pdidoi->dwType   = didoiW.dwType;
+        pdidoi->dwFlags  = didoiW.dwFlags;
+    }
+
+    return res;
 }
 
 HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
@@ -983,9 +1008,49 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-    FIXME("(this=%p,%p,%d,0x%08x): stub!\n",
-	  iface, pdidoi, dwObj, dwHow);
-    
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+    DWORD dwSize = pdidoi->dwSize;
+    LPDIOBJECTDATAFORMAT odf;
+    int idx = -1;
+
+    TRACE("(%p) %d(0x%08x) -> %p\n", This, dwHow, dwObj, pdidoi);
+
+    if (!pdidoi ||
+        (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEW) &&
+         pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3W)))
+        return DIERR_INVALIDPARAM;
+
+    switch (dwHow)
+    {
+    case DIPH_BYOFFSET:
+        if (!This->data_format.offsets) break;
+        for (idx = This->data_format.wine_df->dwNumObjs - 1; idx >= 0; idx--)
+            if (This->data_format.offsets[idx] == dwObj) break;
+        break;
+    case DIPH_BYID:
+        dwObj &= 0x00ffffff;
+        for (idx = This->data_format.wine_df->dwNumObjs - 1; idx >= 0; idx--)
+            if ((dataformat_to_odf(This->data_format.wine_df, idx)->dwType & 0x00ffffff) == dwObj)
+                break;
+        break;
+
+    case DIPH_BYUSAGE:
+        FIXME("dwHow = DIPH_BYUSAGE not implemented\n");
+        break;
+    default:
+        WARN("invalid parameter: dwHow = %08x\n", dwHow);
+        return DIERR_INVALIDPARAM;
+    }
+    if (idx < 0) return DIERR_OBJECTNOTFOUND;
+
+    odf = dataformat_to_odf(This->data_format.wine_df, idx);
+    memset(pdidoi, 0, pdidoi->dwSize);
+    pdidoi->dwSize   = dwSize;
+    pdidoi->guidType = *odf->pguid;
+    pdidoi->dwOfs    = This->data_format.offsets ? This->data_format.offsets[idx] : odf->dwOfs;
+    pdidoi->dwType   = odf->dwType;
+    pdidoi->dwFlags  = odf->dwFlags;
+
     return DI_OK;
 }
 
