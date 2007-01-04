@@ -213,9 +213,9 @@ ULONG WINAPI D3D9CB_DestroyRenderTarget(IWineD3DSurface *pSurface) {
     return IDirect3DSurface9_Release((IDirect3DSurface9*) surfaceParent);
 }
 
-HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
-                                                WINED3DPRESENT_PARAMETERS* pPresentationParameters,
-                                                IWineD3DSwapChain ** ppSwapChain) {
+static HRESULT WINAPI D3D9CB_CreateAdditionalSwapChain(IUnknown *device,
+                                                       WINED3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                       IWineD3DSwapChain ** ppSwapChain) {
     HRESULT res = D3D_OK;
     IDirect3DSwapChain9Impl *d3dSwapChain = NULL;
     D3DPRESENT_PARAMETERS localParameters;
@@ -308,9 +308,10 @@ ULONG WINAPI D3D9CB_DestroyDepthStencilSurface(IWineD3DSurface *pSurface) {
     return IDirect3DSurface9_Release((IDirect3DSurface9*) surfaceParent);
 }
 
-HRESULT  WINAPI  IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType, HWND hFocusWindow,
-                                            DWORD BehaviourFlags, D3DPRESENT_PARAMETERS* pPresentationParameters,
-                                            IDirect3DDevice9** ppReturnedDeviceInterface) {
+static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapter, D3DDEVTYPE DeviceType,
+                                                  HWND hFocusWindow, DWORD BehaviourFlags,
+                                                  D3DPRESENT_PARAMETERS* pPresentationParameters,
+                                                  IDirect3DDevice9** ppReturnedDeviceInterface) {
 
     IDirect3D9Impl       *This   = (IDirect3D9Impl *)iface;
     IDirect3DDevice9Impl *object = NULL;
