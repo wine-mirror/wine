@@ -740,6 +740,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     ORPCTHAT orpcthat;
     ORPC_EXTENT_ARRAY orpc_ext_array;
     WIRE_ORPC_EXTENT *first_wire_orpc_extent = NULL;
+    HRESULT hrFault = S_OK;
 
     TRACE("(%p) iMethod=%d\n", olemsg, olemsg->iMethod);
 
@@ -836,7 +837,9 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     }
     ClientRpcChannelBuffer_ReleaseEventHandle(This, params->handle);
 
-    if (hr == S_OK) hr = params->hr;
+    /* for WM shortcut, faults are returned in params->hr */
+    if (hr == S_OK)
+        hrFault = params->hr;
 
     status = params->status;
     HeapFree(GetProcessHeap(), 0, params);
@@ -845,7 +848,21 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     orpcthat.flags = ORPCF_NULL;
     orpcthat.extensions = NULL;
 
-    if (status == RPC_S_OK && msg->BufferLength > FIELD_OFFSET(ORPCTHAT, extensions) + 4)
+    /* for normal RPC calls, faults are returned in first 4 bytes of the
+     * buffer */
+    TRACE("RPC call status: 0x%lx\n", status);
+    if (status == RPC_S_CALL_FAILED)
+        hrFault = *(HRESULT *)olemsg->Buffer;
+    else if (status != RPC_S_OK)
+        hr = HRESULT_FROM_WIN32(status);
+
+    TRACE("hrFault = 0x%08x\n", hrFault);
+
+    /* FIXME: this condition should be
+     * "hr == S_OK && (!hrFault || msg->BufferLength > FIELD_OFFSET(ORPCTHAT, extentions) + 4)"
+     * but we don't currently reset the message length for PostMessage
+     * dispatched calls */
+    if (hr == S_OK && hrFault == S_OK)
     {
         HRESULT hr2;
         char *original_buffer = msg->Buffer;
@@ -862,26 +879,22 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     else
         message_state->prefix_data_len = 0;
 
-    ChannelHooks_ClientNotify(&message_state->channel_hook_info,
-                              msg->DataRepresentation,
-                              first_wire_orpc_extent,
-                              orpcthat.extensions && first_wire_orpc_extent ? orpcthat.extensions->size : 0,
-                              status == RPC_S_CALL_FAILED && msg->BufferLength >= sizeof(HRESULT) ? *(HRESULT *)msg->Buffer : S_OK);
+    if (hr == S_OK)
+    {
+        ChannelHooks_ClientNotify(&message_state->channel_hook_info,
+                                  msg->DataRepresentation,
+                                  first_wire_orpc_extent,
+                                  orpcthat.extensions && first_wire_orpc_extent ? orpcthat.extensions->size : 0,
+                                  hrFault);
+    }
 
     /* save away the message state again */
     msg->Handle = message_state;
 
-    if (hr) return hr;
-
     if (pstatus) *pstatus = status;
 
-    TRACE("RPC call status: 0x%lx\n", status);
-    if (status == RPC_S_OK)
-        hr = S_OK;
-    else if (status == RPC_S_CALL_FAILED)
-        hr = *(HRESULT *)olemsg->Buffer;
-    else
-        hr = HRESULT_FROM_WIN32(status);
+    if (hr == S_OK)
+        hr = hrFault;
 
     TRACE("-- 0x%08x\n", hr);
 
@@ -1228,12 +1241,16 @@ void RPC_ExecuteCall(struct dispatch_params *params)
 
     params->hr = unmarshal_ORPCTHIS(msg, &orpcthis, &orpc_ext_array, &first_wire_orpc_extent);
     if (params->hr != S_OK)
+    {
+        msg->Buffer = original_buffer;
         goto exit;
+    }
 
     message_state = HeapAlloc(GetProcessHeap(), 0, sizeof(*message_state));
     if (!message_state)
     {
         params->hr = E_OUTOFMEMORY;
+        msg->Buffer = original_buffer;
         goto exit;
     }
 
@@ -1283,11 +1300,11 @@ void RPC_ExecuteCall(struct dispatch_params *params)
         {
         case SERVERCALL_REJECTED:
             params->hr = RPC_E_CALL_REJECTED;
-            goto exit;
+            goto exit_reset_state;
         case SERVERCALL_RETRYLATER:
 #if 0 /* FIXME: handle retries on the client side before enabling this code */
             params->hr = RPC_E_RETRY;
-            goto exit;
+            goto exit_reset_state;
 #else
             FIXME("retry call later not implemented\n");
             break;
@@ -1310,6 +1327,7 @@ void RPC_ExecuteCall(struct dispatch_params *params)
     COM_CurrentInfo()->pending_call_count_server--;
     COM_CurrentInfo()->causality_id = old_causality_id;
 
+exit_reset_state:
     message_state = (struct message_state *)msg->Handle;
     msg->Handle = message_state->binding_handle;
     msg->Buffer = (char *)msg->Buffer - message_state->prefix_data_len;
