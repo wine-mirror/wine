@@ -59,6 +59,108 @@ BOOL IS_VALID_DMFORM (FOURCC chunkID) {
 	else return FALSE;
 }
 
+/* generic flag-dumping function */
+static const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
+	static char buffer[128] = "", *ptr = &buffer[0];
+	unsigned int i, size = sizeof(buffer);
+
+	for (i=0; i < num_names; i++) {
+		if ((flags & names[i].val)) {
+			int cnt = snprintf(ptr, size, "%s ", names[i].name);
+			if (cnt < 0 || cnt >= size) break;
+			size -= cnt;
+			ptr += cnt;
+		}
+	}
+
+	ptr = &buffer[0];
+	return ptr;
+}
+
+/* dump DMUS_OBJ flags */
+static const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
+    static const flag_info flags[] = {
+	    FE(DMUS_OBJ_OBJECT),
+	    FE(DMUS_OBJ_CLASS),
+	    FE(DMUS_OBJ_NAME),
+	    FE(DMUS_OBJ_CATEGORY),
+	    FE(DMUS_OBJ_FILENAME),
+	    FE(DMUS_OBJ_FULLPATH),
+	    FE(DMUS_OBJ_URL),
+	    FE(DMUS_OBJ_VERSION),
+	    FE(DMUS_OBJ_DATE),
+	    FE(DMUS_OBJ_LOADED),
+	    FE(DMUS_OBJ_MEMORY),
+	    FE(DMUS_OBJ_STREAM)
+	};
+    return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
+}
+
+/* month number into month name (for debugstr_filetime) */
+static const char *debugstr_month (DWORD dwMonth) {
+	switch (dwMonth) {
+		case 1: return "January";
+		case 2: return "February";
+		case 3: return "March";
+		case 4: return "April";
+		case 5: return "May";
+		case 6: return "June";
+		case 7: return "July";
+		case 8: return "August";
+		case 9: return "September";
+		case 10: return "October";
+		case 11: return "November";
+		case 12: return "December";
+		default: return "Invalid";
+	}
+}
+
+/* FILETIME struct to string conversion for debug messages */
+static const char *debugstr_filetime (LPFILETIME time) {
+	SYSTEMTIME sysTime;
+
+	if (!time) return "'null'";
+
+	FileTimeToSystemTime (time, &sysTime);
+
+	return wine_dbg_sprintf ("\'%02i. %s %04i %02i:%02i:%02i\'", \
+		sysTime.wDay, debugstr_month(sysTime.wMonth), sysTime.wYear,
+		sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
+}
+
+/* DMUS_VERSION struct to string conversion for debug messages */
+static const char *debugstr_dmversion (LPDMUS_VERSION version) {
+	if (!version) return "'null'";
+	return wine_dbg_sprintf ("\'%i,%i,%i,%i\'",
+		HIWORD(version->dwVersionMS),LOWORD(version->dwVersionMS),
+		HIWORD(version->dwVersionLS), LOWORD(version->dwVersionLS));
+}
+
+/* dump whole DMUS_OBJECTDESC struct */
+static const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
+	if (pDesc) {
+		char buffer[1024] = "", *ptr = &buffer[0];
+
+		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
+		ptr += sprintf(ptr, " - dwSize = 0x%08X\n", pDesc->dwSize);
+		ptr += sprintf(ptr, " - dwValidData = 0x%08X ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
+		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, " - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
+		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, " - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
+		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, " - ftDate = %s\n", debugstr_filetime (&pDesc->ftDate));
+		if (pDesc->dwValidData & DMUS_OBJ_VERSION) ptr += sprintf(ptr, " - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
+		if (pDesc->dwValidData & DMUS_OBJ_NAME) ptr += sprintf(ptr, " - wszName = %s\n", debugstr_w(pDesc->wszName));
+		if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) ptr += sprintf(ptr, " - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
+		if (pDesc->dwValidData & DMUS_OBJ_FILENAME) ptr += sprintf(ptr, " - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
+		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) ptr += sprintf(ptr, " - llMemLength = 0x%s\n  - pbMemData = %p\n",
+		                                                     wine_dbgstr_longlong(pDesc->llMemLength), pDesc->pbMemData);
+		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, " - pStream = %p\n", pDesc->pStream);
+
+		return wine_dbg_sprintf("%s", buffer);
+	} else {
+		return "(NULL)";
+	}
+}
+
 HRESULT IDirectMusicUtils_IPersistStream_ParseDescGeneric (DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm, LPDMUS_OBJECTDESC pDesc) {
 
   switch (pChunk->fccID) {
@@ -253,46 +355,6 @@ const char *debugstr_fourcc (DWORD fourcc) {
     return wine_dbg_sprintf ("\'%c%c%c%c\'",
 		(char)(fourcc), (char)(fourcc >> 8),
         (char)(fourcc >> 16), (char)(fourcc >> 24));
-}
-
-/* DMUS_VERSION struct to string conversion for debug messages */
-const char *debugstr_dmversion (LPDMUS_VERSION version) {
-	if (!version) return "'null'";
-	return wine_dbg_sprintf ("\'%i,%i,%i,%i\'",
-		HIWORD(version->dwVersionMS),LOWORD(version->dwVersionMS),
-		HIWORD(version->dwVersionLS), LOWORD(version->dwVersionLS));
-}
-
-/* month number into month name (for debugstr_filetime) */
-static const char *debugstr_month (DWORD dwMonth) {
-	switch (dwMonth) {
-		case 1: return "January";
-		case 2: return "February";
-		case 3: return "March";
-		case 4: return "April";
-		case 5: return "May";
-		case 6: return "June";
-		case 7: return "July";
-		case 8: return "August";
-		case 9: return "September";
-		case 10: return "October";
-		case 11: return "November";
-		case 12: return "December";
-		default: return "Invalid";
-	}
-}
-
-/* FILETIME struct to string conversion for debug messages */
-const char *debugstr_filetime (LPFILETIME time) {
-	SYSTEMTIME sysTime;
-
-	if (!time) return "'null'";
-	
-	FileTimeToSystemTime (time, &sysTime);
-	
-	return wine_dbg_sprintf ("\'%02i. %s %04i %02i:%02i:%02i\'", \
-		sysTime.wDay, debugstr_month(sysTime.wMonth), sysTime.wYear,
-		sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
 }
 
 /* returns name of given GUID */
@@ -627,45 +689,8 @@ const char *debugstr_dmreturn (DWORD code) {
 }
 
 
-/* generic flag-dumping function */
-const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
-	static char buffer[128] = "", *ptr = &buffer[0];
-	unsigned int i, size = sizeof(buffer);
-		
-	for (i=0; i < num_names; i++) {
-		if ((flags & names[i].val)) {
-			int cnt = snprintf(ptr, size, "%s ", names[i].name);
-			if (cnt < 0 || cnt >= size) break;
-			size -= cnt;
-			ptr += cnt;
-		}
-	}
-	
-	ptr = &buffer[0];
-	return ptr;
-}
-
-/* dump DMUS_OBJ flags */
-const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
-    static const flag_info flags[] = {
-	    FE(DMUS_OBJ_OBJECT),
-	    FE(DMUS_OBJ_CLASS),
-	    FE(DMUS_OBJ_NAME),
-	    FE(DMUS_OBJ_CATEGORY),
-	    FE(DMUS_OBJ_FILENAME),
-	    FE(DMUS_OBJ_FULLPATH),
-	    FE(DMUS_OBJ_URL),
-	    FE(DMUS_OBJ_VERSION),
-	    FE(DMUS_OBJ_DATE),
-	    FE(DMUS_OBJ_LOADED),
-	    FE(DMUS_OBJ_MEMORY),
-	    FE(DMUS_OBJ_STREAM)
-	};
-    return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
-}
-
 /* dump DMUS_CONTAINER flags */
-const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
+static const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_CONTAINER_NOLOADS)
 	};
@@ -673,35 +698,11 @@ const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
 }
 
 /* dump DMUS_CONTAINED_OBJF flags */
-const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
+static const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_CONTAINED_OBJF_KEEP)
 	};
     return debugstr_flags (flagmask, flags, sizeof(flags)/sizeof(flags[0]));
-}
-
-const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {
-	if (pDesc) {
-		char buffer[1024] = "", *ptr = &buffer[0];
-		
-		ptr += sprintf(ptr, "DMUS_OBJECTDESC (%p):\n", pDesc);
-		ptr += sprintf(ptr, " - dwSize = 0x%08X\n", pDesc->dwSize);
-		ptr += sprintf(ptr, " - dwValidData = 0x%08X ( %s)\n", pDesc->dwValidData, debugstr_DMUS_OBJ_FLAGS (pDesc->dwValidData));
-		if (pDesc->dwValidData & DMUS_OBJ_CLASS) ptr +=	sprintf(ptr, " - guidClass = %s\n", debugstr_dmguid(&pDesc->guidClass));
-		if (pDesc->dwValidData & DMUS_OBJ_OBJECT) ptr += sprintf(ptr, " - guidObject = %s\n", debugstr_guid(&pDesc->guidObject));
-		if (pDesc->dwValidData & DMUS_OBJ_DATE) ptr += sprintf(ptr, " - ftDate = %s\n", debugstr_filetime (&pDesc->ftDate));
-		if (pDesc->dwValidData & DMUS_OBJ_VERSION) ptr += sprintf(ptr, " - vVersion = %s\n", debugstr_dmversion(&pDesc->vVersion));
-		if (pDesc->dwValidData & DMUS_OBJ_NAME) ptr += sprintf(ptr, " - wszName = %s\n", debugstr_w(pDesc->wszName));
-		if (pDesc->dwValidData & DMUS_OBJ_CATEGORY) ptr += sprintf(ptr, " - wszCategory = %s\n", debugstr_w(pDesc->wszCategory));
-		if (pDesc->dwValidData & DMUS_OBJ_FILENAME) ptr += sprintf(ptr, " - wszFileName = %s\n", debugstr_w(pDesc->wszFileName));
-		if (pDesc->dwValidData & DMUS_OBJ_MEMORY) ptr += sprintf(ptr, " - llMemLength = 0x%s\n  - pbMemData = %p\n",
-		                                                     wine_dbgstr_longlong(pDesc->llMemLength), pDesc->pbMemData);
-		if (pDesc->dwValidData & DMUS_OBJ_STREAM) ptr += sprintf(ptr, " - pStream = %p\n", pDesc->pStream);
-		
-		return wine_dbg_sprintf("%s", buffer);
-	} else {
-		return "(NULL)";
-	}
 }
 
 void debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc) {

@@ -68,22 +68,11 @@ extern BOOL IS_VALID_DMFORM (FOURCC chunkID);
 extern const char *resolve_STREAM_SEEK (DWORD flag);
 /* FOURCC to string conversion for debug messages */
 extern const char *debugstr_fourcc (DWORD fourcc);
-/* DMUS_VERSION struct to string conversion for debug messages */
-extern const char *debugstr_dmversion (LPDMUS_VERSION version);
-/* FILETIME struct to string conversion for debug messages */
-extern const char *debugstr_filetime (LPFILETIME time);
 /* returns name of given GUID */
 extern const char *debugstr_dmguid (const GUID *id);
 /* returns name of given error code */
 extern const char *debugstr_dmreturn (DWORD code);
-/* generic flags-dumping function */
-extern const char *debugstr_flags (DWORD flags, const flag_info* names, size_t num_names);
 
-extern const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask);
-extern const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask);
-extern const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask);
-/* dump whole DMUS_OBJECTDESC struct */
-extern const char *debugstr_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
 extern void        debug_DMUS_OBJECTDESC (LPDMUS_OBJECTDESC pDesc);
 extern const char *debugstr_DMUS_IO_CONTAINER_HEADER (LPDMUS_IO_CONTAINER_HEADER pHeader);
 extern const char *debugstr_DMUS_IO_CONTAINED_OBJECT_HEADER (LPDMUS_IO_CONTAINED_OBJECT_HEADER pHeader);
