@@ -662,7 +662,7 @@ static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
         LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow)
 {
     static const WCHAR x_axisW[] = {'X','-','A','x','i','s',0};
-    static const WCHAR y_axisW[] = {'X','-','A','x','i','s',0};
+    static const WCHAR y_axisW[] = {'Y','-','A','x','i','s',0};
     static const WCHAR wheelW[] = {'W','h','e','e','l',0};
     static const WCHAR buttonW[] = {'B','u','t','t','o','n',' ','%','d',0};
     HRESULT res;
