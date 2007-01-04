@@ -2225,7 +2225,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     BOOL bSuccess = FALSE;
     LPWSTR requestString = NULL;
     INT responseLen;
-    BOOL loop_next = FALSE;
+    BOOL loop_next;
     INTERNET_ASYNC_RESULT iar;
 
     TRACE("--> %p\n", lpwhr);
@@ -2252,6 +2252,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     {
         DWORD len;
         char *ascii_req;
+
+        loop_next = FALSE;
 
         if (TRACE_ON(wininet))
         {
