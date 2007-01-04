@@ -447,7 +447,9 @@ struct token_groups
 /* Get next APC to call */
 @REQ(get_apc)
     int          alertable;    /* is thread alertable? */
+    obj_handle_t prev;         /* handle to previous APC */
 @REPLY
+    obj_handle_t handle;       /* handle to APC */
     void*        func;         /* function to call */
     int          type;         /* function type */
     void*        arg1;         /* function arguments */

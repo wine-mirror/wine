@@ -854,11 +854,13 @@ static void dump_queue_apc_request( const struct queue_apc_request *req )
 
 static void dump_get_apc_request( const struct get_apc_request *req )
 {
-    fprintf( stderr, " alertable=%d", req->alertable );
+    fprintf( stderr, " alertable=%d,", req->alertable );
+    fprintf( stderr, " prev=%p", req->prev );
 }
 
 static void dump_get_apc_reply( const struct get_apc_reply *req )
 {
+    fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " func=%p,", req->func );
     fprintf( stderr, " type=%d,", req->type );
     fprintf( stderr, " arg1=%p,", req->arg1 );

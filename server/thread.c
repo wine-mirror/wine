@@ -71,6 +71,7 @@ struct thread_apc
     struct object       obj;      /* object header */
     struct list         entry;    /* queue linked list */
     struct object      *owner;    /* object that queued this apc */
+    int                 executed; /* has it been executed by the client? */
     void               *func;     /* function to call in client */
     enum apc_type       type;     /* type of apc function */
     void               *arg1;     /* function arguments */
@@ -310,7 +311,8 @@ static void dump_thread_apc( struct object *obj, int verbose )
 
 static int thread_apc_signaled( struct object *obj, struct thread *thread )
 {
-    return 0;
+    struct thread_apc *apc = (struct thread_apc *)obj;
+    return apc->executed;
 }
 
 /* get a thread pointer from a thread id (and increment the refcount) */
@@ -679,6 +681,7 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
     apc->arg1   = arg1;
     apc->arg2   = arg2;
     apc->arg3   = arg3;
+    apc->executed = 0;
     list_add_tail( queue, &apc->entry );
     if (!list_prev( queue, &apc->entry ))  /* first one */
         wake_thread( thread );
@@ -1061,13 +1064,22 @@ DECL_HANDLER(get_apc)
 {
     struct thread_apc *apc;
 
+    if (req->prev)
+    {
+        if (!(apc = (struct thread_apc *)get_handle_obj( current->process, req->prev,
+                                                         0, &thread_apc_ops ))) return;
+        apc->executed = 1;
+        wake_up( &apc->obj, 0 );
+        close_handle( current->process, req->prev );
+        release_object( apc );
+    }
+
     for (;;)
     {
         if (!(apc = thread_dequeue_apc( current, !req->alertable )))
         {
             /* no more APCs */
-            reply->func = NULL;
-            reply->type = APC_NONE;
+            set_error( STATUS_PENDING );
             return;
         }
         /* Optimization: ignore APCs that have a NULL func; they are only used
@@ -1077,11 +1089,15 @@ DECL_HANDLER(get_apc)
         if (apc->func || apc->type == APC_ASYNC_IO) break;
         release_object( apc );
     }
-    reply->func = apc->func;
-    reply->type = apc->type;
-    reply->arg1 = apc->arg1;
-    reply->arg2 = apc->arg2;
-    reply->arg3 = apc->arg3;
+
+    if ((reply->handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
+    {
+        reply->func = apc->func;
+        reply->type = apc->type;
+        reply->arg1 = apc->arg1;
+        reply->arg2 = apc->arg2;
+        reply->arg3 = apc->arg3;
+    }
     release_object( apc );
 }
 

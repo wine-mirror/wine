@@ -659,6 +659,8 @@ static int wait_reply( void *cookie )
  */
 static void call_apcs( BOOL alertable )
 {
+    NTSTATUS ret;
+    HANDLE handle = 0;
     FARPROC proc;
     LARGE_INTEGER time;
     void *arg1, *arg2, *arg3;
@@ -669,18 +671,23 @@ static void call_apcs( BOOL alertable )
         SERVER_START_REQ( get_apc )
         {
             req->alertable = alertable;
-            if (!wine_server_call( req )) type = reply->type;
-            proc = reply->func;
-            arg1 = reply->arg1;
-            arg2 = reply->arg2;
-            arg3 = reply->arg3;
+            req->prev      = handle;
+            if (!(ret = wine_server_call( req )))
+            {
+                handle = reply->handle;
+                type   = reply->type;
+                proc   = reply->func;
+                arg1   = reply->arg1;
+                arg2   = reply->arg2;
+                arg3   = reply->arg3;
+            }
         }
         SERVER_END_REQ;
 
+        if (ret) return;  /* no more APCs */
+
         switch (type)
         {
-        case APC_NONE:
-            return;  /* no more APCs */
         case APC_USER:
             proc( arg1, arg2, arg3 );
             break;

@@ -529,10 +529,12 @@ struct get_apc_request
 {
     struct request_header __header;
     int          alertable;
+    obj_handle_t prev;
 };
 struct get_apc_reply
 {
     struct reply_header __header;
+    obj_handle_t handle;
     void*        func;
     int          type;
     void*        arg1;
@@ -4415,6 +4417,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 261
+#define SERVER_PROTOCOL_VERSION 262
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
