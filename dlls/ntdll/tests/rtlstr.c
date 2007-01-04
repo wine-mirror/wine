@@ -1684,14 +1684,14 @@ static void test_RtlGUIDFromString(void)
   UNICODE_STRING str;
   NTSTATUS ret;
 
-  str.Length = str.MaximumLength = (sizeof(szGuid) - 1) / sizeof(WCHAR);
+  str.Length = str.MaximumLength = sizeof(szGuid) - sizeof(WCHAR);
   str.Buffer = (LPWSTR)szGuid;
 
   ret = pRtlGUIDFromString(&str, &guid);
   ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
   ok(memcmp(&guid, &IID_Endianess, sizeof(guid)) == 0, "Endianess broken\n");
 
-  str.Length = str.MaximumLength = (sizeof(szGuid2) - 1) / sizeof(WCHAR);
+  str.Length = str.MaximumLength = sizeof(szGuid2) - sizeof(WCHAR);
   str.Buffer = (LPWSTR)szGuid2;
 
   ret = pRtlGUIDFromString(&str, &guid);
@@ -1708,7 +1708,7 @@ static void test_RtlStringFromGUID(void)
 
   ret = pRtlStringFromGUID(&IID_Endianess, &str);
   ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
-  ok(str.Buffer && !lstrcmpW(str.Buffer, szGuid), "Endianess broken\n");
+  ok(str.Buffer && !lstrcmpiW(str.Buffer, szGuid), "Endianess broken\n");
 }
 
 START_TEST(rtlstr)
