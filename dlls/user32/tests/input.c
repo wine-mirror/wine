@@ -538,6 +538,7 @@ static void test_keynames(void)
 }
 
 static POINT pt_old, pt_new;
+static BOOL clipped;
 #define STEP 20
 
 static LRESULT CALLBACK hook_proc1( int code, WPARAM wparam, LPARAM lparam )
@@ -558,7 +559,10 @@ static LRESULT CALLBACK hook_proc1( int code, WPARAM wparam, LPARAM lparam )
         pt.y = pt_old.y + STEP;
         SetCursorPos(pt.x, pt.y);
         GetCursorPos(&pt1);
-        ok(pt.x == pt1.x && pt.y == pt1.y, "Wrong set pos: (%d,%d)\n", pt1.x, pt1.y);
+        if (clipped)
+            ok(pt1.x == pt_old.x && pt1.y == pt_old.y, "Wrong set pos: (%d,%d)\n", pt1.x, pt1.y);
+        else
+            ok(pt1.x == pt.x && pt1.y == pt.y, "Wrong set pos: (%d,%d)\n", pt1.x, pt1.y);
     }
     return CallNextHookEx( 0, code, wparam, lparam );
 }
@@ -575,8 +579,10 @@ static LRESULT CALLBACK hook_proc2( int code, WPARAM wparam, LPARAM lparam )
 
         /* Should match position set above */
         GetCursorPos(&pt);
-        ok(pt.x == pt_old.x +STEP && pt.y == pt_old.y +STEP, "GetCursorPos: (%d,%d)\n",
-           pt.x, pt.y);
+        if (clipped)
+            ok(pt.x == pt_old.x && pt.y == pt_old.y, "GetCursorPos: (%d,%d)\n", pt.x, pt.y);
+        else
+            ok(pt.x == pt_old.x +STEP && pt.y == pt_old.y +STEP, "GetCursorPos: (%d,%d)\n", pt.x, pt.y);
     }
     return CallNextHookEx( 0, code, wparam, lparam );
 }
@@ -586,11 +592,12 @@ static void test_mouse_ll_hook(void)
     HWND hwnd;
     HHOOK hook1, hook2;
     POINT pt_org, pt;
+    RECT rc;
 
     GetCursorPos(&pt_org);
-    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW,
+    hwnd = CreateWindow("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
-    SetCursorPos(300, 300);
+    SetCursorPos(100, 100);
 
     hook2 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc2, GetModuleHandleA(0), 0);
     hook1 = SetWindowsHookExA(WH_MOUSE_LL, hook_proc1, GetModuleHandleA(0), 0);
@@ -609,6 +616,23 @@ static void test_mouse_ll_hook(void)
     GetCursorPos(&pt_old);
     ok(pt_old.x == pt_new.x && pt_old.y == pt_new.y, "Wrong new pos: (%d,%d)\n", pt_old.x, pt_old.y);
 
+    SetRect(&rc, 50, 50, 151, 151);
+    ClipCursor(&rc);
+    clipped = TRUE;
+
+    SetCursorPos(40, 40);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 50 && pt_old.y == 50, "Wrong new pos: (%d,%d)\n", pt_new.x, pt_new.y);
+    SetCursorPos(160, 160);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_new.x, pt_new.y);
+    mouse_event(MOUSEEVENTF_MOVE, +STEP, +STEP, 0, 0);
+    GetCursorPos(&pt_old);
+    ok(pt_old.x == 150 && pt_old.y == 150, "Wrong new pos: (%d,%d)\n", pt_new.x, pt_new.y);
+
+    clipped = FALSE;
+    pt_new.x = pt_new.y = 150;
+    ClipCursor(NULL);
     UnhookWindowsHookEx(hook1);
 
     /* Now check that mouse buttons do not change mouse position

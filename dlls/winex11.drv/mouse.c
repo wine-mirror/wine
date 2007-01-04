@@ -71,6 +71,7 @@ static const UINT button_up_flags[NB_BUTTONS] =
 
 POINT cursor_pos;
 static DWORD last_time_modified;
+static RECT cursor_clip; /* Cursor clipping rect */
 
 BOOL X11DRV_SetCursorPos( INT x, INT y );
 
@@ -89,6 +90,18 @@ static inline void get_coords( HWND hwnd, int x, int y, POINT *pt )
     pt->y = y + data->whole_rect.top;
 }
 
+/***********************************************************************
+ *		clip_point_to_rect
+ *
+ * Clip point to the provided rectangle
+ */
+static inline void clip_point_to_rect( LPCRECT rect, LPPOINT pt )
+{
+    if      (pt->x <  rect->left)   pt->x = rect->left;
+    else if (pt->x >= rect->right)  pt->x = rect->right - 1;
+    if      (pt->y <  rect->top)    pt->y = rect->top;
+    else if (pt->y >= rect->bottom) pt->y = rect->bottom - 1;
+}
 
 /***********************************************************************
  *		update_button_state
@@ -257,12 +270,6 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         wine_tsx11_lock();
         pt.x = cursor_pos.x + (long)x * xMult;
         pt.y = cursor_pos.y + (long)y * yMult;
-
-        /* Clip to the current screen size */
-        if (pt.x < 0) pt.x = 0;
-        else if (pt.x >= screen_width) pt.x = screen_width - 1;
-        if (pt.y < 0) pt.y = 0;
-        else if (pt.y >= screen_height) pt.y = screen_height - 1;
         wine_tsx11_unlock();
     }
     else
@@ -284,6 +291,7 @@ void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
         else
         {
             wine_tsx11_lock();
+            clip_point_to_rect( &cursor_clip, &pt);
             cursor_pos = pt;
             wine_tsx11_unlock();
         }
@@ -683,6 +691,7 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 BOOL X11DRV_SetCursorPos( INT x, INT y )
 {
     Display *display = thread_display();
+    POINT pt;
 
     TRACE( "warping to (%d,%d)\n", x, y );
 
@@ -695,11 +704,12 @@ BOOL X11DRV_SetCursorPos( INT x, INT y )
         return TRUE;
     }
 
+    pt.x = x; pt.y = y;
+    clip_point_to_rect( &cursor_clip, &pt);
     XWarpPointer( display, root_window, root_window, 0, 0, 0, 0,
-                  x - virtual_screen_rect.left, y - virtual_screen_rect.top );
+                  pt.x - virtual_screen_rect.left, pt.y - virtual_screen_rect.top );
     XFlush( display ); /* avoids bad mouse lag in games that do their own mouse warping */
-    cursor_pos.x = x;
-    cursor_pos.y = y;
+    cursor_pos = pt;
     wine_tsx11_unlock();
     return TRUE;
 }
@@ -728,6 +738,20 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
     }
     *pos = cursor_pos;
     wine_tsx11_unlock();
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *		ClipCursor (X11DRV.@)
+ *
+ * Set the cursor clipping rectangle.
+ */
+BOOL X11DRV_ClipCursor( LPCRECT clip )
+{
+    if (!IntersectRect( &cursor_clip, &virtual_screen_rect, clip ))
+        cursor_clip = virtual_screen_rect;
+
     return TRUE;
 }
 

@@ -1565,9 +1565,13 @@ BOOL WINAPI ClipCursor( const RECT *rect )
     OffsetRect( &virt, GetSystemMetrics( SM_XVIRTUALSCREEN ),
                        GetSystemMetrics( SM_YVIRTUALSCREEN ) );
 
+    TRACE( "Clipping to: %s was: %s screen: %s\n", wine_dbgstr_rect(rect),
+           wine_dbgstr_rect(&CURSOR_ClipRect), wine_dbgstr_rect(&virt) );
+
     if (!IntersectRect( &CURSOR_ClipRect, &virt, rect ))
         CURSOR_ClipRect = virt;
 
+    USER_Driver->pClipCursor( rect );
     return TRUE;
 }
 

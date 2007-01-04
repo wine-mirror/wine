@@ -120,6 +120,7 @@ typedef struct tagUSER_DRIVER {
     void   (*pSetCursor)(struct tagCURSORICONINFO *);
     BOOL   (*pGetCursorPos)(LPPOINT);
     BOOL   (*pSetCursorPos)(INT,INT);
+    BOOL   (*pClipCursor)(LPCRECT);
     /* screen saver functions */
     BOOL   (*pGetScreenSaveActive)(void);
     void   (*pSetScreenSaveActive)(BOOL);

@@ -88,6 +88,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(SetCursor);
         GET_USER_FUNC(GetCursorPos);
         GET_USER_FUNC(SetCursorPos);
+        GET_USER_FUNC(ClipCursor);
         GET_USER_FUNC(GetScreenSaveActive);
         GET_USER_FUNC(SetScreenSaveActive);
         GET_USER_FUNC(AcquireClipboard);
@@ -225,6 +226,11 @@ static BOOL nulldrv_GetCursorPos( LPPOINT pt )
 }
 
 static BOOL nulldrv_SetCursorPos( INT x, INT y )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_ClipCursor( LPCRECT clip )
 {
     return FALSE;
 }
@@ -431,6 +437,7 @@ static const USER_DRIVER null_driver =
     nulldrv_SetCursor,
     nulldrv_GetCursorPos,
     nulldrv_SetCursorPos,
+    nulldrv_ClipCursor,
     /* screen saver functions */
     nulldrv_GetScreenSaveActive,
     nulldrv_SetScreenSaveActive,
@@ -558,6 +565,11 @@ static BOOL loaderdrv_GetCursorPos( LPPOINT pt )
 static BOOL loaderdrv_SetCursorPos( INT x, INT y )
 {
     return load_driver()->pSetCursorPos( x, y );
+}
+
+static BOOL loaderdrv_ClipCursor( LPCRECT clip )
+{
+    return load_driver()->pClipCursor( clip );
 }
 
 static BOOL loaderdrv_GetScreenSaveActive(void)
@@ -754,6 +766,7 @@ static const USER_DRIVER lazy_load_driver =
     loaderdrv_SetCursor,
     loaderdrv_GetCursorPos,
     loaderdrv_SetCursorPos,
+    loaderdrv_ClipCursor,
     /* screen saver functions */
     loaderdrv_GetScreenSaveActive,
     loaderdrv_SetScreenSaveActive,
