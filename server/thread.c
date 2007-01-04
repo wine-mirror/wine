@@ -68,6 +68,7 @@ struct thread_wait
 
 struct thread_apc
 {
+    struct object       obj;      /* object header */
     struct list         entry;    /* queue linked list */
     struct object      *owner;    /* object that queued this apc */
     void               *func;     /* function to call in client */
@@ -75,6 +76,25 @@ struct thread_apc
     void               *arg1;     /* function arguments */
     void               *arg2;
     void               *arg3;
+};
+
+static void dump_thread_apc( struct object *obj, int verbose );
+static int thread_apc_signaled( struct object *obj, struct thread *thread );
+
+static const struct object_ops thread_apc_ops =
+{
+    sizeof(struct thread_apc),  /* size */
+    dump_thread_apc,            /* dump */
+    add_queue,                  /* add_queue */
+    remove_queue,               /* remove_queue */
+    thread_apc_signaled,        /* signaled */
+    no_satisfied,               /* satisfied */
+    no_signal,                  /* signal */
+    no_get_fd,                  /* get_fd */
+    no_map_access,              /* map_access */
+    no_lookup_name,             /* lookup_name */
+    no_close_handle,            /* close_handle */
+    no_destroy                  /* destroy */
 };
 
 
@@ -212,7 +232,7 @@ static void cleanup_thread( struct thread *thread )
     int i;
     struct thread_apc *apc;
 
-    while ((apc = thread_dequeue_apc( thread, 0 ))) free( apc );
+    while ((apc = thread_dequeue_apc( thread, 0 ))) release_object( apc );
     free( thread->req_data );
     free( thread->reply_data );
     if (thread->request_fd) release_object( thread->request_fd );
@@ -278,6 +298,19 @@ static unsigned int thread_map_access( struct object *obj, unsigned int access )
     if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE;
     if (access & GENERIC_ALL)     access |= THREAD_ALL_ACCESS;
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
+}
+
+static void dump_thread_apc( struct object *obj, int verbose )
+{
+    struct thread_apc *apc = (struct thread_apc *)obj;
+    assert( obj->ops == &thread_apc_ops );
+
+    fprintf( stderr, "APC owner=%p type=%u\n", apc->owner, apc->type );
+}
+
+static int thread_apc_signaled( struct object *obj, struct thread *thread )
+{
+    return 0;
 }
 
 /* get a thread pointer from a thread id (and increment the refcount) */
@@ -639,7 +672,7 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
     if (owner) thread_cancel_apc( thread, owner, system );
     if (thread->state == TERMINATED) return 0;
 
-    if (!(apc = mem_alloc( sizeof(*apc) ))) return 0;
+    if (!(apc = alloc_object( &thread_apc_ops ))) return 0;
     apc->owner  = owner;
     apc->func   = func;
     apc->type   = type;
@@ -662,7 +695,7 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, int system 
     {
         if (apc->owner != owner) continue;
         list_remove( &apc->entry );
-        free( apc );
+        release_object( apc );
         return;
     }
 }
@@ -1042,14 +1075,14 @@ DECL_HANDLER(get_apc)
          * Exception: for APC_ASYNC_IO, func == NULL is legal.
          */
         if (apc->func || apc->type == APC_ASYNC_IO) break;
-        free( apc );
+        release_object( apc );
     }
     reply->func = apc->func;
     reply->type = apc->type;
     reply->arg1 = apc->arg1;
     reply->arg2 = apc->arg2;
     reply->arg3 = apc->arg3;
-    free( apc );
+    release_object( apc );
 }
 
 /* retrieve the current context of a thread */
