@@ -59,8 +59,8 @@ static const DIDATAFORMAT data_format = {
 static BOOL CALLBACK enum_callback(LPCDIDEVICEOBJECTINSTANCE oi, LPVOID info)
 {
     if (winetest_debug > 1)
-        trace(" Type:%4x Ofs:%2x Name:%s Flags:%08x\n",
-              oi->dwType, oi->dwOfs, oi->tszName, oi->dwFlags);
+        trace(" Type:%4x Ofs:%3d Flags:%08x Name:%s\n",
+              oi->dwType, oi->dwOfs, oi->dwFlags, oi->tszName);
     (*(int*)info)++;
     return DIENUM_CONTINUE;
 }

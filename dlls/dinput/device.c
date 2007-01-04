@@ -800,15 +800,12 @@ ULONG WINAPI IDirectInputDevice2AImpl_AddRef(
     return InterlockedIncrement(&(This->ref));
 }
 
-HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
-	LPVOID lpvRef,
-	DWORD dwFlags)
+HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(LPDIRECTINPUTDEVICE8A iface,
+        LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback, LPVOID lpvRef, DWORD dwFlags)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
     DIDEVICEOBJECTINSTANCEA ddoi;
-    int i, axis = 0, button = 0;
+    int i;
 
     TRACE("(%p) %p,%p flags:%08x)\n", iface, lpCallback, lpvRef, dwFlags);
     TRACE("  - flags = ");
@@ -821,56 +818,46 @@ HRESULT WINAPI IDirectInputDevice2AImpl_EnumObjects(
 
     for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
     {
-        LPDIOBJECTDATAFORMAT odf;
-        DWORD type;
+        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
 
-        odf = (LPDIOBJECTDATAFORMAT)((LPBYTE)This->data_format.wine_df->rgodf +
-                                         i * This->data_format.wine_df->dwObjSize);
-        type = DIEFT_GETTYPE(odf->dwType);
+        if (dwFlags != DIDFT_ALL && !(dwFlags & DIEFT_GETTYPE(odf->dwType))) continue;
+        if (IDirectInputDevice_GetObjectInfo(iface, &ddoi, odf->dwType, DIPH_BYID) != DI_OK)
+            continue;
 
-        if      (type & DIDFT_AXIS)   axis++;
-        else if (type & DIDFT_BUTTON) button++;
-
-        if (dwFlags != DIDFT_ALL && !(dwFlags & type)) continue;
-
-        ddoi.guidType = *odf->pguid;
-        ddoi.dwType   =  odf->dwType;
-        ddoi.dwFlags  =  odf->dwFlags;
-        ddoi.dwOfs    =  !This->data_format.offsets ? odf->dwOfs : This->data_format.offsets[i];
-
-        if      (IsEqualGUID(&ddoi.guidType, &GUID_XAxis)) strcpy(ddoi.tszName, "X-Axis");
-        else if (IsEqualGUID(&ddoi.guidType, &GUID_YAxis)) strcpy(ddoi.tszName, "Y-Axis");
-        else if (IsEqualGUID(&ddoi.guidType, &GUID_ZAxis)) strcpy(ddoi.tszName, "Z-Axis");
-        else if (IsEqualGUID(&ddoi.guidType, &GUID_Key  ))
-                    GetKeyNameTextA((DIDFT_GETINSTANCE(odf->dwType) & 0x80) << 17 |
-                                    (DIDFT_GETINSTANCE(odf->dwType) & 0x7f) << 16,
-                                    ddoi.tszName, sizeof(ddoi.tszName));
-        else if (type & DIDFT_AXIS)   wsprintfA(ddoi.tszName, "%d-Axis", axis - 1);
-        else if (type & DIDFT_BUTTON) wsprintfA(ddoi.tszName, "Button %d", button - 1);
-        else FIXME("no name\n");
-
-	_dump_OBJECTINSTANCEA(&ddoi);
 	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) break;
     }
 
     return DI_OK;
 }
 
-HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(
-	LPDIRECTINPUTDEVICE8W iface,
-	LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback,
-	LPVOID lpvRef,
-	DWORD dwFlags)
+HRESULT WINAPI IDirectInputDevice2WImpl_EnumObjects(LPDIRECTINPUTDEVICE8W iface,
+        LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback, LPVOID lpvRef, DWORD dwFlags)
 {
-    device_enumobjects_AtoWcb_data data;
+    IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
+    DIDEVICEOBJECTINSTANCEW ddoi;
+    int i;
 
-    data.lpCallBack = lpCallback;
-    data.lpvRef = lpvRef;
+    TRACE("(%p) %p,%p flags:%08x)\n", iface, lpCallback, lpvRef, dwFlags);
+    TRACE("  - flags = ");
+    _dump_EnumObjects_flags(dwFlags);
+    TRACE("\n");
 
-    return IDirectInputDevice2AImpl_EnumObjects(
-                (LPDIRECTINPUTDEVICE8A) iface,
-                (LPDIENUMDEVICEOBJECTSCALLBACKA) DIEnumDevicesCallbackAtoW,
-                (LPVOID) &data, dwFlags);
+    /* Only the fields till dwFFMaxForce are relevant */
+    memset(&ddoi, 0, sizeof(ddoi));
+    ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, dwFFMaxForce);
+
+    for (i = 0; i < This->data_format.wine_df->dwNumObjs; i++)
+    {
+        LPDIOBJECTDATAFORMAT odf = dataformat_to_odf(This->data_format.wine_df, i);
+
+        if (dwFlags != DIDFT_ALL && !(dwFlags & DIEFT_GETTYPE(odf->dwType))) continue;
+        if (IDirectInputDevice_GetObjectInfo(iface, &ddoi, odf->dwType, DIPH_BYID) != DI_OK)
+            continue;
+
+	if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) break;
+    }
+
+    return DI_OK;
 }
 
 /******************************************************************************
