@@ -415,33 +415,18 @@ SysKeyboardAImpl_GetObjectInfo(
 	DWORD dwObj,
 	DWORD dwHow)
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    DIDEVICEOBJECTINSTANCEA ddoi;
-    DWORD dwSize = pdidoi->dwSize;
-    
-    TRACE("(this=%p,%p,%d,0x%08x)\n", This, pdidoi, dwObj, dwHow);
+    HRESULT res;
 
-    if (dwHow == DIPH_BYID) {
-        WARN(" querying by id not supported yet...\n");
-	return DI_OK;
-    }
+    res = IDirectInputDevice2AImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
+    if (res != DI_OK) return res;
 
-    memset(pdidoi, 0, dwSize);
-    memset(&ddoi, 0, sizeof(ddoi));
-
-    ddoi.dwSize = dwSize;
-    ddoi.guidType = GUID_Key;
-    ddoi.dwOfs = dwObj;
-    ddoi.dwType = DIDFT_MAKEINSTANCE(dwObj) | DIDFT_BUTTON;
-    if (!GetKeyNameTextA(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName)))
+    if (!GetKeyNameTextA((DIDFT_GETINSTANCE(pdidoi->dwType) & 0x80) << 17 |
+                         (DIDFT_GETINSTANCE(pdidoi->dwType) & 0x7f) << 16,
+                         pdidoi->tszName, sizeof(pdidoi->tszName)))
         return DIERR_OBJECTNOTFOUND;
 
-    /* And return our just filled device object instance structure */
-    memcpy(pdidoi, &ddoi, (dwSize < sizeof(ddoi) ? dwSize : sizeof(ddoi)));
-    
     _dump_OBJECTINSTANCEA(pdidoi);
-
-    return DI_OK;
+    return res;
 }
 
 static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
@@ -449,33 +434,18 @@ static HRESULT WINAPI SysKeyboardWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface
 						     DWORD dwObj,
 						     DWORD dwHow)
 {
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-    DIDEVICEOBJECTINSTANCEW ddoi;
-    DWORD dwSize = pdidoi->dwSize;
-    
-    TRACE("(this=%p,%p,%d,0x%08x)\n", This, pdidoi, dwObj, dwHow);
+    HRESULT res;
 
-    if (dwHow == DIPH_BYID) {
-        WARN(" querying by id not supported yet...\n");
-	return DI_OK;
-    }
+    res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
+    if (res != DI_OK) return res;
 
-    memset(pdidoi, 0, dwSize);
-    memset(&ddoi, 0, sizeof(ddoi));
-
-    ddoi.dwSize = dwSize;
-    ddoi.guidType = GUID_Key;
-    ddoi.dwOfs = dwObj;
-    ddoi.dwType = DIDFT_MAKEINSTANCE(dwObj) | DIDFT_BUTTON;
-    if (!GetKeyNameTextW(((dwObj & 0x7f) << 16) | ((dwObj & 0x80) << 17), ddoi.tszName, sizeof(ddoi.tszName)))
+    if (!GetKeyNameTextW((DIDFT_GETINSTANCE(pdidoi->dwType) & 0x80) << 17 |
+                         (DIDFT_GETINSTANCE(pdidoi->dwType) & 0x7f) << 16,
+                         pdidoi->tszName, sizeof(pdidoi->tszName)))
         return DIERR_OBJECTNOTFOUND;
 
-    /* And return our just filled device object instance structure */
-    memcpy(pdidoi, &ddoi, (dwSize < sizeof(ddoi) ? dwSize : sizeof(ddoi)));
-    
     _dump_OBJECTINSTANCEW(pdidoi);
-
-    return DI_OK;
+    return res;
 }
 
 /******************************************************************************
