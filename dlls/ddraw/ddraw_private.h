@@ -631,7 +631,6 @@ typedef struct
 } member_info;
 
 /* Structure copy */
-#define DDRAW_dump_flags(flags,names,num_names) DDRAW_dump_flags_(flags, names, num_names, 1)
 #define ME(x,f,e) { x, #x, (void (*)(const void *))(f), offsetof(STRUCT, e) }
 
 #define DD_STRUCT_COPY_BYSIZE(to,from)                  \

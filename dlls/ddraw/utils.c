@@ -30,7 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
-void DDRAW_dump_flags_(DWORD flags, const flag_info* names, size_t num_names, int newline);
 
 /*****************************************************************************
  * PixelFormat_WineD3DtoDD
@@ -629,6 +628,25 @@ DDRAW_dump_DDCOLORKEY(const DDCOLORKEY *ddck)
 {
     DPRINTF(" Low : %d  - High : %d", ddck->dwColorSpaceLowValue, ddck->dwColorSpaceHighValue);
 }
+
+#define DDRAW_dump_flags(flags,names,num_names) DDRAW_dump_flags_(flags, names, num_names, 1)
+static void
+DDRAW_dump_flags_(DWORD flags,
+                  const flag_info* names,
+                  size_t num_names,
+                  int newline)
+{
+    unsigned int	i;
+
+    for (i=0; i < num_names; i++)
+        if ((flags & names[i].val) ||      /* standard flag value */
+            ((!flags) && (!names[i].val))) /* zero value only */
+            DPRINTF("%s ", names[i].name);
+
+    if (newline)
+        DPRINTF("\n");
+}
+
 void DDRAW_dump_DDSCAPS2(const DDSCAPS2 *in)
 {
     static const flag_info flags[] = {
@@ -702,23 +720,6 @@ DDRAW_dump_DDSCAPS(const DDSCAPS *in)
     DDRAW_dump_DDSCAPS2(&in_bis);
 }
 
-void
-DDRAW_dump_flags_(DWORD flags,
-                  const flag_info* names,
-                  size_t num_names,
-                  int newline)
-{
-    unsigned int	i;
-
-    for (i=0; i < num_names; i++)
-        if ((flags & names[i].val) ||      /* standard flag value */
-            ((!flags) && (!names[i].val))) /* zero value only */
-            DPRINTF("%s ", names[i].name);
-
-    if (newline)
-        DPRINTF("\n");
-}
-
 static void
 DDRAW_dump_pixelformat_flag(DWORD flagmask)
 {
@@ -743,7 +744,7 @@ DDRAW_dump_pixelformat_flag(DWORD flagmask)
     DDRAW_dump_flags_(flagmask, flags, sizeof(flags)/sizeof(flags[0]), 0);
 }
 
-void
+static void
 DDRAW_dump_members(DWORD flags,
                    const void* data,
                    const member_info* mems,
