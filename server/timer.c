@@ -104,8 +104,20 @@ static void timer_callback( void *private )
     /* queue an APC */
     if (timer->thread)
     {
-        if (!thread_queue_apc( timer->thread, &timer->obj, timer->callback, APC_TIMER, 0,
-                               (void *)timer->when.tv_sec, (void *)timer->when.tv_usec, timer->arg))
+        apc_call_t data;
+
+        memset( &data, 0, sizeof(data) );
+        if (timer->callback)
+        {
+            data.type            = APC_TIMER;
+            data.timer.func      = timer->callback;
+            data.timer.time.sec  = timer->when.tv_sec;
+            data.timer.time.usec = timer->when.tv_usec;
+            data.timer.arg       = timer->arg;
+        }
+        else data.type = APC_NONE;  /* wake up only */
+
+        if (!thread_queue_apc( timer->thread, &timer->obj, &data ))
         {
             release_object( timer->thread );
             timer->thread = NULL;
@@ -136,7 +148,7 @@ static int cancel_timer( struct timer *timer )
     }
     if (timer->thread)
     {
-        thread_cancel_apc( timer->thread, &timer->obj, 0 );
+        thread_cancel_apc( timer->thread, &timer->obj, APC_TIMER );
         release_object( timer->thread );
         timer->thread = NULL;
     }

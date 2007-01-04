@@ -43,6 +43,8 @@
 static const void *cur_data;
 static data_size_t cur_size;
 
+static const char *get_status_name( unsigned int status );
+
 /* utility functions */
 
 inline static void remove_data( data_size_t size )
@@ -94,6 +96,34 @@ static void dump_char_info( const char_info_t *info )
     fprintf( stderr, "{'" );
     dump_strW( &info->ch, 1, stderr, "\'\'" );
     fprintf( stderr, "',%04x}", info->attr );
+}
+
+static void dump_apc_call( const apc_call_t *call )
+{
+    fputc( '{', stderr );
+    switch(call->type)
+    {
+    case APC_NONE:
+        fprintf( stderr, "APC_NONE" );
+        break;
+    case APC_USER:
+        fprintf( stderr, "APC_USER,args={%lx,%lx,%lx}",
+                 call->user.args[0], call->user.args[1], call->user.args[2] );
+        break;
+    case APC_TIMER:
+        fprintf( stderr, "APC_TIMER,time=" );
+        dump_abs_time( &call->timer.time );
+        fprintf( stderr, ",arg=%p", call->timer.arg );
+        break;
+    case APC_ASYNC_IO:
+        fprintf( stderr, "APC_ASYNC_IO,user=%p,sb=%p,status=%s",
+                 call->async_io.user, call->async_io.sb, get_status_name(call->async_io.status) );
+        break;
+    default:
+        fprintf( stderr, "type=%u", call->type );
+        break;
+    }
+    fputc( '}', stderr );
 }
 
 static void dump_context( const CONTEXT *context )
@@ -845,11 +875,8 @@ static void dump_unload_dll_request( const struct unload_dll_request *req )
 static void dump_queue_apc_request( const struct queue_apc_request *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " user=%d,", req->user );
-    fprintf( stderr, " func=%p,", req->func );
-    fprintf( stderr, " arg1=%p,", req->arg1 );
-    fprintf( stderr, " arg2=%p,", req->arg2 );
-    fprintf( stderr, " arg3=%p", req->arg3 );
+    fprintf( stderr, " call=" );
+    dump_apc_call( &req->call );
 }
 
 static void dump_get_apc_request( const struct get_apc_request *req )
@@ -861,11 +888,8 @@ static void dump_get_apc_request( const struct get_apc_request *req )
 static void dump_get_apc_reply( const struct get_apc_reply *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
-    fprintf( stderr, " func=%p,", req->func );
-    fprintf( stderr, " type=%d,", req->type );
-    fprintf( stderr, " arg1=%p,", req->arg1 );
-    fprintf( stderr, " arg2=%p,", req->arg2 );
-    fprintf( stderr, " arg3=%p", req->arg3 );
+    fprintf( stderr, " call=" );
+    dump_apc_call( &req->call );
 }
 
 static void dump_close_handle_request( const struct close_handle_request *req )

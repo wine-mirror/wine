@@ -209,6 +209,34 @@ struct token_groups
 
 };
 
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
+
+typedef union
+{
+    enum apc_type type;
+    struct
+    {
+        enum apc_type    type;
+        void (__stdcall *func)(unsigned long,unsigned long,unsigned long);
+        unsigned long    args[3];
+    } user;
+    struct
+    {
+        enum apc_type   type;
+        void (__stdcall *func)(void*, unsigned int, unsigned int);
+        abs_time_t       time;
+        void            *arg;
+    } timer;
+    struct
+    {
+        enum apc_type    type;
+        void (__stdcall *func)(void*, void*, unsigned int);
+        void            *user;
+        void            *sb;
+        unsigned int     status;
+    } async_io;
+} apc_call_t;
+
 
 
 
@@ -512,11 +540,7 @@ struct queue_apc_request
 {
     struct request_header __header;
     obj_handle_t handle;
-    int          user;
-    void*        func;
-    void*        arg1;
-    void*        arg2;
-    void*        arg3;
+    apc_call_t   call;
 };
 struct queue_apc_reply
 {
@@ -535,13 +559,8 @@ struct get_apc_reply
 {
     struct reply_header __header;
     obj_handle_t handle;
-    void*        func;
-    int          type;
-    void*        arg1;
-    void*        arg2;
-    void*        arg3;
+    apc_call_t   call;
 };
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 
 
 
@@ -4417,6 +4436,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 262
+#define SERVER_PROTOCOL_VERSION 263
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

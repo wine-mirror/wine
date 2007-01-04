@@ -42,6 +42,7 @@ my %formats =
     "abs_time_t"    => "&dump_abs_time",
     "rectangle_t"   => "&dump_rectangle",
     "char_info_t"   => "&dump_char_info",
+    "apc_call_t"    => "&dump_apc_call",
 );
 
 my @requests = ();

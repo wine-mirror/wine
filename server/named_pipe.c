@@ -857,9 +857,16 @@ DECL_HANDLER(wait_named_pipe)
     server = find_server( pipe, ps_wait_open );
     if (server)
     {
+        apc_call_t data;
+
         /* there's already a server waiting for a client to connect */
-        thread_queue_apc( current, NULL, req->func, APC_ASYNC_IO,
-                          1, req->event, NULL, (void *)STATUS_SUCCESS );
+        memset( &data, 0, sizeof(data) );
+        data.type            = APC_ASYNC_IO;
+        data.async_io.func   = req->func;
+        data.async_io.user   = req->event;
+        data.async_io.sb     = NULL;
+        data.async_io.status = STATUS_SUCCESS;
+        thread_queue_apc( current, NULL, &data );
         release_object( server );
     }
     else

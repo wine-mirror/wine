@@ -1283,8 +1283,15 @@ struct async
 /* destroys the server side of it */
 static void async_terminate( struct async *async, int status )
 {
-    thread_queue_apc( async->thread, NULL, async->apc, APC_ASYNC_IO,
-                      1, async->user, async->sb, (void *)status );
+    apc_call_t data;
+
+    memset( &data, 0, sizeof(data) );
+    data.type            = APC_ASYNC_IO;
+    data.async_io.func   = async->apc;
+    data.async_io.user   = async->user;
+    data.async_io.sb     = async->sb;
+    data.async_io.status = status;
+    thread_queue_apc( async->thread, NULL, &data );
 
     if (async->timeout) remove_timeout_user( async->timeout );
     async->timeout = NULL;

@@ -660,14 +660,11 @@ static int wait_reply( void *cookie )
 static void call_apcs( BOOL alertable )
 {
     NTSTATUS ret;
+    apc_call_t call;
     HANDLE handle = 0;
-    FARPROC proc;
-    LARGE_INTEGER time;
-    void *arg1, *arg2, *arg3;
 
     for (;;)
     {
-        int type = APC_NONE;
         SERVER_START_REQ( get_apc )
         {
             req->alertable = alertable;
@@ -675,34 +672,33 @@ static void call_apcs( BOOL alertable )
             if (!(ret = wine_server_call( req )))
             {
                 handle = reply->handle;
-                type   = reply->type;
-                proc   = reply->func;
-                arg1   = reply->arg1;
-                arg2   = reply->arg2;
-                arg3   = reply->arg3;
+                call   = reply->call;
             }
         }
         SERVER_END_REQ;
 
         if (ret) return;  /* no more APCs */
 
-        switch (type)
+        switch (call.type)
         {
         case APC_USER:
-            proc( arg1, arg2, arg3 );
+            call.user.func( call.user.args[0], call.user.args[1], call.user.args[2] );
             break;
         case APC_TIMER:
+        {
+            LARGE_INTEGER time;
             /* convert sec/usec to NT time */
-            RtlSecondsSince1970ToTime( (time_t)arg1, &time );
-            time.QuadPart += (DWORD)arg2 * 10;
-            proc( arg3, time.u.LowPart, time.u.HighPart );
+            RtlSecondsSince1970ToTime( call.timer.time.sec, &time );
+            time.QuadPart += call.timer.time.usec * 10;
+            call.timer.func( call.timer.arg, time.u.LowPart, time.u.HighPart );
             break;
+        }
         case APC_ASYNC_IO:
             NtCurrentTeb()->num_async_io--;
-            proc( arg1, (IO_STATUS_BLOCK*)arg2, (ULONG)arg3 );
+            call.async_io.func( call.async_io.user, call.async_io.sb, call.async_io.status );
             break;
         default:
-            server_protocol_error( "get_apc_request: bad type %d\n", type );
+            server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;
         }
     }

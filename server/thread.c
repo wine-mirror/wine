@@ -72,11 +72,7 @@ struct thread_apc
     struct list         entry;    /* queue linked list */
     struct object      *owner;    /* object that queued this apc */
     int                 executed; /* has it been executed by the client? */
-    void               *func;     /* function to call in client */
-    enum apc_type       type;     /* type of apc function */
-    void               *arg1;     /* function arguments */
-    void               *arg2;
-    void               *arg3;
+    apc_call_t          call;
 };
 
 static void dump_thread_apc( struct object *obj, int verbose );
@@ -306,7 +302,7 @@ static void dump_thread_apc( struct object *obj, int verbose )
     struct thread_apc *apc = (struct thread_apc *)obj;
     assert( obj->ops == &thread_apc_ops );
 
-    fprintf( stderr, "APC owner=%p type=%u\n", apc->owner, apc->type );
+    fprintf( stderr, "APC owner=%p type=%u\n", apc->owner, apc->call.type );
 }
 
 static int thread_apc_signaled( struct object *obj, struct thread *thread )
@@ -663,24 +659,33 @@ void wake_up( struct object *obj, int max )
     }
 }
 
+/* return the apc queue to use for a given apc type */
+static inline struct list *get_apc_queue( struct thread *thread, enum apc_type type )
+{
+    switch(type)
+    {
+    case APC_NONE:
+    case APC_USER:
+    case APC_TIMER:
+        return &thread->user_apc;
+    default:
+        return &thread->system_apc;
+    }
+}
+
 /* queue an async procedure call */
-int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
-                      enum apc_type type, int system, void *arg1, void *arg2, void *arg3 )
+int thread_queue_apc( struct thread *thread, struct object *owner, const apc_call_t *call_data )
 {
     struct thread_apc *apc;
-    struct list *queue = system ? &thread->system_apc : &thread->user_apc;
+    struct list *queue = get_apc_queue( thread, call_data->type );
 
     /* cancel a possible previous APC with the same owner */
-    if (owner) thread_cancel_apc( thread, owner, system );
+    if (owner) thread_cancel_apc( thread, owner, call_data->type );
     if (thread->state == TERMINATED) return 0;
 
     if (!(apc = alloc_object( &thread_apc_ops ))) return 0;
-    apc->owner  = owner;
-    apc->func   = func;
-    apc->type   = type;
-    apc->arg1   = arg1;
-    apc->arg2   = arg2;
-    apc->arg3   = arg3;
+    apc->call     = *call_data;
+    apc->owner    = owner;
     apc->executed = 0;
     list_add_tail( queue, &apc->entry );
     if (!list_prev( queue, &apc->entry ))  /* first one */
@@ -690,10 +695,11 @@ int thread_queue_apc( struct thread *thread, struct object *owner, void *func,
 }
 
 /* cancel the async procedure call owned by a specific object */
-void thread_cancel_apc( struct thread *thread, struct object *owner, int system )
+void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_type type )
 {
     struct thread_apc *apc;
-    struct list *queue = system ? &thread->system_apc : &thread->user_apc;
+    struct list *queue = get_apc_queue( thread, type );
+
     LIST_FOR_EACH_ENTRY( apc, queue, struct thread_apc, entry )
     {
         if (apc->owner != owner) continue;
@@ -1053,8 +1059,16 @@ DECL_HANDLER(queue_apc)
     struct thread *thread;
     if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
     {
-        thread_queue_apc( thread, NULL, req->func, APC_USER, !req->user,
-                          req->arg1, req->arg2, req->arg3 );
+        switch( req->call.type )
+        {
+        case APC_NONE:
+        case APC_USER:
+            thread_queue_apc( thread, NULL, &req->call );
+            break;
+        default:
+            set_error( STATUS_INVALID_PARAMETER );
+            break;
+        }
         release_object( thread );
     }
 }
@@ -1082,22 +1096,15 @@ DECL_HANDLER(get_apc)
             set_error( STATUS_PENDING );
             return;
         }
-        /* Optimization: ignore APCs that have a NULL func; they are only used
-         * to wake up a thread, but since we got here the thread woke up already.
-         * Exception: for APC_ASYNC_IO, func == NULL is legal.
+        /* Optimization: ignore APC_NONE calls, they are only used to
+         * wake up a thread, but since we got here the thread woke up already.
          */
-        if (apc->func || apc->type == APC_ASYNC_IO) break;
+        if (apc->call.type != APC_NONE) break;
         release_object( apc );
     }
 
     if ((reply->handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
-    {
-        reply->func = apc->func;
-        reply->type = apc->type;
-        reply->arg1 = apc->arg1;
-        reply->arg2 = apc->arg2;
-        reply->arg3 = apc->arg3;
-    }
+        reply->call = apc->call;
     release_object( apc );
 }
 

@@ -225,6 +225,34 @@ struct token_groups
     /* VARARGS(sids,SID); */
 };
 
+enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
+
+typedef union
+{
+    enum apc_type type;
+    struct
+    {
+        enum apc_type    type;     /* APC_USER */
+        void (__stdcall *func)(unsigned long,unsigned long,unsigned long);
+        unsigned long    args[3];  /* arguments for user function */
+    } user;
+    struct
+    {
+        enum apc_type   type;     /* APC_TIMER */
+        void (__stdcall *func)(void*, unsigned int, unsigned int);
+        abs_time_t       time;     /* absolute time of expiration */
+        void            *arg;      /* user argument */
+    } timer;
+    struct
+    {
+        enum apc_type    type;     /* APC_ASYNC_IO */
+        void (__stdcall *func)(void*, void*, unsigned int);
+        void            *user;     /* user pointer */
+        void            *sb;       /* status block */
+        unsigned int     status;   /* I/O status */
+    } async_io;
+} apc_call_t;
+
 /****************************************************************/
 /* Request declarations */
 
@@ -436,11 +464,7 @@ struct token_groups
 /* Queue an APC for a thread */
 @REQ(queue_apc)
     obj_handle_t handle;       /* thread handle */
-    int          user;         /* user or system apc? */
-    void*        func;         /* function to call */
-    void*        arg1;         /* params for function to call */
-    void*        arg2;
-    void*        arg3;
+    apc_call_t   call;         /* call arguments */
 @END
 
 
@@ -450,13 +474,8 @@ struct token_groups
     obj_handle_t prev;         /* handle to previous APC */
 @REPLY
     obj_handle_t handle;       /* handle to APC */
-    void*        func;         /* function to call */
-    int          type;         /* function type */
-    void*        arg1;         /* function arguments */
-    void*        arg2;
-    void*        arg3;
+    apc_call_t   call;         /* call arguments */
 @END
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
 
 
 /* Close a handle for the current process */
