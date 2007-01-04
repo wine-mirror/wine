@@ -181,11 +181,13 @@ NTSTATUS WINAPI RtlQueueWorkItem(PRTL_WORK_ITEM_ROUTINE Function, PVOID Context,
     work_item->function = Function;
     work_item->context = Context;
 
-    if (Flags != WT_EXECUTEDEFAULT)
+    if (Flags & ~WT_EXECUTELONGFUNCTION)
         FIXME("Flags 0x%x not supported\n", Flags);
 
     status = add_work_item_to_queue(work_item);
 
+    /* FIXME: tune this algorithm to not be as aggressive with creating threads
+     * if WT_EXECUTELONGFUNCTION isn't specified */
     if ((status == STATUS_SUCCESS) &&
         ((num_workers == 0) || (num_workers == num_busy_workers)))
     {
