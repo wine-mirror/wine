@@ -654,6 +654,51 @@ static HRESULT WINAPI SysMouseAImpl_GetCapabilities(
     return DI_OK;
 }
 
+/******************************************************************************
+  *     GetObjectInfo : get information about a device object such as a button
+  *                     or axis
+  */
+static HRESULT WINAPI SysMouseWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
+        LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow)
+{
+    static const WCHAR x_axisW[] = {'X','-','A','x','i','s',0};
+    static const WCHAR y_axisW[] = {'X','-','A','x','i','s',0};
+    static const WCHAR wheelW[] = {'W','h','e','e','l',0};
+    static const WCHAR buttonW[] = {'B','u','t','t','o','n',' ','%','d',0};
+    HRESULT res;
+
+    res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
+    if (res != DI_OK) return res;
+
+    if      (IsEqualGUID(&pdidoi->guidType, &GUID_XAxis)) strcpyW(pdidoi->tszName, x_axisW);
+    else if (IsEqualGUID(&pdidoi->guidType, &GUID_YAxis)) strcpyW(pdidoi->tszName, y_axisW);
+    else if (IsEqualGUID(&pdidoi->guidType, &GUID_ZAxis)) strcpyW(pdidoi->tszName, wheelW);
+    else if (pdidoi->dwType & DIDFT_BUTTON)
+        wsprintfW(pdidoi->tszName, buttonW, DIDFT_GETINSTANCE(pdidoi->dwType) - 3);
+
+    _dump_OBJECTINSTANCEW(pdidoi);
+    return res;
+}
+
+static HRESULT WINAPI SysMouseAImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
+        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
+{
+    HRESULT res;
+    DIDEVICEOBJECTINSTANCEW didoiW;
+    DWORD dwSize = pdidoi->dwSize;
+
+    didoiW.dwSize = sizeof(didoiW);
+    res = SysMouseWImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface, &didoiW, dwObj, dwHow);
+    if (res != DI_OK) return res;
+
+    memset(pdidoi, 0, pdidoi->dwSize);
+    memcpy(pdidoi, &didoiW, FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, tszName));
+    pdidoi->dwSize = dwSize;
+    WideCharToMultiByte(CP_ACP, 0, didoiW.tszName, -1, pdidoi->tszName,
+                        sizeof(pdidoi->tszName), NULL, NULL);
+
+    return res;
+}
 
 /******************************************************************************
   *     GetDeviceInfo : get information about a device's identity
@@ -707,7 +752,7 @@ static const IDirectInputDevice8AVtbl SysMouseAvt =
     IDirectInputDevice2AImpl_SetDataFormat,
     IDirectInputDevice2AImpl_SetEventNotification,
     IDirectInputDevice2AImpl_SetCooperativeLevel,
-    IDirectInputDevice2AImpl_GetObjectInfo,
+    SysMouseAImpl_GetObjectInfo,
     SysMouseAImpl_GetDeviceInfo,
     IDirectInputDevice2AImpl_RunControlPanel,
     IDirectInputDevice2AImpl_Initialize,
@@ -749,7 +794,7 @@ static const IDirectInputDevice8WVtbl SysMouseWvt =
     XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
     XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
     XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
-    IDirectInputDevice2WImpl_GetObjectInfo,
+    SysMouseWImpl_GetObjectInfo,
     SysMouseWImpl_GetDeviceInfo,
     XCAST(RunControlPanel)IDirectInputDevice2AImpl_RunControlPanel,
     XCAST(Initialize)IDirectInputDevice2AImpl_Initialize,
