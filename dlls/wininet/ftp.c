@@ -2289,7 +2289,7 @@ lend:
 static BOOL FTP_InitListenSocket(LPWININETFTPSESSIONW lpwfs)
 {
     BOOL bSuccess = FALSE;
-    size_t namelen = sizeof(struct sockaddr_in);
+    socklen_t namelen = sizeof(struct sockaddr_in);
 
     TRACE("\n");
 
@@ -2579,7 +2579,7 @@ static BOOL FTP_SendPortOrPasv(LPWININETFTPSESSIONW lpwfs)
 static BOOL FTP_GetDataSocket(LPWININETFTPSESSIONW lpwfs, LPINT nDataSocket)
 {
     struct sockaddr_in saddr;
-    size_t addrlen = sizeof(struct sockaddr);
+    socklen_t addrlen = sizeof(struct sockaddr);
 
     TRACE("\n");
     if (lpwfs->hdr.dwFlags & INTERNET_FLAG_PASSIVE)
