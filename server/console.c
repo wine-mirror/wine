@@ -1252,12 +1252,20 @@ DECL_HANDLER(alloc_console)
     struct process *renderer = current->process;
     struct console_input *console;
 
-    process = (req->pid) ? get_process_from_id( req->pid ) :
-              (struct process *)grab_object( renderer->parent );
+    if (req->pid)
+    {
+        if (!(process = get_process_from_id( req->pid ))) return;
+    }
+    else
+    {
+        if (!(process = renderer->parent))
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            return;
+        }
+        grab_object( process );
+    }
 
-    reply->handle_in = 0;
-    reply->event = 0;
-    if (!process) return;
     if (process != renderer && process->console)
     {
         set_error( STATUS_ACCESS_DENIED );
