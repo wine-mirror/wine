@@ -2227,6 +2227,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
     INT responseLen;
     BOOL loop_next;
     INTERNET_ASYNC_RESULT iar;
+    static const WCHAR szClose[] = { 'C','l','o','s','e',0 };
 
     TRACE("--> %p\n", lpwhr);
 
@@ -2269,6 +2270,9 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             HTTP_HttpAddRequestHeadersW(lpwhr, lpszHeaders, dwHeaderLength,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
+
+        HTTP_ProcessHeader(lpwhr, szConnection, szClose,
+                           HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
 
         /* if there's a proxy username and password, add it to the headers */
         HTTP_AddProxyInfo(lpwhr);
@@ -2786,16 +2790,9 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
     LPHTTPHEADERW lphttpHdr = NULL;
     BOOL bSuccess = FALSE;
     INT index = -1;
-    static const WCHAR szConnection[] = { 'C','o','n','n','e','c','t','i','o','n',0 };
     BOOL request_only = dwModifier & HTTP_ADDHDR_FLAG_REQ;
 
     TRACE("--> %s: %s - 0x%08x\n", debugstr_w(field), debugstr_w(value), dwModifier);
-
-    /* Don't let applications add Connection header to request */
-    if (strcmpW(szConnection,field)==0 && (dwModifier & HTTP_ADDHDR_FLAG_REQ))
-    {
-        return FALSE;
-    }
 
     /* REPLACE wins out over ADD */
     if (dwModifier & HTTP_ADDHDR_FLAG_REPLACE)
