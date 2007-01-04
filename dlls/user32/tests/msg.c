@@ -8330,7 +8330,7 @@ static const struct message WmShowNormal[] = {
     { WM_SHOWWINDOW, sent|wparam, 1 },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE },
     { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2003 doesn't send it */
     { HCBT_SETFOCUS, hook },
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE },
     { 0 }
@@ -8359,9 +8359,9 @@ static const struct message WmShowNoActivate_2[] = {
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED },
     { HCBT_SETFOCUS, hook },
-    { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_ACTIVATE, hook|optional }, /* win2003 doesn't send it */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2003 doesn't send it */
+    { HCBT_SETFOCUS, hook|optional }, /* win2003 doesn't send it */
     { 0 }
 };
 static const struct message WmShowNA_1[] = {
@@ -8397,12 +8397,13 @@ static const struct message WmRestore_3[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_GETMINMAXINFO, sent },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
-    { HCBT_ACTIVATE, hook },
-    { WM_WINDOWPOSCHANGING, sent|wparam, SWP_NOSIZE|SWP_NOMOVE },
-    { HCBT_SETFOCUS, hook },
+    { HCBT_ACTIVATE, hook|optional }, /* win2003 doesn't send it */
+    { WM_WINDOWPOSCHANGING, sent|wparam|optional, SWP_NOSIZE|SWP_NOMOVE }, /* win2003 doesn't send it */
+    { HCBT_SETFOCUS, hook|optional }, /* win2003 doesn't send it */
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
+    { HCBT_SETFOCUS, hook|optional }, /* win2003 sends it */
     { 0 }
 };
 static const struct message WmRestore_4[] = {
@@ -8508,6 +8509,7 @@ static const struct message WmShowMaximized_1[] = {
     { WM_WINDOWPOSCHANGED, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_NOCOPYBITS|0x8000 },
     { WM_MOVE, sent|defwinproc },
     { WM_SIZE, sent|wparam|defwinproc, SIZE_MAXIMIZED },
+    { HCBT_SETFOCUS, hook|optional }, /* win2003 sends it */
     { 0 }
 };
 static const struct message WmShowMaximized_2[] = {
@@ -8546,7 +8548,7 @@ static void test_ShowWindow(void)
         BOOL todo_msg; /* message sequence doesn't match what Wine does */
     } sw[] =
     {
-/*  1 */ { SW_SHOWNORMAL, FALSE, WS_VISIBLE, WmShowNormal, TRUE },
+/*  1 */ { SW_SHOWNORMAL, FALSE, WS_VISIBLE, WmShowNormal, FALSE },
 /*  2 */ { SW_SHOWNORMAL, TRUE, WS_VISIBLE, WmEmptySeq, FALSE },
 /*  3 */ { SW_HIDE, TRUE, 0, WmHide_1, FALSE },
 /*  4 */ { SW_HIDE, FALSE, 0, WmEmptySeq, FALSE },
@@ -8591,7 +8593,7 @@ static void test_ShowWindow(void)
 /* 43 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmMinMax_2, FALSE },
 /* 44 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinimize_1, TRUE },
 /* 45 */ { SW_MINIMIZE, TRUE, WS_VISIBLE|WS_MINIMIZE, WmMinMax_3, FALSE },
-/* 46 */ { SW_RESTORE, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmRestore_3, TRUE },
+/* 46 */ { SW_RESTORE, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmRestore_3, FALSE },
 /* 47 */ { SW_RESTORE, TRUE, WS_VISIBLE, WmRestore_4, FALSE },
 /* 48 */ { SW_SHOWMAXIMIZED, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmShowMaximized_3, FALSE },
 /* 49 */ { SW_SHOW, TRUE, WS_VISIBLE|WS_MAXIMIZE, WmEmptySeq, FALSE },
