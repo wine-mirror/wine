@@ -2578,7 +2578,7 @@ static void ranges_assert(RANGES ranges, LPCSTR desc, const char *func, int line
 
 static RANGES ranges_create(int count)
 {
-    RANGES ranges = (RANGES)Alloc(sizeof(struct tagRANGES));
+    RANGES ranges = Alloc(sizeof(struct tagRANGES));
     if (!ranges) return NULL;
     ranges->hdpa = DPA_Create(count);
     if (ranges->hdpa) return ranges;
@@ -2613,7 +2613,7 @@ static RANGES ranges_clone(RANGES ranges)
 
     for (i = 0; i < DPA_GetPtrCount(ranges->hdpa); i++)
     {
-        RANGE *newrng = (RANGE *)Alloc(sizeof(RANGE));
+        RANGE *newrng = Alloc(sizeof(RANGE));
 	if (!newrng) goto fail;
 	*newrng = *((RANGE*)DPA_GetPtr(ranges->hdpa, i));
 	DPA_SetPtr(clone->hdpa, i, newrng);
@@ -2705,7 +2705,7 @@ static BOOL ranges_add(RANGES ranges, RANGE range)
 	TRACE("Adding new range\n");
 
 	/* create the brand new range to insert */	
-        newrgn = (RANGE *)Alloc(sizeof(RANGE));
+        newrgn = Alloc(sizeof(RANGE));
 	if(!newrgn) goto fail;
 	*newrgn = range;
 	
@@ -2816,7 +2816,7 @@ static BOOL ranges_del(RANGES ranges, RANGE range)
 	{
 	    RANGE tmprgn = *chkrgn, *newrgn;
 
-	    if (!(newrgn = (RANGE *)Alloc(sizeof(RANGE)))) goto fail;
+	    if (!(newrgn = Alloc(sizeof(RANGE)))) goto fail;
 	    newrgn->lower = chkrgn->lower;
 	    newrgn->upper = range.lower;
 	    chkrgn->lower = range.upper;
@@ -3519,7 +3519,7 @@ static BOOL set_sub_item(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem, BOOL i
 	SUBITEM_INFO *tmpSubItem;
 	INT i;
 
-	lpSubItem = (SUBITEM_INFO *)Alloc(sizeof(SUBITEM_INFO));
+	lpSubItem = Alloc(sizeof(SUBITEM_INFO));
 	if (!lpSubItem) return FALSE;
 	/* we could binary search here, if need be...*/
   	for (i = 1; i < DPA_GetPtrCount(hdpaSubItems); i++)
@@ -6247,7 +6247,7 @@ static INT LISTVIEW_InsertItemT(LISTVIEW_INFO *infoPtr, const LVITEMW *lpLVItem,
 
     if (!is_assignable_item(lpLVItem, infoPtr->dwStyle)) return -1;
 
-    if (!(lpItem = (ITEM_INFO *)Alloc(sizeof(ITEM_INFO)))) return -1;
+    if (!(lpItem = Alloc(sizeof(ITEM_INFO)))) return -1;
     
     /* insert item in listview control data structure */
     if ( !(hdpaSubItems = DPA_Create(8)) ) goto fail;
@@ -7669,7 +7669,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   TRACE("(lpcs=%p)\n", lpcs);
 
   /* initialize info pointer */
-  infoPtr = (LISTVIEW_INFO *)Alloc(sizeof(LISTVIEW_INFO));
+  infoPtr = Alloc(sizeof(LISTVIEW_INFO));
   if (!infoPtr) return -1;
 
   SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
