@@ -2525,7 +2525,11 @@ int create_msft_typelib(typelib_t *typelib)
     if (ctl2_alloc_segment(msft, MSFT_SEG_GUIDHASH, 0x80, 0x80)) { failed = 1; }
     if (ctl2_alloc_segment(msft, MSFT_SEG_NAMEHASH, 0x200, 0x200)) { failed = 1; }
 
-    if(failed) return 0;
+    if(failed)
+    {
+        free(msft);
+        return 0;
+    }
 
     msft->typelib_guidhash_segment = (int *)msft->typelib_segment_data[MSFT_SEG_GUIDHASH];
     msft->typelib_namehash_segment = (int *)msft->typelib_segment_data[MSFT_SEG_NAMEHASH];
@@ -2557,5 +2561,6 @@ int create_msft_typelib(typelib_t *typelib)
         add_entry(msft, entry);
 
     save_all_changes(msft);
+    free(msft);
     return 1;
 }
