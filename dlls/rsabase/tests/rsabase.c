@@ -39,13 +39,13 @@ static int init_environment(void)
 		{
 			if(!CryptAcquireContext(&hProv, szContainer, szProvider, PROV_RSA_FULL, CRYPT_NEWKEYSET)) 
 			{
-				trace("%08x\n", (unsigned int)GetLastError());
+				trace("%08x\n", GetLastError());
 				return 0;
 			}
 		}
 		else
 		{
-			trace("%08x\n", (unsigned int)GetLastError());
+			trace("%08x\n", GetLastError());
 			return 0;
 		}
 	}
@@ -67,10 +67,10 @@ static void test_gen_random(void)
 	memset(rnd2, 0, sizeof(rnd2));
 	
 	result = CryptGenRandom(hProv, sizeof(rnd1), rnd1);
-	ok(result, "%08x\n", (unsigned int)GetLastError());
+	ok(result, "%08x\n", GetLastError());
 
 	result = CryptGenRandom(hProv, sizeof(rnd2), rnd2);
-	ok(result, "%08x\n", (unsigned int)GetLastError());
+	ok(result, "%08x\n", GetLastError());
 
 	ok(memcmp(rnd1, rnd2, sizeof(rnd1)), "CryptGenRandom generates non random data\n");
 }
