@@ -1690,19 +1690,27 @@ static BOOL INTERNET_ReadFile(LPWININETHANDLEHEADER lpwh, LPVOID lpBuffer,
 {
     BOOL retval = FALSE;
     int nSocket = -1;
+    int bytes_read;
+    LPWININETHTTPREQW lpwhr;
 
     /* FIXME: this should use NETCON functions! */
     switch (lpwh->htype)
     {
         case WH_HHTTPREQ:
-            if (!NETCON_recv(&((LPWININETHTTPREQW)lpwh)->netConnection, lpBuffer,
-                             dwNumOfBytesToRead, bWait ? MSG_WAITALL : 0, (int *)pdwNumOfBytesRead))
+            lpwhr = (LPWININETHTTPREQW)lpwh;
+            if (!NETCON_recv(&lpwhr->netConnection, lpBuffer,
+                             min(dwNumOfBytesToRead, lpwhr->dwContentLength - lpwhr->dwContentRead),
+                             bWait ? MSG_WAITALL : 0, &bytes_read))
             {
                 *pdwNumOfBytesRead = 0;
                 retval = TRUE; /* Under windows, it seems to return 0 even if nothing was read... */
             }
             else
+            {
+                lpwhr->dwContentRead += bytes_read;
+                *pdwNumOfBytesRead = bytes_read;
                 retval = TRUE;
+            }
             break;
 
         case WH_HFILE:
@@ -3216,7 +3224,8 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     {
     case WH_HHTTPREQ:
         if (!NETCON_recv(&lpwhr->netConnection, buffer,
-                         4048, MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
+                         min(sizeof(buffer), lpwhr->dwContentLength - lpwhr->dwContentRead),
+                         MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
         {
             SetLastError(ERROR_NO_MORE_FILES);
             retval = FALSE;

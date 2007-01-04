@@ -605,6 +605,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     BOOL rc = FALSE;
     LPWININETHTTPREQW lpwhr;
     INT responseLen;
+    DWORD dwBufferSize;
 
     TRACE("-->\n");
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hRequest );
@@ -617,6 +618,8 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
 
     lpwhr->hdr.dwFlags |= dwFlags;
     lpwhr->hdr.dwContext = dwContext;
+
+    /* We appear to do nothing with lpBuffersOut.. is that correct? */
 
     SendAsyncCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
             INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
@@ -631,18 +634,20 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
     /* process headers here. Is this right? */
     HTTP_ProcessHeaders(lpwhr);
 
-    /* We appear to do nothing with the buffer.. is that correct? */
+    dwBufferSize = sizeof(lpwhr->dwContentLength);
+    if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
+                             &lpwhr->dwContentLength,&dwBufferSize,NULL))
+        lpwhr->dwContentLength = -1;
 
     if(!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT))
     {
-        DWORD dwCode,dwCodeLength=sizeof(DWORD),dwIndex=0;
-        if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
+        DWORD dwCode,dwCodeLength=sizeof(DWORD);
+        if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
             (dwCode==302 || dwCode==301))
         {
             WCHAR szNewLocation[2048];
-            DWORD dwBufferSize=2048;
-            dwIndex=0;
-            if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
+            dwBufferSize=2048;
+            if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
             {
 	            static const WCHAR szGET[] = { 'G','E','T', 0 };
                 /* redirects are always GETs */
@@ -2255,6 +2260,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
         char *ascii_req;
 
         loop_next = FALSE;
+        lpwhr->dwContentRead = 0;
 
         if (TRACE_ON(wininet))
         {
@@ -2311,6 +2317,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
         if (bEndRequest)
         {
+            DWORD dwBufferSize;
+
             INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                 INTERNET_STATUS_RECEIVING_RESPONSE, NULL, 0);
     
@@ -2327,14 +2335,19 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
 
             HTTP_ProcessHeaders(lpwhr);
 
+            dwBufferSize = sizeof(lpwhr->dwContentLength);
+            if (!HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_CONTENT_LENGTH,
+                                     &lpwhr->dwContentLength,&dwBufferSize,NULL))
+                lpwhr->dwContentLength = -1;
+
             if (!(lpwhr->hdr.dwFlags & INTERNET_FLAG_NO_AUTO_REDIRECT) && bSuccess)
             {
-                DWORD dwCode,dwCodeLength=sizeof(DWORD),dwIndex=0;
+                DWORD dwCode,dwCodeLength=sizeof(DWORD);
                 WCHAR szNewLocation[2048];
-                DWORD dwBufferSize=2048;
-                if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,&dwIndex) &&
+                dwBufferSize=2048;
+                if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
                     (dwCode==HTTP_STATUS_REDIRECT || dwCode==HTTP_STATUS_MOVED) &&
-                    HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,&dwIndex))
+                    HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
                 {
                     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                                           INTERNET_STATUS_REDIRECT, szNewLocation,

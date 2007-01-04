@@ -197,6 +197,8 @@ typedef struct
     WININET_NETCONNECTION netConnection;
     LPWSTR lpszVersion;
     LPWSTR lpszStatusText;
+    DWORD dwContentLength; /* total number of bytes to be read */
+    DWORD dwContentRead; /* bytes of the content read so far */
     HTTPHEADERW *pCustHeaders;
     DWORD nCustHeaders;
 } WININETHTTPREQW, *LPWININETHTTPREQW;
