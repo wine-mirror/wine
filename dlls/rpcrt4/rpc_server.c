@@ -345,7 +345,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     packet->conn = conn;
     packet->hdr = hdr;
     packet->msg = msg;
-    QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTEDEFAULT);
+    QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION);
 #endif
     msg = NULL;
   }
