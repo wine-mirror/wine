@@ -215,7 +215,10 @@ void WINAPI RtlInitUnicodeString(
 {
     if ((target->Buffer = (PWSTR) source))
     {
-        target->Length = strlenW(source) * sizeof(WCHAR);
+        unsigned int length = strlenW(source) * sizeof(WCHAR);
+        if (length > 0xfffc)
+            length = 0xfffc;
+        target->Length = length;
         target->MaximumLength = target->Length + sizeof(WCHAR);
     }
     else target->Length = target->MaximumLength = 0;

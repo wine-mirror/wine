@@ -246,12 +246,12 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.MaximumLength = 12345;
     uni.Buffer = (void *) 0xdeadbeef;
     pRtlInitUnicodeString(&uni, teststring2);
-    ok(uni.Length == 33920,
+    ok(uni.Length == 33920 /* <= Win2000 */ || uni.Length == 65532 /* >= Win XP */,
        "pRtlInitUnicodeString(&uni, 0) sets Length to %u, expected %u\n",
-       uni.Length, 33920);
-    ok(uni.MaximumLength == 33922,
+       uni.Length, 65532);
+    ok(uni.MaximumLength == 33922 /* <= Win2000 */ || uni.MaximumLength == 65534 /* >= Win XP */,
        "pRtlInitUnicodeString(&uni, 0) sets MaximumLength to %u, expected %u\n",
-       uni.MaximumLength, 33922);
+       uni.MaximumLength, 65534);
     ok(uni.Buffer == teststring2,
        "pRtlInitUnicodeString(&uni, 0) sets Buffer to %p, expected %p\n",
        uni.Buffer, teststring2);
