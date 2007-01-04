@@ -2925,16 +2925,16 @@ static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
 
     TRACE("%p\n",lpwhr);
 
+    if (!NETCON_connected(&lpwhr->netConnection))
+        return;
+
     lpwhs = lpwhr->lpHttpSession;
     hIC = lpwhs->lpAppInfo;
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CLOSING_CONNECTION, 0, 0);
 
-    if (NETCON_connected(&lpwhr->netConnection))
-    {
-        NETCON_close(&lpwhr->netConnection);
-    }
+    NETCON_close(&lpwhr->netConnection);
 
     INTERNET_SendCallback(&lpwhr->hdr, lpwhr->hdr.dwContext,
                           INTERNET_STATUS_CONNECTION_CLOSED, 0, 0);
@@ -2956,8 +2956,7 @@ static void HTTP_CloseHTTPRequestHandle(LPWININETHANDLEHEADER hdr)
 
     WININET_Release(&lpwhr->hdr);
 
-    if (NETCON_connected(&lpwhr->netConnection))
-        HTTP_CloseConnection(lpwhr);
+    HTTP_CloseConnection(lpwhr);
 
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszPath);
     HeapFree(GetProcessHeap(), 0, lpwhr->lpszVerb);
