@@ -241,7 +241,11 @@ sub GET_ERROR_NAMES()
         {
             if (/set_error\s*\(\s*STATUS_(\w+)\s*\)/)
             {
-                $errors{$1} = "STATUS_$1";
+                $errors{$1} = "STATUS_$1" unless $1 eq "SUCCESS";
+            }
+            elsif (/async_terminate_\w+\s*\(.*,\s*STATUS_(\w+)\s*\)/)
+            {
+                $errors{$1} = "STATUS_$1" unless $1 eq "SUCCESS";
             }
             elsif (/set_win32_error\s*\(\s*(\w+)\s*\)/)
             {
