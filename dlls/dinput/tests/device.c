@@ -104,7 +104,7 @@ static void test_object_info(LPDIRECTINPUTDEVICE device, HWND hwnd)
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);
         ok(hr == DI_OK, "SetProperty() failed: %s\n", DXGetErrorString8(hr));
 
-        /* Can not change mode while acquired */
+        /* Cannot change mode while acquired */
         hr = IDirectInputDevice_Acquire(device);
         ok(hr == DI_OK, "Acquire() failed: %s\n", DXGetErrorString8(hr));
         hr = IDirectInputDevice_SetProperty(device, DIPROP_AXISMODE, &dp.diph);

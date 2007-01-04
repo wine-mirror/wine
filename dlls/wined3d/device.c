@@ -3486,7 +3486,7 @@ static void IWineD3DDeviceImpl_FindTexUnitMap(IWineD3DDeviceImpl *This) {
         This->oneToOneTexUnitMap = TRUE;
         return;
     } else {
-        /* No pixel shader, and we do not have enought texture units available. Try to skip NULL textures
+        /* No pixel shader, and we do not have enough texture units available. Try to skip NULL textures
          * First, see if we can succeed at all
          */
         tex = 0;

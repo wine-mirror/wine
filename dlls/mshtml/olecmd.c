@@ -286,7 +286,7 @@ static HRESULT exec_print(HTMLDocument *This, DWORD nCmdexecopt, VARIANT *pvaIn,
             }
 
             if(opts_cnt >= 3)
-                FIXME("Unsuported opts_cnt %d\n", opts_cnt);
+                FIXME("Unsupported opts_cnt %d\n", opts_cnt);
 
             SafeArrayUnaccessData(V_ARRAY(pvaIn));
             break;

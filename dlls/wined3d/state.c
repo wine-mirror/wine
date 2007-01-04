@@ -1748,7 +1748,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
             activate_dimensions(sampler, stateblock);
 
             if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
-                /* If color keying is enabled update the alpha test, it depends on the existance
+                /* If color keying is enabled update the alpha test, it depends on the existence
                  * of a color key in stage 0
                  */
                 state_alpha(WINED3DRS_COLORKEYENABLE, stateblock);
