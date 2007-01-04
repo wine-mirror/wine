@@ -1109,7 +1109,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd, CREATESTRUCTA *cs, BOOL unicode )
     if (!(wndPtr = WIN_GetPtr(hwnd))) return FALSE;
 
     /* yes, even if the CBT hook was called with HWND_TOP */
-    insert_after = ((wndPtr->dwStyle & (WS_CHILD|WS_MAXIMIZE)) == WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
+    insert_after = (wndPtr->dwStyle & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
 
     X11DRV_SetWindowPos( hwnd, insert_after, &wndPtr->rectWindow, &rect, 0, NULL );
 

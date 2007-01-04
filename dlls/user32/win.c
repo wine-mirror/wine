@@ -934,7 +934,7 @@ static HWND WIN_CreateWindowEx( CREATESTRUCTA *cs, ATOM classAtom, UINT flags )
             {
                 TRACE("Restoring current maximized child %p\n", top_child);
                 SendMessageW( top_child, WM_SETREDRAW, FALSE, 0 );
-                ShowWindow(top_child, SW_RESTORE);
+                ShowWindow( top_child, SW_SHOWNORMAL );
                 SendMessageW( top_child, WM_SETREDRAW, TRUE, 0 );
             }
         }

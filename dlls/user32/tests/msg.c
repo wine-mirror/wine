@@ -55,6 +55,8 @@ static HWINEVENTHOOK hEvent_hook;
 
 static HWND (WINAPI *pGetAncestor)(HWND,UINT);
 
+static void dump_winpos_flags(UINT flags);
+
 /*
 FIXME: add tests for these
 Window Edge Styles (Win31/Win95/98 look), in order of precedence:
@@ -2479,6 +2481,7 @@ static LRESULT WINAPI mdi_client_hook_proc(HWND hwnd, UINT message, WPARAM wPara
                 trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+                dump_winpos_flags(winpos->flags);
 
                 /* Log only documented flags, win2k uses 0x1000 and 0x2000
                  * in the high word for internal purposes
@@ -2526,6 +2529,7 @@ static LRESULT WINAPI mdi_child_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
                 trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+                dump_winpos_flags(winpos->flags);
 
                 /* Log only documented flags, win2k uses 0x1000 and 0x2000
                  * in the high word for internal purposes
@@ -2591,6 +2595,7 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
                 trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+                dump_winpos_flags(winpos->flags);
 
                 /* Log only documented flags, win2k uses 0x1000 and 0x2000
                  * in the high word for internal purposes
@@ -2793,7 +2798,7 @@ static void test_mdi_messages(void)
     flush_sequence();
 
     ShowWindow(mdi_child2, SW_MAXIMIZE);
-    ok_sequence(WmMaximizeMDIchildInvisibleSeq, "ShowWindow(SW_MAXIMIZE):invisible MDI child", TRUE);
+    ok_sequence(WmMaximizeMDIchildInvisibleSeq, "ShowWindow(SW_MAXIMIZE):invisible MDI child", FALSE);
 
     ok(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
     ok(IsWindowVisible(mdi_child2), "MDI child should be visible\n");
@@ -2815,7 +2820,7 @@ static void test_mdi_messages(void)
     ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE):MDI child", FALSE);
 
     ShowWindow(mdi_child2, SW_RESTORE);
-    ok_sequence(WmRestoreMDIchildInisibleSeq, "ShowWindow(SW_RESTORE):invisible MDI child", TRUE);
+    ok_sequence(WmRestoreMDIchildInisibleSeq, "ShowWindow(SW_RESTORE):invisible MDI child", FALSE);
     flush_sequence();
 
     ok(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
@@ -2839,13 +2844,13 @@ static void test_mdi_messages(void)
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     ShowWindow(mdi_child2, SW_MAXIMIZE);
-    ok_sequence(WmMaximizeMDIchildVisibleSeq, "ShowWindow(SW_MAXIMIZE):MDI child", TRUE);
+    ok_sequence(WmMaximizeMDIchildVisibleSeq, "ShowWindow(SW_MAXIMIZE):MDI child", FALSE);
 
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
 
     ShowWindow(mdi_child2, SW_RESTORE);
-    ok_sequence(WmRestoreMDIchildVisibleSeq, "ShowWindow(SW_RESTORE):MDI child", TRUE);
+    ok_sequence(WmRestoreMDIchildVisibleSeq, "ShowWindow(SW_RESTORE):MDI child", FALSE);
 
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == 0, "wrong focus window %p\n", GetFocus());
@@ -3056,7 +3061,7 @@ static void test_mdi_messages(void)
     mdi_client = CreateWindow("MDI_client_class",
                                  NULL,
                                  WS_CHILD | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL | WS_VISIBLE,
-                                 0, 0, 662, 432,
+                                 0, 0, 660, 430,
                                  mdi_frame, 0, GetModuleHandleA(0), &client_cs);
     ok_sequence(WmCreateMDIclientSeq, "Create MDI client window", FALSE);
 
@@ -3065,7 +3070,7 @@ static void test_mdi_messages(void)
 
     mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_class", "MDI child",
                                 WS_CHILD | WS_CLIPCHILDREN | WS_VSCROLL | WS_HSCROLL,
-                                0, 0, 654, 443,
+                                0, 0, 650, 440,
                                 mdi_client, 0, GetModuleHandleA(0), NULL);
     ok_sequence(WmCreateMDIchildInvisibleParentSeq, "Create MDI child window with invisible parent", FALSE);
 
@@ -3140,6 +3145,7 @@ static INT_PTR CALLBACK TestModalDlgProcA(HWND hwnd, UINT message, WPARAM wParam
             trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+            dump_winpos_flags(winpos->flags);
 
             /* Log only documented flags, win2k uses 0x1000 and 0x2000
              * in the high word for internal purposes
@@ -5617,6 +5623,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
             trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+            dump_winpos_flags(winpos->flags);
 
             /* Log only documented flags, win2k uses 0x1000 and 0x2000
              * in the high word for internal purposes
@@ -5761,6 +5768,7 @@ static LRESULT WINAPI ParentMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
                 trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                       winpos->hwnd, winpos->hwndInsertAfter,
                       winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+                dump_winpos_flags(winpos->flags);
 
                 /* Log only documented flags, win2k uses 0x1000 and 0x2000
                  * in the high word for internal purposes
@@ -5825,6 +5833,7 @@ static LRESULT WINAPI TestDlgProcA(HWND hwnd, UINT message, WPARAM wParam, LPARA
             trace("%p after %p, x %d, y %d, cx %d, cy %d flags %08x\n",
                   winpos->hwnd, winpos->hwndInsertAfter,
                   winpos->x, winpos->y, winpos->cx, winpos->cy, winpos->flags);
+            dump_winpos_flags(winpos->flags);
 
             /* Log only documented flags, win2k uses 0x1000 and 0x2000
              * in the high word for internal purposes
