@@ -398,6 +398,7 @@ int   main (int argc, char *argv[])
     globals.mode = NONE;
     globals.forward_dll = NULL;
     globals.input_name = NULL;
+    globals.dumpsect = NULL;
 
     parse_options (argv);
 

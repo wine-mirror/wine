@@ -384,9 +384,19 @@ void ne_dump( void )
     if (!dos) return;
     ne = PRD(dos->e_lfanew, sizeof(*ne));
 
-    dump_ne_header( ne );
-    dump_ne_names( ne );
-    dump_ne_resources( ne );
-    dump_ne_exports( ne );
-    for (i = 1; i <= ne->ne_cseg; i++) dump_ne_segment( ne, i );
+    if (globals.do_dumpheader || !globals.dumpsect)
+        dump_ne_header( ne );
+    if (globals.do_dumpheader)
+        dump_ne_names( ne );
+    if (globals.dumpsect)
+    {
+        BOOL	all = strcmp(globals.dumpsect, "ALL") == 0;
+
+        if (all || !strcmp(globals.dumpsect, "resource"))
+            dump_ne_resources( ne );
+        if (all || !strcmp(globals.dumpsect, "export"))
+            dump_ne_exports( ne );
+    }
+    if (globals.do_dumpheader)
+        for (i = 1; i <= ne->ne_cseg; i++) dump_ne_segment( ne, i );
 }
