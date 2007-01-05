@@ -183,6 +183,11 @@ static void test_GetTimeFormatA(void)
   ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
+  /* MSDN: LOCALE_NOUSEROVERRIDE can't be specified with a format string */
+  SetLastError(0xdeadbeef);
+  ret = GetTimeFormatA(lcid, NUO|TIME_FORCE24HOURFORMAT, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
+
   STRINGSA("tt HH':'mm'@'ss", "A"); /* Insufficent buffer */
   SetLastError(0xdeadbeef);
   ret = GetTimeFormatA(lcid, TIME_FORCE24HOURFORMAT, &curtime, input, buffer, 2);
@@ -339,6 +344,12 @@ static void test_GetDateFormatA(void)
   ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
 
+  /* Same as above but with LOCALE_NOUSEROVERRIDE */
+  STRINGSA("ddd',' MMM dd yy",""); /* Simple case */
+  SetLastError(0xdeadbeef);
+  ret = GetDateFormatA(lcid, NUO, &curtime, input, buffer, COUNTOF(buffer));
+  EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
+
   STRINGSA("ddd',' MMM dd yy","Sat, May 04 02"); /* Format containing "'" */
   ret = GetDateFormatA(lcid, 0, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_VALID; EXPECT_LENA; EXPECT_EQA;
@@ -370,12 +381,14 @@ static void test_GetDateFormatA(void)
   /* test for expected DATE_YEARMONTH behavior with null format */
   /* NT4 returns ERROR_INVALID_FLAGS for DATE_YEARMONTH */
   STRINGSA("ddd',' MMM dd ''''yy", ""); /* DATE_YEARMONTH */
+  SetLastError(0xdeadbeef);
   ret = GetDateFormat(lcid, NUO|DATE_YEARMONTH, &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
 
   /* Test that using invalid DATE_* flags results in the correct error */
   /* and return values */
   STRINGSA("m/d/y", ""); /* Invalid flags */
+  SetLastError(0xdeadbeef);
   ret = GetDateFormat(lcid, DATE_YEARMONTH|DATE_SHORTDATE|DATE_LONGDATE,
                       &curtime, input, buffer, COUNTOF(buffer));
   EXPECT_FLAGS; EXPECT_LEN(0); EXPECT_EQA;
