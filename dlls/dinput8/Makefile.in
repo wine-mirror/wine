@@ -8,7 +8,8 @@ IMPORTS   = dinput ole32 advapi32 kernel32
 EXTRALIBS = -luuid -ldxguid
 
 C_SRCS = \
-	dinput8_main.c
+	dinput8_main.c \
+	regsvr.c
 
 RC_SRCS = version.rc
 
