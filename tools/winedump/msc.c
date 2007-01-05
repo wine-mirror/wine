@@ -1158,6 +1158,10 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             }
             break;
 
+        case S_ALIGN_V1:
+            /* simply skip it */
+            break;
+
         default:
             printf(">>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
