@@ -2562,15 +2562,7 @@ BSTR WINAPI PropSysAllocString(LPCOLESTR str)
      */
     newBuffer++;
 
-    /*
-     * Copy the information in the buffer.
-     * Since it is valid to pass a NULL pointer here, we'll initialize the
-     * buffer to nul if it is the case.
-     */
-    if (str != 0)
-      memcpy(newBuffer, str, bufferSize);
-    else
-      memset(newBuffer, 0, bufferSize);
+    memcpy(newBuffer, str, bufferSize);
 
     /*
      * Make sure that there is a nul character at the end of the
