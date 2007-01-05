@@ -245,7 +245,7 @@ static HRESULT WINAPI BaseMemAllocator_Commit(IMemAllocator * iface)
         {
             if (!(This->hSemWaiting = CreateSemaphoreW(NULL, This->pProps->cBuffers, This->pProps->cBuffers, NULL)))
             {
-                ERR("Couldn't create semaphore (error was %d)\n", GetLastError());
+                ERR("Couldn't create semaphore (error was %u)\n", GetLastError());
                 hr = HRESULT_FROM_WIN32(GetLastError());
             }
             else
@@ -393,7 +393,7 @@ static HRESULT WINAPI BaseMemAllocator_ReleaseBuffer(IMemAllocator * iface, IMed
     /* notify a waiting thread that there is now a free buffer */
     if (!ReleaseSemaphore(This->hSemWaiting, 1, NULL))
     {
-        ERR("ReleaseSemaphore failed with error %d\n", GetLastError());
+        ERR("ReleaseSemaphore failed with error %u\n", GetLastError());
         hr = HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -821,7 +821,7 @@ static HRESULT StdMemAllocator_Free(IMemAllocator * iface)
     /* free memory */
     if (!VirtualFree(This->pMemory, 0, MEM_RELEASE))
     {
-        ERR("Couldn't free memory. Error: %d\n", GetLastError());
+        ERR("Couldn't free memory. Error: %u\n", GetLastError());
         return HRESULT_FROM_WIN32(GetLastError());
     }
 

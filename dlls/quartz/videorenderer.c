@@ -156,7 +156,7 @@ static BOOL CreateRenderingWindow(VideoRendererImpl* This)
     {
         if (!RegisterClassA(&winclass))
         {
-            ERR("Unable to register window %x\n", GetLastError());
+            ERR("Unable to register window %u\n", GetLastError());
             return FALSE;
         }
         wnd_class_registered = TRUE;
