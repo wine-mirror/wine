@@ -995,8 +995,7 @@ static INT CBUpdateLBox( LPHEADCOMBO lphc, BOOL bSelect )
 
    if( pText )
    {
-       if( length ) GetWindowTextW( lphc->hWndEdit, pText, length + 1);
-       else pText[0] = '\0';
+       GetWindowTextW( lphc->hWndEdit, pText, length + 1);
        idx = SendMessageW(lphc->hWndLBox, LB_FINDSTRING,
 			     (WPARAM)(-1), (LPARAM)pText );
        HeapFree( GetProcessHeap(), 0, pText );
