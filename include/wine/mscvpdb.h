@@ -1650,18 +1650,6 @@ typedef struct OMFSymHash
     unsigned long   cbHAddr;
 } OMFSymHash;
 
-/* FIXME: to be removed (and using codeview_symbol type above)
- * Symbol table entry */
-typedef struct DATASYM32
-{
-    unsigned short  reclen;
-    unsigned short  rectyp;
-    unsigned long   typind;
-    unsigned long   off;
-    unsigned short  seg;
-} DATASYM32;
-typedef DATASYM32 PUBSYM32;
-
 /* sstSegMap section */
 
 typedef struct OMFSegMapDesc

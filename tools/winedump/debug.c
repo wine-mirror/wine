@@ -135,18 +135,12 @@ static int dump_cv_sst_global_pub(const OMFDirEntry* omfde)
     long	        fileoffset;
     const OMFSymHash*   header;
     const BYTE*	        symbols;
-    const BYTE*	        curpos;
-    const PUBSYM32*	sym;
-    unsigned 	        symlen;
-    int		        recordlen;
-    char 	        nametmp[256];
 
     fileoffset = Offset(cv_base) + omfde->lfo;
     printf ("    GlobalPub section starts at file offset 0x%lx\n", fileoffset);
     printf ("    Symbol table starts at 0x%lx\n", fileoffset + sizeof (OMFSymHash));
 
     printf ("\n                           ----- Begin Symbol Table -----\n");
-    printf ("      (type)      (symbol name)                 (offset)      (len) (seg) (ind)\n");
 
     header = PRD(fileoffset, sizeof(OMFSymHash));
     if (!header) {printf("Can't get OMF-SymHash, aborting\n");return FALSE;}
@@ -154,35 +148,7 @@ static int dump_cv_sst_global_pub(const OMFDirEntry* omfde)
     symbols = PRD(fileoffset + sizeof(OMFSymHash), header->cbSymbol);
     if (!symbols) {printf("Can't OMF-SymHash details, aborting\n"); return FALSE;}
 
-    /* We don't know how many symbols are in this block of memory...only what
-     * the total size of the block is.  Because the symbol's name is tacked
-     * on to the end of the PUBSYM32 struct, each symbol may take up a different
-     * # of bytes.  This makes it harder to parse through the symbol table,
-     * since we won't know the exact location of the following symbol until we've
-     * already parsed the current one.
-     */
-    for (curpos = symbols; curpos < symbols + header->cbSymbol; curpos += recordlen)
-    {
-	/* Point to the next PUBSYM32 in the table.
-	 */
-	sym = (const PUBSYM32*)curpos;
-
-	if (sym->reclen < sizeof(PUBSYM32)) break;
-
-	symlen = sym->reclen - sizeof(PUBSYM32) + 1;
-	if (symlen > sizeof(nametmp)) {printf("\nsqueeze%d\n", symlen);symlen = sizeof(nametmp) - 1;}
-
-	memcpy(nametmp, curpos + sizeof (PUBSYM32) + 1, symlen);
-	nametmp[symlen] = '\0';
-
-	printf ("      0x%04x  %-30.30s  [0x%8lx]  [0x%4x]  %d     %ld\n",
-		sym->rectyp, nametmp, sym->off, sym->reclen, sym->seg, sym->typind);
-
-	/* The entire record is null-padded to the nearest 4-byte
-	 * boundary, so we must do a little extra math to keep things straight.
-	 */
-	recordlen = (sym->reclen + 3) & ~3;
-    }
+    codeview_dump_symbols(symbols, header->cbSymbol);
 
     return TRUE;
 }
