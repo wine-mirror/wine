@@ -1162,6 +1162,11 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             /* simply skip it */
             break;
 
+        case S_SSEARCH_V1:
+            printf("\tSSearch V1: (%04x:%08x)\n",
+                   sym->ssearch_v1.segment, sym->ssearch_v1.offset);
+            break;
+
         default:
             printf(">>> Unsupported symbol-id %x sz=%d\n", sym->generic.id, sym->generic.len + 2);
             dump_data((const void*)sym, sym->generic.len + 2, "  ");
