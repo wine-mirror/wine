@@ -239,6 +239,7 @@ void            dump_unicode_str( const unsigned short *str, int len );
 void            dump_file_header(const IMAGE_FILE_HEADER *);
 void            dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *, UINT);
 void            dump_section(const IMAGE_SECTION_HEADER *);
+char*           guid_to_string(const GUID* guid, char *str, size_t sz);
 
 enum FileSig    get_kind_exec(void);
 void            dos_dump( void );

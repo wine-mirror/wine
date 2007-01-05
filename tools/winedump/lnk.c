@@ -106,14 +106,6 @@ typedef struct lnk_string_tag
 
 static unsigned offset;
 
-static void guid_to_string(const GUID* guid, char *str)
-{
-    sprintf(str, "{%08x-%04x-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}",
-            guid->Data1, guid->Data2, guid->Data3,
-            guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-            guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
-}
-
 static const void* fetch_block(void)
 {
     const unsigned*     u;
@@ -292,7 +284,7 @@ static int dump_advertise_info(const char *type)
         GUID guid;
 
         if (base85_to_guid(avt->bufA, &guid))
-            guid_to_string( &guid, prod_str );
+            guid_to_string( &guid, prod_str, sizeof(prod_str) );
         else
             strcpy( prod_str, "?" );
 
@@ -311,7 +303,7 @@ static int dump_advertise_info(const char *type)
         }
 
         if (feat && feat[0] == '>' && base85_to_guid( &feat[1], &guid ))
-            guid_to_string( &guid, feat_str );
+            guid_to_string( &guid, feat_str, sizeof(feat_str) );
         else
             feat_str[0] = 0;
 
@@ -345,12 +337,10 @@ void lnk_dump(void)
     offset = 0;
     hdr = fetch_block();
 
-    guid_to_string(&hdr->MagicGuid, guid);
-
     printf("Header\n");
     printf("------\n\n");
     printf("Size:    %04x\n", hdr->dwSize);
-    printf("GUID:    %s\n", guid);
+    printf("GUID:    %s\n", guid_to_string(&hdr->MagicGuid, guid, sizeof(guid)));
 
     printf("FileAttr: %08x\n", hdr->dwFileAttr);
     printf("FileLength: %08x\n", hdr->dwFileLength);

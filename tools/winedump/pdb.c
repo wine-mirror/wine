@@ -625,18 +625,18 @@ static void pdb_ds_dump(void)
     if (root)
     {
         const char*     ptr;
+        char            guid_str[40];
+
         printf("Root:\n"
                "\tVersion:              %u\n"
                "\tTimeDateStamp:        %08x\n"
                "\tAge:                  %08x\n"
-               "\tguid                  {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n"
+               "\tguid                  %s\n"
                "\tcbNames:              %08x\n",
                root->Version,
                root->TimeDateStamp,
                root->Age,
-               root->guid.Data1, root->guid.Data2, root->guid.Data3,
-               root->guid.Data4[0], root->guid.Data4[1], root->guid.Data4[2], root->guid.Data4[3],
-               root->guid.Data4[4], root->guid.Data4[5], root->guid.Data4[6], root->guid.Data4[7],
+               guid_to_string(&root->guid, guid_str, sizeof(guid_str)),
                root->cbNames);
         for (ptr = &root->names[0]; ptr < &root->names[0] + root->cbNames; ptr += strlen(ptr) + 1)
             printf("\tString:               %s\n", ptr);
