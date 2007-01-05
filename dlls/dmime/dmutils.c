@@ -242,7 +242,7 @@ const char *debugstr_fourcc (DWORD fourcc) {
 }
 
 /* DMUS_VERSION struct to string conversion for debug messages */
-const char *debugstr_dmversion (LPDMUS_VERSION version) {
+static const char *debugstr_dmversion (LPDMUS_VERSION version) {
 	if (!version) return "'null'";
 	return wine_dbg_sprintf ("\'%i,%i,%i,%i\'",
 		HIWORD(version->dwVersionMS),LOWORD(version->dwVersionMS),
@@ -269,7 +269,7 @@ static const char *debugstr_month (DWORD dwMonth) {
 }
 
 /* FILETIME struct to string conversion for debug messages */
-const char *debugstr_filetime (LPFILETIME time) {
+static const char *debugstr_filetime (LPFILETIME time) {
 	SYSTEMTIME sysTime;
 
 	if (!time) return "'null'";
@@ -614,7 +614,7 @@ const char *debugstr_dmreturn (DWORD code) {
 
 
 /* generic flag-dumping function */
-const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
+static const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_names){
 	static char buffer[128] = "", *ptr = &buffer[0];
 	unsigned int i, size = sizeof(buffer);
 		
@@ -632,7 +632,7 @@ const char* debugstr_flags (DWORD flags, const flag_info* names, size_t num_name
 }
 
 /* dump DMUS_OBJ flags */
-const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
+static const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_OBJ_OBJECT),
 	    FE(DMUS_OBJ_CLASS),
@@ -651,7 +651,7 @@ const char *debugstr_DMUS_OBJ_FLAGS (DWORD flagmask) {
 }
 
 /* dump DMUS_CONTAINER flags */
-const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
+static const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_CONTAINER_NOLOADS)
 	};
@@ -659,7 +659,7 @@ const char *debugstr_DMUS_CONTAINER_FLAGS (DWORD flagmask) {
 }
 
 /* dump DMUS_CONTAINED_OBJF flags */
-const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
+static const char *debugstr_DMUS_CONTAINED_OBJF_FLAGS (DWORD flagmask) {
     static const flag_info flags[] = {
 	    FE(DMUS_CONTAINED_OBJF_KEEP)
 	};
