@@ -33,7 +33,7 @@
 	(ERROR_BAD_PATHNAME == GetLastError()), \
 	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_BAD_PATHNAME (98)/" \
 	"ERROR_PATH_NOT_FOUND (NT4)/ERROR_FILE_NOT_FOUND (2k3)" \
-	"expected, got 0x%08x\n", GetLastError());
+	"expected, got %u\n", GetLastError());
 #define EXPECT_INVALID__NOT_FOUND \
     ok( (ERROR_PATH_NOT_FOUND == GetLastError()) || \
 	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) || \
@@ -41,7 +41,7 @@
 	(ERROR_INVALID_PARAMETER == GetLastError()), \
 	"Last error wrong! ERROR_RESOURCE_DATA_NOT_FOUND/ERROR_INVALID_PARAMETER (98)/" \
 	"ERROR_PATH_NOT_FOUND (NT4)/ERROR_FILE_NOT_FOUND (2k3)" \
-	"expected, got 0x%08x\n", GetLastError());
+	"expected, got %u\n", GetLastError());
 
 static void test_info_size(void)
 {   DWORD hdl, retval;
@@ -87,7 +87,7 @@ static void test_info_size(void)
 	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08x\n",
 	retval);
     ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
-	"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got 0x%08x\n",
+	"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got %u\n",
 	MY_LAST_ERROR, GetLastError());
 
     hdl = 0x55555555;
@@ -97,7 +97,7 @@ static void test_info_size(void)
 	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08x\n",
 	retval);
     ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
-	"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got 0x%08x\n",
+	"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got %u\n",
 	MY_LAST_ERROR, GetLastError());
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08x\n", hdl);
@@ -111,7 +111,7 @@ static void test_info_size(void)
 	(ERROR_RESOURCE_DATA_NOT_FOUND == GetLastError()) ||
 	(MY_LAST_ERROR == GetLastError()),
 	"Last error wrong! ERROR_FILE_NOT_FOUND/ERROR_RESOURCE_DATA_NOT_FOUND "
-	"(XP)/0x%08x (NT4) expected, got 0x%08x\n", MY_LAST_ERROR, GetLastError());
+	"(XP)/0x%08x (NT4) expected, got %u\n", MY_LAST_ERROR, GetLastError());
 
     /* test a currently loaded executable */
     if(GetModuleFileNameA(NULL, mypath, MAX_PATH)) {
@@ -122,7 +122,7 @@ static void test_info_size(void)
             "GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08x\n",
 	    retval);
 	ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
-            "Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got 0x%08x\n",
+            "Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got %u\n",
 	    MY_LAST_ERROR, GetLastError());
 	ok( hdl == 0L,
             "Handle wrong! 0L expected, got 0x%08x\n", hdl);
@@ -144,7 +144,7 @@ static void test_info_size(void)
 		"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08x\n",
 		retval);
 	    ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
-		"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got 0x%08x\n",
+		"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got %u\n",
 		MY_LAST_ERROR, GetLastError());
 	    ok( hdl == 0L,
 		"Handle wrong! 0L expected, got 0x%08x\n", hdl);
@@ -186,7 +186,7 @@ static void test_info(void)
 	"GetFileVersionInfoSizeA result wrong! <> 0L expected, got 0x%08x\n",
 	retval);
     ok((NO_ERROR == GetLastError()) || (MY_LAST_ERROR == GetLastError()),
-	"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got 0x%08x\n",
+	"Last error wrong! NO_ERROR/0x%08x (NT4)  expected, got %u\n",
 	MY_LAST_ERROR, GetLastError());
     ok( hdl == 0L,
 	"Handle wrong! 0L expected, got 0x%08x\n", hdl);
@@ -204,21 +204,21 @@ static void test_info(void)
     /* this test crashes on WinNT4
      */
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, 0);
-    ok (!boolret, "GetFileVersionInfoA should have failed: GetLastError = %d\n", GetLastError());
+    ok (!boolret, "GetFileVersionInfoA should have failed: GetLastError = %u\n", GetLastError());
     ok ((GetLastError() == ERROR_INVALID_DATA) || (GetLastError() == ERROR_BAD_PATHNAME) ||
 	(GetLastError() == NO_ERROR),
         "Last error wrong! ERROR_INVALID_DATA/ERROR_BAD_PATHNAME (ME)/"
-	"NO_ERROR (95) expected, got 0x%08x\n",
+	"NO_ERROR (95) expected, got %u\n",
         GetLastError());
     }
 
     boolret = GetFileVersionInfoA( "kernel32.dll", 0, retval, pVersionInfo );
-    ok (boolret, "GetFileVersionInfoA failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (boolret, "GetFileVersionInfoA failed: GetLastError = %u\n", GetLastError());
     if (!boolret)
         goto cleanup;
 
     boolret = VerQueryValueA( pVersionInfo, backslash, (LPVOID *)&pFixedVersionInfo, &uiLength );
-    ok (boolret, "VerQueryValueA failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (boolret, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     if (!boolret)
         goto cleanup;
 
@@ -234,7 +234,7 @@ static void test_info(void)
     /* this test crashes on WinNT4
      */
     boolret = VerQueryValueA( pVersionInfo, backslash, (LPVOID *)&pFixedVersionInfo, 0);
-    ok (boolret, "VerQueryValue failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (boolret, "VerQueryValue failed: GetLastError = %u\n", GetLastError());
     }
 
 cleanup:
@@ -355,13 +355,13 @@ static void test_32bit_win(void)
     /* Get the VS_FIXEDFILEINFO information, this must be the same for both A- and W-Calls */ 
 
     retA = VerQueryValueA( pVersionInfoA, rootA, (LPVOID *)&pBufA, &uiLengthA );
-    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (retA, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthA);
 
     if (is_unicode_enabled)
     { 
         retW = VerQueryValueW( pVersionInfoW, rootW, (LPVOID *)&pBufW, &uiLengthW );
-        ok (retW, "VerQueryValueW failed: GetLastError = 0x%08x\n", GetLastError());
+        ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
         ok ( uiLengthA == sizeof(VS_FIXEDFILEINFO), "Size (%d) doesn't match the size of the VS_FIXEDFILEINFO struct\n", uiLengthA);
 
         ok( uiLengthA == uiLengthW, "The size of VS_FIXEDFILEINFO should be the same for both A/W calls, it is (%d) vs. (%d)\n",
@@ -372,13 +372,13 @@ static void test_32bit_win(void)
     /* Get some VarFileInfo information, this must be the same for both A- and W-Calls */
 
     retA = VerQueryValueA( pVersionInfoA, varfileinfoA, (LPVOID *)&pBufA, &uiLengthA );
-    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (retA, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     ok( !memcmp(pBufA, WineVarFileInfoA, uiLengthA), "The VarFileInfo should have matched 0904e404 (non case sensitive)\n");
 
     if (is_unicode_enabled)
     { 
         retW = VerQueryValueW( pVersionInfoW, varfileinfoW, (LPVOID *)&pBufW, &uiLengthW );
-        ok (retW, "VerQueryValueW failed: GetLastError = 0x%08x\n", GetLastError());
+        ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
         ok( uiLengthA == uiLengthW, "The size of the VarFileInfo information should be the same for both A/W calls, it is (%d) vs. (%d)\n",
                                     uiLengthA, uiLengthW);
         ok( !memcmp(pBufA, pBufW, uiLengthA), "Both values should be the same, they aren't\n");
@@ -387,18 +387,18 @@ static void test_32bit_win(void)
     /* Get some StringFileInfo information, this will be ANSI for A-Calls and Unicode for W-Calls */
 
     retA = VerQueryValueA( pVersionInfoA, FileDescriptionA, (LPVOID *)&pBufA, &uiLengthA );
-    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (retA, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     ok( !lstrcmpA(WineFileDescriptionA, pBufA), "FileDescription should have been 'Wine version test'\n");
 
     /* Test a second time */
     retA = VerQueryValueA( pVersionInfoA, FileDescriptionA, (LPVOID *)&pBufA, &uiLengthA );
-    ok (retA, "VerQueryValueA failed: GetLastError = 0x%08x\n", GetLastError());
+    ok (retA, "VerQueryValueA failed: GetLastError = %u\n", GetLastError());
     ok( !lstrcmpA(WineFileDescriptionA, pBufA), "FileDescription should have been 'Wine version test'\n");
 
     if (is_unicode_enabled)
     { 
         retW = VerQueryValueW( pVersionInfoW, FileDescriptionW, (LPVOID *)&pBufW, &uiLengthW );
-        ok (retW, "VerQueryValueW failed: GetLastError = 0x%08x\n", GetLastError());
+        ok (retW, "VerQueryValueW failed: GetLastError = %u\n", GetLastError());
         ok( !lstrcmpW(WineFileDescriptionW, pBufW), "FileDescription should have been 'Wine version test' (unicode)\n");
     }
 
