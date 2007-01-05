@@ -45,6 +45,7 @@
 #include "winbase.h"
 #include "winedump.h"
 #include "cvinclude.h"
+#include "wine/mscvpdb.h"
 
 /*
  * .DBG File Layout:
@@ -420,19 +421,33 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 
     if (memcmp(signature->Signature, "NB10", 4) == 0)
     {
-	const struct {DWORD TimeStamp; DWORD  Dunno; char Name[1];} *pdb_data;
+	const CODEVIEW_PDB_DATA* pdb_data;
 	pdb_data = (const void *)(signature + 1);
 
 	printf("        TimeStamp:            %08X (%s)\n",
-	       pdb_data->TimeStamp, get_time_str(pdb_data->TimeStamp));
-	printf("        Dunno:                %08X\n", pdb_data->Dunno);
-	printf("        Filename:             %s\n", pdb_data->Name);
+	       pdb_data->timestamp, get_time_str(pdb_data->timestamp));
+	printf("        Dunno:                %08X\n", pdb_data->unknown);
+	printf("        Filename:             %s\n", pdb_data->name);
+	return;
+    }
+    if (memcmp(signature->Signature, "RSDS", 4) == 0)
+    {
+	const CODEVIEW_HEADER_RSDS*     rsds_data;
+        char                            guid_str[40];
+
+	rsds_data = (const void *)signature;
+	printf("        Signature:            %08X\n",
+	       rsds_data->dwSignature);
+	printf("        Guid:                 %s\n",
+               guid_to_string(&rsds_data->guid, guid_str, sizeof(guid_str)));
+	printf("        Dunno:                %08X\n", rsds_data->unknown);
+	printf("        Filename:             %s\n", rsds_data->name);
 	return;
     }
 
     if (memcmp(signature->Signature, "NB09", 4) != 0 && memcmp(signature->Signature, "NB11", 4) != 0)
     {
-	printf("Unsupported signature, aborting\n");
+	printf("Unsupported signature (%.4s), aborting\n", signature->Signature);
 	return;
     }
 
