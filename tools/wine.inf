@@ -2105,6 +2105,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,comcat.dll,1
 11,,d3dxof.dll,1
 11,,ddraw.dll,1
+11,,ddrawex.dll,1
 11,,devenum.dll,1
 11,,dinput.dll,1
 11,,dinput8.dll,1

@@ -338,22 +338,3 @@ DllMain(HINSTANCE hInstDLL,
     TRACE("(%p,%x,%p)\n", hInstDLL, Reason, lpv);
     return TRUE;
 }
-
-
-/***********************************************************************
- * DllRegisterServer (DDRAWEX.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    FIXME("stub\n");
-    return E_FAIL;
-}
-
-/***********************************************************************
- * DllUnregisterServer (DDRAWEX.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    FIXME("stub\n");
-    return E_FAIL;
-}

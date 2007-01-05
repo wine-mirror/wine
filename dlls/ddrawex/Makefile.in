@@ -3,11 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = ddrawex.dll
-IMPORTS   = ddraw kernel32
+IMPORTS   = ddraw ole32 advapi32 kernel32
 EXTRALIBS = -ldxguid -luuid
 
 C_SRCS = \
-	main.c
+	main.c \
+	regsvr.c
 
 @MAKE_DLL_RULES@
 
