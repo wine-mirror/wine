@@ -117,6 +117,7 @@ typedef struct {
     LPWSTR name;
     LPWSTR printername;
     monitor_t *pm;
+    HANDLE hXcv;
     jobqueue_t *queue;
     started_doc_t *doc;
 } opened_printer_t;
@@ -1477,7 +1478,14 @@ static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefaul
         }
 
         if (printer->pm) {
-            FIXME("pm->pfnXcvOpenPort not implemented\n");
+            if ((printer->pm->monitor) && (printer->pm->monitor->pfnXcvOpenPort)) {
+                printer->pm->monitor->pfnXcvOpenPort(&printername[len], pDefault->DesiredAccess, &printer->hXcv);
+            }
+            if (printer->hXcv == NULL) {
+                SetLastError(ERROR_INVALID_PARAMETER);
+                handle = 0;
+                goto end;
+            }
         }
         else
         {
@@ -1523,6 +1531,7 @@ end:
     LeaveCriticalSection(&printer_handles_cs);
     if (!handle && printer) {
         /* Something failed: Free all resources */
+        if (printer->hXcv) printer->pm->monitor->pfnXcvClosePort(printer->hXcv);
         monitor_unload(printer->pm);
         HeapFree(GetProcessHeap(), 0, printer->printername);
         HeapFree(GetProcessHeap(), 0, printer->name);
@@ -2912,6 +2921,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
             }
             HeapFree(GetProcessHeap(), 0, printer->queue);
         }
+        if (printer->hXcv) printer->pm->monitor->pfnXcvClosePort(printer->hXcv);
         monitor_unload(printer->pm);
         HeapFree(GetProcessHeap(), 0, printer->printername);
         HeapFree(GetProcessHeap(), 0, printer->name);
