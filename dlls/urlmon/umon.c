@@ -711,7 +711,7 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
                     }
                     if(bSuccess)
                     {
-                        TRACE("res = %d gle = %08x url len = %d\n", hres, GetLastError(), bind->expected_size);
+                        TRACE("res = %d gle = %u url len = %d\n", hres, GetLastError(), bind->expected_size);
 
                         IBindStatusCallback_OnProgress(bind->pbscb, 0, 0, BINDSTATUS_CACHEFILENAMEAVAILABLE, szFileName);
 
@@ -765,7 +765,7 @@ static HRESULT WINAPI URLMonikerImpl_BindToStorage(IMoniker* iface,
 
     bret = InternetCrackUrlW(This->URLName, 0, ICU_ESCAPE, &url);
     if(!bret) {
-        ERR("InternetCrackUrl failed: %d\n", GetLastError());
+        ERR("InternetCrackUrl failed: %u\n", GetLastError());
         return E_FAIL;
     }
 
