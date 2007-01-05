@@ -241,6 +241,7 @@ void            dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *, UINT);
 void            dump_section(const IMAGE_SECTION_HEADER *);
 
 enum FileSig    get_kind_exec(void);
+void            dos_dump( void );
 void            pe_dump( void );
 void            ne_dump( void );
 void            le_dump( void );

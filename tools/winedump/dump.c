@@ -151,7 +151,7 @@ static const struct dumper
 }
 dumpers[] =
 {
-    {SIG_DOS,           get_kind_exec,  NULL},
+    {SIG_DOS,           get_kind_exec,  dos_dump},
     {SIG_PE,            get_kind_exec,  pe_dump},
     {SIG_DBG,           get_kind_dbg,   dbg_dump},
     {SIG_PDB,           get_kind_pdb,   pdb_dump},
@@ -160,7 +160,7 @@ dumpers[] =
     {SIG_COFFLIB,       get_kind_lib,   lib_dump},
     {SIG_MDMP,          get_kind_mdmp,  mdmp_dump},
     {SIG_LNK,           get_kind_lnk,   lnk_dump},
-    {SIG_EMF,           get_kind_emf,    emf_dump},
+    {SIG_EMF,           get_kind_emf,   emf_dump},
     {SIG_UNKNOWN,       NULL,           NULL} /* sentinel */
 };
 

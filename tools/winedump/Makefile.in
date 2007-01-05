@@ -10,6 +10,7 @@ MODULE   = none
 
 C_SRCS = \
 	debug.c \
+	dos.c \
 	dump.c \
 	emf.c \
 	le.c \
