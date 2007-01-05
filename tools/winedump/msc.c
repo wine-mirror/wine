@@ -775,6 +775,24 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
         }
         break;
 
+    case LF_DERIVED_V1:
+        printf("\t%x => Derived V1(#%u):", curr_type, reftype->derived_v1.num);
+        for (i = 0; i < reftype->derived_v1.num; i++)
+        {
+            printf(" %x", reftype->derived_v1.drvdcls[i]);
+        }
+        printf("\n");
+        break;
+
+    case LF_DERIVED_V2:
+        printf("\t%x => Derived V2(#%u):", curr_type, reftype->derived_v2.num);
+        for (i = 0; i < reftype->derived_v2.num; i++)
+        {
+            printf(" %x", reftype->derived_v2.drvdcls[i]);
+        }
+        printf("\n");
+        break;
+
     default:
         printf(">>> Unsupported type-id %x for %x\n", type->generic.id, curr_type);
         dump_data((const void*)type, type->generic.len + 2, "");

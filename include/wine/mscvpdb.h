@@ -403,6 +403,21 @@ union codeview_reftype
         unsigned                args[1];
     } arglist_v2;
 
+    struct
+    {
+        unsigned short int      len;
+        short int               id;
+        unsigned short          num;
+        unsigned short          drvdcls[1];
+    } derived_v1;
+
+    struct
+    {
+        unsigned short int      len;
+        short int               id;
+        unsigned                num;
+        unsigned                drvdcls[1];
+    } derived_v2;
 };
 
 union codeview_fieldtype
