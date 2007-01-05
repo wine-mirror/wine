@@ -731,8 +731,8 @@ LPTSTR GetLastErrorText(LPTSTR lpszBuf, DWORD dwSize)
     if (!dwRet || ( (long)dwSize < (long)dwRet+14)) {
         lpszBuf[0] = TEXT('\0');
     } else {
-        lpszTemp[lstrlen(lpszTemp)-2] = TEXT('\0');  /*remove cr and newline character */
-        _stprintf(lpszBuf, TEXT("%s (0x%x)"), lpszTemp, (int)GetLastError());
+        lpszTemp[lstrlen(lpszTemp)-2] = TEXT('\0');  /* remove cr and newline character */
+        _stprintf(lpszBuf, TEXT("%s (%u)"), lpszTemp, GetLastError());
     }
     if (lpszTemp) {
         LocalFree((HLOCAL)lpszTemp);
