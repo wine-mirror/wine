@@ -173,7 +173,25 @@ static int dump_cv_sst_libraries(const OMFDirEntry* omfde)
 
 static int dump_cv_sst_global_types(const OMFDirEntry* omfde)
 {
-    /*** NOT YET IMPLEMENTED ***/
+    long	        fileoffset;
+    const OMFGlobalTypes*types;
+    const BYTE*         data;
+    unsigned            sz;
+
+    fileoffset = Offset(cv_base) + omfde->lfo;
+    printf ("    GlobalTypes section starts at file offset 0x%lx\n", fileoffset);
+
+    printf ("\n                           ----- Begin Global Types Table -----\n");
+
+    types = PRD(fileoffset, sizeof(OMFGlobalTypes));
+    if (!types) {printf("Can't get OMF-GlobalTypes, aborting\n");return FALSE;}
+
+    sz = omfde->cb - sizeof(OMFGlobalTypes) - sizeof(DWORD) * types->cTypes;
+    data = PRD(fileoffset + sizeof(OMFGlobalTypes) + sizeof(DWORD) * types->cTypes, sz);
+    if (!data) {printf("Can't OMF-SymHash details, aborting\n"); return FALSE;}
+
+    codeview_dump_types(data, sz);
+
     return TRUE;
 }
 
@@ -306,7 +324,11 @@ static int dump_cv_sst_src_module(const OMFDirEntry* omfde)
 
 static int dump_cv_sst_align_sym(const OMFDirEntry* omfde)
 {
-    /*** NOT YET IMPLEMENTED ***/
+    const char* rawdata = PRD(Offset(cv_base) + omfde->lfo, omfde->cb);
+
+    if (!rawdata) {printf("Can't get srcAlignSym subsection details, aborting\n");return FALSE;}
+    if (omfde->cb < sizeof(DWORD)) return TRUE;
+    codeview_dump_symbols(rawdata + sizeof(DWORD), omfde->cb - sizeof(DWORD));
 
     return TRUE;
 }
