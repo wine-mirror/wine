@@ -259,7 +259,8 @@ void            emf_dump( void );
 enum FileSig    get_kind_pdb(void);
 void            pdb_dump(void);
 int             codeview_dump_symbols(const void* root, unsigned long size);
-int             codeview_dump_types(const void* table, unsigned long len);
+int             codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types);
+int             codeview_dump_types_from_block(const void* table, unsigned long len);
 
 void            dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, unsigned szstr);
 void		dump_codeview(unsigned long ptr, unsigned long len);

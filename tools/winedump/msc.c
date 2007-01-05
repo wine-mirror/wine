@@ -507,291 +507,306 @@ static void do_field(const unsigned char* start, const unsigned char* end)
     }
 }
 
-int codeview_dump_types(const void* table, unsigned long len)
+static void codeview_dump_one_type(unsigned curr_type, const union codeview_type* type)
+{
+    const union codeview_reftype* reftype = (const union codeview_reftype*)type;
+    int                 i, leaf_len, value;
+    const char*         str;
+
+    switch (type->generic.id)
+    {
+    case LF_POINTER_V1:
+        printf("\t%x => Pointer V1 to type:%x\n",
+               curr_type, type->pointer_v1.datatype);
+        break;
+    case LF_POINTER_V2:
+        printf("\t%x => Pointer V2 to type:%x\n",
+               curr_type, type->pointer_v2.datatype);
+        break;
+    case LF_ARRAY_V1:
+        leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
+        printf("\t%x => Array V1-'%s'[%u type:%x] type:%x\n",
+               curr_type, p_string(PSTRING(&type->array_v1.arrlen, leaf_len)),
+               value, type->array_v1.idxtype, type->array_v1.elemtype);
+        break;
+    case LF_ARRAY_V2:
+        leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
+        printf("\t%x => Array V2-'%s'[%u type:%x] type:%x\n",
+               curr_type, p_string(PSTRING(&type->array_v2.arrlen, leaf_len)),
+               value, type->array_v2.idxtype, type->array_v2.elemtype);
+        break;
+    case LF_ARRAY_V3:
+        leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
+        str = (const char*)&type->array_v3.arrlen + leaf_len;
+        printf("\t%x => Array V3-'%s'[%u type:%x] type:%x\n",
+               curr_type, str, value,
+               type->array_v3.idxtype, type->array_v3.elemtype);
+        break;
+
+    /* a bitfields is a CodeView specific data type which represent a bitfield
+     * in a structure or a class. For now, we store it in a SymTag-like type
+     * (so that the rest of the process is seamless), but check at udt inclusion
+     * type for its presence
+     */
+    case LF_BITFIELD_V1:
+        printf("\t%x => Bitfield V1:%x offset:%u #bits:%u\n",
+               curr_type, reftype->bitfield_v1.type, reftype->bitfield_v1.bitoff,
+               reftype->bitfield_v1.nbits);
+        break;
+
+    case LF_BITFIELD_V2:
+        printf("\t%x => Bitfield V2:%x offset:%u #bits:%u\n",
+               curr_type, reftype->bitfield_v2.type, reftype->bitfield_v2.bitoff,
+               reftype->bitfield_v2.nbits);
+        break;
+
+    case LF_FIELDLIST_V1:
+    case LF_FIELDLIST_V2:
+        printf("\t%x => Fieldlist\n", curr_type);
+        do_field(reftype->fieldlist.list, (const BYTE*)type + reftype->generic.len + 2);
+        break;
+
+    case LF_STRUCTURE_V1:
+    case LF_CLASS_V1:
+        leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
+        printf("\t%x => %s V1 '%s' elts:%u prop:%u fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
+               curr_type, type->generic.id == LF_CLASS_V1 ? "Class" : "Struct",
+               p_string(PSTRING(&type->struct_v1.structlen, leaf_len)),
+               type->struct_v1.n_element, type->struct_v1.property,
+               type->struct_v1.fieldlist, type->struct_v1.derived,
+               type->struct_v1.vshape, value);
+        break;
+
+    case LF_STRUCTURE_V2:
+    case LF_CLASS_V2:
+        leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
+        printf("\t%x => %s V2 '%s' elts:%u prop:%u\n"
+               "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
+               curr_type, type->generic.id == LF_CLASS_V2 ? "Class" : "Struct",
+               p_string(PSTRING(&type->struct_v2.structlen, leaf_len)),
+               type->struct_v2.n_element, type->struct_v2.property,
+               type->struct_v2.fieldlist, type->struct_v2.derived,
+               type->struct_v2.vshape, value);
+        break;
+
+    case LF_STRUCTURE_V3:
+    case LF_CLASS_V3:
+        leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
+        str = (const char*)&type->struct_v3.structlen + leaf_len;
+        printf("\t%x => %s V3 '%s' elts:%u prop:%u\n"
+               "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
+               curr_type, type->generic.id == LF_CLASS_V3 ? "Class" : "Struct",
+               str, type->struct_v3.n_element, type->struct_v3.property,
+               type->struct_v3.fieldlist, type->struct_v3.derived,
+               type->struct_v3.vshape, value);
+        break;
+
+    case LF_UNION_V1:
+        leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
+        printf("\t%x => Union V1 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
+               curr_type, p_string(PSTRING(&type->union_v1.un_len, leaf_len)),
+               type->union_v1.count, type->union_v1.property,
+               type->union_v1.fieldlist, value);
+        break;
+
+    case LF_UNION_V2:
+        leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
+        printf("\t%x => Union V2 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
+               curr_type, p_string(PSTRING(&type->union_v2.un_len, leaf_len)),
+               type->union_v2.count, type->union_v2.property,
+               type->union_v2.fieldlist, value);
+        break;
+
+    case LF_UNION_V3:
+        leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
+        str = (const char*)&type->union_v3.un_len + leaf_len;
+        printf("\t%x => Union V3 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
+               curr_type, str, type->union_v3.count,
+               type->union_v3.property, type->union_v3.fieldlist, value);
+        break;
+
+    case LF_ENUM_V1:
+        printf("\t%x => Enum V1 '%s' type:%x field-type:%x count:%u property:%x\n",
+               curr_type, p_string(&type->enumeration_v1.p_name),
+               type->enumeration_v1.type,
+               type->enumeration_v1.fieldlist,
+               type->enumeration_v1.count,
+               type->enumeration_v1.property);
+        break;
+
+    case LF_ENUM_V2:
+        printf("\t%x => Enum V2 '%s' type:%x field-type:%x count:%u property:%x\n",
+               curr_type, p_string(&type->enumeration_v2.p_name),
+               type->enumeration_v2.type,
+               type->enumeration_v2.fieldlist,
+               type->enumeration_v2.count,
+               type->enumeration_v2.property);
+        break;
+
+    case LF_ENUM_V3:
+        printf("\t%x => Enum V3 '%s' type:%x field-type:%x count:%u property:%x\n",
+               curr_type, type->enumeration_v3.name,
+               type->enumeration_v3.type,
+               type->enumeration_v3.fieldlist,
+               type->enumeration_v3.count,
+               type->enumeration_v3.property);
+        break;
+
+    case LF_ARGLIST_V1:
+        printf("\t%x => Arglist V1(#%u):", curr_type, reftype->arglist_v1.num);
+        for (i = 0; i < reftype->arglist_v1.num; i++)
+        {
+            printf(" %x", reftype->arglist_v1.args[i]);
+        }
+        printf("\n");
+        break;
+
+    case LF_ARGLIST_V2:
+        printf("\t%x => Arglist V2(#%u):", curr_type, reftype->arglist_v2.num);
+        for (i = 0; i < reftype->arglist_v2.num; i++)
+        {
+            printf("\t %x", reftype->arglist_v2.args[i]);
+        }
+        printf("\t\n");
+        break;
+
+    case LF_PROCEDURE_V1:
+        /* FIXME: unknown could be the calling convention for the proc */
+        printf("\t%x => Procedure V1 ret_type:%x call:%x (#%u args_type:%x)\n",
+               curr_type, type->procedure_v1.rvtype,
+               type->procedure_v1.call, type->procedure_v1.params,
+               type->procedure_v1.arglist);
+        break;
+
+    case LF_PROCEDURE_V2:
+        printf("\t%x => Procedure V2 ret_type:%x unk:%x (#%u args_type:%x)\n",
+               curr_type, type->procedure_v2.rvtype,
+               type->procedure_v2.call, type->procedure_v2.params,
+               type->procedure_v2.arglist);
+        break;
+
+    case LF_MFUNCTION_V2:
+        printf("\t%x => MFunction V2 ret-type:%x call:%x class-type:%x this-type:%x\n"
+               "\t\t#args:%x args-type:%x this_adjust:%x\n",
+               curr_type,
+               type->mfunction_v2.rvtype,
+               type->mfunction_v2.call,
+               type->mfunction_v2.class_type,
+               type->mfunction_v2.this_type,
+               type->mfunction_v2.params,
+               type->mfunction_v2.arglist,
+               type->mfunction_v2.this_adjust);
+        break;
+
+    case LF_MODIFIER_V1:
+        printf("\t%x => Modifier V1 type:%x modif:%x\n",
+               curr_type, type->modifier_v1.type, type->modifier_v1.attribute);
+        break;
+
+    case LF_MODIFIER_V2:
+        printf("\t%x => Modifier V2 type:%x modif:%x\n",
+               curr_type, type->modifier_v2.type, type->modifier_v2.attribute);
+        break;
+
+    case LF_METHODLIST_V1:
+        {
+            const unsigned short* pattr = (const unsigned short*)((const char*)type + 4);
+
+            printf("\t%x => Method list\n", curr_type);
+            while ((const char*)pattr < (const char*)type + type->generic.len + 2)
+            {
+                switch ((*pattr >> 2) & 7)
+                {
+                case 4: case 6:
+                    printf("\t\t\tattr:%s type:%x vtab-offset:%x\n",
+                           get_attr(pattr[0]), pattr[1],
+                           *(const unsigned*)(&pattr[2]));
+                    pattr += 3;
+                    break;
+                default:
+                    printf("\t\t\tattr:%s type:%x\n",
+                           get_attr(pattr[0]), pattr[1]);
+                    pattr += 2;
+                }
+            }
+        }
+        break;
+
+    case LF_METHODLIST_V2:
+        {
+            const unsigned* pattr = (const unsigned*)((const char*)type + 4);
+
+            printf("\t%x => Method list\n", curr_type);
+            while ((const char*)pattr < (const char*)type + type->generic.len + 2)
+            {
+                switch ((*pattr >> 2) & 7)
+                {
+                case 4: case 6:
+                    printf("\t\t\tattr:%s type:%x vtab-offset:%x\n",
+                           get_attr(pattr[0]), pattr[1], pattr[2]);
+                    pattr += 3;
+                    break;
+                default:
+                    printf("\t\t\tattr:%s type:%x\n",
+                           get_attr(pattr[0]), pattr[1]);
+                    pattr += 2;
+                }
+            }
+        }
+        break;
+
+    case LF_VTSHAPE_V1:
+        {
+            int count = *(const unsigned short*)((const char*)type + 4);
+            int shift = 0;
+            const char* ptr = (const char*)type + 6;
+            const char* desc[] = {"Near", "Far", "Thin", "Disp to outtermost",
+                                  "Pointer to metaclass", "Near32", "Far32"};
+            printf("\t%x => VT Shape #%d: ", curr_type, count);
+            while (count--)
+            {
+                if (((*ptr << shift) & 0xF) <= 6)
+                    printf("%s ", desc[(*ptr << shift) & 0xF]);
+                else
+                    printf("%x ", (*ptr << shift) & 0xF);
+                if (shift == 0) shift = 4; else {shift = 0; ptr++;}
+            }
+            printf("\n");
+        }
+        break;
+
+    default:
+        printf(">>> Unsupported type-id %x for %x\n", type->generic.id, curr_type);
+        dump_data((const void*)type, type->generic.len + 2, "");
+        break;
+    }
+}
+
+int codeview_dump_types_from_offsets(const void* table, const DWORD* offsets, unsigned num_types)
+{
+    unsigned long i;
+
+    for (i = 0; i < num_types; i++)
+    {
+        codeview_dump_one_type(0x1000 + i,
+                               (const union codeview_type*)((const char*)table + offsets[i]));
+    }
+
+    return TRUE;
+}
+
+int codeview_dump_types_from_block(const void* table, unsigned long len)
 {
     unsigned int        curr_type = 0x1000;
     const unsigned char*ptr = table;
-    int                 i, leaf_len, value;
-    const char*         str;
 
     while (ptr - (const unsigned char*)table < len)
     {
         const union codeview_type* type = (const union codeview_type*)ptr;
-        const union codeview_reftype* reftype = (const union codeview_reftype*)ptr;
-        int retv = TRUE;
 
-        switch (type->generic.id)
-        {
-        case LF_POINTER_V1:
-            printf("\t%x => Pointer V1 to type:%x\n",
-                   curr_type, type->pointer_v1.datatype);
-            break;
-        case LF_POINTER_V2:
-            printf("\t%x => Pointer V2 to type:%x\n",
-                   curr_type, type->pointer_v2.datatype);
-            break;
-        case LF_ARRAY_V1:
-            leaf_len = numeric_leaf(&value, &type->array_v1.arrlen);
-            printf("\t%x => Array V1-'%s'[%u type:%x] type:%x\n",
-                   curr_type, p_string(PSTRING(&type->array_v1.arrlen, leaf_len)),
-                   value, type->array_v1.idxtype, type->array_v1.elemtype);
-            break;
-        case LF_ARRAY_V2:
-            leaf_len = numeric_leaf(&value, &type->array_v2.arrlen);
-            printf("\t%x => Array V2-'%s'[%u type:%x] type:%x\n",
-                   curr_type, p_string(PSTRING(&type->array_v2.arrlen, leaf_len)),
-                   value, type->array_v2.idxtype, type->array_v2.elemtype);
-            break;
-        case LF_ARRAY_V3:
-            leaf_len = numeric_leaf(&value, &type->array_v3.arrlen);
-            str = (const char*)&type->array_v3.arrlen + leaf_len;
-            printf("\t%x => Array V3-'%s'[%u type:%x] type:%x\n",
-                   curr_type, str, value, 
-                   type->array_v3.idxtype, type->array_v3.elemtype);
-            break;
-
-
-        /* a bitfields is a CodeView specific data type which represent a bitfield
-         * in a structure or a class. For now, we store it in a SymTag-like type
-         * (so that the rest of the process is seamless), but check at udt inclusion
-         * type for its presence
-         */
-        case LF_BITFIELD_V1:
-            printf("\t%x => Bitfield V1:%x offset:%u #bits:%u\n",
-                   curr_type, reftype->bitfield_v1.type, reftype->bitfield_v1.bitoff,
-                   reftype->bitfield_v1.nbits);
-            break;
-
-        case LF_BITFIELD_V2:
-            printf("\t%x => Bitfield V2:%x offset:%u #bits:%u\n",
-                   curr_type, reftype->bitfield_v2.type, reftype->bitfield_v2.bitoff,
-                   reftype->bitfield_v2.nbits);
-            break;
-
-        case LF_FIELDLIST_V1:
-        case LF_FIELDLIST_V2:
-            printf("\t%x => Fieldlist\n", curr_type);
-            do_field(reftype->fieldlist.list, ptr + reftype->generic.len + 2);
-            break;
-
-        case LF_STRUCTURE_V1:
-        case LF_CLASS_V1:
-            leaf_len = numeric_leaf(&value, &type->struct_v1.structlen);
-            printf("\t%x => %s V1 '%s' elts:%u prop:%u fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
-                   curr_type, type->generic.id == LF_CLASS_V1 ? "Class" : "Struct",
-                   p_string(PSTRING(&type->struct_v1.structlen, leaf_len)),
-                   type->struct_v1.n_element, type->struct_v1.property,
-                   type->struct_v1.fieldlist, type->struct_v1.derived, 
-                   type->struct_v1.vshape, value);
-            break;
-
-        case LF_STRUCTURE_V2:
-        case LF_CLASS_V2:
-            leaf_len = numeric_leaf(&value, &type->struct_v2.structlen);
-            printf("\t%x => %s V2 '%s' elts:%u prop:%u\n"
-                   "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
-                   curr_type, type->generic.id == LF_CLASS_V2 ? "Class" : "Struct",
-                   p_string(PSTRING(&type->struct_v2.structlen, leaf_len)),
-                   type->struct_v2.n_element, type->struct_v2.property,
-                   type->struct_v2.fieldlist, type->struct_v2.derived, 
-                   type->struct_v2.vshape, value);
-            break;
-
-        case LF_STRUCTURE_V3:
-        case LF_CLASS_V3:
-            leaf_len = numeric_leaf(&value, &type->struct_v3.structlen);
-            str = (const char*)&type->struct_v3.structlen + leaf_len;
-            printf("\t%x => %s V3 '%s' elts:%u prop:%u\n"
-                   "                fieldlist-type:%x derived-type:%x vshape:%x size:%u\n",
-                   curr_type, type->generic.id == LF_CLASS_V3 ? "Class" : "Struct",
-                   str, type->struct_v3.n_element, type->struct_v3.property,
-                   type->struct_v3.fieldlist, type->struct_v3.derived, 
-                   type->struct_v3.vshape, value);
-            break;
-
-        case LF_UNION_V1:
-            leaf_len = numeric_leaf(&value, &type->union_v1.un_len);
-            printf("\t%x => Union V1 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
-                   curr_type, p_string(PSTRING(&type->union_v1.un_len, leaf_len)),
-                   type->union_v1.count, type->union_v1.property,
-                   type->union_v1.fieldlist, value);
-            break;
-
-        case LF_UNION_V2:
-            leaf_len = numeric_leaf(&value, &type->union_v2.un_len);
-            printf("\t%x => Union V2 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
-                   curr_type, p_string(PSTRING(&type->union_v2.un_len, leaf_len)),
-                   type->union_v2.count, type->union_v2.property,
-                   type->union_v2.fieldlist, value);
-            break;
-
-        case LF_UNION_V3:
-            leaf_len = numeric_leaf(&value, &type->union_v3.un_len);
-            str = (const char*)&type->union_v3.un_len + leaf_len;
-            printf("\t%x => Union V3 '%s' count:%u prop:%u fieldlist-type:%x size:%u\n",
-                   curr_type, str, type->union_v3.count, 
-                   type->union_v3.property, type->union_v3.fieldlist, value);
-            break;
-
-        case LF_ENUM_V1:
-            printf("\t%x => Enum V1 '%s' type:%x field-type:%x count:%u property:%x\n",
-                   curr_type, p_string(&type->enumeration_v1.p_name),
-                   type->enumeration_v1.type,
-                   type->enumeration_v1.fieldlist,
-                   type->enumeration_v1.count,
-                   type->enumeration_v1.property);
-            break;
-
-        case LF_ENUM_V2:
-            printf("\t%x => Enum V2 '%s' type:%x field-type:%x count:%u property:%x\n",
-                   curr_type, p_string(&type->enumeration_v2.p_name),
-                   type->enumeration_v2.type,
-                   type->enumeration_v2.fieldlist,
-                   type->enumeration_v2.count,
-                   type->enumeration_v2.property);
-            break;
-
-        case LF_ENUM_V3:
-            printf("\t%x => Enum V3 '%s' type:%x field-type:%x count:%u property:%x\n",
-                   curr_type, type->enumeration_v3.name, 
-                   type->enumeration_v3.type,
-                   type->enumeration_v3.fieldlist,
-                   type->enumeration_v3.count,
-                   type->enumeration_v3.property);
-            break;
-
-        case LF_ARGLIST_V1:
-            printf("\t%x => Arglist V1(#%u):", curr_type, reftype->arglist_v1.num);
-            for (i = 0; i < reftype->arglist_v1.num; i++)
-            {
-                printf(" %x", reftype->arglist_v1.args[i]);
-            }
-            printf("\n");
-            break;
-
-        case LF_ARGLIST_V2:
-            printf("\t%x => Arglist V2(#%u):", curr_type, reftype->arglist_v2.num);
-            for (i = 0; i < reftype->arglist_v2.num; i++)
-            {
-                printf("\t %x", reftype->arglist_v2.args[i]);
-            }
-            printf("\t\n");
-            break;
-
-        case LF_PROCEDURE_V1:
-            /* FIXME: unknown could be the calling convention for the proc */
-            printf("\t%x => Procedure V1 ret_type:%x call:%x (#%u args_type:%x)\n",
-                   curr_type, type->procedure_v1.rvtype,
-                   type->procedure_v1.call, type->procedure_v1.params,
-                   type->procedure_v1.arglist);
-            break;
-        case LF_PROCEDURE_V2:
-            printf("\t%x => Procedure V2 ret_type:%x unk:%x (#%u args_type:%x)\n",
-                   curr_type, type->procedure_v2.rvtype,
-                   type->procedure_v2.call, type->procedure_v2.params,
-                   type->procedure_v2.arglist);
-            break;
-
-        case LF_MFUNCTION_V2:
-            printf("\t%x => MFunction V2 ret-type:%x call:%x class-type:%x this-type:%x\n"
-                   "\t\t#args:%x args-type:%x this_adjust:%x\n",
-                   curr_type,
-                   type->mfunction_v2.rvtype,
-                   type->mfunction_v2.call,
-                   type->mfunction_v2.class_type,
-                   type->mfunction_v2.this_type,
-                   type->mfunction_v2.params,
-                   type->mfunction_v2.arglist, 
-                   type->mfunction_v2.this_adjust);
-            break;
-
-        case LF_MODIFIER_V1:
-            printf("\t%x => Modifier V1 type:%x modif:%x\n",
-                   curr_type, type->modifier_v1.type, type->modifier_v1.attribute);
-            break;
-        case LF_MODIFIER_V2:
-            printf("\t%x => Modifier V2 type:%x modif:%x\n",
-                   curr_type, type->modifier_v2.type, type->modifier_v2.attribute);  
-            break;
-
-        case LF_METHODLIST_V1:
-            {
-                const unsigned short* pattr = (const unsigned short*)((const char*)type + 4);
-
-                printf("\t%x => Method list\n", curr_type);
-                while ((const char*)pattr < (const char*)type + type->generic.len + 2)
-                {
-                    switch ((*pattr >> 2) & 7)
-                    {
-                    case 4: case 6:
-                        printf("\t\t\tattr:%s type:%x vtab-offset:%x\n",
-                               get_attr(pattr[0]), pattr[1],
-                               *(const unsigned*)(&pattr[2]));
-                        pattr += 3;
-                        break;
-                    default:
-                        printf("\t\t\tattr:%s type:%x\n",
-                               get_attr(pattr[0]), pattr[1]);
-                        pattr += 2;
-                    }
-                }
-            }
-            break;
-
-        case LF_METHODLIST_V2:
-            {
-                const unsigned* pattr = (const unsigned*)((const char*)type + 4);
-
-                printf("\t%x => Method list\n", curr_type);
-                while ((const char*)pattr < (const char*)type + type->generic.len + 2)
-                {
-                    switch ((*pattr >> 2) & 7)
-                    {
-                    case 4: case 6:
-                        printf("\t\t\tattr:%s type:%x vtab-offset:%x\n",
-                               get_attr(pattr[0]), pattr[1], pattr[2]);
-                        pattr += 3;
-                        break;
-                    default:
-                        printf("\t\t\tattr:%s type:%x\n",
-                               get_attr(pattr[0]), pattr[1]);
-                        pattr += 2;
-                    }
-                }
-            }
-            break;
-
-        case LF_VTSHAPE_V1:
-            {
-                int count = *(const unsigned short*)((const char*)type + 4);
-                int shift = 0;
-                const char* ptr = (const char*)type + 6;
-                const char* desc[] = {"Near", "Far", "Thin", "Disp to outtermost",
-                                      "Pointer to metaclass", "Near32", "Far32"};
-                printf("\t%x => VT Shape #%d: ", curr_type, count);
-                while (count--)
-                {
-                    if (((*ptr << shift) & 0xF) <= 6)
-                        printf("%s ", desc[(*ptr << shift) & 0xF]);
-                    else
-                        printf("%x ", (*ptr << shift) & 0xF);
-                    if (shift == 0) shift = 4; else {shift = 0; ptr++;}
-                }
-                printf("\n");
-            }
-            break;
-
-        default:
-            printf(">>> Unsupported type-id %x for %x\n", type->generic.id, curr_type);
-            dump_data((const void*)type, type->generic.len + 2, "");
-            break;
-        }
-
-        if (!retv)
-            return FALSE;
-
+        codeview_dump_one_type(curr_type, type);
         curr_type++;
-        ptr += type->generic.len + 2;
+        ptr += (type->generic.len + 2 + 3) & ~3;
     }
 
     return TRUE;

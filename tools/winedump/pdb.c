@@ -458,7 +458,7 @@ static void pdb_dump_types(struct pdb_reader* reader)
            types->search_len,
            types->unknown_offset,
            types->unknown_len);
-    codeview_dump_types((const char*)types + types->type_offset, types->type_size);
+    codeview_dump_types_from_block((const char*)types + types->type_offset, types->type_size);
     free((char*)types);
 }
 

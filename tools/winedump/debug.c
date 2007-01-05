@@ -190,7 +190,12 @@ static int dump_cv_sst_global_types(const OMFDirEntry* omfde)
     data = PRD(fileoffset + sizeof(OMFGlobalTypes) + sizeof(DWORD) * types->cTypes, sz);
     if (!data) {printf("Can't OMF-SymHash details, aborting\n"); return FALSE;}
 
-    codeview_dump_types(data, sz);
+    /* doc says:
+     * - for NB07 & NB08 (that we don't support yet), offsets are from types
+     * - for NB09, offsets are from data
+     * For now, we only support the later
+     */
+    codeview_dump_types_from_offsets(data, (const DWORD*)(types + 1), types->cTypes);
 
     return TRUE;
 }
