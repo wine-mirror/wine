@@ -578,8 +578,33 @@ void	dump_codeview(unsigned long base, unsigned long len)
 
 void	dump_frame_pointer_omission(unsigned long base, unsigned long len)
 {
-	/* FPO is used to describe nonstandard stack frames */
-	printf("FIXME: FPO (frame pointer omission) debug symbol dumping not implemented yet.\n");
+    const FPO_DATA*     fpo;
+    const FPO_DATA*     last;
+    const char*         x;
+    /* FPO is used to describe nonstandard stack frames */
+    printf("Range             #loc #pmt Prlg #reg Info\n"
+           "-----------------+----+----+----+----+------------\n");
+
+    fpo = (const FPO_DATA*)PRD(base, len);
+    if (!fpo) {printf("Couldn't get FPO blob\n"); return;}
+    last = (const FPO_DATA*)((const char*)fpo + len);
+
+    while (fpo < last && fpo->ulOffStart)
+    {
+        switch (fpo->cbFrame)
+        {
+        case FRAME_FPO: x = "FRAME_FPO"; break;
+        case FRAME_NONFPO: x = "FRAME_NONFPO"; break;
+        case FRAME_TRAP: x = "FRAME_TRAP"; break;
+        case FRAME_TSS: x = "case FRAME_TSS"; break;
+        default: x = NULL; break;
+        }
+        printf("%08x-%08x %4u %4u %4u %4u %s%s%s\n",
+               fpo->ulOffStart, fpo->ulOffStart + fpo->cbProcSize,
+               fpo->cdwLocals, fpo->cdwParams, fpo->cbProlog, fpo->cbRegs,
+               x, fpo->fHasSEH ? " SEH" : "", fpo->fUseBP ? " UseBP" : "");
+        fpo++;
+    }
 }
 
 struct stab_nlist
