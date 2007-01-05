@@ -109,7 +109,7 @@ static void test_ParseDisplayName(void)
     if (!pSHGetSpecialFolderPathW || !pILFindLastID) goto finished;
     
     bRes = pSHGetSpecialFolderPathW(NULL, cTestDirW, CSIDL_PERSONAL, FALSE);
-    ok(bRes, "SHGetSpecialFolderPath(CSIDL_PERSONAL) failed! %d\n", GetLastError());
+    ok(bRes, "SHGetSpecialFolderPath(CSIDL_PERSONAL) failed! %u\n", GetLastError());
     if (!bRes) goto finished;
 
     hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL, cTestDirW, NULL, &newPIDL, 0);
@@ -294,7 +294,7 @@ static void test_BindToObject(void)
 #endif
 
     cChars = GetSystemDirectoryA(szSystemDir, MAX_PATH);
-    ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryA failed! LastError: %08x\n", GetLastError());
+    ok (cChars > 0 && cChars < MAX_PATH, "GetSystemDirectoryA failed! LastError: %u\n", GetLastError());
     if (cChars == 0 || cChars >= MAX_PATH) {
         IShellFolder_Release(psfMyComputer);
         return;
@@ -356,14 +356,14 @@ static void test_GetDisplayName(void)
 
     /* First creating a directory in MyDocuments and a file in this directory. */
     result = pSHGetSpecialFolderPathW(NULL, wszTestDir, CSIDL_PERSONAL, FALSE);
-    ok(result, "SHGetSpecialFolderPathW failed! Last error: %08x\n", GetLastError());
+    ok(result, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
     if (!result) return;
 
     PathAddBackslashW(wszTestDir);
     lstrcatW(wszTestDir, wszDirName);
     WideCharToMultiByte(CP_ACP, 0, wszTestDir, -1, szTestDir, MAX_PATH, 0, 0);
     result = CreateDirectoryA(szTestDir, NULL);
-    ok(result, "CreateDirectoryA failed! Last error: %08x\n", GetLastError());
+    ok(result, "CreateDirectoryA failed! Last error: %u\n", GetLastError());
     if (!result) return;
 
     lstrcpyW(wszTestFile, wszTestDir);
@@ -372,7 +372,7 @@ static void test_GetDisplayName(void)
     WideCharToMultiByte(CP_ACP, 0, wszTestFile, -1, szTestFile, MAX_PATH, 0, 0);
 
     hTestFile = CreateFileA(szTestFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    ok((hTestFile != INVALID_HANDLE_VALUE), "CreateFileA failed! Last error: %08x\n", GetLastError());
+    ok((hTestFile != INVALID_HANDLE_VALUE), "CreateFileA failed! Last error: %u\n", GetLastError());
     if (hTestFile == INVALID_HANDLE_VALUE) return;
     CloseHandle(hTestFile);
 
@@ -439,7 +439,7 @@ static void test_GetDisplayName(void)
 
     /* SHGetPathFromIDListW still works, although the file is not present anymore. */
     result = SHGetPathFromIDListW(pidlTestFile, wszTestFile2);
-    ok (result, "SHGetPathFromIDListW failed! Last error: %08x\n", GetLastError());
+    ok (result, "SHGetPathFromIDListW failed! Last error: %u\n", GetLastError());
     ok (!lstrcmpiW(wszTestFile, wszTestFile2), "SHGetPathFromIDListW returns incorrect path!\n");
 
     if(!pSHBindToParent) return;
@@ -781,11 +781,11 @@ static void test_SHGetPathFromIDList(void)
 
     /* Calling SHGetPathFromIDList with an empty pidl should return the desktop folder's path. */
     result = pSHGetSpecialFolderPathW(NULL, wszDesktop, CSIDL_DESKTOP, FALSE);
-    ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOP) failed! Last error: %08x\n", GetLastError());
+    ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOP) failed! Last error: %u\n", GetLastError());
     if (!result) return;
     
     result = SHGetPathFromIDListW(pidlEmpty, wszPath);
-    ok(result, "SHGetPathFromIDListW failed! Last error: %08x\n", GetLastError());
+    ok(result, "SHGetPathFromIDListW failed! Last error: %u\n", GetLastError());
     if (!result) return;
     ok(!lstrcmpiW(wszDesktop, wszPath), "SHGetPathFromIDList didn't return desktop path for empty pidl!\n");
 
@@ -806,7 +806,7 @@ static void test_SHGetPathFromIDList(void)
     wszPath[1] = '\0';
     result = SHGetPathFromIDListW(pidlMyComputer, wszPath);
     ok (!result, "SHGetPathFromIDList succeeded where it shouldn't!\n");
-    ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDList shouldn't set last error! Last error: %08x\n", GetLastError());
+    ok (GetLastError()==0xdeadbeef, "SHGetPathFromIDList shouldn't set last error! Last error: %u\n", GetLastError());
     ok (!wszPath[0], "Expected empty path\n");
     if (result) {
         IShellFolder_Release(psfDesktop);
@@ -816,7 +816,7 @@ static void test_SHGetPathFromIDList(void)
     IMalloc_Free(ppM, pidlMyComputer);
 
     result = pSHGetSpecialFolderPathW(NULL, wszFileName, CSIDL_DESKTOPDIRECTORY, FALSE);
-    ok(result, "SHGetSpecialFolderPathW failed! Last error: %08x\n", GetLastError());
+    ok(result, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
     if (!result) {
         IShellFolder_Release(psfDesktop);
         return;
@@ -824,7 +824,7 @@ static void test_SHGetPathFromIDList(void)
     PathAddBackslashW(wszFileName);
     lstrcatW(wszFileName, wszTestFile);
     hTestFile = CreateFileW(wszFileName, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
-    ok(hTestFile != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: %08x\n", GetLastError());
+    ok(hTestFile != INVALID_HANDLE_VALUE, "CreateFileW failed! Last error: %u\n", GetLastError());
     if (hTestFile == INVALID_HANDLE_VALUE) {
         IShellFolder_Release(psfDesktop);
         return;
@@ -859,7 +859,7 @@ static void test_SHGetPathFromIDList(void)
     }
 
     result = SHGetPathFromIDListW(pidlTestFile, wszPath);
-    ok(result, "SHGetPathFromIDListW failed! Last error: %08x\n", GetLastError());
+    ok(result, "SHGetPathFromIDListW failed! Last error: %u\n", GetLastError());
     IMalloc_Free(ppM, pidlTestFile);
     if (!result) return;
     ok(0 == lstrcmpW(wszFileName, wszPath), "SHGetPathFromIDListW returned incorrect path for file placed on desktop\n");
@@ -982,7 +982,7 @@ static HRESULT WINAPI InitPropertyBag_IPropertyBag_Read(IPropertyBag *iface, LPC
         if (V_VT(pVar) != VT_BSTR) return E_INVALIDARG;
 
         result = pSHGetSpecialFolderPathW(NULL, wszPath, CSIDL_DESKTOPDIRECTORY, FALSE);
-        ok(result, "SHGetSpecialFolderPathW(DESKTOPDIRECTORY) failed! x%08x\n", GetLastError());
+        ok(result, "SHGetSpecialFolderPathW(DESKTOPDIRECTORY) failed! %u\n", GetLastError());
         if (!result) return E_INVALIDARG;
 
         V_BSTR(pVar) = SysAllocString(wszPath);
@@ -1078,7 +1078,7 @@ static void test_FolderShortcut(void) {
     }
 
     result = pSHGetSpecialFolderPathW(NULL, wszDesktopPath, CSIDL_DESKTOPDIRECTORY, FALSE);
-    ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOPDIRECTORY) failed! 0x%08x\n", GetLastError());
+    ok(result, "SHGetSpecialFolderPathW(CSIDL_DESKTOPDIRECTORY) failed! %u\n", GetLastError());
     if (!result) return;
 
     pStrRetToBufW(&strret, NULL, wszBuffer, MAX_PATH);
@@ -1224,11 +1224,11 @@ static void test_ITEMIDLIST_format(void) {
     if(!pSHGetSpecialFolderPathW) return;
 
     bResult = pSHGetSpecialFolderPathW(NULL, wszPersonal, CSIDL_PERSONAL, FALSE);
-    ok(bResult, "SHGetSpecialFolderPathW failed! Last error: %08x\n", GetLastError());
+    ok(bResult, "SHGetSpecialFolderPathW failed! Last error: %u\n", GetLastError());
     if (!bResult) return;
 
     bResult = SetCurrentDirectoryW(wszPersonal);
-    ok(bResult, "SetCurrentDirectory failed! Last error: %d\n", GetLastError());
+    ok(bResult, "SetCurrentDirectory failed! Last error: %u\n", GetLastError());
     if (!bResult) return;
 
     hr = SHGetDesktopFolder(&psfDesktop);
@@ -1257,7 +1257,7 @@ static void test_ITEMIDLIST_format(void) {
         WideCharToMultiByte(CP_ACP, 0, wszFile[i], -1, szFile, MAX_PATH, NULL, NULL);
         
         hFile = CreateFileW(wszFile[i], GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_FLAG_WRITE_THROUGH, NULL);
-        ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed! (%d)\n", GetLastError());
+        ok(hFile != INVALID_HANDLE_VALUE, "CreateFile failed! (%u)\n", GetLastError());
         if (hFile == INVALID_HANDLE_VALUE) {
             IShellFolder_Release(psfPersonal);
             return;
