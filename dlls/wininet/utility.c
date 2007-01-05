@@ -50,7 +50,7 @@ time_t ConvertTimeString(LPCWSTR asctime)
     struct tm t;
     int timelen = strlenW(asctime);
 
-    if(!asctime || !timelen)
+    if(!timelen)
         return 0;
 
     /* FIXME: the atoiWs below rely on that tmpChar is \0 padded */
