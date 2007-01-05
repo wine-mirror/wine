@@ -122,10 +122,6 @@ static int read_buf_byte(struct mpstr *mp)
 	while(pos >= mp->tail->size) {
 		remove_buf(mp);
 		pos = mp->tail->pos;
-		if(!mp->tail) {
-			fprintf(stderr,"Fatal error!\n");
-			exit(1);
-		}
 	}
 
 	b = mp->tail->pnt[pos];
