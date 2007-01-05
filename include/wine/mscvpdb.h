@@ -1565,65 +1565,70 @@ extern BOOL coff_process_info(const struct msc_debug_info* msc_dbg);
 #define sstFileIndex   0x133
 #define sstStaticSym   0x134
 
-typedef struct _CODEVIEW_HEADER_NBxx
+/* overall structure information */
+typedef struct OMFSignature
 {
-    DWORD       dwSignature;
-    DWORD       lfoDirectory;
-} CODEVIEW_HEADER_NBxx,* PCODEVIEW_HEADER_NBxx;
+    char        Signature[4];
+    long        filepos;
+} OMFSignature;
 
-typedef struct _CODEVIEW_HEADER_RSDS
+typedef struct OMFSignatureRSDS
 {
-    DWORD       dwSignature;
+    char        Signature[4];
     GUID        guid;
     DWORD       unknown;
     CHAR        name[1];
-} CODEVIEW_HEADER_RSDS,* PCODEVIEW_HEADER_RSDS;
+} OMFSignatureRSDS;
 
 typedef struct _CODEVIEW_PDB_DATA
 {
+    char        Signature[4];
+    long        filepos;
     DWORD       timestamp;
     DWORD       unknown;
     CHAR        name[1];
 } CODEVIEW_PDB_DATA, *PCODEVIEW_PDB_DATA;
 
-typedef struct _CV_DIRECTORY_HEADER
+typedef struct OMFDirHeader
 {
     WORD        cbDirHeader;
     WORD        cbDirEntry;
     DWORD       cDir;
     DWORD       lfoNextDir;
     DWORD       flags;
-} CV_DIRECTORY_HEADER, *PCV_DIRECTORY_HEADER;
+} OMFDirHeader;
 
-typedef struct _CV_DIRECTORY_ENTRY
+typedef struct OMFDirEntry
 {
-    WORD        subsection;
+    WORD        SubSection;
     WORD        iMod;
     DWORD       lfo;
     DWORD       cb;
-} CV_DIRECTORY_ENTRY, *PCV_DIRECTORY_ENTRY;
+} OMFDirEntry;
 
-typedef struct _CV_ENTRY_MODULE_SEGINFO
+/* sstModule subsection */
+
+typedef struct OMFSegDesc
 {
-    WORD        seg;
+    WORD        Seg;
     WORD        pad;
-    DWORD       offset;
+    DWORD       Off;
     DWORD       cbSeg;
-} CV_ENTRY_MODULE_SEGINFO;
+} OMFSegDesc;
 
-typedef struct _CV_ENTRY_MODULE
+typedef struct OMFModule
 {
     WORD        ovlNumber;
     WORD        iLib;
     WORD        cSeg;
-    WORD        Style;
+    char        Style[2];
 /*
-    CV_ENTRY_MODULE_SEGINFO     SegInfo[cSeg];
+    OMFSegDesc  SegInfo[cSeg];
     p_string    Name;
 */
-} CV_ENTRY_MODULE;
+} OMFModule;
 
-typedef struct _CV_ENTRY_GLOBAL_TYPES
+typedef struct OMFGlobalTypes
 {
     DWORD       flags;
     DWORD       cTypes;
@@ -1631,4 +1636,76 @@ typedef struct _CV_ENTRY_GLOBAL_TYPES
     DWORD       offset[cTypes];
                 types_record[];
 */
-} CV_ENTRY_GLOBAL_TYPES;
+} OMFGlobalTypes;
+
+/* sstGlobalPub section */
+
+/* Header for symbol table */
+typedef struct OMFSymHash
+{
+    unsigned short  symhash;
+    unsigned short  addrhash;
+    unsigned long   cbSymbol;
+    unsigned long   cbHSym;
+    unsigned long   cbHAddr;
+} OMFSymHash;
+
+/* FIXME: to be removed (and using codeview_symbol type above)
+ * Symbol table entry */
+typedef struct DATASYM32
+{
+    unsigned short  reclen;
+    unsigned short  rectyp;
+    unsigned long   typind;
+    unsigned long   off;
+    unsigned short  seg;
+} DATASYM32;
+typedef DATASYM32 PUBSYM32;
+
+/* sstSegMap section */
+
+typedef struct OMFSegMapDesc
+{
+    unsigned short  flags;
+    unsigned short  ovl;
+    unsigned short  group;
+    unsigned short  frame;
+    unsigned short  iSegName;
+    unsigned short  iClassName;
+    unsigned long   offset;
+    unsigned long   cbSeg;
+} OMFSegMapDesc;
+
+typedef struct OMFSegMap
+{
+    unsigned short  cSeg;
+    unsigned short  cSegLog;
+/*    OMFSegMapDesc   rgDesc[0];*/
+} OMFSegMap;
+
+
+/* sstSrcModule section */
+
+typedef struct OMFSourceLine
+{
+    unsigned short  Seg;
+    unsigned short  cLnOff;
+    unsigned long   offset[1];
+    unsigned short  lineNbr[1];
+} OMFSourceLine;
+
+typedef struct OMFSourceFile
+{
+    unsigned short  cSeg;
+    unsigned short  reserved;
+    unsigned long   baseSrcLn[1];
+    unsigned short  cFName;
+    char            Name;
+} OMFSourceFile;
+
+typedef struct OMFSourceModule
+{
+    unsigned short  cFile;
+    unsigned short  cSeg;
+    unsigned long   baseSrcFile[1];
+} OMFSourceModule;

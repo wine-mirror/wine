@@ -44,7 +44,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
-#include "cvinclude.h"
 #include "wine/mscvpdb.h"
 
 /*
@@ -99,8 +98,8 @@
  *    (OMFDirHeader.cDir)
  */
 
-extern const IMAGE_NT_HEADERS*        PE_nt_headers;
-static const void*		cv_base /* = 0 */;
+extern const IMAGE_NT_HEADERS*  PE_nt_headers;
+static const void*	        cv_base /* = 0 */;
 
 static int dump_cv_sst_module(const OMFDirEntry* omfde)
 {
@@ -124,7 +123,7 @@ static int dump_cv_sst_module(const OMFDirEntry* omfde)
 
     for (i = 0; i < module->cSeg; i++)
     {
-	printf ("      segment #%2d: offset = [0x%8lx], size = [0x%8lx]\n",
+	printf ("      segment #%2d: offset = [0x%8x], size = [0x%8x]\n",
 		segDesc->Seg, segDesc->Off, segDesc->cbSeg);
 	segDesc++;
     }
@@ -376,8 +375,8 @@ static void dump_codeview_all_modules(const OMFDirHeader *omfdh)
 	printf("Module #%2d (%p)\n", i + 1, &dirEntry[i]);
 	printf("  SubSection:            %04X (%s)\n", dirEntry[i].SubSection, str);
 	printf("  iMod:                  %d\n", dirEntry[i].iMod);
-	printf("  lfo:                   %ld\n", dirEntry[i].lfo);
-	printf("  cb:                    %lu\n", dirEntry[i].cb);
+	printf("  lfo:                   %d\n", dirEntry[i].lfo);
+	printf("  cb:                    %u\n", dirEntry[i].cb);
 
 	switch (dirEntry[i].SubSection)
 	{
@@ -402,8 +401,9 @@ static void dump_codeview_all_modules(const OMFDirHeader *omfdh)
 static void dump_codeview_headers(unsigned long base, unsigned long len)
 {
     const OMFDirHeader* dirHeader;
-    const OMFSignature* signature;
+    const char*         signature;
     const OMFDirEntry*  dirEntry;
+    const OMFSignature* sig;
     unsigned		i;
     int modulecount = 0, alignsymcount = 0, srcmodulecount = 0, librariescount = 0;
     int globalsymcount = 0, globalpubcount = 0, globaltypescount = 0;
@@ -415,50 +415,51 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     signature = cv_base;
 
     printf("    CodeView Data\n");
+    printf("      Signature:         %.4s\n", signature);
 
-    printf("      Signature:         %.4s\n", signature->Signature);
-    printf("      Filepos:           0x%08lX\n", signature->filepos);
-
-    if (memcmp(signature->Signature, "NB10", 4) == 0)
+    if (memcmp(signature, "NB10", 4) == 0)
     {
 	const CODEVIEW_PDB_DATA* pdb_data;
-	pdb_data = (const void *)(signature + 1);
+	pdb_data = (const void *)cv_base;
 
-	printf("        TimeStamp:            %08X (%s)\n",
+        printf("      Filepos:           0x%08lX\n", pdb_data->filepos);
+	printf("      TimeStamp:         %08X (%s)\n",
 	       pdb_data->timestamp, get_time_str(pdb_data->timestamp));
-	printf("        Dunno:                %08X\n", pdb_data->unknown);
-	printf("        Filename:             %s\n", pdb_data->name);
+	printf("      Dunno:             %08X\n", pdb_data->unknown);
+	printf("      Filename:          %s\n", pdb_data->name);
 	return;
     }
-    if (memcmp(signature->Signature, "RSDS", 4) == 0)
+    if (memcmp(signature, "RSDS", 4) == 0)
     {
-	const CODEVIEW_HEADER_RSDS*     rsds_data;
-        char                            guid_str[40];
+	const OMFSignatureRSDS* rsds_data;
+        char                    guid_str[40];
 
-	rsds_data = (const void *)signature;
-	printf("        Signature:            %08X\n",
-	       rsds_data->dwSignature);
-	printf("        Guid:                 %s\n",
+	rsds_data = (const void *)cv_base;
+	printf("      Guid:              %s\n",
                guid_to_string(&rsds_data->guid, guid_str, sizeof(guid_str)));
-	printf("        Dunno:                %08X\n", rsds_data->unknown);
-	printf("        Filename:             %s\n", rsds_data->name);
+	printf("      Dunno:             %08X\n", rsds_data->unknown);
+	printf("      Filename:          %s\n", rsds_data->name);
 	return;
     }
 
-    if (memcmp(signature->Signature, "NB09", 4) != 0 && memcmp(signature->Signature, "NB11", 4) != 0)
+    if (memcmp(signature, "NB09", 4) != 0 && memcmp(signature, "NB11", 4) != 0)
     {
-	printf("Unsupported signature (%.4s), aborting\n", signature->Signature);
+	printf("Unsupported signature (%.4s), aborting\n", signature);
 	return;
     }
 
-    dirHeader = PRD(Offset(cv_base) + signature->filepos, sizeof(OMFDirHeader));
+    sig = cv_base;
+
+    printf("      Filepos:           0x%08lX\n", sig->filepos);
+
+    dirHeader = PRD(Offset(cv_base) + sig->filepos, sizeof(OMFDirHeader));
     if (!dirHeader) {printf("Can't get debug header, aborting\n"); return;}
 
     printf("      Size of header:    0x%4X\n", dirHeader->cbDirHeader);
     printf("      Size per entry:    0x%4X\n", dirHeader->cbDirEntry);
-    printf("      # of entries:      0x%8lX (%ld)\n", dirHeader->cDir, dirHeader->cDir);
-    printf("      Offset to NextDir: 0x%8lX\n", dirHeader->lfoNextDir);
-    printf("      Flags:             0x%8lX\n", dirHeader->flags);
+    printf("      # of entries:      0x%8X (%d)\n", dirHeader->cDir, dirHeader->cDir);
+    printf("      Offset to NextDir: 0x%8X\n", dirHeader->lfoNextDir);
+    printf("      Flags:             0x%8X\n", dirHeader->flags);
 
     if (!dirHeader->cDir) return;
 

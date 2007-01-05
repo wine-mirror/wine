@@ -2295,34 +2295,35 @@ BOOL pdb_fetch_file_info(struct pdb_lookup* pdb_lookup)
 static BOOL codeview_process_info(const struct process* pcs, 
                                   const struct msc_debug_info* msc_dbg)
 {
-    const CODEVIEW_HEADER_NBxx* cv = (const CODEVIEW_HEADER_NBxx*)msc_dbg->root;
+    const DWORD*                signature = (const DWORD*)msc_dbg->root;
     BOOL                        ret = FALSE;
     struct pdb_lookup           pdb_lookup;
 
-    TRACE("Processing signature %.4s\n", (const char*)&cv->dwSignature);
+    TRACE("Processing signature %.4s\n", (const char*)signature);
 
-    switch (cv->dwSignature)
+    switch (*signature)
     {
     case CODEVIEW_NB09_SIG:
     case CODEVIEW_NB11_SIG:
     {
-        const CV_DIRECTORY_HEADER*      hdr = (const CV_DIRECTORY_HEADER*)(msc_dbg->root + cv->lfoDirectory);
-        const CV_DIRECTORY_ENTRY*       ent;
-        const CV_DIRECTORY_ENTRY*       prev;
-        const CV_DIRECTORY_ENTRY*       next;
+        const OMFSignature*     cv = (const OMFSignature*)msc_dbg->root;
+        const OMFDirHeader*     hdr = (const OMFDirHeader*)(msc_dbg->root + cv->filepos);
+        const OMFDirEntry*      ent;
+        const OMFDirEntry*      prev;
+        const OMFDirEntry*      next;
         unsigned int                    i;
 
         codeview_init_basic_types(msc_dbg->module);
 
         for (i = 0; i < hdr->cDir; i++)
         {
-            ent = (const CV_DIRECTORY_ENTRY*)((const BYTE*)hdr + hdr->cbDirHeader + i * hdr->cbDirEntry);
-            if (ent->subsection == sstGlobalTypes)
+            ent = (const OMFDirEntry*)((const BYTE*)hdr + hdr->cbDirHeader + i * hdr->cbDirEntry);
+            if (ent->SubSection == sstGlobalTypes)
             {
-                const CV_ENTRY_GLOBAL_TYPES*    types;
+                const OMFGlobalTypes*           types;
                 struct codeview_type_parse      ctp;
 
-                types = (const CV_ENTRY_GLOBAL_TYPES*)(msc_dbg->root + ent->lfo);
+                types = (const OMFGlobalTypes*)(msc_dbg->root + ent->lfo);
                 ctp.module = msc_dbg->module;
                 ctp.offset = (const DWORD*)(types + 1);
                 ctp.num    = types->cTypes;
@@ -2337,15 +2338,15 @@ static BOOL codeview_process_info(const struct process* pcs,
             }
         }
 
-        ent = (const CV_DIRECTORY_ENTRY*)((const BYTE*)hdr + hdr->cbDirHeader);
+        ent = (const OMFDirEntry*)((const BYTE*)hdr + hdr->cbDirHeader);
         for (i = 0; i < hdr->cDir; i++, ent = next)
         {
             next = (i == hdr->cDir-1) ? NULL :
-                   (const CV_DIRECTORY_ENTRY*)((const BYTE*)ent + hdr->cbDirEntry);
+                   (const OMFDirEntry*)((const BYTE*)ent + hdr->cbDirEntry);
             prev = (i == 0) ? NULL :
-                   (const CV_DIRECTORY_ENTRY*)((const BYTE*)ent - hdr->cbDirEntry);
+                   (const OMFDirEntry*)((const BYTE*)ent - hdr->cbDirEntry);
 
-            if (ent->subsection == sstAlignSym)
+            if (ent->SubSection == sstAlignSym)
             {
                 /*
                  * Check the next and previous entry.  If either is a
@@ -2357,13 +2358,13 @@ static BOOL codeview_process_info(const struct process* pcs,
                 struct codeview_linetab*        linetab = NULL;
 
                 if (next && next->iMod == ent->iMod && 
-                    next->subsection == sstSrcModule)
+                    next->SubSection == sstSrcModule)
                     linetab = codeview_snarf_linetab(msc_dbg->module, 
                                                      msc_dbg->root + next->lfo, next->cb, 
                                                      TRUE);
 
                 if (prev && prev->iMod == ent->iMod &&
-                    prev->subsection == sstSrcModule)
+                    prev->SubSection == sstSrcModule)
                     linetab = codeview_snarf_linetab(msc_dbg->module, 
                                                      msc_dbg->root + prev->lfo, prev->cb, 
                                                      TRUE);
@@ -2387,7 +2388,7 @@ static BOOL codeview_process_info(const struct process* pcs,
 
     case CODEVIEW_NB10_SIG:
     {
-        const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)(cv + 1);
+        const CODEVIEW_PDB_DATA* pdb = (const CODEVIEW_PDB_DATA*)msc_dbg->root;
         pdb_lookup.filename = pdb->name;
         pdb_lookup.kind = PDB_JG;
         pdb_lookup.u.jg.timestamp = pdb->timestamp;
@@ -2398,7 +2399,7 @@ static BOOL codeview_process_info(const struct process* pcs,
     }
     case CODEVIEW_RSDS_SIG:
     {
-        const CODEVIEW_HEADER_RSDS* rsds = (const CODEVIEW_HEADER_RSDS*)msc_dbg->root;
+        const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
 
         TRACE("Got RSDS type of PDB file: guid=%s unk=%08x name=%s\n",
               wine_dbgstr_guid(&rsds->guid), rsds->unknown, rsds->name);
@@ -2411,14 +2412,14 @@ static BOOL codeview_process_info(const struct process* pcs,
         break;
     }
     default:
-        ERR("Unknown CODEVIEW signature %08X in module %s\n",
-            cv->dwSignature, msc_dbg->module->module.ModuleName);
+        ERR("Unknown CODEVIEW signature %.4s in module %s\n",
+            (const char*)signature, msc_dbg->module->module.ModuleName);
         break;
     }
     if (ret)
     {
-        msc_dbg->module->module.CVSig = cv->dwSignature;
-        memcpy(msc_dbg->module->module.CVData, cv,
+        msc_dbg->module->module.CVSig = *signature;
+        memcpy(msc_dbg->module->module.CVData, msc_dbg->root,
                sizeof(msc_dbg->module->module.CVData));
     }
     return ret;
