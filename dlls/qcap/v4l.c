@@ -689,7 +689,7 @@ HRESULT qcap_driver_run(Capture *capBox, FILTER_STATE *state)
             LeaveCriticalSection(&capBox->CritSect);
             return S_OK;
         }
-        ERR("Creating thread failed.. %x\n", GetLastError());
+        ERR("Creating thread failed.. %u\n", GetLastError());
         LeaveCriticalSection(&capBox->CritSect);
         return E_FAIL;
     }
