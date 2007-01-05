@@ -1294,11 +1294,9 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = OpenPrinter(local_server, &hprinter, NULL);
-        todo_wine {
         ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
             "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
             res, GetLastError());
-        }
         if(res) ClosePrinter(hprinter);
     }
 
