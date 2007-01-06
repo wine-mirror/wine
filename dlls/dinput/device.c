@@ -1041,7 +1041,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
     odf = dataformat_to_odf(This->data_format.wine_df, idx);
     memset(pdidoi, 0, pdidoi->dwSize);
     pdidoi->dwSize   = dwSize;
-    pdidoi->guidType = *odf->pguid;
+    if (odf->pguid) pdidoi->guidType = *odf->pguid;
     pdidoi->dwOfs    = This->data_format.offsets ? This->data_format.offsets[idx] : odf->dwOfs;
     pdidoi->dwType   = odf->dwType;
     pdidoi->dwFlags  = odf->dwFlags;
