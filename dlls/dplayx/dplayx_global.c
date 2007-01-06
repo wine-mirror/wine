@@ -199,14 +199,16 @@ static DPSESSIONDESC2* sessionData = NULL;
 /* static DPSESSIONDESC2* sessionData[ numSupportedSessions ]; */
 
 /* Function prototypes */
-DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpDplData );
-DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpDplData );
-void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src );
-void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src );
-BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppId, LPDPLAYX_LOBBYDATA* dplData );
-void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData );
-BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
-                                   LPCDPSESSIONDESC2 lpSessionSrc );
+static DWORD DPLAYX_SizeOfLobbyDataA( LPDPLCONNECTION lpDplData );
+static DWORD DPLAYX_SizeOfLobbyDataW( LPDPLCONNECTION lpDplData );
+static void DPLAYX_CopyConnStructA( LPDPLCONNECTION dest, LPDPLCONNECTION src );
+static void DPLAYX_CopyConnStructW( LPDPLCONNECTION dest, LPDPLCONNECTION src );
+static BOOL DPLAYX_IsAppIdLobbied( DWORD dwAppId, LPDPLAYX_LOBBYDATA* dplData );
+static void DPLAYX_InitializeLobbyDataEntry( LPDPLAYX_LOBBYDATA lpData );
+static BOOL DPLAYX_CopyIntoSessionDesc2A( LPDPSESSIONDESC2  lpSessionDest,
+                                          LPCDPSESSIONDESC2 lpSessionSrc );
+static BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart, LPHANDLE lphDeath,
+                                        LPHANDLE lphConnRead, BOOL bClearSetHandles );
 
 
 
@@ -527,10 +529,10 @@ BOOL DPLAYX_SetLobbyHandles( DWORD dwAppID,
   return TRUE;
 }
 
-BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
-                                 LPHANDLE lphDeath,
-                                 LPHANDLE lphConnRead,
-                                 BOOL     bClearSetHandles )
+static BOOL DPLAYX_GetThisLobbyHandles( LPHANDLE lphStart,
+                                        LPHANDLE lphDeath,
+                                        LPHANDLE lphConnRead,
+                                        BOOL     bClearSetHandles )
 {
   LPDPLAYX_LOBBYDATA lpLData;
 

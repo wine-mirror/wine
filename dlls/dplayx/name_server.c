@@ -67,7 +67,7 @@ struct NSCache
 typedef struct NSCache NSCache, *lpNSCache;
 
 /* Function prototypes */
-DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
+static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData );
 
 /* Name Server functions
  * ---------------------
@@ -245,7 +245,7 @@ HRESULT NS_SendSessionRequestBroadcast( LPCGUID lpcGuid,
 }
 
 /* Delete a name server node which has been allocated on the heap */
-DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData )
+static DPQ_DECL_DELETECB( cbDeleteNSNodeFromHeap, lpNSCacheData )
 {
   /* NOTE: This proc doesn't deal with the walking pointer */
 
