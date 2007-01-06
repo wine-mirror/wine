@@ -111,6 +111,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     {
 
         WINED3DDEVINFO_VCACHE *data = (WINED3DDEVINFO_VCACHE *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_VCACHE\n", This);
         data->Pattern     = MAKEFOURCC('C','A','C','H');
         data->OptMethod   = 0; /*0 get longest strips, 1 optimize vertex cache*/
         data->CacheSize   = 0; /*cache size, only required if OptMethod == 1*/
@@ -122,6 +123,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     {
         WINED3DDEVINFO_RESOURCEMANAGER *data = (WINED3DDEVINFO_RESOURCEMANAGER *)pData;
         int i;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_RESOURCEMANAGER\n", This);
         for(i = 0; i < WINED3DRTYPECOUNT; i++){
             /*I'm setting the default values to 1 so as to reduce the risk of a div/0 in the caller*/
             /*  isTextureResident could be used to get some of this infomration  */
@@ -143,6 +145,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_VERTEXSTATS:
     {
         WINED3DDEVINFO_VERTEXSTATS *data = (WINED3DDEVINFO_VERTEXSTATS *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_VERTEXSTATS\n", This);
         data->NumRenderedTriangles      = 1;
         data->NumExtraClippingTriangles = 1;
 
@@ -151,6 +154,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_EVENT:
     {
         BOOL* data = pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_EVENT\n", This);
         *data = TRUE; /*Don't know what this is supposed to be*/
     }
     break;
@@ -185,24 +189,28 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_TIMESTAMP:
     {
         UINT64* data = pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_TIMESTAMP\n", This);
         *data = 1; /*Don't know what this is supposed to be*/
     }
     break;
     case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
     {
         BOOL* data = pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_TIMESTAMPDISJOINT\n", This);
         *data = FALSE; /*Don't know what this is supposed to be*/
     }
     break;
     case WINED3DQUERYTYPE_TIMESTAMPFREQ:
     {
         UINT64* data = pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_TIMESTAMPFREQ\n", This);
         *data = 1; /*Don't know what this is supposed to be*/
     }
     break;
     case WINED3DQUERYTYPE_PIPELINETIMINGS:
     {
         WINED3DDEVINFO_PIPELINETIMINGS *data = (WINED3DDEVINFO_PIPELINETIMINGS *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_PIPELINETIMINGS\n", This);
 
         data->VertexProcessingTimePercent    =   1.0f;
         data->PixelProcessingTimePercent     =   1.0f;
@@ -213,6 +221,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_INTERFACETIMINGS:
     {
         WINED3DDEVINFO_INTERFACETIMINGS *data = (WINED3DDEVINFO_INTERFACETIMINGS *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_INTERFACETIMINGS\n", This);
 
         data->WaitingForGPUToUseApplicationResourceTimePercent =   1.0f;
         data->WaitingForGPUToAcceptMoreCommandsTimePercent     =   1.0f;
@@ -225,6 +234,8 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_VERTEXTIMINGS:
     {
         WINED3DDEVINFO_STAGETIMINGS *data = (WINED3DDEVINFO_STAGETIMINGS *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_VERTEXTIMINGS\n", This);
+
         data->MemoryProcessingPercent      = 50.0f;
         data->ComputationProcessingPercent = 50.0f;
 
@@ -233,6 +244,8 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_PIXELTIMINGS:
     {
         WINED3DDEVINFO_STAGETIMINGS *data = (WINED3DDEVINFO_STAGETIMINGS *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_PIXELTIMINGS\n", This);
+
         data->MemoryProcessingPercent      = 50.0f;
         data->ComputationProcessingPercent = 50.0f;
     }
@@ -240,6 +253,8 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
     {
         WINED3DDEVINFO_BANDWIDTHTIMINGS *data = (WINED3DDEVINFO_BANDWIDTHTIMINGS *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_BANDWIDTHTIMINGS\n", This);
+
         data->MaxBandwidthUtilized                =  1.0f;
         data->FrontEndUploadMemoryUtilizedPercent =  1.0f;
         data->VertexRateUtilizedPercent           =  1.0f;
@@ -250,6 +265,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_CACHEUTILIZATION:
     {
         WINED3DDEVINFO_CACHEUTILIZATION *data = (WINED3DDEVINFO_CACHEUTILIZATION *)pData;
+        FIXME("(%p): Unimplemented query WINED3DQUERYTYPE_CACHEUTILIZATION\n", This);
 
         data->TextureCacheHitRate             = 1.0f;
         data->PostTransformVertexCacheHitRate = 1.0f;
@@ -265,7 +281,6 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     /*dwGetDataFlags = 0 || D3DGETDATA_FLUSH
     D3DGETDATA_FLUSH may return WINED3DERR_DEVICELOST if the device is lost
     */
-    FIXME("(%p) : type %#x, Partial stub\n", This, This->type);
     return res; /* S_OK if the query data is available*/
 }
 
@@ -353,7 +368,8 @@ static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIs
             break;
 
         default:
-            FIXME("(%p) : Unhandled query type %#x\n", This, This->type);
+            /* The fixme is printed when the app asks for the resulting data */
+            WARN("(%p) : Unhandled query type %#x\n", This, This->type);
             break;
     }
 
