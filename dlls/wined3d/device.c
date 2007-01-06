@@ -3531,13 +3531,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShader(IWineD3DDevice *iface, I
         TRACE("Recording... not performing anything\n");
     }
 
-    if (NULL != pShader) {
-        IWineD3DPixelShader_AddRef(pShader);
-    }
-    if (NULL != oldShader) {
-        IWineD3DPixelShader_Release(oldShader);
-    }
-
     if (This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
         return WINED3D_OK;

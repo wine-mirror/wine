@@ -246,10 +246,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 This->pIndexData = NULL;
             }
 
-            if (NULL != This->pixelShader) {
-                IWineD3DPixelShader_Release(This->pixelShader);
-            }
-
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(sampler_stages); counter++) {
                 if (This->textures[counter]) {
@@ -413,13 +409,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         /* Recorded => Only update 'changed' values */
         if (This->pixelShader != targetStateBlock->pixelShader) {
             TRACE("Updating pixel shader from %p to %p\n", This->pixelShader, targetStateBlock->pixelShader);
-
-            if (targetStateBlock->pixelShader) {
-                IWineD3DPixelShader_AddRef(targetStateBlock->pixelShader);
-            }
-            if (This->pixelShader) {
-                IWineD3DPixelShader_Release(This->pixelShader);
-            }
 
             This->pixelShader = targetStateBlock->pixelShader;
         }
