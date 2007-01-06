@@ -1141,39 +1141,6 @@ inline static void drawPrimitiveDrawStrided(
     This->shader_backend->shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
 }
 
-inline void drawPrimitiveTraceDataLocations(
-    WineDirect3DVertexStridedData *dataLocations) {
-
-    /* Dump out what parts we have supplied */
-    TRACE("Strided Data:\n");
-    TRACE_STRIDED((dataLocations), position);
-    TRACE_STRIDED((dataLocations), blendWeights);
-    TRACE_STRIDED((dataLocations), blendMatrixIndices);
-    TRACE_STRIDED((dataLocations), normal);
-    TRACE_STRIDED((dataLocations), pSize);
-    TRACE_STRIDED((dataLocations), diffuse);
-    TRACE_STRIDED((dataLocations), specular);
-    TRACE_STRIDED((dataLocations), texCoords[0]);
-    TRACE_STRIDED((dataLocations), texCoords[1]);
-    TRACE_STRIDED((dataLocations), texCoords[2]);
-    TRACE_STRIDED((dataLocations), texCoords[3]);
-    TRACE_STRIDED((dataLocations), texCoords[4]);
-    TRACE_STRIDED((dataLocations), texCoords[5]);
-    TRACE_STRIDED((dataLocations), texCoords[6]);
-    TRACE_STRIDED((dataLocations), texCoords[7]);
-    TRACE_STRIDED((dataLocations), position2);
-    TRACE_STRIDED((dataLocations), normal2);
-    TRACE_STRIDED((dataLocations), tangent);
-    TRACE_STRIDED((dataLocations), binormal);
-    TRACE_STRIDED((dataLocations), tessFactor);
-    TRACE_STRIDED((dataLocations), fog);
-    TRACE_STRIDED((dataLocations), depth);
-    TRACE_STRIDED((dataLocations), sample);
-
-    return;
-
-}
-
 static void check_fbo_status(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 

@@ -2440,6 +2440,38 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     }
 }
 
+inline void drawPrimitiveTraceDataLocations(
+    WineDirect3DVertexStridedData *dataLocations) {
+
+    /* Dump out what parts we have supplied */
+    TRACE("Strided Data:\n");
+    TRACE_STRIDED((dataLocations), position);
+    TRACE_STRIDED((dataLocations), blendWeights);
+    TRACE_STRIDED((dataLocations), blendMatrixIndices);
+    TRACE_STRIDED((dataLocations), normal);
+    TRACE_STRIDED((dataLocations), pSize);
+    TRACE_STRIDED((dataLocations), diffuse);
+    TRACE_STRIDED((dataLocations), specular);
+    TRACE_STRIDED((dataLocations), texCoords[0]);
+    TRACE_STRIDED((dataLocations), texCoords[1]);
+    TRACE_STRIDED((dataLocations), texCoords[2]);
+    TRACE_STRIDED((dataLocations), texCoords[3]);
+    TRACE_STRIDED((dataLocations), texCoords[4]);
+    TRACE_STRIDED((dataLocations), texCoords[5]);
+    TRACE_STRIDED((dataLocations), texCoords[6]);
+    TRACE_STRIDED((dataLocations), texCoords[7]);
+    TRACE_STRIDED((dataLocations), position2);
+    TRACE_STRIDED((dataLocations), normal2);
+    TRACE_STRIDED((dataLocations), tangent);
+    TRACE_STRIDED((dataLocations), binormal);
+    TRACE_STRIDED((dataLocations), tessFactor);
+    TRACE_STRIDED((dataLocations), fog);
+    TRACE_STRIDED((dataLocations), depth);
+    TRACE_STRIDED((dataLocations), sample);
+
+    return;
+}
+
 /* Helper for vertexdeclaration() */
 static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVertexShaderFunction) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
@@ -2450,6 +2482,10 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
         /* Note: this is a ddraw fixed-function code path */
         TRACE("================ Strided Input ===================\n");
         memcpy(dataLocations, device->up_strided, sizeof(*dataLocations));
+
+        if(TRACE_ON(d3d)) {
+            drawPrimitiveTraceDataLocations(dataLocations);
+        }
     } else if (stateblock->vertexDecl || stateblock->vertexShader) {
         /* Note: This is a fixed function or shader codepath.
          * This means it must handle both types of strided data.
@@ -2474,6 +2510,9 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
         memset(dataLocations, 0, sizeof(*dataLocations));
         primitiveConvertToStridedData((IWineD3DDevice *) device, dataLocations,
 									   &fixup);
+        if(TRACE_ON(d3d)) {
+            drawPrimitiveTraceDataLocations(dataLocations);
+        }
      }
 
     /* Unload the old arrays before loading the new ones to get old junk out */
