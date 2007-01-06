@@ -1810,6 +1810,22 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
+static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
+
+    /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
+     * has an update pending
+     */
+    if(isStateDirty(device, STATE_VDECL) ||
+       isStateDirty(device, STATE_PIXELSHADER)) {
+       return;
+    }
+    
+    device->shader_backend->shader_load_constants((IWineD3DDevice *) device,
+        stateblock->pixelShader && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function,
+        stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function);
+}
+
 static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     int i;
 
@@ -1838,6 +1854,10 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                     (IWineD3DDevice *) stateblock->wineD3DDevice,
                     TRUE,
                     !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+            
+            if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT)) {
+                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock);
+            }
         }
         stateblock->wineD3DDevice->last_was_pshader = TRUE;
     } else {
@@ -1856,6 +1876,10 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
                     (IWineD3DDevice *) stateblock->wineD3DDevice,
                     FALSE,
                     !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+
+            if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT)) {
+                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock);
+            }
         }
     }
 }
@@ -2649,16 +2673,20 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
          * in order to determine if we need to do any swizzling for D3DCOLOR
          * registers. If the shader is already compiled this call will do nothing. */
         IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
+    }
 
-        /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
-         * application
-         */
-        if(!isStateDirty(device, STATE_PIXELSHADER)) {
-            BOOL usePixelShaderFunction = device->ps_selected_mode != SHADER_NONE &&
-                                          stateblock->pixelShader &&
-                                          ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
+    /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
+     * application
+     */
+    if(!isStateDirty(device, STATE_PIXELSHADER)) {
+        BOOL usePixelShaderFunction = device->ps_selected_mode != SHADER_NONE && 
+                                        stateblock->pixelShader &&
+                                        ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
 
-            device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
+        device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
+
+        if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
+            shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock);
         }
     }
 
@@ -3704,5 +3732,6 @@ const struct StateEntry StateTable[] =
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },
-
+    { /*   , STATE_VERTEXSHADERCONSTANT             */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
+    { /*   , STATE_PIXELSHADERCONSTANT              */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
 };

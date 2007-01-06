@@ -1106,10 +1106,7 @@ inline static void drawPrimitiveDrawStrided(
     int minIndex,
     long StartIdx) {
 
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    /* Load any global constants/uniforms that may have been set by the application */
-    This->shader_backend->shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;    
 
     /* Draw vertex-by-vertex */
     if (This->useDrawStridedSlow)
@@ -1271,7 +1268,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         StateTable[dirtyState].apply(dirtyState, This->stateBlock);
     }
     This->numDirtyEntries = 0; /* This makes the whole list clean */
-
 
     if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         check_fbo_status(iface);

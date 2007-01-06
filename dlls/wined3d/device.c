@@ -3328,6 +3328,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantB(
         This->updateStateBlock->set.vertexShaderConstantsB[i]     = TRUE;
     }
 
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
+
     return WINED3D_OK;
 }
 
@@ -3374,6 +3376,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantI(
         This->updateStateBlock->changed.vertexShaderConstantsI[i] = TRUE;
         This->updateStateBlock->set.vertexShaderConstantsI[i]     = TRUE;
     }
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3426,6 +3430,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
         }
         This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
     }
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VERTEXSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3606,6 +3612,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantB(
         This->updateStateBlock->set.pixelShaderConstantsB[i]     = TRUE;
     }
 
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
+
     return WINED3D_OK;
 }
 
@@ -3652,6 +3660,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantI(
         This->updateStateBlock->changed.pixelShaderConstantsI[i] = TRUE;
         This->updateStateBlock->set.pixelShaderConstantsI[i]     = TRUE;
     }
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
 
     return WINED3D_OK;
 }
@@ -3704,6 +3714,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
         }
         This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;
     }
+
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADERCONSTANT);
 
     return WINED3D_OK;
 }
