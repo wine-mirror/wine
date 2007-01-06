@@ -143,20 +143,20 @@ static void test_invalid_files(void)
         err_line = 0xdeadbeef;
         hinf = test_file_contents( invalid_files[i].data, &err_line );
         err = GetLastError();
-        trace( "hinf=%p err=%x line=%d\n", hinf, err, err_line );
+        trace( "hinf=%p err=0x%x line=%d\n", hinf, err, err_line );
         if (invalid_files[i].error)  /* should fail */
         {
             ok( hinf == INVALID_HANDLE_VALUE, "file %u: Open succeeded\n", i );
             if (invalid_files[i].todo) todo_wine
             {
-                ok( err == invalid_files[i].error, "file %u: Bad error %x/%x\n",
+                ok( err == invalid_files[i].error, "file %u: Bad error %u/%u\n",
                     i, err, invalid_files[i].error );
                 ok( err_line == invalid_files[i].err_line, "file %u: Bad error line %d/%d\n",
                     i, err_line, invalid_files[i].err_line );
             }
             else
             {
-                ok( err == invalid_files[i].error, "file %u: Bad error %x/%x\n",
+                ok( err == invalid_files[i].error, "file %u: Bad error %u/%u\n",
                     i, err, invalid_files[i].error );
                 ok( err_line == invalid_files[i].err_line, "file %u: Bad error line %d/%d\n",
                     i, err_line, invalid_files[i].err_line );
@@ -165,7 +165,7 @@ static void test_invalid_files(void)
         else  /* should succeed */
         {
             ok( hinf != INVALID_HANDLE_VALUE, "file %u: Open failed\n", i );
-            ok( err == 0, "file %u: Error code set to %x\n", i, err );
+            ok( err == 0, "file %u: Error code set to %u\n", i, err );
         }
         if (hinf != INVALID_HANDLE_VALUE) SetupCloseInfFile( hinf );
     }
@@ -223,23 +223,23 @@ static void test_section_names(void)
     {
         SetLastError( 0xdeadbeef );
         hinf = test_file_contents( section_names[i].data, &err_line );
-        ok( hinf != INVALID_HANDLE_VALUE, "line %u: open failed err %x\n", i, GetLastError() );
+        ok( hinf != INVALID_HANDLE_VALUE, "line %u: open failed err %u\n", i, GetLastError() );
         if (hinf == INVALID_HANDLE_VALUE) continue;
 
         ret = SetupGetLineCountA( hinf, section_names[i].section );
         err = GetLastError();
-        trace( "hinf=%p ret=%d err=%x\n", hinf, ret, err );
+        trace( "hinf=%p ret=%d err=0x%x\n", hinf, ret, err );
         if (ret != -1)
         {
             ok( !section_names[i].error, "line %u: section name %s found\n",
                 i, section_names[i].section );
-            ok( !err, "line %u: bad error code %x\n", i, err );
+            ok( !err, "line %u: bad error code %u\n", i, err );
         }
         else
         {
             ok( section_names[i].error, "line %u: section name %s not found\n",
                 i, section_names[i].section );
-            ok( err == section_names[i].error, "line %u: bad error %x/%x\n",
+            ok( err == section_names[i].error, "line %u: bad error %u/%u\n",
                 i, err, section_names[i].error );
         }
         SetupCloseInfFile( hinf );
@@ -328,12 +328,12 @@ static const char *check_key( INFCONTEXT *context, const char *wanted )
     if (!key)
     {
         ok( !wanted, "missing key %s\n", wanted );
-        ok( err == 0 || err == ERROR_INVALID_PARAMETER, "last error set to %x\n", err );
+        ok( err == 0 || err == ERROR_INVALID_PARAMETER, "last error set to %u\n", err );
     }
     else
     {
         ok( !strcmp( key, wanted ), "bad key %s/%s\n", key, wanted );
-        ok( err == 0, "last error set to %x\n", err );
+        ok( err == 0, "last error set to %u\n", err );
     }
     return key;
 }
@@ -355,7 +355,7 @@ static void test_key_names(void)
         strcat( buffer, key_names[i].data );
         SetLastError( 0xdeadbeef );
         hinf = test_file_contents( buffer, &err_line );
-        ok( hinf != INVALID_HANDLE_VALUE, "line %u: open failed err %x\n", i, GetLastError() );
+        ok( hinf != INVALID_HANDLE_VALUE, "line %u: open failed err %u\n", i, GetLastError() );
         if (hinf == INVALID_HANDLE_VALUE) continue;
 
         ret = SetupFindFirstLineA( hinf, "Test", 0, &context );
@@ -370,7 +370,7 @@ static void test_key_names(void)
             err = GetLastError();
             if (field)
             {
-                ok( err == 0, "line %u: bad error %x\n", i, GetLastError() );
+                ok( err == 0, "line %u: bad error %u\n", i, err );
                 if (key_names[i].fields[index])
                     ok( !strcmp( field, key_names[i].fields[index] ), "line %u: bad field %s/%s\n",
                         i, field, key_names[i].fields[index] );
@@ -382,7 +382,7 @@ static void test_key_names(void)
             else
             {
                 ok( err == 0 || err == ERROR_INVALID_PARAMETER,
-                    "line %u: bad error %x\n", i, GetLastError() );
+                    "line %u: bad error %u\n", i, err );
                 if (key_names[i].fields[index])
                     ok( 0, "line %u: missing field %s\n", i, key_names[i].fields[index] );
             }
@@ -404,7 +404,7 @@ static void test_close_inf_file(void)
 {
     SetLastError(0xdeadbeef);
     SetupCloseInfFile(NULL);
-    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %u\n", GetLastError());
 }
 
 static const char *contents = "[Version]\n"
@@ -448,7 +448,7 @@ static void test_pSetupGetField(void)
         ret = HeapFree( GetProcessHeap(), 0, (LPVOID)field );
         ok( !ret, "Expected HeapFree to fail\n" );
         ok( GetLastError() == ERROR_INVALID_PARAMETER,
-            "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError() );
+            "Expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError() );
     }
 
     field = pSetupGetField( &context, 3 );
@@ -458,7 +458,7 @@ static void test_pSetupGetField(void)
     field = pSetupGetField( &context, 4 );
     ok( field == NULL, "Expected NULL, got %p\n", field );
     ok( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError() );
+        "Expected ERROR_INVALID_PARAMETER, got %u\n", GetLastError() );
 
     SetupCloseInfFile( hinf );
 }
