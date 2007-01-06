@@ -313,6 +313,33 @@ static void test_items(void)
     ok(r != 0, "ret %d\n", r);
     ok(item.lParam == lparamTest, "got lParam %lx, expected %lx\n", item.lParam, lparamTest);
 
+    /**** Some tests of state highlighting ****/
+    memset (&item, 0xaa, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    item.state = LVIS_SELECTED;
+    item.stateMask = LVIS_SELECTED | LVIS_DROPHILITED;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    item.iSubItem = 1;
+    item.state = LVIS_DROPHILITED;
+    r = SendMessage(hwnd, LVM_SETITEM, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+
+    memset (&item, 0xaa, sizeof (item));
+    item.mask = LVIF_STATE;
+    item.iItem = 0;
+    item.iSubItem = 0;
+    item.stateMask = -1;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    ok(item.state == LVIS_SELECTED, "got state %x, expected %x\n", item.state, LVIS_SELECTED);
+    item.iSubItem = 1;
+    r = SendMessage(hwnd, LVM_GETITEM, 0, (LPARAM) &item);
+    ok(r != 0, "ret %d\n", r);
+    todo_wine ok(item.state == LVIS_DROPHILITED, "got state %x, expected %x\n", item.state, LVIS_DROPHILITED);
+
     DestroyWindow(hwnd);
 }
 
