@@ -1450,10 +1450,18 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShaderConstant(LPDIRECT3DDEVI
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_GetPixelShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD pPixelShader, void* pData, DWORD* pSizeOfData) {
-    IDirect3DPixelShader8Impl *This = (IDirect3DPixelShader8Impl *)pPixelShader;
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    IDirect3DPixelShader8Impl *shader = NULL;
 
-    TRACE("(%p) : Relay\n", This);
-    return IWineD3DPixelShader_GetFunction(This->wineD3DPixelShader, pData, (UINT *)pSizeOfData);
+    TRACE("(%p) : pPixelShader %#x, pData %p, pSizeOfData %p\n", This, pPixelShader, pData, pSizeOfData);
+
+    if (pPixelShader <= VS_HIGHESTFIXEDFXF || This->allocated_shader_handles <= pPixelShader - (VS_HIGHESTFIXEDFXF + 1)) {
+        ERR("Passed an invalid shader handle.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    shader = This->shader_handles[pPixelShader - (VS_HIGHESTFIXEDFXF + 1)];
+    return IWineD3DPixelShader_GetFunction(shader->wineD3DPixelShader, pData, (UINT *)pSizeOfData);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_DrawRectPatch(LPDIRECT3DDEVICE8 iface, UINT Handle,CONST float* pNumSegs,CONST D3DRECTPATCH_INFO* pRectPatchInfo) {
