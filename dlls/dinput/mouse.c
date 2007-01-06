@@ -273,6 +273,7 @@ static ULONG WINAPI SysMouseAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     HeapFree(GetProcessHeap(), 0, This->base.data_queue);
 
     /* Free data format */
+    HeapFree(GetProcessHeap(), 0, (LPVOID)This->base.data_format.wine_df->rgodf);
     HeapFree(GetProcessHeap(), 0, (LPVOID)This->base.data_format.wine_df);
     release_DataFormat(&This->base.data_format);
 
