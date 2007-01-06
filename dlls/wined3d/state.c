@@ -307,10 +307,6 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     TRACE("glBlendFunc src=%x, dst=%x\n", srcBlend, dstBlend);
     glBlendFunc(srcBlend, dstBlend);
     checkGLcall("glBlendFunc");
-
-    /* TODO: Remove when state management done */
-    stateblock->wineD3DDevice->dstBlend = dstBlend;
-    stateblock->wineD3DDevice->srcBlend = srcBlend;
 }
 
 static void state_blendfactor(DWORD state, IWineD3DStateBlockImpl *stateblock) {
@@ -361,7 +357,6 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         glParm = CompareFunc(stateblock->renderState[WINED3DRS_ALPHAFUNC]);
     }
     if(glParm) {
-        stateblock->wineD3DDevice->alphafunc = glParm; /* Remove when state management done */
         glAlphaFunc(glParm, ref);
         checkGLcall("glAlphaFunc");
     }
