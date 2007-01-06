@@ -3239,12 +3239,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexDeclaration(IWineD3DDevice* if
         return WINED3D_OK;
     }
 
-    if (NULL != pDecl) {
-        IWineD3DVertexDeclaration_AddRef(pDecl);
-    }
-    if (NULL != oldDecl) {
-        IWineD3DVertexDeclaration_Release(oldDecl);
-    }
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     return WINED3D_OK;
 }
