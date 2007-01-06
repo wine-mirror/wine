@@ -232,13 +232,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         if (This->blockType == WINED3DSBT_INIT) {
             int counter;
             FIXME("Releasing primary stateblock\n");
-            /* Free any streams still bound */
-            for (counter = 0 ; counter < MAX_STREAMS ; counter++) {
-                if (This->streamSource[counter] != NULL) {
-                    IWineD3DVertexBuffer_Release(This->streamSource[counter]);
-                    This->streamSource[counter] = NULL;
-                }
-            }
 
             /* free any index data */
             if (This->pIndexData) {

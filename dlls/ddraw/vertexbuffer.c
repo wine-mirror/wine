@@ -164,6 +164,32 @@ IDirect3DVertexBufferImpl_Release(IDirect3DVertexBuffer7 *iface)
 
     if (ref == 0)
     {
+        IWineD3DVertexBuffer *curVB = NULL;
+        UINT offset, stride;
+
+        /* D3D7 Vertex buffers don't stay bound in the device, they are passed as a parameter
+         * to drawPrimitiveVB. DrawPrimitiveVB sets them as the stream source in wined3d,
+         * and they should get unset there before they are destroyed
+         */
+        IWineD3DDevice_GetStreamSource(This->ddraw->wineD3DDevice,
+                                       0 /* Stream number */,
+                                       &curVB,
+                                       &offset,
+                                       &stride);
+        if(curVB == This->wineD3DVertexBuffer)
+        {
+            IWineD3DDevice_SetStreamSource(This->ddraw->wineD3DDevice,
+                                        0 /* Steam number */,
+                                        NULL /* stream data */,
+                                        0 /* Offset */,
+                                        0 /* stride */);
+        }
+        if(curVB)
+        {
+            IWineD3DVertexBuffer_Release(curVB); /* For the GetStreamSource */
+        }
+
+
         IWineD3DVertexBuffer_Release(This->wineD3DVertexBuffer);
         HeapFree(GetProcessHeap(), 0, This);
         return 0;

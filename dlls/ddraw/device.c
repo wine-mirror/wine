@@ -288,7 +288,7 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         IParent *IndexBufferParent;
         DWORD i;
 
-        /* Free the index buffer */
+        /* Free the index buffer. */
         IWineD3DDevice_SetIndices(This->wineD3DDevice,
                                   NULL,
                                   0);
@@ -299,6 +299,11 @@ IDirect3DDeviceImpl_7_Release(IDirect3DDevice7 *iface)
         {
             ERR(" (%p) Something is still holding the index buffer parent %p\n", This, IndexBufferParent);
         }
+
+        /* There is no need to unset the vertex buffer here, IWineD3DDevice_Uninit3D will do that when
+         * destroying the primary stateblock. If a vertex buffer is destroyed while it is bound
+         * IDirect3DVertexBuffer::Release will unset it.
+         */
 
         /* Restore the render targets */
         if(This->OffScreenTarget)

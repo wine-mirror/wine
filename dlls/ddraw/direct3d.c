@@ -997,6 +997,7 @@ IDirect3DImpl_7_CreateVertexBuffer(IDirect3D7 *iface,
     ICOM_INIT_INTERFACE(object, IDirect3DVertexBuffer, IDirect3DVertexBuffer1_Vtbl);
 
     object->Caps = Desc->dwCaps;
+    object->ddraw = This;
 
     hr = IWineD3DDevice_CreateVertexBuffer(This->wineD3DDevice,
                                            get_flexible_vertex_size(Desc->dwFVF) * Desc->dwNumVertices,
