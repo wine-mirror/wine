@@ -1092,29 +1092,6 @@ void drawStridedSoftwareVS(IWineD3DDevice *iface, WineDirect3DVertexStridedData 
 
 #endif
 
-inline static void drawPrimitiveDrawStrided(
-    IWineD3DDevice *iface,
-    BOOL useVertexShaderFunction,
-    BOOL usePixelShaderFunction,
-    WineDirect3DVertexStridedData *dataLocations,
-    ULONG baseVIndex,
-    UINT numberOfvertices,
-    UINT numberOfIndicies,
-    GLenum glPrimType,
-    const void *idxData,
-    short idxSize,
-    int minIndex,
-    long StartIdx) {
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;    
-
-    /* Draw vertex-by-vertex */
-    if (This->useDrawStridedSlow)
-        drawStridedSlow(iface, dataLocations, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx, baseVIndex);
-    else
-        drawStridedFast(iface, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx, baseVIndex);
-}
-
 static void check_fbo_status(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -1230,22 +1207,10 @@ void drawPrimitive(IWineD3DDevice *iface,
                    int   minIndex) {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
-    BOOL                          useVertexShaderFunction = FALSE;
-    BOOL                          usePixelShaderFunction = FALSE;
     IWineD3DSwapChainImpl         *swapchain;
     int                           i;
     DWORD                         dirtyState, idx;
     BYTE                          shift;
-
-    /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
-     * here simply check whether a shader was set, or the user disabled shaders */
-    if (This->vs_selected_mode != SHADER_NONE && This->stateBlock->vertexShader &&
-        ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function != NULL) 
-        useVertexShaderFunction = TRUE;
-
-    if (This->ps_selected_mode != SHADER_NONE && This->stateBlock->pixelShader &&
-        ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function) 
-        usePixelShaderFunction = TRUE;
 
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < IWineD3DDevice_GetNumberOfSwapChains(iface); i++) {
@@ -1289,9 +1254,12 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
 
-        drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction,
-            &This->strided_streams, StartVertexIndex, numberOfVertices, calculatedNumberOfindices, glPrimType,
-            idxData, idxSize, minIndex, StartIdx);
+        if (This->useDrawStridedSlow)
+            drawStridedSlow(iface, &This->strided_streams, calculatedNumberOfindices,
+                            glPrimType, idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+        else
+            drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
+                            idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
     }
 
     /* Finshed updating the screen, restore lock */
