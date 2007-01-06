@@ -432,7 +432,7 @@
 432 stub -noname SHSendMessageBroadcastA
 433 stub -noname SHSendMessageBroadcastW
 434 stdcall @(long long long long long long ptr) user32.SendMessageTimeoutW
-435 stub -noname CLSIDFromProgIDWrap
+435 stdcall -noname CLSIDFromProgIDWrap(wstr ptr) ole32.CLSIDFromProgID
 436 stdcall -noname CLSIDFromStringWrap(wstr ptr)
 437 stdcall -noname IsOS(long)
 438 stub -noname SHLoadRegUIStringA

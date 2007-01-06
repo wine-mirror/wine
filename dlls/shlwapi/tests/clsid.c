@@ -19,7 +19,6 @@
 
 #include <stdio.h>
 
-#define INITGUID
 #include "wine/test.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -27,6 +26,10 @@
 #include "winuser.h"
 #include "shlguid.h"
 #include "shobjidl.h"
+#include "olectl.h"
+
+#define INITGUID
+#include "initguid.h"
 
 /* Function ptrs for ordinal calls */
 static HMODULE hShlwapi = 0;
@@ -153,6 +156,26 @@ static void test_ClassIDs(void)
   ok(szBuff[0] == '{', "Didn't write to buffer with ok length\n");
 }
 
+static void test_CLSIDFromProgIDWrap(void)
+{
+    HRESULT (WINAPI *pCLSIDFromProgIDWrap)(LPCOLESTR,LPCLSID);
+    CLSID clsid = IID_NULL;
+    HRESULT hres;
+
+    static const WCHAR wszStdPicture[] = {'S','t','d','P','i','c','t','u','r','e',0};
+
+    pCLSIDFromProgIDWrap = (void*)GetProcAddress(hShlwapi,(char*)435);
+
+    hres = pCLSIDFromProgIDWrap(wszStdPicture, &clsid);
+    ok(hres == S_OK, "CLSIDFromProgIDWrap failed: %08x\n", hres);
+    ok(IsEqualGUID(&CLSID_StdPicture, &clsid), "wrong clsid\n");
+
+    hres = pCLSIDFromProgIDWrap(NULL, &clsid);
+    ok(hres == E_INVALIDARG, "CLSIDFromProgIDWrap failed: %08x, expected E_INVALIDARG\n", hres);
+
+    hres = pCLSIDFromProgIDWrap(wszStdPicture, NULL);
+    ok(hres == E_INVALIDARG, "CLSIDFromProgIDWrap failed: %08x, expected E_INVALIDARG\n", hres);
+}
 
 START_TEST(clsid)
 {
@@ -165,6 +188,7 @@ START_TEST(clsid)
   }
 
   test_ClassIDs();
+  test_CLSIDFromProgIDWrap();
 
   if (hShlwapi)
     FreeLibrary(hShlwapi);
