@@ -227,7 +227,8 @@ static void test_AddMonitor(void)
         "returned %d with %d (expected '0' with ERROR_INVALID_LEVEL)\n",
         res, GetLastError());
 
-#if 0
+    if (0)
+    {
     /* This test crash with win9x on vmware (works with win9x on qemu 0.8.1) */
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, NULL);
@@ -237,7 +238,7 @@ static void test_AddMonitor(void)
          (GetLastError() == ERROR_PRIVILEGE_NOT_HELD)), 
         "returned %d with %d (expected '0' with: MAGIC_DEAD or "
         "ERROR_PRIVILEGE_NOT_HELD)\n", res, GetLastError());
-#endif
+    }
 
     ZeroMemory(&mi2a, sizeof(MONITOR_INFO_2A));
     SetLastError(MAGIC_DEAD);
@@ -260,7 +261,8 @@ static void test_AddMonitor(void)
         return;
     }
 
-#if 0
+    if (0)
+    {
     /* The Test is deactivated, because when mi2a.pName is NULL, the subkey
        HKLM\System\CurrentControlSet\Control\Print\Monitors\C:\WINDOWS\SYSTEM
        or HKLM\System\CurrentControlSet\Control\Print\Monitors\ì
@@ -270,7 +272,7 @@ static void test_AddMonitor(void)
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
-#endif
+    }
 
     mi2a.pEnvironment = entry->env;
     mi2a.pName = empty;
@@ -1149,13 +1151,14 @@ static void test_GetPrintProcessorDirectory(void)
         "returned %d with %d (expected '0' with ERROR_INSUFFICIENT_BUFFER)\n",
         res, GetLastError());
 
-#if 0
+    if (0)
+    {
     /* XPsp2: the program will crash here, when the spooler is not running  */
     /*        GetPrinterDriverDirectory has the same bug */
     pcbNeeded = 0;
     SetLastError(0xdeadbeef);
     res = GetPrintProcessorDirectoryA( NULL, NULL, 1, NULL, cbBuf, &pcbNeeded);
-#endif
+    }
 
     buffer[0] = '\0';
     SetLastError(0xdeadbeef);
