@@ -356,6 +356,14 @@ DWORD_PTR WINAPI SHGetFileInfoW(LPCWSTR path,DWORD dwFileAttributes,
          (flags & (SHGFI_ATTRIBUTES|SHGFI_EXETYPE|SHGFI_PIDL)))
         return FALSE;
 
+    if ( (flags & SHGFI_USEFILEATTRIBUTES) &&
+         (flags & (SHGFI_ICONLOCATION | SHGFI_ICON | SHGFI_SYSICONINDEX)) )
+    {
+        FIXME("This combination of flags is not supported yet\n");
+        /* And it would cause a crash, so return false instead */
+        return FALSE;
+    }
+
     /* windows initializes these values regardless of the flags */
     if (psfi != NULL)
     {

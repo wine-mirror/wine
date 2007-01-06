@@ -111,6 +111,26 @@ static void clean_after_shfo_tests(void)
     RemoveDirectoryA("nonexistent");
 }
 
+
+static void test_get_file_info(void)
+{
+    DWORD rc;
+    SHFILEINFO shfi;
+
+    strcpy(shfi.szDisplayName, "dummy");
+    shfi.iIcon=0xdeadbeef;
+    rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
+                      &shfi, sizeof(shfi),
+                      SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
+    todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent) returned %d\n", rc);
+    if (rc)
+    {
+        ok(strcpy(shfi.szDisplayName, "dummy") != 0, "SHGetFileInfoA(c:\\nonexistent) displayname is not set\n");
+        ok(shfi.iIcon != 0xdeadbeef, "SHGetFileInfoA(c:\\nonexistent) iIcon is not set\n");
+    }
+}
+
+
 /*
  puts into the specified buffer file names with current directory.
  files - string with file names, separated by null characters. Ends on a double
@@ -854,6 +874,8 @@ START_TEST(shlfileop)
     InitFunctionPointers();
 
     clean_after_shfo_tests();
+
+    test_get_file_info();
 
     init_shfo_tests();
     test_delete();
