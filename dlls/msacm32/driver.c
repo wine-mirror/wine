@@ -426,11 +426,11 @@ LRESULT WINAPI acmDriverMessage(HACMDRIVER had, UINT uMsg, LPARAM lParam1, LPARA
             }
         
             if (pAlias != NULL) {
-                unsigned int iStructSize = 16;
-                /* This verification is required because DRVCONFIGINFO is 12 bytes
-                   long, yet native msacm reports a 16-byte structure to codecs.
+                /* DRVCONFIGINFO is only 12 bytes long, but native msacm
+                 * reports a 16-byte structure to codecs, so allocate 16 bytes,
+                 * just to be on the safe side.
                  */
-                if (iStructSize < sizeof(DRVCONFIGINFO)) iStructSize = sizeof(DRVCONFIGINFO);
+                const unsigned int iStructSize = 16;
                 pConfigInfo = HeapAlloc(MSACM_hHeap, 0, iStructSize);
                 if (!pConfigInfo) {
                     ERR("OOM while supplying DRVCONFIGINFO for DRV_CONFIGURE, using NULL\n");
