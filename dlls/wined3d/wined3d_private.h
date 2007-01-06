@@ -583,6 +583,7 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    last_was_vshader;
     BOOL                    last_was_foggy_shader;
     BOOL                    namedArraysLoaded, numberedArraysLoaded;
+    BOOL                    lastWasPow2Texture[MAX_TEXTURES];
 
     /* State block related */
     BOOL                    isRecordingState;

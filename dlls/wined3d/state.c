@@ -1752,13 +1752,28 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 
     if(stateblock->textures[sampler]) {
+        BOOL texIsPow2 = FALSE;
 
-        /* NP2 textures need the texture matrix set properly for the stage */
-        if(wined3d_settings.nonpower2_mode == NP2_NATIVE && sampler < MAX_TEXTURES - 1 &&
-           stateblock->textureDimensions[sampler] == GL_TEXTURE_2D &&
-           (((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorX != 1.0 ||
-            ((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorY != 1.0 ) ) {
-            transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock);
+        /* The fixed function np2 texture emulation uses the texture matrix to fix up the coordinates
+         * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
+         * scaling is reapplied or removed, the texture matrix has to be reapplied
+         */
+        if(wined3d_settings.nonpower2_mode != NP2_NATIVE && sampler < MAX_TEXTURES) {
+            if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D) {
+                if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorX != 1.0 ||
+                   ((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorY != 1.0 ) {
+                    texIsPow2 = TRUE;
+                }
+            } else if(stateblock->textureDimensions[sampler] == GL_TEXTURE_CUBE_MAP_ARB) {
+                if(((IWineD3DCubeTextureImpl *) stateblock->textures[sampler])->pow2scalingFactor != 1.0) {
+                    texIsPow2 = TRUE;
+                }
+            }
+
+            if(texIsPow2 || stateblock->wineD3DDevice->lastWasPow2Texture[sampler]) {
+                transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock);
+                stateblock->wineD3DDevice->lastWasPow2Texture[sampler] = texIsPow2;
+            }
         }
 
         IWineD3DBaseTexture_PreLoad((IWineD3DBaseTexture *) stateblock->textures[sampler]);
