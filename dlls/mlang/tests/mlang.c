@@ -399,12 +399,14 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
                 "wszWebCharset mismatch");
 #endif
 
-#if 0 /* native mlang returns completely messed up encodings in some cases */
+	if (0)
+	{
+	    /* native mlang returns completely messed up encodings in some cases */
 	    ok(mcsi.uiInternetEncoding == cpinfo[i].uiCodePage || mcsi.uiInternetEncoding == cpinfo[i].uiFamilyCodePage,
 		"%u != %u || %u\n", mcsi.uiInternetEncoding, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
 	    ok(mcsi.uiCodePage == cpinfo[i].uiCodePage || mcsi.uiCodePage == cpinfo[i].uiFamilyCodePage,
 		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
-#endif
+        }
 	}
 
 	ret = IMultiLanguage2_GetCharsetInfo(iML2, cpinfo[i].wszHeaderCharset, &mcsi);
@@ -423,12 +425,14 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
                 "wszHeaderCharset mismatch");
 #endif
 
-#if 0 /* native mlang returns completely messed up encodings in some cases */
+	if (0)
+	{
+	    /* native mlang returns completely messed up encodings in some cases */
 	    ok(mcsi.uiInternetEncoding == cpinfo[i].uiCodePage || mcsi.uiInternetEncoding == cpinfo[i].uiFamilyCodePage,
 		"%u != %u || %u\n", mcsi.uiInternetEncoding, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
 	    ok(mcsi.uiCodePage == cpinfo[i].uiCodePage || mcsi.uiCodePage == cpinfo[i].uiFamilyCodePage,
 		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
-#endif
+	}
 	}
 
 	ret = IMultiLanguage2_GetCharsetInfo(iML2, cpinfo[i].wszBodyCharset, &mcsi);
@@ -447,12 +451,14 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
                 "wszBodyCharset mismatch");
 #endif
 
-#if 0 /* native mlang returns completely messed up encodings in some cases */
+	if (0)
+	{
+	    /* native mlang returns completely messed up encodings in some cases */
 	    ok(mcsi.uiInternetEncoding == cpinfo[i].uiCodePage || mcsi.uiInternetEncoding == cpinfo[i].uiFamilyCodePage,
 		"%u != %u || %u\n", mcsi.uiInternetEncoding, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
 	    ok(mcsi.uiCodePage == cpinfo[i].uiCodePage || mcsi.uiCodePage == cpinfo[i].uiFamilyCodePage,
 		"%u != %u || %u\n", mcsi.uiCodePage, cpinfo[i].uiCodePage, cpinfo[i].uiFamilyCodePage);
-#endif
+	}
 	}
 
 	trace("---\n");
@@ -470,13 +476,14 @@ static void test_EnumCodePages(IMultiLanguage2 *iML2, DWORD flags)
     ok(n == 1 && ret == S_OK, "IEnumCodePage_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
     cpinfo_cmp(&cpinfo[0], &cpinfo2);
 
-#if 0
+    if (0)
+    {
     /* Due to a bug in MS' implementation of IEnumCodePage_Skip
      * it's not used here.
      */
     ret = IEnumCodePage_Skip(iEnumCP, 1);
     ok(ret == S_OK, "IEnumCodePage_Skip: expected S_OK, got %08x\n", ret);
-#endif
+    }
     for (i = 0; i < total - 1; i++)
     {
         n = 0;
@@ -589,13 +596,14 @@ static void test_EnumScripts(IMultiLanguage2 *iML2, DWORD flags)
     ok(n == 1 && ret == S_OK, "IEnumScript_Next: expected 1/S_OK, got %u/%08x\n", n, ret);
     scriptinfo_cmp(&sinfo[0], &sinfo2);
 
-#if 0
+    if (0)
+    {
     /* Due to a bug in MS' implementation of IEnumScript_Skip
      * it's not used here.
      */
     ret = IEnumScript_Skip(iEnumScript, 1);
     ok(ret == S_OK, "IEnumScript_Skip: expected S_OK, got %08x\n", ret);
-#endif
+    }
     for (i = 0; i < total - 1; i++)
     {
         n = 0;
