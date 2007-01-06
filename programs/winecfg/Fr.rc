@@ -2,7 +2,7 @@
  * WineCfg resources
  * French Language Support
  *
- * Copyright 2005-2006 Jonathan Ernst
+ * Copyright 2005-2007 Jonathan Ernst
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -284,4 +284,24 @@ BEGIN
     IDS_DEVICES_MIXER           "Périphériques de mixage"
     IDS_UNAVAILABLE_DRIVER      "Un pilote non disponible a été trouvé dans la base de registre !\n\nSouhaitez-vous supprimer « %s » de la base de registre ?"
     IDS_WARNING                 "Attention"
+END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    IDC_SYSPARAMS_BUTTON            "Contrôle le fond"
+    IDC_SYSPARAMS_BUTTON_TEXT       "Contrôle le texte"
+    IDC_SYSPARAMS_DESKTOP           "Bureau"
+    IDC_SYSPARAMS_MENU              "Fond du menu"
+    IDC_SYSPARAMS_MENU_TEXT         "Texte du menu"
+    IDC_SYSPARAMS_SCROLLBAR         "Barre de défilement"
+    IDC_SYSPARAMS_SELECTION         "Fond de la sélection"
+    IDC_SYSPARAMS_SELECTION_TEXT    "Texte de la sélection"
+    IDC_SYSPARAMS_TOOLTIP           "Fond de l'infobulle"
+    IDC_SYSPARAMS_TOOLTIP_TEXT      "Texte de l'infobulle"
+    IDC_SYSPARAMS_WINDOW            "Fond de la fenêtre"
+    IDC_SYSPARAMS_WINDOW_TEXT       "Texte de la fenêtre"
+    IDC_SYSPARAMS_ACTIVE_TITLE      "Barre de titre active"
+    IDC_SYSPARAMS_ACTIVE_TITLE_TEXT "Texte de la barre de titre active"
+    IDC_SYSPARAMS_INACTIVE_TITLE    "Barre de titre inactive"
+    IDC_SYSPARAMS_INACTIVE_TITLE_TEXT "Texte de la barre de titre inactive"
 END
