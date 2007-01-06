@@ -2406,8 +2406,8 @@ static void test_VarMod(void)
       else if (l == VT_DECIMAL)
       {
 	V_DECIMAL(&v1).Hi32 = 0;
-	V_DECIMAL(&v1).Lo64 = 100;
-	V_DECIMAL(&v1).signscale = 0;
+	U1(V_DECIMAL(&v1)).Lo64 = 100;
+	U(V_DECIMAL(&v1)).signscale = 0;
       }
       else
 	V_I4(&v1) = 10000;
@@ -2427,8 +2427,8 @@ static void test_VarMod(void)
       else if (r == VT_DECIMAL)
       {
 	V_DECIMAL(&v2).Hi32 = 0;
-	V_DECIMAL(&v2).Lo64 = 100;
-	V_DECIMAL(&v2).signscale = 0;
+	U1(V_DECIMAL(&v2)).Lo64 = 100;
+	U(V_DECIMAL(&v2)).signscale = 0;
       }
       else
 	V_I4(&v2) = 10000;
