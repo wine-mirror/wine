@@ -250,10 +250,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 IWineD3DPixelShader_Release(This->pixelShader);
             }
 
-            if (NULL != This->vertexShader) {
-                IWineD3DVertexShader_Release(This->vertexShader);
-            }
-
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(sampler_stages); counter++) {
                 if (This->textures[counter]) {
@@ -336,13 +332,6 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
         /* Recorded => Only update 'changed' values */
         if (This->vertexShader != targetStateBlock->vertexShader) {
             TRACE("Updating vertex shader from %p to %p\n", This->vertexShader, targetStateBlock->vertexShader);
-
-            if (targetStateBlock->vertexShader) {
-                IWineD3DVertexShader_AddRef(targetStateBlock->vertexShader);
-            }
-            if (This->vertexShader) {
-                IWineD3DVertexShader_Release(This->vertexShader);
-            }
 
             This->vertexShader = targetStateBlock->vertexShader;
         }

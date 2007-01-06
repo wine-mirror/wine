@@ -3270,13 +3270,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShader(IWineD3DDevice *iface, 
         return WINED3D_OK;
     }
 
-    if (NULL != pShader) {
-        IWineD3DVertexShader_AddRef(pShader);
-    }
-    if (NULL != oldShader) {
-        IWineD3DVertexShader_Release(oldShader);
-    }
-
     TRACE("(%p) : setting pShader(%p)\n", This, pShader);
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VSHADER);
