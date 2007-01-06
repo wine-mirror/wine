@@ -119,36 +119,37 @@ static void test_pointer_marshal(const unsigned char *formattypes,
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
 
-#if 0 /* NdrPointerMemorySize crashes under Wine, remove #if 0 when this is fixed */
+    if (0)
+    {
+    /* NdrPointerMemorySize crashes under Wine */
     size = NdrPointerMemorySize( &StubMsg, formattypes );
-    ok(size == StubMsg.MemorySize, "%s: mem size %ld size %ld\n", msgpfx, StubMsg.MemorySize, size); 
-    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen); 
+    ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(size == srcsize + 4, "%s: mem size %ld\n", msgpfx, size);
+        ok(size == srcsize + 4, "%s: mem size %u\n", msgpfx, size);
     else
-        ok(size == srcsize, "%s: mem size %ld\n", msgpfx, size);
+        ok(size == srcsize, "%s: mem size %u\n", msgpfx, size);
 
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 16;
     size = NdrPointerMemorySize( &StubMsg, formattypes );
-    ok(size == StubMsg.MemorySize, "%s: mem size %ld size %ld\n", msgpfx, StubMsg.MemorySize, size); 
-    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen); 
+    ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(size == srcsize + 4 + 16, "%s: mem size %ld\n", msgpfx, size);
+        ok(size == srcsize + 4 + 16, "%s: mem size %u\n", msgpfx, size);
     else
-        ok(size == srcsize + 16, "%s: mem size %ld\n", msgpfx, size);
- 
+        ok(size == srcsize + 16, "%s: mem size %u\n", msgpfx, size);
+
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 1;
     size = NdrPointerMemorySize( &StubMsg, formattypes );
-    ok(size == StubMsg.MemorySize, "%s: mem size %ld size %ld\n", msgpfx, StubMsg.MemorySize, size); 
-    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen); 
+    ok(size == StubMsg.MemorySize, "%s: mem size %u size %u\n", msgpfx, StubMsg.MemorySize, size);
+    ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p len %ld\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart, wiredatalen);
     if(formattypes[1] & 0x10 /* FC_POINTER_DEREF */)
-        ok(size == srcsize + 4 + (srcsize == 8 ? 8 : 4), "%s: mem size %ld\n", msgpfx, size);
+        ok(size == srcsize + 4 + (srcsize == 8 ? 8 : 4), "%s: mem size %u\n", msgpfx, size);
     else
-        ok(size == srcsize + (srcsize == 8 ? 8 : 4), "%s: mem size %ld\n", msgpfx, size);
-
-#endif
+        ok(size == srcsize + (srcsize == 8 ? 8 : 4), "%s: mem size %u\n", msgpfx, size);
+    }
 
     size = srcsize;
     if(formattypes[1] & 0x10) size += 4;
@@ -305,14 +306,12 @@ static void test_simple_types(void)
         0x7,            /* FC_USHORT */
         0x5c,           /* FC_PAD */
     };
-#if 0
     static const unsigned char fmtstr_up_enum16[] =
     {
         0x12, 0x8,      /* FC_UP [simple_pointer] */
         0xd,            /* FC_ENUM16 */
         0x5c,           /* FC_PAD */
     };
-#endif
     static const unsigned char fmtstr_up_long[] =
     {
         0x12, 0x8,      /* FC_UP [simple_pointer] */
@@ -382,9 +381,7 @@ static void test_simple_types(void)
 
     i = s;
     *(void**)wiredata = &i;
-#if 0 /* Not sure why this crashes under Windows */
     test_pointer_marshal(fmtstr_up_enum16, &i, 2, wiredata, 6, NULL, 0, "up_enum16");
-#endif
 
     l = 0xcafebabe;
     *(void**)wiredata = &l;
@@ -449,12 +446,14 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
     ok(!memcmp(StubMsg.BufferStart, wiredata, wiredatalen), "%s: incorrectly marshaled %08x %08x %08x\n", msgpfx, *(DWORD*)StubMsg.BufferStart,*((DWORD*)StubMsg.BufferStart+1),*((DWORD*)StubMsg.BufferStart+2));
 
-#if 0
+    if (0)
+    {
+    /* FIXME: Causes Wine to crash */
     StubMsg.Buffer = StubMsg.BufferStart;
     StubMsg.MemorySize = 0;
     size = NdrSimpleStructMemorySize( &StubMsg, formattypes );
     ok(size == StubMsg.MemorySize, "%s: size != MemorySize\n", msgpfx);
-    ok(size == srcsize, "%s: mem size %ld\n", msgpfx, size);
+    ok(size == srcsize, "%s: mem size %u\n", msgpfx, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
 
     StubMsg.Buffer = StubMsg.BufferStart;
@@ -462,9 +461,9 @@ static void test_simple_struct_marshal(const unsigned char *formattypes,
 todo_wine {
     ok(size == StubMsg.MemorySize, "%s: size != MemorySize\n", msgpfx);
 }
-    ok(StubMsg.MemorySize == ((srcsize + 3) & ~3) + srcsize, "%s: mem size %ld\n", msgpfx, size);
+    ok(StubMsg.MemorySize == ((srcsize + 3) & ~3) + srcsize, "%s: mem size %u\n", msgpfx, size);
     ok(StubMsg.Buffer - StubMsg.BufferStart == wiredatalen, "%s: Buffer %p Start %p\n", msgpfx, StubMsg.Buffer, StubMsg.BufferStart);
-#endif
+    }
     size = srcsize;
     /*** Unmarshalling first with must_alloc false ***/
 
@@ -668,9 +667,11 @@ static void test_simple_struct(void)
 
     *(void**)wiredata = &s1;
     memcpy(wiredata + 4, &s1, wiredatalen);
-#if 0 /* one of the unmarshallings crashes Wine */
+    if (0)
+    {
+    /* one of the unmarshallings crashes Wine */
     test_pointer_marshal(fmtstr_simple_struct, &s1, 24, wiredata, 28, NULL, 0, "struct");
-#endif
+    }
 
     /* FC_PSTRUCT */
     ps1.l1 = 0xdeadbeef;
@@ -684,9 +685,11 @@ static void test_simple_struct(void)
 
     test_simple_struct_marshal(fmtstr_pointer_struct + 4, &ps1, 17, wiredata + 4, 17, ps1_cmp, 2, "pointer_struct");
     *(void**)wiredata = &ps1;
-#if 0 /* one of the unmarshallings crashes Wine */
+    if (0)
+    {
+    /* one of the unmarshallings crashes Wine */
     test_pointer_marshal(fmtstr_pointer_struct, &ps1, 17, wiredata, 21, ps1_cmp, 2, "pointer_struct");
-#endif
+    }
 }
 
 static void test_fullpointer_xlat(void)
@@ -889,13 +892,11 @@ static void test_client_init(void)
     TEST_POINTER_UNSET(VarianceMark);
     ok(stubMsg.Unused == 0xcccccccc, "Unused should have be unset instead of 0x%x\n", stubMsg.Unused);
     TEST_POINTER_UNSET(pContext);
-#if 0
     TEST_ULONG_UNSET(Reserved51_1);
     TEST_ULONG_UNSET(Reserved51_2);
     TEST_ULONG_UNSET(Reserved51_3);
     TEST_ULONG_UNSET(Reserved51_4);
     TEST_ULONG_UNSET(Reserved51_5);
-#endif
 #undef TEST_ULONG_UNSET
 #undef TEST_POINTER_UNSET
 #undef TEST_ZERO
