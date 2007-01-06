@@ -112,13 +112,13 @@ static void InternetCrackUrl_test(void)
 
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
   ret = InternetCrackUrl(TEST_URL, 0,0,&urlComponents);
-  ok( ret, "InternetCrackUrl failed, error %x\n",GetLastError());
+  ok( ret, "InternetCrackUrl failed, error %d\n",GetLastError());
   ok((strcmp(TEST_URL_PATH,path) == 0),"path cracked wrong\n");
 
   /* Bug 1805: Confirm the returned lengths are correct:                     */
   /* 1. When extra info split out explicitly */
   zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 1);
-  ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed, error 0x%x\n", GetLastError());
+  ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed, error %d\n", GetLastError());
   ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATH),".dwUrlPathLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_PATH), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATH,strlen(TEST_URL2_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATH, urlComponents.lpszUrlPath);
   ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
@@ -128,7 +128,7 @@ static void InternetCrackUrl_test(void)
 
   /* 2. When extra info is not split out explicitly and is in url path */
   zero_compsA(&urlComponents, 0, 1, 0, 0, 1, 0);
-  ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed with GLE 0x%x\n",GetLastError());
+  ok(InternetCrackUrlA(TEST_URL2, 0, 0, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
   ok(urlComponents.dwUrlPathLength == strlen(TEST_URL2_PATHEXTRA),".dwUrlPathLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_PATHEXTRA), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL2_PATHEXTRA,strlen(TEST_URL2_PATHEXTRA)),"lpszUrlPath should be %s but is %s\n", TEST_URL2_PATHEXTRA, urlComponents.lpszUrlPath);
   ok(urlComponents.dwHostNameLength == strlen(TEST_URL2_SERVER),".dwHostNameLength should be %d, but is %d\n", (DWORD)strlen(TEST_URL2_SERVER), urlComponents.dwHostNameLength);
@@ -137,7 +137,7 @@ static void InternetCrackUrl_test(void)
   ok(urlComponents.nScheme == INTERNET_SCHEME_HTTP,"urlComponents->nScheme should have been INTERNET_SCHEME_HTTP instead of %d\n", urlComponents.nScheme);
 
   zero_compsA(&urlComponents, 1, 1, 1, 1, 1, 1);
-  ok(InternetCrackUrlA(TEST_URL, strlen(TEST_URL), 0, &urlComponents),"InternetCrackUrl failed with GLE 0x%x\n",GetLastError());
+  ok(InternetCrackUrlA(TEST_URL, strlen(TEST_URL), 0, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
   ok(urlComponents.dwUrlPathLength == strlen(TEST_URL_PATH),".dwUrlPathLength should be %d, but is %d\n", lstrlenA(TEST_URL_PATH), urlComponents.dwUrlPathLength);
   ok(!strncmp(urlComponents.lpszUrlPath,TEST_URL_PATH,strlen(TEST_URL_PATH)),"lpszUrlPath should be %s but is %s\n", TEST_URL_PATH, urlComponents.lpszUrlPath);
   ok(urlComponents.dwHostNameLength == strlen(TEST_URL_HOST),".dwHostNameLength should be %d, but is %d\n", lstrlenA(TEST_URL_HOST), urlComponents.dwHostNameLength);
@@ -153,7 +153,7 @@ static void InternetCrackUrl_test(void)
 
   /*3. Check for %20 */
   copy_compsA(&urlSrc, &urlComponents, 32, 1024, 1024, 1024, 2048, 1024);
-  ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE 0x%x\n",GetLastError());
+  ok(InternetCrackUrlA(TEST_URL3, 0, ICU_DECODE, &urlComponents),"InternetCrackUrl failed with GLE %d\n",GetLastError());
 
 
   /* Tests for lpsz* members pointing to real strings while 
