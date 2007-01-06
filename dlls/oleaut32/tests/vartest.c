@@ -316,10 +316,8 @@ static void test_VariantClear(void)
   LONG i4;
   IUnknown *punk;
 
-#if 0
   /* Crashes: Native does not test input for NULL, so neither does Wine */
-  hres = VariantClear(NULL);
-#endif
+  if (0) hres = VariantClear(NULL);
 
   /* Only the type field is set, to VT_EMPTY */
   V_VT(&v) = VT_UI4;

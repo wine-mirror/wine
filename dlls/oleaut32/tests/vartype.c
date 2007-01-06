@@ -2558,10 +2558,12 @@ static void test_VarUI8FromDec(void)
 
   CONVERT_BADDEC(VarUI8FromDec);
 
-#if 0
   /* This returns 1 under native; Wine fixes this bug and returns overflow */
-  CONVERT_DEC(VarUI8FromDec,0,0x80,0,1);
-#endif
+  if (0)
+  {
+      CONVERT_DEC(VarUI8FromDec,0,0x80,0,1);
+  }
+
   CONVERT_DEC(VarUI8FromDec,0,0,0,0);   EXPECTI8(0);
   CONVERT_DEC(VarUI8FromDec,0,0,0,1);   EXPECTI8(1);
   CONVERT_DEC(VarUI8FromDec,0,0,0,255); EXPECTI8(255);
@@ -5012,12 +5014,13 @@ static void test_SysAllocStringLen(void)
   BSTR str;
 
   /* Very early native dlls do not limit the size of strings, so skip this test */
-#if 0
+  if (0)
+  {
   str = SysAllocStringLen(szTest, 0x80000000);
   todo_wine {
   ok (str == NULL, "Expected NULL, got %p\n", str);
   }
-#endif
+  }
   
   str = SysAllocStringLen(NULL, 0);
   ok (str != NULL, "Expected non-NULL\n");

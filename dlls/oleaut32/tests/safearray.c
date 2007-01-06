@@ -649,11 +649,12 @@ static void test_SafeArrayAllocDestroyDescriptor(void)
   ok(IS_ANCIENT || hres == E_INVALIDARG,
      "65536 dimensions gave hres 0x%x\n", hres);
 
-#if 0
+  if (0)
+  {
   /* Crashes on 95: XP & Wine return E_POINTER */
   hres=SafeArrayAllocDescriptor(1, NULL);
   ok(hres == E_POINTER,"NULL parm gave hres 0x%x\n", hres);
-#endif
+  }
 
   /* Test up to the dimension boundary case */
   for (i = 5; i <= 65535; i += 30)
@@ -985,13 +986,14 @@ static void test_SafeArrayGetPutElement(void)
   hres = SafeArrayGetElement(sa, NULL, &value);
   ok(hres == E_INVALIDARG, "Get NULL indices hres 0x%x\n", hres);
 
-#if 0
+  if (0)
+  {
   /* This is retarded. Windows checks every case of invalid parameters
    * except the following, which crashes. We ERR this in Wine.
    */
   hres = SafeArrayPutElement(sa, indices, NULL);
   ok(hres == E_INVALIDARG, "Put NULL value hres 0x%x\n", hres);
-#endif
+  }
 
   hres = SafeArrayGetElement(sa, indices, NULL);
   ok(hres == E_INVALIDARG, "Get NULL value hres 0x%x\n", hres);
