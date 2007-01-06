@@ -42,18 +42,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 /* Wine mouse driver object instances */
 #define WINE_MOUSE_X_AXIS_INSTANCE   0
 #define WINE_MOUSE_Y_AXIS_INSTANCE   1
-
-/* ------------------------------- */
-/* Wine mouse internal data format */
-/* ------------------------------- */
-
-/* Constants used to access the offset array */
-#define WINE_MOUSE_X_POSITION 0
-#define WINE_MOUSE_Y_POSITION 1
-#define WINE_MOUSE_Z_POSITION 2
-#define WINE_MOUSE_L_POSITION 3
-#define WINE_MOUSE_R_POSITION 4
-#define WINE_MOUSE_M_POSITION 5
+#define WINE_MOUSE_Z_AXIS_INSTANCE   2
+#define WINE_MOUSE_BUTTONS_INSTANCE  3
 
 static const IDirectInputDevice8AVtbl SysMouseAvt;
 static const IDirectInputDevice8WVtbl SysMouseWvt;
@@ -298,7 +288,7 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
     SysMouseImpl* This = (SysMouseImpl*) current_lock;
     DWORD dwCoop;
-    int wdata;
+    int wdata = 0, inst_id = -1;
 
     if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
@@ -322,58 +312,68 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
                 pt1 = pt;
 
             if (pt.x)
-                queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_X_POSITION],
+                queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format,
+                            DIDFT_MAKEINSTANCE(WINE_MOUSE_X_AXIS_INSTANCE) | DIDFT_RELAXIS),
                             pt1.x, hook->time, This->dinput->evsequence);
             if (pt.y)
-                queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Y_POSITION],
-                            pt1.y, hook->time, This->dinput->evsequence);
+            {
+                inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Y_AXIS_INSTANCE) | DIDFT_RELAXIS;
+                wdata = pt1.y;
+            }
 
             This->need_warp = (pt.x || pt.y) && dwCoop & DISCL_EXCLUSIVE;
             break;
         }
+        case WM_MOUSEWHEEL:
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_Z_AXIS_INSTANCE) | DIDFT_RELAXIS;
+            This->m_state.lZ += wdata = (short)HIWORD(hook->mouseData);
+            break;
         case WM_LBUTTONDOWN:
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_L_POSITION],
-                        0x80, hook->time, This->dinput->evsequence);
-	    This->m_state.rgbButtons[0] = 0x80;
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[0] = wdata = 0x80;
 	    break;
 	case WM_LBUTTONUP:
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_L_POSITION],
-                        0x00, hook->time, This->dinput->evsequence);
-	    This->m_state.rgbButtons[0] = 0x00;
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 0) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[0] = wdata = 0x00;
 	    break;
 	case WM_RBUTTONDOWN:
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_R_POSITION],
-                        0x80, hook->time, This->dinput->evsequence);
-	    This->m_state.rgbButtons[1] = 0x80;
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 1) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[1] = wdata = 0x80;
 	    break;
 	case WM_RBUTTONUP:
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_R_POSITION],
-                        0x00, hook->time, This->dinput->evsequence);
-	    This->m_state.rgbButtons[1] = 0x00;
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 1) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[1] = wdata = 0x00;
 	    break;
 	case WM_MBUTTONDOWN:
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_M_POSITION],
-                        0x80, hook->time, This->dinput->evsequence);
-	    This->m_state.rgbButtons[2] = 0x80;
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[2] = wdata = 0x80;
 	    break;
 	case WM_MBUTTONUP:
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_M_POSITION],
-                        0x00, hook->time, This->dinput->evsequence);
-	    This->m_state.rgbButtons[2] = 0x00;
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[2] = wdata = 0x00;
 	    break;
-	case WM_MOUSEWHEEL:
-	    wdata = (short)HIWORD(hook->mouseData);
-            queue_event((LPDIRECTINPUTDEVICE8A)This, This->base.data_format.offsets[WINE_MOUSE_Z_POSITION],
-                        wdata, hook->time, This->dinput->evsequence);
-	    This->m_state.lZ += wdata;
-	    break;
+        case WM_XBUTTONDOWN:
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[2 + HIWORD(hook->mouseData)] = wdata = 0x80;
+            break;
+        case WM_XBUTTONUP:
+            inst_id = DIDFT_MAKEINSTANCE(WINE_MOUSE_BUTTONS_INSTANCE + 2 + HIWORD(hook->mouseData)) | DIDFT_PSHBUTTON;
+            This->m_state.rgbButtons[2 + HIWORD(hook->mouseData)] = wdata = 0x00;
+            break;
     }
 
-    TRACE("msg %x @ (%d %d): (X: %d - Y: %d   L: %02x M: %02x R: %02x)\n",
-          wparam, hook->pt.x, hook->pt.y, This->m_state.lX, This->m_state.lY,
-	  This->m_state.rgbButtons[0], This->m_state.rgbButtons[2], This->m_state.rgbButtons[1]);
+    if (TRACE_ON(dinput))
+    {
+        int i;
 
-    This->dinput->evsequence++;
+        TRACE("msg %x @ (%d %d): (X: %d Y: %d Z: %d\n", wparam, hook->pt.x, hook->pt.y,
+              This->m_state.lX, This->m_state.lY, This->m_state.lZ);
+        for (i = 0; i < 5; i++) TRACE(" B%d: %02x", i, This->m_state.rgbButtons[i]);
+        TRACE(")\n");
+    }
+    if (inst_id != -1)
+        queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format, inst_id),
+                    wdata, hook->time, This->dinput->evsequence++);
 
     /* Mouse moved -> send event if asked */
     if (This->base.hEvent) SetEvent(This->base.hEvent);

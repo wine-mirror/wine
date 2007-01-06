@@ -493,7 +493,7 @@ int offset_to_object(LPCDIDATAFORMAT df, int offset)
     int i;
 
     for (i = 0; i < df->dwNumObjs; i++)
-        if (df->rgodf[i].dwOfs == offset)
+        if (dataformat_to_odf(df, i)->dwOfs == offset)
             return i;
 
     return -1;
@@ -503,11 +503,19 @@ static int id_to_object(LPCDIDATAFORMAT df, int id)
 {
     int i;
 
+    id &= 0x00ffffff;
     for (i = 0; i < df->dwNumObjs; i++)
-        if ((df->rgodf[i].dwType & 0x00ffffff) == (id & 0x00ffffff))
+        if ((dataformat_to_odf(df, i)->dwType & 0x00ffffff) == id)
             return i;
 
     return -1;
+}
+
+int id_to_offset(DataFormat *df, int id)
+{
+    int obj = id_to_object(df->wine_df, id);
+
+    return obj >= 0 && df->offsets ? df->offsets[obj] : -1;
 }
 
 int find_property(LPCDIDATAFORMAT df, LPCDIPROPHEADER ph)
