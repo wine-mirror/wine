@@ -233,12 +233,6 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
             int counter;
             FIXME("Releasing primary stateblock\n");
 
-            /* free any index data */
-            if (This->pIndexData) {
-                IWineD3DIndexBuffer_Release(This->pIndexData);
-                This->pIndexData = NULL;
-            }
-
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
             for (counter = 0; counter < GL_LIMITS(sampler_stages); counter++) {
                 if (This->textures[counter]) {

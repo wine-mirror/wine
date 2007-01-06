@@ -2999,13 +2999,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
         return WINED3D_OK;
     }
 
-    if (NULL != pIndexData) {
-        IWineD3DIndexBuffer_AddRef(pIndexData);
-    }
-    if (NULL != oldIdxs) {
-        IWineD3DIndexBuffer_Release(oldIdxs);
-    }
-
     /* So far only the base vertex index is tracked */
     if(BaseVertexIndex != oldBaseIndex) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
@@ -4768,10 +4761,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
         idxStride = 2;
     } else {
         idxStride = 4;
-    }
-
-    if (This->stateBlock->pIndexData) {
-        IWineD3DIndexBuffer_Release(This->stateBlock->pIndexData);
     }
 
     /* Note in the following, it's not this type, but that's the purpose of streamIsUP */
