@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-HINSTANCE hdnsapi;
+static HINSTANCE hdnsapi;
 
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
