@@ -1313,6 +1313,12 @@ static void test_OpenProcess(void)
     addr1 = pVirtualAllocEx(hproc, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
 todo_wine {
     ok(!addr1, "VirtualAllocEx should fail\n");
+    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {   /* Win9x */
+        CloseHandle(hproc);
+        trace("VirtualAllocEx is not implemented, skipping the test\n");
+        return;
+    }
     ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
 }
 
