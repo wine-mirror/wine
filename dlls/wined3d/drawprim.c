@@ -219,6 +219,10 @@ void primitiveDeclarationConvertToStridedData(
     WINED3DVERTEXELEMENT *element;
     DWORD stride;
     int reg;
+    char isPreLoaded[MAX_STREAMS];
+    DWORD preLoadStreams[MAX_STREAMS], numPreloadStreams = 0;
+
+    memset(isPreLoaded, 0, sizeof(isPreLoaded));
 
     /* Locate the vertex declaration */
     if (This->stateBlock->vertexShader && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration) {
@@ -249,7 +253,11 @@ void primitiveDeclarationConvertToStridedData(
             if(fixup && *fixup) FIXME("Missing fixed and unfixed vertices, expect graphics glitches\n");
         } else {
             TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
-            IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[element->Stream]);
+            if(!isPreLoaded[element->Stream]) {
+                preLoadStreams[numPreloadStreams] = element->Stream;
+                numPreloadStreams++;
+                isPreLoaded[element->Stream] = 1;
+            }
             data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0, &streamVBO);
             if(fixup) {
                 if( streamVBO != 0) *fixup = TRUE;
@@ -287,6 +295,17 @@ void primitiveDeclarationConvertToStridedData(
            }
         }
     };
+    /* Now call PreLoad on all the vertex buffers. In the very rare case
+     * that the buffers stopps converting PreLoad will dirtify the VDECL again.
+     * The vertex buffer can now use the strided structure in the device instead of finding its
+     * own again.
+     *
+     * NULL streams won't be recorded in the array, UP streams won't be either. A stream is only
+     * once in there.
+     */
+    for(i=0; i < numPreloadStreams; i++) {
+            IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[preLoadStreams[i]]);
+    }
 }
 
 void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDirect3DVertexStridedData *strided, GLint streamVBO) {
@@ -413,6 +432,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStri
     short         LoopThroughTo = 0;
     short         nStream;
     GLint         streamVBO = 0;
+    DWORD preLoadStreams[MAX_STREAMS], numPreloadStreams = 0;
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
@@ -443,7 +463,11 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStri
                 streamVBO = 0;
                 data    = (BYTE *)This->stateBlock->streamSource[nStream];
             } else {
-                IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[nStream]);
+                /* The for loop should iterate through here only once per stream, so we don't need magic to prevent double loading
+                 * buffers
+                 */
+                preLoadStreams[numPreloadStreams] = nStream;
+                numPreloadStreams++;
                 /* GetMemory binds the VBO */
                 data = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[nStream], 0, &streamVBO);
                 if(fixup) {
@@ -461,6 +485,17 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStri
 
         /* Now convert the stream into pointers */
         primitiveConvertFVFtoOffset(thisFVF, stride, data, strided, streamVBO);
+    }
+    /* Now call PreLoad on all the vertex buffers. In the very rare case
+     * that the buffers stopps converting PreLoad will dirtify the VDECL again.
+     * The vertex buffer can now use the strided structure in the device instead of finding its
+     * own again.
+     *
+     * NULL streams won't be recorded in the array, UP streams won't be either. A stream is only
+     * once in there.
+     */
+    for(nStream=0; nStream < numPreloadStreams; nStream++) {
+            IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[preLoadStreams[nStream]]);
     }
 }
 
