@@ -668,10 +668,9 @@ todo_wine {
            kd[i].otmMacAscent, otm.otmMacAscent);
         ok(kd[i].otmMacDescent == otm.otmMacDescent, "expected %d, got %d\n",
            kd[i].otmMacDescent, otm.otmMacDescent);
-#if 0 /* this one succeeds due to expected 0, enable it when removing todo */
-        ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
+        /* FIXME: this one sometimes succeeds due to expected 0, enable it when removing todo */
+        if (0) ok(kd[i].otmMacLineGap == otm.otmMacLineGap, "expected %u, got %u\n",
            kd[i].otmMacLineGap, otm.otmMacLineGap);
-#endif
         ok(kd[i].otmusMinimumPPEM == otm.otmusMinimumPPEM, "expected %u, got %u\n",
            kd[i].otmusMinimumPPEM, otm.otmusMinimumPPEM);
 }
