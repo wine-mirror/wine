@@ -1108,23 +1108,6 @@ inline static void drawPrimitiveDrawStrided(
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-/* Generate some fixme's if unsupported functionality is being used */
-#define BUFFER_OR_DATA(_attribute) dataLocations->u.s._attribute.lpData
-    /* TODO: Either support missing functionality in fixupVertices or by creating a shader to replace the pipeline. */
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(blendMatrixIndices) || BUFFER_OR_DATA(blendWeights))) {
-        FIXME("Blending data is only valid with vertex shaders %p %p\n",dataLocations->u.s.blendWeights.lpData,dataLocations->u.s.blendWeights.lpData);
-    }
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(position2) || BUFFER_OR_DATA(normal2))) {
-        FIXME("Tweening is only valid with vertex shaders\n");
-    }
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(tangent) || BUFFER_OR_DATA(binormal))) {
-        FIXME("Tangent and binormal bump mapping is only valid with vertex shaders\n");
-    }
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(tessFactor) || BUFFER_OR_DATA(fog) || BUFFER_OR_DATA(depth) || BUFFER_OR_DATA(sample))) {
-        FIXME("Extended attributes are only valid with vertex shaders\n");
-    }
-#undef BUFFER_OR_DATA
-
     /* Make any shaders active */
     This->shader_backend->shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
 
