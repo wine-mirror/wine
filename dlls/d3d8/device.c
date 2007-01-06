@@ -1298,10 +1298,18 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderDeclaration(LPDIRECT3D
     return D3DERR_INVALIDCALL;
 }
 static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShaderFunction(LPDIRECT3DDEVICE8 iface, DWORD pVertexShader, void* pData, DWORD* pSizeOfData) {
-    IDirect3DVertexShader8Impl *This = (IDirect3DVertexShader8Impl *)pVertexShader;
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    IDirect3DVertexShader8Impl *shader = NULL;
 
-    TRACE("(%p) : Relay\n", This);
-    return IWineD3DVertexShader_GetFunction(This->wineD3DVertexShader, pData, (UINT *)pSizeOfData);
+    TRACE("(%p) : pVertexShader %#x, pData %p, pSizeOfData %p\n", This, pVertexShader, pData, pSizeOfData);
+
+    if (pVertexShader <= VS_HIGHESTFIXEDFXF || This->allocated_shader_handles <= pVertexShader - (VS_HIGHESTFIXEDFXF + 1)) {
+        ERR("Passed an invalid shader handle.\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    shader = This->shader_handles[pVertexShader - (VS_HIGHESTFIXEDFXF + 1)];
+    return IWineD3DVertexShader_GetFunction(shader->wineD3DVertexShader, pData, (UINT *)pSizeOfData);
 }
 
 static HRESULT WINAPI IDirect3DDevice8Impl_SetIndices(LPDIRECT3DDEVICE8 iface, IDirect3DIndexBuffer8* pIndexData, UINT baseVertexIndex) {
