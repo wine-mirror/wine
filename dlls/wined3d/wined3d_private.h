@@ -579,6 +579,7 @@ typedef struct IWineD3DDeviceImpl
     BOOL                    untransformed;
     BOOL                    last_was_pshader;
     BOOL                    last_was_foggy_shader;
+    BOOL                    namedArraysLoaded, numberedArraysLoaded;
 
     /* State block related */
     BOOL                    isRecordingState;
@@ -670,7 +671,7 @@ typedef struct IWineD3DDeviceImpl
     /* Stream source management */
     WineDirect3DVertexStridedData strided_streams;
     WineDirect3DVertexStridedData *up_strided;
-    BOOL                      streamFixedUp;
+    BOOL                      useDrawStridedSlow;
 
 } IWineD3DDeviceImpl;
 

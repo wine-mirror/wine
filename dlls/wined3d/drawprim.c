@@ -26,7 +26,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_draw);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
 #include <stdio.h>
@@ -596,436 +595,6 @@ static void draw_vertex(IWineD3DDevice *iface,                         /* interf
 }
 #endif /* TODO: Software shaders */
 
-/* This should match any arrays loaded in loadNumberedArrays. */
-/* TODO: Only load / unload arrays if we have to. */
-static void unloadNumberedArrays(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    /* disable any attribs (this is the same for both GLSL and ARB modes) */
-    GLint maxAttribs;
-    int i;
-
-    /* Leave all the attribs disabled */
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS_ARB, &maxAttribs);
-    /* MESA does not support it right not */
-    if (glGetError() != GL_NO_ERROR)
-        maxAttribs = 16;
-    for (i = 0; i < maxAttribs; ++i) {
-        GL_EXTCALL(glDisableVertexAttribArrayARB(i));
-        checkGLcall("glDisableVertexAttribArrayARB(reg);");
-    }
-}
-
-/* TODO: Only load / unload arrays if we have to. */
-static void loadNumberedArrays(
-    IWineD3DDevice *iface,
-    IWineD3DVertexShader *shader,
-    WineDirect3DVertexStridedData *strided) {
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
-    int i;
-
-    for (i = 0; i < MAX_ATTRIBS; i++) {
-
-        if (!strided->u.input[i].lpData && !strided->u.input[i].VBO)
-            continue;
-
-        TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, strided->u.input[i].VBO);
-
-        if(curVBO != strided->u.input[i].VBO) {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, strided->u.input[i].VBO));
-            checkGLcall("glBindBufferARB");
-            curVBO = strided->u.input[i].VBO;
-        }
-        GL_EXTCALL(glVertexAttribPointerARB(i,
-                        WINED3D_ATR_SIZE(strided->u.input[i].dwType),
-                        WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
-                        WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
-                        strided->u.input[i].dwStride,
-                        strided->u.input[i].lpData + This->stateBlock->baseVertexIndex * strided->u.input[i].dwStride));
-        GL_EXTCALL(glEnableVertexAttribArrayARB(i));
-   }
-}
-
-/* This should match any arrays loaded in loadVertexData. */
-/* TODO: Only load / unload arrays if we have to. */
-static void unloadVertexData(IWineD3DDevice *iface) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int texture_idx;
-
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-        glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-    }
-    for (texture_idx = 0; texture_idx < GL_LIMITS(textures); ++texture_idx) {
-        GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
-        glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-    }
-}
-
-/* TODO: Only load / unload arrays if we have to. */
-static void loadVertexData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd) {
-    unsigned int textureNo   = 0;
-    unsigned int texture_idx = 0;
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
-
-    TRACE("Using fast vertex array code\n");
-    /* Blend Data ---------------------------------------------- */
-    if( (sd->u.s.blendWeights.lpData) || (sd->u.s.blendWeights.VBO) ||
-        (sd->u.s.blendMatrixIndices.lpData) || (sd->u.s.blendMatrixIndices.VBO) ) {
-
-
-        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-
-#if 1
-            glEnableClientState(GL_WEIGHT_ARRAY_ARB);
-            checkGLcall("glEnableClientState(GL_WEIGHT_ARRAY_ARB)");
-#endif
-
-            TRACE("Blend %d %p %d\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
-                sd->u.s.blendWeights.lpData + This->stateBlock->baseVertexIndex * sd->u.s.blendWeights.dwStride, sd->u.s.blendWeights.dwStride);
-            /* FIXME("TODO\n");*/
-            /* Note dwType == float3 or float4 == 2 or 3 */
-
-#if 0
-            /* with this on, the normals appear to be being modified,
-               but the vertices aren't being translated as they should be
-               Maybe the world matrix aren't being setup properly? */
-            glVertexBlendARB(WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) + 1);
-#endif
-
-
-            VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %d, %p)\n",
-                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) ,
-                sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + This->stateBlock->baseVertexIndex * sd->u.s.blendWeights.dwStride));
-
-            if(curVBO != sd->u.s.blendWeights.VBO) {
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.blendWeights.VBO));
-                checkGLcall("glBindBufferARB");
-                curVBO = sd->u.s.blendWeights.VBO;
-            }
-
-            GL_EXTCALL(glWeightPointerARB)(
-                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
-                WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
-                sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + This->stateBlock->baseVertexIndex * sd->u.s.blendWeights.dwStride);
-
-            checkGLcall("glWeightPointerARB");
-
-            if((sd->u.s.blendMatrixIndices.lpData) || (sd->u.s.blendMatrixIndices.VBO)){
-                static BOOL showfixme = TRUE;
-                if(showfixme){
-                    FIXME("blendMatrixIndices support\n");
-                    showfixme = FALSE;
-                }
-            }
-
-        } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-            /* FIXME("TODO\n");*/
-#if 0
-
-            GL_EXTCALL(glVertexWeightPointerEXT)(
-                WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
-                WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
-                sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + This->stateBlock->baseVertexIndex * sd->u.s.blendWeights.dwStride);
-            checkGLcall("glVertexWeightPointerEXT(numBlends, ...)");
-            glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
-            checkGLcall("glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
-#endif
-
-        } else {
-            /* TODO: support blends in fixupVertices */
-            FIXME("unsupported blending in openGl\n");
-        }
-    } else {
-        if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
-#if 0    /* TODO: Vertex blending */
-            glDisable(GL_VERTEX_BLEND_ARB);
-#endif
-            TRACE("ARB_VERTEX_BLEND\n");
-        } else if (GL_SUPPORT(EXT_VERTEX_WEIGHTING)) {
-            TRACE(" EXT_VERTEX_WEIGHTING\n");
-            glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
-            checkGLcall("glDisableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
-
-        }
-    }
-
-#if 0 /* FOG  ----------------------------------------------*/
-    if (sd->u.s.fog.lpData || sd->u.s.fog.VBO) {
-        /* TODO: fog*/
-    if (GL_SUPPORT(EXT_FOG_COORD) {
-             glEnableClientState(GL_FOG_COORDINATE_EXT);
-            (GL_EXTCALL)(FogCoordPointerEXT)(
-                WINED3D_ATR_GLTYPE(sd->u.s.fog.dwType),
-                sd->u.s.fog.dwStride,
-                sd->u.s.fog.lpData + This->stateBlock->baseVertexIndex * sd->u.s.fog.dwStride);
-        } else {
-            /* don't bother falling back to 'slow' as we don't support software FOG yet. */
-            /* FIXME: fixme once */
-            TRACE("Hardware support for FOG is not avaiable, FOG disabled.\n");
-        }
-    } else {
-        if (GL_SUPPRT(EXT_FOR_COORD) {
-             /* make sure fog is disabled */
-             glDisableClientState(GL_FOG_COORDINATE_EXT);
-        }
-    }
-#endif
-
-#if 0 /* tangents  ----------------------------------------------*/
-    if (sd->u.s.tangent.lpData || sd->u.s.tangent.VBO ||
-        sd->u.s.binormal.lpData || sd->u.s.binormal.VBO) {
-        /* TODO: tangents*/
-        if (GL_SUPPORT(EXT_COORDINATE_FRAME) {
-            if (sd->u.s.tangent.lpData || sd->u.s.tangent.VBO) {
-                glEnable(GL_TANGENT_ARRAY_EXT);
-                (GL_EXTCALL)(TangentPointerEXT)(
-                    WINED3D_ATR_GLTYPE(sd->u.s.tangent.dwType),
-                    sd->u.s.tangent.dwStride,
-                    sd->u.s.tangent.lpData + This->stateBlock->baseVertexIndex * sd->u.s.tangent.dwStride);
-            } else {
-                    glDisable(GL_TANGENT_ARRAY_EXT);
-            }
-            if (sd->u.s.binormal.lpData || sd->u.s.binormal.VBO) {
-                    glEnable(GL_BINORMAL_ARRAY_EXT);
-                    (GL_EXTCALL)(BinormalPointerEXT)(
-                        WINED3D_ATR_GLTYPE(sd->u.s.binormal.dwType),
-                        sd->u.s.binormal.dwStride,
-                        sd->u.s.binormal.lpData + This->stateBlock->baseVertexIndex * sd->u.s.binormal.dwStride);
-            } else{
-                    glDisable(GL_BINORMAL_ARRAY_EXT);
-            }
-
-        } else {
-            /* don't bother falling back to 'slow' as we don't support software tangents and binormals yet . */
-            /* FIXME: fixme once */
-            TRACE("Hardware support for tangents and binormals is not avaiable, tangents and binormals disabled.\n");
-        }
-    } else {
-        if (GL_SUPPORT(EXT_COORDINATE_FRAME) {
-             /* make sure fog is disabled */
-             glDisable(GL_TANGENT_ARRAY_EXT);
-             glDisable(GL_BINORMAL_ARRAY_EXT);
-        }
-    }
-#endif
-
-    /* Point Size ----------------------------------------------*/
-    if (sd->u.s.pSize.lpData || sd->u.s.pSize.VBO) {
-
-        /* no such functionality in the fixed function GL pipeline */
-        TRACE("Cannot change ptSize here in openGl\n");
-        /* TODO: Implement this function in using shaders if they are available */
-
-    }
-
-    /* Vertex Pointers -----------------------------------------*/
-    if (sd->u.s.position.lpData != NULL || sd->u.s.position.VBO != 0) {
-        /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glVertexPointer(%d, GL_FLOAT, %d, %p)\n",
-                sd->u.s.position.dwStride,
-                sd->u.s.position.dwType + 1,
-                sd->u.s.position.lpData));
-
-        if(curVBO != sd->u.s.position.VBO) {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.position.VBO));
-            checkGLcall("glBindBufferARB");
-            curVBO = sd->u.s.position.VBO;
-        }
-
-        /* min(WINED3D_ATR_SIZE(position),3) to Disable RHW mode as 'w' coord
-           handling for rhw mode should not impact screen position whereas in GL it does.
-           This may  result in very slightly distored textures in rhw mode, but
-           a very minimal different. There's always the other option of
-           fixing the view matrix to prevent w from having any effect
-
-           This only applies to user pointer sources, in VBOs the vertices are fixed up
-         */
-        if(sd->u.s.position.VBO == 0) {
-            glVertexPointer(3 /* min(WINED3D_ATR_SIZE(sd->u.s.position.dwType),3) */,
-                WINED3D_ATR_GLTYPE(sd->u.s.position.dwType),
-                sd->u.s.position.dwStride, sd->u.s.position.lpData + This->stateBlock->baseVertexIndex * sd->u.s.position.dwStride);
-        } else {
-            glVertexPointer(
-                WINED3D_ATR_SIZE(sd->u.s.position.dwType),
-                WINED3D_ATR_GLTYPE(sd->u.s.position.dwType),
-                sd->u.s.position.dwStride, sd->u.s.position.lpData + This->stateBlock->baseVertexIndex * sd->u.s.position.dwStride);
-        }
-        checkGLcall("glVertexPointer(...)");
-        glEnableClientState(GL_VERTEX_ARRAY);
-        checkGLcall("glEnableClientState(GL_VERTEX_ARRAY)");
-
-    } else {
-        glDisableClientState(GL_VERTEX_ARRAY);
-        checkGLcall("glDisableClientState(GL_VERTEX_ARRAY)");
-    }
-
-    /* Normals -------------------------------------------------*/
-    if (sd->u.s.normal.lpData || sd->u.s.normal.VBO) {
-        /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glNormalPointer(GL_FLOAT, %d, %p)\n",
-                sd->u.s.normal.dwStride,
-                sd->u.s.normal.lpData));
-        if(curVBO != sd->u.s.normal.VBO) {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.normal.VBO));
-            checkGLcall("glBindBufferARB");
-            curVBO = sd->u.s.normal.VBO;
-        }
-        glNormalPointer(
-            WINED3D_ATR_GLTYPE(sd->u.s.normal.dwType),
-            sd->u.s.normal.dwStride,
-            sd->u.s.normal.lpData + This->stateBlock->baseVertexIndex * sd->u.s.normal.dwStride);
-        checkGLcall("glNormalPointer(...)");
-        glEnableClientState(GL_NORMAL_ARRAY);
-        checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
-
-    } else {
-        glDisableClientState(GL_NORMAL_ARRAY);
-        checkGLcall("glDisableClientState(GL_NORMAL_ARRAY)");
-        glNormal3f(0, 0, 1);
-        checkGLcall("glNormal3f(0, 0, 1)");
-    }
-
-    /* Diffuse Colour --------------------------------------------*/
-    /*  WARNING: Data here MUST be in RGBA format, so cannot      */
-    /*     go directly into fast mode from app pgm, because       */
-    /*     directx requires data in BGRA format.                  */
-    /* currently fixupVertices swizels the format, but this isn't */
-    /* very practical when using VBOS                             */
-    /* NOTE: Unless we write a vertex shader to swizel the colour */
-    /* , or the user doesn't care and wants the speed advantage   */
-
-    if (sd->u.s.diffuse.lpData || sd->u.s.diffuse.VBO) {
-        /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n",
-                sd->u.s.diffuse.dwStride,
-                sd->u.s.diffuse.lpData));
-
-        if(curVBO != sd->u.s.diffuse.VBO) {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.diffuse.VBO));
-            checkGLcall("glBindBufferARB");
-            curVBO = sd->u.s.diffuse.VBO;
-        }
-        glColorPointer(4, GL_UNSIGNED_BYTE,
-                       sd->u.s.diffuse.dwStride,
-                       sd->u.s.diffuse.lpData + This->stateBlock->baseVertexIndex * sd->u.s.diffuse.dwStride);
-        checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
-        glEnableClientState(GL_COLOR_ARRAY);
-        checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
-
-    } else {
-        glDisableClientState(GL_COLOR_ARRAY);
-        checkGLcall("glDisableClientState(GL_COLOR_ARRAY)");
-        glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-        checkGLcall("glColor4f(1, 1, 1, 1)");
-    }
-
-    /* Specular Colour ------------------------------------------*/
-    if (sd->u.s.specular.lpData || sd->u.s.specular.VBO) {
-        TRACE("setting specular colour\n");
-        /* Note dwType == float3 or float4 == 2 or 3 */
-        VTRACE(("glSecondaryColorPointer(4, GL_UNSIGNED_BYTE, %d, %p)\n",
-                sd->u.s.specular.dwStride,
-                sd->u.s.specular.lpData));
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-            if(curVBO != sd->u.s.specular.VBO) {
-                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.specular.VBO));
-                checkGLcall("glBindBufferARB");
-                curVBO = sd->u.s.specular.VBO;
-            }
-            GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE,
-                                                   sd->u.s.specular.dwStride,
-                                                   sd->u.s.specular.lpData + This->stateBlock->baseVertexIndex * sd->u.s.specular.dwStride);
-            vcheckGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
-            glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-            vcheckGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-        } else {
-
-        /* Missing specular color is not critical, no warnings */
-        VTRACE(("Specular colour is not supported in this GL implementation\n"));
-        }
-
-    } else {
-        if (GL_SUPPORT(EXT_SECONDARY_COLOR)) {
-
-            glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
-            checkGLcall("glDisableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
-            GL_EXTCALL(glSecondaryColor3fEXT)(0, 0, 0);
-            checkGLcall("glSecondaryColor3fEXT(0, 0, 0)");
-        } else {
-
-            /* Missing specular color is not critical, no warnings */
-            VTRACE(("Specular colour is not supported in this GL implementation\n"));
-        }
-    }
-
-    /* Texture coords -------------------------------------------*/
-
-    for (textureNo = 0, texture_idx = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
-        /* The code below uses glClientActiveTexture and glMultiTexCoord* which are all part of the GL_ARB_multitexture extension. */
-        /* Abort if we don't support the extension. */
-        if (!GL_SUPPORT(ARB_MULTITEXTURE)) {
-            FIXME("Program using multiple concurrent textures which this opengl implementation doesn't support\n");
-            continue;
-        }
-
-        if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]*/ TRUE) {
-            /* Select the correct texture stage */
-            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + texture_idx));
-        }
-
-        if (This->stateBlock->textures[textureNo] != NULL) {
-            int coordIdx = This->stateBlock->textureState[textureNo][WINED3DTSS_TEXCOORDINDEX];
-
-            if (coordIdx >= MAX_TEXTURES) {
-                VTRACE(("tex: %d - Skip tex coords, as being system generated\n", textureNo));
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
-
-            } else if (sd->u.s.texCoords[coordIdx].lpData == NULL && sd->u.s.texCoords[coordIdx].VBO == 0) {
-                VTRACE(("Bound texture but no texture coordinates supplied, so skipping\n"));
-                glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-                GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + texture_idx, 0, 0, 0, 1));
-
-            } else {
-                TRACE("Setting up texture %u, idx %d, cordindx %u, data %p\n",
-                      textureNo, texture_idx, coordIdx, sd->u.s.texCoords[coordIdx].lpData);
-                if(curVBO != sd->u.s.texCoords[coordIdx].VBO) {
-                    GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.texCoords[coordIdx].VBO));
-                    checkGLcall("glBindBufferARB");
-                    curVBO = sd->u.s.texCoords[coordIdx].VBO;
-                }
-                /* The coords to supply depend completely on the fvf / vertex shader */
-                glTexCoordPointer(
-                    WINED3D_ATR_SIZE(sd->u.s.texCoords[coordIdx].dwType),
-                    WINED3D_ATR_GLTYPE(sd->u.s.texCoords[coordIdx].dwType),
-                    sd->u.s.texCoords[coordIdx].dwStride,
-                    sd->u.s.texCoords[coordIdx].lpData + This->stateBlock->baseVertexIndex * sd->u.s.texCoords[coordIdx].dwStride);
-                glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-            }
-        } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
-        }
-        if (/*!GL_SUPPORT(NV_REGISTER_COMBINERS) || This->stateBlock->textures[textureNo]*/ TRUE) ++texture_idx;
-    }
-    if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        for (textureNo = texture_idx; textureNo < GL_LIMITS(textures); ++textureNo) {
-            GL_EXTCALL(glClientActiveTextureARB(GL_TEXTURE0_ARB + textureNo));
-            glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-            GL_EXTCALL(glMultiTexCoord4fARB(GL_TEXTURE0_ARB + textureNo, 0, 0, 0, 1));
-        }
-    }
-}
-
 static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum glPrimitiveType,
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx, ULONG startVertex) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -1535,18 +1104,9 @@ inline static void drawPrimitiveDrawStrided(
     const void *idxData,
     short idxSize,
     int minIndex,
-    long StartIdx,
-    BOOL fixup) {
+    long StartIdx) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    BOOL useDrawStridedSlow;
-
-    int startStride = idxData == NULL ? 0 : 
-                      idxData == (void *) -1 ? 0 :
-                      (idxSize == 2 ? *(((const short *) idxData) + StartIdx) : *((const int *) idxData) + StartIdx);
-    int endStride = startStride;
-    TRACE("begin Start stride %d, end stride %d, number of indices%d, number of vertices%d\n",
-        startStride, endStride, numberOfIndicies, numberOfvertices);
 
 /* Generate some fixme's if unsupported functionality is being used */
 #define BUFFER_OR_DATA(_attribute) dataLocations->u.s._attribute.lpData
@@ -1565,34 +1125,6 @@ inline static void drawPrimitiveDrawStrided(
     }
 #undef BUFFER_OR_DATA
 
-    /* Fixed pipeline, no fixups required - load arrays */
-    if (!useVertexShaderFunction &&
-       ((dataLocations->u.s.pSize.lpData == NULL &&
-         dataLocations->u.s.diffuse.lpData == NULL &&
-         dataLocations->u.s.specular.lpData == NULL) ||
-         fixup) ) {
-
-        /* Load the vertex data using named arrays */
-        TRACE("(%p) Loading vertex data\n", This);
-        loadVertexData(iface, dataLocations);
-        useDrawStridedSlow = FALSE;
-
-    /* Shader pipeline - load attribute arrays */
-    } else if(useVertexShaderFunction) {
-
-        loadNumberedArrays(iface, This->stateBlock->vertexShader, dataLocations);
-        useDrawStridedSlow = FALSE;
-
-        /* We compile the shader here because we need the vertex declaration
-         * in order to determine if we need to do any swizzling for D3DCOLOR
-         * registers. If the shader is already compiled this call will do nothing. */
-        IWineD3DVertexShader_CompileShader(This->stateBlock->vertexShader);
-    /* Draw vertex by vertex */
-    } else { 
-        TRACE("Not loading vertex data\n");
-        useDrawStridedSlow = TRUE;
-    }
-
     /* Make any shaders active */
     This->shader_backend->shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
 
@@ -1600,20 +1132,13 @@ inline static void drawPrimitiveDrawStrided(
     This->shader_backend->shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
 
     /* Draw vertex-by-vertex */
-    if (useDrawStridedSlow)
+    if (This->useDrawStridedSlow)
         drawStridedSlow(iface, dataLocations, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx, baseVIndex);
     else
         drawStridedFast(iface, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx, baseVIndex);
 
     /* Cleanup any shaders */
     This->shader_backend->shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
-
-    /* Unload vertex data */
-    if (useVertexShaderFunction) {
-        unloadNumberedArrays(iface);
-    } else {
-        unloadVertexData(iface);
-    }
 }
 
 inline void drawPrimitiveTraceDataLocations(
@@ -1760,7 +1285,6 @@ void drawPrimitive(IWineD3DDevice *iface,
     BOOL                          usePixelShaderFunction = FALSE;
     IWineD3DSwapChainImpl         *swapchain;
     int                           i;
-    BOOL                          fixup;
     DWORD                         dirtyState, idx;
     BYTE                          shift;
 
@@ -1795,7 +1319,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         StateTable[dirtyState].apply(dirtyState, This->stateBlock);
     }
     This->numDirtyEntries = 0; /* This makes the whole list clean */
-    fixup = This->streamFixedUp;
+
 
     if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         check_fbo_status(iface);
@@ -1819,7 +1343,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
         drawPrimitiveDrawStrided(iface, useVertexShaderFunction, usePixelShaderFunction,
             &This->strided_streams, StartVertexIndex, numberOfVertices, calculatedNumberOfindices, glPrimType,
-            idxData, idxSize, minIndex, StartIdx, fixup);
+            idxData, idxSize, minIndex, StartIdx);
     }
 
     /* Finshed updating the screen, restore lock */
