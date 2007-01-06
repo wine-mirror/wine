@@ -491,8 +491,6 @@ HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
         GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
         checkGLcall("glUnmapBufferARB");
         LEAVE_GL();
-    } else if(This->Flags & VBFLAG_HASDESC){
-        IWineD3DVertexBufferImpl_PreLoad(iface);
     }
     return WINED3D_OK;
 }
