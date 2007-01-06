@@ -1826,6 +1826,10 @@ IDirectDrawImpl_CreateNewSurface(IDirectDrawImpl *This,
     {
         Pool = WINED3DPOOL_SYSTEMMEM;
     }
+    else if(pDDSD->ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE)
+    {
+        Pool = WINED3DPOOL_MANAGED;
+    }
 
     Format = PixelFormat_DD2WineD3D(&pDDSD->u4.ddpfPixelFormat);
     if(Format == WINED3DFMT_UNKNOWN)
