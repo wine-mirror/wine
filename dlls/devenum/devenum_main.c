@@ -296,7 +296,6 @@ HRESULT WINAPI DllUnregisterServer(void)
 static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWSTR pszThreadingModel)
 {
     HRESULT res = S_OK;
-    WCHAR dll_module[MAX_PATH];
     LPOLESTR clsidString;
     HKEY hkeyClsid;
     HKEY hkeySub;
@@ -305,17 +304,10 @@ static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWST
     int i;
     static const WCHAR wcszInproc32[] = {'I','n','p','r','o','c','S','e','r','v','e','r','3','2',0};
     static const WCHAR wcszThreadingModel[] = {'T','h','r','e','a','d','i','n','g','M','o','d','e','l',0};
+    static const WCHAR dll_module[] = {'d','e','v','e','n','u','m','.','d','l','l',0};
 
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, clsid_keyname, &hkeyClsid)
           == ERROR_SUCCESS ? S_OK : E_FAIL;
-
-    TRACE("HModule = %p\n", DEVENUM_hInstance);
-    i = GetModuleFileNameW(DEVENUM_hInstance, dll_module,
-                           sizeof(dll_module) / sizeof(WCHAR));
-    if (!i)
-	return HRESULT_FROM_WIN32(GetLastError());
-    if (i >= sizeof(dll_module) / sizeof(WCHAR))
-	return HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
     for (i = 0; i < count; i++)
     {
