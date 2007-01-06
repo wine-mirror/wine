@@ -1833,16 +1833,12 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         /* Compile and bind the shader */
         IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
 
-#if 0
-        /* Can't do that here right now, because glsl shaders depend on having both pixel and vertex shader
-         * setup at the same time. The shader_select call will be done by drawprim until vertex shaders are
-         * moved to the state table too
-         */
-        stateblock->wineD3DDevice->shader_backend->shader_select(
-                (IWineD3DDevice *) stateblock->wineD3DDevice,
-                TRUE,
-                !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
-#endif
+        if(!isStateDirty(stateblock->wineD3DDevice, StateTable[STATE_VSHADER].representative)) {
+            stateblock->wineD3DDevice->shader_backend->shader_select(
+                    (IWineD3DDevice *) stateblock->wineD3DDevice,
+                    TRUE,
+                    !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+        }
         stateblock->wineD3DDevice->last_was_pshader = TRUE;
     } else {
         /* Disabled the pixel shader - color ops weren't applied
@@ -1855,12 +1851,12 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         }
         stateblock->wineD3DDevice->last_was_pshader = FALSE;
 
-#if 0
-        stateblock->wineD3DDevice->shader_backend->shader_select(
-                (IWineD3DDevice *) stateblock->wineD3DDevice,
-                FALSE,
-                !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
-#endif
+        if(!isStateDirty(stateblock->wineD3DDevice, StateTable[STATE_VSHADER].representative)) {
+            stateblock->wineD3DDevice->shader_backend->shader_select(
+                    (IWineD3DDevice *) stateblock->wineD3DDevice,
+                    FALSE,
+                    !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+        }
     }
 }
 
@@ -2653,6 +2649,17 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
          * in order to determine if we need to do any swizzling for D3DCOLOR
          * registers. If the shader is already compiled this call will do nothing. */
         IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
+
+        /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
+         * application
+         */
+        if(!isStateDirty(device, STATE_PIXELSHADER)) {
+            BOOL usePixelShaderFunction = device->ps_selected_mode != SHADER_NONE &&
+                                          stateblock->pixelShader &&
+                                          ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
+
+            device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
+        }
     }
 
     if(updateFog) {

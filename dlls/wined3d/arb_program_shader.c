@@ -946,6 +946,9 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
         TRACE("(%p) : Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n",
             This, ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.prgId);
+    } else if(GL_SUPPORT(GL_VERTEX_PROGRAM_ARB)) {
+        glDisable(GL_VERTEX_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
 
     if (usePS) {
@@ -961,6 +964,9 @@ static void shader_arb_select(IWineD3DDevice *iface, BOOL usePS, BOOL useVS) {
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
         TRACE("(%p) : Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n",
             This, ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.prgId);
+    } else if(GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) {
+        glDisable(GL_FRAGMENT_PROGRAM_ARB);
+        checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
     }
 }
 

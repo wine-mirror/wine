@@ -1108,9 +1108,6 @@ inline static void drawPrimitiveDrawStrided(
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    /* Make any shaders active */
-    This->shader_backend->shader_select(iface, usePixelShaderFunction, useVertexShaderFunction);
-
     /* Load any global constants/uniforms that may have been set by the application */
     This->shader_backend->shader_load_constants(iface, usePixelShaderFunction, useVertexShaderFunction);
 
@@ -1119,9 +1116,6 @@ inline static void drawPrimitiveDrawStrided(
         drawStridedSlow(iface, dataLocations, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx, baseVIndex);
     else
         drawStridedFast(iface, numberOfIndicies, glPrimType, idxData, idxSize, minIndex, StartIdx, baseVIndex);
-
-    /* Cleanup any shaders */
-    This->shader_backend->shader_cleanup(usePixelShaderFunction, useVertexShaderFunction);
 }
 
 static void check_fbo_status(IWineD3DDevice *iface) {
@@ -1164,6 +1158,14 @@ static void depth_blt(IWineD3DDevice *iface, GLuint texture) {
     glBindTexture(GL_TEXTURE_2D, old_binding);
 
     glPopAttrib();
+
+    /* Reselect the old shaders. There doesn't seem to be any glPushAttrib bit for arb shaders,
+     * and this seems easier and more efficient than providing the shader backend with a private
+     * storage to read and restore the old shader settings
+     */
+    This->shader_backend->shader_select(iface,
+        This->stateBlock->pixelShader && ((IWineD3DPixelShaderImpl *)This->stateBlock->pixelShader)->baseShader.function,
+        This->stateBlock->vertexShader && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->baseShader.function);
 }
 
 static void depth_copy(IWineD3DDevice *iface) {
