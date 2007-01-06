@@ -1247,6 +1247,9 @@ void drawPrimitive(IWineD3DDevice *iface,
     DWORD                         dirtyState, idx;
     BYTE                          shift;
 
+    /* Signals other modules that a drawing is in progress and the stateblock finalized */
+    This->isInDraw = TRUE;
+
     /* Invalidate the back buffer memory so LockRect will read it the next time */
     for(i = 0; i < IWineD3DDevice_GetNumberOfSwapChains(iface); i++) {
         IWineD3DDevice_GetSwapChain(iface, i, (IWineD3DSwapChain **) &swapchain);
@@ -1340,4 +1343,7 @@ void drawPrimitive(IWineD3DDevice *iface,
         ++primCounter;
     }
 #endif
+
+    /* Control goes back to the device, stateblock values may change again */
+    This->isInDraw = FALSE;
 }

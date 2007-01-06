@@ -258,7 +258,20 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         return; /* Not doing any conversion */
     }
 
-    declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
+    /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
+    if(This->resource.wineD3DDevice->isInDraw && This->Flags & VBFLAG_STREAM) {
+        declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
+    } else if(This->Flags & VBFLAG_HASDESC) {
+        /* Reuse the declaration stored in the buffer. It will most likely not change, and if it does
+         * the stream source state handler will call PreLoad again and the change will be cought
+         */
+    } else {
+        /* Cannot get a declaration, and no declaration is stored in the buffer. It is pointless to preload
+         * now. When the buffer is used, PreLoad will be called by the stream source state handler and a valid
+         * declaration for the buffer can be found
+         */
+        return;
+    }
 
     /* If applications change the declaration over and over, reconverting all the time is a huge
      * performance hit. So count the declaration changes and release the VBO if there are too much
