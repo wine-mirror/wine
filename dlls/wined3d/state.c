@@ -2096,7 +2096,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
                         WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
                         WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
                         strided->u.input[i].dwStride,
-                        strided->u.input[i].lpData + stateblock->baseVertexIndex * strided->u.input[i].dwStride));
+                        strided->u.input[i].lpData + stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride));
         GL_EXTCALL(glEnableVertexAttribArrayARB(i));
    }
 }
@@ -2121,7 +2121,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
 #endif
 
             TRACE("Blend %d %p %d\n", WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
-                sd->u.s.blendWeights.lpData + stateblock->baseVertexIndex * sd->u.s.blendWeights.dwStride, sd->u.s.blendWeights.dwStride);
+                sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride, sd->u.s.blendWeights.dwStride);
             /* FIXME("TODO\n");*/
             /* Note dwType == float3 or float4 == 2 or 3 */
 
@@ -2136,7 +2136,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
             VTRACE(("glWeightPointerARB(%d, GL_FLOAT, %d, %p)\n",
                 WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType) ,
                 sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + stateblock->baseVertexIndex * sd->u.s.blendWeights.dwStride));
+                sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride));
 
             if(curVBO != sd->u.s.blendWeights.VBO) {
                 GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, sd->u.s.blendWeights.VBO));
@@ -2148,7 +2148,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                 WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
                 WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
                 sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + stateblock->baseVertexIndex * sd->u.s.blendWeights.dwStride);
+                sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride);
 
             checkGLcall("glWeightPointerARB");
 
@@ -2168,7 +2168,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                 WINED3D_ATR_SIZE(sd->u.s.blendWeights.dwType),
                 WINED3D_ATR_GLTYPE(sd->u.s.blendWeights.dwType),
                 sd->u.s.blendWeights.dwStride,
-                sd->u.s.blendWeights.lpData + stateblock->baseVertexIndex * sd->u.s.blendWeights.dwStride);
+                sd->u.s.blendWeights.lpData + stateblock->loadBaseVertexIndex * sd->u.s.blendWeights.dwStride);
             checkGLcall("glVertexWeightPointerEXT(numBlends, ...)");
             glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT);
             checkGLcall("glEnableClientState(GL_VERTEX_WEIGHT_ARRAY_EXT)");
@@ -2200,7 +2200,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
             (GL_EXTCALL)(FogCoordPointerEXT)(
                 WINED3D_ATR_GLTYPE(sd->u.s.fog.dwType),
                 sd->u.s.fog.dwStride,
-                sd->u.s.fog.lpData + stateblock->baseVertexIndex * sd->u.s.fog.dwStride);
+                sd->u.s.fog.lpData + stateblock->loadBaseVertexIndex * sd->u.s.fog.dwStride);
         } else {
             /* don't bother falling back to 'slow' as we don't support software FOG yet. */
             /* FIXME: fixme once */
@@ -2224,7 +2224,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                 (GL_EXTCALL)(TangentPointerEXT)(
                     WINED3D_ATR_GLTYPE(sd->u.s.tangent.dwType),
                     sd->u.s.tangent.dwStride,
-                    sd->u.s.tangent.lpData + stateblock->baseVertexIndex * sd->u.s.tangent.dwStride);
+                    sd->u.s.tangent.lpData + stateblock->loadBaseVertexIndex * sd->u.s.tangent.dwStride);
             } else {
                     glDisable(GL_TANGENT_ARRAY_EXT);
             }
@@ -2233,7 +2233,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                     (GL_EXTCALL)(BinormalPointerEXT)(
                         WINED3D_ATR_GLTYPE(sd->u.s.binormal.dwType),
                         sd->u.s.binormal.dwStride,
-                        sd->u.s.binormal.lpData + stateblock->baseVertexIndex * sd->u.s.binormal.dwStride);
+                        sd->u.s.binormal.lpData + stateblock->loadBaseVertexIndex * sd->u.s.binormal.dwStride);
             } else{
                     glDisable(GL_BINORMAL_ARRAY_EXT);
             }
@@ -2286,12 +2286,12 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         if(sd->u.s.position.VBO == 0) {
             glVertexPointer(3 /* min(WINED3D_ATR_SIZE(sd->u.s.position.dwType),3) */,
                 WINED3D_ATR_GLTYPE(sd->u.s.position.dwType),
-                sd->u.s.position.dwStride, sd->u.s.position.lpData + stateblock->baseVertexIndex * sd->u.s.position.dwStride);
+                sd->u.s.position.dwStride, sd->u.s.position.lpData + stateblock->loadBaseVertexIndex * sd->u.s.position.dwStride);
         } else {
             glVertexPointer(
                 WINED3D_ATR_SIZE(sd->u.s.position.dwType),
                 WINED3D_ATR_GLTYPE(sd->u.s.position.dwType),
-                sd->u.s.position.dwStride, sd->u.s.position.lpData + stateblock->baseVertexIndex * sd->u.s.position.dwStride);
+                sd->u.s.position.dwStride, sd->u.s.position.lpData + stateblock->loadBaseVertexIndex * sd->u.s.position.dwStride);
         }
         checkGLcall("glVertexPointer(...)");
         glEnableClientState(GL_VERTEX_ARRAY);
@@ -2316,7 +2316,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         glNormalPointer(
             WINED3D_ATR_GLTYPE(sd->u.s.normal.dwType),
             sd->u.s.normal.dwStride,
-            sd->u.s.normal.lpData + stateblock->baseVertexIndex * sd->u.s.normal.dwStride);
+            sd->u.s.normal.lpData + stateblock->loadBaseVertexIndex * sd->u.s.normal.dwStride);
         checkGLcall("glNormalPointer(...)");
         glEnableClientState(GL_NORMAL_ARRAY);
         checkGLcall("glEnableClientState(GL_NORMAL_ARRAY)");
@@ -2350,7 +2350,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
         }
         glColorPointer(4, GL_UNSIGNED_BYTE,
                        sd->u.s.diffuse.dwStride,
-                       sd->u.s.diffuse.lpData + stateblock->baseVertexIndex * sd->u.s.diffuse.dwStride);
+                       sd->u.s.diffuse.lpData + stateblock->loadBaseVertexIndex * sd->u.s.diffuse.dwStride);
         checkGLcall("glColorPointer(4, GL_UNSIGNED_BYTE, ...)");
         glEnableClientState(GL_COLOR_ARRAY);
         checkGLcall("glEnableClientState(GL_COLOR_ARRAY)");
@@ -2377,7 +2377,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
             }
             GL_EXTCALL(glSecondaryColorPointerEXT)(4, GL_UNSIGNED_BYTE,
                                                    sd->u.s.specular.dwStride,
-                                                   sd->u.s.specular.lpData + stateblock->baseVertexIndex * sd->u.s.specular.dwStride);
+                                                   sd->u.s.specular.lpData + stateblock->loadBaseVertexIndex * sd->u.s.specular.dwStride);
             vcheckGLcall("glSecondaryColorPointerEXT(4, GL_UNSIGNED_BYTE, ...)");
             glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT);
             vcheckGLcall("glEnableClientState(GL_SECONDARY_COLOR_ARRAY_EXT)");
@@ -2442,7 +2442,7 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
                     WINED3D_ATR_SIZE(sd->u.s.texCoords[coordIdx].dwType),
                     WINED3D_ATR_GLTYPE(sd->u.s.texCoords[coordIdx].dwType),
                     sd->u.s.texCoords[coordIdx].dwStride,
-                    sd->u.s.texCoords[coordIdx].lpData + stateblock->baseVertexIndex * sd->u.s.texCoords[coordIdx].dwStride);
+                    sd->u.s.texCoords[coordIdx].lpData + stateblock->loadBaseVertexIndex * sd->u.s.texCoords[coordIdx].dwStride);
                 glEnableClientState(GL_TEXTURE_COORD_ARRAY);
             }
         } else if (!GL_SUPPORT(NV_REGISTER_COMBINERS)) {

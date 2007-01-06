@@ -4697,9 +4697,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitive(IWineD3DDevice *iface, WI
                                debug_d3dprimitivetype(PrimitiveType),
                                StartVertex, PrimitiveCount);
 
-    if(StartVertex - This->stateBlock->baseVertexIndex < 0) ERR("Drawing negative\n");
+    if(This->stateBlock->loadBaseVertexIndex != 0) {
+        This->stateBlock->loadBaseVertexIndex = 0;
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
+    }
     /* Account for the loading offset due to index buffers. Instead of reloading all sources correct it with the startvertex parameter */
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex - This->stateBlock->baseVertexIndex, 0/* NumVertices */, -1 /* indxStart */,
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, StartVertex, 0/* NumVertices */, -1 /* indxStart */,
                   0 /* indxSize */, NULL /* indxData */, 0 /* minIndex */);
     return WINED3D_OK;
 }
@@ -4728,6 +4731,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
         idxStride = 4;
     }
 
+    if(This->stateBlock->loadBaseVertexIndex != This->stateBlock->baseVertexIndex) {
+        This->stateBlock->loadBaseVertexIndex = This->stateBlock->baseVertexIndex;
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
+    }
+
     drawPrimitive(iface, PrimitiveType, primCount, 0, NumVertices, startIndex,
                    idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
 
@@ -4752,11 +4760,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveUP(IWineD3DDevice *iface, 
     This->stateBlock->streamSource[0] = (IWineD3DVertexBuffer *)pVertexStreamZeroData;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
     This->stateBlock->streamIsUP = TRUE;
+    This->stateBlock->loadBaseVertexIndex = 0;
 
     /* TODO: Only mark dirty if drawing from a different UP address */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
 
-    drawPrimitive(iface, PrimitiveType, PrimitiveCount, -This->stateBlock->baseVertexIndex /* start vertex */, 0  /* NumVertices */,
+    drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* start vertex */, 0  /* NumVertices */,
                   0 /* indxStart*/, 0 /* indxSize*/, NULL /* indxData */, 0 /* indxMin */);
 
     /* MSDN specifies stream zero settings must be set to NULL */
@@ -4801,10 +4810,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     This->stateBlock->streamIsUP = TRUE;
     This->stateBlock->streamStride[0] = VertexStreamZeroStride;
 
-    /* Mark the state dirty until we have nicer tracking */
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
     /* Set to 0 as per msdn. Do it now due to the stream source loading during drawPrimitive */
     This->stateBlock->baseVertexIndex = 0;
+    This->stateBlock->loadBaseVertexIndex = 0;
+    /* Mark the state dirty until we have nicer tracking of the stream source pointers */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex);
 
@@ -4812,6 +4822,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     This->stateBlock->streamSource[0] = NULL;
     This->stateBlock->streamStride[0] = 0;
     This->stateBlock->pIndexData = NULL;
+    /* No need to mark the stream source state dirty here. Either the app calls UP drawing again, or it has to call
+     * SetStreamSource to specify a vertex buffer
+     */
 
     return WINED3D_OK;
 }

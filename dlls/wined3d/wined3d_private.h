@@ -1201,7 +1201,8 @@ struct IWineD3DStateBlockImpl
 
     /* Indices */
     IWineD3DIndexBuffer*      pIndexData;
-    UINT                      baseVertexIndex; /* Note: only used for d3d8 */
+    UINT                      baseVertexIndex;
+    UINT                      loadBaseVertexIndex; /* non-indexed drawing needs 0 here, indexed baseVertexIndex */
 
     /* Transform */
     WINED3DMATRIX             transforms[HIGHEST_TRANSFORMSTATE + 1];

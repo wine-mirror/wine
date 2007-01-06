@@ -650,7 +650,7 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     DWORD diffuseColor = 0xFFFFFFFF;       /* Diffuse Color              */
     DWORD specularColor = 0;               /* Specular Color             */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    LONG                       SkipnStrides = startVertex + This->stateBlock->baseVertexIndex;
+    LONG                       SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
 
     TRACE("Using slow vertex array code\n");
 
@@ -680,10 +680,10 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
             /* Indexed so work out the number of strides to skip */
             if (idxSize == 2) {
                 VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufS[startIdx+vx_index]));
-                SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->baseVertexIndex;
+                SkipnStrides = pIdxBufS[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
             } else {
                 VTRACE(("Idx for vertex %d = %d\n", vx_index, pIdxBufL[startIdx+vx_index]));
-                SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->baseVertexIndex;
+                SkipnStrides = pIdxBufL[startIdx + vx_index] + This->stateBlock->loadBaseVertexIndex;
             }
         }
 
