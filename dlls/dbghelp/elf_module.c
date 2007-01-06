@@ -147,8 +147,8 @@ static const char* elf_map_section(struct elf_file_map* fmap, int sidx)
         return ELF_NO_MAP;
     /* align required information on page size (we assume pagesize is a power of 2) */
     ofst = fmap->sect[sidx].shdr.sh_offset & ~(pgsz - 1);
-    size = (fmap->sect[sidx].shdr.sh_offset + 
-            fmap->sect[sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1);
+    size = ((fmap->sect[sidx].shdr.sh_offset +
+             fmap->sect[sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1)) - ofst;
     fmap->sect[sidx].mapped = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fmap->fd, ofst);
     if (fmap->sect[sidx].mapped == ELF_NO_MAP) return ELF_NO_MAP;
     return fmap->sect[sidx].mapped + (fmap->sect[sidx].shdr.sh_offset & (pgsz - 1));
@@ -163,7 +163,14 @@ static void elf_unmap_section(struct elf_file_map* fmap, int sidx)
 {
     if (sidx >= 0 && sidx < fmap->elfhdr.e_shnum && fmap->sect[sidx].mapped != ELF_NO_MAP)
     {
-        munmap((char*)fmap->sect[sidx].mapped, fmap->sect[sidx].shdr.sh_size);
+        unsigned pgsz = getpagesize();
+        unsigned ofst, size;
+
+        ofst = fmap->sect[sidx].shdr.sh_offset & ~(pgsz - 1);
+        size = ((fmap->sect[sidx].shdr.sh_offset +
+             fmap->sect[sidx].shdr.sh_size + pgsz - 1) & ~(pgsz - 1)) - ofst;
+        if (munmap((char*)fmap->sect[sidx].mapped, size) < 0)
+            WARN("Couldn't unmap the section\n");
         fmap->sect[sidx].mapped = ELF_NO_MAP;
     }
 }
@@ -957,11 +964,11 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                 else
                     WARN("Couldn't load debug information from %s\n", dbg_link);
                 ret = ret || lret;
+                elf_unmap_file(&fmap_link);
             }
             else
                 WARN("Couldn't load linked debug file for %s\n",
                      module->module.ModuleName);
-            elf_unmap_file(&fmap_link);
         }
     }
     if (strstr(module->module.ModuleName, "<elf>") ||
