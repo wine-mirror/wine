@@ -90,17 +90,17 @@ todo_wine
 }
 
     ret = IntersectClipRect(hdc, 0, 0, 50, 50);
-#if 0  /* XP returns COMPLEXREGION although dump_region reports only 1 rect */
-    ok(ret == SIMPLEREGION, "IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
-#endif
-    if (ret != SIMPLEREGION)
+    if (ret == COMPLEXREGION)
     {
+        /* XP returns COMPLEXREGION although dump_region reports only 1 rect */
         trace("Windows BUG: IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
         /* let's make sure that it's a simple region */
         ret = GetClipRgn(hdc, hrgn);
         ok(ret == 1, "GetClipRgn returned %d instead of 1\n", ret);
         dump_region(hrgn);
     }
+    else
+        ok(ret == SIMPLEREGION, "IntersectClipRect returned %d instead of SIMPLEREGION\n", ret);
 
     ret = GetClipBox(hdc, &rc_clip);
     ok(ret == SIMPLEREGION, "GetClipBox returned %d instead of SIMPLEREGION\n", ret);
