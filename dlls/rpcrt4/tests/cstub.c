@@ -869,12 +869,9 @@ static void test_delegating_Invoke(IPSFactoryBuffer *ppsf)
     memset(&msg, 0, sizeof(msg));
     msg.dataRepresentation = NDR_LOCAL_DATA_REPRESENTATION;
     msg.iMethod = 3;
-#if 0 /* FIXME: Figure out why this fails in Windows */
+    /* FIXME: Figure out why this fails on Windows */
     r = IRpcStubBuffer_Invoke(pstub, &msg, pchan);
-    ok(r == S_OK, "ret %08lx\n", r);
-#else
-    pchan = NULL; /* stop compiler waring */
-#endif
+    ok(r == S_OK, "ret %08x\n", r);
     if(r == S_OK)
     {
         ok(*(DWORD*)msg.Buffer == 0xabcdef, "buf[0] %08x\n", *(DWORD*)msg.Buffer);
