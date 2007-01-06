@@ -693,12 +693,14 @@ static void test_CreateFileW(void)
     ret = DeleteFileW(filename);
     ok(ret, "DeleteFileW: error %d\n", GetLastError());
 
-#if 0  /* this test crashes on NT4.0 */
-    hFile = CreateFileW(NULL, GENERIC_READ, 0, NULL,
-                        CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
-    ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
-       "CreateFileW(NULL) returned ret=%p error=%ld\n",hFile,GetLastError());
-#endif
+    if (0)
+    {
+        /* this crashes on NT4.0 */
+        hFile = CreateFileW(NULL, GENERIC_READ, 0, NULL,
+                            CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);
+        ok(hFile == INVALID_HANDLE_VALUE && GetLastError() == ERROR_PATH_NOT_FOUND,
+           "CreateFileW(NULL) returned ret=%p error=%u\n",hFile,GetLastError());
+    }
 
     hFile = CreateFileW(emptyW, GENERIC_READ, 0, NULL,
                         CREATE_NEW, FILE_FLAG_RANDOM_ACCESS, 0);

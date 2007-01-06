@@ -532,9 +532,8 @@ static void testCtrlHandler(void)
     mch_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     mch_count = 0;
     ok(GenerateConsoleCtrlEvent(CTRL_C_EVENT, 0), "Couldn't send ctrl-c event\n");
-#if 0  /* FIXME: it isn't synchronous on wine but it can still happen before we test */
-    todo_wine ok(mch_count == 1, "Event isn't synchronous\n");
-#endif
+    /* FIXME: it isn't synchronous on wine but it can still happen before we test */
+    if (0) ok(mch_count == 1, "Event isn't synchronous\n");
     ok(WaitForSingleObject(mch_event, 3000) == WAIT_OBJECT_0, "event sending didn't work\n");
     CloseHandle(mch_event);
 

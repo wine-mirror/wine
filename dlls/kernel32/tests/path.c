@@ -964,10 +964,9 @@ static void test_GetSystemDirectory(void)
     ok(res > 0, "returned %d with %d (expected '>0')\n", res, GetLastError());
 
     total = res;
-#if 0
-    /* this test crash on XP */
-    res = GetSystemDirectory(NULL, total);
-#endif
+
+    /* this crashes on XP */
+    if (0) res = GetSystemDirectory(NULL, total);
 
     SetLastError(0xdeadbeef);
     res = GetSystemDirectory(NULL, total-1);
@@ -1024,10 +1023,8 @@ static void test_GetWindowsDirectory(void)
     ok(res > 0, "returned %d with %d (expected '>0')\n", res, GetLastError());
 
     total = res;
-#if 0
-    /* this test crash on XP */
-    res = GetWindowsDirectory(NULL, total);
-#endif
+    /* this crashes on XP */
+    if (0) res = GetWindowsDirectory(NULL, total);
 
     SetLastError(0xdeadbeef);
     res = GetWindowsDirectory(NULL, total-1);
