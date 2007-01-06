@@ -2675,19 +2675,22 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
     }
 
-    /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
-     * application
-     */
-    if(!isStateDirty(device, STATE_PIXELSHADER)) {
+    if(useVertexShaderFunction || device->last_was_vshader) {
         BOOL usePixelShaderFunction = device->ps_selected_mode != SHADER_NONE && 
-                                        stateblock->pixelShader &&
-                                        ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
+                                      stateblock->pixelShader &&
+                                      ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
 
-        device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
+        /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
+         * application
+         */
+        if(!isStateDirty(device, STATE_PIXELSHADER)) {
+            device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
 
-        if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
-            shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock);
+            if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
+                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock);
+            }
         }
+        device->last_was_vshader = useVertexShaderFunction;
     }
 
     if(updateFog) {
