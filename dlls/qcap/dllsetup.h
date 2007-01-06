@@ -66,8 +66,7 @@ typedef struct tagCFactoryTemplate {
  * CFactoryTemplate
  *
  ****************************************************************************/
-extern HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
-                                    HINSTANCE hinst, BOOL bRegister);
+extern HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num, BOOL bRegister);
 
 /****************************************************************************
  * SetupInitializeServers

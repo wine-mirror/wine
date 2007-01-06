@@ -45,7 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(qcap);
 
 static LONG objects_ref = 0;
 static LONG server_locks = 0;
-static HINSTANCE ghInst = NULL;
 
 static const WCHAR wAudioCaptFilter[] =
 {'A','u','d','i','o',' ','C','a','p','t','u','r','e',' ','F','i','l','t','e','r',0};
@@ -158,7 +157,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
     {
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls(hInstDLL);
-            ghInst = hInstDLL;
             SetupInitializeServers(g_cTemplates, g_numTemplates, TRUE);
             break;
         case DLL_PROCESS_DETACH:
@@ -175,7 +173,7 @@ HRESULT WINAPI DllRegisterServer(void)
 {
     TRACE("()\n");
 
-    return SetupRegisterServers(g_cTemplates, g_numTemplates, ghInst, TRUE);	
+    return SetupRegisterServers(g_cTemplates, g_numTemplates, TRUE);
 }
 
 /***********************************************************************
@@ -185,7 +183,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 {
     TRACE("\n");
 
-    return SetupRegisterServers(g_cTemplates, g_numTemplates, ghInst, FALSE);	
+    return SetupRegisterServers(g_cTemplates, g_numTemplates, FALSE);
 }
 
 /***********************************************************************

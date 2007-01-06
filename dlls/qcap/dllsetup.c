@@ -271,16 +271,12 @@ static HRESULT SetupRegisterAllClasses(const CFactoryTemplate * pList, int num,
  *
  ****************************************************************************/
 HRESULT SetupRegisterServers(const CFactoryTemplate * pList, int num,
-                             HINSTANCE hinst, BOOL bRegister)
+                             BOOL bRegister)
 {
+    static const WCHAR szFileName[] = {'q','c','a','p','.','d','l','l',0};
     HRESULT hr = NOERROR;
-    WCHAR szFileName[MAX_PATH];
     IFilterMapper2 *pIFM2 = NULL;
     IFilterMapper *pIFM = NULL;
-
-    /* Win95 wouldn't support the Unicode version of this API!! */
-    if (!GetModuleFileNameW(hinst, szFileName, MAX_PATH))
-        return HRESULT_FROM_WIN32(GetLastError());
 
     /* first register all server classes, just to make sure */
     if (bRegister)
