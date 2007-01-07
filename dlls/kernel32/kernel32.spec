@@ -649,8 +649,8 @@
 @ stdcall GetVersionExW(ptr)
 @ stdcall GetVolumeInformationA(str ptr long ptr ptr ptr ptr long)
 @ stdcall GetVolumeInformationW(wstr ptr long ptr ptr ptr ptr long)
-@ stub GetVolumeNameForVolumeMountPointA
-@ stdcall GetVolumeNameForVolumeMountPointW(wstr long long)
+@ stdcall GetVolumeNameForVolumeMountPointA(str ptr long)
+@ stdcall GetVolumeNameForVolumeMountPointW(wstr ptr long)
 @ stdcall GetVolumePathNameA(str ptr long)
 @ stdcall GetVolumePathNameW(wstr ptr long)
 # @ stub GetVolumePathNamesForVolumeNameA

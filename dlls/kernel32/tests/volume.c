@@ -45,7 +45,51 @@ static void test_query_dos_deviceA(void)
     }
 }
 
+static void test_GetVolumeNameForVolumeMountPointA(void)
+{
+    BOOL ret;
+    char volume[MAX_PATH], path[] = "c:\\";
+    DWORD len = sizeof(volume);
+
+    ret = GetVolumeNameForVolumeMountPointA(path, volume, 0);
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+
+    if (0) { /* these crash on XP */
+    ret = GetVolumeNameForVolumeMountPointA(path, NULL, len);
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+
+    ret = GetVolumeNameForVolumeMountPointA(NULL, volume, len);
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+    }
+
+    ret = GetVolumeNameForVolumeMountPointA(path, volume, len);
+    ok(ret == TRUE, "GetVolumeNameForVolumeMountPointA failed\n");
+}
+
+static void test_GetVolumeNameForVolumeMountPointW(void)
+{
+    BOOL ret;
+    WCHAR volume[MAX_PATH], path[] = {'c',':','\\',0};
+    DWORD len = sizeof(volume) / sizeof(WCHAR);
+
+    ret = GetVolumeNameForVolumeMountPointW(path, volume, 0);
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
+
+    if (0) { /* these crash on XP */
+    ret = GetVolumeNameForVolumeMountPointW(path, NULL, len);
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointW succeeded\n");
+
+    ret = GetVolumeNameForVolumeMountPointW(NULL, volume, len);
+    ok(ret == FALSE, "GetVolumeNameForVolumeMountPointW succeeded\n");
+    }
+
+    ret = GetVolumeNameForVolumeMountPointW(path, volume, len);
+    ok(ret == TRUE, "GetVolumeNameForVolumeMountPointW failed\n");
+}
+
 START_TEST(volume)
 {
     test_query_dos_deviceA();
+    test_GetVolumeNameForVolumeMountPointA();
+    test_GetVolumeNameForVolumeMountPointW();
 }
