@@ -2279,9 +2279,9 @@ INT X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
       }
   }
 
-  /* Finally issue FIXME for unknown keys   */
+  /* Finally issue WARN for unknown keys   */
 
-  FIXME("(%08x,%p,%d): unsupported key, vkey=%04x, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
+  WARN("(%08x,%p,%d): unsupported key, vkey=%04x, ansi=%04x\n",lParam,lpBuffer,nSize,vkey,ansi);
   if (lpBuffer && nSize)
     *lpBuffer = 0;
   return 0;
