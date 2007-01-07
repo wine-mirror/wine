@@ -2302,7 +2302,8 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
                         HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REPLACE);
         }
 
-        HTTP_ProcessHeader(lpwhr, szConnection, szClose,
+        HTTP_ProcessHeader(lpwhr, szConnection,
+                           lpwhr->hdr.dwFlags & INTERNET_FLAG_KEEP_CONNECTION ? szKeepAlive : szClose,
                            HTTP_ADDHDR_FLAG_REQ | HTTP_ADDHDR_FLAG_REPLACE);
 
         /* if there's a proxy username and password, add it to the headers */
