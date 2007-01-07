@@ -1257,7 +1257,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     DWORD		retType;
     LPCWSTR		lpCmd = 0;
     LPWSTR		devAlias = NULL;
-    BOOL		bAutoOpen = FALSE;
     static const WCHAR  wszNew[] = {'n','e','w',0};
     static const WCHAR  wszSAliasS[] = {' ','a','l','i','a','s',' ',0};
     static const WCHAR wszTypeS[] = {'t','y','p','e',' ',0};
@@ -1420,10 +1419,6 @@ DWORD WINAPI mciSendStringW(LPCWSTR lpstrCommand, LPWSTR lpstrRet,
     if ((dwRet = MCI_ParseOptArgs(data, offset, lpCmd, args, &dwFlags)))
 	goto errCleanUp;
 
-    if (bAutoOpen && (dwFlags & MCI_NOTIFY)) {
-	dwRet = MCIERR_NOTIFY_ON_AUTO_OPEN;
-	goto errCleanUp;
-    }
     /* FIXME: the command should get it's own notification window set up and
      * ask for device closing while processing the notification mechanism
      */
