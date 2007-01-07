@@ -249,6 +249,7 @@ WINDOWS_INCLUDES = \
 	reason.h \
 	regstr.h \
 	richedit.h \
+	rmxfguid.h \
 	rpc.h \
 	rpcdce.h \
 	rpcdcep.h \
