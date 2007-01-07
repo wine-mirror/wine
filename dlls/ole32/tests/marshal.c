@@ -2136,6 +2136,9 @@ static DWORD CALLBACK get_global_interface_proc(LPVOID pv)
 	CoInitialize(NULL);
 	hr = IGlobalInterfaceTable_GetInterfaceFromGlobal(params->git, params->cookie, &IID_IClassFactory, (void **)&cf);
 	ok_ole_success(hr, IGlobalInterfaceTable_GetInterfaceFromGlobal);
+
+	IGlobalInterfaceTable_Release(params->git);
+
 	CoUninitialize();
 
 	return hr;
