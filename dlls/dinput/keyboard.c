@@ -89,8 +89,6 @@ static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam
     EnterCriticalSection(&This->base.crit);
     queue_event((LPDIRECTINPUTDEVICE8A)This, dik_code, new_diks, hook->time, This->dinput->evsequence++);
     LeaveCriticalSection(&This->base.crit);
-
-    if (This->base.hEvent) SetEvent(This->base.hEvent);
     
     return CallNextHookEx(0, code, wparam, lparam);
 }

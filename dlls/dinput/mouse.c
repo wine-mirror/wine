@@ -376,9 +376,6 @@ static LRESULT CALLBACK dinput_mouse_hook( int code, WPARAM wparam, LPARAM lpara
         queue_event((LPDIRECTINPUTDEVICE8A)This, id_to_offset(&This->base.data_format, inst_id),
                     wdata, hook->time, This->dinput->evsequence++);
 
-    /* Mouse moved -> send event if asked */
-    if (This->base.hEvent) SetEvent(This->base.hEvent);
-
     LeaveCriticalSection(&This->base.crit);
     
     /* Ignore message */

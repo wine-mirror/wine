@@ -591,6 +591,8 @@ void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, D
     This->data_queue[This->queue_head].dwTimeStamp = time;
     This->data_queue[This->queue_head].dwSequence  = seq;
     This->queue_head = next_pos;
+    /* Send event if asked */
+    if (This->hEvent) SetEvent(This->hEvent);
 }
 
 /******************************************************************************
