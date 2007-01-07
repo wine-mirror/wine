@@ -119,8 +119,10 @@ static HRESULT WINAPI EnumFormatImpl_Skip(IEnumFORMATETC *iface, ULONG celt)
 
 static HRESULT WINAPI EnumFormatImpl_Reset(IEnumFORMATETC *iface)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    EnumFormatImpl *This = (EnumFormatImpl*)iface;
+
+    This->cur = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI EnumFormatImpl_Clone(IEnumFORMATETC *iface, IEnumFORMATETC **ppenum)
@@ -329,6 +331,19 @@ static void test_set_clipboard(void)
         return;
 
     hr = OleSetClipboard(data1);
+    todo_wine
+    ok(hr == CO_E_NOTINITIALIZED, "OleSetClipboard should have failed with CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+
+    CoInitialize(NULL);
+    hr = OleSetClipboard(data1);
+    todo_wine
+    ok(hr == CO_E_NOTINITIALIZED, "OleSetClipboard should have failed with CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+    CoUninitialize();
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "OleInitialize failed with error 0x%08x\n", hr);
+
+    hr = OleSetClipboard(data1);
     ok(hr == S_OK, "failed to set clipboard to data1, hr = 0x%08x\n", hr);
     hr = OleIsCurrentClipboard(data1);
     ok(hr == S_OK, "expected current clipboard to be data1, hr = 0x%08x\n", hr);
@@ -355,6 +370,8 @@ static void test_set_clipboard(void)
     ok(ref == 0, "expected data1 ref=0, got %d\n", ref);
     ref = IDataObject_Release(data2);
     ok(ref == 0, "expected data2 ref=0, got %d\n", ref);
+
+    OleUninitialize();
 }
 
 
