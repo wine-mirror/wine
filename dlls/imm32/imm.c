@@ -60,6 +60,7 @@ static InputContextData *root_context = NULL;
 static HWND hwndDefault = NULL;
 static HANDLE hImeInst;
 static const WCHAR WC_IMECLASSNAME[] = {'I','M','E',0};
+static ATOM atIMEClass = 0;
 
 /* MSIME messages */
 static UINT WM_MSIME_SERVICE;
@@ -109,12 +110,14 @@ static void IMM_Register(void)
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW +1);
     wndClass.lpszMenuName   = 0;
     wndClass.lpszClassName = WC_IMECLASSNAME;
-    RegisterClassW(&wndClass);
+    atIMEClass = RegisterClassW(&wndClass);
 }
 
 static void IMM_Unregister(void)
 {
-    UnregisterClassW(WC_IMECLASSNAME, NULL);
+    if (atIMEClass) {
+        UnregisterClassW(WC_IMECLASSNAME, NULL);
+    }
 }
 
 static void IMM_RegisterMessages(void)
