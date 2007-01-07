@@ -121,9 +121,11 @@ static HRESULT WINAPI StgStreamImpl_QueryInterface(
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (IsEqualGUID(&IID_IUnknown, riid)||
-      IsEqualGUID(&IID_IPersistStream, riid)||
-      IsEqualGUID(&IID_IStream, riid))
+  if (IsEqualIID(&IID_IUnknown, riid) ||
+      IsEqualIID(&IID_IPersist, riid) ||
+      IsEqualIID(&IID_IPersistStream, riid) ||
+      IsEqualIID(&IID_ISequentialStream, riid) ||
+      IsEqualIID(&IID_IStream, riid))
   {
     *ppvObject = (IStream*)This;
   }
