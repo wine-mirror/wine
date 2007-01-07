@@ -24,7 +24,6 @@
 
 #include "wine/test.h"
 #include "dsound.h"
-#include "initguid.h"
 #include "dsconf.h"
 #include "dxerr8.h"
 
@@ -34,6 +33,8 @@
 #define DSBCAPS_CTRLDEFAULT \
         DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLPAN|DSBCAPS_CTRLVOLUME
 #endif
+
+#include "initguid.h"
 
 DEFINE_GUID(DSPROPSETID_VoiceManager, \
             0x62A69BAE,0xDF9D,0x11D1,0x99,0xA6,0x00,0xC0,0x4F,0xC9,0x9D,0x46);
