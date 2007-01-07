@@ -127,15 +127,11 @@ TGraphCtrl::~TGraphCtrl()
 
 BOOL GraphCtrl_Create(TGraphCtrl* this, HWND hWnd, HWND hParentWnd, UINT nID) 
 {
-    BOOL result = 0;
-
     GraphCtrl_Init(this);
     this->m_hParentWnd = hParentWnd;
     this->m_hWnd = hWnd;
     GraphCtrl_Resize(this);
-    if (result != 0)
-        GraphCtrl_InvalidateCtrl(this);
-    return result;
+    return 0;
 }
 
 void GraphCtrl_SetRange(TGraphCtrl* this, double dLower, double dUpper, int nDecimalPlaces)
