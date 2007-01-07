@@ -176,7 +176,7 @@ sub parse_makefile($)
             $make{"=rules"} = $makerules{$var};
             next;
         }
-        if (/^(MODULE|IMPORTLIB)\s*=\s*(.*)/)
+        if (/^(MODULE|IMPORTLIB|TESTDLL)\s*=\s*(.*)/)
         {
             $make{$1} = $2;
             next;
@@ -346,9 +346,11 @@ sub update_dlls(@)
 
         if ($make =~ /dlls\/(.*)\/tests\/Makefile/)
         {
+            $testdirs{$1} = "$1/tests";
+            (my $crosstest = $makefile{"TESTDLL"}) =~ s/\.dll$//;
+            push @ignores, $makefile{"=dir"} . $crosstest . "_crosstest.exe";
             push @ignores, $makefile{"=dir"} . "testlist.c";
             push @ignores, $makefile{"=dir"} . "*.ok";
-            $testdirs{$1} = "$1/tests";
             next;
         }
 
