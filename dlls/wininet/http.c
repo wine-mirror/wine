@@ -846,9 +846,9 @@ end:
 }
 
 /***********************************************************************
- *  HTTP_Base64
+ *  HTTP_DecodeBase64
  */
-static UINT HTTP_Base64( LPCWSTR bin, LPWSTR base64 )
+static UINT HTTP_EncodeBase64( LPCWSTR bin, LPWSTR base64 )
 {
     UINT n = 0, x;
     static LPCSTR HTTP_Base64Enc = 
@@ -914,7 +914,7 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
         lstrcatW( in, szColon );
         lstrcatW( in, password );
         lstrcpyW( out, szBasic );
-        HTTP_Base64( in, &out[strlenW(out)] );
+        HTTP_EncodeBase64( in, &out[strlenW(out)] );
     }
     HeapFree( GetProcessHeap(), 0, in );
 
