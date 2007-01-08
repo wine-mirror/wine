@@ -1745,47 +1745,50 @@ static void test_overlapped(void)
     result = 1;
     r = GetOverlappedResult(0, &ov, &result, 0);
     ok( r == TRUE, "should return false\n");
-    ok( result == 0, "result wrong\n");
+    ok( result == 0, "wrong result %u\n", result );
 
     result = 0;
     ov.Internal = 0;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
     ok( r == TRUE, "should return false\n");
-    ok( result == 0xabcd, "result wrong\n");
+    ok( result == 0xabcd, "wrong result %u\n", result );
 
     SetLastError( 0xb00 );
     result = 0;
     ov.Internal = STATUS_INVALID_HANDLE;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok (GetLastError() == ERROR_INVALID_HANDLE, "error wrong\n");
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
-    ok( result == 0xabcd, "result wrong\n");
+    ok( result == 0xabcd, "wrong result %u\n", result );
 
+    SetLastError( 0xb00 );
     result = 0;
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
     todo_wine {
-    ok (GetLastError() == ERROR_IO_INCOMPLETE, "error wrong\n");
+    ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
     }
     ok( r == FALSE, "should return false\n");
-    ok( result == 0, "result wrong\n");
+    ok( result == 0, "wrong result %u\n", result );
 
+    SetLastError( 0xb00 );
     ov.hEvent = CreateEvent( NULL, 1, 1, NULL );
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0xabcd;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok (GetLastError() == ERROR_IO_INCOMPLETE, "error wrong\n");
+    ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
 
     ResetEvent( ov.hEvent );
 
+    SetLastError( 0xb00 );
     ov.Internal = STATUS_PENDING;
     ov.InternalHigh = 0;
     r = GetOverlappedResult(0, &ov, &result, 0);
-    ok (GetLastError() == ERROR_IO_INCOMPLETE, "error wrong\n");
+    ok( GetLastError() == ERROR_IO_INCOMPLETE, "wrong error %u\n", GetLastError() );
     ok( r == FALSE, "should return false\n");
 
     r = CloseHandle( ov.hEvent );
