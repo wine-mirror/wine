@@ -36,9 +36,10 @@ static int dll_capable(const char *dll, const char *function)
     return (GetProcAddress(module, function) != NULL);
 }
 
-
-LPCSTR filename = "testfile.xxx";
-LPCSTR sillytext =
+/* keep filename and filenameW the same */
+static const char filename[] = "testfile.xxx";
+static const WCHAR filenameW[] = { 't','e','s','t','f','i','l','e','.','x','x','x',0 };
+static const char sillytext[] =
 "en larvig liten text dx \033 gx hej 84 hej 4484 ! \001\033 bla bl\na.. bla bla."
 "1234 43 4kljf lf &%%%&&&&&& 34 4 34   3############# 33 3 3 3 # 3## 3"
 "1234 43 4kljf lf &%%%&&&&&& 34 4 34   3############# 33 3 3 3 # 3## 3"
@@ -1075,9 +1076,22 @@ static void test_LockFile(void)
     DeleteFileA( filename );
 }
 
-static inline int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2 )
+static inline int is_sharing_compatible( DWORD access1, DWORD sharing1, DWORD access2, DWORD sharing2, BOOL is_win9x )
 {
-    if (!access1 || !access2) return 1;
+    if (!is_win9x)
+    {
+        if (!access1) sharing1 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
+        if (!access2) sharing2 = FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE;
+    }
+    else
+    {
+        access1 &= ~DELETE;
+        if (!access1) access1 = GENERIC_READ;
+
+        access2 &= ~DELETE;
+        if (!access2) access2 = GENERIC_READ;
+    }
+
     if ((access1 & GENERIC_READ) && !(sharing2 & FILE_SHARE_READ)) return 0;
     if ((access1 & GENERIC_WRITE) && !(sharing2 & FILE_SHARE_WRITE)) return 0;
     if ((access1 & DELETE) && !(sharing2 & FILE_SHARE_DELETE)) return 0;
@@ -1100,6 +1114,7 @@ static void test_file_sharing(void)
     int a1, s1, a2, s2;
     int ret;
     HANDLE h, h2;
+    BOOL is_win9x = FALSE;
 
     /* make sure the file exists */
     h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
@@ -1108,12 +1123,18 @@ static void test_file_sharing(void)
         ok(0, "couldn't create file \"%s\" (err=%d)\n", filename, GetLastError());
         return;
     }
+    is_win9x = GetFileAttributesW(filenameW) == INVALID_FILE_ATTRIBUTES;
     CloseHandle( h );
 
     for (a1 = 0; a1 < sizeof(access_modes)/sizeof(access_modes[0]); a1++)
     {
         for (s1 = 0; s1 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s1++)
         {
+            /* Win9x doesn't support FILE_SHARE_DELETE */
+            if (is_win9x && (sharing_modes[s1] & FILE_SHARE_DELETE))
+                continue;
+
+            SetLastError(0xdeadbeef);
             h = CreateFileA( filename, access_modes[a1], sharing_modes[s1],
                              NULL, OPEN_EXISTING, 0, 0 );
             if (h == INVALID_HANDLE_VALUE)
@@ -1125,35 +1146,40 @@ static void test_file_sharing(void)
             {
                 for (s2 = 0; s2 < sizeof(sharing_modes)/sizeof(sharing_modes[0]); s2++)
                 {
+                    /* Win9x doesn't support FILE_SHARE_DELETE */
+                    if (is_win9x && (sharing_modes[s2] & FILE_SHARE_DELETE))
+                        continue;
+
                     SetLastError(0xdeadbeef);
                     h2 = CreateFileA( filename, access_modes[a2], sharing_modes[s2],
                                       NULL, OPEN_EXISTING, 0, 0 );
+
                     if (is_sharing_compatible( access_modes[a1], sharing_modes[s1],
-                                               access_modes[a2], sharing_modes[s2] ))
+                                               access_modes[a2], sharing_modes[s2], is_win9x ))
                     {
                         ret = GetLastError();
-                        ok( ERROR_SHARING_VIOLATION == ret || 0 == ret,
-                            "Windows 95 sets GetLastError() = ERROR_SHARING_VIOLATION and\n"
-                            "  Windows XP GetLastError() = 0, but now it is %d.\n"
-                            "  indexes = %d, %d, %d, %d\n"
-                            "  modes   =\n  %x/%x/%x/%x\n",
-			    ret,
-                            a1, s1, a2, s2, 
+
+                        ok( h2 != INVALID_HANDLE_VALUE,
+                            "open failed for modes %x/%x/%x/%x\n",
                             access_modes[a1], sharing_modes[s1],
-			    access_modes[a2], sharing_modes[s2]
-                            );
+                            access_modes[a2], sharing_modes[s2] );
+                        ok( ret == 0xdeadbeef /* Win9x */ ||
+                            ret == 0, /* XP */
+                             "wrong error code %d\n", ret );
+
+                        CloseHandle( h2 );
                     }
                     else
                     {
+                        ret = GetLastError();
+
                         ok( h2 == INVALID_HANDLE_VALUE,
                             "open succeeded for modes %x/%x/%x/%x\n",
                             access_modes[a1], sharing_modes[s1],
                             access_modes[a2], sharing_modes[s2] );
-                        if (h2 == INVALID_HANDLE_VALUE)
-                            ok( GetLastError() == ERROR_SHARING_VIOLATION,
-                                "wrong error code %d\n", GetLastError() );
+                         ok( ret == ERROR_SHARING_VIOLATION,
+                             "wrong error code %d\n", ret );
                     }
-                    if (h2 != INVALID_HANDLE_VALUE) CloseHandle( h2 );
                 }
             }
             CloseHandle( h );
