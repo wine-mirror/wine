@@ -3588,6 +3588,16 @@ static void test_sys_menu(void)
     ok(state == 0xffffffff, "wrong SC_CLOSE state %x\n", state);
 
     DestroyWindow(hwnd);
+
+    /* test new window without WS_SYSMENU style */
+    hwnd = CreateWindowExA(0, "NoCloseWindowClass", NULL, WS_OVERLAPPEDWINDOW & ~WS_SYSMENU,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok(hwnd != 0, "Failed to create overlapped window\n");
+
+    hmenu = GetSystemMenu(hwnd, FALSE);
+    ok(!hmenu, "GetSystemMenu error %d\n", GetLastError());
+
+    DestroyWindow(hwnd);
 }
 
 /* test if we receive the right sequence of messages */
