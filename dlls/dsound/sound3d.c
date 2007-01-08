@@ -70,7 +70,7 @@ static inline D3DVALUE ScalarProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 {
 	D3DVALUE c;
 	c = (a->x*b->x) + (a->y*b->y) + (a->z*b->z);
-	TRACE("(%f,%f,%f) * (%f,%f,%f) = %f)\n", a->x, a->y, a->z, b->x, b->y, \
+	TRACE("(%f,%f,%f) * (%f,%f,%f) = %f)\n", a->x, a->y, a->z, b->x, b->y,
 	      b->z, c);
 	return c;
 }
@@ -82,7 +82,7 @@ static inline D3DVECTOR VectorProduct (LPD3DVECTOR a, LPD3DVECTOR b)
 	c.x = (a->y*b->z) - (a->z*b->y);
 	c.y = (a->z*b->x) - (a->x*b->z);
 	c.z = (a->x*b->y) - (a->y*b->x);
-	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->x, a->y, a->z, b->x, b->y, \
+	TRACE("(%f,%f,%f) x (%f,%f,%f) = (%f,%f,%f)\n", a->x, a->y, a->z, b->x, b->y,
 	      b->z, c.x, c.y, c.z);
 	return c;
 }
@@ -304,7 +304,7 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 		/* formula taken from Gianicoli D.: Physics, 4th edition: */
 		/* FIXME: replace dsb->freq with appropriate frequency ! */
 		flFreq = dsb->freq * ((DEFAULT_VELOCITY + flListenerVel)/(DEFAULT_VELOCITY + flBufferVel));
-		TRACE("doppler: Buffer velocity (component) = %lf, Listener velocity (component) = %lf => Doppler shift: %ld Hz -> %lf Hz\n", flBufferVel, flListenerVel, \
+		TRACE("doppler: Buffer velocity (component) = %lf, Listener velocity (component) = %lf => Doppler shift: %ld Hz -> %lf Hz\n", flBufferVel, flListenerVel,
 		      dsb->freq, flFreq);
 		/* FIXME: replace following line with correct frequency setting ! */
 		dsb->freq = flFreq;
@@ -860,8 +860,8 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_GetOrientation(
 	LPD3DVECTOR lpvOrientTop)
 {
 	IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
-	TRACE("returning: OrientFront vector = (%f,%f,%f); OrientTop vector = (%f,%f,%f)\n", This->device->ds3dl.vOrientFront.x, \
-	This->device->ds3dl.vOrientFront.y, This->device->ds3dl.vOrientFront.z, This->device->ds3dl.vOrientTop.x, This->device->ds3dl.vOrientTop.y, \
+	TRACE("returning: OrientFront vector = (%f,%f,%f); OrientTop vector = (%f,%f,%f)\n", This->device->ds3dl.vOrientFront.x,
+	This->device->ds3dl.vOrientFront.y, This->device->ds3dl.vOrientFront.z, This->device->ds3dl.vOrientTop.x, This->device->ds3dl.vOrientTop.y,
 	This->device->ds3dl.vOrientTop.z);
 	*lpvOrientFront = This->device->ds3dl.vOrientFront;
 	*lpvOrientTop = This->device->ds3dl.vOrientTop;
@@ -956,7 +956,7 @@ static HRESULT WINAPI IDirectSound3DListenerImpl_SetOrientation(
 	DWORD dwApply)
 {
 	IDirectSound3DListenerImpl *This = (IDirectSound3DListenerImpl *)iface;
-	TRACE("setting: Front vector = (%f,%f,%f); Top vector = (%f,%f,%f); dwApply = %d\n", \
+	TRACE("setting: Front vector = (%f,%f,%f); Top vector = (%f,%f,%f); dwApply = %d\n",
 	xFront, yFront, zFront, xTop, yTop, zTop, dwApply);
 	This->device->ds3dl.vOrientFront.x = xFront;
 	This->device->ds3dl.vOrientFront.y = yFront;
