@@ -34,7 +34,6 @@
 #include "dsound.h"
 #include "dsdriver.h"
 #include "dsound_private.h"
-#include "initguid.h"
 #include "dsconf.h"
 
 #ifdef NONAMELESSSTRUCT
