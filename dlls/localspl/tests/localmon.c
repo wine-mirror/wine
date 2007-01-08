@@ -58,11 +58,18 @@ static BOOL  (WINAPI *pXcvOpenPort)(LPCWSTR, ACCESS_MASK, PHANDLE phXcv);
 static DWORD (WINAPI *pXcvDataPort)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD);
 static BOOL  (WINAPI *pXcvClosePort)(HANDLE);
 
+static HMODULE  hlocalui;
+static PMONITORUI (WINAPI *pInitializePrintMonitorUI)(VOID);
+static PMONITORUI pui;
+static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
+static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
+static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
+
 static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static WCHAR cmd_MonitorUI_lcaseW[] = {'m','o','n','i','t','o','r','u','i',0};
 static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
 static WCHAR emptyW[] = {0};
-static WCHAR Monitors_LocalPortW[] = { \
+static WCHAR Monitors_LocalPortW[] = {
                                 'S','y','s','t','e','m','\\',
                                 'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                 'C','o','n','t','r','o','l','\\',
@@ -481,11 +488,15 @@ static void test_XcvOpenPort(void)
 
 START_TEST(localmon)
 {
+    DWORD   numentries;
+
     /* This DLL does not exists on Win9x */
     hdll = LoadLibraryA("localspl.dll");
     if (!hdll) return;
 
     pInitializePrintMonitor = (void *) GetProcAddress(hdll, "InitializePrintMonitor");
+    pInitializePrintMonitorUI = (void *) GetProcAddress(hdll, "InitializePrintMonitorUI");
+
     if (!pInitializePrintMonitor) {
         /* The Monitor for "Local Ports" was in a seperate dll before w2k */
         hlocalmon = LoadLibraryA("localmon.dll");
@@ -501,7 +512,6 @@ START_TEST(localmon)
        or InitializePrintMonitor fails. */
     pm = pInitializePrintMonitor(Monitors_LocalPortW);
     if (pm) {
-        DWORD   numentries;
         numentries = (pm->dwMonitorSize ) / sizeof(VOID *);
         /* NT4: 14, since w2k: 17 */
         ok( numentries == 14 || numentries == 17, 
@@ -525,6 +535,38 @@ START_TEST(localmon)
         GET_MONITOR_FUNC(XcvDataPort);
         GET_MONITOR_FUNC(XcvClosePort);
     }
+
+    if ((!pInitializePrintMonitorUI) && (pXcvOpenPort) && (pXcvDataPort) && (pXcvClosePort)) {
+        /* The user interface for "Local Ports" is in a separate dll since w2k */
+        BYTE    buffer[MAX_PATH];
+        DWORD   res;
+        DWORD   len;
+        HANDLE  hXcv;
+
+        res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+        if (res) {
+            res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, MAX_PATH, &len);
+            if (res == ERROR_SUCCESS) hlocalui = LoadLibraryW( (LPWSTR) buffer);
+            if (hlocalui) pInitializePrintMonitorUI = (void *) GetProcAddress(hlocalui, "InitializePrintMonitorUI");
+            pXcvClosePort(hXcv);
+        }
+    }
+
+    if (pInitializePrintMonitorUI) {
+        pui = pInitializePrintMonitorUI();
+        if (pui) {
+            numentries = (pui->dwMonitorUISize - sizeof(DWORD)) / sizeof(VOID *);
+            ok( numentries == 3,
+                "dwMonitorUISize (%d) => %d Functions\n", pui->dwMonitorUISize, numentries);
+
+            if (numentries > 2) {
+                pAddPortUI = pui->pfnAddPortUI;
+                pConfigurePortUI = pui->pfnConfigurePortUI;
+                pDeletePortUI = pui->pfnDeletePortUI;
+            }
+        }
+    }
+
     test_InitializePrintMonitor();
 
     test_AddPort();
