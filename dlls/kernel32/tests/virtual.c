@@ -63,8 +63,14 @@ static void test_VirtualAllocEx(void)
     for (i = 0; i < alloc_size; i++)
         src[i] = 0xcafedead + i;
 
+    SetLastError(0xdeadbeef);
     addr1 = VirtualAllocEx(hProcess, NULL, alloc_size, MEM_COMMIT,
                            PAGE_EXECUTE_READWRITE);
+    if (!addr1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
+    {   /* Win9x */
+        trace("VirtualAllocEx is not implemented, skipping the test\n");
+        return;
+    }
     todo_wine ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
     ok(b && (bytes_written == alloc_size), "%lu bytes written\n",
