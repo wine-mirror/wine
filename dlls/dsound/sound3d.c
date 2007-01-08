@@ -105,15 +105,6 @@ static inline D3DVALUE RadToDeg (D3DVALUE angle)
 	return newangle;
 }
 
-/* conversion between degrees and radians */
-static inline D3DVALUE DegToRad (D3DVALUE angle)
-{
-	D3DVALUE newangle;
-	newangle = angle * (2*M_PI/360);
-	TRACE("%f deg = %f rad\n", angle, newangle);
-	return newangle;
-}
-
 /* angle between vectors - deg version */
 static inline D3DVALUE AngleBetweenVectorsDeg (LPD3DVECTOR a, LPD3DVECTOR b)
 {
