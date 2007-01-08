@@ -46,8 +46,8 @@ static void testProps(void)
 {
     static const WCHAR szDot[] = { '.',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
-    static const WCHAR propName[] = { 'p','r','o','p',0 };
-    static const char val[] = "l33t auth0r";
+    static WCHAR propName[] = { 'p','r','o','p',0 };
+    static char val[] = "l33t auth0r";
     WCHAR filename[MAX_PATH];
     HRESULT hr;
     IStorage *storage = NULL;
@@ -131,7 +131,7 @@ static void testProps(void)
     spec.ulKind = PRSPEC_PROPID;
     U(spec).propid = PIDSI_AUTHOR;
     var.vt = VT_LPSTR;
-    U(var).pszVal = (LPSTR)val;
+    U(var).pszVal = val;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
     ok(hr == S_OK, "WriteMultiple failed: 0x%08x\n", hr);
 
@@ -293,7 +293,7 @@ static void testCodepage(void)
     static const WCHAR szDot[] = { '.',0 };
     static const WCHAR szPrefix[] = { 's','t','g',0 };
     static CHAR aval[] = "hi";
-    static const WCHAR wval[] = { 'h','i',0 };
+    static WCHAR wval[] = { 'h','i',0 };
     HRESULT hr;
     IStorage *storage = NULL;
     IPropertySetStorage *propSetStorage = NULL;
@@ -422,7 +422,7 @@ static void testCodepage(void)
      * obviously something about string conversion I don't understand.
      */
     if(0) {
-    static const unsigned char strVal[] = { 0x81, 0xff, 0x04, 0 };
+    static unsigned char strVal[] = { 0x81, 0xff, 0x04, 0 };
     /* Set code page to 950 (Traditional Chinese) */
     U(var).iVal = 950;
     hr = IPropertyStorage_WriteMultiple(propertyStorage, 1, &spec, &var, 0);
