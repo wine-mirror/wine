@@ -58,11 +58,6 @@ static void test_VirtualAllocEx(void)
     hProcess = create_target_process("sleep");
     ok(hProcess != NULL, "Can't start process\n");
 
-    src = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
-    dst = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
-    for (i = 0; i < alloc_size; i++)
-        src[i] = 0xcafedead + i;
-
     SetLastError(0xdeadbeef);
     addr1 = VirtualAllocEx(hProcess, NULL, alloc_size, MEM_COMMIT,
                            PAGE_EXECUTE_READWRITE);
@@ -71,6 +66,12 @@ static void test_VirtualAllocEx(void)
         trace("VirtualAllocEx is not implemented, skipping the test\n");
         return;
     }
+
+    src = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
+    dst = (char *) HeapAlloc( GetProcessHeap(), 0, alloc_size );
+    for (i = 0; i < alloc_size; i++)
+        src[i] = 0xcafedead + i;
+
     todo_wine ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
     ok(b && (bytes_written == alloc_size), "%lu bytes written\n",
