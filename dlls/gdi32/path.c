@@ -122,18 +122,7 @@ static inline void INTERNAL_LPTODP_FLOAT(DC *dc, FLOAT_POINT *point)
                dc->xformWorld2Vport.eDy;
 }
 
-/* Performs a world-to-viewport transformation on the specified width.
- */
-static inline void INTERNAL_WSTODS(DC *dc, DWORD *width)
-{
-    POINT pt[2];
-    pt[0].x = pt[0].y = 0;
-    pt[1].x = *width;
-    pt[1].y = 0;
-    LPtoDP(dc->hSelf, pt, 2);
-    *width = pt[1].x - pt[0].x;
-}
- 
+
 /***********************************************************************
  *           BeginPath    (GDI32.@)
  */
