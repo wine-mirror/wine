@@ -32,8 +32,6 @@
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
-static const SAFEARRAYBOUND ArrayBound = {1, 0};
-
 typedef struct IOleClientSiteImpl
 {
     const IOleClientSiteVtbl *lpVtbl;
