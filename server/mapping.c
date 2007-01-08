@@ -184,6 +184,11 @@ static int build_shared_mapping( struct mapping *mapping, int fd,
         while (toread)
         {
             long res = pread( fd, buffer + file_size - toread, toread, read_pos );
+            if (!res && toread < 0x200)  /* partial sector at EOF is not an error */
+            {
+                file_size -= toread;
+                break;
+            }
             if (res <= 0) goto error;
             toread -= res;
             read_pos += res;
