@@ -380,7 +380,7 @@ int MenuCommand(WPARAM wParam, HWND hWnd)
 
             memset(&si, 0, sizeof(si));
             si.cb = sizeof(si);
-            CreateProcess(NULL, wszRegEdit, NULL, NULL, FALSE, 0,\
+            CreateProcess(NULL, wszRegEdit, NULL, NULL, FALSE, 0,
                     NULL, NULL, &si, &pi);
             CloseHandle(pi.hProcess);
             CloseHandle(pi.hThread);

@@ -290,7 +290,7 @@ static const char *debugstr_filetime (LPFILETIME time) {
 	
 	FileTimeToSystemTime (time, &sysTime);
 	
-	return wine_dbg_sprintf ("\'%02i. %s %04i %02i:%02i:%02i\'", \
+	return wine_dbg_sprintf ("\'%02i. %s %04i %02i:%02i:%02i\'",
 		sysTime.wDay, debugstr_month(sysTime.wMonth), sysTime.wYear,
 		sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
 }

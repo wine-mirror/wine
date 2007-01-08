@@ -333,7 +333,7 @@ void test_directory(void)
     /* Can't use symlinks as a directory */
     pRtlCreateUnicodeStringFromAsciiz(&str, "\\BaseNamedObjects\\Local");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
-    status = pNtOpenSymbolicLinkObject(&dir, SYMBOLIC_LINK_QUERY, &attr);\
+    status = pNtOpenSymbolicLinkObject(&dir, SYMBOLIC_LINK_QUERY, &attr);
     ok(status == STATUS_SUCCESS, "Failed to open SymbolicLink(%08x)\n", status);
     pRtlFreeUnicodeString(&str);
     InitializeObjectAttributes(&attr, &str, 0, dir, NULL);

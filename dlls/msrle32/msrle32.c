@@ -101,12 +101,12 @@ static BOOL isSupportedMRLE(LPCBITMAPINFOHEADER lpbi)
   /* pre-conditions */
   assert(lpbi != NULL);
 
-  if (lpbi->biSize < sizeof(BITMAPINFOHEADER) || \
+  if (lpbi->biSize < sizeof(BITMAPINFOHEADER) ||
       lpbi->biPlanes != 1)
     return FALSE;
 
   if (lpbi->biCompression == BI_RLE4) {
-    if (lpbi->biBitCount != 4 || \
+    if (lpbi->biBitCount != 4 ||
 	(lpbi->biWidth % 2) != 0)
       return FALSE;
   } else if (lpbi->biCompression == BI_RLE8) {

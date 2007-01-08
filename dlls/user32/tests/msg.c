@@ -8231,17 +8231,17 @@ static void test_TrackMouseEvent(void)
     ok(ret, "TrackMouseEvent(TME_HOVER | TME_CANCEL) error %d\n", GetLastError())
 
     default_hover_time = 0xdeadbeef;
-    SetLastError(0xdeadbeef); \
+    SetLastError(0xdeadbeef);
     ret = SystemParametersInfo(SPI_GETMOUSEHOVERTIME, 0, &default_hover_time, 0);
     ok(ret, "SystemParametersInfo(SPI_GETMOUSEHOVERTIME) error %u\n", GetLastError());
     if (!ret) default_hover_time = 400;
     trace("SPI_GETMOUSEHOVERTIME returned %u ms\n", default_hover_time);
 
-    SetLastError(0xdeadbeef); \
+    SetLastError(0xdeadbeef);
     ret = SystemParametersInfo(SPI_GETMOUSEHOVERWIDTH, 0, &hover_width, 0);
     ok(ret, "SystemParametersInfo(SPI_GETMOUSEHOVERWIDTH) error %u\n", GetLastError());
     if (!ret) hover_width = 4;
-    SetLastError(0xdeadbeef); \
+    SetLastError(0xdeadbeef);
     ret = SystemParametersInfo(SPI_GETMOUSEHOVERHEIGHT, 0, &hover_height, 0);
     ok(ret, "SystemParametersInfo(SPI_GETMOUSEHOVERHEIGHT) error %u\n", GetLastError());
     if (!ret) hover_height = 4;

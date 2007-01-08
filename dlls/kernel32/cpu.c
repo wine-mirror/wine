@@ -618,7 +618,7 @@ VOID WINAPI GetSystemInfo(
 			cachedsi.wProcessorLevel = 6;
 			break;
 		default:
-			FIXME("unknown FreeBSD cpu family %d, please report! (-> setting to 386)\n", \
+			FIXME("unknown FreeBSD cpu family %d, please report! (-> setting to 386)\n",
 				(regs2[0] >> 8)&0xf);
 			break;
 		}
