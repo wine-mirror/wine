@@ -381,7 +381,7 @@ typedef struct tagDRAGLISTINFO
 #elif defined(_MSC_VER)
 # define DRAGLISTMSGSTRINGW     L"commctrl_DragListMsg"
 #else
-static const WCHAR DRAGLISTMSGSTRINGW[] = { 'c','o','m','m','c','t','r','l', \
+static const WCHAR DRAGLISTMSGSTRINGW[] = { 'c','o','m','m','c','t','r','l',
   '_','D','r','a','g','L','i','s','t','M','s','g',0 };
 #endif
 #define DRAGLISTMSGSTRING       WINELIB_NAME_AW(DRAGLISTMSGSTRING)

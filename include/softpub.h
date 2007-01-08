@@ -30,7 +30,7 @@
 #elif defined(_MSC_VER)
 #define SP_GENERIC_CERT_INIT_FUNCTION L"SoftpubDefCertInit"
 #else
-static const WCHAR SP_GENERIC_CERT_INIT_FUNCTION[] =  \
+static const WCHAR SP_GENERIC_CERT_INIT_FUNCTION[] =
     {'S','o','f','t','p','u','b','D','e','f','C','e','r','t','I','n','i','t', 0};
 #endif
 
@@ -46,9 +46,9 @@ static const WCHAR SP_GENERIC_CERT_INIT_FUNCTION[] =  \
 #define GENERIC_CHAIN_FINALPOLICY_FUNCTION L"GenericChainFinalProv"
 #define GENERIC_CHAIN_CERTTRUST_FUNCTION   L"GenericChainCertificateTrust"
 #else
-static const WCHAR GENERIC_CHAIN_FINALPOLICY_FUNCTION[] = \
+static const WCHAR GENERIC_CHAIN_FINALPOLICY_FUNCTION[] =
     {'G','e','n','e','r','i','c','C','h','a','i','n','F','i','n','a','l','P','r','o','v', 0};
-static const WCHAR GENERIC_CHAIN_CERTTRUST_FUNCTION[] = \
+static const WCHAR GENERIC_CHAIN_CERTTRUST_FUNCTION[] =
     {'G','e','n','e','r','i','c','C','h','a','i','n','C','e','r','t','i','f','i','c','a','t','e','T','r','u','s','t', 0};
 #endif
 
@@ -58,7 +58,7 @@ static const WCHAR GENERIC_CHAIN_CERTTRUST_FUNCTION[] = \
 #elif defined(_MSC_VER)
 #define SP_POLICY_PROVIDER_DLL_NAME L"WINTRUST.DLL"
 #else
-static const WCHAR SP_POLICY_PROVIDER_DLL_NAME[] =  \
+static const WCHAR SP_POLICY_PROVIDER_DLL_NAME[] =
     {'W','I','N','T','R','U','S','T','.','D','L','L', 0};
 #endif
 
@@ -86,17 +86,17 @@ static const WCHAR SP_POLICY_PROVIDER_DLL_NAME[] =  \
 #define SP_FINALPOLICY_FUNCTION   L"SoftpubAuthenticode"
 #define SP_CLEANUPPOLICY_FUNCTION L"SoftpubCleanup"
 #else
-static const WCHAR SP_INIT_FUNCTION[]          =  \
+static const WCHAR SP_INIT_FUNCTION[]          =
     {'S','o','f','t','p','u','b','I','n','i','t','i','a','l','i','z','e', 0};
-static const WCHAR SP_OBJTRUST_FUNCTION[]      =  \
+static const WCHAR SP_OBJTRUST_FUNCTION[]      =
     {'S','o','f','t','p','u','b','L','o','a','d','M','e','s','s','a','g','e', 0};
-static const WCHAR SP_SIGTRUST_FUNCTION[]      =  \
+static const WCHAR SP_SIGTRUST_FUNCTION[]      =
     {'S','o','f','t','p','u','b','L','o','a','d','S','i','g','n','a','t','u','r','e', 0};
-static const WCHAR SP_CHKCERT_FUNCTION[]       =  \
+static const WCHAR SP_CHKCERT_FUNCTION[]       =
     {'S','o','f','t','p','u','b','C','h','e','c','k','C','e','r','t', 0};
-static const WCHAR SP_FINALPOLICY_FUNCTION[]   =  \
+static const WCHAR SP_FINALPOLICY_FUNCTION[]   =
     {'S','o','f','t','p','u','b','A','u','t','h','e','n','t','i','c','o','d','e', 0};
-static const WCHAR SP_CLEANUPPOLICY_FUNCTION[] =  \
+static const WCHAR SP_CLEANUPPOLICY_FUNCTION[] =
     {'S','o','f','t','p','u','b','C','l','e','a','n','u','p', 0};
 #endif
 
@@ -109,7 +109,7 @@ static const WCHAR SP_CLEANUPPOLICY_FUNCTION[] =  \
 #elif defined(_MSC_VER)
 #define SP_TESTDUMPPOLICY_FUNCTION_TEST L"SoftpubDumpStructure"
 #else
-static const WCHAR SP_TESTDUMPPOLICY_FUNCTION_TEST[] =  \
+static const WCHAR SP_TESTDUMPPOLICY_FUNCTION_TEST[] =
     {'S','o','f','t','p','u','b','D','u','m','p','S','t','r','u','c','t','u','r','e', 0};
 #endif
 
@@ -125,9 +125,9 @@ static const WCHAR SP_TESTDUMPPOLICY_FUNCTION_TEST[] =  \
 #define HTTPS_FINALPOLICY_FUNCTION L"HTTPSFinalProv"
 #define HTTPS_CERTTRUST_FUNCTION   L"HTTPSCertificateTrust"
 #else
-static const WCHAR HTTPS_CERTTRUST_FUNCTION[] =  \
+static const WCHAR HTTPS_CERTTRUST_FUNCTION[] =
     {'H','T','T','P','S','C','e','r','t','i','f','i','c','a','t','e','T','r','u','s','t', 0};
-static const WCHAR HTTPS_FINALPOLICY_FUNCTION[] =  \
+static const WCHAR HTTPS_FINALPOLICY_FUNCTION[] =
     {'H','T','T','P','S','F','i','n','a','l','P','r','o','v', 0};
 #endif
 
@@ -146,11 +146,11 @@ static const WCHAR HTTPS_FINALPOLICY_FUNCTION[] =  \
 #define     OFFICE_INITPROV_FUNCTION        L"OfficeInitializePolicy"
 #define     OFFICE_CLEANUPPOLICY_FUNCTION   L"OfficeCleanupPolicy"
 #else
-static const WCHAR OFFICE_POLICY_PROVIDER_DLL_NAME[] =  \
+static const WCHAR OFFICE_POLICY_PROVIDER_DLL_NAME[] =
     {'W','I','N','T','R','U','S','T','.','D','L','L', 0};
-static const WCHAR OFFICE_INITPROV_FUNCTION[] = \
+static const WCHAR OFFICE_INITPROV_FUNCTION[] =
     {'O','f','f','i','c','e','I','n','i','t','i','a','l','i','z','e','P','o','l','i','c','y', 0};
-static const WCHAR OFFICE_CLEANUPPOLICY_FUNCTION[] = \
+static const WCHAR OFFICE_CLEANUPPOLICY_FUNCTION[] =
     {'O','f','f','i','c','e','C','l','e','a','n','u','p','P','o','l','i','c','y', 0};
 #endif
 
@@ -169,11 +169,11 @@ static const WCHAR OFFICE_CLEANUPPOLICY_FUNCTION[] = \
 #define     DRIVER_FINALPOLPROV_FUNCTION  L"DriverFinalPolicy"
 #define     DRIVER_CLEANUPPOLICY_FUNCTION L"DriverCleanupPolicy"
 #else
-static const WCHAR DRIVER_INITPROV_FUNCTION[] = \
+static const WCHAR DRIVER_INITPROV_FUNCTION[] =
     {'D','r','i','v','e','r','I','n','i','t','i','a','l','i','z','e','P','o','l','i','c','y', 0};
-static const WCHAR DRIVER_FINALPOLPROV_FUNCTION[] = \
+static const WCHAR DRIVER_FINALPOLPROV_FUNCTION[] =
     {'D','r','i','v','e','r','F','i','n','a','l','P','o','l','i','c','y', 0};
-static const WCHAR DRIVER_CLEANUPPOLICY_FUNCTION[] = \
+static const WCHAR DRIVER_CLEANUPPOLICY_FUNCTION[] =
     {'D','r','i','v','e','r','C','l','e','a','n','u','p','P','o','l','i','c','y', 0};
 #endif
 

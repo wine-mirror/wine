@@ -355,7 +355,7 @@ extern "C" {
 #elif defined(_MSC_VER)
 #define WT_PROVIDER_CERTTRUST_FUNCTION L"WintrustCertificateTrust"
 #else
-static const WCHAR WT_PROVIDER_CERTTRUST_FUNCTION[] = \
+static const WCHAR WT_PROVIDER_CERTTRUST_FUNCTION[] =
     {'W','i','n','t','r','u','s','t','C','e','r','t','i','f','i','c','a','t','e','T','r','u','s','t', 0};
 #endif
 
