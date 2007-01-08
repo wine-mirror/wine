@@ -1513,20 +1513,18 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         break;
 
     case WM_SIZE:
+        /* do not change */
         TRACE("current active %p, maximized %p\n", ci->hwndActiveChild, ci->hwndChildMaximized);
 
-        if( ci->hwndChildMaximized == hwnd && wParam != SIZE_MAXIMIZED )
+        if( ci->hwndActiveChild == hwnd && wParam != SIZE_MAXIMIZED )
         {
             HWND frame;
+
+            ci->hwndChildMaximized = 0;
 
             frame = GetParent(client);
             MDI_RestoreFrameMenu( frame, hwnd );
             MDI_UpdateFrameText( frame, client, FALSE, NULL );
-
-            ci->hwndChildMaximized = 0;
-
-            MDI_RefreshMenu(ci);
-            MDI_PostUpdate(client, ci, SB_BOTH+1);
         }
 
         if( wParam == SIZE_MAXIMIZED )
@@ -1534,11 +1532,14 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
             HWND frame, hMaxChild = ci->hwndChildMaximized;
 
             if( hMaxChild == hwnd ) break;
+
             if( hMaxChild)
             {
                 SendMessageW( hMaxChild, WM_SETREDRAW, FALSE, 0 );
+
                 MDI_RestoreFrameMenu( GetParent(client), hMaxChild );
                 ShowWindow( hMaxChild, SW_SHOWNOACTIVATE );
+
                 SendMessageW( hMaxChild, WM_SETREDRAW, TRUE, 0 );
             }
 
@@ -1550,10 +1551,17 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
             frame = GetParent(client);
             MDI_AugmentFrameMenu( frame, hwnd );
             MDI_UpdateFrameText( frame, client, TRUE, NULL );
-
-            MDI_RefreshMenu(ci);
-            MDI_PostUpdate(client, ci, SB_BOTH+1);
         }
+
+        if( wParam == SIZE_MINIMIZED )
+        {
+            HWND switchTo = MDI_GetWindow( ci, hwnd, TRUE, WS_MINIMIZE );
+
+            if( switchTo )
+                SendMessageW( switchTo, WM_CHILDACTIVATE, 0, 0 );
+	}
+
+        MDI_PostUpdate(client, ci, SB_BOTH+1);
         break;
 
     case WM_NEXTMENU:
