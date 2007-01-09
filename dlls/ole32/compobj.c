@@ -3219,7 +3219,6 @@ HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
                  * COM call */
                 if (COM_PeekMessage(apt, &msg))
                 {
-                    /* FIXME: filter the messages here */
                     TRACE("received message whilst waiting for RPC: 0x%04x\n", msg.message);
                     TranslateMessage(&msg);
                     DispatchMessageW(&msg);
