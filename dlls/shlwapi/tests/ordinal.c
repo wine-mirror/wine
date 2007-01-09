@@ -47,7 +47,7 @@ static void test_GetAcceptLanguagesA(void)
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, &buffersize);
     trace("GetAcceptLanguagesA: retval %08x, size %08x, buffer (%s),"
-	" last error %d\n", retval, buffersize, buffer, GetLastError());
+	" last error %u\n", retval, buffersize, buffer, GetLastError());
     if(retval != S_OK) {
 	trace("GetAcceptLanguagesA: skipping tests\n");
 	return;
@@ -56,14 +56,14 @@ static void test_GetAcceptLanguagesA(void)
 	(ERROR_CLASS_DOES_NOT_EXIST == GetLastError()) ||
 	(ERROR_PROC_NOT_FOUND == GetLastError()) ||
 	(ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) ||
-	(ERROR_SUCCESS == GetLastError()), "last error set to %d\n", GetLastError());
+	(ERROR_SUCCESS == GetLastError()), "last error set to %u\n", GetLastError());
     exactsize = strlen(buffer);
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( NULL, NULL);
     ok(retval == E_FAIL,
        "function result wrong: got %08x; expected E_FAIL\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = sizeof(buffer);
     SetLastError(ERROR_SUCCESS);
@@ -72,13 +72,13 @@ static void test_GetAcceptLanguagesA(void)
        "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(buffersize == sizeof(buffer),
        "buffersize was changed (2nd parameter; not on Win2k)\n");
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     SetLastError(ERROR_SUCCESS);
     retval = pGetAcceptLanguagesA( buffer, NULL);
     ok(retval == E_FAIL,
        "function result wrong: got %08x; expected E_FAIL\n", retval);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = 0;
     memset(buffer, 0, sizeof(buffer));
@@ -88,7 +88,7 @@ static void test_GetAcceptLanguagesA(void)
        "function result wrong: got %08x; expected E_FAIL\n", retval);
     ok(buffersize == 0,
        "buffersize wrong(changed) got %08x; expected 0 (2nd parameter; not on Win2k)\n", buffersize);
-    ok(ERROR_SUCCESS == GetLastError(), "last error set to %d\n", GetLastError());
+    ok(ERROR_SUCCESS == GetLastError(), "last error set to %u\n", GetLastError());
 
     buffersize = buffersize2 = 1;
     memset(buffer, 0, sizeof(buffer));
@@ -99,29 +99,29 @@ static void test_GetAcceptLanguagesA(void)
             if(buffersize == exactsize) {
             ok( (ERROR_SUCCESS == GetLastError()) || (ERROR_CALL_NOT_IMPLEMENTED == GetLastError()) ||
 		(ERROR_PROC_NOT_FOUND == GetLastError()) || (ERROR_NO_IMPERSONATION_TOKEN == GetLastError()),
-                "last error wrong: got %08x; expected ERROR_SUCCESS(NT4)/ERROR_CALL_NOT_IMPLEMENTED(98/ME)/"
+                "last error wrong: got %u; expected ERROR_SUCCESS(NT4)/ERROR_CALL_NOT_IMPLEMENTED(98/ME)/"
 		"ERROR_PROC_NOT_FOUND(NT4)/ERROR_NO_IMPERSONATION_TOKEN(XP)\n", GetLastError());
             ok(exactsize == strlen(buffer),
                  "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), exactsize);
             } else if((buffersize +1) == buffersize2) {
                 ok(ERROR_SUCCESS == GetLastError(),
-                    "last error wrong: got %08x; expected ERROR_SUCCESS\n", GetLastError());
+                    "last error wrong: got %u; expected ERROR_SUCCESS\n", GetLastError());
                 ok(buffersize == strlen(buffer),
                     "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize);
             } else
-                ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
+                ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
                     retval, buffersize, buffer, GetLastError());
             break;
 	case E_INVALIDARG:
             ok(buffersize == 0,
                "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
             ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %08x; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
                "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
         default:
-            ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
+            ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
                 retval, buffersize, buffer, GetLastError());
             break;
     }
@@ -133,25 +133,25 @@ static void test_GetAcceptLanguagesA(void)
     switch(retval) {
 	case 0L:
             ok(ERROR_SUCCESS == GetLastError(),
-                 "last error wrong: got %08x; expected ERROR_SUCCESS\n", GetLastError());
+                 "last error wrong: got %u; expected ERROR_SUCCESS\n", GetLastError());
             if((buffersize == exactsize) /* XP */ ||
                ((buffersize +1)== exactsize) /* 98 */)
                 ok(buffersize == strlen(buffer),
                     "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize);
             else
-                ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
+                ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
                     retval, buffersize, buffer, GetLastError());
             break;
 	case E_INVALIDARG:
             ok(buffersize == 0,
                "buffersize wrong: got %08x, expected 0 (2nd parameter;Win2k)\n", buffersize);
             ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
-               "last error wrong: got %08x; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
+               "last error wrong: got %u; expected ERROR_INSUFFICIENT_BUFFER\n", GetLastError());
             ok(buffersize2 == strlen(buffer),
                "buffer content (length) wrong: got %08x, expected %08x\n", lstrlenA(buffer), buffersize2);
             break;
         default:
-            ok( 0, "retval %08x, size %08x, buffer (%s), last error %d\n",
+            ok( 0, "retval %08x, size %08x, buffer (%s), last error %u\n",
                 retval, buffersize, buffer, GetLastError());
             break;
     }
@@ -208,23 +208,23 @@ static void test_alloc_shared(void)
 
     procid=GetCurrentProcessId();
     hmem=pSHAllocShared(NULL,10,procid);
-    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %d\n", GetLastError());
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %u\n", GetLastError());
     ret = pSHFreeShared(hmem, procid);
-    ok( ret, "SHFreeShared failed: %d\n", GetLastError());
+    ok( ret, "SHFreeShared failed: %u\n", GetLastError());
 
     val=0x12345678;
     hmem=pSHAllocShared(&val,4,procid);
-    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %d\n", GetLastError());
+    ok(hmem!=NULL,"SHAllocShared(NULL...) failed: %u\n", GetLastError());
 
     p=(int*)pSHLockShared(hmem,procid);
-    ok(p!=NULL,"SHLockShared failed: %d\n", GetLastError());
+    ok(p!=NULL,"SHLockShared failed: %u\n", GetLastError());
     if (p!=NULL)
         ok(*p==val,"Wrong value in shared memory: %d instead of %d\n",*p,val);
     ret = pSHUnlockShared(p);
-    ok( ret, "SHUnlockShared failed: %d\n", GetLastError());
+    ok( ret, "SHUnlockShared failed: %u\n", GetLastError());
 
     ret = pSHFreeShared(hmem, procid);
-    ok( ret, "SHFreeShared failed: %d\n", GetLastError());
+    ok( ret, "SHFreeShared failed: %u\n", GetLastError());
 }
 
 static void test_fdsa(void)
@@ -377,11 +377,11 @@ static void test_GetShellSecurityDescriptor(void)
         ok(IsValidSecurityDescriptor(psd), "returned value is not valid SD\n");
 
         ok(GetSecurityDescriptorControl(psd, &control, &dwRev),
-                "GetSecurityDescriptorControl failed with error %d\n", GetLastError());
+                "GetSecurityDescriptorControl failed with error %u\n", GetLastError());
         ok(0 == (control & SE_SELF_RELATIVE), "SD should be absolute\n");
 
         ok(GetSecurityDescriptorDacl(psd, &bHasDacl, &pAcl, &bDefaulted), 
-            "GetSecurityDescriptorDacl failed with error %d\n", GetLastError());
+            "GetSecurityDescriptorDacl failed with error %u\n", GetLastError());
 
         ok(bHasDacl, "SD has no DACL\n");
         if (bHasDacl)
@@ -396,27 +396,27 @@ static void test_GetShellSecurityDescriptor(void)
                 ok(IsValidAcl(pAcl), "DACL is not valid\n");
 
                 ok(GetAclInformation(pAcl, &asiSize, sizeof(asiSize), AclSizeInformation),
-                        "GetAclInformation failed with error %d\n", GetLastError());
+                        "GetAclInformation failed with error %u\n", GetLastError());
 
                 ok(asiSize.AceCount == 3, "Incorrect number of ACEs: %d entries\n", asiSize.AceCount);
                 if (asiSize.AceCount == 3)
                 {
                     ACCESS_ALLOWED_ACE *paaa; /* will use for DENIED too */
 
-                    ok(GetAce(pAcl, 0, (LPVOID*)&paaa), "GetAce failed with error %d\n", GetLastError());
+                    ok(GetAce(pAcl, 0, (LPVOID*)&paaa), "GetAce failed with error %u\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_ALLOWED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
                     ok(paaa->Mask == GENERIC_ALL, "Invalid ACE mask %x\n", paaa->Mask);
 
-                    ok(GetAce(pAcl, 1, (LPVOID*)&paaa), "GetAce failed with error %d\n", GetLastError());
+                    ok(GetAce(pAcl, 1, (LPVOID*)&paaa), "GetAce failed with error %u\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     /* first one of two ACEs generated from inheritable entry - without inheritance */
                     ok(paaa->Header.AceFlags == 0, "Invalid ACE flags %x\n", paaa->Header.AceFlags);
                     ok(paaa->Mask == GENERIC_WRITE, "Invalid ACE mask %x\n", paaa->Mask);
 
-                    ok(GetAce(pAcl, 2, (LPVOID*)&paaa), "GetAce failed with error %d\n", GetLastError());
+                    ok(GetAce(pAcl, 2, (LPVOID*)&paaa), "GetAce failed with error %u\n", GetLastError());
                     ok(paaa->Header.AceType == ACCESS_DENIED_ACE_TYPE, 
                             "Invalid ACE type %d\n", paaa->Header.AceType); 
                     /* second ACE - with inheritance */
