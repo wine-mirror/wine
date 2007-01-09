@@ -7901,7 +7901,7 @@ HRESULT WINAPI WriteClassStm(IStream *pStm,REFCLSID rclsid)
 {
     TRACE("(%p,%p)\n",pStm,rclsid);
 
-    if (rclsid==NULL)
+    if (!pStm || !rclsid)
         return E_INVALIDARG;
 
     return IStream_Write(pStm,rclsid,sizeof(CLSID),NULL);
@@ -7927,7 +7927,7 @@ HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
 
     TRACE("(%p,%p)\n",pStm,pclsid);
 
-    if (pclsid==NULL)
+    if (!pStm || !pclsid)
         return E_INVALIDARG;
 
     res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
