@@ -2088,34 +2088,6 @@ static void test_out_of_process_com(void)
     CloseHandle(heventShutdown);
 }
 
-static void test_ROT(void)
-{
-    static const WCHAR wszFileName[] = {'B','E','2','0','E','2','F','5','-',
-        '1','9','0','3','-','4','A','A','E','-','B','1','A','F','-',
-        '2','0','4','6','E','5','8','6','C','9','2','5',0};
-    HRESULT hr;
-    IMoniker *pMoniker = NULL;
-    IRunningObjectTable *pROT = NULL;
-    DWORD dwCookie;
-
-    cLocks = 0;
-
-    hr = CreateFileMoniker(wszFileName, &pMoniker);
-    ok_ole_success(hr, CreateClassMoniker);
-    hr = GetRunningObjectTable(0, &pROT);
-    ok_ole_success(hr, GetRunningObjectTable);
-    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
-    ok_ole_success(hr, IRunningObjectTable_Register);
-    IMoniker_Release(pMoniker);
-
-    ok_more_than_one_lock();
-
-    hr = IRunningObjectTable_Revoke(pROT, dwCookie);
-    ok_ole_success(hr, IRunningObjectTable_Revoke);
-
-    ok_no_locks();
-}
-
 struct git_params
 {
 	DWORD cookie;
@@ -2455,7 +2427,6 @@ START_TEST(marshal)
     /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
     if (0) test_out_of_process_com();
 
-    test_ROT();
     test_globalinterfacetable();
 
     test_CoGetInterfaceAndReleaseStream();

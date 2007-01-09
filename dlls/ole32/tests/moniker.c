@@ -584,6 +584,20 @@ static void test_ROT(void)
     hr = CreateFileMoniker(wszFileName, &pMoniker);
     ok_ole_success(hr, CreateClassMoniker);
 
+    /* test flags: 0 */
+    hr = IRunningObjectTable_Register(pROT, 0, (IUnknown*)&Test_ClassFactory,
+                                      pMoniker, &dwCookie);
+    ok_ole_success(hr, IRunningObjectTable_Register);
+    IMoniker_Release(pMoniker);
+
+    ok_more_than_one_lock();
+
+    hr = IRunningObjectTable_Revoke(pROT, dwCookie);
+    ok_ole_success(hr, IRunningObjectTable_Revoke);
+
+    ok_no_locks();
+
+    /* test flags: ROTFLAGS_REGISTRATIONKEEPSALIVE */
     hr = IRunningObjectTable_Register(pROT, ROTFLAGS_REGISTRATIONKEEPSALIVE,
         (IUnknown*)&Test_ClassFactory, pMoniker, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
@@ -595,6 +609,7 @@ static void test_ROT(void)
 
     ok_no_locks();
 
+    /* test flags: ROTFLAGS_REGISTRATIONKEEPSALIVE|ROTFLAGS_ALLOWANYCLIENT */
     /* only succeeds when process is started by SCM and has LocalService
      * or RunAs AppId values */
     hr = IRunningObjectTable_Register(pROT,
