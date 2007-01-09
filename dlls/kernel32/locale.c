@@ -2842,12 +2842,8 @@ void LOCALE_Init(void)
     */
     all_locales = CFLocaleCopyAvailableLocaleIdentifiers();
     preferred_locales = CFBundleCopyLocalizationsForPreferences( all_locales, NULL );
-    if (preferred_locales)
-    {
-        if (CFArrayGetCount( preferred_locales ))
-            user_language_string_ref = CFArrayGetValueAtIndex( preferred_locales, 0 );
-        CFRelease( preferred_locales );
-    }
+    if (preferred_locales && CFArrayGetCount( preferred_locales ))
+        user_language_string_ref = CFArrayGetValueAtIndex( preferred_locales, 0 );
     CFRelease( all_locales );
 #endif /* __APPLE__ */
 
@@ -2868,6 +2864,8 @@ void LOCALE_Init(void)
         lcid_LC_MESSAGES = locale_name.lcid;
         TRACE( "setting lcid_LC_MESSAGES to '%s'\n", user_locale );
     }
+    if (preferred_locales)
+        CFRelease( preferred_locales );
 #endif
 
     NtSetDefaultUILanguage( LANGIDFROMLCID(lcid_LC_MESSAGES) );
