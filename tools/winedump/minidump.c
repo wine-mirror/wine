@@ -66,7 +66,7 @@ enum FileSig get_kind_mdmp(void)
     pdw = PRD(0, sizeof(DWORD));
     if (!pdw) {printf("Can't get main signature, aborting\n"); return SIG_UNKNOWN;}
 
-    if (*pdw == 0x444D /* "MDMP" */) return SIG_MDMP;
+    if (*pdw == 0x504D444D /* "MDMP" */) return SIG_MDMP;
     return SIG_UNKNOWN;
 }
 
