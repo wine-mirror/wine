@@ -849,7 +849,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
           This->wantmax[i] = pr->lMax;
         }
       } else {
-        int obj = find_property(This->base.data_format.user_df, ph);
+        int obj = find_property(&This->base.data_format, ph);
+
         TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
         if (obj >= 0) {
           This->wantmin[obj] = pr->lMin;
@@ -868,7 +869,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(LPDIRECTINPUTDEVICE8A iface,
           This->deadz[i] = pd->dwData;
         }
       } else {
-        int obj = find_property(This->base.data_format.user_df, ph);
+        int obj = find_property(&This->base.data_format, ph);
+
         TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
         if (obj >= 0) {
           This->deadz[obj] = pd->dwData;
@@ -1127,7 +1129,8 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
     switch (LOWORD(rguid)) {
     case (DWORD) DIPROP_RANGE: {
       LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-      int obj = find_property(This->base.data_format.user_df, pdiph);
+      int obj = find_property(&This->base.data_format, pdiph);
+
       if (obj >= 0) {
 	pr->lMin = This->joydev->havemin[obj];
 	pr->lMax = This->joydev->havemax[obj];

@@ -518,12 +518,12 @@ int id_to_offset(DataFormat *df, int id)
     return obj >= 0 && df->offsets ? df->offsets[obj] : -1;
 }
 
-int find_property(LPCDIDATAFORMAT df, LPCDIPROPHEADER ph)
+int find_property(DataFormat *df, LPCDIPROPHEADER ph)
 {
     switch (ph->dwHow)
     {
-        case DIPH_BYID:     return id_to_object(df, ph->dwObj);
-        case DIPH_BYOFFSET: return offset_to_object(df, ph->dwObj);
+        case DIPH_BYID:     return id_to_object(df->user_df, ph->dwObj);
+        case DIPH_BYOFFSET: return offset_to_object(df->user_df, ph->dwObj);
     }
     FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
 

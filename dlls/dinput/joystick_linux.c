@@ -909,7 +909,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
                     This->props[i].lMax = pr->lMax;
                 }
             } else {
-                int obj = find_property(This->base.data_format.user_df, ph);
+                int obj = find_property(&This->base.data_format, ph);
+
                 TRACE("proprange(%d,%d) obj=%d\n", pr->lMin, pr->lMax, obj);
                 if (obj >= 0) {
                     This->props[obj].lMin = pr->lMin;
@@ -926,7 +927,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
                 for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++)
                     This->props[i].lDeadZone  = pd->dwData;
             } else {
-                int obj = find_property(This->base.data_format.user_df, ph);
+                int obj = find_property(&This->base.data_format, ph);
+
                 TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
                 if (obj >= 0) {
                     This->props[obj].lDeadZone  = pd->dwData;
@@ -942,7 +944,8 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
                 for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++)
                     This->props[i].lSaturation = pd->dwData;
             } else {
-                int obj = find_property(This->base.data_format.user_df, ph);
+                int obj = find_property(&This->base.data_format, ph);
+
                 TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);
                 if (obj >= 0) {
                     This->props[obj].lSaturation = pd->dwData;
@@ -1171,8 +1174,9 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
     if (!HIWORD(rguid)) {
         switch (LOWORD(rguid)) {
         case (DWORD) DIPROP_RANGE: {
-            LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-            int obj = find_property(This->base.data_format.user_df, pdiph);
+            LPDIPROPRANGE pr = (LPDIPROPRANGE)pdiph;
+            int obj = find_property(&This->base.data_format, pdiph);
+
             /* The app is querying the current range of the axis
              * return the lMin and lMax values */
             if (obj >= 0) {
@@ -1184,8 +1188,9 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
             break;
         }
         case (DWORD) DIPROP_DEADZONE: {
-            LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-            int obj = find_property(This->base.data_format.user_df, pdiph);
+            LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+            int obj = find_property(&This->base.data_format, pdiph);
+
             if (obj >= 0) {
                 pd->dwData = This->props[obj].lDeadZone;
                 TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
@@ -1194,8 +1199,9 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
             break;
         }
         case (DWORD) DIPROP_SATURATION: {
-            LPDIPROPDWORD	pd = (LPDIPROPDWORD)pdiph;
-            int obj = find_property(This->base.data_format.user_df, pdiph);
+            LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+            int obj = find_property(&This->base.data_format, pdiph);
+
             if (obj >= 0) {
                 pd->dwData = This->props[obj].lSaturation;
                 TRACE("saturation(%d) obj=%d\n", pd->dwData, obj);

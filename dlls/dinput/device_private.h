@@ -75,7 +75,7 @@ extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD 
 /* Helper functions to work with data format */
 extern int offset_to_object(LPCDIDATAFORMAT df, int offset);
 extern int id_to_offset(DataFormat *df, int id);
-extern int find_property(LPCDIDATAFORMAT df, LPCDIPROPHEADER ph);
+extern int find_property(DataFormat *df, LPCDIPROPHEADER ph);
 
 /**
  * Callback Data used by specific callback 
