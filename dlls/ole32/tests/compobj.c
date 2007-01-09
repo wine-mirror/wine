@@ -34,6 +34,8 @@
 HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 
 #define ok_ole_success(hr, func) ok(hr == S_OK, func " failed with error 0x%08x\n", hr)
+#define ok_more_than_one_lock() ok(cLocks > 0, "Number of locks should be > 0, but actually is %d\n", cLocks)
+#define ok_no_locks() ok(cLocks == 0, "Number of locks should be 0, but actually is %d\n", cLocks)
 
 static const CLSID CLSID_non_existent =   { 0x12345678, 0x1234, 0x1234, { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 } };
 static const CLSID CLSID_CDeviceMoniker = { 0x4315d437, 0x5b8c, 0x11d0, { 0xbd, 0x3b, 0x00, 0xa0, 0xc9, 0x11, 0xce, 0x86 } };
@@ -58,6 +60,77 @@ static const IID IID_IWineTest =
     {0xa1, 0xa2, 0x5d, 0x5a, 0x36, 0x54, 0xd3, 0xbd}
 }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
+static LONG cLocks;
+
+static void LockModule(void)
+{
+    InterlockedIncrement(&cLocks);
+}
+
+static void UnlockModule(void)
+{
+    InterlockedDecrement(&cLocks);
+}
+
+static HRESULT WINAPI Test_IClassFactory_QueryInterface(
+    LPCLASSFACTORY iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IClassFactory))
+    {
+        *ppvObj = (LPVOID)iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppvObj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_IClassFactory_AddRef(LPCLASSFACTORY iface)
+{
+    LockModule();
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
+{
+    UnlockModule();
+    return 1; /* non-heap-based object */
+}
+
+static HRESULT WINAPI Test_IClassFactory_CreateInstance(
+    LPCLASSFACTORY iface,
+    LPUNKNOWN pUnkOuter,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    *ppvObj = NULL;
+    if (pUnkOuter) return CLASS_E_NOAGGREGATION;
+    return E_NOINTERFACE;
+}
+
+static HRESULT WINAPI Test_IClassFactory_LockServer(
+    LPCLASSFACTORY iface,
+    BOOL fLock)
+{
+    return S_OK;
+}
+
+static const IClassFactoryVtbl TestClassFactory_Vtbl =
+{
+    Test_IClassFactory_QueryInterface,
+    Test_IClassFactory_AddRef,
+    Test_IClassFactory_Release,
+    Test_IClassFactory_CreateInstance,
+    Test_IClassFactory_LockServer
+};
+
+static IClassFactory Test_ClassFactory = { &TestClassFactory_Vtbl };
 
 static void test_ProgIDFromCLSID(void)
 {
@@ -160,7 +233,7 @@ static ATOM register_dummy_class(void)
         NULL,
         TEXT("WineOleTestClass"),
     };
-    
+
     return RegisterClass(&wc);
 }
 
@@ -337,7 +410,7 @@ static HRESULT WINAPI PSFactoryBuffer_QueryInterface(
     }
     return E_NOINTERFACE;
 }
-        
+
 static ULONG WINAPI PSFactoryBuffer_AddRef(
     IPSFactoryBuffer * This)
 {
@@ -359,7 +432,7 @@ static HRESULT WINAPI PSFactoryBuffer_CreateProxy(
 {
     return E_NOTIMPL;
 }
-        
+
 static HRESULT WINAPI PSFactoryBuffer_CreateStub(
     IPSFactoryBuffer * This,
     /* [in] */ REFIID riid,
@@ -468,6 +541,74 @@ static void test_CoGetInterfaceAndReleaseStream(void)
     CoUninitialize();
 }
 
+static void test_CoMarshalInterface(void)
+{
+    IStream *pStream;
+    HRESULT hr;
+    static const LARGE_INTEGER llZero;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
+    hr = CoMarshalInterface(pStream, &IID_IUnknown, NULL, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == E_INVALIDARG, "CoMarshalInterface should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    hr = CoMarshalInterface(NULL, &IID_IUnknown, (IUnknown *)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == E_INVALIDARG, "CoMarshalInterface should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    hr = CoMarshalInterface(pStream, &IID_IUnknown, (IUnknown *)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, "CoMarshalInterface");
+
+    /* stream not rewound */
+    hr = CoReleaseMarshalData(pStream);
+    ok(hr == STG_E_READFAULT, "CoReleaseMarshalData should have returned STG_E_READFAULT instead of 0x%08x\n", hr);
+
+    hr = IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, "IStream_Seek");
+
+    hr = CoReleaseMarshalData(pStream);
+    ok_ole_success(hr, "CoReleaseMarshalData");
+
+    IStream_Release(pStream);
+
+    CoUninitialize();
+}
+
+static void test_CoMarshalInterThreadInterfaceInStream(void)
+{
+    IStream *pStream;
+    HRESULT hr;
+    IClassFactory *pProxy;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    cLocks = 0;
+
+    hr = CoMarshalInterThreadInterfaceInStream(&IID_IUnknown, (IUnknown *)&Test_ClassFactory, NULL);
+    ok(hr == E_INVALIDARG, "CoMarshalInterThreadInterfaceInStream should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    hr = CoMarshalInterThreadInterfaceInStream(&IID_IUnknown, NULL, &pStream);
+    ok(hr == E_INVALIDARG, "CoMarshalInterThreadInterfaceInStream should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    ok_no_locks();
+
+    hr = CoMarshalInterThreadInterfaceInStream(&IID_IUnknown, (IUnknown *)&Test_ClassFactory, &pStream);
+    ok_ole_success(hr, "CoMarshalInterThreadInterfaceInStream");
+
+    ok_more_than_one_lock();
+
+    hr = CoUnmarshalInterface(pStream, &IID_IClassFactory, (void **)&pProxy);
+    ok_ole_success(hr, "CoUnmarshalInterface");
+
+    IClassFactory_Release(pProxy);
+
+    ok_no_locks();
+
+    CoUninitialize();
+}
+
 START_TEST(compobj)
 {
     HMODULE hOle32 = GetModuleHandle("ole32");
@@ -487,4 +628,6 @@ START_TEST(compobj)
     test_CoRegisterPSClsid();
     test_CoGetPSClsid();
     test_CoGetInterfaceAndReleaseStream();
+    test_CoMarshalInterface();
+    test_CoMarshalInterThreadInterfaceInStream();
 }
