@@ -55,6 +55,7 @@ TESTBINS = \
 	msxml3_test.exe \
 	netapi32_test.exe \
 	ntdll_test.exe \
+	odbccp32_test.exe \
 	ole32_test.exe \
 	oleaut32_test.exe \
 	psapi_test.exe \
@@ -143,6 +144,8 @@ netapi32_test.exe: $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/netapi32/tests/netapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ntdll_test.exe: $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ntdll/tests/ntdll_test.exe$(DLLEXT) $@ && $(STRIP) $@
+odbccp32_test.exe: $(DLLDIR)/odbccp32/tests/odbccp32_test.exe$(DLLEXT)
+	cp $(DLLDIR)/odbccp32/tests/odbccp32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 ole32_test.exe: $(DLLDIR)/ole32/tests/ole32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/ole32/tests/ole32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 oleaut32_test.exe: $(DLLDIR)/oleaut32/tests/oleaut32_test.exe$(DLLEXT)

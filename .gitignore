@@ -356,6 +356,9 @@ dlls/ntdsapi/libntdsapi.def
 dlls/objsel/objsel.res
 dlls/odbc32/libodbc32.def
 dlls/odbccp32/libodbccp32.def
+dlls/odbccp32/tests/*.ok
+dlls/odbccp32/tests/odbccp32_crosstest.exe
+dlls/odbccp32/tests/testlist.c
 dlls/ole2.dll16
 dlls/ole2conv.dll16
 dlls/ole2disp.dll16
@@ -751,6 +754,7 @@ programs/winetest/msvcrtd_test.exe
 programs/winetest/msxml3_test.exe
 programs/winetest/netapi32_test.exe
 programs/winetest/ntdll_test.exe
+programs/winetest/odbccp32_test.exe
 programs/winetest/ole32_test.exe
 programs/winetest/oleaut32_test.exe
 programs/winetest/psapi_test.exe

@@ -301,6 +301,7 @@ ALL_MAKEFILES = \
 	dlls/objsel/Makefile \
 	dlls/odbc32/Makefile \
 	dlls/odbccp32/Makefile \
+	dlls/odbccp32/tests/Makefile \
 	dlls/ole32/Makefile \
 	dlls/ole32/tests/Makefile \
 	dlls/oleacc/Makefile \
@@ -626,6 +627,7 @@ dlls/ntdsapi/Makefile: dlls/ntdsapi/Makefile.in dlls/Makedll.rules
 dlls/objsel/Makefile: dlls/objsel/Makefile.in dlls/Makedll.rules
 dlls/odbc32/Makefile: dlls/odbc32/Makefile.in dlls/Makedll.rules
 dlls/odbccp32/Makefile: dlls/odbccp32/Makefile.in dlls/Makedll.rules
+dlls/odbccp32/tests/Makefile: dlls/odbccp32/tests/Makefile.in dlls/Maketest.rules
 dlls/ole32/Makefile: dlls/ole32/Makefile.in dlls/Makedll.rules
 dlls/ole32/tests/Makefile: dlls/ole32/tests/Makefile.in dlls/Maketest.rules
 dlls/oleacc/Makefile: dlls/oleacc/Makefile.in dlls/Makedll.rules
