@@ -75,7 +75,7 @@ static void test_AddRem_ActionID(void)
     ok (!ret, "Expected WintrustAddActionID to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
         GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
-        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %u.\n", GetLastError());
 
     /* NULL functions */
     SetLastError(0xdeadbeef);
@@ -83,7 +83,7 @@ static void test_AddRem_ActionID(void)
     ok (!ret, "Expected WintrustAddActionID to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
         GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
-        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %u.\n", GetLastError());
 
     /* All OK (although no functions defined), except cbStruct is not set in ActionIDFunctions */
     SetLastError(0xdeadbeef);
@@ -92,7 +92,7 @@ static void test_AddRem_ActionID(void)
     ok (!ret, "Expected WintrustAddActionID to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER /* XP/W2K3 */ ||
         GetLastError() == 0xdeadbeef              /* Win98/NT4/W2K */,
-        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER(W2K3) or 0xdeadbeef(Win98/NT4/W2K), got %u.\n", GetLastError());
 
     /* All OK (although no functions defined) and cbStruct is set now */
     SetLastError(0xdeadbeef);
@@ -101,7 +101,7 @@ static void test_AddRem_ActionID(void)
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
     ok (ret, "Expected WintrustAddActionID to succeed.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* All OK and all (but 1) functions are correctly defined. The DLL and entrypoints
      * are not present.
@@ -120,7 +120,7 @@ static void test_AddRem_ActionID(void)
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
     ok (ret, "Expected WintrustAddActionID to succeed.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* All OK and all functions are correctly defined. The DLL and entrypoints
      * are not present.
@@ -139,26 +139,26 @@ static void test_AddRem_ActionID(void)
     ret = pWintrustAddActionID(&ActionID, 0, &ActionIDFunctions);
     ok (ret, "Expected WintrustAddActionID to succeed.\n");
     ok (GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got %d.\n", GetLastError());
+        "Expected 0xdeadbeef, got %u.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = pWintrustRemoveActionID(&ActionID);
-    ok ( ret, "WintrustRemoveActionID failed : 0x%08x\n", GetLastError());
-    ok ( GetLastError() == 0xdeadbeef, "Last error should not have been changed: 0x%08x\n", GetLastError());
+    ok ( ret, "WintrustRemoveActionID failed : %d\n", GetLastError());
+    ok ( GetLastError() == 0xdeadbeef, "Last error should not have been changed: %u\n", GetLastError());
 
     /* NULL input */
     SetLastError(0xdeadbeef);
     ret = pWintrustRemoveActionID(NULL);
     ok (ret, "Expected WintrustRemoveActionID to succeed.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* The passed GUID is removed by a previous call, so it's basically a test with a nonexistent Trust provider */ 
     SetLastError(0xdeadbeef);
     ret = pWintrustRemoveActionID(&ActionID);
     ok (ret, "Expected WintrustRemoveActionID to succeed.\n");
     ok (GetLastError() == 0xdeadbeef,
-        "Expected 0xdeadbeef, got %d.\n", GetLastError());
+        "Expected 0xdeadbeef, got %u.\n", GetLastError());
 }
 
 static void test_AddDefaultForUsage(void)
@@ -177,14 +177,14 @@ static void test_AddDefaultForUsage(void)
     ret = pWintrustAddDefaultForUsage(NULL, NULL);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* NULL defusage */
     SetLastError(0xdeadbeef);
     ret = pWintrustAddDefaultForUsage(oid, NULL);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* NULL oid and proper defusage */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -197,7 +197,7 @@ static void test_AddDefaultForUsage(void)
     ret = pWintrustAddDefaultForUsage(NULL, &DefUsage);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* Just the ActionID */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -207,7 +207,7 @@ static void test_AddDefaultForUsage(void)
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
     ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
     ok (GetLastError() == 0xdeadbeef,
-        "Last error should not have been changed: 0x%08x\n", GetLastError());
+        "Last error should not have been changed: %u\n", GetLastError());
    
     /* No ActionID */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -218,7 +218,7 @@ static void test_AddDefaultForUsage(void)
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* cbStruct set to 0 */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -231,7 +231,7 @@ static void test_AddDefaultForUsage(void)
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
     ok (!ret, "Expected WintrustAddDefaultForUsage to fail.\n");
     ok (GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d.\n", GetLastError());
+        "Expected ERROR_INVALID_PARAMETER, got %u.\n", GetLastError());
 
     /* All OK */
     memset(&DefUsage, 0 , sizeof(CRYPT_PROVIDER_REGDEFUSAGE));
@@ -244,7 +244,7 @@ static void test_AddDefaultForUsage(void)
     ret = pWintrustAddDefaultForUsage(oid, &DefUsage);
     ok ( ret, "Expected WintrustAddDefaultForUsage to succeed\n");
     ok (GetLastError() == 0xdeadbeef,
-        "Last error should not have been changed: 0x%08x\n", GetLastError());
+        "Last error should not have been changed: %u\n", GetLastError());
 
     /* There is no corresponding remove for WintrustAddDefaultForUsage
      * so we delete the registry key manually.
