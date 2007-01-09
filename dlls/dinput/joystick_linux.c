@@ -778,7 +778,11 @@ static void joy_polldev(JoystickImpl *This) {
         WARN("no device\n");
         return;
     }
-    while (1) {
+    while (1)
+    {
+        LONG value;
+        int inst_id = -1;
+
 	plfd.fd = This->joyfd;
 	plfd.events = POLLIN;
 	if (poll(&plfd,1,0) != 1)
@@ -789,19 +793,19 @@ static void joy_polldev(JoystickImpl *This) {
 	}
         TRACE("js_event: type 0x%x, number %d, value %d\n",
               jse.type,jse.number,jse.value);
-        if (jse.type & JS_EVENT_BUTTON) {
-            int offset = This->base.data_format.offsets[jse.number + 12];
-            int value = jse.value?0x80:0x00;
-
-            This->js.rgbButtons[jse.number] = value;
-            queue_event((LPDIRECTINPUTDEVICE8A)This, offset, value, jse.time, This->dinput->evsequence++);
-        } else if (jse.type & JS_EVENT_AXIS) {
+        if (jse.type & JS_EVENT_BUTTON)
+        {
+            inst_id = DIDFT_MAKEINSTANCE(jse.number) | DIDFT_PSHBUTTON;
+            This->js.rgbButtons[jse.number] = value = jse.value ? 0x80 : 0x00;
+        }
+        else if (jse.type & JS_EVENT_AXIS)
+        {
             int number = This->axis_map[jse.number];	/* wine format object index */
-            if (number < 12) {
-                int offset = This->base.data_format.offsets[number];
-                int index = offset_to_object(This->base.data_format.user_df, offset);
-                LONG value = map_axis(This, jse.value, index);
 
+            if (number < 12)
+            {
+                inst_id = DIDFT_MAKEINSTANCE(jse.number) | (number < 8 ? DIDFT_AXIS : DIDFT_POV);
+                value = map_axis(This, jse.value, number);
                 /* FIXME do deadzone and saturation here */
 
                 TRACE("changing axis %d => %d\n", jse.number, number);
@@ -860,11 +864,13 @@ static void joy_polldev(JoystickImpl *This) {
                     value = calculate_pov(This, 3);
                     break;
                 }
-
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, value, jse.time, This->dinput->evsequence++);
             } else
                 WARN("axis %d not supported\n", number);
         }
+        if (inst_id >= 0)
+            queue_event((LPDIRECTINPUTDEVICE8A)This,
+                        id_to_offset(&This->base.data_format, inst_id),
+                        value, jse.time, This->dinput->evsequence++);
     }
 }
 
