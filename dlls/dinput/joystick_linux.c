@@ -654,7 +654,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 {
     JoystickImpl *This = (JoystickImpl *)iface;
     unsigned int i;
-    ObjProps * new_props = 0;
     HRESULT hr;
 
     TRACE("(%p,%p)\n",This,df);
@@ -662,13 +661,8 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
     hr = IDirectInputDevice2AImpl_SetDataFormat(iface, df);
     if (FAILED(hr)) return hr;
 
-    new_props = HeapAlloc(GetProcessHeap(),0,df->dwNumObjs*sizeof(ObjProps));
-    if (!new_props) return DIERR_OUTOFMEMORY;
-
-    HeapFree(GetProcessHeap(),0,This->props);
-
-    This->props = new_props;
-    for (i = 0; i < df->dwNumObjs; i++) {
+    for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
+    {
         This->props[i].lMin = 0;
         This->props[i].lMax = 0xffff;
         This->props[i].lDeadZone = 1000;
@@ -925,10 +919,10 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
     if (!HIWORD(rguid)) {
         switch (LOWORD(rguid)) {
         case (DWORD)DIPROP_RANGE: {
-            LPCDIPROPRANGE	pr = (LPCDIPROPRANGE)ph;
+            LPCDIPROPRANGE pr = (LPCDIPROPRANGE)ph;
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("proprange(%d,%d) all\n", pr->lMin, pr->lMax);
-                for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++) {
+                for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++) {
                     This->props[i].lMin = pr->lMin;
                     This->props[i].lMax = pr->lMax;
                 }
@@ -945,10 +939,10 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
             break;
         }
         case (DWORD)DIPROP_DEADZONE: {
-            LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
+            LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("deadzone(%d) all\n", pd->dwData);
-                for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++)
+                for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
                     This->props[i].lDeadZone  = pd->dwData;
             } else {
                 int obj = find_property(&This->base.data_format, ph);
@@ -962,10 +956,10 @@ static HRESULT WINAPI JoystickAImpl_SetProperty(
             break;
         }
         case (DWORD)DIPROP_SATURATION: {
-            LPCDIPROPDWORD	pd = (LPCDIPROPDWORD)ph;
+            LPCDIPROPDWORD pd = (LPCDIPROPDWORD)ph;
             if (ph->dwHow == DIPH_DEVICE) {
                 TRACE("saturation(%d) all\n", pd->dwData);
-                for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++)
+                for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
                     This->props[i].lSaturation = pd->dwData;
             } else {
                 int obj = find_property(&This->base.data_format, ph);
