@@ -1659,6 +1659,9 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
 
     TRACE("(%p, %s, %p)\n", pStream, debugstr_guid(riid), ppv);
 
+    if (!pStream || !ppv)
+        return E_INVALIDARG;
+
     hr = get_unmarshaler_from_stream(pStream, &pMarshal, &iid);
     if (hr != S_OK)
         return hr;
