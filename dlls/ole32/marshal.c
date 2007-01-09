@@ -1671,16 +1671,13 @@ HRESULT WINAPI CoUnmarshalInterface(IStream *pStream, REFIID riid, LPVOID *ppv)
     if (hr)
         ERR("IMarshal::UnmarshalInterface failed, 0x%08x\n", hr);
 
-    /* IID_NULL means use the interface ID of the marshaled object */
-    if (!IsEqualIID(riid, &IID_NULL))
-        iid = *riid;
-
     if (hr == S_OK)
     {
-        if (!IsEqualIID(riid, &iid))
+        /* IID_NULL means use the interface ID of the marshaled object */
+        if (!IsEqualIID(riid, &IID_NULL) && !IsEqualIID(riid, &iid))
         {
             TRACE("requested interface != marshalled interface, additional QI needed\n");
-            hr = IUnknown_QueryInterface(object, &iid, ppv);
+            hr = IUnknown_QueryInterface(object, riid, ppv);
             if (hr)
                 ERR("Couldn't query for interface %s, hr = 0x%08x\n",
                     debugstr_guid(riid), hr);
