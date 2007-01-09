@@ -370,7 +370,7 @@ BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 
     if (!lpszDirectory)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
 

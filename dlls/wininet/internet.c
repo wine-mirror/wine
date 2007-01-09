@@ -769,7 +769,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
 
     if (!lpszServerName)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
 
@@ -778,7 +778,7 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     hIC = (LPWININETAPPINFOW) WININET_GetObject( hInternet );
     if ( (hIC == NULL) || (hIC->hdr.htype != WH_HINIT) )
     {
-        SetLastError(ERROR_INVALID_HANDLE);
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         goto lend;
     }
 
@@ -1219,7 +1219,7 @@ BOOL WINAPI InternetCrackUrlW(LPCWSTR lpszUrl_orig, DWORD dwUrlLength_orig, DWOR
 
     if (!lpszUrl_orig || !*lpszUrl_orig)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -1777,7 +1777,7 @@ BOOL WINAPI InternetReadFile(HINTERNET hFile, LPVOID lpBuffer,
     lpwh = WININET_GetObject( hFile );
     if (!lpwh)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
@@ -1839,14 +1839,14 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
 
     if (lpBuffersOut->dwStructSize != sizeof(*lpBuffersOut))
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
     lpwh = (LPWININETHANDLEHEADER) WININET_GetObject( hFile );
     if (!lpwh)
     {
-        SetLastError(ERROR_INVALID_HANDLE);
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
@@ -1868,7 +1868,7 @@ BOOL WINAPI InternetReadFileExA(HINTERNET hFile, LPINTERNET_BUFFERSA lpBuffersOu
         retval = INTERNET_AsyncCall(&workRequest);
         if (!retval) return FALSE;
 
-        SetLastError(ERROR_IO_PENDING);
+        INTERNET_SetLastError(ERROR_IO_PENDING);
         return FALSE;
     }
 
@@ -1923,7 +1923,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
     lpwhh = (LPWININETHANDLEHEADER) WININET_GetObject( hInternet );
     if (!lpwhh)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -1936,7 +1936,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             if (!lpwhh)
             {
                 WARN("Invalid hInternet handle\n");
-                SetLastError(ERROR_INVALID_HANDLE);
+                INTERNET_SetLastError(ERROR_INVALID_HANDLE);
                 return FALSE;
             }
 
@@ -1976,7 +1976,7 @@ static BOOL INET_QueryOptionHelper(BOOL bIsUnicode, HINTERNET hInternet, DWORD d
             if (!lpwhh)
             {
                 WARN("Invalid hInternet handle\n");
-                SetLastError(ERROR_INVALID_HANDLE);
+                INTERNET_SetLastError(ERROR_INVALID_HANDLE);
                 return FALSE;
             }
             if (lpwhh->htype == WH_HHTTPREQ)
@@ -2519,7 +2519,7 @@ BOOL WINAPI InternetSetOptionExW(HINTERNET hInternet, DWORD dwOption,
     FIXME("Flags %08x ignored\n", dwFlags);
     if( dwFlags & ~ISO_VALID_FLAGS )
     {
-        SetLastError( ERROR_INVALID_PARAMETER );
+        INTERNET_SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
     return InternetSetOptionW( hInternet, dwOption, lpBuffer, dwBufferLength );
@@ -2760,7 +2760,7 @@ End:
 
   HeapFree( GetProcessHeap(), 0, command );
   if (rc == FALSE)
-    SetLastError(ERROR_NOT_CONNECTED);
+    INTERNET_SetLastError(ERROR_NOT_CONNECTED);
 
   return rc;
 }
@@ -2919,7 +2919,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 
     if (!lpszUrl)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
 
@@ -2949,7 +2949,7 @@ HINTERNET WINAPI InternetOpenUrlW(HINTERNET hInternet, LPCWSTR lpszUrl,
 	/*
 	 * This is from windows.
 	 */
-	SetLastError(ERROR_IO_PENDING);
+	INTERNET_SetLastError(ERROR_IO_PENDING);
     } else {
 	ret = INTERNET_InternetOpenUrlW(hIC, lpszUrl, lpszHeaders, dwHeadersLength, dwFlags, dwContext);
     }
@@ -3227,7 +3227,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
     lpwhr = (LPWININETHTTPREQW) WININET_GetObject( hFile );
     if (NULL == lpwhr)
     {
-        SetLastError(ERROR_NO_MORE_FILES);
+        INTERNET_SetLastError(ERROR_NO_MORE_FILES);
         return FALSE;
     }
 
@@ -3240,7 +3240,7 @@ BOOL WINAPI InternetQueryDataAvailable( HINTERNET hFile,
                          min(sizeof(buffer), lpwhr->dwContentLength - lpwhr->dwContentRead),
                          MSG_PEEK, (int *)lpdwNumberOfBytesAvailble))
         {
-            SetLastError(ERROR_NO_MORE_FILES);
+            INTERNET_SetLastError(ERROR_NO_MORE_FILES);
             retval = FALSE;
         }
         else
@@ -3459,7 +3459,7 @@ static BOOL calc_url_length(LPURL_COMPONENTSW lpUrlComponents,
     {
         if (lpUrlComponents->lpszPassword)
         {
-            SetLastError(ERROR_INVALID_PARAMETER);
+            INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
             return FALSE;
         }
     }
@@ -3577,7 +3577,7 @@ BOOL WINAPI InternetCreateUrlA(LPURL_COMPONENTSA lpUrlComponents, DWORD dwFlags,
 
     if (lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSW) || !lpdwUrlLength)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -3647,7 +3647,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
 
     if (lpUrlComponents->dwStructSize != sizeof(URL_COMPONENTSW) || !lpdwUrlLength)
     {
-        SetLastError(ERROR_INVALID_PARAMETER);
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 
@@ -3657,7 +3657,7 @@ BOOL WINAPI InternetCreateUrlW(LPURL_COMPONENTSW lpUrlComponents, DWORD dwFlags,
     if (!lpszUrl || *lpdwUrlLength < dwLen)
     {
         *lpdwUrlLength = (dwLen + 1) * sizeof(WCHAR);
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        INTERNET_SetLastError(ERROR_INSUFFICIENT_BUFFER);
         return FALSE;
     }
 

@@ -1464,7 +1464,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         ((dwInfoLevel & HTTP_QUERY_FLAG_REQUEST_HEADERS) &&
          (~lphttpHdr->wFlags & HDR_ISREQUEST)))
     {
-        SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
+        INTERNET_SetLastError(ERROR_HTTP_HEADER_NOT_FOUND);
         return bSuccess;
     }
 
@@ -1754,7 +1754,7 @@ BOOL WINAPI HttpSendRequestExA(HINTERNET hRequest,
             header = HeapAlloc(GetProcessHeap(),0,headerlen*sizeof(WCHAR));
             if (!(BuffersInW.lpcszHeader = header))
             {
-                SetLastError(ERROR_OUTOFMEMORY);
+                INTERNET_SetLastError(ERROR_OUTOFMEMORY);
                 return FALSE;
             }
             BuffersInW.dwHeadersLength = MultiByteToWideChar(CP_ACP, 0,
@@ -1848,7 +1848,7 @@ BOOL WINAPI HttpSendRequestExW(HINTERNET hRequest,
         /*
          * This is from windows.
          */
-        SetLastError(ERROR_IO_PENDING);
+        INTERNET_SetLastError(ERROR_IO_PENDING);
         ret = FALSE;
     }
     else
@@ -1930,7 +1930,7 @@ BOOL WINAPI HttpSendRequestW(HINTERNET hHttpRequest, LPCWSTR lpszHeaders,
         /*
          * This is from windows.
          */
-        SetLastError(ERROR_IO_PENDING);
+        INTERNET_SetLastError(ERROR_IO_PENDING);
         r = FALSE;
     }
     else
