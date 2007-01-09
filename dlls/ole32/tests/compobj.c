@@ -455,6 +455,18 @@ static void test_CoGetPSClsid(void)
     CoUninitialize();
 }
 
+static void test_CoGetInterfaceAndReleaseStream(void)
+{
+    HRESULT hr;
+    IUnknown *pUnk;
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoGetInterfaceAndReleaseStream(NULL, &IID_IUnknown, (void**)&pUnk);
+    ok(hr == E_INVALIDARG, "hr %08x\n", hr);
+
+    CoUninitialize();
+}
 
 START_TEST(compobj)
 {
@@ -474,4 +486,5 @@ START_TEST(compobj)
     test_CoRegisterMessageFilter();
     test_CoRegisterPSClsid();
     test_CoGetPSClsid();
+    test_CoGetInterfaceAndReleaseStream();
 }

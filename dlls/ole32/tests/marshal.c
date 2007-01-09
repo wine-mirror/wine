@@ -2150,15 +2150,6 @@ static void test_globalinterfacetable(void)
 	CloseHandle(thread);
 }
 
-static void test_CoGetInterfaceAndReleaseStream(void)
-{
-    HRESULT hr;
-    IUnknown *pUnk;
-
-    hr = CoGetInterfaceAndReleaseStream(NULL, &IID_IUnknown, (void**)&pUnk);
-    ok(hr == E_INVALIDARG, "hr %08x\n", hr);
-}
-
 static const char *debugstr_iid(REFIID riid)
 {
     static char name[256];
@@ -2428,8 +2419,6 @@ START_TEST(marshal)
     if (0) test_out_of_process_com();
 
     test_globalinterfacetable();
-
-    test_CoGetInterfaceAndReleaseStream();
 
     /* must be last test as channel hooks can't be unregistered */
     test_channel_hook();
