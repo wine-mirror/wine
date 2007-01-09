@@ -7930,13 +7930,16 @@ HRESULT WINAPI ReadClassStm(IStream *pStm,CLSID *pclsid)
     if (!pStm || !pclsid)
         return E_INVALIDARG;
 
+    /* clear the output args */
+    memcpy(pclsid, &CLSID_NULL, sizeof(*pclsid));
+
     res = IStream_Read(pStm,(void*)pclsid,sizeof(CLSID),&nbByte);
 
     if (FAILED(res))
         return res;
 
     if (nbByte != sizeof(CLSID))
-        return S_FALSE;
+        return STG_E_READFAULT;
     else
         return S_OK;
 }
