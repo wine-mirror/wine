@@ -483,16 +483,6 @@ static HRESULT WINAPI SysKeyboardWImpl_GetDeviceInfo(LPDIRECTINPUTDEVICE8W iface
     return DI_OK;
 }
 
-static HRESULT WINAPI SysKeyboardAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
-{
-    SysKeyboardImpl *This = (SysKeyboardImpl *)iface;
-
-    TRACE("(%p)\n",This);
-
-    if (!This->base.acquired) return DIERR_NOTACQUIRED;
-    return DI_NOEFFECT;
-}
-
 static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 {
 	IDirectInputDevice2AImpl_QueryInterface,
@@ -520,7 +510,7 @@ static const IDirectInputDevice8AVtbl SysKeyboardAvt =
 	IDirectInputDevice2AImpl_SendForceFeedbackCommand,
 	IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
 	IDirectInputDevice2AImpl_Escape,
-        SysKeyboardAImpl_Poll,
+        IDirectInputDevice2AImpl_Poll,
         IDirectInputDevice2AImpl_SendDeviceData,
         IDirectInputDevice7AImpl_EnumEffectsInFile,
         IDirectInputDevice7AImpl_WriteEffectToFile,
@@ -562,7 +552,7 @@ static const IDirectInputDevice8WVtbl SysKeyboardWvt =
 	XCAST(SendForceFeedbackCommand)IDirectInputDevice2AImpl_SendForceFeedbackCommand,
 	XCAST(EnumCreatedEffectObjects)IDirectInputDevice2AImpl_EnumCreatedEffectObjects,
 	XCAST(Escape)IDirectInputDevice2AImpl_Escape,
-        XCAST(Poll)SysKeyboardAImpl_Poll,
+        XCAST(Poll)IDirectInputDevice2AImpl_Poll,
         XCAST(SendDeviceData)IDirectInputDevice2AImpl_SendDeviceData,
         IDirectInputDevice7WImpl_EnumEffectsInFile,
         IDirectInputDevice7WImpl_WriteEffectToFile,
