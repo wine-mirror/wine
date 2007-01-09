@@ -121,7 +121,7 @@ static	DWORD    MCICDA_GetStatus(WINE_MCICDAUDIO* wmcda)
     fmt.Format = IOCTL_CDROM_CURRENT_POSITION;
     if (!DeviceIoControl(wmcda->handle, IOCTL_CDROM_READ_Q_CHANNEL, &fmt, sizeof(fmt),
                          &data, sizeof(data), &br, NULL)) {
-        if (GetLastError() == STATUS_NO_MEDIA_IN_DEVICE) mode = MCI_MODE_OPEN;
+        if (GetLastError() == ERROR_NOT_READY) mode = MCI_MODE_OPEN;
     } else {
         switch (data.CurrentPosition.Header.AudioStatus)
         {
@@ -145,8 +145,8 @@ static	int	MCICDA_GetError(WINE_MCICDAUDIO* wmcda)
 {
     switch (GetLastError())
     {
-    case STATUS_NO_MEDIA_IN_DEVICE:     return MCIERR_DEVICE_NOT_READY;
-    case STATUS_IO_DEVICE_ERROR:        return MCIERR_HARDWARE;
+    case ERROR_NOT_READY:     return MCIERR_DEVICE_NOT_READY;
+    case ERROR_IO_DEVICE:     return MCIERR_HARDWARE;
     default:
 	FIXME("Unknown mode %x\n", GetLastError());
     }
