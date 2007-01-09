@@ -555,15 +555,15 @@ run_tests (char *logname)
 static void
 usage (void)
 {
-    fprintf (stderr, "\
-Usage: winetest [OPTION]...\n\n\
-  -c       console mode, no GUI\n\
-  -e       preserve the environment\n\
-  -h       print this message and exit\n\
-  -q       quiet mode, no output at all\n\
-  -o FILE  put report into FILE, do not submit\n\
-  -s FILE  submit FILE, do not run tests\n\
-  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
+    fprintf (stderr,
+"Usage: winetest [OPTION]...\n\n"
+"  -c       console mode, no GUI\n"
+"  -e       preserve the environment\n"
+"  -h       print this message and exit\n"
+"  -q       quiet mode, no output at all\n"
+"  -o FILE  put report into FILE, do not submit\n"
+"  -s FILE  submit FILE, do not run tests\n"
+"  -t TAG   include TAG of characters [-.0-9a-zA-Z] in the report\n");
 }
 
 int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,

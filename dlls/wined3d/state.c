@@ -601,9 +601,9 @@ state_stencil(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     if( stateblock->set.renderState[WINED3DRS_CCW_STENCILPASS] )
         stencilPass_ccw = StencilOp(stateblock->renderState[WINED3DRS_CCW_STENCILPASS]);
 
-    TRACE("(onesided %d, twosided %d, ref %x, mask %x,  \
-            GL_FRONT: func: %x, fail %x, zfail %x, zpass %x  \
-            GL_BACK: func: %x, fail %x, zfail %x, zpass %x )\n",
+    TRACE("(onesided %d, twosided %d, ref %x, mask %x, "
+          "GL_FRONT: func: %x, fail %x, zfail %x, zpass %x "
+          "GL_BACK: func: %x, fail %x, zfail %x, zpass %x )\n",
     onesided_enable, twosided_enable, ref, mask,
     func, stencilFail, depthFail, stencilPass,
     func_ccw, stencilFail_ccw, depthFail_ccw, stencilPass_ccw);

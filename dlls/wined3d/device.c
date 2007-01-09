@@ -860,17 +860,17 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
     switch(Pool) {
     case WINED3DPOOL_SCRATCH:
         if(!Lockable)
-            FIXME("Create surface called with a pool of SCRATCH and a Lockable of FALSE \
-                which are mutually exclusive, setting lockable to true\n");
+            FIXME("Create surface called with a pool of SCRATCH and a Lockable of FALSE "
+                "which are mutually exclusive, setting lockable to TRUE\n");
                 Lockable = TRUE;
     break;
     case WINED3DPOOL_SYSTEMMEM:
-        if(!Lockable) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, \
-                                    this is acceptable but unexpected (I can't know how the surface can be usable!)\n");
+        if(!Lockable) FIXME("Create surface called with a pool of SYSTEMMEM and a Lockable of FALSE, "
+                                    "this is acceptable but unexpected (I can't know how the surface can be usable!)\n");
     case WINED3DPOOL_MANAGED:
-        if(Usage == WINED3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a \
-                                                Usage of DYNAMIC which are mutually exclusive, not doing \
-                                                anything just telling you.\n");
+        if(Usage == WINED3DUSAGE_DYNAMIC) FIXME("Create surface called with a pool of MANAGED and a "
+                                                "Usage of DYNAMIC which are mutually exclusive, not doing "
+                                                "anything just telling you.\n");
     break;
     case WINED3DPOOL_DEFAULT: /*TODO: Create offscreen plain can cause this check to fail..., find out if it should */
         if(!(Usage & WINED3DUSAGE_DYNAMIC) && !(Usage & WINED3DUSAGE_RENDERTARGET)

@@ -322,8 +322,8 @@ IDirectDrawImpl_SetupFullscreenWindow(IDirectDrawImpl *This,
     TRACE("(%p): Setting up window %p for exclusive mode\n", This, window);
     if( (This->style != 0) && (This->exStyle != 0) )
     {
-        ERR("(%p) Want to change the window parameters of HWND %p, but \
-             another style is stored for restauration afterwards\n", This, window);
+        ERR("(%p) Want to change the window parameters of HWND %p, but "
+            "another style is stored for restauration afterwards\n", This, window);
     }
 
     /* Get the parameters and save them */
@@ -2259,8 +2259,8 @@ IDirectDrawImpl_CreateSurface(IDirectDraw7 *iface,
                 if( (rect.right - rect.left) <= 1 ||
                     (rect.bottom - rect.top) <= 1 )
                 {
-                    FIXME("Wanted to get surface dimensions from window %p, but it has only \
-                           a size of %dx%d. Using full screen dimensions\n",
+                    FIXME("Wanted to get surface dimensions from window %p, but it has only "
+                           "a size of %dx%d. Using full screen dimensions\n",
                            window, rect.right - rect.left, rect.bottom - rect.top);
                 }
                 else

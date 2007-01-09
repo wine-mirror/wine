@@ -363,8 +363,8 @@ HFDI __cdecl FDICreate(
 {
   HFDI rv;
 
-  TRACE("(pfnalloc == ^%p, pfnfree == ^%p, pfnopen == ^%p, pfnread == ^%p, pfnwrite == ^%p, \
-        pfnclose == ^%p, pfnseek == ^%p, cpuType == %d, perf == ^%p)\n", 
+  TRACE("(pfnalloc == ^%p, pfnfree == ^%p, pfnopen == ^%p, pfnread == ^%p, pfnwrite == ^%p, "
+        "pfnclose == ^%p, pfnseek == ^%p, cpuType == %d, perf == ^%p)\n",
         pfnalloc, pfnfree, pfnopen, pfnread, pfnwrite, pfnclose, pfnseek,
         cpuType, perf);
 
@@ -2450,8 +2450,8 @@ BOOL __cdecl FDICopy(
   fdi_decomp_state _decomp_state;
   fdi_decomp_state *decomp_state = &_decomp_state;
 
-  TRACE("(hfdi == ^%p, pszCabinet == ^%p, pszCabPath == ^%p, flags == %0d, \
-        pfnfdin == ^%p, pfnfdid == ^%p, pvUser == ^%p)\n",
+  TRACE("(hfdi == ^%p, pszCabinet == ^%p, pszCabPath == ^%p, flags == %0d, "
+        "pfnfdin == ^%p, pfnfdid == ^%p, pvUser == ^%p)\n",
         hfdi, pszCabinet, pszCabPath, flags, pfnfdin, pfnfdid, pvUser);
 
   if (!REALLY_IS_FDI(hfdi)) {
