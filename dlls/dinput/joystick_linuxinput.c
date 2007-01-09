@@ -146,7 +146,6 @@ struct JoystickImpl
 static void fake_current_js_state(JoystickImpl *ji);
 static DWORD map_pov(int event_value, int is_x);
 static void find_joydevs(void);
-static int lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code);
 
 /* This GUID is slightly different from the linux joystick one. Take note. */
 static const GUID DInput_Wine_Joystick_Base_GUID = { /* 9e573eda-7734-11d2-8d4a-23903fb6bdf7 */
@@ -660,8 +659,7 @@ static DWORD map_pov(int event_value, int is_x)
 }
 
 /* defines how the linux input system offset mappings into c_dfDIJoystick2 */
-static int
-lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code )
+static int lxinput_to_user_index(JoystickImpl *This, int ie_type, int ie_code )
 {
   int offset = -1;
   switch (ie_type) {
@@ -696,19 +694,23 @@ lxinput_to_user_offset(JoystickImpl *This, int ie_type, int ie_code )
       FIXME("Unhandled type(0x%02X)\n", ie_type);
       return -1;
   }
-  return This->base.data_format.offsets[offset];
+  return offset;
 }
 
 /* convert wine format offset to user format object index */
-static void joy_polldev(JoystickImpl *This) {
+static void joy_polldev(JoystickImpl *This)
+{
     struct pollfd plfd;
-    struct	input_event ie;
-    int         btn, offset;
+    struct input_event ie;
 
     if (This->joyfd==-1)
 	return;
 
-    while (1) {
+    while (1)
+    {
+        LONG value = 0;
+        int inst_id = -1;
+
 	plfd.fd = This->joyfd;
 	plfd.events = POLLIN;
 
@@ -722,86 +724,48 @@ static void joy_polldev(JoystickImpl *This) {
 	TRACE("input_event: type %d, code %d, value %d\n",ie.type,ie.code,ie.value);
 	switch (ie.type) {
 	case EV_KEY:	/* button */
-            btn = This->joydev->buttons[ie.code];
+        {
+            int btn = This->joydev->buttons[ie.code];
+
             TRACE("(%p) %d -> %d\n", This, ie.code, btn);
-            if (btn&0x80) {
-              btn &= 0x7F;
-	      if ((offset = lxinput_to_user_offset(This, ie.type, btn)) == -1) {
-		return;
-	      }
-              This->js.rgbButtons[btn] = ie.value?0x80:0x00;
-              queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgbButtons[btn],
-                          ie.time.tv_usec, This->dinput->evsequence++);
+            if (btn & 0x80)
+            {
+                btn &= 0x7F;
+                inst_id = DIDFT_MAKEINSTANCE(btn) | DIDFT_PSHBUTTON;
+                This->js.rgbButtons[btn] = value = ie.value ? 0x80 : 0x00;
             }
             break;
+        }
 	case EV_ABS:
-            if ((offset = lxinput_to_user_offset(This, ie.type, ie.code)) == -1) {
-              return;
-            }
+            if ((inst_id = lxinput_to_user_index(This, ie.type, ie.code)) == -1)
+                return;
+            inst_id = DIDFT_MAKEINSTANCE(inst_id) | (inst_id < ABS_HAT0X ? DIDFT_AXIS : DIDFT_POV);
+            value = map_axis(This, ie.code, ie.value);
+
 	    switch (ie.code) {
-	    case ABS_X:
-		This->js.lX = map_axis(This,ABS_X,ie.value);
-		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lX,
-                            ie.time.tv_usec, This->dinput->evsequence++);
-		break;
-	    case ABS_Y:
-		This->js.lY = map_axis(This,ABS_Y,ie.value);
-		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lY,
-                            ie.time.tv_usec, This->dinput->evsequence++);
-		break;
-	    case ABS_Z:
-		This->js.lZ = map_axis(This,ABS_Z,ie.value);
-		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lZ,
-                            ie.time.tv_usec, This->dinput->evsequence++);
-		break;
-	    case ABS_RX:
-		This->js.lRx = map_axis(This,ABS_RX,ie.value);
-		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lRx,
-                            ie.time.tv_usec, This->dinput->evsequence++);
-		break;
-	    case ABS_RY:
-		This->js.lRy = map_axis(This,ABS_RY,ie.value);
-		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lRy,
-                            ie.time.tv_usec, This->dinput->evsequence++);
-		break;
-	    case ABS_RZ:
-		This->js.lRz = map_axis(This,ABS_RZ,ie.value);
-		queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.lRz,
-                            ie.time.tv_usec, This->dinput->evsequence++);
-		break;
-	    case ABS_THROTTLE:
-                This->js.rglSlider[0] = map_axis(This,ABS_THROTTLE,ie.value);
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rglSlider[0],
-                            ie.time.tv_usec, This->dinput->evsequence++);
-                break;
-	    case ABS_RUDDER:
-                This->js.rglSlider[1] = map_axis(This,ABS_RUDDER,ie.value);
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rglSlider[1],
-                            ie.time.tv_usec, This->dinput->evsequence++);
-                break;
+            case ABS_X:         This->js.lX  = value; break;
+            case ABS_Y:         This->js.lY  = value; break;
+            case ABS_Z:         This->js.lZ  = value; break;
+            case ABS_RX:        This->js.lRx = value; break;
+            case ABS_RY:        This->js.lRy = value; break;
+            case ABS_RZ:        This->js.lRz = value; break;
+            case ABS_THROTTLE:  This->js.rglSlider[0] = value; break;
+            case ABS_RUDDER:    This->js.rglSlider[1] = value; break;
 	    case ABS_HAT0X:
 	    case ABS_HAT0Y:
-                This->js.rgdwPOV[0] = map_pov(ie.value,ie.code==ABS_HAT0X);
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[0],
-                            ie.time.tv_usec, This->dinput->evsequence++);
+                This->js.rgdwPOV[0] = value = map_pov(ie.value, ie.code==ABS_HAT0X);
                 break;
 	    case ABS_HAT1X:
 	    case ABS_HAT1Y:
-                This->js.rgdwPOV[1] = map_pov(ie.value,ie.code==ABS_HAT1X);
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[1],
-                            ie.time.tv_usec, This->dinput->evsequence++);
+                This->js.rgdwPOV[1] = value = map_pov(ie.value, ie.code==ABS_HAT1X);
                 break;
 	    case ABS_HAT2X:
 	    case ABS_HAT2Y:
-                This->js.rgdwPOV[2] = map_pov(ie.value,ie.code==ABS_HAT2X);
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[2],
-                            ie.time.tv_usec, This->dinput->evsequence++);
+                This->js.rgdwPOV[2] = value  = map_pov(ie.value, ie.code==ABS_HAT2X);
                 break;
 	    case ABS_HAT3X:
 	    case ABS_HAT3Y:
-                This->js.rgdwPOV[3] = map_pov(ie.value,ie.code==ABS_HAT3X);
-                queue_event((LPDIRECTINPUTDEVICE8A)This, offset, This->js.rgdwPOV[3],
-                            ie.time.tv_usec, This->dinput->evsequence++);
+                This->js.rgdwPOV[3] = value  = map_pov(ie.value, ie.code==ABS_HAT3X);
                 break;
 	    default:
 		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
@@ -822,6 +786,10 @@ static void joy_polldev(JoystickImpl *This) {
 	    FIXME("joystick cannot handle type %d event (code %d)\n",ie.type,ie.code);
 	    break;
 	}
+        if (inst_id >= 0)
+            queue_event((LPDIRECTINPUTDEVICE8A)This,
+                        id_to_offset(&This->base.data_format, inst_id),
+                        value, ie.time.tv_usec, This->dinput->evsequence++);
     }
 }
 
