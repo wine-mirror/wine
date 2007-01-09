@@ -1010,8 +1010,12 @@ TREEVIEW_AllocateItem(TREEVIEW_INFO *infoPtr)
     if (!newItem)
 	return NULL;
 
-    newItem->iImage = -1;
-    newItem->iSelectedImage = -1;
+    /* I_IMAGENONE would make more sense but this is neither what is
+     * documented (MSDN doesn't specify) nor what Windows actually does
+     * (it sets it to zero)... and I can so imagine an application using
+     * inc/dec to toggle the images. */
+    newItem->iImage = 0;
+    newItem->iSelectedImage = 0;
 
     if (DPA_InsertPtr(infoPtr->items, INT_MAX, newItem) == -1)
     {

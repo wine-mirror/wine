@@ -70,6 +70,7 @@ static void IdentifyItem(HTREEITEM hItem)
 static void FillRoot(void)
 {
     TVINSERTSTRUCTA ins;
+    TVITEM tvi;
     static CHAR root[]  = "Root",
                 child[] = "Child";
 
@@ -81,6 +82,13 @@ static void FillRoot(void)
     U(ins).item.pszText = root;
     hRoot = TreeView_InsertItem(hTree, &ins);
     assert(hRoot);
+
+    /* UMLPad 1.15 depends on this being not -1 (I_IMAGECALLBACK) */
+    tvi.hItem = hRoot;
+    tvi.mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE;
+    SendMessage( hTree, TVM_GETITEM, 0, (LPARAM)&tvi );
+    ok(tvi.iImage == 0, "tvi.iImage=%d\n", tvi.iImage);
+    ok(tvi.iSelectedImage == 0, "tvi.iSelectedImage=%d\n", tvi.iSelectedImage);
 
     AddItem('B');
     ins.hParent = hRoot;
