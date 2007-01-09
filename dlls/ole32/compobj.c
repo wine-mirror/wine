@@ -41,7 +41,6 @@
 
 #include "config.h"
 
-#include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -1677,7 +1676,7 @@ HRESULT WINAPI CoRevokeClassObject(
         LARGE_INTEGER zero;
         memset(&zero, 0, sizeof(zero));
         /* FIXME: stop local server thread */
-        IStream_Seek(curClass->pMarshaledData, zero, SEEK_SET, NULL);
+        IStream_Seek(curClass->pMarshaledData, zero, STREAM_SEEK_SET, NULL);
         CoReleaseMarshalData(curClass->pMarshaledData);
       }
 

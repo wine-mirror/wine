@@ -20,11 +20,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
-#include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <string.h>
 #include <assert.h>
 
@@ -35,10 +31,7 @@
 #include "winuser.h"
 #include "objbase.h"
 #include "ole2.h"
-#include "rpc.h"
 #include "winerror.h"
-#include "winreg.h"
-#include "wtypes.h"
 #include "wine/unicode.h"
 
 #include "compobj_private.h"
@@ -1780,7 +1773,7 @@ HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(
     if (SUCCEEDED(hres))
     {
         memset(&seekto, 0, sizeof(seekto));
-        IStream_Seek(*ppStm, seekto, SEEK_SET, &xpos);
+        IStream_Seek(*ppStm, seekto, STREAM_SEEK_SET, &xpos);
     }
     else
     {

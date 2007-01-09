@@ -23,11 +23,8 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <string.h>
-#include <assert.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -42,7 +39,6 @@
 #include "rpc.h"
 #include "winerror.h"
 #include "winreg.h"
-#include "wtypes.h"
 #include "wine/unicode.h"
 
 #include "compobj_private.h"

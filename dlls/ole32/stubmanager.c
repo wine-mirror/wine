@@ -35,9 +35,8 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "objbase.h"
-#include "ole2.h"
-#include "ole2ver.h"
 #include "rpc.h"
+
 #include "wine/debug.h"
 #include "compobj_private.h"
 

@@ -24,13 +24,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
-#include <assert.h>
-#include <stdlib.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <string.h>
 
 #define COBJMACROS
 #define NONAMELESSUNION
@@ -42,8 +36,6 @@
 #include "objbase.h"
 #include "ole2.h"
 #include "winerror.h"
-#include "winreg.h"
-#include "winternl.h"
 
 #include "compobj_private.h" 
 
@@ -208,7 +200,7 @@ StdGlobalInterfaceTable_RegisterInterfaceInGlobal(
   }
 
   zero.QuadPart = 0;
-  IStream_Seek(stream, zero, SEEK_SET, NULL);
+  IStream_Seek(stream, zero, STREAM_SEEK_SET, NULL);
 
   entry = HeapAlloc(GetProcessHeap(), 0, sizeof(StdGITEntry));
   if (entry == NULL) return E_OUTOFMEMORY;
