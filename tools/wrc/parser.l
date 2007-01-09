@@ -347,12 +347,13 @@ static struct keyword *iskeyword(char *kw)
 <pp_pragma>[^\n]*		yy_pop_state(); if (pedantic) parser_warning("Unrecognized #pragma directive '%s'",yytext);
 
 <pp_code_page>\({ws}*default{ws}*\)[^\n]*	current_codepage = -1; yy_pop_state();
+<pp_code_page>\({ws}*utf8{ws}*\)[^\n]*		current_codepage = CP_UTF8; yy_pop_state();
 <pp_code_page>\({ws}*[0-9]+{ws}*\)[^\n]* {
         char *p = yytext;
         yy_pop_state();
         while (*p < '0' || *p > '9') p++;
         current_codepage = strtol( p, NULL, 10 );
-        if (current_codepage && !wine_cp_get_table( current_codepage ))
+        if (current_codepage && current_codepage != CP_UTF8 && !wine_cp_get_table( current_codepage ))
         {
             parser_error("Codepage %d not supported", current_codepage);
             current_codepage = 0;

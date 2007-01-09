@@ -244,26 +244,38 @@ string_t *convert_string(const string_t *str, enum str_e type, int codepage)
 {
     const union cptable *cptable = codepage ? wine_cp_get_table( codepage ) : NULL;
     string_t *ret = xmalloc(sizeof(*ret));
+    int res;
 
-    if (!cptable && str->type != type)
-        error( "Current language is Unicode only, cannot convert strings" );
+    if (!codepage && str->type != type)
+        parser_error( "Current language is Unicode only, cannot convert string" );
 
     if((str->type == str_char) && (type == str_unicode))
     {
-        ret->type     = str_unicode;
-        ret->size     = wine_cp_mbstowcs( cptable, 0, str->str.cstr, str->size, NULL, 0 );
+        ret->type = str_unicode;
+        ret->size = cptable ? wine_cp_mbstowcs( cptable, 0, str->str.cstr, str->size, NULL, 0 )
+                            : wine_utf8_mbstowcs( 0, str->str.cstr, str->size, NULL, 0 );
         ret->str.wstr = xmalloc( (ret->size+1) * sizeof(WCHAR) );
-        wine_cp_mbstowcs( cptable, 0, str->str.cstr, str->size, ret->str.wstr, ret->size );
+        if (cptable)
+            res = wine_cp_mbstowcs( cptable, MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
+                                    ret->str.wstr, ret->size );
+        else
+            res = wine_utf8_mbstowcs( MB_ERR_INVALID_CHARS, str->str.cstr, str->size,
+                                      ret->str.wstr, ret->size );
+        if (res == -2)
+            parser_error( "Invalid character in string '%.*s' for codepage %u\n",
+                   str->size, str->str.cstr, codepage );
         ret->str.wstr[ret->size] = 0;
     }
     else if((str->type == str_unicode) && (type == str_char))
     {
-        ret->type     = str_char;
-        ret->size     = wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size,
-                                          NULL, 0, NULL, NULL );
+        ret->type = str_char;
+        ret->size = cptable ? wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, NULL, 0, NULL, NULL )
+                            : wine_utf8_wcstombs( str->str.wstr, str->size, NULL, 0 );
         ret->str.cstr = xmalloc( ret->size + 1 );
-        wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size,
-                     NULL, NULL );
+        if (cptable)
+            wine_cp_wcstombs( cptable, 0, str->str.wstr, str->size, ret->str.cstr, ret->size, NULL, NULL );
+        else
+            wine_utf8_wcstombs( str->str.wstr, str->size, ret->str.cstr, ret->size );
         ret->str.cstr[ret->size] = 0;
     }
     else if(str->type == str_unicode)
