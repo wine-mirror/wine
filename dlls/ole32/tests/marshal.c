@@ -392,6 +392,32 @@ static void test_marshal_and_unmarshal_invalid(void)
     end_host_object(tid, thread);
 }
 
+static void test_same_apartment_unmarshal_failure(void)
+{
+    HRESULT hr;
+    IStream *pStream;
+    IUnknown *pProxy;
+    static const LARGE_INTEGER llZero;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    hr = CoMarshalInterface(pStream, &IID_IUnknown, (IUnknown *)&Test_ClassFactory, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+
+    hr = IStream_Seek(pStream, llZero, STREAM_SEEK_SET, NULL);
+    ok_ole_success(hr, IStream_Seek);
+
+    hr = CoUnmarshalInterface(pStream, &IID_IParseDisplayName, (void **)&pProxy);
+    ok(hr == E_NOINTERFACE, "CoUnmarshalInterface should have returned E_NOINTERFACE instead of 0x%08x\n", hr);
+
+    ok_no_locks();
+}
+
 /* tests success case of an interthread marshal */
 static void test_interthread_marshal_and_unmarshal(void)
 {
@@ -2388,6 +2414,7 @@ START_TEST(marshal)
     test_normal_marshal_and_release();
     test_normal_marshal_and_unmarshal();
     test_marshal_and_unmarshal_invalid();
+    test_same_apartment_unmarshal_failure();
     test_interthread_marshal_and_unmarshal();
     test_proxy_marshal_and_unmarshal();
     test_proxy_marshal_and_unmarshal2();
