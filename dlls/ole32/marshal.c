@@ -1550,7 +1550,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     dump_MSHLFLAGS(mshlFlags);
     TRACE(")\n");
 
-    if (pUnk == NULL)
+    if (!pUnk || !pStream)
         return E_INVALIDARG;
 
     objref.signature = OBJREF_SIGNATURE;
