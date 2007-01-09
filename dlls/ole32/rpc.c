@@ -704,7 +704,8 @@ static DWORD WINAPI rpc_sendreceive_thread(LPVOID param)
 {
     struct dispatch_params *data = (struct dispatch_params *) param;
 
-    /* FIXME: trap and rethrow RPC exceptions in app thread */
+    /* Note: I_RpcSendReceive doesn't raise exceptions like the higher-level
+     * RPC functions do */
     data->status = I_RpcSendReceive((RPC_MESSAGE *)data->msg);
 
     TRACE("completed with status 0x%lx\n", data->status);
