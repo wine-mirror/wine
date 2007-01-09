@@ -73,7 +73,6 @@ extern HRESULT create_DataFormat(LPCDIDATAFORMAT asked_format, DataFormat *forma
 extern void release_DataFormat(DataFormat *df) ;
 extern void queue_event(LPDIRECTINPUTDEVICE8A iface, int ofs, DWORD data, DWORD time, DWORD seq);
 /* Helper functions to work with data format */
-extern int offset_to_object(LPCDIDATAFORMAT df, int offset);
 extern int id_to_offset(DataFormat *df, int id);
 extern int find_property(DataFormat *df, LPCDIPROPHEADER ph);
 

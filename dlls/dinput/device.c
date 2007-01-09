@@ -488,13 +488,14 @@ failed:
 }
 
 /* find an object by it's offset in a data format */
-int offset_to_object(LPCDIDATAFORMAT df, int offset)
+static int offset_to_object(DataFormat *df, int offset)
 {
     int i;
 
-    for (i = 0; i < df->dwNumObjs; i++)
-        if (dataformat_to_odf(df, i)->dwOfs == offset)
-            return i;
+    if (!df->offsets) return -1;
+
+    for (i = 0; i < df->wine_df->dwNumObjs; i++)
+        if (df->offsets[i] == offset) return i;
 
     return -1;
 }
@@ -522,8 +523,8 @@ int find_property(DataFormat *df, LPCDIPROPHEADER ph)
 {
     switch (ph->dwHow)
     {
-        case DIPH_BYID:     return id_to_object(df->user_df, ph->dwObj);
-        case DIPH_BYOFFSET: return offset_to_object(df->user_df, ph->dwObj);
+        case DIPH_BYID:     return id_to_object(df->wine_df, ph->dwObj);
+        case DIPH_BYOFFSET: return offset_to_object(df, ph->dwObj);
     }
     FIXME("Unhandled ph->dwHow=='%04X'\n", (unsigned int)ph->dwHow);
 
