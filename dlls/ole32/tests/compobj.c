@@ -528,6 +528,28 @@ static void test_CoGetPSClsid(void)
     CoUninitialize();
 }
 
+/* basic test, mainly for invalid arguments. see marshal.c for more */
+static void test_CoUnmarshalInterface(void)
+{
+    IUnknown *pProxy;
+    IStream *pStream;
+    HRESULT hr;
+
+    hr = CoUnmarshalInterface(NULL, &IID_IUnknown, (void **)&pProxy);
+    ok(hr == E_INVALIDARG, "CoUnmarshalInterface should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+
+    hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
+    ok(hr == STG_E_READFAULT, "CoUnmarshalInterface should have returned STG_E_READFAULT instead of 0x%08x\n", hr);
+
+    hr = CoUnmarshalInterface(pStream, &IID_IUnknown, NULL);
+    ok(hr == E_INVALIDARG, "CoUnmarshalInterface should have returned E_INVALIDARG instead of 0x%08x\n", hr);
+
+    IStream_Release(pStream);
+}
+
 static void test_CoGetInterfaceAndReleaseStream(void)
 {
     HRESULT hr;
@@ -541,6 +563,7 @@ static void test_CoGetInterfaceAndReleaseStream(void)
     CoUninitialize();
 }
 
+/* basic test, mainly for invalid arguments. see marshal.c for more */
 static void test_CoMarshalInterface(void)
 {
     IStream *pStream;
@@ -627,6 +650,7 @@ START_TEST(compobj)
     test_CoRegisterMessageFilter();
     test_CoRegisterPSClsid();
     test_CoGetPSClsid();
+    test_CoUnmarshalInterface();
     test_CoGetInterfaceAndReleaseStream();
     test_CoMarshalInterface();
     test_CoMarshalInterThreadInterfaceInStream();
