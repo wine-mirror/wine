@@ -68,12 +68,6 @@ struct chmFile* chm_openW(const WCHAR *filename);
 /* close an ITS archive */
 void chm_close(struct chmFile *h);
 
-/* methods for ssetting tuning parameters for particular file */
-#define CHM_PARAM_MAX_BLOCKS_CACHED 0
-void chm_set_param(struct chmFile *h,
-                   int paramType,
-                   int paramVal);
-
 /* resolve a particular object from the archive */
 #define CHM_RESOLVE_SUCCESS (0)
 #define CHM_RESOLVE_FAILURE (1)
