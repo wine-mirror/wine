@@ -1725,6 +1725,10 @@ static void tex_bumpenvloffset(DWORD state, IWineD3DStateBlockImpl *stateblock) 
 static void tex_resultarg(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
 
+    if(stage >= GL_LIMITS(texture_stages)) {
+        return;
+    }
+
     if(stateblock->textureState[stage][WINED3DTSS_RESULTARG] != D3DTA_CURRENT) {
         ERR("WINED3DTSS_RESULTARG not supported yet\n");
     }
