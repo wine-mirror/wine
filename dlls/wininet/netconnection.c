@@ -498,6 +498,11 @@ BOOL NETCON_recv(WININET_NETCONNECTION *connection, void *buf, size_t len, int f
 		int *recvd /* out */)
 {
     if (!NETCON_connected(connection)) return FALSE;
+    if (!len)
+    {
+        *recvd = 0;
+        return TRUE;
+    }
     if (!connection->useSSL)
     {
 	*recvd = recv(connection->socketFD, buf, len, flags);
