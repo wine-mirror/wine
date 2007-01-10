@@ -1,7 +1,13 @@
 /*
  * Direct3D state management
  *
- * Copyright 2006 Stefan Dösinger for CodeWeavers
+ * Copyright 2002 Lionel Ulmer
+ * Copyright 2002-2005 Jason Edmeades
+ * Copyright 2003-2004 Raphael Junqueira
+ * Copyright 2004 Christian Costa
+ * Copyright 2005 Oliver Stieber
+ * Copyright 2006 Henri Verbeet
+ * Copyright 2006-2007 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
