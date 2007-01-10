@@ -1762,6 +1762,7 @@ dlls/winejack.drv/Makefile
 dlls/winejoystick.drv/Makefile
 dlls/winemp3.acm/Makefile
 dlls/winenas.drv/Makefile
+dlls/wineoss.drv/Makefile
 dlls/wineps.drv/Makefile
 dlls/winequartz.drv/Makefile
 dlls/winex11.drv/Makefile
@@ -1769,7 +1770,6 @@ dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
 dlls/winmm/tests/Makefile
-dlls/winmm/wineoss/Makefile
 dlls/winnls32/Makefile
 dlls/winspool.drv/Makefile
 dlls/winspool.drv/tests/Makefile

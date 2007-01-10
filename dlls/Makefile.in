@@ -192,10 +192,10 @@ BASEDIRS = \
 	winejoystick.drv \
 	winemp3.acm \
 	winenas.drv \
+	wineoss.drv \
 	wineps.drv \
 	wininet \
 	winmm \
-	winmm/wineoss \
 	winnls32 \
 	winspool.drv \
 	wintab32 \
@@ -344,7 +344,7 @@ WIN16_FILES = \
 
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
-	wineoss.drv.so
+	
 
 # Main target
 
@@ -357,9 +357,6 @@ symlinks.so: $(SYMLINKS_SO)
 symlinks: $(BUILDSUBDIRS)
 
 # Map symlink name to the corresponding library
-
-wineoss.drv.so: winmm/wineoss/wineoss.drv.so
-	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv.so $@
 
 # Placeholders for 16-bit libraries
 
@@ -946,7 +943,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-winmm/wineoss/wineoss.drv.so: winmm/wineoss
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
 dxguid/libdxguid.a: dxguid
