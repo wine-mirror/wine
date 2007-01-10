@@ -165,6 +165,13 @@ inline BOOL WINAPI IWineD3DVertexBufferImpl_FindDecl(IWineD3DVertexBufferImpl *T
     WineDirect3DVertexStridedData strided;
     IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
 
+    /* In d3d7 the vertex buffer declaration NEVER changes because it is stored in the d3d7 vertex buffer.
+     * Once we have our declaration there is no need to look it up again.
+     */
+    if(((IWineD3DImpl *)device->wineD3D)->dxVersion == 7 && This->Flags & VBFLAG_HASDESC) {
+        return FALSE;
+    }
+
     memset(&strided, 0, sizeof(strided));
     /* There are certain vertex data types that need to be fixed up. The Vertex Buffers FVF doesn't
      * help finding them, only the vertex declaration or the device FVF can determine that at drawPrim
