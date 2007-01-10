@@ -191,10 +191,10 @@ BASEDIRS = \
 	winejack.drv \
 	winejoystick.drv \
 	winemp3.acm \
+	winenas.drv \
 	wineps.drv \
 	wininet \
 	winmm \
-	winmm/winenas \
 	winmm/wineoss \
 	winnls32 \
 	winspool.drv \
@@ -344,7 +344,6 @@ WIN16_FILES = \
 
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
-	winenas.drv.so \
 	wineoss.drv.so
 
 # Main target
@@ -358,9 +357,6 @@ symlinks.so: $(SYMLINKS_SO)
 symlinks: $(BUILDSUBDIRS)
 
 # Map symlink name to the corresponding library
-
-winenas.drv.so: winmm/winenas/winenas.drv.so
-	$(RM) $@ && $(LN_S) winmm/winenas/winenas.drv.so $@
 
 wineoss.drv.so: winmm/wineoss/wineoss.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineoss/wineoss.drv.so $@
@@ -950,7 +946,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-winmm/winenas/winenas.drv.so: winmm/winenas
 winmm/wineoss/wineoss.drv.so: winmm/wineoss
 dxerr8/libdxerr8.a: dxerr8
 dxerr9/libdxerr9.a: dxerr9
