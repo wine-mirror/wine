@@ -231,7 +231,7 @@ static inline NTSTATUS wait_semaphore( RTL_CRITICAL_SECTION *crit, int timeout )
         LARGE_INTEGER time;
 
         time.QuadPart = timeout * (LONGLONG)-10000000;
-        ret = NtWaitForSingleObject( sem, FALSE, &time );
+        ret = NTDLL_wait_for_multiple_objects( 1, &sem, 0, &time, 0 );
     }
     return ret;
 }
