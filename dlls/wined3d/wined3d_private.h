@@ -576,7 +576,6 @@ typedef struct IWineD3DDeviceImpl
 #define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
 #define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
 #define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
-    BOOL                    texture_shader_active;  /* TODO: Confirm use is correct */
     BOOL                    last_was_notclipped;
     BOOL                    untransformed;
     BOOL                    last_was_pshader;
