@@ -3975,10 +3975,48 @@ IDirect3DDeviceImpl_7_GetTextureStageState(IDirect3DDevice7 *iface,
     if(!State)
         return DDERR_INVALIDPARAMS;
 
-    return IWineD3DDevice_GetTextureStageState(This->wineD3DDevice,
-                                               Stage,
-                                               TexStageStateType,
-                                               State);
+    switch(TexStageStateType)
+    {
+        /* Mipfilter is a sampler state with different values */
+        case D3DTSS_MIPFILTER:
+        {
+            HRESULT hr;
+            WINED3DTEXTUREFILTERTYPE value;
+
+            hr = IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+                                                Stage,
+                                                WINED3DSAMP_MIPFILTER,
+                                                &value);
+            switch(value)
+            {
+                case WINED3DTEXF_NONE: *State = D3DTFP_NONE; break;
+                case WINED3DTEXF_POINT: *State = D3DTFP_POINT; break;
+                case WINED3DTEXF_LINEAR: *State = D3DTFP_LINEAR; break;
+                default:
+                    ERR("Unexpected mipfilter value %d\n", value);
+                    *State = D3DTFP_NONE;
+            }
+            return hr;
+        }
+
+        /* Minfilter is a sampler state too, equal values */
+        case D3DTSS_MINFILTER:
+            return IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+                                                  Stage,
+                                                  WINED3DSAMP_MINFILTER,
+                                                  State);
+        /* Same for MAGFILTER */
+        case D3DTSS_MAGFILTER:
+            return IWineD3DDevice_GetSamplerState(This->wineD3DDevice,
+                                                  Stage,
+                                                  WINED3DSAMP_MAGFILTER,
+                                                  State);
+        default:
+            return IWineD3DDevice_GetTextureStageState(This->wineD3DDevice,
+                                                    Stage,
+                                                    TexStageStateType,
+                                                    State);
+    }
 }
 
 static HRESULT WINAPI
