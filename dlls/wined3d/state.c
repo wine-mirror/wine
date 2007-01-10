@@ -806,7 +806,18 @@ static void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 /* TODO: Merge with primitive type + init_materials()!! */
 static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    GLenum Parm = GL_AMBIENT_AND_DIFFUSE;
+    GLenum Parm = -1;
+    WineDirect3DStridedData *diffuse = &stateblock->wineD3DDevice->strided_streams.u.s.diffuse;
+    BOOL isDiffuseSupplied;
+
+    /* Depends on the decoded vertex declaration to read the existance of diffuse data.
+     * The vertex declaration will call this function if the fixed function pipeline is used.
+     */
+    if(isStateDirty(stateblock->wineD3DDevice, STATE_VDECL)) {
+        return;
+    }
+
+    isDiffuseSupplied = diffuse->lpData || diffuse->VBO;
 
     if (stateblock->renderState[WINED3DRS_COLORVERTEX]) {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
@@ -827,19 +838,17 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
             Parm = GL_EMISSION;
         } else if (stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
             Parm = GL_SPECULAR;
-        } else {
-            Parm = -1;
         }
+    }
 
-        if (Parm == -1) {
-            if (stateblock->wineD3DDevice->tracking_color != DISABLED_TRACKING) stateblock->wineD3DDevice->tracking_color = NEEDS_DISABLE;
-        } else {
-            stateblock->wineD3DDevice->tracking_color = NEEDS_TRACKING;
-            stateblock->wineD3DDevice->tracking_parm  = Parm;
-        }
-
+    if(Parm == -1 || !isDiffuseSupplied) {
+        glDisable(GL_COLOR_MATERIAL);
+        checkGLcall("glDisable GL_COLOR_MATERIAL");
     } else {
-        if (stateblock->wineD3DDevice->tracking_color != DISABLED_TRACKING) stateblock->wineD3DDevice->tracking_color = NEEDS_DISABLE;
+        glColorMaterial(GL_FRONT_AND_BACK, Parm);
+        checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)");
+        glEnable(GL_COLOR_MATERIAL);
+        checkGLcall("glEnable(GL_COLOR_MATERIAL)");
     }
 }
 
@@ -2677,6 +2686,10 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
            !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))) &&
            !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_VIEW))) {
             transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock);
+        }
+
+        if(!isStateDirty(stateblock->wineD3DDevice, STATE_RENDER(WINED3DRS_COLORVERTEX))) {
+            state_colormat(STATE_RENDER(WINED3DRS_COLORVERTEX), stateblock);
         }
     } else {
         /* We compile the shader here because we need the vertex declaration

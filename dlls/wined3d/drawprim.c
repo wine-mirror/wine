@@ -90,37 +90,6 @@ static DWORD primitiveToGl(WINED3DPRIMITIVETYPE PrimitiveType,
     return NumVertexes;
 }
 
-/* Ensure the appropriate material states are set up - only change
-   state if really required                                        */
-static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied) {
-        /* If we have not set up the material color tracking, do it now as required */
-        glDisable(GL_COLOR_MATERIAL); /* Note: Man pages state must enable AFTER calling glColorMaterial! Required?*/
-        checkGLcall("glDisable GL_COLOR_MATERIAL");
-        TRACE("glColorMaterial Parm=%x\n", This->tracking_parm);
-        glColorMaterial(GL_FRONT_AND_BACK, This->tracking_parm);
-        checkGLcall("glColorMaterial(GL_FRONT_AND_BACK, Parm)");
-        glEnable(GL_COLOR_MATERIAL);
-        checkGLcall("glEnable GL_COLOR_MATERIAL");
-        This->tracking_color = IS_TRACKING;
-    } else if ((This->tracking_color == IS_TRACKING && !isDiffuseSupplied) ||
-               (This->tracking_color == NEEDS_TRACKING && !isDiffuseSupplied)) {
-        /* If we are tracking the current color but one isn't supplied, don't! */
-        glDisable(GL_COLOR_MATERIAL);
-        checkGLcall("glDisable GL_COLOR_MATERIAL");
-        This->tracking_color = NEEDS_TRACKING;
-    } else if (This->tracking_color == IS_TRACKING && isDiffuseSupplied) {
-        /* No need to reset material colors since no change to gl_color_material */
-    } else if (This->tracking_color == NEEDS_DISABLE) {
-        glDisable(GL_COLOR_MATERIAL);
-        checkGLcall("glDisable GL_COLOR_MATERIAL");
-        This->tracking_color = DISABLED_TRACKING;
-    }
-}
-
 static BOOL fixed_get_input(
     BYTE usage, BYTE usage_idx,
     unsigned int* regnum) {
@@ -1247,9 +1216,6 @@ void drawPrimitive(IWineD3DDevice *iface,
         depth_copy(iface);
     }
     This->depth_copy_state = WINED3D_DCS_INITIAL;
-
-    /* Now initialize the materials state */
-    init_materials(iface, (This->strided_streams.u.s.diffuse.lpData != NULL || This->strided_streams.u.s.diffuse.VBO != 0));
 
     {
         GLenum glPrimType;
