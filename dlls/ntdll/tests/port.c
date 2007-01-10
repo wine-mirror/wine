@@ -192,7 +192,8 @@ static DWORD WINAPI test_ports_client(LPVOID arg)
     sqos.EffectiveOnly = TRUE;
 
     status = pNtConnectPort(&PortHandle, &port, &sqos, 0, 0, &len, NULL, NULL);
-    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
+    todo_wine ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
+    if (status != STATUS_SUCCESS) return 1;
 
     status = pNtRegisterThreadTerminatePort(PortHandle);
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
@@ -248,6 +249,7 @@ static void test_ports_server(void)
     {
         ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %d\n", status);
     }
+    if (status != STATUS_SUCCESS) return;
 
     size = FIELD_OFFSET(LPC_MESSAGE, Data) + MAX_MESSAGE_LEN;
     LpcMessage = HeapAlloc(GetProcessHeap(), 0, size);
