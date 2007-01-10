@@ -145,9 +145,9 @@ static const struct exception
     { { 0xa1, 0xfc, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffc,%eax; ret */
       0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffc } },
     { { 0xa1, 0xfd, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffd,%eax; ret */
-      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
+      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffd } },
     { { 0xa1, 0xfe, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xfffffffe,%eax; ret */
-      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
+      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xfffffffe } },
     { { 0xa1, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl 0xffffffff,%eax; ret */
       0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
 
@@ -155,11 +155,11 @@ static const struct exception
     { { 0xa3, 0xfc, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffc; ret */
       0, 5, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffc } },
     { { 0xa3, 0xfd, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffd; ret */
-      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
+      0, 5, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffd } },
     { { 0xa3, 0xfe, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xfffffffe; ret */
-      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
+      0, 5, STATUS_ACCESS_VIOLATION, 2, { 1, 0xfffffffe } },
     { { 0xa3, 0xff, 0xff, 0xff, 0xff, 0xc3 },  /* movl %eax,0xffffffff; ret */
-      0, 5, STATUS_ACCESS_VIOLATION, 2, { 0, 0xffffffff } },
+      0, 5, STATUS_ACCESS_VIOLATION, 2, { 1, 0xffffffff } },
 };
 
 static int got_exception;
@@ -202,11 +202,21 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
 
     ok( rec->NumberParameters == except->nb_params,
         "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
+
+    /* Most CPUs (except Intel Core apparently) report a segment limit violation */
+    /* instead of page faults for accesses beyond 0xffffffff */
+    if (except->nb_params == 2 && except->params[1] >= 0xfffffffd)
+    {
+        if (rec->ExceptionInformation[0] == 0 && rec->ExceptionInformation[1] == 0xffffffff)
+            goto skip_params;
+    }
+
     for (i = 0; i < rec->NumberParameters; i++)
         ok( rec->ExceptionInformation[i] == except->params[i],
             "%u: Wrong parameter %d: %lx/%x\n",
             entry, i, rec->ExceptionInformation[i], except->params[i] );
 
+skip_params:
     /* don't handle exception if it's not the address we expected */
     if (rec->ExceptionAddress != (char*)code_mem + except->offset) return ExceptionContinueSearch;
 
