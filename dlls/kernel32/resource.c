@@ -649,7 +649,7 @@ struct resource_data {
     BYTE data[1];
 };
 
-int resource_strcmp( LPCWSTR a, LPCWSTR b )
+static int resource_strcmp( LPCWSTR a, LPCWSTR b )
 {
     if ( a == b )
         return 0;
@@ -663,7 +663,7 @@ int resource_strcmp( LPCWSTR a, LPCWSTR b )
     return ( a < b ) ? -1 : 1;
 }
 
-struct resource_dir_entry *find_resource_dir_entry( struct list *dir, LPCWSTR id )
+static struct resource_dir_entry *find_resource_dir_entry( struct list *dir, LPCWSTR id )
 {
     struct resource_dir_entry *ent;
 
@@ -675,7 +675,7 @@ struct resource_dir_entry *find_resource_dir_entry( struct list *dir, LPCWSTR id
     return NULL;
 }
 
-struct resource_data *find_resource_data( struct list *dir, LANGID lang )
+static struct resource_data *find_resource_data( struct list *dir, LANGID lang )
 {
     struct resource_data *res_data;
 
@@ -687,7 +687,7 @@ struct resource_data *find_resource_data( struct list *dir, LANGID lang )
     return NULL;
 }
 
-void add_resource_dir_entry( struct list *dir, struct resource_dir_entry *resdir )
+static void add_resource_dir_entry( struct list *dir, struct resource_dir_entry *resdir )
 {
     struct resource_dir_entry *ent;
 
@@ -702,7 +702,7 @@ void add_resource_dir_entry( struct list *dir, struct resource_dir_entry *resdir
     list_add_tail( dir, &resdir->entry );
 }
 
-void add_resource_data_entry( struct list *dir, struct resource_data *resdata )
+static void add_resource_data_entry( struct list *dir, struct resource_data *resdata )
 {
     struct resource_data *ent;
 
@@ -717,7 +717,7 @@ void add_resource_data_entry( struct list *dir, struct resource_data *resdata )
     list_add_tail( dir, &resdata->entry );
 }
 
-LPWSTR res_strdupW( LPCWSTR str )
+static LPWSTR res_strdupW( LPCWSTR str )
 {
     LPWSTR ret;
     UINT len;
@@ -730,14 +730,14 @@ LPWSTR res_strdupW( LPCWSTR str )
     return ret;
 }
 
-void res_free_str( LPWSTR str )
+static void res_free_str( LPWSTR str )
 {
     if (HIWORD(str))
         HeapFree( GetProcessHeap(), 0, str );
 }
 
-BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
-                          WORD Language, DWORD codepage, LPCVOID lpData, DWORD cbData )
+static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
+                                 WORD Language, DWORD codepage, LPCVOID lpData, DWORD cbData )
 {
     struct resource_dir_entry *restype, *resname;
     struct resource_data *resdata;
@@ -787,7 +787,7 @@ BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
     return TRUE;
 }
 
-void free_resource_directory( struct list *head, int level )
+static void free_resource_directory( struct list *head, int level )
 {
     struct list *ptr = NULL;
 
@@ -813,7 +813,7 @@ void free_resource_directory( struct list *head, int level )
     }
 }
 
-IMAGE_NT_HEADERS *get_nt_header( void *base, DWORD mapping_size )
+static IMAGE_NT_HEADERS *get_nt_header( void *base, DWORD mapping_size )
 {
     IMAGE_NT_HEADERS *nt;
     IMAGE_DOS_HEADER *dos;
@@ -836,7 +836,7 @@ IMAGE_NT_HEADERS *get_nt_header( void *base, DWORD mapping_size )
     return nt;
 }
 
-IMAGE_SECTION_HEADER *get_section_header( void *base, DWORD mapping_size, DWORD *num_sections )
+static IMAGE_SECTION_HEADER *get_section_header( void *base, DWORD mapping_size, DWORD *num_sections )
 {
     IMAGE_NT_HEADERS *nt;
     IMAGE_SECTION_HEADER *sec;
@@ -964,7 +964,7 @@ static void get_resource_sizes( QUEUEDUPDATES *updates, struct resource_size_inf
           si->strings_ofs, si->data_ofs, si->total_size);
 }
 
-void res_write_padding( BYTE *res_base, DWORD size )
+static void res_write_padding( BYTE *res_base, DWORD size )
 {
     static const BYTE pad[] = {
         'P','A','D','D','I','N','G','X','X','P','A','D','D','I','N','G' };
@@ -975,7 +975,7 @@ void res_write_padding( BYTE *res_base, DWORD size )
     memcpy( &res_base[i*sizeof pad], pad, size%sizeof pad );
 }
 
-BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resource_size_info *si, DWORD rva )
+static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resource_size_info *si, DWORD rva )
 {
     struct resource_dir_entry *types, *names;
     struct resource_data *data;
@@ -1113,7 +1113,7 @@ BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resource_size_
  *   header, how would that work?
  *  Seems that at least some of these cases can't be handled properly.
  */
-IMAGE_SECTION_HEADER *get_resource_section( void *base, DWORD mapping_size )
+static IMAGE_SECTION_HEADER *get_resource_section( void *base, DWORD mapping_size )
 {
     IMAGE_SECTION_HEADER *sec;
     IMAGE_NT_HEADERS *nt;
@@ -1148,7 +1148,7 @@ IMAGE_SECTION_HEADER *get_resource_section( void *base, DWORD mapping_size )
     return &sec[i];
 }
 
-DWORD get_init_data_size( void *base, DWORD mapping_size )
+static DWORD get_init_data_size( void *base, DWORD mapping_size )
 {
     DWORD i, sz = 0, num_sections = 0;
     IMAGE_SECTION_HEADER *s;
