@@ -332,13 +332,6 @@ sub update_dlls(@)
     my $text = "";
     my @ignores = ();
 
-    sub needs_symlink($$)
-    {
-        my ($mod, $dir) = @_;
-        $mod =~ s/\.dll$//;
-        return $mod ne $dir;
-    }
-
     foreach my $make (@_)
     {
         my %makefile = %{$makefiles{$make}};
@@ -356,7 +349,7 @@ sub update_dlls(@)
 
         next unless defined $makefile{"MODULE"};
         my $module = $makefile{"MODULE"};
-        (my $dir = $make) =~ s/^dlls\/(.*)\/[^\/]+$/$1/;
+        (my $dir = $makefile{"=dir"}) =~ s/^dlls\/(.*)\//$1/;
 
         if ($module =~ /^lib.*\.a$/)
         {
@@ -365,6 +358,8 @@ sub update_dlls(@)
         }
         else
         {
+            (my $mod = $module) =~ s/\.dll$//;
+            die "invalid directory $dir for module $module\n" unless $mod eq $dir;
             $directories{$module} = $dir;
         }
 
@@ -433,43 +428,28 @@ sub update_dlls(@)
     $text .= "INSTALLSUBDIRS = \$(BASEDIRS) \$(EXTRADIRS) \$(IMPLIBSUBDIRS)\n";
     $text .= "DOCSUBDIRS     = \$(BASEDIRS) \$(EXTRADIRS)\n";
 
-    # output the all: target
+    # output the list of 16-bit files
 
-    my %targets = ();  # use a hash to get rid of duplicate target names
-    my %targets16 = ();
+    my @targets16 = ();
     foreach my $mod (sort keys %directories)
     {
-        next if defined($special_dlls{$directories{$mod}});  # skip special dlls
-        $targets{$mod . ".so"} = 1 if needs_symlink($mod, $directories{$mod});
         next unless defined $altnames{$mod};
         foreach my $i (sort @{$altnames{$mod}})
         {
-            $targets16{$i . "16"} = $mod;
+            push @targets16, $i . "16";
         }
     }
-
-    $text .= "\n\@MAKE_RULES\@\n\n";
-    $text .= "# Symbolic links\n\n";
+    $text .= "\n# 16-bit dlls\n\n";
     $text .= "WIN16_FILES = \\\n";
-    $text .=  "\t" . join( " \\\n\t", sort keys %targets16 ) . "\n\n";
-    $text .= "SYMLINKS_SO = \\\n";
-    $text .= "\t\@WIN16_FILES\@ \\\n";
-    $text .= "\t" . join( " \\\n\t", sort keys %targets ) . "\n\n";
+    $text .=  "\t" . join( " \\\n\t", sort @targets16 ) . "\n\n";
+    $text .= "\@MAKE_RULES\@\n\n";
+
+    # output the all: target
+
     $text .= "# Main target\n\n";
-    $text .= "all: \$(BUILDSUBDIRS) symlinks\$(DLLEXT)\n\n";
-    $text .= ".PHONY: symlinks symlinks.so implib\n\n";
-    $text .= "symlinks.so: \$(SYMLINKS_SO)\n\n";
-    $text .= "symlinks: \$(BUILDSUBDIRS)\n\n";
+    $text .= "all: \$(BUILDSUBDIRS) \@WIN16_FILES\@\n\n";
 
     # output the lib name -> directory rules
-
-    $text .= "# Map symlink name to the corresponding library\n\n";
-    foreach my $mod (sort keys %directories)
-    {
-        next unless needs_symlink($mod, $directories{$mod});
-        $text .= sprintf "%s.so: %s/%s.so\n", $mod, $directories{$mod}, $mod;
-        $text .= sprintf "\t\$(RM) \$@ && \$(LN_S) %s/%s.so \$@\n\n", $directories{$mod}, $mod;
-    }
 
     $text .= "# Placeholders for 16-bit libraries\n\n";
     foreach my $mod (sort keys %directories)
@@ -513,6 +493,7 @@ sub update_dlls(@)
     }
     $text .= "\n\n";
     $text .= "implib: \$(IMPORT_LIBS)\n\n";
+    $text .= ".PHONY: implib\n\n";
 
     foreach my $mod (sort keys %importlibs)
     {
@@ -541,11 +522,6 @@ sub update_dlls(@)
 
     $text .= "# Map library name to the corresponding directory\n\n";
 
-    foreach my $mod (sort keys %directories)
-    {
-        next unless needs_symlink($mod, $directories{$mod});
-        $text .= sprintf "%s/%s.so: %s\n", $directories{$mod}, $mod, $directories{$mod};
-    }
     foreach my $mod (sort keys %staticlib_dirs)
     {
         $text .= sprintf "%s/%s: %s\n", $staticlib_dirs{$mod}, $mod, $staticlib_dirs{$mod};

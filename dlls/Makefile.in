@@ -287,9 +287,7 @@ BUILDSUBDIRS   = $(BASEDIRS) $(EXTRADIRS) $(TESTSUBDIRS)
 INSTALLSUBDIRS = $(BASEDIRS) $(EXTRADIRS) $(IMPLIBSUBDIRS)
 DOCSUBDIRS     = $(BASEDIRS) $(EXTRADIRS)
 
-@MAKE_RULES@
-
-# Symbolic links
+# 16-bit dlls
 
 WIN16_FILES = \
 	avifile.dll16 \
@@ -342,21 +340,11 @@ WIN16_FILES = \
 	wintab.dll16 \
 	wprocs.dll16
 
-SYMLINKS_SO = \
-	@WIN16_FILES@ \
-	
+@MAKE_RULES@
 
 # Main target
 
-all: $(BUILDSUBDIRS) symlinks$(DLLEXT)
-
-.PHONY: symlinks symlinks.so implib
-
-symlinks.so: $(SYMLINKS_SO)
-
-symlinks: $(BUILDSUBDIRS)
-
-# Map symlink name to the corresponding library
+all: $(BUILDSUBDIRS) @WIN16_FILES@
 
 # Placeholders for 16-bit libraries
 
@@ -577,6 +565,8 @@ IMPORT_LIBS = \
 	wtsapi32/libwtsapi32.$(IMPLIBEXT)
 
 implib: $(IMPORT_LIBS)
+
+.PHONY: implib
 
 activeds/libactiveds.$(IMPLIBEXT): activeds/activeds.spec $(WINEBUILD)
 	@cd activeds && $(MAKE) libactiveds.$(IMPLIBEXT)
