@@ -1313,6 +1313,8 @@ typedef struct IWineD3DSwapChainImpl
     D3DPRESENT_PARAMETERS     presentParms;
     DWORD                     orig_width, orig_height;
 
+    long prev_time, frames;   /* Performance tracking */
+
     /* TODO: move everything up to drawable off into a context manager
       and store the 'data' in the contextManagerData interface.
     IUnknown                  *contextManagerData;

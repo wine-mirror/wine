@@ -307,15 +307,13 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
     /* FPS support */
     if (TRACE_ON(fps))
     {
-        static long prev_time, frames;
-
         DWORD time = GetTickCount();
-        frames++;
+        This->frames++;
         /* every 1.5 seconds */
-        if (time - prev_time > 1500) {
-            TRACE_(fps)("@ approx %.2ffps\n", 1000.0*frames/(time - prev_time));
-            prev_time = time;
-            frames = 0;
+        if (time - This->prev_time > 1500) {
+            TRACE_(fps)("%p @ approx %.2ffps\n", This, 1000.0*This->frames/(time - This->prev_time));
+            This->prev_time = time;
+            This->frames = 0;
         }
     }
 
