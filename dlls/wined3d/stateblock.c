@@ -78,6 +78,7 @@ void stateblock_savedstates_copy(
     dest->vertexDecl = source->vertexDecl;
     dest->pixelShader = source->pixelShader;
     dest->vertexShader = source->vertexShader;
+    dest->scissorRect = dest->scissorRect;
 
     /* Fixed size arrays */
     memcpy(dest->streamSource, source->streamSource, bsize * MAX_STREAMS);
@@ -115,6 +116,7 @@ void stateblock_savedstates_set(
     states->vertexDecl = value;
     states->pixelShader = value;
     states->vertexShader = value;
+    states->scissorRect = value;
 
     /* Fixed size arrays */
     memset(states->streamSource, value, bsize * MAX_STREAMS);
@@ -168,6 +170,7 @@ void stateblock_copy(
     Dest->material = This->material;
     Dest->pixelShader = This->pixelShader;
     Dest->glsl_program = This->glsl_program;
+    memcpy(&Dest->scissorRect, &This->scissorRect, sizeof(Dest->scissorRect));
 
     /* Fixed size arrays */
     memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
@@ -484,6 +487,14 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
             memcpy(&This->viewport, &targetStateBlock->viewport, sizeof(WINED3DVIEWPORT));
         }
 
+        if(This->set.scissorRect && memcmp(&targetStateBlock->scissorRect,
+                                           &This->scissorRect,
+                                           sizeof(targetStateBlock->scissorRect)))
+        {
+            TRACE("Updating scissor rect\n");
+            memcpy(&targetStateBlock->scissorRect, &This->scissorRect, sizeof(targetStateBlock->scissorRect));
+        }
+
         for (i = 0; i < MAX_STREAMS; i++) {
             if (This->set.streamSource[i] &&
                             ((This->streamStride[i] != targetStateBlock->streamStride[i]) ||
@@ -655,6 +666,9 @@ should really perform a delta so that only the changes get updated*/
 
         if (This->set.viewport && This->changed.viewport)
             IWineD3DDevice_SetViewport(pDevice, &This->viewport);
+
+        if (This->set.scissorRect && This->changed.scissorRect)
+            IWineD3DDevice_SetScissorRect(pDevice, &This->scissorRect);
 
         /* TODO: Proper implementation using SetStreamSource offset (set to 0 for the moment)\n") */
         for (i=0; i<MAX_STREAMS; i++) {

@@ -3180,6 +3180,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
     RECT windowRect;
     UINT winHeight;
 
+    This->updateStateBlock->set.scissorRect = TRUE;
+    This->updateStateBlock->changed.scissorRect = TRUE;
+    memcpy(&This->updateStateBlock->scissorRect, pRect, sizeof(*pRect));
+
+    if(This->isRecordingState) {
+        TRACE("Recording... not performing anything\n");
+        return WINED3D_OK;
+    }
+
     GetClientRect(((IWineD3DSwapChainImpl *)This->swapchains[0])->win_handle, &windowRect);
     /* Warning: glScissor uses window coordinates, not viewport coordinates, so our viewport correction does not apply
     * Warning2: Even in windowed mode the coords are relative to the window, not the screen
@@ -3197,17 +3206,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetScissorRect(IWineD3DDevice *iface, RECT* pRect) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLint scissorBox[4];
 
-    ENTER_GL();
-    /** FIXME: Windows uses a top,left origin openGL uses a bottom Right? **/
-    glGetIntegerv(GL_SCISSOR_BOX, scissorBox);
-    pRect->left = scissorBox[0];
-    pRect->top = scissorBox[1];
-    pRect->right = scissorBox[0] + scissorBox[2];
-    pRect->bottom = scissorBox[1] + scissorBox[3];
+    memcpy(pRect, &This->updateStateBlock->scissorRect, sizeof(pRect));
     TRACE("(%p)Returning a Scissor Rect of %d:%d-%d:%d\n", This, pRect->left, pRect->top, pRect->right, pRect->bottom);
-    LEAVE_GL();
     return WINED3D_OK;
 }
 

@@ -1155,6 +1155,7 @@ typedef struct SAVEDSTATES {
         BOOL                      vertexShaderConstantsB[MAX_CONST_B];
         BOOL                      vertexShaderConstantsI[MAX_CONST_I];
         BOOL                     *vertexShaderConstantsF;
+        BOOL                      scissorRect;
 } SAVEDSTATES;
 
 typedef struct {
@@ -1243,6 +1244,9 @@ struct IWineD3DStateBlockImpl
 
     /* Current GLSL Shader Program */
     struct glsl_shader_prog_link *glsl_program;
+
+    /* Scissor test rectangle */
+    RECT                      scissorRect;
 };
 
 extern void stateblock_savedstates_set(
