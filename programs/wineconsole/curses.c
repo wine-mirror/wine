@@ -335,8 +335,8 @@ static void	WCCURSES_SetTitle(const struct inner_data* data)
     if (WINECON_GetConsoleTitle(data->hConIn, wbuf, sizeof(wbuf)/sizeof(WCHAR)))
     {
         char        buffer[256];
-        
-        WideCharToMultiByte(CP_ACP, 0, wbuf, -1, buffer, sizeof(buffer), 
+
+        WideCharToMultiByte(CP_UNIXCP, 0, wbuf, -1, buffer, sizeof(buffer),
                             NULL, NULL);
         fputs("\033]2;", stdout);
         fputs(buffer, stdout);
@@ -363,7 +363,7 @@ static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
 	cell = &data->cells[y * data->curcfg.sb_width];
         for (x = 0; x < data->curcfg.sb_width; x++)
         {
-            WideCharToMultiByte(CP_ACP, 0, &cell[x].Char.UnicodeChar, 1, 
+            WideCharToMultiByte(CP_UNIXCP, 0, &cell[x].Char.UnicodeChar, 1,
                                 &ch, 1, NULL, NULL);
             attr = ((BYTE)ch < 32 || (BYTE)ch > 127) ? 32 : (BYTE)ch;
 
