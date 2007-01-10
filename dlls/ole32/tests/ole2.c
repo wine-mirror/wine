@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define CONST_VTABLE
 
 #include <stdarg.h>
 
@@ -34,6 +35,14 @@
 static IPersistStorage OleObjectPersistStg;
 static IOleCache *cache;
 static IRunnableObject *runnable;
+
+static const CLSID CLSID_WineTest =
+{ /* 9474ba1a-258b-490b-bc13-516e9239ace0 */
+    0x9474ba1a,
+    0x258b,
+    0x490b,
+    {0xbc, 0x13, 0x51, 0x6e, 0x92, 0x39, 0xac, 0xe0}
+};
 
 static char const * const *expected_method_list;
 
@@ -311,7 +320,7 @@ static HRESULT WINAPI OleObject_SetColorScheme
     return E_NOTIMPL;
 }
 
-static IOleObjectVtbl OleObjectVtbl =
+static const IOleObjectVtbl OleObjectVtbl =
 {
     OleObject_QueryInterface,
     OleObject_AddRef,
@@ -424,7 +433,7 @@ static HRESULT WINAPI OleObjectPersistStg_HandsOffStorage
     return S_OK;
 }
 
-static IPersistStorageVtbl OleObjectPersistStgVtbl = 
+static const IPersistStorageVtbl OleObjectPersistStgVtbl =
 {
     OleObjectPersistStg_QueryInterface,
     OleObjectPersistStg_AddRef,
@@ -514,7 +523,7 @@ static HRESULT WINAPI OleObjectCache_SetData
 }
 
 
-static IOleCacheVtbl OleObjectCacheVtbl =
+static const IOleCacheVtbl OleObjectCacheVtbl =
 {
     OleObjectCache_QueryInterface,
     OleObjectCache_AddRef,
@@ -560,7 +569,7 @@ static HRESULT WINAPI OleObjectCF_LockServer(IClassFactory *iface, BOOL lock)
     return S_OK;
 }
 
-static IClassFactoryVtbl OleObjectCFVtbl =
+static const IClassFactoryVtbl OleObjectCFVtbl =
 {
     OleObjectCF_QueryInterface,
     OleObjectCF_AddRef,
@@ -627,7 +636,7 @@ static HRESULT WINAPI OleObjectRunnable_SetContainedObject(
     return S_OK;
 }
 
-static IRunnableObjectVtbl OleObjectRunnableVtbl =
+static const IRunnableObjectVtbl OleObjectRunnableVtbl =
 {
     OleObjectRunnable_QueryInterface,
     OleObjectRunnable_AddRef,
@@ -893,7 +902,7 @@ static void WINAPI AdviseSink_OnClose(IAdviseSink *iface)
     CHECK_EXPECTED_METHOD("AdviseSink_OnClose");
 }
 
-static IAdviseSinkVtbl AdviseSinkVtbl =
+static const IAdviseSinkVtbl AdviseSinkVtbl =
 {
     AdviseSink_QueryInterface,
     AdviseSink_AddRef,
@@ -1294,6 +1303,156 @@ static void test_data_cache(void)
     ReleaseStgMedium(&stgmedium);
 }
 
+static void test_default_handler(void)
+{
+    HRESULT hr;
+    IOleObject *pObject;
+    IRunnableObject *pRunnableObject;
+    IOleClientSite *pClientSite;
+    IDataObject *pDataObject;
+    SIZEL sizel;
+    DWORD dwStatus;
+    CLSID clsid;
+    LPOLESTR pszUserType;
+    LOGPALETTE palette;
+    DWORD dwAdvConn;
+    IMoniker *pMoniker;
+    FORMATETC fmtetc;
+    IOleInPlaceObject *pInPlaceObj;
+    IEnumOLEVERB *pEnumVerbs;
+    static const WCHAR wszUnknown[] = {'U','n','k','n','o','w','n',0};
+    static const WCHAR wszHostName[] = {'W','i','n','e',' ','T','e','s','t',' ','P','r','o','g','r','a','m',0};
+    static const WCHAR wszDelim[] = {'!',0};
+
+    hr = CoCreateInstance(&CLSID_WineTest, NULL, CLSCTX_INPROC_HANDLER, &IID_IOleObject, (void **)&pObject);
+    ok(hr == REGDB_E_CLASSNOTREG, "CoCreateInstance should have failed with REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+
+    hr = OleCreateDefaultHandler(&CLSID_WineTest, NULL, &IID_IOleObject, (void **)&pObject);
+    ok_ole_success(hr, "OleCreateDefaultHandler");
+
+    hr = IOleObject_QueryInterface(pObject, &IID_IOleInPlaceObject, (void **)&pInPlaceObj);
+    ok(hr == E_NOINTERFACE, "IOleObject_QueryInterface(&IID_IOleInPlaceObject) should return E_NOINTERFACE instead of 0x%08x\n", hr);
+
+    hr = IOleObject_Advise(pObject, &AdviseSink, &dwAdvConn);
+    ok_ole_success(hr, "IOleObject_Advise");
+
+    hr = IOleObject_Close(pObject, OLECLOSE_NOSAVE);
+    ok_ole_success(hr, "IOleObject_Close");
+
+    /* FIXME: test IOleObject_EnumAdvise */
+
+    hr = IOleObject_EnumVerbs(pObject, &pEnumVerbs);
+    ok(hr == REGDB_E_CLASSNOTREG, "IOleObject_EnumVerbs should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+
+    hr = IOleObject_GetClientSite(pObject, &pClientSite);
+    ok_ole_success(hr, "IOleObject_GetClientSite");
+
+    hr = IOleObject_GetClipboardData(pObject, 0, &pDataObject);
+    ok(hr == OLE_E_NOTRUNNING,
+       "IOleObject_GetClipboardData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n",
+       hr);
+
+    hr = IOleObject_GetExtent(pObject, DVASPECT_CONTENT, &sizel);
+    ok(hr == OLE_E_BLANK, "IOleObject_GetExtent should have returned OLE_E_BLANK instead of 0x%08x\n",
+       hr);
+
+    hr = IOleObject_GetMiscStatus(pObject, DVASPECT_CONTENT, &dwStatus);
+    todo_wine
+    ok(hr == REGDB_E_CLASSNOTREG, "IOleObject_GetMiscStatus should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+
+    hr = IOleObject_GetUserClassID(pObject, &clsid);
+    ok_ole_success(hr, "IOleObject_GetUserClassID");
+    ok(IsEqualCLSID(&clsid, &CLSID_WineTest), "clsid != CLSID_WineTest\n");
+
+    hr = IOleObject_GetUserType(pObject, USERCLASSTYPE_FULL, &pszUserType);
+    todo_wine {
+    ok_ole_success(hr, "IOleObject_GetUserType");
+    ok(!lstrcmpW(pszUserType, wszUnknown), "Retrieved user type was wrong\n");
+    }
+
+    hr = IOleObject_InitFromData(pObject, NULL, TRUE, 0);
+    ok(hr == OLE_E_NOTRUNNING, "IOleObject_InitFromData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
+
+    hr = IOleObject_IsUpToDate(pObject);
+    ok(hr == OLE_E_NOTRUNNING, "IOleObject_IsUpToDate should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
+
+    palette.palNumEntries = 1;
+    palette.palVersion = 2;
+    memset(&palette.palPalEntry[0], 0, sizeof(palette.palPalEntry[0]));
+    hr = IOleObject_SetColorScheme(pObject, &palette);
+    ok(hr == OLE_E_NOTRUNNING, "IOleObject_SetColorScheme should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
+
+    sizel.cx = sizel.cy = 0;
+    hr = IOleObject_SetExtent(pObject, DVASPECT_CONTENT, &sizel);
+
+    hr = IOleObject_SetHostNames(pObject, wszHostName, NULL);
+    ok_ole_success(hr, "IOleObject_SetHostNames");
+
+    hr = CreateItemMoniker(wszDelim, wszHostName, &pMoniker);
+    ok_ole_success(hr, "CreateItemMoniker");
+    hr = IOleObject_SetMoniker(pObject, OLEWHICHMK_CONTAINER, pMoniker);
+    ok_ole_success(hr, "IOleObject_SetMoniker");
+
+    hr = IOleObject_GetMoniker(pObject, OLEGETMONIKER_ONLYIFTHERE, OLEWHICHMK_CONTAINER, &pMoniker);
+    ok(hr == E_FAIL, "IOleObject_GetMoniker should have returned E_FAIL instead of 0x%08x\n", hr);
+
+    hr = IOleObject_Update(pObject);
+    todo_wine
+    ok(hr == REGDB_E_CLASSNOTREG, "IOleObject_Update should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+
+    hr = IOleObject_QueryInterface(pObject, &IID_IDataObject, (void **)&pDataObject);
+    ok_ole_success(hr, "IOleObject_QueryInterface");
+
+    fmtetc.cfFormat = CF_TEXT;
+    fmtetc.ptd = NULL;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.lindex = -1;
+    fmtetc.tymed = TYMED_NULL;
+    hr = IDataObject_DAdvise(pDataObject, &fmtetc, 0, &AdviseSink, &dwAdvConn);
+    ok_ole_success(hr, "IDataObject_DAdvise");
+
+    fmtetc.cfFormat = CF_ENHMETAFILE;
+    fmtetc.ptd = NULL;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.lindex = -1;
+    fmtetc.tymed = TYMED_ENHMF;
+    hr = IDataObject_DAdvise(pDataObject, &fmtetc, 0, &AdviseSink, &dwAdvConn);
+    ok_ole_success(hr, "IDataObject_DAdvise");
+
+    fmtetc.cfFormat = CF_ENHMETAFILE;
+    fmtetc.ptd = NULL;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.lindex = -1;
+    fmtetc.tymed = TYMED_ENHMF;
+    hr = IDataObject_QueryGetData(pDataObject, &fmtetc);
+    todo_wine
+    ok(hr == OLE_E_NOTRUNNING, "IDataObject_QueryGetData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
+
+    fmtetc.cfFormat = CF_TEXT;
+    fmtetc.ptd = NULL;
+    fmtetc.dwAspect = DVASPECT_CONTENT;
+    fmtetc.lindex = -1;
+    fmtetc.tymed = TYMED_NULL;
+    hr = IDataObject_QueryGetData(pDataObject, &fmtetc);
+    todo_wine
+    ok(hr == OLE_E_NOTRUNNING, "IDataObject_QueryGetData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
+
+    hr = IOleObject_QueryInterface(pObject, &IID_IRunnableObject, (void **)&pRunnableObject);
+    ok_ole_success(hr, "IOleObject_QueryInterface");
+
+    hr = IRunnableObject_SetContainedObject(pRunnableObject, TRUE);
+    ok_ole_success(hr, "IRunnableObject_SetContainedObject");
+
+    hr = IRunnableObject_Run(pRunnableObject, NULL);
+    ok(hr == REGDB_E_CLASSNOTREG, "IOleObject_Run should have returned REGDB_E_CLASSNOTREG instead of 0x%08x\n", hr);
+
+    hr = IOleObject_Close(pObject, OLECLOSE_NOSAVE);
+    ok_ole_success(hr, "IOleObject_Close");
+
+    IRunnableObject_Release(pRunnableObject);
+    IOleObject_Release(pObject);
+}
+
 START_TEST(ole2)
 {
     DWORD dwRegister;
@@ -1323,6 +1482,7 @@ START_TEST(ole2)
     ok_ole_success(hr, "CoRevokeClassObject");
 
     test_data_cache();
+    test_default_handler();
 
     CoUninitialize();
 }
