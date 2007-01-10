@@ -93,6 +93,7 @@ static DWORD primitiveToGl(WINED3DPRIMITIVETYPE PrimitiveType,
 /* Ensure the appropriate material states are set up - only change
    state if really required                                        */
 static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
+
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied) {
@@ -119,12 +120,6 @@ static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
         This->tracking_color = DISABLED_TRACKING;
     }
 }
-
-static const GLfloat invymat[16] = {
-	1.0f, 0.0f, 0.0f, 0.0f,
-	0.0f, -1.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 1.0f, 0.0f,
-	0.0f, 0.0f, 0.0f, 1.0f};
 
 static BOOL fixed_get_input(
     BYTE usage, BYTE usage_idx,
