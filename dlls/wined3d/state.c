@@ -81,9 +81,9 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock) {
      * vertex declaration appplying function calls this function for updating
      */
 
-	if(isStateDirty(stateblock->wineD3DDevice, STATE_VDECL)) {
-		return;
-	}
+    if(isStateDirty(stateblock->wineD3DDevice, STATE_VDECL)) {
+        return;
+    }
 
     normals = stateblock->wineD3DDevice->strided_streams.u.s.normal.lpData != NULL ||
               stateblock->wineD3DDevice->strided_streams.u.s.normal.VBO != 0;
@@ -664,7 +664,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
      */
-	else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+    else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
         glHint(GL_FOG_HINT, GL_FASTEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
         stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
@@ -1981,7 +1981,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 }
 
 static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
-	WARN("World matrix 1 - 255 not supported yet\n");
+    WARN("World matrix 1 - 255 not supported yet\n");
 }
 
 static const GLfloat invymat[16] = {
@@ -2549,8 +2549,7 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
          */
         TRACE("================ FVF ===================\n");
         memset(dataLocations, 0, sizeof(*dataLocations));
-        primitiveConvertToStridedData((IWineD3DDevice *) device, dataLocations,
-									   &fixup);
+        primitiveConvertToStridedData((IWineD3DDevice *) device, dataLocations, &fixup);
         if(TRACE_ON(d3d)) {
             drawPrimitiveTraceDataLocations(dataLocations);
         }
