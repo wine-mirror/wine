@@ -182,13 +182,13 @@ BASEDIRS = \
 	vtdapi.vxd \
 	vwin32.vxd \
 	w32skrnl \
+	winealsa.drv \
 	winedos \
 	winejoystick.drv \
 	winemp3.acm \
 	wineps.drv \
 	wininet \
 	winmm \
-	winmm/winealsa \
 	winmm/winearts \
 	winmm/wineaudioio \
 	winmm/winecoreaudio \
@@ -344,7 +344,6 @@ WIN16_FILES = \
 
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
-	winealsa.drv.so \
 	winearts.drv.so \
 	wineaudioio.drv.so \
 	winecoreaudio.drv.so \
@@ -364,9 +363,6 @@ symlinks.so: $(SYMLINKS_SO)
 symlinks: $(BUILDSUBDIRS)
 
 # Map symlink name to the corresponding library
-
-winealsa.drv.so: winmm/winealsa/winealsa.drv.so
-	$(RM) $@ && $(LN_S) winmm/winealsa/winealsa.drv.so $@
 
 winearts.drv.so: winmm/winearts/winearts.drv.so
 	$(RM) $@ && $(LN_S) winmm/winearts/winearts.drv.so $@
@@ -974,7 +970,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-winmm/winealsa/winealsa.drv.so: winmm/winealsa
 winmm/winearts/winearts.drv.so: winmm/winearts
 winmm/wineaudioio/wineaudioio.drv.so: winmm/wineaudioio
 winmm/winecoreaudio/winecoreaudio.drv.so: winmm/winecoreaudio

@@ -379,6 +379,7 @@ ALL_MAKEFILES = \
 	dlls/vtdapi.vxd/Makefile \
 	dlls/vwin32.vxd/Makefile \
 	dlls/w32skrnl/Makefile \
+	dlls/winealsa.drv/Makefile \
 	dlls/winecrt0/Makefile \
 	dlls/wined3d/Makefile \
 	dlls/winedos/Makefile \
@@ -391,7 +392,6 @@ ALL_MAKEFILES = \
 	dlls/wininet/tests/Makefile \
 	dlls/winmm/Makefile \
 	dlls/winmm/tests/Makefile \
-	dlls/winmm/winealsa/Makefile \
 	dlls/winmm/winearts/Makefile \
 	dlls/winmm/wineaudioio/Makefile \
 	dlls/winmm/winecoreaudio/Makefile \
@@ -705,6 +705,7 @@ dlls/vnetbios.vxd/Makefile: dlls/vnetbios.vxd/Makefile.in dlls/Makedll.rules
 dlls/vtdapi.vxd/Makefile: dlls/vtdapi.vxd/Makefile.in dlls/Makedll.rules
 dlls/vwin32.vxd/Makefile: dlls/vwin32.vxd/Makefile.in dlls/Makedll.rules
 dlls/w32skrnl/Makefile: dlls/w32skrnl/Makefile.in dlls/Makedll.rules
+dlls/winealsa.drv/Makefile: dlls/winealsa.drv/Makefile.in dlls/Makedll.rules
 dlls/winecrt0/Makefile: dlls/winecrt0/Makefile.in dlls/Makeimplib.rules
 dlls/wined3d/Makefile: dlls/wined3d/Makefile.in dlls/Makedll.rules
 dlls/winedos/Makefile: dlls/winedos/Makefile.in dlls/Makedll.rules
@@ -717,7 +718,6 @@ dlls/wininet/Makefile: dlls/wininet/Makefile.in dlls/Makedll.rules
 dlls/wininet/tests/Makefile: dlls/wininet/tests/Makefile.in dlls/Maketest.rules
 dlls/winmm/Makefile: dlls/winmm/Makefile.in dlls/Makedll.rules
 dlls/winmm/tests/Makefile: dlls/winmm/tests/Makefile.in dlls/Maketest.rules
-dlls/winmm/winealsa/Makefile: dlls/winmm/winealsa/Makefile.in dlls/Makedll.rules
 dlls/winmm/winearts/Makefile: dlls/winmm/winearts/Makefile.in dlls/Makedll.rules
 dlls/winmm/wineaudioio/Makefile: dlls/winmm/wineaudioio/Makefile.in dlls/Makedll.rules
 dlls/winmm/winecoreaudio/Makefile: dlls/winmm/winecoreaudio/Makefile.in dlls/Makedll.rules
