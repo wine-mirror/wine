@@ -655,10 +655,11 @@ static int wait_reply( void *cookie )
 /***********************************************************************
  *              call_apcs
  *
- * Call outstanding APCs.
+ * Call outstanding APCs. Return TRUE if a user APC has been run.
  */
-static void call_apcs( BOOL alertable )
+static BOOL call_apcs( BOOL alertable )
 {
+    BOOL user_apc = FALSE;
     NTSTATUS ret;
     apc_call_t call;
     HANDLE handle = 0;
@@ -677,12 +678,13 @@ static void call_apcs( BOOL alertable )
         }
         SERVER_END_REQ;
 
-        if (ret) return;  /* no more APCs */
+        if (ret) return user_apc;  /* no more APCs */
 
         switch (call.type)
         {
         case APC_USER:
             call.user.func( call.user.args[0], call.user.args[1], call.user.args[2] );
+            user_apc = TRUE;
             break;
         case APC_TIMER:
         {
@@ -691,6 +693,7 @@ static void call_apcs( BOOL alertable )
             RtlSecondsSince1970ToTime( call.timer.time.sec, &time );
             time.QuadPart += call.timer.time.usec * 10;
             call.timer.func( call.timer.arg, time.u.LowPart, time.u.HighPart );
+            user_apc = TRUE;
             break;
         }
         case APC_ASYNC_IO:
@@ -733,8 +736,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
         SERVER_END_REQ;
         if (ret == STATUS_PENDING) ret = wait_reply( &cookie );
         if (ret != STATUS_USER_APC) break;
-        call_apcs( (flags & SELECT_ALERTABLE) != 0 );
-        if (flags & SELECT_ALERTABLE) break;
+        if (call_apcs( (flags & SELECT_ALERTABLE) != 0 )) break;
         signal_object = 0;  /* don't signal it multiple times */
     }
 
