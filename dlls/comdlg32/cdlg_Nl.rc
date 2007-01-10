@@ -283,7 +283,40 @@ FONT 8, "MS Shell Dlg"
     RTEXT           "&t/m:",           stc3, 100,124,  16,8
 }
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_ABOUTBOX            "&Info over FolderPicker"
+    IDS_DOCUMENTFOLDERS     "Documenten Mappen"
+    IDS_PERSONAL            "Mijn Documenten"
+    IDS_FAVORITES           "Mijn Favorieten"
+    IDS_PATH                "Systeem Pad"
+    IDS_DESKTOP             "Bureaublad"
+    IDS_FONTS               "Lettertype"
+    IDS_MYCOMPUTER          "Deze Computer"
+}
 
+STRINGTABLE DISCARDABLE
+{
+    IDS_SYSTEMFOLDERS       "Systeem mappen"
+    IDS_LOCALHARDRIVES      "Lokale vaste schijven"
+    IDS_FILENOTFOUND        "Bestand niet gevonden"
+    IDS_VERIFYFILE          "Controleer of de juiste bestandnaam is opgegeven"
+    IDS_CREATEFILE          "Dit bestand bestaat nog niet\nWilt u het bestand aanmaken?"
+    IDS_OVERWRITEFILE       "Bestand bestaat al.\nWilt u het vervangen?"
+    IDS_INVALID_FILENAME_TITLE "De naam van het pad bevat ongeldige tekens"
+    IDS_INVALID_FILENAME    "De volgende tekens mogen niet in de bestandsnaam voorkomen:\n                          / : < > |"
+    IDS_PATHNOTEXISTING     "Het pad bestaat niet"
+    IDS_FILENOTEXISTING     "Kan het bestand niet vinden"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_UPFOLDER         "Bovenliggende map"
+    IDS_NEWFOLDER        "Nieuwe map aanmaken"
+    IDS_LISTVIEW         "Lijst"
+    IDS_REPORTVIEW       "Details"
+    IDS_TODESKTOP        "Ga naar Bureaublad"
+}
 
 STRINGTABLE DISCARDABLE
 {
