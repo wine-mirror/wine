@@ -488,8 +488,14 @@ HRESULT WINAPI GetErrorInfo(ULONG dwReserved, IErrorInfo **pperrinfo)
 {
 	TRACE("(%d, %p, %p)\n", dwReserved, pperrinfo, COM_CurrentInfo()->errorinfo);
 
+	if (dwReserved)
+	{
+		ERR("dwReserved (0x%x) != 0\n", dwReserved);
+		return E_INVALIDARG;
+	}
+
 	if(!pperrinfo) return E_INVALIDARG;
-        
+
 	if (!COM_CurrentInfo()->errorinfo)
 	{
 	   *pperrinfo = NULL;
@@ -511,7 +517,13 @@ HRESULT WINAPI SetErrorInfo(ULONG dwReserved, IErrorInfo *perrinfo)
 	IErrorInfo * pei;
 
 	TRACE("(%d, %p)\n", dwReserved, perrinfo);
-	
+
+	if (dwReserved)
+	{
+		ERR("dwReserved (0x%x) != 0\n", dwReserved);
+		return E_INVALIDARG;
+	}
+
 	/* release old errorinfo */
 	pei = COM_CurrentInfo()->errorinfo;
 	if (pei) IErrorInfo_Release(pei);
