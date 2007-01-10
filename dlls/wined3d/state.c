@@ -1440,7 +1440,12 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         return;
     }
 
-    if (mapped_stage != -1) activate_dimensions(stage, stateblock);
+    /* The sampler will also activate the correct texture dimensions, so no need to do it here
+     * if the sampler for this stage is dirty
+     */
+    if(!isStateDirty(stateblock->wineD3DDevice, STATE_SAMPLER(stage))) {
+        if (mapped_stage != -1) activate_dimensions(stage, stateblock);
+    }
 
     /* Set the texture combiners */
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
@@ -1816,7 +1821,9 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
             glEnable(stateblock->textureDimensions[sampler]);
             checkGLcall("glEnable(stateblock->textureDimensions[sampler])");
         } else if(sampler < stateblock->lowest_disabled_stage) {
-            activate_dimensions(sampler, stateblock);
+            if(!isStateDirty(stateblock->wineD3DDevice, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
+                activate_dimensions(sampler, stateblock);
+            }
 
             if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && sampler == 0) {
                 /* If color keying is enabled update the alpha test, it depends on the existence
@@ -1827,10 +1834,10 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         }
     } else if(sampler < GL_LIMITS(texture_stages)) {
         if(sampler < stateblock->lowest_disabled_stage) {
-            /* TODO: Check if the colorop is dirty to do that job
-             * TODO: What should I do with pixel shaders here ???
-             */
-            activate_dimensions(sampler, stateblock);
+            /* TODO: What should I do with pixel shaders here ??? */
+            if(!isStateDirty(stateblock->wineD3DDevice, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
+                activate_dimensions(sampler, stateblock);
+            }
         } /* Otherwise tex_colorop disables the stage */
         glBindTexture(GL_TEXTURE_1D, stateblock->wineD3DDevice->dummyTextureName[sampler]);
         checkGLcall("glBindTexture(GL_TEXTURE_1D, stateblock->wineD3DDevice->dummyTextureName[sampler])");
