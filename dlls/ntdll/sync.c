@@ -715,7 +715,9 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
 {
     NTSTATUS ret;
     int cookie;
+    abs_time_t abs_timeout;
 
+    NTDLL_get_server_abstime( &abs_timeout, timeout );
     if (timeout) flags |= SELECT_TIMEOUT;
     for (;;)
     {
@@ -724,7 +726,7 @@ NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UIN
             req->flags   = flags;
             req->cookie  = &cookie;
             req->signal  = signal_object;
-            NTDLL_get_server_abstime( &req->timeout, timeout );
+            req->timeout = abs_timeout;
             wine_server_add_data( req, handles, count * sizeof(HANDLE) );
             ret = wine_server_call( req );
         }
