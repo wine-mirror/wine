@@ -29,8 +29,7 @@ static void test_SQLInstallerError(void)
 
     /* MSDN states that the error number should be between 1 and 8.  Passing 0 is an error */
     sql_ret = SQLInstallerError(0, NULL, NULL, 0, NULL);
-    todo_wine
-        ok(sql_ret == SQL_ERROR, "SQLInstallerError(0...) failed with %d instead of SQL_ERROR\n", sql_ret);
+    ok(sql_ret == SQL_ERROR, "SQLInstallerError(0...) failed with %d instead of SQL_ERROR\n", sql_ret);
     /* However numbers greater than 8 do not return SQL_ERROR.
      * I am currenly unsure as to whether it should return SQL_NO_DATA or "the same as for error 8";
      * I have never been able to generate 8 errors to test it
@@ -45,8 +44,7 @@ static void test_SQLInstallerError(void)
 
     /* Null pointers are acceptable in all obvious places */
     sql_ret = SQLInstallerError(1, NULL, NULL, 0, NULL);
-    todo_wine
-        ok(sql_ret == SQL_SUCCESS_WITH_INFO, "SQLInstallerError(null addresses) failed with %d instead of SQL_SUCCESS_WITH_INFO\n", sql_ret);
+    ok(sql_ret == SQL_SUCCESS_WITH_INFO, "SQLInstallerError(null addresses) failed with %d instead of SQL_SUCCESS_WITH_INFO\n", sql_ret);
 }
 
 START_TEST(misc)
