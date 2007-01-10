@@ -161,7 +161,7 @@ void wait_suspend( CONTEXT *context )
 
     /* wait with 0 timeout, will only return once the thread is no longer suspended */
     timeout.QuadPart = 0;
-    NTDLL_wait_for_multiple_objects( 0, NULL, 0, &timeout, 0 );
+    NTDLL_wait_for_multiple_objects( 0, NULL, SELECT_INTERRUPTIBLE, &timeout, 0 );
 
     /* retrieve the new context */
     SERVER_START_REQ( get_thread_context )

@@ -470,8 +470,13 @@ static int check_wait( struct thread *thread )
     struct thread_wait *wait = thread->wait;
     struct wait_queue_entry *entry = wait->queues;
 
-    /* Suspended threads may not acquire locks */
-    if (thread->process->suspend + thread->suspend > 0) return -1;
+    /* Suspended threads may not acquire locks, but they can run system APCs */
+    if (thread->process->suspend + thread->suspend > 0)
+    {
+        if ((wait->flags & SELECT_INTERRUPTIBLE) && !list_empty( &thread->system_apc ))
+            return STATUS_USER_APC;
+        return -1;
+    }
 
     assert( wait );
     if (wait->flags & SELECT_ALL)
@@ -1077,6 +1082,7 @@ DECL_HANDLER(queue_apc)
 DECL_HANDLER(get_apc)
 {
     struct thread_apc *apc;
+    int system_only = !req->alertable;
 
     if (req->prev)
     {
@@ -1088,9 +1094,11 @@ DECL_HANDLER(get_apc)
         release_object( apc );
     }
 
+    if (current->suspend + current->process->suspend > 0) system_only = 1;
+
     for (;;)
     {
-        if (!(apc = thread_dequeue_apc( current, !req->alertable )))
+        if (!(apc = thread_dequeue_apc( current, system_only )))
         {
             /* no more APCs */
             set_error( STATUS_PENDING );
