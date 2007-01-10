@@ -929,17 +929,16 @@ static void state_psizemin(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         float f;
     } tmpvalue;
 
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
     if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-        tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
         GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MIN_ARB, tmpvalue.f);
         checkGLcall("glPointParameterfARB(...");
     }
     else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-        tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MIN];
         GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MIN_EXT, tmpvalue.f);
         checkGLcall("glPointParameterfEXT(...);");
-    } else {
-        FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl\n");
+    } else if(tmpvalue.f != 1.0) {
+        FIXME("WINED3DRS_POINTSIZE_MIN not supported on this opengl, value is %f\n", tmpvalue.f);
     }
 }
 
@@ -949,17 +948,16 @@ static void state_psizemax(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         float f;
     } tmpvalue;
 
+    tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
     if(GL_SUPPORT(ARB_POINT_PARAMETERS)) {
-        tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
         GL_EXTCALL(glPointParameterfARB)(GL_POINT_SIZE_MAX_ARB, tmpvalue.f);
         checkGLcall("glPointParameterfARB(...");
     }
     else if(GL_SUPPORT(EXT_POINT_PARAMETERS)) {
-        tmpvalue.d = stateblock->renderState[WINED3DRS_POINTSIZE_MAX];
         GL_EXTCALL(glPointParameterfEXT)(GL_POINT_SIZE_MAX_EXT, tmpvalue.f);
         checkGLcall("glPointParameterfEXT(...);");
-    } else {
-        FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl\n");
+    } else if(tmpvalue.f != 64.0) {
+        FIXME("WINED3DRS_POINTSIZE_MAX not supported on this opengl, value is %f\n", tmpvalue.f);
     }
 }
 
