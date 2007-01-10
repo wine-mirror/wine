@@ -1753,6 +1753,7 @@ dlls/w32skrnl/Makefile
 dlls/winealsa.drv/Makefile
 dlls/winearts.drv/Makefile
 dlls/wineaudioio.drv/Makefile
+dlls/winecoreaudio.drv/Makefile
 dlls/winecrt0/Makefile
 dlls/wined3d/Makefile
 dlls/winedos/Makefile
@@ -1765,7 +1766,6 @@ dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
 dlls/winmm/tests/Makefile
-dlls/winmm/winecoreaudio/Makefile
 dlls/winmm/wineesd/Makefile
 dlls/winmm/winejack/Makefile
 dlls/winmm/winenas/Makefile

@@ -185,13 +185,13 @@ BASEDIRS = \
 	winealsa.drv \
 	winearts.drv \
 	wineaudioio.drv \
+	winecoreaudio.drv \
 	winedos \
 	winejoystick.drv \
 	winemp3.acm \
 	wineps.drv \
 	wininet \
 	winmm \
-	winmm/winecoreaudio \
 	winmm/wineesd \
 	winmm/winejack \
 	winmm/winenas \
@@ -344,7 +344,6 @@ WIN16_FILES = \
 
 SYMLINKS_SO = \
 	@WIN16_FILES@ \
-	winecoreaudio.drv.so \
 	wineesd.drv.so \
 	winejack.drv.so \
 	winenas.drv.so \
@@ -361,9 +360,6 @@ symlinks.so: $(SYMLINKS_SO)
 symlinks: $(BUILDSUBDIRS)
 
 # Map symlink name to the corresponding library
-
-winecoreaudio.drv.so: winmm/winecoreaudio/winecoreaudio.drv.so
-	$(RM) $@ && $(LN_S) winmm/winecoreaudio/winecoreaudio.drv.so $@
 
 wineesd.drv.so: winmm/wineesd/wineesd.drv.so
 	$(RM) $@ && $(LN_S) winmm/wineesd/wineesd.drv.so $@
@@ -962,7 +958,6 @@ $(INSTALLSUBDIRS:%=%/__install__) $(INSTALLSUBDIRS:%=%/__install-lib__): $(IMPOR
 
 # Map library name to the corresponding directory
 
-winmm/winecoreaudio/winecoreaudio.drv.so: winmm/winecoreaudio
 winmm/wineesd/wineesd.drv.so: winmm/wineesd
 winmm/winejack/winejack.drv.so: winmm/winejack
 winmm/winenas/winenas.drv.so: winmm/winenas
