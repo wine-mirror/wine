@@ -1986,7 +1986,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     }
 }
 
-static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateBlock) {
+static void transform_worldex(DWORD state, IWineD3DStateBlockImpl *stateblock) {
     WARN("World matrix 1 - 255 not supported yet\n");
 }
 
