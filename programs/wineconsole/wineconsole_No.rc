@@ -45,7 +45,7 @@ IDS_CMD_LAUNCH_FAILED      "wineconsole: Klarte ikke starte programmet «%sx.\n"\
                            "Kommandoen er ugyldig.\n"
 
 IDS_USAGE_HEADER           "\nBruk:\n  wineconsole [alternativer] <kommando>\n\nAlternativer:\n"
-IDS_USAGE_BACKEND          "  --backend={user|ncurses}  «user» lager et nyttt vindu, mens «ncurses»\n"\
+IDS_USAGE_BACKEND          "  --backend={user|curses}  «user» lager et nyttt vindu, mens «curses»\n"\
                            "                            prøve å bruke gjeldende terminal som Wine-konsoll\n"
 IDS_USAGE_COMMAND          "  <kommando>                 Wine-programmet som skal kjøres i konsollet\n"
 IDS_USAGE_FOOTER           "\nEksempel:\n  wineconsole cmd\nStarter Wine-ledeteksten i et Wine-konsoll\n\n"

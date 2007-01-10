@@ -46,7 +46,7 @@ IDS_CMD_LAUNCH_FAILED      "wineconsole: Nie uda³o siê uruchomiæ programu %s.\n"
                            "Polecenie jest niew³aœciwe.\n"
 
 IDS_USAGE_HEADER           "\nU¿ycie:\n  wineconsole [opcje] <polecenie>\n\nOpcje:\n"
-IDS_USAGE_BACKEND          "  --backend={user|ncurses}  Wybór 'user' spowoduje wyœwietlenie nowego okna, 'ncurses'\n"\
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Wybór 'user' spowoduje wyœwietlenie nowego okna, 'curses'\n"\
                            "                            spróbuje przerobiæ aktualnie u¿ywany terminal na konsolê Wine\n"
 IDS_USAGE_COMMAND          "  <polecenie>               Program Wine który nale¿y uruchomiæ\n"
 IDS_USAGE_FOOTER           "\nPrzyk³ad:\n  wineconsole cmd\nUruchamia wiersz poleceñ Wine w konsoli Wine\n\n"

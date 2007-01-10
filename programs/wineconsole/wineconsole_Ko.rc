@@ -46,8 +46,8 @@ IDS_CMD_LAUNCH_FAILED      "wineconsole: 풀그림 %s 시작 실패.\n"\
                            "이 명령은 올바르지 않습니다.\n"
 
 IDS_USAGE_HEADER           "\n사용법:\n  wineconsole [옵션] <명령>\n\n옵션:\n"
-IDS_USAGE_BACKEND          "  --backend={user|ncurses}  사용자가 새 창을 열 것인지,\n"\
-                           "                            ncurses가 Wine 콘솔처럼 현재 터미널에  나타낼 것인지 선택\n"
+IDS_USAGE_BACKEND          "  --backend={user|curses}  사용자가 새 창을 열 것인지,\n"\
+                           "                            curses가 Wine 콘솔처럼 현재 터미널에  나타낼 것인지 선택\n"
 IDS_USAGE_COMMAND          "  <명령>                 The Wine 프로그램은 콘솔을 통해서 시작됨\n"
 IDS_USAGE_FOOTER           "\n예:\n  wineconsole cmd\nWine 콘솔에서 Wine 명령 프롬프트 시작\n\n"
 

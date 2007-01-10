@@ -46,7 +46,7 @@ IDS_CMD_LAUNCH_FAILED      "wineconsole : Échec lors du démarrage du programme %
                            "La commande est invalide.\n"
 
 IDS_USAGE_HEADER           "\nUsage :\n  wineconsole [options] <commande>\n\nOptions :\n"
-IDS_USAGE_BACKEND          "  --backend={user|ncurses}  En choisissant « user » une nouvelle fenêtre sera créée, « ncurses »\n"\
+IDS_USAGE_BACKEND          "  --backend={user|curses}  En choisissant « user » une nouvelle fenêtre sera créée, « curses »\n"\
                            "                            essaiera de convertir le terminal courant en console Wine\n"
 IDS_USAGE_COMMAND          "  <command>                 Le programme Wine à exécuter dans la console\n"
 IDS_USAGE_FOOTER           "\nExemple :\n  wineconsole cmd\nDémarre l'interpréteur de commandes de Wine dans une console Wine\n\n"

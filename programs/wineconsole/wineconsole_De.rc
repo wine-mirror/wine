@@ -45,8 +45,8 @@ IDS_CMD_LAUNCH_FAILED      "wineconsole: Starten des Programms %s fehlgeschlagen
                            "Der Befehl ist ungültig.\n"
 
 IDS_USAGE_HEADER           "\nAufruf:\n  wineconsole [Optionen] <Befehl>\n\nOptionen:\n"
-IDS_USAGE_BACKEND          "  --backend={user|ncurses}  Auswahl von ‚user‘ erstellt ein neues Fenster,\n"\
-                           "                            ‚ncurses‘ versucht das aktuelle Terminal als Wine-\n"\
+IDS_USAGE_BACKEND          "  --backend={user|curses}  Auswahl von ‚user‘ erstellt ein neues Fenster,\n"\
+                           "                            ‚curses‘ versucht das aktuelle Terminal als Wine-\n"\
                            "                            Konsole einzurichten\n"
 IDS_USAGE_COMMAND          "  <Befehl>                  Das in der Konsole zu startende Wine-Programm\n"
 IDS_USAGE_FOOTER           "\nBespiel:\n  wineconsole cmd\nStartet die Wine-Befehlszeile in einer Wine-Konsole\n\n"
