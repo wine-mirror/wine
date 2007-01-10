@@ -632,8 +632,8 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
     HeapFree(GetProcessHeap(), 0, This->props);
 
     /* release the data transform filter */
-    HeapFree(GetProcessHeap(), 0, (LPVOID)This->base.data_format.wine_df->rgodf);
-    HeapFree(GetProcessHeap(), 0, (LPVOID)This->base.data_format.wine_df);
+    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df->rgodf);
+    HeapFree(GetProcessHeap(), 0, This->base.data_format.wine_df);
     release_DataFormat(&This->base.data_format);
 
     This->base.crit.DebugInfo->Spare[0] = 0;
@@ -1032,155 +1032,6 @@ static HRESULT WINAPI JoystickAImpl_Poll(LPDIRECTINPUTDEVICE8A iface)
 }
 
 /******************************************************************************
-  *     EnumObjects : enumerate the different buttons and axis...
-  */
-static HRESULT WINAPI JoystickAImpl_EnumObjects(
-	LPDIRECTINPUTDEVICE8A iface,
-	LPDIENUMDEVICEOBJECTSCALLBACKA lpCallback,
-	LPVOID lpvRef,
-	DWORD dwFlags)
-{
-  JoystickImpl *This = (JoystickImpl *)iface;
-  DIDEVICEOBJECTINSTANCEA ddoi;
-  BYTE i;
-  int user_offset;
-  int user_object;
-
-  TRACE("(this=%p,%p,%p,%08x)\n", This, lpCallback, lpvRef, dwFlags);
-  if (TRACE_ON(dinput)) {
-    TRACE("  - flags = ");
-    _dump_EnumObjects_flags(dwFlags);
-    TRACE("\n");
-  }
-
-  /* Only the fields till dwFFMaxForce are relevant */
-  ddoi.dwSize = FIELD_OFFSET(DIDEVICEOBJECTINSTANCEA, dwFFMaxForce);
-
-  /* For the joystick, do as is done in the GetCapabilities function */
-  if ((dwFlags == DIDFT_ALL) ||
-      (dwFlags & DIDFT_AXIS) ||
-      (dwFlags & DIDFT_POV)) {
-    int	pov[4] = { 0, 0, 0, 0 };
-    int axes = 0;
-    int povs = 0;
-
-    for (i = 0; i < This->axes; i++) {
-      int wine_obj = This->axis_map[i];
-      BOOL skip = FALSE;
-
-      switch (wine_obj) {
-      case 0:
-	ddoi.guidType = GUID_XAxis;
-	break;
-      case 1:
-	ddoi.guidType = GUID_YAxis;
-	break;
-      case 2:
-	ddoi.guidType = GUID_ZAxis;
-	break;
-      case 3:
-	ddoi.guidType = GUID_RxAxis;
-	break;
-      case 4:
-	ddoi.guidType = GUID_RyAxis;
-	break;
-      case 5:
-	ddoi.guidType = GUID_RzAxis;
-	break;
-      case 6:
-	ddoi.guidType = GUID_Slider;
-	break;
-      case 7:
-	ddoi.guidType = GUID_Slider;
-	break;
-      case 8:
-        pov[0]++;
-	ddoi.guidType = GUID_POV;
-	break;
-      case 9:
-        pov[1]++;
-	ddoi.guidType = GUID_POV;
-	break;
-      case 10:
-        pov[2]++;
-	ddoi.guidType = GUID_POV;
-	break;
-      case 11:
-        pov[3]++;
-	ddoi.guidType = GUID_POV;
-	break;
-      default:
-	ddoi.guidType = GUID_Unknown;
-      }
-      if (wine_obj < 8) {
-          user_offset = This->base.data_format.offsets[wine_obj];	/* get user offset from wine index */
-          user_object = offset_to_object(This->base.data_format.user_df, user_offset);
-
-          ddoi.dwType = This->base.data_format.user_df->rgodf[user_object].dwType & 0x00ffffff;
-          ddoi.dwOfs =  This->base.data_format.user_df->rgodf[user_object].dwOfs;
-          sprintf(ddoi.tszName, "Axis %d", axes);
-          axes++;
-      } else {
-          if (pov[wine_obj - 8] < 2) {
-              user_offset = This->base.data_format.offsets[wine_obj];	/* get user offset from wine index */
-              user_object = offset_to_object(This->base.data_format.user_df, user_offset);
-
-              ddoi.dwType = This->base.data_format.user_df->rgodf[user_object].dwType & 0x00ffffff;
-              ddoi.dwOfs =  This->base.data_format.user_df->rgodf[user_object].dwOfs;
-              sprintf(ddoi.tszName, "POV %d", povs);
-              povs++;
-          } else
-              skip = TRUE;
-      }
-      if (!skip) {
-          _dump_OBJECTINSTANCEA(&ddoi);
-          if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE)
-              return DI_OK;
-      }
-    }
-  }
-
-  if ((dwFlags == DIDFT_ALL) ||
-      (dwFlags & DIDFT_BUTTON)) {
-
-    /* The DInput SDK says that GUID_Button is only for mouse buttons but well... */
-    ddoi.guidType = GUID_Button;
-
-    for (i = 0; i < This->buttons; i++) {
-      user_offset = This->base.data_format.offsets[i + 12];	/* get user offset from wine index */
-      user_object = offset_to_object(This->base.data_format.user_df, user_offset);
-      ddoi.guidType = GUID_Button;
-      ddoi.dwType = This->base.data_format.user_df->rgodf[user_object].dwType & 0x00ffffff;
-      ddoi.dwOfs =  This->base.data_format.user_df->rgodf[user_object].dwOfs;
-      sprintf(ddoi.tszName, "Button %d", i);
-      _dump_OBJECTINSTANCEA(&ddoi);
-      if (lpCallback(&ddoi, lpvRef) != DIENUM_CONTINUE) return DI_OK;
-    }
-  }
-
-  return DI_OK;
-}
-
-/******************************************************************************
-  *     EnumObjects : enumerate the different buttons and axis...
-  */
-static HRESULT WINAPI JoystickWImpl_EnumObjects(
-	LPDIRECTINPUTDEVICE8W iface,
-	LPDIENUMDEVICEOBJECTSCALLBACKW lpCallback,
-	LPVOID lpvRef,
-	DWORD dwFlags)
-{
-  JoystickImpl *This = (JoystickImpl *)iface;
-
-  device_enumobjects_AtoWcb_data data;
-
-  data.lpCallBack = lpCallback;
-  data.lpvRef = lpvRef;
-
-  return JoystickAImpl_EnumObjects((LPDIRECTINPUTDEVICE8A) This, (LPDIENUMDEVICEOBJECTSCALLBACKA) DIEnumDevicesCallbackAtoW, (LPVOID) &data, dwFlags);
-}
-
-/******************************************************************************
   *     GetProperty : get input device properties
   */
 static HRESULT WINAPI JoystickAImpl_GetProperty(
@@ -1244,89 +1095,46 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(
 /******************************************************************************
   *     GetObjectInfo : get object info
   */
-static HRESULT WINAPI JoystickAImpl_GetObjectInfo(
-    LPDIRECTINPUTDEVICE8A iface,
-    LPDIDEVICEOBJECTINSTANCEA pdidoi,
-    DWORD dwObj,
-    DWORD dwHow)
+static HRESULT WINAPI JoystickWImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8W iface,
+        LPDIDEVICEOBJECTINSTANCEW pdidoi, DWORD dwObj, DWORD dwHow)
 {
-    JoystickImpl *This = (JoystickImpl *)iface;
-    DIDEVICEOBJECTINSTANCEA didoiA;
-    unsigned int i;
+    static const WCHAR axisW[] = {'A','x','i','s',' ','%','d',0};
+    static const WCHAR povW[] = {'P','O','V',' ','%','d',0};
+    static const WCHAR buttonW[] = {'B','u','t','t','o','n',' ','%','d',0};
+    HRESULT res;
 
-    TRACE("(%p,%p,%d,0x%08x(%s))\n",
-          iface, pdidoi, dwObj, dwHow,
-          dwHow == DIPH_BYOFFSET ? "DIPH_BYOFFSET" :
-          dwHow == DIPH_BYID ? "DIPH_BYID" :
-          dwHow == DIPH_BYUSAGE ? "DIPH_BYUSAGE" :
-          "UNKNOWN");
+    res = IDirectInputDevice2WImpl_GetObjectInfo(iface, pdidoi, dwObj, dwHow);
+    if (res != DI_OK) return res;
 
-    if (pdidoi == NULL) {
-        WARN("invalid parameter: pdidoi = NULL\n");
-        return DIERR_INVALIDPARAM;
-    }
+    if      (pdidoi->dwType & DIDFT_AXIS)
+        sprintfW(pdidoi->tszName, axisW, DIDFT_GETINSTANCE(pdidoi->dwType));
+    else if (pdidoi->dwType & DIDFT_POV)
+        sprintfW(pdidoi->tszName, povW, DIDFT_GETINSTANCE(pdidoi->dwType));
+    else if (pdidoi->dwType & DIDFT_BUTTON)
+        sprintfW(pdidoi->tszName, buttonW, DIDFT_GETINSTANCE(pdidoi->dwType));
 
-    if ((pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCEA)) &&
-        (pdidoi->dwSize != sizeof(DIDEVICEOBJECTINSTANCE_DX3A))) {
-        WARN("invalid parameter: pdidoi->dwSize = %d != %d or %d\n",
-             pdidoi->dwSize, sizeof(DIDEVICEOBJECTINSTANCEA),
-             sizeof(DIDEVICEOBJECTINSTANCE_DX3A));
-        return DIERR_INVALIDPARAM;
-    }
+    _dump_OBJECTINSTANCEW(pdidoi);
+    return res;
+}
 
-    ZeroMemory(&didoiA, sizeof(didoiA));
-    didoiA.dwSize = pdidoi->dwSize;
+static HRESULT WINAPI JoystickAImpl_GetObjectInfo(LPDIRECTINPUTDEVICE8A iface,
+        LPDIDEVICEOBJECTINSTANCEA pdidoi, DWORD dwObj, DWORD dwHow)
+{
+    HRESULT res;
+    DIDEVICEOBJECTINSTANCEW didoiW;
+    DWORD dwSize = pdidoi->dwSize;
 
-    switch (dwHow) {
-    case DIPH_BYOFFSET: {
-        int axis = 0;
-        int pov = 0;
-        int button = 0;
-        for (i = 0; i < This->base.data_format.user_df->dwNumObjs; i++) {
-            if (This->base.data_format.user_df->rgodf[i].dwOfs == dwObj) {
-                if (This->base.data_format.user_df->rgodf[i].pguid)
-                    didoiA.guidType = *This->base.data_format.user_df->rgodf[i].pguid;
-                else
-                    didoiA.guidType = GUID_NULL;
+    didoiW.dwSize = sizeof(didoiW);
+    res = JoystickWImpl_GetObjectInfo((LPDIRECTINPUTDEVICE8W)iface, &didoiW, dwObj, dwHow);
+    if (res != DI_OK) return res;
 
-                didoiA.dwOfs = dwObj;
-                didoiA.dwType = This->base.data_format.user_df->rgodf[i].dwType;
-                didoiA.dwFlags = This->base.data_format.user_df->rgodf[i].dwFlags;
+    memset(pdidoi, 0, pdidoi->dwSize);
+    memcpy(pdidoi, &didoiW, FIELD_OFFSET(DIDEVICEOBJECTINSTANCEW, tszName));
+    pdidoi->dwSize = dwSize;
+    WideCharToMultiByte(CP_ACP, 0, didoiW.tszName, -1, pdidoi->tszName,
+                        sizeof(pdidoi->tszName), NULL, NULL);
 
-                if (DIDFT_GETTYPE(This->base.data_format.user_df->rgodf[i].dwType) & DIDFT_AXIS)
-                    sprintf(didoiA.tszName, "Axis %d", axis);
-                else if (DIDFT_GETTYPE(This->base.data_format.user_df->rgodf[i].dwType) & DIDFT_POV)
-                    sprintf(didoiA.tszName, "POV %d", pov);
-                else if (DIDFT_GETTYPE(This->base.data_format.user_df->rgodf[i].dwType) & DIDFT_BUTTON)
-                    sprintf(didoiA.tszName, "Button %d", button);
-
-                CopyMemory(pdidoi, &didoiA, pdidoi->dwSize);
-                return DI_OK;
-            }
-
-            if (DIDFT_GETTYPE(This->base.data_format.user_df->rgodf[i].dwType) & DIDFT_AXIS)
-                axis++;
-            else if (DIDFT_GETTYPE(This->base.data_format.user_df->rgodf[i].dwType) & DIDFT_POV)
-                pov++;
-            else if (DIDFT_GETTYPE(This->base.data_format.user_df->rgodf[i].dwType) & DIDFT_BUTTON)
-                button++;
-        }
-        break;
-    }
-    case DIPH_BYID:
-        FIXME("dwHow = DIPH_BYID not implemented\n");
-        break;
-    case DIPH_BYUSAGE:
-        FIXME("dwHow = DIPH_BYUSAGE not implemented\n");
-        break;
-    default:
-        WARN("invalid parameter: dwHow = %08x\n", dwHow);
-        return DIERR_INVALIDPARAM;
-    }
-
-    CopyMemory(pdidoi, &didoiA, pdidoi->dwSize);
-
-    return DI_OK;
+    return res;
 }
 
 /******************************************************************************
@@ -1410,7 +1218,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	IDirectInputDevice2AImpl_AddRef,
 	JoystickAImpl_Release,
 	JoystickAImpl_GetCapabilities,
-	JoystickAImpl_EnumObjects,
+        IDirectInputDevice2AImpl_EnumObjects,
 	JoystickAImpl_GetProperty,
 	JoystickAImpl_SetProperty,
 	JoystickAImpl_Acquire,
@@ -1452,7 +1260,7 @@ static const IDirectInputDevice8WVtbl SysJoystickWvt =
 	XCAST(AddRef)IDirectInputDevice2AImpl_AddRef,
 	XCAST(Release)JoystickAImpl_Release,
 	XCAST(GetCapabilities)JoystickAImpl_GetCapabilities,
-	JoystickWImpl_EnumObjects,
+        IDirectInputDevice2WImpl_EnumObjects,
 	XCAST(GetProperty)JoystickAImpl_GetProperty,
 	XCAST(SetProperty)JoystickAImpl_SetProperty,
 	XCAST(Acquire)JoystickAImpl_Acquire,

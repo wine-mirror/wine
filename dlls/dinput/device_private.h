@@ -41,7 +41,7 @@ typedef struct
     DataTransform              *dt;
 
     int                        *offsets;     /* object offsets */
-    LPCDIDATAFORMAT             wine_df;     /* wine internal data format */
+    LPDIDATAFORMAT              wine_df;     /* wine internal data format */
     LPDIDATAFORMAT              user_df;     /* user defined data format */
 } DataFormat;
 
