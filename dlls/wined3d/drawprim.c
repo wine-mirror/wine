@@ -93,8 +93,6 @@ static DWORD primitiveToGl(WINED3DPRIMITIVETYPE PrimitiveType,
 /* Ensure the appropriate material states are set up - only change
    state if really required                                        */
 static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
-
-    BOOL requires_material_reset = FALSE;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
     if (This->tracking_color == NEEDS_TRACKING && isDiffuseSupplied) {
@@ -107,45 +105,19 @@ static void init_materials(IWineD3DDevice *iface, BOOL isDiffuseSupplied) {
         glEnable(GL_COLOR_MATERIAL);
         checkGLcall("glEnable GL_COLOR_MATERIAL");
         This->tracking_color = IS_TRACKING;
-        requires_material_reset = TRUE; /* Restore material settings as will be used */
-
     } else if ((This->tracking_color == IS_TRACKING && !isDiffuseSupplied) ||
                (This->tracking_color == NEEDS_TRACKING && !isDiffuseSupplied)) {
         /* If we are tracking the current color but one isn't supplied, don't! */
         glDisable(GL_COLOR_MATERIAL);
         checkGLcall("glDisable GL_COLOR_MATERIAL");
         This->tracking_color = NEEDS_TRACKING;
-        requires_material_reset = TRUE; /* Restore material settings as will be used */
-
     } else if (This->tracking_color == IS_TRACKING && isDiffuseSupplied) {
         /* No need to reset material colors since no change to gl_color_material */
-        requires_material_reset = FALSE;
-
     } else if (This->tracking_color == NEEDS_DISABLE) {
         glDisable(GL_COLOR_MATERIAL);
         checkGLcall("glDisable GL_COLOR_MATERIAL");
         This->tracking_color = DISABLED_TRACKING;
-        requires_material_reset = TRUE; /* Restore material settings as will be used */
     }
-
-    /* Reset the material colors which may have been tracking the color*/
-    if (requires_material_reset) {
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*) &This->stateBlock->material.Ambient);
-        checkGLcall("glMaterialfv");
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*) &This->stateBlock->material.Diffuse);
-        checkGLcall("glMaterialfv");
-        if (This->stateBlock->renderState[WINED3DRS_SPECULARENABLE]) {
-           glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*) &This->stateBlock->material.Specular);
-           checkGLcall("glMaterialfv");
-        } else {
-           float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-           glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
-           checkGLcall("glMaterialfv");
-        }
-        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*) &This->stateBlock->material.Emissive);
-        checkGLcall("glMaterialfv");
-    }
-
 }
 
 static const GLfloat invymat[16] = {
