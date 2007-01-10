@@ -20,6 +20,9 @@
 
 #include <stdarg.h>
 
+#define NTDDI_WIN2K   0x05000000
+#define NTDDI_VERSION NTDDI_WIN2K /* for some MIDL_STUB_MESSAGE fields */
+
 #include "wine/test.h"
 #include <windef.h>
 #include <winbase.h>
@@ -892,8 +895,8 @@ static void test_client_init(void)
     TEST_POINTER_UNSET(VarianceMark);
     ok(stubMsg.Unused == 0xcccccccc, "Unused should have be unset instead of 0x%x\n", stubMsg.Unused);
     TEST_POINTER_UNSET(pContext);
-    TEST_ULONG_UNSET(Reserved51_1);
-    TEST_ULONG_UNSET(Reserved51_2);
+    TEST_POINTER_UNSET(ContextHandleHash);
+    TEST_POINTER_UNSET(pUserMarshalList);
     TEST_ULONG_UNSET(Reserved51_3);
     TEST_ULONG_UNSET(Reserved51_4);
     TEST_ULONG_UNSET(Reserved51_5);

@@ -222,10 +222,10 @@ typedef struct _MIDL_STUB_MESSAGE
   CS_STUB_INFO *pCSInfo;
   unsigned char *ConformanceMark;
   unsigned char *VarianceMark;
-  INT_PTR Unused;
+  INT_PTR Unused; /* BackingStoreLowMark on IA64 */
   struct _NDR_PROC_CONTEXT *pContext;
-  INT_PTR Reserved51_1;
-  INT_PTR Reserved51_2;
+  void* ContextHandleHash;
+  void* pUserMarshalList;
   INT_PTR Reserved51_3;
   INT_PTR Reserved51_4;
   INT_PTR Reserved51_5;
