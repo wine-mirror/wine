@@ -64,6 +64,8 @@ static void test_VirtualAllocEx(void)
     if (!addr1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {   /* Win9x */
         trace("VirtualAllocEx is not implemented, skipping the test\n");
+        TerminateProcess(hProcess, 0);
+        CloseHandle(hProcess);
         return;
     }
 
