@@ -70,6 +70,7 @@ extern int winetest_get_mainargs( char*** pargv );
 #ifdef __GNUC__
 
 extern int winetest_ok( int condition, const char *msg, ... ) __attribute__((format (printf,2,3) ));
+extern void winetest_skip( const char *msg, ... ) __attribute__((format (printf,1,2)));
 extern void winetest_trace( const char *msg, ... ) __attribute__((format (printf,1,2)));
 
 #else /* __GNUC__ */
@@ -80,9 +81,11 @@ extern void winetest_trace( const char *msg, ... );
 #endif /* __GNUC__ */
 
 #define ok_(file, line)     (winetest_set_location(file, line), 0) ? 0 : winetest_ok
+#define skip_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
 #define trace_(file, line)  (winetest_set_location(file, line), 0) ? (void)0 : winetest_trace
 
 #define ok     ok_(__FILE__, __LINE__)
+#define skip   skip_(__FILE__, __LINE__)
 #define trace  trace_(__FILE__, __LINE__)
 
 #define todo(platform) for (winetest_start_todo(platform); \
@@ -169,6 +172,7 @@ static const struct test *current_test; /* test currently being run */
 
 static LONG successes;       /* number of successful tests */
 static LONG failures;        /* number of failures */
+static LONG skipped;         /* number of skipped test chunks */
 static LONG todo_successes;  /* number of successful tests inside todo block */
 static LONG todo_failures;   /* number of failures inside todo block */
 
@@ -292,6 +296,18 @@ void winetest_trace( const char *msg, ... )
     }
 }
 
+void winetest_skip( const char *msg, ... )
+{
+    va_list valist;
+    tls_data* data=get_tls_data();
+
+    fprintf( stdout, "%s:%d: Tests skipped: ", data->current_file, data->current_line );
+    va_start(valist, msg);
+    vfprintf(stdout, msg, valist);
+    va_end(valist);
+    skipped++;
+}
+
 void winetest_start_todo( const char* platform )
 {
     tls_data* data=get_tls_data();
@@ -371,10 +387,11 @@ static int run_test( const char *name )
 
     if (winetest_debug)
     {
-        fprintf( stdout, "%s: %d tests executed, %d marked as todo, %d %s.\n",
+        fprintf( stdout, "%s: %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
                  name, successes + failures + todo_successes + todo_failures,
                  todo_successes, failures + todo_failures,
-                 (failures + todo_failures != 1) ? "failures" : "failure" );
+                 (failures + todo_failures != 1) ? "failures" : "failure",
+                 skipped );
     }
     status = (failures + todo_failures < 255) ? failures + todo_failures : 255;
     return status;
