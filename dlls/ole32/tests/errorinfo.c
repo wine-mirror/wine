@@ -1,7 +1,7 @@
 /*
- * Component Object Tests
+ * Error Info Tests
  *
- * Copyright 2005 Robert Shearman
+ * Copyright 2007 Robert Shearman
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
