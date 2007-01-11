@@ -778,6 +778,51 @@ static DWORD calc_crc32(struct elf_file_map* fmap)
 #undef UPDC32
 }
 
+static BOOL elf_load_debug_info_from_map(struct module* module,
+                                         struct elf_file_map* fmap,
+                                         struct pool* pool,
+                                         struct hash_table* ht_symtab);
+
+/******************************************************************
+ *		elf_debuglink_parse
+ *
+ * Parses a .gnu_debuglink section and loads the debug info from
+ * the external file specified there.
+ */
+static BOOL elf_debuglink_parse (struct module* module,
+                                 struct pool* pool,
+                                 struct hash_table* ht_symtab,
+				 const BYTE* debuglink)
+{
+    /* The content of a debug link section is:
+     * 1/ a NULL terminated string, containing the file name for the
+     *    debug info
+     * 2/ padding on 4 byte boundary
+     * 3/ CRC of the linked ELF file
+     */
+    BOOL ret = FALSE, lret;
+    const char* dbg_link = (char*)debuglink;
+    struct elf_file_map fmap_link;
+
+    if (elf_map_file(dbg_link, &fmap_link))
+    {
+	fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
+	fmap_link.with_crc = 1;
+	lret = elf_load_debug_info_from_map(module, &fmap_link, pool,
+					    ht_symtab);
+	if (lret)
+	    strcpy(module->module.LoadedPdbName, dbg_link);
+	else
+	    WARN("Couldn't load debug information from %s\n", dbg_link);
+	ret = ret || lret;
+	elf_unmap_file(&fmap_link);
+    }
+    else
+        WARN("Couldn't map %s\n", dbg_link);
+
+    return ret;
+}
+
 /******************************************************************
  *		elf_load_debug_info_from_map
  *
@@ -943,32 +988,18 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         }
         if (debuglink_sect != -1)
         {
-            const char* dbg_link;
-            struct elf_file_map fmap_link;
+            const BYTE* dbg_link;
 
-            dbg_link = elf_map_section(fmap, debuglink_sect);
-            /* The content of a debug link section is:
-             * 1/ a NULL terminated string, containing the file name for the
-             *    debug info
-             * 2/ padding on 4 byte boundary
-             * 3/ CRC of the linked ELF file
-             */
-            if (dbg_link != ELF_NO_MAP && elf_map_file(dbg_link, &fmap_link))
+            dbg_link = (const BYTE*) elf_map_section(fmap, debuglink_sect);
+            if (dbg_link != ELF_NO_MAP)
             {
-                fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
-                fmap_link.with_crc = 1;
-                lret = elf_load_debug_info_from_map(module, &fmap_link, pool,
-                                                    ht_symtab);
-                if (lret)
-                    strcpy(module->module.LoadedPdbName, dbg_link);
-                else
-                    WARN("Couldn't load debug information from %s\n", dbg_link);
+                lret = elf_debuglink_parse (module, pool, ht_symtab, dbg_link);
+                if (!lret)
+		    WARN("Couldn't load linked debug file for %s\n",
+			  module->module.ModuleName);
                 ret = ret || lret;
-                elf_unmap_file(&fmap_link);
             }
-            else
-                WARN("Couldn't load linked debug file for %s\n",
-                     module->module.ModuleName);
+            elf_unmap_section(fmap, debuglink_sect);
         }
     }
     if (strstr(module->module.ModuleName, "<elf>") ||
