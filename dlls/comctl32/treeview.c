@@ -2702,7 +2702,7 @@ TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr)
 	    > infoPtr->clientWidth - GetSystemMetrics(SM_CXVSCROLL))
 	    horz = TRUE;
     }
-    else if (infoPtr->treeWidth > infoPtr->clientWidth)
+    else if (infoPtr->treeWidth > infoPtr->clientWidth || infoPtr->scrollX > 0)
 	horz = TRUE;
 
     if (!vert && horz && infoPtr->treeHeight
@@ -2760,6 +2760,8 @@ TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr)
 	infoPtr->uInternalStatus |= TV_HSCROLL;
 
 	SetScrollInfo(hwnd, SB_HORZ, &si, TRUE);
+	TREEVIEW_HScroll(infoPtr,
+	                MAKEWPARAM(SB_THUMBPOSITION, scrollX));
     }
     else
     {
@@ -2768,12 +2770,11 @@ TREEVIEW_UpdateScrollBars(TREEVIEW_INFO *infoPtr)
 	infoPtr->uInternalStatus &= ~TV_HSCROLL;
 
 	scrollX = 0;
-    }
-
-    if (infoPtr->scrollX != scrollX)
-    {
-	TREEVIEW_HScroll(infoPtr,
-	                 MAKEWPARAM(SB_THUMBPOSITION, scrollX));
+        if (infoPtr->scrollX != 0)
+        {
+	    TREEVIEW_HScroll(infoPtr,
+	                    MAKEWPARAM(SB_THUMBPOSITION, scrollX));
+        }
     }
 
     if (!horz)
