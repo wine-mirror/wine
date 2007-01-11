@@ -949,6 +949,31 @@ error:
     fatal_error( "invalid WINEPRELOADRESERVE value '%s'\n", str );
 }
 
+/* check if address is in one of the reserved ranges */
+static int is_addr_reserved( const void *addr )
+{
+    int i;
+
+    for (i = 0; preload_info[i].size; i++)
+    {
+        if ((const char *)addr >= (const char *)preload_info[i].addr &&
+            (const char *)addr <  (const char *)preload_info[i].addr + preload_info[i].size)
+            return 1;
+    }
+    return 0;
+}
+
+/* remove a range from the preload list */
+static void remove_preload_range( int i )
+{
+    while (preload_info[i].size)
+    {
+        preload_info[i].addr = preload_info[i+1].addr;
+        preload_info[i].size = preload_info[i+1].size;
+        i++;
+    }
+}
+
 /*
  *  is_in_preload_range
  *
@@ -956,18 +981,10 @@ error:
  */
 static int is_in_preload_range( const ElfW(auxv_t) *av, int type )
 {
-    int i;
-
-    while (av->a_type != type && av->a_type != AT_NULL) av++;
-
-    if (av->a_type == type)
+    while (av->a_type != AT_NULL)
     {
-        for (i = 0; preload_info[i].size; i++)
-        {
-            if ((char *)av->a_un.a_val >= (char *)preload_info[i].addr &&
-                (char *)av->a_un.a_val < (char *)preload_info[i].addr + preload_info[i].size)
-                return 1;
-        }
+        if (av->a_type == type) return is_addr_reserved( (const void *)av->a_un.a_val );
+        av++;
     }
     return 0;
 }
@@ -1039,12 +1056,21 @@ void* wld_start( void **stack )
     /* reserve memory that Wine needs */
     if (reserve) preload_reserve( reserve );
     for (i = 0; preload_info[i].size; i++)
-        wld_mmap( preload_info[i].addr, preload_info[i].size,
-                  PROT_NONE, MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 );
+    {
+        if (wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
+                      MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
+        {
+            wld_printf( "preloader: Warning: failed to reserve range %x-%x\n",
+                        preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
+            remove_preload_range( i );
+            i--;
+        }
+    }
 
     /* add an executable page at the top of the address space to defeat
      * broken no-exec protections that play with the code selector limit */
-    wld_mprotect( (char *)0x80000000 - page_size, page_size, PROT_EXEC | PROT_READ );
+    if (is_addr_reserved( (char *)0x80000000 - page_size ))
+        wld_mprotect( (char *)0x80000000 - page_size, page_size, PROT_EXEC | PROT_READ );
 
     /* load the main binary */
     map_so_lib( argv[1], &main_binary_map );
