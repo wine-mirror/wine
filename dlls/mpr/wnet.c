@@ -99,7 +99,7 @@ typedef struct _WNetEnumerator
  */
 static DWORD _findProviderIndexW(LPCWSTR lpProvider);
 
-PWNetProviderTable providerTable;
+static PWNetProviderTable providerTable;
 
 /*
  * Global provider table functions
