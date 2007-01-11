@@ -652,7 +652,7 @@ BOOL memory_get_register(DWORD regno, DWORD** value, char* buffer, int len)
             else
                 *value = div->pval;
 
-            snprintf(buffer, len, div->name);
+            if (buffer) snprintf(buffer, len, div->name);
             return TRUE;
         }
     }
