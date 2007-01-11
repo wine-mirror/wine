@@ -220,12 +220,6 @@ static const WCHAR _CHMU_CONTENT[] = {
         'M','S','C','o','m','p','r','e','s','s','e','d','/',
         'C','o','n','t','e','n','t',0
 };
-static const WCHAR _CHMU_SPANINFO[] = {
-':',':','D','a','t','a','S','p','a','c','e','/',
-        'S','t','o','r','a','g','e','/',
-        'M','S','C','o','m','p','r','e','s','s','e','d','/',
-        'S','p','a','n','I','n','f','o',
-};
 
 /*
  * structures local to this module
@@ -755,33 +749,6 @@ struct chmFile *chm_openW(const WCHAR *filename)
 
     /* By default, compression is enabled. */
     newHandle->compression_enabled = 1;
-
-/* Jed, Sun Jun 27: 'span' doesn't seem to be used anywhere?! */
-#if 0
-    /* fetch span */
-    if (CHM_RESOLVE_SUCCESS != chm_resolve_object(newHandle,
-                                                  _CHMU_SPANINFO,
-                                                  &uiSpan)                ||
-        uiSpan.space == CHM_COMPRESSED)
-    {
-        chm_close(newHandle);
-        return NULL;
-    }
-
-    /* N.B.: we've already checked that uiSpan is in the uncompressed section,
-     *       so this should not require attempting to decompress, which may
-     *       rely on having a valid "span"
-     */
-    sremain = 8;
-    sbufpos = sbuffer;
-    if (chm_retrieve_object(newHandle, &uiSpan, sbuffer,
-                            0, sremain) != sremain                        ||
-        !_unmarshal_uint64(&sbufpos, &sremain, &newHandle->span))
-    {
-        chm_close(newHandle);
-        return NULL;
-    }
-#endif
 
     /* prefetch most commonly needed unit infos */
     if (CHM_RESOLVE_SUCCESS != chm_resolve_object(newHandle,
