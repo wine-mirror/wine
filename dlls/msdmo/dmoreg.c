@@ -302,7 +302,7 @@ static BOOL IEnumDMO_Destructor(IEnumDMO* iface)
 /**************************************************************************
  *  IEnumDMO_Constructor
  */
-IEnumDMO * IEnumDMO_Constructor(
+static IEnumDMO * IEnumDMO_Constructor(
     REFGUID guidCategory,
     DWORD dwFlags,
     DWORD cInTypes,
