@@ -1393,7 +1393,7 @@ static nsresult NSAPI nsSupportsWeakReference_GetWeakReference(nsISupportsWeakRe
 
 #undef NSWEAKREF_THIS
 
-const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
+static const nsISupportsWeakReferenceVtbl nsSupportsWeakReferenceVtbl = {
     nsSupportsWeakReference_QueryInterface,
     nsSupportsWeakReference_AddRef,
     nsSupportsWeakReference_Release,
