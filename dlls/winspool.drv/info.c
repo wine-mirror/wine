@@ -7340,8 +7340,8 @@ LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
     if(doc->lpszOutput == NULL || !strcmpW(doc->lpszOutput, FILE_Port))
     {
         LPWSTR name;
-        get_filename(&name);
-        if(name)
+
+        if (get_filename(&name))
         {
             if(!(len = GetFullPathNameW(name, 0, NULL, NULL)))
             {
