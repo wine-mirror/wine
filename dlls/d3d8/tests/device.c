@@ -763,8 +763,14 @@ static void test_display_modes(void)
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
+    if (!d3d8_handle)
+    {
+        skip("Could not load d3d8.dll\n");
+        return;
+    }
 
     pDirect3DCreate8 = (void *)GetProcAddress( d3d8_handle, "Direct3DCreate8" );
+    ok(pDirect3DCreate8 != NULL, "Failed to get address of Direct3DCreate8\n");
     if (pDirect3DCreate8)
     {
         test_display_modes();

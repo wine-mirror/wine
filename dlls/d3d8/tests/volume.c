@@ -129,7 +129,7 @@ START_TEST(volume)
     d3d8_handle = LoadLibraryA("d3d8.dll");
     if (!d3d8_handle)
     {
-        trace("Could not load d3d8.dll, skipping tests\n");
+        skip("Could not load d3d8.dll\n");
         return;
     }
 
