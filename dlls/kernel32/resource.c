@@ -910,6 +910,105 @@ struct resource_size_info {
     DWORD total_size;
 };
 
+struct mapping_info {
+    HANDLE file;
+    HANDLE mapping;
+    void *base;
+    DWORD size;
+    BOOL read_write;
+};
+
+static BOOL map_file_into_memory( struct mapping_info *mi )
+{
+    DWORD page_attr, perm;
+
+    if (mi->read_write)
+    {
+        page_attr = PAGE_READWRITE;
+        perm = FILE_MAP_WRITE | FILE_MAP_READ;
+    }
+    else
+    {
+        page_attr = PAGE_READONLY;
+        perm = FILE_MAP_READ;
+    }
+
+    mi->mapping = CreateFileMappingW( mi->file, NULL, page_attr, 0, 0, NULL );
+    if (!mi->mapping)
+        return FALSE;
+
+    mi->base = MapViewOfFile( mi->mapping, perm, 0, 0, mi->size );
+    if (!mi->base)
+        return FALSE;
+
+    return TRUE;
+}
+
+static BOOL unmap_file_from_memory( struct mapping_info *mi )
+{
+    if (mi->base)
+        UnmapViewOfFile( mi->base );
+    mi->base = NULL;
+    if (mi->mapping)
+        CloseHandle( mi->mapping );
+    mi->mapping = NULL;
+    return TRUE;
+}
+
+static void destroy_mapping( struct mapping_info *mi )
+{
+    if (!mi)
+        return;
+    unmap_file_from_memory( mi );
+    if (mi->file)
+        CloseHandle( mi->file );
+    HeapFree( GetProcessHeap(), 0, mi );
+}
+
+static struct mapping_info *create_mapping( LPCWSTR name, BOOL rw )
+{
+    struct mapping_info *mi;
+
+    mi = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof *mi );
+    if (!mi)
+        return NULL;
+
+    mi->read_write = rw;
+
+    mi->file = CreateFileW( name, GENERIC_READ | (rw ? GENERIC_WRITE : 0),
+                            0, NULL, OPEN_EXISTING, 0, 0 );
+
+    if (mi->file != INVALID_HANDLE_VALUE)
+    {
+        mi->size = GetFileSize( mi->file, NULL );
+
+        if (map_file_into_memory( mi ))
+            return mi;
+    }
+
+    unmap_file_from_memory( mi );
+
+    return NULL;
+}
+
+static BOOL resize_mapping( struct mapping_info *mi, DWORD new_size )
+{
+    if (!unmap_file_from_memory( mi ))
+        return FALSE;
+
+    /* change the file size */
+    SetFilePointer( mi->file, new_size, NULL, FILE_BEGIN );
+    if (!SetEndOfFile( mi->file ))
+    {
+        ERR("failed to set file size to %08x\n", new_size );
+        return FALSE;
+    }
+
+    mi->size = new_size;
+
+    return map_file_into_memory( mi );
+}
+
 static void get_resource_sizes( QUEUEDUPDATES *updates, struct resource_size_info *si )
 {
     struct resource_dir_entry *types, *names;
@@ -1169,13 +1268,12 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
     static const WCHAR prefix[] = { 'r','e','s','u',0 };
     WCHAR tempdir[MAX_PATH], tempfile[MAX_PATH];
     DWORD mapping_size, section_size, old_size;
-    HANDLE file = NULL, mapping = NULL;
     BOOL ret = FALSE;
-    void *base = NULL;
     IMAGE_SECTION_HEADER *sec;
     IMAGE_NT_HEADERS *nt;
     struct resource_size_info res_size;
     BYTE *res_base;
+    struct mapping_info *write_map = NULL;
 
     /* copy the exe to a temp file then update the temp file... */
     tempdir[0] = 0;
@@ -1190,21 +1288,11 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
 
     TRACE("tempfile %s\n", debugstr_w(tempfile));
 
-    file = CreateFileW( tempfile, GENERIC_READ | GENERIC_WRITE,
-                        0, NULL, OPEN_EXISTING, 0, 0 );
-
-    mapping_size = GetFileSize( file, NULL );
-    old_size = mapping_size;
-
-    mapping = CreateFileMappingW( file, NULL, PAGE_READWRITE, 0, 0, NULL );
-    if (!mapping)
+    write_map = create_mapping( tempfile, TRUE );
+    if (!write_map)
         goto done;
 
-    base = MapViewOfFile( mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, mapping_size );
-    if (!base)
-        goto done;
-
-    nt = get_nt_header( base, mapping_size );
+    nt = get_nt_header( write_map->base, write_map->size );
     if (!nt)
         goto done;
 
@@ -1214,14 +1302,14 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
         goto done;
     }
 
-    sec = get_resource_section( base, mapping_size );
+    sec = get_resource_section( write_map->base, write_map->size );
     if (!sec)
-         goto done;
+        goto done;
 
-    if ((sec->SizeOfRawData + sec->PointerToRawData) != mapping_size)
+    if ((sec->SizeOfRawData + sec->PointerToRawData) != write_map->size)
     {
         FIXME(".rsrc isn't at the end of the image %08x + %08x != %08x\n",
-            sec->SizeOfRawData, sec->PointerToRawData, mapping_size);
+            sec->SizeOfRawData, sec->PointerToRawData, write_map->size);
         goto done;
     }
 
@@ -1240,43 +1328,22 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
     /* check if the file size needs to be changed */
     if (section_size != sec->SizeOfRawData)
     {
+        old_size = write_map->size;
+
         TRACE("file size %08x -> %08x\n", old_size, mapping_size);
 
         /* unmap the file before changing the file size */
-        UnmapViewOfFile( base );
-        base = NULL;
-        CloseHandle( mapping );
-        mapping = NULL;
-
-        /* change the file size */
-        SetFilePointer( file, mapping_size, NULL, FILE_BEGIN );
-        if (!SetEndOfFile( file ))
-        {
-            ERR("failed to set file size to %08x\n", mapping_size );
-            goto done;
-        }
-
-        mapping = CreateFileMappingW( file, NULL, PAGE_READWRITE, 0, 0, NULL );
-        if (!mapping)
-            goto done;
-
-        /* remap the file */
-        base = MapViewOfFile( mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, mapping_size );
-        if (!base)
-        {
-            ERR("failed to map file again\n");
-            goto done;
-        }
+        ret = resize_mapping( write_map, mapping_size );
 
         /* get the pointers again - they might be different after remapping */
-        nt = get_nt_header( base, mapping_size );
+        nt = get_nt_header( write_map->base, mapping_size );
         if (!nt)
         {
             ERR("couldn't get NT header\n");
             goto done;
         }
 
-        sec = get_resource_section( base, mapping_size );
+        sec = get_resource_section( write_map->base, mapping_size );
         if (!sec)
              goto done;
 
@@ -1285,12 +1352,12 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
         sec->SizeOfRawData = section_size;
         sec->Misc.VirtualSize = section_size;
         nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_RESOURCE].Size = res_size.total_size;
-        nt->OptionalHeader.SizeOfInitializedData = get_init_data_size( base, mapping_size );
+        nt->OptionalHeader.SizeOfInitializedData = get_init_data_size( write_map->base, mapping_size );
     }
 
-    res_base = (LPBYTE) base + sec->PointerToRawData;
+    res_base = (LPBYTE) write_map->base + sec->PointerToRawData;
 
-    TRACE("base = %p offset = %08x\n", base, sec->PointerToRawData);
+    TRACE("base = %p offset = %08x\n", write_map->base, sec->PointerToRawData);
 
     ret = write_resources( updates, res_base, &res_size, sec->VirtualAddress );
 
@@ -1299,17 +1366,7 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
     TRACE("after  .rsrc at %08x, size %08x\n", sec->PointerToRawData, sec->SizeOfRawData);
 
 done:
-    if (base)
-    {
-        FlushViewOfFile( base, mapping_size );
-        UnmapViewOfFile( base );
-    }
-
-    if (mapping)
-        CloseHandle( mapping );
-
-    if (file)
-        CloseHandle( file );
+    destroy_mapping( write_map );
 
     if (ret)
         ret = CopyFileW( tempfile, updates->pFileName, FALSE );
