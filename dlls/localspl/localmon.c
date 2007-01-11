@@ -36,11 +36,34 @@
 #include "localspl_private.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
 
 /*****************************************************/
+
+static CRITICAL_SECTION xcv_handles_cs;
+static CRITICAL_SECTION_DEBUG xcv_handles_cs_debug =
+{
+    0, 0, &xcv_handles_cs,
+    { &xcv_handles_cs_debug.ProcessLocksList, &xcv_handles_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": xcv_handles_cs") }
+};
+static CRITICAL_SECTION xcv_handles_cs = { &xcv_handles_cs_debug, -1, 0, 0, 0, 0 };
+
+/* ############################### */
+
+typedef struct {
+    struct list entry;
+    ACCESS_MASK GrantedAccess;
+    WCHAR       nameW[1];
+} xcv_t;
+
+static struct list xcv_handles = LIST_INIT( xcv_handles );
+
+/* ############################### */
+
 
 static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'M','i','c','r','o','s','o','f','t','\\',
@@ -289,6 +312,73 @@ cleanup:
 }
 
 /*****************************************************
+ * localmon_XcvClosePort [exported through MONITOREX]
+ *
+ * Close a Communication-Channel
+ *
+ * PARAMS
+ *  hXcv  [i] The Handle to close
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
+{
+    xcv_t * xcv = (xcv_t *) hXcv;
+
+    TRACE("(%p)\n", xcv);
+    /* No checks are done in Windows */
+    EnterCriticalSection(&xcv_handles_cs);
+    list_remove(&xcv->entry);
+    LeaveCriticalSection(&xcv_handles_cs);
+    spl_free(xcv);
+    return TRUE;
+}
+
+/*****************************************************
+ * localmon_XcvOpenPort [exported through MONITOREX]
+ *
+ * Open a Communication-Channel
+ *
+ * PARAMS
+ *  pName         [i] Name of selected Object
+ *  GrantedAccess [i] Access-Rights to use
+ *  phXcv         [o] The resulting Handle is stored here
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess, PHANDLE phXcv)
+{
+    DWORD   len;
+    xcv_t * xcv;
+
+    TRACE("%s, 0x%x, %p)\n", debugstr_w(pName), GrantedAccess, phXcv);
+    /* No checks for any field is done in Windows */
+    len = (lstrlenW(pName) + 1) * sizeof(WCHAR);
+    xcv = spl_alloc( sizeof(xcv_t) + len);
+    if (xcv) {
+        xcv->GrantedAccess = GrantedAccess;
+        memcpy(&xcv->nameW, pName, len);
+        *phXcv = (HANDLE) xcv;
+        EnterCriticalSection(&xcv_handles_cs);
+        list_add_tail(&xcv_handles, &xcv->entry);
+        LeaveCriticalSection(&xcv_handles_cs);
+        TRACE("=> %p\n", xcv);
+        return TRUE;
+    }
+    else
+    {
+        *phXcv = (HANDLE) NULL;
+        return FALSE;
+    }
+}
+
+/*****************************************************
  *      InitializePrintMonitor  (LOCALSPL.@)
  *
  * Initialize the Monitor for the Local Ports
@@ -324,7 +414,12 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
             NULL,       /* localmon_AddPortW */
             NULL,       /* localmon_AddPortExW */
             localmon_ConfigurePortW,
-            localmon_DeletePortW
+            localmon_DeletePortW,
+            NULL,       /* localmon_GetPrinterDataFromPort */
+            NULL,       /* localmon_SetPortTimeOuts */
+            localmon_XcvOpenPort,
+            NULL,        /* localmon_XcvDataPort */
+            localmon_XcvClosePort
         }
     };
 

@@ -35,4 +35,17 @@ extern HINSTANCE LOCALSPL_hInstance;
 #define IDS_LOCALPORT_MAXLEN 32
 #define IDS_NOTHINGTOCONFIG_MAXLEN 80
 
+/* ## Memory allocation macros ## */
+
+static inline void *spl_alloc( size_t len )
+{
+    return HeapAlloc( GetProcessHeap(), 0, len );
+}
+
+static inline BOOL spl_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}
+
+
 #endif /* __WINE_LOCALSPL_PRIVATE__ */
