@@ -838,7 +838,9 @@ static void wave_out_test_device(int device)
        "waveOutGetDevCapsW(%s): MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED "
        "expected, got %s\n",dev_name(device),wave_out_error(rc));
 
-#if 0 /* FIXME: this works on windows but crashes wine */
+    if (0)
+    {
+    /* FIXME: this works on windows but crashes wine */
     rc=waveOutGetDevCapsA(device,(LPWAVEOUTCAPSA)1,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
        "waveOutGetDevCapsA(%s): MMSYSERR_INVALPARAM expected, got %s\n",
@@ -848,7 +850,7 @@ static void wave_out_test_device(int device)
     ok(rc==MMSYSERR_INVALPARAM || rc==MMSYSERR_NOTSUPPORTED,
        "waveOutGetDevCapsW(%s): MMSYSERR_INVALPARAM or MMSYSERR_NOTSUPPORTED "
        "expected, got %s\n",dev_name(device),wave_out_error(rc));
-#endif
+    }
 
     rc=waveOutGetDevCapsA(device,&capsA,4);
     ok(rc==MMSYSERR_NOERROR,
@@ -1257,7 +1259,9 @@ static void wave_out_test_device(int device)
         trace("waveOutOpen(%s): 6 channels not supported\n",
               dev_name(device));
 
-#if 0	/* ALSA doesn't like this format */
+    if (0)
+    {
+    /* FIXME: ALSA doesn't like this format */
     /* test if 24 bit samples supported */
     wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
     wfex.Format.nChannels=2;
@@ -1283,7 +1287,7 @@ static void wave_out_test_device(int device)
     } else
         trace("waveOutOpen(%s): 24 bit samples not supported\n",
               dev_name(device));
-#endif
+    }
 
     /* test if 32 bit samples supported */
     wfex.Format.wFormatTag=WAVE_FORMAT_EXTENSIBLE;
