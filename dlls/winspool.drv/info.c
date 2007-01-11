@@ -218,6 +218,7 @@ static const WCHAR DriverW[] = {'D','r','i','v','e','r',0};
 static const WCHAR Help_FileW[] = {'H','e','l','p',' ','F','i','l','e',0};
 static const WCHAR LocationW[] = {'L','o','c','a','t','i','o','n',0};
 static const WCHAR MonitorW[] = {'M','o','n','i','t','o','r',0};
+static const WCHAR MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static const WCHAR NameW[] = {'N','a','m','e',0};
 static const WCHAR ParametersW[] = {'P','a','r','a','m','e','t','e','r','s',0};
 static const WCHAR PortW[] = {'P','o','r','t',0};
@@ -1153,6 +1154,49 @@ static DWORD monitor_loadall(void)
     TRACE("%d monitors loaded\n", loaded);
     return loaded;
 }
+
+/******************************************************************
+ * monitor_loadui [internal]
+ *
+ * load the userinterface-dll for a given portmonitor
+ *
+ * On failure, NULL is returned
+ */
+
+static monitor_t * monitor_loadui(monitor_t * pm)
+{
+    monitor_t * pui = NULL;
+    LPWSTR  buffer[MAX_PATH];
+    HANDLE  hXcv;
+    DWORD   len;
+    DWORD   res;
+
+    if (pm == NULL) return NULL;
+    TRACE("(%p) => dllname: %s\n", pm, debugstr_w(pm->dllname));
+
+    /* Try the Portmonitor first; works for many monitors */
+    if (pm->monitorUI) {
+        EnterCriticalSection(&monitor_handles_cs);
+        pm->refcount++;
+        LeaveCriticalSection(&monitor_handles_cs);
+        return pm;
+    }
+
+    /* query the userinterface-dllname from the Portmonitor */
+    if ((pm->monitor) && (pm->monitor->pfnXcvDataPort)) {
+        /* building (",XcvMonitor %s",pm->name) not needed yet */
+        res = pm->monitor->pfnXcvOpenPort(emptyStringW, SERVER_ACCESS_ADMINISTER, &hXcv);
+        TRACE("got %u with %p\n", res, hXcv);
+        if (res) {
+            res = pm->monitor->pfnXcvDataPort(hXcv, MonitorUIW, NULL, 0, (BYTE *) buffer, sizeof(buffer), &len);
+            TRACE("got %u with %s\n", res, debugstr_w((LPWSTR) buffer));
+            if (res == ERROR_SUCCESS) pui = monitor_load(NULL, (LPWSTR) buffer);
+            pm->monitor->pfnXcvClosePort(hXcv);
+        }
+    }
+    return pui;
+}
+
 
 /******************************************************************
  * monitor_load_by_port [internal]
@@ -6116,7 +6160,8 @@ BOOL WINAPI ConfigurePortA(LPSTR pName, HWND hWnd, LPSTR pPortName)
 BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 {
     monitor_t * pm;
-    DWORD   res = ROUTER_UNKNOWN;
+    monitor_t * pui;
+    DWORD       res;
 
     TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pPortName));
 
@@ -6131,28 +6176,40 @@ BOOL WINAPI ConfigurePortW(LPWSTR pName, HWND hWnd, LPWSTR pPortName)
     }
 
     /* an empty Portname is Invalid, but can popup a Dialog */
-    if (!pPortName[0]) goto cleanup;
-
+    if (!pPortName[0]) {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
 
     pm = monitor_load_by_port(pPortName);
-    if (pm && pm->monitor) {
-        if (pm->monitor->pfnConfigurePort != NULL) {
-            TRACE("Using %s for %s:\n", debugstr_w(pm->name), debugstr_w(pPortName));
-            res = pm->monitor->pfnConfigurePort(pName, hWnd, pPortName);
-            TRACE("got %d with %d\n", res, GetLastError());
+    if (pm && pm->monitor && pm->monitor->pfnConfigurePort) {
+        TRACE("Using %s for %s (%p: %s)\n", debugstr_w(pm->name), debugstr_w(pPortName), pm, debugstr_w(pm->dllname));
+        res = pm->monitor->pfnConfigurePort(pName, hWnd, pPortName);
+        TRACE("got %d with %u\n", res, GetLastError());
+    }
+    else
+    {
+        pui = monitor_loadui(pm);
+        if (pui && pui->monitorUI && pui->monitorUI->pfnConfigurePortUI) {
+            TRACE("Use %s for %s (%p: %s)\n", debugstr_w(pui->name), debugstr_w(pPortName), pui, debugstr_w(pui->dllname));
+            res = pui->monitorUI->pfnConfigurePortUI(pName, hWnd, pPortName);
+            TRACE("got %d with %u\n", res, GetLastError());
         }
         else
         {
-            FIXME("XcvOpenPort not implemented (dwMonitorSize: %d)\n", pm->dwMonitorSize);
+            FIXME("not implemented for %s (%p: %s => %p: %s)\n", debugstr_w(pPortName),
+                pm, pm ? debugstr_w(pm->dllname) : NULL, pui, pui ? debugstr_w(pui->dllname) : NULL);
+
+            /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
+            SetLastError(ERROR_NOT_SUPPORTED);
+            res = FALSE;
         }
+        monitor_unload(pui);
     }
     monitor_unload(pm);
 
-cleanup:
-    /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
-    if (res == ROUTER_UNKNOWN) SetLastError(ERROR_NOT_SUPPORTED);
-    TRACE("returning %d with %d\n", (res == ROUTER_SUCCESS), GetLastError());
-    return (res == ROUTER_SUCCESS);
+    TRACE("returning %d with %u\n", res, GetLastError());
+    return res;
 }
 
 /******************************************************************************
