@@ -646,7 +646,7 @@ struct resource_data {
     LANGID lang;
     DWORD codepage;
     DWORD cbData;
-    BYTE data[1];
+    void *lpData;
 };
 
 static int resource_strcmp( LPCWSTR a, LPCWSTR b )
@@ -737,15 +737,13 @@ static void res_free_str( LPWSTR str )
 }
 
 static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR Name,
-                                 WORD Language, DWORD codepage, LPCVOID lpData, DWORD cbData )
+                                 struct resource_data *resdata, BOOL overwrite_existing )
 {
     struct resource_dir_entry *restype, *resname;
-    struct resource_data *resdata;
+    struct resource_data *existing;
 
-    TRACE("%p %s %s %04x %04x %p %d bytes\n", updates, debugstr_w(Type), debugstr_w(Name), Language, codepage, lpData, cbData);
-
-    if (!lpData || !cbData)
-        return FALSE;
+    TRACE("%p %s %s %p %d\n", updates,
+          debugstr_w(Type), debugstr_w(Name), resdata, overwrite_existing );
 
     restype = find_resource_dir_entry( &updates->root, Type );
     if (!restype)
@@ -769,22 +767,44 @@ static BOOL update_add_resource( QUEUEDUPDATES *updates, LPCWSTR Type, LPCWSTR N
      * If there's an existing resource entry with matching (Type,Name,Language)
      *  it needs to be removed before adding the new data.
      */
-    resdata = find_resource_data( &resname->children, Language );
-    if (resdata)
+    existing = find_resource_data( &resname->children, resdata->lang );
+    if (existing)
     {
-        list_remove( &resdata->entry );
-        HeapFree( GetProcessHeap(), 0, resdata );
+        if (!overwrite_existing)
+            return TRUE;
+        list_remove( &existing->entry );
+        HeapFree( GetProcessHeap(), 0, existing );
     }
-
-    resdata = HeapAlloc( GetProcessHeap(), 0, sizeof *resdata + cbData );
-    resdata->lang = Language;
-    resdata->codepage = codepage;
-    resdata->cbData = cbData;
-    memcpy( resdata->data, lpData, cbData );
 
     add_resource_data_entry( &resname->children, resdata );
 
     return TRUE;
+}
+
+static struct resource_data *allocate_resource_data( WORD Language, DWORD codepage,
+                                                     LPVOID lpData, DWORD cbData, BOOL copy_data )
+{
+    struct resource_data *resdata;
+
+    if (!lpData || !cbData)
+        return NULL;
+
+    resdata = HeapAlloc( GetProcessHeap(), 0, sizeof *resdata + (copy_data ? cbData : 0) );
+    if (resdata)
+    {
+        resdata->lang = Language;
+        resdata->codepage = codepage;
+        resdata->cbData = cbData;
+        if (copy_data)
+        {
+            resdata->lpData = &resdata[1];
+            memcpy( resdata->lpData, lpData, cbData );
+        }
+        else
+            resdata->lpData = lpData;
+    }
+
+    return resdata;
 }
 
 static void free_resource_directory( struct list *head, int level )
@@ -1184,7 +1204,7 @@ static BOOL write_resources( QUEUEDUPDATES *updates, LPBYTE base, struct resourc
                 si->data_entry_ofs += sizeof (IMAGE_RESOURCE_DATA_ENTRY);
 
                 /* write out the resource data */
-                memcpy( &base[si->data_ofs], data->data, data->cbData );
+                memcpy( &base[si->data_ofs], data->lpData, data->cbData );
                 si->data_ofs += data->cbData;
 
                 pad_size = (-si->data_ofs)&3;
@@ -1492,8 +1512,10 @@ BOOL WINAPI UpdateResourceW( HANDLE hUpdate, LPCWSTR lpType, LPCWSTR lpName,
     updates = GlobalLock(hUpdate);
     if (updates)
     {
-        ret = update_add_resource( updates, lpType, lpName,
-                                   wLanguage, GetACP(), lpData, cbData );
+        struct resource_data *data;
+        data = allocate_resource_data( wLanguage, 0, lpData, cbData, TRUE );
+        if (data)
+            ret = update_add_resource( updates, lpType, lpName, data, TRUE );
         GlobalUnlock(hUpdate);
     }
     return ret;
