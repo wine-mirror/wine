@@ -645,9 +645,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     }
 
     /* try a non PCM format */
-    if (0)
-    {
-    /* FIXME: Why is this commented out? */
+#if 0
     init_format(&wfx,WAVE_FORMAT_MULAW,8000,8,1);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
@@ -666,12 +664,10 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	ok(ref==0,"IDirectSoundCaptureBuffer_Release() has %d references, "
            "should have 0\n",ref);
     }
-    }
+#endif
 
     /* Try an invalid format to test error handling */
-    if (0)
-    {
-    /* FIXME: Remove this test altogether? */
+#if 0
     init_format(&wfx,WAVE_FORMAT_PCM,2000000,16,2);
     ZeroMemory(&bufdesc, sizeof(bufdesc));
     bufdesc.dwSize=sizeof(bufdesc);
@@ -684,7 +680,7 @@ static BOOL WINAPI dscenum_callback(LPGUID lpGuid, LPCSTR lpcstrDescription,
     rc=IDirectSoundCapture_CreateCaptureBuffer(dsco,&bufdesc,&dscbo,NULL);
     ok(rc!=DS_OK,"IDirectSoundCapture_CreateCaptureBuffer() should have failed "
        "at 2 MHz %s\n",DXGetErrorString8(rc));
-    }
+#endif
 
 EXIT:
     if (dsco!=NULL) {

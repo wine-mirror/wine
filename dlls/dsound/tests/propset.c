@@ -722,12 +722,8 @@ START_TEST(propset)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibraryA("dsound.dll");
-    if (!hDsound) {
-        trace("dsound.dll not found\n");
-        return;
-    }
-
+    hDsound = GetModuleHandleA("dsound.dll");
+    ok(hDsound != NULL, "dsound.dll not loaded!\n");
     trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
     pDirectSoundCreate8 = (void*)GetProcAddress(hDsound, "DirectSoundCreate8");

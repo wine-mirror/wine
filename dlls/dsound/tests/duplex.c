@@ -237,12 +237,8 @@ START_TEST(duplex)
 
     CoInitialize(NULL);
 
-    hDsound = LoadLibraryA("dsound.dll");
-    if (!hDsound) {
-        trace("dsound.dll not found\n");
-        goto done;
-    }
-
+    hDsound = GetModuleHandleA("dsound.dll");
+    ok(hDsound != NULL, "dsound.dll not loaded!\n");
     trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
     pDirectSoundFullDuplexCreate=(void*)GetProcAddress(hDsound,"DirectSoundFullDuplexCreate");
