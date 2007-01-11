@@ -358,12 +358,14 @@ static inline void *wld_memset( void *dest, int val, size_t len )
  *
  *  %x prints a hex number
  *  %s prints a string
+ *  %p prints a pointer
  */
 static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
 {
     static const char hex_chars[16] = "0123456789abcdef";
     const char *p = fmt;
     char *str = buffer;
+    int i;
 
     while( *p )
     {
@@ -372,8 +374,20 @@ static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
             p++;
             if( *p == 'x' )
             {
-                int i;
                 unsigned int x = va_arg( args, unsigned int );
+                for(i=7; i>=0; i--)
+                    *str++ = hex_chars[(x>>(i*4))&0xf];
+            }
+            else if (p[0] == 'l' && p[1] == 'x')
+            {
+                unsigned long x = va_arg( args, unsigned long );
+                for(i=7; i>=0; i--)
+                    *str++ = hex_chars[(x>>(i*4))&0xf];
+                p++;
+            }
+            else if( *p == 'p' )
+            {
+                unsigned long x = (unsigned long)va_arg( args, void * );
                 for(i=7; i>=0; i--)
                     *str++ = hex_chars[(x>>(i*4))&0xf];
             }
@@ -393,7 +407,7 @@ static int wld_vsprintf(char *buffer, const char *fmt, va_list args )
     return str - buffer;
 }
 
-static void wld_printf(const char *fmt, ... )
+static __attribute__((format(printf,1,2))) void wld_printf(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -405,7 +419,7 @@ static void wld_printf(const char *fmt, ... )
     wld_write(2, buffer, len);
 }
 
-static __attribute__((noreturn)) void fatal_error(const char *fmt, ... )
+static __attribute__((noreturn,format(printf,1,2))) void fatal_error(const char *fmt, ... )
 {
     va_list args;
     char buffer[256];
@@ -453,8 +467,8 @@ static void dump_auxiliary( ElfW(auxv_t) *av )
     for (  ; av->a_type != AT_NULL; av++)
     {
         for (i = 0; names[i].name; i++) if (names[i].val == av->a_type) break;
-        if (names[i].name) wld_printf("%s = %x\n", names[i].name, av->a_un.a_val);
-        else wld_printf( "%x = %x\n", av->a_type, av->a_un.a_val );
+        if (names[i].name) wld_printf("%s = %lx\n", names[i].name, av->a_un.a_val);
+        else wld_printf( "%x = %lx\n", av->a_type, av->a_un.a_val );
     }
 }
 #endif
@@ -597,7 +611,7 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
     {
 
 #ifdef DUMP_SEGMENTS
-      wld_printf( "ph = %x\n", ph );
+      wld_printf( "ph = %p\n", ph );
       wld_printf( " p_type   = %x\n", ph->p_type );
       wld_printf( " p_flags  = %x\n", ph->p_flags );
       wld_printf( " p_offset = %x\n", ph->p_offset );
@@ -696,8 +710,8 @@ static void map_so_lib( const char *name, struct wld_link_map *l)
         /* sanity check */
         if ((char *)c->mapstart + maplength > preloader_start &&
             (char *)c->mapstart <= preloader_end)
-            fatal_error( "%s: binary overlaps preloader (%x-%x)\n",
-                         name, c->mapstart, (char *)c->mapstart + maplength );
+            fatal_error( "%s: binary overlaps preloader (%p-%p)\n",
+                         name, (char *)c->mapstart, (char *)c->mapstart + maplength );
 
         ELF_FIXED_ADDRESS (loader, c->mapstart);
     }
@@ -815,7 +829,7 @@ static void *find_symbol( const ElfW(Phdr) *phdr, int num, const char *var, int 
 
     /* check the values */
 #ifdef DUMP_SYMS
-    wld_printf("%x %x\n", phdr, num );
+    wld_printf("%p %x\n", phdr, num );
 #endif
     if( ( phdr == NULL ) || ( num == 0 ) )
     {
@@ -929,7 +943,7 @@ static void preload_reserve( const char *str )
     else if ((char *)end > preloader_start &&
              (char *)start <= preloader_end)
     {
-        wld_printf( "WINEPRELOADRESERVE range %x-%x overlaps preloader %x-%x\n",
+        wld_printf( "WINEPRELOADRESERVE range %p-%p overlaps preloader %p-%p\n",
                      start, end, preloader_start, preloader_end );
         start = end = NULL;
     }
@@ -1048,7 +1062,7 @@ void* wld_start( void **stack )
     preloader_end = (char *)((unsigned int)(_end + page_mask) & ~page_mask);
 
 #ifdef DUMP_AUX_INFO
-    wld_printf( "stack = %x\n", *stack );
+    wld_printf( "stack = %p\n", *stack );
     for( i = 0; i < *pargc; i++ ) wld_printf("argv[%x] = %s\n", i, argv[i]);
     dump_auxiliary( av );
 #endif
@@ -1060,7 +1074,7 @@ void* wld_start( void **stack )
         if (wld_mmap( preload_info[i].addr, preload_info[i].size, PROT_NONE,
                       MAP_FIXED | MAP_PRIVATE | MAP_ANON | MAP_NORESERVE, -1, 0 ) == (void *)-1)
         {
-            wld_printf( "preloader: Warning: failed to reserve range %x-%x\n",
+            wld_printf( "preloader: Warning: failed to reserve range %p-%p\n",
                         preload_info[i].addr, (char *)preload_info[i].addr + preload_info[i].size );
             remove_preload_range( i );
             i--;
@@ -1117,7 +1131,7 @@ void* wld_start( void **stack )
     set_auxiliary_values( av, new_av, delete_av, stack );
 
 #ifdef DUMP_AUX_INFO
-    wld_printf("new stack = %x\n", *stack);
+    wld_printf("new stack = %p\n", *stack);
     wld_printf("jumping to %x\n", ld_so_map.l_entry);
 #endif
 
