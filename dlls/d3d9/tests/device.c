@@ -946,8 +946,14 @@ static void test_display_modes(void)
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
+    if (!d3d9_handle)
+    {
+        skip("Could not load d3d9.dll\n");
+        return;
+    }
 
     pDirect3DCreate9 = (void *)GetProcAddress( d3d9_handle, "Direct3DCreate9" );
+    ok(pDirect3DCreate9 != NULL, "Failed to get address of Direct3DCreate9\n");
     if (pDirect3DCreate9)
     {
         test_display_modes();

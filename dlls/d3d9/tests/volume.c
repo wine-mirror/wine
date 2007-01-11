@@ -126,7 +126,7 @@ START_TEST(volume)
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
     {
-        trace("Could not load d3d9.dll, skipping tests\n");
+        skip("Could not load d3d9.dll\n");
         return;
     }
 

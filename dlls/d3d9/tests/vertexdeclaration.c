@@ -632,21 +632,21 @@ START_TEST(vertexdeclaration)
     d3d9_handle = LoadLibraryA("d3d9.dll");
     if (!d3d9_handle)
     {
-        trace("Could not load d3d9.dll, skipping tests\n");
+        skip("Could not load d3d9.dll\n");
         return;
     }
 
     device_ptr = init_d3d9();
     if (!device_ptr)
     {
-        trace("Failed to initialise d3d9, aborting test.\n");
+        skip("Failed to initialise d3d9\n");
         return;
     }
 
     decl_ptr = test_create_vertex_declaration(device_ptr, simple_decl);
     if (!decl_ptr)
     {
-        trace("Failed to create a vertex declaration, aborting test.\n");
+        skip("Failed to create a vertex declaration\n");
         return;
     }
 
