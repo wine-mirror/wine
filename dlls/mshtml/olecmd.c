@@ -701,7 +701,7 @@ static HRESULT exec_fontsize(HTMLDocument *This, VARIANT *in, VARIANT *out)
             set_font_size(This, V_BSTR(in));
             break;
         default:
-            FIXME("unsupported vt %d\n", V_VT(out));
+            FIXME("unsupported vt %d\n", V_VT(in));
         }
     }
 
