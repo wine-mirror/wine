@@ -170,7 +170,7 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
             checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT_AVAILABLE)\n");
             TRACE("(%p) : available %d.\n", This, available);
 
-            if (available || dwGetDataFlags & WINED3DGETDATA_FLUSH) {
+            if (available) {
                 GL_EXTCALL(glGetQueryObjectuivARB(queryId, GL_QUERY_RESULT_ARB, &samples));
                 checkGLcall("glGetQueryObjectuivARB(GL_QUERY_RESULT)\n");
                 TRACE("(%p) : Returning %d samples.\n", This, samples);
