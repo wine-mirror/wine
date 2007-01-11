@@ -356,9 +356,13 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetFrontBufferData(LPDIRECT3DDEVICE
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_StretchRect(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9* pSourceSurface, CONST RECT* pSourceRect, IDirect3DSurface9* pDestSurface, CONST RECT* pDestRect, D3DTEXTUREFILTERTYPE Filter) {
-    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;    
-    TRACE("(%p) Relay\n" , This);
-    return IWineD3DDevice_StretchRect(This->WineD3DDevice, ((IDirect3DSurface9Impl *)pSourceSurface)->wineD3DSurface, pSourceRect, ((IDirect3DSurface9Impl *)pDestSurface)->wineD3DSurface, pDestRect, (WINED3DTEXTUREFILTERTYPE) Filter);            
+    IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
+    IDirect3DSurface9Impl *src = (IDirect3DSurface9Impl *) pSourceSurface;
+    IDirect3DSurface9Impl *dst = (IDirect3DSurface9Impl *) pDestSurface;
+
+    TRACE("(%p)->(%p,%p,%p,%p,%d)\n" , This, src, pSourceRect, dst, pDestRect, Filter);
+    if(Filter != D3DTEXF_NONE) ERR("Texture filters not supported yet\n");
+    return IWineD3DSurface_Blt(dst->wineD3DSurface, (RECT *) pDestRect, src->wineD3DSurface, (RECT *) pSourceRect, 0, NULL);
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_ColorFill(LPDIRECT3DDEVICE9 iface, IDirect3DSurface9* pSurface, CONST RECT* pRect, D3DCOLOR color) {

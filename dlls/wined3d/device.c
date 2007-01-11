@@ -4930,14 +4930,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_UpdateTexture (IWineD3DDevice *iface, I
     return hr;
 }
 
-static HRESULT  WINAPI  IWineD3DDeviceImpl_StretchRect(IWineD3DDevice *iface, IWineD3DSurface *pSourceSurface,
-                                                CONST RECT* pSourceRect, IWineD3DSurface *pDestinationSurface,
-                                                CONST RECT* pDestRect, WINED3DTEXTUREFILTERTYPE Filter) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    TRACE("(%p) : stub\n", This);
-    return WINED3D_OK;
-}
 static HRESULT  WINAPI  IWineD3DDeviceImpl_GetRenderTargetData(IWineD3DDevice *iface, IWineD3DSurface *pRenderTarget, IWineD3DSurface *pSurface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     /** TODO: remove remove casts to IWineD3DSurfaceImpl *
@@ -6776,7 +6768,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_ColorFill,
     IWineD3DDeviceImpl_UpdateTexture,
     IWineD3DDeviceImpl_UpdateSurface,
-    IWineD3DDeviceImpl_StretchRect,
     IWineD3DDeviceImpl_GetRenderTargetData,
     IWineD3DDeviceImpl_GetFrontBufferData,
     /*** object tracking ***/

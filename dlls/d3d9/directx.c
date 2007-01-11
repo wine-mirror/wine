@@ -170,6 +170,9 @@ static HRESULT WINAPI IDirect3D9Impl_GetDeviceCaps(LPDIRECT3D9 iface, UINT Adapt
     D3D9CAPSTOWINECAPS(pCaps, pWineCaps)
     hrc = IWineD3D_GetDeviceCaps(This->WineD3D, Adapter, DeviceType, pWineCaps);
     HeapFree(GetProcessHeap(), 0, pWineCaps);
+
+    /* Some functionality is implemented in d3d9.dll, not wined3d.dll. Add the needed caps */
+    pCaps->Caps2 |= D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES;
     TRACE("(%p) returning %p\n", This, pCaps);
     return hrc;
 }
