@@ -513,3 +513,12 @@ BOOL16 WINAPI GetSaveFileName16(
     TRACE("return lpstrFile='%s' !\n", (char *)MapSL(lpofn->lpstrFile));
     return bRet;
 }
+
+
+/***********************************************************************
+ *	GetFileTitle		(COMMDLG.27)
+ */
+short WINAPI GetFileTitle16(LPCSTR lpFile, LPSTR lpTitle, UINT16 cbBuf)
+{
+	return GetFileTitleA(lpFile, lpTitle, cbBuf);
+}

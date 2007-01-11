@@ -3914,3 +3914,82 @@ BOOL WINAPI GetSaveFileNameW(
     else
         return GetFileDialog95W(ofn, SAVE_DIALOG);
 }
+
+/***********************************************************************
+ *	GetFileTitleA		(COMDLG32.@)
+ *
+ * See GetFileTitleW.
+ */
+short WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf)
+{
+    int ret;
+    UNICODE_STRING strWFile;
+    LPWSTR lpWTitle;
+
+    RtlCreateUnicodeStringFromAsciiz(&strWFile, lpFile);
+    lpWTitle = RtlAllocateHeap( GetProcessHeap(), 0, cbBuf*sizeof(WCHAR));
+    ret = GetFileTitleW(strWFile.Buffer, lpWTitle, cbBuf);
+    if (!ret) WideCharToMultiByte( CP_ACP, 0, lpWTitle, -1, lpTitle, cbBuf, NULL, NULL );
+    RtlFreeUnicodeString( &strWFile );
+    RtlFreeHeap( GetProcessHeap(), 0, lpWTitle );
+    return ret;
+}
+
+
+/***********************************************************************
+ *	GetFileTitleW		(COMDLG32.@)
+ *
+ * Get the name of a file.
+ *
+ * PARAMS
+ *  lpFile  [I] name and location of file
+ *  lpTitle [O] returned file name
+ *  cbBuf   [I] buffer size of lpTitle
+ *
+ * RETURNS
+ *  Success: zero
+ *  Failure: negative number.
+ */
+short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf)
+{
+	int i, len;
+        static const WCHAR brkpoint[] = {'*','[',']',0};
+	TRACE("(%p %p %d);\n", lpFile, lpTitle, cbBuf);
+
+	if(lpFile == NULL || lpTitle == NULL)
+		return -1;
+
+	len = strlenW(lpFile);
+
+	if (len == 0)
+		return -1;
+
+	if(strpbrkW(lpFile, brkpoint))
+		return -1;
+
+	len--;
+
+	if(lpFile[len] == '/' || lpFile[len] == '\\' || lpFile[len] == ':')
+		return -1;
+
+	for(i = len; i >= 0; i--)
+	{
+		if (lpFile[i] == '/' ||  lpFile[i] == '\\' ||  lpFile[i] == ':')
+		{
+			i++;
+			break;
+		}
+	}
+
+	if(i == -1)
+		i++;
+
+	TRACE("---> '%s'\n", debugstr_w(&lpFile[i]));
+
+	len = strlenW(lpFile+i)+1;
+	if(cbBuf < len)
+		return len;
+
+	strcpyW(lpTitle, &lpFile[i]);
+	return 0;
+}
