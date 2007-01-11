@@ -43,7 +43,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 static int num_errors;
 static int error_code[8];
 static const WCHAR *error_msg[8];
+static const WCHAR odbc_error_general_err[] = {'G','e','n','e','r','a','l',' ','e','r','r','o','r',0};
 static const WCHAR odbc_error_invalid_buff_len[] = {'I','n','v','a','l','i','d',' ','b','u','f','f','e','r',' ','l','e','n','g','t','h',0};
+static const WCHAR odbc_error_component_not_found[] = {'C','o','m','p','o','n','e','n','t',' ','n','o','t',' ','f','o','u','n','d',0};
+static const WCHAR odbc_error_out_of_mem[] = {'O','u','t',' ','o','f',' ','m','e','m','o','r','y',0};
 
 /* Push an error onto the error stack, taking care of ranges etc. */
 static void push_error(int code, LPCWSTR msg)
@@ -263,31 +266,93 @@ BOOL WINAPI SQLGetConfigMode(UWORD *pwConfigMode)
     return FALSE;
 }
 
+/* This is implemented sensibly rather than according to exact conformance to Microsoft's buggy implementations
+ * e.g. The Microsoft one occasionally actually adds a third nul character (possibly beyond the buffer).
+ * e.g. If the key has no drivers then version 3.525.1117.0 does not modify the buffer at all, not even a nul character.
+ */
 BOOL WINAPI SQLGetInstalledDriversW(LPWSTR lpszBuf, WORD cbBufMax,
                WORD *pcbBufOut)
 {
+    HKEY hDrivers; /* Registry handle to the Drivers key */
+    LONG reg_ret; /* Return code from registry functions */
+    BOOL success = FALSE; /* The value we will return */
+
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    /* Just enough for testing the SQLInstallerError.  The meat will be in the next patch. */
     if (!lpszBuf || cbBufMax == 0)
     {
         push_error(ODBC_ERROR_INVALID_BUFF_LEN, odbc_error_invalid_buff_len);
     }
-    return FALSE;
+    else if ((reg_ret = RegOpenKeyExA (HKEY_LOCAL_MACHINE /* The drivers does not depend on the config mode */,
+            "Software\\ODBC\\ODBCINST.INI\\ODBC Drivers", 0, KEY_READ /* Maybe overkill */,
+            &hDrivers)) == ERROR_SUCCESS)
+    {
+        DWORD index = 0;
+        cbBufMax--;
+        success = TRUE;
+        while (cbBufMax > 0)
+        {
+            DWORD size_name;
+            size_name = cbBufMax;
+            if ((reg_ret = RegEnumValueW(hDrivers, index, lpszBuf, &size_name, NULL, NULL, NULL, NULL)) == ERROR_SUCCESS)
+            {
+                index++;
+                assert (size_name < cbBufMax && *(lpszBuf + size_name) == 0);
+                size_name++;
+                cbBufMax-= size_name;
+                lpszBuf+=size_name;
+            }
+            else
+            {
+                if (reg_ret != ERROR_NO_MORE_ITEMS)
+                {
+                    success = FALSE;
+                    push_error(ODBC_ERROR_GENERAL_ERR, odbc_error_general_err);
+                }
+                break;
+            }
+        }
+        *lpszBuf = 0;
+        if ((reg_ret = RegCloseKey (hDrivers)) != ERROR_SUCCESS)
+            TRACE ("Error %d closing ODBC Drivers key\n", reg_ret);
+    }
+    else
+    {
+        /* MSDN states that it returns failure with COMPONENT_NOT_FOUND in this case.
+         * Version 3.525.1117.0 (Windows 2000) does not; it actually returns success.
+         * I doubt if it will actually be an issue.
+         */
+        push_error(ODBC_ERROR_COMPONENT_NOT_FOUND, odbc_error_component_not_found);
+    }
+    return success;
 }
 
 BOOL WINAPI SQLGetInstalledDrivers(LPSTR lpszBuf, WORD cbBufMax,
                WORD *pcbBufOut)
 {
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    /* Just enough for testing the SQLInstallerError.  The meat will be in the next patch. */
-    if (!lpszBuf || cbBufMax == 0)
+    BOOL ret;
+    int size_wbuf = cbBufMax;
+    LPWSTR wbuf;
+    WORD size_used;
+    wbuf = HeapAlloc(GetProcessHeap(), 0, size_wbuf*sizeof(WCHAR));
+    if (wbuf)
     {
-        push_error(ODBC_ERROR_INVALID_BUFF_LEN, odbc_error_invalid_buff_len);
+        ret = SQLGetInstalledDriversW(wbuf, size_wbuf, &size_used);
+        if (ret)
+        {
+            if (!(ret = SQLInstall_narrow(2, lpszBuf, wbuf, size_used, cbBufMax, pcbBufOut)))
+            {
+                push_error(ODBC_ERROR_GENERAL_ERR, odbc_error_general_err);
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, wbuf);
+        /* ignore failure; we have achieved the aim */
     }
-    return FALSE;
+    else
+    {
+        push_error(ODBC_ERROR_OUT_OF_MEM, odbc_error_out_of_mem);
+        ret = FALSE;
+    }
+    return ret;
 }
 
 int WINAPI SQLGetPrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry,
