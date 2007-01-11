@@ -5162,7 +5162,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     unsigned int  srcSurfaceWidth, srcSurfaceHeight, destSurfaceWidth, destSurfaceHeight;
     WINED3DFORMAT destFormat, srcFormat;
     UINT          destSize;
-    int destLeft, destTop;
+    int srcLeft, destLeft, destTop;
     WINED3DPOOL       srcPool, destPool;
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
@@ -5212,15 +5212,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
     srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
     srcHeight  = pSourceRect ? pSourceRect->top   - pSourceRect->bottom : srcSurfaceHeight;
+    srcLeft    = pSourceRect ? pSourceRect->left : 0;
     destLeft   = pDestPoint  ? pDestPoint->x : 0;
     destTop    = pDestPoint  ? pDestPoint->y : 0;
 
 
     /* This function doesn't support compressed textures
     the pitch is just bytesPerPixel * width */
-    if(srcWidth != srcSurfaceWidth  || (pSourceRect != NULL && pSourceRect->left != 0) ){
+    if(srcWidth != srcSurfaceWidth  || srcLeft ){
         rowoffset = (srcSurfaceWidth - srcWidth) * pSrcSurface->bytesPerPixel;
-        offset   += pSourceRect->left * pSrcSurface->bytesPerPixel;
+        offset   += srcLeft * pSrcSurface->bytesPerPixel;
         /* TODO: do we ever get 3bpp?, would a shift and an add be quicker than a mul (well maybe a cycle or two) */
     }
     /* TODO DXT formats */
