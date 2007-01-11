@@ -613,17 +613,6 @@ static	LRESULT	ADPCM_StreamClose(PACMDRVSTREAMINSTANCE adsi)
 }
 
 /***********************************************************************
- *           ADPCM_round
- *
- */
-static	inline DWORD	ADPCM_round(DWORD a, DWORD b, DWORD c)
-{
-    assert(a && b && c);
-    /* to be sure, always return an entire number of c... */
-    return ((double)a * (double)b + (double)c - 1) / (double)c;
-}
-
-/***********************************************************************
  *           ADPCM_StreamSize
  *
  */
