@@ -3,6 +3,7 @@
  *
  * Copyright 1993 Robert J. Amstadt
  * Copyright 1995, 2003 Alexandre Julliard
+ * Copyright 2006 Mike McCormack
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -621,9 +622,9 @@ DWORD WINAPI SizeofResource( HINSTANCE hModule, HRSRC hRsrc )
  *  Type/Name/Language is a keyset for accessing resource data.
  *
  *  QUEUEDUPDATES (root) ->
- *    list of struct resouce_dir_entry    (Type) ->
- *      list of struct resouce_dir_entry  (Name)   ->
- *         list of struct resouce_data    Language + Data
+ *    list of struct resource_dir_entry    (Type) ->
+ *      list of struct resource_dir_entry  (Name)   ->
+ *         list of struct resource_data    Language + Data
  */
 
 typedef struct
@@ -937,6 +938,150 @@ struct mapping_info {
     DWORD size;
     BOOL read_write;
 };
+
+static const IMAGE_SECTION_HEADER *section_from_rva( void *base, DWORD mapping_size, DWORD rva )
+{
+    const IMAGE_SECTION_HEADER *sec;
+    DWORD num_sections = 0;
+    int i;
+
+    sec = get_section_header( base, mapping_size, &num_sections );
+    if (!sec)
+        return NULL;
+
+    for (i=num_sections-1; i>=0; i--)
+    {
+        if (sec[i].VirtualAddress <= rva &&
+            rva <= (DWORD)sec[i].VirtualAddress + sec[i].SizeOfRawData)
+        {
+            return &sec[i];
+        }
+    }
+
+    return NULL;
+}
+
+static void *address_from_rva( void *base, DWORD mapping_size, DWORD rva, DWORD len )
+{
+    const IMAGE_SECTION_HEADER *sec;
+
+    sec = section_from_rva( base, mapping_size, rva );
+    if (!sec)
+        return NULL;
+
+    if (rva + len <= (DWORD)sec->VirtualAddress + sec->SizeOfRawData)
+        return (void*)((const BYTE*) base + (sec->PointerToRawData + rva - sec->VirtualAddress));
+
+    return NULL;
+}
+
+static LPWSTR resource_dup_string( const IMAGE_RESOURCE_DIRECTORY *root, const IMAGE_RESOURCE_DIRECTORY_ENTRY *entry )
+{
+    const IMAGE_RESOURCE_DIR_STRING_U* string;
+    LPWSTR s;
+
+    if (!entry->u1.s1.NameIsString)
+        return (LPWSTR) (DWORD) entry->u1.s2.Id;
+
+    string = (const IMAGE_RESOURCE_DIR_STRING_U*) (((const char *)root) + entry->u1.s1.NameOffset);
+    s = HeapAlloc(GetProcessHeap(), 0, (string->Length + 1)*sizeof (WCHAR) );
+    memcpy( s, string->NameString, (string->Length + 1)*sizeof (WCHAR) );
+    s[string->Length] = 0;
+
+    return s;
+}
+
+/* this function is based on the code in winedump's pe.c */
+static BOOL enumerate_mapped_resources( QUEUEDUPDATES *updates,
+                             void *base, DWORD mapping_size,
+                             const IMAGE_RESOURCE_DIRECTORY *root )
+{
+    const IMAGE_RESOURCE_DIRECTORY *namedir, *langdir;
+    const IMAGE_RESOURCE_DIRECTORY_ENTRY *e1, *e2, *e3;
+    const IMAGE_RESOURCE_DATA_ENTRY *data;
+    DWORD i, j, k;
+
+    TRACE("version (%d.%d) %d named %d id entries\n",
+          root->MajorVersion, root->MinorVersion, root->NumberOfNamedEntries, root->NumberOfIdEntries);
+
+    for (i = 0; i< root->NumberOfNamedEntries + root->NumberOfIdEntries; i++)
+    {
+        LPWSTR Type;
+
+        e1 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(root + 1) + i;
+
+        Type = resource_dup_string( root, e1 );
+
+        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->u2.s3.OffsetToDirectory);
+        for (j = 0; j < namedir->NumberOfNamedEntries + namedir->NumberOfIdEntries; j++)
+        {
+            LPWSTR Name;
+
+            e2 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(namedir + 1) + j;
+
+            Name = resource_dup_string( root, e2 );
+
+            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->u2.s3.OffsetToDirectory);
+            for (k = 0; k < langdir->NumberOfNamedEntries + langdir->NumberOfIdEntries; k++)
+            {
+                LANGID Lang;
+                void *p;
+                struct resource_data *resdata;
+
+                e3 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(langdir + 1) + k;
+
+                Lang = e3->u1.s2.Id;
+
+                data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->u2.OffsetToData);
+
+                p = address_from_rva( base, mapping_size, data->OffsetToData, data->Size );
+
+                resdata = allocate_resource_data( Lang, data->CodePage, p, data->Size, FALSE );
+                if (resdata)
+                    update_add_resource( updates, Type, Name, resdata, FALSE );
+            }
+            res_free_str( Name );
+        }
+        res_free_str( Type );
+    }
+
+    return TRUE;
+}
+
+static BOOL read_mapped_resources( QUEUEDUPDATES *updates, void *base, DWORD mapping_size )
+{
+    const IMAGE_RESOURCE_DIRECTORY *root;
+    const IMAGE_NT_HEADERS *nt;
+    const IMAGE_SECTION_HEADER *sec;
+    DWORD num_sections = 0, i;
+
+    nt = get_nt_header( base, mapping_size );
+    if (!nt)
+        return FALSE;
+
+    sec = get_section_header( base, mapping_size, &num_sections );
+    if (!sec)
+        return FALSE;
+
+    for (i=0; i<num_sections; i++)
+        if (!memcmp(sec[i].Name, ".rsrc", 6))
+            break;
+
+    if (i == num_sections)
+        return TRUE;
+
+    /* check the resource data is inside the mapping */
+    if (sec[i].PointerToRawData > mapping_size ||
+        (sec[i].PointerToRawData + sec[i].SizeOfRawData) > mapping_size)
+        return TRUE;
+
+    TRACE("found .rsrc at %08x, size %08x\n", sec[i].PointerToRawData, sec[i].SizeOfRawData);
+
+    root = (void*) ((BYTE*)base + sec[i].PointerToRawData);
+    enumerate_mapped_resources( updates, base, mapping_size, root );
+
+    return TRUE;
+}
 
 static BOOL map_file_into_memory( struct mapping_info *mi )
 {
@@ -1293,7 +1438,7 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
     IMAGE_NT_HEADERS *nt;
     struct resource_size_info res_size;
     BYTE *res_base;
-    struct mapping_info *write_map = NULL;
+    struct mapping_info *read_map = NULL, *write_map = NULL;
 
     /* copy the exe to a temp file then update the temp file... */
     tempdir[0] = 0;
@@ -1307,6 +1452,20 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
         goto done;
 
     TRACE("tempfile %s\n", debugstr_w(tempfile));
+
+    if (!updates->bDeleteExistingResources)
+    {
+        read_map = create_mapping( updates->pFileName, FALSE );
+        if (!read_map)
+            goto done;
+
+        ret = read_mapped_resources( updates, read_map->base, read_map->size );
+        if (!ret)
+        {
+            ERR("failed to read existing resources\n");
+            goto done;
+        }
+    }
 
     write_map = create_mapping( tempfile, TRUE );
     if (!write_map)
@@ -1386,6 +1545,7 @@ static BOOL write_raw_resources( QUEUEDUPDATES *updates )
     TRACE("after  .rsrc at %08x, size %08x\n", sec->PointerToRawData, sec->SizeOfRawData);
 
 done:
+    destroy_mapping( read_map );
     destroy_mapping( write_map );
 
     if (ret)
@@ -1469,12 +1629,6 @@ BOOL WINAPI EndUpdateResourceW( HANDLE hUpdate, BOOL fDiscard )
     updates = GlobalLock(hUpdate);
     if (!updates)
         return FALSE;
-
-    if (!updates->bDeleteExistingResources)
-    {
-        FIXME("preserving existing resources not yet implemented\n");
-        fDiscard = TRUE;
-    }
 
     ret = fDiscard || write_raw_resources( updates );
 

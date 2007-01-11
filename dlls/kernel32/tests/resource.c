@@ -266,13 +266,8 @@ START_TEST(resource)
     update_missing_exe();
     update_empty_exe();
     build_exe();
-
-    /* for when BeginUpdateResource( bDeleteExisting = FALSE ) works right */
-    if (0)
-    {
-        update_resources_none();
-        check_exe( check_empty );
-    }
+    update_resources_none();
+    check_exe( check_empty );
     update_resources_delete();
     check_exe( check_empty );
     update_resources_version();
