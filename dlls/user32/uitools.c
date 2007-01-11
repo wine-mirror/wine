@@ -1587,6 +1587,8 @@ static BOOL UITOOLS_DrawState(HDC hdc, HBRUSH hbr, DRAWSTATEPROC func, LPARAM lp
 
     if((opcode == DST_TEXT || opcode == DST_PREFIXTEXT) && !len)    /* The string is '\0' terminated */
     {
+        if (!lp) return FALSE;
+
         if(unicode)
             len = strlenW((LPWSTR)lp);
         else

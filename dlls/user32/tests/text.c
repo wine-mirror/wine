@@ -2,6 +2,7 @@
  * DrawText tests
  *
  * Copyright (c) 2004 Zach Gorman
+ * Copyright 2007 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -243,11 +244,53 @@ static void test_TabbedText(void)
         }
     }
 
+    ReleaseDC( hwnd, hdc );
+    DestroyWindow( hwnd );
+}
 
+static void test_DrawState(void)
+{
+    static const char text[] = "Sample text string";
+    HWND hwnd;
+    HDC hdc;
+    BOOL ret;
+
+    hwnd = CreateWindowExA(0, "static", NULL, WS_POPUP,
+                           0, 0, 200, 200, 0, 0, 0, NULL);
+    assert(hwnd);
+
+    hdc = GetDC(hwnd);
+    assert(hdc);
+
+    SetLastError(0xdeadbeef);
+    ret = DrawState(hdc, GetStockObject(DKGRAY_BRUSH), NULL, (LPARAM)text, strlen(text),
+                    0, 0, 10, 10, DST_TEXT);
+    ok(ret, "DrawState error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DrawState(hdc, GetStockObject(DKGRAY_BRUSH), NULL, (LPARAM)text, 0,
+                    0, 0, 10, 10, DST_TEXT);
+    ok(ret, "DrawState error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DrawState(hdc, GetStockObject(DKGRAY_BRUSH), NULL, 0, strlen(text),
+                    0, 0, 10, 10, DST_TEXT);
+    ok(!ret, "DrawState succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "not expected error %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = DrawState(hdc, GetStockObject(DKGRAY_BRUSH), NULL, 0, 0,
+                    0, 0, 10, 10, DST_TEXT);
+    ok(!ret, "DrawState succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "not expected error %u\n", GetLastError());
+
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
 }
 
 START_TEST(text)
 {
     test_TabbedText();
     test_DrawTextCalcRect();
+    test_DrawState();
 }
