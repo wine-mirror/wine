@@ -4435,7 +4435,10 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     static int hinting = -1;
 
     if(hinting == -1)
+    {
         hinting = is_hinting_enabled();
+        TRACE("hinting is %senabled\n", hinting ? "" : "NOT ");
+    }
 
     lprs->nSize = sizeof(RASTERIZER_STATUS);
     lprs->wFlags = TT_AVAILABLE | TT_ENABLED | (hinting ? WINE_TT_HINTER_ENABLED : 0);
