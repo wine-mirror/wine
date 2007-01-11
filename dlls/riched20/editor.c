@@ -1639,6 +1639,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     size_t len = wszText ? lstrlenW(wszText) : 0;
     int from, to;
     ME_Style *style;
+    int oldModify = editor->nModifyStep;
     TRACE("EM_SETTEXTEX - %s, flags %d, cp %d\n", debugstr_w(wszText), (int)pStruct->flags, pStruct->codepage);
     if (pStruct->codepage != 1200) {
       FIXME("EM_SETTEXTEX only supports unicode right now!\n"); 
@@ -1659,7 +1660,10 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     }
     ME_CommitUndo(editor);
     if (!(pStruct->flags & ST_KEEPUNDO))
+    {
+      editor->nModifyStep = oldModify;
       ME_EmptyUndoStack(editor);
+    }
     ME_UpdateRepaint(editor);
     return len;
   }
@@ -1690,7 +1694,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   case EM_SETMODIFY:
   {
     if (wParam)
-      editor->nModifyStep = 0x80000000;
+      editor->nModifyStep = 1;
     else
       editor->nModifyStep = 0;
     
@@ -1732,6 +1736,7 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       bRepaint = (from != to);
       ME_SetSelectionCharFormat(editor, p);
     }
+    editor->nModifyStep = 1;
     ME_CommitUndo(editor);
     if (bRepaint)
       ME_RewrapRepaint(editor);

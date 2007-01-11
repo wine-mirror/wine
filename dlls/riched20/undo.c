@@ -163,7 +163,6 @@ void ME_CommitUndo(ME_TextEditor *editor) {
     
   ME_AddUndoItem(editor, diUndoEndTransaction, NULL);
   ME_SendSelChange(editor);
-  editor->nModifyStep++;
 }
 
 void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
@@ -260,7 +259,6 @@ void ME_Undo(ME_TextEditor *editor) {
   if (p)
     p->prev = NULL;
   editor->nUndoMode = nMode;
-  editor->nModifyStep--;
   ME_UpdateRepaint(editor);
 }
 
@@ -293,6 +291,5 @@ void ME_Redo(ME_TextEditor *editor) {
   if (p)
     p->prev = NULL;
   editor->nUndoMode = nMode;
-  editor->nModifyStep++;
   ME_UpdateRepaint(editor);
 }

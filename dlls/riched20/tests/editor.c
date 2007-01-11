@@ -1192,10 +1192,8 @@ static void test_EM_GETMODIFY(void)
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
   SendMessage(hwndRichEdit, WM_SETFONT, (WPARAM)testFont,(LPARAM) MAKELONG((WORD) TRUE, 0));
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  todo_wine {
   ok (result == 0,
       "EM_GETMODIFY returned non-zero, instead of zero on setting font\n");
-  }
 
   /* setting text should set modify flag */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
@@ -1207,20 +1205,16 @@ static void test_EM_GETMODIFY(void)
   /* undo previous text doesn't reset modify flag */
   SendMessage(hwndRichEdit, WM_UNDO, 0, 0);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  todo_wine {
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero on undo after setting text\n");
-  }
   
   /* set text with no flag to keep undo stack should not set modify flag */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
   setText.flags = 0;
   SendMessage(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  todo_wine {
   ok (result == 0,
       "EM_GETMODIFY returned non-zero, instead of zero when setting text while not keeping undo stack\n");
-  }
   
   /* WM_SETTEXT doesn't modify */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
@@ -1295,10 +1289,8 @@ static void test_EM_GETMODIFY(void)
   pf2.wAlignment = PFA_RIGHT;
   SendMessage(hwndRichEdit, EM_SETPARAFORMAT, 0, (LPARAM) &pf2);
   result = SendMessage(hwndRichEdit, EM_GETMODIFY, 0, 0);
-  todo_wine {
   ok (result == 0,
       "EM_GETMODIFY returned zero, instead of non-zero for EM_SETPARAFORMAT\n");
-  }
 
   /* EM_STREAM */
   SendMessage(hwndRichEdit, EM_SETMODIFY, FALSE, 0);

@@ -435,6 +435,9 @@ void ME_InsertTextFromCursor(ME_TextEditor *editor, int nCursor,
   /* Didn't affect performance for WM_SETTEXT (around 50sec/30K) */
   int freeSpace = editor->nTextLimit - ME_GetTextLength(editor);
 
+  /* text operations set modified state */
+  editor->nModifyStep = 1;
+
   assert(style);
 
   /* FIXME really HERE ? */
