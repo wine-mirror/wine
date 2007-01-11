@@ -985,11 +985,13 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
     /* Is the Monitor already loaded? */
     EnterCriticalSection(&monitor_handles_cs);
 
-    LIST_FOR_EACH_ENTRY(cursor, &monitor_handles, monitor_t, entry)
-    {
-        if (lstrcmpW(name, cursor->name) == 0) {
-            pm = cursor;
-            break;
+    if (name) {
+        LIST_FOR_EACH_ENTRY(cursor, &monitor_handles, monitor_t, entry)
+        {
+            if (cursor->name && (lstrcmpW(name, cursor->name) == 0)) {
+                pm = cursor;
+                break;
+            }
         }
     }
 
@@ -1005,8 +1007,10 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
         LPMONITOREX pmonitorEx;
         DWORD   len;
 
-        len = lstrlenW(MonitorsW) + lstrlenW(name) + 2; 
-        regroot = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (name) {
+            len = lstrlenW(MonitorsW) + lstrlenW(name) + 2;
+            regroot = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        }
 
         if (regroot) {
             lstrcpyW(regroot, MonitorsW);
@@ -1029,7 +1033,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
         pm->name = strdupW(name);
         pm->dllname = strdupW(driver);
 
-        if (!regroot || !pm->name || !pm->dllname) {
+        if ((name && (!regroot || !pm->name)) || !pm->dllname) {
             monitor_unload(pm);
             SetLastError(ERROR_NOT_ENOUGH_MEMORY);
             pm = NULL;
@@ -1069,10 +1073,10 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
             }
         }
 
-        if (pInitializePrintMonitor != NULL) {
+        if (pInitializePrintMonitor && regroot) {
             pmonitorEx = pInitializePrintMonitor(regroot);
-            TRACE(  "%p: LPMONITOREX from %s,InitializePrintMonitor(%s)\n", 
-                    pmonitorEx, debugstr_w(driver), debugstr_w(regroot)); 
+            TRACE(  "%p: LPMONITOREX from %s,InitializePrintMonitor(%s)\n",
+                    pmonitorEx, debugstr_w(driver), debugstr_w(regroot));
 
             if (pmonitorEx) {
                 pm->dwMonitorSize = pmonitorEx->dwMonitorSize;
@@ -1085,7 +1089,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
 
         }
 
-        if (!pm->monitor) {
+        if (!pm->monitor && regroot) {
             if (pInitializePrintMonitor2 != NULL) {
                 FIXME("%s,InitializePrintMonitor2 not implemented\n", debugstr_w(driver));
             }
