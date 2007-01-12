@@ -1056,7 +1056,7 @@ static void test_shell_window(void)
 
 /************** MDI test ****************/
 
-static const char mdi_lParam_test_message[] = "just a test string";
+static char mdi_lParam_test_message[] = "just a test string";
 
 static void test_MDI_create(HWND parent, HWND mdi_client, INT first_id)
 {
