@@ -365,7 +365,7 @@ static void WCCURSES_Refresh(const struct inner_data* data, int tp, int bm)
         {
             WideCharToMultiByte(CP_UNIXCP, 0, &cell[x].Char.UnicodeChar, 1,
                                 &ch, 1, NULL, NULL);
-            attr = ((BYTE)ch < 32 || (BYTE)ch > 127) ? 32 : (BYTE)ch;
+            attr = ((BYTE)ch < 32) ? 32 : (BYTE)ch;
 
             if (cell[x].Attributes & FOREGROUND_RED)       attr |= COLOR_PAIR(COLOR_RED);
             if (cell[x].Attributes & FOREGROUND_BLUE)      attr |= COLOR_PAIR(COLOR_BLUE);
@@ -487,6 +487,7 @@ static unsigned WCCURSES_FillSimpleChar(INPUT_RECORD* ir, unsigned real_inchar)
 {
     unsigned vk;
     unsigned inchar;
+    char ch;
     unsigned numEvent = 0;
     DWORD    cks = 0;
 
@@ -538,8 +539,9 @@ static unsigned WCCURSES_FillSimpleChar(INPUT_RECORD* ir, unsigned real_inchar)
         ir[numEvent].Event.KeyEvent.dwControlKeyState |= LEFT_ALT_PRESSED;
     ir[numEvent].Event.KeyEvent.wVirtualKeyCode = vk;
     ir[numEvent].Event.KeyEvent.wVirtualScanCode = mapvkey_0[vk & 0x00ff]; /* VirtualKeyCodes to ScanCode */
-    ir[numEvent].Event.KeyEvent.uChar.UnicodeChar = (unsigned char)inchar;
 
+    ch = inchar;
+    MultiByteToWideChar(CP_UNIXCP, 0,&ch,1,&ir[numEvent].Event.KeyEvent.uChar.UnicodeChar, 1);
     ir[numEvent + 1] = ir[numEvent];
     ir[numEvent + 1].Event.KeyEvent.bKeyDown      = 0;
 
