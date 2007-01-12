@@ -860,7 +860,6 @@ static const WCHAR szTables[]  = { '_','T','a','b','l','e','s',0 };
 static const WCHAR szTable[]  = { 'T','a','b','l','e',0 };
 static const WCHAR szName[]    = { 'N','a','m','e',0 };
 static const WCHAR szColumns[] = { '_','C','o','l','u','m','n','s',0 };
-static const WCHAR szColumn[]  = { 'C','o','l','u','m','n',0 };
 static const WCHAR szNumber[]  = { 'N','u','m','b','e','r',0 };
 static const WCHAR szType[]    = { 'T','y','p','e',0 };
 

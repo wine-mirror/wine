@@ -107,14 +107,6 @@ static const WCHAR szUserProduct_fmt[] = {
 'P','r','o','d','u','c','t','s','\\',
 '%','s',0};
 
-static const WCHAR szInstaller_Products[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'P','r','o','d','u','c','t','s',0};
-
 static const WCHAR szInstaller_Products_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -124,14 +116,6 @@ static const WCHAR szInstaller_Products_fmt[] = {
 'P','r','o','d','u','c','t','s','\\',
 '%','s',0};
 
-static const WCHAR szInstaller_UpgradeCodes[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'W','i','n','d','o','w','s','\\',
-'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','p','g','r','a','d','e','C','o','d','e','s',0};
-
 static const WCHAR szInstaller_UpgradeCodes_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
 'M','i','c','r','o','s','o','f','t','\\',
@@ -140,12 +124,6 @@ static const WCHAR szInstaller_UpgradeCodes_fmt[] = {
 'I','n','s','t','a','l','l','e','r','\\',
 'U','p','g','r','a','d','e','C','o','d','e','s','\\',
 '%','s',0};
-
-static const WCHAR szInstaller_UserUpgradeCodes[] = {
-'S','o','f','t','w','a','r','e','\\',
-'M','i','c','r','o','s','o','f','t','\\',
-'I','n','s','t','a','l','l','e','r','\\',
-'U','p','g','r','a','d','e','C','o','d','e','s',0};
 
 static const WCHAR szInstaller_UserUpgradeCodes_fmt[] = {
 'S','o','f','t','w','a','r','e','\\',
