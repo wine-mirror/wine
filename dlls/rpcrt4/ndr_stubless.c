@@ -1036,7 +1036,7 @@ __ASM_GLOBAL_FUNC(call_server_func,
     "popl %esi\n\t"             /* Restore registers */
     "popl %edi\n\t"
     "popl %ebp\n\t"
-    "ret\n" );
+    "ret\n" )
 #else
 #warning call_server_func not implemented for your architecture
 LONG_PTR __cdecl call_server_func(SERVER_ROUTINE func, unsigned char * args, unsigned short stack_size)

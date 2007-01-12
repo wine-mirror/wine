@@ -422,7 +422,7 @@ __ASM_GLOBAL_FUNC( __CxxFrameHandler,
                    "pushl 28(%esp)\n\t"  /* rec */
                    "call " __ASM_NAME("cxx_frame_handler") "\n\t"
                    "add $28,%esp\n\t"
-                   "ret" );
+                   "ret" )
 
 
 /*********************************************************************

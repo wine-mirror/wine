@@ -2161,7 +2161,7 @@ void WINAPI MapHInstSL16( CONTEXT86 *context )
 __ASM_GLOBAL_FUNC( MapHInstLS,
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("MapHModuleLS") "\n\t"
-                   "ret" );
+                   "ret" )
 
 /***************************************************************************
  *		MapHInstSL			(KERNEL32.@)
@@ -2169,7 +2169,7 @@ __ASM_GLOBAL_FUNC( MapHInstLS,
 __ASM_GLOBAL_FUNC( MapHInstSL,
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("MapHModuleSL") "\n\t"
-                   "ret" );
+                   "ret" )
 
 /***************************************************************************
  *		MapHInstLS_PN			(KERNEL32.@)
@@ -2179,7 +2179,7 @@ __ASM_GLOBAL_FUNC( MapHInstLS_PN,
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("MapHModuleLS") "\n"
-                   "1:\tret" );
+                   "1:\tret" )
 
 /***************************************************************************
  *		MapHInstSL_PN			(KERNEL32.@)
@@ -2189,6 +2189,6 @@ __ASM_GLOBAL_FUNC( MapHInstSL_PN,
                    "jz 1f\n\t"
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("MapHModuleSL") "\n"
-                   "1:\tret" );
+                   "1:\tret" )
 
 #endif  /* __i386__ */

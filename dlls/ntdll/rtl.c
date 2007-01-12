@@ -407,7 +407,7 @@ __ASM_GLOBAL_FUNC( _chkstk,
                    "xchgl %esp,%eax\n\t"
                    "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
                    "movl %eax,0(%esp)\n\t"
-                   "ret" );
+                   "ret" )
 #endif
 
 /**************************************************************************
@@ -422,7 +422,7 @@ __ASM_GLOBAL_FUNC( _alloca_probe,
                    "xchgl %esp,%eax\n\t"
                    "movl 0(%eax),%eax\n\t"  /* copy return address from old location */
                    "movl %eax,0(%esp)\n\t"
-                   "ret" );
+                   "ret" )
 #endif
 
 
@@ -627,7 +627,7 @@ ULONGLONG __cdecl RtlUlonglongByteSwap(ULONGLONG i)
 __ASM_GLOBAL_FUNC(NTDLL_RtlUlongByteSwap,
                   "movl %ecx,%eax\n\t"
                   "bswap %eax\n\t"
-                  "ret");
+                  "ret")
 #endif
 
 /*************************************************************************
@@ -642,7 +642,7 @@ __ASM_GLOBAL_FUNC(NTDLL_RtlUlongByteSwap,
 __ASM_GLOBAL_FUNC(NTDLL_RtlUshortByteSwap,
                   "movb %ch,%al\n\t"
                   "movb %cl,%ah\n\t"
-                  "ret");
+                  "ret")
 #endif
 
 

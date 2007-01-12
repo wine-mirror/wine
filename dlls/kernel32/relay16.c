@@ -302,7 +302,7 @@ __ASM_GLOBAL_FUNC( call_entry_point,
                    "\tpopl %edi\n"
                    "\tpopl %esi\n"
                    "\tpopl %ebp\n"
-                   "\tret" );
+                   "\tret" )
 
 
 /***********************************************************************

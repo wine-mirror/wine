@@ -109,7 +109,7 @@ __ASM_GLOBAL_FUNC(_EH_prolog,
                   "movl  %ebp, 12(%esp)\n\t"
                   "leal  12(%esp), %ebp\n\t"
                   "pushl %eax\n\t"
-                  "ret");
+                  "ret")
 #endif
 
 /*******************************************************************
@@ -286,7 +286,7 @@ __ASM_GLOBAL_FUNC( longjmp_set_regs,
                    "movl 12(%ecx),%esi\n\t"  /* jmp_buf.Esi */
                    "movl 16(%ecx),%esp\n\t"  /* jmp_buf.Esp */
                    "addl $4,%esp\n\t"        /* get rid of return address */
-                   "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ );
+                   "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ )
 
 /*
  * The signatures of the setjmp/longjmp functions do not match that
@@ -297,7 +297,7 @@ __ASM_GLOBAL_FUNC( longjmp_set_regs,
 /*******************************************************************
  *		_setjmp (MSVCRT.@)
  */
-DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp);
+DEFINE_SETJMP_ENTRYPOINT(MSVCRT__setjmp)
 int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
 {
     jmp->Registration = (unsigned long)NtCurrentTeb()->Tib.ExceptionList;
@@ -314,7 +314,7 @@ int CDECL __regs_MSVCRT__setjmp(struct MSVCRT___JUMP_BUFFER *jmp)
 /*******************************************************************
  *		_setjmp3 (MSVCRT.@)
  */
-DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 );
+DEFINE_SETJMP_ENTRYPOINT( MSVCRT__setjmp3 )
 int CDECL __regs_MSVCRT__setjmp3(struct MSVCRT___JUMP_BUFFER *jmp, int nb_args, ...)
 {
     jmp->Cookie = MSVCRT_JMP_MAGIC;

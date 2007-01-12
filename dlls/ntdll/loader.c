@@ -150,7 +150,7 @@ __ASM_GLOBAL_FUNC(call_dll_entry_point,
                   "leal -4(%ebp),%esp\n\t"
                   "popl %ebx\n\t"
                   "popl %ebp\n\t"
-                  "ret" );
+                  "ret" )
 #else /* __i386__ */
 static inline BOOL call_dll_entry_point( DLLENTRYPROC proc, void *module,
                                          UINT reason, void *reserved )

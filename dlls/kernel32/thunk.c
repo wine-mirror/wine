@@ -661,23 +661,23 @@ DEFINE_REGS_ENTRYPOINT( FT_Thunk, 0, 0 );
     "leave\n\t"
 
 #define DEFINE_FT_Exit(n) \
-    __ASM_GLOBAL_FUNC( FT_Exit ## n, FT_EXIT_RESTORE_REGS "ret $" #n );
+    __ASM_GLOBAL_FUNC( FT_Exit ## n, FT_EXIT_RESTORE_REGS "ret $" #n )
 
-DEFINE_FT_Exit(0);
-DEFINE_FT_Exit(4);
-DEFINE_FT_Exit(8);
-DEFINE_FT_Exit(12);
-DEFINE_FT_Exit(16);
-DEFINE_FT_Exit(20);
-DEFINE_FT_Exit(24);
-DEFINE_FT_Exit(28);
-DEFINE_FT_Exit(32);
-DEFINE_FT_Exit(36);
-DEFINE_FT_Exit(40);
-DEFINE_FT_Exit(44);
-DEFINE_FT_Exit(48);
-DEFINE_FT_Exit(52);
-DEFINE_FT_Exit(56);
+DEFINE_FT_Exit(0)
+DEFINE_FT_Exit(4)
+DEFINE_FT_Exit(8)
+DEFINE_FT_Exit(12)
+DEFINE_FT_Exit(16)
+DEFINE_FT_Exit(20)
+DEFINE_FT_Exit(24)
+DEFINE_FT_Exit(28)
+DEFINE_FT_Exit(32)
+DEFINE_FT_Exit(36)
+DEFINE_FT_Exit(40)
+DEFINE_FT_Exit(44)
+DEFINE_FT_Exit(48)
+DEFINE_FT_Exit(52)
+DEFINE_FT_Exit(56)
 
 #endif /* __i386__ */
 

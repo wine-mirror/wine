@@ -278,7 +278,7 @@ __ASM_GLOBAL_FUNC( WINPROC_wrapper,
                    "popl %esi\n\t"
                    "popl %edi\n\t"
                    "leave\n\t"
-                   "ret" );
+                   "ret" )
 #else
 static inline LRESULT WINPROC_wrapper( WNDPROC proc, HWND hwnd, UINT msg,
                                        WPARAM wParam, LPARAM lParam )

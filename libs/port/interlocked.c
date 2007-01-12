@@ -30,28 +30,28 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
                   "movl 8(%esp),%ecx\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; cmpxchgl %ecx,(%edx)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "movl 12(%esp),%eax\n\t"
                   "movl 8(%esp),%ecx\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; cmpxchgl %ecx,(%edx)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; xchgl %eax,(%edx)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; xchgl %eax,(%edx)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
                   "lock; xaddl %eax,(%edx)\n\t"
-                  "ret");
+                  "ret")
 
 #elif defined(_MSC_VER)
 
@@ -108,23 +108,23 @@ __declspec(naked) int interlocked_xchg_add( int *dest, int incr )
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
                   "mov %edx, %eax\n\t"
                   "lock cmpxchgl %esi,(%rdi)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "mov %rdx, %rax\n\t"
                   "lock cmpxchgq %rsi,(%rdi)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "mov %esi, %eax\n\t"
                   "lock xchgl %eax, (%rdi)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
                   "mov %rsi, %rax\n\t"
                   "lock xchgq %rax,(%rdi)\n\t"
-                  "ret");
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "mov %esi, %eax\n\t"
                   "lock xaddl %eax, (%rdi)\n\t"
-                  "ret");
+                  "ret")
 
 #else
 # error You must implement the interlocked* functions for your compiler
@@ -286,7 +286,7 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg,
                   "beq   $0,L0cmpxchg\n\t"
                   "mov   $18,$0\n"
                   "L1cmpxchg:\n\t"
-                  "mb");
+                  "mb")
 
 __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "L0cmpxchg_ptr:\n\t"
@@ -298,7 +298,7 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "beq   $0,L0cmpxchg_ptr\n\t"
                   "mov   $18,$0\n"
                   "L1cmpxchg_ptr:\n\t"
-                  "mb");
+                  "mb")
 
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "L0xchg:\n\t"
@@ -306,7 +306,7 @@ __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "mov   $17,$1\n\t"
                   "stl_c $1,0($16)\n\t"
                   "beq   $1,L0xchg\n\t"
-                  "mb");
+                  "mb")
 
 __ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
                   "L0xchg_ptr:\n\t"
@@ -314,7 +314,7 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_ptr,
                   "mov   $17,$1\n\t"
                   "stq_c $1,0($16)\n\t"
                   "beq   $1,L0xchg_ptr\n\t"
-                  "mb");
+                  "mb")
 
 __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "L0xchg_add:\n\t"
@@ -322,7 +322,7 @@ __ASM_GLOBAL_FUNC(interlocked_xchg_add,
                   "addl  $0,$17,$1\n\t"
                   "stl_c $1,0($16)\n\t"
                   "beq   $1,L0xchg_add\n\t"
-                  "mb");
+                  "mb")
 
 #else
 # error You must implement the interlocked* functions for your CPU

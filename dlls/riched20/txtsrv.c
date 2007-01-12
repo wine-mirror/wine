@@ -346,24 +346,24 @@ HRESULT WINAPI fnTextSrv_TxGetCachedSize(ITextServices *iface,
    return E_NOTIMPL;
 }
 
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxSendMessage);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxDraw);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetHScroll);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetVScroll);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxSetCursor);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxQueryHitPoint);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInplaceActivate);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInplaceDeactivate);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxUIActivate);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxUIDeactivate);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetText);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxSetText);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetCurrentTargetX);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetBaseLinePos);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetNaturalSize);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetDropTarget);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxPropertyBitsChange);
-DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetCachedSize);
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxSendMessage)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxDraw)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetHScroll)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetVScroll)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxSetCursor)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxQueryHitPoint)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInplaceActivate)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxInplaceDeactivate)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxUIActivate)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxUIDeactivate)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetText)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxSetText)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetCurrentTargetX)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetBaseLinePos)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetNaturalSize)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetDropTarget)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_OnTxPropertyBitsChange)
+DEFINE_THISCALL_WRAPPER(fnTextSrv_TxGetCachedSize)
 
 static const ITextServicesVtbl textservices_Vtbl =
 {

@@ -148,7 +148,7 @@ __ASM_GLOBAL_FUNC(_chkesp,
                   "popl %ecx\n\t"
                   "popl %eax\n\t"
                   "leave\n\t"
-                  "ret");
+                  "ret")
 
 void CDECL MSVCRT_chkesp_fail(void)
 {

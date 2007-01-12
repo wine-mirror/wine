@@ -130,7 +130,7 @@ __ASM_GLOBAL_FUNC(vm86_enter,
                   ".globl " __ASM_NAME("vm86_return_end") "\n\t"
                   __ASM_FUNC("vm86_return_end") "\n"
                   __ASM_NAME("vm86_return_end") ":\n\t"
-                  "ret" );
+                  "ret" )
 
 #ifdef HAVE_SYS_VM86_H
 # define __HAVE_VM86
@@ -1477,12 +1477,12 @@ void __wine_enter_vm86( CONTEXT *context )
 /**********************************************************************
  *		DbgBreakPoint   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret");
+__ASM_GLOBAL_FUNC( DbgBreakPoint, "int $3; ret")
 
 /**********************************************************************
  *		DbgUserBreakPoint   (NTDLL.@)
  */
-__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret");
+__ASM_GLOBAL_FUNC( DbgUserBreakPoint, "int $3; ret")
 
 
 /**********************************************************************
@@ -1509,7 +1509,7 @@ __ASM_GLOBAL_FUNC( EXC_CallHandler,
 "	popl	%ebx\n"
 "	leave\n"
 "	ret\n"
-);
+)
 __ASM_GLOBAL_FUNC(call_exception_handler,
 "	pushl	%ebp\n"
 "	movl	%esp, %ebp\n"
@@ -1533,5 +1533,5 @@ __ASM_GLOBAL_FUNC(call_exception_handler,
 "	movl	%ebp, %esp\n"     /* restore saved stack, in case it was corrupted */
 "	popl	%ebp\n"
 "	ret	$20\n"            /* (*4) */
-);
+)
 #endif  /* __i386__ */

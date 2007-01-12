@@ -566,7 +566,7 @@ LPVOID WINAPI MapSLFix( SEGPTR sptr )
  * Must not change EAX, hence defined as asm function.
  */
 #ifdef __i386__
-__ASM_GLOBAL_FUNC( UnMapSLFixArray, "ret $8" );
+__ASM_GLOBAL_FUNC( UnMapSLFixArray, "ret $8" )
 #endif
 
 
@@ -603,7 +603,7 @@ __ASM_GLOBAL_FUNC( SMapLS,
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("MapLS") "\n\t"
                    "movl %eax,%edx\n"
-                   "1:\tret" );
+                   "1:\tret" )
 
 /***********************************************************************
  *		SUnMapLS (KERNEL32.@)
@@ -613,7 +613,7 @@ __ASM_GLOBAL_FUNC( SUnMapLS,
                    "pushl %eax\n\t"
                    "call " __ASM_NAME("UnMapLS") "\n\t"
                    "popl %eax\n\t"
-                   "ret" );
+                   "ret" )
 
 /***********************************************************************
  *		SMapLS_IP_EBP_8 (KERNEL32.@)
@@ -636,17 +636,17 @@ __ASM_GLOBAL_FUNC( SUnMapLS,
                      "movl " #n "(%ebp),%eax\n\t" \
                      "call " __ASM_NAME("SMapLS") "\n\t" \
                      "movl %edx," #n "(%ebp)\n\t" \
-                     "ret" );
+                     "ret" )
 
-DEFINE_SMapLS(8);
-DEFINE_SMapLS(12);
-DEFINE_SMapLS(16);
-DEFINE_SMapLS(20);
-DEFINE_SMapLS(24);
-DEFINE_SMapLS(28);
-DEFINE_SMapLS(32);
-DEFINE_SMapLS(36);
-DEFINE_SMapLS(40);
+DEFINE_SMapLS(8)
+DEFINE_SMapLS(12)
+DEFINE_SMapLS(16)
+DEFINE_SMapLS(20)
+DEFINE_SMapLS(24)
+DEFINE_SMapLS(28)
+DEFINE_SMapLS(32)
+DEFINE_SMapLS(36)
+DEFINE_SMapLS(40)
 
 
 /***********************************************************************
@@ -670,14 +670,14 @@ DEFINE_SMapLS(40);
                      "popl %eax\n\t" \
                      "ret" )
 
-DEFINE_SUnMapLS(8);
-DEFINE_SUnMapLS(12);
-DEFINE_SUnMapLS(16);
-DEFINE_SUnMapLS(20);
-DEFINE_SUnMapLS(24);
-DEFINE_SUnMapLS(28);
-DEFINE_SUnMapLS(32);
-DEFINE_SUnMapLS(36);
-DEFINE_SUnMapLS(40);
+DEFINE_SUnMapLS(8)
+DEFINE_SUnMapLS(12)
+DEFINE_SUnMapLS(16)
+DEFINE_SUnMapLS(20)
+DEFINE_SUnMapLS(24)
+DEFINE_SUnMapLS(28)
+DEFINE_SUnMapLS(32)
+DEFINE_SUnMapLS(36)
+DEFINE_SUnMapLS(40)
 
 #endif  /* __i386__ */
