@@ -123,7 +123,6 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
         case WM_LBUTTONDBLCLK:
         case WM_RBUTTONDBLCLK:
         case WM_MBUTTONDBLCLK:
-        {
             /* notify the owner hwnd of the message */
             WINE_TRACE("relaying 0x%x\n", msg);
             ret = PostMessage(icon->owner, icon->callback_message, (WPARAM) icon->id, (LPARAM) msg);
@@ -133,8 +132,7 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
                           "notification icon, removing automatically\n");
                 DestroyWindow(window);
             }
-            return 0;
-        }
+            break;
 
         case WM_NCDESTROY:
             SetWindowLongPtr(window, GWLP_USERDATA, 0);
@@ -143,9 +141,12 @@ static LRESULT WINAPI adaptor_wndproc(HWND window, UINT msg,
             DestroyIcon(icon->image);
             HeapFree(GetProcessHeap(), 0, icon);
             break;
+
+        default:
+            return DefWindowProc(window, msg, wparam, lparam);
     }
 
-    return DefWindowProc(window, msg, wparam, lparam);
+    return 0;
 }
 
 
