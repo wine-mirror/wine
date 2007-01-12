@@ -450,17 +450,6 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
         goto error;
     }
 
-    /* Transformed vertices are horribly inflexible. If the app specifies an
-      * vertex buffer with transformed vertices in default pool without DYNAMIC
-      * usage assume DYNAMIC usage and print a warning. The app will have to update
-      * the vertices regularily for them to be useful
-      */
-    if(((object->fvf & WINED3DFVF_POSITION_MASK) == WINED3DFVF_XYZRHW) &&
-        !(vboUsage & WINED3DUSAGE_DYNAMIC)) {
-        WARN("Application creates a vertex buffer holding transformed vertices which doesn't specify dynamic usage\n");
-        vboUsage |= WINED3DUSAGE_DYNAMIC;
-    }
-
     /* Don't use static, because dx apps tend to update the buffer
       * quite often even if they specify 0 usage
       */
