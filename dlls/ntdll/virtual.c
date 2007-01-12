@@ -1874,6 +1874,10 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     SERVER_END_REQ;
     if (res) return res;
 
+    size = ((ULONGLONG)size_high << 32) | size_low;
+    if (sizeof(size) == sizeof(size_low) && size_high)
+        ERR( "Sizes larger than 4Gb (%x%08x) not supported on this platform\n", size_high, size_low );
+
     if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
     if (prot & VPROT_IMAGE)
@@ -1884,32 +1888,28 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
-            res = map_image( handle, unix_handle, base, size_low, mask, header_size,
+            res = map_image( handle, unix_handle, base, size, mask, header_size,
                              shared_fd, dup_mapping, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             NtClose( shared_file );
         }
         else
         {
-            res = map_image( handle, unix_handle, base, size_low, mask, header_size,
+            res = map_image( handle, unix_handle, base, size, mask, header_size,
                              -1, dup_mapping, addr_ptr );
         }
         if (needs_close) close( unix_handle );
-        if (!res) *size_ptr = size_low;
+        if (!res) *size_ptr = size;
         return res;
     }
 
-    if (size_high)
-        ERR("Sizes larger than 4Gb not supported\n");
-
-    if ((offset.u.LowPart >= size_low) ||
-        (*size_ptr > size_low - offset.u.LowPart))
+    if ((offset.QuadPart >= size) || (*size_ptr > size - offset.QuadPart))
     {
         res = STATUS_INVALID_PARAMETER;
         goto done;
     }
     if (*size_ptr) size = ROUND_SIZE( offset.u.LowPart, *size_ptr );
-    else size = size_low - offset.u.LowPart;
+    else size = size - offset.QuadPart;
 
     switch(protect)
     {
