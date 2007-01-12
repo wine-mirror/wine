@@ -1745,9 +1745,9 @@ BOOL WINAPI EnumSystemCodePagesW( CODEPAGE_ENUMPROCW lpfnCodePageEnum, DWORD fla
  *   page   [I] Codepage character set to convert from
  *   flags  [I] Character mapping flags
  *   src    [I] Source string buffer
- *   srclen [I] Length of src, or -1 if src is NUL terminated
+ *   srclen [I] Length of src (in bytes), or -1 if src is NUL terminated
  *   dst    [O] Destination buffer
- *   dstlen [I] Length of dst, or 0 to compute the required length
+ *   dstlen [I] Length of dst (in WCHARs), or 0 to compute the required length
  *
  * RETURNS
  *   Success: If dstlen > 0, the number of characters written to dst.
@@ -1836,9 +1836,9 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
  *   page    [I] Code page character set to convert to
  *   flags   [I] Mapping Flags (MB_ constants from "winnls.h").
  *   src     [I] Source string buffer
- *   srclen  [I] Length of src, or -1 if src is NUL terminated
+ *   srclen  [I] Length of src (in WCHARs), or -1 if src is NUL terminated
  *   dst     [O] Destination buffer
- *   dstlen  [I] Length of dst, or 0 to compute the required length
+ *   dstlen  [I] Length of dst (in bytes), or 0 to compute the required length
  *   defchar [I] Default character to use for conversion if no exact
  *		    conversion can be made
  *   used    [O] Set if default character was used in the conversion
