@@ -1244,6 +1244,8 @@ HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs,
 
      if (!(lpABC = usp_zero_alloc(sizeof(ABC) * cGlyphs))) return E_OUTOFMEMORY;
 
+     memset(pABC, 0, sizeof(ABC));
+
     /* FIXME: set pGoffset to more reasonable values */
      if (!GetCharABCWidthsI(((ScriptCache *)*psc)->hdc, 0, cGlyphs, (WORD *) pwGlyphs, lpABC ))
      {
