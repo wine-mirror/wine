@@ -22,6 +22,7 @@
 #include <windows.h>
 #include <richedit.h>
 #include <time.h>
+#include <stdio.h>
 
 static HMODULE hmoduleRichEdit;
 
@@ -1386,6 +1387,41 @@ static void test_EM_EXSETSEL(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static void test_WM_PASTE(void)
+{
+    int result;
+    char buffer[1024] = {0};
+    const char* text1 = "testing paste\r";
+    const char* text2 = "testing paste\r\rtesting paste";
+    const char* text3 = "testing paste\rpaste\rtesting paste";
+    HWND hwndRichEdit = new_richedit(NULL);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text1);
+    SendMessage(hwndRichEdit, EM_SETSEL, 0, 14);
+    SendMessage(hwndRichEdit, WM_CHAR, 3, 0);  /* ctrl-c */
+    SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
+    SendMessage(hwndRichEdit, WM_CHAR, 22, 0);  /* ctrl-v */
+    SendMessage(hwndRichEdit, WM_CHAR, 26, 0);  /* ctrl-z */
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(text1, buffer);
+    ok(result == 0,
+        "test paste: strcmp = %i\n", result);
+
+    SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) text2);
+    SendMessage(hwndRichEdit, EM_SETSEL, 8, 13);
+    SendMessage(hwndRichEdit, WM_CHAR, 3, 0);  /* ctrl-c */
+    SendMessage(hwndRichEdit, EM_SETSEL, 14, 14);
+    SendMessage(hwndRichEdit, WM_CHAR, 22, 0);  /* ctrl-v */
+    SendMessage(hwndRichEdit, WM_CHAR, 26, 0);  /* ctrl-z */
+    SendMessage(hwndRichEdit, WM_CHAR, 25, 0);  /* ctrl-y */
+    SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+    result = strcmp(buffer,text3);
+    ok(result == 0,
+        "test paste: strcmp = %i\n", result);
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1412,6 +1448,7 @@ START_TEST( editor )
   test_WM_SETFONT();
   test_EM_GETMODIFY();
   test_EM_EXSETSEL();
+  test_WM_PASTE();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

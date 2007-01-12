@@ -598,7 +598,6 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   RTF_Info parser;
   ME_Style *style;
   int from, to, to2;
-  ME_UndoItem *pUI;
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
 
@@ -671,19 +670,9 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     if (!(format & SFF_SELECTION))
       SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
   }
-  
+
   if (format & SFF_SELECTION)
   {
-    if(from < to) /* selection overwritten is non-empty */
-    {
-      pUI = ME_AddUndoItem(editor, diUndoDeleteRun, NULL);
-      TRACE("from %d to %d\n", from, to);
-      if (pUI)
-      {
-        pUI->nStart = from;
-        pUI->nLen = to-from;
-      }
-    }
     /* even if we didn't add an undo, we need to commit the ones added earlier */
     ME_CommitUndo(editor);
   }
