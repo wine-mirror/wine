@@ -604,7 +604,7 @@ static void test_CreateAsyncBindCtxEx(void)
         IBindCtx_Release(bctx);
 }
 
-static void test_BindToStorage(void)
+static void test_BindToStorage(int protocol, BOOL emul)
 {
     IMoniker *mon;
     HRESULT hres;
@@ -614,6 +614,9 @@ static void test_BindToStorage(void)
     IBindStatusCallback *previousclb;
     IUnknown *unk = (IUnknown*)0x00ff00ff;
     IBinding *bind;
+
+    test_protocol = protocol;
+    emulate_protocol = emul;
 
     hres = CreateAsyncBindCtx(0, &bsc, NULL, &bctx);
     ok(SUCCEEDED(hres), "CreateAsyncBindCtx failed: %08x\n\n", hres);
@@ -779,33 +782,24 @@ START_TEST(url)
     test_CreateAsyncBindCtxEx();
 
     trace("http test...\n");
-    emulate_protocol = FALSE;
-    test_protocol = HTTP_TEST;
-    test_BindToStorage();
+    test_BindToStorage(HTTP_TEST, FALSE);
 
     trace("about test...\n");
-    test_protocol = ABOUT_TEST;
     CoInitialize(NULL);
-    test_BindToStorage();
+    test_BindToStorage(ABOUT_TEST, FALSE);
     CoUninitialize();
 
     trace("emulated about test...\n");
-    emulate_protocol = TRUE;
-    test_protocol = ABOUT_TEST;
-    test_BindToStorage();
+    test_BindToStorage(ABOUT_TEST, TRUE);
 
     trace("file test...\n");
     create_file();
-    emulate_protocol = FALSE;
-    test_protocol = FILE_TEST;
-    test_BindToStorage();
+    test_BindToStorage(FILE_TEST, FALSE);
     DeleteFileW(wszIndexHtml);
 
     trace("emulated file test...\n");
     set_file_url();
-    emulate_protocol = TRUE;
-    test_protocol = FILE_TEST;
-    test_BindToStorage();
+    test_BindToStorage(FILE_TEST, TRUE);
 
     test_BindToStorage_fail();
 }
