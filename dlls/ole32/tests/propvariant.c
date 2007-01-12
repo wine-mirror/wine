@@ -199,8 +199,8 @@ static void test_validtypes(void)
 
 static void test_copy(void)
 {
-    static const char szTestString[] = "Test String";
-    static const WCHAR wszTestString[] = {'T','e','s','t',' ','S','t','r','i','n','g',0};
+    static char szTestString[] = "Test String";
+    static WCHAR wszTestString[] = {'T','e','s','t',' ','S','t','r','i','n','g',0};
     PROPVARIANT propvarSrc;
     PROPVARIANT propvarDst;
     HRESULT hr;
@@ -217,7 +217,7 @@ static void test_copy(void)
     ok(hr == S_OK, "PropVariantClear(...VT_BSTR...) failed\n");
 
     propvarSrc.vt = VT_LPWSTR;
-    U(propvarSrc).pwszVal = (LPWSTR)wszTestString;
+    U(propvarSrc).pwszVal = wszTestString;
     hr = PropVariantCopy(&propvarDst, &propvarSrc);
     ok(hr == S_OK, "PropVariantCopy(...VT_LPWSTR...) failed\n");
     ok(!lstrcmpW(U(propvarSrc).pwszVal, U(propvarDst).pwszVal), "Wide string not copied properly\n");
@@ -226,7 +226,7 @@ static void test_copy(void)
     memset(&propvarSrc, 0, sizeof(propvarSrc));
 
     propvarSrc.vt = VT_LPSTR;
-    U(propvarSrc).pszVal = (LPSTR)szTestString;
+    U(propvarSrc).pszVal = szTestString;
     hr = PropVariantCopy(&propvarDst, &propvarSrc);
     ok(hr == S_OK, "PropVariantCopy(...VT_LPSTR...) failed\n");
     ok(!strcmp(U(propvarSrc).pszVal, U(propvarDst).pszVal), "String not copied properly\n");
