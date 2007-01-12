@@ -776,6 +776,17 @@ DECL_HANDLER(open_named_pipe)
             if ((res != -1) && is_overlapped( server->options ))
                 res = fcntl( fds[0], F_SETFL, O_NONBLOCK );
 
+            if (pipe->insize)
+            {
+                setsockopt( fds[0], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
+                setsockopt( fds[1], SOL_SOCKET, SO_RCVBUF, &pipe->insize, sizeof(pipe->insize) );
+            }
+            if (pipe->outsize)
+            {
+                setsockopt( fds[0], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
+                setsockopt( fds[1], SOL_SOCKET, SO_SNDBUF, &pipe->outsize, sizeof(pipe->outsize) );
+            }
+
             client->fd = create_anonymous_fd( &pipe_client_fd_ops,
                                             fds[1], &client->obj );
             server->fd = create_anonymous_fd( &pipe_server_fd_ops,

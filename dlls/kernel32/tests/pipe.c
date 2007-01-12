@@ -754,6 +754,8 @@ static void test_CreatePipe(void)
     HANDLE piperead, pipewrite;
     DWORD written;
     DWORD read;
+    DWORD i, size;
+    BYTE *buffer;
     char readbuf[32];
 
     pipe_attr.nLength = sizeof(SECURITY_ATTRIBUTES); 
@@ -764,6 +766,8 @@ static void test_CreatePipe(void)
     ok(written == sizeof(PIPENAME), "Write to anonymous pipe wrote %d bytes\n", written);
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL), "Read from non empty pipe failed\n");
     ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %d bytes\n", read);
+    ok(CloseHandle(pipewrite), "CloseHandle for the write pipe failed\n");
+    ok(CloseHandle(piperead), "CloseHandle for the read pipe failed\n");
 
     /* Now write another chunk*/
     ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, 0) != 0, "CreatePipe failed\n");
@@ -775,6 +779,24 @@ static void test_CreatePipe(void)
     ok(read == sizeof(PIPENAME), "Read from  anonymous pipe got %d bytes\n", read);
     /* But now we need to get informed that the pipe is closed */
     ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
+    ok(CloseHandle(piperead), "CloseHandle for the read pipe failed\n");
+
+    /* Try bigger chunks */
+    size = 32768;
+    buffer = HeapAlloc( GetProcessHeap(), 0, size );
+    for (i = 0; i < size; i++) buffer[i] = i;
+    ok(CreatePipe(&piperead, &pipewrite, &pipe_attr, size) != 0, "CreatePipe failed\n");
+    ok(WriteFile(pipewrite, buffer, size, &written, NULL), "Write to anonymous pipe failed\n");
+    ok(written == size, "Write to anonymous pipe wrote %d bytes\n", written);
+    /* and close the write end, read should still succeed*/
+    ok(CloseHandle(pipewrite), "CloseHandle for the Write Pipe failed\n");
+    memset( buffer, 0, size );
+    ok(ReadFile(piperead, buffer, size, &read, NULL), "Read from broken pipe withe with pending data failed\n");
+    ok(read == size, "Read from  anonymous pipe got %d bytes\n", read);
+    for (i = 0; i < size; i++) ok( buffer[i] == (BYTE)i, "invalid data %x at %x\n", buffer[i], i );
+    /* But now we need to get informed that the pipe is closed */
+    ok(ReadFile(piperead,readbuf,sizeof(readbuf),&read, NULL) == 0, "Broken pipe not detected\n");
+    ok(CloseHandle(piperead), "CloseHandle for the read pipe failed\n");
 }
 
 START_TEST(pipe)
