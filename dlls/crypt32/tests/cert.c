@@ -49,10 +49,10 @@ static void init_function_pointers(void)
     CRYPT_GET_PROC(CryptVerifyCertificateSignatureEx);
 }
 
-static const BYTE subjectName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+static BYTE subjectName[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
  0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61,
  0x6e, 0x67, 0x00 };
-static const BYTE serialNum[] = { 1 };
+static BYTE serialNum[] = { 1 };
 static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
  0x00, 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06, 0x03, 0x55, 0x04, 0x03, 0x13,
  0x0a, 0x4a, 0x75, 0x61, 0x6e, 0x20, 0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x22,
@@ -63,7 +63,7 @@ static const BYTE bigCert[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
  0x4c, 0x61, 0x6e, 0x67, 0x00, 0x30, 0x07, 0x30, 0x02, 0x06, 0x00, 0x03, 0x01,
  0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03, 0x55, 0x1d, 0x13, 0x01,
  0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff, 0x02, 0x01, 0x01 };
-static const BYTE bigCertHash[] = { 0x6e, 0x30, 0x90, 0x71, 0x5f, 0xd9, 0x23,
+static BYTE bigCertHash[] = { 0x6e, 0x30, 0x90, 0x71, 0x5f, 0xd9, 0x23,
  0x56, 0xeb, 0xae, 0x25, 0x40, 0xe6, 0x22, 0xda, 0x19, 0x26, 0x02, 0xa6, 0x08 };
 
 static const BYTE bigCertWithDifferentSubject[] = { 0x30, 0x7a, 0x02, 0x01, 0x02,
@@ -89,7 +89,7 @@ static const BYTE bigCertWithDifferentIssuer[] = { 0x30, 0x7a, 0x02, 0x01,
  0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff,
  0x02, 0x01, 0x01 };
 
-static const BYTE subjectName2[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
+static BYTE subjectName2[] = { 0x30, 0x15, 0x31, 0x13, 0x30, 0x11, 0x06,
  0x03, 0x55, 0x04, 0x03, 0x13, 0x0a, 0x41, 0x6c, 0x65, 0x78, 0x20, 0x4c, 0x61,
  0x6e, 0x67, 0x00 };
 static const BYTE bigCert2[] = { 0x30, 0x7a, 0x02, 0x01, 0x01, 0x30, 0x02, 0x06,
@@ -113,7 +113,7 @@ static const BYTE bigCert2WithDifferentSerial[] = { 0x30, 0x7a, 0x02, 0x01,
  0x06, 0x00, 0x03, 0x01, 0x00, 0xa3, 0x16, 0x30, 0x14, 0x30, 0x12, 0x06, 0x03,
  0x55, 0x1d, 0x13, 0x01, 0x01, 0xff, 0x04, 0x08, 0x30, 0x06, 0x01, 0x01, 0xff,
  0x02, 0x01, 0x01 };
-static const BYTE bigCert2Hash[] = { 0x4a, 0x7f, 0x32, 0x1f, 0xcf, 0x3b, 0xc0,
+static BYTE bigCert2Hash[] = { 0x4a, 0x7f, 0x32, 0x1f, 0xcf, 0x3b, 0xc0,
  0x87, 0x48, 0x2b, 0xa1, 0x86, 0x54, 0x18, 0xe4, 0x3a, 0x0e, 0x53, 0x7e, 0x2b };
 
 static const BYTE certWithUsage[] = { 0x30, 0x81, 0x93, 0x02, 0x01, 0x01, 0x30,
@@ -180,8 +180,7 @@ static void testAddCert(void)
     ok(context != NULL, "Expected a context\n");
     if (context)
     {
-        CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash),
-         (LPBYTE)bigCert2Hash };
+        CRYPT_DATA_BLOB hash = { sizeof(bigCert2Hash), bigCert2Hash };
 
         /* Duplicate (AddRef) the context so we can still use it after
          * deleting it from the store.
@@ -309,8 +308,8 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
      propID);
 }
 
-static const WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e',
- 'm','p',0 };
+static WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e','m','p',0 };
+static WCHAR ms_def_prov_w[] = MS_DEF_PROV_W;
 
 static void testCertProperties(void)
 {
@@ -568,9 +567,9 @@ static void testFindCert(void)
      */
 
     /* Check first cert's there, by issuer */
-    certInfo.Subject.pbData = (LPBYTE)subjectName;
+    certInfo.Subject.pbData = subjectName;
     certInfo.Subject.cbData = sizeof(subjectName);
-    certInfo.SerialNumber.pbData = (LPBYTE)serialNum;
+    certInfo.SerialNumber.pbData = serialNum;
     certInfo.SerialNumber.cbData = sizeof(serialNum);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_ISSUER_NAME, &certInfo.Subject, NULL);
@@ -590,7 +589,7 @@ static void testFindCert(void)
     }
 
     /* Check second cert's there as well, by subject name */
-    certInfo.Subject.pbData = (LPBYTE)subjectName2;
+    certInfo.Subject.pbData = subjectName2;
     certInfo.Subject.cbData = sizeof(subjectName2);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_SUBJECT_NAME, &certInfo.Subject, NULL);
@@ -611,7 +610,7 @@ static void testFindCert(void)
     ok(context == NULL, "Expected no certificate\n");
     certInfo.Subject.pbData = NULL;
     certInfo.Subject.cbData = 0;
-    certInfo.Issuer.pbData = (LPBYTE)subjectName2;
+    certInfo.Issuer.pbData = subjectName2;
     certInfo.Issuer.cbData = sizeof(subjectName2);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_SUBJECT_CERT, &certInfo, NULL);
@@ -625,7 +624,7 @@ static void testFindCert(void)
     }
 
     /* The nice thing about hashes, they're unique */
-    blob.pbData = (LPBYTE)bigCertHash;
+    blob.pbData = bigCertHash;
     blob.cbData = sizeof(bigCertHash);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
      CERT_FIND_SHA1_HASH, &blob, NULL);
@@ -677,13 +676,13 @@ static void testGetSubjectCert(void)
     ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     info.SerialNumber.cbData = sizeof(serialNum);
-    info.SerialNumber.pbData = (LPBYTE)serialNum;
+    info.SerialNumber.pbData = serialNum;
     context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
      &info);
     ok(!context2 && GetLastError() == CRYPT_E_NOT_FOUND,
      "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
     info.Issuer.cbData = sizeof(subjectName2);
-    info.Issuer.pbData = (LPBYTE)subjectName2;
+    info.Issuer.pbData = subjectName2;
     context2 = CertGetSubjectCertificateFromStore(store, X509_ASN_ENCODING,
      &info);
     ok(context2 != NULL,
@@ -1034,12 +1033,12 @@ static void testVerifyCertSig(HCRYPTPROV csp, const CRYPT_DATA_BLOB *toBeSigned,
     }
 }
 
-static const BYTE emptyCert[] = { 0x30, 0x00 };
+static BYTE emptyCert[] = { 0x30, 0x00 };
 
 static void testCertSigs(void)
 {
     HCRYPTPROV csp;
-    CRYPT_DATA_BLOB toBeSigned = { sizeof(emptyCert), (LPBYTE)emptyCert };
+    CRYPT_DATA_BLOB toBeSigned = { sizeof(emptyCert), emptyCert };
     BOOL ret;
     HCRYPTKEY key;
     BYTE sig[64];
@@ -1155,7 +1154,7 @@ static void testSignAndEncodeCert(void)
 static void testCreateSelfSignCert(void)
 {
     PCCERT_CONTEXT context;
-    CERT_NAME_BLOB name = { sizeof(subjectName), (LPBYTE)subjectName };
+    CERT_NAME_BLOB name = { sizeof(subjectName), subjectName };
     HCRYPTPROV csp;
     BOOL ret;
     HCRYPTKEY key;
@@ -1514,9 +1513,9 @@ static void testKeyUsage(void)
 
 static void testCompareCertName(void)
 {
-    static const BYTE bogus[] = { 1, 2, 3, 4 };
-    static const BYTE bogusPrime[] = { 0, 1, 2, 3, 4 };
-    static const BYTE emptyPrime[] = { 0x30, 0x00, 0x01 };
+    static BYTE bogus[] = { 1, 2, 3, 4 };
+    static BYTE bogusPrime[] = { 0, 1, 2, 3, 4 };
+    static BYTE emptyPrime[] = { 0x30, 0x00, 0x01 };
     BOOL ret;
     CERT_NAME_BLOB blob1, blob2;
 
@@ -1524,34 +1523,34 @@ static void testCompareCertName(void)
     ret = CertCompareCertificateName(0, NULL, NULL);
      */
     /* An empty name checks against itself.. */
-    blob1.pbData = (LPBYTE)emptyCert;
+    blob1.pbData = emptyCert;
     blob1.cbData = sizeof(emptyCert);
     ret = CertCompareCertificateName(0, &blob1, &blob1);
     ok(ret, "CertCompareCertificateName failed: %08x\n", GetLastError());
     /* It doesn't have to be a valid encoded name.. */
-    blob1.pbData = (LPBYTE)bogus;
+    blob1.pbData = bogus;
     blob1.cbData = sizeof(bogus);
     ret = CertCompareCertificateName(0, &blob1, &blob1);
     ok(ret, "CertCompareCertificateName failed: %08x\n", GetLastError());
     /* Leading zeroes matter.. */
-    blob2.pbData = (LPBYTE)bogusPrime;
+    blob2.pbData = bogusPrime;
     blob2.cbData = sizeof(bogusPrime);
     ret = CertCompareCertificateName(0, &blob1, &blob2);
     ok(!ret, "Expected failure\n");
     /* As do trailing extra bytes. */
-    blob2.pbData = (LPBYTE)emptyPrime;
+    blob2.pbData = emptyPrime;
     blob2.cbData = sizeof(emptyPrime);
     ret = CertCompareCertificateName(0, &blob1, &blob2);
     ok(!ret, "Expected failure\n");
 }
 
-static const BYTE int1[] = { 0x88, 0xff, 0xff, 0xff };
-static const BYTE int2[] = { 0x88, 0xff };
-static const BYTE int3[] = { 0x23, 0xff };
-static const BYTE int4[] = { 0x7f, 0x00 };
-static const BYTE int5[] = { 0x7f };
-static const BYTE int6[] = { 0x80, 0x00, 0x00, 0x00 };
-static const BYTE int7[] = { 0x80, 0x00 };
+static BYTE int1[] = { 0x88, 0xff, 0xff, 0xff };
+static BYTE int2[] = { 0x88, 0xff };
+static BYTE int3[] = { 0x23, 0xff };
+static BYTE int4[] = { 0x7f, 0x00 };
+static BYTE int5[] = { 0x7f };
+static BYTE int6[] = { 0x80, 0x00, 0x00, 0x00 };
+static BYTE int7[] = { 0x80, 0x00 };
 
 static struct IntBlobTest
 {
@@ -1559,11 +1558,11 @@ static struct IntBlobTest
     CRYPT_INTEGER_BLOB blob2;
     BOOL areEqual;
 } intBlobs[] = {
- { { sizeof(int1), (LPBYTE)int1 }, { sizeof(int2), (LPBYTE)int2 }, TRUE },
- { { sizeof(int3), (LPBYTE)int3 }, { sizeof(int3), (LPBYTE)int3 }, TRUE },
- { { sizeof(int4), (LPBYTE)int4 }, { sizeof(int5), (LPBYTE)int5 }, TRUE },
- { { sizeof(int6), (LPBYTE)int6 }, { sizeof(int7), (LPBYTE)int7 }, TRUE },
- { { sizeof(int1), (LPBYTE)int1 }, { sizeof(int7), (LPBYTE)int7 }, FALSE },
+ { { sizeof(int1), int1 }, { sizeof(int2), int2 }, TRUE },
+ { { sizeof(int3), int3 }, { sizeof(int3), int3 }, TRUE },
+ { { sizeof(int4), int4 }, { sizeof(int5), int5 }, TRUE },
+ { { sizeof(int6), int6 }, { sizeof(int7), int7 }, TRUE },
+ { { sizeof(int1), int1 }, { sizeof(int7), int7 }, FALSE },
 };
 
 static void testCompareIntegerBlob(void)
@@ -1587,9 +1586,9 @@ static void testComparePublicKeyInfo(void)
     static CHAR oid_rsa_rsa[]     = szOID_RSA_RSA;
     static CHAR oid_rsa_sha1rsa[] = szOID_RSA_SHA1RSA;
     static CHAR oid_x957_dsa[]    = szOID_X957_DSA;
-    static const BYTE bits1[] = { 1, 0 };
-    static const BYTE bits2[] = { 0 };
-    static const BYTE bits3[] = { 1 };
+    static BYTE bits1[] = { 1, 0 };
+    static BYTE bits2[] = { 0 };
+    static BYTE bits3[] = { 1 };
 
     /* crashes
     ret = CertComparePublicKeyInfo(0, NULL, NULL);
@@ -1606,25 +1605,25 @@ static void testComparePublicKeyInfo(void)
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
     info1.PublicKey.cbData = sizeof(bits1);
-    info1.PublicKey.pbData = (LPBYTE)bits1;
+    info1.PublicKey.pbData = bits1;
     info1.PublicKey.cUnusedBits = 0;
     info2.PublicKey.cbData = sizeof(bits1);
-    info2.PublicKey.pbData = (LPBYTE)bits1;
+    info2.PublicKey.pbData = bits1;
     info2.PublicKey.cUnusedBits = 0;
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(ret, "CertComparePublicKeyInfo failed: %08x\n", GetLastError());
     /* Even though they compare in their used bits, these do not compare */
     info1.PublicKey.cbData = sizeof(bits2);
-    info1.PublicKey.pbData = (LPBYTE)bits2;
+    info1.PublicKey.pbData = bits2;
     info1.PublicKey.cUnusedBits = 0;
     info2.PublicKey.cbData = sizeof(bits3);
-    info2.PublicKey.pbData = (LPBYTE)bits3;
+    info2.PublicKey.pbData = bits3;
     info2.PublicKey.cUnusedBits = 1;
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     /* Simple (non-comparing) case */
     ok(!ret, "Expected keys not to compare\n");
     info2.PublicKey.cbData = sizeof(bits1);
-    info2.PublicKey.pbData = (LPBYTE)bits1;
+    info2.PublicKey.pbData = bits1;
     info2.PublicKey.cUnusedBits = 0;
     ret = CertComparePublicKeyInfo(0, &info1, &info2);
     ok(!ret, "Expected keys not to compare\n");
@@ -1674,22 +1673,22 @@ static void testCompareCert(void)
     /* Certs with the same issuer and serial number are equal, even if they
      * differ in other respects (like subject).
      */
-    info1.SerialNumber.pbData = (LPBYTE)serialNum;
+    info1.SerialNumber.pbData = serialNum;
     info1.SerialNumber.cbData = sizeof(serialNum);
-    info1.Issuer.pbData = (LPBYTE)subjectName;
+    info1.Issuer.pbData = subjectName;
     info1.Issuer.cbData = sizeof(subjectName);
-    info1.Subject.pbData = (LPBYTE)subjectName2;
+    info1.Subject.pbData = subjectName2;
     info1.Subject.cbData = sizeof(subjectName2);
-    info2.SerialNumber.pbData = (LPBYTE)serialNum;
+    info2.SerialNumber.pbData = serialNum;
     info2.SerialNumber.cbData = sizeof(serialNum);
-    info2.Issuer.pbData = (LPBYTE)subjectName;
+    info2.Issuer.pbData = subjectName;
     info2.Issuer.cbData = sizeof(subjectName);
-    info2.Subject.pbData = (LPBYTE)subjectName;
+    info2.Subject.pbData = subjectName;
     info2.Subject.cbData = sizeof(subjectName);
     ret = CertCompareCertificate(X509_ASN_ENCODING, &info1, &info2);
     ok(ret, "Expected certs to be equal\n");
 
-    info2.Issuer.pbData = (LPBYTE)subjectName2;
+    info2.Issuer.pbData = subjectName2;
     info2.Issuer.cbData = sizeof(subjectName2);
     ret = CertCompareCertificate(X509_ASN_ENCODING, &info1, &info2);
     ok(!ret, "Expected certs not to be equal\n");
@@ -1750,7 +1749,7 @@ static void testVerifySubjectCert(void)
     CertFreeCertificateContext(context1);
 }
 
-static const BYTE privKey[] = {
+static BYTE privKey[] = {
  0x07, 0x02, 0x00, 0x00, 0x00, 0x24, 0x00, 0x00, 0x52, 0x53, 0x41, 0x32, 0x00,
  0x02, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x79, 0x10, 0x1c, 0xd0, 0x6b, 0x10,
  0x18, 0x30, 0x94, 0x61, 0xdc, 0x0e, 0xcb, 0x96, 0x4e, 0x21, 0x3f, 0x79, 0xcd,
@@ -1826,8 +1825,8 @@ static void testAcquireCertPrivateKey(void)
     CRYPT_KEY_PROV_INFO keyProvInfo;
     HCRYPTKEY key;
 
-    keyProvInfo.pwszContainerName = (LPWSTR)cspNameW;
-    keyProvInfo.pwszProvName = (LPWSTR)MS_DEF_PROV_W;
+    keyProvInfo.pwszContainerName = cspNameW;
+    keyProvInfo.pwszProvName = ms_def_prov_w;
     keyProvInfo.dwProvType = PROV_RSA_FULL;
     keyProvInfo.dwFlags = 0;
     keyProvInfo.cProvParam = 0;
@@ -1869,7 +1868,7 @@ static void testAcquireCertPrivateKey(void)
 
     CryptAcquireContextW(&csp, cspNameW, MS_DEF_PROV_W, PROV_RSA_FULL,
      CRYPT_NEWKEYSET);
-    ret = CryptImportKey(csp, (LPBYTE)privKey, sizeof(privKey), 0, 0, &key);
+    ret = CryptImportKey(csp, privKey, sizeof(privKey), 0, 0, &key);
     ok(ret, "CryptImportKey failed: %08x\n", GetLastError());
     if (ret)
     {
