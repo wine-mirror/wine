@@ -23,6 +23,33 @@
 #include "winbase.h"
 #include "odbcinst.h"
 
+static void test_SQLConfigMode(void)
+{
+    BOOL bool_ret;
+    DWORD error_code;
+    RETCODE sql_ret;
+    UWORD config_mode;
+    int i;
+
+    ok(SQLGetConfigMode(NULL), "SQLGetConfigMode(NULL) should succeed\n");
+
+    bool_ret = SQLGetConfigMode(&config_mode);
+    ok(bool_ret && config_mode == ODBC_BOTH_DSN, "Failed to get the initial SQLGetConfigMode or it was not both\n");
+
+    bool_ret = SQLSetConfigMode(3);
+    sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
+    ok(!bool_ret && sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_PARAM_SEQUENCE, "SQLSetConfigMode with invalid argument did not fail correctly");
+
+    ok (ODBC_SYSTEM_DSN == 2 && ODBC_USER_DSN == 1 && ODBC_BOTH_DSN == 0, "SQLSetConfigMode modes not as expected\n");
+    for (i = ODBC_SYSTEM_DSN; i >= ODBC_BOTH_DSN; --i)
+    {
+        ok(SQLSetConfigMode((UWORD)i), "SQLSetConfigMode Failed to set config mode\n");
+        bool_ret = SQLGetConfigMode(&config_mode);
+        ok(bool_ret && config_mode == i, "Failed to confirm SQLSetConfigMode.\n");
+    }
+    /* And that leaves it correctly on BOTH */
+}
+
 static void test_SQLInstallerError(void)
 {
     RETCODE sql_ret;
@@ -49,5 +76,6 @@ static void test_SQLInstallerError(void)
 
 START_TEST(misc)
 {
+    test_SQLConfigMode();
     test_SQLInstallerError();
 }

@@ -36,8 +36,14 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
-/* Registry key namess */
+/* Registry key names */
 static const WCHAR drivers_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','I','N','S','T','.','I','N','I','\\','O','D','B','C',' ','D','r','i','v','e','r','s',0};
+
+/* This config mode is known to be process-wide.
+ * MSDN documentation suggests that the value is hidden somewhere in the registry but I haven't found it yet.
+ * Although both the registry and the ODBC.ini files appear to be maintained together they are not maintained automatically through the registry's IniFileMapping.
+ */
+static UWORD config_mode = ODBC_BOTH_DSN;
 
 /* MSDN documentation suggests that the error subsystem handles errors 1 to 8
  * only and experimentation (Windows 2000) shows that the errors are process-
@@ -50,6 +56,7 @@ static const WCHAR odbc_error_general_err[] = {'G','e','n','e','r','a','l',' ','
 static const WCHAR odbc_error_invalid_buff_len[] = {'I','n','v','a','l','i','d',' ','b','u','f','f','e','r',' ','l','e','n','g','t','h',0};
 static const WCHAR odbc_error_component_not_found[] = {'C','o','m','p','o','n','e','n','t',' ','n','o','t',' ','f','o','u','n','d',0};
 static const WCHAR odbc_error_out_of_mem[] = {'O','u','t',' ','o','f',' ','m','e','m','o','r','y',0};
+static const WCHAR odbc_error_invalid_param_sequence[] = {'I','n','v','a','l','i','d',' ','p','a','r','a','m','e','t','e','r',' ','s','e','q','u','e','n','c','e',0};
 
 /* Push an error onto the error stack, taking care of ranges etc. */
 static void push_error(int code, LPCWSTR msg)
@@ -264,9 +271,9 @@ BOOL WINAPI SQLGetAvailableDrivers(LPCSTR lpszInfFile, LPSTR lpszBuf,
 BOOL WINAPI SQLGetConfigMode(UWORD *pwConfigMode)
 {
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    if (pwConfigMode)
+        *pwConfigMode = config_mode;
+    return TRUE;
 }
 
 /* This is implemented sensibly rather than according to exact conformance to Microsoft's buggy implementations
@@ -886,9 +893,16 @@ BOOL WINAPI SQLRemoveTranslator(LPCSTR lpszTranslator, LPDWORD lpdwUsageCount)
 BOOL WINAPI SQLSetConfigMode(UWORD wConfigMode)
 {
     clear_errors();
-    FIXME("\n");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    if (wConfigMode > ODBC_SYSTEM_DSN)
+    {
+        push_error(ODBC_ERROR_INVALID_PARAM_SEQUENCE, odbc_error_invalid_param_sequence);
+        return FALSE;
+    }
+    else
+    {
+        config_mode = wConfigMode;
+        return TRUE;
+    }
 }
 
 BOOL WINAPI SQLValidDSNW(LPCWSTR lpszDSN)

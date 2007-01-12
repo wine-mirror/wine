@@ -34,6 +34,11 @@ extern "C" {
 #define ODBC_CONFIG_DRIVER	3
 #define ODBC_CONFIG_DRIVER_MAX  100
 
+/* Mode values for SQLSetConfigMode/SQLGetConfigMode */
+#define ODBC_BOTH_DSN 0
+#define ODBC_USER_DSN 1
+#define ODBC_SYSTEM_DSN 2
+
 /* error values */
 #define ODBC_ERROR_GENERAL_ERR			1
 #define ODBC_ERROR_INVALID_BUFF_LEN		2
