@@ -1803,11 +1803,12 @@ static void test_Load(IPersistMoniker *persist)
 {
     IBindCtx *bind;
     HRESULT hres;
+    static WCHAR sz_html_clientsite_objectparam[] = SZ_HTML_CLIENTSITE_OBJECTPARAM;
 
     test_readyState((IUnknown*)persist);
 
     CreateBindCtx(0, &bind);
-    IBindCtx_RegisterObjectParam(bind, (LPOLESTR)SZ_HTML_CLIENTSITE_OBJECTPARAM,
+    IBindCtx_RegisterObjectParam(bind, sz_html_clientsite_objectparam,
                                  (IUnknown*)&ClientSite);
 
     SET_EXPECT(GetDisplayName);
