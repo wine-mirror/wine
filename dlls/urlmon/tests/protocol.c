@@ -918,6 +918,37 @@ static HWND create_protocol_window(void)
                          CW_USEDEFAULT, NULL, NULL, NULL, NULL);
 }
 
+static void test_mk_protocol(void)
+{
+    IInternetProtocolInfo *protocol_info;
+    IInternetProtocol *protocol;
+    IClassFactory *factory;
+    IUnknown *unk;
+    HRESULT hres;
+
+    hres = CoGetClassObject(&CLSID_MkProtocol, CLSCTX_INPROC_SERVER, NULL,
+            &IID_IUnknown, (void**)&unk);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&protocol_info);
+    ok(hres == E_NOINTERFACE,
+        "Could not get IInternetProtocolInfo interface: %08x, expected E_NOINTERFACE\n",
+        hres);
+
+    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
+    ok(hres == S_OK, "Could not get IClassFactory interface\n");
+    IUnknown_Release(unk);
+    if(FAILED(hres))
+        return;
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol,
+                                        (void**)&protocol);
+    IClassFactory_Release(factory);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+
+    IInternetProtocol_Release(protocol);
+}
+
 START_TEST(protocol)
 {
     OleInitialize(NULL);
@@ -926,6 +957,7 @@ START_TEST(protocol)
 
     test_file_protocol();
     test_http_protocol();
+    test_mk_protocol();
 
     DestroyWindow(protocol_hwnd);
 

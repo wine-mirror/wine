@@ -14,6 +14,7 @@ C_SRCS = \
 	ftp.c \
 	http.c \
 	internet.c \
+	mk.c \
 	regsvr.c \
 	sec_mgr.c \
 	session.c \

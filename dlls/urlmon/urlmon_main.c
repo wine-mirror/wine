@@ -181,6 +181,8 @@ static const ClassFactory FtpProtocolCF =
     { &ClassFactoryVtbl, FtpProtocol_Construct};
 static const ClassFactory HttpProtocolCF =
     { &ClassFactoryVtbl, HttpProtocol_Construct};
+static const ClassFactory MkProtocolCF =
+    { &ClassFactoryVtbl, MkProtocol_Construct};
 static const ClassFactory SecurityManagerCF =
     { &ClassFactoryVtbl, SecManagerImpl_Construct};
 static const ClassFactory ZoneManagerCF =
@@ -196,12 +198,14 @@ struct object_creation_info
 static const WCHAR wszFile[] = {'f','i','l','e',0};
 static const WCHAR wszFtp[]  = {'f','t','p',0};
 static const WCHAR wszHttp[] = {'h','t','t','p',0};
+static const WCHAR wszMk[]   = {'m','k',0};
 
 static const struct object_creation_info object_creation[] =
 {
     { &CLSID_FileProtocol,            CLASSFACTORY(&FileProtocolCF),    wszFile },
     { &CLSID_FtpProtocol,             CLASSFACTORY(&FtpProtocolCF),     wszFtp  },
     { &CLSID_HttpProtocol,            CLASSFACTORY(&HttpProtocolCF),    wszHttp },
+    { &CLSID_MkProtocol,              CLASSFACTORY(&MkProtocolCF),      wszMk },
     { &CLSID_InternetSecurityManager, CLASSFACTORY(&SecurityManagerCF), NULL    },
     { &CLSID_InternetZoneManager,     CLASSFACTORY(&ZoneManagerCF),     NULL    }
 };
