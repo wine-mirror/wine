@@ -1291,22 +1291,6 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
     return ret;
 }
 
-/***********************************************************************
- *           VIRTUAL_HasMapping
- *
- * Check if the specified view has an associated file mapping.
- */
-BOOL VIRTUAL_HasMapping( LPCVOID addr )
-{
-    FILE_VIEW *view;
-    BOOL ret = FALSE;
-
-    RtlEnterCriticalSection( &csVirtual );
-    if ((view = VIRTUAL_FindView( addr ))) ret = (view->mapping != 0);
-    RtlLeaveCriticalSection( &csVirtual );
-    return ret;
-}
-
 
 /***********************************************************************
  *           VIRTUAL_SetForceExec

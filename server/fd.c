@@ -1668,6 +1668,12 @@ int is_same_file_fd( struct fd *fd1, struct fd *fd2 )
     return fd1->inode == fd2->inode;
 }
 
+/* check if fd is on a removable device */
+int is_fd_removable( struct fd *fd )
+{
+    return (fd->inode && fd->inode->device->removable);
+}
+
 /* handler for close_handle that refuses to close fd-associated handles in other processes */
 int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
@@ -1966,7 +1972,7 @@ DECL_HANDLER(get_handle_fd)
         reply->type = fd->fd_ops->get_file_info( fd, &reply->flags );
         if (reply->type != FD_TYPE_INVALID)
         {
-            if (fd->inode && fd->inode->device->removable) reply->flags |= FD_FLAG_REMOVABLE;
+            if (is_fd_removable(fd)) reply->flags |= FD_FLAG_REMOVABLE;
             if (!req->cached)
             {
                 int unix_fd = get_unix_fd( fd );

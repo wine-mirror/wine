@@ -492,7 +492,7 @@ static struct process_dll *process_load_dll( struct process *process, struct fil
             free( dll );
             return NULL;
         }
-        if (file) dll->file = (struct file *)grab_object( file );
+        if (file) dll->file = grab_file_unless_removable( file );
         list_add_tail( &process->dlls, &dll->entry );
     }
     return dll;

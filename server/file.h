@@ -55,6 +55,7 @@ extern void *get_fd_user( struct fd *fd );
 extern void set_fd_user( struct fd *fd, const struct fd_ops *ops, struct object *user );
 extern int get_unix_fd( struct fd *fd );
 extern int is_same_file_fd( struct fd *fd1, struct fd *fd2 );
+extern int is_fd_removable( struct fd *fd );
 extern int fd_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 extern void fd_poll_event( struct fd *fd, int event );
 extern int check_fd_events( struct fd *fd, int events );
@@ -104,6 +105,7 @@ extern struct file *get_file_obj( struct process *process, obj_handle_t handle,
                                   unsigned int access );
 extern int get_file_unix_fd( struct file *file );
 extern int is_same_file( struct file *file1, struct file *file2 );
+extern struct file *grab_file_unless_removable( struct file *file );
 extern int grow_file( struct file *file, file_pos_t size );
 extern struct file *create_temp_file( int access );
 extern void file_set_error(void);

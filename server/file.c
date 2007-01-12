@@ -319,6 +319,12 @@ int get_file_unix_fd( struct file *file )
     return get_unix_fd( file->fd );
 }
 
+struct file *grab_file_unless_removable( struct file *file )
+{
+    if (is_fd_removable( file->fd )) return NULL;
+    return (struct file *)grab_object( file );
+}
+
 /* extend a file beyond the current end of file */
 static int extend_file( struct file *file, file_pos_t new_size )
 {

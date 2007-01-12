@@ -1438,9 +1438,6 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
 
     nt = RtlImageNtHeader( module );
 
-    /* don't keep the file open if the mapping is from removable media */
-    if (!VIRTUAL_HasMapping( module )) file = 0;
-
     SERVER_START_REQ( load_dll )
     {
         req->handle     = file;
