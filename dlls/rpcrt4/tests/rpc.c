@@ -178,11 +178,13 @@ static void TestDceErrorInqText (void)
 static void test_rpc_ncacn_ip_tcp(void)
 {
     RPC_STATUS status;
+    static unsigned char foo[] = "foo";
+    static unsigned char ncacn_ip_tcp[] = "ncacn_ip_tcp";
 
-    status = RpcNetworkIsProtseqValid((unsigned char*)"foo");
+    status = RpcNetworkIsProtseqValid(foo);
     ok(status == RPC_S_INVALID_RPC_PROTSEQ, "return wrong\n");
 
-    status = RpcNetworkIsProtseqValid((unsigned char*)"ncacn_ip_tcp");
+    status = RpcNetworkIsProtseqValid(ncacn_ip_tcp);
     ok(status == RPC_S_OK, "return wrong\n");
 }
 
