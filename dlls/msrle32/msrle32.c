@@ -38,12 +38,12 @@ static HINSTANCE MSRLE32_hModule = 0;
 #define SQR(a)                ((a) * (a))
 
 #define QUALITY_to_DIST(q)    (ICQUALITY_HIGH - q)
-inline WORD ColorCmp(WORD clr1, WORD clr2)
+static inline WORD ColorCmp(WORD clr1, WORD clr2)
 {
   register UINT a = (clr1-clr2);
   return SQR(a);
 }
-inline WORD Intensity(RGBQUAD clr)
+static inline WORD Intensity(RGBQUAD clr)
 {
   return (30 * clr.rgbRed + 59 * clr.rgbGreen + 11 * clr.rgbBlue)/4;
 }
