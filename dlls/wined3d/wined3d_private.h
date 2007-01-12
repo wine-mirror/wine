@@ -984,6 +984,8 @@ struct IWineD3DSurfaceImpl
 
     RECT                      lockedRect;
     RECT                      dirtyRect;
+    int                       lockCount;
+#define MAXLOCKCOUNT          50 /* After this amount of locks do not free the sysmem copy */
 
     glDescriptor              glDescription;
 
