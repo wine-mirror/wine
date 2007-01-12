@@ -36,6 +36,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
+/* Registry key namess */
+static const WCHAR drivers_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','I','N','S','T','.','I','N','I','\\','O','D','B','C',' ','D','r','i','v','e','r','s',0};
+
 /* MSDN documentation suggests that the error subsystem handles errors 1 to 8
  * only and experimentation (Windows 2000) shows that the errors are process-
  * wide so go for the simple solution; static arrays.
@@ -282,8 +285,8 @@ BOOL WINAPI SQLGetInstalledDriversW(LPWSTR lpszBuf, WORD cbBufMax,
     {
         push_error(ODBC_ERROR_INVALID_BUFF_LEN, odbc_error_invalid_buff_len);
     }
-    else if ((reg_ret = RegOpenKeyExA (HKEY_LOCAL_MACHINE /* The drivers does not depend on the config mode */,
-            "Software\\ODBC\\ODBCINST.INI\\ODBC Drivers", 0, KEY_READ /* Maybe overkill */,
+    else if ((reg_ret = RegOpenKeyExW (HKEY_LOCAL_MACHINE /* The drivers does not depend on the config mode */,
+            drivers_key, 0, KEY_READ /* Maybe overkill */,
             &hDrivers)) == ERROR_SUCCESS)
     {
         DWORD index = 0;
