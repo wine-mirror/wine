@@ -934,7 +934,7 @@ static int do_relocations( char *base, const IMAGE_DATA_DIRECTORY *dir,
  * Map an executable (PE format) image into memory.
  */
 static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_size, SIZE_T mask,
-                           SIZE_T header_size, int shared_fd, BOOL removable, PVOID *addr_ptr )
+                           SIZE_T header_size, int shared_fd, HANDLE dup_mapping, PVOID *addr_ptr )
 {
     IMAGE_DOS_HEADER *dos;
     IMAGE_NT_HEADERS *nt;
@@ -975,7 +975,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     if (!st.st_size) goto error;
     header_size = min( header_size, st.st_size );
     if (map_file_into_view( view, fd, 0, header_size, 0, VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                            removable ) != STATUS_SUCCESS) goto error;
+                            !dup_mapping ) != STATUS_SUCCESS) goto error;
     dos = (IMAGE_DOS_HEADER *)ptr;
     nt = (IMAGE_NT_HEADERS *)(ptr + dos->e_lfanew);
     header_end = ptr + ROUND_SIZE( 0, header_size );
@@ -1019,7 +1019,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         /* in that case Windows simply maps in the whole file */
 
         if (map_file_into_view( view, fd, 0, total_size, 0, VPROT_COMMITTED | VPROT_READ,
-                                removable ) != STATUS_SUCCESS) goto error;
+                                !dup_mapping ) != STATUS_SUCCESS) goto error;
 
         /* check that all sections are loaded at the right offset */
         if (nt->OptionalHeader.FileAlignment != nt->OptionalHeader.SectionAlignment) goto error;
@@ -1121,7 +1121,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
             end < file_start ||
             map_file_into_view( view, fd, sec->VirtualAddress, file_size, file_start,
                                 VPROT_COMMITTED | VPROT_READ | VPROT_WRITECOPY,
-                                removable ) != STATUS_SUCCESS)
+                                !dup_mapping ) != STATUS_SUCCESS)
         {
             ERR_(module)( "Could not map section %.8s, file probably truncated\n", sec->Name );
             goto error;
@@ -1195,11 +1195,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     }
 
  done:
-    if (!removable)  /* don't keep handle open on removable media */
-        NtDuplicateObject( NtCurrentProcess(), hmapping,
-                           NtCurrentProcess(), &view->mapping,
-                           0, 0, DUPLICATE_SAME_ACCESS );
-
+    view->mapping = dup_mapping;
     RtlLeaveCriticalSection( &csVirtual );
 
     *addr_ptr = ptr;
@@ -1208,6 +1204,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
  error:
     if (view) delete_view( view );
     RtlLeaveCriticalSection( &csVirtual );
+    if (dup_mapping) NtClose( dup_mapping );
     return status;
 }
 
@@ -1837,13 +1834,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     NTSTATUS res;
     SIZE_T size = 0;
     SIZE_T mask = get_mask( zero_bits );
-    int unix_handle = -1, flags, needs_close;
+    int unix_handle = -1, needs_close;
     int prot;
     void *base;
     struct file_view *view;
     DWORD size_low, size_high, header_size, shared_size;
-    HANDLE shared_file;
-    BOOL removable = FALSE;
+    HANDLE dup_mapping, shared_file;
     LARGE_INTEGER offset;
 
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
@@ -1871,14 +1867,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         size_low    = reply->size_low;
         size_high   = reply->size_high;
         header_size = reply->header_size;
+        dup_mapping = reply->mapping;
         shared_file = reply->shared_file;
         shared_size = reply->shared_size;
     }
     SERVER_END_REQ;
     if (res) return res;
 
-    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, &flags ))) return res;
-    removable = (flags & FD_FLAG_REMOVABLE) != 0;
+    if ((res = server_get_unix_fd( handle, 0, &unix_handle, &needs_close, NULL, NULL ))) goto done;
 
     if (prot & VPROT_IMAGE)
     {
@@ -1889,14 +1885,14 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             if ((res = server_get_unix_fd( shared_file, FILE_READ_DATA|FILE_WRITE_DATA,
                                            &shared_fd, &shared_needs_close, NULL, NULL ))) goto done;
             res = map_image( handle, unix_handle, base, size_low, mask, header_size,
-                             shared_fd, removable, addr_ptr );
+                             shared_fd, dup_mapping, addr_ptr );
             if (shared_needs_close) close( shared_fd );
             NtClose( shared_file );
         }
         else
         {
             res = map_image( handle, unix_handle, base, size_low, mask, header_size,
-                             -1, removable, addr_ptr );
+                             -1, dup_mapping, addr_ptr );
         }
         if (needs_close) close( unix_handle );
         if (!res) *size_ptr = size_low;
@@ -1926,7 +1922,6 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
             res = STATUS_INVALID_PARAMETER;
             goto done;
         }
-        removable = FALSE;
         /* fall through */
     case PAGE_READONLY:
     case PAGE_WRITECOPY:
@@ -1964,16 +1959,13 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     TRACE("handle=%p size=%lx offset=%x%08x\n",
           handle, size, offset.u.HighPart, offset.u.LowPart );
 
-    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, prot, removable );
+    res = map_file_into_view( view, unix_handle, 0, size, offset.QuadPart, prot, !dup_mapping );
     if (res == STATUS_SUCCESS)
     {
-        if (!removable)  /* don't keep handle open on removable media */
-            NtDuplicateObject( NtCurrentProcess(), handle,
-                               NtCurrentProcess(), &view->mapping,
-                               0, 0, DUPLICATE_SAME_ACCESS );
-
         *addr_ptr = view->base;
         *size_ptr = size;
+        view->mapping = dup_mapping;
+        dup_mapping = 0;  /* don't close it */
     }
     else
     {
@@ -1985,6 +1977,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     RtlLeaveCriticalSection( &csVirtual );
 
 done:
+    if (dup_mapping) NtClose( dup_mapping );
     if (needs_close) close( unix_handle );
     return res;
 }

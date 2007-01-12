@@ -1570,6 +1570,7 @@ static void dump_get_mapping_info_reply( const struct get_mapping_info_reply *re
     fprintf( stderr, " protect=%d,", req->protect );
     fprintf( stderr, " header_size=%d,", req->header_size );
     fprintf( stderr, " base=%p,", req->base );
+    fprintf( stderr, " mapping=%p,", req->mapping );
     fprintf( stderr, " shared_file=%p,", req->shared_file );
     fprintf( stderr, " shared_size=%d", req->shared_size );
 }
@@ -3966,6 +3967,7 @@ static const struct
     { "FILE_LOCK_CONFLICT",          STATUS_FILE_LOCK_CONFLICT },
     { "HANDLES_CLOSED",              STATUS_HANDLES_CLOSED },
     { "HANDLE_NOT_CLOSABLE",         STATUS_HANDLE_NOT_CLOSABLE },
+    { "ILLEGAL_FUNCTION",            STATUS_ILLEGAL_FUNCTION },
     { "INSTANCE_NOT_AVAILABLE",      STATUS_INSTANCE_NOT_AVAILABLE },
     { "INVALID_CID",                 STATUS_INVALID_CID },
     { "INVALID_FILE_FOR_SECTION",    STATUS_INVALID_FILE_FOR_SECTION },

@@ -1535,6 +1535,7 @@ struct get_mapping_info_reply
     int          protect;
     int          header_size;
     void*        base;
+    obj_handle_t mapping;
     obj_handle_t shared_file;
     int          shared_size;
 };
@@ -4436,6 +4437,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 263
+#define SERVER_PROTOCOL_VERSION 264
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

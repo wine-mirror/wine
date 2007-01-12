@@ -1159,6 +1159,7 @@ enum char_info_mode
     int          protect;       /* protection flags */
     int          header_size;   /* header size (for VPROT_IMAGE mapping) */
     void*        base;          /* default base addr (for VPROT_IMAGE mapping) */
+    obj_handle_t mapping;       /* duplicate mapping handle unless removable */
     obj_handle_t shared_file;   /* shared mapping file handle */
     int          shared_size;   /* shared mapping size */
 @END
