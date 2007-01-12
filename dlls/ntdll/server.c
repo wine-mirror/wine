@@ -327,6 +327,26 @@ unsigned int wine_server_call( void *req_ptr )
 
 
 /***********************************************************************
+ *           server_enter_uninterrupted_section
+ */
+void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
+{
+    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, sigset );
+    RtlEnterCriticalSection( cs );
+}
+
+
+/***********************************************************************
+ *           server_leave_uninterrupted_section
+ */
+void server_leave_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
+{
+    RtlLeaveCriticalSection( cs );
+    pthread_functions.sigprocmask( SIG_SETMASK, sigset, NULL );
+}
+
+
+/***********************************************************************
  *           wine_server_send_fd   (NTDLL.@)
  *
  * Send a file descriptor to the server.

@@ -222,15 +222,16 @@ static void VIRTUAL_DumpView( FILE_VIEW *view )
 #if WINE_VM_DEBUG
 static void VIRTUAL_Dump(void)
 {
+    sigset_t sigset;
     struct file_view *view;
 
     TRACE( "Dump of all virtual memory views:\n" );
-    RtlEnterCriticalSection(&csVirtual);
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
     LIST_FOR_EACH_ENTRY( view, &views_list, FILE_VIEW, entry )
     {
         VIRTUAL_DumpView( view );
     }
-    RtlLeaveCriticalSection(&csVirtual);
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 }
 #endif
 
@@ -943,13 +944,14 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
     off_t pos;
+    sigset_t sigset;
     struct stat st;
     struct file_view *view = NULL;
     char *ptr, *header_end;
 
     /* zero-map the whole range */
 
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (base >= (char *)0x110000)  /* make sure the DOS area remains free */
         status = map_view( &view, base, total_size, mask, FALSE,
@@ -1196,14 +1198,14 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
  done:
     view->mapping = dup_mapping;
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     *addr_ptr = ptr;
     return STATUS_SUCCESS;
 
  error:
     if (view) delete_view( view );
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     if (dup_mapping) NtClose( dup_mapping );
     return status;
 }
@@ -1272,8 +1274,9 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
 {
     FILE_VIEW *view;
     NTSTATUS ret = STATUS_ACCESS_VIOLATION;
+    sigset_t sigset;
 
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
     if ((view = VIRTUAL_FindView( addr )))
     {
         void *page = ROUND_ADDR( addr, page_mask );
@@ -1284,7 +1287,7 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
             ret = STATUS_GUARD_PAGE_VIOLATION;
         }
     }
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     return ret;
 }
 
@@ -1297,8 +1300,9 @@ NTSTATUS VIRTUAL_HandleFault( LPCVOID addr )
 void VIRTUAL_SetForceExec( BOOL enable )
 {
     struct file_view *view;
+    sigset_t sigset;
 
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
     if (!force_exec_prot != !enable)  /* change all existing views */
     {
         force_exec_prot = enable;
@@ -1340,7 +1344,7 @@ void VIRTUAL_SetForceExec( BOOL enable )
             }
         }
     }
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 }
 
 
@@ -1370,6 +1374,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
     SIZE_T mask = get_mask( zero_bits );
     NTSTATUS status = STATUS_SUCCESS;
     struct file_view *view;
+    sigset_t sigset;
 
     TRACE("%p %p %08lx %x %08x\n", process, *ret, size, type, protect );
 
@@ -1426,7 +1431,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     /* Reserve the memory */
 
-    if (use_locks) RtlEnterCriticalSection( &csVirtual );
+    if (use_locks) server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (type & MEM_SYSTEM)
     {
@@ -1454,7 +1459,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
         else if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
     }
 
-    if (use_locks) RtlLeaveCriticalSection( &csVirtual );
+    if (use_locks) server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     if (status == STATUS_SUCCESS)
     {
@@ -1473,6 +1478,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 {
     FILE_VIEW *view;
     char *base;
+    sigset_t sigset;
     NTSTATUS status = STATUS_SUCCESS;
     LPVOID addr = *addr_ptr;
     SIZE_T size = *size_ptr;
@@ -1493,7 +1499,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     /* avoid freeing the DOS area when a broken app passes a NULL pointer */
     if (!base && !(type & MEM_SYSTEM)) return STATUS_INVALID_PARAMETER;
 
-    RtlEnterCriticalSection(&csVirtual);
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (!(view = VIRTUAL_FindView( base )) ||
         (base + size > (char *)view->base + view->size) ||
@@ -1537,7 +1543,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         status = STATUS_INVALID_PARAMETER;
     }
 
-    RtlLeaveCriticalSection(&csVirtual);
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
 }
 
@@ -1550,6 +1556,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
                                         ULONG new_prot, ULONG *old_prot )
 {
     FILE_VIEW *view;
+    sigset_t sigset;
     NTSTATUS status = STATUS_SUCCESS;
     char *base;
     UINT i;
@@ -1571,7 +1578,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
     size = ROUND_SIZE( addr, size );
     base = ROUND_ADDR( addr, page_mask );
 
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     if (!(view = VIRTUAL_FindView( base )) || (base + size > (char *)view->base + view->size))
     {
@@ -1598,7 +1605,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
             if (!VIRTUAL_SetProt( view, base, size, vprot )) status = STATUS_ACCESS_DENIED;
         }
     }
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     if (status == STATUS_SUCCESS)
     {
@@ -1626,6 +1633,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     struct list *ptr;
     SIZE_T size = 0;
     MEMORY_BASIC_INFORMATION *info = buffer;
+    sigset_t sigset;
 
     if (info_class != MemoryBasicInformation)
     {
@@ -1654,7 +1662,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
 
     /* Find the view containing the address */
 
-    RtlEnterCriticalSection(&csVirtual);
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
     ptr = list_head( &views_list );
     for (;;)
     {
@@ -1666,7 +1674,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
             {
                 if (user_space_limit && base >= (char *)user_space_limit)
                 {
-                    RtlLeaveCriticalSection( &csVirtual );
+                    server_leave_uninterrupted_section( &csVirtual, &sigset );
                     return STATUS_WORKING_SET_LIMIT_RANGE;
                 }
                 size = (char *)user_space_limit - alloc_base;
@@ -1715,7 +1723,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
         for (size = base - alloc_base; size < view->size; size += page_size)
             if (view->prot[size >> page_shift] != vprot) break;
     }
-    RtlLeaveCriticalSection(&csVirtual);
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 
     info->BaseAddress    = base;
     info->RegionSize     = size - (base - alloc_base);
@@ -1841,6 +1849,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     DWORD size_low, size_high, header_size, shared_size;
     HANDLE dup_mapping, shared_file;
     LARGE_INTEGER offset;
+    sigset_t sigset;
 
     offset.QuadPart = offset_ptr ? offset_ptr->QuadPart : 0;
 
@@ -1945,12 +1954,12 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
 
     /* Reserve a properly aligned area */
 
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
 
     res = map_view( &view, *addr_ptr, size, mask, FALSE, prot );
     if (res)
     {
-        RtlLeaveCriticalSection( &csVirtual );
+        server_leave_uninterrupted_section( &csVirtual, &sigset );
         goto done;
     }
 
@@ -1974,7 +1983,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         delete_view( view );
     }
 
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
 
 done:
     if (dup_mapping) NtClose( dup_mapping );
@@ -1991,6 +2000,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 {
     FILE_VIEW *view;
     NTSTATUS status = STATUS_INVALID_PARAMETER;
+    sigset_t sigset;
     void *base = ROUND_ADDR( addr, page_mask );
 
     if (!is_current_process( process ))
@@ -1998,13 +2008,13 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
     if ((view = VIRTUAL_FindView( base )) && (base == view->base))
     {
         delete_view( view );
         status = STATUS_SUCCESS;
     }
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
 }
 
@@ -2018,6 +2028,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
 {
     FILE_VIEW *view;
     NTSTATUS status = STATUS_SUCCESS;
+    sigset_t sigset;
     void *addr = ROUND_ADDR( *addr_ptr, page_mask );
 
     if (!is_current_process( process ))
@@ -2025,7 +2036,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
         ERR("Unsupported on other process\n");
         return STATUS_ACCESS_DENIED;
     }
-    RtlEnterCriticalSection( &csVirtual );
+    server_enter_uninterrupted_section( &csVirtual, &sigset );
     if (!(view = VIRTUAL_FindView( addr ))) status = STATUS_INVALID_PARAMETER;
     else
     {
@@ -2033,7 +2044,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
         *addr_ptr = addr;
         if (msync( addr, *size_ptr, MS_SYNC )) status = STATUS_NOT_MAPPED_DATA;
     }
-    RtlLeaveCriticalSection( &csVirtual );
+    server_leave_uninterrupted_section( &csVirtual, &sigset );
     return status;
 }
 
