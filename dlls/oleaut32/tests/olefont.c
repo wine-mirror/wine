@@ -40,6 +40,10 @@
 #include <olectl.h>
 #include <ocidl.h>
 
+static WCHAR MSSansSerif_font[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
+static WCHAR system_font[] = { 'S','y','s','t','e','m',0 };
+static WCHAR arial_font[] = { 'A','r','i','a','l',0 };
+
 static HMODULE hOleaut32;
 
 static HRESULT (WINAPI *pOleCreateFontIndirect)(LPFONTDESC,REFIID,LPVOID*);
@@ -56,7 +60,6 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	long hfont_height, const char * test_name)
 {
 	FONTDESC fd;
-	static const WCHAR fname[] = { 'S','y','s','t','e','m',0 };
 	LPVOID pvObj = NULL;
 	IFont* ifnt = NULL;
 	HFONT hfont;
@@ -65,7 +68,7 @@ static void test_ifont_sizes(long lo_size, long hi_size,
 	HRESULT hres;
 
 	fd.cbSizeofstruct = sizeof(FONTDESC);
-	fd.lpstrName      = (WCHAR*)fname;
+	fd.lpstrName      = system_font;
 	S(fd.cySize).Lo   = lo_size;
 	S(fd.cySize).Hi   = hi_size;
 	fd.sWeight        = 0;
@@ -262,12 +265,11 @@ static void test_font_events_disp(void)
     HRESULT hr;
     DWORD dwCookie;
     IFontDisp *pFontDisp;
-    static const WCHAR wszMSSansSerif[] = {'M','S',' ','S','a','n','s',' ','S','e','r','i','f',0};
     DISPPARAMS dispparams;
     VARIANTARG vararg;
 
     fontdesc.cbSizeofstruct = sizeof(fontdesc);
-    fontdesc.lpstrName = (LPOLESTR)wszMSSansSerif;
+    fontdesc.lpstrName = MSSansSerif_font;
     fontdesc.cySize.int64 = 12 * 10000; /* 12 pt */
     fontdesc.sWeight = FW_NORMAL;
     fontdesc.sCharset = 0;
@@ -484,8 +486,6 @@ static void test_Invoke(void)
 static void test_IsEqual()
 {
     FONTDESC fd;
-    static const WCHAR system_font[] = { 'S','y','s','t','e','m',0 };
-    static const WCHAR arial_font[] = { 'A','r','i','a','l',0 };
     LPVOID pvObj = NULL;
     LPVOID pvObj2 = NULL;
     IFont* ifnt = NULL;
@@ -494,7 +494,7 @@ static void test_IsEqual()
 
     /* Basic font description */
     fd.cbSizeofstruct = sizeof(FONTDESC);
-    fd.lpstrName      = (WCHAR*)system_font;
+    fd.lpstrName      = system_font;
     S(fd.cySize).Lo   = 100;
     S(fd.cySize).Hi   = 100;
     fd.sWeight        = 0;
@@ -521,12 +521,12 @@ static void test_IsEqual()
         "IFont_IsEqual: (NULL) Expected 0x80004003 but got 0x%08x\n",hres);
 
     /* Test strName */
-    fd.lpstrName = (WCHAR*)arial_font;
+    fd.lpstrName = arial_font;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     hres = IFont_IsEqual(ifnt,ifnt2);
     ok(hres == S_FALSE,
         "IFont_IsEqual: (strName) Expected S_FALSE but got 0x%08x\n",hres);
-    fd.lpstrName = (WCHAR*)system_font;
+    fd.lpstrName = system_font;
     IFont_Release(ifnt2);
 
     /* Test lo font size */
@@ -602,8 +602,6 @@ static void test_IsEqual()
 static void test_ReleaseHfont(void)
 {
     FONTDESC fd;
-    static const WCHAR system_font[] = { 'S','y','s','t','e','m',0 };
-    static const WCHAR arial_font[] = { 'A','r','i','a','l',0 };
     LPVOID pvObj1 = NULL;
     LPVOID pvObj2 = NULL;
     IFont* ifnt1 = NULL;
@@ -614,7 +612,7 @@ static void test_ReleaseHfont(void)
 
     /* Basic font description */
     fd.cbSizeofstruct = sizeof(FONTDESC);
-    fd.lpstrName      = (WCHAR*)system_font;
+    fd.lpstrName      = system_font;
     S(fd.cySize).Lo   = 100;
     S(fd.cySize).Hi   = 100;
     fd.sWeight        = 0;
@@ -627,7 +625,7 @@ static void test_ReleaseHfont(void)
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj1);
     ifnt1 = pvObj1;
     IFont_get_hFont(ifnt1,&hfnt1);
-    fd.lpstrName = (WCHAR*)arial_font;
+    fd.lpstrName = arial_font;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     ifnt2 = pvObj2;
     IFont_get_hFont(ifnt2,&hfnt2);
@@ -674,8 +672,6 @@ static void test_ReleaseHfont(void)
 static void test_AddRefHfont(void)
 {
     FONTDESC fd;
-    static const WCHAR system_font[] = { 'S','y','s','t','e','m',0 };
-    static const WCHAR arial_font[] = { 'A','r','i','a','l',0 };
     LPVOID pvObj1 = NULL;
     LPVOID pvObj2 = NULL;
     LPVOID pvObj3 = NULL;
@@ -689,7 +685,7 @@ static void test_AddRefHfont(void)
 
     /* Basic font description */
     fd.cbSizeofstruct = sizeof(FONTDESC);
-    fd.lpstrName      = (WCHAR*)system_font;
+    fd.lpstrName      = system_font;
     S(fd.cySize).Lo   = 100;
     S(fd.cySize).Hi   = 100;
     fd.sWeight        = 0;
@@ -702,7 +698,7 @@ static void test_AddRefHfont(void)
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj1);
     ifnt1 = pvObj1;
     IFont_get_hFont(ifnt1,&hfnt1);
-    fd.lpstrName = (WCHAR*)arial_font;
+    fd.lpstrName = arial_font;
     pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
     ifnt2 = pvObj2;
     IFont_get_hFont(ifnt2,&hfnt2);
