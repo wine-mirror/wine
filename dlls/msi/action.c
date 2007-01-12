@@ -1931,7 +1931,7 @@ static UINT ITERATE_CostFinalizeConditions(MSIRECORD *row, LPVOID param)
     return ERROR_SUCCESS;
 }
 
-LPWSTR msi_get_disk_file_version( LPCWSTR filename )
+static LPWSTR msi_get_disk_file_version( LPCWSTR filename )
 {
     static const WCHAR name_fmt[] =
         {'%','u','.','%','u','.','%','u','.','%','u',0};
@@ -3869,7 +3869,7 @@ static UINT ACTION_ForceReboot(MSIPACKAGE *package)
     return ERROR_INSTALL_SUSPEND;
 }
 
-UINT msi_set_sourcedir_props(MSIPACKAGE *package)
+static UINT msi_set_sourcedir_props(MSIPACKAGE *package)
 {
     LPWSTR p, source;
     DWORD len;
