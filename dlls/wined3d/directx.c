@@ -2243,9 +2243,9 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
        The following fields apply to d3d9 only
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
-        FIXME("Caps support for directx9 is nonexistent at the moment!\n");
+        /* d3d9.dll sets D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES here because StretchRects is implemented in d3d9 */
         *pCaps->DevCaps2                          = 0;
-        /* TODO: D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES and VS3.0 needs at least D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
+        /* TODO: VS3.0 needs at least D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
         *pCaps->MaxNpatchTessellationLevel        = 0;
         *pCaps->MasterAdapterOrdinal              = 0;
         *pCaps->AdapterOrdinalInGroup             = 0;
