@@ -2243,14 +2243,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
     so for now, just count internally   */
     if (pStreamData != NULL) {
         IWineD3DVertexBufferImpl *vbImpl = (IWineD3DVertexBufferImpl *) pStreamData;
-        if( (vbImpl->Flags & VBFLAG_STREAM) && vbImpl->stream != StreamNumber) {
-            WARN("Assigning a Vertex Buffer to stream %d which is already assigned to stream %d\n", StreamNumber, vbImpl->stream);
-        }
-        vbImpl->stream = StreamNumber;
-        vbImpl->Flags |= VBFLAG_STREAM;
+        InterlockedIncrement(&vbImpl->bindCount);
     }
     if (oldSrc != NULL) {
-        ((IWineD3DVertexBufferImpl *) oldSrc)->Flags &= ~VBFLAG_STREAM;
+        InterlockedDecrement(&((IWineD3DVertexBufferImpl *) oldSrc)->bindCount);
     }
 
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);

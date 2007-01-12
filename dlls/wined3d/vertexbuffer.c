@@ -266,7 +266,7 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     }
 
     /* Reading the declaration makes only sense if the stateblock is finalized and the buffer bound to a stream */
-    if(This->resource.wineD3DDevice->isInDraw && This->Flags & VBFLAG_STREAM) {
+    if(This->resource.wineD3DDevice->isInDraw && This->bindCount > 0) {
         declChanged = IWineD3DVertexBufferImpl_FindDecl(This);
     } else if(This->Flags & VBFLAG_HASDESC) {
         /* Reuse the declaration stored in the buffer. It will most likely not change, and if it does
