@@ -116,10 +116,12 @@ static void testAcquireSecurityContext(void)
     PCCERT_CONTEXT certs[2];
     HCRYPTPROV csp;
     static CHAR unisp_name_a[] = UNISP_NAME_A;
-    static WCHAR ms_def_prov_w[] = MS_DEF_PROV_W;
+    WCHAR ms_def_prov_w[MAX_PATH];
     BOOL ret;
     HCRYPTKEY key;
     CRYPT_KEY_PROV_INFO keyProvInfo;
+
+    lstrcpyW(ms_def_prov_w, MS_DEF_PROV_W);
 
     keyProvInfo.pwszContainerName = cspNameW;
     keyProvInfo.pwszProvName = ms_def_prov_w;
