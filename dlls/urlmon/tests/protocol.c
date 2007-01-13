@@ -86,7 +86,8 @@ static DWORD bindf = 0;
 
 static enum {
     FILE_TEST,
-    HTTP_TEST
+    HTTP_TEST,
+    MK_TEST
 } tested_protocol;
 
 static HRESULT WINAPI HttpNegotiate_QueryInterface(IHttpNegotiate2 *iface, REFIID riid, void **ppv)
@@ -926,6 +927,12 @@ static void test_mk_protocol(void)
     IUnknown *unk;
     HRESULT hres;
 
+    static const WCHAR wrong_url1[] = {'t','e','s','t',':','@','M','S','I','T','S','t','o','r','e',
+                                       ':',':','/','t','e','s','t','.','h','t','m','l',0};
+    static const WCHAR wrong_url2[] = {'m','k',':','/','t','e','s','t','.','h','t','m','l',0};
+
+    tested_protocol = MK_TEST;
+
     hres = CoGetClassObject(&CLSID_MkProtocol, CLSCTX_INPROC_SERVER, NULL,
             &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
@@ -945,6 +952,27 @@ static void test_mk_protocol(void)
                                         (void**)&protocol);
     IClassFactory_Release(factory);
     ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+
+    SET_EXPECT(GetBindInfo);
+    hres = IInternetProtocol_Start(protocol, wrong_url1, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == MK_E_SYNTAX, "Start failed: %08x, expected MK_E_SYNTAX\n", hres);
+    CHECK_CALLED(GetBindInfo);
+
+    SET_EXPECT(GetBindInfo);
+    SET_EXPECT(ReportProgress_DIRECTBIND);
+    SET_EXPECT(ReportProgress_SENDINGREQUEST);
+    SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+    SET_EXPECT(ReportResult);
+    expect_hrResult = INET_E_RESOURCE_NOT_FOUND;
+
+    hres = IInternetProtocol_Start(protocol, wrong_url2, &protocol_sink, &bind_info, 0, 0);
+    ok(hres == INET_E_RESOURCE_NOT_FOUND, "Start failed: %08x, expected INET_E_RESOURCE_NOT_FOUND\n", hres);
+
+    CHECK_CALLED(GetBindInfo);
+    CHECK_CALLED(ReportProgress_DIRECTBIND);
+    CHECK_CALLED(ReportProgress_SENDINGREQUEST);
+    CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+    CHECK_CALLED(ReportResult);
 
     IInternetProtocol_Release(protocol);
 }
