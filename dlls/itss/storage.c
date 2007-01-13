@@ -296,6 +296,7 @@ static ULONG WINAPI ITSS_IStorageImpl_Release(
 
     if (ref == 0)
     {
+        chm_close(This->chmfile);
         HeapFree(GetProcessHeap(), 0, This);
         ITSS_UnlockModule();
     }
