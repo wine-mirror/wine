@@ -8611,10 +8611,16 @@ static LRESULT LISTVIEW_HeaderNotification(LISTVIEW_INFO *infoPtr, const NMHEADE
 		    /* resizing left-aligned columns leaves most of the left side untouched */
 		    if ((lpColumnInfo->fmt & LVCFMT_JUSTIFYMASK) == LVCFMT_LEFT)
 		    {
-			INT nMaxDirty = infoPtr->nEllipsisWidth + infoPtr->ntmMaxCharWidth + dx;
+			INT nMaxDirty = infoPtr->nEllipsisWidth + infoPtr->ntmMaxCharWidth;
+			if (dx > 0)
+			    nMaxDirty += dx;
 			rcCol.left = max (rcCol.left, rcCol.right - nMaxDirty);
 		    }
-		    
+
+		    /* when shrinking the last column clear the now unused field */
+		    if (lpnmh->iItem == DPA_GetPtrCount(infoPtr->hdpaColumns) - 1 && dx < 0)
+		        rcCol.right -= dx;
+
 		    LISTVIEW_InvalidateRect(infoPtr, &rcCol);
 		}
 	    }
