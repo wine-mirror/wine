@@ -1803,7 +1803,9 @@ static void test_Load(IPersistMoniker *persist)
 {
     IBindCtx *bind;
     HRESULT hres;
-    static WCHAR sz_html_clientsite_objectparam[] = SZ_HTML_CLIENTSITE_OBJECTPARAM;
+    WCHAR sz_html_clientsite_objectparam[MAX_PATH];
+
+    lstrcpyW(sz_html_clientsite_objectparam, SZ_HTML_CLIENTSITE_OBJECTPARAM);
 
     test_readyState((IUnknown*)persist);
 
