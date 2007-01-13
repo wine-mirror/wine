@@ -50,7 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(variant);
 
 static const WCHAR szPercent_d[] = { '%','d','\0' };
 static const WCHAR szPercentZeroTwo_d[] = { '%','0','2','d','\0' };
-static const WCHAR szPercentZeroFour_d[] = { '%','0','4','d','\0' };
 static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
 
 #if 0
