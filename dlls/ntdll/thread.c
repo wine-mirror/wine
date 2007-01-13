@@ -88,21 +88,6 @@ static inline NTSTATUS init_teb( TEB *teb )
 
 
 /***********************************************************************
- *           free_teb
- */
-static inline void free_teb( TEB *teb )
-{
-    SIZE_T size = 0;
-    void *addr = teb;
-    struct ntdll_thread_regs *thread_regs = (struct ntdll_thread_regs *)teb->SpareBytes1;
-
-    NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
-    wine_ldt_free_fs( thread_regs->fs );
-    munmap( teb, sigstack_total_size );
-}
-
-
-/***********************************************************************
  *           fix_unicode_string
  *
  * Make sure the unicode string doesn't point beyond the end pointer
