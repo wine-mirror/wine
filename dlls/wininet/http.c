@@ -846,22 +846,22 @@ end:
 }
 
 /***********************************************************************
- *  HTTP_DecodeBase64
+ *  HTTP_EncodeBase64
  */
-static UINT HTTP_EncodeBase64( LPCWSTR bin, LPWSTR base64 )
+static UINT HTTP_EncodeBase64( LPCSTR bin, unsigned int len, LPWSTR base64 )
 {
     UINT n = 0, x;
     static LPCSTR HTTP_Base64Enc = 
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    while( bin[0] )
+    while( len > 0 )
     {
         /* first 6 bits, all from bin[0] */
         base64[n++] = HTTP_Base64Enc[(bin[0] & 0xfc) >> 2];
         x = (bin[0] & 3) << 4;
 
         /* next 6 bits, 2 from bin[0] and 4 from bin[1] */
-        if( !bin[1] )
+        if( len == 1 )
         {
             base64[n++] = HTTP_Base64Enc[x];
             base64[n++] = '=';
@@ -872,7 +872,7 @@ static UINT HTTP_EncodeBase64( LPCWSTR bin, LPWSTR base64 )
         x = ( bin[1] & 0x0f ) << 2;
 
         /* next 6 bits 4 from bin[1] and 2 from bin[2] */
-        if( !bin[2] )
+        if( len == 2 )
         {
             base64[n++] = HTTP_Base64Enc[x];
             base64[n++] = '=';
@@ -883,6 +883,7 @@ static UINT HTTP_EncodeBase64( LPCWSTR bin, LPWSTR base64 )
         /* last 6 bits, all from bin [2] */
         base64[n++] = HTTP_Base64Enc[ bin[2] & 0x3f ];
         bin += 3;
+        len -= 3;
     }
     base64[n] = 0;
     return n;
@@ -896,12 +897,13 @@ static UINT HTTP_EncodeBase64( LPCWSTR bin, LPWSTR base64 )
 static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
 {
     UINT len;
-    LPWSTR in, out;
+    char *in;
+    LPWSTR out;
     static const WCHAR szBasic[] = {'B','a','s','i','c',' ',0};
-    static const WCHAR szColon[] = {':',0};
 
-    len = lstrlenW( username ) + 1 + lstrlenW ( password ) + 1;
-    in = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+    len = WideCharToMultiByte(CP_UTF8, 0, username, lstrlenW(username), NULL, 0, NULL, NULL) +
+        1 + WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
+    in = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(CHAR) );
     if( !in )
         return NULL;
 
@@ -910,11 +912,11 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
     out = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if( out )
     {
-        lstrcpyW( in, username );
-        lstrcatW( in, szColon );
-        lstrcatW( in, password );
+        WideCharToMultiByte(CP_UTF8, 0, username, -1, NULL, 0, NULL, NULL);
+        strcat(in, ":");
+        WideCharToMultiByte(CP_UTF8, 0, password, -1, NULL, 0, NULL, NULL);
         lstrcpyW( out, szBasic );
-        HTTP_EncodeBase64( in, &out[strlenW(out)] );
+        HTTP_EncodeBase64( in, len, &out[strlenW(out)] );
     }
     HeapFree( GetProcessHeap(), 0, in );
 
