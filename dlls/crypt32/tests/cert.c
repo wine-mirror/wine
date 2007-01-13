@@ -309,7 +309,6 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
 }
 
 static WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e','m','p',0 };
-static WCHAR ms_def_prov_w[] = MS_DEF_PROV_W;
 
 static void testCertProperties(void)
 {
@@ -1824,6 +1823,9 @@ static void testAcquireCertPrivateKey(void)
     BOOL callerFree;
     CRYPT_KEY_PROV_INFO keyProvInfo;
     HCRYPTKEY key;
+    WCHAR ms_def_prov_w[MAX_PATH];
+
+    lstrcpyW(ms_def_prov_w, MS_DEF_PROV_W);
 
     keyProvInfo.pwszContainerName = cspNameW;
     keyProvInfo.pwszProvName = ms_def_prov_w;
