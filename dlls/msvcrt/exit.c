@@ -41,7 +41,7 @@ extern char *MSVCRT__pgmptr;
 void (*_aexit_rtn)(int) = MSVCRT__exit;
 
 /* INTERNAL: call atexit functions */
-void __MSVCRT__call_atexit(void)
+static void __MSVCRT__call_atexit(void)
 {
   /* Note: should only be called with the exit lock held */
   TRACE("%d atext functions to call\n", MSVCRT_atexit_registered);

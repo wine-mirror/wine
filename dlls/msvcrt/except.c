@@ -412,7 +412,7 @@ static BOOL WINAPI msvcrt_console_handler(DWORD ctrlType)
 typedef void (*float_handler)(int, int);
 
 /* The exception codes are actually NTSTATUS values */
-struct
+static const struct
 {
     NTSTATUS status;
     int signal;
