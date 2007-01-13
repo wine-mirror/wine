@@ -50,11 +50,6 @@ static inline dom_pi *impl_from_IXMLDOMProcessingInstruction( IXMLDOMProcessingI
     return (dom_pi *)((char*)iface - FIELD_OFFSET(dom_pi, lpVtbl));
 }
 
-static inline xmlNodePtr get_pi( dom_pi *This )
-{
-    return xmlNodePtr_from_domnode( This->node, XML_PI_NODE );
-}
-
 static HRESULT WINAPI dom_pi_QueryInterface(
     IXMLDOMProcessingInstruction *iface,
     REFIID riid,

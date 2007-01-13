@@ -50,11 +50,6 @@ static inline domcomment *impl_from_IXMLDOMComment( IXMLDOMComment *iface )
     return (domcomment *)((char*)iface - FIELD_OFFSET(domcomment, lpVtbl));
 }
 
-static inline xmlNodePtr get_comment( domcomment *This )
-{
-    return xmlNodePtr_from_domnode( This->node, XML_COMMENT_NODE );
-}
-
 static HRESULT WINAPI domcomment_QueryInterface(
     IXMLDOMComment *iface,
     REFIID riid,

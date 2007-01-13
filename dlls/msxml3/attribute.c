@@ -50,11 +50,6 @@ static inline domattr *impl_from_IXMLDOMAttribute( IXMLDOMAttribute *iface )
     return (domattr *)((char*)iface - FIELD_OFFSET(domattr, lpVtbl));
 }
 
-static inline xmlNodePtr get_attribute( domattr *This )
-{
-    return xmlNodePtr_from_domnode( This->node, XML_ATTRIBUTE_NODE );
-}
-
 static HRESULT WINAPI domattr_QueryInterface(
     IXMLDOMAttribute *iface,
     REFIID riid,
