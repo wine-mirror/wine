@@ -660,7 +660,7 @@ static HRESULT WINAPI ITSS_IStream_Read(
     if( pcbRead )
         *pcbRead = count;
     
-    return S_OK;
+    return count ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI ITSS_IStream_Write(
