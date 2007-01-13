@@ -2873,6 +2873,8 @@ static BOOL HTTP_ProcessHeader(LPWININETHTTPREQW lpwhr, LPCWSTR field, LPCWSTR v
 
         return HTTP_InsertCustomHeader(lpwhr, &hdr);
     }
+    /* no value to delete */
+    else return TRUE;
 
     if (dwModifier & HTTP_ADDHDR_FLAG_REQ)
 	    lphttpHdr->wFlags |= HDR_ISREQUEST;
