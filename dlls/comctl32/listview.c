@@ -3749,6 +3749,7 @@ static BOOL LISTVIEW_DrawItem(LISTVIEW_INFO *infoPtr, HDC hdc, INT nItem, INT nS
 
     hOldFont = GetCurrentObject(hdc, OBJ_FONT);
     if (nSubItem > 0) cdmode = infoPtr->cditemmode;
+    if (cdmode & CDRF_SKIPDEFAULT) goto postpaint;
     if (cdmode & CDRF_NOTIFYITEMDRAW)
         cdsubitemmode = notify_customdraw(infoPtr, CDDS_PREPAINT, &nmlvcd);
     if (nSubItem == 0) infoPtr->cditemmode = cdsubitemmode;
