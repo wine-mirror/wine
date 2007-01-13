@@ -4910,6 +4910,7 @@ TOOLBAR_SetImageList (HWND hwnd, WPARAM wParam, LPARAM lParam)
         infoPtr->nBitmapHeight = 1;
     }
     infoPtr->nVBitmapHeight = infoPtr->nBitmapHeight;
+    TOOLBAR_CalcToolbar(hwnd);
 
     TRACE("hwnd %p, new himl=%p, id = %d, count=%d, bitmap w=%d, h=%d\n",
 	  hwnd, infoPtr->himlDef, id, infoPtr->nNumBitmaps,
