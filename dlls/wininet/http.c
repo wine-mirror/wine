@@ -665,7 +665,7 @@ BOOL WINAPI HttpEndRequestW(HINTERNET hRequest,
             (dwCode==302 || dwCode==301))
         {
             WCHAR szNewLocation[2048];
-            dwBufferSize=2048;
+            dwBufferSize=sizeof(szNewLocation);
             if(HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
             {
 	            static const WCHAR szGET[] = { 'G','E','T', 0 };
@@ -2373,7 +2373,7 @@ BOOL WINAPI HTTP_HttpSendRequestW(LPWININETHTTPREQW lpwhr, LPCWSTR lpszHeaders,
             {
                 DWORD dwCode,dwCodeLength=sizeof(DWORD);
                 WCHAR szNewLocation[2048];
-                dwBufferSize=2048;
+                dwBufferSize=sizeof(szNewLocation);
                 if (HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_FLAG_NUMBER|HTTP_QUERY_STATUS_CODE,&dwCode,&dwCodeLength,NULL) &&
                     (dwCode==HTTP_STATUS_REDIRECT || dwCode==HTTP_STATUS_MOVED) &&
                     HTTP_HttpQueryInfoW(lpwhr,HTTP_QUERY_LOCATION,szNewLocation,&dwBufferSize,NULL))
@@ -2988,7 +2988,7 @@ static VOID HTTP_CloseConnection(LPWININETHTTPREQW lpwhr)
 BOOL HTTP_FinishedReading(LPWININETHTTPREQW lpwhr)
 {
     WCHAR szConnectionResponse[20];
-    DWORD dwBufferSize = sizeof(szConnectionResponse)/sizeof(szConnectionResponse[0]);
+    DWORD dwBufferSize = sizeof(szConnectionResponse);
 
     TRACE("\n");
 
