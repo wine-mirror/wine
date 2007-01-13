@@ -60,10 +60,17 @@ DEFINE_EXPECT(GetBindInfo);
 DEFINE_EXPECT(ReportProgress_BEGINDOWNLOADDATA);
 DEFINE_EXPECT(ReportProgress_SENDINGREQUEST);
 DEFINE_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+DEFINE_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
+DEFINE_EXPECT(ReportProgress_DIRECTBIND);
 DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
 
 static HRESULT expect_hrResult;
+
+static enum {
+    ITS_PROTOCOL,
+    MK_PROTOCOL
+} test_protocol;
 
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
@@ -95,6 +102,8 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 {
     static const WCHAR blank_html[] = {'b','l','a','n','k','.','h','t','m','l',0};
     static const WCHAR text_html[] = {'t','e','x','t','/','h','t','m','l',0};
+    static const WCHAR cache_file[] =
+        {'t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
 
     switch(ulStatusCode) {
     case BINDSTATUS_BEGINDOWNLOADDATA:
@@ -103,11 +112,22 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
         break;
     case BINDSTATUS_SENDINGREQUEST:
         CHECK_EXPECT(ReportProgress_SENDINGREQUEST);
-        ok(!lstrcmpW(szStatusText, blank_html), "unexpected szStatusText\n");
+        if(test_protocol == ITS_PROTOCOL)
+            ok(!lstrcmpW(szStatusText, blank_html), "unexpected szStatusText\n");
+        else
+            ok(szStatusText == NULL, "szStatusText != NULL\n");
         break;
     case BINDSTATUS_MIMETYPEAVAILABLE:
         CHECK_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
         ok(!lstrcmpW(szStatusText, text_html), "unexpected szStatusText\n");
+        break;
+    case BINDSTATUS_CACHEFILENAMEAVAILABLE:
+        CHECK_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
+        ok(!lstrcmpW(szStatusText, cache_file), "unexpected szStatusText\n");
+        break;
+    case BINDSTATUS_DIRECTBIND:
+        CHECK_EXPECT(ReportProgress_DIRECTBIND);
+        ok(!szStatusText, "szStatusText != NULL\n");
         break;
     default:
         ok(0, "unexpected ulStatusCode %d\n", ulStatusCode);
@@ -123,7 +143,10 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
     CHECK_EXPECT(ReportData);
 
     ok(ulProgress == ulProgressMax, "ulProgress != ulProgressMax\n");
-    ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE), "grcf = %08x\n", grfBSCF);
+    if(test_protocol == ITS_PROTOCOL)
+        ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_DATAFULLYAVAILABLE), "grcf = %08x\n", grfBSCF);
+    else
+        ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION), "grcf = %08x\n", grfBSCF);
 
     return S_OK;
 }
@@ -225,10 +248,15 @@ static void protocol_start(IInternetProtocol *protocol, LPCWSTR url)
     HRESULT hres;
 
     SET_EXPECT(GetBindInfo);
+    if(test_protocol == MK_PROTOCOL)
+        SET_EXPECT(ReportProgress_DIRECTBIND);
     SET_EXPECT(ReportProgress_SENDINGREQUEST);
     SET_EXPECT(ReportProgress_MIMETYPEAVAILABLE);
+    if(test_protocol == MK_PROTOCOL)
+        SET_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
     SET_EXPECT(ReportData);
-    SET_EXPECT(ReportProgress_BEGINDOWNLOADDATA);
+    if(test_protocol == ITS_PROTOCOL)
+        SET_EXPECT(ReportProgress_BEGINDOWNLOADDATA);
     SET_EXPECT(ReportResult);
     expect_hrResult = S_OK;
 
@@ -236,14 +264,19 @@ static void protocol_start(IInternetProtocol *protocol, LPCWSTR url)
     ok(hres == S_OK, "Start failed: %08x\n", hres);
 
     CHECK_CALLED(GetBindInfo);
+    if(test_protocol == MK_PROTOCOL)
+        CHECK_CALLED(ReportProgress_DIRECTBIND);
     CHECK_CALLED(ReportProgress_SENDINGREQUEST);
     CHECK_CALLED(ReportProgress_MIMETYPEAVAILABLE);
+    if(test_protocol == MK_PROTOCOL)
+        SET_EXPECT(ReportProgress_CACHEFILENAMEAVAIABLE);
     CHECK_CALLED(ReportData);
-    CHECK_CALLED(ReportProgress_BEGINDOWNLOADDATA);
+    if(test_protocol == ITS_PROTOCOL)
+        CHECK_CALLED(ReportProgress_BEGINDOWNLOADDATA);
     CHECK_CALLED(ReportResult);
 }
 
-static void test_its_protocol_url(IClassFactory *factory, LPCWSTR url)
+static void test_protocol_url(IClassFactory *factory, LPCWSTR url)
 {
     IInternetProtocol *protocol;
     BYTE buf[512];
@@ -270,8 +303,8 @@ static void test_its_protocol_url(IClassFactory *factory, LPCWSTR url)
 
     cb = 0xdeadbeef;
     hres = IInternetProtocol_Read(protocol, buf, sizeof(buf), &cb);
-    ok(hres == INET_E_DATA_NOT_AVAILABLE,
-       "Read returned %08x expected INET_E_DATA_NOT_AVAILABLE\n", hres);
+    ok(hres == (test_protocol == ITS_PROTOCOL ? INET_E_DATA_NOT_AVAILABLE : E_FAIL),
+       "Read returned %08x\n", hres);
     ok(cb == 0xdeadbeef, "cb=%u expected 0xdeadbeef\n", cb);
 
     protocol_start(protocol, url);
@@ -358,6 +391,8 @@ static void test_its_protocol(void)
     static const WCHAR wrong_url5[] = {'f','i','l','e',':',
         't','e','s','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
 
+    test_protocol = ITS_PROTOCOL;
+
     hres = CoGetClassObject(&CLSID_ITSProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
     if(!SUCCEEDED(hres))
@@ -386,15 +421,36 @@ static void test_its_protocol(void)
             ref = IInternetProtocol_Release(protocol);
             ok(!ref, "protocol ref=%d\n", ref);
 
-            test_its_protocol_url(factory, blank_url1);
-            test_its_protocol_url(factory, blank_url2);
-            test_its_protocol_url(factory, blank_url3);
+            test_protocol_url(factory, blank_url1);
+            test_protocol_url(factory, blank_url2);
+            test_protocol_url(factory, blank_url3);
         }
 
         IClassFactory_Release(factory);
     }
 
     IUnknown_Release(unk);
+}
+
+static void test_mk_protocol(void)
+{
+    IClassFactory *cf;
+    HRESULT hres;
+
+    static const WCHAR blank_url[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
+         't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+
+    test_protocol = MK_PROTOCOL;
+
+    hres = CoGetClassObject(&CLSID_MkProtocol, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory,
+                            (void**)&cf);
+    ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
+    if(!SUCCEEDED(hres))
+        return;
+
+    test_protocol_url(cf, blank_url);
+
+    IClassFactory_Release(cf);
 }
 
 static BOOL create_chm(void)
@@ -433,6 +489,7 @@ START_TEST(protocol)
         return;
 
     test_its_protocol();
+    test_mk_protocol();
 
     delete_chm();
     OleUninitialize();
