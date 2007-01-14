@@ -800,7 +800,7 @@ static BOOL elf_debuglink_parse (struct module* module,
      * 2/ padding on 4 byte boundary
      * 3/ CRC of the linked ELF file
      */
-    BOOL ret = FALSE, lret;
+    BOOL ret = FALSE;
     const char* dbg_link = (char*)debuglink;
     struct elf_file_map fmap_link;
 
@@ -808,13 +808,12 @@ static BOOL elf_debuglink_parse (struct module* module,
     {
 	fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
 	fmap_link.with_crc = 1;
-	lret = elf_load_debug_info_from_map(module, &fmap_link, pool,
-					    ht_symtab);
-	if (lret)
+	ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
+                                           ht_symtab);
+	if (ret)
 	    strcpy(module->module.LoadedPdbName, dbg_link);
 	else
 	    WARN("Couldn't load debug information from %s\n", dbg_link);
-	ret = ret || lret;
 	elf_unmap_file(&fmap_link);
     }
     else
