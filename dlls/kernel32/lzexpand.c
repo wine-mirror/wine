@@ -588,16 +588,3 @@ void WINAPI LZClose( HFILE fd )
             HeapFree( GetProcessHeap(), 0, lzs );
         }
 }
-
-
-/***********************************************************************
- *           CopyLZFile  (KERNEL32.@)
- *
- * Copy src to dest (including uncompressing src).
- * NOTE: Yes. This is exactly the same function as LZCopy.
- */
-LONG WINAPI CopyLZFile( HFILE src, HFILE dest )
-{
-    TRACE("(%d,%d)\n",src,dest);
-    return LZCopy(src,dest);
-}

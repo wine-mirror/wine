@@ -208,7 +208,7 @@
 @ stdcall CopyFileExA (str str ptr ptr ptr long)
 @ stdcall CopyFileExW (wstr wstr ptr ptr ptr long)
 @ stdcall CopyFileW(wstr wstr long)
-@ stdcall CopyLZFile(long long)
+@ stdcall CopyLZFile(long long) LZCopy
 @ stdcall CreateActCtxA(ptr)
 @ stdcall CreateActCtxW(ptr)
 @ stdcall CreateConsoleScreenBuffer(long long ptr long ptr)
