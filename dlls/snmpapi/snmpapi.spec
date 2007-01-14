@@ -18,11 +18,17 @@
 @ stub SnmpSvcSetLogLevel
 @ stub SnmpSvcSetLogType
 @ stub SnmpUtilAnsiToUnicode
+@ stub SnmpUtilAsnAnyCpy
+@ stub SnmpUtilAsnAnyFree
 @ stub SnmpUtilDbgPrint
 @ stub SnmpUtilIdsToA
 @ stub SnmpUtilMemAlloc
 @ stub SnmpUtilMemFree
 @ stub SnmpUtilMemReAlloc
+@ stub SnmpUtilOctetsCmp
+@ stub SnmpUtilOctetsCpy
+@ stub SnmpUtilOctetsFree
+@ stub SnmpUtilOctetsNCmp
 @ stub SnmpUtilOidAppend
 @ stub SnmpUtilOidCmp
 @ stdcall SnmpUtilOidCpy(ptr ptr)
