@@ -190,7 +190,7 @@ static void update_fullscreen_state( Display *display, Window win, BOOL new_fs_s
 {
     XEvent xev;
 
-    TRACE("setting fullscreen state for window %ld to %s\n", win, new_fs_state ? "true" : "false");
+    TRACE("setting fullscreen state for window %lx to %s\n", win, new_fs_state ? "true" : "false");
 
     xev.xclient.type = ClientMessage;
     xev.xclient.window = win;
@@ -229,10 +229,11 @@ static BOOL fullscreen_state_changed( const struct x11drv_win_data *data,
         *new_fs_state = TRUE;
 
 #if 0 /* useful to debug fullscreen state problems */
-    TRACE("old rect %s, new rect %s, old screen %s, new screen (0,0-%d,%d)\n",
+    TRACE("hwnd %p, old rect %s, new rect %s, old screen %s, new screen (0,0-%d,%d)\n",
+           data->hwnd,
            wine_dbgstr_rect(old_client_rect), wine_dbgstr_rect(&data->client_rect),
            wine_dbgstr_rect(old_screen_rect), screen_width, screen_height);
-    TRACE("old fs state %d\n, new fs state = %d\n", old_fs_state, new_fs_state);
+    TRACE("old fs state %d\n, new fs state = %d\n", old_fs_state, *new_fs_state);
 #endif
     return *new_fs_state != old_fs_state;
 }
