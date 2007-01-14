@@ -1427,6 +1427,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         HDC      hdc;
         int      bpp = 0;
         RECT     clip_rc;
+        DWORD    style;
 
         /* Get info on the current display setup */
         hdc = GetDC(0);
@@ -1442,11 +1443,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         MultiByteToWideChar(CP_ACP, 0, "Gamers CG", -1, devmode.dmDeviceName, CCHDEVICENAME);
         ChangeDisplaySettingsExW(devmode.dmDeviceName, &devmode, object->win_handle, CDS_FULLSCREEN, NULL);
 
-        /* Make popup window */
-        SetWindowLongA(object->win_handle, GWL_STYLE, WS_POPUP);
+        /* Make popup window, remove caption and borders */
+        style = GetWindowLongW(object->win_handle, GWL_STYLE);
+        style &= ~WS_CAPTION;
+        SetWindowLongW(object->win_handle, GWL_STYLE, style | WS_POPUP);
         SetWindowPos(object->win_handle, HWND_TOP, 0, 0,
                      *(pPresentationParameters->BackBufferWidth),
-                     *(pPresentationParameters->BackBufferHeight), SWP_SHOWWINDOW | SWP_FRAMECHANGED);
+                     *(pPresentationParameters->BackBufferHeight), SWP_FRAMECHANGED);
 
         /* For GetDisplayMode */
         This->ddraw_width = devmode.dmPelsWidth;
