@@ -201,6 +201,9 @@ typedef struct {
 #define SNMP_AUTHAPI_INVALID_MSG_TYPE 31
 #define SNMP_AUTHAPI_TRIV_AUTH_FAILED 32
 
+#define SNMPAPI_NOERROR TRUE
+#define SNMPAPI_ERROR   FALSE
+
 #ifdef __cplusplus
 extern "C" {
 #endif

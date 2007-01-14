@@ -25,8 +25,8 @@
 @ stub SnmpUtilMemReAlloc
 @ stub SnmpUtilOidAppend
 @ stub SnmpUtilOidCmp
-@ stub SnmpUtilOidCpy
-@ stub SnmpUtilOidFree
+@ stdcall SnmpUtilOidCpy(ptr ptr)
+@ stdcall SnmpUtilOidFree(ptr)
 @ stub SnmpUtilOidNCmp
 @ stub SnmpUtilOidToA
 @ stub SnmpUtilPrintAsnAny
@@ -34,6 +34,6 @@
 @ stub SnmpUtilStrlenW
 @ stub SnmpUtilUnicodeToAnsi
 @ stub SnmpUtilVarBindCpy
-@ stub SnmpUtilVarBindFree
+@ stdcall SnmpUtilVarBindFree(ptr)
 @ stub SnmpUtilVarBindListCpy
 @ stub SnmpUtilVarBindListFree

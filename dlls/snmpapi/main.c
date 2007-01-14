@@ -24,6 +24,8 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "snmp.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(snmpapi);
@@ -49,4 +51,62 @@ BOOL WINAPI DllMain(
     }
 
     return TRUE;
+}
+
+INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
+{
+    unsigned int i, size;
+
+    TRACE("(%p, %p)\n", dst, src);
+
+    size = sizeof(AsnObjectIdentifier);
+    if ((dst = HeapAlloc(GetProcessHeap(), 0, size)))
+    {
+        size = src->idLength * sizeof(UINT);
+        if (!(dst->ids = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            HeapFree(GetProcessHeap(), 0, dst);
+            return SNMPAPI_ERROR;
+        }
+        dst->idLength = src->idLength;
+        for (i = 0; i < dst->idLength; i++) dst->ids[i] = src->ids[i];
+        return SNMPAPI_NOERROR;
+    }
+    return SNMPAPI_ERROR;
+}
+
+void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
+{
+    TRACE("(%p)\n", oid);
+
+    HeapFree(GetProcessHeap(), 0, oid->ids);
+    HeapFree(GetProcessHeap(), 0, oid);
+}
+
+void WINAPI SnmpUtilVarBindFree(SnmpVarBind *vb)
+{
+    TRACE("(%p)\n", vb);
+
+    switch (vb->value.asnType)
+    {
+    case ASN_OCTETSTRING:
+    case ASN_BITS:
+    case ASN_SEQUENCE:
+    case ASN_IPADDRESS:
+    case ASN_OPAQUE:
+    {
+        if (vb->value.asnValue.string.dynamic)
+            HeapFree(GetProcessHeap(), 0, vb->value.asnValue.string.stream);
+        break;
+    }
+    case ASN_OBJECTIDENTIFIER:
+    {
+        HeapFree(GetProcessHeap(), 0, vb->value.asnValue.object.ids);
+        break;
+    }
+    default: break;
+    }
+
+    HeapFree(GetProcessHeap(), 0, vb->name.ids);
+    HeapFree(GetProcessHeap(), 0, vb);
 }
