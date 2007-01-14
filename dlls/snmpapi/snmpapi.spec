@@ -22,9 +22,9 @@
 @ stub SnmpUtilAsnAnyFree
 @ stub SnmpUtilDbgPrint
 @ stub SnmpUtilIdsToA
-@ stub SnmpUtilMemAlloc
-@ stub SnmpUtilMemFree
-@ stub SnmpUtilMemReAlloc
+@ stdcall SnmpUtilMemAlloc(long)
+@ stdcall SnmpUtilMemFree(ptr)
+@ stdcall SnmpUtilMemReAlloc(ptr long)
 @ stub SnmpUtilOctetsCmp
 @ stub SnmpUtilOctetsCpy
 @ stub SnmpUtilOctetsFree

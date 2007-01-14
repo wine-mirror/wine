@@ -53,6 +53,24 @@ BOOL WINAPI DllMain(
     return TRUE;
 }
 
+LPVOID WINAPI SnmpUtilMemAlloc(UINT nbytes)
+{
+    TRACE("(%d)\n", nbytes);
+    return HeapAlloc(GetProcessHeap(), 0, nbytes);
+}
+
+LPVOID WINAPI SnmpUtilMemReAlloc(LPVOID mem, UINT nbytes)
+{
+    TRACE("(%p, %d)\n", mem, nbytes);
+    return HeapReAlloc(GetProcessHeap(), 0, mem, nbytes);
+}
+
+void WINAPI SnmpUtilMemFree(LPVOID mem)
+{
+    TRACE("(%p)\n", mem);
+    HeapFree(GetProcessHeap(), 0, mem);
+}
+
 INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
 {
     unsigned int i, size;
