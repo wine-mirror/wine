@@ -1115,12 +1115,6 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
                                             hwnd, 0, csA->hOwner,
                                             (LPVOID)csA->lParam);
             }
-
-            if (IsZoomed(ci->hwndActiveChild))
-            {
-                MDI_AugmentFrameMenu(GetParent(hwnd), child);
-                MDI_UpdateFrameText(GetParent(hwnd), hwnd, TRUE, NULL);
-            }
             return (LRESULT)child;
         }
         return 0;
