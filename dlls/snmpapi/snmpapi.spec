@@ -39,7 +39,7 @@
 @ stub SnmpUtilPrintOid
 @ stub SnmpUtilStrlenW
 @ stub SnmpUtilUnicodeToAnsi
-@ stub SnmpUtilVarBindCpy
+@ stdcall SnmpUtilVarBindCpy(ptr ptr)
 @ stdcall SnmpUtilVarBindFree(ptr)
 @ stub SnmpUtilVarBindListCpy
 @ stub SnmpUtilVarBindListFree

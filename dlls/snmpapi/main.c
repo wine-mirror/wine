@@ -2,6 +2,7 @@
  * Stub implementation of SNMPAPI.DLL
  *
  * Copyright 2002 Patrik Stridvall
+ * Copyright 2007 Hans Leidekker
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -99,6 +100,75 @@ void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
 
     HeapFree(GetProcessHeap(), 0, oid->ids);
     HeapFree(GetProcessHeap(), 0, oid);
+}
+
+INT WINAPI SnmpUtilVarBindCpy(SnmpVarBind *dst, SnmpVarBind *src)
+{
+    unsigned int i, size;
+
+    TRACE("(%p, %p)\n", dst, src);
+
+    if (!(dst = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(SnmpVarBind))))
+        return SNMPAPI_ERROR;
+
+    size = src->name.idLength * sizeof(UINT);
+    if (!(dst->name.ids = HeapAlloc(GetProcessHeap(), 0, size))) goto error;
+    for (i = 0; i < src->name.idLength; i++) dst->name.ids[i] = src->name.ids[i];
+    dst->name.idLength = src->name.idLength;
+
+    dst->value.asnType = src->value.asnType;
+    switch (dst->value.asnType)
+    {
+    case ASN_INTEGER32:  dst->value.asnValue.number = src->value.asnValue.number; break;
+    case ASN_UNSIGNED32: dst->value.asnValue.unsigned32 = src->value.asnValue.unsigned32; break;
+    case ASN_COUNTER64:  dst->value.asnValue.counter64 = src->value.asnValue.counter64; break;
+    case ASN_COUNTER32:  dst->value.asnValue.counter = src->value.asnValue.counter; break;
+    case ASN_GAUGE32:    dst->value.asnValue.gauge = src->value.asnValue.gauge; break;
+    case ASN_TIMETICKS:  dst->value.asnValue.ticks = src->value.asnValue.ticks; break;
+
+    case ASN_OCTETSTRING:
+    case ASN_BITS:
+    case ASN_SEQUENCE:
+    case ASN_IPADDRESS:
+    case ASN_OPAQUE:
+    {
+        BYTE *stream;
+        UINT length = src->value.asnValue.string.length;
+
+        if (!(stream = HeapAlloc(GetProcessHeap(), 0, length)))
+            goto error;
+
+        dst->value.asnValue.string.stream = stream;
+        dst->value.asnValue.string.length = length;
+        dst->value.asnValue.string.dynamic = TRUE;
+        break;
+    }
+    case ASN_OBJECTIDENTIFIER:
+    {
+        UINT *ids, size = src->name.idLength * sizeof(UINT);
+
+        if (!(ids = HeapAlloc(GetProcessHeap(), 0, size)))
+            goto error;
+
+        dst->value.asnValue.object.ids = ids;
+        dst->value.asnValue.object.idLength = src->value.asnValue.object.idLength;
+
+        for (i = 0; i < dst->value.asnValue.object.idLength; i++)
+            dst->value.asnValue.object.ids[i] = src->value.asnValue.object.ids[i];
+        break;
+    }
+    default:
+    {
+        WARN("unknown ASN type: %d\n", src->value.asnType);
+        break;
+    }
+    }
+    return SNMPAPI_NOERROR;
+
+error:
+    HeapFree(GetProcessHeap(), 0, dst->name.ids);
+    HeapFree(GetProcessHeap(), 0, dst);
+    return SNMPAPI_ERROR;
 }
 
 void WINAPI SnmpUtilVarBindFree(SnmpVarBind *vb)
