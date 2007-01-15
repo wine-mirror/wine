@@ -6684,6 +6684,18 @@ BOOL WINAPI XcvDataW( HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
         return FALSE;
     }
 
+    if (!pcbOutputNeeded) {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!pszDataName || !pdwStatus || (!pOutputData && (cbOutputData > 0))) {
+        SetLastError(RPC_X_NULL_REF_POINTER);
+        return FALSE;
+    }
+
+    *pcbOutputNeeded = 0;
+
     *pdwStatus = printer->pm->monitor->pfnXcvDataPort(printer->hXcv, pszDataName,
             pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
 
