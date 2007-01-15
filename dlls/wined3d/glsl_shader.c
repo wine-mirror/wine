@@ -734,21 +734,16 @@ static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, c
     /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
      * but addressed as "rgba". To fix this we need to swap the register's x
      * and z components. */
+    DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
     const char *swizzle_chars = fixup ? "zyxw" : "xyzw";
     char *ptr = swizzle_str;
 
-    /* swizzle bits fields: wwzzyyxx */
-    DWORD swizzle = (param & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
-    DWORD swizzle_x = swizzle & 0x03;
-    DWORD swizzle_y = (swizzle >> 2) & 0x03;
-    DWORD swizzle_z = (swizzle >> 4) & 0x03;
-    DWORD swizzle_w = (swizzle >> 6) & 0x03;
-
     *ptr++ = '.';
-    if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle_x];
-    if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[swizzle_y];
-    if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[swizzle_z];
-    if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[swizzle_w];
+    /* swizzle bits fields: wwzzyyxx */
+    if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[(swizzle >> 2) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[(swizzle >> 4) & 0x03];
+    if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[(swizzle >> 6) & 0x03];
 
     *ptr = '\0';
 }
