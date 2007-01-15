@@ -74,7 +74,7 @@ static void test_VirtualAllocEx(void)
     for (i = 0; i < alloc_size; i++)
         src[i] = 0xcafedead + i;
 
-    todo_wine ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
+    ok(addr1 != NULL, "VirtualAllocEx error %u\n", GetLastError());
     b = WriteProcessMemory(hProcess, addr1, src, alloc_size, &bytes_written);
     ok(b && (bytes_written == alloc_size), "%lu bytes written\n",
        bytes_written);
@@ -82,7 +82,7 @@ static void test_VirtualAllocEx(void)
     ok(b && (bytes_read == alloc_size), "%lu bytes read\n", bytes_read);
     ok(!memcmp(src, dst, alloc_size), "Data from remote process differs\n");
     b = VirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
-    todo_wine ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
+    ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
 
     HeapFree( GetProcessHeap(), 0, src );
     HeapFree( GetProcessHeap(), 0, dst );
@@ -99,7 +99,7 @@ static void test_VirtualAllocEx(void)
         "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
     addr1 = VirtualAllocEx(hProcess, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
-    todo_wine ok(addr1 != NULL, "VirtualAllocEx failed\n");
+    ok(addr1 != NULL, "VirtualAllocEx failed\n");
 
     /* test a not committed memory */
     memset(&info, 'q', sizeof(info));
@@ -154,11 +154,13 @@ static void test_VirtualAllocEx(void)
        GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
         "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
+    old_prot = 0;
     todo_wine ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READONLY,
                                   &old_prot), "VirtualProtectEx failed\n");
     todo_wine ok(old_prot == PAGE_NOACCESS,
         "wrong old protection: got %04x instead of PAGE_NOACCESS\n", old_prot);
 
+    old_prot = 0;
     todo_wine ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READWRITE,
                                   &old_prot), "VirtualProtectEx failed\n");
     todo_wine ok(old_prot == PAGE_READONLY,
@@ -166,20 +168,18 @@ static void test_VirtualAllocEx(void)
 
     ok(!VirtualFreeEx(hProcess, addr1, 0x10000, 0),
        "VirtualFreeEx should fail with type 0\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    todo_wine ok(VirtualFreeEx(hProcess, addr1, 0x10000, MEM_DECOMMIT),
-                 "VirtualFreeEx failed\n");
+    ok(VirtualFreeEx(hProcess, addr1, 0x10000, MEM_DECOMMIT), "VirtualFreeEx failed\n");
 
     /* if the type is MEM_RELEASE, size must be 0 */
     ok(!VirtualFreeEx(hProcess, addr1, 1, MEM_RELEASE),
        "VirtualFreeEx should fail\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    todo_wine ok(VirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE),
-                 "VirtualFreeEx failed\n");
+    ok(VirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE), "VirtualFreeEx failed\n");
 
     TerminateProcess(hProcess, 0);
     CloseHandle(hProcess);

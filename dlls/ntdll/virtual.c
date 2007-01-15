@@ -1380,10 +1380,26 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG zero_
 
     if (!size) return STATUS_INVALID_PARAMETER;
 
-    if (!is_current_process( process ))
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_alloc.type      = APC_VIRTUAL_ALLOC;
+        call.virtual_alloc.addr      = *ret;
+        call.virtual_alloc.size      = *size_ptr;
+        call.virtual_alloc.zero_bits = zero_bits;
+        call.virtual_alloc.op_type   = type;
+        call.virtual_alloc.prot      = protect;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_alloc.status == STATUS_SUCCESS)
+        {
+            *ret      = result.virtual_alloc.addr;
+            *size_ptr = result.virtual_alloc.size;
+        }
+        return result.virtual_alloc.status;
     }
 
     /* Round parameters to a page boundary */
@@ -1485,10 +1501,24 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
 
     TRACE("%p %p %08lx %x\n", process, addr, size, type );
 
-    if (!is_current_process( process ))
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_free.type      = APC_VIRTUAL_FREE;
+        call.virtual_free.addr      = addr;
+        call.virtual_free.size      = size;
+        call.virtual_free.op_type   = type;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_free.status == STATUS_SUCCESS)
+        {
+            *addr_ptr = result.virtual_free.addr;
+            *size_ptr = result.virtual_free.size;
+        }
+        return result.virtual_free.status;
     }
 
     /* Fix the parameters */

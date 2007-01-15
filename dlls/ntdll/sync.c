@@ -706,6 +706,26 @@ static BOOL call_apcs( BOOL alertable )
             NtCurrentTeb()->num_async_io--;
             call.async_io.func( call.async_io.user, call.async_io.sb, call.async_io.status );
             break;
+        case APC_VIRTUAL_ALLOC:
+            result.type = call.type;
+            result.virtual_alloc.addr = call.virtual_alloc.addr;
+            result.virtual_alloc.size = call.virtual_alloc.size;
+            result.virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(),
+                                                                   &result.virtual_alloc.addr,
+                                                                   call.virtual_alloc.zero_bits,
+                                                                   &result.virtual_alloc.size,
+                                                                   call.virtual_alloc.op_type,
+                                                                   call.virtual_alloc.prot );
+            break;
+        case APC_VIRTUAL_FREE:
+            result.type = call.type;
+            result.virtual_free.addr = call.virtual_free.addr;
+            result.virtual_free.size = call.virtual_free.size;
+            result.virtual_free.status = NtFreeVirtualMemory( NtCurrentProcess(),
+                                                              &result.virtual_free.addr,
+                                                              &result.virtual_free.size,
+                                                              call.virtual_free.op_type );
+            break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;
