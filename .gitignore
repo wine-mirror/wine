@@ -257,6 +257,7 @@ dlls/kernel32/kernel.res
 dlls/kernel32/libkernel32.def
 dlls/kernel32/nls/winerr_deu.mc.rc
 dlls/kernel32/nls/winerr_enu.mc.rc
+dlls/kernel32/nls/winerr_fra.mc.rc
 dlls/kernel32/nls/winerr_kor.mc.rc
 dlls/kernel32/tests/*.ok
 dlls/kernel32/tests/kernel32_crosstest.exe
