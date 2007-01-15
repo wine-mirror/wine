@@ -1003,6 +1003,21 @@ void shader_glsl_dot(SHADER_OPCODE_ARG* arg) {
                    tmpDest, cast, src0_str, cast, src1_str, dst_mask);
 }
 
+/* Note that this instruction has some restrictions. The destination write mask
+ * can't contain the w component, and the source swizzles have to be .xyzw */
+void shader_glsl_cross(SHADER_OPCODE_ARG *arg) {
+    char src0_reg[50], src0_mask[6], src0_str[100];
+    char src1_reg[50], src1_mask[6], src1_str[100];
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    char dst_mask[6];
+
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src_mask, src1_reg, src1_mask, src1_str);
+    shader_addline(arg->buffer, "cross(%s, %s).%s);\n", src0_str, src1_str, dst_mask);
+}
+
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
 
@@ -1027,7 +1042,6 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
             case WINED3DSIO_ABS:    strcat(tmpLine, "abs"); break;
             case WINED3DSIO_FRC:    strcat(tmpLine, "fract"); break;
             case WINED3DSIO_POW:    strcat(tmpLine, "pow"); break;
-            case WINED3DSIO_CRS:    strcat(tmpLine, "cross"); break;
             case WINED3DSIO_NRM:    strcat(tmpLine, "normalize"); break;
             case WINED3DSIO_LOGP:
             case WINED3DSIO_LOG:    strcat(tmpLine, "log2"); break;

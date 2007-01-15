@@ -1616,6 +1616,7 @@ extern void shader_glsl_load_constants(
     char useVertexShader);
 
 /** The following translate DirectX pixel/vertex shader opcodes to GLSL lines */
+extern void shader_glsl_cross(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_arith(SHADER_OPCODE_ARG* arg);
 extern void shader_glsl_mov(SHADER_OPCODE_ARG* arg);
