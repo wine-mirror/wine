@@ -1799,19 +1799,17 @@ void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXREG2AR instruction in GLSL
  * Sample 2D texture at dst using the alpha & red (wx) components of src as texture coordinates */
 void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
-    
-    char tmpLine[255];
-    char dst_str[100], src0_str[100];
-    char dst_reg[50], src0_reg[50];
-    char dst_mask[6], src0_mask[6];
-    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+    DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+    char dst_mask[6];
 
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_ALL, src0_reg, src0_mask, src0_str);
 
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(arg->buffer, "%stexture2D(Psampler%u, %s.yz))%s;\n",
-            tmpLine, src0_regnum, dst_reg, dst_mask);
+    shader_addline(arg->buffer, "texture2D(Psampler%u, %s.wx)%s);\n", sampler_idx, src0_reg, dst_mask);
 }
 
 /** Process the WINED3DSIO_TEXREG2GB instruction in GLSL
