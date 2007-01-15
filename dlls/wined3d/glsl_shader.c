@@ -513,31 +513,6 @@ static const char * const shift_glsl_tab[] = {
     "0.5 * "      /* 15 (d2)   */ 
 };
 
-/** Print the beginning of the generated GLSL string. example: "reg_name.xyzw = vec4("
- * Will also change the reg_mask if necessary (not all register types are equal in DX vs GL)  */
-static void shader_glsl_add_dst_old(DWORD param, const char* reg_name, char* reg_mask, char* outStr) {
-
-    int shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    char cast[6];
-    
-    if ((shader_get_regtype(param) == WINED3DSPR_RASTOUT)
-         && ((param & WINED3DSP_REGNUM_MASK) != 0)) {
-        /* gl_FogFragCoord or glPointSize - both floats */
-        strcpy(cast, "float");
-        strcpy(reg_mask, "");
-
-    } else if (reg_name[0] == 'A') {
-        /* Address register for vertex shaders (ivec4) */
-        strcpy(cast, "ivec4");
-        
-    } else {
-        /* Everything else should be a 4 component float vector */
-        strcpy(cast, "vec4");
-    }
-    
-    sprintf(outStr, "%s%s = %s%s(", reg_name, reg_mask, shift_glsl_tab[shift], cast); 
-}
-
 /* Generate a GLSL parameter that does the input modifier computation and return the input register/mask to use */
 static void shader_glsl_gen_modifier (
     const DWORD instr,
@@ -1843,30 +1818,20 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXREG2RGB instruction in GLSL
  * Sample texture at dst using the rgb (xyz) components of src as texture coordinates */
 void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+    char dst_mask[6];
+    DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    glsl_sample_function_t sample_function;
 
-    char tmpLine[255];
-    char dst_str[100], src0_str[100];
-    char dst_reg[50], src0_reg[50];
-    char dst_mask[6], src0_mask[6];
-    char dimensions[5];
-    DWORD src0_regnum = arg->src[0] & WINED3DSP_REGNUM_MASK;
-    DWORD stype = arg->reg_maps->samplers[src0_regnum] & WINED3DSP_TEXTURETYPE_MASK;
-    switch (stype) {
-        case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;
-        case WINED3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
-        case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
-        default:
-            strcpy(dimensions, "");
-            FIXME("Unrecognized sampler type: %#x\n", stype);
-            break;
-    }
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], sample_function.coord_mask, src0_reg, src0_mask, src0_str);
 
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(arg->buffer, "%stexture%s(Psampler%u, %s.%s))%s;\n",
-            tmpLine, dimensions, src0_regnum, dst_reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz", dst_mask);
+    shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n", sample_function.name, sampler_idx, src0_str, dst_mask);
 }
 
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.
