@@ -1761,27 +1761,31 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
-    char dst_str[8];
-    char src0_str[100], src0_name[50], src0_mask[6];
+    char src0_str[100], src0_name[50], src0_mask[6], dst_mask[6];
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    DWORD sampler_type = arg->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    glsl_sample_function_t sample_function;
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
 
     /* Perform the last matrix multiply operation */
     shader_addline(buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
 
     /* Construct the eye-ray vector from w coordinates */
-    shader_addline(buffer, "tmp1.x = gl_TexCoord[%u].w;\n", current_state->texcoord_w[0]);
-    shader_addline(buffer, "tmp1.y = gl_TexCoord[%u].w;\n", current_state->texcoord_w[1]);
-    shader_addline(buffer, "tmp1.z = gl_TexCoord[%u].w;\n", reg);
+    shader_addline(buffer, "tmp1.xyz = normalize(vec3(gl_TexCoord[%u].w, gl_TexCoord[%u].w, gl_TexCoord[%u].w));\n",
+            current_state->texcoord_w[0], current_state->texcoord_w[1], reg);
 
-    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(N.E)*N -E */
-    shader_addline(buffer, "tmp0.x = dot(vec3(tmp0), vec3(tmp1));\n");
-    shader_addline(buffer, "tmp0 = tmp0.w * tmp0;\n");
-    shader_addline(buffer, "tmp0 = (2.0 * tmp0) - tmp1;\n");
+    /* Calculate reflection vector (Assume normal is normalized): RF = 2*(tmp0.tmp1)*tmp0-tmp1
+     * This is equavalent to reflect(-tmp1, tmp0); */
+    shader_addline(buffer, "tmp0.xyz = reflect(-tmp1.xyz, tmp0.xyz);\n");
+
+    shader_glsl_append_dst(buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    sprintf(dst_str, "T%u", reg);
-    shader_glsl_sample(arg, reg, dst_str, "tmp0");
+    shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
+
     current_state->current_row = 0;
 }
 
