@@ -925,32 +925,29 @@ static void shader_glsl_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const 
 
 /* Generate GLSL arithmetic functions (dst = src1 + src2) */
 void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
-
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpLine[256];
-    char dst_reg[50], src0_reg[50], src1_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6];
-    char dst_str[100], src0_str[100], src1_str[100];
-
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    strcat(tmpLine, "vec4(");
-    strcat(tmpLine, src0_str);
-    strcat(tmpLine, ")");
+    char src0_reg[50], src1_reg[50];
+    char src0_mask[6], src1_mask[6];
+    char src0_str[100], src1_str[100];
+    DWORD write_mask;
+    char op;
 
     /* Determine the GLSL operator to use based on the opcode */
     switch (curOpcode->opcode) {
-        case WINED3DSIO_MUL:    strcat(tmpLine, " * "); break;
-        case WINED3DSIO_ADD:    strcat(tmpLine, " + "); break;
-        case WINED3DSIO_SUB:    strcat(tmpLine, " - "); break;
+        case WINED3DSIO_MUL: op = '*'; break;
+        case WINED3DSIO_ADD: op = '+'; break;
+        case WINED3DSIO_SUB: op = '-'; break;
         default:
+            op = ' ';
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
     }
-    shader_addline(buffer, "%svec4(%s))%s;\n", tmpLine, src1_str, dst_mask);
+
+    write_mask = shader_glsl_append_dst(buffer, arg);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, src1_reg, src1_mask, src1_str);
+    shader_addline(buffer, "%s %c %s);\n", src0_str, op, src1_str);
 }
 
 /* Process the WINED3DSIO_MOV opcode using GLSL (dst = src) */
