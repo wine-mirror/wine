@@ -1128,17 +1128,21 @@ void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
 
 /** Process the RCP (reciprocal or inverse) opcode in GLSL (dst = 1 / src) */
 void shader_glsl_rcp(SHADER_OPCODE_ARG* arg) {
+    char src_str[100];
+    char src_reg[50];
+    char src_mask[6];
+    DWORD write_mask;
+    size_t mask_size;
 
-    char tmpLine[256];
-    char dst_str[100], src_str[100];
-    char dst_reg[50], src_reg[50];
-    char dst_mask[6], src_mask[6];
-    
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src_reg, src_mask, src_str);
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    strcat(tmpLine, "1.0 / ");
-    shader_addline(arg->buffer, "%s%s)%s;\n", tmpLine, src_str, dst_mask);
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src_reg, src_mask, src_str);
+
+    if (mask_size > 1) {
+        shader_addline(arg->buffer, "vec%d(1.0 / %s));\n", mask_size, src_str);
+    } else {
+        shader_addline(arg->buffer, "1.0 / %s);\n", src_str);
+    }
 }
 
 /** Process signed comparison opcodes in GLSL. */
