@@ -721,10 +721,11 @@ static void shader_glsl_get_register_name(
 }
 
 /* Get the GLSL write mask for the destination register */
-static void shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
+static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     char *ptr = write_mask;
+    DWORD mask = param & WINED3DSP_WRITEMASK_ALL;
 
-    if ((param & WINED3DSP_WRITEMASK_ALL) != WINED3DSP_WRITEMASK_ALL) {
+    if (mask != WINED3DSP_WRITEMASK_ALL) {
         *ptr++ = '.';
         if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
         if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
@@ -733,6 +734,8 @@ static void shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     }
 
     *ptr = '\0';
+
+    return mask;
 }
 
 static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, char *swizzle_str) {
@@ -783,15 +786,18 @@ static void shader_glsl_add_src_param(SHADER_OPCODE_ARG* arg, const DWORD param,
 /* From a given parameter token, generate the corresponding GLSL string.
  * Also, return the actual register name and swizzle in case the
  * caller needs this information as well. */
-static void shader_glsl_add_dst_param(SHADER_OPCODE_ARG* arg, const DWORD param,
+static DWORD shader_glsl_add_dst_param(SHADER_OPCODE_ARG* arg, const DWORD param,
         const DWORD addr_token, char *reg_name, char *write_mask, char *out_str) {
     BOOL is_color = FALSE;
+    DWORD mask;
     write_mask[0] = reg_name[0] = out_str[0] = 0;
 
     shader_glsl_get_register_name(param, addr_token, reg_name, &is_color, arg);
 
-    shader_glsl_get_write_mask(param, write_mask);
+    mask = shader_glsl_get_write_mask(param, write_mask);
     sprintf(out_str, "%s%s", reg_name, write_mask);
+
+    return mask;
 }
 
 /** Process GLSL instruction modifiers */
