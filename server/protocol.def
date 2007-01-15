@@ -504,10 +504,13 @@ typedef union
 @END
 
 
-/* Queue an APC for a thread */
+/* Queue an APC for a thread or process */
 @REQ(queue_apc)
-    obj_handle_t handle;       /* thread handle */
+    obj_handle_t thread;       /* thread handle */
+    obj_handle_t process;      /* process handle */
     apc_call_t   call;         /* call arguments */
+@REPLY
+    obj_handle_t handle;       /* APC handle */
 @END
 
 

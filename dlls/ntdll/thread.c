@@ -622,7 +622,7 @@ NTSTATUS WINAPI NtQueueApcThread( HANDLE handle, PNTAPCFUNC func, ULONG_PTR arg1
     NTSTATUS ret;
     SERVER_START_REQ( queue_apc )
     {
-        req->handle = handle;
+        req->thread = handle;
         if (func)
         {
             req->call.type         = APC_USER;

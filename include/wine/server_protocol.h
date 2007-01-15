@@ -582,12 +582,14 @@ struct unload_dll_reply
 struct queue_apc_request
 {
     struct request_header __header;
-    obj_handle_t handle;
+    obj_handle_t thread;
+    obj_handle_t process;
     apc_call_t   call;
 };
 struct queue_apc_reply
 {
     struct reply_header __header;
+    obj_handle_t handle;
 };
 
 
@@ -4497,6 +4499,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 265
+#define SERVER_PROTOCOL_VERSION 266
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

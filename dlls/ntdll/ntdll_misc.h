@@ -42,6 +42,7 @@ extern void dump_ObjectAttributes (const OBJECT_ATTRIBUTES *ObjectAttributes);
 
 extern void NTDLL_get_server_abstime( abs_time_t *when, const LARGE_INTEGER *timeout );
 extern void NTDLL_from_server_abstime( LARGE_INTEGER *time, const abs_time_t *when );
+extern NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result );
 extern NTSTATUS NTDLL_wait_for_multiple_objects( UINT count, const HANDLE *handles, UINT flags,
                                                  const LARGE_INTEGER *timeout, HANDLE signal_object );
 

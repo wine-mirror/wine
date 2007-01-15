@@ -312,6 +312,21 @@ static int thread_apc_signaled( struct object *obj, struct thread *thread )
     return apc->executed;
 }
 
+/* queue an async procedure call */
+static struct thread_apc *create_apc( struct object *owner, const apc_call_t *call_data )
+{
+    struct thread_apc *apc;
+
+    if ((apc = alloc_object( &thread_apc_ops )))
+    {
+        apc->call        = *call_data;
+        apc->owner       = owner;
+        apc->executed    = 0;
+        apc->result.type = APC_NONE;
+    }
+    return apc;
+}
+
 /* get a thread pointer from a thread id (and increment the refcount) */
 struct thread *get_thread_from_id( thread_id_t id )
 {
@@ -679,25 +694,68 @@ static inline struct list *get_apc_queue( struct thread *thread, enum apc_type t
     }
 }
 
-/* queue an async procedure call */
-int thread_queue_apc( struct thread *thread, struct object *owner, const apc_call_t *call_data )
+/* queue an existing APC to a given thread */
+static int queue_apc( struct process *process, struct thread *thread, struct thread_apc *apc )
 {
-    struct thread_apc *apc;
-    struct list *queue = get_apc_queue( thread, call_data->type );
+    struct list *queue;
 
-    /* cancel a possible previous APC with the same owner */
-    if (owner) thread_cancel_apc( thread, owner, call_data->type );
-    if (thread->state == TERMINATED) return 0;
+    if (!thread)  /* find a suitable thread inside the process */
+    {
+        struct thread *candidate;
 
-    if (!(apc = alloc_object( &thread_apc_ops ))) return 0;
-    apc->call     = *call_data;
-    apc->owner    = owner;
-    apc->executed = 0;
+        /* first try to find a waiting thread */
+        LIST_FOR_EACH_ENTRY( candidate, &process->thread_list, struct thread, proc_entry )
+        {
+            if (candidate->state == TERMINATED) continue;
+            if (process->suspend || candidate->suspend ||
+                (candidate->wait && (candidate->wait->flags & SELECT_INTERRUPTIBLE)))
+            {
+                thread = candidate;
+                break;
+            }
+        }
+        if (!thread)
+        {
+            /* then use the first one that accepts a signal */
+            LIST_FOR_EACH_ENTRY( candidate, &process->thread_list, struct thread, proc_entry )
+            {
+                if (send_thread_signal( candidate, SIGUSR1 ))
+                {
+                    thread = candidate;
+                    break;
+                }
+            }
+        }
+        if (!thread) return 0;  /* nothing found */
+    }
+    else
+    {
+        if (thread->state == TERMINATED) return 0;
+        /* cancel a possible previous APC with the same owner */
+        if (apc->owner) thread_cancel_apc( thread, apc->owner, apc->call.type );
+    }
+
+    queue = get_apc_queue( thread, apc->call.type );
+    grab_object( apc );
     list_add_tail( queue, &apc->entry );
     if (!list_prev( queue, &apc->entry ))  /* first one */
         wake_thread( thread );
 
     return 1;
+}
+
+/* queue an async procedure call */
+int thread_queue_apc( struct thread *thread, struct object *owner, const apc_call_t *call_data )
+{
+    struct thread_apc *apc;
+    int ret = 0;
+
+    if ((apc = create_apc( owner, call_data )))
+    {
+        ret = queue_apc( NULL, thread, apc );
+        release_object( apc );
+    }
+    return ret;
 }
 
 /* cancel the async procedure call owned by a specific object */
@@ -1076,24 +1134,47 @@ DECL_HANDLER(select)
     select_on( count, req->cookie, get_req_data(), req->flags, &req->timeout, req->signal );
 }
 
-/* queue an APC for a thread */
+/* queue an APC for a thread or process */
 DECL_HANDLER(queue_apc)
 {
     struct thread *thread;
-    if ((thread = get_thread_from_handle( req->handle, THREAD_SET_CONTEXT )))
+    struct process *process;
+    struct thread_apc *apc;
+
+    if (!(apc = create_apc( NULL, &req->call ))) return;
+
+    switch (apc->call.type)
     {
-        switch( req->call.type )
+    case APC_NONE:
+    case APC_USER:
+        if ((thread = get_thread_from_handle( req->thread, THREAD_SET_CONTEXT )))
         {
-        case APC_NONE:
-        case APC_USER:
-            thread_queue_apc( thread, NULL, &req->call );
-            break;
-        default:
-            set_error( STATUS_INVALID_PARAMETER );
-            break;
+            if (!queue_apc( NULL, thread, apc )) set_error( STATUS_THREAD_IS_TERMINATING );
+            release_object( thread );
         }
-        release_object( thread );
+        break;
+    case APC_VIRTUAL_ALLOC:
+    case APC_VIRTUAL_FREE:
+        if ((process = get_process_from_handle( req->process, PROCESS_VM_OPERATION )))
+        {
+            obj_handle_t handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 );
+            if (handle)
+            {
+                if (queue_apc( process, NULL, apc )) reply->handle = handle;
+                else
+                {
+                    close_handle( current->process, handle );
+                    set_error( STATUS_PROCESS_IS_TERMINATING );
+                }
+            }
+            release_object( process );
+        }
+        break;
+    default:
+        set_error( STATUS_INVALID_PARAMETER );
+        break;
     }
+    release_object( apc );
 }
 
 /* get next APC to call */

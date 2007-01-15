@@ -715,6 +715,42 @@ static BOOL call_apcs( BOOL alertable )
 
 
 /***********************************************************************
+ *           NTDLL_queue_process_apc
+ */
+NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_result_t *result )
+{
+    for (;;)
+    {
+        NTSTATUS ret;
+        HANDLE handle = 0;
+
+        SERVER_START_REQ( queue_apc )
+        {
+            req->process = process;
+            req->call = *call;
+            if (!(ret = wine_server_call( req ))) handle = reply->handle;
+        }
+        SERVER_END_REQ;
+
+        if (!handle) return ret;
+
+        NtWaitForSingleObject( handle, FALSE, NULL );
+
+        SERVER_START_REQ( get_apc_result )
+        {
+            req->handle = handle;
+            if (!(ret = wine_server_call( req ))) *result = reply->result;
+        }
+        SERVER_END_REQ;
+
+        if (!ret && result->type == APC_NONE) continue;  /* APC didn't run, try again */
+        if (ret) NtClose( handle );
+        return ret;
+    }
+}
+
+
+/***********************************************************************
  *              NTDLL_wait_for_multiple_objects
  *
  * Implementation of NtWaitForMultipleObjects

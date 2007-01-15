@@ -909,9 +909,15 @@ static void dump_unload_dll_request( const struct unload_dll_request *req )
 
 static void dump_queue_apc_request( const struct queue_apc_request *req )
 {
-    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " thread=%p,", req->thread );
+    fprintf( stderr, " process=%p,", req->process );
     fprintf( stderr, " call=" );
     dump_apc_call( &req->call );
+}
+
+static void dump_queue_apc_reply( const struct queue_apc_reply *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
 }
 
 static void dump_get_apc_request( const struct get_apc_request *req )
@@ -3573,7 +3579,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_resume_thread_reply,
     (dump_func)0,
     (dump_func)0,
-    (dump_func)0,
+    (dump_func)dump_queue_apc_reply,
     (dump_func)dump_get_apc_reply,
     (dump_func)dump_get_apc_result_reply,
     (dump_func)0,
@@ -4057,10 +4063,12 @@ static const struct
     { "PIPE_LISTENING",              STATUS_PIPE_LISTENING },
     { "PIPE_NOT_AVAILABLE",          STATUS_PIPE_NOT_AVAILABLE },
     { "PRIVILEGE_NOT_HELD",          STATUS_PRIVILEGE_NOT_HELD },
+    { "PROCESS_IS_TERMINATING",      STATUS_PROCESS_IS_TERMINATING },
     { "SECTION_TOO_BIG",             STATUS_SECTION_TOO_BIG },
     { "SEMAPHORE_LIMIT_EXCEEDED",    STATUS_SEMAPHORE_LIMIT_EXCEEDED },
     { "SHARING_VIOLATION",           STATUS_SHARING_VIOLATION },
     { "SUSPEND_COUNT_EXCEEDED",      STATUS_SUSPEND_COUNT_EXCEEDED },
+    { "THREAD_IS_TERMINATING",       STATUS_THREAD_IS_TERMINATING },
     { "TIMEOUT",                     STATUS_TIMEOUT },
     { "TOO_MANY_OPENED_FILES",       STATUS_TOO_MANY_OPENED_FILES },
     { "UNSUCCESSFUL",                STATUS_UNSUCCESSFUL },
