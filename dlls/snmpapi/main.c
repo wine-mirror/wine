@@ -54,24 +54,36 @@ BOOL WINAPI DllMain(
     return TRUE;
 }
 
+/***********************************************************************
+ *      SnmpUtilMemAlloc        (SNMPAPI.@)
+ */
 LPVOID WINAPI SnmpUtilMemAlloc(UINT nbytes)
 {
     TRACE("(%d)\n", nbytes);
     return HeapAlloc(GetProcessHeap(), 0, nbytes);
 }
 
+/***********************************************************************
+ *      SnmpUtilMemReAlloc      (SNMPAPI.@)
+ */
 LPVOID WINAPI SnmpUtilMemReAlloc(LPVOID mem, UINT nbytes)
 {
     TRACE("(%p, %d)\n", mem, nbytes);
     return HeapReAlloc(GetProcessHeap(), 0, mem, nbytes);
 }
 
+/***********************************************************************
+ *      SnmpUtilMemFree         (SNMPAPI.@)
+ */
 void WINAPI SnmpUtilMemFree(LPVOID mem)
 {
     TRACE("(%p)\n", mem);
     HeapFree(GetProcessHeap(), 0, mem);
 }
 
+/***********************************************************************
+ *      SnmpUtilOidCpy          (SNMPAPI.@)
+ */
 INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
 {
     unsigned int i, size;
@@ -94,6 +106,9 @@ INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
     return SNMPAPI_ERROR;
 }
 
+/***********************************************************************
+ *      SnmpUtilOidFree         (SNMPAPI.@)
+ */
 void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
 {
     TRACE("(%p)\n", oid);
@@ -102,6 +117,9 @@ void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
     HeapFree(GetProcessHeap(), 0, oid);
 }
 
+/***********************************************************************
+ *      SnmpUtilVarBindCpy      (SNMPAPI.@)
+ */
 INT WINAPI SnmpUtilVarBindCpy(SnmpVarBind *dst, SnmpVarBind *src)
 {
     unsigned int i, size;
@@ -171,6 +189,9 @@ error:
     return SNMPAPI_ERROR;
 }
 
+/***********************************************************************
+ *      SnmpUtilVarBindFree     (SNMPAPI.@)
+ */
 void WINAPI SnmpUtilVarBindFree(SnmpVarBind *vb)
 {
     TRACE("(%p)\n", vb);
@@ -197,4 +218,55 @@ void WINAPI SnmpUtilVarBindFree(SnmpVarBind *vb)
 
     HeapFree(GetProcessHeap(), 0, vb->name.ids);
     HeapFree(GetProcessHeap(), 0, vb);
+}
+
+/***********************************************************************
+ *      SnmpUtilVarBindListCpy  (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *dst, SnmpVarBindList *src)
+{
+    unsigned int i, size;
+    SnmpVarBind *src_entry, *dst_entry;
+
+    TRACE("(%p, %p)\n", dst, src);
+
+    size = src->len * sizeof(SnmpVarBind *);
+    if (!(dst->list = HeapAlloc(GetProcessHeap(), 0, size)))
+    {
+        HeapFree(GetProcessHeap(), 0, dst);
+        return SNMPAPI_ERROR;
+    }
+    src_entry = src->list;
+    dst_entry = dst->list;
+    for (i = 0; i < src->len; i++)
+    {
+        if (SnmpUtilVarBindCpy(dst_entry, src_entry))
+        {
+            src_entry++;
+            dst_entry++;
+        }
+        else
+        {
+            for (--i; i > 0; i--) SnmpUtilVarBindFree(--dst_entry);
+            HeapFree(GetProcessHeap(), 0, dst->list);
+            return SNMPAPI_ERROR;
+        }
+    }
+    dst->len = src->len;
+    return SNMPAPI_NOERROR;
+}
+
+/***********************************************************************
+ *      SnmpUtilVarBindListFree (SNMPAPI.@)
+ */
+void WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *vb)
+{
+    unsigned int i;
+    SnmpVarBind *entry;
+
+    TRACE("(%p)\n", vb);
+
+    entry = vb->list;
+    for (i = 0; i < vb->len; i++) SnmpUtilVarBindFree(entry++);
+    HeapFree(GetProcessHeap(), 0, vb->list);
 }

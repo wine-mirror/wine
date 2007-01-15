@@ -41,5 +41,5 @@
 @ stub SnmpUtilUnicodeToAnsi
 @ stdcall SnmpUtilVarBindCpy(ptr ptr)
 @ stdcall SnmpUtilVarBindFree(ptr)
-@ stub SnmpUtilVarBindListCpy
-@ stub SnmpUtilVarBindListFree
+@ stdcall SnmpUtilVarBindListCpy(ptr ptr)
+@ stdcall SnmpUtilVarBindListFree(ptr)
