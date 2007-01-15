@@ -1622,15 +1622,15 @@ void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXM3X2PAD instruction in GLSL
  * Calculate the 1st of a 2-row matrix multiplication. */
 void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
-
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     char src0_str[100];
     char src0_name[50];
     char src0_mask[6];
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.x = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
+    shader_addline(buffer, "tmp0.x = dot(T%u.xyz, %s);\n", reg, src0_str);
 }
 
 /** Process the WINED3DSIO_TEXM3X3PAD instruction in GLSL
