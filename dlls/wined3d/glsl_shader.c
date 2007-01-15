@@ -649,7 +649,7 @@ static void shader_glsl_get_register_name(
             * prior to that, it was hard-coded as "A0.x" because there's only 1 register */
            if (WINED3DSHADER_VERSION_MAJOR(This->baseShader.hex_version) >= 2)  {
                char relStr[100], relReg[50], relMask[6];
-               shader_glsl_add_src_param_old(arg, addr_token, 0, relReg, relMask, relStr);
+               shader_glsl_add_src_param(arg, addr_token, 0, WINED3DSP_WRITEMASK_0, relReg, relMask, relStr);
                sprintf(tmpStr, "%s[%s + %u]", prefix, relStr, reg);
            } else
                sprintf(tmpStr, "%s[A0.x + %u]", prefix, reg);
