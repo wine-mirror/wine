@@ -749,6 +749,17 @@ static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     return mask;
 }
 
+static size_t shader_glsl_get_write_mask_size(DWORD write_mask) {
+    size_t size = 0;
+
+    if (write_mask & WINED3DSP_WRITEMASK_0) ++size;
+    if (write_mask & WINED3DSP_WRITEMASK_1) ++size;
+    if (write_mask & WINED3DSP_WRITEMASK_2) ++size;
+    if (write_mask & WINED3DSP_WRITEMASK_3) ++size;
+
+    return size;
+}
+
 static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, char *swizzle_str) {
     /* For registers of type WINED3DDECLTYPE_D3DCOLOR, data is stored as "bgra",
      * but addressed as "rgba". To fix this we need to swap the register's x
@@ -1021,8 +1032,6 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
             case WINED3DSIO_LOGP:
             case WINED3DSIO_LOG:    strcat(tmpLine, "log2"); break;
             case WINED3DSIO_EXP:    strcat(tmpLine, "exp2"); break;
-            case WINED3DSIO_SGE:    strcat(tmpLine, "greaterThanEqual"); break;
-            case WINED3DSIO_SLT:    strcat(tmpLine, "lessThan"); break;
             case WINED3DSIO_SGN:    strcat(tmpLine, "sign"); break;
         default:
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
@@ -1097,32 +1106,39 @@ void shader_glsl_rcp(SHADER_OPCODE_ARG* arg) {
 
 /** Process signed comparison opcodes in GLSL. */
 void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100], src1_str[100];
+    char src0_reg[50], src1_reg[50];
+    char src0_mask[6], src1_mask[6];
+    DWORD write_mask;
+    size_t mask_size;
 
-    char tmpLine[256];
-    char dst_str[100], src0_str[100], src1_str[100];
-    char dst_reg[50], src0_reg[50], src1_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6];
-    
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, src1_reg, src1_mask, src1_str);
 
-    /* If we are comparing vectors and not scalars, we should process this through map2gl using the GLSL functions. */
-    if (strlen(src0_mask) != 2) {
-        shader_glsl_map2gl(arg);
-    } else {
-        char compareStr[3];
-        compareStr[0] = 0;
-        shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    if (mask_size > 1) {
+        const char *compare;
 
-        switch (arg->opcode->opcode) {
-            case WINED3DSIO_SLT:    strcpy(compareStr, "<"); break;
-            case WINED3DSIO_SGE:    strcpy(compareStr, ">="); break;
-            default:
+        switch(arg->opcode->opcode) {
+            case WINED3DSIO_SLT: compare = "lessThan"; break;
+            case WINED3DSIO_SGE: compare = "greaterThanEqual"; break;
+            default: compare = "";
                 FIXME("Can't handle opcode %s\n", arg->opcode->name);
         }
-        shader_addline(arg->buffer, "%s(float(%s) %s float(%s)) ? 1.0 : 0.0)%s;\n",
-                       tmpLine, src0_str, compareStr, src1_str, dst_mask);
+
+        shader_addline(arg->buffer, "vec%d(%s(%s, %s)));\n", mask_size, compare, src0_str, src1_str);
+    } else {
+        const char *compare;
+
+        switch(arg->opcode->opcode) {
+            case WINED3DSIO_SLT: compare = "<"; break;
+            case WINED3DSIO_SGE: compare = ">="; break;
+            default: compare = "";
+                FIXME("Can't handle opcode %s\n", arg->opcode->name);
+        }
+
+        shader_addline(arg->buffer, "(%s %s %s) ? 1.0 : 0.0);\n", src0_str, compare, src1_str);
     }
 }
 
