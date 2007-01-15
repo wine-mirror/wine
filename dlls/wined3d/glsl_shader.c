@@ -35,6 +35,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
 #define GLINFO_LOCATION      (*gl_info)
 
+typedef struct {
+    const char *name;
+    DWORD coord_mask;
+} glsl_sample_function_t;
+
 /** Prints the GLSL info log which will contain error messages if they exist */
 void print_glsl_info_log(WineD3D_GL_Info *gl_info, GLhandleARB obj) {
     
@@ -887,43 +892,50 @@ static inline const char* shader_get_comp_op(
     }
 }
 
+static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, glsl_sample_function_t *sample_function) {
+    /* Note that there's no such thing as a projected cube texture. */
+    switch(sampler_type) {
+        case WINED3DSTT_1D:
+            sample_function->name = projected ? "texture1DProj" : "texture1D";
+            sample_function->coord_mask = WINED3DSP_WRITEMASK_0;
+            break;
+        case WINED3DSTT_2D:
+            sample_function->name = projected ? "texture2DProj" : "texture2D";
+            sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1;
+            break;
+        case WINED3DSTT_CUBE:
+            sample_function->name = "textureCube";
+            sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+            break;
+        case WINED3DSTT_VOLUME:
+            sample_function->name = projected ? "texture3DProj" : "texture3D";
+            sample_function->coord_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+            break;
+        default:
+            sample_function->name = "";
+            FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
+            break;
+    }
+}
+
 static void shader_glsl_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
     DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
     const char sampler_prefix = shader_is_pshader_version(This->baseShader.hex_version) ? 'P' : 'V';
     SHADER_BUFFER* buffer = arg->buffer;
+    glsl_sample_function_t sample_function;
 
     if(deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
-        /* Note that there's no such thing as a projected cube texture. */
-        switch(sampler_type) {
-            case WINED3DSTT_2D:
-                shader_addline(buffer, "%s = texture2DProj(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                break;
-            case WINED3DSTT_VOLUME:
-                shader_addline(buffer, "%s = texture3DProj(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                break;
-            default:
-                shader_addline(buffer, "%s = unrecognized_stype(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
-                break;
-        }
+        shader_glsl_get_sample_function(sampler_type, TRUE, &sample_function);
+        shader_addline(buffer, "%s = %s(%csampler%u, %s);\n", dst_str, sample_function.name, sampler_prefix, sampler_idx, coord_reg);
     } else {
-        switch(sampler_type) {
-            case WINED3DSTT_2D:
-                shader_addline(buffer, "%s = texture2D(%csampler%u, %s.xy);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                break;
-            case WINED3DSTT_CUBE:
-                shader_addline(buffer, "%s = textureCube(%csampler%u, %s.xyz);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                break;
-            case WINED3DSTT_VOLUME:
-                shader_addline(buffer, "%s = texture3D(%csampler%u, %s.xyz);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                break;
-            default:
-                shader_addline(buffer, "%s = unrecognized_stype(%csampler%u, %s);\n", dst_str, sampler_prefix, sampler_idx, coord_reg);
-                FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
-                break;
-        }
+        char coord_swizzle[6];
+
+        shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
+        shader_glsl_get_write_mask(sample_function.coord_mask, coord_swizzle);
+
+        shader_addline(buffer, "%s = %s(%csampler%u, %s%s);\n", dst_str, sample_function.name, sampler_prefix, sampler_idx, coord_reg, coord_swizzle);
     }
 }
 
