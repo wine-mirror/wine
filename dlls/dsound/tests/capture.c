@@ -710,20 +710,27 @@ START_TEST(capture)
 
     CoInitialize(NULL);
 
-    hDsound = GetModuleHandleA("dsound.dll");
-    ok(hDsound != NULL, "dsound.dll not loaded!\n");
-    trace("DLL Version: %s\n", get_file_version("dsound.dll"));
-
-    pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,"DirectSoundCaptureCreate");
-    pDirectSoundCaptureEnumerateA=(void*)GetProcAddress(hDsound,"DirectSoundCaptureEnumerateA");
-    if (!pDirectSoundCaptureCreate || !pDirectSoundCaptureEnumerateA)
+    hDsound = LoadLibrary("dsound.dll");
+    if (hDsound)
     {
-        trace("capture test skipped\n");
-        return;
-    }
+        trace("DLL Version: %s\n", get_file_version("dsound.dll"));
 
-    IDirectSoundCapture_tests();
-    capture_tests();
+        pDirectSoundCaptureCreate=(void*)GetProcAddress(hDsound,
+            "DirectSoundCaptureCreate");
+        pDirectSoundCaptureEnumerateA=(void*)GetProcAddress(hDsound,
+            "DirectSoundCaptureEnumerateA");
+        if (pDirectSoundCaptureCreate && pDirectSoundCaptureEnumerateA)
+        {
+            IDirectSoundCapture_tests();
+            capture_tests();
+        }
+        else
+            skip("capture test skipped\n");
+
+        FreeLibrary(hDsound);
+    }
+    else
+        skip("dsound.dll not found!\n");
 
     CoUninitialize();
 }
