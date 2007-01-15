@@ -1459,14 +1459,15 @@ void shader_glsl_break(SHADER_OPCODE_ARG* arg) {
     shader_addline(arg->buffer, "break;\n");
 }
 
+/* FIXME: According to MSDN the compare is done per component. */
 void shader_glsl_breakc(SHADER_OPCODE_ARG* arg) {
 
     char src0_str[100], src1_str[100];
     char src0_reg[50], src1_reg[50];
     char src0_mask[6], src1_mask[6];
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, src1_reg, src1_mask, src1_str);
 
     shader_addline(arg->buffer, "if (%s %s %s) break;\n",
         src0_str, shader_get_comp_op(arg->opcode_token), src1_str);
