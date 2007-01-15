@@ -6001,7 +6001,8 @@ BOOL WINAPI AddPortA(LPSTR pName, HWND hWnd, LPSTR pMonitorName)
 BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
 {
     monitor_t * pm;
-    DWORD   res = ROUTER_UNKNOWN;
+    monitor_t * pui;
+    DWORD       res;
 
     TRACE("(%s, %p, %s)\n", debugstr_w(pName), hWnd, debugstr_w(pMonitorName));
 
@@ -6016,28 +6017,43 @@ BOOL WINAPI AddPortW(LPWSTR pName, HWND hWnd, LPWSTR pMonitorName)
     }
 
     /* an empty Monitorname is Invalid */
-    if (!pMonitorName[0]) goto cleanup;
+    if (!pMonitorName[0]) {
+        SetLastError(ERROR_NOT_SUPPORTED);
+        return FALSE;
+    }
 
     pm = monitor_load(pMonitorName, NULL);
-    if (pm && pm->monitor) {
-        if (pm->monitor->pfnAddPort != NULL) {
-            res = pm->monitor->pfnAddPort(pName, hWnd, pMonitorName);
-            TRACE("got %d with %d\n", res, GetLastError());
-        }
-        else if (pm->monitor->pfnXcvOpenPort != NULL)
-        {
-            FIXME("XcvOpenPort not implemented (dwMonitorSize: %d)\n", pm->dwMonitorSize);
-        }
-        /* invalidate cached PORT_INFO_2W */
-        if (res == ROUTER_SUCCESS) monitor_flush(pm);
+    if (pm && pm->monitor && pm->monitor->pfnAddPort) {
+        res = pm->monitor->pfnAddPort(pName, hWnd, pMonitorName);
+        TRACE("got %d with %u\n", res, GetLastError());
+        res = TRUE;
     }
-    monitor_unload(pm);
+    else
+    {
+        pui = monitor_loadui(pm);
+        if (pui && pui->monitorUI && pui->monitorUI->pfnAddPortUI) {
+            TRACE("use %p: %s\n", pui, debugstr_w(pui->dllname));
+            res = pui->monitorUI->pfnAddPortUI(pName, hWnd, pMonitorName, NULL);
+            TRACE("got %d with %u\n", res, GetLastError());
+            res = TRUE;
+        }
+        else
+        {
+            FIXME("not implemented for %s (%p: %s => %p: %s)\n", debugstr_w(pMonitorName),
+                pm, pm ? debugstr_w(pm->dllname) : NULL, pui, pui ? debugstr_w(pui->dllname) : NULL);
 
-cleanup:
-    /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
-    if (res == ROUTER_UNKNOWN) SetLastError(ERROR_NOT_SUPPORTED);
-    TRACE("returning %d with %d\n", (res == ROUTER_SUCCESS), GetLastError());
-    return (res == ROUTER_SUCCESS);
+            /* XP: ERROR_NOT_SUPPORTED, NT351,9x: ERROR_INVALID_PARAMETER */
+            SetLastError(ERROR_NOT_SUPPORTED);
+            res = FALSE;
+        }
+        monitor_unload(pui);
+    }
+    /* invalidate cached PORT_INFO_2W */
+    monitor_flush(pm);
+
+    monitor_unload(pm);
+    TRACE("returning %d with %u\n", res, GetLastError());
+    return res;
 }
 
 /******************************************************************************
