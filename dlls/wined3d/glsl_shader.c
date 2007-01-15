@@ -1492,7 +1492,7 @@ void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
     char src1_mask[6];
    
     DWORD snum = (arg->src[0]) & WINED3DSP_REGNUM_MASK;
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, src1_reg, src1_mask, src1_str);
     shader_addline(arg->buffer, "if (%s) subroutine%lu();\n", src1_str, snum);
 }
 
