@@ -119,8 +119,43 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, "APC_ASYNC_IO,user=%p,sb=%p,status=%s",
                  call->async_io.user, call->async_io.sb, get_status_name(call->async_io.status) );
         break;
+    case APC_VIRTUAL_ALLOC:
+        fprintf( stderr, "APC_VIRTUAL_ALLOC,addr=%p,size=%lu,zero_bits=%u,op_type=%x,prot=%x",
+                 call->virtual_alloc.addr, call->virtual_alloc.size,
+                 call->virtual_alloc.zero_bits, call->virtual_alloc.op_type,
+                 call->virtual_alloc.prot );
+        break;
+    case APC_VIRTUAL_FREE:
+        fprintf( stderr, "APC_VIRTUAL_FREE,addr=%p,size=%lu,op_type=%x",
+                 call->virtual_free.addr, call->virtual_free.size,
+                 call->virtual_free.op_type );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
+        break;
+    }
+    fputc( '}', stderr );
+}
+
+static void dump_apc_result( const apc_result_t *result )
+{
+    fputc( '{', stderr );
+    switch(result->type)
+    {
+    case APC_NONE:
+        break;
+    case APC_VIRTUAL_ALLOC:
+        fprintf( stderr, "APC_VIRTUAL_ALLOC,status=%s,addr=%p,size=%lu",
+                 get_status_name( result->virtual_alloc.status ),
+                 result->virtual_alloc.addr, result->virtual_alloc.size );
+        break;
+    case APC_VIRTUAL_FREE:
+        fprintf( stderr, "APC_VIRTUAL_FREE,status=%s,addr=%p,size=%lu",
+                 get_status_name( result->virtual_free.status ),
+                 result->virtual_free.addr, result->virtual_free.size );
+        break;
+    default:
+        fprintf( stderr, "type=%u", result->type );
         break;
     }
     fputc( '}', stderr );
@@ -882,7 +917,9 @@ static void dump_queue_apc_request( const struct queue_apc_request *req )
 static void dump_get_apc_request( const struct get_apc_request *req )
 {
     fprintf( stderr, " alertable=%d,", req->alertable );
-    fprintf( stderr, " prev=%p", req->prev );
+    fprintf( stderr, " prev=%p,", req->prev );
+    fprintf( stderr, " result=" );
+    dump_apc_result( &req->result );
 }
 
 static void dump_get_apc_reply( const struct get_apc_reply *req )
@@ -890,6 +927,17 @@ static void dump_get_apc_reply( const struct get_apc_reply *req )
     fprintf( stderr, " handle=%p,", req->handle );
     fprintf( stderr, " call=" );
     dump_apc_call( &req->call );
+}
+
+static void dump_get_apc_result_request( const struct get_apc_result_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_apc_result_reply( const struct get_apc_result_reply *req )
+{
+    fprintf( stderr, " result=" );
+    dump_apc_result( &req->result );
 }
 
 static void dump_close_handle_request( const struct close_handle_request *req )
@@ -3310,6 +3358,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_unload_dll_request,
     (dump_func)dump_queue_apc_request,
     (dump_func)dump_get_apc_request,
+    (dump_func)dump_get_apc_result_request,
     (dump_func)dump_close_handle_request,
     (dump_func)dump_set_handle_info_request,
     (dump_func)dump_dup_handle_request,
@@ -3526,6 +3575,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)0,
     (dump_func)0,
     (dump_func)dump_get_apc_reply,
+    (dump_func)dump_get_apc_result_reply,
     (dump_func)0,
     (dump_func)dump_set_handle_info_reply,
     (dump_func)dump_dup_handle_reply,
@@ -3742,6 +3792,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "unload_dll",
     "queue_apc",
     "get_apc",
+    "get_apc_result",
     "close_handle",
     "set_handle_info",
     "dup_handle",

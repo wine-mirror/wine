@@ -129,6 +129,7 @@ DECL_HANDLER(load_dll);
 DECL_HANDLER(unload_dll);
 DECL_HANDLER(queue_apc);
 DECL_HANDLER(get_apc);
+DECL_HANDLER(get_apc_result);
 DECL_HANDLER(close_handle);
 DECL_HANDLER(set_handle_info);
 DECL_HANDLER(dup_handle);
@@ -348,6 +349,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_unload_dll,
     (req_handler)req_queue_apc,
     (req_handler)req_get_apc,
+    (req_handler)req_get_apc_result,
     (req_handler)req_close_handle,
     (req_handler)req_set_handle_info,
     (req_handler)req_dup_handle,

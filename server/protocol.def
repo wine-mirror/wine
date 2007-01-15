@@ -225,7 +225,15 @@ struct token_groups
     /* VARARGS(sids,SID); */
 };
 
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
+enum apc_type
+{
+    APC_NONE,
+    APC_USER,
+    APC_TIMER,
+    APC_ASYNC_IO,
+    APC_VIRTUAL_ALLOC,
+    APC_VIRTUAL_FREE
+};
 
 typedef union
 {
@@ -251,7 +259,42 @@ typedef union
         void            *sb;       /* status block */
         unsigned int     status;   /* I/O status */
     } async_io;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
+        void            *addr;      /* requested address */
+        unsigned long    size;      /* allocation size */
+        unsigned int     zero_bits; /* allocation alignment */
+        unsigned int     op_type;   /* type of operation */
+        unsigned int     prot;      /* memory protection flags */
+    } virtual_alloc;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_FREE */
+        void            *addr;      /* requested address */
+        unsigned long    size;      /* allocation size */
+        unsigned int     op_type;   /* type of operation */
+    } virtual_free;
 } apc_call_t;
+
+typedef union
+{
+    enum apc_type type;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_ALLOC */
+        unsigned int     status;    /* status returned by call */
+        void            *addr;      /* resulting address */
+        unsigned long    size;      /* resulting size */
+    } virtual_alloc;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_FREE */
+        unsigned int     status;    /* status returned by call */
+        void            *addr;      /* resulting address */
+        unsigned long    size;      /* resulting size */
+    } virtual_free;
+} apc_result_t;
 
 /****************************************************************/
 /* Request declarations */
@@ -472,9 +515,18 @@ typedef union
 @REQ(get_apc)
     int          alertable;    /* is thread alertable? */
     obj_handle_t prev;         /* handle to previous APC */
+    apc_result_t result;       /* result of previous APC */
 @REPLY
     obj_handle_t handle;       /* handle to APC */
     apc_call_t   call;         /* call arguments */
+@END
+
+
+/* Get the result of an APC call */
+@REQ(get_apc_result)
+    obj_handle_t handle;       /* handle to the APC */
+@REPLY
+    apc_result_t result;       /* result of the APC */
 @END
 
 

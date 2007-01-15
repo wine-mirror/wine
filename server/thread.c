@@ -72,7 +72,8 @@ struct thread_apc
     struct list         entry;    /* queue linked list */
     struct object      *owner;    /* object that queued this apc */
     int                 executed; /* has it been executed by the client? */
-    apc_call_t          call;
+    apc_call_t          call;     /* call arguments */
+    apc_result_t        result;   /* call results once executed */
 };
 
 static void dump_thread_apc( struct object *obj, int verbose );
@@ -1105,6 +1106,7 @@ DECL_HANDLER(get_apc)
     {
         if (!(apc = (struct thread_apc *)get_handle_obj( current->process, req->prev,
                                                          0, &thread_apc_ops ))) return;
+        apc->result = req->result;
         apc->executed = 1;
         wake_up( &apc->obj, 0 );
         close_handle( current->process, req->prev );
@@ -1132,6 +1134,23 @@ DECL_HANDLER(get_apc)
 
     if ((reply->handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
         reply->call = apc->call;
+    release_object( apc );
+}
+
+/* Get the result of an APC call */
+DECL_HANDLER(get_apc_result)
+{
+    struct thread_apc *apc;
+
+    if (!(apc = (struct thread_apc *)get_handle_obj( current->process, req->handle,
+                                                     0, &thread_apc_ops ))) return;
+    if (!apc->executed) set_error( STATUS_PENDING );
+    else
+    {
+        reply->result = apc->result;
+        /* close the handle directly to avoid an extra round-trip */
+        close_handle( current->process, req->handle );
+    }
     release_object( apc );
 }
 

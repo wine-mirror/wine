@@ -662,7 +662,10 @@ static BOOL call_apcs( BOOL alertable )
     BOOL user_apc = FALSE;
     NTSTATUS ret;
     apc_call_t call;
+    apc_result_t result;
     HANDLE handle = 0;
+
+    memset( &result, 0, sizeof(result) );
 
     for (;;)
     {
@@ -670,6 +673,7 @@ static BOOL call_apcs( BOOL alertable )
         {
             req->alertable = alertable;
             req->prev      = handle;
+            req->result    = result;
             if (!(ret = wine_server_call( req )))
             {
                 handle = reply->handle;
@@ -679,6 +683,8 @@ static BOOL call_apcs( BOOL alertable )
         SERVER_END_REQ;
 
         if (ret) return user_apc;  /* no more APCs */
+
+        memset( &result, 0, sizeof(result) );
 
         switch (call.type)
         {

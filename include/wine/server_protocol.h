@@ -209,7 +209,15 @@ struct token_groups
 
 };
 
-enum apc_type { APC_NONE, APC_USER, APC_TIMER, APC_ASYNC_IO };
+enum apc_type
+{
+    APC_NONE,
+    APC_USER,
+    APC_TIMER,
+    APC_ASYNC_IO,
+    APC_VIRTUAL_ALLOC,
+    APC_VIRTUAL_FREE
+};
 
 typedef union
 {
@@ -235,7 +243,42 @@ typedef union
         void            *sb;
         unsigned int     status;
     } async_io;
+    struct
+    {
+        enum apc_type    type;
+        void            *addr;
+        unsigned long    size;
+        unsigned int     zero_bits;
+        unsigned int     op_type;
+        unsigned int     prot;
+    } virtual_alloc;
+    struct
+    {
+        enum apc_type    type;
+        void            *addr;
+        unsigned long    size;
+        unsigned int     op_type;
+    } virtual_free;
 } apc_call_t;
+
+typedef union
+{
+    enum apc_type type;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        void            *addr;
+        unsigned long    size;
+    } virtual_alloc;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        void            *addr;
+        unsigned long    size;
+    } virtual_free;
+} apc_result_t;
 
 
 
@@ -554,12 +597,26 @@ struct get_apc_request
     struct request_header __header;
     int          alertable;
     obj_handle_t prev;
+    apc_result_t result;
 };
 struct get_apc_reply
 {
     struct reply_header __header;
     obj_handle_t handle;
     apc_call_t   call;
+};
+
+
+
+struct get_apc_result_request
+{
+    struct request_header __header;
+    obj_handle_t handle;
+};
+struct get_apc_result_reply
+{
+    struct reply_header __header;
+    apc_result_t result;
 };
 
 
@@ -3803,6 +3860,7 @@ enum request
     REQ_unload_dll,
     REQ_queue_apc,
     REQ_get_apc,
+    REQ_get_apc_result,
     REQ_close_handle,
     REQ_set_handle_info,
     REQ_dup_handle,
@@ -4023,6 +4081,7 @@ union generic_request
     struct unload_dll_request unload_dll_request;
     struct queue_apc_request queue_apc_request;
     struct get_apc_request get_apc_request;
+    struct get_apc_result_request get_apc_result_request;
     struct close_handle_request close_handle_request;
     struct set_handle_info_request set_handle_info_request;
     struct dup_handle_request dup_handle_request;
@@ -4241,6 +4300,7 @@ union generic_reply
     struct unload_dll_reply unload_dll_reply;
     struct queue_apc_reply queue_apc_reply;
     struct get_apc_reply get_apc_reply;
+    struct get_apc_result_reply get_apc_result_reply;
     struct close_handle_reply close_handle_reply;
     struct set_handle_info_reply set_handle_info_reply;
     struct dup_handle_reply dup_handle_reply;
@@ -4437,6 +4497,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 264
+#define SERVER_PROTOCOL_VERSION 265
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

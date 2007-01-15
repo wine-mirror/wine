@@ -43,6 +43,7 @@ my %formats =
     "rectangle_t"   => "&dump_rectangle",
     "char_info_t"   => "&dump_char_info",
     "apc_call_t"    => "&dump_apc_call",
+    "apc_result_t"  => "&dump_apc_result",
 );
 
 my @requests = ();
