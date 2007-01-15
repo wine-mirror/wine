@@ -1444,8 +1444,8 @@ void shader_glsl_ifc(SHADER_OPCODE_ARG* arg) {
     char src0_reg[50], src1_reg[50];
     char src0_mask[6], src1_mask[6];
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_0, src1_reg, src1_mask, src1_str);
 
     shader_addline(arg->buffer, "if (%s %s %s) {\n",
         src0_str, shader_get_comp_op(arg->opcode_token), src1_str);
