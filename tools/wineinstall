@@ -244,9 +244,12 @@ then {
 
       if ! su root -c "$sucommand"
       then {
-      	if ! su root -c "$sucommand"
+	echo
+	echo "Incorrect root password. If you are running Ubuntu or a similar distribution,"
+	echo "'make install' needs to be run via the sudo wrapper, so trying that one now"
+	if ! sudo su root -c "$sucommand"
         then {
-      	     echo
+	     echo
              echo "Either you entered an incorrect password or we failed to"
              echo "run '$sucommand' correctly."
              echo "If you didn't enter an incorrect password then please"
