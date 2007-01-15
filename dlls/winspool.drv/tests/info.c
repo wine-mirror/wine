@@ -44,7 +44,7 @@ static CHAR portname_file[]     = "FILE:";
 static CHAR portname_lpt1[]     = "LPT1:";
 static CHAR server_does_not_exist[] = "\\does_not_exist";
 static CHAR version_dll[]       = "version.dll";
-static CHAR winetest_monitor[]  = "winetest";
+static CHAR winetest[]  = "winetest";
 
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
@@ -156,11 +156,11 @@ static struct monitor_entry * find_installed_monitor(void)
     num_tests = (sizeof(monitor_table)/sizeof(struct monitor_entry));
 
     /* cleanup */
-    DeleteMonitorA(NULL, env_x86, winetest_monitor);
-    DeleteMonitorA(NULL, env_win9x_case, winetest_monitor);
+    DeleteMonitorA(NULL, env_x86, winetest);
+    DeleteMonitorA(NULL, env_win9x_case, winetest);
 
-    /* find a usable monitor from the table */    
-    mi2a.pName = winetest_monitor;
+    /* find a usable monitor from the table */
+    mi2a.pName = winetest;
     while ((entry == NULL) && (i < num_tests)) {
         entry = &monitor_table[i];
         i++;
@@ -170,7 +170,7 @@ static struct monitor_entry * find_installed_monitor(void)
         if (AddMonitorA(NULL, 2, (LPBYTE) &mi2a)) {
             /* we got one */
             trace("using '%s', '%s'\n", entry->env, entry->dllname);
-            DeleteMonitorA(NULL, entry->env, winetest_monitor);
+            DeleteMonitorA(NULL, entry->env, winetest);
         }
         else
         {
@@ -286,7 +286,7 @@ static void test_AddMonitor(void)
         "ERROR_PRIVILEGE_NOT_HELD)\n",
         res, GetLastError());
 
-    mi2a.pName = winetest_monitor;
+    mi2a.pName = winetest;
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     /* NT: ERROR_INVALID_PARAMETER,  9x: ERROR_PRIVILEGE_NOT_HELD */
@@ -323,7 +323,7 @@ static void test_AddMonitor(void)
         (GetLastError() == ERROR_INVALID_PARAMETER)),
         "returned %d with %d (expected '0' with: ERROR_PROC_NOT_FOUND or "
         "ERROR_INVALID_PARAMETER)\n", res, GetLastError());
-    if (res) DeleteMonitorA(NULL, entry->env, winetest_monitor); 
+    if (res) DeleteMonitorA(NULL, entry->env, winetest);
 
    /* Test AddMonitor with real options */
     mi2a.pDLLName = entry->dllname;
@@ -342,13 +342,13 @@ static void test_AddMonitor(void)
         "ERROR_PRINT_MONITOR_ALREADY_INSTALLED or ERROR_ALREADY_EXISTS)\n",
         res, GetLastError());
 
-    DeleteMonitorA(NULL, entry->env, winetest_monitor); 
+    DeleteMonitorA(NULL, entry->env, winetest);
     SetLastError(MAGIC_DEAD);
     res = AddMonitorA(empty, 2, (LPBYTE) &mi2a);
     ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
 
     /* cleanup */
-    DeleteMonitorA(NULL, entry->env, winetest_monitor);
+    DeleteMonitorA(NULL, entry->env, winetest);
 
 }
 
@@ -472,7 +472,7 @@ static void test_DeleteMonitor(void)
         return;
     }
 
-    mi2a.pName = winetest_monitor;
+    mi2a.pName = winetest;
     mi2a.pEnvironment = entry->env;
     mi2a.pDLLName = entry->dllname;
 
@@ -480,12 +480,12 @@ static void test_DeleteMonitor(void)
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
 
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, entry->env, winetest_monitor);
+    res = DeleteMonitorA(NULL, entry->env, winetest);
     ok(res, "returned %d with %d (expected '!= 0')\n", res, GetLastError());
 
     /* Delete the Monitor twice */
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, entry->env, winetest_monitor);
+    res = DeleteMonitorA(NULL, entry->env, winetest);
     /* NT: ERROR_UNKNOWN_PRINT_MONITOR (3000), 9x: ERROR_INVALID_PARAMETER (87) */
     ok( !res &&
         ((GetLastError() == ERROR_UNKNOWN_PRINT_MONITOR) ||
@@ -496,17 +496,17 @@ static void test_DeleteMonitor(void)
     /* the environment */
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, NULL, winetest_monitor);
+    res = DeleteMonitorA(NULL, NULL, winetest);
     ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError());
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, empty, winetest_monitor);
+    res = DeleteMonitorA(NULL, empty, winetest);
     ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError());
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(NULL, invalid_env, winetest_monitor);
+    res = DeleteMonitorA(NULL, invalid_env, winetest);
     ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError());
 
     /* the monitor-name */
@@ -532,11 +532,11 @@ static void test_DeleteMonitor(void)
 
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
-    res = DeleteMonitorA(empty, entry->env, winetest_monitor);
+    res = DeleteMonitorA(empty, entry->env, winetest);
     ok(res, "returned %d with %d (expected '!=0')\n", res, GetLastError());
 
     /* cleanup */
-    DeleteMonitorA(NULL, entry->env, winetest_monitor);
+    DeleteMonitorA(NULL, entry->env, winetest);
 }
 
 /* ########################### */
