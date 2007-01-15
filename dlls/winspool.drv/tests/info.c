@@ -1654,6 +1654,7 @@ static void test_EnumPrinters(void)
     SetLastError(0xdeadbeef);
     neededA = -1;
     ret = EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 2, NULL, 0, &neededA, &num);
+    RETURN_ON_DEACTIVATED_SPOOLER(ret)
     if (!ret)
     {
         /* We have 1 or more printers */
