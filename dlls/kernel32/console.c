@@ -1200,7 +1200,7 @@ BOOL WINAPI ReadConsoleA(HANDLE hConsoleInput, LPVOID lpBuffer, DWORD nNumberOfC
     BOOL	ret;
 
     if ((ret = ReadConsoleW(hConsoleInput, ptr, nNumberOfCharsToRead, &ncr, NULL)))
-	ncr = WideCharToMultiByte(CP_ACP, 0, ptr, ncr, lpBuffer, nNumberOfCharsToRead, NULL, NULL);
+        ncr = WideCharToMultiByte(GetConsoleCP(), 0, ptr, ncr, lpBuffer, nNumberOfCharsToRead, NULL, NULL);
 
     if (lpNumberOfCharsRead) *lpNumberOfCharsRead = ncr;
     HeapFree(GetProcessHeap(), 0, ptr);
@@ -2005,13 +2005,13 @@ BOOL WINAPI WriteConsoleA(HANDLE hConsoleOutput, LPCVOID lpBuffer, DWORD nNumber
     LPWSTR	xstring;
     DWORD 	n;
 
-    n = MultiByteToWideChar(CP_ACP, 0, lpBuffer, nNumberOfCharsToWrite, NULL, 0);
+    n = MultiByteToWideChar(GetConsoleOutputCP(), 0, lpBuffer, nNumberOfCharsToWrite, NULL, 0);
 
     if (lpNumberOfCharsWritten) *lpNumberOfCharsWritten = 0;
     xstring = HeapAlloc(GetProcessHeap(), 0, n * sizeof(WCHAR));
     if (!xstring) return 0;
 
-    MultiByteToWideChar(CP_ACP, 0, lpBuffer, nNumberOfCharsToWrite, xstring, n);
+    MultiByteToWideChar(GetConsoleOutputCP(), 0, lpBuffer, nNumberOfCharsToWrite, xstring, n);
 
     ret = WriteConsoleW(hConsoleOutput, xstring, n, lpNumberOfCharsWritten, 0);
 
@@ -2258,7 +2258,7 @@ BOOL WINAPI ScrollConsoleScreenBufferA(HANDLE hConsoleOutput, LPSMALL_RECT lpScr
     CHAR_INFO	ciw;
 
     ciw.Attributes = lpFill->Attributes;
-    MultiByteToWideChar(CP_ACP, 0, &lpFill->Char.AsciiChar, 1, &ciw.Char.UnicodeChar, 1);
+    MultiByteToWideChar(GetConsoleOutputCP(), 0, &lpFill->Char.AsciiChar, 1, &ciw.Char.UnicodeChar, 1);
 
     return ScrollConsoleScreenBufferW(hConsoleOutput, lpScrollRect, lpClipRect,
 				      dwDestOrigin, &ciw);
