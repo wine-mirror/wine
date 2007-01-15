@@ -1609,17 +1609,14 @@ void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
  * depth = (tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y
  */
 void pshader_glsl_texm3x2depth(SHADER_OPCODE_ARG* arg) {
-    
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
-    char src0_str[100], dst_str[100];
-    char src0_name[50], dst_name[50];
-    char src0_mask[6],  dst_mask[6];
+    char src0_str[100], src0_name[50], src0_mask[6];
 
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_name, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
 
-    shader_addline(arg->buffer, "tmp0.y = dot(vec3(T%u), vec3(%s));\n", dstreg, src0_str);
-    shader_addline(arg->buffer, "gl_FragDepth = vec4((tmp0.y == 0.0) ? 1.0 : tmp0.x / tmp0.y)%s;\n", dst_str, dst_name);
+    shader_addline(arg->buffer, "tmp0.y = dot(T%u.xyz, %s);\n", dstreg, src0_str);
+    shader_addline(arg->buffer, "gl_FragDepth = (tmp0.y == 0.0) ? 1.0 : clamp(tmp0.x / tmp0.y, 0.0, 1.0);\n");
 }
 
 /** Process the WINED3DSIO_TEXM3X2PAD instruction in GLSL
