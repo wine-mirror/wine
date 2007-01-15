@@ -19,6 +19,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*
+ * D3D shader asm has swizzles on source parameters, and write masks for
+ * destination parameters. GLSL uses swizzles for both. The result of this is
+ * that for example "mov dst.xw, src.zyxw" becomes "dst.xw = src.zw" in GLSL.
+ * Ie, to generate a proper GLSL source swizzle, we need to take the D3D write
+ * mask for the destination parameter into account.
+ */
+
 #include "config.h"
 #include <stdio.h>
 #include "wined3d_private.h"
