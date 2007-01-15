@@ -1397,17 +1397,18 @@ void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
 }
 
 /** Process the WINED3DSIO_LOOP instruction in GLSL:
- * Start a for() loop where src0.y is the initial value of aL,
- *  increment aL by src0.z for a total of src0.x iterations.
+ * Start a for() loop where src1.y is the initial value of aL,
+ *  increment aL by src1.z for a total of src1.x iterations.
  *  Need to use a temporary variable for this operation.
  */
+/* FIXME: I don't think nested loops will work correctly this way. */
 void shader_glsl_loop(SHADER_OPCODE_ARG* arg) {
     
     char src1_str[100];
     char src1_reg[50];
     char src1_mask[6];
     
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_ALL, src1_reg, src1_mask, src1_str);
   
     shader_addline(arg->buffer, "for (tmpInt = 0, aL = %s.y; tmpInt < %s.x; tmpInt++, aL += %s.z) {\n",
                    src1_reg, src1_reg, src1_reg);
