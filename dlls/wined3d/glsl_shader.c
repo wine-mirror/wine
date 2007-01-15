@@ -1169,22 +1169,26 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
     }
 }
 
-/** Process CMP instruction in GLSL (dst = src0.x > 0.0 ? src1.x : src2.x), per channel */
+/** Process CMP instruction in GLSL (dst = src0 >= 0.0 ? src1 : src2), per channel */
 void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100], src1_str[100], src2_str[100];
+    char src0_reg[50], src1_reg[50], src2_reg[50];
+    char src0_mask[6], src1_mask[6], src2_mask[6];
+    DWORD write_mask;
+    size_t mask_size;
 
-    char tmpLine[256];
-    char dst_str[100], src0_str[100], src1_str[100], src2_str[100];
-    char dst_reg[50], src0_reg[50], src1_reg[50], src2_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6], src2_mask[6];
-   
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
-    shader_glsl_add_src_param_old(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    mask_size = shader_glsl_get_write_mask_size(write_mask);
 
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(arg->buffer, "%smix(vec4(%s), vec4(%s), vec4(lessThan(vec4(%s), vec4(0.0)))))%s;\n",
-        tmpLine, src1_str, src2_str, src0_str, dst_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, src2_reg, src2_mask, src2_str);
+
+    if (mask_size > 1) {
+        shader_addline(arg->buffer, "mix(%s, %s, vec%d(lessThan(%s, vec%d(0.0)))));\n", src1_str, src2_str, mask_size, src0_str, mask_size);
+    } else {
+        shader_addline(arg->buffer, "%s >= 0.0 ? %s : %s);\n", src0_str, src1_str, src2_str);
+    }
 }
 
 /** Process the CND opcode in GLSL (dst = (src0 < 0.5) ? src1 : src2) */
