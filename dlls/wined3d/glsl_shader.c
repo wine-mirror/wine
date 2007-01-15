@@ -1434,7 +1434,7 @@ void shader_glsl_if(SHADER_OPCODE_ARG* arg) {
     char src0_reg[50];
     char src0_mask[6];
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src0_reg, src0_mask, src0_str);
     shader_addline(arg->buffer, "if (%s) {\n", src0_str); 
 }
 
