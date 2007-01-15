@@ -1724,36 +1724,32 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
-    char dimensions[5];
-    char dst_str[8];
     char src0_str[100], src0_name[50], src0_mask[6];
     char src1_str[100], src1_name[50], src1_mask[6];
+    char dst_mask[6];
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
     DWORD stype = arg->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    glsl_sample_function_t sample_function;
 
-    switch (stype) {
-        case WINED3DSTT_2D:     strcpy(dimensions, "2D");   break;
-        case WINED3DSTT_CUBE:   strcpy(dimensions, "Cube"); break;
-        case WINED3DSTT_VOLUME: strcpy(dimensions, "3D");   break;
-        default:
-            strcpy(dimensions, "");
-            FIXME("Unrecognized sampler type: %#x\n", stype);
-            break;
-    }
-
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_name, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src_mask, src1_name, src1_mask, src1_str);
 
     /* Perform the last matrix multiply operation */
-    shader_addline(buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
+    shader_addline(buffer, "tmp0.z = dot(T%u.xyz, %s);\n", reg, src0_str);
 
-    /* Calculate reflection vector */
-    shader_addline(buffer, "tmp0.xyz = reflect(-vec3(%s), vec3(tmp0));\n", src1_str);
+    /* Calculate reflection vector, 2*(tmp0.src1)*tmp0-src1
+     * This is equavalent to reflect(-src1, tmp0); */
+    shader_addline(buffer, "tmp0.xyz = reflect(-(%s), tmp0.xyz);\n", src1_str);
+
+    shader_glsl_append_dst(buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_glsl_get_sample_function(stype, FALSE, &sample_function);
 
     /* Sample the texture */
-    sprintf(dst_str, "T%u", reg);
-    shader_glsl_sample(arg, reg, dst_str, "tmp0");
+    shader_addline(buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
+
     current_state->current_row = 0;
 }
 
