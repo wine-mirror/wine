@@ -120,6 +120,14 @@ typedef struct
     /* At some points, particularly when switching MDI children, active and
      * maximized MDI children may be not the same window, so we need to track
      * them separately.
+     * The only place where we switch to/from maximized state is DefMDIChildProc
+     * WM_SIZE/SIZE_MAXIMIZED handler. We get that notification only after the
+     * ShowWindow(SW_SHOWMAXIMIZED) request, therefore window is guaranteed to
+     * be visible at the time we get the notification, and it's safe to assume
+     * that hwndChildMaximized is always visible.
+     * If the app plays games with WS_VISIBLE, WS_MAXIMIZE or any other window
+     * states it must keep coherency with USER32 on its own. This is true for
+     * Windows as well.
      */
     UINT      nActiveChildren;
     HWND      hwndChildMaximized;
@@ -355,7 +363,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
             HMENU oldFrameMenu = ci->hFrameMenu;
 
             ci->hFrameMenu = hmenuFrame;
-            if (ci->hwndChildMaximized && (GetWindowLongW(ci->hwndChildMaximized, GWL_STYLE) & WS_VISIBLE))
+            if (ci->hwndChildMaximized)
                 MDI_AugmentFrameMenu( hwndFrame, ci->hwndChildMaximized );
 
             return (LRESULT)oldFrameMenu;
@@ -974,7 +982,7 @@ static void MDI_UpdateFrameText( HWND frame, HWND hClient, BOOL repaint, LPCWSTR
 
     if (ci->frameTitle)
     {
-	if (ci->hwndChildMaximized && (GetWindowLongW(ci->hwndChildMaximized, GWL_STYLE) & WS_VISIBLE))
+	if (ci->hwndChildMaximized)
 	{
 	    /* combine frame title and child title if possible */
 
@@ -1220,8 +1228,7 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
         return 0;
 
       case WM_SIZE:
-        if( IsWindow(ci->hwndActiveChild) && IsZoomed(ci->hwndActiveChild) &&
-            (GetWindowLongW(ci->hwndActiveChild, GWL_STYLE) & WS_VISIBLE) )
+        if( ci->hwndChildMaximized )
 	{
 	    RECT	rect;
 
@@ -1230,9 +1237,9 @@ static LRESULT MDIClientWndProc_common( HWND hwnd, UINT message,
 	    rect.right = LOWORD(lParam);
 	    rect.bottom = HIWORD(lParam);
 
-	    AdjustWindowRectEx(&rect, GetWindowLongA(ci->hwndActiveChild, GWL_STYLE),
-                               0, GetWindowLongA(ci->hwndActiveChild, GWL_EXSTYLE) );
-	    MoveWindow(ci->hwndActiveChild, rect.left, rect.top,
+	    AdjustWindowRectEx( &rect, GetWindowLongA(ci->hwndChildMaximized, GWL_STYLE),
+                               0, GetWindowLongA(ci->hwndChildMaximized, GWL_EXSTYLE) );
+	    MoveWindow( ci->hwndChildMaximized, rect.left, rect.top,
 			 rect.right - rect.left, rect.bottom - rect.top, 1);
 	}
 	else
@@ -1507,6 +1514,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         break;
 
     case WM_SIZE:
+        /* This is the only place where we switch to/from maximized state */
         /* do not change */
         TRACE("current active %p, maximized %p\n", ci->hwndActiveChild, ci->hwndChildMaximized);
 
