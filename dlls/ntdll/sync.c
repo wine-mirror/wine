@@ -756,6 +756,14 @@ static BOOL call_apcs( BOOL alertable )
                                                                     call.virtual_protect.prot,
                                                                     &result.virtual_protect.prot );
             break;
+        case APC_VIRTUAL_FLUSH:
+            result.type = call.type;
+            result.virtual_flush.addr = call.virtual_flush.addr;
+            result.virtual_flush.size = call.virtual_flush.size;
+            result.virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
+                                                                &result.virtual_flush.addr,
+                                                                &result.virtual_flush.size, 0 );
+            break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;

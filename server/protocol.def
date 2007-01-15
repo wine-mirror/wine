@@ -234,7 +234,8 @@ enum apc_type
     APC_VIRTUAL_ALLOC,
     APC_VIRTUAL_FREE,
     APC_VIRTUAL_QUERY,
-    APC_VIRTUAL_PROTECT
+    APC_VIRTUAL_PROTECT,
+    APC_VIRTUAL_FLUSH
 };
 
 typedef union
@@ -289,6 +290,12 @@ typedef union
         unsigned long    size;      /* requested address */
         unsigned int     prot;      /* new protection flags */
     } virtual_protect;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_FLUSH */
+        const void      *addr;      /* requested address */
+        unsigned long    size;      /* requested address */
+    } virtual_flush;
 } apc_call_t;
 
 typedef union
@@ -328,6 +335,13 @@ typedef union
         unsigned long    size;      /* resulting size */
         unsigned int     prot;      /* old protection flags */
     } virtual_protect;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_FLUSH */
+        unsigned int     status;    /* status returned by call */
+        const void      *addr;      /* resulting address */
+        unsigned long    size;      /* resulting size */
+    } virtual_flush;
 } apc_result_t;
 
 /****************************************************************/

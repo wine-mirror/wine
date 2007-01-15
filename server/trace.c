@@ -138,6 +138,10 @@ static void dump_apc_call( const apc_call_t *call )
                  call->virtual_protect.addr, call->virtual_protect.size,
                  call->virtual_protect.prot );
         break;
+    case APC_VIRTUAL_FLUSH:
+        fprintf( stderr, "APC_VIRTUAL_FLUSH,addr=%p,size=%lu",
+                 call->virtual_flush.addr, call->virtual_flush.size );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -175,6 +179,11 @@ static void dump_apc_result( const apc_result_t *result )
                  get_status_name( result->virtual_protect.status ),
                  result->virtual_protect.addr, result->virtual_protect.size,
                  result->virtual_protect.prot );
+        break;
+    case APC_VIRTUAL_FLUSH:
+        fprintf( stderr, "APC_VIRTUAL_FLUSH,status=%s,addr=%p,size=%lu",
+                 get_status_name( result->virtual_flush.status ),
+                 result->virtual_flush.addr, result->virtual_flush.size );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );

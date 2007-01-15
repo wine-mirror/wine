@@ -2095,11 +2095,25 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
     sigset_t sigset;
     void *addr = ROUND_ADDR( *addr_ptr, page_mask );
 
-    if (!is_current_process( process ))
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_flush.type = APC_VIRTUAL_FLUSH;
+        call.virtual_flush.addr = addr;
+        call.virtual_flush.size = *size_ptr;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_flush.status == STATUS_SUCCESS)
+        {
+            *addr_ptr = result.virtual_flush.addr;
+            *size_ptr = result.virtual_flush.size;
+        }
+        return result.virtual_flush.status;
     }
+
     server_enter_uninterrupted_section( &csVirtual, &sigset );
     if (!(view = VIRTUAL_FindView( addr ))) status = STATUS_INVALID_PARAMETER;
     else
