@@ -36,6 +36,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 #define GLINFO_LOCATION      (*gl_info)
 
 typedef struct {
+    char reg_name[50];
+    char mask_str[6];
+} glsl_dst_param_t;
+
+typedef struct {
     const char *name;
     DWORD coord_mask;
 } glsl_sample_function_t;
@@ -764,28 +769,25 @@ static void shader_glsl_add_src_param(SHADER_OPCODE_ARG* arg, const DWORD param,
  * Also, return the actual register name and swizzle in case the
  * caller needs this information as well. */
 static DWORD shader_glsl_add_dst_param(SHADER_OPCODE_ARG* arg, const DWORD param,
-        const DWORD addr_token, char *reg_name, char *write_mask, char *out_str) {
+        const DWORD addr_token, glsl_dst_param_t *dst_param) {
     BOOL is_color = FALSE;
-    DWORD mask;
-    write_mask[0] = reg_name[0] = out_str[0] = 0;
 
-    shader_glsl_get_register_name(param, addr_token, reg_name, &is_color, arg);
+    dst_param->mask_str[0] = '\0';
+    dst_param->reg_name[0] = '\0';
 
-    mask = shader_glsl_get_write_mask(param, write_mask);
-    sprintf(out_str, "%s%s", reg_name, write_mask);
-
-    return mask;
+    shader_glsl_get_register_name(param, addr_token, dst_param->reg_name, &is_color, arg);
+    return shader_glsl_get_write_mask(param, dst_param->mask_str);
 }
 
 /* Append the destination part of the instruction to the buffer, return the effective write mask */
 static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, SHADER_OPCODE_ARG *arg) {
-    char reg_name[50], write_mask[6], reg_str[100];
+    glsl_dst_param_t dst_param;
     DWORD mask;
     int shift;
 
     shift = (arg->dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
-    mask = shader_glsl_add_dst_param(arg, arg->dst, arg->dst_addr, reg_name, write_mask, reg_str);
-    shader_addline(buffer, "%s = %s(", reg_str, shift_glsl_tab[shift]);
+    mask = shader_glsl_add_dst_param(arg, arg->dst, arg->dst_addr, &dst_param);
+    shader_addline(buffer, "%s%s = %s(", dst_param.reg_name, dst_param.mask_str, shift_glsl_tab[shift]);
 
     return mask;
 }
@@ -796,15 +798,14 @@ void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
     DWORD mask = arg->dst & WINED3DSP_DSTMOD_MASK;
  
     if (arg->opcode->dst_token && mask != 0) {
-        char dst_reg[50];
-        char dst_mask[6];
-        char dst_str[100];
-       
-        shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
+        glsl_dst_param_t dst_param;
+
+        shader_glsl_add_dst_param(arg, arg->dst, 0, &dst_param);
 
         if (mask & WINED3DSPDM_SATURATE) {
             /* _SAT means to clamp the value of the register to between 0 and 1 */
-            shader_addline(arg->buffer, "%s%s = clamp(%s%s, 0.0, 1.0);\n", dst_reg, dst_mask, dst_reg, dst_mask);
+            shader_addline(arg->buffer, "%s%s = clamp(%s%s, 0.0, 1.0);\n", dst_param.reg_name,
+                    dst_param.mask_str, dst_param.reg_name, dst_param.mask_str);
         }
         if (mask & WINED3DSPDM_MSAMPCENTROID) {
             FIXME("_centroid modifier not handled\n");
@@ -1613,14 +1614,11 @@ void pshader_glsl_texdp3(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXDEPTH instruction in GLSL:
  * Calculate the depth as dst.x / dst.y   */
 void pshader_glsl_texdepth(SHADER_OPCODE_ARG* arg) {
-    
-    char dst_str[100];
-    char dst_reg[50];
-    char dst_mask[6];
-   
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
+    glsl_dst_param_t dst_param;
 
-    shader_addline(arg->buffer, "gl_FragDepth = %s.x / %s.y;\n", dst_reg, dst_reg);
+    shader_glsl_add_dst_param(arg, arg->dst, 0, &dst_param);
+
+    shader_addline(arg->buffer, "gl_FragDepth = %s.x / %s.y;\n", dst_param.reg_name, dst_param.reg_name);
 }
 
 /** Process the WINED3DSIO_TEXM3X2DEPTH instruction in GLSL:
@@ -1876,11 +1874,10 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXKILL instruction in GLSL.
  * If any of the first 3 components are < 0, discard this pixel */
 void pshader_glsl_texkill(SHADER_OPCODE_ARG* arg) {
+    glsl_dst_param_t dst_param;
 
-    char dst_str[100], dst_name[50], dst_mask[6];
-
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_name, dst_mask, dst_str);
-    shader_addline(arg->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_name);
+    shader_glsl_add_dst_param(arg, arg->dst, 0, &dst_param);
+    shader_addline(arg->buffer, "if (any(lessThan(%s.xyz, vec3(0.0)))) discard;\n", dst_param.reg_name);
 }
 
 /** Process the WINED3DSIO_DP2ADD instruction in GLSL.
