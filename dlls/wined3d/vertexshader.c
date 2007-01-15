@@ -715,6 +715,7 @@ static VOID IWineD3DVertexShaderImpl_GenerateShader(
 #endif
     buffer.bsize = 0;
     buffer.lineNo = 0;
+    buffer.newline = TRUE;
 
     if (This->baseShader.shader_mode == SHADER_GLSL) {
 

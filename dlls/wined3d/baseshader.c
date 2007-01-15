@@ -57,9 +57,18 @@ int shader_addline(
         return -1;
     }
 
+    if (buffer->newline) {
+        TRACE("GL HW (%u, %u) : %s", buffer->lineNo + 1, buffer->bsize, base);
+        buffer->newline = FALSE;
+    } else {
+        TRACE(base);
+    }
+
     buffer->bsize += rc;
-    buffer->lineNo++;
-    TRACE("GL HW (%u, %u) : %s", buffer->lineNo, buffer->bsize, base); 
+    if (buffer->buffer[buffer->bsize-1] == '\n') {
+        buffer->lineNo++;
+        buffer->newline = TRUE;
+    }
     return 0;
 }
 

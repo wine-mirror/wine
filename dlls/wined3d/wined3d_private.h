@@ -1491,6 +1491,7 @@ typedef struct SHADER_BUFFER {
     char* buffer;
     unsigned int bsize;
     unsigned int lineNo;
+    BOOL newline;
 } SHADER_BUFFER;
 
 /* Undocumented opcode controls */
