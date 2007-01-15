@@ -64,6 +64,8 @@ static struct list xcv_handles = LIST_INIT( xcv_handles );
 
 /* ############################### */
 
+static const WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
+static const WCHAR dllnameuiW[] = {'l','o','c','a','l','u','i','.','d','l','l',0};
 
 static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'M','i','c','r','o','s','o','f','t','\\',
@@ -338,6 +340,54 @@ BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
 }
 
 /*****************************************************
+ * localmon_XcvDataPort [exported through MONITOREX]
+ *
+ * Execute command through a Communication-Channel
+ *
+ * PARAMS
+ *  hXcv            [i] The Handle to work with
+ *  pszDataName     [i] Name of the command to execute
+ *  pInputData      [i] Buffer for extra Input Data (needed only for some commands)
+ *  cbInputData     [i] Size in Bytes of Buffer at pInputData
+ *  pOutputData     [o] Buffer to receive additional Data (needed only for some commands)
+ *  cbOutputData    [i] Size in Bytes of Buffer at pOutputData
+ *  pcbOutputNeeded [o] PTR to receive the minimal Size in Bytes of the Buffer at pOutputData
+ *
+ * RETURNS
+ *  Success: ERROR_SUCCESS
+ *  Failure: win32 error code (same value is returned by GetLastError) 
+ *
+ * NOTES
+ *
+ *  Minimal List of commands, that every Printmonitor DLL should support:
+ *
+ *| "MonitorUI" : Return the Name of the Userinterface-DLL as WSTR in pOutputData
+ *| "AddPort"   : Add a Port (Name as WSTR in pInputData)
+ *| "DeletePort": Delete a Port (Name as WSTR in pInputData)
+ *
+ *
+ */
+DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData, DWORD cbInputData,
+                PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded)
+{
+
+    TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
+          pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
+
+
+    if (!lstrcmpW(pszDataName, cmd_MonitorUIW)) {
+        * pcbOutputNeeded = sizeof(dllnameuiW);
+        if (cbOutputData >= sizeof(dllnameuiW)) {
+            memcpy(pOutputData, dllnameuiW, sizeof(dllnameuiW));
+            return ERROR_SUCCESS;
+        }
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+    FIXME("command not supported: %s\n", debugstr_w(pszDataName));
+    return ERROR_INVALID_PARAMETER;
+}
+
+/*****************************************************
  * localmon_XcvOpenPort [exported through MONITOREX]
  *
  * Open a Communication-Channel
@@ -418,7 +468,7 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
             NULL,       /* localmon_GetPrinterDataFromPort */
             NULL,       /* localmon_SetPortTimeOuts */
             localmon_XcvOpenPort,
-            NULL,        /* localmon_XcvDataPort */
+            localmon_XcvDataPort,
             localmon_XcvClosePort
         }
     };
