@@ -1297,17 +1297,26 @@ void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
  *                                        where src.w is clamped at +- 128
  */
 void shader_glsl_lit(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+    char src1_str[100];
+    char src1_reg[50];
+    char src1_mask[6];
+    char src3_str[100];
+    char src3_reg[50];
+    char src3_mask[6];
+    char dst_mask[6];
 
-    char dst_str[100], src0_str[100];
-    char dst_reg[50], src0_reg[50];
-    char dst_mask[6], src0_mask[6];
-   
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
 
-    shader_addline(arg->buffer,
-        "%s = vec4(1.0, (%s.x > 0.0 ? %s.x : 0.0), (%s.x > 0.0 ? ((%s.y > 0.0) ? pow(%s.y, clamp(%s.w, -128.0, 128.0)) : 0.0) : 0.0), 1.0)%s;\n",
-        dst_str, src0_reg, src0_reg, src0_reg, src0_reg, src0_reg, src0_reg, dst_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_1, src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, src3_reg, src3_mask, src3_str);
+
+    shader_addline(arg->buffer, "vec4(1.0, (%s > 0.0 ? %s : 0.0), (%s > 0.0 ? ((%s > 0.0) ? pow(%s, clamp(%s, -128.0, 128.0)) : 0.0) : 0.0), 1.0)%s);\n",
+        src0_str, src0_str, src0_str, src1_str, src1_str, src3_str, dst_mask);
 }
 
 /** Process the WINED3DSIO_DST instruction in GLSL:
