@@ -821,7 +821,6 @@ static DWORD shader_glsl_add_dst_param(SHADER_OPCODE_ARG* arg, const DWORD param
     return mask;
 }
 
-#if 0
 /* Append the destination part of the instruction to the buffer, return the effective write mask */
 static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, SHADER_OPCODE_ARG *arg) {
     char reg_name[50], write_mask[6], reg_str[100];
@@ -834,7 +833,6 @@ static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, SHADER_OPCODE_ARG *ar
 
     return mask;
 }
-#endif
 
 /** Process GLSL instruction modifiers */
 void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
@@ -1306,16 +1304,31 @@ void shader_glsl_dst(SHADER_OPCODE_ARG* arg) {
  * dst.w = dst.w
  */
 void shader_glsl_sincos(SHADER_OPCODE_ARG* arg) {
-    
-    char dst_str[100], src0_str[100];
-    char dst_reg[50], src0_reg[50];
-    char dst_mask[6], src0_mask[6];
-   
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+    DWORD write_mask;
 
-    shader_addline(arg->buffer, "%s = vec4(cos(%s), sin(%s), %s.z, %s.w)%s;\n",
-                   dst_str, src0_str, src0_str, dst_reg, dst_reg, dst_mask);
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src0_reg, src0_mask, src0_str);
+
+    switch (write_mask) {
+        case WINED3DSP_WRITEMASK_0:
+            shader_addline(arg->buffer, "cos(%s));\n", src0_str);
+            break;
+
+        case WINED3DSP_WRITEMASK_1:
+            shader_addline(arg->buffer, "sin(%s));\n", src0_str);
+            break;
+
+        case (WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1):
+            shader_addline(arg->buffer, "vec2(cos(%s), sin(%s)));\n", src0_str, src0_str);
+            break;
+
+        default:
+            ERR("Write mask should be .x, .y or .xy\n");
+            break;
+    }
 }
 
 /** Process the WINED3DSIO_LOOP instruction in GLSL:
