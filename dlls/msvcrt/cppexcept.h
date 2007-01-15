@@ -135,12 +135,6 @@ typedef struct __cxx_exception_type
 
 void _CxxThrowException(exception*,const cxx_exception_type*);
 
-/* get the vtable pointer for a C++ object */
-static inline const vtable_ptr *get_vtable( void *obj )
-{
-    return *(const vtable_ptr **)obj;
-}
-
 static inline const char *dbgstr_type_info( const type_info *info )
 {
     if (!info) return "{}";

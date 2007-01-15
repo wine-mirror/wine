@@ -97,6 +97,12 @@ extern const vtable_ptr MSVCRT_bad_cast_vtable;
 extern const vtable_ptr MSVCRT___non_rtti_object_vtable;
 extern const vtable_ptr MSVCRT_type_info_vtable;
 
+/* get the vtable pointer for a C++ object */
+static inline const vtable_ptr *get_vtable( void *obj )
+{
+    return *(const vtable_ptr **)obj;
+}
+
 static inline const rtti_object_locator *get_obj_locator( void *cppobj )
 {
     const vtable_ptr *vtable = get_vtable( cppobj );
