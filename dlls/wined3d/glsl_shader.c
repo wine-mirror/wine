@@ -487,12 +487,6 @@ void shader_generate_glsl_declarations(
 static void shader_glsl_add_src_param(SHADER_OPCODE_ARG* arg, const DWORD param,
         const DWORD addr_token, DWORD mask, char *reg_name, char *swizzle, char *out_str);
 
-/* FIXME: This should be removed */
-static void shader_glsl_add_src_param_old(SHADER_OPCODE_ARG* arg, const DWORD param,
-        const DWORD addr_token, char *reg_name, char *swizzle, char *out_str) {
-    shader_glsl_add_src_param(arg, param, addr_token, 0, reg_name, swizzle, out_str);
-}
-
 /** Used for opcode modifiers - They multiply the result by the specified amount */
 static const char * const shift_glsl_tab[] = {
     "",           /*  0 (none) */ 
@@ -526,6 +520,8 @@ static void shader_glsl_gen_modifier (
         return;
 
     switch (instr & WINED3DSP_SRCMOD_MASK) {
+    case WINED3DSPSM_DZ: /* Need to handle this in the instructions itself (texld & texcrd). */
+    case WINED3DSPSM_DW:
     case WINED3DSPSM_NONE:
         sprintf(out_str, "%s%s", in_reg, in_regswizzle);
         break;
@@ -555,12 +551,6 @@ static void shader_glsl_gen_modifier (
         break;
     case WINED3DSPSM_X2NEG:
         sprintf(out_str, "-(2.0 * %s%s)", in_reg, in_regswizzle);
-        break;
-    case WINED3DSPSM_DZ:    /* reg1_db = { reg1.r/b, reg1.g/b, ...}  The g & a components are undefined, so we'll leave them alone */
-        sprintf(out_str, "vec4(%s.r / %s.b, %s.g / %s.b, %s.b, %s.a)", in_reg, in_reg, in_reg, in_reg, in_reg, in_reg);
-        break;
-    case WINED3DSPSM_DW:
-        sprintf(out_str, "vec4(%s.r / %s.a, %s.g / %s.a, %s.b, %s.a)", in_reg, in_reg, in_reg, in_reg, in_reg, in_reg);
         break;
     case WINED3DSPSM_ABS:
         sprintf(out_str, "abs(%s%s)", in_reg, in_regswizzle);
@@ -754,29 +744,11 @@ static void shader_glsl_get_swizzle(const DWORD param, BOOL fixup, DWORD mask, c
     DWORD swizzle_z = (swizzle >> 4) & 0x03;
     DWORD swizzle_w = (swizzle >> 6) & 0x03;
 
-    /* FIXME: This is here to keep shader_glsl_add_src_param_old happy.
-     * As soon as that is removed, this needs to go as well. */
-    if (!mask) {
-        /* If the swizzle is the default swizzle (ie, "xyzw"), we don't need to
-         * generate a swizzle string. Unless we need to our own swizzling. */
-        if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) != swizzle || fixup) {
-            *ptr++ = '.';
-            if (swizzle_x == swizzle_y && swizzle_x == swizzle_z && swizzle_x == swizzle_w) {
-                *ptr++ = swizzle_chars[swizzle_x];
-            } else {
-                *ptr++ = swizzle_chars[swizzle_x];
-                *ptr++ = swizzle_chars[swizzle_y];
-                *ptr++ = swizzle_chars[swizzle_z];
-                *ptr++ = swizzle_chars[swizzle_w];
-            }
-        }
-    } else {
-        *ptr++ = '.';
-        if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle_x];
-        if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[swizzle_y];
-        if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[swizzle_z];
-        if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[swizzle_w];
-    }
+    *ptr++ = '.';
+    if (mask & WINED3DSP_WRITEMASK_0) *ptr++ = swizzle_chars[swizzle_x];
+    if (mask & WINED3DSP_WRITEMASK_1) *ptr++ = swizzle_chars[swizzle_y];
+    if (mask & WINED3DSP_WRITEMASK_2) *ptr++ = swizzle_chars[swizzle_z];
+    if (mask & WINED3DSP_WRITEMASK_3) *ptr++ = swizzle_chars[swizzle_w];
 
     *ptr = '\0';
 }
@@ -890,27 +862,6 @@ static void shader_glsl_get_sample_function(DWORD sampler_type, BOOL projected, 
             sample_function->name = "";
             FIXME("Unrecognized sampler type: %#x;\n", sampler_type);
             break;
-    }
-}
-
-static void shader_glsl_sample(SHADER_OPCODE_ARG* arg, DWORD sampler_idx, const char *dst_str, const char *coord_reg) {
-    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
-    DWORD sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
-    const char sampler_prefix = shader_is_pshader_version(This->baseShader.hex_version) ? 'P' : 'V';
-    SHADER_BUFFER* buffer = arg->buffer;
-    glsl_sample_function_t sample_function;
-
-    if(deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS] & WINED3DTTFF_PROJECTED) {
-        shader_glsl_get_sample_function(sampler_type, TRUE, &sample_function);
-        shader_addline(buffer, "%s = %s(%csampler%u, %s);\n", dst_str, sample_function.name, sampler_prefix, sampler_idx, coord_reg);
-    } else {
-        char coord_swizzle[6];
-
-        shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
-        shader_glsl_get_write_mask(sample_function.coord_mask, coord_swizzle);
-
-        shader_addline(buffer, "%s = %s(%csampler%u, %s%s);\n", dst_str, sample_function.name, sampler_prefix, sampler_idx, coord_reg, coord_swizzle);
     }
 }
 
@@ -1501,30 +1452,79 @@ void shader_glsl_callnz(SHADER_OPCODE_ARG* arg) {
  ********************************************/
 void pshader_glsl_tex(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-
     DWORD hex_version = This->baseShader.hex_version;
-
-    char dst_str[100],   dst_reg[50],  dst_mask[6];
     char coord_str[100], coord_reg[50], coord_mask[6];
+    char dst_swizzle[6];
+    glsl_sample_function_t sample_function;
+    DWORD sampler_type;
+    DWORD sampler_idx;
+    BOOL projected;
+    DWORD mask = 0;
 
     /* All versions have a destination register */
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-
-    /* 1.0-1.3: Use destination register as coordinate source.
-       1.4+: Use provided coordinate source register. */
-    if (hex_version < WINED3DPS_VERSION(1,4))
-       strcpy(coord_reg, dst_reg);
-    else
-       shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], coord_reg, coord_mask, coord_str);
+    shader_glsl_append_dst(arg->buffer, arg);
 
     /* 1.0-1.4: Use destination register as sampler source.
      * 2.0+: Use provided sampler source. */
-    if (hex_version < WINED3DPS_VERSION(2,0)) {
-        shader_glsl_sample(arg, arg->dst & WINED3DSP_REGNUM_MASK, dst_str, coord_reg);
+    if (hex_version < WINED3DPS_VERSION(1,4)) {
+        IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+        DWORD flags;
+
+        sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+        flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+
+        if (flags & WINED3DTTFF_PROJECTED) {
+            projected = TRUE;
+            switch (flags & ~WINED3DTTFF_PROJECTED) {
+                case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
+                case WINED3DTTFF_COUNT2: mask = WINED3DSP_WRITEMASK_1; break;
+                case WINED3DTTFF_COUNT3: mask = WINED3DSP_WRITEMASK_2; break;
+                case WINED3DTTFF_COUNT4:
+                case WINED3DTTFF_DISABLE: mask = WINED3DSP_WRITEMASK_3; break;
+            }
+        } else {
+            projected = FALSE;
+        }
+    } else if (hex_version < WINED3DPS_VERSION(2,0)) {
+        DWORD src_mod = arg->src[0] & WINED3DSP_SRCMOD_MASK;
+        sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+
+        if (src_mod == WINED3DSPSM_DZ) {
+            projected = TRUE;
+            mask = WINED3DSP_WRITEMASK_2;
+        } else if (src_mod == WINED3DSPSM_DW) {
+            projected = TRUE;
+            mask = WINED3DSP_WRITEMASK_3;
+        } else {
+            projected = FALSE;
+        }
     } else {
-        shader_glsl_sample(arg, arg->src[1] & WINED3DSP_REGNUM_MASK, dst_str, coord_reg);
+        sampler_idx = arg->src[1] & WINED3DSP_REGNUM_MASK;
+        /* TODO: Handle D3DSI_TEXLD_PROJECTED... */
+        projected = FALSE;
     }
 
+    sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    shader_glsl_get_sample_function(sampler_type, projected, &sample_function);
+    mask |= sample_function.coord_mask;
+
+    if (hex_version < WINED3DPS_VERSION(2,0)) {
+        shader_glsl_get_write_mask(arg->dst, dst_swizzle);
+    } else {
+        shader_glsl_get_swizzle(arg->src[1], FALSE, arg->dst, dst_swizzle);
+    }
+
+    /* 1.0-1.3: Use destination register as coordinate source.
+       1.4+: Use provided coordinate source register. */
+    if (hex_version < WINED3DPS_VERSION(1,4)) {
+        shader_glsl_get_write_mask(mask, coord_mask);
+        shader_addline(arg->buffer, "%s(Psampler%u, T%u%s)%s);\n",
+                sample_function.name, sampler_idx, sampler_idx, coord_mask, dst_swizzle);
+    } else {
+        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], mask, coord_reg, coord_mask, coord_str);
+        shader_addline(arg->buffer, "%s(Psampler%u, %s)%s);\n",
+                sample_function.name, sampler_idx, coord_str, dst_swizzle);
+    }
 }
 
 void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
@@ -1534,21 +1534,46 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_BUFFER* buffer = arg->buffer;
     DWORD hex_version = This->baseShader.hex_version;
+    DWORD write_mask;
+    char dst_mask[6];
 
-    char tmpStr[100];
-    char tmpReg[50];
-    char tmpMask[6];
-    tmpReg[0] = 0;
-
-    shader_glsl_add_dst_param(arg, arg->dst, 0, tmpReg, tmpMask, tmpStr);
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(write_mask, dst_mask);
 
     if (hex_version != WINED3DPS_VERSION(1,4)) {
         DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
-        shader_addline(buffer, "%s = clamp(gl_TexCoord[%u], 0.0, 1.0);\n", tmpReg, reg);
+        shader_addline(buffer, "clamp(gl_TexCoord[%u], 0.0, 1.0)%s);\n", reg, dst_mask);
     } else {
-        DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
-        shader_addline(buffer, "%s = gl_TexCoord[%u]%s;\n", tmpStr, reg2, tmpMask);
-   }
+        DWORD reg = arg->src[0] & WINED3DSP_REGNUM_MASK;
+        DWORD src_mod = arg->src[0] & WINED3DSP_SRCMOD_MASK;
+        char dst_swizzle[6];
+
+        shader_glsl_get_swizzle(arg->src[0], FALSE, write_mask, dst_swizzle);
+
+        if (src_mod == WINED3DSPSM_DZ) {
+            char div_str[100], div_reg[50], div_mask[6];
+            size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+            shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_2, div_reg, div_mask, div_str);
+
+            if (mask_size > 1) {
+                shader_addline(buffer, "gl_TexCoord[%u]%s / vec%d(%s));\n", reg, dst_swizzle, mask_size, div_str);
+            } else {
+                shader_addline(buffer, "gl_TexCoord[%u]%s / %s);\n", reg, dst_swizzle, div_str);
+            }
+        } else if (src_mod == WINED3DSPSM_DW) {
+            char div_str[100], div_reg[50], div_mask[6];
+            size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+            shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_3, div_reg, div_mask, div_str);
+
+            if (mask_size > 1) {
+                shader_addline(buffer, "gl_TexCoord[%u]%s / vec%d(%s));\n", reg, dst_swizzle, mask_size, div_str);
+            } else {
+                shader_addline(buffer, "gl_TexCoord[%u]%s / %s);\n", reg, dst_swizzle, div_str);
+            }
+        } else {
+            shader_addline(buffer, "gl_TexCoord[%u]%s);\n", reg, dst_swizzle);
+        }
+    }
 }
 
 /** Process the WINED3DSIO_TEXDP3TEX instruction in GLSL:
