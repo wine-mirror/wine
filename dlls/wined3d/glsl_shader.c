@@ -1673,20 +1673,27 @@ void pshader_glsl_texm3x2tex(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXM3X3TEX instruction in GLSL
  * Perform the 3rd row of a 3x3 matrix multiply, then sample the texture using the calculated coordinates */
 void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
-    char dst_str[8];
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     char src0_str[100];
     char src0_name[50];
     char src0_mask[6];
+    char dst_mask[6];
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
+    DWORD sampler_type = arg->reg_maps->samplers[reg] & WINED3DSP_TEXTURETYPE_MASK;
+    glsl_sample_function_t sample_function;
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
-    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
+    shader_addline(arg->buffer, "tmp0.z = dot(T%u.xyz, %s);\n", reg, src0_str);
+
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_glsl_get_sample_function(sampler_type, FALSE, &sample_function);
 
     /* Sample the texture using the calculated coordinates */
-    sprintf(dst_str, "T%u", reg);
-    shader_glsl_sample(arg, reg, dst_str, "tmp0");
+    shader_addline(arg->buffer, "%s(Psampler%u, tmp0.xyz)%s);\n", sample_function.name, reg, dst_mask);
+
     current_state->current_row = 0;
 }
 
