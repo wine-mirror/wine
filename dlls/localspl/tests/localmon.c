@@ -342,7 +342,7 @@ static void test_XcvClosePort(void)
 
 /* ########################### */
 
-static void test_XcvDataPort(void)
+static void test_XcvDataPort_MonitorUI(void)
 {
     DWORD   res;
     HANDLE  hXcv;
@@ -363,11 +363,20 @@ static void test_XcvDataPort(void)
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, NULL, 0, &needed);
+    if (res == ERROR_INVALID_PARAMETER) {
+        pXcvClosePort(hXcv);
+        skip("'MonitorUI' nor supported\n");
+        return;
+    }
     ok( (res == ERROR_INSUFFICIENT_BUFFER) && (needed <= MAX_PATH),
         "returned %d with %u and 0x%x (expected 'ERROR_INSUFFICIENT_BUFFER' "
         " and '<= MAX_PATH')\n", res, GetLastError(), needed);
 
-    if (needed > MAX_PATH) goto xcv_cleanup;
+    if (needed > MAX_PATH) {
+        pXcvClosePort(hXcv);
+        skip("buffer overflow (%u)\n", needed);
+        return;
+    }
     len = needed;
 
     /* the command is required */
@@ -410,6 +419,7 @@ static void test_XcvDataPort(void)
 
 
     /* off by one: smaller */
+    /* the buffer is not modified for NT4, w2k, XP */
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len-1, &needed);
@@ -424,7 +434,25 @@ static void test_XcvDataPort(void)
     ok( res == ERROR_SUCCESS, "returned %d with %u and 0x%x "
         "(expected 'ERROR_SUCCESS')\n", res, GetLastError(), needed);
 
-xcv_cleanup:
+
+    pXcvClosePort(hXcv);
+
+
+    /* small check without access-rights: */
+    hXcv = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvOpenPort(emptyW, 0, &hXcv);
+    ok(res, "returned %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+    /* The ACCESS_MASK is ignored for "MonitorUI" */
+    memset(buffer, 0, len);
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_MonitorUIW, NULL, 0, buffer, sizeof(buffer), &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with %u and 0x%x "
+        "(expected 'ERROR_SUCCESS')\n", res, GetLastError(), needed);
+
     pXcvClosePort(hXcv);
 
 }
@@ -574,6 +602,6 @@ START_TEST(localmon)
     test_DeletePort();
     test_EnumPorts();
     test_XcvClosePort();
-    test_XcvDataPort();
+    test_XcvDataPort_MonitorUI();
     test_XcvOpenPort();
 }
