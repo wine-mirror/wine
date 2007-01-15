@@ -1638,6 +1638,7 @@ void pshader_glsl_texm3x2pad(SHADER_OPCODE_ARG* arg) {
 void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
 
     IWineD3DPixelShaderImpl* shader = (IWineD3DPixelShaderImpl*) arg->shader;
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     SHADER_BUFFER* buffer = arg->buffer;
     SHADER_PARSE_STATE* current_state = &shader->baseShader.parse_state;
@@ -1645,8 +1646,8 @@ void pshader_glsl_texm3x3pad(SHADER_OPCODE_ARG* arg) {
     char src0_name[50];
     char src0_mask[6];
 
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
-    shader_addline(buffer, "tmp0.%c = dot(vec3(T%u), vec3(%s));\n", 'x' + current_state->current_row, reg, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
+    shader_addline(buffer, "tmp0.%c = dot(T%u.xyz, %s);\n", 'x' + current_state->current_row, reg, src0_str);
     current_state->texcoord_w[current_state->current_row++] = reg;
 }
 
