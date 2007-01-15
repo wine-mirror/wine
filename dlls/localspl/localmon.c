@@ -37,6 +37,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
@@ -65,7 +66,14 @@ static struct list xcv_handles = LIST_INIT( xcv_handles );
 /* ############################### */
 
 static const WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
+static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
 static const WCHAR dllnameuiW[] = {'l','o','c','a','l','u','i','.','d','l','l',0};
+
+static const WCHAR portname_LPT[]  = {'L','P','T',0};
+static const WCHAR portname_COM[]  = {'C','O','M',0};
+static const WCHAR portname_FILE[] = {'F','I','L','E',':',0};
+static const WCHAR portname_CUPS[] = {'C','U','P','S',':',0};
+static const WCHAR portname_LPR[]  = {'L','P','R',':',0};
 
 static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'M','i','c','r','o','s','o','f','t','\\',
@@ -195,6 +203,52 @@ getports_cleanup:
     *lpreturned = numentries;
     TRACE("need %d byte for %d entries (%d)\n", needed, numentries, GetLastError());
     return needed;
+}
+
+/*****************************************************
+ * get_type_from_name (internal)
+ * 
+ */
+
+static DWORD get_type_from_name(LPCWSTR name)
+{
+    HANDLE  hfile;
+
+    if (!strncmpW(name, portname_LPT, sizeof(portname_LPT) / sizeof(WCHAR) -1))
+        return PORT_IS_LPT;
+
+    if (!strncmpW(name, portname_COM, sizeof(portname_COM) / sizeof(WCHAR) -1))
+        return PORT_IS_COM;
+
+    if (!strcmpW(name, portname_FILE))
+        return PORT_IS_FILE;
+
+    if (name[0] == '/')
+        return PORT_IS_UNIXNAME;
+
+    if (name[0] == '|')
+        return PORT_IS_PIPE;
+
+    if (!strncmpW(name, portname_CUPS, sizeof(portname_CUPS) / sizeof(WCHAR) -1))
+        return PORT_IS_CUPS;
+
+    if (!strncmpW(name, portname_LPR, sizeof(portname_LPR) / sizeof(WCHAR) -1))
+        return PORT_IS_LPR;
+
+    /* Must be a file or a directory. Does the file exist ? */
+    hfile = CreateFileW(name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    TRACE("%p for OPEN_EXISTING on %s\n", hfile, debugstr_w(name));
+    if (hfile == INVALID_HANDLE_VALUE) {
+        /* Can we create the file? */
+        hfile = CreateFileW(name, GENERIC_WRITE, 0, NULL, OPEN_ALWAYS, FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        TRACE("%p for OPEN_ALWAYS\n", hfile);
+    }
+    if (hfile != INVALID_HANDLE_VALUE) {
+        CloseHandle(hfile);
+        return PORT_IS_FILENAME;
+    }
+    /* We can't use the name. use GetLastError() for the reason */
+    return PORT_IS_UNKNOWN;
 }
 
 /*****************************************************
@@ -370,6 +424,7 @@ BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
 DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData, DWORD cbInputData,
                 PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded)
 {
+    DWORD   res;
 
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
@@ -383,6 +438,18 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
         }
         return ERROR_INSUFFICIENT_BUFFER;
     }
+
+    if (!lstrcmpW(pszDataName, cmd_PortIsValidW)) {
+        TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
+        res = get_type_from_name((LPCWSTR) pInputData);
+        TRACE("detected as %u\n",  res);
+        /* names, that we have recognized, are valid */
+        if (res) return ERROR_SUCCESS;
+
+        /* ERROR_ACCESS_DENIED, ERROR_PATH_NOT_FOUND ore something else */
+        return GetLastError();
+    }
+
     FIXME("command not supported: %s\n", debugstr_w(pszDataName));
     return ERROR_INVALID_PARAMETER;
 }
