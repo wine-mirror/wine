@@ -77,6 +77,7 @@ struct thread_apc
 
 static void dump_thread_apc( struct object *obj, int verbose );
 static int thread_apc_signaled( struct object *obj, struct thread *thread );
+static void clear_apc_queue( struct list *queue );
 
 static const struct object_ops thread_apc_ops =
 {
@@ -102,7 +103,6 @@ static int thread_signaled( struct object *obj, struct thread *thread );
 static unsigned int thread_map_access( struct object *obj, unsigned int access );
 static void thread_poll_event( struct fd *fd, int event );
 static void destroy_thread( struct object *obj );
-static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only );
 
 static const struct object_ops thread_ops =
 {
@@ -227,9 +227,9 @@ static void thread_poll_event( struct fd *fd, int event )
 static void cleanup_thread( struct thread *thread )
 {
     int i;
-    struct thread_apc *apc;
 
-    while ((apc = thread_dequeue_apc( thread, 0 ))) release_object( apc );
+    clear_apc_queue( &thread->system_apc );
+    clear_apc_queue( &thread->user_apc );
     free( thread->req_data );
     free( thread->reply_data );
     if (thread->request_fd) release_object( thread->request_fd );
@@ -709,12 +709,14 @@ void thread_cancel_apc( struct thread *thread, struct object *owner, enum apc_ty
     {
         if (apc->owner != owner) continue;
         list_remove( &apc->entry );
+        apc->executed = 1;
+        wake_up( &apc->obj, 0 );
         release_object( apc );
         return;
     }
 }
 
-/* remove the head apc from the queue; the returned pointer must be freed by the caller */
+/* remove the head apc from the queue; the returned object must be released by the caller */
 static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_only )
 {
     struct thread_apc *apc = NULL;
@@ -727,6 +729,21 @@ static struct thread_apc *thread_dequeue_apc( struct thread *thread, int system_
         list_remove( ptr );
     }
     return apc;
+}
+
+/* clear an APC queue, cancelling all the APCs on it */
+static void clear_apc_queue( struct list *queue )
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( queue )))
+    {
+        struct thread_apc *apc = LIST_ENTRY( ptr, struct thread_apc, entry );
+        list_remove( &apc->entry );
+        apc->executed = 1;
+        wake_up( &apc->obj, 0 );
+        release_object( apc );
+    }
 }
 
 /* add an fd to the inflight list */
@@ -1108,6 +1125,8 @@ DECL_HANDLER(get_apc)
          * wake up a thread, but since we got here the thread woke up already.
          */
         if (apc->call.type != APC_NONE) break;
+        apc->executed = 1;
+        wake_up( &apc->obj, 0 );
         release_object( apc );
     }
 
