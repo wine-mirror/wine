@@ -1163,20 +1163,16 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
 
 /** GLSL code generation for WINED3DSIO_MAD: Multiply the first 2 opcodes, then add the last */
 void shader_glsl_mad(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100], src1_str[100], src2_str[100];
+    char src0_reg[50], src1_reg[50], src2_reg[50];
+    char src0_mask[6], src1_mask[6], src2_mask[6];
+    DWORD write_mask;
 
-    char tmpLine[256];
-    char dst_str[100], src0_str[100], src1_str[100], src2_str[100];
-    char dst_reg[50], src0_reg[50], src1_reg[50], src2_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6], src2_mask[6];
-    
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
-    shader_glsl_add_src_param_old(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-
-    shader_addline(arg->buffer, "%s(vec4(%s) * vec4(%s)) + vec4(%s))%s;\n",
-                   tmpLine, src0_str, src1_str, src2_str, dst_mask);
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, src2_reg, src2_mask, src2_str);
+    shader_addline(arg->buffer, "(%s * %s) + %s);\n", src0_str, src1_str, src2_str);
 }
 
 /** Handles transforming all WINED3DSIO_M?x? opcodes for 
