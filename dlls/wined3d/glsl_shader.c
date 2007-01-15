@@ -1553,17 +1553,19 @@ void pshader_glsl_texcoord(SHADER_OPCODE_ARG* arg) {
  * Take a 3-component dot product of the TexCoord[dstreg] and src,
  * then perform a 1D texture lookup from stage dstregnum, place into dst. */
 void pshader_glsl_texdp3tex(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100];
+    char src0_name[50];
+    char src0_mask[6];
+    char dst_mask[6];
+    DWORD sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
 
-    DWORD dstreg = arg->dst & WINED3DSP_REGNUM_MASK;
-    char src0_str[100], dst_str[100];
-    char src0_name[50], dst_name[50];
-    char src0_mask[6],  dst_mask[6];
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
 
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_name, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
-
-    shader_addline(arg->buffer, "tmp0.x = dot(vec3(gl_TexCoord[%u]), vec3(%s));\n", dstreg, src0_str);
-    shader_addline(arg->buffer, "%s = vec4(texture1D(Psampler%u, tmp0.x))%s;\n", dst_str, dstreg, dst_mask);
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_addline(arg->buffer, "texture1D(Psampler%u, dot(gl_TexCoord[%u].xyz, %s))%s);\n",
+            sampler_idx, sampler_idx, src0_str, dst_mask);
 }
 
 /** Process the WINED3DSIO_TEXDP3 instruction in GLSL:
