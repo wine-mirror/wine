@@ -103,18 +103,18 @@ struct JoyDev {
 	BYTE				keybits[(KEY_MAX+7)/8];
 	BYTE				ffbits[(FF_MAX+7)/8];	
 
-#define AXE_ABS		0
-#define AXE_ABSMIN	1
-#define AXE_ABSMAX	2
-#define AXE_ABSFUZZ	3
-#define AXE_ABSFLAT	4
+#define AXIS_ABS     0
+#define AXIS_ABSMIN  1
+#define AXIS_ABSMAX  2
+#define AXIS_ABSFUZZ 3
+#define AXIS_ABSFLAT 4
 
 	/* data returned by the EVIOCGABS() ioctl */
 	int				axes[ABS_MAX][5];
 	/* LUT for KEY_ to offset in rgbButtons */
 	BYTE				buttons[KEY_MAX];
 
-	/* autodetecting ranges per axe by following movement */
+	/* autodetecting ranges per axis by following movement */
 	LONG				havemax[ABS_MAX];
 	LONG				havemin[ABS_MAX];
 };
@@ -246,16 +246,16 @@ static void find_joydevs(void)
 	for (j=0;j<ABS_MAX;j++) {
 	  if (test_bit(joydev.absbits,j)) {
 	    if (-1!=ioctl(fd,EVIOCGABS(j),&(joydev.axes[j]))) {
-	      TRACE(" ... with axe %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
+	      TRACE(" ... with axis %d: cur=%d, min=%d, max=%d, fuzz=%d, flat=%d\n",
 		  j,
-		  joydev.axes[j][AXE_ABS],
-		  joydev.axes[j][AXE_ABSMIN],
-		  joydev.axes[j][AXE_ABSMAX],
-		  joydev.axes[j][AXE_ABSFUZZ],
-		  joydev.axes[j][AXE_ABSFLAT]
+		  joydev.axes[j][AXIS_ABS],
+		  joydev.axes[j][AXIS_ABSMIN],
+		  joydev.axes[j][AXIS_ABSMAX],
+		  joydev.axes[j][AXIS_ABSFUZZ],
+		  joydev.axes[j][AXIS_ABSFLAT]
 		  );
-	      joydev.havemin[j] = joydev.axes[j][AXE_ABSMIN];
-	      joydev.havemax[j] = joydev.axes[j][AXE_ABSMAX];
+	      joydev.havemin[j] = joydev.axes[j][AXIS_ABSMIN];
+	      joydev.havemax[j] = joydev.axes[j][AXIS_ABSMAX];
 	    }
 	  }
 	}
@@ -578,13 +578,13 @@ static HRESULT WINAPI JoystickAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 
 /*
  * This maps the read value (from the input event) to a value in the
- * 'wanted' range. It also autodetects the possible range of the axe and
+ * 'wanted' range. It also autodetects the possible range of the axis and
  * adapts values accordingly.
  */
 static int
 map_axis(JoystickImpl* This, int axis, int val) {
-    int	xmin = This->joydev->axes[axis][AXE_ABSMIN];
-    int	xmax = This->joydev->axes[axis][AXE_ABSMAX];
+    int	xmin = This->joydev->axes[axis][AXIS_ABSMIN];
+    int	xmax = This->joydev->axes[axis][AXIS_ABSMAX];
     int hmax = This->joydev->havemax[axis];
     int hmin = This->joydev->havemin[axis];
     int	wmin = This->wantmin[axis];
@@ -619,14 +619,14 @@ static void fake_current_js_state(JoystickImpl *ji)
 {
 	int i;
 	/* center the axes */
-	ji->js.lX           = test_bit(ji->joydev->absbits, ABS_X)        ? map_axis(ji, ABS_X,        ji->joydev->axes[ABS_X       ][AXE_ABS]) : 0;
-	ji->js.lY           = test_bit(ji->joydev->absbits, ABS_Y)        ? map_axis(ji, ABS_Y,        ji->joydev->axes[ABS_Y       ][AXE_ABS]) : 0;
-	ji->js.lZ           = test_bit(ji->joydev->absbits, ABS_Z)        ? map_axis(ji, ABS_Z,        ji->joydev->axes[ABS_Z       ][AXE_ABS]) : 0;
-	ji->js.lRx          = test_bit(ji->joydev->absbits, ABS_RX)       ? map_axis(ji, ABS_RX,       ji->joydev->axes[ABS_RX      ][AXE_ABS]) : 0;
-	ji->js.lRy          = test_bit(ji->joydev->absbits, ABS_RY)       ? map_axis(ji, ABS_RY,       ji->joydev->axes[ABS_RY      ][AXE_ABS]) : 0;
-	ji->js.lRz          = test_bit(ji->joydev->absbits, ABS_RZ)       ? map_axis(ji, ABS_RZ,       ji->joydev->axes[ABS_RZ      ][AXE_ABS]) : 0;
-	ji->js.rglSlider[0] = test_bit(ji->joydev->absbits, ABS_THROTTLE) ? map_axis(ji, ABS_THROTTLE, ji->joydev->axes[ABS_THROTTLE][AXE_ABS]) : 0;
-	ji->js.rglSlider[1] = test_bit(ji->joydev->absbits, ABS_RUDDER)   ? map_axis(ji, ABS_RUDDER,   ji->joydev->axes[ABS_RUDDER  ][AXE_ABS]) : 0;
+	ji->js.lX           = test_bit(ji->joydev->absbits, ABS_X)        ? map_axis(ji, ABS_X,        ji->joydev->axes[ABS_X       ][AXIS_ABS]) : 0;
+	ji->js.lY           = test_bit(ji->joydev->absbits, ABS_Y)        ? map_axis(ji, ABS_Y,        ji->joydev->axes[ABS_Y       ][AXIS_ABS]) : 0;
+	ji->js.lZ           = test_bit(ji->joydev->absbits, ABS_Z)        ? map_axis(ji, ABS_Z,        ji->joydev->axes[ABS_Z       ][AXIS_ABS]) : 0;
+	ji->js.lRx          = test_bit(ji->joydev->absbits, ABS_RX)       ? map_axis(ji, ABS_RX,       ji->joydev->axes[ABS_RX      ][AXIS_ABS]) : 0;
+	ji->js.lRy          = test_bit(ji->joydev->absbits, ABS_RY)       ? map_axis(ji, ABS_RY,       ji->joydev->axes[ABS_RY      ][AXIS_ABS]) : 0;
+	ji->js.lRz          = test_bit(ji->joydev->absbits, ABS_RZ)       ? map_axis(ji, ABS_RZ,       ji->joydev->axes[ABS_RZ      ][AXIS_ABS]) : 0;
+	ji->js.rglSlider[0] = test_bit(ji->joydev->absbits, ABS_THROTTLE) ? map_axis(ji, ABS_THROTTLE, ji->joydev->axes[ABS_THROTTLE][AXIS_ABS]) : 0;
+	ji->js.rglSlider[1] = test_bit(ji->joydev->absbits, ABS_RUDDER)   ? map_axis(ji, ABS_RUDDER,   ji->joydev->axes[ABS_RUDDER  ][AXIS_ABS]) : 0;
 	/* POV center is -1 */
 	for (i=0; i<4; i++) {
 		ji->js.rgdwPOV[i] = -1;
@@ -768,7 +768,7 @@ static void joy_polldev(JoystickImpl *This)
                 This->js.rgdwPOV[3] = value  = map_pov(ie.value, ie.code==ABS_HAT3X);
                 break;
 	    default:
-		FIXME("unhandled joystick axe event (code %d, value %d)\n",ie.code,ie.value);
+		FIXME("unhandled joystick axis event (code %d, value %d)\n",ie.code,ie.value);
 		break;
 	    }
 	    break;
