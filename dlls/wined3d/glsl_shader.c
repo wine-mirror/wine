@@ -978,29 +978,32 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
 
 /* Process the dot product operators DP3 and DP4 in GLSL (dst = dot(src0, src1)) */
 void shader_glsl_dot(SHADER_OPCODE_ARG* arg) {
-
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpDest[100];
-    char dst_str[100], src0_str[100], src1_str[100];
-    char dst_reg[50], src0_reg[50], src1_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6];
-    char cast[6];
+    char src0_str[100], src1_str[100];
+    char src0_reg[50], src1_reg[50];
+    char src0_mask[6], src1_mask[6];
+    DWORD dst_write_mask, src_write_mask;
+    size_t dst_size = 0;
 
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    dst_write_mask = shader_glsl_append_dst(buffer, arg);
+    dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
 
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpDest);
- 
-    /* Need to cast the src vectors to vec3 for dp3, and vec4 for dp4 */
-    if (curOpcode->opcode == WINED3DSIO_DP4)
-        strcpy(cast, "vec4(");
-    else
-        strcpy(cast, "vec3(");
-    
-    shader_addline(buffer, "%sdot(%s%s), %s%s)))%s;\n",
-                   tmpDest, cast, src0_str, cast, src1_str, dst_mask);
+    /* dp3 works on vec3, dp4 on vec4 */
+    if (curOpcode->opcode == WINED3DSIO_DP4) {
+        src_write_mask = WINED3DSP_WRITEMASK_ALL;
+    } else {
+        src_write_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
+    }
+
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_write_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src_write_mask, src1_reg, src1_mask, src1_str);
+
+    if (dst_size > 1) {
+        shader_addline(buffer, "vec%d(dot(%s, %s)));\n", dst_size, src0_str, src1_str);
+    } else {
+        shader_addline(buffer, "dot(%s, %s));\n", src0_str, src1_str);
+    }
 }
 
 /* Note that this instruction has some restrictions. The destination write mask
