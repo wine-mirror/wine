@@ -587,9 +587,6 @@ map_axis(JoystickImpl* This, int axis, int val) {
     int	wmax = This->props[axis].wantmax;
     int ret;
 
-    if (val > hmax) This->props[axis].havemax = hmax = val;
-    if (val < hmin) This->props[axis].havemin = hmin = val;
-
     /* map the value from the hmin-hmax range into the wmin-wmax range */
     ret = MulDiv( val - hmin, wmax - wmin, hmax - hmin ) + wmin;
 
