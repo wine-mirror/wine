@@ -1020,54 +1020,49 @@ void shader_glsl_cross(SHADER_OPCODE_ARG *arg) {
 
 /* Map the opcode 1-to-1 to the GL code (arg->dst = instruction(src0, src1, ...) */
 void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
-
     CONST SHADER_OPCODE* curOpcode = arg->opcode;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpLine[256];
-    char dst_str[100], src_str[100];
-    char dst_reg[50], src_reg[50];
-    char dst_mask[6], src_mask[6];
+    const char *instruction;
+    char arguments[256];
+    char src_str[100];
+    char src_reg[50];
+    char src_mask[6];
+    DWORD write_mask;
     unsigned i;
-    
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
 
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
- 
     /* Determine the GLSL function to use based on the opcode */
     /* TODO: Possibly make this a table for faster lookups */
     switch (curOpcode->opcode) {
-            case WINED3DSIO_MIN:    strcat(tmpLine, "min"); break;
-            case WINED3DSIO_MAX:    strcat(tmpLine, "max"); break;
-            case WINED3DSIO_RSQ:    strcat(tmpLine, "inversesqrt"); break;
-            case WINED3DSIO_ABS:    strcat(tmpLine, "abs"); break;
-            case WINED3DSIO_FRC:    strcat(tmpLine, "fract"); break;
-            case WINED3DSIO_POW:    strcat(tmpLine, "pow"); break;
-            case WINED3DSIO_NRM:    strcat(tmpLine, "normalize"); break;
-            case WINED3DSIO_LOGP:
-            case WINED3DSIO_LOG:    strcat(tmpLine, "log2"); break;
-            case WINED3DSIO_EXP:    strcat(tmpLine, "exp2"); break;
-            case WINED3DSIO_SGN:    strcat(tmpLine, "sign"); break;
-        default:
+        case WINED3DSIO_MIN: instruction = "min"; break;
+        case WINED3DSIO_MAX: instruction = "max"; break;
+        case WINED3DSIO_RSQ: instruction = "inversesqrt"; break;
+        case WINED3DSIO_ABS: instruction = "abs"; break;
+        case WINED3DSIO_FRC: instruction = "fract"; break;
+        case WINED3DSIO_POW: instruction = "pow"; break;
+        case WINED3DSIO_NRM: instruction = "normalize"; break;
+        case WINED3DSIO_LOGP:
+        case WINED3DSIO_LOG: instruction = "log2"; break;
+        case WINED3DSIO_EXP: instruction = "exp2"; break;
+        case WINED3DSIO_SGN: instruction = "sign"; break;
+        default: instruction = "";
             FIXME("Opcode %s not yet handled in GLSL\n", curOpcode->name);
             break;
     }
 
-    strcat(tmpLine, "(");
+    write_mask = shader_glsl_append_dst(buffer, arg);
 
+    arguments[0] = '\0';
     if (curOpcode->num_params > 0) {
-        strcat(tmpLine, "vec4(");
-        shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src_reg, src_mask, src_str);
-        strcat(tmpLine, src_str);
-        strcat(tmpLine, ")");
+        shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src_reg, src_mask, src_str);
+        strcat(arguments, src_str);
         for (i = 2; i < curOpcode->num_params; ++i) {
-            strcat(tmpLine, ", vec4(");
-            shader_glsl_add_src_param_old(arg, arg->src[i-1], arg->src_addr[i-1], src_reg, src_mask, src_str);
-            strcat(tmpLine, src_str);
-            strcat(tmpLine, ")");
+            strcat(arguments, ", ");
+            shader_glsl_add_src_param(arg, arg->src[i-1], arg->src_addr[i-1], write_mask, src_reg, src_mask, src_str);
+            strcat(arguments, src_str);
         }
     }
-    shader_addline(buffer, "%s))%s;\n", tmpLine, dst_mask);
 
+    shader_addline(buffer, "%s(%s));\n", instruction, arguments);
 }
 
 /** Process the WINED3DSIO_EXPP instruction in GLSL:
