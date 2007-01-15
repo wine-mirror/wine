@@ -746,6 +746,16 @@ static BOOL call_apcs( BOOL alertable )
             }
             break;
         }
+        case APC_VIRTUAL_PROTECT:
+            result.type = call.type;
+            result.virtual_protect.addr = call.virtual_protect.addr;
+            result.virtual_protect.size = call.virtual_protect.size;
+            result.virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(),
+                                                                    &result.virtual_protect.addr,
+                                                                    &result.virtual_protect.size,
+                                                                    call.virtual_protect.prot,
+                                                                    &result.virtual_protect.prot );
+            break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;

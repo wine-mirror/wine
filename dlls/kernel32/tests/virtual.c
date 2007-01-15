@@ -118,7 +118,7 @@ static void test_VirtualAllocEx(void)
     SetLastError(0xdeadbeef);
     ok(!VirtualProtectEx(hProcess, addr1, 0xFFFC, PAGE_READONLY, &old_prot),
        "VirtualProtectEx should fail on a not committed memory\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
+    ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
        GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
         "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
@@ -141,21 +141,17 @@ static void test_VirtualAllocEx(void)
     SetLastError(0xdeadbeef);
     ok(!VirtualProtectEx(hProcess, addr1, 0xFFFC, PAGE_READONLY, &old_prot),
         "VirtualProtectEx should fail on a not committed memory\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
+    ok(GetLastError() == ERROR_INVALID_ADDRESS /* NT */ ||
        GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
         "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
     old_prot = 0;
-    todo_wine ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READONLY,
-                                  &old_prot), "VirtualProtectEx failed\n");
-    todo_wine ok(old_prot == PAGE_NOACCESS,
-        "wrong old protection: got %04x instead of PAGE_NOACCESS\n", old_prot);
+    ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READONLY, &old_prot), "VirtualProtectEx failed\n");
+    ok(old_prot == PAGE_NOACCESS, "wrong old protection: got %04x instead of PAGE_NOACCESS\n", old_prot);
 
     old_prot = 0;
-    todo_wine ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READWRITE,
-                                  &old_prot), "VirtualProtectEx failed\n");
-    todo_wine ok(old_prot == PAGE_READONLY,
-        "wrong old protection: got %04x instead of PAGE_READONLY\n", old_prot);
+    ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READWRITE, &old_prot), "VirtualProtectEx failed\n");
+    ok(old_prot == PAGE_READONLY, "wrong old protection: got %04x instead of PAGE_READONLY\n", old_prot);
 
     ok(!VirtualFreeEx(hProcess, addr1, 0x10000, 0),
        "VirtualFreeEx should fail with type 0\n");

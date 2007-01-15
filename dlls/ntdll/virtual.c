@@ -1597,10 +1597,25 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 
     TRACE("%p %p %08lx %08x\n", process, addr, size, new_prot );
 
-    if (!is_current_process( process ))
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_protect.type = APC_VIRTUAL_PROTECT;
+        call.virtual_protect.addr = addr;
+        call.virtual_protect.size = size;
+        call.virtual_protect.prot = new_prot;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_protect.status == STATUS_SUCCESS)
+        {
+            *addr_ptr = result.virtual_protect.addr;
+            *size_ptr = result.virtual_protect.size;
+            if (old_prot) *old_prot = result.virtual_protect.prot;
+        }
+        return result.virtual_protect.status;
     }
 
     /* Fix the parameters */

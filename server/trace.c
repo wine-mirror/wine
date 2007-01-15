@@ -133,6 +133,11 @@ static void dump_apc_call( const apc_call_t *call )
     case APC_VIRTUAL_QUERY:
         fprintf( stderr, "APC_VIRTUAL_QUERY,addr=%p", call->virtual_query.addr );
         break;
+    case APC_VIRTUAL_PROTECT:
+        fprintf( stderr, "APC_VIRTUAL_PROTECT,addr=%p,size=%lu,prot=%x",
+                 call->virtual_protect.addr, call->virtual_protect.size,
+                 call->virtual_protect.prot );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -164,6 +169,12 @@ static void dump_apc_result( const apc_result_t *result )
                  result->virtual_query.size, result->virtual_query.state,
                  result->virtual_query.prot, result->virtual_query.alloc_prot,
                  result->virtual_query.alloc_type );
+        break;
+    case APC_VIRTUAL_PROTECT:
+        fprintf( stderr, "APC_VIRTUAL_PROTECT,status=%s,addr=%p,size=%lu,prot=%x",
+                 get_status_name( result->virtual_protect.status ),
+                 result->virtual_protect.addr, result->virtual_protect.size,
+                 result->virtual_protect.prot );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );

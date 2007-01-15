@@ -233,7 +233,8 @@ enum apc_type
     APC_ASYNC_IO,
     APC_VIRTUAL_ALLOC,
     APC_VIRTUAL_FREE,
-    APC_VIRTUAL_QUERY
+    APC_VIRTUAL_QUERY,
+    APC_VIRTUAL_PROTECT
 };
 
 typedef union
@@ -281,6 +282,13 @@ typedef union
         enum apc_type    type;      /* APC_VIRTUAL_QUERY */
         const void      *addr;      /* requested address */
     } virtual_query;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_PROTECT */
+        void            *addr;      /* requested address */
+        unsigned long    size;      /* requested address */
+        unsigned int     prot;      /* new protection flags */
+    } virtual_protect;
 } apc_call_t;
 
 typedef union
@@ -312,6 +320,14 @@ typedef union
         unsigned int     alloc_prot;/* resulting allocation protection */
         unsigned int     alloc_type;/* resulting region allocation type */
     } virtual_query;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_PROTECT */
+        unsigned int     status;    /* status returned by call */
+        void            *addr;      /* resulting address */
+        unsigned long    size;      /* resulting size */
+        unsigned int     prot;      /* old protection flags */
+    } virtual_protect;
 } apc_result_t;
 
 /****************************************************************/

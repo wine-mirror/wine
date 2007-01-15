@@ -217,7 +217,8 @@ enum apc_type
     APC_ASYNC_IO,
     APC_VIRTUAL_ALLOC,
     APC_VIRTUAL_FREE,
-    APC_VIRTUAL_QUERY
+    APC_VIRTUAL_QUERY,
+    APC_VIRTUAL_PROTECT
 };
 
 typedef union
@@ -265,6 +266,13 @@ typedef union
         enum apc_type    type;
         const void      *addr;
     } virtual_query;
+    struct
+    {
+        enum apc_type    type;
+        void            *addr;
+        unsigned long    size;
+        unsigned int     prot;
+    } virtual_protect;
 } apc_call_t;
 
 typedef union
@@ -296,6 +304,14 @@ typedef union
         unsigned int     alloc_prot;
         unsigned int     alloc_type;
     } virtual_query;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        void            *addr;
+        unsigned long    size;
+        unsigned int     prot;
+    } virtual_protect;
 } apc_result_t;
 
 
@@ -4517,6 +4533,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 267
+#define SERVER_PROTOCOL_VERSION 268
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
