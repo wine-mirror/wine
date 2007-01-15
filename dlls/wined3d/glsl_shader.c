@@ -1270,24 +1270,22 @@ void shader_glsl_mnxn(SHADER_OPCODE_ARG* arg) {
 /**
     The LRP instruction performs a component-wise linear interpolation 
     between the second and third operands using the first operand as the
-    blend factor.  Equation:  (dst = src2 * (src1 - src0) + src0)
+    blend factor.  Equation:  (dst = src2 + src0 * (src1 - src2))
+    This is equivalent to mix(src2, src1, src0);
 */
 void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
+    char src0_str[100], src1_str[100], src2_str[100];
+    char src0_reg[50], src1_reg[50], src2_reg[50];
+    char src0_mask[6], src1_mask[6], src2_mask[6];
+    DWORD write_mask;
 
-    char tmpLine[256];
-    char dst_str[100], src0_str[100], src1_str[100], src2_str[100];
-    char dst_reg[50], src0_reg[50], src1_reg[50], src2_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6], src2_mask[6];
-   
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
-    shader_glsl_add_src_param_old(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);     
+    write_mask = shader_glsl_append_dst(arg->buffer, arg);
 
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    
-    shader_addline(arg->buffer, "%s%s + %s * (%s - %s))%s;\n",
-                   tmpLine, src2_str, src0_str, src1_str, src2_str, dst_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src0_reg, src0_mask, src0_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], write_mask, src1_reg, src1_mask, src1_str);
+    shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], write_mask, src2_reg, src2_mask, src2_str);
+
+    shader_addline(arg->buffer, "mix(%s, %s, %s));\n", src2_str, src1_str, src0_str);
 }
 
 /** Process the WINED3DSIO_LIT instruction in GLSL:
