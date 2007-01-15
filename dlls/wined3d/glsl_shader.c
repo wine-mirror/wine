@@ -1356,17 +1356,20 @@ void shader_glsl_lit(SHADER_OPCODE_ARG* arg) {
  * dst.w = src1.w
  */
 void shader_glsl_dst(SHADER_OPCODE_ARG* arg) {
+    char src0y_str[100], src0z_str[100], src1y_str[100], src1w_str[100];
+    char src0y_reg[50], src0z_reg[50], src1y_reg[50], src1w_reg[50];
+    char dst_mask[6], src0y_mask[6], src0z_mask[6], src1y_mask[6], src1w_mask[6];
 
-    char dst_str[100], src0_str[100], src1_str[100];
-    char dst_reg[50], src0_reg[50], src1_reg[50];
-    char dst_mask[6], src0_mask[6], src1_mask[6];
-   
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_src_param_old(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
 
-    shader_addline(arg->buffer, "%s = vec4(1.0, %s.x * %s.y, %s.z, %s.w)%s;\n",
-                   dst_str, src0_reg, src1_reg, src0_reg, src1_reg, dst_mask);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_1, src0y_reg, src0y_mask, src0y_str);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_2, src0z_reg, src0z_mask, src0z_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_1, src1y_reg, src1y_mask, src1y_str);
+    shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], WINED3DSP_WRITEMASK_3, src1w_reg, src1w_mask, src1w_str);
+
+    shader_addline(arg->buffer, "vec4(1.0, %s * %s, %s, %s))%s;\n",
+            src0y_str, src1y_str, src0z_str, src1w_str, dst_mask);
 }
 
 /** Process the WINED3DSIO_SINCOS instruction in GLSL:
