@@ -111,8 +111,6 @@ struct JoyDev {
 
 	/* data returned by the EVIOCGABS() ioctl */
 	int				axes[ABS_MAX][5];
-	/* LUT for KEY_ to offset in rgbButtons */
-	BYTE				buttons[KEY_MAX];
 };
 
 struct ObjProps
@@ -141,6 +139,9 @@ struct JoystickImpl
 	DIJOYSTATE2			js;
 
 	struct ObjProps                 props[ABS_MAX];
+
+	/* LUT for KEY_ to offset in rgbButtons */
+	BYTE				buttons[KEY_MAX];
 
 	/* Force feedback variables */
 	EffectListItem*			top_effect;
@@ -181,7 +182,7 @@ static void find_joydevs(void)
     struct JoyDev joydev = {0};
     int fd;
     int no_ff_check = 0;
-    int j, buttons;
+    int j;
 
     snprintf(buf,MAX_PATH,EVDEVPREFIX"%d",i);
     buf[MAX_PATH-1] = 0;
@@ -259,15 +260,6 @@ static void find_joydevs(void)
 		  joydev.axes[j][AXIS_ABSFLAT]
 		  );
 	    }
-	  }
-	}
-
-	buttons = 0;
-	for (j=0;j<KEY_MAX;j++) {
-	  if (test_bit(joydev.keybits,j)) {
-	    TRACE(" ... with button %d: %d\n", j, buttons);
-	    joydev.buttons[j] = 0x80 | buttons;
-	    buttons++;
 	  }
 	}
 
@@ -417,6 +409,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         if (!test_bit(newDevice->joydev->keybits, i)) continue;
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[btn + WINE_JOYSTICK_BUTTON_BASE], df->dwObjSize);
+	newDevice->buttons[i] = 0x80 | btn;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(btn++) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
@@ -723,7 +716,7 @@ static void joy_polldev(JoystickImpl *This)
 	switch (ie.type) {
 	case EV_KEY:	/* button */
         {
-            int btn = This->joydev->buttons[ie.code];
+            int btn = This->buttons[ie.code];
 
             TRACE("(%p) %d -> %d\n", This, ie.code, btn);
             if (btn & 0x80)
