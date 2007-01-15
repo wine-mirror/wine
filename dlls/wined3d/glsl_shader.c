@@ -504,7 +504,7 @@ static const char * const shift_glsl_tab[] = {
 
 /** Print the beginning of the generated GLSL string. example: "reg_name.xyzw = vec4("
  * Will also change the reg_mask if necessary (not all register types are equal in DX vs GL)  */
-static void shader_glsl_add_dst(DWORD param, const char* reg_name, char* reg_mask, char* outStr) {
+static void shader_glsl_add_dst_old(DWORD param, const char* reg_name, char* reg_mask, char* outStr) {
 
     int shift = (param & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
     char cast[6];
@@ -805,6 +805,21 @@ static DWORD shader_glsl_add_dst_param(SHADER_OPCODE_ARG* arg, const DWORD param
     return mask;
 }
 
+#if 0
+/* Append the destination part of the instruction to the buffer, return the effective write mask */
+static DWORD shader_glsl_append_dst(SHADER_BUFFER *buffer, SHADER_OPCODE_ARG *arg) {
+    char reg_name[50], write_mask[6], reg_str[100];
+    DWORD mask;
+    int shift;
+
+    shift = (arg->dst & WINED3DSP_DSTSHIFT_MASK) >> WINED3DSP_DSTSHIFT_SHIFT;
+    mask = shader_glsl_add_dst_param(arg, arg->dst, arg->dst_addr, reg_name, write_mask, reg_str);
+    shader_addline(buffer, "%s = %s(", reg_str, shift_glsl_tab[shift]);
+
+    return mask;
+}
+#endif
+
 /** Process GLSL instruction modifiers */
 void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG* arg) {
     
@@ -907,7 +922,7 @@ void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     strcat(tmpLine, "vec4(");
     strcat(tmpLine, src0_str);
     strcat(tmpLine, ")");
@@ -935,7 +950,7 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
 
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(buffer, "%s%s)%s;\n", tmpLine, src0_str, dst_mask);
 }
 
@@ -954,7 +969,7 @@ void shader_glsl_dot(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpDest);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpDest);
  
     /* Need to cast the src vectors to vec3 for dp3, and vec4 for dp4 */
     if (curOpcode->opcode == WINED3DSIO_DP4)
@@ -979,7 +994,7 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
     
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
  
     /* Determine the GLSL function to use based on the opcode */
     /* TODO: Possibly make this a table for faster lookups */
@@ -1041,7 +1056,7 @@ void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
     
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_reg, src_mask, src_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
 
     if (hex_version < WINED3DPS_VERSION(2,0)) {
         shader_addline(arg->buffer, "tmp0.x = vec4(exp2(floor(%s))).x;\n", src_str);
@@ -1064,7 +1079,7 @@ void shader_glsl_rcp(SHADER_OPCODE_ARG* arg) {
     
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_reg, src_mask, src_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     strcat(tmpLine, "1.0 / ");
     shader_addline(arg->buffer, "%s%s)%s;\n", tmpLine, src_str, dst_mask);
 }
@@ -1079,7 +1094,7 @@ void shader_glsl_compare(SHADER_OPCODE_ARG* arg) {
     
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
 
     /* If we are comparing vectors and not scalars, we should process this through map2gl using the GLSL functions. */
     if (strlen(src0_mask) != 2) {
@@ -1113,7 +1128,7 @@ void shader_glsl_cmp(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
     shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%smix(vec4(%s), vec4(%s), vec4(lessThan(vec4(%s), vec4(0.0)))))%s;\n",
         tmpLine, src1_str, src2_str, src0_str, dst_mask);
 }
@@ -1130,7 +1145,7 @@ void shader_glsl_cnd(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
     shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%s(%s < 0.5) ? %s : %s)%s;\n", 
                    tmpLine, src0_str, src1_str, src2_str, dst_mask);
 }
@@ -1147,7 +1162,7 @@ void shader_glsl_mad(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
     shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
 
     shader_addline(arg->buffer, "%s(vec4(%s) * vec4(%s)) + vec4(%s))%s;\n",
                    tmpLine, src0_str, src1_str, src2_str, dst_mask);
@@ -1219,7 +1234,7 @@ void shader_glsl_lrp(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
     shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);     
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     
     shader_addline(arg->buffer, "%s%s + %s * (%s - %s))%s;\n",
                    tmpLine, src2_str, src0_str, src1_str, src2_str, dst_mask);
@@ -1687,7 +1702,7 @@ void pshader_glsl_texreg2ar(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%stexture2D(Psampler%u, %s.yz))%s;\n",
             tmpLine, src0_regnum, dst_reg, dst_mask);
 }
@@ -1705,7 +1720,7 @@ void pshader_glsl_texreg2gb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%stexture2D(Psampler%u, %s.yz))%s;\n",
             tmpLine, src0_regnum, dst_reg, dst_mask);
 }
@@ -1734,7 +1749,7 @@ void pshader_glsl_texreg2rgb(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
 
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%stexture%s(Psampler%u, %s.%s))%s;\n",
             tmpLine, dimensions, src0_regnum, dst_reg, (stype == WINED3DSTT_2D) ? "xy" : "xyz", dst_mask);
 }
@@ -1762,7 +1777,7 @@ void pshader_glsl_dp2add(SHADER_OPCODE_ARG* arg) {
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
     shader_glsl_add_src_param(arg, arg->src[1], arg->src_addr[1], src1_reg, src1_mask, src1_str);
     shader_glsl_add_src_param(arg, arg->src[2], arg->src_addr[2], src2_reg, src2_mask, src2_str);
-    shader_glsl_add_dst(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
     shader_addline(arg->buffer, "%sdot(vec2(%s), vec2(%s)) + %s)%s;\n",
                    tmpLine, src0_str, src1_str, src2_str, dst_mask);
 }
