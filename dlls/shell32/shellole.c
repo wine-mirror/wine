@@ -50,7 +50,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 extern HRESULT WINAPI IFSFolder_Constructor(IUnknown * pUnkOuter, REFIID riid, LPVOID * ppv);
 
 static const WCHAR sShell32[12] = {'S','H','E','L','L','3','2','.','D','L','L','\0'};
-static const WCHAR sOLE32[10] = {'O','L','E','3','2','.','D','L','L','\0'};
 
 /**************************************************************************
  * Default ClassFactory types
