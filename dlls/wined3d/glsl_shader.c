@@ -1093,26 +1093,36 @@ void shader_glsl_map2gl(SHADER_OPCODE_ARG* arg) {
  *   dst = 2^src;    (partial precision is allowed, but optional)
  */
 void shader_glsl_expp(SHADER_OPCODE_ARG* arg) {
+    IWineD3DBaseShaderImpl *shader = (IWineD3DBaseShaderImpl *)arg->shader;
+    char src_str[100];
+    char src_reg[50];
+    char src_mask[6];
 
-    char tmpLine[256];
-    char dst_str[100], src_str[100];
-    char dst_reg[50], src_reg[50];
-    char dst_mask[6], src_mask[6];
-    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
-    DWORD hex_version = This->baseShader.hex_version;
-    
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src_reg, src_mask, src_str);
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], WINED3DSP_WRITEMASK_0, src_reg, src_mask, src_str);
 
-    if (hex_version < WINED3DPS_VERSION(2,0)) {
-        shader_addline(arg->buffer, "tmp0.x = vec4(exp2(floor(%s))).x;\n", src_str);
-        shader_addline(arg->buffer, "tmp0.y = vec4(%s - floor(%s)).y;\n", src_str, src_str);
-        shader_addline(arg->buffer, "tmp0.z = vec4(exp2(%s)).x;\n", src_str);
+    if (shader->baseShader.hex_version < WINED3DPS_VERSION(2,0)) {
+        char dst_mask[6];
+
+        shader_addline(arg->buffer, "tmp0.x = exp2(floor(%s));\n", src_str);
+        shader_addline(arg->buffer, "tmp0.y = %s - floor(%s);\n", src_str, src_str);
+        shader_addline(arg->buffer, "tmp0.z = exp2(%s);\n", src_str);
         shader_addline(arg->buffer, "tmp0.w = 1.0;\n");
-        shader_addline(arg->buffer, "%svec4(tmp0))%s;\n", tmpLine, dst_mask);
+
+        shader_glsl_append_dst(arg->buffer, arg);
+        shader_glsl_get_write_mask(arg->dst, dst_mask);
+        shader_addline(arg->buffer, "tmp0%s);\n", dst_mask);
     } else {
-        shader_addline(arg->buffer, "%svec4(exp2(%s)))%s;\n", tmpLine, src_str, dst_mask);
+        DWORD write_mask;
+        size_t mask_size;
+
+        write_mask = shader_glsl_append_dst(arg->buffer, arg);
+        mask_size = shader_glsl_get_write_mask_size(write_mask);
+
+        if (mask_size > 1) {
+            shader_addline(arg->buffer, "vec%d(exp2(%s)));\n", mask_size, src_str);
+        } else {
+            shader_addline(arg->buffer, "exp2(%s));\n", src_str);
+        }
     }
 }
 
