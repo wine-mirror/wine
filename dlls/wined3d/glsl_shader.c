@@ -963,17 +963,32 @@ void shader_glsl_arith(SHADER_OPCODE_ARG* arg) {
 
 /* Process the WINED3DSIO_MOV opcode using GLSL (dst = src) */
 void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
-
+    IWineD3DBaseShaderImpl* shader = (IWineD3DBaseShaderImpl*) arg->shader;
     SHADER_BUFFER* buffer = arg->buffer;
-    char tmpLine[256];
-    char dst_str[100], src0_str[100];
-    char dst_reg[50], src0_reg[50];
-    char dst_mask[6], src0_mask[6];
+    char src0_str[100];
+    char src0_reg[50];
+    char src0_mask[6];
+    DWORD write_mask;
 
-    shader_glsl_add_dst_param(arg, arg->dst, 0, dst_reg, dst_mask, dst_str);
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_reg, src0_mask, src0_str);
-    shader_glsl_add_dst_old(arg->dst, dst_reg, dst_mask, tmpLine);
-    shader_addline(buffer, "%s%s)%s;\n", tmpLine, src0_str, dst_mask);
+    write_mask = shader_glsl_append_dst(buffer, arg);
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, src0_reg, src0_mask, src0_str);
+
+    /* In vs_1_1 WINED3DSIO_MOV can write to the adress register. In later
+     * shader versions WINED3DSIO_MOVA is used for this. */
+    if ((WINED3DSHADER_VERSION_MAJOR(shader->baseShader.hex_version) == 1 &&
+            !shader_is_pshader_version(shader->baseShader.hex_version) &&
+            shader_get_regtype(arg->dst) == WINED3DSPR_ADDR) ||
+            arg->opcode->opcode == WINED3DSIO_MOVA) {
+        /* We need to *round* to the nearest int here. */
+        size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
+        if (mask_size > 1) {
+            shader_addline(buffer, "ivec%d(floor(%s + vec%d(0.5))));\n", mask_size, src0_str, mask_size);
+        } else {
+            shader_addline(buffer, "int(floor(%s + 0.5)));\n", src0_str);
+        }
+    } else {
+        shader_addline(buffer, "%s);\n", src0_str);
+    }
 }
 
 /* Process the dot product operators DP3 and DP4 in GLSL (dst = dot(src0, src1)) */
