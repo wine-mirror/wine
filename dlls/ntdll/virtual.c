@@ -1682,10 +1682,29 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
     if (ADDRESS_SPACE_LIMIT && addr >= ADDRESS_SPACE_LIMIT)
         return STATUS_WORKING_SET_LIMIT_RANGE;
 
-    if (!is_current_process( process ))
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        NTSTATUS status;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_query.type = APC_VIRTUAL_QUERY;
+        call.virtual_query.addr = addr;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_query.status == STATUS_SUCCESS)
+        {
+            info->BaseAddress       = result.virtual_query.base;
+            info->AllocationBase    = result.virtual_query.alloc_base;
+            info->RegionSize        = result.virtual_query.size;
+            info->State             = result.virtual_query.state;
+            info->Protect           = result.virtual_query.prot;
+            info->AllocationProtect = result.virtual_query.alloc_prot;
+            info->Type              = result.virtual_query.alloc_type;
+            if (res_len) *res_len = sizeof(*info);
+        }
+        return result.virtual_query.status;
     }
 
     base = ROUND_ADDR( addr, page_mask );

@@ -232,7 +232,8 @@ enum apc_type
     APC_TIMER,
     APC_ASYNC_IO,
     APC_VIRTUAL_ALLOC,
-    APC_VIRTUAL_FREE
+    APC_VIRTUAL_FREE,
+    APC_VIRTUAL_QUERY
 };
 
 typedef union
@@ -275,6 +276,11 @@ typedef union
         unsigned long    size;      /* allocation size */
         unsigned int     op_type;   /* type of operation */
     } virtual_free;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_QUERY */
+        const void      *addr;      /* requested address */
+    } virtual_query;
 } apc_call_t;
 
 typedef union
@@ -294,6 +300,18 @@ typedef union
         void            *addr;      /* resulting address */
         unsigned long    size;      /* resulting size */
     } virtual_free;
+    struct
+    {
+        enum apc_type    type;      /* APC_VIRTUAL_QUERY */
+        unsigned int     status;    /* status returned by call */
+        void            *base;      /* resulting base address */
+        void            *alloc_base;/* resulting allocation base */
+        unsigned long    size;      /* resulting region size */
+        unsigned int     state;     /* resulting region state */
+        unsigned int     prot;      /* resulting region protection */
+        unsigned int     alloc_prot;/* resulting allocation protection */
+        unsigned int     alloc_type;/* resulting region allocation type */
+    } virtual_query;
 } apc_result_t;
 
 /****************************************************************/

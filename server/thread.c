@@ -1140,6 +1140,7 @@ DECL_HANDLER(queue_apc)
     struct thread *thread;
     struct process *process;
     struct thread_apc *apc;
+    unsigned int access;
 
     if (!(apc = create_apc( NULL, &req->call ))) return;
 
@@ -1155,7 +1156,9 @@ DECL_HANDLER(queue_apc)
         break;
     case APC_VIRTUAL_ALLOC:
     case APC_VIRTUAL_FREE:
-        if ((process = get_process_from_handle( req->process, PROCESS_VM_OPERATION )))
+    case APC_VIRTUAL_QUERY:
+        access = (apc->call.type == APC_VIRTUAL_QUERY) ? PROCESS_QUERY_INFORMATION : PROCESS_VM_OPERATION;
+        if ((process = get_process_from_handle( req->process, access )))
         {
             obj_handle_t handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 );
             if (handle)

@@ -726,6 +726,26 @@ static BOOL call_apcs( BOOL alertable )
                                                               &result.virtual_free.size,
                                                               call.virtual_free.op_type );
             break;
+        case APC_VIRTUAL_QUERY:
+        {
+            MEMORY_BASIC_INFORMATION info;
+            result.type = call.type;
+            result.virtual_query.status = NtQueryVirtualMemory( NtCurrentProcess(),
+                                                                call.virtual_query.addr,
+                                                                MemoryBasicInformation, &info,
+                                                                sizeof(info), NULL );
+            if (result.virtual_query.status == STATUS_SUCCESS)
+            {
+                result.virtual_query.base       = info.BaseAddress;
+                result.virtual_query.alloc_base = info.AllocationBase;
+                result.virtual_query.size       = info.RegionSize;
+                result.virtual_query.state      = info.State;
+                result.virtual_query.prot       = info.Protect;
+                result.virtual_query.alloc_prot = info.AllocationProtect;
+                result.virtual_query.alloc_type = info.Type;
+            }
+            break;
+        }
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;

@@ -103,22 +103,17 @@ static void test_VirtualAllocEx(void)
 
     /* test a not committed memory */
     memset(&info, 'q', sizeof(info));
-    todo_wine ok(VirtualQueryEx(hProcess, addr1, &info, sizeof(info))
-                 == sizeof(info), "VirtualQueryEx failed\n");
-    todo_wine ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress,
-                 addr1);
-    todo_wine ok(info.AllocationBase == addr1, "%p != %p\n",
-                 info.AllocationBase, addr1);
-    todo_wine ok(info.AllocationProtect == PAGE_NOACCESS,
-                 "%x != PAGE_NOACCESS\n", info.AllocationProtect);
-    todo_wine ok(info.RegionSize == 0x10000, "%lx != 0x10000\n",
-                 info.RegionSize);
-    todo_wine ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
+    ok(VirtualQueryEx(hProcess, addr1, &info, sizeof(info)) == sizeof(info), "VirtualQueryEx failed\n");
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
+    ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
     /* NT reports Protect == 0 for a not committed memory block */
-    todo_wine ok(info.Protect == 0 /* NT */ ||
+    ok(info.Protect == 0 /* NT */ ||
        info.Protect == PAGE_NOACCESS, /* Win9x */
         "%x != PAGE_NOACCESS\n", info.Protect);
-    todo_wine ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     SetLastError(0xdeadbeef);
     ok(!VirtualProtectEx(hProcess, addr1, 0xFFFC, PAGE_READONLY, &old_prot),
@@ -131,20 +126,16 @@ static void test_VirtualAllocEx(void)
     ok(addr1 == addr2, "VirtualAllocEx failed\n");
 
     /* test a committed memory */
-    todo_wine ok(VirtualQueryEx(hProcess, addr1, &info, sizeof(info))
-                 == sizeof(info),
+    ok(VirtualQueryEx(hProcess, addr1, &info, sizeof(info)) == sizeof(info),
         "VirtualQueryEx failed\n");
-    todo_wine ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress,
-                 addr1);
-    todo_wine ok(info.AllocationBase == addr1, "%p != %p\n",
-                 info.AllocationBase, addr1);
-    todo_wine ok(info.AllocationProtect == PAGE_NOACCESS,
-                 "%x != PAGE_NOACCESS\n", info.AllocationProtect);
-    todo_wine ok(info.RegionSize == 0x1000, "%lx != 0x1000\n", info.RegionSize);
-    todo_wine ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
+    ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+    ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+    ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
+    ok(info.RegionSize == 0x1000, "%lx != 0x1000\n", info.RegionSize);
+    ok(info.State == MEM_COMMIT, "%x != MEM_COMMIT\n", info.State);
     /* this time NT reports PAGE_NOACCESS as well */
-    todo_wine ok(info.Protect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.Protect);
-    todo_wine ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+    ok(info.Protect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.Protect);
+    ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
 
     /* this should fail, since not the whole range is committed yet */
     SetLastError(0xdeadbeef);

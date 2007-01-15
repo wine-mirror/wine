@@ -130,6 +130,9 @@ static void dump_apc_call( const apc_call_t *call )
                  call->virtual_free.addr, call->virtual_free.size,
                  call->virtual_free.op_type );
         break;
+    case APC_VIRTUAL_QUERY:
+        fprintf( stderr, "APC_VIRTUAL_QUERY,addr=%p", call->virtual_query.addr );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -153,6 +156,14 @@ static void dump_apc_result( const apc_result_t *result )
         fprintf( stderr, "APC_VIRTUAL_FREE,status=%s,addr=%p,size=%lu",
                  get_status_name( result->virtual_free.status ),
                  result->virtual_free.addr, result->virtual_free.size );
+        break;
+    case APC_VIRTUAL_QUERY:
+        fprintf( stderr, "APC_VIRTUAL_QUERY,status=%s,base=%p,alloc_base=%p,size=%lu,state=%x,prot=%x,alloc_prot=%x,alloc_type=%x",
+                 get_status_name( result->virtual_query.status ),
+                 result->virtual_query.base, result->virtual_query.alloc_base,
+                 result->virtual_query.size, result->virtual_query.state,
+                 result->virtual_query.prot, result->virtual_query.alloc_prot,
+                 result->virtual_query.alloc_type );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );
