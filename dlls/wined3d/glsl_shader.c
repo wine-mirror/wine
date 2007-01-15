@@ -705,13 +705,11 @@ static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     if ((shader_get_regtype(param) == WINED3DSPR_RASTOUT) && ((param & WINED3DSP_REGNUM_MASK) != 0)) {
         mask = WINED3DSP_WRITEMASK_0;
     } else {
-        if (mask != WINED3DSP_WRITEMASK_ALL) {
-            *ptr++ = '.';
-            if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
-            if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
-            if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
-            if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
-        }
+        *ptr++ = '.';
+        if (param & WINED3DSP_WRITEMASK_0) *ptr++ = 'x';
+        if (param & WINED3DSP_WRITEMASK_1) *ptr++ = 'y';
+        if (param & WINED3DSP_WRITEMASK_2) *ptr++ = 'z';
+        if (param & WINED3DSP_WRITEMASK_3) *ptr++ = 'w';
     }
 
     *ptr = '\0';
