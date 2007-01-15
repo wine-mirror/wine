@@ -1700,18 +1700,21 @@ void pshader_glsl_texm3x3tex(SHADER_OPCODE_ARG* arg) {
 /** Process the WINED3DSIO_TEXM3X3 instruction in GLSL
  * Perform the 3rd row of a 3x3 matrix multiply */
 void pshader_glsl_texm3x3(SHADER_OPCODE_ARG* arg) {
-
+    DWORD src_mask = WINED3DSP_WRITEMASK_0 | WINED3DSP_WRITEMASK_1 | WINED3DSP_WRITEMASK_2;
     char src0_str[100];
     char src0_name[50];
     char src0_mask[6];
+    char dst_mask[6];
     DWORD reg = arg->dst & WINED3DSP_REGNUM_MASK;
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
     SHADER_PARSE_STATE* current_state = &This->baseShader.parse_state;
-    
-    shader_glsl_add_src_param_old(arg, arg->src[0], arg->src_addr[0], src0_name, src0_mask, src0_str);
-    
-    shader_addline(arg->buffer, "tmp0.z = dot(vec3(T%u), vec3(%s));\n", reg, src0_str);
-    shader_addline(arg->buffer, "T%u = vec4(tmp0.x, tmp0.y, tmp0.z, 1.0);\n", reg);
+
+    shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], src_mask, src0_name, src0_mask, src0_str);
+
+    shader_glsl_append_dst(arg->buffer, arg);
+    shader_glsl_get_write_mask(arg->dst, dst_mask);
+    shader_addline(arg->buffer, "vec4(tmp.xy, dot(T%u.xyz, %s), 1.0)%s);\n", reg, src0_str, dst_mask);
+
     current_state->current_row = 0;
 }
 
