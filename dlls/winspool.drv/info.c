@@ -2961,16 +2961,21 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
     opened_printer_t *printer = NULL;
     BOOL ret = FALSE;
 
-    TRACE("Handle %p\n", hPrinter);
+    TRACE("(%p)\n", hPrinter);
 
     EnterCriticalSection(&printer_handles_cs);
 
     if ((i > 0) && (i <= nb_printer_handles))
         printer = printer_handles[i - 1];
 
+
     if(printer)
     {
         struct list *cursor, *cursor2;
+
+        TRACE("%p: %s (hXcv: %p) for %s (doc: %p)\n", printer->pm,
+                debugstr_w(printer->pm ? printer->pm->dllname : NULL),
+                printer->hXcv, debugstr_w(printer->name), printer->doc );
 
         if(printer->doc)
             EndDocPrinter(hPrinter);
