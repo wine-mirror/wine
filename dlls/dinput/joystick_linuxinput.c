@@ -69,9 +69,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define EVDEVPREFIX	"/dev/input/event"
 
 /* Wine joystick driver object instances */
-#define WINE_JOYSTICK_AXIS_BASE   0
-#define WINE_JOYSTICK_POV_BASE    6
-#define WINE_JOYSTICK_BUTTON_BASE 8
+#define WINE_JOYSTICK_MAX_AXES    8
+#define WINE_JOYSTICK_MAX_POVS    4
+#define WINE_JOYSTICK_MAX_BUTTONS 128
 
 typedef struct EffectListItem EffectListItem;
 struct EffectListItem
@@ -139,6 +139,8 @@ struct JoystickImpl
 	DIJOYSTATE2			js;
 
 	struct ObjProps                 props[ABS_MAX];
+
+	int                             axes[ABS_MAX];
 
 	/* LUT for KEY_ to offset in rgbButtons */
 	BYTE				buttons[KEY_MAX];
@@ -352,7 +354,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
-    int axis = 0, pov = 0, btn = 0;
+    int axis = 0, btn = 0;
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
@@ -367,19 +369,6 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
   newDevice->ff_state = FF_STATUS_STOPPED;
 #endif
-  for (i=0;i<ABS_MAX;i++) {
-    /* apps expect the range to be the same they would get from the
-     * GetProperty/range method */
-    newDevice->props[i].wantmin = newDevice->props[i].havemin = newDevice->joydev->axes[i][AXIS_ABSMIN];
-    newDevice->props[i].wantmax = newDevice->props[i].havemax = newDevice->joydev->axes[i][AXIS_ABSMAX];
-    /* TODO: 
-     * direct input defines a default for the deadzone somewhere; but as long
-     * as in map_axis the code for the dead zone is commented out its no
-     * problem
-     */
-    newDevice->props[i].deadzone = 0;
-  }
-  fake_current_js_state(newDevice);
 
     /* Create copy of default data format */
     if (!(df = HeapAlloc(GetProcessHeap(), 0, c_dfDIJoystick2.dwSize))) goto failed;
@@ -387,32 +376,46 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     if (!(df->rgodf = HeapAlloc(GetProcessHeap(), 0, df->dwNumObjs * df->dwObjSize))) goto failed;
 
     /* Supported Axis & POVs should map 1-to-1 */
-    for (i = 0; i < 8; i++)
+    for (i = 0; i < WINE_JOYSTICK_MAX_AXES; i++)
     {
-        if (!test_bit(newDevice->joydev->absbits, i)) continue;
+        if (!test_bit(newDevice->joydev->absbits, i)) {
+            newDevice->axes[i] = -1;
+            continue;
+        }
 
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[axis + WINE_JOYSTICK_AXIS_BASE], df->dwObjSize);
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
+        newDevice->axes[i] = idx;
+        newDevice->props[idx].wantmin = newDevice->props[idx].havemin = newDevice->joydev->axes[i][AXIS_ABSMIN];
+        newDevice->props[idx].wantmax = newDevice->props[idx].havemax = newDevice->joydev->axes[i][AXIS_ABSMAX];
+        newDevice->props[idx].deadzone = 0;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(axis++) | DIDFT_ABSAXIS;
     }
-    for (i = 0; i < 4; i++)
+
+    for (i = 0; i < WINE_JOYSTICK_MAX_POVS; i++)
     {
         if (!test_bit(newDevice->joydev->absbits, ABS_HAT0X + i * 2) ||
-            !test_bit(newDevice->joydev->absbits, ABS_HAT0Y + i * 2))
+            !test_bit(newDevice->joydev->absbits, ABS_HAT0Y + i * 2)) {
+            newDevice->axes[ABS_HAT0X + i * 2] = newDevice->axes[ABS_HAT0Y + i * 2] = -1;
             continue;
+        }
 
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[pov + WINE_JOYSTICK_POV_BASE], df->dwObjSize);
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(pov++) | DIDFT_POV;
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + WINE_JOYSTICK_MAX_AXES], df->dwObjSize);
+        newDevice->axes[ABS_HAT0X + i * 2] = newDevice->axes[ABS_HAT0Y + i * 2] = i;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_POV;
     }
+
     /* Buttons can be anywhere, so check all */
-    for (i = 0; i < KEY_MAX && btn < 128; i++)
+    for (i = 0; i < KEY_MAX && btn < WINE_JOYSTICK_MAX_BUTTONS; i++)
     {
         if (!test_bit(newDevice->joydev->keybits, i)) continue;
 
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[btn + WINE_JOYSTICK_BUTTON_BASE], df->dwObjSize);
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[btn + WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS], df->dwObjSize);
 	newDevice->buttons[i] = 0x80 | btn;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(btn++) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
+
+    fake_current_js_state(newDevice);
 
     newDevice->base.data_format.wine_df = df;
     IDirectInput_AddRef((LPDIRECTINPUTDEVICE8A)newDevice->dinput);
@@ -610,14 +613,14 @@ static void fake_current_js_state(JoystickImpl *ji)
 {
 	int i;
 	/* center the axes */
-	ji->js.lX           = test_bit(ji->joydev->absbits, ABS_X)        ? map_axis(ji, ABS_X,        ji->joydev->axes[ABS_X       ][AXIS_ABS]) : 0;
-	ji->js.lY           = test_bit(ji->joydev->absbits, ABS_Y)        ? map_axis(ji, ABS_Y,        ji->joydev->axes[ABS_Y       ][AXIS_ABS]) : 0;
-	ji->js.lZ           = test_bit(ji->joydev->absbits, ABS_Z)        ? map_axis(ji, ABS_Z,        ji->joydev->axes[ABS_Z       ][AXIS_ABS]) : 0;
-	ji->js.lRx          = test_bit(ji->joydev->absbits, ABS_RX)       ? map_axis(ji, ABS_RX,       ji->joydev->axes[ABS_RX      ][AXIS_ABS]) : 0;
-	ji->js.lRy          = test_bit(ji->joydev->absbits, ABS_RY)       ? map_axis(ji, ABS_RY,       ji->joydev->axes[ABS_RY      ][AXIS_ABS]) : 0;
-	ji->js.lRz          = test_bit(ji->joydev->absbits, ABS_RZ)       ? map_axis(ji, ABS_RZ,       ji->joydev->axes[ABS_RZ      ][AXIS_ABS]) : 0;
-	ji->js.rglSlider[0] = test_bit(ji->joydev->absbits, ABS_THROTTLE) ? map_axis(ji, ABS_THROTTLE, ji->joydev->axes[ABS_THROTTLE][AXIS_ABS]) : 0;
-	ji->js.rglSlider[1] = test_bit(ji->joydev->absbits, ABS_RUDDER)   ? map_axis(ji, ABS_RUDDER,   ji->joydev->axes[ABS_RUDDER  ][AXIS_ABS]) : 0;
+	ji->js.lX           = ji->axes[ABS_X]!=-1        ? map_axis(ji, ji->axes[ABS_X],        ji->joydev->axes[ABS_X       ][AXIS_ABS]) : 0;
+	ji->js.lY           = ji->axes[ABS_Y]!=-1        ? map_axis(ji, ji->axes[ABS_Y],        ji->joydev->axes[ABS_Y       ][AXIS_ABS]) : 0;
+	ji->js.lZ           = ji->axes[ABS_Z]!=-1        ? map_axis(ji, ji->axes[ABS_Z],        ji->joydev->axes[ABS_Z       ][AXIS_ABS]) : 0;
+	ji->js.lRx          = ji->axes[ABS_RX]!=-1       ? map_axis(ji, ji->axes[ABS_RX],       ji->joydev->axes[ABS_RX      ][AXIS_ABS]) : 0;
+	ji->js.lRy          = ji->axes[ABS_RY]!=-1       ? map_axis(ji, ji->axes[ABS_RY],       ji->joydev->axes[ABS_RY      ][AXIS_ABS]) : 0;
+	ji->js.lRz          = ji->axes[ABS_RZ]!=-1       ? map_axis(ji, ji->axes[ABS_RZ],       ji->joydev->axes[ABS_RZ      ][AXIS_ABS]) : 0;
+	ji->js.rglSlider[0] = ji->axes[ABS_THROTTLE]!=-1 ? map_axis(ji, ji->axes[ABS_THROTTLE], ji->joydev->axes[ABS_THROTTLE][AXIS_ABS]) : 0;
+	ji->js.rglSlider[1] = ji->axes[ABS_RUDDER]!=-1   ? map_axis(ji, ji->axes[ABS_RUDDER],   ji->joydev->axes[ABS_RUDDER  ][AXIS_ABS]) : 0;
 	/* POV center is -1 */
 	for (i=0; i<4; i++) {
 		ji->js.rgdwPOV[i] = -1;
@@ -647,45 +650,6 @@ static DWORD map_pov(int event_value, int is_x)
 		}
 	}
 	return ret;
-}
-
-/* defines how the linux input system offset mappings into c_dfDIJoystick2 */
-static int lxinput_to_user_index(JoystickImpl *This, int ie_type, int ie_code )
-{
-  int offset = -1;
-  switch (ie_type) {
-    case EV_ABS:
-      switch (ie_code) {
-        case ABS_X:                     offset = 0; break;
-        case ABS_Y:                     offset = 1; break;
-        case ABS_Z:                     offset = 2; break;
-        case ABS_RX:                    offset = 3; break;
-        case ABS_RY:                    offset = 4; break;
-        case ABS_RZ:                    offset = 5; break;
-        case ABS_THROTTLE:              offset = 6; break;
-        case ABS_RUDDER:                offset = 7; break;
-        case ABS_HAT0X: case ABS_HAT0Y: offset = 8; break;
-        case ABS_HAT1X: case ABS_HAT1Y: offset = 9; break;
-        case ABS_HAT2X: case ABS_HAT2Y: offset = 10; break;
-        case ABS_HAT3X: case ABS_HAT3Y: offset = 11; break;
-        /* XXX when adding new axes here also fix the offset for the buttons bellow */
-        default:
-          FIXME("Unhandled EV_ABS(0x%02X)\n", ie_code);
-          return -1;
-      }
-      break;
-    case EV_KEY:
-      if (ie_code >= 128) {
-        WARN("DX8 does not support more than 128 buttons\n");
-        return -1;
-      }
-      offset = 12 + ie_code; /* XXX */
-      break;
-    default:
-      FIXME("Unhandled type(0x%02X)\n", ie_type);
-      return -1;
-  }
-  return offset;
 }
 
 /* convert wine format offset to user format object index */
@@ -728,10 +692,13 @@ static void joy_polldev(JoystickImpl *This)
             break;
         }
 	case EV_ABS:
-            if ((inst_id = lxinput_to_user_index(This, ie.type, ie.code)) == -1)
-                return;
-            inst_id = DIDFT_MAKEINSTANCE(inst_id) | (inst_id < ABS_HAT0X ? DIDFT_AXIS : DIDFT_POV);
-            value = map_axis(This, ie.code, ie.value);
+        {
+            int axis = This->axes[ie.code];
+            if (axis==-1) {
+                break;
+            }
+            inst_id = DIDFT_MAKEINSTANCE(axis) | (ie.code < ABS_HAT0X ? DIDFT_ABSAXIS : DIDFT_POV);
+            value = map_axis(This, axis, ie.value);
 
 	    switch (ie.code) {
             case ABS_X:         This->js.lX  = value; break;
@@ -763,6 +730,7 @@ static void joy_polldev(JoystickImpl *This)
 		break;
 	    }
 	    break;
+        }
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
 	case EV_FF_STATUS:
 	    This->ff_state = ie.value;
