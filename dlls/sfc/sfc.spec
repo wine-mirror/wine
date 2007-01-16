@@ -1,2 +1,2 @@
 @ stub SfcGetNextProtectedFile
-@ stdcall SfcIsFileProtected(ptr wstr)
+@ stdcall SfcIsFileProtected(ptr wstr) sfc_os.SfcIsFileProtected

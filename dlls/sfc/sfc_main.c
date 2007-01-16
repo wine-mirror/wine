@@ -20,49 +20,35 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+/*
+ * Moved to sfc_os.dll since XP
+ *
+ */
+
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
-#include "sfc.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(sfc);
 
 /******************************************************************
- *              SfcIsFileProtected     [SFC.@]
- *
- * Check, if the given File is protected by the System
- *
- * PARAMS
- *  RpcHandle    [I] This must be NULL
- *  ProtFileName [I] Filename with Path to check
- *
- * RETURNS
- *  Failure: FALSE with GetLastError() != ERROR_FILE_NOT_FOUND
- *  Success: TRUE, when the File is Protected
- *           FALSE with GetLastError() == ERROR_FILE_NOT_FOUND,
- *           when the File is not Protected
- *
- *
- * BUGS
- *  We return always the Result for: "File is not Protected"
- *
+ *      DllMain
  */
-BOOL WINAPI SfcIsFileProtected(HANDLE RpcHandle, LPCWSTR ProtFileName)
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
-    static BOOL reported = FALSE;
+    TRACE("(%p, %d, %p)\n",hinstDLL, fdwReason, lpvReserved);
 
-    if (reported) {
-        TRACE("(%p, %s) stub\n", RpcHandle, debugstr_w(ProtFileName));
-    }
-    else
+    switch(fdwReason)
     {
-        FIXME("(%p, %s) stub\n", RpcHandle, debugstr_w(ProtFileName));
-        reported = TRUE;
-    }
+        case DLL_WINE_PREATTACH:
+            return FALSE;           /* prefer native version */
 
-    SetLastError(ERROR_FILE_NOT_FOUND);
-    return FALSE;
+        case DLL_PROCESS_ATTACH:
+            DisableThreadLibraryCalls( hinstDLL );
+            break;
+    }
+    return TRUE;
 }
