@@ -764,6 +764,22 @@ static BOOL call_apcs( BOOL alertable )
                                                                 &result.virtual_flush.addr,
                                                                 &result.virtual_flush.size, 0 );
             break;
+        case APC_VIRTUAL_LOCK:
+            result.type = call.type;
+            result.virtual_lock.addr = call.virtual_lock.addr;
+            result.virtual_lock.size = call.virtual_lock.size;
+            result.virtual_lock.status = NtLockVirtualMemory( NtCurrentProcess(),
+                                                              &result.virtual_lock.addr,
+                                                              &result.virtual_lock.size, 0 );
+            break;
+        case APC_VIRTUAL_UNLOCK:
+            result.type = call.type;
+            result.virtual_unlock.addr = call.virtual_unlock.addr;
+            result.virtual_unlock.size = call.virtual_unlock.size;
+            result.virtual_unlock.status = NtUnlockVirtualMemory( NtCurrentProcess(),
+                                                                  &result.virtual_unlock.addr,
+                                                                  &result.virtual_unlock.size, 0 );
+            break;
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;
