@@ -784,6 +784,48 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                                          struct hash_table* ht_symtab);
 
 /******************************************************************
+ *		elf_locate_debug_link
+ *
+ * Locate a filename from a .gnu_debuglink section, using the same
+ * strategy as gdb:
+ * "If the full name of the directory containing the executable is
+ * execdir, and the executable has a debug link that specifies the
+ * name debugfile, then GDB will automatically search for the
+ * debugging information file in three places:
+ *  - the directory containing the executable file (that is, it
+ *    will look for a file named `execdir/debugfile',
+ *  - a subdirectory of that directory named `.debug' (that is, the
+ *    file `execdir/.debug/debugfile', and
+ *  - a subdirectory of the global debug file directory that includes
+ *    the executable's full path, and the name from the link (that is,
+ *    the file `globaldebugdir/execdir/debugfile', where globaldebugdir
+ *    is the global debug file directory, and execdir has been turned
+ *    into a relative path)." (from GDB manual)
+ */
+static char* elf_locate_debug_link (const char* filename, const char* moduleDir)
+{
+    static const char globalDebugDir[] = "/usr/lib/debug";
+    const size_t moduleDirLen = strlen (moduleDir);
+    const size_t globalDebugDirLen = strlen (globalDebugDir);
+    struct stat statbuf;
+
+    char* p = HeapAlloc (GetProcessHeap(), 0,
+        moduleDirLen + 1 + max (6, globalDebugDirLen) + 1 + strlen (filename)+1);
+
+    sprintf (p, "%s/%s", moduleDir, filename);
+    if (stat(p, &statbuf) != -1 && !S_ISDIR(statbuf.st_mode)) return p;
+
+    sprintf (p, "%s/.debug/%s", moduleDir, filename);
+    if (stat(p, &statbuf) != -1 && !S_ISDIR(statbuf.st_mode)) return p;
+
+    sprintf (p, "%s/%s/%s", globalDebugDir, moduleDir, filename);
+    if (stat(p, &statbuf) != -1 && !S_ISDIR(statbuf.st_mode)) return p;
+
+    strcpy (p, filename);
+    return p;
+}
+
+/******************************************************************
  *		elf_debuglink_parse
  *
  * Parses a .gnu_debuglink section and loads the debug info from
@@ -803,21 +845,35 @@ static BOOL elf_debuglink_parse (struct module* module,
     BOOL ret = FALSE;
     const char* dbg_link = (char*)debuglink;
     struct elf_file_map fmap_link;
+    char* moduleDir;
+    char* link_file;
+    char* slash;
 
-    if (elf_map_file(dbg_link, &fmap_link))
+    moduleDir = HeapAlloc (GetProcessHeap(), 0, strlen (module->module.LoadedImageName) + 1);
+    strcpy (moduleDir, module->module.LoadedImageName);
+    slash = strrchr (moduleDir, '/');
+    if (slash != 0) *slash = 0;
+
+    link_file = elf_locate_debug_link (dbg_link, moduleDir);
+    TRACE("Located debug information file %s at %s\n", dbg_link, link_file);
+
+    if (elf_map_file(link_file, &fmap_link))
     {
 	fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
 	fmap_link.with_crc = 1;
 	ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
                                            ht_symtab);
 	if (ret)
-	    strcpy(module->module.LoadedPdbName, dbg_link);
+	    strcpy(module->module.LoadedPdbName, link_file);
 	else
-	    WARN("Couldn't load debug information from %s\n", dbg_link);
+	    WARN("Couldn't load debug information from %s\n", link_file);
 	elf_unmap_file(&fmap_link);
     }
     else
         WARN("Couldn't map %s\n", dbg_link);
+
+    HeapFree (GetProcessHeap(), 0, link_file);
+    HeapFree (GetProcessHeap(), 0, moduleDir);
 
     return ret;
 }
