@@ -1751,7 +1751,7 @@ TMStubImpl_Invoke(
     HRESULT	hres;
     DWORD	*args = NULL, res, *xargs, nrofargs;
     marshal_state	buf;
-    UINT	nrofnames;
+    UINT	nrofnames = 0;
     BSTR	names[10];
     BSTR	iname = NULL;
     ITypeInfo 	*tinfo = NULL;
