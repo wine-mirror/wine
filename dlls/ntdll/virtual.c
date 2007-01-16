@@ -1802,12 +1802,32 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
  */
 NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown )
 {
-    if (!is_current_process( process ))
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_lock.type = APC_VIRTUAL_LOCK;
+        call.virtual_lock.addr = *addr;
+        call.virtual_lock.size = *size;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_lock.status == STATUS_SUCCESS)
+        {
+            *addr = result.virtual_lock.addr;
+            *size = result.virtual_lock.size;
+        }
+        return result.virtual_lock.status;
     }
-    return STATUS_SUCCESS;
+
+    *size = ROUND_SIZE( *addr, *size );
+    *addr = ROUND_ADDR( *addr, page_mask );
+
+    if (mlock( *addr, *size )) status = STATUS_ACCESS_DENIED;
+    return status;
 }
 
 
@@ -1817,12 +1837,32 @@ NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, 
  */
 NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown )
 {
-    if (!is_current_process( process ))
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.virtual_unlock.type = APC_VIRTUAL_UNLOCK;
+        call.virtual_unlock.addr = *addr;
+        call.virtual_unlock.size = *size;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.virtual_unlock.status == STATUS_SUCCESS)
+        {
+            *addr = result.virtual_unlock.addr;
+            *size = result.virtual_unlock.size;
+        }
+        return result.virtual_unlock.status;
     }
-    return STATUS_SUCCESS;
+
+    *size = ROUND_SIZE( *addr, *size );
+    *addr = ROUND_ADDR( *addr, page_mask );
+
+    if (munlock( *addr, *size )) status = STATUS_ACCESS_DENIED;
+    return status;
 }
 
 

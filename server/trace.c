@@ -142,6 +142,14 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, "APC_VIRTUAL_FLUSH,addr=%p,size=%lu",
                  call->virtual_flush.addr, call->virtual_flush.size );
         break;
+    case APC_VIRTUAL_LOCK:
+        fprintf( stderr, "APC_VIRTUAL_LOCK,addr=%p,size=%lu",
+                 call->virtual_lock.addr, call->virtual_lock.size );
+        break;
+    case APC_VIRTUAL_UNLOCK:
+        fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=%p,size=%lu",
+                 call->virtual_unlock.addr, call->virtual_unlock.size );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -184,6 +192,16 @@ static void dump_apc_result( const apc_result_t *result )
         fprintf( stderr, "APC_VIRTUAL_FLUSH,status=%s,addr=%p,size=%lu",
                  get_status_name( result->virtual_flush.status ),
                  result->virtual_flush.addr, result->virtual_flush.size );
+        break;
+    case APC_VIRTUAL_LOCK:
+        fprintf( stderr, "APC_VIRTUAL_LOCK,status=%s,addr=%p,size=%lu",
+                 get_status_name( result->virtual_lock.status ),
+                 result->virtual_lock.addr, result->virtual_lock.size );
+        break;
+    case APC_VIRTUAL_UNLOCK:
+        fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=%p,size=%lu",
+                 get_status_name( result->virtual_unlock.status ),
+                 result->virtual_unlock.addr, result->virtual_unlock.size );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );

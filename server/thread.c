@@ -1159,6 +1159,8 @@ DECL_HANDLER(queue_apc)
     case APC_VIRTUAL_QUERY:
     case APC_VIRTUAL_PROTECT:
     case APC_VIRTUAL_FLUSH:
+    case APC_VIRTUAL_LOCK:
+    case APC_VIRTUAL_UNLOCK:
         access = (apc->call.type == APC_VIRTUAL_QUERY) ? PROCESS_QUERY_INFORMATION : PROCESS_VM_OPERATION;
         if ((process = get_process_from_handle( req->process, access )))
         {
