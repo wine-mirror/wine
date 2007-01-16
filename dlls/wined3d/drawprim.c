@@ -628,7 +628,11 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     DWORD diffuseColor = 0xFFFFFFFF;       /* Diffuse Color              */
     DWORD specularColor = 0;               /* Specular Color             */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT *streamOffset = This->stateBlock->streamOffset;
     LONG                       SkipnStrides = startVertex + This->stateBlock->loadBaseVertexIndex;
+
+    BYTE *texCoords[WINED3DDP_MAXTEXCOORD];
+    BYTE *diffuse = NULL, *specular = NULL, *normal = NULL, *position = NULL;
 
     TRACE("Using slow vertex array code\n");
 
@@ -636,6 +640,29 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     if (idxData != NULL) {
         if (idxSize == 2) pIdxBufS = (const short *) idxData;
         else pIdxBufL = (const long *) idxData;
+    }
+
+    /* Adding the stream offset once is cheaper than doing it every iteration. Do not modify the strided data, it is a pointer
+     * to the strided Data in the device and might be needed intact on the next draw
+     */
+    for (textureNo = 0, texture_idx = 0; textureNo < GL_LIMITS(texture_stages); ++textureNo) {
+        if(sd->u.s.texCoords[textureNo].lpData) {
+            texCoords[textureNo] = sd->u.s.texCoords[textureNo].lpData + streamOffset[sd->u.s.texCoords[textureNo].streamNo];
+        } else {
+            texCoords[textureNo] = NULL;
+        }
+    }
+    if(sd->u.s.diffuse.lpData) {
+        diffuse = sd->u.s.diffuse.lpData + streamOffset[sd->u.s.diffuse.streamNo];
+    }
+    if(sd->u.s.specular.lpData) {
+        specular = sd->u.s.specular.lpData + streamOffset[sd->u.s.specular.streamNo];
+    }
+    if(sd->u.s.normal.lpData) {
+        normal = sd->u.s.normal.lpData + streamOffset[sd->u.s.normal.streamNo];
+    }
+    if(sd->u.s.position.lpData) {
+        position = sd->u.s.position.lpData + streamOffset[sd->u.s.position.streamNo];
     }
 
     /* Start drawing in GL */
@@ -707,8 +734,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
                     continue;
                 }
 
-                ptrToCoords = (float *)(sd->u.s.texCoords[coordIdx].lpData + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
-                if (sd->u.s.texCoords[coordIdx].lpData == NULL) {
+                ptrToCoords = (float *)(texCoords[coordIdx] + (SkipnStrides * sd->u.s.texCoords[coordIdx].dwStride));
+                if (texCoords[coordIdx] == NULL) {
                     TRACE("tex: %d - Skipping tex coords, as no data supplied\n", textureNo);
                     ++texture_idx;
                     continue;
@@ -796,8 +823,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         } /* End of textures */
 
         /* Diffuse -------------------------------- */
-        if (sd->u.s.diffuse.lpData != NULL) {
-            DWORD *ptrToCoords = (DWORD *)(sd->u.s.diffuse.lpData + (SkipnStrides * sd->u.s.diffuse.dwStride));
+        if (diffuse) {
+            DWORD *ptrToCoords = (DWORD *)(diffuse + (SkipnStrides * sd->u.s.diffuse.dwStride));
             diffuseColor = ptrToCoords[0];
             VTRACE(("diffuseColor=%lx\n", diffuseColor));
 
@@ -813,8 +840,8 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         }
 
         /* Specular ------------------------------- */
-        if (sd->u.s.specular.lpData != NULL) {
-            DWORD *ptrToCoords = (DWORD *)(sd->u.s.specular.lpData + (SkipnStrides * sd->u.s.specular.dwStride));
+        if (specular) {
+            DWORD *ptrToCoords = (DWORD *)(specular + (SkipnStrides * sd->u.s.specular.dwStride));
             specularColor = ptrToCoords[0];
             VTRACE(("specularColor=%lx\n", specularColor));
 
@@ -850,16 +877,16 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
         }
 
         /* Normal -------------------------------- */
-        if (sd->u.s.normal.lpData != NULL) {
-            float *ptrToCoords = (float *)(sd->u.s.normal.lpData + (SkipnStrides * sd->u.s.normal.dwStride));
+        if (normal != NULL) {
+            float *ptrToCoords = (float *)(normal + (SkipnStrides * sd->u.s.normal.dwStride));
 
             VTRACE(("glNormal:nx,ny,nz=%f,%f,%f\n", ptrToCoords[0], ptrToCoords[1], ptrToCoords[2]));
             glNormal3f(ptrToCoords[0], ptrToCoords[1], ptrToCoords[2]);
         }
 
         /* Position -------------------------------- */
-        if (sd->u.s.position.lpData != NULL) {
-            float *ptrToCoords = (float *)(sd->u.s.position.lpData + (SkipnStrides * sd->u.s.position.dwStride));
+        if (position) {
+            float *ptrToCoords = (float *)(position + (SkipnStrides * sd->u.s.position.dwStride));
             x = ptrToCoords[0];
             y = ptrToCoords[1];
             z = ptrToCoords[2];
