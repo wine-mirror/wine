@@ -96,9 +96,10 @@
 @ cdecl __isascii(long) MSVCRT___isascii
 @ cdecl __iscsym(long) MSVCRT___iscsym
 @ cdecl __iscsymf(long) MSVCRT___iscsymf
-# extern __lc_codepage
+@ extern __lc_codepage MSVCRT___lc_codepage
 @ stub __lc_collate
-# extern __lc_handle
+@ extern __lc_collate_cp MSVCRT___lc_collate_cp
+@ extern __lc_handle MSVCRT___lc_handle
 @ cdecl __lconv_init()
 @ extern __mb_cur_max MSVCRT___mb_cur_max
 @ cdecl __p___argc()
@@ -767,4 +768,3 @@
 @ cdecl wctomb(ptr long) MSVCRT_wctomb
 @ varargs wprintf(wstr) MSVCRT_wprintf
 @ varargs wscanf(wstr) MSVCRT_wscanf
-# extern __lc_collate_cp

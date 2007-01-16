@@ -45,7 +45,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 #define MAX_LOCALE_LENGTH 256
 char MSVCRT_current_lc_all[MAX_LOCALE_LENGTH];
 LCID MSVCRT_current_lc_all_lcid;
-int msvcrt_current_lc_all_cp;
+int MSVCRT___lc_codepage;
+int MSVCRT___lc_collate_cp;
+HANDLE MSVCRT___lc_handle[MSVCRT_LC_MAX - MSVCRT_LC_MIN + 1];
 
 /* MT */
 #define LOCK_LOCALE   _mlock(_SETLOCALE_LOCK);
@@ -275,7 +277,8 @@ static void msvcrt_set_ctype(unsigned int codepage, LCID lcid)
     unsigned char *traverse = (unsigned char *)cp.LeadByte;
 
     memset(MSVCRT_current_ctype, 0, sizeof(MSVCRT__ctype));
-    msvcrt_current_lc_all_cp = codepage;
+    MSVCRT___lc_codepage = codepage;
+    MSVCRT___lc_collate_cp = codepage;
 
     /* Switch ctype macros to MBCS if needed */
     MSVCRT___mb_cur_max = cp.MaxCharSize;
@@ -342,7 +345,8 @@ char* CDECL MSVCRT_setlocale(int category, const char* locale)
   {
     MSVCRT_current_lc_all[0] = 'C';
     MSVCRT_current_lc_all[1] = '\0';
-    msvcrt_current_lc_all_cp = GetACP();
+    MSVCRT___lc_codepage = GetACP();
+    MSVCRT___lc_collate_cp = GetACP();
 
     switch (category) {
     case MSVCRT_LC_ALL:
@@ -535,22 +539,22 @@ int CDECL _setmbcp(int cp)
   LOCK_LOCALE;
   if ( cp > _MB_CP_SBCS)
   {
-    if( msvcrt_current_lc_all_cp != cp)
+    if( MSVCRT___lc_codepage != cp)
       /* FIXME: set ctype behaviour for this cp */
-      msvcrt_current_lc_all_cp = cp;
+      MSVCRT___lc_codepage = cp;
   }
   else if(cp == _MB_CP_ANSI)
   {
-    msvcrt_current_lc_all_cp = GetACP();
+    MSVCRT___lc_codepage = GetACP();
   }
   else if(cp == _MB_CP_OEM)
   {
-    msvcrt_current_lc_all_cp = GetOEMCP();
+    MSVCRT___lc_codepage = GetOEMCP();
   }
   else if(cp == _MB_CP_LOCALE)
   {
     GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER,
-                    (WCHAR *)&msvcrt_current_lc_all_cp, sizeof(INT)/sizeof(WCHAR) );
+                    (WCHAR *)&MSVCRT___lc_codepage, sizeof(INT)/sizeof(WCHAR) );
   }
   else if(cp == _MB_CP_SBCS)
   {
@@ -560,8 +564,9 @@ int CDECL _setmbcp(int cp)
   {
     FIXME ("Unreal codepages (e.g. %d) not implemented\n", cp);
   }
+  MSVCRT___lc_collate_cp = MSVCRT___lc_codepage;
   UNLOCK_LOCALE;
-  TRACE("(%d) -> %d\n", cp, msvcrt_current_lc_all_cp);
+  TRACE("(%d) -> %d\n", cp, MSVCRT___lc_codepage);
   return 0;
 }
 
@@ -570,7 +575,7 @@ int CDECL _setmbcp(int cp)
  */
 int CDECL _getmbcp(void)
 {
-  return msvcrt_current_lc_all_cp;
+  return MSVCRT___lc_codepage;
 }
 
 /*********************************************************************

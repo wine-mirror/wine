@@ -111,7 +111,7 @@ typedef struct __thread_data thread_data_t;
 
 extern thread_data_t *msvcrt_get_thread_data(void);
 
-extern int msvcrt_current_lc_all_cp;
+extern int MSVCRT___lc_codepage;
 
 void   msvcrt_set_errno(int);
 char*  msvcrt_strndup(const char*,unsigned int);
