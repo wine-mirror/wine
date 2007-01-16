@@ -900,10 +900,10 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
     char *in;
     LPWSTR out;
     static const WCHAR szBasic[] = {'B','a','s','i','c',' ',0};
+    int userlen = WideCharToMultiByte(CP_UTF8, 0, username, lstrlenW(username), NULL, 0, NULL, NULL);
+    int passlen = WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
 
-    len = WideCharToMultiByte(CP_UTF8, 0, username, lstrlenW(username), NULL, 0, NULL, NULL) +
-        1 + WideCharToMultiByte(CP_UTF8, 0, password, lstrlenW(password), NULL, 0, NULL, NULL);
-    in = HeapAlloc( GetProcessHeap(), 0, (len+1)*sizeof(CHAR) );
+    in = HeapAlloc( GetProcessHeap(), 0, userlen + 1 + passlen );
     if( !in )
         return NULL;
 
@@ -912,11 +912,11 @@ static LPWSTR HTTP_EncodeBasicAuth( LPCWSTR username, LPCWSTR password)
     out = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
     if( out )
     {
-        WideCharToMultiByte(CP_UTF8, 0, username, -1, NULL, 0, NULL, NULL);
-        strcat(in, ":");
-        WideCharToMultiByte(CP_UTF8, 0, password, -1, NULL, 0, NULL, NULL);
+        WideCharToMultiByte(CP_UTF8, 0, username, -1, in, userlen, NULL, NULL);
+        in[userlen] = ':';
+        WideCharToMultiByte(CP_UTF8, 0, password, -1, &in[userlen+1], passlen, NULL, NULL);
         lstrcpyW( out, szBasic );
-        HTTP_EncodeBase64( in, len, &out[strlenW(out)] );
+        HTTP_EncodeBase64( in, userlen + 1 + passlen, &out[strlenW(out)] );
     }
     HeapFree( GetProcessHeap(), 0, in );
 
