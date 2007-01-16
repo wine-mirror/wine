@@ -396,7 +396,8 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF,
                                  DWORD stride,
                                  BYTE *data,
                                  WineDirect3DVertexStridedData *strided,
-                                 GLint streamVBO);
+                                 GLint streamVBO,
+                                 UINT streamNo);
 
 DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 

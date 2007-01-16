@@ -223,6 +223,7 @@ void primitiveDeclarationConvertToStridedData(
            strided->u.input[idx].dwType = element->Type;
            strided->u.input[idx].dwStride = stride;
            strided->u.input[idx].VBO = streamVBO;
+           strided->u.input[idx].streamNo = element->Stream;
            if (!useVertexShaderFunction) {
                if (element->Usage == D3DDECLUSAGE_POSITION)
                    strided->u.s.position_transformed = FALSE;
@@ -244,7 +245,7 @@ void primitiveDeclarationConvertToStridedData(
     }
 }
 
-void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDirect3DVertexStridedData *strided, GLint streamVBO) {
+void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDirect3DVertexStridedData *strided, GLint streamVBO, UINT streamNo) {
     int           numBlends;
     int           numTextures;
     int           textureNo;
@@ -259,6 +260,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.position.dwType    = WINED3DDECLTYPE_FLOAT3;
         strided->u.s.position.dwStride  = stride;
         strided->u.s.position.VBO       = streamVBO;
+        strided->u.s.position.streamNo  = streamNo;
         data += 3 * sizeof(float);
         if (thisFVF & WINED3DFVF_XYZRHW) {
             strided->u.s.position.dwType = WINED3DDECLTYPE_FLOAT4;
@@ -279,6 +281,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.blendWeights.dwType    = WINED3DDECLTYPE_FLOAT1 + numBlends - 1;
         strided->u.s.blendWeights.dwStride  = stride;
         strided->u.s.blendWeights.VBO       = streamVBO;
+        strided->u.s.blendWeights.streamNo  = streamNo;
         data += numBlends * sizeof(FLOAT);
 
         if (thisFVF & WINED3DFVF_LASTBETA_UBYTE4) {
@@ -286,6 +289,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
             strided->u.s.blendMatrixIndices.dwType  = WINED3DDECLTYPE_UBYTE4;
             strided->u.s.blendMatrixIndices.dwStride= stride;
             strided->u.s.blendMatrixIndices.VBO     = streamVBO;
+            strided->u.s.blendMatrixIndices.streamNo= streamNo;
             data += sizeof(DWORD);
         }
     }
@@ -295,7 +299,8 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.normal.lpData    = data;
         strided->u.s.normal.dwType    = WINED3DDECLTYPE_FLOAT3;
         strided->u.s.normal.dwStride  = stride;
-        strided->u.s.normal.VBO     = streamVBO;
+        strided->u.s.normal.VBO       = streamVBO;
+        strided->u.s.normal.streamNo  = streamNo;
         data += 3 * sizeof(FLOAT);
     }
 
@@ -305,6 +310,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.pSize.dwType    = WINED3DDECLTYPE_FLOAT1;
         strided->u.s.pSize.dwStride  = stride;
         strided->u.s.pSize.VBO       = streamVBO;
+        strided->u.s.pSize.streamNo  = streamNo;
         data += sizeof(FLOAT);
     }
 
@@ -314,6 +320,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.diffuse.dwType    = WINED3DDECLTYPE_SHORT4;
         strided->u.s.diffuse.dwStride  = stride;
         strided->u.s.diffuse.VBO       = streamVBO;
+        strided->u.s.diffuse.streamNo  = streamNo;
         data += sizeof(DWORD);
     }
 
@@ -323,6 +330,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.specular.dwType    = WINED3DDECLTYPE_SHORT4;
         strided->u.s.specular.dwStride  = stride;
         strided->u.s.specular.VBO       = streamVBO;
+        strided->u.s.specular.streamNo  = streamNo;
         data += sizeof(DWORD);
     }
 
@@ -343,6 +351,7 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
         strided->u.s.texCoords[textureNo].dwType    = WINED3DDECLTYPE_FLOAT1;
         strided->u.s.texCoords[textureNo].dwStride  = stride;
         strided->u.s.texCoords[textureNo].VBO       = streamVBO;
+        strided->u.s.texCoords[textureNo].streamNo  = streamNo;
         numCoords[textureNo] = coordIdxInfo & 0x03;
 
         /* Always one set */
@@ -420,7 +429,7 @@ void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStri
         if (thisFVF == 0) continue;
 
         /* Now convert the stream into pointers */
-        primitiveConvertFVFtoOffset(thisFVF, stride, data, strided, streamVBO);
+        primitiveConvertFVFtoOffset(thisFVF, stride, data, strided, streamVBO, nStream);
     }
     /* Now call PreLoad on all the vertex buffers. In the very rare case
      * that the buffers stopps converting PreLoad will dirtify the VDECL again.

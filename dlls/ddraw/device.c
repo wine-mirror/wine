@@ -3281,6 +3281,7 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
 
     TRACE("(%p)->(%08x,%08x,%p,%08x,%08x): stub!\n", This, PrimitiveType, VertexType, D3DDrawPrimStrideData, VertexCount, Flags);
 
+    memset(&WineD3DStrided, 0, sizeof(WineD3DStrided));
     /* Get the strided data right. the wined3d structure is a bit bigger
      * Watch out: The contents of the strided data are determined by the fvf,
      * not by the members set in D3DDrawPrimStrideData. So it's valid
@@ -3289,7 +3290,6 @@ IDirect3DDeviceImpl_7_DrawPrimitiveStrided(IDirect3DDevice7 *iface,
      */
     if(VertexType & D3DFVF_POSITION_MASK)
     {
-        memset(&WineD3DStrided, 0, sizeof(WineD3DStrided));
         WineD3DStrided.u.s.position.lpData = D3DDrawPrimStrideData->position.lpvData;
         WineD3DStrided.u.s.position.dwStride = D3DDrawPrimStrideData->position.dwStride;
         WineD3DStrided.u.s.position.dwType = WINED3DDECLTYPE_FLOAT3;

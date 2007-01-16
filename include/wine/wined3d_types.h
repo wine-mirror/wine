@@ -1252,6 +1252,7 @@ typedef struct WineDirect3DStridedData {
     DWORD     dwStride;      /* Stride between occurances of this data */
     DWORD     dwType;        /* Type (as in D3DVSDT_TYPE)              */
     int       VBO;           /* Vertex buffer object this data is in   */
+    UINT      streamNo;      /* D3D stream number                      */
 } WineDirect3DStridedData;
 
 typedef struct WineDirect3DVertexStridedData {
