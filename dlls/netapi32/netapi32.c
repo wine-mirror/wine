@@ -24,7 +24,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netbios);
 
-HMODULE NETAPI32_hModule = 0;
+static HMODULE NETAPI32_hModule;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
