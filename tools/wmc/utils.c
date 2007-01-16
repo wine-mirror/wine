@@ -36,7 +36,7 @@
 
 static void generic_msg(const char *s, const char *t, va_list ap)
 {
-	fprintf(stderr, "%s %s: %d, %d: ", t, input_name ? input_name : "stdin", line_number, char_number);
+	fprintf(stderr, "%s:%d:%d: %s: ", input_name ? input_name : "stdin", line_number, char_number, t);
 	vfprintf(stderr, s, ap);
 	fprintf(stderr, "\n");
 }
