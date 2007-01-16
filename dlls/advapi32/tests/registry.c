@@ -746,6 +746,122 @@ static void test_regconnectregistry( void)
 
 }
 
+static void test_reg_query_value(void)
+{
+    HKEY subkey;
+    CHAR val[MAX_PATH];
+    WCHAR valW[5];
+    LONG size, ret;
+
+    static const WCHAR expected[] = {'d','a','t','a',0};
+    static const WCHAR set[] = {'d','a','t','a'};
+
+    ret = RegCreateKeyA(hkey_main, "subkey", &subkey);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegSetValueA(subkey, NULL, REG_SZ, "data", 4);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    /* try an invalid hkey */
+    SetLastError(0xdeadbeef);
+    size = MAX_PATH;
+    ret = RegQueryValueA((HKEY)0xcafebabe, "subkey", val, &size);
+    ok(ret == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+
+    /* try a NULL hkey */
+    SetLastError(0xdeadbeef);
+    size = MAX_PATH;
+    ret = RegQueryValueA(NULL, "subkey", val, &size);
+    ok(ret == ERROR_INVALID_HANDLE, "Expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+
+    /* try a NULL value */
+    size = MAX_PATH;
+    ret = RegQueryValueA(hkey_main, "subkey", NULL, &size);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    /* try a NULL size */
+    SetLastError(0xdeadbeef);
+    val[0] = '\0';
+    ret = RegQueryValueA(hkey_main, "subkey", val, NULL);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrlenA(val) == 0, "Expected val to be untouched, got %s\n", val);
+
+    /* try a NULL value and size */
+    ret = RegQueryValueA(hkey_main, "subkey", NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    /* try a size too small */
+    SetLastError(0xdeadbeef);
+    val[0] = '\0';
+    size = 1;
+    ret = RegQueryValueA(hkey_main, "subkey", val, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrlenA(val) == 0, "Expected val to be untouched, got %s\n", val);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    /* successfully read the value using 'subkey' */
+    size = MAX_PATH;
+    ret = RegQueryValueA(hkey_main, "subkey", val, &size);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ok(!lstrcmpA(val, "data"), "Expected 'data', got '%s'\n", val);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    /* successfully read the value using the subkey key */
+    size = MAX_PATH;
+    ret = RegQueryValueA(subkey, NULL, val, &size);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ok(!lstrcmpA(val, "data"), "Expected 'data', got '%s'\n", val);
+    ok(size == 5, "Expected 5, got %d\n", size);
+
+    /* unicode - try size too small */
+    SetLastError(0xdeadbeef);
+    valW[0] = '\0';
+    size = 0;
+    ret = RegQueryValueW(subkey, NULL, valW, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrlenW(valW) == 0, "Expected valW to be untouched\n");
+    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+
+    /* unicode - try size in WCHARS */
+    SetLastError(0xdeadbeef);
+    size = sizeof(valW) / sizeof(WCHAR);
+    ret = RegQueryValueW(subkey, NULL, valW, &size);
+    ok(ret == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "Expected 0xdeadbeef, got %d\n", GetLastError());
+    ok(lstrlenW(valW) == 0, "Expected valW to be untouched\n");
+    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+
+    /* unicode - successfully read the value */
+    size = sizeof(valW);
+    ret = RegQueryValueW(subkey, NULL, valW, &size);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ok(!lstrcmpW(valW, expected), "Got wrong value\n");
+    ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+
+    /* unicode - set the value without a NULL terminator */
+    ret = RegSetValueW(subkey, NULL, REG_SZ, set, sizeof(set));
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    /* unicode - read the unterminated value, value is terminated for us */
+    memset(valW, 'a', sizeof(valW));
+    size = sizeof(valW);
+    ret = RegQueryValueW(subkey, NULL, valW, &size);
+    todo_wine
+    {
+        ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+        ok(!lstrcmpW(valW, expected), "Got wrong value\n");
+        ok(size == sizeof(expected), "Got wrong size: %d\n", size);
+    }
+
+    RegDeleteKeyA(subkey, "");
+}
+
 START_TEST(registry)
 {
     setup_main_key();
@@ -758,6 +874,7 @@ START_TEST(registry)
     test_reg_create_key();
     test_reg_close_key();
     test_reg_delete_key();
+    test_reg_query_value();
 
     /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
     if (set_privileges(SE_BACKUP_NAME, TRUE) &&
