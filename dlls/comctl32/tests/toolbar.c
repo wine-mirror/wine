@@ -330,6 +330,16 @@ static void test_add_bitmap(void)
     ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(30, 30)) == TRUE, "TB_SETBITMAPSIZE failed\n");
     UpdateWindow(hToolbar);
     CHECK_IMAGELIST(8, 30, 30);
+    /* when the width or height is zero, set it to 1 */
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(0, 0)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(208, 1, 1);
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(0, 5)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(208, 1, 5);
+    ok(SendMessageA(hToolbar, TB_SETBITMAPSIZE, 0, MAKELONG(5, 0)) == TRUE, "TB_SETBITMAPSIZE failed\n");
+    UpdateWindow(hToolbar);
+    CHECK_IMAGELIST(41, 5, 1);
 
     /* the control can add bitmaps to an existing image list */
     rebuild_toolbar(&hToolbar);
