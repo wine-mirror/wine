@@ -812,14 +812,15 @@ static void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 /* TODO: Merge with primitive type + init_materials()!! */
 static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
+    IWineD3DDeviceImpl *device = (IWineD3DDeviceImpl *)stateblock->wineD3DDevice;
     GLenum Parm = 0;
-    WineDirect3DStridedData *diffuse = &stateblock->wineD3DDevice->strided_streams.u.s.diffuse;
+    WineDirect3DStridedData *diffuse = &device->strided_streams.u.s.diffuse;
     BOOL isDiffuseSupplied;
 
     /* Depends on the decoded vertex declaration to read the existance of diffuse data.
      * The vertex declaration will call this function if the fixed function pipeline is used.
      */
-    if(isStateDirty(stateblock->wineD3DDevice, STATE_VDECL)) {
+    if(isStateDirty(device, STATE_VDECL)) {
         return;
     }
 
@@ -847,6 +848,9 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         }
     }
 
+    /* Nothing changed, return. */
+    if (Parm == device->tracking_parm) return;
+
     if(!Parm) {
         glDisable(GL_COLOR_MATERIAL);
         checkGLcall("glDisable GL_COLOR_MATERIAL");
@@ -856,6 +860,45 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         glEnable(GL_COLOR_MATERIAL);
         checkGLcall("glEnable(GL_COLOR_MATERIAL)");
     }
+
+    /* Apparently calls to glMaterialfv are ignored for properties we're
+     * tracking with glColorMaterial, so apply those here. */
+    switch (device->tracking_parm) {
+        case GL_AMBIENT_AND_DIFFUSE:
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*)&device->updateStateBlock->material.Ambient);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*)&device->updateStateBlock->material.Diffuse);
+            checkGLcall("glMaterialfv");
+            break;
+
+        case GL_DIFFUSE:
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*)&device->updateStateBlock->material.Diffuse);
+            checkGLcall("glMaterialfv");
+            break;
+
+        case GL_AMBIENT:
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*)&device->updateStateBlock->material.Ambient);
+            checkGLcall("glMaterialfv");
+            break;
+
+        case GL_EMISSION:
+            glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (float*)&device->updateStateBlock->material.Emissive);
+            checkGLcall("glMaterialfv");
+            break;
+
+        case GL_SPECULAR:
+            /* Only change material color if specular is enabled, otherwise it is set to black */
+            if (device->stateBlock->renderState[WINED3DRS_SPECULARENABLE]) {
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (float*)&device->updateStateBlock->material.Specular);
+                checkGLcall("glMaterialfv");
+            } else {
+                float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+                glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, &black[0]);
+                checkGLcall("glMaterialfv");
+            }
+            break;
+    }
+
+    device->tracking_parm = Parm;
 }
 
 static void state_linepattern(DWORD state, IWineD3DStateBlockImpl *stateblock) {
