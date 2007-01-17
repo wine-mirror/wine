@@ -38,7 +38,7 @@ static void test_SQLConfigMode(void)
 
     bool_ret = SQLSetConfigMode(3);
     sql_ret = SQLInstallerErrorW(1, &error_code, NULL, 0, NULL);
-    ok(!bool_ret && sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_PARAM_SEQUENCE, "SQLSetConfigMode with invalid argument did not fail correctly");
+    ok(!bool_ret && sql_ret == SQL_SUCCESS_WITH_INFO && error_code == ODBC_ERROR_INVALID_PARAM_SEQUENCE, "SQLSetConfigMode with invalid argument did not fail correctly\n");
 
     ok (ODBC_SYSTEM_DSN == 2 && ODBC_USER_DSN == 1 && ODBC_BOTH_DSN == 0, "SQLSetConfigMode modes not as expected\n");
     for (i = ODBC_SYSTEM_DSN; i >= ODBC_BOTH_DSN; --i)
