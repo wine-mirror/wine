@@ -249,13 +249,58 @@ static const WCHAR LPR_Port[] = {'L','P','R',':',0};
 static const WCHAR default_doc_title[] = {'L','o','c','a','l',' ','D','o','w','n','l','e','v','e','l',' ',
                                           'D','o','c','u','m','e','n','t',0};
 
-static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode);
-static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
-				      DWORD Level, LPBYTE pDriverInfo,
-				      DWORD cbBuf, LPDWORD pcbNeeded,
-				      BOOL unicode);
-static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey);
-static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey);
+
+/*****************************************************************************
+ *   WINSPOOL_SHRegDeleteKey
+ *
+ *   Recursively delete subkeys.
+ *   Cut & paste from shlwapi.
+ *
+ */
+static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
+{
+  DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
+  WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
+  HKEY hSubKey = 0;
+
+  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
+  if(!dwRet)
+  {
+    /* Find how many subkeys there are */
+    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
+                             &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
+    if(!dwRet)
+    {
+      dwMaxSubkeyLen++;
+      if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
+        /* Name too big: alloc a buffer for it */
+        lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(WCHAR));
+
+      if(!lpszName)
+        dwRet = ERROR_NOT_ENOUGH_MEMORY;
+      else
+      {
+        /* Recursively delete all the subkeys */
+        for(i = 0; i < dwKeyCount && !dwRet; i++)
+        {
+          dwSize = dwMaxSubkeyLen;
+          dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
+          if(!dwRet)
+            dwRet = WINSPOOL_SHDeleteKeyW(hSubKey, lpszName);
+        }
+
+        if (lpszName != szNameBuf)
+          HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
+      }
+    }
+
+    RegCloseKey(hSubKey);
+    if(!dwRet)
+      dwRet = RegDeleteKeyW(hKey, lpszSubKey);
+  }
+  return dwRet;
+}
+
 
 /******************************************************************
  *  validate the user-supplied printing-environment [internal]
@@ -700,109 +745,8 @@ static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *va
         return ERROR_FILE_NOT_FOUND;
 }
 
-void WINSPOOL_LoadSystemPrinters(void)
-{
-    HKEY                hkey, hkeyPrinters;
-    HANDLE              hprn;
-    DWORD               needed, num, i;
-    WCHAR               PrinterName[256];
-    BOOL                done = FALSE;
-
-    /* This ensures that all printer entries have a valid Name value.  If causes
-       problems later if they don't.  If one is found to be missed we create one
-       and set it equal to the name of the key */
-    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
-        if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
-                            NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
-            for(i = 0; i < num; i++) {
-                if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) == ERROR_SUCCESS) {
-                    if(RegOpenKeyW(hkeyPrinters, PrinterName, &hkey) == ERROR_SUCCESS) {
-                        if(RegQueryValueExW(hkey, NameW, 0, 0, 0, &needed) == ERROR_FILE_NOT_FOUND) {
-                            set_reg_szW(hkey, NameW, PrinterName);
-                        }
-                        RegCloseKey(hkey);
-                    }
-                }
-            }
-        }
-        RegCloseKey(hkeyPrinters);
-    }
-
-    /* We want to avoid calling AddPrinter on printers as much as
-       possible, because on cups printers this will (eventually) lead
-       to a call to cupsGetPPD which takes forever, even with non-cups
-       printers AddPrinter takes a while.  So we'll tag all printers that
-       were automatically added last time around, if they still exist
-       we'll leave them be otherwise we'll delete them. */
-    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
-    if(needed) {
-        PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
-        if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
-            for(i = 0; i < num; i++) {
-                if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
-                    if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
-                        if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
-                            DWORD dw = 1;
-                            RegSetValueExW(hkey, May_Delete_Value, 0, REG_DWORD, (LPBYTE)&dw, sizeof(dw));
-                            RegCloseKey(hkey);
-                        }
-                        ClosePrinter(hprn);
-                    }
-                }
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, pi);
-    }
-
-
-#ifdef HAVE_CUPS_CUPS_H
-    done = CUPS_LoadPrinters();
-#endif
-
-    if(!done) { /* If we have any CUPS based printers, skip looking for printcap printers */
-        /* Check for [ppd] section in config file before parsing /etc/printcap */
-        /* @@ Wine registry key: HKCU\Software\Wine\Printing\PPD Files */
-        if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\PPD Files",
-                        &hkey) == ERROR_SUCCESS) {
-            RegCloseKey(hkey);
-            PRINTCAP_LoadPrinters();
-        }
-    }
-
-    /* Now enumerate the list again and delete any printers that a still tagged */
-    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
-    if(needed) {
-        PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
-        if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
-            for(i = 0; i < num; i++) {
-                if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
-                    if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
-                        BOOL delete_driver = FALSE;
-                        if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
-                            DWORD dw, type, size = sizeof(dw);
-                            if(RegQueryValueExW(hkey, May_Delete_Value, NULL, &type, (LPBYTE)&dw, &size) == ERROR_SUCCESS) {
-                                TRACE("Deleting old printer %s\n", pi[i].pPrinterName);
-                                DeletePrinter(hprn);
-                                delete_driver = TRUE;
-                            }
-                            RegCloseKey(hkey);
-                        }
-                        ClosePrinter(hprn);
-                        if(delete_driver)
-                            DeletePrinterDriverExA(NULL, NULL, pi[i].pPrinterName, 0, 0);
-                    }
-                }
-            }
-        }
-        HeapFree(GetProcessHeap(), 0, pi);
-    }
-
-    return;
-
-}
-
 /*****************************************************************************
- * enumerate the local monitors (INTERNAL)  
+ * enumerate the local monitors (INTERNAL)
  *
  * returns the needed size (in bytes) for pMonitors
  * and  *lpreturned is set to number of entries returned in pMonitors
@@ -1646,6 +1590,107 @@ static DWORD WINSPOOL_GetOpenedPrinterRegKey(HANDLE hPrinter, HKEY *phkey)
     }
     RegCloseKey(hkeyPrinters);
     return ERROR_SUCCESS;
+}
+
+void WINSPOOL_LoadSystemPrinters(void)
+{
+    HKEY                hkey, hkeyPrinters;
+    HANDLE              hprn;
+    DWORD               needed, num, i;
+    WCHAR               PrinterName[256];
+    BOOL                done = FALSE;
+
+    /* This ensures that all printer entries have a valid Name value.  If causes
+       problems later if they don't.  If one is found to be missed we create one
+       and set it equal to the name of the key */
+    if(RegCreateKeyW(HKEY_LOCAL_MACHINE, PrintersW, &hkeyPrinters) == ERROR_SUCCESS) {
+        if(RegQueryInfoKeyA(hkeyPrinters, NULL, NULL, NULL, &num, NULL, NULL,
+                            NULL, NULL, NULL, NULL, NULL) == ERROR_SUCCESS) {
+            for(i = 0; i < num; i++) {
+                if(RegEnumKeyW(hkeyPrinters, i, PrinterName, sizeof(PrinterName)) == ERROR_SUCCESS) {
+                    if(RegOpenKeyW(hkeyPrinters, PrinterName, &hkey) == ERROR_SUCCESS) {
+                        if(RegQueryValueExW(hkey, NameW, 0, 0, 0, &needed) == ERROR_FILE_NOT_FOUND) {
+                            set_reg_szW(hkey, NameW, PrinterName);
+                        }
+                        RegCloseKey(hkey);
+                    }
+                }
+            }
+        }
+        RegCloseKey(hkeyPrinters);
+    }
+
+    /* We want to avoid calling AddPrinter on printers as much as
+       possible, because on cups printers this will (eventually) lead
+       to a call to cupsGetPPD which takes forever, even with non-cups
+       printers AddPrinter takes a while.  So we'll tag all printers that
+       were automatically added last time around, if they still exist
+       we'll leave them be otherwise we'll delete them. */
+    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
+    if(needed) {
+        PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
+        if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
+            for(i = 0; i < num; i++) {
+                if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
+                    if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
+                        if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
+                            DWORD dw = 1;
+                            RegSetValueExW(hkey, May_Delete_Value, 0, REG_DWORD, (LPBYTE)&dw, sizeof(dw));
+                            RegCloseKey(hkey);
+                        }
+                        ClosePrinter(hprn);
+                    }
+                }
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, pi);
+    }
+
+
+#ifdef HAVE_CUPS_CUPS_H
+    done = CUPS_LoadPrinters();
+#endif
+
+    if(!done) { /* If we have any CUPS based printers, skip looking for printcap printers */
+        /* Check for [ppd] section in config file before parsing /etc/printcap */
+        /* @@ Wine registry key: HKCU\Software\Wine\Printing\PPD Files */
+        if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\PPD Files",
+                        &hkey) == ERROR_SUCCESS) {
+            RegCloseKey(hkey);
+            PRINTCAP_LoadPrinters();
+        }
+    }
+
+    /* Now enumerate the list again and delete any printers that a still tagged */
+    EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
+    if(needed) {
+        PRINTER_INFO_5A* pi = HeapAlloc(GetProcessHeap(), 0, needed);
+        if(EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, (LPBYTE)pi, needed, &needed, &num)) {
+            for(i = 0; i < num; i++) {
+                if(pi[i].pPortName == NULL || !strncmp(pi[i].pPortName,"CUPS:", 5) || !strncmp(pi[i].pPortName, "LPR:", 4)) {
+                    if(OpenPrinterA(pi[i].pPrinterName, &hprn, NULL)) {
+                        BOOL delete_driver = FALSE;
+                        if(WINSPOOL_GetOpenedPrinterRegKey(hprn, &hkey) == ERROR_SUCCESS) {
+                            DWORD dw, type, size = sizeof(dw);
+                            if(RegQueryValueExW(hkey, May_Delete_Value, NULL, &type, (LPBYTE)&dw, &size) == ERROR_SUCCESS) {
+                                TRACE("Deleting old printer %s\n", pi[i].pPrinterName);
+                                DeletePrinter(hprn);
+                                delete_driver = TRUE;
+                            }
+                            RegCloseKey(hkey);
+                        }
+                        ClosePrinter(hprn);
+                        if(delete_driver)
+                            DeletePrinterDriverExA(NULL, NULL, pi[i].pPrinterName, 0, 0);
+                    }
+                }
+            }
+        }
+        HeapFree(GetProcessHeap(), 0, pi);
+    }
+
+    return;
+
 }
 
 /******************************************************************
@@ -3017,57 +3062,6 @@ BOOL WINAPI DeleteFormW(HANDLE hPrinter, LPWSTR pFormName)
 {
     FIXME("(%p,%s): stub\n", hPrinter, debugstr_w(pFormName));
     return 1;
-}
-
-/*****************************************************************************
- *   WINSPOOL_SHRegDeleteKey
- *
- *   Recursively delete subkeys.
- *   Cut & paste from shlwapi.
- * 
- */
-static DWORD WINSPOOL_SHDeleteKeyW(HKEY hKey, LPCWSTR lpszSubKey)
-{
-  DWORD dwRet, dwKeyCount = 0, dwMaxSubkeyLen = 0, dwSize, i;
-  WCHAR szNameBuf[MAX_PATH], *lpszName = szNameBuf;
-  HKEY hSubKey = 0;
-
-  dwRet = RegOpenKeyExW(hKey, lpszSubKey, 0, KEY_READ, &hSubKey);
-  if(!dwRet)
-  {
-    /* Find how many subkeys there are */
-    dwRet = RegQueryInfoKeyW(hSubKey, NULL, NULL, NULL, &dwKeyCount,
-                             &dwMaxSubkeyLen, NULL, NULL, NULL, NULL, NULL, NULL);
-    if(!dwRet)
-    {
-      dwMaxSubkeyLen++;
-      if (dwMaxSubkeyLen > sizeof(szNameBuf)/sizeof(WCHAR))
-        /* Name too big: alloc a buffer for it */
-        lpszName = HeapAlloc(GetProcessHeap(), 0, dwMaxSubkeyLen*sizeof(WCHAR));
-
-      if(!lpszName)
-        dwRet = ERROR_NOT_ENOUGH_MEMORY;
-      else
-      {
-        /* Recursively delete all the subkeys */
-        for(i = 0; i < dwKeyCount && !dwRet; i++)
-        {
-          dwSize = dwMaxSubkeyLen;
-          dwRet = RegEnumKeyExW(hSubKey, i, lpszName, &dwSize, NULL, NULL, NULL, NULL);
-          if(!dwRet)
-            dwRet = WINSPOOL_SHDeleteKeyW(hSubKey, lpszName);
-        }
-
-        if (lpszName != szNameBuf)
-          HeapFree(GetProcessHeap(), 0, lpszName); /* Free buffer if allocated */
-      }
-    }
-
-    RegCloseKey(hSubKey);
-    if(!dwRet)
-      dwRet = RegDeleteKeyW(hKey, lpszSubKey);
-  }
-  return dwRet;
 }
 
 /*****************************************************************************
