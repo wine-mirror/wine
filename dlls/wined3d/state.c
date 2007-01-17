@@ -812,7 +812,7 @@ static void state_fogdensity(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
 /* TODO: Merge with primitive type + init_materials()!! */
 static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
-    GLenum Parm = -1;
+    GLenum Parm = 0;
     WineDirect3DStridedData *diffuse = &stateblock->wineD3DDevice->strided_streams.u.s.diffuse;
     BOOL isDiffuseSupplied;
 
@@ -825,7 +825,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
     isDiffuseSupplied = diffuse->lpData || diffuse->VBO;
 
-    if (stateblock->renderState[WINED3DRS_COLORVERTEX]) {
+    if (isDiffuseSupplied && stateblock->renderState[WINED3DRS_COLORVERTEX]) {
         TRACE("diff %d, amb %d, emis %d, spec %d\n",
               stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE],
               stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE],
@@ -847,7 +847,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         }
     }
 
-    if(Parm == -1 || !isDiffuseSupplied) {
+    if(!Parm) {
         glDisable(GL_COLOR_MATERIAL);
         checkGLcall("glDisable GL_COLOR_MATERIAL");
     } else {
