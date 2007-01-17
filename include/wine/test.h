@@ -76,6 +76,7 @@ extern void winetest_trace( const char *msg, ... ) __attribute__((format (printf
 #else /* __GNUC__ */
 
 extern int winetest_ok( int condition, const char *msg, ... );
+extern void winetest_skip( const char *msg, ... );
 extern void winetest_trace( const char *msg, ... );
 
 #endif /* __GNUC__ */
