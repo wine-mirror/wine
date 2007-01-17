@@ -435,7 +435,7 @@ char string[MAX_PATH];
   if (context != NULL) {
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
     while (WCMD_fgets (string, sizeof(string), context -> h)) {
-      if ((string[0] == ':') && (strcmp (&string[1], param1) == 0)) return;
+      if ((string[0] == ':') && (lstrcmpi (&string[1], param1) == 0)) return;
     }
     WCMD_output ("Target to GOTO not found\n");
   }
