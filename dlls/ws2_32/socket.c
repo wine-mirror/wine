@@ -2938,7 +2938,7 @@ int WINAPI WS_setsockopt(SOCKET s, int level, int optname,
     struct linger linger;
     struct timeval tval;
 
-    TRACE("socket: %04x, level %d, name %d, ptr %p, len %d\n",
+    TRACE("socket: %04x, level 0x%x, name 0x%x, ptr %p, len %d\n",
           s, level, optname, optval, optlen);
 
     switch(level)
