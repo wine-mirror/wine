@@ -145,6 +145,10 @@ struct JoystickImpl
 	/* LUT for KEY_ to offset in rgbButtons */
 	BYTE				buttons[KEY_MAX];
 
+	DWORD                           numAxes;
+	DWORD                           numPOVs;
+	DWORD                           numButtons;
+
 	/* Force feedback variables */
 	EffectListItem*			top_effect;
 	int				ff_state;
@@ -354,7 +358,6 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
     JoystickImpl* newDevice;
     LPDIDATAFORMAT df = NULL;
     int i, idx = 0;
-    int axis = 0, btn = 0;
 
     newDevice = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(JoystickImpl));
     if (!newDevice) return NULL;
@@ -388,7 +391,7 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
         newDevice->props[idx].wantmin = newDevice->props[idx].havemin = newDevice->joydev->axes[i][AXIS_ABSMIN];
         newDevice->props[idx].wantmax = newDevice->props[idx].havemax = newDevice->joydev->axes[i][AXIS_ABSMAX];
         newDevice->props[idx].deadzone = 0;
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(axis++) | DIDFT_ABSAXIS;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
     }
 
     for (i = 0; i < WINE_JOYSTICK_MAX_POVS; i++)
@@ -401,17 +404,17 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i + WINE_JOYSTICK_MAX_AXES], df->dwObjSize);
         newDevice->axes[ABS_HAT0X + i * 2] = newDevice->axes[ABS_HAT0Y + i * 2] = i;
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(i) | DIDFT_POV;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numPOVs++) | DIDFT_POV;
     }
 
     /* Buttons can be anywhere, so check all */
-    for (i = 0; i < KEY_MAX && btn < WINE_JOYSTICK_MAX_BUTTONS; i++)
+    for (i = 0; i < KEY_MAX && newDevice->numButtons < WINE_JOYSTICK_MAX_BUTTONS; i++)
     {
         if (!test_bit(newDevice->joydev->keybits, i)) continue;
 
-        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[btn + WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS], df->dwObjSize);
-	newDevice->buttons[i] = 0x80 | btn;
-        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(btn++) | DIDFT_PSHBUTTON;
+        memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[newDevice->numButtons + WINE_JOYSTICK_MAX_AXES + WINE_JOYSTICK_MAX_POVS], df->dwObjSize);
+	newDevice->buttons[i] = 0x80 | newDevice->numButtons;
+        df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numButtons++) | DIDFT_PSHBUTTON;
     }
     df->dwNumObjs = idx;
 
@@ -851,7 +854,6 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
 	LPDIDEVCAPS lpDIDevCaps)
 {
     JoystickImpl *This = (JoystickImpl *)iface;
-    int		i,axes,buttons,povs;
 
     TRACE("%p->(%p)\n",iface,lpDIDevCaps);
 
@@ -871,35 +873,12 @@ static HRESULT WINAPI JoystickAImpl_GetCapabilities(
     else
         lpDIDevCaps->dwDevType = DIDEVTYPE_JOYSTICK | (DIDEVTYPEJOYSTICK_TRADITIONAL << 8);
 
-    axes=0;
-    for (i=0;i<ABS_MAX;i++) {
-      if (!test_bit(This->joydev->absbits,i)) continue;
-      switch (i) {
-      case ABS_HAT0X: case ABS_HAT0Y:
-      case ABS_HAT1X: case ABS_HAT1Y:
-      case ABS_HAT2X: case ABS_HAT2Y:
-      case ABS_HAT3X: case ABS_HAT3Y:
-        /* will be handled as POV - see below */
-        break;
-      default:
-        axes++;
-      }
-    }
-    buttons=0;
-    for (i=0;i<KEY_MAX;i++) if (test_bit(This->joydev->keybits,i)) buttons++;
-    povs=0;
-    for (i=0; i<4; i++) {
-      if (test_bit(This->joydev->absbits,ABS_HAT0X+(i<<1)) && test_bit(This->joydev->absbits,ABS_HAT0Y+(i<<1))) {
-        povs ++;
-      }
-    }
-
     if (This->joydev->has_ff) 
 	 lpDIDevCaps->dwFlags |= DIDC_FORCEFEEDBACK;
 
-    lpDIDevCaps->dwAxes = axes;
-    lpDIDevCaps->dwButtons = buttons;
-    lpDIDevCaps->dwPOVs = povs;
+    lpDIDevCaps->dwAxes = This->numAxes;
+    lpDIDevCaps->dwButtons = This->numButtons;
+    lpDIDevCaps->dwPOVs = This->numPOVs;
 
     return DI_OK;
 }
