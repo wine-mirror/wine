@@ -1729,7 +1729,7 @@ void pshader_glsl_texm3x3spec(SHADER_OPCODE_ARG* arg) {
     shader_addline(buffer, "tmp0.z = dot(T%u.xyz, %s);\n", reg, src0_param.param_str);
 
     /* Calculate reflection vector, 2*(tmp0.src1)*tmp0-src1
-     * This is equavalent to reflect(-src1, tmp0); */
+     * This is equivalent to reflect(-src1, tmp0); */
     shader_addline(buffer, "tmp0.xyz = reflect(-(%s), tmp0.xyz);\n", src1_param.param_str);
 
     shader_glsl_append_dst(buffer, arg);
@@ -1766,7 +1766,7 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
             current_state->texcoord_w[0], current_state->texcoord_w[1], reg);
 
     /* Calculate reflection vector (Assume normal is normalized): RF = 2*(tmp0.tmp1)*tmp0-tmp1
-     * This is equavalent to reflect(-tmp1, tmp0); */
+     * This is equivalent to reflect(-tmp1, tmp0); */
     shader_addline(buffer, "tmp0.xyz = reflect(-tmp1.xyz, tmp0.xyz);\n");
 
     shader_glsl_append_dst(buffer, arg);
