@@ -162,6 +162,12 @@ static void test_sscanf( void )
     ok(strcmp(buffer1,"def")==0, "Second %%s read incorrectly: %s\n", buffer1);
     ok(number_so_far==6, "%%n yielded wrong result: %d\n", number_so_far);
     ok(ret == 2, "%%n shouldn't count as a conversion: %d\n", ret);
+
+    /* Check where %n matches to EOF in buffer */
+    strcpy(buffer, "3:45");
+    ret = sscanf(buffer, "%d:%d%n", &hour, &min, &number_so_far);
+    ok(ret == 2, "Wrong number of arguments read: %d\n", ret);
+    ok(number_so_far == 4, "%%n yielded wrong result: %d\n", number_so_far);
 }
 
 START_TEST(scanf)

@@ -415,7 +415,7 @@ _FUNCTION_ {
 	    case 'n': {
  		    if (!suppress) {
 			int*n = va_arg(ap, int*);
-			*n = consumed - (nch!=_EOF_);
+			*n = consumed - 1;
 		    }
 		    /* This is an odd one: according to the standard,
 		     * "Execution of a %n directive does not increment the
