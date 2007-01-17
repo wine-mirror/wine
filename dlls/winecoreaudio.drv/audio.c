@@ -2186,8 +2186,11 @@ OSStatus CoreAudio_wiAudioUnitIOProc(void *inRefCon,
 
 
     if (wwi->trace_on)
-        fprintf(stderr, "trace:wave:CoreAudio_wiAudioUnitIOProc (ioActionFlags = %08lx, inTimeStamp = { %f, %llu, %f, %llu, %08lx }, inBusNumber = %lu, inNumberFrames = %lu)\n",
-            *ioActionFlags, inTimeStamp->mSampleTime, inTimeStamp->mHostTime, inTimeStamp->mRateScalar, inTimeStamp->mWordClockTime, inTimeStamp->mFlags, inBusNumber, inNumberFrames);
+        fprintf(stderr, "trace:wave:CoreAudio_wiAudioUnitIOProc (ioActionFlags = %08lx, "
+	    "inTimeStamp = { %f, %lx%08lx, %f, %lx%08lx, %08lx }, inBusNumber = %lu, inNumberFrames = %lu)\n",
+            *ioActionFlags, inTimeStamp->mSampleTime, (DWORD)(inTimeStamp->mHostTime >>32),
+	    (DWORD)inTimeStamp->mHostTime, inTimeStamp->mRateScalar, (DWORD)(inTimeStamp->mWordClockTime >> 32),
+	    (DWORD)inTimeStamp->mWordClockTime, inTimeStamp->mFlags, inBusNumber, inNumberFrames);
 
     /* Render into audio buffer */
     /* FIXME: implement sample rate conversion on input.  This will require
