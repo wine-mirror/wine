@@ -36,6 +36,7 @@
 #include "wine/unicode.h"
 #include "wine/winuser16.h"
 #include "wine/server.h"
+#include "wine/exception.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
@@ -726,7 +727,27 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     return 0;
 }
 
+static LPARAM DEFWND_GetTextA( WND *wndPtr, LPSTR dest, WPARAM wParam )
+{
+    LPARAM result = 0;
 
+    __TRY
+    {
+        if (wndPtr->text)
+        {
+            if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1,
+                                      dest, wParam, NULL, NULL )) dest[wParam-1] = 0;
+            result = strlen( dest );
+        }
+        else dest[0] = '\0';
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return 0;
+    }
+    __ENDTRY
+    return result;
+}
 
 /***********************************************************************
  *              DefWindowProcA (USER32.@)
@@ -778,13 +799,8 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
             WND *wndPtr = WIN_GetPtr( hwnd );
 
             if (!wndPtr) break;
-            if (wndPtr->text)
-            {
-                if (!WideCharToMultiByte( CP_ACP, 0, wndPtr->text, -1,
-                                          dest, wParam, NULL, NULL )) dest[wParam-1] = 0;
-                result = strlen( dest );
-            }
-            else dest[0] = '\0';
+            result = DEFWND_GetTextA( wndPtr, dest, wParam );
+
             WIN_ReleasePtr( wndPtr );
         }
         break;
@@ -862,6 +878,28 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 
+static LPARAM DEFWND_GetTextW( WND *wndPtr, LPWSTR dest, WPARAM wParam )
+{
+    LPARAM result = 0;
+
+    __TRY
+    {
+        if (wndPtr->text)
+        {
+            lstrcpynW( dest, wndPtr->text, wParam );
+            result = strlenW( dest );
+        }
+        else dest[0] = '\0';
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        return 0;
+    }
+    __ENDTRY
+
+    return result;
+}
+
 /***********************************************************************
  *              DefWindowProcW (USER32.@) Calls default window message handler
  *
@@ -917,12 +955,7 @@ LRESULT WINAPI DefWindowProcW(
             WND *wndPtr = WIN_GetPtr( hwnd );
 
             if (!wndPtr) break;
-            if (wndPtr->text)
-            {
-                lstrcpynW( dest, wndPtr->text, wParam );
-                result = strlenW( dest );
-            }
-            else dest[0] = '\0';
+            result = DEFWND_GetTextW( wndPtr, dest, wParam );
             WIN_ReleasePtr( wndPtr );
         }
         break;
