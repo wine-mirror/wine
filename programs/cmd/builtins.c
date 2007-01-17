@@ -464,7 +464,6 @@ char condition[MAX_PATH], *command, *s;
   }
   if (!lstrcmpi (condition, "errorlevel")) {
     if (errorlevel >= atoi(WCMD_parameter (p, 1+negate, NULL))) test = 1;
-    return;
     WCMD_parameter (p, 2+negate, &command);
   }
   else if (!lstrcmpi (condition, "exist")) {
