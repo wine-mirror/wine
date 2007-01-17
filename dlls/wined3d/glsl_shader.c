@@ -32,6 +32,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 
 #define GLINFO_LOCATION      (*gl_info)
 
@@ -113,7 +114,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
             for (i = 0; i < max_constants; ++i) {
                 tmp_loc = constant_locations[i];
                 if (tmp_loc != -1) {
-                    TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                    TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
                             constants[i * 4 + 0], constants[i * 4 + 1],
                             constants[i * 4 + 2], constants[i * 4 + 3]);
                 }
@@ -134,7 +135,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
                 i = constant->idx;
                 tmp_loc = constant_locations[i];
                 if (tmp_loc != -1) {
-                    TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                    TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
                             constants[i * 4 + 0], constants[i * 4 + 1],
                             constants[i * 4 + 2], constants[i * 4 + 3]);
                 }
@@ -157,7 +158,7 @@ static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL
             tmp_loc = constant_locations[lconst->idx];
             if (tmp_loc != -1) {
                 GLfloat* values = (GLfloat*)lconst->value;
-                TRACE("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
+                TRACE_(d3d_constants)("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
                         values[0], values[1], values[2], values[3]);
             }
         }
@@ -194,7 +195,7 @@ void shader_glsl_load_constantsI(
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
 
-            TRACE("Loading constants %i: %i, %i, %i, %i\n",
+            TRACE_(d3d_constants)("Loading constants %i: %i, %i, %i, %i\n",
                   i, constants[i*4], constants[i*4+1], constants[i*4+2], constants[i*4+3]);
 
             /* TODO: Benchmark and see if it would be beneficial to store the 
@@ -216,7 +217,7 @@ void shader_glsl_load_constantsI(
         unsigned int idx = lconst->idx;
         GLint* values = (GLint*) lconst->value;
 
-        TRACE("Loading local constants %i: %i, %i, %i, %i\n", idx,
+        TRACE_(d3d_constants)("Loading local constants %i: %i, %i, %i, %i\n", idx,
             values[0], values[1], values[2], values[3]);
 
         snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
@@ -252,7 +253,7 @@ void shader_glsl_load_constantsB(
     for (i=0; i<max_constants; ++i) {
         if (NULL == constants_set || constants_set[i]) {
 
-            TRACE("Loading constants %i: %i;\n", i, constants[i*4]);
+            TRACE_(d3d_constants)("Loading constants %i: %i;\n", i, constants[i*4]);
 
             /* TODO: Benchmark and see if it would be beneficial to store the 
              * locations of the constants to avoid looking up each time */
@@ -273,7 +274,7 @@ void shader_glsl_load_constantsB(
         unsigned int idx = lconst->idx;
         GLint* values = (GLint*) lconst->value;
 
-        TRACE("Loading local constants %i: %i\n", idx, values[0]);
+        TRACE_(d3d_constants)("Loading local constants %i: %i\n", idx, values[0]);
 
         snprintf(tmp_name, sizeof(tmp_name), "%s[%i]", prefix, idx);
         tmp_loc = GL_EXTCALL(glGetUniformLocationARB(programId, tmp_name));

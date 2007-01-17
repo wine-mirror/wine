@@ -33,6 +33,7 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
+WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
 
 #define GLINFO_LOCATION      (*gl_info)
 
@@ -56,7 +57,7 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
     if (!constant_list) {
         if (TRACE_ON(d3d_shader)) {
             for (i = 0; i < max_constants; ++i) {
-                TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
                         constants[i * 4 + 0], constants[i * 4 + 1],
                         constants[i * 4 + 2], constants[i * 4 + 3]);
             }
@@ -69,7 +70,7 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
         if (TRACE_ON(d3d_shader)) {
             LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
                 i = constant->idx;
-                TRACE("Loading constants %i: %f, %f, %f, %f\n", i,
+                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
                         constants[i * 4 + 0], constants[i * 4 + 1],
                         constants[i * 4 + 2], constants[i * 4 + 3]);
             }
@@ -85,7 +86,7 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
     if (TRACE_ON(d3d_shader)) {
         LIST_FOR_EACH_ENTRY(lconst, &This->baseShader.constantsF, local_constant, entry) {
             GLfloat* values = (GLfloat*)lconst->value;
-            TRACE("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
+            TRACE_(d3d_constants)("Loading local constants %i: %f, %f, %f, %f\n", lconst->idx,
                     values[0], values[1], values[2], values[3]);
         }
     }
