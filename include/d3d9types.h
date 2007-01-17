@@ -797,7 +797,6 @@ typedef enum _D3DFORMAT {
     D3DFMT_X8L8V8U8             =  62,
     D3DFMT_Q8W8V8U8             =  63,
     D3DFMT_V16U16               =  64,
-    D3DFMT_W11V11U10            =  65,
     D3DFMT_A2W10V10U10          =  67,
 
     D3DFMT_UYVY                 =  MAKEFOURCC('U', 'Y', 'V', 'Y'),
@@ -807,7 +806,7 @@ typedef enum _D3DFORMAT {
     D3DFMT_DXT3                 =  MAKEFOURCC('D', 'X', 'T', '3'),
     D3DFMT_DXT4                 =  MAKEFOURCC('D', 'X', 'T', '4'),
     D3DFMT_DXT5                 =  MAKEFOURCC('D', 'X', 'T', '5'),
-    D3DFMT_MULTI2_ARGB          =  MAKEFOURCC('M', 'E', 'T', '1'),
+    D3DFMT_MULTI2_ARGB8         =  MAKEFOURCC('M', 'E', 'T', '1'),
     D3DFMT_G8R8_G8B8            =  MAKEFOURCC('G', 'R', 'G', 'B'),
     D3DFMT_R8G8_B8G8            =  MAKEFOURCC('R', 'G', 'B', 'G'),
 
@@ -826,7 +825,7 @@ typedef enum _D3DFORMAT {
     D3DFMT_INDEX16              = 101,
     D3DFMT_INDEX32              = 102,
     D3DFMT_Q16W16V16U16         = 110,
-    /* Flaoting point formats */
+    /* Floating point formats */
     D3DFMT_R16F                 = 111,
     D3DFMT_G16R16F              = 112,
     D3DFMT_A16B16G16R16F        = 113,

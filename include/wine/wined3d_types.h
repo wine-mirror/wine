@@ -267,7 +267,7 @@ typedef enum _WINED3DFORMAT {
     WINED3DFMT_DXT3                 =  MAKEFOURCC('D', 'X', 'T', '3'),
     WINED3DFMT_DXT4                 =  MAKEFOURCC('D', 'X', 'T', '4'),
     WINED3DFMT_DXT5                 =  MAKEFOURCC('D', 'X', 'T', '5'),
-    WINED3DFMT_MULTI2_ARGB          =  MAKEFOURCC('M', 'E', 'T', '1'),
+    WINED3DFMT_MULTI2_ARGB8         =  MAKEFOURCC('M', 'E', 'T', '1'),
     WINED3DFMT_G8R8_G8B8            =  MAKEFOURCC('G', 'R', 'G', 'B'),
     WINED3DFMT_R8G8_B8G8            =  MAKEFOURCC('R', 'G', 'B', 'G'),
 
@@ -286,7 +286,7 @@ typedef enum _WINED3DFORMAT {
     WINED3DFMT_INDEX16              = 101,
     WINED3DFMT_INDEX32              = 102,
     WINED3DFMT_Q16W16V16U16         = 110,
-    /* Flaoting point formats */
+    /* Floating point formats */
     WINED3DFMT_R16F                 = 111,
     WINED3DFMT_G16R16F              = 112,
     WINED3DFMT_A16B16G16R16F        = 113,

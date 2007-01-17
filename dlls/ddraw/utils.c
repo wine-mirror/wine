@@ -255,7 +255,7 @@ PixelFormat_WineD3DtoDD(DDPIXELFORMAT *DDPixelFormat,
         case WINED3DFMT_DXT3:
         case WINED3DFMT_DXT4:
         case WINED3DFMT_DXT5:
-        case WINED3DFMT_MULTI2_ARGB:
+        case WINED3DFMT_MULTI2_ARGB8:
         case WINED3DFMT_G8R8_G8B8:
         case WINED3DFMT_R8G8_B8G8:
             DDPixelFormat->dwFlags = DDPF_FOURCC;

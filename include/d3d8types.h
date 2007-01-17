@@ -613,6 +613,8 @@ typedef enum _D3DFORMAT {
     D3DFMT_A8                   =  28,
     D3DFMT_A8R3G3B2             =  29,
     D3DFMT_X4R4G4B4             =  30,
+    D3DFMT_A2B10G10R10          =  31,
+    D3DFMT_G16R16               =  34,
 
     D3DFMT_A8P8                 =  40,
     D3DFMT_P8                   =  41,
@@ -627,6 +629,7 @@ typedef enum _D3DFORMAT {
     D3DFMT_Q8W8V8U8             =  63,
     D3DFMT_V16U16               =  64,
     D3DFMT_W11V11U10            =  65,
+    D3DFMT_A2W10V10U10          =  67,
 
     D3DFMT_UYVY                 =  MAKEFOURCC('U', 'Y', 'V', 'Y'),
     D3DFMT_YUY2                 =  MAKEFOURCC('Y', 'U', 'Y', '2'),

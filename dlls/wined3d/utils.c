@@ -43,7 +43,7 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_DXT3        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,TRUE       ,GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,GL_RGBA   ,GL_UNSIGNED_BYTE               },
     {WINED3DFMT_DXT4        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,TRUE       ,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,GL_RGBA   ,GL_UNSIGNED_BYTE               },
     {WINED3DFMT_DXT5        ,0x0        ,0x0        ,0x0        ,0x0        ,1      ,TRUE       ,GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,GL_RGBA   ,GL_UNSIGNED_BYTE               },
-    {WINED3DFMT_MULTI2_ARGB ,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,TRUE       ,0                      ,0                  ,0                              },
+    {WINED3DFMT_MULTI2_ARGB8,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,TRUE       ,0                      ,0                  ,0                              },
     {WINED3DFMT_G8R8_G8B8   ,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,TRUE       ,0                      ,0                  ,0                              },
     {WINED3DFMT_R8G8_B8G8   ,0x0        ,0x0        ,0x0        ,0x0        ,1/*?*/ ,TRUE       ,0                      ,0                  ,0                              },
     /* IEEE formats */
@@ -174,7 +174,7 @@ const char* debug_d3dformat(WINED3DFORMAT fmt) {
     FMT_TO_STR(WINED3DFMT_DXT3);
     FMT_TO_STR(WINED3DFMT_DXT4);
     FMT_TO_STR(WINED3DFMT_DXT5);
-    FMT_TO_STR(WINED3DFMT_MULTI2_ARGB);
+    FMT_TO_STR(WINED3DFMT_MULTI2_ARGB8);
     FMT_TO_STR(WINED3DFMT_G8R8_G8B8);
     FMT_TO_STR(WINED3DFMT_R8G8_B8G8);
     FMT_TO_STR(WINED3DFMT_D16_LOCKABLE);
