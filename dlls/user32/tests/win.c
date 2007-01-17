@@ -4084,6 +4084,39 @@ static void test_ShowWindow(void)
     ok(!IsWindow(hwnd), "window should not exist\n");
 }
 
+void test_gettext(void)
+{
+    WNDCLASS cls;
+    LPCSTR clsname = "gettexttest";
+    HWND hwnd;
+    LRESULT r;
+
+    memset( &cls, 0, sizeof cls );
+    cls.lpfnWndProc = DefWindowProc;
+    cls.lpszClassName = clsname;
+    cls.hInstance = GetModuleHandle(NULL);
+
+    if (!RegisterClass( &cls )) return;
+
+    hwnd = CreateWindow( clsname, "test text", WS_OVERLAPPED, 0, 0, 10, 10, 0, NULL, NULL, NULL);
+    ok( hwnd != NULL, "window was null\n");
+
+    r = SendMessage( hwnd, WM_GETTEXT, 0x10, 0x1000);
+    ok( r == 0, "settext should return zero\n");
+
+    r = SendMessage( hwnd, WM_GETTEXT, 0x10000, 0);
+    ok( r == 0, "settext should return zero (%ld)\n", r);
+
+    r = SendMessage( hwnd, WM_GETTEXT, 0xff000000, 0x1000);
+    ok( r == 0, "settext should return zero (%ld)\n", r);
+
+    r = SendMessage( hwnd, WM_GETTEXT, 0x1000, 0xff000000);
+    ok( r == 0, "settext should return zero (%ld)\n", r);
+
+    DestroyWindow(hwnd);
+    UnregisterClass( clsname, NULL );
+}
+
 START_TEST(win)
 {
     pGetAncestor = (void *)GetProcAddress( GetModuleHandleA("user32.dll"), "GetAncestor" );
@@ -4161,6 +4194,7 @@ START_TEST(win)
     test_csparentdc();
     test_SetWindowLong();
     test_ShowWindow();
+    test_gettext();
 
     /* add the tests above this line */
     UnhookWindowsHookEx(hhook);
