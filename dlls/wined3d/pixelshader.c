@@ -658,7 +658,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
 
     */
     {WINED3DSIO_NRM,      "nrm",      NULL, 1, 2, pshader_nrm,     NULL, shader_glsl_map2gl, 0, 0},
-    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, shader_glsl_sincos, WINED3DPS_VERSION(2,0), WINED3DPS_VERSION(2,0)},
+    {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 4, pshader_sincos2, NULL, shader_glsl_sincos, WINED3DPS_VERSION(2,0), WINED3DPS_VERSION(2,1)},
     {WINED3DSIO_SINCOS,   "sincos",   NULL, 1, 2, pshader_sincos3, NULL, shader_glsl_sincos, WINED3DPS_VERSION(3,0), -1},
     /* TODO: dp2add can be made out of multiple instuctions */
     {WINED3DSIO_DP2ADD,   "dp2add",   GLNAME_REQUIRE_GLSL,  1, 4, pshader_dp2add,  NULL, pshader_glsl_dp2add, WINED3DPS_VERSION(2,0), -1},
