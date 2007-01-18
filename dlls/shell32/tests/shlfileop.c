@@ -114,19 +114,80 @@ static void clean_after_shfo_tests(void)
 
 static void test_get_file_info(void)
 {
-    DWORD rc;
-    SHFILEINFO shfi;
+    DWORD rc, rc2;
+    SHFILEINFO shfi, shfi2;
+    char notepad[MAX_PATH];
 
+    /* Test some flag combinations that MSDN claims are not allowed,
+     * but which work anyway
+     */
+    shfi.dwAttributes=0xdeadbeef;
+    rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
+                      &shfi, sizeof(shfi),
+                      SHGFI_ATTRIBUTES | SHGFI_USEFILEATTRIBUTES);
+    todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent | SHGFI_ATTRIBUTES) failed\n");
+    if (rc)
+        ok(shfi.dwAttributes != 0xdeadbeef, "dwFileAttributes is not set\n");
+
+    rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
+                      &shfi, sizeof(shfi),
+                      SHGFI_EXETYPE | SHGFI_USEFILEATTRIBUTES);
+    todo_wine ok(rc == 1, "SHGetFileInfoA(c:\\nonexistent | SHGFI_EXETYPE) returned %d\n", rc);
+
+    /* Test SHGFI_USEFILEATTRIBUTES support */
     strcpy(shfi.szDisplayName, "dummy");
     shfi.iIcon=0xdeadbeef;
     rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
                       &shfi, sizeof(shfi),
                       SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
-    todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent) returned %d\n", rc);
+    todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent) failed\n");
     if (rc)
     {
         ok(strcpy(shfi.szDisplayName, "dummy") != 0, "SHGetFileInfoA(c:\\nonexistent) displayname is not set\n");
         ok(shfi.iIcon != 0xdeadbeef, "SHGetFileInfoA(c:\\nonexistent) iIcon is not set\n");
+    }
+
+    /* Wine does not have a default icon for text files, and Windows 98 fails
+     * if we give it an empty executable. So use notepad.exe as the test
+     */
+    if (SearchPath(NULL, "notepad.exe", NULL, sizeof(notepad), notepad, NULL))
+    {
+        strcpy(shfi.szDisplayName, "dummy");
+        shfi.iIcon=0xdeadbeef;
+        rc=SHGetFileInfoA(notepad, GetFileAttributes(notepad),
+                          &shfi, sizeof(shfi),
+                          SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
+        todo_wine ok(rc, "SHGetFileInfoA(%s, SHGFI_USEFILEATTRIBUTES) failed\n", notepad);
+        strcpy(shfi2.szDisplayName, "dummy");
+        shfi2.iIcon=0xdeadbeef;
+        rc2=SHGetFileInfoA(notepad, 0,
+                           &shfi2, sizeof(shfi2),
+                           SHGFI_ICONLOCATION);
+        ok(rc2, "SHGetFileInfoA(%s) failed\n", notepad);
+        if (rc && rc2)
+        {
+            ok(lstrcmpi(shfi2.szDisplayName, shfi.szDisplayName) == 0, "wrong display name %s != %s\n", shfi.szDisplayName, shfi2.szDisplayName);
+            ok(shfi2.iIcon == shfi.iIcon, "wrong icon index %d != %d\n", shfi.iIcon, shfi2.iIcon);
+        }
+    }
+
+    /* with a directory now */
+    strcpy(shfi.szDisplayName, "dummy");
+    shfi.iIcon=0xdeadbeef;
+    rc=SHGetFileInfoA("test4.txt", GetFileAttributes("test4.txt"),
+                      &shfi, sizeof(shfi),
+                      SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
+    todo_wine ok(rc, "SHGetFileInfoA(test4.txt/, SHGFI_USEFILEATTRIBUTES) failed\n");
+    strcpy(shfi2.szDisplayName, "dummy");
+    shfi2.iIcon=0xdeadbeef;
+    rc2=SHGetFileInfoA("test4.txt", 0,
+                      &shfi2, sizeof(shfi2),
+                      SHGFI_ICONLOCATION);
+    ok(rc2, "SHGetFileInfoA(test4.txt/) failed\n");
+    if (rc && rc2)
+    {
+        ok(lstrcmpi(shfi2.szDisplayName, shfi.szDisplayName) == 0, "wrong display name %s != %s\n", shfi.szDisplayName, shfi2.szDisplayName);
+        ok(shfi2.iIcon == shfi.iIcon, "wrong icon index %d != %d\n", shfi.iIcon, shfi2.iIcon);
     }
 }
 
@@ -875,7 +936,9 @@ START_TEST(shlfileop)
 
     clean_after_shfo_tests();
 
+    init_shfo_tests();
     test_get_file_info();
+    clean_after_shfo_tests();
 
     init_shfo_tests();
     test_delete();
