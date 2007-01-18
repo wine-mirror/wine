@@ -714,6 +714,7 @@ struct queue_apc_reply
 {
     struct reply_header __header;
     obj_handle_t handle;
+    int          self;
 };
 
 
@@ -4624,6 +4625,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 273
+#define SERVER_PROTOCOL_VERSION 274
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

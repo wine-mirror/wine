@@ -995,7 +995,8 @@ static void dump_queue_apc_request( const struct queue_apc_request *req )
 
 static void dump_queue_apc_reply( const struct queue_apc_reply *req )
 {
-    fprintf( stderr, " handle=%p", req->handle );
+    fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " self=%d", req->self );
 }
 
 static void dump_get_apc_request( const struct get_apc_request *req )

@@ -635,6 +635,7 @@ typedef union
     apc_call_t   call;         /* call arguments */
 @REPLY
     obj_handle_t handle;       /* APC handle */
+    int          self;         /* run APC in caller itself? */
 @END
 
 

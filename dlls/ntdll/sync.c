@@ -653,6 +653,151 @@ static int wait_reply( void *cookie )
 
 
 /***********************************************************************
+ *              invoke_apc
+ *
+ * Invoke a single APC. Return TRUE if a user APC has been run.
+ */
+static BOOL invoke_apc( const apc_call_t *call, apc_result_t *result )
+{
+    BOOL user_apc = FALSE;
+
+    memset( result, 0, sizeof(*result) );
+
+    switch (call->type)
+    {
+    case APC_USER:
+        call->user.func( call->user.args[0], call->user.args[1], call->user.args[2] );
+        user_apc = TRUE;
+        break;
+    case APC_TIMER:
+    {
+        LARGE_INTEGER time;
+        /* convert sec/usec to NT time */
+        RtlSecondsSince1970ToTime( call->timer.time.sec, &time );
+        time.QuadPart += call->timer.time.usec * 10;
+        call->timer.func( call->timer.arg, time.u.LowPart, time.u.HighPart );
+        user_apc = TRUE;
+        break;
+    }
+    case APC_ASYNC_IO:
+        NtCurrentTeb()->num_async_io--;
+        call->async_io.func( call->async_io.user, call->async_io.sb, call->async_io.status );
+        break;
+    case APC_VIRTUAL_ALLOC:
+        result->type = call->type;
+        result->virtual_alloc.addr = call->virtual_alloc.addr;
+        result->virtual_alloc.size = call->virtual_alloc.size;
+        result->virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(),
+                                                                &result->virtual_alloc.addr,
+                                                                call->virtual_alloc.zero_bits,
+                                                                &result->virtual_alloc.size,
+                                                                call->virtual_alloc.op_type,
+                                                                call->virtual_alloc.prot );
+        break;
+    case APC_VIRTUAL_FREE:
+        result->type = call->type;
+        result->virtual_free.addr = call->virtual_free.addr;
+        result->virtual_free.size = call->virtual_free.size;
+        result->virtual_free.status = NtFreeVirtualMemory( NtCurrentProcess(),
+                                                           &result->virtual_free.addr,
+                                                           &result->virtual_free.size,
+                                                           call->virtual_free.op_type );
+        break;
+    case APC_VIRTUAL_QUERY:
+    {
+        MEMORY_BASIC_INFORMATION info;
+        result->type = call->type;
+        result->virtual_query.status = NtQueryVirtualMemory( NtCurrentProcess(),
+                                                             call->virtual_query.addr,
+                                                             MemoryBasicInformation, &info,
+                                                             sizeof(info), NULL );
+        if (result->virtual_query.status == STATUS_SUCCESS)
+        {
+            result->virtual_query.base       = info.BaseAddress;
+            result->virtual_query.alloc_base = info.AllocationBase;
+            result->virtual_query.size       = info.RegionSize;
+            result->virtual_query.state      = info.State;
+            result->virtual_query.prot       = info.Protect;
+            result->virtual_query.alloc_prot = info.AllocationProtect;
+            result->virtual_query.alloc_type = info.Type;
+        }
+        break;
+    }
+    case APC_VIRTUAL_PROTECT:
+        result->type = call->type;
+        result->virtual_protect.addr = call->virtual_protect.addr;
+        result->virtual_protect.size = call->virtual_protect.size;
+        result->virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(),
+                                                                 &result->virtual_protect.addr,
+                                                                 &result->virtual_protect.size,
+                                                                 call->virtual_protect.prot,
+                                                                 &result->virtual_protect.prot );
+        break;
+    case APC_VIRTUAL_FLUSH:
+        result->type = call->type;
+        result->virtual_flush.addr = call->virtual_flush.addr;
+        result->virtual_flush.size = call->virtual_flush.size;
+        result->virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
+                                                             &result->virtual_flush.addr,
+                                                             &result->virtual_flush.size, 0 );
+        break;
+    case APC_VIRTUAL_LOCK:
+        result->type = call->type;
+        result->virtual_lock.addr = call->virtual_lock.addr;
+        result->virtual_lock.size = call->virtual_lock.size;
+        result->virtual_lock.status = NtLockVirtualMemory( NtCurrentProcess(),
+                                                           &result->virtual_lock.addr,
+                                                           &result->virtual_lock.size, 0 );
+        break;
+    case APC_VIRTUAL_UNLOCK:
+        result->type = call->type;
+        result->virtual_unlock.addr = call->virtual_unlock.addr;
+        result->virtual_unlock.size = call->virtual_unlock.size;
+        result->virtual_unlock.status = NtUnlockVirtualMemory( NtCurrentProcess(),
+                                                               &result->virtual_unlock.addr,
+                                                               &result->virtual_unlock.size, 0 );
+        break;
+    case APC_MAP_VIEW:
+    {
+        LARGE_INTEGER offset;
+        result->type = call->type;
+        result->map_view.addr   = call->map_view.addr;
+        result->map_view.size   = call->map_view.size;
+        offset.u.LowPart        = call->map_view.offset_low;
+        offset.u.HighPart       = call->map_view.offset_high;
+        result->map_view.status = NtMapViewOfSection( call->map_view.handle, NtCurrentProcess(),
+                                                      &result->map_view.addr, call->map_view.zero_bits,
+                                                      0, &offset, &result->map_view.size, ViewShare,
+                                                      call->map_view.alloc_type, call->map_view.prot );
+        NtClose( call->map_view.handle );
+        break;
+    }
+    case APC_UNMAP_VIEW:
+        result->type = call->type;
+        result->unmap_view.status = NtUnmapViewOfSection( NtCurrentProcess(), call->unmap_view.addr );
+        break;
+    case APC_CREATE_THREAD:
+    {
+        CLIENT_ID id;
+        result->type = call->type;
+        result->create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
+                                                            call->create_thread.suspend, NULL,
+                                                            call->create_thread.reserve,
+                                                            call->create_thread.commit,
+                                                            call->create_thread.func,
+                                                            call->create_thread.arg,
+                                                            &result->create_thread.handle, &id );
+        result->create_thread.tid = (thread_id_t)id.UniqueThread;
+        break;
+    }
+    default:
+        server_protocol_error( "get_apc_request: bad type %d\n", call->type );
+        break;
+    }
+    return user_apc;
+}
+
+/***********************************************************************
  *              call_apcs
  *
  * Call outstanding APCs. Return TRUE if a user APC has been run.
@@ -684,140 +829,7 @@ static BOOL call_apcs( BOOL alertable )
 
         if (ret) return user_apc;  /* no more APCs */
 
-        memset( &result, 0, sizeof(result) );
-
-        switch (call.type)
-        {
-        case APC_USER:
-            call.user.func( call.user.args[0], call.user.args[1], call.user.args[2] );
-            user_apc = TRUE;
-            break;
-        case APC_TIMER:
-        {
-            LARGE_INTEGER time;
-            /* convert sec/usec to NT time */
-            RtlSecondsSince1970ToTime( call.timer.time.sec, &time );
-            time.QuadPart += call.timer.time.usec * 10;
-            call.timer.func( call.timer.arg, time.u.LowPart, time.u.HighPart );
-            user_apc = TRUE;
-            break;
-        }
-        case APC_ASYNC_IO:
-            NtCurrentTeb()->num_async_io--;
-            call.async_io.func( call.async_io.user, call.async_io.sb, call.async_io.status );
-            break;
-        case APC_VIRTUAL_ALLOC:
-            result.type = call.type;
-            result.virtual_alloc.addr = call.virtual_alloc.addr;
-            result.virtual_alloc.size = call.virtual_alloc.size;
-            result.virtual_alloc.status = NtAllocateVirtualMemory( NtCurrentProcess(),
-                                                                   &result.virtual_alloc.addr,
-                                                                   call.virtual_alloc.zero_bits,
-                                                                   &result.virtual_alloc.size,
-                                                                   call.virtual_alloc.op_type,
-                                                                   call.virtual_alloc.prot );
-            break;
-        case APC_VIRTUAL_FREE:
-            result.type = call.type;
-            result.virtual_free.addr = call.virtual_free.addr;
-            result.virtual_free.size = call.virtual_free.size;
-            result.virtual_free.status = NtFreeVirtualMemory( NtCurrentProcess(),
-                                                              &result.virtual_free.addr,
-                                                              &result.virtual_free.size,
-                                                              call.virtual_free.op_type );
-            break;
-        case APC_VIRTUAL_QUERY:
-        {
-            MEMORY_BASIC_INFORMATION info;
-            result.type = call.type;
-            result.virtual_query.status = NtQueryVirtualMemory( NtCurrentProcess(),
-                                                                call.virtual_query.addr,
-                                                                MemoryBasicInformation, &info,
-                                                                sizeof(info), NULL );
-            if (result.virtual_query.status == STATUS_SUCCESS)
-            {
-                result.virtual_query.base       = info.BaseAddress;
-                result.virtual_query.alloc_base = info.AllocationBase;
-                result.virtual_query.size       = info.RegionSize;
-                result.virtual_query.state      = info.State;
-                result.virtual_query.prot       = info.Protect;
-                result.virtual_query.alloc_prot = info.AllocationProtect;
-                result.virtual_query.alloc_type = info.Type;
-            }
-            break;
-        }
-        case APC_VIRTUAL_PROTECT:
-            result.type = call.type;
-            result.virtual_protect.addr = call.virtual_protect.addr;
-            result.virtual_protect.size = call.virtual_protect.size;
-            result.virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(),
-                                                                    &result.virtual_protect.addr,
-                                                                    &result.virtual_protect.size,
-                                                                    call.virtual_protect.prot,
-                                                                    &result.virtual_protect.prot );
-            break;
-        case APC_VIRTUAL_FLUSH:
-            result.type = call.type;
-            result.virtual_flush.addr = call.virtual_flush.addr;
-            result.virtual_flush.size = call.virtual_flush.size;
-            result.virtual_flush.status = NtFlushVirtualMemory( NtCurrentProcess(),
-                                                                &result.virtual_flush.addr,
-                                                                &result.virtual_flush.size, 0 );
-            break;
-        case APC_VIRTUAL_LOCK:
-            result.type = call.type;
-            result.virtual_lock.addr = call.virtual_lock.addr;
-            result.virtual_lock.size = call.virtual_lock.size;
-            result.virtual_lock.status = NtLockVirtualMemory( NtCurrentProcess(),
-                                                              &result.virtual_lock.addr,
-                                                              &result.virtual_lock.size, 0 );
-            break;
-        case APC_VIRTUAL_UNLOCK:
-            result.type = call.type;
-            result.virtual_unlock.addr = call.virtual_unlock.addr;
-            result.virtual_unlock.size = call.virtual_unlock.size;
-            result.virtual_unlock.status = NtUnlockVirtualMemory( NtCurrentProcess(),
-                                                                  &result.virtual_unlock.addr,
-                                                                  &result.virtual_unlock.size, 0 );
-            break;
-        case APC_MAP_VIEW:
-        {
-            LARGE_INTEGER offset;
-            result.type = call.type;
-            result.map_view.addr   = call.map_view.addr;
-            result.map_view.size   = call.map_view.size;
-            offset.u.LowPart       = call.map_view.offset_low;
-            offset.u.HighPart      = call.map_view.offset_high;
-            result.map_view.status = NtMapViewOfSection( call.map_view.handle, NtCurrentProcess(),
-                                                         &result.map_view.addr, call.map_view.zero_bits,
-                                                         0, &offset, &result.map_view.size, ViewShare,
-                                                         call.map_view.alloc_type, call.map_view.prot );
-            NtClose( call.map_view.handle );
-            break;
-        }
-        case APC_UNMAP_VIEW:
-            result.type = call.type;
-            result.unmap_view.status = NtUnmapViewOfSection( NtCurrentProcess(),
-                                                             call.unmap_view.addr );
-            break;
-        case APC_CREATE_THREAD:
-        {
-            CLIENT_ID id;
-            result.type = call.type;
-            result.create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
-                                                               call.create_thread.suspend, NULL,
-                                                               call.create_thread.reserve,
-                                                               call.create_thread.commit,
-                                                               call.create_thread.func,
-                                                               call.create_thread.arg,
-                                                               &result.create_thread.handle, &id );
-            result.create_thread.tid = (thread_id_t)id.UniqueThread;
-            break;
-        }
-        default:
-            server_protocol_error( "get_apc_request: bad type %d\n", call.type );
-            break;
-        }
+        user_apc = invoke_apc( &call, &result );
     }
 }
 
@@ -831,28 +843,39 @@ NTSTATUS NTDLL_queue_process_apc( HANDLE process, const apc_call_t *call, apc_re
     {
         NTSTATUS ret;
         HANDLE handle = 0;
+        BOOL self = FALSE;
 
         SERVER_START_REQ( queue_apc )
         {
             req->process = process;
             req->call = *call;
-            if (!(ret = wine_server_call( req ))) handle = reply->handle;
+            if (!(ret = wine_server_call( req )))
+            {
+                handle = reply->handle;
+                self = reply->self;
+            }
         }
         SERVER_END_REQ;
+        if (ret != STATUS_SUCCESS) return ret;
 
-        if (!handle) return ret;
-
-        NtWaitForSingleObject( handle, FALSE, NULL );
-
-        SERVER_START_REQ( get_apc_result )
+        if (self)
         {
-            req->handle = handle;
-            if (!(ret = wine_server_call( req ))) *result = reply->result;
+            invoke_apc( call, result );
         }
-        SERVER_END_REQ;
+        else
+        {
+            NtWaitForSingleObject( handle, FALSE, NULL );
 
-        if (!ret && result->type == APC_NONE) continue;  /* APC didn't run, try again */
-        if (ret) NtClose( handle );
+            SERVER_START_REQ( get_apc_result )
+            {
+                req->handle = handle;
+                if (!(ret = wine_server_call( req ))) *result = reply->result;
+            }
+            SERVER_END_REQ;
+
+            if (!ret && result->type == APC_NONE) continue;  /* APC didn't run, try again */
+            if (ret) NtClose( handle );
+        }
         return ret;
     }
 }

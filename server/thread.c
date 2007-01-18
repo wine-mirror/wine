@@ -1172,7 +1172,7 @@ DECL_HANDLER(queue_apc)
         break;
     case APC_MAP_VIEW:
         process = get_process_from_handle( req->process, PROCESS_VM_OPERATION );
-        if (process)
+        if (process && process != current->process)
         {
             /* duplicate the handle into the target process */
             obj_handle_t handle = duplicate_handle( current->process, apc->call.map_view.handle,
@@ -1200,18 +1200,22 @@ DECL_HANDLER(queue_apc)
     }
     else if (process)
     {
-        obj_handle_t handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 );
-        if (handle)
+        reply->self = (process == current->process);
+        if (!reply->self)
         {
-            if (queue_apc( process, NULL, apc ))
+            obj_handle_t handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 );
+            if (handle)
             {
-                apc->caller = (struct thread *)grab_object( current );
-                reply->handle = handle;
-            }
-            else
-            {
-                close_handle( current->process, handle );
-                set_error( STATUS_PROCESS_IS_TERMINATING );
+                if (queue_apc( process, NULL, apc ))
+                {
+                    apc->caller = (struct thread *)grab_object( current );
+                    reply->handle = handle;
+                }
+                else
+                {
+                    close_handle( current->process, handle );
+                    set_error( STATUS_PROCESS_IS_TERMINATING );
+                }
             }
         }
         release_object( process );
