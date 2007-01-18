@@ -346,6 +346,8 @@ static void start_thread( struct wine_pthread_thread_info *info )
     size = page_size;
     NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size, PAGE_NOACCESS, NULL );
 
+    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &teb->TlsLinks );
     RtlReleasePebLock();
@@ -380,6 +382,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
                                      PRTL_THREAD_START_ROUTINE start, void *param,
                                      HANDLE *handle_ptr, CLIENT_ID *id )
 {
+    sigset_t sigset;
     struct ntdll_thread_data *thread_data;
     struct ntdll_thread_regs *thread_regs = NULL;
     struct startup_info *info = NULL;
@@ -416,7 +419,13 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     }
     SERVER_END_REQ;
 
-    if (status) goto error;
+    if (status)
+    {
+        close( request_pipe[1] );
+        return status;
+    }
+
+    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, &sigset );
 
     addr = NULL;
     size = sigstack_total_size;
@@ -469,6 +478,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         status = STATUS_NO_MEMORY;
         goto error;
     }
+    pthread_functions.sigprocmask( SIG_SETMASK, &sigset, NULL );
 
     if (id) id->UniqueThread = (HANDLE)tid;
     if (handle_ptr) *handle_ptr = handle;
@@ -484,6 +494,7 @@ error:
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     if (handle) NtClose( handle );
+    pthread_functions.sigprocmask( SIG_SETMASK, &sigset, NULL );
     close( request_pipe[1] );
     return status;
 }

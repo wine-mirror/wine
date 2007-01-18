@@ -1018,6 +1018,7 @@ void server_init_process(void)
     sigaddset( &server_block_set, SIGUSR1 );
     sigaddset( &server_block_set, SIGUSR2 );
     sigaddset( &server_block_set, SIGCHLD );
+    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
 
     /* receive the first thread request fd on the main socket */
     ntdll_get_thread_data()->request_fd = receive_fd( &dummy_handle );
@@ -1025,6 +1026,38 @@ void server_init_process(void)
 #ifdef __APPLE__
     send_server_task_port();
 #endif
+}
+
+
+/***********************************************************************
+ *           server_init_process_done
+ */
+NTSTATUS server_init_process_done(void)
+{
+    PEB *peb = NtCurrentTeb()->Peb;
+    IMAGE_NT_HEADERS *nt = RtlImageNtHeader( peb->ImageBaseAddress );
+    NTSTATUS status;
+
+    /* Install signal handlers; this cannot be done earlier, since we cannot
+     * send exceptions to the debugger before the create process event that
+     * is sent by REQ_INIT_PROCESS_DONE.
+     * We do need the handlers in place by the time the request is over, so
+     * we set them up here. If we segfault between here and the server call
+     * something is very wrong... */
+    if (!SIGNAL_Init()) exit(1);
+
+    /* Signal the parent process to continue */
+    SERVER_START_REQ( init_process_done )
+    {
+        req->module = peb->ImageBaseAddress;
+        req->entry  = (char *)peb->ImageBaseAddress + nt->OptionalHeader.AddressOfEntryPoint;
+        req->gui    = (nt->OptionalHeader.Subsystem != IMAGE_SUBSYSTEM_WINDOWS_CUI);
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    pthread_functions.sigprocmask( SIG_UNBLOCK, &server_block_set, NULL );
+    return status;
 }
 
 
