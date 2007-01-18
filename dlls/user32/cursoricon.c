@@ -1823,16 +1823,31 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     HICON16 hObj;
     int	sizeXor,sizeAnd;
 
-    if (iconinfo->hbmColor) GetObjectA( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
-    GetObjectA( iconinfo->hbmMask, sizeof(bmpAnd), &bmpAnd );
+    TRACE("color %p, mask %p, hotspot %ux%u, fIcon %d\n",
+           iconinfo->hbmColor, iconinfo->hbmMask,
+           iconinfo->xHotspot, iconinfo->yHotspot, iconinfo->fIcon);
+
+    if (iconinfo->hbmColor)
+    {
+        GetObjectW( iconinfo->hbmColor, sizeof(bmpXor), &bmpXor );
+        TRACE("color: width %d, height %d, width bytes %d, planes %u, bpp %u\n",
+               bmpXor.bmWidth, bmpXor.bmHeight, bmpXor.bmWidthBytes,
+               bmpXor.bmPlanes, bmpXor.bmBitsPixel);
+    }
+    GetObjectW( iconinfo->hbmMask, sizeof(bmpAnd), &bmpAnd );
+    TRACE("mask: width %d, height %d, width bytes %d, planes %u, bpp %u\n",
+           bmpAnd.bmWidth, bmpAnd.bmHeight, bmpAnd.bmWidthBytes,
+           bmpAnd.bmPlanes, bmpAnd.bmBitsPixel);
 
     sizeXor = iconinfo->hbmColor ? (bmpXor.bmHeight * bmpXor.bmWidthBytes) : 0;
-    sizeAnd = bmpAnd.bmHeight * bmpAnd.bmWidthBytes;
+    sizeAnd = bmpAnd.bmHeight * get_bitmap_width_bytes(bmpAnd.bmWidth, 1);
 
     hObj = GlobalAlloc16( GMEM_MOVEABLE,
                           sizeof(CURSORICONINFO) + sizeXor + sizeAnd );
     if (hObj)
     {
+        HDC hdc;
+        BITMAPINFO bi;
         CURSORICONINFO *info;
 
         info = (CURSORICONINFO *)GlobalLock16( hObj );
@@ -1860,15 +1875,27 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         else
         {
             info->nWidth        = bmpAnd.bmWidth;
-            info->nHeight       = bmpAnd.bmHeight / 2;
-            info->nWidthBytes   = bmpAnd.bmWidthBytes;
-            info->bPlanes       = bmpAnd.bmPlanes;
-            info->bBitsPerPixel = bmpAnd.bmBitsPixel;
+            info->nHeight       = bmpAnd.bmHeight * 2;
+            info->nWidthBytes   = get_bitmap_width_bytes(bmpAnd.bmWidth, 1);
+            info->bPlanes       = 1;
+            info->bBitsPerPixel = 1;
         }
 
         /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
-        GetBitmapBits( iconinfo->hbmMask, sizeAnd, (char*)(info + 1) );
+        /* Some apps pass a color bitmap as a mask, convert it to b/w */
+        hdc = GetDC( 0 );
+        memset(&bi, 0, sizeof(bi) );
+        bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bi.bmiHeader.biWidth = bmpAnd.bmWidth;
+        bi.bmiHeader.biHeight = bmpAnd.bmHeight;
+        bi.bmiHeader.biPlanes = 1;
+        bi.bmiHeader.biBitCount = 1;
+        bi.bmiHeader.biCompression = BI_RGB;
+        bi.bmiHeader.biSizeImage = sizeAnd;
+        GetDIBits( hdc, iconinfo->hbmMask, 0, bmpAnd.bmHeight, (char*)(info + 1), &bi, DIB_RGB_COLORS );
+        ReleaseDC( 0, hdc );
+
         if (iconinfo->hbmColor) GetBitmapBits( iconinfo->hbmColor, sizeXor, (char*)(info + 1) + sizeAnd );
         GlobalUnlock16( hObj );
     }
