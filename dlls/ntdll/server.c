@@ -458,10 +458,8 @@ static int receive_fd( obj_handle_t *handle )
 }
 
 
-inline static unsigned int handle_to_index( obj_handle_t handle )
-{
-    return ((unsigned long)handle >> 2) - 1;
-}
+/***********************************************************************/
+/* fd cache support */
 
 struct fd_cache_entry
 {
@@ -469,8 +467,19 @@ struct fd_cache_entry
     enum server_fd_type type;
 };
 
-static struct fd_cache_entry *fd_cache;
-static unsigned int fd_cache_size;
+#define FD_CACHE_BLOCK_SIZE  (65536 / sizeof(struct fd_cache_entry))
+#define FD_CACHE_ENTRIES     128
+
+static struct fd_cache_entry *fd_cache[FD_CACHE_ENTRIES];
+static struct fd_cache_entry fd_cache_initial_block[FD_CACHE_BLOCK_SIZE];
+
+inline static unsigned int handle_to_index( obj_handle_t handle, unsigned int *entry )
+{
+    unsigned long idx = ((unsigned long)handle >> 2) - 1;
+    *entry = idx / FD_CACHE_BLOCK_SIZE;
+    return idx % FD_CACHE_BLOCK_SIZE;
+}
+
 
 /***********************************************************************
  *           add_fd_to_cache
@@ -479,35 +488,31 @@ static unsigned int fd_cache_size;
  */
 static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type type )
 {
-    unsigned int idx = handle_to_index( handle );
+    unsigned int entry, idx = handle_to_index( handle, &entry );
+    int prev_fd;
 
-    if (idx >= fd_cache_size)
+    if (entry >= FD_CACHE_ENTRIES)
     {
-        unsigned int i, size = max( 32, fd_cache_size * 2 );
-        struct fd_cache_entry *new_cache;
+        FIXME( "too many allocated handles, not caching %p\n", handle );
+        return 0;
+    }
 
-        if (size <= idx) size = idx + 1;
-        if (fd_cache)
-            new_cache = RtlReAllocateHeap( GetProcessHeap(), 0, fd_cache, size*sizeof(fd_cache[0]) );
+    if (!fd_cache[entry])  /* do we need to allocate a new block of entries? */
+    {
+        if (!entry) fd_cache[0] = fd_cache_initial_block;
         else
-            new_cache = RtlAllocateHeap( GetProcessHeap(), 0, size*sizeof(fd_cache[0]) );
-
-        if (new_cache)
         {
-            for (i = fd_cache_size; i < size; i++) new_cache[i].fd = -1;
-            fd_cache = new_cache;
-            fd_cache_size = size;
+            void *ptr = wine_anon_mmap( NULL, FD_CACHE_BLOCK_SIZE * sizeof(struct fd_cache_entry),
+                                        PROT_READ | PROT_WRITE, 0 );
+            if (ptr == MAP_FAILED) return 0;
+            fd_cache[entry] = ptr;
         }
     }
-    if (idx < fd_cache_size)
-    {
-        assert( fd_cache[idx].fd == -1 );
-        fd_cache[idx].fd   = fd;
-        fd_cache[idx].type = type;
-        TRACE("added %p (%d) type %d to cache\n", handle, fd, type );
-        return 1;
-    }
-    return 0;
+    /* store fd+1 so that 0 can be used as the unset value */
+    prev_fd = interlocked_xchg( &fd_cache[entry][idx].fd, fd + 1 ) - 1;
+    fd_cache[entry][idx].type = type;
+    if (prev_fd != -1) close( prev_fd );
+    return 1;
 }
 
 
@@ -518,13 +523,13 @@ static int add_fd_to_cache( obj_handle_t handle, int fd, enum server_fd_type typ
  */
 static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type )
 {
-    unsigned int idx = handle_to_index( handle );
+    unsigned int entry, idx = handle_to_index( handle, &entry );
     int fd = -1;
 
-    if (idx < fd_cache_size)
+    if (entry < FD_CACHE_ENTRIES && fd_cache[entry])
     {
-        fd = fd_cache[idx].fd;
-        if (type) *type = fd_cache[idx].type;
+        fd = fd_cache[entry][idx].fd - 1;
+        if (type) *type = fd_cache[entry][idx].type;
     }
     return fd;
 }
@@ -535,22 +540,12 @@ static inline int get_cached_fd( obj_handle_t handle, enum server_fd_type *type 
  */
 int server_remove_fd_from_cache( obj_handle_t handle )
 {
-    unsigned int idx = handle_to_index( handle );
+    unsigned int entry, idx = handle_to_index( handle, &entry );
     int fd = -1;
 
-    RtlEnterCriticalSection( &fd_cache_section );
-    if (idx < fd_cache_size)
-    {
-        fd = fd_cache[idx].fd;
-        fd_cache[idx].fd = -1;
-    }
-    RtlLeaveCriticalSection( &fd_cache_section );
+    if (entry < FD_CACHE_ENTRIES && fd_cache[entry])
+        fd = interlocked_xchg( &fd_cache[entry][idx].fd, 0 ) - 1;
 
-    if (fd != -1)
-    {
-        close( fd );
-        TRACE("removed %p (%d) from cache\n", handle, fd );
-    }
     return fd;
 }
 
