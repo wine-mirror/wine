@@ -651,7 +651,7 @@ static const IStreamVtbl HGLOBALStreamImpl_Vtbl =
  *    fDeleteOnRelease - Flag set to TRUE if the HGLOBAL will be released
  *                       when the IStream object is destroyed.
  */
-HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
+static HGLOBALStreamImpl* HGLOBALStreamImpl_Construct(
 		HGLOBAL  hGlobal,
 		BOOL     fDeleteOnRelease)
 {

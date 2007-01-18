@@ -81,11 +81,11 @@ typedef struct HGLOBALLockBytesImpl HGLOBALLockBytesImpl;
 /*
  * Method definition for the HGLOBALLockBytesImpl class.
  */
-HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(
+static HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(
     HGLOBAL  hGlobal,
     BOOL     fDeleteOnRelease);
 
-void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This);
+static void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This);
 
 static HRESULT WINAPI HGLOBALLockBytesImpl_SetSize( ILockBytes* iface, ULARGE_INTEGER libNewSize );
 
@@ -196,8 +196,8 @@ HRESULT WINAPI GetHGlobalFromILockBytes(ILockBytes* plkbyt, HGLOBAL* phglobal)
  *    fDeleteOnRelease [ I] Flag set to TRUE if the HGLOBAL will be released
  *                          when the IStream object is destroyed.
  */
-HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
-                                                     BOOL    fDeleteOnRelease)
+static HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
+                                                            BOOL    fDeleteOnRelease)
 {
   HGLOBALLockBytesImpl* newLockBytes;
   newLockBytes = HeapAlloc(GetProcessHeap(), 0, sizeof(HGLOBALLockBytesImpl));
@@ -244,7 +244,7 @@ HGLOBALLockBytesImpl* HGLOBALLockBytesImpl_Construct(HGLOBAL hGlobal,
  * HGLOBALLockBytesImpl class. The pointer passed-in to this function will be
  * freed and will not be valid anymore.
  */
-void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This)
+static void HGLOBALLockBytesImpl_Destroy(HGLOBALLockBytesImpl* This)
 {
   /*
    * Release the HGlobal if the constructor asked for that.

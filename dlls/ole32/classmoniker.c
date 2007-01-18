@@ -694,7 +694,7 @@ static const IROTDataVtbl ROTDataVtbl =
 /******************************************************************************
  *         ClassMoniker_Construct (local function)
  *******************************************************************************/
-HRESULT WINAPI ClassMoniker_Construct(ClassMoniker* This, REFCLSID rclsid)
+static HRESULT WINAPI ClassMoniker_Construct(ClassMoniker* This, REFCLSID rclsid)
 {
     TRACE("(%p,%s)\n",This,debugstr_guid(rclsid));
 
