@@ -231,6 +231,7 @@ HANDLE thread_init(void)
     sigstack_total_size = get_signal_stack_total_size();
     while (1 << sigstack_zero_bits < sigstack_total_size) sigstack_zero_bits++;
     assert( 1 << sigstack_zero_bits == sigstack_total_size );  /* must be a power of 2 */
+    assert( sigstack_total_size >= sizeof(TEB) + sizeof(struct startup_info) );
     thread_info.teb_size = sigstack_total_size;
 
     addr = NULL;
@@ -344,7 +345,6 @@ static void start_thread( struct wine_pthread_thread_info *info )
     /* setup the guard page */
     size = page_size;
     NtProtectVirtualMemory( NtCurrentProcess(), &teb->DeallocationStack, &size, PAGE_NOACCESS, NULL );
-    RtlFreeHeap( GetProcessHeap(), 0, info );
 
     RtlAcquirePebLock();
     InsertHeadList( &tls_links, &teb->TlsLinks );
@@ -418,12 +418,6 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
 
     if (status) goto error;
 
-    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*info) )))
-    {
-        status = STATUS_NO_MEMORY;
-        goto error;
-    }
-
     addr = NULL;
     size = sigstack_total_size;
     if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, sigstack_zero_bits,
@@ -431,6 +425,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
         goto error;
     teb = addr;
     teb->Peb = NtCurrentTeb()->Peb;
+    info = (struct startup_info *)(teb + 1);
     info->pthread_info.teb_size = size;
     if ((status = init_teb( teb ))) goto error;
 
@@ -488,7 +483,6 @@ error:
         SIZE_T size = 0;
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
-    RtlFreeHeap( GetProcessHeap(), 0, info );
     if (handle) NtClose( handle );
     close( request_pipe[1] );
     return status;
