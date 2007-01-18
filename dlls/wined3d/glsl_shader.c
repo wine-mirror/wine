@@ -711,9 +711,11 @@ static void shader_glsl_get_register_name(
 static DWORD shader_glsl_get_write_mask(const DWORD param, char *write_mask) {
     char *ptr = write_mask;
     DWORD mask = param & WINED3DSP_WRITEMASK_ALL;
+    DWORD reg_type = shader_get_regtype(param);
 
-    /* gl_FogFragCoord and glPointSize are floats, fixup the write mask. */
-    if ((shader_get_regtype(param) == WINED3DSPR_RASTOUT) && ((param & WINED3DSP_REGNUM_MASK) != 0)) {
+    /* gl_FogFragCoord, gl_PointSize and gl_FragDepth are floats, fixup the write mask. */
+    if (((reg_type == WINED3DSPR_RASTOUT) && ((param & WINED3DSP_REGNUM_MASK) != 0))
+            || reg_type == WINED3DSPR_DEPTHOUT) {
         mask = WINED3DSP_WRITEMASK_0;
     } else {
         *ptr++ = '.';
