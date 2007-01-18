@@ -490,7 +490,7 @@ BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess, PHAND
     }
     else
     {
-        *phXcv = (HANDLE) NULL;
+        *phXcv = NULL;
         return FALSE;
     }
 }
