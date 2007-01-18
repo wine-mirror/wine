@@ -45,42 +45,6 @@
 #include "kernel_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
-WINE_DECLARE_DEBUG_CHANNEL(relay);
-
-
-struct new_thread_info
-{
-    LPTHREAD_START_ROUTINE func;
-    void                  *arg;
-};
-
-
-/***********************************************************************
- *           THREAD_Start
- *
- * Start execution of a newly created thread. Does not return.
- */
-static void CALLBACK THREAD_Start( void *ptr )
-{
-    struct new_thread_info *info = ptr;
-    LPTHREAD_START_ROUTINE func = info->func;
-    void *arg = info->arg;
-
-    RtlFreeHeap( GetProcessHeap(), 0, info );
-
-    if (TRACE_ON(relay))
-        DPRINTF("%04x:Starting thread (entryproc=%p)\n", GetCurrentThreadId(), func );
-
-    __TRY
-    {
-        ExitThread( func( arg ) );
-    }
-    __EXCEPT(UnhandledExceptionFilter)
-    {
-        TerminateThread( GetCurrentThread(), GetExceptionCode() );
-    }
-    __ENDTRY
-}
 
 
 /***********************************************************************
@@ -120,22 +84,13 @@ HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE
     CLIENT_ID client_id;
     NTSTATUS status;
     SIZE_T stack_reserve = 0, stack_commit = 0;
-    struct new_thread_info *info;
-
-    if (!(info = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*info) )))
-    {
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return 0;
-    }
-    info->func = start;
-    info->arg  = param;
 
     if (flags & STACK_SIZE_PARAM_IS_A_RESERVATION) stack_reserve = stack;
     else stack_commit = stack;
 
     status = RtlCreateUserThread( hProcess, NULL, TRUE,
                                   NULL, stack_reserve, stack_commit,
-                                  THREAD_Start, info, &handle, &client_id );
+                                  (PRTL_THREAD_START_ROUTINE)start, param, &handle, &client_id );
     if (status == STATUS_SUCCESS)
     {
         if (id) *id = (DWORD)client_id.UniqueThread;
@@ -147,7 +102,6 @@ HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE
             if (NtResumeThread( handle, &ret ))
             {
                 NtClose( handle );
-                RtlFreeHeap( GetProcessHeap(), 0, info );
                 SetLastError( ERROR_NOT_ENOUGH_MEMORY );
                 handle = 0;
             }
@@ -155,7 +109,6 @@ HANDLE WINAPI CreateRemoteThread( HANDLE hProcess, SECURITY_ATTRIBUTES *sa, SIZE
     }
     else
     {
-        RtlFreeHeap( GetProcessHeap(), 0, info );
         SetLastError( RtlNtStatusToDosError(status) );
         handle = 0;
     }

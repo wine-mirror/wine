@@ -43,6 +43,7 @@
 #include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 /* info passed to a starting thread */
 struct startup_info
@@ -349,6 +350,47 @@ static PUNHANDLED_EXCEPTION_FILTER get_unhandled_exception_filter(void)
 }
 
 /***********************************************************************
+ *           call_thread_func
+ *
+ * Hack to make things compatible with the thread procedures used by kernel32.CreateThread.
+ */
+static void DECLSPEC_NORETURN call_thread_func( PRTL_THREAD_START_ROUTINE rtl_func, void *arg )
+{
+    LPTHREAD_START_ROUTINE func = (LPTHREAD_START_ROUTINE)rtl_func;
+    DWORD exit_code;
+    BOOL last;
+
+    MODULE_DllThreadAttach( NULL );
+
+    if (TRACE_ON(relay))
+        DPRINTF( "%04x:Starting thread proc %p (arg=%p)\n", GetCurrentThreadId(), func, arg );
+
+    exit_code = func( arg );
+
+    /* send the exit code to the server */
+    SERVER_START_REQ( terminate_thread )
+    {
+        req->handle    = GetCurrentThread();
+        req->exit_code = exit_code;
+        wine_server_call( req );
+        last = reply->last;
+    }
+    SERVER_END_REQ;
+
+    if (last)
+    {
+        LdrShutdownProcess();
+        exit( exit_code );
+    }
+    else
+    {
+        LdrShutdownThread();
+        server_exit_thread( exit_code );
+    }
+}
+
+
+/***********************************************************************
  *           start_thread
  *
  * Startup routine for a newly created thread.
@@ -397,7 +439,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
     {
         __TRY
         {
-            MODULE_DllThreadAttach( NULL );
+            call_thread_func( func, arg );
         }
         __EXCEPT(get_unhandled_exception_filter())
         {
@@ -406,9 +448,7 @@ static void start_thread( struct wine_pthread_thread_info *info )
         __ENDTRY
     }
     else
-        MODULE_DllThreadAttach( NULL );
-
-    func( arg );
+        call_thread_func( func, arg );
 }
 
 
