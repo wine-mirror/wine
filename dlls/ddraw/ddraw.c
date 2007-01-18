@@ -301,99 +301,6 @@ IDirectDrawImpl_Release(IDirectDraw7 *iface)
  *****************************************************************************/
 
 /*****************************************************************************
- * IDirectDrawImpl_SetupExclusiveWindow
- *
- * Helper function that modifies a HWND's Style and ExStyle for proper
- * fullscreen use.
- *
- * Params:
- *  This: Pointer to the DirectDraw implementation
- *  HWND: Window to setup
- *
- *****************************************************************************/
-static void
-IDirectDrawImpl_SetupFullscreenWindow(IDirectDrawImpl *This,
-                                      HWND window)
-{
-    LONG style, exStyle;
-    /* Don't do anything if an original style is stored.
-     * That shouldn't happen
-     */
-    TRACE("(%p): Setting up window %p for exclusive mode\n", This, window);
-    if( (This->style != 0) && (This->exStyle != 0) )
-    {
-        ERR("(%p) Want to change the window parameters of HWND %p, but "
-            "another style is stored for restauration afterwards\n", This, window);
-    }
-
-    /* Get the parameters and save them */
-    style = GetWindowLongW(window, GWL_STYLE);
-    exStyle = GetWindowLongW(window, GWL_EXSTYLE);
-    This->style = style;
-    This->exStyle = exStyle;
-
-    /* Filter out window decorations */
-    style &= ~WS_CAPTION;
-    style &= ~WS_THICKFRAME;
-    exStyle &= ~WS_EX_WINDOWEDGE;
-    exStyle &= ~WS_EX_CLIENTEDGE;
-
-    /* Make sure the window is managed, otherwise we won't get keyboard input */
-    style |= WS_POPUP | WS_SYSMENU;
-
-    TRACE("Old style was %08x,%08x, setting to %08x,%08x\n",
-          This->style, This->exStyle, style, exStyle);
-
-    SetWindowLongW(window, GWL_STYLE, style);
-    SetWindowLongW(window, GWL_EXSTYLE, exStyle);
-
-    /* Inform the window about the update.
-     * TODO: Should I move it to 0/0 too?
-     */
-    SetWindowPos(window, 0 /* InsertAfter, ignored */,
-                 0, 0, 0, 0, /* Pos, Size, ignored */
-                 SWP_FRAMECHANGED | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER);
-}
-
-/*****************************************************************************
- * IDirectDrawImpl_RestoreWindow
- *
- * Helper function that restores a windows' properties when taking it out
- * of fullscreen mode
- *
- * Params:
- *  This: Pointer to the DirectDraw implementation
- *  HWND: Window to setup
- *
- *****************************************************************************/
-static void
-IDirectDrawImpl_RestoreWindow(IDirectDrawImpl *This,
-                              HWND window)
-{
-    if( (This->style == 0) && (This->exStyle == 0) )
-    {
-        /* This could be a DDSCL_NORMAL -> DDSCL_NORMAL
-         * switch, do nothing
-         */
-        return;
-    }
-    TRACE("(%p): Restoring window settings of window %p to %08x, %08x\n",
-          This, window, This->style, This->exStyle);
-
-    SetWindowLongW(window, GWL_STYLE, This->style);
-    SetWindowLongW(window, GWL_EXSTYLE, This->exStyle);
-
-    /* Delete the old values */
-    This->style = 0;
-    This->exStyle = 0;
-
-    /* Inform the window about the update */
-    SetWindowPos(window, 0 /* InsertAfter, ignored */,
-                 0, 0, 0, 0, /* Pos, Size, ignored */
-                 SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
-}
-
-/*****************************************************************************
  * IDirectDraw7::SetCooperativeLevel
  *
  * Sets the cooperative level for the DirectDraw object, and the window
@@ -520,7 +427,7 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             IDirectDraw7_RestoreDisplayMode(iface);
 
             if(window)
-                IDirectDrawImpl_RestoreWindow(This, window);
+                IWineD3DDevice_RestoreWindow(This->wineD3DDevice, window);
 
             This->cooperative_level &= ~DDSCL_FULLSCREEN;
             This->cooperative_level &= ~DDSCL_EXCLUSIVE;
@@ -573,8 +480,8 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             if(window != hwnd)
             {
                 if(window)
-                    IDirectDrawImpl_RestoreWindow(This, window);
-                IDirectDrawImpl_SetupFullscreenWindow(This, hwnd);
+                    IWineD3DDevice_RestoreWindow(This->wineD3DDevice, window);
+                IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, hwnd);
             }
             IWineD3DDevice_SetHWND(This->wineD3DDevice, hwnd);
         }

@@ -560,6 +560,10 @@ typedef struct IWineD3DDeviceImpl
     IUnknown               *parent;
     IWineD3D               *wineD3D;
 
+    /* Window styles to restore when switching fullscreen mode */
+    LONG                    style;
+    LONG                    exStyle;
+
     /* X and GL Information */
     GLint                   maxConcurrentLights;
 

@@ -1252,6 +1252,91 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
     return WINED3D_OK;
 }
 
+/*****************************************************************************
+ * IWineD3DDeviceImpl_SetupFullscreenWindow
+ *
+ * Helper function that modifies a HWND's Style and ExStyle for proper
+ * fullscreen use.
+ *
+ * Params:
+ *  iface: Pointer to the IWineD3DDevice interface
+ *  window: Window to setup
+ *
+ *****************************************************************************/
+static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *iface, HWND window) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    LONG style, exStyle;
+    /* Don't do anything if an original style is stored.
+     * That shouldn't happen
+     */
+    TRACE("(%p): Setting up window %p for exclusive mode\n", This, window);
+    if (This->style && This->exStyle) {
+        ERR("(%p): Want to change the window parameters of HWND %p, but "
+            "another style is stored for restoration afterwards\n", This, window);
+    }
+
+    /* Get the parameters and save them */
+    style = GetWindowLongW(window, GWL_STYLE);
+    exStyle = GetWindowLongW(window, GWL_EXSTYLE);
+    This->style = style;
+    This->exStyle = exStyle;
+
+    /* Filter out window decorations */
+    style &= ~WS_CAPTION;
+    style &= ~WS_THICKFRAME;
+    exStyle &= ~WS_EX_WINDOWEDGE;
+    exStyle &= ~WS_EX_CLIENTEDGE;
+
+    /* Make sure the window is managed, otherwise we won't get keyboard input */
+    style |= WS_POPUP | WS_SYSMENU;
+
+    TRACE("Old style was %08x,%08x, setting to %08x,%08x\n",
+          This->style, This->exStyle, style, exStyle);
+
+    SetWindowLongW(window, GWL_STYLE, style);
+    SetWindowLongW(window, GWL_EXSTYLE, exStyle);
+
+    /* Inform the window about the update. */
+    SetWindowPos(window, HWND_TOP, 0, 0,
+            This->ddraw_width, This->ddraw_height, SWP_FRAMECHANGED);
+}
+
+/*****************************************************************************
+ * IWineD3DDeviceImpl_RestoreWindow
+ *
+ * Helper function that restores a windows' properties when taking it out
+ * of fullscreen mode
+ *
+ * Params:
+ *  iface: Pointer to the IWineD3DDevice interface
+ *  window: Window to setup
+ *
+ *****************************************************************************/
+static void WINAPI IWineD3DDeviceImpl_RestoreWindow(IWineD3DDevice *iface, HWND window) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+
+    /* This could be a DDSCL_NORMAL -> DDSCL_NORMAL
+     * switch, do nothing
+     */
+    if (!This->style && !This->exStyle) return;
+
+    TRACE("(%p): Restoring window settings of window %p to %08x, %08x\n",
+          This, window, This->style, This->exStyle);
+
+    SetWindowLongW(window, GWL_STYLE, This->style);
+    SetWindowLongW(window, GWL_EXSTYLE, This->exStyle);
+
+    /* Delete the old values */
+    This->style = 0;
+    This->exStyle = 0;
+
+    /* Inform the window about the update */
+    SetWindowPos(window, 0 /* InsertAfter, ignored */,
+                 0, 0, 0, 0, /* Pos, Size, ignored */
+                 SWP_FRAMECHANGED | SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER);
+}
+
 /* example at http://www.fairyengine.com/articles/dxmultiviews.htm */
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevice* iface, WINED3DPRESENT_PARAMETERS*  pPresentationParameters,                                                                   IWineD3DSwapChain** ppSwapChain,
                                                             IUnknown* parent,
@@ -6759,6 +6844,8 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_UpdateSurface,
     IWineD3DDeviceImpl_GetRenderTargetData,
     IWineD3DDeviceImpl_GetFrontBufferData,
+    IWineD3DDeviceImpl_SetupFullscreenWindow,
+    IWineD3DDeviceImpl_RestoreWindow,
     /*** object tracking ***/
     IWineD3DDeviceImpl_ResourceReleased
 };

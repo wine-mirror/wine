@@ -471,6 +471,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(UpdateSurface)(THIS_ struct IWineD3DSurface* pSourceSurface, CONST RECT* pSourceRect, struct IWineD3DSurface* pDestinationSurface, CONST POINT* pDestPoint) PURE;
     STDMETHOD(GetRenderTargetData)(THIS_ struct IWineD3DSurface* pRenderTarget, struct IWineD3DSurface* pSurface) PURE;
     STDMETHOD(GetFrontBufferData)(THIS_ UINT iSwapChain,struct IWineD3DSurface* pSurface) PURE;
+    STDMETHOD_(void, SetupFullscreenWindow)(THIS_ HWND window) PURE;
+    STDMETHOD_(void, RestoreWindow)(THIS_ HWND window) PURE;
     /*** object tracking ***/
     STDMETHOD_(void, ResourceReleased)(THIS_ struct IWineD3DResource *resource);
 };
@@ -609,6 +611,8 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_UpdateSurface(p,a,b,c,d)                 (p)->lpVtbl->UpdateSurface(p,a,b,c,d)
 #define IWineD3DDevice_GetRenderTargetData(p,a,b)               (p)->lpVtbl->GetRenderTargetData(p,a,b)
 #define IWineD3DDevice_GetFrontBufferData(p,a,b)                (p)->lpVtbl->GetFrontBufferData(p,a,b)
+#define IWineD3DDevice_SetupFullscreenWindow(p, a)              (p)->lpVtbl->SetupFullscreenWindow(p,a);
+#define IWineD3DDevice_RestoreWindow(p, a)                      (p)->lpVtbl->RestoreWindow(p,a);
 #define IWineD3DDevice_ResourceReleased(p,a)                    (p)->lpVtbl->ResourceReleased(p,a)
 #endif
 

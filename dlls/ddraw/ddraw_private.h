@@ -120,9 +120,6 @@ struct IDirectDrawImpl
 
     DDCAPS                  caps;
 
-    LONG                    style;
-    LONG                    exStyle;
-
     /* D3D things */
     IDirectDrawSurfaceImpl  *d3d_target;
     HWND                    d3d_window;
