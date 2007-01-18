@@ -148,7 +148,7 @@ static	int	MCICDA_GetError(WINE_MCICDAUDIO* wmcda)
     case ERROR_NOT_READY:     return MCIERR_DEVICE_NOT_READY;
     case ERROR_IO_DEVICE:     return MCIERR_HARDWARE;
     default:
-	FIXME("Unknown mode %x\n", GetLastError());
+	FIXME("Unknown mode %u\n", GetLastError());
     }
     return MCIERR_DRIVER_INTERNAL;
 }
