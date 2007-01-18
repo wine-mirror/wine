@@ -46,9 +46,11 @@ static struct namespace *winstation_namespace;
 static void winstation_dump( struct object *obj, int verbose );
 static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void winstation_destroy( struct object *obj );
+static unsigned int winstation_map_access( struct object *obj, unsigned int access );
 static void desktop_dump( struct object *obj, int verbose );
 static int desktop_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void desktop_destroy( struct object *obj );
+static unsigned int desktop_map_access( struct object *obj, unsigned int access );
 
 static const struct object_ops winstation_ops =
 {
@@ -60,7 +62,7 @@ static const struct object_ops winstation_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
-    no_map_access,                /* map_access */
+    winstation_map_access,        /* map_access */
     no_lookup_name,               /* lookup_name */
     winstation_close_handle,      /* close_handle */
     winstation_destroy            /* destroy */
@@ -77,7 +79,7 @@ static const struct object_ops desktop_ops =
     NULL,                         /* satisfied */
     no_signal,                    /* signal */
     no_get_fd,                    /* get_fd */
-    no_map_access,                /* map_access */
+    desktop_map_access,           /* map_access */
     no_lookup_name,               /* lookup_name */
     desktop_close_handle,         /* close_handle */
     desktop_destroy               /* destroy */
@@ -137,6 +139,17 @@ static void winstation_destroy( struct object *obj )
     list_remove( &winstation->entry );
     if (winstation->clipboard) release_object( winstation->clipboard );
     if (winstation->atom_table) release_object( winstation->atom_table );
+}
+
+static unsigned int winstation_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | WINSTA_ENUMDESKTOPS | WINSTA_READATTRIBUTES |
+                                            WINSTA_ENUMERATE | WINSTA_READSCREEN;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | WINSTA_ACCESSCLIPBOARD | WINSTA_CREATEDESKTOP |
+                                            WINSTA_WRITEATTRIBUTES;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | WINSTA_ACCESSGLOBALATOMS | WINSTA_EXITWINDOWS;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 /* retrieve the process window station, checking the handle access rights */
@@ -237,6 +250,17 @@ static void desktop_destroy( struct object *obj )
     if (desktop->close_timeout) remove_timeout_user( desktop->close_timeout );
     list_remove( &desktop->entry );
     release_object( desktop->winstation );
+}
+
+static unsigned int desktop_map_access( struct object *obj, unsigned int access )
+{
+    if (access & GENERIC_READ)    access |= STANDARD_RIGHTS_READ | DESKTOP_READOBJECTS | DESKTOP_ENUMERATE;
+    if (access & GENERIC_WRITE)   access |= STANDARD_RIGHTS_WRITE | DESKTOP_CREATEMENU | DESKTOP_CREATEWINDOW |
+                                            DESKTOP_HOOKCONTROL | DESKTOP_JOURNALRECORD | DESKTOP_JOURNALPLAYBACK |
+                                            DESKTOP_WRITEOBJECTS;
+    if (access & GENERIC_EXECUTE) access |= STANDARD_RIGHTS_EXECUTE | DESKTOP_SWITCHDESKTOP;
+    if (access & GENERIC_ALL)     access |= STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS;
+    return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
 /* retrieve the thread desktop, checking the handle access rights */
