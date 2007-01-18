@@ -61,7 +61,7 @@ int shader_addline(
         TRACE("GL HW (%u, %u) : %s", buffer->lineNo + 1, buffer->bsize, base);
         buffer->newline = FALSE;
     } else {
-        TRACE(base);
+        TRACE("%s", base);
     }
 
     buffer->bsize += rc;
