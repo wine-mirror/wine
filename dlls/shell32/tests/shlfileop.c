@@ -140,7 +140,7 @@ static void test_get_file_info(void)
     rc=SHGetFileInfoA("c:\\nonexistent", FILE_ATTRIBUTE_DIRECTORY,
                       &shfi, sizeof(shfi),
                       SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
-    todo_wine ok(rc, "SHGetFileInfoA(c:\\nonexistent) failed\n");
+    ok(rc, "SHGetFileInfoA(c:\\nonexistent) failed\n");
     if (rc)
     {
         ok(strcpy(shfi.szDisplayName, "dummy") != 0, "SHGetFileInfoA(c:\\nonexistent) displayname is not set\n");
@@ -157,7 +157,7 @@ static void test_get_file_info(void)
         rc=SHGetFileInfoA(notepad, GetFileAttributes(notepad),
                           &shfi, sizeof(shfi),
                           SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
-        todo_wine ok(rc, "SHGetFileInfoA(%s, SHGFI_USEFILEATTRIBUTES) failed\n", notepad);
+        ok(rc, "SHGetFileInfoA(%s, SHGFI_USEFILEATTRIBUTES) failed\n", notepad);
         strcpy(shfi2.szDisplayName, "dummy");
         shfi2.iIcon=0xdeadbeef;
         rc2=SHGetFileInfoA(notepad, 0,
@@ -177,7 +177,7 @@ static void test_get_file_info(void)
     rc=SHGetFileInfoA("test4.txt", GetFileAttributes("test4.txt"),
                       &shfi, sizeof(shfi),
                       SHGFI_ICONLOCATION | SHGFI_USEFILEATTRIBUTES);
-    todo_wine ok(rc, "SHGetFileInfoA(test4.txt/, SHGFI_USEFILEATTRIBUTES) failed\n");
+    ok(rc, "SHGetFileInfoA(test4.txt/, SHGFI_USEFILEATTRIBUTES) failed\n");
     strcpy(shfi2.szDisplayName, "dummy");
     shfi2.iIcon=0xdeadbeef;
     rc2=SHGetFileInfoA("test4.txt", 0,
