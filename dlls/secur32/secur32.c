@@ -943,7 +943,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     if (ntStatus != STATUS_SUCCESS)
     {
         SetLastError(LsaNtStatusToWinError(ntStatus));
-        WARN("LsaOpenPolicy failed with NT status %x\n", GetLastError());
+        WARN("LsaOpenPolicy failed with NT status %u\n", GetLastError());
         return FALSE;
     }
 
@@ -953,7 +953,7 @@ BOOLEAN WINAPI GetComputerObjectNameW(
     if (ntStatus != STATUS_SUCCESS)
     {
         SetLastError(LsaNtStatusToWinError(ntStatus));
-        WARN("LsaQueryInformationPolicy failed with NT status %x\n",
+        WARN("LsaQueryInformationPolicy failed with NT status %u\n",
              GetLastError());
         LsaClose(policyHandle);
         return FALSE;
