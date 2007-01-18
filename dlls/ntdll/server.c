@@ -89,7 +89,7 @@ abs_time_t server_start_time = { 0, 0 };  /* time of server startup */
 
 extern struct wine_pthread_functions pthread_functions;
 
-static sigset_t block_set;  /* signals to block during server calls */
+sigset_t server_block_set;  /* signals to block during server calls */
 static int fd_socket = -1;  /* socket to exchange file descriptors with the server */
 
 static RTL_CRITICAL_SECTION fd_cache_section;
@@ -156,7 +156,7 @@ void server_exit_thread( int status )
     fds[1] = ntdll_get_thread_data()->wait_fd[1];
     fds[2] = ntdll_get_thread_data()->reply_fd;
     fds[3] = ntdll_get_thread_data()->request_fd;
-    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
+    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
 
     size = 0;
     NtFreeVirtualMemory( GetCurrentProcess(), &info.stack_base, &size, MEM_RELEASE | MEM_SYSTEM );
@@ -179,7 +179,7 @@ void server_exit_thread( int status )
  */
 void server_abort_thread( int status )
 {
-    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, NULL );
+    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, NULL );
     close( ntdll_get_thread_data()->wait_fd[0] );
     close( ntdll_get_thread_data()->wait_fd[1] );
     close( ntdll_get_thread_data()->reply_fd );
@@ -318,7 +318,7 @@ unsigned int wine_server_call( void *req_ptr )
     struct __server_request_info * const req = req_ptr;
     sigset_t old_set;
 
-    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, &old_set );
+    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, &old_set );
     send_request( req );
     wait_reply( req );
     pthread_functions.sigprocmask( SIG_SETMASK, &old_set, NULL );
@@ -331,7 +331,7 @@ unsigned int wine_server_call( void *req_ptr )
  */
 void server_enter_uninterrupted_section( RTL_CRITICAL_SECTION *cs, sigset_t *sigset )
 {
-    pthread_functions.sigprocmask( SIG_BLOCK, &block_set, sigset );
+    pthread_functions.sigprocmask( SIG_BLOCK, &server_block_set, sigset );
     RtlEnterCriticalSection( cs );
 }
 
@@ -1010,14 +1010,14 @@ void server_init_process(void)
     }
 
     /* setup the signal mask */
-    sigemptyset( &block_set );
-    sigaddset( &block_set, SIGALRM );
-    sigaddset( &block_set, SIGIO );
-    sigaddset( &block_set, SIGINT );
-    sigaddset( &block_set, SIGHUP );
-    sigaddset( &block_set, SIGUSR1 );
-    sigaddset( &block_set, SIGUSR2 );
-    sigaddset( &block_set, SIGCHLD );
+    sigemptyset( &server_block_set );
+    sigaddset( &server_block_set, SIGALRM );
+    sigaddset( &server_block_set, SIGIO );
+    sigaddset( &server_block_set, SIGINT );
+    sigaddset( &server_block_set, SIGHUP );
+    sigaddset( &server_block_set, SIGUSR1 );
+    sigaddset( &server_block_set, SIGUSR2 );
+    sigaddset( &server_block_set, SIGCHLD );
 
     /* receive the first thread request fd on the main socket */
     ntdll_get_thread_data()->request_fd = receive_fd( &dummy_handle );

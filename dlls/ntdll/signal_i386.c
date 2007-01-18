@@ -1341,12 +1341,8 @@ BOOL SIGNAL_Init(void)
     }
 #endif  /* HAVE_SIGALTSTACK */
 
-    sigemptyset( &sig_act.sa_mask );
-    sigaddset( &sig_act.sa_mask, SIGINT );
-    sigaddset( &sig_act.sa_mask, SIGUSR1 );
-    sigaddset( &sig_act.sa_mask, SIGUSR2 );
+    sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_SIGINFO | SA_RESTART;
-
 #ifdef SA_ONSTACK
     sig_act.sa_flags |= SA_ONSTACK;
 #endif

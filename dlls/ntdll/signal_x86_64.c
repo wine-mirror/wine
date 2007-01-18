@@ -462,10 +462,7 @@ static int set_handler( int sig, void (*func)() )
     struct sigaction sig_act;
 
     sig_act.sa_sigaction = func;
-    sigemptyset( &sig_act.sa_mask );
-    sigaddset( &sig_act.sa_mask, SIGINT );
-    sigaddset( &sig_act.sa_mask, SIGUSR2 );
-
+    sig_act.sa_mask = server_block_set;
     sig_act.sa_flags = SA_RESTART | SA_SIGINFO | SA_ONSTACK;
     return sigaction( sig, &sig_act, NULL );
 }
