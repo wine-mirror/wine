@@ -2391,7 +2391,7 @@ static SUBITEM_INFO* LISTVIEW_GetSubItemPtr(HDPA hdpaSubItems, INT nSubItem)
 
 /***
  * DESCRIPTION:
- * Caclulates the desired item width.
+ * Calculates the desired item width.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure
@@ -2436,7 +2436,7 @@ static INT LISTVIEW_CalculateItemWidth(LISTVIEW_INFO *infoPtr)
 
 /***
  * DESCRIPTION:
- * Caclulates the desired item height.
+ * Calculates the desired item height.
  *
  * PARAMETER(S):
  * [I] infoPtr : valid pointer to the listview structure

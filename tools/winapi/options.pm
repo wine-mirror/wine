@@ -383,7 +383,7 @@ sub AUTOLOAD {
 
     my $refvalue = $self->{$name};
     if(!defined($refvalue)) {
-	die "<internal>: options.pm: member $name does not exists\n";
+	die "<internal>: options.pm: member $name does not exist\n";
     }
 
     if(ref($$refvalue) ne "HASH") {

@@ -856,7 +856,7 @@ static HRESULT WINAPI ClientRpcChannelBuffer_SendReceive(LPRPCCHANNELBUFFER ifac
     TRACE("hrFault = 0x%08x\n", hrFault);
 
     /* FIXME: this condition should be
-     * "hr == S_OK && (!hrFault || msg->BufferLength > FIELD_OFFSET(ORPCTHAT, extentions) + 4)"
+     * "hr == S_OK && (!hrFault || msg->BufferLength > FIELD_OFFSET(ORPCTHAT, extensions) + 4)"
      * but we don't currently reset the message length for PostMessage
      * dispatched calls */
     if (hr == S_OK && hrFault == S_OK)

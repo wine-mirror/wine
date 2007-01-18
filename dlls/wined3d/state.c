@@ -2683,7 +2683,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
 
     handleStreams(stateblock, useVertexShaderFunction);
 
-    /* Do I have to use ? TRUE : FALSE ? Or can I rely on 15==15 beeing equal to TRUE(=1)? */
+    /* Do I have to use ? TRUE : FALSE ? Or can I rely on 15==15 being equal to TRUE(=1)? */
     transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
                     device->strided_streams.u.s.position.VBO != 0) &&
                     device->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
@@ -2692,7 +2692,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock) {
         updateFog = TRUE;
     }
 
-    /* Reapply lighting if it is not sheduled for reapplication already */
+    /* Reapply lighting if it is not scheduled for reapplication already */
     if(!isStateDirty(device, STATE_RENDER(WINED3DRS_LIGHTING))) {
         state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock);
     }

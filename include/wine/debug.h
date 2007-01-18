@@ -162,7 +162,7 @@ extern void __wine_dbg_set_functions( const struct __wine_debug_functions *new_f
  * Exported definitions and macros
  */
 
-/* These function return a printable version of a string, including
+/* These functions return a printable version of a string, including
    quotes.  The string will be valid for some time, but not indefinitely
    as strings are re-used.  */
 extern const char *wine_dbgstr_an( const char * s, int n );

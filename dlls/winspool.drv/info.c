@@ -1342,8 +1342,8 @@ static LPCWSTR get_basename_from_name(LPCWSTR name)
         /* skip over the servername and search for the following '\'  */
         name = strchrW(&name[2], '\\');
         if ((name) && (name[1])) {
-            /* found a seperator ('\') followed by a name:
-               skip over the seperator and return the rest */
+            /* found a separator ('\') followed by a name:
+               skip over the separator and return the rest */
             name++;
         }
         else
@@ -2364,7 +2364,7 @@ BOOL WINAPI DeleteMonitorW (LPWSTR pName, LPWSTR pEnvironment, LPWSTR pMonitorNa
         return TRUE;
     }
 
-    WARN("monitor %s does not exists\n", debugstr_w(pMonitorName));
+    WARN("monitor %s does not exist\n", debugstr_w(pMonitorName));
     RegCloseKey(hroot);
 
     /* NT: ERROR_UNKNOWN_PRINT_MONITOR (3000), 9x: ERROR_INVALID_PARAMETER (87) */
@@ -5085,7 +5085,7 @@ BOOL WINAPI EnumPortsA( LPSTR pName, DWORD Level, LPBYTE pPorts, DWORD cbBuf,
        We use the smaller Ansi-Size to avoid conflicts with fixed Buffers of old Apps.
      */
     if (res) {
-        /* EnumPortsW collected all Data. Parse them to caclulate ANSI-Size */
+        /* EnumPortsW collected all Data. Parse them to calculate ANSI-Size */
         DWORD   entrysize = 0;
         DWORD   index;
         LPSTR   ptr;
@@ -6463,7 +6463,7 @@ BOOL WINAPI EnumMonitorsA(LPSTR pName, DWORD Level, LPBYTE pMonitors,
        We use the smaller Ansi-Size to avoid conflicts with fixed Buffers of old Apps.
      */
     if (res) {
-        /* EnumMonitorsW collected all Data. Parse them to caclulate ANSI-Size */
+        /* EnumMonitorsW collected all Data. Parse them to calculate ANSI-Size */
         DWORD   entrysize = 0;
         DWORD   index;
         LPSTR   ptr;

@@ -594,7 +594,7 @@ static void test_XcvDataPort_PortIsValid(void)
         res, GetLastError(), needed);
 
 
-    /* a normal, writeable file is allowed */
+    /* a normal, writable file is allowed */
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_PortIsValidW, (PBYTE) tempfileW, (lstrlenW(tempfileW) + 1) * sizeof(WCHAR), NULL, 0, &needed);
@@ -684,7 +684,7 @@ START_TEST(localmon)
     DWORD   numentries;
     DWORD   res;
 
-    /* This DLL does not exists on Win9x */
+    /* This DLL does not exist on Win9x */
     hdll = LoadLibraryA("localspl.dll");
     if (!hdll) return;
 

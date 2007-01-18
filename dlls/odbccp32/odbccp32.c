@@ -178,7 +178,7 @@ static BOOL SQLInstall_narrow(int mode, LPSTR buffer, LPCWSTR str, WORD str_leng
         }
         else
         {
-            ERR("transfering wide to narrow\n");
+            ERR("transferring wide to narrow\n");
         }
         if (pbuf != buffer)
         {
