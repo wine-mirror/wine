@@ -1212,7 +1212,7 @@ static void test_digit_substitution(void)
     for (i = 0; i < sizeof(groups)/sizeof(groups[0]); i++)
     {
         ret = pEnumLanguageGroupLocalesA(enum_proc, groups[i], 0, 0);
-        ok(ret, "EnumLanguageGroupLocalesA failed unexpectedly: 0x%08x\n", GetLastError());
+        ok(ret, "EnumLanguageGroupLocalesA failed unexpectedly: %u\n", GetLastError());
     }
 }
 
