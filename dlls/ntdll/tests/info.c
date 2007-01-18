@@ -680,7 +680,7 @@ static void test_query_process_times(void)
     process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
     if (!process)
     {
-        trace("Could not open process with ID : %d, error : %08x. Going to use current one.\n", one_before_last_pid, GetLastError());
+        trace("Could not open process with ID : %d, error : %u. Going to use current one.\n", one_before_last_pid, GetLastError());
         process = GetCurrentProcess();
         trace("ProcessTimes for current process\n");
     }
@@ -733,7 +733,7 @@ static void test_query_process_handlecount(void)
     process = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, one_before_last_pid);
     if (!process)
     {
-        trace("Could not open process with ID : %d, error : %08x. Going to use current one.\n", one_before_last_pid, GetLastError());
+        trace("Could not open process with ID : %d, error : %u. Going to use current one.\n", one_before_last_pid, GetLastError());
         process = GetCurrentProcess();
         trace("ProcessHandleCount for current process\n");
     }
