@@ -558,13 +558,14 @@ int server_remove_fd_from_cache( obj_handle_t handle )
 int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
                         int *needs_close, enum server_fd_type *type, int *flags )
 {
+    sigset_t sigset;
     obj_handle_t fd_handle;
     int ret = 0, removable = 0, fd;
 
     *unix_fd = -1;
     *needs_close = 0;
 
-    RtlEnterCriticalSection( &fd_cache_section );
+    server_enter_uninterrupted_section( &fd_cache_section, &sigset );
 
     fd = get_cached_fd( handle, type );
     if (fd != -1 && !flags) goto done;
@@ -593,7 +594,7 @@ int server_get_unix_fd( obj_handle_t handle, unsigned int access, int *unix_fd,
     SERVER_END_REQ;
 
 done:
-    RtlLeaveCriticalSection( &fd_cache_section );
+    server_leave_uninterrupted_section( &fd_cache_section, &sigset );
     if (!ret) *unix_fd = fd;
     return ret;
 }
