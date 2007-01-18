@@ -1488,7 +1488,7 @@ static HANDLE get_opened_printer_entry(LPCWSTR name, LPPRINTER_DEFAULTSW pDefaul
                 goto end;
             }
             if (RegOpenKeyW(hkeyPrinters, printername, &hkeyPrinter) != ERROR_SUCCESS) {
-                WARN("Printer not found in Registry: '%s'\n", debugstr_w(printername));
+                WARN("Printer not found in Registry: %s\n", debugstr_w(printername));
                 RegCloseKey(hkeyPrinters);
                 SetLastError(ERROR_INVALID_PRINTER_NAME);
                 handle = 0;
@@ -2073,7 +2073,7 @@ BOOL WINAPI OpenPrinterW(LPWSTR lpPrinterName,HANDLE *phPrinter, LPPRINTER_DEFAU
 
     /* Get the unique handle of the printer or Printserver */
     *phPrinter = get_opened_printer_entry(lpPrinterName, pDefault);
-    TRACE("returning %d with 0x%x and %p\n", *phPrinter != NULL, GetLastError(), *phPrinter);
+    TRACE("returning %d with %u and %p\n", *phPrinter != NULL, GetLastError(), *phPrinter);
     return (*phPrinter != 0);
 }
 
@@ -2905,7 +2905,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     size = DocumentPropertiesW(0, 0, pi->pPrinterName, NULL, NULL, 0);
 
     if(size < 0) {
-        FIXME("DocumentPropertiesW on printer '%s' fails\n", debugstr_w(pi->pPrinterName));
+        FIXME("DocumentPropertiesW on printer %s fails\n", debugstr_w(pi->pPrinterName));
 	size = sizeof(DEVMODEW);
     }
     if(pi->pDevMode)
@@ -2917,7 +2917,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
         dmW->dmSize = size;
         if (0>DocumentPropertiesW(0,0,pi->pPrinterName,dmW,NULL,DM_OUT_BUFFER))
         {
-            WARN("DocumentPropertiesW on printer '%s' failed!\n", debugstr_w(pi->pPrinterName));
+            WARN("DocumentPropertiesW on printer %s failed!\n", debugstr_w(pi->pPrinterName));
             HeapFree(GetProcessHeap(),0,dmW);
             dmW=NULL;
         }
@@ -3370,7 +3370,7 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
 
     if(!AddJobW(hPrinter, 1, addjob_buf, sizeof(addjob_buf), &needed))
     {
-        ERR("AddJob failed gle %08x\n", GetLastError());
+        ERR("AddJob failed gle %u\n", GetLastError());
         goto end;
     }
 
@@ -4299,7 +4299,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
     }
 
     if(!DriverName[0] || RegOpenKeyW(hkeyDrivers, DriverName, &hkeyDriver) != ERROR_SUCCESS) {
-        ERR("Can't find driver '%s' in registry\n", debugstr_w(DriverName));
+        ERR("Can't find driver %s in registry\n", debugstr_w(DriverName));
         SetLastError(ERROR_UNKNOWN_PRINTER_DRIVER); /* ? */
         return FALSE;
     }
