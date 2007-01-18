@@ -43,29 +43,6 @@
 
 extern  int __wine_set_signal_handler(unsigned, int (*)(unsigned));
 
-static CRITICAL_SECTION ldt_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &ldt_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": ldt_section") }
-};
-static CRITICAL_SECTION ldt_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
-/***********************************************************************
- *           locking for LDT routines
- */
-static void ldt_lock(void)
-{
-    RtlEnterCriticalSection( &ldt_section );
-}
-
-static void ldt_unlock(void)
-{
-    RtlLeaveCriticalSection( &ldt_section );
-}
-
-
 /***********************************************************************
  *           KERNEL thread initialisation routine
  */
@@ -140,9 +117,6 @@ static BOOL process_attach(void)
         RtlAddVectoredExceptionHandler( TRUE, INSTR_vectored_handler );
     }
 #endif
-
-    /* initialize LDT locking */
-    wine_ldt_init_locking( ldt_lock, ldt_unlock );
 
     /* finish the process initialisation for console bits, if needed */
     __wine_set_signal_handler(SIGINT, CONSOLE_HandleCtrlC);
