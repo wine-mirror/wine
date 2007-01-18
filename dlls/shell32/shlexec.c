@@ -576,7 +576,7 @@ UINT SHELL_FindExecutable(LPCWSTR lpPath, LPCWSTR lpFile, LPCWSTR lpOperation,
     WCHAR xlpFile[256];      /* result of SearchPath */
     DWORD attribs;           /* file attributes */
 
-    TRACE("%s\n", (lpFile != NULL) ? debugstr_w(lpFile) : "-");
+    TRACE("%s\n", debugstr_w(lpFile));
 
     if (!lpResult)
         return ERROR_INVALID_PARAMETER;
@@ -828,7 +828,7 @@ static unsigned dde_connect(WCHAR* key, const WCHAR* start, WCHAR* ddeexec,
     if (!hConv)
     {
         static const WCHAR wIfexec[] = {'\\','i','f','e','x','e','c',0};
-        TRACE("Launching '%s'\n", debugstr_w(start));
+        TRACE("Launching %s\n", debugstr_w(start));
         ret = execfunc(start, env, TRUE, psei, psei_out);
         if (ret <= 32)
         {
@@ -1009,8 +1009,7 @@ HINSTANCE WINAPI FindExecutableW(LPCWSTR lpFile, LPCWSTR lpDirectory, LPWSTR lpR
     UINT_PTR retval = SE_ERR_NOASSOC;
     WCHAR old_dir[1024];
 
-    TRACE("File %s, Dir %s\n",
-          (lpFile != NULL ? debugstr_w(lpFile) : "-"), (lpDirectory != NULL ? debugstr_w(lpDirectory) : "-"));
+    TRACE("File %s, Dir %s\n", debugstr_w(lpFile), debugstr_w(lpDirectory));
 
     lpResult[0] = '\0'; /* Start off with an empty return string */
     if (lpFile == NULL)
@@ -1413,7 +1412,7 @@ BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
                                wszParameters, sizeof(wszParameters)/sizeof(WCHAR));
 
         /* FIXME: get the extension of lpFile, check if it fits to the lpClass */
-        TRACE("SEE_MASK_CLASSNAME->'%s', doc->'%s'\n", debugstr_w(wszParameters), debugstr_w(wszApplicationName));
+        TRACE("SEE_MASK_CLASSNAME->%s, doc->%s\n", debugstr_w(wszParameters), debugstr_w(wszApplicationName));
 
         wcmd[0] = '\0';
         done = SHELL_ArgifyW(wcmd, sizeof(wcmd)/sizeof(WCHAR), wszParameters, wszApplicationName, sei_tmp.lpIDList, NULL, &resultLen);
