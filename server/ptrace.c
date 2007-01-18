@@ -262,6 +262,8 @@ int send_thread_signal( struct thread *thread, int sig )
             thread->unix_tid = -1;
         }
     }
+    if (debug_level && ret != -1)
+        fprintf( stderr, "%04x: *sent signal* signal=%d\n", thread->id, sig );
     return (ret != -1);
 }
 
