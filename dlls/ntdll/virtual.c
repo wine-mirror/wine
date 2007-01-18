@@ -1212,27 +1212,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
 
 /***********************************************************************
- *           is_current_process
- *
- * Check whether a process handle is for the current process.
- */
-BOOL is_current_process( HANDLE handle )
-{
-    BOOL ret = FALSE;
-
-    if (handle == NtCurrentProcess()) return TRUE;
-    SERVER_START_REQ( get_process_info )
-    {
-        req->handle = handle;
-        if (!wine_server_call( req ))
-            ret = ((DWORD)reply->pid == GetCurrentProcessId());
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/***********************************************************************
  *           virtual_init
  */
 void virtual_init(void)
