@@ -150,6 +150,15 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=%p,size=%lu",
                  call->virtual_unlock.addr, call->virtual_unlock.size );
         break;
+    case APC_MAP_VIEW:
+        fprintf( stderr, "APC_MAP_VIEW,handle=%p,addr=%p,size=%lu,offset=%x%08x,zero_bits=%u,alloc_type=%x,prot=%x",
+                 call->map_view.handle, call->map_view.addr, call->map_view.size,
+                 call->map_view.offset_high, call->map_view.offset_low, call->map_view.zero_bits,
+                 call->map_view.alloc_type, call->map_view.prot );
+        break;
+    case APC_UNMAP_VIEW:
+        fprintf( stderr, "APC_UNMAP_VIEW,addr=%p", call->unmap_view.addr );
+        break;
     case APC_CREATE_THREAD:
         fprintf( stderr, "APC_CREATE_THREAD,func=%p,arg=%p,reserve=%lx,commit=%lx,suspend=%u",
                  call->create_thread.func, call->create_thread.arg,
@@ -208,6 +217,15 @@ static void dump_apc_result( const apc_result_t *result )
         fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=%p,size=%lu",
                  get_status_name( result->virtual_unlock.status ),
                  result->virtual_unlock.addr, result->virtual_unlock.size );
+        break;
+    case APC_MAP_VIEW:
+        fprintf( stderr, "APC_MAP_VIEW,status=%s,addr=%p,size=%lu",
+                 get_status_name( result->map_view.status ),
+                 result->map_view.addr, result->map_view.size );
+        break;
+    case APC_UNMAP_VIEW:
+        fprintf( stderr, "APC_UNMAP_VIEW,status=%s",
+                 get_status_name( result->unmap_view.status ) );
         break;
     case APC_CREATE_THREAD:
         fprintf( stderr, "APC_CREATE_THREAD,status=%s,tid=%04x,handle=%p",

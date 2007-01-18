@@ -1960,16 +1960,35 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
     TRACE("handle=%p process=%p addr=%p off=%x%08x size=%lx access=%x\n",
           handle, process, *addr_ptr, offset.u.HighPart, offset.u.LowPart, size, protect );
 
-    if (!is_current_process( process ))
-    {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
-    }
-
     /* Check parameters */
 
     if ((offset.u.LowPart & mask) || (*addr_ptr && ((UINT_PTR)*addr_ptr & mask)))
         return STATUS_INVALID_PARAMETER;
+
+    if (process != NtCurrentProcess())
+    {
+        apc_call_t call;
+        apc_result_t result;
+
+        call.map_view.type        = APC_MAP_VIEW;
+        call.map_view.handle      = handle;
+        call.map_view.addr        = *addr_ptr;
+        call.map_view.size        = *size_ptr;
+        call.map_view.offset_low  = offset.u.LowPart;
+        call.map_view.offset_high = offset.u.HighPart;
+        call.map_view.zero_bits   = zero_bits;
+        call.map_view.alloc_type  = alloc_type;
+        call.map_view.prot        = protect;
+        res = NTDLL_queue_process_apc( process, &call, &result );
+        if (res != STATUS_SUCCESS) return res;
+
+        if (result.map_view.status == STATUS_SUCCESS)
+        {
+            *addr_ptr = result.map_view.addr;
+            *size_ptr = result.map_view.size;
+        }
+        return result.map_view.status;
+    }
 
     SERVER_START_REQ( get_mapping_info )
     {
@@ -2107,11 +2126,18 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     sigset_t sigset;
     void *base = ROUND_ADDR( addr, page_mask );
 
-    if (!is_current_process( process ))
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.unmap_view.type = APC_UNMAP_VIEW;
+        call.unmap_view.addr = addr;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status == STATUS_SUCCESS) status = result.unmap_view.status;
+        return status;
     }
+
     server_enter_uninterrupted_section( &csVirtual, &sigset );
     if ((view = VIRTUAL_FindView( base )) && (base == view->base))
     {

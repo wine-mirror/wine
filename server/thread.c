@@ -1164,10 +1164,26 @@ DECL_HANDLER(queue_apc)
     case APC_VIRTUAL_FLUSH:
     case APC_VIRTUAL_LOCK:
     case APC_VIRTUAL_UNLOCK:
+    case APC_UNMAP_VIEW:
         process = get_process_from_handle( req->process, PROCESS_VM_OPERATION );
         break;
     case APC_VIRTUAL_QUERY:
         process = get_process_from_handle( req->process, PROCESS_QUERY_INFORMATION );
+        break;
+    case APC_MAP_VIEW:
+        process = get_process_from_handle( req->process, PROCESS_VM_OPERATION );
+        if (process)
+        {
+            /* duplicate the handle into the target process */
+            obj_handle_t handle = duplicate_handle( current->process, apc->call.map_view.handle,
+                                                    process, 0, 0, DUP_HANDLE_SAME_ACCESS );
+            if (handle) apc->call.map_view.handle = handle;
+            else
+            {
+                release_object( process );
+                process = NULL;
+            }
+        }
         break;
     case APC_CREATE_THREAD:
         process = get_process_from_handle( req->process, PROCESS_CREATE_THREAD );

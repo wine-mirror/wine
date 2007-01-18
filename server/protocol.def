@@ -238,6 +238,8 @@ enum apc_type
     APC_VIRTUAL_FLUSH,
     APC_VIRTUAL_LOCK,
     APC_VIRTUAL_UNLOCK,
+    APC_MAP_VIEW,
+    APC_UNMAP_VIEW,
     APC_CREATE_THREAD
 };
 
@@ -313,6 +315,23 @@ typedef union
     } virtual_unlock;
     struct
     {
+        enum apc_type    type;      /* APC_MAP_VIEW */
+        obj_handle_t     handle;    /* mapping handle */
+        void            *addr;      /* requested address */
+        unsigned long    size;      /* allocation size */
+        unsigned int     offset_low;/* file offset */
+        unsigned int     offset_high;
+        unsigned int     zero_bits; /* allocation alignment */
+        unsigned int     alloc_type;/* allocation type */
+        unsigned int     prot;      /* memory protection flags */
+    } map_view;
+    struct
+    {
+        enum apc_type    type;      /* APC_UNMAP_VIEW */
+        void            *addr;      /* view address */
+    } unmap_view;
+    struct
+    {
         enum apc_type    type;      /* APC_CREATE_THREAD */
         void (__stdcall *func)(void*);  /* start function */
         void            *arg;       /* argument for start function */
@@ -380,6 +399,18 @@ typedef union
         void            *addr;      /* resulting address */
         unsigned long    size;      /* resulting size */
     } virtual_unlock;
+    struct
+    {
+        enum apc_type    type;      /* APC_MAP_VIEW */
+        unsigned int     status;    /* status returned by call */
+        void            *addr;      /* resulting address */
+        unsigned long    size;      /* resulting size */
+    } map_view;
+    struct
+    {
+        enum apc_type    type;      /* APC_MAP_VIEW */
+        unsigned int     status;    /* status returned by call */
+    } unmap_view;
     struct
     {
         enum apc_type    type;      /* APC_CREATE_THREAD */

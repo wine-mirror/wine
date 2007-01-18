@@ -222,6 +222,8 @@ enum apc_type
     APC_VIRTUAL_FLUSH,
     APC_VIRTUAL_LOCK,
     APC_VIRTUAL_UNLOCK,
+    APC_MAP_VIEW,
+    APC_UNMAP_VIEW,
     APC_CREATE_THREAD
 };
 
@@ -298,6 +300,23 @@ typedef union
     struct
     {
         enum apc_type    type;
+        obj_handle_t     handle;
+        void            *addr;
+        unsigned long    size;
+        unsigned int     offset_low;
+        unsigned int     offset_high;
+        unsigned int     zero_bits;
+        unsigned int     alloc_type;
+        unsigned int     prot;
+    } map_view;
+    struct
+    {
+        enum apc_type    type;
+        void            *addr;
+    } unmap_view;
+    struct
+    {
+        enum apc_type    type;
         void (__stdcall *func)(void*);
         void            *arg;
         unsigned long    reserve;
@@ -364,6 +383,18 @@ typedef union
         void            *addr;
         unsigned long    size;
     } virtual_unlock;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        void            *addr;
+        unsigned long    size;
+    } map_view;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+    } unmap_view;
     struct
     {
         enum apc_type    type;
@@ -4593,6 +4624,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 272
+#define SERVER_PROTOCOL_VERSION 273
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

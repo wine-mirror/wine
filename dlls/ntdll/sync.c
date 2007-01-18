@@ -780,6 +780,26 @@ static BOOL call_apcs( BOOL alertable )
                                                                   &result.virtual_unlock.addr,
                                                                   &result.virtual_unlock.size, 0 );
             break;
+        case APC_MAP_VIEW:
+        {
+            LARGE_INTEGER offset;
+            result.type = call.type;
+            result.map_view.addr   = call.map_view.addr;
+            result.map_view.size   = call.map_view.size;
+            offset.u.LowPart       = call.map_view.offset_low;
+            offset.u.HighPart      = call.map_view.offset_high;
+            result.map_view.status = NtMapViewOfSection( call.map_view.handle, NtCurrentProcess(),
+                                                         &result.map_view.addr, call.map_view.zero_bits,
+                                                         0, &offset, &result.map_view.size, ViewShare,
+                                                         call.map_view.alloc_type, call.map_view.prot );
+            NtClose( call.map_view.handle );
+            break;
+        }
+        case APC_UNMAP_VIEW:
+            result.type = call.type;
+            result.unmap_view.status = NtUnmapViewOfSection( NtCurrentProcess(),
+                                                             call.unmap_view.addr );
+            break;
         case APC_CREATE_THREAD:
         {
             CLIENT_ID id;

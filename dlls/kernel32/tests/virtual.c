@@ -403,7 +403,66 @@ static void test_MapViewOfFile(void)
         GetLastError() == ERROR_ACCESS_DENIED, "Wrong error %d\n", GetLastError() );
 
     CloseHandle( file );
+    DeleteFileA( testfile );
+}
 
+static DWORD (WINAPI *pNtMapViewOfSection)( HANDLE handle, HANDLE process, PVOID *addr_ptr,
+                                            ULONG zero_bits, SIZE_T commit_size,
+                                            const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
+                                            ULONG inherit, ULONG alloc_type, ULONG protect );
+static DWORD (WINAPI *pNtUnmapViewOfSection)( HANDLE process, PVOID addr );
+
+static void test_NtMapViewOfSection(void)
+{
+    HANDLE hProcess;
+
+    static const char testfile[] = "testfile.xxx";
+    static const char data[] = "test data for NtMapViewOfSection";
+    char buffer[sizeof(data)];
+    HANDLE file, mapping;
+    void *ptr;
+    BOOL ret;
+    DWORD status, written;
+    SIZE_T size, result;
+    LARGE_INTEGER offset;
+
+    pNtMapViewOfSection = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"), "NtMapViewOfSection" );
+    pNtUnmapViewOfSection = (void *)GetProcAddress( GetModuleHandle("ntdll.dll"), "NtUnmapViewOfSection" );
+    if (!pNtMapViewOfSection || !pNtUnmapViewOfSection)
+    {
+        skip( "NtMapViewOfSection not found\n" );
+        return;
+    }
+
+    file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "Failed to create test file\n" );
+    WriteFile( file, data, sizeof(data), &written, NULL );
+    SetFilePointer( file, 4096, NULL, FILE_BEGIN );
+    SetEndOfFile( file );
+
+    /* read/write mapping */
+
+    mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping failed\n" );
+
+    hProcess = create_target_process("sleep");
+    ok(hProcess != NULL, "Can't start process\n");
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
+    status = pNtMapViewOfSection( mapping, hProcess, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE );
+    ok( !status, "NtMapViewOfSection failed status %x\n", status );
+
+    ret = ReadProcessMemory( hProcess, ptr, buffer, sizeof(buffer), &result );
+    ok( ret, "ReadProcessMemory failed\n" );
+    ok( result == sizeof(buffer), "ReadProcessMemory didn't read all data (%lx)\n", result );
+    ok( !memcmp( buffer, data, sizeof(buffer) ), "Wrong data read\n" );
+
+    status = pNtUnmapViewOfSection( hProcess, ptr );
+    ok( !status, "NtUnmapViewOfSection failed status %x\n", status );
+
+    CloseHandle( mapping );
     CloseHandle( file );
     DeleteFileA( testfile );
 }
@@ -439,4 +498,5 @@ START_TEST(virtual)
     test_VirtualAllocEx();
     test_VirtualAlloc();
     test_MapViewOfFile();
+    test_NtMapViewOfSection();
 }
