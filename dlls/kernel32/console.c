@@ -120,7 +120,11 @@ static void char_info_AtoW( CHAR_INFO *buffer, int count )
 
 
 /******************************************************************************
- * GetConsoleWindow [KERNEL32.@]
+ * GetConsoleWindow [KERNEL32.@] Get hwnd of the console window.
+ *
+ * RETURNS
+ *   Success: hwnd of the console window.
+ *   Failure: NULL
  */
 HWND WINAPI GetConsoleWindow(VOID)
 {
