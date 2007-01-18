@@ -780,6 +780,20 @@ static BOOL call_apcs( BOOL alertable )
                                                                   &result.virtual_unlock.addr,
                                                                   &result.virtual_unlock.size, 0 );
             break;
+        case APC_CREATE_THREAD:
+        {
+            CLIENT_ID id;
+            result.type = call.type;
+            result.create_thread.status = RtlCreateUserThread( NtCurrentProcess(), NULL,
+                                                               call.create_thread.suspend, NULL,
+                                                               call.create_thread.reserve,
+                                                               call.create_thread.commit,
+                                                               call.create_thread.func,
+                                                               call.create_thread.arg,
+                                                               &result.create_thread.handle, &id );
+            result.create_thread.tid = (thread_id_t)id.UniqueThread;
+            break;
+        }
         default:
             server_protocol_error( "get_apc_request: bad type %d\n", call.type );
             break;

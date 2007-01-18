@@ -221,48 +221,43 @@ static VOID test_CreateRemoteThread(void)
     /* create suspended remote thread with entry point SetEvent() */
     hThread = CreateRemoteThread(hProcess, NULL, 0, threadFunc_SetEvent,
                                  hRemoteEvent, CREATE_SUSPENDED, &tid);
-    todo_wine ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n",
-                 GetLastError());
+    ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
     ok(tid != 0, "null tid\n");
     ret = SuspendThread(hThread);
-    todo_wine ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
+    ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
     ret = ResumeThread(hThread);
-    todo_wine ok(ret == 2, "ret=%u, err=%u\n", ret, GetLastError());
+    ok(ret == 2, "ret=%u, err=%u\n", ret, GetLastError());
 
     /* thread still suspended, so wait times out */
     ret = WaitForSingleObject(hEvent, 100);
     ok(ret == WAIT_TIMEOUT, "wait did not time out, ret=%u\n", ret);
 
     ret = ResumeThread(hThread);
-    todo_wine ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
+    ok(ret == 1, "ret=%u, err=%u\n", ret, GetLastError());
 
     /* wait that doesn't time out */
     ret = WaitForSingleObject(hEvent, 100);
-    todo_wine ok(ret == WAIT_OBJECT_0, "object not signaled, ret=%u\n", ret);
+    ok(ret == WAIT_OBJECT_0, "object not signaled, ret=%u\n", ret);
 
     /* wait for thread end */
     ret = WaitForSingleObject(hThread, 100);
-    todo_wine ok(ret == WAIT_OBJECT_0,
-                 "waiting for thread failed, ret=%u\n", ret);
+    ok(ret == WAIT_OBJECT_0, "waiting for thread failed, ret=%u\n", ret);
     CloseHandle(hThread);
 
     /* create and wait for remote thread with entry point CloseHandle() */
     hThread = CreateRemoteThread(hProcess, NULL, 0,
                                  threadFunc_CloseHandle,
                                  hRemoteEvent, 0, &tid);
-    todo_wine ok(hThread != NULL,
-                 "CreateRemoteThread failed, err=%u\n", GetLastError());
+    ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
     ret = WaitForSingleObject(hThread, 100);
-    todo_wine ok(ret == WAIT_OBJECT_0,
-                 "waiting for thread failed, ret=%u\n", ret);
+    ok(ret == WAIT_OBJECT_0, "waiting for thread failed, ret=%u\n", ret);
     CloseHandle(hThread);
 
     /* create remote thread with entry point SetEvent() */
     hThread = CreateRemoteThread(hProcess, NULL, 0,
                                  threadFunc_SetEvent,
                                  hRemoteEvent, 0, &tid);
-    todo_wine ok(hThread != NULL,
-                 "CreateRemoteThread failed, err=%u\n", GetLastError());
+    ok(hThread != NULL, "CreateRemoteThread failed, err=%u\n", GetLastError());
 
     /* closed handle, so wait times out */
     ret = WaitForSingleObject(hEvent, 100);
@@ -270,9 +265,8 @@ static VOID test_CreateRemoteThread(void)
 
     /* check that remote SetEvent() failed */
     ret = GetExitCodeThread(hThread, &exitcode);
-    todo_wine ok(ret != 0,
-                 "GetExitCodeThread failed, err=%u\n", GetLastError());
-    if (ret) todo_wine ok(exitcode == 0, "SetEvent succeeded, expected to fail\n");
+    ok(ret != 0, "GetExitCodeThread failed, err=%u\n", GetLastError());
+    if (ret) ok(exitcode == 0, "SetEvent succeeded, expected to fail\n");
     CloseHandle(hThread);
 
     TerminateProcess(hProcess, 0);

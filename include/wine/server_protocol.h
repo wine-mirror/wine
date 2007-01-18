@@ -221,7 +221,8 @@ enum apc_type
     APC_VIRTUAL_PROTECT,
     APC_VIRTUAL_FLUSH,
     APC_VIRTUAL_LOCK,
-    APC_VIRTUAL_UNLOCK
+    APC_VIRTUAL_UNLOCK,
+    APC_CREATE_THREAD
 };
 
 typedef union
@@ -294,6 +295,15 @@ typedef union
         void            *addr;
         unsigned long    size;
     } virtual_unlock;
+    struct
+    {
+        enum apc_type    type;
+        void (__stdcall *func)(void*);
+        void            *arg;
+        unsigned long    reserve;
+        unsigned long    commit;
+        int              suspend;
+    } create_thread;
 } apc_call_t;
 
 typedef union
@@ -354,6 +364,13 @@ typedef union
         void            *addr;
         unsigned long    size;
     } virtual_unlock;
+    struct
+    {
+        enum apc_type    type;
+        unsigned int     status;
+        thread_id_t      tid;
+        obj_handle_t     handle;
+    } create_thread;
 } apc_result_t;
 
 
@@ -4576,6 +4593,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 271
+#define SERVER_PROTOCOL_VERSION 272
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

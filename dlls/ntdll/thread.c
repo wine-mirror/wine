@@ -473,10 +473,27 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     NTSTATUS status;
     SIZE_T size, page_size = getpagesize();
 
-    if( ! is_current_process( process ) )
+    if (process != NtCurrentProcess())
     {
-        ERR("Unsupported on other process\n");
-        return STATUS_ACCESS_DENIED;
+        apc_call_t call;
+        apc_result_t result;
+
+        call.create_thread.type    = APC_CREATE_THREAD;
+        call.create_thread.func    = start;
+        call.create_thread.arg     = param;
+        call.create_thread.reserve = stack_reserve;
+        call.create_thread.commit  = stack_commit;
+        call.create_thread.suspend = suspended;
+        status = NTDLL_queue_process_apc( process, &call, &result );
+        if (status != STATUS_SUCCESS) return status;
+
+        if (result.create_thread.status == STATUS_SUCCESS)
+        {
+            if (id) id->UniqueThread = (HANDLE)result.create_thread.tid;
+            if (handle_ptr) *handle_ptr = result.create_thread.handle;
+            else NtClose( result.create_thread.handle );
+        }
+        return result.create_thread.status;
     }
 
     if (pipe( request_pipe ) == -1) return STATUS_TOO_MANY_OPENED_FILES;

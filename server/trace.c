@@ -150,6 +150,12 @@ static void dump_apc_call( const apc_call_t *call )
         fprintf( stderr, "APC_VIRTUAL_UNLOCK,addr=%p,size=%lu",
                  call->virtual_unlock.addr, call->virtual_unlock.size );
         break;
+    case APC_CREATE_THREAD:
+        fprintf( stderr, "APC_CREATE_THREAD,func=%p,arg=%p,reserve=%lx,commit=%lx,suspend=%u",
+                 call->create_thread.func, call->create_thread.arg,
+                 call->create_thread.reserve, call->create_thread.commit,
+                 call->create_thread.suspend );
+        break;
     default:
         fprintf( stderr, "type=%u", call->type );
         break;
@@ -202,6 +208,11 @@ static void dump_apc_result( const apc_result_t *result )
         fprintf( stderr, "APC_VIRTUAL_UNLOCK,status=%s,addr=%p,size=%lu",
                  get_status_name( result->virtual_unlock.status ),
                  result->virtual_unlock.addr, result->virtual_unlock.size );
+        break;
+    case APC_CREATE_THREAD:
+        fprintf( stderr, "APC_CREATE_THREAD,status=%s,tid=%04x,handle=%p",
+                 get_status_name( result->create_thread.status ),
+                 result->create_thread.tid, result->create_thread.handle );
         break;
     default:
         fprintf( stderr, "type=%u", result->type );

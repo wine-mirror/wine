@@ -237,7 +237,8 @@ enum apc_type
     APC_VIRTUAL_PROTECT,
     APC_VIRTUAL_FLUSH,
     APC_VIRTUAL_LOCK,
-    APC_VIRTUAL_UNLOCK
+    APC_VIRTUAL_UNLOCK,
+    APC_CREATE_THREAD
 };
 
 typedef union
@@ -310,6 +311,15 @@ typedef union
         void            *addr;      /* requested address */
         unsigned long    size;      /* requested address */
     } virtual_unlock;
+    struct
+    {
+        enum apc_type    type;      /* APC_CREATE_THREAD */
+        void (__stdcall *func)(void*);  /* start function */
+        void            *arg;       /* argument for start function */
+        unsigned long    reserve;   /* reserve size for thread stack */
+        unsigned long    commit;    /* commit size for thread stack */
+        int              suspend;   /* suspended thread? */
+    } create_thread;
 } apc_call_t;
 
 typedef union
@@ -370,6 +380,13 @@ typedef union
         void            *addr;      /* resulting address */
         unsigned long    size;      /* resulting size */
     } virtual_unlock;
+    struct
+    {
+        enum apc_type    type;      /* APC_CREATE_THREAD */
+        unsigned int     status;    /* status returned by call */
+        thread_id_t      tid;       /* thread id */
+        obj_handle_t     handle;    /* handle to new thread */
+    } create_thread;
 } apc_result_t;
 
 /****************************************************************/
