@@ -314,8 +314,11 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source,
             if (dest) *dest = reply->handle;
             if (reply->closed)
             {
-                int fd = server_remove_fd_from_cache( source );
-                if (fd != -1) close( fd );
+                if (reply->self)
+                {
+                    int fd = server_remove_fd_from_cache( source );
+                    if (fd != -1) close( fd );
+                }
             }
             else if (options & DUPLICATE_CLOSE_SOURCE)
                 WARN( "failed to close handle %p in process %p\n", source, source_process );

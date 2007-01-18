@@ -1025,6 +1025,7 @@ static void dump_dup_handle_request( const struct dup_handle_request *req )
 static void dump_dup_handle_reply( const struct dup_handle_reply *req )
 {
     fprintf( stderr, " handle=%p,", req->handle );
+    fprintf( stderr, " self=%d,", req->self );
     fprintf( stderr, " closed=%d", req->closed );
 }
 

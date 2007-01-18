@@ -740,6 +740,7 @@ struct dup_handle_reply
 {
     struct reply_header __header;
     obj_handle_t handle;
+    int          self;
     int          closed;
 };
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE
@@ -4575,6 +4576,6 @@ union generic_reply
     struct query_symlink_reply query_symlink_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 270
+#define SERVER_PROTOCOL_VERSION 271
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

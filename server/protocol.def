@@ -635,6 +635,7 @@ typedef union
     unsigned int options;      /* duplicate options (see below) */
 @REPLY
     obj_handle_t handle;       /* duplicated handle in dst process */
+    int          self;         /* is the source the current process? */
     int          closed;       /* whether the source handle has been closed */
 @END
 #define DUP_HANDLE_CLOSE_SOURCE  DUPLICATE_CLOSE_SOURCE

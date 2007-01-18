@@ -536,6 +536,7 @@ DECL_HANDLER(dup_handle)
             reply->closed = close_handle( src, req->src_handle );
             set_error( err );
         }
+        reply->self = (src == current->process);
         release_object( src );
     }
 }
