@@ -1734,12 +1734,12 @@ HRESULT WINAPI SHGetFolderPathW(
     ret = SHCreateDirectoryExW(hwndOwner, szBuildPath, NULL);
     if (ret && ret != ERROR_ALREADY_EXISTS)
     {
-        ERR("Failed to create directory '%s'.\n", debugstr_w(szBuildPath));
+        ERR("Failed to create directory %s.\n", debugstr_w(szBuildPath));
         hr = E_FAIL;
         goto end;
     }
 
-    TRACE("Created missing system directory '%s'\n", debugstr_w(szBuildPath));
+    TRACE("Created missing system directory %s\n", debugstr_w(szBuildPath));
 end:
     TRACE("returning 0x%08x (final path is %s)\n", hr, debugstr_w(szBuildPath));
     return hr;

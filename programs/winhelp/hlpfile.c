@@ -941,7 +941,7 @@ static BOOL HLPFILE_AddParagraph(HLPFILE *hlpfile, BYTE *buf, BYTE *end, unsigne
 
         while (text < text_end && format < format_end)
         {
-            WINE_TRACE("Got text: '%s' (%p/%p - %p/%p)\n", wine_dbgstr_a(text), text, text_end, format, format_end);
+            WINE_TRACE("Got text: %s (%p/%p - %p/%p)\n", wine_dbgstr_a(text), text, text_end, format, format_end);
             textsize = strlen(text) + 1;
             if (textsize > 1)
             {

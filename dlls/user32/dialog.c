@@ -1668,7 +1668,7 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPWSTR str, INT len,
     BOOL ret;
     HWND listbox = GetDlgItem( hwnd, id );
 
-    TRACE("%p '%s' %d\n", hwnd, unicode ? debugstr_w(str) : debugstr_a((LPSTR)str), id );
+    TRACE("%p %s %d\n", hwnd, unicode ? debugstr_w(str) : debugstr_a((LPSTR)str), id );
     if (!listbox) return FALSE;
 
     item = SendMessageW(listbox, combo ? CB_GETCURSEL : LB_GETCURSEL, 0, 0 );
@@ -1704,7 +1704,7 @@ static BOOL DIALOG_DlgDirSelect( HWND hwnd, LPWSTR str, INT len,
     }
     else lstrcpynW( str, ptr, len );
     HeapFree( GetProcessHeap(), 0, buffer );
-    TRACE("Returning %d '%s'\n", ret, unicode ? debugstr_w(str) : debugstr_a((LPSTR)str) );
+    TRACE("Returning %d %s\n", ret, unicode ? debugstr_w(str) : debugstr_a((LPSTR)str) );
     return ret;
 }
 

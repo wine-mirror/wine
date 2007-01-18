@@ -3206,7 +3206,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	if (strl) {
 		/* there is an insertion */
 		tl = strlenW(es->text);
-		TRACE("inserting stuff (tl %d, strl %d, selstart %d ('%s'), text '%s')\n", tl, strl, s, debugstr_w(es->text + s), debugstr_w(es->text));
+		TRACE("inserting stuff (tl %d, strl %d, selstart %d (%s), text %s)\n", tl, strl, s, debugstr_w(es->text + s), debugstr_w(es->text));
 		for (p = es->text + tl ; p >= es->text + s ; p--)
 			p[strl] = p[0];
 		for (i = 0 , p = es->text + s ; i < strl ; i++)

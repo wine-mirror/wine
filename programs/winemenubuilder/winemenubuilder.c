@@ -916,7 +916,7 @@ static BOOL InvokeShellLinker( IShellLinkW *sl, LPCWSTR link, BOOL bAgain )
 
     if( !GetLinkLocation( link, &csidl, &link_name ) )
     {
-        WINE_WARN("Unknown link location '%s'. Ignoring.\n",wine_dbgstr_w(link));
+        WINE_WARN("Unknown link location %s. Ignoring.\n",wine_dbgstr_w(link));
         return TRUE;
     }
     if (!in_desktop_dir(csidl) && !in_startmenu(csidl))

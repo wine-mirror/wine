@@ -520,7 +520,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_InitializeSecurityContextW(
 
         if(lstrlenA(want_flags) > 2)
         {
-            TRACE("Want flags are '%s'\n", debugstr_a(want_flags));
+            TRACE("Want flags are %s\n", debugstr_a(want_flags));
             lstrcpynA(buffer, want_flags, max_len-1);
             if((ret = run_helper(helper, buffer, max_len, &buffer_len)) 
                     != SEC_E_OK)

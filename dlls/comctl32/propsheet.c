@@ -360,7 +360,7 @@ static BOOL PROPSHEET_CollectSheetInfoW(LPCPROPSHEETHEADERW lppsh,
   psInfo->isModeless = dwFlags & PSH_MODELESS;
 
   memcpy(&psInfo->ppshheader,lppsh,dwSize);
-  TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%d\ndwFlags\t\t%08x\nhwndParent\t%p\nhInstance\t%p\npszCaption\t'%s'\nnPages\t\t%d\npfnCallback\t%p\n",
+  TRACE("\n** PROPSHEETHEADER **\ndwSize\t\t%d\ndwFlags\t\t%08x\nhwndParent\t%p\nhInstance\t%p\npszCaption\t%s\nnPages\t\t%d\npfnCallback\t%p\n",
       lppsh->dwSize, lppsh->dwFlags, lppsh->hwndParent, lppsh->hInstance, debugstr_w(lppsh->pszCaption), lppsh->nPages, lppsh->pfnCallback);
 
   PROPSHEET_UnImplementedFlags(lppsh->dwFlags);
@@ -2156,7 +2156,7 @@ static void PROPSHEET_SetTitleW(HWND hwndDlg, DWORD dwStyle, LPCWSTR lpszText)
   PropSheetInfo*	psInfo = (PropSheetInfo*) GetPropW(hwndDlg, PropSheetInfoStr);
   WCHAR			szTitle[256];
 
-  TRACE("'%s' (style %08x)\n", debugstr_w(lpszText), dwStyle);
+  TRACE("%s (style %08x)\n", debugstr_w(lpszText), dwStyle);
   if (HIWORD(lpszText) == 0) {
     if (!LoadStringW(psInfo->ppshheader.hInstance,
                      LOWORD(lpszText), szTitle, sizeof(szTitle)-sizeof(WCHAR)))
@@ -2216,7 +2216,7 @@ static void PROPSHEET_SetFinishTextW(HWND hwndDlg, LPCWSTR lpszText)
   PropSheetInfo* psInfo = (PropSheetInfo*) GetPropW(hwndDlg, PropSheetInfoStr);
   HWND hwndButton = GetDlgItem(hwndDlg, IDC_FINISH_BUTTON);
 
-  TRACE("'%s'\n", debugstr_w(lpszText));
+  TRACE("%s\n", debugstr_w(lpszText));
   /* Set text, show and enable the Finish button */
   SetWindowTextW(hwndButton, lpszText);
   ShowWindow(hwndButton, SW_SHOW);

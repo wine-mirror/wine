@@ -983,7 +983,7 @@ BOOL WINAPI GetLogColorSpaceW(HCOLORSPACE hColorSpace, LPLOGCOLORSPACEW lpBuffer
  */
 BOOL WINAPI SetICMProfileA(HDC hDC, LPSTR lpszFilename)
 {
-    FIXME("hDC %p filename '%s': stub!\n", hDC, debugstr_a(lpszFilename));
+    FIXME("hDC %p filename %s: stub!\n", hDC, debugstr_a(lpszFilename));
     return TRUE; /* success */
 }
 
@@ -993,7 +993,7 @@ BOOL WINAPI SetICMProfileA(HDC hDC, LPSTR lpszFilename)
  */
 BOOL WINAPI SetICMProfileW(HDC hDC, LPWSTR lpszFilename)
 {
-    FIXME("hDC %p filename '%s': stub!\n", hDC, debugstr_w(lpszFilename));
+    FIXME("hDC %p filename %s: stub!\n", hDC, debugstr_w(lpszFilename));
     return TRUE; /* success */
 }
 

@@ -244,7 +244,7 @@ static void MCIWND_UpdateState(MCIWndInfo *mwi)
         strcatW(buffer, r_braceW);
     }
 
-    TRACE("=> '%s'\n", debugstr_w(buffer));
+    TRACE("=> %s\n", debugstr_w(buffer));
     SetWindowTextW(mwi->hWnd, buffer);
 }
 

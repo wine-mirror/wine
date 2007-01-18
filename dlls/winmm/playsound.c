@@ -133,7 +133,7 @@ static HMMIO	get_mmioFromProfile(UINT uFlags, LPCWSTR lpszName)
     hmmio = mmioOpenW(str, NULL, MMIO_ALLOCBUF | MMIO_READ | MMIO_DENYWRITE);
     if (hmmio) return hmmio;
  none:
-    WARN("can't find SystemSound='%s' !\n", debugstr_w(lpszName));
+    WARN("can't find SystemSound=%s !\n", debugstr_w(lpszName));
     return 0;
 }
 
@@ -263,7 +263,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
 
     s.hEvent = 0;
 
-    TRACE("SoundName='%s' !\n", debugstr_w(wps->pszSound));
+    TRACE("SoundName=%s !\n", debugstr_w(wps->pszSound));
 
     /* if resource, grab it */
     if ((wps->fdwSound & SND_RESOURCE) == SND_RESOURCE) {
@@ -408,7 +408,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     waveOutUnprepareHeader(hWave, &waveHdr[1], sizeof(WAVEHDR));
 
 errCleanUp:
-    TRACE("Done playing='%s' => %s!\n", debugstr_w(wps->pszSound), bRet ? "ok" : "ko");
+    TRACE("Done playing=%s => %s!\n", debugstr_w(wps->pszSound), bRet ? "ok" : "ko");
     CloseHandle(s.hEvent);
     HeapFree(GetProcessHeap(), 0, waveHdr);
     HeapFree(GetProcessHeap(), 0, lpWaveFormat);

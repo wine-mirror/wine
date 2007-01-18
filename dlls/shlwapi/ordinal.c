@@ -3091,7 +3091,7 @@ BOOL WINAPI SHGetIniStringW(LPSTR str1, LPSTR str2, LPSTR pStr, DWORD some_len, 
  */
 BOOL WINAPI SHSetIniStringW(LPWSTR str1, LPVOID x, LPWSTR str2, LPWSTR str3)
 {
-    FIXME("('%s', %p, '%s', '%s'), stub.\n", debugstr_w(str1), x, debugstr_w(str2), debugstr_w(str3));
+    FIXME("(%s, %p, %s, %s), stub.\n", debugstr_w(str1), x, debugstr_w(str2), debugstr_w(str3));
     return TRUE;
 }
 

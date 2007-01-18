@@ -140,7 +140,7 @@ static WCHAR* NLS_GetLocaleString(LCID lcid, DWORD dwFlags)
   TRACE( #type ": %d (%08x)\n", (DWORD)num, (DWORD)num)
 
 #define GET_LOCALE_STRING(str, type) str = NLS_GetLocaleString(lcid, type|dwFlags); \
-  TRACE( #type ": '%s'\n", debugstr_w(str))
+  TRACE( #type ": %s\n", debugstr_w(str))
 
 /**************************************************************************
  * NLS_GetFormats <internal>
@@ -656,7 +656,7 @@ NLS_GetDateTimeFormatW_InvalidFlags:
   }
   cchWritten++; /* Include terminating NUL */
 
-  TRACE("returning length=%d, ouput='%s'\n", cchWritten, debugstr_w(lpStr));
+  TRACE("returning length=%d, ouput=%s\n", cchWritten, debugstr_w(lpStr));
   return cchWritten;
 
 NLS_GetDateTimeFormatW_Overrun:

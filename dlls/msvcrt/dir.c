@@ -768,7 +768,7 @@ MSVCRT_wchar_t * CDECL _wfullpath(MSVCRT_wchar_t * absPath, const MSVCRT_wchar_t
     return NULL;
   }
 
-  TRACE(":resolving relative path '%s'\n",debugstr_w(relPath));
+  TRACE(":resolving relative path %s\n",debugstr_w(relPath));
 
   rc = GetFullPathNameW(relPath,size,buffer,&lastpart);
 

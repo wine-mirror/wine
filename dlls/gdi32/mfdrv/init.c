@@ -241,7 +241,7 @@ HDC WINAPI CreateMetaFileW( LPCWSTR filename )
     METAFILEDRV_PDEVICE *physDev;
     HANDLE hFile;
 
-    TRACE("'%s'\n", debugstr_w(filename) );
+    TRACE("%s\n", debugstr_w(filename) );
 
     if (!(dc = MFDRV_AllocMetaFile())) return 0;
     physDev = (METAFILEDRV_PDEVICE *)dc->physDev;

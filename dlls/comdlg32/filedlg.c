@@ -3984,7 +3984,7 @@ short WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf)
 	if(i == -1)
 		i++;
 
-	TRACE("---> '%s'\n", debugstr_w(&lpFile[i]));
+	TRACE("---> %s\n", debugstr_w(&lpFile[i]));
 
 	len = strlenW(lpFile+i)+1;
 	if(cbBuf < len)

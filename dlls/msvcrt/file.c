@@ -2752,7 +2752,7 @@ MSVCRT_wchar_t* CDECL MSVCRT__getws(MSVCRT_wchar_t* buf)
     }
     *buf = '\0';
 
-    TRACE("got '%s'\n", debugstr_w(ws));
+    TRACE("got %s\n", debugstr_w(ws));
     return ws;
 }
 

@@ -139,7 +139,7 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Read (LPSTREAM iface,
     if (pcbRead == NULL) pcbRead = &cbRead;
     if (!ReadFile (This->hFile, pv, cb, pcbRead, NULL) || *pcbRead != cb) return E_FAIL;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08X): '%s'\n", *pcbRead, debugstr_an(pv, *pcbRead));
+	TRACE_(dmfileraw)(": data (size = 0x%08X): %s\n", *pcbRead, debugstr_an(pv, *pcbRead));
     return S_OK;
 }
 
@@ -201,7 +201,7 @@ static HRESULT WINAPI IDirectMusicLoaderFileStream_IStream_Write (LPSTREAM iface
     if (pcbWritten == NULL) pcbWritten = &cbWrite;
     if (!WriteFile (This->hFile, pv, cb, pcbWritten, NULL) || *pcbWritten != cb) return E_FAIL;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08X): '%s'\n", *pcbWritten, debugstr_an(pv, *pcbWritten));
+	TRACE_(dmfileraw)(": data (size = 0x%08X): %s\n", *pcbWritten, debugstr_an(pv, *pcbWritten));
     return S_OK;
 }
 
@@ -392,7 +392,7 @@ static HRESULT WINAPI IDirectMusicLoaderResourceStream_IStream_Read (LPSTREAM if
 	/* FIXME: error checking would be nice */
 	if (pcbRead) *pcbRead = cb;
 	
-	TRACE_(dmfileraw)(": data (size = 0x%08X): '%s'\n", cb, debugstr_an(pv, cb));
+	TRACE_(dmfileraw)(": data (size = 0x%08X): %s\n", cb, debugstr_an(pv, cb));
     return S_OK;
 }
 

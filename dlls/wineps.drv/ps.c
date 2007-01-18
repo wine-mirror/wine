@@ -314,7 +314,7 @@ INT PSDRV_WriteHeader( PSDRV_PDEVICE *physDev, LPCSTR title )
     int win_duplex;
     int llx, lly, urx, ury;
 
-    TRACE("'%s'\n", debugstr_a(title));
+    TRACE("%s\n", debugstr_a(title));
 
     escaped_title = escape_title(title);
     buf = HeapAlloc( PSDRV_Heap, 0, sizeof(psheader) +

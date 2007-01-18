@@ -980,7 +980,7 @@ static BOOL HTTP_DealWithProxy( LPWININETAPPINFOW hIC,
 
     if( !lpwhr->lpszPath )
         lpwhr->lpszPath = szNul;
-    TRACE("server='%s' path='%s'\n",
+    TRACE("server=%s path=%s\n",
           debugstr_w(lpwhs->lpszHostName), debugstr_w(lpwhr->lpszPath));
     /* for constant 15 see above */
     len = strlenW(lpwhs->lpszHostName) + strlenW(lpwhr->lpszPath) + 15;
@@ -1524,7 +1524,7 @@ static BOOL WINAPI HTTP_HttpQueryInfoW( LPWININETHTTPREQW lpwhr, DWORD dwInfoLev
         *lpdwBufferLength = len - sizeof(WCHAR);
         bSuccess = TRUE;
 
-	TRACE(" returning string : '%s'\n", debugstr_w(lpBuffer));
+	TRACE(" returning string : %s\n", debugstr_w(lpBuffer));
     }
     return bSuccess;
 }
