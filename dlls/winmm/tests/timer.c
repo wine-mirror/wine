@@ -167,7 +167,7 @@ static void CALLBACK priorityTimeProc(UINT uID, UINT uMsg, DWORD_PTR dwUser,
                                       DWORD_PTR dw1, DWORD_PTR dw2)
 {
     priority = GetThreadPriority(GetCurrentThread());
-    ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %08x\n", GetLastError());
+    ok(priority!=THREAD_PRIORITY_ERROR_RETURN, "GetThreadPriority() failed, GetLastError() = %u\n", GetLastError());
     fired = TRUE;
 }
 
