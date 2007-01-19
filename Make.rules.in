@@ -221,7 +221,7 @@ winapi_check:: dummy
 
 # Rules for dependencies
 
-DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_H_SRCS) $(IDL_GEN_C_SRCS) $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
+DEPEND_SRCS = $(C_SRCS) $(C_SRCS16) $(RC_SRCS) $(RC_SRCS16) $(MC_SRCS) $(IDL_H_SRCS) $(IDL_C_SRCS) $(IDL_I_SRCS) $(IDL_P_SRCS) $(IDL_S_SRCS) $(IDL_GEN_C_SRCS) $(BISON_SRCS) $(LEX_SRCS) $(EXTRA_SRCS)
 
 $(SUBDIRS:%=%/__depend__): dummy
 	@cd `dirname $@` && $(MAKE) depend
