@@ -162,6 +162,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
     if (attr->ObjectName->Length > sizeof(pipeW) &&
         !memicmpW( attr->ObjectName->Buffer, pipeW, sizeof(pipeW)/sizeof(WCHAR) ))
     {
+        if (attr->SecurityQualityOfService)
+            FIXME("SecurityQualityOfService ignored\n");
         SERVER_START_REQ( open_named_pipe )
         {
             req->access = access;
@@ -182,6 +184,8 @@ NTSTATUS WINAPI NtCreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATTRIB
     if (attr->ObjectName->Length > sizeof(mailslotW) &&
         !memicmpW( attr->ObjectName->Buffer, mailslotW, sizeof(mailslotW)/sizeof(WCHAR) ))
     {
+        if (attr->SecurityQualityOfService)
+            FIXME("SecurityQualityOfService ignored\n");
         SERVER_START_REQ( open_mailslot )
         {
             req->access = access & GENERIC_WRITE;

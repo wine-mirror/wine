@@ -1281,6 +1281,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     static const WCHAR bkslashes_with_dotW[] = {'\\','\\','.','\\',0};
     static const WCHAR coninW[] = {'C','O','N','I','N','$',0};
     static const WCHAR conoutW[] = {'C','O','N','O','U','T','$',0};
+    SECURITY_QUALITY_OF_SERVICE qos;
 
     static const UINT nt_disposition[5] =
     {
@@ -1406,7 +1407,16 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     attr.ObjectName = &nameW;
     attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
-    attr.SecurityQualityOfService = NULL;
+    if (attributes & SECURITY_SQOS_PRESENT)
+    {
+        qos.Length = sizeof(qos);
+        qos.ImpersonationLevel = (attributes >> 16) & 0x3;
+        qos.ContextTrackingMode = attributes & SECURITY_CONTEXT_TRACKING ? SECURITY_DYNAMIC_TRACKING : SECURITY_STATIC_TRACKING;
+        qos.EffectiveOnly = attributes & SECURITY_EFFECTIVE_ONLY ? TRUE : FALSE;
+        attr.SecurityQualityOfService = &qos;
+    }
+    else
+        attr.SecurityQualityOfService = NULL;
 
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
