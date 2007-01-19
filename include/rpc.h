@@ -18,8 +18,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#if !defined(RPC_NO_WINDOWS_H) && !defined(__WINESRC__)
-#include <windows.h>
+#ifndef RPC_NO_WINDOWS_H
+# ifdef __WINESRC__
+#  include <windef.h>
+# else
+#  include <windows.h>
+# endif
 #endif
 
 #ifndef __WINE_RPC_H
@@ -50,6 +54,7 @@ typedef void* I_RPC_HANDLE;
 #include <rpcdce.h>
 /* #include <rpcnsi.h> */
 #include <rpcnterr.h>
+#include <excpt.h>
 #include <winerror.h>
 
 /* ignore exception handling for now */
