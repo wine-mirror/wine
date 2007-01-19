@@ -432,7 +432,7 @@ void write_client(ifref_t *ifaces)
 
     if (!do_client)
         return;
-    if (!iface)
+    if (do_everything && !ifaces)
         return;
     END_OF_LIST(iface);
 

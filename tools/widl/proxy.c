@@ -999,20 +999,18 @@ void write_proxies(ifref_t *ifaces)
   int c;
 
   if (!do_proxies) return;
-  if (!lcur) return;
-  END_OF_LIST(lcur);
+  if (do_everything && !ifaces) return;
 
   init_proxy(ifaces);
   if(!proxy) return;
 
+  END_OF_LIST(lcur);
   cur = lcur;
   while (cur) {
     if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
       write_proxy(cur->iface);
     cur = PREV_LINK(cur);
   }
-
-  if (!proxy) return;
 
   write_stubdesc();
 

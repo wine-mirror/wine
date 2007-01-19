@@ -87,7 +87,7 @@ int debuglevel = DEBUGLEVEL_NONE;
 int parser_debug, yy_flex_debug;
 
 int pedantic = 0;
-static int do_everything = 1;
+int do_everything = 1;
 int preprocess_only = 0;
 int do_header = 0;
 int do_typelib = 0;

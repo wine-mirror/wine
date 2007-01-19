@@ -572,7 +572,7 @@ void write_server(ifref_t *ifaces)
 
     if (!do_server)
         return;
-    if (!ifaces)
+    if (do_everything && !ifaces)
         return;
     END_OF_LIST(iface);
 

@@ -36,6 +36,7 @@ extern int debuglevel;
 
 extern int win32;
 extern int pedantic;
+extern int do_everything;
 extern int do_header;
 extern int do_typelib;
 extern int do_proxies;
