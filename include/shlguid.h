@@ -41,7 +41,6 @@ DEFINE_SHLGUID(CGID_ShellServiceObject, 0x000214D2L, 0, 0);
 DEFINE_SHLGUID(CGID_ExplorerBarDoc,     0x000214D3L, 0, 0);
 
 DEFINE_SHLGUID(IID_IShellIcon,          0x000214E5L, 0, 0);
-DEFINE_SHLGUID(IID_IShellPropSheetExt,  0x000214E9L, 0, 0);
 DEFINE_SHLGUID(IID_IShellDetails,       0x000214ECL, 0, 0);
 DEFINE_SHLGUID(IID_IDelayedRelease,     0x000214EDL, 0, 0);
 DEFINE_SHLGUID(IID_IShellCopyHookA,     0x000214EFL, 0, 0);
@@ -54,6 +53,7 @@ DEFINE_SHLGUID(IID_IRemoteComputer,     0x000214FEL, 0, 0);
 DEFINE_SHLGUID(IID_IQueryInfo,          0x00021500L, 0, 0);
 
 /* avoid duplicate definitions with shobjidl.h (FIXME) */
+/* DEFINE_SHLGUID(IID_IShellPropSheetExt,  0x000214E9L, 0, 0); */
 /* DEFINE_SHLGUID(IID_IExtractIconA,       0x000214EBL, 0, 0); */
 /* DEFINE_SHLGUID(IID_IExtractIconW,       0x000214FAL, 0, 0); */
 /* DEFINE_SHLGUID(IID_IContextMenu,        0x000214E4L, 0, 0); */

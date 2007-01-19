@@ -1513,13 +1513,68 @@ DWORD WINAPI SHELL32_714(LPVOID x)
 	return 0;
 }
 
+typedef struct _PSXA
+{
+    UINT uiCount;
+    UINT uiAllocated;
+    IShellPropSheetExt *pspsx[1];
+} PSXA, *PPSXA;
+
+typedef struct _PSXA_CALL
+{
+    LPFNADDPROPSHEETPAGE lpfnAddReplaceWith;
+    LPARAM lParam;
+    BOOL bCalled;
+    BOOL bMultiple;
+    UINT uiCount;
+} PSXA_CALL, *PPSXA_CALL;
+
+static BOOL CALLBACK PsxaCall(HPROPSHEETPAGE hpage, LPARAM lParam)
+{
+    PPSXA_CALL Call = (PPSXA_CALL)lParam;
+
+    if (Call != NULL)
+    {
+        if ((Call->bMultiple || !Call->bCalled) &&
+            Call->lpfnAddReplaceWith(hpage, Call->lParam))
+        {
+            Call->bCalled = TRUE;
+            Call->uiCount++;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
+
 /*************************************************************************
  *      SHAddFromPropSheetExtArray	[SHELL32.167]
  */
 UINT WINAPI SHAddFromPropSheetExtArray(HPSXA hpsxa, LPFNADDPROPSHEETPAGE lpfnAddPage, LPARAM lParam)
 {
-	FIXME("(%p,%p,%08lx)stub\n", hpsxa, lpfnAddPage, lParam);
-	return 0;
+    PSXA_CALL Call;
+    UINT i;
+    PPSXA psxa = (PPSXA)hpsxa;
+
+    TRACE("(%p,%p,%08lx)\n", hpsxa, lpfnAddPage, lParam);
+
+    if (psxa)
+    {
+        ZeroMemory(&Call, sizeof(Call));
+        Call.lpfnAddReplaceWith = lpfnAddPage;
+        Call.lParam = lParam;
+        Call.bMultiple = TRUE;
+
+        /* Call the AddPage method of all registered IShellPropSheetExt interfaces */
+        for (i = 0; i != psxa->uiCount; i++)
+        {
+            psxa->pspsx[i]->lpVtbl->AddPages(psxa->pspsx[i], PsxaCall, (LPARAM)&Call);
+        }
+
+        return Call.uiCount;
+    }
+
+    return 0;
 }
 
 /*************************************************************************
@@ -1527,8 +1582,102 @@ UINT WINAPI SHAddFromPropSheetExtArray(HPSXA hpsxa, LPFNADDPROPSHEETPAGE lpfnAdd
  */
 HPSXA WINAPI SHCreatePropSheetExtArray(HKEY hKey, LPCWSTR pszSubKey, UINT max_iface)
 {
-	FIXME("(%p,%s,%u)stub\n", hKey, debugstr_w(pszSubKey), max_iface);
-	return NULL;
+    static const WCHAR szPropSheetSubKey[] = {'s','h','e','l','l','e','x','\\','P','r','o','p','e','r','t','y','S','h','e','e','t','H','a','n','d','l','e','r','s',0};
+    WCHAR szHandler[64];
+    DWORD dwHandlerLen;
+    WCHAR szClsidHandler[39];
+    DWORD dwClsidSize;
+    CLSID clsid;
+    LONG lRet;
+    DWORD dwIndex;
+    IShellExtInit *psxi;
+    IShellPropSheetExt *pspsx;
+    HKEY hkBase, hkPropSheetHandlers;
+    PPSXA psxa = NULL;
+
+    TRACE("(%p,%s,%u)\n", hKey, debugstr_w(pszSubKey), max_iface);
+
+    if (max_iface == 0)
+        return NULL;
+
+    /* Open the registry key */
+    lRet = RegOpenKeyW(hKey, pszSubKey, &hkBase);
+    if (lRet != ERROR_SUCCESS)
+        return NULL;
+
+    lRet = RegOpenKeyExW(hkBase, szPropSheetSubKey, 0, KEY_ENUMERATE_SUB_KEYS, &hkPropSheetHandlers);
+    RegCloseKey(hkBase);
+    if (lRet == ERROR_SUCCESS)
+    {
+        /* Create and initialize the Property Sheet Extensions Array */
+        psxa = (PPSXA)LocalAlloc(LMEM_FIXED, FIELD_OFFSET(PSXA, pspsx[max_iface]));
+        if (psxa)
+        {
+            ZeroMemory(psxa, FIELD_OFFSET(PSXA, pspsx[max_iface]));
+            psxa->uiAllocated = max_iface;
+
+            /* Enumerate all subkeys and attempt to load the shell extensions */
+            dwIndex = 0;
+            do
+            {
+                dwHandlerLen = sizeof(szHandler) / sizeof(szHandler[0]);
+                lRet = RegEnumKeyExW(hkPropSheetHandlers, dwIndex++, szHandler, &dwHandlerLen, NULL, NULL, NULL, NULL);
+                if (lRet != ERROR_SUCCESS)
+                {
+                    if (lRet == ERROR_MORE_DATA)
+                        continue;
+
+                    if (lRet == ERROR_NO_MORE_ITEMS)
+                        lRet = ERROR_SUCCESS;
+                    break;
+                }
+
+                dwClsidSize = sizeof(szClsidHandler);
+                if (SHGetValueW(hkPropSheetHandlers, szHandler, NULL, NULL, szClsidHandler, &dwClsidSize) == ERROR_SUCCESS)
+                {
+                    /* Force a NULL-termination and convert the string */
+                    szClsidHandler[(sizeof(szClsidHandler) / sizeof(szClsidHandler[0])) - 1] = 0;
+                    if (SUCCEEDED(SHCLSIDFromStringW(szClsidHandler, &clsid)))
+                    {
+                        /* Attempt to get an IShellPropSheetExt and an IShellExtInit instance.
+                           Only if both interfaces are supported it's a real shell extension.
+                           Then call IShellExtInit's Initialize method. */
+                        if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER/* | CLSCTX_NO_CODE_DOWNLOAD */, &IID_IShellPropSheetExt, (LPVOID *)&pspsx)))
+                        {
+                            if (SUCCEEDED(pspsx->lpVtbl->QueryInterface(pspsx, &IID_IShellExtInit, (PVOID *)&psxi)))
+                            {
+                                if (SUCCEEDED(psxi->lpVtbl->Initialize(psxi, NULL, NULL, hKey)))
+                                {
+                                    /* Add the IShellPropSheetExt instance to the array */
+                                    psxa->pspsx[psxa->uiCount++] = pspsx;
+                                }
+                                else
+                                {
+                                    psxi->lpVtbl->Release(psxi);
+                                    pspsx->lpVtbl->Release(pspsx);
+                                }
+                            }
+                            else
+                                pspsx->lpVtbl->Release(pspsx);
+                        }
+                    }
+                }
+
+            } while (psxa->uiCount != psxa->uiAllocated);
+        }
+        else
+            lRet = ERROR_NOT_ENOUGH_MEMORY;
+
+        RegCloseKey(hkPropSheetHandlers);
+    }
+
+    if (lRet != ERROR_SUCCESS && psxa)
+    {
+        SHDestroyPropSheetExtArray((HPSXA)psxa);
+        psxa = NULL;
+    }
+
+    return (HPSXA)psxa;
 }
 
 /*************************************************************************
@@ -1536,8 +1685,30 @@ HPSXA WINAPI SHCreatePropSheetExtArray(HKEY hKey, LPCWSTR pszSubKey, UINT max_if
  */
 UINT WINAPI SHReplaceFromPropSheetExtArray(HPSXA hpsxa, UINT uPageID, LPFNADDPROPSHEETPAGE lpfnReplaceWith, LPARAM lParam)
 {
-	FIXME("(%p,%u,%p,%08lx)stub\n", hpsxa, uPageID, lpfnReplaceWith, lParam);
-	return 0;
+    PSXA_CALL Call;
+    UINT i;
+    PPSXA psxa = (PPSXA)hpsxa;
+
+    TRACE("(%p,%u,%p,%08lx)\n", hpsxa, uPageID, lpfnReplaceWith, lParam);
+
+    if (psxa)
+    {
+        ZeroMemory(&Call, sizeof(Call));
+        Call.lpfnAddReplaceWith = lpfnReplaceWith;
+        Call.lParam = lParam;
+
+        /* Call the ReplacePage method of all registered IShellPropSheetExt interfaces.
+           Each shell extension is only allowed to call the callback once during the callback. */
+        for (i = 0; i != psxa->uiCount; i++)
+        {
+            Call.bCalled = FALSE;
+            psxa->pspsx[i]->lpVtbl->ReplacePage(psxa->pspsx[i], uPageID, PsxaCall, (LPARAM)&Call);
+        }
+
+        return Call.uiCount;
+    }
+
+    return 0;
 }
 
 /*************************************************************************
@@ -1545,7 +1716,20 @@ UINT WINAPI SHReplaceFromPropSheetExtArray(HPSXA hpsxa, UINT uPageID, LPFNADDPRO
  */
 void WINAPI SHDestroyPropSheetExtArray(HPSXA hpsxa)
 {
-	FIXME("(%p)stub\n", hpsxa);
+    UINT i;
+    PPSXA psxa = (PPSXA)hpsxa;
+
+    TRACE("(%p)\n", hpsxa);
+
+    if (psxa)
+    {
+        for (i = 0; i != psxa->uiCount; i++)
+        {
+            psxa->pspsx[i]->lpVtbl->Release(psxa->pspsx[i]);
+        }
+
+        LocalFree((HLOCAL)psxa);
+    }
 }
 
 /*************************************************************************

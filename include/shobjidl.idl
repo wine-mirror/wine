@@ -84,6 +84,38 @@ interface IEnumIDList : IUnknown
     HRESULT Clone( [out] IEnumIDList **ppenum );
 }
 
+/*****************************************************************************
+ * IShellPropSheetExt interface
+ */
+cpp_quote("#if 0")
+    typedef LPARAM LPFNSVADDPROPSHEETPAGE;
+cpp_quote("#else")
+cpp_quote("#include <prsht.h>")
+cpp_quote("typedef LPFNADDPROPSHEETPAGE LPFNSVADDPROPSHEETPAGE;")
+cpp_quote("#endif")
+
+[
+    object,
+    uuid(000214E9-0000-0000-C000-000000000046),
+    pointer_default(unique)
+]
+interface IShellPropSheetExt : IUnknown
+{
+    enum tagSHELLPROPSHEETEXTPAGEID {
+        EXPPS_FILETYPES = 0x1
+    };
+
+    typedef UINT EXPPS;
+
+    HRESULT AddPages(
+        [in] LPFNSVADDPROPSHEETPAGE pfnAddPage,
+        [in] LPARAM lParam);
+    HRESULT ReplacePage(
+        [in] EXPPS uPageID,
+        [in] LPFNSVADDPROPSHEETPAGE pfnReplaceWith,
+        [in] LPARAM lParam);
+}
+typedef IShellPropSheetExt *LPSHELLPROPSHEETEXT;
 
 /*****************************************************************************
  * IShellFolder interface
@@ -393,13 +425,6 @@ interface IShellView : IOleWindow
         SVUIA_ACTIVATE_FOCUS   = 2,
         SVUIA_INPLACEACTIVATE  = 3
     } SVUIA_STATUS;
-
-cpp_quote("#if 0")
-    typedef LPARAM LPFNSVADDPROPSHEETPAGE;
-cpp_quote("#else")
-cpp_quote("#include <prsht.h>")
-cpp_quote("typedef LPFNADDPROPSHEETPAGE LPFNSVADDPROPSHEETPAGE;")
-cpp_quote("#endif")
 
     HRESULT TranslateAccelerator( [in] MSG *pmsg );
     HRESULT EnableModeless( [in] BOOL fEnable );
