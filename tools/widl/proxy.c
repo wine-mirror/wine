@@ -94,6 +94,7 @@ static void init_proxy(ifref_t *ifaces)
   print_proxy( "#define __REQUIRED_RPCPROXY_H_VERSION__ 440\n");
   print_proxy( "#endif /* __REDQ_RPCPROXY_H_VERSION__ */\n");
   print_proxy( "\n");
+  print_proxy( "#include \"objbase.h\"\n");
   print_proxy( "#include \"rpcproxy.h\"\n");
   print_proxy( "#ifndef __RPCPROXY_H_VERSION__\n");
   print_proxy( "#error This code needs a newer version of rpcproxy.h\n");

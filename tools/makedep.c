@@ -709,6 +709,7 @@ static void parse_generated_idl( INCL_FILE *source )
     }
     else if (strendswith( source->name, "_p.c" ))
     {
+        add_include( source, "objbase.h", 0, 1 );
         add_include( source, "rpcproxy.h", 0, 1 );
         add_include( source, header, 0, 0 );
     }
