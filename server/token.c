@@ -542,7 +542,8 @@ struct token *token_create_admin( void )
     static const unsigned int alias_users_subauth[] = { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS };
     PSID alias_admins_sid;
     PSID alias_users_sid;
-    ACL *default_dacl = create_default_dacl( &local_system_sid );
+    /* note: should be the owner specified in the token */
+    ACL *default_dacl = create_default_dacl( &interactive_sid );
 
     alias_admins_sid = security_sid_alloc( &nt_authority, sizeof(alias_admins_subauth)/sizeof(alias_admins_subauth[0]),
                                            alias_admins_subauth );
