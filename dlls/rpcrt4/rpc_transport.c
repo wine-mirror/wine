@@ -162,8 +162,33 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
   TRACE("connecting to %s\n", pname);
 
   while (TRUE) {
+    DWORD dwFlags = 0;
+    if (Connection->QOS)
+    {
+        switch (Connection->QOS->qos->ImpersonationType)
+        {
+            dwFlags = SECURITY_SQOS_PRESENT;
+            case RPC_C_IMP_LEVEL_DEFAULT:
+                /* FIXME: what to do here? */
+                break;
+            case RPC_C_IMP_LEVEL_ANONYMOUS:
+                dwFlags |= SECURITY_ANONYMOUS;
+                break;
+            case RPC_C_IMP_LEVEL_IDENTIFY:
+                dwFlags |= SECURITY_IDENTIFICATION;
+                break;
+            case RPC_C_IMP_LEVEL_IMPERSONATE:
+                dwFlags |= SECURITY_IMPERSONATION;
+                break;
+            case RPC_C_IMP_LEVEL_DELEGATE:
+                dwFlags |= SECURITY_DELEGATION;
+                break;
+        }
+        if (Connection->QOS->qos->IdentityTracking == RPC_C_QOS_IDENTIFY_DYNAMIC)
+            dwFlags |= SECURITY_CONTEXT_TRACKING;
+    }
     pipe = CreateFileA(pname, GENERIC_READ|GENERIC_WRITE, 0, NULL,
-                       OPEN_EXISTING, 0, 0);
+                       OPEN_EXISTING, dwFlags, 0);
     if (pipe != INVALID_HANDLE_VALUE) break;
     err = GetLastError();
     if (err == ERROR_PIPE_BUSY) {
