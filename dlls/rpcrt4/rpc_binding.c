@@ -224,6 +224,8 @@ RPC_STATUS RPCRT4_DestroyBinding(RpcBinding* Binding)
   RPCRT4_strfree(Binding->Endpoint);
   RPCRT4_strfree(Binding->NetworkAddr);
   RPCRT4_strfree(Binding->Protseq);
+  if (Binding->AuthInfo) RpcAuthInfo_Release(Binding->AuthInfo);
+  if (Binding->QOS) RpcQualityOfService_Release(Binding->QOS);
   HeapFree(GetProcessHeap(), 0, Binding);
   return RPC_S_OK;
 }
@@ -241,7 +243,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
     /* try to find a compatible connection from the connection pool */
     NewConnection = RPCRT4_GetIdleConnection(InterfaceId, TransferSyntax,
         Binding->Protseq, Binding->NetworkAddr, Binding->Endpoint,
-        Binding->AuthInfo);
+        Binding->AuthInfo, Binding->QOS);
     if (NewConnection) {
       *Connection = NewConnection;
       return RPC_S_OK;
@@ -258,7 +260,7 @@ RPC_STATUS RPCRT4_OpenBinding(RpcBinding* Binding, RpcConnection** Connection,
   status = RPCRT4_CreateConnection(&NewConnection, Binding->server,
                                    Binding->Protseq, Binding->NetworkAddr,
                                    Binding->Endpoint, NULL, Binding->AuthInfo,
-                                   Binding);
+                                   Binding->QOS, Binding);
   if (status != RPC_S_OK)
     return status;
 
@@ -874,6 +876,8 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
 
   if (SrcBinding->AuthInfo) RpcAuthInfo_AddRef(SrcBinding->AuthInfo);
   DestBinding->AuthInfo = SrcBinding->AuthInfo;
+  if (SrcBinding->QOS) RpcQualityOfService_AddRef(SrcBinding->QOS);
+  DestBinding->QOS = SrcBinding->QOS;
 
   *DestinationBinding = DestBinding;
   return RPC_S_OK;
@@ -934,6 +938,7 @@ static RPC_STATUS RpcAuthInfo_Create(unsigned long AuthnLevel, unsigned long Aut
     if (!AuthInfo)
         return ERROR_OUTOFMEMORY;
 
+    AuthInfo->refs = 1;
     AuthInfo->AuthnLevel = AuthnLevel;
     AuthInfo->AuthnSvc = AuthnSvc;
     AuthInfo->cred = cred;
@@ -957,6 +962,101 @@ ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
         HeapFree(GetProcessHeap(), 0, AuthInfo);
     }
 
+    return refs;
+}
+
+static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BOOL unicode, RpcQualityOfService **qos_dst)
+{
+    RpcQualityOfService *qos = HeapAlloc(GetProcessHeap(), 0, sizeof(*qos));
+
+    if (!qos)
+        return RPC_S_OUT_OF_RESOURCES;
+
+    qos->refs = 1;
+    qos->qos = HeapAlloc(GetProcessHeap(), 0, sizeof(*qos->qos));
+    if (!qos->qos) goto error;
+    qos->qos->Version = qos_src->Version;
+    qos->qos->Capabilities = qos_src->Capabilities;
+    qos->qos->IdentityTracking = qos_src->IdentityTracking;
+    qos->qos->ImpersonationType = qos_src->ImpersonationType;
+    qos->qos->AdditionalSecurityInfoType = 0;
+
+    if (qos_src->Version >= 2)
+    {
+        const RPC_SECURITY_QOS_V2_W *qos_src2 = (const RPC_SECURITY_QOS_V2_W *)qos_src;
+        qos->qos->AdditionalSecurityInfoType = qos_src2->AdditionalSecurityInfoType;
+        if (qos_src2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
+        {
+            const RPC_HTTP_TRANSPORT_CREDENTIALS_W *http_credentials_src = qos_src2->u.HttpCredentials;
+            RPC_HTTP_TRANSPORT_CREDENTIALS_W *http_credentials_dst;
+
+            http_credentials_dst = HeapAlloc(GetProcessHeap(), 0, sizeof(*http_credentials_dst));
+            qos->qos->u.HttpCredentials = http_credentials_dst;
+            if (!http_credentials_dst) goto error;
+            http_credentials_dst->TransportCredentials = http_credentials_src->TransportCredentials;
+            http_credentials_dst->Flags = http_credentials_src->Flags;
+            http_credentials_dst->AuthenticationTarget = http_credentials_src->AuthenticationTarget;
+            http_credentials_dst->NumberOfAuthnSchemes = http_credentials_src->NumberOfAuthnSchemes;
+            http_credentials_dst->AuthnSchemes = NULL;
+            http_credentials_dst->ServerCertificateSubject = NULL;
+            if (http_credentials_src->NumberOfAuthnSchemes)
+            {
+                http_credentials_dst->AuthnSchemes = HeapAlloc(GetProcessHeap(), 0, http_credentials_src->NumberOfAuthnSchemes * sizeof(*http_credentials_dst->AuthnSchemes));
+                if (!http_credentials_dst->AuthnSchemes) goto error;
+                memcpy(http_credentials_dst->AuthnSchemes, http_credentials_src->AuthnSchemes, http_credentials_src->NumberOfAuthnSchemes * sizeof(*http_credentials_dst->AuthnSchemes));
+            }
+            if (http_credentials_src->ServerCertificateSubject)
+            {
+                if (unicode)
+                    http_credentials_dst->ServerCertificateSubject =
+                        RPCRT4_strndupW(http_credentials_src->ServerCertificateSubject,
+                                        strlenW(http_credentials_src->ServerCertificateSubject));
+                else
+                    http_credentials_dst->ServerCertificateSubject =
+                        RPCRT4_strdupAtoW((char *)http_credentials_src->ServerCertificateSubject);
+                if (!http_credentials_dst->ServerCertificateSubject) goto error;
+            }
+        }
+    }
+    *qos_dst = qos;
+    return RPC_S_OK;
+
+error:
+    if (qos->qos)
+    {
+        if (qos->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP &&
+            qos->qos->u.HttpCredentials)
+        {
+            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->AuthnSchemes);
+            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->ServerCertificateSubject);
+            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials);
+        }
+        HeapFree(GetProcessHeap(), 0, qos->qos);
+    }
+    HeapFree(GetProcessHeap(), 0, qos);
+    return RPC_S_OUT_OF_RESOURCES;
+}
+
+ULONG RpcQualityOfService_AddRef(RpcQualityOfService *qos)
+{
+    return InterlockedIncrement(&qos->refs);
+}
+
+ULONG RpcQualityOfService_Release(RpcQualityOfService *qos)
+{
+    ULONG refs = InterlockedDecrement(&qos->refs);
+
+    if (!refs)
+    {
+        if (qos->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
+        {
+            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->AuthnSchemes);
+            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->ServerCertificateSubject);
+            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials);
+        }
+        HeapFree(GetProcessHeap(), 0, qos->qos);
+        HeapFree(GetProcessHeap(), 0, qos);
+    }
     return refs;
 }
 
@@ -1049,6 +1149,36 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
 
+  if (SecurityQos)
+  {
+      RPC_STATUS status;
+
+      TRACE("SecurityQos { Version=%ld, Capabilties=0x%lx, IdentityTracking=%ld, ImpersonationLevel=%ld",
+            SecurityQos->Version, SecurityQos->Capabilities, SecurityQos->IdentityTracking, SecurityQos->ImpersonationType);
+      if (SecurityQos->Version >= 2)
+      {
+          const RPC_SECURITY_QOS_V2_A *SecurityQos2 = (const RPC_SECURITY_QOS_V2_A *)SecurityQos;
+          TRACE(", AdditionalSecurityInfoType=%ld", SecurityQos2->AdditionalSecurityInfoType);
+          if (SecurityQos2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
+              TRACE(", { %p, 0x%lx, %ld, %ld, %p, %s }",
+                    SecurityQos2->u.HttpCredentials->TransportCredentials,
+                    SecurityQos2->u.HttpCredentials->Flags,
+                    SecurityQos2->u.HttpCredentials->AuthenticationTarget,
+                    SecurityQos2->u.HttpCredentials->NumberOfAuthnSchemes,
+                    SecurityQos2->u.HttpCredentials->AuthnSchemes,
+                    SecurityQos2->u.HttpCredentials->ServerCertificateSubject);
+      }
+      TRACE("}\n");
+      status = RpcQualityOfService_Create(SecurityQos, FALSE, &bind->QOS);
+      if (status != RPC_S_OK)
+          return status;
+  }
+  else
+  {
+      if (bind->QOS) RpcQualityOfService_Release(bind->QOS);
+      bind->QOS = NULL;
+  }
+
   if (AuthnSvc == RPC_C_AUTHN_DEFAULT)
     AuthnSvc = RPC_C_AUTHN_WINNT;
 
@@ -1134,6 +1264,36 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
 
   TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
+
+  if (SecurityQos)
+  {
+      RPC_STATUS status;
+
+      TRACE("SecurityQos { Version=%ld, Capabilties=0x%lx, IdentityTracking=%ld, ImpersonationLevel=%ld",
+            SecurityQos->Version, SecurityQos->Capabilities, SecurityQos->IdentityTracking, SecurityQos->ImpersonationType);
+      if (SecurityQos->Version >= 2)
+      {
+          const RPC_SECURITY_QOS_V2_W *SecurityQos2 = (const RPC_SECURITY_QOS_V2_W *)SecurityQos;
+          TRACE(", AdditionalSecurityInfoType=%ld", SecurityQos2->AdditionalSecurityInfoType);
+          if (SecurityQos2->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
+              TRACE(", { %p, 0x%lx, %ld, %ld, %p, %s }",
+                    SecurityQos2->u.HttpCredentials->TransportCredentials,
+                    SecurityQos2->u.HttpCredentials->Flags,
+                    SecurityQos2->u.HttpCredentials->AuthenticationTarget,
+                    SecurityQos2->u.HttpCredentials->NumberOfAuthnSchemes,
+                    SecurityQos2->u.HttpCredentials->AuthnSchemes,
+                    debugstr_w(SecurityQos2->u.HttpCredentials->ServerCertificateSubject));
+      }
+      TRACE("}\n");
+      status = RpcQualityOfService_Create(SecurityQos, TRUE, &bind->QOS);
+      if (status != RPC_S_OK)
+          return status;
+  }
+  else
+  {
+      if (bind->QOS) RpcQualityOfService_Release(bind->QOS);
+      bind->QOS = NULL;
+  }
 
   if (AuthnSvc == RPC_C_AUTHN_DEFAULT)
     AuthnSvc = RPC_C_AUTHN_WINNT;

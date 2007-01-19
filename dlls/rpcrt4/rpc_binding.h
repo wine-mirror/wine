@@ -36,6 +36,13 @@ typedef struct _RpcAuthInfo
   TimeStamp exp;
 } RpcAuthInfo;
 
+typedef struct _RpcQualityOfService
+{
+    LONG refs;
+
+    RPC_SECURITY_QOS_V2_W *qos;
+} RpcQualityOfService;
+
 struct connection_ops;
 
 typedef struct _RpcConnection
@@ -56,6 +63,7 @@ typedef struct _RpcConnection
   TimeStamp exp;
   ULONG attr;
   RpcAuthInfo *AuthInfo;
+  RpcQualityOfService *QOS;
 
   /* client-only */
   struct list conn_pool_entry;
@@ -90,6 +98,7 @@ typedef struct _RpcBinding
 
   /* authentication */
   RpcAuthInfo *AuthInfo;
+  RpcQualityOfService *QOS;
 } RpcBinding;
 
 LPSTR RPCRT4_strndupA(LPCSTR src, INT len);
@@ -103,10 +112,12 @@ void RPCRT4_strfree(LPSTR src);
 
 ULONG RpcAuthInfo_AddRef(RpcAuthInfo *AuthInfo);
 ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo);
+ULONG RpcQualityOfService_AddRef(RpcQualityOfService *qos);
+ULONG RpcQualityOfService_Release(RpcQualityOfService *qos);
 
-RpcConnection *RPCRT4_GetIdleConnection(const RPC_SYNTAX_IDENTIFIER *InterfaceId, const RPC_SYNTAX_IDENTIFIER *TransferSyntax, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, RpcAuthInfo* AuthInfo);
+RpcConnection *RPCRT4_GetIdleConnection(const RPC_SYNTAX_IDENTIFIER *InterfaceId, const RPC_SYNTAX_IDENTIFIER *TransferSyntax, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, const RpcAuthInfo* AuthInfo, const RpcQualityOfService *QOS);
 void RPCRT4_ReleaseIdleConnection(RpcConnection *Connection);
-RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcBinding* Binding);
+RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server, LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint, LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS, RpcBinding* Binding);
 RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_OpenClientConnection(RpcConnection* Connection);
 RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection);

@@ -219,7 +219,7 @@ static RPC_STATUS rpcrt4_protseq_ncalrpc_open_endpoint(RpcServerProtseq* protseq
   RpcConnection *Connection;
 
   r = RPCRT4_CreateConnection(&Connection, TRUE, protseq->Protseq, NULL,
-                              endpoint, NULL, NULL, NULL);
+                              endpoint, NULL, NULL, NULL, NULL);
   if (r != RPC_S_OK)
       return r;
 
@@ -266,7 +266,7 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
   RpcConnection *Connection;
 
   r = RPCRT4_CreateConnection(&Connection, TRUE, protseq->Protseq, NULL,
-                              endpoint, NULL, NULL, NULL);
+                              endpoint, NULL, NULL, NULL, NULL);
   if (r != RPC_S_OK)
     return r;
 
@@ -795,7 +795,8 @@ static RPC_STATUS rpcrt4_protseq_ncacn_ip_tcp_open_endpoint(RpcServerProtseq *pr
         }
         create_status = RPCRT4_CreateConnection((RpcConnection **)&tcpc, TRUE,
                                                 protseq->Protseq, NULL,
-                                                endpoint, NULL, NULL, NULL);
+                                                endpoint, NULL, NULL, NULL,
+                                                NULL);
         if (create_status != RPC_S_OK)
         {
             close(sock);
@@ -1291,7 +1292,8 @@ RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
 
 RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
     LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint,
-    LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcBinding* Binding)
+    LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS,
+    RpcBinding* Binding)
 {
   const struct connection_ops *ops;
   RpcConnection* NewConnection;
@@ -1317,6 +1319,8 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   SecInvalidateHandle(&NewConnection->ctx);
   if (AuthInfo) RpcAuthInfo_AddRef(AuthInfo);
   NewConnection->AuthInfo = AuthInfo;
+  if (QOS) RpcQualityOfService_AddRef(QOS);
+  NewConnection->QOS = QOS;
   list_init(&NewConnection->conn_pool_entry);
 
   TRACE("connection: %p\n", NewConnection);
@@ -1327,13 +1331,14 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
 
 RpcConnection *RPCRT4_GetIdleConnection(const RPC_SYNTAX_IDENTIFIER *InterfaceId,
     const RPC_SYNTAX_IDENTIFIER *TransferSyntax, LPCSTR Protseq, LPCSTR NetworkAddr,
-    LPCSTR Endpoint, RpcAuthInfo* AuthInfo)
+    LPCSTR Endpoint, const RpcAuthInfo* AuthInfo, const RpcQualityOfService *QOS)
 {
   RpcConnection *Connection;
   /* try to find a compatible connection from the connection pool */
   EnterCriticalSection(&connection_pool_cs);
   LIST_FOR_EACH_ENTRY(Connection, &connection_pool, RpcConnection, conn_pool_entry)
     if ((Connection->AuthInfo == AuthInfo) &&
+        (Connection->QOS == QOS) &&
         !memcmp(&Connection->ActiveInterface, InterfaceId,
            sizeof(RPC_SYNTAX_IDENTIFIER)) &&
         !strcmp(rpcrt4_conn_get_name(Connection), Protseq) &&
@@ -1367,7 +1372,8 @@ RPC_STATUS RPCRT4_SpawnConnection(RpcConnection** Connection, RpcConnection* Old
                                 rpcrt4_conn_get_name(OldConnection),
                                 OldConnection->NetworkAddr,
                                 OldConnection->Endpoint, NULL,
-                                OldConnection->AuthInfo, NULL);
+                                OldConnection->AuthInfo, OldConnection->QOS,
+                                NULL);
   if (err == RPC_S_OK)
     rpcrt4_conn_handoff(OldConnection, *Connection);
   return err;
@@ -1381,6 +1387,7 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   RPCRT4_strfree(Connection->Endpoint);
   RPCRT4_strfree(Connection->NetworkAddr);
   if (Connection->AuthInfo) RpcAuthInfo_Release(Connection->AuthInfo);
+  if (Connection->QOS) RpcQualityOfService_Release(Connection->QOS);
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
 }
