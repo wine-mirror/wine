@@ -3670,6 +3670,21 @@ static void test_sys_menu(void)
     DestroyWindow(hwnd);
 }
 
+/* For shown WS_OVERLAPPEDWINDOW */
+static const struct message WmSetIcon_1[] = {
+    { WM_SETICON, sent },
+    { 0x00AE, sent|defwinproc|optional }, /* XP */
+    { WM_GETTEXT, sent|defwinproc|optional },
+    { WM_GETTEXT, sent|defwinproc|optional }, /* XP sends a duplicate */
+    { 0 }
+};
+
+/* For WS_POPUP and hidden WS_OVERLAPPEDWINDOW */
+static const struct message WmSetIcon_2[] = {
+    { WM_SETICON, sent },
+    { 0 }
+};
+
 /* test if we receive the right sequence of messages */
 static void test_messages(void)
 {
@@ -3995,6 +4010,44 @@ static void test_messages(void)
 
     DestroyWindow(hchild);
     DestroyWindow(hparent);
+    flush_sequence();
+
+    /* Message sequences for WM_SETICON */
+    trace("testing WM_SETICON\n");
+    hwnd = CreateWindowExA(0, "TestWindowClass", NULL, WS_OVERLAPPEDWINDOW,
+                           CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
+                           NULL, NULL, 0);
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
+    ok_sequence(WmSetIcon_1, "WM_SETICON for shown window with caption", FALSE);
+
+    ShowWindow(hwnd, SW_HIDE);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
+    ok_sequence(WmSetIcon_2, "WM_SETICON for hidden window with caption", FALSE);
+    DestroyWindow(hwnd);
+    flush_sequence();
+
+    hwnd = CreateWindowExA(0, "TestPopupClass", NULL, WS_POPUP,
+                           CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, 0,
+                           NULL, NULL, 0);
+    ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
+    ok_sequence(WmSetIcon_2, "WM_SETICON for shown window without caption", FALSE);
+
+    ShowWindow(hwnd, SW_HIDE);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    flush_sequence();
+    SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)LoadIcon(0, IDI_APPLICATION));
+    ok_sequence(WmSetIcon_2, "WM_SETICON for hidden window without caption", FALSE);
+    DestroyWindow(hwnd);
     flush_sequence();
 }
 
