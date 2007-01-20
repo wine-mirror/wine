@@ -113,8 +113,8 @@
  *    };
  *    struct IDirect3DVtbl {
  *        HRESULT (*QueryInterface)(IDirect3D* me, REFIID riid, LPVOID* ppvObj);
- *        ULONG (*QueryInterface)(IDirect3D* me);
- *        ULONG (*QueryInterface)(IDirect3D* me);
+ *        ULONG (*AddRef)(IDirect3D* me);
+ *        ULONG (*Release)(IDirect3D* me);
  *        HRESULT (*Initialize)(IDirect3D* me, REFIID a);
  *        HRESULT (*EnumDevices)(IDirect3D* me, LPD3DENUMDEVICESCALLBACK a, LPVOID b);
  *        HRESULT (*CreateLight)(IDirect3D* me, LPDIRECT3DLIGHT* a, IUnknown* b);
