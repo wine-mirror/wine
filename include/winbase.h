@@ -2089,6 +2089,10 @@ BOOL        WINAPI ZombifyActCtx(HANDLE);
 
 LPSTR       WINAPI lstrcatA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcatW(LPWSTR,LPCWSTR);
+INT         WINAPI lstrcmpA(LPCSTR,LPCSTR);
+INT         WINAPI lstrcmpW(LPCWSTR,LPCWSTR);
+INT         WINAPI lstrcmpiA(LPCSTR,LPCSTR);
+INT         WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
 LPSTR       WINAPI lstrcpyA(LPSTR,LPCSTR);
 LPWSTR      WINAPI lstrcpyW(LPWSTR,LPCWSTR);
 LPSTR       WINAPI lstrcpynA(LPSTR,LPCSTR,INT);
@@ -2174,6 +2178,8 @@ extern inline LPSTR WINAPI lstrcatA( LPSTR dst, LPCSTR src )
 #endif /* !defined(WINE_NO_INLINE_STRING) && defined(__WINESRC__) */
 
 #define     lstrcat WINELIB_NAME_AW(lstrcat)
+#define     lstrcmp WINELIB_NAME_AW(lstrcmp)
+#define     lstrcmpi WINELIB_NAME_AW(lstrcmpi)
 #define     lstrcpy WINELIB_NAME_AW(lstrcpy)
 #define     lstrcpyn WINELIB_NAME_AW(lstrcpyn)
 #define     lstrlen WINELIB_NAME_AW(lstrlen)
@@ -2186,12 +2192,6 @@ LONG        WINAPI _llseek(HFILE,LONG,INT);
 HFILE       WINAPI _lopen(LPCSTR,INT);
 UINT        WINAPI _lread(HFILE,LPVOID,UINT);
 UINT        WINAPI _lwrite(HFILE,LPCSTR,UINT);
-INT         WINAPI lstrcmpA(LPCSTR,LPCSTR);
-INT         WINAPI lstrcmpW(LPCWSTR,LPCWSTR);
-#define     lstrcmp WINELIB_NAME_AW(lstrcmp)
-INT         WINAPI lstrcmpiA(LPCSTR,LPCSTR);
-INT         WINAPI lstrcmpiW(LPCWSTR,LPCWSTR);
-#define     lstrcmpi WINELIB_NAME_AW(lstrcmpi)
 
 /* compatibility macros */
 #define     FillMemory RtlFillMemory
