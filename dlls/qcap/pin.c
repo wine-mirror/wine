@@ -132,7 +132,7 @@ HRESULT WINAPI IPinImpl_QueryId(IPin * iface, LPWSTR * Id)
     TRACE("(%p/%p)->(%p)\n", This, iface, Id);
 
     *Id = CoTaskMemAlloc((strlenW(This->pinInfo.achName) + 1) * sizeof(WCHAR));
-    if (!Id)
+    if (!*Id)
         return E_OUTOFMEMORY;
 
     strcpyW(*Id, This->pinInfo.achName);
