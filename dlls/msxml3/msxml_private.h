@@ -21,6 +21,10 @@
 #ifndef __MSXML_PRIVATE__
 #define __MSXML_PRIVATE__
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 #ifdef HAVE_LIBXML2
 
 #ifdef HAVE_LIBXML_PARSER_H

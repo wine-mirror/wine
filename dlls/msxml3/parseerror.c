@@ -21,6 +21,8 @@
 
 #define COBJMACROS
 
+#include "config.h"
+
 #include <stdarg.h>
 #include <assert.h>
 #include "windef.h"
