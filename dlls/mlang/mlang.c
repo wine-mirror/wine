@@ -1497,8 +1497,24 @@ static HRESULT WINAPI fnIMultiLanguage_GetCodePageInfo(
     UINT uiCodePage,
     PMIMECPINFO pCodePageInfo)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    UINT i, n;
+
+    ICOM_THIS_MULTI(MLang_impl, vtbl_IMultiLanguage, iface);
+    TRACE("%p, %u, %p\n", This, uiCodePage, pCodePageInfo);
+
+    for (i = 0; i < sizeof(mlang_data)/sizeof(mlang_data[0]); i++)
+    {
+        for (n = 0; n < mlang_data[i].number_of_cp; n++)
+        {
+            if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
+            {
+                fill_cp_info(&mlang_data[i], n, pCodePageInfo);
+                return S_OK;
+            }
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI fnIMultiLanguage_GetFamilyCodePage(
