@@ -71,7 +71,6 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
   DWORD timeOut = INFINITE;
   MSG msg;
   HRESULT hr;
-  REFERENCE_TIME rtLastTime;
   REFERENCE_TIME rtCurTime;
   DMUS_PMSGItem* it = NULL;
   DMUS_PMSGItem* cur = NULL;
@@ -84,7 +83,6 @@ static DWORD WINAPI ProcessMsgThread(LPVOID lpParam) {
     timeOut = INFINITE;
 
     EnterCriticalSection(&This->safe);
-    rtLastTime = rtCurTime;
     hr = IDirectMusicPerformance8_GetTime((IDirectMusicPerformance8*) This, &rtCurTime, NULL);
     if (FAILED(hr)) {
       goto outrefresh;
