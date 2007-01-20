@@ -33,8 +33,9 @@
 
 static HINSTANCE hkernel32;
 static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
-static LPVOID (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
+static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
 
+/* ############################### */
 static char     base[MAX_PATH];
 static char     selfname[MAX_PATH];
 static char*    exename;
@@ -1302,8 +1303,11 @@ static void test_OpenProcess(void)
     MEMORY_BASIC_INFORMATION info;
     SIZE_T dummy, read_bytes;
 
-    /* Not implemented in all windows versions */
-    if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) return;
+    /* not exported in all windows versions */
+    if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) {
+        skip("VirtualAllocEx not found\n");
+        return;
+    }
 
     /* without PROCESS_VM_OPERATION */
     hproc = OpenProcess(PROCESS_ALL_ACCESS & ~PROCESS_VM_OPERATION, FALSE, GetCurrentProcessId());
@@ -1315,7 +1319,7 @@ static void test_OpenProcess(void)
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {   /* Win9x */
         CloseHandle(hproc);
-        trace("VirtualAllocEx is not implemented, skipping the test\n");
+        skip("VirtualAllocEx not implemented\n");
         return;
     }
     ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
