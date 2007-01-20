@@ -109,6 +109,7 @@ static const struct message create_parent_wnd_seq[] = {
     { WM_SETFOCUS, sent|wparam|defwinproc, 0 },
     /* Win9x adds SWP_NOZORDER below */
     { WM_WINDOWPOSCHANGED, sent, /*|wparam, SWP_SHOWWINDOW|SWP_NOSIZE|SWP_NOMOVE|SWP_NOCLIENTSIZE|SWP_NOCLIENTMOVE*/ },
+    { WM_NCCALCSIZE, sent|wparam|optional, 1 },
     { WM_SIZE, sent },
     { WM_MOVE, sent },
     { 0 }
@@ -123,7 +124,7 @@ static const struct message add_updown_with_edit_seq[] = {
     { WM_WINDOWPOSCHANGING, sent },
     { WM_NCCALCSIZE, sent|wparam, TRUE },
     { WM_WINDOWPOSCHANGED, sent },
-    { WM_SIZE, sent|wparam|lparam|defwinproc, SIZE_RESTORED, MAKELONG(91, 75) },
+    { WM_SIZE, sent|wparam|defwinproc, SIZE_RESTORED /*, MAKELONG(91, 75) exact size depends on font */ },
     { 0 }
 };
 
@@ -202,6 +203,8 @@ static void ok_sequence_(int sequence_index, const struct message *expected,
 
     while (expected->message && actual->message)
     {
+        trace_( file, line)("expected %04x - actual %04x\n", expected->message, actual->message);
+
         if (expected->message == actual->message)
         {
             if (expected->flags & wparam)
@@ -356,6 +359,8 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         message != WM_GETICON &&
         message != WM_DEVICECHANGE)
     {
+        trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
         msg.message = message;
         msg.flags = sent|wparam|lparam;
         if (defwndproc_counter) msg.flags |= defwinproc;
@@ -413,6 +418,8 @@ static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam,
     LRESULT ret;
     struct message msg;
 
+    trace("edit: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
     msg.message = message;
     msg.flags = sent|wparam|lparam;
     if (defwndproc_counter) msg.flags |= defwinproc;
@@ -458,6 +465,8 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     static long defwndproc_counter = 0;
     LRESULT ret;
     struct message msg;
+
+    trace("updown: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
 
     msg.message = message;
     msg.flags = sent|wparam|lparam;
@@ -519,7 +528,7 @@ static void test_create_updown_control(void)
     updown = create_updown_control();
     ok(updown != NULL, "Failed to create updown control\n");
     ok_sequence(PARENT_SEQ_INDEX, add_updown_to_parent_seq, "add updown control to parent", TRUE);
-    ok_sequence(EDIT_SEQ_INDEX, add_updown_with_edit_seq, "add updown control with edit", TRUE);
+    ok_sequence(EDIT_SEQ_INDEX, add_updown_with_edit_seq, "add updown control with edit", FALSE);
 
     flush_sequences();
 
