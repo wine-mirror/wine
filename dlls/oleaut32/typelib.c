@@ -1229,7 +1229,7 @@ static void dump_TLBImplType(const TLBImplType * impl)
     }
 }
 
-void dump_Variant(const VARIANT * pvar)
+static void dump_Variant(const VARIANT * pvar)
 {
     SYSTEMTIME st;
 

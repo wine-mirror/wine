@@ -599,7 +599,6 @@ WORD typeofarray
 HRESULT ITypeInfoImpl_GetInternalFuncDesc( ITypeInfo *iface, UINT index, const FUNCDESC **ppFuncDesc );
 
 extern DWORD _invoke(FARPROC func,CALLCONV callconv, int nrargs, DWORD *args);
-extern void dump_Variant(const VARIANT * pvar);
 
 HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv);
 

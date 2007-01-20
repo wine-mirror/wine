@@ -1465,7 +1465,7 @@ HRESULT WINAPI VarUdateFromDate(DATE dateIn, ULONG dwFlags, UDATE *lpUdate)
   TRACE("lcid 0x%x, " #name "=%d '%c'\n", lcid, lpChars->name, lpChars->name)
 
 /* Get the valid number characters for an lcid */
-void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
+static void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS *lpChars, LCID lcid, DWORD dwFlags)
 {
   static const VARIANT_NUMBER_CHARS defaultChars = { '-','+','.',',','$',0,'.',',' };
   LCTYPE lctype = dwFlags & LOCALE_NOUSEROVERRIDE;

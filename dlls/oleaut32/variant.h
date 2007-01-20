@@ -123,5 +123,3 @@ typedef struct tagVARIANT_NUMBER_CHARS
   WCHAR cCurrencyDecimalPoint;
   WCHAR cCurrencyDigitSeparator;
 } VARIANT_NUMBER_CHARS;
-
-void VARIANT_GetLocalisedNumberChars(VARIANT_NUMBER_CHARS*,LCID,DWORD);
