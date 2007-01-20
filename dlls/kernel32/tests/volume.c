@@ -27,6 +27,12 @@
 #define LANMAN  "LANMANREDIRECTOR"
 #define RAMDISK "RAMDISK"
 
+static HINSTANCE hdll;
+static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointA)(LPCSTR, LPSTR, DWORD);
+static BOOL (WINAPI * pGetVolumeNameForVolumeMountPointW)(LPCWSTR, LPWSTR, DWORD);
+
+/* ############################### */
+
 static void test_query_dos_deviceA(void)
 {
     char drivestr[] = "a:";
@@ -51,18 +57,24 @@ static void test_GetVolumeNameForVolumeMountPointA(void)
     char volume[MAX_PATH], path[] = "c:\\";
     DWORD len = sizeof(volume);
 
-    ret = GetVolumeNameForVolumeMountPointA(path, volume, 0);
+    /* not present before w2k */
+    if (!pGetVolumeNameForVolumeMountPointA) {
+        skip("GetVolumeNameForVolumeMountPointA not found\n");
+        return;
+    }
+
+    ret = pGetVolumeNameForVolumeMountPointA(path, volume, 0);
     ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
 
     if (0) { /* these crash on XP */
-    ret = GetVolumeNameForVolumeMountPointA(path, NULL, len);
+    ret = pGetVolumeNameForVolumeMountPointA(path, NULL, len);
     ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
 
-    ret = GetVolumeNameForVolumeMountPointA(NULL, volume, len);
+    ret = pGetVolumeNameForVolumeMountPointA(NULL, volume, len);
     ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
     }
 
-    ret = GetVolumeNameForVolumeMountPointA(path, volume, len);
+    ret = pGetVolumeNameForVolumeMountPointA(path, volume, len);
     ok(ret == TRUE, "GetVolumeNameForVolumeMountPointA failed\n");
 }
 
@@ -72,23 +84,33 @@ static void test_GetVolumeNameForVolumeMountPointW(void)
     WCHAR volume[MAX_PATH], path[] = {'c',':','\\',0};
     DWORD len = sizeof(volume) / sizeof(WCHAR);
 
-    ret = GetVolumeNameForVolumeMountPointW(path, volume, 0);
+    /* not present before w2k */
+    if (!pGetVolumeNameForVolumeMountPointW) {
+        skip("GetVolumeNameForVolumeMountPointW not found\n");
+        return;
+    }
+
+    ret = pGetVolumeNameForVolumeMountPointW(path, volume, 0);
     ok(ret == FALSE, "GetVolumeNameForVolumeMountPointA succeeded\n");
 
     if (0) { /* these crash on XP */
-    ret = GetVolumeNameForVolumeMountPointW(path, NULL, len);
+    ret = pGetVolumeNameForVolumeMountPointW(path, NULL, len);
     ok(ret == FALSE, "GetVolumeNameForVolumeMountPointW succeeded\n");
 
-    ret = GetVolumeNameForVolumeMountPointW(NULL, volume, len);
+    ret = pGetVolumeNameForVolumeMountPointW(NULL, volume, len);
     ok(ret == FALSE, "GetVolumeNameForVolumeMountPointW succeeded\n");
     }
 
-    ret = GetVolumeNameForVolumeMountPointW(path, volume, len);
+    ret = pGetVolumeNameForVolumeMountPointW(path, volume, len);
     ok(ret == TRUE, "GetVolumeNameForVolumeMountPointW failed\n");
 }
 
 START_TEST(volume)
 {
+    hdll = GetModuleHandleA("kernel32.dll");
+    pGetVolumeNameForVolumeMountPointA = (void *) GetProcAddress(hdll, "GetVolumeNameForVolumeMountPointA");
+    pGetVolumeNameForVolumeMountPointW = (void *) GetProcAddress(hdll, "GetVolumeNameForVolumeMountPointW");
+
     test_query_dos_deviceA();
     test_GetVolumeNameForVolumeMountPointA();
     test_GetVolumeNameForVolumeMountPointW();
