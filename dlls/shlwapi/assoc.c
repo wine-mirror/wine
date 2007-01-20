@@ -376,7 +376,7 @@ HRESULT WINAPI AssocQueryStringByKeyA(ASSOCF cfFlags, ASSOCSTR str, HKEY hkAssoc
                                       LPCSTR pszExtra, LPSTR pszOut,
                                       DWORD *pcchOut)
 {
-  WCHAR szExtraW[MAX_PATH], *lpszExtraW;
+  WCHAR szExtraW[MAX_PATH], *lpszExtraW = szExtraW;
   WCHAR szReturnW[MAX_PATH], *lpszReturnW = szReturnW;
   HRESULT hRet = E_OUTOFMEMORY;
 
