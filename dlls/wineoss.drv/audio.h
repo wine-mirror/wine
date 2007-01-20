@@ -21,6 +21,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 #ifdef HAVE_OSS
 
 /* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
