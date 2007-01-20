@@ -28,6 +28,12 @@
 
 #define NUM_THREADS 4
 
+static HINSTANCE hkernel32;
+static LPVOID (WINAPI *pVirtualAllocEx)(HANDLE, LPVOID, SIZE_T, DWORD, DWORD);
+static BOOL   (WINAPI *pVirtualFreeEx)(HANDLE, LPVOID, SIZE_T, DWORD);
+
+/* ############################### */
+
 static HANDLE create_target_process(const char *arg)
 {
     char **argv;
@@ -55,15 +61,21 @@ static void test_VirtualAllocEx(void)
     MEMORY_BASIC_INFORMATION info;
     HANDLE hProcess;
 
+    /* not exported in all windows-versions  */
+    if ((!pVirtualAllocEx) || (!pVirtualFreeEx)) {
+        skip("VirtualAllocEx not found\n");
+        return;
+    }
+
     hProcess = create_target_process("sleep");
     ok(hProcess != NULL, "Can't start process\n");
 
     SetLastError(0xdeadbeef);
-    addr1 = VirtualAllocEx(hProcess, NULL, alloc_size, MEM_COMMIT,
+    addr1 = pVirtualAllocEx(hProcess, NULL, alloc_size, MEM_COMMIT,
                            PAGE_EXECUTE_READWRITE);
     if (!addr1 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {   /* Win9x */
-        trace("VirtualAllocEx is not implemented, skipping the test\n");
+        skip("VirtualAllocEx not implemented\n");
         TerminateProcess(hProcess, 0);
         CloseHandle(hProcess);
         return;
@@ -81,7 +93,7 @@ static void test_VirtualAllocEx(void)
     b = ReadProcessMemory(hProcess, addr1, dst, alloc_size, &bytes_read);
     ok(b && (bytes_read == alloc_size), "%lu bytes read\n", bytes_read);
     ok(!memcmp(src, dst, alloc_size), "Data from remote process differs\n");
-    b = VirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
+    b = pVirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
     ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
 
     HeapFree( GetProcessHeap(), 0, src );
@@ -92,13 +104,13 @@ static void test_VirtualAllocEx(void)
      */
 
     SetLastError(0xdeadbeef);
-    addr1 = VirtualAllocEx(hProcess, 0, 0, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = pVirtualAllocEx(hProcess, 0, 0, MEM_RESERVE, PAGE_NOACCESS);
     ok(addr1 == NULL, "VirtualAllocEx should fail on zero-sized allocation\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER /* NT */ ||
        GetLastError() == ERROR_NOT_ENOUGH_MEMORY, /* Win9x */
         "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    addr1 = VirtualAllocEx(hProcess, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
+    addr1 = pVirtualAllocEx(hProcess, 0, 0xFFFC, MEM_RESERVE, PAGE_NOACCESS);
     ok(addr1 != NULL, "VirtualAllocEx failed\n");
 
     /* test a not committed memory */
@@ -122,7 +134,7 @@ static void test_VirtualAllocEx(void)
        GetLastError() == ERROR_INVALID_PARAMETER, /* Win9x */
         "got %u, expected ERROR_INVALID_ADDRESS\n", GetLastError());
 
-    addr2 = VirtualAllocEx(hProcess, addr1, 0x1000, MEM_COMMIT, PAGE_NOACCESS);
+    addr2 = pVirtualAllocEx(hProcess, addr1, 0x1000, MEM_COMMIT, PAGE_NOACCESS);
     ok(addr1 == addr2, "VirtualAllocEx failed\n");
 
     /* test a committed memory */
@@ -153,20 +165,20 @@ static void test_VirtualAllocEx(void)
     ok(VirtualProtectEx(hProcess, addr1, 0x1000, PAGE_READWRITE, &old_prot), "VirtualProtectEx failed\n");
     ok(old_prot == PAGE_READONLY, "wrong old protection: got %04x instead of PAGE_READONLY\n", old_prot);
 
-    ok(!VirtualFreeEx(hProcess, addr1, 0x10000, 0),
+    ok(!pVirtualFreeEx(hProcess, addr1, 0x10000, 0),
        "VirtualFreeEx should fail with type 0\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    ok(VirtualFreeEx(hProcess, addr1, 0x10000, MEM_DECOMMIT), "VirtualFreeEx failed\n");
+    ok(pVirtualFreeEx(hProcess, addr1, 0x10000, MEM_DECOMMIT), "VirtualFreeEx failed\n");
 
     /* if the type is MEM_RELEASE, size must be 0 */
-    ok(!VirtualFreeEx(hProcess, addr1, 1, MEM_RELEASE),
+    ok(!pVirtualFreeEx(hProcess, addr1, 1, MEM_RELEASE),
        "VirtualFreeEx should fail\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %u, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
-    ok(VirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE), "VirtualFreeEx failed\n");
+    ok(pVirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE), "VirtualFreeEx failed\n");
 
     TerminateProcess(hProcess, 0);
     CloseHandle(hProcess);
@@ -494,6 +506,10 @@ START_TEST(virtual)
         }
         return;
     }
+
+    hkernel32 = GetModuleHandleA("kernel32.dll");
+    pVirtualAllocEx = (void *) GetProcAddress(hkernel32, "VirtualAllocEx");
+    pVirtualFreeEx = (void *) GetProcAddress(hkernel32, "VirtualFreeEx");
 
     test_VirtualAllocEx();
     test_VirtualAlloc();
