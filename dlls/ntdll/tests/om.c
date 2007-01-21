@@ -483,6 +483,13 @@ void test_symboliclink(void)
     ok(status == STATUS_INVALID_PARAMETER,
         "NtOpenSymbolicLinkObject should have failed with STATUS_INVALID_PARAMETER got(%08x)\n", status);
 
+    /* No attributes */
+    pRtlCreateUnicodeStringFromAsciiz(&target, "\\DosDevices");
+    status = pNtCreateSymbolicLinkObject(&h, SYMBOLIC_LINK_QUERY, NULL, &target);
+    ok(status == STATUS_SUCCESS, "NtCreateSymbolicLinkObject failed(%08x)\n", status);
+    pRtlFreeUnicodeString(&target);
+    pNtClose(h);
+
     InitializeObjectAttributes(&attr, NULL, 0, 0, NULL);
     SYMLNK_TEST_CREATE_FAILURE(&link, STATUS_INVALID_PARAMETER)
     SYMLNK_TEST_OPEN_FAILURE(&h, STATUS_OBJECT_PATH_SYNTAX_BAD)

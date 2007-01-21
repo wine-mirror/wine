@@ -562,7 +562,7 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACC
         req->access = DesiredAccess;
         req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
         req->rootdir = ObjectAttributes ? ObjectAttributes->RootDirectory : 0;
-        if (ObjectAttributes->ObjectName)
+        if (ObjectAttributes && ObjectAttributes->ObjectName)
         {
             req->name_len = ObjectAttributes->ObjectName->Length;
             wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
