@@ -1479,7 +1479,7 @@ NtAccessCheck(
 {
     NTSTATUS status;
 
-    TRACE("(%p, %p, %08x, %p, %p, %p, %p, %p), stub\n",
+    TRACE("(%p, %p, %08x, %p, %p, %p, %p, %p)\n",
         SecurityDescriptor, ClientToken, DesiredAccess, GenericMapping,
         PrivilegeSet, ReturnLength, GrantedAccess, AccessStatus);
 
