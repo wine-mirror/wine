@@ -542,7 +542,7 @@
 @ stdcall PtInRect(ptr double)
 @ stub QuerySendMessage
 # @ stub QueryUserCounters
-# @ stub RealChildWindowFromPoint
+@ stub RealChildWindowFromPoint
 @ stdcall RealGetWindowClass(long ptr long) RealGetWindowClassA
 @ stdcall RealGetWindowClassA(long ptr long)
 @ stdcall RealGetWindowClassW(long ptr long)
