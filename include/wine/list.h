@@ -100,7 +100,7 @@ inline static void list_remove( struct list *elem )
 }
 
 /* get the next element */
-inline static struct list *list_next( struct list *list, struct list *elem )
+inline static struct list *list_next( const struct list *list, const struct list *elem )
 {
     struct list *ret = elem->next;
     if (elem->next == list) ret = NULL;
@@ -108,7 +108,7 @@ inline static struct list *list_next( struct list *list, struct list *elem )
 }
 
 /* get the previous element */
-inline static struct list *list_prev( struct list *list, struct list *elem )
+inline static struct list *list_prev( const struct list *list, const struct list *elem )
 {
     struct list *ret = elem->prev;
     if (elem->prev == list) ret = NULL;
@@ -116,19 +116,19 @@ inline static struct list *list_prev( struct list *list, struct list *elem )
 }
 
 /* get the first element */
-inline static struct list *list_head( struct list *list )
+inline static struct list *list_head( const struct list *list )
 {
     return list_next( list, list );
 }
 
 /* get the last element */
-inline static struct list *list_tail( struct list *list )
+inline static struct list *list_tail( const struct list *list )
 {
     return list_prev( list, list );
 }
 
 /* check if a list is empty */
-inline static int list_empty( struct list *list )
+inline static int list_empty( const struct list *list )
 {
     return list->next == list;
 }
@@ -137,6 +137,15 @@ inline static int list_empty( struct list *list )
 inline static void list_init( struct list *list )
 {
     list->next = list->prev = list;
+}
+
+/* count the elements of a list */
+inline static unsigned int list_count( const struct list *list )
+{
+    unsigned count = 0;
+    const struct list *ptr;
+    for (ptr = list->next; ptr != list; ptr = ptr->next) count++;
+    return count;
 }
 
 /* move all elements from src to the tail of dst */
