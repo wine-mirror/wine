@@ -1451,14 +1451,6 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBaseShader)
     /*** IWineD3DVertexShader methods ***/
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID *pData, UINT *pSizeOfData) PURE;
-    STDMETHOD(SetConstantB)(THIS_ UINT StartRegister, CONST BOOL*  pConstantData, UINT BoolCount) PURE;
-    STDMETHOD(SetConstantI)(THIS_ UINT StartRegister, CONST INT*   pConstantData, UINT Vector4iCount) PURE;
-    STDMETHOD(SetConstantF)(THIS_ UINT StartRegister, CONST FLOAT* pConstantData, UINT Vector4fCount) PURE;
-    STDMETHOD(GetConstantB)(THIS_ UINT StartRegister, BOOL*  pConstantData, UINT BoolCount) PURE;
-    STDMETHOD(GetConstantI)(THIS_ UINT StartRegister, INT*   pConstantData, UINT Vector4iCount) PURE;
-    STDMETHOD(GetConstantF)(THIS_ UINT StartRegister, FLOAT* pConstantData, UINT Vector4fCount) PURE;
-    /* Internal Interfaces */
-    STDMETHOD_(DWORD, GetVersion)(THIS) PURE;
 };
 #undef INTERFACE
 
@@ -1475,13 +1467,6 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBaseShader)
 /*** IWineD3DVertexShader methods ***/
 #define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
 #define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DVertexShader_SetConstantB(p,a,b,c)     (p)->lpVtbl->SetConstantB(p,a,b,c)
-#define IWineD3DVertexShader_SetConstantI(p,a,b,c)     (p)->lpVtbl->SetConstantI(p,a,b,c)
-#define IWineD3DVertexShader_SetConstantF(p,a,b,c)     (p)->lpVtbl->SetConstantF(p,a,b,c)
-#define IWineD3DVertexShader_GetConstantB(p,a,b,c)     (p)->lpVtbl->GetConstantB(p,a,b,c)
-#define IWineD3DVertexShader_GetConstantI(p,a,b,c)     (p)->lpVtbl->GetConstantI(p,a,b,c)
-#define IWineD3DVertexShader_GetConstantF(p,a,b,c)     (p)->lpVtbl->GetConstantF(p,a,b,c)
-#define IWineD3DVertexShader_GetVersion(p)             (p)->lpVtbl->GetVersion(p)
 #endif
 
 /*****************************************************************************
