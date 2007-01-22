@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include "guiddef.h"
 #include "wine/rpcfc.h"
+#include "wine/list.h"
 
 #ifndef UUID_DEFINED
 #define UUID_DEFINED
@@ -254,7 +255,7 @@ struct _ifref_t {
 
 struct _typelib_entry_t {
     type_t *type;
-    DECL_LINK(typelib_entry_t);
+    struct list entry;
 };
 
 struct _importinfo_t {
@@ -279,15 +280,15 @@ struct _importlib_t {
 
     int allocated;
 
-    DECL_LINK(importlib_t);
+    struct list entry;
 };
 
 struct _typelib_t {
     char *name;
     char *filename;
     attr_t *attrs;
-    typelib_entry_t *entry;
-    importlib_t *importlibs;
+    struct list entries;
+    struct list importlibs;
 };
 
 void init_types(void);

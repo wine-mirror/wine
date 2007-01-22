@@ -230,8 +230,8 @@ void start_typelib(char *name, attr_t *attrs)
     typelib->name = xstrdup(name);
     typelib->filename = xstrdup(typelib_name);
     typelib->attrs = attrs;
-    typelib->entry = NULL;
-    typelib->importlibs = NULL;
+    list_init( &typelib->entries );
+    list_init( &typelib->importlibs );
 }
 
 void end_typelib(void)
@@ -251,8 +251,7 @@ void add_typelib_entry(type_t *t)
     chat("add kind %i: %s\n", t->kind, t->name);
     entry = xmalloc(sizeof(*entry));
     entry->type = t;
-    LINK(entry, typelib->entry);
-    typelib->entry = entry;
+    list_add_tail( &typelib->entries, &entry->entry );
 }
 
 static void tlb_read(int fd, void *buf, int count)
@@ -365,10 +364,9 @@ void add_importlib(const char *name)
 
     if(!typelib) return;
 
-    for(importlib = typelib->importlibs; importlib; importlib = NEXT_LINK(importlib)) {
+    LIST_FOR_EACH_ENTRY( importlib, &typelib->importlibs, importlib_t, entry )
         if(!strcmp(name, importlib->name))
             return;
-    }
 
     chat("add_importlib: %s\n", name);
 
@@ -377,7 +375,5 @@ void add_importlib(const char *name)
     importlib->name = xstrdup(name);
 
     read_importlib(importlib);
-
-    LINK(importlib, typelib->importlibs);
-    typelib->importlibs = importlib;
+    list_add_head( &typelib->importlibs, &importlib->entry );
 }

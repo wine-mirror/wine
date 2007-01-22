@@ -716,7 +716,8 @@ static importinfo_t *find_importinfo(msft_typelib_t *typelib, const char *name)
     if(!name)
         return NULL;
 
-    for(importlib = typelib->typelib->importlibs; importlib; importlib = NEXT_LINK(importlib)) {
+    LIST_FOR_EACH_ENTRY( importlib, &typelib->typelib->importlibs, importlib_t, entry )
+    {
         for(i=0; i < importlib->ntypeinfos; i++) {
             if(!strcmp(name, importlib->importinfos[i].name)) {
                 chat("Found %s in importlib.\n", name);
@@ -2517,10 +2518,7 @@ int create_msft_typelib(typelib_t *typelib)
     set_custdata(msft, &midl_time_guid, VT_UI4, &cur_time, &msft->typelib_header.CustomDataOffset);
     set_custdata(msft, &midl_version_guid, VT_UI4, &version, &msft->typelib_header.CustomDataOffset);
 
-    for(entry = typelib->entry; entry && NEXT_LINK(entry); entry = NEXT_LINK(entry))
-        ;
-
-    for( ; entry; entry = PREV_LINK(entry))
+    LIST_FOR_EACH_ENTRY( entry, &typelib->entries, typelib_entry_t, entry )
         add_entry(msft, entry);
 
     save_all_changes(msft);
