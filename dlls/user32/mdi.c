@@ -1518,7 +1518,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         /* do not change */
         TRACE("current active %p, maximized %p\n", ci->hwndActiveChild, ci->hwndChildMaximized);
 
-        if( ci->hwndActiveChild == hwnd && wParam != SIZE_MAXIMIZED )
+        if( ci->hwndChildMaximized == hwnd && wParam != SIZE_MAXIMIZED )
         {
             HWND frame;
 
