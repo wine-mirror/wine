@@ -146,6 +146,7 @@ dlls/comm.drv16
 dlls/commdlg.dll16
 dlls/compobj.dll16
 dlls/compstui/libcompstui.def
+dlls/credui/credui.res
 dlls/crtdll/libcrtdll.def
 dlls/crypt32/crypt32.res
 dlls/crypt32/libcrypt32.def

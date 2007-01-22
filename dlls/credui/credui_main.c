@@ -23,10 +23,16 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
+#include "winuser.h"
+#include "wincred.h"
+
+#include "credui_resources.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(credui);
+
+static HINSTANCE hinstCredUI;
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -35,7 +41,138 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 	if (fdwReason == DLL_WINE_PREATTACH) return FALSE;	/* prefer native version */
 
 	if (fdwReason == DLL_PROCESS_ATTACH)
-	   DisableThreadLibraryCalls(hinstDLL);
+	{
+		DisableThreadLibraryCalls(hinstDLL);
+		hinstCredUI = hinstDLL;
+	}
 
 	return TRUE;
+}
+
+struct cred_dialog_params
+{
+    PCWSTR pszTargetName;
+    PCWSTR pszMessageText;
+    PCWSTR pszCaptionText;
+    HBITMAP hbmBanner;
+    PWSTR pszUsername;
+    ULONG ulUsernameMaxChars;
+    PWSTR pszPassword;
+    ULONG ulPasswordMaxChars;
+    BOOL fSave;
+};
+
+static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
+                                       LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_INITDIALOG:
+        {
+            struct cred_dialog_params *params = (struct cred_dialog_params *)lParam;
+            SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
+            if (params->pszCaptionText)
+                SetWindowTextW(hwndDlg, params->pszCaptionText);
+            return TRUE;
+        }
+        case WM_COMMAND:
+            switch (wParam)
+            {
+                case MAKELONG(IDOK, BN_CLICKED):
+                {
+                    ULONG domainlen;
+                    struct cred_dialog_params *params =
+                        (struct cred_dialog_params *)GetWindowLongPtrW(hwndDlg, DWLP_USER);
+
+                    domainlen = GetDlgItemTextW(hwndDlg, IDC_DOMAIN,
+                                                params->pszUsername,
+                                                params->ulUsernameMaxChars);
+                    if (domainlen && (domainlen < params->ulUsernameMaxChars))
+                    {
+                        params->pszUsername[domainlen++] = '\\';
+                        params->pszUsername[domainlen] = '\0';
+                    }
+                    if (domainlen < params->ulUsernameMaxChars)
+                        GetDlgItemTextW(hwndDlg, IDC_USERNAME,
+                                        params->pszUsername + domainlen,
+                                        params->ulUsernameMaxChars - domainlen);
+                    GetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword,
+                                    params->ulPasswordMaxChars);
+
+                    EndDialog(hwndDlg, IDOK);
+                    return TRUE;
+                }
+                case MAKELONG(IDCANCEL, BN_CLICKED):
+                    EndDialog(hwndDlg, IDCANCEL);
+                    return TRUE;
+            }
+            /* fall through */
+        default:
+            return FALSE;
+    }
+}
+
+/******************************************************************************
+ *           CredUIPromptForCredentialsW [CREDUI.@]
+ */
+DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
+                                         PCWSTR pszTargetName,
+                                         PCtxtHandle Reserved,
+                                         DWORD dwAuthError,
+                                         PWSTR pszUsername,
+                                         ULONG ulUsernameMaxChars,
+                                         PWSTR pszPassword,
+                                         ULONG ulPasswordMaxChars, BOOL *pfSave,
+                                         DWORD dwFlags)
+{
+    INT_PTR ret;
+    struct cred_dialog_params params;
+
+    TRACE("(%p, %s, %p, %d, %p, %d, %p, %d, %p, 0x%08x)\n", pUIInfo,
+          debugstr_w(pszTargetName), Reserved, dwAuthError, pszUsername,
+          ulUsernameMaxChars, pszPassword, ulPasswordMaxChars, pfSave, dwFlags);
+
+    params.pszTargetName = pszTargetName;
+    if (pUIInfo)
+    {
+        params.pszMessageText = pUIInfo->pszMessageText;
+        params.pszCaptionText = pUIInfo->pszCaptionText;
+        params.hbmBanner  = pUIInfo->hbmBanner;
+    }
+    else
+    {
+        params.pszMessageText = NULL;
+        params.pszCaptionText = NULL;
+        params.hbmBanner = NULL;
+    }
+    params.pszUsername = pszUsername;
+    params.ulUsernameMaxChars = ulUsernameMaxChars;
+    params.pszPassword = pszPassword;
+    params.ulPasswordMaxChars = ulPasswordMaxChars;
+    params.fSave = *pfSave;
+
+    ret = DialogBoxParamW(hinstCredUI, MAKEINTRESOURCEW(IDD_CREDDIALOG),
+                          pUIInfo->hwndParent, CredDialogProc, (LPARAM)&params);
+    if (ret <= 0)
+        return GetLastError();
+
+    if (ret == IDCANCEL)
+    {
+        TRACE("dialog cancelled\n");
+        return ERROR_CANCELLED;
+    }
+
+    *pfSave = params.fSave;
+
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *           CredUIConfirmCredentialsW [CREDUI.@]
+ */
+DWORD WINAPI CredUIConfirmCredentialsW(PCWSTR pszTargetName, BOOL bConfirm)
+{
+    FIXME("(%s, %s): stub\n", debugstr_w(pszTargetName),
+          bConfirm ? "TRUE" : "FALSE");
+    return ERROR_SUCCESS;
 }

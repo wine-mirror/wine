@@ -3,10 +3,12 @@ TOPOBJDIR = ../..
 SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = credui.dll
-IMPORTS   = kernel32
+IMPORTS   = user32 kernel32
 
 C_SRCS = \
 	credui_main.c
+
+RC_SRCS = credui.rc
 
 @MAKE_DLL_RULES@
 
