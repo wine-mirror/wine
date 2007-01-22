@@ -179,6 +179,80 @@ void WINAPI SnmpUtilAsnAnyFree(AsnAny *any)
 }
 
 /***********************************************************************
+ *      SnmpUtilOctetsCpy       (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilOctetsCpy(AsnOctetString *dst, AsnOctetString *src)
+{
+    TRACE("(%p, %p)\n", dst, src);
+
+    if (!dst) return SNMPAPI_ERROR;
+    if (!src)
+    {
+        dst->dynamic = FALSE;
+        dst->length = 0;
+        dst->stream = NULL;
+        return SNMPAPI_NOERROR;
+    }
+    if ((dst->stream = HeapAlloc(GetProcessHeap(), 0, src->length)))
+    {
+        unsigned int i;
+
+        dst->dynamic = TRUE;
+        dst->length = src->length;
+        for (i = 0; i < dst->length; i++) dst->stream[i] = src->stream[i];
+        return SNMPAPI_NOERROR;
+    }
+    return SNMPAPI_ERROR;
+}
+
+/***********************************************************************
+ *      SnmpUtilOctetsFree      (SNMPAPI.@)
+ */
+void WINAPI SnmpUtilOctetsFree(AsnOctetString *octets)
+{
+    TRACE("(%p)\n", octets);
+
+    if (octets)
+    {
+        octets->length = 0;
+        if (octets->dynamic) HeapFree(GetProcessHeap(), 0, octets->stream);
+        octets->stream = NULL;
+        octets->dynamic = FALSE;
+    }
+}
+
+/***********************************************************************
+ *      SnmpUtilOctetsNCmp      (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilOctetsNCmp(AsnOctetString *octets1, AsnOctetString *octets2, UINT count)
+{
+    INT ret;
+    unsigned int i;
+
+    TRACE("(%p, %p, %d)\n", octets1, octets2, count);
+
+    if (!octets1 || !octets2) return 0;
+
+    for (i = 0; i < count; i++)
+        if ((ret = octets1->stream[i] - octets2->stream[i])) return ret;
+
+    return 0;
+}
+
+/***********************************************************************
+ *      SnmpUtilOctetsCmp       (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilOctetsCmp(AsnOctetString *octets1, AsnOctetString *octets2)
+{
+    TRACE("(%p, %p)\n", octets1, octets2);
+
+    if (octets1->length < octets2->length) return -1;
+    if (octets1->length > octets2->length) return 1;
+
+    return SnmpUtilOctetsNCmp(octets1, octets2, octets1->length);
+}
+
+/***********************************************************************
  *      SnmpUtilOidCpy          (SNMPAPI.@)
  */
 INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)

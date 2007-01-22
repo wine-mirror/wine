@@ -25,10 +25,10 @@
 @ stdcall SnmpUtilMemAlloc(long)
 @ stdcall SnmpUtilMemFree(ptr)
 @ stdcall SnmpUtilMemReAlloc(ptr long)
-@ stub SnmpUtilOctetsCmp
-@ stub SnmpUtilOctetsCpy
-@ stub SnmpUtilOctetsFree
-@ stub SnmpUtilOctetsNCmp
+@ stdcall SnmpUtilOctetsCmp(ptr ptr)
+@ stdcall SnmpUtilOctetsCpy(ptr ptr)
+@ stdcall SnmpUtilOctetsFree(ptr)
+@ stdcall SnmpUtilOctetsNCmp(ptr ptr long)
 @ stub SnmpUtilOidAppend
 @ stub SnmpUtilOidCmp
 @ stdcall SnmpUtilOidCpy(ptr ptr)
