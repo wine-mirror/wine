@@ -586,6 +586,7 @@ INT WINAPI GetDIBits(
     core_header = (bitmap_type == 0);
     if (!(dc = DC_GetDCUpdate( hdc )))
     {
+        SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
     if (!(bmp = (BITMAPOBJ *)GDI_GetObjPtr( hbitmap, BITMAP_MAGIC )))

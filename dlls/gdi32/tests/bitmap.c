@@ -1244,6 +1244,309 @@ static void test_GetDIBits_selected_DDB(BOOL monochrome)
     HeapFree(GetProcessHeap(), 0, info);
 }
 
+static void test_GetDIBits(void)
+{
+    /* 2-bytes aligned 1-bit bitmap data: 16x16 */
+    static const BYTE bmp_bits_1[16 * 2] =
+    {
+        0xff,0xff, 0,0, 0xff,0xff, 0,0,
+        0xff,0xff, 0,0, 0xff,0xff, 0,0,
+        0xff,0xff, 0,0, 0xff,0xff, 0,0,
+        0xff,0xff, 0,0, 0xff,0xff, 0,0
+    };
+    /* 4-bytes aligned 1-bit DIB data: 16x16 */
+    static const BYTE dib_bits_1[16 * 4] =
+    {
+        0,0,0,0, 0xff,0xff,0,0, 0,0,0,0, 0xff,0xff,0,0,
+        0,0,0,0, 0xff,0xff,0,0, 0,0,0,0, 0xff,0xff,0,0,
+        0,0,0,0, 0xff,0xff,0,0, 0,0,0,0, 0xff,0xff,0,0,
+        0,0,0,0, 0xff,0xff,0,0, 0,0,0,0, 0xff,0xff,0,0
+    };
+    /* 2-bytes aligned 24-bit bitmap data: 16x16 */
+    static const BYTE bmp_bits_24[16 * 16*3] =
+    {
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+    };
+    /* 4-bytes aligned 24-bit DIB data: 16x16 */
+    static const BYTE dib_bits_24[16 * 16*3] =
+    {
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+        0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
+    };
+    HBITMAP hbmp;
+    BITMAP bm;
+    HDC hdc;
+    int i, bytes, lines;
+    BYTE buf[1024];
+    char bi_buf[sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256];
+    BITMAPINFO *bi = (BITMAPINFO *)bi_buf;
+
+    hdc = GetDC(0);
+
+    /* 1-bit source bitmap data */
+    hbmp = CreateBitmap(16, 16, 1, 1, bmp_bits_1);
+    ok(hbmp != 0, "CreateBitmap failed\n");
+
+    memset(&bm, 0xAA, sizeof(bm));
+    bytes = GetObject(hbmp, sizeof(bm), &bm);
+    ok(bytes == sizeof(bm), "GetObject returned %d\n", bytes);
+    ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
+    ok(bm.bmWidth == 16, "wrong bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == 16, "wrong bmHeight %d\n", bm.bmHeight);
+    ok(bm.bmWidthBytes == 2, "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
+    ok(bm.bmPlanes == 1, "wrong bmPlanes %u\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == 1, "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
+    ok(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
+
+    bytes = GetBitmapBits(hbmp, 0, NULL);
+    ok(bytes == sizeof(bmp_bits_1), "expected 16*2 got %d bytes\n", bytes);
+    bytes = GetBitmapBits(hbmp, sizeof(buf), buf);
+    ok(bytes == sizeof(bmp_bits_1), "expected 16*2 got %d bytes\n", bytes);
+    ok(!memcmp(buf, bmp_bits_1, sizeof(bmp_bits_1)), "bitmap bits don't match\n");
+
+    /* retrieve 1-bit DIB data */
+    memset(bi, 0, sizeof(*bi));
+    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi->bmiHeader.biWidth = bm.bmWidth;
+    bi->bmiHeader.biHeight = bm.bmHeight;
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biSizeImage = 0;
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(0, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
+    ok(lines == 0, "GetDIBits copied %d lines with hdc = 0\n", lines);
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %u\n", GetLastError());
+    ok(bi->bmiHeader.biSizeImage == 0, "expected 0, got %u\n", bi->bmiHeader.biSizeImage);
+
+    memset(buf, 0xAA, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
+    ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
+       lines, bm.bmHeight, GetLastError());
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1), "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
+
+    /* the color table consists of black and white */
+    ok(bi->bmiColors[0].rgbRed == 0 && bi->bmiColors[0].rgbGreen == 0 &&
+       bi->bmiColors[0].rgbBlue == 0 && bi->bmiColors[0].rgbReserved == 0,
+       "expected bmiColors[0] 0,0,0,0 - got %x %x %x %x\n",
+       bi->bmiColors[0].rgbRed, bi->bmiColors[0].rgbGreen,
+       bi->bmiColors[0].rgbBlue, bi->bmiColors[0].rgbReserved);
+todo_wine
+    ok(bi->bmiColors[1].rgbRed == 0xff && bi->bmiColors[1].rgbGreen == 0xff &&
+       bi->bmiColors[1].rgbBlue == 0xff && bi->bmiColors[1].rgbReserved == 0,
+       "expected bmiColors[0] 0xff,0xff,0xff,0 - got %x %x %x %x\n",
+       bi->bmiColors[1].rgbRed, bi->bmiColors[1].rgbGreen,
+       bi->bmiColors[1].rgbBlue, bi->bmiColors[1].rgbReserved);
+    for (i = 2; i < 256; i++)
+    {
+        ok(bi->bmiColors[i].rgbRed == 0xAA && bi->bmiColors[i].rgbGreen == 0xAA &&
+           bi->bmiColors[i].rgbBlue == 0xAA && bi->bmiColors[i].rgbReserved == 0xAA,
+           "expected bmiColors[%d] 0xAA,0xAA,0xAA,0xAA - got %x %x %x %x\n", i,
+           bi->bmiColors[i].rgbRed, bi->bmiColors[i].rgbGreen,
+           bi->bmiColors[i].rgbBlue, bi->bmiColors[i].rgbReserved);
+    }
+
+    /* returned bits are DWORD aligned and upside down */
+todo_wine
+    ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
+
+    /* retrieve 24-bit DIB data */
+    memset(bi, 0, sizeof(*bi));
+    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi->bmiHeader.biWidth = bm.bmWidth;
+    bi->bmiHeader.biHeight = bm.bmHeight;
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 24;
+    bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biSizeImage = 0;
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    memset(buf, 0xAA, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
+    ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
+       lines, bm.bmHeight, GetLastError());
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24), "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
+
+    /* the color table doesn't exist for 24-bit images */
+    for (i = 0; i < 256; i++)
+    {
+        ok(bi->bmiColors[i].rgbRed == 0xAA && bi->bmiColors[i].rgbGreen == 0xAA &&
+           bi->bmiColors[i].rgbBlue == 0xAA && bi->bmiColors[i].rgbReserved == 0xAA,
+           "expected bmiColors[%d] 0xAA,0xAA,0xAA,0xAA - got %x %x %x %x\n", i,
+           bi->bmiColors[i].rgbRed, bi->bmiColors[i].rgbGreen,
+           bi->bmiColors[i].rgbBlue, bi->bmiColors[i].rgbReserved);
+    }
+
+    /* returned bits are DWORD aligned and upside down */
+todo_wine
+    ok(!memcmp(buf, dib_bits_24, sizeof(dib_bits_24)), "DIB bits don't match\n");
+    DeleteObject(hbmp);
+
+    /* 24-bit source bitmap data */
+    hbmp = CreateCompatibleBitmap(hdc, 16, 16);
+    ok(hbmp != 0, "CreateBitmap failed\n");
+    SetLastError(0xdeadbeef);
+    bi->bmiHeader.biHeight = -bm.bmHeight; /* indicate bottom-up data */
+    lines = SetDIBits(hdc, hbmp, 0, bm.bmHeight, bmp_bits_24, bi, DIB_RGB_COLORS);
+    ok(lines == bm.bmHeight, "SetDIBits copied %d lines of %d, error %u\n",
+       lines, bm.bmHeight, GetLastError());
+
+    memset(&bm, 0xAA, sizeof(bm));
+    bytes = GetObject(hbmp, sizeof(bm), &bm);
+    ok(bytes == sizeof(bm), "GetObject returned %d\n", bytes);
+    ok(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
+    ok(bm.bmWidth == 16, "wrong bmWidth %d\n", bm.bmWidth);
+    ok(bm.bmHeight == 16, "wrong bmHeight %d\n", bm.bmHeight);
+    ok(bm.bmWidthBytes == BITMAP_GetWidthBytes(bm.bmWidth, bm.bmBitsPixel), "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
+    ok(bm.bmPlanes == GetDeviceCaps(hdc, PLANES), "wrong bmPlanes %u\n", bm.bmPlanes);
+    ok(bm.bmBitsPixel == GetDeviceCaps(hdc, BITSPIXEL), "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
+    ok(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
+
+    bytes = GetBitmapBits(hbmp, 0, NULL);
+    ok(bytes == bm.bmWidthBytes * bm.bmHeight, "expected %d got %d bytes\n",
+       bm.bmWidthBytes * bm.bmHeight, bytes);
+    bytes = GetBitmapBits(hbmp, sizeof(buf), buf);
+    ok(bytes == bm.bmWidthBytes * bm.bmHeight, "expected %d got %d bytes\n",
+       bm.bmWidthBytes * bm.bmHeight, bytes);
+
+    /* retrieve 1-bit DIB data */
+    memset(bi, 0, sizeof(*bi));
+    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi->bmiHeader.biWidth = bm.bmWidth;
+    bi->bmiHeader.biHeight = bm.bmHeight;
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 1;
+    bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biSizeImage = 0;
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    memset(buf, 0xAA, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
+    ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
+       lines, bm.bmHeight, GetLastError());
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_1), "expected 16*4, got %u\n", bi->bmiHeader.biSizeImage);
+
+    /* the color table consists of black and white */
+    ok(bi->bmiColors[0].rgbRed == 0 && bi->bmiColors[0].rgbGreen == 0 &&
+       bi->bmiColors[0].rgbBlue == 0 && bi->bmiColors[0].rgbReserved == 0,
+       "expected bmiColors[0] 0,0,0,0 - got %x %x %x %x\n",
+       bi->bmiColors[0].rgbRed, bi->bmiColors[0].rgbGreen,
+       bi->bmiColors[0].rgbBlue, bi->bmiColors[0].rgbReserved);
+    ok(bi->bmiColors[1].rgbRed == 0xff && bi->bmiColors[1].rgbGreen == 0xff &&
+       bi->bmiColors[1].rgbBlue == 0xff && bi->bmiColors[1].rgbReserved == 0,
+       "expected bmiColors[0] 0xff,0xff,0xff,0 - got %x %x %x %x\n",
+       bi->bmiColors[1].rgbRed, bi->bmiColors[1].rgbGreen,
+       bi->bmiColors[1].rgbBlue, bi->bmiColors[1].rgbReserved);
+    for (i = 2; i < 256; i++)
+    {
+        ok(bi->bmiColors[i].rgbRed == 0xAA && bi->bmiColors[i].rgbGreen == 0xAA &&
+           bi->bmiColors[i].rgbBlue == 0xAA && bi->bmiColors[i].rgbReserved == 0xAA,
+           "expected bmiColors[%d] 0xAA,0xAA,0xAA,0xAA - got %x %x %x %x\n", i,
+           bi->bmiColors[i].rgbRed, bi->bmiColors[i].rgbGreen,
+           bi->bmiColors[i].rgbBlue, bi->bmiColors[i].rgbReserved);
+    }
+
+    /* returned bits are DWORD aligned and upside down */
+todo_wine
+    ok(!memcmp(buf, dib_bits_1, sizeof(dib_bits_1)), "DIB bits don't match\n");
+
+    /* retrieve 24-bit DIB data */
+    memset(bi, 0, sizeof(*bi));
+    bi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    bi->bmiHeader.biWidth = bm.bmWidth;
+    bi->bmiHeader.biHeight = bm.bmHeight;
+    bi->bmiHeader.biPlanes = 1;
+    bi->bmiHeader.biBitCount = 24;
+    bi->bmiHeader.biCompression = BI_RGB;
+    bi->bmiHeader.biSizeImage = 0;
+    memset(bi->bmiColors, 0xAA, sizeof(RGBQUAD) * 256);
+    memset(buf, 0xAA, sizeof(buf));
+    SetLastError(0xdeadbeef);
+    lines = GetDIBits(hdc, hbmp, 0, bm.bmHeight, buf, bi, DIB_RGB_COLORS);
+    ok(lines == bm.bmHeight, "GetDIBits copied %d lines of %d, error %u\n",
+       lines, bm.bmHeight, GetLastError());
+    ok(bi->bmiHeader.biSizeImage == sizeof(dib_bits_24), "expected 16*16*3, got %u\n", bi->bmiHeader.biSizeImage);
+
+    /* the color table doesn't exist for 24-bit images */
+    for (i = 0; i < 256; i++)
+    {
+        ok(bi->bmiColors[i].rgbRed == 0xAA && bi->bmiColors[i].rgbGreen == 0xAA &&
+           bi->bmiColors[i].rgbBlue == 0xAA && bi->bmiColors[i].rgbReserved == 0xAA,
+           "expected bmiColors[%d] 0xAA,0xAA,0xAA,0xAA - got %x %x %x %x\n", i,
+           bi->bmiColors[i].rgbRed, bi->bmiColors[i].rgbGreen,
+           bi->bmiColors[i].rgbBlue, bi->bmiColors[i].rgbReserved);
+    }
+
+    /* returned bits are DWORD aligned and upside down */
+    ok(!memcmp(buf, dib_bits_24, sizeof(dib_bits_24)), "DIB bits don't match\n");
+    DeleteObject(hbmp);
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(bitmap)
 {
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
@@ -1258,4 +1561,5 @@ START_TEST(bitmap)
     test_GetDIBits_selected_DIB(8);
     test_GetDIBits_selected_DDB(TRUE);
     test_GetDIBits_selected_DDB(FALSE);
+    test_GetDIBits();
 }
