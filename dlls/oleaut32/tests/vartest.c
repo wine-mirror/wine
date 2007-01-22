@@ -301,7 +301,7 @@ static const char *variantstr( const VARIANT *var )
     case VT_UINT:
         sprintf( buffer[current], "VT_UINT(%d)", V_UINT(var) ); break;
     case VT_CY:
-        sprintf( buffer[current], "VT_CY(%x%08x)", V_CY(var).Hi, V_CY(var).Lo ); break;
+        sprintf( buffer[current], "VT_CY(%x%08x)", S(V_CY(var)).Hi, S(V_CY(var)).Lo ); break;
     case VT_DATE:
         sprintf( buffer[current], "VT_DATE(%g)", V_DATE(var) ); break;
     default:
