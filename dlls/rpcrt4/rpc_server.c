@@ -287,7 +287,7 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr, RPC_MESSA
       break;
 
     default:
-      FIXME("unhandled packet type\n");
+      FIXME("unhandled packet type %u\n", hdr->common.ptype);
       break;
   }
 
