@@ -48,6 +48,7 @@ typedef struct _typelib_t typelib_t;
 
 typedef struct list attr_list_t;
 typedef struct list func_list_t;
+typedef struct list var_list_t;
 typedef struct list ifref_list_t;
 
 #define DECL_LINK(type) \
@@ -210,7 +211,7 @@ struct _type_t {
   struct _type_t *ref;
   const attr_list_t *attrs;
   func_list_t *funcs;             /* interfaces and modules */
-  var_t *fields;                  /* interfaces, structures and enumerations */
+  var_list_t *fields;             /* interfaces, structures and enumerations */
   ifref_list_t *ifaces;           /* coclasses */
   type_t *orig;                   /* dup'd types */
   int ignore, is_const, sign;
@@ -231,18 +232,18 @@ struct _var_t {
   int ptr_level;
   expr_t *array;
   type_t *type;
-  var_t *args;  /* for function pointers */
+  var_list_t *args;  /* for function pointers */
   const char *tname;
   attr_list_t *attrs;
   expr_t *eval;
 
   /* parser-internal */
-  DECL_LINK(var_t);
+  struct list entry;
 };
 
 struct _func_t {
   var_t *def;
-  var_t *args;
+  var_list_t *args;
   int ignore, idx;
 
   /* parser-internal */
@@ -301,7 +302,7 @@ type_t *duptype(type_t *t, int dupname);
 type_t *alias(type_t *t, const char *name);
 
 int is_ptr(const type_t *t);
-int is_var_ptr(var_t *v);
-int cant_be_null(var_t *v);
+int is_var_ptr(const var_t *v);
+int cant_be_null(const var_t *v);
 
 #endif

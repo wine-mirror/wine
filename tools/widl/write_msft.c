@@ -1250,7 +1250,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
     int i, id, next_idx;
     int decoded_size, extra_attr = 0;
     int num_params = 0, num_defaults = 0;
-    var_t *arg, *last_arg = NULL;
+    var_t *arg;
     char *namedata;
     const attr_t *attr;
     unsigned int funcflags = 0, callconv = 4 /* CC_STDCALL */;
@@ -1279,8 +1279,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         return S_FALSE;
     }
 
-    for(arg = func->args; arg; arg = NEXT_LINK(arg)) {
-        last_arg = arg;
+    if (func->args)
+      LIST_FOR_EACH_ENTRY( arg, func->args, var_t, entry )
+      {
         num_params++;
         if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             if(attr->type == ATTR_DEFAULTVALUE_EXPR || attr->type == ATTR_DEFAULTVALUE_STRING) {
@@ -1288,7 +1289,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
                 break;
             }
         }
-    }
+      }
 
     chat("add_func_desc: num of params %d\n", num_params);
 
@@ -1433,7 +1434,11 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
         warning("unknown number of optional attrs\n");
     }
 
-    for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
+    if (func->args)
+    {
+      i = 0;
+      LIST_FOR_EACH_ENTRY( arg, func->args, var_t, entry )
+      {
         const attr_t *attr;
         int paramflags = 0;
         int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
@@ -1491,6 +1496,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 	paramdata[1] = -1;
 	paramdata[2] = paramflags;
 	typedata[3] += decoded_size << 16;
+        i++;
+      }
     }
 
     if(typeinfo->funcs_allocated == 0) {
@@ -1541,10 +1548,16 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int 
 
     if(invokekind != 0x4 /* INVOKE_PROPERTYPUT */ && invokekind != 0x8 /* INVOKE_PROPERTYPUTREF */) { 
         /* don't give the arg of a [propput*] func a name */
-        for (arg = last_arg, i = 0; arg; arg = PREV_LINK(arg), i++) {
+        if (func->args)
+        {
+          i = 0;
+          LIST_FOR_EACH_ENTRY( arg, func->args, var_t, entry )
+          {
             int *paramdata = typedata + 6 + extra_attr + (num_defaults ? num_params : 0) + i * 3;
             offset = ctl2_alloc_name(typeinfo->typelib, arg->name);
             paramdata[1] = offset;
+            i++;
+          }
         }
     }
     return S_OK;
@@ -1919,14 +1932,9 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     if (dispinterface->funcs)
         LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry ) idx++;
 
-    if((var = dispinterface->fields)) {
-        while(NEXT_LINK(var)) var = NEXT_LINK(var);
-        while(var) {
-            add_var_desc(msft_typeinfo, idx, var);
-            idx++;
-            var = PREV_LINK(var);
-        }
-    }
+    if (dispinterface->fields)
+        LIST_FOR_EACH_ENTRY( var, dispinterface->fields, var_t, entry )
+            add_var_desc(msft_typeinfo, idx++, var);
 
     if (dispinterface->funcs)
     {
@@ -1998,7 +2006,7 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
 {
     int idx = 0;
-    var_t *cur = structure->fields;
+    var_t *cur;
     msft_typeinfo_t *msft_typeinfo;
 
     if (-1 < structure->typelib_idx)
@@ -2008,30 +2016,24 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_RECORD, structure->name, structure->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while(cur) {
-        add_var_desc(msft_typeinfo, idx, cur);
-        idx++;
-        cur = PREV_LINK(cur);
-    }
+    if (structure->fields)
+        LIST_FOR_EACH_ENTRY( cur, structure->fields, var_t, entry )
+            add_var_desc(msft_typeinfo, idx++, cur);
 }
 
 static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration)
 {
     int idx = 0;
-    var_t *cur = enumeration->fields;
+    var_t *cur;
     msft_typeinfo_t *msft_typeinfo;
 
     enumeration->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ENUM, enumeration->name, enumeration->attrs);
     msft_typeinfo->typeinfo->size = 0;
 
-    while(NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-    while(cur) {
-        add_var_desc(msft_typeinfo, idx, cur);
-        idx++;
-        cur = PREV_LINK(cur);
-    }
+    if (enumeration->fields)
+        LIST_FOR_EACH_ENTRY( cur, enumeration->fields, var_t, entry )
+            add_var_desc(msft_typeinfo, idx++, cur);
 }
 
 static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *tdef)

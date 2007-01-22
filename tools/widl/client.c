@@ -65,16 +65,13 @@ static void print_message_buffer_size(const func_t *func)
 
     if (func->args)
     {
-        const var_t *var = func->args;
-        while (NEXT_LINK(var)) var = NEXT_LINK(var);
-        while (var)
+        const var_t *var;
+        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
         {
             unsigned int alignment;
 
             total_size += get_required_buffer_size(var, &alignment, PASS_IN);
             total_size += alignment;
-
-            var = PREV_LINK(var);
         }
     }
     fprintf(client, " %u", total_size);
@@ -82,14 +79,12 @@ static void print_message_buffer_size(const func_t *func)
 
 static void check_pointers(const func_t *func)
 {
-    var_t *var;
+    const var_t *var;
 
     if (!func->args)
         return;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
         if (is_var_ptr(var) && cant_be_null(var))
         {
@@ -100,8 +95,6 @@ static void check_pointers(const func_t *func)
             indent--;
             print_client("}\n\n");
         }
-
-        var = PREV_LINK(var);
     }
 }
 
@@ -110,7 +103,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
     const func_t *func;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
-    var_t *var;
+    const var_t *var;
     int method_count = 0;
 
     if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
@@ -259,13 +252,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         /* update proc_offset */
         if (func->args)
         {
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
-            {
+            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                 *proc_offset += get_size_procformatstring_var(var);
-                var = PREV_LINK(var);
-            }
         }
         if (!is_void(def->type, NULL))
             *proc_offset += get_size_procformatstring_var(def);

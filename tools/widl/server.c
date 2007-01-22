@@ -68,15 +68,10 @@ static void write_parameters_init(const func_t *func)
     if (!func->args)
         return;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
-    {
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
         if (var->type->type != RPC_FC_BIND_PRIMITIVE)
             print_server("%s = 0;\n", var->name);
 
-        var = PREV_LINK(var);
-    }
     fprintf(server, "\n");
 }
 
@@ -85,14 +80,12 @@ static void declare_args(const func_t *func)
 {
     int in_attr, out_attr;
     int i = 0;
-    var_t *var;
+    const var_t *var;
 
     if (!func->args)
         return;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
         const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
         int has_size = size_is && (size_is->type != EXPR_VOID);
@@ -119,8 +112,6 @@ static void declare_args(const func_t *func)
         write_name(server, var);
         write_array(server, var->array, 0);
         fprintf(server, ";\n");
-
-        var = PREV_LINK(var);
     }
 }
 
@@ -129,16 +120,14 @@ static void assign_out_args(const func_t *func)
 {
     int in_attr, out_attr;
     int i = 0, sep = 0;
-    var_t *var;
+    const var_t *var;
     const expr_t *size_is;
     int has_size;
 
     if (!func->args)
         return;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
         int is_string = is_attr(var->attrs, ATTR_STRING);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
@@ -173,8 +162,6 @@ static void assign_out_args(const func_t *func)
 
             sep = 1;
         }
-
-        var = PREV_LINK(var);
     }
 
     if (sep)
@@ -319,9 +306,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 
             fprintf(server, "(\n");
             indent++;
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
+            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
             {
                 if (first_arg)
                     first_arg = 0;
@@ -329,7 +314,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
                     fprintf(server, ",\n");
                 print_server("");
                 write_name(server, var);
-                var = PREV_LINK(var);
             }
             fprintf(server, ");\n");
             indent--;
@@ -341,9 +325,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 
         if (func->args)
         {
-            const var_t *var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
+            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
             {
                 if (is_attr(var->attrs, ATTR_OUT))
                 {
@@ -351,8 +333,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
                     buffer_size += get_required_buffer_size(var, &alignment, PASS_OUT);
                     buffer_size += alignment;
                 }
-
-                var = PREV_LINK(var);
             }
         }
 
@@ -417,13 +397,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         /* update proc_offset */
         if (func->args)
         {
-            var = func->args;
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            while (var)
-            {
+            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                 *proc_offset += get_size_procformatstring_var(var);
-                var = PREV_LINK(var);
-            }
         }
         if (!is_void(def->type, NULL))
             *proc_offset += get_size_procformatstring_var(def);

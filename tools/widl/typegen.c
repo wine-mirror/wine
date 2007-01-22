@@ -60,7 +60,7 @@ struct expr_eval_routine
 };
 
 static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array);
-static size_t fields_memsize(const var_t *v);
+static size_t fields_memsize(const var_list_t *fields);
 
 static int compare_expr(const expr_t *a, const expr_t *b)
 {
@@ -263,7 +263,7 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 {
     const ifref_t *iface;
     int indent = 0;
-    var_t *var;
+    const var_t *var;
     unsigned int type_offset = 2;
 
     print_file(file, indent, "static const MIDL_PROC_FORMAT_STRING __MIDL_ProcFormatString =\n");
@@ -286,15 +286,8 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
                 /* emit argument data */
                 if (func->args)
                 {
-                    var = func->args;
-                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                    while (var)
-                    {
-                        write_procformatstring_var(file, indent, var, FALSE,
-                                                   &type_offset);
-
-                        var = PREV_LINK(var);
-                    }
+                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+                        write_procformatstring_var(file, indent, var, FALSE, &type_offset);
                 }
 
                 /* emit return value data */
@@ -399,7 +392,8 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
         {
             const var_t *var;
 
-            for (offset = 0, var = structure->fields; var; var = NEXT_LINK(var))
+            offset = 0;
+            if (structure->fields) LIST_FOR_EACH_ENTRY( var, structure->fields, const var_t, entry )
             {
                 offset -= type_memsize(var->type, var->ptr_level, var->array);
                 if (!strcmp(var->name, subexpr->u.sval))
@@ -416,17 +410,18 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
         }
         else
         {
-            const var_t *var = func->args;
+            const var_t *var;
 
-            while (NEXT_LINK(var)) var = NEXT_LINK(var);
-            /* FIXME: not all stack variables are sizeof(void *) */
-            for (offset = 0; var; offset += sizeof(void *), var = PREV_LINK(var))
+            offset = 0;
+            if (func->args) LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
             {
                 if (!strcmp(var->name, subexpr->u.sval))
                 {
                     correlation_variable = var->type;
                     break;
                 }
+                /* FIXME: not all stack variables are sizeof(void *) */
+                offset += sizeof(void *);
             }
             if (!correlation_variable)
                 error("write_conf_or_var_desc: couldn't find variable %s in function\n",
@@ -530,17 +525,15 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
     return 4;
 }
 
-static size_t fields_memsize(const var_t *v)
+static size_t fields_memsize(const var_list_t *fields)
 {
     size_t size = 0;
-    const var_t *first = v;
-    if (!v) return 0;
-    while (NEXT_LINK(v)) v = NEXT_LINK(v);
-    while (v) {
+    const var_t *v;
+
+    if (!fields) return 0;
+    LIST_FOR_EACH_ENTRY( v, fields, const var_t, entry )
         size += type_memsize(v->type, v->ptr_level, v->array);
-        if (v == first) break;
-        v = PREV_LINK(v);
-    }
+
     return size;
 }
 
@@ -638,10 +631,8 @@ static int write_pointers(FILE *file, const attr_list_t *attrs,
         case RPC_FC_CPSTRUCT:
         case RPC_FC_CSTRUCT:
         case RPC_FC_PSTRUCT:
-            v = type->fields;
-            if (!v) break;
-            while (NEXT_LINK(v)) v = NEXT_LINK(v);
-            for (; v; v = PREV_LINK(v))
+            if (!type->fields) break;
+            LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
                 pointers_written += write_pointers(file, v->attrs, v->type,
                                                    v->ptr_level, v->array,
                                                    level + 1,
@@ -691,10 +682,8 @@ static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
         case RPC_FC_CPSTRUCT:
         case RPC_FC_CSTRUCT:
         case RPC_FC_PSTRUCT:
-            v = type->fields;
-            if (!v) break;
-            while (NEXT_LINK(v)) v = NEXT_LINK(v);
-            for (; v; v = PREV_LINK(v))
+            if (!type->fields) break;
+            LIST_FOR_EACH_ENTRY( v, type->fields, const var_t, entry )
                 size += write_pointer_description(file, v->attrs, v->type,
                                                   v->ptr_level, v->array,
                                                   level + 1,
@@ -1001,8 +990,8 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
 
 static const var_t *find_array_or_string_in_struct(const type_t *type)
 {
-    /* last field is the first in the fields linked list */
-    const var_t *last_field = type->fields;
+    const var_t *last_field = LIST_ENTRY( list_tail(type->fields), const var_t, entry );
+
     if (is_array_type(last_field->attrs, last_field->ptr_level, last_field->array))
         return last_field;
 
@@ -1016,11 +1005,9 @@ static const var_t *find_array_or_string_in_struct(const type_t *type)
 static size_t write_struct_members(FILE *file, const type_t *type)
 {
     size_t typestring_size = 0;
-    var_t *field;
+    const var_t *field;
 
-    field = type->fields;
-    while (NEXT_LINK(field)) field = NEXT_LINK(field);
-    for (; field; field = PREV_LINK(field))
+    if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
     {
         unsigned char rtype = field->type->type;
 
@@ -1458,7 +1445,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
 {
     int indent = 0;
-    var_t *var;
+    const var_t *var;
     unsigned int typeformat_offset;
     const ifref_t *iface;
 
@@ -1483,16 +1470,9 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
             {
                 current_func = func;
                 if (func->args)
-                {
-                    var = func->args;
-                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                    while (var)
-                    {
+                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                         write_typeformatstring_var(file, indent, var,
                                                    &typeformat_offset);
-                        var = PREV_LINK(var);
-                    }
-                }
             }
         }
     }
@@ -1547,7 +1527,8 @@ static unsigned int get_required_buffer_size_type(
         {
             size_t size = 0;
             const var_t *field;
-            for (field = type->fields; field; field = NEXT_LINK(field))
+            if (!type->fields) return 0;
+            LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
             {
                 unsigned int alignment;
                 size += get_required_buffer_size_type(
@@ -1587,7 +1568,9 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment,
             {
                 const var_t *field;
                 unsigned int size = 36;
-                for (field = type->fields; field; field = NEXT_LINK(field))
+
+                if (!type->fields) return size;
+                LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
                 {
                     unsigned int align;
                     size += get_required_buffer_size_type(
@@ -1615,7 +1598,9 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment,
                 {
                     unsigned int size = 36;
                     const var_t *field;
-                    for (field = type->fields; field; field = NEXT_LINK(field))
+
+                    if (!type->fields) return size;
+                    LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
                     {
                         unsigned int align;
                         size += get_required_buffer_size_type(
@@ -1772,14 +1757,12 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
     const expr_t *length_is;
     const expr_t *size_is;
     int in_attr, out_attr, has_length, has_size, pointer_type;
-    var_t *var;
+    const var_t *var;
 
     if (!func->args)
         return;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    for (; var; *type_offset += get_size_typeformatstring_var(var), var = PREV_LINK(var))
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
         const type_t *type = var->type;
         unsigned char rtype;
@@ -1801,12 +1784,10 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         switch (pass)
         {
         case PASS_IN:
-            if (!in_attr)
-                continue;
+            if (!in_attr) goto next;
             break;
         case PASS_OUT:
-            if (!out_attr)
-                continue;
+            if (!out_attr) goto next;
             break;
         case PASS_RETURN:
             break;
@@ -1943,6 +1924,8 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             }
         }
         fprintf(file, "\n");
+    next:
+        *type_offset += get_size_typeformatstring_var(var);
     }
 }
 
@@ -1966,7 +1949,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
     const ifref_t *iface;
     size_t size = 1;
     const func_t *func;
-    var_t *var;
+    const var_t *var;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
@@ -1979,15 +1962,8 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
             {
                 /* argument list size */
                 if (func->args)
-                {
-                    var = func->args;
-                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                    while (var)
-                    {
+                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                         size += get_size_procformatstring_var(var);
-                        var = PREV_LINK(var);
-                    }
-                }
 
                 var = func->def;
                 /* return value size */
@@ -2006,7 +1982,7 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
     const ifref_t *iface;
     size_t size = 3;
     const func_t *func;
-    var_t *var;
+    const var_t *var;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
@@ -2019,15 +1995,8 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
             {
                 /* argument list size */
                 if (func->args)
-                {
-                    var = func->args;
-                    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-                    while (var)
-                    {
+                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
                         size += get_size_typeformatstring_var(var);
-                        var = PREV_LINK(var);
-                    }
-                }
             }
         }
     }
@@ -2035,7 +2004,7 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 }
 
 static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
-                              const var_t *fields, const char *structvar)
+                              const var_list_t *fields, const char *structvar)
 {
     switch (e->type) {
         case EXPR_VOID:
@@ -2055,15 +2024,14 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
         case EXPR_IDENTIFIER:
         {
             const var_t *field;
-            for (field = fields; field; field = NEXT_LINK(field))
-            {
+            LIST_FOR_EACH_ENTRY( field, fields, const var_t, entry )
                 if (!strcmp(e->u.sval, field->name))
                 {
                     fprintf(h, "%s->%s", structvar, e->u.sval);
                     break;
                 }
-            }
-            if (!field) error("no field found for identifier %s\n", e->u.sval);
+
+            if (&field->entry == fields) error("no field found for identifier %s\n", e->u.sval);
             break;
         }
         case EXPR_NEG:

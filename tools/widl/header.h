@@ -31,7 +31,7 @@ extern void write_type(FILE *h, type_t *t, const var_t *v, const char *n);
 extern int is_object(const attr_list_t *list);
 extern int is_local(const attr_list_t *list);
 extern const var_t *is_callas(const attr_list_t *list);
-extern void write_args(FILE *h, var_t *arg, const char *name, int obj, int do_indent);
+extern void write_args(FILE *h, const var_list_t *arg, const char *name, int obj, int do_indent);
 extern void write_array(FILE *h, const expr_t *v, int field);
 extern void write_forward(type_t *iface);
 extern void write_interface(type_t *iface);

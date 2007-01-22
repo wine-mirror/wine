@@ -164,23 +164,19 @@ static void write_field(FILE *h, var_t *v)
   }
 }
 
-static void write_fields(FILE *h, var_t *v)
+static void write_fields(FILE *h, var_list_t *fields)
 {
-  var_t *first = v;
-  if (!v) return;
-  while (NEXT_LINK(v)) v = NEXT_LINK(v);
-  while (v) {
-    write_field(h, v);
-    if (v == first) break;
-    v = PREV_LINK(v);
-  }
+    var_t *v;
+    if (!fields) return;
+    LIST_FOR_EACH_ENTRY( v, fields, var_t, entry ) write_field(h, v);
 }
 
-static void write_enums(FILE *h, var_t *v)
+static void write_enums(FILE *h, var_list_t *enums)
 {
-  if (!v) return;
-  while (NEXT_LINK(v)) v = NEXT_LINK(v);
-  while (v) {
+  var_t *v;
+  if (!enums) return;
+  LIST_FOR_EACH_ENTRY( v, enums, var_t, entry )
+  {
     if (get_name(v)) {
       indent(h, 0);
       write_name(h, v);
@@ -189,9 +185,7 @@ static void write_enums(FILE *h, var_t *v)
         write_expr(h, v->eval, 0);
       }
     }
-    if (PREV_LINK(v))
-      fprintf(h, ",\n");
-    v = PREV_LINK(v);
+    if (list_next( enums, &v->entry )) fprintf(h, ",\n");
   }
   fprintf(h, "\n");
 }
@@ -292,9 +286,13 @@ static int user_type_registered(const char *name)
   return 0;
 }
 
-static void check_for_user_types(const var_t *v)
+static void check_for_user_types(const var_list_t *list)
 {
-  while (v) {
+  const var_t *v;
+
+  if (!list) return;
+  LIST_FOR_EACH_ENTRY( v, list, const var_t, entry )
+  {
     type_t *type;
     for (type = v->type; type; type = type->kind == TKIND_ALIAS ? type->orig : type->ref) {
       const char *name = type->name;
@@ -312,14 +310,11 @@ static void check_for_user_types(const var_t *v)
          * using a wire marshaled type */
         break;
       }
-      else if (type->fields)
+      else
       {
-        const var_t *fields = type->fields;
-        while (NEXT_LINK(fields)) fields = NEXT_LINK(fields);
-        check_for_user_types(fields);
+        check_for_user_types(type->fields);
       }
     }
-    v = PREV_LINK(v);
   }
 }
 
@@ -456,22 +451,16 @@ const var_t* get_explicit_handle_var(const func_t* func)
     if (!func->args)
         return NULL;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
-    {
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
         if (var->type->type == RPC_FC_BIND_PRIMITIVE)
             return var;
-
-        var = PREV_LINK(var);
-    }
 
     return NULL;
 }
 
 int has_out_arg_or_return(const func_t *func)
 {
-    var_t *var;
+    const var_t *var;
 
     if (!is_void(func->def->type, NULL))
         return 1;
@@ -479,15 +468,10 @@ int has_out_arg_or_return(const func_t *func)
     if (!func->args)
         return 0;
 
-    var = func->args;
-    while (NEXT_LINK(var)) var = NEXT_LINK(var);
-    while (var)
-    {
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
         if (is_attr(var->attrs, ATTR_OUT))
             return 1;
 
-        var = PREV_LINK(var);
-    }
     return 0;
 }
 
@@ -525,13 +509,11 @@ static void write_method_macro(const type_t *iface, const char *name)
   {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
-      var_t *arg = cur->args;
+      const var_t *arg;
       int argc = 0;
       int c;
-      while (arg) {
-	arg = NEXT_LINK(arg);
-	argc++;
-      }
+
+      if (cur->args) LIST_FOR_EACH_ENTRY( arg, cur->args, const var_t, entry ) argc++;
 
       fprintf(header, "#define %s_", name);
       write_name(header,def);
@@ -550,13 +532,11 @@ static void write_method_macro(const type_t *iface, const char *name)
   }
 }
 
-void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent)
+void write_args(FILE *h, const var_list_t *args, const char *name, int method, int do_indent)
 {
+  const var_t *arg;
   int count = 0;
-  if (arg) {
-    while (NEXT_LINK(arg))
-      arg = NEXT_LINK(arg);
-  }
+
   if (do_indent)
   {
       indentation++;
@@ -566,7 +546,7 @@ void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent
     fprintf(h, "%s* This", name);
     count++;
   }
-  while (arg) {
+  if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry ) {
     if (count) {
         if (do_indent)
         {
@@ -591,7 +571,6 @@ void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent
       write_name(h, arg);
     }
     write_array(h, arg->array, 0);
-    arg = PREV_LINK(arg);
     count++;
   }
   if (do_indent) indentation--;
@@ -664,7 +643,7 @@ static void write_method_proto(const type_t *iface)
   {
     const var_t *def = cur->def;
     const var_t *cas = is_callas(def->attrs);
-    const var_t *args;
+
     if (!is_local(def->attrs)) {
       /* proxy prototype */
       write_type(header, def->type, def, def->tname);
@@ -681,13 +660,7 @@ static void write_method_proto(const type_t *iface)
       fprintf(header, "    IRpcChannelBuffer* pRpcChannelBuffer,\n");
       fprintf(header, "    PRPC_MESSAGE pRpcMessage,\n");
       fprintf(header, "    DWORD* pdwStubPhase);\n");
-
-      args = cur->args;
-      if (args) {
-        while (NEXT_LINK(args))
-          args = NEXT_LINK(args);
-      }
-      check_for_user_types(args);
+      check_for_user_types(cur->args);
     }
     if (cas) {
       const func_t *m;

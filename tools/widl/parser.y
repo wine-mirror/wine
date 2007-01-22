@@ -82,21 +82,22 @@ static type_t *type_ref(typeref_t *ref);
 static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
+static var_list_t *append_var(var_list_t *list, var_t *var);
 static var_t *make_var(char *name);
 static func_list_t *append_func(func_list_t *list, func_t *func);
-static func_t *make_func(var_t *def, var_t *args);
+static func_t *make_func(var_t *def, var_list_t *args);
 static type_t *make_class(char *name);
 static type_t *make_safearray(void);
 static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
-static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs);
+static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs);
 static type_t *find_type(const char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
 static type_t *get_typev(unsigned char type, var_t *name, int t);
-static int get_struct_type(var_t *fields);
+static int get_struct_type(var_list_t *fields);
 
 static var_t *reg_const(var_t *var);
 static var_t *find_const(char *name, int f);
@@ -108,7 +109,7 @@ static void write_iid(type_t *iface);
 
 static int compute_method_indexes(type_t *iface);
 static char *gen_name(void);
-static void process_typedefs(var_t *names);
+static void process_typedefs(var_list_t *names);
 static void check_arg(var_t *arg);
 
 #define tsENUM   1
@@ -123,6 +124,7 @@ static void check_arg(var_t *arg);
 	type_t *type;
 	typeref_t *tref;
 	var_t *var;
+	var_list_t *var_list;
 	func_t *func;
 	func_list_t *func_list;
 	ifref_t *ifref;
@@ -227,10 +229,9 @@ static void check_arg(var_t *arg);
 %type <ifref> coclass_int
 %type <ifref_list> gbl_statements coclass_ints
 %type <tref> type
-%type <var> m_args no_args args arg
-%type <var> fields field s_field cases case enums enum_list enum constdef externdef
-%type <var> m_ident t_ident ident p_ident pident pident_list
-%type <var> dispint_props
+%type <var> arg field s_field case enum constdef externdef
+%type <var_list> m_args no_args args fields cases enums enum_list pident_list dispint_props
+%type <var> m_ident t_ident ident p_ident pident
 %type <func> funcdef
 %type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
@@ -328,8 +329,8 @@ m_args:						{ $$ = NULL; }
 no_args:  tVOID					{ $$ = NULL; }
 	;
 
-args:	  arg					{ check_arg($1); $$ = $1; }
-	| args ',' arg				{ check_arg($3); LINK($3, $1); $$ = $3; }
+args:	  arg					{ check_arg($1); $$ = append_var( NULL, $1 ); }
+	| args ',' arg				{ check_arg($3); $$ = append_var( $1, $3); }
 	| no_args
 	;
 
@@ -457,9 +458,7 @@ callconv:
 	;
 
 cases:						{ $$ = NULL; }
-	| cases case				{ if ($2) { LINK($2, $1); $$ = $2; }
-						  else { $$ = $1; }
-						}
+	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
 case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, $2);
@@ -483,12 +482,16 @@ enums:						{ $$ = NULL; }
 	| enum_list
 	;
 
-enum_list: enum					{ if (!$$->eval)
-						    $$->eval = make_exprl(EXPR_NUM, 0 /* default for first enum entry */);
+enum_list: enum					{ if (!$1->eval)
+						    $1->eval = make_exprl(EXPR_NUM, 0 /* default for first enum entry */);
+                                                  $$ = append_var( NULL, $1 );
 						}
-	| enum_list ',' enum			{ LINK($3, $1); $$ = $3;
-						  if (!$$->eval)
-						    $$->eval = make_exprl(EXPR_NUM, $1->eval->cval + 1);
+	| enum_list ',' enum			{ if (!$3->eval)
+                                                  {
+                                                    var_t *last = LIST_ENTRY( list_tail($$), var_t, entry );
+                                                    $3->eval = make_exprl(EXPR_NUM, last->eval->cval + 1);
+                                                  }
+                                                  $$ = append_var( $1, $3 );
 						}
 	;
 
@@ -566,9 +569,7 @@ externdef: tEXTERN tCONST type ident		{ $$ = $4;
 	;
 
 fields:						{ $$ = NULL; }
-	| fields field				{ if ($2) { LINK($2, $1); $$ = $2; }
-						  else { $$ = $1; }
-						}
+	| fields field				{ $$ = append_var( $1, $2 ); }
 	;
 
 field:	  s_field ';'				{ $$ = $1; }
@@ -702,7 +703,7 @@ dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
 	;
 
 dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
-	| dispint_props s_field ';'		{ LINK($2, $1); $$ = $2; }
+	| dispint_props s_field ';'		{ $$ = append_var( $1, $2 ); }
 	;
 
 dispint_meths: tMETHODS ':'			{ $$ = NULL; }
@@ -795,8 +796,8 @@ pident:	  ident
 	;
 
 pident_list:
-	  pident
-	| pident_list ',' pident		{ LINK($3, $1); $$ = $3; }
+	pident                                  { $$ = append_var( NULL, $1 ); }
+	| pident_list ',' pident                { $$ = append_var( $1, $3 ); }
 	;
 
 pointer_type:
@@ -849,7 +850,8 @@ uniondef: tUNION t_ident '{' fields '}'		{ $$ = get_typev(RPC_FC_NON_ENCAPSULATE
 						  u->type->kind = TKIND_UNION;
 						  u->type->fields = $9;
 						  u->type->defined = TRUE;
-						  LINK(u, $5); $$->fields = u;
+						  $$->fields = append_var( $$->fields, $5 );
+						  $$->fields = append_var( $$->fields, u );
 						  $$->defined = TRUE;
 						}
 	;
@@ -1225,6 +1227,18 @@ static ifref_t *make_ifref(type_t *iface)
   return l;
 }
 
+static var_list_t *append_var(var_list_t *list, var_t *var)
+{
+    if (!var) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &var->entry );
+    return list;
+}
+
 static var_t *make_var(char *name)
 {
   var_t *v = xmalloc(sizeof(var_t));
@@ -1236,7 +1250,6 @@ static var_t *make_var(char *name)
   v->attrs = NULL;
   v->array = NULL;
   v->eval = NULL;
-  INIT_LINK(v);
   return v;
 }
 
@@ -1252,7 +1265,7 @@ static func_list_t *append_func(func_list_t *list, func_t *func)
     return list;
 }
 
-static func_t *make_func(var_t *def, var_t *args)
+static func_t *make_func(var_t *def, var_list_t *args)
 {
   func_t *f = xmalloc(sizeof(func_t));
   f->def = def;
@@ -1319,9 +1332,10 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   return type;
 }
 
-static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs)
+static type_t *reg_typedefs(type_t *type, var_list_t *names, attr_list_t *attrs)
 {
   type_t *ptr = type;
+  const var_t *name;
   int ptrc = 0;
   int is_str = is_attr(attrs, ATTR_STRING);
   unsigned char ptr_type = get_attrv(attrs, ATTR_POINTERTYPE);
@@ -1336,8 +1350,11 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs)
 
     c = t->type;
     if (c != RPC_FC_CHAR && c != RPC_FC_BYTE && c != RPC_FC_WCHAR)
+    {
+      name = LIST_ENTRY( list_head( names ), const var_t, entry );
       yyerror("'%s': [string] attribute is only valid on 'char', 'byte', or 'wchar_t' pointers and arrays",
-              names->name);
+              name->name);
+    }
   }
 
   /* We must generate names for tagless enum, struct or union.
@@ -1352,11 +1369,11 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs)
     type->name = gen_name();
   }
 
-  while (names) {
-    var_t *next = NEXT_LINK(names);
-    if (names->name) {
+  LIST_FOR_EACH_ENTRY( name, names, const var_t, entry )
+  {
+    if (name->name) {
       type_t *cur = ptr;
-      int cptr = names->ptr_level;
+      int cptr = name->ptr_level;
       if (cptr > ptrc) {
         while (cptr > ptrc) {
           cur = ptr = make_type(RPC_FC_RP, cur);
@@ -1368,7 +1385,7 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs)
           cptr++;
         }
       }
-      cur = alias(cur, names->name);
+      cur = alias(cur, name->name);
       cur->attrs = attrs;
       if (ptr_type)
       {
@@ -1384,7 +1401,6 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs)
 
       reg_type(cur, cur->name, 0);
     }
-    names = next;
   }
   return type;
 }
@@ -1446,13 +1462,14 @@ static type_t *get_typev(unsigned char type, var_t *name, int t)
   return get_type(type, sname, t);
 }
 
-static int get_struct_type(var_t *field)
+static int get_struct_type(var_list_t *fields)
 {
   int has_pointer = 0;
   int has_conformance = 0;
   int has_variance = 0;
+  var_t *field;
 
-  for (; field; field = NEXT_LINK(field))
+  if (fields) LIST_FOR_EACH_ENTRY( field, fields, var_t, entry )
   {
     type_t *t = field->type;
 
@@ -1474,7 +1491,7 @@ static int get_struct_type(var_t *field)
         if (field->array && !field->array->is_const)
         {
             has_conformance = 1;
-            if (PREV_LINK(field))
+            if (list_next( fields, &field->entry ))
                 yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                         field->name);
         }
@@ -1518,7 +1535,7 @@ static int get_struct_type(var_t *field)
       break;
     case RPC_FC_CARRAY:
       has_conformance = 1;
-      if (PREV_LINK(field))
+      if (list_next( fields, &field->entry ))
           yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
       break;
@@ -1535,7 +1552,7 @@ static int get_struct_type(var_t *field)
 
     case RPC_FC_CPSTRUCT:
       has_conformance = 1;
-      if (PREV_LINK(field))
+      if (list_next( fields, &field->entry ))
           yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
       has_pointer = 1;
@@ -1543,7 +1560,7 @@ static int get_struct_type(var_t *field)
 
     case RPC_FC_CSTRUCT:
       has_conformance = 1;
-      if (PREV_LINK(field))
+      if (list_next( fields, &field->entry ))
           yyerror("field '%s' deriving from a conformant array must be the last field in the structure",
                   field->name);
       break;
@@ -1689,21 +1706,21 @@ static char *gen_name(void)
   return name;
 }
 
-static void process_typedefs(var_t *names)
+static void process_typedefs(var_list_t *names)
 {
-  END_OF_LIST(names);
-  while (names)
+  var_t *name, *next;
+
+  if (!names) return;
+  LIST_FOR_EACH_ENTRY_SAFE( name, next, names, var_t, entry )
   {
-    var_t *next = PREV_LINK(names);
-    type_t *type = find_type(names->name, 0);
+    type_t *type = find_type(name->name, 0);
 
     if (! parse_only && do_header)
       write_typedef(type);
     if (in_typelib && type->attrs)
       add_typelib_entry(type);
 
-    free(names);
-    names = next;
+    free(name);
   }
 }
 
