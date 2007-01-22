@@ -417,6 +417,12 @@ INT WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *dst, SnmpVarBindList *src)
 
     TRACE("(%p, %p)\n", dst, src);
 
+    if (!src)
+    {
+        dst->list = NULL;
+        dst->len = 0;
+        return SNMPAPI_NOERROR;
+    }
     size = src->len * sizeof(SnmpVarBind *);
     if (!(dst->list = HeapAlloc(GetProcessHeap(), 0, size)))
     {
@@ -456,6 +462,8 @@ void WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *vb)
     entry = vb->list;
     for (i = 0; i < vb->len; i++) SnmpUtilVarBindFree(entry++);
     HeapFree(GetProcessHeap(), 0, vb->list);
+    vb->list = NULL;
+    vb->len = 0;
 }
 
 /***********************************************************************

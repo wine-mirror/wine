@@ -347,6 +347,83 @@ static void test_SnmpUtilOidAppend(void)
        "SnmpUtilOidAppend failed\n");
 }
 
+static void test_SnmpUtilVarBindCpyFree(void)
+{
+    INT ret;
+    static UINT ids[] = { 1, 3, 6, 1, 4, 1, 311 };
+    static SnmpVarBind dst, src = { { 7, ids }, { ASN_INTEGER, { 1 } } };
+
+    ret = SnmpUtilVarBindCpy(NULL, NULL);
+    ok(!ret, "SnmpUtilVarBindCpy succeeded\n");
+
+    memset(&dst, 0, sizeof(SnmpVarBind));
+    ret = SnmpUtilVarBindCpy(&dst, NULL);
+    ok(ret, "SnmpUtilVarBindCpy failed\n");
+    ok(dst.name.idLength == 0, "SnmpUtilVarBindCpy failed\n");
+    ok(dst.name.ids == NULL, "SnmpUtilVarBindCpy failed\n");
+    ok(dst.value.asnType == ASN_NULL, "SnmpUtilVarBindCpy failed\n");
+    ok(dst.value.asnValue.number == 0, "SnmpUtilVarBindCpy failed\n");
+
+    ret = SnmpUtilVarBindCpy(NULL, &src);
+    ok(!ret, "SnmpUtilVarBindCpy succeeded\n");
+
+    memset(&dst, 0, sizeof(SnmpVarBind));
+    ret = SnmpUtilVarBindCpy(&dst, &src);
+    ok(ret, "SnmpUtilVarBindCpy failed\n");
+    ok(src.name.idLength == dst.name.idLength, "SnmpUtilVarBindCpy failed\n");
+    ok(!memcmp(src.name.ids, dst.name.ids, dst.name.idLength * sizeof(UINT)),
+       "SnmpUtilVarBindCpy failed\n");
+    ok(!memcmp(&src.value, &dst.value, sizeof(AsnObjectSyntax)),
+       "SnmpUtilVarBindCpy failed\n");
+
+    SnmpUtilVarBindFree(NULL);
+    SnmpUtilVarBindFree(&dst);
+    ok(dst.name.idLength == 0, "SnmpUtilVarBindFree failed\n");
+    ok(dst.name.ids == NULL, "SnmpUtilVarBindFree failed\n");
+    ok(dst.value.asnType == ASN_NULL, "SnmpUtilVarBindFree failed\n");
+    ok(dst.value.asnValue.number == 1, "SnmpUtilVarBindFree failed\n");
+}
+
+static void test_SnmpUtilVarBindListCpyFree(void)
+{
+    INT ret;
+    static UINT ids[] = { 1, 3, 6, 1, 4, 1, 311 };
+    static SnmpVarBind src = { { 7, ids }, { ASN_INTEGER, { 1 } } };
+    static SnmpVarBindList dst_list, src_list = { &src, 1 };
+
+    if (0) { /* these crash on XP */
+    ret = SnmpUtilVarBindListCpy(NULL, NULL);
+    ok(!ret, "SnmpUtilVarBindCpy succeeded\n");
+
+    ret = SnmpUtilVarBindListCpy(NULL, &src_list);
+    ok(!ret, "SnmpUtilVarBindListCpy succeeded\n");
+    }
+
+    memset(&dst_list, 0xff, sizeof(SnmpVarBindList));
+    ret = SnmpUtilVarBindListCpy(&dst_list, NULL);
+    ok(ret, "SnmpUtilVarBindListCpy failed\n");
+    ok(dst_list.list == NULL, "SnmpUtilVarBindListCpy failed\n");
+    ok(dst_list.len == 0, "SnmpUtilVarBindListCpy failed\n");
+
+    ret = SnmpUtilVarBindListCpy(&dst_list, &src_list);
+    ok(ret, "SnmpUtilVarBindListCpy failed\n");
+    ok(src_list.len == dst_list.len, "SnmpUtilVarBindListCpy failed\n");
+    ok(src_list.list->name.idLength == dst_list.list->name.idLength,
+       "SnmpUtilVarBindListCpy failed\n");
+    ok(!memcmp(src_list.list->name.ids, dst_list.list->name.ids,
+               dst_list.list->name.idLength * sizeof(UINT)),
+       "SnmpUtilVarBindListCpy failed\n");
+    ok(!memcmp(&src_list.list->value, &dst_list.list->value, sizeof(AsnAny)),
+       "SnmpUtilVarBindListCpy failed\n");
+
+    if (0) { /* crashes on XP */
+    SnmpUtilVarBindListFree(NULL);
+    }
+    SnmpUtilVarBindListFree(&dst_list);
+    ok(dst_list.list == NULL, "SnmpUtilVarBindListFree failed\n");
+    ok(dst_list.len == 0, "SnmpUtilVarBindListFree failed\n");
+}
+
 START_TEST(util)
 {
     test_SnmpUtilOidToA();
@@ -358,4 +435,6 @@ START_TEST(util)
     test_SnmpUtilOidCmp();
     test_SnmpUtilOidNCmp();
     test_SnmpUtilOidAppend();
+    test_SnmpUtilVarBindCpyFree();
+    test_SnmpUtilVarBindListCpyFree();
 }
