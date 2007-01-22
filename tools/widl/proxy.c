@@ -576,7 +576,7 @@ static void proxy_free_variables( var_t *arg )
   }
 }
 
-static void gen_proxy(type_t *iface, func_t *cur, int idx)
+static void gen_proxy(type_t *iface, const func_t *cur, int idx)
 {
   var_t *def = cur->def;
   int has_ret = !is_void(def->type, def);
@@ -762,7 +762,7 @@ static void stub_genmarshall( var_t *args )
   stub_gen_marshall_copydata( args );
 }
 
-static void gen_stub(type_t *iface, func_t *cur, const char *cas)
+static void gen_stub(type_t *iface, const func_t *cur, const char *cas)
 {
   var_t *def = cur->def;
   var_t *arg;
@@ -865,13 +865,11 @@ static void gen_stub(type_t *iface, func_t *cur, const char *cas)
 
 static int write_proxy_methods(type_t *iface)
 {
-  func_t *cur = iface->funcs;
+  const func_t *cur;
   int i = 0;
 
-  END_OF_LIST(cur);
-
   if (iface->ref) i = write_proxy_methods(iface->ref);
-  while (cur) {
+  if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry ) {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       if (i) fprintf(proxy, ",\n");
@@ -880,21 +878,19 @@ static int write_proxy_methods(type_t *iface)
       fprintf(proxy, "_Proxy");
       i++;
     }
-    cur = PREV_LINK(cur);
   }
   return i;
 }
 
 static int write_stub_methods(type_t *iface)
 {
-  func_t *cur = iface->funcs;
+  const func_t *cur;
   int i = 0;
-
-  END_OF_LIST(cur);
 
   if (iface->ref) i = write_stub_methods(iface->ref);
   else return i; /* skip IUnknown */
-  while (cur) {
+
+  if (iface->funcs) LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry ) {
     var_t *def = cur->def;
     if (!is_local(def->attrs)) {
       if (i) fprintf(proxy,",\n");
@@ -903,7 +899,6 @@ static int write_stub_methods(type_t *iface)
       fprintf(proxy, "_Stub");
       i++;
     }
-    cur = PREV_LINK(cur);
   }
   return i;
 }
@@ -911,28 +906,30 @@ static int write_stub_methods(type_t *iface)
 static void write_proxy(type_t *iface)
 {
   int midx = -1, stubs;
-  func_t *cur = iface->funcs;
+  const func_t *cur;
 
-  if (!cur) return;
-
-  END_OF_LIST(cur);
+  if (!iface->funcs) return;
 
   /* FIXME: check for [oleautomation], shouldn't generate proxies/stubs if specified */
 
   fprintf(proxy, "/*****************************************************************************\n");
   fprintf(proxy, " * %s interface\n", iface->name);
   fprintf(proxy, " */\n");
-  while (cur) {
+  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  {
     const var_t *def = cur->def;
     if (!is_local(def->attrs)) {
       const var_t *cas = is_callas(def->attrs);
       const char *cname = cas ? cas->name : NULL;
       int idx = cur->idx;
       if (cname) {
-        const func_t *m = iface->funcs;
-        while (m && strcmp(get_name(m->def), cname))
-          m = NEXT_LINK(m);
-        idx = m->idx;
+          const func_t *m;
+          LIST_FOR_EACH_ENTRY( m, iface->funcs, const func_t, entry )
+              if (!strcmp(get_name(m->def), cname))
+              {
+                  idx = m->idx;
+                  break;
+              }
       }
       gen_proxy(iface, cur, idx);
       gen_stub(iface, cur, cname);
@@ -940,7 +937,6 @@ static void write_proxy(type_t *iface)
       else if (midx != idx) parser_error("method index mismatch in write_proxy");
       midx++;
     }
-    cur = PREV_LINK(cur);
   }
 
   /* proxy vtable */

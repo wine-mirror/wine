@@ -47,6 +47,7 @@ typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 
 typedef struct list attr_list_t;
+typedef struct list func_list_t;
 typedef struct list ifref_list_t;
 
 #define DECL_LINK(type) \
@@ -208,7 +209,7 @@ struct _type_t {
   unsigned char type;
   struct _type_t *ref;
   const attr_list_t *attrs;
-  func_t *funcs;                  /* interfaces and modules */
+  func_list_t *funcs;             /* interfaces and modules */
   var_t *fields;                  /* interfaces, structures and enumerations */
   ifref_list_t *ifaces;           /* coclasses */
   type_t *orig;                   /* dup'd types */
@@ -245,7 +246,7 @@ struct _func_t {
   int ignore, idx;
 
   /* parser-internal */
-  DECL_LINK(func_t);
+  struct list entry;
 };
 
 struct _ifref_t {

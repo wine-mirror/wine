@@ -186,12 +186,12 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
-    const func_t *func = iface->funcs;
+    const func_t *func;
     const var_t *var;
     const var_t* explicit_handle_var;
 
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
+    if (!iface->funcs) return;
+    LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         const var_t *def = func->def;
         unsigned long buffer_size = 0;
@@ -429,8 +429,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             *proc_offset += get_size_procformatstring_var(def);
         else
             *proc_offset += 2; /* FC_END and FC_PAD */
-
-        func = PREV_LINK(func);
     }
 }
 
@@ -439,13 +437,13 @@ static void write_dispatchtable(type_t *iface)
 {
     unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
     unsigned long method_count = 0;
-    func_t *func = iface->funcs;
+    const func_t *func;
 
     print_server("static RPC_DISPATCH_FUNCTION %s_table[] =\n", iface->name);
     print_server("{\n");
     indent++;
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
+
+    if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         var_t *def = func->def;
 
@@ -454,7 +452,6 @@ static void write_dispatchtable(type_t *iface)
         fprintf(server, ",\n");
 
         method_count++;
-        func = PREV_LINK(func);
     }
     print_server("0\n");
     indent--;

@@ -83,6 +83,7 @@ static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_t *make_var(char *name);
+static func_list_t *append_func(func_list_t *list, func_t *func);
 static func_t *make_func(var_t *def, var_t *args);
 static type_t *make_class(char *name);
 static type_t *make_safearray(void);
@@ -123,6 +124,7 @@ static void check_arg(var_t *arg);
 	typeref_t *tref;
 	var_t *var;
 	func_t *func;
+	func_list_t *func_list;
 	ifref_t *ifref;
 	ifref_list_t *ifref_list;
 	char *str;
@@ -229,8 +231,8 @@ static void check_arg(var_t *arg);
 %type <var> fields field s_field cases case enums enum_list enum constdef externdef
 %type <var> m_ident t_ident ident p_ident pident pident_list
 %type <var> dispint_props
-%type <func> funcdef int_statements
-%type <func> dispint_meths
+%type <func> funcdef
+%type <func_list> int_statements dispint_meths
 %type <type> coclass coclasshdr coclassdef
 %type <num> pointer_type version
 %type <str> libraryhdr
@@ -283,7 +285,7 @@ imp_statements:					{}
 	;
 
 int_statements:					{ $$ = NULL; }
-	| int_statements funcdef ';'		{ $$ = $2; LINK($$, $1); }
+	| int_statements funcdef ';'		{ $$ = append_func( $1, $2 ); }
 	| int_statements statement		{ $$ = $1; }
 	;
 
@@ -704,7 +706,7 @@ dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
 	;
 
 dispint_meths: tMETHODS ':'			{ $$ = NULL; }
-	| dispint_meths funcdef ';'		{ LINK($2, $1); $$ = $2; }
+	| dispint_meths funcdef ';'		{ $$ = append_func( $1, $2 ); }
 	;
 
 dispinterfacedef: dispinterfacehdr '{'
@@ -1238,6 +1240,18 @@ static var_t *make_var(char *name)
   return v;
 }
 
+static func_list_t *append_func(func_list_t *list, func_t *func)
+{
+    if (!func) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &func->entry );
+    return list;
+}
+
 static func_t *make_func(var_t *def, var_t *args)
 {
   func_t *f = xmalloc(sizeof(func_t));
@@ -1245,7 +1259,6 @@ static func_t *make_func(var_t *def, var_t *args)
   f->args = args;
   f->ignore = parse_only;
   f->idx = -1;
-  INIT_LINK(f);
   return f;
 }
 
@@ -1634,20 +1647,17 @@ static void write_iid(type_t *iface)
 static int compute_method_indexes(type_t *iface)
 {
   int idx;
-  func_t *f = iface->funcs;
+  func_t *f;
 
   if (iface->ref)
     idx = compute_method_indexes(iface->ref);
   else
     idx = 0;
 
-  if (! f)
+  if (!iface->funcs)
     return idx;
 
-  while (NEXT_LINK(f))
-    f = NEXT_LINK(f);
-
-  for ( ; f ; f = PREV_LINK(f))
+  LIST_FOR_EACH_ENTRY( f, iface->funcs, func_t, entry )
     if (! is_callas(f->def->attrs))
       f->idx = idx++;
 

@@ -514,15 +514,15 @@ const var_t *is_callas(const attr_list_t *a)
 
 static void write_method_macro(const type_t *iface, const char *name)
 {
-  func_t *cur = iface->funcs;
+  const func_t *cur;
 
   if (iface->ref) write_method_macro(iface->ref, name);
 
-  if (!cur) return;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+  if (!iface->funcs) return;
 
   fprintf(header, "/*** %s methods ***/\n", iface->name);
-  while (cur) {
+  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       var_t *arg = cur->args;
@@ -547,7 +547,6 @@ static void write_method_macro(const type_t *iface, const char *name)
 	fprintf(header, ",%c", c+'a');
       fprintf(header, ")\n");
     }
-    cur = PREV_LINK(cur);
   }
 }
 
@@ -600,11 +599,12 @@ void write_args(FILE *h, var_t *arg, const char *name, int method, int do_indent
 
 static void write_cpp_method_def(const type_t *iface)
 {
-  func_t *cur = iface->funcs;
+  const func_t *cur;
 
-  if (!cur) return;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-  while (cur) {
+  if (!iface->funcs) return;
+
+  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  {
     var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       indent(header, 0);
@@ -617,21 +617,20 @@ static void write_cpp_method_def(const type_t *iface)
       fprintf(header, ") = 0;\n");
       fprintf(header, "\n");
     }
-    cur = PREV_LINK(cur);
   }
 }
 
 static void do_write_c_method_def(const type_t *iface, const char *name)
 {
-  const func_t *cur = iface->funcs;
+  const func_t *cur;
 
   if (iface->ref) do_write_c_method_def(iface->ref, name);
 
-  if (!cur) return;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
+  if (!iface->funcs) return;
   indent(header, 0);
   fprintf(header, "/*** %s methods ***/\n", iface->name);
-  while (cur) {
+  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  {
     const var_t *def = cur->def;
     if (!is_callas(def->attrs)) {
       indent(header, 0);
@@ -643,7 +642,6 @@ static void do_write_c_method_def(const type_t *iface, const char *name)
       fprintf(header, ");\n");
       fprintf(header, "\n");
     }
-    cur = PREV_LINK(cur);
   }
 }
 
@@ -659,11 +657,11 @@ static void write_c_disp_method_def(const type_t *iface)
 
 static void write_method_proto(const type_t *iface)
 {
-  const func_t *cur = iface->funcs;
+  const func_t *cur;
 
-  if (!cur) return;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-  while (cur) {
+  if (!iface->funcs) return;
+  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  {
     const var_t *def = cur->def;
     const var_t *cas = is_callas(def->attrs);
     const var_t *args;
@@ -692,10 +690,10 @@ static void write_method_proto(const type_t *iface)
       check_for_user_types(args);
     }
     if (cas) {
-      const func_t *m = iface->funcs;
-      while (m && strcmp(get_name(m->def), cas->name))
-        m = NEXT_LINK(m);
-      if (m) {
+      const func_t *m;
+      LIST_FOR_EACH_ENTRY( m, iface->funcs, const func_t, entry )
+          if (!strcmp(get_name(m->def), cas->name)) break;
+      if (&m->entry != iface->funcs) {
         const var_t *mdef = m->def;
         /* proxy prototype - use local prototype */
         write_type(header, mdef->type, mdef, mdef->tname);
@@ -716,8 +714,6 @@ static void write_method_proto(const type_t *iface)
         parser_warning("invalid call_as attribute (%s -> %s)\n", get_name(def), cas->name);
       }
     }
-
-    cur = PREV_LINK(cur);
   }
 }
 
@@ -726,10 +722,11 @@ static void write_function_proto(const type_t *iface)
   const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
   int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
   const var_t* explicit_handle_var;
+  const func_t *cur;
 
-  func_t *cur = iface->funcs;
-  while (NEXT_LINK(cur)) cur = NEXT_LINK(cur);
-  while (cur) {
+  if (!iface->funcs) return;
+  LIST_FOR_EACH_ENTRY( cur, iface->funcs, const func_t, entry )
+  {
     var_t *def = cur->def;
 
     /* check for a defined binding handle */
@@ -756,8 +753,6 @@ static void write_function_proto(const type_t *iface)
     else
       fprintf(header, "    void");
     fprintf(header, ");\n");
-
-    cur = PREV_LINK(cur);
   }
 }
 

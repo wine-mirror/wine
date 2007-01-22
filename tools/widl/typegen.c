@@ -280,9 +280,8 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 
         if (iface->iface->funcs)
         {
-            func_t *func = iface->iface->funcs;
-            while (NEXT_LINK(func)) func = NEXT_LINK(func);
-            for (; func; func = PREV_LINK(func))
+            const func_t *func;
+            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 /* emit argument data */
                 if (func->args)
@@ -1479,9 +1478,8 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 
         if (iface->iface->funcs)
         {
-            func_t *func = iface->iface->funcs;
-            while (NEXT_LINK(func)) func = NEXT_LINK(func);
-            for (; func; func = PREV_LINK(func))
+            const func_t *func;
+            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 current_func = func;
                 if (func->args)
@@ -1967,7 +1965,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 {
     const ifref_t *iface;
     size_t size = 1;
-    func_t *func;
+    const func_t *func;
     var_t *var;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
@@ -1977,9 +1975,7 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 
         if (iface->iface->funcs)
         {
-            func = iface->iface->funcs;
-            while (NEXT_LINK(func)) func = NEXT_LINK(func);
-            while (func)
+            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 /* argument list size */
                 if (func->args)
@@ -1999,8 +1995,6 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
                     size += 2;
                 else
                     size += get_size_procformatstring_var(var);
-
-                func = PREV_LINK(func);
             }
         }
     }
@@ -2011,7 +2005,7 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 {
     const ifref_t *iface;
     size_t size = 3;
-    func_t *func;
+    const func_t *func;
     var_t *var;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
@@ -2021,9 +2015,7 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 
         if (iface->iface->funcs)
         {
-            func = iface->iface->funcs;
-            while (NEXT_LINK(func)) func = NEXT_LINK(func);
-            while (func)
+            LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
                 /* argument list size */
                 if (func->args)
@@ -2036,8 +2028,6 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
                         var = PREV_LINK(var);
                     }
                 }
-
-                func = PREV_LINK(func);
             }
         }
     }

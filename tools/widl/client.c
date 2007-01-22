@@ -107,14 +107,13 @@ static void check_pointers(const func_t *func)
 
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
 {
-    const func_t *func = iface->funcs;
+    const func_t *func;
     const char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
     int explicit_handle = is_attr(iface->attrs, ATTR_EXPLICIT_HANDLE);
     var_t *var;
     int method_count = 0;
 
-    while (NEXT_LINK(func)) func = NEXT_LINK(func);
-    while (func)
+    if (iface->funcs) LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         const var_t *def = func->def;
         const var_t* explicit_handle_var;
@@ -301,7 +300,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         fprintf(client, "\n");
 
         method_count++;
-        func = PREV_LINK(func);
     }
 }
 

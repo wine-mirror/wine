@@ -1243,7 +1243,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
     return S_OK;
 }
 
-static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
+static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, const func_t *func, int index)
 {
     int offset, name_offset;
     int *typedata, typedata_size;
@@ -1897,7 +1897,7 @@ static void add_dispatch(msft_typelib_t *typelib)
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface)
 { 
     int idx = 0;
-    func_t *func;
+    const func_t *func;
     var_t *var;
     msft_typeinfo_t *msft_typeinfo;
 
@@ -1916,13 +1916,8 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
     msft_typeinfo->typeinfo->cImplTypes = 1;
 
     /* count the no of funcs, as the variable indices come after the funcs */
-    if((func = dispinterface->funcs)) {
-        idx++;
-        while(NEXT_LINK(func)) {
-            func = NEXT_LINK(func);
-            idx++;
-        }
-    }
+    if (dispinterface->funcs)
+        LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry ) idx++;
 
     if((var = dispinterface->fields)) {
         while(NEXT_LINK(var)) var = NEXT_LINK(var);
@@ -1933,19 +1928,19 @@ static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinte
         }
     }
 
-    idx = 0;
-    /* the func count above has already left us pointing at the first func */
-    while(func) {
-        if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
-            idx++;
-        func = PREV_LINK(func);
+    if (dispinterface->funcs)
+    {
+        idx = 0;
+        LIST_FOR_EACH_ENTRY( func, dispinterface->funcs, const func_t, entry )
+            if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
+                idx++;
     }
 }
 
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
 {
     int idx = 0;
-    func_t *func;
+    const func_t *func;
     type_t *ref;
     msft_typeinfo_t *msft_typeinfo;
     importinfo_t *ref_importinfo = NULL;
@@ -1987,20 +1982,17 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     /* count the number of inherited interfaces and non-local functions */
     for(ref = interface->ref; ref; ref = ref->ref) {
         num_parents++;
-        for(func = ref->funcs; func; func = NEXT_LINK(func))
-            if (!is_local(func->def->attrs)) num_funcs++;
+        if (ref->funcs)
+            LIST_FOR_EACH_ENTRY( func, ref->funcs, const func_t, entry )
+                if (!is_local(func->def->attrs)) num_funcs++;
     }
     msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
     msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
 
-    if((func = interface->funcs)) {
-        while(NEXT_LINK(func)) func = NEXT_LINK(func);
-        while(func) {
+    if (interface->funcs)
+        LIST_FOR_EACH_ENTRY( func, interface->funcs, const func_t, entry )
             if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
                 idx++;
-            func = PREV_LINK(func);
-        }
-    }
 }
 
 static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure)
@@ -2139,7 +2131,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
 static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
 {
     int idx = 0;
-    func_t *func;
+    const func_t *func;
     msft_typeinfo_t *msft_typeinfo;
 
     if (-1 < module->typelib_idx)
@@ -2149,14 +2141,11 @@ static void add_module_typeinfo(msft_typelib_t *typelib, type_t *module)
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_MODULE, module->name, module->attrs);
     msft_typeinfo->typeinfo->typekind |= 0x0a00;
 
-    if((func = module->funcs)) {
-        while(NEXT_LINK(func)) func = NEXT_LINK(func);
-        while(func) {
+    if (module->funcs)
+        LIST_FOR_EACH_ENTRY( func, module->funcs, const func_t, entry )
             if(add_func_desc(msft_typeinfo, func, idx) == S_OK)
                 idx++;
-            func = PREV_LINK(func);
-        }
-    }
+
     msft_typeinfo->typeinfo->size = idx;
 }
 
