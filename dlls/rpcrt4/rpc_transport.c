@@ -354,21 +354,40 @@ static int rpcrt4_conn_np_read(RpcConnection *Connection,
                         void *buffer, unsigned int count)
 {
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  DWORD dwRead = 0;
-  if (!ReadFile(npc->pipe, buffer, count, &dwRead, NULL) &&
-      (GetLastError() != ERROR_MORE_DATA))
-    return -1;
-  return dwRead;
+  char *buf = buffer;
+  BOOL ret = TRUE;
+  unsigned int bytes_left = count;
+
+  while (bytes_left)
+  {
+    DWORD bytes_read;
+    ret = ReadFile(npc->pipe, buf, bytes_left, &bytes_read, NULL);
+    if (!ret || !bytes_read)
+        break;
+    bytes_left -= bytes_read;
+    buf += bytes_read;
+  }
+  return ret ? count : -1;
 }
 
 static int rpcrt4_conn_np_write(RpcConnection *Connection,
                              const void *buffer, unsigned int count)
 {
   RpcConnection_np *npc = (RpcConnection_np *) Connection;
-  DWORD dwWritten = 0;
-  if (!WriteFile(npc->pipe, buffer, count, &dwWritten, NULL))
-    return -1;
-  return dwWritten;
+  const char *buf = buffer;
+  BOOL ret = TRUE;
+  unsigned int bytes_left = count;
+
+  while (bytes_left)
+  {
+    DWORD bytes_written;
+    ret = WriteFile(npc->pipe, buf, count, &bytes_written, NULL);
+    if (!ret || !bytes_written)
+        break;
+    bytes_left -= bytes_written;
+    buf += bytes_written;
+  }
+  return ret ? count : -1;
 }
 
 static int rpcrt4_conn_np_close(RpcConnection *Connection)
