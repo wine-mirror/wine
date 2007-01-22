@@ -1,0 +1,13 @@
+TOPSRCDIR = @top_srcdir@
+TOPOBJDIR = ../../..
+SRCDIR    = @srcdir@
+VPATH     = @srcdir@
+TESTDLL   = snmpapi.dll
+IMPORTS   = snmpapi kernel32
+
+CTESTS = \
+	util.c
+
+@MAKE_TEST_RULES@
+
+@DEPENDENCIES@  # everything below this line is overwritten by make depend

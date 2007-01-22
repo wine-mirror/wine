@@ -478,6 +478,9 @@ dlls/shlwapi/tests/*.ok
 dlls/shlwapi/tests/shlwapi_crosstest.exe
 dlls/shlwapi/tests/testlist.c
 dlls/snmpapi/libsnmpapi.def
+dlls/snmpapi/tests/*.ok
+dlls/snmpapi/tests/snmpapi_crosstest.exe
+dlls/snmpapi/tests/testlist.c
 dlls/sound.drv16
 dlls/stdole2.tlb/rsrc.res
 dlls/stdole2.tlb/std_ole_v2.tlb
@@ -770,6 +773,7 @@ programs/winetest/setupapi_test.exe
 programs/winetest/shdocvw_test.exe
 programs/winetest/shell32_test.exe
 programs/winetest/shlwapi_test.exe
+programs/winetest/snmpapi_test.exe
 programs/winetest/urlmon_test.exe
 programs/winetest/user32_test.exe
 programs/winetest/usp10_test.exe

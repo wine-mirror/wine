@@ -69,6 +69,7 @@ TESTBINS = \
 	shdocvw_test.exe \
 	shell32_test.exe \
 	shlwapi_test.exe \
+	snmpapi_test.exe \
 	urlmon_test.exe \
 	user32_test.exe \
 	usp10_test.exe \
@@ -172,6 +173,8 @@ shell32_test.exe: $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shell32/tests/shell32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 shlwapi_test.exe: $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/shlwapi/tests/shlwapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
+snmpapi_test.exe: $(DLLDIR)/snmpapi/tests/snmpapi_test.exe$(DLLEXT)
+	cp $(DLLDIR)/snmpapi/tests/snmpapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
 urlmon_test.exe: $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT)
 	cp $(DLLDIR)/urlmon/tests/urlmon_test.exe$(DLLEXT) $@ && $(STRIP) $@
 user32_test.exe: $(DLLDIR)/user32/tests/user32_test.exe$(DLLEXT)

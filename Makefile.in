@@ -350,6 +350,7 @@ ALL_MAKEFILES = \
 	dlls/shlwapi/Makefile \
 	dlls/shlwapi/tests/Makefile \
 	dlls/snmpapi/Makefile \
+	dlls/snmpapi/tests/Makefile \
 	dlls/spoolss/Makefile \
 	dlls/stdole2.tlb/Makefile \
 	dlls/stdole32.tlb/Makefile \
@@ -677,6 +678,7 @@ dlls/shfolder/Makefile: dlls/shfolder/Makefile.in dlls/Makedll.rules
 dlls/shlwapi/Makefile: dlls/shlwapi/Makefile.in dlls/Makedll.rules
 dlls/shlwapi/tests/Makefile: dlls/shlwapi/tests/Makefile.in dlls/Maketest.rules
 dlls/snmpapi/Makefile: dlls/snmpapi/Makefile.in dlls/Makedll.rules
+dlls/snmpapi/tests/Makefile: dlls/snmpapi/tests/Makefile.in dlls/Maketest.rules
 dlls/spoolss/Makefile: dlls/spoolss/Makefile.in dlls/Makedll.rules
 dlls/stdole2.tlb/Makefile: dlls/stdole2.tlb/Makefile.in dlls/Makedll.rules
 dlls/stdole32.tlb/Makefile: dlls/stdole32.tlb/Makefile.in dlls/Makedll.rules

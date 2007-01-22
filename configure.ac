@@ -1721,6 +1721,7 @@ dlls/shfolder/Makefile
 dlls/shlwapi/Makefile
 dlls/shlwapi/tests/Makefile
 dlls/snmpapi/Makefile
+dlls/snmpapi/tests/Makefile
 dlls/spoolss/Makefile
 dlls/stdole2.tlb/Makefile
 dlls/stdole32.tlb/Makefile

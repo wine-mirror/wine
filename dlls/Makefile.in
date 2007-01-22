@@ -263,6 +263,7 @@ TESTSUBDIRS = \
 	shdocvw/tests \
 	shell32/tests \
 	shlwapi/tests \
+	snmpapi/tests \
 	urlmon/tests \
 	user32/tests \
 	usp10/tests \
