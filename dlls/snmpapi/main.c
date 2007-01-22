@@ -253,23 +253,53 @@ INT WINAPI SnmpUtilOctetsCmp(AsnOctetString *octets1, AsnOctetString *octets2)
 }
 
 /***********************************************************************
+ *      SnmpUtilOidAppend       (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilOidAppend(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
+{
+    UINT *ids, i, size;
+
+    TRACE("(%p, %p)\n", dst, src);
+
+    if (!dst) return SNMPAPI_ERROR;
+    if (!src) return SNMPAPI_NOERROR;
+
+    size = (src->idLength + dst->idLength) * sizeof(UINT);
+    if (!(ids = HeapReAlloc(GetProcessHeap(), 0, dst->ids, size)))
+    {
+        if (!(ids = HeapAlloc(GetProcessHeap(), 0, size)))
+        {
+            SetLastError(SNMP_MEM_ALLOC_ERROR);
+            return SNMPAPI_ERROR;
+        }
+        else memcpy(ids, dst->ids, dst->idLength * sizeof(UINT));
+    }
+
+    for (i = 0; i < src->idLength; i++) ids[i + dst->idLength] = src->ids[i];
+    dst->idLength = dst->idLength + src->idLength;
+    dst->ids = ids;
+
+    return SNMPAPI_NOERROR;
+}
+
+/***********************************************************************
  *      SnmpUtilOidCpy          (SNMPAPI.@)
  */
 INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
 {
-    unsigned int i, size;
-
     TRACE("(%p, %p)\n", dst, src);
 
-    size = sizeof(AsnObjectIdentifier);
-    if ((dst = HeapAlloc(GetProcessHeap(), 0, size)))
+    if (!dst) return SNMPAPI_ERROR;
+    if (!src)
     {
-        size = src->idLength * sizeof(UINT);
-        if (!(dst->ids = HeapAlloc(GetProcessHeap(), 0, size)))
-        {
-            HeapFree(GetProcessHeap(), 0, dst);
-            return SNMPAPI_ERROR;
-        }
+        dst->idLength = 0;
+        dst->ids = NULL;
+        return SNMPAPI_NOERROR;
+    }
+    if ((dst->ids = HeapAlloc(GetProcessHeap(), 0, src->idLength * sizeof(UINT))))
+    {
+        unsigned int i;
+
         dst->idLength = src->idLength;
         for (i = 0; i < dst->idLength; i++) dst->ids[i] = src->ids[i];
         return SNMPAPI_NOERROR;
@@ -284,8 +314,43 @@ void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
 {
     TRACE("(%p)\n", oid);
 
+    if (!oid) return;
+
+    oid->idLength = 0;
     HeapFree(GetProcessHeap(), 0, oid->ids);
-    HeapFree(GetProcessHeap(), 0, oid);
+    oid->ids = NULL;
+}
+
+/***********************************************************************
+ *      SnmpUtilOidNCmp         (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilOidNCmp(AsnObjectIdentifier *oid1, AsnObjectIdentifier *oid2, UINT count)
+{
+    unsigned int i;
+
+    TRACE("(%p, %p, %d)\n", oid1, oid2, count);
+
+    if (!oid1 || !oid2) return 0;
+
+    for (i = 0; i < count; i++)
+    {
+        if (oid1->ids[i] > oid2->ids[i]) return 1;
+        if (oid1->ids[i] < oid2->ids[i]) return -1;
+    }
+    return 0;
+}
+
+/***********************************************************************
+ *      SnmpUtilOidCmp          (SNMPAPI.@)
+ */
+INT WINAPI SnmpUtilOidCmp(AsnObjectIdentifier *oid1, AsnObjectIdentifier *oid2)
+{
+    TRACE("(%p, %p)\n", oid1, oid2);
+
+    if (oid1->idLength < oid2->idLength) return -1;
+    if (oid1->idLength > oid2->idLength) return 1;
+
+    return SnmpUtilOidNCmp(oid1, oid2, oid1->idLength);
 }
 
 /***********************************************************************

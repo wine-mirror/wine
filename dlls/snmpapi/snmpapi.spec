@@ -29,11 +29,11 @@
 @ stdcall SnmpUtilOctetsCpy(ptr ptr)
 @ stdcall SnmpUtilOctetsFree(ptr)
 @ stdcall SnmpUtilOctetsNCmp(ptr ptr long)
-@ stub SnmpUtilOidAppend
-@ stub SnmpUtilOidCmp
+@ stdcall SnmpUtilOidAppend(ptr ptr)
+@ stdcall SnmpUtilOidCmp(ptr ptr)
 @ stdcall SnmpUtilOidCpy(ptr ptr)
 @ stdcall SnmpUtilOidFree(ptr)
-@ stub SnmpUtilOidNCmp
+@ stdcall SnmpUtilOidNCmp(ptr ptr long)
 @ stub SnmpUtilOidToA
 @ stub SnmpUtilPrintAsnAny
 @ stub SnmpUtilPrintOid
