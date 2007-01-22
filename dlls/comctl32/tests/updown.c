@@ -282,6 +282,8 @@ static void ok_sequence_(int sequence_index, const struct message *expected,
             expected++;
             actual++;
         }
+        else if (expected->flags & optional)
+            expected++;
         else if (todo)
         {
             failcount++;
