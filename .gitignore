@@ -438,6 +438,7 @@ dlls/setupapi/tests/setupapi_crosstest.exe
 dlls/setupapi/tests/testlist.c
 dlls/setupx.dll16
 dlls/sfc/libsfc.def
+dlls/sfc_os/libsfc_os.def
 dlls/shdoclc/rsrc.res
 dlls/shdocvw/libshdocvw.def
 dlls/shdocvw/shdocvw.res

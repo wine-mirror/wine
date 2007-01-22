@@ -535,6 +535,7 @@ IMPORT_LIBS = \
 	serialui/libserialui.$(IMPLIBEXT) \
 	setupapi/libsetupapi.$(IMPLIBEXT) \
 	sfc/libsfc.$(IMPLIBEXT) \
+	sfc_os/libsfc_os.$(IMPLIBEXT) \
 	shdocvw/libshdocvw.$(IMPLIBEXT) \
 	shell32/libshell32.$(IMPLIBEXT) \
 	shfolder/libshfolder.$(IMPLIBEXT) \
@@ -838,6 +839,9 @@ setupapi/libsetupapi.$(IMPLIBEXT): setupapi/setupapi.spec $(WINEBUILD)
 
 sfc/libsfc.$(IMPLIBEXT): sfc/sfc.spec $(WINEBUILD)
 	@cd sfc && $(MAKE) libsfc.$(IMPLIBEXT)
+
+sfc_os/libsfc_os.$(IMPLIBEXT): sfc_os/sfc_os.spec $(WINEBUILD)
+	@cd sfc_os && $(MAKE) libsfc_os.$(IMPLIBEXT)
 
 shdocvw/libshdocvw.$(IMPLIBEXT): shdocvw/shdocvw.spec $(WINEBUILD)
 	@cd shdocvw && $(MAKE) libshdocvw.$(IMPLIBEXT)
