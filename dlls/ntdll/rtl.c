@@ -886,3 +886,39 @@ NTSTATUS WINAPI RtlIpv4AddressToStringExW (PULONG IP, PULONG Port,
 
     return STATUS_SUCCESS;
 }
+
+static DWORD_PTR get_pointer_obfuscator( void )
+{
+    static DWORD_PTR pointer_obfuscator;
+
+    if (!pointer_obfuscator)
+    {
+        ULONG seed = NtGetTickCount();
+        ULONG_PTR rand;
+
+        /* generate a random value for the obfuscator */
+        rand = RtlUniform( &seed );
+
+        /* handle 64bit pointers */
+        rand ^= RtlUniform( &seed ) << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
+
+        /* set the high bits so dereferencing obfuscated pointers will (usually) crash */
+        rand |= 0xc0000000 << ((sizeof (DWORD_PTR) - sizeof (ULONG))*8);
+
+        interlocked_cmpxchg_ptr( (void**) &pointer_obfuscator, (void*) rand, NULL );
+    }
+
+    return pointer_obfuscator;
+}
+
+PVOID WINAPI RtlEncodePointer( PVOID ptr )
+{
+    DWORD_PTR ptrval = (DWORD_PTR) ptr;
+    return (PVOID)(ptrval ^ get_pointer_obfuscator());
+}
+
+PVOID WINAPI RtlDecodePointer( PVOID ptr )
+{
+    DWORD_PTR ptrval = (DWORD_PTR) ptr;
+    return (PVOID)(ptrval ^ get_pointer_obfuscator());
+}

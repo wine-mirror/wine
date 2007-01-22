@@ -501,7 +501,7 @@
 @ stub RtlDeactivateActivationContext
 @ stub RtlDeactivateActivationContextUnsafeFast
 @ stub RtlDebugPrintTimes
-# @ stub RtlDecodePointer
+@ stdcall RtlDecodePointer(ptr)
 # @ stub RtlDecodeSystemPointer
 @ stub RtlDecompressBuffer
 @ stub RtlDecompressFragment
@@ -543,7 +543,7 @@
 @ stdcall RtlDuplicateUnicodeString(long ptr ptr)
 @ stdcall RtlEmptyAtomTable(ptr long)
 # @ stub RtlEnableEarlyCriticalSectionEventCreation
-# @ stub RtlEncodePointer
+@ stdcall RtlEncodePointer(ptr)
 # @ stub RtlEncodeSystemPointer
 @ stdcall -ret64 RtlEnlargedIntegerMultiply(long long)
 @ stdcall RtlEnlargedUnsignedDivide(double long ptr)
