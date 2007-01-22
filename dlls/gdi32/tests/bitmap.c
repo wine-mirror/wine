@@ -1547,6 +1547,64 @@ todo_wine
     ReleaseDC(0, hdc);
 }
 
+static void test_select_object(void)
+{
+    HDC hdc;
+    HBITMAP hbm, hbm_old;
+    INT planes, bpp;
+
+    hdc = GetDC(0);
+    ok(hdc != 0, "GetDC(0) failed\n");
+    hbm = CreateCompatibleBitmap(hdc, 10, 10);
+    ok(hbm != 0, "CreateCompatibleBitmap failed\n");
+
+    hbm_old = SelectObject(hdc, hbm);
+    ok(hbm_old == 0, "SelectObject should fail\n");
+
+    DeleteObject(hbm);
+    ReleaseDC(0, hdc);
+
+    hdc = CreateCompatibleDC(0);
+    ok(hdc != 0, "GetDC(0) failed\n");
+    hbm = CreateCompatibleBitmap(hdc, 10, 10);
+    ok(hbm != 0, "CreateCompatibleBitmap failed\n");
+
+    hbm_old = SelectObject(hdc, hbm);
+    ok(hbm_old != 0, "SelectObject failed\n");
+    hbm_old = SelectObject(hdc, hbm_old);
+    ok(hbm_old == hbm, "SelectObject failed\n");
+
+    DeleteObject(hbm);
+
+    /* test an 1-bpp bitmap */
+    planes = GetDeviceCaps(hdc, PLANES);
+    bpp = 1;
+
+    hbm = CreateBitmap(10, 10, planes, bpp, NULL);
+    ok(hbm != 0, "CreateBitmap failed\n");
+
+    hbm_old = SelectObject(hdc, hbm);
+    ok(hbm_old != 0, "SelectObject failed\n");
+    hbm_old = SelectObject(hdc, hbm_old);
+    ok(hbm_old == hbm, "SelectObject failed\n");
+
+    DeleteObject(hbm);
+
+    /* test a color bitmap that doesn't match the dc's bpp */
+    planes = GetDeviceCaps(hdc, PLANES);
+    bpp = GetDeviceCaps(hdc, BITSPIXEL) == 24 ? 8 : 24;
+
+    hbm = CreateBitmap(10, 10, planes, bpp, NULL);
+    ok(hbm != 0, "CreateBitmap failed\n");
+
+    hbm_old = SelectObject(hdc, hbm);
+    ok(hbm_old == 0, "SelectObject should fail\n");
+
+    DeleteObject(hbm);
+
+    DeleteDC(hdc);
+}
+
 START_TEST(bitmap)
 {
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
@@ -1562,4 +1620,5 @@ START_TEST(bitmap)
     test_GetDIBits_selected_DDB(TRUE);
     test_GetDIBits_selected_DDB(FALSE);
     test_GetDIBits();
+    test_select_object();
 }
