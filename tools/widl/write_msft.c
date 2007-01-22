@@ -49,6 +49,7 @@
 #include "typelib.h"
 #include "typelib_struct.h"
 #include "utils.h"
+#include "header.h"
 #include "hash.h"
 
 enum MSFT_segment_index {
@@ -1272,11 +1273,9 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
         break;
     }
 
-    for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_LOCAL) {
-            chat("add_func_desc: skipping local function\n");
-            return S_FALSE;
-        }
+    if (is_local( func->def->attrs )) {
+        chat("add_func_desc: skipping local function\n");
+        return S_FALSE;
     }
 
     for(arg = func->args; arg; arg = NEXT_LINK(arg)) {
@@ -1949,15 +1948,13 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     msft_typeinfo_t *msft_typeinfo;
     importinfo_t *ref_importinfo = NULL;
     int num_parents = 0, num_funcs = 0;
-    const attr_t *attr;
     const type_t *derived;
 
     if (-1 < interface->typelib_idx)
         return;
 
-    for(attr = interface->attrs; attr; attr = NEXT_LINK(attr))
-        if(attr->type == ATTR_DISPINTERFACE)
-            return add_dispinterface_typeinfo(typelib, interface);
+    if (is_attr(interface->attrs, ATTR_DISPINTERFACE))
+        return add_dispinterface_typeinfo(typelib, interface);
 
     /* midl adds the parent interface first, unless the parent itself
        has no parent (i.e. it stops before IUnknown). */
@@ -1988,14 +1985,8 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
     /* count the number of inherited interfaces and non-local functions */
     for(ref = interface->ref; ref; ref = ref->ref) {
         num_parents++;
-        for(func = ref->funcs; func; func = NEXT_LINK(func)) {
-            const attr_t *attr;
-            for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr))
-                if(attr->type == ATTR_LOCAL)
-                    break;
-            if(!attr)
-                num_funcs++;
-        }
+        for(func = ref->funcs; func; func = NEXT_LINK(func))
+            if (!is_local(func->def->attrs)) num_funcs++;
     }
     msft_typeinfo->typeinfo->datatype2 = num_funcs << 16 | num_parents;
     msft_typeinfo->typeinfo->cbSizeVft = num_funcs * 4;
@@ -2217,34 +2208,22 @@ static void set_name(msft_typelib_t *typelib)
 
 static void set_version(msft_typelib_t *typelib)
 {
-    long version = MAKELONG(0,0);
-    const attr_t *attr;
-
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_VERSION) {
-            version = attr->u.ival;
-        }
-    }
-    typelib->typelib_header.version = version;
-    return;
+    typelib->typelib_header.version = get_attrv( typelib->typelib->attrs, ATTR_VERSION );
 }
 
 static void set_guid(msft_typelib_t *typelib)
 {
     MSFT_GuidEntry guidentry;
     int offset;
-    const attr_t *attr;
+    void *ptr;
     GUID guid = {0,0,0,{0,0,0,0,0,0}};
 
     guidentry.guid = guid;
     guidentry.hreftype = -2;
     guidentry.next_hash = -1;
 
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_UUID) {
-            guidentry.guid = *(GUID*)(attr->u.pval);
-        }
-    }
+    ptr = get_attrp( typelib->typelib->attrs, ATTR_UUID );
+    if (ptr) guidentry.guid = *(GUID *)ptr;
 
     offset = ctl2_alloc_guid(typelib, &guidentry);
     typelib->typelib_header.posguid = offset;
@@ -2254,71 +2233,55 @@ static void set_guid(msft_typelib_t *typelib)
 
 static void set_doc_string(msft_typelib_t *typelib)
 {
-    const attr_t *attr;
-    int offset;
+    char *str = get_attrp( typelib->typelib->attrs, ATTR_HELPSTRING );
 
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_HELPSTRING) {
-            offset = ctl2_alloc_string(typelib, attr->u.pval);
-            if (offset == -1) return;
-            typelib->typelib_header.helpstring = offset;
-        }
+    if (str)
+    {
+        int offset = ctl2_alloc_string(typelib, str);
+        if (offset != -1) typelib->typelib_header.helpstring = offset;
     }
-    return;
 }
 
 static void set_help_file_name(msft_typelib_t *typelib)
 {
-    int offset;
-    const attr_t *attr;
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_HELPFILE) {
-            offset = ctl2_alloc_string(typelib, attr->u.pval);
-            if (offset == -1) return;
+    char *str = get_attrp( typelib->typelib->attrs, ATTR_HELPFILE );
+
+    if (str)
+    {
+        int offset = ctl2_alloc_string(typelib, str);
+        if (offset != -1)
+        {
             typelib->typelib_header.helpfile = offset;
             typelib->typelib_header.varflags |= 0x10;
         }
     }
-    return;
 }
 
 static void set_help_context(msft_typelib_t *typelib)
 {
-    const attr_t *attr;
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_HELPCONTEXT) {
-            const expr_t *expr = (expr_t *)attr->u.pval;
-            typelib->typelib_header.helpcontext = expr->cval;
-        }
-    }
-    return;
+    const expr_t *expr = get_attrp( typelib->typelib->attrs, ATTR_HELPCONTEXT );
+    if (expr) typelib->typelib_header.helpcontext = expr->cval;
 }
 
 static void set_help_string_dll(msft_typelib_t *typelib)
 {
-    int offset;
-    const attr_t *attr;
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_HELPSTRINGDLL) {
-            offset = ctl2_alloc_string(typelib, attr->u.pval);
-            if (offset == -1) return;
+    char *str = get_attrp( typelib->typelib->attrs, ATTR_HELPSTRINGDLL );
+
+    if (str)
+    {
+        int offset = ctl2_alloc_string(typelib, str);
+        if (offset != -1)
+        {
             typelib->help_string_dll_offset = offset;
             typelib->typelib_header.varflags |= 0x100;
         }
     }
-    return;
 }
 
 static void set_help_string_context(msft_typelib_t *typelib)
 {
-    const attr_t *attr;
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
-        if(attr->type == ATTR_HELPSTRINGCONTEXT) {
-            const expr_t *expr = (expr_t *)attr->u.pval;
-            typelib->typelib_header.helpstringcontext = expr->cval;
-        }
-    }
-    return;
+    const expr_t *expr = get_attrp( typelib->typelib->attrs, ATTR_HELPSTRINGCONTEXT );
+    if (expr) typelib->typelib_header.helpstringcontext = expr->cval;
 }
 
 static void set_lcid(msft_typelib_t *typelib)
