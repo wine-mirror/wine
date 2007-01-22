@@ -76,10 +76,12 @@ static expr_t *make_expr1(enum expr_type type, expr_t *expr);
 static expr_t *make_expr2(enum expr_type type, expr_t *exp1, expr_t *exp2);
 static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, expr_t *expr3);
 static type_t *make_type(unsigned char type, type_t *ref);
+static expr_list_t *append_expr(expr_list_t *list, expr_t *expr);
+static array_dims_t *append_array(array_dims_t *list, expr_t *expr);
 static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
 static type_t *type_ref(typeref_t *ref);
-static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
+static void set_type(var_t *v, typeref_t *ref, array_dims_t *arr);
 static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_list_t *append_var(var_list_t *list, var_t *var);
@@ -121,6 +123,8 @@ static void check_arg(var_t *arg);
 	attr_t *attr;
 	attr_list_t *attr_list;
 	expr_t *expr;
+	expr_list_t *expr_list;
+	array_dims_t *array_dims;
 	type_t *type;
 	typeref_t *tref;
 	var_t *var;
@@ -219,8 +223,9 @@ static void check_arg(var_t *arg);
 
 %type <attr> attribute
 %type <attr_list> m_attributes attributes attrib_list
-%type <expr> m_exprs /* exprs expr_list */ m_expr expr expr_list_const expr_const
-%type <expr> array array_list
+%type <expr> m_expr expr expr_const
+%type <expr_list> m_exprs /* exprs expr_list */ expr_list_const
+%type <array_dims> array array_list
 %type <type> inherit interface interfacehdr interfacedef interfacedec
 %type <type> dispinterface dispinterfacehdr dispinterfacedef
 %type <type> module modulehdr moduledef
@@ -357,12 +362,12 @@ arg:	  attributes type pident array		{ $$ = $3;
 
 array:						{ $$ = NULL; }
 	| '[' array_list ']'			{ $$ = $2; }
-	| '[' '*' ']'				{ $$ = make_expr(EXPR_VOID); }
+	| '[' '*' ']'				{ $$ = append_array( NULL, make_expr(EXPR_VOID) ); }
 	;
 
-array_list: m_expr /* size of first dimension is optional */
-	| array_list ',' expr			{ LINK($3, $1); $$ = $3; }
-	| array_list ']' '[' expr		{ LINK($4, $1); $$ = $4; }
+array_list: m_expr /* size of first dimension is optional */ { $$ = append_array( NULL, $1 ); }
+	| array_list ',' expr                   { $$ = append_array( $1, $3 ); }
+	| array_list ']' '[' expr               { $$ = append_array( $1, $4 ); }
 	;
 
 m_attributes:					{ $$ = NULL; }
@@ -434,7 +439,9 @@ attribute:					{ $$ = NULL; }
 	| tPROPPUT				{ $$ = make_attr(ATTR_PROPPUT); }
 	| tPROPPUTREF				{ $$ = make_attr(ATTR_PROPPUTREF); }
 	| tPUBLIC				{ $$ = make_attr(ATTR_PUBLIC); }
-	| tRANGE '(' expr_const ',' expr_const ')' { LINK($5, $3); $$ = make_attrp(ATTR_RANGE, $5); }
+	| tRANGE '(' expr_const ',' expr_const ')' { expr_list_t *list = append_expr( NULL, $3 );
+                                                     list = append_expr( list, $5 );
+                                                     $$ = make_attrp(ATTR_RANGE, list); }
 	| tREADONLY				{ $$ = make_attr(ATTR_READONLY); }
 	| tREQUESTEDIT				{ $$ = make_attr(ATTR_REQUESTEDIT); }
 	| tRESTRICTED				{ $$ = make_attr(ATTR_RESTRICTED); }
@@ -513,8 +520,8 @@ enumdef: tENUM t_ident '{' enums '}'		{ $$ = get_typev(RPC_FC_ENUM16, $2, tsENUM
 						}
 	;
 
-m_exprs:  m_expr
-	| m_exprs ',' m_expr			{ LINK($3, $1); $$ = $3; }
+m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); }
+	| m_exprs ',' m_expr                    { $$ = append_expr( $1, $3 ); }
 	;
 
 /*
@@ -553,8 +560,8 @@ expr:	  aNUM					{ $$ = make_exprl(EXPR_NUM, $1); }
 	| '(' expr ')'				{ $$ = $2; }
 	;
 
-expr_list_const: expr_const
-	| expr_list_const ',' expr_const	{ LINK($3, $1); $$ = $3; }
+expr_list_const: expr_const                     { $$ = append_expr( NULL, $1 ); }
+	| expr_list_const ',' expr_const        { $$ = append_expr( $1, $3 ); }
 	;
 
 expr_const: expr				{ $$ = $1;
@@ -951,7 +958,6 @@ static expr_t *make_expr(enum expr_type type)
   e->ref = NULL;
   e->u.lval = 0;
   e->is_const = FALSE;
-  INIT_LINK(e);
   return e;
 }
 
@@ -962,7 +968,6 @@ static expr_t *make_exprl(enum expr_type type, long val)
   e->ref = NULL;
   e->u.lval = val;
   e->is_const = FALSE;
-  INIT_LINK(e);
   /* check for numeric constant */
   if (type == EXPR_NUM || type == EXPR_HEXNUM || type == EXPR_TRUEFALSE) {
     /* make sure true/false value is valid */
@@ -981,7 +986,6 @@ static expr_t *make_exprs(enum expr_type type, char *val)
   e->ref = NULL;
   e->u.sval = val;
   e->is_const = FALSE;
-  INIT_LINK(e);
   /* check for predefined constants */
   if (type == EXPR_IDENTIFIER) {
     var_t *c = find_const(val, 0);
@@ -1003,7 +1007,6 @@ static expr_t *make_exprt(enum expr_type type, typeref_t *tref, expr_t *expr)
   e->ref = expr;
   e->u.tref = tref;
   e->is_const = FALSE;
-  INIT_LINK(e);
   /* check for cast of constant expression */
   if (type == EXPR_SIZEOF) {
     switch (tref->ref->type) {
@@ -1049,7 +1052,6 @@ static expr_t *make_expr1(enum expr_type type, expr_t *expr)
   e->ref = expr;
   e->u.lval = 0;
   e->is_const = FALSE;
-  INIT_LINK(e);
   /* check for compile-time optimization */
   if (expr->is_const) {
     e->is_const = TRUE;
@@ -1076,7 +1078,6 @@ static expr_t *make_expr2(enum expr_type type, expr_t *expr1, expr_t *expr2)
   e->ref = expr1;
   e->u.ext = expr2;
   e->is_const = FALSE;
-  INIT_LINK(e);
   /* check for compile-time optimization */
   if (expr1->is_const && expr2->is_const) {
     e->is_const = TRUE;
@@ -1122,7 +1123,6 @@ static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, exp
   e->u.ext = expr2;
   e->ext2 = expr3;
   e->is_const = FALSE;
-  INIT_LINK(e);
   /* check for compile-time optimization */
   if (expr1->is_const && expr2->is_const && expr3->is_const) {
     e->is_const = TRUE;
@@ -1136,6 +1136,30 @@ static expr_t *make_expr3(enum expr_type type, expr_t *expr1, expr_t *expr2, exp
     }
   }
   return e;
+}
+
+static expr_list_t *append_expr(expr_list_t *list, expr_t *expr)
+{
+    if (!expr) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &expr->entry );
+    return list;
+}
+
+static array_dims_t *append_array(array_dims_t *list, expr_t *expr)
+{
+    if (!expr) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &expr->entry );
+    return list;
 }
 
 static type_t *make_type(unsigned char type, type_t *ref)
@@ -1157,7 +1181,6 @@ static type_t *make_type(unsigned char type, type_t *ref)
   t->written = FALSE;
   t->user_types_registered = FALSE;
   t->typelib_idx = -1;
-  INIT_LINK(t);
   return t;
 }
 
@@ -1198,7 +1221,7 @@ static type_t *type_ref(typeref_t *ref)
   return t;
 }
 
-static void set_type(var_t *v, typeref_t *ref, expr_t *arr)
+static void set_type(var_t *v, typeref_t *ref, array_dims_t *arr)
 {
   v->type = ref->ref;
   v->tname = ref->name;
@@ -1280,7 +1303,6 @@ static type_t *make_class(char *name)
   type_t *c = make_type(0, NULL);
   c->name = name;
   c->kind = TKIND_COCLASS;
-  INIT_LINK(c);
   return c;
 }
 
@@ -1488,7 +1510,7 @@ static int get_struct_type(var_list_t *fields)
 
     if (is_array_type(field->attrs, 0, field->array))
     {
-        if (field->array && !field->array->is_const)
+        if (field->array && is_conformant_array(field->array))
         {
             has_conformance = 1;
             if (list_next( fields, &field->entry ))

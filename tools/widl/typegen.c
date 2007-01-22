@@ -59,7 +59,7 @@ struct expr_eval_routine
     const expr_t *expr;
 };
 
-static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array);
+static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array);
 static size_t fields_memsize(const var_list_t *fields);
 
 static int compare_expr(const expr_t *a, const expr_t *b)
@@ -537,7 +537,7 @@ static size_t fields_memsize(const var_list_t *fields)
     return size;
 }
 
-static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
+static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array)
 {
     size_t size = 0;
 
@@ -586,10 +586,12 @@ static size_t type_memsize(const type_t *t, int ptr_level, const expr_t *array)
 
     if (array)
     {
-        if (array->is_const)
-            size *= array->cval;
-        else
-            size = 0;
+        expr_t *dim;
+        LIST_FOR_EACH_ENTRY( dim, array, expr_t, entry )
+            if (dim->is_const)
+                size *= dim->cval;
+            else
+                size = 0;
     }
 
     return size;
@@ -602,7 +604,7 @@ size_t get_type_memsize(const type_t *type)
 
 static int write_pointers(FILE *file, const attr_list_t *attrs,
                           const type_t *type, int ptr_level,
-                          const expr_t *array, int level,
+                          const array_dims_t *array, int level,
                           unsigned int *typestring_offset)
 {
     int pointers_written = 0;
@@ -650,7 +652,7 @@ static int write_pointers(FILE *file, const attr_list_t *attrs,
 
 static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
                                         const type_t *type, int ptr_level,
-                                        const expr_t *array, int level,
+                                        const array_dims_t *array, int level,
                                         size_t typestring_offset)
 {
     size_t size = 0;
@@ -700,7 +702,7 @@ static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
 }
 
 static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
-                               const type_t *type, const expr_t *array,
+                               const type_t *type, const array_dims_t *array,
                                const char *name, unsigned int *typestring_offset)
 {
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
@@ -744,11 +746,13 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
         *typestring_offset += 2;
     }
 
-    if (array && array->is_const)
+    if (array && !is_conformant_array(array))
     {
-        if (array->cval > USHRT_MAX)
+        /* FIXME: multi-dimensional array */
+        const expr_t *dim = LIST_ENTRY( list_head( array ), expr_t, entry );
+        if (dim->cval > USHRT_MAX)
             error("array size for parameter %s exceeds %d bytes by %ld bytes\n",
-                  name, USHRT_MAX, array->cval - USHRT_MAX);
+                  name, USHRT_MAX, dim->cval - USHRT_MAX);
 
         if (rtype == RPC_FC_CHAR)
             WRITE_FCTYPE(file, FC_CSTRING, *typestring_offset);
@@ -757,7 +761,7 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
         print_file(file, 2, "0x%x, /* FC_PAD */\n", RPC_FC_PAD);
         *typestring_offset += 2;
 
-        print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", array->cval, array->cval);
+        print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", dim->cval, dim->cval);
         *typestring_offset += 2;
 
         return start_offset;
@@ -789,13 +793,13 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
 }
 
 static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
-                              const type_t *type, const expr_t *array,
+                              const type_t *type, const array_dims_t *array,
                               const char *name, unsigned int *typestring_offset)
 {
     const expr_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
     const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
     int has_length = length_is && (length_is->type != EXPR_VOID);
-    int has_size = (size_is && (size_is->type != EXPR_VOID)) || !array->is_const;
+    int has_size = (size_is && (size_is->type != EXPR_VOID)) || is_conformant_array(array);
     size_t start_offset;
     int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
     if (!pointer_type)
@@ -807,13 +811,14 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
     print_file(file, 2, "NdrFcShort(0x2),\n");
     *typestring_offset += 4;
 
-    if (array && NEXT_LINK(array)) /* multi-dimensional array */
+    if (array && list_count(array) > 1) /* multi-dimensional array */
     {
         error("write_array_tfs: Multi-dimensional arrays not implemented yet (param %s)\n", name);
         return 0;
     }
     else
     {
+        const expr_t *dim = LIST_ENTRY( list_head( array ), expr_t, entry );
         size_t pointer_start_offset = *typestring_offset;
         int has_pointer = 0;
 
@@ -866,7 +871,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         {
             /* varying array */
             size_t element_size = type_memsize(type, 0, NULL);
-            size_t elements = array->cval;
+            size_t elements = dim->cval;
             size_t total_size = element_size * elements;
 
             if (total_size < USHRT_MAX)
@@ -930,7 +935,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
 
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
-                                                         size_is ? size_is : array);
+                                                         size_is ? size_is : dim);
 
             if (has_pointer)
             {
@@ -963,7 +968,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
 
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
-                                                         size_is ? size_is : array);
+                                                         size_is ? size_is : dim);
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
                                                          length_is);
@@ -1486,7 +1491,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
 }
 
 static unsigned int get_required_buffer_size_type(
-    const type_t *type, int ptr_level, const expr_t *array,
+    const type_t *type, int ptr_level, const array_dims_t *array,
     const char *name, unsigned int *alignment)
 {
     *alignment = 0;
@@ -1770,7 +1775,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
         has_length = length_is && (length_is->type != EXPR_VOID);
-        has_size = (size_is && (size_is->type != EXPR_VOID)) || (var->array && !var->array->is_const);
+        has_size = (size_is && (size_is->type != EXPR_VOID)) || (var->array && is_conformant_array(var->array));
 
         pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
         if (!pointer_type)
@@ -1797,7 +1802,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
         if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
-            if (var->array && var->array->is_const)
+            if (var->array && !is_conformant_array(var->array))
                 print_phase_function(file, indent, "NonConformantString", phase, var->name, *type_offset);
             else
             {
@@ -1819,10 +1824,11 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         {
             const char *array_type;
 
-            if (var->array && NEXT_LINK(var->array)) /* multi-dimensional array */
+            if (var->array && list_count(var->array) > 1) /* multi-dimensional array */
                 array_type = "ComplexArray";
             else
             {
+                const expr_t *dim = LIST_ENTRY( list_head( var->array ), expr_t, entry );
                 if (!has_length && !has_size)
                     array_type = "FixedArray";
                 else if (has_length && !has_size)
@@ -1841,7 +1847,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     if (is_size_needed_for_phase(phase) && phase != PHASE_FREE)
                     {
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                        write_expr(file, size_is ? size_is : var->array, 1);
+                        write_expr(file, size_is ? size_is : dim, 1);
                         fprintf(file, ";\n\n");
                     }
                     array_type = "ConformantArray";
@@ -1851,7 +1857,7 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                     if (is_size_needed_for_phase(phase))
                     {
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                        write_expr(file, size_is ? size_is : var->array, 1);
+                        write_expr(file, size_is ? size_is : dim, 1);
                         fprintf(file, ";\n");
                         print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
                         print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");

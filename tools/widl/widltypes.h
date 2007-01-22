@@ -48,26 +48,10 @@ typedef struct _typelib_t typelib_t;
 
 typedef struct list attr_list_t;
 typedef struct list func_list_t;
+typedef struct list expr_list_t;
 typedef struct list var_list_t;
 typedef struct list ifref_list_t;
-
-#define DECL_LINK(type) \
-  type *l_next; \
-  type *l_prev
-
-#define LINK(x,y) do { x->l_next = y; x->l_prev = NULL; if (y) y->l_prev = x; } while (0)
-
-#define INIT_LINK(x) do { x->l_next = NULL; x->l_prev = NULL; } while (0)
-#define NEXT_LINK(x) ((x)->l_next)
-#define PREV_LINK(x) ((x)->l_prev)
-
-#define END_OF_LIST(list)       \
-  do {                          \
-    if (list) {                 \
-      while (NEXT_LINK(list))   \
-        list = NEXT_LINK(list); \
-    }                           \
-  } while(0)
+typedef struct list array_dims_t;
 
 enum attr_type
 {
@@ -201,7 +185,7 @@ struct _expr_t {
   int is_const;
   long cval;
   /* parser-internal */
-  DECL_LINK(expr_t);
+  struct list entry;
 };
 
 struct _type_t {
@@ -217,8 +201,6 @@ struct _type_t {
   int ignore, is_const, sign;
   int defined, written, user_types_registered;
   int typelib_idx;
-  /* parser-internal */
-  DECL_LINK(type_t);
 };
 
 struct _typeref_t {
@@ -230,7 +212,7 @@ struct _typeref_t {
 struct _var_t {
   char *name;
   int ptr_level;
-  expr_t *array;
+  array_dims_t *array;
   type_t *type;
   var_list_t *args;  /* for function pointers */
   const char *tname;

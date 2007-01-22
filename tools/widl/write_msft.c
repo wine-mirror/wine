@@ -1104,15 +1104,11 @@ static int encode_var(
     }
 
     if(var->array) {
-        expr_t *dim = var->array;
-        expr_t *array_save;
-        int num_dims = 1, elements = 1, arrayoffset;
+        expr_t *dim;
+        array_dims_t *array_save;
+        int num_dims = list_count( var->array ), elements = 1, arrayoffset;
         int *arraydata;
 
-        while(NEXT_LINK(dim)) {
-            dim = NEXT_LINK(dim);
-            num_dims++;
-        }
         chat("array with %d dimensions\n", num_dims);
         array_save = var->array;
         var->array = NULL;
@@ -1126,12 +1122,12 @@ static int encode_var(
         arraydata[1] |= ((num_dims * 2 * sizeof(long)) << 16);
 
         arraydata += 2;
-        while(dim) {
+        LIST_FOR_EACH_ENTRY( dim, var->array, expr_t, entry )
+        {
             arraydata[0] = dim->cval;
             arraydata[1] = 0;
             arraydata += 2;
             elements *= dim->cval;
-            dim = PREV_LINK(dim);
         }
 
 	typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);

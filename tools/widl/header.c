@@ -77,6 +77,14 @@ int is_void(const type_t *t, const var_t *v)
   return 0;
 }
 
+int is_conformant_array( const array_dims_t *array )
+{
+    expr_t *dim;
+    if (!array) return 0;
+    dim = LIST_ENTRY( list_head( array ), expr_t, entry );
+    return !dim->is_const;
+}
+
 void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
@@ -112,19 +120,20 @@ const char* get_name(const var_t *v)
   return v->name;
 }
 
-void write_array(FILE *h, const expr_t *v, int field)
+void write_array(FILE *h, array_dims_t *dims, int field)
 {
-  if (!v) return;
-  while (NEXT_LINK(v)) v = NEXT_LINK(v);
+  expr_t *v;
+
+  if (!dims) return;
   fprintf(h, "[");
-  while (v) {
+  LIST_FOR_EACH_ENTRY( v, dims, expr_t, entry )
+  {
     if (v->is_const)
       fprintf(h, "%ld", v->cval); /* statically sized array */
     else
       if (field) fprintf(h, "1"); /* dynamically sized array */
-    if (PREV_LINK(v))
+    if (list_next( dims, &v->entry ))
       fprintf(h, ", ");
-    v = PREV_LINK(v);
   }
   fprintf(h, "]");
 }
