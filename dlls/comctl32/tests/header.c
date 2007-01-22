@@ -73,22 +73,22 @@ static BOOL notifies_received(void)
     return fRet;
 }
 
-static LONG addItem(HWND hdex, int idx, LPCSTR text)
+static LONG addItem(HWND hdex, int idx, LPSTR text)
 {
     HDITEMA hdItem;
     hdItem.mask       = HDI_TEXT | HDI_WIDTH;
     hdItem.cxy        = 100;
-    hdItem.pszText    = (LPSTR)text;
+    hdItem.pszText    = text;
     hdItem.cchTextMax = 0;
     return (LONG)SendMessage(hdex, HDM_INSERTITEMA, (WPARAM)idx, (LPARAM)&hdItem);
 }
 
-static LONG setItem(HWND hdex, int idx, LPCSTR text, BOOL fCheckNotifies)
+static LONG setItem(HWND hdex, int idx, LPSTR text, BOOL fCheckNotifies)
 {
     LONG ret;
     HDITEMA hdexItem;
     hdexItem.mask       = HDI_TEXT;
-    hdexItem.pszText    = (LPSTR)text;
+    hdexItem.pszText    = text;
     hdexItem.cchTextMax = 0;
     if (fCheckNotifies)
     {
@@ -101,17 +101,17 @@ static LONG setItem(HWND hdex, int idx, LPCSTR text, BOOL fCheckNotifies)
     return ret;
 }
 
-static LONG setItemUnicodeNotify(HWND hdex, int idx, LPCSTR text, LPCWSTR wText)
+static LONG setItemUnicodeNotify(HWND hdex, int idx, LPSTR text, LPWSTR wText)
 {
     LONG ret;
     HDITEMA hdexItem;
     HDITEMW hdexNotify;
     hdexItem.mask       = HDI_TEXT;
-    hdexItem.pszText    = (LPSTR)text;
+    hdexItem.pszText    = text;
     hdexItem.cchTextMax = 0;
     
     hdexNotify.mask    = HDI_TEXT;
-    hdexNotify.pszText = (LPWSTR)wText;
+    hdexNotify.pszText = wText;
     
     expect_notify(HDN_ITEMCHANGINGW, TRUE, (HDITEMA*)&hdexNotify);
     expect_notify(HDN_ITEMCHANGEDW, TRUE, (HDITEMA*)&hdexNotify);
@@ -207,11 +207,18 @@ static void compare_items(INT iCode, HDITEMA *hdi1, HDITEMA *hdi2, BOOL fUnicode
     }
 }
 
-static const char *str_items[] =
-    {"First Item", "Second Item", "Third Item", "Fourth Item", "Replace Item", "Out Of Range Item"};
+static char pszFirstItem[]      = "First Item";
+static char pszSecondItem[]     = "Second Item";
+static char pszThirdItem[]      = "Third Item";
+static char pszFourthItem[]     = "Fourth Item";
+static char pszReplaceItem[]    = "Replace Item";
+static char pszOutOfRangeItem[] = "Out Of Range Item";
+
+static char *str_items[] =
+    {pszFirstItem, pszSecondItem, pszThirdItem, pszFourthItem, pszReplaceItem, pszOutOfRangeItem};
     
-static const char pszUniTestA[] = "TST";
-static const WCHAR pszUniTestW[] = {'T','S','T',0};
+static char pszUniTestA[]  = "TST";
+static WCHAR pszUniTestW[] = {'T','S','T',0};
 
 
 #define TEST_GET_ITEM(i,c)\
