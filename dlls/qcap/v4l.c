@@ -136,7 +136,7 @@ static const struct renderlist renderlist_V4l[] = {
     {  0, NULL,                          NULL },
 };
 
-const int fallback_V4l[] = { 4, 5, 7, 8, 9, 13, 15, 14, 16, 11, -1 };
+static const int fallback_V4l[] = { 4, 5, 7, 8, 9, 13, 15, 14, 16, 11, -1 };
 /* Fallback: First try raw formats (Should try yuv first perhaps?), then yuv */
 
 /* static const Capture defbox; */

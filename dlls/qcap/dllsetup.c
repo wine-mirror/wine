@@ -57,7 +57,7 @@ static WCHAR const tmodel_both[] =
 /*
  * Delete a key and all its subkeys
  */
-HRESULT DeleteEntireSubKey(HKEY hkey, LPWSTR strSubKey)
+static HRESULT DeleteEntireSubKey(HKEY hkey, LPWSTR strSubKey)
 {
     WCHAR buffer[MAX_KEY_LEN];
     DWORD dw = MAX_KEY_LEN;
