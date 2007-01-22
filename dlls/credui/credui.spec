@@ -1,0 +1,17 @@
+@ stub CredUICmdLinePromptForCredentialsA
+@ stub CredUICmdLinePromptForCredentialsW
+@ stub CredUIConfirmCredentialsA
+@ stub CredUIConfirmCredentialsW
+@ stub CredUIInitControls
+@ stub CredUIParseUserNameA
+@ stub CredUIParseUserNameW
+@ stub CredUIPromptForCredentialsA
+@ stub CredUIPromptForCredentialsW
+@ stub CredUIReadSSOCredA
+@ stub CredUIReadSSOCredW
+@ stub CredUIStoreSSOCredA
+@ stub CredUIStoreSSOCredW
+@ stub DllCanUnloadNow
+@ stub DllGetClassObject
+@ stub DllRegisterServer
+@ stub DllUnregisterServer

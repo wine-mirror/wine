@@ -32,6 +32,7 @@ BASEDIRS = \
 	comctl32 \
 	comdlg32 \
 	compstui \
+	credui \
 	crtdll \
 	crypt32 \
 	cryptdll \
