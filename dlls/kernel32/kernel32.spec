@@ -263,7 +263,7 @@
 @ stdcall DebugBreak()
 @ stdcall DebugBreakProcess(long)
 @ stdcall DebugSetProcessKillOnExit(long)
-# @ stub DecodePointer ( -> ntdll.RtlDecodePointer)
+@ stdcall DecodePointer(ptr) ntdll.RtlDecodePointer
 # @ stub DecodeSystemPointer ( -> ntdll.RtlDecodeSystemPointer)
 @ stdcall DefineDosDeviceA(long str str)
 @ stdcall DefineDosDeviceW(long wstr wstr)
@@ -288,7 +288,7 @@
 # @ stub DosPathToSessionPathW
 @ stdcall DuplicateConsoleHandle(long long long long)
 @ stdcall DuplicateHandle(long long long ptr long long long)
-# @ stub EncodePointer ( -> ntdll.RtlEncodePointer)
+@ stdcall EncodePointer(ptr) ntdll.RtlEncodePointer
 # @ stub EncodeSystemPointer ( -> ntdll.RtlEncodeSystemPointer)
 @ stdcall EndUpdateResourceA(long long)
 @ stdcall EndUpdateResourceW(long long)
