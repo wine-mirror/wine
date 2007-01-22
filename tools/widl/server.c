@@ -564,17 +564,16 @@ static void init_server(void)
 }
 
 
-void write_server(ifref_t *ifaces)
+void write_server(ifref_list_t *ifaces)
 {
     unsigned int proc_offset = 0;
     unsigned int type_offset = 2;
-    ifref_t *iface = ifaces;
+    ifref_t *iface;
 
     if (!do_server)
         return;
     if (do_everything && !ifaces)
         return;
-    END_OF_LIST(iface);
 
     init_server();
     if (!server)
@@ -582,7 +581,7 @@ void write_server(ifref_t *ifaces)
 
     write_formatstringsdecl(server, indent, ifaces, 0);
 
-    for (; iface; iface = PREV_LINK(iface))
+    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
     {
         if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;

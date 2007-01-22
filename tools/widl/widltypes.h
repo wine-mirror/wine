@@ -46,6 +46,9 @@ typedef struct _importlib_t importlib_t;
 typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 
+typedef struct list attr_list_t;
+typedef struct list ifref_list_t;
+
 #define DECL_LINK(type) \
   type *l_next; \
   type *l_prev
@@ -182,7 +185,6 @@ struct _attr_t {
   /* parser-internal */
   struct list entry;
 };
-typedef struct list attr_list_t;
 
 struct _expr_t {
   enum expr_type type;
@@ -208,7 +210,7 @@ struct _type_t {
   const attr_list_t *attrs;
   func_t *funcs;                  /* interfaces and modules */
   var_t *fields;                  /* interfaces, structures and enumerations */
-  ifref_t *ifaces;                /* coclasses */
+  ifref_list_t *ifaces;           /* coclasses */
   type_t *orig;                   /* dup'd types */
   int ignore, is_const, sign;
   int defined, written, user_types_registered;
@@ -251,7 +253,7 @@ struct _ifref_t {
   attr_list_t *attrs;
 
   /* parser-internal */
-  DECL_LINK(ifref_t);
+  struct list entry;
 };
 
 struct _typelib_entry_t {

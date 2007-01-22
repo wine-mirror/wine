@@ -424,17 +424,16 @@ static void init_client(void)
 }
 
 
-void write_client(ifref_t *ifaces)
+void write_client(ifref_list_t *ifaces)
 {
     unsigned int proc_offset = 0;
     unsigned int type_offset = 2;
-    ifref_t *iface = ifaces;
+    ifref_t *iface;
 
     if (!do_client)
         return;
     if (do_everything && !ifaces)
         return;
-    END_OF_LIST(iface);
 
     init_client();
     if (!client)
@@ -442,7 +441,7 @@ void write_client(ifref_t *ifaces)
 
     write_formatstringsdecl(client, indent, ifaces, 0);
 
-    for (; iface; iface = PREV_LINK(iface))
+    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, ifref_t, entry )
     {
         if (is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;

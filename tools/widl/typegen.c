@@ -142,7 +142,7 @@ static void write_formatdesc(FILE *f, int indent, const char *str)
     print_file(f, indent, "\n");
 }
 
-void write_formatstringsdecl(FILE *f, int indent, ifref_t *ifaces, int for_objects)
+void write_formatstringsdecl(FILE *f, int indent, ifref_list_t *ifaces, int for_objects)
 {
     print_file(f, indent, "#define TYPE_FORMAT_STRING_SIZE %d\n",
                get_size_typeformatstring(ifaces, for_objects));
@@ -259,9 +259,9 @@ static size_t write_procformatstring_var(FILE *file, int indent,
     return size;
 }
 
-void write_procformatstring(FILE *file, const ifref_t *ifaces, int for_objects)
+void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
 {
-    const ifref_t *iface = ifaces;
+    const ifref_t *iface;
     int indent = 0;
     var_t *var;
     unsigned int type_offset = 2;
@@ -273,9 +273,7 @@ void write_procformatstring(FILE *file, const ifref_t *ifaces, int for_objects)
     print_file(file, indent, "{\n");
     indent++;
 
-    END_OF_LIST(iface);
-
-    for (; iface; iface = PREV_LINK(iface))
+    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
         if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
@@ -1458,12 +1456,12 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 }
 
 
-void write_typeformatstring(FILE *file, const ifref_t *ifaces, int for_objects)
+void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_objects)
 {
     int indent = 0;
     var_t *var;
     unsigned int typeformat_offset;
-    const ifref_t *iface = ifaces;
+    const ifref_t *iface;
 
     print_file(file, indent, "static const MIDL_TYPE_FORMAT_STRING __MIDL_TypeFormatString =\n");
     print_file(file, indent, "{\n");
@@ -1474,9 +1472,7 @@ void write_typeformatstring(FILE *file, const ifref_t *ifaces, int for_objects)
     print_file(file, indent, "NdrFcShort(0x0),\n");
     typeformat_offset = 2;
 
-    END_OF_LIST(iface);
-
-    for (; iface; iface = PREV_LINK(iface))
+    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
         if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
@@ -1967,16 +1963,14 @@ size_t get_size_typeformatstring_var(const var_t *var)
     return type_offset;
 }
 
-size_t get_size_procformatstring(const ifref_t *ifaces, int for_objects)
+size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
 {
-    const ifref_t *iface = ifaces;
+    const ifref_t *iface;
     size_t size = 1;
     func_t *func;
     var_t *var;
 
-    END_OF_LIST(iface);
-
-    for (; iface; iface = PREV_LINK(iface))
+    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
         if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;
@@ -2013,16 +2007,14 @@ size_t get_size_procformatstring(const ifref_t *ifaces, int for_objects)
     return size;
 }
 
-size_t get_size_typeformatstring(const ifref_t *ifaces, int for_objects)
+size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
 {
-    const ifref_t *iface = ifaces;
+    const ifref_t *iface;
     size_t size = 3;
     func_t *func;
     var_t *var;
 
-    END_OF_LIST(iface);
-
-    for (; iface; iface = PREV_LINK(iface))
+    if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
         if (for_objects != is_object(iface->iface->attrs) || is_local(iface->iface->attrs))
             continue;

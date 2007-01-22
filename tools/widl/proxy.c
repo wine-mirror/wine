@@ -83,7 +83,7 @@ static void write_stubdesc(void)
   print_proxy( "\n");
 }
 
-static void init_proxy(ifref_t *ifaces)
+static void init_proxy(ifref_list_t *ifaces)
 {
   if (proxy) return;
   if(!(proxy = fopen(proxy_name, "w")))
@@ -992,9 +992,8 @@ static void write_proxy(type_t *iface)
   print_proxy( "\n");
 }
 
-void write_proxies(ifref_t *ifaces)
+void write_proxies(ifref_list_t *ifaces)
 {
-  ifref_t *lcur = ifaces;
   ifref_t *cur;
   char *file_id = proxy_token;
   int c;
@@ -1005,13 +1004,10 @@ void write_proxies(ifref_t *ifaces)
   init_proxy(ifaces);
   if(!proxy) return;
 
-  END_OF_LIST(lcur);
-  cur = lcur;
-  while (cur) {
-    if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-      write_proxy(cur->iface);
-    cur = PREV_LINK(cur);
-  }
+  if (ifaces)
+      LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
+          if (is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+              write_proxy(cur->iface);
 
   write_stubdesc();
 
@@ -1024,39 +1020,34 @@ void write_proxies(ifref_t *ifaces)
 
   fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  cur = lcur;
-  while (cur) {
-    if(cur->iface->ref && cur->iface->funcs &&
-       is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-      fprintf(proxy, "    (CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", cur->iface->name);
-    cur = PREV_LINK(cur);
-  }
+  if (ifaces)
+      LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
+          if(cur->iface->ref && cur->iface->funcs &&
+             is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+              fprintf(proxy, "    (CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", cur->iface->name);
+
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
   fprintf(proxy, "const CInterfaceStubVtbl* _%s_StubVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  cur = lcur;
-  while (cur) {
-    if(cur->iface->ref && cur->iface->funcs &&
-       is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-      fprintf(proxy, "    (CInterfaceStubVtbl*)&_%sStubVtbl,\n", cur->iface->name);
-    cur = PREV_LINK(cur);
-  }
+  if (ifaces)
+      LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
+          if(cur->iface->ref && cur->iface->funcs &&
+             is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+              fprintf(proxy, "    (CInterfaceStubVtbl*)&_%sStubVtbl,\n", cur->iface->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
   fprintf(proxy, "PCInterfaceName const _%s_InterfaceNamesList[] =\n", file_id);
   fprintf(proxy, "{\n");
-  cur = lcur;
-  while (cur) {
-    if(cur->iface->ref && cur->iface->funcs &&
-       is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-      fprintf(proxy, "    \"%s\",\n", cur->iface->name);
-    cur = PREV_LINK(cur);
-  }
+  if (ifaces)
+      LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
+          if(cur->iface->ref && cur->iface->funcs &&
+             is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
+              fprintf(proxy, "    \"%s\",\n", cur->iface->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
@@ -1065,20 +1056,18 @@ void write_proxies(ifref_t *ifaces)
   fprintf(proxy, "\n");
   fprintf(proxy, "int __stdcall _%s_IID_Lookup(const IID* pIID, int* pIndex)\n", file_id);
   fprintf(proxy, "{\n");
-  cur = lcur;
   c = 0;
-  while (cur) {
-    if(cur->iface->ref)
-    {
-      fprintf(proxy, "    if (!_%s_CHECK_IID(%d))\n", file_id, c);
-      fprintf(proxy, "    {\n");
-      fprintf(proxy, "        *pIndex = %d;\n", c);
-      fprintf(proxy, "        return 1;\n");
-      fprintf(proxy, "    }\n");
-      c++;
-    }
-    cur = PREV_LINK(cur);
-  }
+  if (ifaces)
+      LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
+          if(cur->iface->ref)
+          {
+              fprintf(proxy, "    if (!_%s_CHECK_IID(%d))\n", file_id, c);
+              fprintf(proxy, "    {\n");
+              fprintf(proxy, "        *pIndex = %d;\n", c);
+              fprintf(proxy, "        return 1;\n");
+              fprintf(proxy, "    }\n");
+              c++;
+          }
   fprintf(proxy, "    return 0;\n");
   fprintf(proxy, "}\n");
   fprintf(proxy, "\n");

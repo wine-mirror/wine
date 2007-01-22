@@ -2072,17 +2072,13 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
     cls->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_COCLASS, cls->name, cls->attrs);
 
-    if((iref = cls->ifaces)) {
-        num_ifaces++;
-        while(NEXT_LINK(iref)) {
-            iref = NEXT_LINK(iref);
-            num_ifaces++;
-        }
-    }
+    if (cls->ifaces) LIST_FOR_EACH_ENTRY( iref, cls->ifaces, ifref_t, entry ) num_ifaces++;
 
     offset = msft_typeinfo->typeinfo->datatype1 = ctl2_alloc_segment(typelib, MSFT_SEG_REFERENCES,
                                                                      num_ifaces * sizeof(*ref), 0);
-    for(i = 0; i < num_ifaces; i++) {
+
+    i = 0;
+    if (cls->ifaces) LIST_FOR_EACH_ENTRY( iref, cls->ifaces, ifref_t, entry ) {
         if(iref->iface->typelib_idx == -1)
             add_interface_typeinfo(typelib, iref->iface);
         ref = (MSFT_RefRecord*) (typelib->typelib_segment_data[MSFT_SEG_REFERENCES] + offset + i * sizeof(*ref));
@@ -2125,7 +2121,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
             else if(!first)
                 first = ref;
         }
-        iref = PREV_LINK(iref);
+        i++;
     }
 
     /* If we haven't had a default interface, then set the default flags on the

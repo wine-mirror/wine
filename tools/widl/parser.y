@@ -80,6 +80,7 @@ static typeref_t *make_tref(char *name, type_t *ref);
 static typeref_t *uniq_tref(typeref_t *ref);
 static type_t *type_ref(typeref_t *ref);
 static void set_type(var_t *v, typeref_t *ref, expr_t *arr);
+static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface);
 static ifref_t *make_ifref(type_t *iface);
 static var_t *make_var(char *name);
 static func_t *make_func(var_t *def, var_t *args);
@@ -123,6 +124,7 @@ static void check_arg(var_t *arg);
 	var_t *var;
 	func_t *func;
 	ifref_t *ifref;
+	ifref_list_t *ifref_list;
 	char *str;
 	UUID *uuid;
 	unsigned int num;
@@ -220,7 +222,8 @@ static void check_arg(var_t *arg);
 %type <type> module modulehdr moduledef
 %type <type> base_type int_std
 %type <type> enumdef structdef uniondef
-%type <ifref> gbl_statements coclass_ints coclass_int
+%type <ifref> coclass_int
+%type <ifref_list> gbl_statements coclass_ints
 %type <tref> type
 %type <var> m_args no_args args arg
 %type <var> fields field s_field cases case enums enum_list enum constdef externdef
@@ -251,7 +254,7 @@ input:   gbl_statements                        { write_proxies($1); write_client
 
 gbl_statements:					{ $$ = NULL; }
 	| gbl_statements interfacedec		{ $$ = $1; }
-	| gbl_statements interfacedef		{ $$ = make_ifref($2); LINK($$, $1); }
+	| gbl_statements interfacedef		{ $$ = append_ifref( $1, make_ifref($2) ); }
 	| gbl_statements coclass ';'		{ $$ = $1;
 						  reg_type($2, $2->name, 0);
 						  if (!parse_only && do_header) write_coclass_forward($2);
@@ -673,7 +676,7 @@ coclassdef: coclasshdr '{' coclass_ints '}'	{ $$ = $1;
 	;
 
 coclass_ints:					{ $$ = NULL; }
-	| coclass_ints coclass_int		{ LINK($2, $1); $$ = $2; }
+	| coclass_ints coclass_int		{ $$ = append_ifref( $1, $2 ); }
 	;
 
 coclass_int:
@@ -1200,12 +1203,23 @@ static void set_type(var_t *v, typeref_t *ref, expr_t *arr)
   v->array = arr;
 }
 
+static ifref_list_t *append_ifref(ifref_list_t *list, ifref_t *iface)
+{
+    if (!iface) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &iface->entry );
+    return list;
+}
+
 static ifref_t *make_ifref(type_t *iface)
 {
   ifref_t *l = xmalloc(sizeof(ifref_t));
   l->iface = iface;
   l->attrs = NULL;
-  INIT_LINK(l);
   return l;
 }
 
