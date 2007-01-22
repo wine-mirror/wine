@@ -20,8 +20,8 @@
 @ stub SnmpUtilAnsiToUnicode
 @ stdcall SnmpUtilAsnAnyCpy(ptr ptr)
 @ stdcall SnmpUtilAsnAnyFree(ptr)
-@ stub SnmpUtilDbgPrint
-@ stub SnmpUtilIdsToA
+@ stdcall SnmpUtilDbgPrint(long str)
+@ stdcall SnmpUtilIdsToA(ptr long)
 @ stdcall SnmpUtilMemAlloc(long)
 @ stdcall SnmpUtilMemFree(ptr)
 @ stdcall SnmpUtilMemReAlloc(ptr long)
@@ -34,9 +34,9 @@
 @ stdcall SnmpUtilOidCpy(ptr ptr)
 @ stdcall SnmpUtilOidFree(ptr)
 @ stdcall SnmpUtilOidNCmp(ptr ptr long)
-@ stub SnmpUtilOidToA
-@ stub SnmpUtilPrintAsnAny
-@ stub SnmpUtilPrintOid
+@ stdcall SnmpUtilOidToA(ptr)
+@ stdcall SnmpUtilPrintAsnAny(ptr)
+@ stdcall SnmpUtilPrintOid(ptr)
 @ stub SnmpUtilStrlenW
 @ stub SnmpUtilUnicodeToAnsi
 @ stdcall SnmpUtilVarBindCpy(ptr ptr)

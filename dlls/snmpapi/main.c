@@ -21,6 +21,7 @@
 
 #include "config.h"
 
+#include <stdio.h>
 #include <stdarg.h>
 
 #include "windef.h"
@@ -131,6 +132,14 @@ BOOL WINAPI DllMain(
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *      SnmpUtilDbgPrint        (SNMPAPI.@)
+ */
+void WINAPI SnmpUtilDbgPrint(INT loglevel, LPSTR format, ...)
+{
+    FIXME("(%d, %s)\n", loglevel, debugstr_a(format));
 }
 
 /***********************************************************************
@@ -447,4 +456,161 @@ void WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *vb)
     entry = vb->list;
     for (i = 0; i < vb->len; i++) SnmpUtilVarBindFree(entry++);
     HeapFree(GetProcessHeap(), 0, vb->list);
+}
+
+/***********************************************************************
+ *      SnmpUtilIdsToA          (SNMPAPI.@)
+ */
+LPSTR WINAPI SnmpUtilIdsToA(UINT *ids, UINT length)
+{
+    static char one[10], oid[514], null_oid[] = "<null oid>";
+    unsigned int i, len, left = sizeof(oid) - 1;
+
+    TRACE("(%p, %d)\n", ids, length);
+
+    if (!ids || !length) return null_oid;
+
+    *oid = 0;
+    for (i = 0; i < length; i++)
+    {
+        sprintf(one, "%d", ids[i]);
+        len = strlen(one);
+        if (left >= len)
+        {
+            strcat(oid, one);
+            left -= len;
+        }
+        else return oid;
+
+        if (i < length - 1)
+        {
+            if (left > 0)
+            {
+                strcat(oid, ".");
+                left--;
+            }
+            else return oid;
+        }
+    }
+    return oid;
+}
+
+/***********************************************************************
+ *      SnmpUtilOidToA          (SNMPAPI.@)
+ */
+LPSTR WINAPI SnmpUtilOidToA(AsnObjectIdentifier *oid)
+{
+    static char null_oid[] = "<null oid>";
+
+    TRACE("(%p)\n", oid);
+
+    if (oid)
+        return SnmpUtilIdsToA(oid->ids, oid->idLength);
+    else
+        return null_oid;
+}
+
+/***********************************************************************
+ *      SnmpUtilPrintOid        (SNMPAPI.@)
+ */
+void WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *oid)
+{
+    unsigned int i;
+
+    TRACE("(%p)\n", oid);
+
+    if (!oid) return;
+
+    for (i = 0; i < oid->idLength; i++)
+    {
+        TRACE("%u", oid->ids[i]);
+        if (i < oid->idLength - 1) TRACE(".");
+    }
+}
+
+/***********************************************************************
+ *      SnmpUtilPrintAsnAny     (SNMPAPI.@)
+ */
+void WINAPI SnmpUtilPrintAsnAny(AsnAny *any)
+{
+    unsigned int i;
+
+    TRACE("(%p)\n", any);
+
+    switch (any->asnType)
+    {
+    case ASN_NULL:       TRACE("Null value\n"); return;
+    case ASN_INTEGER32:  TRACE("Integer32 %d\n", any->asnValue.number); return;
+    case ASN_UNSIGNED32: TRACE("Unsigned32 %u\n", any->asnValue.unsigned32); return;
+    case ASN_COUNTER32:  TRACE("Counter32 %u\n", any->asnValue.counter); return;
+    case ASN_GAUGE32:    TRACE("Gauge32 %u\n", any->asnValue.gauge); return;
+    case ASN_TIMETICKS:  TRACE("Timeticks %u\n", any->asnValue.ticks); return;
+    case ASN_COUNTER64:
+    {
+        TRACE("Counter64 %llu\n", any->asnValue.counter64.QuadPart);
+        return;
+    }
+    case ASN_OCTETSTRING:
+    {
+        TRACE("String ");
+        for (i = 0; i < any->asnValue.string.length; i++)
+            TRACE("%c", any->asnValue.string.stream[i]);
+        TRACE("\n");
+        return;
+    }
+    case ASN_IPADDRESS:
+    {
+        TRACE("IpAddress ");
+        if (any->asnValue.string.length < 4)
+        {
+            TRACE("Invalid\n");
+            return;
+        }
+        for (i = 0; i < 4; i++)
+        {
+            TRACE("%u", any->asnValue.string.stream[i]);
+            if (i < 3) TRACE(".");
+        }
+        TRACE("\n");
+        return;
+    }
+    case ASN_BITS:
+    {
+        TRACE("Bits ");
+        for (i = 0; i < any->asnValue.string.length; i++)
+        {
+            TRACE("0x%02x", any->asnValue.string.stream[i]);
+            if (i < any->asnValue.object.idLength - 1) TRACE(" ");
+        }
+        TRACE("\n");
+        return;
+    }
+    case ASN_OPAQUE:
+    {
+        TRACE("Opaque ");
+        for (i = 0; i < any->asnValue.string.length; i++)
+        {
+            TRACE("0x%02x", any->asnValue.string.stream[i]);
+            if (i < any->asnValue.object.idLength - 1) TRACE(" ");
+        }
+        TRACE("\n");
+        return;
+    }
+    case ASN_OBJECTIDENTIFIER:
+    {
+        TRACE("ObjectID ");
+        for (i = 0; i < any->asnValue.object.idLength; i++)
+        {
+            TRACE("%u", any->asnValue.object.ids[i]);
+            if (i < any->asnValue.object.idLength - 1) TRACE(".");
+        }
+        TRACE("\n");
+        return;
+    }
+    default:
+    {
+        TRACE("Invalid type %d\n", any->asnType);
+        return;
+    }
+    }
 }
