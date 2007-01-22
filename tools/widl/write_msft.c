@@ -1282,7 +1282,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
     for(arg = func->args; arg; arg = NEXT_LINK(arg)) {
         last_arg = arg;
         num_params++;
-        for(attr = arg->attrs; attr; attr = NEXT_LINK(attr)) {
+        if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             if(attr->type == ATTR_DEFAULTVALUE_EXPR || attr->type == ATTR_DEFAULTVALUE_STRING) {
                 num_defaults++;
                 break;
@@ -1294,8 +1294,8 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
 
     name_offset = ctl2_alloc_name(typeinfo->typelib, func->def->name);
 
-    for(attr = func->def->attrs; attr; attr = NEXT_LINK(attr)) {
-        expr_t *expr = attr->u.pval; 
+    if (func->def->attrs) LIST_FOR_EACH_ENTRY( attr, func->def->attrs, const attr_t, entry ) {
+        expr_t *expr = attr->u.pval;
         switch(attr->type) {
         case ATTR_ENTRY_ORDINAL:
             extra_attr = max(extra_attr, 3);
@@ -1442,7 +1442,7 @@ static HRESULT add_func_desc(msft_typeinfo_t* typeinfo, func_t *func, int index)
         if(defaultdata) *defaultdata = -1;
 
 	encode_var(typeinfo->typelib, arg, paramdata, NULL, NULL, &decoded_size);
-        for(attr = arg->attrs; attr; attr = NEXT_LINK(attr)) {
+        if (arg->attrs) LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry ) {
             switch(attr->type) {
             case ATTR_DEFAULTVALUE_EXPR:
               {
@@ -1568,8 +1568,8 @@ static HRESULT add_var_desc(msft_typeinfo_t *typeinfo, UINT index, var_t* var)
 
     id = 0x40000000 + index;
 
-    for(attr = var->attrs; attr; attr = NEXT_LINK(attr)) {
-        expr_t *expr = attr->u.pval; 
+    if (var->attrs) LIST_FOR_EACH_ENTRY( attr, var->attrs, const attr_t, entry ) {
+        expr_t *expr = attr->u.pval;
         switch(attr->type) {
         case ATTR_HIDDEN:
             varflags |= 0x40; /* VARFLAG_FHIDDEN */
@@ -1727,8 +1727,9 @@ static HRESULT add_impl_type(msft_typeinfo_t *typeinfo, type_t *ref, importinfo_
 }
 
 static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_kind kind,
-                                             const char *name, const attr_t *attr)
+                                             const char *name, const attr_list_t *attrs)
 {
+    const attr_t *attr;
     msft_typeinfo_t *msft_typeinfo;
     int nameoffset;
     int typeinfo_offset;
@@ -1757,7 +1758,7 @@ static msft_typeinfo_t *create_msft_typeinfo(msft_typelib_t *typelib, enum type_
     if(kind == TKIND_COCLASS)
         typeinfo->flags |= 0x2; /* TYPEFLAG_FCANCREATE */
 
-    for( ; attr; attr = NEXT_LINK(attr)) {
+    if (attrs) LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry ) {
         switch(attr->type) {
         case ATTR_AGGREGATABLE:
             if (kind == TKIND_COCLASS)
@@ -2092,7 +2093,7 @@ static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
         if(i < num_ifaces - 1)
             ref->onext = offset + (i + 1) * sizeof(*ref);
 
-        for(attr = iref->attrs; attr; attr = NEXT_LINK(attr)) {
+        if (iref->attrs) LIST_FOR_EACH_ENTRY( attr, iref->attrs, const attr_t, entry ) {
             switch(attr->type) {
             case ATTR_DEFAULT:
                 ref->flags |= 0x1; /* IMPLTYPEFLAG_FDEFAULT */
@@ -2296,7 +2297,9 @@ static void set_lib_flags(msft_typelib_t *typelib)
     const attr_t *attr;
 
     typelib->typelib_header.flags = 0;
-    for(attr = typelib->typelib->attrs; attr; attr = NEXT_LINK(attr)) {
+    if (!typelib->typelib->attrs) return;
+    LIST_FOR_EACH_ENTRY( attr, typelib->typelib->attrs, const attr_t, entry )
+    {
         switch(attr->type) {
         case ATTR_CONTROL:
             typelib->typelib_header.flags |= 0x02; /* LIBFLAG_FCONTROL */

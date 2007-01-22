@@ -46,31 +46,28 @@ static void indent(FILE *h, int delta)
   if (delta > 0) indentation += delta;
 }
 
-int is_attr(const attr_t *a, enum attr_type t)
+int is_attr(const attr_list_t *list, enum attr_type t)
 {
-  while (a) {
-    if (a->type == t) return 1;
-    a = NEXT_LINK(a);
-  }
-  return 0;
+    const attr_t *attr;
+    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
+        if (attr->type == t) return 1;
+    return 0;
 }
 
-void *get_attrp(const attr_t *a, enum attr_type t)
+void *get_attrp(const attr_list_t *list, enum attr_type t)
 {
-  while (a) {
-    if (a->type == t) return a->u.pval;
-    a = NEXT_LINK(a);
-  }
-  return NULL;
+    const attr_t *attr;
+    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
+        if (attr->type == t) return attr->u.pval;
+    return NULL;
 }
 
-unsigned long get_attrv(const attr_t *a, enum attr_type t)
+unsigned long get_attrv(const attr_list_t *list, enum attr_type t)
 {
-  while (a) {
-    if (a->type == t) return a->u.ival;
-    a = NEXT_LINK(a);
-  }
-  return 0;
+    const attr_t *attr;
+    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
+        if (attr->type == t) return attr->u.ival;
+    return 0;
 }
 
 int is_void(const type_t *t, const var_t *v)
@@ -443,7 +440,8 @@ void write_externdef(const var_t *v)
   fprintf(header, ";\n\n");
 }
 
-void write_library(const char *name, const attr_t *attr) {
+void write_library(const char *name, const attr_list_t *attr)
+{
   const UUID *uuid = get_attrp(attr, ATTR_UUID);
   fprintf(header, "\n");
   write_guid(header, "LIBID", name, uuid);
@@ -496,21 +494,20 @@ int has_out_arg_or_return(const func_t *func)
 
 /********** INTERFACES **********/
 
-int is_object(const attr_t *a)
+int is_object(const attr_list_t *list)
 {
-  while (a) {
-    if (a->type == ATTR_OBJECT || a->type == ATTR_ODL) return 1;
-    a = NEXT_LINK(a);
-  }
-  return 0;
+    const attr_t *attr;
+    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
+        if (attr->type == ATTR_OBJECT || attr->type == ATTR_ODL) return 1;
+    return 0;
 }
 
-int is_local(const attr_t *a)
+int is_local(const attr_list_t *a)
 {
   return is_attr(a, ATTR_LOCAL);
 }
 
-const var_t *is_callas(const attr_t *a)
+const var_t *is_callas(const attr_list_t *a)
 {
   return get_attrp(a, ATTR_CALLAS);
 }

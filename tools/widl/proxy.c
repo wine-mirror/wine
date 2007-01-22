@@ -128,7 +128,7 @@ int is_var_ptr(var_t *v)
 int cant_be_null(var_t *v)
 {
   /* Search backwards for the most recent pointer attribute.  */
-  const attr_t *attrs = v->attrs;
+  const attr_list_t *attrs = v->attrs;
   const type_t *type = v->type;
 
   if (! attrs && type)
@@ -161,7 +161,7 @@ int cant_be_null(var_t *v)
 
 static int is_user_derived(var_t *v)
 {
-  const attr_t *attrs = v->attrs;
+  const attr_list_t *attrs = v->attrs;
   const type_t *type = v->type;
 
   if (! attrs && type)

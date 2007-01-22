@@ -610,7 +610,7 @@ size_t get_type_memsize(const type_t *type)
     return type_memsize(type, 0, NULL);
 }
 
-static int write_pointers(FILE *file, const attr_t *attrs,
+static int write_pointers(FILE *file, const attr_list_t *attrs,
                           const type_t *type, int ptr_level,
                           const expr_t *array, int level,
                           unsigned int *typestring_offset)
@@ -660,7 +660,7 @@ static int write_pointers(FILE *file, const attr_t *attrs,
     return pointers_written;
 }
 
-static size_t write_pointer_description(FILE *file, const attr_t *attrs,
+static size_t write_pointer_description(FILE *file, const attr_list_t *attrs,
                                         const type_t *type, int ptr_level,
                                         const expr_t *array, int level,
                                         size_t typestring_offset)
@@ -713,7 +713,7 @@ static size_t write_pointer_description(FILE *file, const attr_t *attrs,
     return size;
 }
 
-static size_t write_string_tfs(FILE *file, const attr_t *attrs,
+static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
                                const type_t *type, const expr_t *array,
                                const char *name, unsigned int *typestring_offset)
 {
@@ -802,7 +802,7 @@ static size_t write_string_tfs(FILE *file, const attr_t *attrs,
     }
 }
 
-static size_t write_array_tfs(FILE *file, const attr_t *attrs,
+static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
                               const type_t *type, const expr_t *array,
                               const char *name, unsigned int *typestring_offset)
 {
@@ -1234,7 +1234,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
     }
 }
 
-static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, int pointer_type,
+static void write_pointer_only_tfs(FILE *file, const attr_list_t *attrs, int pointer_type,
                                    unsigned char flags, size_t offset,
                                    unsigned int *typeformat_offset)
 {
@@ -1263,7 +1263,7 @@ static void write_pointer_only_tfs(FILE *file, const attr_t *attrs, int pointer_
     *typeformat_offset += 4;
 }
 
-static size_t write_union_tfs(FILE *file, const attr_t *attrs,
+static size_t write_union_tfs(FILE *file, const attr_list_t *attrs,
                               const type_t *type, const char *name,
                               unsigned int *typeformat_offset)
 {
@@ -1271,7 +1271,7 @@ static size_t write_union_tfs(FILE *file, const attr_t *attrs,
     return *typeformat_offset;
 }
 
-static size_t write_ip_tfs(FILE *file, const attr_t *attrs,
+static size_t write_ip_tfs(FILE *file, const attr_list_t *attrs,
                            const char *name, unsigned int *typeformat_offset)
 {
     size_t i;

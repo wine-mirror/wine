@@ -64,6 +64,7 @@
 # endif
 #endif
 
+static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned long val);
 static attr_t *make_attrp(enum attr_type type, void *val);
@@ -88,7 +89,7 @@ static type_t *make_builtin(char *name);
 static type_t *make_int(int sign);
 
 static type_t *reg_type(type_t *type, const char *name, int t);
-static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs);
+static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs);
 static type_t *find_type(const char *name, int t);
 static type_t *find_type2(char *name, int t);
 static type_t *get_type(unsigned char type, char *name, int t);
@@ -98,7 +99,7 @@ static int get_struct_type(var_t *fields);
 static var_t *reg_const(var_t *var);
 static var_t *find_const(char *name, int f);
 
-static void write_libid(const char *name, const attr_t *attr);
+static void write_libid(const char *name, const attr_list_t *attr);
 static void write_clsid(type_t *cls);
 static void write_diid(type_t *iface);
 static void write_iid(type_t *iface);
@@ -115,6 +116,7 @@ static void check_arg(var_t *arg);
 %}
 %union {
 	attr_t *attr;
+	attr_list_t *attr_list;
 	expr_t *expr;
 	type_t *type;
 	typeref_t *tref;
@@ -209,7 +211,8 @@ static void check_arg(var_t *arg);
 %token tVOID
 %token tWCHAR tWIREMARSHAL
 
-%type <attr> m_attributes attributes attrib_list attribute
+%type <attr> attribute
+%type <attr_list> m_attributes attributes attrib_list
 %type <expr> m_exprs /* exprs expr_list */ m_expr expr expr_list_const expr_const
 %type <expr> array array_list
 %type <type> inherit interface interfacehdr interfacedef interfacedec
@@ -367,13 +370,9 @@ attributes:
 						}
 	;
 
-attrib_list: attribute
-	| attrib_list ',' attribute		{ if ($3) { LINK($3, $1); $$ = $3; }
-						  else { $$ = $1; }
-						}
-	| attrib_list ']' '[' attribute		{ if ($4) { LINK($4, $1); $$ = $4; }
-						  else { $$ = $1; }
-						}
+attrib_list: attribute                          { $$ = append_attr( NULL, $1 ); }
+	| attrib_list ',' attribute             { $$ = append_attr( $1, $3 ); }
+	| attrib_list ']' '[' attribute         { $$ = append_attr( $1, $4 ); }
 	;
 
 attribute:					{ $$ = NULL; }
@@ -460,11 +459,11 @@ cases:						{ $$ = NULL; }
 
 case:	  tCASE expr ':' field			{ attr_t *a = make_attrp(ATTR_CASE, $2);
 						  $$ = $4; if (!$$) $$ = make_var(NULL);
-						  LINK(a, $$->attrs); $$->attrs = a;
+						  $$->attrs = append_attr( $$->attrs, a );
 						}
 	| tDEFAULT ':' field			{ attr_t *a = make_attr(ATTR_DEFAULT);
 						  $$ = $3; if (!$$) $$ = make_var(NULL);
-						  LINK(a, $$->attrs); $$->attrs = a;
+						  $$->attrs = append_attr( $$->attrs, a );
 						}
 	;
 
@@ -689,8 +688,7 @@ dispinterfacehdr: attributes dispinterface	{ attr_t *attrs;
 						  $$ = $2;
 						  if ($$->defined) yyerror("multiple definition error");
 						  attrs = make_attr(ATTR_DISPINTERFACE);
-						  LINK(attrs, $1);
-						  $$->attrs = attrs;
+						  $$->attrs = append_attr( $1, attrs );
 						  $$->ref = find_type("IDispatch", 0);
 						  if (!$$->ref) yyerror("IDispatch is undefined");
 						  $$->defined = TRUE;
@@ -903,12 +901,23 @@ void init_types(void)
   decl_builtin("handle_t", RPC_FC_BIND_PRIMITIVE);
 }
 
+static attr_list_t *append_attr(attr_list_t *list, attr_t *attr)
+{
+    if (!attr) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    list_add_tail( list, &attr->entry );
+    return list;
+}
+
 static attr_t *make_attr(enum attr_type type)
 {
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
   a->u.ival = 0;
-  INIT_LINK(a);
   return a;
 }
 
@@ -917,7 +926,6 @@ static attr_t *make_attrv(enum attr_type type, unsigned long val)
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
   a->u.ival = val;
-  INIT_LINK(a);
   return a;
 }
 
@@ -926,7 +934,6 @@ static attr_t *make_attrp(enum attr_type type, void *val)
   attr_t *a = xmalloc(sizeof(attr_t));
   a->type = type;
   a->u.pval = val;
-  INIT_LINK(a);
   return a;
 }
 
@@ -1285,7 +1292,7 @@ static type_t *reg_type(type_t *type, const char *name, int t)
   return type;
 }
 
-static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs)
+static type_t *reg_typedefs(type_t *type, var_t *names, attr_list_t *attrs)
 {
   type_t *ptr = type;
   int ptrc = 0;
@@ -1314,11 +1321,7 @@ static type_t *reg_typedefs(type_t *type, var_t *names, attr_t *attrs)
        || type->kind == TKIND_UNION) && ! type->name && ! parse_only)
   {
     if (! is_attr(attrs, ATTR_PUBLIC))
-    {
-      attr_t *new_attrs = make_attr(ATTR_PUBLIC);
-      LINK(new_attrs, attrs);
-      attrs = new_attrs;
-    }
+      attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
     type->name = gen_name();
   }
 
@@ -1590,7 +1593,7 @@ static var_t *find_const(char *name, int f)
   return cur->var;
 }
 
-static void write_libid(const char *name, const attr_t *attr)
+static void write_libid(const char *name, const attr_list_t *attr)
 {
   const UUID *uuid = get_attrp(attr, ATTR_UUID);
   write_guid(idfile, "LIBID", name, uuid);

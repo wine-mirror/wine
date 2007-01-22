@@ -172,7 +172,7 @@ enum type_kind
     TKIND_UNION,
     TKIND_MAX
 };
-   
+
 struct _attr_t {
   enum attr_type type;
   union {
@@ -180,8 +180,9 @@ struct _attr_t {
     void *pval;
   } u;
   /* parser-internal */
-  DECL_LINK(attr_t);
+  struct list entry;
 };
+typedef struct list attr_list_t;
 
 struct _expr_t {
   enum expr_type type;
@@ -204,7 +205,7 @@ struct _type_t {
   enum type_kind kind;
   unsigned char type;
   struct _type_t *ref;
-  const attr_t *attrs;
+  const attr_list_t *attrs;
   func_t *funcs;                  /* interfaces and modules */
   var_t *fields;                  /* interfaces, structures and enumerations */
   ifref_t *ifaces;                /* coclasses */
@@ -229,7 +230,7 @@ struct _var_t {
   type_t *type;
   var_t *args;  /* for function pointers */
   const char *tname;
-  attr_t *attrs;
+  attr_list_t *attrs;
   expr_t *eval;
 
   /* parser-internal */
@@ -247,7 +248,7 @@ struct _func_t {
 
 struct _ifref_t {
   type_t *iface;
-  attr_t *attrs;
+  attr_list_t *attrs;
 
   /* parser-internal */
   DECL_LINK(ifref_t);
@@ -286,7 +287,7 @@ struct _importlib_t {
 struct _typelib_t {
     char *name;
     char *filename;
-    attr_t *attrs;
+    attr_list_t *attrs;
     struct list entries;
     struct list importlibs;
 };

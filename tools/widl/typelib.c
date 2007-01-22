@@ -221,7 +221,7 @@ unsigned short get_var_vt(var_t *v)
   return get_type_vt(v->type);
 }
 
-void start_typelib(char *name, attr_t *attrs)
+void start_typelib(char *name, attr_list_t *attrs)
 {
     in_typelib++;
     if (!do_typelib) return;
