@@ -52,6 +52,7 @@
 #endif
 #ifdef HAVE_LINUX_JOYSTICK_H
 # include <linux/joystick.h>
+# undef SW_MAX
 #endif
 #ifdef HAVE_SYS_POLL_H
 # include <sys/poll.h>

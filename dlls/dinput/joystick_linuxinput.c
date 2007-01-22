@@ -44,6 +44,7 @@
 #endif
 #ifdef HAVE_LINUX_INPUT_H
 # include <linux/input.h>
+# undef SW_MAX
 # if defined(EVIOCGBIT) && defined(EV_ABS) && defined(BTN_PINKIE)
 #  define HAVE_CORRECT_LINUXINPUT_H
 # endif

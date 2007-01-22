@@ -27,6 +27,7 @@
 #include <string.h>
 #ifdef HAVE_LINUX_INPUT_H
 #  include <linux/input.h>
+#  undef SW_MAX
 #endif
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
