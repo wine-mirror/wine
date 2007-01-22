@@ -18,8 +18,8 @@
 @ stub SnmpSvcSetLogLevel
 @ stub SnmpSvcSetLogType
 @ stub SnmpUtilAnsiToUnicode
-@ stub SnmpUtilAsnAnyCpy
-@ stub SnmpUtilAsnAnyFree
+@ stdcall SnmpUtilAsnAnyCpy(ptr ptr)
+@ stdcall SnmpUtilAsnAnyFree(ptr)
 @ stub SnmpUtilDbgPrint
 @ stub SnmpUtilIdsToA
 @ stdcall SnmpUtilMemAlloc(long)
