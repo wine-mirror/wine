@@ -1524,7 +1524,7 @@ void WINAPI NdrPointerFree(PMIDL_STUB_MESSAGE pStubMsg,
 void WINAPI NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
                                    unsigned char FormatChar )
 {
-    FIXME("stub\n");
+    NdrBaseTypeMarshall(pStubMsg, pMemory, &FormatChar);
 }
 
 /***********************************************************************
@@ -1533,7 +1533,7 @@ void WINAPI NdrSimpleTypeMarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* p
 void WINAPI NdrSimpleTypeUnmarshall( PMIDL_STUB_MESSAGE pStubMsg, unsigned char* pMemory,
                                      unsigned char FormatChar )
 {
-    FIXME("stub\n");
+    NdrBaseTypeUnmarshall(pStubMsg, &pMemory, &FormatChar, 0);
 }
 
 /***********************************************************************
