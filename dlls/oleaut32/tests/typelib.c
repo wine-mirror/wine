@@ -277,12 +277,12 @@ static void test_CreateDispTypeInfo(void)
     FUNCDESC *pFuncDesc;
     MEMBERID memid;
 
-    static const WCHAR func1[] = {'f','u','n','c','1',0};
+    static WCHAR func1[] = {'f','u','n','c','1',0};
     static const WCHAR func2[] = {'f','u','n','c','2',0};
     static const WCHAR func3[] = {'f','u','n','c','3',0};
     static const WCHAR parm1[] = {'p','a','r','m','1',0};
     static const WCHAR parm2[] = {'p','a','r','m','2',0};
-    OLECHAR *name = (OLECHAR *)func1;
+    OLECHAR *name = func1;
 
     ifdata.pmethdata = methdata;
     ifdata.cMembers = sizeof(methdata) / sizeof(methdata[0]);
