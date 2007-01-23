@@ -2,6 +2,7 @@
 * Unit test suite for rich edit control
 *
 * Copyright 2006 Google (Thomas Kho)
+* Copyright 2007 Matt Finnicum
 *
 * This library is free software; you can redistribute it and/or
 * modify it under the terms of the GNU Lesser General Public
@@ -975,6 +976,45 @@ static void test_EM_SETTEXTEX(void)
   DestroyWindow(hwndRichEdit);
 }
 
+static void test_EM_LIMITTEXT(void)
+{
+  int ret;
+
+  HWND hwndRichEdit = new_richedit(NULL);
+
+  /* The main purpose of this test is to demonstrate that the nonsense in MSDN
+   * about setting the length to -1 for multiline edit controls doesn't happen.
+   */
+
+  /* Don't check default gettextlimit case. That's done in other tests */
+
+  /* Set textlimit to 100 */
+  SendMessage (hwndRichEdit, EM_LIMITTEXT, 100, 0);
+  ret = SendMessage (hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok (ret == 100,
+      "EM_LIMITTEXT: set to 100, returned: %d, expected: 100\n", ret);
+
+  /* Set textlimit to 0 */
+  SendMessage (hwndRichEdit, EM_LIMITTEXT, 0, 0);
+  ret = SendMessage (hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok (ret == 65536,
+      "EM_LIMITTEXT: set to 0, returned: %d, expected: 65536\n", ret);
+
+  /* Set textlimit to -1 */
+  SendMessage (hwndRichEdit, EM_LIMITTEXT, -1, 0);
+  ret = SendMessage (hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok (ret == -1,
+      "EM_LIMITTEXT: set to -1, returned: %d, expected: -1\n", ret);
+
+  /* Set textlimit to -2 */
+  SendMessage (hwndRichEdit, EM_LIMITTEXT, -2, 0);
+  ret = SendMessage (hwndRichEdit, EM_GETLIMITTEXT, 0, 0);
+  ok (ret == -2,
+      "EM_LIMITTEXT: set to -2, returned: %d, expected: -2\n", ret);
+
+  DestroyWindow (hwndRichEdit);
+}
+
 
 static void test_EM_EXLIMITTEXT(void)
 {
@@ -1443,6 +1483,7 @@ START_TEST( editor )
   test_EM_SETUNDOLIMIT();
   test_ES_PASSWORD();
   test_EM_SETTEXTEX();
+  test_EM_LIMITTEXT();
   test_EM_EXLIMITTEXT();
   test_EM_GETLIMITTEXT();
   test_WM_SETFONT();

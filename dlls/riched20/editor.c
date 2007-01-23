@@ -77,7 +77,7 @@
   - EM_GETWORDWRAPMODE 1.0asian
   + EM_GETZOOM 3.0
   + EM_HIDESELECTION
-  - EM_LIMITTEXT
+  + EM_LIMITTEXT (Also called EM_SETLIMITTEXT)
   + EM_LINEFROMCHAR
   + EM_LINEINDEX
   + EM_LINELENGTH
@@ -1429,7 +1429,6 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
   UNSUPPORTED_MSG(EM_GETTYPOGRAPHYOPTIONS)
   UNSUPPORTED_MSG(EM_GETUNDONAME)
   UNSUPPORTED_MSG(EM_GETWORDBREAKPROCEX)
-  UNSUPPORTED_MSG(EM_LIMITTEXT) /* also known as EM_SETLIMITTEXT */
   UNSUPPORTED_MSG(EM_PASTESPECIAL)
   UNSUPPORTED_MSG(EM_SELECTIONTYPE)
   UNSUPPORTED_MSG(EM_SETBIDIOPTIONS)
@@ -2183,6 +2182,14 @@ LRESULT WINAPI RichEditANSIWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
       editor->nTextLimit = 65536;
     else
       editor->nTextLimit = (int) lParam;
+    return 0;
+  }
+  case EM_LIMITTEXT:
+  {
+    if (wParam == 0)
+      editor->nTextLimit = 65536;
+    else
+      editor->nTextLimit = (int) wParam;
     return 0;
   }
   case EM_GETLIMITTEXT:
