@@ -9,6 +9,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	binding.c \
+	bindprot.c \
 	file.c \
 	format.c \
 	ftp.c \

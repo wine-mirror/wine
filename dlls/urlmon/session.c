@@ -268,9 +268,13 @@ static HRESULT WINAPI InternetSession_CreateBinding(IInternetSession *iface,
         LPBC pBC, LPCWSTR szUrl, IUnknown *pUnkOuter, IUnknown **ppUnk,
         IInternetProtocol **ppOInetProt, DWORD dwOption)
 {
-    FIXME("(%p %s %p %p %p %08x)\n", pBC, debugstr_w(szUrl), pUnkOuter, ppUnk,
+    TRACE("(%p %s %p %p %p %08x)\n", pBC, debugstr_w(szUrl), pUnkOuter, ppUnk,
             ppOInetProt, dwOption);
-    return E_NOTIMPL;
+
+    if(pBC || pUnkOuter || ppUnk || dwOption)
+        FIXME("Unsupported arguments\n");
+
+    return create_binding_protocol(szUrl, ppOInetProt);
 }
 
 static HRESULT WINAPI InternetSession_SetSessionOption(IInternetSession *iface,

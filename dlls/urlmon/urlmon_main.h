@@ -60,4 +60,6 @@ HRESULT get_protocol_handler(LPCWSTR url, IClassFactory **ret);
 
 HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv);
 
+HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol);
+
 #endif /* __WINE_URLMON_MAIN_H */
