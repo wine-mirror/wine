@@ -206,8 +206,8 @@ static void ME_DebugWrite(HDC hDC, POINT *pt, WCHAR *szText) {
   SetTextColor(hDC, color);
 }
 
-void ME_DrawGraphics(ME_Context *c, int x, int y, ME_Run *run, 
-                     ME_Paragraph *para, BOOL selected) {
+static void ME_DrawGraphics(ME_Context *c, int x, int y, ME_Run *run,
+                            ME_Paragraph *para, BOOL selected) {
   SIZE sz;
   int xs, ys, xe, ye, h, ym, width, eyes;
   ME_GetGraphicsSize(c->editor, run, &sz);

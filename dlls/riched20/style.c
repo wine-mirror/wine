@@ -305,10 +305,10 @@ void ME_CharFormatFromLogFont(HDC hDC, LOGFONTW *lf, CHARFORMAT2W *fmt)
       would add an erronious CFM_UNDERLINE. This isn't currently ever a problem */
   if (lf->lfStrikeOut) fmt->dwEffects |= CFM_STRIKEOUT;
   fmt->bPitchAndFamily = lf->lfPitchAndFamily;
-  fmt->bCharSet = lf->lfCharSet;  
+  fmt->bCharSet = lf->lfCharSet;
 }
 
-BOOL ME_IsFontEqual(LOGFONTW *p1, LOGFONTW *p2)
+static BOOL ME_IsFontEqual(LOGFONTW *p1, LOGFONTW *p2)
 {
   if (memcmp(p1, p2, sizeof(LOGFONTW)-sizeof(p1->lfFaceName)))
     return FALSE;

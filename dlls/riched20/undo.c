@@ -165,7 +165,7 @@ void ME_CommitUndo(ME_TextEditor *editor) {
   ME_SendSelChange(editor);
 }
 
-void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
+static void ME_PlayUndoItem(ME_TextEditor *editor, ME_DisplayItem *pItem)
 {
   ME_UndoItem *pUItem = (ME_UndoItem *)pItem;
 
