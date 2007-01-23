@@ -91,10 +91,10 @@ static const WCHAR szDocument[] = {
 };
 
 static const WCHAR szOpen[] = { 'o','p','e','n',0 };
-static const WCHAR szdl[] = { 'd','l',0 };
+static WCHAR szdl[] = { 'd','l',0 };
 static const WCHAR szvr[] = { 'v','r',0 };
 static const WCHAR szlc[] = { 'l','c',0 };
-static const WCHAR szbs[] = { 'b','s',0 };
+static WCHAR szbs[] = { 'b','s',0 };
 static const WCHAR szstr1[] = { 's','t','r','1',0 };
 static const WCHAR szstr2[] = { 's','t','r','2',0 };
 static const WCHAR szstar[] = { '*',0 };
@@ -545,10 +545,10 @@ todo_wine
         ok( FALSE, "no element\n");
 
     node = (void*)0xdeadbeef;
-    r = IXMLDOMNode_selectSingleNode( element, (BSTR)szdl, &node );
+    r = IXMLDOMNode_selectSingleNode( element, szdl, &node );
     ok( r == S_FALSE, "ret %08x\n", r );
     ok( node == NULL, "node %p\n", node );
-    r = IXMLDOMNode_selectSingleNode( element, (BSTR)szbs, &node );
+    r = IXMLDOMNode_selectSingleNode( element, szbs, &node );
     ok( r == S_OK, "ret %08x\n", r );
     r = IXMLDOMNode_Release( node );
     ok( r == 0, "ret %08x\n", r );
