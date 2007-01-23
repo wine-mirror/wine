@@ -2581,15 +2581,18 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
 {
   int x,y;
   ME_Cursor tmpCursor;
+  int nCharOfs; /* The start of the clicked text. Absolute character offset */
+
   ME_Run *tmpRun;
-  BOOL bNothing;
+
   ENLINK info;
   x = (short)LOWORD(lParam);
   y = (short)HIWORD(lParam);
-  ME_FindPixelPos(editor, x, y, &tmpCursor, &bNothing);
+  nCharOfs = ME_CharFromPos(editor, x, y);
+  ME_CursorFromCharOfs(editor, nCharOfs, &tmpCursor);
   tmpRun = &tmpCursor.pRun->member.run;
-	
-  if ((tmpRun->style->fmt.dwMask & CFM_LINK) 
+
+  if ((tmpRun->style->fmt.dwMask & CFM_LINK)
     && (tmpRun->style->fmt.dwEffects & CFE_LINK))
   { /* The clicked run has CFE_LINK set */
     info.nmhdr.hwndFrom = editor->hWnd;
