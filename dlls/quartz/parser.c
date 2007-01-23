@@ -596,7 +596,7 @@ static const IMediaSeekingVtbl Parser_Seeking_Vtbl =
     MediaSeekingImpl_GetPreroll
 };
 
-HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
+static HRESULT WINAPI Parser_OutputPin_QueryInterface(IPin * iface, REFIID riid, LPVOID * ppv)
 {
     Parser_OutputPin *This = (Parser_OutputPin *)iface;
 
