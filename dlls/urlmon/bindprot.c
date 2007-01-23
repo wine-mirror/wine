@@ -34,12 +34,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct {
     const IInternetProtocolVtbl *lpInternetProtocolVtbl;
     const IInternetBindInfoVtbl *lpInternetBindInfoVtbl;
+    const IInternetPriorityVtbl *lpInternetPriorityVtbl;
 
     LONG ref;
 } BindProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
 #define BINDINFO(x)  ((IInternetBindInfo*) &(x)->lpInternetBindInfoVtbl)
+#define PRIORITY(x)  ((IInternetPriority*) &(x)->lpInternetPriorityVtbl)
 
 #define PROTOCOL_THIS(iface) DEFINE_THIS(BindProtocol, InternetProtocol, iface)
 
@@ -60,6 +62,13 @@ static HRESULT WINAPI BindProtocol_QueryInterface(IInternetProtocol *iface, REFI
     }else if(IsEqualGUID(&IID_IInternetBindInfo, riid)) {
         TRACE("(%p)->(IID_IInternetBindInfo %p)\n", This, ppv);
         *ppv = BINDINFO(This);
+    }else if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+        TRACE("(%p)->(IID_IInternetPriority %p)\n", This, ppv);
+        *ppv = PRIORITY(This);
+    }else if(IsEqualGUID(&IID_IAuthenticate, riid)) {
+        FIXME("(%p)->(IID_IAuthenticate %p)\n", This, ppv);
+    }else if(IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
+        FIXME("(%p)->(IID_IInternetProtocolSink %p)\n", This, ppv);
     }
 
     if(*ppv) {
@@ -241,12 +250,59 @@ static const IInternetBindInfoVtbl InternetBindInfoVtbl = {
     BindInfo_GetBindString
 };
 
+#define PRIORITY_THIS(iface) DEFINE_THIS(BindProtocol, InternetPriority, iface)
+
+static HRESULT WINAPI InternetPriority_QueryInterface(IInternetPriority *iface,
+        REFIID riid, void **ppv)
+{
+    BindProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
+}
+
+static ULONG WINAPI InternetPriority_AddRef(IInternetPriority *iface)
+{
+    BindProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_AddRef(PROTOCOL(This));
+}
+
+static ULONG WINAPI InternetPriority_Release(IInternetPriority *iface)
+{
+    BindProtocol *This = PRIORITY_THIS(iface);
+    return IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static HRESULT WINAPI InternetPriority_SetPriority(IInternetPriority *iface, LONG nPriority)
+{
+    BindProtocol *This = PRIORITY_THIS(iface);
+    FIXME("(%p)->(%d)\n", This, nPriority);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InternetPriority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
+{
+    BindProtocol *This = PRIORITY_THIS(iface);
+    FIXME("(%p)->(%p)\n", This, pnPriority);
+    return E_NOTIMPL;
+}
+
+#undef PRIORITY_THIS
+
+static const IInternetPriorityVtbl InternetPriorityVtbl = {
+    InternetPriority_QueryInterface,
+    InternetPriority_AddRef,
+    InternetPriority_Release,
+    InternetPriority_SetPriority,
+    InternetPriority_GetPriority
+
+};
+
 HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
 {
     BindProtocol *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(BindProtocol));
 
     ret->lpInternetProtocolVtbl = &BindProtocolVtbl;
     ret->lpInternetBindInfoVtbl = &InternetBindInfoVtbl;
+    ret->lpInternetPriorityVtbl = &InternetPriorityVtbl;
     ret->ref = 1;
 
     *protocol = PROTOCOL(ret);
