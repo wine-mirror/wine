@@ -61,22 +61,7 @@ static void test_ScriptItemIzeShapePlace(HDC hdc, unsigned short pwOutGlyphs[256
     int             piAdvance[256];
     GOFFSET         pGoffset[256];
     ABC             pABC[256];
-    LOGFONTA        lf;
-    HFONT           zfont;
     int             cnt;
-
-
-    lstrcpyA(lf.lfFaceName, "Symbol");
-    lf.lfHeight = 10;
-    lf.lfItalic = 0;
-    lf.lfEscapement = 0;
-    lf.lfOrientation = 0;
-    lf.lfUnderline = 0;
-    lf.lfStrikeOut = 0;
-    lf.lfWeight = 3;
-    lf.lfWidth = 10;
-
-    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
 
     /* Start testing usp10 functions                                                         */
     /* This test determines that the pointer returned by ScriptGetProperties is valid
@@ -711,23 +696,6 @@ static void test_ScriptStringXtoCP_CPtoX(HDC hdc)
     int             X;
     BOOL            fTrailing;
 
-    LOGFONTA        lf;
-    HFONT           zfont;
-
-    lstrcpyA(lf.lfFaceName, "Symbol");
-    lf.lfHeight = 10;
-    lf.lfCharSet = 0;
-    lf.lfItalic = 0;
-    lf.lfEscapement = 0;
-    lf.lfOrientation = 0;
-    lf.lfUnderline = 0;
-    lf.lfStrikeOut = 0;
-    lf.lfWeight = 400;
-    lf.lfWidth = 0;
-    lf.lfPitchAndFamily = 0;
-
-    zfont = (HFONT) SelectObject(hdc, CreateFontIndirectA(&lf));
-
     /* Test with hdc, this should be a valid test
      * Here we generrate an SCRIPT_STRING_ANALYSIS that will be used as input to the
      * following character positions to X and X to character position functions.
@@ -880,16 +848,8 @@ static void test_ScriptCacheGetHeight(HDC hdc)
 static void test_ScriptGetGlyphABCWidth(HDC hdc)
 {
     HRESULT hr;
-    LOGFONTA lf;
-    HFONT hfont;
     SCRIPT_CACHE sc = NULL;
     ABC abc;
-
-    memset(&lf, 0, sizeof(lf));
-
-    lstrcpyA(lf.lfFaceName, "Symbol");
-    hfont = CreateFontIndirectA(&lf);
-    hfont = SelectObject(hdc, hfont);
 
     hr = ScriptGetGlyphABCWidth(NULL, NULL, 'a', NULL);
     ok(hr == E_INVALIDARG, "expected E_INVALIDARG, got 0x%08x\n", hr);
@@ -1239,6 +1199,8 @@ START_TEST(usp10)
 {
     HWND            hwnd;
     HDC             hdc;
+    LOGFONTA        lf;
+    HFONT           hfont;
 
     unsigned short  pwOutGlyphs[256];
 
@@ -1252,6 +1214,14 @@ START_TEST(usp10)
 
     hdc = GetDC(hwnd);                                      /* We now have a hdc             */
     ok( hdc != NULL, "HDC failed to be created %p\n", hdc);
+
+    memset(&lf, 0, sizeof(HFONT));
+    lstrcpyA(lf.lfFaceName, "Symbol");
+    lf.lfHeight = 10;
+    lf.lfWeight = 3;
+    lf.lfWidth = 10;
+
+    hfont = SelectObject(hdc, CreateFontIndirectA(&lf));
 
     test_ScriptItemIzeShapePlace(hdc,pwOutGlyphs);
     test_ScriptGetCMap(hdc, pwOutGlyphs);
