@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -77,6 +77,7 @@ DEFINE_EXPECT(CreateInstance);
 DEFINE_EXPECT(Start);
 DEFINE_EXPECT(Terminate);
 DEFINE_EXPECT(Read);
+DEFINE_EXPECT(SetPriority);
 
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 static const WCHAR index_url[] =
@@ -486,6 +487,47 @@ static IInternetBindInfoVtbl bind_info_vtbl = {
 
 static IInternetBindInfo bind_info = { &bind_info_vtbl };
 
+static HRESULT WINAPI InternetPriority_QueryInterface(IInternetPriority *iface,
+                                                  REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI InternetPriority_AddRef(IInternetPriority *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InternetPriority_Release(IInternetPriority *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InternetPriority_SetPriority(IInternetPriority *iface, LONG nPriority)
+{
+    CHECK_EXPECT(SetPriority);
+    ok(nPriority == 100, "nPriority=%d\n", nPriority);
+    return S_OK;
+}
+
+static HRESULT WINAPI InternetPriority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+
+static const IInternetPriorityVtbl InternetPriorityVtbl = {
+    InternetPriority_QueryInterface,
+    InternetPriority_AddRef,
+    InternetPriority_Release,
+    InternetPriority_SetPriority,
+    InternetPriority_GetPriority
+};
+
+static IInternetPriority InternetPriority = { &InternetPriorityVtbl };
+
 static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
@@ -493,8 +535,10 @@ static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID r
         return S_OK;
     }
 
-    if(IsEqualGUID(&IID_IInternetPriority, riid))
-        return E_NOINTERFACE; /* TODO */
+    if(IsEqualGUID(&IID_IInternetPriority, riid)) {
+        *ppv = &InternetPriority;
+        return S_OK;
+    }
 
     ok(0, "unexpected call\n");
     *ppv = NULL;
@@ -1233,7 +1277,9 @@ static void test_mk_protocol(void)
 static void test_CreateBinding(void)
 {
     IInternetProtocol *protocol;
+    IInternetPriority *priority;
     IInternetSession *session;
+    LONG p;
     BYTE buf[1000];
     DWORD read;
     HRESULT hres;
@@ -1265,9 +1311,26 @@ static void test_CreateBinding(void)
     hres = IInternetProtocol_Start(protocol, NULL, &protocol_sink, &bind_info, 0, 0);
     ok(hres == E_INVALIDARG, "Start failed: %08x, expected E_INVALIDARG\n", hres);
 
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+    ok(hres == S_OK, "QueryInterface(IID_IInternetPriority) failed: %08x\n", hres);
+
+    p = 0xdeadbeef;
+    hres = IInternetPriority_GetPriority(priority, &p);
+    ok(hres == S_OK, "GetPriority failed: %08x\n", hres);
+    ok(!p, "p=%d\n", p);
+
+    hres = IInternetPriority_SetPriority(priority, 100);
+    ok(hres == S_OK, "SetPriority failed: %08x\n", hres);
+
+    p = 0xdeadbeef;
+    hres = IInternetPriority_GetPriority(priority, &p);
+    ok(hres == S_OK, "GetPriority failed: %08x\n", hres);
+    ok(p == 100, "p=%d\n", p);
+
     SET_EXPECT(QueryService_InternetProtocol);
     SET_EXPECT(CreateInstance);
     SET_EXPECT(ReportProgress_PROTOCOLCLASSID);
+    SET_EXPECT(SetPriority);
     SET_EXPECT(Start);
 
     expect_hrResult = S_OK;
@@ -1277,6 +1340,7 @@ static void test_CreateBinding(void)
     CHECK_CALLED(QueryService_InternetProtocol);
     CHECK_CALLED(CreateInstance);
     CHECK_CALLED(ReportProgress_PROTOCOLCLASSID);
+    CHECK_CALLED(SetPriority);
     CHECK_CALLED(Start);
 
     SET_EXPECT(Read);
@@ -1293,11 +1357,20 @@ static void test_CreateBinding(void)
     ok(!read, "read = %d\n", read);
     CHECK_CALLED(Read);
 
+    p = 0xdeadbeef;
+    hres = IInternetPriority_GetPriority(priority, &p);
+    ok(hres == S_OK, "GetPriority failed: %08x\n", hres);
+    ok(p == 100, "p=%d\n", p);
+
+    hres = IInternetPriority_SetPriority(priority, 101);
+    ok(hres == S_OK, "SetPriority failed: %08x\n", hres);
+
     SET_EXPECT(Terminate);
     hres = IInternetProtocol_Terminate(protocol, 0xdeadbeef);
     ok(hres == S_OK, "Terminate failed: %08x\n", hres);
     CHECK_CALLED(Terminate);
 
+    IInternetPriority_Release(priority);
     IInternetBindInfo_Release(prot_bind_info);
     IInternetProtocol_Release(protocol);
     IInternetSession_Release(session);

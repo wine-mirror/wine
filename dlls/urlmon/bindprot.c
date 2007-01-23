@@ -42,6 +42,8 @@ typedef struct {
     IInternetProtocol *protocol;
     IInternetBindInfo *bind_info;
     IInternetProtocolSink *protocol_sink;
+
+    LONG priority;
 } BindProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*) &(x)->lpInternetProtocolVtbl)
@@ -126,6 +128,7 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 {
     BindProtocol *This = PROTOCOL_THIS(iface);
     IInternetProtocol *protocol = NULL;
+    IInternetPriority *priority;
     IServiceProvider *service_provider;
     CLSID clsid = IID_NULL;
     LPOLESTR clsid_str;
@@ -177,6 +180,12 @@ static HRESULT WINAPI BindProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl
 
     IInternetProtocolSink_AddRef(pOIProtSink);
     This->protocol_sink = pOIProtSink;
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetPriority, (void**)&priority);
+    if(SUCCEEDED(hres)) {
+        IInternetPriority_SetPriority(priority, This->priority);
+        IInternetPriority_Release(priority);
+    }
 
     return IInternetProtocol_Start(protocol, szUrl, PROTSINK(This), BINDINFO(This), 0, 0);
 }
@@ -356,15 +365,21 @@ static ULONG WINAPI InternetPriority_Release(IInternetPriority *iface)
 static HRESULT WINAPI InternetPriority_SetPriority(IInternetPriority *iface, LONG nPriority)
 {
     BindProtocol *This = PRIORITY_THIS(iface);
-    FIXME("(%p)->(%d)\n", This, nPriority);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d)\n", This, nPriority);
+
+    This->priority = nPriority;
+    return S_OK;
 }
 
 static HRESULT WINAPI InternetPriority_GetPriority(IInternetPriority *iface, LONG *pnPriority)
 {
     BindProtocol *This = PRIORITY_THIS(iface);
-    FIXME("(%p)->(%p)\n", This, pnPriority);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, pnPriority);
+
+    *pnPriority = This->priority;
+    return S_OK;
 }
 
 #undef PRIORITY_THIS
@@ -476,6 +491,7 @@ HRESULT create_binding_protocol(LPCWSTR url, IInternetProtocol **protocol)
     ret->protocol = NULL;
     ret->bind_info = NULL;
     ret->protocol_sink = NULL;
+    ret->priority = 0;
 
     *protocol = PROTOCOL(ret);
     return S_OK;
