@@ -89,6 +89,7 @@ my @ignore_srcs = (
     [ 'RC_SRCS',      '\.rc',  '.res' ],
     [ 'RC_SRCS16',    '\.rc',  '.res' ],
     [ 'IDL_TLB_SRCS', '\.idl', '.tlb' ],
+    [ 'IDL_H_SRCS',   '\.idl', '.h' ],
     [ 'IDL_C_SRCS',   '\.idl', '_c.c' ],
     [ 'IDL_I_SRCS',   '\.idl', '_i.c' ],
     [ 'IDL_P_SRCS',   '\.idl', '_p.c' ],
@@ -101,7 +102,7 @@ my (@makefiles, %makefiles);
 sub update_file($)
 {
     my $file = shift;
-    my $ret = system "cmp $file $file.new >/dev/null";
+    my $ret = !(-f $file) || system "cmp $file $file.new >/dev/null";
     if (!$ret)
     {
         unlink "$file.new";
@@ -317,8 +318,10 @@ sub update_ignores(@)
             push @list, map { (my $ret = $_) =~ s/$pattern[1]$/$pattern[2]/; $ret; } @{$makefile{$pattern[0]}};
         }
         push @list, @{$makefile{"RC_BINARIES"}} if defined $makefile{"RC_BINARIES"};
-
-        push @ignores, map { $makefile{"=dir"} . $_; } @list;
+        foreach my $f (@list)
+        {
+            push @ignores, $makefile{"=dir"} . $f unless $f =~ /\$\(.*\)/;  # skip make variables
+        }
     }
     return @ignores;
 }
@@ -381,11 +384,6 @@ sub update_dlls(@)
         {
             my @list = map { $_ =~ s/\.spec$//; $_ .= ".dll" unless $_ =~ /\./; $_; } @{$makefile{"SPEC_SRCS16"}};
             $altnames{$module} = \@list;
-        }
-
-        if (defined $makefile{"IDL_H_SRCS"})
-        {
-            push @ignores, map { $_ =~ s/(.*)\.idl$/dlls\/$dir\/$1.h/; $_; } @{$makefile{"IDL_H_SRCS"}};
         }
     }
 
