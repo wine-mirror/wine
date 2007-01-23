@@ -1846,8 +1846,6 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
                           sizeof(CURSORICONINFO) + sizeXor + sizeAnd );
     if (hObj)
     {
-        HDC hdc;
-        BITMAPINFO bi;
         CURSORICONINFO *info;
 
         info = (CURSORICONINFO *)GlobalLock16( hObj );
@@ -1884,18 +1882,34 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         /* Transfer the bitmap bits to the CURSORICONINFO structure */
 
         /* Some apps pass a color bitmap as a mask, convert it to b/w */
-        hdc = GetDC( 0 );
-        memset(&bi, 0, sizeof(bi) );
-        bi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bi.bmiHeader.biWidth = bmpAnd.bmWidth;
-        bi.bmiHeader.biHeight = bmpAnd.bmHeight;
-        bi.bmiHeader.biPlanes = 1;
-        bi.bmiHeader.biBitCount = 1;
-        bi.bmiHeader.biCompression = BI_RGB;
-        bi.bmiHeader.biSizeImage = sizeAnd;
-        GetDIBits( hdc, iconinfo->hbmMask, 0, bmpAnd.bmHeight, (char*)(info + 1), &bi, DIB_RGB_COLORS );
-        ReleaseDC( 0, hdc );
+        if (bmpAnd.bmBitsPixel == 1)
+        {
+            GetBitmapBits( iconinfo->hbmMask, sizeAnd, (char*)(info + 1) );
+        }
+        else
+        {
+            HDC hdc, hdc_mem;
+            HBITMAP hbmp_old, hbmp_mem_old, hbmp_mono;
 
+            hdc = GetDC( 0 );
+            hdc_mem = CreateCompatibleDC( hdc );
+
+            hbmp_mono = CreateBitmap( bmpAnd.bmWidth, bmpAnd.bmHeight, 1, 1, NULL );
+
+            hbmp_old = SelectObject( hdc, iconinfo->hbmMask );
+            hbmp_mem_old = SelectObject( hdc_mem, hbmp_mono );
+
+            BitBlt( hdc_mem, 0, 0, bmpAnd.bmWidth, bmpAnd.bmHeight, hdc, 0, 0, SRCCOPY );
+
+            SelectObject( hdc, hbmp_old );
+            SelectObject( hdc_mem, hbmp_mem_old );
+
+            DeleteDC( hdc_mem );
+            ReleaseDC( 0, hdc );
+
+            GetBitmapBits( hbmp_mono, sizeAnd, (char*)(info + 1) );
+            DeleteObject( hbmp_mono );
+        }
         if (iconinfo->hbmColor) GetBitmapBits( iconinfo->hbmColor, sizeXor, (char*)(info + 1) + sizeAnd );
         GlobalUnlock16( hObj );
     }
