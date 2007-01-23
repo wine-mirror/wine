@@ -1079,7 +1079,7 @@ static HRESULT get_protocol(Binding *This, LPCWSTR url)
             return S_OK;
     }
 
-    hres = get_protocol_handler(url, &cf);
+    hres = get_protocol_handler(url, NULL, &cf);
     if(FAILED(hres))
         return hres;
 

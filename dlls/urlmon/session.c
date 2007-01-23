@@ -36,25 +36,26 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 typedef struct name_space {
     LPWSTR protocol;
     IClassFactory *cf;
+    CLSID clsid;
 
     struct name_space *next;
 } name_space;
 
 static name_space *name_space_list = NULL;
 
-static IClassFactory *find_name_space(LPCWSTR protocol)
+static name_space *find_name_space(LPCWSTR protocol)
 {
     name_space *iter;
 
     for(iter = name_space_list; iter; iter = iter->next) {
         if(!strcmpW(iter->protocol, protocol))
-            return iter->cf;
+            return iter;
     }
 
     return NULL;
 }
 
-static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, IUnknown **ret)
+static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, IUnknown **ret)
 {
     WCHAR str_clsid[64];
     HKEY hkey = NULL;
@@ -92,13 +93,16 @@ static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, IUnknown **r
         return hres;
     }
 
+    if(pclsid)
+        *pclsid = clsid;
+
     return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)ret);
 }
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
 {
     IInternetProtocolInfo *ret = NULL;
-    IClassFactory *cf;
+    name_space *ns;
     IUnknown *unk;
     WCHAR schema[64];
     DWORD schema_len;
@@ -109,18 +113,18 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
     if(FAILED(hres) || !schema_len)
         return NULL;
 
-    cf = find_name_space(schema);
-    if(cf) {
-        hres = IClassFactory_QueryInterface(cf, &IID_IInternetProtocolInfo, (void**)&ret);
+    ns = find_name_space(schema);
+    if(ns) {
+        hres = IClassFactory_QueryInterface(ns->cf, &IID_IInternetProtocolInfo, (void**)&ret);
         if(SUCCEEDED(hres))
             return ret;
 
-        hres = IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocolInfo, (void**)&ret);
+        hres = IClassFactory_CreateInstance(ns->cf, NULL, &IID_IInternetProtocolInfo, (void**)&ret);
         if(SUCCEEDED(hres))
             return ret;
     }
 
-    hres = get_protocol_iface(schema, schema_len, &unk);
+    hres = get_protocol_iface(schema, schema_len, NULL, &unk);
     if(FAILED(hres))
         return NULL;
 
@@ -130,10 +134,10 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
     return ret;
 }
 
-HRESULT get_protocol_handler(LPCWSTR url, IClassFactory **ret)
+HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret)
 {
-    IClassFactory *cf;
     IUnknown *unk;
+    name_space *ns;
     WCHAR schema[64];
     DWORD schema_len;
     HRESULT hres;
@@ -143,13 +147,15 @@ HRESULT get_protocol_handler(LPCWSTR url, IClassFactory **ret)
     if(FAILED(hres) || !schema_len)
         return schema_len ? hres : E_FAIL;
 
-    cf = find_name_space(schema);
-    if(cf) {
-        *ret = cf;
+    ns = find_name_space(schema);
+    if(ns) {
+        *ret = ns->cf;
+        if(clsid)
+            *clsid = ns->clsid;
         return S_OK;
     }
 
-    hres = get_protocol_iface(schema, schema_len, &unk);
+    hres = get_protocol_iface(schema, schema_len, clsid, &unk);
     if(FAILED(hres))
         return hres;
 
@@ -213,6 +219,7 @@ static HRESULT WINAPI InternetSession_RegisterNameSpace(IInternetSession *iface,
 
     IClassFactory_AddRef(pCF);
     new_name_space->cf = pCF;
+    new_name_space->clsid = *rclsid;
 
     new_name_space->next = name_space_list;
     name_space_list = new_name_space;
