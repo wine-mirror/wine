@@ -1201,6 +1201,23 @@ HRESULT WINAPI ScriptIsComplex(const WCHAR *chars, int len, DWORD flag)
 /***********************************************************************
  *      ScriptShape (USP10.@)
  *
+ * Produce glyphs and visual attributes for a run.
+ *
+ * PARAMS
+ *  hdc         [I]   Device context.
+ *  psc         [I/O] Opaque pointer to a script cache.
+ *  pwcChars    [I]   Array of characters specifying the run.
+ *  cChars      [I]   Number of characters in pwcChars.
+ *  cMaxGlyphs  [I]   Length of pwOutGlyphs.
+ *  psa         [I/O] String analysis.
+ *  pwOutGlyphs [O]   Array of glyphs.
+ *  pwLogClust  [O]   Array of logical cluster info.
+ *  psva        [O]   Array of visual attributes.
+ *  pcGlyphs    [O]   Number of glyphs returned.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
  */
 HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars, 
                            int cChars, int cMaxGlyphs,
@@ -1257,6 +1274,22 @@ HRESULT WINAPI ScriptShape(HDC hdc, SCRIPT_CACHE *psc, const WCHAR *pwcChars,
 /***********************************************************************
  *      ScriptPlace (USP10.@)
  *
+ * Produce advance widths for a run.
+ *
+ * PARAMS
+ *  hdc       [I]   Device context.
+ *  psc       [I/O] Opaque pointer to a script cache.
+ *  pwGlyphs  [I]   Array of glyphs.
+ *  cGlyphs   [I]   Number of glyphs in pwGlyphs.
+ *  psva      [I]   Array of visual attributes.
+ *  psa       [I/O] String analysis.
+ *  piAdvance [O]   Array of advance widths.
+ *  pGoffset  [O]   Glyph offsets.
+ *  pABC      [O]   Combined ABC width.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: Non-zero HRESULT value.
  */
 HRESULT WINAPI ScriptPlace(HDC hdc, SCRIPT_CACHE *psc, const WORD *pwGlyphs, 
                            int cGlyphs, const SCRIPT_VISATTR *psva,
