@@ -1696,7 +1696,7 @@ ImageList_LoadImageW (HINSTANCE hi, LPCWSTR lpbmp, INT cx, INT cGrow,
 
     handle = LoadImageW (hi, lpbmp, uType, 0, 0, uFlags);
     if (!handle) {
-        ERR("Error loading image!\n");
+        WARN("Couldn't load image\n");
         return NULL;
     }
 
