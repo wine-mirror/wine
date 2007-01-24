@@ -541,6 +541,7 @@ void WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *oid)
         TRACE("%u", oid->ids[i]);
         if (i < oid->idLength - 1) TRACE(".");
     }
+    TRACE("\n");
 }
 
 /***********************************************************************
