@@ -564,7 +564,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     HRESULT hres;
 
     static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
-    static const WCHAR empty_str = {0};
+    static const WCHAR empty_str[] = {0};
 
     CHECK_EXPECT(Start);
 
@@ -592,7 +592,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     SET_EXPECT(ReportProgress_CACHEFILENAMEAVAILABLE);
     hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
-            BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = &empty_str);
+            BINDSTATUS_CACHEFILENAMEAVAILABLE, expect_wsz = empty_str);
     ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
     CHECK_CALLED(ReportProgress_CACHEFILENAMEAVAILABLE);
 
