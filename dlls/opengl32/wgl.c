@@ -195,7 +195,7 @@ static BOOL is_extension_supported(const char* extension)
     if(strncmp(extension, "GL_VERSION_", 11) == 0)
     {
         const GLubyte *gl_version = glGetString(GL_VERSION);
-        const const char *version = extension + 11; /* Move past 'GL_VERSION_' */
+        const char *version = extension + 11; /* Move past 'GL_VERSION_' */
 
         if(!gl_version) {
             ERR("Error no OpenGL version found,\n");
