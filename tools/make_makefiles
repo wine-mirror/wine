@@ -77,7 +77,9 @@ my @ignores = (
     "/config.status",
     "/TAGS",
     "/tags",
-    "Makefile"
+    "Makefile",
+    "include/config.h",
+    "include/stamp-h"
 );
 
 # Source files and their resulting target to ignore

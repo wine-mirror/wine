@@ -4,7 +4,7 @@ SRCDIR    = @srcdir@
 VPATH	  = @srcdir@
 MODULE	  = none
 
-WINDOWS_IDL_SRCS = \
+IDL_H_SRCS = \
 	activscp.idl \
 	amstream.idl \
 	amvideo.idl \
@@ -49,6 +49,7 @@ WINDOWS_IDL_SRCS = \
 	unknwn.idl \
 	urlhist.idl \
 	urlmon.idl \
+	wine/itss.idl \
 	wtypes.idl \
 	xmldom.idl \
 	xmldso.idl
@@ -56,19 +57,9 @@ WINDOWS_IDL_SRCS = \
 IDL_TLB_SRCS = \
 	stdole2.idl
 
-WINDOWS_IDL_INCLUDES = \
+SRCDIR_INCLUDES = \
 	$(IDL_TLB_SRCS) \
-	$(WINDOWS_IDL_SRCS) \
-	axcore.idl \
-	axextend.idl \
-	dbinit.idl \
-	dbprop.idl \
-	dbs.idl \
-	devenum.idl \
-	dyngraph.idl
-
-WINDOWS_INCLUDES = \
-	$(WINDOWS_IDL_INCLUDES) \
+	$(IDL_H_SRCS) \
 	accctrl.h \
 	aclapi.h \
 	adshlp.h \
@@ -76,6 +67,8 @@ WINDOWS_INCLUDES = \
 	appmgmt.h \
 	audevcod.h \
 	aviriff.h \
+	axcore.idl \
+	axextend.idl \
 	basetsd.h \
 	basetyps.h \
 	cderr.h \
@@ -103,6 +96,9 @@ WINDOWS_INCLUDES = \
 	d3dvec.inl \
 	d3dx8core.h \
 	dbghelp.h \
+	dbinit.idl \
+	dbprop.idl \
+	dbs.idl \
 	dbt.h \
 	dciddi.h \
 	dciman.h \
@@ -116,6 +112,7 @@ WINDOWS_INCLUDES = \
 	ddk/winsplp.h \
 	ddraw.h \
 	ddrawi.h \
+	devenum.idl \
 	devguid.h \
 	digitalv.h \
 	dinput.h \
@@ -150,6 +147,7 @@ WINDOWS_INCLUDES = \
 	dxerr8.h \
 	dxerr9.h \
 	dxfile.h \
+	dyngraph.idl \
 	errors.h \
 	evcode.h \
 	evntrace.h \
@@ -213,6 +211,42 @@ WINDOWS_INCLUDES = \
 	msidefs.h \
 	msiquery.h \
 	mssip.h \
+	msvcrt/conio.h \
+	msvcrt/crtdbg.h \
+	msvcrt/ctype.h \
+	msvcrt/direct.h \
+	msvcrt/dirent.h \
+	msvcrt/dos.h \
+	msvcrt/eh.h \
+	msvcrt/errno.h \
+	msvcrt/fcntl.h \
+	msvcrt/float.h \
+	msvcrt/io.h \
+	msvcrt/limits.h \
+	msvcrt/locale.h \
+	msvcrt/malloc.h \
+	msvcrt/math.h \
+	msvcrt/mbctype.h \
+	msvcrt/mbstring.h \
+	msvcrt/process.h \
+	msvcrt/search.h \
+	msvcrt/setjmp.h \
+	msvcrt/share.h \
+	msvcrt/signal.h \
+	msvcrt/stddef.h \
+	msvcrt/stdio.h \
+	msvcrt/stdlib.h \
+	msvcrt/string.h \
+	msvcrt/sys/locking.h \
+	msvcrt/sys/stat.h \
+	msvcrt/sys/timeb.h \
+	msvcrt/sys/types.h \
+	msvcrt/sys/unistd.h \
+	msvcrt/sys/utime.h \
+	msvcrt/time.h \
+	msvcrt/unistd.h \
+	msvcrt/wchar.h \
+	msvcrt/wctype.h \
 	mswsock.h \
 	msxml2did.h \
 	msxmldid.h \
@@ -298,6 +332,10 @@ WINDOWS_INCLUDES = \
 	windns.h \
 	windows.h \
 	windowsx.h \
+	wine/debug.h \
+	wine/exception.h \
+	wine/library.h \
+	wine/unicode.h \
 	winerror.h \
 	wingdi.h \
 	wininet.h \
@@ -334,56 +372,6 @@ WINDOWS_INCLUDES = \
 	xmldsodid.h \
 	zmouse.h
 
-MSVCRT_INCLUDES = \
-	msvcrt/conio.h \
-	msvcrt/crtdbg.h \
-	msvcrt/ctype.h \
-	msvcrt/direct.h \
-	msvcrt/dirent.h \
-	msvcrt/dos.h \
-	msvcrt/eh.h \
-	msvcrt/errno.h \
-	msvcrt/fcntl.h \
-	msvcrt/float.h \
-	msvcrt/io.h \
-	msvcrt/limits.h \
-	msvcrt/locale.h \
-	msvcrt/malloc.h \
-	msvcrt/math.h \
-	msvcrt/mbctype.h \
-	msvcrt/mbstring.h \
-	msvcrt/process.h \
-	msvcrt/search.h \
-	msvcrt/setjmp.h \
-	msvcrt/share.h \
-	msvcrt/signal.h \
-	msvcrt/stddef.h \
-	msvcrt/stdio.h \
-	msvcrt/stdlib.h \
-	msvcrt/string.h \
-	msvcrt/sys/locking.h \
-	msvcrt/sys/stat.h \
-	msvcrt/sys/timeb.h \
-	msvcrt/sys/types.h \
-	msvcrt/sys/unistd.h \
-	msvcrt/sys/utime.h \
-	msvcrt/time.h \
-	msvcrt/unistd.h \
-	msvcrt/wchar.h \
-	msvcrt/wctype.h
-
-WINE_IDL_SRCS = \
-	itss.idl
-
-WINE_INCLUDES = \
-	$(WINE_IDL_SRCS) \
-	debug.h \
-	exception.h \
-	library.h \
-	unicode.h
-
-IDL_H_SRCS = $(WINDOWS_IDL_SRCS) $(WINE_IDL_SRCS:%=wine/%)
-
 EXTRASUBDIRS = ddk msvcrt msvcrt/sys wine
 
 INSTALLDIRS = \
@@ -395,25 +383,30 @@ INSTALLDIRS = \
 
 @MAKE_RULES@
 
-WINDOWS_IDL_HEADERS = $(WINDOWS_IDL_SRCS:.idl=.h)
-WINE_IDL_HEADERS = $(WINE_IDL_SRCS:.idl=.h)
-IDL_HEADERS = $(IDL_H_SRCS:.idl=.h)
-IDL_TLBS = $(IDL_TLB_SRCS:.idl=.tlb)
+OBJDIR_INCLUDES = $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb)
 
-all: $(IDL_HEADERS) $(IDL_TLBS)
+all: $(OBJDIR_INCLUDES)
 
-install:: $(IDL_HEADERS) $(IDL_TLBS) $(INSTALLDIRS)
-	for f in $(WINDOWS_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/windows/$$f; done
-	for f in $(WINDOWS_IDL_HEADERS) $(IDL_TLBS); do $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/windows/$$f; done
-	for f in $(MSVCRT_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/$$f; done
-	for f in $(WINE_INCLUDES); do $(INSTALL_DATA) $(SRCDIR)/wine/$$f $(DESTDIR)$(includedir)/$$f; done
-	for f in $(WINE_IDL_HEADERS); do $(INSTALL_DATA) wine/$$f $(DESTDIR)$(includedir)/$$f; done
+install:: $(OBJDIR_INCLUDES) $(INSTALLDIRS)
+	for f in $(SRCDIR_INCLUDES); do case $$f in \
+	  wine/*)   $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
+	  msvcrt/*) $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/$$f ;; \
+	  *)        $(INSTALL_DATA) $(SRCDIR)/$$f $(DESTDIR)$(includedir)/windows/$$f ;; \
+	esac; done
+	for f in $(OBJDIR_INCLUDES); do case $$f in \
+	  wine/*)   $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
+	  msvcrt/*) $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/$$f ;; \
+	  *)        $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/windows/$$f ;; \
+	esac; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
-	-cd $(DESTDIR)$(includedir)/windows && $(RM) $(WINDOWS_INCLUDES) $(WINDOWS_IDL_HEADERS) $(IDL_TLBS)
-	-cd $(DESTDIR)$(includedir) && $(RM) $(MSVCRT_INCLUDES) $(WINE_INCLUDES) $(WINE_IDL_HEADERS)
+	for f in $(SRCDIR_INCLUDES) $(OBJDIR_INCLUDES); do case $$f in \
+	  wine/*)   $(RM) $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
+	  msvcrt/*) $(RM) $(DESTDIR)$(includedir)/$$f ;; \
+	  *)        $(RM) $(DESTDIR)$(includedir)/windows/$$f ;; \
+	esac; done
 	-rmdir $(INSTALLDIRS)
 
 @DEPENDENCIES@  # everything below this line is overwritten by make depend
