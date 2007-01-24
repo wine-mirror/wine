@@ -993,12 +993,43 @@ static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BO
             http_credentials_dst = HeapAlloc(GetProcessHeap(), 0, sizeof(*http_credentials_dst));
             qos->qos->u.HttpCredentials = http_credentials_dst;
             if (!http_credentials_dst) goto error;
-            http_credentials_dst->TransportCredentials = http_credentials_src->TransportCredentials;
+            http_credentials_dst->TransportCredentials = NULL;
             http_credentials_dst->Flags = http_credentials_src->Flags;
             http_credentials_dst->AuthenticationTarget = http_credentials_src->AuthenticationTarget;
             http_credentials_dst->NumberOfAuthnSchemes = http_credentials_src->NumberOfAuthnSchemes;
             http_credentials_dst->AuthnSchemes = NULL;
             http_credentials_dst->ServerCertificateSubject = NULL;
+            if (http_credentials_src->TransportCredentials)
+            {
+                SEC_WINNT_AUTH_IDENTITY_W *cred_dst;
+                cred_dst = http_credentials_dst->TransportCredentials = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cred_dst));
+                if (!cred_dst) goto error;
+                cred_dst->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
+                if (unicode)
+                {
+                    const SEC_WINNT_AUTH_IDENTITY_W *cred_src = http_credentials_src->TransportCredentials;
+                    cred_dst->UserLength = cred_src->UserLength;
+                    cred_dst->PasswordLength = cred_src->PasswordLength;
+                    cred_dst->DomainLength = cred_src->DomainLength;
+                    cred_dst->User = RPCRT4_strndupW(cred_src->User, cred_src->UserLength);
+                    cred_dst->Password = RPCRT4_strndupW(cred_src->Password, cred_src->PasswordLength);
+                    cred_dst->Domain = RPCRT4_strndupW(cred_src->Domain, cred_src->DomainLength);
+                }
+                else
+                {
+                    const SEC_WINNT_AUTH_IDENTITY_A *cred_src = (const SEC_WINNT_AUTH_IDENTITY_A *)http_credentials_src->TransportCredentials;
+                    cred_dst->UserLength = MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->User, cred_src->UserLength, NULL, 0);
+                    cred_dst->DomainLength = MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Domain, cred_src->DomainLength, NULL, 0);
+                    cred_dst->PasswordLength = MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Password, cred_src->PasswordLength, NULL, 0);
+                    cred_dst->User = HeapAlloc(GetProcessHeap(), 0, cred_dst->UserLength * sizeof(WCHAR));
+                    cred_dst->Password = HeapAlloc(GetProcessHeap(), 0, cred_dst->PasswordLength * sizeof(WCHAR));
+                    cred_dst->Domain = HeapAlloc(GetProcessHeap(), 0, cred_dst->DomainLength * sizeof(WCHAR));
+                    if (!cred_dst || !cred_dst->Password || !cred_dst->Domain) goto error;
+                    MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->User, cred_src->UserLength, cred_dst->User, cred_dst->UserLength);
+                    MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Domain, cred_src->DomainLength, cred_dst->Domain, cred_dst->DomainLength);
+                    MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Password, cred_src->PasswordLength, cred_dst->Password, cred_dst->PasswordLength);
+                }
+            }
             if (http_credentials_src->NumberOfAuthnSchemes)
             {
                 http_credentials_dst->AuthnSchemes = HeapAlloc(GetProcessHeap(), 0, http_credentials_src->NumberOfAuthnSchemes * sizeof(*http_credentials_dst->AuthnSchemes));
@@ -1027,6 +1058,13 @@ error:
         if (qos->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP &&
             qos->qos->u.HttpCredentials)
         {
+            if (qos->qos->u.HttpCredentials->TransportCredentials)
+            {
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->User);
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Domain);
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Password);
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials);
+            }
             HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->AuthnSchemes);
             HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->ServerCertificateSubject);
             HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials);
@@ -1050,6 +1088,13 @@ ULONG RpcQualityOfService_Release(RpcQualityOfService *qos)
     {
         if (qos->qos->AdditionalSecurityInfoType == RPC_C_AUTHN_INFO_TYPE_HTTP)
         {
+            if (qos->qos->u.HttpCredentials->TransportCredentials)
+            {
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->User);
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Domain);
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Password);
+                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials);
+            }
             HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->AuthnSchemes);
             HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->ServerCertificateSubject);
             HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials);
@@ -1205,9 +1250,6 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
   }
 
-  if (SecurityQos)
-    FIXME("SecurityQos ignored\n");
-
   r = EnumerateSecurityPackagesA(&package_count, &packages);
   if (r != SEC_E_OK)
   {
@@ -1320,9 +1362,6 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
     FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
   }
-
-  if (SecurityQos)
-    FIXME("SecurityQos ignored\n");
 
   r = EnumerateSecurityPackagesW(&package_count, &packages);
   if (r != SEC_E_OK)
