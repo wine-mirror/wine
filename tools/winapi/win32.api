@@ -3829,7 +3829,7 @@ LPWSTR
 PCWSTR
 PWSTR
 
-%%sfc.dll
+%%sfc_os.dll
 
 %long
 
