@@ -1545,6 +1545,11 @@ static unsigned int get_required_buffer_size_type(
             return size;
         }
 
+        case RPC_FC_RP:
+            if (is_base_type( type->ref->type ) || type->ref->type == RPC_FC_STRUCT)
+                return get_required_buffer_size_type( type->ref, 0, NULL, name, alignment );
+            return 0;
+
         default:
             error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
             return 0;
@@ -1918,30 +1923,43 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
         }
         else if (var->ptr_level == 0)
         {
-            const char *ndrtype;
-
             switch (rtype)
             {
             case RPC_FC_STRUCT:
-                ndrtype = "SimpleStruct";
+                print_phase_function(file, indent, "SimpleStruct", phase, var->name, *type_offset);
                 break;
             case RPC_FC_CSTRUCT:
             case RPC_FC_CPSTRUCT:
-                ndrtype = "ConformantStruct";
+                print_phase_function(file, indent, "ConformantStruct", phase, var->name, *type_offset);
                 break;
             case RPC_FC_CVSTRUCT:
-                ndrtype = "ConformantVaryingStruct";
+                print_phase_function(file, indent, "ConformantVaryingStruct", phase, var->name, *type_offset);
                 break;
             case RPC_FC_BOGUS_STRUCT:
-                ndrtype = "ComplexStruct";
+                print_phase_function(file, indent, "ComplexStruct", phase, var->name, *type_offset);
+                break;
+            case RPC_FC_RP:
+                if (is_base_type( var->type->ref->type ))
+                {
+                    print_phase_basetype(file, indent, phase, pass, var, var->name);
+                }
+                else if (var->type->ref->type == RPC_FC_STRUCT)
+                {
+                    if (phase != PHASE_BUFFERSIZE && phase != PHASE_FREE)
+                        print_phase_function(file, indent, "SimpleStruct", phase, var->name, *type_offset + 4);
+                }
+                else
+                {
+                    const var_t *iid;
+                    if ((iid = get_attrp( var->attrs, ATTR_IIDIS )))
+                        print_file( file, indent, "_StubMsg.MaxCount = (unsigned long)%s;\n", iid->name );
+                    print_phase_function(file, indent, "Pointer", phase, var->name, *type_offset);
+                }
                 break;
             default:
                 error("write_remoting_arguments: Unsupported type: %s (0x%02x, ptr_level: %d)\n",
                     var->name, rtype, var->ptr_level);
-                ndrtype = NULL;
             }
-
-            print_phase_function(file, indent, ndrtype, phase, var->name, *type_offset);
         }
         else
         {
