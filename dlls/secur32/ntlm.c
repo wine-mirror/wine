@@ -222,8 +222,9 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                         {
                             helper->pwlen = WideCharToMultiByte(CP_UNIXCP, 
                                 WC_NO_BEST_FIT_CHARS, auth_data->Password, 
-                                auth_data->PasswordLength+1, NULL, 0, NULL, NULL);
-                        
+                                auth_data->PasswordLength+1, NULL, 0, NULL,
+                                NULL) + 1;
+
                             helper->password = HeapAlloc(GetProcessHeap(), 0, 
                                     helper->pwlen);
 
@@ -232,7 +233,7 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleW(
                                 helper->password, helper->pwlen, NULL, NULL);
                         }
                     }
-           
+
                     phCredential->dwUpper = fCredentialUse;
                     phCredential->dwLower = (ULONG_PTR)helper;
                     TRACE("ACH phCredential->dwUpper: 0x%08lx, dwLower: 0x%08lx\n",
