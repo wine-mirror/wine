@@ -122,6 +122,28 @@ exit:
 }
 
 /******************************************************************************
+ *  release_all_handles
+ *
+ * Releases all valid handles in the given handle table and shrinks the table
+ * to zero size.
+ *
+ * PARAMS
+ *  lpTable [I] The table of which all valid handles shall be released.
+ */
+static void release_all_handles(HANDLETABLE *lpTable)
+{
+    unsigned int i;
+
+    TRACE("(lpTable=%p)\n", lpTable);
+
+    EnterCriticalSection(&lpTable->mutex);
+    for (i=0; i<lpTable->iEntries; i++)
+        if (lpTable->paEntries[i].pObject)
+            release_handle(lpTable, lpTable->paEntries[i].pObject->dwType, INDEX2HANDLE(i));
+    LeaveCriticalSection(&lpTable->mutex);
+}
+
+/******************************************************************************
  *  alloc_handle_table
  *
  * Allocates a new handle table
@@ -235,10 +257,10 @@ static int grow_handle_table(HANDLETABLE *lpTable)
  *  non zero,  if successful
  *  zero,      if not successful (no free handle)
  */
-int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int *lpHandle)
+static int alloc_handle(HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int *lpHandle)
 {
     int ret = 0;
-        
+
     TRACE("(lpTable=%p, lpObject=%p, lpHandle=%p)\n", lpTable, lpObject, lpHandle);
         
     EnterCriticalSection(&lpTable->mutex);
@@ -311,28 +333,6 @@ int release_handle(HANDLETABLE *lpTable, unsigned int handle, DWORD dwType)
 exit:
     LeaveCriticalSection(&lpTable->mutex);
     return ret;
-}
-
-/******************************************************************************
- *  release_all_handles
- *
- * Releases all valid handles in the given handle table and shrinks the table 
- * to zero size.
- *
- * PARAMS
- *  lpTable [I] The table of which all valid handles shall be released.
- */
-void release_all_handles(HANDLETABLE *lpTable) 
-{
-    unsigned int i;
-
-    TRACE("(lpTable=%p)\n", lpTable);
-        
-    EnterCriticalSection(&lpTable->mutex);
-    for (i=0; i<lpTable->iEntries; i++) 
-        if (lpTable->paEntries[i].pObject)
-            release_handle(lpTable, lpTable->paEntries[i].pObject->dwType, INDEX2HANDLE(i));
-    LeaveCriticalSection(&lpTable->mutex);
 }
 
 /******************************************************************************

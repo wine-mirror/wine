@@ -56,10 +56,8 @@ typedef struct tagHANDLETABLE
 
 int  alloc_handle_table  (HANDLETABLE **lplpTable);
 void init_handle_table   (HANDLETABLE *lpTable);
-void release_all_handles (HANDLETABLE *lpTable);
 int  release_handle_table(HANDLETABLE *lpTable);
 void destroy_handle_table(HANDLETABLE *lpTable);
-int  alloc_handle        (HANDLETABLE *lpTable, OBJECTHDR *lpObject, unsigned int *lpHandle);
 int  release_handle      (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType);
 int  copy_handle         (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, unsigned int *copy);
 int  lookup_handle       (HANDLETABLE *lpTable, unsigned int handle, DWORD dwType, OBJECTHDR **lplpObject);

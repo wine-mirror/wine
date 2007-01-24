@@ -1282,7 +1282,7 @@ static const ulong64 des_fp[8][256] = {
 
 static void cookey(const ulong32 *raw1, ulong32 *keyout);
 
-void deskey(const unsigned char *key, short edf, ulong32 *keyout)
+static void deskey(const unsigned char *key, short edf, ulong32 *keyout)
 {
     ulong32 i, j, l, m, n, kn[32];
     unsigned char pc1m[56], pcr[56];

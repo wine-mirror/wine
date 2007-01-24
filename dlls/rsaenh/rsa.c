@@ -39,7 +39,7 @@ static const struct {
 };
 
 /* convert a MPI error to a LTC error (Possibly the most powerful function ever!  Oh wait... no) */
-int mpi_to_ltc_error(int err)
+static int mpi_to_ltc_error(int err)
 {
    int x;
 
@@ -58,7 +58,7 @@ static int rand_prime_helper(unsigned char *dst, int len, void *dat)
     return gen_rand_impl(dst, len) ? len : 0;
 }
 
-int rand_prime(mp_int *N, long len)
+static int rand_prime(mp_int *N, long len)
 {
    int type;
 
