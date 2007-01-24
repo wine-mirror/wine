@@ -165,9 +165,9 @@ static RPC_STATUS rpcrt4_conn_open_pipe(RpcConnection *Connection, LPCSTR pname,
     DWORD dwFlags = 0;
     if (Connection->QOS)
     {
+        dwFlags = SECURITY_SQOS_PRESENT;
         switch (Connection->QOS->qos->ImpersonationType)
         {
-            dwFlags = SECURITY_SQOS_PRESENT;
             case RPC_C_IMP_LEVEL_DEFAULT:
                 /* FIXME: what to do here? */
                 break;
