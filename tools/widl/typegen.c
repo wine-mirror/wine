@@ -1051,7 +1051,7 @@ static size_t write_struct_members(FILE *file, const type_t *type)
             error("Unsupported member type 0x%x\n", rtype);
     }
 
-    if (typestring_size % 1)
+    if (!(typestring_size % 2))
     {
         print_file(file, 2, "0x%x,\t\t/* FC_PAD */\n", RPC_FC_PAD);
         typestring_size++;
