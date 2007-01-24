@@ -1971,6 +1971,25 @@ size_t get_size_procformatstring_var(const var_t *var)
 }
 
 
+size_t get_size_procformatstring_func(const func_t *func)
+{
+    const var_t *var;
+    size_t size = 0;
+
+    /* argument list size */
+    if (func->args)
+        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+            size += get_size_procformatstring_var(var);
+
+    /* return value size */
+    if (is_void(func->def->type, NULL))
+        size += 2; /* FC_END and FC_PAD */
+    else
+        size += get_size_procformatstring_var(func->def);
+
+    return size;
+}
+
 size_t get_size_typeformatstring_var(const var_t *var)
 {
     unsigned int type_offset = 0;
@@ -1983,7 +2002,6 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
     const ifref_t *iface;
     size_t size = 1;
     const func_t *func;
-    const var_t *var;
 
     if (ifaces) LIST_FOR_EACH_ENTRY( iface, ifaces, const ifref_t, entry )
     {
@@ -1991,22 +2009,9 @@ size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects)
             continue;
 
         if (iface->iface->funcs)
-        {
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
-            {
-                /* argument list size */
-                if (func->args)
-                    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                        size += get_size_procformatstring_var(var);
-
-                var = func->def;
-                /* return value size */
-                if (is_void(var->type, NULL))
-                    size += 2;
-                else
-                    size += get_size_procformatstring_var(var);
-            }
-        }
+                if (!is_local(func->def->attrs))
+                    size += get_size_procformatstring_func( func );
     }
     return size;
 }

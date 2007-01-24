@@ -270,15 +270,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         fprintf(server, "\n");
 
         /* update proc_offset */
-        if (func->args)
-        {
-            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                *proc_offset += get_size_procformatstring_var(var);
-        }
-        if (!is_void(def->type, NULL))
-            *proc_offset += get_size_procformatstring_var(def);
-        else
-            *proc_offset += 2; /* FC_END and FC_PAD */
+        *proc_offset += get_size_procformatstring_func( func );
     }
 }
 
