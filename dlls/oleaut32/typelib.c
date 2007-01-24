@@ -165,9 +165,9 @@ static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
     {
         INT v_maj, v_min;
 
-        if (sscanf(key_name, "%u.%u", &v_maj, &v_min) == 2)
+        if (sscanf(key_name, "%x.%x", &v_maj, &v_min) == 2)
         {
-            TRACE("found %s: %u.%u\n", debugstr_w(buffer), v_maj, v_min);
+            TRACE("found %s: %x.%x\n", debugstr_w(buffer), v_maj, v_min);
 
             if (*wMaj == v_maj)
             {
@@ -195,7 +195,7 @@ static BOOL find_typelib_key( REFGUID guid, WORD *wMaj, WORD *wMin )
 static WCHAR *get_typelib_key( REFGUID guid, WORD wMaj, WORD wMin, WCHAR *buffer )
 {
     static const WCHAR TypelibW[] = {'T','y','p','e','l','i','b','\\',0};
-    static const WCHAR VersionFormatW[] = {'\\','%','u','.','%','u',0};
+    static const WCHAR VersionFormatW[] = {'\\','%','x','.','%','x',0};
 
     memcpy( buffer, TypelibW, sizeof(TypelibW) );
     StringFromGUID2( guid, buffer + strlenW(buffer), 40 );
@@ -668,7 +668,7 @@ HRESULT WINAPI RegisterTypeLib(
 				KEY_WRITE, NULL, &subKey, NULL) == ERROR_SUCCESS)
 			    {
 				WCHAR buffer[40];
-				static const WCHAR fmtver[] = {'%','u','.','%','u',0 };
+				static const WCHAR fmtver[] = {'%','x','.','%','x',0 };
 				static const WCHAR VersionW[] = {'V','e','r','s','i','o','n',0};
 
 				StringFromGUID2(&attr->guid, buffer, 40);
