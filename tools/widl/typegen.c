@@ -819,7 +819,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
     }
     else
     {
-        const expr_t *dim = LIST_ENTRY( list_head( array ), expr_t, entry );
+        const expr_t *dim = array ? LIST_ENTRY( list_head( array ), expr_t, entry ) : NULL;
         size_t pointer_start_offset = *typestring_offset;
         int has_pointer = 0;
 
