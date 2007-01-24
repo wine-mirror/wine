@@ -59,24 +59,6 @@ static int print_client( const char *format, ... )
 }
 
 
-static void print_message_buffer_size(const func_t *func)
-{
-    unsigned int total_size = 0;
-
-    if (func->args)
-    {
-        const var_t *var;
-        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-        {
-            unsigned int alignment;
-
-            total_size += get_required_buffer_size(var, &alignment, PASS_IN);
-            total_size += alignment;
-        }
-    }
-    fprintf(client, " %u", total_size);
-}
-
 static void check_pointers(const func_t *func)
 {
     const var_t *var;
@@ -188,11 +170,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             print_client("_Handle = %s;\n", explicit_handle_var->name);
             fprintf(client, "\n");
         }
-
-        /* emit the message buffer size */
-        print_client("_StubMsg.BufferLength =");
-        print_message_buffer_size(func);
-        fprintf(client, ";\n");
 
         type_offset_func = *type_offset;
         write_remoting_arguments(client, indent, func, &type_offset_func, PASS_IN, PHASE_BUFFERSIZE);

@@ -1551,7 +1551,7 @@ static unsigned int get_required_buffer_size_type(
     return 0;
 }
 
-unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment, enum pass pass)
+static unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment, enum pass pass)
 {
     expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
     int has_size = (size_is && (size_is->type != EXPR_VOID));
@@ -1619,6 +1619,28 @@ unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment,
 
         return get_required_buffer_size_type(var->type, var->ptr_level, var->array, var->name, alignment);
     }
+}
+
+static unsigned int get_function_buffer_size( const func_t *func, enum pass pass )
+{
+    const var_t *var;
+    unsigned int total_size = 0, alignment;
+
+    if (func->args)
+    {
+        LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+        {
+            total_size += get_required_buffer_size(var, &alignment, pass);
+            total_size += alignment;
+        }
+    }
+
+    if (pass == PASS_OUT && !is_void(func->def->type, NULL))
+    {
+        total_size += get_required_buffer_size(func->def, &alignment, PASS_RETURN);
+        total_size += alignment;
+    }
+    return total_size;
 }
 
 static void print_phase_function(FILE *file, int indent, const char *type,
@@ -1766,6 +1788,12 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
     if (!func->args)
         return;
+
+    if (phase == PHASE_BUFFERSIZE)
+    {
+        unsigned int size = get_function_buffer_size( func, pass );
+        print_file(file, indent, "_StubMsg.BufferLength = %u;\n", size);
+    }
 
     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {

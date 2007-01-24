@@ -88,7 +88,6 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
     LIST_FOR_EACH_ENTRY( func, iface->funcs, const func_t, entry )
     {
         const var_t *def = func->def;
-        unsigned long buffer_size = 0;
         unsigned int type_offset_func;
 
         /* check for a defined binding handle */
@@ -222,31 +221,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
             fprintf(server, "();\n");
         }
 
-        if (func->args)
-        {
-            LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-            {
-                if (is_attr(var->attrs, ATTR_OUT))
-                {
-                    unsigned int alignment;
-                    buffer_size += get_required_buffer_size(var, &alignment, PASS_OUT);
-                    buffer_size += alignment;
-                }
-            }
-        }
-
-        if (!is_void(def->type, NULL))
-        {
-            unsigned int alignment;
-            buffer_size += get_required_buffer_size(def, &alignment, PASS_RETURN);
-            buffer_size += alignment;
-        }
-
         if (has_out_arg_or_return(func))
         {
-            fprintf(server, "\n");
-            print_server("_StubMsg.BufferLength = %u;\n", buffer_size);
-
             type_offset_func = *type_offset;
             write_remoting_arguments(server, indent, func, &type_offset_func, PASS_OUT, PHASE_BUFFERSIZE);
 
