@@ -2099,6 +2099,108 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
     }
 }
 
+
+void declare_stub_args( FILE *file, int indent, const func_t *func )
+{
+    int in_attr, out_attr;
+    int i = 0;
+    const var_t *def = func->def;
+    const var_t *var;
+
+    /* declare return value '_RetVal' */
+    if (!is_void(def->type, NULL))
+    {
+        print_file(file, indent, "");
+        write_type(file, def->type, def, def->tname);
+        fprintf(file, " _RetVal;\n");
+    }
+
+    if (!func->args)
+        return;
+
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    {
+        const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+        int has_size = size_is && (size_is->type != EXPR_VOID);
+        int is_string = is_attr(var->attrs, ATTR_STRING);
+
+        in_attr = is_attr(var->attrs, ATTR_IN);
+        out_attr = is_attr(var->attrs, ATTR_OUT);
+        if (!out_attr && !in_attr)
+            in_attr = 1;
+
+        if (!in_attr && !has_size && !is_string)
+        {
+            int indirection;
+            print_file(file, indent, "");
+            write_type(file, var->type, NULL, var->tname);
+            for (indirection = 0; indirection < var->ptr_level - 1; indirection++)
+                fprintf(file, "*");
+            fprintf(file, " _W%u;\n", i++);
+        }
+
+        print_file(file, indent, "");
+        write_type(file, var->type, var, var->tname);
+        fprintf(file, " ");
+        write_name(file, var);
+        write_array(file, var->array, 0);
+        fprintf(file, ";\n");
+    }
+}
+
+
+void assign_stub_out_args( FILE *file, int indent, const func_t *func )
+{
+    int in_attr, out_attr;
+    int i = 0, sep = 0;
+    const var_t *var;
+    const expr_t *size_is;
+    int has_size;
+
+    if (!func->args)
+        return;
+
+    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
+    {
+        int is_string = is_attr(var->attrs, ATTR_STRING);
+        size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+        has_size = size_is && (size_is->type != EXPR_VOID);
+        in_attr = is_attr(var->attrs, ATTR_IN);
+        out_attr = is_attr(var->attrs, ATTR_OUT);
+        if (!out_attr && !in_attr)
+            in_attr = 1;
+
+        if (!in_attr)
+        {
+            print_file(file, indent, "");
+            write_name(file, var);
+
+            if (has_size)
+            {
+                unsigned int size;
+                type_t *type = var->type;
+
+                fprintf(file, " = NdrAllocate(&_StubMsg, ");
+                write_expr(file, size_is, 1);
+                size = get_type_memsize(type);
+                fprintf(file, " * %u);\n", size);
+            }
+            else if (!is_string)
+            {
+                fprintf(file, " = &_W%u;\n", i);
+                if (var->ptr_level > 1)
+                    print_file(file, indent, "_W%u = 0;\n", i);
+                i++;
+            }
+
+            sep = 1;
+        }
+    }
+    if (sep)
+        fprintf(file, "\n");
+}
+
+
 int write_expr_eval_routines(FILE *file, const char *iface)
 {
     int result = 0;

@@ -46,5 +46,7 @@ size_t get_size_procformatstring_var(const var_t *var);
 size_t get_size_typeformatstring_var(const var_t *var);
 size_t get_size_procformatstring(const ifref_list_t *ifaces, int for_objects);
 size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects);
+void assign_stub_out_args( FILE *file, int indent, const func_t *func );
+void declare_stub_args( FILE *file, int indent, const func_t *func );
 int write_expr_eval_routines(FILE *file, const char *iface);
 void write_expr_eval_routine_list(FILE *file, const char *iface);

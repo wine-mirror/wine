@@ -76,99 +76,6 @@ static void write_parameters_init(const func_t *func)
 }
 
 
-static void declare_args(const func_t *func)
-{
-    int in_attr, out_attr;
-    int i = 0;
-    const var_t *var;
-
-    if (!func->args)
-        return;
-
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-    {
-        const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-        int has_size = size_is && (size_is->type != EXPR_VOID);
-        int is_string = is_attr(var->attrs, ATTR_STRING);
-
-        in_attr = is_attr(var->attrs, ATTR_IN);
-        out_attr = is_attr(var->attrs, ATTR_OUT);
-        if (!out_attr && !in_attr)
-            in_attr = 1;
-
-        if (!in_attr && !has_size && !is_string)
-        {
-            int indirection;
-            print_server("");
-            write_type(server, var->type, NULL, var->tname);
-            for (indirection = 0; indirection < var->ptr_level - 1; indirection++)
-                fprintf(server, "*");
-            fprintf(server, " _W%u;\n", i++);
-        }
-
-        print_server("");
-        write_type(server, var->type, var, var->tname);
-        fprintf(server, " ");
-        write_name(server, var);
-        write_array(server, var->array, 0);
-        fprintf(server, ";\n");
-    }
-}
-
-
-static void assign_out_args(const func_t *func)
-{
-    int in_attr, out_attr;
-    int i = 0, sep = 0;
-    const var_t *var;
-    const expr_t *size_is;
-    int has_size;
-
-    if (!func->args)
-        return;
-
-    LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-    {
-        int is_string = is_attr(var->attrs, ATTR_STRING);
-        size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-        has_size = size_is && (size_is->type != EXPR_VOID);
-        in_attr = is_attr(var->attrs, ATTR_IN);
-        out_attr = is_attr(var->attrs, ATTR_OUT);
-        if (!out_attr && !in_attr)
-            in_attr = 1;
-
-        if (!in_attr)
-        {
-            print_server("");
-            write_name(server, var);
-
-            if (has_size)
-            {
-                unsigned int size;
-                type_t *type = var->type;
-
-                fprintf(server, " = NdrAllocate(&_StubMsg, ");
-                write_expr(server, size_is, 1);
-                size = get_type_memsize(type);
-                fprintf(server, " * %u);\n", size);
-            }
-            else if (!is_string)
-            {
-                fprintf(server, " = &_W%u;\n", i);
-                if (var->ptr_level > 1)
-                    print_server("_W%u = 0;\n", i);
-                i++;
-            }
-
-            sep = 1;
-        }
-    }
-
-    if (sep)
-        fprintf(server, "\n");
-}
-
-
 static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsigned int *type_offset)
 {
     char *implicit_handle = get_attrp(iface->attrs, ATTR_IMPLICIT_HANDLE);
@@ -215,16 +122,8 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         fprintf(server, "{\n");
         indent++;
 
-        /* declare return value '_RetVal' */
-        if (!is_void(def->type, NULL))
-        {
-            print_server("");
-            write_type(server, def->type, def, def->tname);
-            fprintf(server, " _RetVal;\n");
-        }
-
         /* Declare arguments */
-        declare_args(func);
+        declare_stub_args(server, indent, func);
 
         print_server("MIDL_STUB_MESSAGE _StubMsg;\n");
         print_server("RPC_STATUS _Status;\n");
@@ -291,7 +190,7 @@ static void write_function_stubs(type_t *iface, unsigned int *proc_offset, unsig
         fprintf(server, "\n");
 
         /* Assign 'out' arguments */
-        assign_out_args(func);
+        assign_stub_out_args(server, indent, func);
 
         /* Call the real server function */
         if (!is_void(def->type, NULL))
