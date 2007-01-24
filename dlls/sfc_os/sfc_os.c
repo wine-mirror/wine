@@ -23,6 +23,7 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
+#include "winreg.h"
 #include "sfc.h"
 #include "wine/debug.h"
 
