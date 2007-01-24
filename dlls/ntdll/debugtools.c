@@ -121,7 +121,7 @@ static const char *NTDLL_dbgstr_wn( const WCHAR *src, int n )
 static int NTDLL_dbg_vprintf( const char *format, va_list args )
 {
     struct debug_info *info = get_info();
-    char *p;
+    int end;
 
     int ret = vsnprintf( info->out_pos, sizeof(info->output) - (info->out_pos - info->output),
                          format, args );
@@ -138,16 +138,16 @@ static int NTDLL_dbg_vprintf( const char *format, va_list args )
        abort();
     }
 
-    p = strrchr( info->out_pos, '\n' );
-    if (!p) info->out_pos += ret;
+    for (end = ret; end > 0; end--) if (info->out_pos[end - 1] == '\n') break;
+
+    if (!end) info->out_pos += ret;
     else
     {
         char *pos = info->output;
-        p++;
-        write( 2, pos, p - pos );
+        write( 2, pos, info->out_pos + end - pos );
         /* move beginning of next line to start of buffer */
-        while ((*pos = *p++)) pos++;
-        info->out_pos = pos;
+        memmove( pos, info->out_pos + end, ret - end );
+        info->out_pos = pos + ret - end;
     }
     return ret;
 }
