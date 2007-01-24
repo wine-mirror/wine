@@ -110,7 +110,7 @@ static RPC_STATUS RPCRT4_AllocBinding(RpcBinding** Binding, BOOL server)
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protseq)
+static RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protseq)
 {
   RpcBinding* NewBinding;
 
@@ -123,7 +123,7 @@ RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPSTR Protse
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Protseq)
+static RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Protseq)
 {
   RpcBinding* NewBinding;
 
@@ -136,7 +136,8 @@ RPC_STATUS RPCRT4_CreateBindingW(RpcBinding** Binding, BOOL server, LPWSTR Prots
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPSTR Endpoint,  LPSTR NetworkOptions)
+static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,
+                                          LPSTR Endpoint, LPSTR NetworkOptions)
 {
   TRACE("(RpcBinding == ^%p, NetworkAddr == %s, EndPoint == %s, NetworkOptions == %s)\n", Binding,
    debugstr_a(NetworkAddr), debugstr_a(Endpoint), debugstr_a(NetworkOptions));
@@ -156,7 +157,8 @@ RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPSTR NetworkAddr,  LPST
   return RPC_S_OK;
 }
 
-RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr, LPWSTR Endpoint, LPWSTR NetworkOptions)
+static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPWSTR NetworkAddr,
+                                          LPWSTR Endpoint, LPWSTR NetworkOptions)
 {
   TRACE("(RpcBinding == ^%p, NetworkAddr == %s, EndPoint == %s, NetworkOptions == %s)\n", Binding, 
    debugstr_w(NetworkAddr), debugstr_w(Endpoint), debugstr_w(NetworkOptions));

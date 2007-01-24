@@ -655,8 +655,8 @@ HRESULT WINAPI DllRegisterServer( void )
     return S_OK;
 }
 
-BOOL RPCRT4_StartRPCSS(void)
-{ 
+static BOOL RPCRT4_StartRPCSS(void)
+{
     PROCESS_INFORMATION pi;
     STARTUPINFOA si;
     static char cmd[6];

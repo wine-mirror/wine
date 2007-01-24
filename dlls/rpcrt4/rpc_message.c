@@ -200,7 +200,7 @@ RpcPktHdr *RPCRT4_BuildBindHeader(unsigned long DataRepresentation,
   return header;
 }
 
-RpcPktHdr *RPCRT4_BuildAuthHeader(unsigned long DataRepresentation)
+static RpcPktHdr *RPCRT4_BuildAuthHeader(unsigned long DataRepresentation)
 {
   RpcPktHdr *header;
 
