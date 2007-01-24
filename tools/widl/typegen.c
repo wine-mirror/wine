@@ -283,6 +283,7 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
             const func_t *func;
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
+                if (is_local(func->def->attrs)) continue;
                 /* emit argument data */
                 if (func->args)
                 {
@@ -1473,6 +1474,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
             const func_t *func;
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
+                if (is_local(func->def->attrs)) continue;
                 current_func = func;
                 if (func->args)
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
@@ -2032,6 +2034,7 @@ size_t get_size_typeformatstring(const ifref_list_t *ifaces, int for_objects)
         {
             LIST_FOR_EACH_ENTRY( func, iface->iface->funcs, const func_t, entry )
             {
+                if (is_local(func->def->attrs)) continue;
                 /* argument list size */
                 if (func->args)
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
