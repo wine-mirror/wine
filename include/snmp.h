@@ -289,7 +289,7 @@ DWORD WINAPI SnmpSvcGetUptime(void);
 void WINAPI SnmpSvcSetLogLevel(int nLogLevel);
 void WINAPI SnmpSvcSetLogType(int nLogType);
 
-void WINAPI SnmpUtilDbgPrint(int nLogLevel, LPSTR szFormat, ...);
+void WINAPIV SnmpUtilDbgPrint(int nLogLevel, LPSTR szFormat, ...);
 
 #ifdef __cplusplus
 }

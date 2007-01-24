@@ -20,7 +20,7 @@
 @ stub SnmpUtilAnsiToUnicode
 @ stdcall SnmpUtilAsnAnyCpy(ptr ptr)
 @ stdcall SnmpUtilAsnAnyFree(ptr)
-@ stdcall SnmpUtilDbgPrint(long str)
+@ varargs SnmpUtilDbgPrint(long str)
 @ stdcall SnmpUtilIdsToA(ptr long)
 @ stdcall SnmpUtilMemAlloc(long)
 @ stdcall SnmpUtilMemFree(ptr)

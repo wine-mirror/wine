@@ -136,8 +136,15 @@ BOOL WINAPI DllMain(
 
 /***********************************************************************
  *      SnmpUtilDbgPrint        (SNMPAPI.@)
+ *
+ * NOTES
+ *  The Microsoft headers claim this function uses the stdcall calling
+ *  convention. But stdcall functions cannot take a variable number of
+ *  arguments so this does not make sense. The stdcall specification is
+ *  probably ignored by Microsoft's compiler in this case. So declare it
+ *  correctly in Wine so it works with all compilers.
  */
-void WINAPI SnmpUtilDbgPrint(INT loglevel, LPSTR format, ...)
+void WINAPIV SnmpUtilDbgPrint(INT loglevel, LPSTR format, ...)
 {
     FIXME("(%d, %s)\n", loglevel, debugstr_a(format));
 }
