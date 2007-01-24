@@ -828,6 +828,7 @@ static int encode_type(
 	break;
 
     case VT_CY:
+    case VT_DATE:
 	*encoded_type = default_type;
 	*width = 8;
 	*alignment = 8;
