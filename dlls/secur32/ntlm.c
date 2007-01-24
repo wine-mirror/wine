@@ -332,12 +332,12 @@ static SECURITY_STATUS SEC_ENTRY ntlm_AcquireCredentialsHandleA(
             if(identity->PasswordLength != 0)
             {
                 passwd_sizeW = MultiByteToWideChar(CP_ACP, 0, 
-                    (LPCSTR)identity->Password, identity->PasswordLength+1, 
+                    (LPCSTR)identity->Password, identity->PasswordLength,
                     NULL, 0);
                 passwd = HeapAlloc(GetProcessHeap(), 0, passwd_sizeW
                     * sizeof(SEC_WCHAR));
                 MultiByteToWideChar(CP_ACP, 0, (LPCSTR)identity->Password,
-                    identity->PasswordLength+1, passwd, passwd_sizeW);
+                    identity->PasswordLength, passwd, passwd_sizeW);
             }
             else
             {
