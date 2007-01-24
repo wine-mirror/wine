@@ -186,7 +186,7 @@ void WINAPI _CorImageUnloading(LPCVOID* imageBase)
     TRACE("(%p): stub\n", imageBase);
 }
 
-DWORD _CorValidateImage(LPCVOID* imageBase, LPCWSTR imageName)
+DWORD WINAPI _CorValidateImage(LPCVOID* imageBase, LPCWSTR imageName)
 {
     TRACE("(%p, %s): stub\n", imageBase, debugstr_w(imageName));
     return E_FAIL;
