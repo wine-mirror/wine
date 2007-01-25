@@ -656,6 +656,7 @@ static void test_AccessCheck(void)
     BOOL res;
     HMODULE NtDllModule;
     BOOLEAN Enabled;
+    DWORD err;
 
     NtDllModule = GetModuleHandle("ntdll.dll");
 
@@ -691,8 +692,8 @@ static void test_AccessCheck(void)
     res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_READ, EveryoneSid);
     ok(res, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
 
-    res = AddAccessAllowedAce(Acl, ACL_REVISION, KEY_ALL_ACCESS, AdminSid);
-    ok(res, "AddAccessAllowedAceEx failed with error %d\n", GetLastError());
+    res = AddAccessDeniedAce(Acl, ACL_REVISION, KEY_SET_VALUE, AdminSid);
+    ok(res, "AddAccessDeniedAce failed with error %d\n", GetLastError());
 
     SecurityDescriptor = HeapAlloc(GetProcessHeap(), 0, SECURITY_DESCRIPTOR_MIN_LENGTH);
 
@@ -701,12 +702,6 @@ static void test_AccessCheck(void)
 
     res = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
     ok(res, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
-
-    res = SetSecurityDescriptorOwner(SecurityDescriptor, AdminSid, FALSE);
-    ok(res, "SetSecurityDescriptorOwner failed with error %d\n", GetLastError());
-
-    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, TRUE);
-    ok(res, "SetSecurityDescriptorGroup failed with error %d\n", GetLastError());
 
     PrivSetLen = FIELD_OFFSET(PRIVILEGE_SET, Privilege[16]);
     PrivSet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, PrivSetLen);
@@ -719,6 +714,33 @@ static void test_AccessCheck(void)
     ret = OpenThreadToken(GetCurrentThread(),
                           TOKEN_QUERY, TRUE, &Token);
     ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
+
+    /* SD without owner/group */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0xdeadbeef;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_QUERY_VALUE, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_INVALID_SECURITY_DESCR, "AccessCheck should have "
+       "failed with ERROR_INVALID_SECURITY_DESCR, instead of %d\n", err);
+    ok(Access == 0xdeadbeef && AccessStatus == 0xdeadbeef,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Set owner and group */
+    res = SetSecurityDescriptorOwner(SecurityDescriptor, AdminSid, FALSE);
+    ok(res, "SetSecurityDescriptorOwner failed with error %d\n", GetLastError());
+    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, TRUE);
+    ok(res, "SetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+
+    /* Generic access mask */
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(SecurityDescriptor, Token, GENERIC_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_GENERIC_NOT_MAPPED, "AccessCheck should have failed "
+       "with ERROR_GENERIC_NOT_MAPPED, instead of %d\n", err);
+    ok(Access == 0xdeadbeef && AccessStatus == 0xdeadbeef,
+       "Access and/or AccessStatus were changed!\n");
 
     ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
@@ -734,6 +756,16 @@ static void test_AccessCheck(void)
         "AccessCheck failed to grant any access with error %d\n",
         GetLastError());
     trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08x\n", Access);
+
+    /* Access denied by SD */
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_WRITE, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+    err = GetLastError();
+    ok(!AccessStatus && err == ERROR_ACCESS_DENIED, "AccessCheck should have failed "
+       "with ERROR_ACCESS_DENIED, instead of %d\n", err);
+    ok(!Access, "Should have failed to grant any access, got 0x%08x\n", Access);
 
     SetLastError(0);
     PrivSet->PrivilegeCount = 16;

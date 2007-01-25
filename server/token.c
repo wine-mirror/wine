@@ -838,7 +838,7 @@ static unsigned int token_access_check( struct token *token,
                     if (desired_access & access)
                     {
                         *granted_access = 0;
-                        return STATUS_SUCCESS;
+                        return STATUS_ACCESS_DENIED;
                     }
                 }
             }
