@@ -63,6 +63,28 @@ NTSTATUS WINAPI NtQueryObject(IN HANDLE handle,
 
     switch (info_class)
     {
+    case ObjectBasicInformation:
+        {
+            POBJECT_BASIC_INFORMATION p = (POBJECT_BASIC_INFORMATION)ptr;
+
+            if (len < sizeof(*p)) return STATUS_INVALID_BUFFER_SIZE;
+
+            SERVER_START_REQ( get_object_info )
+            {
+                req->handle = handle;
+                status = wine_server_call( req );
+                if (status == STATUS_SUCCESS)
+                {
+                    memset( p, 0, sizeof(*p) );
+                    p->GrantedAccess = reply->access;
+                    p->PointerCount = reply->ref_count;
+                    p->HandleCount = 1; /* at least one */
+                    if (used_len) *used_len = sizeof(*p);
+                }
+            }
+            SERVER_END_REQ;
+        }
+        break;
     case ObjectDataInformation:
         {
             OBJECT_DATA_INFORMATION* p = (OBJECT_DATA_INFORMATION*)ptr;

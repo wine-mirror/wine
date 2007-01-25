@@ -3424,6 +3424,17 @@ static void dump_query_symlink_reply( const struct query_symlink_reply *req )
     dump_varargs_unicode_str( cur_size );
 }
 
+static void dump_get_object_info_request( const struct get_object_info_request *req )
+{
+    fprintf( stderr, " handle=%p", req->handle );
+}
+
+static void dump_get_object_info_reply( const struct get_object_info_reply *req )
+{
+    fprintf( stderr, " access=%08x,", req->access );
+    fprintf( stderr, " ref_count=%08x", req->ref_count );
+}
+
 static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_new_process_request,
     (dump_func)dump_get_new_process_info_request,
@@ -3639,6 +3650,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_symlink_request,
     (dump_func)dump_open_symlink_request,
     (dump_func)dump_query_symlink_request,
+    (dump_func)dump_get_object_info_request,
 };
 
 static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
@@ -3856,6 +3868,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_symlink_reply,
     (dump_func)dump_open_symlink_reply,
     (dump_func)dump_query_symlink_reply,
+    (dump_func)dump_get_object_info_reply,
 };
 
 static const char * const req_names[REQ_NB_REQUESTS] = {
@@ -4073,6 +4086,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_symlink",
     "open_symlink",
     "query_symlink",
+    "get_object_info",
 };
 
 static const struct
