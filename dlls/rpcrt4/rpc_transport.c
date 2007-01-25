@@ -1336,7 +1336,7 @@ RPC_STATUS RPCRT4_CloseConnection(RpcConnection* Connection)
 
 RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
     LPCSTR Protseq, LPCSTR NetworkAddr, LPCSTR Endpoint,
-    LPCSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS,
+    LPCWSTR NetworkOptions, RpcAuthInfo* AuthInfo, RpcQualityOfService *QOS,
     RpcBinding* Binding)
 {
   const struct connection_ops *ops;
@@ -1355,6 +1355,7 @@ RPC_STATUS RPCRT4_CreateConnection(RpcConnection** Connection, BOOL server,
   NewConnection->ops = ops;
   NewConnection->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
   NewConnection->Endpoint = RPCRT4_strdupA(Endpoint);
+  NewConnection->NetworkOptions = RPCRT4_strdupW(NetworkOptions);
   NewConnection->Used = Binding;
   NewConnection->MaxTransmissionSize = RPC_MAX_PACKET_SIZE;
   memset(&NewConnection->ActiveInterface, 0, sizeof(NewConnection->ActiveInterface));
@@ -1430,6 +1431,7 @@ RPC_STATUS RPCRT4_DestroyConnection(RpcConnection* Connection)
   RPCRT4_CloseConnection(Connection);
   RPCRT4_strfree(Connection->Endpoint);
   RPCRT4_strfree(Connection->NetworkAddr);
+  HeapFree(GetProcessHeap(), 0, Connection->NetworkOptions);
   if (Connection->AuthInfo) RpcAuthInfo_Release(Connection->AuthInfo);
   if (Connection->QOS) RpcQualityOfService_Release(Connection->QOS);
   HeapFree(GetProcessHeap(), 0, Connection);
