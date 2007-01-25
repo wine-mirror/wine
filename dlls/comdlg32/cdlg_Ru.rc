@@ -399,14 +399,14 @@ STRINGTABLE DISCARDABLE
     PD32_TOO_LARGE_COPIES                 "Такое большое количество копий не \
 может быть напечатано Вашим принтером.\nВведите значение между 1 и %d"
     PD32_PRINT_ERROR                      "Произошла ошибка принтера"
-    PD32_NO_DEFAULT_PRINTER               "Нет принтера, устаовленного по умолчанию"
+    PD32_NO_DEFAULT_PRINTER               "Нет принтера, установленного по умолчанию"
     PD32_CANT_FIND_PRINTER                "Не удалось найти принтер"
     PD32_OUT_OF_MEMORY                    "Мало памяти"
     PD32_GENERIC_ERROR                    "Произошла(и) ошибка(и)"
     PD32_DRIVER_UNKNOWN                   "Неизвестный драйвер принтера"
-    PD32_NO_DEVICES                       "Before you can perform printer-related tasks \
-such as page setup or printing a document, you need to install a printer. \
-Please install one and retry."
+    PD32_NO_DEVICES                       "Отсутствуют принтеры в системе. \
+Проверьте, что хотя бы один принтер установлен и система печати запущена. \
+"
 
     PD32_DEFAULT_PRINTER                  "Принтер по умолчанию; "
     PD32_NR_OF_DOCUMENTS_IN_QUEUE         "%d документов в очереди"
@@ -440,4 +440,34 @@ Please install one and retry."
     PD32_PRINTER_STATUS_DOOR_OPEN         "Крышка принтера открыта; "
     PD32_PRINTER_STATUS_SERVER_UNKNOWN    "Неизвестный сервер принтера; "
     PD32_PRINTER_STATUS_POWER_SAVE        "Питание в безопасном режиме; "
+}
+
+STRINGTABLE DISCARDABLE /* Color names */
+{
+    IDS_COLOR_BLACK     "Чёрный"
+    IDS_COLOR_MAROON    "Тёмно-бордовый"
+    IDS_COLOR_GREEN     "Зелёный"
+    IDS_COLOR_OLIVE     "Оливковый"
+    IDS_COLOR_NAVY      "Тёмно-синий"
+    IDS_COLOR_PURPLE    "Пурпурный"
+    IDS_COLOR_TEAL      "Морской волны"
+    IDS_COLOR_GRAY      "Серый"
+    IDS_COLOR_SILVER    "Серебряный"
+    IDS_COLOR_RED       "Красный"
+    IDS_COLOR_LIME      "Лимонный"
+    IDS_COLOR_YELLOW    "Жёлтый"
+    IDS_COLOR_BLUE      "Синий"
+    IDS_COLOR_FUCHSIA   "Ярко-розовый"
+    IDS_COLOR_AQUA      "Голубой"
+    IDS_COLOR_WHITE     "Белый"
+}
+
+STRINGTABLE DISCARDABLE
+{
+    IDS_FONT_SIZE   "Выберите шрифт размером %d - %d пунктов."
+    IDS_SAVE_BUTTON "&Сохранить"
+    IDS_SAVE_IN     "Сохранить &в:"
+    IDS_SAVE        "Сохранить"
+    IDS_SAVE_AS     "Сохранить как"
+    IDS_OPEN_FILE   "Открыть файл"
 }
