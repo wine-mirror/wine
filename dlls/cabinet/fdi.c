@@ -865,8 +865,21 @@ static int QTMfdi_init(int window, int level, fdi_decomp_state *decomp_state) {
  * LZXfdi_init (internal)
  */
 static int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
+  static const cab_UBYTE bits[]  =
+                        { 0,  0,  0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,
+                          7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13, 14, 14,
+                         15, 15, 16, 16, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,
+                         17, 17, 17};
+  static const cab_ULONG base[] =
+                {      0,       1,       2,       3,       4,       6,       8,      12,
+                      16,      24,      32,      48,      64,      96,     128,     192,
+                     256,     384,     512,     768,    1024,    1536,    2048,    3072,
+                    4096,    6144,    8192,   12288,   16384,   24576,   32768,   49152,
+                   65536,   98304,  131072,  196608,  262144,  393216,  524288,  655360,
+                  786432,  917504, 1048576, 1179648, 1310720, 1441792, 1572864, 1703936,
+                 1835008, 1966080, 2097152};
   cab_ULONG wndsize = 1 << window;
-  int i, j, posn_slots;
+  int posn_slots;
 
   /* LZX supports window sizes of 2^15 (32Kb) through 2^21 (2Mb) */
   /* if a previously allocated window is big enough, keep it     */
@@ -882,14 +895,8 @@ static int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   LZX(window_size) = wndsize;
 
   /* initialize static tables */
-  for (i=0, j=0; i <= 50; i += 2) {
-    CAB(extra_bits)[i] = CAB(extra_bits)[i+1] = j; /* 0,0,0,0,1,1,2,2,3,3... */
-    if ((i != 0) && (j < 17)) j++; /* 0,0,1,2,3,4...15,16,17,17,17,17... */
-  }
-  for (i=0, j=0; i <= 50; i++) {
-    CAB(lzx_position_base)[i] = j; /* 0,1,2,3,4,6,8,12,16,24,32,... */
-    j += 1 << CAB(extra_bits)[i]; /* 1,1,1,1,2,2,4,4,8,8,16,16,32,32,... */
-  }
+  memcpy(CAB(extra_bits), bits, sizeof(bits));
+  memcpy(CAB(lzx_position_base), base, sizeof(base));
 
   /* calculate required position slots */
        if (window == 20) posn_slots = 42;
@@ -909,8 +916,8 @@ static int LZXfdi_init(int window, fdi_decomp_state *decomp_state) {
   LZX(window_posn)     = 0;
 
   /* initialize tables to 0 (because deltas will be applied to them) */
-  for (i = 0; i < LZX_MAINTREE_MAXSYMBOLS; i++) LZX(MAINTREE_len)[i] = 0;
-  for (i = 0; i < LZX_LENGTH_MAXSYMBOLS; i++)   LZX(LENGTH_len)[i]   = 0;
+  memset(LZX(MAINTREE_len), 0, sizeof(LZX(MAINTREE_len)));
+  memset(LZX(LENGTH_len), 0, sizeof(LZX(LENGTH_len)));
 
   return DECR_OK;
 }
