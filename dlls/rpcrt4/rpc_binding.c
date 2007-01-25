@@ -57,7 +57,7 @@ LPSTR RPCRT4_strndupA(LPCSTR src, INT slen)
   return s;
 }
 
-LPSTR RPCRT4_strdupWtoA(LPWSTR src)
+LPSTR RPCRT4_strdupWtoA(LPCWSTR src)
 {
   DWORD len;
   LPSTR s;
@@ -68,7 +68,7 @@ LPSTR RPCRT4_strdupWtoA(LPWSTR src)
   return s;
 }
 
-LPWSTR RPCRT4_strdupAtoW(LPSTR src)
+LPWSTR RPCRT4_strdupAtoW(LPCSTR src)
 {
   DWORD len;
   LPWSTR s;

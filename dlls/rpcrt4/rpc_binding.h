@@ -105,8 +105,8 @@ typedef struct _RpcBinding
 
 LPSTR RPCRT4_strndupA(LPCSTR src, INT len);
 LPWSTR RPCRT4_strndupW(LPCWSTR src, INT len);
-LPSTR RPCRT4_strdupWtoA(LPWSTR src);
-LPWSTR RPCRT4_strdupAtoW(LPSTR src);
+LPSTR RPCRT4_strdupWtoA(LPCWSTR src);
+LPWSTR RPCRT4_strdupAtoW(LPCSTR src);
 void RPCRT4_strfree(LPSTR src);
 
 #define RPCRT4_strdupA(x) RPCRT4_strndupA((x),-1)
