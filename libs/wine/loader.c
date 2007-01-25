@@ -59,10 +59,10 @@ char **__wine_main_environ = NULL;
 
 struct dll_path_context
 {
-    int   index;    /* current index in the dll path list */
-    char *buffer;   /* buffer used for storing path names */
-    char *name;     /* start of file name part in buffer (including leading slash) */
-    int   namelen;  /* length of file name without .so extension */
+    unsigned int index; /* current index in the dll path list */
+    char *buffer;       /* buffer used for storing path names */
+    char *name;         /* start of file name part in buffer (including leading slash) */
+    int   namelen;      /* length of file name without .so extension */
 };
 
 #define MAX_DLLS 100
@@ -82,7 +82,7 @@ static load_dll_callback_t load_dll_callback;
 static const char *build_dir;
 static const char *default_dlldir;
 static const char **dll_paths;
-static int nb_dll_paths;
+static unsigned int nb_dll_paths;
 static int dll_path_maxlen;
 
 extern void mmap_init(void);
@@ -162,7 +162,7 @@ inline static char *prepend( char *buffer, const char *str, size_t len )
 /* get a filename from the next entry in the dll path */
 static char *next_dll_path( struct dll_path_context *context )
 {
-    int index = context->index++;
+    unsigned int index = context->index++;
     int namelen = context->namelen;
     char *path = context->name;
 
@@ -331,7 +331,8 @@ static void *map_dll( const IMAGE_NT_HEADERS *nt_descr )
     DWORD code_start, data_start, data_end;
     const size_t page_size = getpagesize();
     const size_t page_mask = page_size - 1;
-    int i, delta, nb_sections = 2;  /* code + data */
+    int delta, nb_sections = 2;  /* code + data */
+    unsigned int i;
 
     size_t size = (sizeof(IMAGE_DOS_HEADER)
                    + sizeof(IMAGE_NT_HEADERS)

@@ -49,7 +49,7 @@ struct reserved_area
 };
 
 static struct list reserved_areas = LIST_INIT(reserved_areas);
-static const int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
+static const unsigned int granularity_mask = 0xffff;  /* reserved areas have 64k granularity */
 
 #ifdef HAVE_MMAP
 
