@@ -224,7 +224,7 @@ BOOL WINAPI SnmpExtensionTrap(AsnObjectIdentifier *pEnterpriseOid,
  AsnInteger32 *pGenericTrapId, AsnInteger32 *pSpecificTrapId,
  AsnTimeticks *pTimeStamp, SnmpVarBindList *pVarBindList);
 
-void WINAPI SnmpExtensionClose(void);
+VOID WINAPI SnmpExtensionClose(VOID);
 
 typedef BOOL (WINAPI *PFNSNMPEXTENSIONINIT)(DWORD dwUptimeReference,
  HANDLE *phSubagentTrapEvent, AsnObjectIdentifier *pFirstSupportedRegion);
@@ -245,51 +245,51 @@ typedef BOOL (WINAPI *PFNSNMPEXTENSIONTRAP)(AsnObjectIdentifier *pEnterpriseOid,
  AsnInteger32 *pGenericTrapId, AsnInteger32 *pSpecificTrapId,
  AsnTimeticks *pTimeStamp, SnmpVarBindList *pVarBindList);
 
-typedef void (WINAPI *PFNSNMPEXTENSIONCLOSE)(void);
+typedef VOID (WINAPI *PFNSNMPEXTENSIONCLOSE)(VOID);
 
-int WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *pOidDst,
+INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *pOidDst,
  AsnObjectIdentifier *pOidSrc);
-int WINAPI SnmpUtilOidAppend(AsnObjectIdentifier *pOidDst,
+INT WINAPI SnmpUtilOidAppend(AsnObjectIdentifier *pOidDst,
  AsnObjectIdentifier *pOidSrc);
-int WINAPI SnmpUtilOidCmp(AsnObjectIdentifier *pOid1,
+INT WINAPI SnmpUtilOidCmp(AsnObjectIdentifier *pOid1,
  AsnObjectIdentifier *pOid2);
-int WINAPI SnmpUtilOidNCmp(AsnObjectIdentifier *pOid1,
+INT WINAPI SnmpUtilOidNCmp(AsnObjectIdentifier *pOid1,
  AsnObjectIdentifier *pOid2, UINT nSubIds);
-void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *pOid);
+VOID WINAPI SnmpUtilOidFree(AsnObjectIdentifier *pOid);
 
-int WINAPI SnmpUtilOctetsCmp(AsnOctetString *pOctets1,
+INT WINAPI SnmpUtilOctetsCmp(AsnOctetString *pOctets1,
  AsnOctetString *pOctets2);
-int WINAPI SnmpUtilOctetsNCmp(AsnOctetString *pOctets1,
+INT WINAPI SnmpUtilOctetsNCmp(AsnOctetString *pOctets1,
  AsnOctetString *pOctets2, UINT nChars);
-int WINAPI SnmpUtilOctetsCpy(AsnOctetString *pOctetsDst,
+INT WINAPI SnmpUtilOctetsCpy(AsnOctetString *pOctetsDst,
  AsnOctetString *pOctetsSrc);
-void WINAPI SnmpUtilOctetsFree(AsnOctetString *pOctets);
+VOID WINAPI SnmpUtilOctetsFree(AsnOctetString *pOctets);
 
-int WINAPI SnmpUtilAsnAnyCpy(AsnAny *pAnyDst, AsnAny *pAnySrc);
-void WINAPI SnmpUtilAsnAnyFree(AsnAny *pAny);
+INT WINAPI SnmpUtilAsnAnyCpy(AsnAny *pAnyDst, AsnAny *pAnySrc);
+VOID WINAPI SnmpUtilAsnAnyFree(AsnAny *pAny);
 
-int WINAPI SnmpUtilVarBindCpy(SnmpVarBind *pVbDst, SnmpVarBind *pVbSrc);
-void WINAPI SnmpUtilVarBindFree(SnmpVarBind *pVb);
+INT WINAPI SnmpUtilVarBindCpy(SnmpVarBind *pVbDst, SnmpVarBind *pVbSrc);
+VOID WINAPI SnmpUtilVarBindFree(SnmpVarBind *pVb);
 
-int WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *pVblDst,
+INT WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *pVblDst,
  SnmpVarBindList *pVblSrc);
-void WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *pVbl);
+VOID WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *pVbl);
 
 LPVOID WINAPI SnmpUtilMemAlloc(UINT nBytes);
 LPVOID WINAPI SnmpUtilMemReAlloc(LPVOID pMem, UINT nBytes);
-void WINAPI SnmpUtilMemFree(LPVOID pMem);
+VOID WINAPI SnmpUtilMemFree(LPVOID pMem);
 
 LPSTR WINAPI SnmpUtilOidToA(AsnObjectIdentifier *Oid);
 LPSTR WINAPI SnmpUtilIdsToA(UINT *Ids, UINT IdLength);
 
-void WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *Oid);
-void WINAPI SnmpUtilPrintAsnAny(AsnAny *pAny);
+VOID WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *Oid);
+VOID WINAPI SnmpUtilPrintAsnAny(AsnAny *pAny);
 
-DWORD WINAPI SnmpSvcGetUptime(void);
-void WINAPI SnmpSvcSetLogLevel(int nLogLevel);
-void WINAPI SnmpSvcSetLogType(int nLogType);
+DWORD WINAPI SnmpSvcGetUptime(VOID);
+VOID WINAPI SnmpSvcSetLogLevel(INT nLogLevel);
+VOID WINAPI SnmpSvcSetLogType(INT nLogType);
 
-void WINAPIV SnmpUtilDbgPrint(int nLogLevel, LPSTR szFormat, ...);
+VOID WINAPIV SnmpUtilDbgPrint(INT nLogLevel, LPSTR szFormat, ...);
 
 #ifdef __cplusplus
 }

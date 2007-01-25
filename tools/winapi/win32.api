@@ -4153,6 +4153,31 @@ void
 LPCWSTR
 LPWSTR
 
+%%snmpapi.dll
+
+%void
+
+VOID
+
+%long
+
+INT
+UINT
+
+%str
+
+LPSTR
+
+%ptr
+
+AsnAny *
+AsnObjectIdentifier *
+AsnOctetString *
+LPVOID
+SnmpVarBind *
+SnmpVarBindList *
+UINT *
+
 %%sti.dll
 
 %long

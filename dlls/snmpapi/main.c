@@ -144,7 +144,7 @@ BOOL WINAPI DllMain(
  *  probably ignored by Microsoft's compiler in this case. So declare it
  *  correctly in Wine so it works with all compilers.
  */
-void WINAPIV SnmpUtilDbgPrint(INT loglevel, LPSTR format, ...)
+VOID WINAPIV SnmpUtilDbgPrint(INT loglevel, LPSTR format, ...)
 {
     FIXME("(%d, %s)\n", loglevel, debugstr_a(format));
 }
@@ -170,7 +170,7 @@ LPVOID WINAPI SnmpUtilMemReAlloc(LPVOID mem, UINT nbytes)
 /***********************************************************************
  *      SnmpUtilMemFree         (SNMPAPI.@)
  */
-void WINAPI SnmpUtilMemFree(LPVOID mem)
+VOID WINAPI SnmpUtilMemFree(LPVOID mem)
 {
     TRACE("(%p)\n", mem);
     HeapFree(GetProcessHeap(), 0, mem);
@@ -188,7 +188,7 @@ INT WINAPI SnmpUtilAsnAnyCpy(AsnAny *dst, AsnAny *src)
 /***********************************************************************
  *      SnmpUtilAsnAnyFree      (SNMPAPI.@)
  */
-void WINAPI SnmpUtilAsnAnyFree(AsnAny *any)
+VOID WINAPI SnmpUtilAsnAnyFree(AsnAny *any)
 {
     TRACE("(%p)\n", any);
     asn_any_free(any);
@@ -224,7 +224,7 @@ INT WINAPI SnmpUtilOctetsCpy(AsnOctetString *dst, AsnOctetString *src)
 /***********************************************************************
  *      SnmpUtilOctetsFree      (SNMPAPI.@)
  */
-void WINAPI SnmpUtilOctetsFree(AsnOctetString *octets)
+VOID WINAPI SnmpUtilOctetsFree(AsnOctetString *octets)
 {
     TRACE("(%p)\n", octets);
 
@@ -326,7 +326,7 @@ INT WINAPI SnmpUtilOidCpy(AsnObjectIdentifier *dst, AsnObjectIdentifier *src)
 /***********************************************************************
  *      SnmpUtilOidFree         (SNMPAPI.@)
  */
-void WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
+VOID WINAPI SnmpUtilOidFree(AsnObjectIdentifier *oid)
 {
     TRACE("(%p)\n", oid);
 
@@ -402,7 +402,7 @@ INT WINAPI SnmpUtilVarBindCpy(SnmpVarBind *dst, SnmpVarBind *src)
 /***********************************************************************
  *      SnmpUtilVarBindFree     (SNMPAPI.@)
  */
-void WINAPI SnmpUtilVarBindFree(SnmpVarBind *vb)
+VOID WINAPI SnmpUtilVarBindFree(SnmpVarBind *vb)
 {
     TRACE("(%p)\n", vb);
 
@@ -459,7 +459,7 @@ INT WINAPI SnmpUtilVarBindListCpy(SnmpVarBindList *dst, SnmpVarBindList *src)
 /***********************************************************************
  *      SnmpUtilVarBindListFree (SNMPAPI.@)
  */
-void WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *vb)
+VOID WINAPI SnmpUtilVarBindListFree(SnmpVarBindList *vb)
 {
     unsigned int i;
     SnmpVarBind *entry;
@@ -528,7 +528,7 @@ LPSTR WINAPI SnmpUtilOidToA(AsnObjectIdentifier *oid)
 /***********************************************************************
  *      SnmpUtilPrintOid        (SNMPAPI.@)
  */
-void WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *oid)
+VOID WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *oid)
 {
     unsigned int i;
 
@@ -547,7 +547,7 @@ void WINAPI SnmpUtilPrintOid(AsnObjectIdentifier *oid)
 /***********************************************************************
  *      SnmpUtilPrintAsnAny     (SNMPAPI.@)
  */
-void WINAPI SnmpUtilPrintAsnAny(AsnAny *any)
+VOID WINAPI SnmpUtilPrintAsnAny(AsnAny *any)
 {
     unsigned int i;
 
