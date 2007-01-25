@@ -305,7 +305,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     }
 
     WineGLInfo.glVersion = (const char *) pglGetString(GL_VERSION);
-    WineGLInfo.glExtensions = (const char *) pglGetString(GL_EXTENSIONS);
+    WineGLInfo.glExtensions = strdup((const char *) pglGetString(GL_EXTENSIONS));
 
     /* Get the common GLX version supported by GLX client and server ( major/minor) */
     pglXQueryVersion(gdi_display, &WineGLInfo.glxVersion[0], &WineGLInfo.glxVersion[1]);
