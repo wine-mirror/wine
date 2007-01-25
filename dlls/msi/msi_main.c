@@ -59,7 +59,7 @@ static void UnlockModule(void)
 }
 
 /******************************************************************
- *    	DllMain
+ *      DllMain
  */
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -78,8 +78,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-typedef struct tagIClassFactoryImpl
-{
+typedef struct tagIClassFactoryImpl {
     const IClassFactoryVtbl *lpVtbl;
 } IClassFactoryImpl;
 
@@ -87,7 +86,16 @@ static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,
                 REFIID riid,LPVOID *ppobj)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
-    FIXME("%p %s %p\n",This,debugstr_guid(riid),ppobj);
+
+    TRACE("%p %s %p\n",This,debugstr_guid(riid),ppobj);
+
+    if( IsEqualCLSID( riid, &IID_IUnknown ) ||
+        IsEqualCLSID( riid, &IID_IClassFactory ) )
+    {
+        IClassFactory_AddRef( iface );
+        *ppobj = iface;
+        return S_OK;
+    }
     return E_NOINTERFACE;
 }
 
