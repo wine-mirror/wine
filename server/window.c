@@ -1037,6 +1037,20 @@ static void validate_whole_window( struct window *win )
 }
 
 
+/* validate a window's children so that we don't get any further paint messages for it */
+static void validate_children( struct window *win )
+{
+    struct window *child;
+
+    LIST_FOR_EACH_ENTRY( child, &win->children, struct window, entry )
+    {
+        if (!(child->style & WS_VISIBLE)) continue;
+        validate_children(child);
+        validate_whole_window(child);
+    }
+}
+
+
 /* validate the update region of a window on all parents; helper for redraw_window */
 static void validate_parents( struct window *child )
 {
@@ -1370,6 +1384,7 @@ static void set_window_pos( struct window *win, struct window *previous,
     {
         /* clear the update region since the window is no longer visible */
         validate_whole_window( win );
+        validate_children( win );
         goto done;
     }
 
