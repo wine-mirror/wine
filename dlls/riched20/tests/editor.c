@@ -1462,6 +1462,106 @@ static void test_WM_PASTE(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static int nCallbackCount = 0;
+
+static DWORD CALLBACK EditStreamCallback(DWORD_PTR dwCookie, LPBYTE pbBuff,
+				 LONG cb, LONG* pcb)
+{
+  const char text[] = {'t','e','s','t'};
+
+  if (sizeof(text) <= cb)
+  {
+    if ((int)dwCookie != nCallbackCount)
+    {
+      *pcb = 0;
+      return 0;
+    }
+
+    memcpy (pbBuff, text, sizeof(text));
+    *pcb = sizeof(text);
+
+    nCallbackCount++;
+
+    return 0;
+  }
+  else
+    return 1; /* indicates callback failed */
+}
+
+static void test_EM_StreamIn_Undo(void)
+{
+  /* The purpose of this test is to determine when a EM_StreamIn should be
+   * undoable. This is important because WM_PASTE currently uses StreamIn and
+   * pasting should always be undoable but streaming isn't always.
+   *
+   * cases to test:
+   * StreamIn plain text without SFF_SELECTION.
+   * StreamIn plain text with SFF_SELECTION set but a zero-length selection
+   * StreamIn plain text with SFF_SELECTION and a valid, normal selection
+   * StreamIn plain text with SFF_SELECTION and a backwards-selection (from>to)
+   * Feel free to add tests for other text modes or StreamIn things.
+   */
+
+
+  HWND hwndRichEdit = new_richedit(NULL);
+  LRESULT result;
+  EDITSTREAM es;
+  char buffer[1024] = {0};
+  const char randomtext[] = "Some text";
+
+  es.pfnCallback = (EDITSTREAMCALLBACK) EditStreamCallback;
+
+  /* StreamIn, no SFF_SELECTION */
+  es.dwCookie = nCallbackCount;
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) randomtext);
+  SendMessage(hwndRichEdit, EM_SETSEL,0,0);
+  SendMessage(hwndRichEdit, EM_STREAMIN, (WPARAM)SF_TEXT, (LPARAM)&es);
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  result = strcmp (buffer,"test");
+  ok (result  == 0,
+      "EM_STREAMIN: Test 1 set wrong text: Result: %s\n",buffer);
+
+  result = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  ok (result == FALSE,
+      "EM_STREAMIN without SFF_SELECTION wrongly allows undo\n");
+
+  /* StreamIn, SFF_SELECTION, but nothing selected */
+  es.dwCookie = nCallbackCount;
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) randomtext);
+  SendMessage(hwndRichEdit, EM_SETSEL,0,0);
+  SendMessage(hwndRichEdit, EM_STREAMIN,
+	      (WPARAM)(SF_TEXT|SFF_SELECTION), (LPARAM)&es);
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  result = strcmp (buffer,"testSome text");
+  ok (result  == 0,
+      "EM_STREAMIN: Test 2 set wrong text: Result: %s\n",buffer);
+
+  result = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  ok (result == TRUE,
+     "EM_STREAMIN with SFF_SELECTION but no selection set "
+      "should create an undo\n");
+
+  /* StreamIn, SFF_SELECTION, with a selection */
+  es.dwCookie = nCallbackCount;
+  SendMessage(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
+  SendMessage(hwndRichEdit, WM_SETTEXT, 0, (LPARAM) randomtext);
+  SendMessage(hwndRichEdit, EM_SETSEL,4,5);
+  SendMessage(hwndRichEdit, EM_STREAMIN,
+	      (WPARAM)(SF_TEXT|SFF_SELECTION), (LPARAM)&es);
+  SendMessage(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM) buffer);
+  result = strcmp (buffer,"Sometesttext");
+  ok (result  == 0,
+      "EM_STREAMIN: Test 2 set wrong text: Result: %s\n",buffer);
+
+  result = SendMessage(hwndRichEdit, EM_CANUNDO, 0, 0);
+  ok (result == TRUE,
+      "EM_STREAMIN with SFF_SELECTION and selection set "
+      "should create an undo\n");
+
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1490,6 +1590,7 @@ START_TEST( editor )
   test_EM_GETMODIFY();
   test_EM_EXSETSEL();
   test_WM_PASTE();
+  test_EM_StreamIn_Undo();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

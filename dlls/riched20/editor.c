@@ -597,7 +597,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
 {
   RTF_Info parser;
   ME_Style *style;
-  int from, to, to2;
+  int from, to, to2, nUndoMode;
   int nEventMask = editor->nEventMask;
   ME_InStream inStream;
 
@@ -619,7 +619,15 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
     ME_ClearTempStyle(editor);
     /* FIXME restore default paragraph formatting ! */
   }
-  
+
+
+  /* Back up undo mode to a local variable */
+  nUndoMode = editor->nUndoMode;
+
+  /* Only create an undo if SFF_SELECTION is set */
+  if (!(format & SFF_SELECTION))
+    editor->nUndoMode = umIgnore;
+
   inStream.editstream = stream;
   inStream.editstream->dwError = 0;
   inStream.dwSize = 0;
@@ -671,17 +679,17 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       SendMessageA(editor->hWnd, EM_SETSEL, 0, 0);
   }
 
-  if (format & SFF_SELECTION)
-  {
-    /* even if we didn't add an undo, we need to commit the ones added earlier */
-    ME_CommitUndo(editor);
-  }
-  else
-  {
-    ME_EmptyUndoStack(editor);
-  }
+  /* Restore saved undo mode */
+  editor->nUndoMode = nUndoMode;
 
-  ME_ReleaseStyle(style); 
+  /* even if we didn't add an undo, we need to commit anything on the stack */
+  ME_CommitUndo(editor);
+
+  /* If SFF_SELECTION isn't set, delete any undos from before we started too */
+  if (!(format & SFF_SELECTION))
+    ME_EmptyUndoStack(editor);
+
+  ME_ReleaseStyle(style);
   editor->nEventMask = nEventMask;
   if (editor->bRedraw)
   {
