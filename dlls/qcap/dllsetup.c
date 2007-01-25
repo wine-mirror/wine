@@ -94,7 +94,7 @@ static HRESULT SetupRegisterClass(HKEY clsid, LPCWSTR szCLSID,
                                   LPCWSTR szServerType,
                                   LPCWSTR szThreadingModel)
 {
-    HKEY hkey, hsubkey;
+    HKEY hkey, hsubkey = NULL;
     LONG ret = RegCreateKeyW(clsid, szCLSID, &hkey);
     if (ERROR_SUCCESS != ret)
         return HRESULT_FROM_WIN32(ret);
