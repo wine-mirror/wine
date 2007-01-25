@@ -4,10 +4,12 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 TESTDLL   = msi.dll
 IMPORTS   = cabinet msi shell32 ole32 advapi32 kernel32
+EXTRALIBS = -luuid
 
 CTESTS = \
 	db.c \
 	format.c \
+	iface.c \
 	install.c \
 	msi.c \
 	package.c \
