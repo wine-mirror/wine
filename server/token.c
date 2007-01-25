@@ -424,6 +424,7 @@ static struct token *create_token( unsigned primary, const SID *user,
         list_init( &token->privileges );
         list_init( &token->groups );
         token->primary = primary;
+        token->default_dacl = NULL;
 
         /* copy user */
         token->user = memdup( user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
@@ -477,8 +478,6 @@ static struct token *create_token( unsigned primary, const SID *user,
                 return NULL;
             }
         }
-        else
-            token->default_dacl = NULL;
 
         token->source = source;
     }
