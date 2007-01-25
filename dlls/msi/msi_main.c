@@ -80,7 +80,14 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 
 typedef struct tagIClassFactoryImpl {
     const IClassFactoryVtbl *lpVtbl;
+    HRESULT (*create_object)( IUnknown*, LPVOID* );
 } IClassFactoryImpl;
+
+static HRESULT create_msiserver( IUnknown *pOuter, LPVOID *ppObj )
+{
+    FIXME("\n");
+    return E_FAIL;
+}
 
 static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,
                 REFIID riid,LPVOID *ppobj)
@@ -115,9 +122,18 @@ static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface,
     LPUNKNOWN pOuter, REFIID riid, LPVOID *ppobj)
 {
     IClassFactoryImpl *This = (IClassFactoryImpl *)iface;
+    IUnknown *unk = NULL;
+    HRESULT r;
 
-    FIXME("%p %p %s %p\n", This, pOuter, debugstr_guid(riid), ppobj);
-    return E_FAIL;
+    TRACE("%p %p %s %p\n", This, pOuter, debugstr_guid(riid), ppobj);
+
+    r = This->create_object( pOuter, ppobj );
+    if (SUCCEEDED(r))
+    {
+        r = IUnknown_QueryInterface( unk, riid, ppobj );
+        IUnknown_Release( unk );
+    }
+    return r;
 }
 
 static HRESULT WINAPI MsiCF_LockServer(LPCLASSFACTORY iface, BOOL dolock)
@@ -141,7 +157,7 @@ static const IClassFactoryVtbl MsiCF_Vtbl =
     MsiCF_LockServer
 };
 
-static IClassFactoryImpl Msi_CF = { &MsiCF_Vtbl };
+static IClassFactoryImpl MsiServer_CF = { &MsiCF_Vtbl, create_msiserver };
 
 /******************************************************************
  * DllGetClassObject          [MSI.@]
@@ -150,15 +166,20 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
 {
     TRACE("%s %s %p\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if( IsEqualCLSID (rclsid, &CLSID_IMsiServer) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerMessage) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX1) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX2) ||
-        IsEqualCLSID (rclsid, &CLSID_IMsiServerX3) )
+    if ( IsEqualCLSID (rclsid, &CLSID_IMsiServerX2) )
     {
-        *ppv = (LPVOID) &Msi_CF;
+        *ppv = (LPVOID) &MsiServer_CF;
         return S_OK;
     }
+
+    if( IsEqualCLSID (rclsid, &CLSID_IMsiServerMessage) ||
+        IsEqualCLSID (rclsid, &CLSID_IMsiServer) ||
+        IsEqualCLSID (rclsid, &CLSID_IMsiServerX1) ||
+        IsEqualCLSID (rclsid, &CLSID_IMsiServerX3) )
+    {
+        FIXME("create %s object\n", debugstr_guid( rclsid ));
+    }
+
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
