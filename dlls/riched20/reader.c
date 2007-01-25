@@ -111,8 +111,6 @@ int _RTFGetChar(RTF_Info *info)
 	int ch;
         ME_InStream *stream = info->stream;
 
-	TRACE("\n");
-
 	if (stream->dwSize <= stream->dwUsed)
 	{
                 ME_StreamInFill(stream);
@@ -131,8 +129,6 @@ int _RTFGetChar(RTF_Info *info)
 
 void RTFSetEditStream(RTF_Info *info, ME_InStream *stream)
 {
-	TRACE("\n");
-
         info->stream = stream;
 }
 
@@ -198,8 +194,6 @@ void RTFInit(RTF_Info *info)
 {
 	int	i;
 
-	TRACE("\n");
-
 	if (info->rtfTextBuf == NULL)	/* initialize the text buffers */
 	{
 		info->rtfTextBuf = RTFAlloc (rtfBufSiz);
@@ -262,8 +256,6 @@ void RTFInit(RTF_Info *info)
 
 void RTFSetInputName(RTF_Info *info, char *name)
 {
-	TRACE("\n");
-
 	info->inputName = RTFStrSave (name);
 	if (info->inputName == NULL)
 		ERR ("RTFSetInputName: out of memory\n");
@@ -278,8 +270,6 @@ char *RTFGetInputName(RTF_Info *info)
 
 void RTFSetOutputName(RTF_Info *info, char *name)
 {
-	TRACE("\n");
-
 	info->outputName = RTFStrSave (name);
 	if (info->outputName == NULL)
 		ERR ("RTFSetOutputName: out of memory\n");
@@ -367,8 +357,6 @@ void RTFRouteToken(RTF_Info *info)
 {
 	RTFFuncPtr	p;
 
-	TRACE("\n");
-
 	if (info->rtfClass < 0 || info->rtfClass >= rtfMaxClass)	/* watchdog */
 	{
 		ERR( "Unknown class %d: %s (reader malfunction)\n",
@@ -402,8 +390,6 @@ void RTFSkipGroup(RTF_Info *info)
 {
 	int	level = 1;
 
-	TRACE("\n");
-
 	while (RTFGetToken (info) != rtfEOF)
 	{
 		if (info->rtfClass == rtfGroup)
@@ -430,7 +416,6 @@ int RTFGetToken(RTF_Info *info)
 {
 	RTFFuncPtr	p;
 
-	TRACE("\n");
 	/* don't try to return anything once EOF is reached */
 	if (info->rtfClass == rtfEOF) {
 		return rtfEOF;
@@ -470,8 +455,6 @@ RTFFuncPtr RTFGetReadHook(RTF_Info *info)
 
 void RTFUngetToken(RTF_Info *info)
 {
-	TRACE("\n");
-
 	if (info->pushedClass >= 0)	/* there's already an ungotten token */
 		ERR ("cannot unget two tokens\n");
 	if (info->rtfClass < 0)
@@ -494,8 +477,6 @@ int RTFPeekToken(RTF_Info *info)
 
 static void _RTFGetToken(RTF_Info *info)
 {
-	TRACE("\n");
-
 	if (info->rtfFormat == SF_TEXT)
 	{
 		info->rtfMajor = GetChar (info);
@@ -598,8 +579,6 @@ static void _RTFGetToken2(RTF_Info *info)
 {
 	int	sign;
 	int	c;
-
-	TRACE("\n");
 
 	/* initialize token vars */
 
@@ -770,8 +749,6 @@ static int GetChar(RTF_Info *info)
 	int	c;
 	int	oldBumpLine;
 
-	TRACE("\n");
-
 	if ((c = _RTFGetChar(info)) != EOF)
 	{
 		info->rtfTextBuf[info->rtfTextLen++] = c;
@@ -811,8 +788,6 @@ static int GetChar(RTF_Info *info)
 
 void RTFSetToken(RTF_Info *info, int class, int major, int minor, int param, const char *text)
 {
-	TRACE("\n");
-
 	info->rtfClass = class;
 	info->rtfMajor = major;
 	info->rtfMinor = minor;
@@ -859,8 +834,6 @@ static void ReadFontTbl(RTF_Info *info)
 	char		buf[rtfBufSiz], *bp;
 	int		old = -1;
 	const char	*fn = "ReadFontTbl";
-
-	TRACE("\n");
 
 	for (;;)
 	{
@@ -1041,8 +1014,6 @@ static void ReadColorTbl(RTF_Info *info)
 	const char	*fn = "ReadColorTbl";
         int group_level = 1;
 
-	TRACE("\n");
-
 	for (;;)
 	{
 		RTFGetToken (info);
@@ -1099,8 +1070,6 @@ static void ReadStyleSheet(RTF_Info *info)
 	char		buf[rtfBufSiz], *bp;
 	const char	*fn = "ReadStyleSheet";
 	int             real_style;
-
-	TRACE("\n");
 
 	for (;;)
 	{
@@ -1345,8 +1314,6 @@ void RTFExpandStyle(RTF_Info *info, int n)
 {
 	RTFStyle	*s;
 	RTFStyleElt	*se;
-
-	TRACE("\n");
 
 	if (n == -1)
 		return;
@@ -2365,7 +2332,6 @@ static void Lookup(RTF_Info *info, char *s)
         RTFHashTableEntry *entry;
         int i;
 
-	TRACE("\n");
 	++s;			/* skip over the leading \ character */
 	hash = Hash (s);
         entry = &rtfHashTable[hash % (RTF_KEY_COUNT * 2)];
@@ -2498,8 +2464,6 @@ TextClass (RTF_Info *info)
 static void
 ControlClass (RTF_Info *info)
 {
-	TRACE("\n");
-
 	switch (info->rtfMajor)
 	{
         case rtfCharAttr:
@@ -2581,7 +2545,6 @@ CharSet(RTF_Info *info)
 static void
 Destination (RTF_Info *info)
 {
-	TRACE("\n");
 	if (!RTFGetDestinationCallback(info, info->rtfMinor))
 		RTFSkipGroup (info);    
 }
@@ -2614,9 +2577,6 @@ DocAttr(RTF_Info *info)
 
 static void SpecialChar (RTF_Info *info)
 {
-
-	TRACE("\n");
-
 	switch (info->rtfMinor)
 	{
 	case rtfOptDest:
