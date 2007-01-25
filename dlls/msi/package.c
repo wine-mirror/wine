@@ -140,7 +140,7 @@ static UINT set_user_sid_prop( MSIPACKAGE *package )
     LookupAccountNameW( NULL, user_name, NULL, &size, NULL, &dom_size, &use );
 
     psid = msi_alloc( size );
-    dom = msi_alloc( dom_size );
+    dom = msi_alloc( dom_size*sizeof (WCHAR) );
     if (!psid || !dom)
     {
         r = ERROR_OUTOFMEMORY;
