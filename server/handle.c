@@ -459,7 +459,7 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
             access = entry->access;
         else  /* pseudo-handle, give it full access */
         {
-            access = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
+            access = obj->ops->map_access( obj, GENERIC_ALL );
             clear_error();
         }
     }
