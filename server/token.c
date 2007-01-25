@@ -707,11 +707,12 @@ static int token_sid_present( struct token *token, const SID *sid, int deny )
     return FALSE;
 }
 
-/* checks access to a security descriptor. sd must have been validated by caller.
- * it returns STATUS_SUCCESS if access was granted to the object, or an error
- * status code if not, giving the reason. errors not relating to giving access
- * to the object are returned in the status parameter. granted_access and
- * status always have a valid value stored in them on return. */
+/* Checks access to a security descriptor. 'sd' must have been validated by
+ * caller. It returns STATUS_SUCCESS if call succeeded or an error indicating
+ * the reason. 'status' parameter will indicate if access is granted or denied.
+ *
+ * If both returned value and 'status' are STATUS_SUCCESS then access is granted.
+ */
 static unsigned int token_access_check( struct token *token,
                                  const struct security_descriptor *sd,
                                  unsigned int desired_access,
@@ -729,16 +730,14 @@ static unsigned int token_access_check( struct token *token,
     const ACE_HEADER *ace;
     const SID *owner;
 
-    /* assume success, but no access rights */
-    *status = STATUS_SUCCESS;
+    /* assume no access rights */
     *granted_access = 0;
 
     /* fail if desired_access contains generic rights */
     if (desired_access & (GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE|GENERIC_ALL))
     {
         *priv_count = 0;
-        *status = STATUS_GENERIC_NOT_MAPPED;
-        return STATUS_ACCESS_DENIED;
+        return STATUS_GENERIC_NOT_MAPPED;
     }
 
     dacl = sd_get_dacl( sd, &dacl_present );
@@ -746,8 +745,7 @@ static unsigned int token_access_check( struct token *token,
     if (!owner || !sd_get_group( sd ))
     {
         *priv_count = 0;
-        *status = STATUS_INVALID_SECURITY_DESCR;
-        return STATUS_ACCESS_DENIED;
+        return STATUS_INVALID_SECURITY_DESCR;
     }
 
     /* 1: Grant desired access if the object is unprotected */
@@ -755,12 +753,13 @@ static unsigned int token_access_check( struct token *token,
     {
         *priv_count = 0;
         *granted_access = desired_access;
-        return STATUS_SUCCESS;
+        return *status = STATUS_SUCCESS;
     }
     if (!dacl)
     {
         *priv_count = 0;
-        return STATUS_ACCESS_DENIED;
+        *status = STATUS_ACCESS_DENIED;
+        return STATUS_SUCCESS;
     }
 
     /* 2: Check if caller wants access to system security part. Note: access
@@ -789,13 +788,14 @@ static unsigned int token_access_check( struct token *token,
             if (desired_access == current_access)
             {
                 *granted_access = current_access;
-                return STATUS_SUCCESS;
+                return *status = STATUS_SUCCESS;
             }
         }
         else
         {
             *priv_count = 0;
-            return STATUS_PRIVILEGE_NOT_HELD;
+            *status = STATUS_PRIVILEGE_NOT_HELD;
+            return STATUS_SUCCESS;
         }
     }
     else if (priv_count) *priv_count = 0;
@@ -810,7 +810,7 @@ static unsigned int token_access_check( struct token *token,
         if (desired_access == current_access)
         {
             *granted_access = current_access;
-            return STATUS_SUCCESS;
+            return *status = STATUS_SUCCESS;
         }
     }
 
@@ -835,11 +835,7 @@ static unsigned int token_access_check( struct token *token,
                 else
                 {
                     denied_access |= (access & ~current_access);
-                    if (desired_access & access)
-                    {
-                        *granted_access = 0;
-                        return STATUS_ACCESS_DENIED;
-                    }
+                    if (desired_access & access) goto done;
                 }
             }
             break;
@@ -866,24 +862,17 @@ static unsigned int token_access_check( struct token *token,
         ace = ace_next( ace );
     }
 
+done:
     if (desired_access & MAXIMUM_ALLOWED)
-    {
         *granted_access = current_access & ~denied_access;
-        if (*granted_access)
-            return STATUS_SUCCESS;
-        else
-            return STATUS_ACCESS_DENIED;
-    }
     else
-    {
         if ((current_access & desired_access) == desired_access)
-        {
             *granted_access = current_access & desired_access;
-            return STATUS_SUCCESS;
-        }
         else
-            return STATUS_ACCESS_DENIED;
-    }
+            *granted_access = 0;
+
+    *status = *granted_access ? STATUS_SUCCESS : STATUS_ACCESS_DENIED;
+    return STATUS_SUCCESS;
 }
 
 const ACL *token_get_default_dacl( struct token *token )
@@ -1109,9 +1098,9 @@ DECL_HANDLER(access_check)
         mapping.GenericExecute = req->mapping_execute;
         mapping.GenericAll = req->mapping_all;
 
-        reply->access_status = token_access_check(
+        status = token_access_check(
             token, sd, req->desired_access, &priv, &priv_count, &mapping,
-            &reply->access_granted, &status );
+            &reply->access_granted, &reply->access_status );
 
         reply->privileges_len = priv_count*sizeof(LUID_AND_ATTRIBUTES);
 
@@ -1121,9 +1110,7 @@ DECL_HANDLER(access_check)
             memcpy( privs, &priv, sizeof(priv) );
         }
 
-        if (status != STATUS_SUCCESS)
-            set_error( status );
-
+        set_error( status );
         release_object( token );
     }
 }
