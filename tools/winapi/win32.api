@@ -4744,6 +4744,21 @@ WORD
 
 DWORD_PTR
 
+%%winecoreaudio.drv
+
+%long
+
+DWORD
+HDRVR
+LPARAM
+LRESULT
+UINT
+WORD
+
+%long --pointer
+
+DWORD_PTR
+
 %%wined3d.dll
 
 %long
