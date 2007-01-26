@@ -67,18 +67,31 @@ static int print_proxy( const char *format, ... )
 
 static void write_stubdescproto(void)
 {
-  print_proxy( "extern const MIDL_STUB_DESC Object_StubDesc;\n");
+  print_proxy( "static const MIDL_STUB_DESC Object_StubDesc;\n");
   print_proxy( "\n");
 }
 
 static void write_stubdesc(void)
 {
-  print_proxy( "const MIDL_STUB_DESC Object_StubDesc = {\n");
-  print_proxy( "    0,\n");
-  print_proxy( "    NdrOleAllocate,\n");
-  print_proxy( "    NdrOleFree,\n");
-  print_proxy( "    {0}, 0, 0, 0, 0,\n");
-  print_proxy( "    0 /* __MIDL_TypeFormatString.Format */\n");
+  print_proxy( "static const MIDL_STUB_DESC Object_StubDesc =\n{\n");
+  indent++;
+  print_proxy( "0,\n");
+  print_proxy( "NdrOleAllocate,\n");
+  print_proxy( "NdrOleFree,\n");
+  print_proxy( "{0}, 0, 0, 0, 0,\n");
+  print_proxy( "__MIDL_TypeFormatString.Format,\n");
+  print_proxy( "1, /* -error bounds_check flag */\n");
+  print_proxy( "0x10001, /* Ndr library version */\n");
+  print_proxy( "0,\n");
+  print_proxy( "0x50100a4, /* MIDL Version 5.1.164 */\n");
+  print_proxy( "0,\n");
+  print_proxy( "0,\n");
+  print_proxy( "0,  /* notify & notify_flag routine table */\n");
+  print_proxy( "1,  /* Flags */\n");
+  print_proxy( "0,  /* Reserved3 */\n");
+  print_proxy( "0,  /* Reserved4 */\n");
+  print_proxy( "0   /* Reserved5 */\n");
+  indent--;
   print_proxy( "};\n");
   print_proxy( "\n");
 }
