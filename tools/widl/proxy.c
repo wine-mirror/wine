@@ -532,7 +532,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset, unsigned int *
   }
 
   /* proxy vtable */
-  print_proxy( "const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", midx, iface->name);
+  print_proxy( "static const CINTERFACE_PROXY_VTABLE(%d) _%sProxyVtbl =\n", midx, iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n", iface->name);
@@ -559,7 +559,7 @@ static void write_proxy(type_t *iface, unsigned int *proc_offset, unsigned int *
   indent--;
   fprintf(proxy, "};\n");
   print_proxy( "\n");
-  print_proxy( "const CInterfaceStubVtbl _%sStubVtbl =\n", iface->name);
+  print_proxy( "static const CInterfaceStubVtbl _%sStubVtbl =\n", iface->name);
   print_proxy( "{\n");
   indent++;
   print_proxy( "{\n");
@@ -607,30 +607,30 @@ void write_proxies(ifref_list_t *ifaces)
   write_procformatstring(proxy, ifaces, 1);
   write_typeformatstring(proxy, ifaces, 1);
 
-  fprintf(proxy, "const CInterfaceProxyVtbl* _%s_ProxyVtblList[] =\n", file_id);
+  fprintf(proxy, "static const CInterfaceProxyVtbl* const _%s_ProxyVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
           if(cur->iface->ref && cur->iface->funcs &&
              is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-              fprintf(proxy, "    (CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", cur->iface->name);
+              fprintf(proxy, "    (const CInterfaceProxyVtbl*)&_%sProxyVtbl,\n", cur->iface->name);
 
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "const CInterfaceStubVtbl* _%s_StubVtblList[] =\n", file_id);
+  fprintf(proxy, "static const CInterfaceStubVtbl* const _%s_StubVtblList[] =\n", file_id);
   fprintf(proxy, "{\n");
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
           if(cur->iface->ref && cur->iface->funcs &&
              is_object(cur->iface->attrs) && !is_local(cur->iface->attrs))
-              fprintf(proxy, "    (CInterfaceStubVtbl*)&_%sStubVtbl,\n", cur->iface->name);
+              fprintf(proxy, "    (const CInterfaceStubVtbl*)&_%sStubVtbl,\n", cur->iface->name);
   fprintf(proxy, "    0\n");
   fprintf(proxy, "};\n");
   fprintf(proxy, "\n");
 
-  fprintf(proxy, "PCInterfaceName const _%s_InterfaceNamesList[] =\n", file_id);
+  fprintf(proxy, "static PCInterfaceName const _%s_InterfaceNamesList[] =\n", file_id);
   fprintf(proxy, "{\n");
   if (ifaces)
       LIST_FOR_EACH_ENTRY( cur, ifaces, ifref_t, entry )
@@ -663,9 +663,9 @@ void write_proxies(ifref_list_t *ifaces)
 
   fprintf(proxy, "const ExtendedProxyFileInfo %s_ProxyFileInfo =\n", file_id);
   fprintf(proxy, "{\n");
-  fprintf(proxy, "    (PCInterfaceProxyVtblList*)&_%s_ProxyVtblList,\n", file_id);
-  fprintf(proxy, "    (PCInterfaceStubVtblList*)&_%s_StubVtblList,\n", file_id);
-  fprintf(proxy, "    (const PCInterfaceName*)&_%s_InterfaceNamesList,\n", file_id);
+  fprintf(proxy, "    (const PCInterfaceProxyVtblList*)&_%s_ProxyVtblList,\n", file_id);
+  fprintf(proxy, "    (const PCInterfaceStubVtblList*)&_%s_StubVtblList,\n", file_id);
+  fprintf(proxy, "    _%s_InterfaceNamesList,\n", file_id);
   fprintf(proxy, "    0,\n");
   fprintf(proxy, "    &_%s_IID_Lookup,\n", file_id);
   fprintf(proxy, "    %d,\n", c);
