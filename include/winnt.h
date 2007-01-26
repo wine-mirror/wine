@@ -593,6 +593,35 @@ typedef struct _SINGLE_LIST_ENTRY {
   struct _SINGLE_LIST_ENTRY *Next;
 } SINGLE_LIST_ENTRY, *PSINGLE_LIST_ENTRY;
 
+#ifdef _WIN64
+
+typedef struct _SLIST_ENTRY *PSLIST_ENTRY;
+typedef struct _SLIST_ENTRY {
+    PSLIST_ENTRY Next;
+};
+
+typedef struct _SLIST_HEADER {
+    ULONGLONG Alignment;
+    ULONGLONG Region;
+} SLIST_HEADER, *PSLIST_HEADER;
+
+#else
+
+#define SLIST_ENTRY SINGLE_LIST_ENTRY
+#define _SLIST_ENTRY _SINGLE_LIST_ENTRY
+#define PSLIST_ENTRY PSINGLE_LIST_ENTRY
+
+typedef union _SLIST_HEADER {
+    ULONGLONG Alignment;
+    struct {
+        SLIST_ENTRY Next;
+        WORD Depth;
+        WORD Sequence;
+    };
+} SLIST_HEADER, *PSLIST_HEADER;
+
+#endif
+
 /* Heap flags */
 
 #define HEAP_NO_SERIALIZE               0x00000001
