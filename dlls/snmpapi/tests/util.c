@@ -83,23 +83,23 @@ static void test_SnmpUtilOidToA(void)
 
     ret = SnmpUtilOidToA(&oid2);
     ok(ret != NULL, "SnmpUtilOidToA failed\n");
-    ok(!strcmp(ret, expect2), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n %d\n",
-       ret, expect2, strlen(ret));
+    ok(!strcmp(ret, expect2), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
+       ret, expect2);
 
     ret = SnmpUtilOidToA(&oid3);
     ok(ret != NULL, "SnmpUtilOidToA failed\n");
-    ok(!strcmp(ret, expect3), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n %d\n",
-       ret, expect3, strlen(ret));
+    ok(!strcmp(ret, expect3), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
+       ret, expect3);
 
     ret = SnmpUtilOidToA(&oid4);
     ok(ret != NULL, "SnmpUtilOidToA failed\n");
-    ok(!strcmp(ret, expect3), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n %d\n",
-       ret, expect3, strlen(ret));
+    ok(!strcmp(ret, expect3), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
+       ret, expect3);
 
     ret = SnmpUtilOidToA(&oid5);
     ok(ret != NULL, "SnmpUtilOidToA failed\n");
-    ok(!strcmp(ret, expect4), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n %d\n",
-       ret, expect4, strlen(ret));
+    ok(!strcmp(ret, expect4), "SnmpUtilOidToA failed got \n%s\n expected \n%s\n",
+       ret, expect4);
 }
 
 static void test_SnmpUtilAsnAnyCpyFree(void)
