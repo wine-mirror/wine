@@ -159,6 +159,20 @@ void write_formatstringsdecl(FILE *f, int indent, ifref_list_t *ifaces, int for_
     print_file(f, indent, "\n");
 }
 
+static int is_user_derived(const var_t *v)
+{
+    const type_t *type = v->type;
+
+    if (v->attrs && is_attr( v->attrs, ATTR_WIREMARSHAL )) return 1;
+
+    while (type)
+    {
+        if (type->attrs && is_attr( type->attrs, ATTR_WIREMARSHAL )) return 1;
+        type = type->ref;
+    }
+    return 0;
+}
+
 static inline int is_base_type(unsigned char type)
 {
     switch (type)
@@ -1835,7 +1849,11 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
         rtype = type->type;
 
-        if (is_string_type(var->attrs, var->ptr_level, var->array))
+        if (is_user_derived( var ))
+        {
+            print_phase_function(file, indent, "UserMarshal", phase, var->name, *type_offset);
+        }
+        else if (is_string_type(var->attrs, var->ptr_level, var->array))
         {
             if (var->array && !is_conformant_array(var->array))
                 print_phase_function(file, indent, "NonConformantString", phase, var->name, *type_offset);
