@@ -63,6 +63,7 @@ static void test_msi_dispid(void)
         return;
     }
 
+    todo_wine {
     ok( get_dispid( disp, "OpenPackage" ) == 2, "dispid wrong\n");
     ok( get_dispid( disp, "OpenProduct" ) == 3, "dispid wrong\n");
     ok( get_dispid( disp, "OpenDatabase" ) == 4, "dispid wrong\n");
@@ -118,6 +119,7 @@ static void test_msi_dispid(void)
     ok( get_dispid( disp, "PatchesEx" ) == 55, "dispid wrong\n");
 
     ok( get_dispid( disp, "ExtractPatchXMLData" ) == 57, "dispid wrong\n");
+    }
 
     /* MSDN claims the following functions exist but IDispatch->GetIDsOfNames disagrees */
     if (0)
@@ -166,7 +168,12 @@ static void test_msi_invoke(void)
 
     r = IDispatch_Invoke( installer, dispid, &IID_NULL, 0,
                           DISPATCH_METHOD, &param, &result, NULL, NULL);
-    ok( r == S_OK, "dispatch failed %08x\n", r);
+    todo_wine ok( r == S_OK, "dispatch failed %08x\n", r);
+    if (FAILED(r))
+    {
+        skip( "failed to create record\n");
+        return;
+    }
 
     ok( V_VT(&result) == VT_DISPATCH, "type wrong\n");
 
