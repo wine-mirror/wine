@@ -673,14 +673,16 @@ static DWORD enumIPAddresses(PDWORD pcAddresses, struct ifconf *ifc)
     int ioctlRet = 0;
     DWORD guessedNumAddresses = 0, numAddresses = 0;
     caddr_t ifPtr;
+    int lastlen;
 
     ret = NO_ERROR;
     ifc->ifc_len = 0;
     ifc->ifc_buf = NULL;
     /* there is no way to know the interface count beforehand,
        so we need to loop again and again upping our max each time
-       until returned < max */
+       until returned is constant across 2 calls */
     do {
+      lastlen = ifc->ifc_len;
       HeapFree(GetProcessHeap(), 0, ifc->ifc_buf);
       if (guessedNumAddresses == 0)
         guessedNumAddresses = INITIAL_INTERFACES_ASSUMED;
@@ -689,8 +691,7 @@ static DWORD enumIPAddresses(PDWORD pcAddresses, struct ifconf *ifc)
       ifc->ifc_len = sizeof(struct ifreq) * guessedNumAddresses;
       ifc->ifc_buf = HeapAlloc(GetProcessHeap(), 0, ifc->ifc_len);
       ioctlRet = ioctl(fd, SIOCGIFCONF, ifc);
-    } while (ioctlRet == 0 &&
-     ifc->ifc_len > (sizeof(struct ifreq) * (guessedNumAddresses - 2)));
+    } while ((ioctlRet == 0) && (ifc->ifc_len != lastlen));
 
     if (ioctlRet == 0) {
       ifPtr = ifc->ifc_buf;
