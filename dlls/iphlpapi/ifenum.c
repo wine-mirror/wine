@@ -696,7 +696,11 @@ static DWORD enumIPAddresses(PDWORD pcAddresses, struct ifconf *ifc)
     if (ioctlRet == 0) {
       ifPtr = ifc->ifc_buf;
       while (ifPtr && ifPtr < ifc->ifc_buf + ifc->ifc_len) {
-        numAddresses++;
+        struct ifreq *ifr = (struct ifreq *)ifPtr;
+
+        if (ifr->ifr_addr.sa_family == AF_INET)
+          numAddresses++;
+
         ifPtr += ifreq_len((struct ifreq *)ifPtr);
       }
     }
@@ -752,6 +756,11 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
         while (!ret && ifPtr && ifPtr < ifc.ifc_buf + ifc.ifc_len) {
           struct ifreq *ifr = (struct ifreq *)ifPtr;
 
+          ifPtr += ifreq_len(ifr);
+
+          if (ifr->ifr_addr.sa_family != AF_INET)
+             continue;
+
           ret = getInterfaceIndexByName(ifr->ifr_name,
            &(*ppIpAddrTable)->table[i].dwIndex);
           memcpy(&(*ppIpAddrTable)->table[i].dwAddr, ifr->ifr_addr.sa_data + 2,
@@ -770,7 +779,6 @@ DWORD getIPAddrTable(PMIB_IPADDRTABLE *ppIpAddrTable, HANDLE heap, DWORD flags)
 
           (*ppIpAddrTable)->table[i].unused1 = 0;
           (*ppIpAddrTable)->table[i].wType = 0;
-          ifPtr += ifreq_len(ifr);
           i++;
         }
       }
