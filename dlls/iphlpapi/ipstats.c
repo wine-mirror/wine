@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/debug.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -51,6 +52,14 @@
 #include <netinet/tcp_fsm.h>
 #endif
 
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
+
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define ADVANCE(x, n) (x += ROUNDUP(((struct sockaddr *)n)->sa_len))
+
 #include "windef.h"
 #include "winbase.h"
 #include "iprtrmib.h"
@@ -70,6 +79,8 @@
 #define TCPS_LISTEN      10
 #define TCPS_CLOSING     11
 #endif
+
+WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
 DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
 {
@@ -152,6 +163,9 @@ DWORD getInterfaceStatsByName(const char *name, PMIB_IFROW entry)
     }
     fclose(fp);
   }
+  else
+     ERR ("unimplemented!\n");
+
   return NO_ERROR;
 }
 
@@ -279,6 +293,9 @@ DWORD getICMPStats(MIB_ICMP *stats)
     }
     fclose(fp);
   }
+  else
+     ERR ("unimplemented!\n");
+
   return NO_ERROR;
 }
 
@@ -390,6 +407,9 @@ DWORD getIPStats(PMIB_IPSTATS stats)
     }
     fclose(fp);
   }
+  else
+     ERR ("unimplemented!\n");
+
   return NO_ERROR;
 }
 
@@ -480,6 +500,9 @@ DWORD getTCPStats(MIB_TCPSTATS *stats)
     }
     fclose(fp);
   }
+  else
+     ERR ("unimplemented!\n");
+
   return NO_ERROR;
 }
 
@@ -533,6 +556,9 @@ DWORD getUDPStats(MIB_UDPSTATS *stats)
     }
     fclose(fp);
   }
+  else
+     ERR ("unimplemented!\n");
+
   return NO_ERROR;
 }
 
@@ -556,12 +582,66 @@ static DWORD getNumWithOneHeader(const char *filename)
     }
     fclose(fp);
   }
+  else
+     ERR ("Unable to open '%s' to count entries!\n", filename);
+
   return ret;
 }
 
 DWORD getNumRoutes(void)
 {
-  return getNumWithOneHeader("/proc/net/route");
+#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+   int mib[6] = {CTL_NET, PF_ROUTE, 0, PF_INET, NET_RT_DUMP, 0};
+   size_t needed;
+   char *buf, *lim, *next;
+   struct rt_msghdr *rtm;
+   DWORD RouteCount = 0;
+
+   if (sysctl (mib, 6, NULL, &needed, NULL, 0) < 0)
+   {
+      ERR ("sysctl 1 failed!\n");
+      return 0;
+   }
+
+   buf = HeapAlloc (GetProcessHeap (), 0, needed);
+   if (!buf)
+   {
+      ERR ("HeapAlloc of %ld failed!\n", needed);
+      return 0;
+   }
+
+   if (sysctl (mib, 6, buf, &needed, NULL, 0) < 0)
+   {
+      ERR ("sysctl 2 failed!\n");
+      HeapFree (GetProcessHeap (), 0, buf);
+      return 0;
+   }
+
+   lim = buf + needed;
+   for (next = buf; next < lim; next += rtm->rtm_msglen)
+   {
+      rtm = (struct rt_msghdr *)next;
+
+      if (rtm->rtm_type != RTM_GET)
+      {
+         WARN ("Got unexpected message type 0x%x!\n",
+               rtm->rtm_type);
+         continue;
+      }
+
+      /* Ignore all entries except for gateway routes which aren't
+         multicast */
+      if (!(rtm->rtm_flags & RTF_GATEWAY) || (rtm->rtm_flags & RTF_MULTICAST))
+         continue;
+
+      RouteCount++;
+   }
+
+   HeapFree (GetProcessHeap (), 0, buf);
+   return RouteCount;
+#else
+   return getNumWithOneHeader("/proc/net/route");
+#endif
 }
 
 DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
@@ -577,6 +657,122 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
      sizeof(MIB_IPFORWARDTABLE) + (numRoutes - 1) * sizeof(MIB_IPFORWARDROW));
 
     if (table) {
+#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+       int mib[6] = {CTL_NET, PF_ROUTE, 0, PF_INET, NET_RT_DUMP, 0};
+       size_t needed;
+       char *buf, *lim, *next, *addrPtr;
+       struct rt_msghdr *rtm;
+
+       if (sysctl (mib, 6, NULL, &needed, NULL, 0) < 0)
+       {
+          ERR ("sysctl 1 failed!\n");
+          HeapFree (GetProcessHeap (), 0, table);
+          return NO_ERROR;
+       }
+
+       buf = HeapAlloc (GetProcessHeap (), 0, needed);
+       if (!buf)
+       {
+          ERR ("HeapAlloc of %ld failed!\n", needed);
+          HeapFree (GetProcessHeap (), 0, table);
+          return ERROR_OUTOFMEMORY;
+       }
+
+       if (sysctl (mib, 6, buf, &needed, NULL, 0) < 0)
+       {
+          ERR ("sysctl 2 failed!\n");
+          HeapFree (GetProcessHeap (), 0, table);
+          HeapFree (GetProcessHeap (), 0, buf);
+          return NO_ERROR;
+       }
+
+       *ppIpForwardTable = table;
+       table->dwNumEntries = 0;
+
+       lim = buf + needed;
+       for (next = buf; next < lim; next += rtm->rtm_msglen)
+       {
+          int i;
+
+          rtm = (struct rt_msghdr *)next;
+
+          if (rtm->rtm_type != RTM_GET)
+          {
+             WARN ("Got unexpected message type 0x%x!\n",
+                   rtm->rtm_type);
+             continue;
+          }
+
+          /* Ignore all entries except for gateway routes which aren't
+             multicast */
+          if (!(rtm->rtm_flags & RTF_GATEWAY) ||
+              (rtm->rtm_flags & RTF_MULTICAST))
+             continue;
+
+          memset (&table->table[table->dwNumEntries], 0,
+                  sizeof (MIB_IPFORWARDROW));
+          table->table[table->dwNumEntries].dwForwardIfIndex = rtm->rtm_index;
+          table->table[table->dwNumEntries].dwForwardType =
+             MIB_IPROUTE_TYPE_INDIRECT;
+          table->table[table->dwNumEntries].dwForwardMetric1 =
+             rtm->rtm_rmx.rmx_hopcount;
+          table->table[table->dwNumEntries].dwForwardProto =
+             MIB_IPPROTO_LOCAL;
+
+          addrPtr = (char *)(rtm + 1);
+
+          for (i = 1; i; i <<= 1)
+          {
+             struct sockaddr *sa;
+             DWORD addr;
+
+             if (!(i & rtm->rtm_addrs))
+                continue;
+
+             sa = (struct sockaddr *)addrPtr;
+             ADVANCE (addrPtr, sa);
+
+             /* default routes are encoded by length-zero sockaddr */
+             if (sa->sa_len == 0)
+                addr = 0;
+             else if (sa->sa_family != AF_INET)
+             {
+                ERR ("Received unsupported sockaddr family 0x%x\n",
+                     sa->sa_family);
+                addr = 0;
+             }
+             else
+             {
+                struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+
+                addr = sin->sin_addr.s_addr;
+             }
+
+             switch (i)
+             {
+                case RTA_DST:
+                   table->table[table->dwNumEntries].dwForwardDest = addr;
+                   break;
+
+                case RTA_GATEWAY:
+                   table->table[table->dwNumEntries].dwForwardNextHop = addr;
+                   break;
+
+                case RTA_NETMASK:
+                   table->table[table->dwNumEntries].dwForwardMask = addr;
+                   break;
+
+                default:
+                   ERR ("Unexpected address type 0x%x\n", i);
+             }
+          }
+
+          table->dwNumEntries++;
+       }
+
+       HeapFree (GetProcessHeap (), 0, buf);
+       ret = NO_ERROR;
+#else
       FILE *fp;
 
       ret = NO_ERROR;
@@ -656,6 +852,12 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
         }
         fclose(fp);
       }
+      else
+      {
+        ERR ("unimplemented!\n");
+        return ERROR_INVALID_PARAMETER;
+      }
+#endif
     }
     else
       ret = ERROR_OUTOFMEMORY;
@@ -671,6 +873,11 @@ DWORD getNumArpEntries(void)
 DWORD getArpTable(PMIB_IPNETTABLE *ppIpNetTable, HANDLE heap, DWORD flags)
 {
   DWORD ret;
+
+#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+  ERR ("unimplemented!\n");
+  return ERROR_INVALID_PARAMETER;
+#endif
 
   if (!ppIpNetTable)
     ret = ERROR_INVALID_PARAMETER;
@@ -765,6 +972,11 @@ DWORD getUdpTable(PMIB_UDPTABLE *ppUdpTable, HANDLE heap, DWORD flags)
 {
   DWORD ret;
 
+#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+  ERR ("unimplemented!\n");
+  return ERROR_INVALID_PARAMETER;
+#endif
+
   if (!ppUdpTable)
     ret = ERROR_INVALID_PARAMETER;
   else {
@@ -827,6 +1039,11 @@ DWORD getNumTcpEntries(void)
 DWORD getTcpTable(PMIB_TCPTABLE *ppTcpTable, HANDLE heap, DWORD flags)
 {
   DWORD ret;
+
+#if defined(HAVE_SYS_SYSCTL_H) && defined(NET_RT_DUMP)
+  ERR ("unimplemented!\n");
+  return ERROR_INVALID_PARAMETER;
+#endif
 
   if (!ppTcpTable)
     ret = ERROR_INVALID_PARAMETER;
