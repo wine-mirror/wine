@@ -331,6 +331,7 @@ HRESULT WINAPI CoInternetGetSession(DWORD dwSessionMode, IInternetSession **ppII
     if(dwReserved)
         ERR("dwReserved=%d\n", dwReserved);
 
+    IInternetSession_AddRef(&InternetSession);
     *ppIInternetSession = &InternetSession;
     return S_OK;
 }
