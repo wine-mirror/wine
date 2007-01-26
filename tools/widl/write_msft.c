@@ -733,6 +733,7 @@ static void add_structure_typeinfo(msft_typelib_t *typelib, type_t *structure);
 static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface);
 static void add_enum_typeinfo(msft_typelib_t *typelib, type_t *enumeration);
 static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls);
+static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface);
 
 
 /****************************************************************************
@@ -974,6 +975,8 @@ static int encode_type(
             case 0:
                 if (type->kind == TKIND_COCLASS)
                     add_coclass_typeinfo(typelib, type);
+                else if (type->kind == TKIND_DISPATCH)
+                    add_dispinterface_typeinfo(typelib, type);
                 else
                     error("encode_type: VT_USERDEFINED - can't yet add typedef's on the fly\n");
                 break;
@@ -1887,7 +1890,7 @@ static void add_dispatch(msft_typelib_t *typelib)
 }
 
 static void add_dispinterface_typeinfo(msft_typelib_t *typelib, type_t *dispinterface)
-{ 
+{
     int idx = 0;
     const func_t *func;
     var_t *var;
