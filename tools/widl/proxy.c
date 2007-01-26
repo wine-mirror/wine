@@ -401,9 +401,12 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   fprintf(proxy, "\n");
   print_proxy("");
   if (has_ret) fprintf(proxy, "_RetVal = ");
-  fprintf(proxy, "%s_", iface->name);
-  if (cas) fprintf(proxy, "%s_Stub", cas);
-  else write_name(proxy, def);
+  if (cas) fprintf(proxy, "%s_%s_Stub", iface->name, cas);
+  else
+  {
+      fprintf(proxy, "_This->lpVtbl->");
+      write_name(proxy, def);
+  }
   fprintf(proxy, "(_This");
 
   if (cur->args)
