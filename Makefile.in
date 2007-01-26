@@ -132,10 +132,10 @@ $(TESTSUBDIRS:%=%/__crosstest__): tools include
 # Misc rules
 
 TAGS etags:
-	find -L $(TOPSRCDIR) -name '*.[ch]' -print | etags -
+	(test -d .git && git-ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | etags -
 
 tags ctags:
-	find -L $(TOPSRCDIR) -name '*.[ch]' -print | ctags --c-types=+px -L -
+	(test -d .git && git-ls-files '*.[chly]' '*.idl' || find -L $(TOPSRCDIR) -name '*.[ch]' -print) | ctags -
 
 manpages htmlpages sgmlpages: dummy
 	@cd documentation && $(MAKE) $@
