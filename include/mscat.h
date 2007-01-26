@@ -19,6 +19,8 @@
 #ifndef __WINE_MSCAT_H
 #define __WINE_MSCAT_H
 
+#include <mssip.h>
+
 typedef HANDLE HCATADMIN;
 typedef HANDLE HCATINFO;
 
@@ -44,6 +46,9 @@ BOOL      WINAPI CryptCATAdminAcquireContext(HCATADMIN*,const GUID*,DWORD);
 BOOL      WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE,DWORD*,BYTE*,DWORD);
 HCATINFO  WINAPI CryptCATAdminEnumCatalogFromHash(HCATADMIN,BYTE*,DWORD,DWORD,HCATINFO*);
 BOOL      WINAPI CryptCATAdminReleaseContext(HCATADMIN,DWORD);
+BOOL      WINAPI CryptCATClose(HANDLE);
+CRYPTCATMEMBER* WINAPI CryptCATEnumerateMember(HANDLE,CRYPTCATMEMBER*);
+HANDLE    WINAPI CryptCATOpen(LPWSTR,DWORD,HCRYPTPROV,DWORD,DWORD);
 
 #ifdef __cplusplus
 }
