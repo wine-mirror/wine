@@ -263,7 +263,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
     write_type(proxy, def->type, def, def->tname);
     print_proxy( " _RetVal;\n");
   }
-  print_proxy( "RPC_MESSAGE _Msg;\n" );
+  print_proxy( "RPC_MESSAGE _RpcMessage;\n" );
   print_proxy( "MIDL_STUB_MESSAGE _StubMsg;\n" );
   print_proxy( "\n");
 
@@ -273,7 +273,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   print_proxy( "RpcTryExcept\n" );
   print_proxy( "{\n" );
   indent++;
-  print_proxy( "NdrProxyInitialize(This, &_Msg, &_StubMsg, &Object_StubDesc, %d);\n", idx);
+  print_proxy( "NdrProxyInitialize(This, &_RpcMessage, &_StubMsg, &Object_StubDesc, %d);\n", idx);
   proxy_check_pointers( cur->args );
 
   print_proxy( "RpcTryFinally\n" );
@@ -290,7 +290,10 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
 
   print_proxy( "NdrProxySendReceive(This, &_StubMsg);\n" );
   fprintf(proxy, "\n");
-  print_proxy("if ((_Msg.DataRepresentation&0xffff) != NDR_LOCAL_DATA_REPRESENTATION)\n");
+  print_proxy( "_StubMsg.BufferStart = _RpcMessage.Buffer;\n" );
+  print_proxy( "_StubMsg.BufferEnd   = _StubMsg.BufferStart + _RpcMessage.BufferLength;\n\n" );
+
+  print_proxy("if ((_RpcMessage.DataRepresentation & 0xffff) != NDR_LOCAL_DATA_REPRESENTATION)\n");
   indent++;
   print_proxy("NdrConvert( &_StubMsg, &__MIDL_ProcFormatString.Format[%u]);\n", proc_offset );
   indent--;
@@ -345,8 +348,8 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy( "_Stub(\n");
   indent++;
   print_proxy( "IRpcStubBuffer* This,\n");
-  print_proxy( "IRpcChannelBuffer* pRpcChannelBuffer,\n");
-  print_proxy( "PRPC_MESSAGE _Msg,\n");
+  print_proxy( "IRpcChannelBuffer *_pRpcChannelBuffer,\n");
+  print_proxy( "PRPC_MESSAGE _pRpcMessage,\n");
   print_proxy( "DWORD* _pdwStubPhase)\n");
   indent--;
   print_proxy( "{\n");
@@ -358,7 +361,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
 
   /* FIXME: trace */
 
-  print_proxy("NdrStubInitialize(_Msg, &_StubMsg, &Object_StubDesc, pRpcChannelBuffer);\n");
+  print_proxy("NdrStubInitialize(_pRpcMessage, &_StubMsg, &Object_StubDesc, _pRpcChannelBuffer);\n");
   fprintf(proxy, "\n");
 
   if (cur->args)
@@ -368,7 +371,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("RpcTryFinally\n");
   print_proxy("{\n");
   indent++;
-  print_proxy("if ((_Msg->DataRepresentation&0xffff) != NDR_LOCAL_DATA_REPRESENTATION)\n");
+  print_proxy("if ((_pRpcMessage->DataRepresentation & 0xffff) != NDR_LOCAL_DATA_REPRESENTATION)\n");
   indent++;
   print_proxy("NdrConvert( &_StubMsg, &__MIDL_ProcFormatString.Format[%u]);\n", proc_offset );
   indent--;
@@ -405,7 +408,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   offset = *type_offset;
   write_remoting_arguments(proxy, indent, cur, &offset, PASS_OUT, PHASE_BUFFERSIZE);
 
-  print_proxy("NdrStubGetBuffer(This, pRpcChannelBuffer, &_StubMsg);\n");
+  print_proxy("NdrStubGetBuffer(This, _pRpcChannelBuffer, &_StubMsg);\n");
 
   offset = *type_offset;
   write_remoting_arguments(proxy, indent, cur, &offset, PASS_OUT, PHASE_MARSHAL);
@@ -425,7 +428,7 @@ static void gen_stub(type_t *iface, const func_t *cur, const char *cas,
   print_proxy("}\n");
   print_proxy("RpcEndFinally\n");
 
-  print_proxy("_Msg->BufferLength = _StubMsg.Buffer - (unsigned char *)_Msg->Buffer;\n");
+  print_proxy("_pRpcMessage->BufferLength = _StubMsg.Buffer - (unsigned char *)_pRpcMessage->Buffer;\n");
   indent--;
 
   print_proxy("}\n");
