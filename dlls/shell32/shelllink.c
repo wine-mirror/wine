@@ -2483,12 +2483,12 @@ ShellLink_QueryContextMenu( IContextMenu* iface, HMENU hmenu, UINT indexMenu,
 static LPWSTR
 shelllink_get_msi_component_path( LPWSTR component )
 {
-    LPWSTR path = NULL;
+    LPWSTR path;
     DWORD r, sz = 0;
 
     r = CommandLineFromMsiDescriptor( component, NULL, &sz );
     if (r != ERROR_SUCCESS)
-         return path;
+         return NULL;
 
     sz++;
     path = HeapAlloc( GetProcessHeap(), 0, sz*sizeof(WCHAR) );
