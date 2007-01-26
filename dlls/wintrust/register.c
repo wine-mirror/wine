@@ -707,7 +707,7 @@ static BOOL WINTRUST_RegisterGenChainVerify(void)
  *   WintrustAddDefaultForUsage will only return TRUE or FALSE, no last 
  *   error is set, not even when the registry cannot be written to.
  */
-BOOL WINAPI WintrustAddDefaultForUsage(const CHAR *pszUsageOID,
+BOOL WINAPI WintrustAddDefaultForUsage(const char *pszUsageOID,
                                        CRYPT_PROVIDER_REGDEFUSAGE *psDefUsage)
 {
     static const WCHAR CBAlloc[]    = {'C','a','l','l','b','a','c','k','A','l','l','o','c','F','u','n','c','t','i','o','n', 0};

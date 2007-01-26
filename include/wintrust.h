@@ -362,7 +362,7 @@ static const WCHAR WT_PROVIDER_CERTTRUST_FUNCTION[] =
 BOOL      WINAPI WintrustAddActionID(GUID*,DWORD,CRYPT_REGISTER_ACTIONID*);
 BOOL      WINAPI WintrustRemoveActionID(GUID*);
 BOOL      WINAPI WintrustLoadFunctionPointers(GUID*,CRYPT_PROVIDER_FUNCTIONS*);
-BOOL      WINAPI WintrustAddDefaultForUsage(const CHAR*,CRYPT_PROVIDER_REGDEFUSAGE*);
+BOOL      WINAPI WintrustAddDefaultForUsage(const char*,CRYPT_PROVIDER_REGDEFUSAGE*);
 void      WINAPI WintrustGetRegPolicyFlags(DWORD*);
 LONG      WINAPI WinVerifyTrust(HWND,GUID*,LPVOID);
 HRESULT   WINAPI WinVerifyTrustEx(HWND,GUID*,WINTRUST_DATA*);
