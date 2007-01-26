@@ -803,7 +803,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 
     if (ret == S_OK) {
 	/* Reuse mrelative as temp storage as its already allocated and not needed anymore */
-	ret = UrlCanonicalizeW(preliminary, mrelative, pcchCombined, dwFlags);
+	ret = UrlCanonicalizeW(preliminary, mrelative, pcchCombined, (dwFlags & ~URL_FILE_USE_PATHURL));
 	if(SUCCEEDED(ret) && pszCombined) {
 	    lstrcpyW(pszCombined, mrelative);
 	}
