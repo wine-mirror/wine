@@ -139,7 +139,9 @@ sub parse_api_file($$) {
 
     open(IN, "< $winapi_dir/$file") || die "$winapi_dir/$file: $!\n";
     $/ = "\n";
+    my $linenum=0;
     while(<IN>) {
+        $linenum++;
 	s/^\s*?(.*?)\s*$/$1/; # remove whitespace at begin and end of line
 	s/^(.*?)\s*#.*$/$1/;  # remove comments
 	/^$/ && next;         # skip empty lines
@@ -193,12 +195,12 @@ sub parse_api_file($$) {
 	    if(!$forbidden) {
 		if(defined($module)) {
 		    if($$allowed_modules_unlimited{$type}) {
-			$output->write("$file: type ($type) already specified as an unlimited type\n");
+			$output->write("$file:$linenum: type ($type) already specified as an unlimited type\n");
 		    } elsif(!$$allowed_modules{$type}{$module}) {
 			$$allowed_modules{$type}{$module} = 1;
 			$$allowed_modules_limited{$type} = 1;
 		    } else {
-			$output->write("$file: type ($type) already specified\n");
+			$output->write("$file:$linenum: type ($type) already specified\n");
 		    }
 		} else {
 		    $$allowed_modules_unlimited{$type} = 1;
@@ -207,14 +209,14 @@ sub parse_api_file($$) {
 		$$allowed_modules_limited{$type} = 1;
 	    }
 	    if(defined($$translate_argument{$type}) && $$translate_argument{$type} ne $kind) {
-		$output->write("$file: type ($type) respecified as different kind ($kind != $$translate_argument{$type})\n");
+		$output->write("$file:$linenum: type ($type) respecified as different kind ($kind != $$translate_argument{$type})\n");
 	    } else {
 		$$translate_argument{$type} = $kind;
 	    }
 
 	    $$type_format{$module}{$type} = $format;
 	} else {
-	    $output->write("$file: file must begin with %<type> statement\n");
+	    $output->write("$file:$linenum: file must begin with %<type> statement\n");
 	    exit 1;
 	}
     }
