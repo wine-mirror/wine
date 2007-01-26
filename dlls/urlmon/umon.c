@@ -339,7 +339,7 @@ static ULONG WINAPI URLMonikerImpl_AddRef(IMoniker* iface)
     URLMonikerImpl *This = (URLMonikerImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%u)\n",This, refCount - 1);
+    TRACE("(%p) ref=%u\n",This, refCount);
 
     return refCount;
 }
@@ -352,7 +352,7 @@ static ULONG WINAPI URLMonikerImpl_Release(IMoniker* iface)
     URLMonikerImpl *This = (URLMonikerImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(ref before=%u)\n",This, refCount + 1);
+    TRACE("(%p) ref=%u\n",This, refCount);
 
     /* destroy the object if there's no more reference on it */
     if (!refCount) {
@@ -1167,7 +1167,6 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
 {
     URLMonikerImpl *obj;
     HRESULT hres;
-    IID iid = IID_IMoniker;
     LPOLESTR lefturl = NULL;
 
     TRACE("(%p, %s, %p)\n", pmkContext, debugstr_w(szURL), ppmk);
@@ -1189,7 +1188,7 @@ HRESULT WINAPI CreateURLMoniker(IMoniker *pmkContext, LPCWSTR szURL, IMoniker **
     hres = URLMonikerImpl_Construct(obj, lefturl, szURL);
     CoTaskMemFree(lefturl);
     if(SUCCEEDED(hres))
-	hres = URLMonikerImpl_QueryInterface((IMoniker*)obj, &iid, (void**)ppmk);
+	hres = URLMonikerImpl_QueryInterface((IMoniker*)obj, &IID_IMoniker, (void**)ppmk);
     else
 	HeapFree(GetProcessHeap(), 0, obj);
     return hres;
