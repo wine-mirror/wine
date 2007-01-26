@@ -107,6 +107,7 @@ static void init_proxy(ifref_list_t *ifaces)
   print_proxy( "#define __REQUIRED_RPCPROXY_H_VERSION__ 440\n");
   print_proxy( "#endif /* __REDQ_RPCPROXY_H_VERSION__ */\n");
   print_proxy( "\n");
+  print_proxy( "#define __midl_proxy\n");
   print_proxy( "#include \"objbase.h\"\n");
   print_proxy( "#include \"rpcproxy.h\"\n");
   print_proxy( "#ifndef __RPCPROXY_H_VERSION__\n");
