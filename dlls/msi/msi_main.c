@@ -127,7 +127,7 @@ static HRESULT WINAPI MsiCF_CreateInstance(LPCLASSFACTORY iface,
 
     TRACE("%p %p %s %p\n", This, pOuter, debugstr_guid(riid), ppobj);
 
-    r = This->create_object( pOuter, ppobj );
+    r = This->create_object( pOuter, (LPVOID*) &unk );
     if (SUCCEEDED(r))
     {
         r = IUnknown_QueryInterface( unk, riid, ppobj );
