@@ -47,6 +47,8 @@ C_SRCS = \
 	upgrade.c \
 	where.c
 
+IDL_TLB_SRCS = msiserver.idl
+
 BISON_SRCS = \
 	cond.y \
 	sql.y

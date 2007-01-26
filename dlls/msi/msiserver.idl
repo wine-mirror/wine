@@ -1,0 +1,123 @@
+/*
+ * Copyright (C) 2007 Mike McCormack
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+import "wtypes.idl";
+import "objidl.idl";
+import "oaidl.idl";
+
+[ uuid(000C1092-0000-0000-C000-000000000046), version(1.0) ]
+library WindowsInstaller
+{
+    dispinterface Installer;
+    dispinterface Record;
+    dispinterface Session;
+    dispinterface Database;
+    dispinterface SummaryInfo;
+    dispinterface View;
+    dispinterface UIPreview;
+    dispinterface FeatureInfo;
+    dispinterface RecordList;
+    dispinterface StringList;
+    dispinterface Product;
+    dispinterface Patch;
+
+    [ uuid(000C1090-0000-0000-C000-000000000046) ]
+    dispinterface Installer
+    {
+    properties:
+    methods:
+    }
+
+    [ uuid(000C1093-0000-0000-C000-000000000046) ]
+    dispinterface Record
+    {
+    properties:
+    methods:
+    }
+
+    [ uuid(000C1095-0000-0000-C000-000000000046) ]
+    dispinterface StringList
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C1096-0000-0000-C000-000000000046) ]
+    dispinterface RecordList
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C109A-0000-0000-C000-000000000046) ]
+    dispinterface UIPreview
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C109B-0000-0000-C000-000000000046) ]
+    dispinterface SummaryInfo
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C109C-0000-0000-C000-000000000046) ]
+    dispinterface View
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C109D-0000-0000-C000-000000000046) ]
+    dispinterface Database
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C109E-0000-0000-C000-000000000046) ]
+    dispinterface Session
+    {
+    properties:
+    methods:
+    }
+
+    [ uuid(000C109F-0000-0000-C000-000000000046) ]
+    dispinterface FeatureInfo
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C10A0-0000-0000-C000-000000000046) ]
+    dispinterface Product
+    {
+        properties:
+        methods:
+    }
+
+    [ uuid(000C10A1-0000-0000-C000-000000000046) ]
+    dispinterface Patch
+    {
+        properties:
+        methods:
+    }
+}
