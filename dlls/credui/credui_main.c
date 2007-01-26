@@ -29,6 +29,7 @@
 #include "credui_resources.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(credui);
 
@@ -175,5 +176,59 @@ DWORD WINAPI CredUIConfirmCredentialsW(PCWSTR pszTargetName, BOOL bConfirm)
 {
     FIXME("(%s, %s): stub\n", debugstr_w(pszTargetName),
           bConfirm ? "TRUE" : "FALSE");
+    return ERROR_SUCCESS;
+}
+
+/******************************************************************************
+ *           CredUIParseUserNameW [CREDUI.@]
+ */
+DWORD WINAPI CredUIParseUserNameW(PCWSTR pszUserName, PWSTR pszUser,
+                                  ULONG ulMaxUserChars, PWSTR pszDomain,
+                                  ULONG ulMaxDomainChars)
+{
+    PWSTR p;
+
+    TRACE("(%s, %p, %d, %p, %d)\n", debugstr_w(pszUserName), pszUser,
+          ulMaxUserChars, pszDomain, ulMaxDomainChars);
+
+    if (!pszUserName || !pszUser || !ulMaxUserChars || !pszDomain ||
+        !ulMaxDomainChars)
+        return ERROR_INVALID_PARAMETER;
+
+    /* FIXME: handle marshaled credentials */
+
+    p = strchrW(pszUserName, '\\');
+    if (p)
+    {
+        if (p - pszUserName > ulMaxDomainChars - 1)
+            return ERROR_INSUFFICIENT_BUFFER;
+        if (strlenW(p + 1) > ulMaxUserChars - 1)
+            return ERROR_INSUFFICIENT_BUFFER;
+        strcpyW(pszUser, p + 1);
+        memcpy(pszDomain, pszUserName, (p - pszUserName)*sizeof(WCHAR));
+        pszDomain[p - pszUserName] = '\0';
+
+        return ERROR_SUCCESS;
+    }
+
+    p = strrchrW(pszUserName, '@');
+    if (p)
+    {
+        if (p + 1 - pszUserName > ulMaxUserChars - 1)
+            return ERROR_INSUFFICIENT_BUFFER;
+        if (strlenW(p + 1) > ulMaxDomainChars - 1)
+            return ERROR_INSUFFICIENT_BUFFER;
+        strcpyW(pszDomain, p + 1);
+        memcpy(pszUser, pszUserName, (p - pszUserName)*sizeof(WCHAR));
+        pszUser[p - pszUserName] = '\0';
+
+        return ERROR_SUCCESS;
+    }
+
+    if (strlenW(pszUserName) > ulMaxUserChars - 1)
+        return ERROR_INSUFFICIENT_BUFFER;
+    strcpyW(pszUser, pszUserName);
+    pszDomain[0] = '\0';
+
     return ERROR_SUCCESS;
 }
