@@ -15,8 +15,11 @@ RC_SRCS = winspool.rc
 
 @MAKE_DLL_RULES@
 
-$(IMPORTLIB): $(MAINSPEC)
+libwinspool.def: $(MAINSPEC)
 	$(WINEBUILD) -w --def -o $@ --export $(SRCDIR)/$(MAINSPEC)
+
+libwinspool.a: $(SPEC_DEF)
+	$(DLLTOOL) -k -l $@ -d $(SPEC_DEF)
 
 clean::
 	$(RM) $(IMPORTLIB)
