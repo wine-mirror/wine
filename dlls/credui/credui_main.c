@@ -73,7 +73,8 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
             SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
             if (params->pszCaptionText)
                 SetWindowTextW(hwndDlg, params->pszCaptionText);
-            return TRUE;
+            SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
+            return FALSE;
         }
         case WM_COMMAND:
             switch (wParam)
