@@ -28,6 +28,9 @@ typedef HANDLE HCATINFO;
 extern "C" {
 #endif
 
+
+#include <pshpack8.h>
+
 typedef struct CRYPTCATMEMBER_ {
     DWORD cbStruct;
     LPWSTR pwszReferenceTag;
@@ -41,6 +44,9 @@ typedef struct CRYPTCATMEMBER_ {
     CRYPT_ATTR_BLOB sEncodedIndirectData;
     CRYPT_ATTR_BLOB sEncodedMemberInfo;
 } CRYPTCATMEMBER;
+
+#include <poppack.h>
+
 
 BOOL      WINAPI CryptCATAdminAcquireContext(HCATADMIN*,const GUID*,DWORD);
 BOOL      WINAPI CryptCATAdminCalcHashFromFileHandle(HANDLE,DWORD*,BYTE*,DWORD);
