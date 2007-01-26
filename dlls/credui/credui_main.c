@@ -71,10 +71,26 @@ static INT_PTR CALLBACK CredDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
         case WM_INITDIALOG:
         {
             struct cred_dialog_params *params = (struct cred_dialog_params *)lParam;
+            DWORD ret;
+            WCHAR user[256];
+            WCHAR domain[256];
+
             SetWindowLongPtrW(hwndDlg, DWLP_USER, (LONG_PTR)params);
+            ret = CredUIParseUserNameW(params->pszUsername, user, 256, domain, 256);
+            if (ret == ERROR_SUCCESS)
+            {
+                SetDlgItemTextW(hwndDlg, IDC_USERNAME, user);
+                SetDlgItemTextW(hwndDlg, IDC_DOMAIN, domain);
+            }
+            SetDlgItemTextW(hwndDlg, IDC_PASSWORD, params->pszPassword);
+
+            if (ret == ERROR_SUCCESS && user[0])
+                SetFocus(GetDlgItem(hwndDlg, IDC_PASSWORD));
+            else
+                SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
+
             if (params->pszCaptionText)
                 SetWindowTextW(hwndDlg, params->pszCaptionText);
-            SetFocus(GetDlgItem(hwndDlg, IDC_USERNAME));
             return FALSE;
         }
         case WM_COMMAND:
