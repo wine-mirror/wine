@@ -1605,6 +1605,87 @@ static void test_select_object(void)
     DeleteDC(hdc);
 }
 
+static void test_mono_1x1_bmp_dbg(HBITMAP hbmp, int line)
+{
+    INT ret;
+    BITMAP bm;
+
+    ret = GetObjectType(hbmp);
+    ok_(__FILE__, line)(ret == OBJ_BITMAP, "the object %p is not bitmap\n", hbmp);
+
+    ret = GetObject(hbmp, 0, 0);
+    ok_(__FILE__, line)(ret == sizeof(BITMAP) /* XP */ ||
+                        ret == sizeof(DIBSECTION) /* Win9x */, "object size %d\n", ret);
+
+    memset(&bm, 0xDA, sizeof(bm));
+    SetLastError(0xdeadbeef);
+    ret = GetObject(hbmp, sizeof(bm), &bm);
+    if (!ret) /* XP, only for curObj2 */ return;
+    ok_(__FILE__, line)(ret == sizeof(BITMAP) ||
+                        ret == sizeof(DIBSECTION) /* Win9x, only for curObj2 */,
+                        "GetObject returned %d, error %u\n", ret, GetLastError());
+    ok_(__FILE__, line)(bm.bmType == 0, "wrong bmType %d\n", bm.bmType);
+    ok_(__FILE__, line)(bm.bmWidth == 1, "wrong bmWidth %d\n", bm.bmWidth);
+    ok_(__FILE__, line)(bm.bmHeight == 1, "wrong bmHeight %d\n", bm.bmHeight);
+    ok_(__FILE__, line)(bm.bmWidthBytes == 2, "wrong bmWidthBytes %d\n", bm.bmWidthBytes);
+    ok_(__FILE__, line)(bm.bmPlanes == 1, "wrong bmPlanes %u\n", bm.bmPlanes);
+    ok_(__FILE__, line)(bm.bmBitsPixel == 1, "wrong bmBitsPixel %d\n", bm.bmBitsPixel);
+    ok_(__FILE__, line)(!bm.bmBits, "wrong bmBits %p\n", bm.bmBits);
+}
+
+#define test_mono_1x1_bmp(a) test_mono_1x1_bmp_dbg((a), __LINE__)
+
+static void test_CreateBitmap(void)
+{
+    HDC screenDC = GetDC(0);
+    HDC hdc = CreateCompatibleDC(screenDC);
+
+    /* all of these are the stock monochrome bitmap */
+    HBITMAP bm = CreateCompatibleBitmap(hdc, 0, 0);
+    HBITMAP bm1 = CreateCompatibleBitmap(screenDC, 0, 0);
+    HBITMAP bm4 = CreateBitmap(0, 1, 0, 0, 0);
+    HBITMAP bm5 = CreateDiscardableBitmap(hdc, 0, 0);
+    HBITMAP curObj1 = (HBITMAP)GetCurrentObject(hdc, OBJ_BITMAP);
+    HBITMAP curObj2 = (HBITMAP)GetCurrentObject(screenDC, OBJ_BITMAP);
+
+    /* these 2 are not the stock monochrome bitmap */
+    HBITMAP bm2 = CreateCompatibleBitmap(hdc, 1, 1);
+    HBITMAP bm3 = CreateBitmap(1, 1, 1, 1, 0);
+
+    HBITMAP old1 = (HBITMAP)SelectObject(hdc, bm2);
+    HBITMAP old2 = (HBITMAP)SelectObject(screenDC, bm3);
+    SelectObject(hdc, old1);
+    SelectObject(screenDC, old2);
+
+    ok(bm == bm1 && bm == bm4 && bm == bm5 && bm == curObj1 && bm == old1,
+       "0: %p, 1: %p, 4: %p, 5: %p, curObj1 %p, old1 %p\n",
+       bm, bm1, bm4, bm5, curObj1, old1);
+    ok(bm != bm2 && bm != bm3, "0: %p, 2: %p, 3: %p\n", bm, bm2, bm3);
+    ok(bm != curObj2 /* XP */ || bm == curObj2 /* Win9x */,
+       "0: %p, curObj2 %p\n", bm, curObj2);
+    ok(old2 == 0, "old2 %p\n", old2);
+
+    test_mono_1x1_bmp(bm);
+    test_mono_1x1_bmp(bm1);
+    test_mono_1x1_bmp(bm2);
+    test_mono_1x1_bmp(bm3);
+    test_mono_1x1_bmp(bm4);
+    test_mono_1x1_bmp(bm5);
+    test_mono_1x1_bmp(old1);
+    test_mono_1x1_bmp(curObj1);
+    test_mono_1x1_bmp(curObj2);
+
+    DeleteObject(bm);
+    DeleteObject(bm1);
+    DeleteObject(bm2);
+    DeleteObject(bm3);
+    DeleteObject(bm4);
+    DeleteObject(bm5);
+
+    DeleteDC(hdc);
+    ReleaseDC(0, screenDC);
+}
+
 START_TEST(bitmap)
 {
     is_win9x = GetWindowLongPtrW(GetDesktopWindow(), GWLP_WNDPROC) == 0;
@@ -1621,4 +1702,5 @@ START_TEST(bitmap)
     test_GetDIBits_selected_DDB(FALSE);
     test_GetDIBits();
     test_select_object();
+    test_CreateBitmap();
 }
