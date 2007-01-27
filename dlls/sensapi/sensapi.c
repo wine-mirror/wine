@@ -44,7 +44,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sensapi);
 
-HMODULE SENSAPI_hModule = 0;
+static HMODULE SENSAPI_hModule;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
