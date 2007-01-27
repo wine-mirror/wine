@@ -3712,6 +3712,8 @@ static void test_CreateWindow(void)
 {
     HWND hwnd, parent;
     HMENU hmenu;
+    RECT rc, rc_minmax;
+    MINMAXINFO minmax;
 
 #define expect_menu(window, menu) \
     SetLastError(0xdeadbeef); \
@@ -3903,6 +3905,49 @@ static void test_CreateWindow(void)
     SetLastError(0xdeadbeef);
     ok(!IsMenu(hmenu), "IsMenu should fail\n");
     ok(GetLastError() == ERROR_INVALID_MENU_HANDLE, "IsMenu set error %d\n", GetLastError());
+
+    /* test child window sizing */
+    SetLastError(0xdeadbeef);
+    parent = CreateWindowEx(0, "static", NULL, WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
+                           0, 0, 100, 100, 0, 0, 0, NULL);
+    ok(parent != 0, "CreateWindowEx error %d\n", GetLastError());
+    expect_menu(parent, 0);
+    expect_style(parent, WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_CLIPSIBLINGS);
+    expect_ex_style(parent, WS_EX_WINDOWEDGE);
+
+    memset(&minmax, 0, sizeof(minmax));
+    SendMessage(parent, WM_GETMINMAXINFO, 0, (LPARAM)&minmax);
+    SetRect(&rc_minmax, 0, 0, minmax.ptMaxSize.x, minmax.ptMaxSize.y);
+    ok(IsRectEmpty(&rc_minmax), "rc_minmax is not empty\n");
+
+    GetClientRect(parent, &rc);
+    ok(rc_minmax.left >= rc.left && rc_minmax.top >= rc.top &&
+       rc_minmax.right <= rc.right && rc_minmax.bottom <= rc.bottom,
+       "rc_minmax (%d,%d-%d,%d) is not within of parent client rect (%d,%d-%d,%d)\n",
+       rc_minmax.left, rc_minmax.top, rc_minmax.right, rc_minmax.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
+    InflateRect(&rc, 200, 200);
+    trace("creating child with rect (%d,%d-%d,%d)\n", rc.left, rc.top, rc.right, rc.bottom);
+
+    SetLastError(0xdeadbeef);
+    hwnd = CreateWindowEx(0, "static", NULL, WS_CHILD | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
+                          rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
+                          parent, (HMENU)1, 0, NULL);
+    ok(hwnd != 0, "CreateWindowEx error %d\n", GetLastError());
+    expect_menu(hwnd, 1);
+    expect_style(hwnd, WS_CHILD | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME);
+    expect_ex_style(hwnd, WS_EX_WINDOWEDGE);
+
+    OffsetRect(&rc, -rc.left, -rc.top);
+
+    GetWindowRect(hwnd, &rc_minmax);
+    OffsetRect(&rc_minmax, -rc_minmax.left, -rc_minmax.top);
+    ok(EqualRect(&rc, &rc_minmax), "rects don't match: (%d,%d-%d,%d) and (%d,%d-%d,%d)\n",
+       rc.left, rc.top, rc.right, rc.bottom,
+       rc_minmax.left, rc_minmax.top, rc_minmax.right, rc_minmax.bottom);
+
+    DestroyWindow(hwnd);
+    DestroyWindow(parent);
 
 #undef expect_menu
 #undef expect_style
