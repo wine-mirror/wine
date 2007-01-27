@@ -66,7 +66,7 @@ static TW_UINT16 SANE_GetIdentity( pTW_IDENTITY, pTW_IDENTITY);
 static TW_UINT16 SANE_OpenDS( pTW_IDENTITY, pTW_IDENTITY);
 #endif
 
-TW_UINT16 SANE_SourceControlHandler (
+static TW_UINT16 SANE_SourceControlHandler (
            pTW_IDENTITY pOrigin,
            TW_UINT16    DAT,
            TW_UINT16    MSG,
