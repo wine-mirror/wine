@@ -2136,7 +2136,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                 D3DTEXOPCAPS_LERP               |
                                 D3DTEXOPCAPS_SUBTRACT;
     }
-    if (GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
+    if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3) ||
+         GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
         *pCaps->TextureOpCaps |= D3DTEXOPCAPS_ADDSMOOTH             |
                                 D3DTEXOPCAPS_MULTIPLYADD            |
                                 D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
