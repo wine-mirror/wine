@@ -96,7 +96,7 @@ typedef struct
 } TAB_ITEM;
 
 /* The size of a tab item depends on how much extra data is requested */
-#define TAB_ITEM_SIZE(infoPtr) (sizeof(TAB_ITEM) - sizeof(BYTE) + infoPtr->cbInfo)
+#define TAB_ITEM_SIZE(infoPtr) (FIELD_OFFSET(TAB_ITEM, extra[(infoPtr)->cbInfo]))
 
 typedef struct
 {
