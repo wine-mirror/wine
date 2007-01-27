@@ -47,7 +47,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(comm);
 
-HMODULE SERIALUI_hModule = 0;
+static HMODULE SERIALUI_hModule;
 
 /***********************************************************************
  * DllMain [Internal] Initializes the internal 'SERIALUI.DLL'.
@@ -342,7 +342,7 @@ static void SERIALUI_DialogInfoToDCB(HWND hDlg, SERIALUI_DialogInfo *info)
  *
  * Shows a dialog for configuring a COMM port
  */
-INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK SERIALUI_ConfigDialogProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     static const WCHAR szSettings[] = {
         'S','e','t','t','i','n','g','s',' ','f','o','r',' ',0
