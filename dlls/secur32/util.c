@@ -145,7 +145,7 @@ SECURITY_STATUS SECUR32_CreateNTLMv1SessionKey(PBYTE password, int len, PBYTE se
     return SEC_E_OK;
 }
 
-void SECUR32_CalcNTLMv2Subkey(PBYTE session_key, const char *magic, PBYTE subkey)
+static void SECUR32_CalcNTLMv2Subkey(PBYTE session_key, const char *magic, PBYTE subkey)
 {
     MD5_CTX ctx;
 
