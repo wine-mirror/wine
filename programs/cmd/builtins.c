@@ -519,6 +519,8 @@ HANDLE hff;
 
   /* If 2nd parm is directory, then use original filename */
   GetFullPathName (param2, sizeof(outpath), outpath, NULL);
+  if (outpath[strlen(outpath) - 1] == '\\')
+      outpath[strlen(outpath) - 1] = '\0';
   hff = FindFirstFile (outpath, &fd);
   if (hff != INVALID_HANDLE_VALUE) {
     if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
