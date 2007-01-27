@@ -2411,6 +2411,23 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                 TRACE("itemData=0x%08lx\n", lpmis->itemData);
             }
             break;
+        case WM_NCCREATE:
+        case WM_CREATE:
+        {
+            BOOL unicode;
+            CREATESTRUCTA *cs;
+
+            if (!enter) break;
+
+            unicode = IsWindowUnicode(sp_e->msg_hwnd);
+            cs = (CREATESTRUCTA *)sp_e->lParam;
+            TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
+                  unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
+                  unicode ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
+                  cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
+                  cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams);
+            break;
+        }
         case WM_SIZE:
             if (!enter) break;
             TRACE("cx=%d cy=%d\n", LOWORD(sp_e->lParam), HIWORD(sp_e->lParam));
