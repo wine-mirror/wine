@@ -279,6 +279,11 @@ static void test_sprintf( void )
     ok(!strcmp(buffer,"f"),"Precision ignored \"%s\"\n",buffer);
     ok( r==1, "return count wrong\n");
 
+    format = "%*s";
+    r = sprintf(buffer,format,-5,"foo");
+    ok(!strcmp(buffer,"foo  "),"Negative field width ignored \"%s\"\n",buffer);
+    ok( r==5, "return count wrong\n");
+
     format = "%#-012p";
     r = sprintf(buffer,format,(void *)57);
     ok(!strcmp(buffer,"0X00000039  "),"Pointer formatted incorrectly\n");

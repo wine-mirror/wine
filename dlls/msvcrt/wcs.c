@@ -568,9 +568,14 @@ static int pf_vsnprintf( pf_output *out, const WCHAR *format, va_list valist )
 
         /* deal with the field width specifier */
         flags.FieldLength = 0;
-        if( *p == '*' ) 
+        if( *p == '*' )
         {
             flags.FieldLength = va_arg( valist, int );
+            if (flags.FieldLength < 0)
+            {
+                flags.LeftAlign = '-';
+                flags.FieldLength = -flags.FieldLength;
+            }
             p++;
         }
         else while( isdigit(*p) )
