@@ -61,10 +61,7 @@
 #ifdef HAVE_ALSA
 
 WINE_DEFAULT_DEBUG_CHANNEL(wave);
-
-/*======================================================================*
- *                  Low level DSOUND implementation			*
- *======================================================================*/
+WINE_DECLARE_DEBUG_CHANNEL(waveloop);
 
 typedef struct IDsDriverImpl IDsDriverImpl;
 typedef struct IDsDriverBufferImpl IDsDriverBufferImpl;
@@ -87,107 +84,163 @@ struct IDsDriverBufferImpl
     /* IDsDriverBufferImpl fields */
     IDsDriverImpl*	      drv;
 
-    CRITICAL_SECTION          mmap_crst;
     LPVOID                    mmap_buffer;
     DWORD                     mmap_buflen_bytes;
     snd_pcm_uframes_t         mmap_buflen_frames;
     snd_pcm_channel_area_t *  mmap_areas;
-    snd_async_handler_t *     mmap_async_handler;
     snd_pcm_uframes_t	      mmap_ppos; /* play position */
-
-    /* Do we have a direct hardware buffer - SND_PCM_TYPE_HW? */
-    int                       mmap_mode;
+    snd_pcm_uframes_t         mmap_wpos; /* write position */
+    HANDLE                    mmap_thread;
+    ALSA_MSG_RING             mmap_ring; /* sync object */
 };
 
 static void DSDB_CheckXRUN(IDsDriverBufferImpl* pdbi)
 {
     WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
     snd_pcm_state_t    state = snd_pcm_state(wwo->pcm);
+    snd_pcm_avail_update(wwo->pcm);
 
     if ( state == SND_PCM_STATE_XRUN )
     {
-	int            err = snd_pcm_prepare(wwo->pcm);
-	TRACE("xrun occurred\n");
+	int err = snd_pcm_prepare(wwo->pcm);
+	WARN_(waveloop)("xrun occurred\n");
 	if ( err < 0 )
             ERR("recovery from xrun failed, prepare failed: %s\n", snd_strerror(err));
     }
     else if ( state == SND_PCM_STATE_SUSPENDED )
     {
-	int            err = snd_pcm_resume(wwo->pcm);
-	TRACE("recovery from suspension occurred\n");
+	int err = snd_pcm_resume(wwo->pcm);
+	TRACE_(waveloop)("recovery from suspension occurred\n");
         if (err < 0 && err != -EAGAIN){
             err = snd_pcm_prepare(wwo->pcm);
             if (err < 0)
                 ERR("recovery from suspend failed, prepare failed: %s\n", snd_strerror(err));
         }
+    } else if ( state != SND_PCM_STATE_RUNNING ) {
+        WARN_(waveloop)("Unhandled state: %d\n", state);
     }
 }
 
-static void DSDB_MMAPCopy(IDsDriverBufferImpl* pdbi, int mul)
+/**
+ * The helper thread for DirectSound
+ *
+ * Basically it does an infinite loop until it is told to die
+ * 
+ * snd_pcm_wait() is a call that polls the sound buffer and waits
+ * until there is at least 1 period free before it returns.
+ *
+ * We then commit the buffer filled by the owner of this
+ * IDSDriverBuffer */
+static DWORD CALLBACK DBSB_MMAPLoop(LPVOID data)
 {
-    WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
-    snd_pcm_uframes_t  period_size;
-    snd_pcm_sframes_t  avail;
-    int err;
-    int dir=0;
-
+    IDsDriverBufferImpl* pdbi = (IDsDriverBufferImpl*)data;
+    WINE_WAVEDEV *wwo = &(WOutDev[pdbi->drv->wDevID]);
+    snd_pcm_uframes_t frames, wanted, ofs;
     const snd_pcm_channel_area_t *areas;
-    snd_pcm_uframes_t     ofs;
-    snd_pcm_uframes_t     frames;
-    snd_pcm_uframes_t     wanted;
+    int state = WINE_WS_STOPPED;
+    snd_pcm_state_t alsastate;
 
-    if ( !pdbi->mmap_buffer || !wwo->hw_params || !wwo->pcm)
-	return;
+    TRACE_(waveloop)("0x%8p\n", data);
+    TRACE("0x%8p, framelength: %lu, area: %8p\n", data, pdbi->mmap_buflen_frames, pdbi->mmap_areas);
 
-    err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
-    avail = snd_pcm_avail_update(wwo->pcm);
-
-    DSDB_CheckXRUN(pdbi);
-
-    TRACE("avail=%d, mul=%d\n", (int)avail, mul);
-
-    frames = pdbi->mmap_buflen_frames;
-
-    EnterCriticalSection(&pdbi->mmap_crst);
-
-    /* we want to commit the given number of periods, or the whole lot */
-    wanted = mul == 0 ? frames : period_size * 2;
-
-    snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
     if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
         FIXME("Can't access sound driver's buffer directly.\n");
 
-    /* mark our current play position */
-    pdbi->mmap_ppos = ofs;
+    do {
+        enum win_wm_message msg;
+        DWORD param;
+        HANDLE hEvent;
+        int err;
+        snd_pcm_format_t format;
 
-    if (frames > wanted)
-        frames = wanted;
+        if (state != WINE_WS_PLAYING)
+        {
+            ALSA_WaitRingMessage(&pdbi->mmap_ring, 1000000);
+            ALSA_RetrieveRingMessage(&pdbi->mmap_ring, &msg, &param, &hEvent);
+        }
+        else
+        while (!ALSA_RetrieveRingMessage(&pdbi->mmap_ring, &msg, &param, &hEvent))
+        {
+            snd_pcm_wait(wwo->pcm, -1);
+            DSDB_CheckXRUN(pdbi);
 
-    err = snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
+            wanted = frames = pdbi->mmap_buflen_frames;
 
-    /* Check to make sure we committed all we want to commit. ALSA
-     * only gives a contiguous linear region, so we need to check this
-     * in case we've reached the end of the buffer, in which case we
-     * can wrap around back to the beginning. */
-    if (frames < wanted) {
-        frames = wanted -= frames;
-        snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
-        snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
-    }
+            err = snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
+            snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
 
-    LeaveCriticalSection(&pdbi->mmap_crst);
-}
+            /* mark our current play position */
+            pdbi->mmap_ppos = ofs;
+            TRACE_(waveloop)("Updated position to %lx [%d, 0x%8p, %lu]\n", ofs, err, areas, frames);
+            /* Check to make sure we committed all we want to commit. ALSA
+             * only gives a contiguous linear region, so we need to check this
+             * in case we've reached the end of the buffer, in which case we
+             * can wrap around back to the beginning. */
+            if (frames < wanted) {
+                frames = wanted - frames;
+                snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
+                snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
+            }
+            wanted = 0;
+            snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &wanted);
+            snd_pcm_mmap_commit(wwo->pcm, ofs, wanted);
+            pdbi->mmap_wpos = ofs;
+        }
 
-static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
-{
-    int periods;
-    /* snd_pcm_t *               handle = snd_async_handler_get_pcm(ahandler); */
-    IDsDriverBufferImpl*      pdbi = snd_async_handler_get_callback_private(ahandler);
-    TRACE("callback called\n");
+        switch (msg) {
+        case WINE_WM_STARTING:
+            if (state == WINE_WS_PLAYING)
+                break;
 
-    /* Commit another block (the entire buffer if it's a direct hw buffer) */
-    periods = pdbi->mmap_mode == SND_PCM_TYPE_HW ? 0 : 1;
-    DSDB_MMAPCopy(pdbi, periods);
+            alsastate = snd_pcm_state(wwo->pcm);
+            if ( alsastate == SND_PCM_STATE_SETUP )
+            {
+                err = snd_pcm_prepare(wwo->pcm);
+                alsastate = snd_pcm_state(wwo->pcm);
+            }
+
+            snd_pcm_avail_update(wwo->pcm);
+
+            /* Rewind, and initialise */
+            frames = 0;
+            snd_pcm_mmap_begin(wwo->pcm, &areas, &ofs, &frames);
+            snd_pcm_mmap_commit(wwo->pcm, ofs, frames);
+            snd_pcm_rewind(wwo->pcm, ofs);
+            snd_pcm_hw_params_get_format(wwo->hw_params, &format);
+            snd_pcm_format_set_silence(format, pdbi->mmap_buffer, pdbi->mmap_buflen_frames);
+            pdbi->mmap_ppos = 0;
+            snd_pcm_hw_params_get_period_size(wwo->hw_params, &wanted, NULL);
+            pdbi->mmap_wpos = 2*wanted;
+            if ( alsastate == SND_PCM_STATE_PREPARED )
+            {
+                err = snd_pcm_start(wwo->pcm);
+                TRACE("Starting 0x%8p err: %d\n", wwo->pcm, err);
+            }
+            state = WINE_WS_PLAYING;
+            break;
+
+        case WINE_WM_STOPPING:
+            state = WINE_WS_STOPPED;
+            snd_pcm_drain(wwo->pcm);
+            break;
+
+        case WINE_WM_CLOSING:
+            if (wwo->pcm != NULL)
+                snd_pcm_drain(wwo->pcm);
+            pdbi->mmap_thread = NULL;
+            SetEvent(hEvent);
+            goto out;
+        default:
+            ERR("Unhandled event %s", ALSA_getCmdString(msg));
+            break;
+        }
+        if (hEvent != INVALID_HANDLE_VALUE)
+            SetEvent(hEvent);
+    } while (1);
+out:
+    TRACE_(waveloop)("Destroyed MMAP thread\n");
+    TRACE("Destroyed MMAP thread\n");
+    return 0;
 }
 
 /**
@@ -196,29 +249,40 @@ static void DSDB_PCMCallback(snd_async_handler_t *ahandler)
  */
 static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 {
-    WINE_WAVEDEV *            wwo = &(WOutDev[pdbi->drv->wDevID]);
-    snd_pcm_format_t          format;
-    snd_pcm_uframes_t         frames;
-    snd_pcm_uframes_t         ofs;
-    snd_pcm_uframes_t         avail;
-    unsigned int              channels;
-    unsigned int              bits_per_sample;
-    unsigned int              bits_per_frame;
-    int                       err;
+    WINE_WAVEDEV *     wwo = &(WOutDev[pdbi->drv->wDevID]);
+    snd_pcm_format_t   format;
+    snd_pcm_uframes_t  frames, ofs, avail, psize;
+    unsigned int       channels, bits_per_sample, bits_per_frame;
+    int                err, mmap_mode;
 
+    mmap_mode = snd_pcm_type(wwo->pcm);
+
+    ALSA_InitRingMessage(&pdbi->mmap_ring);
+
+    if (mmap_mode == SND_PCM_TYPE_HW) {
+        TRACE("mmap'd buffer is a hardware buffer.\n");
+    }
+    else {
+#if 0 /* Horribly hack, shouldn't be used */
+        err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &psize, NULL);
+        /* Set only a buffer of 2 period sizes, to decrease latency */
+        if (err >= 0)
+            err = snd_pcm_hw_params_set_buffer_size_near(wwo->pcm, wwo->hw_params, &psize);
+
+        psize *= 2;
+        if (err < 0) {
+            ERR("Errno %d (%s) occured when setting buffer size\n", err, strerror(errno));
+        }
+#endif
+        TRACE("mmap'd buffer is an ALSA emulation of hardware buffer.\n");
+    }
+
+    err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &psize, NULL);
     err = snd_pcm_hw_params_get_format(wwo->hw_params, &format);
     err = snd_pcm_hw_params_get_buffer_size(wwo->hw_params, &frames);
     err = snd_pcm_hw_params_get_channels(wwo->hw_params, &channels);
     bits_per_sample = snd_pcm_format_physical_width(format);
     bits_per_frame = bits_per_sample * channels;
-    pdbi->mmap_mode = snd_pcm_type(wwo->pcm);
-
-    if (pdbi->mmap_mode == SND_PCM_TYPE_HW) {
-        TRACE("mmap'd buffer is a hardware buffer.\n");
-    }
-    else {
-        TRACE("mmap'd buffer is an ALSA emulation of hardware buffer.\n");
-    }
 
     if (TRACE_ON(wave))
 	ALSA_TraceParameters(wwo->hw_params, NULL, FALSE);
@@ -246,32 +310,13 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
     if (ofs > 0)
 	err = snd_pcm_rewind(wwo->pcm, ofs);
     pdbi->mmap_buffer = pdbi->mmap_areas->addr;
-
-    snd_pcm_format_set_silence(format, pdbi->mmap_buffer, frames );
+    pdbi->mmap_thread = NULL;
 
     TRACE("created mmap buffer of %ld frames (%d bytes) at %p\n",
         frames, pdbi->mmap_buflen_bytes, pdbi->mmap_buffer);
 
-    err = snd_async_add_pcm_handler(&pdbi->mmap_async_handler, wwo->pcm, DSDB_PCMCallback, pdbi);
-    if ( err < 0 )
-    {
-	ERR("add_pcm_handler failed. reason: %s\n", snd_strerror(err));
-	return DSERR_GENERIC;
-    }
-
-    InitializeCriticalSection(&pdbi->mmap_crst);
-    pdbi->mmap_crst.DebugInfo->Spare[0] = (DWORD_PTR)"WINEALSA_mmap_crst";
-
     return DS_OK;
 }
-
-static void DSDB_DestroyMMAP(IDsDriverBufferImpl* pdbi)
-{
-    TRACE("mmap buffer %p destroyed\n", pdbi->mmap_buffer);
-    pdbi->mmap_areas = NULL;
-    pdbi->mmap_buffer = NULL;
-}
-
 
 static HRESULT WINAPI IDsDriverBufferImpl_QueryInterface(PIDSDRIVERBUFFER iface, REFIID riid, LPVOID *ppobj)
 {
@@ -299,9 +344,15 @@ static ULONG WINAPI IDsDriverBufferImpl_Release(PIDSDRIVERBUFFER iface)
 
     if (refCount)
 	return refCount;
+
+    if (This->mmap_thread != NULL)
+        ALSA_AddRingMessage(&This->mmap_ring, WINE_WM_CLOSING, 0, 1);
+
+    TRACE("mmap buffer %p destroyed\n", This->mmap_buffer);
+    ALSA_DestroyRingMessage(&This->mmap_ring);
+
     if (This == This->drv->primary)
 	This->drv->primary = NULL;
-    DSDB_DestroyMMAP(This);
     HeapFree(GetProcessHeap(), 0, This);
     return 0;
 }
@@ -359,7 +410,7 @@ static HRESULT WINAPI IDsDriverBufferImpl_SetVolumePan(PIDSDRIVERBUFFER iface, P
 static HRESULT WINAPI IDsDriverBufferImpl_SetPosition(PIDSDRIVERBUFFER iface, DWORD dwNewPos)
 {
     /* IDsDriverImpl *This = (IDsDriverImpl *)iface; */
-    TRACE("(%p,%d): stub\n",iface,dwNewPos);
+    FIXME("(%p,%d): stub\n",iface,dwNewPos);
     return DSERR_UNSUPPORTED;
 }
 
@@ -368,105 +419,60 @@ static HRESULT WINAPI IDsDriverBufferImpl_GetPosition(PIDSDRIVERBUFFER iface,
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
     WINE_WAVEDEV *      wwo = &(WOutDev[This->drv->wDevID]);
-    snd_pcm_uframes_t   hw_ptr;
-    snd_pcm_uframes_t   period_size;
+    snd_pcm_uframes_t   hw_pptr, hw_wptr;
     snd_pcm_state_t     state;
-    int dir;
-    int err;
 
-    if (wwo->hw_params == NULL) return DSERR_GENERIC;
+    if (wwo->hw_params == NULL || wwo->pcm == NULL) return DSERR_GENERIC;
 
-    dir=0;
-    err = snd_pcm_hw_params_get_period_size(wwo->hw_params, &period_size, &dir);
-
-    if (wwo->pcm == NULL) return DSERR_GENERIC;
-    /** we need to track down buffer underruns */
+#if 0 /* Shouldn't be needed */
+    /* we need to track down buffer underruns */
     DSDB_CheckXRUN(This);
-
-    hw_ptr = This->mmap_ppos;
+#endif
 
     state = snd_pcm_state(wwo->pcm);
-    if (state != SND_PCM_STATE_RUNNING)
-      hw_ptr = 0;
+    if (state == SND_PCM_STATE_RUNNING)
+    {
+        hw_pptr = This->mmap_ppos;
+        hw_wptr = This->mmap_wpos;
+    }
+    else
+        hw_pptr = hw_wptr = 0;
 
     if (lpdwPlay)
-	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr) % This->mmap_buflen_bytes;
+	*lpdwPlay = snd_pcm_frames_to_bytes(wwo->pcm, hw_pptr) % This->mmap_buflen_bytes;
     if (lpdwWrite)
-	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->pcm, hw_ptr + period_size * 2) % This->mmap_buflen_bytes;
+	*lpdwWrite = snd_pcm_frames_to_bytes(wwo->pcm, hw_wptr) % This->mmap_buflen_bytes;
 
-    TRACE("hw_ptr=0x%08x, playpos=%d, writepos=%d\n", (unsigned int)hw_ptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
+    TRACE_(waveloop)("hw_pptr=0x%08x, hw_wptr=0x%08x playpos=%d, writepos=%d\n", (unsigned int)hw_pptr, (unsigned int)hw_wptr, lpdwPlay?*lpdwPlay:-1, lpdwWrite?*lpdwWrite:-1);
     return DS_OK;
 }
 
 static HRESULT WINAPI IDsDriverBufferImpl_Play(PIDSDRIVERBUFFER iface, DWORD dwRes1, DWORD dwRes2, DWORD dwFlags)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    WINE_WAVEDEV *       wwo = &(WOutDev[This->drv->wDevID]);
-    snd_pcm_state_t      state;
-    int                  err;
 
     TRACE("(%p,%x,%x,%x)\n",iface,dwRes1,dwRes2,dwFlags);
 
-    if (wwo->pcm == NULL) return DSERR_GENERIC;
+    if (This->mmap_thread == NULL)
+        This->mmap_thread = CreateThread(NULL, 0, DBSB_MMAPLoop, (LPVOID)(DWORD)This, 0, NULL);
 
-    state = snd_pcm_state(wwo->pcm);
-    if ( state == SND_PCM_STATE_SETUP )
-    {
-	err = snd_pcm_prepare(wwo->pcm);
-        state = snd_pcm_state(wwo->pcm);
-    }
-    if ( state == SND_PCM_STATE_PREPARED )
-    {
-	/* If we have a direct hardware buffer, we can commit the whole lot
-	 * immediately (periods = 0), otherwise we prime the queue with only
-	 * 2 periods.
-	 *
-	 * Why 2? We want a small number so that we don't get ahead of the
-	 * DirectSound mixer. But we don't want to ever let the buffer get
-	 * completely empty - having 2 periods gives us time to commit another
-	 * period when the first expires.
-	 *
-	 * The potential for buffer underrun is high, but that's the reality
-	 * of using a translated buffer (the whole point of DirectSound is
-	 * to provide direct access to the hardware).
-         *
-         * A better implementation would use the buffer Lock() and Unlock()
-         * methods to determine how far ahead we can commit, and to rewind if
-         * necessary.
-	 */
-	int periods = This->mmap_mode == SND_PCM_TYPE_HW ? 0 : 2;
+    if (This->mmap_thread == NULL)
+        ERR("Cannot create sound thread, don't expect any sound at all\n");
+    else
+        ALSA_AddRingMessage(&This->mmap_ring, WINE_WM_STARTING, 0, 1);
 
-	DSDB_MMAPCopy(This, periods);
-	err = snd_pcm_start(wwo->pcm);
-    }
     return DS_OK;
 }
 
 static HRESULT WINAPI IDsDriverBufferImpl_Stop(PIDSDRIVERBUFFER iface)
 {
     IDsDriverBufferImpl *This = (IDsDriverBufferImpl *)iface;
-    WINE_WAVEDEV *    wwo = &(WOutDev[This->drv->wDevID]);
-    int               err;
-    DWORD             play;
-    DWORD             write;
 
     TRACE("(%p)\n",iface);
 
-    if (wwo->pcm == NULL) return DSERR_GENERIC;
+    if (This->mmap_thread != NULL)
+        ALSA_AddRingMessage(&This->mmap_ring, WINE_WM_STOPPING, 0, 1);
 
-    /* ring buffer wrap up detection */
-    IDsDriverBufferImpl_GetPosition(iface, &play, &write);
-    if ( play > write)
-    {
-	TRACE("writepos wrapper up\n");
-	return DS_OK;
-    }
-
-    if ( ( err = snd_pcm_drop(wwo->pcm)) < 0 )
-    {
-	ERR("error while stopping pcm: %s\n", snd_strerror(err));
-	return DSERR_GENERIC;
-    }
     return DS_OK;
 }
 
