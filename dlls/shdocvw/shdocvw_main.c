@@ -126,7 +126,7 @@ HRESULT WINAPI DllInstall(BOOL bInstall, LPCWSTR cmdline)
  *
  * makes sure the handle to shell32 is valid
  */
- BOOL SHDOCVW_LoadShell32(void)
+static BOOL SHDOCVW_LoadShell32(void)
 {
      if (SHDOCVW_hshell32)
        return TRUE;

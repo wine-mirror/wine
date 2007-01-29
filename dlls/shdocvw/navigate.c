@@ -548,8 +548,8 @@ HRESULT navigate_url(DocHost *This, BSTR url, VARIANT *Flags, VARIANT *TargetFra
     return hres;
 }
 
-HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
-                       IBindStatusCallback *callback)
+static HRESULT navigate_hlink(DocHost *This, IMoniker *mon, IBindCtx *bindctx,
+                              IBindStatusCallback *callback)
 {
     IHttpNegotiate *http_negotiate;
     LPWSTR url = NULL;

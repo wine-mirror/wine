@@ -169,7 +169,7 @@ static const IPropertyBagVtbl RegistryPropertyBag_IPropertyBagVtbl = {
     RegistryPropertyBag_IPropertyBag_Write
 };
 
-HRESULT RegistryPropertyBag_Constructor(HKEY hInitPropertyBagKey, REFIID riid, LPVOID *ppvObject) {
+static HRESULT RegistryPropertyBag_Constructor(HKEY hInitPropertyBagKey, REFIID riid, LPVOID *ppvObject) {
     HRESULT hr = E_FAIL;
     RegistryPropertyBag *pRegistryPropertyBag;
 
@@ -313,8 +313,8 @@ static const IClassFactoryVtbl InstanceObjectFactory_IClassFactoryVtbl = {
     InstanceObjectFactory_IClassFactory_LockServer
 };
 
-HRESULT InstanceObjectFactory_Constructor(REFCLSID rclsid, IPropertyBag *pPropertyBag, REFIID riid,
-    LPVOID *ppvObject)
+static HRESULT InstanceObjectFactory_Constructor(REFCLSID rclsid, IPropertyBag *pPropertyBag,
+                                                 REFIID riid, LPVOID *ppvObject)
 {
     InstanceObjectFactory *pInstanceObjectFactory;
     HRESULT hr = E_FAIL;
