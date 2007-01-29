@@ -44,12 +44,13 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wave);
-
+WINE_DEFAULT_DEBUG_CHANNEL(alsa);
 /* unless someone makes a wineserver kernel module, Unix pipes are faster than win32 events */
 #define USE_PIPE_SYNC
 
 #ifdef USE_PIPE_SYNC
+#define INIT_OMR(omr) do { if (pipe(omr->msg_pipe) < 0) { omr->msg_pipe[0] = omr->msg_pipe[1] = -1; } } while (0)
+#define CLOSE_OMR(Omr) do { close(omr->msg_pipe[0]); close(omr->msg_pipe[1]); } while (0)
 #define SIGNAL_OMR(omr) do { int x = 0; write((omr)->msg_pipe[1], &x, sizeof(x)); } while (0)
 #define CLEAR_OMR(omr) do { int x = 0; read((omr)->msg_pipe[0], &x, sizeof(x)); } while (0)
 #define RESET_OMR(omr) do { } while (0)
@@ -57,6 +58,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(wave);
   do { struct pollfd pfd; pfd.fd = (omr)->msg_pipe[0]; \
        pfd.events = POLLIN; poll(&pfd, 1, sleep); } while (0)
 #else
+#define INIT_OMR(omr) do { omr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL); } while (0)
+#define CLOSE_OMR(omr) do { CloseHandle(omr->msg_event); } while (0)
 #define SIGNAL_OMR(omr) do { SetEvent((omr)->msg_event); } while (0)
 #define CLEAR_OMR(omr) do { } while (0)
 #define RESET_OMR(omr) do { ResetEvent((omr)->msg_event); } while (0)
@@ -76,15 +79,7 @@ int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
 {
     omr->msg_toget = 0;
     omr->msg_tosave = 0;
-#ifdef USE_PIPE_SYNC
-    if (pipe(omr->msg_pipe) < 0) {
-        omr->msg_pipe[0] = -1;
-        omr->msg_pipe[1] = -1;
-        ERR("could not create pipe, error=%s\n", strerror(errno));
-    }
-#else
-    omr->msg_event = CreateEventW(NULL, FALSE, FALSE, NULL);
-#endif
+    INIT_OMR(omr);
     omr->ring_buffer_size = ALSA_RING_BUFFER_INCREMENT;
     omr->messages = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,omr->ring_buffer_size * sizeof(ALSA_MSG));
 
@@ -99,12 +94,7 @@ int ALSA_InitRingMessage(ALSA_MSG_RING* omr)
  */
 int ALSA_DestroyRingMessage(ALSA_MSG_RING* omr)
 {
-#ifdef USE_PIPE_SYNC
-    close(omr->msg_pipe[0]);
-    close(omr->msg_pipe[1]);
-#else
-    CloseHandle(omr->msg_event);
-#endif
+    CLOSE_OMR(omr);
     HeapFree(GetProcessHeap(),0,omr->messages);
     omr->ring_buffer_size = 0;
     omr->msg_crst.DebugInfo->Spare[0] = 0;
@@ -144,7 +134,6 @@ int ALSA_AddRingMessage(ALSA_MSG_RING* omr, enum win_wm_message msg, DWORD param
     {
 	int old_ring_buffer_size = omr->ring_buffer_size;
 	omr->ring_buffer_size += ALSA_RING_BUFFER_INCREMENT;
-	TRACE("omr->ring_buffer_size=%d\n",omr->ring_buffer_size);
 	omr->messages = HeapReAlloc(GetProcessHeap(),0,omr->messages, omr->ring_buffer_size * sizeof(ALSA_MSG));
 	/* Now we need to rearrange the ring buffer so that the new
 	   buffers just allocated are in between omr->msg_tosave and
