@@ -2089,6 +2089,8 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
 {
     DWORD ret;
     HKEY shkey;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING subkey;
 
     TRACE("(%p,%s)\n",hkey, debugstr_w(lpSubKey));
 
@@ -2096,7 +2098,9 @@ LONG WINAPI RegUnLoadKeyW( HKEY hkey, LPCWSTR lpSubKey )
     if( ret )
         return ERROR_INVALID_PARAMETER;
 
-    ret = RtlNtStatusToDosError(NtUnloadKey(shkey));
+    RtlInitUnicodeString(&subkey, lpSubKey);
+    InitializeObjectAttributes(&attr, &subkey, OBJ_CASE_INSENSITIVE, shkey, NULL);
+    ret = RtlNtStatusToDosError(NtUnloadKey(&attr));
 
     RegCloseKey(shkey);
 

@@ -775,15 +775,15 @@ NTSTATUS WINAPI RtlpNtSetValueKey( HANDLE hkey, ULONG type, const void *data,
  * NtUnloadKey [NTDLL.@]
  * ZwUnloadKey [NTDLL.@]
  */
-NTSTATUS WINAPI NtUnloadKey(IN HANDLE KeyHandle)
+NTSTATUS WINAPI NtUnloadKey(IN POBJECT_ATTRIBUTES attr)
 {
     NTSTATUS ret;
 
-    TRACE("(%p)\n", KeyHandle);
+    TRACE("(%p)\n", attr);
 
     SERVER_START_REQ( unload_registry )
     {
-        req->hkey  = KeyHandle;
+        req->hkey = attr->RootDirectory;
         ret = wine_server_call(req);
     }
     SERVER_END_REQ;
