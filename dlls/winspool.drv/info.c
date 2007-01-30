@@ -1651,15 +1651,8 @@ void WINSPOOL_LoadSystemPrinters(void)
     done = CUPS_LoadPrinters();
 #endif
 
-    if(!done) { /* If we have any CUPS based printers, skip looking for printcap printers */
-        /* Check for [ppd] section in config file before parsing /etc/printcap */
-        /* @@ Wine registry key: HKCU\Software\Wine\Printing\PPD Files */
-        if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Printing\\PPD Files",
-                        &hkey) == ERROR_SUCCESS) {
-            RegCloseKey(hkey);
-            PRINTCAP_LoadPrinters();
-        }
-    }
+    if(!done) /* If we have any CUPS based printers, skip looking for printcap printers */
+        PRINTCAP_LoadPrinters();
 
     /* Now enumerate the list again and delete any printers that a still tagged */
     EnumPrintersA(PRINTER_ENUM_LOCAL, NULL, 5, NULL, 0, &needed, &num);
