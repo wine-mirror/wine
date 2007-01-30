@@ -696,7 +696,17 @@ static inline SF_TYPE SAFEARRAY_GetUnionType(SAFEARRAY *psa)
 
     hr = SafeArrayGetVartype(psa, &vt);
     if (FAILED(hr))
-        RpcRaiseException(hr);
+    {
+        switch(psa->cbElements)
+        {
+        case 1: vt = VT_I1; break;
+        case 2: vt = VT_I2; break;
+        case 4: vt = VT_I4; break;
+        case 8: vt = VT_I8; break;
+        default:
+            RpcRaiseException(hr);
+        }
+    }
 
     if (psa->fFeatures & FADF_HAVEIID)
         return SF_HAVEIID;
@@ -846,8 +856,8 @@ unsigned char * WINAPI LPSAFEARRAY_UserMarshal(ULONG *pFlags, unsigned char *Buf
         wiresa->cbElements = psa->cbElements;
 
         hr = SafeArrayGetVartype(psa, &vt);
-        if (FAILED(hr))
-            RpcRaiseException(hr);
+        if (FAILED(hr)) vt = 0;
+
         wiresa->cLocks = (USHORT)psa->cLocks | (vt << 16);
 
         Buffer += FIELD_OFFSET(struct _wireSAFEARRAY, uArrayStructs);
@@ -996,7 +1006,14 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     wiresab = (SAFEARRAYBOUND *)Buffer;
     Buffer += sizeof(wiresab[0]) * wiresa->cDims;
 
-    *ppsa = SafeArrayCreateEx(vt, wiresa->cDims, wiresab, NULL);
+    if(vt)
+        *ppsa = SafeArrayCreateEx(vt, wiresa->cDims, wiresab, NULL);
+    else
+    {
+        SafeArrayAllocDescriptor(wiresa->cDims, ppsa);
+        if(*ppsa)
+            memcpy((*ppsa)->rgsabound, wiresab, sizeof(SAFEARRAYBOUND) * wiresa->cDims);
+    }
     if (!*ppsa)
         RpcRaiseException(E_OUTOFMEMORY);
 
