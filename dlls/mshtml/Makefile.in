@@ -31,7 +31,7 @@ C_SRCS = \
 	navigate.c \
 	nsembed.c \
 	nsio.c \
-	nsservice.c\
+	nsservice.c \
 	olecmd.c \
 	oleobj.c \
 	olewnd.c \
