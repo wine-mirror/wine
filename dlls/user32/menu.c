@@ -440,7 +440,7 @@ static HMENU MENU_CopySysPopup(void)
  * However, the real system menu handle is sometimes seen in the
  * WM_MENUSELECT parameters (and Word 6 likes it this way).
  */
-HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
+static HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 {
     HMENU hMenu;
 
