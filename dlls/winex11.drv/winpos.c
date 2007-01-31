@@ -718,6 +718,9 @@ BOOL X11DRV_ShowWindow( HWND hwnd, INT cmd )
     }
     else WIN_ReleasePtr( wndPtr );
 
+    /* if previous state was minimized Windows sets focus to the window */
+    if (style & WS_MINIMIZE) SetFocus( hwnd );
+
     return wasVisible;
 }
 

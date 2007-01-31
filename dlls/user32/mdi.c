@@ -1559,8 +1559,8 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         {
             HWND switchTo = MDI_GetWindow( ci, hwnd, TRUE, WS_MINIMIZE );
 
-            if( switchTo )
-                SendMessageW( switchTo, WM_CHILDACTIVATE, 0, 0 );
+            if (!switchTo) switchTo = hwnd;
+            SendMessageW( switchTo, WM_CHILDACTIVATE, 0, 0 );
 	}
 
         MDI_PostUpdate(client, ci, SB_BOTH+1);
