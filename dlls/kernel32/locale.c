@@ -1823,6 +1823,8 @@ INT WINAPI MultiByteToWideChar( UINT page, DWORD flags, LPCSTR src, INT srclen,
         }
         ret = 0;
     }
+    TRACE("cp %d %s -> %s, ret = %d\n",
+          page, debugstr_an(src, srclen), debugstr_wn(dst, ret), ret);
     return ret;
 }
 
