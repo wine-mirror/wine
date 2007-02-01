@@ -1050,7 +1050,7 @@ static HINSTANCE16 MODULE_LoadModule16( LPCSTR libname, BOOL implicit, BOOL lib_
     const char *file_name = NULL;
     char dllname[20], owner[20], *p;
     const char *basename;
-    int owner_exists;
+    int owner_exists = FALSE;
 
     /* strip path information */
 
