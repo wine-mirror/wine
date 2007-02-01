@@ -296,7 +296,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 static HRESULT register_clsids(int count, const register_info * pRegInfo, LPCWSTR pszThreadingModel)
 {
     HRESULT res = S_OK;
-    LPOLESTR clsidString;
+    LPOLESTR clsidString = NULL;
     HKEY hkeyClsid;
     HKEY hkeySub;
     HKEY hkeyInproc32;
