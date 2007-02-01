@@ -471,7 +471,7 @@ static void UXTHEME_SaveSystemMetrics(void)
  *
  * Change the current active theme
  */
-HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
+static HRESULT UXTHEME_SetActiveTheme(PTHEME_FILE tf)
 {
     HKEY hKey;
     WCHAR tmp[2];
@@ -605,7 +605,7 @@ HRESULT WINAPI EnableTheming(BOOL fEnable)
  * I'm using atoms as there may be large numbers of duplicated strings
  * and they do the work of keeping memory down as a cause of that quite nicely
  */
-HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
+static HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
 {
     ATOM oldValue = (ATOM)(size_t)RemovePropW(hwnd, (LPCWSTR)MAKEINTATOM(aProp));
     if(oldValue)
@@ -622,7 +622,7 @@ HRESULT UXTHEME_SetWindowProperty(HWND hwnd, ATOM aProp, LPCWSTR pszValue)
     return S_OK;
 }
 
-LPWSTR UXTHEME_GetWindowProperty(HWND hwnd, ATOM aProp, LPWSTR pszBuffer, int dwLen)
+static LPWSTR UXTHEME_GetWindowProperty(HWND hwnd, ATOM aProp, LPWSTR pszBuffer, int dwLen)
 {
     ATOM atValue = (ATOM)(size_t)GetPropW(hwnd, (LPCWSTR)MAKEINTATOM(aProp));
     if(atValue) {

@@ -1719,8 +1719,8 @@ HRESULT WINAPI GetThemeBackgroundRegion(HTHEME hTheme, HDC hdc, int iPartId,
 }
 
 /* compute part size for "borderfill" backgrounds */
-HRESULT get_border_background_size (HTHEME hTheme, int iPartId,
-                                    int iStateId, THEMESIZE eSize, POINT* psz)
+static HRESULT get_border_background_size (HTHEME hTheme, int iPartId,
+                                           int iStateId, THEMESIZE eSize, POINT* psz)
 {
     HRESULT hr = S_OK;
     int bordersize = 1;
