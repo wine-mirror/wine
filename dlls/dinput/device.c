@@ -955,7 +955,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
 	DWORD dwHow)
 {
     IDirectInputDevice2AImpl *This = (IDirectInputDevice2AImpl *)iface;
-    DWORD dwSize = pdidoi->dwSize;
+    DWORD dwSize;
     LPDIOBJECTDATAFORMAT odf;
     int idx = -1;
 
@@ -990,6 +990,7 @@ HRESULT WINAPI IDirectInputDevice2WImpl_GetObjectInfo(
     if (idx < 0) return DIERR_OBJECTNOTFOUND;
 
     odf = dataformat_to_odf(This->data_format.wine_df, idx);
+    dwSize = pdidoi->dwSize; /* save due to memset below */
     memset(pdidoi, 0, pdidoi->dwSize);
     pdidoi->dwSize   = dwSize;
     if (odf->pguid) pdidoi->guidType = *odf->pguid;
