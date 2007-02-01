@@ -39,10 +39,21 @@ extern "C" {
 #define RAS_MaxDnsSuffix      256
 
 /* szDeviceType strings for RASDEVINFO */
-#define	RASDT_Direct	"direct"
-#define	RASDT_Modem	"modem"
-#define	RASDT_Isdn	"isdn"
-#define	RASDT_X25	"x25"
+#define RASDT_Direct     "direct"
+#define RASDT_Modem      "modem"
+#define RASDT_Isdn       "isdn"
+#define RASDT_X25        "x25"
+#define RASDT_Vpn        "vpn"
+#define RASDT_Pad        "pad"
+#define RASDT_Generic    "GENERIC"
+#define RASDT_Serial     "SERIAL"
+#define RASDT_FrameRelay "FRAMERELAY"
+#define RASDT_Atm        "ATM"
+#define RASDT_Sonet      "SONET"
+#define RASDT_SW56       "SW56"
+#define RASDT_Irda       "IRDA"
+#define RASDT_Parallel   "PARALLEL"
+#define RASDT_PPPoE      "PPPoE"
 
 #define RASBASE				600
 #define ERROR_BUFFER_TOO_SMALL		(RASBASE+3)
