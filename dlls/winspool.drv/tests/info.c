@@ -44,11 +44,20 @@ static CHAR portname_file[]     = "FILE:";
 static CHAR portname_lpt1[]     = "LPT1:";
 static CHAR server_does_not_exist[] = "\\does_not_exist";
 static CHAR version_dll[]       = "version.dll";
-static CHAR winetest[]  = "winetest";
+static CHAR winetest[]          = "winetest";
+static CHAR xcv_localport[]     = ",XcvMonitor Local Port";
+
+static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
+static WCHAR emptyW[] = {0};
+
 
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
 static FARPROC pSetDefaultPrinterA;
+static DWORD (WINAPI * pXcvDataW)(HANDLE, LPCWSTR, PBYTE, DWORD, PBYTE, DWORD, PDWORD, PDWORD);
+
+
+/* ################################ */
 
 struct monitor_entry {
     LPSTR  env;
@@ -1496,6 +1505,126 @@ static void test_SetDefaultPrinter(void)
 
 }
 
+/* ########################### */
+
+static void test_XcvDataW_MonitorUI(void)
+{
+    DWORD   res;
+    HANDLE  hXcv;
+    BYTE    buffer[MAX_PATH + 4];
+    DWORD   needed;
+    DWORD   status;
+    DWORD   len;
+    PRINTER_DEFAULTSA pd;
+
+    /* api is not present before w2k */
+    if (pXcvDataW == NULL) return;
+
+    pd.pDatatype = NULL;
+    pd.pDevMode  = NULL;
+    pd.DesiredAccess = SERVER_ACCESS_ADMINISTER;
+
+    hXcv = NULL;
+    SetLastError(0xdeadbeef);
+    res = OpenPrinter(xcv_localport, &hXcv, &pd);
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    ok(res, "returned %d with %u and handle %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+    /* ask for needed size */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_INSUFFICIENT_BUFFER) && (needed <= MAX_PATH),
+        "returned %d with %u and %u for status %u (expected '!= 0' and "
+        "'<= MAX_PATH' for status ERROR_INSUFFICIENT_BUFFER)\n",
+        res, GetLastError(), needed, status);
+
+    if (needed > MAX_PATH) {
+        ClosePrinter(hXcv);
+        skip("buffer overflow (%u)\n", needed);
+        return;
+    }
+    len = needed;       /* Size is in bytes */
+
+    /* the command is required */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, emptyW, NULL, 0, NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_INVALID_PARAMETER),
+        "returned %d with %u and %u for status %u (expected '!= 0' with "
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, NULL, NULL, 0, buffer, MAX_PATH, &needed, &status);
+    ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER),
+        "returned %d with %u and %u for status %u (expected '0' with "
+        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError(), needed, status);
+
+    /* "PDWORD needed" is checked before RPC-Errors */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len, NULL, &status);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %d with %u and %u for status %u (expected '0' with "
+        "ERROR_INVALID_PARAMETER)\n", res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, NULL, len, &needed, &status);
+    ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER),
+        "returned %d with %u and %u for status %u (expected '0' with "
+        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len, &needed, NULL);
+    ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER),
+        "returned %d with %u and %u for status %u (expected '0' with "
+        "RPC_X_NULL_REF_POINTER)\n", res, GetLastError(), needed, status);
+
+    /* off by one: larger  */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len+1, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' for status "
+        "ERROR_SUCCESS)\n", res, GetLastError(), needed, status);
+
+    /* off by one: smaller */
+    /* the buffer is not modified for NT4, w2k, XP */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len-1, &needed, &status);
+    ok( res && (status == ERROR_INSUFFICIENT_BUFFER),
+        "returned %d with %u and %u for status %u (expected '!= 0' for status "
+        "ERROR_INSUFFICIENT_BUFFER)\n", res, GetLastError(), needed, status);
+
+
+    /* Normal use. The DLL-Name without a Path is returned */
+    memset(buffer, 0, len);
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_MonitorUIW, NULL, 0, buffer, len, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' for status "
+        "ERROR_SUCCESS)\n", res, GetLastError(), needed, status);
+
+    ClosePrinter(hXcv);
+}
+
+/* ########################### */
+
 static void test_GetPrinterDriver(void)
 {
     HANDLE hprn;
@@ -1703,6 +1832,7 @@ START_TEST(info)
     hwinspool = GetModuleHandleA("winspool.drv");
     pGetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "GetDefaultPrinterA");
     pSetDefaultPrinterA = (void *) GetProcAddress(hwinspool, "SetDefaultPrinterA");
+    pXcvDataW = (void *) GetProcAddress(hwinspool, "XcvDataW");
 
     find_default_printer();
     find_local_server();
@@ -1715,14 +1845,14 @@ START_TEST(info)
     test_DocumentProperties();
     test_EnumForms(NULL);
     if (default_printer) test_EnumForms(default_printer);
-    test_EnumMonitors(); 
+    test_EnumMonitors();
     test_EnumPorts();
+    test_EnumPrinters();
     test_GetDefaultPrinter();
     test_GetPrinterDriverDirectory();
     test_GetPrintProcessorDirectory();
     test_OpenPrinter();
     test_GetPrinterDriver();
     test_SetDefaultPrinter();
-
-    test_EnumPrinters();
+    test_XcvDataW_MonitorUI();
 }
