@@ -258,6 +258,14 @@ static BOOL CALLBACK EnumJoysticks(
     ok(caps.dwButtons == info.button, "Number of enumerated buttons doesn't match capabilities\n");
     ok(caps.dwPOVs == info.pov, "Number of enumerated POVs doesn't match capabilities\n");
 
+    /* Set format and check limits again */
+    hr = IDirectInputDevice_SetDataFormat(pJoystick, &c_dfDIJoystick2);
+    ok(hr==DI_OK,"IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
+    info.lMin = -2000;
+    info.lMax = +2000;
+    hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, (VOID*)&info, DIDFT_ALL);
+    ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %s\n", DXGetErrorString8(hr));
+
     hr = IDirectInputDevice_GetDeviceInfo(pJoystick, 0);
     ok(hr==E_POINTER, "IDirectInputDevice_GetDeviceInfo() "
        "should have returned E_POINTER, returned: %s\n",

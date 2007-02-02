@@ -664,8 +664,6 @@ static HRESULT WINAPI JoystickAImpl_SetDataFormat(
 
     for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
     {
-        This->props[i].lMin = 0;
-        This->props[i].lMax = 0xffff;
         This->props[i].lDeadZone = 1000;
         This->props[i].lSaturation = 0;
     }
