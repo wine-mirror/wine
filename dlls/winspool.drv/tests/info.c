@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "winerror.h"
 #include "wingdi.h"
+#include <winnls.h>
 #include "winuser.h"
 #include "winreg.h"
 #include "winspool.h"
@@ -48,8 +49,14 @@ static CHAR winetest[]          = "winetest";
 static CHAR xcv_localport[]     = ",XcvMonitor Local Port";
 
 static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
+static WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
 static WCHAR emptyW[] = {0};
 
+static WCHAR portname_com1W[] = {'C','O','M','1',':',0};
+static WCHAR portname_com2W[] = {'C','O','M','2',':',0};
+static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
+static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
+static WCHAR portname_lpt2W[] = {'L','P','T','2',':',0};
 
 static HANDLE  hwinspool;
 static FARPROC pGetDefaultPrinterA;
@@ -64,9 +71,14 @@ struct monitor_entry {
     CHAR  dllname[32];
 };
 
-static LPSTR   default_printer = NULL;
-static LPSTR   local_server = NULL;
+static LPSTR default_printer = NULL;
+static LPSTR local_server = NULL;
+static LPSTR tempdirA = NULL;
+static LPSTR tempfileA = NULL;
+static LPWSTR tempdirW = NULL;
+static LPWSTR tempfileW = NULL;
 
+/* ################################ */
 /* report common behavior only once */
 static DWORD report_deactivated_spooler = 1;
 #define RETURN_ON_DEACTIVATED_SPOOLER(res) \
@@ -215,6 +227,47 @@ static void find_local_server(VOID)
 
 /* ########################### */
 
+static void find_tempfile(VOID)
+{
+    static CHAR buffer_dirA[MAX_PATH];
+    static CHAR buffer_fileA[MAX_PATH];
+    static WCHAR buffer_dirW[MAX_PATH];
+    static WCHAR buffer_fileW[MAX_PATH];
+    DWORD   res;
+    int     resint;
+
+    memset(buffer_dirA, 0, MAX_PATH - 1);
+    buffer_dirA[MAX_PATH - 1] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetTempPathA(MAX_PATH, buffer_dirA);
+    ok(res, "returned %u with %u and '%s' (expected '!= 0')\n", res, GetLastError(), buffer_dirA);
+    if (res == 0) return;
+
+    memset(buffer_fileA, 0, MAX_PATH - 1);
+    buffer_fileA[MAX_PATH - 1] = '\0';
+    SetLastError(0xdeadbeef);
+    res = GetTempFileNameA(buffer_dirA, winetest, 0, buffer_fileA);
+    ok(res, "returned %u with %u and '%s' (expected '!= 0')\n", res, GetLastError(), buffer_fileA);
+    if (res == 0) return;
+
+    SetLastError(0xdeadbeef);
+    resint = MultiByteToWideChar(CP_ACP, 0, buffer_dirA, -1, buffer_dirW, MAX_PATH);
+    ok(res, "returned %u with %u (expected '!= 0')\n", resint, GetLastError());
+    if (resint == 0) return;
+
+    SetLastError(0xdeadbeef);
+    resint = MultiByteToWideChar(CP_ACP, 0, buffer_fileA, -1, buffer_fileW, MAX_PATH);
+    ok(res, "returned %u with %u (expected '!= 0')\n", resint, GetLastError());
+    if (resint == 0) return;
+
+    tempdirA  = buffer_dirA;
+    tempfileA = buffer_fileA;
+    tempdirW  = buffer_dirW;
+    tempfileW = buffer_fileW;
+    trace("tempfile: '%s'\n", tempfileA);
+}
+
+/* ########################### */
 
 static void test_AddMonitor(void)
 {
@@ -1625,6 +1678,115 @@ static void test_XcvDataW_MonitorUI(void)
 
 /* ########################### */
 
+static void test_XcvDataW_PortIsValid(void)
+{
+    DWORD   res;
+    HANDLE  hXcv;
+    DWORD   needed;
+    DWORD   status;
+    PRINTER_DEFAULTSA   pd;
+
+    /* api is not present before w2k */
+    if (pXcvDataW == NULL) return;
+
+    pd.pDatatype = NULL;
+    pd.pDevMode  = NULL;
+    pd.DesiredAccess = SERVER_ACCESS_ADMINISTER;
+
+    hXcv = (HANDLE) 0;
+    SetLastError(0xdeadbeef);
+    res = OpenPrinter(xcv_localport, &hXcv, &pd);
+
+    RETURN_ON_DEACTIVATED_SPOOLER(res)
+    ok(res, "returned %d with %u and handle %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+
+    /* "PDWORD needed" is always required */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, NULL, &status);
+    ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
+        "returned %d with %u and %u for status %u (expected '!= 0' with ERROR_INVALID_PARAMETER)\n",
+         res, GetLastError(), needed, status);
+
+    /* an empty name is not allowed */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) emptyW, sizeof(emptyW), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_PATH_NOT_FOUND),
+        "returned %d with %u and %u for status %u (expected '!= 0' for ERROR_PATH_NOT_FOUND)\n",
+        res, GetLastError(), needed, status);
+
+    /* a directory is not allowed */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) tempdirW, (lstrlenW(tempdirW) + 1) * sizeof(WCHAR), NULL, 0, &needed, &status);
+    /* XP: ERROR_PATH_NOT_FOUND, w2k ERROR_ACCESS_DENIED */
+    ok( res && ((status == ERROR_PATH_NOT_FOUND) || (status == ERROR_ACCESS_DENIED)),
+        "returned %d with %u and %u for status %u (expected '!= 0' for status: "
+        "ERROR_PATH_NOT_FOUND or ERROR_ACCESS_DENIED)\n",
+        res, GetLastError(), needed, status);
+
+    /* more valid well known Ports */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' for ERROR_SUCCESS)\n",
+        res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) portname_lpt2W, sizeof(portname_lpt2W), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' for ERROR_SUCCESS)\n",
+        res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) portname_com1W, sizeof(portname_com1W), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' for ERROR_SUCCESS)\n",
+        res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) portname_com2W, sizeof(portname_com2W), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' for ERROR_SUCCESS)\n",
+        res, GetLastError(), needed, status);
+
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) portname_fileW, sizeof(portname_fileW), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' with  ERROR_SUCCESS)\n",
+        res, GetLastError(), needed, status);
+
+
+    /* a normal, writeable file is allowed */
+    needed = (DWORD) 0xdeadbeef;
+    status = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) tempfileW, (lstrlenW(tempfileW) + 1) * sizeof(WCHAR), NULL, 0, &needed, &status);
+    ok( res && (status == ERROR_SUCCESS),
+        "returned %d with %u and %u for status %u (expected '!= 0' with ERROR_SUCCESS)\n",
+        res, GetLastError(), needed, status);
+
+    ClosePrinter(hXcv);
+}
+
+/* ########################### */
+
 static void test_GetPrinterDriver(void)
 {
     HANDLE hprn;
@@ -1836,6 +1998,7 @@ START_TEST(info)
 
     find_default_printer();
     find_local_server();
+    find_tempfile();
 
     test_AddMonitor();
     test_AddPort();
@@ -1855,4 +2018,5 @@ START_TEST(info)
     test_GetPrinterDriver();
     test_SetDefaultPrinter();
     test_XcvDataW_MonitorUI();
+    test_XcvDataW_PortIsValid();
 }
