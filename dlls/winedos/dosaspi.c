@@ -175,7 +175,7 @@ DWORD ASPI_SendASPIDOSCommand(DWORD ptrSRB)
 	return retval;
 }
 
-void WINAPI ASPI_DOS_func(CONTEXT86 *context)
+static void WINAPI ASPI_DOS_func(CONTEXT86 *context)
 {
 	WORD *stack = CTX_SEG_OFF_TO_LIN(context, context->SegSs, context->Esp);
 	DWORD ptrSRB = *(DWORD *)&stack[2];

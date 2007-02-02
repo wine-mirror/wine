@@ -236,7 +236,7 @@ void BiosTick( WORD timer )
  * Helper function for internal use only.
  * Atach all following free blocks to this one, even if this one is not free.
  */
-void DOSMEM_Collapse( MCB* mcb )
+static void DOSMEM_Collapse( MCB* mcb )
 {
     MCB* next = MCB_NEXT( mcb );
 

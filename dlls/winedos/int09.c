@@ -46,7 +46,7 @@ static struct
  * so we might be out of sync with the real current system status of these keys.
  * Probably doesn't matter too much, though.
  */
-void DOSVM_Int09UpdateKbdStatusFlags(BYTE scan, BOOL extended, BIOSDATA *data, BOOL *modifier)
+static void DOSVM_Int09UpdateKbdStatusFlags(BYTE scan, BOOL extended, BIOSDATA *data, BOOL *modifier)
 {
     BYTE realscan = scan & 0x7f; /* remove 0x80 make/break flag */
     BYTE bit1 = 255, bit2 = 255;

@@ -2427,7 +2427,8 @@ static void CreateBPB(int drive, BYTE *data, BOOL16 limited)
     }
 }
 
-inline DWORD INT21_Ioctl_CylHeadSect2Lin(DWORD cyl, WORD head, WORD sec, WORD cyl_cnt, WORD head_cnt, WORD sec_cnt)
+static inline DWORD INT21_Ioctl_CylHeadSect2Lin(DWORD cyl, WORD head, WORD sec, WORD cyl_cnt,
+                                                 WORD head_cnt, WORD sec_cnt)
 {
     DWORD res = (cyl * head_cnt*sec_cnt + head * sec_cnt + sec);
     return res;

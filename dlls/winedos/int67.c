@@ -54,7 +54,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(int);
  * FIXME: Missing lots of fields, packing is not correct.
  */
 
-struct {
+static struct {
   struct {
     UCHAR hindex;  /* handle number */
     BYTE  flags;   /* bit 0: normal handle rather than system handle */
@@ -79,7 +79,7 @@ struct {
     WORD  logical_page; /* logical page */
   } mapping_save_area[EMS_MAX_HANDLES][4];
 
-} *EMS_record = 0;
+} *EMS_record;
 
 /**********************************************************************
  *          EMS_init

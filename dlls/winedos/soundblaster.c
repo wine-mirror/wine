@@ -63,7 +63,7 @@ static BYTE dma_buffer[DMATRFSIZE*2];
 /* Direct Sound playback stuff */
 static HMODULE hmodule;
 typedef HRESULT (WINAPI* fnDirectSoundCreate) (LPGUID,LPDIRECTSOUND*,LPUNKNOWN);
-fnDirectSoundCreate lpDirectSoundCreate;
+static fnDirectSoundCreate lpDirectSoundCreate;
 static LPDIRECTSOUND lpdsound;
 static LPDIRECTSOUNDBUFFER lpdsbuf;
 static DSBUFFERDESC buf_desc;

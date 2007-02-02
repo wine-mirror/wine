@@ -110,7 +110,7 @@ typedef struct
 
 #define DOS_DATASEG_OFF(xxx) FIELD_OFFSET(DOS_DATASEG, xxx)
 
-DWORD DOS_LOLSeg;
+static DWORD DOS_LOLSeg;
 
 static struct _DOS_LISTOFLISTS * DOSMEM_LOL(void)
 {

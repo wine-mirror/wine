@@ -517,9 +517,9 @@ callrmproc_again:
 
 
 /**********************************************************************
- *	    CallRMInt   (WINEDOS.@)
+ *	    CallRMInt
  */
-void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
+static void DOSVM_CallRMInt( CONTEXT86 *context )
 {
     CONTEXT86 realmode_ctx;
     FARPROC16 rm_int = DOSVM_GetRMHandler( BL_reg(context) );
@@ -546,9 +546,9 @@ void WINAPI DOSVM_CallRMInt( CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    CallRMProc   (WINEDOS.@)
+ *	    CallRMProc
  */
-void WINAPI DOSVM_CallRMProc( CONTEXT86 *context, int iret )
+static void DOSVM_CallRMProc( CONTEXT86 *context, int iret )
 {
     REALMODECALL *p = CTX_SEG_OFF_TO_LIN( context, 
                                           context->SegEs, 
@@ -775,9 +775,9 @@ void WINAPI DOSVM_RawModeSwitchHandler( CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    AllocRMCB   (WINEDOS.@)
+ *	    AllocRMCB
  */
-void WINAPI DOSVM_AllocRMCB( CONTEXT86 *context )
+static void DOSVM_AllocRMCB( CONTEXT86 *context )
 {
     RMCB *NewRMCB = DPMI_AllocRMCB();
 
@@ -801,9 +801,9 @@ void WINAPI DOSVM_AllocRMCB( CONTEXT86 *context )
 
 
 /**********************************************************************
- *	    FreeRMCB   (WINEDOS.@)
+ *	    FreeRMCB
  */
-void WINAPI DOSVM_FreeRMCB( CONTEXT86 *context )
+static void DOSVM_FreeRMCB( CONTEXT86 *context )
 {
     FIXME("callback address: %04x:%04x\n",
           CX_reg(context), DX_reg(context));

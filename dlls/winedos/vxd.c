@@ -58,7 +58,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vxd);
              CX_reg(context), DX_reg(context), SI_reg(context), \
              DI_reg(context), (WORD)context->SegDs, (WORD)context->SegEs )
 
-UINT W32S_offset = 0;
+static UINT W32S_offset;
 
 static WORD VXD_WinVersion(void)
 {

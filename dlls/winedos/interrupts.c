@@ -115,7 +115,7 @@ static BOOL DOSVM_IsIRQ( BYTE intnum )
  * Default interrupt handler. This will be used to emulate all
  * interrupts that don't have their own interrupt handler.
  */
-void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
+static void WINAPI DOSVM_DefaultHandler( CONTEXT86 *context )
 {
 }
 
