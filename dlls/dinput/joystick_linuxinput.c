@@ -242,16 +242,14 @@ static void find_joydevs(void)
             );
 
 #ifdef HAVE_STRUCT_FF_EFFECT_DIRECTION
-        if (!no_ff_check) {
-          if ((!test_bit(joydev.evbits,EV_FF))
-              || (-1==ioctl(fd,EVIOCGBIT(EV_FF,sizeof(joydev.ffbits)),joydev.ffbits)) 
-              || (-1==ioctl(fd,EVIOCGEFFECTS,&joydev.num_effects))
-              || (joydev.num_effects <= 0)) {
-            close(fd);
-          } else {
+        if (!no_ff_check &&
+            test_bit(joydev.evbits, EV_FF) &&
+            ioctl(fd, EVIOCGBIT(EV_FF, sizeof(joydev.ffbits)), joydev.ffbits) != -1 &&
+            ioctl(fd, EVIOCGEFFECTS, &joydev.num_effects) != -1 &&
+            joydev.num_effects > 0)
+        {
 	    TRACE(" ... with force feedback\n");
 	    joydev.has_ff = 1;
-	  }
         }
 #endif
 
