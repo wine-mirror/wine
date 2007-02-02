@@ -387,8 +387,10 @@ static JoystickImpl *alloc_device(REFGUID rguid, const void *jvt, IDirectInputIm
 
         memcpy(&df->rgodf[idx], &c_dfDIJoystick2.rgodf[i], df->dwObjSize);
         newDevice->axes[i] = idx;
-        newDevice->props[idx].wantmin = newDevice->props[idx].havemin = newDevice->joydev->axes[i][AXIS_ABSMIN];
-        newDevice->props[idx].wantmax = newDevice->props[idx].havemax = newDevice->joydev->axes[i][AXIS_ABSMAX];
+        newDevice->props[idx].havemin = newDevice->joydev->axes[i][AXIS_ABSMIN];
+        newDevice->props[idx].havemax = newDevice->joydev->axes[i][AXIS_ABSMAX];
+        newDevice->props[idx].wantmin = 0;
+        newDevice->props[idx].wantmax = 0xffff;
         newDevice->props[idx].deadzone = 0;
         df->rgodf[idx++].dwType = DIDFT_MAKEINSTANCE(newDevice->numAxes++) | DIDFT_ABSAXIS;
     }

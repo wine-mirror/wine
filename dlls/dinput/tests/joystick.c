@@ -81,6 +81,7 @@ typedef struct tagJoystickInfo
     DWORD axis;
     DWORD pov;
     DWORD button;
+    LONG  lMin, lMax;
 } JoystickInfo;
 
 static BOOL CALLBACK EnumAxes(
@@ -102,8 +103,14 @@ static BOOL CALLBACK EnumAxes(
         diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
         diprg.diph.dwHow        = DIPH_BYID;
         diprg.diph.dwObj        = pdidoi->dwType;
-        diprg.lMin              = -1000;
-        diprg.lMax              = +1000;
+
+        hr = IDirectInputDevice_GetProperty(info->pJoystick, DIPROP_RANGE, &diprg.diph);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_GetProperty() failed: %s\n", DXGetErrorString8(hr));
+        ok(info->lMin == diprg.lMin && info->lMax == diprg.lMax, "Min/Max range invalid: "
+           "expected %d..%d got %d..%d\n", info->lMin, info->lMax, diprg.lMin, diprg.lMax);
+
+        diprg.lMin = -2000;
+        diprg.lMax = +2000;
 
         hr = IDirectInputDevice_SetProperty(info->pJoystick, DIPROP_RANGE, NULL);
         ok(hr==E_INVALIDARG,"IDirectInputDevice_SetProperty() should have returned "
@@ -239,6 +246,9 @@ static BOOL CALLBACK EnumJoysticks(
     ZeroMemory(&info, sizeof(info));
     info.pJoystick = pJoystick;
 
+    /* default min/max limits */
+    info.lMin = 0;
+    info.lMax = 0xffff;
     /* enumerate objects */
     hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, (VOID*)&info, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %s\n",
