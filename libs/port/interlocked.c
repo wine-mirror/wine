@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include <assert.h>
 
 #ifdef __i386__
 
@@ -37,6 +38,18 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "movl 4(%esp),%edx\n\t"
                   "lock; cmpxchgl %ecx,(%edx)\n\t"
                   "ret")
+ __ASM_GLOBAL_FUNC(interlocked_cmpxchg64,
+                   "push %ebx\n\t"
+                   "push %esi\n\t"
+                   "movl 12(%esp),%esi\n\t"
+                   "movl 16(%esp),%ebx\n\t"
+                   "movl 20(%esp),%ecx\n\t"
+                   "movl 24(%esp),%eax\n\t"
+                   "movl 28(%esp),%edx\n\t"
+                   "lock; cmpxchg8b (%esi)\n\t"
+                   "pop %esi\n\t"
+                   "pop %ebx\n\t"
+                   "ret");
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "movl 8(%esp),%eax\n\t"
                   "movl 4(%esp),%edx\n\t"
@@ -70,6 +83,21 @@ __declspec(naked) void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *
     __asm mov ecx, 8[esp];
     __asm mov edx, 4[esp];
     __asm lock cmpxchg [edx], ecx;
+    __asm ret;
+}
+
+__declspec(naked) __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare)
+{
+    __asm push ebx;
+    __asm push esi;
+    __asm mov esi, 12[esp];
+    __asm mov ebx, 16[esp];
+    __asm mov ecx, 20[esp];
+    __asm mov eax, 24[esp];
+    __asm mov edx, 28[esp];
+    __asm lock cmpxchg8b [esi];
+    __asm pop esi;
+    __asm pop ebx;
     __asm ret;
 }
 
@@ -113,6 +141,11 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "mov %rdx, %rax\n\t"
                   "lock cmpxchgq %rsi,(%rdi)\n\t"
                   "ret")
+__int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare)
+{
+    /* FIXME: add code */
+    assert(0);
+}
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "mov %esi, %eax\n\t"
                   "lock xchgl %eax, (%rdi)\n\t"
@@ -147,6 +180,12 @@ void* interlocked_cmpxchg_ptr( void **dest, void* xchg, void* compare)
         : "r"(dest), "r"(xchg), "r"(compare)
         : "cr0","memory");
     return ret;
+}
+
+__int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare)
+{
+    /* FIXME: add code */
+    assert(0);
 }
 
 int interlocked_cmpxchg( int *dest, int xchg, int compare)
@@ -244,6 +283,15 @@ void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare )
     return compare;
 }
 
+__int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare )
+{
+    _lwp_mutex_lock( &interlocked_mutex );
+    if (*dest == compare) *dest = xchg;
+    else compare = *dest;
+    _lwp_mutex_unlock( &interlocked_mutex );
+    return compare;
+}
+
 int interlocked_xchg( int *dest, int val )
 {
     int retv;
@@ -299,6 +347,12 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "mov   $18,$0\n"
                   "L1cmpxchg_ptr:\n\t"
                   "mb")
+
+__int64 interlocked_cmpxchg64(__int64 *dest, __int64 xchg, __int64 compare)
+{
+    /* FIXME: add code */
+    assert(0);
+}
 
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "L0xchg:\n\t"

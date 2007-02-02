@@ -50,6 +50,14 @@
  * Type definitions
  */
 
+#if !defined(_MSC_VER) && !defined(__int64)
+#  if defined(__x86_64__) || defined(_WIN64)
+#    define __int64 long
+#  else
+#    define __int64 long long
+#  endif
+#endif
+
 #ifndef HAVE_MODE_T
 typedef int mode_t;
 #endif
@@ -359,6 +367,7 @@ extern int spawnvp(int mode, const char *cmdname, const char * const argv[]);
 
 extern inline int interlocked_cmpxchg( int *dest, int xchg, int compare );
 extern inline void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
+extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
 extern inline int interlocked_xchg( int *dest, int val );
 extern inline void *interlocked_xchg_ptr( void **dest, void *val );
 extern inline int interlocked_xchg_add( int *dest, int incr );
@@ -407,6 +416,7 @@ extern inline int interlocked_xchg_add( int *dest, int incr )
 
 extern int interlocked_cmpxchg( int *dest, int xchg, int compare );
 extern void *interlocked_cmpxchg_ptr( void **dest, void *xchg, void *compare );
+extern __int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare );
 extern int interlocked_xchg( int *dest, int val );
 extern void *interlocked_xchg_ptr( void **dest, void *val );
 extern int interlocked_xchg_add( int *dest, int incr );
