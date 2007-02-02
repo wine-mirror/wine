@@ -901,35 +901,32 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 						REFGUID rguid,
 						LPDIPROPHEADER pdiph)
 {
-  JoystickImpl *This = (JoystickImpl *)iface;
+    JoystickImpl *This = (JoystickImpl *)iface;
 
-  TRACE("(this=%p,%s,%p)\n",
-	iface, debugstr_guid(rguid), pdiph);
-
-  if (TRACE_ON(dinput))
+    TRACE("(this=%p,%s,%p)\n", iface, debugstr_guid(rguid), pdiph);
     _dump_DIPROPHEADER(pdiph);
 
-  if (!HIWORD(rguid)) {
-    switch (LOWORD(rguid)) {
-    case (DWORD) DIPROP_RANGE: {
-      LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
-      int obj = find_property(&This->base.data_format, pdiph);
+    if (HIWORD(rguid)) return DI_OK;
 
-      if (obj >= 0) {
-	pr->lMin = This->props[obj].havemin;
-	pr->lMax = This->props[obj].havemax;
+    switch (LOWORD(rguid)) {
+    case (DWORD) DIPROP_RANGE:
+    {
+        LPDIPROPRANGE pr = (LPDIPROPRANGE) pdiph;
+        int obj = find_property(&This->base.data_format, pdiph);
+
+        if (obj < 0) return DIERR_OBJECTNOTFOUND;
+
+        pr->lMin = This->props[obj].wantmin;
+        pr->lMax = This->props[obj].wantmax;
 	TRACE("range(%d, %d) obj=%d\n", pr->lMin, pr->lMax, obj);
-      }
-      break;
+        break;
     }
 
     default:
       return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
     }
-  }
 
-
-  return DI_OK;
+    return DI_OK;
 }
 
 /******************************************************************************
