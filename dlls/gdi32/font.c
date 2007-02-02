@@ -1484,17 +1484,33 @@ UINT WINAPI GetOutlineTextMetricsA(
 
         /* check if the string offsets really fit into the provided size */
         /* FIXME: should we check string length as well? */
-        if ((UINT_PTR)lpOTM->otmpFamilyName >= lpOTM->otmSize)
-            lpOTM->otmpFamilyName = 0; /* doesn't fit */
+        /* make sure that we don't read/write beyond the provided buffer */
+        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpFamilyName) + sizeof(LPSTR))
+        {
+            if ((UINT_PTR)lpOTM->otmpFamilyName >= lpOTM->otmSize)
+                lpOTM->otmpFamilyName = 0; /* doesn't fit */
+        }
 
-        if ((UINT_PTR)lpOTM->otmpFaceName >= lpOTM->otmSize)
-            lpOTM->otmpFaceName = 0; /* doesn't fit */
+        /* make sure that we don't read/write beyond the provided buffer */
+        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpFaceName) + sizeof(LPSTR))
+        {
+            if ((UINT_PTR)lpOTM->otmpFaceName >= lpOTM->otmSize)
+                lpOTM->otmpFaceName = 0; /* doesn't fit */
+        }
 
-        if ((UINT_PTR)lpOTM->otmpStyleName >= lpOTM->otmSize)
-            lpOTM->otmpStyleName = 0; /* doesn't fit */
+            /* make sure that we don't read/write beyond the provided buffer */
+        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpStyleName) + sizeof(LPSTR))
+        {
+            if ((UINT_PTR)lpOTM->otmpStyleName >= lpOTM->otmSize)
+                lpOTM->otmpStyleName = 0; /* doesn't fit */
+        }
 
-        if ((UINT_PTR)lpOTM->otmpFullName >= lpOTM->otmSize)
-            lpOTM->otmpFullName = 0; /* doesn't fit */
+        /* make sure that we don't read/write beyond the provided buffer */
+        if (lpOTM->otmSize >= FIELD_OFFSET(OUTLINETEXTMETRICA, otmpFullName) + sizeof(LPSTR))
+        {
+            if ((UINT_PTR)lpOTM->otmpFullName >= lpOTM->otmSize)
+                lpOTM->otmpFullName = 0; /* doesn't fit */
+        }
     }
 
 end:

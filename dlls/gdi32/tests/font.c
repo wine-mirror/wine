@@ -732,6 +732,91 @@ todo_wine {
     ReleaseDC(0, hdc);
 }
 
+static void test_GetOutlineTextMetrics(void)
+{
+    OUTLINETEXTMETRIC *otm;
+    LOGFONT lf;
+    HFONT hfont, hfont_old;
+    HDC hdc;
+    DWORD ret, otm_size;
+
+    hdc = GetDC(0);
+
+    if (!is_font_installed("Arial"))
+    {
+        skip("Arial is not installed\n");
+        return;
+    }
+
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Arial");
+    lf.lfHeight = -13;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfPitchAndFamily = DEFAULT_PITCH;
+    lf.lfQuality = PROOF_QUALITY;
+    hfont = CreateFontIndirect(&lf);
+    assert(hfont != 0);
+
+    hfont_old = SelectObject(hdc, hfont);
+    otm_size = GetOutlineTextMetrics(hdc, 0, NULL);
+    trace("otm buffer size %u (0x%x)\n", otm_size, otm_size);
+
+    otm = HeapAlloc(GetProcessHeap(), 0, otm_size);
+
+    memset(otm, 0xAA, otm_size);
+    SetLastError(0xdeadbeef);
+    otm->otmSize = sizeof(*otm); /* just in case for Win9x compatibility */
+    ret = GetOutlineTextMetrics(hdc, otm->otmSize, otm);
+    ok(ret == 1 /* Win9x */ ||
+       ret == otm->otmSize /* XP*/,
+       "expected %u, got %u, error %d\n", otm->otmSize, ret, GetLastError());
+    if (ret != 1) /* Win9x doesn't care about pointing beyond of the buffer */
+    {
+        ok(otm->otmpFamilyName == NULL, "expected NULL got %p\n", otm->otmpFamilyName);
+        ok(otm->otmpFaceName == NULL, "expected NULL got %p\n", otm->otmpFaceName);
+        ok(otm->otmpStyleName == NULL, "expected NULL got %p\n", otm->otmpStyleName);
+        ok(otm->otmpFullName == NULL, "expected NULL got %p\n", otm->otmpFullName);
+    }
+
+    memset(otm, 0xAA, otm_size);
+    SetLastError(0xdeadbeef);
+    otm->otmSize = otm_size; /* just in case for Win9x compatibility */
+    ret = GetOutlineTextMetrics(hdc, otm->otmSize, otm);
+    ok(ret == 1 /* Win9x */ ||
+       ret == otm->otmSize /* XP*/,
+       "expected %u, got %u, error %d\n", otm->otmSize, ret, GetLastError());
+    if (ret != 1) /* Win9x doesn't care about pointing beyond of the buffer */
+    {
+        ok(otm->otmpFamilyName != NULL, "expected not NULL got %p\n", otm->otmpFamilyName);
+        ok(otm->otmpFaceName != NULL, "expected not NULL got %p\n", otm->otmpFaceName);
+        ok(otm->otmpStyleName != NULL, "expected not NULL got %p\n", otm->otmpStyleName);
+        ok(otm->otmpFullName != NULL, "expected not NULL got %p\n", otm->otmpFullName);
+    }
+
+    /* ask about truncated data */
+    memset(otm, 0xAA, otm_size);
+    SetLastError(0xdeadbeef);
+    otm->otmSize = sizeof(*otm) - sizeof(LPSTR); /* just in case for Win9x compatibility */
+    ret = GetOutlineTextMetrics(hdc, otm->otmSize, otm);
+    ok(ret == 1 /* Win9x */ ||
+       ret == otm->otmSize /* XP*/,
+       "expected %u, got %u, error %d\n", otm->otmSize, ret, GetLastError());
+    if (ret != 1) /* Win9x doesn't care about pointing beyond of the buffer */
+    {
+        ok(otm->otmpFamilyName == NULL, "expected NULL got %p\n", otm->otmpFamilyName);
+        ok(otm->otmpFaceName == NULL, "expected NULL got %p\n", otm->otmpFaceName);
+        ok(otm->otmpStyleName == NULL, "expected NULL got %p\n", otm->otmpStyleName);
+    }
+    ok(otm->otmpFullName == (LPSTR)0xAAAAAAAA, "expected 0xAAAAAAAA got %p\n", otm->otmpFullName);
+
+    HeapFree(GetProcessHeap(), 0, otm);
+
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+
+    ReleaseDC(0, hdc);
+}
+
 START_TEST(font)
 {
     test_logfont();
@@ -742,4 +827,5 @@ START_TEST(font)
     test_text_extents();
     test_GetGlyphIndices();
     test_GetKerningPairs();
+    test_GetOutlineTextMetrics();
 }
