@@ -706,15 +706,15 @@
 @ stdcall InitAtomTable(long)
 @ stdcall InitializeCriticalSection(ptr)
 @ stdcall InitializeCriticalSectionAndSpinCount(ptr long)
-# @ stub InitializeSListHead ( -> ntdll.RtlInitializeSListHead)
+@ stdcall InitializeSListHead(ptr) ntdll.RtlInitializeSListHead
 @ stdcall InterlockedCompareExchange (ptr long long)
 @ stdcall InterlockedDecrement(ptr)
 @ stdcall InterlockedExchange(ptr long)
 @ stdcall InterlockedExchangeAdd (ptr long )
-# @ stub InterlockedFlushSList ( -> ntdll.RtlInterlockedFlushSList)
+@ stdcall InterlockedFlushSList(ptr) ntdll.RtlInterlockedFlushSList
 @ stdcall InterlockedIncrement(ptr)
-# @ stub InterlockedPopEntrySList ( -> ntdll.RtlInterlockedPopEntrySList)
-# @ stub InterlockedPushEntrySList ( -> ntdll.RtlInterlockedPushEntrySList)
+@ stdcall InterlockedPopEntrySList(ptr) ntdll.RtlInterlockedPopEntrySList
+@ stdcall InterlockedPushEntrySList(ptr ptr) ntdll.RtlInterlockedPushEntrySList
 @ stub InvalidateConsoleDIBits
 @ stdcall InvalidateNLSCache()
 @ stdcall IsBadCodePtr(ptr)
@@ -843,7 +843,7 @@
 @ stdcall PurgeComm(long long)
 @ stdcall -i386 -register QT_Thunk()
 @ stdcall QueryActCtxW(long ptr ptr long ptr long ptr)
-# @ stub QueryDepthSList ( -> ntdll.RtlQueryDepthSList)
+@ stdcall QueryDepthSList(ptr) ntdll.RtlQueryDepthSList
 @ stdcall QueryDosDeviceA(str ptr long)
 @ stdcall QueryDosDeviceW(wstr ptr long)
 @ stub QueryInformationJobObject

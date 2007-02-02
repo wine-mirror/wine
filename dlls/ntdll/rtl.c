@@ -35,6 +35,7 @@
 #include "windef.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 #include "ntdll_misc.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
@@ -921,4 +922,133 @@ PVOID WINAPI RtlDecodePointer( PVOID ptr )
 {
     DWORD_PTR ptrval = (DWORD_PTR) ptr;
     return (PVOID)(ptrval ^ get_pointer_obfuscator());
+}
+
+VOID WINAPI RtlInitializeSListHead(volatile PSLIST_HEADER ListHeader)
+{
+    TRACE("(%p)\n", ListHeader);
+#if _WIN64
+    assert(0);
+#else
+    ListHeader->Alignment = 0;
+#endif
+}
+
+USHORT WINAPI RtlQueryDepthSList(volatile PSLIST_HEADER ListHeader)
+{
+    TRACE("(%p)\n", ListHeader);
+#if _WIN64
+    assert(0);
+#else
+    return ListHeader->Depth;
+#endif
+}
+
+PSLIST_ENTRY WINAPI RtlFirstEntrySList(volatile PSLIST_HEADER ListHeader)
+{
+    TRACE("(%p)\n", ListHeader);
+#if _WIN64
+    assert(0);
+#else
+    return ListHeader->Next.Next;
+#endif
+}
+
+PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(volatile PSLIST_HEADER ListHeader)
+{
+    SLIST_HEADER oldHeader, newHeader;
+    TRACE("(%p)\n", ListHeader);
+#if _WIN64
+    assert(0);
+#else
+    if (ListHeader->Depth == 0)
+        return NULL;
+    newHeader.Alignment = 0;
+    do
+    {
+        oldHeader = *ListHeader;
+        newHeader.Sequence = ListHeader->Sequence + 1;
+    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
+                                   newHeader.Alignment,
+                                   oldHeader.Alignment) != oldHeader.Alignment);
+    return oldHeader.Next.Next;
+#endif
+}
+
+PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(volatile PSLIST_HEADER ListHeader,
+                                                 PSLIST_ENTRY ListEntry)
+{
+    SLIST_HEADER oldHeader, newHeader;
+    TRACE("(%p, %p)\n", ListHeader, ListEntry);
+#if _WIN64
+    assert(0);
+#else
+    newHeader.Next.Next = ListEntry;
+    do
+    {
+        oldHeader = *ListHeader;
+        ListEntry->Next = ListHeader->Next.Next;
+        newHeader.Depth = ListHeader->Depth + 1;
+        newHeader.Sequence = ListHeader->Sequence + 1;
+    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
+                                   newHeader.Alignment,
+                                   oldHeader.Alignment) != oldHeader.Alignment);
+    return oldHeader.Next.Next;
+#endif
+}
+
+PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(volatile PSLIST_HEADER ListHeader)
+{
+    SLIST_HEADER oldHeader, newHeader;
+    PSLIST_ENTRY entry;
+    TRACE("(%p)\n", ListHeader);
+#if _WIN64
+    assert(0);
+#else
+    do
+    {
+        oldHeader = *ListHeader;
+        entry = ListHeader->Next.Next;
+        if (entry == NULL)
+            return NULL;
+        /* entry could be deleted by another thread */
+        __TRY
+        {
+            newHeader.Next.Next = entry->Next;
+            newHeader.Depth = ListHeader->Depth - 1;
+            newHeader.Sequence = ListHeader->Sequence + 1;
+        }
+        __EXCEPT_PAGE_FAULT
+        {
+        }
+        __ENDTRY
+    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
+                                   newHeader.Alignment,
+                                   oldHeader.Alignment) != oldHeader.Alignment);
+    return entry;
+#endif
+}
+
+PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(volatile PSLIST_HEADER ListHeader,
+                                                PSLIST_ENTRY FirstEntry,
+                                                PSLIST_ENTRY LastEntry,
+                                                ULONG Count)
+{
+    SLIST_HEADER oldHeader, newHeader;
+    TRACE("(%p, %p, %p, %d)\n", ListHeader, FirstEntry, LastEntry, Count);
+#if _WIN64
+    assert(0);
+#else
+    newHeader.Next.Next = FirstEntry;
+    do
+    {
+        oldHeader = *ListHeader;
+        newHeader.Depth = ListHeader->Depth + Count;
+        newHeader.Sequence = ListHeader->Sequence + 1;
+        LastEntry->Next = ListHeader->Next.Next;
+    } while (interlocked_cmpxchg64((__int64*)&ListHeader->Alignment,
+                                   newHeader.Alignment,
+                                   oldHeader.Alignment) != oldHeader.Alignment);
+    return oldHeader.Next.Next;
+#endif
 }

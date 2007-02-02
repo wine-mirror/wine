@@ -152,8 +152,102 @@ static void test_mutex(void)
     CloseHandle(hCreated);
 }
 
+static void test_slist(void)
+{
+    struct item
+    {
+        SLIST_ENTRY entry;
+        int value;
+    } item1, item2, item3, *pitem;
+
+    SLIST_HEADER slist_header, test_header;
+    PSLIST_ENTRY entry;
+    USHORT size;
+
+    VOID (WINAPI *pInitializeSListHead)(PSLIST_HEADER);
+    USHORT (WINAPI *pQueryDepthSList)(PSLIST_HEADER);
+    PSLIST_ENTRY (WINAPI *pInterlockedFlushSList)(PSLIST_HEADER);
+    PSLIST_ENTRY (WINAPI *pInterlockedPopEntrySList)(PSLIST_HEADER);
+    PSLIST_ENTRY (WINAPI *pInterlockedPushEntrySList)(PSLIST_HEADER,PSLIST_ENTRY);
+    HMODULE kernel32;
+
+    kernel32 = GetModuleHandle("KERNEL32.DLL");
+    pInitializeSListHead = (void*) GetProcAddress(kernel32, "InitializeSListHead");
+    pQueryDepthSList = (void*) GetProcAddress(kernel32, "QueryDepthSList");
+    pInterlockedFlushSList = (void*) GetProcAddress(kernel32, "InterlockedFlushSList");
+    pInterlockedPopEntrySList = (void*) GetProcAddress(kernel32, "InterlockedPopEntrySList");
+    pInterlockedPushEntrySList = (void*) GetProcAddress(kernel32, "InterlockedPushEntrySList");
+    if (pInitializeSListHead == NULL ||
+        pQueryDepthSList == NULL ||
+        pInterlockedFlushSList == NULL ||
+        pInterlockedPopEntrySList == NULL ||
+        pInterlockedPushEntrySList == NULL)
+    {
+        skip("some required slist entrypoints were not found, skipping tests\n");
+        return;
+    }
+
+    memset(&test_header, 0, sizeof(test_header));
+    memset(&slist_header, 0xFF, sizeof(slist_header));
+    pInitializeSListHead(&slist_header);
+    ok(memcmp(&test_header, &slist_header, sizeof(SLIST_HEADER)) == 0,
+        "InitializeSListHead didn't zero-fill list header");
+    size = pQueryDepthSList(&slist_header);
+    ok(size == 0, "initially created slist has size %d, expected 0\n", size);
+
+    item1.value = 1;
+    ok(pInterlockedPushEntrySList(&slist_header, &item1.entry) == NULL,
+        "previous entry in empty slist wasn't NULL\n");
+    size = pQueryDepthSList(&slist_header);
+    ok(size == 1, "slist with 1 item has size %d\n", size);
+
+    item2.value = 2;
+    entry = pInterlockedPushEntrySList(&slist_header, &item2.entry);
+    ok(entry != NULL, "previous entry in non-empty slist was NULL\n");
+    if (entry != NULL)
+    {
+        pitem = (struct item*) entry;
+        ok(pitem->value == 1, "previous entry in slist wasn't the one added\n");
+    }
+    size = pQueryDepthSList(&slist_header);
+    ok(size == 2, "slist with 2 items has size %d\n", size);
+
+    item3.value = 3;
+    entry = pInterlockedPushEntrySList(&slist_header, &item3.entry);
+    ok(entry != NULL, "previous entry in non-empty slist was NULL\n");
+    if (entry != NULL)
+    {
+        pitem = (struct item*) entry;
+        ok(pitem->value == 2, "previous entry in slist wasn't the one added\n");
+    }
+    size = pQueryDepthSList(&slist_header);
+    ok(size == 3, "slist with 3 items has size %d\n", size);
+
+    entry = pInterlockedPopEntrySList(&slist_header);
+    ok(entry != NULL, "entry shouldn't be NULL\n");
+    if (entry != NULL)
+    {
+        pitem = (struct item*) entry;
+        ok(pitem->value == 3, "unexpected entry removed\n");
+    }
+    size = pQueryDepthSList(&slist_header);
+    ok(size == 2, "slist with 2 items has size %d\n", size);
+
+    entry = pInterlockedFlushSList(&slist_header);
+    size = pQueryDepthSList(&slist_header);
+    ok(size == 0, "flushed slist should be empty, size is %d\n", size);
+    if (size == 0)
+    {
+        ok(pInterlockedPopEntrySList(&slist_header) == NULL,
+            "popping empty slist didn't return NULL\n");
+    }
+    ok(((struct item*)entry)->value == 2, "item 2 not in front of list\n");
+    ok(((struct item*)entry->Next)->value == 1, "item 1 not at the back of list\n");
+}
+
 START_TEST(sync)
 {
     test_signalandwait();
     test_mutex();
+    test_slist();
 }
