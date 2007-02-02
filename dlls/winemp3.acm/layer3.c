@@ -48,8 +48,8 @@ struct bandInfoStruct {
   short shortDiff[13];
 };
 
-int longLimit[9][23];
-int shortLimit[9][14];
+static int longLimit[9][23];
+static int shortLimit[9][14];
 
 static const struct bandInfoStruct bandInfo[9] = {
 
