@@ -1645,9 +1645,9 @@ static UINT msi_dialog_create_radiobutton( MSIRECORD *rec, LPVOID param )
     style = WS_CHILD | BS_AUTORADIOBUTTON | BS_MULTILINE | WS_TABSTOP;
     name = MSI_RecordGetString( rec, 3 );
     text = MSI_RecordGetString( rec, 8 );
-    if( attributes & 1 )
+    if( attributes & msidbControlAttributesVisible )
         style |= WS_VISIBLE;
-    if( ~attributes & 2 )
+    if( ~attributes & msidbControlAttributesEnabled )
         style |= WS_DISABLED;
 
     control = msi_dialog_create_window( dialog, rec, 0, szButton, name, text,
