@@ -2168,14 +2168,18 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 {
     struct msi_listbox_info *info;
     msi_control *control;
-    DWORD style;
+    DWORD attributes, style;
     LPCWSTR prop;
 
     info = msi_alloc( sizeof *info );
     if (!info)
         return ERROR_FUNCTION_FAILED;
 
-    style = WS_TABSTOP | WS_GROUP | WS_CHILD | LBS_STANDARD;
+    style = WS_TABSTOP | WS_GROUP | WS_CHILD | LBS_NOTIFY | WS_VSCROLL | WS_BORDER;
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    if (~attributes & msidbControlAttributesSorted)
+        style |= LBS_SORT;
+
     control = msi_dialog_add_control( dialog, rec, WC_LISTBOXW, style );
     if (!control)
         return ERROR_FUNCTION_FAILED;
