@@ -1350,6 +1350,7 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
     LOGFONTW lf;
     POINT org;
     HDC hdc = dc->hSelf;
+    INT offset = 0, xoff = 0, yoff = 0;
 
     TRACE("%p, %d, %d, %08x, %s, %s, %d, %p)\n", hdc, x, y, flags,
 	  wine_dbgstr_rect(lprc), debugstr_wn(str, count), count, dx);
@@ -1372,7 +1373,6 @@ BOOL PATH_ExtTextOut(DC *dc, INT x, INT y, UINT flags, const RECT *lprc,
 
     for (idx = 0; idx < count; idx++)
     {
-        INT offset = 0, xoff = 0, yoff = 0;
         GLYPHMETRICS gm;
         DWORD dwSize;
         void *outline;
