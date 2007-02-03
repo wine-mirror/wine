@@ -25,7 +25,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wtsapi);
 
-HMODULE WTSAPI32_hModule = 0;
+static HMODULE WTSAPI32_hModule;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
