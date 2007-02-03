@@ -1923,7 +1923,7 @@ static HPBUFFERARB WINAPI X11DRV_wglCreatePbufferARB(HDC hdc, int iPixelFormat, 
     GLXFBConfig* cfgs = NULL;
     int nCfgs = 0;
     int attribs[256];
-    unsigned nAttribs = 0;
+    int nAttribs = 0;
     int fmt_index = 0;
 
     TRACE("(%p, %d, %d, %d, %p)\n", hdc, iPixelFormat, iWidth, iHeight, piAttribList);
