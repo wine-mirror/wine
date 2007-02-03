@@ -376,7 +376,7 @@ HRESULT WINAPI OpenINFEngineW(LPCWSTR pszInfFilename, LPCWSTR pszInstallSection,
  * See RebootCheckOnInstallW.
  */
 HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF,
-                                     LPSTR pszSec, DWORD dwReserved)
+                                     LPCSTR pszSec, DWORD dwReserved)
 {
     UNICODE_STRING infW, secW;
     HRESULT res;
@@ -422,7 +422,7 @@ HRESULT WINAPI RebootCheckOnInstallA(HWND hWnd, LPCSTR pszINF,
  *   Unimplemented.
  */
 HRESULT WINAPI RebootCheckOnInstallW(HWND hWnd, LPCWSTR pszINF,
-                                     LPWSTR pszSec, DWORD dwReserved)
+                                     LPCWSTR pszSec, DWORD dwReserved)
 {
     FIXME("(%p, %s, %s, %d): stub\n", hWnd, debugstr_w(pszINF),
           debugstr_w(pszSec), dwReserved);
