@@ -1793,9 +1793,9 @@ theEnd:
  *		MMDRV_LoadMMDrvFunc16
  *
  */
-unsigned   MMDRV_LoadMMDrvFunc16(LPCSTR drvName, LPWINE_DRIVER d, 
-                                 LPWINE_MM_DRIVER lpDrv)
-{        
+static unsigned MMDRV_LoadMMDrvFunc16(LPCSTR drvName, LPWINE_DRIVER d,
+                                      LPWINE_MM_DRIVER lpDrv)
+{
     WINEMM_msgFunc16	func;
     unsigned            count = 0;
     char    		buffer[128];
