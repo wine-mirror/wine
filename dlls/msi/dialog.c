@@ -1124,9 +1124,18 @@ static UINT msi_dialog_icon_control( msi_dialog *dialog, MSIRECORD *rec )
 static UINT msi_dialog_combo_control( msi_dialog *dialog, MSIRECORD *rec )
 {
     static const WCHAR szCombo[] = { 'C','O','M','B','O','B','O','X',0 };
+    DWORD attributes, style;
 
-    msi_dialog_add_control( dialog, rec, szCombo,
-                            SS_BITMAP | SS_LEFT | SS_CENTERIMAGE );
+    style = CBS_AUTOHSCROLL | WS_TABSTOP | WS_GROUP | WS_CHILD;
+    attributes = MSI_RecordGetInteger( rec, 8 );
+    if ( ~attributes & msidbControlAttributesSorted)
+        style |= CBS_SORT;
+    if ( attributes & msidbControlAttributesComboList)
+        style |= CBS_DROPDOWNLIST;
+    else
+        style |= CBS_DROPDOWN;
+
+    msi_dialog_add_control( dialog, rec, szCombo, style );
     return ERROR_SUCCESS;
 }
 
