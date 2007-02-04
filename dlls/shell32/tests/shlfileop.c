@@ -329,8 +329,8 @@ static void test_delete(void)
 static void test_rename(void)
 {
     SHFILEOPSTRUCTA shfo, shfo2;
-    CHAR from[MAX_PATH];
-    CHAR to[MAX_PATH];
+    CHAR from[5*MAX_PATH];
+    CHAR to[5*MAX_PATH];
     DWORD retval;
 
     shfo.hwnd = NULL;
@@ -438,8 +438,8 @@ static void test_rename(void)
 static void test_copy(void)
 {
     SHFILEOPSTRUCTA shfo, shfo2;
-    CHAR from[MAX_PATH];
-    CHAR to[MAX_PATH];
+    CHAR from[5*MAX_PATH];
+    CHAR to[5*MAX_PATH];
     FILEOP_FLAGS tmp_flags;
     DWORD retval;
 
@@ -767,8 +767,8 @@ static void test_copy(void)
 static void test_move(void)
 {
     SHFILEOPSTRUCTA shfo, shfo2;
-    CHAR from[MAX_PATH];
-    CHAR to[MAX_PATH];
+    CHAR from[5*MAX_PATH];
+    CHAR to[5*MAX_PATH];
     DWORD retval;
 
     shfo.hwnd = NULL;
