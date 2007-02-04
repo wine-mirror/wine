@@ -64,6 +64,7 @@ struct media_info {
     LPWSTR cabinet;
     LPWSTR volume_label;
     BOOL is_continuous;
+    BOOL is_extracted;
     WCHAR source[MAX_PATH];
 };
 
@@ -434,6 +435,9 @@ done:
     msi_free(cabinet);
     msi_free(cab_path);
 
+    if (ret)
+        mi->is_extracted = TRUE;
+
     return ret;
 }
 
@@ -715,7 +719,8 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
         if (file->state != msifs_missing && file->state != msifs_overwrite)
             continue;
 
-        if (file->Sequence > mi->last_sequence || mi->is_continuous)
+        if (file->Sequence > mi->last_sequence || mi->is_continuous ||
+            (file->IsCompressed && !mi->is_extracted))
         {
             rc = ready_media(package, file, mi);
             if (rc != ERROR_SUCCESS)

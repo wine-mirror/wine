@@ -202,6 +202,18 @@ static const CHAR co2_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\t
                                     "2\t12\t\ttest3.cab\tDISK3\t\n"
                                     "3\t2\t\ttest2.cab\tDISK2\t\n";
 
+static const CHAR mm_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                  "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                  "File\tFile\n"
+                                  "maximus\tmaximus\tmaximus\t500\t\t\t512\t1\n"
+                                  "augustus\taugustus\taugustus\t500\t\t\t512\t2\n"
+                                  "caesar\tcaesar\tcaesar\t500\t\t\t16384\t3";
+
+static const CHAR mm_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                   "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                   "Media\tDiskId\n"
+                                   "1\t3\t\ttest1.cab\tDISK1\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -259,6 +271,18 @@ static const msi_table co2_tables[] =
     ADD_TABLE(cc_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(co2_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table mm_tables[] =
+{
+    ADD_TABLE(cc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(mm_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(mm_media),
     ADD_TABLE(property),
 };
 
@@ -967,6 +991,36 @@ static void test_caborder(void)
     DeleteFile(msifile);
 }
 
+static void test_mixedmedia(void)
+{
+    UINT r;
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_file("msitest\\augustus", 500);
+    create_file("caesar", 500);
+
+    create_database(msifile, mm_tables, sizeof(mm_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    create_cab_file("test1.cab", MEDIA_SIZE, "caesar\0");
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile("maximus");
+    DeleteFile("augustus");
+    DeleteFile("caesar");
+    RemoveDirectory("msitest");
+    DeleteFile("test1.cab");
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -989,6 +1043,7 @@ START_TEST(install)
     test_packagecoltypes();
     test_continuouscabs();
     test_caborder();
+    test_mixedmedia();
 
     SetCurrentDirectoryA(prev_path);
 }
