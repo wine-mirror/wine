@@ -216,6 +216,9 @@ typedef struct
 #define BAND_NEEDS_REDRAW   0x00000020
 #define CREATE_RUNNING      0x00000040
 
+/* used by Windows to mark that the header size has been set by the user and shouldn't be changed */
+#define RBBS_UNDOC_FIXEDHEADER 0x40000000
+
 /* ----   REBAR layout constants. Mostly determined by        ---- */
 /* ----   experiment on WIN 98.                               ---- */
 
@@ -2049,7 +2052,7 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     }
 
     /* check if user overrode the header value */
-    if (!(lpBand->fMask & RBBIM_HEADERSIZE))
+    if (!(lpBand->fStyle & RBBS_UNDOC_FIXEDHEADER))
         lpBand->cxHeader = header;
 
 
@@ -2210,6 +2213,7 @@ REBAR_CommonSetupBand (HWND hwnd, LPREBARBANDINFOA lprbbi, REBAR_BAND *lpBand)
             (lpBand->cxHeader != lprbbi->cxHeader ) )
         {
 	    lpBand->cxHeader = lprbbi->cxHeader;
+            lpBand->fStyle |= RBBS_UNDOC_FIXEDHEADER;
             bChanged = TRUE;
         }
     }

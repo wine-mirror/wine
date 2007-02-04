@@ -15,6 +15,7 @@ CTESTS = \
 	mru.c \
 	progress.c \
 	propsheet.c \
+	rebar.c \
 	status.c \
 	string.c \
 	subclass.c \
