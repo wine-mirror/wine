@@ -365,7 +365,7 @@ REBAR_FmtMask( UINT mask)
 
 
 static VOID
-REBAR_DumpBandInfo( LPREBARBANDINFOA pB)
+REBAR_DumpBandInfo(LPREBARBANDINFOW pB)
 {
     if( !TRACE_ON(rebar) ) return;
     TRACE("band info: ");
@@ -2092,7 +2092,7 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
 }
 
 static BOOL
-REBAR_CommonSetupBand (HWND hwnd, LPREBARBANDINFOA lprbbi, REBAR_BAND *lpBand)
+REBAR_CommonSetupBand(HWND hwnd, LPREBARBANDINFOW lprbbi, REBAR_BAND *lpBand)
      /* Function:  This routine copies the supplied values from   */
      /*  user input (lprbbi) to the internal band structure.      */
      /*  It returns true if something changed and false if not.   */
@@ -2831,7 +2831,7 @@ REBAR_GetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnic
 	    lprbbi->cxHeader = lpBand->cxHeader;
     }
 
-    REBAR_DumpBandInfo((LPREBARBANDINFOA)lprbbi);
+    REBAR_DumpBandInfo(lprbbi);
 
     return TRUE;
 }
@@ -3042,7 +3042,7 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnico
 
     /* trace the index as signed to see the -1 */
     TRACE("insert band at %d (bUnicode=%d)!\n", (INT)uIndex, bUnicode);
-    REBAR_DumpBandInfo((LPREBARBANDINFOA)lprbbi);
+    REBAR_DumpBandInfo(lprbbi);
 
     infoPtr->bands = ReAlloc(infoPtr->bands, (infoPtr->uNumBands+1) * sizeof(REBAR_BAND));
     if (((INT)uIndex == -1) || (uIndex > infoPtr->uNumBands))
@@ -3060,7 +3060,7 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnico
     lpBand->clrBack = infoPtr->clrBk;
     lpBand->iImage = -1;
 
-    REBAR_CommonSetupBand(infoPtr->hwndSelf, (LPREBARBANDINFOA)lprbbi, lpBand);
+    REBAR_CommonSetupBand(infoPtr->hwndSelf, lprbbi, lpBand);
     if ((lprbbi->fMask & RBBIM_TEXT) && (lprbbi->lpText)) {
         if (bUnicode)
             Str_SetPtrW(&lpBand->lpText, lprbbi->lpText);
@@ -3325,9 +3325,9 @@ REBAR_strdifW( LPCWSTR a, LPCWSTR b )
 }
 
 static LRESULT
-REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
+REBAR_SetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
 {
-    LPREBARBANDINFOA lprbbi = (LPREBARBANDINFOA)lParam;
+    LPREBARBANDINFOW lprbbi = (LPREBARBANDINFOW)lParam;
     REBAR_BAND *lpBand;
     BOOL bChanged;
 
@@ -3347,29 +3347,18 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     bChanged = REBAR_CommonSetupBand (infoPtr->hwndSelf, lprbbi, lpBand);
     if (lprbbi->fMask & RBBIM_TEXT) {
         LPWSTR wstr = NULL;
+        if (bUnicode)
+            Str_SetPtrW(&wstr, lprbbi->lpText);
+        else
+            Str_SetPtrAtoW(&wstr, (LPSTR)lprbbi->lpText);
 
-        if (lprbbi->lpText)
-        {
-            INT len;
-            len = MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, NULL, 0 );
-            if (len > 1)
-                wstr = (LPWSTR)Alloc (len*sizeof(WCHAR));
-            if (wstr)
-                MultiByteToWideChar( CP_ACP, 0, lprbbi->lpText, -1, wstr, len );
-        }
-        if (REBAR_strdifW(lpBand->lpText, wstr)) {
-	    if (lpBand->lpText) {
-	        Free (lpBand->lpText);
-	        lpBand->lpText = NULL;
-	    }
-	    if (wstr) {
-                lpBand->lpText = wstr;
-                wstr = NULL;
-	    }
+        if (REBAR_strdifW(wstr, lprbbi->lpText)) {
+            Free(lpBand->lpText);
+            lpBand->lpText = wstr;
             bChanged = TRUE;
         }
-        if (wstr)
-	    Free (wstr);
+        else
+            Free(wstr);
     }
 
     REBAR_ValidateBand (infoPtr, lpBand);
@@ -3379,56 +3368,6 @@ REBAR_SetBandInfoA (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (bChanged && (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE))) {
 	  REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
 	  InvalidateRect(infoPtr->hwndSelf, 0, 1);
-    }
-
-    return TRUE;
-}
-
-static LRESULT
-REBAR_SetBandInfoW (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
-{
-    LPREBARBANDINFOW lprbbi = (LPREBARBANDINFOW)lParam;
-    REBAR_BAND *lpBand;
-    BOOL bChanged;
-
-    if (lprbbi == NULL)
-	return FALSE;
-    if (lprbbi->cbSize < REBARBANDINFOW_V3_SIZE)
-	return FALSE;
-    if ((UINT)wParam >= infoPtr->uNumBands)
-	return FALSE;
-
-    TRACE("index %u\n", (UINT)wParam);
-    REBAR_DumpBandInfo ((LPREBARBANDINFOA)lprbbi);
-
-    /* set band information */
-    lpBand = &infoPtr->bands[(UINT)wParam];
-
-    bChanged = REBAR_CommonSetupBand (infoPtr->hwndSelf, (LPREBARBANDINFOA)lprbbi, lpBand);
-    if( (lprbbi->fMask & RBBIM_TEXT) && 
-        REBAR_strdifW( lpBand->lpText, lprbbi->lpText ) ) {
-	if (lpBand->lpText) {
-	    Free (lpBand->lpText);
-	    lpBand->lpText = NULL;
-	}
-	if (lprbbi->lpText) {
-	    INT len = lstrlenW (lprbbi->lpText);
-	    if (len > 0)
-	    {
-	        lpBand->lpText = (LPWSTR)Alloc ((len + 1)*sizeof(WCHAR));
-	        strcpyW (lpBand->lpText, lprbbi->lpText);
-	    }
-	}
-        bChanged = TRUE;
-    }
-
-    REBAR_ValidateBand (infoPtr, lpBand);
-
-    REBAR_DumpBand (infoPtr);
-
-    if ( bChanged && (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE)) ) {
-      REBAR_Layout (infoPtr, NULL, TRUE, FALSE);
-      InvalidateRect(infoPtr->hwndSelf, 0, 1);
     }
 
     return TRUE;
@@ -4479,10 +4418,10 @@ REBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	    return REBAR_PushChevron (infoPtr, wParam, lParam);
 
 	case RB_SETBANDINFOA:
-	    return REBAR_SetBandInfoA (infoPtr, wParam, lParam);
+	    return REBAR_SetBandInfoT(infoPtr, wParam, lParam, FALSE);
 
 	case RB_SETBANDINFOW:
-	    return REBAR_SetBandInfoW (infoPtr, wParam, lParam);
+	    return REBAR_SetBandInfoT(infoPtr, wParam, lParam, TRUE);
 
 	case RB_SETBARINFO:
 	    return REBAR_SetBarInfo (infoPtr, wParam, lParam);
