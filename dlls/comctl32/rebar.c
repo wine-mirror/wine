@@ -2649,7 +2649,6 @@ static LRESULT
 REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     UINT uBand = (UINT)wParam;
-    HWND childhwnd = 0;
     REBAR_BAND *lpBand;
 
     if (uBand >= infoPtr->uNumBands)
@@ -2658,39 +2657,16 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TRACE("deleting band %u!\n", uBand);
     lpBand = &infoPtr->bands[uBand];
     REBAR_Notify_NMREBAR (infoPtr, uBand, RBN_DELETINGBAND);
+    /* TODO: a return of 1 should probably cancel the deletion */
 
-    if (infoPtr->uNumBands == 1) {
-	TRACE(" simple delete!\n");
-	if ((lpBand->fMask & RBBIM_CHILD) && lpBand->hwndChild)
-	    childhwnd = lpBand->hwndChild;
-	Free (infoPtr->bands);
-	infoPtr->bands = NULL;
-	infoPtr->uNumBands = 0;
-    }
-    else {
-	REBAR_BAND *oldBands = infoPtr->bands;
-        TRACE("complex delete! [uBand=%u]\n", uBand);
+    if (lpBand->hwndChild)
+        ShowWindow(lpBand->hwndChild, SW_HIDE);
+    Free(lpBand->lpText);
 
-	if ((lpBand->fMask & RBBIM_CHILD) && lpBand->hwndChild)
-	    childhwnd = lpBand->hwndChild;
-
-	infoPtr->uNumBands--;
-	infoPtr->bands = Alloc (sizeof (REBAR_BAND) * infoPtr->uNumBands);
-        if (uBand > 0) {
-            memcpy (&infoPtr->bands[0], &oldBands[0],
-                    uBand * sizeof(REBAR_BAND));
-        }
-
-        if (uBand < infoPtr->uNumBands) {
-            memcpy (&infoPtr->bands[uBand], &oldBands[uBand+1],
-                    (infoPtr->uNumBands - uBand) * sizeof(REBAR_BAND));
-        }
-
-	Free (oldBands);
-    }
-
-    if (childhwnd)
-        ShowWindow (childhwnd, SW_HIDE);
+    infoPtr->uNumBands--;
+    memmove(&infoPtr->bands[uBand], &infoPtr->bands[uBand+1],
+        (infoPtr->uNumBands - uBand) * sizeof(REBAR_BAND));
+    infoPtr->bands = ReAlloc(infoPtr->bands, infoPtr->uNumBands * sizeof(REBAR_BAND));
 
     REBAR_Notify_NMREBAR (infoPtr, -1, RBN_DELETEDBAND);
 
