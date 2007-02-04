@@ -30,6 +30,11 @@
 #include "shlwapi.h"
 #include "shtypes.h"
 
+#define expect_eq(expr, val, type, fmt) do { \
+    type ret = expr; \
+    ok(ret == val, "Unexpected value of '" #expr "': " #fmt " instead of " #val "\n", ret); \
+} while (0);
+
 static HMODULE hShlwapi;
 static LPSTR   (WINAPI *pStrCpyNXA)(LPSTR,LPCSTR,int);
 static LPWSTR  (WINAPI *pStrCpyNXW)(LPWSTR,LPCWSTR,int);
@@ -755,6 +760,65 @@ static void test_SHUnicodeToUnicode(void)
      dwRet, dest[0], dest[1], dest[2], dest[3], dest[4], dest[5], dest[6], dest[7]);
 }
 
+static void test_StrXXX_overflows()
+{
+    CHAR str1[2*MAX_PATH+1], buf[2*MAX_PATH];
+    WCHAR wstr1[2*MAX_PATH+1], wbuf[2*MAX_PATH];
+    const WCHAR fmt[] = {'%','s',0};
+    STRRET strret;
+    int ret;
+    int i;
+
+    for (i=0; i<2*MAX_PATH; i++)
+    {
+        str1[i] = '0'+(i%10);
+        wstr1[i] = '0'+(i%10);
+    }
+    str1[2*MAX_PATH] = 0;
+    wstr1[2*MAX_PATH] = 0;
+
+    memset(buf, 0xbf, sizeof(buf));
+    expect_eq(StrCpyNA(buf, str1, 10), buf, PCHAR, "%p");
+    expect_eq(buf[9], 0, CHAR, "%x");
+    expect_eq(buf[10], '\xbf', CHAR, "%x");
+    expect_eq(StrCatBuffA(buf, str1, 100), buf, PCHAR, "%p");
+    expect_eq(buf[99], 0, CHAR, "%x");
+    expect_eq(buf[100], '\xbf', CHAR, "%x");
+
+    memset(wbuf, 0xbf, sizeof(wbuf));
+    expect_eq(StrCpyNW(wbuf, wstr1, 10), wbuf, PWCHAR, "%p");
+    expect_eq(wbuf[9], 0, WCHAR, "%x");
+    expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+    expect_eq(StrCatBuffW(wbuf, wstr1, 100), wbuf, PWCHAR, "%p");
+    expect_eq(wbuf[99], 0, WCHAR, "%x");
+    expect_eq(wbuf[100], (WCHAR)0xbfbf, WCHAR, "%x");
+
+    memset(wbuf, 0xbf, sizeof(wbuf));
+    strret.uType = STRRET_WSTR;
+    U(strret).pOleStr = StrDupW(wstr1);
+    expect_eq(StrRetToBufW(&strret, NULL, wbuf, 10), S_OK, HRESULT, "%x");
+    expect_eq(wbuf[9], 0, WCHAR, "%x");
+    expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+
+    memset(buf, 0xbf, sizeof(buf));
+    strret.uType = STRRET_CSTR;
+    StrCpyN(U(strret).cStr, str1, MAX_PATH);
+    expect_eq(StrRetToBufA(&strret, NULL, buf, 10), S_OK, HRESULT, "%x");
+    expect_eq(buf[9], 0, CHAR, "%x");
+    expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
+
+    memset(buf, 0xbf, sizeof(buf));
+    ret = wnsprintfA(buf, 10, "%s", str1);
+    todo_wine ok(ret == 9, "Unexpected wsnprintfA return %d, expected 9\n", ret);
+    expect_eq(buf[9], 0, CHAR, "%x");
+    expect_eq(buf[10], (CHAR)0xbf, CHAR, "%x");
+    memset(wbuf, 0xbf, sizeof(wbuf));
+    ret = wnsprintfW(wbuf, 10, fmt, wstr1);
+    todo_wine ok(ret == 9, "Unexpected wsnprintfW return %d, expected 9\n", ret);
+    expect_eq(wbuf[9], 0, WCHAR, "%x");
+    expect_eq(wbuf[10], (WCHAR)0xbfbf, WCHAR, "%x");
+}
+
 START_TEST(string)
 {
   TCHAR thousandDelim[8];
@@ -802,4 +866,5 @@ START_TEST(string)
   test_StrRStrI();
   test_SHAnsiToAnsi();
   test_SHUnicodeToUnicode();
+  test_StrXXX_overflows();
 }
