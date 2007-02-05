@@ -80,7 +80,7 @@ $DEF_CHAR = ord '?';
     [ 10029, "VENDORS/MICSFT/MAC/LATIN2.TXT",     "Mac Latin 2" ],
     [ 10079, "VENDORS/MICSFT/MAC/ICELAND.TXT",    "Mac Icelandic" ],
     [ 10081, "VENDORS/MICSFT/MAC/TURKISH.TXT",    "Mac Turkish" ],
-    [ 20127, "VENDORS/MISC/US-ASCII-QUOTES.TXT",  "US-ASCII (7bit)" ],
+    [ 20127, undef,                               "US-ASCII (7bit)" ],
     [ 20866, "VENDORS/MISC/KOI8-R.TXT",           "Russian KOI8" ],
     [ 20932, "OBSOLETE/EASTASIA/JIS/JIS0208.TXT", "EUC-JP" ],
     [ 21866, "VENDORS/MISC/KOI8-U.TXT",           "Ukrainian KOI8" ],
@@ -370,9 +370,6 @@ sub READ_FILE
 {
     my $name = shift;
     open INPUT,$name or die "Cannot open $name";
-    @cp2uni = ();
-    @lead_bytes = ();
-    @uni2cp = ();
 
     while (<INPUT>)
     {
@@ -402,15 +399,21 @@ sub READ_FILE
 
 
 ################################################################
+# fill input data for the 20127 (us-ascii) codepage
+sub fill_20127_codepage()
+{
+    for (my $i = 0; $i < 128; $i++) { $cp2uni[$i] = $uni2cp[$i] = $i; }
+    for (my $i = 128; $i < 256; $i++) { $cp2uni[$i] = $i & 0x7f; }
+}
+
+
+################################################################
 # build EUC-JP table from the JIS 0208 file
 # FIXME: for proper EUC-JP we should probably read JIS 0212 too
 # but this would require 3-byte DBCS characters
 sub READ_JIS0208_FILE
 {
     my $name = shift;
-    @cp2uni = ();
-    @lead_bytes = ();
-    @uni2cp = ();
 
     # ASCII chars
     for ($i = 0x00; $i <= 0x7f; $i++)
@@ -1145,8 +1148,13 @@ sub HANDLE_FILE
 {
     my ($codepage,$filename,$comment) = @_;
 
+    @cp2uni = ();
+    @lead_bytes = ();
+    @uni2cp = ();
+
     # symbol codepage file is special
     if ($codepage == 20932) { READ_JIS0208_FILE($MAPPREFIX . $filename); }
+    elsif ($codepage == 20127) { fill_20127_codepage(); }
     else { READ_FILE($MAPPREFIX . $filename); }
 
     # hack: 0x00a5 must map to backslash in Shift-JIS
@@ -1157,12 +1165,12 @@ sub HANDLE_FILE
     my $output = sprintf "c_%03d.c", $codepage;
     open OUTPUT,">$output.new" or die "Cannot create $output";
 
-    printf "Building %s from %s (%s)\n", $output, $filename, $comment;
+    printf "Building %s from %s (%s)\n", $output, $filename || "hardcoded data", $comment;
 
     # dump all tables
 
     printf OUTPUT "/* code page %03d (%s) */\n", $codepage, $comment;
-    printf OUTPUT "/* generated from %s */\n", $MAPPREFIX . $filename;
+    printf OUTPUT "/* generated from %s */\n", $MAPPREFIX . $filename if $filename;
     printf OUTPUT "/* DO NOT EDIT!! */\n\n";
     printf OUTPUT "#include \"wine/unicode.h\"\n\n";
 
