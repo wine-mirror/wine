@@ -829,12 +829,7 @@ void CreateTypedefHeader(ITypeInfo *pTypeInfo,
     AddToTLDataStrW(pTLData, wszTypedef);
     if(memcmp(&pTypeAttr->guid, &GUID_NULL, sizeof(GUID)))
     {
-        if(bFirst) AddToTLDataStrW(pTLData, wszOpenBrackets1);
-        else
-        {
-            AddToTLDataStrW(pTLData, wszComa);
-            AddToTLDataStrW(pTLData, wszSpace);
-        }
+        AddToTLDataStrW(pTLData, wszOpenBrackets1);
         bFirst = FALSE;
         AddToTLDataStrW(pTLData, wszUUID);
         AddToTLDataStrW(pTLData, wszOpenBrackets2);
