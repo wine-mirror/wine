@@ -29,6 +29,7 @@
 #include "winerror.h"
 
 #include "ole2.h"
+#include "shlguid.h"
 
 #include "wine/debug.h"
 
@@ -502,6 +503,13 @@ static LONG recursive_delete_keyW(HKEY base, WCHAR const *name)
  *		coclass list
  */
 static struct regsvr_coclass const coclass_list[] = {
+    {
+        &CLSID_ACLMulti,
+        "Multiple AutoComplete List Container",
+        NULL,
+        "browseui.dll",
+        "Apartment"
+    },
     { NULL }			/* list terminator */
 };
 

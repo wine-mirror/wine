@@ -31,8 +31,11 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "shlguid.h"
 
 #include "initguid.h"
+
+#include "browseui.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 
@@ -46,6 +49,7 @@ static const struct {
     REFCLSID clsid;
     LPFNCONSTRUCTOR ctor;
 } ClassesTable[] = {
+    {&CLSID_ACLMulti, ACLMulti_Constructor},
     {NULL, NULL}
 };
 
@@ -194,5 +198,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppvOut)
         if (IsEqualCLSID(ClassesTable[i].clsid, clsid)) {
             return ClassFactory_Constructor(ClassesTable[i].ctor, ppvOut);
         }
+    FIXME("CLSID %s not supported\n", debugstr_guid(clsid));
     return CLASS_E_CLASSNOTAVAILABLE;
 }

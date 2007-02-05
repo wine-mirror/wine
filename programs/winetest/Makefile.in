@@ -25,6 +25,7 @@ RC_BINARIES = wine.ico
 TESTBINS = \
 	advapi32_test.exe \
 	advpack_test.exe \
+	browseui_test.exe \
 	cabinet_test.exe \
 	comcat_test.exe \
 	comctl32_test.exe \
@@ -85,6 +86,8 @@ advapi32_test.exe: $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advapi32/tests/advapi32_test.exe$(DLLEXT) $@ && $(STRIP) $@
 advpack_test.exe: $(DLLDIR)/advpack/tests/advpack_test.exe$(DLLEXT)
 	cp $(DLLDIR)/advpack/tests/advpack_test.exe$(DLLEXT) $@ && $(STRIP) $@
+browseui_test.exe: $(DLLDIR)/browseui/tests/browseui_test.exe$(DLLEXT)
+	cp $(DLLDIR)/browseui/tests/browseui_test.exe$(DLLEXT) $@ && $(STRIP) $@
 cabinet_test.exe: $(DLLDIR)/cabinet/tests/cabinet_test.exe$(DLLEXT)
 	cp $(DLLDIR)/cabinet/tests/cabinet_test.exe$(DLLEXT) $@ && $(STRIP) $@
 comcat_test.exe: $(DLLDIR)/comcat/tests/comcat_test.exe$(DLLEXT)

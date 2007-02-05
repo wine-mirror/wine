@@ -1536,6 +1536,7 @@ dlls/atl/Makefile
 dlls/avicap32/Makefile
 dlls/avifil32/Makefile
 dlls/browseui/Makefile
+dlls/browseui/tests/Makefile
 dlls/cabinet/Makefile
 dlls/cabinet/tests/Makefile
 dlls/capi2032/Makefile

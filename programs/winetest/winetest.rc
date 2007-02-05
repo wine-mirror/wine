@@ -148,6 +148,7 @@ IDI_WINE ICON "wine.ico"
 
 advapi32_test.exe TESTRES "advapi32_test.exe"
 advpack_test.exe TESTRES "advpack_test.exe"
+browseui_test.exe TESTRES "browseui_test.exe"
 cabinet_test.exe TESTRES "cabinet_test.exe"
 comcat_test.exe TESTRES "comcat_test.exe"
 comctl32_test.exe TESTRES "comctl32_test.exe"
