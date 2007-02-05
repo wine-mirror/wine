@@ -300,6 +300,53 @@ DECLARE_INTERFACE_(IInputObjectSite,IUnknown)
 #define IInputObjectSite_OnFocusChangeIS(p,a,b) (p)->lpVtbl->OnFocusChangeIS(p,a,b)
 #endif
 
+/* IObjMgr interface */
+#define INTERFACE IObjMgr
+DECLARE_INTERFACE_(IObjMgr,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface) (THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS) PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+    /*** IObjMgr methods ***/
+    STDMETHOD(Append)(THIS_ LPUNKNOWN punk) PURE;
+    STDMETHOD(Remove)(THIS_ LPUNKNOWN punk) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IObjMgr_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IObjMgr_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IObjMgr_Release(p)             (p)->lpVtbl->Release(p)
+/*** IObjMgr methods ***/
+#define IObjMgr_Append(p,a) (p)->lpVtbl->Append(p,a)
+#define IObjMgr_Remove(p,a) (p)->lpVtbl->Remove(p,a)
+#endif
+
+/* IACList interface */
+#define INTERFACE IACList
+DECLARE_INTERFACE_(IACList,IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface) (THIS_ REFIID riid, void** ppvObject) PURE;
+    STDMETHOD_(ULONG,AddRef) (THIS) PURE;
+    STDMETHOD_(ULONG,Release) (THIS) PURE;
+    /*** IACList methods ***/
+    STDMETHOD(Expand)(THIS_ LPCOLESTR str) PURE;
+};
+#undef INTERFACE
+
+#if !defined(__cplusplus) || defined(CINTERFACE)
+/*** IUnknown methods ***/
+#define IACList_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IACList_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IACList_Release(p)             (p)->lpVtbl->Release(p)
+/*** IACList methods ***/
+#define IACList_Expand(p,a)             (p)->lpVtbl->Expand(p,a)
+#endif
+
+
 /****************************************************************************
 * SHAddToRecentDocs API
 */
