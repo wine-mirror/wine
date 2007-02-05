@@ -30,6 +30,7 @@ dlls/avicap32/libavicap32.def
 dlls/avifil32/libavifil32.def
 dlls/avifil32/rsrc.res
 dlls/avifile.dll16
+dlls/browseui/version.res
 dlls/cabinet/cabinet.res
 dlls/cabinet/libcabinet.def
 dlls/cabinet/tests/*.ok

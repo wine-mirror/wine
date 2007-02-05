@@ -23,6 +23,7 @@ BASEDIRS = \
 	atl \
 	avicap32 \
 	avifil32 \
+	browseui \
 	cabinet \
 	capi2032 \
 	cards \

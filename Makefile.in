@@ -164,6 +164,7 @@ ALL_MAKEFILES = \
 	dlls/atl/Makefile \
 	dlls/avicap32/Makefile \
 	dlls/avifil32/Makefile \
+	dlls/browseui/Makefile \
 	dlls/cabinet/Makefile \
 	dlls/cabinet/tests/Makefile \
 	dlls/capi2032/Makefile \
@@ -493,6 +494,7 @@ dlls/amstream/Makefile: dlls/amstream/Makefile.in dlls/Makedll.rules
 dlls/atl/Makefile: dlls/atl/Makefile.in dlls/Makedll.rules
 dlls/avicap32/Makefile: dlls/avicap32/Makefile.in dlls/Makedll.rules
 dlls/avifil32/Makefile: dlls/avifil32/Makefile.in dlls/Makedll.rules
+dlls/browseui/Makefile: dlls/browseui/Makefile.in dlls/Makedll.rules
 dlls/cabinet/Makefile: dlls/cabinet/Makefile.in dlls/Makedll.rules
 dlls/cabinet/tests/Makefile: dlls/cabinet/tests/Makefile.in dlls/Maketest.rules
 dlls/capi2032/Makefile: dlls/capi2032/Makefile.in dlls/Makedll.rules
