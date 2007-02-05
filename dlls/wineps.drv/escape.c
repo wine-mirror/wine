@@ -381,7 +381,7 @@ INT PSDRV_EndPage( PSDRV_PDEVICE *physDev )
 /************************************************************************
  *           PSDRV_StartDocA
  */
-INT PSDRV_StartDocA( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
+static INT PSDRV_StartDocA( PSDRV_PDEVICE *physDev, const DOCINFOA *doc )
 {
     LPCSTR output = "LPT1:";
     BYTE buf[300];

@@ -467,7 +467,7 @@ static BOOL PSDRV_PPDGetNextTuple(FILE *fp, PPDTuple *tuple)
  * entry which is appended to the list if name is not found.
  *
  */
-PAGESIZE *PSDRV_PPDGetPageSizeInfo(PPD *ppd, char *name)
+static PAGESIZE *PSDRV_PPDGetPageSizeInfo(PPD *ppd, char *name)
 {
     PAGESIZE *page = ppd->PageSizes, *lastpage;
 
