@@ -141,11 +141,10 @@ __ASM_GLOBAL_FUNC(interlocked_cmpxchg_ptr,
                   "mov %rdx, %rax\n\t"
                   "lock cmpxchgq %rsi,(%rdi)\n\t"
                   "ret")
-__int64 interlocked_cmpxchg64( __int64 *dest, __int64 xchg, __int64 compare)
-{
-    /* FIXME: add code */
-    assert(0);
-}
+__ASM_GLOBAL_FUNC(interlocked_cmpxchg64,
+                  "mov %rdx, %rax\n\t"
+                  "lock cmpxchgq %rsi,(%rdi)\n\t"
+                  "ret")
 __ASM_GLOBAL_FUNC(interlocked_xchg,
                   "mov %esi, %eax\n\t"
                   "lock xchgl %eax, (%rdi)\n\t"
