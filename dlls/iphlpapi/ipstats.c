@@ -604,11 +604,7 @@ DWORD getNumRoutes(void)
    }
 
    buf = HeapAlloc (GetProcessHeap (), 0, needed);
-   if (!buf)
-   {
-      ERR ("HeapAlloc of %ld failed!\n", needed);
-      return 0;
-   }
+   if (!buf) return 0;
 
    if (sysctl (mib, 6, buf, &needed, NULL, 0) < 0)
    {
@@ -673,7 +669,6 @@ DWORD getRouteTable(PMIB_IPFORWARDTABLE *ppIpForwardTable, HANDLE heap,
        buf = HeapAlloc (GetProcessHeap (), 0, needed);
        if (!buf)
        {
-          ERR ("HeapAlloc of %ld failed!\n", needed);
           HeapFree (GetProcessHeap (), 0, table);
           return ERROR_OUTOFMEMORY;
        }
