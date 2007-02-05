@@ -607,6 +607,7 @@ typedef struct _SLIST_HEADER {
 
 #else
 
+#undef SLIST_ENTRY /* for Mac OS */
 #define SLIST_ENTRY SINGLE_LIST_ENTRY
 #define _SLIST_ENTRY _SINGLE_LIST_ENTRY
 #define PSLIST_ENTRY PSINGLE_LIST_ENTRY
