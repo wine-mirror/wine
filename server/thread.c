@@ -447,10 +447,10 @@ static void end_wait( struct thread *thread )
     int i;
 
     assert( wait );
+    thread->wait = wait->next;
     for (i = 0, entry = wait->queues; i < wait->count; i++, entry++)
         entry->obj->ops->remove_queue( entry->obj, entry );
     if (wait->user) remove_timeout_user( wait->user );
-    thread->wait = wait->next;
     free( wait );
 }
 
