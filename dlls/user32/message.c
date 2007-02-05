@@ -273,12 +273,6 @@ inline static void *get_buffer_space( void **buffer, size_t size )
     return ret;
 }
 
-/* retrieve a string pointer from packed data */
-inline static LPWSTR get_string( void **buffer )
-{
-    return get_data( buffer, (strlenW( (LPWSTR)*buffer ) + 1) * sizeof(WCHAR) );
-}
-
 /* check whether a combobox expects strings or ids in CB_ADDSTRING/CB_INSERTSTRING */
 inline static BOOL combobox_has_strings( HWND hwnd )
 {
