@@ -338,7 +338,7 @@
 @ cdecl _makepath(str str str str str)
 @ cdecl _matherr(ptr) MSVCRT__matherr
 @ cdecl _mbbtombc(long)
-@ stub _mbbtype #(long long)
+@ cdecl _mbbtype(long long)
 # extern _mbcasemap
 @ cdecl _mbccpy (str str)
 @ stub _mbcjistojms #(long)

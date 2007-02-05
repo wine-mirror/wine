@@ -26,6 +26,7 @@
 #include "msvcrt.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
+#include "msvcrt/mbctype.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -737,6 +738,31 @@ unsigned int CDECL _mbbtombc(unsigned int c)
      */
   }
   return c;  /* ASCII CP or no MB char */
+}
+
+/*********************************************************************
+ *		_mbbtype(MSVCRT.@)
+ */
+int CDECL _mbbtype(unsigned char c, int type)
+{
+    if (type == 1)
+    {
+        if ((c >= 0x20 && c <= 0x7e) || (c >= 0xa1 && c <= 0xdf))
+            return _MBC_SINGLE;
+        else if ((c >= 0x40 && c <= 0x7e) || (c >= 0x80 && c <= 0xfc))
+            return _MBC_TRAIL;
+        else
+            return _MBC_ILLEGAL;
+    }
+    else
+    {
+        if ((c >= 0x20 && c <= 0x7e) || (c >= 0xa1 && c <= 0xdf))
+            return _MBC_SINGLE;
+        else if ((c >= 0x81 && c <= 0x9f) || (c >= 0xe0 && c <= 0xfc))
+            return _MBC_LEAD;
+        else
+            return _MBC_ILLEGAL;
+    }
 }
 
 /*********************************************************************
