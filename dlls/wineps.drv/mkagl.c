@@ -99,20 +99,9 @@ inline static void fcpto(FILE *f, int newpos, int curpos)
     }
 }
 
-inline static void cpto(int newpos, int curpos)
-{
-    fcpto(stdout, newpos, curpos);
-}
-
-
 /*
  *  Make main() look "purty"
  */
-
-inline static void double_space(FILE *f)
-{
-    fputc('\n', f);
-}
 
 inline static void triple_space(FILE *f)
 {
