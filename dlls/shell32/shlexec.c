@@ -295,25 +295,6 @@ static BOOL SHELL_ArgifyW(WCHAR* out, int len, const WCHAR* fmt, const WCHAR* lp
     return found_p1;
 }
 
-HRESULT SHELL_GetPathFromIDListForExecuteA(LPCITEMIDLIST pidl, LPSTR pszPath, UINT uOutSize)
-{
-    STRRET strret;
-    IShellFolder* desktop;
-
-    HRESULT hr = SHGetDesktopFolder(&desktop);
-
-    if (SUCCEEDED(hr)) {
-	hr = IShellFolder_GetDisplayNameOf(desktop, pidl, SHGDN_FORPARSING, &strret);
-
-	if (SUCCEEDED(hr))
-	    StrRetToStrNA(pszPath, uOutSize, &strret, pidl);
-
-	IShellFolder_Release(desktop);
-    }
-
-    return hr;
-}
-
 HRESULT SHELL_GetPathFromIDListForExecuteW(LPCITEMIDLIST pidl, LPWSTR pszPath, UINT uOutSize)
 {
     STRRET strret;
