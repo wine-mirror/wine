@@ -183,6 +183,9 @@ void lib_dump(void)
 
         cur_file_pos += sizeof(IMAGE_ARCHIVE_MEMBER_HEADER);
 
+        size = strtoul((const char *)iamh->Size, NULL, 10);
+        size = (size + 1) & ~1; /* align to an even address */
+
         /* FIXME: only import library contents with the short format are
          * recognized.
          */
@@ -193,6 +196,7 @@ void lib_dump(void)
         }
         else if (strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
         {
+            long expected_size;
             const IMAGE_FILE_HEADER *fh = (const IMAGE_FILE_HEADER *)ioh;
 
             if (globals.do_dumpheader)
@@ -204,11 +208,11 @@ void lib_dump(void)
                     dump_optional_header(oh, fh->SizeOfOptionalHeader);
                 }
             }
-            dump_long_import(fh, (const IMAGE_SECTION_HEADER *)((const char *)fh + sizeof(*fh) + fh->SizeOfOptionalHeader), fh->NumberOfSections);
+            /* Sanity check */
+            expected_size = sizeof(*fh) + fh->SizeOfOptionalHeader + fh->NumberOfSections * sizeof(IMAGE_SECTION_HEADER);
+            if (size > expected_size)
+                dump_long_import(fh, (const IMAGE_SECTION_HEADER *)((const char *)fh + sizeof(*fh) + fh->SizeOfOptionalHeader), fh->NumberOfSections);
         }
-
-        size = strtoul((const char *)iamh->Size, NULL, 10);
-        size = (size + 1) & ~1; /* align to an even address */
 
         cur_file_pos += size;
     }
