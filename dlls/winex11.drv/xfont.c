@@ -857,6 +857,7 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
    const char   *any = "*";
    char         h_string[64], resx_string[64], resy_string[64];
    LFD          aLFD;
+   const fontEncodingTemplate* boba = &fETTable[0];
 
 /* Get the worst case over with first */
 
@@ -1001,33 +1002,22 @@ static BOOL LFD_ComposeLFD( const fontObject* fo,
 
 /* encoding */
 
-   if (uRelax <= 5)
-   {
-       const fontEncodingTemplate* boba = &fETTable[0];
+   for(i = fo->fi->fi_encoding >> 8; i; i--) boba = boba->next;
+   aLFD.charset_registry = boba->prefix ? boba->prefix : any;
 
-       for(i = fo->fi->fi_encoding >> 8; i; i--) boba = boba->next;
-       aLFD.charset_registry = boba->prefix ? boba->prefix : any;
+   i = fo->fi->fi_encoding & 255;
+   switch( i ) {
+   default:
+       aLFD.charset_encoding = boba->sufch[i].psuffix;
+       break;
 
-       i = fo->fi->fi_encoding & 255;
-       switch( i )
-       {
-       default:
-	   aLFD.charset_encoding = boba->sufch[i].psuffix;
-	   break;
-
-       case 254:
-	   aLFD.charset_encoding = any;
-	   break;
-
-       case 255: /* no suffix - it ends eg "-ascii" */
-	   aLFD.charset_encoding = NULL;
-	   break;
-       }
-   }
-   else
-   {
-       aLFD.charset_registry = any;
+   case 254:
        aLFD.charset_encoding = any;
+       break;
+
+   case 255: /* no suffix - it ends eg "-ascii" */
+       aLFD.charset_encoding = NULL;
+       break;
    }
 
    LFD_UnParse(lpLFD, MAX_LFD_LENGTH, &aLFD);
