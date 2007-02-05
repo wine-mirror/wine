@@ -24,6 +24,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define COBJMACROS
+
 #include "wine/debug.h"
 #include "windef.h"
 #include "winbase.h"
@@ -37,6 +39,103 @@ WINE_DEFAULT_DEBUG_CHANNEL(browseui);
 LONG BROWSEUI_refCount = 0;
 
 HINSTANCE browseui_hinstance = 0;
+
+typedef HRESULT (WINAPI *LPFNCONSTRUCTOR)(IUnknown *pUnkOuter, IUnknown **ppvOut);
+
+static const struct {
+    REFCLSID clsid;
+    LPFNCONSTRUCTOR ctor;
+} ClassesTable[] = {
+    {NULL, NULL}
+};
+
+typedef struct tagClassFactory
+{
+    const IClassFactoryVtbl *vtbl;
+    LONG   ref;
+    LPFNCONSTRUCTOR ctor;
+} ClassFactory;
+static const IClassFactoryVtbl ClassFactoryVtbl;
+
+static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
+{
+    ClassFactory *This = CoTaskMemAlloc(sizeof(ClassFactory));
+    This->vtbl = &ClassFactoryVtbl;
+    This->ref = 1;
+    This->ctor = ctor;
+    *ppvOut = (LPVOID)This;
+    TRACE("Created class factory %p\n", This);
+    BROWSEUI_refCount++;
+    return S_OK;
+}
+
+static void ClassFactory_Destructor(ClassFactory *This)
+{
+    TRACE("Destroying class factory %p\n", This);
+    CoTaskMemFree(This);
+    BROWSEUI_refCount--;
+}
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, LPVOID *ppvOut)
+{
+    *ppvOut = NULL;
+    if (IsEqualIID(riid, &IID_IClassFactory) || IsEqualIID(riid, &IID_IUnknown)) {
+        IClassFactory_AddRef(iface);
+        *ppvOut = iface;
+        return S_OK;
+    }
+
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    ClassFactory *This = (ClassFactory *)iface;
+    return InterlockedIncrement(&This->ref);
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    ClassFactory *This = (ClassFactory *)iface;
+    ULONG ret = InterlockedDecrement(&This->ref);
+
+    if (ret == 0)
+        ClassFactory_Destructor(This);
+    return ret;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *punkOuter, REFIID iid, LPVOID *ppvOut)
+{
+    ClassFactory *This = (ClassFactory *)iface;
+    HRESULT ret;
+    IUnknown *obj;
+
+    TRACE("(%p, %p, %s, %p)\n", iface, punkOuter, debugstr_guid(iid), ppvOut);
+    ret = This->ctor(punkOuter, &obj);
+    if (FAILED(ret))
+        return ret;
+    ret = IUnknown_QueryInterface(obj, iid, ppvOut);
+    IUnknown_Release(obj);
+    return ret;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL fLock)
+{
+    FIXME("(%p, %s) - not implemented\n", iface, (fLock ? "TRUE" : "FALSE"));
+    return E_NOTIMPL;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    /* IUnknown */
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+
+    /* IClassFactory*/
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
 
 /*************************************************************************
  * BROWSEUI DllMain
@@ -83,8 +182,17 @@ HRESULT WINAPI DllGetVersion(DLLVERSIONINFO *info)
 /***********************************************************************
  *              DllGetClassObject (BROWSEUI.@)
  */
-HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppv)
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, LPVOID *ppvOut)
 {
-    *ppv = NULL;
+    int i;
+
+    *ppvOut = NULL;
+    if (!IsEqualIID(iid, &IID_IUnknown) && !IsEqualIID(iid, &IID_IClassFactory))
+        return E_NOINTERFACE;
+
+    for (i = 0; ClassesTable[i].clsid != NULL; i++)
+        if (IsEqualCLSID(ClassesTable[i].clsid, clsid)) {
+            return ClassFactory_Constructor(ClassesTable[i].ctor, ppvOut);
+        }
     return CLASS_E_CLASSNOTAVAILABLE;
 }
