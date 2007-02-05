@@ -28,7 +28,7 @@ ME_DisplayItem *ME_FindRowStart(ME_Context *c, ME_DisplayItem *item,
                                 int nRelPos) {
   ME_DisplayItem *para = ME_GetParagraph(item);
   ME_MustBeWrapped(c, para);
-  if(nRelPos>=0) { /* if this or preceding row */
+  if(nRelPos<=0) { /* if this or preceding row */
     while(nRelPos<=0) {
       ME_DisplayItem *item2 = ME_FindItemBack(item, diStartRowOrParagraph);
       if (item2->type == diParagraph)
