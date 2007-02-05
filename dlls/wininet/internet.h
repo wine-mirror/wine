@@ -71,13 +71,6 @@ typedef struct
 #endif
 } WININET_NETCONNECTION;
 
-inline static LPSTR WININET_strdup( LPCSTR str )
-{
-    LPSTR ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 );
-    if (ret) strcpy( ret, str );
-    return ret;
-}
-
 inline static LPWSTR WININET_strdupW( LPCWSTR str )
 {
     LPWSTR ret = HeapAlloc( GetProcessHeap(), 0, (strlenW(str) + 1)*sizeof(WCHAR) );
