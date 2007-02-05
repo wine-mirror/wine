@@ -1319,7 +1319,7 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     else if (dwarf2_find_attribute(subpgm->ctx, di, DW_AT_const_value, &value))
     {
         VARIANT v;
-        if (subpgm->func) FIXME("Unsupported constant %s in function\n", name.u.string);
+        if (subpgm->func) WARN("Unsupported constant %s in function\n", name.u.string);
         if (is_pmt)       FIXME("Unsupported constant (parameter) %s in function\n", name.u.string);
         switch (value.form)
         {
