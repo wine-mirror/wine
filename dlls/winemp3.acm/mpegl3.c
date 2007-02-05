@@ -121,27 +121,6 @@ static	DWORD	MPEG3_GetFormatIndex(LPWAVEFORMATEX wfx)
     return 0xFFFFFFFF;
 }
 
-/***********************************************************************
- *           R16
- *
- * Read a 16 bit sample (correctly handles endianess)
- */
-static inline short  R16(const unsigned char* src)
-{
-    return (short)((unsigned short)src[0] | ((unsigned short)src[1] << 8));
-}
-
-/***********************************************************************
- *           W16
- *
- * Write a 16 bit sample (correctly handles endianess)
- */
-static inline void  W16(unsigned char* dst, short s)
-{
-    dst[0] = LOBYTE(s);
-    dst[1] = HIBYTE(s);
-}
-
 static DWORD get_num_buffered_bytes(struct mpstr *mp)
 {
     DWORD numBuff = 0;
@@ -458,17 +437,6 @@ static	LRESULT	MPEG3_StreamClose(PACMDRVSTREAMINSTANCE adsi)
     ExitMP3(&((AcmMpeg3Data*)adsi->dwDriver)->mp);
     HeapFree(GetProcessHeap(), 0, (void*)adsi->dwDriver);
     return MMSYSERR_NOERROR;
-}
-
-/***********************************************************************
- *           MPEG3_round
- *
- */
-static	inline DWORD	MPEG3_round(DWORD a, DWORD b, DWORD c)
-{
-    assert(a && b && c);
-    /* to be sure, always return an entire number of c... */
-    return ((double)a * (double)b + (double)c - 1) / (double)c;
 }
 
 /***********************************************************************
