@@ -2064,6 +2064,7 @@ struct msi_listbox_info
     HWND hwnd;
     WNDPROC oldproc;
     DWORD num_items;
+    DWORD addpos_items;
     LPWSTR *items;
 };
 
@@ -2099,17 +2100,16 @@ static UINT msi_listbox_add_item( MSIRECORD *rec, LPVOID param )
 {
     struct msi_listbox_info *info = param;
     LPCWSTR value, text;
-    static int index = 0;
     int pos;
 
     value = MSI_RecordGetString( rec, 3 );
     text = MSI_RecordGetString( rec, 4 );
 
-    info->items[index] = strdupW( value );
+    info->items[info->addpos_items] = strdupW( value );
 
     pos = SendMessageW( info->hwnd, LB_ADDSTRING, 0, (LPARAM)text );
-    SendMessageW( info->hwnd, LB_SETITEMDATA, pos, (LPARAM)info->items[index] );
-    index++;
+    SendMessageW( info->hwnd, LB_SETITEMDATA, pos, (LPARAM)info->items[info->addpos_items] );
+    info->addpos_items++;
     return ERROR_SUCCESS;
 }
 
@@ -2189,6 +2189,7 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
     info->dialog = dialog;
     info->hwnd = control->hwnd;
     info->items = NULL;
+    info->addpos_items = 0;
     info->oldproc = (WNDPROC)SetWindowLongPtrW( control->hwnd, GWLP_WNDPROC,
                                                 (LONG_PTR)MSIListBox_WndProc );
     SetPropW( control->hwnd, szButtonData, info );
