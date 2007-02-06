@@ -465,7 +465,7 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
         {
             const var_t *var;
 
-            offset = 0;
+            offset = sizeof(void *);
             if (func->args) LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
             {
                 if (!strcmp(var->name, subexpr->u.sval))
@@ -513,6 +513,21 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
         case RPC_FC_ULONG:
             param_type = RPC_FC_ULONG;
             param_type_string = "FC_ULONG";
+            break;
+        case RPC_FC_RP:
+        case RPC_FC_UP:
+        case RPC_FC_OP:
+        case RPC_FC_FP:
+            if (sizeof(void *) == 4)  /* FIXME */
+            {
+                param_type = RPC_FC_LONG;
+                param_type_string = "FC_LONG";
+            }
+            else
+            {
+                param_type = RPC_FC_HYPER;
+                param_type_string = "FC_HYPER";
+            }
             break;
         default:
             error("write_conf_or_var_desc: conformance variable type not supported 0x%x\n",
@@ -1313,28 +1328,49 @@ static size_t write_union_tfs(FILE *file, const attr_list_t *attrs,
     return *typeformat_offset;
 }
 
-static size_t write_ip_tfs(FILE *file, const attr_list_t *attrs,
-                           const char *name, unsigned int *typeformat_offset)
+static size_t write_ip_tfs(FILE *file, const func_t *func, const var_t *var,
+                           unsigned int *typeformat_offset)
 {
     size_t i;
     size_t start_offset = *typeformat_offset;
-    const UUID *uuid = get_attrp(attrs, ATTR_UUID);
+    const var_t *iid = get_attrp(var->attrs, ATTR_IIDIS);
 
-    if (! uuid)
-        error("%s: interface %s missing UUID\n", __FUNCTION__, name);
+    if (iid)
+    {
+        expr_t expr;
+        expr_list_t expr_list;
 
-    print_file(file, 2, "0x2f,\t/* FC_IP */\n");
-    print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
-    print_file(file, 2, "NdrFcLong(0x%08lx),\n", uuid->Data1);
-    print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data2);
-    print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data3);
-    for (i = 0; i < 8; ++i)
-        print_file(file, 2, "0x%02x,\n", uuid->Data4[i]);
+        expr.type = EXPR_IDENTIFIER;
+        expr.ref  = NULL;
+        expr.u.sval = iid->name;
+        expr.is_const = FALSE;
+        list_init( &expr_list );
+        list_add_head( &expr_list, &expr.entry );
+        print_file(file, 2, "0x2f,  /* FC_IP */\n");
+        print_file(file, 2, "0x5c,  /* FC_PAD */\n");
+        *typeformat_offset += write_conf_or_var_desc(file, func, NULL, &expr_list) + 2;
+    }
+    else
+    {
+        const type_t *base = is_ptr(var->type) ? var->type->ref : var->type;
+        const UUID *uuid = get_attrp(base->attrs, ATTR_UUID);
 
-    if (file)
-        fprintf(file, "\n");
+        if (! uuid)
+            error("%s: interface %s missing UUID\n", __FUNCTION__, base->name);
 
-    *typeformat_offset += 18;
+        print_file(file, 2, "0x2f,\t/* FC_IP */\n");
+        print_file(file, 2, "0x5a,\t/* FC_CONSTANT_IID */\n");
+        print_file(file, 2, "NdrFcLong(0x%08lx),\n", uuid->Data1);
+        print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data2);
+        print_file(file, 2, "NdrFcShort(0x%04x),\n", uuid->Data3);
+        for (i = 0; i < 8; ++i)
+            print_file(file, 2, "0x%02x,\n", uuid->Data4[i]);
+
+        if (file)
+            fprintf(file, "\n");
+
+        *typeformat_offset += 18;
+    }
     return start_offset;
 }
 
@@ -1351,7 +1387,7 @@ static int get_ptr_attr(const type_t *t, int def_type)
     }
 }
 
-static size_t write_typeformatstring_var(FILE *file, int indent,
+static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *func,
                                          const var_t *var, unsigned int *typeformat_offset)
 {
     const type_t *type = var->type;
@@ -1443,7 +1479,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent,
 
             if (base->type == RPC_FC_IP)
             {
-                return write_ip_tfs(file, base->attrs, base->name, typeformat_offset);
+                return write_ip_tfs(file, func, var, typeformat_offset);
             }
 
             /* special case for pointers to base types */
@@ -1530,7 +1566,7 @@ void write_typeformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
                 current_func = func;
                 if (func->args)
                     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
-                        write_typeformatstring_var(file, indent, var,
+                        write_typeformatstring_var(file, indent, func, var,
                                                    &typeformat_offset);
             }
         }
@@ -2084,7 +2120,7 @@ size_t get_size_procformatstring_func(const func_t *func)
 size_t get_size_typeformatstring_var(const var_t *var)
 {
     unsigned int type_offset = 0;
-    write_typeformatstring_var(NULL, 0, var, &type_offset);
+    write_typeformatstring_var(NULL, 0, NULL, var, &type_offset);
     return type_offset;
 }
 
