@@ -1842,6 +1842,16 @@ LPCWSTR
 LPWSTR
 WCHAR *
 
+%%localspl.dll
+
+%ptr
+
+LPMONITOREX
+
+%wstr
+
+LPWSTR
+
 %%mapi32.dll
 
 %long
