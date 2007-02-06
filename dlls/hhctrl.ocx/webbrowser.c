@@ -585,8 +585,6 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
     HRESULT hr;
     RECT rc;
 
-    static const WCHAR hostNameW[] = {'H','o','s','t',' ','N','a','m','e',0};
-
     /* clear out struct to keep from accessing invalid ptrs */
     ZeroMemory(pWBInfo, sizeof(WBInfo));
 
@@ -613,7 +611,6 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
 
     /* make the browser object accessible to the IOleClientSite implementation */
     iOleClientSiteImpl->pBrowserObject = browserObject;
-    IOleObject_SetHostNames(browserObject, hostNameW, 0);
 
     GetClientRect(hwndParent, &rc);
 
