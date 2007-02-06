@@ -5689,6 +5689,19 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     }
                 }
             }
+            if (V_VT(&varresult) != VT_ERROR)
+            {
+                TRACE("varresult value: ");
+                dump_Variant(&varresult);
+
+                if (pVarResult)
+                {
+                    VariantClear(pVarResult);
+                    *pVarResult = varresult;
+                }
+                else
+                    VariantClear(&varresult);
+            }
 
 func_fail:
             HeapFree(GetProcessHeap(), 0, buffer);

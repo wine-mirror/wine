@@ -998,10 +998,7 @@ static void test_typelibmarshal(void)
     VariantInit(&varresult);
     hr = ITypeInfo_Invoke(pTypeInfo, &NonOleAutomation, DISPID_NOA_BSTRRET, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
     ok_ole_success(hr, ITypeInfo_Invoke);
-    todo_wine
-    {
-        ok(V_VT(&varresult) == VT_BSTR, "V_VT(&varresult) should be VT_BSTR instead of %d\n", V_VT(&varresult));
-    }
+    ok(V_VT(&varresult) == VT_BSTR, "V_VT(&varresult) should be VT_BSTR instead of %d\n", V_VT(&varresult));
     ok(V_BSTR(&varresult) != NULL, "V_BSTR(&varresult) should not be NULL\n");
 
     VariantClear(&varresult);
