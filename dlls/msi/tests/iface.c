@@ -64,6 +64,7 @@ static void test_msi_dispid(void)
     }
 
     todo_wine {
+    ok( get_dispid( disp, "CreateRecord" ) == 1, "dispid wrong\n");
     ok( get_dispid( disp, "OpenPackage" ) == 2, "dispid wrong\n");
     ok( get_dispid( disp, "OpenProduct" ) == 3, "dispid wrong\n");
     ok( get_dispid( disp, "OpenDatabase" ) == 4, "dispid wrong\n");
