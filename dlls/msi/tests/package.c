@@ -1347,12 +1347,26 @@ static BOOL check_prop_empty( MSIHANDLE hpkg, const char * prop)
 
 static void test_props(void)
 {
-    MSIHANDLE hpkg;
+    MSIHANDLE hpkg, hdb;
     UINT r;
     DWORD sz;
     char buffer[0x100];
 
-    hpkg = package_from_db(create_package_db());
+    hdb = create_package_db();
+    r = run_query( hdb,
+            "CREATE TABLE `Property` ( "
+            "`Property` CHAR(255) NOT NULL, "
+            "`Value` CHAR(255) "
+            "PRIMARY KEY `Property`)" );
+    ok( r == ERROR_SUCCESS , "Failed\n" );
+
+    r = run_query(hdb,
+            "INSERT INTO `Property` "
+            "(`Property`, `Value`) "
+            "VALUES( 'MetadataCompName', 'Photoshop.dll' )");
+    ok( r == ERROR_SUCCESS , "Failed\n" );
+
+    hpkg = package_from_db( hdb );
     ok( hpkg, "failed to create package\n");
 
     /* test invalid values */
@@ -1472,6 +1486,19 @@ static void test_props(void)
     ok( r == ERROR_SUCCESS, "wrong return val\n");
     ok( !strcmp(buffer,"foo"), "buffer wrong\n");
     ok( sz == 3, "wrong size returned\n");
+
+    r = MsiSetProperty(hpkg, "MetadataCompName", "Photoshop.dll");
+    ok( r == ERROR_SUCCESS, "wrong return val\n");
+
+    sz = 0;
+    r = MsiGetProperty(hpkg, "MetadataCompName", NULL, &sz );
+    ok( r == ERROR_SUCCESS, "return wrong\n");
+    ok( sz == 13, "size wrong (%d)\n", sz);
+
+    sz = 13;
+    r = MsiGetProperty(hpkg, "MetadataCompName", buffer, &sz );
+    ok( r == ERROR_MORE_DATA, "return wrong\n");
+    ok( !strcmp(buffer,"Photoshop.dl"), "buffer wrong\n");
 
     MsiCloseHandle( hpkg );
     DeleteFile(msifile);
