@@ -66,6 +66,7 @@ DEFINE_EXPECT(ReportData);
 DEFINE_EXPECT(ReportResult);
 
 static HRESULT expect_hrResult;
+static IInternetProtocol *read_protocol = NULL;
 
 static enum {
     ITS_PROTOCOL,
@@ -148,11 +149,22 @@ static HRESULT WINAPI ProtocolSink_ReportData(IInternetProtocolSink *iface, DWOR
     else
         ok(grfBSCF == (BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION), "grcf = %08x\n", grfBSCF);
 
+    if(read_protocol) {
+        BYTE buf[100];
+        DWORD cb = 0xdeadbeef;
+        HRESULT hres;
+
+        hres = IInternetProtocol_Read(read_protocol, buf, sizeof(buf), &cb);
+        ok(hres == S_OK, "Read failed: %08x\n", hres);
+        ok(cb == 13, "cb=%u expected 13\n", cb);
+        ok(!memcmp(buf, "<html></html>", 13), "unexpected data\n");
+    }
+
     return S_OK;
 }
 
-static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HRESULT hrResult, DWORD dwError,
-        LPCWSTR szResult)
+static HRESULT WINAPI ProtocolSink_ReportResult(IInternetProtocolSink *iface, HRESULT hrResult,
+        DWORD dwError, LPCWSTR szResult)
 {
     CHECK_EXPECT(ReportResult);
 
@@ -365,6 +377,16 @@ static void test_protocol_url(IClassFactory *factory, LPCWSTR url)
     ok(cb == 2, "cb=%u expected 2\n", cb);
     ref = IInternetProtocol_Release(protocol);
     ok(!ref, "protocol ref=%d\n", ref);
+
+    hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&read_protocol);
+    ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    protocol_start(read_protocol, url);
+    ref = IInternetProtocol_Release(read_protocol);
+    ok(!ref, "protocol ref=%d\n", ref);
+    read_protocol = NULL;
 }
 
 static void test_its_protocol(void)

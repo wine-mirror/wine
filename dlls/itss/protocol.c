@@ -195,6 +195,10 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         CoTaskMemFree(mime);
     }
 
+    release_chm(This); /* Native leaks handle here */
+    This->chm_file = chm_file;
+    memcpy(&This->chm_object, &chm_object, sizeof(chm_object));
+
     hres = IInternetProtocolSink_ReportData(pOIProtSink,
             BSCF_FIRSTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE,
             chm_object.length, chm_object.length);
@@ -205,10 +209,6 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     }
 
     hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_BEGINDOWNLOADDATA, NULL);
-
-    release_chm(This); /* Native leaks handle here */
-    This->chm_file = chm_file;
-    memcpy(&This->chm_object, &chm_object, sizeof(chm_object));
 
     return report_result(pOIProtSink, hres);
 }
