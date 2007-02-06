@@ -1543,8 +1543,10 @@ static unsigned int get_required_buffer_size_type(
     const type_t *type, int ptr_level, const array_dims_t *array,
     const char *name, unsigned int *alignment)
 {
+    size_t size = 0;
+
     *alignment = 0;
-    if (ptr_level == 0 && !array)
+    if (ptr_level == 0)
     {
         switch (type->type)
         {
@@ -1553,25 +1555,29 @@ static unsigned int get_required_buffer_size_type(
         case RPC_FC_USMALL:
         case RPC_FC_SMALL:
             *alignment = 4;
-            return 1;
+            size = 1;
+            break;
 
         case RPC_FC_WCHAR:
         case RPC_FC_USHORT:
         case RPC_FC_SHORT:
             *alignment = 4;
-            return 2;
+            size = 2;
+            break;
 
         case RPC_FC_ULONG:
         case RPC_FC_LONG:
         case RPC_FC_FLOAT:
         case RPC_FC_ERROR_STATUS_T:
             *alignment = 4;
-            return 4;
+            size = 4;
+            break;
 
         case RPC_FC_HYPER:
         case RPC_FC_DOUBLE:
             *alignment = 8;
-            return 8;
+            size = 8;
+            break;
 
         case RPC_FC_IGNORE:
         case RPC_FC_BIND_PRIMITIVE:
@@ -1579,7 +1585,6 @@ static unsigned int get_required_buffer_size_type(
 
         case RPC_FC_STRUCT:
         {
-            size_t size = 0;
             const var_t *field;
             if (!type->fields) return 0;
             LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
@@ -1589,20 +1594,21 @@ static unsigned int get_required_buffer_size_type(
                     field->type, field->ptr_level, field->array, field->name,
                     &alignment);
             }
-            return size;
+            break;
         }
 
         case RPC_FC_RP:
             if (is_base_type( type->ref->type ) || type->ref->type == RPC_FC_STRUCT)
-                return get_required_buffer_size_type( type->ref, 0, NULL, name, alignment );
-            return 0;
+                size = get_required_buffer_size_type( type->ref, 0, NULL, name, alignment );
+            break;
 
         default:
             error("get_required_buffer_size: Unknown/unsupported type: %s (0x%02x)\n", name, type->type);
             return 0;
         }
+        if (array) size *= get_array_size( array );
     }
-    return 0;
+    return size;
 }
 
 static unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment, enum pass pass)
