@@ -191,7 +191,7 @@ static void test_slist(void)
     memset(&slist_header, 0xFF, sizeof(slist_header));
     pInitializeSListHead(&slist_header);
     ok(memcmp(&test_header, &slist_header, sizeof(SLIST_HEADER)) == 0,
-        "InitializeSListHead didn't zero-fill list header");
+        "InitializeSListHead didn't zero-fill list header\n");
     size = pQueryDepthSList(&slist_header);
     ok(size == 0, "initially created slist has size %d, expected 0\n", size);
 

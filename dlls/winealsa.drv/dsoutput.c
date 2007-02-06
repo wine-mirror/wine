@@ -231,7 +231,7 @@ static DWORD CALLBACK DBSB_MMAPLoop(LPVOID data)
             SetEvent(hEvent);
             goto out;
         default:
-            ERR("Unhandled event %s", ALSA_getCmdString(msg));
+            ERR("Unhandled event %s\n", ALSA_getCmdString(msg));
             break;
         }
         if (hEvent != INVALID_HANDLE_VALUE)
