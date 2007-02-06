@@ -664,6 +664,8 @@ static BOOL HEAP_InitSubHeap( HEAP *heap, LPVOID address, DWORD flags,
             NtDuplicateObject( NtCurrentProcess(), sem, NtCurrentProcess(), &sem, 0, 0,
                                DUP_HANDLE_MAKE_GLOBAL | DUP_HANDLE_SAME_ACCESS | DUP_HANDLE_CLOSE_SOURCE );
             heap->critSection.LockSemaphore = sem;
+            RtlFreeHeap( processHeap, 0, heap->critSection.DebugInfo );
+            heap->critSection.DebugInfo = NULL;
         }
     }
 
