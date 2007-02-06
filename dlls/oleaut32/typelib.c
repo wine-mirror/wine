@@ -5471,8 +5471,24 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             VARIANTARG **prgpvarg = INVBUF_GET_ARG_PTR_ARRAY(buffer, func_desc->cParams);
             VARIANTARG *rgvarg = INVBUF_GET_ARG_ARRAY(buffer, func_desc->cParams);
             VARTYPE *rgvt = INVBUF_GET_ARG_TYPE_ARRAY(buffer, func_desc->cParams);
+            UINT cNamedArgs = pDispParams->cNamedArgs;
+            DISPID *rgdispidNamedArgs = pDispParams->rgdispidNamedArgs;
 
             hres = S_OK;
+
+            if (func_desc->invkind & (INVOKE_PROPERTYPUT|INVOKE_PROPERTYPUTREF))
+            {
+                if (!cNamedArgs || (rgdispidNamedArgs[0] != DISPID_PROPERTYPUT))
+                {
+                    ERR("first named arg for property put invocation must be DISPID_PROPERTYPUT\n");
+                    hres = DISP_E_PARAMNOTOPTIONAL;
+                    goto func_fail;
+                }
+                /* ignore the DISPID_PROPERTYPUT named argument from now on */
+                cNamedArgs--;
+                rgdispidNamedArgs++;
+            }
+
             for (i = 0; i < func_desc->cParams; i++)
             {
                 TYPEDESC *tdesc = &func_desc->lprgelemdescParam[i].tdesc;
@@ -5487,24 +5503,16 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
                 VARIANTARG *src_arg;
 
-                if (pDispParams->cNamedArgs)
+                if (cNamedArgs)
                 {
                     USHORT j;
                     src_arg = NULL;
-                    for (j = 0; j < pDispParams->cNamedArgs; j++)
-                    {
-                        if ((func_desc->invkind & INVOKE_PROPERTYPUT) &&
-                            (pDispParams->rgdispidNamedArgs[j] == DISPID_PROPERTYPUT))
-                        {
-                            src_arg = &pDispParams->rgvarg[0];
-                            break;
-                        }
-                        if (pDispParams->rgdispidNamedArgs[j] == i)
+                    for (j = 0; j < cNamedArgs; j++)
+                        if (rgdispidNamedArgs[j] == i)
                         {
                             src_arg = &pDispParams->rgvarg[j];
                             break;
                         }
-                    }
                 }
                 else
                     src_arg = i < pDispParams->cArgs ? &pDispParams->rgvarg[pDispParams->cArgs - 1 - i] : NULL;
