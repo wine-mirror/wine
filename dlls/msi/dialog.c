@@ -2100,13 +2100,15 @@ static UINT msi_listbox_add_item( MSIRECORD *rec, LPVOID param )
     struct msi_listbox_info *info = param;
     LPCWSTR value, text;
     static int index = 0;
+    int pos;
 
     value = MSI_RecordGetString( rec, 3 );
     text = MSI_RecordGetString( rec, 4 );
 
     info->items[index] = strdupW( value );
 
-    SendMessageW( info->hwnd, LB_ADDSTRING, 0, (LPARAM)text );
+    pos = SendMessageW( info->hwnd, LB_ADDSTRING, 0, (LPARAM)text );
+    SendMessageW( info->hwnd, LB_SETITEMDATA, pos, (LPARAM)info->items[index] );
     index++;
     return ERROR_SUCCESS;
 }
@@ -2146,15 +2148,17 @@ static UINT msi_dialog_listbox_handler( msi_dialog *dialog,
 {
     struct msi_listbox_info *info;
     int index;
+    LPCWSTR value;
 
     if( HIWORD(param) != LBN_SELCHANGE )
         return ERROR_SUCCESS;
 
     info = GetPropW( control->hwnd, szButtonData );
     index = SendMessageW( control->hwnd, LB_GETCURSEL, 0, 0 );
+    value = (LPCWSTR) SendMessageW( control->hwnd, LB_GETITEMDATA, index, 0 );
 
     MSI_SetPropertyW( info->dialog->package,
-                      control->property, info->items[index] );
+                      control->property, value );
     msi_dialog_evaluate_control_conditions( info->dialog );
 
     return ERROR_SUCCESS;
