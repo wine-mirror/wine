@@ -5632,6 +5632,14 @@ PWTS_PROCESS_INFOW *
 PWTS_SESSION_INFOA *
 PWTS_SESSION_INFOW *
 
+%str
+
+LPSTR
+
+%wstr
+
+LPWSTR
+
 %void
 
 void
