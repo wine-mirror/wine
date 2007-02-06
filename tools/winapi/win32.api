@@ -3127,7 +3127,6 @@ int
 short
 signed char
 unsigned int
-unsigned long
 
 %long --pointer
 
@@ -3206,7 +3205,6 @@ float *
 int *
 signed char *
 unsigned char *
-unsigned long *
 void *
 void **
 
