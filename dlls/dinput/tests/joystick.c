@@ -82,6 +82,7 @@ typedef struct tagJoystickInfo
     DWORD pov;
     DWORD button;
     LONG  lMin, lMax;
+    DWORD dZone;
 } JoystickInfo;
 
 static BOOL CALLBACK EnumAxes(
@@ -97,12 +98,20 @@ static BOOL CALLBACK EnumAxes(
         IsEqualIID(&pdidoi->guidType, &GUID_RxAxis) ||
         IsEqualIID(&pdidoi->guidType, &GUID_RyAxis) ||
         IsEqualIID(&pdidoi->guidType, &GUID_RzAxis) ||
-        IsEqualIID(&pdidoi->guidType, &GUID_Slider)) {
+        IsEqualIID(&pdidoi->guidType, &GUID_Slider))
+    {
         DIPROPRANGE diprg;
+        DIPROPDWORD dipdw;
+
         diprg.diph.dwSize       = sizeof(DIPROPRANGE);
         diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
         diprg.diph.dwHow        = DIPH_BYID;
         diprg.diph.dwObj        = pdidoi->dwType;
+
+        dipdw.diph.dwSize       = sizeof(dipdw);
+        dipdw.diph.dwHeaderSize = sizeof(DIPROPHEADER);
+        dipdw.diph.dwHow        = DIPH_BYID;
+        dipdw.diph.dwObj        = pdidoi->dwType;
 
         hr = IDirectInputDevice_GetProperty(info->pJoystick, DIPROP_RANGE, &diprg.diph);
         ok(SUCCEEDED(hr), "IDirectInputDevice_GetProperty() failed: %s\n", DXGetErrorString8(hr));
@@ -117,6 +126,17 @@ static BOOL CALLBACK EnumAxes(
            "E_INVALIDARG, returned: %s\n", DXGetErrorString8(hr));
 
         hr = IDirectInputDevice_SetProperty(info->pJoystick, DIPROP_RANGE, &diprg.diph);
+        ok(hr==DI_OK,"IDirectInputDevice_SetProperty() failed: %s\n", DXGetErrorString8(hr));
+
+        /* dead zone */
+        hr = IDirectInputDevice_GetProperty(info->pJoystick, DIPROP_DEADZONE, &dipdw.diph);
+        ok(SUCCEEDED(hr), "IDirectInputDevice_GetProperty() failed: %s\n", DXGetErrorString8(hr));
+        ok(info->dZone == dipdw.dwData, "deadzone invalid: expected %d got %d\n",
+           info->dZone, dipdw.dwData);
+
+        dipdw.dwData = 123;
+
+        hr = IDirectInputDevice_SetProperty(info->pJoystick, DIPROP_DEADZONE, &dipdw.diph);
         ok(hr==DI_OK,"IDirectInputDevice_SetProperty() failed: %s\n", DXGetErrorString8(hr));
 
         info->axis++;
@@ -263,6 +283,7 @@ static BOOL CALLBACK EnumJoysticks(
     ok(hr==DI_OK,"IDirectInputDevice_SetDataFormat() failed: %s\n", DXGetErrorString8(hr));
     info.lMin = -2000;
     info.lMax = +2000;
+    info.dZone= 123;
     hr = IDirectInputDevice_EnumObjects(pJoystick, EnumAxes, (VOID*)&info, DIDFT_ALL);
     ok(hr==DI_OK,"IDirectInputDevice_EnumObjects() failed: %s\n", DXGetErrorString8(hr));
 

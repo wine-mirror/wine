@@ -474,7 +474,7 @@ static HRESULT alloc_device(REFGUID rguid, const void *jvt, IDirectInputImpl *di
     newDevice->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)"DINPUT_joystick";
 
     /* setup_dinput_options may change these */
-    newDevice->deadzone = 5000;
+    newDevice->deadzone = 0;
     newDevice->devcaps.dwButtons = newDevice->buttons;
     newDevice->devcaps.dwAxes = newDevice->axes;
     newDevice->devcaps.dwPOVs = 0;
@@ -669,32 +669,6 @@ static ULONG WINAPI JoystickAImpl_Release(LPDIRECTINPUTDEVICE8A iface)
 
     HeapFree(GetProcessHeap(),0,This);
     return 0;
-}
-
-/******************************************************************************
-  *   SetDataFormat : the application can choose the format of the data
-  *   the device driver sends back with GetDeviceState.
-  */
-static HRESULT WINAPI JoystickAImpl_SetDataFormat(
-    LPDIRECTINPUTDEVICE8A iface,
-    LPCDIDATAFORMAT df)
-{
-    JoystickImpl *This = (JoystickImpl *)iface;
-    unsigned int i;
-    HRESULT hr;
-
-    TRACE("(%p,%p)\n",This,df);
-
-    hr = IDirectInputDevice2AImpl_SetDataFormat(iface, df);
-    if (FAILED(hr)) return hr;
-
-    for (i = 0; i < This->base.data_format.wine_df->dwNumObjs; i++)
-    {
-        This->props[i].lDeadZone = 1000;
-        This->props[i].lSaturation = 0;
-    }
-
-    return DI_OK;
 }
 
 /******************************************************************************
@@ -1250,7 +1224,7 @@ static const IDirectInputDevice8AVtbl JoystickAvt =
 	JoystickAImpl_Unacquire,
 	JoystickAImpl_GetDeviceState,
 	IDirectInputDevice2AImpl_GetDeviceData,
-	JoystickAImpl_SetDataFormat,
+	IDirectInputDevice2AImpl_SetDataFormat,
 	IDirectInputDevice2AImpl_SetEventNotification,
 	IDirectInputDevice2AImpl_SetCooperativeLevel,
 	JoystickAImpl_GetObjectInfo,
@@ -1292,7 +1266,7 @@ static const IDirectInputDevice8WVtbl SysJoystickWvt =
 	XCAST(Unacquire)JoystickAImpl_Unacquire,
 	XCAST(GetDeviceState)JoystickAImpl_GetDeviceState,
 	XCAST(GetDeviceData)IDirectInputDevice2AImpl_GetDeviceData,
-	XCAST(SetDataFormat)JoystickAImpl_SetDataFormat,
+	XCAST(SetDataFormat)IDirectInputDevice2AImpl_SetDataFormat,
 	XCAST(SetEventNotification)IDirectInputDevice2AImpl_SetEventNotification,
 	XCAST(SetCooperativeLevel)IDirectInputDevice2AImpl_SetCooperativeLevel,
 	IDirectInputDevice2WImpl_GetObjectInfo,

@@ -923,9 +923,20 @@ static HRESULT WINAPI JoystickAImpl_GetProperty(LPDIRECTINPUTDEVICE8A iface,
 	TRACE("range(%d, %d) obj=%d\n", pr->lMin, pr->lMax, obj);
         break;
     }
+    case (DWORD) DIPROP_DEADZONE:
+    {
+        LPDIPROPDWORD pd = (LPDIPROPDWORD)pdiph;
+        int obj = find_property(&This->base.data_format, pdiph);
+
+        if (obj < 0) return DIERR_OBJECTNOTFOUND;
+
+        pd->dwData = This->props[obj].deadzone;
+        TRACE("deadzone(%d) obj=%d\n", pd->dwData, obj);
+        break;
+    }
 
     default:
-      return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
+        return IDirectInputDevice2AImpl_GetProperty(iface, rguid, pdiph);
     }
 
     return DI_OK;
