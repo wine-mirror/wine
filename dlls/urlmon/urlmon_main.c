@@ -400,7 +400,7 @@ void WINAPI ReleaseBindInfo(BINDINFO* pbindinfo)
  *
  * Determines the Multipurpose Internet Mail Extensions (MIME) type from the data provided.
  */
-static BOOL text_html_filter(const BYTE const *b, DWORD size)
+static BOOL text_html_filter(const BYTE *b, DWORD size)
 {
     int i;
 
@@ -419,7 +419,7 @@ static BOOL text_html_filter(const BYTE const *b, DWORD size)
     return FALSE;
 }
 
-static BOOL image_gif_filter(const BYTE const *b, DWORD size)
+static BOOL image_gif_filter(const BYTE *b, DWORD size)
 {
     return size >= 6
         && (b[0] == 'G' || b[0] == 'g')
@@ -430,69 +430,69 @@ static BOOL image_gif_filter(const BYTE const *b, DWORD size)
         && (b[5] == 'A' || b[5] == 'a');
 }
 
-static BOOL image_pjpeg_filter(const BYTE const *b, DWORD size)
+static BOOL image_pjpeg_filter(const BYTE *b, DWORD size)
 {
     return size > 2 && b[0] == 0xff && b[1] == 0xd8;
 }
 
-static BOOL image_tiff_filter(const BYTE const *b, DWORD size)
+static BOOL image_tiff_filter(const BYTE *b, DWORD size)
 {
     return size > 2 && b[0] == 0x4d && b[1] == 0x4d;
 }
 
-static BOOL image_xpng_filter(const BYTE const *b, DWORD size)
+static BOOL image_xpng_filter(const BYTE *b, DWORD size)
 {
     static const BYTE xpng_header[] = {0x89,'P','N','G',0x0d,0x0a,0x1a,0x0a};
     return size > sizeof(xpng_header) && !memcmp(b, xpng_header, sizeof(xpng_header));
 }
 
-static BOOL image_bmp_filter(const BYTE const *b, DWORD size)
+static BOOL image_bmp_filter(const BYTE *b, DWORD size)
 {
     return size >= 14
         && b[0] == 0x42 && b[1] == 0x4d
         && *(const DWORD *)(b+6) == 0;
 }
 
-static BOOL video_avi_filter(const BYTE const *b, DWORD size)
+static BOOL video_avi_filter(const BYTE *b, DWORD size)
 {
     return size > 12
         && b[0] == 'R' && b[1] == 'I' && b[2] == 'F' && b[3] == 'F'
         && b[8] == 'A' && b[9] == 'V' && b[10] == 'I' && b[11] == 0x20;
 }
 
-static BOOL video_mpeg_filter(const BYTE const *b, DWORD size)
+static BOOL video_mpeg_filter(const BYTE *b, DWORD size)
 {
     return size > 4
         && !b[0] && !b[1] && b[2] == 0x01
         && (b[3] == 0xb3 || b[3] == 0xba);
 }
 
-static BOOL application_pdf_filter(const BYTE const *b, DWORD size)
+static BOOL application_pdf_filter(const BYTE *b, DWORD size)
 {
     return size > 4 && b[0] == 0x25 && b[1] == 0x50 && b[2] == 0x44 && b[3] == 0x46;
 }
 
-static BOOL application_xzip_filter(const BYTE const *b, DWORD size)
+static BOOL application_xzip_filter(const BYTE *b, DWORD size)
 {
     return size > 2 && b[0] == 0x50 && b[1] == 0x4b;
 }
 
-static BOOL application_xgzip_filter(const BYTE const *b, DWORD size)
+static BOOL application_xgzip_filter(const BYTE *b, DWORD size)
 {
     return size > 2 && b[0] == 0x1f && b[1] == 0x8b;
 }
 
-static BOOL application_java_filter(const BYTE const *b, DWORD size)
+static BOOL application_java_filter(const BYTE *b, DWORD size)
 {
     return size > 4 && b[0] == 0xca && b[1] == 0xfe && b[2] == 0xba && b[3] == 0xbe;
 }
 
-static BOOL application_xmsdownload(const BYTE const *b, DWORD size)
+static BOOL application_xmsdownload(const BYTE *b, DWORD size)
 {
     return size > 2 && b[0] == 'M' && b[1] == 'Z';
 }
 
-static BOOL text_plain_filter(const BYTE const *b, DWORD size)
+static BOOL text_plain_filter(const BYTE *b, DWORD size)
 {
     const BYTE *ptr;
 
@@ -504,7 +504,7 @@ static BOOL text_plain_filter(const BYTE const *b, DWORD size)
     return TRUE;
 }
 
-static BOOL application_octet_stream_filter(const BYTE const *b, DWORD size)
+static BOOL application_octet_stream_filter(const BYTE *b, DWORD size)
 {
     return TRUE;
 }
@@ -539,7 +539,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
     }
 
     if(pBuffer) {
-        const BYTE const *buf = pBuffer;
+        const BYTE *buf = pBuffer;
         DWORD len;
         LPCWSTR ret = NULL;
         int i;
@@ -568,7 +568,7 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 
         static const struct {
             LPCWSTR mime;
-            BOOL (*filter)(const BYTE const*,DWORD);
+            BOOL (*filter)(const BYTE *,DWORD);
         } mime_filters[] = {
             {wszTextHtml,       text_html_filter},
             {wszImageGif,       image_gif_filter},
