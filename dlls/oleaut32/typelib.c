@@ -2214,36 +2214,40 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
     int ret = TYPE_E_CANTLOADLIBRARY;
     INT index = 1;
     HINSTANCE hinstDLL;
+    LPWSTR index_str, file = (LPWSTR)pszFileName;
 
     *ppTypeLib = NULL;
 
-    lstrcpynW(pszPath, pszFileName, cchPath);
-
-    /* first try loading as a dll and access the typelib as a resource */
-    hinstDLL = LoadLibraryExW(pszFileName, 0, DONT_RESOLVE_DLL_REFERENCES |
-            LOAD_LIBRARY_AS_DATAFILE | LOAD_WITH_ALTERED_SEARCH_PATH);
-    if (!hinstDLL)
+    index_str = strrchrW(pszFileName, '\\');
+    if(index_str && *++index_str != '\0')
     {
-        /* it may have been specified with resource index appended to the
-         * path, so remove it and try again */
-        const WCHAR *pIndexStr = strrchrW(pszFileName, '\\');
-        if(pIndexStr && pIndexStr != pszFileName && *++pIndexStr != '\0')
+        LPWSTR end_ptr;
+        long idx = strtolW(index_str, &end_ptr, 10);
+        if(*end_ptr == '\0')
         {
-            index = atoiW(pIndexStr);
-            pszPath[pIndexStr - pszFileName - 1] = '\0';
-
-            hinstDLL = LoadLibraryExW(pszPath, 0, DONT_RESOLVE_DLL_REFERENCES |
-                    LOAD_LIBRARY_AS_DATAFILE | LOAD_WITH_ALTERED_SEARCH_PATH);
+            int str_len = index_str - pszFileName - 1;
+            index = idx;
+            file = HeapAlloc(GetProcessHeap(), 0, (str_len + 1) * sizeof(WCHAR));
+            memcpy(file, pszFileName, str_len * sizeof(WCHAR));
+            file[str_len] = 0;
         }
     }
 
-    /* get the path to the specified typelib file */
-    if (!hinstDLL)
+    if(!SearchPathW(NULL, file, NULL, cchPath, pszPath, NULL))
     {
-        /* otherwise, try loading as a regular file */
-        if (!SearchPathW(NULL, pszFileName, NULL, cchPath, pszPath, NULL))
-            return TYPE_E_CANTLOADLIBRARY;
+        if(strchrW(file, '\\'))
+        {
+            lstrcpyW(pszPath, file);
+        }
+        else
+        {
+            int len = GetSystemDirectoryW(pszPath, cchPath);
+            pszPath[len] = '\\';
+            memcpy(pszPath + len + 1, file, (strlenW(file) + 1) * sizeof(WCHAR));
+        }
     }
+
+    if(file != pszFileName) HeapFree(GetProcessHeap(), 0, file);
 
     TRACE_(typelib)("File %s index %d\n", debugstr_w(pszPath), index);
 
@@ -2257,13 +2261,16 @@ static int TLB_ReadTypeLib(LPCWSTR pszFileName, LPWSTR pszPath, UINT cchPath, IT
             *ppTypeLib = (ITypeLib2*)entry;
             ITypeLib_AddRef(*ppTypeLib);
             LeaveCriticalSection(&cache_section);
-            FreeLibrary(hinstDLL);
             return S_OK;
         }
     }
     LeaveCriticalSection(&cache_section);
 
     /* now actually load and parse the typelib */
+
+    hinstDLL = LoadLibraryExW(pszPath, 0, DONT_RESOLVE_DLL_REFERENCES |
+            LOAD_LIBRARY_AS_DATAFILE | LOAD_WITH_ALTERED_SEARCH_PATH);
+
     if (hinstDLL)
     {
         static const WCHAR TYPELIBW[] = {'T','Y','P','E','L','I','B',0};
