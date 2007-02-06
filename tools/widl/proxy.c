@@ -191,10 +191,9 @@ static void proxy_check_pointers( const var_list_t *args )
   }
 }
 
-static void free_variable( const var_t *arg )
+static void free_variable( const var_t *arg, unsigned int type_offset )
 {
   var_t *constraint;
-  int index = 0; /* FIXME */
   type_t *type;
   expr_list_t *expr;
 
@@ -202,11 +201,11 @@ static void free_variable( const var_t *arg )
   if (expr)
   {
     const expr_t *size = LIST_ENTRY( list_head(expr), const expr_t, entry );
-    print_proxy( "_StubMsg.MaxCount = ", arg->name );
+    print_proxy( "_StubMsg.MaxCount = " );
     write_expr(proxy, size, 0);
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
-    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], ", index );
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
     fprintf(proxy, "(void*)%s );\n", arg->name );
     return;
   }
@@ -232,7 +231,7 @@ static void free_variable( const var_t *arg )
     if( constraint )
       print_proxy( "_StubMsg.MaxCount = (unsigned long) ( %s );\n",constraint->name);
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
-    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], ", index );
+    fprintf(proxy, "&__MIDL_TypeFormatString.Format[%u], ", type_offset );
     fprintf(proxy, "(void*)%s );\n", arg->name );
     break;
 
@@ -241,7 +240,7 @@ static void free_variable( const var_t *arg )
   }
 }
 
-static void proxy_free_variables( var_list_t *args )
+static void proxy_free_variables( var_list_t *args, unsigned int type_offset )
 {
   const var_t *arg;
 
@@ -250,9 +249,10 @@ static void proxy_free_variables( var_list_t *args )
   {
     if (is_attr(arg->attrs, ATTR_OUT))
     {
-      free_variable( arg );
+      free_variable( arg, type_offset );
       fprintf(proxy, "\n");
     }
+    type_offset += get_size_typeformatstring_var(arg);
   }
 }
 
@@ -301,7 +301,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   print_proxy( "NdrProxyGetBuffer(This, &_StubMsg);\n" );
 
   offset = *type_offset;
-  write_remoting_arguments(proxy, indent, cur, type_offset, PASS_IN, PHASE_MARSHAL);
+  write_remoting_arguments(proxy, indent, cur, &offset, PASS_IN, PHASE_MARSHAL);
 
   print_proxy( "NdrProxySendReceive(This, &_StubMsg);\n" );
   fprintf(proxy, "\n");
@@ -314,7 +314,8 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   indent--;
   fprintf(proxy, "\n");
 
-  write_remoting_arguments(proxy, indent, cur, &offset, PASS_OUT, PHASE_UNMARSHAL);
+  offset = *type_offset;
+  write_remoting_arguments(proxy, indent, cur, type_offset, PASS_OUT, PHASE_UNMARSHAL);
 
   if (has_ret)
       print_phase_basetype(proxy, indent, PHASE_UNMARSHAL, PASS_RETURN, def, "_RetVal");
@@ -334,7 +335,7 @@ static void gen_proxy(type_t *iface, const func_t *cur, int idx,
   print_proxy( "{\n" );
   if (has_ret) {
     indent++;
-    proxy_free_variables( cur->args );
+    proxy_free_variables( cur->args, offset );
     print_proxy( "_RetVal = NdrProxyErrorHandler(RpcExceptionCode());\n" );
     indent--;
   }
