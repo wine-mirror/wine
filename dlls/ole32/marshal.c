@@ -155,17 +155,18 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     /* make sure ifstub that we are creating is unique */
     ifstub = stub_manager_find_ifstub(manager, riid, mshlflags);
     if (!ifstub)
-    {
         ifstub = stub_manager_new_ifstub(manager, stub, iobject, riid, mshlflags);
-        IUnknown_Release(iobject);
-        if (stub) IRpcStubBuffer_Release(stub);
-        if (!ifstub)
-        {
-            stub_manager_int_release(manager);
-            /* FIXME: should we do another release to completely destroy the
-             * stub manager? */
-            return E_OUTOFMEMORY;
-        }
+
+    if (stub) IRpcStubBuffer_Release(stub);
+    IUnknown_Release(iobject);
+
+    if (!ifstub)
+    {
+        stub_manager_int_release(manager);
+        /* destroy the stub manager if it has no ifstubs by releasing
+         * zero external references */
+        stub_manager_ext_release(manager, 0, TRUE);
+        return E_OUTOFMEMORY;
     }
 
     if (!tablemarshal)
