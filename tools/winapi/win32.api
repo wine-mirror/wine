@@ -1382,6 +1382,18 @@ void **
 
 void
 
+%%gphoto2.ds
+
+%long
+
+TW_UINT16
+TW_UINT32
+
+%ptr
+
+pTW_IDENTITY
+TW_MEMREF
+
 %%hhctrl.ocx
 
 %long
