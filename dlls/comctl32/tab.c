@@ -82,7 +82,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(tab);
 
 typedef struct
 {
-  UINT   mask;
   DWORD  dwState;
   LPWSTR pszText;
   INT    iImage;
@@ -217,9 +216,8 @@ TAB_DumpItemInternal(TAB_INFO *infoPtr, UINT iItem)
 	TAB_ITEM *ti;
 
 	ti = TAB_GetItem(infoPtr, iItem);
-	TRACE("tab %d, mask=0x%08x, dwState=0x%08x, pszText=%s, iImage=%d\n",
-	      iItem, ti->mask, ti->dwState, debugstr_w(ti->pszText),
-	      ti->iImage);
+	TRACE("tab %d, dwState=0x%08x, pszText=%s, iImage=%d\n",
+	      iItem, ti->dwState, debugstr_w(ti->pszText), ti->iImage);
 	TRACE("tab %d, rect.left=%d, rect.top(row)=%d\n",
 	      iItem, ti->rect.left, ti->rect.top);
     }
@@ -1737,7 +1735,7 @@ TAB_DrawItemInterior
      *
      * Draw the icon.
      */
-    if (infoPtr->himl && (item->mask & TCIF_IMAGE))
+    if (infoPtr->himl && item->iImage != -1)
     {
       INT cx;
       INT cy;
@@ -2639,7 +2637,6 @@ TAB_InsertItemT (TAB_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnicode)
 
   item = TAB_GetItem(infoPtr, iItem);
 
-  item->mask = pti->mask;
   item->pszText = NULL;
 
   if (pti->mask & TCIF_TEXT)
@@ -2846,7 +2843,7 @@ static LRESULT TAB_DeleteItem (TAB_INFO *infoPtr, INT iItem)
 	
 	TAB_InvalidateTabArea(infoPtr);
 
-	if ((item->mask & TCIF_TEXT) && item->pszText)
+        if (item->pszText)
             Free(item->pszText);
 
 	infoPtr->uNumItem--;
