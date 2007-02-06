@@ -105,6 +105,7 @@ SRCDIR_INCLUDES = \
 	dde.h \
 	ddeml.h \
 	ddk/compstui.h \
+	ddk/hidsdi.h \
 	ddk/ntddcdvd.h \
 	ddk/ntddser.h \
 	ddk/ntddtape.h \

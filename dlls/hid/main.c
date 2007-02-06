@@ -24,6 +24,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "ddk/hidsdi.h"
 
 #include "wine/debug.h"
 
