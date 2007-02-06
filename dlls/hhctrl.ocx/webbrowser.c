@@ -580,6 +580,7 @@ static IStorage MyIStorage = { &MyIStorageTable };
 BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
 {
     IOleClientSiteImpl *iOleClientSiteImpl;
+    IOleInPlaceObject *inplace;
     IOleObject *browserObject;
     IWebBrowser2 *webBrowser2;
     HRESULT hr;
@@ -622,16 +623,16 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
                            -1, hwndParent, &rc);
     if (FAILED(hr)) goto error;
 
+    hr = IOleObject_QueryInterface(browserObject, &IID_IOleInPlaceObject, (void**)&inplace);
+    if (FAILED(hr)) goto error;
+
+    IOleInPlaceObject_SetObjectRects(inplace, &rc, &rc);
+    IOleInPlaceObject_Release(inplace);
 
     hr = IOleObject_QueryInterface(browserObject, &IID_IWebBrowser2,
                                    (void **)&webBrowser2);
     if (SUCCEEDED(hr))
     {
-        IWebBrowser2_put_Left(webBrowser2, 0);
-        IWebBrowser2_put_Top(webBrowser2, 0);
-        IWebBrowser2_put_Width(webBrowser2, rc.right);
-        IWebBrowser2_put_Height(webBrowser2, rc.bottom);
-
         pWBInfo->pWebBrowser2 = webBrowser2;
         pWBInfo->hwndParent = hwndParent;
 
