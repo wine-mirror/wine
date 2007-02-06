@@ -1558,6 +1558,16 @@ LPSTR
 LPCWSTR
 LPWSTR
 
+%%inseng.dll
+
+%long
+
+BOOL
+
+%ptr
+
+LPVOID
+
 %%iphlpapi.dll
 
 %long
