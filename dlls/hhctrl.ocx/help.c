@@ -20,6 +20,8 @@
 
 #include <stdarg.h>
 
+#define COBJMACROS
+
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -28,11 +30,17 @@
 #include "commctrl.h"
 #include "htmlhelp.h"
 #include "ole2.h"
+#include "exdisp.h"
+#include "wininet.h"
+
 #include "wine/unicode.h"
+#include "wine/debug.h"
 
 #include "resource.h"
 #include "chm.h"
 #include "webbrowser.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
 static void Help_OnSize(HWND hWnd);
 
@@ -85,6 +93,34 @@ static LPWSTR HH_LoadString(DWORD dwID)
     LoadStringW(hhctrl_hinstance, dwID, string, iSize);
 
     return string;
+}
+
+static BOOL NavigateToChm(WBInfo *pWBInfo, LPCWSTR file, LPCWSTR index)
+{
+    WCHAR buf[INTERNET_MAX_URL_LENGTH];
+    WCHAR full_path[MAX_PATH];
+    VARIANT url;
+
+    static const WCHAR url_format[] =
+        {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','/','%','s',0};
+
+    if (!pWBInfo->pWebBrowser2)
+        return FALSE;
+
+    if(!GetFullPathNameW(file, sizeof(full_path), full_path, NULL)) {
+        WARN("GetFullPathName failed: %u\n", GetLastError());
+        return FALSE;
+    }
+
+    wsprintfW(buf, url_format, full_path, index);
+
+    V_VT(&url) = VT_BSTR;
+    V_BSTR(&url) = SysAllocString(buf);
+
+    IWebBrowser2_Navigate2(pWBInfo->pWebBrowser2, &url, 0, 0, 0, 0);
+    VariantClear(&url);
+
+    return TRUE;
 }
 
 /* Size Bar */
@@ -321,13 +357,8 @@ static void TB_OnClick(HWND hWnd, DWORD dwID)
             WB_DoPageAction(pHHInfo->pWBInfo, WB_GOBACK);
             break;
         case IDTB_HOME:
-        {
-            WCHAR szUrl[MAX_PATH];
-
-            CHM_CreateITSUrl(pHHInfo->pCHMInfo, pHHInfo->pHHWinType->pszHome, szUrl);
-            WB_Navigate(pHHInfo->pWBInfo, szUrl);
+            NavigateToChm(pHHInfo->pWBInfo, pHHInfo->pCHMInfo->szFile, pHHInfo->pHHWinType->pszHome);
             break;
-        }
         case IDTB_FORWARD:
             WB_DoPageAction(pHHInfo->pWBInfo, WB_GOFORWARD);
             break;
@@ -821,15 +852,6 @@ static void HH_Close(HHInfo *pHHInfo)
     }
 }
 
-static void HH_OpenDefaultTopic(HHInfo *pHHInfo)
-{
-    WCHAR url[MAX_PATH];
-    LPCWSTR defTopic = pHHInfo->pHHWinType->pszFile;
-
-    CHM_CreateITSUrl(pHHInfo->pCHMInfo, defTopic, url);
-    WB_Navigate(pHHInfo->pWBInfo, url);
-}
-
 static BOOL HH_OpenCHM(HHInfo *pHHInfo)
 {
     if (!CHM_OpenCHM(pHHInfo->pCHMInfo, pHHInfo->szCmdLine))
@@ -857,7 +879,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         return -1;
     }
 
-    HH_OpenDefaultTopic(pHHInfo);
+    NavigateToChm(pHHInfo->pWBInfo, pHHInfo->pCHMInfo->szFile, pHHInfo->pHHWinType->pszFile);
     
     while (GetMessageW(&msg, 0, 0, 0))
     {

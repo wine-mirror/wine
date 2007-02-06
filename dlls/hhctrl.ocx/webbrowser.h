@@ -42,7 +42,6 @@ typedef struct WBInfo
 
 BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent);
 void WB_UnEmbedBrowser(WBInfo *pWBInfo);
-BOOL WB_Navigate(WBInfo *pWBInfo, LPCWSTR szUrl);
 void WB_ResizeBrowser(WBInfo *pWBInfo, DWORD dwWidth, DWORD dwHeight);
 void WB_DoPageAction(WBInfo *pWBInfo, DWORD dwAction);
 

@@ -33,6 +33,5 @@ typedef struct CHMInfo
 BOOL CHM_OpenCHM(CHMInfo *pCHMInfo, LPCWSTR szFile);
 BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 void CHM_CloseCHM(CHMInfo *pCHMInfo);
-void CHM_CreateITSUrl(CHMInfo *pCHMInfo, LPCWSTR szIndex, LPWSTR szUrl);
 
 #endif

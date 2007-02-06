@@ -174,13 +174,3 @@ void CHM_CloseCHM(CHMInfo *pCHMInfo)
     IITStorage_Release(pCHMInfo->pITStorage);
     IStorage_Release(pCHMInfo->pStorage);
 }
-
-/* Creates a Url of a CHM file that can be used with WB_Navigate */
-void CHM_CreateITSUrl(CHMInfo *pChmInfo, LPCWSTR szIndex, LPWSTR szUrl)
-{
-    static const WCHAR formatW[] = {
-        'i','t','s',':','%','s',':',':','%','s',0
-    };
-
-    wsprintfW(szUrl, formatW, pChmInfo->szFile, szIndex);
-}

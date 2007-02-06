@@ -668,23 +668,6 @@ void WB_UnEmbedBrowser(WBInfo *pWBInfo)
     }
 }
 
-BOOL WB_Navigate(WBInfo *pWBInfo, LPCWSTR szUrl)
-{
-    IWebBrowser2 *pWebBrowser2 = pWBInfo->pWebBrowser2;
-    VARIANT myURL;
-
-    if (!pWebBrowser2)
-        return FALSE;
-
-    V_VT(&myURL) = VT_BSTR;
-    V_BSTR(&myURL) = SysAllocString(szUrl);
-
-    IWebBrowser2_Navigate2(pWebBrowser2, &myURL, 0, 0, 0, 0);
-    VariantClear(&myURL);
-
-    return TRUE;
-}
-
 void WB_ResizeBrowser(WBInfo *pWBInfo, DWORD dwWidth, DWORD dwHeight)
 {
     IWebBrowser2 *pWebBrowser2 = pWBInfo->pWebBrowser2;
