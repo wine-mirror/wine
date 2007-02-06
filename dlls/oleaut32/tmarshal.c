@@ -56,6 +56,10 @@ WINE_DECLARE_DEBUG_CHANNEL(olerelay);
 
 #define ICOM_THIS_MULTI(impl,field,iface) impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
 
+static HRESULT TMarshalDispatchChannel_Create(
+    IRpcChannelBuffer *pDelegateChannel, REFIID tmarshal_riid,
+    IRpcChannelBuffer **ppChannel);
+
 typedef struct _marshal_state {
     LPBYTE	base;
     int		size;
@@ -462,7 +466,13 @@ TMProxyImpl_Connect(
     LeaveCriticalSection(&This->crit);
 
     if (This->dispatch_proxy)
-        IRpcProxyBuffer_Connect(This->dispatch_proxy, pRpcChannelBuffer);
+    {
+        IRpcChannelBuffer *pDelegateChannel;
+        HRESULT hr = TMarshalDispatchChannel_Create(pRpcChannelBuffer, &This->iid, &pDelegateChannel);
+        if (FAILED(hr))
+            return hr;
+        return IRpcProxyBuffer_Connect(This->dispatch_proxy, pDelegateChannel);
+    }
 
     return S_OK;
 }
@@ -1495,6 +1505,116 @@ static HRESULT WINAPI ProxyIDispatch_Invoke(LPDISPATCH iface, DISPID dispIdMembe
                             wFlags, pDispParams, pVarResult, pExcepInfo,
                             puArgErr);
 }
+
+typedef struct
+{
+    const IRpcChannelBufferVtbl *lpVtbl;
+    LONG                  refs;
+    /* the IDispatch-derived interface we are handling */
+	IID                   tmarshal_iid;
+    IRpcChannelBuffer    *pDelegateChannel;
+} TMarshalDispatchChannel;
+
+static HRESULT WINAPI TMarshalDispatchChannel_QueryInterface(LPRPCCHANNELBUFFER iface, REFIID riid, LPVOID *ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid,&IID_IRpcChannelBuffer) || IsEqualIID(riid,&IID_IUnknown))
+    {
+        *ppv = (LPVOID)iface;
+        IUnknown_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI TMarshalDispatchChannel_AddRef(LPRPCCHANNELBUFFER iface)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    return InterlockedIncrement(&This->refs);
+}
+
+static ULONG WINAPI TMarshalDispatchChannel_Release(LPRPCCHANNELBUFFER iface)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    ULONG ref;
+
+    ref = InterlockedDecrement(&This->refs);
+    if (ref)
+        return ref;
+
+	IRpcChannelBuffer_Release(This->pDelegateChannel);
+    HeapFree(GetProcessHeap(), 0, This);
+    return 0;
+}
+
+static HRESULT WINAPI TMarshalDispatchChannel_GetBuffer(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE* olemsg, REFIID riid)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TRACE("(%p, %s)\n", olemsg, debugstr_guid(riid));
+    /* Note: we are pretending to invoke a method on the interface identified
+     * by tmarshal_iid so that we can re-use the IDispatch proxy/stub code
+     * without the RPC runtime getting confused by not exporting an IDispatch interface */
+    return IRpcChannelBuffer_GetBuffer(This->pDelegateChannel, olemsg, &This->tmarshal_iid);
+}
+
+static HRESULT WINAPI TMarshalDispatchChannel_SendReceive(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE *olemsg, ULONG *pstatus)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TRACE("(%p, %p)\n", olemsg, pstatus);
+    return IRpcChannelBuffer_SendReceive(This->pDelegateChannel, olemsg, pstatus);
+}
+
+static HRESULT WINAPI TMarshalDispatchChannel_FreeBuffer(LPRPCCHANNELBUFFER iface, RPCOLEMESSAGE* olemsg)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TRACE("(%p)\n", olemsg);
+    return IRpcChannelBuffer_FreeBuffer(This->pDelegateChannel, olemsg);
+}
+
+static HRESULT WINAPI TMarshalDispatchChannel_GetDestCtx(LPRPCCHANNELBUFFER iface, DWORD* pdwDestContext, void** ppvDestContext)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TRACE("(%p,%p)\n", pdwDestContext, ppvDestContext);
+    return IRpcChannelBuffer_GetDestCtx(This->pDelegateChannel, pdwDestContext, ppvDestContext);
+}
+
+static HRESULT WINAPI TMarshalDispatchChannel_IsConnected(LPRPCCHANNELBUFFER iface)
+{
+    TMarshalDispatchChannel *This = (TMarshalDispatchChannel *)iface;
+    TRACE("()\n");
+    return IRpcChannelBuffer_IsConnected(This->pDelegateChannel);
+}
+
+static const IRpcChannelBufferVtbl TMarshalDispatchChannelVtbl =
+{
+    TMarshalDispatchChannel_QueryInterface,
+    TMarshalDispatchChannel_AddRef,
+    TMarshalDispatchChannel_Release,
+    TMarshalDispatchChannel_GetBuffer,
+    TMarshalDispatchChannel_SendReceive,
+    TMarshalDispatchChannel_FreeBuffer,
+    TMarshalDispatchChannel_GetDestCtx,
+    TMarshalDispatchChannel_IsConnected
+};
+
+static HRESULT TMarshalDispatchChannel_Create(
+    IRpcChannelBuffer *pDelegateChannel, REFIID tmarshal_riid,
+    IRpcChannelBuffer **ppChannel)
+{
+    TMarshalDispatchChannel *This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    if (!This)
+        return E_OUTOFMEMORY;
+
+    This->lpVtbl = &TMarshalDispatchChannelVtbl;
+    This->refs = 1;
+    IRpcChannelBuffer_AddRef(pDelegateChannel);
+    This->pDelegateChannel = pDelegateChannel;
+    This->tmarshal_iid = *tmarshal_riid;
+
+    *ppChannel = (IRpcChannelBuffer *)&This->lpVtbl;
+    return S_OK;
+}
+
 
 static inline HRESULT get_facbuf_for_iid(REFIID riid, IPSFactoryBuffer **facbuf)
 {
