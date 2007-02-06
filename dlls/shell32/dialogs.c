@@ -52,8 +52,8 @@ typedef struct
 typedef BOOL (*LPFNOFN) (OPENFILENAMEA *) ;
 
 WINE_DEFAULT_DEBUG_CHANNEL(shell);
-INT_PTR CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
-void FillList (HWND, char *) ;
+static INT_PTR CALLBACK RunDlgProc (HWND, UINT, WPARAM, LPARAM) ;
+static void FillList (HWND, char *) ;
 
 
 /*************************************************************************
@@ -116,7 +116,7 @@ void WINAPI RunFileDlg(
 }
 
 /* Dialog procedure for RunFileDlg */
-INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     int ic ;
     char *psz, szMsg[256] ;
@@ -235,7 +235,7 @@ INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     }
 
 /* This grabs the MRU list from the registry and fills the combo for the "Run" dialog above */
-void FillList (HWND hCb, char *pszLatest)
+static void FillList (HWND hCb, char *pszLatest)
     {
     HKEY hkey ;
 /*    char szDbgMsg[256] = "" ; */
