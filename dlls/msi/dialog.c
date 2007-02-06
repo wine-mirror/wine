@@ -2124,7 +2124,7 @@ static UINT msi_listbox_add_item( MSIRECORD *rec, LPVOID param )
     return ERROR_SUCCESS;
 }
 
-static UINT msi_listbox_add_items( struct msi_listbox_info *info )
+static UINT msi_listbox_add_items( struct msi_listbox_info *info, LPCWSTR property )
 {
     UINT r;
     MSIQUERY *view = NULL;
@@ -2133,10 +2133,12 @@ static UINT msi_listbox_add_items( struct msi_listbox_info *info )
     static const WCHAR query[] = {
         'S','E','L','E','C','T',' ','*',' ',
         'F','R','O','M',' ','`','L','i','s','t','B','o','x','`',' ',
+        'W','H','E','R','E',' ',
+        '`','P','r','o','p','e','r','t','y','`',' ','=',' ','\'','%','s','\'',' ',
         'O','R','D','E','R',' ','B','Y',' ','`','O','r','d','e','r','`',0
     };
 
-    r = MSI_OpenQuery( info->dialog->package->db, &view, query );
+    r = MSI_OpenQuery( info->dialog->package->db, &view, query, property );
     if ( r != ERROR_SUCCESS )
         return r;
 
@@ -2176,6 +2178,7 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
     struct msi_listbox_info *info;
     msi_control *control;
     DWORD style;
+    LPCWSTR prop;
 
     info = msi_alloc( sizeof *info );
     if (!info)
@@ -2188,6 +2191,9 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
 
     control->handler = msi_dialog_listbox_handler;
 
+    prop = MSI_RecordGetString( rec, 9 );
+    control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+
     /* subclass */
     info->dialog = dialog;
     info->hwnd = control->hwnd;
@@ -2196,7 +2202,8 @@ static UINT msi_dialog_list_box( msi_dialog *dialog, MSIRECORD *rec )
                                                 (LONG_PTR)MSIListBox_WndProc );
     SetPropW( control->hwnd, szButtonData, info );
 
-    msi_listbox_add_items( info );
+    if ( control->property )
+        msi_listbox_add_items( info, control->property );
 
     return ERROR_SUCCESS;
 }
