@@ -327,6 +327,37 @@ void write_procformatstring(FILE *file, const ifref_list_t *ifaces, int for_obje
     print_file(file, indent, "\n");
 }
 
+static int write_base_type(FILE *file, const type_t *type, unsigned int *typestring_offset)
+{
+    switch (type->type)
+    {
+#define CASE_BASETYPE(fctype) \
+        case RPC_##fctype: \
+            print_file(file, 2, "0x%02x,  /* " #fctype " */\n", RPC_##fctype); \
+            *typestring_offset += 1; \
+            return 1;
+
+        CASE_BASETYPE(FC_BYTE);
+        CASE_BASETYPE(FC_CHAR);
+        CASE_BASETYPE(FC_SMALL);
+        CASE_BASETYPE(FC_USMALL);
+        CASE_BASETYPE(FC_WCHAR);
+        CASE_BASETYPE(FC_SHORT);
+        CASE_BASETYPE(FC_USHORT);
+        CASE_BASETYPE(FC_LONG);
+        CASE_BASETYPE(FC_ULONG);
+        CASE_BASETYPE(FC_FLOAT);
+        CASE_BASETYPE(FC_HYPER);
+        CASE_BASETYPE(FC_DOUBLE);
+        CASE_BASETYPE(FC_ENUM16);
+        CASE_BASETYPE(FC_ENUM32);
+        CASE_BASETYPE(FC_IGNORE);
+        CASE_BASETYPE(FC_ERROR_STATUS_T);
+#undef CASE_BASETYPE
+    }
+    return 0;
+}
+
 /* write conformance / variance descriptor */
 static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_t *structure, const expr_t *expr)
 {
@@ -888,9 +919,13 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
                 *typestring_offset += 1;
             }
 
-            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            if (!write_base_type( file, type, typestring_offset ))
+            {
+                print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+                *typestring_offset += 1;
+            }
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 2;
+            *typestring_offset += 1;
 
             return start_offset;
         }
@@ -943,9 +978,13 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
                 *typestring_offset += 1;
             }
 
-            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            if (!write_base_type( file, type, typestring_offset ))
+            {
+                print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+                *typestring_offset += 1;
+            }
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 2;
+            *typestring_offset += 1;
 
             return start_offset;
         }
@@ -977,9 +1016,13 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
                 *typestring_offset += 1;
             }
 
-            print_file(file, 2, "0x%x, /* FIXME: write out conversion data */\n", type->type);
+            if (!write_base_type( file, type, typestring_offset ))
+            {
+                print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+                *typestring_offset += 1;
+            }
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 2;
+            *typestring_offset += 1;
 
             return start_offset;
         }
@@ -1014,9 +1057,13 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
                 *typestring_offset += 1;
             }
 
-            print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+            if (!write_base_type( file, type, typestring_offset ))
+            {
+                print_file(file, 2, "0x0, /* FIXME: write out conversion data */\n");
+                *typestring_offset += 1;
+            }
             print_file(file, 2, "0x%x, /* FC_END */\n", RPC_FC_END);
-            *typestring_offset += 2;
+            *typestring_offset += 1;
 
             return start_offset;
         }
@@ -1037,59 +1084,29 @@ static const var_t *find_array_or_string_in_struct(const type_t *type)
     return find_array_or_string_in_struct(last_field->type);
 }
 
-static size_t write_struct_members(FILE *file, const type_t *type)
+static void write_struct_members(FILE *file, const type_t *type, unsigned int *typestring_offset)
 {
-    size_t typestring_size = 0;
     const var_t *field;
 
     if (type->fields) LIST_FOR_EACH_ENTRY( field, type->fields, const var_t, entry )
     {
         unsigned char rtype = field->type->type;
 
-        if (is_base_type(rtype))
-        {
-            switch (rtype)
-            {
-#define CASE_BASETYPE(fctype) \
-            case RPC_##fctype: \
-                print_file(file, 2, "0x%02x,\t\t/* " #fctype " */\n", RPC_##fctype); \
-                typestring_size++; \
-                break;
-            CASE_BASETYPE(FC_BYTE);
-            CASE_BASETYPE(FC_CHAR);
-            CASE_BASETYPE(FC_SMALL);
-            CASE_BASETYPE(FC_USMALL);
-            CASE_BASETYPE(FC_WCHAR);
-            CASE_BASETYPE(FC_SHORT);
-            CASE_BASETYPE(FC_USHORT);
-            CASE_BASETYPE(FC_LONG);
-            CASE_BASETYPE(FC_ULONG);
-            CASE_BASETYPE(FC_FLOAT);
-            CASE_BASETYPE(FC_HYPER);
-            CASE_BASETYPE(FC_DOUBLE);
-            CASE_BASETYPE(FC_ENUM16);
-            CASE_BASETYPE(FC_ENUM32);
-            CASE_BASETYPE(FC_IGNORE);
-            CASE_BASETYPE(FC_ERROR_STATUS_T);
-            default:
-                break;
-#undef CASE_BASETYPE
-            }
-        }
-        else
+        if (field->array)
+            write_array_tfs( file, field->attrs, field->type, field->array,
+                             field->name, typestring_offset );
+        else if (!write_base_type( file, field->type, typestring_offset ))
             error("Unsupported member type 0x%x\n", rtype);
     }
 
-    if (!(typestring_size % 2))
+    if (!(*typestring_offset % 2))
     {
         print_file(file, 2, "0x%x,\t\t/* FC_PAD */\n", RPC_FC_PAD);
-        typestring_size++;
+        *typestring_offset += 1;
     }
 
     print_file(file, 2, "0x%x,\t\t/* FC_END */\n", RPC_FC_END);
-    typestring_size++;
-
-    return typestring_size;
+    *typestring_offset += 1;
 }
 
 static size_t write_struct_tfs(FILE *file, const type_t *type,
@@ -1142,7 +1159,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         }
 
         /* member layout */
-        *typestring_offset += write_struct_members(file, type);
+        write_struct_members(file, type, typestring_offset);
         return start_offset;
     case RPC_FC_CSTRUCT:
     case RPC_FC_CPSTRUCT:
