@@ -359,14 +359,19 @@ static int write_base_type(FILE *file, const type_t *type, unsigned int *typestr
 }
 
 /* write conformance / variance descriptor */
-static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_t *structure, const expr_t *expr)
+static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_t *structure, const expr_list_t *expr_list)
 {
     unsigned char operator_type = 0;
     const char *operator_string = "no operators";
-    const expr_t *subexpr = expr;
+    const expr_t *expr, *subexpr;
     unsigned char correlation_type;
 
     if (!file) return 4; /* optimisation for sizing pass */
+
+    if (list_count(expr_list) > 1)
+        error("write_conf_or_var_desc: multi-dimensional arrays not supported yet\n");
+
+    expr = subexpr = LIST_ENTRY( list_head(expr_list), const expr_t, entry );
 
     if (expr->is_const)
     {
@@ -762,8 +767,8 @@ static size_t write_string_tfs(FILE *file, const attr_list_t *attrs,
                                const type_t *type, const array_dims_t *array,
                                const char *name, unsigned int *typestring_offset)
 {
-    const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
-    int has_size = size_is && (size_is->type != EXPR_VOID);
+    const expr_list_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
+    int has_size = is_non_void(size_is);
     size_t start_offset = *typestring_offset;
     unsigned char flags = 0;
     int pointer_type;
@@ -853,10 +858,10 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
                               const type_t *type, const array_dims_t *array,
                               const char *name, unsigned int *typestring_offset)
 {
-    const expr_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
-    const expr_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
-    int has_length = length_is && (length_is->type != EXPR_VOID);
-    int has_size = (size_is && (size_is->type != EXPR_VOID)) || is_conformant_array(array);
+    const expr_list_t *length_is = get_attrp(attrs, ATTR_LENGTHIS);
+    const expr_list_t *size_is = get_attrp(attrs, ATTR_SIZEIS);
+    int has_length = is_non_void(length_is);
+    int has_size = is_non_void(size_is) || is_conformant_array(array);
     size_t start_offset;
     int pointer_type = get_attrv(attrs, ATTR_POINTERTYPE);
     if (!pointer_type)
@@ -1003,7 +1008,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
 
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
-                                                         size_is ? size_is : dim);
+                                                         size_is ? size_is : array);
 
             if (has_pointer)
             {
@@ -1041,7 +1046,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
 
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
-                                                         size_is ? size_is : dim);
+                                                         size_is ? size_is : array);
             *typestring_offset += write_conf_or_var_desc(file, current_func,
                                                          current_structure,
                                                          length_is);
@@ -1613,8 +1618,8 @@ static unsigned int get_required_buffer_size_type(
 
 static unsigned int get_required_buffer_size(const var_t *var, unsigned int *alignment, enum pass pass)
 {
-    expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-    int has_size = (size_is && (size_is->type != EXPR_VOID));
+    expr_list_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+    int has_size = is_non_void(size_is);
     int in_attr = is_attr(var->attrs, ATTR_IN);
     int out_attr = is_attr(var->attrs, ATTR_OUT);
 
@@ -1841,8 +1846,8 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                               unsigned int *type_offset, enum pass pass,
                               enum remoting_phase phase)
 {
-    const expr_t *length_is;
-    const expr_t *size_is;
+    const expr_list_t *length_is;
+    const expr_list_t *size_is;
     int in_attr, out_attr, has_length, has_size, pointer_type;
     const var_t *var;
 
@@ -1862,8 +1867,8 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
 
         length_is = get_attrp(var->attrs, ATTR_LENGTHIS);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-        has_length = length_is && (length_is->type != EXPR_VOID);
-        has_size = (size_is && (size_is->type != EXPR_VOID)) || (var->array && is_conformant_array(var->array));
+        has_length = is_non_void(length_is);
+        has_size = is_non_void(size_is) || (var->array && is_conformant_array(var->array));
 
         pointer_type = get_attrv(var->attrs, ATTR_POINTERTYPE);
         if (!pointer_type)
@@ -1900,8 +1905,9 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
             {
                 if (size_is && is_size_needed_for_phase(phase))
                 {
+                    const expr_t *size = LIST_ENTRY( list_head(size_is), const expr_t, entry );
                     print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                    write_expr(file, size_is, 1);
+                    write_expr(file, size, 1);
                     fprintf(file, ";\n");
                 }
 
@@ -1920,16 +1926,16 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 array_type = "ComplexArray";
             else
             {
-                const expr_t *dim = LIST_ENTRY( list_head( var->array ), expr_t, entry );
                 if (!has_length && !has_size)
                     array_type = "FixedArray";
                 else if (has_length && !has_size)
                 {
                     if (is_size_needed_for_phase(phase))
                     {
+                        const expr_t *length = LIST_ENTRY( list_head(length_is), const expr_t, entry );
                         print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
                         print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                        write_expr(file, length_is, 1);
+                        write_expr(file, length, 1);
                         fprintf(file, ";\n\n");
                     }
                     array_type = "VaryingArray";
@@ -1938,8 +1944,10 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 {
                     if (is_size_needed_for_phase(phase) && phase != PHASE_FREE)
                     {
+                        const expr_t *size = LIST_ENTRY( list_head(size_is ? size_is : var->array),
+                                                         const expr_t, entry );
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                        write_expr(file, size_is ? size_is : dim, 1);
+                        write_expr(file, size, 1);
                         fprintf(file, ";\n\n");
                     }
                     array_type = "ConformantArray";
@@ -1948,12 +1956,15 @@ void write_remoting_arguments(FILE *file, int indent, const func_t *func,
                 {
                     if (is_size_needed_for_phase(phase))
                     {
+                        const expr_t *length = LIST_ENTRY( list_head(length_is), const expr_t, entry );
+                        const expr_t *size = LIST_ENTRY( list_head(size_is ? size_is : var->array),
+                                                         const expr_t, entry );
                         print_file(file, indent, "_StubMsg.MaxCount = (unsigned long)");
-                        write_expr(file, size_is ? size_is : dim, 1);
+                        write_expr(file, size, 1);
                         fprintf(file, ";\n");
                         print_file(file, indent, "_StubMsg.Offset = (unsigned long)0;\n"); /* FIXME */
                         print_file(file, indent, "_StubMsg.ActualCount = (unsigned long)");
-                        write_expr(file, length_is, 1);
+                        write_expr(file, length, 1);
                         fprintf(file, ";\n\n");
                     }
                     array_type = "ConformantVaryingArray";
@@ -2234,8 +2245,8 @@ void declare_stub_args( FILE *file, int indent, const func_t *func )
 
     LIST_FOR_EACH_ENTRY( var, func->args, const var_t, entry )
     {
-        const expr_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-        int has_size = size_is && (size_is->type != EXPR_VOID);
+        const expr_list_t *size_is = get_attrp(var->attrs, ATTR_SIZEIS);
+        int has_size = is_non_void(size_is);
         int is_string = is_attr(var->attrs, ATTR_STRING);
 
         in_attr = is_attr(var->attrs, ATTR_IN);
@@ -2268,7 +2279,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
     int in_attr, out_attr;
     int i = 0, sep = 0;
     const var_t *var;
-    const expr_t *size_is;
+    const expr_list_t *size_is;
     int has_size;
 
     if (!func->args)
@@ -2278,7 +2289,7 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
     {
         int is_string = is_attr(var->attrs, ATTR_STRING);
         size_is = get_attrp(var->attrs, ATTR_SIZEIS);
-        has_size = size_is && (size_is->type != EXPR_VOID);
+        has_size = is_non_void(size_is);
         in_attr = is_attr(var->attrs, ATTR_IN);
         out_attr = is_attr(var->attrs, ATTR_OUT);
         if (!out_attr && !in_attr)
@@ -2291,13 +2302,19 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
 
             if (has_size)
             {
+                const expr_t *expr;
                 unsigned int size, align = 0;
                 type_t *type = var->type;
 
                 fprintf(file, " = NdrAllocate(&_StubMsg, ");
-                write_expr(file, size_is, 1);
+                LIST_FOR_EACH_ENTRY( expr, size_is, const expr_t, entry )
+                {
+                    if (expr->type == EXPR_VOID) continue;
+                    write_expr( file, expr, 1 );
+                    fprintf(file, " * ");
+                }
                 size = type_memsize(type, 0, NULL, &align);
-                fprintf(file, " * %u);\n", size);
+                fprintf(file, "%u);\n", size);
             }
             else if (!is_string)
             {

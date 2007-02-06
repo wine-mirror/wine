@@ -196,13 +196,14 @@ static void free_variable( const var_t *arg )
   var_t *constraint;
   int index = 0; /* FIXME */
   type_t *type;
-  expr_t *expr;
+  expr_list_t *expr;
 
   expr = get_attrp( arg->attrs, ATTR_SIZEIS );
   if (expr)
   {
+    const expr_t *size = LIST_ENTRY( list_head(expr), const expr_t, entry );
     print_proxy( "_StubMsg.MaxCount = ", arg->name );
-    write_expr(proxy, expr, 0);
+    write_expr(proxy, size, 0);
     fprintf(proxy, ";\n\n");
     print_proxy( "NdrClearOutParameters( &_StubMsg, ");
     fprintf(proxy, "&__MIDL_TypeFormatString.Format[%d], ", index );

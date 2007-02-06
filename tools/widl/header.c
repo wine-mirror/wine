@@ -85,6 +85,16 @@ int is_conformant_array( const array_dims_t *array )
     return !dim->is_const;
 }
 
+int is_non_void(const expr_list_t *list)
+{
+    const expr_t *expr;
+
+    if (list)
+        LIST_FOR_EACH_ENTRY( expr, list, const expr_t, entry )
+            if (expr->type != EXPR_VOID) return 1;
+    return 0;
+}
+
 void write_guid(FILE *f, const char *guid_prefix, const char *name, const UUID *uuid)
 {
   if (!uuid) return;
