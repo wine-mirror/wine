@@ -5569,11 +5569,20 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                     }
                     else
                     {
-                        VARIANTARG *missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams);
-                        V_VT(arg) = VT_VARIANT | VT_BYREF;
-                        V_VARIANTREF(arg) = &missing_arg[i];
-                        V_VT(V_VARIANTREF(arg)) = VT_ERROR;
-                        V_ERROR(V_VARIANTREF(arg)) = DISP_E_PARAMNOTFOUND;
+                        VARIANTARG *missing_arg;
+                        /* if the function wants a pointer to a variant then
+                         * set that up, otherwise just pass the VT_ERROR in
+                         * the argument by value */
+                        if (rgvt[i] & VT_BYREF)
+                        {
+                            missing_arg = INVBUF_GET_MISSING_ARG_ARRAY(buffer, func_desc->cParams) + i;
+                            V_VT(arg) = VT_VARIANT | VT_BYREF;
+                            V_VARIANTREF(arg) = missing_arg;
+                        }
+                        else
+                            missing_arg = arg;
+                        V_VT(missing_arg) = VT_ERROR;
+                        V_ERROR(missing_arg) = DISP_E_PARAMNOTFOUND;
                     }
                 }
                 else
