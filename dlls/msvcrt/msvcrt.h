@@ -366,7 +366,7 @@ struct MSVCRT__stati64 {
   short          st_uid;
   short          st_gid;
   MSVCRT__dev_t  st_rdev;
-  __int64        st_size;
+  __int64 DECLSPEC_ALIGN(8) st_size;
   MSVCRT_time_t  st_atime;
   MSVCRT_time_t  st_mtime;
   MSVCRT_time_t  st_ctime;

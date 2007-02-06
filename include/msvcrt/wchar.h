@@ -43,6 +43,16 @@ typedef unsigned short wchar_t;
 #define _WIN64
 #endif
 
+#ifndef DECLSPEC_ALIGN
+# if defined(_MSC_VER) && (_MSC_VER >= 1300) && !defined(MIDL_PASS)
+#  define DECLSPEC_ALIGN(x) __declspec(align(x))
+# elif defined(__GNUC__)
+#  define DECLSPEC_ALIGN(x) __attribute__((aligned(x)))
+# else
+#  define DECLSPEC_ALIGN(x)
+# endif
+#endif
+
 typedef int mbstate_t;
 
 #ifndef _SIZE_T_DEFINED
@@ -181,7 +191,7 @@ struct _stati64 {
   short          st_uid;
   short          st_gid;
   _dev_t st_rdev;
-  __int64        st_size;
+  __int64 DECLSPEC_ALIGN(8) st_size;
   time_t st_atime;
   time_t st_mtime;
   time_t st_ctime;
