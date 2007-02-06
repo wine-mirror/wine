@@ -5665,7 +5665,20 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             {
                 WARN("invoked function failed with error 0x%08x\n", V_ERROR(&varresult));
                 hres = DISP_E_EXCEPTION;
-                if (pExcepInfo) pExcepInfo->scode = V_ERROR(&varresult);
+                if (pExcepInfo)
+                {
+                    IErrorInfo *pErrorInfo;
+                    pExcepInfo->scode = V_ERROR(&varresult);
+                    if (GetErrorInfo(0, &pErrorInfo) == S_OK)
+                    {
+                        IErrorInfo_GetDescription(pErrorInfo, &pExcepInfo->bstrDescription);
+                        IErrorInfo_GetHelpFile(pErrorInfo, &pExcepInfo->bstrHelpFile);
+                        IErrorInfo_GetSource(pErrorInfo, &pExcepInfo->bstrSource);
+                        IErrorInfo_GetHelpContext(pErrorInfo, &pExcepInfo->dwHelpContext);
+
+                        IErrorInfo_Release(pErrorInfo);
+                    }
+                }
             }
 
 func_fail:
