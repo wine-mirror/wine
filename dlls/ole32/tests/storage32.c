@@ -862,10 +862,11 @@ static void test_transact(void)
     static const WCHAR szPrefix[] = { 's','t','g',0 };
     static const WCHAR szDot[] = { '.',0 };
     WCHAR filename[MAX_PATH];
-    IStorage *stg = NULL;
+    IStorage *stg = NULL, *stg2 = NULL;
     HRESULT r;
     IStream *stm = NULL;
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    static const WCHAR stmname2[] = { 'F','O','O',0 };
 
     if(!GetTempFileNameW(szDot, szPrefix, 0, filename))
         return;
@@ -878,8 +879,27 @@ static void test_transact(void)
     ok(r==S_OK, "StgCreateDocfile failed\n");
 
     /* now create a stream, but don't commit it */
+    r = IStorage_CreateStream(stg, stmname2, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
+    ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    r = IStream_Write(stm, "this is stream 1\n", 16, NULL);
+    ok(r==S_OK, "IStream->Write failed\n");
+
+    r = IStream_Release(stm);
+
+    r = IStorage_Commit(stg, 0);
+    ok(r==S_OK, "IStorage->Commit failed\n");
+
+    /* now create a stream, but don't commit it */
+    stm = NULL;
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==S_OK, "IStorage->CreateStream failed\n");
+
+    r = IStream_Write(stm, "this is stream 2\n", 16, NULL);
+    ok(r==S_OK, "IStream->Write failed\n");
+
+    r = IStream_Commit(stm, STGC_ONLYIFCURRENT | STGC_DANGEROUSLYCOMMITMERELYTODISKCACHE);
+    ok(r==S_OK, "IStream->Commit failed\n");
 
     r = IStream_Release(stm);
 
@@ -902,13 +922,24 @@ static void test_transact(void)
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
     ok(r==STG_E_INVALIDFUNCTION, "IStorage->OpenStream failed %08x\n", r);
 
+    r = IStorage_OpenStorage(stg, stmname, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg2 );
+    ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream failed %08x\n", r);
+
     todo_wine {
     r = IStorage_OpenStream(stg, stmname, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
     ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream should fail %08x\n", r);
     }
-
     if (stm)
         r = IStream_Release(stm);
+
+    r = IStorage_OpenStorage(stg, stmname2, NULL, STGM_TRANSACTED|STGM_SHARE_EXCLUSIVE|STGM_READWRITE, NULL, 0, &stg2 );
+    ok(r==STG_E_FILENOTFOUND, "IStorage->OpenStream failed %08x\n", r);
+
+    r = IStorage_OpenStream(stg, stmname2, NULL, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, &stm );
+    ok(r==S_OK, "IStorage->OpenStream should fail %08x\n", r);
+    if (stm)
+        r = IStream_Release(stm);
+
     IStorage_Release(stg);
 
     r = DeleteFileW(filename);
