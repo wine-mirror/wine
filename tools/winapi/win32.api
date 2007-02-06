@@ -3476,6 +3476,19 @@ LPSTR
 
 LPWSTR
 
+%%pstorec.dll
+
+%long
+
+DWORD
+HRESULT
+
+%ptr
+
+IPStore **
+PST_PROVIDERID *
+void *
+
 %%qcap.dll
 
 %long
