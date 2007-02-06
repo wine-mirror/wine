@@ -726,13 +726,13 @@ dispinterfacedef: dispinterfacehdr '{'
 						  if (!parse_only && do_header) write_dispinterface($$);
 						  if (!parse_only && do_idfile) write_diid($$);
 						}
-/* FIXME: not sure how to handle this yet
-	| dispinterfacehdr '{' interface '}'	{ $$ = $1;
-						  compute_method_indexes($$);
-						  if (!parse_only && do_header) write_interface($$);
-						  if (!parse_only && do_idfile) write_iid($$);
+	| dispinterfacehdr
+	 '{' interface ';' '}'			{ $$ = $1;
+						  $$->fields = $3->fields;
+						  $$->funcs = $3->funcs;
+						  if (!parse_only && do_header) write_dispinterface($$);
+						  if (!parse_only && do_idfile) write_diid($$);
 						}
-*/
 	;
 
 inherit:					{ $$ = NULL; }
