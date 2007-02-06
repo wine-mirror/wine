@@ -940,10 +940,10 @@ RPC_STATUS WINAPI RpcObjectSetType( UUID* ObjUuid, UUID* TypeUuid )
 /***********************************************************************
  *             RpcServerRegisterAuthInfoA (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
-  FIXME( "(%s,%lu,%p,%p): stub\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg );
+  FIXME( "(%s,%u,%p,%p): stub\n", ServerPrincName, AuthnSvc, GetKeyFn, Arg );
   
   return RPC_S_UNKNOWN_AUTHN_SERVICE; /* We don't know any authentication services */
 }
@@ -951,10 +951,10 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, unsigned
 /***********************************************************************
  *             RpcServerRegisterAuthInfoW (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, unsigned long AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
+RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, ULONG AuthnSvc, RPC_AUTH_KEY_RETRIEVAL_FN GetKeyFn,
                             LPVOID Arg )
 {
-  FIXME( "(%s,%lu,%p,%p): stub\n", debugstr_w( ServerPrincName ), AuthnSvc, GetKeyFn, Arg );
+  FIXME( "(%s,%u,%p,%p): stub\n", debugstr_w( ServerPrincName ), AuthnSvc, GetKeyFn, Arg );
   
   return RPC_S_UNKNOWN_AUTHN_SERVICE; /* We don't know any authentication services */
 }
@@ -1067,10 +1067,10 @@ RPC_STATUS WINAPI RpcMgmtInqIfIds(RPC_BINDING_HANDLE Binding, RPC_IF_ID_VECTOR *
 /***********************************************************************
  *             RpcMgmtEpEltInqBegin (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, unsigned long InquiryType,
-    RPC_IF_ID *IfId, unsigned long VersOption, UUID *ObjectUuid, RPC_EP_INQ_HANDLE* InquiryContext)
+RPC_STATUS WINAPI RpcMgmtEpEltInqBegin(RPC_BINDING_HANDLE Binding, ULONG InquiryType,
+    RPC_IF_ID *IfId, ULONG VersOption, UUID *ObjectUuid, RPC_EP_INQ_HANDLE* InquiryContext)
 {
-  FIXME("(%p,%lu,%p,%lu,%p,%p): stub\n",
+  FIXME("(%p,%u,%p,%u,%p,%p): stub\n",
         Binding, InquiryType, IfId, VersOption, ObjectUuid, InquiryContext);
   return RPC_S_INVALID_BINDING;
 }
@@ -1087,8 +1087,8 @@ RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
 /***********************************************************************
  *             RpcMgmtSetServerStackSize (RPCRT4.@)
  */
-RPC_STATUS WINAPI RpcMgmtSetServerStackSize(unsigned long ThreadStackSize)
+RPC_STATUS WINAPI RpcMgmtSetServerStackSize(ULONG ThreadStackSize)
 {
-  FIXME("(0x%lx): stub\n", ThreadStackSize);
+  FIXME("(0x%x): stub\n", ThreadStackSize);
   return RPC_S_OK;
 }

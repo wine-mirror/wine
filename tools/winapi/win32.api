@@ -3618,17 +3618,16 @@ DWORD
 HMODULE
 HRESULT
 HWND
+LONG
 RPC_BINDING_HANDLE
 RPC_IF_HANDLE
 RPC_STATUS
 UINT
 ULONG
 int
-long
 size_t
 unsigned char
 unsigned int
-unsigned long
 unsigned short
 
 %long --pointer
@@ -3675,11 +3674,11 @@ RPC_MGR_EPV *
 RPC_STATUS *
 UUID *
 UUID_VECTOR *
+ULONG *
 struct IRpcChannelBuffer *
 struct IRpcStubBuffer *
 unsigned char *
 unsigned char **
-unsigned long *
 unsigned short *
 unsigned short **
 void *

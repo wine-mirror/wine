@@ -940,7 +940,7 @@ RPC_STATUS WINAPI RpcRevertToSelfEx(RPC_BINDING_HANDLE BindingHandle)
     return RPC_S_OK;
 }
 
-static RPC_STATUS RpcAuthInfo_Create(unsigned long AuthnLevel, unsigned long AuthnSvc, CredHandle cred, TimeStamp exp, RpcAuthInfo **ret)
+static RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc, CredHandle cred, TimeStamp exp, RpcAuthInfo **ret)
 {
     RpcAuthInfo *AuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo));
     if (!AuthInfo)
@@ -1136,11 +1136,11 @@ RPC_STATUS WINAPI RpcMgmtSetComTimeout(RPC_BINDING_HANDLE BindingHandle, unsigne
  *             RpcBindingInqAuthInfoExA (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName, unsigned long *AuthnLevel,
-                          unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc,
-                          unsigned long RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS )
+RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName, ULONG *AuthnLevel,
+                          ULONG *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, ULONG *AuthzSvc,
+                          ULONG RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS )
 {
-    FIXME("%p %p %p %p %p %p %lu %p\n", Binding, ServerPrincName, AuthnLevel,
+    FIXME("%p %p %p %p %p %p %u %p\n", Binding, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthIdentity, AuthzSvc, RpcQosVersion, SecurityQOS);
     return RPC_S_INVALID_BINDING;
 }
@@ -1149,11 +1149,11 @@ RpcBindingInqAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName,
  *             RpcBindingInqAuthInfoExW (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, unsigned long *AuthnLevel,
-                          unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc,
-                          unsigned long RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS )
+RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, ULONG *AuthnLevel,
+                          ULONG *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, ULONG *AuthzSvc,
+                          ULONG RpcQosVersion, RPC_SECURITY_QOS *SecurityQOS )
 {
-    FIXME("%p %p %p %p %p %p %lu %p\n", Binding, ServerPrincName, AuthnLevel,
+    FIXME("%p %p %p %p %p %p %u %p\n", Binding, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthIdentity, AuthzSvc, RpcQosVersion, SecurityQOS);
     return RPC_S_INVALID_BINDING;
 }
@@ -1162,8 +1162,8 @@ RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName,
  *             RpcBindingInqAuthInfoA (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingInqAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName, unsigned long *AuthnLevel,
-                        unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc )
+RpcBindingInqAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName, ULONG *AuthnLevel,
+                        ULONG *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, ULONG *AuthzSvc )
 {
     FIXME("%p %p %p %p %p %p\n", Binding, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthIdentity, AuthzSvc);
@@ -1174,8 +1174,8 @@ RpcBindingInqAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR *ServerPrincName, u
  *             RpcBindingInqAuthInfoW (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, unsigned long *AuthnLevel,
-                        unsigned long *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, unsigned long *AuthzSvc )
+RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, ULONG *AuthnLevel,
+                        ULONG *AuthnSvc, RPC_AUTH_IDENTITY_HANDLE *AuthIdentity, ULONG *AuthzSvc )
 {
     FIXME("%p %p %p %p %p %p\n", Binding, ServerPrincName, AuthnLevel,
           AuthnSvc, AuthIdentity, AuthzSvc);
@@ -1187,8 +1187,8 @@ RpcBindingInqAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName, u
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
 RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
-                          unsigned long AuthnLevel, unsigned long AuthnSvc,
-                          RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
+                          ULONG AuthnLevel, ULONG AuthnSvc,
+                          RPC_AUTH_IDENTITY_HANDLE AuthIdentity, ULONG AuthzSvr,
                           RPC_SECURITY_QOS *SecurityQos )
 {
   RpcBinding* bind = (RpcBinding*)Binding;
@@ -1199,7 +1199,7 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
   ULONG i;
   PSecPkgInfoA packages;
 
-  TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_a((const char*)ServerPrincName),
+  TRACE("%p %s %u %u %p %u %p\n", Binding, debugstr_a((const char*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
 
   if (SecurityQos)
@@ -1248,13 +1248,13 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
 
   if (AuthnLevel > RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
   {
-    FIXME("unknown AuthnLevel %lu\n", AuthnLevel);
+    FIXME("unknown AuthnLevel %u\n", AuthnLevel);
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
   if (AuthzSvr)
   {
-    FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
+    FIXME("unsupported AuthzSvr %u\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
   }
 
@@ -1271,12 +1271,12 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
 
   if (i == package_count)
   {
-    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
+    FIXME("unsupported AuthnSvc %u\n", AuthnSvc);
     FreeContextBuffer(packages);
     return RPC_S_UNKNOWN_AUTHN_SERVICE;
   }
 
-  TRACE("found package %s for service %ld\n", packages[i].Name, AuthnSvc);
+  TRACE("found package %s for service %u\n", packages[i].Name, AuthnSvc);
   r = AcquireCredentialsHandleA((SEC_CHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   FreeContextBuffer(packages);
@@ -1300,8 +1300,8 @@ RpcBindingSetAuthInfoExA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName,
  *             RpcBindingSetAuthInfoExW (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, unsigned long AuthnLevel,
-                          unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr,
+RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, ULONG AuthnLevel,
+                          ULONG AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, ULONG AuthzSvr,
                           RPC_SECURITY_QOS *SecurityQos )
 {
   RpcBinding* bind = (RpcBinding*)Binding;
@@ -1312,7 +1312,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
   ULONG i;
   PSecPkgInfoW packages;
 
-  TRACE("%p %s %lu %lu %p %lu %p\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
+  TRACE("%p %s %u %u %p %u %p\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
         AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, SecurityQos);
 
   if (SecurityQos)
@@ -1361,13 +1361,13 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
 
   if (AuthnLevel > RPC_C_AUTHN_LEVEL_PKT_PRIVACY)
   {
-    FIXME("unknown AuthnLevel %lu\n", AuthnLevel);
+    FIXME("unknown AuthnLevel %u\n", AuthnLevel);
     return RPC_S_UNKNOWN_AUTHN_LEVEL;
   }
 
   if (AuthzSvr)
   {
-    FIXME("unsupported AuthzSvr %lu\n", AuthzSvr);
+    FIXME("unsupported AuthzSvr %u\n", AuthzSvr);
     return RPC_S_UNKNOWN_AUTHZ_SERVICE;
   }
 
@@ -1384,12 +1384,12 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
 
   if (i == package_count)
   {
-    FIXME("unsupported AuthnSvc %lu\n", AuthnSvc);
+    FIXME("unsupported AuthnSvc %u\n", AuthnSvc);
     FreeContextBuffer(packages);
     return RPC_S_UNKNOWN_AUTHN_SERVICE;
   }
 
-  TRACE("found package %s for service %ld\n", debugstr_w(packages[i].Name), AuthnSvc);
+  TRACE("found package %s for service %u\n", debugstr_w(packages[i].Name), AuthnSvc);
   r = AcquireCredentialsHandleW((SEC_WCHAR *)ServerPrincName, packages[i].Name, SECPKG_CRED_OUTBOUND, NULL,
                                 AuthIdentity, NULL, NULL, &cred, &exp);
   FreeContextBuffer(packages);
@@ -1413,10 +1413,10 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
  *             RpcBindingSetAuthInfoA (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName, unsigned long AuthnLevel,
-                        unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
+RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName, ULONG AuthnLevel,
+                        ULONG AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, ULONG AuthzSvr )
 {
-    TRACE("%p %s %lu %lu %p %lu\n", Binding, debugstr_a((const char*)ServerPrincName),
+    TRACE("%p %s %u %u %p %u\n", Binding, debugstr_a((const char*)ServerPrincName),
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
     return RpcBindingSetAuthInfoExA(Binding, ServerPrincName, AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, NULL);
 }
@@ -1425,10 +1425,10 @@ RpcBindingSetAuthInfoA( RPC_BINDING_HANDLE Binding, RPC_CSTR ServerPrincName, un
  *             RpcBindingSetAuthInfoW (RPCRT4.@)
  */
 RPCRTAPI RPC_STATUS RPC_ENTRY
-RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, unsigned long AuthnLevel,
-                        unsigned long AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, unsigned long AuthzSvr )
+RpcBindingSetAuthInfoW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, ULONG AuthnLevel,
+                        ULONG AuthnSvc, RPC_AUTH_IDENTITY_HANDLE AuthIdentity, ULONG AuthzSvr )
 {
-    TRACE("%p %s %lu %lu %p %lu\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
+    TRACE("%p %s %u %u %p %u\n", Binding, debugstr_w((const WCHAR*)ServerPrincName),
           AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr);
     return RpcBindingSetAuthInfoExW(Binding, ServerPrincName, AuthnLevel, AuthnSvc, AuthIdentity, AuthzSvr, NULL);
 }
