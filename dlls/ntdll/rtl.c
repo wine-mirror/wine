@@ -912,6 +912,9 @@ static DWORD_PTR get_pointer_obfuscator( void )
     return pointer_obfuscator;
 }
 
+/*************************************************************************
+ * RtlEncodePointer   [NTDLL.@]
+ */
 PVOID WINAPI RtlEncodePointer( PVOID ptr )
 {
     DWORD_PTR ptrval = (DWORD_PTR) ptr;
@@ -1029,6 +1032,9 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(volatile PSLIST_HEADER ListHeade
 #endif
 }
 
+/*************************************************************************
+ * RtlInterlockedPushListSList   [NTDLL.@]
+ */
 PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(volatile PSLIST_HEADER ListHeader,
                                                 PSLIST_ENTRY FirstEntry,
                                                 PSLIST_ENTRY LastEntry,
