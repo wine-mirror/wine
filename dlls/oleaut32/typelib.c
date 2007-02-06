@@ -5485,6 +5485,29 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
             for (i = 0; i < func_desc->cParams; i++)
             {
                 USHORT wParamFlags = func_desc->lprgelemdescParam[i].u.paramdesc.wParamFlags;
+                VARIANTARG *src_arg;
+
+                if (pDispParams->cNamedArgs)
+                {
+                    USHORT j;
+                    src_arg = NULL;
+                    for (j = 0; j < pDispParams->cNamedArgs; j++)
+                    {
+                        if ((func_desc->invkind & INVOKE_PROPERTYPUT) &&
+                            (pDispParams->rgdispidNamedArgs[j] == DISPID_PROPERTYPUT))
+                        {
+                            src_arg = &pDispParams->rgvarg[0];
+                            break;
+                        }
+                        if (pDispParams->rgdispidNamedArgs[j] == i)
+                        {
+                            src_arg = &pDispParams->rgvarg[j];
+                            break;
+                        }
+                    }
+                }
+                else
+                    src_arg = i < pDispParams->cArgs ? &pDispParams->rgvarg[pDispParams->cArgs - 1 - i] : NULL;
 
                 if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
@@ -5507,9 +5530,8 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                         break;
                     }
                 }
-                else if (i < pDispParams->cArgs)
+                else if (src_arg)
                 {
-                    VARIANTARG *src_arg = &pDispParams->rgvarg[pDispParams->cArgs - 1 - i];
                     dump_Variant(src_arg);
 
                     if (rgvt[i] == VT_VARIANT)
