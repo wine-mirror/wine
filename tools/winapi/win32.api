@@ -1402,6 +1402,16 @@ LPSTR
 
 LPCWSTR
 
+%%hid.dll
+
+%ptr
+
+LPGUID
+
+%void
+
+void
+
 %%iccvid.dll
 
 %long
