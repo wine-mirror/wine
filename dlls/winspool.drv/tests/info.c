@@ -1693,7 +1693,7 @@ static void test_XcvDataW_PortIsValid(void)
     pd.pDevMode  = NULL;
     pd.DesiredAccess = SERVER_ACCESS_ADMINISTER;
 
-    hXcv = (HANDLE) 0;
+    hXcv = NULL;
     SetLastError(0xdeadbeef);
     res = OpenPrinter(xcv_localport, &hXcv, &pd);
 
