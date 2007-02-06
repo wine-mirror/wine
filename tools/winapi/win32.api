@@ -587,6 +587,21 @@ LPSTR
 LPCWSTR
 LPWSTR
 
+%%compstui.dll
+
+%long
+
+BOOL
+HWND
+LONG
+LPARAM
+ULONG_PTR
+
+%ptr
+
+LPDWORD
+PFNPROPSHEETUI
+
 %%crtdll.dll
 
 %long
