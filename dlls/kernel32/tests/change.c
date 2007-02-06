@@ -65,7 +65,7 @@ static HANDLE StartNotificationThread(LPCSTR path, BOOL subtree, DWORD flags)
 
     thread = CreateThread(NULL, 0, NotificationThread, (LPVOID)change,
                           0, &threadId);
-    ok(thread != INVALID_HANDLE_VALUE, "CreateThread error: %d\n", GetLastError());
+    ok(thread != NULL, "CreateThread error: %d\n", GetLastError());
 
     return thread;
 }
