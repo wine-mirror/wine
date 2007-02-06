@@ -59,8 +59,8 @@ struct expr_eval_routine
     const expr_t *expr;
 };
 
-static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array);
-static size_t fields_memsize(const var_list_t *fields);
+static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array, unsigned int *align);
+static size_t fields_memsize(const var_list_t *fields, unsigned int *align);
 
 static int compare_expr(const expr_t *a, const expr_t *b)
 {
@@ -410,7 +410,9 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
             offset = 0;
             if (structure->fields) LIST_FOR_EACH_ENTRY( var, structure->fields, const var_t, entry )
             {
-                offset -= type_memsize(var->type, var->ptr_level, var->array);
+                unsigned int align = 0;
+                offset -= type_memsize(var->type, var->ptr_level, var->array, &align);
+                /* FIXME: take alignment into account */
                 if (!strcmp(var->name, subexpr->u.sval))
                 {
                     correlation_variable = var->type;
@@ -513,9 +515,10 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
 
             if (!found)
             {
+                unsigned int align = 0;
                 eval = xmalloc(sizeof(*eval));
                 eval->structure = structure;
-                eval->structure_size = fields_memsize(structure->fields);
+                eval->structure_size = fields_memsize(structure->fields, &align);
                 eval->expr = expr;
                 list_add_tail(&expr_eval_routines, &eval->entry);
             }
@@ -540,38 +543,58 @@ static size_t write_conf_or_var_desc(FILE *file, const func_t *func, const type_
     return 4;
 }
 
-static size_t fields_memsize(const var_list_t *fields)
+static size_t fields_memsize(const var_list_t *fields, unsigned int *align)
 {
     size_t size = 0;
     const var_t *v;
 
     if (!fields) return 0;
     LIST_FOR_EACH_ENTRY( v, fields, const var_t, entry )
-        size += type_memsize(v->type, v->ptr_level, v->array);
+        size += type_memsize(v->type, v->ptr_level, v->array, align);
 
     return size;
 }
 
-static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array)
+static size_t get_array_size( const array_dims_t *array )
+{
+    size_t size = 1;
+    const expr_t *dim;
+
+    if (!array) return 0;
+
+    LIST_FOR_EACH_ENTRY( dim, array, expr_t, entry )
+    {
+        if (!dim->is_const) return 0;
+        size *= dim->cval;
+    }
+
+    return size;
+}
+
+static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *array, unsigned int *align)
 {
     size_t size = 0;
 
     if (ptr_level)
-        return sizeof(void *);
-
-    switch (t->type)
+    {
+        size = sizeof(void *);
+        if (size > *align) *align = size;
+    }
+    else switch (t->type)
     {
     case RPC_FC_BYTE:
     case RPC_FC_CHAR:
     case RPC_FC_USMALL:
     case RPC_FC_SMALL:
         size = 1;
+        if (size > *align) *align = size;
         break;
     case RPC_FC_WCHAR:
     case RPC_FC_USHORT:
     case RPC_FC_SHORT:
     case RPC_FC_ENUM16:
         size = 2;
+        if (size > *align) *align = size;
         break;
     case RPC_FC_ULONG:
     case RPC_FC_LONG:
@@ -579,10 +602,12 @@ static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *a
     case RPC_FC_ENUM32:
     case RPC_FC_FLOAT:
         size = 4;
+        if (size > *align) *align = size;
         break;
     case RPC_FC_HYPER:
     case RPC_FC_DOUBLE:
         size = 8;
+        if (size > *align) *align = size;
         break;
     case RPC_FC_STRUCT:
     case RPC_FC_CVSTRUCT:
@@ -592,29 +617,15 @@ static size_t type_memsize(const type_t *t, int ptr_level, const array_dims_t *a
     case RPC_FC_BOGUS_STRUCT:
     case RPC_FC_ENCAPSULATED_UNION:
     case RPC_FC_NON_ENCAPSULATED_UNION:
-        size = fields_memsize(t->fields);
+        size = fields_memsize(t->fields, align);
         break;
     default:
         error("type_memsize: Unknown type %d\n", t->type);
         size = 0;
     }
 
-    if (array)
-    {
-        expr_t *dim;
-        LIST_FOR_EACH_ENTRY( dim, array, expr_t, entry )
-            if (dim->is_const)
-                size *= dim->cval;
-            else
-                size = 0;
-    }
-
+    if (array) size *= get_array_size( array );
     return size;
-}
-
-size_t get_type_memsize(const type_t *type)
-{
-    return type_memsize(type, 0, NULL);
 }
 
 static int write_pointers(FILE *file, const attr_list_t *attrs,
@@ -845,12 +856,13 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         if (!has_length && !has_size)
         {
             /* fixed array */
-            size_t size = type_memsize(type, 0, array);
+            unsigned int align = 0;
+            size_t size = type_memsize(type, 0, array, &align);
             if (size < USHRT_MAX)
             {
                 WRITE_FCTYPE(file, FC_SMFARRAY, *typestring_offset);
                 /* alignment */
-                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                print_file(file, 2, "0x%02x,\n", align - 1);
                 /* size */
                 print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", size, size);
                 *typestring_offset += 4;
@@ -859,7 +871,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
             {
                 WRITE_FCTYPE(file, FC_LGFARRAY, *typestring_offset);
                 /* alignment */
-                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                print_file(file, 2, "0x%02x,\n", align - 1);
                 /* size */
                 print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", size, size);
                 *typestring_offset += 6;
@@ -885,7 +897,8 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         else if (has_length && !has_size)
         {
             /* varying array */
-            size_t element_size = type_memsize(type, 0, NULL);
+            unsigned int align = 0;
+            size_t element_size = type_memsize(type, 0, NULL, &align);
             size_t elements = dim->cval;
             size_t total_size = element_size * elements;
 
@@ -893,7 +906,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
             {
                 WRITE_FCTYPE(file, FC_SMVARRAY, *typestring_offset);
                 /* alignment */
-                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                print_file(file, 2, "0x%02x,\n", align - 1);
                 /* total size */
                 print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", total_size, total_size);
                 /* number of elements */
@@ -904,7 +917,7 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
             {
                 WRITE_FCTYPE(file, FC_LGVARRAY, *typestring_offset);
                 /* alignment */
-                print_file(file, 2, "0x%x, /* 0 */\n", 0);
+                print_file(file, 2, "0x%02x,\n", align - 1);
                 /* total size */
                 print_file(file, 2, "NdrFcLong(0x%x), /* %d */\n", total_size, total_size);
                 /* number of elements */
@@ -939,11 +952,12 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         else if (!has_length && has_size)
         {
             /* conformant array */
-            size_t element_size = type_memsize(type, 0, NULL);
+            unsigned int align = 0;
+            size_t element_size = type_memsize(type, 0, NULL, &align);
 
             WRITE_FCTYPE(file, FC_CARRAY, *typestring_offset);
             /* alignment */
-            print_file(file, 2, "0x%x, /* 0 */\n", 0);
+            print_file(file, 2, "0x%02x,\n", align - 1);
             /* element size */
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
             *typestring_offset += 4;
@@ -972,11 +986,12 @@ static size_t write_array_tfs(FILE *file, const attr_list_t *attrs,
         else
         {
             /* conformant varying array */
-            size_t element_size = type_memsize(type, 0, NULL);
+            unsigned int align = 0;
+            size_t element_size = type_memsize(type, 0, NULL, &align);
 
             WRITE_FCTYPE(file, FC_CVARRAY, *typestring_offset);
             /* alignment */
-            print_file(file, 2, "0x%x, /* 0 */\n", 0);
+            print_file(file, 2, "0x%02x,\n", align - 1);
             /* element size */
             print_file(file, 2, "NdrFcShort(0x%x), /* %d */\n", element_size, element_size);
             *typestring_offset += 4;
@@ -1085,12 +1100,13 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
     size_t start_offset;
     size_t array_offset;
     size_t pointer_offset;
+    unsigned int align = 0;
 
     switch (type->type)
     {
     case RPC_FC_STRUCT:
     case RPC_FC_PSTRUCT:
-        total_size = type_memsize(type, 0, NULL);
+        total_size = type_memsize(type, 0, NULL, &align);
 
         if (total_size > USHRT_MAX)
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
@@ -1109,7 +1125,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         else
             WRITE_FCTYPE(file, FC_PSTRUCT, *typestring_offset);
         /* alignment */
-        print_file(file, 2, "0x3,\n"); /* FIXME */
+        print_file(file, 2, "0x%02x,\n", align - 1);
         /* total size */
         print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
@@ -1130,7 +1146,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         return start_offset;
     case RPC_FC_CSTRUCT:
     case RPC_FC_CPSTRUCT:
-        total_size = type_memsize(type, 0, NULL);
+        total_size = type_memsize(type, 0, NULL, &align);
 
         if (total_size > USHRT_MAX)
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
@@ -1156,7 +1172,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         else
             WRITE_FCTYPE(file, FC_CPSTRUCT, *typestring_offset);
         /* alignment */
-        print_file(file, 2, "0x0,\n");
+        print_file(file, 2, "0x%02x,\n", align - 1);
         /* total size */
         print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
@@ -1182,7 +1198,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
 
         return start_offset;
     case RPC_FC_CVSTRUCT:
-        total_size = type_memsize(type, 0, NULL);
+        total_size = type_memsize(type, 0, NULL, &align);
 
         if (total_size > USHRT_MAX)
             error("structure size for parameter %s exceeds %d bytes by %d bytes\n",
@@ -1207,7 +1223,7 @@ static size_t write_struct_tfs(FILE *file, const type_t *type,
         start_offset = *typestring_offset;
         WRITE_FCTYPE(file, FC_CVSTRUCT, *typestring_offset);
         /* alignment */
-        print_file(file, 2, "0x0,\n");
+        print_file(file, 2, "0x%02x,\n", align - 1);
         /* total size */
         print_file(file, 2, "NdrFcShort(0x%x), /* %u */\n", total_size, total_size);
         *typestring_offset += 4;
@@ -2252,12 +2268,12 @@ void assign_stub_out_args( FILE *file, int indent, const func_t *func )
 
             if (has_size)
             {
-                unsigned int size;
+                unsigned int size, align = 0;
                 type_t *type = var->type;
 
                 fprintf(file, " = NdrAllocate(&_StubMsg, ");
                 write_expr(file, size_is, 1);
-                size = get_type_memsize(type);
+                size = type_memsize(type, 0, NULL, &align);
                 fprintf(file, " * %u);\n", size);
             }
             else if (!is_string)
