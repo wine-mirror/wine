@@ -68,6 +68,8 @@ static HRESULT map_url_to_zone(LPCWSTR url, DWORD *zone)
                     'P','r','o','t','o','c','o','l','D','e','f','a','u','l','t','s',0};
     static const WCHAR wszFile[] = {'f','i','l','e',0};
 
+    *zone = -1;
+
     hres = CoInternetParseUrl(url, PARSE_SCHEMA, 0, schema, sizeof(schema)/sizeof(WCHAR), &size, 0);
     if(FAILED(hres))
         return hres;

@@ -539,7 +539,7 @@ static void test_FindMimeFromData(void)
             ok(!lstrcmpW(mime, mime_tests[i].mime), "[%d] wrong mime\n", i);
             CoTaskMemFree(mime);
         }else {
-            ok(hres == E_FAIL, "FindMimeFromData failed: %08x, expected E_FAIL\n", hres);
+            ok(hres == E_FAIL, "[%d] FindMimeFromData failed: %08x, expected E_FAIL\n", i, hres);
             ok(mime == (LPWSTR)0xf0f0f0f0, "[%d] mime != 0xf0f0f0f0\n", i);
         }
 
@@ -664,8 +664,11 @@ static void test_SecurityManager(void)
         ok(hres == secmgr_tests[i].zone_hres,
            "[%d] MapUrlToZone failed: %08x, expected %08x\n",
                 i, hres, secmgr_tests[i].zone_hres);
-        ok(zone == secmgr_tests[i].zone, "[%d] zone=%d, expected %d\n", i, zone,
-                secmgr_tests[i].zone);
+        if(SUCCEEDED(hres))
+            ok(zone == secmgr_tests[i].zone, "[%d] zone=%d, expected %d\n", i, zone,
+               secmgr_tests[i].zone);
+        else
+            ok(zone == secmgr_tests[i].zone || zone == -1, "[%d] zone=%d\n", i, zone);
 
         size = sizeof(buf);
         memset(buf, 0xf0, sizeof(buf));
@@ -684,6 +687,7 @@ static void test_SecurityManager(void)
     zone = 100;
     hres = IInternetSecurityManager_MapUrlToZone(secmgr, NULL, &zone, 0);
     ok(hres == E_INVALIDARG, "MapUrlToZone failed: %08x, expected E_INVALIDARG\n", hres);
+    ok(zone == 100, "zone=%d\n", zone);
 
     size = sizeof(buf);
     hres = IInternetSecurityManager_GetSecurityId(secmgr, NULL, buf, &size, 0);
