@@ -410,7 +410,7 @@ static LRESULT WINAPI ButtonWndProc_common(HWND hWnd, UINT uMsg,
 
     case WM_SETFONT:
         set_button_font( hWnd, (HFONT)wParam );
-        if (lParam) paint_button( hWnd, btn_type, ODA_DRAWENTIRE );
+        if (lParam) InvalidateRect(hWnd, NULL, TRUE);
         break;
 
     case WM_GETFONT:
