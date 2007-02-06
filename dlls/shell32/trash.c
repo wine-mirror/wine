@@ -254,7 +254,7 @@ static char *create_trashinfo(const char *info_dir, const char *file_path)
     return NULL;
 }
 
-void remove_trashinfo_file(const char *info_dir, const char *base_name)
+static void remove_trashinfo_file(const char *info_dir, const char *base_name)
 {
     char *filename_buffer;
     
@@ -386,7 +386,7 @@ void TRASH_DisposeElement(TRASH_ELEMENT *element)
     SHFree(element->filename);
 }
 
-HRESULT TRASH_GetDetails(const TRASH_ELEMENT *element, WIN32_FIND_DATAW *data)
+static HRESULT TRASH_GetDetails(const TRASH_ELEMENT *element, WIN32_FIND_DATAW *data)
 {
     LPSTR path = NULL;
     XDG_PARSED_FILE *parsed = NULL;
@@ -480,7 +480,7 @@ failed:
     return ret;
 }
 
-INT CALLBACK free_item_callback(void *item, void *lParam)
+static INT CALLBACK free_item_callback(void *item, void *lParam)
 {
     SHFree(item);
     return TRUE;
