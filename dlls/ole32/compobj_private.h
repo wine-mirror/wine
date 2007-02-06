@@ -112,7 +112,7 @@ struct ifproxy
   STDOBJREF stdobjref;     /* marshal data that represents this object (RO) */
   IID iid;                 /* interface ID (RO) */
   LPRPCPROXYBUFFER proxy;  /* interface proxy (RO) */
-  DWORD refs;              /* imported (public) references (MUTEX parent->remoting_mutex) */
+  ULONG refs;              /* imported (public) references (LOCK) */
   IRpcChannelBuffer *chan; /* channel to object (CS parent->cs) */
 };
 

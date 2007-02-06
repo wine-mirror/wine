@@ -498,7 +498,7 @@ static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
             rif.cPrivateRefs = 0;
             hr = IRemUnknown_RemAddRef(remunk, 1, &rif, &hrref);
             if (hr == S_OK && hrref == S_OK)
-                This->refs += NORMALEXTREFS;
+                InterlockedExchangeAdd((LONG *)&This->refs, NORMALEXTREFS);
             else
                 ERR("IRemUnknown_RemAddRef returned with 0x%08x, hrref = 0x%08x\n", hr, hrref);
         }
@@ -511,6 +511,7 @@ static HRESULT ifproxy_get_public_ref(struct ifproxy * This)
 static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
 {
     HRESULT hr = S_OK;
+    LONG public_refs;
 
     if (WAIT_OBJECT_0 != WaitForSingleObject(This->parent->remoting_mutex, INFINITE))
     {
@@ -518,22 +519,23 @@ static HRESULT ifproxy_release_public_refs(struct ifproxy * This)
         return E_UNEXPECTED;
     }
 
-    if (This->refs > 0)
+    public_refs = This->refs;
+    if (public_refs > 0)
     {
         IRemUnknown *remunk = NULL;
 
-        TRACE("releasing %d refs\n", This->refs);
+        TRACE("releasing %d refs\n", public_refs);
 
         hr = proxy_manager_get_remunknown(This->parent, &remunk);
         if (hr == S_OK)
         {
             REMINTERFACEREF rif;
             rif.ipid = This->stdobjref.ipid;
-            rif.cPublicRefs = This->refs;
+            rif.cPublicRefs = public_refs;
             rif.cPrivateRefs = 0;
             hr = IRemUnknown_RemRelease(remunk, 1, &rif);
             if (hr == S_OK)
-                This->refs = 0;
+                InterlockedExchangeAdd((LONG *)&This->refs, -public_refs);
             else if (hr == RPC_E_DISCONNECTED)
                 WARN("couldn't release references because object was "
                      "disconnected: oxid = %s, oid = %s\n",
@@ -751,7 +753,7 @@ static HRESULT proxy_manager_create_ifproxy(
     ifproxy->parent = This;
     ifproxy->stdobjref = *stdobjref;
     ifproxy->iid = *riid;
-    ifproxy->refs = stdobjref->cPublicRefs;
+    ifproxy->refs = 0;
     ifproxy->proxy = NULL;
 
     assert(channel);
@@ -788,10 +790,6 @@ static HRESULT proxy_manager_create_ifproxy(
         if (hr == S_OK)
             hr = IRpcProxyBuffer_Connect(ifproxy->proxy, ifproxy->chan);
     }
-
-    /* get at least one external reference to the object to keep it alive */
-    if (hr == S_OK)
-        hr = ifproxy_get_public_ref(ifproxy);
 
     if (hr == S_OK)
     {
@@ -1134,6 +1132,15 @@ static HRESULT unmarshal_object(const STDOBJREF *stdobjref, APARTMENT *apt,
         }
         else
             IUnknown_AddRef((IUnknown *)ifproxy->iface);
+
+        if (hr == S_OK)
+        {
+            InterlockedExchangeAdd((LONG *)&ifproxy->refs, stdobjref->cPublicRefs);
+            /* get at least one external reference to the object to keep it alive */
+            hr = ifproxy_get_public_ref(ifproxy);
+            if (FAILED(hr))
+                ifproxy_destroy(ifproxy);
+        }
 
         if (hr == S_OK)
             *object = ifproxy->iface;
