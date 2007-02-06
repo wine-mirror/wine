@@ -2058,19 +2058,13 @@ static UINT msi_dialog_group_box( msi_dialog *dialog, MSIRECORD *rec )
 
 /******************** List Box ***************************************/
 
-struct msi_listbox_item
-{
-    LPWSTR property;
-    LPWSTR value;
-};
-
 struct msi_listbox_info
 {
     msi_dialog *dialog;
     HWND hwnd;
     WNDPROC oldproc;
     DWORD num_items;
-    struct msi_listbox_item *items;
+    LPWSTR *items;
 };
 
 static LRESULT WINAPI MSIListBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -2091,10 +2085,7 @@ static LRESULT WINAPI MSIListBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
     {
     case WM_NCDESTROY:
         for (j = 0; j < info->num_items; j++)
-        {
-            msi_free( info->items[j].property );
-            msi_free( info->items[j].value );
-        }
+            msi_free( info->items[j] );
         msi_free( info->items );
         msi_free( info );
         RemovePropW( hWnd, szButtonData );
@@ -2107,20 +2098,16 @@ static LRESULT WINAPI MSIListBox_WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPA
 static UINT msi_listbox_add_item( MSIRECORD *rec, LPVOID param )
 {
     struct msi_listbox_info *info = param;
-    struct msi_listbox_item *item;
-    LPCWSTR property, value, text;
+    LPCWSTR value, text;
     static int index = 0;
 
-    item = &info->items[index++];
-    property = MSI_RecordGetString( rec, 1 );
     value = MSI_RecordGetString( rec, 3 );
     text = MSI_RecordGetString( rec, 4 );
 
-    item->property = strdupW( property );
-    item->value = strdupW( value );
+    info->items[index] = strdupW( value );
 
     SendMessageW( info->hwnd, LB_ADDSTRING, 0, (LPARAM)text );
-
+    index++;
     return ERROR_SUCCESS;
 }
 
@@ -2167,7 +2154,7 @@ static UINT msi_dialog_listbox_handler( msi_dialog *dialog,
     index = SendMessageW( control->hwnd, LB_GETCURSEL, 0, 0 );
 
     MSI_SetPropertyW( info->dialog->package,
-                      info->items[index].property, info->items[index].value );
+                      control->property, info->items[index] );
     msi_dialog_evaluate_control_conditions( info->dialog );
 
     return ERROR_SUCCESS;
