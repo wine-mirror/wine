@@ -662,7 +662,7 @@ static DWORD SHFindAttrW(LPCWSTR pName, BOOL fileOnly)
  * otherwise the ASCII strings are copied into it and the buffer is increased
  * to point to the location after the final 0 termination char.
  */
-DWORD SHNameTranslate(LPWSTR* wString, LPCWSTR* pWToFrom, BOOL more)
+static DWORD SHNameTranslate(LPWSTR* wString, LPCWSTR* pWToFrom, BOOL more)
 {
 	DWORD size = 0, aSize = 0;
 	LPCSTR aString = (LPCSTR)*pWToFrom;
