@@ -873,6 +873,24 @@ static const MSICOLUMNINFO _Tables_cols[1] = {
     { szTables,  1, szName,   MSITYPE_VALID | MSITYPE_STRING | 64, 0 },
 };
 
+static void table_calc_column_offsets( MSICOLUMNINFO *colinfo, DWORD count )
+{
+    DWORD i;
+
+    for( i=0; colinfo && (i<count); i++ )
+    {
+         assert( (i+1) == colinfo[ i ].number );
+         if (i)
+             colinfo[i].offset = colinfo[ i - 1 ].offset
+                               + bytes_per_column( &colinfo[ i - 1 ] );
+         else
+             colinfo[i].offset = 0;
+         TRACE("column %d is [%s] with type %08x ofs %d\n",
+               colinfo[i].number, debugstr_w(colinfo[i].colname),
+               colinfo[i].type, colinfo[i].offset);
+    }
+}
+
 static UINT get_defaulttablecolumns( LPCWSTR name, MSICOLUMNINFO *colinfo, UINT *sz)
 {
     const MSICOLUMNINFO *p;
@@ -905,6 +923,7 @@ static UINT get_defaulttablecolumns( LPCWSTR name, MSICOLUMNINFO *colinfo, UINT 
         if( colinfo && (i >= *sz) )
             break;
     }
+    table_calc_column_offsets( colinfo, n );
     *sz = n;
     return ERROR_SUCCESS;
 }
@@ -994,26 +1013,14 @@ static UINT get_tablecolumns( MSIDATABASE *db,
 
     TRACE("%s has %d columns\n", debugstr_w(szTableName), n);
 
-    if (maxcount && n != maxcount)
+    if (colinfo && n != maxcount)
     {
         ERR("missing column in table %s\n", debugstr_w(szTableName));
         msi_free_colinfo(colinfo, maxcount );
         return ERROR_FUNCTION_FAILED;
     }
 
-    /* calculate the offsets */
-    for( i=0; maxcount && (i<maxcount); i++ )
-    {
-         assert( (i+1) == colinfo[ i ].number );
-         if (i)
-             colinfo[i].offset = colinfo[ i - 1 ].offset
-                               + bytes_per_column( &colinfo[ i - 1 ] );
-         else
-             colinfo[i].offset = 0;
-         TRACE("column %d is [%s] with type %08x ofs %d\n",
-               colinfo[i].number, debugstr_w(colinfo[i].colname),
-               colinfo[i].type, colinfo[i].offset);
-    }
+    table_calc_column_offsets( colinfo, n );
     *sz = n;
 
     return ERROR_SUCCESS;
