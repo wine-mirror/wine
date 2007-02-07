@@ -1605,7 +1605,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
     HRESULT hr;
     LPWSTR ext;
 
-    static const WCHAR header[] = {
+    static WCHAR header[] = {
         'H','T','T','P','/','1','.','0',' ','2','0','0',' ',
         'O','K','\\','r','\\','n','\\','r','\\','n',0
     };
@@ -1631,7 +1631,7 @@ HRESULT WINAPI URLDownloadToCacheFileW(LPUNKNOWN lpUnkCaller, LPCWSTR szURL, LPW
     modified.dwLowDateTime = 0;
 
     if (!CommitUrlCacheEntryW(szURL, cache_path, expire, modified, NORMAL_CACHE_ENTRY,
-                              (LPWSTR)header, sizeof(header), NULL, NULL))
+                              header, sizeof(header), NULL, NULL))
         return E_FAIL;
 
     if (lstrlenW(cache_path) > dwBufLength)
