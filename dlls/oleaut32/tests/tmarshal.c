@@ -662,12 +662,13 @@ static IKindaEnumWidget *KindaEnumWidget_Create(void)
     ITypeLib *pTypeLib;
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
-    ok_ole_success(hr, LoadRegTypeLib);
     if (hr == TYPE_E_LIBNOTREGISTERED)
     {
         hr = register_current_module_typelib(&pTypeLib);
         ok_ole_success(hr, register_current_module_typelib);
     }
+    else
+        ok_ole_success(hr, LoadRegTypeLib);
     if (SUCCEEDED(hr))
         ITypeLib_Release(pTypeLib);
 
