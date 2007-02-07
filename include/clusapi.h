@@ -19,6 +19,6 @@
 #ifndef __WINE_CLUSAPI_H
 #define __WINE_CLUSAPI_H
 
-DWORD WINAPI GetNodeClusterState(LPCWSTR lpszNodeName, DWORD *pdwClusterState);
+DWORD WINAPI GetNodeClusterState(LPCWSTR lpszNodeName, LPDWORD pdwClusterState);
 
 #endif /* __WINE_CLUSAPI_H */

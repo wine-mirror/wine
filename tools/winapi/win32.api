@@ -443,6 +443,20 @@ ULONG *
 PCHAR
 PCSTR
 
+%%clusapi.dll
+
+%long
+
+DWORD
+
+%ptr
+
+LPDWORD
+
+%wstr
+
+LPCWSTR
+
 %%comcat.dll
 
 %long
