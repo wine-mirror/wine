@@ -19,6 +19,10 @@
 #ifndef _WINCRED_H_
 #define _WINCRED_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __SECHANDLE_DEFINED__
 #define __SECHANDLE_DEFINED__
 typedef struct _SecHandle
@@ -99,5 +103,9 @@ DWORD WINAPI CredUIStoreSSOCredW(PCWSTR,PCWSTR,PCWSTR,BOOL);
 /* Note: no CredUIStoreSSOCredA in PSDK header */
 DWORD WINAPI CredUIReadSSOCredW(PCWSTR,PWSTR*);
 /* Note: no CredUIReadSSOCredA in PSDK header */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _WINCRED_H_ */
