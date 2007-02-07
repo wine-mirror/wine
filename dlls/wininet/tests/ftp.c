@@ -253,6 +253,11 @@ static void test_getfile(void)
         return;
     }
 
+    /* Make sure we start clean */
+
+    DeleteFileA("should_be_non_existing_deadbeef");
+    DeleteFileA("should_also_be_non_existing_deadbeef");
+
     /* We should have a ftp-connection, try some getting */
 
     /* No remote file */
@@ -260,8 +265,14 @@ static void test_getfile(void)
     bRet = FtpGetFileA(hFtp, NULL, "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
     todo_wine
+    {
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
+    ok (GetFileAttributesA("should_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
+        "Local file should not have been created\n");
+    }
+    DeleteFileA("should_be_non_existing_deadbeef");
 
     /* No local file */
     SetLastError(0xdeadbeef);
@@ -280,6 +291,9 @@ static void test_getfile(void)
     ok ( GetLastError() == ERROR_SUCCESS,
         "Expected ERROR_SUCCESS, got %d\n", GetLastError());
     }
+    /* Wine passes this test but for the wrong reason */
+    ok (GetFileAttributesA("should_be_non_existing_deadbeef") != INVALID_FILE_ATTRIBUTES,
+        "Local file should have been created\n");
     DeleteFileA("should_be_non_existing_deadbeef");
 
     /* Illegal condition flags */
@@ -287,20 +301,25 @@ static void test_getfile(void)
     bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, 5, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
     todo_wine
+    {
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok (GetFileAttributesA("should_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
+        "Local file should not have been created\n");
+    }
+    DeleteFileA("should_be_non_existing_deadbeef");
 
     /* Remote file doesn't exist */
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
     todo_wine
+    {
     ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
         "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
-    /* Wine currently creates the file (empty though), cater for that */
-    todo_wine
     ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
         "Local file should not have been created\n");
+    }
     DeleteFileA("should_also_be_non_existing_deadbeef");
 
     /* This one should succeed and give us a copy of the 'welcome.msg' file */
