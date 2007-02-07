@@ -1089,13 +1089,45 @@ static HRESULT get_protocol(Binding *This, LPCWSTR url)
     return hres;
 }
 
+static BOOL is_urlmon_protocol(LPCWSTR url)
+{
+    static const WCHAR wszCdl[] = {'c','d','l'};
+    static const WCHAR wszFile[] = {'f','i','l','e'};
+    static const WCHAR wszFtp[]  = {'f','t','p'};
+    static const WCHAR wszGopher[] = {'g','o','p','h','e','r'};
+    static const WCHAR wszHttp[] = {'h','t','t','p'};
+    static const WCHAR wszHttps[] = {'h','t','t','p','s'};
+    static const WCHAR wszMk[]   = {'m','k'};
+
+    static const struct {
+        LPCWSTR scheme;
+        int len;
+    } protocol_list[] = {
+        {wszCdl,    sizeof(wszCdl)   /sizeof(WCHAR)},
+        {wszFile,   sizeof(wszFile)  /sizeof(WCHAR)},
+        {wszFtp,    sizeof(wszFtp)   /sizeof(WCHAR)},
+        {wszGopher, sizeof(wszGopher)/sizeof(WCHAR)},
+        {wszHttp,   sizeof(wszHttp)  /sizeof(WCHAR)},
+        {wszHttps,  sizeof(wszHttps) /sizeof(WCHAR)},
+        {wszMk,     sizeof(wszMk)    /sizeof(WCHAR)}
+    };
+
+    int i, len = strlenW(url);
+
+    for(i=0; i < sizeof(protocol_list)/sizeof(protocol_list[0]); i++) {
+        if(len >= protocol_list[i].len
+           && !memcmp(url, protocol_list[i].scheme, protocol_list[i].len*sizeof(WCHAR)))
+            return TRUE;
+    }
+
+    return FALSE;
+}
+
 static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding **binding)
 {
     Binding *ret;
     int len;
     HRESULT hres;
-
-    static const WCHAR wszFile[] = {'f','i','l','e',':'};
 
     if(!IsEqualGUID(&IID_IStream, riid)) {
         FIXME("Unsupported riid %s\n", debugstr_guid(riid));
@@ -1159,11 +1191,10 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
 
     ret->bindf |= BINDF_FROMURLMON;
 
-    len = strlenW(url)+1;
-
-    if(len < sizeof(wszFile)/sizeof(WCHAR) || memcmp(wszFile, url, sizeof(wszFile)))
+    if(!is_urlmon_protocol(url))
         ret->bindf |= BINDF_NEEDFILE;
 
+    len = strlenW(url)+1;
     ret->url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
     memcpy(ret->url, url, len*sizeof(WCHAR));
 
