@@ -610,11 +610,11 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI unsigned char* RPC_ENTRY
   NdrServerInitializeNew( PRPC_MESSAGE pRpcMsg, PMIDL_STUB_MESSAGE pStubMsg, PMIDL_STUB_DESC pStubDesc );
 RPCRTAPI unsigned char* RPC_ENTRY
-  NdrGetBuffer( MIDL_STUB_MESSAGE *stubmsg, ULONG buflen, RPC_BINDING_HANDLE handle );
+  NdrGetBuffer( PMIDL_STUB_MESSAGE stubmsg, ULONG buflen, RPC_BINDING_HANDLE handle );
 RPCRTAPI void RPC_ENTRY
-  NdrFreeBuffer( MIDL_STUB_MESSAGE *pStubMsg );
+  NdrFreeBuffer( PMIDL_STUB_MESSAGE pStubMsg );
 RPCRTAPI unsigned char* RPC_ENTRY
-  NdrSendReceive( MIDL_STUB_MESSAGE *stubmsg, unsigned char *buffer );
+  NdrSendReceive( PMIDL_STUB_MESSAGE stubmsg, unsigned char *buffer );
 
 RPCRTAPI unsigned char * RPC_ENTRY
   NdrNsGetBuffer( PMIDL_STUB_MESSAGE pStubMsg, ULONG BufferLength, RPC_BINDING_HANDLE Handle );

@@ -258,7 +258,7 @@ typedef struct twr_t
  *             TowerExplode (RPCRT4.@)
  */
 RPC_STATUS WINAPI TowerExplode(
-    const twr_t *tower, RPC_SYNTAX_IDENTIFIER *object, RPC_SYNTAX_IDENTIFIER *syntax,
+    const twr_t *tower, PRPC_SYNTAX_IDENTIFIER object, PRPC_SYNTAX_IDENTIFIER syntax,
     char **protseq, char **endpoint, char **address)
 {
     size_t tower_size;
