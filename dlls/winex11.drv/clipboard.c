@@ -287,7 +287,6 @@ static WINE_CLIPFORMAT ClipFormats[]  =
 static const WCHAR wszRichTextFormat[] = {'R','i','c','h',' ','T','e','x','t',' ','F','o','r','m','a','t',0};
 static const WCHAR wszGIF[] = {'G','I','F',0};
 static const WCHAR wszHTMLFormat[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
-static const WCHAR wszRICHHTMLFormat[] = {'H','T','M','L',' ','F','o','r','m','a','t',0};
 static const struct
 {
     LPCWSTR lpszFormat;

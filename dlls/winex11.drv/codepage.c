@@ -62,13 +62,6 @@ int IsLegalDBCSChar_cp950( BYTE lead, BYTE trail )
 	       ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) ) );
 }
 
-static inline
-int IsLegalDBCSChar_euc( BYTE lead, BYTE trail )
-{
-    return ( ( lead >= (BYTE)0xa1 && lead <= (BYTE)0xfe ) &&
-             ( trail >= (BYTE)0xa1 && trail <= (BYTE)0xfe ) );
-}
-
 
 /***********************************************************************
  *           DBCSCharToXChar2b for cp932/euc
@@ -102,15 +95,6 @@ void DBCSCharToXChar2b_cp932( XChar2b* pch, BYTE lead, BYTE trail )
     pch->byte1 = (unsigned char)high;
     pch->byte2 = (unsigned char)low;
 }
-
-static inline
-void DBCSCharToXChar2b_euc( XChar2b* pch, BYTE lead, BYTE trail )
-{
-    pch->byte1 = lead & (BYTE)0x7f;
-    pch->byte2 = trail & (BYTE)0x7f;
-}
-
-
 
 
 static WORD X11DRV_enum_subfont_charset_normal( UINT index )
