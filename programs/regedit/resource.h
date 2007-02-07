@@ -29,7 +29,6 @@
 #define IDS_LIST_COLUMN_TYPE            92
 #define IDS_LIST_COLUMN_DATA            93
 #define IDS_LIST_COLUMN_LAST            93
-#define IDD_ABOUTBOX                    103
 #define IDS_APP_TITLE                   103
 #define IDI_REGEDIT                     100
 #define IDI_SMALL                       108

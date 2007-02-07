@@ -97,18 +97,6 @@ END
  * Dialog
  */
 
-IDD_ABOUTBOX DIALOG DISCARDABLE  22, 17, 230, 75
-STYLE DS_MODALFRAME | DS_NOIDLEMSG | WS_CAPTION | WS_SYSMENU
-CAPTION "O"
-FONT 8, "MS Shell Dlg"
-BEGIN
-    ICON            IDI_REGEDIT,IDI_REGEDIT,14,9,16,16
-    LTEXT           "ReactOSov Urejevalnik registra, verzija 1.0",IDC_STATIC,49,10,119,8,
-                    SS_NOPREFIX
-    LTEXT           "Copyright (C) 2002 ekipa ReactOS",IDC_STATIC,49,20,119,8
-    DEFPUSHBUTTON   "V redu",IDOK,195,6,30,11,WS_GROUP
-END
-
 /*
  * String Table
  */
