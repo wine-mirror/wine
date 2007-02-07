@@ -249,8 +249,8 @@ HRESULT WINAPI RunSetupCommandW(HWND hWnd,
      LPCWSTR szCmdName, LPCWSTR szInfSection, LPCWSTR szDir, LPCWSTR lpszTitle,
      HANDLE *phEXE, DWORD dwFlags, LPVOID pvReserved);
 #define RunSetupCommand WINELIB_NAME_AW(RunSetupCommand)
-HRESULT WINAPI SetPerUserSecValuesA(PPERUSERSECTIONA pPerUser);
-HRESULT WINAPI SetPerUserSecValuesW(PPERUSERSECTIONW pPerUser);
+HRESULT WINAPI SetPerUserSecValuesA(PERUSERSECTIONA* pPerUser);
+HRESULT WINAPI SetPerUserSecValuesW(PERUSERSECTIONW* pPerUser);
 #define SetPerUserSecValues WINELIB_NAME_AW(SetPerUserSecValues)
 HRESULT WINAPI TranslateInfStringA(LPCSTR pszInfFilename, LPCSTR pszInstallSection,
      LPCSTR pszTranslateSection, LPCSTR pszTranslateKey, LPSTR pszBuffer,
