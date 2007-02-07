@@ -343,6 +343,34 @@ static void test_items(void)
     DestroyWindow(hwnd);
 }
 
+/* test setting imagelist between WM_NCCREATE and WM_CREATE */
+static WNDPROC listviewWndProc;
+static HIMAGELIST test_create_imagelist;
+
+static LRESULT CALLBACK create_test_wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    if (uMsg == WM_CREATE)
+        SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)test_create_imagelist);
+    return CallWindowProc(listviewWndProc, hwnd, uMsg, wParam, lParam);
+}
+
+static void test_create()
+{
+    HWND hList;
+    WNDCLASSEX cls;
+    cls.cbSize = sizeof(WNDCLASSEX);
+    ok(GetClassInfoEx(GetModuleHandle(NULL), "SysListView32", &cls), "GetClassInfoEx failed\n");
+    listviewWndProc = cls.lpfnWndProc;
+    cls.lpfnWndProc = create_test_wndproc;
+    cls.lpszClassName = "MyListView32";
+    ok(RegisterClassEx(&cls), "RegisterClassEx failed\n");
+
+    test_create_imagelist = ImageList_Create(16, 16, 0, 5, 10);
+    hList = CreateWindow("MyListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandle(NULL), 0);
+    ok((HIMAGELIST)SendMessage(hList, LVM_GETIMAGELIST, 0, 0) == test_create_imagelist, "Image list not obtained\n");
+    DestroyWindow(hList);
+}
+
 START_TEST(listview)
 {
     INITCOMMONCONTROLSEX icc;
@@ -354,4 +382,5 @@ START_TEST(listview)
     test_images();
     test_checkboxes();
     test_items();
+    test_create();
 }

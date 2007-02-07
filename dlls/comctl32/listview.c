@@ -7673,17 +7673,17 @@ static CALLBACK VOID LISTVIEW_DelayedEditItem(HWND hwnd, UINT uMsg, UINT_PTR idE
 
 /***
  * DESCRIPTION:
- * Creates the listview control.
+ * Creates the listview control - the WM_NCCREATE phase.
  *
  * PARAMETER(S):
  * [I] hwnd : window handle
  * [I] lpcs : the create parameters
  *
  * RETURN:
- *   Success: 0
- *   Failure: -1
+ *   Success: TRUE
+ *   Failure: FALSE
  */
-static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
+static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
   LISTVIEW_INFO *infoPtr;
   UINT uView = lpcs->style & LVS_TYPEMASK;
@@ -7693,7 +7693,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   /* initialize info pointer */
   infoPtr = Alloc(sizeof(LISTVIEW_INFO));
-  if (!infoPtr) return -1;
+  if (!infoPtr) return FALSE;
 
   SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -7701,8 +7701,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->dwStyle = lpcs->style;
   /* determine the type of structures to use */
   infoPtr->hwndNotify = lpcs->hwndParent;
-  infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT,
-                                       (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
+  /* infoPtr->notifyFormat will be filled in WM_CREATE */
 
   /* initialize color information  */
   infoPtr->clrBk = CLR_NONE;
@@ -7731,19 +7730,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   infoPtr->hFont = infoPtr->hDefaultFont;
   LISTVIEW_SaveTextMetrics(infoPtr);
 
-  /* create header */
-  infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, NULL,
-    WS_CHILD | HDS_HORZ | HDS_FULLDRAG | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
-    0, 0, 0, 0, hwnd, NULL,
-    lpcs->hInstance, NULL);
-  if (!infoPtr->hwndHeader) goto fail;
-
-  /* set header unicode format */
-  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, (LPARAM)NULL);
-
-  /* set header font */
-  SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, (LPARAM)TRUE);
-
   /* allocate memory for the data structure */
   if (!(infoPtr->selectionRanges = ranges_create(10))) goto fail;
   if (!(infoPtr->hdpaItems = DPA_Create(10))) goto fail;
@@ -7754,10 +7740,58 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   /* initialize the icon sizes */
   set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, uView != LVS_ICON);
   set_icon_size(&infoPtr->iconStateSize, infoPtr->himlState, TRUE);
+  return TRUE;
+
+fail:
+    DestroyWindow(infoPtr->hwndHeader);
+    ranges_destroy(infoPtr->selectionRanges);
+    DPA_Destroy(infoPtr->hdpaItems);
+    DPA_Destroy(infoPtr->hdpaPosX);
+    DPA_Destroy(infoPtr->hdpaPosY);
+    DPA_Destroy(infoPtr->hdpaColumns);
+    Free(infoPtr);
+    return FALSE;
+}
+
+/***
+ * DESCRIPTION:
+ * Creates the listview control - the WM_CREATE phase. Most of the data is
+ * already set up in LISTVIEW_NCCreate
+ *
+ * PARAMETER(S):
+ * [I] hwnd : window handle
+ * [I] lpcs : the create parameters
+ *
+ * RETURN:
+ *   Success: 0
+ *   Failure: -1
+ */
+static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
+{
+  LISTVIEW_INFO *infoPtr = (LISTVIEW_INFO *)GetWindowLongPtrW(hwnd, 0);
+  UINT uView = lpcs->style & LVS_TYPEMASK;
+
+  TRACE("(lpcs=%p)\n", lpcs);
+
+  infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT,
+                                       (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
+
+  /* create header */
+  infoPtr->hwndHeader =	CreateWindowW(WC_HEADERW, NULL,
+    WS_CHILD | HDS_HORZ | HDS_FULLDRAG | (DWORD)((LVS_NOSORTHEADER & lpcs->style)?0:HDS_BUTTONS),
+    0, 0, 0, 0, hwnd, NULL,
+    lpcs->hInstance, NULL);
+  if (!infoPtr->hwndHeader) return -1;
+
+  /* set header unicode format */
+  SendMessageW(infoPtr->hwndHeader, HDM_SETUNICODEFORMAT, (WPARAM)TRUE, (LPARAM)NULL);
+
+  /* set header font */
+  SendMessageW(infoPtr->hwndHeader, WM_SETFONT, (WPARAM)infoPtr->hFont, (LPARAM)TRUE);
 
   /* init item size to avoid division by 0 */
   LISTVIEW_UpdateItemSize (infoPtr);
-  
+
   if (uView == LVS_REPORT)
   {
     if (!(LVS_NOCOLUMNHEADER & lpcs->style))
@@ -7775,16 +7809,6 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
   OpenThemeData(hwnd, themeClass);
 
   return 0;
-
-fail:
-    DestroyWindow(infoPtr->hwndHeader);
-    ranges_destroy(infoPtr->selectionRanges);
-    DPA_Destroy(infoPtr->hdpaItems);
-    DPA_Destroy(infoPtr->hdpaPosX);
-    DPA_Destroy(infoPtr->hdpaPosY);
-    DPA_Destroy(infoPtr->hdpaColumns);
-    Free(infoPtr);
-    return -1;
 }
 
 /***
@@ -9246,7 +9270,7 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   TRACE("(uMsg=%x wParam=%x lParam=%lx)\n", uMsg, wParam, lParam);
 
-  if (!infoPtr && (uMsg != WM_CREATE))
+  if (!infoPtr && (uMsg != WM_NCCREATE))
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 
   switch (uMsg)
@@ -9604,6 +9628,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
   case WM_COMMAND:
     return LISTVIEW_Command(infoPtr, wParam, lParam);
+
+  case WM_NCCREATE:
+    return LISTVIEW_NCCreate(hwnd, (LPCREATESTRUCTW)lParam);
 
   case WM_CREATE:
     return LISTVIEW_Create(hwnd, (LPCREATESTRUCTW)lParam);
