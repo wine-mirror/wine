@@ -42,6 +42,10 @@ static TCHAR favoriteName[128];
 static TCHAR searchString[128];
 static int searchMask = SEARCH_KEYS | SEARCH_VALUES | SEARCH_CONTENT;
 
+static TCHAR FileNameBuffer[_MAX_PATH];
+static TCHAR FileTitleBuffer[_MAX_PATH];
+static TCHAR FilterBuffer[_MAX_PATH];
+
 /*******************************************************************************
  * Local module support methods
  */
@@ -286,9 +290,6 @@ static UINT_PTR CALLBACK ExportRegistryFile_OFNHookProc(HWND hdlg, UINT uiMsg, W
     return 0L;
 }
 
-TCHAR FileNameBuffer[_MAX_PATH];
-TCHAR FileTitleBuffer[_MAX_PATH];
-TCHAR FilterBuffer[_MAX_PATH];
 
 static BOOL InitOpenFileName(HWND hWnd, OPENFILENAME *pofn)
 {
