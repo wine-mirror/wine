@@ -77,7 +77,7 @@ static UINT msi_change_media( MSIPACKAGE *package, struct media_info *mi )
     static const WCHAR szUILevel[] = {'U','I','L','e','v','e','l',0};
     static const WCHAR error_prop[] = {'E','r','r','o','r','D','i','a','l','o','g',0};
 
-    if ( msi_get_property_int(package, szUILevel, 0) == INSTALLUILEVEL_NONE && !gUIHandlerA )
+    if ( (msi_get_property_int(package, szUILevel, 0) & INSTALLUILEVEL_MASK) == INSTALLUILEVEL_NONE && !gUIHandlerA )
         return ERROR_SUCCESS;
 
     error = generate_error_string( package, 1302, 1, mi->disk_prompt );
