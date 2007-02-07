@@ -772,6 +772,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     switch(msg)
     {
     case WM_NCCREATE:
+        if (lParam)
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
             /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
@@ -930,6 +931,7 @@ LRESULT WINAPI DefWindowProcW(
     switch(msg)
     {
     case WM_NCCREATE:
+        if (lParam)
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
             /* check for string, as static icons, bitmaps (SS_ICON, SS_BITMAP)
