@@ -520,16 +520,20 @@ typedef struct KindaEnum
     LONG refs;
 } KindaEnum;
 
-static HRESULT register_current_module_typelib(ITypeLib **typelib)
+static HRESULT register_current_module_typelib(void)
 {
     WCHAR path[MAX_PATH];
     HRESULT hr;
+    ITypeLib *typelib;
 
     GetModuleFileNameW(NULL, path, MAX_PATH);
 
-    hr = LoadTypeLib(path, typelib);
+    hr = LoadTypeLib(path, &typelib);
     if (SUCCEEDED(hr))
-        hr = RegisterTypeLib(*typelib, path, NULL);
+    {
+        hr = RegisterTypeLib(typelib, path, NULL);
+        ITypeLib_Release(typelib);
+    }
     return hr;
 }
 
@@ -544,11 +548,6 @@ static IWidget *Widget_Create(void)
 
     hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
     ok_ole_success(hr, LoadRegTypeLib);
-    if (hr == TYPE_E_LIBNOTREGISTERED)
-    {
-        hr = register_current_module_typelib(&pTypeLib);
-        ok_ole_success(hr, register_current_module_typelib);
-    }
     if (SUCCEEDED(hr))
     {
         ITypeInfo *pTypeInfo;
@@ -658,19 +657,6 @@ static const IKindaEnumWidgetVtbl KindaEnumWidget_VTable =
 static IKindaEnumWidget *KindaEnumWidget_Create(void)
 {
     KindaEnum *This;
-    HRESULT hr;
-    ITypeLib *pTypeLib;
-
-    hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
-    if (hr == TYPE_E_LIBNOTREGISTERED)
-    {
-        hr = register_current_module_typelib(&pTypeLib);
-        ok_ole_success(hr, register_current_module_typelib);
-    }
-    else
-        ok_ole_success(hr, LoadRegTypeLib);
-    if (SUCCEEDED(hr))
-        ITypeLib_Release(pTypeLib);
 
     This = (KindaEnum *)HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
     if (!This) return NULL;
@@ -720,11 +706,7 @@ static ITypeInfo *NonOleAutomation_GetTypeInfo(void)
 {
     ITypeLib *pTypeLib;
     HRESULT hr = LoadRegTypeLib(&LIBID_TestTypelib, 1, 0, LOCALE_NEUTRAL, &pTypeLib);
-    if (hr == TYPE_E_LIBNOTREGISTERED)
-    {
-        hr = register_current_module_typelib(&pTypeLib);
-        ok_ole_success(hr, register_current_module_typelib);
-    }
+    ok_ole_success(hr, LoadRegTypeLib);
     if (SUCCEEDED(hr))
     {
         ITypeInfo *pTypeInfo;
@@ -1106,7 +1088,12 @@ static void test_DispCallFunc(void)
 
 START_TEST(tmarshal)
 {
+    HRESULT hr;
+
     CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = register_current_module_typelib();
+    ok_ole_success(hr, register_current_module_typelib);
 
     test_typelibmarshal();
     test_DispCallFunc();
