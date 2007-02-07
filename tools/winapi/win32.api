@@ -634,6 +634,25 @@ ULONG_PTR
 LPDWORD
 PFNPROPSHEETUI
 
+%%credui.dll
+
+%long
+
+BOOL
+DWORD
+ULONG
+
+%ptr
+
+PBOOL
+PCREDUI_INFOW
+PCtxtHandle
+
+%wstr
+
+PCWSTR
+PWSTR
+
 %%crtdll.dll
 
 %long

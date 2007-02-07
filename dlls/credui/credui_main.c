@@ -140,7 +140,7 @@ DWORD WINAPI CredUIPromptForCredentialsW(PCREDUI_INFOW pUIInfo,
                                          PWSTR pszUsername,
                                          ULONG ulUsernameMaxChars,
                                          PWSTR pszPassword,
-                                         ULONG ulPasswordMaxChars, BOOL *pfSave,
+                                         ULONG ulPasswordMaxChars, PBOOL pfSave,
                                          DWORD dwFlags)
 {
     INT_PTR ret;
