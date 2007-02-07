@@ -58,9 +58,9 @@ typedef struct tagACLMulti {
     struct ACLMultiSublist *objs;
 } ACLMulti;
 
-const static IEnumStringVtbl ACLMultiVtbl;
-const static IACListVtbl ACLMulti_ACListVtbl;
-const static IObjMgrVtbl ACLMulti_ObjMgrVtbl;
+static const IEnumStringVtbl ACLMultiVtbl;
+static const IACListVtbl ACLMulti_ACListVtbl;
+static const IObjMgrVtbl ACLMulti_ObjMgrVtbl;
 
 static inline ACLMulti *impl_from_IACList(IACList *iface)
 {
