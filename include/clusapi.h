@@ -19,6 +19,14 @@
 #ifndef __WINE_CLUSAPI_H
 #define __WINE_CLUSAPI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DWORD WINAPI GetNodeClusterState(LPCWSTR lpszNodeName, LPDWORD pdwClusterState);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __WINE_CLUSAPI_H */
