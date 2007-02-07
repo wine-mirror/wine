@@ -1550,8 +1550,6 @@ BOOL FTP_FtpRemoveDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszDirectory)
 
     TRACE("\n");
 
-    assert (WH_HFTPSESSION == lpwfs->hdr.htype);
-
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
