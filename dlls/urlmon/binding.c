@@ -91,6 +91,7 @@ struct Binding {
     LPWSTR url;
     BOOL verified_mime;
     DWORD continue_call;
+    BOOL request_locked;
 
     DWORD apartment_thread;
     HWND notif_hwnd;
@@ -871,8 +872,10 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     if(grfBSCF & BSCF_LASTDATANOTIFICATION)
         on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_ENDDOWNLOADDATA, This->url);
 
-    if(grfBSCF & BSCF_FIRSTDATANOTIFICATION)
-        IInternetProtocol_LockRequest(This->protocol, 0);
+    if(!This->request_locked) {
+        HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
+        This->request_locked = SUCCEEDED(hres);
+    }
 
     on_data_available(This, grfBSCF);
 
@@ -1155,6 +1158,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->notif_hwnd = get_notif_hwnd();
     ret->verified_mime = FALSE;
     ret->continue_call = 0;
+    ret->request_locked = FALSE;
     ret->task_queue_head = ret->task_queue_tail = NULL;
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
@@ -1240,7 +1244,8 @@ HRESULT start_binding(LPCWSTR url, IBindCtx *pbc, REFIID riid, void **ppv)
     }
 
     if(binding->stream->init_buf) {
-        IInternetProtocol_UnlockRequest(binding->protocol);
+        if(binding->request_locked)
+            IInternetProtocol_UnlockRequest(binding->protocol);
 
         IStream_AddRef(STREAM(binding->stream));
         *ppv = binding->stream;
