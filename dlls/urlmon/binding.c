@@ -812,36 +812,11 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     return S_OK;
 }
 
-static void report_data(Binding *This, DWORD bscf)
+static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progress_max)
 {
     FORMATETC formatetc = {0, NULL, 1, -1, TYMED_ISTREAM};
 
-    fill_stream_buffer(This->stream);
-
-    IBindStatusCallback_OnDataAvailable(This->callback, bscf, This->stream->buf_size,
-            &formatetc, &This->stgmed);
-}
-
-typedef struct {
-    task_header_t header;
-    DWORD bscf;
-} report_data_task_t;
-
-static void report_data_proc(Binding *binding, task_header_t *t)
-{
-    report_data_task_t *task = (report_data_task_t*)t;
-
-    report_data(binding, task->bscf);
-
-    HeapFree(GetProcessHeap(), 0, task);
-}
-
-static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
-        DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
-{
-    Binding *This = PROTSINK_THIS(iface);
-
-    TRACE("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
+    TRACE("(%p)->(%d %u %u)\n", This, bscf, progress, progress_max);
 
     if(GetCurrentThreadId() != This->apartment_thread)
         FIXME("called from worked hread\n");
@@ -856,32 +831,66 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
         FindMimeFromData(NULL, This->url, This->stream->buf,
                          min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
 
-        on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_MIMETYPEAVAILABLE, mime);
+        on_progress(This, progress, progress_max, BINDSTATUS_MIMETYPEAVAILABLE, mime);
     }
 
-    if(grfBSCF & BSCF_FIRSTDATANOTIFICATION) {
-        on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_BEGINDOWNLOADDATA, This->url);
+    if(bscf & BSCF_FIRSTDATANOTIFICATION) {
+        on_progress(This, progress, progress_max, BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
 
-    if(grfBSCF & BSCF_LASTDATANOTIFICATION)
-        on_progress(This, ulProgress, ulProgressMax, BINDSTATUS_ENDDOWNLOADDATA, This->url);
+    if(bscf & BSCF_LASTDATANOTIFICATION)
+        on_progress(This, progress, progress_max, BINDSTATUS_ENDDOWNLOADDATA, This->url);
 
     if(!This->request_locked) {
         HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
         This->request_locked = SUCCEEDED(hres);
     }
 
+    fill_stream_buffer(This->stream);
+
+    IBindStatusCallback_OnDataAvailable(This->callback, bscf, This->stream->buf_size,
+            &formatetc, &This->stgmed);
+
+    if(bscf & BSCF_LASTDATANOTIFICATION)
+        IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
+}
+
+typedef struct {
+    task_header_t header;
+    DWORD bscf;
+    ULONG progress;
+    ULONG progress_max;
+} report_data_task_t;
+
+static void report_data_proc(Binding *binding, task_header_t *t)
+{
+    report_data_task_t *task = (report_data_task_t*)t;
+
+    report_data(binding, task->bscf, task->progress, task->progress_max);
+
+    HeapFree(GetProcessHeap(), 0, task);
+}
+
+static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
+        DWORD grfBSCF, ULONG ulProgress, ULONG ulProgressMax)
+{
+    Binding *This = PROTSINK_THIS(iface);
+
+    TRACE("(%p)->(%d %u %u)\n", This, grfBSCF, ulProgress, ulProgressMax);
+
+    if(GetCurrentThreadId() != This->apartment_thread)
+        FIXME("called from worked hread\n");
+
     if(This->continue_call) {
         report_data_task_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(report_data_task_t));
         task->bscf = grfBSCF;
+        task->progress = ulProgress;
+        task->progress_max = ulProgressMax;
 
         push_task(This, &task->header, report_data_proc);
     }else {
-        report_data(This, grfBSCF);
+        report_data(This, grfBSCF, ulProgress, ulProgressMax);
     }
-
-    if(grfBSCF & BSCF_LASTDATANOTIFICATION)
-        IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
 
     return S_OK;
 }
