@@ -425,12 +425,6 @@ BOOL WINAPI FTP_FtpSetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpsz
 
     TRACE("lpszDirectory(%s)\n", debugstr_w(lpszDirectory));
 
-    if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
-    }
-
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
