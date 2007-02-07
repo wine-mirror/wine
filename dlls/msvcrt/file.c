@@ -2356,9 +2356,9 @@ MSVCRT_wint_t CDECL _fputwchar(MSVCRT_wint_t wc)
 }
 
 /*********************************************************************
- *		fopen (MSVCRT.@)
+ *		_fsopen (MSVCRT.@)
  */
-MSVCRT_FILE* CDECL MSVCRT_fopen(const char *path, const char *mode)
+MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share)
 {
   MSVCRT_FILE* file;
   int open_flags, stream_flags, fd;
@@ -2370,7 +2370,7 @@ MSVCRT_FILE* CDECL MSVCRT_fopen(const char *path, const char *mode)
       return NULL;
 
   LOCK_FILES();
-  fd = _open(path, open_flags, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
+  fd = MSVCRT__sopen(path, open_flags, share, MSVCRT__S_IREAD | MSVCRT__S_IWRITE);
   if (fd < 0)
     file = NULL;
   else if ((file = msvcrt_alloc_fp()) && msvcrt_init_fp(file, fd, stream_flags)
@@ -2390,9 +2390,9 @@ MSVCRT_FILE* CDECL MSVCRT_fopen(const char *path, const char *mode)
 }
 
 /*********************************************************************
- *		_wfopen (MSVCRT.@)
+ *		_wfsopen (MSVCRT.@)
  */
-MSVCRT_FILE * CDECL MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode)
+MSVCRT_FILE * CDECL MSVCRT__wfsopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, int share)
 {
   const unsigned int plen = strlenW(path), mlen = strlenW(mode);
   char *patha = MSVCRT_calloc(plen + 1, 1);
@@ -2404,7 +2404,7 @@ MSVCRT_FILE * CDECL MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wcha
       WideCharToMultiByte(CP_ACP,0,path,plen,patha,plen,NULL,NULL) &&
       WideCharToMultiByte(CP_ACP,0,mode,mlen,modea,mlen,NULL,NULL))
   {
-    MSVCRT_FILE *retval = MSVCRT_fopen(patha,modea);
+    MSVCRT_FILE *retval = MSVCRT__fsopen(patha,modea,share);
     MSVCRT_free(patha);
     MSVCRT_free(modea);
     return retval;
@@ -2415,22 +2415,19 @@ MSVCRT_FILE * CDECL MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wcha
 }
 
 /*********************************************************************
- *		_fsopen (MSVCRT.@)
+ *		fopen (MSVCRT.@)
  */
-MSVCRT_FILE* CDECL MSVCRT__fsopen(const char *path, const char *mode, int share)
+MSVCRT_FILE * CDECL MSVCRT_fopen(const char *path, const char *mode)
 {
-  FIXME(":(%s,%s,%d),ignoring share mode!\n",path,mode,share);
-  return MSVCRT_fopen(path,mode);
+    return MSVCRT__fsopen( path, mode, MSVCRT__SH_DENYNO );
 }
 
 /*********************************************************************
- *		_wfsopen (MSVCRT.@)
+ *		_wfopen (MSVCRT.@)
  */
-MSVCRT_FILE* CDECL MSVCRT__wfsopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, int share)
+MSVCRT_FILE * CDECL MSVCRT__wfopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode)
 {
-  FIXME(":(%s,%s,%d),ignoring share mode!\n",
-        debugstr_w(path),debugstr_w(mode),share);
-  return MSVCRT__wfopen(path,mode);
+    return MSVCRT__wfsopen( path, mode, MSVCRT__SH_DENYNO );
 }
 
 /* MSVCRT_fputc calls MSVCRT__flsbuf which calls MSVCRT_fputc */
