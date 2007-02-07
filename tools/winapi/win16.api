@@ -1484,7 +1484,7 @@ HWND16
 BOOL
 INT
 LONG
-u_long
+WS_u_long
 
 %ptr
 
@@ -1520,7 +1520,7 @@ HWND16
 INT16
 SOCKET16
 UINT16
-u_short
+WS_u_short
 
 %%wintab.dll
 

@@ -5589,6 +5589,10 @@ void
 
 %%ws2_32.dll
 
+%short
+
+WS_u_short
+
 %long
 
 BOOL
@@ -5600,13 +5604,12 @@ INT
 SOCKET
 UINT
 WORD
+WS_socklen_t
+WS_u_long
 WSAESETSERVICEOP
 WSAEVENT
 int
 long
-socklen_t
-u_long
-u_short
 
 %ptr
 
@@ -5638,6 +5641,8 @@ LPWSASERVICECLASSINFOW
 PADDRINFOW *
 SOCKADDR *
 WS_fd_set *
+WS_u_long *
+WS_u_short *
 int *
 struct WS_addrinfo *
 struct WS_addrinfo **
@@ -5646,8 +5651,6 @@ struct WS_protoent *
 struct WS_servent *
 struct WS_sockaddr *
 struct WS_timeval *
-u_long *
-u_short *
 
 %str
 
