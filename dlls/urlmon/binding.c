@@ -36,27 +36,14 @@ WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 typedef struct Binding Binding;
 
-struct _task_t;
+struct _task_header_t;
 
-typedef void (*task_proc_t)(Binding*, struct _task_t*);
+typedef void (*task_proc_t)(Binding*, struct _task_header_t*);
 
-typedef struct {
-    Binding *binding;
-    ULONG progress;
-    ULONG progress_max;
-    ULONG status_code;
-    LPWSTR status_text;
-} on_progress_data;
-
-typedef struct _task_t {
+typedef struct _task_header_t {
     task_proc_t proc;
-    struct _task_t *next;
-    union {
-        on_progress_data on_progress;
-        PROTOCOLDATA *protocol_data;
-        DWORD bscf;
-    } data;
-} task_t;
+    struct _task_header_t *next;
+} task_header_t;
 
 typedef struct {
     const IStreamVtbl *lpStreamVtbl;
@@ -96,7 +83,7 @@ struct Binding {
 
     STGMEDIUM stgmed;
 
-    task_t *task_queue_head, *task_queue_tail;
+    task_header_t *task_queue_head, *task_queue_tail;
     CRITICAL_SECTION section;
 };
 
@@ -109,11 +96,12 @@ struct Binding {
 
 #define WM_MK_CONTINUE   (WM_USER+101)
 
-static void push_task(Binding *binding, task_t *task)
+static void push_task(Binding *binding, task_header_t *task, task_proc_t proc)
 {
+    task->proc = proc;
     task->next = NULL;
 
-     EnterCriticalSection(&binding->section);
+    EnterCriticalSection(&binding->section);
 
     if(binding->task_queue_tail)
         binding->task_queue_tail->next = task;
@@ -123,22 +111,22 @@ static void push_task(Binding *binding, task_t *task)
     LeaveCriticalSection(&binding->section);
 }
 
-static task_t *pop_task(Binding *binding)
+static task_header_t *pop_task(Binding *binding)
 {
-    task_t *ret;
+    task_header_t *ret;
 
-     EnterCriticalSection(&binding->section);
+    EnterCriticalSection(&binding->section);
 
-     ret = binding->task_queue_head;
-     if(ret) {
-         binding->task_queue_head = ret->next;
-         if(!binding->task_queue_head)
-             binding->task_queue_tail = NULL;
-     }
+    ret = binding->task_queue_head;
+    if(ret) {
+        binding->task_queue_head = ret->next;
+        if(!binding->task_queue_head)
+            binding->task_queue_tail = NULL;
+    }
 
-     LeaveCriticalSection(&binding->section);
+    LeaveCriticalSection(&binding->section);
 
-     return ret;
+    return ret;
 }
 
 static void fill_stream_buffer(ProtocolStream *This)
@@ -161,7 +149,7 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
 {
     if(msg == WM_MK_CONTINUE) {
         Binding *binding = (Binding*)lParam;
-        task_t *task;
+        task_header_t *task;
 
         while((task = pop_task(binding)))
             task->proc(binding, task);
@@ -696,26 +684,32 @@ static ULONG WINAPI InternetProtocolSink_Release(IInternetProtocolSink *iface)
     return IBinding_Release(BINDING(This));
 }
 
-static void switch_proc(Binding *binding, task_t *t)
-{
-    IInternetProtocol_Continue(binding->protocol, t->data.protocol_data);
+typedef struct {
+    task_header_t header;
+    PROTOCOLDATA *data;
+} switch_task_t;
 
-    HeapFree(GetProcessHeap(), 0, t);
+static void switch_proc(Binding *binding, task_header_t *t)
+{
+    switch_task_t *task = (switch_task_t*)t;
+
+    IInternetProtocol_Continue(binding->protocol, task->data);
+
+    HeapFree(GetProcessHeap(), 0, task);
 }
 
 static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
         PROTOCOLDATA *pProtocolData)
 {
     Binding *This = PROTSINK_THIS(iface);
-    task_t *task;
+    switch_task_t *task;
 
     TRACE("(%p)->(%p)\n", This, pProtocolData);
 
-    task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_t));
-    task->proc = switch_proc;
-    task->data.protocol_data = pProtocolData;
+    task = HeapAlloc(GetProcessHeap(), 0, sizeof(switch_task_t));
+    task->data = pProtocolData;
 
-    push_task(This, task);
+    push_task(This, &task->header, switch_proc);
 
     IBinding_AddRef(BINDING(This));
     PostMessageW(This->notif_hwnd, WM_MK_CONTINUE, 0, (LPARAM)This);
@@ -723,19 +717,31 @@ static HRESULT WINAPI InternetProtocolSink_Switch(IInternetProtocolSink *iface,
     return S_OK;
 }
 
-static void on_progress_proc(Binding *This, task_t *t)
-{
-    IBindStatusCallback_OnProgress(This->callback, t->data.on_progress.progress,
-            t->data.on_progress.progress_max, t->data.on_progress.status_code, t->data.on_progress.status_text);
+typedef struct {
+    task_header_t header;
 
-    HeapFree(GetProcessHeap(), 0, t->data.on_progress.status_text);
-    HeapFree(GetProcessHeap(), 0, t);
+    Binding *binding;
+    ULONG progress;
+    ULONG progress_max;
+    ULONG status_code;
+    LPWSTR status_text;
+} on_progress_task_t;
+
+static void on_progress_proc(Binding *binding, task_header_t *t)
+{
+    on_progress_task_t *task = (on_progress_task_t*)t;
+
+    IBindStatusCallback_OnProgress(binding->callback, task->progress,
+            task->progress_max, task->status_code, task->status_text);
+
+    HeapFree(GetProcessHeap(), 0, task->status_text);
+    HeapFree(GetProcessHeap(), 0, task);
 }
 
 static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
                         ULONG status_code, LPCWSTR status_text)
 {
-    task_t *task;
+    on_progress_task_t *task;
 
     if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
@@ -743,23 +749,22 @@ static void on_progress(Binding *This, ULONG progress, ULONG progress_max,
         return;
     }
 
-    task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_t));
+    task = HeapAlloc(GetProcessHeap(), 0, sizeof(on_progress_task_t));
 
-    task->proc = on_progress_proc;
-    task->data.on_progress.progress = progress;
-    task->data.on_progress.progress_max = progress_max;
-    task->data.on_progress.status_code = status_code;
+    task->progress = progress;
+    task->progress_max = progress_max;
+    task->status_code = status_code;
 
     if(status_text) {
         DWORD size = (strlenW(status_text)+1)*sizeof(WCHAR);
 
-        task->data.on_progress.status_text = HeapAlloc(GetProcessHeap(), 0, size);
-        memcpy(task->data.on_progress.status_text, status_text, size);
+        task->status_text = HeapAlloc(GetProcessHeap(), 0, size);
+        memcpy(task->status_text, status_text, size);
     }else {
-        task->data.on_progress.status_text = NULL;
+        task->status_text = NULL;
     }
 
-    push_task(This, task);
+    push_task(This, &task->header, on_progress_proc);
 
     if(GetCurrentThreadId() != This->apartment_thread) {
         IBinding_AddRef(BINDING(This));
@@ -814,11 +819,18 @@ static void report_data(Binding *This, DWORD bscf)
             &formatetc, &This->stgmed);
 }
 
-static void report_data_proc(Binding *binding, task_t *t)
-{
-    report_data(binding, t->data.bscf);
+typedef struct {
+    task_header_t header;
+    DWORD bscf;
+} report_data_task_t;
 
-    HeapFree(GetProcessHeap(), 0, t);
+static void report_data_proc(Binding *binding, task_header_t *t)
+{
+    report_data_task_t *task = (report_data_task_t*)t;
+
+    report_data(binding, task->bscf);
+
+    HeapFree(GetProcessHeap(), 0, task);
 }
 
 static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *iface,
@@ -857,11 +869,10 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     }
 
     if(This->continue_call) {
-        task_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_t));
-        task->proc = report_data_proc;
-        task->data.bscf = grfBSCF;
+        report_data_task_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(report_data_task_t));
+        task->bscf = grfBSCF;
 
-        push_task(This, task);
+        push_task(This, &task->header, report_data_proc);
     }else {
         report_data(This, grfBSCF);
     }
