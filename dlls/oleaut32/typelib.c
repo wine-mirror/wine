@@ -5519,6 +5519,19 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
 
                 if (wParamFlags & PARAMFLAG_FRETVAL)
                 {
+                    /* under most conditions the caller is not allowed to
+                     * pass in a dispparam arg in the index of what would be
+                     * the retval parameter. however, there is an exception
+                     * where the extra parameter is used in an extra
+                     * IDispatch::Invoke below */
+                    if ((i < pDispParams->cArgs) &&
+                        ((func_desc->cParams != 1) || !pVarResult ||
+                         !(func_desc->invkind & INVOKE_PROPERTYGET)))
+                    {
+                        hres = DISP_E_BADPARAMCOUNT;
+                        break;
+                    }
+
                     /* note: this check is placed so that if the caller passes
                      * in a VARIANTARG for the retval we just ignore it, like
                      * native does */
@@ -5731,6 +5744,29 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 }
                 else
                     VariantClear(&varresult);
+            }
+
+            if (SUCCEEDED(hres) && pVarResult && (func_desc->cParams == 1) &&
+                (wFlags == INVOKE_PROPERTYGET) &&
+                (func_desc->lprgelemdescParam[0].u.paramdesc.wParamFlags & PARAMFLAG_FRETVAL) &&
+                (pDispParams->cArgs != 0))
+            {
+                if (V_VT(pVarResult) == VT_DISPATCH)
+                {
+                    IDispatch *pDispatch = V_DISPATCH(pVarResult);
+                    /* Note: not VariantClear; we still need the dispatch
+                     * pointer to be valid */
+                    VariantInit(pVarResult);
+                    hres = IDispatch_Invoke(pDispatch, DISPID_VALUE, &IID_NULL,
+                        GetSystemDefaultLCID(), INVOKE_PROPERTYGET,
+                        pDispParams, pVarResult, pExcepInfo, pArgErr);
+                    IDispatch_Release(pDispatch);
+                }
+                else
+                {
+                    VariantClear(pVarResult);
+                    hres = DISP_E_NOTACOLLECTION;
+                }
             }
 
 func_fail:

@@ -898,11 +898,8 @@ static void test_typelibmarshal(void)
         "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
         excepinfo.wCode, excepinfo.scode);
 
-    todo_wine
-    {
-        ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
-        ok(V_I2(&varresult) == 1234, "V_I2(&varresult) was %d instead of 1234\n", V_I2(&varresult));
-    }
+    ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
+    ok(V_I2(&varresult) == 1234, "V_I2(&varresult) was %d instead of 1234\n", V_I2(&varresult));
     VariantClear(&varresult);
 
     /* call Value with a VT_VARIANT|VT_BYREF type */
@@ -1033,10 +1030,7 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_STATE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
-    todo_wine
-    {
-        ok(hr == DISP_E_NOTACOLLECTION, "IDispatch_Invoke should have returned DISP_E_NOTACOLLECTION instead of 0x%08x\n", hr);
-    }
+    ok(hr == DISP_E_NOTACOLLECTION, "IDispatch_Invoke should have returned DISP_E_NOTACOLLECTION instead of 0x%08x\n", hr);
 
     IDispatch_Release(pDispatch);
     IWidget_Release(pWidget);
