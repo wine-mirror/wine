@@ -171,7 +171,6 @@ static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BO
 
 static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    ChildWnd* pChildWnd = g_pChildWnd;
     switch (LOWORD(wParam)) {
         /* Parse the menu selections: */
     case ID_REGISTRY_EXIT:
@@ -182,8 +181,8 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         /* TODO */
         break;
     case ID_SWITCH_PANELS:
-        pChildWnd->nFocusPanel = !pChildWnd->nFocusPanel;
-        SetFocus(pChildWnd->nFocusPanel? pChildWnd->hListWnd: pChildWnd->hTreeWnd);
+        g_pChildWnd->nFocusPanel = !g_pChildWnd->nFocusPanel;
+        SetFocus(g_pChildWnd->nFocusPanel? g_pChildWnd->hListWnd: g_pChildWnd->hTreeWnd);
         break;
     default:
         return FALSE;
@@ -205,19 +204,18 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static int last_split;
-    ChildWnd* pChildWnd = g_pChildWnd;
 
     switch (message) {
     case WM_CREATE:
-        g_pChildWnd = pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
-        if (!pChildWnd) return 0;
-        LoadString(hInst, IDS_REGISTRY_ROOT_NAME, pChildWnd->szPath, MAX_PATH);
-        pChildWnd->nSplitPos = 250;
-        pChildWnd->hWnd = hWnd;
-        pChildWnd->hTreeWnd = CreateTreeView(hWnd, pChildWnd->szPath, TREE_WINDOW);
-        pChildWnd->hListWnd = CreateListView(hWnd, LIST_WINDOW/*, pChildWnd->szPath*/);
-        pChildWnd->nFocusPanel = 1;
-        SetFocus(pChildWnd->hTreeWnd);
+        g_pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
+        if (!g_pChildWnd) return 0;
+        LoadString(hInst, IDS_REGISTRY_ROOT_NAME, g_pChildWnd->szPath, MAX_PATH);
+        g_pChildWnd->nSplitPos = 250;
+        g_pChildWnd->hWnd = hWnd;
+        g_pChildWnd->hTreeWnd = CreateTreeView(hWnd, g_pChildWnd->szPath, TREE_WINDOW);
+        g_pChildWnd->hListWnd = CreateListView(hWnd, LIST_WINDOW/*, g_pChildWnd->szPath*/);
+        g_pChildWnd->nFocusPanel = 1;
+        SetFocus(g_pChildWnd->hTreeWnd);
         break;
     case WM_COMMAND:
         if (!_CmdWndProc(hWnd, message, wParam, lParam)) {
@@ -232,23 +230,23 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             POINT pt;
             GetCursorPos(&pt);
             ScreenToClient(hWnd, &pt);
-            if (pt.x>=pChildWnd->nSplitPos-SPLIT_WIDTH/2 && pt.x<pChildWnd->nSplitPos+SPLIT_WIDTH/2+1) {
+            if (pt.x>=g_pChildWnd->nSplitPos-SPLIT_WIDTH/2 && pt.x<g_pChildWnd->nSplitPos+SPLIT_WIDTH/2+1) {
                 SetCursor(LoadCursor(0, IDC_SIZEWE));
                 return TRUE;
             }
         }
         goto def;
     case WM_DESTROY:
-        HeapFree(GetProcessHeap(), 0, pChildWnd);
-        pChildWnd = NULL;
+        HeapFree(GetProcessHeap(), 0, g_pChildWnd);
+        g_pChildWnd = NULL;
         PostQuitMessage(0);
         break;
     case WM_LBUTTONDOWN: {
             RECT rt;
             int x = (short)LOWORD(lParam);
             GetClientRect(hWnd, &rt);
-            if (x>=pChildWnd->nSplitPos-SPLIT_WIDTH/2 && x<pChildWnd->nSplitPos+SPLIT_WIDTH/2+1) {
-                last_split = pChildWnd->nSplitPos;
+            if (x>=g_pChildWnd->nSplitPos-SPLIT_WIDTH/2 && x<g_pChildWnd->nSplitPos+SPLIT_WIDTH/2+1) {
+                last_split = g_pChildWnd->nSplitPos;
                 draw_splitbar(hWnd, last_split);
                 SetCapture(hWnd);
             }
@@ -262,7 +260,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             draw_splitbar(hWnd, last_split);
             last_split = -1;
             GetClientRect(hWnd, &rt);
-            pChildWnd->nSplitPos = x;
+            g_pChildWnd->nSplitPos = x;
             ResizeWnd(rt.right, rt.bottom);
             ReleaseCapture();
         }
@@ -304,8 +302,8 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_SETFOCUS:
-        if (pChildWnd != NULL) {
-            SetFocus(pChildWnd->nFocusPanel? pChildWnd->hListWnd: pChildWnd->hTreeWnd);
+        if (g_pChildWnd != NULL) {
+            SetFocus(g_pChildWnd->nFocusPanel? g_pChildWnd->hListWnd: g_pChildWnd->hTreeWnd);
         }
         break;
 
@@ -313,16 +311,16 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
 
     case WM_NOTIFY:
-        if ((int)wParam == TREE_WINDOW) {
+        if (((int)wParam == TREE_WINDOW) && (g_pChildWnd != NULL)) {
             switch (((LPNMHDR)lParam)->code) {
             case TVN_ITEMEXPANDING:
-                return !OnTreeExpanding(pChildWnd->hTreeWnd, (NMTREEVIEW*)lParam);
+                return !OnTreeExpanding(g_pChildWnd->hTreeWnd, (NMTREEVIEW*)lParam);
             case TVN_SELCHANGED:
-                OnTreeSelectionChanged(pChildWnd->hTreeWnd, pChildWnd->hListWnd,
+                OnTreeSelectionChanged(g_pChildWnd->hTreeWnd, g_pChildWnd->hListWnd,
                     ((NMTREEVIEW *)lParam)->itemNew.hItem, TRUE);
                 break;
 	    case NM_SETFOCUS:
-		pChildWnd->nFocusPanel = 0;
+		g_pChildWnd->nFocusPanel = 0;
 		break;
             case NM_RCLICK: {
 		POINT pt;
@@ -334,16 +332,16 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	    case TVN_ENDLABELEDIT: {
 		HKEY hRootKey;
 	        LPNMTVDISPINFO dispInfo = (LPNMTVDISPINFO)lParam;
-		LPCTSTR path = GetItemPath(pChildWnd->hTreeWnd, 0, &hRootKey);
+		LPCTSTR path = GetItemPath(g_pChildWnd->hTreeWnd, 0, &hRootKey);
 	        BOOL res = RenameKey(hWnd, hRootKey, path, dispInfo->item.pszText);
 		if (res) {
 		    TVITEMEX item;
-                    LPTSTR fullPath = GetPathFullPath(pChildWnd->hTreeWnd,
+                    LPTSTR fullPath = GetPathFullPath(g_pChildWnd->hTreeWnd,
                      dispInfo->item.pszText);
 		    item.mask = TVIF_HANDLE | TVIF_TEXT;
-		    item.hItem = TreeView_GetSelection(pChildWnd->hTreeWnd);
+		    item.hItem = TreeView_GetSelection(g_pChildWnd->hTreeWnd);
 		    item.pszText = dispInfo->item.pszText;
-                    SendMessage( pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
+                    SendMessage( g_pChildWnd->hTreeWnd, TVM_SETITEMW, 0, (LPARAM)&item );
                     SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)fullPath);
                     HeapFree(GetProcessHeap(), 0, fullPath);
 		}
@@ -353,17 +351,17 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 return 0; /* goto def; */
             }
         } else
-            if ((int)wParam == LIST_WINDOW) {
+            if (((int)wParam == LIST_WINDOW) && (g_pChildWnd != NULL)) {
 		if (((LPNMHDR)lParam)->code == NM_SETFOCUS) {
-		    pChildWnd->nFocusPanel = 1;
-		} else if (!SendMessage(pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam)) {
+		    g_pChildWnd->nFocusPanel = 1;
+		} else if (!SendMessage(g_pChildWnd->hListWnd, WM_NOTIFY_REFLECT, wParam, lParam)) {
                     goto def;
                 }
             }
         break;
 
     case WM_SIZE:
-        if (wParam != SIZE_MINIMIZED && pChildWnd != NULL) {
+        if (wParam != SIZE_MINIMIZED && g_pChildWnd != NULL) {
             ResizeWnd(LOWORD(lParam), HIWORD(lParam));
         }
         /* fall through */
