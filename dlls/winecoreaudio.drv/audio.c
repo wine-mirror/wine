@@ -1263,8 +1263,6 @@ static DWORD wodReset(WORD wDevID)
 
     wwo = &WOutDev[wDevID];
 
-    FIXME("\n");
-
     /* updates current notify list */
     /* if resetting, remove all wave headers and notify client that all headers were completed */
     wodHelper_NotifyCompletions(wwo, TRUE);
