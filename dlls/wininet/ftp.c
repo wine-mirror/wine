@@ -701,8 +701,6 @@ HINTERNET WINAPI FTP_FtpFindFirstFileW(LPWININETFTPSESSIONW lpwfs,
 
     TRACE("\n");
 
-    assert(WH_HFTPSESSION == lpwfs->hdr.htype);
-
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
