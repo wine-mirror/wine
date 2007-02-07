@@ -871,7 +871,7 @@ lend:
 
 
 /***********************************************************************
- *           FTP_FtpGetCurrentDirectoryA (Internal)
+ *           FTP_FtpGetCurrentDirectoryW (Internal)
  *
  * Retrieves the current directory
  *
@@ -888,12 +888,6 @@ BOOL WINAPI FTP_FtpGetCurrentDirectoryW(LPWININETFTPSESSIONW lpwfs, LPWSTR lpszC
     DWORD bSuccess = FALSE;
 
     TRACE("len(%d)\n", *lpdwCurrentDirectory);
-
-    if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
-    {
-        INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
-        return FALSE;
-    }
 
     /* Clear any error information */
     INTERNET_SetLastError(0);
