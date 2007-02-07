@@ -170,32 +170,47 @@ static void test_msi_invoke(void)
     r = IDispatch_Invoke( installer, dispid, &IID_NULL, 0,
                           DISPATCH_METHOD, &param, &result, NULL, NULL);
     todo_wine ok( r == S_OK, "dispatch failed %08x\n", r);
-    if (FAILED(r))
+    if (SUCCEEDED(r))
     {
-        skip( "failed to create record\n");
-        return;
+        ok( V_VT(&result) == VT_DISPATCH, "type wrong\n");
+
+        record = V_DISPATCH(&result);
+
+        memset( &result, 0, sizeof result );
+        dispid = get_dispid( record, "FieldCount" );
+
+        param.cArgs = 0;
+        param.cNamedArgs = 0;
+        param.rgvarg = &varg;
+        param.rgdispidNamedArgs = &arg;
+
+        r = IDispatch_Invoke( record, dispid, &IID_NULL, 0,
+                              DISPATCH_PROPERTYGET, &param, &result, NULL, NULL );
+        ok( r == S_OK, "dispatch failed %08x\n", r);
+
+        ok( V_VT(&result) == VT_I4, "type wrong\n");
+        ok( V_I4(&result) == 1, "field count wrong\n");
+
+        IDispatch_Release( record );
     }
-
-    ok( V_VT(&result) == VT_DISPATCH, "type wrong\n");
-
-    record = V_DISPATCH(&result);
+    else
+        skip( "failed to create record\n");
 
     memset( &result, 0, sizeof result );
-    dispid = get_dispid( record, "FieldCount" );
+    dispid = get_dispid( installer, "Version" );
 
     param.cArgs = 0;
     param.cNamedArgs = 0;
     param.rgvarg = &varg;
     param.rgdispidNamedArgs = &arg;
 
-    r = IDispatch_Invoke( record, dispid, &IID_NULL, 0,
+    r = IDispatch_Invoke( installer, dispid, &IID_NULL, 0,
                           DISPATCH_PROPERTYGET, &param, &result, NULL, NULL );
+    todo_wine {
     ok( r == S_OK, "dispatch failed %08x\n", r);
+    ok( V_VT(&result) == VT_BSTR, "type wrong %d\n", V_VT(&result));
+    }
 
-    ok( V_VT(&result) == VT_I4, "type wrong\n");
-    ok( V_I4(&result) == 1, "field count wrong\n");
-
-    IDispatch_Release( record );
     IDispatch_Release( installer );
 }
 
