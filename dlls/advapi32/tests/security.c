@@ -1375,17 +1375,33 @@ static void test_granted_access(HANDLE handle, ACCESS_MASK access, int line)
         "be 0x%08x, instead of 0x%08x\n", access, obj_info.GrantedAccess);
 }
 
+#define CHECK_SET_SECURITY(o,i,e) \
+    do{ \
+        BOOL res; \
+        DWORD err; \
+        SetLastError( 0xdeadbeef ); \
+        res = SetKernelObjectSecurity( o, i, SecurityDescriptor ); \
+        err = GetLastError(); \
+        if (e == ERROR_SUCCESS) \
+            ok(res, "SetKernelObjectSecurity failed with %d\n", err); \
+        else \
+            ok(!res && err == e, "SetKernelObjectSecurity should have failed " \
+               "with %s, instead of %d\n", #e, err); \
+    }while(0)
+
 static void test_process_security(void)
 {
     BOOL res;
+    char owner[32], group[32];
     PSID AdminSid = NULL, UsersSid = NULL;
     PACL Acl = NULL;
     SECURITY_DESCRIPTOR *SecurityDescriptor = NULL;
-    SID_IDENTIFIER_AUTHORITY SIDAuthNT = { SECURITY_NT_AUTHORITY };
     char buffer[MAX_PATH];
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
     SECURITY_ATTRIBUTES psa;
+    HANDLE token, event;
+    DWORD tmp;
 
     Acl = HeapAlloc(GetProcessHeap(), 0, 256);
     res = InitializeAcl(Acl, 256, ACL_REVISION);
@@ -1396,12 +1412,20 @@ static void test_process_security(void)
     }
     ok(res, "InitializeAcl failed with error %d\n", GetLastError());
 
-    res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
-                                    DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &AdminSid);
-    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
-    res = AllocateAndInitializeSid( &SIDAuthNT, 2, SECURITY_BUILTIN_DOMAIN_RID,
-                                    DOMAIN_ALIAS_RID_USERS, 0, 0, 0, 0, 0, 0, &UsersSid);
-    ok(res, "AllocateAndInitializeSid failed with error %d\n", GetLastError());
+    /* get owner from the token we might be running as a user not admin */
+    res = OpenProcessToken( GetCurrentProcess(), MAXIMUM_ALLOWED, &token );
+    ok(res, "OpenProcessToken failed with error %d\n", GetLastError());
+    if (!res) return;
+
+    res = GetTokenInformation( token, TokenOwner, owner, sizeof(owner), &tmp );
+    ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
+    AdminSid = ((TOKEN_OWNER*)owner)->Owner;
+    res = GetTokenInformation( token, TokenPrimaryGroup, group, sizeof(group), &tmp );
+    ok(res, "GetTokenInformation failed with error %d\n", GetLastError());
+    UsersSid = ((TOKEN_PRIMARY_GROUP*)group)->PrimaryGroup;
+
+    CloseHandle( token );
+    if (!res) return;
 
     res = AddAccessDeniedAce(Acl, ACL_REVISION, PROCESS_VM_READ, AdminSid);
     ok(res, "AddAccessDeniedAce failed with error %d\n", GetLastError());
@@ -1412,14 +1436,24 @@ static void test_process_security(void)
     res = InitializeSecurityDescriptor(SecurityDescriptor, SECURITY_DESCRIPTOR_REVISION);
     ok(res, "InitializeSecurityDescriptor failed with error %d\n", GetLastError());
 
+    event = CreateEvent( NULL, TRUE, TRUE, "test_event" );
+    ok(event != NULL, "CreateEvent %d\n", GetLastError());
+
+    CHECK_SET_SECURITY( event, OWNER_SECURITY_INFORMATION, ERROR_INVALID_SECURITY_DESCR );
+    CHECK_SET_SECURITY( event, GROUP_SECURITY_INFORMATION, ERROR_INVALID_SECURITY_DESCR );
+    CHECK_SET_SECURITY( event, SACL_SECURITY_INFORMATION, ERROR_ACCESS_DENIED );
+    CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
+
     /* Set owner and group and dacl */
     res = SetSecurityDescriptorOwner(SecurityDescriptor, AdminSid, FALSE);
     ok(res, "SetSecurityDescriptorOwner failed with error %d\n", GetLastError());
-    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, TRUE);
+    CHECK_SET_SECURITY( event, OWNER_SECURITY_INFORMATION, ERROR_SUCCESS );
+    res = SetSecurityDescriptorGroup(SecurityDescriptor, UsersSid, FALSE);
     ok(res, "SetSecurityDescriptorGroup failed with error %d\n", GetLastError());
+    CHECK_SET_SECURITY( event, GROUP_SECURITY_INFORMATION, ERROR_SUCCESS );
     res = SetSecurityDescriptorDacl(SecurityDescriptor, TRUE, Acl, FALSE);
     ok(res, "SetSecurityDescriptorDacl failed with error %d\n", GetLastError());
-
+    CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
 
     sprintf(buffer, "%s tests/security.c test", myARGV[0]);
     memset(&startup, 0, sizeof(startup));
@@ -1437,8 +1471,7 @@ static void test_process_security(void)
     TEST_GRANTED_ACCESS( info.hProcess, PROCESS_ALL_ACCESS );
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
 
-    if (AdminSid) FreeSid(AdminSid);
-    if (UsersSid) FreeSid(UsersSid);
+    CloseHandle( event );
     HeapFree(GetProcessHeap(), 0, Acl);
     HeapFree(GetProcessHeap(), 0, SecurityDescriptor);
 }
@@ -1446,17 +1479,28 @@ static void test_process_security(void)
 static void test_process_security_child(void)
 {
     HANDLE handle, handle1;
+    BOOL ret;
+    DWORD err;
 
     handle = OpenProcess( PROCESS_TERMINATE, FALSE, GetCurrentProcessId() );
     ok(handle != NULL, "OpenProcess(PROCESS_TERMINATE) with err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS( handle, PROCESS_TERMINATE );
 
     ok(DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
-                        &handle1, PROCESS_ALL_ACCESS, TRUE, DUPLICATE_SAME_ACCESS),
+                        &handle1, 0, TRUE, DUPLICATE_SAME_ACCESS ),
        "duplicating handle err:%d\n", GetLastError());
-    TEST_GRANTED_ACCESS( handle, PROCESS_TERMINATE );
+    TEST_GRANTED_ACCESS( handle1, PROCESS_TERMINATE );
 
     CloseHandle( handle1 );
+
+    SetLastError( 0xdeadbeef );
+    ret = DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
+                           &handle1, PROCESS_ALL_ACCESS, TRUE, 0 );
+    err = GetLastError();
+    todo_wine
+    ok(!ret && err == ERROR_ACCESS_DENIED, "duplicating handle should have failed "
+       "with STATUS_ACCESS_DENIED, instead of err:%d\n", err);
+
     CloseHandle( handle );
 
     /* These two should fail - they are denied by ACL */
@@ -1469,10 +1513,22 @@ static void test_process_security_child(void)
 
     /* Documented privilege elevation */
     ok(DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
-                        &handle, PROCESS_ALL_ACCESS, TRUE, DUPLICATE_SAME_ACCESS),
+                        &handle, 0, TRUE, DUPLICATE_SAME_ACCESS ),
        "duplicating handle err:%d\n", GetLastError());
     TEST_GRANTED_ACCESS( handle, PROCESS_ALL_ACCESS );
 
+    CloseHandle( handle );
+
+    /* Same only explicitly asking for all access rights */
+    ok(DuplicateHandle( GetCurrentProcess(), GetCurrentProcess(), GetCurrentProcess(),
+                        &handle, PROCESS_ALL_ACCESS, TRUE, 0 ),
+       "duplicating handle err:%d\n", GetLastError());
+    TEST_GRANTED_ACCESS( handle, PROCESS_ALL_ACCESS );
+    ok(DuplicateHandle( GetCurrentProcess(), handle, GetCurrentProcess(),
+                        &handle1, PROCESS_VM_READ, TRUE, 0 ),
+       "duplicating handle err:%d\n", GetLastError());
+    TEST_GRANTED_ACCESS( handle1, PROCESS_VM_READ );
+    CloseHandle( handle1 );
     CloseHandle( handle );
 }
 
