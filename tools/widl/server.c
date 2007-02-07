@@ -358,6 +358,9 @@ static void write_serverinterfacedecl(type_t *iface)
 {
     unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
     UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+    const str_list_t *endpoints = get_attrp(iface->attrs, ATTR_ENDPOINT);
+
+    if (endpoints) write_endpoints( server, iface->name, endpoints );
 
     print_server("extern RPC_DISPATCH_TABLE %s_v%d_%d_DispatchTable;\n", iface->name, LOWORD(ver), HIWORD(ver));
     fprintf(server, "\n");
@@ -371,8 +374,16 @@ static void write_serverinterfacedecl(type_t *iface)
                  uuid->Data4[7], LOWORD(ver), HIWORD(ver));
     print_server("{{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},\n"); /* FIXME */
     print_server("&%s_v%d_%d_DispatchTable,\n", iface->name, LOWORD(ver), HIWORD(ver));
-    print_server("0,\n");
-    print_server("0,\n");
+    if (endpoints)
+    {
+        print_server("%u,\n", list_count(endpoints));
+        print_server("(PRPC_PROTSEQ_ENDPOINT)%s__RpcProtseqEndpoint,\n", iface->name);
+    }
+    else
+    {
+        print_server("0,\n");
+        print_server("0,\n");
+    }
     print_server("0,\n");
     print_server("0,\n");
     print_server("0,\n");

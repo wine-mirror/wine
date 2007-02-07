@@ -330,6 +330,9 @@ static void write_clientinterfacedecl(type_t *iface)
 {
     unsigned long ver = get_attrv(iface->attrs, ATTR_VERSION);
     const UUID *uuid = get_attrp(iface->attrs, ATTR_UUID);
+    const str_list_t *endpoints = get_attrp(iface->attrs, ATTR_ENDPOINT);
+
+    if (endpoints) write_endpoints( client, iface->name, endpoints );
 
     print_client("static const RPC_CLIENT_INTERFACE %s___RpcClientInterface =\n", iface->name );
     print_client("{\n");
@@ -341,8 +344,16 @@ static void write_clientinterfacedecl(type_t *iface)
                  uuid->Data4[7], LOWORD(ver), HIWORD(ver));
     print_client("{{0x8a885d04,0x1ceb,0x11c9,{0x9f,0xe8,0x08,0x00,0x2b,0x10,0x48,0x60}},{2,0}},\n"); /* FIXME */
     print_client("0,\n");
-    print_client("0,\n");
-    print_client("0,\n");
+    if (endpoints)
+    {
+        print_client("%u,\n", list_count(endpoints));
+        print_client("(PRPC_PROTSEQ_ENDPOINT)%s__RpcProtseqEndpoint,\n", iface->name);
+    }
+    else
+    {
+        print_client("0,\n");
+        print_client("0,\n");
+    }
     print_client("0,\n");
     print_client("0,\n");
     print_client("0,\n");

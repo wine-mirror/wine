@@ -2417,3 +2417,38 @@ void write_expr_eval_routine_list(FILE *file, const char *iface)
 
     fprintf(file, "};\n\n");
 }
+
+
+void write_endpoints( FILE *f, const char *prefix, const str_list_t *list )
+{
+    const struct str_list_entry_t *endpoint;
+    const char *p;
+
+    /* this should be an array of RPC_PROTSEQ_ENDPOINT but we want const strings */
+    print_file( f, 0, "static const unsigned char * %s__RpcProtseqEndpoint[][2] =\n{\n", prefix );
+    LIST_FOR_EACH_ENTRY( endpoint, list, const struct str_list_entry_t, entry )
+    {
+        print_file( f, 1, "{ (const unsigned char *)\"" );
+        for (p = endpoint->str; *p && *p != ':'; p++)
+        {
+            if (*p == '"' || *p == '\\') fputc( '\\', f );
+            fputc( *p, f );
+        }
+        if (!*p) goto error;
+        if (p[1] != '[') goto error;
+
+        fprintf( f, "\", (const unsigned char *)\"" );
+        for (p += 2; *p && *p != ']'; p++)
+        {
+            if (*p == '"' || *p == '\\') fputc( '\\', f );
+            fputc( *p, f );
+        }
+        if (*p != ']') goto error;
+        fprintf( f, "\" },\n" );
+    }
+    print_file( f, 0, "};\n\n" );
+    return;
+
+error:
+    error("Invalid endpoint syntax '%s'\n", endpoint->str);
+}
