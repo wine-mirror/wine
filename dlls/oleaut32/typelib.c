@@ -5481,7 +5481,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                 if (!cNamedArgs || (rgdispidNamedArgs[0] != DISPID_PROPERTYPUT))
                 {
                     ERR("first named arg for property put invocation must be DISPID_PROPERTYPUT\n");
-                    hres = DISP_E_PARAMNOTOPTIONAL;
+                    hres = DISP_E_PARAMNOTFOUND;
                     goto func_fail;
                 }
                 /* ignore the DISPID_PROPERTYPUT named argument from now on */

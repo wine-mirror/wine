@@ -975,10 +975,7 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_NAME, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYPUT, &dispparams, &varresult, &excepinfo, NULL);
-    todo_wine
-    {
-        ok(hr == DISP_E_PARAMNOTFOUND, "IDispatch_Invoke should have returned DISP_E_PARAMNOTFOUND instead of 0x%08x\n", hr);
-    }
+    ok(hr == DISP_E_PARAMNOTFOUND, "IDispatch_Invoke should have returned DISP_E_PARAMNOTFOUND instead of 0x%08x\n", hr);
     VariantClear(&varresult);
 
     /* tests param type that cannot be coerced */
