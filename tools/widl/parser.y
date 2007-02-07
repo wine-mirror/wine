@@ -64,6 +64,7 @@
 # endif
 #endif
 
+static str_list_t *append_str(str_list_t *list, char *str);
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 static attr_t *make_attr(enum attr_type type);
 static attr_t *make_attrv(enum attr_type type, unsigned long val);
@@ -122,6 +123,7 @@ static void check_arg(var_t *arg);
 %union {
 	attr_t *attr;
 	attr_list_t *attr_list;
+	str_list_t *str_list;
 	expr_t *expr;
 	expr_list_t *expr_list;
 	array_dims_t *array_dims;
@@ -223,6 +225,7 @@ static void check_arg(var_t *arg);
 
 %type <attr> attribute
 %type <attr_list> m_attributes attributes attrib_list
+%type <str_list> str_list
 %type <expr> m_expr expr expr_const
 %type <expr_list> m_exprs /* exprs expr_list */ expr_list_const
 %type <array_dims> array array_list
@@ -386,6 +389,10 @@ attrib_list: attribute                          { $$ = append_attr( NULL, $1 ); 
 	| attrib_list ']' '[' attribute         { $$ = append_attr( $1, $4 ); }
 	;
 
+str_list: aSTRING                               { $$ = append_str( NULL, $1 ); }
+	| str_list ',' aSTRING                  { $$ = append_str( $1, $3 ); }
+	;
+
 attribute:					{ $$ = NULL; }
 	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
 	| tAPPOBJECT				{ $$ = make_attr(ATTR_APPOBJECT); }
@@ -406,7 +413,7 @@ attribute:					{ $$ = NULL; }
 	| tDISPLAYBIND				{ $$ = make_attr(ATTR_DISPLAYBIND); }
 	| tDLLNAME '(' aSTRING ')'		{ $$ = make_attrp(ATTR_DLLNAME, $3); }
 	| tDUAL					{ $$ = make_attr(ATTR_DUAL); }
-	| tENDPOINT '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
+	| tENDPOINT '(' str_list ')'		{ $$ = make_attrp(ATTR_ENDPOINT, $3); }
 	| tENTRY '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ENTRY_STRING, $3); }
 	| tENTRY '(' expr_const ')'		{ $$ = make_attrp(ATTR_ENTRY_ORDINAL, $3); }
 	| tEXPLICITHANDLE			{ $$ = make_attr(ATTR_EXPLICIT_HANDLE); }
@@ -905,6 +912,22 @@ void init_types(void)
   decl_builtin("boolean", RPC_FC_BYTE);
   decl_builtin("error_status_t", RPC_FC_ERROR_STATUS_T);
   decl_builtin("handle_t", RPC_FC_BIND_PRIMITIVE);
+}
+
+static str_list_t *append_str(str_list_t *list, char *str)
+{
+    struct str_list_entry_t *entry;
+
+    if (!str) return list;
+    if (!list)
+    {
+        list = xmalloc( sizeof(*list) );
+        list_init( list );
+    }
+    entry = xmalloc( sizeof(*entry) );
+    entry->str = str;
+    list_add_tail( list, &entry->entry );
+    return list;
 }
 
 static attr_list_t *append_attr(attr_list_t *list, attr_t *attr)

@@ -47,6 +47,7 @@ typedef struct _importinfo_t importinfo_t;
 typedef struct _typelib_t typelib_t;
 
 typedef struct list attr_list_t;
+typedef struct list str_list_t;
 typedef struct list func_list_t;
 typedef struct list expr_list_t;
 typedef struct list var_list_t;
@@ -160,6 +161,12 @@ enum type_kind
     TKIND_ALIAS,
     TKIND_UNION,
     TKIND_MAX
+};
+
+struct str_list_entry_t
+{
+    char *str;
+    struct list entry;
 };
 
 struct _attr_t {
