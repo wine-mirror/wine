@@ -44,7 +44,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(urlmon);
 
 /* native urlmon.dll uses this key, too */
-static const WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
+static WCHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
 
 /*static BOOL registered_wndclass = FALSE;*/
 
@@ -541,7 +541,7 @@ static HRESULT URLMonikerImpl_BindToStorage_hack(LPCWSTR URLName,
         *ppvObject = (void *) bind->pstrCache;
         IStream_AddRef((IStream *) bind->pstrCache);
 
-        hres = IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown**)&bind->pbscb);
+        hres = IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown**)&bind->pbscb);
         if(SUCCEEDED(hres)) {
             TRACE("Got IBindStatusCallback...\n");
 
@@ -1296,16 +1296,16 @@ HRESULT WINAPI RegisterBindStatusCallback(
     if (pbc == NULL || pbsc == NULL)
         return E_INVALIDARG;
 
-    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown **)&prev)))
+    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown **)&prev)))
     {
-        IBindCtx_RevokeObjectParam(pbc, (LPOLESTR)BSCBHolder);
+        IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
         if (ppbscPrevious)
             *ppbscPrevious = prev;
         else
             IBindStatusCallback_Release(prev);
     }
 
-    return IBindCtx_RegisterObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown *)pbsc);
+    return IBindCtx_RegisterObjectParam(pbc, BSCBHolder, (IUnknown *)pbsc);
 }
 
 /***********************************************************************
@@ -1333,11 +1333,11 @@ HRESULT WINAPI RevokeBindStatusCallback(
     if (pbc == NULL || pbsc == NULL)
         return E_INVALIDARG;
 
-    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, (LPOLESTR)BSCBHolder, (IUnknown **)&callback)))
+    if (SUCCEEDED(IBindCtx_GetObjectParam(pbc, BSCBHolder, (IUnknown **)&callback)))
     {
         if (callback == pbsc)
         {
-            IBindCtx_RevokeObjectParam(pbc, (LPOLESTR)BSCBHolder);
+            IBindCtx_RevokeObjectParam(pbc, BSCBHolder);
             hr = S_OK;
         }
         IBindStatusCallback_Release(pbsc);
