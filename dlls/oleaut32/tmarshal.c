@@ -1255,6 +1255,16 @@ _get_funcdesc(
     }
 }
 
+static inline BOOL is_in_elem(const ELEMDESC *elem)
+{
+    return (elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags);
+}
+
+static inline BOOL is_out_elem(const ELEMDESC *elem)
+{
+    return (elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT || !elem->u.paramdesc.wParamFlags);
+}
+
 static DWORD
 xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 {
@@ -1328,14 +1338,14 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 		TRACE_(olerelay)("%s=",relaystr(names[i+1]));
 	}
 	/* No need to marshal other data than FIN and any VT_PTR. */
-	if (!(elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags) && (elem->tdesc.vt != VT_PTR)) {
+	if (!is_in_elem(elem) && (elem->tdesc.vt != VT_PTR)) {
 	    xargs+=_argsize(elem->tdesc.vt);
 	    if (relaydeb) TRACE_(olerelay)("[out]");
 	    continue;
 	}
 	hres = serialize_param(
 	    tinfo,
-	    elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags,
+	    is_in_elem(elem),
 	    relaydeb,
 	    FALSE,
 	    &elem->tdesc,
@@ -1387,14 +1397,14 @@ xCall(LPVOID retptr, int method, TMProxyImpl *tpinfo /*, args */)
 	    if (i+1<nrofnames && names[i+1]) TRACE_(olerelay)("%s=",relaystr(names[i+1]));
 	}
 	/* No need to marshal other data than FOUT and any VT_PTR */
-	if (!(elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT) && (elem->tdesc.vt != VT_PTR)) {
+	if (!is_out_elem(elem) && (elem->tdesc.vt != VT_PTR)) {
 	    xargs += _argsize(elem->tdesc.vt);
 	    if (relaydeb) TRACE_(olerelay)("[in]");
 	    continue;
 	}
 	hres = deserialize_param(
 	    tinfo,
-	    elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+	    is_out_elem(elem),
 	    relaydeb,
 	    FALSE,
 	    &(elem->tdesc),
@@ -1945,7 +1955,7 @@ TMStubImpl_Invoke(
 
 	hres = deserialize_param(
 	   tinfo,
-	   elem->u.paramdesc.wParamFlags & PARAMFLAG_FIN || !elem->u.paramdesc.wParamFlags,
+	   is_in_elem(elem),
 	   FALSE,
 	   TRUE,
 	   &(elem->tdesc),
@@ -1991,7 +2001,7 @@ TMStubImpl_Invoke(
 	ELEMDESC	*elem = fdesc->lprgelemdescParam+i;
 	hres = serialize_param(
 	   tinfo,
-	   elem->u.paramdesc.wParamFlags & PARAMFLAG_FOUT,
+	   is_out_elem(elem),
 	   FALSE,
 	   TRUE,
 	   &elem->tdesc,
