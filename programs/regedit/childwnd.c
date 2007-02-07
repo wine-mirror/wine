@@ -60,14 +60,14 @@ static void draw_splitbar(HWND hWnd, int x)
     ReleaseDC(hWnd, hdc);
 }
 
-static void ResizeWnd(ChildWnd* pChildWnd, int cx, int cy)
+static void ResizeWnd(int cx, int cy)
 {
     HDWP hdwp = BeginDeferWindowPos(2);
     RECT rt = {0, 0, cx, cy};
 
-    cx = pChildWnd->nSplitPos + SPLIT_WIDTH/2;
-    DeferWindowPos(hdwp, pChildWnd->hTreeWnd, 0, rt.left, rt.top, pChildWnd->nSplitPos-SPLIT_WIDTH/2-rt.left, rt.bottom-rt.top, SWP_NOZORDER|SWP_NOACTIVATE);
-    DeferWindowPos(hdwp, pChildWnd->hListWnd, 0, rt.left+cx  , rt.top, rt.right-cx, rt.bottom-rt.top, SWP_NOZORDER|SWP_NOACTIVATE);
+    cx = g_pChildWnd->nSplitPos + SPLIT_WIDTH/2;
+    DeferWindowPos(hdwp, g_pChildWnd->hTreeWnd, 0, rt.left, rt.top, g_pChildWnd->nSplitPos-SPLIT_WIDTH/2-rt.left, rt.bottom-rt.top, SWP_NOZORDER|SWP_NOACTIVATE);
+    DeferWindowPos(hdwp, g_pChildWnd->hListWnd, 0, rt.left+cx  , rt.top, rt.right-cx, rt.bottom-rt.top, SWP_NOZORDER|SWP_NOACTIVATE);
     EndDeferWindowPos(hdwp);
 }
 
@@ -263,7 +263,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             last_split = -1;
             GetClientRect(hWnd, &rt);
             pChildWnd->nSplitPos = x;
-            ResizeWnd(pChildWnd, rt.right, rt.bottom);
+            ResizeWnd(rt.right, rt.bottom);
             ReleaseCapture();
         }
         break;
@@ -279,7 +279,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
                 RECT rt;
                 draw_splitbar(hWnd, last_split);
                 GetClientRect(hWnd, &rt);
-                ResizeWnd(pChildWnd, rt.right, rt.bottom);
+                ResizeWnd(rt.right, rt.bottom);
                 last_split = -1;
                 ReleaseCapture();
                 SetCursor(LoadCursor(0, IDC_ARROW));
@@ -364,7 +364,7 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 
     case WM_SIZE:
         if (wParam != SIZE_MINIMIZED && pChildWnd != NULL) {
-            ResizeWnd(pChildWnd, LOWORD(lParam), HIWORD(lParam));
+            ResizeWnd(LOWORD(lParam), HIWORD(lParam));
         }
         /* fall through */
 default: def:
