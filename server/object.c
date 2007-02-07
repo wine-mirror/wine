@@ -178,6 +178,7 @@ void *alloc_object( const struct object_ops *ops )
         obj->refcount = 1;
         obj->ops      = ops;
         obj->name     = NULL;
+        obj->sd       = NULL;
         list_init( &obj->wait_queue );
 #ifdef DEBUG_OBJECTS
         list_add_head( &object_list, &obj->obj_list );
@@ -278,6 +279,7 @@ void release_object( void *ptr )
         assert( list_empty( &obj->wait_queue ));
         obj->ops->destroy( obj );
         if (obj->name) free_name( obj );
+        free( obj->sd );
 #ifdef DEBUG_OBJECTS
         list_remove( &obj->obj_list );
         memset( obj, 0xaa, obj->ops->size );

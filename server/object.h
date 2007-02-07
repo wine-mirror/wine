@@ -88,6 +88,7 @@ struct object
     const struct object_ops  *ops;
     struct list               wait_queue;
     struct object_name       *name;
+    struct security_descriptor *sd;
 #ifdef DEBUG_OBJECTS
     struct list               obj_list;
 #endif
