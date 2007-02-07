@@ -786,6 +786,9 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
     case BINDSTATUS_CONNECTING:
         on_progress(This, 0, 0, BINDSTATUS_CONNECTING, szStatusText);
         break;
+    case BINDSTATUS_BEGINDOWNLOADDATA:
+        fill_stream_buffer(This->stream);
+        break;
     case BINDSTATUS_MIMETYPEAVAILABLE: {
         int len = strlenW(szStatusText)+1;
         This->mime = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
