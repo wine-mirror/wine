@@ -76,7 +76,7 @@ library TestTypelib
         [propget, id(DISPID_TM_CLONECOCLASS)]
         HRESULT CloneCoclass([out, retval] ApplicationObject2 **ppVal);
 
-        [id(DISPID_VALUE)]
+        [propget, id(DISPID_VALUE)]
         HRESULT Value([in] VARIANT *value, [out, retval] VARIANT *retval);
 
         [id(DISPID_TM_ARRAY)]

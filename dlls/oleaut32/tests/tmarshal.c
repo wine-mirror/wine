@@ -916,20 +916,14 @@ static void test_typelibmarshal(void)
     dispparams.rgvarg = vararg;
     VariantInit(&varresult);
     hr = IDispatch_Invoke(pDispatch, DISPID_VALUE, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_PROPERTYGET, &dispparams, &varresult, &excepinfo, NULL);
-    todo_wine
-    {
-        ok_ole_success(hr, IDispatch_Invoke);
-    }
+    ok_ole_success(hr, IDispatch_Invoke);
 
     ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
         "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
         excepinfo.wCode, excepinfo.scode);
 
-    todo_wine
-    {
-        ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
-        ok(V_I2(&varresult) == 1234, "V_I2(&varresult) was %d instead of 1234\n", V_I2(&varresult));
-    }
+    ok(V_VT(&varresult) == VT_I2, "V_VT(&varresult) was %d instead of VT_I2\n", V_VT(&varresult));
+    ok(V_I2(&varresult) == 1234, "V_I2(&varresult) was %d instead of 1234\n", V_I2(&varresult));
     VariantClear(&varresult);
 
     /* call Variant - exercises variant copying in ITypeInfo::Invoke and
