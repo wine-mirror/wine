@@ -33,7 +33,7 @@ static HWND hRebar;
 
 static void rebuild_rebar(HWND *hRebar)
 {
-    if (hRebar)
+    if (*hRebar)
         DestroyWindow(*hRebar);
 
     *hRebar = CreateWindow(REBARCLASSNAME, NULL, WS_CHILD | WS_VISIBLE, 0, 0, 0, 0,
