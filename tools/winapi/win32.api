@@ -233,11 +233,13 @@ REFIID
 
 %long
 
+ATOM
 BOOL
 DWORD
 HINSTANCE
 HRESULT
 HWND
+LPARAM
 
 %long --pointer
 
@@ -246,27 +248,43 @@ DWORD_PTR
 %ptr
 
 _ATL_INTMAP_ENTRY *
-_ATL_MODULEA *
 _ATL_MODULEW *
-_ATL_OBJMAP_ENTRYA *
+_ATL_OBJMAP_ENTRYW *
 _ATL_TERMFUNC *
+_ATL_WNDCLASSINFOW *
+_AtlCreateWndData *
+BSTR *
 CLSID *
+DLGPROC
 IID *
 IRegistrar *
 IStream *
 IStream **
+ITypeLib **
 IUnknown *
 IUnknown **
 LPDWORD
-LPVOID
 LPVOID *
 REFCLSID
 REFIID
+SIZEL *
+WNDPROC *
 struct _ATL_REGMAP_ENTRY *
+void *
+void **
 
 %str
 
 LPCOLESTR
+LPCSTR
+
+%wstr
+
+LPCWSTR
+
+%void
+
+void
 
 %%avicap32.dll
 
