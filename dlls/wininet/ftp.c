@@ -1255,8 +1255,6 @@ BOOL WINAPI FTP_FtpGetFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszRemoteFile, 
 
     TRACE("lpszRemoteFile(%s) lpszNewFile(%s)\n", debugstr_w(lpszRemoteFile), debugstr_w(lpszNewFile));
 
-    assert (WH_HFTPSESSION == lpwfs->hdr.htype);
-
     /* Clear any error information */
     INTERNET_SetLastError(0);
 
