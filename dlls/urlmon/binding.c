@@ -74,7 +74,7 @@ struct Binding {
     DWORD bindf;
     LPWSTR mime;
     LPWSTR url;
-    BOOL verified_mime;
+    BOOL report_mime;
     DWORD continue_call;
     BOOL request_locked;
 
@@ -799,10 +799,13 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         on_progress(This, 0, 0, BINDSTATUS_SENDINGREQUEST, szStatusText);
         break;
     case BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE:
-        This->verified_mime = TRUE;
+        This->report_mime = FALSE;
         on_progress(This, 0, 0, BINDSTATUS_MIMETYPEAVAILABLE, szStatusText);
         break;
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
+        break;
+    case BINDSTATUS_DIRECTBIND:
+        This->report_mime = FALSE;
         break;
     default:
         FIXME("Unhandled status code %d\n", ulStatusCode);
@@ -821,10 +824,10 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     if(GetCurrentThreadId() != This->apartment_thread)
         FIXME("called from worked hread\n");
 
-    if(!This->verified_mime) {
+    if(This->report_mime) {
         LPWSTR mime;
 
-        This->verified_mime = TRUE;
+        This->report_mime = FALSE;
 
         fill_stream_buffer(This->stream);
 
@@ -1184,7 +1187,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->url = NULL;
     ret->apartment_thread = GetCurrentThreadId();
     ret->notif_hwnd = get_notif_hwnd();
-    ret->verified_mime = FALSE;
+    ret->report_mime = TRUE;
     ret->continue_call = 0;
     ret->request_locked = FALSE;
     ret->task_queue_head = ret->task_queue_tail = NULL;
