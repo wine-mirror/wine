@@ -67,5 +67,5 @@ END
 STRINGTABLE DISCARDABLE
 {
     IDS_ERROR "ќЎ»Ѕ ј"
-    IDS_MDI_MOREWINDOWS "&≈ще окна..."
+    IDS_MDI_MOREWINDOWS "&≈щЄ окна..."
 }

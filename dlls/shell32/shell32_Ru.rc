@@ -21,8 +21,8 @@ LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 
 MENU_001 MENU DISCARDABLE
 BEGIN
-    MENUITEM "&Большие Иконки",	FCIDM_SHVIEW_BIGICON
-    MENUITEM "&Мелкие Иконки",	FCIDM_SHVIEW_SMALLICON
+    MENUITEM "&Большие значки",	FCIDM_SHVIEW_BIGICON
+    MENUITEM "&Мелкие значки",	FCIDM_SHVIEW_SMALLICON
     MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
     MENUITEM "&Подробно",	FCIDM_SHVIEW_REPORTVIEW
 END
@@ -36,27 +36,27 @@ BEGIN
     BEGIN
         POPUP "&Просмотр"
         BEGIN
-            MENUITEM "&Большие Иконки",	FCIDM_SHVIEW_BIGICON
-            MENUITEM "&Мелкие Иконки",	FCIDM_SHVIEW_SMALLICON
+            MENUITEM "&Большие значки",	FCIDM_SHVIEW_BIGICON
+            MENUITEM "&Мелкие значки",	FCIDM_SHVIEW_SMALLICON
             MENUITEM "&Список",		FCIDM_SHVIEW_LISTVIEW
             MENUITEM "&Подробно",	FCIDM_SHVIEW_REPORTVIEW
         END
         MENUITEM SEPARATOR
-        POPUP "Arrange &Icons"
+        POPUP "Упорядочить &значки"
         BEGIN
-            MENUITEM "По &Имени",	0x30	/* column 0 */
-            MENUITEM "По &Типу",	0x32	/* column 2 */
-            MENUITEM "По &Размеру",	0x31	/* ... */
-            MENUITEM "По &Дате",	0x33
+            MENUITEM "По &имени",	0x30	/* column 0 */
+            MENUITEM "По &типу",	0x32	/* column 2 */
+            MENUITEM "По &размеру",	0x31	/* ... */
+            MENUITEM "По &дате",	0x33
             MENUITEM SEPARATOR
             MENUITEM "&Автоматически",	FCIDM_SHVIEW_AUTOARRANGE
         END
-        MENUITEM "В&ыровнять иконки",	FCIDM_SHVIEW_SNAPTOGRID
+        MENUITEM "В&ыровнять значки",	FCIDM_SHVIEW_SNAPTOGRID
         MENUITEM SEPARATOR
         MENUITEM "О&бновить",		FCIDM_SHVIEW_REFRESH
         MENUITEM SEPARATOR
         MENUITEM "&Вставить",		FCIDM_SHVIEW_INSERT
-        MENUITEM "Вставить &ярклык",	FCIDM_SHVIEW_INSERTLINK
+        MENUITEM "Вставить &ярлык",	FCIDM_SHVIEW_INSERTLINK
         MENUITEM SEPARATOR
         POPUP "Создать"
         BEGIN
@@ -82,7 +82,7 @@ BEGIN
         MENUITEM "&Вырезать",		FCIDM_SHVIEW_CUT
         MENUITEM "&Копировать",		FCIDM_SHVIEW_COPY
         MENUITEM SEPARATOR
-        MENUITEM "Создать &Яолык",	FCIDM_SHVIEW_CREATELINK
+        MENUITEM "Создать &ярлык",	FCIDM_SHVIEW_CREATELINK
         MENUITEM "&Удалмть",		FCIDM_SHVIEW_DELETE
         MENUITEM "Переи&меновать",	FCIDM_SHVIEW_RENAME
         MENUITEM SEPARATOR
@@ -138,9 +138,9 @@ STRINGTABLE DISCARDABLE
     IDS_SHV_COLUMN1		"Имя"
     IDS_SHV_COLUMN2		"Размер"
     IDS_SHV_COLUMN3		"Тип"
-    IDS_SHV_COLUMN4		"Изменен"
+    IDS_SHV_COLUMN4		"Изменён"
     IDS_SHV_COLUMN5		"Атрибуты"
-    IDS_SHV_COLUMN6		"Полный объем"
+    IDS_SHV_COLUMN6		"Полный объём"
     IDS_SHV_COLUMN7		"Свободно"
     IDS_SHV_COLUMN8		"Имя"
     IDS_SHV_COLUMN9		"Комментарий"
@@ -152,8 +152,8 @@ STRINGTABLE DISCARDABLE
     IDS_MYCOMPUTER		"Мой компьютер"
 
     /* context menus */
-    IDS_VIEW_LARGE		"&Большие Иконки"
-    IDS_VIEW_SMALL		"&Мелкие Иконки"
+    IDS_VIEW_LARGE		"&Большие значки"
+    IDS_VIEW_SMALL		"&Мелкие значки"
     IDS_VIEW_LIST		"&Список"
     IDS_VIEW_DETAILS		"&Подробно"
     IDS_SELECT			"&Выбрать"
@@ -172,23 +172,23 @@ STRINGTABLE DISCARDABLE
     IDS_RESTART_TITLE		"Перезагрузить"
     IDS_RESTART_PROMPT		"Вы хотите симулировать перезапуск Windows?"
     IDS_SHUTDOWN_TITLE		"Выключить питание"
-    IDS_SHUTDOWN_PROMPT		"Вы хотите закинчить работу с Wine?"
+    IDS_SHUTDOWN_PROMPT		"Закончить работу с Wine?"
 
     /* shell folder path default values */
     IDS_PROGRAMS                "Главное меню\\Программы"
     IDS_PERSONAL                "Мои документы"
     IDS_FAVORITES               "Избранное"
     IDS_STARTUP                 "Главное меню\\Программы\\Автозагрузка"
-    IDS_RECENT                  "Recent"
-    IDS_SENDTO                  "Отпрввить"
+    IDS_RECENT                  "Недавнее"
+    IDS_SENDTO                  "Отправить"
     IDS_STARTMENU               "Главное меню"
     IDS_MYMUSIC                 "Моя музыка"
     IDS_MYVIDEO                 "Мои фильмы"
     IDS_DESKTOPDIRECTORY        "Рабочий стол"
-    IDS_NETHOOD                 "NetHood"
+    IDS_NETHOOD                 "Сетевое окружение"
     IDS_TEMPLATES               "Шаблоны"
     IDS_APPDATA                 "Application Data"
-    IDS_PRINTHOOD               "PrintHood"
+    IDS_PRINTHOOD               "Принтеры"
     IDS_LOCAL_APPDATA           "Local Settings\\Application Data"
     IDS_INTERNET_CACHE          "Local Settings\\Temporary Internet Files"
     IDS_COOKIES                 "Cookies"
