@@ -886,6 +886,93 @@ const ACL *token_get_default_dacl( struct token *token )
     return token->default_dacl;
 }
 
+static void set_object_sd( struct object *obj, const struct security_descriptor *sd,
+                           unsigned int set_info )
+{
+    struct security_descriptor new_sd, *pnew_sd;
+    int present;
+    const SID *owner, *group;
+    const ACL *sacl, *dacl;
+    char *ptr;
+
+    if (!set_info) return;
+
+    new_sd.control = sd->control & ~SE_SELF_RELATIVE;
+
+    owner = sd_get_owner( sd );
+    if (set_info & OWNER_SECURITY_INFORMATION && owner)
+        new_sd.owner_len = sd->owner_len;
+    else
+    {
+        owner = current->process->token->user;
+        new_sd.owner_len = FIELD_OFFSET(SID, SubAuthority[owner->SubAuthorityCount]);
+        new_sd.control |= SE_OWNER_DEFAULTED;
+    }
+
+    group = sd_get_group( sd );
+    if (set_info & GROUP_SECURITY_INFORMATION && group)
+        new_sd.group_len = sd->group_len;
+    else
+    {
+        group = current->process->token->primary_group;
+        new_sd.group_len = FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]);
+        new_sd.control |= SE_GROUP_DEFAULTED;
+    }
+
+    new_sd.control |= SE_SACL_PRESENT;
+    sacl = sd_get_sacl( sd, &present );
+    if (set_info & SACL_SECURITY_INFORMATION && present)
+        new_sd.sacl_len = sd->sacl_len;
+    else
+    {
+        if (obj->sd) sacl = sd_get_sacl( obj->sd, &present );
+
+        if (obj->sd && present)
+            new_sd.sacl_len = obj->sd->sacl_len;
+        else
+        {
+            new_sd.sacl_len = 0;
+            new_sd.control |= SE_SACL_DEFAULTED;
+        }
+    }
+
+    new_sd.control |= SE_DACL_PRESENT;
+    dacl = sd_get_dacl( sd, &present );
+    if (set_info & DACL_SECURITY_INFORMATION && present)
+        new_sd.dacl_len = sd->dacl_len;
+    else
+    {
+        if (obj->sd) dacl = sd_get_dacl( obj->sd, &present );
+
+        if (obj->sd && present)
+            new_sd.dacl_len = obj->sd->dacl_len;
+        else
+        {
+            dacl = token_get_default_dacl( current->process->token );
+            new_sd.dacl_len = dacl->AclSize;
+            new_sd.control |= SE_DACL_DEFAULTED;
+        }
+    }
+
+    ptr = mem_alloc( sizeof(new_sd) + new_sd.owner_len + new_sd.group_len +
+                     new_sd.sacl_len + new_sd.dacl_len );
+    if (!ptr) return;
+    pnew_sd = (struct security_descriptor*)ptr;
+
+    memcpy( ptr, &new_sd, sizeof(new_sd) );
+    ptr += sizeof(new_sd);
+    memcpy( ptr, owner, new_sd.owner_len );
+    ptr += new_sd.owner_len;
+    memcpy( ptr, group, new_sd.group_len );
+    ptr += new_sd.group_len;
+    memcpy( ptr, sacl, new_sd.sacl_len );
+    ptr += new_sd.sacl_len;
+    memcpy( ptr, dacl, new_sd.dacl_len );
+
+    free( obj->sd );
+    obj->sd = pnew_sd;
+}
+
 /* open a security token */
 DECL_HANDLER(open_token)
 {
@@ -1205,4 +1292,31 @@ DECL_HANDLER(get_token_groups)
 
         release_object( token );
     }
+}
+
+DECL_HANDLER(set_security_object)
+{
+    data_size_t sd_size = get_req_data_size();
+    const struct security_descriptor *sd = get_req_data();
+    struct object *obj;
+    unsigned int access = 0;
+
+    if (!sd_is_valid( sd, sd_size ))
+    {
+        set_error( STATUS_ACCESS_VIOLATION );
+        return;
+    }
+
+    if (req->security_info & OWNER_SECURITY_INFORMATION ||
+        req->security_info & GROUP_SECURITY_INFORMATION)
+        access |= WRITE_OWNER;
+    if (req->security_info & SACL_SECURITY_INFORMATION)
+        access |= ACCESS_SYSTEM_SECURITY;
+    if (req->security_info & DACL_SECURITY_INFORMATION)
+        access |= WRITE_DAC;
+
+    if (!(obj = get_handle_obj( current->process, req->handle, access, NULL ))) return;
+
+    set_object_sd( obj, sd, req->security_info );
+    release_object( obj );
 }

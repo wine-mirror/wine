@@ -2759,6 +2759,12 @@ enum message_type
     VARARG(user,token_groups); /* groups the token's user belongs to */
 @END
 
+@REQ(set_security_object)
+    obj_handle_t    handle;       /* handle to the object */
+    unsigned int    security_info; /* which parts of security descriptor to set */
+    VARARG(sd,security_descriptor); /* security descriptor to set */
+@END
+
 /* Create a mailslot */
 @REQ(create_mailslot)
     unsigned int   access;        /* wanted access rights */

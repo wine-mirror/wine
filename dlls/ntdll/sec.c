@@ -1539,15 +1539,82 @@ NtAccessCheck(
 
 /******************************************************************************
  *  NtSetSecurityObject		[NTDLL.@]
+ *  ZwSetSecurityObject		[NTDLL.@]
+ *
+ * Sets specified parts of the object's security descriptor.
+ *
+ * PARAMS
+ *  Handle              [I] Handle to the object to change security descriptor of.
+ *  SecurityInformation [I] Specifies which parts of the security descriptor to set.
+ *  SecurityDescriptor  [I] New parts of a security descriptor for the object.
+ *
+ * RETURNS
+ *  NTSTATUS code.
+ *
  */
-NTSTATUS WINAPI
-NtSetSecurityObject(
-        IN HANDLE Handle,
-        IN SECURITY_INFORMATION SecurityInformation,
-        IN PSECURITY_DESCRIPTOR SecurityDescriptor)
+NTSTATUS WINAPI NtSetSecurityObject(HANDLE Handle,
+        SECURITY_INFORMATION SecurityInformation,
+        PSECURITY_DESCRIPTOR SecurityDescriptor)
 {
-	FIXME("%p 0x%08x %p\n", Handle, SecurityInformation, SecurityDescriptor);
-	return STATUS_SUCCESS;
+    NTSTATUS status;
+    struct security_descriptor sd;
+    PACL dacl, sacl;
+    PSID owner, group;
+    BOOLEAN defaulted, present;
+    DWORD revision;
+    SECURITY_DESCRIPTOR_CONTROL control;
+
+    TRACE("%p 0x%08x %p\n", Handle, SecurityInformation, SecurityDescriptor);
+
+    if (!SecurityDescriptor) return STATUS_ACCESS_VIOLATION;
+
+    memset( &sd, 0, sizeof(sd) );
+    RtlGetControlSecurityDescriptor( SecurityDescriptor, &control, &revision );
+    sd.control = control & ~SE_SELF_RELATIVE;
+
+    if (SecurityInformation & OWNER_SECURITY_INFORMATION)
+    {
+        RtlGetOwnerSecurityDescriptor( SecurityDescriptor, &owner, &defaulted );
+        if (!(sd.owner_len = RtlLengthSid( owner )))
+            return STATUS_INVALID_SECURITY_DESCR;
+    }
+
+    if (SecurityInformation & GROUP_SECURITY_INFORMATION)
+    {
+        RtlGetGroupSecurityDescriptor( SecurityDescriptor, &group, &defaulted );
+        if (!(sd.group_len = RtlLengthSid( group )))
+            return STATUS_INVALID_SECURITY_DESCR;
+    }
+
+    if (SecurityInformation & SACL_SECURITY_INFORMATION)
+    {
+        RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
+        sd.sacl_len = present ? sacl->AclSize : 0;
+        sd.control |= SE_SACL_PRESENT;
+    }
+
+    if (SecurityInformation & DACL_SECURITY_INFORMATION)
+    {
+        RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
+        sd.dacl_len = present ? dacl->AclSize : 0;
+        sd.control |= SE_DACL_PRESENT;
+    }
+
+    SERVER_START_REQ( set_security_object )
+    {
+        req->handle = Handle;
+        req->security_info = SecurityInformation;
+
+        wine_server_add_data( req, &sd, sizeof(sd) );
+        wine_server_add_data( req, owner, sd.owner_len );
+        wine_server_add_data( req, group, sd.group_len );
+        wine_server_add_data( req, sacl, sd.sacl_len );
+        wine_server_add_data( req, dacl, sd.dacl_len );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    return status;
 }
 
 /******************************************************************************

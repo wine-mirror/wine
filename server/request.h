@@ -316,6 +316,7 @@ DECL_HANDLER(duplicate_token);
 DECL_HANDLER(access_check);
 DECL_HANDLER(get_token_user);
 DECL_HANDLER(get_token_groups);
+DECL_HANDLER(set_security_object);
 DECL_HANDLER(create_mailslot);
 DECL_HANDLER(open_mailslot);
 DECL_HANDLER(set_mailslot_info);
@@ -537,6 +538,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_access_check,
     (req_handler)req_get_token_user,
     (req_handler)req_get_token_groups,
+    (req_handler)req_set_security_object,
     (req_handler)req_create_mailslot,
     (req_handler)req_open_mailslot,
     (req_handler)req_set_mailslot_info,
