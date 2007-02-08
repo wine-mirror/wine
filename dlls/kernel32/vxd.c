@@ -243,7 +243,6 @@ HANDLE VXD_Open( LPCWSTR filenameW, DWORD access, SECURITY_ATTRIBUTES *sa )
     }
 
     ERR("too many open VxD modules, please report\n" );
-    CloseHandle( handle );
     FreeLibrary( module );
     handle = 0;
 
