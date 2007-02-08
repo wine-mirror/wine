@@ -834,15 +834,18 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
         FindMimeFromData(NULL, This->url, This->stream->buf,
                          min(This->stream->buf_size, 255), This->mime, 0, &mime, 0);
 
-        on_progress(This, progress, progress_max, BINDSTATUS_MIMETYPEAVAILABLE, mime);
+        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                BINDSTATUS_MIMETYPEAVAILABLE, mime);
     }
 
     if(bscf & BSCF_FIRSTDATANOTIFICATION) {
-        on_progress(This, progress, progress_max, BINDSTATUS_BEGINDOWNLOADDATA, This->url);
+        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
 
     if(bscf & BSCF_LASTDATANOTIFICATION)
-        on_progress(This, progress, progress_max, BINDSTATUS_ENDDOWNLOADDATA, This->url);
+        IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
+                BINDSTATUS_ENDDOWNLOADDATA, This->url);
 
     if(!This->request_locked) {
         HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
