@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
+
 #include "config.h"
 
 #include <stdarg.h>
@@ -31,6 +33,7 @@
 
 #include "ole2.h"
 #include "olectl.h"
+#include "oleauto.h"
 
 #include "wine/debug.h"
 
@@ -650,6 +653,8 @@ static HRESULT register_msiexec(void)
  */
 HRESULT WINAPI DllRegisterServer(void)
 {
+    LPWSTR path = NULL;
+    ITypeLib *tl;
     HRESULT hr;
 
     TRACE("\n");
@@ -659,6 +664,16 @@ HRESULT WINAPI DllRegisterServer(void)
 	hr = register_interfaces(interface_list);
     if (SUCCEEDED(hr))
 	hr = register_msiexec();
+
+    tl = get_msi_typelib( &path );
+    if (tl)
+    {
+        hr = RegisterTypeLib( tl, path, NULL );
+        ITypeLib_Release( tl );
+    }
+    else
+        hr = E_FAIL;
+
     return hr;
 }
 

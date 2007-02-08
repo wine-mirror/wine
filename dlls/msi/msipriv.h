@@ -525,6 +525,9 @@ typedef struct {
 
 UINT msi_strcpy_to_awstring( LPCWSTR str, awstring *awbuf, DWORD *sz );
 
+/* msi server interface */
+extern ITypeLib *get_msi_typelib( LPWSTR *path );
+
 /* handle functions */
 extern void *msihandle2msiinfo(MSIHANDLE handle, UINT type);
 extern MSIHANDLE alloc_msihandle( MSIOBJECTHDR * );

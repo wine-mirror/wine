@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "winreg.h"
 #include "shlwapi.h"
+#include "oleauto.h"
 #include "msipriv.h"
 
 #include "wine/debug.h"
@@ -43,6 +44,8 @@ INSTALLUI_HANDLERW gUIHandlerW = NULL;
 DWORD gUIFilter = 0;
 LPVOID gUIContext = NULL;
 WCHAR gszLogFile[MAX_PATH];
+WCHAR msi_path[MAX_PATH];
+ITypeLib *msi_typelib = NULL;
 HINSTANCE msi_hInstance;
 
 /*
@@ -71,6 +74,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         msi_dialog_register_class();
         break;
     case DLL_PROCESS_DETACH:
+        if (msi_typelib) ITypeLib_Release( msi_typelib );
         msi_dialog_unregister_class();
         msi_free_handle_table();
         break;
@@ -78,16 +82,49 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     return TRUE;
 }
 
-typedef struct tagIClassFactoryImpl {
-    const IClassFactoryVtbl *lpVtbl;
-    HRESULT (*create_object)( IUnknown*, LPVOID* );
-} IClassFactoryImpl;
+static CRITICAL_SECTION MSI_typelib_cs;
+static CRITICAL_SECTION_DEBUG MSI_typelib_cs_debug =
+{
+    0, 0, &MSI_typelib_cs,
+    { &MSI_typelib_cs_debug.ProcessLocksList,
+      &MSI_typelib_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": MSI_typelib_cs") }
+};
+static CRITICAL_SECTION MSI_typelib_cs = { &MSI_typelib_cs_debug, -1, 0, 0, 0, 0 };
+
+ITypeLib *get_msi_typelib( LPWSTR *path )
+{
+    EnterCriticalSection( &MSI_typelib_cs );
+
+    if (!msi_typelib)
+    {
+        TRACE("loading typelib\n");
+
+        if (GetModuleFileNameW( msi_hInstance, msi_path, MAX_PATH ))
+            LoadTypeLib( msi_path, &msi_typelib );
+    }
+
+    LeaveCriticalSection( &MSI_typelib_cs );
+
+    if (path)
+        *path = msi_path;
+
+    if (msi_typelib)
+        ITypeLib_AddRef( msi_typelib );
+
+    return msi_typelib;
+}
 
 static HRESULT create_msiserver( IUnknown *pOuter, LPVOID *ppObj )
 {
     FIXME("\n");
     return E_FAIL;
 }
+
+typedef struct tagIClassFactoryImpl {
+    const IClassFactoryVtbl *lpVtbl;
+    HRESULT (*create_object)( IUnknown*, LPVOID* );
+} IClassFactoryImpl;
 
 static HRESULT WINAPI MsiCF_QueryInterface(LPCLASSFACTORY iface,
                 REFIID riid,LPVOID *ppobj)
