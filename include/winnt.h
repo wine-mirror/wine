@@ -595,14 +595,33 @@ typedef struct _SINGLE_LIST_ENTRY {
 
 #ifdef _WIN64
 
-typedef struct _SLIST_ENTRY *PSLIST_ENTRY;
-typedef struct _SLIST_ENTRY {
+typedef struct DECLSPEC_ALIGN(16) _SLIST_ENTRY *PSLIST_ENTRY;
+typedef struct DECLSPEC_ALIGN(16) _SLIST_ENTRY {
     PSLIST_ENTRY Next;
-};
+} SLIST_ENTRY;
 
-typedef struct _SLIST_HEADER {
-    ULONGLONG Alignment;
-    ULONGLONG Region;
+typedef union DECLSPEC_ALIGN(16) _SLIST_HEADER {
+    struct {
+        ULONGLONG Alignment;
+        ULONGLONG Region;
+    };
+    struct {
+        ULONGLONG Depth:16;
+        ULONGLONG Sequence:9;
+        ULONGLONG NextEntry:39;
+        ULONGLONG HeaderType:1;
+        ULONGLONG Init:1;
+        ULONGLONG Reserved:59;
+        ULONGLONG Region:3;
+    } Header8;
+    struct {
+        ULONGLONG Depth:16;
+        ULONGLONG Sequence:48;
+        ULONGLONG HeaderType:1;
+        ULONGLONG Init:1;
+        ULONGLONG Reserved:2;
+        ULONGLONG NextEntry:60;
+    } Header16;
 } SLIST_HEADER, *PSLIST_HEADER;
 
 #else
