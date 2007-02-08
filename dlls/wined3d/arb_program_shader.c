@@ -986,9 +986,11 @@ static void shader_arb_select_depth_blt(IWineD3DDevice *iface) {
     glEnable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
-static void shader_arb_cleanup(BOOL usePS, BOOL useVS) {
-    if (useVS) glDisable(GL_VERTEX_PROGRAM_ARB);
-    if (usePS) glDisable(GL_FRAGMENT_PROGRAM_ARB);
+static void shader_arb_cleanup(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    if (GL_SUPPORT(ARB_VERTEX_PROGRAM)) glDisable(GL_VERTEX_PROGRAM_ARB);
+    if (GL_SUPPORT(ARB_FRAGMENT_PROGRAM)) glDisable(GL_FRAGMENT_PROGRAM_ARB);
 }
 
 const shader_backend_t arb_program_shader_backend = {

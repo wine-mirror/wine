@@ -2161,8 +2161,10 @@ static void shader_glsl_select_depth_blt(IWineD3DDevice *iface) {
     GL_EXTCALL(glUniform1iARB(loc, 0));
 }
 
-static void shader_glsl_cleanup(BOOL usePS, BOOL useVS) {
-    /* Nothing to do */
+static void shader_glsl_cleanup(IWineD3DDevice *iface) {
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
+    GL_EXTCALL(glUseProgramObjectARB(0));
 }
 
 const shader_backend_t glsl_shader_backend = {

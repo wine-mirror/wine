@@ -177,7 +177,7 @@ typedef struct {
     void (*shader_select)(IWineD3DDevice *iface, BOOL usePS, BOOL useVS);
     void (*shader_select_depth_blt)(IWineD3DDevice *iface);
     void (*shader_load_constants)(IWineD3DDevice *iface, char usePS, char useVS);
-    void (*shader_cleanup)(BOOL usePS, BOOL useVS);
+    void (*shader_cleanup)(IWineD3DDevice *iface);
 } shader_backend_t;
 
 extern const shader_backend_t glsl_shader_backend;
