@@ -101,7 +101,7 @@ directory_entry()
 [Desktop Entry]
 Type=Directory
 EOF
-    if [ "$1" == "wine" ] ; then
+    if [ "$1" = "wine" ] ; then
         echo "Name=Wine"
         echo "Icon=wine"
     else
@@ -208,7 +208,7 @@ if [ $mode = "menu" ] ; then
     mkdir -p "$xdg_data_dir/applications/wine/`dirname "$link"`"
 
     linkpath=`dirname "$link" | sed 's!/!-!g'`
-    if [ "$linkpath" == "." ] ; then 
+    if [ "$linkpath" = "." ] ; then
         linkpath=""
     else
         linkpath="-$linkpath"
