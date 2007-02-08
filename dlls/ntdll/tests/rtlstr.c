@@ -637,7 +637,7 @@ static void test_RtlDowncaseUnicodeString(void)
     UNICODE_STRING result_str;
     UNICODE_STRING lower_str;
 
-    for (i = 0; i <= 1024; i++) {
+    for (i = 0; i < 1024; i++) {
 	ch = (WCHAR) i;
 	if (ch >= 'A' && ch <= 'Z') {
 	    lower_ch = ch - 'A' + 'a';
@@ -678,7 +678,6 @@ static void test_RtlDowncaseUnicodeString(void)
 		case 0x38c: lower_ch = 0x3cc; break;
 		case 0x38e: lower_ch = 0x3cd; break;
 		case 0x38f: lower_ch = 0x3ce; break;
-		case 0x400: lower_ch = 0x0; break;
 		default: lower_ch = ch; break;
 	    } /* switch */
 	}
