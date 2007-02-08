@@ -153,6 +153,9 @@ BEGIN {  RS="<" }
 #   new item
 write_menu_file()
 {
+    menu=`echo $1 | sed 's!/!-!g'`
+    filename=`echo $2 | sed 's!/!-!g'`
+
     tmpfile=`mktemp`
     (
         echo '<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"'
@@ -160,7 +163,7 @@ write_menu_file()
         echo '<Menu>'
         echo '  <Name>Applications</Name>'
 
-        IFS="-"
+        IFS="/"
 
         fullname='wine'
         for i in $1; do
@@ -179,16 +182,16 @@ write_menu_file()
 
         IFS="
 "
-        for i in $(get_menu_entries "$1"); do
-            test "$i" = "$2" && continue
+        for i in $(get_menu_entries "$menu"); do
+            test "$i" = "$filename" && continue
             echo "      <Filename>$i</Filename>"
         done
 
         # New record
-        echo "      <Filename>$2</Filename>"
+        echo "      <Filename>$filename</Filename>"
         echo "    </Include>"
 
-        IFS='-'
+        IFS='/'
         for i in $1; do
             echo "  </Menu>"
         done
@@ -196,7 +199,7 @@ write_menu_file()
     ) > $tmpfile
     chmod 0600 $tmpfile
 
-    mv -f $tmpfile "$xdg_config_dir/$1.menu"
+    mv -f $tmpfile "$xdg_config_dir/$menu.menu"
 }
 
 
@@ -207,15 +210,15 @@ linkname=`basename "$link"`
 if [ $mode = "menu" ] ; then
     mkdir -p "$xdg_data_dir/applications/wine/`dirname "$link"`"
 
-    linkpath=`dirname "$link" | sed 's!/!-!g'`
+    linkpath=`dirname "$link"`
     if [ "$linkpath" = "." ] ; then
         linkpath=""
     else
-        linkpath="-$linkpath"
+        linkpath="/$linkpath"
     fi
 
     desktop_entry > "$xdg_data_dir/applications/wine/$link.desktop"
-    write_menu_file "wine$linkpath" "wine$linkpath-$linkname.desktop"
+    write_menu_file "wine$linkpath" "wine$linkpath/$linkname.desktop"
 else
     desktop_entry > "$HOME/Desktop/$linkname.desktop"
 fi
