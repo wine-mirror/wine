@@ -429,6 +429,7 @@ static const struct
 static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
 {
     LONG ret = EXCEPTION_CONTINUE_SEARCH;
+    MSVCRT___sighandler_t handler;
 
     if (!except || !except->ExceptionRecord)
         return EXCEPTION_CONTINUE_SEARCH;
@@ -436,10 +437,13 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
     switch (except->ExceptionRecord->ExceptionCode)
     {
     case EXCEPTION_ACCESS_VIOLATION:
-        if (sighandlers[MSVCRT_SIGSEGV])
+        if ((handler = sighandlers[MSVCRT_SIGSEGV]) != MSVCRT_SIG_DFL)
         {
-            if (sighandlers[MSVCRT_SIGSEGV] != MSVCRT_SIG_IGN)
-                sighandlers[MSVCRT_SIGSEGV](MSVCRT_SIGSEGV);
+            if (handler != MSVCRT_SIG_IGN)
+            {
+                sighandlers[MSVCRT_SIGSEGV] = MSVCRT_SIG_DFL;
+                handler(MSVCRT_SIGSEGV);
+            }
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
         break;
@@ -455,31 +459,36 @@ static LONG WINAPI msvcrt_exception_filter(struct _EXCEPTION_POINTERS *except)
     case EXCEPTION_FLT_OVERFLOW:
     case EXCEPTION_FLT_STACK_CHECK:
     case EXCEPTION_FLT_UNDERFLOW:
-        if (sighandlers[MSVCRT_SIGFPE])
+        if ((handler = sighandlers[MSVCRT_SIGFPE]) != MSVCRT_SIG_DFL)
         {
-            if (sighandlers[MSVCRT_SIGFPE] != MSVCRT_SIG_IGN)
+            if (handler != MSVCRT_SIG_IGN)
             {
                 int i, float_signal = _FPE_INVALID;
 
-                float_handler handler = (float_handler)sighandlers[MSVCRT_SIGFPE];
+                sighandlers[MSVCRT_SIGFPE] = MSVCRT_SIG_DFL;
                 for (i = 0; i < sizeof(float_exception_map) /
-                 sizeof(float_exception_map[0]); i++)
+                         sizeof(float_exception_map[0]); i++)
+                {
                     if (float_exception_map[i].status ==
-                     except->ExceptionRecord->ExceptionCode)
+                        except->ExceptionRecord->ExceptionCode)
                     {
                         float_signal = float_exception_map[i].signal;
                         break;
                     }
-                handler(MSVCRT_SIGFPE, float_signal);
+                }
+                ((float_handler)handler)(MSVCRT_SIGFPE, float_signal);
             }
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
         break;
     case EXCEPTION_ILLEGAL_INSTRUCTION:
-        if (sighandlers[MSVCRT_SIGILL])
+        if ((handler = sighandlers[MSVCRT_SIGILL]) != MSVCRT_SIG_DFL)
         {
-            if (sighandlers[MSVCRT_SIGILL] != MSVCRT_SIG_IGN)
-                sighandlers[MSVCRT_SIGILL](MSVCRT_SIGILL);
+            if (handler != MSVCRT_SIG_IGN)
+            {
+                sighandlers[MSVCRT_SIGILL] = MSVCRT_SIG_DFL;
+                handler(MSVCRT_SIGILL);
+            }
             ret = EXCEPTION_CONTINUE_EXECUTION;
         }
         break;
