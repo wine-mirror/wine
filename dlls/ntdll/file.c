@@ -1227,7 +1227,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE hFile, PIO_STATUS_BLOCK io,
     };
 
     struct stat st;
-    int fd, needs_close;
+    int fd, needs_close = FALSE;
 
     TRACE("(%p,%p,%p,0x%08x,0x%08x)\n", hFile, io, ptr, len, class);
 
