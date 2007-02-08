@@ -155,6 +155,8 @@ void CDECL MSVCRT_abort(void)
   }
   else
     _cputs("\nabnormal program termination\n");
+  MSVCRT_raise(MSVCRT_SIGABRT);
+  /* in case raise() returns */
   MSVCRT__exit(3);
 }
 
@@ -172,6 +174,8 @@ void CDECL MSVCRT__assert(const char* str, const char* file, unsigned int line)
   }
   else
     _cprintf("Assertion failed: %s, file %s, line %d\n\n",str, file, line);
+  MSVCRT_raise(MSVCRT_SIGABRT);
+  /* in case raise() returns */
   MSVCRT__exit(3);
 }
 
