@@ -716,7 +716,7 @@ UINT ACTION_InstallFiles(MSIPACKAGE *package)
 
     LIST_FOR_EACH_ENTRY( file, &package->files, MSIFILE, entry )
     {
-        if (file->state != msifs_missing && file->state != msifs_overwrite)
+        if (file->state != msifs_missing && !mi->is_continuous && file->state != msifs_overwrite)
             continue;
 
         if (file->Sequence > mi->last_sequence || mi->is_continuous ||

@@ -214,6 +214,13 @@ static const CHAR mm_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tV
                                    "Media\tDiskId\n"
                                    "1\t3\t\ttest1.cab\tDISK1\t\n";
 
+static const CHAR ss_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                   "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                   "Media\tDiskId\n"
+                                   "1\t2\t\ttest1.cab\tDISK1\t\n"
+                                   "2\t2\t\ttest2.cab\tDISK2\t\n"
+                                   "3\t12\t\ttest3.cab\tDISK3\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -283,6 +290,18 @@ static const msi_table mm_tables[] =
     ADD_TABLE(mm_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(mm_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table ss_tables[] =
+{
+    ADD_TABLE(cc_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(cc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(ss_media),
     ADD_TABLE(property),
 };
 
@@ -1021,6 +1040,29 @@ static void test_mixedmedia(void)
     DeleteFile(msifile);
 }
 
+static void test_samesequence(void)
+{
+    UINT r;
+
+    create_cc_test_files();
+    create_database(msifile, ss_tables, sizeof(ss_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    }
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    delete_cab_files();
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -1044,6 +1086,7 @@ START_TEST(install)
     test_continuouscabs();
     test_caborder();
     test_mixedmedia();
+    test_samesequence();
 
     SetCurrentDirectoryA(prev_path);
 }
