@@ -187,7 +187,7 @@ static int fill_inputbuffer(void)
 
 	if(!inputbuffer)
 	{
-		inputbuffer = xmalloc(INPUTBUFFER_SIZE);
+		inputbuffer = xmalloc(INPUTBUFFER_SIZE*sizeof(WCHAR));
 		xlatebuffer = xmalloc(INPUTBUFFER_SIZE);
 	}
 
