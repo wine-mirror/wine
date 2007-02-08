@@ -360,6 +360,12 @@ static DWORD DoRegServer(void)
     return ret;
 }
 
+static INT DoEmbedding( LPWSTR key )
+{
+	printf("Remote custom actions are not supported yet\n");
+	return 1;
+}
+
 static BOOL process_args_from_reg( LPWSTR ident, int *pargc, WCHAR ***pargv )
 {
 	LONG r;
@@ -437,6 +443,9 @@ int main(int argc, char **argv)
 		if(!process_args_from_reg( argvW[2], &argc, &argvW ))
 			return 1;
 	}
+
+	if (argc == 3 && msi_option_equal(argvW[1], "Embedding"))
+		return DoEmbedding( argvW[2] );
 
 	for(i = 1; i < argc; i++)
 	{
