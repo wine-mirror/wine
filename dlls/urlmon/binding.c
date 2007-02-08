@@ -151,8 +151,11 @@ static LRESULT WINAPI notif_wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM 
         Binding *binding = (Binding*)lParam;
         task_header_t *task;
 
-        while((task = pop_task(binding)))
+        while((task = pop_task(binding))) {
+            binding->continue_call++;
             task->proc(binding, task);
+            binding->continue_call--;
+        }
 
         IBinding_Release(BINDING(binding));
         return 0;
