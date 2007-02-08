@@ -31,8 +31,8 @@ hex	0x{hexd}+
 uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
 
 %x QUOTE
-%x attr
-%x pp_line
+%x ATTR
+%x PP_LINE
 
 %{
 
@@ -105,8 +105,8 @@ static UUID* parse_uuid(const char*u)
  **************************************************************************
  */
 %%
-<INITIAL,attr>^{ws}*\#{ws}*	yy_push_state(pp_line);
-<pp_line>[^\n]*         {
+<INITIAL,ATTR>^{ws}*\#{ws}*	yy_push_state(PP_LINE);
+<PP_LINE>[^\n]*         {
                             int lineno;
                             char *cptr, *fname;
                             yy_pop_state();
@@ -125,7 +125,7 @@ static UUID* parse_uuid(const char*u)
                             free( input_name );
                             input_name = xstrdup(fname);
                         }
-<INITIAL,attr>\"	yy_push_state(QUOTE); cbufidx = 0;
+<INITIAL,ATTR>\"	yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
 				yy_pop_state();
 				parser_lval.str = get_buffered_cstring();
@@ -135,28 +135,28 @@ static UUID* parse_uuid(const char*u)
 <QUOTE>\\\"		addcchar(yytext[1]);
 <QUOTE>\\.		addcchar('\\'); addcchar(yytext[1]);
 <QUOTE>.		addcchar(yytext[0]);
-<INITIAL,attr>\[	yy_push_state(attr); return '[';
-<attr>\]		yy_pop_state(); return ']';
-<attr>{cident}		return attr_token(yytext);
-<attr>{uuid}			{
+<INITIAL,ATTR>\[	yy_push_state(ATTR); return '[';
+<ATTR>\]		yy_pop_state(); return ']';
+<ATTR>{cident}		return attr_token(yytext);
+<ATTR>{uuid}			{
 				parser_lval.uuid = parse_uuid(yytext);
 				return aUUID;
 			}
-<INITIAL,attr>{hex}	{
+<INITIAL,ATTR>{hex}	{
 				parser_lval.num = strtoul(yytext, NULL, 0);
 				return aHEXNUM;
 			}
-<INITIAL,attr>{int}	{
+<INITIAL,ATTR>{int}	{
 				parser_lval.num = strtoul(yytext, NULL, 0);
 				return aNUM;
 			}
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 {cident}		return kw_token(yytext);
-<INITIAL,attr>\n	line_number++;
-<INITIAL,attr>{ws}
-<INITIAL,attr>\<\<	return SHL;
-<INITIAL,attr>\>\>	return SHR;
-<INITIAL,attr>.		return yytext[0];
+<INITIAL,ATTR>\n	line_number++;
+<INITIAL,ATTR>{ws}
+<INITIAL,ATTR>\<\<	return SHL;
+<INITIAL,ATTR>\>\>	return SHR;
+<INITIAL,ATTR>.		return yytext[0];
 <<EOF>>			{
 				if (import_stack_ptr) {
 					pop_import();
