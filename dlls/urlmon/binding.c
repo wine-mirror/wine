@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -895,6 +895,18 @@ static HRESULT WINAPI InternetProtocolSink_ReportData(IInternetProtocolSink *ifa
     return S_OK;
 }
 
+static void report_result_proc(Binding *binding, task_header_t *t)
+{
+    IInternetProtocol_Terminate(binding->protocol, 0);
+
+    if(binding->request_locked) {
+        IInternetProtocol_UnlockRequest(binding->protocol);
+        binding->request_locked = FALSE;
+    }
+
+    HeapFree(GetProcessHeap(), 0, t);
+}
+
 static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
         HRESULT hrResult, DWORD dwError, LPCWSTR szResult)
 {
@@ -902,7 +914,13 @@ static HRESULT WINAPI InternetProtocolSink_ReportResult(IInternetProtocolSink *i
 
     TRACE("(%p)->(%08x %d %s)\n", This, hrResult, dwError, debugstr_w(szResult));
 
-    IInternetProtocol_Terminate(This->protocol, 0);
+    if(GetCurrentThreadId() == This->apartment_thread && !This->continue_call) {
+        IInternetProtocol_Terminate(This->protocol, 0);
+    }else {
+        task_header_t *task = HeapAlloc(GetProcessHeap(), 0, sizeof(task_header_t));
+        push_task(This, task, report_result_proc);
+    }
+
     return S_OK;
 }
 
