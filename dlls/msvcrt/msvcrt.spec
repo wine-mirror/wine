@@ -686,7 +686,7 @@
 @ cdecl putwc(long ptr) MSVCRT_fputwc
 @ cdecl putwchar(long) _fputwchar
 @ cdecl qsort(ptr long long ptr) ntdll.qsort
-@ stub raise #(long)
+@ cdecl raise(long) MSVCRT_raise
 @ cdecl rand() MSVCRT_rand
 @ cdecl realloc(ptr long) MSVCRT_realloc
 @ cdecl remove(str) MSVCRT_remove

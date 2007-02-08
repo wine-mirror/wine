@@ -544,6 +544,40 @@ MSVCRT___sighandler_t CDECL MSVCRT_signal(int sig, MSVCRT___sighandler_t func)
 }
 
 /*********************************************************************
+ *		raise (MSVCRT.@)
+ */
+int CDECL MSVCRT_raise(int sig)
+{
+    MSVCRT___sighandler_t handler;
+
+    TRACE("(%d)\n", sig);
+
+    switch (sig)
+    {
+    case MSVCRT_SIGABRT:
+    case MSVCRT_SIGFPE:
+    case MSVCRT_SIGILL:
+    case MSVCRT_SIGSEGV:
+    case MSVCRT_SIGINT:
+    case MSVCRT_SIGTERM:
+        handler = sighandlers[sig];
+        if (handler == MSVCRT_SIG_DFL) MSVCRT__exit(3);
+        if (handler != MSVCRT_SIG_IGN)
+        {
+            sighandlers[sig] = MSVCRT_SIG_DFL;
+            if (sig == MSVCRT_SIGFPE)
+                ((float_handler)handler)(sig, _FPE_EXPLICITGEN);
+            else
+                handler(sig);
+        }
+        break;
+    default:
+        return -1;
+    }
+    return 0;
+}
+
+/*********************************************************************
  *		_XcptFilter (MSVCRT.@)
  */
 int CDECL _XcptFilter(NTSTATUS ex, PEXCEPTION_POINTERS ptr)
