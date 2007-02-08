@@ -887,6 +887,129 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     return TRUE;
 }
 
+static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
+{
+    INT         x, y,
+                breakCount,
+                outputWidth = 0,    /* to test TabbedTextOut() */
+                justifiedWidth = 0, /* to test GetTextExtentExPointW() */
+                areaWidth = clientArea->right - clientArea->left,
+                nErrors = 0, e;
+    BOOL        lastExtent = FALSE;
+    PSTR        pFirstChar, pLastChar;
+    SIZE        size;
+    TEXTMETRICA tm;
+    struct err
+    {
+        char extent[100];
+        int  GetTextExtentExPointWWidth;
+        int  TabbedTextOutWidth;
+    } error[10];
+
+    GetTextMetricsA(hdc, &tm);
+    y = clientArea->top;
+    do {
+        breakCount = 0;
+        while (*str == tm.tmBreakChar) str++; /* skip leading break chars */
+        pFirstChar = str;
+
+        do {
+            pLastChar = str;
+
+            /* if not at the end of the string, ... */
+            if (*str == '\0') break;
+            /* ... add the next word to the current extent */
+            while (*str != '\0' && *str++ != tm.tmBreakChar);
+            breakCount++;
+            SetTextJustification(hdc, 0, 0);
+            GetTextExtentPoint32(hdc, pFirstChar, str - pFirstChar - 1, &size);
+        } while ((int) size.cx < areaWidth);
+
+        /* ignore trailing break chars */
+        breakCount--;
+        while (*(pLastChar - 1) == tm.tmBreakChar)
+        {
+            pLastChar--;
+            breakCount--;
+        }
+
+        if (*str == '\0' || breakCount <= 0) pLastChar = str;
+
+        SetTextJustification(hdc, 0, 0);
+        GetTextExtentPoint32(hdc, pFirstChar, pLastChar - pFirstChar, &size);
+
+        /* do not justify the last extent */
+        if (*str != '\0' && breakCount > 0)
+        {
+            SetTextJustification(hdc, areaWidth - size.cx, breakCount);
+            GetTextExtentPoint32(hdc, pFirstChar, pLastChar - pFirstChar, &size);
+            justifiedWidth = size.cx;
+        }
+        else lastExtent = TRUE;
+
+        x = clientArea->left;
+
+        outputWidth = LOWORD(TabbedTextOut(
+                             hdc, x, y, pFirstChar, pLastChar - pFirstChar,
+                             0, NULL, 0));
+        /* catch errors and report them */
+        if (!lastExtent && ((outputWidth != areaWidth) || (justifiedWidth != areaWidth)))
+        {
+            memset(error[nErrors].extent, 0, 100);
+            memcpy(error[nErrors].extent, pFirstChar, pLastChar - pFirstChar);
+            error[nErrors].TabbedTextOutWidth = outputWidth;
+            error[nErrors].GetTextExtentExPointWWidth = justifiedWidth;
+            nErrors++;
+        }
+
+        y += size.cy;
+        str = pLastChar;
+    } while (*str && y < clientArea->bottom);
+
+    for (e = 0; e < nErrors; e++)
+    {
+        ok(error[e].TabbedTextOutWidth == areaWidth,
+            "The output text (\"%s\") width should be %d, not %d.\n",
+            error[e].extent, areaWidth, error[e].TabbedTextOutWidth);
+        /* The width returned by GetTextExtentPoint32() is exactly the same
+           returned by GetTextExtentExPointW() - see dlls/gdi32/font.c */
+        ok(error[e].GetTextExtentExPointWWidth == areaWidth,
+            "GetTextExtentPointW() for \"%s\" should have returned a width of %d, not %d.\n",
+            error[e].extent, areaWidth, error[e].GetTextExtentExPointWWidth);
+    }
+}
+
+static void test_SetTextJustification(void)
+{
+    HDC hdc = GetDC(0);
+    RECT clientArea = {0, 0, 400, 400};
+    LOGFONTA lf;
+    HFONT hfont;
+    static char testText[] =
+            "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do "
+            "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut "
+            "enim ad minim veniam, quis nostrud exercitation ullamco laboris "
+            "nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in "
+            "reprehenderit in voluptate velit esse cillum dolore eu fugiat "
+            "nulla pariatur. Excepteur sint occaecat cupidatat non proident, "
+            "sunt in culpa qui officia deserunt mollit anim id est laborum.";
+
+    memset(&lf, 0, sizeof lf);
+    lf.lfCharSet = ANSI_CHARSET;
+    lf.lfClipPrecision = CLIP_DEFAULT_PRECIS;
+    lf.lfWeight = FW_DONTCARE;
+    lf.lfHeight = 20;
+    lf.lfQuality = DEFAULT_QUALITY;
+    lstrcpyA(lf.lfFaceName, "Times New Roman");
+    hfont = create_font("Times New Roman", &lf);
+    SelectObject(hdc, hfont);
+
+    testJustification(hdc, testText, &clientArea);
+
+    DeleteObject(hfont);
+    ReleaseDC(0, hdc);
+}
+
 static void test_font_charset(void)
 {
     static struct charset_data
@@ -940,5 +1063,6 @@ START_TEST(font)
     test_GetGlyphIndices();
     test_GetKerningPairs();
     test_GetOutlineTextMetrics();
+    test_SetTextJustification();
     test_font_charset();
 }

@@ -1231,12 +1231,15 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     LPINT dxs = NULL;
     DC *dc;
     BOOL ret = FALSE;
+    TEXTMETRICW tm;
 
     TRACE("(%p, %s, %d)\n",hdc,debugstr_wn(str,count),maxExt);
 
     dc = DC_GetDCPtr(hdc);
     if (! dc)
         return FALSE;
+
+    GetTextMetricsW(hdc, &tm);
 
     /* If we need to calculate nFit, then we need the partial extents even if
        the user hasn't provided us with an array.  */
@@ -1263,22 +1266,49 @@ BOOL WINAPI GetTextExtentExPointW( HDC hdc, LPCWSTR str, INT count,
     /* Perform device size to world size transformations.  */
     if (ret)
     {
-	INT extra = dc->charExtra, breakRem = dc->breakRem;
+	INT extra      = dc->charExtra,
+        breakExtra = dc->breakExtra,
+        breakRem   = dc->breakRem,
+        i;
 
 	if (dxs)
 	{
-	    INT i;
 	    for (i = 0; i < count; ++i)
 	    {
 		dxs[i] = abs(INTERNAL_XDSTOWS(dc, dxs[i]));
-		dxs[i] += (i+1) * extra + breakRem;
+		dxs[i] += (i+1) * extra;
+                if (count > 1 && (breakExtra || breakRem) && str[i] == tm.tmBreakChar)
+                {
+                    dxs[i] += breakExtra;
+                    if (breakRem > 0)
+                    {
+                        breakRem--;
+                        dxs[i]++;
+                    }
+                }
 		if (dxs[i] <= maxExt)
 		    ++nFit;
 	    }
+            breakRem = dc->breakRem;
 	}
 	size->cx = abs(INTERNAL_XDSTOWS(dc, size->cx));
 	size->cy = abs(INTERNAL_YDSTOWS(dc, size->cy));
-	size->cx += count * extra + breakRem;
+
+        if (!dxs && count > 1 && (breakExtra || breakRem))
+        {
+            for (i = 0; i < count; i++)
+            {
+                if (str[i] == tm.tmBreakChar)
+                {
+                    size->cx += breakExtra;
+                    if (breakRem > 0)
+                    {
+                        breakRem--;
+                        (size->cx)++;
+                    }
+                }
+            }
+        }
     }
 
     if (lpnFit)
@@ -1812,11 +1842,14 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     SIZE sz;
     RECT rc;
     BOOL done_extents = FALSE;
-    INT width, xwidth = 0, ywidth = 0;
+    INT width = 0, xwidth = 0, ywidth = 0;
     DWORD type;
     DC * dc = DC_GetDCUpdate( hdc );
+    INT breakRem;
 
     if (!dc) return FALSE;
+
+    breakRem = dc->breakRem;
 
     if (flags & (ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY))
         FIXME("flags ETO_NUMERICSLOCAL | ETO_NUMERICSLATIN | ETO_PDY unimplemented\n");
@@ -1927,8 +1960,7 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
     y = pt.y;
 
     char_extra = GetTextCharacterExtra(hdc);
-    width = 0;
-    if(char_extra || dc->breakExtra || lpDx)
+    if(char_extra || dc->breakExtra || breakRem || lpDx)
     {
         UINT i;
         SIZE tmpsz;
@@ -1949,9 +1981,14 @@ BOOL WINAPI ExtTextOutW( HDC hdc, INT x, INT y, UINT flags,
                 deltas[i] = tmpsz.cx;
             }
             
-            if (!(flags & ETO_GLYPH_INDEX) && dc->breakExtra && reordered_str[i] == tm.tmBreakChar)
+            if (!(flags & ETO_GLYPH_INDEX) && (dc->breakExtra || breakRem) && reordered_str[i] == tm.tmBreakChar)
             {
                 deltas[i] = deltas[i] + dc->breakExtra;
+                if (breakRem > 0)
+                {
+                    breakRem--;
+                    deltas[i]++;
+                }
             }
             deltas[i] = INTERNAL_XWSTODS(dc, deltas[i]);
             width += deltas[i];
