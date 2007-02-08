@@ -689,7 +689,7 @@ static HANDLE test_OpenComm(BOOL doOverlap)
 
 static void test_GetModemStatus(HANDLE hcom)
 {
-    DWORD ModemStat;
+    DWORD ModemStat = 0;
 
     ok(GetCommModemStatus(hcom, &ModemStat), "GetCommModemStatus failed\n");
     trace("GetCommModemStatus returned 0x%08x->%s%s%s%s\n", ModemStat,
@@ -917,9 +917,10 @@ static void test_LoopbackRead(HANDLE hcom)
 
 static void test_LoopbackCtsRts(HANDLE hcom)
 {
-    DWORD ModemStat, defaultStat;
+    DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
 
+    memset (&dcb, 0, sizeof (dcb));
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
     if (dcb.fRtsControl == RTS_CONTROL_HANDSHAKE)
     {
@@ -956,7 +957,7 @@ static void test_LoopbackCtsRts(HANDLE hcom)
 
 static void test_LoopbackDtrDcd(HANDLE hcom)
 {
-    DWORD ModemStat, defaultStat;
+    DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
@@ -995,7 +996,7 @@ static void test_LoopbackDtrDcd(HANDLE hcom)
 
 static void test_LoopbackDtrDsr(HANDLE hcom)
 {
-    DWORD ModemStat, defaultStat;
+    DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
@@ -1034,7 +1035,7 @@ static void test_LoopbackDtrDsr(HANDLE hcom)
 
 static void test_LoopbackDtrRing(HANDLE hcom)
 {
-    DWORD ModemStat, defaultStat;
+    DWORD ModemStat = 0, defaultStat = 0;
     DCB dcb;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
@@ -1179,7 +1180,7 @@ static void  test_WaitCts(HANDLE hcom)
     OVERLAPPED overlapped;
     HANDLE hComPortEvent;
     HANDLE alarmThread;
-    DWORD args[4], defaultStat;
+    DWORD args[4], defaultStat = 0;
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
@@ -1337,7 +1338,7 @@ static void  test_WaitDsr(HANDLE hcom)
     OVERLAPPED overlapped;
     HANDLE hComPortEvent;
     HANDLE alarmThread;
-    DWORD args[3], defaultStat;
+    DWORD args[3], defaultStat = 0;
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
@@ -1482,7 +1483,7 @@ static void  test_WaitDcd(HANDLE hcom)
     OVERLAPPED overlapped;
     HANDLE hComPortEvent;
     HANDLE alarmThread;
-    DWORD args[3], defaultStat;
+    DWORD args[3], defaultStat = 0;
     DWORD alarmThreadId, before, after, after1, diff, success, err, written, evtmask=0;
 
     ok(GetCommState(hcom, &dcb), "GetCommState failed\n");
