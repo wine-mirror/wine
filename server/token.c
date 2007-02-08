@@ -316,7 +316,7 @@ static int sd_is_valid( const struct security_descriptor *sd, data_size_t size )
     if (group)
     {
         size_t needed_size = FIELD_OFFSET(SID, SubAuthority[group->SubAuthorityCount]);
-        if ((sd->owner_len < sizeof(SID)) || (needed_size > sd->owner_len))
+        if ((sd->group_len < sizeof(SID)) || (needed_size > sd->group_len))
             return FALSE;
     }
     offset += sd->group_len;
