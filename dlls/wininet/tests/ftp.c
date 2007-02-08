@@ -106,7 +106,6 @@ static void test_createdir(void)
     SetLastError(0xdeadbeef);
     bRet = FtpCreateDirectoryA(NULL, "new_directory_deadbeef");
     ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
@@ -125,7 +124,6 @@ static void test_createdir(void)
     SetLastError(0xdeadbeef);
     bRet = FtpCreateDirectoryA(hFtp, NULL);
     ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
