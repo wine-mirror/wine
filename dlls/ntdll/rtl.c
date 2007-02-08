@@ -930,8 +930,8 @@ PVOID WINAPI RtlDecodePointer( PVOID ptr )
 VOID WINAPI RtlInitializeSListHead(volatile PSLIST_HEADER ListHeader)
 {
     TRACE("(%p)\n", ListHeader);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
 #else
     ListHeader->Alignment = 0;
 #endif
@@ -940,8 +940,9 @@ VOID WINAPI RtlInitializeSListHead(volatile PSLIST_HEADER ListHeader)
 USHORT WINAPI RtlQueryDepthSList(volatile PSLIST_HEADER ListHeader)
 {
     TRACE("(%p)\n", ListHeader);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
+    return NULL;
 #else
     return ListHeader->Depth;
 #endif
@@ -950,8 +951,9 @@ USHORT WINAPI RtlQueryDepthSList(volatile PSLIST_HEADER ListHeader)
 PSLIST_ENTRY WINAPI RtlFirstEntrySList(volatile PSLIST_HEADER ListHeader)
 {
     TRACE("(%p)\n", ListHeader);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
+    return NULL;
 #else
     return ListHeader->Next.Next;
 #endif
@@ -961,8 +963,9 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(volatile PSLIST_HEADER ListHeader)
 {
     SLIST_HEADER oldHeader, newHeader;
     TRACE("(%p)\n", ListHeader);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
+    return NULL;
 #else
     if (ListHeader->Depth == 0)
         return NULL;
@@ -983,8 +986,9 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(volatile PSLIST_HEADER ListHead
 {
     SLIST_HEADER oldHeader, newHeader;
     TRACE("(%p, %p)\n", ListHeader, ListEntry);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
+    return NULL;
 #else
     newHeader.Next.Next = ListEntry;
     do
@@ -1005,8 +1009,9 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(volatile PSLIST_HEADER ListHeade
     SLIST_HEADER oldHeader, newHeader;
     PSLIST_ENTRY entry;
     TRACE("(%p)\n", ListHeader);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
+    return NULL;
 #else
     do
     {
@@ -1042,8 +1047,9 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(volatile PSLIST_HEADER ListHeade
 {
     SLIST_HEADER oldHeader, newHeader;
     TRACE("(%p, %p, %p, %d)\n", ListHeader, FirstEntry, LastEntry, Count);
-#if _WIN64
-    assert(0);
+#ifdef _WIN64
+    FIXME("stub\n");
+    return NULL;
 #else
     newHeader.Next.Next = FirstEntry;
     do
