@@ -2983,6 +2983,27 @@ PCWSTR
 PWSTR
 WCHAR *
 
+%%ntdsapi.dll
+
+%long
+
+DWORD
+USHORT
+
+%ptr
+
+DWORD *
+
+%str
+
+LPCSTR
+LPSTR
+
+%wstr
+
+LPCWSTR
+LPWSTR
+
 %%odbc32.dll
 
 %long
