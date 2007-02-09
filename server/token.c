@@ -80,6 +80,7 @@ struct token
     struct list    privileges;      /* privileges available to the token */
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
+    SID           *primary_group;   /* SID of user's primary group */
     unsigned       primary;         /* is this a primary or impersonation token? */
     ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
     TOKEN_SOURCE   source;          /* source of the token */
@@ -425,6 +426,7 @@ static struct token *create_token( unsigned primary, const SID *user,
         list_init( &token->groups );
         token->primary = primary;
         token->default_dacl = NULL;
+        token->primary_group = NULL;
 
         /* copy user */
         token->user = memdup( user, FIELD_OFFSET(SID, SubAuthority[user->SubAuthorityCount]) );
@@ -450,10 +452,13 @@ static struct token *create_token( unsigned primary, const SID *user,
             group->def = TRUE;
             group->logon = FALSE;
             group->mandatory = (groups[i].Attributes & SE_GROUP_MANDATORY) ? TRUE : FALSE;
-            group->owner = FALSE;
+            group->owner = groups[i].Attributes & SE_GROUP_OWNER ? TRUE : FALSE;
             group->resource = FALSE;
             group->deny_only = FALSE;
             list_add_tail( &token->groups, &group->entry );
+            /* Use first owner capable group as an owner */
+            if (!token->primary_group && group->owner)
+                token->primary_group = &group->sid;
         }
 
         /* copy privileges */
@@ -582,7 +587,7 @@ struct token *token_create_admin( void )
             { security_local_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { security_interactive_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
             { security_authenticated_user_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
-            { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
+            { alias_admins_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY|SE_GROUP_OWNER },
             { alias_users_sid, SE_GROUP_ENABLED|SE_GROUP_ENABLED_BY_DEFAULT|SE_GROUP_MANDATORY },
         };
         static const TOKEN_SOURCE admin_source = {"SeMgr", {0, 0}};
@@ -592,6 +597,8 @@ struct token *token_create_admin( void )
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
                             default_dacl, admin_source );
+        /* we really need a primary group */
+        assert( token->primary_group );
     }
 
     free( alias_admins_sid );
@@ -1024,6 +1031,8 @@ DECL_HANDLER(duplicate_token)
                 memcpy( newgroup, group, size );
                 list_add_tail( &token->groups, &newgroup->entry );
             }
+            token->primary_group = src_token->primary_group;
+            assert( token->primary_group );
 
             /* copy privileges */
             LIST_FOR_EACH_ENTRY( privilege, &src_token->privileges, struct privilege, entry )
