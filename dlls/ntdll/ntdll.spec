@@ -1116,7 +1116,7 @@
 @ stdcall ZwQueryVirtualMemory(long ptr long ptr long ptr) NtQueryVirtualMemory
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 # @ stub ZwQueueApcThread
-@ stdcall -register ZwRaiseException(ptr ptr long) NtRaiseException
+@ stdcall ZwRaiseException(ptr ptr long) NtRaiseException
 @ stub ZwRaiseHardError
 @ stdcall ZwReadFile(long long long long long long long long long) NtReadFile
 # @ stub ZwReadFileScatter
