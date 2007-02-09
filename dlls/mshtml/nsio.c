@@ -27,6 +27,7 @@
 #include "winuser.h"
 #include "ole2.h"
 #include "shlguid.h"
+#include "wininet.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -53,7 +54,7 @@ typedef struct {
     nsIURI *uri;
     NSContainer *container;
     IMoniker *mon;
-    LPSTR spec;
+    LPWSTR wine_url;
     PRBool is_doc_uri;
 } nsURI;
 
@@ -1145,7 +1146,7 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
             nsIURI_Release(This->uri);
         if(This->mon)
             IMoniker_Release(This->mon);
-        mshtml_free(This->spec);
+        mshtml_free(This->wine_url);
         mshtml_free(This);
     }
 
@@ -1161,8 +1162,11 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
     if(This->uri)
         return nsIURI_GetSpec(This->uri, aSpec);
 
-    if(This->spec) {
-        nsACString_SetData(aSpec, This->spec);
+    if(This->wine_url) {
+        char speca[INTERNET_MAX_URL_LENGTH];
+        WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
+        nsACString_SetData(aSpec, speca);
+
         return NS_OK;
     }
 
@@ -1563,8 +1567,8 @@ static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
         WARN("Moniker already set: %p\n", This->container);
         IMoniker_Release(This->mon);
 
-        mshtml_free(This->spec);
-        This->spec = NULL;
+        mshtml_free(This->wine_url);
+        This->wine_url = NULL;
     }
 
     if(aMoniker) {
@@ -1575,12 +1579,12 @@ static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
         if(SUCCEEDED(hres)) {
             DWORD len;
 
-            len = WideCharToMultiByte(CP_ACP, 0, url, -1, NULL, 0, NULL, NULL);
-            This->spec = mshtml_alloc(len*sizeof(WCHAR));
-            WideCharToMultiByte(CP_ACP, 0, url, -1, This->spec, -1, NULL, NULL);
+            len = strlenW(url)+1;
+            This->wine_url = mshtml_alloc(len*sizeof(WCHAR));
+            memcpy(This->wine_url, url, len*sizeof(WCHAR));
             CoTaskMemFree(url);
 
-            TRACE("spec %s\n", debugstr_a(This->spec));
+            TRACE("wine_url %s\n", debugstr_w(This->wine_url));
         }else {
             ERR("GetDisplayName failed: %08x\n", hres);
         }
@@ -1661,7 +1665,7 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval
     ret->uri = uri;
     ret->container = container;
     ret->mon = NULL;
-    ret->spec = NULL;
+    ret->wine_url = NULL;
     ret->is_doc_uri = FALSE;
 
     if(container)
