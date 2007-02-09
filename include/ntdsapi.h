@@ -19,6 +19,8 @@
 #ifndef __WINE_NTDSAPI_H
 #define __WINE_NTDSAPI_H
 
+/* FIXME: #include <schedule.h> */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
