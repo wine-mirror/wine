@@ -338,6 +338,7 @@ static void test_GetDisplayName(void)
     HANDLE hTestFile;
     WCHAR wszTestFile[MAX_PATH], wszTestFile2[MAX_PATH], wszTestDir[MAX_PATH];
     char szTestFile[MAX_PATH], szTestDir[MAX_PATH];
+    DWORD attr;
     STRRET strret;
     LPSHELLFOLDER psfDesktop, psfPersonal;
     IUnknown *psfFile;
@@ -364,10 +365,15 @@ static void test_GetDisplayName(void)
 
     PathAddBackslashW(wszTestDir);
     lstrcatW(wszTestDir, wszDirName);
+    /* Use ANSI file functions so this works on Windows 9x */
     WideCharToMultiByte(CP_ACP, 0, wszTestDir, -1, szTestDir, MAX_PATH, 0, 0);
-    result = CreateDirectoryA(szTestDir, NULL);
-    ok(result, "CreateDirectoryA failed! Last error: %u\n", GetLastError());
-    if (!result) return;
+    CreateDirectoryA(szTestDir, NULL);
+    attr=GetFileAttributesA(szTestDir);
+    if (attr == INVALID_FILE_ATTRIBUTES || !(attr & FILE_ATTRIBUTE_DIRECTORY))
+    {
+        ok(0, "unable to create the '%s' directory\n", szTestDir);
+        return;
+    }
 
     lstrcpyW(wszTestFile, wszTestDir);
     PathAddBackslashW(wszTestFile);
