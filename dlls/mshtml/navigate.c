@@ -267,6 +267,14 @@ static HRESULT WINAPI BindStatusCallback_OnStartBinding(IBindStatusCallback *ifa
     IBinding_AddRef(pbind);
     This->binding = pbind;
 
+    if(This->nschannel && This->nschannel->load_group) {
+        nsresult nsres = nsILoadGroup_AddRequest(This->nschannel->load_group,
+                (nsIRequest*)NSCHANNEL(This->nschannel), This->nscontext);
+
+        if(NS_FAILED(nsres))
+            ERR("AddRequest failed:%08x\n", nsres);
+    }
+
     return S_OK;
 }
 

@@ -634,16 +634,8 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
 
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
 
-            if(do_load_from_moniker_hack(This)) {
-                if(This->load_group) {
-                    nsres = nsILoadGroup_AddRequest(This->load_group,
-                                                    (nsIRequest*)NSCHANNEL(This), NULL);
-
-                    if(NS_FAILED(nsres))
-                        ERR("AddRequest failed:%08x\n", nsres);
-                }
+            if(do_load_from_moniker_hack(This))
                 return WINE_NS_LOAD_FROM_MONIKER;
-            }
         }else if(container->doc) {
             BOOL cont = before_async_open(This, container);
             nsIWebBrowserChrome_Release(NSWBCHROME(container));
@@ -724,14 +716,6 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     if(aContext) {
         nsISupports_AddRef(aContext);
         bscallback->nscontext = aContext;
-    }
-
-    if(This->load_group) {
-        nsres = nsILoadGroup_AddRequest(This->load_group,
-                (nsIRequest*)NSCHANNEL(This), NULL);
-
-        if(NS_FAILED(nsres))
-            ERR("AddRequest failed:%08x\n", nsres);
     }
 
     start_binding(bscallback);
