@@ -293,7 +293,10 @@ sub parse_spec_file($$) {
 
 	    $flags =~ s/\s+/ /g;
 
-	    $internal_name = $external_name if !$internal_name;
+            if (!$internal_name)
+            {
+                $internal_name = ($flags =~ /-register/ ? "__regs_" : "") . $external_name;
+            }
 
 	    if($flags =~ /-noname/) {
 		# $external_name = "@";
@@ -303,6 +306,9 @@ sub parse_spec_file($$) {
 		if($arguments) { $arguments .= " "; }
 		$arguments .= "ptr";
 		$calling_convention .= " -register";
+	    }
+	    if($flags =~ /(?:-i386)/) {
+		$calling_convention .= " -i386";
 	    }
 
 	    if ($internal_name =~ /^(.*?)\.(.*?)$/) {
