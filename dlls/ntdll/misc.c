@@ -149,7 +149,7 @@ int CDECL NTDLL_abs( int i )
 /*********************************************************************
  *                  labs   (NTDLL.@)
  */
-long int CDECL NTDLL_labs( long int i )
+long CDECL NTDLL_labs( long i )
 {
     return labs( i );
 }
