@@ -759,6 +759,69 @@ static void test_display_modes(void)
     IDirect3D8_Release(pD3d);
 }
 
+static void test_scene(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D8                  *pD3d               = NULL;
+    IDirect3DDevice8            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+
+    hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+    if(!pDevice) goto cleanup;
+
+    /* Test an EndScene without beginscene. Should return an error */
+    hr = IDirect3DDevice8_EndScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %s\n", DXGetErrorString8(hr));
+
+    /* Test a normal BeginScene / EndScene pair, this should work */
+    hr = IDirect3DDevice8_BeginScene(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %s\n", DXGetErrorString8(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice8_EndScene(pDevice);
+        ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %s\n", DXGetErrorString8(hr));
+    }
+
+    /* Test another EndScene without having begun a new scene. Should return an error */
+    hr = IDirect3DDevice8_EndScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %s\n", DXGetErrorString8(hr));
+
+    /* Two nested BeginScene and EndScene calls */
+    hr = IDirect3DDevice8_BeginScene(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice8_BeginScene failed with %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_BeginScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_BeginScene returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_EndScene(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice8_EndScene failed with %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_EndScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice8_EndScene returned %s\n", DXGetErrorString8(hr));
+
+    /* StretchRect does not exit in Direct3D8, so no equivalent to the d3d9 stretchrect tests */
+
+cleanup:
+    if(pD3d) IDirect3D8_Release(pD3d);
+    if(pDevice) IDirect3D8_Release(pDevice);
+    if(hwnd) DestroyWindow(hwnd);
+}
 
 START_TEST(device)
 {
@@ -780,5 +843,6 @@ START_TEST(device)
         test_mipmap_levels();
         test_cursor();
         test_states();
+        test_scene();
     }
 }

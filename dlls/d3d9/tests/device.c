@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2006 Vitaliy Margolen
- * Copyright (C) 2006 Stefan Dösinger(For CodeWeavers)
  * Copyright (C) 2006 Chris Robinson
+ * Copyright (C) 2006-2007 Stefan Dösinger(For CodeWeavers)
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -943,6 +943,156 @@ static void test_display_modes(void)
     IDirect3D9_Release(pD3d);
 }
 
+static void test_scene(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D9                  *pD3d               = NULL;
+    IDirect3DDevice9            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    IDirect3DSurface9            *pSurface1 = NULL, *pSurface2 = NULL, *pSurface3 = NULL, *pRenderTarget = NULL;
+    IDirect3DSurface9            *pBackBuffer = NULL, *pDepthStencil = NULL;
+    RECT rect = {0, 0, 128, 128};
+    D3DCAPS9                     caps;
+
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice) goto cleanup;
+
+    /* Get the caps, they will be needed to tell if an operation is supposed to be valid */
+    memset(&caps, 0, sizeof(caps));
+    hr = IDirect3DDevice9_GetDeviceCaps(pDevice, &caps);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetCaps failed with %s\n", DXGetErrorString9(hr));
+    if(FAILED(hr)) goto cleanup;
+
+    /* Test an EndScene without beginscene. Should return an error */
+    hr = IDirect3DDevice9_EndScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+
+    /* Test a normal BeginScene / EndScene pair, this should work */
+    hr = IDirect3DDevice9_BeginScene(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice9_EndScene(pDevice);
+        ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    }
+
+    /* Test another EndScene without having begun a new scene. Should return an error */
+    hr = IDirect3DDevice9_EndScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+
+    /* Two nested BeginScene and EndScene calls */
+    hr = IDirect3DDevice9_BeginScene(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_BeginScene returned %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_EndScene(pDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_EndScene(pDevice);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_EndScene returned %s\n", DXGetErrorString9(hr));
+
+    /* Create some surfaces to test stretchrect between the scenes */
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 128, 128, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &pSurface1, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(pDevice, 128, 128, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &pSurface2, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateOffscreenPlainSurface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateDepthStencilSurface(pDevice, 800, 600, D3DFMT_D16, D3DMULTISAMPLE_NONE, 0, FALSE, &pSurface3, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateDepthStencilSurface failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_CreateRenderTarget(pDevice, 128, 128, d3ddm.Format, D3DMULTISAMPLE_NONE, 0, FALSE, &pRenderTarget, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateRenderTarget failed with %s\n", DXGetErrorString9(hr));
+
+    hr = IDirect3DDevice9_GetBackBuffer(pDevice, 0, 0, D3DBACKBUFFER_TYPE_MONO, &pBackBuffer);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_GetDepthStencilSurface(pDevice, &pDepthStencil);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetBackBuffer failed with %s\n", DXGetErrorString9(hr));
+
+    /* First make sure a simple StretchRect call works */
+    if(pSurface1 && pSurface2) {
+        hr = IDirect3DDevice9_StretchRect(pDevice, pSurface1, NULL, pSurface2, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+    }
+    if(pBackBuffer && pRenderTarget) {
+        hr = IDirect3DDevice9_StretchRect(pDevice, pBackBuffer, &rect, pRenderTarget, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+    }
+    if(pDepthStencil && pSurface3) {
+        HRESULT expected;
+        if(0) /* Disabled for now because it crashes in wine */ {
+            expected = caps.DevCaps2 & D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES ? D3D_OK : D3DERR_INVALIDCALL;
+            hr = IDirect3DDevice9_StretchRect(pDevice, pDepthStencil, NULL, pSurface3, NULL, 0);
+            ok( hr == expected, "IDirect3DDevice9_StretchRect returned %s, expected %s\n", DXGetErrorString9(hr), DXGetErrorString9(expected));
+        }
+    }
+
+    /* Now try it in a BeginScene - EndScene pair. Seems to be allowed in a beginScene - Endscene pair
+     * width normal surfaces, render targets and depth stencil surfaces.
+     */
+    hr = IDirect3DDevice9_BeginScene(pDevice);
+    ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+
+    if(pSurface1 && pSurface2)
+    {
+        hr = IDirect3DDevice9_StretchRect(pDevice, pSurface1, NULL, pSurface2, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+    }
+    if(pBackBuffer && pRenderTarget)
+    {
+        hr = IDirect3DDevice9_StretchRect(pDevice, pBackBuffer, &rect, pRenderTarget, NULL, 0);
+        ok( hr == D3D_OK, "IDirect3DDevice9_StretchRect failed with %s\n", DXGetErrorString9(hr));
+    }
+    if(pDepthStencil && pSurface3)
+    {
+        /* This is supposed to fail inside a BeginScene - EndScene pair. */
+        hr = IDirect3DDevice9_StretchRect(pDevice, pDepthStencil, NULL, pSurface3, NULL, 0);
+        ok( hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_StretchRect returned %s, expected D3DERR_INVALIDCALL\n", DXGetErrorString9(hr));
+    }
+
+    hr = IDirect3DDevice9_EndScene(pDevice);
+    ok( hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+
+    /* Does a SetRenderTarget influence BeginScene / EndScene ?
+     * Set a new render target, then see if it started a new scene. Flip the rt back and see if that maybe
+     * ended the scene. Expected result is that the scene is not affected by SetRenderTarget
+     */
+    hr = IDirect3DDevice9_SetRenderTarget(pDevice, 0, pRenderTarget);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_BeginScene(pDevice);
+    ok( hr == D3D_OK, "IDirect3DDevice9_BeginScene failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_SetRenderTarget(pDevice, 0, pBackBuffer);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderTarget failed with %s\n", DXGetErrorString9(hr));
+    hr = IDirect3DDevice9_EndScene(pDevice);
+    ok( hr == D3D_OK, "IDirect3DDevice9_EndScene failed with %s\n", DXGetErrorString9(hr));
+
+cleanup:
+    if(pRenderTarget) IDirect3DSurface9_Release(pRenderTarget);
+    if(pDepthStencil) IDirect3DSurface9_Release(pDepthStencil);
+    if(pBackBuffer) IDirect3DSurface9_Release(pBackBuffer);
+    if(pSurface1) IDirect3DSurface9_Release(pSurface1);
+    if(pSurface2) IDirect3DSurface9_Release(pSurface2);
+    if(pSurface3) IDirect3DSurface9_Release(pSurface3);
+    if(pD3d) IDirect3D9_Release(pD3d);
+    if(pDevice) IDirect3D9_Release(pDevice);
+    if(hwnd) DestroyWindow(hwnd);
+}
 
 START_TEST(device)
 {
@@ -963,5 +1113,6 @@ START_TEST(device)
         test_mipmap_levels();
         test_cursor();
         test_reset();
+        test_scene();
     }
 }

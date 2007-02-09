@@ -4547,13 +4547,25 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginScene(IWineD3DDevice *iface) {
     /* At the moment we have no need for any functionality at the beginning
        of a scene                                                          */
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : stub\n", This);
+    TRACE("(%p)\n", This);
+
+    if(This->inScene) {
+        TRACE("Already in Scene, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+    This->inScene = TRUE;
     return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)\n", This);
+
+    if(!This->inScene) {
+        TRACE("Not in scene, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     ENTER_GL();
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
     glFlush();
@@ -4579,8 +4591,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
             IUnknown_Release(targetContainer);
         }
     }
-    This->sceneEnded = TRUE;
     LEAVE_GL();
+    This->inScene = FALSE;
     return WINED3D_OK;
 }
 
@@ -5713,8 +5725,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     } else {
         /* Otherwise, set the render target up */
 
-        if (!This->sceneEnded) {
+        if (This->inScene) {
+            /* EndScene takes care for loading the pbuffer into the texture. Call EndScene and BeginScene until we have better offscreen handling */
             IWineD3DDevice_EndScene(iface);
+            IWineD3DDevice_BeginScene(iface);
         }
         TRACE("clearing renderer\n");
         /* IWineD3DDeviceImpl_CleanRender(iface); */
@@ -5752,7 +5766,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
     } else {
         FIXME("Unknown error setting the render target\n");
     }
-    This->sceneEnded = FALSE;
     return hr;
 }
 

@@ -642,8 +642,8 @@ typedef struct IWineD3DDeviceImpl
     /* Screen buffer resources */
     glContext contextCache[CONTEXT_CACHE];
 
-    /* A flag to check if endscene has been called before changing the render tartet */
-    BOOL sceneEnded;
+    /* A flag to check for proper BeginScene / EndScene call pairs */
+    BOOL inScene;
 
     /* process vertex shaders using software or hardware */
     BOOL softwareVertexProcessing;

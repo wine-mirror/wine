@@ -1428,15 +1428,20 @@ IDirect3DDeviceImpl_1_DeleteMatrix(IDirect3DDevice *iface,
  *
  * Returns:
  *  D3D_OK on success, for details see IWineD3DDevice::BeginScene
+ *  D3DERR_SCENE_IN_SCENE if WineD3D returns an error(Only in case of an already
+ *  started scene).
  *
  *****************************************************************************/
 static HRESULT WINAPI
 IDirect3DDeviceImpl_7_BeginScene(IDirect3DDevice7 *iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    HRESULT hr;
     TRACE("(%p): Relay\n", This);
 
-    return IWineD3DDevice_BeginScene(This->wineD3DDevice);
+    hr = IWineD3DDevice_BeginScene(This->wineD3DDevice);
+    if(hr == WINED3D_OK) return D3D_OK;
+    else return D3DERR_SCENE_IN_SCENE; /* TODO: Other possible causes of failure */
 }
 
 static HRESULT WINAPI
@@ -1473,16 +1478,20 @@ Thunk_IDirect3DDeviceImpl_1_BeginScene(IDirect3DDevice *iface)
  *
  * Returns:
  *  D3D_OK on success, for details see IWineD3DDevice::EndScene
+ *  D3DERR_SCENE_NOT_IN_SCENE is returned if WineD3D returns an error. It does
+ *  that only if the scene was already ended.
  *
  *****************************************************************************/
 static HRESULT WINAPI
 IDirect3DDeviceImpl_7_EndScene(IDirect3DDevice7 *iface)
 {
     ICOM_THIS_FROM(IDirect3DDeviceImpl, IDirect3DDevice7, iface);
+    HRESULT hr;
     TRACE("(%p): Relay\n", This);
 
-    IWineD3DDevice_EndScene(This->wineD3DDevice);
-    return D3D_OK;
+    hr = IWineD3DDevice_EndScene(This->wineD3DDevice);
+    if(hr == WINED3D_OK) return D3D_OK;
+    else return D3DERR_SCENE_NOT_IN_SCENE;
 }
 
 static HRESULT WINAPI

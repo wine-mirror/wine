@@ -486,6 +486,41 @@ static void StateTest( void )
     ok(rc == D3D_OK, "IDirect3DDevice7_SetRenderState(D3DRENDERSTATE_ZVISIBLE, FALSE) returned %08x\n", rc);
 }
 
+
+static void SceneTest(void)
+{
+    HRESULT                      hr;
+
+    /* Test an EndScene without beginscene. Should return an error */
+    hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+    ok(hr == D3DERR_SCENE_NOT_IN_SCENE, "IDirect3DDevice7_EndScene returned %08x\n", hr);
+
+    /* Test a normal BeginScene / EndScene pair, this should work */
+    hr = IDirect3DDevice7_BeginScene(lpD3DDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
+    if(SUCCEEDED(hr))
+    {
+        hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+        ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
+    }
+
+    /* Test another EndScene without having begun a new scene. Should return an error */
+    hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+    ok(hr == D3DERR_SCENE_NOT_IN_SCENE, "IDirect3DDevice7_EndScene returned %08x\n", hr);
+
+    /* Two nested BeginScene and EndScene calls */
+    hr = IDirect3DDevice7_BeginScene(lpD3DDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
+    hr = IDirect3DDevice7_BeginScene(lpD3DDevice);
+    ok(hr == D3DERR_SCENE_IN_SCENE, "IDirect3DDevice7_BeginScene returned %08x\n", hr);
+    hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+    ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
+    hr = IDirect3DDevice7_EndScene(lpD3DDevice);
+    ok(hr == D3DERR_SCENE_NOT_IN_SCENE, "IDirect3DDevice7_EndScene returned %08x\n", hr);
+
+    /* TODO: Verify that blitting works in the same way as in d3d9 */
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -501,5 +536,6 @@ START_TEST(d3d)
     LightTest();
     ProcessVerticesTest();
     StateTest();
+    SceneTest();
     ReleaseDirect3D();
 }
