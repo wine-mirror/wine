@@ -1616,6 +1616,35 @@ static nsresult NSAPI nsURI_SetIsDocumentURI(nsIWineURI *iface, PRBool aIsDocume
     return NS_OK;
 }
 
+static nsresult NSAPI nsURI_GetWineURL(nsIWineURI *iface, LPCWSTR *aURL)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%p)\n", This, aURL);
+
+    *aURL = This->wine_url;
+    return NS_OK;
+}
+
+static nsresult NSAPI nsURI_SetWineURL(nsIWineURI *iface, LPCWSTR aURL)
+{
+    nsURI *This = NSURI_THIS(iface);
+
+    TRACE("(%p)->(%s)\n", This, debugstr_w(aURL));
+
+    mshtml_free(This->wine_url);
+
+    if(aURL) {
+        int len = strlenW(aURL)+1;
+        This->wine_url = mshtml_alloc(len*sizeof(WCHAR));
+        memcpy(This->wine_url, aURL, len*sizeof(WCHAR));
+    }else {
+        This->wine_url = NULL;
+    }
+
+    return NS_OK;
+}
+
 #undef NSURI_THIS
 
 static const nsIWineURIVtbl nsWineURIVtbl = {
@@ -1653,7 +1682,9 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_GetMoniker,
     nsURI_SetMoniker,
     nsURI_GetIsDocumentURI,
-    nsURI_SetIsDocumentURI
+    nsURI_SetIsDocumentURI,
+    nsURI_GetWineURL,
+    nsURI_SetWineURL
 };
 
 static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval)

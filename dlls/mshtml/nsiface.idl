@@ -1533,4 +1533,6 @@ interface nsIWineURI : nsIURI
     nsresult SetMoniker(IMoniker *aMoniker);
     nsresult GetIsDocumentURI(PRBool *aIsDocumentURI);
     nsresult SetIsDocumentURI(PRBool aIsDocumentURI);
+    nsresult GetWineURL(LPCWSTR *aURL);
+    nsresult SetWineURL(LPCWSTR aURL);
 }
