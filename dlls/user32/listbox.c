@@ -568,12 +568,12 @@ static void LISTBOX_PaintItem( LB_DESCR *descr, HDC hdc, const RECT *rect,
         dis.hDC          = hdc;
         dis.itemID       = index;
         dis.itemState    = 0;
-        if (item && item->selected) dis.itemState |= ODS_SELECTED;
+        if (item->selected) dis.itemState |= ODS_SELECTED;
         if (!ignoreFocus && (descr->focus_item == index) &&
             (descr->caret_on) &&
             (descr->in_focus)) dis.itemState |= ODS_FOCUS;
         if (!IsWindowEnabled(descr->self)) dis.itemState |= ODS_DISABLED;
-        dis.itemData     = item ? item->data : 0;
+        dis.itemData     = item->data;
         dis.rcItem       = *rect;
         TRACE("[%p]: drawitem %d (%s) action=%02x state=%02x rect=%d,%d-%d,%d\n",
               descr->self, index, item ? debugstr_w(item->str) : "", action,
