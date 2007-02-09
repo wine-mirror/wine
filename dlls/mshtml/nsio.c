@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,9 +25,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ole2.h"
 #include "shlguid.h"
 #include "wininet.h"
+#include "shlwapi.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -59,8 +61,9 @@ typedef struct {
 } nsURI;
 
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
+#define NSWINEURI(x)     ((nsIWineURI*)        &(x)->lpWineURIVtbl)
 
-static nsresult create_uri(nsIURI*,NSContainer*,nsIURI**);
+static nsresult create_uri(nsIURI*,NSContainer*,nsIWineURI**);
 
 static BOOL exec_shldocvw_67(HTMLDocument *doc, LPCWSTR url)
 {
@@ -601,7 +604,9 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     nsIWineURI *wine_uri;
     IMoniker *mon;
     PRBool is_doc_uri;
+    LPCWSTR wine_url;
     nsresult nsres;
+    HRESULT hres;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
 
@@ -696,11 +701,15 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         return NS_ERROR_UNEXPECTED;
     }
 
-    nsIWineURI_GetMoniker(wine_uri, &mon);
-    nsIWineURI_Release(wine_uri);
+    nsIWineURI_GetWineURL(wine_uri, &wine_url);
+    if(!wine_url) {
+        TRACE("wine_url == NULL\n");
+        return NS_ERROR_UNEXPECTED;
+    }
 
-    if(!mon) {
-        WARN("mon == NULL\n");
+    hres = CreateURLMoniker(NULL, wine_url, &mon);
+    if(FAILED(hres)) {
+        WARN("CreateURLMonikrer failed: %08x\n", hres);
         return NS_ERROR_UNEXPECTED;
     }
 
@@ -1451,7 +1460,7 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
             return nsres;
         }
 
-        return create_uri(uri, This->container, _retval);
+        return create_uri(uri, This->container, (nsIWineURI**)_retval);
     }
 
     FIXME("default action not implemented\n");
@@ -1687,7 +1696,7 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_SetWineURL
 };
 
-static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval)
+static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIWineURI **_retval)
 {
     nsURI *ret = mshtml_alloc(sizeof(nsURI));
 
@@ -1703,7 +1712,7 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIURI **_retval
         nsIWebBrowserChrome_AddRef(NSWBCHROME(container));
 
     TRACE("retval=%p\n", ret);
-    *_retval = NSURI(ret);
+    *_retval = NSWINEURI(ret);
     return NS_OK;
 }
 
@@ -1760,7 +1769,8 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     NSContainer *nscontainer = NULL;
     nsIURI *uri = NULL;
     PRBool is_javascript = FALSE;
-    IMoniker *base_mon = NULL;
+    LPCWSTR base_wine_url = NULL;
+    nsIWineURI *base_wine_uri = NULL, *wine_uri;
     nsresult nsres;
 
     nsACString_GetData(aSpec, &spec, NULL);
@@ -1779,7 +1789,7 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
         nsres = nsIURI_GetSpec(aBaseURI, &base_uri_str);
         if(NS_SUCCEEDED(nsres)) {
             nsACString_GetData(&base_uri_str, &base_uri, NULL);
-            TRACE("uri=%s\n", debugstr_a(base_uri));
+            TRACE("base_uri=%s\n", debugstr_a(base_uri));
         }else {
             ERR("GetSpec failed: %08x\n", nsres);
         }
@@ -1804,42 +1814,41 @@ static nsresult NSAPI nsIOService_NewURI(nsIIOService *iface, const nsACString *
     }
 
     if(aBaseURI) {
-        nsIWineURI *wine_uri;
-
-        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&wine_uri);
+        nsres = nsIURI_QueryInterface(aBaseURI, &IID_nsIWineURI, (void**)&base_wine_uri);
         if(NS_SUCCEEDED(nsres)) {
-            nsIWineURI_GetNSContainer(wine_uri, &nscontainer);
-            nsIWineURI_GetMoniker(wine_uri, &base_mon);
-            nsIWineURI_Release(wine_uri);
+            nsIWineURI_GetNSContainer(base_wine_uri, &nscontainer);
+            nsIWineURI_GetWineURL(base_wine_uri, &base_wine_url);
         }else {
             ERR("Could not get nsIWineURI: %08x\n", nsres);
         }
     }
 
-    nsres = create_uri(uri, nscontainer, _retval);
+    nsres = create_uri(uri, nscontainer, &wine_uri);
+    *_retval = (nsIURI*)wine_uri;
 
     if(nscontainer)
         nsIWebBrowserChrome_Release(NSWBCHROME(nscontainer));
 
-    if(base_mon) {
-        LPWSTR url;
-        IMoniker *mon;
+    if(base_wine_url) {
+        WCHAR url[INTERNET_MAX_URL_LENGTH], rel_url[INTERNET_MAX_URL_LENGTH];
+        LPCSTR speca;
         DWORD len;
         HRESULT hres;
 
-        len = MultiByteToWideChar(CP_ACP, 0, spec, -1, NULL, 0);
-        url = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, spec, -1, url, -1);
+        nsACString_GetData(aSpec, &speca, NULL);
+        MultiByteToWideChar(CP_ACP, 0, speca, -1, rel_url, sizeof(rel_url)/sizeof(WCHAR));
 
-        hres = CreateURLMoniker(base_mon, url, &mon);
-        HeapFree(GetProcessHeap(), 0, url);
-        if(SUCCEEDED(hres)) {
-            nsIWineURI_SetMoniker((nsIWineURI*)*_retval, mon);
-            IMoniker_Release(mon);
-        }else {
-            WARN("CreateURLMoniker failed: %08x\n", hres);
-        }
+        hres = CoInternetCombineUrl(base_wine_url, rel_url,
+                                    URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO,
+                                    url, sizeof(url)/sizeof(WCHAR), &len, 0);
+        if(SUCCEEDED(hres))
+            nsIWineURI_SetWineURL(wine_uri, url);
+        else
+            WARN("CoCombineUrl failed: %08x\n", hres);
     }
+
+    if(base_wine_uri)
+        nsIWineURI_Release(base_wine_uri);
 
     return nsres;
 }

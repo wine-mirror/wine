@@ -934,20 +934,13 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
     nsIWineURI_SetIsDocumentURI(wine_uri, TRUE);
 
     if(This->bscallback && This->bscallback->mon) {
-        LPWSTR url = NULL;
+        LPWSTR wine_url;
         HRESULT hres;
 
-        hres = IMoniker_GetDisplayName(This->bscallback->mon, NULL, 0, &url);
+        hres = IMoniker_GetDisplayName(This->bscallback->mon, NULL, 0, &wine_url);
         if(SUCCEEDED(hres)) {
-            IMoniker *mon = NULL;
-
-            hres = CreateURLMoniker(NULL, url, &mon);
-            if(SUCCEEDED(hres)) {
-                nsIWineURI_SetMoniker(wine_uri, mon);
-                IMoniker_Release(mon);
-            }else {
-                WARN("CreateURLMoniker failed: %08x\n", hres);
-            }
+            nsIWineURI_SetWineURL(wine_uri, wine_url);
+            CoTaskMemFree(wine_url);
         }else {
             WARN("GetDisplayName failed: %08x\n", hres);
         }
@@ -1510,7 +1503,6 @@ NSContainer *NSContainer_Create(HTMLDocument *doc, NSContainer *parent)
     }else {
         ERR("GetContentDOMWindow failed: %08x\n", nsres);
     }
-
 
     return ret;
 }
