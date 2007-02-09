@@ -30,6 +30,11 @@
 #include <string.h>
 #endif
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NTAPI __stdcall
 
 #if (defined(_M_IX86) || defined(_M_IA64) || defined(_M_AMD64) || defined(__MINGW32__)) && !defined(MIDL_PASS)
@@ -4784,5 +4789,9 @@ ULONGLONG WINAPI VerSetConditionMask(ULONGLONG,DWORD,BYTE);
 #define	VER_LESS_EQUAL				5
 #define	VER_AND					6
 #define	VER_OR					7
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* _WINNT_ */
