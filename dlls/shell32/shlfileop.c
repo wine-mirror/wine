@@ -65,6 +65,135 @@ static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest);
 static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bFailIfExists);
 static DWORD SHFindAttrW(LPCWSTR pName, BOOL fileOnly);
 
+/* Confirm dialogs with an optional "Yes To All" as used in file operations confirmations
+ */
+static const WCHAR CONFIRM_MSG_PROP[] = {'W','I','N','E','_','C','O','N','F','I','R','M',0};
+
+struct confirm_msg_info
+{
+    LPWSTR lpszText;
+    LPWSTR lpszCaption;
+    HICON hIcon;
+    BOOL bYesToAll;
+};
+
+/* as some buttons may be hidden and the dialog height may change we may need
+ * to move the controls */
+static void confirm_msg_move_button(HWND hDlg, INT iId, INT *xPos, INT yOffset, BOOL bShow)
+{
+    HWND hButton = GetDlgItem(hDlg, iId);
+    RECT r;
+
+    if (bShow) {
+        POINT pt;
+        int width;
+
+        GetWindowRect(hButton, &r);
+        width = r.right - r.left;
+        pt.x = r.left;
+        pt.y = r.top;
+        ScreenToClient(hDlg, &pt);
+        MoveWindow(hButton, *xPos - width, pt.y - yOffset, width, r.bottom - r.top, FALSE);
+        *xPos -= width + 5;
+    }
+    else
+        ShowWindow(hButton, SW_HIDE);
+}
+
+/* Note: we paint the text manually and don't use the static control to make
+ * sure the text has the same height as the one computed in WM_INITDIALOG
+ */
+static INT_PTR CALLBACK ConfirmMsgBox_Paint(HWND hDlg)
+{
+    PAINTSTRUCT ps;
+    HFONT hOldFont;
+    RECT r;
+    HDC hdc;
+
+    BeginPaint(hDlg, &ps);
+    hdc = ps.hdc;
+
+    GetClientRect(GetDlgItem(hDlg, IDD_MESSAGE), &r);
+    /* this will remap the rect to dialog coords */
+    MapWindowPoints(GetDlgItem(hDlg, IDD_MESSAGE), hDlg, (LPPOINT)&r, 2);
+    hOldFont = SelectObject(hdc, (HFONT)SendDlgItemMessageW(hDlg, IDD_MESSAGE, WM_GETFONT, 0, 0));
+    DrawTextW(hdc, (LPWSTR)GetPropW(hDlg, CONFIRM_MSG_PROP), -1, &r, DT_NOPREFIX | DT_PATH_ELLIPSIS | DT_WORDBREAK);
+    SelectObject(hdc, hOldFont);
+    EndPaint(hDlg, &ps);
+    return TRUE;
+}
+
+static INT_PTR CALLBACK ConfirmMsgBox_Init(HWND hDlg, LPARAM lParam)
+{
+    struct confirm_msg_info *info = (struct confirm_msg_info *)lParam;
+    INT xPos, yOffset;
+    int width, height;
+    HFONT hOldFont;
+    HDC hdc;
+    RECT r;
+
+    SetWindowTextW(hDlg, info->lpszCaption);
+    ShowWindow(GetDlgItem(hDlg, IDD_MESSAGE), SW_HIDE);
+    SetPropW(hDlg, CONFIRM_MSG_PROP, (HANDLE)info->lpszText);
+    SendDlgItemMessageW(hDlg, IDD_ICON, STM_SETICON, (WPARAM)info->hIcon, 0);
+
+    /* compute the text height and resize the dialog */
+    GetClientRect(GetDlgItem(hDlg, IDD_MESSAGE), &r);
+    hdc = GetDC(hDlg);
+    yOffset = r.bottom;
+    hOldFont = SelectObject(hdc, (HFONT)SendDlgItemMessageW(hDlg, IDD_MESSAGE, WM_GETFONT, 0, 0));
+    DrawTextW(hdc, info->lpszText, -1, &r, DT_NOPREFIX | DT_PATH_ELLIPSIS | DT_WORDBREAK | DT_CALCRECT);
+    SelectObject(hdc, hOldFont);
+    yOffset -= r.bottom;
+    yOffset = min(yOffset, 35);  /* don't make the dialog too small */
+    ReleaseDC(hDlg, hdc);
+
+    GetClientRect(hDlg, &r);
+    xPos = r.right - 7;
+    GetWindowRect(hDlg, &r);
+    width = r.right - r.left;
+    height = r.bottom - r.top - yOffset;
+    MoveWindow(hDlg, (GetSystemMetrics(SM_CXSCREEN) - width)/2,
+        (GetSystemMetrics(SM_CYSCREEN) - height)/2, width, height, FALSE);
+
+    confirm_msg_move_button(hDlg, IDCANCEL,     &xPos, yOffset, info->bYesToAll);
+    confirm_msg_move_button(hDlg, IDNO,         &xPos, yOffset, TRUE);
+    confirm_msg_move_button(hDlg, IDD_YESTOALL, &xPos, yOffset, info->bYesToAll);
+    confirm_msg_move_button(hDlg, IDYES,        &xPos, yOffset, TRUE);
+    return TRUE;
+}
+
+static INT_PTR CALLBACK ConfirmMsgBoxProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_INITDIALOG:
+            return ConfirmMsgBox_Init(hDlg, lParam);
+        case WM_PAINT:
+            return ConfirmMsgBox_Paint(hDlg);
+        case WM_COMMAND:
+            EndDialog(hDlg, wParam);
+            break;
+        case WM_CLOSE:
+            EndDialog(hDlg, IDCANCEL);
+            break;
+    }
+    return FALSE;
+}
+
+static int SHELL_ConfirmMsgBox(HWND hWnd, LPWSTR lpszText, LPWSTR lpszCaption, HICON hIcon, BOOL bYesToAll)
+{
+    static const WCHAR wszTemplate[] = {'S','H','E','L','L','_','Y','E','S','T','O','A','L','L','_','M','S','G','B','O','X',0};
+    struct confirm_msg_info info;
+
+    info.lpszText = lpszText;
+    info.lpszCaption = lpszCaption;
+    info.hIcon = hIcon;
+    info.bYesToAll = bYesToAll;
+    return DialogBoxParamW(shell32_hInstance, wszTemplate, hWnd, ConfirmMsgBoxProc, (LPARAM)&info);
+}
+
+/* confirmation dialogs content */
 typedef struct
 {
         HINSTANCE hIconInstance;
@@ -132,8 +261,8 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 {
 	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 	SHELL_ConfirmIDstruc ids;
-	MSGBOXPARAMSW params;
 	DWORD_PTR args[1];
+	HICON hIcon;
 
 	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
 	  return FALSE;
@@ -144,17 +273,9 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 	args[0] = (DWORD_PTR)szDir;
 	FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
 	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)args);
+        hIcon = LoadIconW(ids.hIconInstance, (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id));
 
-        ZeroMemory(&params, sizeof(params));
-        params.cbSize = sizeof(MSGBOXPARAMSW);
-        params.hwndOwner = hWnd;
-        params.hInstance = ids.hIconInstance;
-        params.lpszText = szBuffer;
-        params.lpszCaption = szCaption;
-        params.lpszIcon = (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id);
-        params.dwStyle = MB_YESNO | MB_USERICON;
-
-        return (IDYES == MessageBoxIndirectW(&params));
+        return (IDYES == SHELL_ConfirmMsgBox(hWnd, szBuffer, szCaption, hIcon, FALSE));
 }
 
 static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChars)

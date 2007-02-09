@@ -96,6 +96,11 @@
 /* Note: this string is referenced from the registry*/
 #define IDS_RECYCLEBIN_FOLDER_NAME   8964
 
+#define IDD_ICON                0x4300
+#define IDD_MESSAGE             0x4301
+
+/* these IDs are the same as on native */
+#define IDD_YESTOALL            0x3207
 /* browse for folder dialog box */
 #define IDD_STATUS		0x3743
 #define IDD_TITLE		0x3742
