@@ -55,7 +55,6 @@ typedef struct {
 
     nsIURI *uri;
     NSContainer *container;
-    IMoniker *mon;
     LPWSTR wine_url;
     PRBool is_doc_uri;
 } nsURI;
@@ -1153,8 +1152,6 @@ static nsrefcnt NSAPI nsURI_Release(nsIWineURI *iface)
             nsIWebBrowserChrome_Release(NSWBCHROME(This->container));
         if(This->uri)
             nsIURI_Release(This->uri);
-        if(This->mon)
-            IMoniker_Release(This->mon);
         mshtml_free(This->wine_url);
         mshtml_free(This);
     }
@@ -1553,58 +1550,6 @@ static nsresult NSAPI nsURI_SetNSContainer(nsIWineURI *iface, NSContainer *aCont
     return NS_OK;
 }
 
-static nsresult NSAPI nsURI_GetMoniker(nsIWineURI *iface, IMoniker **aMoniker)
-{
-    nsURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aMoniker);
-
-    if(This->mon)
-        IMoniker_AddRef(This->mon);
-    *aMoniker = This->mon;
-
-    return NS_OK;
-}
-
-static nsresult NSAPI nsURI_SetMoniker(nsIWineURI *iface, IMoniker *aMoniker)
-{
-    nsURI *This = NSURI_THIS(iface);
-
-    TRACE("(%p)->(%p)\n", This, aMoniker);
-
-    if(This->mon) {
-        WARN("Moniker already set: %p\n", This->container);
-        IMoniker_Release(This->mon);
-
-        mshtml_free(This->wine_url);
-        This->wine_url = NULL;
-    }
-
-    if(aMoniker) {
-        LPWSTR url = NULL;
-        HRESULT hres;
-
-        hres = IMoniker_GetDisplayName(aMoniker, NULL, NULL, &url);
-        if(SUCCEEDED(hres)) {
-            DWORD len;
-
-            len = strlenW(url)+1;
-            This->wine_url = mshtml_alloc(len*sizeof(WCHAR));
-            memcpy(This->wine_url, url, len*sizeof(WCHAR));
-            CoTaskMemFree(url);
-
-            TRACE("wine_url %s\n", debugstr_w(This->wine_url));
-        }else {
-            ERR("GetDisplayName failed: %08x\n", hres);
-        }
-
-        IMoniker_AddRef(aMoniker);
-    }
-    This->mon = aMoniker;
-
-    return NS_OK;
-}
-
 static nsresult NSAPI nsURI_GetIsDocumentURI(nsIWineURI *iface, PRBool *aIsDocumentURI)
 {
     nsURI *This = NSURI_THIS(iface);
@@ -1688,8 +1633,6 @@ static const nsIWineURIVtbl nsWineURIVtbl = {
     nsURI_GetOriginCharset,
     nsURI_GetNSContainer,
     nsURI_SetNSContainer,
-    nsURI_GetMoniker,
-    nsURI_SetMoniker,
     nsURI_GetIsDocumentURI,
     nsURI_SetIsDocumentURI,
     nsURI_GetWineURL,
@@ -1704,7 +1647,6 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIWineURI **_re
     ret->ref = 1;
     ret->uri = uri;
     ret->container = container;
-    ret->mon = NULL;
     ret->wine_url = NULL;
     ret->is_doc_uri = FALSE;
 
