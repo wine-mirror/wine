@@ -167,7 +167,6 @@ static void test_deletefile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpDeleteFileA(NULL, "non_existent_file_deadbeef");
     ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
@@ -186,7 +185,6 @@ static void test_deletefile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpDeleteFileA(hFtp, NULL);
     ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 

@@ -1384,9 +1384,21 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
     BOOL r = FALSE;
 
     lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hFtpSession );
-    if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
+    if (!lpwfs)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if (!lpszFileName)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
 
@@ -1409,8 +1421,7 @@ BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
     }
 
 lend:
-    if( lpwfs )
-        WININET_Release( &lpwfs->hdr );
+    WININET_Release( &lpwfs->hdr );
 
     return r;
 }
