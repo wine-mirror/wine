@@ -156,7 +156,7 @@ write_menu_file()
     menu=`echo $1 | sed 's!/!-!g'`
     filename=`echo $2 | sed 's!/!-!g'`
 
-    tmpfile=`mktemp`
+    tmpfile=`mktemp /tmp/wine.XXXXXX`
     (
         echo '<!DOCTYPE Menu PUBLIC "-//freedesktop//DTD Menu 1.0//EN"'
         echo '"http://www.freedesktop.org/standards/menu-spec/menu-1.0.dtd">'
