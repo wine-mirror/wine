@@ -27,6 +27,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -64,6 +65,14 @@ static DWORD SHNotifyDeleteFileW(LPCWSTR path);
 static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest);
 static DWORD SHNotifyCopyFileW(LPCWSTR src, LPCWSTR dest, BOOL bFailIfExists);
 static DWORD SHFindAttrW(LPCWSTR pName, BOOL fileOnly);
+
+typedef struct
+{
+    SHFILEOPSTRUCTW *req;
+    DWORD dwYesToAllMask;
+    BOOL bManyItems;
+    BOOL bCancelled;
+} FILE_OPERATION;
 
 /* Confirm dialogs with an optional "Yes To All" as used in file operations confirmations
  */
@@ -250,22 +259,32 @@ static BOOL SHELL_ConfirmIDs(int nKindOfDialog, SHELL_ConfirmIDstruc *ids)
             ids->icon_resource_id = IDI_WARNING;
 	    ids->caption_resource_id  = IDS_OVERWRITEFILE_CAPTION;
 	    ids->text_resource_id  = IDS_OVERWRITEFILE_TEXT;
-	    return TRUE;
+            return TRUE;
+	  case ASK_OVERWRITE_FOLDER:
+            ids->hIconInstance = NULL;
+            ids->icon_resource_id = IDI_WARNING;
+            ids->caption_resource_id  = IDS_OVERWRITEFILE_CAPTION;
+            ids->text_resource_id  = IDS_OVERWRITEFOLDER_TEXT;
+            return TRUE;
 	  default:
 	    FIXME(" Unhandled nKindOfDialog %d stub\n", nKindOfDialog);
 	}
 	return FALSE;
 }
 
-BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
+static BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir, FILE_OPERATION *op)
 {
 	WCHAR szCaption[255], szText[255], szBuffer[MAX_PATH + 256];
 	SHELL_ConfirmIDstruc ids;
 	DWORD_PTR args[1];
 	HICON hIcon;
+	int ret;
 
-	if (!SHELL_ConfirmIDs(nKindOfDialog, &ids))
-	  return FALSE;
+        assert(nKindOfDialog >= 0 && nKindOfDialog < 32);
+        if (op && (op->dwYesToAllMask & (1 << nKindOfDialog)))
+            return IDYES;
+
+	assert(SHELL_ConfirmIDs(nKindOfDialog, &ids));
 
 	LoadStringW(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption)/sizeof(WCHAR));
 	LoadStringW(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText)/sizeof(WCHAR));
@@ -275,7 +294,23 @@ BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
 	               szText, 0, 0, szBuffer, sizeof(szBuffer), (va_list*)args);
         hIcon = LoadIconW(ids.hIconInstance, (LPWSTR)MAKEINTRESOURCE(ids.icon_resource_id));
 
-        return (IDYES == SHELL_ConfirmMsgBox(hWnd, szBuffer, szCaption, hIcon, FALSE));
+        ret = SHELL_ConfirmMsgBox(hWnd, szBuffer, szCaption, hIcon, op && op->bManyItems);
+        if (op) {
+            if (ret == IDD_YESTOALL) {
+                op->dwYesToAllMask |= (1 << nKindOfDialog);
+                ret = IDYES;
+            }
+            if (ret == IDCANCEL)
+                op->bCancelled = TRUE;
+            if (ret != IDYES)
+                op->req->fAnyOperationsAborted = TRUE;
+        }
+        return ret == IDYES;
+}
+
+BOOL SHELL_ConfirmYesNoW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir)
+{
+    return SHELL_ConfirmDialogW(hWnd, nKindOfDialog, szDir, NULL);
 }
 
 static DWORD SHELL32_AnsiToUnicodeBuf(LPCSTR aPath, LPWSTR *wPath, DWORD minChars)
@@ -324,7 +359,7 @@ BOOL SHELL_DeleteDirectoryW(HWND hwnd, LPCWSTR pszDir, BOOL bShowUI)
 	if (hFind == INVALID_HANDLE_VALUE)
 	  return FALSE;
 
-	if (!bShowUI || (ret = SHELL_ConfirmDialogW(hwnd, ASK_DELETE_FOLDER, pszDir)))
+	if (!bShowUI || (ret = SHELL_ConfirmDialogW(hwnd, ASK_DELETE_FOLDER, pszDir, NULL)))
 	{
 	  do
 	  {
@@ -1047,7 +1082,7 @@ static void destroy_file_list(FILE_LIST *flList)
     HeapFree(GetProcessHeap(), 0, flList->feFiles);
 }
 
-static void copy_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, LPWSTR szDestPath)
+static void copy_dir_to_dir(FILE_OPERATION *op, FILE_ENTRY *feFrom, LPWSTR szDestPath)
 {
     WCHAR szFrom[MAX_PATH], szTo[MAX_PATH];
     SHFILEOPSTRUCTW fileOp;
@@ -1062,22 +1097,48 @@ static void copy_dir_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, LPWS
     else
         lstrcpyW(szTo, szDestPath);
 
+    if (!(op->req->fFlags & FOF_NOCONFIRMATION) && PathFileExistsW(szTo)) {
+        if (!SHELL_ConfirmDialogW(op->req->hwnd, ASK_OVERWRITE_FOLDER, feFrom->szFilename, op))
+        {
+            /* Vista returns an ERROR_CANCELLED even if user pressed "No" */
+            if (!op->bManyItems)
+                op->bCancelled = TRUE;
+            return;
+        }
+    }
+
     szTo[lstrlenW(szTo) + 1] = '\0';
     SHNotifyCreateDirectoryW(szTo, NULL);
 
     PathCombineW(szFrom, feFrom->szFullPath, wildCardFiles);
     szFrom[lstrlenW(szFrom) + 1] = '\0';
 
-    memcpy(&fileOp, lpFileOp, sizeof(fileOp));
+    memcpy(&fileOp, op->req, sizeof(fileOp));
     fileOp.pFrom = szFrom;
     fileOp.pTo = szTo;
     fileOp.fFlags &= ~FOF_MULTIDESTFILES; /* we know we're copying to one dir */
 
+    /* Don't ask the user about overwriting files when he accepted to overwrite the
+       folder. FIXME: this is not exactly what Windows does - e.g. there would be
+       an additional confirmation for a nested folder */
+    fileOp.fFlags |= FOF_NOCONFIRMATION;  
+
     SHFileOperationW(&fileOp);
 }
 
+static BOOL copy_file_to_file(FILE_OPERATION *op, WCHAR *szFrom, WCHAR *szTo)
+{
+    if (!(op->req->fFlags & FOF_NOCONFIRMATION) && PathFileExistsW(szTo))
+    {
+        if (!SHELL_ConfirmDialogW(op->req->hwnd, ASK_OVERWRITE_FILE, PathFindFileNameW(szTo), op))
+            return 0;
+    }
+    
+    return SHNotifyCopyFileW(szFrom, szTo, FALSE) == 0;
+}
+
 /* copy a file or directory to another directory */
-static void copy_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, FILE_ENTRY *feTo)
+static void copy_to_dir(FILE_OPERATION *op, FILE_ENTRY *feFrom, FILE_ENTRY *feTo)
 {
     if (!PathFileExistsW(feTo->szFullPath))
         SHNotifyCreateDirectoryW(feTo->szFullPath, NULL);
@@ -1087,10 +1148,10 @@ static void copy_to_dir(LPSHFILEOPSTRUCTW lpFileOp, FILE_ENTRY *feFrom, FILE_ENT
         WCHAR szDestPath[MAX_PATH];
 
         PathCombineW(szDestPath, feTo->szFullPath, feFrom->szFilename);
-        SHNotifyCopyFileW(feFrom->szFullPath, szDestPath, FALSE);
+        copy_file_to_file(op, feFrom->szFullPath, szDestPath);
     }
-    else if (!(lpFileOp->fFlags & FOF_FILESONLY && feFrom->bFromWildcard))
-        copy_dir_to_dir(lpFileOp, feFrom, feTo->szFullPath);
+    else if (!(op->req->fFlags & FOF_FILESONLY && feFrom->bFromWildcard))
+        copy_dir_to_dir(op, feFrom, feTo->szFullPath);
 }
 
 static void create_dest_dirs(LPWSTR szDestDir)
@@ -1113,7 +1174,7 @@ static void create_dest_dirs(LPWSTR szDestDir)
 }
 
 /* the FO_COPY operation */
-static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LIST *flTo)
+static HRESULT copy_files(FILE_OPERATION *op, FILE_LIST *flFrom, FILE_LIST *flTo)
 {
     DWORD i;
     FILE_ENTRY *entryToCopy;
@@ -1123,13 +1184,13 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
     if (flFrom->bAnyDontExist)
         return ERROR_SHELL_INTERNAL_FILE_NOT_FOUND;
 
-    if (lpFileOp->fFlags & FOF_MULTIDESTFILES && flFrom->bAnyFromWildcard)
+    if (op->req->fFlags & FOF_MULTIDESTFILES && flFrom->bAnyFromWildcard)
         return ERROR_CANCELLED;
 
-    if (!(lpFileOp->fFlags & FOF_MULTIDESTFILES) && flTo->dwNumFiles != 1)
+    if (!(op->req->fFlags & FOF_MULTIDESTFILES) && flTo->dwNumFiles != 1)
         return ERROR_CANCELLED;
 
-    if (lpFileOp->fFlags & FOF_MULTIDESTFILES && flFrom->dwNumFiles != 1 &&
+    if (op->req->fFlags & FOF_MULTIDESTFILES && flFrom->dwNumFiles != 1 &&
         flFrom->dwNumFiles != flTo->dwNumFiles)
     {
         return ERROR_CANCELLED;
@@ -1145,11 +1206,11 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
     if (flFrom->dwNumFiles > 1 && flTo->dwNumFiles == 1 && fileDest->bFromRelative &&
         !PathFileExistsW(fileDest->szFullPath))
     {
-        lpFileOp->fAnyOperationsAborted = TRUE;
+        op->req->fAnyOperationsAborted = TRUE;
         return ERROR_CANCELLED;
     }
 
-    if (!(lpFileOp->fFlags & FOF_MULTIDESTFILES) && flFrom->dwNumFiles != 1 &&
+    if (!(op->req->fFlags & FOF_MULTIDESTFILES) && flFrom->dwNumFiles != 1 &&
         PathFileExistsW(fileDest->szFullPath) &&
         IsAttribFile(fileDest->attributes))
     {
@@ -1160,7 +1221,7 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
     {
         entryToCopy = &flFrom->feFiles[i];
 
-        if (lpFileOp->fFlags & FOF_MULTIDESTFILES)
+        if (op->req->fFlags & FOF_MULTIDESTFILES)
             fileDest = &flTo->feFiles[i];
 
         if (IsAttribDir(entryToCopy->attributes) &&
@@ -1185,22 +1246,28 @@ static HRESULT copy_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom, FILE_LI
         if ((flFrom->dwNumFiles > 1 && flTo->dwNumFiles == 1) ||
             (flFrom->dwNumFiles == 1 && IsAttribDir(fileDest->attributes)))
         {
-            copy_to_dir(lpFileOp, entryToCopy, fileDest);
+            copy_to_dir(op, entryToCopy, fileDest);
         }
         else if (IsAttribDir(entryToCopy->attributes))
         {
-            copy_dir_to_dir(lpFileOp, entryToCopy, fileDest->szFullPath);
+            copy_dir_to_dir(op, entryToCopy, fileDest->szFullPath);
         }
         else
         {
-            if (SHNotifyCopyFileW(entryToCopy->szFullPath, fileDest->szFullPath, TRUE))
+            if (!copy_file_to_file(op, entryToCopy->szFullPath, fileDest->szFullPath))
             {
-                lpFileOp->fAnyOperationsAborted = TRUE;
+                op->req->fAnyOperationsAborted = TRUE;
                 return ERROR_CANCELLED;
             }
         }
+
+        /* Vista return code. XP would return e.g. ERROR_FILE_NOT_FOUND, ERROR_ALREADY_EXISTS */
+        if (op->bCancelled)
+            return ERROR_CANCELLED;
     }
 
+    /* Vista return code. On XP if the used pressed "No" for the last item,
+     * ERROR_ARENA_TRASHED would be returned */
     return ERROR_SUCCESS;
 }
 
@@ -1212,16 +1279,16 @@ static BOOL confirm_delete_list(HWND hWnd, DWORD fFlags, BOOL fTrash, FILE_LIST 
         const WCHAR format[] = {'%','d',0};
 
         wnsprintfW(tmp, sizeof(tmp)/sizeof(tmp[0]), format, flFrom->dwNumFiles);
-        return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_MULTIPLE_ITEM:ASK_DELETE_MULTIPLE_ITEM), tmp);
+        return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_MULTIPLE_ITEM:ASK_DELETE_MULTIPLE_ITEM), tmp, NULL);
     }
     else
     {
         FILE_ENTRY *fileEntry = &flFrom->feFiles[0];
 
         if (IsAttribFile(fileEntry->attributes))
-            return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_FILE:ASK_DELETE_FILE), fileEntry->szFullPath);
+            return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_FILE:ASK_DELETE_FILE), fileEntry->szFullPath, NULL);
         else if (!(fFlags & FOF_FILESONLY && fileEntry->bFromWildcard))
-            return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_FOLDER:ASK_DELETE_FOLDER), fileEntry->szFullPath);
+            return SHELL_ConfirmDialogW(hWnd, (fTrash?ASK_TRASH_FOLDER:ASK_DELETE_FOLDER), fileEntry->szFullPath, NULL);
     }
     return TRUE;
 }
@@ -1265,7 +1332,7 @@ static HRESULT delete_files(LPSHFILEOPSTRUCTW lpFileOp, FILE_LIST *flFrom)
 
             /* Note: Windows silently deletes the file in such a situation, we show a dialog */
             if (!(lpFileOp->fFlags & FOF_NOCONFIRMATION) || (lpFileOp->fFlags & FOF_WANTNUKEWARNING))
-                bDelete = SHELL_ConfirmDialogW(lpFileOp->hwnd, ASK_CANT_TRASH_ITEM, fileEntry->szFullPath);
+                bDelete = SHELL_ConfirmDialogW(lpFileOp->hwnd, ASK_CANT_TRASH_ITEM, fileEntry->szFullPath, NULL);
             else
                 bDelete = TRUE;
 
@@ -1423,6 +1490,7 @@ static void check_flags(FILEOP_FLAGS fFlags)
  */
 int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
 {
+    FILE_OPERATION op;
     FILE_LIST flFrom, flTo;
     int ret = 0;
 
@@ -1440,10 +1508,14 @@ int WINAPI SHFileOperationW(LPSHFILEOPSTRUCTW lpFileOp)
     if (lpFileOp->wFunc != FO_DELETE)
         parse_file_list(&flTo, lpFileOp->pTo);
 
+    ZeroMemory(&op, sizeof(op));
+    op.req = lpFileOp;
+    op.bManyItems = (flFrom.dwNumFiles > 1);
+
     switch (lpFileOp->wFunc)
     {
         case FO_COPY:
-            ret = copy_files(lpFileOp, &flFrom, &flTo);
+            ret = copy_files(&op, &flFrom, &flTo);
             break;
         case FO_DELETE:
             ret = delete_files(lpFileOp, &flFrom);

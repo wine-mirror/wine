@@ -163,10 +163,14 @@ STRINGTABLE DISCARDABLE
 	IDS_CREATEFOLDER_CAPTION "Chyba pøi pokusu vytvoøit nový adresáø"
 	IDS_DELETEITEM_CAPTION "Potvrdit odstranìní souboru"
 	IDS_DELETEFOLDER_CAPTION "Potvrdit odstranìní adresáøe"
-	IDS_OVERWRITEFILE_CAPTION "Potvrdit pøepsání souboru"
 	IDS_DELETEITEM_TEXT "Opravdu chcete odstranit '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Opravdu chcete odstranit tìchto %1 položek?"
-	IDS_OVERWRITEFILE_TEXT "Pøejete si pøepsat soubor '%1'?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
+	IDS_OVERWRITEFILE_CAPTION "Potvrdit pøepsání souboru"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 }
 
 /*	columns in the shellview	*/

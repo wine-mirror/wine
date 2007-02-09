@@ -163,8 +163,12 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Konfirmu forigon de dosierujo"
 	IDS_DELETEITEM_TEXT "Æu vi estas certa pri forigo de '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Æu vi estas certa pri forigo de æi tiuj %1 komponantoj?"
-	IDS_OVERWRITEFILE_TEXT "Æu vi supreskribas la dosieron %1?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "Konfirmu supreskribiton de dosieron"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 }
 
 /*	columns in the shellview	*/
@@ -222,4 +226,3 @@ STRINGTABLE DISCARDABLE
 	IDS_COMMON_VIDEO            "Documents\\Video"
 	IDS_CDBURN_AREA             "Local Settings\\Application Data\\Microsoft\\CD Burning"
 }
-

@@ -63,6 +63,21 @@ static BOOL file_exists(const CHAR *name)
     return GetFileAttributesA(name) != INVALID_FILE_ATTRIBUTES;
 }
 
+static BOOL file_has_content(const CHAR *name, const CHAR *content)
+{
+    CHAR buf[MAX_PATH];
+    HANDLE file;
+    DWORD read;
+
+    file = CreateFileA(name, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (file == INVALID_HANDLE_VALUE)
+        return FALSE;
+    ReadFile(file, buf, MAX_PATH - 1, &read, NULL);
+    buf[read] = 0;
+    CloseHandle(file);
+    return strcmp(buf, content)==0;
+}
+
 /* initializes the tests */
 static void init_shfo_tests(void)
 {
@@ -92,6 +107,7 @@ static void clean_after_shfo_tests(void)
     DeleteFileA("test2.txt");
     DeleteFileA("test3.txt");
     DeleteFileA("test_5.txt");
+    DeleteFileA("one.txt");
     DeleteFileA("test4.txt\\test1.txt");
     DeleteFileA("test4.txt\\test2.txt");
     DeleteFileA("test4.txt\\test3.txt");
@@ -761,6 +777,45 @@ static void test_copy(void)
     ok(retval == 1026, "Expected 1026, got %d\n", retval);
     ok(!file_exists("nonexistent\\e.txt"), "Expected nonexistent\\e.txt to not exist\n");
     ok(!file_exists("nonexistent"), "Expected nonexistent to not exist\n");
+
+    /* Overwrite tests */
+    clean_after_shfo_tests();
+    init_shfo_tests();
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    shfo.pFrom = "test1.txt\0";
+    shfo.pTo = "test2.txt\0";
+    shfo.fAnyOperationsAborted = FALSE;
+    /* without FOF_NOCOFIRMATION the confirmation is Yes/No */
+    retval = SHFileOperation(&shfo);
+    ok(retval == 0, "Expected 0, got %d\n", retval);
+    ok(file_has_content("test2.txt", "test1.txt\n"), "The file was not copied\n");
+
+    shfo.pFrom = "test3.txt\0test1.txt\0";
+    shfo.pTo = "test2.txt\0one.txt\0";
+    shfo.fFlags = FOF_NOCONFIRMATION | FOF_MULTIDESTFILES;
+    /* without FOF_NOCOFIRMATION the confirmation is Yes/Yes to All/No/Cancel */
+    retval = SHFileOperation(&shfo);
+    ok(retval == 0, "Expected 0, got %d\n", retval);
+    ok(file_has_content("test2.txt", "test3.txt\n"), "The file was not copied\n");
+
+    shfo.pFrom = "one.txt\0";
+    shfo.pTo = "testdir2\0";
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    /* without FOF_NOCOFIRMATION the confirmation is Yes/No */
+    retval = SHFileOperation(&shfo);
+    ok(retval == 0, "Expected 0, got %d\n", retval);
+    ok(file_has_content("testdir2\\one.txt", "test1.txt\n"), "The file was not copied\n");
+
+    createTestFile("test4.txt\\test1.txt");
+    shfo.pFrom = "test4.txt\0";
+    shfo.pTo = "testdir2\0";
+    shfo.fFlags = FOF_NOCONFIRMATION;
+    ok(!SHFileOperation(&shfo), "First SHFileOperation failed\n");
+    createTestFile("test4.txt\\.\\test1.txt"); /* modify the content of the file */
+    /* without FOF_NOCOFIRMATION the confirmation is "This folder already contains a folder named ..." */
+    retval = SHFileOperation(&shfo);
+    ok(retval == 0, "Expected 0, got %d\n", retval);
+    ok(file_has_content("testdir2\\test4.txt\\test1.txt", "test4.txt\\.\\test1.txt\n"), "The file was not copied\n");
 }
 
 /* tests the FO_MOVE action */

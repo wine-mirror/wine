@@ -92,6 +92,7 @@
 #define IDS_TRASHITEM_TEXT          138
 #define IDS_TRASHMULTIPLE_TEXT      139
 #define IDS_CANTTRASH_TEXT          140
+#define IDS_OVERWRITEFOLDER_TEXT    141
 
 /* Note: this string is referenced from the registry*/
 #define IDS_RECYCLEBIN_FOLDER_NAME   8964

@@ -256,8 +256,12 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Confirmar exclusão de pasta"
 	IDS_DELETEITEM_TEXT "Você tem certeza que deseja excluir '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Você tem certeza que deseja excluir estes %1 itens?"
-	IDS_OVERWRITEFILE_TEXT "Sobreescrever arquivo %1?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescrever arquivo"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 
         /* message box strings */
 	IDS_RESTART_TITLE       "Reiniciar"

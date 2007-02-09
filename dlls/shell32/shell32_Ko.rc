@@ -173,8 +173,12 @@ IDS_TRASHITEM_TEXT "당신은 '%1' 을(를) 휴지통으로 보내기를 바랍니까?"
 IDS_TRASHFOLDER_TEXT "당신은 '%1' 과 그 안의 내용을 휴지통으로 보내기를 바랍니까?"
 IDS_TRASHMULTIPLE_TEXT "당신은 '%1' 들을(를) 휴지통으로 보내기를 바랍니까?"
 IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-IDS_OVERWRITEFILE_TEXT "파일 %1을 덮어쓰겠습니까?"
+IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 IDS_OVERWRITEFILE_CAPTION "파일 덮어쓰기 확인"
+IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 
 /* message box strings */
 IDS_RESTART_TITLE       "다시 시작"

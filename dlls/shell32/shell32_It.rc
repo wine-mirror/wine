@@ -164,8 +164,12 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Confermare la cancellazione della cartella"
 	IDS_DELETEITEM_TEXT "Sei sicuro di voler cancellare '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "Sei sicuro di voler cancellare questi %1 elementi?"
-	IDS_OVERWRITEFILE_TEXT "Sovrascrivere il File %1?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "Confermare la sovrascrizione del File"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 
 	/* message box strings */
        IDS_RESTART_TITLE       "Riavvia"

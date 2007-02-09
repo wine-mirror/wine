@@ -176,8 +176,12 @@ STRINGTABLE DISCARDABLE
 	IDS_TRASHFOLDER_TEXT "Êtes-vous sûr de vouloir mettre « %1 » et tout ce qu'il contient dans la corbeille ?"
 	IDS_TRASHMULTIPLE_TEXT "Êtes-vous sûr de vouloir mettre ces %1 éléments dans la corbeille ?"
 	IDS_CANTTRASH_TEXT "L'élément « %1 » ne peut pas être mis dans la corbeille. Souhaitez-vous le supprimer à la place ?"
-	IDS_OVERWRITEFILE_TEXT "Écraser le fichier %1 ?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "Confirmer l'écrasement du fichier"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 
         /* message box strings */
        IDS_RESTART_TITLE       "Redémarrer"

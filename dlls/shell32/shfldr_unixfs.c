@@ -1829,7 +1829,7 @@ static HRESULT UNIXFS_delete_with_syscalls(UnixFolder *This, UINT cidl, LPCITEMI
     static const WCHAR empty[] = {0};
     int i;
     
-    if (!SHELL_ConfirmDialogW(GetActiveWindow(), ASK_DELETE_SELECTED, empty))
+    if (!SHELL_ConfirmYesNoW(GetActiveWindow(), ASK_DELETE_SELECTED, empty))
         return S_OK;
     
     lstrcpyA(szAbsolute, This->m_pszPath);

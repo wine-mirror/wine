@@ -173,8 +173,12 @@ STRINGTABLE DISCARDABLE
 	IDS_TRASHFOLDER_TEXT "Czy jesteœ pewien, ¿e chcesz umieœciæ folder '%1' i ca³¹ jego zawartoœæ w koszu"
 	IDS_TRASHMULTIPLE_TEXT "Elementów: %1 - czy na pewno chcesz je umieœciæ w Koszu?"
 	IDS_CANTTRASH_TEXT "Nie mogê przenieœæ elementu '%1' do Kosza. Czy chcesz go zamiast tego usun¹æ?"
-	IDS_OVERWRITEFILE_TEXT "Zast¹piæ plik %1?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "PotwierdŸ zast¹pienie pliku"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 
         /* message box strings */
         IDS_RESTART_TITLE       "Uruchom ponownie"

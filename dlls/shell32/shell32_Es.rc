@@ -162,8 +162,12 @@ STRINGTABLE DISCARDABLE
 	IDS_DELETEFOLDER_CAPTION "Confirmar eliminación de carpeta"
 	IDS_DELETEITEM_TEXT "¿Seguro que desea eliminar '%1'?"
 	IDS_DELETEMULTIPLE_TEXT "¿Seguro que desea eliminar estos %1 elementos?"
-	IDS_OVERWRITEFILE_TEXT "¿Sobreescribir el archivo '%1'?"
+	IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 	IDS_OVERWRITEFILE_CAPTION "Confirmar sobreescritura de archivo"
+	IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
+	    "If the files in the destination folder have the same names as files in the\n"\
+	    "selected folder they will be replaced. Do you still want to move or copy\n"\
+	    "the folder?"
 }
 
 /*	columns in the shellview	*/
