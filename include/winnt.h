@@ -647,6 +647,14 @@ typedef union _SLIST_HEADER {
 
 #endif
 
+PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER*);
+VOID         WINAPI RtlInitializeSListHead(PSLIST_HEADER);
+PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER);
+PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER);
+PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER, PSLIST_ENTRY);
+WORD         WINAPI RtlQueryDepthSList(PSLIST_HEADER);
+
+
 /* Heap flags */
 
 #define HEAP_NO_SERIALIZE               0x00000001

@@ -927,7 +927,7 @@ PVOID WINAPI RtlDecodePointer( PVOID ptr )
     return (PVOID)(ptrval ^ get_pointer_obfuscator());
 }
 
-VOID WINAPI RtlInitializeSListHead(volatile PSLIST_HEADER ListHeader)
+VOID WINAPI RtlInitializeSListHead(PSLIST_HEADER ListHeader)
 {
     TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
@@ -937,7 +937,7 @@ VOID WINAPI RtlInitializeSListHead(volatile PSLIST_HEADER ListHeader)
 #endif
 }
 
-USHORT WINAPI RtlQueryDepthSList(volatile PSLIST_HEADER ListHeader)
+WORD WINAPI RtlQueryDepthSList(PSLIST_HEADER ListHeader)
 {
     TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
@@ -948,7 +948,7 @@ USHORT WINAPI RtlQueryDepthSList(volatile PSLIST_HEADER ListHeader)
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlFirstEntrySList(volatile PSLIST_HEADER ListHeader)
+PSLIST_ENTRY WINAPI RtlFirstEntrySList(const SLIST_HEADER* ListHeader)
 {
     TRACE("(%p)\n", ListHeader);
 #ifdef _WIN64
@@ -959,7 +959,7 @@ PSLIST_ENTRY WINAPI RtlFirstEntrySList(volatile PSLIST_HEADER ListHeader)
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(volatile PSLIST_HEADER ListHeader)
+PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(PSLIST_HEADER ListHeader)
 {
     SLIST_HEADER oldHeader, newHeader;
     TRACE("(%p)\n", ListHeader);
@@ -981,7 +981,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedFlushSList(volatile PSLIST_HEADER ListHeader)
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(volatile PSLIST_HEADER ListHeader,
+PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(PSLIST_HEADER ListHeader,
                                                  PSLIST_ENTRY ListEntry)
 {
     SLIST_HEADER oldHeader, newHeader;
@@ -1004,7 +1004,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushEntrySList(volatile PSLIST_HEADER ListHead
 #endif
 }
 
-PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(volatile PSLIST_HEADER ListHeader)
+PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER ListHeader)
 {
     SLIST_HEADER oldHeader, newHeader;
     PSLIST_ENTRY entry;
@@ -1040,7 +1040,7 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(volatile PSLIST_HEADER ListHeade
 /*************************************************************************
  * RtlInterlockedPushListSList   [NTDLL.@]
  */
-PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(volatile PSLIST_HEADER ListHeader,
+PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER ListHeader,
                                                 PSLIST_ENTRY FirstEntry,
                                                 PSLIST_ENTRY LastEntry,
                                                 ULONG Count)
