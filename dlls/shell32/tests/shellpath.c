@@ -200,7 +200,7 @@ static void loadShell32(void)
 /* A couple utility printing functions */
 static const char *getFolderName(int folder)
 {
-    static char unknown[17];
+    static char unknown[32];
 
 #define CSIDL_TO_STR(x) case x: return#x;
     switch (folder)
@@ -265,7 +265,7 @@ static const char *getFolderName(int folder)
     CSIDL_TO_STR(CSIDL_COMPUTERSNEARME);
 #undef CSIDL_TO_STR
     default:
-        wnsprintfA(unknown, sizeof(unknown), "unknown (0x%04x)", folder);
+        sprintf(unknown, "unknown (0x%04x)", folder);
         return unknown;
     }
 }
@@ -276,8 +276,7 @@ static const char *printGUID(const GUID *guid)
 
     if (!guid) return NULL;
 
-    wnsprintfA(guidSTR, sizeof(guidSTR),
-     "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+    sprintf(guidSTR, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
      guid->Data1, guid->Data2, guid->Data3,
      guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
      guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
@@ -830,13 +829,12 @@ static void testNonExistentPath(void)
             if (!RegSetValueExA(key, "Favorites", 0, type,
              (LPBYTE)modifiedPath, len))
             {
-                char buffer[MAX_PATH];
+                char buffer[MAX_PATH+20];
                 STARTUPINFOA startup;
                 PROCESS_INFORMATION info;
                 HRESULT hr;
 
-                wnsprintfA(buffer, sizeof(buffer), "%s tests/shellpath.c 1",
-                 selfname);
+                sprintf(buffer, "%s tests/shellpath.c 1", selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
@@ -858,8 +856,7 @@ static void testNonExistentPath(void)
                  strlen(originalPath) + 1);
                 RegFlushKey(key);
 
-                wnsprintfA(buffer, sizeof(buffer), "%s tests/shellpath.c 2",
-                 selfname);
+                sprintf(buffer, "%s tests/shellpath.c 2", selfname);
                 memset(&startup, 0, sizeof(startup));
                 startup.cb = sizeof(startup);
                 startup.dwFlags = STARTF_USESHOWWINDOW;
