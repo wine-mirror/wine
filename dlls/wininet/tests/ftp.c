@@ -666,7 +666,6 @@ static void test_renamefile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpRenameFileA(NULL , "should_be_non_existing_deadbeef", "new");
     ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
@@ -685,7 +684,6 @@ static void test_renamefile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpRenameFileA(hFtp , NULL, "new");
     ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
@@ -693,7 +691,6 @@ static void test_renamefile(void)
     SetLastError(0xdeadbeef);
     bRet = FtpRenameFileA(hFtp , "should_be_non_existing_deadbeef", NULL);
     ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
