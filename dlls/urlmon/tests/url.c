@@ -80,6 +80,9 @@ static const WCHAR WINE_ABOUT_URL[] = {'h','t','t','p',':','/','/','w','w','w','
                                        'o','r','g','/','s','i','t','e','/','a','b','o','u','t',0};
 static const WCHAR ABOUT_BLANK[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 static WCHAR INDEX_HTML[MAX_PATH];
+static const WCHAR ITS_URL[] =
+    {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+
 
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
 
@@ -89,13 +92,15 @@ static DWORD read = 0;
 static const LPCWSTR urls[] = {
     WINE_ABOUT_URL,
     ABOUT_BLANK,
-    INDEX_HTML
+    INDEX_HTML,
+    ITS_URL
 };
 
 static enum {
     HTTP_TEST,
     ABOUT_TEST,
-    FILE_TEST
+    FILE_TEST,
+    ITS_TEST
 } test_protocol;
 
 static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
@@ -178,14 +183,16 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     ok(!memcmp(&bindinfo, &bi, sizeof(bindinfo)), "wrong bindinfo\n");
 
-    if(test_protocol == FILE_TEST) {
+    if(test_protocol == FILE_TEST || test_protocol == ITS_TEST) {
         SET_EXPECT(OnProgress_SENDINGREQUEST);
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_SENDINGREQUEST, &null_char);
         ok(hres == S_OK,
            "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08x\n", hres);
         CHECK_CALLED(OnProgress_SENDINGREQUEST);
+    }
 
+    if(test_protocol == FILE_TEST) {
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_CACHEFILENAMEAVAILABLE, &null_char);
         ok(hres == S_OK,
@@ -195,7 +202,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, wszTextHtml);
         ok(hres == S_OK,
-           "ReportProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
+           "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
     }else {
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
@@ -206,6 +213,8 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     if(test_protocol == ABOUT_TEST)
         bscf |= BSCF_DATAFULLYAVAILABLE;
+    if(test_protocol == ITS_TEST)
+        bscf = BSCF_FIRSTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE;
 
     SET_EXPECT(Read);
     if(test_protocol != FILE_TEST)
@@ -227,6 +236,13 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     CHECK_CALLED(LockRequest);
     CHECK_CALLED(OnDataAvailable);
     CHECK_CALLED(OnStopBinding);
+
+    if(test_protocol == ITS_TEST) {
+        SET_EXPECT(Read);
+        hres = IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_BEGINDOWNLOADDATA, NULL);
+        ok(hres == S_OK, "ReportProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
+        CHECK_CALLED(Read);
+    }
 
     SET_EXPECT(Terminate);
     hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
@@ -286,8 +302,7 @@ static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
     ok(pcbRead != NULL, "pcbRead == NULL\n");
     if(pcbRead) {
         ok(*pcbRead == 0, "*pcbRead=%d, expected 0\n", *pcbRead);
-        *pcbRead = 13;
-        read = 13;
+        read += *pcbRead = sizeof(data)-1;
     }
     if(pv)
         memcpy(pv, data, sizeof(data));
@@ -662,10 +677,10 @@ static void test_BindToStorage(int protocol, BOOL emul)
             SET_EXPECT(OnProgress_SENDINGREQUEST);
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
         SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
-        SET_EXPECT(OnDataAvailable);
         if(test_protocol == HTTP_TEST)
             SET_EXPECT(OnProgress_DOWNLOADINGDATA);
         SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
+        SET_EXPECT(OnDataAvailable);
         SET_EXPECT(OnStopBinding);
     }
 
@@ -708,10 +723,10 @@ static void test_BindToStorage(int protocol, BOOL emul)
             CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
         }
         CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
-        CHECK_CALLED(OnDataAvailable);
         if(test_protocol == HTTP_TEST)
             CHECK_CALLED(OnProgress_DOWNLOADINGDATA);
         CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
+        CHECK_CALLED(OnDataAvailable);
         CHECK_CALLED(OnStopBinding);
     }
 
@@ -800,6 +815,9 @@ START_TEST(url)
     trace("emulated file test...\n");
     set_file_url();
     test_BindToStorage(FILE_TEST, TRUE);
+
+    trace("emulated its test...\n");
+    test_BindToStorage(ITS_TEST, TRUE);
 
     test_BindToStorage_fail();
 }
