@@ -1500,10 +1500,13 @@ static nsresult NSAPI nsURI_GetAsciiSpec(nsIWineURI *iface, nsACString *aAsciiSp
 
     TRACE("(%p)->(%p)\n", This, aAsciiSpec);
 
+    if(This->wine_url)
+        return nsIURI_GetSpec(NSURI(This), aAsciiSpec);
+
     if(This->uri)
         return nsIURI_GetAsciiSpec(This->uri, aAsciiSpec);
 
-    FIXME("default action not implemented\n");
+    TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
