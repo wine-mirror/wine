@@ -421,6 +421,7 @@ extern int	        dbg_printf(const char* format, ...);
 #endif
 extern const struct dbg_internal_var* dbg_get_internal_var(const char*);
 extern BOOL             dbg_interrupt_debuggee(void);
+extern unsigned         dbg_num_processes(void);
 extern struct dbg_process* dbg_add_process(const struct be_process_io* pio, DWORD pid, HANDLE h);
 extern void             dbg_set_process_name(struct dbg_process* p, const char* name);
 extern struct dbg_process* dbg_get_process(DWORD pid);

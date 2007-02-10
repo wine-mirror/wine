@@ -242,6 +242,16 @@ const struct dbg_internal_var* dbg_get_internal_var(const char* name)
     return NULL;
 }
 
+unsigned         dbg_num_processes(void)
+{
+    struct dbg_process*	p;
+    unsigned            num = 0;
+
+    for (p = dbg_process_list; p; p = p->next)
+	num++;
+    return num;
+}
+
 struct dbg_process*     dbg_get_process(DWORD pid)
 {
     struct dbg_process*	p;

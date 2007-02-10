@@ -33,3 +33,6 @@ INTERNAL_VAR(ProcessId,			FALSE,		&dbg_curr_pid,		dbg_itype_unsigned_int)
 
    /* symbol manipulation */
 INTERNAL_VAR(AlwaysShowThunks,          FALSE,          NULL,                   dbg_itype_unsigned_int)
+
+   /* process manipulation */
+INTERNAL_VAR(AlsoDebugProcChild,        FALSE,          NULL,                   dbg_itype_unsigned_int)

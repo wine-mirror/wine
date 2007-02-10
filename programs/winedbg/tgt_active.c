@@ -664,7 +664,7 @@ static void wait_exception(void)
 {
     DEBUG_EVENT		de;
 
-    while (dbg_curr_process && WaitForDebugEvent(&de, INFINITE))
+    while (dbg_num_processes() && WaitForDebugEvent(&de, INFINITE))
     {
         if (dbg_handle_debug_event(&de)) break;
     }
@@ -704,6 +704,7 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
     STARTUPINFOA	startup;
+    DWORD               flags;
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
@@ -713,9 +714,10 @@ static	unsigned dbg_start_debuggee(LPSTR cmdLine)
     /* FIXME: shouldn't need the CREATE_NEW_CONSOLE, but as usual CUI:s need it
      * while GUI:s don't
      */
-    if (!CreateProcess(NULL, cmdLine, NULL, NULL,
-                       FALSE, 
-                       DEBUG_PROCESS|DEBUG_ONLY_THIS_PROCESS|CREATE_NEW_CONSOLE,
+    flags = DEBUG_PROCESS | CREATE_NEW_CONSOLE;
+    if (!DBG_IVAR(AlsoDebugProcChild)) flags |= DEBUG_ONLY_THIS_PROCESS;
+
+    if (!CreateProcess(NULL, cmdLine, NULL, NULL, FALSE, flags,
                        NULL, NULL, &startup, &info))
     {
 	dbg_printf("Couldn't start process '%s'\n", cmdLine);

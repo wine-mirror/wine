@@ -95,7 +95,7 @@ STRING     \"[^\n"]+\"
 %x NOPROCESS
 %%
                                         /* set to special state when no process is loaded. */
-                                        if (!dbg_curr_process && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
+                                        if (!dbg_num_processes() && YYSTATE == INITIAL) {BEGIN(NOPROCESS);}
 
 <<EOF>>                                 { return tEOF; }
 <*>\n		                        { BEGIN(INITIAL); syntax_error = 0; return tEOL; }
