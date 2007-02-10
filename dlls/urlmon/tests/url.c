@@ -82,6 +82,9 @@ static const WCHAR ABOUT_BLANK[] = {'a','b','o','u','t',':','b','l','a','n','k',
 static WCHAR INDEX_HTML[MAX_PATH];
 static const WCHAR ITS_URL[] =
     {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR MK_URL[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
+    't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+
 
 
 static const WCHAR wszIndexHtml[] = {'i','n','d','e','x','.','h','t','m','l',0};
@@ -93,14 +96,16 @@ static const LPCWSTR urls[] = {
     WINE_ABOUT_URL,
     ABOUT_BLANK,
     INDEX_HTML,
-    ITS_URL
+    ITS_URL,
+    MK_URL
 };
 
 static enum {
     HTTP_TEST,
     ABOUT_TEST,
     FILE_TEST,
-    ITS_TEST
+    ITS_TEST,
+    MK_TEST
 } test_protocol;
 
 static void test_CreateURLMoniker(LPCWSTR url1, LPCWSTR url2)
@@ -171,7 +176,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &bindinfo);
     ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
 
-    if(test_protocol == FILE_TEST) {
+    if(test_protocol == FILE_TEST || test_protocol == MK_TEST) {
         ok(bindf == (BINDF_ASYNCHRONOUS|BINDF_ASYNCSTORAGE|BINDF_PULLDATA
                      |BINDF_FROMURLMON),
            "bindf=%08x\n", bindf);
@@ -183,13 +188,23 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     ok(!memcmp(&bindinfo, &bi, sizeof(bindinfo)), "wrong bindinfo\n");
 
-    if(test_protocol == FILE_TEST || test_protocol == ITS_TEST) {
+    switch(test_protocol) {
+    case MK_TEST:
+        hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
+                BINDSTATUS_DIRECTBIND, NULL);
+        ok(hres == S_OK,
+           "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08x\n", hres);
+
+    case FILE_TEST:
+    case ITS_TEST:
         SET_EXPECT(OnProgress_SENDINGREQUEST);
         hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
                 BINDSTATUS_SENDINGREQUEST, &null_char);
         ok(hres == S_OK,
            "ReportProgress(BINDSTATUS_SENDINGREQUEST) failed: %08x\n", hres);
         CHECK_CALLED(OnProgress_SENDINGREQUEST);
+    default:
+        break;
     }
 
     if(test_protocol == FILE_TEST) {
@@ -217,7 +232,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
         bscf = BSCF_FIRSTDATANOTIFICATION|BSCF_DATAFULLYAVAILABLE;
 
     SET_EXPECT(Read);
-    if(test_protocol != FILE_TEST)
+    if(test_protocol != FILE_TEST && test_protocol != MK_TEST)
         SET_EXPECT(OnProgress_MIMETYPEAVAILABLE);
     SET_EXPECT(OnProgress_BEGINDOWNLOADDATA);
     SET_EXPECT(OnProgress_ENDDOWNLOADDATA);
@@ -229,7 +244,7 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ok(hres == S_OK, "ReportData failed: %08x\n", hres);
 
     CHECK_CALLED(Read);
-    if(test_protocol != FILE_TEST)
+    if(test_protocol != FILE_TEST && test_protocol != MK_TEST)
         CHECK_CALLED(OnProgress_MIMETYPEAVAILABLE);
     CHECK_CALLED(OnProgress_BEGINDOWNLOADDATA);
     CHECK_CALLED(OnProgress_ENDDOWNLOADDATA);
@@ -818,6 +833,9 @@ START_TEST(url)
 
     trace("emulated its test...\n");
     test_BindToStorage(ITS_TEST, TRUE);
+
+    trace("emulated mk test...\n");
+    test_BindToStorage(MK_TEST, TRUE);
 
     test_BindToStorage_fail();
 }
