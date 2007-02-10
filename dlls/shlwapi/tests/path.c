@@ -198,7 +198,10 @@ const TEST_URL_COMBINE TEST_COMBINE[] = {
     {"file:///C:\\dir\\file.txt", "test.txt", 0, S_OK, "file:///C:/dir/test.txt"},
     {"http://www.winehq.org/test/", "test%20file.txt", 0, S_OK, "http://www.winehq.org/test/test%20file.txt"},
     {"http://www.winehq.org/test/", "test%20file.txt", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org/test/test%20file.txt"},
-    {"http://www.winehq.org%2ftest/", "test%20file.txt", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org%2ftest/test%20file.txt"}
+    {"http://www.winehq.org%2ftest/", "test%20file.txt", URL_FILE_USE_PATHURL, S_OK, "http://www.winehq.org%2ftest/test%20file.txt"},
+    {"xxx:@MSITStore:file.chm/file.html", "dir/file", 0, S_OK, "xxx:dir/file"},
+    {"mk:@MSITStore:file.chm::/file.html", "/dir/file", 0, S_OK, "mk:@MSITStore:file.chm::/dir/file"},
+    {"mk:@MSITStore:file.chm::/file.html", "mk:@MSITStore:file.chm::/dir/file", 0, S_OK, "mk:@MSITStore:file.chm::/dir/file"},
 };
 
 struct {

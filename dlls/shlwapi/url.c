@@ -629,6 +629,22 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	process_case = 1;
     }
     else do {
+        /* mk is a special case */
+        if(base.nScheme == URL_SCHEME_MK) {
+            static const WCHAR wsz[] = {':',':',0};
+
+            WCHAR *ptr = strstrW(base.pszSuffix, wsz);
+            if(ptr) {
+                int delta;
+
+                ptr += 2;
+                delta = ptr-base.pszSuffix;
+                base.cchProtocol += delta;
+                base.pszSuffix += delta;
+                base.cchSuffix -= delta;
+            }
+        }
+
 	/* get size of location field (if it exists) */
 	work = (LPWSTR)base.pszSuffix;
 	sizeloc = 0;
