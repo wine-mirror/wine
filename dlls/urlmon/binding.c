@@ -55,6 +55,7 @@ typedef struct {
     BYTE buf[1024*8];
     DWORD buf_size;
     BOOL init_buf;
+    HRESULT hres;
 } ProtocolStream;
 
 typedef enum {
@@ -139,14 +140,13 @@ static task_header_t *pop_task(Binding *binding)
 static void fill_stream_buffer(ProtocolStream *This)
 {
     DWORD read = 0;
-    HRESULT hres;
 
     if(sizeof(This->buf) == This->buf_size)
         return;
 
-    hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
-                                  sizeof(This->buf)-This->buf_size, &read);
-    if(SUCCEEDED(hres)) {
+    This->hres = IInternetProtocol_Read(This->protocol, This->buf+This->buf_size,
+            sizeof(This->buf)-This->buf_size, &read);
+    if(SUCCEEDED(This->hres)) {
         This->buf_size += read;
         This->init_buf = TRUE;
     }
@@ -389,7 +389,6 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
 {
     ProtocolStream *This = STREAM_THIS(iface);
     DWORD read = 0, pread = 0;
-    HRESULT hres;
 
     TRACE("(%p)->(%p %d %p)\n", This, pv, cb, pcbRead);
 
@@ -411,13 +410,13 @@ static HRESULT WINAPI ProtocolStream_Read(IStream *iface, void *pv,
         return S_OK;
     }
 
-    hres = IInternetProtocol_Read(This->protocol, (PBYTE)pv+read, cb-read, &pread);
+    This->hres = IInternetProtocol_Read(This->protocol, (PBYTE)pv+read, cb-read, &pread);
     *pcbRead = read + pread;
 
-    if(hres == E_PENDING)
+    if(This->hres == E_PENDING)
         return E_PENDING;
-    else if(FAILED(hres))
-        FIXME("Read failed: %08x\n", hres);
+    else if(FAILED(This->hres))
+        FIXME("Read failed: %08x\n", This->hres);
 
     return read || pread ? S_OK : S_FALSE;
 }
@@ -533,6 +532,7 @@ static ProtocolStream *create_stream(IInternetProtocol *protocol)
     ret->ref = 1;
     ret->buf_size = 0;
     ret->init_buf = FALSE;
+    ret->hres = S_OK;
 
     IInternetProtocol_AddRef(protocol);
     ret->protocol = protocol;
@@ -859,7 +859,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
                 BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
 
-    if(bscf & BSCF_LASTDATANOTIFICATION) {
+    if(This->stream->hres == S_FALSE || (bscf & BSCF_LASTDATANOTIFICATION)) {
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_ENDDOWNLOADDATA, This->url);
     }
@@ -874,7 +874,7 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, This->stream->buf_size,
             &formatetc, &This->stgmed);
 
-    if(bscf & BSCF_LASTDATANOTIFICATION) {
+    if(This->stream->hres == S_FALSE) {
         This->download_state = END_DOWNLOAD;
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
     }
