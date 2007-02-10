@@ -41,7 +41,8 @@ static const WCHAR wszRichEditClass[] = {'R','I','C','H','E','D','I','T','2','0'
 static const WCHAR wszMainWndClass[] = {'W','O','R','D','P','A','D','T','O','P',0};
 static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a','d',0};
 
-static HWND hMainWnd = NULL;
+static HWND hMainWnd;
+static HWND hEditorWnd;
 
 static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
 {
@@ -71,9 +72,122 @@ static void AddSeparator(HWND hwndToolBar)
     SendMessage(hwndToolBar, TB_ADDBUTTONS, 1, (LPARAM)&button);
 }
 
+static LPSTR stream_buffer;
+static LONG  stream_buffer_size;
+
+static DWORD CALLBACK stream_in(DWORD_PTR cookie, LPBYTE buffer, LONG cb, LONG *pcb)
+{
+    LONG size = min(stream_buffer_size, cb);
+
+    memcpy(buffer, stream_buffer, size);
+    stream_buffer_size -= size;
+    stream_buffer += size;
+    *pcb = size;
+    return 0;
+}
+
+static void DoOpenFile(LPCWSTR szFileName)
+{
+    HANDLE hFile;
+    LPSTR pTemp;
+    DWORD size;
+    DWORD dwNumRead;
+    EDITSTREAM es;
+
+    hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
+                        OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return;
+
+    size = GetFileSize(hFile, NULL);
+    if (size == INVALID_FILE_SIZE)
+    {
+        CloseHandle(hFile);
+        return;
+    }
+    size++;
+
+    pTemp = HeapAlloc(GetProcessHeap(), 0, size);
+    if (!pTemp)
+    {
+        CloseHandle(hFile);
+        return;
+    }
+
+    if (!ReadFile(hFile, pTemp, size, &dwNumRead, NULL))
+    {
+        CloseHandle(hFile);
+        HeapFree(GetProcessHeap(), 0, pTemp);
+        return;
+    }
+    CloseHandle(hFile);
+    pTemp[dwNumRead] = 0;
+
+    memset(&es, 0, sizeof(es));
+    es.pfnCallback = stream_in;
+
+    stream_buffer = pTemp;
+    stream_buffer_size = size;
+
+    SendMessage(hEditorWnd, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+    HeapFree(GetProcessHeap(), 0, pTemp);
+
+    SetFocus(hEditorWnd);
+}
+
+static void HandleCommandLine(LPWSTR cmdline)
+{
+    WCHAR delimiter;
+    int opt_print = 0;
+
+    /* skip white space */
+    while (*cmdline == ' ') cmdline++;
+
+    /* skip executable name */
+    delimiter = (*cmdline == '"' ? '"' : ' ');
+
+    if (*cmdline == delimiter) cmdline++;
+    while (*cmdline && *cmdline != delimiter) cmdline++;
+    if (*cmdline == delimiter) cmdline++;
+
+    while (*cmdline == ' ' || *cmdline == '-' || *cmdline == '/')
+    {
+        WCHAR option;
+
+        if (*cmdline++ == ' ') continue;
+
+        option = *cmdline;
+        if (option) cmdline++;
+        while (*cmdline == ' ') cmdline++;
+
+        switch (option)
+        {
+            case 'p':
+            case 'P':
+                opt_print = 1;
+                break;
+        }
+    }
+
+    if (*cmdline)
+    {
+        /* file name is passed on the command line */
+        if (cmdline[0] == '"')
+        {
+            cmdline++;
+            cmdline[lstrlenW(cmdline) - 1] = 0;
+        }
+        DoOpenFile(cmdline);
+        InvalidateRect(hMainWnd, NULL, FALSE);
+    }
+
+    if (opt_print)
+        MessageBox(hMainWnd, "Printing not implemented", "WordPad", MB_OK);
+}
+
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
-    HWND hEditorWnd, hToolBarWnd, hReBarWnd;
+    HWND hToolBarWnd, hReBarWnd;
     HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hWnd, GWLP_HINSTANCE);
     HANDLE hDLL;
     TBADDBITMAP ab;
@@ -499,6 +613,8 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
     hMainWnd = CreateWindowExW(0, wszMainWndClass, wszAppTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, hInstance, NULL);
     ShowWindow(hMainWnd, SW_SHOWMAXIMIZED);
+
+    HandleCommandLine(GetCommandLineW());
 
     while(GetMessage(&msg,0,0,0))
     {
