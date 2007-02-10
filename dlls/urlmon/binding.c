@@ -57,6 +57,12 @@ typedef struct {
     BOOL init_buf;
 } ProtocolStream;
 
+typedef enum {
+    BEFORE_DOWNLOAD,
+    DOWNLOADING,
+    END_DOWNLOAD
+} download_state_t;
+
 struct Binding {
     const IBindingVtbl               *lpBindingVtbl;
     const IInternetProtocolSinkVtbl  *lpInternetProtocolSinkVtbl;
@@ -77,6 +83,7 @@ struct Binding {
     BOOL report_mime;
     DWORD continue_call;
     BOOL request_locked;
+    download_state_t download_state;
 
     DWORD apartment_thread;
     HWND notif_hwnd;
@@ -824,6 +831,9 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
 
     TRACE("(%p)->(%d %u %u)\n", This, bscf, progress, progress_max);
 
+    if(This->download_state == END_DOWNLOAD)
+        return;
+
     if(GetCurrentThreadId() != This->apartment_thread)
         FIXME("called from worked hread\n");
 
@@ -841,14 +851,18 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
                 BINDSTATUS_MIMETYPEAVAILABLE, mime);
     }
 
-    if(bscf & BSCF_FIRSTDATANOTIFICATION) {
+    if(This->download_state == BEFORE_DOWNLOAD) {
+        fill_stream_buffer(This->stream);
+
+        This->download_state = DOWNLOADING;
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_BEGINDOWNLOADDATA, This->url);
     }
 
-    if(bscf & BSCF_LASTDATANOTIFICATION)
+    if(bscf & BSCF_LASTDATANOTIFICATION) {
         IBindStatusCallback_OnProgress(This->callback, progress, progress_max,
                 BINDSTATUS_ENDDOWNLOADDATA, This->url);
+    }
 
     if(!This->request_locked) {
         HRESULT hres = IInternetProtocol_LockRequest(This->protocol, 0);
@@ -860,8 +874,10 @@ static void report_data(Binding *This, DWORD bscf, ULONG progress, ULONG progres
     IBindStatusCallback_OnDataAvailable(This->callback, bscf, This->stream->buf_size,
             &formatetc, &This->stgmed);
 
-    if(bscf & BSCF_LASTDATANOTIFICATION)
+    if(bscf & BSCF_LASTDATANOTIFICATION) {
+        This->download_state = END_DOWNLOAD;
         IBindStatusCallback_OnStopBinding(This->callback, S_OK, NULL);
+    }
 }
 
 typedef struct {
@@ -1196,6 +1212,7 @@ static HRESULT Binding_Create(LPCWSTR url, IBindCtx *pbc, REFIID riid, Binding *
     ret->report_mime = TRUE;
     ret->continue_call = 0;
     ret->request_locked = FALSE;
+    ret->download_state = BEFORE_DOWNLOAD;
     ret->task_queue_head = ret->task_queue_tail = NULL;
 
     memset(&ret->bindinfo, 0, sizeof(BINDINFO));
