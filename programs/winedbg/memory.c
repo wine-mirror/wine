@@ -82,7 +82,7 @@ static void	memory_report_invalid_addr(const void* addr)
     address.Offset  = (unsigned long)addr;
     dbg_printf("*** Invalid address ");
     print_address(&address, FALSE);
-    dbg_printf("\n");
+    dbg_printf(" ***\n");
 }
 
 /***********************************************************************
@@ -108,7 +108,7 @@ BOOL memory_read_value(const struct dbg_lvalue* lvalue, DWORD size, void* result
             ret = TRUE;
         }
     }
-    return TRUE;
+    return ret;
 }
 
 /***********************************************************************
