@@ -470,7 +470,6 @@ static	void	dump_dir_exported_functions(void)
     const DWORD*		pName;
     const WORD* 		pOrdl;
     DWORD*		        map;
-    parsed_symbol		symbol;
 
     if (!exportDir) return;
 
@@ -503,28 +502,10 @@ static	void	dump_dir_exported_functions(void)
 
     for (i = 0; i < exportDir->NumberOfNames; i++, pName++, pOrdl++)
     {
-	const char*	name;
-
 	map[*pOrdl / 32] |= 1 << (*pOrdl % 32);
 
-	name = (const char*)RVA(*pName, sizeof(DWORD));
-	if (name && globals.do_demangle)
-	{
-            printf("  %08X  %4u ", pFunc[*pOrdl], exportDir->Base + *pOrdl);
-
-	    symbol_init(&symbol, name);
-	    if (symbol_demangle(&symbol) == -1)
-		printf(name);
-	    else if (symbol.flags & SYM_DATA)
-		printf(symbol.arg_text[0]);
-	    else
-		output_prototype(stdout, &symbol);
-	    symbol_clear(&symbol);
-	}
-	else
-	{
-            printf("  %08X  %4u %s", pFunc[*pOrdl], exportDir->Base + *pOrdl, name);
-	}
+        printf("  %08X  %4u %s", pFunc[*pOrdl], exportDir->Base + *pOrdl,
+               get_symbol_str((const char*)RVA(*pName, sizeof(DWORD))));
         /* check for forwarded function */
         if ((const char *)RVA(pFunc[*pOrdl],sizeof(void*)) >= (const char *)exportDir &&
             (const char *)RVA(pFunc[*pOrdl],sizeof(void*)) < (const char *)exportDir + size)

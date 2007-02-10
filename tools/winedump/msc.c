@@ -852,9 +852,9 @@ int codeview_dump_symbols(const void* root, unsigned long size)
          */
 	case S_GDATA_V2:
 	case S_LDATA_V2:
-            printf("\tS-%s-Data V2 '%s' %04x:%08x type:%08x\n", 
+            printf("\tS-%s-Data V2 '%s' %04x:%08x type:%08x\n",
                    sym->generic.id == S_GDATA_V2 ? "Global" : "Local",
-                   p_string(&sym->data_v2.p_name),
+                   get_symbol_str(p_string(&sym->data_v2.p_name)),
                    sym->data_v2.segment, sym->data_v2.offset, sym->data_v2.symtype);
 	    break;
 
@@ -863,14 +863,14 @@ int codeview_dump_symbols(const void* root, unsigned long size)
 /* EPP         case S_DATA_V3: */
             printf("\tS-%s-Data V3 '%s' (%04x:%08x) type:%08x\n",
                    sym->generic.id == S_GDATA_V3 ? "Global" : "Local",
-                   sym->data_v3.name, 
-                   sym->data_v3.segment, sym->data_v3.offset, 
+                   get_symbol_str(sym->data_v3.name),
+                   sym->data_v3.segment, sym->data_v3.offset,
                    sym->data_v3.symtype);
             break;
 
 	case S_PUB_V2:
             printf("\tS-Public V2 '%s' %04x:%08x type:%08x\n",
-                   p_string(&sym->public_v2.p_name),
+                   get_symbol_str(p_string(&sym->public_v2.p_name)),
                    sym->public_v2.segment, sym->public_v2.offset,
                    sym->public_v2.symtype);
 	    break;
@@ -882,7 +882,7 @@ int codeview_dump_symbols(const void* root, unsigned long size)
             printf("\tS-Public%s V3 '%s' %04x:%08x type:%08x\n",
                    sym->generic.id == S_PUB_V3 ? "" :
                                       (sym->generic.id == S_PUB_FUNC1_V3 ? "<subkind1" : "<subkind2"),
-                   sym->public_v3.name,
+                   get_symbol_str(sym->public_v3.name),
                    sym->public_v3.segment,
                    sym->public_v3.offset, sym->public_v3.symtype);
 	    break;
@@ -1127,8 +1127,9 @@ int codeview_dump_symbols(const void* root, unsigned long size)
                 int             val, vlen;
 
                 vlen = numeric_leaf(&val, &sym->constant_v2.cvalue);
-                printf("\tS-Constant V2 '%s' = %u type:%x\n", 
-                       p_string(PSTRING(&sym->constant_v2.cvalue, vlen)), val, sym->constant_v2.type);
+                printf("\tS-Constant V2 '%s' = %u type:%x\n",
+                       p_string(PSTRING(&sym->constant_v2.cvalue, vlen)),
+                       val, sym->constant_v2.type);
             }
             break;
 

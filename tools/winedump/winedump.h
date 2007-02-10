@@ -236,6 +236,7 @@ void            dump_data( const unsigned char *ptr, unsigned int size, const ch
 const char*	get_time_str( unsigned long );
 unsigned int    strlenW( const unsigned short *str );
 void            dump_unicode_str( const unsigned short *str, int len );
+const char*     get_symbol_str(const char* symname);
 void            dump_file_header(const IMAGE_FILE_HEADER *);
 void            dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *, UINT);
 void            dump_section(const IMAGE_SECTION_HEADER *);

@@ -407,19 +407,11 @@ int   main (int argc, char *argv[])
     switch (globals.mode)
     {
     case DMGL:
-	globals.uc_dll_name = "";
 	VERBOSE = 1;
 
-	symbol_init (&symbol, globals.input_name);
-	globals.input_module = "";
-	if (symbol_demangle (&symbol) == -1)
-	    fatal( "Symbol hasn't got a mangled name\n");
-	if (symbol.flags & SYM_DATA)
-	    printf (symbol.arg_text[0]);
-	else
-	    output_prototype (stdout, &symbol);
-	fputc ('\n', stdout);
-	symbol_clear(&symbol);
+        if (globals.input_name == NULL)
+            fatal("No symbol name has been given\n");
+        printf("%s\n", get_symbol_str(globals.input_name));
 	break;
 
     case SPEC:
