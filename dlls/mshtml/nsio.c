@@ -1440,6 +1440,7 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
 
     if(This->uri) {
         nsIURI *uri;
+        nsIWineURI *wine_uri;
         nsresult nsres;
 
         nsres = nsIURI_Clone(This->uri, &uri);
@@ -1448,7 +1449,11 @@ static nsresult NSAPI nsURI_Clone(nsIWineURI *iface, nsIURI **_retval)
             return nsres;
         }
 
-        return create_uri(uri, This->container, (nsIWineURI**)_retval);
+        nsres = create_uri(uri, This->container, &wine_uri);
+        *_retval = (nsIURI*)wine_uri;
+        if(NS_SUCCEEDED(nsres))
+            return nsIWineURI_SetWineURL(wine_uri, This->wine_url);
+        return nsres;
     }
 
     FIXME("default action not implemented\n");
