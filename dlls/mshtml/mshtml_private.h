@@ -386,8 +386,11 @@ typedef struct task_t {
     enum {
         TASK_SETDOWNLOADSTATE,
         TASK_PARSECOMPLETE,
-        TASK_SETPROGRESS
+        TASK_SETPROGRESS,
+        TASK_START_BINDING
     } task_id;
+
+    BSCallback *bscallback;
 
     struct task_t *next;
 } task_t;

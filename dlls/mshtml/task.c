@@ -217,6 +217,12 @@ static void set_progress(HTMLDocument *doc)
     }
 }
 
+static void task_start_binding(BSCallback *bscallback)
+{
+    start_binding(bscallback);
+    IBindStatusCallback_Release(STATUSCLB(bscallback));
+}
+
 static void process_task(task_t *task)
 {
     switch(task->task_id) {
@@ -226,6 +232,8 @@ static void process_task(task_t *task)
         return set_parsecomplete(task->doc);
     case TASK_SETPROGRESS:
         return set_progress(task->doc);
+    case TASK_START_BINDING:
+        return task_start_binding(task->bscallback);
     default:
         ERR("Wrong task_id %d\n", task->task_id);
     }

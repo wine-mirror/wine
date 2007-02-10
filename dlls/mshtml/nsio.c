@@ -605,6 +605,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     PRBool is_doc_uri;
     LPCWSTR wine_url;
     nsresult nsres;
+    task_t *task;
     HRESULT hres;
 
     TRACE("(%p)->(%p %p)\n", This, aListener, aContext);
@@ -718,8 +719,14 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         bscallback->nscontext = aContext;
     }
 
-    start_binding(bscallback);
-    IBindStatusCallback_Release(STATUSCLB(bscallback));
+    task = mshtml_alloc(sizeof(task_t));
+
+    task->doc = bscallback->doc;
+    task->task_id = TASK_START_BINDING;
+    task->next = NULL;
+    task->bscallback = bscallback;
+
+    push_task(task);
 
     return NS_OK;
 }
