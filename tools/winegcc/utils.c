@@ -118,16 +118,16 @@ void strarray_add(strarray* arr, const char* str)
     arr->base[arr->size++] = str;
 }
 
-void strarray_del(strarray* arr, int i)
+void strarray_del(strarray* arr, unsigned int i)
 {
-    if (i < 0 || i >= arr->size) error("Invalid index i=%d", i);
+    if (i >= arr->size) error("Invalid index i=%d", i);
     memmove(&arr->base[i], &arr->base[i + 1], (arr->size - i - 1) * sizeof(arr->base[0]));
     arr->size--;
 }
 
 void strarray_addall(strarray* arr, const strarray* from)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < from->size; i++)
 	strarray_add(arr, from->base[i]);
@@ -136,7 +136,7 @@ void strarray_addall(strarray* arr, const strarray* from)
 strarray* strarray_dup(const strarray* arr)
 {
     strarray* dup = strarray_alloc();
-    int i;
+    unsigned int i;
 
     for (i = 0; i < arr->size; i++)
 	strarray_add(dup, arr->base[i]);
@@ -160,7 +160,7 @@ strarray* strarray_fromstring(const char* str, const char* delim)
 char* strarray_tostring(const strarray* arr, const char* sep)
 {
     char *str, *newstr;
-    int i;
+    unsigned int i;
 
     str = strmake("%s", arr->base[0]);
     for (i = 1; i < arr->size; i++)
@@ -277,7 +277,7 @@ static file_type guess_lib_type(const char* dir, const char* library, char** fil
 
 file_type get_lib_type(strarray* path, const char* library, char** file)
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < path->size; i++)
     {
@@ -289,7 +289,8 @@ file_type get_lib_type(strarray* path, const char* library, char** file)
 
 void spawn(const strarray* prefix, const strarray* args, int ignore_errors)
 {
-    int i, status;
+    unsigned int i;
+    int status;
     strarray* arr = strarray_dup(args);
     const char** argv;
     char* prog = 0;

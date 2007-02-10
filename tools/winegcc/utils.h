@@ -48,7 +48,7 @@ strarray* strarray_alloc(void);
 strarray* strarray_dup(const strarray* arr);
 void strarray_free(strarray* arr);
 void strarray_add(strarray* arr, const char* str);
-void strarray_del(strarray* arr, int i);
+void strarray_del(strarray* arr, unsigned int i);
 void strarray_addall(strarray* arr, const strarray* from);
 strarray* strarray_fromstring(const char* str, const char* delim);
 char* strarray_tostring(const strarray* arr, const char* sep);
