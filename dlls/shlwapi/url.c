@@ -44,31 +44,28 @@ WINE_DEFAULT_DEBUG_CHANNEL(shell);
 /* The following schemes were identified in the native version of
  * SHLWAPI.DLL version 5.50
  */
-typedef struct {
+static const struct {
     URL_SCHEME  scheme_number;
-    LPCSTR scheme_name;
-} SHL_2_inet_scheme;
-
-static const SHL_2_inet_scheme shlwapi_schemes[] = {
-  {URL_SCHEME_FTP,        "ftp"},
-  {URL_SCHEME_HTTP,       "http"},
-  {URL_SCHEME_GOPHER,     "gopher"},
-  {URL_SCHEME_MAILTO,     "mailto"},
-  {URL_SCHEME_NEWS,       "news"},
-  {URL_SCHEME_NNTP,       "nntp"},
-  {URL_SCHEME_TELNET,     "telnet"},
-  {URL_SCHEME_WAIS,       "wais"},
-  {URL_SCHEME_FILE,       "file"},
-  {URL_SCHEME_MK,         "mk"},
-  {URL_SCHEME_HTTPS,      "https"},
-  {URL_SCHEME_SHELL,      "shell"},
-  {URL_SCHEME_SNEWS,      "snews"},
-  {URL_SCHEME_LOCAL,      "local"},
-  {URL_SCHEME_JAVASCRIPT, "javascript"},
-  {URL_SCHEME_VBSCRIPT,   "vbscript"},
-  {URL_SCHEME_ABOUT,      "about"},
-  {URL_SCHEME_RES,        "res"},
-  {0, 0}
+    WCHAR scheme_name[12];
+} shlwapi_schemes[] = {
+  {URL_SCHEME_FTP,        {'f','t','p',0}},
+  {URL_SCHEME_HTTP,       {'h','t','t','p',0}},
+  {URL_SCHEME_GOPHER,     {'g','o','p','h','e','r',0}},
+  {URL_SCHEME_MAILTO,     {'m','a','i','l','t','o',0}},
+  {URL_SCHEME_NEWS,       {'n','e','w','s',0}},
+  {URL_SCHEME_NNTP,       {'n','n','t','p',0}},
+  {URL_SCHEME_TELNET,     {'t','e','l','n','e','t',0}},
+  {URL_SCHEME_WAIS,       {'w','a','i','s',0}},
+  {URL_SCHEME_FILE,       {'f','i','l','e',0}},
+  {URL_SCHEME_MK,         {'m','k',0}},
+  {URL_SCHEME_HTTPS,      {'h','t','t','p','s',0}},
+  {URL_SCHEME_SHELL,      {'s','h','e','l','l',0}},
+  {URL_SCHEME_SNEWS,      {'s','n','e','w','s',0}},
+  {URL_SCHEME_LOCAL,      {'l','o','c','a','l',0}},
+  {URL_SCHEME_JAVASCRIPT, {'j','a','v','a','s','c','r','i','p','t',0}},
+  {URL_SCHEME_VBSCRIPT,   {'v','b','s','c','r','i','p','t',0}},
+  {URL_SCHEME_ABOUT,      {'a','b','o','u','t',0}},
+  {URL_SCHEME_RES,        {'r','e','s',0}},
 };
 
 typedef struct {
@@ -119,6 +116,19 @@ static const unsigned char HashDataLookup[256] = {
  0x25, 0x45, 0x27, 0x75, 0x92, 0xB8, 0xA3, 0xC8, 0xDE, 0xEB, 0xF8, 0xF3, 0xDB,
  0x0A, 0x98, 0x83, 0x7B, 0xE5, 0xCB, 0x4C, 0x78, 0xD1 };
 
+static DWORD get_scheme_code(LPCWSTR scheme, DWORD scheme_len)
+{
+    int i;
+
+    for(i=0; i < sizeof(shlwapi_schemes)/sizeof(shlwapi_schemes[0]); i++) {
+        if(scheme_len == strlenW(shlwapi_schemes[i].scheme_name)
+           && !memcmp(scheme, shlwapi_schemes[i].scheme_name, scheme_len*sizeof(WCHAR)))
+            return shlwapi_schemes[i].scheme_number;
+    }
+
+    return URL_SCHEME_UNKNOWN;
+}
+
 static BOOL URL_JustLocation(LPCWSTR str)
 {
     while(*str && (*str == L'/')) str++;
@@ -147,8 +157,8 @@ static BOOL URL_JustLocation(LPCWSTR str)
  */
 HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
 {
-    DWORD cnt;
-    const SHL_2_inet_scheme *inet_pro;
+    WCHAR scheme[INTERNET_MAX_SCHEME_LENGTH];
+    DWORD cnt, len;
 
     y->nScheme = URL_SCHEME_INVALID;
     if (y->cbSize != sizeof(*y)) return E_INVALIDARG;
@@ -180,17 +190,10 @@ HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
     /* found scheme, set length of remainder */
     y->cchSuffix = lstrlenA(y->pszSuffix);
 
-    /* see if known scheme and return indicator number */
-    y->nScheme = URL_SCHEME_UNKNOWN;
-    inet_pro = shlwapi_schemes;
-    while (inet_pro->scheme_name) {
-	if (!strncasecmp(inet_pro->scheme_name, y->pszProtocol,
-		    min(y->cchProtocol, lstrlenA(inet_pro->scheme_name)))) {
-	    y->nScheme = inet_pro->scheme_number;
-	    break;
-	}
-	inet_pro++;
-    }
+    len = MultiByteToWideChar(CP_ACP, 0, y->pszProtocol, y->cchProtocol,
+                              scheme, sizeof(scheme));
+    y->nScheme = get_scheme_code(scheme, len);
+
     return S_OK;
 }
 
@@ -202,9 +205,6 @@ HRESULT WINAPI ParseURLA(LPCSTR x, PARSEDURLA *y)
 HRESULT WINAPI ParseURLW(LPCWSTR x, PARSEDURLW *y)
 {
     DWORD cnt;
-    const SHL_2_inet_scheme *inet_pro;
-    LPSTR cmpstr;
-    INT len;
 
     y->nScheme = URL_SCHEME_INVALID;
     if (y->cbSize != sizeof(*y)) return E_INVALIDARG;
@@ -235,22 +235,8 @@ HRESULT WINAPI ParseURLW(LPCWSTR x, PARSEDURLW *y)
 
     /* found scheme, set length of remainder */
     y->cchSuffix = lstrlenW(y->pszSuffix);
+    y->nScheme = get_scheme_code(y->pszProtocol, y->cchProtocol);
 
-    /* see if known scheme and return indicator number */
-    len = WideCharToMultiByte(0, 0, y->pszProtocol, y->cchProtocol, 0, 0, 0, 0);
-    cmpstr = HeapAlloc(GetProcessHeap(), 0, len);
-    WideCharToMultiByte(0, 0, y->pszProtocol, y->cchProtocol, cmpstr, len, 0, 0);
-    y->nScheme = URL_SCHEME_UNKNOWN;
-    inet_pro = shlwapi_schemes;
-    while (inet_pro->scheme_name) {
-	if (!strncasecmp(inet_pro->scheme_name, cmpstr,
-		    min(len, lstrlenA(inet_pro->scheme_name)))) {
-	    y->nScheme = inet_pro->scheme_number;
-	    break;
-	}
-	inet_pro++;
-    }
-    HeapFree(GetProcessHeap(), 0, cmpstr);
     return S_OK;
 }
 
@@ -643,7 +629,6 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	process_case = 1;
     }
     else do {
-
 	/* get size of location field (if it exists) */
 	work = (LPWSTR)base.pszSuffix;
 	sizeloc = 0;
@@ -665,6 +650,7 @@ HRESULT WINAPI UrlCombineW(LPCWSTR pszBase, LPCWSTR pszRelative,
 	    len = (DWORD)(work - base.pszSuffix + 1);
 	    base.cchSuffix = len;
 	}
+
 	/*
 	 * At this point:
 	 *    .pszSuffix   points to location (starting with '//')
