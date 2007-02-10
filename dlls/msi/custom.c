@@ -322,7 +322,7 @@ static UINT store_binary_to_temp(MSIPACKAGE *package, LPCWSTR source,
     return r;
 }
 
-static void file_running_action(MSIPACKAGE* package, HANDLE Handle, 
+static void file_running_action(MSIPACKAGE* package, HANDLE Handle,
                                 BOOL process, LPCWSTR name)
 {
     MSIRUNNINGACTION *action;
@@ -367,53 +367,59 @@ static UINT custom_get_thread_return( HANDLE thread )
     }
 }
 
-static UINT process_handle(MSIPACKAGE* package, UINT type,
-                           HANDLE ThreadHandle, HANDLE ProcessHandle,
-                           LPCWSTR Name)
+static UINT wait_process_handle(MSIPACKAGE* package, UINT type,
+                           HANDLE ProcessHandle, LPCWSTR name)
 {
     UINT rc = ERROR_SUCCESS;
 
     if (!(type & msidbCustomActionTypeAsync))
     {
-        /* synchronous */
-        TRACE("Synchronous Execution of action %s\n",debugstr_w(Name));
-        if (ProcessHandle)
-            msi_dialog_check_messages(ProcessHandle);
-        else
-            msi_dialog_check_messages(ThreadHandle);
+        TRACE("waiting for %s\n", debugstr_w(name));
+
+        msi_dialog_check_messages(ProcessHandle);
 
         if (!(type & msidbCustomActionTypeContinue))
-        {
-            if (ProcessHandle)
-                rc = custom_get_process_return(ProcessHandle);
-            else
-                rc = custom_get_thread_return(ThreadHandle);
-        }
+            rc = custom_get_process_return(ProcessHandle);
 
-        CloseHandle(ThreadHandle);
-        if (ProcessHandle)
-            CloseHandle(ProcessHandle);
+        CloseHandle(ProcessHandle);
     }
     else
     {
-        TRACE("Asynchronous Execution of action %s\n",debugstr_w(Name));
-        /* asynchronous */
+        TRACE("%s running in background\n", debugstr_w(name));
+
         if (!(type & msidbCustomActionTypeContinue))
-        {
-            if (ProcessHandle)
-            {
-                file_running_action(package, ProcessHandle, TRUE, Name);
-                CloseHandle(ThreadHandle);
-            }
-            else
-                file_running_action(package, ThreadHandle, FALSE, Name);
-        }
+            file_running_action(package, ProcessHandle, TRUE, name);
         else
-        {
+            CloseHandle(ProcessHandle);
+    }
+
+    return rc;
+}
+
+static UINT wait_thread_handle(MSIPACKAGE* package, UINT type,
+                                  HANDLE ThreadHandle, LPCWSTR name)
+{
+    UINT rc = ERROR_SUCCESS;
+
+    if (!(type & msidbCustomActionTypeAsync))
+    {
+        TRACE("waiting for %s\n", debugstr_w(name));
+
+        msi_dialog_check_messages(ThreadHandle);
+
+        if (!(type & msidbCustomActionTypeContinue))
+            rc = custom_get_thread_return(ThreadHandle);
+
+        CloseHandle(ThreadHandle);
+    }
+    else
+    {
+        TRACE("%s running in background\n", debugstr_w(name));
+
+        if (!(type & msidbCustomActionTypeContinue))
+            file_running_action(package, ThreadHandle, FALSE, name);
+        else
             CloseHandle(ThreadHandle);
-            if (ProcessHandle)
-                CloseHandle(ProcessHandle);
-        }
     }
 
     return rc;
@@ -503,7 +509,7 @@ static HANDLE do_msidbCustomActionTypeDll(MSIPACKAGE *package, LPCWSTR dll, LPCW
     return CreateThread(NULL, 0, DllThread, info, 0, NULL);
 }
 
-static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source, 
+static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
                                LPCWSTR target, const INT type, LPCWSTR action)
 {
     WCHAR tmp_file[MAX_PATH];
@@ -525,12 +531,12 @@ static UINT HANDLE_CustomType1(MSIPACKAGE *package, LPCWSTR source,
 
     ThreadHandle = do_msidbCustomActionTypeDll( package, tmp_file, target );
 
-    r = process_handle(package, type, ThreadHandle, NULL, action);
+    r = wait_thread_handle( package, type, ThreadHandle, action );
 
     return r;
 }
 
-static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source, 
+static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
                                LPCWSTR target, const INT type, LPCWSTR action)
 {
     WCHAR tmp_file[MAX_PATH];
@@ -578,8 +584,9 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
         ERR("Unable to execute command %s\n", debugstr_w(cmd));
         return ERROR_SUCCESS;
     }
+    CloseHandle( info.hThread );
 
-    r = process_handle(package, type, info.hThread, info.hProcess, action);
+    r = wait_process_handle(package, type, info.hProcess, action);
 
     return r;
 }
@@ -601,7 +608,7 @@ static UINT HANDLE_CustomType17(MSIPACKAGE *package, LPCWSTR source,
 
     hThread = do_msidbCustomActionTypeDll( package, file->TargetPath, target );
 
-    return process_handle(package, type, hThread, NULL, action);
+    return wait_thread_handle(package, type, hThread, action);
 }
 
 static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
@@ -615,7 +622,6 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
     INT len;
     static const WCHAR spc[] = {' ',0};
     MSIFILE *file;
-    UINT prc;
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
@@ -646,7 +652,6 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
     rc = CreateProcessW(NULL, cmd, NULL, NULL, FALSE, 0, NULL,
                   c_collen, &si, &info);
 
-    
     if ( !rc )
     {
         ERR("Unable to execute command %s\n", debugstr_w(cmd));
@@ -654,10 +659,9 @@ static UINT HANDLE_CustomType18(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
     msi_free(cmd);
+    CloseHandle( info.hThread );
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action);
-
-    return prc;
+    return wait_process_handle(package, type, info.hProcess, action);
 }
 
 static UINT HANDLE_CustomType19(MSIPACKAGE *package, LPCWSTR source,
@@ -740,7 +744,9 @@ static UINT HANDLE_CustomType50(MSIPACKAGE *package, LPCWSTR source,
     }
     msi_free(cmd);
 
-    return process_handle(package, type, info.hThread, info.hProcess, action);
+    CloseHandle( info.hThread );
+
+    return wait_process_handle(package, type, info.hProcess, action);
 }
 
 static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
@@ -750,7 +756,6 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
     STARTUPINFOW si;
     PROCESS_INFORMATION info;
     BOOL rc;
-    UINT prc;
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
@@ -779,10 +784,9 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
         return ERROR_SUCCESS;
     }
     msi_free(deformated);
+    CloseHandle( info.hThread );
 
-    prc = process_handle(package, type, info.hThread, info.hProcess, action);
-
-    return prc;
+    return wait_process_handle(package, type, info.hProcess, action);
 }
 
 
