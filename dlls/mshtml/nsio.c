@@ -57,6 +57,7 @@ typedef struct {
     NSContainer *container;
     LPWSTR wine_url;
     PRBool is_doc_uri;
+    BOOL use_wine_url;
 } nsURI;
 
 #define NSURI(x)         ((nsIURI*)            &(x)->lpWineURIVtbl)
@@ -1159,7 +1160,7 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
     if(This->uri)
         return nsIURI_GetSpec(This->uri, aSpec);
 
-    if(This->wine_url) {
+    if(This->use_wine_url) {
         char speca[INTERNET_MAX_URL_LENGTH];
         WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
         nsACString_SetData(aSpec, speca);
@@ -1167,7 +1168,7 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
         return NS_OK;
     }
 
-    WARN("mon and uri are NULL\n");
+    TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 
 }
@@ -1204,10 +1205,19 @@ static nsresult NSAPI nsURI_GetScheme(nsIWineURI *iface, nsACString *aScheme)
 
     TRACE("(%p)->(%p)\n", This, aScheme);
 
+    if(This->use_wine_url) {
+        /*
+         * For Gecko we set scheme to unknown so it won't be handled
+         * as any special case.
+         */
+        nsACString_SetData(aScheme, "wine");
+        return NS_OK;
+    }
+
     if(This->uri)
         return nsIURI_GetScheme(This->uri, aScheme);
 
-    FIXME("default action not implemented\n");
+    TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
@@ -1580,6 +1590,10 @@ static nsresult NSAPI nsURI_SetWineURL(nsIWineURI *iface, LPCWSTR aURL)
 {
     nsURI *This = NSURI_THIS(iface);
 
+    static const WCHAR wszFtp[]   = {'f','t','p',':'};
+    static const WCHAR wszHttp[]  = {'h','t','t','p',':'};
+    static const WCHAR wszHttps[] = {'h','t','t','p','s',':'};
+
     TRACE("(%p)->(%s)\n", This, debugstr_w(aURL));
 
     mshtml_free(This->wine_url);
@@ -1588,8 +1602,15 @@ static nsresult NSAPI nsURI_SetWineURL(nsIWineURI *iface, LPCWSTR aURL)
         int len = strlenW(aURL)+1;
         This->wine_url = mshtml_alloc(len*sizeof(WCHAR));
         memcpy(This->wine_url, aURL, len*sizeof(WCHAR));
+
+        /* FIXME: Always use wine url */
+        This->use_wine_url =
+               strncmpW(aURL, wszFtp,   sizeof(wszFtp)/sizeof(WCHAR))
+            && strncmpW(aURL, wszHttp,  sizeof(wszHttp)/sizeof(WCHAR))
+            && strncmpW(aURL, wszHttps, sizeof(wszHttps)/sizeof(WCHAR));
     }else {
         This->wine_url = NULL;
+        This->use_wine_url = FALSE;
     }
 
     return NS_OK;
@@ -1645,6 +1666,7 @@ static nsresult create_uri(nsIURI *uri, NSContainer *container, nsIWineURI **_re
     ret->container = container;
     ret->wine_url = NULL;
     ret->is_doc_uri = FALSE;
+    ret->use_wine_url = FALSE;
 
     if(container)
         nsIWebBrowserChrome_AddRef(NSWBCHROME(container));
