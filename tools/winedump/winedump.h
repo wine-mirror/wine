@@ -94,8 +94,6 @@ typedef struct __parsed_symbol
   char  arg_flag [MAX_FUNCTION_ARGS];
   char *arg_text [MAX_FUNCTION_ARGS];
   char *arg_name [MAX_FUNCTION_ARGS];
-  unsigned int n_u_refs;
-  char *u_ref    [MAX_FUNCTION_ARGS];
 } parsed_symbol;
 
 /* FIXME: Replace with some hash such as GHashTable */
