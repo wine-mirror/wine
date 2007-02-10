@@ -86,10 +86,13 @@ inline static BOOL is_window_managed( HWND hwnd )
     if (style & WS_THICKFRAME) return TRUE;
     /* application windows are managed */
     if (ex_style & WS_EX_APPWINDOW) return TRUE;
-    /* full-screen popup windows are managed */
     if (style & WS_POPUP)
     {
         RECT rect;
+
+        /* popup with sysmenu == caption are managed */
+        if (style & WS_SYSMENU) return TRUE;
+        /* full-screen popup windows are managed */
         GetWindowRect( hwnd, &rect );
         if ((rect.right - rect.left) == screen_width && (rect.bottom - rect.top) == screen_height)
             return TRUE;
