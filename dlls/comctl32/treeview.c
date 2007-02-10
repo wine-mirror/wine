@@ -4654,9 +4654,6 @@ TREEVIEW_VScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
     if (!(infoPtr->uInternalStatus & TV_VSCROLL))
 	return 0;
 
-    if (infoPtr->hwndEdit)
-	SetFocus(infoPtr->hwnd);
-
     if (!oldFirstVisible)
     {
 	assert(infoPtr->root->firstChild == NULL);
@@ -4726,9 +4723,6 @@ TREEVIEW_HScroll(TREEVIEW_INFO *infoPtr, WPARAM wParam)
 
     if (!(infoPtr->uInternalStatus & TV_HSCROLL))
 	return FALSE;
-
-    if (infoPtr->hwndEdit)
-	SetFocus(infoPtr->hwnd);
 
     maxWidth = infoPtr->treeWidth - infoPtr->clientWidth;
     /* shall never occur */
@@ -5618,6 +5612,11 @@ TREEVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             return TREEVIEW_MouseMove(infoPtr, wParam, lParam);
         else
             return 0;
+
+    case WM_NCLBUTTONDOWN:
+        if (infoPtr->hwndEdit)
+            SetFocus(infoPtr->hwnd);
+        goto def;
 
     case WM_NCPAINT:
         if (nc_paint (infoPtr, (HRGN)wParam))

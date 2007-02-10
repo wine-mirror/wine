@@ -29,10 +29,10 @@
 #include "commctrl.h" 
 
 #include "wine/test.h"
- 
+
 static HWND hMainWnd;
 
-static HWND hTree;
+static HWND hTree, hEdit;
 static HTREEITEM hRoot, hChild;
 
 static int pos = 0;
@@ -140,6 +140,37 @@ static void DoTest2(void)
     ok(!strcmp(sequence, "1(nR)nR23(RC)RC45(CR)CR."), "root-child select test\n");
 }
 
+static void DoFocusTest(void)
+{
+    TVINSERTSTRUCTA ins;
+    static CHAR child1[]  = "Edit",
+                child2[]  = "A really long string";
+    HTREEITEM hChild1, hChild2;
+
+    /* This test verifies that when a label is being edited, scrolling
+     * the treeview does not cause the label to lose focus. To test
+     * this, first some additional entries are added to generate
+     * scrollbars.
+     */
+    ins.hParent = hRoot;
+    ins.hInsertAfter = hChild;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = child1;
+    hChild1 = TreeView_InsertItem(hTree, &ins);
+    assert(hChild1);
+    ins.hInsertAfter = hChild1;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = child2;
+    hChild2 = TreeView_InsertItem(hTree, &ins);
+    assert(hChild2);
+
+    ShowWindow(hMainWnd,SW_SHOW);
+    SendMessageW(hTree, TVM_SELECTITEM, TVGN_CARET, (LPARAM)hChild);
+    hEdit = TreeView_EditLabel(hTree, hChild);
+    ScrollWindowEx(hTree, -10, 0, NULL, NULL, NULL, NULL, SW_SCROLLCHILDREN);
+    ok(GetFocus() == hEdit, "Edit control should have focus\n");
+}
+
 static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -147,9 +178,9 @@ static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_CREATE:
     {
         hTree = CreateWindowExA(WS_EX_CLIENTEDGE, WC_TREEVIEWA, NULL, WS_CHILD|WS_VISIBLE|
-            TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS, 
-            0, 0, 300, 50, hWnd, (HMENU)100, GetModuleHandleA(0), 0);
-    
+            TVS_LINESATROOT|TVS_HASLINES|TVS_HASBUTTONS|TVS_EDITLABELS,
+            0, 0, 120, 100, hWnd, (HMENU)100, GetModuleHandleA(0), 0);
+
         SetFocus(hTree);
         return 0;
     }
@@ -211,15 +242,16 @@ START_TEST(treeview)
     wc.lpszClassName = "MyTestWnd";
     wc.lpfnWndProc = MyWndProc;
     RegisterClassA(&wc);
-    
-    
-    hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW, 
-      CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
+
+
+    hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
+      CW_USEDEFAULT, CW_USEDEFAULT, 130, 105, NULL, NULL, GetModuleHandleA(NULL), 0);
     GetClientRect(hMainWnd, &rc);
 
     FillRoot();
     DoTest1();
     DoTest2();
+    DoFocusTest();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
