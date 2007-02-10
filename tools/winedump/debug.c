@@ -425,11 +425,9 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
     if (memcmp(signature, "RSDS", 4) == 0)
     {
 	const OMFSignatureRSDS* rsds_data;
-        char                    guid_str[40];
 
 	rsds_data = (const void *)cv_base;
-	printf("      Guid:              %s\n",
-               guid_to_string(&rsds_data->guid, guid_str, sizeof(guid_str)));
+	printf("      Guid:              %s\n", get_guid_str(&rsds_data->guid));
 	printf("      Dunno:             %08X\n", rsds_data->unknown);
 	printf("      Filename:          %s\n", rsds_data->name);
 	return;

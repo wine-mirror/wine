@@ -625,7 +625,6 @@ static void pdb_ds_dump(void)
     if (root)
     {
         const char*     ptr;
-        char            guid_str[40];
 
         printf("Root:\n"
                "\tVersion:              %u\n"
@@ -636,7 +635,7 @@ static void pdb_ds_dump(void)
                root->Version,
                root->TimeDateStamp,
                root->Age,
-               guid_to_string(&root->guid, guid_str, sizeof(guid_str)),
+               get_guid_str(&root->guid),
                root->cbNames);
         for (ptr = &root->names[0]; ptr < &root->names[0] + root->cbNames; ptr += strlen(ptr) + 1)
             printf("\tString:               %s\n", ptr);

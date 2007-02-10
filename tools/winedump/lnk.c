@@ -279,14 +279,14 @@ static int dump_advertise_info(const char *type)
     printf("%s = %s\n", type, avt->bufA);
     if (avt->magic == 0xa0000006)
     {
-        char prod_str[40], comp_str[40], feat_str[40];
-        const char *feat, *comp;
+        char comp_str[40];
+        const char *feat, *comp, *prod_str, *feat_str;
         GUID guid;
 
         if (base85_to_guid(avt->bufA, &guid))
-            guid_to_string( &guid, prod_str, sizeof(prod_str) );
+            prod_str = get_guid_str( &guid );
         else
-            strcpy( prod_str, "?" );
+            prod_str = "?";
 
         comp = &avt->bufA[20];
         feat = strchr(comp,'>');
@@ -303,9 +303,9 @@ static int dump_advertise_info(const char *type)
         }
 
         if (feat && feat[0] == '>' && base85_to_guid( &feat[1], &guid ))
-            guid_to_string( &guid, feat_str, sizeof(feat_str) );
+            feat_str = get_guid_str( &guid );
         else
-            feat_str[0] = 0;
+            feat_str = "";
 
         printf("  product:   %s\n", prod_str);
         printf("  component: %s\n", comp_str );
@@ -332,7 +332,6 @@ enum FileSig get_kind_lnk(void)
 void lnk_dump(void)
 {
     const LINK_HEADER*        hdr;
-    char guid[40];
 
     offset = 0;
     hdr = fetch_block();
@@ -340,7 +339,7 @@ void lnk_dump(void)
     printf("Header\n");
     printf("------\n\n");
     printf("Size:    %04x\n", hdr->dwSize);
-    printf("GUID:    %s\n", guid_to_string(&hdr->MagicGuid, guid, sizeof(guid)));
+    printf("GUID:    %s\n", get_guid_str(&hdr->MagicGuid));
 
     printf("FileAttr: %08x\n", hdr->dwFileAttr);
     printf("FileLength: %08x\n", hdr->dwFileLength);

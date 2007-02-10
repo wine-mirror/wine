@@ -1,7 +1,7 @@
 /*
  *	File dumping utility
  *
- * 	Copyright 2001,2005 Eric Pouech
+ * 	Copyright 2001,2007 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -96,13 +96,9 @@ const char *get_time_str(unsigned long _t)
     const time_t    t = (const time_t)_t;
     const char      *str = ctime(&t);
     size_t          len;
-    static char     buf[128];
+    char*           buf;
 
-    if (!str) /* not valid time */
-    {
-        strcpy(buf, "not valid time");
-        return buf;
-    }
+    if (!str) return "not valid time";
 
     len = strlen(str);
     /* FIXME: I don't get the same values from MS' pedump running under Wine...
@@ -110,8 +106,12 @@ const char *get_time_str(unsigned long _t)
      */
     if (len && str[len-1] == '\n') len--;
     if (len >= sizeof(buf)) len = sizeof(buf) - 1;
-    memcpy( buf, str, len );
-    buf[len] = 0;
+    buf = dump_want_n(len + 1);
+    if (buf)
+    {
+        memcpy( buf, str, len );
+        buf[len] = 0;
+    }
     return buf;
 }
 
@@ -200,12 +200,16 @@ const char* get_symbol_str(const char* symname)
     return ret;
 }
 
-char* guid_to_string(const GUID* guid, char* str, size_t sz)
+const char* get_guid_str(const GUID* guid)
 {
-    snprintf(str, sz, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-             guid->Data1, guid->Data2, guid->Data3,
-             guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
-             guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
+    char* str;
+
+    str = dump_want_n(39);
+    if (str)
+        sprintf(str, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                guid->Data1, guid->Data2, guid->Data3,
+                guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7]);
     return str;
 }
 
