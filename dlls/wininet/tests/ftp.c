@@ -597,7 +597,6 @@ static void test_removedir(void)
     SetLastError(0xdeadbeef);
     bRet = FtpRemoveDirectoryA(NULL, "should_be_non_existing_deadbeef_dir");
     ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
 
@@ -616,7 +615,6 @@ static void test_removedir(void)
     SetLastError(0xdeadbeef);
     bRet = FtpRemoveDirectoryA(hFtp, NULL);
     ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
