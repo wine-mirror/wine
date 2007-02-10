@@ -1157,9 +1157,6 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
 
     TRACE("(%p)->(%p)\n", This, aSpec);
 
-    if(This->uri)
-        return nsIURI_GetSpec(This->uri, aSpec);
-
     if(This->use_wine_url) {
         char speca[INTERNET_MAX_URL_LENGTH];
         WideCharToMultiByte(CP_ACP, 0, This->wine_url, -1, speca, sizeof(speca), NULL, NULL);
@@ -1167,6 +1164,9 @@ static nsresult NSAPI nsURI_GetSpec(nsIWineURI *iface, nsACString *aSpec)
 
         return NS_OK;
     }
+
+    if(This->uri)
+        return nsIURI_GetSpec(This->uri, aSpec);
 
     TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
