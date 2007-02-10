@@ -709,6 +709,15 @@ LRESULT CFn_WMInitDialog(HWND hDlg, WPARAM wParam, LPARAM lParam,
         SendDlgItemMessageW(hDlg,cmb1,CB_SETCURSEL,0,0);
         SendMessageW(hDlg, WM_COMMAND, MAKEWPARAM(cmb1, CBN_SELCHANGE),
                 (LPARAM)GetDlgItem(hDlg,cmb1));
+        SendDlgItemMessageW(hDlg,cmb2,CB_SETCURSEL,0,0);
+        SendMessageW(hDlg, WM_COMMAND, MAKEWPARAM(cmb2, CBN_SELCHANGE),
+                (LPARAM)GetDlgItem(hDlg,cmb1));
+        SendDlgItemMessageW(hDlg,cmb3,CB_SETCURSEL,0,0);
+        SendMessageW(hDlg, WM_COMMAND, MAKEWPARAM(cmb3, CBN_SELCHANGE),
+                (LPARAM)GetDlgItem(hDlg,cmb3));
+        SendDlgItemMessageW(hDlg,cmb5,CB_SETCURSEL,0,0);
+        SendMessageW(hDlg, WM_COMMAND, MAKEWPARAM(cmb5, CBN_SELCHANGE),
+                (LPARAM)GetDlgItem(hDlg,cmb5));
     }
     if ((lpcf->Flags & CF_USESTYLE) && lpcf->lpszStyle)
     {
