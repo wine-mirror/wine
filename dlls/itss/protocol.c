@@ -180,13 +180,20 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     object_name += 2;
     memset(&chm_object, 0, sizeof(chm_object));
     res = chm_resolve_object(chm_file, object_name, &chm_object);
+    if(res != CHM_RESOLVE_SUCCESS && object_name[0] != '/') {
+        WCHAR tmp_obj_name[MAX_PATH];
+        tmp_obj_name[0] = '/';
+        strcpyW(tmp_obj_name+1, object_name);
+        res = chm_resolve_object(chm_file, tmp_obj_name, &chm_object);
+    }
     if(res != CHM_RESOLVE_SUCCESS) {
         WARN("Could not resolve chm object\n");
         chm_close(chm_file);
         return report_result(pOIProtSink, STG_E_FILENOTFOUND);
     }
 
-    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST, object_name+1);
+    IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST,
+                                         object_name[0] == '/' ? object_name+1 : object_name);
 
     /* FIXME: Native doesn't use FindMimeFromData */
     hres = FindMimeFromData(NULL, szUrl, NULL, 0, NULL, 0, &mime, 0);

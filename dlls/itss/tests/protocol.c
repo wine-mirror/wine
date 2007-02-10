@@ -402,6 +402,8 @@ static void test_its_protocol(void)
          't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
     static const WCHAR blank_url3[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
          't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+    static const WCHAR blank_url4[] = {'i','t','s',':',
+        't','e','s','t','.','c','h','m',':',':','b','l','a','n','k','.','h','t','m','l',0};
     static const WCHAR wrong_url1[] =
         {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','.','h','t','m','l',0};
     static const WCHAR wrong_url2[] =
@@ -446,6 +448,7 @@ static void test_its_protocol(void)
             test_protocol_url(factory, blank_url1);
             test_protocol_url(factory, blank_url2);
             test_protocol_url(factory, blank_url3);
+            test_protocol_url(factory, blank_url4);
         }
 
         IClassFactory_Release(factory);
