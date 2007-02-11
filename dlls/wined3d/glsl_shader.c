@@ -923,9 +923,9 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
         /* We need to *round* to the nearest int here. */
         size_t mask_size = shader_glsl_get_write_mask_size(write_mask);
         if (mask_size > 1) {
-            shader_addline(buffer, "ivec%d(floor(%s + vec%d(0.5))));\n", mask_size, src0_param.param_str, mask_size);
+            shader_addline(buffer, "ivec%d(floor(abs(%s) + vec%d(0.5)) * sign(%s)));\n", mask_size, src0_param.param_str, mask_size, src0_param.param_str);
         } else {
-            shader_addline(buffer, "int(floor(%s + 0.5)));\n", src0_param.param_str);
+            shader_addline(buffer, "int(floor(abs(%s) + 0.5) * sign(%s)));\n", src0_param.param_str, src0_param.param_str);
         }
     } else {
         shader_addline(buffer, "%s);\n", src0_param.param_str);
