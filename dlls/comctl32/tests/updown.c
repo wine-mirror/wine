@@ -2,6 +2,7 @@
  *
  * Copyright 2005 C. Scott Ananian
  * Copyright (C) 2007 James Hawkins
+ * Copyright (C) 2007 Leslie Choong
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -511,6 +512,171 @@ static HWND create_updown_control()
     return updown;
 }
 
+static void test_updown_pos(void)
+{
+    int r;
+
+    /* Set Range from 0 to 100 */
+    SendMessage(updown, UDM_SETRANGE, 0 , MAKELONG(100,0) );
+    r = SendMessage(updown, UDM_GETRANGE, 0,0);
+    ok(LOWORD(r) == 100, "Expected 100, got %d\n", LOWORD(r));
+    ok(HIWORD(r) == 0, "Expected 0, got %d\n", HIWORD(r));
+
+    /* Set the position to 5, return is not checked as it was set before func call */
+    SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(5,0) );
+    /* Since UDM_SETBUDDYINT was not set at creation HIWORD(r) will always be 1 as a return from UDM_GETPOS */
+    /* Get the position, which should be 5 */
+    r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
+    ok(LOWORD(r) == 5, "Expected 5, got %d\n", LOWORD(r));
+    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+
+    /* Set the position to 0, return should be 5 */
+    r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(0,0) );
+    ok(r == 5, "Expected 5, got %d\n", r);
+    /* Get the position, which should be 0 */
+    r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
+    ok(LOWORD(r) == 0, "Expected 0, got %d\n", LOWORD(r));
+    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+
+    /* Set the position to -1, return should be 0 */
+    r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(-1,0) );
+    ok(r == 0, "Expected 0, got %d\n", r);
+    /* Get the position, which should be 0 */
+    r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
+    ok(LOWORD(r) == 0, "Expected 0, got %d\n", LOWORD(r));
+    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+
+    /* Set the position to 100, return should be 0 */
+    r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(100,0) );
+    ok(r == 0, "Expected 0, got %d\n", r);
+    /* Get the position, which should be 100 */
+    r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
+    ok(LOWORD(r) == 100, "Expected 100, got %d\n", LOWORD(r));
+    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+
+    /* Set the position to 101, return should be 100 */
+    r = SendMessage(updown, UDM_SETPOS, 0 , MAKELONG(101,0) );
+    ok(r == 100, "Expected 100, got %d\n", r);
+    /* Get the position, which should be 100 */
+    r = SendMessage(updown, UDM_GETPOS, 0 , 0 );
+    ok(LOWORD(r) == 100, "Expected 100, got %d\n", LOWORD(r));
+    ok(HIWORD(r) == 1, "Expected 1, got %d\n", HIWORD(r));
+}
+
+static void test_updown_pos32(void)
+{
+    int r;
+    int low, high;
+
+    /* Set the position to 0 to 1000 */
+    SendMessage(updown, UDM_SETRANGE32, 0 , 1000 );
+
+    r = SendMessage(updown, UDM_GETRANGE32, (WPARAM) &low , (LPARAM) &high );
+    ok(low == 0, "Expected 0, got %d\n", low);
+    ok(high == 1000, "Expected 1000, got %d\n", high);
+
+    /* Set position to 500, don't check return since it is unset*/
+    r = SendMessage(updown, UDM_SETPOS32, 0 , 500 );
+
+    /* Since UDM_SETBUDDYINT was not set at creation bRet will always be true as a return from UDM_GETPOS32 */
+
+    r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
+    ok(r == 500, "Expected 500, got %d\n", r);
+    ok(high == 1 , "Expected 0, got %d\n", high);
+
+    /* Set position to 0, return should be 500 */
+    r = SendMessage(updown, UDM_SETPOS32, 0 , 0 );
+    ok(r == 500, "Expected 500, got %d\n", r);
+    r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
+    ok(r == 0, "Expected 0, got %d\n", r);
+    ok(high == 1 , "Expected 0, got %d\n", high);
+
+    /* Set position to -1 which sohuld become 0, return should be 0 */
+    r = SendMessage(updown, UDM_SETPOS32, 0 , -1 );
+    ok(r == 0, "Expected 0, got %d\n", r);
+    r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
+    ok(r == 0, "Expected 0, got %d\n", r);
+    ok(high == 1 , "Expected 0, got %d\n", high);
+
+    /* Set position to 1000, return should be 0 */
+    r = SendMessage(updown, UDM_SETPOS32, 0 , 1000 );
+    ok(r == 0, "Expected 0, got %d\n", r);
+    r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
+    ok(r == 1000, "Expected 1000, got %d\n", r);
+    ok(high == 1 , "Expected 0, got %d\n", high);
+
+    /* Set position to 1001 which sohuld become 1000, return should be 1000 */
+    r = SendMessage(updown, UDM_SETPOS32, 0 , 1001 );
+    ok(r == 1000, "Expected 1000, got %d\n", r);
+    r = SendMessage(updown, UDM_GETPOS32, 0 , (LPARAM) &high );
+    ok(r == 1000, "Expected 0, got %d\n", r);
+    ok(high == 1 , "Expected 0, got %d\n", high);
+}
+
+static void test_updown_buddy(void)
+{
+    HWND buddyReturn;
+
+    buddyReturn = (HWND)SendMessage(updown, UDM_GETBUDDY, 0 , 0 );
+    ok(buddyReturn == edit, "Expected edit handle\n");
+}
+
+static void test_updown_base(void)
+{
+    int r;
+
+    SendMessage(updown, UDM_SETBASE, 10 , 0);
+    r = SendMessage(updown, UDM_GETBASE, 0 , 0);
+    ok(r == 10, "Expected 10, got %d\n", r);
+
+    /* Set base to an invalid value, should return 0 and stay at 10 */
+    r = SendMessage(updown, UDM_SETBASE, 80 , 0);
+    ok(r == 0, "Expected 0, got %d\n", r);
+    r = SendMessage(updown, UDM_GETBASE, 0 , 0);
+    ok(r == 10, "Expected 10, got %d\n", r);
+
+    /* Set base to 16 now, should get 16 as the return */
+    r = SendMessage(updown, UDM_SETBASE, 16 , 0);
+    ok(r == 10, "Expected 10, got %d\n", r);
+    r = SendMessage(updown, UDM_GETBASE, 0 , 0);
+    ok(r == 16, "Expected 16, got %d\n", r);
+
+    /* Set base to an invalid value, should return 0 and stay at 16 */
+    r = SendMessage(updown, UDM_SETBASE, 80 , 0);
+    ok(r == 0, "Expected 0, got %d\n", r);
+    r = SendMessage(updown, UDM_GETBASE, 0 , 0);
+    ok(r == 16, "Expected 16, got %d\n", r);
+
+    /* Set base back to 10, return should be 16 */
+    r = SendMessage(updown, UDM_SETBASE, 10 , 0);
+    ok(r == 16, "Expected 16, got %d\n", r);
+    r = SendMessage(updown, UDM_GETBASE, 0 , 0);
+    ok(r == 10, "Expected 10, got %d\n", r);
+}
+
+static void test_updown_unicode(void)
+{
+    int r;
+
+    /* Set it to ANSI, don't check return as we don't know previous state */
+    SendMessage(updown, UDM_SETUNICODEFORMAT, 0 , 0);
+    r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
+    ok(r == 0, "Expected 0, got %d\n", r);
+
+    /* Now set it to Unicode format */
+    r = SendMessage(updown, UDM_SETUNICODEFORMAT, 1 , 0);
+    ok(r == 0, "Expected 0, got %d\n", r);
+    r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
+    ok(r == 1, "Expected 1, got %d\n", r);
+
+    /* And now set it back to ANSI */
+    r = SendMessage(updown, UDM_SETUNICODEFORMAT, 0 , 0);
+    ok(r == 1, "Expected 1, got %d\n", r);
+    r = SendMessage(updown, UDM_GETUNICODEFORMAT, 0 , 0);
+    ok(r == 0, "Expected 0, got %d\n", r);
+}
+
+
 static void test_create_updown_control(void)
 {
     CHAR text[MAX_PATH];
@@ -539,6 +705,12 @@ static void test_create_updown_control(void)
     ok_sequence(EDIT_SEQ_INDEX, get_edit_text_seq, "get edit text", FALSE);
 
     flush_sequences();
+
+    test_updown_pos();
+    test_updown_pos32();
+    test_updown_buddy();
+    test_updown_base();
+    test_updown_unicode();
 }
 
 START_TEST(updown)
