@@ -2191,8 +2191,9 @@ static HRESULT WINAPI IShellLinkW_fnSetPath(IShellLinkW * iface, LPCWSTR pszFile
             *buffer = '\0';
         else if (!GetFullPathNameW(pszFile, MAX_PATH, buffer, &fname))
 	    return E_FAIL;
-        else if(!PathFileExistsW(buffer))
-            hr = S_FALSE;
+        else if(!PathFileExistsW(buffer) &&
+		!SearchPathW(NULL, pszFile, NULL, MAX_PATH, buffer, NULL))
+	  hr = S_FALSE;
 
         This->pPidl = SHSimpleIDListFromPathW(pszFile);
         ShellLink_GetVolumeInfo(buffer, &This->volume);
