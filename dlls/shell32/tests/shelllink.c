@@ -487,6 +487,7 @@ static void test_load_save(void)
     lnk_desc_t desc;
     char mypath[MAX_PATH];
     char mydir[MAX_PATH];
+    char realpath[MAX_PATH];
     char* p;
     DWORD r;
 
@@ -533,6 +534,22 @@ static void test_load_save(void)
     desc.icon_id=0;
     desc.hotkey=0x1234;
     create_lnk(lnkfile, &desc, 0);
+    check_lnk(lnkfile, &desc);
+
+    /* Overwrite the existing lnk file and test link to a command on the path */
+    desc.description="command on path";
+    desc.workdir=mypath;
+    desc.path="rundll32.exe";
+    desc.pidl=NULL;
+    desc.arguments="/option1 /option2 \"Some string\"";
+    desc.showcmd=SW_SHOWNORMAL;
+    desc.icon=mypath;
+    desc.icon_id=0;
+    desc.hotkey=0x1234;
+    create_lnk(lnkfile, &desc, 0);
+    /* Check that link is created to proper location */
+    SearchPathA( NULL, desc.path, NULL, MAX_PATH, realpath, NULL);
+    desc.path=realpath;
     check_lnk(lnkfile, &desc);
 
     /* FIXME: Also test saving a .lnk pointing to a pidl that cannot be
