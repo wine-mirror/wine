@@ -115,6 +115,7 @@ static const CHAR property_dat[] = "Property\tValue\n"
                                    "s72\tl0\n"
                                    "Property\tProperty\n"
                                    "DefaultUIFont\tDlgFont8\n"
+                                   "HASUIRUN\t0\n"
                                    "INSTALLLEVEL\t3\n"
                                    "InstallMode\tTypical\n"
                                    "Manufacturer\tWine\n"
@@ -221,6 +222,25 @@ static const CHAR ss_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tV
                                    "2\t2\t\ttest2.cab\tDISK2\t\n"
                                    "3\t12\t\ttest3.cab\tDISK3\t\n";
 
+/* tables for test_uiLevelFlags */
+static const CHAR ui_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                       "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                       "Component\tComponent\n"
+                                       "maximus\t\tMSITESTDIR\t0\tHASUIRUN=1\tmaximus\n"
+                                       "augustus\t\tMSITESTDIR\t0\t1\taugustus\n"
+                                       "caesar\t\tMSITESTDIR\t0\t1\tcaesar\n";
+
+static const CHAR ui_install_ui_seq_dat[] = "Action\tCondition\tSequence\n"
+                                           "s72\tS255\tI2\n"
+                                           "InstallUISequence\tAction\n"
+                                           "SetUIProperty\t\t5\n"
+                                           "ExecuteAction\t\t1100\n";
+
+static const CHAR ui_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComments\n"
+                                           "s72\ti2\tS64\tS0\tS255\n"
+                                           "CustomAction\tAction\n"
+                                           "SetUIProperty\t51\tHASUIRUN\t1\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -302,6 +322,20 @@ static const msi_table ss_tables[] =
     ADD_TABLE(cc_file),
     ADD_TABLE(install_exec_seq),
     ADD_TABLE(ss_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table ui_tables[] =
+{
+    ADD_TABLE(ui_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(cc_feature),
+    ADD_TABLE(cc_feature_comp),
+    ADD_TABLE(cc_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(ui_install_ui_seq),
+    ADD_TABLE(ui_custom_action),
+    ADD_TABLE(cc_media),
     ADD_TABLE(property),
 };
 
@@ -1063,6 +1097,29 @@ static void test_samesequence(void)
     DeleteFile(msifile);
 }
 
+static void test_uiLevelFlags(void)
+{
+    UINT r;
+
+    create_cc_test_files();
+    create_database(msifile, ui_tables, sizeof(ui_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY, NULL);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(!delete_pf("msitest\\maximus", TRUE), "UI install occurred, but execute-only was requested.\n");
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+        ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
+    }
+    delete_pf("msitest", FALSE);
+
+    delete_cab_files();
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -1087,6 +1144,7 @@ START_TEST(install)
     test_caborder();
     test_mixedmedia();
     test_samesequence();
+    test_uiLevelFlags();
 
     SetCurrentDirectoryA(prev_path);
 }
