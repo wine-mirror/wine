@@ -2622,6 +2622,7 @@ static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
     static const WCHAR szShow[] = { 'S','h','o','w',0 };
     static const WCHAR szDisable[] = { 'D','i','s','a','b','l','e',0 };
     static const WCHAR szEnable[] = { 'E','n','a','b','l','e',0 };
+    static const WCHAR szDefault[] = { 'D','e','f','a','u','l','t',0 };
     msi_dialog *dialog = param;
     msi_control *control;
     LPCWSTR name, action, condition;
@@ -2645,6 +2646,8 @@ static UINT msi_dialog_set_control_condition( MSIRECORD *rec, LPVOID param )
             EnableWindow(control->hwnd, FALSE);
         else if(!strcmpW(action, szEnable))
             EnableWindow(control->hwnd, TRUE);
+        else if(!strcmpW(action, szDefault))
+            SetFocus(control->hwnd);
         else
             FIXME("Unhandled action %s\n", debugstr_w(action));
     }
