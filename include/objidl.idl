@@ -1960,7 +1960,7 @@ interface IClientSecurity : IUnknown
     [out] DWORD *pAuthnLevel,
     [out] DWORD *pImpLevel,
     [out] void **pAuthInfo,
-    [out] DWORD *pCapabilites);
+    [out] DWORD *pCapabilities);
 
   HRESULT SetBlanket(
     [in] IUnknown *pProxy,
