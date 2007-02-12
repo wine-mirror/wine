@@ -410,7 +410,15 @@ typedef struct WineD3DContext {
     /* TODO: Dirty State list                              */
     /* TODO: Render target / swapchain this ctx belongs to */
     /* TODO: Thread this ctx belongs to                    */
-    /* TODO: Per context state chaches                     */
+
+    /* Stores some inforation about the context state for optimization */
+    BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+    BOOL                    last_was_pshader;
+    BOOL                    last_was_vshader;
+    BOOL                    last_was_foggy_shader;
+    BOOL                    namedArraysLoaded, numberedArraysLoaded;
+    BOOL                    lastWasPow2Texture[MAX_TEXTURES];
+    GLenum                  tracking_parm;     /* Which source is tracking current colour         */
 } WineD3DContext;
 
 /* Routines and structures related to state management */
@@ -579,22 +587,9 @@ typedef struct IWineD3DDeviceImpl
     int ps_selected_mode;
     const shader_backend_t *shader_backend;
 
-    /* Optimization */
+    /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */
-    BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
-    GLenum                  tracking_parm;     /* Which source is tracking current colour         */
-    LONG                    tracking_color;    /* used iff GL_COLOR_MATERIAL was enabled          */
-#define                         DISABLED_TRACKING  0  /* Disabled                                 */
-#define                         IS_TRACKING        1  /* tracking_parm is tracking diffuse color  */
-#define                         NEEDS_TRACKING     2  /* Tracking needs to be enabled when needed */
-#define                         NEEDS_DISABLE      3  /* Tracking needs to be disabled when needed*/
-    BOOL                    last_was_notclipped;
     BOOL                    untransformed;
-    BOOL                    last_was_pshader;
-    BOOL                    last_was_vshader;
-    BOOL                    last_was_foggy_shader;
-    BOOL                    namedArraysLoaded, numberedArraysLoaded;
-    BOOL                    lastWasPow2Texture[MAX_TEXTURES];
 
     /* State block related */
     BOOL                    isRecordingState;

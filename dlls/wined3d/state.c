@@ -665,7 +665,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
         fogstart = 1.0;
         fogend = 0.0;
-        stateblock->wineD3DDevice->last_was_foggy_shader = TRUE;
+        context->last_was_foggy_shader = TRUE;
     }
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
@@ -673,14 +673,14 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
         glHint(GL_FOG_HINT, GL_FASTEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
-        stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
+        context->last_was_foggy_shader = FALSE;
 
         switch (stateblock->renderState[WINED3DRS_FOGVERTEXMODE]) {
             /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
              * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
              */
             case D3DFOG_EXP:  {
-                if(!stateblock->wineD3DDevice->last_was_rhw) {
+                if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
                     if(GL_SUPPORT(EXT_FOG_COORD)) {
@@ -691,7 +691,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 }
             }
             case D3DFOG_EXP2: {
-                if(!stateblock->wineD3DDevice->last_was_rhw) {
+                if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP2);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
                     if(GL_SUPPORT(EXT_FOG_COORD)) {
@@ -702,7 +702,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 }
             }
             case D3DFOG_LINEAR: {
-                if(!stateblock->wineD3DDevice->last_was_rhw) {
+                if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_LINEAR);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
                     if(GL_SUPPORT(EXT_FOG_COORD)) {
@@ -735,7 +735,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     } else {
         glHint(GL_FOG_HINT, GL_NICEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_NICEST)");
-        stateblock->wineD3DDevice->last_was_foggy_shader = FALSE;
+        context->last_was_foggy_shader = FALSE;
 
         switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
             case D3DFOG_EXP:
@@ -849,7 +849,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     }
 
     /* Nothing changed, return. */
-    if (Parm == device->tracking_parm) return;
+    if (Parm == context->tracking_parm) return;
 
     if(!Parm) {
         glDisable(GL_COLOR_MATERIAL);
@@ -863,7 +863,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 
     /* Apparently calls to glMaterialfv are ignored for properties we're
      * tracking with glColorMaterial, so apply those here. */
-    switch (device->tracking_parm) {
+    switch (context->tracking_parm) {
         case GL_AMBIENT_AND_DIFFUSE:
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, (float*)&device->updateStateBlock->material.Ambient);
             glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, (float*)&device->updateStateBlock->material.Diffuse);
@@ -898,7 +898,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
             break;
     }
 
-    device->tracking_parm = Parm;
+    context->tracking_parm = Parm;
 }
 
 static void state_linepattern(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -1738,7 +1738,7 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage), stateblock, context);
     }
 
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_VDECL) && stateblock->wineD3DDevice->namedArraysLoaded) {
+    if(!isStateDirty(stateblock->wineD3DDevice, STATE_VDECL) && context->namedArraysLoaded) {
         /* Reload the arrays if we are using fixed function arrays to reflect the selected coord input
          * source. Call loadVertexData directly because there is no need to reparse the vertex declaration
          * and do all the things linked to it
@@ -1835,9 +1835,9 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
                 }
             }
 
-            if(texIsPow2 || stateblock->wineD3DDevice->lastWasPow2Texture[sampler]) {
+            if(texIsPow2 || context->lastWasPow2Texture[sampler]) {
                 transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stateblock->wineD3DDevice->texUnitMap[sampler]), stateblock, context);
-                stateblock->wineD3DDevice->lastWasPow2Texture[sampler] = texIsPow2;
+                context->lastWasPow2Texture[sampler] = texIsPow2;
             }
         }
 
@@ -1907,7 +1907,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     int i;
 
     if(stateblock->pixelShader && ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.function != NULL) {
-        if(!stateblock->wineD3DDevice->last_was_pshader) {
+        if(!context->last_was_pshader) {
             /* Former draw without a pixel shader, some samplers
              * may be disabled because of WINED3DTSS_COLOROP = WINED3DTOP_DISABLE
              * make sure to enable them
@@ -1936,7 +1936,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
                 shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
             }
         }
-        stateblock->wineD3DDevice->last_was_pshader = TRUE;
+        context->last_was_pshader = TRUE;
     } else {
         /* Disabled the pixel shader - color ops weren't applied
          * while it was enabled, so re-apply them.
@@ -1946,7 +1946,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
                 tex_colorop(STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
             }
         }
-        stateblock->wineD3DDevice->last_was_pshader = FALSE;
+        context->last_was_pshader = FALSE;
 
         if(!isStateDirty(stateblock->wineD3DDevice, StateTable[STATE_VSHADER].representative)) {
             stateblock->wineD3DDevice->shader_backend->shader_select(
@@ -1972,7 +1972,7 @@ static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode");
 
-    if(stateblock->wineD3DDevice->last_was_rhw) {
+    if(context->last_was_rhw) {
         glLoadIdentity();
         checkGLcall("glLoadIdentity()");
     } else {
@@ -2021,7 +2021,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         checkGLcall("glClipPlane");
     }
 
-    if(stateblock->wineD3DDevice->last_was_rhw) {
+    if(context->last_was_rhw) {
         glLoadIdentity();
         checkGLcall("glLoadIdentity()");
         /* No need to update the world matrix, the identity is fine */
@@ -2052,7 +2052,7 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
     glLoadIdentity();
     checkGLcall("glLoadIdentity");
 
-    if(stateblock->wineD3DDevice->last_was_rhw) {
+    if(context->last_was_rhw) {
         double X, Y, height, width, minZ, maxZ;
 
         X      = stateblock->viewport.X;
@@ -2572,7 +2572,7 @@ inline void drawPrimitiveTraceDataLocations(
 }
 
 /* Helper for vertexdeclaration() */
-static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVertexShaderFunction) {
+static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVertexShaderFunction, WineD3DContext *context) {
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
     BOOL fixup = FALSE;
     WineDirect3DVertexStridedData *dataLocations = &device->strided_streams;
@@ -2614,20 +2614,20 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
      }
 
     /* Unload the old arrays before loading the new ones to get old junk out */
-    if(device->numberedArraysLoaded) {
+    if(context->numberedArraysLoaded) {
         unloadNumberedArrays(stateblock);
-        device->numberedArraysLoaded = FALSE;
+        context->numberedArraysLoaded = FALSE;
     }
-    if(device->namedArraysLoaded) {
+    if(context->namedArraysLoaded) {
         unloadVertexData(stateblock);
-        device->namedArraysLoaded = FALSE;
+        context->namedArraysLoaded = FALSE;
     }
 
     if(useVertexShaderFunction) {
         TRACE("Loading numbered arrays\n");
         loadNumberedArrays(stateblock, dataLocations);
         device->useDrawStridedSlow = FALSE;
-        device->numberedArraysLoaded = TRUE;
+        context->numberedArraysLoaded = TRUE;
     } else if (fixup ||
                (dataLocations->u.s.pSize.lpData == NULL &&
                 dataLocations->u.s.diffuse.lpData == NULL &&
@@ -2636,7 +2636,7 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
         TRACE("Loading vertex data\n");
         loadVertexData(stateblock, dataLocations);
         device->useDrawStridedSlow = FALSE;
-        device->namedArraysLoaded = TRUE;
+        context->namedArraysLoaded = TRUE;
     } else {
         TRACE("Not loading vertex data\n");
         device->useDrawStridedSlow = TRUE;
@@ -2665,7 +2665,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     BOOL transformed;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
-    BOOL wasrhw = device->last_was_rhw;
+    BOOL wasrhw = context->last_was_rhw;
 
     /* Shaders can be implemented using ARB_PROGRAM, GLSL, or software -
      * here simply check whether a shader was set, or the user disabled shaders
@@ -2674,21 +2674,21 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
        ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL) {
         useVertexShaderFunction = TRUE;
 
-        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog != device->last_was_foggy_shader) {
+        if(((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog != context->last_was_foggy_shader) {
             updateFog = TRUE;
         }
-    } else if(device->last_was_foggy_shader) {
+    } else if(context->last_was_foggy_shader) {
         updateFog = TRUE;
     }
 
-    handleStreams(stateblock, useVertexShaderFunction);
+    handleStreams(stateblock, useVertexShaderFunction, context);
 
     /* Do I have to use ? TRUE : FALSE ? Or can I rely on 15==15 being equal to TRUE(=1)? */
     transformed = ((device->strided_streams.u.s.position.lpData != NULL ||
                     device->strided_streams.u.s.position.VBO != 0) &&
                     device->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
 
-    if(transformed != device->last_was_rhw && !useVertexShaderFunction) {
+    if(transformed != context->last_was_rhw && !useVertexShaderFunction) {
         updateFog = TRUE;
     }
 
@@ -2698,11 +2698,11 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
     }
 
     if (!useVertexShaderFunction && transformed) {
-        stateblock->wineD3DDevice->last_was_rhw = TRUE;
+        context->last_was_rhw = TRUE;
     } else {
 
         /* Untransformed, so relies on the view and projection matrices */
-        device->last_was_rhw = FALSE;
+        context->last_was_rhw = FALSE;
         /* This turns off the Z scale trick to 'disable' viewport frustum clipping in rhw mode*/
         device->untransformed = TRUE;
 
@@ -2725,7 +2725,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         /* TODO: Move this mainly to the viewport state and only apply when the vp has changed
          * or transformed / untransformed was switched
          */
-       if(wasrhw != device->last_was_rhw &&
+       if(wasrhw != context->last_was_rhw &&
           !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION)) &&
           !isStateDirty(stateblock->wineD3DDevice, STATE_VIEWPORT)) {
             transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
@@ -2757,7 +2757,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
     }
 
-    if(useVertexShaderFunction || device->last_was_vshader) {
+    if(useVertexShaderFunction || context->last_was_vshader) {
         BOOL usePixelShaderFunction = device->ps_selected_mode != SHADER_NONE && 
                                       stateblock->pixelShader &&
                                       ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
@@ -2772,7 +2772,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
                 shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
             }
         }
-        device->last_was_vshader = useVertexShaderFunction;
+        context->last_was_vshader = useVertexShaderFunction;
     }
 
     if(updateFog) {

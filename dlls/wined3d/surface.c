@@ -1167,7 +1167,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             /* glDrawPixels transforms the raster position as though it was a vertex -
                we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
-            myDevice->last_was_rhw = TRUE;
+            myDevice->contexts[myDevice->activeContext].last_was_rhw = TRUE;
             /* Apply the projection and world matrices, it sets up orthogonal projection due to last_was_rhw */
             StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
             StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
@@ -2495,7 +2495,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             /* Draw a textured quad
              */
-            myDevice->last_was_rhw = TRUE;
+            myDevice->contexts[myDevice->activeContext].last_was_rhw = TRUE;
             /* Apply the projection matrix, it sets up orthogonal projection due to last_was_rhw */
             StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
             StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
