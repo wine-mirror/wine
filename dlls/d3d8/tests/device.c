@@ -24,6 +24,20 @@
 
 static IDirect3D8 *(WINAPI *pDirect3DCreate8)(UINT);
 
+static const DWORD simple_vs[] = {0xFFFE0101,       /* vs_1_1               */
+    0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
+    0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
+    0x00000009, 0xC0040000, 0x90E40000, 0xA0E40002, /* dp4 oPos.z, v0, c2   */
+    0x00000009, 0xC0080000, 0x90E40000, 0xA0E40003, /* dp4 oPos.w, v0, c3   */
+    0x0000FFFF};                                    /* END                  */
+static const DWORD simple_ps[] = {0xFFFF0101,                               /* ps_1_1                       */
+    0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
+    0x00000042, 0xB00F0000,                                                 /* tex t0                       */
+    0x00000008, 0x800F0000, 0xA0E40001, 0xA0E40000,                         /* dp3 r0, c1, c0               */
+    0x00000005, 0x800F0000, 0x90E40000, 0x80E40000,                         /* mul r0, v0, r0               */
+    0x00000005, 0x800F0000, 0xB0E40000, 0x80E40000,                         /* mul r0, t0, r0               */
+    0x0000FFFF};                                                            /* END                          */
+
 static int get_refcount(IUnknown *object)
 {
     IUnknown_AddRef( object );
@@ -290,20 +304,6 @@ static void test_refcount(void)
         D3DVSD_REG(D3DVSDE_DIFFUSE, D3DVSDT_D3DCOLOR), /* D3DVSDE_DIFFUSE, Register v5 */
 	D3DVSD_END()
     };
-    static DWORD simple_vs[] = {0xFFFE0101,             /* vs_1_1               */
-        0x00000009, 0xC0010000, 0x90E40000, 0xA0E40000, /* dp4 oPos.x, v0, c0   */
-        0x00000009, 0xC0020000, 0x90E40000, 0xA0E40001, /* dp4 oPos.y, v0, c1   */
-        0x00000009, 0xC0040000, 0x90E40000, 0xA0E40002, /* dp4 oPos.z, v0, c2   */
-        0x00000009, 0xC0080000, 0x90E40000, 0xA0E40003, /* dp4 oPos.w, v0, c3   */
-        0x0000FFFF};                                    /* END                  */
-    static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
-        0x00000051, 0xA00F0001, 0x3F800000, 0x00000000, 0x00000000, 0x00000000, /* def c1 = 1.0, 0.0, 0.0, 0.0  */
-        0x00000042, 0xB00F0000,                                                 /* tex t0                       */
-        0x00000008, 0x800F0000, 0xA0E40001, 0xA0E40000,                         /* dp3 r0, c1, c0               */
-        0x00000005, 0x800F0000, 0x90E40000, 0x80E40000,                         /* mul r0, v0, r0               */
-        0x00000005, 0x800F0000, 0xB0E40000, 0x80E40000,                         /* mul r0, t0, r0               */
-        0x0000FFFF};                                                            /* END                          */
-
 
     pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
     ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
@@ -823,6 +823,125 @@ cleanup:
     if(hwnd) DestroyWindow(hwnd);
 }
 
+static void test_shader(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D8                  *pD3d               = NULL;
+    IDirect3DDevice8            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    DWORD                        hPixelShader = 0, hVertexShader = 0;
+    DWORD                        hPixelShader2 = 0, hVertexShader2 = 0;
+    DWORD                        hTempHandle;
+
+    static DWORD dwVertexDecl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(D3DVSDE_POSITION,  D3DVSDT_FLOAT3),
+        D3DVSD_END()
+    };
+
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+
+
+    hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+    if(!pDevice) goto cleanup;
+
+    /* First create a vertex shader */
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
+    /* Msdn says that the new vertex shader is set immediately. This is wrong, apparently */
+    hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == 0, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, 0);
+    /* Assign the shader, then verify that GetVertexShader works */
+    hr = IDirect3DDevice8_SetVertexShader(pDevice, hVertexShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
+    /* Delete the assigned shader. This is supposed to work */
+    hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
+    /* The shader should be unset now */
+    hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == 0, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, 0);
+
+    /* The same with a pixel shader */
+    hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+    /* Msdn says that the new pixel shader is set immediately. This is wrong, apparently */
+    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
+    /* Assign the shader, then verify that GetPixelShader works */
+    hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
+    /* Delete the assigned shader. This is supposed to work */
+    hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+    /* The shader should be unset now */
+    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == 0, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, 0);
+
+    /* What happens if a non-bound shader is deleted? */
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_CreateVertexShader(pDevice, dwVertexDecl, NULL, &hVertexShader2, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateVertexShader returned %s\n", DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_SetVertexShader(pDevice, hVertexShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetVertexShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader2);
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_GetVertexShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetVertexShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == hVertexShader, "Vertex Shader %d is set, expected shader %d\n", hTempHandle, hVertexShader);
+    hr = IDirect3DDevice8_DeleteVertexShader(pDevice, hVertexShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeleteVertexShader returned %s\n", DXGetErrorString8(hr));
+
+    /* Now for pixel shaders */
+    hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_CreatePixelShader(pDevice, simple_ps, &hPixelShader2);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreatePixelShader returned %s\n", DXGetErrorString8(hr));
+
+    hr = IDirect3DDevice8_SetPixelShader(pDevice, hPixelShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_SetPixelShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader2);
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+    hr = IDirect3DDevice8_GetPixelShader(pDevice, &hTempHandle);
+    ok(hr == D3D_OK, "IDirect3DDevice8_GetPixelShader returned %s\n", DXGetErrorString8(hr));
+    ok(hTempHandle == hPixelShader, "Pixel Shader %d is set, expected shader %d\n", hTempHandle, hPixelShader);
+    hr = IDirect3DDevice8_DeletePixelShader(pDevice, hPixelShader);
+    ok(hr == D3D_OK, "IDirect3DDevice8_DeletePixelShader returned %s\n", DXGetErrorString8(hr));
+
+cleanup:
+    if(pD3d) IDirect3D8_Release(pD3d);
+    if(pDevice) IDirect3D8_Release(pDevice);
+    if(hwnd) DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -844,5 +963,6 @@ START_TEST(device)
         test_cursor();
         test_states();
         test_scene();
+        test_shader();
     }
 }

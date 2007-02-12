@@ -1244,11 +1244,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_GetVertexShader(LPDIRECT3DDEVICE8 ifa
             IWineD3DVertexShader_Release(pShader);
             *ppShader = (d3d8_shader->handle - This->shader_handles) + (VS_HIGHESTFIXEDFXF + 1);
         } else {
-            WARN("(%p) : The shader has been set to NULL\n", This);
-
-            /* TODO: Find out what should be returned, e.g. the FVF */
             *ppShader = 0;
-            hrc = D3DERR_INVALIDCALL;
+            hrc = D3D_OK;
         }
     } else {
         WARN("(%p) : Call to IWineD3DDevice_GetVertexShader failed %u (device %p)\n", This, hrc, This->WineD3DDevice);
@@ -1267,8 +1264,16 @@ static HRESULT  WINAPI  IDirect3DDevice8Impl_DeleteVertexShader(LPDIRECT3DDEVICE
         ERR("(%p) : Trying to delete an invalid handle\n", This);
         return D3DERR_INVALIDCALL;
     } else {
+        IWineD3DVertexShader *cur = NULL;
         shader_handle *handle = &This->shader_handles[pShader - (VS_HIGHESTFIXEDFXF + 1)];
         IDirect3DVertexShader8Impl *shader = *handle;
+
+        IWineD3DDevice_GetVertexShader(This->WineD3DDevice, &cur);
+        if(cur) {
+            if(cur == shader->wineD3DVertexShader) IDirect3DDevice8_SetVertexShader(iface, 0);
+            IWineD3DVertexShader_Release(cur);
+        }
+
         while(IUnknown_Release((IUnknown *)shader));
         free_shader_handle(This, handle);
     }
@@ -1450,8 +1455,16 @@ static HRESULT WINAPI IDirect3DDevice8Impl_DeletePixelShader(LPDIRECT3DDEVICE8 i
         ERR("(%p) : Trying to delete an invalid handle\n", This);
         return D3DERR_INVALIDCALL;
     } else {
+        IWineD3DPixelShader *cur = NULL;
         shader_handle *handle = &This->shader_handles[pShader - (VS_HIGHESTFIXEDFXF + 1)];
         IDirect3DPixelShader8Impl *shader = *handle;
+
+        IWineD3DDevice_GetPixelShader(This->WineD3DDevice, &cur);
+        if(cur) {
+            if(cur == shader->wineD3DPixelShader) IDirect3DDevice8_SetPixelShader(iface, 0);
+            IWineD3DPixelShader_Release(cur);
+        }
+
         while(IUnknown_Release((IUnknown *)shader));
         free_shader_handle(This, handle);
     }
