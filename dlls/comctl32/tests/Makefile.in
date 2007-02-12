@@ -22,6 +22,7 @@ CTESTS = \
 	tab.c \
 	toolbar.c \
 	tooltips.c \
+	trackbar.c \
 	treeview.c \
 	updown.c
 
