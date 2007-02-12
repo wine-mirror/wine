@@ -482,6 +482,8 @@ struct WineD3DContext {
     /* The actual opengl context */
     GLXContext              glCtx;
     Drawable                drawable;
+    Display                 *display;
+    BOOL                    isPBuffer;
 };
 
 typedef enum ContextUsage {
@@ -491,9 +493,7 @@ typedef enum ContextUsage {
 } ContextUsage;
 
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
-WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Window win);
-WineD3DContext *AddContext(IWineD3DDeviceImpl *This, GLXContext glCtx, Drawable drawable);
-void DeleteContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
+WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Display *display, Window win);
 void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
 void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target);
 
@@ -1335,11 +1335,6 @@ typedef struct IWineD3DSwapChainImpl
 
     HWND                    win_handle;
     Window                  win;
-    Display                *display;
-
-    XVisualInfo            *visInfo;
-    GLXContext              render_ctx;
-    /* This has been left in device for now, but needs moving off into a rendertarget management class and separated out from swapchains and devices. */
 } IWineD3DSwapChainImpl;
 
 extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;

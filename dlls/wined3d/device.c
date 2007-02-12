@@ -1347,11 +1347,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     HDC                     hDc;
     IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
-    int                     num;
-    XVisualInfo             template;
-    GLXContext              oldContext, newCtx;
-    Drawable                oldDrawable;
     HRESULT                 hr = WINED3D_OK;
+    IUnknown               *bufferParent;
+    Display                *display;
 
     TRACE("(%p) : Created Aditional Swap Chain\n", This);
 
@@ -1386,11 +1384,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         return WINED3DERR_NOTAVAILABLE;
     }
     hDc                = GetDC(object->win_handle);
-    object->display    = get_display(hDc);
+    display            = get_display(hDc);
     ReleaseDC(object->win_handle, hDc);
-    TRACE("Using a display of %p %p\n", object->display, hDc);
+    TRACE("Using a display of %p %p\n", display, hDc);
 
-    if (NULL == object->display || NULL == hDc) {
+    if (NULL == display || NULL == hDc) {
         WARN("Failed to get a display and HDc for Window %p\n", object->win_handle);
         return WINED3DERR_NOTAVAILABLE;
     }
@@ -1403,6 +1401,63 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     object->orig_width = GetSystemMetrics(SM_CXSCREEN);
     object->orig_height = GetSystemMetrics(SM_CYSCREEN);
 
+    /** MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
+     *  then the corresponding dimension of the client area of the hDeviceWindow
+     *  (or the focus window, if hDeviceWindow is NULL) is taken.
+      **********************/
+
+    if (*(pPresentationParameters->Windowed) &&
+        ((*(pPresentationParameters->BackBufferWidth)  == 0) ||
+         (*(pPresentationParameters->BackBufferHeight) == 0))) {
+
+        RECT Rect;
+        GetClientRect(object->win_handle, &Rect);
+
+        if (*(pPresentationParameters->BackBufferWidth) == 0) {
+           *(pPresentationParameters->BackBufferWidth) = Rect.right;
+           TRACE("Updating width to %d\n", *(pPresentationParameters->BackBufferWidth));
+        }
+        if (*(pPresentationParameters->BackBufferHeight) == 0) {
+           *(pPresentationParameters->BackBufferHeight) = Rect.bottom;
+           TRACE("Updating height to %d\n", *(pPresentationParameters->BackBufferHeight));
+        }
+    }
+
+    /* Put the correct figures in the presentation parameters */
+    TRACE("Copying across presentation parameters\n");
+    object->presentParms.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
+    object->presentParms.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);
+    object->presentParms.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
+    object->presentParms.BackBufferCount                = *(pPresentationParameters->BackBufferCount);
+    object->presentParms.MultiSampleType                = *(pPresentationParameters->MultiSampleType);
+    object->presentParms.MultiSampleQuality             = NULL == pPresentationParameters->MultiSampleQuality ? 0 : *(pPresentationParameters->MultiSampleQuality);
+    object->presentParms.SwapEffect                     = *(pPresentationParameters->SwapEffect);
+    object->presentParms.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);
+    object->presentParms.Windowed                       = *(pPresentationParameters->Windowed);
+    object->presentParms.EnableAutoDepthStencil         = *(pPresentationParameters->EnableAutoDepthStencil);
+    object->presentParms.AutoDepthStencilFormat         = *(pPresentationParameters->AutoDepthStencilFormat);
+    object->presentParms.Flags                          = *(pPresentationParameters->Flags);
+    object->presentParms.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz);
+    object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);
+
+    TRACE("calling rendertarget CB\n");
+    hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
+                             parent,
+                             object->presentParms.BackBufferWidth,
+                             object->presentParms.BackBufferHeight,
+                             object->presentParms.BackBufferFormat,
+                             object->presentParms.MultiSampleType,
+                             object->presentParms.MultiSampleQuality,
+                             TRUE /* Lockable */,
+                             &object->frontBuffer,
+                             NULL /* pShared (always null)*/);
+    if (object->frontBuffer != NULL) {
+        IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
+    } else {
+        ERR("Failed to create the front buffer\n");
+        goto error;
+    }
+
     /**
     * Create an opengl context for the display visual
     *  NOTE: the visual is chosen as the window is created and the glcontext cannot
@@ -1413,84 +1468,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
     ENTER_GL();
-
-    /* Create a new context for this swapchain */
-    template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
-    /* TODO: change this to find a similar visual, but one with a stencil/zbuffer buffer that matches the request
-    (or the best possible if none is requested) */
-    TRACE("Found x visual ID  : %ld\n", template.visualid);
-
-    object->visInfo   = XGetVisualInfo(object->display, VisualIDMask, &template, &num);
-    if (NULL == object->visInfo) {
-        ERR("cannot really get XVisual\n");
-        LEAVE_GL();
-        return WINED3DERR_NOTAVAILABLE;
-    } else {
-        int n, value;
-        /* Write out some debug info about the visual/s */
-        TRACE("Using x visual ID  : %ld\n", template.visualid);
-        TRACE("        visual info: %p\n", object->visInfo);
-        TRACE("        num items  : %d\n", num);
-        for (n = 0;n < num; n++) {
-            TRACE("=====item=====: %d\n", n + 1);
-            TRACE("   visualid      : %ld\n", object->visInfo[n].visualid);
-            TRACE("   screen        : %d\n",  object->visInfo[n].screen);
-            TRACE("   depth         : %u\n",  object->visInfo[n].depth);
-            TRACE("   class         : %d\n",  object->visInfo[n].class);
-            TRACE("   red_mask      : %ld\n", object->visInfo[n].red_mask);
-            TRACE("   green_mask    : %ld\n", object->visInfo[n].green_mask);
-            TRACE("   blue_mask     : %ld\n", object->visInfo[n].blue_mask);
-            TRACE("   colormap_size : %d\n",  object->visInfo[n].colormap_size);
-            TRACE("   bits_per_rgb  : %d\n",  object->visInfo[n].bits_per_rgb);
-            /* log some extra glx info */
-            glXGetConfig(object->display, object->visInfo, GLX_AUX_BUFFERS, &value);
-            TRACE("   gl_aux_buffers  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_BUFFER_SIZE ,&value);
-            TRACE("   gl_buffer_size  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_RED_SIZE, &value);
-            TRACE("   gl_red_size  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_GREEN_SIZE, &value);
-            TRACE("   gl_green_size  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_BLUE_SIZE, &value);
-            TRACE("   gl_blue_size  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_ALPHA_SIZE, &value);
-            TRACE("   gl_alpha_size  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_DEPTH_SIZE ,&value);
-            TRACE("   gl_depth_size  : %d\n",  value);
-            glXGetConfig(object->display, object->visInfo, GLX_STENCIL_SIZE, &value);
-            TRACE("   gl_stencil_size : %d\n",  value);
-        }
-        /* Now choose a similar visual ID*/
-    }
-
-    {
-        IWineD3DSwapChain *implSwapChain;
-        if (WINED3D_OK != IWineD3DDevice_GetSwapChain(iface, 0, &implSwapChain)) {
-            /* The first time around we create the context that is shared with all other swapchains and render targets */
-            newCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
-            TRACE("Creating implicit context for vis %p, hwnd %p\n", object->display, object->visInfo);
-        } else {
-
-            TRACE("Creating context for vis %p, hwnd %p\n", object->display, object->visInfo);
-            /* TODO: don't use Impl structures outside of create functions! (a context manager will replace the ->glCtx) */
-            /* and create a new context with the implicit swapchains context as the shared context */
-            newCtx = glXCreateContext(object->display, object->visInfo, ((IWineD3DSwapChainImpl *)implSwapChain)->context->glCtx, GL_TRUE);
-            IWineD3DSwapChain_Release(implSwapChain);
-        }
-    }
-
-    /* Cleanup */
-    XFree(object->visInfo);
-    object->visInfo = NULL;
-
+    object->context = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, display, object->win);
     LEAVE_GL();
 
-    if (!newCtx) {
-        ERR("Failed to create GLX context\n");
-        return WINED3DERR_NOTAVAILABLE;
+    if (!object->context) {
+        ERR("Failed to create a new context\n");
+        hr = WINED3DERR_NOTAVAILABLE;
+        goto error;
     } else {
-        TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
-                object->win_handle, newCtx, object->win, object->visInfo);
+        TRACE("Context created (HWND=%p, glContext=%p, Window=%ld)\n",
+               object->win_handle, object->context->glCtx, object->win);
     }
 
    /*********************
@@ -1536,86 +1523,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         ClipCursor(&clip_rc);
     }
 
-
-    /** MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
-     *  then the corresponding dimension of the client area of the hDeviceWindow
-     *  (or the focus window, if hDeviceWindow is NULL) is taken.
-      **********************/
-
-    if (*(pPresentationParameters->Windowed) &&
-        ((*(pPresentationParameters->BackBufferWidth)  == 0) ||
-         (*(pPresentationParameters->BackBufferHeight) == 0))) {
-
-        RECT Rect;
-        GetClientRect(object->win_handle, &Rect);
-
-        if (*(pPresentationParameters->BackBufferWidth) == 0) {
-           *(pPresentationParameters->BackBufferWidth) = Rect.right;
-           TRACE("Updating width to %d\n", *(pPresentationParameters->BackBufferWidth));
-        }
-        if (*(pPresentationParameters->BackBufferHeight) == 0) {
-           *(pPresentationParameters->BackBufferHeight) = Rect.bottom;
-           TRACE("Updating height to %d\n", *(pPresentationParameters->BackBufferHeight));
-        }
-    }
-
-   /*********************
-   * finish off parameter initialization
-   *******************/
-
-    /* Put the correct figures in the presentation parameters */
-    TRACE("Copying across presentation parameters\n");
-    object->presentParms.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
-    object->presentParms.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);
-    object->presentParms.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
-    object->presentParms.BackBufferCount                = *(pPresentationParameters->BackBufferCount);
-    object->presentParms.MultiSampleType                = *(pPresentationParameters->MultiSampleType);
-    object->presentParms.MultiSampleQuality             = NULL == pPresentationParameters->MultiSampleQuality ? 0 : *(pPresentationParameters->MultiSampleQuality);
-    object->presentParms.SwapEffect                     = *(pPresentationParameters->SwapEffect);
-    object->presentParms.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);
-    object->presentParms.Windowed                       = *(pPresentationParameters->Windowed);
-    object->presentParms.EnableAutoDepthStencil         = *(pPresentationParameters->EnableAutoDepthStencil);
-    object->presentParms.AutoDepthStencilFormat         = *(pPresentationParameters->AutoDepthStencilFormat);
-    object->presentParms.Flags                          = *(pPresentationParameters->Flags);
-    object->presentParms.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz);
-    object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);
-
-
    /*********************
    * Create the back, front and stencil buffers
    *******************/
-
-    TRACE("calling rendertarget CB\n");
-    hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
-                             parent,
-                             object->presentParms.BackBufferWidth,
-                             object->presentParms.BackBufferHeight,
-                             object->presentParms.BackBufferFormat,
-                             object->presentParms.MultiSampleType,
-                             object->presentParms.MultiSampleQuality,
-                             TRUE /* Lockable */,
-                             &object->frontBuffer,
-                             NULL /* pShared (always null)*/);
-    if (object->frontBuffer != NULL)
-        IWineD3DSurface_SetContainer(object->frontBuffer, (IWineD3DBase *)object);
-
     if(object->presentParms.BackBufferCount > 0) {
         int i;
 
         object->backBuffer = HeapAlloc(GetProcessHeap(), 0, sizeof(IWineD3DSurface *) * object->presentParms.BackBufferCount);
         if(!object->backBuffer) {
             ERR("Out of memory\n");
-
-            if (object->frontBuffer) {
-                IUnknown *bufferParent;
-                IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
-                IUnknown_Release(bufferParent); /* once for the get parent */
-                if (IUnknown_Release(bufferParent) > 0) {
-                    FIXME("(%p) Something's still holding the front buffer\n",This);
-                }
-            }
-            HeapFree(GetProcessHeap(), 0, object);
-            return E_OUTOFMEMORY;
+            hr = E_OUTOFMEMORY;
+            goto error;
         }
 
         for(i = 0; i < object->presentParms.BackBufferCount; i++) {
@@ -1633,19 +1551,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
             if(hr == WINED3D_OK && object->backBuffer[i]) {
                 IWineD3DSurface_SetContainer(object->backBuffer[i], (IWineD3DBase *)object);
             } else {
-                break;
+                ERR("Cannot create new back buffer\n");
+                goto error;
             }
+            ENTER_GL();
+            glDrawBuffer(GL_BACK);
+            checkGLcall("glDrawBuffer(GL_BACK)");
+            LEAVE_GL();
         }
     } else {
         object->backBuffer = NULL;
-    }
 
-    if (object->backBuffer != NULL) {
-        ENTER_GL();
-        glDrawBuffer(GL_BACK);
-        checkGLcall("glDrawBuffer(GL_BACK)");
-        LEAVE_GL();
-    } else {
         /* Single buffering - draw to front buffer */
         ENTER_GL();
         glDrawBuffer(GL_FRONT);
@@ -1679,108 +1595,36 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         object->wantsDepthStencilBuffer = FALSE;
     }
 
+    TRACE("Created swapchain %p\n", object);
     TRACE("FrontBuf @ %p, BackBuf @ %p, DepthStencil %d\n",object->frontBuffer, object->backBuffer ? object->backBuffer[0] : NULL, object->wantsDepthStencilBuffer);
+    return WINED3D_OK;
 
-
-   /*********************
-   * init the default renderTarget management
-   *******************/
-    object->render_ctx   = newCtx;
-
-    /* Register the context */
-    object->context = AddContext(This, newCtx, object->win);
-
-    if (hr == WINED3D_OK && object->context) {
-        /*********************
-         * Setup some defaults and clear down the buffers
-         *******************/
-        ENTER_GL();
-        /** save current context and drawable **/
-        oldContext  = glXGetCurrentContext();
-        oldDrawable = glXGetCurrentDrawable();
-
-        TRACE("Activating context (display %p context %p drawable %ld)!\n", object->display, newCtx, object->win);
-        if (glXMakeCurrent(object->display, object->win, newCtx) == False) {
-            ERR("Error in setting current context (display %p context %p drawable %ld)!\n", object->display, newCtx, object->win);
-        }
-        checkGLcall("glXMakeCurrent");
-
-        TRACE("Setting up the screen\n");
-        /* Clear the screen */
-        glClearColor(1.0, 0.0, 0.0, 0.0);
-        checkGLcall("glClearColor");
-        glClearIndex(0);
-        glClearDepth(1);
-        glClearStencil(0xffff);
-
-        checkGLcall("glClear");
-
-        glColor3f(1.0, 1.0, 1.0);
-        checkGLcall("glColor3f");
-
-        glEnable(GL_LIGHTING);
-        checkGLcall("glEnable");
-
-        glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-        checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
-
-        glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-        checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
-
-        glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-        checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
-
-        /* switch back to the original context (if there was one)*/
-        if (This->swapchains) {
-            /** TODO: restore the context and drawable **/
-            glXMakeCurrent(object->display, oldDrawable, oldContext);
-        }
-
-        /* Set the surface alignment. This never changes, so we are safe to set it once per context*/
-        glPixelStorei(GL_PACK_ALIGNMENT, SURFACE_ALIGNMENT);
-        checkGLcall("glPixelStorei(GL_PACK_ALIGNMENT, SURFACE_ALIGNMENT);");
-        glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);
-        checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, SURFACE_ALIGNMENT);");
-
-        LEAVE_GL();
-
-        TRACE("Set swapchain to %p\n", object);
-    } else { /* something went wrong so clean up */
-        IUnknown* bufferParent;
-        if (object->frontBuffer) {
-
-            IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
-            IUnknown_Release(bufferParent); /* once for the get parent */
-            if (IUnknown_Release(bufferParent) > 0) {
-                FIXME("(%p) Something's still holding the front buffer\n",This);
-            }
-        }
-        if (object->backBuffer) {
-            int i;
-            for(i = 0; i < object->presentParms.BackBufferCount; i++) {
-                if(object->backBuffer[i]) {
-                    IWineD3DSurface_GetParent(object->backBuffer[i], &bufferParent);
-                    IUnknown_Release(bufferParent); /* once for the get parent */
-                    if (IUnknown_Release(bufferParent) > 0) {
-                        FIXME("(%p) Something's still holding the back buffer\n",This);
-                    }
+error:
+    if (object->backBuffer) {
+        int i;
+        for(i = 0; i < object->presentParms.BackBufferCount; i++) {
+            if(object->backBuffer[i]) {
+                IWineD3DSurface_GetParent(object->backBuffer[i], &bufferParent);
+                IUnknown_Release(bufferParent); /* once for the get parent */
+                if (IUnknown_Release(bufferParent) > 0) {
+                    FIXME("(%p) Something's still holding the back buffer\n",This);
                 }
             }
-            HeapFree(GetProcessHeap(), 0, object->backBuffer);
-            object->backBuffer = NULL;
         }
-        /* NOTE: don't clean up the depthstencil buffer because it belongs to the device */
-        /* Clean up the context */
-        /* check that we are the current context first (we shouldn't be though!) */
-        if (newCtx != 0) {
-            if(glXGetCurrentContext() == newCtx) {
-                glXMakeCurrent(object->display, None, NULL);
-            }
-            glXDestroyContext(object->display, newCtx);
-        }
-        HeapFree(GetProcessHeap(), 0, object);
+        HeapFree(GetProcessHeap(), 0, object->backBuffer);
+        object->backBuffer = NULL;
     }
-
+    if(object->context) {
+        DestroyContext(This, object->context);
+    }
+    if(object->frontBuffer) {
+        IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
+        IUnknown_Release(bufferParent); /* once for the get parent */
+        if (IUnknown_Release(bufferParent) > 0) {
+            FIXME("(%p) Something's still holding the front buffer\n",This);
+        }
+    }
+    if(object) HeapFree(GetProcessHeap(), 0, object);
     return hr;
 }
 
@@ -1985,13 +1829,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     *  with Default values
     */
 
-    ((IWineD3DImpl *) This->wineD3D)->isGLInfoValid = IWineD3DImpl_FillGLCaps( This->wineD3D, swapchain->display);
+    ((IWineD3DImpl *) This->wineD3D)->isGLInfoValid = IWineD3DImpl_FillGLCaps( This->wineD3D, swapchain->context->display);
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
 #if 0
     IWineD3DImpl_CheckGraphicsMemory();
 #endif
-    LEAVE_GL();
 
     /* Initialize our list of GLSL programs */
     list_init(&This->glsl_shader_progs);
@@ -2011,7 +1854,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     This->view_ident = 1;
     This->contexts[0]->last_was_rhw = 0;
     glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights);
+    checkGLcall("glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights)");
     TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
+    LEAVE_GL();
 
     /* Clear the screen */
     IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER|WINED3DCLEAR_TARGET, 0x00, 1.0, 0);
@@ -2765,7 +2610,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
 
             /* If we have too many active lights, fail the call */
             if ((Index == This->maxConcurrentLights) && (bsf == NULL)) {
-                FIXME("Program requests too many concurrent lights\n");
+                FIXME("Program requests too many concurrent lights.\n");
                 return WINED3DERR_INVALIDCALL;
 
             /* If we have allocated all lights, but not all are enabled,

@@ -123,17 +123,8 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
         }
     }
 
-    /* Clean up the context */
-    /* check that we are the current context first */
-    if(glXGetCurrentContext() == This->context->glCtx){
-        glXMakeCurrent(This->display, None, NULL);
-    }
-    glXDestroyContext(This->display, This->context->glCtx);
-    DeleteContext(This->wineD3DDevice, This->context);
-    /* IUnknown_Release(This->parent); This should only apply to the primary swapchain,
-        all others are created by the caller, so releasing the parent should cause
-        the child to be released, not the other way around!
-        */
+    DestroyContext(This->wineD3DDevice, This->context);
+
     HeapFree(GetProcessHeap(), 0, This);
 }
 
@@ -184,125 +175,49 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
     /* TODO: If only source rect or dest rect are supplied then clip the window to match */
-    TRACE("preseting display %p, drawable %ld\n", This->display, This->context->drawable);
+    TRACE("preseting display %p, drawable %ld\n", This->context->display, This->context->drawable);
 
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
-        /* Set this swapchain up to point to the new destination.. */
+        HDC hDc;
+        WINED3DLOCKED_RECT r;
+        Display *display;
+        BYTE *mem;
 
-            /* Ok, now we switch the opengl context behind the context manager's back. Tidy this up when
-             * the ctx manager is completely in place
+        TRACE("Performing dest override of swapchain %p from window %p to %p\n", This, This->win_handle, hDestWindowOverride);
+        if(This->context == This->wineD3DDevice->contexts[0]) {
+            /* The primary context 'owns' all the opengl resources. Destroying and recreating that context would require downloading
+             * all opengl resources, deleting the gl resources, destroying all other contexts, then recreating all other contexts
+             * and reload the resources
              */
-            /* FIXME: Never access */
-            IWineD3DSwapChainImpl *swapChainImpl;
-            IWineD3DDevice_GetSwapChain((IWineD3DDevice *)This->wineD3DDevice, 0 , (IWineD3DSwapChain **)&swapChainImpl);
-            FIXME("Unable to render to a destination window %p\n", hDestWindowOverride );
-            if(This == swapChainImpl){
-                /* FIXME: this will be fixed by moving to a context management system */
-                FIXME("Cannot change the target of the implicit swapchain\n");
-            }else{
-                HDC               hDc;
-                XVisualInfo       template;
-                int               num;
-                Display          *oldDisplay = This->display;
-                GLXContext        oldContext = This->context->glCtx;
-                IUnknown*         tmp;
-                GLXContext        currentContext;
-                Drawable          currentDrawable;
-                hDc                          = GetDC(hDestWindowOverride);
-                This->win_handle             = hDestWindowOverride;
-                This->win                    = (Window)GetPropA( hDestWindowOverride, "__wine_x11_whole_window" );
+            ERR("Cannot change the destination window of the owner of the primary context\n");
+        } else {
+            hDc                          = GetDC(hDestWindowOverride);
+            This->win_handle             = hDestWindowOverride;
+            This->win                    = (Window)GetPropA( hDestWindowOverride, "__wine_x11_whole_window" );
+            display                      = get_display(hDc);
+            ReleaseDC(hDestWindowOverride, hDc);
 
-                TRACE("Creating a new context for the window %p\n", hDestWindowOverride);
-                ENTER_GL();
-                TRACE("Desctroying context %p %p\n", This->display, This->render_ctx);
+            /* The old back buffer has to be copied over to the new back buffer. A lockrect - switchcontext - unlockrect
+             * would suffice in theory, but it is rather nasty and may cause troubles with future changes of the locking code
+             * So lock read only, copy the surface out, then lock with the discard flag and write back
+             */
+            IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_READONLY);
+            mem = HeapAlloc(GetProcessHeap(), 0, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
+            memcpy(mem, r.pBits, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
+            IWineD3DSurface_UnlockRect(This->backBuffer[0]);
 
+            DestroyContext(This->wineD3DDevice, This->context);
+            This->context = CreateContext(This->wineD3DDevice, (IWineD3DSurfaceImpl *) This->frontBuffer, display, This->win);
 
-
-                LEAVE_GL();
-                ENTER_GL();
-
-                This->display    = get_display(hDc);
-                TRACE("Got display%p  for  %p %p\n",  This->display, hDc, hDestWindowOverride);
-                ReleaseDC(hDestWindowOverride, hDc);
-                template.visualid = (VisualID)GetPropA(GetDesktopWindow(), "__wine_x11_visual_id");
-                This->visInfo   = XGetVisualInfo(This->display, VisualIDMask, &template, &num);
-                if (NULL == This->visInfo) {
-                    ERR("cannot really get XVisual\n");
-                    LEAVE_GL();
-                    return WINED3DERR_NOTAVAILABLE;
-                }
-                /* Now we have problems? well not really we just need to know what the implicit context is */
-                /* now destroy the old context and create a new one (we should really copy the buffers over, and do the whole make current thing! */
-                /* destroy the active context?*/
-                TRACE("Creating new context for %p %p %p\n",This->display, This->visInfo, swapChainImpl->context->glCtx);
-                This->context->glCtx = glXCreateContext(This->display, This->visInfo, swapChainImpl->context->glCtx, GL_TRUE);
-
-                if (NULL == This->context->glCtx) {
-                    ERR("cannot create glxContext\n");
-                }
-                This->context->drawable     = This->win;
-                This->render_ctx   = This->context->glCtx;
-                /* Setup some default states TODO: apply the stateblock to the new context */
-                /** save current context and drawable **/
-                currentContext  =   glXGetCurrentContext();
-                currentDrawable =   glXGetCurrentDrawable();
-
-                if (glXMakeCurrent(This->display, This->win, This->context->glCtx) == False) {
-                    ERR("Error in setting current context (display %p context %p drawable %ld)!\n", This->display, This->context->glCtx, This->win);
-                }
-
-                checkGLcall("glXMakeCurrent");
-
-                /* Clear the screen */
-                glClearColor(0.0, 0.0, 0.0, 0.0);
-                checkGLcall("glClearColor");
-                glClearIndex(0);
-                glClearDepth(1);
-                glClearStencil(0);
-
-                glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_ACCUM_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-                checkGLcall("glClear");
-
-                glColor3f(1.0, 1.0, 1.0);
-                checkGLcall("glColor3f");
-
-                glEnable(GL_LIGHTING);
-                checkGLcall("glEnable");
-
-                glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
-                checkGLcall("glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);");
-
-                glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-                checkGLcall("glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);");
-
-                glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-                checkGLcall("glLightModeli(GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);");
-
-                /* If this swapchain is currently the active context then make this swapchain active */
-                if(IWineD3DSurface_GetContainer(This->wineD3DDevice->render_targets[0], &IID_IWineD3DSwapChain, (void **)&tmp) == WINED3D_OK){
-                    if(tmp != (IUnknown *)This){
-                        glXMakeCurrent(This->display, currentDrawable, currentContext);
-                        checkGLcall("glXMakeCurrent");
-                    }
-                    IUnknown_Release(tmp);
-                }else{
-                    /* reset the context */
-                    glXMakeCurrent(This->display, currentDrawable, currentContext);
-                    checkGLcall("glXMakeCurrent");
-                }
-                /* delete the old contxt*/
-                glXDestroyContext(oldDisplay, oldContext); /* Should this happen on an active context? seems a bad idea */
-                LEAVE_GL();
-            }
-            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapChainImpl);
-
+            IWineD3DSurface_LockRect(This->backBuffer[0], &r, NULL, WINED3DLOCK_DISCARD);
+            memcpy(r.pBits, mem, r.Pitch * ((IWineD3DSurfaceImpl *) This->backBuffer[0])->currentDesc.Height);
+            HeapFree(GetProcessHeap(), 0, mem);
+            IWineD3DSurface_UnlockRect(This->backBuffer[0]);
         }
+    }
 
-
-        /* TODO: The slow way, save the data to memory, create a new context for the destination window, transfer the data cleanup, it may be a good idea to the move this swapchain over to the using the target winows context so that it runs faster in feature. */
-
-    glXSwapBuffers(This->display, This->context->drawable); /* TODO: cycle through the swapchain buffers */
+    glXSwapBuffers(This->context->display, This->context->drawable); /* TODO: cycle through the swapchain buffers */
 
     TRACE("glXSwapBuffers called, Starting new frame\n");
     /* FPS support */
