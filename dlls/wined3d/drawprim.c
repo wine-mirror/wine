@@ -1181,6 +1181,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     int                           i;
     DWORD                         dirtyState, idx;
     BYTE                          shift;
+    WineD3DContext                *context;
 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
@@ -1197,13 +1198,16 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
 
+    /* TODO: Find the correct context for the render target / thread */
+    context = &This->contexts[This->activeContext];
+
     /* Apply dirty states */
     for(i=0; i < This->numDirtyEntries; i++) {
         dirtyState = This->dirtyArray[i];
         idx = dirtyState >> 5;
         shift = dirtyState & 0x1f;
         This->isStateDirty[idx] &= ~(1 << shift);
-        StateTable[dirtyState].apply(dirtyState, This->stateBlock);
+        StateTable[dirtyState].apply(dirtyState, This->stateBlock, context);
     }
     This->numDirtyEntries = 0; /* This makes the whole list clean */
 

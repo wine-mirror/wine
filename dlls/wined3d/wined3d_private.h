@@ -405,8 +405,16 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
+/* The new context manager that should deal with onscreen and offscreen rendering */
+typedef struct WineD3DContext {
+    /* TODO: Dirty State list                              */
+    /* TODO: Render target / swapchain this ctx belongs to */
+    /* TODO: Thread this ctx belongs to                    */
+    /* TODO: Per context state chaches                     */
+} WineD3DContext;
+
 /* Routines and structures related to state management */
-typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock);
+typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *ctx);
 
 #define STATE_RENDER(a) (a)
 #define STATE_IS_RENDER(a) ((a) >= STATE_RENDER(1) && (a) <= STATE_RENDER(WINEHIGHEST_RENDER_STATE))
@@ -511,7 +519,7 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
 
-/** Hacked out start of a context manager!! **/
+/** Hacked out start of a context manager!! - Subject to removal **/
 typedef struct glContext {
     int Width;
     int Height;
@@ -639,7 +647,7 @@ typedef struct IWineD3DDeviceImpl
     HRESULT                 state;
     BOOL                    d3d_initialized;
 
-    /* Screen buffer resources */
+    /* Screen buffer resources - subject to removal */
     glContext contextCache[CONTEXT_CACHE];
 
     /* A flag to check for proper BeginScene / EndScene call pairs */
@@ -681,6 +689,9 @@ typedef struct IWineD3DDeviceImpl
     WineDirect3DVertexStridedData *up_strided;
     BOOL                      useDrawStridedSlow;
 
+    /* Context management */
+    WineD3DContext          contexts[1];   /* Dynamic array later */
+    UINT                    activeContext; /* Only 0 for now      */
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;

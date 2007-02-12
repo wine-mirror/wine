@@ -1169,8 +1169,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                per drawprim (and leave set - it will sort itself out due to last_was_rhw */
             myDevice->last_was_rhw = TRUE;
             /* Apply the projection and world matrices, it sets up orthogonal projection due to last_was_rhw */
-            StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock);
-            StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock);
+            StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
+            StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
             /* Will reapply the projection matrix too */
             IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_VDECL);
 
@@ -2497,8 +2497,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
              */
             myDevice->last_was_rhw = TRUE;
             /* Apply the projection matrix, it sets up orthogonal projection due to last_was_rhw */
-            StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock);
-            StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock);
+            StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
+            StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
             /* That will reapply the projection matrix too */
             IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_VDECL);
 
