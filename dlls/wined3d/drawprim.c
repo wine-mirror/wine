@@ -1202,14 +1202,14 @@ void drawPrimitive(IWineD3DDevice *iface,
     context = &This->contexts[This->activeContext];
 
     /* Apply dirty states */
-    for(i=0; i < This->numDirtyEntries; i++) {
-        dirtyState = This->dirtyArray[i];
+    for(i=0; i < context->numDirtyEntries; i++) {
+        dirtyState = context->dirtyArray[i];
         idx = dirtyState >> 5;
         shift = dirtyState & 0x1f;
-        This->isStateDirty[idx] &= ~(1 << shift);
+        context->isStateDirty[idx] &= ~(1 << shift);
         StateTable[dirtyState].apply(dirtyState, This->stateBlock, context);
     }
-    This->numDirtyEntries = 0; /* This makes the whole list clean */
+    context->numDirtyEntries = 0; /* This makes the whole list clean */
 
     if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         check_fbo_status(iface);

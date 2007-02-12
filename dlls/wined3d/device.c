@@ -2007,6 +2007,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Initialize the current view state */
     This->view_ident = 1;
+    This->numContexts = 1;
     This->contexts[0].last_was_rhw = 0;
     glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights);
     TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
@@ -6978,11 +6979,18 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     DWORD rep = StateTable[state].representative;
     DWORD idx;
     BYTE shift;
+    UINT i;
+    WineD3DContext *context;
 
-    if(!rep || isStateDirty(This, rep)) return;
+    if(!rep) return;
 
-    This->dirtyArray[This->numDirtyEntries++] = rep;
-    idx = rep >> 5;
-    shift = rep & 0x1f;
-    This->isStateDirty[idx] |= (1 << shift);
+    for(i = 0; i < This->numContexts; i++) {
+        context = &This->contexts[i];
+        if(isStateDirty(context, rep)) continue;
+
+        context->dirtyArray[context->numDirtyEntries++] = rep;
+        idx = rep >> 5;
+        shift = rep & 0x1f;
+        context->isStateDirty[idx] |= (1 << shift);
+    }
 }

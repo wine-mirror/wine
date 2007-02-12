@@ -405,23 +405,8 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType);
 #define GET_TEXCOORD_SIZE_FROM_FVF(d3dvtVertexType, tex_num) \
     (((((d3dvtVertexType) >> (16 + (2 * (tex_num)))) + 1) & 0x03) + 1)
 
-/* The new context manager that should deal with onscreen and offscreen rendering */
-typedef struct WineD3DContext {
-    /* TODO: Dirty State list                              */
-    /* TODO: Render target / swapchain this ctx belongs to */
-    /* TODO: Thread this ctx belongs to                    */
-
-    /* Stores some inforation about the context state for optimization */
-    BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
-    BOOL                    last_was_pshader;
-    BOOL                    last_was_vshader;
-    BOOL                    last_was_foggy_shader;
-    BOOL                    namedArraysLoaded, numberedArraysLoaded;
-    BOOL                    lastWasPow2Texture[MAX_TEXTURES];
-    GLenum                  tracking_parm;     /* Which source is tracking current colour         */
-} WineD3DContext;
-
 /* Routines and structures related to state management */
+typedef struct WineD3DContext WineD3DContext;
 typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *ctx);
 
 #define STATE_RENDER(a) (a)
@@ -467,6 +452,31 @@ struct StateEntry
 
 /* Global state table */
 extern const struct StateEntry StateTable[];
+
+/* The new context manager that should deal with onscreen and offscreen rendering */
+struct WineD3DContext {
+    /* State dirtification
+     * dirtyArray is an array that contains markers for dirty states. numDirtyEntries states are dirty, their numbers are in indices
+     * 0...numDirtyEntries - 1. isStateDirty is a redundant copy of the dirtyArray. Technically only one of them would be needed,
+     * but with the help of both it is easy to find out if a state is dirty(just check the array index), and for applying dirty states
+     * only numDirtyEntries array elements have to be checked, not STATE_HIGHEST states.
+     */
+    DWORD                   dirtyArray[STATE_HIGHEST + 1]; /* Won't get bigger than that, a state is never marked dirty 2 times */
+    DWORD                   numDirtyEntries;
+    DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
+
+    /* TODO: Render target / swapchain this ctx belongs to */
+    /* TODO: Thread this ctx belongs to                    */
+
+    /* Stores some inforation about the context state for optimization */
+    BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
+    BOOL                    last_was_pshader;
+    BOOL                    last_was_vshader;
+    BOOL                    last_was_foggy_shader;
+    BOOL                    namedArraysLoaded, numberedArraysLoaded;
+    BOOL                    lastWasPow2Texture[MAX_TEXTURES];
+    GLenum                  tracking_parm;     /* Which source is tracking current colour         */
+};
 
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
@@ -665,16 +675,6 @@ typedef struct IWineD3DDeviceImpl
     /* Final position fixup constant */
     float                       posFixup[4];
 
-    /* State dirtification
-     * dirtyArray is an array that contains markers for dirty states. numDirtyEntries states are dirty, their numbers are in indices
-     * 0...numDirtyEntries - 1. isStateDirty is a redundant copy of the dirtyArray. Technically only one of them would be needed,
-     * but with the help of both it is easy to find out if a state is dirty(just check the array index), and for applying dirty states
-     * only numDirtyEntries array elements have to be checked, not STATE_HIGHEST states.
-     */
-    DWORD                   dirtyArray[STATE_HIGHEST + 1]; /* Won't get bigger than that, a state is never marked dirty 2 times */
-    DWORD                   numDirtyEntries;
-    DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
-
     /* With register combiners we can skip junk texture stages */
     DWORD                     texUnitMap[MAX_SAMPLERS];
     BOOL                      oneToOneTexUnitMap;
@@ -687,15 +687,16 @@ typedef struct IWineD3DDeviceImpl
     /* Context management */
     WineD3DContext          contexts[1];   /* Dynamic array later */
     UINT                    activeContext; /* Only 0 for now      */
+    UINT                    numContexts;   /* Always 1 for now    */
 } IWineD3DDeviceImpl;
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 
 void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state);
-static inline BOOL isStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
+static inline BOOL isStateDirty(WineD3DContext *context, DWORD state) {
     DWORD idx = state >> 5;
     BYTE shift = state & 0x1f;
-    return This->isStateDirty[idx] & (1 << shift);
+    return context->isStateDirty[idx] & (1 << shift);
 }
 
 /* Support for IWineD3DResource ::Set/Get/FreePrivateData. I don't think

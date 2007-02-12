@@ -87,7 +87,7 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
      * vertex declaration appplying function calls this function for updating
      */
 
-    if(isStateDirty(stateblock->wineD3DDevice, STATE_VDECL)) {
+    if(isStateDirty(context, STATE_VDECL)) {
         return;
     }
 
@@ -820,7 +820,8 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     /* Depends on the decoded vertex declaration to read the existance of diffuse data.
      * The vertex declaration will call this function if the fixed function pipeline is used.
      */
-    if(isStateDirty(device, STATE_VDECL)) {
+
+    if(isStateDirty(context, STATE_VDECL)) {
         return;
     }
 
@@ -1486,7 +1487,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     /* The sampler will also activate the correct texture dimensions, so no need to do it here
      * if the sampler for this stage is dirty
      */
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_SAMPLER(stage))) {
+    if(!isStateDirty(context, STATE_SAMPLER(stage))) {
         if (mapped_stage != -1) activate_dimensions(stage, stateblock);
     }
 
@@ -1734,11 +1735,11 @@ static void tex_coordindex(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     }
 
     /* Update the texture matrix */
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage))) {
+    if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage))) {
         transform_texture(STATE_TRANSFORM(WINED3DTS_TEXTURE0 + stage), stateblock, context);
     }
 
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_VDECL) && context->namedArraysLoaded) {
+    if(!isStateDirty(context, STATE_VDECL) && context->namedArraysLoaded) {
         /* Reload the arrays if we are using fixed function arrays to reflect the selected coord input
          * source. Call loadVertexData directly because there is no need to reparse the vertex declaration
          * and do all the things linked to it
@@ -1864,7 +1865,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
             glEnable(stateblock->textureDimensions[sampler]);
             checkGLcall("glEnable(stateblock->textureDimensions[sampler])");
         } else if(sampler < stateblock->lowest_disabled_stage) {
-            if(!isStateDirty(stateblock->wineD3DDevice, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
+            if(!isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
                 activate_dimensions(sampler, stateblock);
             }
 
@@ -1878,7 +1879,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
     } else if(sampler < GL_LIMITS(texture_stages)) {
         if(sampler < stateblock->lowest_disabled_stage) {
             /* TODO: What should I do with pixel shaders here ??? */
-            if(!isStateDirty(stateblock->wineD3DDevice, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
+            if(!isStateDirty(context, STATE_TEXTURESTAGE(sampler, WINED3DTSS_COLOROP))) {
                 activate_dimensions(sampler, stateblock);
             }
         } /* Otherwise tex_colorop disables the stage */
@@ -1893,8 +1894,8 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     /* Vertex and pixel shader states will call a shader upload, don't do anything as long one of them
      * has an update pending
      */
-    if(isStateDirty(device, STATE_VDECL) ||
-       isStateDirty(device, STATE_PIXELSHADER)) {
+    if(isStateDirty(context, STATE_VDECL) ||
+       isStateDirty(context, STATE_PIXELSHADER)) {
        return;
     }
     
@@ -1913,7 +1914,7 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
              * make sure to enable them
              */
             for(i=0; i < MAX_SAMPLERS; i++) {
-                if(!isStateDirty(stateblock->wineD3DDevice, STATE_SAMPLER(i))) {
+                if(!isStateDirty(context, STATE_SAMPLER(i))) {
                     sampler(STATE_SAMPLER(i), stateblock, context);
                 }
             }
@@ -1926,13 +1927,13 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         /* Compile and bind the shader */
         IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
 
-        if(!isStateDirty(stateblock->wineD3DDevice, StateTable[STATE_VSHADER].representative)) {
+        if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
             stateblock->wineD3DDevice->shader_backend->shader_select(
                     (IWineD3DDevice *) stateblock->wineD3DDevice,
                     TRUE,
                     !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
             
-            if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT)) {
+            if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT)) {
                 shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
             }
         }
@@ -1942,19 +1943,19 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
          * while it was enabled, so re-apply them.
          */
         for(i=0; i < MAX_TEXTURES; i++) {
-            if(!isStateDirty(stateblock->wineD3DDevice, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP))) {
+            if(!isStateDirty(context, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP))) {
                 tex_colorop(STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
             }
         }
         context->last_was_pshader = FALSE;
 
-        if(!isStateDirty(stateblock->wineD3DDevice, StateTable[STATE_VSHADER].representative)) {
+        if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
             stateblock->wineD3DDevice->shader_backend->shader_select(
                     (IWineD3DDevice *) stateblock->wineD3DDevice,
                     FALSE,
                     !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
 
-            if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT)) {
+            if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT)) {
                 shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
             }
         }
@@ -2031,7 +2032,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     /* Call the world matrix state, this will apply the combined WORLD + VIEW matrix
      * No need to do it here if the state is scheduled for update.
      */
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
+    if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)))) {
         transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock, context);
     }
 }
@@ -2692,8 +2693,8 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         updateFog = TRUE;
     }
 
-    /* Reapply lighting if it is not scheduled for reapplication already */
-    if(!isStateDirty(device, STATE_RENDER(WINED3DRS_LIGHTING))) {
+    /* Reapply lighting if it is not sheduled for reapplication already */
+    if(!isStateDirty(context, STATE_RENDER(WINED3DRS_LIGHTING))) {
         state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock, context);
     }
 
@@ -2726,8 +2727,8 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
          * or transformed / untransformed was switched
          */
        if(wasrhw != context->last_was_rhw &&
-          !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_PROJECTION)) &&
-          !isStateDirty(stateblock->wineD3DDevice, STATE_VIEWPORT)) {
+          !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION)) &&
+          !isStateDirty(context, STATE_VIEWPORT)) {
             transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
         }
         /* World matrix needs reapplication here only if we're switching between rhw and non-rhw
@@ -2742,12 +2743,12 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
          * dirty
          */
         if(transformed != wasrhw &&
-           !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))) &&
-           !isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(WINED3DTS_VIEW))) {
+           !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))) &&
+           !isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW))) {
             transform_world(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), stateblock, context);
         }
 
-        if(!isStateDirty(stateblock->wineD3DDevice, STATE_RENDER(WINED3DRS_COLORVERTEX))) {
+        if(!isStateDirty(context, STATE_RENDER(WINED3DRS_COLORVERTEX))) {
             state_colormat(STATE_RENDER(WINED3DRS_COLORVERTEX), stateblock, context);
         }
     } else {
@@ -2765,10 +2766,10 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
          * application
          */
-        if(!isStateDirty(device, STATE_PIXELSHADER)) {
+        if(!isStateDirty(context, STATE_PIXELSHADER)) {
             device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
 
-            if(!isStateDirty(stateblock->wineD3DDevice, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
+            if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
                 shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
             }
         }
@@ -2793,7 +2794,7 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
 
     stateblock->wineD3DDevice->posFixup[2] = 0.9 / stateblock->viewport.Width;
     stateblock->wineD3DDevice->posFixup[3] = -0.9 / stateblock->viewport.Height;
-    if(!isStateDirty(stateblock->wineD3DDevice, STATE_TRANSFORM(D3DTS_PROJECTION))) {
+    if(!isStateDirty(context, STATE_TRANSFORM(D3DTS_PROJECTION))) {
         transform_projection(STATE_TRANSFORM(D3DTS_PROJECTION), stateblock, context);
     }
 
