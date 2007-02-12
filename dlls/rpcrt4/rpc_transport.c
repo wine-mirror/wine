@@ -300,7 +300,12 @@ static RPC_STATUS rpcrt4_protseq_ncacn_np_open_endpoint(RpcServerProtseq *protse
   strcat(strcpy(pname, prefix), Connection->Endpoint);
   r = rpcrt4_conn_create_pipe(Connection, pname);
   I_RpcFree(pname);
-    
+
+  EnterCriticalSection(&protseq->cs);
+  Connection->Next = protseq->conn;
+  protseq->conn = Connection;
+  LeaveCriticalSection(&protseq->cs);
+
   return r;
 }
 
