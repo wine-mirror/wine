@@ -42,6 +42,19 @@
 
 #include "wine/test.h"
 
+static void test_getfile_no_open(void)
+{
+    BOOL      bRet;
+
+    /* Invalid internet handle, the others are valid parameters */
+    SetLastError(0xdeadbeef);
+    bRet = FtpGetFileA(NULL, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
+    ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
+    todo_wine
+    ok ( GetLastError() == ERROR_INTERNET_NOT_INITIALIZED,
+        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+}
+
 static void test_connect(void)
 {
     HINTERNET hInternet, hFtp;
@@ -727,6 +740,15 @@ static void test_renamefile(void)
 
 START_TEST(ftp)
 {
+    /* The first call should always be a proper InternetOpen, if not
+     * several calls will return ERROR_INTERNET_NOT_INITIALIZED when
+     * all parameters are correct but no session handle is given. Whereas
+     * the same call will return ERROR_INVALID_HANDLE if an InternetOpen
+     * is done before.
+     * The following test will show that behaviour, where the tests inside
+     * the other sub-tests will show the other situation.
+     */
+    test_getfile_no_open();
     test_connect();
     test_createdir();
     test_deletefile();
