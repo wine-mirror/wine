@@ -207,7 +207,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
     /* TODO: Thread selection */
 
     /* TODO: Activate the opengl context */
-    context = &This->contexts[This->activeContext];
+    context = This->contexts[This->activeContext];
 
     switch(usage) {
         case CTXUSAGE_RESOURCELOAD:

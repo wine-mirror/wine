@@ -350,9 +350,15 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     TRACE("(%p) : Releasing from %d\n", This, refCount + 1);
 
     if (!refCount) {
+        UINT i;
         if (This->fbo) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->fbo));
         }
+
+        for(i = 0; i < This->numContexts; i++) {
+            HeapFree(GetProcessHeap(), 0, This->contexts[i]);
+        }
+        HeapFree(GetProcessHeap(), 0, This->contexts);
 
         HeapFree(GetProcessHeap(), 0, This->render_targets);
 
@@ -2007,8 +2013,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Initialize the current view state */
     This->view_ident = 1;
-    This->numContexts = 1;
-    This->contexts[0].last_was_rhw = 0;
+    This->contexts[0]->last_was_rhw = 0;
     glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights);
     TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
 
@@ -5948,7 +5953,7 @@ static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
     if (This->depth_copy_state != WINED3D_DCS_NO_COPY) {
         This->depth_copy_state = WINED3D_DCS_COPY;
     }
-    This->contexts[0].last_was_rhw = FALSE;
+    This->contexts[0]->last_was_rhw = FALSE;
     /* Viewport state will reapply the projection matrix for now */
     IWineD3DDeviceImpl_MarkStateDirty(This, WINED3DRS_CULLMODE);
 
@@ -6985,7 +6990,7 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     if(!rep) return;
 
     for(i = 0; i < This->numContexts; i++) {
-        context = &This->contexts[i];
+        context = This->contexts[i];
         if(isStateDirty(context, rep)) continue;
 
         context->dirtyArray[context->numDirtyEntries++] = rep;

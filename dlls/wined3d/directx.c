@@ -2444,6 +2444,12 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     object->ddraw_format = pixelformat_for_depth(GetDeviceCaps(hDC, BITSPIXEL) * GetDeviceCaps(hDC, PLANES));
     ReleaseDC(0, hDC);
 
+    /* Allocate one context for now */
+    object->contexts = HeapAlloc(GetProcessHeap(), 0, sizeof(WineD3DContext *));
+    object->contexts[0] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineD3DContext));
+    object->numContexts = 1;
+    object->activeContext = 0;
+
     return WINED3D_OK;
 create_device_error:
 

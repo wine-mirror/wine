@@ -695,7 +695,7 @@ struct IWineD3DDeviceImpl
     BOOL                      useDrawStridedSlow;
 
     /* Context management */
-    WineD3DContext          contexts[1];   /* Dynamic array later */
+    WineD3DContext          **contexts;   /* Dynamic array containing pointers to context structures */
     UINT                    activeContext; /* Only 0 for now      */
     UINT                    numContexts;   /* Always 1 for now    */
 };
