@@ -575,7 +575,6 @@ static HRESULT WINAPI Moniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc,
     /* ok(pbc != NULL, "pbc == NULL\n"); */
     ok(pmkToLeft == NULL, "pmkToLeft=%p\n", pmkToLeft);
     ok(ppszDisplayName != NULL, "ppszDisplayName == NULL\n");
-    ok(*ppszDisplayName == NULL, "*ppszDisplayName=%p\n", *ppszDisplayName);
 
     *ppszDisplayName = CoTaskMemAlloc(sizeof(winetest_test));
     memcpy(*ppszDisplayName, winetest_test, sizeof(winetest_test));
