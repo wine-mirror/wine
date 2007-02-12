@@ -1193,6 +1193,8 @@ static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszNewFile);
 }
 
+#define FTP_CONDITION_MASK      0x0007
+
 BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
     BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
     DWORD dwContext)
@@ -1201,10 +1203,32 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
     LPWININETAPPINFOW hIC = NULL;
     BOOL r = FALSE;
 
+    if (!lpszRemoteFile || !lpszNewFile)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hInternet );
-    if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
+    if (!lpwfs)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    /* Testing shows that Windows only accepts dwInternetFlags where the last
+     * 3 (yes 3) bits define FTP_TRANSFER_TYPE_UNKNOWN, FTP_TRANSFER_TYPE_ASCII or FTP_TRANSFER_TYPE_BINARY.
+     */
+
+    if ((dwInternetFlags & FTP_CONDITION_MASK) > FTP_TRANSFER_TYPE_BINARY)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
 
@@ -1238,8 +1262,7 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
     }
 
 lend:
-    if( lpwfs )
-        WININET_Release( &lpwfs->hdr );
+    WININET_Release( &lpwfs->hdr );
 
     return r;
 }
