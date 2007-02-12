@@ -350,15 +350,9 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
     TRACE("(%p) : Releasing from %d\n", This, refCount + 1);
 
     if (!refCount) {
-        UINT i;
         if (This->fbo) {
             GL_EXTCALL(glDeleteFramebuffersEXT(1, &This->fbo));
         }
-
-        for(i = 0; i < This->numContexts; i++) {
-            HeapFree(GetProcessHeap(), 0, This->contexts[i]);
-        }
-        HeapFree(GetProcessHeap(), 0, This->contexts);
 
         HeapFree(GetProcessHeap(), 0, This->render_targets);
 
@@ -372,7 +366,7 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
         if (This->vs_selected_mode == SHADER_GLSL ||
             This->ps_selected_mode == SHADER_GLSL)
             delete_glsl_shader_list(iface);
-    
+
         /* Release the update stateblock */
         if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
             if(This->updateStateBlock != This->stateBlock)
@@ -396,6 +390,7 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
             dumpResources(This->resources);
         }
 
+        if(This->contexts) ERR("Context array not freed!\n");
 
         IWineD3D_Release(This->wineD3D);
         This->wineD3D = NULL;
@@ -1354,7 +1349,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     IWineD3DSwapChainImpl  *object; /** NOTE: impl ref allowed since this is a create function **/
     int                     num;
     XVisualInfo             template;
-    GLXContext              oldContext;
+    GLXContext              oldContext, newCtx;
     Drawable                oldDrawable;
     HRESULT                 hr = WINED3D_OK;
 
@@ -1467,23 +1462,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         }
         /* Now choose a similar visual ID*/
     }
-#ifdef USE_CONTEXT_MANAGER
-
-    /** TODO: use a context mamager **/
-#endif
 
     {
         IWineD3DSwapChain *implSwapChain;
         if (WINED3D_OK != IWineD3DDevice_GetSwapChain(iface, 0, &implSwapChain)) {
             /* The first time around we create the context that is shared with all other swapchains and render targets */
-            object->glCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
+            newCtx = glXCreateContext(object->display, object->visInfo, NULL, GL_TRUE);
             TRACE("Creating implicit context for vis %p, hwnd %p\n", object->display, object->visInfo);
         } else {
 
             TRACE("Creating context for vis %p, hwnd %p\n", object->display, object->visInfo);
             /* TODO: don't use Impl structures outside of create functions! (a context manager will replace the ->glCtx) */
             /* and create a new context with the implicit swapchains context as the shared context */
-            object->glCtx = glXCreateContext(object->display, object->visInfo, ((IWineD3DSwapChainImpl *)implSwapChain)->glCtx, GL_TRUE);
+            newCtx = glXCreateContext(object->display, object->visInfo, ((IWineD3DSwapChainImpl *)implSwapChain)->context->glCtx, GL_TRUE);
             IWineD3DSwapChain_Release(implSwapChain);
         }
     }
@@ -1494,12 +1485,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     LEAVE_GL();
 
-    if (!object->glCtx) {
+    if (!newCtx) {
         ERR("Failed to create GLX context\n");
         return WINED3DERR_NOTAVAILABLE;
     } else {
         TRACE("Context created (HWND=%p, glContext=%p, Window=%ld, VisInfo=%p)\n",
-                object->win_handle, object->glCtx, object->win, object->visInfo);
+                object->win_handle, newCtx, object->win, object->visInfo);
     }
 
    /*********************
@@ -1694,10 +1685,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
    /*********************
    * init the default renderTarget management
    *******************/
-    object->drawable     = object->win;
-    object->render_ctx   = object->glCtx;
+    object->render_ctx   = newCtx;
 
-    if (hr == WINED3D_OK) {
+    /* Register the context */
+    object->context = AddContext(This, newCtx, object->win);
+
+    if (hr == WINED3D_OK && object->context) {
         /*********************
          * Setup some defaults and clear down the buffers
          *******************/
@@ -1706,9 +1699,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         oldContext  = glXGetCurrentContext();
         oldDrawable = glXGetCurrentDrawable();
 
-        TRACE("Activating context (display %p context %p drawable %ld)!\n", object->display, object->glCtx, object->win);
-        if (glXMakeCurrent(object->display, object->win, object->glCtx) == False) {
-            ERR("Error in setting current context (display %p context %p drawable %ld)!\n", object->display, object->glCtx, object->win);
+        TRACE("Activating context (display %p context %p drawable %ld)!\n", object->display, newCtx, object->win);
+        if (glXMakeCurrent(object->display, object->win, newCtx) == False) {
+            ERR("Error in setting current context (display %p context %p drawable %ld)!\n", object->display, newCtx, object->win);
         }
         checkGLcall("glXMakeCurrent");
 
@@ -1779,14 +1772,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         /* NOTE: don't clean up the depthstencil buffer because it belongs to the device */
         /* Clean up the context */
         /* check that we are the current context first (we shouldn't be though!) */
-        if (object->glCtx != 0) {
-            if(glXGetCurrentContext() == object->glCtx) {
+        if (newCtx != 0) {
+            if(glXGetCurrentContext() == newCtx) {
                 glXMakeCurrent(object->display, None, NULL);
             }
-            glXDestroyContext(object->display, object->glCtx);
+            glXDestroyContext(object->display, newCtx);
         }
         HeapFree(GetProcessHeap(), 0, object);
-
     }
 
     return hr;
@@ -1967,12 +1959,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     if(swapchain->backBuffer && swapchain->backBuffer[0]) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
         This->render_targets[0] = swapchain->backBuffer[0];
+        This->lastActiveRenderTarget = swapchain->backBuffer[0];
     }
     else {
         TRACE("Setting rendertarget to %p\n", swapchain->frontBuffer);
         This->render_targets[0] = swapchain->frontBuffer;
+        This->lastActiveRenderTarget = swapchain->frontBuffer;
     }
     IWineD3DSurface_AddRef(This->render_targets[0]);
+    This->activeContext = swapchain->context;
+
     /* Depth Stencil support */
     This->stencilBufferTarget = This->depthStencilBuffer;
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
@@ -2020,15 +2016,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     /* Clear the screen */
     IWineD3DDevice_Clear((IWineD3DDevice *) This, 0, NULL, WINED3DCLEAR_STENCIL|WINED3DCLEAR_ZBUFFER|WINED3DCLEAR_TARGET, 0x00, 1.0, 0);
 
-    /* Mark all states dirty. The Setters will not mark a state dirty when the new value is equal to the old value
-     * This might create a problem in 2 situations:
-     * ->The D3D default value is 0, but the opengl default value is something else
-     * ->D3D7 unintialized D3D and reinitializes it. This way the context is destroyed, be the stateblock unchanged
-     */
-    for(state = 0; state <= STATE_HIGHEST; state++) {
-        IWineD3DDeviceImpl_MarkStateDirty(This, state);
-    }
-
     This->d3d_initialized = TRUE;
     return WINED3D_OK;
 }
@@ -2040,6 +2027,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
     TRACE("(%p)\n", This);
 
     if(!This->d3d_initialized) return WINED3DERR_INVALIDCALL;
+
+    /* Delete the pbuffer context if there is any */
+    if(This->pbufferContext) DestroyContext(This, This->pbufferContext);
 
     /* Delete the mouse cursor texture */
     if(This->cursorTexture) {
@@ -4576,28 +4566,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EndScene(IWineD3DDevice *iface) {
     /* We only have to do this if we need to read the, swapbuffers performs a flush for us */
     glFlush();
     checkGLcall("glFlush");
-
-    TRACE("End Scene\n");
-    /* If we're using FBOs this isn't needed */
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO && This->render_targets[0] != NULL) {
-
-        /* If the container of the rendertarget is a texture then we need to save the data from the pbuffer */
-        IUnknown *targetContainer = NULL;
-        if (WINED3D_OK == IWineD3DSurface_GetContainer(This->render_targets[0], &IID_IWineD3DBaseTexture, (void **)&targetContainer)
-            || WINED3D_OK == IWineD3DSurface_GetContainer(This->render_targets[0], &IID_IWineD3DDevice, (void **)&targetContainer)) {
-            TRACE("(%p) : Texture rendertarget %p\n", This ,This->render_targets[0]);
-            /** always dirtify for now. we must find a better way to see that surface have been modified
-            (Modifications should will only occur via draw-primitive, but we do need better locking
-            switching to render-to-texture should remove the overhead though.
-            */
-            IWineD3DSurface_SetPBufferState(This->render_targets[0], TRUE /* inPBuffer */, FALSE /* inTexture */);
-            IWineD3DSurface_AddDirtyRect(This->render_targets[0], NULL);
-            IWineD3DSurface_PreLoad(This->render_targets[0]);
-            IWineD3DSurface_SetPBufferState(This->render_targets[0], FALSE /* inPBuffer */, FALSE /* inTexture */);
-            IUnknown_Release(targetContainer);
-        }
-    }
     LEAVE_GL();
+
     This->inScene = FALSE;
     return WINED3D_OK;
 }
@@ -5644,7 +5614,7 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     }
 }
 
-static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target) {
+void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSurfaceImpl *rtimpl = (IWineD3DSurfaceImpl *)render_target;
 
@@ -5690,13 +5660,8 @@ static void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurf
     }
 }
 
-/* internal static helper functions */
-static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
-                                                IWineD3DSurface *RenderSurface);
-
 static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, DWORD RenderTargetIndex, IWineD3DSurface *pRenderTarget) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    HRESULT  hr = WINED3D_OK;
     WINED3DVIEWPORT viewport;
 
     TRACE("(%p) : Setting rendertarget %d to %p\n", This, RenderTargetIndex, pRenderTarget);
@@ -5717,51 +5682,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         FIXME("Trying to set render target 0 to NULL\n");
         return WINED3DERR_INVALIDCALL;
     }
-    /* TODO: replace Impl* usage with interface usage */
     if (pRenderTarget && !((IWineD3DSurfaceImpl *)pRenderTarget)->resource.usage & WINED3DUSAGE_RENDERTARGET) {
         FIXME("(%p)Trying to set the render target to a surface(%p) that wasn't created with a usage of WINED3DUSAGE_RENDERTARGET\n",This ,pRenderTarget);
         return WINED3DERR_INVALIDCALL;
     }
-    /** TODO: check that the depth stencil format matches the render target, this is only done in debug
-     *        builds, but I think wine counts as a 'debug' build for now.
-      ******************************/
+
     /* If we are trying to set what we already have, don't bother */
     if (pRenderTarget == This->render_targets[RenderTargetIndex]) {
         TRACE("Trying to do a NOP SetRenderTarget operation\n");
-    } else {
-        /* Otherwise, set the render target up */
-
-        if (This->inScene) {
-            /* EndScene takes care for loading the pbuffer into the texture. Call EndScene and BeginScene until we have better offscreen handling */
-            IWineD3DDevice_EndScene(iface);
-            IWineD3DDevice_BeginScene(iface);
-        }
-        TRACE("clearing renderer\n");
-        /* IWineD3DDeviceImpl_CleanRender(iface); */
-        /* OpenGL doesn't support 'sharing' of the stencilBuffer so we may incure an extra memory overhead
-        depending on the renter target implementation being used.
-        A shared context implementation will share all buffers between all rendertargets (including swapchains),
-        implementations that use separate pbuffers for different swapchains or rendertargets will have to duplicate the
-        stencil buffer and incure an extra memory overhead */
-        if (RenderTargetIndex == 0) {
-            hr = IWineD3DDeviceImpl_ActiveRender(iface, pRenderTarget);
-        } else {
-            hr = WINED3D_OK;
-        }
-
-        /* Replace the render target */
-        if (This->render_targets[RenderTargetIndex]) IWineD3DSurface_Release(This->render_targets[RenderTargetIndex]);
-        This->render_targets[RenderTargetIndex] = pRenderTarget;
-        if (pRenderTarget) IWineD3DSurface_AddRef(pRenderTarget);
-
-        if (wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
-            set_render_target_fbo(iface, RenderTargetIndex, pRenderTarget);
-        }
+        return WINED3D_OK;
     }
+    if(pRenderTarget) IWineD3DSurface_AddRef(pRenderTarget);
+    if(This->render_targets[RenderTargetIndex]) IWineD3DSurface_Release(This->render_targets[RenderTargetIndex]);
+    This->render_targets[RenderTargetIndex] = pRenderTarget;
 
-    if (SUCCEEDED(hr)) {
+    /* Render target 0 is special */
+    if(RenderTargetIndex == 0) {
         /* Finally, reset the viewport as the MSDN states. */
-        /* TODO: Replace impl usage */
         viewport.Height = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height;
         viewport.Width  = ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Width;
         viewport.X      = 0;
@@ -5769,10 +5706,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetRenderTarget(IWineD3DDevice *iface, 
         viewport.MaxZ   = 1.0f;
         viewport.MinZ   = 0.0f;
         IWineD3DDeviceImpl_SetViewport(iface, &viewport);
+
+        /* Activate the new render target for now. This shouldn't stay here, but is needed until all methods using gl activate the
+         * ctx properly.
+         * Use resourceload usage, this will just set the drawables and context but not apply any states. The stateblock may be
+         * incomplete or incorrect when SetRenderTarget is called. DrawPrim() will apply the states when it is called.
+         */
+        ActivateContext(This, This->render_targets[0], CTXUSAGE_RESOURCELOAD);
     } else {
-        FIXME("Unknown error setting the render target\n");
+        /* We only get more than 1 render target with fbos, so no need to check the offscreen rendering method */
+        set_render_target_fbo(iface, RenderTargetIndex, pRenderTarget);
     }
-    return hr;
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *iface, IWineD3DSurface *pNewZStencil) {
@@ -5808,445 +5753,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDepthStencilSurface(IWineD3DDevice *
     }
 
     return hr;
-}
-
-
-#ifdef GL_VERSION_1_3
-/* Internal functions not in DirectX */
- /** TODO: move this off to the opengl context manager
- *(the swapchain doesn't need to know anything about offscreen rendering!)
-  ****************************************************/
-
-static HRESULT WINAPI IWineD3DDeviceImpl_CleanRender(IWineD3DDevice* iface, IWineD3DSwapChainImpl *swapchain)
-{
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    TRACE("(%p), %p\n", This, swapchain);
-
-    if (swapchain->win != swapchain->drawable) {
-        /* Set everything back the way it ws */
-        swapchain->render_ctx = swapchain->glCtx;
-        swapchain->drawable   = swapchain->win;
-    }
-    return WINED3D_OK;
-}
-
-/* TODO: move this off into a context manager so that GLX_ATI_render_texture and other types of surface can be used. */
-static HRESULT WINAPI IWineD3DDeviceImpl_FindGLContext(IWineD3DDevice *iface, IWineD3DSurface *pSurface, glContext **context) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i;
-    unsigned int width;
-    unsigned int height;
-    WINED3DFORMAT format;
-    WINED3DSURFACE_DESC surfaceDesc;
-    memset(&surfaceDesc, 0, sizeof(surfaceDesc));
-    surfaceDesc.Width  = &width;
-    surfaceDesc.Height = &height;
-    surfaceDesc.Format = &format;
-    IWineD3DSurface_GetDesc(pSurface, &surfaceDesc);
-    *context = NULL;
-    /* I need a get width/height function (and should do something with the format) */
-    for (i = 0; i < CONTEXT_CACHE; ++i) {
-        /** NOTE: the contextCache[i].pSurface == pSurface check ceates onepbuffer per surface
-        ATI cards don't destroy pbuffers, but as soon as resource releasing callbacks are inplace
-        the pSurface can be set to 0 allowing it to be reused from cache **/
-        if (This->contextCache[i].Width == width && This->contextCache[i].Height == height
-          && (!pbuffer_per_surface || This->contextCache[i].pSurface == pSurface || This->contextCache[i].pSurface == NULL)) {
-            *context = &This->contextCache[i];
-            break;
-        }
-        if (This->contextCache[i].Width == 0) {
-            This->contextCache[i].pSurface = pSurface;
-            This->contextCache[i].Width    = width;
-            This->contextCache[i].Height   = height;
-            *context = &This->contextCache[i];
-            break;
-        }
-    }
-    if (i == CONTEXT_CACHE) {
-        int minUsage = 0x7FFFFFFF; /* MAX_INT */
-        glContext *dropContext = 0;
-        for (i = 0; i < CONTEXT_CACHE; i++) {
-            if (This->contextCache[i].usedcount < minUsage) {
-                dropContext = &This->contextCache[i];
-                minUsage = This->contextCache[i].usedcount;
-            }
-        }
-        /* clean up the context (this doesn't work for ATI at the moment */
-#if 0
-        glXDestroyContext(swapchain->display, dropContext->context);
-        glXDestroyPbuffer(swapchain->display, dropContext->drawable);
-#endif
-        FIXME("Leak\n");
-        dropContext->Width = 0;
-        dropContext->pSurface = pSurface;
-        *context = dropContext;
-    } else {
-        if (++This->contextCache[i].usedcount == 0x7FFFFFFF /* MAX_INT */ - 1 ) {
-          for (i = 0; i < CONTEXT_CACHE; i++) {
-             This->contextCache[i].usedcount = max(0, This->contextCache[i].usedcount - (0x7FFFFFFF /* MAX_INT */ >> 1));
-          }
-        }
-    }
-    if (*context != NULL)
-        return WINED3D_OK;
-    else
-        return E_OUTOFMEMORY;
-}
-#endif
-
-/* Reapply the device stateblock */
-static void device_reapply_stateblock(IWineD3DDeviceImpl* This) {
-
-    BOOL oldRecording;  
-    IWineD3DStateBlockImpl *oldUpdateStateBlock;
-    DWORD i;
-
-    /* Disable recording */
-    oldUpdateStateBlock = This->updateStateBlock;
-    oldRecording= This->isRecordingState;
-    This->isRecordingState = FALSE;
-    This->updateStateBlock = This->stateBlock;
-
-    /* Reapply the state block */ 
-    IWineD3DStateBlock_Apply((IWineD3DStateBlock *)This->stateBlock);
-
-    /* Temporaryily mark all render states dirty to force reapplication
-     * until the context management for is integrated with the state management
-     * The same for the pixel shader, vertex declaration and vertex shader
-     * Sampler states and texture stage states are marked
-     * dirty my StateBlock::Apply already.
-     */
-    for(i = 1; i < WINEHIGHEST_RENDER_STATE; i++) {
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(i));
-    }
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_PIXELSHADER);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
-    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VSHADER);
-
-    /* Restore recording */
-    This->isRecordingState = oldRecording;
-    This->updateStateBlock = oldUpdateStateBlock;
-}
-
-/* Set offscreen rendering. When rendering offscreen the surface will be
- * rendered upside down to compensate for the fact that D3D texture coordinates
- * are flipped compared to GL texture coordinates. The cullmode is affected by
- * this, so it must be updated. To update the cullmode stateblock recording has
- * to be temporarily disabled. The new state management code will hopefully
- * make this unnecessary */
-static void device_render_to_texture(IWineD3DDeviceImpl* This, BOOL isTexture) {
-
-    BOOL oldRecording;
-    IWineD3DStateBlockImpl *oldUpdateStateBlock;
-
-    /* Nothing to update, return. */
-    if (This->render_offscreen == isTexture) return;
-
-    /* Disable recording */
-    oldUpdateStateBlock = This->updateStateBlock;
-    oldRecording= This->isRecordingState;
-    This->isRecordingState = FALSE;
-    This->updateStateBlock = This->stateBlock;
-
-    This->render_offscreen = isTexture;
-    if (This->depth_copy_state != WINED3D_DCS_NO_COPY) {
-        This->depth_copy_state = WINED3D_DCS_COPY;
-    }
-    This->contexts[0]->last_was_rhw = FALSE;
-    /* Viewport state will reapply the projection matrix for now */
-    IWineD3DDeviceImpl_MarkStateDirty(This, WINED3DRS_CULLMODE);
-
-    /* Restore recording */
-    This->isRecordingState = oldRecording;
-    This->updateStateBlock = oldUpdateStateBlock;
-}
-
-/* Returns an array of compatible FBconfig(s).
- * The array must be freed with XFree. Requires ENTER_GL() */
-
-static GLXFBConfig* device_find_fbconfigs(
-    IWineD3DDeviceImpl* This,
-    IWineD3DSwapChainImpl* implicitSwapchainImpl,
-    IWineD3DSurface* RenderSurface) {
-
-    GLXFBConfig* cfgs = NULL;
-    int nCfgs = 0;
-    int attribs[256];
-    int nAttribs = 0;
-
-    IWineD3DSurface *StencilSurface = This->stencilBufferTarget;
-    WINED3DFORMAT BackBufferFormat = ((IWineD3DSurfaceImpl *) RenderSurface)->resource.format;
-    WINED3DFORMAT StencilBufferFormat = (NULL != StencilSurface) ? ((IWineD3DSurfaceImpl *) StencilSurface)->resource.format : 0;
-
-    /**TODO:
-        if StencilSurface == NULL && zBufferTarget != NULL then switch the zbuffer off, 
-        it StencilSurface != NULL && zBufferTarget == NULL switch it on
-    */
-
-#define PUSH1(att)        attribs[nAttribs++] = (att);
-#define PUSH2(att,value)  attribs[nAttribs++] = (att); attribs[nAttribs++] = (value);
-
-    /* PUSH2(GLX_BIND_TO_TEXTURE_RGBA_ATI, True); examples of this are few and far between (but I've got a nice working one!)*/
-
-    PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT);
-    PUSH2(GLX_X_RENDERABLE,  TRUE);
-    PUSH2(GLX_DOUBLEBUFFER,  TRUE);
-    TRACE("calling makeglcfg\n");
-    D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, FALSE /* alternate */);
-    PUSH1(None);
-    TRACE("calling chooseFGConfig\n");
-    cfgs = glXChooseFBConfig(implicitSwapchainImpl->display,
-                             DefaultScreen(implicitSwapchainImpl->display),
-                             attribs, &nCfgs);
-    if (cfgs == NULL) {
-        /* OK we didn't find the exact config, so use any reasonable match */
-        /* TODO: fill in the 'requested' and 'current' depths, and make sure that's
-           why we failed. */
-        static BOOL show_message = TRUE;
-        if (show_message) {
-            ERR("Failed to find exact match, finding alternative but you may "
-                "suffer performance issues, try changing xfree's depth to match the requested depth\n");
-            show_message = FALSE;
-        }
-        nAttribs = 0;
-        PUSH2(GLX_DRAWABLE_TYPE, GLX_PBUFFER_BIT | GLX_WINDOW_BIT);
-        /* PUSH2(GLX_X_RENDERABLE,  TRUE); */
-        PUSH2(GLX_RENDER_TYPE,   GLX_RGBA_BIT);
-        PUSH2(GLX_DOUBLEBUFFER, FALSE);
-        TRACE("calling makeglcfg\n");
-        D3DFmtMakeGlCfg(BackBufferFormat, StencilBufferFormat, attribs, &nAttribs, TRUE /* alternate */);
-        PUSH1(None);
-        cfgs = glXChooseFBConfig(implicitSwapchainImpl->display,
-                                 DefaultScreen(implicitSwapchainImpl->display),
-                                 attribs, &nCfgs);
-    }
-                                                                                                                                                                      
-    if (cfgs == NULL) {
-        ERR("Could not get a valid FBConfig for (%u,%s)/(%u,%s)\n",
-            BackBufferFormat, debug_d3dformat(BackBufferFormat),
-            StencilBufferFormat, debug_d3dformat(StencilBufferFormat));
-    } else {
-#ifdef EXTRA_TRACES
-        int i;
-        for (i = 0; i < nCfgs; ++i) {
-            TRACE("for (%u,%s)/(%u,%s) found config[%d]@%p\n", BackBufferFormat,
-            debug_d3dformat(BackBufferFormat), StencilBufferFormat,
-            debug_d3dformat(StencilBufferFormat), i, cfgs[i]);
-        }
-        if (NULL != This->renderTarget) {
-            glFlush();
-            vcheckGLcall("glFlush");
-            /** This is only useful if the old render target was a swapchain,
-            * we need to supercede this with a function that displays
-            * the current buffer on the screen. This is easy to do in glx1.3 but
-            * we need to do copy-write pixels in glx 1.2.
-            ************************************************/
-            glXSwapBuffers(implicitSwapChainImpl->display,
-                           implicitSwapChainImpl->drawable);
-            printf("Hit Enter to get next frame ...\n");
-            getchar();
-        }
-#endif
-    }
-#undef PUSH1
-#undef PUSH2
-
-   return cfgs;
-}
-
-/** FIXME: This is currently used called whenever SetRenderTarget or SetStencilBuffer are called
-* the functionality needs splitting up so that we don't do more than we should do.
-* this only seems to impact performance a little.
- ******************************/
-static HRESULT WINAPI IWineD3DDeviceImpl_ActiveRender(IWineD3DDevice* iface,
-                                               IWineD3DSurface *RenderSurface) {
-
-    /**
-    * Currently only active for GLX >= 1.3
-    * for others versions we'll have to use GLXPixmaps
-    *
-    * normally we must test GLX_VERSION_1_3 but nvidia headers are not correct
-    * as they implement GLX 1.3 but only define GLX_VERSION_1_2
-    * so only check OpenGL version
-    * ..........................
-    * I don't believe that it is a problem with NVidia headers,
-    * XFree only supports GLX1.2, nVidia (and ATI to some extent) provide 1.3 functions
-    * in GLX 1.2, there is no mention of the correct way to tell if the extensions are provided.
-    * ATI Note:
-    * Your application will report GLX version 1.2 on glXQueryVersion.
-    * However, it is safe to call the GLX 1.3 functions as described below.
-    */
-#if defined(GL_VERSION_1_3)
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    GLXFBConfig* cfgs = NULL;
-    IWineD3DSwapChain     *currentSwapchain;
-    IWineD3DSwapChainImpl *currentSwapchainImpl;
-    IWineD3DSwapChain     *implicitSwapchain;
-    IWineD3DSwapChainImpl *implicitSwapchainImpl;
-    IWineD3DSwapChain     *renderSurfaceSwapchain;
-    IWineD3DSwapChainImpl *renderSurfaceSwapchainImpl;
-
-    /* Obtain a reference to the device implicit swapchain,
-     * the swapchain of the current render target,
-     * and the swapchain of the new render target.
-     * Fallback to device implicit swapchain if the current render target doesn't have one */
-    IWineD3DDevice_GetSwapChain(iface, 0, &implicitSwapchain);
-    IWineD3DSurface_GetContainer(RenderSurface, &IID_IWineD3DSwapChain, (void**) &renderSurfaceSwapchain);
-    IWineD3DSurface_GetContainer(This->render_targets[0], &IID_IWineD3DSwapChain, (void **)&currentSwapchain);
-    if (currentSwapchain == NULL)
-        IWineD3DDevice_GetSwapChain(iface, 0, &currentSwapchain);
-
-    currentSwapchainImpl = (IWineD3DSwapChainImpl*) currentSwapchain;
-    implicitSwapchainImpl = (IWineD3DSwapChainImpl*) implicitSwapchain;
-    renderSurfaceSwapchainImpl = (IWineD3DSwapChainImpl*) renderSurfaceSwapchain;
-
-    ENTER_GL();
-
-    /**
-    * TODO: remove the use of IWineD3DSwapChainImpl, a context manager will help since it will replace the
-    *  renderTarget = swapchain->backBuffer[i] bit and anything to do with *glContexts
-     **********************************************************************/
-    if (renderSurfaceSwapchain != NULL) {
-
-        /* We also need to make sure that the lights &co are also in the context of the swapchains */
-        /* FIXME: If the render target gets sent to the frontBuffer, should we be presenting it raw? */
-        TRACE("making swapchain active\n");
-        if (RenderSurface != This->render_targets[0]) {
-            BOOL backbuf = FALSE;
-            int i;
-
-            for(i = 0; i < renderSurfaceSwapchainImpl->presentParms.BackBufferCount; i++) {
-                if(RenderSurface == renderSurfaceSwapchainImpl->backBuffer[i]) {
-                    backbuf = TRUE;
-                    break;
-                }
-            }
-
-            if (backbuf) {
-            } else {
-                /* This could be flagged so that some operations work directly with the front buffer */
-                FIXME("Attempting to set the  renderTarget to the frontBuffer\n");
-            }
-            if (glXMakeCurrent(renderSurfaceSwapchainImpl->display,
-                               renderSurfaceSwapchainImpl->win,
-                               renderSurfaceSwapchainImpl->glCtx) == False) {
-
-                TRACE("Error in setting current context: context %p drawable %ld !\n",
-                       implicitSwapchainImpl->glCtx, implicitSwapchainImpl->win);
-            }
-            checkGLcall("glXMakeContextCurrent");
-
-            /* Clean up the old context */
-            IWineD3DDeviceImpl_CleanRender(iface, currentSwapchainImpl);
-
-            /* Reapply the stateblock, and set the device not to render to texture */
-            device_reapply_stateblock(This);
-            device_render_to_texture(This, FALSE);
-        }
-
-    /* Offscreen rendering: PBuffers (currently disabled).
-     * Also note that this path is never reached if FBOs are supported */
-    } else if (wined3d_settings.offscreen_rendering_mode == ORM_PBUFFER &&
-               (cfgs = device_find_fbconfigs(This, implicitSwapchainImpl, RenderSurface)) != NULL) {
-
-        /** ********************************************************************
-        * This is a quickly hacked out implementation of offscreen textures.
-        * It will work in most cases but there may be problems if the client
-        * modifies the texture directly, or expects the contents of the rendertarget
-        * to be persistent.
-        *
-        * There are some real speed vs compatibility issues here:
-        *    we should really use a new context for every texture, but that eats ram.
-        *    we should also be restoring the texture to the pbuffer but that eats CPU
-        *    we can also 'reuse' the current pbuffer if the size is larger than the requested buffer,
-        *    but if this means reusing the display backbuffer then we need to make sure that
-        *    states are correctly preserved.
-        * In many cases I would expect that we can 'skip' some functions, such as preserving states,
-        * and gain a good performance increase at the cost of compatibility.
-        * I would suggest that, when this is the case, a user configurable flag be made
-        * available, allowing the user to choose the best emulated experience for them.
-         *********************************************************************/
-
-        XVisualInfo *visinfo;
-        glContext   *newContext;
-
-        /* Here were using a shared context model */
-        if (WINED3D_OK != IWineD3DDeviceImpl_FindGLContext(iface, RenderSurface, &newContext)) {
-            FIXME("(%p) : Failed to find a context for surface %p\n", iface, RenderSurface);
-        }
-
-        /* If the context doesn't exist then create a new one */
-        /* TODO: This should really be part of findGlContext */
-        if (NULL == newContext->context) {
-
-            int attribs[256];
-            int nAttribs = 0;
-
-            TRACE("making new buffer\n");
-            attribs[nAttribs++] = GLX_PBUFFER_WIDTH; 
-            attribs[nAttribs++] = newContext->Width;
-            attribs[nAttribs++] = GLX_PBUFFER_HEIGHT;
-            attribs[nAttribs++] = newContext->Height;
-            attribs[nAttribs++] = None;
-
-            newContext->drawable = glXCreatePbuffer(implicitSwapchainImpl->display, cfgs[0], attribs);
-
-            /** ****************************************
-            *GLX1.3 isn't supported by XFree 'yet' until that point ATI emulates pBuffers
-            *they note:
-            *   In future releases, we may provide the calls glXCreateNewContext,
-            *   glXQueryDrawable and glXMakeContextCurrent.
-            *    so until then we have to use glXGetVisualFromFBConfig &co..
-            ********************************************/
-
-            visinfo = glXGetVisualFromFBConfig(implicitSwapchainImpl->display, cfgs[0]);
-            if (!visinfo) {
-                ERR("Error: couldn't get an RGBA, double-buffered visual\n");
-            } else {
-                newContext->context = glXCreateContext(
-                    implicitSwapchainImpl->display, visinfo,
-                    implicitSwapchainImpl->glCtx, GL_TRUE);
-
-                XFree(visinfo);
-            }
-        }
-        if (NULL == newContext || NULL == newContext->context) {
-            ERR("(%p) : Failed to find a context for surface %p\n", iface, RenderSurface);
-        } else {
-            /* Debug logging, (this function leaks), change to a TRACE when the leak is plugged */
-            if (glXMakeCurrent(implicitSwapchainImpl->display,
-                newContext->drawable, newContext->context) == False) {
-
-                TRACE("Error in setting current context: context %p drawable %ld\n",
-                    newContext->context, newContext->drawable);
-            }
-            checkGLcall("glXMakeContextCurrent");
-
-            /* Clean up the old context */
-            IWineD3DDeviceImpl_CleanRender(iface, currentSwapchainImpl);
-
-            /* Reapply stateblock, and set device to render to a texture */
-            device_reapply_stateblock(This);
-            device_render_to_texture(This, TRUE);
-
-            /* Set the current context of the swapchain to the new context */
-            implicitSwapchainImpl->drawable   = newContext->drawable;
-            implicitSwapchainImpl->render_ctx = newContext->context;
-        }
-    } else {
-        /* Same context, but update render_offscreen and cull mode */
-        device_render_to_texture(This, TRUE);
-    }
-
-    if (cfgs != NULL)                   XFree(cfgs);
-    if (implicitSwapchain != NULL)       IWineD3DSwapChain_Release(implicitSwapchain);
-    if (currentSwapchain != NULL)       IWineD3DSwapChain_Release(currentSwapchain);
-    if (renderSurfaceSwapchain != NULL) IWineD3DSwapChain_Release(renderSurfaceSwapchain);
-    LEAVE_GL();
-#endif
-    return WINED3D_OK;
 }
 
 static HRESULT  WINAPI  IWineD3DDeviceImpl_SetCursorProperties(IWineD3DDevice* iface, UINT XHotSpot,
@@ -6988,7 +6494,6 @@ void IWineD3DDeviceImpl_MarkStateDirty(IWineD3DDeviceImpl *This, DWORD state) {
     WineD3DContext *context;
 
     if(!rep) return;
-
     for(i = 0; i < This->numContexts; i++) {
         context = This->contexts[i];
         if(isStateDirty(context, rep)) continue;

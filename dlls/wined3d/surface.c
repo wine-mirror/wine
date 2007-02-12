@@ -237,6 +237,10 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         if(iface == device->ddraw_primary)
             device->ddraw_primary = NULL;
 
+        if(iface == device->lastActiveRenderTarget) {
+            device->lastActiveRenderTarget = NULL;
+        }
+
         TRACE("(%p) Released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
 
@@ -714,23 +718,17 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             } else if (swapchain != NULL) {
                 IWineD3DSwapChainImpl *implSwapChain;
                 IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
-                if (swapchain->glCtx == implSwapChain->render_ctx && swapchain->drawable == implSwapChain->win) {
-                        /* This will fail for the implicit swapchain, which is why there needs to be a context manager */
-                        if (backbuf) {
-                            glReadBuffer(GL_BACK);
-                        } else if (iface == swapchain->frontBuffer) {
-                            glReadBuffer(GL_FRONT);
-                        } else if (iface == myDevice->depthStencilBuffer) {
-                            FIXME("Stencil Buffer lock unsupported for now\n");
-                        } else {
-                            FIXME("Should have got here!\n");
-                            glReadBuffer(GL_BACK);
-                        }
+
+                /* ActivateContext should have selected the correct opengl context for that */
+                if (backbuf) {
+                    glReadBuffer(GL_BACK);
+                } else if (iface == swapchain->frontBuffer) {
+                    glReadBuffer(GL_FRONT);
+                } else if (iface == myDevice->depthStencilBuffer) {
+                    FIXME("Stencil Buffer lock unsupported for now\n");
                 } else {
-                    /* We need to switch contexts to be able to read the buffer!!! */
-                    FIXME("The buffer requested isn't in the current openGL context\n");
-                    notInContext = TRUE;
-                    /* TODO: check the contexts, to see if were shared with the current context */
+                    FIXME("Should have got here!\n");
+                    glReadBuffer(GL_BACK);
                 }
                 IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
             }

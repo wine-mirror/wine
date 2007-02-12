@@ -466,7 +466,7 @@ struct WineD3DContext {
     DWORD                   numDirtyEntries;
     DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
 
-    /* TODO: Render target / swapchain this ctx belongs to */
+    IWineD3DSurface         *surface;
     /* TODO: Thread this ctx belongs to                    */
 
     /* Stores some inforation about the context state for optimization */
@@ -478,6 +478,10 @@ struct WineD3DContext {
     BOOL                    lastWasPow2Texture[MAX_TEXTURES];
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
     BOOL                    last_was_blit;
+
+    /* The actual opengl context */
+    GLXContext              glCtx;
+    Drawable                drawable;
 };
 
 typedef enum ContextUsage {
@@ -487,6 +491,11 @@ typedef enum ContextUsage {
 } ContextUsage;
 
 void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
+WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Window win);
+WineD3DContext *AddContext(IWineD3DDeviceImpl *This, GLXContext glCtx, Drawable drawable);
+void DeleteContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
+void DestroyContext(IWineD3DDeviceImpl *This, WineD3DContext *context);
+void set_render_target_fbo(IWineD3DDevice *iface, DWORD idx, IWineD3DSurface *render_target);
 
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
@@ -547,32 +556,11 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
 
-/** Hacked out start of a context manager!! - Subject to removal **/
-typedef struct glContext {
-    int Width;
-    int Height;
-    int usedcount;
-    GLXContext context;
-
-    Drawable drawable;
-    IWineD3DSurface *pSurface;
-#if 0 /* TODO: someway to represent the state of the context */
-    IWineD3DStateBlock *pStateBlock;
-#endif
-/* a few other things like format */
-} glContext;
-
 /* TODO: setup some flags in the regestry to enable, disable pbuffer support
 (since it will break quite a few things until contexts are managed properly!) */
 extern BOOL pbuffer_support;
 /* allocate one pbuffer per surface */
 extern BOOL pbuffer_per_surface;
-
-/* Maximum number of contexts/pbuffers to keep in cache,
-set to 100 because ATI's drivers don't support deleting pBuffers properly
-this needs to be migrated to a list and some option availalbe for controle the cache size.
-*/
-#define CONTEXT_CACHE 100
 
 typedef struct ResourceList {
     IWineD3DResource         *resource;
@@ -633,6 +621,10 @@ struct IWineD3DDeviceImpl
 
     IWineD3DSurface        *stencilBufferTarget;
 
+    /* Caches to avoid unneeded context changes */
+    IWineD3DSurface        *lastActiveRenderTarget;
+    IWineD3DSwapChain      *lastActiveSwapChain;
+
     /* palettes texture management */
     PALETTEENTRY            palettes[MAX_PALETTES][256];
     UINT                    currentPalette;
@@ -661,9 +653,6 @@ struct IWineD3DDeviceImpl
     /* Device state management */
     HRESULT                 state;
     BOOL                    d3d_initialized;
-
-    /* Screen buffer resources - subject to removal */
-    glContext contextCache[CONTEXT_CACHE];
 
     /* A flag to check for proper BeginScene / EndScene call pairs */
     BOOL inScene;
@@ -695,9 +684,11 @@ struct IWineD3DDeviceImpl
     BOOL                      useDrawStridedSlow;
 
     /* Context management */
-    WineD3DContext          **contexts;   /* Dynamic array containing pointers to context structures */
-    UINT                    activeContext; /* Only 0 for now      */
-    UINT                    numContexts;   /* Always 1 for now    */
+    WineD3DContext          **contexts;                  /* Dynamic array containing pointers to context structures */
+    WineD3DContext          *activeContext;              /* Only 0 for now      */
+    UINT                    numContexts;                 /* Always 1 for now    */
+    WineD3DContext          *pbufferContext;             /* The context that has a pbuffer as drawable */
+    DWORD                   pbufferWidth, pbufferHeight; /* Size of the buffer drawable */
 };
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
@@ -1340,20 +1331,15 @@ typedef struct IWineD3DSwapChainImpl
 
     long prev_time, frames;   /* Performance tracking */
 
-    /* TODO: move everything up to drawable off into a context manager
-      and store the 'data' in the contextManagerData interface.
-    IUnknown                  *contextManagerData;
-    */
+    WineD3DContext         *context; /* Later a array for multithreading */
 
     HWND                    win_handle;
     Window                  win;
     Display                *display;
 
-    GLXContext              glCtx;
     XVisualInfo            *visInfo;
     GLXContext              render_ctx;
     /* This has been left in device for now, but needs moving off into a rendertarget management class and separated out from swapchains and devices. */
-    Drawable                drawable;
 } IWineD3DSwapChainImpl;
 
 extern const IWineD3DSwapChainVtbl IWineD3DSwapChain_Vtbl;

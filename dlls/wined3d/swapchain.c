@@ -125,10 +125,11 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
 
     /* Clean up the context */
     /* check that we are the current context first */
-    if(glXGetCurrentContext() == This->glCtx){
+    if(glXGetCurrentContext() == This->context->glCtx){
         glXMakeCurrent(This->display, None, NULL);
     }
-    glXDestroyContext(This->display, This->glCtx);
+    glXDestroyContext(This->display, This->context->glCtx);
+    DeleteContext(This->wineD3DDevice, This->context);
     /* IUnknown_Release(This->parent); This should only apply to the primary swapchain,
         all others are created by the caller, so releasing the parent should cause
         the child to be released, not the other way around!
@@ -183,15 +184,15 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
     if (pSourceRect || pDestRect) FIXME("Unhandled present options %p/%p\n", pSourceRect, pDestRect);
     /* TODO: If only source rect or dest rect are supplied then clip the window to match */
-    TRACE("preseting display %p, drawable %ld\n", This->display, This->drawable);
+    TRACE("preseting display %p, drawable %ld\n", This->display, This->context->drawable);
 
     /* Don't call checkGLcall, as glGetError is not applicable here */
     if (hDestWindowOverride && This->win_handle != hDestWindowOverride) {
         /* Set this swapchain up to point to the new destination.. */
-#ifdef USE_CONTEXT_MANAGER
-            /* TODO: use a context mamager */
-#endif
 
+            /* Ok, now we switch the opengl context behind the context manager's back. Tidy this up when
+             * the ctx manager is completely in place
+             */
             /* FIXME: Never access */
             IWineD3DSwapChainImpl *swapChainImpl;
             IWineD3DDevice_GetSwapChain((IWineD3DDevice *)This->wineD3DDevice, 0 , (IWineD3DSwapChain **)&swapChainImpl);
@@ -204,7 +205,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 XVisualInfo       template;
                 int               num;
                 Display          *oldDisplay = This->display;
-                GLXContext        oldContext = This->glCtx;
+                GLXContext        oldContext = This->context->glCtx;
                 IUnknown*         tmp;
                 GLXContext        currentContext;
                 Drawable          currentDrawable;
@@ -234,21 +235,21 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
                 /* Now we have problems? well not really we just need to know what the implicit context is */
                 /* now destroy the old context and create a new one (we should really copy the buffers over, and do the whole make current thing! */
                 /* destroy the active context?*/
-                TRACE("Creating new context for %p %p %p\n",This->display, This->visInfo, swapChainImpl->glCtx);
-                This->glCtx = glXCreateContext(This->display, This->visInfo, swapChainImpl->glCtx, GL_TRUE);
+                TRACE("Creating new context for %p %p %p\n",This->display, This->visInfo, swapChainImpl->context->glCtx);
+                This->context->glCtx = glXCreateContext(This->display, This->visInfo, swapChainImpl->context->glCtx, GL_TRUE);
 
-                if (NULL == This->glCtx) {
+                if (NULL == This->context->glCtx) {
                     ERR("cannot create glxContext\n");
                 }
-                This->drawable     = This->win;
-                This->render_ctx   = This->glCtx;
+                This->context->drawable     = This->win;
+                This->render_ctx   = This->context->glCtx;
                 /* Setup some default states TODO: apply the stateblock to the new context */
                 /** save current context and drawable **/
                 currentContext  =   glXGetCurrentContext();
                 currentDrawable =   glXGetCurrentDrawable();
 
-                if (glXMakeCurrent(This->display, This->win, This->glCtx) == False) {
-                    ERR("Error in setting current context (display %p context %p drawable %ld)!\n", This->display, This->glCtx, This->win);
+                if (glXMakeCurrent(This->display, This->win, This->context->glCtx) == False) {
+                    ERR("Error in setting current context (display %p context %p drawable %ld)!\n", This->display, This->context->glCtx, This->win);
                 }
 
                 checkGLcall("glXMakeCurrent");
@@ -301,7 +302,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
 
         /* TODO: The slow way, save the data to memory, create a new context for the destination window, transfer the data cleanup, it may be a good idea to the move this swapchain over to the using the target winows context so that it runs faster in feature. */
 
-    glXSwapBuffers(This->display, This->drawable); /* TODO: cycle through the swapchain buffers */
+    glXSwapBuffers(This->display, This->context->drawable); /* TODO: cycle through the swapchain buffers */
 
     TRACE("glXSwapBuffers called, Starting new frame\n");
     /* FPS support */
