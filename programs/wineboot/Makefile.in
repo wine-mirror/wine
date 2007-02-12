@@ -4,7 +4,8 @@ SRCDIR    = @srcdir@
 VPATH     = @srcdir@
 MODULE    = wineboot.exe
 APPMODE   = -mconsole
-IMPORTS   = version user32 advapi32 kernel32
+IMPORTS   = shell32 shlwapi version user32 advapi32 kernel32
+EXTRALIBS = -luuid
 
 C_SRCS = \
 	shutdown.c \

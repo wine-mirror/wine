@@ -37,9 +37,9 @@
  * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, synch)
  * - HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch)
  * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run (all, asynch)
- * - Startup folders (all, ?asynch?, no imp)
+ * - Startup folders (all, ?asynch?)
  * - HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\RunOnce (all, asynch)
- *   
+ *
  * Somewhere in there is processing the RunOnceEx entries (also no imp)
  * 
  * Bugs:
@@ -62,6 +62,12 @@
 #endif
 #include <windows.h>
 #include <wine/debug.h>
+
+#define COBJMACROS
+#include <shlobj.h>
+#include <shobjidl.h>
+#include <shlwapi.h>
+#include <shellapi.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
@@ -616,6 +622,88 @@ static int ProcessWindowsFileProtection(void)
     return 1;
 }
 
+/* Process items in the StartUp group of the user's Programs under the Start Menu. Some installers put
+ * shell links here to restart themselves after boot. */
+static BOOL ProcessStartupItems(void)
+{
+    BOOL ret = FALSE;
+    HRESULT hr;
+    int iRet;
+    IMalloc *ppM = NULL;
+    IShellFolder *psfDesktop = NULL, *psfStartup = NULL;
+    LPITEMIDLIST pidlStartup = NULL, pidlItem;
+    ULONG NumPIDLs;
+    IEnumIDList *iEnumList = NULL;
+    STRRET strret;
+    WCHAR wszCommand[MAX_PATH];
+
+    WINE_TRACE("Processing items in the StartUp folder.\n");
+
+    hr = SHGetMalloc(&ppM);
+    if (FAILED(hr))
+    {
+	WINE_ERR("Couldn't get IMalloc object.\n");
+	goto done;
+    }
+
+    hr = SHGetDesktopFolder(&psfDesktop);
+    if (FAILED(hr))
+    {
+	WINE_ERR("Couldn't get desktop folder.\n");
+	goto done;
+    }
+
+    hr = SHGetSpecialFolderLocation(NULL, CSIDL_STARTUP, &pidlStartup);
+    if (FAILED(hr))
+    {
+	WINE_TRACE("Couldn't get StartUp folder location.\n");
+	goto done;
+    }
+
+    hr = IShellFolder_BindToObject(psfDesktop, pidlStartup, NULL, &IID_IShellFolder, (LPVOID*)&psfStartup);
+    if (FAILED(hr))
+    {
+	WINE_TRACE("Couldn't bind IShellFolder to StartUp folder.\n");
+	goto done;
+    }
+
+    hr = IShellFolder_EnumObjects(psfStartup, NULL, SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList);
+    if (FAILED(hr))
+    {
+	WINE_TRACE("Unable to enumerate StartUp objects.\n");
+	goto done;
+    }
+
+    while (IEnumIDList_Next(iEnumList, 1, &pidlItem, &NumPIDLs) == S_OK &&
+	   (NumPIDLs) == 1)
+    {
+	hr = IShellFolder_GetDisplayNameOf(psfStartup, pidlItem, SHGDN_FORPARSING, &strret);
+	if (FAILED(hr))
+	    WINE_TRACE("Unable to get display name of enumeration item.\n");
+	else
+	{
+	    hr = StrRetToBufW(&strret, pidlItem, wszCommand, MAX_PATH);
+	    if (FAILED(hr))
+		WINE_TRACE("Unable to parse display name.\n");
+	    else
+		if ((iRet = (int)ShellExecuteW(NULL, NULL, wszCommand, NULL, NULL, SW_SHOWNORMAL)) <= 32)
+		    WINE_ERR("Error %d executing command %s.\n", iRet, wine_dbgstr_w(wszCommand));
+	}
+
+	IMalloc_Free(ppM, pidlItem);
+    }
+
+    /* Return success */
+    ret = TRUE;
+
+done:
+    if (iEnumList) IEnumIDList_Release(iEnumList);
+    if (psfStartup) IShellFolder_Release(psfStartup);
+    if (pidlStartup) IMalloc_Free(ppM, pidlStartup);
+
+    return ret;
+}
+
 static void usage(void)
 {
     WINE_MESSAGE( "Usage: wineboot [options]\n" );
@@ -732,7 +820,9 @@ int main( int argc, char *argv[] )
                 FALSE, FALSE )) &&
         (!ops.postlogin || !ops.startup ||
          ProcessRunKeys( HKEY_CURRENT_USER, runkeys_names[RUNKEY_RUN],
-                FALSE, FALSE ));
+                FALSE, FALSE )) &&
+	(!ops.postlogin || !ops.startup ||
+	 ProcessStartupItems( ));
 
     WINE_TRACE("Operation done\n");
 
