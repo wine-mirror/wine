@@ -73,7 +73,7 @@ struct SysMouseImpl
 /* FIXME: This is ugly and not thread safe :/ */
 static IDirectInputDevice8A* current_lock = NULL;
 
-static GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
+static const GUID DInput_Wine_Mouse_GUID = { /* 9e573ed8-7734-11d2-8d4a-23903fb6bdf7 */
     0x9e573ed8,
     0x7734,
     0x11d2,

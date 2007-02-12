@@ -113,7 +113,7 @@ struct JoystickImpl
 	POV				povs[4];
 };
 
-static GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
+static const GUID DInput_Wine_Joystick_GUID = { /* 9e573ed9-7734-11d2-8d4a-23903fb6bdf7 */
   0x9e573ed9,
   0x7734,
   0x11d2,

@@ -93,7 +93,7 @@ static LRESULT CALLBACK KeyboardCallback( int code, WPARAM wparam, LPARAM lparam
     return CallNextHookEx(0, code, wparam, lparam);
 }
 
-static GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a96441 */
+static const GUID DInput_Wine_Keyboard_GUID = { /* 0ab8648a-7735-11d2-8c73-71df54a96441 */
   0x0ab8648a,
   0x7735,
   0x11d2,
