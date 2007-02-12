@@ -360,7 +360,7 @@ static HRESULT do_process_root_key(LPCOLESTR data, BOOL do_register)
     LPCOLESTR iter = data;
     strbuf buf;
     HRESULT hres = S_OK;
-    int i;
+    unsigned int i;
 
     strbuf_init(&buf);
     hres = get_word(&iter, &buf);
