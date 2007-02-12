@@ -114,7 +114,10 @@ static ULONG create_page_control( ULONG pagesize, struct WLDAP32_berval *cookie,
 
     ctrl = HeapAlloc( GetProcessHeap(), 0, sizeof(LDAPControlW) );
     if (!ctrl)
+    {
+        HeapFree( GetProcessHeap(), 0, val );
         return WLDAP32_LDAP_NO_MEMORY;
+    }
 
     ctrl->ldctl_oid = strAtoW( LDAP_PAGED_RESULT_OID_STRING );
     ctrl->ldctl_value.bv_len = len;
