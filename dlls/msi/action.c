@@ -4503,6 +4503,12 @@ static UINT ACTION_DeleteServices( MSIPACKAGE *package )
         'S','e','r','v','i','c','e','C','o','n','t','r','o','l',0 };
     return msi_unimplemented_action_stub( package, "DeleteServices", table );
 }
+static UINT ACTION_ValidateProductID( MSIPACKAGE *package )
+{
+	static const WCHAR table[] = {
+		'P','r','o','d','u','c','t','I','D',0 };
+	return msi_unimplemented_action_stub( package, "ValidateProductID", table );
+}
 
 static UINT ACTION_WriteEnvironmentStrings( MSIPACKAGE *package )
 {
@@ -4634,7 +4640,7 @@ static const struct _actions StandardActions[] = {
     { szUnregisterMIMEInfo, NULL},
     { szUnregisterProgIdInfo, NULL},
     { szUnregisterTypeLibraries, NULL},
-    { szValidateProductID, NULL},
+    { szValidateProductID, ACTION_ValidateProductID},
     { szWriteEnvironmentStrings, ACTION_WriteEnvironmentStrings },
     { szWriteIniValues, ACTION_WriteIniValues },
     { szWriteRegistryValues, ACTION_WriteRegistryValues},
