@@ -549,7 +549,7 @@ static void InternetTimeToSystemTimeW_test(void)
     ret = InternetTimeToSystemTimeW( string, NULL, 0 );
     ok( !ret, "InternetTimeToSystemTimeW succeeded (%u)\n", GetLastError() );
 
-    ret = InternetTimeToSystemTimeW( string, &time, 1 );
+    ret = InternetTimeToSystemTimeW( string, &time, 0 );
     ok( ret, "InternetTimeToSystemTimeW failed (%u)\n", GetLastError() );
 
     ret = InternetTimeToSystemTimeW( string, &time, 0 );
