@@ -2933,6 +2933,7 @@ void WINAPI NdrConvert2( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, LO
      is to raise an exception */
 }
 
+#include "pshpack1.h"
 typedef struct _NDR_CSTRUCT_FORMAT
 {
     unsigned char type;
@@ -2940,6 +2941,7 @@ typedef struct _NDR_CSTRUCT_FORMAT
     unsigned short memory_size;
     short offset_to_array_description;
 } NDR_CSTRUCT_FORMAT, NDR_CVSTRUCT_FORMAT;
+#include "poppack.h"
 
 /***********************************************************************
  *           NdrConformantStructMarshall [RPCRT4.@]
@@ -3509,6 +3511,7 @@ void WINAPI NdrConformantVaryingStructFree(PMIDL_STUB_MESSAGE pStubMsg,
     EmbeddedPointerFree(pStubMsg, pMemory, pFormat);
 }
 
+#include "pshpack1.h"
 typedef struct
 {
     unsigned char type;
@@ -3522,6 +3525,7 @@ typedef struct
     unsigned char alignment;
     unsigned long total_size;
 } NDR_LGFARRAY_FORMAT;
+#include "poppack.h"
 
 /***********************************************************************
  *           NdrFixedArrayMarshall [RPCRT4.@]
