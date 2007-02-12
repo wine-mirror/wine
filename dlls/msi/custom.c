@@ -789,30 +789,18 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
     return wait_process_handle(package, type, info.hProcess, action);
 }
 
-
 void ACTION_FinishCustomActions(MSIPACKAGE* package)
 {
-    struct list *item, *cursor;
-    DWORD rc;
+    struct list *item;
 
-    LIST_FOR_EACH_SAFE( item, cursor, &package->RunningActions )
+    while ((item = list_head( &package->RunningActions )))
     {
         MSIRUNNINGACTION *action = LIST_ENTRY( item, MSIRUNNINGACTION, entry );
 
-        TRACE("Checking on action %s\n", debugstr_w(action->name));
-
         list_remove( &action->entry );
 
-        if (action->process)
-            GetExitCodeProcess( action->handle, &rc );
-        else
-            GetExitCodeThread( action->handle, &rc );
-
-        if (rc == STILL_ACTIVE)
-        {
-            TRACE("Waiting on action %s\n", debugstr_w( action->name) );
-            msi_dialog_check_messages( action->handle );
-        }
+        TRACE("waiting for %s\n", debugstr_w( action->name ) );
+        msi_dialog_check_messages( action->handle );
 
         CloseHandle( action->handle );
         msi_free( action->name );
