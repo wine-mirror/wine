@@ -609,7 +609,7 @@ typedef union DECLSPEC_ALIGN(16) _SLIST_HEADER {
     struct {
         ULONGLONG Alignment;
         ULONGLONG Region;
-    };
+    } DUMMYSTRUCTNAME;
     struct {
         ULONGLONG Depth:16;
         ULONGLONG Sequence:9;
@@ -642,7 +642,7 @@ typedef union _SLIST_HEADER {
         SLIST_ENTRY Next;
         WORD Depth;
         WORD Sequence;
-    };
+    } DUMMYSTRUCTNAME;
 } SLIST_HEADER, *PSLIST_HEADER;
 
 #endif
