@@ -632,6 +632,45 @@ done:
     ok(InternetCloseHandle(hSession), "Close session handle failed\n");
 }
 
+static void InternetOpenRequest_test(void)
+{
+    HINTERNET session, connect, request;
+    static const char *types[] = { "*", "", NULL };
+    static const WCHAR slash[] = {'/', 0}, any[] = {'*', 0}, empty[] = {0};
+    static const WCHAR *typesW[] = { any, empty, NULL };
+    BOOL ret;
+
+    session = InternetOpenA("Wine Regression Test", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ok(session != NULL ,"Unable to open Internet session\n");
+
+    connect = InternetConnectA(session, "winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL,
+                              INTERNET_SERVICE_HTTP, 0, 0);
+    ok(connect != NULL, "Unable to connect to http://winehq.org\n");
+
+    request = HttpOpenRequestA(connect, NULL, "/", NULL, NULL, types, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    if (!request && GetLastError() == ERROR_INTERNET_NAME_NOT_RESOLVED)
+    {
+        trace( "Network unreachable, skipping test\n" );
+        goto done;
+    }
+    ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    ok(InternetCloseHandle(request), "Close request handle failed\n");
+
+    request = HttpOpenRequestW(connect, NULL, slash, NULL, NULL, typesW, INTERNET_FLAG_NO_CACHE_WRITE, 0);
+    ok(request != NULL, "Failed to open request handle err %u\n", GetLastError());
+
+    ret = HttpSendRequest(request, NULL, 0, NULL, 0);
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
+    ok(InternetCloseHandle(request), "Close request handle failed\n");
+
+done:
+    ok(InternetCloseHandle(connect), "Close connect handle failed\n");
+    ok(InternetCloseHandle(session), "Close session handle failed\n");
+}
+
 static void HttpHeaders_test(void)
 {
     HINTERNET hSession;
@@ -1092,6 +1131,7 @@ START_TEST(http)
     InternetReadFile_test(INTERNET_FLAG_ASYNC);
     InternetReadFile_test(0);
     InternetReadFileExA_test(INTERNET_FLAG_ASYNC);
+    InternetOpenRequest_test();
     InternetOpenUrlA_test();
     InternetTimeFromSystemTimeA_test();
     InternetTimeFromSystemTimeW_test();

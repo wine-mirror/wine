@@ -803,11 +803,11 @@ HINTERNET WINAPI HttpOpenRequestA(HINTERNET hHttpSession,
     if (lpszAcceptTypes)
     {
         /* find out how many there are */
-        while (lpszAcceptTypes[acceptTypesCount]) 
+        while (lpszAcceptTypes[acceptTypesCount] && *lpszAcceptTypes[acceptTypesCount])
             acceptTypesCount++;
         szAcceptTypes = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *) * (acceptTypesCount+1));
         acceptTypesCount = 0;
-        while (lpszAcceptTypes[acceptTypesCount])
+        while (lpszAcceptTypes[acceptTypesCount] && *lpszAcceptTypes[acceptTypesCount])
         {
             len = MultiByteToWideChar(CP_ACP, 0, lpszAcceptTypes[acceptTypesCount],
                                 -1, NULL, 0 );
@@ -1111,12 +1111,17 @@ HINTERNET WINAPI HTTP_HttpOpenRequestW(LPWININETHTTPSESSIONW lpwhs,
     if (NULL != lpszReferrer && strlenW(lpszReferrer))
         HTTP_ProcessHeader(lpwhr, HTTP_REFERER, lpszReferrer, HTTP_ADDHDR_FLAG_COALESCE);
 
-    if(lpszAcceptTypes!=NULL)
+    if (lpszAcceptTypes)
     {
         int i;
-        for(i=0;lpszAcceptTypes[i]!=NULL;i++)
+        for (i = 0; lpszAcceptTypes[i]; i++)
+        {
+            if (!*lpszAcceptTypes[i]) continue;
             HTTP_ProcessHeader(lpwhr, HTTP_ACCEPT, lpszAcceptTypes[i],
-                               HTTP_ADDHDR_FLAG_COALESCE_WITH_COMMA|HTTP_ADDHDR_FLAG_REQ|(i == 0 ? HTTP_ADDHDR_FLAG_REPLACE : 0));
+                               HTTP_ADDHDR_FLAG_COALESCE_WITH_COMMA |
+                               HTTP_ADDHDR_FLAG_REQ |
+                               (i == 0 ? HTTP_ADDHDR_FLAG_REPLACE : 0));
+        }
     }
 
     if (NULL == lpszVerb)
