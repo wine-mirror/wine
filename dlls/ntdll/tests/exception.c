@@ -39,6 +39,7 @@
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
+static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static void *code_mem;
 
 /* Test various instruction combinations that cause a protection fault on the i386,
@@ -183,6 +184,79 @@ static void run_exception_test(const void *handler, const void* context,
     func();
     pNtCurrentTeb()->Tib.ExceptionList = exc_frame.frame.Prev;
 }
+
+static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
+                      CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
+{
+    trace( "exception: %08x flags:%x addr:%p context: Eip:%x\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip );
+
+    todo_wine {
+    ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
+       rec->ExceptionAddress, (char *)code_mem + 0xb);
+    }
+
+    /* check that context.Eip is fixed up only for EXCEPTION_BREAKPOINT
+     * even if raised by RtlRaiseException
+     */
+    if(rec->ExceptionCode == EXCEPTION_BREAKPOINT)
+    {
+        todo_wine {
+        ok(context->Eip == (DWORD)code_mem + 0xa, "Eip at %x instead of %x\n",
+           context->Eip, (DWORD)code_mem + 0xa);
+        }
+    }
+    else
+    {
+        ok(context->Eip == (DWORD)code_mem + 0xb, "Eip at %x instead of %x\n",
+           context->Eip, (DWORD)code_mem + 0xb);
+    }
+
+    /* Eip in context is decreased by 1
+     * Increase it again, else execution will continue in the middle of a instruction */
+    if(rec->ExceptionCode == EXCEPTION_BREAKPOINT && (context->Eip == (DWORD)code_mem + 0xa))
+        context->Eip += 1;
+    return ExceptionContinueExecution;
+}
+
+
+static const BYTE call_one_arg_code[] = {
+        0x8b, 0x44, 0x24, 0x08, /* mov 0x8(%esp),%eax */
+        0x50,                   /* push %eax */
+        0x8b, 0x44, 0x24, 0x08, /* mov 0x8(%esp),%eax */
+        0xff, 0xd0,             /* call *%eax */
+        0x90,                   /* nop */
+        0x90,                   /* nop */
+        0x90,                   /* nop */
+        0x90,                   /* nop */
+        0xc3,                   /* ret */
+};
+
+
+static void run_rtlraiseexception_test(DWORD exceptioncode)
+{
+
+    EXCEPTION_REGISTRATION_RECORD frame;
+    EXCEPTION_RECORD record;
+
+    void (*func)(void* function, EXCEPTION_RECORD* record) = code_mem;
+
+    record.ExceptionCode = exceptioncode;
+    record.ExceptionFlags = 0;
+    record.ExceptionRecord = NULL;
+    record.ExceptionAddress = NULL; /* does not matter, copied return address */
+    record.NumberParameters = 0;
+
+    frame.Handler = rtlraiseexception_handler;
+    frame.Prev = pNtCurrentTeb()->Tib.ExceptionList;
+
+    memcpy(code_mem, call_one_arg_code, sizeof(call_one_arg_code));
+
+    pNtCurrentTeb()->Tib.ExceptionList = &frame;
+    func(pRtlRaiseException, &record);
+    pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
+}
+
 
 static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
@@ -391,6 +465,8 @@ static void test_exceptions(void)
 
     pNtGetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtGetContextThread" );
     pNtSetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtSetContextThread" );
+    pRtlRaiseException  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlRaiseException" );
+
     if (!pNtGetContextThread || !pNtSetContextThread)
     {
         trace( "NtGetContextThread/NtSetContextThread not found, skipping tests\n" );
@@ -399,6 +475,15 @@ static void test_exceptions(void)
 
     /* test handling of debug registers */
     run_exception_test(dreg_handler, NULL, &segfault_code, sizeof(segfault_code));
+
+    if (pRtlRaiseException)
+    {
+        run_rtlraiseexception_test(0x12345);
+        run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
+        run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+    }
+    else
+        skip( "RtlRaiseException not found\n" );
 
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
