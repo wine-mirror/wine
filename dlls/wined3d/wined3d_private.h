@@ -290,6 +290,7 @@ do {                                                                            
 typedef struct IWineD3DStateBlockImpl IWineD3DStateBlockImpl;
 typedef struct IWineD3DSurfaceImpl    IWineD3DSurfaceImpl;
 typedef struct IWineD3DPaletteImpl    IWineD3DPaletteImpl;
+typedef struct IWineD3DDeviceImpl     IWineD3DDeviceImpl;
 
 /* Tracking */
 
@@ -478,6 +479,14 @@ struct WineD3DContext {
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
 };
 
+typedef enum ContextUsage {
+    CTXUSAGE_RESOURCELOAD       = 1,    /* Only loads textures: No State is applied */
+    CTXUSAGE_DRAWPRIM           = 2,    /* OpenGL states are set up for blitting DirectDraw surfacs */
+    CTXUSAGE_BLIT               = 3,    /* OpenGL states are set up 3D drawing */
+} ContextUsage;
+
+void ActivateContext(IWineD3DDeviceImpl *device, IWineD3DSurface *target, ContextUsage usage);
+
 /* Routine to fill gl caps for swapchains and IWineD3D */
 BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display);
 
@@ -575,7 +584,7 @@ void dumpResources(ResourceList *resources);
 /*****************************************************************************
  * IWineD3DDevice implementation structure
  */
-typedef struct IWineD3DDeviceImpl
+struct IWineD3DDeviceImpl
 {
     /* IUnknown fields      */
     const IWineD3DDeviceVtbl *lpVtbl;
@@ -688,7 +697,7 @@ typedef struct IWineD3DDeviceImpl
     WineD3DContext          contexts[1];   /* Dynamic array later */
     UINT                    activeContext; /* Only 0 for now      */
     UINT                    numContexts;   /* Always 1 for now    */
-} IWineD3DDeviceImpl;
+};
 
 extern const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl;
 

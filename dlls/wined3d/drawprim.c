@@ -1178,10 +1178,7 @@ void drawPrimitive(IWineD3DDevice *iface,
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DSwapChainImpl         *swapchain;
-    int                           i;
-    DWORD                         dirtyState, idx;
-    BYTE                          shift;
-    WineD3DContext                *context;
+    int i;
 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
@@ -1198,18 +1195,7 @@ void drawPrimitive(IWineD3DDevice *iface,
     /* Ok, we will be updating the screen from here onwards so grab the lock */
     ENTER_GL();
 
-    /* TODO: Find the correct context for the render target / thread */
-    context = &This->contexts[This->activeContext];
-
-    /* Apply dirty states */
-    for(i=0; i < context->numDirtyEntries; i++) {
-        dirtyState = context->dirtyArray[i];
-        idx = dirtyState >> 5;
-        shift = dirtyState & 0x1f;
-        context->isStateDirty[idx] &= ~(1 << shift);
-        StateTable[dirtyState].apply(dirtyState, This->stateBlock, context);
-    }
-    context->numDirtyEntries = 0; /* This makes the whole list clean */
+    ActivateContext(This, This->render_targets[0], CTXUSAGE_DRAWPRIM);
 
     if (TRACE_ON(d3d_draw) && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         check_fbo_status(iface);
