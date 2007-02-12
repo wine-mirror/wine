@@ -42,7 +42,7 @@ typedef struct {
     STREAM_TYPE StreamType;
 } IMediaStreamImpl;
 
-static struct IMediaStreamVtbl MediaStream_Vtbl;
+static const struct IMediaStreamVtbl MediaStream_Vtbl;
 
 HRESULT MediaStream_create(IMultiMediaStream* Parent, const MSPID* pPurposeId, STREAM_TYPE StreamType, IMediaStream** ppMediaStream)
 {
@@ -166,7 +166,7 @@ static HRESULT WINAPI IMediaStreamImpl_SendEndOfStream(IMediaStream* iface, DWOR
     return S_FALSE;
 }
 
-static IMediaStreamVtbl MediaStream_Vtbl =
+static const struct IMediaStreamVtbl MediaStream_Vtbl =
 {
     IMediaStreamImpl_QueryInterface,
     IMediaStreamImpl_AddRef,
