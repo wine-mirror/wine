@@ -463,6 +463,7 @@ void CC_PaintTriangle( HWND hDlg, int y)
  int height;
  int oben;
  RECT rect;
+ HBRUSH hbr;
  HWND hwnd = GetDlgItem(hDlg, 0x2be);
  LCCPRIV lpp = (LCCPRIV) GetPropW( hDlg, szColourDialogProp );
 
@@ -483,7 +484,9 @@ void CC_PaintTriangle( HWND hDlg, int y)
    points[2].y = points[0].y - w;
    points[2].x = points[1].x = points[0].x + w;
 
-   FillRect(hDC, &lpp->old3angle, (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND));
+   hbr = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND);
+   if (!hbr) hbr = GetSysColorBrush(COLOR_BTNFACE);
+   FillRect(hDC, &lpp->old3angle, hbr);
    lpp->old3angle.left  = points[0].x;
    lpp->old3angle.right = points[1].x + 1;
    lpp->old3angle.top   = points[2].y - 1;
@@ -740,7 +743,9 @@ static void CC_PaintPredefColorArray( HWND hDlg, int rows, int cols)
 
  hdc = GetDC(hwnd);
  GetClientRect(hwnd, &rect);
- FillRect(hdc, &rect, (HBRUSH)GetClassLongPtrW(hwnd, GCLP_HBRBACKGROUND));
+ hBrush = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND);
+ if (!hBrush) hBrush = GetSysColorBrush(COLOR_BTNFACE);
+ FillRect(hdc, &rect, hBrush);
  for ( j = 0; j < rows; j++ )
  {
   for ( i = 0; i < cols; i++ )
@@ -784,7 +789,9 @@ void CC_PaintUserColorArray( HWND hDlg, int rows, int cols, COLORREF* lpcr )
  hdc = GetDC(hwnd);
  if (hdc)
  {
-  FillRect(hdc, &rect, (HBRUSH)GetClassLongPtrW(hwnd, GCLP_HBRBACKGROUND) );
+  hBrush = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND);
+  if (!hBrush) hBrush = GetSysColorBrush(COLOR_BTNFACE);
+  FillRect( hdc, &rect, hBrush );
   for (j = 0; j < rows; j++)
   {
    for (i = 0; i < cols; i++)
