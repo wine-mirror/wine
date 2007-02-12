@@ -2191,6 +2191,240 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DS
     return IWineD3DDevice_Present(D3D, NULL, NULL, 0, NULL);
 }
 
+/* Does a direct frame buffer -> texture copy. Stretching is done
+ * with single pixel copy calls
+ */
+static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface, IWineD3DSwapChainImpl *swapchain, WINED3DRECT *srect, WINED3DRECT *drect, BOOL upsidedown) {
+    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
+    float xrel, yrel;
+    UINT row;
+    BOOL warned = FALSE; /* deliberately not static */
+    IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
+
+    ENTER_GL();
+
+    ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+
+    /* Bind the target texture */
+    glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
+    checkGLcall("glBindTexture");
+    if(swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) {
+        glReadBuffer(GL_BACK);
+    } else {
+        glReadBuffer(GL_FRONT);
+    }
+    checkGLcall("glReadBuffer");
+
+    xrel = (float) (srect->x2 - srect->x1) / (float) (drect->x2 - drect->x1);
+    yrel = (float) (srect->y2 - srect->y1) / (float) (drect->y2 - drect->y1);
+
+    if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
+        FIXME("Doing a pixel by pixel copy from the framebuffer to a texture, expect major performance issues\n");
+    }
+
+    if(upsidedown &&
+       !((xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) &&
+       !((yrel - 1.0 < -eps) || (yrel - 1.0 > eps))) {
+        /* Upside down copy without stretching is nice, one glCopyTexSubImage call will do */
+
+        glCopyTexSubImage2D(This->glDescription.target,
+                            This->glDescription.level,
+                            drect->x1, drect->y1, /* xoffset, yoffset */
+                            srect->x1, Src->currentDesc.Height - srect->y2,
+                            drect->x2 - drect->x1, drect->y2 - drect->y1);
+    } else {
+        UINT yoffset = Src->currentDesc.Height - srect->y1 + drect->y1 - 1;
+        /* I have to process this row by row to swap the image,
+         * otherwise it would be upside down, so streching in y direction
+         * doesn't cost extra time
+         *
+         * However, streching in x direction can be avoided if not necessary
+         */
+        for(row = drect->y1; row < drect->y2; row++) {
+            if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
+                /* Well, that stuff works, but it's very slow.
+                 * find a better way instead
+                 */
+                UINT col;
+
+                if(!warned) {
+                    warned = TRUE;
+                    FIXME("Doing a pixel by pixel render target -> texture copy, expect performance issues\n");
+                }
+
+                for(col = drect->x1; col < drect->x2; col++) {
+                    glCopyTexSubImage2D(This->glDescription.target,
+                                        This->glDescription.level,
+                                        drect->x1 + col, row, /* xoffset, yoffset */
+                                        srect->x1 + col * xrel, yoffset - (int) (row * yrel),
+                                        1, 1);
+                }
+            } else {
+                glCopyTexSubImage2D(This->glDescription.target,
+                                    This->glDescription.level,
+                                    drect->x1, row, /* xoffset, yoffset */
+                                    srect->x1, yoffset - (int) (row * yrel),
+                                    drect->x2-drect->x1, 1);
+            }
+        }
+    }
+
+    vcheckGLcall("glCopyTexSubImage2D");
+    LEAVE_GL();
+}
+
+/* Uses the hardware to stretch and flip the image */
+static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface, IWineD3DSwapChainImpl *swapchain, WINED3DRECT *srect, WINED3DRECT *drect, BOOL upsidedown) {
+    GLuint backup, src;
+    IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
+    IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
+    float left, right, top, bottom; /* Texture coordinates */
+    UINT fbwidth = Src->currentDesc.Width;
+    UINT fbheight = Src->currentDesc.Height;
+
+    TRACE("Using hwstretch blit\n");
+    /* Activate the Proper context for reading from the source surface, set it up for blitting */
+    ENTER_GL();
+    ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+
+    /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
+     * we are reading from the back buffer, the backup can be used as source texture
+     */
+    glGenTextures(1, &backup);
+    checkGLcall("glGenTextures(1, &backup)");
+    glBindTexture(GL_TEXTURE_2D, backup);
+    checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+
+    glReadBuffer(GL_BACK);
+    checkGLcall("glReadBuffer(GL_BACK)");
+
+    /* TODO: Only back up the part that will be overwritten */
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Src->pow2Width, Src->pow2Height, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    checkGLcall("glTexImage2D");
+
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0,
+                        0, 0 /* read offsets */,
+                        0, 0,
+                        fbwidth,
+                        fbheight);
+
+    checkGLcall("glCopyTexSubImage2D");
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    checkGLcall("glTexParameteri");
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    checkGLcall("glTexParameteri");
+
+    if((IWineD3DSurface *) This == swapchain->backBuffer[0] || TRUE) {
+        src = backup;
+    } else {
+        glReadBuffer(GL_FRONT);
+        checkGLcall("glReadBuffer(GL_FRONT)");
+
+        glGenTextures(1, &src);
+        checkGLcall("glGenTextures(1, &src)");
+        glBindTexture(GL_TEXTURE_2D, src);
+        checkGLcall("glBindTexture(GL_TEXTURE_2D, src)");
+
+        /* TODO: Only copy the part that will be read. Use srect->x1, srect->y2 as origin, but with the width watch
+         * out for power of 2 sizes
+         */
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Src->pow2Width, Src->pow2Height, 0,
+                    GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        checkGLcall("glTexImage2D");
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0,
+                            0, 0 /* read offsets */,
+                            0, 0,
+                            fbwidth,
+                            fbheight);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        checkGLcall("glTexParameteri");
+
+        glReadBuffer(GL_BACK);
+        checkGLcall("glReadBuffer(GL_BACK)");
+    }
+    checkGLcall("glEnd and previous");
+
+    left = (float) srect->x1 / (float) Src->pow2Width;
+    right = (float) srect->x2 / (float) Src->pow2Width;
+
+    if(upsidedown) {
+        top = (float) (Src->currentDesc.Height - srect->y1) / (float) Src->pow2Height;
+        bottom = (float) (Src->currentDesc.Height - srect->y2) / (float) Src->pow2Height;
+    } else {
+        top = (float) (Src->currentDesc.Height - srect->y2) / (float) Src->pow2Height;
+        bottom = (float) (Src->currentDesc.Height - srect->y1) / (float) Src->pow2Height;
+    }
+
+    /* draw the source texture stretched and upside down. The correct surface is bound already */
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    glBegin(GL_QUADS);
+        /* bottom left */
+        glTexCoord2f(left, bottom);
+        glVertex2i(0, fbheight);
+
+        /* top left */
+        glTexCoord2f(left, top);
+        glVertex2i(0, fbheight - drect->y2 - drect->y1);
+
+        /* top right */
+        glTexCoord2f(right, top);
+        glVertex2i(drect->x2 - drect->x1, fbheight - drect->y2 - drect->y1);
+
+        /* bottom right */
+        glTexCoord2f(right, bottom);
+        glVertex2i(drect->x2 - drect->x1, fbheight);
+    glEnd();
+    checkGLcall("glEnd and previous");
+
+    /* Now read the stretched and upside down image into the destination texture */
+    glBindTexture(This->glDescription.target, This->glDescription.textureName);
+    checkGLcall("glBindTexture");
+    glCopyTexSubImage2D(This->glDescription.target,
+                        0,
+                        drect->x1, drect->y1, /* xoffset, yoffset */
+                        0, 0, /* We blitted the image to the origin */
+                        drect->x2 - drect->x1, drect->y2 - drect->y1);
+    checkGLcall("glCopyTexSubImage2D");
+
+    /* Write the back buffer backup back */
+    glBindTexture(GL_TEXTURE_2D, backup);
+    checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+
+    glBegin(GL_QUADS);
+        /* top left */
+        glTexCoord2f(0.0, (float) fbheight / (float) Src->pow2Height);
+        glVertex2i(0, 0);
+
+        /* bottom left */
+        glTexCoord2f(0.0, 0.0);
+        glVertex2i(0, fbheight);
+
+        /* bottom right */
+        glTexCoord2f((float) fbwidth / (float) Src->pow2Width, 0.0);
+        glVertex2i(fbwidth, Src->currentDesc.Height);
+
+        /* top right */
+        glTexCoord2f((float) fbwidth / (float) Src->pow2Width, (float) fbheight / (float) Src->pow2Height);
+        glVertex2i(fbwidth, 0);
+    glEnd();
+
+    /* Cleanup */
+    if(src != backup) {
+        glDeleteTextures(1, &src);
+        checkGLcall("glDeleteTextures(1, &src)");
+    }
+    glDeleteTextures(1, &backup);
+    checkGLcall("glDeleteTextures(1, &backup)");
+    LEAVE_GL();
+}
+
 /* Not called from the VTable */
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
     WINED3DRECT rect;
@@ -2432,72 +2666,71 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             (swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) ) {
             if( ( (IWineD3DSurface *) This != swapchain->frontBuffer) &&
                 ( swapchain->backBuffer && (IWineD3DSurface *) This != swapchain->backBuffer[0]) ) {
-                UINT row;
                 WINED3DRECT srect;
-                float xrel, yrel;
+                BOOL upsideDown, stretchx;
 
                 TRACE("Blt from rendertarget to texture\n");
 
                 /* Call preload for the surface to make sure it isn't dirty */
                 IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
+                /* Make sure that the top pixel is always above the bottom pixel, and keep a seperate upside down flag
+                 * glCopyTexSubImage is a bit picky about the parameters we pass to it
+                 */
                 if(SrcRect) {
+                    if(SrcRect->top < SrcRect->bottom) {
+                        srect.y1 = SrcRect->top;
+                        srect.y2 = SrcRect->bottom;
+                        upsideDown = FALSE;
+                    } else {
+                        srect.y1 = SrcRect->bottom;
+                        srect.y2 = SrcRect->top;
+                        upsideDown = TRUE;
+                    }
                     srect.x1 = SrcRect->left;
-                    srect.y1 = SrcRect->top;
                     srect.x2 = SrcRect->right;
-                    srect.y2 = SrcRect->bottom;
                 } else {
                     srect.x1 = 0;
                     srect.y1 = 0;
                     srect.x2 = Src->currentDesc.Width;
                     srect.y2 = Src->currentDesc.Height;
+                    upsideDown = FALSE;
+                }
+                if(rect.x1 > rect.x2) {
+                    UINT tmp = rect.x2;
+                    rect.x2 = rect.x1;
+                    rect.x1 = tmp;
+                    upsideDown = !upsideDown;
                 }
 
-                ENTER_GL();
-
-                /* Bind the target texture */
-                glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
-                checkGLcall("glBindTexture");
-                if(swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) {
-                    glReadBuffer(GL_BACK);
+                if(rect.x2 - rect.x1 != srect.x2 - srect.x1) {
+                    stretchx = TRUE;
                 } else {
-                    glReadBuffer(GL_FRONT);
+                    stretchx = FALSE;
                 }
-                checkGLcall("glReadBuffer");
 
-                xrel = (float) (srect.x2 - srect.x1) / (float) (rect.x2 - rect.x1);
-                yrel = (float) (srect.y2 - srect.y1) / (float) (rect.y2 - rect.y1);
-
-                /* I have to process this row by row to swap the image,
-                 * otherwise it would be upside down, so streching in y direction
-                 * doesn't cost extra time
+                /* Blt is a pretty powerful call, while glCopyTexSubImage2D is not. glCopyTexSubImage cannot
+                 * flip the image nor scale it. If GL_EXT_framebuffer_blit is available it can be used(hopefully,
+                 * not implemented by now). Otherwise:
                  *
-                 * However, streching in x direction can be avoided if not necessary
+                 * -> If the app asks for a unscaled, upside down copy, just perform one glCopyTexSubImage2D call
+                 * -> If the app wants a image width an unscaled width, copy it line per line
+                 * -> If the app wants a image that is scaled on the x axis, and the destination rectangle is smaller
+                 *    than the frame buffer, draw an upside down scaled image onto the fb, read it back and restore the
+                 *    back buffer. This is slower than reading line per line, thus not used for flipping
+                 * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied
+                 *    pixel by pixel
                  */
-                for(row = rect.y1; row < rect.y2; row++) {
-                    if( (xrel - 1.0 < -eps) || (xrel - 1.0 > eps)) {
-                        /* Well, that stuff works, but it's very slow.
-                         * find a better way instead
-                         */
-                        UINT col;
-                        for(col = rect.x1; col < rect.x2; col++) {
-                            glCopyTexSubImage2D(GL_TEXTURE_2D,
-                                                0, /* level */
-                                                rect.x1 + col, This->currentDesc.Height - row - 1, /* xoffset, yoffset */
-                                                srect.x1 + col * xrel, Src->currentDesc.Height - srect.y2 + row * yrel,
-                                                1, 1);
-                        }
-                    } else {
-                        glCopyTexSubImage2D(GL_TEXTURE_2D,
-                                            0, /* level */
-                                            rect.x1, rect.y2 + rect.y1 - row - 1, /* xoffset, yoffset */
-                                            srect.x1, row - rect.y1,
-                                            rect.x2-rect.x1, 1);
-                    }
+                if(FALSE /* GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) */) {
+                    TRACE("Using GL_EXT_framebuffer_blit for copying\n");
+                } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
+                                         rect.y2 - rect.y1 > Src->currentDesc.Height) {
+                    TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
+                    fb_copy_to_texture_direct(This, SrcSurface, swapchain, &srect, &rect, upsideDown);
+                } else {
+                    TRACE("Using hardware stretching to flip / stretch the texture\n");
+                    fb_copy_to_texture_hwstretch(This, SrcSurface, swapchain, &srect, &rect, upsideDown);
                 }
-
-                vcheckGLcall("glCopyTexSubImage2D");
-                LEAVE_GL();
 
                 if(!(This->Flags & SFLAG_DONOTFREE)) {
                     HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
