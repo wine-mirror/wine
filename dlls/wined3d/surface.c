@@ -853,8 +853,6 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
 
     glDisable(GL_TEXTURE_2D);
     vcheckGLcall("glDisable(GL_TEXTURE_2D)");
-    glDisable(GL_TEXTURE_1D);
-    vcheckGLcall("glDisable(GL_TEXTURE_1D)");
 
     glFlush();
     vcheckGLcall("glFlush");
@@ -1039,21 +1037,6 @@ static void flush_to_framebuffer_texture(IWineD3DSurface *iface) {
 
     ENTER_GL();
 
-    /* Disable some fancy graphics effects */
-    glDisable(GL_LIGHTING);
-    checkGLcall("glDisable GL_LIGHTING");
-    glDisable(GL_DEPTH_TEST);
-    checkGLcall("glDisable GL_DEPTH_TEST");
-    glDisable(GL_FOG);
-    checkGLcall("glDisable GL_FOG");
-    glDisable(GL_CULL_FACE);
-    checkGLcall("glDisable GL_CULL_FACE");
-    glDisable(GL_BLEND);
-    checkGLcall("glDisable GL_BLEND");
-    glDisable(GL_STENCIL_TEST);
-    checkGLcall("glDisable GL_STENCIL_TEST");
-
-    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
     checkGLcall("glEnable glBindTexture");
 
@@ -1160,19 +1143,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
 
         if ((backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->render_targets[0]) && wined3d_settings.rendertargetlock_mode != RTL_DISABLE) {
-            int tex;
 
             ENTER_GL();
 
-            /* glDrawPixels transforms the raster position as though it was a vertex -
-               we want to draw at screen position 0,0 - Set up ortho (rhw) mode as
-               per drawprim (and leave set - it will sort itself out due to last_was_rhw */
-            myDevice->contexts[myDevice->activeContext].last_was_rhw = TRUE;
-            /* Apply the projection and world matrices, it sets up orthogonal projection due to last_was_rhw */
-            StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
-            StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
-            /* Will reapply the projection matrix too */
-            IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_VDECL);
+            ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
 
             if (iface ==  implSwapChain->frontBuffer) {
                 glDrawBuffer(GL_FRONT);
@@ -1181,31 +1155,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 glDrawBuffer(GL_BACK);
                 checkGLcall("glDrawBuffer GL_BACK");
             }
-
-            /* Disable higher textures before calling glDrawPixels */
-            for(tex = 1; tex < GL_LIMITS(samplers); tex++) {
-                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + tex));
-                    checkGLcall("glActiveTextureARB");
-                }
-                IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(tex));
-                glDisable(GL_TEXTURE_2D);
-                checkGLcall("glDisable GL_TEXTURE_2D");
-                glDisable(GL_TEXTURE_1D);
-                checkGLcall("glDisable GL_TEXTURE_1D");
-            }
-            /* Activate texture 0, but don't disable it necessarily */
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-                checkGLcall("glActiveTextureARB");
-            }
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-
-            /* And back buffers are not blended. Disable the depth test, 
-               that helps performance */
-            glDisable(GL_BLEND);
-            glDisable(GL_DEPTH_TEST);
-            glDisable(GL_FOG);
 
             switch(wined3d_settings.rendertargetlock_mode) {
                 case RTL_AUTO:
@@ -1234,10 +1183,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 glDrawBuffer(GL_BACK);
                 vcheckGLcall("glDrawBuffer");
             }
-            if(myDevice->stateBlock->renderState[WINED3DRS_ZENABLE] == WINED3DZB_TRUE ||
-               myDevice->stateBlock->renderState[WINED3DRS_ZENABLE] == WINED3DZB_USEW) glEnable(GL_DEPTH_TEST);
-            if (myDevice->stateBlock->renderState[WINED3DRS_ALPHABLENDENABLE]) glEnable(GL_BLEND);
-            if (myDevice->stateBlock->renderState[WINED3DRS_FOGENABLE]) glEnable(GL_FOG);
 
             LEAVE_GL();
 
@@ -2343,10 +2288,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             float glTexCoord[4];
             DWORD oldCKey;
             DDCOLORKEY oldBltCKey = {0,0};
-            GLint oldLight, oldFog, oldDepth, oldBlend, oldCull, oldAlpha;
-            GLint oldStencil, oldNVRegisterCombiners = 0;
-            GLint alphafunc;
-            GLclampf alpharef;
             RECT SourceRectangle;
             GLint oldDraw;
 
@@ -2399,23 +2340,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             ENTER_GL();
 
-            /* Save all the old stuff until we have a proper opengl state manager */
-            oldLight = glIsEnabled(GL_LIGHTING);
-            oldFog = glIsEnabled(GL_FOG);
-            oldDepth = glIsEnabled(GL_DEPTH_TEST);
-            oldBlend = glIsEnabled(GL_BLEND);
-            oldCull = glIsEnabled(GL_CULL_FACE);
-            oldAlpha = glIsEnabled(GL_ALPHA_TEST);
-            oldStencil = glIsEnabled(GL_STENCIL_TEST);
-
-            if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-                oldNVRegisterCombiners = glIsEnabled(GL_REGISTER_COMBINERS_NV);
-            }
-
-            glGetIntegerv(GL_ALPHA_TEST_FUNC, &alphafunc);
-            checkGLcall("glGetFloatv GL_ALPHA_TEST_FUNC");
-            glGetFloatv(GL_ALPHA_TEST_REF, &alpharef);
-            checkGLcall("glGetFloatv GL_ALPHA_TEST_REF");
+            ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
 
             glGetIntegerv(GL_DRAW_BUFFER, &oldDraw);
             if(This == (IWineD3DSurfaceImpl *) swapchain->frontBuffer) {
@@ -2424,51 +2349,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 checkGLcall("glDrawBuffer GL_FRONT");
             }
 
-            /* Unbind the old texture */
-            glBindTexture(GL_TEXTURE_2D, 0);
-            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-            /* We use texture unit 0 for blts */
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-                checkGLcall("glActiveTextureARB");
-            } else {
-                WARN("Multi-texturing is unsupported in the local OpenGL implementation\n");
-            }
-
-            /* Disable some fancy graphics effects */
-            glDisable(GL_LIGHTING);
-            checkGLcall("glDisable GL_LIGHTING");
-            glDisable(GL_DEPTH_TEST);
-            checkGLcall("glDisable GL_DEPTH_TEST");
-            glDisable(GL_FOG);
-            checkGLcall("glDisable GL_FOG");
-            glDisable(GL_BLEND);
-            checkGLcall("glDisable GL_BLEND");
-            glDisable(GL_CULL_FACE);
-            checkGLcall("glDisable GL_CULL_FACE");
-            glDisable(GL_STENCIL_TEST);
-            checkGLcall("glDisable GL_STENCIL_TEST");
-            if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-                glDisable(GL_REGISTER_COMBINERS_NV);
-                checkGLcall("glDisable GL_REGISTER_COMBINERS_NV");
-            }
-
-            /* Ok, we need 2d textures, but not 1D or 3D */
-            glDisable(GL_TEXTURE_1D);
-            checkGLcall("glDisable GL_TEXTURE_1D");
-            glEnable(GL_TEXTURE_2D);
-            checkGLcall("glEnable GL_TEXTURE_2D");
-            glDisable(GL_TEXTURE_3D);
-            checkGLcall("glDisable GL_TEXTURE_3D");
-
             /* Bind the texture */
             glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName);
             checkGLcall("glBindTexture");
-
-            glEnable(GL_SCISSOR_TEST);
-
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 
             /* No filtering for blts */
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
@@ -2495,13 +2378,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
             /* Draw a textured quad
              */
-            myDevice->contexts[myDevice->activeContext].last_was_rhw = TRUE;
-            /* Apply the projection matrix, it sets up orthogonal projection due to last_was_rhw */
-            StateTable[STATE_TRANSFORM(WINED3DTS_PROJECTION)].apply(STATE_TRANSFORM(WINED3DTS_PROJECTION), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
-            StateTable[STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0))].apply(STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(0)), myDevice->stateBlock, &myDevice->contexts[myDevice->activeContext]);
-            /* That will reapply the projection matrix too */
-            IWineD3DDeviceImpl_MarkStateDirty(myDevice, STATE_VDECL);
-
             glBegin(GL_QUADS);
 
             glColor3d(1.0f, 1.0f, 1.0f);
@@ -2528,46 +2404,6 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* Unbind the texture */
             glBindTexture(GL_TEXTURE_2D, 0);
             checkGLcall("glEnable glBindTexture");
-
-            /* Restore the old settings */
-            if(oldLight) {
-                glEnable(GL_LIGHTING);
-                checkGLcall("glEnable GL_LIGHTING");
-            }
-            if(oldFog) {
-                glEnable(GL_FOG);
-                checkGLcall("glEnable GL_FOG");
-            }
-            if(oldDepth) {
-                glEnable(GL_DEPTH_TEST);
-                checkGLcall("glEnable GL_DEPTH_TEST");
-            }
-            if(oldBlend) {
-                glEnable(GL_BLEND);
-                checkGLcall("glEnable GL_BLEND");
-            }
-            if(oldCull) {
-                glEnable(GL_CULL_FACE);
-                checkGLcall("glEnable GL_CULL_FACE");
-            }
-            if(oldStencil) {
-                glEnable(GL_STENCIL_TEST);
-                checkGLcall("glEnable GL_STENCIL_TEST");
-            }
-            if(!oldAlpha) {
-                glDisable(GL_ALPHA_TEST);
-                checkGLcall("glDisable GL_ALPHA_TEST");
-            } else {
-                glEnable(GL_ALPHA_TEST);
-                checkGLcall("glEnable GL_ALPHA_TEST");
-            }
-            if (GL_SUPPORT(NV_REGISTER_COMBINERS) && oldNVRegisterCombiners) {
-                glEnable(GL_REGISTER_COMBINERS_NV);
-                checkGLcall("glEnable GL_REGISTER_COMBINERS_NV");
-            }
-
-            glAlphaFunc(alphafunc, alpharef);
-            checkGLcall("glAlphaFunc\n");
 
             if(This == (IWineD3DSurfaceImpl *) swapchain->frontBuffer && oldDraw == GL_BACK) {
                 glDrawBuffer(oldDraw);

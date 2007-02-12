@@ -477,6 +477,7 @@ struct WineD3DContext {
     BOOL                    namedArraysLoaded, numberedArraysLoaded;
     BOOL                    lastWasPow2Texture[MAX_TEXTURES];
     GLenum                  tracking_parm;     /* Which source is tracking current colour         */
+    BOOL                    last_was_blit;
 };
 
 typedef enum ContextUsage {
