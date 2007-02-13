@@ -162,7 +162,9 @@ static ULONG WINAPI HTMLDocument_Release(IHTMLDocument2 *iface)
         if(This->hwnd)
             DestroyWindow(This->hwnd);
 
-        IHTMLWindow2_Release(HTMLWINDOW2(This->window));
+        if(This->window)
+            IHTMLWindow2_Release(HTMLWINDOW2(This->window));
+
         release_nodes(This);
 
         HTMLDocument_ConnectionPoints_Destroy(This);
@@ -1110,6 +1112,7 @@ HRESULT HTMLDocument_Create(IUnknown *pUnkOuter, REFIID riid, void** ppvObject)
     ret->nscontainer = NULL;
     ret->nodes = NULL;
     ret->readystate = READYSTATE_UNINITIALIZED;
+    ret->window = NULL;
 
     hres = IHTMLDocument_QueryInterface(HTMLDOC(ret), riid, ppvObject);
     if(FAILED(hres)) {
