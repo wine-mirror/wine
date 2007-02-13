@@ -421,11 +421,13 @@ const void *WINAPI IWineD3DSurfaceImpl_GetData(IWineD3DSurface *iface) {
     return (CONST void*)(This->resource.allocatedMemory);
 }
 
-static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch) {
-    long j;
-    void *mem;
+static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, void *dest, UINT pitch, BOOL srcUpsideDown) {
+    BYTE *mem;
     GLint fmt;
     GLint type;
+    BYTE *row, *top, *bottom;
+    int i;
+    BOOL bpp;
 
     switch(This->resource.format)
     {
@@ -443,11 +445,12 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
             fmt = GL_RGB;
             type = GL_UNSIGNED_BYTE;
             pitch *= 3;
-            mem = HeapAlloc(GetProcessHeap(), 0, (rect->bottom - rect->top) * pitch);
+            mem = HeapAlloc(GetProcessHeap(), 0, This->resource.size * 3);
             if(!mem) {
                 ERR("Out of memory\n");
                 return;
             }
+            bpp = This->bytesPerPixel * 3;
         }
         break;
 
@@ -455,54 +458,42 @@ static void read_from_framebuffer(IWineD3DSurfaceImpl *This, CONST RECT *rect, v
             mem = dest;
             fmt = This->glDescription.glFormat;
             type = This->glDescription.glType;
+            bpp = This->bytesPerPixel;
     }
 
-    if (rect->left == 0 &&
-        rect->right == This->currentDesc.Width ) {
-        BYTE *row, *top, *bottom;
-        int i;
+    glReadPixels(rect->left, rect->top,
+                 rect->right - rect->left,
+                 rect->bottom - rect->top,
+                 fmt, type, mem);
+    vcheckGLcall("glReadPixels");
 
-        glReadPixels(0, rect->top,
-                     This->currentDesc.Width,
-                     rect->bottom - rect->top,
-                     fmt,
-                     type,
-                     mem);
+    /* TODO: Merge this with the palettization loop below for P8 targets */
 
-       /* glReadPixels returns the image upside down, and there is no way to prevent this.
-          Flip the lines in software */
-        row = HeapAlloc(GetProcessHeap(), 0, pitch);
+    if(!srcUpsideDown) {
+        UINT len, off;
+        /* glReadPixels returns the image upside down, and there is no way to prevent this.
+            Flip the lines in software */
+        len = (rect->right - rect->left) * bpp;
+        off = rect->left * bpp;
+
+        row = HeapAlloc(GetProcessHeap(), 0, len);
         if(!row) {
             ERR("Out of memory\n");
+            if(This->resource.format == WINED3DFMT_P8) HeapFree(GetProcessHeap(), 0, mem);
             return;
         }
-        top = mem;
+
+        top = mem + pitch * rect->top;
         bottom = ((BYTE *) mem) + pitch * ( rect->bottom - rect->top - 1);
         for(i = 0; i < (rect->bottom - rect->top) / 2; i++) {
-            memcpy(row, top, pitch);
-            memcpy(top, bottom, pitch);
-            memcpy(bottom, row, pitch);
+            memcpy(row, top + off, len);
+            memcpy(top + off, bottom + off, len);
+            memcpy(bottom + off, row, len);
             top += pitch;
             bottom -= pitch;
         }
         HeapFree(GetProcessHeap(), 0, row);
-
-        if(This->lockedRect.top == 0 && This->lockedRect.bottom ==  This->currentDesc.Height) {
-            This->Flags &= ~SFLAG_GLDIRTY;
-        }
-    } else {
-        for (j = This->lockedRect.top; j < This->lockedRect.bottom - This->lockedRect.top; ++j) {
-            glReadPixels(rect->left,
-                         rect->bottom - j - 1,
-                         rect->right - rect->left,
-                         1,
-                         fmt,
-                         type,
-                         (char *)mem + (pitch * (j-rect->top)));
-        }
     }
-
-    vcheckGLcall("glReadPixels");
 
     if(This->resource.format == WINED3DFMT_P8) {
         PALETTEENTRY *pal;
@@ -623,6 +614,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
      */
     IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
     if(swapchain || iface == myDevice->render_targets[0]) {
+        BOOL srcIsUpsideDown;
+
         if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
             static BOOL warned = FALSE;
             if(!warned) {
@@ -633,17 +626,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             return WINED3D_OK;
         }
 
-        /* FIXME: Partial surface locking is broken */
-        if(This->lockedRect.left != 0 ||
-           This->lockedRect.top != 0 ||
-           This->lockedRect.right != This->currentDesc.Width ||
-           This->lockedRect.bottom != This->currentDesc.Height) {
-            FIXME("Add Support for partial render target locking\n");
-            This->lockedRect.left = 0;
-            This->lockedRect.top = 0;
-            This->lockedRect.right = This->currentDesc.Width;
-            This->lockedRect.bottom = This->currentDesc.Height;
-        }
         /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
          * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
          * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
@@ -662,6 +644,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
              */
             TRACE("Locking offscreen render target\n");
             glReadBuffer(GL_BACK);
+            srcIsUpsideDown = TRUE;
         } else {
             if(iface == swapchain->frontBuffer) {
                 TRACE("Locking the front buffer\n");
@@ -677,22 +660,31 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
                 glReadBuffer(GL_BACK);
             }
             IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+            srcIsUpsideDown = FALSE;
         }
 
         switch(wined3d_settings.rendertargetlock_mode) {
             case RTL_AUTO:
             case RTL_READDRAW:
             case RTL_READTEX:
-                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch);
+                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch, srcIsUpsideDown);
                 break;
 
             case RTL_TEXDRAW:
             case RTL_TEXTEX:
-                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch);
+                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch, srcIsUpsideDown);
                 FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
                 break;
         }
         LEAVE_GL();
+
+        /* Mark the local copy up to date if a full download was done */
+        if(This->lockedRect.left == 0 &&
+           This->lockedRect.top == 0 &&
+           This->lockedRect.right == This->currentDesc.Width &&
+           This->lockedRect.bottom == This->currentDesc.Height) {
+            This->Flags &= ~SFLAG_GLDIRTY;
+        }
     } else if(iface == myDevice->stencilBufferTarget) {
         /** the depth stencil in openGL has a format of GL_FLOAT
          * which should be good for WINED3DFMT_D16_LOCKABLE
@@ -737,6 +729,9 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
             surface_download_data(This);
         }
+
+        /* The local copy is now up to date to the opengl one because a full download was done */
+        This->Flags &= ~SFLAG_GLDIRTY;
     }
 
 lock_end:
@@ -760,9 +755,6 @@ lock_end:
         }
     }
 
-    /* The local copy is now up to date to the opengl one */
-    This->Flags &= ~SFLAG_GLDIRTY;
-
     TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch, This->Flags & SFLAG_DIRTY ? 0 : 1);
     return WINED3D_OK;
 }
@@ -773,7 +765,9 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     GLint skipBytes = 0;
     BOOL storechanged = FALSE, memory_allocated = FALSE;
     GLint fmt, type;
-    void *mem;
+    BYTE *mem;
+    UINT bpp;
+    UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
 
     glDisable(GL_TEXTURE_2D);
     vcheckGLcall("glDisable(GL_TEXTURE_2D)");
@@ -819,6 +813,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
+            bpp = This->bytesPerPixel;
             break;
 
         case WINED3DFMT_X4R4G4B4:
@@ -835,6 +830,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
+            bpp = This->bytesPerPixel;
         }
         break;
 
@@ -852,6 +848,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
+            bpp = This->bytesPerPixel;
         }
         break;
 
@@ -879,6 +876,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
+            bpp = This->bytesPerPixel;
         }
         break;
 
@@ -890,12 +888,12 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
+            bpp = This->bytesPerPixel;
         }
         break;
 
         case WINED3DFMT_P8:
         {
-            UINT pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);    /* target is argb, 4 byte */
             int height = This->glRect.bottom - This->glRect.top;
             type = GL_UNSIGNED_BYTE;
             fmt = GL_RGBA;
@@ -914,6 +912,8 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                                    pitch * 4,
                                    CONVERT_PALETTED,
                                    This);
+            bpp = This->bytesPerPixel * 4;
+            pitch *= 4;
         }
         break;
 
@@ -924,12 +924,13 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
             type = This->glDescription.glType;
             fmt = This->glDescription.glFormat;
             mem = This->resource.allocatedMemory;
+            bpp = This->bytesPerPixel;
     }
 
     glDrawPixels(This->lockedRect.right - This->lockedRect.left,
                  (This->lockedRect.bottom - This->lockedRect.top)-1,
                  fmt, type,
-                 mem);
+                 mem + bpp * This->lockedRect.left + pitch * This->lockedRect.top);
     checkGLcall("glDrawPixels");
     glPixelZoom(1.0,1.0);
     vcheckGLcall("glPixelZoom");
@@ -949,16 +950,15 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     return;
 }
 
-static void flush_to_framebuffer_texture(IWineD3DSurface *iface) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
+static void flush_to_framebuffer_texture(IWineD3DSurfaceImpl *This) {
     float glTexCoord[4];
 
-    glTexCoord[0] = 0.0; /* left */
-    glTexCoord[1] = (float) This->currentDesc.Width / (float) This->pow2Width; /* right */
-    glTexCoord[2] = 0.0; /* top */
-    glTexCoord[3] = (float) This->currentDesc.Height / (float) This->pow2Height; /* bottom */
+    glTexCoord[0] = (float) This->lockedRect.left   / (float) This->pow2Width; /* left */
+    glTexCoord[1] = (float) This->lockedRect.right  / (float) This->pow2Width; /* right */
+    glTexCoord[2] = (float) This->lockedRect.top    / (float) This->pow2Height; /* top */
+    glTexCoord[3] = (float) This->lockedRect.bottom / (float) This->pow2Height; /* bottom */
 
-    IWineD3DSurface_PreLoad(iface);
+    IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
     ENTER_GL();
 
@@ -976,16 +976,16 @@ static void flush_to_framebuffer_texture(IWineD3DSurface *iface) {
 
     glColor3d(1.0f, 1.0f, 1.0f);
     glTexCoord2f(glTexCoord[0], glTexCoord[2]);
-    glVertex3f(0, 0, 0.0);
+    glVertex3f(This->lockedRect.left, This->lockedRect.top, 0.0);
 
     glTexCoord2f(glTexCoord[0], glTexCoord[3]);
-    glVertex3f(0, This->currentDesc.Height, 0.0);
+    glVertex3f(This->lockedRect.left, This->lockedRect.bottom, 0.0);
 
     glTexCoord2f(glTexCoord[1], glTexCoord[3]);
-    glVertex3d(This->currentDesc.Width, This->currentDesc.Height, 0.0);
+    glVertex3d(This->lockedRect.right, This->lockedRect.bottom, 0.0);
 
     glTexCoord2f(glTexCoord[1], glTexCoord[2]);
-    glVertex3f(This->currentDesc.Width, 0, 0.0);
+    glVertex3f(This->lockedRect.right, This->lockedRect.top, 0.0);
 
     glEnd();
     checkGLcall("glEnd");
@@ -1061,7 +1061,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
 
             case RTL_READTEX:
             case RTL_TEXTEX:
-                flush_to_framebuffer_texture(iface);
+                flush_to_framebuffer_texture(This);
                 break;
         }
         if(!swapchain || swapchain->backBuffer) {
