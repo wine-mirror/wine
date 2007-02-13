@@ -1962,11 +1962,11 @@ void vshader_glsl_output_unpack(
                    usage_idx, reg_mask, i, reg_mask);
                break;
 
-           case WINED3DSHADERDECLUSAGE_PSIZE:
+           case D3DDECLUSAGE_PSIZE:
                shader_addline(buffer, "gl_PointSize = OUT%u.x;\n", i);
                break;
 
-           case WINED3DSHADERDECLUSAGE_FOG:
+           case D3DDECLUSAGE_FOG:
                shader_addline(buffer, "gl_FogFragCoord%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
 
