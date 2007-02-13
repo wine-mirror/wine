@@ -1,6 +1,6 @@
 /*
  * Copyright 1998 Juergen Schmied
- * Copyright 2006 YunSong Hwang
+ * Copyright 2006, 2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -175,13 +175,13 @@ IDS_TRASHMULTIPLE_TEXT "당신은 '%1' 들을(를) 휴지통으로 보내기를 바랍니까?"
 IDS_CANTTRASH_TEXT "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo you want to replace it?"
 IDS_OVERWRITEFILE_CAPTION "파일 덮어쓰기 확인"
-IDS_OVERWRITEFOLDER_TEXT "This folder already contains a folder named '%1'.\n\n"\
-	    "If the files in the destination folder have the same names as files in the\n"\
-	    "selected folder they will be replaced. Do you still want to move or copy\n"\
-	    "the folder?"
+IDS_OVERWRITEFOLDER_TEXT "  이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n\n"\
+     "만약 당신이 같은 이름으로 대상 폴더를 지정한다면 선택된 폴더는 대체될 것입니다\n"\
+     " 대체될 것입니다. 당신 이 폴더를 이동시키거나 복사하겠습니까?"
+
 
 /* message box strings */
-IDS_RESTART_TITLE       "다시 시작"
+IDS_RESTART_TITLE       "다시 시작" 
 IDS_RESTART_PROMPT      "당신은 윈도우즈 재부팅을  재현하겠습니까?"
 IDS_SHUTDOWN_TITLE      "끄기"
 IDS_SHUTDOWN_PROMPT     "당신은  Wine 세션을 끄겠습니까?"
