@@ -21,6 +21,7 @@ C_SRCS = \
 	swapchain.c \
 	texture.c \
 	vertexbuffer.c \
+	vertexdeclaration.c \
 	vertexshader.c \
 	volume.c \
 	volumetexture.c

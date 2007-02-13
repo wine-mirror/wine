@@ -437,6 +437,9 @@ struct IDirect3DVolumeTexture8Impl
 DEFINE_GUID(IID_IDirect3DStateBlock8, 
 0x83b073ce, 0x6f30, 0x11d9, 0xc6, 0x87, 0x0, 0x4, 0x61, 0x42, 0xc1, 0x4f);
 
+DEFINE_GUID(IID_IDirect3DVertexDeclaration8,
+0x5dd7478d, 0xcbf3, 0x41a6, 0x8c, 0xfd, 0xfd, 0x19, 0x2b, 0x11, 0xc7, 0x90);
+
 DEFINE_GUID(IID_IDirect3DVertexShader8,
 0xefc5557e, 0x6265, 0x4613, 0x8a, 0x94, 0x43, 0x85, 0x78, 0x89, 0xeb, 0x36);
 
@@ -486,6 +489,35 @@ typedef struct  IDirect3DStateBlock8Impl {
     /* IDirect3DResource8 fields */
     IWineD3DStateBlock             *wineD3DStateBlock;
 } IDirect3DStateBlock8Impl;
+
+/*****************************************************************************
+ * IDirect3DVertexDeclaration8 interface
+ */
+#define INTERFACE IDirect3DVertexDeclaration8
+DECLARE_INTERFACE_(IDirect3DVertexDeclaration8, IUnknown)
+{
+    /*** IUnknown methods ***/
+    STDMETHOD_(HRESULT,QueryInterface)(THIS_ REFIID riid, void** obj_ptr) PURE;
+    STDMETHOD_(ULONG,AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG,Release)(THIS) PURE;
+};
+#undef INTERFACE
+
+/*** IUnknown methods ***/
+#define IDirect3DVertexDeclaration8_QueryInterface(p,a,b)  (p)->lpVtbl->QueryInterface(p,a,b)
+#define IDirect3DVertexDeclaration8_AddRef(p)              (p)->lpVtbl->AddRef(p)
+#define IDirect3DVertexDeclaration8_Release(p)             (p)->lpVtbl->Release(p)
+
+/*** Implementation ***/
+extern const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl;
+
+typedef struct {
+    const IDirect3DVertexDeclaration8Vtbl *lpVtbl;
+    LONG ref_count;
+
+    IWineD3DVertexDeclaration *wined3d_vertex_declaration;
+} IDirect3DVertexDeclaration8Impl;
+
 
 /*****************************************************************************
  * IDirect3DVertexShader9 interface
