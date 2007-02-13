@@ -831,7 +831,7 @@ HRESULT WINAPI RunningObjectTableImpl_Initialize(void)
 /***********************************************************************
  *        RunningObjectTable_UnInitialize
  */
-HRESULT WINAPI RunningObjectTableImpl_UnInitialize()
+HRESULT WINAPI RunningObjectTableImpl_UnInitialize(void)
 {
     TRACE("\n");
 
