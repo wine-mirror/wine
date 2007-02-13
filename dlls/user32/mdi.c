@@ -1480,6 +1480,11 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
         SendMessageW( client, WM_MDIDESTROY, (WPARAM)hwnd, 0 );
         return 0;
 
+    case WM_SETFOCUS:
+        if (ci->hwndActiveChild != hwnd)
+            MDI_ChildActivate( client, hwnd );
+        break;
+
     case WM_CHILDACTIVATE:
         MDI_ChildActivate( client, hwnd );
         return 0;
