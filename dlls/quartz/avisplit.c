@@ -482,11 +482,6 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin)
         ERR("Input stream not a RIFF file\n");
         return E_FAIL;
     }
-    if (list.cb > 1 * 1024 * 1024 * 1024) /* cannot be more than 1Gb in size */
-    {
-        ERR("Input stream violates RIFF spec\n");
-        return E_FAIL;
-    }
     if (list.fccListType != ckidAVI)
     {
         ERR("Input stream not an AVI RIFF file\n");
