@@ -1889,7 +1889,7 @@ void pshader_glsl_input_pack(
 
        switch(usage) {
 
-           case D3DDECLUSAGE_COLOR:
+           case WINED3DDECLUSAGE_COLOR:
                if (usage_idx == 0)
                    shader_addline(buffer, "IN%u%s = vec4(gl_Color)%s;\n",
                        i, reg_mask, reg_mask);
@@ -1901,12 +1901,12 @@ void pshader_glsl_input_pack(
                        i, reg_mask, reg_mask);
                break;
 
-           case D3DDECLUSAGE_TEXCOORD:
+           case WINED3DDECLUSAGE_TEXCOORD:
                shader_addline(buffer, "IN%u%s = vec4(gl_TexCoord[%u])%s;\n",
                    i, reg_mask, usage_idx, reg_mask );
                break;
 
-           case D3DDECLUSAGE_FOG:
+           case WINED3DDECLUSAGE_FOG:
                shader_addline(buffer, "IN%u%s = vec4(gl_FogFragCoord)%s;\n",
                    i, reg_mask, reg_mask);
                break;
@@ -1944,7 +1944,7 @@ void vshader_glsl_output_unpack(
 
        switch(usage) {
 
-           case D3DDECLUSAGE_COLOR:
+           case WINED3DDECLUSAGE_COLOR:
                if (usage_idx == 0)
                    shader_addline(buffer, "gl_FrontColor%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                else if (usage_idx == 1)
@@ -1953,20 +1953,20 @@ void vshader_glsl_output_unpack(
                    shader_addline(buffer, "unsupported_color_output%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
 
-           case D3DDECLUSAGE_POSITION:
+           case WINED3DDECLUSAGE_POSITION:
                shader_addline(buffer, "gl_Position%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
- 
-           case D3DDECLUSAGE_TEXCOORD:
+
+           case WINED3DDECLUSAGE_TEXCOORD:
                shader_addline(buffer, "gl_TexCoord[%u]%s = OUT%u%s;\n",
                    usage_idx, reg_mask, i, reg_mask);
                break;
 
-           case D3DDECLUSAGE_PSIZE:
+           case WINED3DDECLUSAGE_PSIZE:
                shader_addline(buffer, "gl_PointSize = OUT%u.x;\n", i);
                break;
 
-           case D3DDECLUSAGE_FOG:
+           case WINED3DDECLUSAGE_FOG:
                shader_addline(buffer, "gl_FogFragCoord%s = OUT%u%s;\n", reg_mask, i, reg_mask);
                break;
 

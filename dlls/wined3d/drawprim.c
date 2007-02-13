@@ -99,37 +99,37 @@ static BOOL fixed_get_input(
     /* Those positions must have the order in the
      * named part of the strided data */
 
-    if ((usage == D3DDECLUSAGE_POSITION || usage == D3DDECLUSAGE_POSITIONT) && usage_idx == 0)
+    if ((usage == WINED3DDECLUSAGE_POSITION || usage == WINED3DDECLUSAGE_POSITIONT) && usage_idx == 0)
         *regnum = 0;
-    else if (usage == D3DDECLUSAGE_BLENDWEIGHT && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_BLENDWEIGHT && usage_idx == 0)
         *regnum = 1;
-    else if (usage == D3DDECLUSAGE_BLENDINDICES && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_BLENDINDICES && usage_idx == 0)
         *regnum = 2;
-    else if (usage == D3DDECLUSAGE_NORMAL && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_NORMAL && usage_idx == 0)
         *regnum = 3;
-    else if (usage == D3DDECLUSAGE_PSIZE && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_PSIZE && usage_idx == 0)
         *regnum = 4;
-    else if (usage == D3DDECLUSAGE_COLOR && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_COLOR && usage_idx == 0)
         *regnum = 5;
-    else if (usage == D3DDECLUSAGE_COLOR && usage_idx == 1)
+    else if (usage == WINED3DDECLUSAGE_COLOR && usage_idx == 1)
         *regnum = 6;
-    else if (usage == D3DDECLUSAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
+    else if (usage == WINED3DDECLUSAGE_TEXCOORD && usage_idx < WINED3DDP_MAXTEXCOORD)
         *regnum = 7 + usage_idx;
-    else if ((usage == D3DDECLUSAGE_POSITION || usage == D3DDECLUSAGE_POSITIONT) && usage_idx == 1)
+    else if ((usage == WINED3DDECLUSAGE_POSITION || usage == WINED3DDECLUSAGE_POSITIONT) && usage_idx == 1)
         *regnum = 7 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_NORMAL && usage_idx == 1)
+    else if (usage == WINED3DDECLUSAGE_NORMAL && usage_idx == 1)
         *regnum = 8 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_TANGENT && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_TANGENT && usage_idx == 0)
         *regnum = 9 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_BINORMAL && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_BINORMAL && usage_idx == 0)
         *regnum = 10 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_TESSFACTOR && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_TESSFACTOR && usage_idx == 0)
         *regnum = 11 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_FOG && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_FOG && usage_idx == 0)
         *regnum = 12 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_DEPTH && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_DEPTH && usage_idx == 0)
         *regnum = 13 + WINED3DDP_MAXTEXCOORD;
-    else if (usage == D3DDECLUSAGE_SAMPLE && usage_idx == 0)
+    else if (usage == WINED3DDECLUSAGE_SAMPLE && usage_idx == 0)
         *regnum = 14 + WINED3DDP_MAXTEXCOORD;
 
     if (*regnum < 0) {
@@ -225,9 +225,9 @@ void primitiveDeclarationConvertToStridedData(
            strided->u.input[idx].VBO = streamVBO;
            strided->u.input[idx].streamNo = element->Stream;
            if (!useVertexShaderFunction) {
-               if (element->Usage == D3DDECLUSAGE_POSITION)
+               if (element->Usage == WINED3DDECLUSAGE_POSITION)
                    strided->u.s.position_transformed = FALSE;
-               else if (element->Usage == D3DDECLUSAGE_POSITIONT)
+               else if (element->Usage == WINED3DDECLUSAGE_POSITIONT)
                    strided->u.s.position_transformed = TRUE;
            }
         }

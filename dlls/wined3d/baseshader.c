@@ -419,50 +419,50 @@ static void shader_dump_decl_usage(
             TRACE("_");
 
         switch(usage) {
-        case D3DDECLUSAGE_POSITION:
+        case WINED3DDECLUSAGE_POSITION:
             TRACE("position%d", idx);
             break;
-        case D3DDECLUSAGE_BLENDINDICES:
+        case WINED3DDECLUSAGE_BLENDINDICES:
             TRACE("blend");
             break;
-        case D3DDECLUSAGE_BLENDWEIGHT:
+        case WINED3DDECLUSAGE_BLENDWEIGHT:
             TRACE("weight");
             break;
-        case D3DDECLUSAGE_NORMAL:
+        case WINED3DDECLUSAGE_NORMAL:
             TRACE("normal%d", idx);
             break;
-        case D3DDECLUSAGE_PSIZE:
+        case WINED3DDECLUSAGE_PSIZE:
             TRACE("psize");
             break;
-        case D3DDECLUSAGE_COLOR:
+        case WINED3DDECLUSAGE_COLOR:
             if(idx == 0)  {
                 TRACE("color");
             } else {
                 TRACE("specular%d", (idx - 1));
             }
             break;
-        case D3DDECLUSAGE_TEXCOORD:
+        case WINED3DDECLUSAGE_TEXCOORD:
             TRACE("texture%d", idx);
             break;
-        case D3DDECLUSAGE_TANGENT:
+        case WINED3DDECLUSAGE_TANGENT:
             TRACE("tangent");
             break;
-        case D3DDECLUSAGE_BINORMAL:
+        case WINED3DDECLUSAGE_BINORMAL:
             TRACE("binormal");
             break;
-        case D3DDECLUSAGE_TESSFACTOR:
+        case WINED3DDECLUSAGE_TESSFACTOR:
             TRACE("tessfactor");
             break;
-        case D3DDECLUSAGE_POSITIONT:
+        case WINED3DDECLUSAGE_POSITIONT:
             TRACE("positionT%d", idx);
             break;
-        case D3DDECLUSAGE_FOG:
+        case WINED3DDECLUSAGE_FOG:
             TRACE("fog");
             break;
-        case D3DDECLUSAGE_DEPTH:
+        case WINED3DDECLUSAGE_DEPTH:
             TRACE("depth");
             break;
-        case D3DDECLUSAGE_SAMPLE:
+        case WINED3DDECLUSAGE_SAMPLE:
             TRACE("sample");
             break;
         default:
