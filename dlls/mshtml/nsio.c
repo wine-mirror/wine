@@ -1435,10 +1435,20 @@ static nsresult NSAPI nsURI_SchemeIs(nsIWineURI *iface, const char *scheme, PRBo
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_a(scheme), _retval);
 
+    if(This->use_wine_url) {
+        WCHAR buf[INTERNET_MAX_SCHEME_LENGTH];
+        int len = MultiByteToWideChar(CP_ACP, 0, scheme, -1, buf, sizeof(buf)/sizeof(WCHAR))-1;
+
+        *_retval = strlenW(This->wine_url) > len
+            && This->wine_url[len] == ':'
+            && !memcmp(buf, This->wine_url, len*sizeof(WCHAR));
+        return NS_OK;
+    }
+
     if(This->uri)
         return nsIURI_SchemeIs(This->uri, scheme, _retval);
 
-    FIXME("default action not implemented\n");
+    TRACE("returning error\n");
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
