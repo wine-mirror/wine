@@ -1237,6 +1237,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
             object->handle = handle;
             *handle = object;
             *ppShader = (handle - This->shader_handles) + VS_HIGHESTFIXEDFXF + 1;
+
+            load_local_constants(pDeclaration, object->wineD3DVertexShader);
         }
     }
     TRACE("(%p) : returning %p (handle %#x)\n", This, object, *ppShader);

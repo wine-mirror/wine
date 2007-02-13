@@ -1450,23 +1450,25 @@ DECLARE_INTERFACE_(IWineD3DVertexShader,IWineD3DBaseShader)
     STDMETHOD(GetDevice)(THIS_ IWineD3DDevice** ppDevice) PURE;
     STDMETHOD(GetFunction)(THIS_ VOID *pData, UINT *pSizeOfData) PURE;
     STDMETHOD_(void, FakeSemantics)(THIS_ struct IWineD3DVertexDeclaration *vertex_declaration) PURE;
+    STDMETHOD(SetLocalConstantsF)(THIS_ UINT start_idx, const float *src_data, UINT count) PURE;
 };
 #undef INTERFACE
 
 #if !defined(__cplusplus) || defined(CINTERFACE)
 /*** IUnknown methods ***/
-#define IWineD3DVertexShader_QueryInterface(p,a,b)     (p)->lpVtbl->QueryInterface(p,a,b)
-#define IWineD3DVertexShader_AddRef(p)                 (p)->lpVtbl->AddRef(p)
-#define IWineD3DVertexShader_Release(p)                (p)->lpVtbl->Release(p)
+#define IWineD3DVertexShader_QueryInterface(p,a,b)          (p)->lpVtbl->QueryInterface(p,a,b)
+#define IWineD3DVertexShader_AddRef(p)                      (p)->lpVtbl->AddRef(p)
+#define IWineD3DVertexShader_Release(p)                     (p)->lpVtbl->Release(p)
 /*** IWineD3DBase methods ***/
-#define IWineD3DVertexShader_GetParent(p,a)            (p)->lpVtbl->GetParent(p,a)
+#define IWineD3DVertexShader_GetParent(p,a)                 (p)->lpVtbl->GetParent(p,a)
 /*** IWineD3DBaseShader methods ***/
-#define IWineD3DVertexShader_SetFunction(p,a)          (p)->lpVtbl->SetFunction(p,a)
-#define IWineD3DVertexShader_CompileShader(p)          (p)->lpVtbl->CompileShader(p)
+#define IWineD3DVertexShader_SetFunction(p,a)               (p)->lpVtbl->SetFunction(p,a)
+#define IWineD3DVertexShader_CompileShader(p)               (p)->lpVtbl->CompileShader(p)
 /*** IWineD3DVertexShader methods ***/
-#define IWineD3DVertexShader_GetDevice(p,a)            (p)->lpVtbl->GetDevice(p,a)
-#define IWineD3DVertexShader_GetFunction(p,a,b)        (p)->lpVtbl->GetFunction(p,a,b)
-#define IWineD3DVertexShader_FakeSemantics(p,a)        (p)->lpVtbl->FakeSemantics(p,a)
+#define IWineD3DVertexShader_GetDevice(p,a)                 (p)->lpVtbl->GetDevice(p,a)
+#define IWineD3DVertexShader_GetFunction(p,a,b)             (p)->lpVtbl->GetFunction(p,a,b)
+#define IWineD3DVertexShader_FakeSemantics(p,a)             (p)->lpVtbl->FakeSemantics(p,a)
+#define IWineD3DVertexShader_SetLocalConstantsF(p,a,b,c)    (p)->lpVtbl->SetLocalConstantsF(p,a,b,c)
 #endif
 
 /*****************************************************************************

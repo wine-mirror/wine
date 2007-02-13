@@ -105,52 +105,31 @@ void shader_glsl_load_psamplers(
 static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info,
         unsigned int max_constants, float* constants, GLhandleARB *constant_locations,
         struct list *constant_list) {
+    constant_entry *constant;
     local_constant* lconst;
     GLhandleARB tmp_loc;
     int i;
 
-    if (!constant_list) {
-        if (TRACE_ON(d3d_shader)) {
-            for (i = 0; i < max_constants; ++i) {
-                tmp_loc = constant_locations[i];
-                if (tmp_loc != -1) {
-                    TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                            constants[i * 4 + 0], constants[i * 4 + 1],
-                            constants[i * 4 + 2], constants[i * 4 + 3]);
-                }
-            }
-        }
-        for (i = 0; i < max_constants; ++i) {
-            tmp_loc = constant_locations[i];
-            if (tmp_loc != -1) {
-                /* We found this uniform name in the program - go ahead and send the data */
-                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
-            }
-        }
-        checkGLcall("glUniform4fvARB()");
-    } else {
-        constant_entry *constant;
-        if (TRACE_ON(d3d_shader)) {
-            LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
-                i = constant->idx;
-                tmp_loc = constant_locations[i];
-                if (tmp_loc != -1) {
-                    TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                            constants[i * 4 + 0], constants[i * 4 + 1],
-                            constants[i * 4 + 2], constants[i * 4 + 3]);
-                }
-            }
-        }
+    if (TRACE_ON(d3d_shader)) {
         LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
             i = constant->idx;
             tmp_loc = constant_locations[i];
             if (tmp_loc != -1) {
-                /* We found this uniform name in the program - go ahead and send the data */
-                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
+                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
+                        constants[i * 4 + 0], constants[i * 4 + 1],
+                        constants[i * 4 + 2], constants[i * 4 + 3]);
             }
         }
-        checkGLcall("glUniform4fvARB()");
     }
+    LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
+        i = constant->idx;
+        tmp_loc = constant_locations[i];
+        if (tmp_loc != -1) {
+            /* We found this uniform name in the program - go ahead and send the data */
+            GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
+        }
+    }
+    checkGLcall("glUniform4fvARB()");
 
     /* Load immediate constants */
     if (TRACE_ON(d3d_shader)) {
@@ -313,17 +292,10 @@ void shader_glsl_load_constants(
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
-        IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl*)stateBlock->vertexDecl;
         GLint pos;
 
         constant_locations = stateBlock->glsl_program->vuniformF_locations;
         constant_list = &stateBlock->set_vconstantsF;
-
-        if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
-            /* Load DirectX 8 float constants/uniforms for vertex shader */
-            shader_glsl_load_constantsF(vshader, gl_info, GL_LIMITS(vshader_constantsF),
-                    vertexDeclaration->constants, constant_locations, NULL);
-        }
 
         /* Load DirectX 9 float constants/uniforms for vertex shader */
         shader_glsl_load_constantsF(vshader, gl_info, GL_LIMITS(vshader_constantsF),

@@ -618,6 +618,7 @@ typedef struct IDirect3DPixelShader8Impl {
  *
  * to see how not defined it here
  */
+void load_local_constants(const DWORD *d3d8_elements, IWineD3DVertexShader *wined3d_vertex_shader);
 
 /* Callbacks */
 extern HRESULT WINAPI D3D8CB_CreateSurface(IUnknown *device, IUnknown *pSuperior, UINT Width, UINT Height,

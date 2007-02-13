@@ -1221,6 +1221,32 @@ static void WINAPI IWineD3DVertexShaderImpl_FakeSemantics(IWineD3DVertexShader *
     }
 }
 
+/* Set local constants for d3d8 shaders */
+static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertexShader *iface,
+        UINT start_idx, const float *src_data, UINT count) {
+    IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
+    UINT i, end_idx;
+
+    TRACE("(%p) : start_idx %u, src_data %p, count %u\n", This, start_idx, src_data, count);
+
+    end_idx = start_idx + count;
+    if (end_idx > GL_LIMITS(vshader_constantsF)) {
+        WARN("end_idx %u > float constants limit %u\n", end_idx, GL_LIMITS(vshader_constantsF));
+        end_idx = GL_LIMITS(vshader_constantsF);
+    }
+
+    for (i = start_idx; i < end_idx; ++i) {
+        local_constant* lconst = HeapAlloc(GetProcessHeap(), 0, sizeof(local_constant));
+        if (!lconst) return E_OUTOFMEMORY;
+
+        lconst->idx = i;
+        CopyMemory(lconst->value, src_data + i * 4, 4 * sizeof(float));
+        list_add_head(&This->baseShader.constantsF, &lconst->entry);
+    }
+
+    return D3D_OK;
+}
+
 static HRESULT WINAPI IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
     IWineD3DVertexShaderImpl *This = (IWineD3DVertexShaderImpl *)iface;
     CONST DWORD *function = This->baseShader.function;
@@ -1259,5 +1285,6 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
     IWineD3DVertexShaderImpl_GetFunction,
-    IWineD3DVertexShaderImpl_FakeSemantics
+    IWineD3DVertexShaderImpl_FakeSemantics,
+    IWIneD3DVertexShaderImpl_SetLocalConstantsF
 };

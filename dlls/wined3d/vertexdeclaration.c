@@ -315,35 +315,6 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
         } else if (D3DVSD_TOKEN_STREAMDATA == tokentype &&  0x10000000 & tokentype ) {
              TRACE(" 0x%08x SKIP(%u)\n", tokentype, ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
              offset += sizeof(DWORD) * ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
-        } else if (D3DVSD_TOKEN_CONSTMEM  == tokentype) {
-            DWORD i;
-            DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
-            DWORD constaddress = ((token & D3DVSD_CONSTADDRESSMASK) >> D3DVSD_CONSTADDRESSSHIFT);
-            if (This->constants == NULL ) {
-                This->constants = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 
-                        ((IWineD3DImpl*)This->wineD3DDevice->wineD3D)->gl_info.max_vshader_constantsF * 4 * sizeof(float));
-            }
-            TRACE(" 0x%08x CONST(%u, %u)\n", token, constaddress, count);
-            for (i = 0; i < count; ++i) {
-                TRACE("        c[%u] = (0x%08x, 0x%08x, 0x%08x, 0x%08x)\n",
-                    constaddress,
-                    *pToken,
-                    *(pToken + 1),
-                    *(pToken + 2),
-                    *(pToken + 3));
-
-                This->constants[constaddress * 4] = *(const float*) (pToken+ i * 4 + 1);
-                This->constants[constaddress * 4 + 1] = *(const float *)(pToken + i * 4 + 2);
-                This->constants[constaddress * 4 + 2] = *(const float *)(pToken + i * 4 + 3);
-                This->constants[constaddress * 4 + 3] = *(const float *)(pToken + i * 4 + 4);
-                FIXME("        c[%u] = (%8f, %8f, %8f, %8f)\n",
-                    constaddress,
-                    *(const float*) (pToken+ i * 4 + 1),
-                    *(const float*) (pToken + i * 4 + 2),
-                    *(const float*) (pToken + i * 4 +3),
-                    *(const float*) (pToken + i * 4 + 4));
-                ++constaddress;
-            }
         }
 
         len += tokenlen;
@@ -405,7 +376,6 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->pDeclaration8);
         HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
-        HeapFree(GetProcessHeap(), 0, This->constants);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;

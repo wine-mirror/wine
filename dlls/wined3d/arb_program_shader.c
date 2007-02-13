@@ -54,33 +54,19 @@ static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_
     local_constant* lconst;
     int i;
 
-    if (!constant_list) {
-        if (TRACE_ON(d3d_shader)) {
-            for (i = 0; i < max_constants; ++i) {
-                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                        constants[i * 4 + 0], constants[i * 4 + 1],
-                        constants[i * 4 + 2], constants[i * 4 + 3]);
-            }
-        }
-        for (i = 0; i < max_constants; ++i) {
-            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
-        }
-        checkGLcall("glProgramEnvParameter4fvARB()");
-    } else {
-        if (TRACE_ON(d3d_shader)) {
-            LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
-                i = constant->idx;
-                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                        constants[i * 4 + 0], constants[i * 4 + 1],
-                        constants[i * 4 + 2], constants[i * 4 + 3]);
-            }
-        }
+    if (TRACE_ON(d3d_shader)) {
         LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
             i = constant->idx;
-            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+            TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
+                    constants[i * 4 + 0], constants[i * 4 + 1],
+                    constants[i * 4 + 2], constants[i * 4 + 3]);
         }
-        checkGLcall("glProgramEnvParameter4fvARB()");
     }
+    LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
+        i = constant->idx;
+        GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+    }
+    checkGLcall("glProgramEnvParameter4fvARB()");
 
     /* Load immediate constants */
     if (TRACE_ON(d3d_shader)) {
@@ -113,14 +99,6 @@ void shader_arb_load_constants(
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
-        IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl*) stateBlock->vertexDecl;
-
-        if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
-            /* Load DirectX 8 float constants for vertex shader */
-            shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                                       GL_LIMITS(vshader_constantsF),
-                                       vertexDeclaration->constants, NULL);
-        }
 
         /* Load DirectX 9 float constants for vertex shader */
         shader_arb_load_constantsF(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,

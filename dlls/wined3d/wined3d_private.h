@@ -1122,9 +1122,6 @@ typedef struct IWineD3DVertexDeclarationImpl {
 
   WINED3DVERTEXELEMENT  *pDeclarationWine;
   UINT                   declarationWNumElements;
-  
-  float                 *constants;
-  
 } IWineD3DVertexDeclarationImpl;
 
 extern const IWineD3DVertexDeclarationVtbl IWineD3DVertexDeclaration_Vtbl;
