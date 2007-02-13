@@ -1905,9 +1905,11 @@ static void shaderconstant(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 }
 
 static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    BOOL use_ps = stateblock->pixelShader && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function != NULL;
+    BOOL use_vs = stateblock->vertexShader && ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->baseShader.function != NULL;
     int i;
 
-    if(stateblock->pixelShader && ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->baseShader.function != NULL) {
+    if (use_ps) {
         if(!context->last_was_pshader) {
             /* Former draw without a pixel shader, some samplers
              * may be disabled because of WINED3DTSS_COLOROP = WINED3DTOP_DISABLE
@@ -1926,18 +1928,6 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 
         /* Compile and bind the shader */
         IWineD3DPixelShader_CompileShader(stateblock->pixelShader);
-
-        if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
-            stateblock->wineD3DDevice->shader_backend->shader_select(
-                    (IWineD3DDevice *) stateblock->wineD3DDevice,
-                    TRUE,
-                    !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
-            
-            if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT)) {
-                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
-            }
-        }
-        context->last_was_pshader = TRUE;
     } else {
         /* Disabled the pixel shader - color ops weren't applied
          * while it was enabled, so re-apply them.
@@ -1947,19 +1937,17 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
                 tex_colorop(STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP), stateblock, context);
             }
         }
-        context->last_was_pshader = FALSE;
+    }
 
-        if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
-            stateblock->wineD3DDevice->shader_backend->shader_select(
-                    (IWineD3DDevice *) stateblock->wineD3DDevice,
-                    FALSE,
-                    !stateblock->vertexShader ? FALSE : ((IWineD3DVertexShaderImpl *) stateblock->vertexShader)->baseShader.function != NULL);
+    if(!isStateDirty(context, StateTable[STATE_VSHADER].representative)) {
+        stateblock->wineD3DDevice->shader_backend->shader_select((IWineD3DDevice *)stateblock->wineD3DDevice, use_ps, use_vs);
 
-            if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT)) {
-                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
-            }
+        if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (use_vs || use_ps)) {
+            shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
         }
     }
+
+    context->last_was_pshader = use_ps;
 }
 
 static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
