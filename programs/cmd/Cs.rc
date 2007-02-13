@@ -65,7 +65,7 @@ na terminálové zaøízení.\n"
 \n\
 Syntaxe: FOR %promìnná IN (skupina souborù) DO akce\n\
 \n\
-V programu wcmd není tøeba zdvojovat znak % pøed promìnnou pøi použití pøíkazu\n\ FOR v dávkovém souboru.\n"
+V programu cmd není tøeba zdvojovat znak % pøed promìnnou pøi použití pøíkazu\n\ FOR v dávkovém souboru.\n"
 
   WCMD_GOTO,
 "Pøíkaz GOTO pøedá výkon na jiné místo\n\
@@ -107,7 +107,7 @@ Je-li pøesouván adresáø, jsou pøesunuty všechny jeho podadresáøe a soubory.\n\
 MOVE selže jsou-li zdrojová a cílová oblast na jednotkách s jinými DOS písmeny diskù.\n"
 
   WCMD_PATH,
-"PATH zobrazí èi zmìní cesty, v nichž wcmd hledá soubory.\n\
+"PATH zobrazí èi zmìní cesty, v nichž cmd hledá soubory.\n\
 \n\
 PATH bez argumentù zobrazí momentálnì platné nastavení (pøed první zmìnou\n\
 je to hodnota pøevzatá ze souboru wine.conf). Ke zmìnì pøipojte k pøíkazu\n\
@@ -134,7 +134,7 @@ Tyto znaky mají v øetìzcích speciální význam:\n\
 $$    Znak dolaru         $_    Odøádkování         $b    Znak roury (|)\n\
 $d    Datum               $e    Escape              $g    Znaménko vìtší než\n\
 $l    Znaménko menší než  $n    Písmeno disku       $p    Cesta\n\
-$q    Rovnítko            $t    Èas                 $v    Verze wcmd\n\
+$q    Rovnítko            $t    Èas                 $v    Verze cmd\n\
 \n\
 PROMPT bez parametrù resetuje prompt na defaultní,\n\
 který je složen z cesty k souèasnému adresáøi (vèetnì písmena disku\n\
@@ -154,7 +154,7 @@ nejsou vykonány. REM je proto používán jako komentáøový pøíkaz.\n"
   WCMD_RMDIR,  "Nápovìda k RMDIR\n"
 
   WCMD_SET,
-"SET zobrazí nebo zmìní promìnné prostøedí wcmd.\n\
+"SET zobrazí nebo zmìní promìnné prostøedí cmd.\n\
 \n\
 SET bez argumentù ukáže souèasné nastavení prostøedí.\n\
 \n\
@@ -169,8 +169,8 @@ Syntaxe pro nastavení a zmìnu promìnné prostøedí je:\n\
       Ve Wine jsou viditelné promìnné prostøedí operaèního\n\
       systému, ve kterém je Wine spuštìn. Proto uvidíte mnohem víc promìnných\n\
       prostøedí, než u nativní Win32 implementace. Není možné\n\
-      mìnit promìnné prostøedí hostitelského operaèního systému z wcmd.\n"
-  
+      mìnit promìnné prostøedí hostitelského operaèního systému z cmd.\n"
+
   WCMD_SHIFT,
 "SHIFT užíván v dávkových souborech k odstranìní jednoho parametru ze zaèátku\n\
 jejich seznamu, takže parametr 2 se stane parametrem 1 atd. Nemá žádný\n\
@@ -178,7 +178,7 @@ efekt, je-li zadán na pøíkazovou øádku.\n"
 
   WCMD_TIME,   "Nápovìda k TIME\n"
 
-  WCMD_TITLE,  "Nastaví titulek okna wcmd, syntaxe TITLE [øetìzec]\n"
+  WCMD_TITLE,  "Nastaví titulek okna cmd, syntaxe TITLE [øetìzec]\n"
 
   WCMD_TYPE,
 "TYPE <soubor> vypíše <soubor> na konzolové zaøízení (nebo jinam,\n\
@@ -195,16 +195,16 @@ VERIFY		Zobrazí aktuální stav.\n\
 Pøíznak verify nemá ve Wine žádnou funkci.\n"
 
   WCMD_VER,
-"VER zobrazí verzi spuštìného programu wcmd.\n"
+"VER zobrazí verzi spuštìného programu cmd.\n"
 
   WCMD_VOL,    "Nápovìda k VOL\n"
 
   WCMD_EXIT,
 "EXIT ukonèí bìžící sezení a vrátí kontrolu\n\
 operaènímu systému nebo pøíkazovému interpretu,\n\
-ze kterého byl wcmd spuštìn.\n"
+ze kterého byl cmd spuštìn.\n"
 
-  1000, "Vestavìné pøíkazy WCMD jsou:\n\
+  1000, "Vestavìné pøíkazy CMD jsou:\n\
 ATTRIB\t\tZobrazí nebo nastaví DOS-ovské souborové attributy\n\
 CALL\t\tZavolá dávkový soubor z jiného\n\
 CD (CHDIR)\tZmìní pracovní adresáø\n\
@@ -224,10 +224,10 @@ REN (RENAME)\tPøejmenuje soubor\n\
 RD (RMDIR)\tSmaže adresáø\n\
 SET\t\tNastaví nebo zobrazí promìnnou prostøedí\n\
 TIME\t\tUkáže èi nastaví systémový èas\n\
-TITLE\t\tNastaví titulek okna bìžící WCMD instance\n\
+TITLE\t\tNastaví titulek okna bìžící CMD instance\n\
 TYPE\t\tVypíše obsah textového souboru\n\
-VER\t\tZobrazí verzi WCMD\n\
+VER\t\tZobrazí verzi CMD\n\
 VOL\t\tUkáže jmenovku disku\n\
-EXIT\t\tUkonèí WCMD\n\n\
+EXIT\t\tUkonèí CMD\n\n\
 Zadejte HELP <pøíkaz> pro podrobnìjší informace o nìkterém z výše uvedených pøíkazù\n"
 }

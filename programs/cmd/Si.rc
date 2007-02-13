@@ -62,7 +62,7 @@ preceding it with an @ sign.\n"
 Syntax: FOR %variable IN (set) DO command\n\
 \n\
 The requirement to double the % sign when using FOR in a batch file does\n\
-not exist in wcmd.\n"
+not exist in cmd.\n"
 
   WCMD_GOTO,
 "The GOTO command transfers execution to another statement within a\n\
@@ -105,7 +105,7 @@ below the item are moved as well.\n\
 MOVE fails if the old and new locations are on different DOS drive letters.\n"
 
   WCMD_PATH,
-"PATH displays or changes the wcmd search path.\n\
+"PATH displays or changes the cmd search path.\n\
 \n\
 Entering PATH will display the current PATH setting (initially this is\n\
 the value given in your wine.conf file). To change the setting follow the\n\
@@ -125,14 +125,14 @@ before it scrolls off the screen.\n"
 "PROMPT sets the command-line prompt.\n\
 \n\
 The string following the PROMPT command (and the space immediately after)\n\
-appears at the beginning of the line when wcmd is waiting for input.\n\
+appears at the beginning of the line when cmd is waiting for input.\n\
 \n\
 The following character strings have the special meaning shown:\n\
 \n\
 $$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n\
 $d    Current date        $e    Escape              $g    > sign\n\
 $l    < sign              $n    Current drive       $p    Current path\n\
-$q    Equal sign          $t    Current time        $v    wcmd version\n\
+$q    Equal sign          $t    Current time        $v    cmd version\n\
 \n\
 Note that entering the PROMPT command without a prompt-string resets the\n\
 prompt to the default, which is the current drive letter followed by its\n\
@@ -152,7 +152,7 @@ action, and can therefore be used as a comment in a batch file.\n"
   WCMD_RMDIR,  "Help about RMDIR\n"
 
   WCMD_SET,
-"SET displays or changes the wcmd environment variables.\n\
+"SET displays or changes the cmd environment variables.\n\
 \n\
 SET without parameters shows all of the current environment.\n\
 \n\
@@ -167,7 +167,7 @@ have embedded spaces.\n\
 Under Wine, the environment of the underlying operating system is\n\
 included into the Win32 environment, there will generally therefore be\n\
 many more values than in a native Win32 implementation. Note that it is\n\
-not possible to affect the operating system environment from within wcmd.\n"
+not possible to affect the operating system environment from within cmd.\n"
 
   WCMD_SHIFT,
 "SHIFT is used in a batch file to remove one parameter from the head of\n\
@@ -176,7 +176,7 @@ if called from the command line.\n"
 
   WCMD_TIME,   "Help about TIME\n"
 
-  WCMD_TITLE,  "Sets the window title for the wcmd window, syntax TITLE [string]\n"
+  WCMD_TITLE,  "Sets the window title for the cmd window, syntax TITLE [string]\n"
 
   WCMD_TYPE,
 "TYPE <filename> copies <filename> to the console device (or elsewhere\n\
@@ -192,15 +192,15 @@ VERIFY		Displays ON or OFF as appropriate.\n\
 The verify flag has no function in Wine.\n"
 
   WCMD_VER,
-"VER displays the version of wcmd you are running\n"
+"VER displays the version of cmd you are running\n"
 
   WCMD_VOL,    "Help about VOL\n"
 
   WCMD_EXIT,
 "EXIT terminates the current command session and returns\n\
-to the operating system or shell from which you invoked wcmd.\n"
+to the operating system or shell from which you invoked cmd.\n"
 
-  1000, "WCMD built-in commands are:\n\
+  1000, "CMD built-in commands are:\n\
 ATTRIB\t\tShow or change DOS file attributes\n\
 CALL\t\tInvoke a batch file from inside another\n\
 CD (CHDIR)\tChange current default directory\n\
@@ -220,10 +220,10 @@ REN (RENAME)\tRename a file\n\
 RD (RMDIR)\tDelete a subdirectory\n\
 SET\t\tSet or show environment variables\n\
 TIME\t\tSet or show the current system time\n\
-TITLE\t\tSet the window title for the WCMD session\n\
+TITLE\t\tSet the window title for the CMD session\n\
 TYPE\t\tType the contents of a text file\n\
-VER\t\tShow the current version of WCMD\n\
+VER\t\tShow the current version of CMD\n\
 VOL\t\tShow the volume label of a disk device\n\
-EXIT\t\tClose down WCMD\n\n\
+EXIT\t\tClose down CMD\n\n\
 Enter HELP <command> for further information on any of the above commands\n"
 }

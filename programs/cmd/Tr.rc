@@ -63,7 +63,7 @@ kullanýlýr.\n\
 Sözdizim: FOR %deðiþken IN (küme) DO komut\n\
 \n\
 FOR kullanýmý için toplu iþlem dosyasýnda % iþaretini çift kullanma\n\
-gereksinimi wcmd'de yoktur.\n" 
+gereksinimi cmd'de yoktur.\n"
 
   WCMD_GOTO,
 "GOTO komutu çalýþma satýrýný toplu iþlem dosyasýndaki baþka bir satýra\n\
@@ -107,7 +107,7 @@ Eðer eski ve yeni konumlar farklý DOS sürücüleri üzerindeyse MOVE hata\n\
 verecektir.\n"
 
   WCMD_PATH,
-"PATH wcmd arama yolunu gösterir veya deðiþtirir.\n\
+"PATH cmd arama yolunu gösterir veya deðiþtirir.\n\
 \n\
 Sadece PATH girmek geçerli PATH ayarýný gösterecektir (baþlangýçta bu\n\
 wine.conf dosyanýzda verilen deðer olacaktýr). Ayarý deðiþtirmek için\n\
@@ -126,7 +126,7 @@ dosyalarýnda kullanýcýya önceki komutun çýktýsýný ekrandan çýkmadan\n\
   WCMD_PROMPT,
 "PROMPT komut istemini deðiþtirir.\n\
 \n\
-PROMPT komutunu izleyen dize (ve hemen ardýndan bir boþluk) wcmd sizden\n\
+PROMPT komutunu izleyen dize (ve hemen ardýndan bir boþluk) cmd sizden\n\
 komut beklerken satýr baþýnda görünür.\n\
 \n\
 Aþaðýdaki karakter dizeleri gösterilen özel anlamlarý içerir:\n\
@@ -134,7 +134,7 @@ Aþaðýdaki karakter dizeleri gösterilen özel anlamlarý içerir:\n\
 $$    Dolar iþareti       $_    Alt satýr           $b    boru iþareti (|)\n\
 $d    Geçerli tarih       $e    Escape              $g    > iþareti\n\
 $l    < iþareti           $n    Geçerli sürücü      $p    Geçerli yol\n\
-$q    Eþittir iþareti     $t    Geçerli saat        $v    wcmd sürümü\n\
+$q    Eþittir iþareti     $t    Geçerli saat        $v    cmd sürümü\n\
 \n\
 Sadece PROMPT komutunu girerseniz komut istemi geçerli dizini (sürücü harfi\n\
 dahil) ve onu izleyen büyüktür (>) iþareti içeren öntanýmlý deðerlere\n\
@@ -155,7 +155,7 @@ açýklama olarak kullanýlabilir.\n"
   WCMD_RMDIR,  "RMDIR hakkýnda yardým\n"
 
   WCMD_SET,
-"SET wcmd çevre deðiþkenlerini gösterir veya deðiþtirir.\n\
+"SET cmd çevre deðiþkenlerini gösterir veya deðiþtirir.\n\
 \n\
 Parametresiz girilen SET geçerli çevrenin tümünü gösterir.\n\
 \n\
@@ -168,7 +168,7 @@ Bir çevre deðiþkenini oluþturmak veya düzenlemek için sözdizimi:\n\
 \n\
 Wine altýnda, üzerinde çalýþýlan iþletim sistemi çevresi Win32 çevresine\n\
 dahil edilir. Dolayýsýyla doðal bir Win32 gerçeklemesinden daha fazla\n\
-deðer bulunacaktýr. wcmd altýnda iþletim sistemi çevresini deðiþtirmek\n\
+deðer bulunacaktýr. cmd altýnda iþletim sistemi çevresini deðiþtirmek\n\
 mümkün deðildir.\n"
 
   WCMD_SHIFT,
@@ -178,7 +178,7 @@ siler. Böylece 2. parametre 1. parametre olacaktýr. Komut satýrýnda\n\
 
   WCMD_TIME,   "TIME hakkýnda yardým\n"
 
-  WCMD_TITLE,  "wcmd penceresi için pencere baþlýðýný deðiþtirir. Sözdizimi: TITLE [dize]\n"
+  WCMD_TITLE,  "cmd penceresi için pencere baþlýðýný deðiþtirir. Sözdizimi: TITLE [dize]\n"
 
   WCMD_TYPE,
 "TYPE <dosyaadý> komutu <dosyaadý>'ný konsol aygýtýna kopyalar (eðer\n\
@@ -194,15 +194,15 @@ VERIFY		Bayraðýn durumunu gösterir.\n\
 Doðrulama bayraðýnýn Wine'da bir iþlevi yoktur.\n"
 
   WCMD_VER,
-"VER kullandýðýnýz wcmd sürümünü gösterir\n"
+"VER kullandýðýnýz cmd sürümünü gösterir\n"
 
   WCMD_VOL,    "VOL hakkýnda yardým\n"
 
   WCMD_EXIT,
-"EXIT geçerli komut oturumunu sonlandýrýr ve wcmd'yi çaðýrdýðýnýz\n\
+"EXIT geçerli komut oturumunu sonlandýrýr ve cmd'yi çaðýrdýðýnýz\n\
 yerden iþletim sistemine döner.\n"
 
-  1000, "WCMD dahili komutlarý:\n\
+  1000, "CMD dahili komutlarý:\n\
 ATTRIB\t\tDOS dosya özelliklerini göster veya deðiþtir\n\
 CALL\t\tToplu iþlem dosyasý içerisinden bir diðerini çalýþtýr\n\
 CD (CHDIR)\tGeçerli dizini deðiþtir\n\
@@ -222,10 +222,10 @@ REN (RENAME)\tDosyayý yeniden adlandýr\n\
 RD (RMDIR)\tAlt dizini sil\n\
 SET\t\tÇevre deðiþkenlerini düzenle veya göster\n\
 TIME\t\tGeçerli sistem saatini düzenle veya göster\n\
-TITLE\t\tWCMD oturumu için pencere baþlýðýný belirle\n\
+TITLE\t\tCMD oturumu için pencere baþlýðýný belirle\n\
 TYPE\t\tMetin dosyasýnýn içeriðini göster\n\
-VER\t\tGeçerli WCMD sürümünü göster\n\
+VER\t\tGeçerli CMD sürümünü göster\n\
 VOL\t\tDisk aygýtýnýn bölüm etiketini göster\n\
-EXIT\t\tWCMD'yi kapat\n\n\
+EXIT\t\tCMD'yi kapat\n\n\
 Yukarýdaki komutlar hakkýnda daha fazla bilgi için HELP <komut> girin\n"
 }

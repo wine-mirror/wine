@@ -63,7 +63,7 @@ zbioru.\n\
 Sk³adnia: FOR %zmienna IN (zbiór) DO polecenie\n\
 \n\
 Wymóg powtarzania znaku %, gdy u¿ywamy komendy FOR w pliku bat nie\n\
-istnije w wcmd\n"
+istnije w cmd\n"
 
   WCMD_GOTO,
 "Komenda GOTO przenosi kursor do innego miejsca w pliku bat.\n\
@@ -103,7 +103,7 @@ i pliki s¹ tak¿e przesówane.\n\
 MOVE dzia³a tylko w obrêbie jednego dysku.\n"
 
   WCMD_PATH,
-"PATH wyœwitla lub zmienia œcie¿ke w której wyszukuje wcmd.\n\
+"PATH wyœwitla lub zmienia œcie¿ke w której wyszukuje cmd.\n\
 \n\
 Komenda PATH bez parametrów wyœwietla aktualn¹ œcie¿kê. Aby j¹\n\
 zmieniæ nale¿y wywo³aæ PATH za którym wystêpuje nowa œcie¿ka.\n\
@@ -122,14 +122,14 @@ na ekranie.\n"
 "PROMPT ustawia tekst zg³oszenia konsoli.\n\
 \n\
 Tekst wystêpuj¹cy za komend¹ (i spacje wystêpuj¹ce za nim)\n\
-pojawiaj¹ siê na pocz¹tku lini gdy wcmd czeka na komendê.\n\
+pojawiaj¹ siê na pocz¹tku lini gdy cmd czeka na komendê.\n\
 \n\
 Nastêpuj¹ce ci¹gi znaków maj¹ specjalne znaczenie:\n\
 \n\
 $$    Znak dolara ($)     $_    Znak _              $b    Znak |\n\
 $d    Data                $e    Escape              $g    Znak >\n\
 $l    Znak <              $n    Dysk                $p    Œcie¿ka\n\
-$q    Znak =              $t    Czas                $v    Wersja wcmd\n\
+$q    Znak =              $t    Czas                $v    Wersja cmd\n\
 \n\
 Wpisanie PROMPT bez opcji resetuje ustawienia konsoli zwi¹zane z komend¹\n\
 PROMPT, ustawia wyœwietlany tekst na œcie¿ke i znak >.\n\
@@ -147,7 +147,7 @@ stosowane jako komenta¿ w pliku typu bat.\n"
   WCMD_RMDIR,  "Pomoc o RMDIR\n"
 
   WCMD_SET,
-"SET wyœwietla lub ustawia zmienne œrodowiskowe wcmd.\n\
+"SET wyœwietla lub ustawia zmienne œrodowiskowe cmd.\n\
 \n\
 SET bez parametrów wyœwitla wszystkie ustawione zmienne.\n\
 \n\
@@ -171,7 +171,7 @@ wywo³ywane z lini komend.\n"
 
   WCMD_TIME,   "Pomoc o TIME\n"
 
-  WCMD_TITLE,  "Ustawia nazwê okna wcmd, sk³adnia TITLE [ci¹g znaków]\n"
+  WCMD_TITLE,  "Ustawia nazwê okna cmd, sk³adnia TITLE [ci¹g znaków]\n"
 
   WCMD_TYPE,
 "TYPE <nazwa pliku> wyœwietla zawartoœc pliku, nie jest sprawdzane, czy\n\
@@ -187,15 +187,15 @@ VERIFY		Wyœwietla ON lub OFF w zale¿noœci od stanu flagi.\n\
 Ustawienia flagi nic nie zmieniaj¹ pod Wine'em.\n"
 
   WCMD_VER,
-"VER wyœwietla wersjê wcmd.\n"
+"VER wyœwietla wersjê cmd.\n"
 
   WCMD_VOL,    "Pomoc o VOL\n"
 
   WCMD_EXIT,
-"EXIT koñczy bierz¹c¹ sesjê wcmd i powraca do systemu operacyjnego\n\
-lub pow³oki, w której uruchomiono wcmd.\n"
+"EXIT koñczy bierz¹c¹ sesjê cmd i powraca do systemu operacyjnego\n\
+lub pow³oki, w której uruchomiono cmd.\n"
 
-  1000, "WCMD - wbudowane komendy:\n\
+  1000, "CMD - wbudowane komendy:\n\
 ATTRIB\t\tPokazuje lub zmienia atrybuty pliku\n\
 CALL\t\tWywo³uje plik bat z innego pliku\n\
 CD (CHDIR)\tZmienia bierz¹cy katalog\n\
@@ -215,10 +215,10 @@ REN (RENAME)\tZmienia nazwê pliku\n\
 RD (RMDIR)\tUsuwa katalog\n\
 SET\t\tUstawia lub wyœwietla zmienne œrodowiskowe\n\
 TIME\t\tUstawia lub wyœwietla czas\n\
-TITLE\t\tUstawia tytu³ okna WCMD\n\
+TITLE\t\tUstawia tytu³ okna CMD\n\
 TYPE\t\tWyœwietla zawartoœæ pliku\n\
-VER\t\tWyœwietla wersjê WCMD\n\
+VER\t\tWyœwietla wersjê CMD\n\
 VOL\t\tWyœwietla etykietê dysku\n\
-EXIT\t\tWy³¹cza WCMD\n\n\
+EXIT\t\tWy³¹cza CMD\n\n\
 Wpisz HELP <komenda> dla dok³adniejszych informacji o komendzie\n"
 }

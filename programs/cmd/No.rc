@@ -61,7 +61,7 @@ et @-tegn foran den.\n"
 \n\
 Syntaks: FOR %variabel IN (sett) DO kommando\n\
 \n\
-Kravet om to %-tegn når FOR brukes i en satsvis fil finnes ikke i WCMD.\n"
+Kravet om to %-tegn når FOR brukes i en satsvis fil finnes ikke i CMD.\n"
 
   WCMD_GOTO,
 "GOTO-kommandoen flytter kjøringen til et annet sted i en satsvis fil.\n\
@@ -104,7 +104,7 @@ MOVE feiler hvis den gamle og nye plasseringen har forskjellige\n\
 stasjonsbokstaver.\n"
 
   WCMD_PATH,
-"PATH viser eller endrer WCMDs søkesti.\n\
+"PATH viser eller endrer CMDs søkesti.\n\
 \n\
 Å skrive inn PATH viser den gjeldende PATH-innstillingen (dette er\n\
 i begynnelsen verdien oppgitt i filen «wine.conf»). Etterfølg PATH-\n\
@@ -130,7 +130,7 @@ Følgende tegnstrenger har den spesielle betydningen som vises:\n\
 $$   Dollar-tegn       $_   Linjemating         $b   Rørtegn sign (|)\n\
 $d   Gjeldende dato    $e   Escape              $g   Større enn-tegn\n\
 $l   Mindre enn-tegn   $n   Gjeldende stasjon   $p   Gjeldende sti\n\
-$q   Likhetstegn       $t   Gjeldende tid       $v   WCMD-versjon\n\
+$q   Likhetstegn       $t   Gjeldende tid       $v   CMD-versjon\n\
 \n\
 Merk at å bruke PROMPT-kommandoen uten en klartegn-streng tilbakestiller\n\
 klartegnet til standardverdien, som er arbeidskatalogen (inkludert\n\
@@ -151,7 +151,7 @@ fil.\n"
   WCMD_RMDIR,  "Hjelp til RMDIR\n"
 
   WCMD_SET,
-"SET viser eller endrer miljøvariablene i WCMD.\n\
+"SET viser eller endrer miljøvariablene i CMD.\n\
 \n\
 SET uten parametere viser alle gjeldende miljøvariabler.\n\
 \n\
@@ -165,7 +165,7 @@ mellomrom.\n\
 \n\
 I Wine er miljøvariablene i det underliggende operativsystemet\n\ inkludert i Win32-miljøet, og det er derfor vanligvis mange flere\n\
 verdier enn i et vanlig Win32-miljø. Vær oppmerksom på at det ikke går\n\
-an å endre mijøet i det underliggende operativsystemet fra WCMD.\n"
+an å endre mijøet i det underliggende operativsystemet fra CMD.\n"
 
   WCMD_SHIFT,
 "SHIFT bruker i en satsvis fil for å fjerne den første parameteren i en\n\
@@ -174,7 +174,7 @@ effekt hvis det brukes fra kommandolinjen.\n"
 
   WCMD_TIME,   "Hjelp til TIME\n"
 
-  WCMD_TITLE,  "Angir tittelen for WCMD-vinduet, syntaksen er\n\
+  WCMD_TITLE,  "Angir tittelen for CMD-vinduet, syntaksen er\n\
   TITLE [streng]\n"
 
   WCMD_TYPE,
@@ -191,15 +191,15 @@ VERIFY		Viser ON hvis på ellerr OFF hvis av.\n\
 «Verify»-flagget har ingen funksjon i Wine.\n"
 
   WCMD_VER,
-"VER viser versjonnummeret til WCMD\n"
+"VER viser versjonnummeret til CMD\n"
 
   WCMD_VOL,    "Hjelp til VOL\n"
 
   WCMD_EXIT,
 "EXIT avslutter gjeldende kommandoøkt og returnerer til operativsystemet\n\
-eller skallet WCMD ble startet fra.\n"
+eller skallet CMD ble startet fra.\n"
 
-  1000, "Innebygde kommandoer i WCMD:\n\
+  1000, "Innebygde kommandoer i CMD:\n\
 ATTRIB\t\tViser eller endrer DOS-filattributter\n\
 CALL\t\tKall en satsvis fil inne i en annen\n\
 CD (CHDIR)\tBytter arbeidskatalog\n\
@@ -219,10 +219,10 @@ REN (RENAME)\tGir nytt navn til en fil\n\
 RD (RMDIR)\tSletter en underkatalog\n\
 SET\t\tAngir eller viser miljøvariabler\n\
 TIME\t\tAngir eller viser gjeldende systemtid\n\
-TITLE\t\tAngir vindustittelen for WCMD-økten\n\
+TITLE\t\tAngir vindustittelen for CMD-økten\n\
 TYPE\t\tViser innholdet i en fil\n\
-VER\t\tViser WCMDs versjonnummer\n\
+VER\t\tViser CMDs versjonnummer\n\
 VOL\t\tViser volumnavnet til en stasjon\n\
-EXIT\t\tAvslutter WCMD\n\n\
+EXIT\t\tAvslutter CMD\n\n\
 Skriv «HELP <kommando>» for mer informasjon om kommandoene ovenfor\n"
 }

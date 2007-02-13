@@ -64,7 +64,7 @@ précéder d'un signe @.\n"
 Syntaxe: FOR %variable IN (groupe) DO commande\n\
 \n\
 La nécessité de doubler le signe '%' en utilisant FOR dans un fichier batch \n\
-n'existe pas dans wcmd.\n"
+n'existe pas dans cmd.\n"
 
   WCMD_GOTO,
 "La commande GOTO transfère l'exécution à un autre label dans un \n\
@@ -78,7 +78,7 @@ termine l'exécution du fichier batch .\n\
 \n\
 GOTO n'a pas d'effet si utilisé interactivement.\n"
 
-  WCMD_HELP,   "Affiche une brève aide sur les commandes internes de WCMD\n"
+  WCMD_HELP,   "Affiche une brève aide sur les commandes internes de CMD\n"
 
   WCMD_IF,
 "IF est utilisé pour exécuter une commande de façon conditionnelle.\n\
@@ -105,7 +105,7 @@ tous les fichiers et sous-répertoires de l'objet sont également déplacés.\n\
 MOVE échoue si l'ancien et le nouvel emplacement sont sur des lecteurs DOS différents.\n"
 
   WCMD_PATH,
-"PATH affiche ou change le chemin de recherche de wcmd.\n\
+"PATH affiche ou change le chemin de recherche de cmd.\n\
 Entrer PATH affichera le réglage courant de PATH (au départ\n\
 c'est la valeur donnée dans le fichier de configuration wine). Pour changer\n\
 le réglage, faites suivre la commande PATH de la nouvelle valeur.\n\
@@ -123,14 +123,14 @@ la dernière commande avant qu'elle ne disparaisse de l'écran.\n"
 "PROMPT règle l'invite de commande.\n\
 \n\
 La chaîne suivant la commande PROMPT (and the space immediately after)\n\
-apparaît au début de la ligne quand wcmd attend une entrée texte.\n\
+apparaît au début de la ligne quand cmd attend une entrée texte.\n\
 \n\
 Les chaînes de caractères suivantes ont une signification spéciale :\n\
 \n\
 $$    Signe Dollar        $_    Saut de ligne       $b    Signe Pipe (|)\n\
 $d    Date courante       $e    Escape              $g    Signe >\n\
 $l    Signe <             $n    Lecteur courant     $p    Répertoire courant\n\
-$q    Signe =             $t    Heure courante      $v    Version de wcmd\n\
+$q    Signe =             $t    Heure courante      $v    Version de cmd\n\
 \n\
 Notez qu'entrer la commande PROMPT sans texte d'invite remet l'invite\n\
 à la valeur par défaut, qui est la lettre du lecteur courant suivie de\n\
@@ -150,7 +150,7 @@ aucune action, et peut donc servir de commentaire dans un fichier batch.\n"
   WCMD_RMDIR,  "Efface le répertoire donné en paramètre.\n"
 
   WCMD_SET,
-"SET affiche ou change les variables d'environnement de wcmd.\n\
+"SET affiche ou change les variables d'environnement de cmd.\n\
 \n\
 SET sans paramètre affiche l'environnement courant.\n\
 \n\
@@ -164,7 +164,7 @@ ne peut contenir d'espace, et qu'il ne doit pas y en avoir non plus autour du si
 Sous Wine, l'environment du système hôte est\n\
 inclus dans l'environnment Win32, il y aura par conséquent généralement\n\
 bien plus de valeurs que dans un système Win32 natif. Notez qu'il\n\
-n'est pas possible de modifier l'environnement du système d'exploitation dans wcmd.\n"
+n'est pas possible de modifier l'environnement du système d'exploitation dans cmd.\n"
 
   WCMD_SHIFT,
 "SHIFT est utilisé dans un fichier batch pour enlever un paramètre de la\n\
@@ -174,7 +174,7 @@ s'il est appelé depuis la ligne de commande.\n"
   WCMD_TIME,   "Aide de TIME\n"
 
   WCMD_TITLE,
-"Règle le titre de la fenêtre pour la session wcmd, syntaxe: TITLE [chaîne]\n"
+"Règle le titre de la fenêtre pour la session cmd, syntaxe: TITLE [chaîne]\n"
 
   WCMD_TYPE,
 "TYPE <nomfichier> affiche <nomfichier> sur la console (ou ailleurs\n\
@@ -190,15 +190,15 @@ VERIFY\t\tAffiche l'état ON ou OFF du flag.\n\
 Le flag de verification n'a pas de fonction dans Wine.\n"
 
   WCMD_VER,
-"VER affiche la version de wcmd actuellement en mémoire.\n"
+"VER affiche la version de cmd actuellement en mémoire.\n"
 
   WCMD_VOL, "\t\tAffiche le nom de volume d'un lecteur de disque\n"
 
   WCMD_EXIT,
 "EXIT termine la session de ligne de commande et retourne\n\
-au système d'exploitation ou au shell où vous avez invoqué wcmd.\n"
+au système d'exploitation ou au shell où vous avez invoqué cmd.\n"
 
-  1000, "Les commandes internes WCMD sont:\n\
+  1000, "Les commandes internes CMD sont:\n\
 ATTRIB\t\tAffiche ou change les attributs de fichiers DOS\n\
 CALL\t\tInvoque un fichier batch à l'intérieur d'un autre\n\
 CD (CHDIR)\tChange le répertoire courant par défaut\n\
@@ -218,10 +218,10 @@ REN (RENAME)\tRenomme un fichier, un groupe de fichiers ou un répertoire\n\
 RD (RMDIR)\tEfface un répertoire\n\
 SET\t\tRègle ou affiche les variables d'environment\n\
 TIME\t\tRègle ou affiche l'heure système courante\n\
-TITLE\t\tRègle le titre de la fenêtre pour la session WCMD\n\
+TITLE\t\tRègle le titre de la fenêtre pour la session CMD\n\
 TYPE\t\tAffiche le contenu d'un fichier texte\n\
-VER\t\tAffiche la version de wcmd actuellement en mémoire.\n\
+VER\t\tAffiche la version de cmd actuellement en mémoire.\n\
 VOL\t\tAffiche le nom de volume d'un lecteur de disque\n\
-EXIT\t\tQuitte WCMD\n\n\
+EXIT\t\tQuitte CMD\n\n\
 Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
 }
