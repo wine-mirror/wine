@@ -370,7 +370,7 @@ HRESULT HTMLElement_QI(HTMLElement*,REFIID,void**);
 HTMLDOMNode *get_node(HTMLDocument*,nsIDOMNode*);
 void release_nodes(HTMLDocument*);
 
-void install_wine_gecko(void);
+BOOL install_wine_gecko(void);
 
 /* editor */
 void handle_edit_event(HTMLDocument*,nsIDOMEvent*);

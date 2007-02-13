@@ -358,7 +358,7 @@ static INT_PTR CALLBACK installer_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARA
     return FALSE;
 }
 
-void install_wine_gecko(void)
+BOOL install_wine_gecko(void)
 {
     HANDLE hsem;
 
@@ -374,4 +374,6 @@ void install_wine_gecko(void)
 
     ReleaseSemaphore(hsem, 1, NULL);
     CloseHandle(hsem);
+
+    return TRUE;
 }
