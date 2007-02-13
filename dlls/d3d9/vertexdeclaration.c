@@ -237,13 +237,21 @@ static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDevice(LPDIRECT3DVERTEX
 
 static HRESULT WINAPI IDirect3DVertexDeclaration9Impl_GetDeclaration(LPDIRECT3DVERTEXDECLARATION9 iface, D3DVERTEXELEMENT9* pDecl, UINT* pNumElements) {
     IDirect3DVertexDeclaration9Impl *This = (IDirect3DVertexDeclaration9Impl *)iface;
-    DWORD NumElements;
-    HRESULT hr;
-    TRACE("(%p) : Relay\n", iface);
-    hr = IWineD3DVertexDeclaration_GetDeclaration(This->wineD3DVertexDeclaration, pDecl, &NumElements);
 
-    *pNumElements = NumElements;
-    return hr;
+    TRACE("(%p) : pDecl %p, pNumElements %p)\n", This, pDecl, pNumElements);
+
+    *pNumElements = This->element_count;
+
+    /* Passing a NULL pDecl is used to just retrieve the number of elements */
+    if (!pDecl) {
+        TRACE("NULL pDecl passed. Returning D3D_OK.\n");
+        return D3D_OK;
+    }
+
+    TRACE("Copying %p to %p\n", This->elements, pDecl);
+    CopyMemory(pDecl, This->elements, This->element_count * sizeof(D3DVERTEXELEMENT9));
+
+    return D3D_OK;
 }
 
 static const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
@@ -257,12 +265,41 @@ static const IDirect3DVertexDeclaration9Vtbl Direct3DVertexDeclaration9_Vtbl =
     IDirect3DVertexDeclaration9Impl_GetDeclaration
 };
 
+static size_t convert_to_wined3d_declaration(const D3DVERTEXELEMENT9* d3d9_elements, WINED3DVERTEXELEMENT **wined3d_elements) {
+    const D3DVERTEXELEMENT9* element;
+    size_t element_count = 1;
+    size_t i;
+
+    TRACE("d3d9_elements %p, wined3d_elements %p\n", d3d9_elements, wined3d_elements);
+
+    element = d3d9_elements;
+    while (element++->Stream != 0xff && element_count++ < 128);
+
+    if (element_count == 128) {
+        return 0;
+    }
+
+    *wined3d_elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(WINED3DVERTEXELEMENT));
+    if (!*wined3d_elements) {
+        FIXME("Memory allocation failed\n");
+        return 0;
+    }
+
+    for (i = 0; i < element_count; ++i) {
+        CopyMemory(*wined3d_elements + i, d3d9_elements + i, sizeof(D3DVERTEXELEMENT9));
+        (*wined3d_elements)[i].Reg = -1;
+    }
+
+    return element_count;
+}
 
 /* IDirect3DDevice9 IDirect3DVertexDeclaration9 Methods follow: */
 HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 iface, CONST D3DVERTEXELEMENT9* pVertexElements, IDirect3DVertexDeclaration9** ppDecl) {
     
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DVertexDeclaration9Impl *object = NULL;
+    WINED3DVERTEXELEMENT* wined3d_elements;
+    size_t element_count;
     HRESULT hr = D3D_OK;
 
     TRACE("(%p) : Relay\n", iface);
@@ -270,16 +307,37 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateVertexDeclaration(LPDIRECT3DDEVICE9 
         WARN("(%p) : Caller passed NULL As ppDecl, returning D3DERR_INVALIDCALL\n",This);
         return D3DERR_INVALIDCALL;
     }
+
+    element_count = convert_to_wined3d_declaration(pVertexElements, &wined3d_elements);
+    if (!element_count) {
+        FIXME("(%p) : Error parsing vertex declaration\n", This);
+        return D3DERR_INVALIDCALL;
+    }
+
     /* Allocate the storage for the device */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirect3DVertexDeclaration9Impl));
     if (NULL == object) {
+        HeapFree(GetProcessHeap(), 0, wined3d_elements);
         FIXME("Allocation of memory failed, returning D3DERR_OUTOFVIDEOMEMORY\n");
         return D3DERR_OUTOFVIDEOMEMORY;
     }
 
     object->lpVtbl = &Direct3DVertexDeclaration9_Vtbl;
     object->ref = 1;
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, pVertexElements, &object->wineD3DVertexDeclaration, (IUnknown *)object);
+
+    object->elements = HeapAlloc(GetProcessHeap(), 0, element_count * sizeof(D3DVERTEXELEMENT9));
+    if (!object->elements) {
+        HeapFree(GetProcessHeap(), 0, wined3d_elements);
+        HeapFree(GetProcessHeap(), 0, object);
+        ERR("Memory allocation failed\n");
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+    CopyMemory(object->elements, pVertexElements, element_count * sizeof(D3DVERTEXELEMENT9));
+    object->element_count = element_count;
+
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wineD3DVertexDeclaration, (IUnknown *)object, wined3d_elements, element_count);
+
+    HeapFree(GetProcessHeap(), 0, wined3d_elements);
 
     if (FAILED(hr)) {
 

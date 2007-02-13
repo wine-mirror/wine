@@ -373,40 +373,6 @@ IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
   return WINED3D_OK;
 }
 
-static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration9(IWineD3DVertexDeclaration* iface, const D3DVERTEXELEMENT9* pDecl) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    const D3DVERTEXELEMENT9* pToken = pDecl;
-    int i;
-
-    TRACE("(%p) :  pDecl(%p)\n", This, pDecl);
-
-    This->declaration9NumElements = 1;
-    for(pToken = pDecl;0xFF != pToken->Stream && This->declaration9NumElements < 128 ; pToken++) This->declaration9NumElements++;
-
-    if (This->declaration9NumElements == 128) {
-        FIXME("?(%p) Error parsing vertex declaration\n", This);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-
-    /* copy the declaration */
-    This->pDeclaration9 = HeapAlloc(GetProcessHeap(), 0, This->declaration9NumElements * sizeof(D3DVERTEXELEMENT9));
-    memcpy(This->pDeclaration9, pDecl, This->declaration9NumElements * sizeof(D3DVERTEXELEMENT9));
-
-    /* copy to wine style declaration */
-    This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, This->declaration9NumElements * sizeof(WINED3DVERTEXELEMENT));
-    for(i = 0; i < This->declaration9NumElements; ++i) {
-        memcpy(This->pDeclarationWine + i, This->pDeclaration9 + i, sizeof(D3DVERTEXELEMENT9));
-        This->pDeclarationWine[i].Reg = -1;
-        TRACE("Adding element %d:\n", i);
-        dump_wined3dvertexelement(&This->pDeclarationWine[i]);
-    }
-
-    This->declarationWNumElements = This->declaration9NumElements;
-
-  return WINED3D_OK;
-}
-
 /* *******************************************
    IWineD3DVertexDeclaration IUnknown parts follow
    ******************************************* */
@@ -438,7 +404,6 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         HeapFree(GetProcessHeap(), 0, This->pDeclaration8);
-        HeapFree(GetProcessHeap(), 0, This->pDeclaration9);
         HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
         HeapFree(GetProcessHeap(), 0, This->constants);
         HeapFree(GetProcessHeap(), 0, This);
@@ -495,61 +460,47 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVert
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration9(IWineD3DVertexDeclaration* iface,  D3DVERTEXELEMENT9* pData, DWORD* pNumElements) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-
-    TRACE("(This %p, pData %p, pNumElements %p)\n", This, pData, pNumElements);
-
-    TRACE("Setting *pNumElements to %d\n", This->declaration9NumElements);
-    *pNumElements = This->declaration9NumElements;
-
-    /* Passing a NULL pData is used to just retrieve the number of elements */
-    if (!pData) {
-        TRACE("NULL pData passed. Returning WINED3D_OK.\n");
-        return WINED3D_OK;
-    }
-
-    TRACE("Copying %p to %p\n", This->pDeclaration9, pData);
-    memcpy(pData, This->pDeclaration9, This->declaration9NumElements * sizeof(*pData));
-    return WINED3D_OK;
-}
-
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pData, DWORD *pSize) {
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface,
+        WINED3DVERTEXELEMENT *elements, size_t *element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
 
-    TRACE("(%p) : d3d version %d r\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
-    switch (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion) {
-    case 8:
-        hr = IWineD3DVertexDeclarationImpl_GetDeclaration8(iface, (DWORD *)pData, pSize);
-    break;
-    case 9:
-        hr = IWineD3DVertexDeclarationImpl_GetDeclaration9(iface, (D3DVERTEXELEMENT9 *)pData, pSize);
-    break;
-    default:
-        FIXME("(%p)  : Unsupported DirectX version %u\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
-    break;
+    TRACE("(%p) : d3d version %d, elements %p, element_count %p\n",
+            This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion, elements, element_count);
+
+    if (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion == 8) {
+        /* FIXME: This is an ugly hack of course... */
+        hr = IWineD3DVertexDeclarationImpl_GetDeclaration8(iface, (DWORD *)elements, element_count);
+    } else {
+        *element_count = This->declarationWNumElements;
+        if (elements) {
+            CopyMemory(elements, This->pDeclarationWine, This->declarationWNumElements * sizeof(WINED3DVERTEXELEMENT));
+        }
     }
+
     return hr;
 }
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface, VOID *pDecl) {
+static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVertexDeclaration *iface,
+        const WINED3DVERTEXELEMENT *elements, size_t element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
     HRESULT hr = WINED3D_OK;
 
     TRACE("(%p) : d3d version %d\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
-    switch (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion) {
-    case 8:
+
+    if (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion == 8) {
         TRACE("Parsing declaration 8\n");
-        hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(iface, (CONST DWORD *)pDecl);
-    break;
-    case 9:
-        TRACE("Parsing declaration 9\n");
-        hr = IWineD3DVertexDeclarationImpl_ParseDeclaration9(iface, (CONST D3DVERTEXELEMENT9 *)pDecl);
-    break;
-    default:
-        FIXME("(%p)  : Unsupported DirectX version %u\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
-    break;
+        /* FIXME: This is an ugly hack of course... */
+        hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(iface, (CONST DWORD *)elements);
+    } else {
+        This->declarationWNumElements = element_count;
+        This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, sizeof(WINED3DVERTEXELEMENT) * element_count);
+        if (!This->pDeclarationWine) {
+            ERR("Memory allocation failed\n");
+            hr = WINED3DERR_OUTOFVIDEOMEMORY;
+        } else {
+            CopyMemory(This->pDeclarationWine, elements, sizeof(WINED3DVERTEXELEMENT) * element_count);
+        }
     }
     TRACE("Returning\n");
     return hr;

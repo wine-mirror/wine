@@ -1120,10 +1120,6 @@ typedef struct IWineD3DVertexDeclarationImpl {
   DWORD*  pDeclaration8;
   DWORD   declaration8Length;
 
-  /** dx9+ */
-  D3DVERTEXELEMENT9 *pDeclaration9;
-  UINT               declaration9NumElements;
-
   WINED3DVERTEXELEMENT  *pDeclarationWine;
   UINT                   declarationWNumElements;
   

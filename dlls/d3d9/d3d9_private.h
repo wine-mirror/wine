@@ -476,6 +476,9 @@ typedef struct IDirect3DVertexDeclaration9Impl {
   const IDirect3DVertexDeclaration9Vtbl *lpVtbl;
   LONG    ref;
 
+  D3DVERTEXELEMENT9 *elements;
+  size_t element_count;
+
   /* IDirect3DVertexDeclaration9 fields */
   IWineD3DVertexDeclaration *wineD3DVertexDeclaration;
   

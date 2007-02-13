@@ -1179,7 +1179,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevi
     object->ref_count = 1;
     object->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
 
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, declaration, &object->wined3d_vertex_declaration, (IUnknown *)object);
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wined3d_vertex_declaration, (IUnknown *)object, (CONST WINED3DVERTEXELEMENT *)declaration, 0);
     if (FAILED(hr)) {
         ERR("(%p) : IWineD3DDevice_CreateVertexDeclaration call failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);
