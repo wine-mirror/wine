@@ -191,8 +191,10 @@ int symbol_demangle (parsed_symbol *sym)
     /* Class the function is associated with, terminated by '@@' */
     class_name = name;
     while (*name && *name++ != '@') ;
-    if (*name++ != '@')
+    if (*name++ != '@') {
+      free (function_name);
       return -1;
+    }
     class_name = str_substring (class_name, name - 2);
   }
 
@@ -215,6 +217,7 @@ int symbol_demangle (parsed_symbol *sym)
     {
       if (VERBOSE)
         printf ("/*FIXME: %s: unknown data*/\n", sym->symbol);
+      free (function_name);
       return -1;
     }
     sym->flags |= SYM_DATA;
@@ -223,6 +226,7 @@ int symbol_demangle (parsed_symbol *sym)
                                   is_static ? "static_" : "_", function_name);
     sym->arg_text[0] = str_create (3, ct.expression, " ", sym->arg_name[0]);
     FREE_CT (ct);
+    free (function_name);
     return 0;
     break;
 
@@ -238,8 +242,10 @@ int symbol_demangle (parsed_symbol *sym)
 
       if (VERBOSE)
         puts ("Demangled symbol OK [vtable]");
+      free (function_name);
       return 0;
     }
+    free (function_name);
     return -1;
     break;
 
@@ -284,6 +290,7 @@ int symbol_demangle (parsed_symbol *sym)
     break;
   /* FIXME: G,H / O,P / W,X are private / protected / public thunks */
   default:
+    free (function_name);
     return -1;
   }
 
@@ -297,6 +304,7 @@ int symbol_demangle (parsed_symbol *sym)
    case 'C': is_const = CT_VOLATILE; break;
    case 'D': is_const = (CT_CONST | CT_VOLATILE); break;
    default:
+    free (function_name);
      return -1;
    }
   }
@@ -327,6 +335,7 @@ int symbol_demangle (parsed_symbol *sym)
       sym->flags |= SYM_STDCALL;
     break;
   default:
+    free (function_name);
     return -1;
   }
 
@@ -355,8 +364,10 @@ int symbol_demangle (parsed_symbol *sym)
     if (*name != '@')
     {
       INIT_CT (ct);
-      if (!demangle_datatype(&name, &ct, sym))
+      if (!demangle_datatype(&name, &ct, sym)) {
+        free (function_name);
         return -1;
+      }
 
       if (strcmp (ct.expression, "void"))
       {
@@ -381,8 +392,10 @@ int symbol_demangle (parsed_symbol *sym)
   /* Functions are always terminated by 'Z'. If we made it this far and
    * Don't find it, we have incorrectly identified a data type.
    */
-  if (*name != 'Z')
+  if (*name != 'Z') {
+    free (function_name);
     return -1;
+  }
 
   /* Note: '()' after 'Z' means 'throws', but we don't care here */
 
