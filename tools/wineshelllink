@@ -87,7 +87,7 @@ desktop_entry()
     cat <<EOF
 [Desktop Entry]
 Name=$linkname
-Exec=wine "$path" $args
+Exec=env WINEPREFIX="${WINEPREFIX:-$HOME/.wine}" wine "$path" $args
 Type=Application
 EOF
     [ -z "$descr"   ] || echo "Comment=$descr"
