@@ -150,7 +150,7 @@ void primitiveDeclarationConvertToStridedData(
 
     BYTE  *data    = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DVertexDeclarationImpl* vertexDeclaration = NULL;
+    IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
     int i;
     WINED3DVERTEXELEMENT *element;
     DWORD stride;
@@ -159,15 +159,6 @@ void primitiveDeclarationConvertToStridedData(
     DWORD preLoadStreams[MAX_STREAMS], numPreloadStreams = 0;
 
     memset(isPreLoaded, 0, sizeof(isPreLoaded));
-
-    /* Locate the vertex declaration */
-    if (This->stateBlock->vertexShader && ((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration) {
-        TRACE("Using vertex declaration from shader\n");
-        vertexDeclaration = (IWineD3DVertexDeclarationImpl *)((IWineD3DVertexShaderImpl *)This->stateBlock->vertexShader)->vertexDeclaration;
-    } else {
-        TRACE("Using vertex declaration\n");
-        vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->stateBlock->vertexDecl;
-    }
 
     /* Translate the declaration into strided data */
     for (i = 0 ; i < vertexDeclaration->declarationWNumElements - 1; ++i) {

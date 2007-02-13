@@ -1195,6 +1195,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hrc = D3D_OK;
     IDirect3DVertexShader8Impl *object;
+    IWineD3DVertexDeclaration *wined3d_vertex_declaration;
 
     /* Setup a stub object for now */
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -1215,9 +1216,10 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
         *ppShader = 0;
         return D3DERR_INVALIDCALL;
     }
+    wined3d_vertex_declaration = ((IDirect3DVertexDeclaration8Impl *)object->vertex_declaration)->wined3d_vertex_declaration;
 
     /* Usage is missing ..*/
-    hrc = IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pDeclaration, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
+    hrc = IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, wined3d_vertex_declaration, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
 
     if (FAILED(hrc)) {
         /* free up object */
@@ -1252,6 +1254,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 ifa
         IWineD3DDevice_SetFVF(This->WineD3DDevice, pShader);
 
 	/* Call SetVertexShader with a NULL shader to set the vertexshader in the stateblock to NULL. */
+        IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, NULL);
         IWineD3DDevice_SetVertexShader(This->WineD3DDevice, NULL);
     } else {
         TRACE("Setting shader\n");
@@ -1260,7 +1263,9 @@ static HRESULT WINAPI IDirect3DDevice8Impl_SetVertexShader(LPDIRECT3DDEVICE8 ifa
             hrc = D3DERR_INVALIDCALL;
         } else {
             IDirect3DVertexShader8Impl *shader = This->shader_handles[pShader - (VS_HIGHESTFIXEDFXF + 1)];
-            hrc =  IWineD3DDevice_SetVertexShader(This->WineD3DDevice, 0 == shader ? NULL : shader->wineD3DVertexShader);
+            IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice,
+                    shader ? ((IDirect3DVertexDeclaration8Impl *)shader->vertex_declaration)->wined3d_vertex_declaration : NULL);
+            hrc = IWineD3DDevice_SetVertexShader(This->WineD3DDevice, 0 == shader ? NULL : shader->wineD3DVertexShader);
         }
     }
     TRACE("(%p) : returning hr(%u)\n", This, hrc);

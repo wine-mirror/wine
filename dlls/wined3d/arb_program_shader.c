@@ -113,9 +113,7 @@ void shader_arb_load_constants(
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
-        IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) stateBlock->vertexShader;
-        IWineD3DVertexDeclarationImpl* vertexDeclaration = 
-            (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
+        IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl*) stateBlock->vertexDecl;
 
         if (NULL != vertexDeclaration && NULL != vertexDeclaration->constants) {
             /* Load DirectX 8 float constants for vertex shader */

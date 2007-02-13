@@ -2583,9 +2583,7 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
         TRACE("================ Vertex Declaration  ===================\n");
         memset(dataLocations, 0, sizeof(*dataLocations));
 
-        if (stateblock->vertexDecl != NULL ||
-            ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->vertexDeclaration != NULL) {
-
+        if (stateblock->vertexDecl) {
             primitiveDeclarationConvertToStridedData((IWineD3DDevice *) device, useVertexShaderFunction,
                 dataLocations, &fixup);
         }

@@ -1672,7 +1672,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexDeclaration(IWineD3DDevice*
 }
 
 /* http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c/directx/graphics/programmingguide/programmable/vertexshaders/vscreate.asp */
-static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, CONST DWORD *pDeclaration, CONST DWORD *pFunction, IWineD3DVertexShader **ppVertexShader, IUnknown *parent) {
+static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *iface, IWineD3DVertexDeclaration *vertex_declaration, CONST DWORD *pFunction, IWineD3DVertexShader **ppVertexShader, IUnknown *parent) {
     IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexShaderImpl *object;  /* NOTE: impl usage is ok, this is a create */
     HRESULT hr = WINED3D_OK;
@@ -1681,19 +1681,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
 
     TRACE("(%p) : Created Vertex shader %p\n", This, *ppVertexShader);
 
-    /* If a vertex declaration has been passed, save it to the vertex shader, this affects d3d8 only. */
-    /* Further it needs to be set before calling SetFunction as SetFunction needs the declaration. */
-    if (pDeclaration != NULL) {
-        IWineD3DVertexDeclaration *vertexDeclaration;
-        hr = IWineD3DDevice_CreateVertexDeclaration(iface, pDeclaration, &vertexDeclaration ,NULL);
-        if (WINED3D_OK == hr) {
-            TRACE("(%p) : Setting vertex declaration to %p\n", This, vertexDeclaration);
-            object->vertexDeclaration = vertexDeclaration;
-        } else {
-            FIXME("(%p) : Failed to set the declaration, returning WINED3DERR_INVALIDCALL\n", iface);
-            IWineD3DVertexShader_Release(*ppVertexShader);
-            return WINED3DERR_INVALIDCALL;
-        }
+    if (vertex_declaration) {
+        IWineD3DVertexShader_FakeSemantics(*ppVertexShader, vertex_declaration);
     }
 
     hr = IWineD3DVertexShader_SetFunction(*ppVertexShader, pFunction);

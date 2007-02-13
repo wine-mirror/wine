@@ -313,11 +313,8 @@ void shader_glsl_load_constants(
 
     if (useVertexShader) {
         IWineD3DBaseShaderImpl* vshader = (IWineD3DBaseShaderImpl*) stateBlock->vertexShader;
-        IWineD3DVertexShaderImpl* vshader_impl = (IWineD3DVertexShaderImpl*) vshader;
+        IWineD3DVertexDeclarationImpl* vertexDeclaration = (IWineD3DVertexDeclarationImpl*)stateBlock->vertexDecl;
         GLint pos;
-
-        IWineD3DVertexDeclarationImpl* vertexDeclaration =
-            (IWineD3DVertexDeclarationImpl*) vshader_impl->vertexDeclaration;
 
         constant_locations = stateBlock->glsl_program->vuniformF_locations;
         constant_list = &stateBlock->set_vconstantsF;

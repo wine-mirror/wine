@@ -1811,7 +1811,6 @@ typedef struct IWineD3DVertexShaderImpl {
 
     /* run time datas...  */
     VSHADERDATA                *data;
-    IWineD3DVertexDeclaration  *vertexDeclaration;
 #if 0 /* needs reworking */
     /* run time datas */
     VSHADERINPUTDATA input;

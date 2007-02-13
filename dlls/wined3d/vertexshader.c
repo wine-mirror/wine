@@ -661,19 +661,11 @@ BOOL vshader_input_is_color(
 
     IWineD3DVertexShaderImpl* This = (IWineD3DVertexShaderImpl*) iface;
     IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    IWineD3DVertexDeclarationImpl *vertexDeclaration = (IWineD3DVertexDeclarationImpl *)deviceImpl->stateBlock->vertexDecl;
 
     DWORD usage_token = This->semantics_in[regnum].usage;
     DWORD usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
     DWORD usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
-
-    IWineD3DVertexDeclarationImpl *vertexDeclaration = NULL;
-    if (This->vertexDeclaration) {
-        /* D3D8 declaration */
-        vertexDeclaration = (IWineD3DVertexDeclarationImpl *)This->vertexDeclaration;
-    } else {
-        /* D3D9 declaration */
-        vertexDeclaration = (IWineD3DVertexDeclarationImpl *) (deviceImpl->stateBlock->vertexDecl);
-    }
 
     if (vertexDeclaration) {
         int i;
@@ -1111,7 +1103,6 @@ static ULONG WINAPI IWineD3DVertexShaderImpl_Release(IWineD3DVertexShader *iface
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        if (This->vertexDeclaration) IWineD3DVertexDeclaration_Release(This->vertexDeclaration);
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
             /* If this shader is still attached to a program, GL will perform a lazy delete */
             TRACE("Deleting shader object %u\n", This->baseShader.prgId);
@@ -1195,16 +1186,6 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     list_init(&This->baseShader.constantsB);
     list_init(&This->baseShader.constantsI);
 
-    /* Preload semantics for d3d8 shaders */
-    if (This->vertexDeclaration) {
-       IWineD3DVertexDeclarationImpl* vdecl = (IWineD3DVertexDeclarationImpl*) This->vertexDeclaration;
-       int i;
-       for (i = 0; i < vdecl->declarationWNumElements - 1; ++i) {
-           WINED3DVERTEXELEMENT* element = vdecl->pDeclarationWine + i;
-           vshader_set_input(This, element->Reg, element->Usage, element->UsageIndex);
-       }
-    }
-
     /* Second pass: figure out registers used, semantics, etc.. */
     memset(reg_maps, 0, sizeof(shader_reg_maps));
     hr = shader_get_registers_used((IWineD3DBaseShader*) This, reg_maps,
@@ -1226,6 +1207,18 @@ static HRESULT WINAPI IWineD3DVertexShaderImpl_SetFunction(IWineD3DVertexShader 
     }
 
     return WINED3D_OK;
+}
+
+/* Preload semantics for d3d8 shaders */
+static void WINAPI IWineD3DVertexShaderImpl_FakeSemantics(IWineD3DVertexShader *iface, IWineD3DVertexDeclaration *vertex_declaration) {
+    IWineD3DVertexShaderImpl *This =(IWineD3DVertexShaderImpl *)iface;
+    IWineD3DVertexDeclarationImpl* vdecl = (IWineD3DVertexDeclarationImpl*)vertex_declaration;
+
+    int i;
+    for (i = 0; i < vdecl->declarationWNumElements - 1; ++i) {
+        WINED3DVERTEXELEMENT* element = vdecl->pDeclarationWine + i;
+        vshader_set_input(This, element->Reg, element->Usage, element->UsageIndex);
+    }
 }
 
 static HRESULT WINAPI IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
@@ -1265,5 +1258,6 @@ const IWineD3DVertexShaderVtbl IWineD3DVertexShader_Vtbl =
     IWineD3DVertexShaderImpl_CompileShader,
     /*** IWineD3DVertexShader methods ***/
     IWineD3DVertexShaderImpl_GetDevice,
-    IWineD3DVertexShaderImpl_GetFunction
+    IWineD3DVertexShaderImpl_GetFunction,
+    IWineD3DVertexShaderImpl_FakeSemantics
 };
