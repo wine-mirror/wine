@@ -586,6 +586,7 @@ struct IDirect3DVertexShader8Impl {
   LONG ref;
 
   shader_handle                    *handle;
+  IDirect3DVertexDeclaration8      *vertex_declaration;
   IWineD3DVertexShader             *wineD3DVertexShader;
 };
 

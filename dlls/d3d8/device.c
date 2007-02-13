@@ -1162,6 +1162,35 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 ifa
     return IWineD3DDevice_ProcessVertices(This->WineD3DDevice,SrcStartIndex, DestIndex, VertexCount, ((IDirect3DVertexBuffer8Impl *)pDestBuffer)->wineD3DVertexBuffer, NULL, Flags);
 }
 
+static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevice8 *iface, CONST DWORD *declaration, IDirect3DVertexDeclaration8 **decl_ptr) {
+    IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
+    IDirect3DVertexDeclaration8Impl *object;
+    HRESULT hr = D3D_OK;
+
+    TRACE("(%p) : declaration %p\n", This, declaration);
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object) {
+        ERR("Memory allocation failed\n");
+        *decl_ptr = NULL;
+        return D3DERR_OUTOFVIDEOMEMORY;
+    }
+
+    object->ref_count = 1;
+    object->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
+
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, declaration, &object->wined3d_vertex_declaration, (IUnknown *)object);
+    if (FAILED(hr)) {
+        ERR("(%p) : IWineD3DDevice_CreateVertexDeclaration call failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+    } else {
+        *decl_ptr = (IDirect3DVertexDeclaration8 *)object;
+        TRACE("(%p) : Created vertex declaration %p\n", This, object);
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 iface, CONST DWORD* pDeclaration, CONST DWORD* pFunction, DWORD* ppShader, DWORD Usage) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     HRESULT hrc = D3D_OK;
@@ -1178,6 +1207,15 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
 
     object->ref = 1;
     object->lpVtbl = &Direct3DVertexShader8_Vtbl;
+
+    hrc = IDirect3DDevice8Impl_CreateVertexDeclaration(iface, pDeclaration, &object->vertex_declaration);
+    if (FAILED(hrc)) {
+        ERR("(%p) : IDirect3DDeviceImpl_CreateVertexDeclaration call failed\n", This);
+        HeapFree(GetProcessHeap(), 0, object);
+        *ppShader = 0;
+        return D3DERR_INVALIDCALL;
+    }
+
     /* Usage is missing ..*/
     hrc = IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, pDeclaration, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
 
