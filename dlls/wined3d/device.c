@@ -505,12 +505,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     WINED3DFORMAT Format = WINED3DFMT_VERTEXDATA; /* Dummy format for now */
     int dxVersion = ( (IWineD3DImpl *) This->wineD3D)->dxVersion;
     BOOL conv;
+
+    if(Size == 0) {
+        WARN("Size 0 requested, returning WINED3DERR_INVALIDCALL\n");
+        *ppVertexBuffer = NULL;
+        return WINED3DERR_INVALIDCALL;
+    }
+
     D3DCREATERESOURCEOBJECTINSTANCE(object, VertexBuffer, WINED3DRTYPE_VERTEXBUFFER, Size)
 
     TRACE("(%p) : Size=%d, Usage=%d, FVF=%x, Pool=%d - Memory@%p, Iface@%p\n", This, Size, Usage, FVF, Pool, object->resource.allocatedMemory, object);
     *ppVertexBuffer = (IWineD3DVertexBuffer *)object;
-
-    if(Size == 0) return WINED3DERR_INVALIDCALL;
 
     if (Pool == WINED3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
         object->resource.allocatedMemory  = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->resource.size);
