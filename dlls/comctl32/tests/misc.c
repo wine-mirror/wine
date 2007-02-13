@@ -23,6 +23,11 @@
 
 #include "wine/test.h"
 
+static PVOID (WINAPI * pAlloc)(LONG);
+static PVOID (WINAPI * pReAlloc)(PVOID, LONG);
+static BOOL (WINAPI * pFree)(PVOID);
+static LONG (WINAPI * pGetSize)(PVOID);
+
 static INT (WINAPI * pStr_GetPtrA)(LPCSTR, LPSTR, INT);
 static BOOL (WINAPI * pStr_SetPtrA)(LPSTR, LPCSTR);
 static INT (WINAPI * pStr_GetPtrW)(LPCWSTR, LPWSTR, INT);
@@ -37,6 +42,8 @@ static HMODULE hComctl32 = 0;
       FreeLibrary(hComctl32); \
     }
 
+#define expect(expected, got) ok(expected == got, "expected %d, got %d\n", expected,got)
+
 static BOOL InitFunctionPtrs(void)
 {
     hComctl32 = LoadLibraryA("comctl32.dll");
@@ -46,6 +53,11 @@ static BOOL InitFunctionPtrs(void)
         trace("Could not load comctl32.dll\n");
         return FALSE;
     }
+
+    COMCTL32_GET_PROC(71, Alloc);
+    COMCTL32_GET_PROC(72, ReAlloc);
+    COMCTL32_GET_PROC(73, Free);
+    COMCTL32_GET_PROC(74, GetSize);
 
     COMCTL32_GET_PROC(233, Str_GetPtrA)
     COMCTL32_GET_PROC(234, Str_SetPtrA)
@@ -116,12 +128,32 @@ static void test_GetPtrAW(void)
     }
 }
 
+static void test_Alloc(void)
+{
+    PCHAR p = pAlloc(0);
+    ok(p != NULL, "p=%p\n", p);
+    ok(pFree(p), "\n");
+    p = pAlloc(1);
+    ok(p != NULL, "\n");
+    *p = '\0';
+    expect(1, pGetSize(p));
+    p = pReAlloc(p, 2);
+    ok(p != NULL, "\n");
+    expect(2, pGetSize(p));
+    ok(pFree(p), "\n");
+    ok(pFree(NULL), "\n");
+    p = pReAlloc(NULL, 2);
+    ok(p != NULL, "\n");
+    ok(pFree(p), "\n");
+}
+
 START_TEST(misc)
 {
     if(!InitFunctionPtrs())
         return;
 
     test_GetPtrAW();
+    test_Alloc();
 
     FreeLibrary(hComctl32);
 }
