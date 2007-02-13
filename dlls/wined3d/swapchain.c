@@ -305,9 +305,15 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_Present(IWineD3DSwapChain *iface, CO
         /* Flip the DIBsection */
         {
             HBITMAP tmp;
+            BOOL hasDib = front->Flags & SFLAG_DIBSECTION;
             tmp = front->dib.DIBsection;
             front->dib.DIBsection = back->dib.DIBsection;
             back->dib.DIBsection = tmp;
+
+            if(back->Flags & SFLAG_DIBSECTION) front->Flags |= SFLAG_DIBSECTION;
+            else front->Flags &= ~SFLAG_DIBSECTION;
+            if(hasDib) back->Flags |= SFLAG_DIBSECTION;
+            else back->Flags &= ~SFLAG_DIBSECTION;
         }
 
         /* Flip the surface data */
