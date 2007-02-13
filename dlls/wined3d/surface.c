@@ -168,8 +168,12 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsize
         } else {
             TRACE("(%p) : Calling glCompressedTexSubImage2D w %d, h %d, data %p\n", This, width, height, data);
             ENTER_GL();
-            GL_EXTCALL(glCompressedTexSubImage2DARB(This->glDescription.target, This->glDescription.level, 0, 0, width, height,
-                    This->glDescription.glFormatInternal, This->resource.size, data));
+            /* glCompressedTexSubImage2D for uploading and glTexImage2D for allocating does not work well on some drivers(r200 dri, MacOS ATI driver)
+             * glCompressedTexImage2D does not accept NULL pointers. So for compressed textures surface_allocate_surface does nothing, and this
+             * function uses glCompressedTexImage2D instead of the SubImage call
+             */
+            GL_EXTCALL(glCompressedTexImage2DARB(This->glDescription.target, This->glDescription.level, This->glDescription.glFormatInternal,
+                       width, height, 0 /* border */, This->resource.size, data));
             checkGLcall("glCompressedTexSubImage2D");
             LEAVE_GL();
         }
@@ -185,6 +189,14 @@ static void surface_upload_data(IWineD3DSurfaceImpl *This, GLsizei width, GLsize
 static void surface_allocate_surface(IWineD3DSurfaceImpl *This, GLenum internal, GLsizei width, GLsizei height, GLenum format, GLenum type) {
     TRACE("(%p) : Creating surface (target %#x)  level %d, d3d format %s, internal format %#x, width %d, height %d, gl format %#x, gl type=%#x\n", This,
             This->glDescription.target, This->glDescription.level, debug_d3dformat(This->resource.format), internal, width, height, format, type);
+
+    if (This->resource.format == WINED3DFMT_DXT1 ||
+            This->resource.format == WINED3DFMT_DXT2 || This->resource.format == WINED3DFMT_DXT3 ||
+            This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) {
+        /* glCompressedTexImage2D does not accept NULL pointers, so we cannot allocate a compressed texture without uploading data */
+        TRACE("Not allocating compressed surfaces, surface_upload_data will specify them\n");
+        return;
+    }
 
     ENTER_GL();
 
