@@ -564,7 +564,7 @@ static UINT HANDLE_CustomType2(MSIPACKAGE *package, LPCWSTR source,
     WCHAR *deformated = NULL;
     WCHAR *cmd;
     static const WCHAR spc[] = {' ',0};
-    UINT r = ERROR_SUCCESS;
+    UINT r;
 
     memset(&si,0,sizeof(STARTUPINFOW));
 
