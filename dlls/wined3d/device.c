@@ -832,11 +832,8 @@ static HRESULT  WINAPI IWineD3DDeviceImpl_CreateSurface(IWineD3DDevice *iface, U
 
     if (WINED3DFMT_UNKNOWN != Format) {
         object->bytesPerPixel = tableEntry->bpp;
-        object->pow2Size = ((pow2Width * object->bytesPerPixel) + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
-        object->pow2Size *= pow2Height;
     } else {
         object->bytesPerPixel = 0;
-        object->pow2Size      = 0;
     }
 
     /** TODO: change this into a texture transform matrix so that it's processed in hardware **/

@@ -628,12 +628,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             /*Surface has no memory currently allocated to it!*/
             TRACE("(%p) Locking rect\n" , This);
             if(!This->resource.allocatedMemory) {
-                This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->pow2Size);
+                This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
             }
             if (0 != This->glDescription.textureName) {
                 /* Now I have to copy thing bits back */
-                This->Flags |= SFLAG_ACTIVELOCK; /* When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory */
-                /* TODO: make activeLock a bit more intelligent, maybe implement a method to purge the texture memory. */
 
                 /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
                 if (GL_SUPPORT(ARB_MULTITEXTURE)) {
@@ -681,7 +679,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
             if (This->resource.allocatedMemory == NULL)
                     This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 ,This->resource.size);
 
-            This->Flags |= SFLAG_ACTIVELOCK; /*When this flag is set to true, loading the surface again won't free THis->resource.allocatedMemory*/
             pLockedRect->pBits = This->resource.allocatedMemory;
 
             glFlush();
@@ -1242,10 +1239,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
     if(!This->hDC) {
         int extraline = 0;
         SYSTEM_INFO sysInfo;
-
-        if(This->Flags & SFLAG_ACTIVELOCK) {
-            ERR("Creating a DIB section while a lock is active. Uncertain consequences\n");
-        }
 
         switch (This->bytesPerPixel) {
             case 2:
@@ -2092,17 +2085,15 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetFormat(IWineD3DSurface *iface, WINED3DFORM
 
     if (format != WINED3DFMT_UNKNOWN) {
         This->bytesPerPixel = formatEntry->bpp;
-        This->pow2Size      = (This->pow2Width * This->bytesPerPixel) * This->pow2Height;
     } else {
         This->bytesPerPixel = 0;
-        This->pow2Size      = 0;
     }
 
     This->Flags |= (WINED3DFMT_D16_LOCKABLE == format) ? SFLAG_LOCKABLE : 0;
 
     This->resource.format = format;
 
-    TRACE("(%p) : Size %d, pow2Size %d, bytesPerPixel %d, glFormat %d, glFotmatInternal %d, glType %d\n", This, This->resource.size, This->pow2Size, This->bytesPerPixel, This->glDescription.glFormat, This->glDescription.glFormatInternal, This->glDescription.glType);
+    TRACE("(%p) : Size %d, bytesPerPixel %d, glFormat %d, glFotmatInternal %d, glType %d\n", This, This->resource.size, This->bytesPerPixel, This->glDescription.glFormat, This->glDescription.glFormatInternal, This->glDescription.glType);
 
     return WINED3D_OK;
 }

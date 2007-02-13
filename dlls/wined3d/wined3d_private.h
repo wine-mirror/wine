@@ -1069,18 +1069,17 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
 #define SFLAG_LOCKABLE    0x00000010 /* Surface can be locked */
 #define SFLAG_DISCARD     0x00000020 /* ??? */
 #define SFLAG_LOCKED      0x00000040 /* Surface is locked atm */
-#define SFLAG_ACTIVELOCK  0x00000080 /* Not locked, but surface memory is needed */
-#define SFLAG_INTEXTURE   0x00000100 /* ??? */
-#define SFLAG_INPBUFFER   0x00000200 /* ??? */
-#define SFLAG_NONPOW2     0x00000400 /* Surface sizes are not a power of 2 */
-#define SFLAG_DYNLOCK     0x00000800 /* Surface is often locked by the app */
-#define SFLAG_DYNCHANGE   0x00001800 /* Surface contents are changed very often, implies DYNLOCK */
-#define SFLAG_DCINUSE     0x00002000 /* Set between GetDC and ReleaseDC calls */
-#define SFLAG_GLDIRTY     0x00004000 /* The opengl texture is more up to date than the surface mem */
-#define SFLAG_LOST        0x00008000 /* Surface lost flag for DDraw */
-#define SFLAG_FORCELOAD   0x00010000 /* To force PreLoading of a scratch cursor */
-#define SFLAG_USERPTR     0x00020000 /* The application allocated the memory for this surface */
-#define SFLAG_GLCKEY      0x00040000 /* The gl texture was created with a color key */
+#define SFLAG_INTEXTURE   0x00000080 /* ??? */
+#define SFLAG_INPBUFFER   0x00000100 /* ??? */
+#define SFLAG_NONPOW2     0x00000200 /* Surface sizes are not a power of 2 */
+#define SFLAG_DYNLOCK     0x00000400 /* Surface is often locked by the app */
+#define SFLAG_DYNCHANGE   0x00000C00 /* Surface contents are changed very often, implies DYNLOCK */
+#define SFLAG_DCINUSE     0x00001000 /* Set between GetDC and ReleaseDC calls */
+#define SFLAG_GLDIRTY     0x00002000 /* The opengl texture is more up to date than the surface mem */
+#define SFLAG_LOST        0x00004000 /* Surface lost flag for DDraw */
+#define SFLAG_FORCELOAD   0x00008000 /* To force PreLoading of a scratch cursor */
+#define SFLAG_USERPTR     0x00010000 /* The application allocated the memory for this surface */
+#define SFLAG_GLCKEY      0x00020000 /* The gl texture was created with a color key */
 
 /* In some conditions the surface memory must not be freed:
  * SFLAG_OVERSIZE: Not all data can be kept in GL
@@ -1088,7 +1087,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
  * SFLAG_DIBSECTION: The dib code manages the memory
  * SFLAG_DIRTY: GL surface isn't up to date
  * SFLAG_LOCKED: The app requires access to the surface data
- * SFLAG_ACTIVELOCK: Some wined3d code needs the memory
  * SFLAG_DYNLOCK: Avoid freeing the data for performance
  * SFLAG_DYNCHANGE: Same reason as DYNLOCK
  */
@@ -1097,7 +1095,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_UpdateOverlay(IWineD3DSurface *iface, RECT *S
                           SFLAG_DIBSECTION | \
                           SFLAG_DIRTY      | \
                           SFLAG_LOCKED     | \
-                          SFLAG_ACTIVELOCK | \
                           SFLAG_DYNLOCK    | \
                           SFLAG_DYNCHANGE  | \
                           SFLAG_USERPTR)
