@@ -870,6 +870,25 @@ INT WINAPI ScrollWindowEx( HWND hwnd, INT dx, INT dy,
                 CombineRgn( hrgnWinupd, hrgnWinupd, hrgnTemp, RGN_OR );
             RedrawWindow( hwnd, NULL, hrgnTemp, rdw_flags);
             DeleteObject( hrgnClip );
+
+           /* Catch the case where the scolling amount exceeds the size of the
+            * original window. This generated a second update area that is the
+            * location where the original scrolled content would end up.
+            * This second region is not returned by the ScrollDC and sets
+            * ScrollWindowEx apart from just a ScrollDC.
+            *
+            * This has been verified with testing on windows.
+            */
+            if (abs(dx) > abs(rc.right - rc.left) ||
+                abs(dy) > abs(rc.bottom - rc.top))
+            {
+                SetRectRgn( hrgnTemp, rc.left + dx, rc.top + dy, rc.right+dx, rc.bottom + dy);
+                CombineRgn( hrgnTemp, hrgnTemp, hrgnClip, RGN_AND );
+                CombineRgn( hrgnUpdate, hrgnUpdate, hrgnTemp, RGN_OR );
+
+                if( !bOwnRgn)
+                    CombineRgn( hrgnWinupd, hrgnWinupd, hrgnTemp, RGN_OR );
+            }
         }
         DeleteObject( hrgnTemp );
     } else {

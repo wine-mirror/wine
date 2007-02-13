@@ -2991,6 +2991,15 @@ static void test_scrollvalidate( HWND parent)
     CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
     ok( EqualRgn( exprgn, hrgn), "wrong update region\n");
 
+    SetRect( &rc, 0,40, 100,60);
+    SetRect( &cliprc, 0,0, 100,100);
+    ScrollWindowEx( hwnd1, 0, -25, &rc, &cliprc, hrgn, &rcu, SW_INVALIDATE);
+    SetRectRgn( tmprgn, 0,15,98,35);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    SetRectRgn( tmprgn, 0, 40, 98, 60);
+    CombineRgn( exprgn, exprgn, tmprgn, RGN_OR);
+    ok( EqualRgn( exprgn, hrgn), "wrong update region in excessive scroll\n");
+
     /* now test ScrollWindowEx with a combination of
      * WS_CLIPCHILDREN style and SW_SCROLLCHILDREN flag */
     /* make hwnd2 the child of hwnd1 */
