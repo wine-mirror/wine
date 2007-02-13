@@ -113,14 +113,6 @@ static LRESULT HEADER_SendCtrlCustomDraw(HWND hwnd, DWORD dwDrawStage, HDC hdc, 
 static const WCHAR themeClass[] = {'H','e','a','d','e','r',0};
 static WCHAR emptyString[] = {0};
 
-static void HEADER_DisposeItem(HEADER_ITEM *lpItem)
-{
-    if (lpItem->pszText)
-    {
-        Free(lpItem->pszText);
-    }
-}
-
 static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, HDITEMW *phdi, BOOL fUnicode)
 {
     if (mask & HDI_UNSUPPORTED_FIELDS)
@@ -149,11 +141,8 @@ static void HEADER_StoreHDItemInHeader(HEADER_ITEM *lpItem, UINT mask, HDITEMW *
 
     if (mask & HDI_TEXT)
     {
-        if (lpItem->pszText)
-        {
-            Free(lpItem->pszText);
-            lpItem->pszText = NULL;
-        }
+        Free(lpItem->pszText);
+        lpItem->pszText = NULL;
 
         if (phdi->pszText != LPSTR_TEXTCALLBACKW) /* covers != TEXTCALLBACKA too */
         {
@@ -1093,7 +1082,7 @@ HEADER_DeleteItem (HWND hwnd, WPARAM wParam)
        TRACE("%d: order=%d, iOrder=%d, ->iOrder=%d\n", i, infoPtr->order[i], infoPtr->items[i].iOrder, infoPtr->items[infoPtr->order[i]].iOrder);
 
     iOrder = infoPtr->items[iItem].iOrder;
-    HEADER_DisposeItem(&infoPtr->items[iItem]);
+    Free(infoPtr->items[iItem].pszText);
 
     infoPtr->uNumItem--;
     memmove(&infoPtr->items[iItem], &infoPtr->items[iItem + 1],
@@ -1422,7 +1411,7 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
     HEADER_CopyHDItemForNotify(infoPtr, &hdNotify, phdi, bUnicode, &pvScratch);
     if (HEADER_SendNotifyWithHDItemT(hwnd, HDN_ITEMCHANGINGW, nItem, &hdNotify))
     {
-        if (pvScratch) Free(pvScratch);
+        Free(pvScratch);
 	return FALSE;
     }
 
@@ -1439,8 +1428,7 @@ HEADER_SetItemT (HWND hwnd, INT nItem, LPHDITEMW phdi, BOOL bUnicode)
 
     InvalidateRect(hwnd, NULL, FALSE);
 
-    if (pvScratch != NULL)
-        Free(pvScratch);
+    Free(pvScratch);
     return TRUE;
 }
 
@@ -1517,13 +1505,12 @@ HEADER_NCDestroy (HWND hwnd, WPARAM wParam, LPARAM lParam)
     if (infoPtr->items) {
         lpItem = infoPtr->items;
         for (nItem = 0; nItem < infoPtr->uNumItem; nItem++, lpItem++) {
-            HEADER_DisposeItem(lpItem);
+            Free(lpItem->pszText);
         }
         Free (infoPtr->items);
     }
 
-    if (infoPtr->order)
-        Free(infoPtr->order);
+    Free(infoPtr->order);
 
     if (infoPtr->himl)
       ImageList_Destroy (infoPtr->himl);

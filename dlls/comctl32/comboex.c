@@ -227,7 +227,7 @@ COMBOEX_NotifyItem (COMBOEX_INFO *infoPtr, INT code, NMCOMBOBOXEXW *hdr)
 	if (astr && hdr->ceItem.pszText == (LPWSTR)astr)
 	    hdr->ceItem.pszText = wstr;
 
-	if (astr) Free(astr);
+	Free(astr);
 
 	return ret;
     }
@@ -278,7 +278,7 @@ static void COMBOEX_FreeText (CBE_ITEMDATA *item)
 {
     if (is_textW(item->pszText)) Free(item->pszText);
     item->pszText = 0;
-    if (item->pszTemp) Free(item->pszTemp);
+    Free(item->pszTemp);
     item->pszTemp = 0;
 }
 
@@ -327,7 +327,7 @@ static LPCWSTR COMBOEX_GetText(COMBOEX_INFO *infoPtr, CBE_ITEMDATA *item)
 	    COMBOEX_FreeText(item);
 	    item->pszText = buf;
 	} else {
-	    if (item->pszTemp) Free(item->pszTemp);
+	    Free(item->pszTemp);
 	    item->pszTemp = buf;
 	}
 	text = buf;
@@ -701,7 +701,7 @@ static INT COMBOEX_InsertItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
     }
     ret = COMBOEX_InsertItemW(infoPtr, &citW);
 
-    if (wstr) Free(wstr);
+    Free(wstr);
 
     return ret;
 }
@@ -825,7 +825,7 @@ static BOOL COMBOEX_SetItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
     }
     ret = COMBOEX_SetItemW(infoPtr, &citW);
 
-    if (wstr) Free(wstr);
+    Free(wstr);
 
     return ret;
 }

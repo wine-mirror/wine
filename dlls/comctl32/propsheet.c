@@ -1494,8 +1494,7 @@ static BOOL PROPSHEET_CreatePage(HWND hwndParent,
 					ppshpage->pfnDlgProc,
 					(LPARAM)ppshpage);
   /* Free a no more needed copy */
-  if(temp)
-      Free(temp);
+  Free(temp);
 
   psInfo->proppage[index].hwndPage = hwndPage;
 

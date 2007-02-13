@@ -2840,12 +2840,9 @@ static LRESULT TAB_DeleteItem (TAB_INFO *infoPtr, INT iItem)
     {
         TAB_ITEM *item = TAB_GetItem(infoPtr, iItem);
         LPBYTE oldItems = (LPBYTE)infoPtr->items;
-	
+
 	TAB_InvalidateTabArea(infoPtr);
-
-        if (item->pszText)
-            Free(item->pszText);
-
+        Free(item->pszText);
 	infoPtr->uNumItem--;
 
 	if (!infoPtr->uNumItem)

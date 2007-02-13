@@ -9964,8 +9964,7 @@ static LRESULT EditLblWndProcT(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lPara
 	}
 	LISTVIEW_EndEditLabelT(infoPtr, buffer, isW);
 
-	if (buffer) Free(buffer);
-
+	Free(buffer);
     }
 
     SendMessageW(hwnd, WM_CLOSE, 0, 0);

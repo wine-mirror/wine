@@ -351,10 +351,9 @@ void WINAPI FreeMRUList (HANDLE hMRUList)
 	MRU_SaveChanged( mp );
     }
 
-    for(i=0; i<mp->extview.nMaxItems; i++) {
-	if (mp->array[i])
-	    Free(mp->array[i]);
-    }
+    for(i=0; i<mp->extview.nMaxItems; i++)
+        Free(mp->array[i]);
+
     Free(mp->realMRU);
     Free(mp->array);
     Free(mp->extview.lpszSubKey);
@@ -422,8 +421,7 @@ INT WINAPI FindMRUData (HANDLE hList, LPCVOID lpData, DWORD cbData,
 	    }
 	}
     }
-    if(dataA)
-        Free(dataA);
+    Free(dataA);
     if (i < mp->cursize)
 	ret = i;
     else

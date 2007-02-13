@@ -820,8 +820,7 @@ TREEVIEW_UpdateDispInfo(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem,
 				     (LPSTR)callback.item.pszText, -1,
 				     wineItem->pszText, buflen/sizeof(WCHAR));
 		wineItem->cchTextMax = buflen/sizeof(WCHAR);
-		if (oldText)
-		    Free(oldText);
+		Free(oldText);
 	    }
 	}
     }
@@ -1484,7 +1483,7 @@ TREEVIEW_RemoveItem(TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *wineItem)
 
     infoPtr->uNumItems--;
 
-    if (wineItem->pszText && wineItem->pszText != LPSTR_TEXTCALLBACKW)
+    if (wineItem->pszText != LPSTR_TEXTCALLBACKW)
 	Free(wineItem->pszText);
 
     TREEVIEW_FreeItem(infoPtr, wineItem);

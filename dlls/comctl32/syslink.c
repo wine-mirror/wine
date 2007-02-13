@@ -117,14 +117,8 @@ static VOID SYSLINK_FreeDocItem (PDOC_ITEM DocItem)
 {
     if(DocItem->Type == slLink)
     {
-        if (DocItem->u.Link.szID != NULL)
-        {
-            Free(DocItem->u.Link.szID);
-        }
-        if (DocItem->u.Link.szUrl != NULL)
-        {
-            Free(DocItem->u.Link.szUrl);
-        }
+        Free(DocItem->u.Link.szID);
+        Free(DocItem->u.Link.szUrl);
     }
 
     /* we don't free Text because it's just a pointer to a character in the
@@ -1081,11 +1075,7 @@ static LRESULT SYSLINK_SetItem (SYSLINK_INFO *infoPtr, PLITEM Item)
         }
         else
         {
-            if (szId)
-            {
-                Free(szId);
-            }
-
+            Free(szId);
             ERR("Unable to allocate memory for link url\n");
             return FALSE;
         }
@@ -1093,19 +1083,13 @@ static LRESULT SYSLINK_SetItem (SYSLINK_INFO *infoPtr, PLITEM Item)
 
     if(Item->mask & LIF_ITEMID)
     {
-        if(di->u.Link.szID)
-        {
-            Free(di->u.Link.szID);
-        }
+        Free(di->u.Link.szID);
         di->u.Link.szID = szId;
     }
 
     if(Item->mask & LIF_URL)
     {
-        if(di->u.Link.szUrl)
-        {
-            Free(di->u.Link.szUrl);
-        }
+        Free(di->u.Link.szUrl);
         di->u.Link.szUrl = szUrl;
     }
 

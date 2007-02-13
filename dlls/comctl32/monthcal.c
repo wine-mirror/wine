@@ -1909,10 +1909,9 @@ static LRESULT
 MONTHCAL_Destroy(MONTHCAL_INFO *infoPtr)
 {
   /* free month calendar info data */
-  if(infoPtr->monthdayState)
-      Free(infoPtr->monthdayState);
+  Free(infoPtr->monthdayState);
   SetWindowLongPtrW(infoPtr->hwndSelf, 0, 0);
-  
+
   CloseThemeData (GetWindowTheme (infoPtr->hwndSelf));
   
   Free(infoPtr);
