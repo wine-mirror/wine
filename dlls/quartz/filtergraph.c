@@ -1061,7 +1061,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
             IBaseFilter_Release(ppinsplitter);
             ppinsplitter = NULL;
             TRACE("Cannot connect to filter (%x), trying next one\n", hr);
-            break;
+            continue;
         }
         TRACE("Successfully connected to filter\n");
         break;
