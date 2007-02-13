@@ -67,18 +67,33 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
             LEAVE_GL();
         }
     } else {
+        void *mem;
+        int src_pitch = 0;
+        int dst_pitch = 0;
+
+        if (This->Flags & SFLAG_NONPOW2) {
+            src_pitch = This->bytesPerPixel * This->pow2Width;
+            dst_pitch = IWineD3DSurface_GetPitch((IWineD3DSurface *) This);
+            src_pitch = (src_pitch + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
+            mem = HeapAlloc(GetProcessHeap(), 0, src_pitch * This->pow2Height);
+        } else {
+            mem = This->resource.allocatedMemory;
+        }
+
         TRACE("(%p) : Calling glGetTexImage level %d, format %#x, type %#x, data %p\n", This, This->glDescription.level,
-                This->glDescription.glFormat, This->glDescription.glType, This->resource.allocatedMemory);
+                This->glDescription.glFormat, This->glDescription.glType, mem);
 
         ENTER_GL();
 
         glGetTexImage(This->glDescription.target, This->glDescription.level, This->glDescription.glFormat,
-                This->glDescription.glType, This->resource.allocatedMemory);
+                This->glDescription.glType, mem);
         checkGLcall("glGetTexImage()");
 
         LEAVE_GL();
 
-        if (wined3d_settings.nonpower2_mode == NP2_REPACK) {
+        if (This->Flags & SFLAG_NONPOW2) {
+            LPBYTE src_data, dst_data;
+            int y;
             /*
              * Some games (e.g. warhammer 40k) don't work properly with the odd pitches, preventing
              * the surface pitch from being used to box non-power2 textures. Instead we have to use a hack to
@@ -124,23 +139,22 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
              *
              * internally the texture is still stored in a boxed format so any references to textureName will
              * get a boxed texture with width pow2width and not a texture of width currentDesc.Width.
+             *
+             * Performance should not be an issue, because applications normally do not lock the surfaces when
+             * rendering. If an app does, the SFLAG_DYNLOCK flag will kick in and the memory copy won't be released,
+             * and doesn't have to be re-read.
              */
-
-            if (This->Flags & SFLAG_NONPOW2) {
-                LPBYTE src_data, dst_data;
-                int src_pitch = This->bytesPerPixel * This->pow2Width;
-                int dst_pitch = This->bytesPerPixel * This->currentDesc.Width;
-                int y;
-
-                src_data = dst_data = This->resource.allocatedMemory;
-                FIXME("(%p) : Repacking the surface data from pitch %d to pitch %d\n", This, src_pitch, dst_pitch);
-                for (y = 1 ; y < This->currentDesc.Height; y++) {
-                    /* skip the first row */
-                    src_data += src_pitch;
-                    dst_data += dst_pitch;
-                    memcpy(dst_data, src_data, dst_pitch);
-                }
+            src_data = mem;
+            dst_data = This->resource.allocatedMemory;
+            TRACE("(%p) : Repacking the surface data from pitch %d to pitch %d\n", This, src_pitch, dst_pitch);
+            for (y = 1 ; y < This->currentDesc.Height; y++) {
+                /* skip the first row */
+                src_data += src_pitch;
+                dst_data += dst_pitch;
+                memcpy(dst_data, src_data, dst_pitch);
             }
+
+            HeapFree(GetProcessHeap(), 0, mem);
         }
     }
 }
@@ -1152,18 +1166,9 @@ HRESULT WINAPI IWineD3DSurfaceImpl_GetDC(IWineD3DSurface *iface, HDC *pHDC) {
         }
 
         b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        if( (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)) {
-            b_info->bmiHeader.biWidth = This->currentDesc.Width;
-            b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
-            b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
-            /* Use the full pow2 image size(assigned below) because LockRect
-             * will need it for a full glGetTexImage call
-             */
-        } else {
-            b_info->bmiHeader.biWidth = This->pow2Width;
-            b_info->bmiHeader.biHeight = -This->pow2Height -extraline;
-            b_info->bmiHeader.biSizeImage = This->resource.size + extraline  * IWineD3DSurface_GetPitch(iface);
-        }
+        b_info->bmiHeader.biWidth = This->currentDesc.Width;
+        b_info->bmiHeader.biHeight = -This->currentDesc.Height -extraline;
+        b_info->bmiHeader.biSizeImage = ( This->currentDesc.Height + extraline) * IWineD3DSurface_GetPitch(iface);
         b_info->bmiHeader.biPlanes = 1;
         b_info->bmiHeader.biBitCount = This->bytesPerPixel * 8;
 
@@ -1654,11 +1659,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     d3dfmt_get_conv(This, TRUE /* We need color keying */, TRUE /* We will use textures */, &format, &internal, &type, &convert, &bpp);
 
     /* The width is in 'length' not in bytes */
-    if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET)
-        width = This->currentDesc.Width;
-    else
-        width = This->pow2Width;
-
+    width = This->currentDesc.Width;
     pitch = IWineD3DSurface_GetPitch(iface);
 
     if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
@@ -1688,11 +1689,11 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     /* Make sure the correct pitch is used */
     glPixelStorei(GL_UNPACK_ROW_LENGTH, width);
 
-    if (NP2_REPACK == wined3d_settings.nonpower2_mode && (This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
+    if ((This->Flags & SFLAG_NONPOW2) && !(This->Flags & SFLAG_OVERSIZE)) {
         TRACE("non power of two support\n");
         surface_allocate_surface(This, internal, This->pow2Width, This->pow2Height, format, type);
         if (mem) {
-            surface_upload_data(This, This->pow2Width, This->pow2Height, format, type, mem);
+            surface_upload_data(This, This->currentDesc.Width, This->currentDesc.Height, format, type, mem);
         }
     } else {
         surface_allocate_surface(This, internal, This->glRect.right - This->glRect.left, This->glRect.bottom - This->glRect.top, format, type);
@@ -2995,12 +2996,7 @@ DWORD WINAPI IWineD3DSurfaceImpl_GetPitch(IWineD3DSurface *iface) {
              This->resource.format == WINED3DFMT_DXT4 || This->resource.format == WINED3DFMT_DXT5) /* DXT2/3/4/5 is 16 bytes per block */
         ret = ((This->currentDesc.Width + 3) >> 2) << 4;
     else {
-        if (NP2_REPACK == wined3d_settings.nonpower2_mode || This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-            /* Front and back buffers are always lockes/unlocked on currentDesc.Width */
-            ret = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
-        } else {
-            ret = This->bytesPerPixel * This->pow2Width;
-        }
+        ret = This->bytesPerPixel * This->currentDesc.Width;  /* Bytes / row */
         /* Surfaces are 32 bit aligned */
         ret = (ret + SURFACE_ALIGNMENT - 1) & ~(SURFACE_ALIGNMENT - 1);
     }

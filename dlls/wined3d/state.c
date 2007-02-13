@@ -1824,7 +1824,7 @@ static void sampler(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCont
          * IWineD3DBaseTexture::ApplyStateChanges multiplies the set matrix with a fixup matrix. Before the
          * scaling is reapplied or removed, the texture matrix has to be reapplied
          */
-        if(wined3d_settings.nonpower2_mode != NP2_NATIVE && sampler < MAX_TEXTURES) {
+        if(!GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO) && sampler < MAX_TEXTURES) {
             if(stateblock->textureDimensions[sampler] == GL_TEXTURE_2D) {
                 if(((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorX != 1.0 ||
                    ((IWineD3DTextureImpl *) stateblock->textures[sampler])->pow2scalingFactorY != 1.0 ) {

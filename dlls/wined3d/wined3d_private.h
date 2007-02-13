@@ -161,8 +161,6 @@ typedef struct wined3d_settings_s {
     we should use it.  However, until it's fully implemented, we'll leave it as a registry
     setting for developers. */
   BOOL glslRequested;
-/* nonpower 2 function */
-  int nonpower2_mode;
   int offscreen_rendering_mode;
   int rendertargetlock_mode;
 /* Memory tracking and object counting */

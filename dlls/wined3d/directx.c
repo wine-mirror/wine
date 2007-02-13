@@ -792,12 +792,6 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
      * shaders), but 8 texture stages (register combiners). */
     gl_info->max_sampler_stages = max(gl_info->max_samplers, gl_info->max_texture_stages);
 
-    /* We can only use NP2_NATIVE when the hardware supports it. */
-    if (wined3d_settings.nonpower2_mode == NP2_NATIVE && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]) {
-        WARN_(d3d_caps)("GL_ARB_texture_non_power_of_two not supported, falling back to NP2_NONE NPOT mode.\n");
-        wined3d_settings.nonpower2_mode = NP2_NONE;
-    }
-
     /* We can only use ORM_FBO when the hardware supports it. */
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO && !gl_info->supported[EXT_FRAMEBUFFER_OBJECT]) {
         WARN_(d3d_caps)("GL_EXT_framebuffer_object not supported, falling back to PBuffer offscreen rendering mode.\n");

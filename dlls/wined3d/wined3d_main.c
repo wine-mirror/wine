@@ -40,7 +40,6 @@ wined3d_settings_t wined3d_settings =
     PS_HW,          /* Hardware by default */
     VBO_HW,         /* Hardware by default */
     FALSE,          /* Use of GLSL disabled by default */
-    NP2_NATIVE,     /* Use native NPOT textures, when available */
     ORM_BACKBUFFER, /* Use the backbuffer to do offscreen rendering */
     RTL_AUTO,       /* Automatically determine best locking method */
     64*1024*1024    /* 64MB texture memory by default */
@@ -188,21 +187,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
                     TRACE("Use of GL Shading Language disabled\n");
                 }
             }
-            if ( !get_config_key( hkey, appkey, "Nonpower2Mode", buffer, size) )
-            {
-                if (!strcmp(buffer,"none"))
-                {
-                    TRACE("Using default non-power2 textures\n");
-                    wined3d_settings.nonpower2_mode = NP2_NONE;
-
-                }
-                else if (!strcmp(buffer,"repack"))
-                {
-                    TRACE("Repacking non-power2 textures\n");
-                    wined3d_settings.nonpower2_mode = NP2_REPACK;
-                }
-                /* There will be a couple of other choices for nonpow2, they are: TextureRecrangle and OpenGL 2 */
-            }
             if ( !get_config_key( hkey, appkey, "OffscreenRenderingMode", buffer, size) )
             {
                 if (!strcmp(buffer,"backbuffer"))
@@ -271,8 +255,6 @@ BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
            TRACE("Disable Vertex Buffer Hardware support\n");
        if (wined3d_settings.glslRequested)
            TRACE("If supported by your system, GL Shading Language will be used\n");
-       if (wined3d_settings.nonpower2_mode == NP2_REPACK)
-           TRACE("Repacking non-power2 textures\n");
 
        if (appkey) RegCloseKey( appkey );
        if (hkey) RegCloseKey( hkey );
