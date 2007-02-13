@@ -637,6 +637,9 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
     
     TRACE("(%p, %p)\n", ppszFileName, pmt);
 
+    if (!ppszFileName)
+        return E_POINTER;
+
     /* copy file name & media type if available, otherwise clear the outputs */
     if (This->pszFileName)
     {
@@ -646,12 +649,13 @@ static HRESULT WINAPI FileSource_GetCurFile(IFileSourceFilter * iface, LPOLESTR 
     else
         *ppszFileName = NULL;
 
-    if (This->pmt)
+    if (pmt)
     {
-        CopyMediaType(pmt, This->pmt);
+        if (This->pmt)
+            CopyMediaType(pmt, This->pmt);
+        else
+            ZeroMemory(pmt, sizeof(*pmt));
     }
-    else
-        ZeroMemory(pmt, sizeof(*pmt));
 
     return S_OK;
 }
