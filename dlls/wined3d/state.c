@@ -2663,6 +2663,8 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
 
 static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     BOOL useVertexShaderFunction = FALSE, updateFog = FALSE;
+    BOOL usePixelShaderFunction = stateblock->wineD3DDevice->ps_selected_mode != SHADER_NONE && stateblock->pixelShader
+            && ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
     BOOL transformed;
     /* Some stuff is in the device until we have per context tracking */
     IWineD3DDeviceImpl *device = stateblock->wineD3DDevice;
@@ -2758,23 +2760,18 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
     }
 
-    if(useVertexShaderFunction || context->last_was_vshader) {
-        BOOL usePixelShaderFunction = device->ps_selected_mode != SHADER_NONE && 
-                                      stateblock->pixelShader &&
-                                      ((IWineD3DPixelShaderImpl *)stateblock->pixelShader)->baseShader.function;
+    /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
+     * application
+     */
+    if (!isStateDirty(context, STATE_PIXELSHADER)) {
+        device->shader_backend->shader_select((IWineD3DDevice *)device, usePixelShaderFunction, useVertexShaderFunction);
 
-        /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
-         * application
-         */
-        if(!isStateDirty(context, STATE_PIXELSHADER)) {
-            device->shader_backend->shader_select((IWineD3DDevice *) device, usePixelShaderFunction, useVertexShaderFunction);
-
-            if(!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
-                shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
-            }
+        if (!isStateDirty(context, STATE_VERTEXSHADERCONSTANT) && (useVertexShaderFunction || usePixelShaderFunction)) {
+            shaderconstant(STATE_VERTEXSHADERCONSTANT, stateblock, context);
         }
-        context->last_was_vshader = useVertexShaderFunction;
     }
+
+    context->last_was_vshader = useVertexShaderFunction;
 
     if(updateFog) {
         state_fog(STATE_RENDER(WINED3DRS_FOGENABLE), stateblock, context);
