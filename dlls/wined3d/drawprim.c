@@ -1177,18 +1177,15 @@ void drawPrimitive(IWineD3DDevice *iface,
                    int   minIndex) {
 
     IWineD3DDeviceImpl           *This = (IWineD3DDeviceImpl *)iface;
-    IWineD3DSwapChainImpl         *swapchain;
     int i;
 
     /* Signals other modules that a drawing is in progress and the stateblock finalized */
     This->isInDraw = TRUE;
 
     /* Invalidate the back buffer memory so LockRect will read it the next time */
-    for(i = 0; i < IWineD3DDevice_GetNumberOfSwapChains(iface); i++) {
-        IWineD3DDevice_GetSwapChain(iface, i, (IWineD3DSwapChain **) &swapchain);
-        if(swapchain) {
-            if(swapchain->backBuffer) ((IWineD3DSurfaceImpl *) swapchain->backBuffer[0])->Flags |= SFLAG_GLDIRTY;
-            IWineD3DSwapChain_Release( (IWineD3DSwapChain *) swapchain);
+    for(i = 0; i < GL_LIMITS(buffers); i++) {
+        if(This->render_targets[i]) {
+            ((IWineD3DSurfaceImpl *) This->render_targets[i])->Flags |= SFLAG_GLDIRTY;
         }
     }
 
