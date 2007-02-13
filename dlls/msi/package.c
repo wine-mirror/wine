@@ -490,7 +490,6 @@ static MSIPACKAGE *msi_alloc_package( void )
         list_init( &package->extensions );
         list_init( &package->progids );
         list_init( &package->RunningActions );
-        list_init( &package->pending_custom_actions );
 
         for (i=0; i<PROPERTY_HASH_SIZE; i++)
             list_init( &package->props[i] );

@@ -230,7 +230,6 @@ typedef struct tagMSIPACKAGE
     struct tagMSISCRIPT *script;
 
     struct list RunningActions;
-    struct list pending_custom_actions;
 
     LPWSTR BaseURL;
     LPWSTR PackagePath;

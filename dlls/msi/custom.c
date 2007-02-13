@@ -61,12 +61,24 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
 
 typedef UINT (WINAPI *MsiCustomActionEntryPoint)( MSIHANDLE );
 
+static CRITICAL_SECTION msi_custom_action_cs;
+static CRITICAL_SECTION_DEBUG msi_custom_action_cs_debug =
+{
+    0, 0, &msi_custom_action_cs,
+    { &msi_custom_action_cs_debug.ProcessLocksList,
+      &msi_custom_action_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": msi_custom_action_cs") }
+};
+static CRITICAL_SECTION msi_custom_action_cs = { &msi_custom_action_cs_debug, -1, 0, 0, 0, 0 };
+
+static struct list msi_pending_custom_actions = LIST_INIT( msi_pending_custom_actions );
+
 static BOOL check_execution_scheduling_options(MSIPACKAGE *package, LPCWSTR action, UINT options)
 {
     if (!package->script)
         return TRUE;
 
-    if ((options & msidbCustomActionTypeClientRepeat) == 
+    if ((options & msidbCustomActionTypeClientRepeat) ==
             msidbCustomActionTypeClientRepeat)
     {
         if (!(package->script->InWhatSequence & SEQUENCE_UI &&
@@ -405,11 +417,14 @@ typedef struct _msi_custom_action_info {
     HANDLE handle;
     LPWSTR action;
     INT type;
+    GUID guid;
 } msi_custom_action_info;
 
 static void free_custom_action_data( msi_custom_action_info *info )
 {
+    EnterCriticalSection( &msi_custom_action_cs );
     list_remove( &info->entry );
+    LeaveCriticalSection( &msi_custom_action_cs );
     if (info->handle)
         CloseHandle( info->handle );
     msi_free( info->action );
@@ -445,14 +460,45 @@ static UINT wait_thread_handle( msi_custom_action_info *info )
     return rc;
 }
 
-
-static DWORD WINAPI ACTION_CallDllFunction( msi_custom_action_info *info )
+static msi_custom_action_info *find_action_by_guid( const LPGUID guid )
 {
+    msi_custom_action_info *info;
+    BOOL found = FALSE;
+
+    EnterCriticalSection( &msi_custom_action_cs );
+
+    LIST_FOR_EACH_ENTRY( info, &msi_pending_custom_actions, msi_custom_action_info, entry )
+    {
+        if (IsEqualGUID( &info->guid, guid ))
+        {
+            found = TRUE;
+            break;
+        }
+    }
+
+    LeaveCriticalSection( &msi_custom_action_cs );
+
+    if (!found)
+        return NULL;
+
+    return info;
+}
+
+static DWORD WINAPI ACTION_CallDllFunction( const LPGUID guid )
+{
+    msi_custom_action_info *info;
     MsiCustomActionEntryPoint fn;
     MSIHANDLE hPackage;
     HANDLE hModule;
     LPSTR proc;
     UINT r = ERROR_FUNCTION_FAILED;
+
+    info = find_action_by_guid( guid );
+    if (!info)
+    {
+        ERR("failed to find action %s\n", debugstr_guid( guid) );
+        return r;
+    }
 
     TRACE("%s %s\n", debugstr_w( info->dllname ), debugstr_w( info->function ) );
 
@@ -488,12 +534,12 @@ static DWORD WINAPI ACTION_CallDllFunction( msi_custom_action_info *info )
 
 static DWORD WINAPI DllThread( LPVOID arg )
 {
-    msi_custom_action_info *info = arg;
+    LPGUID guid = arg;
     DWORD rc = 0;
 
     TRACE("custom action (%x) started\n", GetCurrentThreadId() );
 
-    rc = ACTION_CallDllFunction( info );
+    rc = ACTION_CallDllFunction( guid );
 
     TRACE("custom action (%x) returned %i\n", GetCurrentThreadId(), rc );
 
@@ -516,9 +562,13 @@ static msi_custom_action_info *do_msidbCustomActionTypeDll(
     info->function = strdupW( function );
     info->dllname = strdupW( dllname );
     info->action = strdupW( action );
-    list_add_tail( &package->pending_custom_actions, &info->entry );
+    CoCreateGuid( &info->guid );
 
-    info->handle = CreateThread( NULL, 0, DllThread, info, 0, NULL );
+    EnterCriticalSection( &msi_custom_action_cs );
+    list_add_tail( &msi_pending_custom_actions, &info->entry );
+    LeaveCriticalSection( &msi_custom_action_cs );
+
+    info->handle = CreateThread( NULL, 0, DllThread, &info->guid, 0, NULL );
     if (!info->handle)
     {
         free_custom_action_data( info );
@@ -823,12 +873,27 @@ void ACTION_FinishCustomActions(MSIPACKAGE* package)
         msi_free( action );
     }
 
-    while ((item = list_head( &package->pending_custom_actions )))
+    while (1)
     {
+        HANDLE handle;
         msi_custom_action_info *info;
 
+        EnterCriticalSection( &msi_custom_action_cs );
+        item = list_head( &msi_pending_custom_actions );
         info = LIST_ENTRY( item, msi_custom_action_info, entry );
-        msi_dialog_check_messages( info->handle );
-        free_custom_action_data( info );
+
+        if (item && info->package == package )
+        {
+            handle = info->handle;
+            free_custom_action_data( info );
+        }
+        else
+            handle = NULL;
+        LeaveCriticalSection( &msi_custom_action_cs );
+
+        if (!item)
+            break;
+
+        msi_dialog_check_messages( handle );
     }
 }
