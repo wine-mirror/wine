@@ -1423,8 +1423,9 @@ ImageList_GetDragImage (POINT *ppt, POINT *pptHotspot)
 DWORD WINAPI
 ImageList_GetFlags(HIMAGELIST himl)
 {
-    FIXME("(%p):empty stub\n", himl);
-    return 0;
+    TRACE("%p\n", himl);
+
+    return is_valid(himl) ? himl->flags : 0;
 }
 
 
