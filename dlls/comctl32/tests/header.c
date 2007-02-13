@@ -1,6 +1,7 @@
 /* Unit test suite for header control.
  *
- * Copyright 2005 Vijay Kiran Kamuju 
+ * Copyright 2005 Vijay Kiran Kamuju
+ * Copyright 2007 Shanren Zhou
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -49,6 +50,8 @@ static HWND hWndHeader;
 #define MAX_CHARS 100
 
 #define compare(val, exp, fmt)  ok((val) == (exp), #val " value: " fmt ", expected: " fmt "\n", (val), (exp))
+
+#define expect(expected, got) ok(expected == got, "expected %d, got %d\n", expected,got)
 
 static void expect_notify(INT iCode, BOOL fUnicode, HDITEMA *lpItem)
 {
@@ -494,6 +497,235 @@ static void test_header_control (void)
     DestroyWindow(hWndHeader);
 }
 
+static void test_hdm_getitemrect(void)
+{
+    /* Afer the setorderarray is called, item with index 0 becomes
+     * the 2nd item and item with index 1 becomes 1st item
+     */
+    RECT rect;
+    int retVal;
+    retVal = SendMessage(hWndHeader, HDM_GETITEMRECT, 0, (LPARAM) &rect);
+    ok(retVal == TRUE, "Getting item rect should TRUE, got %d\n", retVal);
+    /* check bounding rectangle information */
+    expect(80, rect.left);
+    expect(0, rect.top);
+    expect(160, rect.right);
+    expect(18, rect.bottom);
+
+    retVal = SendMessage(hWndHeader, HDM_GETITEMRECT, 1, (LPARAM) &rect);
+    ok(retVal == TRUE, "Getting item rect should TRUE, got %d\n", retVal);
+    /* check bounding rectangle information */
+    expect(0, rect.left);
+    expect(0, rect.top);
+    expect(80, rect.right);
+    expect(18, rect.bottom);
+    retVal = SendMessage(hWndHeader, HDM_GETITEMRECT, 10, (LPARAM) &rect);
+    ok(retVal == 0, "Getting rect of non-existing item should return 0, got %d\n", retVal);
+}
+
+static void test_hdm_layout (void)
+{
+    int retVal;
+    RECT rect;
+    HDLAYOUT hdLayout;
+    WINDOWPOS windowPos;
+    hdLayout.prc = &rect;
+    hdLayout.pwpos = &windowPos;
+    retVal = SendMessage(hWndHeader, HDM_LAYOUT, 0, (LPARAM) &hdLayout);
+    expect(TRUE, retVal);
+}
+
+static void test_hdm_ordertoindex (void)
+{
+    int retVal;
+    retVal = SendMessage(hWndHeader, HDM_ORDERTOINDEX, 1, 0);
+    expect(0, retVal);
+}
+
+static void test_hdm_hittest (void)
+{
+    int retVal;
+    POINT pt;
+    HDHITTESTINFO hdHitTestInfo;
+    const int firstItemMaxRight = 80;
+    const int secondItemMaxRight = 160;
+    const int maxBottom = 18;
+    /* Afer the setorderarray is called, item with index 0 becomes
+     * the 2nd item and item with index 1 becomes 1st item
+     */
+    pt.x = firstItemMaxRight - 1;
+    pt.y = maxBottom - 1;
+    hdHitTestInfo.pt = pt;
+    retVal = SendMessage(hWndHeader, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
+    expect(1, retVal);
+    expect(1, hdHitTestInfo.iItem);
+
+    pt.x = secondItemMaxRight - 1;
+    pt.y = maxBottom - 1;
+    hdHitTestInfo.pt = pt;
+    retVal = SendMessage(hWndHeader, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
+    expect(0, retVal);
+    expect(0, hdHitTestInfo.iItem);
+
+    pt.x = secondItemMaxRight;
+    pt.y = maxBottom + 1;
+    hdHitTestInfo.pt = pt;
+    todo_wine
+    {
+    retVal = SendMessage(hWndHeader, HDM_HITTEST, 0, (LPARAM) &hdHitTestInfo);
+    expect(-1, retVal);
+    }
+}
+
+static void test_hdm_sethotdivider (void)
+{
+    int retVal;
+    /*  low word: x coordinate = 5
+     *  high word:  y coordinate = 5
+     */
+   todo_wine
+   {
+         retVal = SendMessage(hWndHeader, HDM_SETHOTDIVIDER, TRUE, (LPARAM) 0X00050005);
+         expect(0, retVal);
+   }
+    retVal = SendMessage(hWndHeader, HDM_SETHOTDIVIDER, FALSE, 100);
+    expect(100, retVal);
+    retVal = SendMessage(hWndHeader, HDM_SETHOTDIVIDER, FALSE, 1);
+    expect(1, retVal);
+}
+
+static void test_hdm_imageMessages (void)
+{
+    HIMAGELIST hImageList;
+    HIMAGELIST hImageListRetVal;
+    hImageListRetVal = (HIMAGELIST) SendMessage(hWndHeader, HDM_SETIMAGELIST, 0, (LPARAM) &hImageList);
+    ok(hImageListRetVal == NULL, "Expected NULL, got %d\n", (int) hImageListRetVal);
+    hImageListRetVal = (HIMAGELIST) SendMessage(hWndHeader, HDM_GETIMAGELIST, 0, 0);
+    ok(hImageListRetVal != NULL, "Expected non-NULL handle, got %d\n", (int) hImageListRetVal);
+    hImageListRetVal = (HIMAGELIST) SendMessage(hWndHeader, HDM_CREATEDRAGIMAGE, 0, 0);
+    ok(hImageListRetVal != NULL, "Expected non-NULL handle, got %d\n", (int) hImageListRetVal);
+}
+
+static void test_hdm_filterMessages (void)
+{
+    int retVal;
+    todo_wine
+    {
+     /* msdn incorrecly states that return value
+      * is the index of the filter control being
+      * modified. The sendMessage here should
+      * return previous filter timeout value
+     */
+        retVal = SendMessage(hWndHeader, HDM_SETFILTERCHANGETIMEOUT, 1, 100);
+        expect(1000, retVal);
+        retVal = SendMessage(hWndHeader, HDM_CLEARFILTER, 0, 1);
+        expect(1, retVal);
+        retVal = SendMessage(hWndHeader, HDM_EDITFILTER, 1, 0);
+        expect(1, retVal);
+     }
+}
+
+static void test_hdm_unicodeformatMessages (void)
+{
+    int retVal;
+    retVal = SendMessage(hWndHeader, HDM_SETUNICODEFORMAT, TRUE, 0);
+    expect(0, retVal);
+    retVal = SendMessage(hWndHeader, HDM_GETUNICODEFORMAT, 0, 0);
+    expect(1, retVal);
+}
+
+static void test_hdm_bitmapmarginMessages (void)
+{
+    int retVal;
+    retVal = SendMessage(hWndHeader, HDM_GETBITMAPMARGIN, 0, 0);
+    expect(6, retVal);
+}
+
+static void test_hdm_index_messages (void)
+{
+    int retVal;
+    int loopcnt;
+    int strcmpResult;
+    int iSize;
+    static const int lpiarray[2] = {1, 0};
+    static int lpiarrayReceived[2];
+    static char firstHeaderItem[] = "Name";
+    static char secondHeaderItem[] = "Size";
+    static char thirdHeaderItem[] = "Type";
+    static char fourthHeaderItem[] = "Data Modified";
+    static char *items[] = {firstHeaderItem, secondHeaderItem, thirdHeaderItem, fourthHeaderItem};
+    HDITEM hdItem;
+    hdItem.mask = HDI_TEXT | HDI_WIDTH | HDI_FORMAT;
+    hdItem.fmt = HDF_LEFT;
+    hdItem.cxy = 80;
+    hdItem.cchTextMax = 260;
+    hWndHeader = create_header_control();
+    for ( loopcnt = 0 ; loopcnt < 4 ; loopcnt++ )
+    {
+      hdItem.pszText = items[loopcnt];
+      retVal = SendMessage(hWndHeader, HDM_INSERTITEM, loopcnt, (LPARAM) &hdItem);
+      ok(retVal == loopcnt, "Adding item %d failed with return value %d\n", ( loopcnt + 1 ), retVal);
+    }
+
+    retVal = SendMessage(hWndHeader, HDM_DELETEITEM, 3, (LPARAM) &hdItem);
+    ok(retVal == TRUE, "Deleting item 3 should return TRUE, got %d\n", retVal);
+    retVal = SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    ok(retVal == 3, "Getting item count should return 3, got %d\n", retVal);
+
+    retVal = SendMessage(hWndHeader, HDM_DELETEITEM, 3, (LPARAM) &hdItem);
+    ok(retVal == FALSE, "Deleting already-deleted item should return FALSE, got %d\n", retVal);
+    retVal = SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    ok(retVal == 3, "Getting item count should return 3, got %d\n", retVal);
+
+    retVal = SendMessage(hWndHeader, HDM_DELETEITEM, 2, (LPARAM) &hdItem);
+    ok(retVal == TRUE, "Deleting item 2 should return TRUE, got %d\n", retVal);
+    retVal = SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    ok(retVal == 2, "Getting item count should return 2, got %d\n", retVal);
+
+    retVal = SendMessage(hWndHeader, HDM_GETITEM, 3, (LPARAM) &hdItem);
+    ok(retVal == FALSE, "Getting already-deleted item should return FALSE, got %d\n", retVal);
+
+    retVal = SendMessage(hWndHeader, HDM_GETITEM, 0, (LPARAM) &hdItem);
+    ok(retVal == TRUE, "Getting the 1st header item should return TRUE, got %d\n", retVal);
+    /* check if the item is the right one */
+    strcmpResult =  strcmp(hdItem.pszText, firstHeaderItem);
+    expect(0, strcmpResult);
+    expect(80, hdItem.cxy);
+
+    iSize = SendMessage(hWndHeader, HDM_GETITEMCOUNT, 0, (LPARAM) &hdItem);
+    retVal = SendMessage(hWndHeader, HDM_SETORDERARRAY, (WPARAM) iSize , (LPARAM) (LPINT) lpiarray );
+    ok(retVal == TRUE, "Setting header items order should return TRUE, got %d\n", retVal);
+    retVal = SendMessage(hWndHeader, HDM_GETORDERARRAY, (WPARAM) iSize, (LPARAM) (LPINT) lpiarrayReceived );
+    ok(retVal == TRUE, "Getting header items order should return TRUE, got %d\n", retVal);
+    /* check if the array order is set correctly and the size of the array is corret. */
+    expect(2, iSize);
+    expect(lpiarray[0], lpiarrayReceived[0]);
+    expect(lpiarray[1], lpiarrayReceived[1]);
+
+    hdItem.mask = HDI_FORMAT;
+    hdItem.fmt = HDF_CENTER | HDF_STRING;
+    retVal = SendMessage(hWndHeader, HDM_SETITEM, 0, (LPARAM) &hdItem);
+    ok(retVal == TRUE, "Aligning 1st header item to center should return TRUE, got %d\n", retVal);
+    hdItem.fmt = HDF_RIGHT | HDF_STRING;
+    retVal = SendMessage(hWndHeader, HDM_SETITEM, 1, (LPARAM) &hdItem);
+    ok(retVal == TRUE, "Aligning 2nd header item to right should return TRUE, got %d\n", retVal);
+}
+
+static void test_header_messages (void)
+{
+
+    test_hdm_index_messages();
+    test_hdm_getitemrect();
+    test_hdm_hittest();
+    test_hdm_layout();
+    test_hdm_ordertoindex();
+    test_hdm_sethotdivider();
+
+    test_hdm_imageMessages();
+    test_hdm_filterMessages();
+    test_hdm_unicodeformatMessages();
+    test_hdm_bitmapmarginMessages();
+}
 
 #define TEST_NMCUSTOMDRAW(draw_stage, item_spec, lparam, _left, _top, _right, _bottom) \
     ok(nm->dwDrawStage == draw_stage, "Invalid dwDrawStage %d vs %d\n", draw_stage, nm->dwDrawStage); \
@@ -832,6 +1064,7 @@ START_TEST(header)
     test_header_control();
     test_header_order();
     test_customdraw();
+    test_header_messages();
 
     DestroyWindow(hHeaderParentWnd);
 }
