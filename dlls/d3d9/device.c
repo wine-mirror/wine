@@ -344,8 +344,8 @@ static HRESULT  WINAPI  IDirect3DDevice9Impl_GetRenderTargetData(LPDIRECT3DDEVIC
     IDirect3DDevice9Impl *This = (IDirect3DDevice9Impl *)iface;
     IDirect3DSurface9Impl *renderTarget = (IDirect3DSurface9Impl *)pRenderTarget;
     IDirect3DSurface9Impl *destSurface = (IDirect3DSurface9Impl *)pDestSurface;
-    TRACE("(%p) Relay\n" , This);
-    return IWineD3DDevice_GetRenderTargetData(This->WineD3DDevice, renderTarget->wineD3DSurface, destSurface->wineD3DSurface);
+    TRACE("(%p)->(%p,%p)\n" , This, renderTarget, destSurface);
+    return IWineD3DSurface_BltFast(destSurface->wineD3DSurface, 0, 0, renderTarget->wineD3DSurface, NULL, DDBLTFAST_NOCOLORKEY);
 }
 
 static HRESULT  WINAPI  IDirect3DDevice9Impl_GetFrontBufferData(LPDIRECT3DDEVICE9 iface, UINT iSwapChain, IDirect3DSurface9* pDestSurface) {
