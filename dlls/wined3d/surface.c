@@ -526,15 +526,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
     IWineD3DSwapChainImpl *swapchain = NULL;
-    static UINT messages = 0; /* holds flags to disable fixme messages */
-    BOOL backbuf = FALSE;
 
-    /* fixme: should we really lock as such? */
-    if((This->Flags & (SFLAG_INTEXTURE | SFLAG_INPBUFFER)) ==
-                      (SFLAG_INTEXTURE | SFLAG_INPBUFFER) ) {
-        FIXME("Warning: Surface is in texture memory or pbuffer\n");
-        This->Flags &= ~(SFLAG_INTEXTURE | SFLAG_INPBUFFER);
-    }
+    TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
 
     if (!(This->Flags & SFLAG_LOCKABLE)) {
         /* Note: UpdateTextures calls CopyRects which calls this routine to populate the
@@ -544,40 +537,18 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         /*return WINED3DERR_INVALIDCALL; */
     }
 
-    if (This->resource.usage & WINED3DUSAGE_RENDERTARGET) {
-        IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-
-        if (swapchain != NULL ||  iface == myDevice->render_targets[0] || iface == myDevice->depthStencilBuffer) {
-            if(swapchain != NULL) {
-                int i;
-                for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
-                    if(iface == swapchain->backBuffer[i]) {
-                        backbuf = TRUE;
-                        break;
-                    }
-                }
-            }
-            if (backbuf) {
-                TRACE("(%p, backBuffer) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-            } else if (swapchain != NULL && iface ==  swapchain->frontBuffer) {
-                TRACE("(%p, frontBuffer) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-            } else if (iface == myDevice->render_targets[0]) {
-                TRACE("(%p, renderTarget) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-            } else if (iface == myDevice->depthStencilBuffer) {
-                TRACE("(%p, stencilBuffer) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-            }
-
-            if (NULL != swapchain) {
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-            }
-            swapchain = NULL;
-        }
-    } else {
-        TRACE("(%p) : rect@%p flags(%08x), output lockedRect@%p, memory@%p\n", This, pRect, Flags, pLockedRect, This->resource.allocatedMemory);
-    }
-
     pLockedRect->Pitch = IWineD3DSurface_GetPitch(iface);
 
+    /* Mark the surface locked */
+    This->Flags |= SFLAG_LOCKED;
+
+    /* Whatever surface we have, make sure that there is memory allocated for the downloaded copy */
+    if(!This->resource.allocatedMemory) {
+        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
+        This->Flags |= SFLAG_GLDIRTY; /* This is the marker that surface data has to be downloaded */
+    }
+
+    /* Calculate the correct start address to report */
     if (NULL == pRect) {
         pLockedRect->pBits = This->resource.allocatedMemory;
         This->lockedRect.left   = 0;
@@ -614,191 +585,147 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         TRACE("Locking non-power 2 texture\n");
     }
 
-    if (0 == This->resource.usage || This->resource.usage & WINED3DUSAGE_DYNAMIC) {
-        /* classic surface  TODO: non 2d surfaces?
-        These resources may be POOL_SYSTEMMEM, so they must not access the device */
-        TRACE("locking an ordinarary surface\n");
-        /* Check to see if memory has already been allocated from the surface*/
-        if ((NULL == This->resource.allocatedMemory) ||
-            (This->Flags & SFLAG_GLDIRTY) ){ /* TODO: check to see if an update has been performed on the surface (an update could just clobber allocatedMemory */
-            /* Non-system memory surfaces */
-
-            This->Flags &= ~SFLAG_GLDIRTY;
-
-            /*Surface has no memory currently allocated to it!*/
-            TRACE("(%p) Locking rect\n" , This);
-            if(!This->resource.allocatedMemory) {
-                This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 , This->resource.size + 4);
-            }
-            if (0 != This->glDescription.textureName) {
-                /* Now I have to copy thing bits back */
-
-                /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
-                if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                    ENTER_GL();
-                    GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
-                    checkGLcall("glActiveTextureARB");
-                    LEAVE_GL();
-                }
-                IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
-                IWineD3DSurface_PreLoad(iface);
-
-                surface_download_data(This);
-            }
-        } else { /* Nothing to do */
-            TRACE("Memory %p already allocted for texture\n",  This->resource.allocatedMemory);
+    /* Performance optimization: Count how often a surface is locked, if it is locked regularly do not throw away the system memory copy.
+     * This avoids the need to download the surface from opengl all the time. The surface is still downloaded if the opengl texture is
+     * changed
+     */
+    if(!(This->Flags & SFLAG_DYNLOCK)) {
+        This->lockCount++;
+        /* MAXLOCKCOUNT is defined in wined3d_private.h */
+        if(This->lockCount > MAXLOCKCOUNT) {
+            TRACE("Surface is locked regularily, not freeing the system memory copy any more\n");
+            This->Flags |= SFLAG_DYNLOCK;
         }
-
-        if (NULL == pRect) {
-            pLockedRect->pBits = This->resource.allocatedMemory;
-        }  else{
-            if (This->resource.format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
-                pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + ((pRect->left * This->bytesPerPixel / 2));
-            } else {
-                pLockedRect->pBits = This->resource.allocatedMemory + (pLockedRect->Pitch * pRect->top) + (pRect->left * This->bytesPerPixel);
-            }
-        }
-
-    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage ){ /* render surfaces */
-        if((!(Flags&WINED3DLOCK_DISCARD) && (This->Flags & SFLAG_GLDIRTY)) || !This->resource.allocatedMemory) {
-            GLint  prev_store;
-            GLint  prev_read;
-            BOOL notInContext = FALSE;
-            IWineD3DSwapChainImpl *targetSwapChain = NULL;
-
-
-            ENTER_GL();
-
-                /**
-                * for render->surface copy begin to begin of allocatedMemory
-                * unlock can be more easy
-                */
-
-            TRACE("locking a render target\n");
-
-            if (This->resource.allocatedMemory == NULL)
-                    This->resource.allocatedMemory = HeapAlloc(GetProcessHeap() ,0 ,This->resource.size);
-
-            pLockedRect->pBits = This->resource.allocatedMemory;
-
-            glFlush();
-            vcheckGLcall("glFlush");
-            glGetIntegerv(GL_READ_BUFFER, &prev_read);
-            vcheckGLcall("glIntegerv");
-            glGetIntegerv(GL_PACK_SWAP_BYTES, &prev_store);
-            vcheckGLcall("glIntegerv");
-
-    /* Here's what we have to do:
-                See if the swapchain has the same context as the renderTarget or the surface is the render target.
-                Otherwise, see if were sharing a context with the implicit swapchain (because we're using a shared context model!)
-                and use the front back buffer as required.
-                if not, we need to switch contexts and then switchback at the end.
-            */
-            IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-            IWineD3DSurface_GetContainer(myDevice->render_targets[0], &IID_IWineD3DSwapChain, (void **)&targetSwapChain);
-
-            /* NOTE: In a shared context environment the renderTarget will use the same context as the implicit swapchain (we're not in a shared environment yet! */
-            if ((swapchain == targetSwapChain && targetSwapChain != NULL) || iface == myDevice->render_targets[0]) {
-                    if (swapchain && iface == swapchain->frontBuffer) {
-                        TRACE("locking front\n");
-                        glReadBuffer(GL_FRONT);
-                    }
-                    else if (iface == myDevice->render_targets[0] || backbuf) {
-                        TRACE("locking back buffer\n");
-                        glReadBuffer(GL_BACK);
-                    } else if (iface == myDevice->depthStencilBuffer) {
-                        FIXME("Stencil Buffer lock unsupported for now\n");
-                    } else {
-                      FIXME("(%p) Shouldn't have got here!\n", This);
-                      glReadBuffer(GL_BACK);
-                    }
-            } else if (swapchain != NULL) {
-                IWineD3DSwapChainImpl *implSwapChain;
-                IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
-
-                /* ActivateContext should have selected the correct opengl context for that */
-                if (backbuf) {
-                    glReadBuffer(GL_BACK);
-                } else if (iface == swapchain->frontBuffer) {
-                    glReadBuffer(GL_FRONT);
-                } else if (iface == myDevice->depthStencilBuffer) {
-                    FIXME("Stencil Buffer lock unsupported for now\n");
-                } else {
-                    FIXME("Should have got here!\n");
-                    glReadBuffer(GL_BACK);
-                }
-                IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
-            }
-            if (swapchain != NULL)       IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-            if (targetSwapChain != NULL) IWineD3DSwapChain_Release((IWineD3DSwapChain *)targetSwapChain);
-
-            /** the depth stencil in openGL has a format of GL_FLOAT
-            * which should be good for WINED3DFMT_D16_LOCKABLE
-            * and WINED3DFMT_D16
-            * it is unclear what format the stencil buffer is in except.
-            * 'Each index is converted to fixed point...
-            * If GL_MAP_STENCIL is GL_TRUE, indices are replaced by their
-            * mappings in the table GL_PIXEL_MAP_S_TO_S.
-            * glReadPixels(This->lockedRect.left,
-            *             This->lockedRect.bottom - j - 1,
-            *             This->lockedRect.right - This->lockedRect.left,
-            *             1,
-            *             GL_DEPTH_COMPONENT,
-            *             type,
-            *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
-                *****************************************/
-            if (!notInContext) { /* Only read the buffer if it's in the current context */
-                switch(wined3d_settings.rendertargetlock_mode) {
-                    case RTL_AUTO:
-                    case RTL_READDRAW:
-                    case RTL_READTEX:
-                        read_from_framebuffer(This, &This->lockedRect, pLockedRect->pBits, pLockedRect->Pitch);
-                        break;
-
-                    case RTL_TEXDRAW:
-                    case RTL_TEXTEX:
-                        read_from_framebuffer(This, &This->lockedRect, pLockedRect->pBits, pLockedRect->Pitch);
-                        FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
-                        break;
-
-                    case RTL_DISABLE:
-                    {
-                        static BOOL warned = FALSE;
-                        if(!warned) {
-                            ERR("Application tries to lock the render target, but render target locking is disabled\n");
-                            warned = TRUE;
-                        }
-                    }
-                    break;
-                }
-            }
-            TRACE("Resetting buffer\n");
-
-            glReadBuffer(prev_read);
-            vcheckGLcall("glReadBuffer");
-
-            LEAVE_GL();
-        }
-    } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
-
-        if (!messages & 1) {
-            FIXME("TODO stencil depth surface locking surf%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
-            /*
-
-            glReadPixels(This->lockedRect.left,
-            This->lockedRect.bottom - j - 1,
-            This->lockedRect.right - This->lockedRect.left,
-            1,
-            GL_STENCIL_INDEX or GL_DEPTH_COMPONENT
-
-            )
-            */
-            messages |= 1;
-        }
-    } else {
-        FIXME("unsupported locking to surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
     }
 
+    if((Flags & WINED3DLOCK_DISCARD) || !(This->Flags & SFLAG_GLDIRTY) ) {
+        TRACE("WINED3DLOCK_DISCARD flag passed, or local copy is up to date, not downloading data\n");
+        goto lock_end;
+    }
+
+    /* Now download the surface content from opengl
+     * Use the render target readback if the surface is on a swapchain(=onscreen render target) or the current primary target
+     * Offscreen targets which are not active at the moment or are higher targets(fbos) can be locked with the texture path
+     */
+    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if(swapchain || iface == myDevice->render_targets[0]) {
+        if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
+            static BOOL warned = FALSE;
+            if(!warned) {
+                ERR("The application tries to lock the render target, but render target locking is disabled\n");
+                warned = TRUE;
+            }
+            if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+            return WINED3D_OK;
+        }
+
+        /* FIXME: Partial surface locking is broken */
+        if(This->lockedRect.left != 0 ||
+           This->lockedRect.top != 0 ||
+           This->lockedRect.right != This->currentDesc.Width ||
+           This->lockedRect.bottom != This->currentDesc.Height) {
+            FIXME("Add Support for partial render target locking\n");
+            This->lockedRect.left = 0;
+            This->lockedRect.top = 0;
+            This->lockedRect.right = This->currentDesc.Width;
+            This->lockedRect.bottom = This->currentDesc.Height;
+        }
+        /* Activate the surface. Set it up for blitting now, although not necessarily needed for LockRect.
+         * Certain graphics drivers seem to dislike some enabled states when reading from opengl, the blitting usage
+         * should help here. Furthermore unlockrect will need the context set up for blitting. The context manager will find
+         * context->last_was_blit set on the unlock.
+         */
+        ENTER_GL();
+        ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
+
+        /* Select the correct read buffer, and give some debug output.
+         * There is no need to keep track of the current read buffer or reset it, every part of the code
+         * that reads sets the read buffer as desired.
+         */
+        if(!swapchain) {
+            /* Locking the primary render target which is not on a swapchain(=offscreen render target).
+             * Read from the back buffer
+             */
+            TRACE("Locking offscreen render target\n");
+            glReadBuffer(GL_BACK);
+        } else {
+            if(iface == swapchain->frontBuffer) {
+                TRACE("Locking the front buffer\n");
+                glReadBuffer(GL_FRONT);
+            } else if(swapchain->backBuffer && iface == swapchain->backBuffer[0]) {
+                TRACE("Locking the back buffer\n");
+                glReadBuffer(GL_BACK);
+            } else {
+                /* Ok, there is an issue: OpenGL does not guarant any back buffer number, so all we can do is to read GL_BACK
+                 * and hope it gives what the app wants
+                 */
+                FIXME("Application is locking a 2nd or higher back buffer\n");
+                glReadBuffer(GL_BACK);
+            }
+            IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+        }
+
+        switch(wined3d_settings.rendertargetlock_mode) {
+            case RTL_AUTO:
+            case RTL_READDRAW:
+            case RTL_READTEX:
+                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch);
+                break;
+
+            case RTL_TEXDRAW:
+            case RTL_TEXTEX:
+                read_from_framebuffer(This, &This->lockedRect, This->resource.allocatedMemory, pLockedRect->Pitch);
+                FIXME("Reading from render target with a texture isn't implemented yet, falling back to framebuffer reading\n");
+                break;
+        }
+        LEAVE_GL();
+    } else if(iface == myDevice->stencilBufferTarget) {
+        /** the depth stencil in openGL has a format of GL_FLOAT
+         * which should be good for WINED3DFMT_D16_LOCKABLE
+         * and WINED3DFMT_D16
+         * it is unclear what format the stencil buffer is in except.
+         * 'Each index is converted to fixed point...
+         * If GL_MAP_STENCIL is GL_TRUE, indices are replaced by their
+         * mappings in the table GL_PIXEL_MAP_S_TO_S.
+         * glReadPixels(This->lockedRect.left,
+         *             This->lockedRect.bottom - j - 1,
+         *             This->lockedRect.right - This->lockedRect.left,
+         *             1,
+         *             GL_DEPTH_COMPONENT,
+         *             type,
+         *             (char *)pLockedRect->pBits + (pLockedRect->Pitch * (j-This->lockedRect.top)));
+         *
+         * Depth Stencil surfaces which are not the current depth stencil target should have their data in a
+         * gl texture(next path), or in local memory(early return because of missing SFLAG_GLDIRTY above). If
+         * none of that is the case the problem is not in this function :-)
+         ********************************************/
+        FIXME("Depth stencil locking not supported yet\n");
+    } else {
+        /* This path is for normal surfaces, offscreen render targets and everything else that is in a gl texture */
+        TRACE("locking an ordinarary surface\n");
+
+        /* TODO: Make sure that *any* context is active for this thread. It is not important which context that is,
+         * nor that is has any special setup(CTXUSAGE_LOADRESOURCE is fine), but the code below needs a context.
+         * A context is guaranted to be there in a single threaded environment, but not with multithreading
+         */
+        if (0 != This->glDescription.textureName) {
+            /* Now I have to copy thing bits back */
+
+            /* Make sure that a proper texture unit is selected, bind the texture and dirtify the sampler to restore the texture on the next draw */
+            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+                ENTER_GL();
+                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+                checkGLcall("glActiveTextureARB");
+                LEAVE_GL();
+            }
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_SAMPLER(0));
+            IWineD3DSurface_PreLoad(iface);
+
+            surface_download_data(This);
+        }
+    }
+
+lock_end:
     if (Flags & (WINED3DLOCK_NO_DIRTY_UPDATE | WINED3DLOCK_READONLY)) {
         /* Don't dirtify */
     } else {
@@ -819,22 +746,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
         }
     }
 
-    /* Performance optimization: Count how often a surface is locked, if it is locked regularly do not throw away the system memory copy.
-     * This avoids the need to download the surface from opengl all the time. The surface is still downloaded if the opengl texture is
-     * changed
-     */
-    if(!(This->Flags & SFLAG_DYNLOCK)) {
-        This->lockCount++;
-        /* MAXLOCKCOUNT is defined in wined3d_private.h */
-        if(This->lockCount > MAXLOCKCOUNT) {
-            TRACE("Surface is locked regularily, not freeing the system memory copy any more\n");
-            This->Flags |= SFLAG_DYNLOCK;
-        }
-    }
+    /* The local copy is now up to date to the opengl one */
+    This->Flags &= ~SFLAG_GLDIRTY;
 
     TRACE("returning memory@%p, pitch(%d) dirtyfied(%d)\n", pLockedRect->pBits, pLockedRect->Pitch, This->Flags & SFLAG_DIRTY ? 0 : 1);
-
-    This->Flags |= SFLAG_LOCKED;
     return WINED3D_OK;
 }
 
@@ -842,7 +757,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
     GLint  prev_store;
     GLint  prev_rasterpos[4];
     GLint skipBytes = 0;
-    BOOL storechanged = FALSE;
+    BOOL storechanged = FALSE, memory_allocated = FALSE;
     GLint fmt, type;
     void *mem;
 
@@ -976,6 +891,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
                 ERR("Out of memory\n");
                 return;
             }
+            memory_allocated = TRUE;
             d3dfmt_convert_surface(This->resource.allocatedMemory,
                                    mem,
                                    pitch,
@@ -1015,7 +931,7 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
         vcheckGLcall("glPixelStorei GL_PACK_SWAP_BYTES");
     }
 
-    if(mem != This->resource.allocatedMemory) HeapFree(GetProcessHeap(), 0, mem);
+    if(memory_allocated) HeapFree(GetProcessHeap(), 0, mem);
     return;
 }
 
@@ -1070,51 +986,85 @@ static void flush_to_framebuffer_texture(IWineD3DSurface *iface) {
 static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDeviceImpl  *myDevice = This->resource.wineD3DDevice;
-    const char *buffername = "";
     IWineD3DSwapChainImpl *swapchain = NULL;
-    BOOL backbuf = FALSE;
 
     if (!(This->Flags & SFLAG_LOCKED)) {
         WARN("trying to Unlock an unlocked surf@%p\n", This);
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) {
-        IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
-
-        if(swapchain) {
-            int i;
-            for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
-                if(iface == swapchain->backBuffer[i]) {
-                    backbuf = TRUE;
-                    break;
-                }
-            }
-        }
-
-        if (backbuf) {
-                buffername = "backBuffer";
-        } else if ((swapchain != NULL) && iface ==  swapchain->frontBuffer) {
-                buffername = "frontBuffer";
-        } else if (iface == myDevice->depthStencilBuffer) {
-                buffername = "depthStencilBuffer";
-        } else if (iface == myDevice->render_targets[0]) {
-                buffername = "renderTarget";
-        }
-    }
-
-    if (swapchain != NULL) {
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
-    }
-
-    TRACE("(%p %s) : dirtyfied(%d)\n", This, buffername, This->Flags & SFLAG_DIRTY ? 1 : 0);
+    TRACE("(%p) : dirtyfied(%d)\n", This, This->Flags & SFLAG_DIRTY ? 1 : 0);
 
     if (!(This->Flags & SFLAG_DIRTY)) {
         TRACE("(%p) : Not Dirtified so nothing to do, return now\n", This);
         goto unlock_end;
     }
 
-    if (0 == This->resource.usage) { /* classic surface */
+    IWineD3DSurface_GetContainer(iface, &IID_IWineD3DSwapChain, (void **)&swapchain);
+    if(swapchain || iface == myDevice->render_targets[0]) {
+        if(wined3d_settings.rendertargetlock_mode == RTL_DISABLE) {
+            static BOOL warned = FALSE;
+            if(!warned) {
+                ERR("The application tries to write to the render target, but render target locking is disabled\n");
+                warned = TRUE;
+            }
+            if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
+            goto unlock_end;
+        }
+
+        /* Activate the correct context for the render target */
+        ENTER_GL();
+        ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
+
+        if(!swapchain) {
+            /* Primary offscreen render target */
+            TRACE("Offscreen render target\n");
+            glDrawBuffer(GL_BACK);
+            checkGLcall("glDrawBuffer(GL_BACK)");
+        } else {
+            if(iface == swapchain->frontBuffer) {
+                TRACE("Onscreen front buffer\n");
+                glDrawBuffer(GL_FRONT);
+                checkGLcall("glDrawBuffer(GL_FRONT)");
+            } else if(iface == swapchain->backBuffer[0]) {
+                TRACE("Onscreen back buffer\n");
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+            } else {
+                FIXME("Unlocking a higher back buffer\n");
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+            }
+            IWineD3DSwapChain_Release((IWineD3DSwapChain *)swapchain);
+        }
+
+        switch(wined3d_settings.rendertargetlock_mode) {
+            case RTL_AUTO:
+            case RTL_READDRAW:
+            case RTL_TEXDRAW:
+                flush_to_framebuffer_drawpixels(This);
+                break;
+
+            case RTL_READTEX:
+            case RTL_TEXTEX:
+                flush_to_framebuffer_texture(iface);
+                break;
+        }
+        if(!swapchain || swapchain->backBuffer) {
+            glDrawBuffer(GL_BACK);
+            checkGLcall("glDrawBuffer(GL_BACK)");
+        } else {
+            glDrawBuffer(GL_FRONT);
+            checkGLcall("glDrawBuffer(GL_FRONT)");
+        }
+        LEAVE_GL();
+
+        /** restore clean dirty state */
+        IWineD3DSurface_CleanDirtyRect(iface);
+    } else if(iface == myDevice->stencilBufferTarget) {
+        FIXME("Depth Stencil buffer locking is not implemented\n");
+    } else {
+        /* The rest should be a normal texture */
         IWineD3DBaseTextureImpl *impl;
         /* Check if the texture is bound, if yes dirtify the sampler to force a re-upload of the texture
          * Can't load the texture here because PreLoad may destroy and recreate the gl texture, so sampler
@@ -1126,79 +1076,6 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
             }
             IWineD3DBaseTexture_Release((IWineD3DBaseTexture *) impl);
         }
-    } else if (WINED3DUSAGE_RENDERTARGET & This->resource.usage) { /* render surfaces */
-
-        /****************************
-        * TODO: Render targets are 'special' and
-        * ?some? locking needs to be passed onto the context manager
-        * so that it becomes possible to use auxiliary buffers, pbuffers
-        * render-to-texture, shared, cached contexts etc...
-        * ****************************/
-        IWineD3DSwapChainImpl *implSwapChain;
-        IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
-
-        if ((backbuf || iface ==  implSwapChain->frontBuffer || iface == myDevice->render_targets[0]) && wined3d_settings.rendertargetlock_mode != RTL_DISABLE) {
-
-            ENTER_GL();
-
-            ActivateContext(myDevice, iface, CTXUSAGE_BLIT);
-
-            if (iface ==  implSwapChain->frontBuffer) {
-                glDrawBuffer(GL_FRONT);
-                checkGLcall("glDrawBuffer GL_FRONT");
-            } else if (backbuf || iface == myDevice->render_targets[0]) {
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer GL_BACK");
-            }
-
-            switch(wined3d_settings.rendertargetlock_mode) {
-                case RTL_AUTO:
-                case RTL_READDRAW:
-                case RTL_TEXDRAW:
-                    flush_to_framebuffer_drawpixels(This);
-                    break;
-
-                case RTL_READTEX:
-                case RTL_TEXTEX:
-                    flush_to_framebuffer_texture(iface);
-                    break;
-
-                case RTL_DISABLE:
-                {
-                    static BOOL warned = FALSE;
-                    if(!warned) {
-                        ERR("The application tries to write to the render target, but render target locking is disabled\n");
-                        warned = TRUE;
-                    }
-                }
-                break;
-            }
-
-            if(implSwapChain->backBuffer && implSwapChain->backBuffer[0]) {
-                glDrawBuffer(GL_BACK);
-                vcheckGLcall("glDrawBuffer");
-            }
-
-            LEAVE_GL();
-
-            /** restore clean dirty state */
-            IWineD3DSurface_CleanDirtyRect(iface);
-
-        } else if(wined3d_settings.rendertargetlock_mode != RTL_DISABLE) {
-            FIXME("unsupported unlocking to Rendering surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
-        }
-        IWineD3DSwapChain_Release((IWineD3DSwapChain *)implSwapChain);
-
-    } else if (WINED3DUSAGE_DEPTHSTENCIL & This->resource.usage) { /* stencil surfaces */
-
-        if (iface == myDevice->depthStencilBuffer) {
-            FIXME("TODO stencil depth surface unlocking surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
-        } else {
-            FIXME("unsupported unlocking to StencilDepth surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
-        }
-
-    } else {
-        FIXME("unsupported unlocking to surface surf@%p usage(%s)\n", This, debug_d3dusage(This->resource.usage));
     }
 
     unlock_end:
