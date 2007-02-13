@@ -149,7 +149,10 @@ static int process_resources(const char* input_file_name, const char* specific_f
     int fd, c;
 
     if (!(fin = fopen(input_file_name, "r"))) return 0;
-    if (stat(input_file_name, &st) < 0) return 0;
+    if (fstat(fileno(fin), &st) < 0) {
+	fclose (fin);
+	return 0;
+    }
     rc_last_update = st.st_mtime;
 
     if (inserting)
