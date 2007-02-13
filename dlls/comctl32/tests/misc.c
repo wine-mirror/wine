@@ -1,5 +1,5 @@
 /*
- * String tests
+ * Misc tests
  *
  * Copyright 2006 Paul Vriens
  *
@@ -116,7 +116,7 @@ static void test_GetPtrAW(void)
     }
 }
 
-START_TEST(string)
+START_TEST(misc)
 {
     if(!InitFunctionPtrs())
         return;

@@ -11,13 +11,13 @@ CTESTS = \
 	header.c \
 	imagelist.c \
 	listview.c \
+	misc.c \
 	monthcal.c \
 	mru.c \
 	progress.c \
 	propsheet.c \
 	rebar.c \
 	status.c \
-	string.c \
 	subclass.c \
 	tab.c \
 	toolbar.c \
