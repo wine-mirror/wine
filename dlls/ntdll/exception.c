@@ -198,7 +198,7 @@ static NTSTATUS send_debug_event( EXCEPTION_RECORD *rec, int first_chance, CONTE
     SERVER_END_REQ;
     if (!handle) return 0;
 
-    NTDLL_wait_for_multiple_objects( 1, &handle, 0, NULL, 0 );
+    NTDLL_wait_for_multiple_objects( 1, &handle, SELECT_INTERRUPTIBLE, NULL, 0 );
 
     SERVER_START_REQ( get_exception_status )
     {
