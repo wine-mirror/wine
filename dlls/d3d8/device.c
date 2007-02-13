@@ -1165,6 +1165,8 @@ static HRESULT WINAPI IDirect3DDevice8Impl_ProcessVertices(LPDIRECT3DDEVICE8 ifa
 static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevice8 *iface, CONST DWORD *declaration, IDirect3DVertexDeclaration8 **decl_ptr) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     IDirect3DVertexDeclaration8Impl *object;
+    WINED3DVERTEXELEMENT *wined3d_elements;
+    size_t wined3d_element_count;
     HRESULT hr = D3D_OK;
 
     TRACE("(%p) : declaration %p\n", This, declaration);
@@ -1179,7 +1181,11 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexDeclaration(IDirect3DDevi
     object->ref_count = 1;
     object->lpVtbl = &Direct3DVertexDeclaration8_Vtbl;
 
-    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wined3d_vertex_declaration, (IUnknown *)object, (CONST WINED3DVERTEXELEMENT *)declaration, 0);
+    wined3d_element_count = convert_to_wined3d_declaration(declaration, &wined3d_elements);
+    hr = IWineD3DDevice_CreateVertexDeclaration(This->WineD3DDevice, &object->wined3d_vertex_declaration,
+            (IUnknown *)object, wined3d_elements, wined3d_element_count);
+    HeapFree(GetProcessHeap(), 0, wined3d_elements);
+
     if (FAILED(hr)) {
         ERR("(%p) : IWineD3DDevice_CreateVertexDeclaration call failed\n", This);
         HeapFree(GetProcessHeap(), 0, object);

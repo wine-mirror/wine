@@ -224,6 +224,111 @@ void load_local_constants(const DWORD *d3d8_elements, IWineD3DVertexShader *wine
     }
 }
 
+/* NOTE: Make sure these are in the correct numerical order. (see /include/wined3d_types.h) */
+static const size_t wined3d_type_sizes[WINED3DDECLTYPE_UNUSED] = {
+    /*WINED3DDECLTYPE_FLOAT1*/    1 * sizeof(float),
+    /*WINED3DDECLTYPE_FLOAT2*/    2 * sizeof(float),
+    /*WINED3DDECLTYPE_FLOAT3*/    3 * sizeof(float),
+    /*WINED3DDECLTYPE_FLOAT4*/    4 * sizeof(float),
+    /*WINED3DDECLTYPE_D3DCOLOR*/  4 * sizeof(BYTE),
+    /*WINED3DDECLTYPE_UBYTE4*/    4 * sizeof(BYTE),
+    /*WINED3DDECLTYPE_SHORT2*/    2 * sizeof(short int),
+    /*WINED3DDECLTYPE_SHORT4*/    4 * sizeof(short int),
+    /*WINED3DDECLTYPE_UBYTE4N*/   4 * sizeof(BYTE),
+    /*WINED3DDECLTYPE_SHORT2N*/   2 * sizeof(short int),
+    /*WINED3DDECLTYPE_SHORT4N*/   4 * sizeof(short int),
+    /*WINED3DDECLTYPE_USHORT2N*/  2 * sizeof(short int),
+    /*WINED3DDECLTYPE_USHORT4N*/  4 * sizeof(short int),
+    /*WINED3DDECLTYPE_UDEC3*/     3 * sizeof(short int),
+    /*WINED3DDECLTYPE_DEC3N*/     3 * sizeof(short int),
+    /*WINED3DDECLTYPE_FLOAT16_2*/ 2 * sizeof(short int),
+    /*WINED3DDECLTYPE_FLOAT16_4*/ 4 * sizeof(short int)
+};
+
+typedef struct {
+    BYTE usage;
+    BYTE usage_idx;
+} wined3d_usage_t;
+
+static const wined3d_usage_t wined3d_usage_lookup[] = {
+    /*D3DVSDE_POSITION*/     {WINED3DDECLUSAGE_POSITION,     0},
+    /*D3DVSDE_BLENDWEIGHT*/  {WINED3DDECLUSAGE_BLENDWEIGHT,  0},
+    /*D3DVSDE_BLENDINDICES*/ {WINED3DDECLUSAGE_BLENDINDICES, 0},
+    /*D3DVSDE_NORMAL*/       {WINED3DDECLUSAGE_NORMAL,       0},
+    /*D3DVSDE_PSIZE*/        {WINED3DDECLUSAGE_PSIZE,        0},
+    /*D3DVSDE_DIFFUSE*/      {WINED3DDECLUSAGE_COLOR,        0},
+    /*D3DVSDE_SPECULAR*/     {WINED3DDECLUSAGE_COLOR,        1},
+    /*D3DVSDE_TEXCOORD0*/    {WINED3DDECLUSAGE_TEXCOORD,     0},
+    /*D3DVSDE_TEXCOORD1*/    {WINED3DDECLUSAGE_TEXCOORD,     1},
+    /*D3DVSDE_TEXCOORD2*/    {WINED3DDECLUSAGE_TEXCOORD,     2},
+    /*D3DVSDE_TEXCOORD3*/    {WINED3DDECLUSAGE_TEXCOORD,     3},
+    /*D3DVSDE_TEXCOORD4*/    {WINED3DDECLUSAGE_TEXCOORD,     4},
+    /*D3DVSDE_TEXCOORD5*/    {WINED3DDECLUSAGE_TEXCOORD,     5},
+    /*D3DVSDE_TEXCOORD6*/    {WINED3DDECLUSAGE_TEXCOORD,     6},
+    /*D3DVSDE_TEXCOORD7*/    {WINED3DDECLUSAGE_TEXCOORD,     7},
+    /*D3DVSDE_POSITION2*/    {WINED3DDECLUSAGE_POSITION,     1},
+    /*D3DVSDE_NORMAL2*/      {WINED3DDECLUSAGE_NORMAL,       1},
+};
+
+/* TODO: find out where rhw (or positionT) is for declaration8 */
+size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, WINED3DVERTEXELEMENT **wined3d_elements)
+{
+    const DWORD *token = d3d8_elements;
+    WINED3DVERTEXELEMENT *element;
+    D3DVSD_TOKENTYPE token_type;
+    size_t element_count = 0;
+    DWORD stream = 0;
+    int offset = 0;
+
+    TRACE("d3d8_elements %p, wined3d_elements %p\n", d3d8_elements, wined3d_elements);
+
+    /* 128 should be enough for anyone... */
+    *wined3d_elements = HeapAlloc(GetProcessHeap(), 0, 128 * sizeof(WINED3DVERTEXELEMENT));
+    while (D3DVSD_END() != *token)
+    {
+        token_type = ((*token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
+
+        if (token_type == D3DVSD_TOKEN_STREAM && !(*token & D3DVSD_STREAMTESSMASK))
+        {
+            stream = ((*token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
+            offset = 0;
+        } else if (token_type == D3DVSD_TOKEN_STREAMDATA && !(token_type & 0x10000000)) {
+            DWORD type = ((*token & D3DVSD_DATATYPEMASK) >> D3DVSD_DATATYPESHIFT);
+            DWORD reg  = ((*token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
+
+            TRACE("Adding element %d:\n", element_count);
+
+            element = *wined3d_elements + element_count++;
+            element->Stream = stream;
+            element->Method = WINED3DDECLMETHOD_DEFAULT;
+            element->Usage = wined3d_usage_lookup[reg].usage;
+            element->UsageIndex = wined3d_usage_lookup[reg].usage_idx;
+            element->Type = type;
+            element->Offset = offset;
+            element->Reg = reg;
+
+            offset += wined3d_type_sizes[type];
+        } else if (token_type == D3DVSD_TOKEN_STREAMDATA && (token_type & 0x10000000)) {
+            TRACE(" 0x%08x SKIP(%u)\n", token_type, ((token_type & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
+            offset += sizeof(DWORD) * ((token_type & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
+        }
+
+        if (element_count >= 127) {
+            ERR("More than 127 elements?\n");
+            break;
+        }
+
+        token += parse_token(token);
+    }
+
+    /* END */
+    element = *wined3d_elements + element_count++;
+    element->Stream = 0xFF;
+    element->Type = WINED3DDECLTYPE_UNUSED;
+
+    return element_count;
+}
+
 const IDirect3DVertexDeclaration8Vtbl Direct3DVertexDeclaration8_Vtbl =
 {
     IDirect3DVertexDeclaration8Impl_QueryInterface,

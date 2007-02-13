@@ -1116,10 +1116,6 @@ typedef struct IWineD3DVertexDeclarationImpl {
   DWORD   fvf[MAX_STREAMS];
   DWORD   allFVF;
 
-  /** dx8 compatible Declaration fields */
-  DWORD*  pDeclaration8;
-  DWORD   declaration8Length;
-
   WINED3DVERTEXELEMENT  *pDeclarationWine;
   UINT                   declarationWNumElements;
 } IWineD3DVertexDeclarationImpl;

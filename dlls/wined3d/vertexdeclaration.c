@@ -58,118 +58,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d_decl);
  *  http://developer.nvidia.com/view.asp?IO=var_memory_management
  */
 
-/** Vertex Shader Declaration 8 data types tokens */
-#define MAX_VSHADER_DECL_TYPES 8
-
-static const char * const VertexDecl8_DataTypes[] = {
-  "D3DVSDT_FLOAT1",
-  "D3DVSDT_FLOAT2",
-  "D3DVSDT_FLOAT3",
-  "D3DVSDT_FLOAT4",
-  "D3DVSDT_D3DCOLOR",
-  "D3DVSDT_UBYTE4",
-  "D3DVSDT_SHORT2",
-  "D3DVSDT_SHORT4",
-  NULL
-};
-
-static const char * const VertexDecl8_Registers[] = {
-  "D3DVSDE_POSITION",
-  "D3DVSDE_BLENDWEIGHT",
-  "D3DVSDE_BLENDINDICES",
-  "D3DVSDE_NORMAL",
-  "D3DVSDE_PSIZE",
-  "D3DVSDE_DIFFUSE",
-  "D3DVSDE_SPECULAR",
-  "D3DVSDE_TEXCOORD0",
-  "D3DVSDE_TEXCOORD1",
-  "D3DVSDE_TEXCOORD2",
-  "D3DVSDE_TEXCOORD3",
-  "D3DVSDE_TEXCOORD4",
-  "D3DVSDE_TEXCOORD5",
-  "D3DVSDE_TEXCOORD6",
-  "D3DVSDE_TEXCOORD7",
-  "D3DVSDE_POSITION2",
-  "D3DVSDE_NORMAL2",
-  NULL
-};
-
-typedef enum _D3DVSD_TOKENTYPE {
-  D3DVSD_TOKEN_NOP         = 0,
-  D3DVSD_TOKEN_STREAM      = 1,
-  D3DVSD_TOKEN_STREAMDATA  = 2,
-  D3DVSD_TOKEN_TESSELLATOR = 3,
-  D3DVSD_TOKEN_CONSTMEM    = 4,
-  D3DVSD_TOKEN_EXT         = 5,
-  /* RESERVED              = 6 */
-  D3DVSD_TOKEN_END         = 7,
-  D3DVSD_FORCE_DWORD       = 0x7FFFFFFF
-} D3DVSD_TOKENTYPE;
-
-typedef enum _D3DVSDE_REGISTER {
-  D3DVSDE_POSITION     =  0,
-  D3DVSDE_BLENDWEIGHT  =  1,
-  D3DVSDE_BLENDINDICES =  2,
-  D3DVSDE_NORMAL       =  3,
-  D3DVSDE_PSIZE        =  4,
-  D3DVSDE_DIFFUSE      =  5,
-  D3DVSDE_SPECULAR     =  6,
-  D3DVSDE_TEXCOORD0    =  7,
-  D3DVSDE_TEXCOORD1    =  8,
-  D3DVSDE_TEXCOORD2    =  9,
-  D3DVSDE_TEXCOORD3    = 10,
-  D3DVSDE_TEXCOORD4    = 11,
-  D3DVSDE_TEXCOORD5    = 12,
-  D3DVSDE_TEXCOORD6    = 13,
-  D3DVSDE_TEXCOORD7    = 14,
-  D3DVSDE_POSITION2    = 15,
-  D3DVSDE_NORMAL2      = 16,
-  MAX_D3DVSDE          = 17
-} D3DVSDE_REGISTER;
-
-typedef enum _D3DVSDT_TYPE {
-  D3DVSDT_FLOAT1   = 0x00,
-  D3DVSDT_FLOAT2   = 0x01,
-  D3DVSDT_FLOAT3   = 0x02,
-  D3DVSDT_FLOAT4   = 0x03,
-  D3DVSDT_D3DCOLOR = 0x04,
-  D3DVSDT_UBYTE4   = 0x05,
-  D3DVSDT_SHORT2   = 0x06,
-  D3DVSDT_SHORT4   = 0x07
-} D3DVSDT_TYPE;
-
-
-#define D3DVSD_CONSTADDRESSSHIFT  0
-#define D3DVSD_EXTINFOSHIFT       0
-#define D3DVSD_STREAMNUMBERSHIFT  0
-#define D3DVSD_VERTEXREGSHIFT     0
-#define D3DVSD_CONSTRSSHIFT      16
-#define D3DVSD_DATATYPESHIFT     16
-#define D3DVSD_SKIPCOUNTSHIFT    16
-#define D3DVSD_VERTEXREGINSHIFT  20
-#define D3DVSD_EXTCOUNTSHIFT     24
-#define D3DVSD_CONSTCOUNTSHIFT   25
-#define D3DVSD_DATALOADTYPESHIFT 28
-#define D3DVSD_STREAMTESSSHIFT   28
-#define D3DVSD_TOKENTYPESHIFT    29
-
-#define D3DVSD_CONSTADDRESSMASK  (0x7F     << D3DVSD_CONSTADDRESSSHIFT)
-#define D3DVSD_EXTINFOMASK       (0xFFFFFF << D3DVSD_EXTINFOSHIFT)
-#define D3DVSD_STREAMNUMBERMASK  (0xF      << D3DVSD_STREAMNUMBERSHIFT)
-#define D3DVSD_VERTEXREGMASK     (0x1F     << D3DVSD_VERTEXREGSHIFT)
-#define D3DVSD_CONSTRSMASK       (0x1FFF   << D3DVSD_CONSTRSSHIFT)
-#define D3DVSD_DATATYPEMASK      (0xF      << D3DVSD_DATATYPESHIFT)
-#define D3DVSD_SKIPCOUNTMASK     (0xF      << D3DVSD_SKIPCOUNTSHIFT)
-#define D3DVSD_EXTCOUNTMASK      (0x1F     << D3DVSD_EXTCOUNTSHIFT)
-#define D3DVSD_VERTEXREGINMASK   (0xF      << D3DVSD_VERTEXREGINSHIFT)
-#define D3DVSD_CONSTCOUNTMASK    (0xF      << D3DVSD_CONSTCOUNTSHIFT)
-#define D3DVSD_DATALOADTYPEMASK  (0x1      << D3DVSD_DATALOADTYPESHIFT)
-#define D3DVSD_STREAMTESSMASK    (0x1      << D3DVSD_STREAMTESSSHIFT)
-#define D3DVSD_TOKENTYPEMASK     (0x7      << D3DVSD_TOKENTYPESHIFT)
-
-#define D3DVSD_END() 0xFFFFFFFF
-#define D3DVSD_NOP() 0x00000000
-
 static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
     TRACE("     Stream: %d\n", element->Stream);
     TRACE("     Offset: %d\n", element->Offset);
@@ -178,170 +66,6 @@ static void dump_wined3dvertexelement(const WINED3DVERTEXELEMENT *element) {
     TRACE("      Usage: %s (%#x)\n", debug_d3ddeclusage(element->Usage), element->Usage);
     TRACE("Usage index: %d\n", element->UsageIndex);
     TRACE("   Register: %d\n", element->Reg);
-}
-
-static DWORD IWineD3DVertexDeclarationImpl_ParseToken8(const DWORD* pToken) {
-  const DWORD token = *pToken;
-  DWORD tokenlen = 1;
-
-  switch ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT) { /* maybe a macro to inverse ... */
-  case D3DVSD_TOKEN_NOP:
-    TRACE(" 0x%08x NOP()\n", token);
-    break;
-  case D3DVSD_TOKEN_STREAM:
-    if (token & D3DVSD_STREAMTESSMASK) {
-      TRACE(" 0x%08x STREAM_TESS()\n", token);
-    } else {
-      TRACE(" 0x%08x STREAM(%u)\n", token, ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT));
-    }
-    break;
-  case D3DVSD_TOKEN_STREAMDATA:
-    if (token & 0x10000000) {
-      TRACE(" 0x%08x SKIP(%u)\n", token, ((token & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
-    } else {
-      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      TRACE(" 0x%08x REG(%s, %s)\n", token, VertexDecl8_Registers[reg], VertexDecl8_DataTypes[type]);
-    }
-    break;
-  case D3DVSD_TOKEN_TESSELLATOR:
-    if (token & 0x10000000) {
-      DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-      DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-      TRACE(" 0x%08x TESSUV(%s) as %s\n", token, VertexDecl8_Registers[reg], VertexDecl8_DataTypes[type]);
-    } else {
-      DWORD type   = ((token & D3DVSD_DATATYPEMASK)    >> D3DVSD_DATATYPESHIFT);
-      DWORD regout = ((token & D3DVSD_VERTEXREGMASK)   >> D3DVSD_VERTEXREGSHIFT);
-      DWORD regin  = ((token & D3DVSD_VERTEXREGINMASK) >> D3DVSD_VERTEXREGINSHIFT);
-      TRACE(" 0x%08x TESSNORMAL(%s, %s) as %s\n", token, VertexDecl8_Registers[regin], VertexDecl8_Registers[regout], VertexDecl8_DataTypes[type]);
-    }
-    break;
-  case D3DVSD_TOKEN_CONSTMEM:
-    {
-      DWORD count        = ((token & D3DVSD_CONSTCOUNTMASK)   >> D3DVSD_CONSTCOUNTSHIFT);
-      tokenlen = (4 * count) + 1;
-    }
-    break;
-  case D3DVSD_TOKEN_EXT:
-    {
-      DWORD count   = ((token & D3DVSD_CONSTCOUNTMASK) >> D3DVSD_CONSTCOUNTSHIFT);
-      DWORD extinfo = ((token & D3DVSD_EXTINFOMASK)    >> D3DVSD_EXTINFOSHIFT);
-      TRACE(" 0x%08x EXT(%u, %u)\n", token, count, extinfo);
-      /* todo ... print extension */
-      tokenlen = count + 1;
-    }
-    break;
-  case D3DVSD_TOKEN_END:
-    TRACE(" 0x%08x END()\n", token);
-    break;
-  default:
-    TRACE(" 0x%08x UNKNOWN\n", token);
-    /* argg error */
-  }
-  return tokenlen;
-}
-
-/* structure used by the d3d8 to d3d9 conversion lookup table */
-typedef struct _Decl8to9Lookup {
-    int usage;
-    int usageIndex;
-} Decl8to9Lookup;
-
-static HRESULT IWineD3DVertexDeclarationImpl_ParseDeclaration8(IWineD3DVertexDeclaration *iface, const DWORD *pDecl) {
-IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-#define MAKE_LOOKUP(_reg,_usage,_usageindex) decl8to9Lookup[_reg].usage = _usage; \
-                                                 decl8to9Lookup[_reg].usageIndex = _usageindex;
-    const DWORD* pToken = pDecl;
-    DWORD len = 0;
-    DWORD stream = 0;
-    DWORD token;
-    DWORD tokenlen;
-    DWORD tokentype;
-    DWORD nTokens = 0;
-    int offset    = 0;
-
-    WINED3DVERTEXELEMENT convToW[128];
-/* TODO: find out where rhw (or positionT) is for declaration8 */
-    Decl8to9Lookup decl8to9Lookup[MAX_D3DVSDE];
-    MAKE_LOOKUP(D3DVSDE_POSITION,     WINED3DDECLUSAGE_POSITION, 0);
-    MAKE_LOOKUP(D3DVSDE_POSITION2,    WINED3DDECLUSAGE_POSITION, 1);
-    MAKE_LOOKUP(D3DVSDE_BLENDWEIGHT,  WINED3DDECLUSAGE_BLENDWEIGHT, 0);
-    MAKE_LOOKUP(D3DVSDE_BLENDINDICES, WINED3DDECLUSAGE_BLENDINDICES, 0);
-    MAKE_LOOKUP(D3DVSDE_NORMAL,       WINED3DDECLUSAGE_NORMAL, 0);
-    MAKE_LOOKUP(D3DVSDE_NORMAL2,      WINED3DDECLUSAGE_NORMAL, 1);
-    MAKE_LOOKUP(D3DVSDE_DIFFUSE,      WINED3DDECLUSAGE_COLOR, 0);
-    MAKE_LOOKUP(D3DVSDE_SPECULAR,     WINED3DDECLUSAGE_COLOR, 1);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD0,    WINED3DDECLUSAGE_TEXCOORD, 0);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD1,    WINED3DDECLUSAGE_TEXCOORD, 1);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD2,    WINED3DDECLUSAGE_TEXCOORD, 2);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD3,    WINED3DDECLUSAGE_TEXCOORD, 3);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD4,    WINED3DDECLUSAGE_TEXCOORD, 4);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD5,    WINED3DDECLUSAGE_TEXCOORD, 5);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD6,    WINED3DDECLUSAGE_TEXCOORD, 6);
-    MAKE_LOOKUP(D3DVSDE_TEXCOORD7,    WINED3DDECLUSAGE_TEXCOORD, 7);
-    MAKE_LOOKUP(D3DVSDE_PSIZE,        WINED3DDECLUSAGE_PSIZE, 0);
-
-    #undef MAKE_LOOKUP
-    TRACE("(%p) :  pDecl(%p)\n", This, pDecl);
-    /* Convert from a directx* declaration into a directx9 one, so we only have to deal with one type of declaration everywhere else */
-    while (D3DVSD_END() != *pToken) {
-        token = *pToken;
-        tokenlen = IWineD3DVertexDeclarationImpl_ParseToken8(pToken);
-        tokentype = ((token & D3DVSD_TOKENTYPEMASK) >> D3DVSD_TOKENTYPESHIFT);
-
-        if (D3DVSD_TOKEN_STREAM == tokentype && 0 == (D3DVSD_STREAMTESSMASK & token)) {
-            /**
-            * how really works streams,
-            *  in DolphinVS dx8 dsk sample they seems to decal reg numbers !!!
-            */
-            stream = ((token & D3DVSD_STREAMNUMBERMASK) >> D3DVSD_STREAMNUMBERSHIFT);
-            offset = 0;
-
-        } else if (D3DVSD_TOKEN_STREAMDATA == tokentype && 0 == (0x10000000 & tokentype)) {
-            DWORD type = ((token & D3DVSD_DATATYPEMASK)  >> D3DVSD_DATATYPESHIFT);
-            DWORD reg  = ((token & D3DVSD_VERTEXREGMASK) >> D3DVSD_VERTEXREGSHIFT);
-
-            convToW[nTokens].Stream     = stream;
-            convToW[nTokens].Method     = D3DDECLMETHOD_DEFAULT;
-            convToW[nTokens].Usage      = decl8to9Lookup[reg].usage;
-            convToW[nTokens].UsageIndex = decl8to9Lookup[reg].usageIndex;
-            convToW[nTokens].Type       = type;
-            convToW[nTokens].Offset     = offset;
-            convToW[nTokens].Reg        = reg;
-            TRACE("Adding element %d:\n", nTokens);
-            dump_wined3dvertexelement(&convToW[nTokens]);
-            offset += glTypeLookup[type].size * glTypeLookup[type].typesize;
-            ++nTokens;
-        } else if (D3DVSD_TOKEN_STREAMDATA == tokentype &&  0x10000000 & tokentype ) {
-             TRACE(" 0x%08x SKIP(%u)\n", tokentype, ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT));
-             offset += sizeof(DWORD) * ((tokentype & D3DVSD_SKIPCOUNTMASK) >> D3DVSD_SKIPCOUNTSHIFT);
-        }
-
-        len += tokenlen;
-        pToken += tokenlen;
-    }
-
-  /* here D3DVSD_END() */
-  len +=  IWineD3DVertexDeclarationImpl_ParseToken8(pToken);
-
-  convToW[nTokens].Stream = 0xFF;
-  convToW[nTokens].Type = D3DDECLTYPE_UNUSED;
-  ++nTokens;
-
-  /* compute size */
-  This->declaration8Length = len * sizeof(DWORD);
-  /* copy the declaration */
-  This->pDeclaration8 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->declaration8Length);
-  memcpy(This->pDeclaration8, pDecl, This->declaration8Length);
-
-  /* compute convToW size */
-  This->declarationWNumElements = nTokens;
-  /* copy the convTo9 declaration */
-  This->pDeclarationWine = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nTokens * sizeof(WINED3DVERTEXELEMENT));
-  memcpy(This->pDeclarationWine, convToW, nTokens * sizeof(WINED3DVERTEXELEMENT));
-
-  /* returns */
-  return WINED3D_OK;
 }
 
 /* *******************************************
@@ -374,7 +98,6 @@ static ULONG WINAPI IWineD3DVertexDeclarationImpl_Release(IWineD3DVertexDeclarat
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        HeapFree(GetProcessHeap(), 0, This->pDeclaration8);
         HeapFree(GetProcessHeap(), 0, This->pDeclarationWine);
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -404,32 +127,6 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDevice(IWineD3DVertexDecl
     return WINED3D_OK;
 }
 
-static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration8(IWineD3DVertexDeclaration* iface, DWORD* pData, DWORD* pSizeOfData) {
-    IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
-    if (NULL == pData) {
-        *pSizeOfData = This->declaration8Length;
-        return WINED3D_OK;
-    }
-
-    /* The Incredibles and Teenage Mutant Ninja Turtles require this in d3d9 for NumElements == 0,
-    TODO: this needs to be tested against windows */
-    if(*pSizeOfData == 0) {
-        TRACE("(%p) : Requested the vertex declaration without specifying the size of the return buffer\n", This);
-        *pSizeOfData = This->declaration8Length;
-        memcpy(pData, This->pDeclaration8, This->declaration8Length);
-        return WINED3D_OK;
-    }
-
-    if (*pSizeOfData < This->declaration8Length) {
-        FIXME("(%p) : Returning WINED3DERR_MOREDATA numElements %d expected %d\n", iface, *pSizeOfData, This->declaration8Length);
-        *pSizeOfData = This->declaration8Length;
-        return WINED3DERR_MOREDATA;
-    }
-    TRACE("(%p) : GetVertexDeclaration8 copying to %p\n", This, pData);
-    memcpy(pData, This->pDeclaration8, This->declaration8Length);
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVertexDeclaration *iface,
         WINED3DVERTEXELEMENT *elements, size_t *element_count) {
     IWineD3DVertexDeclarationImpl *This = (IWineD3DVertexDeclarationImpl *)iface;
@@ -438,14 +135,9 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_GetDeclaration(IWineD3DVerte
     TRACE("(%p) : d3d version %d, elements %p, element_count %p\n",
             This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion, elements, element_count);
 
-    if (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion == 8) {
-        /* FIXME: This is an ugly hack of course... */
-        hr = IWineD3DVertexDeclarationImpl_GetDeclaration8(iface, (DWORD *)elements, element_count);
-    } else {
-        *element_count = This->declarationWNumElements;
-        if (elements) {
-            CopyMemory(elements, This->pDeclarationWine, This->declarationWNumElements * sizeof(WINED3DVERTEXELEMENT));
-        }
+    *element_count = This->declarationWNumElements;
+    if (elements) {
+        CopyMemory(elements, This->pDeclarationWine, This->declarationWNumElements * sizeof(WINED3DVERTEXELEMENT));
     }
 
     return hr;
@@ -458,20 +150,22 @@ static HRESULT WINAPI IWineD3DVertexDeclarationImpl_SetDeclaration(IWineD3DVerte
 
     TRACE("(%p) : d3d version %d\n", This, ((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion);
 
-    if (((IWineD3DImpl *)This->wineD3DDevice->wineD3D)->dxVersion == 8) {
-        TRACE("Parsing declaration 8\n");
-        /* FIXME: This is an ugly hack of course... */
-        hr = IWineD3DVertexDeclarationImpl_ParseDeclaration8(iface, (CONST DWORD *)elements);
-    } else {
-        This->declarationWNumElements = element_count;
-        This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, sizeof(WINED3DVERTEXELEMENT) * element_count);
-        if (!This->pDeclarationWine) {
-            ERR("Memory allocation failed\n");
-            hr = WINED3DERR_OUTOFVIDEOMEMORY;
-        } else {
-            CopyMemory(This->pDeclarationWine, elements, sizeof(WINED3DVERTEXELEMENT) * element_count);
+    if (TRACE_ON(d3d_decl)) {
+        int i;
+        for (i = 0; i < element_count; ++i) {
+            dump_wined3dvertexelement(elements+i);
         }
     }
+
+    This->declarationWNumElements = element_count;
+    This->pDeclarationWine = HeapAlloc(GetProcessHeap(), 0, sizeof(WINED3DVERTEXELEMENT) * element_count);
+    if (!This->pDeclarationWine) {
+        ERR("Memory allocation failed\n");
+        hr = WINED3DERR_OUTOFVIDEOMEMORY;
+    } else {
+        CopyMemory(This->pDeclarationWine, elements, sizeof(WINED3DVERTEXELEMENT) * element_count);
+    }
+
     TRACE("Returning\n");
     return hr;
 }
