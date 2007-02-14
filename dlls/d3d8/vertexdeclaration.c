@@ -276,7 +276,7 @@ size_t convert_to_wined3d_declaration(const DWORD *d3d8_elements, WINED3DVERTEXE
     const DWORD *token = d3d8_elements;
     WINED3DVERTEXELEMENT *element;
     D3DVSD_TOKENTYPE token_type;
-    size_t element_count = 0;
+    unsigned int element_count = 0;
     DWORD stream = 0;
     int offset = 0;
 
