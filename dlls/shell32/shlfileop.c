@@ -282,9 +282,9 @@ static BOOL SHELL_ConfirmDialogW(HWND hWnd, int nKindOfDialog, LPCWSTR szDir, FI
 
         assert(nKindOfDialog >= 0 && nKindOfDialog < 32);
         if (op && (op->dwYesToAllMask & (1 << nKindOfDialog)))
-            return IDYES;
+            return TRUE;
 
-	assert(SHELL_ConfirmIDs(nKindOfDialog, &ids));
+        if (!SHELL_ConfirmIDs(nKindOfDialog, &ids)) return FALSE;
 
 	LoadStringW(shell32_hInstance, ids.caption_resource_id, szCaption, sizeof(szCaption)/sizeof(WCHAR));
 	LoadStringW(shell32_hInstance, ids.text_resource_id, szText, sizeof(szText)/sizeof(WCHAR));
