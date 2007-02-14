@@ -1987,7 +1987,7 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
      * NOTE2: Apparently texture transforms do NOT need reapplying
      */
 
-    PLIGHTINFOEL *lightChain = NULL;
+    PLIGHTINFOEL *light = NULL;
 
     glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode(GL_MODELVIEW)");
@@ -1995,13 +1995,13 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     checkGLcall("glLoadMatrixf(...)");
 
     /* Reset lights. TODO: Call light apply func */
-    lightChain = stateblock->lights;
-    while (lightChain && lightChain->glIndex != -1) {
-        glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_POSITION, lightChain->lightPosn);
+    for(k = 0; k < stateblock->wineD3DDevice->maxConcurrentLights; k++) {
+        light = stateblock->activeLights[k];
+        if(!light) continue;
+        glLightfv(GL_LIGHT0 + light->glIndex, GL_POSITION, light->lightPosn);
         checkGLcall("glLightfv posn");
-        glLightfv(GL_LIGHT0 + lightChain->glIndex, GL_SPOT_DIRECTION, lightChain->lightDirn);
+        glLightfv(GL_LIGHT0 + light->glIndex, GL_SPOT_DIRECTION, light->lightDirn);
         checkGLcall("glLightfv dirn");
-        lightChain = lightChain->next;
     }
 
     /* Reset Clipping Planes if clipping is enabled. TODO: Call clipplane apply func */

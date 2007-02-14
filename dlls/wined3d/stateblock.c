@@ -140,6 +140,7 @@ void stateblock_savedstates_set(
 void stateblock_copy(
     IWineD3DStateBlock* destination,
     IWineD3DStateBlock* source) {
+    int l;
 
     IWineD3DStateBlockImpl *This = (IWineD3DStateBlockImpl *)source;
     IWineD3DStateBlockImpl *Dest = (IWineD3DStateBlockImpl *)destination;
@@ -164,13 +165,32 @@ void stateblock_copy(
     Dest->streamIsUP = This->streamIsUP;
     Dest->pIndexData = This->pIndexData;
     Dest->baseVertexIndex = This->baseVertexIndex;
-    Dest->lights = This->lights;
+    /* Dest->lights = This->lights; */
     Dest->clip_status = This->clip_status;
     Dest->viewport = This->viewport;
     Dest->material = This->material;
     Dest->pixelShader = This->pixelShader;
     Dest->glsl_program = This->glsl_program;
     memcpy(&Dest->scissorRect, &This->scissorRect, sizeof(Dest->scissorRect));
+
+    /* Lights */
+    memset(This->activeLights, 0, sizeof(This->activeLights));
+    for(l = 0; l < LIGHTMAP_SIZE; l++) {
+        struct list *e1, *e2;
+        LIST_FOR_EACH_SAFE(e1, e2, &Dest->lightMap[l]) {
+            PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry);
+            list_remove(&light->entry);
+            HeapFree(GetProcessHeap(), 0, light);
+        }
+
+        LIST_FOR_EACH(e1, &This->lightMap[l]) {
+            PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry), *light2;
+            light2 = HeapAlloc(GetProcessHeap(), 0, sizeof(*light));
+            memcpy(light2, light, sizeof(*light));
+            list_add_tail(&This->lightMap[l], &light2->entry);
+            if(light2->glIndex != -1) This->activeLights[light2->glIndex] = light2;
+        }
+    }
 
     /* Fixed size arrays */
     memcpy(Dest->vertexShaderConstantB, This->vertexShaderConstantB, sizeof(BOOL) * MAX_CONST_B);
@@ -230,10 +250,10 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
 
     if (!refCount) {
         constant_entry *constant, *constant2;
+        int counter;
 
         /* type 0 represents the primary stateblock, so free all the resources */
         if (This->blockType == WINED3DSBT_INIT) {
-            int counter;
             FIXME("Releasing primary stateblock\n");
 
             /* NOTE: according to MSDN: The application is responsible for making sure the texture references are cleared down */
@@ -246,6 +266,15 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
                 }
             }
 
+        }
+
+        for(counter = 0; counter < LIGHTMAP_SIZE; counter++) {
+            struct list *e1, *e2;
+            LIST_FOR_EACH_SAFE(e1, e2, &This->lightMap[counter]) {
+                PLIGHTINFOEL *light = LIST_ENTRY(e1, PLIGHTINFOEL, entry);
+                list_remove(&light->entry);
+                HeapFree(GetProcessHeap(), 0, light);
+            }
         }
 
         HeapFree(GetProcessHeap(), 0, This->vertexShaderConstantF);
@@ -298,22 +327,26 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
     /* If not recorded, then update can just recapture */
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED  */ 0) {
         IWineD3DStateBlockImpl* tmpBlock;
-        PLIGHTINFOEL *tmp = This->lights;
+        int i;
 
         IWineD3DDevice_CreateStateBlock((IWineD3DDevice *)This->wineD3DDevice, This->blockType, (IWineD3DStateBlock**) &tmpBlock, NULL/*parent*/);
 
-        /* Note just swap the light chains over so when deleting, the old one goes */
         memcpy(This, tmpBlock, sizeof(IWineD3DStateBlockImpl));
-        tmpBlock->lights = tmp;
 
-        /* Delete the temporary one (which points to the old light chain though */
+        /* Move the light elements from the tmpBlock to This. No need to duplicate them, but they have to be removed from tmpBlock
+         * and the pointers updated for the base element in This.
+         *
+         * No need to update This->activeLights because the lights objects are untouched(same address)
+         */
+        for(i = 0; i < LIGHTMAP_SIZE; i++) {
+            list_init(&This->lightMap[i]); /* This element contains rubish due to the memcpy */
+            list_move_tail(&This->lightMap[i], &tmpBlock->lightMap[i]); /* Cleans the list entry in tmpBlock */
+        }
+
         IWineD3DStateBlock_Release((IWineD3DStateBlock *)tmpBlock);
-        /*IDirect3DDevice_DeleteStateBlock(pDevice, tmpBlock);*/
 
     } else {
         unsigned int i, j;
-
-        PLIGHTINFOEL *src;
 
         /* Recorded => Only update 'changed' values */
         if (This->vertexShader != targetStateBlock->vertexShader) {
@@ -363,37 +396,52 @@ static HRESULT  WINAPI IWineD3DStateBlockImpl_Capture(IWineD3DStateBlock *iface)
                 This->vertexShaderConstantB[i] =  targetStateBlock->vertexShaderConstantB[i];
             }
         }
-        
+
         /* Lights... For a recorded state block, we just had a chain of actions to perform,
              so we need to walk that chain and update any actions which differ */
-        src = This->lights;
-        while (src != NULL) {
-            PLIGHTINFOEL *realLight = NULL;
+        for(i = 0; i < LIGHTMAP_SIZE; i++) {
+            struct list *e, *f;
+            LIST_FOR_EACH(e, &This->lightMap[i]) {
+                BOOL updated = FALSE;
+                PLIGHTINFOEL *src = LIST_ENTRY(e, PLIGHTINFOEL, entry), *realLight;
+                if(!src->changed || !src->enabledChanged) continue;
 
-            /* Locate the light in the live lights */
-            realLight = targetStateBlock->lights;
-            while (realLight != NULL && realLight->OriginalIndex != src->OriginalIndex) realLight = realLight->next;
+                /* Look up the light in the destination */
+                LIST_FOR_EACH(f, &targetStateBlock->lightMap[i]) {
+                    realLight = LIST_ENTRY(f, PLIGHTINFOEL, entry);
+                    if(realLight->OriginalIndex == src->OriginalIndex) {
+                        if(src->changed) {
+                            memcpy(&src->OriginalParms, &realLight->OriginalParms, sizeof(src->OriginalParms));
+                        }
+                        if(src->enabledChanged) {
+                            /* Need to double check because enabledChanged does not catch enabled -> disabled -> enabled
+                             * or disabled -> enabled -> disabled changes
+                             */
+                            if(realLight->glIndex == -1 && src->glIndex != -1) {
+                                /* Light disabled */
+                                This->activeLights[src->glIndex] = NULL;
+                            } else if(realLight->glIndex != -1 && src->glIndex == -1){
+                                /* Light enabled */
+                                This->activeLights[realLight->glIndex] = src;
+                            }
+                            src->glIndex = realLight->glIndex;
+                        }
+                        updated = TRUE;
+                        break;
+                    }
+                }
 
-            /* If 'changed' then its a SetLight command. Rather than comparing to see
-                 if the OriginalParms have changed and then copy them (twice through
-                 memory) just do the copy                                              */
-            if (src->changed) {
-
-                /* If the light exists, copy its parameters, otherwise copy the default parameters */
-                const WINED3DLIGHT* params = realLight? &realLight->OriginalParms: &WINED3D_default_light;
-                TRACE("Updating lights for light %d\n", src->OriginalIndex);
-                memcpy(&src->OriginalParms, params, sizeof(*params));
+                if(updated) {
+                    /* Found a light, all done, proceed with next hash entry */
+                    continue;
+                } else if(src->changed) {
+                    /* Otherwise assign defaul params */
+                    memcpy(&src->OriginalParms, &WINED3D_default_light, sizeof(src->OriginalParms));
+                } else {
+                    /* Not enabled by default */
+                    src->glIndex = -1;
+                }
             }
-
-            /* If 'enabledchanged' then its a LightEnable command */
-            if (src->enabledChanged) {
-
-                /* If the light exists, check if it's enabled, otherwise default is disabled state */
-                TRACE("Updating lightEnabled for light %d\n", src->OriginalIndex);
-                src->lightEnabled = realLight? realLight->lightEnabled: FALSE;
-            }
-
-            src = src->next;
         }
 
         /* Recorded => Only update 'changed' values */
@@ -587,14 +635,19 @@ should really perform a delta so that only the changes get updated*/
 
     if (/*TODO: 'magic' statetype, replace with BOOL This->blockType == D3DSBT_RECORDED || */This->blockType == WINED3DSBT_INIT || This->blockType == WINED3DSBT_ALL || This->blockType == WINED3DSBT_VERTEXSTATE) {
 
+        for(i = 0; i < LIGHTMAP_SIZE; i++) {
+            struct list *e;
 
-        PLIGHTINFOEL *toDo = This->lights;
-        while (toDo != NULL) {
-            if (toDo->changed)
-                  IWineD3DDevice_SetLight(pDevice, toDo->OriginalIndex, &toDo->OriginalParms);
-            if (toDo->enabledChanged)
-                  IWineD3DDevice_SetLightEnable(pDevice, toDo->OriginalIndex, toDo->lightEnabled);
-            toDo = toDo->next;
+            LIST_FOR_EACH(e, &This->lightMap[i]) {
+                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+
+                if(light->changed) {
+                    IWineD3DDevice_SetLight(pDevice, light->OriginalIndex, &light->OriginalParms);
+                }
+                if(light->enabledChanged) {
+                    IWineD3DDevice_SetLightEnable(pDevice, light->OriginalIndex, light->glIndex != -1);
+                }
+            }
         }
 
         /* Vertex Shader */

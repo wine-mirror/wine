@@ -517,7 +517,6 @@ struct PLIGHTINFOEL {
     WINED3DLIGHT OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
     DWORD        OriginalIndex;
     LONG         glIndex;
-    BOOL         lightEnabled;
     BOOL         changed;
     BOOL         enabledChanged;
 
@@ -527,8 +526,7 @@ struct PLIGHTINFOEL {
     float                         exponent;
     float                         cutoff;
 
-    PLIGHTINFOEL *next;
-    PLIGHTINFOEL *prev;
+    struct list entry;
 };
 
 /* The default light parameters */
@@ -1204,8 +1202,11 @@ struct IWineD3DStateBlockImpl
     /* Transform */
     WINED3DMATRIX             transforms[HIGHEST_TRANSFORMSTATE + 1];
 
-    /* Lights */
-    PLIGHTINFOEL             *lights; /* NOTE: active GL lights must be front of the chain */
+    /* Light hashmap . Collisions are handled using standard wine double linked lists */
+#define LIGHTMAP_SIZE 43 /* Use of a prime number recommended. Set to 1 for a linked list! */
+#define LIGHTMAP_HASHFUNC(x) ((x) % LIGHTMAP_SIZE) /* Primitive and simple function */
+    struct list               lightMap[LIGHTMAP_SIZE]; /* Mashmap containing the lights */
+    PLIGHTINFOEL             *activeLights[MAX_ACTIVE_LIGHTS]; /* Map of opengl lights to d3d lights */
 
     /* Clipping */
     double                    clipplane[MAX_CLIPPLANES][4];

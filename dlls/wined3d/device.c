@@ -584,6 +584,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
     D3DCREATEOBJECTINSTANCE(object, StateBlock)
     object->blockType     = Type;
 
+    for(i = 0; i < LIGHTMAP_SIZE; i++) {
+        list_init(&object->lightMap[i]);
+    }
+
     /* Special case - Used during initialization to produce a placeholder stateblock
           so other functions called can update a state block                         */
     if (Type == WINED3DSBT_INIT) {
@@ -613,7 +617,16 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
 
         TRACE("ALL => Pretend everything has changed\n");
         stateblock_savedstates_set((IWineD3DStateBlock*) object, &object->changed, TRUE);
-    
+
+        /* Lights are not part of the changed / set structure */
+        for(j = 0; j < LIGHTMAP_SIZE; j++) {
+            struct list *e;
+            LIST_FOR_EACH(e, &object->lightMap[j]) {
+                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+                light->changed = TRUE;
+                light->enabledChanged = TRUE;
+            }
+        }
     } else if (Type == WINED3DSBT_PIXELSTATE) {
 
         TRACE("PIXELSTATE => Pretend all pixel shates have changed\n");
@@ -673,33 +686,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateStateBlock(IWineD3DDevice* iface,
             }
         }
 
-    /* Duplicate light chain */
-    {
-        PLIGHTINFOEL *src = NULL;
-        PLIGHTINFOEL *dst = NULL;
-        PLIGHTINFOEL *newEl = NULL;
-        src = This->stateBlock->lights;
-        object->lights = NULL;
-
-
-        while (src) {
-            newEl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
-            if (newEl == NULL) return WINED3DERR_OUTOFVIDEOMEMORY;
-            memcpy(newEl, src, sizeof(PLIGHTINFOEL));
-            newEl->prev = dst;
-            newEl->changed = TRUE;
-            newEl->enabledChanged = TRUE;
-            if (dst == NULL) {
-                object->lights = newEl;
-            } else {
-                dst->next = newEl;
+        for(j = 0; j < LIGHTMAP_SIZE; j++) {
+            struct list *e;
+            LIST_FOR_EACH(e, &object->lightMap[j]) {
+                PLIGHTINFOEL *light = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+                light->changed = TRUE;
+                light->enabledChanged = TRUE;
             }
-            dst = newEl;
-            src = src->next;
         }
-
-     }
-
     } else {
         FIXME("Unrecognized state block type %d\n", Type);
     }
@@ -2329,73 +2323,30 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, CONST WINED3DLIGHT* pLight) {
     float rho;
-    PLIGHTINFOEL *object, *temp;
+    PLIGHTINFOEL *object = NULL;
+    UINT Hi = LIGHTMAP_HASHFUNC(Index);
+    struct list *e;
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    TRACE("(%p) : Idx(%d), pLight(%p)\n", This, Index, pLight);
+    TRACE("(%p) : Idx(%d), pLight(%p). Hash index is %d\n", This, Index, pLight, Hi);
 
-    /* If recording state block, just add to end of lights chain */
-    if (This->isRecordingState) {
-        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
-        if (NULL == object) {
-            return WINED3DERR_OUTOFVIDEOMEMORY;
-        }
-        memcpy(&object->OriginalParms, pLight, sizeof(WINED3DLIGHT));
-        object->OriginalIndex = Index;
-        object->glIndex = -1;
-        object->changed = TRUE;
-
-        /* Add to the END of the chain of lights changes to be replayed */
-        if (This->updateStateBlock->lights == NULL) {
-            This->updateStateBlock->lights = object;
-        } else {
-            temp = This->updateStateBlock->lights;
-            while (temp->next != NULL) temp=temp->next;
-            temp->next = object;
-        }
-        TRACE("Recording... not performing anything more\n");
-        return WINED3D_OK;
+    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
+        object = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+        if(object->OriginalIndex == Index) break;
+        object = NULL;
     }
 
-    /* Ok, not recording any longer so do real work */
-    object = This->stateBlock->lights;
-    while (object != NULL && object->OriginalIndex != Index) object = object->next;
-
-    /* If we didn't find it in the list of lights, time to add it */
-    if (object == NULL) {
-        PLIGHTINFOEL *insertAt,*prevPos;
-
-        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
-        if (NULL == object) {
-            return WINED3DERR_OUTOFVIDEOMEMORY;
+    if(!object) {
+        TRACE("Adding new light\n");
+        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+        if(!object) {
+            ERR("Out of memory error when allocating a light\n");
+            return E_OUTOFMEMORY;
         }
-        object->OriginalIndex = Index;
+        list_add_head(&This->updateStateBlock->lightMap[Hi], &object->entry);
         object->glIndex = -1;
-
-        /* Add it to the front of list with the idea that lights will be changed as needed
-           BUT after any lights currently assigned GL indexes                             */
-        insertAt = This->stateBlock->lights;
-        prevPos  = NULL;
-        while (insertAt != NULL && insertAt->glIndex != -1) {
-            prevPos  = insertAt;
-            insertAt = insertAt->next;
-        }
-
-        if (insertAt == NULL && prevPos == NULL) { /* Start of list */
-            This->stateBlock->lights = object;
-        } else if (insertAt == NULL) { /* End of list */
-            prevPos->next = object;
-            object->prev = prevPos;
-        } else { /* Middle of chain */
-            if (prevPos == NULL) {
-                This->stateBlock->lights = object;
-            } else {
-                prevPos->next = object;
-            }
-            object->prev = prevPos;
-            object->next = insertAt;
-            insertAt->prev = object;
-        }
+        object->OriginalIndex = Index;
+        object->changed = TRUE;
     }
 
     /* Initialize the object */
@@ -2471,7 +2422,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
     }
 
     /* Update the live definitions if the light is currently assigned a glIndex */
-    if (object->glIndex != -1) {
+    if (object->glIndex != -1 && !This->isRecordingState) {
         setup_light(iface, object->glIndex, object);
     }
     return WINED3D_OK;
@@ -2480,11 +2431,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
 static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD Index, WINED3DLIGHT* pLight) {
     PLIGHTINFOEL *lightInfo = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    DWORD Hi = LIGHTMAP_HASHFUNC(Index);
+    struct list *e;
     TRACE("(%p) : Idx(%d), pLight(%p)\n", This, Index, pLight);
 
-    /* Locate the light in the live lights */
-    lightInfo = This->stateBlock->lights;
-    while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi]) {
+        lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+        if(lightInfo->OriginalIndex == Index) break;
+        lightInfo = NULL;
+    }
 
     if (lightInfo == NULL) {
         TRACE("Light information requested but light not defined\n");
@@ -2502,38 +2457,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLight(IWineD3DDevice *iface, DWORD I
 static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, DWORD Index, BOOL Enable) {
     PLIGHTINFOEL *lightInfo = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT Hi = LIGHTMAP_HASHFUNC(Index);
+    struct list *e;
     TRACE("(%p) : Idx(%d), enable? %d\n", This, Index, Enable);
 
     /* Tests show true = 128...not clear why */
-
     Enable = Enable? 128: 0;
 
-    /* If recording state block, just add to end of lights chain with changedEnable set to true */
-    if (This->isRecordingState) {
-        lightInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(PLIGHTINFOEL));
-        if (NULL == lightInfo) {
-            return WINED3DERR_OUTOFVIDEOMEMORY;
-        }
-        lightInfo->OriginalIndex = Index;
-        lightInfo->glIndex = -1;
-        lightInfo->enabledChanged = TRUE;
-        lightInfo->lightEnabled = Enable;
-
-        /* Add to the END of the chain of lights changes to be replayed */
-        if (This->updateStateBlock->lights == NULL) {
-            This->updateStateBlock->lights = lightInfo;
-        } else {
-            PLIGHTINFOEL *temp = This->updateStateBlock->lights;
-            while (temp->next != NULL) temp=temp->next;
-            temp->next = lightInfo;
-        }
-        TRACE("Recording... not performing anything more\n");
-        return WINED3D_OK;
+    LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
+        lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+        if(lightInfo->OriginalIndex == Index) break;
+        lightInfo = NULL;
     }
-
-    /* Not recording... So, locate the light in the live lights */
-    lightInfo = This->stateBlock->lights;
-    while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+    TRACE("Found light: %p\n", lightInfo);
 
     /* Special case - enabling an undefined light creates one with a strict set of parms! */
     if (lightInfo == NULL) {
@@ -2542,164 +2478,62 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
         IWineD3DDeviceImpl_SetLight(iface, Index, &WINED3D_default_light);
 
         /* Search for it again! Should be fairly quick as near head of list */
-        lightInfo = This->stateBlock->lights;
-        while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+        LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
+            lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+            if(lightInfo->OriginalIndex == Index) break;
+            lightInfo = NULL;
+        }
         if (lightInfo == NULL) {
             FIXME("Adding default lights has failed dismally\n");
             return WINED3DERR_INVALIDCALL;
         }
     }
 
-    /* OK, we now have a light... */
-    if (!Enable) {
-
-        /* If we are disabling it, check it was enabled, and
-           still only do something if it has assigned a glIndex (which it should have!)   */
-        if ((lightInfo->lightEnabled) && (lightInfo->glIndex != -1)) {
-            TRACE("Disabling light set up at gl idx %d\n", lightInfo->glIndex);
-            ENTER_GL();
-            glDisable(GL_LIGHT0 + lightInfo->glIndex);
-            checkGLcall("glDisable GL_LIGHT0+Index");
-            LEAVE_GL();
-        } else {
-            TRACE("Nothing to do as light was not enabled\n");
-        }
-        lightInfo->lightEnabled = Enable;
-    } else {
-
-        /* We are enabling it. If it is enabled, it's really simple */
-        if (lightInfo->lightEnabled) {
-            /* nop */
-            TRACE("Nothing to do as light was enabled\n");
-
-        /* If it already has a glIndex, it's still simple */
-        } else if (lightInfo->glIndex != -1) {
-            TRACE("Reusing light as already set up at gl idx %d\n", lightInfo->glIndex);
-            lightInfo->lightEnabled = Enable;
-            ENTER_GL();
-            glEnable(GL_LIGHT0 + lightInfo->glIndex);
-            checkGLcall("glEnable GL_LIGHT0+Index already setup");
-            LEAVE_GL();
-
-        /* Otherwise got to find space - lights are ordered gl indexes first */
-        } else {
-            PLIGHTINFOEL *bsf  = NULL;
-            PLIGHTINFOEL *pos  = This->stateBlock->lights;
-            PLIGHTINFOEL *prev = NULL;
-            int           Index= 0;
-            int           glIndex = -1;
-
-            /* Try to minimize changes as much as possible */
-            while (pos != NULL && pos->glIndex != -1 && Index < This->maxConcurrentLights) {
-
-                /* Try to remember which index can be replaced if necessary */
-                if (bsf==NULL && !pos->lightEnabled) {
-                    /* Found a light we can replace, save as best replacement */
-                    bsf = pos;
-                }
-
-                /* Step to next space */
-                prev = pos;
-                pos = pos->next;
-                Index ++;
+    lightInfo->enabledChanged = TRUE;
+    if(!Enable) {
+        if(lightInfo->glIndex != -1) {
+            if(!This->isRecordingState) {
+                ENTER_GL();
+                glDisable(GL_LIGHT0 + lightInfo->glIndex);
+                checkGLcall("glDisable GL_LIGHT0+Index");
+                LEAVE_GL();
             }
 
-            /* If we have too many active lights, fail the call */
-            if ((Index == This->maxConcurrentLights) && (bsf == NULL)) {
-                FIXME("Program requests too many concurrent lights.\n");
+            This->stateBlock->activeLights[lightInfo->glIndex] = NULL;
+            lightInfo->glIndex = -1;
+        } else {
+            TRACE("Light already disabled, nothing to do\n");
+        }
+    } else {
+        if (lightInfo->glIndex != -1) {
+            /* nop */
+            TRACE("Nothing to do as light was enabled\n");
+        } else {
+            int i;
+            /* Find a free gl light */
+            for(i = 0; i < This->maxConcurrentLights; i++) {
+                if(This->stateBlock->activeLights[i] == NULL) {
+                    This->stateBlock->activeLights[i] = lightInfo;
+                    lightInfo->glIndex = i;
+                    break;
+                }
+            }
+            if(lightInfo->glIndex == -1) {
+                ERR("Too many concurrently active lights\n");
                 return WINED3DERR_INVALIDCALL;
+            }
 
-            /* If we have allocated all lights, but not all are enabled,
-               reuse one which is not enabled                           */
-            } else if (Index == This->maxConcurrentLights) {
-                /* use bsf - Simply swap the new light and the BSF one */
-                PLIGHTINFOEL *bsfNext = bsf->next;
-                PLIGHTINFOEL *bsfPrev = bsf->prev;
-
-                /* Sort out ends */
-                if (lightInfo->next != NULL) lightInfo->next->prev = bsf;
-                if (bsf->prev != NULL) {
-                    bsf->prev->next = lightInfo;
-                } else {
-                    This->stateBlock->lights = lightInfo;
-                }
-
-                /* If not side by side, lots of chains to update */
-                if (bsf->next != lightInfo) {
-                    lightInfo->prev->next = bsf;
-                    bsf->next->prev = lightInfo;
-                    bsf->next       = lightInfo->next;
-                    bsf->prev       = lightInfo->prev;
-                    lightInfo->next = bsfNext;
-                    lightInfo->prev = bsfPrev;
-
-                } else {
-                    /* Simple swaps */
-                    bsf->prev = lightInfo;
-                    bsf->next = lightInfo->next;
-                    lightInfo->next = bsf;
-                    lightInfo->prev = bsfPrev;
-                }
-
-
-                /* Update states */
-                glIndex = bsf->glIndex;
-                bsf->glIndex = -1;
-                lightInfo->glIndex = glIndex;
-                lightInfo->lightEnabled = Enable;
-
-                /* Finally set up the light in gl itself */
-                TRACE("Replacing light which was set up at gl idx %d\n", lightInfo->glIndex);
+            /* i == lightInfo->glIndex */
+            if(!This->isRecordingState) {
+                setup_light(iface, i, lightInfo);
                 ENTER_GL();
-                setup_light(iface, glIndex, lightInfo);
-                glEnable(GL_LIGHT0 + glIndex);
-                checkGLcall("glEnable GL_LIGHT0 new setup");
+                glEnable(GL_LIGHT0 + i);
+                checkGLcall("glEnable(GL_LIGHT0 + i)");
                 LEAVE_GL();
-
-            /* If we reached the end of the allocated lights, with space in the
-               gl lights, setup a new light                                     */
-            } else if (pos->glIndex == -1) {
-
-                /* We reached the end of the allocated gl lights, so already
-                    know the index of the next one!                          */
-                glIndex = Index;
-                lightInfo->glIndex = glIndex;
-                lightInfo->lightEnabled = Enable;
-
-                /* In an ideal world, it's already in the right place */
-                if (lightInfo->prev == NULL || lightInfo->prev->glIndex!=-1) {
-                   /* No need to move it */
-                } else {
-                    /* Remove this light from the list */
-                    lightInfo->prev->next = lightInfo->next;
-                    if (lightInfo->next != NULL) {
-                        lightInfo->next->prev = lightInfo->prev;
-                    }
-
-                    /* Add in at appropriate place (inbetween prev and pos) */
-                    lightInfo->prev = prev;
-                    lightInfo->next = pos;
-                    if (prev == NULL) {
-                        This->stateBlock->lights = lightInfo;
-                    } else {
-                        prev->next = lightInfo;
-                    }
-                    if (pos != NULL) {
-                        pos->prev = lightInfo;
-                    }
-                }
-
-                /* Finally set up the light in gl itself */
-                TRACE("Defining new light at gl idx %d\n", lightInfo->glIndex);
-                ENTER_GL();
-                setup_light(iface, glIndex, lightInfo);
-                glEnable(GL_LIGHT0 + glIndex);
-                checkGLcall("glEnable GL_LIGHT0 new setup");
-                LEAVE_GL();
-
             }
         }
     }
+
     return WINED3D_OK;
 }
 
@@ -2707,17 +2541,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetLightEnable(IWineD3DDevice *iface, D
 
     PLIGHTINFOEL *lightInfo = NULL;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    struct list *e;
+    UINT Hi = LIGHTMAP_HASHFUNC(Index);
     TRACE("(%p) : for idx(%d)\n", This, Index);
 
-    /* Locate the light in the live lights */
-    lightInfo = This->stateBlock->lights;
-    while (lightInfo != NULL && lightInfo->OriginalIndex != Index) lightInfo = lightInfo->next;
+    LIST_FOR_EACH(e, &This->stateBlock->lightMap[Hi]) {
+        lightInfo = LIST_ENTRY(e, PLIGHTINFOEL, entry);
+        if(lightInfo->OriginalIndex == Index) break;
+        lightInfo = NULL;
+    }
 
     if (lightInfo == NULL) {
         TRACE("Light enabled state requested but light not defined\n");
         return WINED3DERR_INVALIDCALL;
     }
-    *pEnable = lightInfo->lightEnabled;
+    /* true is 128 according to SetLightEnable */
+    *pEnable = lightInfo->glIndex != -1 ? 128 : 0;
     return WINED3D_OK;
 }
 
@@ -4327,7 +4166,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DStateBlockImpl *object;
     HRESULT temp_result;
-    
+    int i;
+
     TRACE("(%p)\n", This);
     
     if (This->isRecordingState) {
@@ -4346,7 +4186,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_BeginStateBlock(IWineD3DDevice *iface) 
     object->blockType    = WINED3DSBT_ALL;
     object->ref          = 1;
     object->lpVtbl       = &IWineD3DStateBlock_Vtbl;
-    
+
+    for(i = 0; i < LIGHTMAP_SIZE; i++) {
+        list_init(&object->lightMap[i]);
+    }
+
     temp_result = allocate_shader_constants(object);
     if (WINED3D_OK != temp_result)
         return temp_result;
