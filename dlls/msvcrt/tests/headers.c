@@ -88,6 +88,7 @@ static void test_types(void)
     CHECK_TYPE(_off_t);
     CHECK_TYPE(clock_t);
     CHECK_TYPE(time_t);
+    CHECK_TYPE(__time64_t);
     CHECK_TYPE(fpos_t);
     CHECK_SIZE(FILE);
     CHECK_TYPE(terminate_handler);
@@ -295,6 +296,18 @@ static void test_structs(void)
     CHECK_FIELD(_stati64, st_atime);
     CHECK_FIELD(_stati64, st_mtime);
     CHECK_FIELD(_stati64, st_ctime);
+    CHECK_STRUCT(_stat64);
+    CHECK_FIELD(_stat64, st_dev);
+    CHECK_FIELD(_stat64, st_ino);
+    CHECK_FIELD(_stat64, st_mode);
+    CHECK_FIELD(_stat64, st_nlink);
+    CHECK_FIELD(_stat64, st_uid);
+    CHECK_FIELD(_stat64, st_gid);
+    CHECK_FIELD(_stat64, st_rdev);
+    CHECK_FIELD(_stat64, st_size);
+    CHECK_FIELD(_stat64, st_atime);
+    CHECK_FIELD(_stat64, st_mtime);
+    CHECK_FIELD(_stat64, st_ctime);
 }
 
 /************* Checking defines ***************/

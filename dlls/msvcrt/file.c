@@ -111,19 +111,34 @@ static CRITICAL_SECTION MSVCRT_file_cs;
 #define LOCK_FILES()    do { EnterCriticalSection(&MSVCRT_file_cs); } while (0)
 #define UNLOCK_FILES()  do { LeaveCriticalSection(&MSVCRT_file_cs); } while (0)
 
-static void msvcrt_cp_from_stati64(const struct MSVCRT__stati64 *bufi64, struct MSVCRT__stat *buf)
+static void msvcrt_stat64_to_stat(const struct MSVCRT__stat64 *buf64, struct MSVCRT__stat *buf)
 {
-    buf->st_dev   = bufi64->st_dev;
-    buf->st_ino   = bufi64->st_ino;
-    buf->st_mode  = bufi64->st_mode;
-    buf->st_nlink = bufi64->st_nlink;
-    buf->st_uid   = bufi64->st_uid;
-    buf->st_gid   = bufi64->st_gid;
-    buf->st_rdev  = bufi64->st_rdev;
-    buf->st_size  = bufi64->st_size;
-    buf->st_atime = bufi64->st_atime;
-    buf->st_mtime = bufi64->st_mtime;
-    buf->st_ctime = bufi64->st_ctime;
+    buf->st_dev   = buf64->st_dev;
+    buf->st_ino   = buf64->st_ino;
+    buf->st_mode  = buf64->st_mode;
+    buf->st_nlink = buf64->st_nlink;
+    buf->st_uid   = buf64->st_uid;
+    buf->st_gid   = buf64->st_gid;
+    buf->st_rdev  = buf64->st_rdev;
+    buf->st_size  = buf64->st_size;
+    buf->st_atime = buf64->st_atime;
+    buf->st_mtime = buf64->st_mtime;
+    buf->st_ctime = buf64->st_ctime;
+}
+
+static void msvcrt_stat64_to_stati64(const struct MSVCRT__stat64 *buf64, struct MSVCRT__stati64 *buf)
+{
+    buf->st_dev   = buf64->st_dev;
+    buf->st_ino   = buf64->st_ino;
+    buf->st_mode  = buf64->st_mode;
+    buf->st_nlink = buf64->st_nlink;
+    buf->st_uid   = buf64->st_uid;
+    buf->st_gid   = buf64->st_gid;
+    buf->st_rdev  = buf64->st_rdev;
+    buf->st_size  = buf64->st_size;
+    buf->st_atime = buf64->st_atime;
+    buf->st_mtime = buf64->st_mtime;
+    buf->st_ctime = buf64->st_ctime;
 }
 
 static inline BOOL msvcrt_is_valid_fd(int fd)
@@ -1106,9 +1121,9 @@ int CDECL MSVCRT__fileno(MSVCRT_FILE* file)
 }
 
 /*********************************************************************
- *		_fstati64 (MSVCRT.@)
+ *		_fstat64 (MSVCRT.@)
  */
-int CDECL MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
+int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
 {
   DWORD dw;
   BY_HANDLE_FILE_INFORMATION hfi;
@@ -1126,7 +1141,7 @@ int CDECL MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
   }
 
   memset(&hfi, 0, sizeof(hfi));
-  memset(buf, 0, sizeof(struct MSVCRT__stati64));
+  memset(buf, 0, sizeof(struct MSVCRT__stat64));
   if (!GetFileInformationByHandle(hand, &hfi))
   {
     WARN(":failed-last error (%d)\n",GetLastError());
@@ -1156,15 +1171,29 @@ int CDECL MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
 }
 
 /*********************************************************************
+ *		_fstati64 (MSVCRT.@)
+ */
+int CDECL MSVCRT__fstati64(int fd, struct MSVCRT__stati64* buf)
+{
+  int ret;
+  struct MSVCRT__stat64 buf64;
+
+  ret = MSVCRT__fstat64(fd, &buf64);
+  if (!ret)
+    msvcrt_stat64_to_stati64(&buf64, buf);
+  return ret;
+}
+
+/*********************************************************************
  *		_fstat (MSVCRT.@)
  */
 int CDECL MSVCRT__fstat(int fd, struct MSVCRT__stat* buf)
 { int ret;
-  struct MSVCRT__stati64 bufi64;
+  struct MSVCRT__stat64 buf64;
 
-  ret = MSVCRT__fstati64(fd, &bufi64);
+  ret = MSVCRT__fstat64(fd, &buf64);
   if (!ret)
-      msvcrt_cp_from_stati64(&bufi64, buf);
+      msvcrt_stat64_to_stat(&buf64, buf);
   return ret;
 }
 
@@ -1692,9 +1721,9 @@ int CDECL _setmode(int fd,int mode)
 }
 
 /*********************************************************************
- *		_stati64 (MSVCRT.@)
+ *		_stat64 (MSVCRT.@)
  */
-int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
+int CDECL MSVCRT__stat64(const char* path, struct MSVCRT__stat64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
@@ -1710,7 +1739,7 @@ int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
       return -1;
   }
 
-  memset(buf,0,sizeof(struct MSVCRT__stati64));
+  memset(buf,0,sizeof(struct MSVCRT__stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs say-what is it?
      Bon 011120: This FIXME seems incorrect
@@ -1753,8 +1782,22 @@ int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
   buf->st_mtime = buf->st_ctime = dw;
   TRACE("%d %d 0x%08lx%08lx %ld %ld %ld\n", buf->st_mode,buf->st_nlink,
         (long)(buf->st_size >> 32),(long)buf->st_size,
-        buf->st_atime,buf->st_mtime, buf->st_ctime);
+        (long)buf->st_atime,(long)buf->st_mtime,(long)buf->st_ctime);
   return 0;
+}
+
+/*********************************************************************
+ *		_stati64 (MSVCRT.@)
+ */
+int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
+{
+  int ret;
+  struct MSVCRT__stat64 buf64;
+
+  ret = MSVCRT__stat64(path, &buf64);
+  if (!ret)
+    msvcrt_stat64_to_stati64(&buf64, buf);
+  return ret;
 }
 
 /*********************************************************************
@@ -1762,18 +1805,18 @@ int CDECL MSVCRT__stati64(const char* path, struct MSVCRT__stati64 * buf)
  */
 int CDECL MSVCRT__stat(const char* path, struct MSVCRT__stat * buf)
 { int ret;
-  struct MSVCRT__stati64 bufi64;
+  struct MSVCRT__stat64 buf64;
 
-  ret = MSVCRT__stati64( path, &bufi64);
+  ret = MSVCRT__stat64( path, &buf64);
   if (!ret)
-      msvcrt_cp_from_stati64(&bufi64, buf);
+      msvcrt_stat64_to_stat(&buf64, buf);
   return ret;
 }
 
 /*********************************************************************
- *		_wstati64 (MSVCRT.@)
+ *		_wstat64 (MSVCRT.@)
  */
-int CDECL MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * buf)
+int CDECL MSVCRT__wstat64(const MSVCRT_wchar_t* path, struct MSVCRT__stat64 * buf)
 {
   DWORD dw;
   WIN32_FILE_ATTRIBUTE_DATA hfi;
@@ -1789,7 +1832,7 @@ int CDECL MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * 
       return -1;
   }
 
-  memset(buf,0,sizeof(struct MSVCRT__stat));
+  memset(buf,0,sizeof(struct MSVCRT__stat64));
 
   /* FIXME: rdev isn't drive num, despite what the docs says-what is it? */
   if (MSVCRT_iswalpha(*path))
@@ -1828,8 +1871,22 @@ int CDECL MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * 
   buf->st_mtime = buf->st_ctime = dw;
   TRACE("%d %d 0x%08lx%08lx %ld %ld %ld\n", buf->st_mode,buf->st_nlink,
         (long)(buf->st_size >> 32),(long)buf->st_size,
-        buf->st_atime,buf->st_mtime, buf->st_ctime);
+        (long)buf->st_atime,(long)buf->st_mtime,(long)buf->st_ctime);
   return 0;
+}
+
+/*********************************************************************
+ *		_wstati64 (MSVCRT.@)
+ */
+int CDECL MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * buf)
+{
+  int ret;
+  struct MSVCRT__stat64 buf64;
+
+  ret = MSVCRT__wstat64(path, &buf64);
+  if (!ret)
+    msvcrt_stat64_to_stati64(&buf64, buf);
+  return ret;
 }
 
 /*********************************************************************
@@ -1838,10 +1895,10 @@ int CDECL MSVCRT__wstati64(const MSVCRT_wchar_t* path, struct MSVCRT__stati64 * 
 int CDECL MSVCRT__wstat(const MSVCRT_wchar_t* path, struct MSVCRT__stat * buf)
 {
   int ret;
-  struct MSVCRT__stati64 bufi64;
+  struct MSVCRT__stat64 buf64;
 
-  ret = MSVCRT__wstati64( path, &bufi64 );
-  if (!ret) msvcrt_cp_from_stati64(&bufi64, buf);
+  ret = MSVCRT__wstat64( path, &buf64 );
+  if (!ret) msvcrt_stat64_to_stat(&buf64, buf);
   return ret;
 }
 
