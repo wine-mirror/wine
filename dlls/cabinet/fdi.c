@@ -2446,7 +2446,7 @@ BOOL __cdecl FDICopy(
 { 
   FDICABINETINFO    fdici;
   FDINOTIFICATION   fdin;
-  int               cabhf, filehf, idx;
+  int               cabhf, filehf = 0, idx;
   unsigned int      i;
   char              fullpath[MAX_PATH];
   size_t            pathlen, filenamelen;
@@ -2826,6 +2826,7 @@ BOOL __cdecl FDICopy(
       fdin.time = file->time;
       fdin.attribs = file->attribs; /* FIXME: filter _A_EXEC? */
       ((*pfnfdin)(fdintCLOSE_FILE_INFO, &fdin));
+      filehf = 0;
 
       switch (err) {
         case DECR_OK:
@@ -2913,6 +2914,8 @@ BOOL __cdecl FDICopy(
     }
     break;
   }
+
+  if (filehf) PFDI_CLOSE(hfdi, filehf);
 
   while (decomp_state) {
     fdi_decomp_state *prev_fds;

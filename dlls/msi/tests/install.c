@@ -1111,10 +1111,10 @@ static void test_uiLevelFlags(void)
     todo_wine
     {
         ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-        ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
         ok(delete_pf("msitest\\caesar", TRUE), "File not installed\n");
     }
-    delete_pf("msitest", FALSE);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
 
     delete_cab_files();
     DeleteFile(msifile);
