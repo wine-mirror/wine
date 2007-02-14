@@ -73,7 +73,7 @@ typedef	struct
     int		rate;
 } Format;
 
-static Format PCM_Formats[] =
+static const Format PCM_Formats[] =
 {
     {1,  8,  8000}, {2,  8,  8000}, {1, 16,  8000}, {2, 16,  8000},
     {1,  8, 11025}, {2,  8, 11025}, {1, 16, 11025}, {2, 16, 11025},
@@ -81,7 +81,7 @@ static Format PCM_Formats[] =
     {1,  8, 44100}, {2,  8, 44100}, {1, 16, 44100}, {2, 16, 44100},
 };
 
-static Format ADPCM_Formats[] =
+static const Format ADPCM_Formats[] =
 {
     {1,  4,  8000}, {2,	4,  8000},  {1,  4, 11025}, {2,	 4, 11025},
     {1,  4, 22050}, {2,	4, 22050},  {1,  4, 44100}, {2,	 4, 44100},
@@ -95,8 +95,8 @@ static Format ADPCM_Formats[] =
  */
 static	DWORD	ADPCM_GetFormatIndex(LPWAVEFORMATEX wfx)
 {
-    int 	i, hi;
-    Format*	fmts;
+    int             i, hi;
+    const Format*   fmts;
 
     switch (wfx->wFormatTag)
     {
