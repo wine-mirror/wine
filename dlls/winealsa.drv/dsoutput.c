@@ -271,7 +271,7 @@ static int DSDB_CreateMMAP(IDsDriverBufferImpl* pdbi)
 
         psize *= 2;
         if (err < 0) {
-            ERR("Errno %d (%s) occured when setting buffer size\n", err, strerror(errno));
+            ERR("Errno %d (%s) occurred when setting buffer size\n", err, strerror(errno));
         }
 #endif
         TRACE("mmap'd buffer is an ALSA emulation of hardware buffer.\n");

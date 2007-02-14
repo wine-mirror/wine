@@ -432,8 +432,8 @@ static void test_GetDisplayName(void)
         hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlNew, wszAbsoluteFilename, 
                 SHGDN_FORPARSING, NULL);
         ok (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "SetNameOf succeeded! hr = %08x\n", hr);
-   
-        /* Rename the file back to it's original name. SetNameOf ignores the fact, that the 
+
+        /* Rename the file back to its original name. SetNameOf ignores the fact, that the
          * SHGDN flags specify an absolute path. */
         hr = IShellFolder_SetNameOf(psfPersonal, NULL, pidlNew, wszFileName, SHGDN_FORPARSING, NULL);
         ok (SUCCEEDED(hr), "SetNameOf failed! hr = %08x\n", hr);

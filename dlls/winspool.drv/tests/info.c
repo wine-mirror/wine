@@ -1773,7 +1773,7 @@ static void test_XcvDataW_PortIsValid(void)
         res, GetLastError(), needed, status);
 
 
-    /* a normal, writeable file is allowed */
+    /* a normal, writable file is allowed */
     needed = (DWORD) 0xdeadbeef;
     status = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);

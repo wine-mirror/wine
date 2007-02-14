@@ -48,7 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commctrl);
  * Internal helper for ChrCmpA/COMCTL32_ChrCmpIA.
  *
  * NOTES
- *  Both this function and its Unicode counterpart are very inneficient. To
+ *  Both this function and its Unicode counterpart are very inefficient. To
  *  fix this, CompareString must be completely implemented and optimised
  *  first. Then the core character test can be taken out of that function and
  *  placed here, so that it need never be called at all. Until then, do not

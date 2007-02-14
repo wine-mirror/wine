@@ -362,7 +362,7 @@ inline static DWORD NtStatusToWSAError( const DWORD status )
     case STATUS_NO_MEMORY:            wserr = WSAEFAULT;             break;
     default:
         if ( status >= WSABASEERR && status <= WSABASEERR+1004 )
-            /* It is not a NT status code but a winsock error */
+            /* It is not an NT status code but a winsock error */
             wserr = status;
         else
         {

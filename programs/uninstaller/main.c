@@ -180,7 +180,7 @@ static int cmp_by_name(const void *a, const void *b)
 
 
 /**
- * Fetch informations from the uninstall key.
+ * Fetch information from the uninstall key.
  */
 static int FetchUninstallInformation(void)
 {

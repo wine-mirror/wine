@@ -263,7 +263,7 @@ typedef struct {
     UINT16 wUmax;		/* maximum u (5th axis) position value */
     UINT16 wVmin;		/* minimum v (6th axis) position value */
     UINT16 wVmax;		/* maximum v (6th axis) position value */
-    UINT16 wCaps;		/* joystick capabilites */
+    UINT16 wCaps;		/* joystick capabilities */
     UINT16 wMaxAxes;		/* maximum number of axes supported */
     UINT16 wNumAxes;		/* number of axes in use */
     UINT16 wMaxButtons;		/* maximum number of buttons supported */

@@ -19,7 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  * NOTES
- *   Nearly complete informations about the binary formats 
+ *   Nearly complete information about the binary formats
  *   of .lnk files available at http://www.wotsit.org
  *
  *  You can use winedump to examine the contents of a link file:
@@ -139,7 +139,7 @@ typedef struct
 
 	LONG            ref;
 
-	/* data structures according to the informations in the link */
+	/* data structures according to the information in the link */
 	LPITEMIDLIST	pPidl;
 	WORD		wHotKey;
 	SYSTEMTIME	time1;

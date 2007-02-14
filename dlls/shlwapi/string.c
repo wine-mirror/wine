@@ -160,7 +160,7 @@ static int FormatDouble(double value, int decimals, LPWSTR pszBuf, int cchBuf)
  * Internal helper for SHLWAPI_ChrCmpA/ChrCMPIA.
  *
  * NOTES
- *  Both this function and its Unicode counterpart are very inneficient. To
+ *  Both this function and its Unicode counterpart are very inefficient. To
  *  fix this, CompareString must be completely implemented and optimised
  *  first. Then the core character test can be taken out of that function and
  *  placed here, so that it need never be called at all. Until then, do not
@@ -2172,7 +2172,7 @@ BOOL WINAPI StrIsIntlEqualW(BOOL bCase, LPCWSTR lpszStr, LPCWSTR lpszComp,
  *  iLen     [I] Maximum number of chars to copy
  *
  * RETURNS
- *  Success: A pointer to the last character written to lpszDest..
+ *  Success: A pointer to the last character written to lpszDest.
  *  Failure: lpszDest, if any arguments are invalid.
  */
 LPSTR WINAPI StrCpyNXA(LPSTR lpszDest, LPCSTR lpszSrc, int iLen)
@@ -2772,7 +2772,7 @@ BOOL WINAPI DoesStringRoundTripW(LPCWSTR lpSrcStr, LPSTR lpDst, INT iLen)
 /*************************************************************************
  *      SHLoadIndirectString    [SHLWAPI.@]
  *
- * If passed a string that begins with a '@' extract the string from the
+ * If passed a string that begins with '@', extract the string from the
  * appropriate resource, otherwise do a straight copy.
  *
  */

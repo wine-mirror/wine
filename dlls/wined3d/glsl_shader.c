@@ -883,7 +883,7 @@ void shader_glsl_mov(SHADER_OPCODE_ARG* arg) {
     write_mask = shader_glsl_append_dst(buffer, arg);
     shader_glsl_add_src_param(arg, arg->src[0], arg->src_addr[0], write_mask, &src0_param);
 
-    /* In vs_1_1 WINED3DSIO_MOV can write to the adress register. In later
+    /* In vs_1_1 WINED3DSIO_MOV can write to the address register. In later
      * shader versions WINED3DSIO_MOVA is used for this. */
     if ((WINED3DSHADER_VERSION_MAJOR(shader->baseShader.hex_version) == 1 &&
             !shader_is_pshader_version(shader->baseShader.hex_version) &&

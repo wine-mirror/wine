@@ -817,7 +817,7 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     WineDirect3DStridedData *diffuse = &device->strided_streams.u.s.diffuse;
     BOOL isDiffuseSupplied;
 
-    /* Depends on the decoded vertex declaration to read the existance of diffuse data.
+    /* Depends on the decoded vertex declaration to read the existence of diffuse data.
      * The vertex declaration will call this function if the fixed function pipeline is used.
      */
 

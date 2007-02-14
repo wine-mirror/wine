@@ -1319,14 +1319,14 @@ HRESULT WINAPI SetAppStartingCursor(HWND u, DWORD v)
 /*************************************************************************
  * SHLoadOLE					[SHELL32.151]
  *
- * To reduce the memory usage of Windows 95 it's shell32 contained an
+ * To reduce the memory usage of Windows 95, its shell32 contained an
  * internal implementation of a part of COM (see e.g. SHGetMalloc, SHCoCreateInstance,
  * SHRegisterDragDrop etc.) that allowed to use in-process STA objects without
  * the need to load OLE32.DLL. If OLE32.DLL was already loaded, the SH* function
  * would just call the Co* functions.
  *
  * The SHLoadOLE was called when OLE32.DLL was being loaded to transfer all the
- * informations from the shell32 "mini-COM" to ole32.dll.
+ * information from the shell32 "mini-COM" to ole32.dll.
  *
  * See http://blogs.msdn.com/oldnewthing/archive/2004/07/05/173226.aspx for a
  * detailed description.

@@ -6321,7 +6321,7 @@ static void test_VarCmp(void)
     SETDEC64(dec,0,0x80,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF);
     VARCMP(DECIMAL,dec,R8,-R8_MAX,VARCMP_GT);
     SETDEC64(dec,20,0,0x5,0x6BC75E2D,0x63100001);     /* 1+1e-20 */
-    VARCMP(DECIMAL,dec,R8,1,VARCMP_GT); /* DECIMAL has higher precission */
+    VARCMP(DECIMAL,dec,R8,1,VARCMP_GT); /* DECIMAL has higher precision */
 
     /* Show that DATE is handled just as a R8 */
     VARCMP(DATE,DATE_MAX,DATE,DATE_MAX+1,VARCMP_LT);
@@ -6334,7 +6334,7 @@ static void test_VarCmp(void)
     VARCMP(DATE,25570.0,EMPTY,0,VARCMP_GT);
     VARCMP(DATE,25570.0,NULL_,0,VARCMP_NULL);
 
-    /* R4 precission handling */
+    /* R4 precision handling */
     VARCMP(R4,1,R8,1+1e-8,VARCMP_EQ);
     VARCMP(R8,1+1e-8,R4,1,VARCMP_EQ);
     VARCMP(R8,1+1e-8,R8,1,VARCMP_GT);

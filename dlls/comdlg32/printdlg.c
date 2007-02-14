@@ -2301,7 +2301,7 @@ BOOL WINAPI PrintDlgW(LPPRINTDLGW lppd)
  *          PageSetupDlg
  * rad1 - portrait
  * rad2 - landscape
- * cmb1 - printer select (not in standart dialog template)
+ * cmb1 - printer select (not in standard dialog template)
  * cmb2 - paper size
  * cmb3 - source (tray?)
  * edt4 - border left
@@ -2315,7 +2315,7 @@ typedef struct {
     LPPAGESETUPDLGA	dlga; /* Handler to user defined struct */
     PRINTDLGA		pdlg;
     HWND 		hDlg; /* Page Setup dialog handler */
-    PAGESETUPDLGA	curdlg; /* Struct means cerrent dialog state */
+    PAGESETUPDLGA	curdlg; /* Stores the current dialog state */
     RECT		rtDrawRect; /* Drawing rect for page */
 } PageSetupDataA;
 
@@ -2479,8 +2479,8 @@ _c_str2sizeW(PAGESETUPDLGW *dlga, LPCWSTR strin) {
  *
  * PARAMS
  *  hDlg	[in] 	 main window dialog HANDLE
- *  pda 	[in/out] ptr to PageSetupDataA structere
- * 
+ *  pda 	[in/out] ptr to PageSetupDataA structure
+ *
  * RETURNS
  *  TRUE
  */
