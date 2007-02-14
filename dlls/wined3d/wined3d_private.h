@@ -41,6 +41,7 @@
 #include "wined3d_private_types.h"
 #include "ddraw.h"
 #include "wine/wined3d_interface.h"
+#include "wine/wined3d_caps.h"
 #include "wine/wined3d_gl.h"
 #include "wine/list.h"
 

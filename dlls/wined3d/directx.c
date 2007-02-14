@@ -2137,48 +2137,48 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 
     *pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 
-    *pCaps->TextureOpCaps =  D3DTEXOPCAPS_ADD         |
-                             D3DTEXOPCAPS_ADDSIGNED   |
-                             D3DTEXOPCAPS_ADDSIGNED2X |
-                             D3DTEXOPCAPS_MODULATE    |
-                             D3DTEXOPCAPS_MODULATE2X  |
-                             D3DTEXOPCAPS_MODULATE4X  |
-                             D3DTEXOPCAPS_SELECTARG1  |
-                             D3DTEXOPCAPS_SELECTARG2  |
-                             D3DTEXOPCAPS_DISABLE;
+    *pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
+                             WINED3DTEXOPCAPS_ADDSIGNED   |
+                             WINED3DTEXOPCAPS_ADDSIGNED2X |
+                             WINED3DTEXOPCAPS_MODULATE    |
+                             WINED3DTEXOPCAPS_MODULATE2X  |
+                             WINED3DTEXOPCAPS_MODULATE4X  |
+                             WINED3DTEXOPCAPS_SELECTARG1  |
+                             WINED3DTEXOPCAPS_SELECTARG2  |
+                             WINED3DTEXOPCAPS_DISABLE;
 
     if (GL_SUPPORT(ARB_TEXTURE_ENV_COMBINE) ||
         GL_SUPPORT(EXT_TEXTURE_ENV_COMBINE) ||
         GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
-        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_BLENDDIFFUSEALPHA |
-                                D3DTEXOPCAPS_BLENDTEXTUREALPHA  |
-                                D3DTEXOPCAPS_BLENDFACTORALPHA   |
-                                D3DTEXOPCAPS_BLENDCURRENTALPHA  |
-                                D3DTEXOPCAPS_LERP               |
-                                D3DTEXOPCAPS_SUBTRACT;
+        *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BLENDDIFFUSEALPHA |
+                                WINED3DTEXOPCAPS_BLENDTEXTUREALPHA  |
+                                WINED3DTEXOPCAPS_BLENDFACTORALPHA   |
+                                WINED3DTEXOPCAPS_BLENDCURRENTALPHA  |
+                                WINED3DTEXOPCAPS_LERP               |
+                                WINED3DTEXOPCAPS_SUBTRACT;
     }
     if (GL_SUPPORT(ATI_TEXTURE_ENV_COMBINE3) ||
          GL_SUPPORT(NV_TEXTURE_ENV_COMBINE4)) {
-        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_ADDSMOOTH             |
-                                D3DTEXOPCAPS_MULTIPLYADD            |
-                                D3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
-                                D3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
-                                D3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
+        *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_ADDSMOOTH             |
+                                WINED3DTEXOPCAPS_MULTIPLYADD            |
+                                WINED3DTEXOPCAPS_MODULATEALPHA_ADDCOLOR |
+                                WINED3DTEXOPCAPS_MODULATECOLOR_ADDALPHA |
+                                WINED3DTEXOPCAPS_BLENDTEXTUREALPHAPM;
     }
     if (GL_SUPPORT(ARB_TEXTURE_ENV_DOT3))
-        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_DOTPRODUCT3;
+        *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_DOTPRODUCT3;
 
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
-        *pCaps->TextureOpCaps |= D3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR |
-                                 D3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
+        *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_MODULATEINVALPHA_ADDCOLOR |
+                                 WINED3DTEXOPCAPS_MODULATEINVCOLOR_ADDALPHA;
     }
-    
-    
+
+
 #if 0
-    *pCaps->TextureOpCaps |= D3DTEXOPCAPS_BUMPENVMAP;
+    *pCaps->TextureOpCaps |= WINED3DTEXOPCAPS_BUMPENVMAP;
                             /* FIXME: Add
-                            D3DTEXOPCAPS_BUMPENVMAPLUMINANCE 
-                            D3DTEXOPCAPS_PREMODULATE */
+                            WINED3DTEXOPCAPS_BUMPENVMAPLUMINANCE
+                            WINED3DTEXOPCAPS_PREMODULATE */
 #endif
 
     *pCaps->MaxTextureBlendStages   = GL_LIMITS(texture_stages);
