@@ -2063,32 +2063,32 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     } else
         *pCaps->VolumeTextureFilterCaps = 0;
 
-    *pCaps->TextureAddressCaps =  D3DPTADDRESSCAPS_INDEPENDENTUV |
-                                  D3DPTADDRESSCAPS_CLAMP  |
-                                  D3DPTADDRESSCAPS_WRAP;
+    *pCaps->TextureAddressCaps =  WINED3DPTADDRESSCAPS_INDEPENDENTUV |
+                                  WINED3DPTADDRESSCAPS_CLAMP  |
+                                  WINED3DPTADDRESSCAPS_WRAP;
 
     if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
-        *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_BORDER;
+        *pCaps->TextureAddressCaps |= WINED3DPTADDRESSCAPS_BORDER;
     }
     if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
-        *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
+        *pCaps->TextureAddressCaps |= WINED3DPTADDRESSCAPS_MIRROR;
     }
     if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
-        *pCaps->TextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
+        *pCaps->TextureAddressCaps |= WINED3DPTADDRESSCAPS_MIRRORONCE;
     }
 
     if (GL_SUPPORT(EXT_TEXTURE3D)) {
-        *pCaps->VolumeTextureAddressCaps =  D3DPTADDRESSCAPS_INDEPENDENTUV |
-                                            D3DPTADDRESSCAPS_CLAMP  |
-                                            D3DPTADDRESSCAPS_WRAP;
+        *pCaps->VolumeTextureAddressCaps =  WINED3DPTADDRESSCAPS_INDEPENDENTUV |
+                                            WINED3DPTADDRESSCAPS_CLAMP  |
+                                            WINED3DPTADDRESSCAPS_WRAP;
         if (GL_SUPPORT(ARB_TEXTURE_BORDER_CLAMP)) {
-            *pCaps->VolumeTextureAddressCaps |= D3DPTADDRESSCAPS_BORDER;
+            *pCaps->VolumeTextureAddressCaps |= WINED3DPTADDRESSCAPS_BORDER;
         }
         if (GL_SUPPORT(ARB_TEXTURE_MIRRORED_REPEAT)) {
-            *pCaps->VolumeTextureAddressCaps |= D3DPTADDRESSCAPS_MIRROR;
+            *pCaps->VolumeTextureAddressCaps |= WINED3DPTADDRESSCAPS_MIRROR;
         }
         if (GL_SUPPORT(ATI_TEXTURE_MIRROR_ONCE)) {
-            *pCaps->VolumeTextureAddressCaps |= D3DPTADDRESSCAPS_MIRRORONCE;
+            *pCaps->VolumeTextureAddressCaps |= WINED3DPTADDRESSCAPS_MIRRORONCE;
         }
     } else
         *pCaps->VolumeTextureAddressCaps = 0;
