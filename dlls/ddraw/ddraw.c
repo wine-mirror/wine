@@ -426,9 +426,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             /* Restore the display mode */
             IDirectDraw7_RestoreDisplayMode(iface);
 
-            if(window)
-                IWineD3DDevice_RestoreWindow(This->wineD3DDevice, window);
-
             This->cooperative_level &= ~DDSCL_FULLSCREEN;
             This->cooperative_level &= ~DDSCL_EXCLUSIVE;
             This->cooperative_level &= ~DDSCL_ALLOWMODEX;
@@ -476,13 +473,6 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
             !(This->devicewindow) &&
             (hwnd != window) )
         {
-            /* On a window change, restore the old window and set the new one */
-            if(window != hwnd)
-            {
-                if(window)
-                    IWineD3DDevice_RestoreWindow(This->wineD3DDevice, window);
-                IWineD3DDevice_SetupFullscreenWindow(This->wineD3DDevice, hwnd);
-            }
             IWineD3DDevice_SetHWND(This->wineD3DDevice, hwnd);
         }
     }

@@ -1159,7 +1159,7 @@ static void WINAPI IWineD3DDeviceImpl_SetupFullscreenWindow(IWineD3DDevice *ifac
      * That shouldn't happen
      */
     TRACE("(%p): Setting up window %p for exclusive mode\n", This, window);
-    if (This->style && This->exStyle) {
+    if (This->style || This->exStyle) {
         ERR("(%p): Want to change the window parameters of HWND %p, but "
             "another style is stored for restoration afterwards\n", This, window);
     }
@@ -1404,7 +1404,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         This->ddraw_height = devmode.dmPelsHeight;
         This->ddraw_format = *(pPresentationParameters->BackBufferFormat);
 
-        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, object->win_handle);
+        IWineD3DDevice_SetFullscreen(iface, TRUE);
 
         /* And finally clip mouse to our screen */
         SetRect(&clip_rc, 0, 0, devmode.dmPelsWidth, devmode.dmPelsHeight);
@@ -1681,6 +1681,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     }
     This->swapchains[0] = (IWineD3DSwapChain *) swapchain;
 
+    if(!This->ddraw_window) IWineD3DDevice_SetHWND(iface, swapchain->win_handle);
+
     if(swapchain->backBuffer && swapchain->backBuffer[0]) {
         TRACE("Setting rendertarget to %p\n", swapchain->backBuffer);
         This->render_targets[0] = swapchain->backBuffer[0];
@@ -1809,6 +1811,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Uninit3D(IWineD3DDevice *iface, D3DCB_D
 static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL fullscreen) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     TRACE("(%p) Setting DDraw fullscreen mode to %s\n", This, fullscreen ? "true" : "false");
+
+    /* Setup the window for fullscreen mode */
+    if(fullscreen && !This->ddraw_fullscreen) {
+        IWineD3DDeviceImpl_SetupFullscreenWindow(iface, This->ddraw_window);
+    } else if(!fullscreen && This->ddraw_fullscreen) {
+        IWineD3DDeviceImpl_RestoreWindow(iface, This->ddraw_window);
+    }
 
     /* DirectDraw apps can change between fullscreen and windowed mode after device creation with
      * IDirectDraw7::SetCooperativeLevel. The GDI surface implementation needs to know this.
@@ -4006,6 +4015,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetHWND(IWineD3DDevice *iface, HWND hWn
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p)->(%p)\n", This, hWnd);
 
+    if(This->ddraw_fullscreen) {
+        if(This->ddraw_window && This->ddraw_window != hWnd) {
+            IWineD3DDeviceImpl_RestoreWindow(iface, This->ddraw_window);
+        }
+        if(hWnd && This->ddraw_window != hWnd) {
+            IWineD3DDeviceImpl_SetupFullscreenWindow(iface, hWnd);
+        }
+    }
+
     This->ddraw_window = hWnd;
     return WINED3D_OK;
 }
@@ -5455,7 +5473,19 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
     if((*pPresentationParameters->Windowed && !swapchain->presentParms.Windowed) ||
        (swapchain->presentParms.Windowed && !*pPresentationParameters->Windowed) ||
         DisplayModeChanged) {
+
+        /* Switching to fullscreen? Change to fullscreen mode, THEN change the screen res */
+        if(!(*pPresentationParameters->Windowed)) {
+            IWineD3DDevice_SetFullscreen(iface, TRUE);
+        }
+
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
+
+        /* Switching out of fullscreen mode? First set the original res, then change the window */
+        if(*pPresentationParameters->Windowed) {
+            IWineD3DDevice_SetFullscreen(iface, FALSE);
+        }
+        swapchain->presentParms.Windowed = *pPresentationParameters->Windowed;
     }
 
     IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
@@ -5809,8 +5839,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_UpdateTexture,
     IWineD3DDeviceImpl_UpdateSurface,
     IWineD3DDeviceImpl_GetFrontBufferData,
-    IWineD3DDeviceImpl_SetupFullscreenWindow,
-    IWineD3DDeviceImpl_RestoreWindow,
     /*** object tracking ***/
     IWineD3DDeviceImpl_ResourceReleased
 };
