@@ -433,7 +433,7 @@ HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
     if(lockcount > 0) {
         /* Delay loading the buffer until everything is unlocked */
         TRACE("Ignoring the unlock\n");
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     if(This->Flags & VBFLAG_HASDESC) {

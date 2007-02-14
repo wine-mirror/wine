@@ -1667,7 +1667,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
     /* Setup the implicit swapchain */
     TRACE("Creating implicit swapchain\n");
-    if (D3D_OK != D3DCB_CreateAdditionalSwapChain((IUnknown *) This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain) || swapchain == NULL) {
+    if (FAILED(D3DCB_CreateAdditionalSwapChain((IUnknown *) This->parent, pPresentationParameters, (IWineD3DSwapChain **)&swapchain)) || !swapchain) {
         WARN("Failed to create implicit swapchain\n");
         return WINED3DERR_INVALIDCALL;
     }
@@ -1845,10 +1845,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface,
         TRACE("Enumerating %dx%d@%s\n", DevModeW.dmPelsWidth, DevModeW.dmPelsHeight, debug_d3dformat(pixelformat_for_depth(DevModeW.dmBitsPerPel)));
 
         if (callback((IUnknown *) This, (UINT) DevModeW.dmPelsWidth, (UINT) DevModeW.dmPelsHeight, pixelformat_for_depth(DevModeW.dmBitsPerPel), 60.0, context) == DDENUMRET_CANCEL)
-            return D3D_OK;
+            return WINED3D_OK;
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
@@ -1882,7 +1882,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, U
         (This->ddraw_height == pMode->Height) &&
         (This->ddraw_format == pMode->Format) &&
         (pMode->RefreshRate == 0) ) {
-        return D3D_OK;
+        return WINED3D_OK;
     }
 
     ret = ChangeDisplaySettingsExW(NULL, &devmode, NULL, CDS_FULLSCREEN, NULL);

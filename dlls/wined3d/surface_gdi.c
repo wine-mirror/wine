@@ -243,7 +243,7 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
     TRACE("returning memory@%p, pitch(%d)\n", pLockedRect->pBits, pLockedRect->Pitch);
 
     This->Flags |= SFLAG_LOCKED;
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 /*****************************************************************************
@@ -1206,7 +1206,7 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
 
         /* Lock the union of the two rectangles */
         ret = IWineD3DSurface_LockRect(iface, &dlock, &lock_union, 0);
-        if(ret != D3D_OK) goto error;
+        if(ret != WINED3D_OK) goto error;
 
         pitch = dlock.Pitch;
         slock.Pitch = dlock.Pitch;
@@ -1221,9 +1221,9 @@ IWineGDISurfaceImpl_BltFast(IWineD3DSurface *iface,
     else
     {
         ret = IWineD3DSurface_LockRect(Source, &slock, &lock_src, WINED3DLOCK_READONLY);
-        if(ret != D3D_OK) goto error;
+        if(ret != WINED3D_OK) goto error;
         ret = IWineD3DSurface_LockRect(iface, &dlock, &lock_dst, 0);
-        if(ret != D3D_OK) goto error;
+        if(ret != WINED3D_OK) goto error;
 
         sbuf = slock.pBits;
         dbuf = dlock.pBits;
@@ -1497,7 +1497,7 @@ const char* filename)
  * avoid confusion in the shared surface code.
  *
  * Returns:
- *  D3D_OK on success
+ *  WINED3D_OK on success
  *  The return values of called methods on failure
  *
  *****************************************************************************/

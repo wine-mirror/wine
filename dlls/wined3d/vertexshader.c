@@ -1244,7 +1244,7 @@ static HRESULT WINAPI IWIneD3DVertexShaderImpl_SetLocalConstantsF(IWineD3DVertex
         list_add_head(&This->baseShader.constantsF, &lconst->entry);
     }
 
-    return D3D_OK;
+    return WINED3D_OK;
 }
 
 static HRESULT WINAPI IWineD3DVertexShaderImpl_CompileShader(IWineD3DVertexShader *iface) {
