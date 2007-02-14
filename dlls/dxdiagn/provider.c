@@ -145,7 +145,7 @@ HRESULT DXDiag_CreateDXDiagProvider(LPCLASSFACTORY iface, LPUNKNOWN punkOuter, R
 static HRESULT DXDiag_AddFileDescContainer(IDxDiagContainer* pSubCont, const WCHAR* szFilePath, const WCHAR* szFileName) {
   HRESULT hr = S_OK;
   /**/
-  static WCHAR szSlashSep[] = {'\\',0};
+  static const WCHAR szSlashSep[] = {'\\',0};
   static const WCHAR szPath[] = {'s','z','P','a','t','h',0};
   static const WCHAR szName[] = {'s','z','N','a','m','e',0};
   static const WCHAR szVersion[] = {'s','z','V','e','r','s','i','o','n',0};
