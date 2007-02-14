@@ -861,6 +861,20 @@ static void test_GetDlgItemText(void)
     ok(string[0] == '\0', "string retrieved using GetDlgItemText should have been NULL terminated\n");
 }
 
+static void test_DialogBoxParamA(void)
+{
+    int ret;
+    HWND hwnd_invalid = (HWND)0x4444;
+
+    SetLastError(0xdeadbeef);
+    ret = DialogBoxParamA(GetModuleHandle(NULL), "IDD_DIALOG" , hwnd_invalid, 0 , 0);
+    ok(0 == ret, "DialogBoxParamA returned %d, expected 0\n", ret);
+    ok(ERROR_INVALID_WINDOW_HANDLE == GetLastError(),"got %d, expected ERROR_INVALID_WINDOW_HANDLE\n",GetLastError());
+    SetLastError(0xdeadbeef);
+    ret = DialogBoxParamA(GetModuleHandle(NULL), "RESOURCE_INVALID" , 0, 0, 0);
+    ok(-1 == ret, "DialogBoxParamA returned %d, expected -1\n", ret);
+    ok(ERROR_RESOURCE_NAME_NOT_FOUND == GetLastError(),"got %d, expected ERROR_RESOURCE_NAME_NOT_FOUND\n",GetLastError());
+}
 
 START_TEST(dialog)
 {
@@ -873,4 +887,5 @@ START_TEST(dialog)
     WM_NEXTDLGCTLTest();
     InitialFocusTest();
     test_GetDlgItemText();
+    test_DialogBoxParamA();
 }
