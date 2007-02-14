@@ -1261,7 +1261,7 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
             needed += (level == 1) ? pm->pi1_needed : pm->pi2_needed;
 
             /* fill the buffer, if we have one */
-            if (pPorts && (cbBuf >= needed )) {
+            if (pPorts && (cbBuf >= needed ) && pm->cache) {
                 cacheindex = 0;
                 cache = pm->cache;
                 while (cacheindex < pm->returned) {
