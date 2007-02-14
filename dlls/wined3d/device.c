@@ -355,31 +355,26 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
     }
 
     /* Don't use static, because dx apps tend to update the buffer
-      * quite often even if they specify 0 usage
-      */
+     * quite often even if they specify 0 usage. Because we always keep the local copy
+     * we never read from the vbo and can create a write only opengl buffer.
+     */
     switch(vboUsage & (D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC) ) {
         case D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC:
+        case D3DUSAGE_DYNAMIC:
             TRACE("Gl usage = GL_STREAM_DRAW\n");
             glUsage = GL_STREAM_DRAW_ARB;
             break;
         case D3DUSAGE_WRITEONLY:
+        default:
             TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
             glUsage = GL_DYNAMIC_DRAW_ARB;
-            break;
-        case D3DUSAGE_DYNAMIC:
-            TRACE("Gl usage = GL_STREAM_COPY\n");
-            glUsage = GL_STREAM_COPY_ARB;
-            break;
-        default:
-            TRACE("Gl usage = GL_DYNAMIC_COPY\n");
-            glUsage = GL_DYNAMIC_COPY_ARB;
             break;
     }
 
     /* Reserve memory for the buffer. The amount of data won't change
-      * so we are safe with calling glBufferData once with a NULL ptr and
-      * calling glBufferSubData on updates
-      */
+     * so we are safe with calling glBufferData once with a NULL ptr and
+     * calling glBufferSubData on updates
+     */
     GL_EXTCALL(glBufferDataARB(GL_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
     error = glGetError();
     if(error != GL_NO_ERROR) {
@@ -444,13 +439,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     if( GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) && Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && 
         (dxVersion > 7 || !conv) ) {
         CreateVBO(object);
-
-        /* DX7 buffers can be locked directly into the VBO (no conversion, see above */
-        if(dxVersion == 7 && object->vbo) {
-            HeapFree(GetProcessHeap(), 0, object->resource.allocatedMemory);
-            object->resource.allocatedMemory = NULL;
-        }
-
     }
     return WINED3D_OK;
 }

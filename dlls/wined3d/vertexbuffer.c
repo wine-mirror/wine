@@ -289,27 +289,21 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
         This->draws = 0;
 
         if(This->declChanges > VB_MAXDECLCHANGES) {
-            if(This->resource.allocatedMemory) {
-                FIXME("Too much declaration changes, stopping converting\n");
-                ENTER_GL();
-                GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
-                checkGLcall("glDeleteBuffersARB");
-                LEAVE_GL();
-                This->vbo = 0;
+            FIXME("Too much declaration changes, stopping converting\n");
+            ENTER_GL();
+            GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
+            checkGLcall("glDeleteBuffersARB");
+            LEAVE_GL();
+            This->vbo = 0;
 
-                /* The stream source state handler might have read the memory of the vertex buffer already
-                 * and got the memory in the vbo which is not valid any longer. Dirtify the stream source
-                 * to force a reload. This happens only once per changed vertexbuffer and should occur rather
-                 * rarely
-                 */
-                IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_STREAMSRC);
-
-                return;
-            }
-            /* Otherwise do not bother to release the VBO. If we're doing direct locking now,
-             * and the declarations changed the code below will fetch the VBO's contents, convert
-             * and on the next decl change the data will be in sysmem too and we can just release the VBO
+            /* The stream source state handler might have read the memory of the vertex buffer already
+             * and got the memory in the vbo which is not valid any longer. Dirtify the stream source
+             * to force a reload. This happens only once per changed vertexbuffer and should occur rather
+             * rarely
              */
+            IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_STREAMSRC);
+
+            return;
         }
     } else {
         /* However, it is perfectly fine to change the declaration every now and then. We don't want a game that
@@ -339,46 +333,20 @@ static void     WINAPI IWineD3DVertexBufferImpl_PreLoad(IWineD3DVertexBuffer *if
     This->dirtystart = 0;
     This->dirtyend = 0;
 
-    /* If there was no conversion done before, then resource.allocatedMemory does not exist
-     * because locking was done directly into the VBO. In this case get the data out
-     */
-    if(declChanged && !This->resource.allocatedMemory) {
-
-        This->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), 0, This->resource.size);
-        if(!This->resource.allocatedMemory) {
-            ERR("Out of memory when allocating memory for a vertex buffer\n");
-            return;
-        }
-        ERR("Was locking directly into the VBO, reading data back because conv is needed\n");
-
-        ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-        checkGLcall("glBindBufferARB");
-        data = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_READ_WRITE_ARB));
-        if(!data) {
-            ERR("glMapBuffer failed!\n");
-            LEAVE_GL();
-            return;
-        }
-        memcpy(This->resource.allocatedMemory, data, This->resource.size);
-        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
-        checkGLcall("glUnmapBufferARB");
-        LEAVE_GL();
-    }
-
     if     (This->strided.u.s.position.dwStride) stride = This->strided.u.s.position.dwStride;
     else if(This->strided.u.s.specular.dwStride) stride = This->strided.u.s.specular.dwStride;
     else if(This->strided.u.s.diffuse.dwStride)  stride = This->strided.u.s.diffuse.dwStride;
     else {
-        /* That means that there is nothing to fixup. Upload everything into the VBO and
-         * free This->resource.allocatedMemory
+        /* That means that there is nothing to fixup. Just upload from This->resource.allocatedMemory
+         * directly into the vbo. Do not free the system memory copy because drawPrimitive may need it if
+         * the stride is 0, for instancing emulation, vertex blending emulation or shader emulation.
          */
         TRACE("No conversion needed, locking directly into the VBO in future\n");
 
         ENTER_GL();
         GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
         checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, This->resource.size, This->resource.allocatedMemory));
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, start, end-start, This->resource.allocatedMemory + start));
         checkGLcall("glBufferSubDataARB");
         LEAVE_GL();
         return;
@@ -448,31 +416,8 @@ static HRESULT  WINAPI IWineD3DVertexBufferImpl_Lock(IWineD3DVertexBuffer *iface
             This->dirtyend = This->resource.size;
     }
 
-    if(This->resource.allocatedMemory) {
-          data = This->resource.allocatedMemory;
-          This->Flags |= VBFLAG_DIRTY;
-    } else {
-        GLenum mode = GL_READ_WRITE_ARB;
-        /* Return data to the VBO */
-
-        TRACE("Locking directly into the buffer\n");
-
-        if((This->resource.usage & WINED3DUSAGE_WRITEONLY) || ( Flags & WINED3DLOCK_DISCARD) ) {
-            mode = GL_WRITE_ONLY_ARB;
-        } else if( Flags & (WINED3DLOCK_READONLY | WINED3DLOCK_NO_DIRTY_UPDATE) ) {
-            mode = GL_READ_ONLY_ARB;
-        }
-
-        ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-        checkGLcall("glBindBufferARB");
-        data = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, mode));
-        LEAVE_GL();
-        if(!data) {
-            ERR("glMapBuffer failed\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-    }
+    data = This->resource.allocatedMemory;
+    This->Flags |= VBFLAG_DIRTY;
     *ppbData = data + OffsetToLock;
 
     TRACE("(%p) : returning memory of %p (base:%p,offset:%u)\n", This, data + OffsetToLock, data, OffsetToLock);
@@ -491,14 +436,7 @@ HRESULT  WINAPI IWineD3DVertexBufferImpl_Unlock(IWineD3DVertexBuffer *iface) {
         return D3D_OK;
     }
 
-    if(!This->resource.allocatedMemory) {
-        ENTER_GL();
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, This->vbo));
-        checkGLcall("glBindBufferARB");
-        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
-        checkGLcall("glUnmapBufferARB");
-        LEAVE_GL();
-    } else if(This->Flags & VBFLAG_HASDESC){
+    if(This->Flags & VBFLAG_HASDESC) {
         IWineD3DVertexBufferImpl_PreLoad(iface);
     }
     return WINED3D_OK;
