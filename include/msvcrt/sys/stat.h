@@ -114,6 +114,20 @@ struct _stati64 {
   time_t st_mtime;
   time_t st_ctime;
 };
+
+struct _stat64 {
+  _dev_t st_dev;
+  _ino_t st_ino;
+  unsigned short st_mode;
+  short          st_nlink;
+  short          st_uid;
+  short          st_gid;
+  _dev_t st_rdev;
+  __int64 DECLSPEC_ALIGN(8) st_size;
+  __time64_t     st_atime;
+  __time64_t     st_mtime;
+  __time64_t     st_ctime;
+};
 #endif /* _STAT_DEFINED */
 
 #ifdef __cplusplus
@@ -124,12 +138,15 @@ int _fstat(int,struct _stat*);
 int _stat(const char*,struct _stat*);
 int _fstati64(int,struct _stati64*);
 int _stati64(const char*,struct _stati64*);
+int _fstat64(int,struct _stat64*);
+int _stat64(const char*,struct _stat64*);
 int _umask(int);
 
 #ifndef _WSTAT_DEFINED
 #define _WSTAT_DEFINED
 int _wstat(const wchar_t*,struct _stat*);
 int _wstati64(const wchar_t*,struct _stati64*);
+int _wstat64(const wchar_t*,struct _stat64*);
 #endif /* _WSTAT_DEFINED */
 
 #ifdef __cplusplus

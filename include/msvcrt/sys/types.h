@@ -56,6 +56,11 @@ typedef long time_t;
 #define _TIME_T_DEFINED
 #endif
 
+#ifndef _TIME64_T_DEFINED
+#define _TIME64_T_DEFINED
+typedef __int64 __time64_t;
+#endif
+
 #ifndef _BSDTYPES_DEFINED
 typedef unsigned char u_char;
 typedef unsigned short u_short;
