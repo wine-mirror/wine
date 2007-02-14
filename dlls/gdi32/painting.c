@@ -805,7 +805,7 @@ BOOL WINAPI AngleArc(HDC hdc, INT x, INT y, DWORD dwRadius, FLOAT eStartAngle, F
     x1 = x + cos(eStartAngle*M_PI/180) * dwRadius;
     y1 = y - sin(eStartAngle*M_PI/180) * dwRadius;
     x2 = x + cos((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
-    y2 = x - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
+    y2 = y - sin((eStartAngle+eSweepAngle)*M_PI/180) * dwRadius;
 
     LineTo( hdc, x1, y1 );
     if( eSweepAngle >= 0 )
