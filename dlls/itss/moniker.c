@@ -347,7 +347,7 @@ static const IMonikerVtbl ITS_IMonikerImpl_Vtbl =
     ITS_IMonikerImpl_IsSystemMoniker
 };
 
-static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPWSTR name, DWORD n )
+static HRESULT ITS_IMoniker_create( IMoniker **ppObj, LPCWSTR name, DWORD n )
 {
     ITS_IMonikerImpl *itsmon;
     DWORD sz;
