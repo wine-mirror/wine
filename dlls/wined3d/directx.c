@@ -1770,6 +1770,26 @@ static HRESULT WINAPI IWineD3DImpl_CheckDeviceFormat(IWineD3D *iface, UINT Adapt
             TRACE_(d3d_caps)("[FAILED]\n"); /* Enable when implemented */
             return WINED3DERR_NOTAVAILABLE;
 
+        /* ATI instancing hack: Although ATI cards do not support Shader Model 3.0, they support
+         * instancing. To query if the card supports instancing CheckDeviceFormat with the special format
+         * MAKEFOURCC('I','N','S','T') is used. Should a (broken) app check for this provide a proper return value.
+         * We can do instancing with all shader versions, but we need vertex shaders.
+         *
+         * Additionally applications have to set the D3DRS_POINTSIZE render state to MAKEFOURCC('I','N','S','T') once
+         * to enable instancing. WineD3D doesn't need that and just ignores it.
+         *
+         * With Shader Model 3.0 capable cards Instancing 'just works' in Windows.
+         */
+        case MAKEFOURCC('I','N','S','T'):
+            TRACE("ATI Instancing check hack\n");
+            if(GL_SUPPORT(ARB_VERTEX_PROGRAM) || GL_SUPPORT(ARB_VERTEX_SHADER)) {
+                TRACE_(d3d_caps)("[OK]\n");
+                return WINED3D_OK;
+            } else {
+                TRACE_(d3d_caps)("[FAILED]\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
+
         default:
             break;
     }

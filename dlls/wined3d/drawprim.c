@@ -6,6 +6,7 @@
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
  * Copyright 2006 Henri Verbeet
+ * Copyright 2007 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1155,6 +1156,142 @@ static void depth_copy(IWineD3DDevice *iface) {
     }
 }
 
+inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStridedData *sd, UINT numberOfVertices,
+                                 GLenum glPrimitiveType, const void *idxData, short idxSize, ULONG minIndex,
+                                 ULONG startIdx, ULONG startVertex) {
+    UINT numInstances = 0;
+    int numInstancedAttribs = 0, i, j;
+    UINT instancedData[sizeof(sd->u.input) / sizeof(sd->u.input[0]) /* 16 */];
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
+    IWineD3DStateBlockImpl *stateblock = This->stateBlock;
+
+    if (idxData == NULL) {
+        /* This is a nasty thing. MSDN says no hardware supports that and apps have to use software vertex processing.
+         * We don't support this for now
+         *
+         * Shouldn't be too hard to support with opengl, in theory just call glDrawArrays instead of drawElements.
+         * But the StreamSourceFreq value has a different meaning in that situation.
+         */
+        FIXME("Non-indexed instanced drawing is not supported\n");
+        return;
+    }
+
+    TRACE("(%p) : glElements(%x, %d, %d, ...)\n", This, glPrimitiveType, numberOfVertices, minIndex);
+    idxData = idxData == (void *)-1 ? NULL : idxData;
+
+    /* First, figure out how many instances we have to draw */
+    for(i = 0; i < MAX_STREAMS; i++) {
+        /* Look at all non-instanced streams */
+        if(!(stateblock->streamFlags[i] & D3DSTREAMSOURCE_INSTANCEDATA) &&
+           stateblock->streamSource[i]) {
+            int inst = stateblock->streamFreq[i];
+
+            if(numInstances && inst != numInstances) {
+                ERR("Two streams specify a different number of instances. Got %d, new is %d\n", numInstances, inst);
+            }
+            numInstances = inst;
+        }
+    }
+
+    for(i = 0; i < sizeof(sd->u.input) / sizeof(sd->u.input[0]); i++) {
+        if(stateblock->streamFlags[sd->u.input[i].streamNo] & D3DSTREAMSOURCE_INSTANCEDATA) {
+            instancedData[numInstancedAttribs] = i;
+            numInstancedAttribs++;
+        }
+    }
+
+    /* now draw numInstances instances :-) */
+    for(i = 0; i < numInstances; i++) {
+        /* Specify the instanced attributes using immediate mode calls */
+        for(j = 0; j < numInstancedAttribs; j++) {
+            BYTE *ptr = sd->u.input[instancedData[j]].lpData +
+                        sd->u.input[instancedData[j]].dwStride * i +
+                        stateblock->streamOffset[sd->u.input[instancedData[j]].streamNo];
+            if(sd->u.input[instancedData[j]].VBO) {
+                IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[sd->u.input[instancedData[j]].streamNo];
+                ptr += (long) vb->resource.allocatedMemory;
+            }
+
+            switch(sd->u.input[instancedData[j]].dwType) {
+                case WINED3DDECLTYPE_FLOAT1:
+                    GL_EXTCALL(glVertexAttrib1fvARB(instancedData[j], (float *) ptr));
+                    break;
+                case WINED3DDECLTYPE_FLOAT2:
+                    GL_EXTCALL(glVertexAttrib2fvARB(instancedData[j], (float *) ptr));
+                    break;
+                case WINED3DDECLTYPE_FLOAT3:
+                    GL_EXTCALL(glVertexAttrib3fvARB(instancedData[j], (float *) ptr));
+                    break;
+                case WINED3DDECLTYPE_FLOAT4:
+                    GL_EXTCALL(glVertexAttrib4fvARB(instancedData[j], (float *) ptr));
+                    break;
+
+                case WINED3DDECLTYPE_UBYTE4:
+                    GL_EXTCALL(glVertexAttrib4NubvARB(instancedData[j], ptr));
+                    break;
+                case WINED3DDECLTYPE_UBYTE4N:
+                case WINED3DDECLTYPE_D3DCOLOR:
+                    GL_EXTCALL(glVertexAttrib4NubvARB(instancedData[j], ptr));
+                    break;
+
+                case WINED3DDECLTYPE_SHORT2:
+                    GL_EXTCALL(glVertexAttrib4svARB(instancedData[j], (GLshort *) ptr));
+                    break;
+                case WINED3DDECLTYPE_SHORT4:
+                    GL_EXTCALL(glVertexAttrib4svARB(instancedData[j], (GLshort *) ptr));
+                    break;
+
+                case WINED3DDECLTYPE_SHORT2N:
+                {
+                    GLshort s[4] = {((short *) ptr)[0], ((short *) ptr)[1], 0, 1};
+                    GL_EXTCALL(glVertexAttrib4NsvARB(instancedData[j], s));
+                    break;
+                }
+                case WINED3DDECLTYPE_USHORT2N:
+                {
+                    GLushort s[4] = {((unsigned short *) ptr)[0], ((unsigned short *) ptr)[1], 0, 1};
+                    GL_EXTCALL(glVertexAttrib4NusvARB(instancedData[j], s));
+                    break;
+                }
+                case WINED3DDECLTYPE_SHORT4N:
+                    GL_EXTCALL(glVertexAttrib4NsvARB(instancedData[j], (GLshort *) ptr));
+                    break;
+                case WINED3DDECLTYPE_USHORT4N:
+                    GL_EXTCALL(glVertexAttrib4NusvARB(instancedData[j], (GLushort *) ptr));
+                    break;
+
+                case WINED3DDECLTYPE_UDEC3:
+                    FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
+                    /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+                    break;
+                case WINED3DDECLTYPE_DEC3N:
+                    FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
+                    /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+                    break;
+
+                case WINED3DDECLTYPE_FLOAT16_2:
+                    /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
+                     * byte float according to the IEEE standard
+                     */
+                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
+                    break;
+                case WINED3DDECLTYPE_FLOAT16_4:
+                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
+                    break;
+
+                case WINED3DDECLTYPE_UNUSED:
+                default:
+                    ERR("Unexpected declaration in instanced attributes\n");
+                    break;
+            }
+        }
+
+        glDrawElements(glPrimitiveType, numberOfVertices, idxSize == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT,
+                    (const char *)idxData+(idxSize * startIdx));
+        checkGLcall("glDrawElements");
+    }
+}
+
 /* Routine common to the draw primitive and draw indexed primitive routines */
 void drawPrimitive(IWineD3DDevice *iface,
                    int PrimitiveType,
@@ -1202,12 +1339,19 @@ void drawPrimitive(IWineD3DDevice *iface,
         if (numberOfVertices == 0 )
             numberOfVertices = calculatedNumberOfindices;
 
-        if (This->useDrawStridedSlow)
+        if (This->useDrawStridedSlow) {
+            /* Immediate mode drawing */
             drawStridedSlow(iface, &This->strided_streams, calculatedNumberOfindices,
                             glPrimType, idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
-        else
+        } else if(This->instancedDraw) {
+            /* Instancing emulation with mixing immediate mode and arrays */
+            drawStridedInstanced(iface, &This->strided_streams, calculatedNumberOfindices, glPrimType,
+                            idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+        } else {
+            /* Simple array draw call */
             drawStridedFast(iface, calculatedNumberOfindices, glPrimType,
                             idxData, idxSize, minIndex, StartIdx, StartVertexIndex);
+        }
     }
 
     /* Finshed updating the screen, restore lock */

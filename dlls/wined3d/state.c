@@ -2146,10 +2146,20 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
     int i;
     UINT *offset = stateblock->streamOffset;
 
+    /* Default to no instancing */
+    stateblock->wineD3DDevice->instancedDraw = FALSE;
+
     for (i = 0; i < MAX_ATTRIBS; i++) {
 
         if (!strided->u.input[i].lpData && !strided->u.input[i].VBO)
             continue;
+
+        /* Do not load instance data. It will be specified using glTexCoord by drawprim */
+        if(stateblock->streamFlags[strided->u.input[i].streamNo] & D3DSTREAMSOURCE_INSTANCEDATA) {
+            GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+            stateblock->wineD3DDevice->instancedDraw = TRUE;
+            continue;
+        }
 
         TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, strided->u.input[i].VBO);
 
@@ -2227,11 +2237,11 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
 
                 case WINED3DDECLTYPE_UDEC3:
                     FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
-                    /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+                    /*glVertexAttrib3usvARB(i, (GLushort *) ptr); Does not exist */
                     break;
                 case WINED3DDECLTYPE_DEC3N:
                     FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
-                    /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+                    /*glVertexAttrib3NusvARB(i, (GLushort *) ptr); Does not exist */
                     break;
 
                 case WINED3DDECLTYPE_FLOAT16_2:
@@ -2262,6 +2272,10 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
     GLint curVBO = GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT) ? -1 : 0;
 
     TRACE("Using fast vertex array code\n");
+
+    /* This is fixed function pipeline only, and the fixed function pipeline doesn't do instancing */
+    stateblock->wineD3DDevice->instancedDraw = FALSE;
+
     /* Blend Data ---------------------------------------------- */
     if( (sd->u.s.blendWeights.lpData) || (sd->u.s.blendWeights.VBO) ||
         (sd->u.s.blendMatrixIndices.lpData) || (sd->u.s.blendMatrixIndices.VBO) ) {

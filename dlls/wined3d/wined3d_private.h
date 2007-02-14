@@ -681,6 +681,7 @@ struct IWineD3DDeviceImpl
     WineDirect3DVertexStridedData strided_streams;
     WineDirect3DVertexStridedData *up_strided;
     BOOL                      useDrawStridedSlow;
+    BOOL                      instancedDraw;
 
     /* Context management */
     WineD3DContext          **contexts;                  /* Dynamic array containing pointers to context structures */

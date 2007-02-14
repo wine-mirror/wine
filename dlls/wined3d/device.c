@@ -2067,6 +2067,8 @@ VertexOffset = StartVertex / Divider * StreamStride +
 */
 static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *iface,  UINT StreamNumber, UINT Divider) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
+    UINT oldFlags = This->updateStateBlock->streamFlags[StreamNumber];
+    UINT oldFreq = This->updateStateBlock->streamFreq[StreamNumber];
 
     TRACE("(%p) StreamNumber(%d), Divider(%d)\n", This, StreamNumber, Divider);
     This->updateStateBlock->streamFlags[StreamNumber] = Divider & (WINED3DSTREAMSOURCE_INSTANCEDATA  | WINED3DSTREAMSOURCE_INDEXEDDATA );
@@ -2075,8 +2077,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *ifa
     This->updateStateBlock->set.streamFreq[StreamNumber]      = TRUE;
     This->updateStateBlock->streamFreq[StreamNumber]          = Divider & 0x7FFFFF;
 
-    if (This->updateStateBlock->streamFlags[StreamNumber] || This->updateStateBlock->streamFreq[StreamNumber] != 1) {
-        FIXME("Stream indexing not fully supported\n");
+    if(This->updateStateBlock->streamFreq[StreamNumber] != oldFreq ||
+       This->updateStateBlock->streamFlags[StreamNumber] != oldFlags) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
     }
 
     return WINED3D_OK;
