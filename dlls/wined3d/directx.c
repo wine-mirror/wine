@@ -1879,29 +1879,29 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                                       WINED3DDEVCAPS_DRAWPRIMITIVES2     |
                                       WINED3DDEVCAPS_DRAWPRIMITIVES2EX;
 
-    *pCaps->PrimitiveMiscCaps       = D3DPMISCCAPS_CULLNONE              |
-                                      D3DPMISCCAPS_CULLCCW               |
-                                      D3DPMISCCAPS_CULLCW                |
-                                      D3DPMISCCAPS_COLORWRITEENABLE      |
-                                      D3DPMISCCAPS_CLIPTLVERTS           |
-                                      D3DPMISCCAPS_CLIPPLANESCALEDPOINTS |
-                                      D3DPMISCCAPS_MASKZ                 |
-                                      D3DPMISCCAPS_BLENDOP;
+    *pCaps->PrimitiveMiscCaps       = WINED3DPMISCCAPS_CULLNONE              |
+                                      WINED3DPMISCCAPS_CULLCCW               |
+                                      WINED3DPMISCCAPS_CULLCW                |
+                                      WINED3DPMISCCAPS_COLORWRITEENABLE      |
+                                      WINED3DPMISCCAPS_CLIPTLVERTS           |
+                                      WINED3DPMISCCAPS_CLIPPLANESCALEDPOINTS |
+                                      WINED3DPMISCCAPS_MASKZ                 |
+                                      WINED3DPMISCCAPS_BLENDOP;
                                     /* TODO:
-                                        D3DPMISCCAPS_NULLREFERENCE
-                                        D3DPMISCCAPS_INDEPENDENTWRITEMASKS
-                                        D3DPMISCCAPS_FOGANDSPECULARALPHA
-                                        D3DPMISCCAPS_SEPARATEALPHABLEND
-                                        D3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS
-                                        D3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING
-                                        D3DPMISCCAPS_FOGVERTEXCLAMPED */
+                                        WINED3DPMISCCAPS_NULLREFERENCE
+                                        WINED3DPMISCCAPS_INDEPENDENTWRITEMASKS
+                                        WINED3DPMISCCAPS_FOGANDSPECULARALPHA
+                                        WINED3DPMISCCAPS_SEPARATEALPHABLEND
+                                        WINED3DPMISCCAPS_MRTINDEPENDENTBITDEPTHS
+                                        WINED3DPMISCCAPS_MRTPOSTPIXELSHADERBLENDING
+                                        WINED3DPMISCCAPS_FOGVERTEXCLAMPED */
 
 /* The caps below can be supported but aren't handled yet in utils.c 'd3dta_to_combiner_input', disable them until support is fixed */
 #if 0
     if (GL_SUPPORT(NV_REGISTER_COMBINERS))
-        *pCaps->PrimitiveMiscCaps |=  D3DPMISCCAPS_TSSARGTEMP;
+        *pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_TSSARGTEMP;
     if (GL_SUPPORT(NV_REGISTER_COMBINERS2))
-        *pCaps->PrimitiveMiscCaps |=  D3DPMISCCAPS_PERSTAGECONSTANT;
+        *pCaps->PrimitiveMiscCaps |=  WINED3DPMISCCAPS_PERSTAGECONSTANT;
 #endif
 
     *pCaps->RasterCaps              = WINED3DPRASTERCAPS_DITHER    |
