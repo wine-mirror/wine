@@ -2155,7 +2155,7 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
             continue;
 
         /* Do not load instance data. It will be specified using glTexCoord by drawprim */
-        if(stateblock->streamFlags[strided->u.input[i].streamNo] & D3DSTREAMSOURCE_INSTANCEDATA) {
+        if(stateblock->streamFlags[strided->u.input[i].streamNo] & WINED3DSTREAMSOURCE_INSTANCEDATA) {
             GL_EXTCALL(glDisableVertexAttribArrayARB(i));
             stateblock->wineD3DDevice->instancedDraw = TRUE;
             continue;

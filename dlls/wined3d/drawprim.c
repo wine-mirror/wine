@@ -1182,7 +1182,7 @@ inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStride
     /* First, figure out how many instances we have to draw */
     for(i = 0; i < MAX_STREAMS; i++) {
         /* Look at all non-instanced streams */
-        if(!(stateblock->streamFlags[i] & D3DSTREAMSOURCE_INSTANCEDATA) &&
+        if(!(stateblock->streamFlags[i] & WINED3DSTREAMSOURCE_INSTANCEDATA) &&
            stateblock->streamSource[i]) {
             int inst = stateblock->streamFreq[i];
 
@@ -1194,7 +1194,7 @@ inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStride
     }
 
     for(i = 0; i < sizeof(sd->u.input) / sizeof(sd->u.input[0]); i++) {
-        if(stateblock->streamFlags[sd->u.input[i].streamNo] & D3DSTREAMSOURCE_INSTANCEDATA) {
+        if(stateblock->streamFlags[sd->u.input[i].streamNo] & WINED3DSTREAMSOURCE_INSTANCEDATA) {
             instancedData[numInstancedAttribs] = i;
             numInstancedAttribs++;
         }
