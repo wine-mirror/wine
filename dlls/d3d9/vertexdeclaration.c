@@ -360,6 +360,11 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetVertexDeclaration(LPDIRECT3DDEVICE9 ifa
 
     TRACE("(%p) : Relay\n", iface);
 
+    if (This->convertedDecl && This->convertedDecl != pDecl) {
+        IUnknown_Release(This->convertedDecl);
+        This->convertedDecl = NULL;
+    }
+
     hr = IWineD3DDevice_SetVertexDeclaration(This->WineD3DDevice, pDeclImpl == NULL ? NULL : pDeclImpl->wineD3DVertexDeclaration);
 
     return hr;

@@ -62,6 +62,8 @@ static ULONG WINAPI IDirect3DDevice9Impl_Release(LPDIRECT3DDEVICE9 iface) {
 
     if (ref == 0) {
       This->inDestruction = TRUE;
+      if (This->convertedDecl != NULL)
+          IUnknown_Release(This->convertedDecl);
       IWineD3DDevice_Uninit3D(This->WineD3DDevice, D3D9CB_DestroyDepthStencilSurface, D3D9CB_DestroySwapChain);
       IWineD3DDevice_Release(This->WineD3DDevice);
       HeapFree(GetProcessHeap(), 0, This);
@@ -766,6 +768,7 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_SetFVF(LPDIRECT3DDEVICE9 iface, DWORD FVF)
              
          hr = IDirect3DDevice9Impl_SetVertexDeclaration(iface, pDecl);
          if (hr != S_OK) goto exit;
+         This->convertedDecl = pDecl;
          pDecl = NULL;
 
          exit:

@@ -179,6 +179,11 @@ typedef struct IDirect3DDevice9Impl
     /* Avoids recursion with nested ReleaseRef to 0 */
     BOOL                          inDestruction;
 
+    /* A vertex declaration was converted from setFVF.
+     * Keep track of it, so it can be properly freed
+     */
+    IDirect3DVertexDeclaration9  *convertedDecl;
+
 } IDirect3DDevice9Impl;
 
 
