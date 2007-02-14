@@ -2153,19 +2153,105 @@ static inline void loadNumberedArrays(IWineD3DStateBlockImpl *stateblock, WineDi
 
         TRACE_(d3d_shader)("Loading array %u [VBO=%u]\n", i, strided->u.input[i].VBO);
 
-        if(curVBO != strided->u.input[i].VBO) {
-            GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, strided->u.input[i].VBO));
-            checkGLcall("glBindBufferARB");
-            curVBO = strided->u.input[i].VBO;
+        if(strided->u.input[i].dwStride) {
+            if(curVBO != strided->u.input[i].VBO) {
+                GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, strided->u.input[i].VBO));
+                checkGLcall("glBindBufferARB");
+                curVBO = strided->u.input[i].VBO;
+            }
+            GL_EXTCALL(glVertexAttribPointerARB(i,
+                            WINED3D_ATR_SIZE(strided->u.input[i].dwType),
+                            WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
+                            WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
+                            strided->u.input[i].dwStride,
+                            strided->u.input[i].lpData + stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride + offset[strided->u.input[i].streamNo]) );
+            GL_EXTCALL(glEnableVertexAttribArrayARB(i));
+        } else {
+            /* Stride = 0 means always the same values. glVertexAttribPointerARB doesn't do that. Instead disable the pointer and
+             * set up the attribute statically. But we have to figure out the system memory address.
+             */
+            BYTE *ptr = strided->u.input[i].lpData + offset[strided->u.input[i].streamNo];
+            if(strided->u.input[i].VBO) {
+                IWineD3DVertexBufferImpl *vb = (IWineD3DVertexBufferImpl *) stateblock->streamSource[strided->u.input[i].streamNo];
+                ptr += (long) vb->resource.allocatedMemory;
+            }
+            GL_EXTCALL(glDisableVertexAttribArrayARB(i));
+
+            switch(strided->u.input[i].dwType) {
+                case WINED3DDECLTYPE_FLOAT1:
+                    GL_EXTCALL(glVertexAttrib1fvARB(i, (float *) ptr));
+                    break;
+                case WINED3DDECLTYPE_FLOAT2:
+                    GL_EXTCALL(glVertexAttrib2fvARB(i, (float *) ptr));
+                    break;
+                case WINED3DDECLTYPE_FLOAT3:
+                    GL_EXTCALL(glVertexAttrib3fvARB(i, (float *) ptr));
+                    break;
+                case WINED3DDECLTYPE_FLOAT4:
+                    GL_EXTCALL(glVertexAttrib4fvARB(i, (float *) ptr));
+                    break;
+
+                case WINED3DDECLTYPE_UBYTE4:
+                    GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
+                    break;
+                case WINED3DDECLTYPE_UBYTE4N:
+                case WINED3DDECLTYPE_D3DCOLOR:
+                    GL_EXTCALL(glVertexAttrib4NubvARB(i, ptr));
+                    break;
+
+                case WINED3DDECLTYPE_SHORT2:
+                    GL_EXTCALL(glVertexAttrib4svARB(i, (GLshort *) ptr));
+                    break;
+                case WINED3DDECLTYPE_SHORT4:
+                    GL_EXTCALL(glVertexAttrib4svARB(i, (GLshort *) ptr));
+                    break;
+
+                case WINED3DDECLTYPE_SHORT2N:
+                {
+                    GLshort s[4] = {((short *) ptr)[0], ((short *) ptr)[1], 0, 1};
+                    GL_EXTCALL(glVertexAttrib4NsvARB(i, s));
+                    break;
+                }
+                case WINED3DDECLTYPE_USHORT2N:
+                {
+                    GLushort s[4] = {((unsigned short *) ptr)[0], ((unsigned short *) ptr)[1], 0, 1};
+                    GL_EXTCALL(glVertexAttrib4NusvARB(i, s));
+                    break;
+                }
+                case WINED3DDECLTYPE_SHORT4N:
+                    GL_EXTCALL(glVertexAttrib4NsvARB(i, (GLshort *) ptr));
+                    break;
+                case WINED3DDECLTYPE_USHORT4N:
+                    GL_EXTCALL(glVertexAttrib4NusvARB(i, (GLushort *) ptr));
+                    break;
+
+                case WINED3DDECLTYPE_UDEC3:
+                    FIXME("Unsure about WINED3DDECLTYPE_UDEC3\n");
+                    /*glVertexAttrib3usvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+                    break;
+                case WINED3DDECLTYPE_DEC3N:
+                    FIXME("Unsure about WINED3DDECLTYPE_DEC3N\n");
+                    /*glVertexAttrib3NusvARB(instancedData[j], (GLushort *) ptr); Does not exist */
+                    break;
+
+                case WINED3DDECLTYPE_FLOAT16_2:
+                    /* Are those 16 bit floats. C doesn't have a 16 bit float type. I could read the single bits and calculate a 4
+                     * byte float according to the IEEE standard
+                     */
+                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_2\n");
+                    break;
+                case WINED3DDECLTYPE_FLOAT16_4:
+                    FIXME("Unsupported WINED3DDECLTYPE_FLOAT16_4\n");
+                    break;
+
+                case WINED3DDECLTYPE_UNUSED:
+                default:
+                    ERR("Unexpected declaration in stride 0 attributes\n");
+                    break;
+
+            }
         }
-        GL_EXTCALL(glVertexAttribPointerARB(i,
-                        WINED3D_ATR_SIZE(strided->u.input[i].dwType),
-                        WINED3D_ATR_GLTYPE(strided->u.input[i].dwType),
-                        WINED3D_ATR_NORMALIZED(strided->u.input[i].dwType),
-                        strided->u.input[i].dwStride,
-                        strided->u.input[i].lpData + stateblock->loadBaseVertexIndex * strided->u.input[i].dwStride + offset[strided->u.input[i].streamNo]) );
-        GL_EXTCALL(glEnableVertexAttribArrayARB(i));
-   }
+    }
 }
 
 /* Used from 2 different functions, and too big to justify making it inlined */
