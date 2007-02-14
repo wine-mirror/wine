@@ -358,13 +358,13 @@ static void CreateVBO(IWineD3DVertexBufferImpl *object) {
      * quite often even if they specify 0 usage. Because we always keep the local copy
      * we never read from the vbo and can create a write only opengl buffer.
      */
-    switch(vboUsage & (D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC) ) {
-        case D3DUSAGE_WRITEONLY | D3DUSAGE_DYNAMIC:
-        case D3DUSAGE_DYNAMIC:
+    switch(vboUsage & (WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC) ) {
+        case WINED3DUSAGE_WRITEONLY | WINED3DUSAGE_DYNAMIC:
+        case WINED3DUSAGE_DYNAMIC:
             TRACE("Gl usage = GL_STREAM_DRAW\n");
             glUsage = GL_STREAM_DRAW_ARB;
             break;
-        case D3DUSAGE_WRITEONLY:
+        case WINED3DUSAGE_WRITEONLY:
         default:
             TRACE("Gl usage = GL_DYNAMIC_DRAW\n");
             glUsage = GL_DYNAMIC_DRAW_ARB;
