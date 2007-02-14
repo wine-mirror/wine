@@ -1930,14 +1930,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
 			   WINED3DPRASTERCAPS_ZBUFFERLESSHSR
 			   WINED3DPRASTERCAPS_WBUFFER */
 
-    *pCaps->ZCmpCaps = D3DPCMPCAPS_ALWAYS       |
-                       D3DPCMPCAPS_EQUAL        |
-                       D3DPCMPCAPS_GREATER      |
-                       D3DPCMPCAPS_GREATEREQUAL |
-                       D3DPCMPCAPS_LESS         |
-                       D3DPCMPCAPS_LESSEQUAL    |
-                       D3DPCMPCAPS_NEVER        |
-                       D3DPCMPCAPS_NOTEQUAL;
+    *pCaps->ZCmpCaps = WINED3DPCMPCAPS_ALWAYS       |
+                       WINED3DPCMPCAPS_EQUAL        |
+                       WINED3DPCMPCAPS_GREATER      |
+                       WINED3DPCMPCAPS_GREATEREQUAL |
+                       WINED3DPCMPCAPS_LESS         |
+                       WINED3DPCMPCAPS_LESSEQUAL    |
+                       WINED3DPCMPCAPS_NEVER        |
+                       WINED3DPCMPCAPS_NOTEQUAL;
 
     *pCaps->SrcBlendCaps  = WINED3DPBLENDCAPS_BLENDFACTOR     |
                             WINED3DPBLENDCAPS_BOTHINVSRCALPHA |
@@ -1969,14 +1969,14 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                             WINED3DPBLENDCAPS_SRCCOLOR        |
                             WINED3DPBLENDCAPS_ZERO;
 
-    *pCaps->AlphaCmpCaps = D3DPCMPCAPS_ALWAYS       |
-                           D3DPCMPCAPS_EQUAL        |
-                           D3DPCMPCAPS_GREATER      |
-                           D3DPCMPCAPS_GREATEREQUAL |
-                           D3DPCMPCAPS_LESS         |
-                           D3DPCMPCAPS_LESSEQUAL    |
-                           D3DPCMPCAPS_NEVER        |
-                           D3DPCMPCAPS_NOTEQUAL;
+    *pCaps->AlphaCmpCaps = WINED3DPCMPCAPS_ALWAYS       |
+                           WINED3DPCMPCAPS_EQUAL        |
+                           WINED3DPCMPCAPS_GREATER      |
+                           WINED3DPCMPCAPS_GREATEREQUAL |
+                           WINED3DPCMPCAPS_LESS         |
+                           WINED3DPCMPCAPS_LESSEQUAL    |
+                           WINED3DPCMPCAPS_NEVER        |
+                           WINED3DPCMPCAPS_NOTEQUAL;
 
     *pCaps->ShadeCaps     = WINED3DPSHADECAPS_SPECULARGOURAUDRGB |
                             WINED3DPSHADECAPS_COLORGOURAUDRGB    |

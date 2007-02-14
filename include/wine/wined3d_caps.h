@@ -34,6 +34,15 @@
 #define WINED3DPBLENDCAPS_BOTHINVSRCALPHA                   0x00001000
 #define WINED3DPBLENDCAPS_BLENDFACTOR                       0x00002000
 
+#define WINED3DPCMPCAPS_NEVER                               0x00000001
+#define WINED3DPCMPCAPS_LESS                                0x00000002
+#define WINED3DPCMPCAPS_EQUAL                               0x00000004
+#define WINED3DPCMPCAPS_LESSEQUAL                           0x00000008
+#define WINED3DPCMPCAPS_GREATER                             0x00000010
+#define WINED3DPCMPCAPS_NOTEQUAL                            0x00000020
+#define WINED3DPCMPCAPS_GREATEREQUAL                        0x00000040
+#define WINED3DPCMPCAPS_ALWAYS                              0x00000080
+
 #define WINED3DPMISCCAPS_MASKZ                              0x00000002
 #define WINED3DPMISCCAPS_LINEPATTERNREP                     0x00000004
 #define WINED3DPMISCCAPS_CULLNONE                           0x00000010
