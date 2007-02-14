@@ -149,103 +149,6 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
 const float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};  /* When needed for comparisons */
 
 /**********************************************************
- * Utility functions follow
- **********************************************************/
-/* Convert the WINED3DLIGHT properties into equivalent gl lights */
-static void setup_light(IWineD3DDevice *iface, LONG Index, PLIGHTINFOEL *lightInfo) {
-
-    float quad_att;
-    float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadMatrixf((float *)&This->stateBlock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-
-    /* Diffuse: */
-    colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;
-    colRGBA[1] = lightInfo->OriginalParms.Diffuse.g;
-    colRGBA[2] = lightInfo->OriginalParms.Diffuse.b;
-    colRGBA[3] = lightInfo->OriginalParms.Diffuse.a;
-    glLightfv(GL_LIGHT0+Index, GL_DIFFUSE, colRGBA);
-    checkGLcall("glLightfv");
-
-    /* Specular */
-    colRGBA[0] = lightInfo->OriginalParms.Specular.r;
-    colRGBA[1] = lightInfo->OriginalParms.Specular.g;
-    colRGBA[2] = lightInfo->OriginalParms.Specular.b;
-    colRGBA[3] = lightInfo->OriginalParms.Specular.a;
-    glLightfv(GL_LIGHT0+Index, GL_SPECULAR, colRGBA);
-    checkGLcall("glLightfv");
-
-    /* Ambient */
-    colRGBA[0] = lightInfo->OriginalParms.Ambient.r;
-    colRGBA[1] = lightInfo->OriginalParms.Ambient.g;
-    colRGBA[2] = lightInfo->OriginalParms.Ambient.b;
-    colRGBA[3] = lightInfo->OriginalParms.Ambient.a;
-    glLightfv(GL_LIGHT0+Index, GL_AMBIENT, colRGBA);
-    checkGLcall("glLightfv");
-
-    /* Attenuation - Are these right? guessing... */
-    glLightf(GL_LIGHT0+Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
-    checkGLcall("glLightf");
-    glLightf(GL_LIGHT0+Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
-    checkGLcall("glLightf");
-
-    if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) >= FLT_MIN) {
-        quad_att = 1.4/(lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range);
-    } else {
-        quad_att = 0; /*  0 or  MAX?  (0 seems to be ok) */
-    }
-
-    if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
-    glLightf(GL_LIGHT0+Index, GL_QUADRATIC_ATTENUATION, quad_att);
-    checkGLcall("glLightf");
-
-    switch (lightInfo->OriginalParms.Type) {
-    case WINED3DLIGHT_POINT:
-        /* Position */
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]);
-        checkGLcall("glLightfv");
-        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
-        checkGLcall("glLightf");
-        /* FIXME: Range */
-        break;
-
-    case WINED3DLIGHT_SPOT:
-        /* Position */
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]);
-        checkGLcall("glLightfv");
-        /* Direction */
-        glLightfv(GL_LIGHT0+Index, GL_SPOT_DIRECTION, &lightInfo->lightDirn[0]);
-        checkGLcall("glLightfv");
-        glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, lightInfo->exponent);
-        checkGLcall("glLightf");
-        glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
-        checkGLcall("glLightf");
-        /* FIXME: Range */
-        break;
-
-    case WINED3DLIGHT_DIRECTIONAL:
-        /* Direction */
-        glLightfv(GL_LIGHT0+Index, GL_POSITION, &lightInfo->lightPosn[0]); /* Note gl uses w position of 0 for direction! */
-        checkGLcall("glLightfv");
-        glLightf(GL_LIGHT0+Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
-        checkGLcall("glLightf");
-        glLightf(GL_LIGHT0+Index, GL_SPOT_EXPONENT, 0.0f);
-        checkGLcall("glLightf");
-        break;
-
-    default:
-        FIXME("Unrecognized light type %d\n", lightInfo->OriginalParms.Type);
-    }
-
-    /* Restore the modelview matrix */
-    glPopMatrix();
-}
-
-/**********************************************************
  * GLSL helper functions follow
  **********************************************************/
 
@@ -2423,7 +2326,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
 
     /* Update the live definitions if the light is currently assigned a glIndex */
     if (object->glIndex != -1 && !This->isRecordingState) {
-        setup_light(iface, object->glIndex, object);
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(object->glIndex));
     }
     return WINED3D_OK;
 }
@@ -2493,10 +2396,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
     if(!Enable) {
         if(lightInfo->glIndex != -1) {
             if(!This->isRecordingState) {
-                ENTER_GL();
-                glDisable(GL_LIGHT0 + lightInfo->glIndex);
-                checkGLcall("glDisable GL_LIGHT0+Index");
-                LEAVE_GL();
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(lightInfo->glIndex));
             }
 
             This->stateBlock->activeLights[lightInfo->glIndex] = NULL;
@@ -2525,11 +2425,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLightEnable(IWineD3DDevice *iface, D
 
             /* i == lightInfo->glIndex */
             if(!This->isRecordingState) {
-                setup_light(iface, i, lightInfo);
-                ENTER_GL();
-                glEnable(GL_LIGHT0 + i);
-                checkGLcall("glEnable(GL_LIGHT0 + i)");
-                LEAVE_GL();
+                IWineD3DDeviceImpl_MarkStateDirty(This, STATE_ACTIVELIGHT(i));
             }
         }
     }

@@ -2783,6 +2783,110 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
 
 }
 
+static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    UINT Index = state - STATE_ACTIVELIGHT(0);
+    PLIGHTINFOEL *lightInfo = stateblock->activeLights[Index];
+
+    if(!lightInfo) {
+        glDisable(GL_LIGHT0 + Index);
+        checkGLcall("glDisable(GL_LIGHT0 + Index)");
+    } else {
+        float quad_att;
+        float colRGBA[] = {0.0, 0.0, 0.0, 0.0};
+
+        /* Light settings are affected by the model view in OpenGL, the View transform in direct3d*/
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadMatrixf((float *)&stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+
+        /* Diffuse: */
+        colRGBA[0] = lightInfo->OriginalParms.Diffuse.r;
+        colRGBA[1] = lightInfo->OriginalParms.Diffuse.g;
+        colRGBA[2] = lightInfo->OriginalParms.Diffuse.b;
+        colRGBA[3] = lightInfo->OriginalParms.Diffuse.a;
+        glLightfv(GL_LIGHT0 + Index, GL_DIFFUSE, colRGBA);
+        checkGLcall("glLightfv");
+
+        /* Specular */
+        colRGBA[0] = lightInfo->OriginalParms.Specular.r;
+        colRGBA[1] = lightInfo->OriginalParms.Specular.g;
+        colRGBA[2] = lightInfo->OriginalParms.Specular.b;
+        colRGBA[3] = lightInfo->OriginalParms.Specular.a;
+        glLightfv(GL_LIGHT0 + Index, GL_SPECULAR, colRGBA);
+        checkGLcall("glLightfv");
+
+        /* Ambient */
+        colRGBA[0] = lightInfo->OriginalParms.Ambient.r;
+        colRGBA[1] = lightInfo->OriginalParms.Ambient.g;
+        colRGBA[2] = lightInfo->OriginalParms.Ambient.b;
+        colRGBA[3] = lightInfo->OriginalParms.Ambient.a;
+        glLightfv(GL_LIGHT0 + Index, GL_AMBIENT, colRGBA);
+        checkGLcall("glLightfv");
+
+        /* Attenuation - Are these right? guessing... */
+        glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
+        checkGLcall("glLightf");
+        glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
+        checkGLcall("glLightf");
+
+        if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) >= FLT_MIN) {
+            quad_att = 1.4/(lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range);
+        } else {
+            quad_att = 0; /*  0 or  MAX?  (0 seems to be ok) */
+        }
+
+        if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
+        glLightf(GL_LIGHT0 + Index, GL_QUADRATIC_ATTENUATION, quad_att);
+        checkGLcall("glLightf");
+
+        switch (lightInfo->OriginalParms.Type) {
+            case WINED3DLIGHT_POINT:
+                /* Position */
+                glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]);
+                checkGLcall("glLightfv");
+                glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+                checkGLcall("glLightf");
+                /* FIXME: Range */
+                break;
+
+            case WINED3DLIGHT_SPOT:
+                /* Position */
+                glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]);
+                checkGLcall("glLightfv");
+                /* Direction */
+                glLightfv(GL_LIGHT0 + Index, GL_SPOT_DIRECTION, &lightInfo->lightDirn[0]);
+                checkGLcall("glLightfv");
+                glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, lightInfo->exponent);
+                checkGLcall("glLightf");
+                glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+                checkGLcall("glLightf");
+                /* FIXME: Range */
+                break;
+
+            case WINED3DLIGHT_DIRECTIONAL:
+                /* Direction */
+                glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]); /* Note gl uses w position of 0 for direction! */
+                checkGLcall("glLightfv");
+                glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+                checkGLcall("glLightf");
+                glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, 0.0f);
+                checkGLcall("glLightf");
+                break;
+
+            default:
+                FIXME("Unrecognized light type %d\n", lightInfo->OriginalParms.Type);
+        }
+
+        /* Restore the modelview matrix */
+        glPopMatrix();
+
+        glEnable(GL_LIGHT0 + Index);
+        checkGLcall("glEnable(GL_LIGHT0 + Index)");
+    }
+
+    return;
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -3803,4 +3907,13 @@ const struct StateEntry StateTable[] =
     { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },
     { /*   , STATE_VERTEXSHADERCONSTANT             */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
     { /*   , STATE_PIXELSHADERCONSTANT              */      STATE_VERTEXSHADERCONSTANT,                         shaderconstant      },
+      /* Lights */
+    { /*   , STATE_ACTIVELIGHT(0)                   */      STATE_ACTIVELIGHT(0),                               light               },
+    { /*   , STATE_ACTIVELIGHT(1)                   */      STATE_ACTIVELIGHT(1),                               light               },
+    { /*   , STATE_ACTIVELIGHT(2)                   */      STATE_ACTIVELIGHT(2),                               light               },
+    { /*   , STATE_ACTIVELIGHT(3)                   */      STATE_ACTIVELIGHT(3),                               light               },
+    { /*   , STATE_ACTIVELIGHT(4)                   */      STATE_ACTIVELIGHT(4),                               light               },
+    { /*   , STATE_ACTIVELIGHT(5)                   */      STATE_ACTIVELIGHT(5),                               light               },
+    { /*   , STATE_ACTIVELIGHT(6)                   */      STATE_ACTIVELIGHT(6),                               light               },
+    { /*   , STATE_ACTIVELIGHT(7)                   */      STATE_ACTIVELIGHT(7),                               light               },
 };
