@@ -1984,27 +1984,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         IWineD3DDeviceImpl       *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DVertexBuffer     *oldSrc;
 
-    /**TODO: instance and index data, see
-    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/programmingguide/advancedtopics/DrawingMultipleInstances.asp
-    and
-    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/directx9_c/directx/graphics/reference/d3d/interfaces/idirect3ddevice9/SetStreamSourceFreq.asp
-     **************/
-
-    /* D3d9 only, but shouldn't  hurt d3d8 */
-    UINT streamFlags;
-
-    streamFlags = StreamNumber &(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
-    if (streamFlags) {
-        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
-           FIXME("stream index data not supported\n");
-        }
-        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
-           FIXME("stream instance data not supported\n");
-        }
-    }
-
-    StreamNumber&= ~(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
-
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
         return WINED3DERR_INVALIDCALL;
@@ -2018,8 +1997,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
 
     if(oldSrc == pStreamData &&
        This->updateStateBlock->streamStride[StreamNumber] == Stride &&
-       This->updateStateBlock->streamOffset[StreamNumber] == OffsetInBytes &&
-       This->updateStateBlock->streamFlags[StreamNumber] == streamFlags) {
+       This->updateStateBlock->streamOffset[StreamNumber] == OffsetInBytes) {
        TRACE("Application is setting the old values over, nothing to do\n");
        return WINED3D_OK;
     }
@@ -2029,7 +2007,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
         This->updateStateBlock->streamStride[StreamNumber]     = Stride;
         This->updateStateBlock->streamOffset[StreamNumber]     = OffsetInBytes;
     }
-    This->updateStateBlock->streamFlags[StreamNumber]          = streamFlags;
 
     /* Handle recording of state blocks */
     if (This->isRecordingState) {
