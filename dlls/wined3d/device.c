@@ -1247,7 +1247,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     *******************************/
 
     /* Check the params */
-    if(*pPresentationParameters->BackBufferCount > D3DPRESENT_BACK_BUFFER_MAX) {
+    if(*pPresentationParameters->BackBufferCount > WINED3DPRESENT_BACK_BUFFER_MAX) {
         ERR("App requested %d back buffers, this is not supported for now\n", *pPresentationParameters->BackBufferCount);
         return WINED3DERR_INVALIDCALL;
     } else if (*pPresentationParameters->BackBufferCount > 1) {
