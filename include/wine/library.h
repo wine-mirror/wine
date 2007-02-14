@@ -177,7 +177,7 @@ inline static int wine_ldt_is_empty( const LDT_ENTRY *ent )
 #  define __DEFINE_GET_SEG(seg) \
     extern inline unsigned short wine_get_##seg(void); \
     extern inline unsigned short wine_get_##seg(void) \
-    { unsigned short res; __asm__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
+    { unsigned short res; __asm__ __volatile__("movw %%" #seg ",%w0" : "=r"(res)); return res; }
 #  define __DEFINE_SET_SEG(seg) \
     extern inline void wine_set_##seg(int val); \
     extern inline void wine_set_##seg(int val) { __asm__("movw %w0,%%" #seg : : "r" (val)); }
