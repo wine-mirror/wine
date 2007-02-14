@@ -19,6 +19,16 @@
 #ifndef __WINE_WINED3D_CAPS_H
 #define __WINE_WINED3D_CAPS_H
 
+#define WINED3DSTENCILCAPS_KEEP                             0x00000001
+#define WINED3DSTENCILCAPS_ZERO                             0x00000002
+#define WINED3DSTENCILCAPS_REPLACE                          0x00000004
+#define WINED3DSTENCILCAPS_INCRSAT                          0x00000008
+#define WINED3DSTENCILCAPS_DECRSAT                          0x00000010
+#define WINED3DSTENCILCAPS_INVERT                           0x00000020
+#define WINED3DSTENCILCAPS_INCR                             0x00000040
+#define WINED3DSTENCILCAPS_DECR                             0x00000080
+#define WINED3DSTENCILCAPS_TWOSIDED                         0x00000100
+
 #define WINED3DTEXOPCAPS_DISABLE                            0x00000001
 #define WINED3DTEXOPCAPS_SELECTARG1                         0x00000002
 #define WINED3DTEXOPCAPS_SELECTARG2                         0x00000004
