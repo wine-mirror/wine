@@ -1044,7 +1044,7 @@ static void test_font_charset(void)
     {
         get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxA, 128, FALSE);
         get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxW, 128, TRUE);
-        ok(!memcmp(cd[i].font_idxA, cd[i].font_idxW, 128), "%d: indices don't match\n", i);
+        ok(!memcmp(cd[i].font_idxA, cd[i].font_idxW, 128*sizeof(WORD)), "%d: indices don't match\n", i);
     }
 
     ok(memcmp(cd[0].font_idxW, cd[1].font_idxW, 128*sizeof(WORD)), "0 vs 1: indices shouldn't match\n");
