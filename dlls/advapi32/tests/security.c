@@ -812,10 +812,8 @@ static void test_AccessCheck(void)
     ret = AccessCheck(SecurityDescriptor, Token, MAXIMUM_ALLOWED, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
     err = GetLastError();
-    todo_wine {
     ok(!ret && err == ERROR_BAD_IMPERSONATION_LEVEL, "AccessCheck should have failed "
        "with ERROR_BAD_IMPERSONATION_LEVEL, instead of %d\n", err);
-    }
 
     CloseHandle(Token);
 
@@ -1572,11 +1570,11 @@ static void test_impersonation_level(void)
     ret = ImpersonateSelf(SecurityAnonymous);
     ok(ret, "ImpersonateSelf(SecurityAnonymous) failed with error %d\n", GetLastError());
     ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
-    todo_wine {
     ok(!ret, "OpenThreadToken should have failed\n");
     error = GetLastError();
     ok(error == ERROR_CANT_OPEN_ANONYMOUS, "OpenThreadToken on anonymous token should have returned ERROR_CANT_OPEN_ANONYMOUS instead of %d\n", error);
     /* can't perform access check when opening object against an anonymous impersonation token */
+    todo_wine {
     error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
     ok(error == ERROR_INVALID_HANDLE, "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE instead of %d\n", error);
     }
@@ -1592,10 +1590,8 @@ static void test_impersonation_level(void)
     /* can't increase the impersonation level */
     ret = DuplicateToken(Token, SecurityIdentification, &Token2);
     error = GetLastError();
-    todo_wine {
     ok(!ret && error == ERROR_BAD_IMPERSONATION_LEVEL,
         "Duplicating a token and increasing the impersonation level should have failed with ERROR_BAD_IMPERSONATION_LEVEL instead of %d\n", error);
-    }
     /* we can query anything from an anonymous token, including the user */
     ret = GetTokenInformation(Token, TokenUser, NULL, 0, &Size);
     error = GetLastError();
@@ -1621,9 +1617,7 @@ static void test_impersonation_level(void)
 
     ret = PrivilegeCheck(Token, PrivilegeSet, &AccessGranted);
     error = GetLastError();
-    todo_wine {
     ok(!ret && error == ERROR_BAD_IMPERSONATION_LEVEL, "PrivilegeCheck for SecurityAnonymous token should have failed with ERROR_BAD_IMPERSONATION_LEVEL instead of %d\n", error);
-    }
 
     CloseHandle(Token);
 

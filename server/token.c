@@ -88,6 +88,7 @@ struct token
     unsigned       primary;         /* is this a primary or impersonation token? */
     ACL           *default_dacl;    /* the default DACL to assign to objects created by this user */
     TOKEN_SOURCE   source;          /* source of the token */
+    SECURITY_IMPERSONATION_LEVEL impersonation_level; /* impersonation level this token is capable of if non-primary token */
 };
 
 struct privilege
@@ -428,7 +429,8 @@ static struct token *create_token( unsigned primary, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
                                    const ACL *default_dacl, TOKEN_SOURCE source,
-                                   const LUID *modified_id )
+                                   const LUID *modified_id,
+                                   SECURITY_IMPERSONATION_LEVEL impersonation_level )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
@@ -443,6 +445,11 @@ static struct token *create_token( unsigned primary, const SID *user,
         list_init( &token->privileges );
         list_init( &token->groups );
         token->primary = primary;
+        /* primary tokens don't have impersonation levels */
+        if (primary)
+            token->impersonation_level = -1;
+        else
+            token->impersonation_level = impersonation_level;
         token->default_dacl = NULL;
         token->primary_group = NULL;
 
@@ -614,7 +621,7 @@ struct token *token_create_admin( void )
         token = create_token( TRUE, &interactive_sid,
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
-                            default_dacl, admin_source, NULL );
+                            default_dacl, admin_source, NULL, -1 );
         /* we really need a primary group */
         assert( token->primary_group );
     }
@@ -1007,10 +1014,15 @@ DECL_HANDLER(open_token)
         if (thread)
         {
             if (thread->token)
-                reply->token = alloc_handle( current->process, thread->token, req->access,
-                                             req->attributes );
+            {
+                if (thread->token->impersonation_level <= SecurityAnonymous)
+                    set_error( STATUS_CANT_OPEN_ANONYMOUS );
+                else
+                    reply->token = alloc_handle( current->process, thread->token,
+                                                 req->access, req->attributes );
+            }
             else
-                set_error(STATUS_NO_TOKEN);
+                set_error( STATUS_NO_TOKEN );
             release_object( thread );
         }
     }
@@ -1023,7 +1035,7 @@ DECL_HANDLER(open_token)
                 reply->token = alloc_handle( current->process, process->token, req->access,
                                              req->attributes );
             else
-                set_error(STATUS_NO_TOKEN);
+                set_error( STATUS_NO_TOKEN );
             release_object( process );
         }
     }
@@ -1114,16 +1126,30 @@ DECL_HANDLER(get_token_privileges)
 DECL_HANDLER(duplicate_token)
 {
     struct token *src_token;
+
+    if ((req->impersonation_level < SecurityAnonymous) ||
+        (req->impersonation_level > SecurityDelegation))
+    {
+        set_error( STATUS_BAD_IMPERSONATION_LEVEL );
+        return;
+    }
+
     if ((src_token = (struct token *)get_handle_obj( current->process, req->handle,
                                                      TOKEN_DUPLICATE,
                                                      &token_ops )))
     {
-        /* FIXME: use req->impersonation_level */
-        struct token *token = create_token( req->primary, src_token->user,
-                                            NULL, 0, NULL, 0,
-                                            src_token->default_dacl,
-                                            src_token->source,
-                                            &src_token->modified_id );
+        const LUID *modified_id =
+            req->primary || (req->impersonation_level == src_token->impersonation_level) ?
+                &src_token->modified_id : NULL;
+        struct token *token = NULL;
+
+        if (req->primary || (req->impersonation_level <= src_token->impersonation_level))
+            token = create_token( req->primary, src_token->user, NULL, 0,
+                                  NULL, 0, src_token->default_dacl,
+                                  src_token->source, modified_id,
+                                  req->impersonation_level );
+        else set_error( STATUS_BAD_IMPERSONATION_LEVEL );
+
         if (token)
         {
             struct privilege *privilege;
@@ -1170,7 +1196,10 @@ DECL_HANDLER(check_token_privileges)
                                                  &token_ops )))
     {
         unsigned int count = get_req_data_size() / sizeof(LUID_AND_ATTRIBUTES);
-        if (get_reply_max_size() >= count * sizeof(LUID_AND_ATTRIBUTES))
+
+        if (!token->primary && token->impersonation_level <= SecurityAnonymous)
+            set_error( STATUS_BAD_IMPERSONATION_LEVEL );
+        else if (get_reply_max_size() >= count * sizeof(LUID_AND_ATTRIBUTES))
         {
             LUID_AND_ATTRIBUTES *usedprivs = set_reply_data_size( count * sizeof(*usedprivs) );
             reply->has_privileges = token_check_privileges( token, req->all_required, get_req_data(), count, usedprivs );
@@ -1210,6 +1239,13 @@ DECL_HANDLER(access_check)
         if (token->primary)
         {
             set_error( STATUS_NO_IMPERSONATION_TOKEN );
+            release_object( token );
+            return;
+        }
+        /* anonymous impersonation tokens can't be used */
+        if (token->impersonation_level <= SecurityAnonymous)
+        {
+            set_error( STATUS_BAD_IMPERSONATION_LEVEL );
             release_object( token );
             return;
         }
