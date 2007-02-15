@@ -82,7 +82,7 @@ static const PixelFormatDesc formats[] = {
     {WINED3DFMT_A8L8        ,0x0000ff00 ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_LUMINANCE8_ALPHA8   ,GL_LUMINANCE_ALPHA ,GL_UNSIGNED_BYTE               },
     {WINED3DFMT_A4L4        ,0x000000f0 ,0x0        ,0x0        ,0x0        ,1      ,FALSE      ,GL_LUMINANCE4_ALPHA4   ,GL_LUMINANCE_ALPHA ,GL_UNSIGNED_BYTE               },
     /* Bump mapping stuff */
-    {WINED3DFMT_V8U8        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_COLOR_INDEX8_EXT    ,GL_COLOR_INDEX     ,GL_UNSIGNED_BYTE               },
+    {WINED3DFMT_V8U8        ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_RGB8                ,GL_BGR             ,GL_BYTE /* needs conversion! */},
     {WINED3DFMT_L6V5U5      ,0x0        ,0x0        ,0x0        ,0x0        ,2      ,FALSE      ,GL_COLOR_INDEX8_EXT    ,GL_COLOR_INDEX     ,GL_UNSIGNED_SHORT_5_5_5_1      },
     {WINED3DFMT_X8L8V8U8    ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_RGBA8               ,GL_BGRA            ,GL_UNSIGNED_BYTE               },
     {WINED3DFMT_Q8W8V8U8    ,0x0        ,0x0        ,0x0        ,0x0        ,4      ,FALSE      ,GL_RGBA8               ,GL_RGBA            ,GL_UNSIGNED_INT_8_8_8_8_REV/*?*/},

@@ -44,7 +44,8 @@ typedef enum {
     CONVERT_CK_RGB24,
     CONVERT_CK_8888,
     CONVERT_CK_8888_ARGB,
-    CONVERT_RGB32_888
+    CONVERT_RGB32_888,
+    CONVERT_V8U8
 } CONVERT_TYPES;
 
 HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UINT height, UINT outpitch, CONVERT_TYPES convert, IWineD3DSurfaceImpl *surf);
@@ -70,6 +71,11 @@ static void surface_download_data(IWineD3DSurfaceImpl *This) {
         void *mem;
         int src_pitch = 0;
         int dst_pitch = 0;
+
+         if(This->Flags & SFLAG_CONVERTED) {
+             FIXME("Read back converted textures unsupported\n");
+             return;
+         }
 
         if (This->Flags & SFLAG_NONPOW2) {
             src_pitch = This->bytesPerPixel * This->pow2Width;
@@ -1405,6 +1411,14 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             }
             break;
 
+        case WINED3DFMT_V8U8:
+            *convert = CONVERT_V8U8;
+            *format = GL_BGR;
+            *internal = GL_RGB8;
+            *type = GL_BYTE;
+            *target_bpp = 3;
+            break;
+
         default:
             break;
     }
@@ -1523,6 +1537,25 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
             }
         }
         break;
+
+        case CONVERT_V8U8:
+        {
+            unsigned int x, y;
+            short *Source;
+            char *Dest;
+            for(y = 0; y < height; y++) {
+                Source = (short *) (src + y * pitch);
+                Dest = (char *) (dst + y * outpitch);
+                for (x = 0; x < width; x++ ) {
+                    long color = (*Source++);
+                    Dest[0] = color >> 8;
+                    Dest[1] = color;
+                    Dest[2] = 0xff;
+                    Dest += 3;
+                }
+            }
+            break;
+        }
 
         default:
             ERR("Unsupported conversation type %d\n", convert);
