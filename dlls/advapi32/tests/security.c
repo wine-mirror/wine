@@ -659,6 +659,7 @@ static void test_AccessCheck(void)
     ACCESS_MASK Access;
     BOOL AccessStatus;
     HANDLE Token;
+    HANDLE ProcessToken;
     BOOL ret;
     DWORD PrivSetLen;
     PRIVILEGE_SET *PrivSet;
@@ -716,13 +717,13 @@ static void test_AccessCheck(void)
     PrivSet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, PrivSetLen);
     PrivSet->PrivilegeCount = 16;
 
-    ImpersonateSelf(SecurityImpersonation);
+    res = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE|TOKEN_QUERY, &ProcessToken);
+    ok(res, "OpenProcessToken failed with error %d\n", GetLastError());
 
     pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, FALSE, TRUE, &Enabled);
 
-    ret = OpenThreadToken(GetCurrentThread(),
-                          TOKEN_QUERY, TRUE, &Token);
-    ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
+    res = DuplicateToken(ProcessToken, SecurityIdentification, &Token);
+    ok(res, "DuplicateToken failed with error %d\n", GetLastError());
 
     /* SD without owner/group */
     SetLastError(0xdeadbeef);
@@ -802,7 +803,30 @@ static void test_AccessCheck(void)
         trace("Couldn't get SE_SECURITY_PRIVILEGE (0x%08x), skipping ACCESS_SYSTEM_SECURITY test\n",
             ret);
 
-    RevertToSelf();
+    CloseHandle(Token);
+
+    res = DuplicateToken(ProcessToken, SecurityAnonymous, &Token);
+    ok(res, "DuplicateToken failed with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(SecurityDescriptor, Token, MAXIMUM_ALLOWED, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    todo_wine {
+    ok(!ret && err == ERROR_BAD_IMPERSONATION_LEVEL, "AccessCheck should have failed "
+       "with ERROR_BAD_IMPERSONATION_LEVEL, instead of %d\n", err);
+    }
+
+    CloseHandle(Token);
+
+    SetLastError(0xdeadbeef);
+    ret = AccessCheck(SecurityDescriptor, ProcessToken, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NO_IMPERSONATION_TOKEN, "AccessCheck should have failed "
+       "with ERROR_NO_IMPERSONATION_TOKEN, instead of %d\n", err);
+
+    CloseHandle(ProcessToken);
 
     if (EveryoneSid)
         FreeSid(EveryoneSid);
