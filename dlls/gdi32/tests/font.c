@@ -998,10 +998,11 @@ static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 
 static void test_SetTextJustification(void)
 {
-    HDC hdc = GetDC(0);
-    RECT clientArea = {0, 0, 400, 400};
+    HDC hdc;
+    RECT clientArea;
     LOGFONTA lf;
     HFONT hfont;
+    HWND hwnd;
     static char testText[] =
             "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do "
             "eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut "
@@ -1010,6 +1011,10 @@ static void test_SetTextJustification(void)
             "reprehenderit in voluptate velit esse cillum dolore eu fugiat "
             "nulla pariatur. Excepteur sint occaecat cupidatat non proident, "
             "sunt in culpa qui officia deserunt mollit anim id est laborum.";
+
+    hwnd = CreateWindowExA(0, "static", "", WS_POPUP, 0,0, 400,400, 0, 0, 0, NULL);
+    GetClientRect( hwnd, &clientArea );
+    hdc = GetDC( hwnd );
 
     memset(&lf, 0, sizeof lf);
     lf.lfCharSet = ANSI_CHARSET;
@@ -1024,7 +1029,8 @@ static void test_SetTextJustification(void)
     testJustification(hdc, testText, &clientArea);
 
     DeleteObject(hfont);
-    ReleaseDC(0, hdc);
+    ReleaseDC(hwnd, hdc);
+    DestroyWindow(hwnd);
 }
 
 static void test_font_charset(void)
