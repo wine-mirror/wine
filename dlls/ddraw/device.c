@@ -2300,9 +2300,11 @@ IDirect3DDeviceImpl_7_SetRenderState(IDirect3DDevice7 *iface,
             switch ((D3DTEXTUREFILTER) Value)
             {
                 case D3DFILTER_NEAREST:
+                case D3DFILTER_LINEARMIPNEAREST:
                     tex_mag = WINED3DTEXF_POINT;
                     break;
                 case D3DFILTER_LINEAR:
+                case D3DFILTER_LINEARMIPLINEAR:
                     tex_mag = WINED3DTEXF_LINEAR;
                     break;
                 default:
