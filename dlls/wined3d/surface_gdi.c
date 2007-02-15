@@ -911,29 +911,33 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
         {
           LONG dstyinc = dlock.Pitch, dstxinc = bpp;
           DWORD keylow = 0xFFFFFFFF, keyhigh = 0, keymask = 0xFFFFFFFF;
+          DWORD destkeylow = 0x0, destkeyhigh = 0xFFFFFFFF, destkeymask = 0xFFFFFFFF;
           if (Flags & (DDBLT_KEYSRC | DDBLT_KEYDEST | DDBLT_KEYSRCOVERRIDE | DDBLT_KEYDESTOVERRIDE))
           {
-
+              /* The color keying flags are checked for correctness in ddraw */
               if (Flags & DDBLT_KEYSRC)
               {
                 keylow  = Src->SrcBltCKey.dwColorSpaceLowValue;
                 keyhigh = Src->SrcBltCKey.dwColorSpaceHighValue;
               }
-              else if (Flags & DDBLT_KEYDEST)
-              {
-                keylow  = This->DestBltCKey.dwColorSpaceLowValue;
-                keyhigh = This->DestBltCKey.dwColorSpaceHighValue;
-              }
-              else if (Flags & DDBLT_KEYSRCOVERRIDE)
+              else  if (Flags & DDBLT_KEYSRCOVERRIDE)
               {
                 keylow  = DDBltFx->ddckSrcColorkey.dwColorSpaceLowValue;
                 keyhigh = DDBltFx->ddckSrcColorkey.dwColorSpaceHighValue;
               }
-              else
+
+              if (Flags & DDBLT_KEYDEST)
               {
-                keylow  = DDBltFx->ddckDestColorkey.dwColorSpaceLowValue;
-                keyhigh = DDBltFx->ddckDestColorkey.dwColorSpaceHighValue;
+                /* Destination color keys are taken from the source surface ! */
+                destkeylow  = Src->DestBltCKey.dwColorSpaceLowValue;
+                destkeyhigh = Src->DestBltCKey.dwColorSpaceHighValue;
               }
+              else if (Flags & DDBLT_KEYDESTOVERRIDE)
+              {
+                destkeylow  = DDBltFx->ddckDestColorkey.dwColorSpaceLowValue;
+                destkeyhigh = DDBltFx->ddckDestColorkey.dwColorSpaceHighValue;
+              }
+
               if(bpp == 1)
               {
                   keymask = 0xff;
@@ -1037,7 +1041,10 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
               dx = d; \
               for (x = sx = 0; x < dstwidth; x++, sx += xinc) { \
                   tmp = s[sx >> 16]; \
-                  if ((tmp & keymask) < keylow || (tmp & keymask) > keyhigh) dx[0] = tmp; \
+                  if (((tmp & keymask) < keylow || (tmp & keymask) > keyhigh) && \
+                      ((dx[0] & destkeymask) >= destkeylow && (dx[0] & destkeymask) <= destkeyhigh)) { \
+                       dx[0] = tmp; \
+                     } \
                   dx = (type*)(((LPBYTE)dx)+dstxinc); \
               } \
               d = (type*)(((LPBYTE)d)+dstyinc); \
@@ -1057,10 +1064,12 @@ IWineGDISurfaceImpl_Blt(IWineD3DSurface *iface,
                     dx = d;
                     for (x = sx = 0; x < dstwidth; x++, sx+= xinc)
                     {
-                        DWORD pixel;
+                        DWORD pixel, dpixel = 0;
                         s = sbuf+3*(sx>>16);
                         pixel = s[0]|(s[1]<<8)|(s[2]<<16);
-                        if ((pixel & keymask) < keylow || (pixel & keymask) > keyhigh)
+                        dpixel = dx[0]|(dx[1]<<8)|(dx[2]<<16);
+                        if (((pixel & keymask) < keylow || (pixel & keymask) > keyhigh) &&
+                            ((dpixel & keymask) >= destkeylow || (dpixel & keymask) <= keyhigh))
                         {
                             dx[0] = (pixel    )&0xff;
                             dx[1] = (pixel>> 8)&0xff;

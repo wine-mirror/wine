@@ -696,6 +696,24 @@ IDirectDrawSurfaceImpl_Blt(IDirectDrawSurface7 *iface,
     IDirectDrawSurfaceImpl *Src = ICOM_OBJECT(IDirectDrawSurfaceImpl, IDirectDrawSurface7, SrcSurface);
     TRACE("(%p)->(%p,%p,%p,%x,%p)\n", This, DestRect, Src, SrcRect, Flags, DDBltFx);
 
+    /* Check for validity of the flags here. WineD3D Has the software-opengl selection path and would have
+     * to check at 2 places, and sometimes do double checks. This also saves the call to wined3d :-)
+     */
+    if((Flags & DDBLT_KEYSRCOVERRIDE) && (!DDBltFx || Flags & DDBLT_KEYSRC)) {
+        WARN("Invalid source color key parameters, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
+    if((Flags & DDBLT_KEYDESTOVERRIDE) && (!DDBltFx || Flags & DDBLT_KEYDEST)) {
+        WARN("Invalid destination color key parameters, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
+    if(Flags & DDBLT_KEYSRC && (!Src || !(Src->surface_desc.dwFlags & DDSD_CKSRCBLT))) {
+        WARN("DDBLT_KEYDEST blit without color key in surface, returning DDERR_INVALIDPARAMS\n");
+        return DDERR_INVALIDPARAMS;
+    }
+
     return IWineD3DSurface_Blt(This->WineD3DSurface,
                                DestRect,
                                Src ? Src->WineD3DSurface : NULL,

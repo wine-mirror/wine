@@ -170,6 +170,7 @@ static void SrcColorKey32BlitTest(void)
     DDCOLORKEY DDColorKey;
     LPDWORD lpData;
     HRESULT rc;
+    DDBLTFX fx;
 
     ddsd2.dwSize = sizeof(ddsd2);
     ddsd2.ddpfPixelFormat.dwSize = sizeof(ddsd2.ddpfPixelFormat);
@@ -244,6 +245,328 @@ static void SrcColorKey32BlitTest(void)
     IDirectDrawSurface_GetSurfaceDesc(lpSrc, &ddsd);
     ok(ddsd.ddckCKSrcBlt.dwColorSpaceLowValue == 0x00FF00 && ddsd.ddckCKSrcBlt.dwColorSpaceHighValue == 0x00FF00,
        "GetSurfaceDesc does not return the colorkey set with SetColorKey\n");
+
+    IDirectDrawSurface_Release(lpSrc);
+    IDirectDrawSurface_Release(lpDst);
+
+    /* start with a new set of surfaces to test the color keying parameters to blit */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CKSRCBLT | DDSD_CKDESTBLT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwWidth = 800;
+    ddsd.dwHeight = 600;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xFF0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x00FF00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
+    ddsd.ddckCKDestBlt.dwColorSpaceLowValue = 0xFF0000;
+    ddsd.ddckCKDestBlt.dwColorSpaceHighValue = 0xFF0000;
+    ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00FF00;
+    ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00FF00;
+    rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpDst, NULL);
+    ok(rc==DD_OK || rc == DDERR_NOCOLORKEYHW,"CreateSurface returned: %x\n",rc);
+    if(FAILED(rc))
+    {
+        skip("Failed to create surface\n");
+        return;
+    }
+
+    /* start with a new set of surfaces to test the color keying parameters to blit */
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CKSRCBLT | DDSD_CKDESTBLT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwWidth = 800;
+    ddsd.dwHeight = 600;
+    ddsd.ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(ddsd.ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(ddsd.ddpfPixelFormat).dwRBitMask = 0xFF0000;
+    U3(ddsd.ddpfPixelFormat).dwGBitMask = 0x00FF00;
+    U4(ddsd.ddpfPixelFormat).dwBBitMask = 0x0000FF;
+    ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0x0000FF;
+    ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0x0000FF;
+    ddsd.ddckCKDestBlt.dwColorSpaceLowValue = 0x000000;
+    ddsd.ddckCKDestBlt.dwColorSpaceHighValue = 0x000000;
+    rc = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpSrc, NULL);
+    ok(rc==DD_OK || rc == DDERR_NOCOLORKEYHW,"CreateSurface returned: %x\n",rc);
+    if(FAILED(rc))
+    {
+        skip("Failed to create surface\n");
+        IDirectDrawSurface_Release(lpDst);
+        return;
+    }
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    fx.ddckSrcColorkey.dwColorSpaceHighValue = 0x110000;
+    fx.ddckSrcColorkey.dwColorSpaceLowValue = 0x110000;
+    fx.ddckDestColorkey.dwColorSpaceHighValue = 0x001100;
+    fx.ddckDestColorkey.dwColorSpaceLowValue = 0x001100;
+
+    rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData[0] = 0x000000FF; /* Applies to src blt key in src surface */
+    lpData[1] = 0x00000000; /* Applies to dst blt key in src surface */
+    lpData[2] = 0x00FF0000; /* Dst color key in dst surface */
+    lpData[3] = 0x0000FF00; /* Src color key in dst surface */
+    lpData[4] = 0x00001100; /* Src color key in ddbltfx */
+    lpData[5] = 0x00110000; /* Dst color key in ddbltfx */
+    rc = IDirectDrawSurface_Unlock(lpSrc, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData[0] = 0x55555555;
+    lpData[1] = 0x55555555;
+    lpData[2] = 0x55555555;
+    lpData[3] = 0x55555555;
+    lpData[4] = 0x55555555;
+    lpData[5] = 0x55555555;
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Test a blit without keying */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, 0, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+    /* Should have copied src data unmodified to dst */
+    ok(lpData[0] == 0x000000FF &&
+       lpData[1] == 0x00000000 &&
+       lpData[2] == 0x00FF0000 &&
+       lpData[3] == 0x0000FF00 &&
+       lpData[4] == 0x00001100 &&
+       lpData[5] == 0x00110000, "Surface data after unkeyed blit does not match\n");
+
+    lpData[0] = 0x55555555;
+    lpData[1] = 0x55555555;
+    lpData[2] = 0x55555555;
+    lpData[3] = 0x55555555;
+    lpData[4] = 0x55555555;
+    lpData[5] = 0x55555555;
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Src key */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRC, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    ok(lpData[0] == 0x55555555 && /* Here the src key applied */
+       lpData[1] == 0x00000000 &&
+       lpData[2] == 0x00FF0000 &&
+       lpData[3] == 0x0000FF00 &&
+       lpData[4] == 0x00001100 &&
+       lpData[5] == 0x00110000, "Surface data after srckey blit does not match\n");
+
+    lpData[0] = 0x55555555;
+    lpData[1] = 0x55555555;
+    lpData[2] = 0x55555555;
+    lpData[3] = 0x55555555;
+    lpData[4] = 0x55555555;
+    lpData[5] = 0x55555555;
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Src override */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRCOVERRIDE, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    ok(lpData[0] == 0x000000FF &&
+       lpData[1] == 0x00000000 &&
+       lpData[2] == 0x00FF0000 &&
+       lpData[3] == 0x0000FF00 &&
+       lpData[4] == 0x00001100 &&
+       lpData[5] == 0x55555555, /* Override key applies here */
+       "Surface data after src override key blit does not match\n");
+
+    lpData[0] = 0x55555555;
+    lpData[1] = 0x55555555;
+    lpData[2] = 0x55555555;
+    lpData[3] = 0x55555555;
+    lpData[4] = 0x55555555;
+    lpData[5] = 0x55555555;
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Src override AND src key. That is not supposed to work */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE, &fx);
+    ok(rc == DDERR_INVALIDPARAMS, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    /* Verify that the destination is unchanged */
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    ok(lpData[0] == 0x55555555 &&
+       lpData[1] == 0x55555555 &&
+       lpData[2] == 0x55555555 &&
+       lpData[3] == 0x55555555 &&
+       lpData[4] == 0x55555555 &&
+       lpData[5] == 0x55555555, /* Override key applies here */
+       "Surface data after src key blit with override does not match\n");
+
+    lpData[0] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[1] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[2] = 0x00001100; /* Dest key in override */
+    lpData[3] = 0x00001100; /* Dest key in override */
+    lpData[4] = 0x00000000; /* Dest key in src surface */
+    lpData[5] = 0x00000000; /* Dest key in src surface */
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Dest key blit */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDEST, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    /* DirectDraw uses the dest blit key from the SOURCE surface ! */
+    ok(lpData[0] == 0x00ff0000 &&
+       lpData[1] == 0x00ff0000 &&
+       lpData[2] == 0x00001100 &&
+       lpData[3] == 0x00001100 &&
+       lpData[4] == 0x00001100 && /* Key applies here */
+       lpData[5] == 0x00110000,   /* Key applies here */
+       "Surface data after dest key blit does not match\n");
+
+    lpData[0] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[1] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[2] = 0x00001100; /* Dest key in override */
+    lpData[3] = 0x00001100; /* Dest key in override */
+    lpData[4] = 0x00000000; /* Dest key in src surface */
+    lpData[5] = 0x00000000; /* Dest key in src surface */
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Dest override key blit */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDESTOVERRIDE, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    ok(lpData[0] == 0x00FF0000 &&
+       lpData[1] == 0x00FF0000 &&
+       lpData[2] == 0x00FF0000 && /* Key applies here */
+       lpData[3] == 0x0000FF00 && /* Key applies here */
+       lpData[4] == 0x00000000 &&
+       lpData[5] == 0x00000000,
+       "Surface data after dest key override blit does not match\n");
+
+    lpData[0] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[1] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[2] = 0x00001100; /* Dest key in override */
+    lpData[3] = 0x00001100; /* Dest key in override */
+    lpData[4] = 0x00000000; /* Dest key in src surface */
+    lpData[5] = 0x00000000; /* Dest key in src surface */
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Dest override key blit. Supposed to fail too */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDEST | DDBLT_KEYDESTOVERRIDE, &fx);
+    ok(rc == DDERR_INVALIDPARAMS, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    /* Check for unchanged data */
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    ok(lpData[0] == 0x00FF0000 &&
+       lpData[1] == 0x00FF0000 &&
+       lpData[2] == 0x00001100 && /* Key applies here */
+       lpData[3] == 0x00001100 && /* Key applies here */
+       lpData[4] == 0x00000000 &&
+       lpData[5] == 0x00000000,
+       "Surface data with dest key and dest override does not match\n");
+
+    lpData[0] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[1] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[2] = 0x00001100; /* Dest key in override */
+    lpData[3] = 0x00001100; /* Dest key in override */
+    lpData[4] = 0x00000000; /* Dest key in src surface */
+    lpData[5] = 0x00000000; /* Dest key in src surface */
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Modify the source data a bit to give some more conclusive results */
+    rc = IDirectDrawSurface_Lock(lpSrc, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+    lpData[5] = 0x000000FF; /* Applies to src blt key in src surface */
+    rc = IDirectDrawSurface_Unlock(lpSrc, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Source and destination key */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDEST | DDBLT_KEYSRC, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    rc = IDirectDrawSurface_Lock(lpDst, NULL, &ddsd2, DDLOCK_WAIT, NULL);
+    ok(rc==DD_OK,"Lock returned: %x\n",rc);
+    lpData = (LPDWORD)ddsd2.lpSurface;
+
+    ok(lpData[0] == 0x00FF0000 && /* Masked by Destination key */
+       lpData[1] == 0x00FF0000 && /* Masked by Destination key */
+       lpData[2] == 0x00001100 && /* Masked by Destination key */
+       lpData[3] == 0x00001100 && /* Masked by Destination key */
+       lpData[4] == 0x00001100 && /* Allowed by destination key, not masked by source key */
+       lpData[5] == 0x00000000,   /* Allowed by dst key, but masked by source key */
+       "Surface data with src key and dest key blit does not match\n");
+
+    lpData[0] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[1] = 0x00FF0000; /* Dest key in dst surface */
+    lpData[2] = 0x00001100; /* Dest key in override */
+    lpData[3] = 0x00001100; /* Dest key in override */
+    lpData[4] = 0x00000000; /* Dest key in src surface */
+    lpData[5] = 0x00000000; /* Dest key in src surface */
+    rc = IDirectDrawSurface_Unlock(lpDst, NULL);
+    ok(rc==DD_OK,"Unlock returned: %x\n",rc);
+
+    /* Override keys without ddbltfx parameter fail */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDESTOVERRIDE, NULL);
+    ok(rc == DDERR_INVALIDPARAMS, "IDirectDrawSurface_Blt returned %08x\n", rc);
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRCOVERRIDE, NULL);
+    ok(rc == DDERR_INVALIDPARAMS, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    /* Try blitting without keys in the source surface*/
+    rc = IDirectDrawSurface_SetColorKey(lpSrc, DDCKEY_SRCBLT, NULL);
+    ok(rc == DD_OK, "SetColorKey returned %x\n", rc);
+    rc = IDirectDrawSurface_SetColorKey(lpSrc, DDCKEY_DESTBLT, NULL);
+    ok(rc == DD_OK, "SetColorKey returned %x\n", rc);
+
+    /* That fails now. Do not bother to check that the data is unmodified */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRC, &fx);
+    ok(rc == DDERR_INVALIDPARAMS, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    /* Dest key blit still works. Which key is used this time??? */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDEST, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+
+    /* With korrectly passed override keys no key in the surface is needed.
+     * Again, the result was checked before, no need to do that again
+     */
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYDESTOVERRIDE, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
+    rc = IDirectDrawSurface_Blt(lpDst, NULL, lpSrc, NULL, DDBLT_KEYSRCOVERRIDE, &fx);
+    ok(rc == DD_OK, "IDirectDrawSurface_Blt returned %08x\n", rc);
 
     IDirectDrawSurface_Release(lpSrc);
     IDirectDrawSurface_Release(lpDst);

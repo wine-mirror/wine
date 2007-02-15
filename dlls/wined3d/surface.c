@@ -2362,6 +2362,13 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         return WINED3DERR_INVALIDCALL;
     }
 
+    /* No destination color keying supported */
+    if(Flags & (DDBLT_KEYDEST | DDBLT_KEYDESTOVERRIDE)) {
+        /* Can we support that with glBlendFunc if blitting to the frame buffer? */
+        TRACE("Destination color key not supported in accelerated Blit, falling back to software\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (DestRect) {
         rect.x1 = DestRect->left;
         rect.y1 = DestRect->top;
@@ -2442,6 +2449,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         WINED3DRECT srect;
         BOOL upsideDown, stretchx;
 
+        if(Flags & (DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE)) {
+            TRACE("Color keying not supported by frame buffer to texture blit\n");
+            return WINED3DERR_INVALIDCALL;
+            /* Destination color key is checked above */
+        }
+
         /* Call preload for the surface to make sure it isn't dirty */
         IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
@@ -2514,8 +2527,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
     } else if(Src) {
         /* Blit from offscreen surface to render target */
         float glTexCoord[4];
-        DWORD oldCKey;
-        DDCOLORKEY oldBltCKey = {0,0};
+        DWORD oldCKeyFlags = Src->CKeyFlags;
+        DDCOLORKEY oldBltCKey = This->SrcBltCKey;
         RECT SourceRectangle;
         GLint oldDraw;
 
@@ -2543,25 +2556,21 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
 
         /* Color keying: Check if we have to do a color keyed blt,
          * and if not check if a color key is activated.
+         *
+         * Just modify the color keying parameters in the surface and restore them afterwards
+         * The surface keeps track of the color key last used to load the opengl surface.
+         * PreLoad will catch the change to the flags and color key and reload if neccessary.
          */
-        oldCKey = Src->CKeyFlags;
-        if(!(Flags & DDBLT_KEYSRC) &&
-            Src->CKeyFlags & DDSD_CKSRCBLT) {
-            /* Ok, the surface has a color key, but we shall not use it -
-             * Deactivate it for now, LoadTexture will catch this
-             */
+        if(Flags & DDBLT_KEYSRC) {
+            /* Use color key from surface */
+        } else if(Flags & DDBLT_KEYSRCOVERRIDE) {
+            /* Use color key from DDBltFx */
+            Src->CKeyFlags |= DDSD_CKSRCBLT;
+            This->SrcBltCKey = DDBltFx->ddckSrcColorkey;
+        } else {
+            /* Do not use color key */
             Src->CKeyFlags &= ~DDSD_CKSRCBLT;
         }
-
-        /* Color keying */
-        if(Flags & DDBLT_KEYDEST) {
-            oldBltCKey = This->SrcBltCKey;
-            /* Temporary replace the source color key with the destination one. We do this because the color conversion code which
-             * is in the end called from LoadTexture works with the source color. At the end of this function we restore the color key.
-             */
-            This->SrcBltCKey = This->DestBltCKey;
-        } else if (Flags & DDBLT_KEYSRC)
-            oldBltCKey = This->SrcBltCKey;
 
         /* Now load the surface */
         IWineD3DSurface_PreLoad((IWineD3DSurface *) Src);
@@ -2595,7 +2604,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         checkGLcall("glTexEnvi");
 
         /* This is for color keying */
-        if(Flags & DDBLT_KEYSRC) {
+        if(Flags & (DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE)) {
             glEnable(GL_ALPHA_TEST);
             checkGLcall("glEnable GL_ALPHA_TEST");
             glAlphaFunc(GL_NOTEQUAL, 0.0);
@@ -2637,15 +2646,9 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer && oldDraw == GL_BACK) {
             glDrawBuffer(oldDraw);
         }
-
-        /* Restore the color key flags */
-        if(oldCKey != Src->CKeyFlags) {
-            Src->CKeyFlags = oldCKey;
-        }
-
-        /* Restore the old color key */
-        if (Flags & (DDBLT_KEYSRC | DDBLT_KEYDEST))
-            This->SrcBltCKey = oldBltCKey;
+        /* Restore the color key parameters */
+        Src->CKeyFlags = oldCKeyFlags;
+        This->SrcBltCKey = oldBltCKey;
 
         LEAVE_GL();
 
