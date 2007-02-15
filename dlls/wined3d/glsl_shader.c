@@ -1767,15 +1767,50 @@ void pshader_glsl_texm3x3vspec(SHADER_OPCODE_ARG* arg) {
 
 /** Process the WINED3DSIO_TEXBEM instruction in GLSL.
  * Apply a fake bump map transform.
- * FIXME: Should apply the BUMPMAPENV matrix.  For now, just sample the texture */
+ * texbem is pshader <= 1.3 only, this saves a few version checks
+ */
 void pshader_glsl_texbem(SHADER_OPCODE_ARG* arg) {
+    IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
+    IWineD3DDeviceImpl* deviceImpl = (IWineD3DDeviceImpl*) This->baseShader.device;
+    char dst_swizzle[6];
+    glsl_sample_function_t sample_function;
+    DWORD sampler_type;
+    DWORD sampler_idx;
+    BOOL projected;
+    DWORD mask = 0;
+    DWORD flags;
+    char coord_mask[6];
 
-    DWORD reg1 = arg->dst & WINED3DSP_REGNUM_MASK;
-    DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
+    /* All versions have a destination register */
+    shader_glsl_append_dst(arg->buffer, arg);
 
-    FIXME("Not applying the BUMPMAPENV matrix for pixel shader instruction texbem.\n");
-    shader_addline(arg->buffer, "T%u = texture2D(Psampler%u, gl_TexCoord[%u].xy + T%u.xy);\n",
-            reg1, reg1, reg1, reg2);
+    sampler_idx = arg->dst & WINED3DSP_REGNUM_MASK;
+    flags = deviceImpl->stateBlock->textureState[sampler_idx][WINED3DTSS_TEXTURETRANSFORMFLAGS];
+
+    /* TODO: Does texbem even support projected textures? half-life 2 uses it */
+    if (flags & WINED3DTTFF_PROJECTED) {
+        projected = TRUE;
+        switch (flags & ~WINED3DTTFF_PROJECTED) {
+            case WINED3DTTFF_COUNT1: FIXME("WINED3DTTFF_PROJECTED with WINED3DTTFF_COUNT1?\n"); break;
+            case WINED3DTTFF_COUNT2: mask = WINED3DSP_WRITEMASK_1; break;
+            case WINED3DTTFF_COUNT3: mask = WINED3DSP_WRITEMASK_2; break;
+            case WINED3DTTFF_COUNT4:
+            case WINED3DTTFF_DISABLE: mask = WINED3DSP_WRITEMASK_3; break;
+        }
+    } else {
+        projected = FALSE;
+    }
+
+    sampler_type = arg->reg_maps->samplers[sampler_idx] & WINED3DSP_TEXTURETYPE_MASK;
+    shader_glsl_get_sample_function(sampler_type, projected, &sample_function);
+    mask |= sample_function.coord_mask;
+
+    shader_glsl_get_write_mask(arg->dst, dst_swizzle);
+
+    shader_glsl_get_write_mask(mask, coord_mask);
+    FIXME("Bump map transform not handled yet\n");
+    shader_addline(arg->buffer, "%s(Psampler%u, T%u%s)%s);\n",
+                   sample_function.name, sampler_idx, sampler_idx, coord_mask, dst_swizzle);
 }
 
 /** Process the WINED3DSIO_TEXREG2AR instruction in GLSL
