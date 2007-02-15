@@ -104,6 +104,7 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetParent(IWineD3DSwapChain *iface, 
 /*IWineD3DSwapChain parts follow: */
 static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB_DESTROYSURFACEFN D3DCB_DestroyRenderTarget) {
     IWineD3DSwapChainImpl *This = (IWineD3DSwapChainImpl *)iface;
+    WINED3DDISPLAYMODE mode;
 
     /* release the ref to the front and back buffer parents */
     if(This->frontBuffer) {
@@ -123,6 +124,18 @@ static void WINAPI IWineD3DSwapChainImpl_Destroy(IWineD3DSwapChain *iface, D3DCB
         }
     }
 
+    /* Restore the screen resolution if we rendered in fullscreen
+     * This will restore the screen resolution to what it was before creating the swapchain. In case of d3d8 and d3d9
+     * this will be the original desktop resolution. In case of d3d7 this will be a NOP because ddraw sets the resolution
+     * before starting up Direct3D, thus orig_width and orig_height will be equal to the modes in the presentation params
+     */
+    if(This->presentParms.Windowed == FALSE) {
+        mode.Width = This->orig_width;
+        mode.Height = This->orig_height;
+        mode.RefreshRate = 0;
+        mode.Format = This->orig_fmt;
+        IWineD3DDevice_SetDisplayMode((IWineD3DDevice *) This->wineD3DDevice, 0, &mode);
+    }
     DestroyContext(This->wineD3DDevice, This->context);
 
     HeapFree(GetProcessHeap(), 0, This);

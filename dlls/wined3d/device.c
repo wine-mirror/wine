@@ -1288,6 +1288,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
 
     object->orig_width = GetSystemMetrics(SM_CXSCREEN);
     object->orig_height = GetSystemMetrics(SM_CYSCREEN);
+    object->orig_fmt = pixelformat_for_depth(GetDeviceCaps(hDc, BITSPIXEL) * GetDeviceCaps(hDc, PLANES));
 
     /** MSDN: If Windowed is TRUE and either of the BackBufferWidth/Height values is zero,
      *  then the corresponding dimension of the client area of the hDeviceWindow

@@ -1318,6 +1318,7 @@ typedef struct IWineD3DSwapChainImpl
     BOOL                      wantsDepthStencilBuffer;
     D3DPRESENT_PARAMETERS     presentParms;
     DWORD                     orig_width, orig_height;
+    WINED3DFORMAT             orig_fmt;
 
     long prev_time, frames;   /* Performance tracking */
 
