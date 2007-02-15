@@ -19,6 +19,14 @@
 #ifndef __WINE_WINED3D_CAPS_H
 #define __WINE_WINED3D_CAPS_H
 
+#define WINED3DDEVCAPS2_STREAMOFFSET                        0x00000001
+#define WINED3DDEVCAPS2_DMAPNPATCH                          0x00000002
+#define WINED3DDEVCAPS2_ADAPTIVETESSRTPATCH                 0x00000004
+#define WINED3DDEVCAPS2_ADAPTIVETESSNPATCH                  0x00000008
+#define WINED3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES       0x00000010
+#define WINED3DDEVCAPS2_PRESAMPLEDDMAPNPATCH                0x00000020
+#define WINED3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET  0x00000040
+
 #define WINED3DDTCAPS_UBYTE4                                0x00000001
 #define WINED3DDTCAPS_UBYTE4N                               0x00000002
 #define WINED3DDTCAPS_SHORT2N                               0x00000004
@@ -30,11 +38,18 @@
 #define WINED3DDTCAPS_FLOAT16_2                             0x00000100
 #define WINED3DDTCAPS_FLOAT16_4                             0x00000200
 
+#define WINED3DFVFCAPS_TEXCOORDCOUNTMASK                    0x0000FFFF
+#define WINED3DFVFCAPS_DONOTSTRIPELEMENTS                   0x00080000
+#define WINED3DFVFCAPS_PSIZE                                0x00100000
+
 #define WINED3DLINECAPS_TEXTURE                             0x00000001
 #define WINED3DLINECAPS_ZTEST                               0x00000002
 #define WINED3DLINECAPS_BLEND                               0x00000004
 #define WINED3DLINECAPS_ALPHACMP                            0x00000008
 #define WINED3DLINECAPS_FOG                                 0x00000010
+
+#define WINED3DMAX30SHADERINSTRUCTIONS                      32768
+#define WINED3DMIN30SHADERINSTRUCTIONS                      512
 
 #define WINED3DPBLENDCAPS_ZERO                              0x00000001
 #define WINED3DPBLENDCAPS_ONE                               0x00000002

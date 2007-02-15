@@ -1164,7 +1164,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
         if (EnumDisplaySettingsExW(NULL, ModeIdx, &DevModeW, 0)) {
             pMode->Width        = DevModeW.dmPelsWidth;
             pMode->Height       = DevModeW.dmPelsHeight;
-            pMode->RefreshRate  = D3DADAPTER_DEFAULT;
+            pMode->RefreshRate  = WINED3DADAPTER_DEFAULT;
             if (DevModeW.dmFields & DM_DISPLAYFREQUENCY)
                 pMode->RefreshRate = DevModeW.dmDisplayFrequency;
 
@@ -1195,7 +1195,7 @@ static HRESULT WINAPI IWineD3DImpl_EnumAdapterModes(IWineD3D *iface, UINT Adapte
         if (Mode > 0) return WINED3DERR_INVALIDCALL;
         pMode->Width        = 800;
         pMode->Height       = 600;
-        pMode->RefreshRate  = D3DADAPTER_DEFAULT;
+        pMode->RefreshRate  = WINED3DADAPTER_DEFAULT;
         pMode->Format       = (Format == WINED3DFMT_UNKNOWN) ? WINED3DFMT_X8R8G8B8 : Format;
 #endif
         TRACE_(d3d_caps)("W %d H %d rr %d fmt (%x - %s) bpp %u\n", pMode->Width, pMode->Height,
@@ -1226,7 +1226,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterDisplayMode(IWineD3D *iface, UINT A
         pMode->Width        = DevModeW.dmPelsWidth;
         pMode->Height       = DevModeW.dmPelsHeight;
         bpp                 = DevModeW.dmBitsPerPel;
-        pMode->RefreshRate  = D3DADAPTER_DEFAULT;
+        pMode->RefreshRate  = WINED3DADAPTER_DEFAULT;
         if (DevModeW.dmFields&DM_DISPLAYFREQUENCY)
         {
             pMode->RefreshRate = DevModeW.dmDisplayFrequency;
@@ -1319,7 +1319,7 @@ static HRESULT WINAPI IWineD3DImpl_GetAdapterIdentifier(IWineD3D *iface, UINT Ad
         }
 
         /*FIXME: memcpy(&pIdentifier->DeviceIdentifier, ??, sizeof(??GUID)); */
-        if (Flags & D3DENUM_NO_WHQL_LEVEL) {
+        if (Flags & WINED3DENUM_NO_WHQL_LEVEL) {
             *(pIdentifier->WHQLLevel) = 0;
         } else {
             *(pIdentifier->WHQLLevel) = 1;
@@ -1859,7 +1859,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     *pCaps->Caps2                   = WINED3DCAPS2_CANRENDERWINDOWED |
                                       WINED3DCAPS2_FULLSCREENGAMMA;
     *pCaps->Caps3                   = 0;
-    *pCaps->PresentationIntervals   = D3DPRESENT_INTERVAL_IMMEDIATE;
+    *pCaps->PresentationIntervals   = WINED3DPRESENT_INTERVAL_IMMEDIATE;
 
     *pCaps->CursorCaps              = 0;
 
@@ -2135,7 +2135,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         *pCaps->StencilCaps |= WINED3DSTENCILCAPS_TWOSIDED;
     }
 
-    *pCaps->FVFCaps = D3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
+    *pCaps->FVFCaps = WINED3DFVFCAPS_PSIZE | 0x0008; /* 8 texture coords */
 
     *pCaps->TextureOpCaps =  WINED3DTEXOPCAPS_ADD         |
                              WINED3DTEXOPCAPS_ADDSIGNED   |
@@ -2266,7 +2266,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
        ------------------------------------------------ */
     if (This->dxVersion > 8) {
         /* d3d9.dll sets D3DDEVCAPS2_CAN_STRETCHRECT_FROM_TEXTURES here because StretchRects is implemented in d3d9 */
-        *pCaps->DevCaps2                          = D3DDEVCAPS2_STREAMOFFSET;
+        *pCaps->DevCaps2                          = WINED3DDEVCAPS2_STREAMOFFSET;
         /* TODO: VS3.0 needs at least D3DDEVCAPS2_VERTEXELEMENTSCANSHARESTREAMOFFSET */
         *pCaps->MaxNpatchTessellationLevel        = 0;
         *pCaps->MasterAdapterOrdinal              = 0;
@@ -2341,7 +2341,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS; /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
 
             *pCaps->MaxPShaderInstructionsExecuted    = 65535;
-            *pCaps->MaxPixelShader30InstructionSlots  = max(D3DMIN30SHADERINSTRUCTIONS, This->gl_info.ps_arb_max_instructions);
+            *pCaps->MaxPixelShader30InstructionSlots  = max(WINED3DMIN30SHADERINSTRUCTIONS, This->gl_info.ps_arb_max_instructions);
         } else if(*pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0)) {
             /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
             *pCaps->PS20Caps.Caps                     = 0;
