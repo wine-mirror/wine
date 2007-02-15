@@ -1556,6 +1556,109 @@ static void test_process_security_child(void)
     CloseHandle( handle );
 }
 
+static void test_impersonation_level(void)
+{
+    HANDLE Token, ProcessToken;
+    HANDLE Token2;
+    DWORD Size;
+    TOKEN_PRIVILEGES *Privileges;
+    TOKEN_USER *User;
+    PRIVILEGE_SET *PrivilegeSet;
+    BOOL AccessGranted;
+    BOOL ret;
+    HKEY hkey;
+    DWORD error;
+
+    ret = ImpersonateSelf(SecurityAnonymous);
+    ok(ret, "ImpersonateSelf(SecurityAnonymous) failed with error %d\n", GetLastError());
+    ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
+    todo_wine {
+    ok(!ret, "OpenThreadToken should have failed\n");
+    error = GetLastError();
+    ok(error == ERROR_CANT_OPEN_ANONYMOUS, "OpenThreadToken on anonymous token should have returned ERROR_CANT_OPEN_ANONYMOUS instead of %d\n", error);
+    /* can't perform access check when opening object against an anonymous impersonation token */
+    error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
+    ok(error == ERROR_INVALID_HANDLE, "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE instead of %d\n", error);
+    }
+    RevertToSelf();
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &ProcessToken);
+    ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
+
+    ret = DuplicateTokenEx(ProcessToken,
+        TOKEN_QUERY | TOKEN_DUPLICATE | TOKEN_IMPERSONATE, NULL,
+        SecurityAnonymous, TokenImpersonation, &Token);
+    ok(ret, "DuplicateTokenEx failed with error %d\n", GetLastError());
+    /* can't increase the impersonation level */
+    ret = DuplicateToken(Token, SecurityIdentification, &Token2);
+    error = GetLastError();
+    todo_wine {
+    ok(!ret && error == ERROR_BAD_IMPERSONATION_LEVEL,
+        "Duplicating a token and increasing the impersonation level should have failed with ERROR_BAD_IMPERSONATION_LEVEL instead of %d\n", error);
+    }
+    /* we can query anything from an anonymous token, including the user */
+    ret = GetTokenInformation(Token, TokenUser, NULL, 0, &Size);
+    error = GetLastError();
+    ok(!ret && error == ERROR_INSUFFICIENT_BUFFER, "GetTokenInformation(TokenUser) should have failed with ERROR_INSUFFICIENT_BUFFER instead of %d\n", error);
+    User = (TOKEN_USER *)HeapAlloc(GetProcessHeap(), 0, Size);
+    ret = GetTokenInformation(Token, TokenUser, User, Size, &Size);
+    ok(ret, "GetTokenInformation(TokenUser) failed with error %d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, User);
+
+    /* PrivilegeCheck fails with SecurityAnonymous level */
+    ret = GetTokenInformation(Token, TokenPrivileges, NULL, 0, &Size);
+    error = GetLastError();
+    ok(!ret && error == ERROR_INSUFFICIENT_BUFFER, "GetTokenInformation(TokenPrivileges) should have failed with ERROR_INSUFFICIENT_BUFFER instead of %d\n", error);
+    Privileges = (TOKEN_PRIVILEGES *)HeapAlloc(GetProcessHeap(), 0, Size);
+    ret = GetTokenInformation(Token, TokenPrivileges, Privileges, Size, &Size);
+    ok(ret, "GetTokenInformation(TokenPrivileges) failed with error %d\n", GetLastError());
+
+    PrivilegeSet = (PRIVILEGE_SET *)HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(PRIVILEGE_SET, Privilege[Privileges->PrivilegeCount]));
+    PrivilegeSet->PrivilegeCount = Privileges->PrivilegeCount;
+    memcpy(PrivilegeSet->Privilege, Privileges->Privileges, PrivilegeSet->PrivilegeCount * sizeof(PrivilegeSet->Privilege[0]));
+    PrivilegeSet->Control = PRIVILEGE_SET_ALL_NECESSARY;
+    HeapFree(GetProcessHeap(), 0, Privileges);
+
+    ret = PrivilegeCheck(Token, PrivilegeSet, &AccessGranted);
+    error = GetLastError();
+    todo_wine {
+    ok(!ret && error == ERROR_BAD_IMPERSONATION_LEVEL, "PrivilegeCheck for SecurityAnonymous token should have failed with ERROR_BAD_IMPERSONATION_LEVEL instead of %d\n", error);
+    }
+
+    CloseHandle(Token);
+
+    ret = ImpersonateSelf(SecurityIdentification);
+    ok(ret, "ImpersonateSelf(SecurityIdentification) failed with error %d\n", GetLastError());
+    ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
+    ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
+
+    /* can't perform access check when opening object against an identification impersonation token */
+    error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
+    todo_wine {
+    ok(error == ERROR_INVALID_HANDLE, "RegOpenKeyEx should have failed with ERROR_INVALID_HANDLE instead of %d\n", error);
+    }
+    ret = PrivilegeCheck(Token, PrivilegeSet, &AccessGranted);
+    ok(ret, "PrivilegeCheck for SecurityIdentification failed with error %d\n", GetLastError());
+    CloseHandle(Token);
+    RevertToSelf();
+
+    ret = ImpersonateSelf(SecurityImpersonation);
+    ok(ret, "ImpersonateSelf(SecurityImpersonation) failed with error %d\n", GetLastError());
+    ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY_SOURCE | TOKEN_IMPERSONATE | TOKEN_ADJUST_DEFAULT, TRUE, &Token);
+    ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
+    error = RegOpenKeyEx(HKEY_CURRENT_USER, "Software", 0, KEY_READ, &hkey);
+    ok(error == ERROR_SUCCESS, "RegOpenKeyEx should have succeeded instead of failing with %d\n", error);
+    RegCloseKey(hkey);
+    ret = PrivilegeCheck(Token, PrivilegeSet, &AccessGranted);
+    ok(ret, "PrivilegeCheck for SecurityImpersonation failed with error %d\n", GetLastError());
+    RevertToSelf();
+
+    CloseHandle(Token);
+    CloseHandle(ProcessToken);
+
+    HeapFree(GetProcessHeap(), 0, PrivilegeSet);
+}
+
 START_TEST(security)
 {
     init();
@@ -1575,4 +1678,5 @@ START_TEST(security)
     test_LookupAccountSid();
     test_LookupAccountName();
     test_process_security();
+    test_impersonation_level();
 }
