@@ -2300,16 +2300,16 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         if(*pCaps->VertexShaderVersion == WINED3DVS_VERSION(3,0)) {
             /* Where possible set the caps based on OpenGL extensions and if they aren't set (in case of software rendering)
                use the VS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum VS3.0 value. */
-            *pCaps->VS20Caps.Caps                     = D3DVS20CAPS_PREDICATION;
-            *pCaps->VS20Caps.DynamicFlowControlDepth  = D3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* VS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
+            *pCaps->VS20Caps.Caps                     = WINED3DVS20CAPS_PREDICATION;
+            *pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* VS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
             *pCaps->VS20Caps.NumTemps                 = max(32, This->gl_info.vs_arb_max_temps);
-            *pCaps->VS20Caps.StaticFlowControlDepth   = D3DVS20_MAX_STATICFLOWCONTROLDEPTH ; /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
+            *pCaps->VS20Caps.StaticFlowControlDepth   = WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH ; /* level of nesting in loops / if-statements; VS 3.0 requires MAX (4) */
 
             *pCaps->MaxVShaderInstructionsExecuted    = 65535; /* VS 3.0 needs at least 65535, some cards even use 2^32-1 */
             *pCaps->MaxVertexShader30InstructionSlots = max(512, This->gl_info.vs_arb_max_instructions);
         } else if(*pCaps->VertexShaderVersion == WINED3DVS_VERSION(2,0)) {
             *pCaps->VS20Caps.Caps                     = 0;
-            *pCaps->VS20Caps.DynamicFlowControlDepth  = D3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
+            *pCaps->VS20Caps.DynamicFlowControlDepth  = WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH;
             *pCaps->VS20Caps.NumTemps                 = max(12, This->gl_info.vs_arb_max_temps);
             *pCaps->VS20Caps.StaticFlowControlDepth   = 1;    
 
@@ -2345,7 +2345,7 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
         } else if(*pCaps->PixelShaderVersion == WINED3DPS_VERSION(2,0)) {
             /* Below we assume PS2.0 specs, not extended 2.0a(GeforceFX)/2.0b(Radeon R3xx) ones */
             *pCaps->PS20Caps.Caps                     = 0;
-            *pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* D3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
+            *pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
             *pCaps->PS20Caps.NumTemps                 = max(12, This->gl_info.ps_arb_max_temps);
             *pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minumum: 1 */
             *pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */

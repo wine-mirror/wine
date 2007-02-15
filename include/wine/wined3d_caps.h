@@ -138,4 +138,13 @@
 #define WINED3DTEXOPCAPS_MULTIPLYADD                        0x01000000
 #define WINED3DTEXOPCAPS_LERP                               0x02000000
 
+#define WINED3DVS20_MAX_DYNAMICFLOWCONTROLDEPTH             24
+#define WINED3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH             0
+#define WINED3DVS20_MAX_NUMTEMPS                            32
+#define WINED3DVS20_MIN_NUMTEMPS                            12
+#define WINED3DVS20_MAX_STATICFLOWCONTROLDEPTH              4
+#define WINED3DVS20_MIN_STATICFLOWCONTROLDEPTH              1
+
+#define WINED3DVS20CAPS_PREDICATION                         0x00000001
+
 #endif /* __WINE_WINED3D_CAPS_H */
