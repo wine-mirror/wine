@@ -115,7 +115,7 @@ HRESULT WINAPI IWineD3DResourceImpl_SetPrivateData(IWineD3DResource *iface, REFG
 #if 0
         (*data)->uniquenessValue = This->uniquenessValue;
 #endif
-        if (Flags & D3DSPD_IUNKNOWN) {
+        if (Flags & WINED3DSPD_IUNKNOWN) {
             (*data)->ptr.object = (LPUNKNOWN)pData;
             (*data)->size = sizeof(LPUNKNOWN);
             IUnknown_AddRef((*data)->ptr.object);
@@ -157,7 +157,7 @@ HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFG
 
 
 #if 0 /* This may not be right. */
-    if (((*data)->flags & D3DSPD_VOLATILE)
+    if (((*data)->flags & WINED3DSPD_VOLATILE)
         && (*data)->uniquenessValue != This->uniquenessValue)
         return DDERR_EXPIRED;
 #endif
@@ -166,7 +166,7 @@ HRESULT WINAPI IWineD3DResourceImpl_GetPrivateData(IWineD3DResource *iface, REFG
         return WINED3DERR_MOREDATA;
     }
 
-    if ((*data)->flags & D3DSPD_IUNKNOWN) {
+    if ((*data)->flags & WINED3DSPD_IUNKNOWN) {
         *(LPUNKNOWN *)pData = (*data)->ptr.object;
         IUnknown_AddRef((*data)->ptr.object);
     }
@@ -187,7 +187,7 @@ HRESULT WINAPI IWineD3DResourceImpl_FreePrivateData(IWineD3DResource *iface, REF
 
     *data = (*data)->next;
 
-    if ((*data)->flags & D3DSPD_IUNKNOWN)
+    if ((*data)->flags & WINED3DSPD_IUNKNOWN)
     {
         if ((*data)->ptr.object != NULL)
             IUnknown_Release((*data)->ptr.object);
