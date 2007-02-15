@@ -861,20 +861,20 @@ typedef struct _WINED3DADAPTER_IDENTIFIER {
 } WINED3DADAPTER_IDENTIFIER;
 
 typedef struct _WINED3DPRESENT_PARAMETERS {
-    UINT                    *BackBufferWidth;
-    UINT                    *BackBufferHeight;
-    WINED3DFORMAT           *BackBufferFormat;
-    UINT                    *BackBufferCount;
-    WINED3DMULTISAMPLE_TYPE *MultiSampleType;
-    DWORD                   *MultiSampleQuality;
-    WINED3DSWAPEFFECT       *SwapEffect;
-    HWND                    *hDeviceWindow;
-    BOOL                    *Windowed;
-    BOOL                    *EnableAutoDepthStencil;
-    WINED3DFORMAT           *AutoDepthStencilFormat;
-    DWORD                   *Flags;
-    UINT                    *FullScreen_RefreshRateInHz;
-    UINT                    *PresentationInterval;
+    UINT                    BackBufferWidth;
+    UINT                    BackBufferHeight;
+    WINED3DFORMAT           BackBufferFormat;
+    UINT                    BackBufferCount;
+    WINED3DMULTISAMPLE_TYPE MultiSampleType;
+    DWORD                   MultiSampleQuality;
+    WINED3DSWAPEFFECT       SwapEffect;
+    HWND                    hDeviceWindow;
+    BOOL                    Windowed;
+    BOOL                    EnableAutoDepthStencil;
+    WINED3DFORMAT           AutoDepthStencilFormat;
+    DWORD                   Flags;
+    UINT                    FullScreen_RefreshRateInHz;
+    UINT                    PresentationInterval;
 } WINED3DPRESENT_PARAMETERS;
 
 typedef enum _WINED3DRESOURCETYPE {

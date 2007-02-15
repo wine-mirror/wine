@@ -128,21 +128,27 @@ static HRESULT WINAPI IDirect3DSwapChain9Impl_GetDevice(LPDIRECT3DSWAPCHAIN9 ifa
 static HRESULT WINAPI IDirect3DSwapChain9Impl_GetPresentParameters(LPDIRECT3DSWAPCHAIN9 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
     IDirect3DSwapChain9Impl *This = (IDirect3DSwapChain9Impl *)iface;
     WINED3DPRESENT_PARAMETERS winePresentParameters;
+    HRESULT hr;
+
     TRACE("(%p)->(%p): Relay\n", This, pPresentationParameters);
-    winePresentParameters.BackBufferWidth = &pPresentationParameters->BackBufferWidth;
-    winePresentParameters.BackBufferHeight = &pPresentationParameters->BackBufferHeight;
-    winePresentParameters.BackBufferFormat = (WINED3DFORMAT *) &pPresentationParameters->BackBufferFormat;
-    winePresentParameters.BackBufferCount = &pPresentationParameters->BackBufferCount;
-    winePresentParameters.MultiSampleType = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
-    winePresentParameters.MultiSampleQuality = &pPresentationParameters->MultiSampleQuality;
-    winePresentParameters.SwapEffect = (WINED3DSWAPEFFECT *)&pPresentationParameters->SwapEffect;
-    winePresentParameters.hDeviceWindow = &pPresentationParameters->hDeviceWindow;
-    winePresentParameters.Windowed = &pPresentationParameters->Windowed;
-    winePresentParameters.EnableAutoDepthStencil = &pPresentationParameters->EnableAutoDepthStencil;
-    winePresentParameters.Flags = &pPresentationParameters->Flags;
-    winePresentParameters.FullScreen_RefreshRateInHz = &pPresentationParameters->FullScreen_RefreshRateInHz;
-    winePresentParameters.PresentationInterval = &pPresentationParameters->PresentationInterval;
-    return IWineD3DSwapChain_GetPresentParameters(This->wineD3DSwapChain, &winePresentParameters);
+
+    hr = IWineD3DSwapChain_GetPresentParameters(This->wineD3DSwapChain, &winePresentParameters);
+
+    pPresentationParameters->BackBufferWidth            = winePresentParameters.BackBufferWidth;
+    pPresentationParameters->BackBufferHeight           = winePresentParameters.BackBufferHeight;
+    pPresentationParameters->BackBufferFormat           = winePresentParameters.BackBufferFormat;
+    pPresentationParameters->BackBufferCount            = winePresentParameters.BackBufferCount;
+    pPresentationParameters->MultiSampleType            = winePresentParameters.MultiSampleType;
+    pPresentationParameters->MultiSampleQuality         = winePresentParameters.MultiSampleQuality;
+    pPresentationParameters->SwapEffect                 = winePresentParameters.SwapEffect;
+    pPresentationParameters->hDeviceWindow              = winePresentParameters.hDeviceWindow;
+    pPresentationParameters->Windowed                   = winePresentParameters.Windowed;
+    pPresentationParameters->EnableAutoDepthStencil     = winePresentParameters.EnableAutoDepthStencil;
+    pPresentationParameters->Flags                      = winePresentParameters.Flags;
+    pPresentationParameters->FullScreen_RefreshRateInHz = winePresentParameters.FullScreen_RefreshRateInHz;
+    pPresentationParameters->PresentationInterval       = winePresentParameters.PresentationInterval;
+
+    return hr;
 }
 
 
@@ -184,23 +190,38 @@ HRESULT  WINAPI  IDirect3DDevice9Impl_CreateAdditionalSwapChain(LPDIRECT3DDEVICE
     }
 
     /* Allocate an associated WineD3DDevice object */
-    localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
-    localParameters.BackBufferHeight               = &pPresentationParameters->BackBufferHeight;
-    localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
-    localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
-    localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
-    localParameters.MultiSampleQuality             = &pPresentationParameters->MultiSampleQuality;
-    localParameters.SwapEffect                     = (WINED3DSWAPEFFECT *)&pPresentationParameters->SwapEffect;
-    localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
-    localParameters.Windowed                       = &pPresentationParameters->Windowed;
-    localParameters.EnableAutoDepthStencil         = &pPresentationParameters->EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat         = (WINED3DFORMAT *)&pPresentationParameters->AutoDepthStencilFormat;
-    localParameters.Flags                          = &pPresentationParameters->Flags;
-    localParameters.FullScreen_RefreshRateInHz     = &pPresentationParameters->FullScreen_RefreshRateInHz;
-    localParameters.PresentationInterval           = &pPresentationParameters->PresentationInterval;
-
+    localParameters.BackBufferWidth                     = pPresentationParameters->BackBufferWidth;
+    localParameters.BackBufferHeight                    = pPresentationParameters->BackBufferHeight;
+    localParameters.BackBufferFormat                    = pPresentationParameters->BackBufferFormat;
+    localParameters.BackBufferCount                     = pPresentationParameters->BackBufferCount;
+    localParameters.MultiSampleType                     = pPresentationParameters->MultiSampleType;
+    localParameters.MultiSampleQuality                  = pPresentationParameters->MultiSampleQuality;
+    localParameters.SwapEffect                          = pPresentationParameters->SwapEffect;
+    localParameters.hDeviceWindow                       = pPresentationParameters->hDeviceWindow;
+    localParameters.Windowed                            = pPresentationParameters->Windowed;
+    localParameters.EnableAutoDepthStencil              = pPresentationParameters->EnableAutoDepthStencil;
+    localParameters.AutoDepthStencilFormat              = pPresentationParameters->AutoDepthStencilFormat;
+    localParameters.Flags                               = pPresentationParameters->Flags;
+    localParameters.FullScreen_RefreshRateInHz          = pPresentationParameters->FullScreen_RefreshRateInHz;
+    localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
 
     hrc = IWineD3DDevice_CreateAdditionalSwapChain(This->WineD3DDevice, &localParameters, &object->wineD3DSwapChain, (IUnknown*)object, D3D9CB_CreateRenderTarget, D3D9CB_CreateDepthStencilSurface);
+
+    pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
+    pPresentationParameters->BackBufferHeight           = localParameters.BackBufferHeight;
+    pPresentationParameters->BackBufferFormat           = localParameters.BackBufferFormat;
+    pPresentationParameters->BackBufferCount            = localParameters.BackBufferCount;
+    pPresentationParameters->MultiSampleType            = localParameters.MultiSampleType;
+    pPresentationParameters->MultiSampleQuality         = localParameters.MultiSampleQuality;
+    pPresentationParameters->SwapEffect                 = localParameters.SwapEffect;
+    pPresentationParameters->hDeviceWindow              = localParameters.hDeviceWindow;
+    pPresentationParameters->Windowed                   = localParameters.Windowed;
+    pPresentationParameters->EnableAutoDepthStencil     = localParameters.EnableAutoDepthStencil;
+    pPresentationParameters->AutoDepthStencilFormat     = localParameters.AutoDepthStencilFormat;
+    pPresentationParameters->Flags                      = localParameters.Flags;
+    pPresentationParameters->FullScreen_RefreshRateInHz = localParameters.FullScreen_RefreshRateInHz;
+    pPresentationParameters->PresentationInterval       = localParameters.PresentationInterval;
+
     if (hrc != D3D_OK) {
         FIXME("(%p) call to IWineD3DDevice_CreateAdditionalSwapChain failed\n", This);
         HeapFree(GetProcessHeap(), 0 , object);

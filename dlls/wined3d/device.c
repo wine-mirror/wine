@@ -1247,10 +1247,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     *******************************/
 
     /* Check the params */
-    if(*pPresentationParameters->BackBufferCount > WINED3DPRESENT_BACK_BUFFER_MAX) {
-        ERR("App requested %d back buffers, this is not supported for now\n", *pPresentationParameters->BackBufferCount);
+    if(pPresentationParameters->BackBufferCount > WINED3DPRESENT_BACK_BUFFER_MAX) {
+        ERR("App requested %d back buffers, this is not supported for now\n", pPresentationParameters->BackBufferCount);
         return WINED3DERR_INVALIDCALL;
-    } else if (*pPresentationParameters->BackBufferCount > 1) {
+    } else if (pPresentationParameters->BackBufferCount > 1) {
         FIXME("The app requests more than one back buffer, this can't be supported properly. Please configure the application to use double buffering(=1 back buffer) if possible\n");
     }
 
@@ -1261,7 +1261,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     ********************/
 
     /* Setup hwnd we are using, plus which display this equates to */
-    object->win_handle = *(pPresentationParameters->hDeviceWindow);
+    object->win_handle = pPresentationParameters->hDeviceWindow;
     if (!object->win_handle) {
         object->win_handle = This->createParms.hFocusWindow;
     }
@@ -1295,39 +1295,26 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
      *  (or the focus window, if hDeviceWindow is NULL) is taken.
       **********************/
 
-    if (*(pPresentationParameters->Windowed) &&
-        ((*(pPresentationParameters->BackBufferWidth)  == 0) ||
-         (*(pPresentationParameters->BackBufferHeight) == 0))) {
+    if (pPresentationParameters->Windowed &&
+        ((pPresentationParameters->BackBufferWidth == 0) ||
+         (pPresentationParameters->BackBufferHeight == 0))) {
 
         RECT Rect;
         GetClientRect(object->win_handle, &Rect);
 
-        if (*(pPresentationParameters->BackBufferWidth) == 0) {
-           *(pPresentationParameters->BackBufferWidth) = Rect.right;
-           TRACE("Updating width to %d\n", *(pPresentationParameters->BackBufferWidth));
+        if (pPresentationParameters->BackBufferWidth == 0) {
+           pPresentationParameters->BackBufferWidth = Rect.right;
+           TRACE("Updating width to %d\n", pPresentationParameters->BackBufferWidth);
         }
-        if (*(pPresentationParameters->BackBufferHeight) == 0) {
-           *(pPresentationParameters->BackBufferHeight) = Rect.bottom;
-           TRACE("Updating height to %d\n", *(pPresentationParameters->BackBufferHeight));
+        if (pPresentationParameters->BackBufferHeight == 0) {
+           pPresentationParameters->BackBufferHeight = Rect.bottom;
+           TRACE("Updating height to %d\n", pPresentationParameters->BackBufferHeight);
         }
     }
 
     /* Put the correct figures in the presentation parameters */
     TRACE("Copying across presentation parameters\n");
-    object->presentParms.BackBufferWidth                = *(pPresentationParameters->BackBufferWidth);
-    object->presentParms.BackBufferHeight               = *(pPresentationParameters->BackBufferHeight);
-    object->presentParms.BackBufferFormat               = *(pPresentationParameters->BackBufferFormat);
-    object->presentParms.BackBufferCount                = *(pPresentationParameters->BackBufferCount);
-    object->presentParms.MultiSampleType                = *(pPresentationParameters->MultiSampleType);
-    object->presentParms.MultiSampleQuality             = NULL == pPresentationParameters->MultiSampleQuality ? 0 : *(pPresentationParameters->MultiSampleQuality);
-    object->presentParms.SwapEffect                     = *(pPresentationParameters->SwapEffect);
-    object->presentParms.hDeviceWindow                  = *(pPresentationParameters->hDeviceWindow);
-    object->presentParms.Windowed                       = *(pPresentationParameters->Windowed);
-    object->presentParms.EnableAutoDepthStencil         = *(pPresentationParameters->EnableAutoDepthStencil);
-    object->presentParms.AutoDepthStencilFormat         = *(pPresentationParameters->AutoDepthStencilFormat);
-    object->presentParms.Flags                          = *(pPresentationParameters->Flags);
-    object->presentParms.FullScreen_RefreshRateInHz     = *(pPresentationParameters->FullScreen_RefreshRateInHz);
-    object->presentParms.PresentationInterval           = *(pPresentationParameters->PresentationInterval);
+    object->presentParms = *pPresentationParameters;
 
     TRACE("calling rendertarget CB\n");
     hr = D3DCB_CreateRenderTarget((IUnknown *) This->parent,
@@ -1379,7 +1366,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
    * I think Windows and X have different ideas about fullscreen, does a single head count as full screen?
     **************************************/
 
-   if (!*(pPresentationParameters->Windowed)) {
+   if (!pPresentationParameters->Windowed) {
 
         DEVMODEW devmode;
         HDC      hdc;
@@ -1395,15 +1382,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         memset(&devmode, 0, sizeof(DEVMODEW));
         devmode.dmFields     = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
         devmode.dmBitsPerPel = (bpp >= 24) ? 32 : bpp; /* Stupid XVidMode cannot change bpp */
-        devmode.dmPelsWidth  = *(pPresentationParameters->BackBufferWidth);
-        devmode.dmPelsHeight = *(pPresentationParameters->BackBufferHeight);
+        devmode.dmPelsWidth  = pPresentationParameters->BackBufferWidth;
+        devmode.dmPelsHeight = pPresentationParameters->BackBufferHeight;
         MultiByteToWideChar(CP_ACP, 0, "Gamers CG", -1, devmode.dmDeviceName, CCHDEVICENAME);
         ChangeDisplaySettingsExW(devmode.dmDeviceName, &devmode, object->win_handle, CDS_FULLSCREEN, NULL);
 
         /* For GetDisplayMode */
         This->ddraw_width = devmode.dmPelsWidth;
         This->ddraw_height = devmode.dmPelsHeight;
-        This->ddraw_format = *(pPresentationParameters->BackBufferFormat);
+        This->ddraw_format = pPresentationParameters->BackBufferFormat;
 
         IWineD3DDevice_SetFullscreen(iface, TRUE);
 
@@ -1459,7 +1446,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     }
 
     /* Under directX swapchains share the depth stencil, so only create one depth-stencil */
-    if (*(pPresentationParameters->EnableAutoDepthStencil) && hr == WINED3D_OK) {
+    if (pPresentationParameters->EnableAutoDepthStencil && hr == WINED3D_OK) {
         TRACE("Creating depth stencil buffer\n");
         if (This->depthStencilBuffer == NULL ) {
             hr = D3DCB_CreateDepthStencil((IUnknown *) This->parent,
@@ -1727,8 +1714,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         WINED3DVIEWPORT vp;
         vp.X      = 0;
         vp.Y      = 0;
-        vp.Width  = *(pPresentationParameters->BackBufferWidth);
-        vp.Height = *(pPresentationParameters->BackBufferHeight);
+        vp.Width  = pPresentationParameters->BackBufferWidth;
+        vp.Height = pPresentationParameters->BackBufferHeight;
         vp.MinZ   = 0.0f;
         vp.MaxZ   = 1.0f;
         IWineD3DDevice_SetViewport((IWineD3DDevice *)This, &vp);
@@ -5344,15 +5331,15 @@ void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAMETERS* 
         surface->resource.allocatedMemory = NULL;
         surface->Flags &= ~SFLAG_DIBSECTION;
     }
-    surface->currentDesc.Width = *pPresentationParameters->BackBufferWidth;
-    surface->currentDesc.Height = *pPresentationParameters->BackBufferHeight;
+    surface->currentDesc.Width = pPresentationParameters->BackBufferWidth;
+    surface->currentDesc.Height = pPresentationParameters->BackBufferHeight;
     if (GL_SUPPORT(ARB_TEXTURE_NON_POWER_OF_TWO)) {
-        surface->pow2Width = *pPresentationParameters->BackBufferWidth;
-        surface->pow2Height = *pPresentationParameters->BackBufferHeight;
+        surface->pow2Width = pPresentationParameters->BackBufferWidth;
+        surface->pow2Height = pPresentationParameters->BackBufferHeight;
     } else {
         surface->pow2Width = surface->pow2Height = 1;
-        while (surface->pow2Width < *pPresentationParameters->BackBufferWidth) surface->pow2Width <<= 1;
-        while (surface->pow2Height < *pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
+        while (surface->pow2Width < pPresentationParameters->BackBufferWidth) surface->pow2Width <<= 1;
+        while (surface->pow2Height < pPresentationParameters->BackBufferHeight) surface->pow2Height <<= 1;
     }
     if(surface->glDescription.textureName) {
         ENTER_GL();
@@ -5360,8 +5347,8 @@ void updateSurfaceDesc(IWineD3DSurfaceImpl *surface, WINED3DPRESENT_PARAMETERS* 
         LEAVE_GL();
         surface->glDescription.textureName = 0;
     }
-    if(surface->pow2Width != *pPresentationParameters->BackBufferWidth ||
-       surface->pow2Height != *pPresentationParameters->BackBufferHeight) {
+    if(surface->pow2Width != pPresentationParameters->BackBufferWidth ||
+       surface->pow2Height != pPresentationParameters->BackBufferHeight) {
         surface->Flags |= SFLAG_NONPOW2;
     } else  {
         surface->Flags &= ~SFLAG_NONPOW2;
@@ -5392,75 +5379,75 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
      * TODO: Figure out what happens to explicit swapchains, or if we have more than one implicit swapchain
      */
     TRACE("New params:\n");
-    TRACE("BackBufferWidth = %d\n", *pPresentationParameters->BackBufferWidth);
-    TRACE("BackBufferHeight = %d\n", *pPresentationParameters->BackBufferHeight);
-    TRACE("BackBufferFormat = %s\n", debug_d3dformat(*pPresentationParameters->BackBufferFormat));
-    TRACE("BackBufferCount = %d\n", *pPresentationParameters->BackBufferCount);
-    TRACE("MultiSampleType = %d\n", *pPresentationParameters->MultiSampleType);
-    TRACE("MultiSampleQuality = %d\n", *pPresentationParameters->MultiSampleQuality);
-    TRACE("SwapEffect = %d\n", *pPresentationParameters->SwapEffect);
-    TRACE("hDeviceWindow = %p\n", *pPresentationParameters->hDeviceWindow);
-    TRACE("Windowed = %s\n", *pPresentationParameters->Windowed ? "true" : "false");
-    TRACE("EnableAutoDepthStencil = %s\n", *pPresentationParameters->EnableAutoDepthStencil ? "true" : "false");
-    TRACE("Flags = %08x\n", *pPresentationParameters->Flags);
-    TRACE("FullScreen_RefreshRateInHz = %d\n", *pPresentationParameters->FullScreen_RefreshRateInHz);
-    TRACE("PresentationInterval = %d\n", *pPresentationParameters->PresentationInterval);
+    TRACE("BackBufferWidth = %d\n", pPresentationParameters->BackBufferWidth);
+    TRACE("BackBufferHeight = %d\n", pPresentationParameters->BackBufferHeight);
+    TRACE("BackBufferFormat = %s\n", debug_d3dformat(pPresentationParameters->BackBufferFormat));
+    TRACE("BackBufferCount = %d\n", pPresentationParameters->BackBufferCount);
+    TRACE("MultiSampleType = %d\n", pPresentationParameters->MultiSampleType);
+    TRACE("MultiSampleQuality = %d\n", pPresentationParameters->MultiSampleQuality);
+    TRACE("SwapEffect = %d\n", pPresentationParameters->SwapEffect);
+    TRACE("hDeviceWindow = %p\n", pPresentationParameters->hDeviceWindow);
+    TRACE("Windowed = %s\n", pPresentationParameters->Windowed ? "true" : "false");
+    TRACE("EnableAutoDepthStencil = %s\n", pPresentationParameters->EnableAutoDepthStencil ? "true" : "false");
+    TRACE("Flags = %08x\n", pPresentationParameters->Flags);
+    TRACE("FullScreen_RefreshRateInHz = %d\n", pPresentationParameters->FullScreen_RefreshRateInHz);
+    TRACE("PresentationInterval = %d\n", pPresentationParameters->PresentationInterval);
 
     /* No special treatment of these parameters. Just store them */
-    swapchain->presentParms.SwapEffect = *pPresentationParameters->SwapEffect;
-    swapchain->presentParms.Flags = *pPresentationParameters->Flags;
-    swapchain->presentParms.PresentationInterval = *pPresentationParameters->PresentationInterval;
-    swapchain->presentParms.FullScreen_RefreshRateInHz = *pPresentationParameters->FullScreen_RefreshRateInHz;
+    swapchain->presentParms.SwapEffect = pPresentationParameters->SwapEffect;
+    swapchain->presentParms.Flags = pPresentationParameters->Flags;
+    swapchain->presentParms.PresentationInterval = pPresentationParameters->PresentationInterval;
+    swapchain->presentParms.FullScreen_RefreshRateInHz = pPresentationParameters->FullScreen_RefreshRateInHz;
 
     /* What to do about these? */
-    if(*pPresentationParameters->BackBufferCount != 0 &&
-        *pPresentationParameters->BackBufferCount != swapchain->presentParms.BackBufferCount) {
+    if(pPresentationParameters->BackBufferCount != 0 &&
+        pPresentationParameters->BackBufferCount != swapchain->presentParms.BackBufferCount) {
         ERR("Cannot change the back buffer count yet\n");
     }
-    if(*pPresentationParameters->BackBufferFormat != WINED3DFMT_UNKNOWN &&
-        *pPresentationParameters->BackBufferFormat != swapchain->presentParms.BackBufferFormat) {
+    if(pPresentationParameters->BackBufferFormat != WINED3DFMT_UNKNOWN &&
+        pPresentationParameters->BackBufferFormat != swapchain->presentParms.BackBufferFormat) {
         ERR("Cannot change the back buffer format yet\n");
     }
-    if(*pPresentationParameters->hDeviceWindow != NULL &&
-        *pPresentationParameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow) {
+    if(pPresentationParameters->hDeviceWindow != NULL &&
+        pPresentationParameters->hDeviceWindow != swapchain->presentParms.hDeviceWindow) {
         ERR("Cannot change the device window yet\n");
     }
-    if(*pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
+    if(pPresentationParameters->EnableAutoDepthStencil != swapchain->presentParms.EnableAutoDepthStencil) {
         ERR("What do do about a changed auto depth stencil parameter?\n");
     }
 
-    if(*pPresentationParameters->Windowed) {
+    if(pPresentationParameters->Windowed) {
         mode.Width = swapchain->orig_width;
         mode.Height = swapchain->orig_height;
         mode.RefreshRate = 0;
         mode.Format = swapchain->presentParms.BackBufferFormat;
     } else {
-        mode.Width = *pPresentationParameters->BackBufferWidth;
-        mode.Height = *pPresentationParameters->BackBufferHeight;
-        mode.RefreshRate = *pPresentationParameters->FullScreen_RefreshRateInHz;
+        mode.Width = pPresentationParameters->BackBufferWidth;
+        mode.Height = pPresentationParameters->BackBufferHeight;
+        mode.RefreshRate = pPresentationParameters->FullScreen_RefreshRateInHz;
         mode.Format = swapchain->presentParms.BackBufferFormat;
     }
 
     /* Should Width == 800 && Height == 0 set 800x600? */
-    if(*pPresentationParameters->BackBufferWidth != 0 && *pPresentationParameters->BackBufferHeight != 0 &&
-       (*pPresentationParameters->BackBufferWidth != swapchain->presentParms.BackBufferWidth ||
-        *pPresentationParameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
+    if(pPresentationParameters->BackBufferWidth != 0 && pPresentationParameters->BackBufferHeight != 0 &&
+       (pPresentationParameters->BackBufferWidth != swapchain->presentParms.BackBufferWidth ||
+        pPresentationParameters->BackBufferHeight != swapchain->presentParms.BackBufferHeight))
     {
         WINED3DVIEWPORT vp;
         int i;
 
         vp.X = 0;
         vp.Y = 0;
-        vp.Width = *pPresentationParameters->BackBufferWidth;
-        vp.Height = *pPresentationParameters->BackBufferHeight;
+        vp.Width = pPresentationParameters->BackBufferWidth;
+        vp.Height = pPresentationParameters->BackBufferHeight;
         vp.MinZ = 0;
         vp.MaxZ = 1;
 
-        if(!*pPresentationParameters->Windowed) {
+        if(!pPresentationParameters->Windowed) {
             DisplayModeChanged = TRUE;
         }
-        swapchain->presentParms.BackBufferWidth = *pPresentationParameters->BackBufferWidth;
-        swapchain->presentParms.BackBufferHeight = *pPresentationParameters->BackBufferHeight;
+        swapchain->presentParms.BackBufferWidth = pPresentationParameters->BackBufferWidth;
+        swapchain->presentParms.BackBufferHeight = pPresentationParameters->BackBufferHeight;
 
         updateSurfaceDesc((IWineD3DSurfaceImpl *)swapchain->frontBuffer, pPresentationParameters);
         for(i = 0; i < swapchain->presentParms.BackBufferCount; i++) {
@@ -5471,22 +5458,22 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Reset(IWineD3DDevice* iface, WINED3DPRE
         IWineD3DDevice_SetViewport(iface, &vp);
     }
 
-    if((*pPresentationParameters->Windowed && !swapchain->presentParms.Windowed) ||
-       (swapchain->presentParms.Windowed && !*pPresentationParameters->Windowed) ||
+    if((pPresentationParameters->Windowed && !swapchain->presentParms.Windowed) ||
+       (swapchain->presentParms.Windowed && !pPresentationParameters->Windowed) ||
         DisplayModeChanged) {
 
         /* Switching to fullscreen? Change to fullscreen mode, THEN change the screen res */
-        if(!(*pPresentationParameters->Windowed)) {
+        if(!pPresentationParameters->Windowed) {
             IWineD3DDevice_SetFullscreen(iface, TRUE);
         }
 
         IWineD3DDevice_SetDisplayMode(iface, 0, &mode);
 
         /* Switching out of fullscreen mode? First set the original res, then change the window */
-        if(*pPresentationParameters->Windowed) {
+        if(pPresentationParameters->Windowed) {
             IWineD3DDevice_SetFullscreen(iface, FALSE);
         }
-        swapchain->presentParms.Windowed = *pPresentationParameters->Windowed;
+        swapchain->presentParms.Windowed = pPresentationParameters->Windowed;
     }
 
     IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);

@@ -2720,17 +2720,9 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
                                 IDirectDrawSurfaceImpl *primary)
 {
     HRESULT hr;
-    UINT                  BackBufferCount = 0;
     HWND                  window;
 
     WINED3DPRESENT_PARAMETERS localParameters;
-    BOOL isWindowed, EnableAutoDepthStencil;
-    WINED3DFORMAT AutoDepthStencilFormat;
-    WINED3DMULTISAMPLE_TYPE MultiSampleType;
-    WINED3DSWAPEFFECT  SwapEffect;
-    DWORD Flags, MultiSampleQuality;
-    UINT FullScreen_RefreshRateInHz, PresentationInterval;
-    WINED3DDISPLAYMODE Mode;
 
     TRACE("(%p)->(%p)\n", This, primary);
 
@@ -2761,47 +2753,28 @@ IDirectDrawImpl_AttachD3DDevice(IDirectDrawImpl *This,
         TRACE("(%p) Using existing window %p for Direct3D rendering\n", This, window);
     }
 
-    /* use the surface description for the device parameters, not the
-     * Device settings. The app might render to an offscreen surface
-     */
-    Mode.Width = primary->surface_desc.dwWidth;
-    Mode.Height = primary->surface_desc.dwHeight;
-    Mode.Format = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
-
-    if(primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT)
-    {
-        BackBufferCount = primary->surface_desc.dwBackBufferCount;
-    }
-
     /* Store the future Render Target surface */
     This->d3d_target = primary;
 
-    isWindowed = !(This->cooperative_level & DDSCL_FULLSCREEN);
-    EnableAutoDepthStencil = FALSE;
-    AutoDepthStencilFormat = WINED3DFMT_D16;
-    MultiSampleType = WINED3DMULTISAMPLE_NONE;
-    SwapEffect = WINED3DSWAPEFFECT_COPY;
-    Flags = 0;
-    MultiSampleQuality = 0;
-    FullScreen_RefreshRateInHz = WINED3DPRESENT_RATE_DEFAULT; /* Default rate: It's already set */
-    PresentationInterval = WINED3DPRESENT_INTERVAL_DEFAULT;
+    /* Use the surface description for the device parameters, not the
+     * Device settings. The app might render to an offscreen surface
+     */
+    localParameters.BackBufferWidth                 = primary->surface_desc.dwWidth;
+    localParameters.BackBufferHeight                = primary->surface_desc.dwHeight;
+    localParameters.BackBufferFormat                = PixelFormat_DD2WineD3D(&primary->surface_desc.u4.ddpfPixelFormat);
+    localParameters.BackBufferCount                 = (primary->surface_desc.dwFlags & DDSD_BACKBUFFERCOUNT) ? primary->surface_desc.dwBackBufferCount : 0;
+    localParameters.MultiSampleType                 = WINED3DMULTISAMPLE_NONE;
+    localParameters.MultiSampleQuality              = 0;
+    localParameters.SwapEffect                      = WINED3DSWAPEFFECT_COPY;
+    localParameters.hDeviceWindow                   = window;
+    localParameters.Windowed                        = !(This->cooperative_level & DDSCL_FULLSCREEN);
+    localParameters.EnableAutoDepthStencil          = FALSE;
+    localParameters.AutoDepthStencilFormat          = WINED3DFMT_D16;
+    localParameters.Flags                           = 0;
+    localParameters.FullScreen_RefreshRateInHz      = WINED3DPRESENT_RATE_DEFAULT; /* Default rate: It's already set */
+    localParameters.PresentationInterval            = WINED3DPRESENT_INTERVAL_DEFAULT;
 
-    TRACE("Passing mode %d\n", Mode.Format);
-
-    localParameters.BackBufferWidth                = &Mode.Width;
-    localParameters.BackBufferHeight               = &Mode.Height;
-    localParameters.BackBufferFormat               = (WINED3DFORMAT *) &Mode.Format;
-    localParameters.BackBufferCount                = (UINT *) &BackBufferCount;
-    localParameters.MultiSampleType                = &MultiSampleType;
-    localParameters.MultiSampleQuality             = &MultiSampleQuality;
-    localParameters.SwapEffect                     = &SwapEffect;
-    localParameters.hDeviceWindow                  = &window;
-    localParameters.Windowed                       = &isWindowed;
-    localParameters.EnableAutoDepthStencil         = &EnableAutoDepthStencil;
-    localParameters.AutoDepthStencilFormat         = &AutoDepthStencilFormat;
-    localParameters.Flags                          = &Flags;
-    localParameters.FullScreen_RefreshRateInHz     = &FullScreen_RefreshRateInHz;
-    localParameters.PresentationInterval           = &PresentationInterval;
+    TRACE("Passing mode %d\n", localParameters.BackBufferFormat);
 
     /* Set this NOW, otherwise creating the depth stencil surface will cause a
      * recursive loop until ram or emulated video memory is full
