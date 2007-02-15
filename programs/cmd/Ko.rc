@@ -3,7 +3,7 @@
  * Korean Language Support
  *
  * Copyright (C) 1999 D A Pickles
- * Copyright 2005 YunSong Hwang
+ * Copyright 2005,2007 YunSong Hwang
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -55,17 +55,17 @@ ECHO OFF 명령은  신호가 진행되는 걸 보여주는걸 막습니다.\n"
   WCMD_ERASE,  "ERASE 도움말\n"
 
   WCMD_FOR,
-"FOR 명령은  파일 한 셋트에서 각각의 명령을 실행시킬 때 사용.\n\
+"FOR 명령은  파일  모음에서 각각의 명령을 실행시킬 때 사용.\n\
 \n\
 문법: FOR 변수 IN (set) DO 명령\n\
 \n\
- cmd 안에서 존재하지 않는 배치 파일에 FOR를 사용할려면 두 개의 %가 필요합니다.\n"
+ wine의 cmd 안에서 존재하지 않는 배치 파일에 FOR를 사용할려면 두 개의 %가 필요합니다.\n"
 
   WCMD_GOTO,
 "The GOTO  명령은 배치파일 안에서 다른 부분으로 실행흐름을 바꿉니다.\n\
 \n\
-GOTO의 타겟인 라벨은 공백을 포함해서 255자까지 가능하다\n\
-(다른 운영체제에서는 다를 수도 있다).\n\
+GOTO의 타겟인 라벨은 공백을 포함해서 255자까지 가능합니다\n\
+(다른 운영체제에서는 다를 수도 있습니다).\n\
  만약 2개나 더 많은 동일한 라벨이 존재할 경우 배치파일은 첫번째 것만 \n\
 실행시킬 것입니다. 존재하지 않는 라벨로 GOTO를 시도한다면 배치파일 실행은 \n\
 중단됩니다.\n\
