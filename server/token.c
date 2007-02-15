@@ -74,9 +74,13 @@ const PSID security_interactive_sid = (PSID)&interactive_sid;
 static const PSID security_authenticated_user_sid = (PSID)&authenticated_user_sid;
 static const PSID security_local_system_sid = (PSID)&local_system_sid;
 
+static LUID prev_luid_value = { 1000, 0 };
+
 struct token
 {
     struct object  obj;             /* object header */
+    LUID           token_id;        /* system-unique id of token */
+    LUID           modified_id;     /* new id allocated every time token is modified */
     struct list    privileges;      /* privileges available to the token */
     struct list    groups;          /* groups that the user of this token belongs to (sid_and_attributes) */
     SID           *user;            /* SID of user this token represents */
@@ -354,6 +358,12 @@ static inline int is_equal_luid( const LUID *luid1, const LUID *luid2 )
     return (luid1->LowPart == luid2->LowPart && luid1->HighPart == luid2->HighPart);
 }
 
+static inline void allocate_luid( LUID *luid )
+{
+    prev_luid_value.LowPart++;
+    *luid = prev_luid_value;
+}
+
 static inline void luid_and_attr_from_privilege( LUID_AND_ATTRIBUTES *out, const struct privilege *in)
 {
     out->Luid = in->luid;
@@ -411,17 +421,25 @@ static void token_destroy( struct object *obj )
  *  privs may be NULL if priv_count is 0.
  *  default_dacl may be NULL, indicating that all objects created by the user
  *   are unsecured.
+ *  modified_id may be NULL, indicating that a new modified_id luid should be
+ *   allocated.
  */
 static struct token *create_token( unsigned primary, const SID *user,
                                    const SID_AND_ATTRIBUTES *groups, unsigned int group_count,
                                    const LUID_AND_ATTRIBUTES *privs, unsigned int priv_count,
-                                   const ACL *default_dacl, TOKEN_SOURCE source )
+                                   const ACL *default_dacl, TOKEN_SOURCE source,
+                                   const LUID *modified_id )
 {
     struct token *token = alloc_object( &token_ops );
     if (token)
     {
         unsigned int i;
 
+        allocate_luid( &token->token_id );
+        if (modified_id)
+            token->modified_id = *modified_id;
+        else
+            allocate_luid( &token->modified_id );
         list_init( &token->privileges );
         list_init( &token->groups );
         token->primary = primary;
@@ -596,7 +614,7 @@ struct token *token_create_admin( void )
         token = create_token( TRUE, &interactive_sid,
                             admin_groups, sizeof(admin_groups)/sizeof(admin_groups[0]),
                             admin_privs, sizeof(admin_privs)/sizeof(admin_privs[0]),
-                            default_dacl, admin_source );
+                            default_dacl, admin_source, NULL );
         /* we really need a primary group */
         assert( token->primary_group );
     }
@@ -628,6 +646,9 @@ static unsigned int token_adjust_privileges( struct token *token, const LUID_AND
                                              unsigned int mod_privs_count )
 {
     unsigned int i, modified_count = 0;
+
+    /* mark as modified */
+    allocate_luid( &token->modified_id );
 
     for (i = 0; i < count; i++)
     {
@@ -664,6 +685,10 @@ static unsigned int token_adjust_privileges( struct token *token, const LUID_AND
 static void token_disable_privileges( struct token *token )
 {
     struct privilege *privilege;
+
+    /* mark as modified */
+    allocate_luid( &token->modified_id );
+
     LIST_FOR_EACH_ENTRY( privilege, &token->privileges, struct privilege, entry )
         privilege->enabled = FALSE;
 }
@@ -1097,7 +1122,8 @@ DECL_HANDLER(duplicate_token)
         struct token *token = create_token( req->primary, src_token->user,
                                             NULL, 0, NULL, 0,
                                             src_token->default_dacl,
-                                            src_token->source );
+                                            src_token->source,
+                                            &src_token->modified_id );
         if (token)
         {
             struct privilege *privilege;
