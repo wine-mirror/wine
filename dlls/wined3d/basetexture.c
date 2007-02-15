@@ -444,25 +444,6 @@ void WINAPI IWineD3DBaseTextureImpl_ApplyStateChanges(IWineD3DBaseTexture *iface
         }
         state++;
     }
-
-    for(i = 0 ;textureObjectTextureStates[i].state != - 1; i++) {
-        if(*state != textureStates[textureObjectTextureStates[i].state] ) {
-            /* apply the state */
-            *state = textureStates[textureObjectTextureStates[i].state];
-            switch (textureObjectTextureStates[i].function) {
-            case WINED3DTSS_ADDRESSW:
-            /* I'm not sure what to do if this is set as well as ADDRESSW on the sampler, how do they interact together? */
-            break;
-            case WINED3DFUNC_UNIMPLEMENTED: /* unimplemented */
-            TRACE("(%p) : stub\n", This);
-            break;
-            case WINED3DFUNC_NOTSUPPORTED: /* nop */
-            TRACE("(%p) : function no supported by this opengl implementation\n", This);
-            break;
-            }
-        }
-        state++;
-    }
 }
 
 
