@@ -58,18 +58,18 @@ static void state_undefined(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
 }
 
 static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    D3DFILLMODE Value = stateblock->renderState[WINED3DRS_FILLMODE];
+    WINED3DFILLMODE Value = stateblock->renderState[WINED3DRS_FILLMODE];
 
     switch(Value) {
-        case D3DFILL_POINT:
+        case WINED3DFILL_POINT:
             glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_POINT)");
             break;
-        case D3DFILL_WIREFRAME:
+        case WINED3DFILL_WIREFRAME:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_LINE)");
             break;
-        case D3DFILL_SOLID:
+        case WINED3DFILL_SOLID:
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             checkGLcall("glPolygonMode(GL_FRONT_AND_BACK, GL_FILL)");
             break;
@@ -287,8 +287,8 @@ static void state_blend(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
             srcBlend = GL_ONE_MINUS_SRC_ALPHA;
             break;
 
-        case D3DBLEND_BLENDFACTOR        : dstBlend = GL_CONSTANT_COLOR;   break;
-        case D3DBLEND_INVBLENDFACTOR     : dstBlend = GL_ONE_MINUS_CONSTANT_COLOR;  break;
+        case WINED3DBLEND_BLENDFACTOR        : dstBlend = GL_CONSTANT_COLOR;   break;
+        case WINED3DBLEND_INVBLENDFACTOR     : dstBlend = GL_ONE_MINUS_CONSTANT_COLOR;  break;
         default:
             FIXME("Unrecognized dst blend value %d\n", stateblock->renderState[WINED3DRS_DESTBLEND]);
     }
@@ -684,7 +684,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
      * the system will apply only pixel(=table) fog effects."
      */
-    else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == D3DFOG_NONE) {
+    else if(stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
         glHint(GL_FOG_HINT, GL_FASTEST);
         checkGLcall("glHint(GL_FOG_HINT, GL_FASTEST)");
         context->last_was_foggy_shader = FALSE;
@@ -693,7 +693,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
             /* Processed vertices have their fog factor stored in the specular value. Fall too the none case.
              * If we are drawing untransformed vertices atm, d3ddevice_set_ortho will update the fog
              */
-            case D3DFOG_EXP:  {
+            case WINED3DFOG_EXP:  {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
@@ -704,7 +704,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                     break;
                 }
             }
-            case D3DFOG_EXP2: {
+            case WINED3DFOG_EXP2: {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_EXP2);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
@@ -715,7 +715,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                     break;
                 }
             }
-            case D3DFOG_LINEAR: {
+            case WINED3DFOG_LINEAR: {
                 if(!context->last_was_rhw) {
                     glFogi(GL_FOG_MODE, GL_LINEAR);
                     checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
@@ -726,7 +726,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                     break;
                 }
             }
-            case D3DFOG_NONE: {
+            case WINED3DFOG_NONE: {
                 /* Both are none? According to msdn the alpha channel of the specular
                  * color contains a fog factor. Set it in drawStridedSlow.
                  * Same happens with Vertexfog on transformed vertices
@@ -752,7 +752,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         context->last_was_foggy_shader = FALSE;
 
         switch (stateblock->renderState[WINED3DRS_FOGTABLEMODE]) {
-            case D3DFOG_EXP:
+            case WINED3DFOG_EXP:
                 glFogi(GL_FOG_MODE, GL_EXP);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP");
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
@@ -761,7 +761,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 }
                 break;
 
-            case D3DFOG_EXP2:
+            case WINED3DFOG_EXP2:
                 glFogi(GL_FOG_MODE, GL_EXP2);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_EXP2");
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
@@ -770,7 +770,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 }
                 break;
 
-            case D3DFOG_LINEAR:
+            case WINED3DFOG_LINEAR:
                 glFogi(GL_FOG_MODE, GL_LINEAR);
                 checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR");
                 if(GL_SUPPORT(EXT_FOG_COORD)) {
@@ -779,7 +779,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
                 }
                 break;
 
-            case D3DFOG_NONE:   /* Won't happen */
+            case WINED3DFOG_NONE:   /* Won't happen */
             default:
                 FIXME("Unexpected WINED3DRS_FOGTABLEMODE %d\n", stateblock->renderState[WINED3DRS_FOGTABLEMODE]);
         }
@@ -848,17 +848,17 @@ static void state_colormat(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
               stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE],
               stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE]);
 
-        if (stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == D3DMCS_COLOR1) {
-            if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+        if (stateblock->renderState[WINED3DRS_DIFFUSEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
+            if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
                 Parm = GL_AMBIENT_AND_DIFFUSE;
             } else {
                 Parm = GL_DIFFUSE;
             }
-        } else if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == D3DMCS_COLOR1) {
+        } else if (stateblock->renderState[WINED3DRS_AMBIENTMATERIALSOURCE] == WINED3DMCS_COLOR1) {
             Parm = GL_AMBIENT;
-        } else if (stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == D3DMCS_COLOR1) {
+        } else if (stateblock->renderState[WINED3DRS_EMISSIVEMATERIALSOURCE] == WINED3DMCS_COLOR1) {
             Parm = GL_EMISSION;
-        } else if (stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == D3DMCS_COLOR1) {
+        } else if (stateblock->renderState[WINED3DRS_SPECULARMATERIALSOURCE] == WINED3DMCS_COLOR1) {
             Parm = GL_SPECULAR;
         }
     }
@@ -1080,14 +1080,14 @@ static void state_colorwrite(DWORD state, IWineD3DStateBlockImpl *stateblock, Wi
     DWORD Value = stateblock->renderState[WINED3DRS_COLORWRITEENABLE];
 
     TRACE("Color mask: r(%d) g(%d) b(%d) a(%d)\n",
-        Value & D3DCOLORWRITEENABLE_RED   ? 1 : 0,
-        Value & D3DCOLORWRITEENABLE_GREEN ? 1 : 0,
-        Value & D3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
-        Value & D3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
-    glColorMask(Value & D3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
-                Value & D3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                Value & D3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                Value & D3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+        Value & WINED3DCOLORWRITEENABLE_RED   ? 1 : 0,
+        Value & WINED3DCOLORWRITEENABLE_GREEN ? 1 : 0,
+        Value & WINED3DCOLORWRITEENABLE_BLUE  ? 1 : 0,
+        Value & WINED3DCOLORWRITEENABLE_ALPHA ? 1 : 0);
+    glColorMask(Value & WINED3DCOLORWRITEENABLE_RED   ? GL_TRUE : GL_FALSE,
+                Value & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                Value & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                Value & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     checkGLcall("glColorMask(...)");
 
     /* depends on WINED3DRS_COLORWRITEENABLE. */
@@ -1259,7 +1259,7 @@ static void state_multisampmask(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
 static void state_patchedgestyle(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
-    if (stateblock->renderState[WINED3DRS_PATCHEDGESTYLE] != D3DPATCHEDGE_DISCRETE)
+    if (stateblock->renderState[WINED3DRS_PATCHEDGESTYLE] != WINED3DPATCHEDGE_DISCRETE)
         ERR("(WINED3DRS_PATCHEDGESTYLE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_PATCHEDGESTYLE]);
 }
 
@@ -1277,13 +1277,13 @@ static void state_patchsegments(DWORD state, IWineD3DStateBlockImpl *stateblock,
 
 static void state_positiondegree(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
-    if (stateblock->renderState[WINED3DRS_POSITIONDEGREE] != D3DDEGREE_CUBIC)
+    if (stateblock->renderState[WINED3DRS_POSITIONDEGREE] != WINED3DDEGREE_CUBIC)
         ERR("(WINED3DRS_POSITIONDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_POSITIONDEGREE]);
 }
 
 static void state_normaldegree(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     TRACE("Stub\n");
-    if (stateblock->renderState[WINED3DRS_NORMALDEGREE] != D3DDEGREE_LINEAR)
+    if (stateblock->renderState[WINED3DRS_NORMALDEGREE] != WINED3DDEGREE_LINEAR)
         ERR("(WINED3DRS_NORMALDEGREE,%d) not yet implemented\n", stateblock->renderState[WINED3DRS_NORMALDEGREE]);
 }
 
@@ -1819,7 +1819,7 @@ static void tex_resultarg(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD
         return;
     }
 
-    if(stateblock->textureState[stage][WINED3DTSS_RESULTARG] != D3DTA_CURRENT) {
+    if(stateblock->textureState[stage][WINED3DTSS_RESULTARG] != WINED3DTA_CURRENT) {
         ERR("WINED3DTSS_RESULTARG not supported yet\n");
     }
 }
@@ -2929,8 +2929,8 @@ static void viewport(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCon
 
     stateblock->wineD3DDevice->posFixup[2] = 0.9 / stateblock->viewport.Width;
     stateblock->wineD3DDevice->posFixup[3] = -0.9 / stateblock->viewport.Height;
-    if(!isStateDirty(context, STATE_TRANSFORM(D3DTS_PROJECTION))) {
-        transform_projection(STATE_TRANSFORM(D3DTS_PROJECTION), stateblock, context);
+    if(!isStateDirty(context, STATE_TRANSFORM(WINED3DTS_PROJECTION))) {
+        transform_projection(STATE_TRANSFORM(WINED3DTS_PROJECTION), stateblock, context);
     }
 
 }
