@@ -19,6 +19,21 @@
 #ifndef __WINE_WINED3D_CAPS_H
 #define __WINE_WINED3D_CAPS_H
 
+#define WINED3DPBLENDCAPS_ZERO                              0x00000001
+#define WINED3DPBLENDCAPS_ONE                               0x00000002
+#define WINED3DPBLENDCAPS_SRCCOLOR                          0x00000004
+#define WINED3DPBLENDCAPS_INVSRCCOLOR                       0x00000008
+#define WINED3DPBLENDCAPS_SRCALPHA                          0x00000010
+#define WINED3DPBLENDCAPS_INVSRCALPHA                       0x00000020
+#define WINED3DPBLENDCAPS_DESTALPHA                         0x00000040
+#define WINED3DPBLENDCAPS_INVDESTALPHA                      0x00000080
+#define WINED3DPBLENDCAPS_DESTCOLOR                         0x00000100
+#define WINED3DPBLENDCAPS_INVDESTCOLOR                      0x00000200
+#define WINED3DPBLENDCAPS_SRCALPHASAT                       0x00000400
+#define WINED3DPBLENDCAPS_BOTHSRCALPHA                      0x00000800
+#define WINED3DPBLENDCAPS_BOTHINVSRCALPHA                   0x00001000
+#define WINED3DPBLENDCAPS_BLENDFACTOR                       0x00002000
+
 #define WINED3DSTENCILCAPS_KEEP                             0x00000001
 #define WINED3DSTENCILCAPS_ZERO                             0x00000002
 #define WINED3DSTENCILCAPS_REPLACE                          0x00000004

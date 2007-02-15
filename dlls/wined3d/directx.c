@@ -1939,35 +1939,35 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                        D3DPCMPCAPS_NEVER        |
                        D3DPCMPCAPS_NOTEQUAL;
 
-    *pCaps->SrcBlendCaps  = D3DPBLENDCAPS_BLENDFACTOR     |
-                            D3DPBLENDCAPS_BOTHINVSRCALPHA |
-                            D3DPBLENDCAPS_BOTHSRCALPHA    |
-                            D3DPBLENDCAPS_DESTALPHA       |
-                            D3DPBLENDCAPS_DESTCOLOR       |
-                            D3DPBLENDCAPS_INVDESTALPHA    |
-                            D3DPBLENDCAPS_INVDESTCOLOR    |
-                            D3DPBLENDCAPS_INVSRCALPHA     |
-                            D3DPBLENDCAPS_INVSRCCOLOR     |
-                            D3DPBLENDCAPS_ONE             |
-                            D3DPBLENDCAPS_SRCALPHA        |
-                            D3DPBLENDCAPS_SRCALPHASAT     |
-                            D3DPBLENDCAPS_SRCCOLOR        |
-                            D3DPBLENDCAPS_ZERO;
-                            
-    *pCaps->DestBlendCaps = D3DPBLENDCAPS_BLENDFACTOR     |
-                            D3DPBLENDCAPS_BOTHINVSRCALPHA |
-                            D3DPBLENDCAPS_BOTHSRCALPHA    |
-                            D3DPBLENDCAPS_DESTALPHA       |
-                            D3DPBLENDCAPS_DESTCOLOR       |
-                            D3DPBLENDCAPS_INVDESTALPHA    |
-                            D3DPBLENDCAPS_INVDESTCOLOR    |
-                            D3DPBLENDCAPS_INVSRCALPHA     |
-                            D3DPBLENDCAPS_INVSRCCOLOR     |
-                            D3DPBLENDCAPS_ONE             |
-                            D3DPBLENDCAPS_SRCALPHA        |
-                            D3DPBLENDCAPS_SRCALPHASAT     |
-                            D3DPBLENDCAPS_SRCCOLOR        |
-                            D3DPBLENDCAPS_ZERO;
+    *pCaps->SrcBlendCaps  = WINED3DPBLENDCAPS_BLENDFACTOR     |
+                            WINED3DPBLENDCAPS_BOTHINVSRCALPHA |
+                            WINED3DPBLENDCAPS_BOTHSRCALPHA    |
+                            WINED3DPBLENDCAPS_DESTALPHA       |
+                            WINED3DPBLENDCAPS_DESTCOLOR       |
+                            WINED3DPBLENDCAPS_INVDESTALPHA    |
+                            WINED3DPBLENDCAPS_INVDESTCOLOR    |
+                            WINED3DPBLENDCAPS_INVSRCALPHA     |
+                            WINED3DPBLENDCAPS_INVSRCCOLOR     |
+                            WINED3DPBLENDCAPS_ONE             |
+                            WINED3DPBLENDCAPS_SRCALPHA        |
+                            WINED3DPBLENDCAPS_SRCALPHASAT     |
+                            WINED3DPBLENDCAPS_SRCCOLOR        |
+                            WINED3DPBLENDCAPS_ZERO;
+
+    *pCaps->DestBlendCaps = WINED3DPBLENDCAPS_BLENDFACTOR     |
+                            WINED3DPBLENDCAPS_BOTHINVSRCALPHA |
+                            WINED3DPBLENDCAPS_BOTHSRCALPHA    |
+                            WINED3DPBLENDCAPS_DESTALPHA       |
+                            WINED3DPBLENDCAPS_DESTCOLOR       |
+                            WINED3DPBLENDCAPS_INVDESTALPHA    |
+                            WINED3DPBLENDCAPS_INVDESTCOLOR    |
+                            WINED3DPBLENDCAPS_INVSRCALPHA     |
+                            WINED3DPBLENDCAPS_INVSRCCOLOR     |
+                            WINED3DPBLENDCAPS_ONE             |
+                            WINED3DPBLENDCAPS_SRCALPHA        |
+                            WINED3DPBLENDCAPS_SRCALPHASAT     |
+                            WINED3DPBLENDCAPS_SRCCOLOR        |
+                            WINED3DPBLENDCAPS_ZERO;
 
     *pCaps->AlphaCmpCaps = D3DPCMPCAPS_ALWAYS       |
                            D3DPCMPCAPS_EQUAL        |
