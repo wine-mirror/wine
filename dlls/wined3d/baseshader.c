@@ -344,6 +344,15 @@ HRESULT shader_get_registers_used(
                             reg_maps->samplers[sampler_code] = (0x1 << 31) | WINED3DSTT_2D;
                     }
                 }
+
+                /* texbem is only valid with < 1.4 pixel shaders */
+                if(WINED3DSIO_TEXBEM == curOpcode->opcode) {
+                    if(reg_maps->bumpmat != 0 && reg_maps->bumpmat != sampler_code) {
+                        FIXME("Pixel shader uses texbem instruction on more than 1 sampler\n");
+                    } else {
+                        reg_maps->bumpmat = sampler_code;
+                    }
+                }
             }
 
             /* This will loop over all the registers and try to

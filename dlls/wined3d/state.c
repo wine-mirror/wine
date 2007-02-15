@@ -1951,6 +1951,18 @@ static void pixelshader(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 }
 
 static void tex_bumpenvmat(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
+
+    if(stateblock->pixelShader && stage != 0 &&
+       ((IWineD3DPixelShaderImpl *) stateblock->pixelShader)->needsbumpmat == stage) {
+        /* The pixel shader has to know the bump env matrix. Do a constants update if it isn't scheduled
+         * anyway
+         */
+        if(!isStateDirty(context, STATE_PIXELSHADERCONSTANT) &&
+           !isStateDirty(context, STATE_PIXELSHADER)) {
+            shaderconstant(STATE_PIXELSHADERCONSTANT, stateblock, context);
+        }
+    }
 }
 
 static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {

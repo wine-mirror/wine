@@ -283,7 +283,8 @@ void shader_glsl_load_constants(
     GLhandleARB *constant_locations;
     struct list *constant_list;
     GLhandleARB programId;
-    
+    GLint pos;
+
     if (!stateBlock->glsl_program) {
         /* No GLSL program set - nothing to do. */
         return;
@@ -336,11 +337,22 @@ void shader_glsl_load_constants(
         shader_glsl_load_constantsI(pshader, gl_info, programId, MAX_CONST_I,
                                     stateBlock->pixelShaderConstantI, 
                                     stateBlock->set.pixelShaderConstantsI);
-        
+
         /* Load DirectX 9 boolean constants/uniforms for pixel shader */
         shader_glsl_load_constantsB(pshader, gl_info, programId, MAX_CONST_B,
                                     stateBlock->pixelShaderConstantB, 
                                     stateBlock->set.pixelShaderConstantsB);
+
+        /* Upload the environment bump map matrix if needed. The needsbumpmat member specifies the texture stage to load the matrix from.
+         * It can't be 0 for a valid texbem instruction.
+         */
+        if(((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat != 0) {
+            float *data = (float *) &stateBlock->textureState[(int) ((IWineD3DPixelShaderImpl *) pshader)->needsbumpmat][WINED3DTSS_BUMPENVMAT00];
+            pos = GL_EXTCALL(glGetUniformLocationARB(programId, "bumpenvmat"));
+            checkGLcall("glGetUniformLocationARB");
+            GL_EXTCALL(glUniform4fvARB(pos, 1, data));
+            checkGLcall("glUniform4fvARB");
+        }
     }
 }
 
@@ -379,6 +391,8 @@ void shader_generate_glsl_declarations(
 
     if(!pshader)
         shader_addline(buffer, "uniform vec4 posFixup;\n");
+    else if(reg_maps->bumpmat)
+        shader_addline(buffer, "uniform vec4 bumpenvmat;\n");
 
     /* Declare texture samplers */ 
     for (i = 0; i < This->baseShader.limits.sampler; i++) {

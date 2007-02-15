@@ -1468,6 +1468,7 @@ typedef struct shader_reg_maps {
     /* Sampler usage tokens 
      * Use 0 as default (bit 31 is always 1 on a valid token) */
     DWORD samplers[MAX_SAMPLERS];
+    char bumpmat;
 
     /* Whether or not a loop is used in this shader */
     char loop;
@@ -1833,6 +1834,10 @@ typedef struct IWineD3DPixelShaderImpl {
 
     /* run time data */
     PSHADERDATA                *data;
+
+    /* Some information about the shader behavior */
+    char                        needsbumpmat;
+    UINT                        bumpenvmatconst;
 
 #if 0 /* needs reworking */
     PSHADERINPUTDATA input;
