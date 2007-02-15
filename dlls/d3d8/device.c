@@ -274,6 +274,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateAdditionalSwapChain(LPDIRECT3DD
 static HRESULT WINAPI IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRESENT_PARAMETERS* pPresentationParameters) {
     IDirect3DDevice8Impl *This = (IDirect3DDevice8Impl *)iface;
     WINED3DPRESENT_PARAMETERS localParameters;
+    DWORD dummy_dword = 0;
     TRACE("(%p) Relay pPresentationParameters(%p)\n", This, pPresentationParameters);
 /* FINDME: FIXME: */
     localParameters.BackBufferWidth                = &pPresentationParameters->BackBufferWidth;
@@ -281,7 +282,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_Reset(LPDIRECT3DDEVICE8 iface, D3DPRE
     localParameters.BackBufferFormat               = (WINED3DFORMAT *)&pPresentationParameters->BackBufferFormat;
     localParameters.BackBufferCount                = &pPresentationParameters->BackBufferCount;
     localParameters.MultiSampleType                = (WINED3DMULTISAMPLE_TYPE *) &pPresentationParameters->MultiSampleType;
-    localParameters.MultiSampleQuality             = NULL; /* D3d9 only */
+    localParameters.MultiSampleQuality             = &dummy_dword; /* D3d9 only */
     localParameters.SwapEffect                     = (WINED3DSWAPEFFECT *) &pPresentationParameters->SwapEffect;
     localParameters.hDeviceWindow                  = &pPresentationParameters->hDeviceWindow;
     localParameters.Windowed                       = &pPresentationParameters->Windowed;
