@@ -37,7 +37,6 @@
 #include "wine/debug.h"
 #include "wine/unicode.h"
 
-#include "d3d9.h"
 #include "wined3d_private_types.h"
 #include "ddraw.h"
 #include "wine/wined3d_interface.h"
