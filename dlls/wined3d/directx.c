@@ -2330,15 +2330,15 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
                use the PS 3.0 from MSDN or else if there's OpenGL spec use a hardcoded value minimum PS 3.0 value. */
             
             /* Caps is more or less undocumented on MSDN but it appears to be used for PS20Caps based on results from R9600/FX5900/Geforce6800 cards from Windows */
-            *pCaps->PS20Caps.Caps                     = D3DPS20CAPS_ARBITRARYSWIZZLE     |
-                                                        D3DPS20CAPS_GRADIENTINSTRUCTIONS |
-                                                        D3DPS20CAPS_PREDICATION          |
-                                                        D3DPS20CAPS_NODEPENDENTREADLIMIT |
-                                                        D3DPS20CAPS_NOTEXINSTRUCTIONLIMIT;
-            *pCaps->PS20Caps.DynamicFlowControlDepth  = D3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
+            *pCaps->PS20Caps.Caps                     = WINED3DPS20CAPS_ARBITRARYSWIZZLE     |
+                                                        WINED3DPS20CAPS_GRADIENTINSTRUCTIONS |
+                                                        WINED3DPS20CAPS_PREDICATION          |
+                                                        WINED3DPS20CAPS_NODEPENDENTREADLIMIT |
+                                                        WINED3DPS20CAPS_NOTEXINSTRUCTIONLIMIT;
+            *pCaps->PS20Caps.DynamicFlowControlDepth  = WINED3DPS20_MAX_DYNAMICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_DYNAMICFLOWCONTROLDEPTH (24) */
             *pCaps->PS20Caps.NumTemps                 = max(32, This->gl_info.ps_arb_max_temps);
-            *pCaps->PS20Caps.StaticFlowControlDepth   = D3DPS20_MAX_STATICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_STATICFLOWCONTROLDEPTH (4) */
-            *pCaps->PS20Caps.NumInstructionSlots      = D3DPS20_MAX_NUMINSTRUCTIONSLOTS; /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
+            *pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MAX_STATICFLOWCONTROLDEPTH; /* PS 3.0 requires MAX_STATICFLOWCONTROLDEPTH (4) */
+            *pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MAX_NUMINSTRUCTIONSLOTS; /* PS 3.0 requires MAX_NUMINSTRUCTIONSLOTS (512) */
 
             *pCaps->MaxPShaderInstructionsExecuted    = 65535;
             *pCaps->MaxPixelShader30InstructionSlots  = max(D3DMIN30SHADERINSTRUCTIONS, This->gl_info.ps_arb_max_instructions);
@@ -2347,8 +2347,8 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
             *pCaps->PS20Caps.Caps                     = 0;
             *pCaps->PS20Caps.DynamicFlowControlDepth  = 0; /* D3DVS20_MIN_DYNAMICFLOWCONTROLDEPTH = 0 */
             *pCaps->PS20Caps.NumTemps                 = max(12, This->gl_info.ps_arb_max_temps);
-            *pCaps->PS20Caps.StaticFlowControlDepth   = D3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minumum: 1 */
-            *pCaps->PS20Caps.NumInstructionSlots      = D3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
+            *pCaps->PS20Caps.StaticFlowControlDepth   = WINED3DPS20_MIN_STATICFLOWCONTROLDEPTH; /* Minumum: 1 */
+            *pCaps->PS20Caps.NumInstructionSlots      = WINED3DPS20_MIN_NUMINSTRUCTIONSLOTS; /* Minimum number (64 ALU + 32 Texture), a GeforceFX uses 512 */
 
             *pCaps->MaxPShaderInstructionsExecuted    = 512; /* Minimum value, a GeforceFX uses 1024 */
             *pCaps->MaxPixelShader30InstructionSlots  = 0;
