@@ -177,7 +177,7 @@ IDS_OVERWRITEFILE_TEXT "This folder already contains a file called '%1'.\n\nDo y
 IDS_OVERWRITEFILE_CAPTION "파일 덮어쓰기 확인"
 IDS_OVERWRITEFOLDER_TEXT "  이 폴더는 이미 '%1'이란 이름을 가진 폴더를 포함하고 있습니다.\n\n"\
      "만약 당신이 같은 이름으로 대상 폴더를 지정한다면 선택된 폴더는 대체될 것입니다\n"\
-     " 대체될 것입니다. 당신 이 폴더를 이동시키거나 복사하겠습니까?"
+     " 대체될 것입니다. 당신은 이 폴더를 이동시키거나 복사하겠습니까?"
 
 
 /* message box strings */
