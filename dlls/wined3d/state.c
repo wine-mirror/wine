@@ -337,9 +337,19 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
      * used WINED3DRS_COLORKEYENABLE state(which is d3d <= 3 only). The texture function will call alpha
      * in case it finds some texture+colorkeyenable combination which needs extra care.
      */
-    if(stateblock->textures[0]) {
+    if(stateblock->textures[0] && stateblock->textureDimensions[0] == GL_TEXTURE_2D) {
         surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *)stateblock->textures[0])->surfaces[0];
-        if(surf->CKeyFlags & DDSD_CKSRCBLT) enable_ckey = TRUE;
+
+        if(surf->CKeyFlags & DDSD_CKSRCBLT) {
+            const PixelFormatDesc *fmt = getFormatDescEntry(surf->resource.format);
+            /* The surface conversion does not do color keying conversion for surfaces that have an alpha
+             * channel on their own. Likewise, the alpha test shouldn't be set up for color keying if the
+             * surface has alpha bits
+             */
+            if(fmt->alphaMask == 0x00000000) {
+                enable_ckey = TRUE;
+            }
+        }
     }
 
     if (stateblock->renderState[WINED3DRS_ALPHATESTENABLE] ||
