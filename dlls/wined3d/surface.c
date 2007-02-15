@@ -2492,6 +2492,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             rect.x1 = tmp;
             upsideDown = !upsideDown;
         }
+        if(!srcSwapchain) {
+            TRACE("Reading from an offscreen target\n");
+            upsideDown = !upsideDown;
+        }
 
         if(rect.x2 - rect.x1 != srect.x2 - srect.x1) {
             stretchx = TRUE;
