@@ -590,7 +590,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
              (pRect->bottom > This->currentDesc.Height))
         {
             WARN(" Invalid values in pRect !!!\n");
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
 
         if (This->resource.format == WINED3DFMT_DXT1) { /* DXT1 is half byte per pixel */
@@ -1330,7 +1330,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_ReleaseDC(IWineD3DSurface *iface, HDC hDC) {
     TRACE("(%p)->(%p)\n",This,hDC);
 
     if (!(This->Flags & SFLAG_DCINUSE))
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
 
     /* we locked first, so unlock now */
     IWineD3DSurface_UnlockRect(iface);
@@ -2415,7 +2415,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 if( dstSwapchain->backBuffer && ((IWineD3DSurface *) This == dstSwapchain->frontBuffer) &&
                     SrcSurface == dstSwapchain->backBuffer[0] ) {
 
-                    D3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
+                    WINED3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
 
                     /* The idea behind this is that a glReadPixels and a glDrawPixels call
                      * take very long, while a flip is fast.

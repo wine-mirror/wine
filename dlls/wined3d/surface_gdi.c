@@ -164,7 +164,7 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
     {
         ERR("(%p) Surface already locked\n", This);
         /* What should I return here? */
-        return D3DERR_INVALIDCALL;
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (!(This->Flags & SFLAG_LOCKABLE))
@@ -217,7 +217,7 @@ IWineGDISurfaceImpl_LockRect(IWineD3DSurface *iface,
              (pRect->bottom > This->currentDesc.Height))
         {
             WARN(" Invalid values in pRect !!!\n");
-            return D3DERR_INVALIDCALL;
+            return WINED3DERR_INVALIDCALL;
         }
 
         if (This->resource.format == WINED3DFMT_DXT1)
@@ -1377,7 +1377,7 @@ HRESULT WINAPI
 IWineGDISurfaceImpl_LoadTexture(IWineD3DSurface *iface)
 {
     ERR("Unsupported on X11 surfaces\n");
-    return D3DERR_INVALIDCALL;
+    return WINED3DERR_INVALIDCALL;
 }
 
 /*****************************************************************************
