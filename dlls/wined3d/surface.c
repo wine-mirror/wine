@@ -2120,7 +2120,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     /* Bind the target texture */
     glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
     checkGLcall("glBindTexture");
-    if(swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) {
+    if(!swapchain || (swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0])) {
         glReadBuffer(GL_BACK);
     } else {
         glReadBuffer(GL_FRONT);
@@ -2228,7 +2228,7 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
 
-    if((IWineD3DSurface *) This == swapchain->backBuffer[0] || TRUE) {
+    if(!swapchain || (IWineD3DSurface *) This == swapchain->backBuffer[0]) {
         src = backup;
     } else {
         glReadBuffer(GL_FRONT);
@@ -2341,21 +2341,25 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *DestRect, IWineD3DSurface *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx) {
     WINED3DRECT rect;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
-    IWineD3DSwapChainImpl *swapchain = NULL;
+    IWineD3DSwapChainImpl *srcSwapchain = NULL, *dstSwapchain = NULL;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     BOOL SrcOK = TRUE;
 
     TRACE("(%p)->(%p,%p,%p,%08x,%p)\n", This, DestRect, SrcSurface, SrcRect, Flags, DDBltFx);
 
     /* Get the swapchain. One of the surfaces has to be a primary surface */
-    IWineD3DSurface_GetContainer( (IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&swapchain);
-    if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-    else if(Src) {
-        IWineD3DSurface_GetContainer( (IWineD3DSurface *) Src, &IID_IWineD3DSwapChain, (void **)&swapchain);
-        if(swapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) swapchain);
-        else return WINED3DERR_INVALIDCALL;
-    } else {
-        swapchain = NULL;
+    IWineD3DSurface_GetContainer( (IWineD3DSurface *) This, &IID_IWineD3DSwapChain, (void **)&dstSwapchain);
+    if(dstSwapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) dstSwapchain);
+    if(Src) {
+        IWineD3DSurface_GetContainer( (IWineD3DSurface *) Src, &IID_IWineD3DSwapChain, (void **)&srcSwapchain);
+        if(srcSwapchain) IWineD3DSwapChain_Release((IWineD3DSwapChain *) srcSwapchain);
+    }
+
+    /* Early sort out of cases where no render target is used */
+    if(!dstSwapchain && !srcSwapchain &&
+        SrcSurface != myDevice->render_targets[0] && This != (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
+        TRACE("No surface is render target, not using hardware blit. Src = %p, dst = %p\n", Src, This);
+        return WINED3DERR_INVALIDCALL;
     }
 
     if (DestRect) {
@@ -2370,12 +2374,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         rect.y2 = This->currentDesc.Height;
     }
 
-    /* Half-life does a Blt from the back buffer to the front buffer,
-     * Full surface size, no flags... Use present instead
-     */
-    if(Src)
-    {
-        /* First, check if we can do a Flip */
+    /* The only case where both surfaces on a swapchain are supported is a back buffer -> front buffer blit on the same swapchain */
+    if(dstSwapchain && dstSwapchain == srcSwapchain) {
+        /* Half-life does a Blt from the back buffer to the front buffer,
+         * Full surface size, no flags... Use present instead
+         */
 
         /* Check rects - IWineD3DDevice_Present doesn't handle them */
         if( SrcRect ) {
@@ -2396,9 +2399,10 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
             /* These flags are unimportant for the flag check, remove them */
 
             if((Flags & ~(DDBLT_DONOTWAIT | DDBLT_WAIT)) == 0) {
-                if( swapchain->backBuffer && ((IWineD3DSurface *) This == swapchain->frontBuffer) && ((IWineD3DSurface *) Src == swapchain->backBuffer[0]) ) {
+                if( dstSwapchain->backBuffer && ((IWineD3DSurface *) This == dstSwapchain->frontBuffer) &&
+                    SrcSurface == dstSwapchain->backBuffer[0] ) {
 
-                    D3DSWAPEFFECT orig_swap = swapchain->presentParms.SwapEffect;
+                    D3DSWAPEFFECT orig_swap = dstSwapchain->presentParms.SwapEffect;
 
                     /* The idea behind this is that a glReadPixels and a glDrawPixels call
                      * take very long, while a flip is fast.
@@ -2412,328 +2416,323 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                      * and to set it back after the flip.
                      */
 
-                    swapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
+                    dstSwapchain->presentParms.SwapEffect = WINED3DSWAPEFFECT_COPY;
 
                     TRACE("Full screen back buffer -> front buffer blt, performing a flip instead\n");
                     IWineD3DDevice_Present((IWineD3DDevice *) This->resource.wineD3DDevice,
                                             NULL, NULL, 0, NULL);
 
-                    swapchain->presentParms.SwapEffect = orig_swap;
+                    dstSwapchain->presentParms.SwapEffect = orig_swap;
 
                     return WINED3D_OK;
                 }
             }
         }
 
-        /* Blt from texture to rendertarget? */
-        if( ( ( (IWineD3DSurface *) This == swapchain->frontBuffer) ||
-              ( swapchain->backBuffer && (IWineD3DSurface *) This == swapchain->backBuffer[0]) )
-              &&
-              ( ( (IWineD3DSurface *) Src != swapchain->frontBuffer) &&
-                ( swapchain->backBuffer && (IWineD3DSurface *) Src != swapchain->backBuffer[0]) ) ) {
-            float glTexCoord[4];
-            DWORD oldCKey;
-            DDCOLORKEY oldBltCKey = {0,0};
-            RECT SourceRectangle;
-            GLint oldDraw;
-
-            TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
-
-            if(SrcRect) {
-                SourceRectangle.left = SrcRect->left;
-                SourceRectangle.right = SrcRect->right;
-                SourceRectangle.top = SrcRect->top;
-                SourceRectangle.bottom = SrcRect->bottom;
-            } else {
-                SourceRectangle.left = 0;
-                SourceRectangle.right = Src->currentDesc.Width;
-                SourceRectangle.top = 0;
-                SourceRectangle.bottom = Src->currentDesc.Height;
-            }
-
-            if(!CalculateTexRect(Src, &SourceRectangle, glTexCoord)) {
-                /* Fall back to software */
-                WARN("(%p) Source texture area (%d,%d)-(%d,%d) is too big\n", Src,
-                     SourceRectangle.left, SourceRectangle.top,
-                     SourceRectangle.right, SourceRectangle.bottom);
-                return WINED3DERR_INVALIDCALL;
-            }
-
-            /* Color keying: Check if we have to do a color keyed blt,
-             * and if not check if a color key is activated.
-             */
-            oldCKey = Src->CKeyFlags;
-            if(!(Flags & DDBLT_KEYSRC) && 
-               Src->CKeyFlags & DDSD_CKSRCBLT) {
-                /* Ok, the surface has a color key, but we shall not use it -
-                 * Deactivate it for now, LoadTexture will catch this
-                 */
-                Src->CKeyFlags &= ~DDSD_CKSRCBLT;
-            }
-
-            /* Color keying */
-            if(Flags & DDBLT_KEYDEST) {
-                oldBltCKey = This->SrcBltCKey;
-                /* Temporary replace the source color key with the destination one. We do this because the color conversion code which
-                 * is in the end called from LoadTexture works with the source color. At the end of this function we restore the color key.
-                 */
-                This->SrcBltCKey = This->DestBltCKey;
-            } else if (Flags & DDBLT_KEYSRC)
-                oldBltCKey = This->SrcBltCKey;
-
-            /* Now load the surface */
-            IWineD3DSurface_PreLoad((IWineD3DSurface *) Src);
-
-            ENTER_GL();
-
-            ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
-
-            glGetIntegerv(GL_DRAW_BUFFER, &oldDraw);
-            if(This == (IWineD3DSurfaceImpl *) swapchain->frontBuffer) {
-                TRACE("Drawing to front buffer\n");
-                glDrawBuffer(GL_FRONT);
-                checkGLcall("glDrawBuffer GL_FRONT");
-            }
-
-            /* Bind the texture */
-            glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName);
-            checkGLcall("glBindTexture");
-
-            /* No filtering for blts */
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, 
-                            GL_NEAREST);
-            checkGLcall("glTexParameteri");
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, 
-                            GL_NEAREST);
-            checkGLcall("glTexParameteri");
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-            checkGLcall("glTexEnvi");
-
-            /* This is for color keying */
-            if(Flags & DDBLT_KEYSRC) {
-                glEnable(GL_ALPHA_TEST);
-                checkGLcall("glEnable GL_ALPHA_TEST");
-                glAlphaFunc(GL_NOTEQUAL, 0.0);
-                checkGLcall("glAlphaFunc\n");
-            } else {
-                glDisable(GL_ALPHA_TEST);
-                checkGLcall("glDisable GL_ALPHA_TEST");
-            }
-
-            /* Draw a textured quad
-             */
-            glBegin(GL_QUADS);
-
-            glColor3d(1.0f, 1.0f, 1.0f);
-            glTexCoord2f(glTexCoord[0], glTexCoord[2]);
-            glVertex3f(rect.x1,
-                       rect.y1,
-                       0.0);
-
-            glTexCoord2f(glTexCoord[0], glTexCoord[3]);
-            glVertex3f(rect.x1, rect.y2, 0.0);
-
-            glTexCoord2f(glTexCoord[1], glTexCoord[3]);
-            glVertex3f(rect.x2,
-                       rect.y2,
-                       0.0);
-
-            glTexCoord2f(glTexCoord[1], glTexCoord[2]);
-            glVertex3f(rect.x2,
-                       rect.y1,
-                       0.0);
-            glEnd();
-            checkGLcall("glEnd");
-
-            /* Unbind the texture */
-            glBindTexture(GL_TEXTURE_2D, 0);
-            checkGLcall("glEnable glBindTexture");
-
-            if(This == (IWineD3DSurfaceImpl *) swapchain->frontBuffer && oldDraw == GL_BACK) {
-                glDrawBuffer(oldDraw);
-            }
-
-            /* Restore the color key flags */
-            if(oldCKey != Src->CKeyFlags) {
-                Src->CKeyFlags = oldCKey;
-            }
-
-            /* Restore the old color key */
-            if (Flags & (DDBLT_KEYSRC | DDBLT_KEYDEST))
-                This->SrcBltCKey = oldBltCKey;
-
-            LEAVE_GL();
-
-            /* TODO: If the surface is locked often, perform the Blt in software on the memory instead */
-            This->Flags |= SFLAG_GLDIRTY;
-
-            return WINED3D_OK;
-        }
-
-
-        /* Blt from rendertarget to texture? */
-        if( (SrcSurface == swapchain->frontBuffer) ||
-            (swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) ) {
-            if( ( (IWineD3DSurface *) This != swapchain->frontBuffer) &&
-                ( swapchain->backBuffer && (IWineD3DSurface *) This != swapchain->backBuffer[0]) ) {
-                WINED3DRECT srect;
-                BOOL upsideDown, stretchx;
-
-                TRACE("Blt from rendertarget to texture\n");
-
-                /* Call preload for the surface to make sure it isn't dirty */
-                IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
-
-                /* Make sure that the top pixel is always above the bottom pixel, and keep a seperate upside down flag
-                 * glCopyTexSubImage is a bit picky about the parameters we pass to it
-                 */
-                if(SrcRect) {
-                    if(SrcRect->top < SrcRect->bottom) {
-                        srect.y1 = SrcRect->top;
-                        srect.y2 = SrcRect->bottom;
-                        upsideDown = FALSE;
-                    } else {
-                        srect.y1 = SrcRect->bottom;
-                        srect.y2 = SrcRect->top;
-                        upsideDown = TRUE;
-                    }
-                    srect.x1 = SrcRect->left;
-                    srect.x2 = SrcRect->right;
-                } else {
-                    srect.x1 = 0;
-                    srect.y1 = 0;
-                    srect.x2 = Src->currentDesc.Width;
-                    srect.y2 = Src->currentDesc.Height;
-                    upsideDown = FALSE;
-                }
-                if(rect.x1 > rect.x2) {
-                    UINT tmp = rect.x2;
-                    rect.x2 = rect.x1;
-                    rect.x1 = tmp;
-                    upsideDown = !upsideDown;
-                }
-
-                if(rect.x2 - rect.x1 != srect.x2 - srect.x1) {
-                    stretchx = TRUE;
-                } else {
-                    stretchx = FALSE;
-                }
-
-                /* Blt is a pretty powerful call, while glCopyTexSubImage2D is not. glCopyTexSubImage cannot
-                 * flip the image nor scale it. If GL_EXT_framebuffer_blit is available it can be used(hopefully,
-                 * not implemented by now). Otherwise:
-                 *
-                 * -> If the app asks for a unscaled, upside down copy, just perform one glCopyTexSubImage2D call
-                 * -> If the app wants a image width an unscaled width, copy it line per line
-                 * -> If the app wants a image that is scaled on the x axis, and the destination rectangle is smaller
-                 *    than the frame buffer, draw an upside down scaled image onto the fb, read it back and restore the
-                 *    back buffer. This is slower than reading line per line, thus not used for flipping
-                 * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied
-                 *    pixel by pixel
-                 */
-                if(FALSE /* GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) */) {
-                    TRACE("Using GL_EXT_framebuffer_blit for copying\n");
-                } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
-                                         rect.y2 - rect.y1 > Src->currentDesc.Height) {
-                    TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
-                    fb_copy_to_texture_direct(This, SrcSurface, swapchain, &srect, &rect, upsideDown);
-                } else {
-                    TRACE("Using hardware stretching to flip / stretch the texture\n");
-                    fb_copy_to_texture_hwstretch(This, SrcSurface, swapchain, &srect, &rect, upsideDown);
-                }
-
-                if(!(This->Flags & SFLAG_DONOTFREE)) {
-                    HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
-                    This->resource.allocatedMemory = NULL;
-                } else {
-                    This->Flags |= SFLAG_GLDIRTY;
-                }
-
-                return WINED3D_OK;
-            }
-        }
+        TRACE("Unsupported blit between buffers on the same swapchain\n");
+        return WINED3DERR_INVALIDCALL;
+    } else if((dstSwapchain || This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) &&
+              (srcSwapchain || SrcSurface == myDevice->render_targets[0]) ) {
+        ERR("Can't perform hardware blit between 2 different swapchains, falling back to software\n");
+        return WINED3DERR_INVALIDCALL;
     }
 
-    if (Flags & DDBLT_COLORFILL) {
-        /* This is easy to handle for the D3D Device... */
-        DWORD color;
-        IWineD3DSwapChainImpl *implSwapChain;
+    if(srcSwapchain || SrcSurface == myDevice->render_targets[0]) {
+        /* Blit from render target to texture */
+        WINED3DRECT srect;
+        BOOL upsideDown, stretchx;
 
-        TRACE("Colorfill\n");
+        /* Call preload for the surface to make sure it isn't dirty */
+        IWineD3DSurface_PreLoad((IWineD3DSurface *) This);
 
-        /* The color as given in the Blt function is in the format of the frame-buffer...
-         * 'clear' expect it in ARGB format => we need to do some conversion :-)
+        /* Make sure that the top pixel is always above the bottom pixel, and keep a seperate upside down flag
+            * glCopyTexSubImage is a bit picky about the parameters we pass to it
+            */
+        if(SrcRect) {
+            if(SrcRect->top < SrcRect->bottom) {
+                srect.y1 = SrcRect->top;
+                srect.y2 = SrcRect->bottom;
+                upsideDown = FALSE;
+            } else {
+                srect.y1 = SrcRect->bottom;
+                srect.y2 = SrcRect->top;
+                upsideDown = TRUE;
+            }
+            srect.x1 = SrcRect->left;
+            srect.x2 = SrcRect->right;
+        } else {
+            srect.x1 = 0;
+            srect.y1 = 0;
+            srect.x2 = Src->currentDesc.Width;
+            srect.y2 = Src->currentDesc.Height;
+            upsideDown = FALSE;
+        }
+        if(rect.x1 > rect.x2) {
+            UINT tmp = rect.x2;
+            rect.x2 = rect.x1;
+            rect.x1 = tmp;
+            upsideDown = !upsideDown;
+        }
+
+        if(rect.x2 - rect.x1 != srect.x2 - srect.x1) {
+            stretchx = TRUE;
+        } else {
+            stretchx = FALSE;
+        }
+
+        /* Blt is a pretty powerful call, while glCopyTexSubImage2D is not. glCopyTexSubImage cannot
+         * flip the image nor scale it. If GL_EXT_framebuffer_blit is available it can be used(hopefully,
+         * not implemented by now). Otherwise:
+         *
+         * -> If the app asks for a unscaled, upside down copy, just perform one glCopyTexSubImage2D call
+         * -> If the app wants a image width an unscaled width, copy it line per line
+         * -> If the app wants a image that is scaled on the x axis, and the destination rectangle is smaller
+         *    than the frame buffer, draw an upside down scaled image onto the fb, read it back and restore the
+         *    back buffer. This is slower than reading line per line, thus not used for flipping
+         * -> If the app wants a scaled image with a dest rect that is bigger than the fb, it has to be copied
+         *    pixel by pixel
          */
-        if (This->resource.format == WINED3DFMT_P8) {
-            if (This->palette) {
-                color = ((0xFF000000) |
-                          (This->palette->palents[DDBltFx->u5.dwFillColor].peRed << 16) |
-                          (This->palette->palents[DDBltFx->u5.dwFillColor].peGreen << 8) |
-                          (This->palette->palents[DDBltFx->u5.dwFillColor].peBlue));
-            } else {
-                color = 0xFF000000;
-            }
-        }
-        else if (This->resource.format == WINED3DFMT_R5G6B5) {
-            if (DDBltFx->u5.dwFillColor == 0xFFFF) {
-                color = 0xFFFFFFFF;
-            } else {
-                color = ((0xFF000000) |
-                          ((DDBltFx->u5.dwFillColor & 0xF800) << 8) |
-                          ((DDBltFx->u5.dwFillColor & 0x07E0) << 5) |
-                          ((DDBltFx->u5.dwFillColor & 0x001F) << 3));
-            }
-        }
-        else if ((This->resource.format == WINED3DFMT_R8G8B8) ||
-                  (This->resource.format == WINED3DFMT_X8R8G8B8) ) {
-            color = 0xFF000000 | DDBltFx->u5.dwFillColor;
-        }
-        else if (This->resource.format == WINED3DFMT_A8R8G8B8) {
-            color = DDBltFx->u5.dwFillColor;
-        }
-        else {
-            ERR("Wrong surface type for BLT override(Format doesn't match) !\n");
-            return WINED3DERR_INVALIDCALL;
+        if(FALSE /* GL_SUPPORT(EXT_FRAMEBUFFER_BLIT) */) {
+            TRACE("Using GL_EXT_framebuffer_blit for copying\n");
+        } else if((!stretchx) || rect.x2 - rect.x1 > Src->currentDesc.Width ||
+                                    rect.y2 - rect.y1 > Src->currentDesc.Height) {
+            TRACE("No stretching in x direction, using direct framebuffer -> texture copy\n");
+            fb_copy_to_texture_direct(This, SrcSurface, srcSwapchain, &srect, &rect, upsideDown);
+        } else {
+            TRACE("Using hardware stretching to flip / stretch the texture\n");
+            fb_copy_to_texture_hwstretch(This, SrcSurface, srcSwapchain, &srect, &rect, upsideDown);
         }
 
-        TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
-        IWineD3DDevice_GetSwapChain((IWineD3DDevice *)myDevice, 0, (IWineD3DSwapChain **)&implSwapChain);
-        IWineD3DSwapChain_Release( (IWineD3DSwapChain *) implSwapChain );
-        if(implSwapChain->backBuffer && This == (IWineD3DSurfaceImpl*) implSwapChain->backBuffer[0]) {
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer(GL_BACK)");
-        }
-        else if (This == (IWineD3DSurfaceImpl*) implSwapChain->frontBuffer) {
-            glDrawBuffer(GL_FRONT);
-            checkGLcall("glDrawBuffer(GL_FRONT)");
-        }
-        else {
-            ERR("Wrong surface type for BLT override(not on swapchain) !\n");
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        TRACE("(%p) executing Render Target override, color = %x\n", This, color);
-
-        IWineD3DDevice_Clear( (IWineD3DDevice *) myDevice,
-                              1 /* Number of rectangles */,
-                              &rect,
-                              WINED3DCLEAR_TARGET,
-                              color,
-                              0.0 /* Z */,
-                              0 /* Stencil */);
-
-        /* Restore the original draw buffer */
-        if(implSwapChain->backBuffer && implSwapChain->backBuffer[0]) {
-            glDrawBuffer(GL_BACK);
-            vcheckGLcall("glDrawBuffer");
+        if(!(This->Flags & SFLAG_DONOTFREE)) {
+            HeapFree(GetProcessHeap(), 0, This->resource.allocatedMemory);
+            This->resource.allocatedMemory = NULL;
+        } else {
+            This->Flags |= SFLAG_GLDIRTY;
         }
 
         return WINED3D_OK;
+    } else if(Src) {
+        /* Blit from offscreen surface to render target */
+        float glTexCoord[4];
+        DWORD oldCKey;
+        DDCOLORKEY oldBltCKey = {0,0};
+        RECT SourceRectangle;
+        GLint oldDraw;
+
+        TRACE("Blt from surface %p to rendertarget %p\n", Src, This);
+
+        if(SrcRect) {
+            SourceRectangle.left = SrcRect->left;
+            SourceRectangle.right = SrcRect->right;
+            SourceRectangle.top = SrcRect->top;
+            SourceRectangle.bottom = SrcRect->bottom;
+        } else {
+            SourceRectangle.left = 0;
+            SourceRectangle.right = Src->currentDesc.Width;
+            SourceRectangle.top = 0;
+            SourceRectangle.bottom = Src->currentDesc.Height;
+        }
+
+        if(!CalculateTexRect(Src, &SourceRectangle, glTexCoord)) {
+            /* Fall back to software */
+            WARN("(%p) Source texture area (%d,%d)-(%d,%d) is too big\n", Src,
+                    SourceRectangle.left, SourceRectangle.top,
+                    SourceRectangle.right, SourceRectangle.bottom);
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        /* Color keying: Check if we have to do a color keyed blt,
+         * and if not check if a color key is activated.
+         */
+        oldCKey = Src->CKeyFlags;
+        if(!(Flags & DDBLT_KEYSRC) &&
+            Src->CKeyFlags & DDSD_CKSRCBLT) {
+            /* Ok, the surface has a color key, but we shall not use it -
+             * Deactivate it for now, LoadTexture will catch this
+             */
+            Src->CKeyFlags &= ~DDSD_CKSRCBLT;
+        }
+
+        /* Color keying */
+        if(Flags & DDBLT_KEYDEST) {
+            oldBltCKey = This->SrcBltCKey;
+            /* Temporary replace the source color key with the destination one. We do this because the color conversion code which
+             * is in the end called from LoadTexture works with the source color. At the end of this function we restore the color key.
+             */
+            This->SrcBltCKey = This->DestBltCKey;
+        } else if (Flags & DDBLT_KEYSRC)
+            oldBltCKey = This->SrcBltCKey;
+
+        /* Now load the surface */
+        IWineD3DSurface_PreLoad((IWineD3DSurface *) Src);
+
+        ENTER_GL();
+
+        /* Activate the destination context, set it up for blitting */
+        ActivateContext(myDevice, (IWineD3DSurface *) This, CTXUSAGE_BLIT);
+
+        glGetIntegerv(GL_DRAW_BUFFER, &oldDraw);
+        if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer) {
+            TRACE("Drawing to front buffer\n");
+            glDrawBuffer(GL_FRONT);
+            checkGLcall("glDrawBuffer GL_FRONT");
+        }
+
+        /* Bind the texture */
+        glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName);
+        checkGLcall("glBindTexture");
+
+        /* No filtering for blts */
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+                        GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                        GL_NEAREST);
+        checkGLcall("glTexParameteri");
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        checkGLcall("glTexEnvi");
+
+        /* This is for color keying */
+        if(Flags & DDBLT_KEYSRC) {
+            glEnable(GL_ALPHA_TEST);
+            checkGLcall("glEnable GL_ALPHA_TEST");
+            glAlphaFunc(GL_NOTEQUAL, 0.0);
+            checkGLcall("glAlphaFunc\n");
+        } else {
+            glDisable(GL_ALPHA_TEST);
+            checkGLcall("glDisable GL_ALPHA_TEST");
+        }
+
+        /* Draw a textured quad
+            */
+        glBegin(GL_QUADS);
+
+        glColor3d(1.0f, 1.0f, 1.0f);
+        glTexCoord2f(glTexCoord[0], glTexCoord[2]);
+        glVertex3f(rect.x1,
+                    rect.y1,
+                    0.0);
+
+        glTexCoord2f(glTexCoord[0], glTexCoord[3]);
+        glVertex3f(rect.x1, rect.y2, 0.0);
+
+        glTexCoord2f(glTexCoord[1], glTexCoord[3]);
+        glVertex3f(rect.x2,
+                    rect.y2,
+                    0.0);
+
+        glTexCoord2f(glTexCoord[1], glTexCoord[2]);
+        glVertex3f(rect.x2,
+                    rect.y1,
+                    0.0);
+        glEnd();
+        checkGLcall("glEnd");
+
+        /* Unbind the texture */
+        glBindTexture(GL_TEXTURE_2D, 0);
+        checkGLcall("glEnable glBindTexture");
+
+        if(This == (IWineD3DSurfaceImpl *) dstSwapchain->frontBuffer && oldDraw == GL_BACK) {
+            glDrawBuffer(oldDraw);
+        }
+
+        /* Restore the color key flags */
+        if(oldCKey != Src->CKeyFlags) {
+            Src->CKeyFlags = oldCKey;
+        }
+
+        /* Restore the old color key */
+        if (Flags & (DDBLT_KEYSRC | DDBLT_KEYDEST))
+            This->SrcBltCKey = oldBltCKey;
+
+        LEAVE_GL();
+
+        /* TODO: If the surface is locked often, perform the Blt in software on the memory instead */
+        This->Flags |= SFLAG_GLDIRTY;
+
+        return WINED3D_OK;
+    } else {
+        /* Source-Less Blit to render target */
+        if (Flags & DDBLT_COLORFILL) {
+            /* This is easy to handle for the D3D Device... */
+            DWORD color;
+
+            TRACE("Colorfill\n");
+
+            /* The color as given in the Blt function is in the format of the frame-buffer...
+             * 'clear' expect it in ARGB format => we need to do some conversion :-)
+             */
+            if (This->resource.format == WINED3DFMT_P8) {
+                if (This->palette) {
+                    color = ((0xFF000000) |
+                            (This->palette->palents[DDBltFx->u5.dwFillColor].peRed << 16) |
+                            (This->palette->palents[DDBltFx->u5.dwFillColor].peGreen << 8) |
+                            (This->palette->palents[DDBltFx->u5.dwFillColor].peBlue));
+                } else {
+                    color = 0xFF000000;
+                }
+            }
+            else if (This->resource.format == WINED3DFMT_R5G6B5) {
+                if (DDBltFx->u5.dwFillColor == 0xFFFF) {
+                    color = 0xFFFFFFFF;
+                } else {
+                    color = ((0xFF000000) |
+                            ((DDBltFx->u5.dwFillColor & 0xF800) << 8) |
+                            ((DDBltFx->u5.dwFillColor & 0x07E0) << 5) |
+                            ((DDBltFx->u5.dwFillColor & 0x001F) << 3));
+                }
+            }
+            else if ((This->resource.format == WINED3DFMT_R8G8B8) ||
+                    (This->resource.format == WINED3DFMT_X8R8G8B8) ) {
+                color = 0xFF000000 | DDBltFx->u5.dwFillColor;
+            }
+            else if (This->resource.format == WINED3DFMT_A8R8G8B8) {
+                color = DDBltFx->u5.dwFillColor;
+            }
+            else {
+                ERR("Wrong surface type for BLT override(Format doesn't match) !\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            TRACE("Calling GetSwapChain with mydevice = %p\n", myDevice);
+            if(dstSwapchain && dstSwapchain->backBuffer && This == (IWineD3DSurfaceImpl*) dstSwapchain->backBuffer[0]) {
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+            } else if (dstSwapchain && This == (IWineD3DSurfaceImpl*) dstSwapchain->frontBuffer) {
+                glDrawBuffer(GL_FRONT);
+                checkGLcall("glDrawBuffer(GL_FRONT)");
+            } else if(This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
+                glDrawBuffer(GL_BACK);
+                checkGLcall("glDrawBuffer(GL_BACK)");
+            } else {
+                TRACE("Surface is higher back buffer, falling back to software\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+
+            TRACE("(%p) executing Render Target override, color = %x\n", This, color);
+
+            IWineD3DDevice_Clear( (IWineD3DDevice *) myDevice,
+                                1 /* Number of rectangles */,
+                                &rect,
+                                WINED3DCLEAR_TARGET,
+                                color,
+                                0.0 /* Z */,
+                                0 /* Stencil */);
+
+            /* Restore the original draw buffer */
+            if(!dstSwapchain || (dstSwapchain->backBuffer && dstSwapchain->backBuffer[0])) {
+                glDrawBuffer(GL_BACK);
+                vcheckGLcall("glDrawBuffer");
+            }
+
+            return WINED3D_OK;
+        }
     }
 
-    /* Default: Fall back to the generic blt */
+    /* Default: Fall back to the generic blt. Not an error, a TRACE is enought */
+    TRACE("Didn't find any usable render target setup for hw blit, falling back to software\n");
     return WINED3DERR_INVALIDCALL;
 }
 
