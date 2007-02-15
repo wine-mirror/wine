@@ -352,6 +352,11 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         }
     }
 
+    if(enable_ckey || context->last_was_ckey) {
+        StateTable[STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP)].apply(STATE_TEXTURESTAGE(0, WINED3DTSS_ALPHAOP), stateblock, context);
+    }
+    context->last_was_ckey = enable_ckey;
+
     if (stateblock->renderState[WINED3DRS_ALPHATESTENABLE] ||
         (stateblock->renderState[WINED3DRS_COLORKEYENABLE] && enable_ckey)) {
         glEnable(GL_ALPHA_TEST);
@@ -376,7 +381,6 @@ static void state_alpha(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         glAlphaFunc(glParm, ref);
         checkGLcall("glAlphaFunc");
     }
-    /* TODO: Some texture blending operations seem to affect the alpha test */
 }
 
 static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
@@ -1521,6 +1525,7 @@ static void tex_colorop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
 static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     DWORD stage = (state - STATE_TEXTURESTAGE(0, 0)) / WINED3D_HIGHEST_TEXTURE_STATE;
     DWORD mapped_stage = stateblock->wineD3DDevice->texUnitMap[stage];
+    DWORD op, arg1, arg2, arg0;
 
     TRACE("Setting alpha op for stage %d\n", stage);
     /* Do not care for enabled / disabled stages, just assign the settigns. colorop disables / enables required stuff */
@@ -1542,19 +1547,41 @@ static void tex_alphaop(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
         }
     }
 
+    op = stateblock->textureState[stage][WINED3DTSS_ALPHAOP];
+    arg1 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG1];
+    arg2 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG2];
+    arg0 = stateblock->textureState[stage][WINED3DTSS_ALPHAARG0];
+
+    if(stateblock->renderState[WINED3DRS_COLORKEYENABLE] && stage == 0 &&
+       stateblock->textures[0] && stateblock->textureDimensions[0] == GL_TEXTURE_2D) {
+        IWineD3DSurfaceImpl *surf = (IWineD3DSurfaceImpl *) ((IWineD3DTextureImpl *) stateblock->textures[0])->surfaces[0];
+
+        if(surf->CKeyFlags & DDSD_CKSRCBLT &&
+           getFormatDescEntry(surf->resource.format)->alphaMask == 0x00000000) {
+
+            /* Color keying needs to pass alpha values from the texture through to have the alpha test work properly.
+             * On the other hand applications can still use texture combiners apparently. This code takes care that apps
+             * cannot remove the texture's alpha channel entirely.
+             *
+             * The fixup is required for Prince of Persia 3D(prison bars), while Moto racer 2 requires D3DTOP_MODULATE to work
+             * on color keyed surfaces.
+             *
+             * What to do with multitexturing? So far no app has been found that uses color keying with multitexturing
+             */
+            if(op == WINED3DTOP_DISABLE) op = WINED3DTOP_SELECTARG1;
+            if(op == WINED3DTOP_SELECTARG1) arg1 = WINED3DTA_TEXTURE;
+            else if(op == WINED3DTOP_SELECTARG2) arg2 = WINED3DTA_TEXTURE;
+        }
+    }
+
     TRACE("Setting alpha op for stage %d\n", stage);
     if (GL_SUPPORT(NV_REGISTER_COMBINERS)) {
         set_tex_op_nvrc((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage,
-                         stateblock->textureState[stage][WINED3DTSS_ALPHAOP],
-                         stateblock->textureState[stage][WINED3DTSS_ALPHAARG1],
-                         stateblock->textureState[stage][WINED3DTSS_ALPHAARG2],
-                         stateblock->textureState[stage][WINED3DTSS_ALPHAARG0],
+                         op, arg1, arg2, arg0,
                          mapped_stage);
     } else {
-        set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage, stateblock->textureState[stage][WINED3DTSS_ALPHAOP],
-                    stateblock->textureState[stage][WINED3DTSS_ALPHAARG1],
-                    stateblock->textureState[stage][WINED3DTSS_ALPHAARG2],
-                    stateblock->textureState[stage][WINED3DTSS_ALPHAARG0]);
+        set_tex_op((IWineD3DDevice *)stateblock->wineD3DDevice, TRUE, stage,
+                    op, arg1, arg2, arg0);
     }
 }
 
