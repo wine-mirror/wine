@@ -333,28 +333,18 @@ BOOL WINAPI GetComputerNameW(LPWSTR name,LPDWORD size)
     len = (len -offsetof( KEY_VALUE_PARTIAL_INFORMATION, Data )) / sizeof (WCHAR) - 1;
     TRACE ("ComputerName is %s (length %u)\n", debugstr_w ( theName ), len);
 
-    __TRY
+    if ( *size < len + 1 )
     {
-        if ( *size < len )
-        {
-            memcpy ( name, theName, *size * sizeof (WCHAR) );
-            name[*size] = 0;
-            *size = len;
-            st = STATUS_MORE_ENTRIES;
-        }
-        else
-        {
-            memcpy ( name, theName, len * sizeof (WCHAR) );
-            name[len] = 0;
-            *size = len;
-            st = STATUS_SUCCESS;
-        }
+        *size = len + 1;
+        st = STATUS_MORE_ENTRIES;
     }
-    __EXCEPT_PAGE_FAULT
+    else
     {
-        st = STATUS_INVALID_PARAMETER;
+        memcpy ( name, theName, len * sizeof (WCHAR) );
+        name[len] = 0;
+        *size = len;
+        st = STATUS_SUCCESS;
     }
-    __ENDTRY
 
 out:
     NtClose ( hsubkey );
@@ -382,20 +372,19 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
 
     if ( !GetComputerNameW (nameW, &sizeW) ) return FALSE;
 
-    len = WideCharToMultiByte ( CP_ACP, 0, nameW, sizeW, NULL, 0, NULL, 0 );
+    len = WideCharToMultiByte ( CP_ACP, 0, nameW, -1, NULL, 0, NULL, 0 );
+    /* for compatibility with Win9x */
     __TRY
     {
-        if ( *size < len )
+        if ( *size < len + 1 )
         {
-            WideCharToMultiByte ( CP_ACP, 0, nameW, sizeW, name, *size, NULL, 0 );
-            name[*size] = 0;
-            *size = len;
+            *size = len + 1;
             SetLastError( ERROR_MORE_DATA );
             ret = FALSE;
         }
         else 
         {
-            WideCharToMultiByte ( CP_ACP, 0, nameW, sizeW, name, len, NULL, 0 );
+            WideCharToMultiByte ( CP_ACP, 0, nameW, -1, name, len, NULL, 0 );
             name[len] = 0;
             *size = len;
             ret = TRUE;
@@ -444,30 +433,19 @@ BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD si
     if ( ret )
     {
         TRACE ("-> %s (%d)\n", debugstr_a (buf), len);
-        __TRY
+        if ( *size < len + 1 )
         {
-            if ( *size < len )
-            {
-                memcpy( name, buf, *size );
-                name[*size] = 0;
-                *size = len;
-                SetLastError( ERROR_MORE_DATA );
-                ret = FALSE;
-            }
-            else
-            {
-                memcpy( name, buf, len );
-                name[len] = 0;
-                *size = len;
-                ret = TRUE;
-            }
+            *size = len + 1;
+            SetLastError( ERROR_MORE_DATA );
+            ret = FALSE;
         }
-        __EXCEPT_PAGE_FAULT
+        else
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return FALSE;
+            memcpy( name, buf, len );
+            name[len] = 0;
+            *size = len;
+            ret = TRUE;
         }
-        __ENDTRY
     }
 
     return ret;
@@ -507,32 +485,24 @@ BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD 
 
     if ( ret )
     {
+        unsigned int lenW;
+
         TRACE ("-> %s (%d)\n", debugstr_a (buf), len);
-        __TRY
+
+        lenW = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
+        if ( *size < lenW + 1 )
         {
-            unsigned int lenW = MultiByteToWideChar( CP_ACP, 0, buf, len, NULL, 0 );
-            if ( *size < lenW )
-            {
-                MultiByteToWideChar( CP_ACP, 0, buf, len, name, *size );
-                name[*size] = 0;
-                *size = lenW;
-                SetLastError( ERROR_MORE_DATA );
-                ret = FALSE;
-            }
-            else
-            {
-                MultiByteToWideChar( CP_ACP, 0, buf, len, name, lenW );
-                name[lenW] = 0;
-                *size = lenW;
-                ret = TRUE;
-            }
+            *size = lenW + 1;
+            SetLastError( ERROR_MORE_DATA );
+            ret = FALSE;
         }
-        __EXCEPT_PAGE_FAULT
+        else
         {
-            SetLastError( ERROR_INVALID_PARAMETER );
-            return FALSE;
+            MultiByteToWideChar( CP_ACP, 0, buf, len, name, lenW );
+            name[lenW] = 0;
+            *size = lenW;
+            ret = TRUE;
         }
-        __ENDTRY
     }
 
     return ret;
