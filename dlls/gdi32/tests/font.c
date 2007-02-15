@@ -26,8 +26,12 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winnls.h"
 
 #include "wine/test.h"
+
+DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 
 static INT CALLBACK is_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
 {
@@ -432,7 +436,7 @@ static void test_text_extents(void)
     GetTextExtentExPointW(hdc, wt, 1, 1, &fit1, &fit2, &sz1);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("Skipping remainder of text extents test on a Win9x platform\n");
+        skip("Skipping remainder of text extents test on a Win9x platform\n");
         hfont = SelectObject(hdc, hfont);
         DeleteObject(hfont);
         ReleaseDC(0, hdc);
@@ -615,7 +619,7 @@ static void test_GetKerningPairs(void)
     GetKerningPairsW(hdc, 0, NULL);
     if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
     {
-        trace("Skipping the GetKerningPairs test on a Win9x platform\n");
+        skip("Skipping the GetKerningPairs test on a Win9x platform\n");
         ReleaseDC(0, hdc);
         return;
     }
@@ -740,13 +744,13 @@ static void test_GetOutlineTextMetrics(void)
     HDC hdc;
     DWORD ret, otm_size;
 
-    hdc = GetDC(0);
-
     if (!is_font_installed("Arial"))
     {
         skip("Arial is not installed\n");
         return;
     }
+
+    hdc = GetDC(0);
 
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Arial");
@@ -817,6 +821,114 @@ static void test_GetOutlineTextMetrics(void)
     ReleaseDC(0, hdc);
 }
 
+static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count, BOOL unicode)
+{
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont, hfont_old;
+    CHARSETINFO csi;
+    INT cs;
+    DWORD i, ret;
+
+    assert(count <= 128);
+
+    memset(&lf, 0, sizeof(lf));
+
+    lf.lfCharSet = charset;
+    lf.lfHeight = 10;
+    lstrcpyA(lf.lfFaceName, "Arial");
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+    hdc = GetDC(0);
+    hfont_old = SelectObject(hdc, hfont);
+
+    cs = GetTextCharset(hdc);
+    ok(cs == charset, "expected %d, got %d\n", charset, cs);
+
+    if (!TranslateCharsetInfo((DWORD *)cs, &csi, TCI_SRCCHARSET))
+    {
+        trace("Can't find codepage for charset %d\n", cs);
+        ReleaseDC(0, hdc);
+        return FALSE;
+    }
+    ok(csi.ciACP == code_page, "expected %d, got %d\n", code_page, csi.ciACP);
+
+    if (unicode)
+    {
+        char ansi_buf[128];
+        WCHAR unicode_buf[128];
+
+        for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
+
+        MultiByteToWideChar(code_page, 0, ansi_buf, count, unicode_buf, count);
+
+        SetLastError(0xdeadbeef);
+        ret = pGetGlyphIndicesW(hdc, unicode_buf, count, idx, 0);
+        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
+    }
+    else
+    {
+        char ansi_buf[128];
+
+        for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
+
+        SetLastError(0xdeadbeef);
+        ret = pGetGlyphIndicesA(hdc, ansi_buf, count, idx, 0);
+        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
+    }
+
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+
+    ReleaseDC(0, hdc);
+
+    return TRUE;
+}
+
+static void test_font_charset(void)
+{
+    static struct charset_data
+    {
+        INT charset;
+        UINT code_page;
+        WORD font_idxA[128], font_idxW[128];
+    } cd[] =
+    {
+        { ANSI_CHARSET, 1252 },
+        { SYMBOL_CHARSET, CP_SYMBOL },
+        { RUSSIAN_CHARSET, 1251 }
+    };
+    int i;
+
+    pGetGlyphIndicesA = (void *)GetProcAddress(GetModuleHandle("gdi32.dll"), "GetGlyphIndicesA");
+    pGetGlyphIndicesW = (void *)GetProcAddress(GetModuleHandle("gdi32.dll"), "GetGlyphIndicesW");
+
+    if (!pGetGlyphIndicesA || !pGetGlyphIndicesW)
+    {
+        skip("Skipping the font charset test on a Win9x platform\n");
+        return;
+    }
+
+    if (!is_font_installed("Arial"))
+    {
+        skip("Arial is not installed\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(cd)/sizeof(cd[0]); i++)
+    {
+        get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxA, 128, FALSE);
+        get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxW, 128, TRUE);
+        ok(!memcmp(cd[i].font_idxA, cd[i].font_idxW, 128), "%d: indices don't match\n", i);
+    }
+
+    ok(memcmp(cd[0].font_idxW, cd[1].font_idxW, 128*sizeof(WORD)), "0 vs 1: indices shouldn't match\n");
+    ok(memcmp(cd[0].font_idxW, cd[2].font_idxW, 128*sizeof(WORD)), "0 vs 2: indices shouldn't match\n");
+    ok(memcmp(cd[1].font_idxW, cd[2].font_idxW, 128*sizeof(WORD)), "1 vs 2: indices shouldn't match\n");
+}
+
 START_TEST(font)
 {
     test_logfont();
@@ -828,4 +940,5 @@ START_TEST(font)
     test_GetGlyphIndices();
     test_GetKerningPairs();
     test_GetOutlineTextMetrics();
+    test_font_charset();
 }
