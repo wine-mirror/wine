@@ -8,6 +8,7 @@ EXTRALIBS = -ldxerr9 -luuid -ldxguid
 
 CTESTS = \
 	device.c \
+	query.c \
 	shader.c \
 	stateblock.c \
 	surface.c \

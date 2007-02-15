@@ -1077,34 +1077,34 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateCubeTexture(IWineD3DDevice *iface
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINED3DQUERYTYPE Type, IWineD3DQuery **ppQuery, IUnknown* parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DQueryImpl *object; /*NOTE: impl ref allowed since this is a create function */
+    HRESULT hr = WINED3DERR_NOTAVAILABLE;
 
-    if (NULL == ppQuery) {
-        /* Just a check to see if we support this type of query */
-        HRESULT hr = WINED3DERR_NOTAVAILABLE;
-        switch(Type) {
-        case WINED3DQUERYTYPE_OCCLUSION:
-            TRACE("(%p) occlusion query\n", This);
-            if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
-                hr = WINED3D_OK;
-            else
-                WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
-            break;
-        case WINED3DQUERYTYPE_VCACHE:
-        case WINED3DQUERYTYPE_RESOURCEMANAGER:
-        case WINED3DQUERYTYPE_VERTEXSTATS:
-        case WINED3DQUERYTYPE_EVENT:
-        case WINED3DQUERYTYPE_TIMESTAMP:
-        case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
-        case WINED3DQUERYTYPE_TIMESTAMPFREQ:
-        case WINED3DQUERYTYPE_PIPELINETIMINGS:
-        case WINED3DQUERYTYPE_INTERFACETIMINGS:
-        case WINED3DQUERYTYPE_VERTEXTIMINGS:
-        case WINED3DQUERYTYPE_PIXELTIMINGS:
-        case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
-        case WINED3DQUERYTYPE_CACHEUTILIZATION:
-        default:
-            FIXME("(%p) Unhandled query type %d\n", This, Type);
-        }
+    /* Just a check to see if we support this type of query */
+    switch(Type) {
+    case WINED3DQUERYTYPE_OCCLUSION:
+        TRACE("(%p) occlusion query\n", This);
+        if (GL_SUPPORT(ARB_OCCLUSION_QUERY))
+            hr = WINED3D_OK;
+        else
+            WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
+        break;
+    case WINED3DQUERYTYPE_VCACHE:
+    case WINED3DQUERYTYPE_RESOURCEMANAGER:
+    case WINED3DQUERYTYPE_VERTEXSTATS:
+    case WINED3DQUERYTYPE_EVENT:
+    case WINED3DQUERYTYPE_TIMESTAMP:
+    case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
+    case WINED3DQUERYTYPE_TIMESTAMPFREQ:
+    case WINED3DQUERYTYPE_PIPELINETIMINGS:
+    case WINED3DQUERYTYPE_INTERFACETIMINGS:
+    case WINED3DQUERYTYPE_VERTEXTIMINGS:
+    case WINED3DQUERYTYPE_PIXELTIMINGS:
+    case WINED3DQUERYTYPE_BANDWIDTHTIMINGS:
+    case WINED3DQUERYTYPE_CACHEUTILIZATION:
+    default:
+        FIXME("(%p) Unhandled query type %d\n", This, Type);
+    }
+    if(NULL == ppQuery || hr != WINED3D_OK) {
         return hr;
     }
 
