@@ -46,7 +46,7 @@ static void test_trackbar_control(void)
 
     hWndTrackbar = create_trackbar(style);
 
-    ok(hWndTrackbar != NULL, "Expected non NULL value");
+    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
 
     if (hWndTrackbar == NULL){
       skip("trackbar control not present?\n");
@@ -58,7 +58,7 @@ static void test_trackbar_control(void)
     /* test TBM_SETBUDDY */
     hWndLeftBuddy = (HWND) CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
         0,0,300,20, NULL, NULL, NULL, NULL);
-    ok(hWndLeftBuddy != NULL, "Expected non NULL value");
+    ok(hWndLeftBuddy != NULL, "Expected non NULL value\n");
 
     if (hWndLeftBuddy != NULL){
         hWndCurrentBuddy = (HWND) SendMessage(hWndTrackbar, TBM_GETBUDDY, TRUE, 0);
@@ -72,7 +72,7 @@ static void test_trackbar_control(void)
     hWndRightBuddy = (HWND) CreateWindowEx(0, STATUSCLASSNAME, NULL, 0,
         0,0,300,20,NULL,NULL, NULL, NULL);
 
-    ok(hWndRightBuddy != NULL, "expected non NULL value");
+    ok(hWndRightBuddy != NULL, "expected non NULL value\n");
 
     if (hWndRightBuddy != NULL){
         hWndCurrentBuddy = (HWND) SendMessage(hWndTrackbar, TBM_GETBUDDY, TRUE, 0);
@@ -335,7 +335,7 @@ static void test_trackbar_control(void)
     if (hWndTooltip != NULL){
         SendMessage(hWndTrackbar, TBM_SETTOOLTIPS, (LPARAM) hWndTooltip, 0);
         rTest = (HWND) SendMessage(hWndTrackbar, TBM_GETTOOLTIPS, 0,0);
-        ok(rTest == hWndTooltip, "Expected hWndToolTip, got \n");
+        ok(rTest == hWndTooltip, "Expected hWndToolTip, got\n");
         SendMessage(hWndTrackbar, TBM_SETTOOLTIPS, (LPARAM) NULL, 0);
         rTest = (HWND) SendMessage(hWndTrackbar, TBM_GETTOOLTIPS, 0,0);
         ok(rTest == NULL, "Expected NULL\n");
@@ -364,7 +364,7 @@ static void test_trackbar_control(void)
     /* test getters and setters without styles set */
     hWndTrackbar = create_trackbar(0);
 
-    ok(hWndTrackbar != NULL, "Expected non NULL value");
+    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
 
     if (hWndTrackbar == NULL){
       skip("trackbar control not present?\n");
