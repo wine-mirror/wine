@@ -2093,12 +2093,12 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     } else
         *pCaps->VolumeTextureAddressCaps = 0;
 
-    *pCaps->LineCaps = D3DLINECAPS_TEXTURE |
-                       D3DLINECAPS_ZTEST;
+    *pCaps->LineCaps = WINED3DLINECAPS_TEXTURE |
+                       WINED3DLINECAPS_ZTEST;
                       /* FIXME: Add
-			 D3DLINECAPS_BLEND
-			 D3DLINECAPS_ALPHACMP
-			 D3DLINECAPS_FOG */
+                        WINED3DLINECAPS_BLEND
+                        WINED3DLINECAPS_ALPHACMP
+                        WINED3DLINECAPS_FOG */
 
     *pCaps->MaxTextureWidth  = GL_LIMITS(texture_size);
     *pCaps->MaxTextureHeight = GL_LIMITS(texture_size);

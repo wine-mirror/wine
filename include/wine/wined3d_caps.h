@@ -19,6 +19,12 @@
 #ifndef __WINE_WINED3D_CAPS_H
 #define __WINE_WINED3D_CAPS_H
 
+#define WINED3DLINECAPS_TEXTURE                             0x00000001
+#define WINED3DLINECAPS_ZTEST                               0x00000002
+#define WINED3DLINECAPS_BLEND                               0x00000004
+#define WINED3DLINECAPS_ALPHACMP                            0x00000008
+#define WINED3DLINECAPS_FOG                                 0x00000010
+
 #define WINED3DPBLENDCAPS_ZERO                              0x00000001
 #define WINED3DPBLENDCAPS_ONE                               0x00000002
 #define WINED3DPBLENDCAPS_SRCCOLOR                          0x00000004
