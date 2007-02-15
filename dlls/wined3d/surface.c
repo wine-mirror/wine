@@ -964,6 +964,12 @@ static void flush_to_framebuffer_drawpixels(IWineD3DSurfaceImpl *This) {
         vcheckGLcall("glPixelStorei GL_PACK_SWAP_BYTES");
     }
 
+    /* Blitting environment requires that 2D texturing is enabled. It was turned off before,
+     * turn it on again
+     */
+    glEnable(GL_TEXTURE_2D);
+    checkGLcall("glEnable(GL_TEXTURE_2D)");
+
     if(memory_allocated) HeapFree(GetProcessHeap(), 0, mem);
     return;
 }
@@ -2638,6 +2644,11 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                     0.0);
         glEnd();
         checkGLcall("glEnd");
+
+        if(Flags & (DDBLT_KEYSRC | DDBLT_KEYSRCOVERRIDE)) {
+            glDisable(GL_ALPHA_TEST);
+            checkGLcall("glDisable(GL_ALPHA_TEST)");
+        }
 
         /* Unbind the texture */
         glBindTexture(GL_TEXTURE_2D, 0);
