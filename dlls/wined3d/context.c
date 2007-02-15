@@ -596,7 +596,7 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
  *
  *****************************************************************************/
 void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextUsage usage) {
-    DWORD tid = This->createParms.BehaviorFlags & D3DCREATE_MULTITHREADED ? GetCurrentThreadId() : 0;
+    DWORD tid = This->createParms.BehaviorFlags & WINED3DCREATE_MULTITHREADED ? GetCurrentThreadId() : 0;
     int                           i;
     DWORD                         dirtyState, idx;
     BYTE                          shift;
