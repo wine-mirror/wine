@@ -1714,7 +1714,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     pitch = IWineD3DSurface_GetPitch(iface);
 
     if((convert != NO_CONVERSION) && This->resource.allocatedMemory) {
-        int height = This->glRect.bottom - This->glRect.top;
+        int height = This->currentDesc.Height;
 
         /* Stick to the alignment for the converted surface too, makes it easier to load the surface */
         outpitch = width * bpp;
