@@ -1601,6 +1601,7 @@ extern void pshader_hw_texm3x3vspec(SHADER_OPCODE_ARG* arg);
 /* ARB vertex shader prototypes */
 extern void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg);
 extern void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg);
+extern void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg);
 
 /* GLSL helper functions */
 extern void shader_glsl_add_instruction_modifiers(SHADER_OPCODE_ARG *arg);

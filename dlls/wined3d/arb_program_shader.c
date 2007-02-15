@@ -881,6 +881,27 @@ void vshader_hw_mnxn(SHADER_OPCODE_ARG* arg) {
     }
 }
 
+void vshader_hw_rsq_rcp(SHADER_OPCODE_ARG* arg) {
+    CONST SHADER_OPCODE* curOpcode = arg->opcode;
+    SHADER_BUFFER* buffer = arg->buffer;
+    DWORD dst = arg->dst;
+    DWORD src = arg->src[0];
+    DWORD swizzle = (src & WINED3DSP_SWIZZLE_MASK) >> WINED3DSP_SWIZZLE_SHIFT;
+
+    char tmpLine[256];
+
+    strcpy(tmpLine, curOpcode->glname); /* Opcode */
+    vshader_program_add_param(arg, dst, FALSE, tmpLine); /* Destination */
+    strcat(tmpLine, ",");
+    vshader_program_add_param(arg, src, TRUE, tmpLine);
+    if ((WINED3DSP_NOSWIZZLE >> WINED3DSP_SWIZZLE_SHIFT) == swizzle) {
+        /* Dx sdk says .x is used if no swizzle is given */
+        strcat(tmpLine, ".x");
+    }
+
+    shader_addline(buffer, "%s;\n", tmpLine);
+}
+
 /* TODO: merge with pixel shader */
 /* Map the opcode 1-to-1 to the GL code */
 void vshader_hw_map2gl(SHADER_OPCODE_ARG* arg) {
