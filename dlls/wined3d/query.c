@@ -354,11 +354,11 @@ static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIs
     switch (This->type) {
         case WINED3DQUERYTYPE_OCCLUSION:
             if (GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
-                if (dwIssueFlags & D3DISSUE_BEGIN) {
+                if (dwIssueFlags & WINED3DISSUE_BEGIN) {
                     GL_EXTCALL(glBeginQueryARB(GL_SAMPLES_PASSED_ARB, ((WineQueryOcclusionData *)This->extendedData)->queryId));
                     checkGLcall("glBeginQuery()");
                 }
-                if (dwIssueFlags & D3DISSUE_END) {
+                if (dwIssueFlags & WINED3DISSUE_END) {
                     GL_EXTCALL(glEndQueryARB(GL_SAMPLES_PASSED_ARB));
                     checkGLcall("glEndQuery()");
                 }
