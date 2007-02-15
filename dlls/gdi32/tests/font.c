@@ -827,8 +827,10 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     LOGFONTA lf;
     HFONT hfont, hfont_old;
     CHARSETINFO csi;
+    FONTSIGNATURE fs;
     INT cs;
     DWORD i, ret;
+    char name[64];
 
     assert(count <= 128);
 
@@ -844,8 +846,23 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     hdc = GetDC(0);
     hfont_old = SelectObject(hdc, hfont);
 
-    cs = GetTextCharset(hdc);
+    cs = GetTextCharsetInfo(hdc, &fs, 0);
     ok(cs == charset, "expected %d, got %d\n", charset, cs);
+
+    SetLastError(0xdeadbeef);
+    ret = GetTextFace(hdc, sizeof(name), name);
+    ok(ret, "GetTextFace error %u\n", GetLastError());
+
+    if (charset == SYMBOL_CHARSET)
+    {
+        ok(strcmp("Arial", name), "face name should NOT be Arial\n");
+        ok(fs.fsCsb[0] & (1 << 31), "symbol encoding should be available\n");
+    }
+    else
+    {
+        ok(!strcmp("Arial", name), "face name should be Arial, not %s\n", name);
+        ok(!(fs.fsCsb[0] & (1 << 31)), "symbol encoding should NOT be available\n");
+    }
 
     if (!TranslateCharsetInfo((DWORD *)cs, &csi, TCI_SRCCHARSET))
     {
@@ -1020,8 +1037,8 @@ static void test_font_charset(void)
     } cd[] =
     {
         { ANSI_CHARSET, 1252 },
-        { SYMBOL_CHARSET, CP_SYMBOL },
-        { RUSSIAN_CHARSET, 1251 }
+        { RUSSIAN_CHARSET, 1251 },
+        { SYMBOL_CHARSET, CP_SYMBOL } /* keep it as the last one */
     };
     int i;
 
@@ -1042,14 +1059,27 @@ static void test_font_charset(void)
 
     for (i = 0; i < sizeof(cd)/sizeof(cd[0]); i++)
     {
+        if (cd[i].charset == SYMBOL_CHARSET)
+        {
+            if (!is_font_installed("Symbol") && !is_font_installed("Wingdings"))
+            {
+                skip("Symbol or Wingdings is not installed\n");
+                break;
+            }
+        }
         get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxA, 128, FALSE);
         get_glyph_indices(cd[i].charset, cd[i].code_page, cd[i].font_idxW, 128, TRUE);
         ok(!memcmp(cd[i].font_idxA, cd[i].font_idxW, 128*sizeof(WORD)), "%d: indices don't match\n", i);
     }
 
     ok(memcmp(cd[0].font_idxW, cd[1].font_idxW, 128*sizeof(WORD)), "0 vs 1: indices shouldn't match\n");
-    ok(memcmp(cd[0].font_idxW, cd[2].font_idxW, 128*sizeof(WORD)), "0 vs 2: indices shouldn't match\n");
-    ok(memcmp(cd[1].font_idxW, cd[2].font_idxW, 128*sizeof(WORD)), "1 vs 2: indices shouldn't match\n");
+    if (i > 2)
+    {
+        ok(memcmp(cd[0].font_idxW, cd[2].font_idxW, 128*sizeof(WORD)), "0 vs 2: indices shouldn't match\n");
+        ok(memcmp(cd[1].font_idxW, cd[2].font_idxW, 128*sizeof(WORD)), "1 vs 2: indices shouldn't match\n");
+    }
+    else
+        skip("Symbol or Wingdings is not installed\n");
 }
 
 START_TEST(font)
