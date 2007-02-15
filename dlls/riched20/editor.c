@@ -2597,6 +2597,8 @@ void ME_LinkNotify(ME_TextEditor *editor, UINT msg, WPARAM wParam, LPARAM lParam
   x = (short)LOWORD(lParam);
   y = (short)HIWORD(lParam);
   nCharOfs = ME_CharFromPos(editor, x, y);
+  if (nCharOfs < 0) return;
+
   ME_CursorFromCharOfs(editor, nCharOfs, &tmpCursor);
   tmpRun = &tmpCursor.pRun->member.run;
 
