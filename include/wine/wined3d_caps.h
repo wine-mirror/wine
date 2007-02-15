@@ -19,6 +19,17 @@
 #ifndef __WINE_WINED3D_CAPS_H
 #define __WINE_WINED3D_CAPS_H
 
+#define WINED3DDTCAPS_UBYTE4                                0x00000001
+#define WINED3DDTCAPS_UBYTE4N                               0x00000002
+#define WINED3DDTCAPS_SHORT2N                               0x00000004
+#define WINED3DDTCAPS_SHORT4N                               0x00000008
+#define WINED3DDTCAPS_USHORT2N                              0x00000010
+#define WINED3DDTCAPS_USHORT4N                              0x00000020
+#define WINED3DDTCAPS_UDEC3                                 0x00000040
+#define WINED3DDTCAPS_DEC3N                                 0x00000080
+#define WINED3DDTCAPS_FLOAT16_2                             0x00000100
+#define WINED3DDTCAPS_FLOAT16_4                             0x00000200
+
 #define WINED3DLINECAPS_TEXTURE                             0x00000001
 #define WINED3DLINECAPS_ZTEST                               0x00000002
 #define WINED3DLINECAPS_BLEND                               0x00000004

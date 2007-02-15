@@ -2280,13 +2280,13 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
              * don't advertise it yet as I'm not sure how we handle it.
              * We might need to add some clamping in the shader engine to
              * support it.
-             * TODO: D3DDTCAPS_USHORT2N, D3DDTCAPS_USHORT4N, D3DDTCAPS_UDEC3, D3DDTCAPS_DEC3N */
-            *pCaps->DeclTypes = D3DDTCAPS_UBYTE4    |
-                                D3DDTCAPS_UBYTE4N   |
-                                D3DDTCAPS_SHORT2N   |
-                                D3DDTCAPS_SHORT4N   |
-                                D3DDTCAPS_FLOAT16_2 |
-                                D3DDTCAPS_FLOAT16_4;
+             * TODO: WINED3DDTCAPS_USHORT2N, WINED3DDTCAPS_USHORT4N, WINED3DDTCAPS_UDEC3, WINED3DDTCAPS_DEC3N */
+            *pCaps->DeclTypes = WINED3DDTCAPS_UBYTE4    |
+                                WINED3DDTCAPS_UBYTE4N   |
+                                WINED3DDTCAPS_SHORT2N   |
+                                WINED3DDTCAPS_SHORT4N   |
+                                WINED3DDTCAPS_FLOAT16_2 |
+                                WINED3DDTCAPS_FLOAT16_4;
 
         } else
             *pCaps->DeclTypes                         = 0;
