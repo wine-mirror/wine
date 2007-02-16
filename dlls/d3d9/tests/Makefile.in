@@ -14,6 +14,7 @@ CTESTS = \
 	surface.c \
 	texture.c \
 	vertexdeclaration.c \
+	visual.c \
 	volume.c
 
 @MAKE_TEST_RULES@

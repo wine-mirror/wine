@@ -4258,6 +4258,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     checkGLcall("glDisable");
     LEAVE_GL();
 
+    /* Dirtify the target surface for now. If the surface is locked regularily, and an up to date sysmem copy exists,
+     * it is most likely more efficient to perform a clear on the sysmem copy too isntead of downloading it
+     */
+    ((IWineD3DSurfaceImpl *)This->render_targets[0])->Flags |= SFLAG_GLDIRTY;
     return WINED3D_OK;
 }
 

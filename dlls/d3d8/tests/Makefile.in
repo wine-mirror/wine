@@ -11,6 +11,7 @@ CTESTS = \
 	device.c \
 	surface.c \
 	texture.c \
+	visual.c \
 	volume.c
 
 @MAKE_TEST_RULES@
