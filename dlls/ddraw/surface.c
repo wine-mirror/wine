@@ -1882,17 +1882,18 @@ IDirectDrawSurfaceImpl_SetClipper(IDirectDrawSurface7 *iface,
                                   IDirectDrawClipper *Clipper)
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
+    IDirectDrawClipperImpl *oldClipper = This->clipper;
 
     TRACE("(%p)->(%p)\n",This,Clipper);
     if (ICOM_OBJECT(IDirectDrawClipperImpl, IDirectDrawClipper, Clipper) == This->clipper)
         return DD_OK;
 
-    if (This->clipper != NULL)
-        IDirectDrawClipper_Release(ICOM_INTERFACE(This->clipper, IDirectDrawClipper) );
-
     This->clipper = ICOM_OBJECT(IDirectDrawClipperImpl, IDirectDrawClipper, Clipper);
+
     if (Clipper != NULL)
         IDirectDrawClipper_AddRef(Clipper);
+    if(oldClipper)
+        IDirectDrawClipper_Release(ICOM_INTERFACE(oldClipper, IDirectDrawClipper));
 
     return DD_OK;
 }
