@@ -1667,10 +1667,7 @@ IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
 {
     ICOM_THIS_FROM(IDirectDrawSurfaceImpl, IDirectDrawSurface7, iface);
 
-    /* It is not quite correct to use the same lpVtable for the different
-     * IDirectDrawSurface versions because the GetDDInterface return different interfaces
-     */
-    FIXME("(%p)->(%p)\n",This,DD);
+    TRACE("(%p)->(%p)\n",This,DD);
 
     if(!DD)
         return DDERR_INVALIDPARAMS;
@@ -1685,8 +1682,13 @@ IDirectDrawSurfaceImpl_GetDDInterface(IDirectDrawSurface7 *iface,
         case 4:
             *((IDirectDraw4 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw4);
             IDirectDraw4_AddRef(*(IDirectDraw4 **) DD);
+            break;
 
         case 2:
+            *((IDirectDraw2 **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw2);
+            IDirectDraw_AddRef( *(IDirectDraw2 **) DD);
+            break;
+
         case 1:
             *((IDirectDraw **) DD) = ICOM_INTERFACE(This->ddraw, IDirectDraw);
             IDirectDraw_AddRef( *(IDirectDraw **) DD);
