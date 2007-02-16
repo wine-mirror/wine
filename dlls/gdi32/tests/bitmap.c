@@ -1637,6 +1637,7 @@ static void test_mono_1x1_bmp_dbg(HBITMAP hbmp, int line)
 
 static void test_CreateBitmap(void)
 {
+    BITMAP bmp;
     HDC screenDC = GetDC(0);
     HDC hdc = CreateCompatibleDC(screenDC);
 
@@ -1684,6 +1685,19 @@ static void test_CreateBitmap(void)
 
     DeleteDC(hdc);
     ReleaseDC(0, screenDC);
+
+    /* show that Windows ignores the provided bm.bmWidthBytes */
+    bmp.bmType = 0;
+    bmp.bmWidth = 1;
+    bmp.bmHeight = 1;
+    bmp.bmWidthBytes = 28;
+    bmp.bmPlanes = 1;
+    bmp.bmBitsPixel = 1;
+    bmp.bmBits = NULL;
+    bm = CreateBitmapIndirect(&bmp);
+    ok(bm != 0, "CreateBitmapIndirect error %u\n", GetLastError());
+    test_mono_1x1_bmp(bm);
+    DeleteObject(bm);
 }
 
 START_TEST(bitmap)

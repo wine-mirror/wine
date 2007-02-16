@@ -263,6 +263,9 @@ HBITMAP WINAPI CreateBitmapIndirect( const BITMAP *bmp )
         return NULL;
     }
 
+    /* Windows ignores the provided bm.bmWidthBytes */
+    bm.bmWidthBytes = BITMAP_GetWidthBytes( bm.bmWidth, bm.bmBitsPixel );
+
       /* Create the BITMAPOBJ */
     bmpobj = GDI_AllocObject( sizeof(BITMAPOBJ), BITMAP_MAGIC,
                               (HGDIOBJ *)&hbitmap, &bitmap_funcs );
