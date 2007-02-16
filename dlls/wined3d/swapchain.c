@@ -364,16 +364,14 @@ static HRESULT WINAPI IWineD3DSwapChainImpl_GetFrontBufferData(IWineD3DSwapChain
     POINT start;
 
     TRACE("(%p) : iface(%p) pDestSurface(%p)\n", This, iface, pDestSurface);
-    
+
     start.x = 0;
     start.y = 0;
-    
+
     if (This->presentParms.Windowed) {
         MapWindowPoints(This->win_handle, NULL, &start, 1);
     }
-#if 0 /* TODO: make sure that this swapchains context is active */
-    IWineD3DDevice_ActivateSwapChainContext(This->wineD3DDevice, iface);
-#endif
+
     IWineD3DSurface_BltFast(pDestSurface, start.x, start.y, This->frontBuffer, NULL, 0);
     return WINED3D_OK;
 }
