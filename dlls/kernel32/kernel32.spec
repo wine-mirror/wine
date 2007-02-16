@@ -182,7 +182,7 @@
 @ stub ChangeTimerQueueTimer
 # @ stub CheckNameLegalDOS8Dot3A
 # @ stub CheckNameLegalDOS8Dot3W
-# @ stub CheckRemoteDebuggerPresent
+@ stdcall CheckRemoteDebuggerPresent(long ptr)
 @ stdcall ClearCommBreak(long)
 @ stdcall ClearCommError(long ptr ptr)
 @ stdcall CloseConsoleHandle(long)
