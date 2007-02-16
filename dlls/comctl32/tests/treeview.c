@@ -1,6 +1,7 @@
 /* Unit tests for treeview.
  *
  * Copyright 2005 Krzysztof Foltman
+ * Copyright 2007 Christopher James Peterson
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -171,6 +172,195 @@ static void DoFocusTest(void)
     ok(GetFocus() == hEdit, "Edit control should have focus\n");
 }
 
+static void TestGetSetBkColor(void)
+{
+    COLORREF crColor = RGB(0,0,0);
+
+    todo_wine{
+        /* If the value is -1, the control is using the system color for the background color. */
+        crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
+        ok(crColor == -1, "Default background color reported as 0x%.8x\n", crColor);
+    }
+
+    /* Test for black background */
+    SendMessage( hTree, TVM_SETBKCOLOR, 0, (LPARAM)RGB(0,0,0) );
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
+    ok(crColor == RGB(0,0,0), "Black background color reported as 0x%.8x\n", crColor);
+
+    /* Test for white background */
+    SendMessage( hTree, TVM_SETBKCOLOR, 0, (LPARAM)RGB(255,255,255) );
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
+    ok(crColor == RGB(255,255,255), "White background color reported as 0x%.8x\n", crColor);
+
+    /* Reset the default background */
+    SendMessage( hTree, TVM_SETBKCOLOR, 0, -1 );
+}
+
+static void TestGetSetImageList(void)
+{
+    HIMAGELIST hImageList = NULL;
+
+    /* Test a NULL HIMAGELIST */
+    SendMessage( hTree, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)hImageList );
+    hImageList = (HIMAGELIST)SendMessage( hTree, TVM_GETIMAGELIST, TVSIL_NORMAL, 0 );
+    ok(hImageList == NULL, "NULL image list, reported as 0x%p, expected 0.\n", hImageList);
+
+    /* TODO: Test an actual image list */
+}
+
+static void TestGetSetIndent(void)
+{
+    int ulIndent = -1;
+    int ulMinIndent = -1;
+    int ulMoreThanTwiceMin = -1;
+
+    /* Finding the minimum indent */
+    SendMessage( hTree, TVM_SETINDENT, 0, 0 );
+    ulMinIndent = (int)SendMessage( hTree, TVM_GETINDENT, 0, 0 );
+
+    /* Checking an indent that is more than twice the default indent */
+    ulMoreThanTwiceMin = 2*ulMinIndent+1;
+    SendMessage( hTree, TVM_SETINDENT, ulMoreThanTwiceMin, 0 );
+    ulIndent = (DWORD)SendMessage( hTree, TVM_GETINDENT, 0, 0 );
+    ok(ulIndent == ulMoreThanTwiceMin, "Indent reported as %d, expected %d\n", ulIndent, ulMoreThanTwiceMin);
+}
+
+static void TestGetSetInsertMarkColor(void)
+{
+    COLORREF crColor = RGB(0,0,0);
+    SendMessage( hTree, TVM_SETBKCOLOR, 0, crColor );
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETBKCOLOR, 0, 0 );
+    ok(crColor == RGB(0,0,0), "Insert mark color reported as 0x%.8x, expected 0x00000000\n", crColor);
+}
+
+static void TestGetSetItem(void)
+{
+    TVITEM tviRoot = {0};
+    int nBufferSize = 80;
+    char szBuffer[80] = {0};
+
+    /* Test the root item */
+    tviRoot.hItem = hRoot;
+    tviRoot.mask = TVIF_TEXT;
+    tviRoot.cchTextMax = nBufferSize;
+    tviRoot.pszText = szBuffer;
+    SendMessage( hTree, TVM_GETITEM, 0, (LPARAM)&tviRoot );
+    ok(!strcmp("Root", szBuffer), "GetItem: szBuffer=\"%s\", expected \"Root\"\n", szBuffer);
+
+    /* Change the root text */
+    strncpy(szBuffer, "Testing123", nBufferSize);
+    SendMessage( hTree, TVM_SETITEM, 0, (LPARAM)&tviRoot );
+    memset(szBuffer, 0, nBufferSize);
+    SendMessage( hTree, TVM_GETITEM, 0, (LPARAM)&tviRoot );
+    ok(!strcmp("Testing123", szBuffer), "GetItem: szBuffer=\"%s\", expected \"Testing123\"\n", szBuffer);
+
+    /* Reset the root text */
+    memset(szBuffer, 0, nBufferSize);
+    strncpy(szBuffer, "Root", nBufferSize);
+    SendMessage( hTree, TVM_SETITEM, 0, (LPARAM)&tviRoot );
+}
+
+static void TestGetSetItemHeight(void)
+{
+    int ulOldHeight = 0;
+    int ulNewHeight = 0;
+
+    /* Assuming default height to begin with */
+    ulOldHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+
+    /* Explicitly setting and getting the default height */
+    SendMessage( hTree, TVM_SETITEMHEIGHT, -1, 0 );
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == ulOldHeight, "Default height not set properly, reported %d, expected %d\n", ulNewHeight, ulOldHeight);
+
+    /* Explicitly setting and getting the height of twice the normal */
+    SendMessage( hTree, TVM_SETITEMHEIGHT, 2*ulOldHeight, 0 );
+    ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+    ok(ulNewHeight == 2*ulOldHeight, "New height not set properly, reported %d, expected %d\n", ulNewHeight, 2*ulOldHeight);
+
+    todo_wine {
+        /* Assuming tree doesn't have TVS_NONEVENHEIGHT set, so a set of 9 will round down to 8 */
+        SendMessage( hTree, TVM_SETITEMHEIGHT, 9, 0 );
+        ulNewHeight = (int) SendMessage( hTree, TVM_GETITEMHEIGHT, 0, 0 );
+        ok(ulNewHeight == 8, "Uneven height not set properly, reported %d, expected %d\n", ulNewHeight, 8);
+    }
+}
+
+static void TestGetSetScrollTime(void)
+{
+    int ulExpectedTime = 20;
+    int ulTime = 0;
+    SendMessage( hTree, TVM_SETSCROLLTIME, ulExpectedTime, 0 );
+    ulTime = (int)SendMessage( hTree, TVM_GETSCROLLTIME, 0, 0 );
+    ok(ulTime == ulExpectedTime, "Scroll time reported as %d, expected %d\n", ulTime, ulExpectedTime);
+}
+
+static void TestGetSetTextColor(void)
+{
+    /* If the value is -1, the control is using the system color for the text color. */
+    COLORREF crColor = RGB(0,0,0);
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
+    ok(crColor == -1, "Default text color reported as 0x%.8x\n", crColor);
+
+    /* Test for black text */
+    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, (LPARAM)RGB(0,0,0) );
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
+    ok(crColor == RGB(0,0,0), "Black text color reported as 0x%.8x\n", crColor);
+
+    /* Test for white text */
+    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, (LPARAM)RGB(255,255,255) );
+    crColor = (COLORREF)SendMessage( hTree, TVM_GETTEXTCOLOR, 0, 0 );
+    ok(crColor == RGB(255,255,255), "White text color reported as 0x%.8x\n", crColor);
+
+    /* Reset the default text color */
+    SendMessage( hTree, TVM_SETTEXTCOLOR, 0, -1 );
+}
+
+static void TestGetSetToolTips(void)
+{
+    HWND hwndLastToolTip = NULL;
+
+    /* Testing setting a NULL ToolTip */
+    SendMessage( hTree, TVM_SETTOOLTIPS, 0, 0 );
+    hwndLastToolTip = (HWND)SendMessage( hTree, TVM_GETTOOLTIPS, 0, 0 );
+    ok(hwndLastToolTip == NULL, "NULL tool tip, reported as 0x%p, expected 0.\n", hwndLastToolTip);
+
+    /* TODO: Add a test of an actual tooltip */
+}
+
+static void TestGetSetUnicodeFormat(void)
+{
+    BOOL bPreviousSetting = 0;
+    BOOL bNewSetting = 0;
+
+    /* Set to Unicode */
+    bPreviousSetting = (BOOL)SendMessage( hTree, TVM_SETUNICODEFORMAT, 1, 0 );
+    bNewSetting = (BOOL)SendMessage( hTree, TVM_GETUNICODEFORMAT, 0, 0 );
+    ok(bNewSetting == 1, "Unicode setting did not work.\n");
+
+    /* Set to ANSI */
+    SendMessage( hTree, TVM_SETUNICODEFORMAT, 0, 0 );
+    bNewSetting = (BOOL)SendMessage( hTree, TVM_GETUNICODEFORMAT, 0, 0 );
+    ok(bNewSetting == 0, "ANSI setting did not work.\n");
+
+    /* Revert to original setting */
+    SendMessage( hTree, TVM_SETUNICODEFORMAT, (LPARAM)bPreviousSetting, 0 );
+}
+
+static void TestGetSet(void)
+{
+    TestGetSetBkColor();            /* TVM_GETBKCOLOR and TVM_SETBKCOLOR */
+    TestGetSetImageList();          /* TVM_GETIMAGELIST and TVM_SETIMAGELIST */
+    TestGetSetIndent();             /* TVM_SETINDENT and TVM_GETINDENT */
+    TestGetSetInsertMarkColor();    /* TVM_GETINSERTMARKCOLOR and TVM_GETINSERTMARKCOLOR */
+    TestGetSetItem();               /* TVM_GETITEM and TVM_SETITEM */
+    TestGetSetItemHeight();         /* TVM_GETITEMHEIGHT and TVM_SETITEMHEIGHT*/
+    TestGetSetScrollTime();         /* TVM_GETSCROLLTIME and TVM_SETSCROLLTIME */
+    TestGetSetTextColor();          /* TVM_GETTEXTCOLOR and TVM_SETTEXTCOLOR */
+    TestGetSetToolTips();           /* TVM_GETTOOLTIPS and TVM_SETTOOLTIPS */
+    TestGetSetUnicodeFormat();      /* TVM_GETUNICODEFORMAT and TVM_SETUNICODEFORMAT */
+}
+
 static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     switch(msg) {
@@ -252,6 +442,7 @@ START_TEST(treeview)
     DoTest1();
     DoTest2();
     DoFocusTest();
+    TestGetSet();
 
     PostMessageA(hMainWnd, WM_CLOSE, 0, 0);
     while(GetMessageA(&msg,0,0,0)) {
