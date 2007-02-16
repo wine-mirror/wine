@@ -64,6 +64,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(wininet);
 #define szCRLF 			"\r\n"
 #define MAX_BACKLOG 		5
 
+/* Testing shows that Windows only accepts dwFlags where the last
+ * 3 (yes 3) bits define FTP_TRANSFER_TYPE_UNKNOWN, FTP_TRANSFER_TYPE_ASCII or FTP_TRANSFER_TYPE_BINARY.
+ */
+#define FTP_CONDITION_MASK      0x0007
+
 typedef enum {
   /* FTP commands with arguments. */
   FTP_CMD_ACCT,
@@ -201,10 +206,28 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
     LPWININETAPPINFOW hIC = NULL;
     BOOL r = FALSE;
 
+    if (!lpszLocalFile || !lpszNewRemoteFile)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
     lpwfs = (LPWININETFTPSESSIONW) WININET_GetObject( hConnect );
-    if (NULL == lpwfs || WH_HFTPSESSION != lpwfs->hdr.htype)
+    if (!lpwfs)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (WH_HFTPSESSION != lpwfs->hdr.htype)
     {
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
+        goto lend;
+    }
+
+    if ((dwFlags & FTP_CONDITION_MASK) > FTP_TRANSFER_TYPE_BINARY)
+    {
+        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
         goto lend;
     }
 
@@ -230,8 +253,7 @@ BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
     }
 
 lend:
-    if( lpwfs )
-        WININET_Release( &lpwfs->hdr );
+    WININET_Release( &lpwfs->hdr );
 
     return r;
 }
@@ -256,23 +278,18 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
 
     TRACE(" lpszLocalFile(%s) lpszNewRemoteFile(%s)\n", debugstr_w(lpszLocalFile), debugstr_w(lpszNewRemoteFile));
 
-    if (!lpszLocalFile || !lpszNewRemoteFile)
-    {
-        INTERNET_SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
     /* Clear any error information */
     INTERNET_SetLastError(0);
-    hIC = lpwfs->lpAppInfo;
 
     /* Open file to be uploaded */
     if (INVALID_HANDLE_VALUE ==
         (hFile = CreateFileW(lpszLocalFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0)))
     {
         INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
-        goto lend;
+        return FALSE;
     }
+
+    hIC = lpwfs->lpAppInfo;
 
     SendAsyncCallback(&lpwfs->hdr, lpwfs->hdr.dwContext, INTERNET_STATUS_SENDING_REQUEST, NULL, 0);
 
@@ -296,7 +313,6 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
         }
     }
 
-lend:
     if (lpwfs->lstnSocket != -1)
         closesocket(lpwfs->lstnSocket);
 
@@ -1193,8 +1209,6 @@ static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszNewFile);
 }
 
-#define FTP_CONDITION_MASK      0x0007
-
 BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
     BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
     DWORD dwContext)
@@ -1221,10 +1235,6 @@ BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lps
         INTERNET_SetLastError(ERROR_INTERNET_INCORRECT_HANDLE_TYPE);
         goto lend;
     }
-
-    /* Testing shows that Windows only accepts dwInternetFlags where the last
-     * 3 (yes 3) bits define FTP_TRANSFER_TYPE_UNKNOWN, FTP_TRANSFER_TYPE_ASCII or FTP_TRANSFER_TYPE_BINARY.
-     */
 
     if ((dwInternetFlags & FTP_CONDITION_MASK) > FTP_TRANSFER_TYPE_BINARY)
     {
