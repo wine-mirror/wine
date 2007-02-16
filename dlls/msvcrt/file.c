@@ -1126,6 +1126,7 @@ int CDECL MSVCRT__fileno(MSVCRT_FILE* file)
 int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
 {
   DWORD dw;
+  DWORD type;
   BY_HANDLE_FILE_INFORMATION hfi;
   HANDLE hand = msvcrt_fdtoh(fd);
 
@@ -1142,31 +1143,39 @@ int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
 
   memset(&hfi, 0, sizeof(hfi));
   memset(buf, 0, sizeof(struct MSVCRT__stat64));
-  if (!GetFileInformationByHandle(hand, &hfi))
+  type = GetFileType(hand);
+  if (type == FILE_TYPE_PIPE)
   {
-    WARN(":failed-last error (%d)\n",GetLastError());
-    msvcrt_set_errno(ERROR_INVALID_PARAMETER);
-    return -1;
+    buf->st_dev = buf->st_rdev = fd;
+    buf->st_mode = S_IFIFO;
+    buf->st_nlink = 1;
   }
-  dw = GetFileType(hand);
-  buf->st_mode = S_IREAD;
-  if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-    buf->st_mode |= S_IWRITE;
-  /* interestingly, Windows never seems to set S_IFDIR */
-  if (dw == FILE_TYPE_CHAR)
-    buf->st_mode |= S_IFCHR;
-  else if (dw == FILE_TYPE_PIPE)
-    buf->st_mode |= S_IFIFO;
-  else
-    buf->st_mode |= S_IFREG;
+  else if (type == FILE_TYPE_CHAR)
+  {
+    buf->st_dev = buf->st_rdev = fd;
+    buf->st_mode = S_IFCHR;
+    buf->st_nlink = 1;
+  }
+  else /* FILE_TYPE_DISK etc. */
+  {
+    if (!GetFileInformationByHandle(hand, &hfi))
+    {
+      WARN(":failed-last error (%d)\n",GetLastError());
+      msvcrt_set_errno(ERROR_INVALID_PARAMETER);
+      return -1;
+    }
+    buf->st_mode = S_IFREG | S_IREAD;
+    if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+      buf->st_mode |= S_IWRITE;
+    buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
+    RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
+    buf->st_atime = dw;
+    RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
+    buf->st_mtime = buf->st_ctime = dw;
+    buf->st_nlink = hfi.nNumberOfLinks;
+  }
   TRACE(":dwFileAttributes = 0x%x, mode set to 0x%x\n",hfi.dwFileAttributes,
    buf->st_mode);
-  buf->st_nlink = hfi.nNumberOfLinks;
-  buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
-  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastAccessTime, &dw);
-  buf->st_atime = dw;
-  RtlTimeToSecondsSince1970((LARGE_INTEGER *)&hfi.ftLastWriteTime, &dw);
-  buf->st_mtime = buf->st_ctime = dw;
   return 0;
 }
 

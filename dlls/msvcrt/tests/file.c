@@ -27,6 +27,7 @@
 #include <share.h>
 #include <sys/stat.h>
 #include <io.h>
+#include <direct.h>
 #include <windef.h>
 #include <winbase.h>
 #include <winnls.h>
@@ -796,6 +797,86 @@ static void test_setmaxstdio(void)
     ok(-1 == _setmaxstdio(2049),"_setmaxstdio returned %d instead of -1\n",_setmaxstdio(2049));
 }
 
+static void test_stat(void)
+{
+    int fd;
+    int pipes[2];
+    struct stat buf;
+
+    /* Tests for a file */
+    fd = open("stat.tst", O_WRONLY | O_CREAT | O_BINARY, _S_IREAD |_S_IWRITE);
+    if (fd >= 0)
+    {
+        if (fstat(fd, &buf) == 0)
+        {
+            if (S_ISREG(buf.st_mode))
+            {
+                ok(buf.st_dev == 0, "st_dev is %d, expected 0\n", buf.st_dev);
+                ok(buf.st_dev == buf.st_rdev, "st_dev (%d) and st_rdev (%d) differ\n",
+                    buf.st_dev, buf.st_rdev);
+                ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n",
+                    buf.st_nlink);
+                ok(buf.st_size == 0, "st_size is %d, expected 0\n",
+                    buf.st_size);
+            }
+            else
+                skip("file is not a file?\n");
+        }
+        else
+            skip("fstat failed, errno %d\n", errno);
+        close(fd);
+        remove("stat.tst");
+    }
+    else
+        skip("open failed with errno %d\n", errno);
+
+    /* Tests for a char device */
+    if (_dup2(0, 10) == 0)
+    {
+        if (fstat(10, &buf) == 0)
+        {
+            if (buf.st_mode == _S_IFCHR)
+            {
+                ok(buf.st_dev == 10, "st_dev is %d, expected 10\n", buf.st_dev);
+                ok(buf.st_rdev == 10, "st_rdev is %d, expected 10\n", buf.st_rdev);
+                ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n", buf.st_nlink);
+            }
+            else
+                skip("stdin is not a char device?\n");
+        }
+        else
+            skip("fstat failed with errno %d\n", errno);
+        close(10);
+    }
+    else
+        skip("_dup2 failed with errno %d\n", errno);
+
+    /* Tests for pipes */
+    if (_pipe(pipes, 1024, O_BINARY) == 0)
+    {
+        if (fstat(pipes[0], &buf) == 0)
+        {
+            if (buf.st_mode == _S_IFIFO)
+            {
+                ok(buf.st_dev == pipes[0], "st_dev is %d, expected %d\n",
+                    buf.st_dev, pipes[0]);
+                ok(buf.st_rdev == pipes[0], "st_rdev is %d, expected %d\n",
+                    buf.st_rdev, pipes[0]);
+                ok(buf.st_nlink == 1, "st_nlink is %d, expected 1\n",
+                    buf.st_nlink);
+            }
+            else
+                skip("pipe() didn't make a pipe?\n");
+        }
+        else
+            skip("fstat failed with errno %d\n", errno);
+        close(pipes[0]);
+        close(pipes[1]);
+    }
+    else
+        skip("pipe failed with errno %d\n", errno);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -813,6 +894,7 @@ START_TEST(file)
     test_file_inherit(arg_v[0]);
     test_file_write_read();
     test_chsize();
+    test_stat();
 
     /* testing stream I/O */
     test_fdopen();
