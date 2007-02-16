@@ -1088,10 +1088,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         else
             WARN("Unsupported in local OpenGL implementation: ARB_OCCLUSION_QUERY/NV_OCCLUSION_QUERY\n");
         break;
+
+    case WINED3DQUERYTYPE_EVENT:
+        /* Half-Life 2 needs this query. It does not render the main menu correctly otherwise
+         * Pretend to support it, faking this query does not do much harm except potentially lowering performance
+         */
+        FIXME("(%p) Event query: Unimplemented, but pretending to be supported\n", This);
+        hr = WINED3D_OK;
+        break;
+
     case WINED3DQUERYTYPE_VCACHE:
     case WINED3DQUERYTYPE_RESOURCEMANAGER:
     case WINED3DQUERYTYPE_VERTEXSTATS:
-    case WINED3DQUERYTYPE_EVENT:
     case WINED3DQUERYTYPE_TIMESTAMP:
     case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
     case WINED3DQUERYTYPE_TIMESTAMPFREQ:
