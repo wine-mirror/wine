@@ -107,6 +107,9 @@ static void MipMapCreationTest(void)
     ok(U2(ddsd).dwMipMapCount == 1, "Incorrect mipmap count: %d.\n",
         U2(ddsd).dwMipMapCount);
 
+    /* Destroy the surface. */
+    IDirectDrawSurface_Release(lpDDSMipMapTest);
+
 
     /* Third mipmap creation test: create a surface with DDSCAPS_MIPMAP,
         DDSCAPS_COMPLEX and without DDSD_MIPMAPCOUNT.
@@ -132,6 +135,9 @@ static void MipMapCreationTest(void)
         "GetSurfaceDesc returned no mipmapcount.\n");
     ok(U2(ddsd).dwMipMapCount == 6, "Incorrect mipmap count: %d.\n",
         U2(ddsd).dwMipMapCount);
+
+    /* Destroy the surface. */
+    IDirectDrawSurface_Release(lpDDSMipMapTest);
 
 
     /* Fourth mipmap creation test: same as above with a different texture
