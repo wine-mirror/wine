@@ -376,7 +376,7 @@ IDirectDrawSurfaceImpl_Release(IDirectDrawSurface7 *iface)
         IDirectDrawSurfaceImpl_Destroy(This);
 
         /* Reduce the ddraw refcount */
-        IUnknown_Release(ifaceToRelease);
+        if(ifaceToRelease) IUnknown_Release(ifaceToRelease);
     }
 
     return ref;

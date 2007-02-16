@@ -410,8 +410,7 @@ IDirectDrawImpl_CreateSurface(LPDIRECTDRAW This, LPDDSURFACEDESC pSDesc,
                              IDirectDraw,
                              IDirectDraw7,
                              This));
-        IDirectDraw_AddRef(This);
-        impl->ifaceToRelease = (IUnknown *) This;
+        impl->ifaceToRelease = NULL;
     }
 
     return hr;
@@ -446,8 +445,7 @@ IDirectDraw2Impl_CreateSurface(LPDIRECTDRAW2 This, LPDDSURFACEDESC pSDesc,
                              IDirectDraw2,
                              IDirectDraw7,
                              This));
-        IDirectDraw2_AddRef(This);
-        impl->ifaceToRelease = (IUnknown *) This;
+        impl->ifaceToRelease = NULL;
     }
 
     return hr;
