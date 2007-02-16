@@ -79,9 +79,9 @@ static void state_fillmode(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
 }
 
 static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
-    BOOL normals;
+    BOOL transformed;
 
-    /* Lighting is only enabled if Vertex normals are passed by the application,
+    /* Lighting is not enabled if transformed vertices are drawn
      * but lighting does not affect the stream sources, so it is not grouped for performance reasons.
      * This state reads the decoded vertex decl, so if it is dirty don't do anything. The
      * vertex declaration appplying function calls this function for updating
@@ -91,10 +91,11 @@ static void state_lighting(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         return;
     }
 
-    normals = stateblock->wineD3DDevice->strided_streams.u.s.normal.lpData != NULL ||
-              stateblock->wineD3DDevice->strided_streams.u.s.normal.VBO != 0;
+    transformed = ((stateblock->wineD3DDevice->strided_streams.u.s.position.lpData != NULL ||
+                    stateblock->wineD3DDevice->strided_streams.u.s.position.VBO != 0) &&
+                    stateblock->wineD3DDevice->strided_streams.u.s.position_transformed) ? TRUE : FALSE;
 
-    if (stateblock->renderState[WINED3DRS_LIGHTING] && normals) {
+    if (stateblock->renderState[WINED3DRS_LIGHTING] && !transformed) {
         glEnable(GL_LIGHTING);
         checkGLcall("glEnable GL_LIGHTING");
     } else {

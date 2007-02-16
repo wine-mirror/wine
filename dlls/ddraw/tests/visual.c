@@ -175,6 +175,132 @@ out:
     return ret;
 }
 
+struct vertex
+{
+    float x, y, z;
+    DWORD diffuse;
+};
+
+struct nvertex
+{
+    float x, y, z;
+    float nx, ny, nz;
+    DWORD diffuse;
+};
+
+static void lighting_test(IDirect3DDevice7 *device)
+{
+    HRESULT hr;
+    DWORD fvf = D3DFVF_XYZ | D3DFVF_DIFFUSE;
+    DWORD nfvf = D3DFVF_XYZ | D3DFVF_DIFFUSE | D3DFVF_NORMAL;
+    DWORD color;
+
+    float mat[16] = { 1.0, 0.0, 0.0, 0.0,
+                      0.0, 1.0, 0.0, 0.0,
+                      0.0, 0.0, 1.0, 0.0,
+                      0.0, 0.0, 0.0, 1.0 };
+
+    struct vertex unlitquad[] =
+    {
+        {-1.0,  -1.0,    0.1,                           0xffff0000},
+        {-1.0,   0.0,    0.1,                           0xffff0000},
+        { 0.0,   0.0,    0.1,                           0xffff0000},
+        { 0.0,  -1.0,    0.1,                           0xffff0000},
+    };
+    struct vertex litquad[] =
+    {
+        {-1.0,   0.0,    0.1,                           0xff00ff00},
+        {-1.0,   1.0,    0.1,                           0xff00ff00},
+        { 0.0,   1.0,    0.1,                           0xff00ff00},
+        { 0.0,   0.0,    0.1,                           0xff00ff00},
+    };
+    struct nvertex unlitnquad[] =
+    {
+        { 0.0,  -1.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
+        { 0.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
+        { 1.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
+        { 1.0,  -1.0,    0.1,   1.0,    1.0,    1.0,    0xff0000ff},
+    };
+    struct nvertex litnquad[] =
+    {
+        { 0.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
+        { 0.0,   1.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
+        { 1.0,   1.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
+        { 1.0,   0.0,    0.1,   1.0,    1.0,    1.0,    0xffffff00},
+    };
+    WORD Indices[] = {0, 1, 2, 2, 3, 0};
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
+
+    /* Setup some states that may cause issues */
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_WORLD, (D3DMATRIX *) mat);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_VIEW, (D3DMATRIX *)mat);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetTransform(device, D3DTRANSFORMSTATE_PROJECTION, (D3DMATRIX *) mat);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetTransform returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CLIPPING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_STENCILENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ALPHATESTENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState failed with %08x\n", hr);
+
+    hr = IDirect3DDevice7_BeginScene(device);
+    ok(hr == D3D_OK, "IDirect3DDevice7_BeginScene failed with %08x\n", hr);
+    if(hr == D3D_OK)
+    {
+        /* No lights are defined... That means, lit vertices should be entirely black */
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, unlitquad, 4 /* NumVerts */,
+                                                    Indices, 6 /* Indexcount */, 0 /* flags */);
+        ok(hr == D3D_OK, "IDirect3DDevice7_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, fvf, litquad, 4 /* NumVerts */,
+                                                    Indices, 6 /* Indexcount */, 0 /* flags */);
+        ok(hr == D3D_OK, "IDirect3DDevice7_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, unlitnquad, 4 /* NumVerts */,
+                                                    Indices, 6 /* Indexcount */, 0 /* flags */);
+        ok(hr == D3D_OK, "IDirect3DDevice7_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+
+        hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+        hr = IDirect3DDevice7_DrawIndexedPrimitive(device, D3DPT_TRIANGLELIST, nfvf, litnquad, 4 /* NumVerts */,
+                                                    Indices, 6 /* Indexcount */, 0 /* flags */);
+        ok(hr == D3D_OK, "IDirect3DDevice7_DrawIndexedPrimitiveUP failed with %08x\n", hr);
+
+        IDirect3DDevice7_EndScene(device);
+        ok(hr == D3D_OK, "IDirect3DDevice7_EndScene failed with %08x\n", hr);
+    }
+
+    color = getPixelColor(device, 160, 360); /* lower left quad - unlit without normals */
+    ok(color == 0x00ff0000, "Unlit quad without normals has color %08x\n", color);
+    color = getPixelColor(device, 160, 120); /* upper left quad - lit without normals */
+    ok(color == 0x00000000, "Lit quad without normals has color %08x\n", color);
+    color = getPixelColor(device, 480, 360); /* lower left quad - unlit width normals */
+    ok(color == 0x000000ff, "Unlit quad width normals has color %08x\n", color);
+    color = getPixelColor(device, 480, 120); /* upper left quad - lit width normals */
+    ok(color == 0x00000000, "Lit quad width normals has color %08x\n", color);
+
+    hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -213,6 +339,9 @@ START_TEST(visual)
         trace("Sanity check returned an incorrect color(%08x), can't assure the correctness of the tests, skipping\n", color);
         goto cleanup;
     }
+
+    /* Now run the tests */
+    lighting_test(Direct3DDevice);
 
 cleanup:
     releaseObjects();
