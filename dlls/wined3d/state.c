@@ -2396,8 +2396,10 @@ static void loadVertexData(IWineD3DStateBlockImpl *stateblock, WineDirect3DVerte
 #endif
 
         } else {
-            /* TODO: support blends in fixupVertices */
-            FIXME("unsupported blending in openGl\n");
+            /* TODO: support blends in drawStridedSlow
+             * No need to write a FIXME here, this is done after the general vertex decl decoding
+             */
+            WARN("unsupported blending in openGl\n");
         }
     } else {
         if (GL_SUPPORT(ARB_VERTEX_BLEND)) {
@@ -2785,8 +2787,11 @@ static inline void handleStreams(IWineD3DStateBlockImpl *stateblock, BOOL useVer
 /* Generate some fixme's if unsupported functionality is being used */
 #define BUFFER_OR_DATA(_attribute) dataLocations->u.s._attribute.lpData
     /* TODO: Either support missing functionality in fixupVertices or by creating a shader to replace the pipeline. */
-    if (!useVertexShaderFunction && (BUFFER_OR_DATA(blendMatrixIndices) || BUFFER_OR_DATA(blendWeights))) {
-        FIXME("Blending data is only valid with vertex shaders %p %p\n",dataLocations->u.s.blendWeights.lpData,dataLocations->u.s.blendWeights.lpData);
+    if (!useVertexShaderFunction &&
+        stateblock->renderState[WINED3DRS_VERTEXBLEND] &&
+        (BUFFER_OR_DATA(blendMatrixIndices) || BUFFER_OR_DATA(blendWeights))) {
+        FIXME("Vertex Blending is not implemented yet %p %p\n",dataLocations->u.s.blendWeights.lpData,dataLocations->u.s.blendWeights.lpData);
+        /* TODO: Implement it using GL_ARB_vertex_blend or software emulation in drawStridedSlow */
     }
     if (!useVertexShaderFunction && (BUFFER_OR_DATA(position2) || BUFFER_OR_DATA(normal2))) {
         FIXME("Tweening is only valid with vertex shaders\n");
