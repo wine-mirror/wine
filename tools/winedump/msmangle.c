@@ -349,8 +349,10 @@ int symbol_demangle (parsed_symbol *sym)
   else
   {
     INIT_CT (ct);
-    if (!demangle_datatype (&name, &ct, sym))
+    if (!demangle_datatype (&name, &ct, sym)) {
+      free (function_name);
       return -1;
+    }
     sym->return_text = ct.expression;
     sym->return_type = get_type_constant(ct.dest_type, ct.flags);
     ct.expression = NULL;
