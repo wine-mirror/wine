@@ -51,46 +51,14 @@
 #include <stdio.h>
 
 #include "wine/test.h"
+#include "msg.h"
 
 #define NUM_MSG_SEQUENCES   3
 #define PARENT_SEQ_INDEX    0
 #define EDIT_SEQ_INDEX      1
 #define UPDOWN_SEQ_INDEX    2
 
-/* undocumented SWP flags - from SDK 3.1 */
-#define SWP_NOCLIENTSIZE	0x0800
-#define SWP_NOCLIENTMOVE	0x1000
-
 static HWND parent_wnd, edit, updown;
-
-typedef enum
-{
-    sent = 0x1,
-    posted = 0x2,
-    parent = 0x4,
-    wparam = 0x8,
-    lparam = 0x10,
-    defwinproc = 0x20,
-    beginpaint = 0x40,
-    optional = 0x80,
-    hook = 0x100,
-    winevent_hook =0x200
-} msg_flags_t;
-
-struct message
-{
-    UINT message;       /* the WM_* code */
-    msg_flags_t flags;  /* message props */
-    WPARAM wParam;      /* expected value of wParam */
-    LPARAM lParam;      /* expected value of lParam */
-};
-
-struct msg_sequence
-{
-    int count;
-    int size;
-    struct message *sequence;
-};
 
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
 
@@ -141,212 +109,6 @@ static const struct message get_edit_text_seq[] = {
     { 0 }
 };
 
-static void add_message(int sequence_index, const struct message *msg)
-{
-    struct msg_sequence *msg_seq = sequences[sequence_index];
-
-    if (!msg_seq->sequence)
-    {
-        msg_seq->size = 10;
-        msg_seq->sequence = HeapAlloc(GetProcessHeap(), 0,
-                                      msg_seq->size * sizeof (struct message));
-    }
-
-    if (msg_seq->count == msg_seq->size)
-    {
-        msg_seq->size *= 2;
-        msg_seq->sequence = HeapReAlloc(GetProcessHeap(), 0,
-                                        msg_seq->sequence,
-                                        msg_seq->size * sizeof (struct message));
-    }
-
-    assert(msg_seq->sequence);
-
-    msg_seq->sequence[msg_seq->count].message = msg->message;
-    msg_seq->sequence[msg_seq->count].flags = msg->flags;
-    msg_seq->sequence[msg_seq->count].wParam = msg->wParam;
-    msg_seq->sequence[msg_seq->count].lParam = msg->lParam;
-
-    msg_seq->count++;
-}
-
-static void flush_sequence(int sequence_index)
-{
-    struct msg_sequence *msg_seq = sequences[sequence_index];
-    HeapFree(GetProcessHeap(), 0, msg_seq->sequence);
-    msg_seq->sequence = NULL;
-    msg_seq->count = msg_seq->size = 0;
-}
-
-static void flush_sequences(void)
-{
-    flush_sequence(PARENT_SEQ_INDEX);
-    flush_sequence(EDIT_SEQ_INDEX);
-    flush_sequence(UPDOWN_SEQ_INDEX);
-}
-
-#define ok_sequence(index, exp, contx, todo) \
-        ok_sequence_(index, (exp), (contx), (todo), __FILE__, __LINE__)
-
-
-static void ok_sequence_(int sequence_index, const struct message *expected,
-                         const char *context, int todo, const char *file, int line)
-{
-    struct msg_sequence *msg_seq = sequences[sequence_index];
-    static const struct message end_of_sequence = {0, 0, 0, 0};
-    const struct message *actual, *sequence;
-    int failcount = 0;
-
-    add_message(sequence_index, &end_of_sequence);
-
-    sequence = msg_seq->sequence;
-    actual = sequence;
-
-    while (expected->message && actual->message)
-    {
-        trace_( file, line)("expected %04x - actual %04x\n", expected->message, actual->message);
-
-        if (expected->message == actual->message)
-        {
-            if (expected->flags & wparam)
-            {
-                if (expected->wParam != actual->wParam && todo)
-                {
-                    todo_wine
-                    {
-                        failcount++;
-                        ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting wParam 0x%x got 0x%x\n",
-                            context, expected->message, expected->wParam, actual->wParam);
-                    }
-                }
-                else
-                {
-                    ok_(file, line) (expected->wParam == actual->wParam,
-                        "%s: in msg 0x%04x expecting wParam 0x%x got 0x%x\n",
-                        context, expected->message, expected->wParam, actual->wParam);
-                }
-            }
-
-            if (expected->flags & lparam)
-            {
-                if (expected->lParam != actual->lParam && todo)
-                {
-                    todo_wine
-                    {
-                        failcount++;
-                        ok_(file, line) (FALSE,
-                            "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
-                            context, expected->message, expected->lParam, actual->lParam);
-                    }
-                }
-                else
-                {
-                    ok_(file, line) (expected->lParam == actual->lParam,
-                        "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
-                        context, expected->message, expected->lParam, actual->lParam);
-                }
-            }
-
-            if ((expected->flags & defwinproc) != (actual->flags & defwinproc) && todo)
-            {
-                todo_wine
-                {
-                    failcount++;
-                    ok_(file, line) (FALSE,
-                        "%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
-                        context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
-                }
-            }
-            else
-            {
-                ok_(file, line) ((expected->flags & defwinproc) == (actual->flags & defwinproc),
-                    "%s: the msg 0x%04x should %shave been sent by DefWindowProc\n",
-                    context, expected->message, (expected->flags & defwinproc) ? "" : "NOT ");
-            }
-
-            ok_(file, line) ((expected->flags & beginpaint) == (actual->flags & beginpaint),
-                "%s: the msg 0x%04x should %shave been sent by BeginPaint\n",
-                context, expected->message, (expected->flags & beginpaint) ? "" : "NOT ");
-            ok_(file, line) ((expected->flags & (sent|posted)) == (actual->flags & (sent|posted)),
-                "%s: the msg 0x%04x should have been %s\n",
-                context, expected->message, (expected->flags & posted) ? "posted" : "sent");
-            ok_(file, line) ((expected->flags & parent) == (actual->flags & parent),
-                "%s: the msg 0x%04x was expected in %s\n",
-                context, expected->message, (expected->flags & parent) ? "parent" : "child");
-            ok_(file, line) ((expected->flags & hook) == (actual->flags & hook),
-                "%s: the msg 0x%04x should have been sent by a hook\n",
-                context, expected->message);
-            ok_(file, line) ((expected->flags & winevent_hook) == (actual->flags & winevent_hook),
-                "%s: the msg 0x%04x should have been sent by a winevent hook\n",
-                context, expected->message);
-            expected++;
-            actual++;
-        }
-        else if (expected->flags & optional)
-            expected++;
-        else if (todo)
-        {
-            failcount++;
-            todo_wine
-            {
-                ok_(file, line) (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
-                    context, expected->message, actual->message);
-            }
-
-            flush_sequence(sequence_index);
-            return;
-        }
-        else
-        {
-            ok_(file, line) (FALSE, "%s: the msg 0x%04x was expected, but got msg 0x%04x instead\n",
-                context, expected->message, actual->message);
-            expected++;
-            actual++;
-        }
-    }
-
-    /* skip all optional trailing messages */
-    while (expected->message && ((expected->flags & optional)))
-        expected++;
-
-    if (todo)
-    {
-        todo_wine
-        {
-            if (expected->message || actual->message)
-            {
-                failcount++;
-                ok_(file, line) (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
-                    context, expected->message, actual->message);
-            }
-        }
-    }
-    else if (expected->message || actual->message)
-    {
-        ok_(file, line) (FALSE, "%s: the msg sequence is not complete: expected %04x - actual %04x\n",
-            context, expected->message, actual->message);
-    }
-
-    if(todo && !failcount) /* succeeded yet marked todo */
-    {
-        todo_wine
-        {
-            ok_(file, line)(TRUE, "%s: marked \"todo_wine\" but succeeds\n", context);
-        }
-    }
-
-    flush_sequence(sequence_index);
-}
-
-static void init_msg_sequences(void)
-{
-    int i;
-
-    for (i = 0; i < NUM_MSG_SEQUENCES; i++)
-        sequences[i] = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct msg_sequence));
-}
-
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static long defwndproc_counter = 0;
@@ -369,7 +131,7 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         if (defwndproc_counter) msg.flags |= defwinproc;
         msg.wParam = wParam;
         msg.lParam = lParam;
-        add_message(PARENT_SEQ_INDEX, &msg);
+        add_message(sequences, PARENT_SEQ_INDEX, &msg);
     }
 
     defwndproc_counter++;
@@ -428,7 +190,7 @@ static LRESULT WINAPI edit_subclass_proc(HWND hwnd, UINT message, WPARAM wParam,
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    add_message(EDIT_SEQ_INDEX, &msg);
+    add_message(sequences, EDIT_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
     ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
@@ -476,7 +238,7 @@ static LRESULT WINAPI updown_subclass_proc(HWND hwnd, UINT message, WPARAM wPara
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    add_message(EDIT_SEQ_INDEX, &msg);
+    add_message(sequences, EDIT_SEQ_INDEX, &msg);
 
     defwndproc_counter++;
     ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
@@ -683,28 +445,28 @@ static void test_create_updown_control(void)
 
     parent_wnd = create_parent_window();
     ok(parent_wnd != NULL, "Failed to create parent window!\n");
-    ok_sequence(PARENT_SEQ_INDEX, create_parent_wnd_seq, "create parent window", TRUE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, create_parent_wnd_seq, "create parent window", TRUE);
 
-    flush_sequences();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     edit = create_edit_control();
     ok(edit != NULL, "Failed to create edit control\n");
-    ok_sequence(PARENT_SEQ_INDEX, add_edit_to_parent_seq, "add edit control to parent", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, add_edit_to_parent_seq, "add edit control to parent", FALSE);
 
-    flush_sequences();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     updown = create_updown_control();
     ok(updown != NULL, "Failed to create updown control\n");
-    ok_sequence(PARENT_SEQ_INDEX, add_updown_to_parent_seq, "add updown control to parent", TRUE);
-    ok_sequence(EDIT_SEQ_INDEX, add_updown_with_edit_seq, "add updown control with edit", FALSE);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, add_updown_to_parent_seq, "add updown control to parent", TRUE);
+    ok_sequence(sequences, EDIT_SEQ_INDEX, add_updown_with_edit_seq, "add updown control with edit", FALSE);
 
-    flush_sequences();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     GetWindowTextA(edit, text, MAX_PATH);
     ok(lstrlenA(text) == 0, "Expected empty string\n");
-    ok_sequence(EDIT_SEQ_INDEX, get_edit_text_seq, "get edit text", FALSE);
+    ok_sequence(sequences, EDIT_SEQ_INDEX, get_edit_text_seq, "get edit text", FALSE);
 
-    flush_sequences();
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_updown_pos();
     test_updown_pos32();
@@ -716,7 +478,7 @@ static void test_create_updown_control(void)
 START_TEST(updown)
 {
     InitCommonControls();
-    init_msg_sequences();
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_create_updown_control();
 }

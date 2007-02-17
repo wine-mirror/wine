@@ -15,6 +15,7 @@ CTESTS = \
 	misc.c \
 	monthcal.c \
 	mru.c \
+	msg.c \
 	progress.c \
 	propsheet.c \
 	rebar.c \
