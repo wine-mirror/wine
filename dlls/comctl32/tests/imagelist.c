@@ -340,10 +340,9 @@ static BOOL DoTest1(void)
     /* destroy it */
     ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
-    /* icons should be deleted by the imagelist */
-    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted\n");
-    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted\n");
-    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted\n");
+    ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
+    ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
+    ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
 
     return TRUE;
 }
@@ -376,10 +375,9 @@ static BOOL DoTest2(void)
     /* destroy it */
     ok(ImageList_Destroy(himl),"destroy imagelist failed\n");
 
-    /* icons should be deleted by the imagelist */
-    ok(!DeleteObject(hicon1),"icon 1 wasn't deleted\n");
-    ok(!DeleteObject(hicon2),"icon 2 wasn't deleted\n");
-    ok(!DeleteObject(hicon3),"icon 3 wasn't deleted\n");
+    ok(DestroyIcon(hicon1),"icon 1 wasn't deleted\n");
+    ok(DestroyIcon(hicon2),"icon 2 wasn't deleted\n");
+    ok(DestroyIcon(hicon3),"icon 3 wasn't deleted\n");
 
     return TRUE;
 }
@@ -551,7 +549,7 @@ static void testMerge(void)
 
     ImageList_Destroy(himl1);
     ImageList_Destroy(himl2);
-    DeleteObject(hicon1);
+    DestroyIcon(hicon1);
     DestroyWindow(hwnd);
 }
 
