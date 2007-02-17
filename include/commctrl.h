@@ -3743,6 +3743,8 @@ typedef struct NMLVSCROLL
 #define ListView_GetItemW(hwnd,pitem) \
     (BOOL)SNDMSGW((hwnd),LVM_GETITEMW,0,(LPARAM)(LVITEMW *)(pitem))
 #define ListView_GetItem WINELIB_NAME_AW(ListView_GetItem)
+#define ListView_GetOrigin(hwnd,ppt) \
+    (BOOL)SNDMSGW((hwnd),LVM_GETORIGIN,0,(LPARAM)(POINT *)(ppt))
 
 #define ListView_HitTest(hwnd,pinfo) \
     (INT)SNDMSGA((hwnd),LVM_HITTEST,0,(LPARAM)(LPLVHITTESTINFO)(pinfo))
