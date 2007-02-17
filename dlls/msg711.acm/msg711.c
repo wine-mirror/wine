@@ -67,7 +67,7 @@ typedef	struct
     int		rate;
 } Format;
 
-static Format PCM_Formats[] =
+static const Format PCM_Formats[] =
 {
     /*{1,  8,  8000}, {2,  8,  8000}, */{1, 16,  8000}, {2, 16,  8000},
     /*{1,  8, 11025}, {2,  8, 11025}, */{1, 16, 11025}, {2, 16, 11025},
@@ -75,13 +75,13 @@ static Format PCM_Formats[] =
     /*{1,  8, 44100}, {2,  8, 44100}, */{1, 16, 44100}, {2, 16, 44100},
 };
 
-static Format ALaw_Formats[] =
+static const Format ALaw_Formats[] =
 {
     {1,  8,  8000}, {2,	8,  8000},  {1,  8, 11025}, {2,	 8, 11025},
     {1,  8, 22050}, {2,	8, 22050},  {1,  8, 44100}, {2,	 8, 44100},
 };
 
-static Format ULaw_Formats[] =
+static const Format ULaw_Formats[] =
 {
     {1,  8,  8000}, {2,	8,  8000},  {1,  8, 11025}, {2,	 8, 11025},
     {1,  8, 22050}, {2,	8, 22050},  {1,  8, 44100}, {2,	 8, 44100},
@@ -96,8 +96,8 @@ static Format ULaw_Formats[] =
  */
 static	DWORD	G711_GetFormatIndex(LPWAVEFORMATEX wfx)
 {
-    int 	i, hi;
-    Format*	fmts;
+    int             i, hi;
+    const Format*   fmts;
 
     switch (wfx->wFormatTag)
     {
@@ -208,13 +208,11 @@ static inline void  W16(unsigned char* dst, short s)
 #define	SEG_SHIFT	(4)		/* Left shift for segment number. */
 #define	SEG_MASK	(0x70)		/* Segment field mask. */
 
-static short seg_aend[8] = {0x1F, 0x3F, 0x7F, 0xFF,
-			    0x1FF, 0x3FF, 0x7FF, 0xFFF};
-static short seg_uend[8] = {0x3F, 0x7F, 0xFF, 0x1FF,
-			    0x3FF, 0x7FF, 0xFFF, 0x1FFF};
+static const short seg_aend[8] = {0x1F, 0x3F, 0x7F, 0x0FF, 0x1FF, 0x3FF, 0x7FF, 0x0FFF};
+static const short seg_uend[8] = {0x3F, 0x7F, 0xFF, 0x1FF, 0x3FF, 0x7FF, 0xFFF, 0x1FFF};
 
 /* copy from CCITT G.711 specifications */
-static unsigned char _u2a[128] = {			/* u- to A-law conversions */
+static const unsigned char _u2a[128] = {		/* u- to A-law conversions */
 	1,	1,	2,	2,	3,	3,	4,	4,
 	5,	5,	6,	6,	7,	7,	8,	8,
 	9,	10,	11,	12,	13,	14,	15,	16,
@@ -235,7 +233,7 @@ static unsigned char _u2a[128] = {			/* u- to A-law conversions */
 	113,	114,	115,	116,	117,	118,	119,	120,
 	121,	122,	123,	124,	125,	126,	127,	128};
 
-static unsigned char _a2u[128] = {			/* A- to u-law conversions */
+static const unsigned char _a2u[128] = {		/* A- to u-law conversions */
 	1,	3,	5,	7,	9,	11,	13,	15,
 	16,	17,	18,	19,	20,	21,	22,	23,
 	24,	25,	26,	27,	28,	29,	30,	31,
@@ -260,7 +258,7 @@ static unsigned char _a2u[128] = {			/* A- to u-law conversions */
 static short
 search(
     int		val,	        /* changed from "short" *drago* */
-    short	*table,
+    const short	*table,
     int		size)	        /* changed from "short" *drago* */
 {
     int		i;	/* changed from "short" *drago* */
@@ -357,7 +355,7 @@ alaw2linear(unsigned char a_val)
 /* EPP (for Wine):
  * this array has been statically generated from the above routine
  */
-static unsigned short _a2l[] = {
+static const unsigned short _a2l[] = {
 0xEA80, 0xEB80, 0xE880, 0xE980, 0xEE80, 0xEF80, 0xEC80, 0xED80,
 0xE280, 0xE380, 0xE080, 0xE180, 0xE680, 0xE780, 0xE480, 0xE580,
 0xF540, 0xF5C0, 0xF440, 0xF4C0, 0xF740, 0xF7C0, 0xF640, 0xF6C0,
@@ -494,7 +492,7 @@ ulaw2linear(unsigned char u_val)
 /* EPP (for Wine):
  * this array has been statically generated from the above routine
  */
-static unsigned short _u2l[] = {
+static const unsigned short _u2l[] = {
 0x8284, 0x8684, 0x8A84, 0x8E84, 0x9284, 0x9684, 0x9A84, 0x9E84,
 0xA284, 0xA684, 0xAA84, 0xAE84, 0xB284, 0xB684, 0xBA84, 0xBE84,
 0xC184, 0xC384, 0xC584, 0xC784, 0xC984, 0xCB84, 0xCD84, 0xCF84,
