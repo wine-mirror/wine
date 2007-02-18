@@ -190,7 +190,7 @@
 @ stub NetSessionGetInfo
 @ stub NetShareAdd
 @ stub NetShareCheck
-@ stub NetShareDel
+@ stdcall NetShareDel(wstr wstr long)
 @ stub NetShareDelSticky
 @ stdcall NetShareEnum(wstr long ptr long ptr ptr ptr)
 @ stub NetShareEnumSticky

@@ -310,10 +310,24 @@ NetUserGetLocalGroups(LPCWSTR servername, LPCWSTR username, DWORD level,
                       DWORD flags, LPBYTE* bufptr, DWORD prefmaxlen,
                       LPDWORD entriesread, LPDWORD totalentries)
 {
+    NET_API_STATUS status;
+
     FIXME("(%s, %s, %d, %08x, %p %d, %p, %p) stub!\n",
           debugstr_w(servername), debugstr_w(username), level, flags, bufptr,
           prefmaxlen, entriesread, totalentries);
-    return NERR_InternalError;
+
+    status = NETAPI_ValidateServername(servername);
+    if (status != NERR_Success)
+        return status;
+
+    if (!NETAPI_IsKnownUser(username))
+        return NERR_UserNotFound;
+
+    if (bufptr) *bufptr = NULL;
+    if (entriesread) *entriesread = 0;
+    if (totalentries) *totalentries = 0;
+
+    return NERR_Success;
 }
 
 /************************************************************

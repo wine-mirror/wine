@@ -83,3 +83,12 @@ NET_API_STATUS WINAPI NetShareEnum( LPWSTR servername, DWORD level, LPBYTE* bufp
 
     return ERROR_NOT_SUPPORTED;
 }
+
+/************************************************************
+ * NetShareDel  (NETAPI32.@)
+ */
+NET_API_STATUS WINAPI NetShareDel(LMSTR servername, LMSTR netname, DWORD reserved)
+{
+    FIXME("Stub (%s %s %d)\n", debugstr_w(servername), debugstr_w(netname), reserved);
+    return NERR_Success;
+}
