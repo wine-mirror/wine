@@ -825,8 +825,9 @@ BOOL get_fbconfig_from_visualid(Display *display, Visual *visual, int *fmt_id, i
     int tmp_vis_id;
     VisualID visualid;
 
-    if(!display || !display) {
+    if(!display || !visual) {
         ERR("Invalid display or visual\n");
+	return FALSE;
     }
     visualid = XVisualIDFromVisual(visual);
 
@@ -835,7 +836,7 @@ BOOL get_fbconfig_from_visualid(Display *display, Visual *visual, int *fmt_id, i
     if (NULL == cfgs || 0 == nCfgs) {
         ERR("glXChooseFBConfig returns NULL\n");
         if(cfgs != NULL) XFree(cfgs);
-            return 0;
+        return FALSE;
     }
 
     /* Find the requested offscreen format and count the number of offscreen formats */
