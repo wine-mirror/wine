@@ -410,7 +410,7 @@ static int multi_sz_lenA(const char *str)
 }
 
 static void
-WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
+WINSPOOL_SetDefaultPrinter(const char *devname, const char *name, BOOL force) {
     char qbuf[200];
 
     /* If forcing, or no profile string entry for device yet, set the entry
@@ -435,7 +435,7 @@ WINSPOOL_SetDefaultPrinter(const char *devname, const char *name,BOOL force) {
     }
 }
 
-static BOOL add_printer_driver(char *name)
+static BOOL add_printer_driver(const char *name)
 {
     DRIVER_INFO_3A di3a;
 
@@ -2775,7 +2775,7 @@ BOOL WINAPI GetPrintProcessorDirectoryW(LPWSTR server, LPWSTR env,
  *    the opened hkey on success
  *    NULL on error
  */
-static HKEY WINSPOOL_OpenDriverReg( LPVOID pEnvironment, BOOL unicode)
+static HKEY WINSPOOL_OpenDriverReg( LPCVOID pEnvironment, BOOL unicode)
 {   
     HKEY  retval = NULL;
     LPWSTR buffer;
@@ -4416,7 +4416,7 @@ static BOOL WINSPOOL_GetDriverInfoFromReg(
 /*****************************************************************************
  *          WINSPOOL_GetPrinterDriver
  */
-static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPWSTR pEnvironment,
+static BOOL WINSPOOL_GetPrinterDriver(HANDLE hPrinter, LPCWSTR pEnvironment,
 				      DWORD Level, LPBYTE pDriverInfo,
 				      DWORD cbBuf, LPDWORD pcbNeeded,
 				      BOOL unicode)
@@ -4903,7 +4903,7 @@ BOOL WINAPI EnumJobsW(HANDLE hPrinter, DWORD FirstJob, DWORD NoJobs,
  * BUGS
  *    - only implemented for localhost, foreign hosts will return an error
  */
-static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPWSTR pEnvironment,
+static BOOL WINSPOOL_EnumPrinterDrivers(LPWSTR pName, LPCWSTR pEnvironment,
                                         DWORD Level, LPBYTE pDriverInfo,
                                         DWORD cbBuf, LPDWORD pcbNeeded,
                                         LPDWORD pcReturned, BOOL unicode)
