@@ -342,8 +342,8 @@
 @ stub SetupDiGetHwProfileList
 @ stub SetupDiGetHwProfileListExA
 @ stub SetupDiGetHwProfileListExW
-@ stub SetupDiGetINFClassA
-@ stub SetupDiGetINFClassW
+@ stdcall SetupDiGetINFClassA(str ptr ptr long ptr)
+@ stdcall SetupDiGetINFClassW(wstr ptr ptr long ptr)
 @ stub SetupDiGetSelectedDevice
 @ stub SetupDiGetSelectedDriverA
 @ stub SetupDiGetSelectedDriverW
@@ -509,8 +509,8 @@
 @ stdcall SetupSetFileQueueFlags(long long long)
 @ stub SetupSetPlatformPathOverrideA
 @ stub SetupSetPlatformPathOverrideW
-@ stub SetupSetSourceListA
-@ stub SetupSetSourceListW
+@ stdcall SetupSetSourceListA(long ptr long)
+@ stdcall SetupSetSourceListW(long ptr long)
 @ stdcall SetupTermDefaultQueueCallback(ptr)
 @ stdcall SetupTerminateFileLog(long)
 @ stub ShouldDeviceBeExcluded
