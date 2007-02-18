@@ -54,6 +54,7 @@ static INT asn_any_copy(AsnAny *dst, AsnAny *src)
         UINT length = src->asnValue.string.length;
 
         if (!(stream = HeapAlloc(GetProcessHeap(), 0, length))) return SNMPAPI_ERROR;
+        memcpy(stream, src->asnValue.string.stream, length);
 
         dst->asnValue.string.stream = stream;
         dst->asnValue.string.length = length;
