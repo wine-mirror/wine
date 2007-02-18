@@ -1057,20 +1057,26 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
         IEnumPins_Release(penumpins);
 
         hr = IPin_Connect(ppinreader, ppinsplitter, NULL);
-        if (FAILED(hr)) {
+        if (SUCCEEDED(hr)) {
+            /* Make sure there's some output pins in the filter */
+            hr = GetInternalConnections(psplitter, ppinsplitter, &ppins, &nb);
+            if(SUCCEEDED(hr)) {
+                if(nb > 0) {
+                    TRACE("Successfully connected to filter\n");
+                    break;
+                }
+                CoTaskMemFree(ppins);
+                ppins = NULL;
+                TRACE("No output pins found in filter\n");
+            }
             IBaseFilter_Release(ppinsplitter);
             ppinsplitter = NULL;
-            TRACE("Cannot connect to filter (%x), trying next one\n", hr);
-            continue;
         }
-        TRACE("Successfully connected to filter\n");
-        break;
+        TRACE("Cannot connect to filter (%x), trying next one\n", hr);
+        hr = E_FAIL;
     }
 
     /* Render all output pin of the splitter by calling IGraphBuilder_Render on each of them */
-    if (SUCCEEDED(hr))
-        hr = GetInternalConnections(psplitter, ppinsplitter, &ppins, &nb);
-    
     if (SUCCEEDED(hr)) {
         int i;
         TRACE("pins to consider: %d\n", nb);
