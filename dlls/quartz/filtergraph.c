@@ -961,9 +961,9 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     IEnumPins* penumpins;
     ULONG pin;
     HRESULT hr;
-    IEnumMoniker* pEnumMoniker;
+    IEnumMoniker* pEnumMoniker = NULL;
     GUID tab[2];
-    IPin** ppins;
+    IPin** ppins = NULL;
     ULONG nb;
     IMoniker* pMoniker;
     IFileSourceFilter* pfile = NULL;
@@ -971,6 +971,9 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     WCHAR* filename;
 
     TRACE("(%p/%p)->(%s, %s)\n", This, iface, debugstr_w(lpcwstrFile), debugstr_w(lpcwstrPlayList));
+
+    if (lpcwstrPlayList != NULL)
+        return E_INVALIDARG;
 
     hr = IGraphBuilder_AddSourceFilter(iface, lpcwstrFile, string, &preader);
 
@@ -982,6 +985,13 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
         IFileSourceFilter_Release(pfile);
     }
 
+    if (SUCCEEDED(hr))
+        hr = IBaseFilter_EnumPins(preader, &penumpins);
+    if (SUCCEEDED(hr)) {
+        hr = IEnumPins_Next(penumpins, 1, &ppinreader, &pin);
+        IEnumPins_Release(penumpins);
+    }
+
     if (SUCCEEDED(hr)) {
         tab[0] = mt.majortype;
         tab[1] = mt.subtype;
@@ -990,6 +1000,8 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
 
     if (FAILED(hr))
     {
+        if (pEnumMoniker)
+            IEnumMoniker_Release(pEnumMoniker);
         if (preader) {
              IGraphBuilder_RemoveFilter(iface, preader);
              IBaseFilter_Release(preader);
@@ -1019,65 +1031,49 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
         hr = IGraphBuilder_AddFilter(iface, psplitter, NULL);
         if (FAILED(hr)) {
             ERR("Unable add filter (%x)\n", hr);
-            return hr;
+            IBaseFilter_Release(psplitter);
+            continue;
         }
 
         /* Connect file source and splitter filters together */
         /* Make the splitter analyze incoming data */
-        hr = IBaseFilter_EnumPins(preader, &penumpins);
-        if (FAILED(hr)) {
-            ERR("Enumpins (%x)\n", hr);
-            return hr;
-        }
-        hr = IEnumPins_Next(penumpins, 1, &ppinreader, &pin);
-        if (FAILED(hr)) {
-            ERR("Next (%x)\n", hr);
-            return hr;
-        }
-        if (pin == 0) {
-            ERR("No Pin\n");
-            return E_FAIL;
-        }
-        IEnumPins_Release(penumpins);
 
         hr = IBaseFilter_EnumPins(psplitter, &penumpins);
-        if (FAILED(hr)) {
-            ERR("Splitter Enumpins (%x)\n", hr);
-            return hr;
+        if (SUCCEEDED(hr)) {
+            hr = IEnumPins_Next(penumpins, 1, &ppinsplitter, &pin);
+            IEnumPins_Release(penumpins);
         }
-        hr = IEnumPins_Next(penumpins, 1, &ppinsplitter, &pin);
-        if (FAILED(hr)) {
-            ERR("Next (%x)\n", hr);
-            return hr;
-        }
-        if (pin == 0) {
-            ERR("No Pin\n");
-            return E_FAIL;
-        }
-        IEnumPins_Release(penumpins);
 
-        hr = IPin_Connect(ppinreader, ppinsplitter, NULL);
+        if (SUCCEEDED(hr))
+            hr = IPin_Connect(ppinreader, ppinsplitter, NULL);
         if (SUCCEEDED(hr)) {
             /* Make sure there's some output pins in the filter */
             hr = GetInternalConnections(psplitter, ppinsplitter, &ppins, &nb);
-            if(SUCCEEDED(hr)) {
+            if (SUCCEEDED(hr)) {
                 if(nb > 0) {
                     TRACE("Successfully connected to filter\n");
                     break;
                 }
                 CoTaskMemFree(ppins);
                 ppins = NULL;
-                TRACE("No output pins found in filter\n");
             }
-            IBaseFilter_Release(ppinsplitter);
-            ppinsplitter = NULL;
+
+            TRACE("No output pins found in filter\n");
+            hr = VFW_E_CANNOT_RENDER;
         }
+
+        IPin_Release(ppinsplitter);
+        ppinsplitter = NULL;
+        IGraphBuilder_RemoveFilter(iface, psplitter);
+        IBaseFilter_Release(psplitter);
+        ppinsplitter = NULL;
+
         TRACE("Cannot connect to filter (%x), trying next one\n", hr);
-        hr = E_FAIL;
     }
 
     /* Render all output pin of the splitter by calling IGraphBuilder_Render on each of them */
     if (SUCCEEDED(hr)) {
+        int partial = 0;
         int i;
         TRACE("pins to consider: %d\n", nb);
         for(i = 0; i < nb; i++) {
@@ -1085,13 +1081,19 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
             hr = IGraphBuilder_Render(iface, ppins[i]);
             if (FAILED(hr)) {
                 ERR("Cannot render pin %p (%x)\n", ppins[i], hr);
-                /* FIXME: We should clean created things properly */
-                break;
+                partial = 1;
             }
+            IPin_Release(ppins[i]);
         }
         CoTaskMemFree(ppins);
+
+        hr = (partial ? VFW_S_PARTIAL_RENDER : S_OK);
     }
-    
+
+    if (psplitter)
+        IBaseFilter_Release(psplitter);
+    IBaseFilter_Release(preader);
+
     return hr;
 }
 
