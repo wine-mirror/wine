@@ -166,6 +166,9 @@ typedef struct _domdoc
     const struct IXMLDOMDocumentVtbl *lpVtbl;
     LONG ref;
     VARIANT_BOOL async;
+    VARIANT_BOOL validating;
+    VARIANT_BOOL resolving;
+    VARIANT_BOOL preserving;
     IUnknown *node_unk;
     IXMLDOMNode *node;
     HRESULT error;
@@ -1195,8 +1198,11 @@ static HRESULT WINAPI domdoc_get_validateOnParse(
     IXMLDOMDocument *iface,
     VARIANT_BOOL* isValidating )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    TRACE("%p <- %d\n", isValidating, This->validating);
+    *isValidating = This->validating;
+    return S_OK;
 }
 
 
@@ -1204,8 +1210,11 @@ static HRESULT WINAPI domdoc_put_validateOnParse(
     IXMLDOMDocument *iface,
     VARIANT_BOOL isValidating )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    TRACE("%d\n", isValidating);
+    This->validating = isValidating;
+    return S_OK;
 }
 
 
@@ -1213,17 +1222,23 @@ static HRESULT WINAPI domdoc_get_resolveExternals(
     IXMLDOMDocument *iface,
     VARIANT_BOOL* isResolving )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    TRACE("%p <- %d\n", isResolving, This->resolving);
+    *isResolving = This->resolving;
+    return S_OK;
 }
 
 
 static HRESULT WINAPI domdoc_put_resolveExternals(
     IXMLDOMDocument *iface,
-    VARIANT_BOOL isValidating )
+    VARIANT_BOOL isResolving )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    TRACE("%d\n", isResolving);
+    This->resolving = isResolving;
+    return S_OK;
 }
 
 
@@ -1231,8 +1246,11 @@ static HRESULT WINAPI domdoc_get_preserveWhiteSpace(
     IXMLDOMDocument *iface,
     VARIANT_BOOL* isPreserving )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    TRACE("%p <- %d\n", isPreserving, This->preserving);
+    *isPreserving = This->preserving;
+    return S_OK;
 }
 
 
@@ -1240,8 +1258,11 @@ static HRESULT WINAPI domdoc_put_preserveWhiteSpace(
     IXMLDOMDocument *iface,
     VARIANT_BOOL isPreserving )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument( iface );
+
+    TRACE("%d\n", isPreserving);
+    This->preserving = isPreserving;
+    return S_OK;
 }
 
 
@@ -1365,6 +1386,9 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->lpVtbl = &domdoc_vtbl;
     doc->ref = 1;
     doc->async = 0;
+    doc->validating = 0;
+    doc->resolving = 0;
+    doc->preserving = 0;
     doc->error = S_OK;
 
     xmldoc = xmlNewDoc(NULL);
