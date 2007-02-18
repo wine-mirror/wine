@@ -596,9 +596,9 @@ static void test_hdm_sethotdivider (void)
 
 static void test_hdm_imageMessages (void)
 {
-    HIMAGELIST hImageList;
+    HIMAGELIST hImageList = ImageList_Create (4, 4, 0, 1, 0);
     HIMAGELIST hImageListRetVal;
-    hImageListRetVal = (HIMAGELIST) SendMessage(hWndHeader, HDM_SETIMAGELIST, 0, (LPARAM) &hImageList);
+    hImageListRetVal = (HIMAGELIST) SendMessage(hWndHeader, HDM_SETIMAGELIST, 0, (LPARAM) hImageList);
     ok(hImageListRetVal == NULL, "Expected NULL, got %d\n", (int) hImageListRetVal);
     hImageListRetVal = (HIMAGELIST) SendMessage(hWndHeader, HDM_GETIMAGELIST, 0, 0);
     ok(hImageListRetVal != NULL, "Expected non-NULL handle, got %d\n", (int) hImageListRetVal);
