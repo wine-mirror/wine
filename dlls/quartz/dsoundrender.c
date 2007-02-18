@@ -365,7 +365,7 @@ static HRESULT WINAPI DSoundRender_QueryInterface(IBaseFilter * iface, REFIID ri
         *ppv = (LPVOID)This;
     else if (IsEqualIID(riid, &IID_IBaseFilter))
         *ppv = (LPVOID)This;
-    else if (IsEqualIID(riid, &IID_IBaseFilter))
+    else if (IsEqualIID(riid, &IID_IBasicAudio))
         *ppv = (LPVOID)&(This->IBasicAudio_vtbl);
 
     if (*ppv)
