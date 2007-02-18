@@ -91,7 +91,7 @@ static HRESULT ACMWrapper_ProcessSampleData(TransformFilterImpl* pTransformFilte
 	This->current_size += copy_size;
 	offset += copy_size;
 
-	if (offset == size)
+	if (offset >= size)
 	    stop = TRUE;
 	if (This->current_size < This->max_size)
 	    break;
@@ -256,8 +256,8 @@ HRESULT ACMWrapper_create(IUnknown * pUnkOuter, LPVOID * ppv)
 
     /* Note: This memory is managed by the transform filter once created */
     This = CoTaskMemAlloc(sizeof(ACMWrapperImpl));
+    ZeroMemory(This, sizeof(ACMWrapperImpl));
 
-    This->has = 0;
     This->reinit_codec = TRUE;
 
     hr = TransformFilter_Create(&(This->tf), &CLSID_ACMWrapper, &ACMWrapper_FuncsTable);
