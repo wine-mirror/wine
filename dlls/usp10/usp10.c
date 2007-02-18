@@ -1682,3 +1682,35 @@ HRESULT WINAPI ScriptStringGetOrder(SCRIPT_STRING_ANALYSIS ssa, UINT *order)
 
     return S_OK;
 }
+
+/***********************************************************************
+ *      ScriptGetLogicalWidths (USP10.@)
+ *
+ * Convert advance widths to logical widths.
+ *
+ * PARAMS
+ *  sa          [I] Script analysis.
+ *  nbchars     [I] Number of characters.
+ *  nbglyphs    [I] Number of glyphs.
+ *  glyph_width [I] Array of glyph widths.
+ *  log_clust   [I] Array of logical clusters.
+ *  sva         [I] Visual attributes.
+ *  widths      [O] Array of logical widths.
+ *
+ * RETURNS
+ *  Success: S_OK
+ *  Failure: a non-zero HRESULT.
+ */
+HRESULT WINAPI ScriptGetLogicalWidths(const SCRIPT_ANALYSIS *sa, int nbchars, int nbglyphs,
+                                      const int *glyph_width, const WORD *log_clust,
+                                      const SCRIPT_VISATTR *sva, int *widths)
+{
+    int i;
+
+    TRACE("(%p, %d, %d, %p, %p, %p, %p)\n",
+          sa, nbchars, nbglyphs, glyph_width, log_clust, sva, widths);
+
+    /* FIXME */
+    for (i = 0; i < nbchars; i++) widths[i] = glyph_width[i];
+    return S_OK;
+}
