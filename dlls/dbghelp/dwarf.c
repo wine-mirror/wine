@@ -1203,7 +1203,7 @@ static void dwarf2_parse_enumerator(dwarf2_parse_context_t* ctx,
 
     TRACE("%s, for %s\n", dwarf2_debug_ctx(ctx), dwarf2_debug_di(di)); 
 
-    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) name.u.string = NULL;
+    if (!dwarf2_find_attribute(ctx, di, DW_AT_name, &name)) return;
     if (!dwarf2_find_attribute(ctx, di, DW_AT_const_value, &value)) value.u.svalue = 0;
     symt_add_enum_element(ctx->module, parent, name.u.string, value.u.svalue);
 
@@ -1278,8 +1278,10 @@ static void dwarf2_parse_variable(dwarf2_subprogram_t* subpgm,
     is_pmt = !block && di->abbrev->tag == DW_TAG_formal_parameter;
     param_type = dwarf2_lookup_type(subpgm->ctx, di);
         
-    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_name, &name))
-        name.u.string = NULL;
+    if (!dwarf2_find_attribute(subpgm->ctx, di, DW_AT_name, &name)) {
+	/* cannot do much without the name, the functions below won't like it. */
+        return;
+    }
     if (dwarf2_compute_location_attr(subpgm->ctx, di, DW_AT_location,
                                      &loc, &subpgm->frame))
     {
