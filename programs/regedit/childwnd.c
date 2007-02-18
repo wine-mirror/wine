@@ -30,8 +30,9 @@
 #include "wine/unicode.h"
                                                                                                                              
 WINE_DEFAULT_DEBUG_CHANNEL(regedit);
-                                                                                                                             
+
 ChildWnd* g_pChildWnd;
+static int last_split;
 
 /*******************************************************************************
  * Local module support methods
@@ -162,6 +163,24 @@ static void OnTreeSelectionChanged(HWND hwndTV, HWND hwndLV, HTREEITEM hItem, BO
 }
 
 /*******************************************************************************
+ * finish_splitbar [internal]
+ *
+ * make the splitbar invisible and resize the windows
+ * (helper for ChildWndProc)
+ */
+static void finish_splitbar(HWND hWnd, int x)
+{
+    RECT rt;
+
+    draw_splitbar(hWnd, last_split);
+    last_split = -1;
+    GetClientRect(hWnd, &rt);
+    g_pChildWnd->nSplitPos = x;
+    ResizeWnd(rt.right, rt.bottom);
+    ReleaseCapture();
+}
+
+/*******************************************************************************
  *
  *  FUNCTION: _CmdWndProc(HWND, unsigned, WORD, LONG)
  *
@@ -203,8 +222,6 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
  */
 LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static int last_split;
-
     switch (message) {
     case WM_CREATE:
         g_pChildWnd = HeapAlloc(GetProcessHeap(), 0, sizeof(ChildWnd));
@@ -253,16 +270,11 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             break;
         }
 
+    /* WM_RBUTTONDOWN sets the splitbar the same way as WM_LBUTTONUP */
     case WM_LBUTTONUP:
+    case WM_RBUTTONDOWN:
         if (GetCapture() == hWnd) {
-            RECT rt;
-            int x = LOWORD(lParam);
-            draw_splitbar(hWnd, last_split);
-            last_split = -1;
-            GetClientRect(hWnd, &rt);
-            g_pChildWnd->nSplitPos = x;
-            ResizeWnd(rt.right, rt.bottom);
-            ReleaseCapture();
+            finish_splitbar(hWnd, LOWORD(lParam));
         }
         break;
 
