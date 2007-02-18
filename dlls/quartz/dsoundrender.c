@@ -166,6 +166,17 @@ static HRESULT DSoundRender_SendSampleData(DSoundRenderImpl* This, LPBYTE data, 
     DWORD size2;
     DWORD play_pos,buf_free;
 
+    if (This->state != State_Running) {
+        DWORD state;
+        if (SUCCEEDED(IDirectSoundBuffer_GetStatus(This->dsbuffer, &state))) {
+            if (state & DSBSTATUS_PLAYING) {
+                IDirectSoundBuffer_Stop(This->dsbuffer);
+                This->started = FALSE;
+            }
+        }
+        return S_OK;
+    }
+
     while (1)
     {
         hr = IDirectSoundBuffer_GetCurrentPosition(This->dsbuffer, &play_pos, NULL);
@@ -390,6 +401,13 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
         DeleteCriticalSection(&This->csFilter);
 	if (This->pClock)
             IReferenceClock_Release(This->pClock);
+
+        if (This->dsbuffer)
+            IDirectSoundBuffer_Release(This->dsbuffer);
+        This->dsbuffer = NULL;
+        if (This->dsound)
+            IDirectSound_Release(This->dsound);
+        This->dsound = NULL;
        
         IPin_Release(This->ppPins[0]);
         
