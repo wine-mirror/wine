@@ -32,7 +32,7 @@
 #define FOF_NORECURSION 0x1000
 #endif
 
-CHAR CURR_DIR[MAX_PATH];
+static CHAR CURR_DIR[MAX_PATH];
 
 static HMODULE hshell32;
 static int (WINAPI *pSHCreateDirectoryExA)(HWND, LPCSTR, LPSECURITY_ATTRIBUTES);
@@ -235,7 +235,7 @@ static void test_delete(void)
 {
     SHFILEOPSTRUCTA shfo;
     DWORD ret;
-    CHAR buf[MAX_PATH];
+    CHAR buf[sizeof(CURR_DIR)+sizeof("/test?.txt")+1];
 
     sprintf(buf, "%s\\%s", CURR_DIR, "test?.txt");
     buf[strlen(buf) + 1] = '\0';
