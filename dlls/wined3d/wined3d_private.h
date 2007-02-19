@@ -973,7 +973,8 @@ struct IWineD3DSurfaceImpl
     /* IWineD3DSurface fields */
     IWineD3DBase              *container;
     WINED3DSURFACET_DESC      currentDesc;
-    IWineD3DPaletteImpl      *palette;
+    IWineD3DPaletteImpl       *palette; /* D3D7 style palette handling */
+    PALETTEENTRY              *palette9; /* D3D8/9 style palette handling */
 
     UINT                      bytesPerPixel;
 

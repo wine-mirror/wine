@@ -297,6 +297,8 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
         }
         if(This->Flags & SFLAG_USERPTR) IWineD3DSurface_SetMem(iface, NULL);
 
+        HeapFree(GetProcessHeap(), 0, This->palette9);
+
         IWineD3DResourceImpl_CleanUp((IWineD3DResource *)iface);
         if(iface == device->ddraw_primary)
             device->ddraw_primary = NULL;
@@ -1649,6 +1651,27 @@ void d3dfmt_p8_upload_palette(IWineD3DSurface *iface, CONVERT_TYPES convert) {
     GL_EXTCALL(glColorTableEXT(GL_TEXTURE_2D,GL_RGBA,256,GL_RGBA,GL_UNSIGNED_BYTE, table));
 }
 
+static BOOL palette9_changed(IWineD3DSurfaceImpl *This) {
+    IWineD3DDeviceImpl *device = This->resource.wineD3DDevice;
+
+    if(This->palette || (This->resource.format != WINED3DFMT_P8 && This->resource.format != WINED3DFMT_A8P8)) {
+        /* If a ddraw-style palette is attached assume no d3d9 palette change.
+         * Also the palette isn't interesting if the surface format isn't P8 or A8P8
+         */
+        return FALSE;
+    }
+
+    if(This->palette9) {
+        if(memcmp(This->palette9, &device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256) == 0) {
+            return FALSE;
+        }
+    } else {
+        This->palette9 = (PALETTEENTRY *) HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY) * 256);
+    }
+    memcpy(This->palette9, &device->palettes[device->currentPalette], sizeof(PALETTEENTRY) * 256);
+    return TRUE;
+}
+
 static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     GLenum format, internal, type;
@@ -1672,6 +1695,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
                 (This->glCKey.dwColorSpaceLowValue != This->SrcBltCKey.dwColorSpaceLowValue) ||
                 (This->glCKey.dwColorSpaceHighValue != This->SrcBltCKey.dwColorSpaceHighValue)))) {
         TRACE("Reloading because of color keying\n");
+    } else if(palette9_changed(This)) {
+        TRACE("Reloading surface because the d3d8/9 palette was changed\n");
     } else {
         TRACE("surface isn't dirty\n");
         return WINED3D_OK;
