@@ -187,7 +187,6 @@ typedef struct
 /* fStatus flags */
 #define BEGIN_DRAG_ISSUED   0x00000001
 #define AUTO_RESIZE         0x00000002
-#define BAND_NEEDS_LAYOUT   0x00000010
 #define BAND_NEEDS_REDRAW   0x00000020
 
 /* used by Windows to mark that the header size has been set by the user and shouldn't be changed */
@@ -1311,15 +1310,6 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect)
     INT cyTarget;
     const INT yInit = 0;
 
-    if (!(infoPtr->fStatus & BAND_NEEDS_LAYOUT)) {
-	TRACE("no layout done. No band changed.\n");
-	REBAR_DumpBand (infoPtr);
-	return;
-    }
-
-    infoPtr->fStatus &= ~BAND_NEEDS_LAYOUT;
-    if (!infoPtr->DoRedraw) infoPtr->fStatus |= BAND_NEEDS_REDRAW;
-
     cyTarget = 0;
     if (lpRect) {
         rcAdj = *lpRect;
@@ -1429,10 +1419,9 @@ REBAR_ValidateBand (REBAR_INFO *infoPtr, REBAR_BAND *lpBand)
     if (lpBand->cxIdeal    > 65535) lpBand->cxIdeal    = 0;
     if (lpBand->cxHeader   > 65535) lpBand->cxHeader   = 0;
 
-    /* FIXME: probably should only set NEEDS_LAYOUT flag when */
-    /*        values change. Till then always set it.         */
-    TRACE("setting NEEDS_LAYOUT\n");
-    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
+    /* TODO : we could try return to the caller if a value changed so that */
+    /*        a REBAR_Layout is needed. Till now the caller should call it */
+    /*        it always (we should also check what native does)            */
 
     /* Header is where the image, text and gripper exist  */
     /* in the band and precede the child window.          */
@@ -1940,8 +1929,6 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (infoPtr->uNumBands == 1)
       REBAR_ValidateBand (infoPtr, &infoPtr->bands[0]);
 
-    TRACE("setting NEEDS_LAYOUT\n");
-    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     REBAR_Layout(infoPtr, NULL);
 
     return TRUE;
@@ -2475,7 +2462,6 @@ REBAR_MoveBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     TRACE("moved band %d to index %d\n", uFrom, uTo);
     REBAR_DumpBand (infoPtr);
 
-    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     /* **************************************************** */
     /*                                                      */
     /* We do not do a REBAR_Layout here because the native  */
@@ -2687,7 +2673,6 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	    ShowWindow (lpBand->hwndChild, SW_HIDE);
     }
 
-    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     REBAR_Layout(infoPtr, NULL);
     InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
@@ -2716,8 +2701,6 @@ REBAR_SizeToRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	  t1.left, t1.top, t1.right, t1.bottom);
 
     /* force full _Layout processing */
-    TRACE("setting NEEDS_LAYOUT\n");
-    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     REBAR_Layout(infoPtr, lpRect);
     InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
     return TRUE;
@@ -3358,7 +3341,6 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	      autosize.rcTarget.right, autosize.rcTarget.bottom, lParam);
     }
 
-    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
     REBAR_Layout(infoPtr, NULL);
 
     return 0;
@@ -3377,10 +3359,7 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
         infoPtr->dwStyle &= ~WS_BORDER;
     /* maybe it should be COMMON_STYLES like in toolbar */
     if ((ss->styleNew ^ ss->styleOld) & CCS_VERT)
-    {
-        infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
         REBAR_Layout(infoPtr, NULL);
-    }
 
     return FALSE;
 }
