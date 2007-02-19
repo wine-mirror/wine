@@ -1257,7 +1257,7 @@ static HRESULT WINAPI IDirect3DDevice8Impl_CreateVertexShader(LPDIRECT3DDEVICE8 
     }
     wined3d_vertex_declaration = ((IDirect3DVertexDeclaration8Impl *)object->vertex_declaration)->wined3d_vertex_declaration;
 
-    /* Usage is missing ..*/
+    /* Usage is missing ... Use SetRenderState to set the sw vp render state in SetVertexShader */
     hrc = IWineD3DDevice_CreateVertexShader(This->WineD3DDevice, wined3d_vertex_declaration, pFunction, &object->wineD3DVertexShader, (IUnknown *)object);
 
     if (FAILED(hrc)) {

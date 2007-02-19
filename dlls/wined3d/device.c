@@ -1586,15 +1586,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexShader(IWineD3DDevice *ifac
         return WINED3DERR_INVALIDCALL;
     }
 
-#if 0 /* TODO: In D3D* SVP is atatched to the shader, in D3D9 it's attached to the device and isn't stored in the stateblock. */
-    if(Usage == WINED3DUSAGE_SOFTWAREVERTEXPROCESSING) {
-        /* Foo */
-    } else {
-        /* Bar */
-    }
-
-#endif
-
     return WINED3D_OK;
 }
 
