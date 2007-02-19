@@ -175,7 +175,6 @@ typedef struct
     DWORD    dwStyle;     /* window style */
     DWORD    orgStyle;    /* original style (dwStyle may change) */
     SIZE     calcSize;    /* calculated rebar size - coordinates swapped for CCS_VERT */
-    SIZE     oldSize;     /* previous calculated rebar size */
     BOOL     bUnicode;    /* TRUE if parent wants notify in W format */
     BOOL     DoRedraw;    /* TRUE to acutally draw bands */
     UINT     fStatus;     /* Status flags (see below)  */
@@ -937,9 +936,7 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
     INT xedge = 0, yedge = 0;
     RECT rcSelf;
 
-    TRACE( "old [%d x %d], new [%d x %d]\n",
-	   infoPtr->oldSize.cx, infoPtr->oldSize.cy,
-	   infoPtr->calcSize.cx, infoPtr->calcSize.cy);
+    TRACE("new size [%d x %d]\n", infoPtr->calcSize.cx, infoPtr->calcSize.cy);
 
     if (infoPtr->dwStyle & CCS_NORESIZE)
         return;
@@ -1328,6 +1325,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 {
     REBAR_BAND *lpBand;
     RECT rcAdj;
+    SIZE oldSize;
     INT adjcx, adjcy, i;
     INT rowstart = 0;
     INT row = 0;
@@ -1359,7 +1357,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 
     if (infoPtr->uNumBands == 0) {
         TRACE("No bands - setting size to (0,%d), vert: %lx\n", adjcx, infoPtr->dwStyle & CCS_VERT);
-        infoPtr->oldSize = infoPtr->calcSize;
+        /* TODO: send a notify if height changed */
         infoPtr->calcSize.cx = adjcx;
         infoPtr->calcSize.cy = 0;
         infoPtr->uNumRows = 0;
@@ -1399,16 +1397,16 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
     else
         REBAR_CalcHorzBand(infoPtr, 0, infoPtr->uNumBands);
     /* now compute size of Rebar itself */
-    infoPtr->oldSize = infoPtr->calcSize;
+    oldSize = infoPtr->calcSize;
 
     infoPtr->calcSize.cx = adjcx;
     infoPtr->calcSize.cy = yPos;
-    if (notify && (infoPtr->oldSize.cy != infoPtr->calcSize.cy))
+    if (notify && (oldSize.cy != infoPtr->calcSize.cy))
         infoPtr->fStatus |= NTF_HGHTCHG;
 
     TRACE("calcsize notify=%d, size=(%d, %d), origheight=(%d,%d)\n", notify,
             infoPtr->calcSize.cx, infoPtr->calcSize.cy,
-	    infoPtr->oldSize.cx, infoPtr->oldSize.cy);
+	    oldSize.cx, oldSize.cy);
 
     REBAR_DumpBand (infoPtr);
     REBAR_MoveChildWindows (infoPtr, 0, infoPtr->uNumBands);
