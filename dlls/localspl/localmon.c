@@ -64,6 +64,10 @@ typedef struct {
 static struct list xcv_handles = LIST_INIT( xcv_handles );
 
 /* ############################### */
+
+static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
+                                    'L','P','T','P','o','r','t',
+                                    'C','o','m','m','a','n','d','O','K',0};
 static const WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
                                     'T','r','a','n','s','m','i','s','s','i','o','n',
                                     'R','e','t','r','y','T','i','m','e','o','u','t',0};
@@ -444,6 +448,16 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
 
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
+
+    if (!lstrcmpW(pszDataName, cmd_ConfigureLPTPortCommandOKW)) {
+        TRACE("InputData (%d): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
+        res = RegCreateKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsW, &hroot);
+        if (res == ERROR_SUCCESS) {
+            res = RegSetValueExW(hroot, TransmissionRetryTimeoutW, 0, REG_SZ, pInputData, cbInputData);
+            RegCloseKey(hroot);
+        }
+        return res;
+    }
 
     if (!lstrcmpW(pszDataName, cmd_GetTransmissionRetryTimeoutW)) {
         * pcbOutputNeeded = sizeof(DWORD);
