@@ -2857,7 +2857,24 @@ HINTERNET WINAPI INTERNET_InternetOpenUrlW(LPWININETAPPINFOW hIC, LPCWSTR lpszUr
 			      userName, password, dwFlags, dwContext, INET_OPENURL);
 	if(client == NULL)
 	    break;
-	client1 = HttpOpenRequestW(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
+
+	if (urlComponents.dwExtraInfoLength) {
+		WCHAR *path_extra;
+		DWORD size = urlComponents.dwUrlPathLength + urlComponents.dwExtraInfoLength + 1;
+
+		if (!(path_extra = HeapAlloc(GetProcessHeap(), 0, size)))
+		{
+			InternetCloseHandle(client);
+			break;
+		}
+		strcpyW(path_extra, urlComponents.lpszUrlPath);
+		strcatW(path_extra, urlComponents.lpszExtraInfo);
+		client1 = HttpOpenRequestW(client, NULL, path_extra, NULL, NULL, accept, dwFlags, dwContext);
+		HeapFree(GetProcessHeap(), 0, path_extra);
+	}
+	else
+		client1 = HttpOpenRequestW(client, NULL, path, NULL, NULL, accept, dwFlags, dwContext);
+
 	if(client1 == NULL) {
 	    InternetCloseHandle(client);
 	    break;
