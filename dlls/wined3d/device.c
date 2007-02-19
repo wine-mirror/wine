@@ -939,9 +939,17 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVolumeTexture(IWineD3DDevice *ifa
 
     for (i = 0; i < object->baseTexture.levels; i++)
     {
+        HRESULT hr;
         /* Create the volume */
-        D3DCB_CreateVolume(This->parent, parent, Width, Height, Depth, Format, Pool, Usage,
-                           (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
+        hr = D3DCB_CreateVolume(This->parent, parent, Width, Height, Depth, Format, Pool, Usage,
+                                (IWineD3DVolume **)&object->volumes[i], pSharedHandle);
+
+        if(FAILED(hr)) {
+            ERR("Creating a volume for the volume texture failed(%08x)\n", hr);
+            IWineD3DVolumeTexture_Release((IWineD3DVolumeTexture *) object);
+            *ppVolumeTexture = NULL;
+            return hr;
+        }
 
         /* Set its container to this object */
         IWineD3DVolume_SetContainer(object->volumes[i], (IWineD3DBase *)object);
