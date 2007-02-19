@@ -32,9 +32,7 @@
  *   - RBS_FIXEDORDER
  *   - RBS_REGISTERDROP
  *   - RBS_TOOLTIPS
- *   - CCS_NORESIZE
- *   - CCS_NOMOVEX
- *   - CCS_NOMOVEY
+ *   - RBS_AUTOSIZE
  *   Messages:
  *   - RB_BEGINDRAG
  *   - RB_DRAGMOVE
@@ -190,7 +188,6 @@ typedef struct
     POINT    dragNow;     /* x,y of this MouseMove */
     INT      iOldBand;    /* last band that had the mouse cursor over it */
     INT      ihitoffset;  /* offset of hotspot from gripper.left */
-    POINT    origin;      /* left/upper corner of client */
     INT      ichevronhotBand; /* last band that had a hot chevron */
     INT      iGrabbedBand;/* band number of band whose gripper was grabbed */
 
@@ -200,11 +197,9 @@ typedef struct
 /* fStatus flags */
 #define BEGIN_DRAG_ISSUED   0x00000001
 #define AUTO_RESIZE         0x00000002
-#define RESIZE_ANYHOW       0x00000004
 #define NTF_HGHTCHG         0x00000008
 #define BAND_NEEDS_LAYOUT   0x00000010
 #define BAND_NEEDS_REDRAW   0x00000020
-#define CREATE_RUNNING      0x00000040
 
 /* used by Windows to mark that the header size has been set by the user and shouldn't be changed */
 #define RBBS_UNDOC_FIXEDHEADER 0x40000000
@@ -439,13 +434,18 @@ REBAR_DumpBand (REBAR_INFO *iP)
 
 }
 
+/* dest can be equal to src */
 static void translate_rect(REBAR_INFO *infoPtr, RECT *dest, const RECT *src)
 {
     if (infoPtr->dwStyle & CCS_VERT) {
-        dest->top = src->left;
-        dest->bottom = src->right;
+        int tmp;
+        tmp = src->left;
         dest->left = src->top;
+        dest->top = tmp;
+        
+        tmp = src->right;
         dest->right = src->bottom;
+        dest->bottom = tmp;
     } else {
         *dest = *src;
     }
@@ -463,6 +463,16 @@ static int get_rect_cy(REBAR_INFO *infoPtr, RECT *lpRect)
     if (infoPtr->dwStyle & CCS_VERT)
         return lpRect->right - lpRect->left;
     return lpRect->bottom - lpRect->top;
+}
+
+static void swap_size_if_vert(REBAR_INFO *infoPtr, SIZE *size)
+{
+    if (infoPtr->dwStyle & CCS_VERT)
+    {
+        LONG tmp = size->cx;
+        size->cx = size->cy;
+        size->cy = tmp;
+    }
 }
 
 static void round_child_height(REBAR_BAND *lpBand, int cyHeight)
@@ -933,104 +943,71 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
      /* Function: This changes the size of the REBAR window to that */
      /*  calculated by REBAR_Layout.                                */
 {
-    RECT rc;
     INT x, y, width, height;
-    INT xedge = GetSystemMetrics(SM_CXEDGE);
-    INT yedge = GetSystemMetrics(SM_CYEDGE);
+    INT xedge = 0, yedge = 0;
+    RECT rcSelf;
 
-    GetClientRect (infoPtr->hwndSelf, &rc);
-
-    TRACE( " old [%d x %d], new [%d x %d], client [%d x %d]\n",
+    TRACE( "old [%d x %d], new [%d x %d]\n",
 	   infoPtr->oldSize.cx, infoPtr->oldSize.cy,
-	   infoPtr->calcSize.cx, infoPtr->calcSize.cy,
-	   rc.right, rc.bottom);
+	   infoPtr->calcSize.cx, infoPtr->calcSize.cy);
 
     if (infoPtr->dwStyle & CCS_NORESIZE)
         return;
 
-    /* If we need to shrink client, then skip size test */
-    if ((infoPtr->calcSize.cy >= rc.bottom) &&
-	(infoPtr->calcSize.cx >= rc.right)) {
-
-	/* if size did not change then skip process */
-	if ((infoPtr->oldSize.cx == infoPtr->calcSize.cx) &&
-	    (infoPtr->oldSize.cy == infoPtr->calcSize.cy) &&
-	    !(infoPtr->fStatus & RESIZE_ANYHOW))
-	    {
-		TRACE("skipping reset\n");
-		return;
-	    }
+    if (infoPtr->dwStyle & WS_BORDER)
+    {
+        xedge = GetSystemMetrics(SM_CXEDGE);
+        yedge = GetSystemMetrics(SM_CYEDGE);
+        /* swap for CCS_VERT? */
     }
 
-    infoPtr->fStatus &= ~RESIZE_ANYHOW;
-    /* Set flag to ignore next WM_SIZE message */
-    infoPtr->fStatus |= AUTO_RESIZE;
+    /* compute rebar window rect in parent client coordinates */
+    GetWindowRect(infoPtr->hwndSelf, &rcSelf);
+    MapWindowPoints(HWND_DESKTOP, GetParent(infoPtr->hwndSelf), (LPPOINT)&rcSelf, 2);
+    translate_rect(infoPtr, &rcSelf, &rcSelf);
 
-    width = 0;
-    height = 0;
-    x = 0;
-    y = 0;
-
-    if (infoPtr->dwStyle & WS_BORDER) {
-	width = 2 * xedge;
-	height = 2 * yedge;
-    }
-
+    height = (infoPtr->dwStyle & CCS_VERT ? infoPtr->calcSize.cx : infoPtr->calcSize.cy) + 2*yedge;
     if (!(infoPtr->dwStyle & CCS_NOPARENTALIGN)) {
-	INT mode = infoPtr->dwStyle & (CCS_VERT | CCS_TOP | CCS_BOTTOM);
-	RECT rcPcl;
+        RECT rcParent;
+        SIZE calcSize;
 
-	GetClientRect(GetParent(infoPtr->hwndSelf), &rcPcl);
-	switch (mode) {
-	case CCS_TOP:
-	    /* _TOP sets width to parents width */
-	    width += (rcPcl.right - rcPcl.left);
-	    height += infoPtr->calcSize.cy;
-	    x += ((infoPtr->dwStyle & WS_BORDER) ? -xedge : 0);
-	    y += ((infoPtr->dwStyle & WS_BORDER) ? -yedge : 0);
-	    y += ((infoPtr->dwStyle & CCS_NODIVIDER) ? 0 : REBAR_DIVIDER);
-	    break;
-	case CCS_BOTTOM:
-	    /* FIXME: wrong wrong wrong */
-	    /* _BOTTOM sets width to parents width */
-	    width += (rcPcl.right - rcPcl.left);
-	    height += infoPtr->calcSize.cy;
-      	    x += -xedge;
-	    y = rcPcl.bottom - height + 1;
-	    break;
-	case CCS_LEFT:
-	    /* _LEFT sets height to parents height */
-            width += infoPtr->calcSize.cx;
-	    height += (rcPcl.bottom - rcPcl.top);
-	    x += ((infoPtr->dwStyle & WS_BORDER) ? -xedge : 0);
-	    x += ((infoPtr->dwStyle & CCS_NODIVIDER) ? 0 : REBAR_DIVIDER);
-	    y += ((infoPtr->dwStyle & WS_BORDER) ? -yedge : 0);
-            break;
-	case CCS_RIGHT:
-	    /* FIXME: wrong wrong wrong */
-	    /* _RIGHT sets height to parents height */
-	    width += infoPtr->calcSize.cx;
-	    height += (rcPcl.bottom - rcPcl.top);
-	    x = rcPcl.right - width + 1;
-      	    y = -yedge;
-	    break;
-	default:
-	    width += infoPtr->calcSize.cx;
-	    height += infoPtr->calcSize.cy;
+        x = -xedge;
+        width = (infoPtr->dwStyle & CCS_VERT ? infoPtr->calcSize.cy : infoPtr->calcSize.cx) + 2*xedge;
+        y = 0; /* quiet compiler warning */
+        switch ( infoPtr->dwStyle & CCS_LAYOUT_MASK) {
+            case 0:     /* shouldn't happen - see NCCreate */
+            case CCS_TOP:
+                y = ((infoPtr->dwStyle & CCS_NODIVIDER) ? 0 : REBAR_DIVIDER) - yedge;
+                break;
+            case CCS_NOMOVEY:
+                y = rcSelf.top;
+                break;
+            case CCS_BOTTOM:
+                GetClientRect(GetParent(infoPtr->hwndSelf), &rcParent);
+                translate_rect(infoPtr, &rcParent, &rcParent);
+                calcSize = infoPtr->calcSize;
+                swap_size_if_vert(infoPtr, &calcSize);
+                y = rcParent.bottom - calcSize.cy - yedge;
+                break;
 	}
     }
     else {
-	width += infoPtr->calcSize.cx;
-	height += infoPtr->calcSize.cy;
-	x = infoPtr->origin.x;
-	y = infoPtr->origin.y;
+	x = rcSelf.left;
+	/* As on Windows if the CCS_NODIVIDER is not present the control will move
+	 * 2 pixel down after every layout */
+	y = rcSelf.top + ((infoPtr->dwStyle & CCS_NODIVIDER) ? 0 : REBAR_DIVIDER);
+	width = rcSelf.right - rcSelf.left;
     }
 
     TRACE("hwnd %p, style=%08x, setting at (%d,%d) for (%d,%d)\n",
-	infoPtr->hwndSelf, infoPtr->dwStyle,
-	x, y, width, height);
-    SetWindowPos (infoPtr->hwndSelf, 0, x, y, width, height,
-		    SWP_NOZORDER);
+	infoPtr->hwndSelf, infoPtr->dwStyle, x, y, width, height);
+
+    /* Set flag to ignore next WM_SIZE message and resize the window */
+    infoPtr->fStatus |= AUTO_RESIZE;
+    if ((infoPtr->dwStyle & CCS_VERT) == 0)
+        SetWindowPos(infoPtr->hwndSelf, 0, x, y, width, height, SWP_NOZORDER);
+    else
+        SetWindowPos(infoPtr->hwndSelf, 0, y, x, height, width, SWP_NOZORDER);
     infoPtr->fStatus &= ~AUTO_RESIZE;
 }
 
@@ -1156,16 +1133,6 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
      *         Goto "BeginDeferWindowPos"
      */
 
-}
-
-static void swap_size_if_vert(REBAR_INFO *infoPtr, SIZE *size)
-{
-    if (infoPtr->dwStyle & CCS_VERT)
-    {
-        LONG tmp = size->cx;
-        size->cx = size->cy;
-        size->cy = tmp;
-    }
 }
 
 static int next_band(REBAR_INFO *infoPtr, int i)
@@ -1394,7 +1361,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
     if (lpRect) {
         rcAdj = *lpRect;
         cyTarget = get_rect_cy(infoPtr, lpRect);
-    } else if (infoPtr->dwStyle & CCS_NORESIZE || GetParent(infoPtr->hwndSelf) == NULL)
+    } else if (infoPtr->dwStyle & (CCS_NORESIZE | CCS_NOPARENTALIGN) || GetParent(infoPtr->hwndSelf) == NULL)
         GetClientRect(infoPtr->hwndSelf, &rcAdj);
     else
         GetClientRect(GetParent(infoPtr->hwndSelf), &rcAdj);
@@ -2010,7 +1977,6 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     TRACE("setting NEEDS_LAYOUT\n");
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-    infoPtr->fStatus |= RESIZE_ANYHOW;
     REBAR_Layout(infoPtr, NULL, TRUE);
 
     return TRUE;
@@ -3150,7 +3116,7 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     infoPtr->hcurHorz  = LoadCursorW (0, (LPWSTR)IDC_SIZEWE);
     infoPtr->hcurVert  = LoadCursorW (0, (LPWSTR)IDC_SIZENS);
     infoPtr->hcurDrag  = LoadCursorW (0, (LPWSTR)IDC_SIZE);
-    infoPtr->fStatus = CREATE_RUNNING;
+    infoPtr->fStatus = 0;
     infoPtr->hFont = GetStockObject (SYSTEM_FONT);
 
     /* issue WM_NOTIFYFORMAT to get unicode status of parent */
@@ -3159,7 +3125,9 @@ REBAR_NCCreate (HWND hwnd, WPARAM wParam, LPARAM lParam)
     /* Stow away the original style */
     infoPtr->orgStyle = cs->style;
     /* add necessary styles to the requested styles */
-    infoPtr->dwStyle = cs->style | WS_VISIBLE | CCS_TOP;
+    infoPtr->dwStyle = cs->style | WS_VISIBLE;
+    if ((infoPtr->dwStyle & CCS_LAYOUT_MASK) == 0)
+        infoPtr->dwStyle |= CCS_TOP;
     SetWindowLongW (hwnd, GWL_STYLE, infoPtr->dwStyle);
 
     /* get font handle for Caption Font */
@@ -3409,88 +3377,17 @@ REBAR_SetRedraw (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    RECT rcClient;
+    TRACE("wParam=%x, lParam=%lx\n", wParam, lParam);
 
-    /* auto resize deadlock check */
+    /* avoid auto resize infinite recursion */
     if (infoPtr->fStatus & AUTO_RESIZE) {
 	infoPtr->fStatus &= ~AUTO_RESIZE;
 	TRACE("AUTO_RESIZE was set, reset, fStatus=%08x lparam=%08lx\n",
 	      infoPtr->fStatus, lParam);
 	return 0;
     }
-
-    if (infoPtr->fStatus & CREATE_RUNNING) {
-	/* still in CreateWindow */
-	RECT rcWin;
-
-	if ((INT)wParam != SIZE_RESTORED) {
-	    ERR("WM_SIZE in create and flags=%08x, lParam=%08lx\n",
-		wParam, lParam);
-	}
-
-	TRACE("still in CreateWindow\n");
-	infoPtr->fStatus &= ~CREATE_RUNNING;
-	GetWindowRect ( infoPtr->hwndSelf, &rcWin);
-	TRACE("win rect (%d,%d)-(%d,%d)\n",
-	      rcWin.left, rcWin.top, rcWin.right, rcWin.bottom);
-
-	if ((lParam == 0) && (rcWin.right-rcWin.left == 0) &&
-	    (rcWin.bottom-rcWin.top == 0)) {
-	    /* native control seems to do this */
-	    GetClientRect (GetParent(infoPtr->hwndSelf), &rcClient);
-            TRACE("sizing rebar, message and client zero, parent client (%d,%d)\n",
-		  rcClient.right, rcClient.bottom);
-	}
-	else {
-	    INT cx, cy;
-
-	    cx = rcWin.right - rcWin.left;
-	    cy = rcWin.bottom - rcWin.top;
-	    if ((cx == LOWORD(lParam)) && (cy == HIWORD(lParam))) {
-		return 0;
-	    }
-
-	    /* do the actual WM_SIZE request */
-	    GetClientRect (infoPtr->hwndSelf, &rcClient);
-            TRACE("sizing rebar from (%d,%d) to (%d,%d), client (%d,%d)\n",
-		  infoPtr->calcSize.cx, infoPtr->calcSize.cy,
-		  LOWORD(lParam), HIWORD(lParam),
-		  rcClient.right, rcClient.bottom);
-	}
-        infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-        REBAR_Layout(infoPtr, &rcClient, TRUE);
-        return 0;
-    }
-    else {
-	if ((INT)wParam != SIZE_RESTORED) {
-	    ERR("WM_SIZE out of create and flags=%08x, lParam=%08lx\n",
-		wParam, lParam);
-	}
-
-	/* Handle cases when outside of the CreateWindow process */
-
-	GetClientRect (infoPtr->hwndSelf, &rcClient);
-	if ((lParam == 0) && (rcClient.right + rcClient.bottom != 0) &&
-	    (infoPtr->dwStyle & RBS_AUTOSIZE)) {
-	    /* on a WM_SIZE to zero and current client not zero and AUTOSIZE */
-	    /* native seems to use the current parent width for the size     */
-	    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-	    GetClientRect (GetParent(infoPtr->hwndSelf), &rcClient);
-            if (infoPtr->dwStyle & CCS_VERT)
-                rcClient.right = 0;
-            else
-                rcClient.bottom = 0;
-            TRACE("sizing rebar to parent (%d,%d) size is zero but AUTOSIZE set\n",
-		  rcClient.right, rcClient.bottom);
-	}
-	else {
-            TRACE("sizing rebar from (%d,%d) to (%d,%d), client (%d,%d)\n",
-		  infoPtr->calcSize.cx, infoPtr->calcSize.cy,
-		  LOWORD(lParam), HIWORD(lParam),
-		  rcClient.right, rcClient.bottom);
-	}
-    }
-
+    
+    /* FIXME: wrong */
     if (infoPtr->dwStyle & RBS_AUTOSIZE) {
 	NMRBAUTOSIZE autosize;
 
@@ -3502,11 +3399,8 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	      autosize.rcTarget.right, autosize.rcTarget.bottom, lParam);
     }
 
-    if (((infoPtr->calcSize.cx != rcClient.right) || (infoPtr->calcSize.cy != rcClient.bottom)))
-    {
-        infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-        REBAR_Layout(infoPtr, &rcClient, TRUE);
-    }
+    infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
+    REBAR_Layout(infoPtr, NULL, TRUE);
 
     return 0;
 }
@@ -3548,13 +3442,9 @@ static LRESULT theme_changed (REBAR_INFO* infoPtr)
 static LRESULT
 REBAR_WindowPosChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    WINDOWPOS *lpwp = (WINDOWPOS *)lParam;
     LRESULT ret;
     RECT rc;
 
-    /* Save the new origin of this window - used by _ForceResize */
-    infoPtr->origin.x = lpwp->x;
-    infoPtr->origin.y = lpwp->y;
     ret = DefWindowProcW(infoPtr->hwndSelf, WM_WINDOWPOSCHANGED,
 			 wParam, lParam);
     GetWindowRect(infoPtr->hwndSelf, &rc);

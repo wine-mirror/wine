@@ -34,6 +34,12 @@ static HWND hRebar;
     val.left == exp.left && val.right == exp.right, "invalid rect (" name ") (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d)\n", \
     val.left, val.top, val.right, val.bottom, exp.left, exp.top, exp.right, exp.bottom);
 
+#define check_rect_no_top(name, val, exp) { \
+        ok((val.bottom - val.top == exp.bottom - exp.top) && \
+            val.left == exp.left && val.right == exp.right, "invalid rect (" name ") (%d,%d) (%d,%d) - expected (%d,%d) (%d,%d), ignoring top\n", \
+            val.left, val.top, val.right, val.bottom, exp.left, exp.top, exp.right, exp.bottom); \
+    }
+
 #define compare(val, exp, format) ok((val) == (exp), #val " value " format " expected " format "\n", (val), (exp));
 
 #define expect_eq(expr, value, type, format) { type ret = expr; ok((value) == ret, #expr " expected " format "  got " format "\n", (value), (ret)); }
@@ -429,6 +435,182 @@ static void layout_test()
     DestroyWindow(hRebar);
 }
 
+#if 0       /* use this to generate more tests */
+
+static void dump_client(HWND hRebar)
+{
+    RECT r;
+    GetWindowRect(hRebar, &r);
+    MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
+    printf("    {{%d, %d, %d, %d}, %d},\n", r.left, r.top, r.right, r.bottom, SendMessage(hRebar, RB_GETROWCOUNT, 0, 0));
+}
+
+#define comment(fmt, arg1)
+#define check_client() dump_client(hRebar)
+
+#else
+
+typedef struct {
+    RECT rc;
+    INT iNumRows;
+} rbresize_test_result_t;
+
+rbresize_test_result_t resize_results[] = {
+/* style 00000001 */
+    {{0, 2, 672, 2}, 0},
+    {{0, 2, 672, 22}, 1},
+    {{0, 2, 672, 22}, 1},
+    {{0, 2, 672, 22}, 1},
+/* style 00000041 */
+    {{0, 0, 672, 0}, 0},
+    {{0, 0, 672, 20}, 1},
+    {{0, 0, 672, 20}, 1},
+    {{0, 0, 672, 20}, 1},
+/* style 00000003 */
+    {{0, 226, 672, 226}, 0},
+    {{0, 206, 672, 226}, 1},
+    {{0, 206, 672, 226}, 1},
+    {{0, 206, 672, 226}, 1},
+/* style 00000043 */
+    {{0, 226, 672, 226}, 0},
+    {{0, 206, 672, 226}, 1},
+    {{0, 206, 672, 226}, 1},
+    {{0, 206, 672, 226}, 1},
+/* style 00000080 */
+    {{2, 0, 2, 226}, 0},
+    {{2, 0, 22, 226}, 1},
+    {{2, 0, 22, 226}, 1},
+    {{2, 0, 22, 226}, 1},
+/* style 00000083 */
+    {{672, 0, 672, 226}, 0},
+    {{652, 0, 672, 226}, 1},
+    {{652, 0, 672, 226}, 1},
+    {{652, 0, 672, 226}, 1},
+/* style 00000008 */
+    {{10, 11, 510, 11}, 0},
+    {{10, 15, 510, 35}, 1},
+    {{10, 17, 510, 37}, 1},
+    {{10, 14, 110, 54}, 2},
+    {{0, 4, 0, 44}, 2},
+    {{0, 6, 0, 46}, 2},
+    {{0, 8, 0, 48}, 2},
+/* style 00000048 */
+    {{10, 5, 510, 5}, 0},
+    {{10, 5, 510, 25}, 1},
+    {{10, 5, 510, 25}, 1},
+    {{10, 10, 110, 50}, 2},
+    {{0, 0, 0, 40}, 2},
+    {{0, 0, 0, 40}, 2},
+    {{0, 0, 0, 40}, 2},
+/* style 00000004 */
+    {{10, 5, 510, 20}, 0},
+    {{10, 5, 510, 20}, 1},
+    {{10, 10, 110, 110}, 2},
+    {{0, 0, 0, 0}, 2},
+    {{0, 0, 0, 0}, 2},
+    {{0, 0, 0, 0}, 2},
+/* style 00000002 */
+    {{0, 5, 672, 5}, 0},
+    {{0, 5, 672, 25}, 1},
+    {{0, 10, 672, 30}, 1},
+    {{0, 0, 672, 20}, 1},
+/* style 00000082 */
+    {{10, 0, 10, 226}, 0},
+    {{10, 0, 30, 226}, 1},
+    {{10, 0, 30, 226}, 1},
+    {{0, 0, 20, 226}, 1},
+/* style 00800001 */
+    {{-2, 0, 674, 4}, 0},
+    {{-2, 0, 674, 24}, 1},
+    {{-2, 0, 674, 24}, 1},
+    {{-2, 0, 674, 24}, 1},
+/* style 00800048 */
+    {{10, 5, 510, 9}, 0},
+    {{10, 5, 510, 29}, 1},
+    {{10, 5, 510, 29}, 1},
+    {{10, 10, 110, 54}, 2},
+    {{0, 0, 0, 44}, 2},
+    {{0, 0, 0, 44}, 2},
+    {{0, 0, 0, 44}, 2},
+/* style 00800004 */
+    {{10, 5, 510, 20}, 0},
+    {{10, 5, 510, 20}, 1},
+    {{10, 10, 110, 110}, 2},
+    {{0, 0, 0, 0}, 2},
+    {{0, 0, 0, 0}, 2},
+    {{0, 0, 0, 0}, 2},
+/* style 00800002 */
+    {{-2, 5, 674, 9}, 0},
+    {{-2, 5, 674, 29}, 1},
+    {{-2, 10, 674, 34}, 1},
+    {{-2, 0, 674, 24}, 1},
+};
+
+static int resize_numtests = 0;
+
+#define comment(fmt, arg1)
+#define check_client() { \
+        RECT r; \
+        rbresize_test_result_t *res = &resize_results[resize_numtests++]; \
+        assert(resize_numtests <= sizeof(resize_results)/sizeof(resize_results[0])); \
+        GetWindowRect(hRebar, &r); \
+        MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2); \
+        if ((dwStyles[i] & (CCS_NOPARENTALIGN|CCS_NODIVIDER)) == CCS_NOPARENTALIGN) {\
+            check_rect_no_top("client", r, res->rc); /* the top coordinate changes after every layout and very implementation-dependent */ \
+        } else { \
+            check_rect("client", r, res->rc); \
+        } \
+        expect_eq((int)SendMessage(hRebar, RB_GETROWCOUNT, 0, 0), res->iNumRows, int, "%d"); \
+    }
+
+#endif
+
+static void resize_test()
+{
+    HWND hRebar;
+    DWORD dwStyles[] = {CCS_TOP, CCS_TOP | CCS_NODIVIDER, CCS_BOTTOM, CCS_BOTTOM | CCS_NODIVIDER, CCS_VERT, CCS_RIGHT,
+        CCS_NOPARENTALIGN, CCS_NOPARENTALIGN | CCS_NODIVIDER, CCS_NORESIZE, CCS_NOMOVEY, CCS_NOMOVEY | CCS_VERT,
+        CCS_TOP | WS_BORDER, CCS_NOPARENTALIGN | CCS_NODIVIDER | WS_BORDER, CCS_NORESIZE | WS_BORDER,
+        CCS_NOMOVEY | WS_BORDER};
+
+    const int styles_count = sizeof(dwStyles) / sizeof(dwStyles[0]);
+    int i;
+
+    for (i = 0; i < styles_count; i++)
+    {
+        comment("style %08x", dwStyles[i]);
+        hRebar = CreateWindow(REBARCLASSNAME, "A", dwStyles[i] | WS_CHILD | WS_VISIBLE, 10, 5, 500, 15, hMainWnd, NULL, GetModuleHandle(NULL), 0);
+        check_client();
+        add_band_w(hRebar, NULL, 70, 100, 0);
+        if (dwStyles[i] & CCS_NOPARENTALIGN)  /* the window drifts downward for CCS_NOPARENTALIGN without CCS_NODIVIDER */
+            check_client();
+        add_band_w(hRebar, NULL, 70, 100, 0);
+        check_client();
+        MoveWindow(hRebar, 10, 10, 100, 100, TRUE);
+        check_client();
+        MoveWindow(hRebar, 0, 0, 0, 0, TRUE);
+        check_client();
+        /* try to fool the rebar by sending invalid width/height - won't work */
+        if (dwStyles[i] & (CCS_NORESIZE | CCS_NOPARENTALIGN))
+        {
+            WINDOWPOS pos;
+            pos.hwnd = hRebar;
+            pos.hwndInsertAfter = NULL;
+            pos.cx = 500;
+            pos.cy = 500;
+            pos.x = 10;
+            pos.y = 10;
+            pos.flags = 0;
+            SendMessage(hRebar, WM_WINDOWPOSCHANGING, 0, (LPARAM)&pos);
+            SendMessage(hRebar, WM_WINDOWPOSCHANGED, 0, (LPARAM)&pos);
+            check_client();
+            SendMessage(hRebar, WM_SIZE, SIZE_RESTORED, MAKELONG(500, 500));
+            check_client();
+        }
+        DestroyWindow(hRebar);
+    }
+}
+
 static void expect_band_content(UINT uBand, UINT fStyle, COLORREF clrFore,
     COLORREF clrBack, LPCSTR lpText, int iImage, HWND hwndChild,
     UINT cxMinChild, UINT cyMinChild, UINT cx, HBITMAP hbmBack, UINT wID,
@@ -550,6 +732,7 @@ START_TEST(rebar)
 
     bandinfo_test();
     layout_test();
+    resize_test();
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {
         TranslateMessage(&msg);
