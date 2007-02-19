@@ -3062,6 +3062,17 @@ static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3D
     checkGLcall("glScissor");
 }
 
+static void indexbuffer(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    if(GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
+        if(stateblock->streamIsUP || stateblock->pIndexData == NULL ) {
+            GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
+        } else {
+            IWineD3DIndexBufferImpl *ib = (IWineD3DIndexBufferImpl *) stateblock->pIndexData;
+            GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, ib->vbo));
+        }
+    }
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -4077,6 +4088,7 @@ const struct StateEntry StateTable[] =
     { /*511, WINED3DTS_WORLDMATRIX(255)             */      STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)),        transform_worldex   },
       /* Various Vertex states follow */
     { /*   , STATE_STREAMSRC                        */      STATE_VDECL,                                        vertexdeclaration   },
+    { /*   , STATE_INDEXBUFFER                      */      STATE_INDEXBUFFER,                                  indexbuffer         },
     { /*   , STATE_VDECL                            */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VSHADER                          */      STATE_VDECL,                                        vertexdeclaration   },
     { /*   , STATE_VIEWPORT                         */      STATE_VIEWPORT,                                     viewport            },

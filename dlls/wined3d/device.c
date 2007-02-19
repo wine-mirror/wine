@@ -443,19 +443,65 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateVertexBuffer(IWineD3DDevice *ifac
     return WINED3D_OK;
 }
 
+static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferImpl *object) {
+    GLenum error, glUsage;
+    TRACE("Creating VBO for Index Buffer %p\n", object);
+
+    ENTER_GL();
+    while(glGetError());
+
+    GL_EXTCALL(glGenBuffersARB(1, &object->vbo));
+    error = glGetError();
+    if(error != GL_NO_ERROR || object->vbo == 0) {
+        ERR("Creating a vbo failed, continueing without vbo for this buffer\n");
+        object->vbo = 0;
+        return;
+    }
+
+    GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->vbo));
+    error = glGetError();
+    if(error != GL_NO_ERROR) {
+        ERR("Failed to bind index buffer, continueing without vbo for this buffer\n");
+        goto out;
+    }
+
+    /* Use static write only usage for now. Dynamic index buffers stay in sysmem, and due to the sysmem
+        * copy no readback will be needed
+        */
+    glUsage = GL_STATIC_DRAW;
+    GL_EXTCALL(glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
+    error = glGetError();
+    if(error != GL_NO_ERROR) {
+        ERR("Failed to initialize the index buffer\n");
+        goto out;
+    }
+    LEAVE_GL();
+    TRACE("Successfully created vbo %d for index buffer %p\n", object->vbo, object);
+    return;
+
+out:
+    GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
+    GL_EXTCALL(glDeleteBuffersARB(1, &object->vbo));
+    LEAVE_GL();
+    object->vbo = 0;
+}
+
 static HRESULT WINAPI IWineD3DDeviceImpl_CreateIndexBuffer(IWineD3DDevice *iface, UINT Length, DWORD Usage, 
                                                     WINED3DFORMAT Format, WINED3DPOOL Pool, IWineD3DIndexBuffer** ppIndexBuffer,
                                                     HANDLE *sharedHandle, IUnknown *parent) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     IWineD3DIndexBufferImpl *object;
     TRACE("(%p) Creating index buffer\n", This);
-    
+
     /* Allocate the storage for the device */
     D3DCREATERESOURCEOBJECTINSTANCE(object,IndexBuffer,WINED3DRTYPE_INDEXBUFFER, Length)
-    
-    /*TODO: use VBO's */
-    if (Pool == WINED3DPOOL_DEFAULT ) { /* Allocate some system memory for now */
+
+    if (Pool == WINED3DPOOL_DEFAULT ) { /* We need a local copy for drawStridedSlow */
         object->resource.allocatedMemory = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,object->resource.size);
+    }
+
+    if(Pool != WINED3DPOOL_SYSTEMMEM && !(Usage & WINED3DUSAGE_DYNAMIC) && GL_SUPPORT(ARB_VERTEX_BUFFER_OBJECT)) {
+        CreateIndexBufferVBO(This, object);
     }
 
     TRACE("(%p) : Len=%d, Use=%x, Format=(%u,%s), Pool=%d - Memory@%p, Iface@%p\n", This, Length, Usage, Format, 
@@ -2557,9 +2603,14 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetIndices(IWineD3DDevice *iface, IWine
         return WINED3D_OK;
     }
 
-    /* So far only the base vertex index is tracked */
+    /* The base vertex index affects the stream sources, while
+     * The index buffer is a seperate index buffer state
+     */
     if(BaseVertexIndex != oldBaseIndex) {
         IWineD3DDeviceImpl_MarkStateDirty(This, STATE_STREAMSRC);
+    }
+    if(oldIdxs != pIndexData) {
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
     }
     return WINED3D_OK;
 }
@@ -4224,9 +4275,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     UINT                 idxStride = 2;
     IWineD3DIndexBuffer *pIB;
     WINED3DINDEXBUFFER_DESC  IdxBufDsc;
+    GLint vbo;
 
     pIB = This->stateBlock->pIndexData;
     This->stateBlock->streamIsUP = FALSE;
+    vbo = ((IWineD3DIndexBufferImpl *) pIB)->vbo;
 
     TRACE("(%p) : Type=(%d,%s), min=%d, CountV=%d, startIdx=%d, countP=%d\n", This,
           PrimitiveType, debug_d3dprimitivetype(PrimitiveType),
@@ -4245,7 +4298,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     }
 
     drawPrimitive(iface, PrimitiveType, primCount, 0, NumVertices, startIndex,
-                   idxStride, ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
+                   idxStride, vbo ? NULL : ((IWineD3DIndexBufferImpl *) pIB)->resource.allocatedMemory, minIndex);
 
     return WINED3D_OK;
 }
@@ -4310,6 +4363,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawIndexedPrimitiveUP(IWineD3DDevice *
     This->stateBlock->loadBaseVertexIndex = 0;
     /* Mark the state dirty until we have nicer tracking of the stream source pointers */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
 
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0 /* vertexStart */, NumVertices, 0 /* indxStart */, idxStride, pIndexData, MinVertexIndex);
 
@@ -4332,8 +4386,10 @@ static HRESULT WINAPI IWineD3DDeviceImpl_DrawPrimitiveStrided (IWineD3DDevice *i
      * that value.
      */
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_VDECL);
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
     This->stateBlock->baseVertexIndex = 0;
     This->up_strided = DrawPrimStrideData;
+    This->stateBlock->streamIsUP = TRUE;
     drawPrimitive(iface, PrimitiveType, PrimitiveCount, 0, 0, 0, 0, NULL, 0);
     This->up_strided = NULL;
     return WINED3D_OK;

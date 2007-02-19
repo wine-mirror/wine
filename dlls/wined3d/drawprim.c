@@ -571,7 +571,7 @@ static void drawStridedFast(IWineD3DDevice *iface,UINT numberOfVertices, GLenum 
                      const void *idxData, short idxSize, ULONG minIndex, ULONG startIdx, ULONG startVertex) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
 
-    if (idxData != NULL /* This crashes sometimes!*/) {
+    if (idxSize != 0 /* This crashes sometimes!*/) {
         TRACE("(%p) : glElements(%x, %d, %d, ...)\n", This, glPrimitiveType, numberOfVertices, minIndex);
         idxData = idxData == (void *)-1 ? NULL : idxData;
 #if 1
@@ -629,7 +629,15 @@ static void drawStridedSlow(IWineD3DDevice *iface, WineDirect3DVertexStridedData
     TRACE("Using slow vertex array code\n");
 
     /* Variable Initialization */
-    if (idxData != NULL) {
+    if (idxSize != 0) {
+        /* Immediate mode drawing can't make use of indices in a vbo - get the data from the index buffer.
+         * If the index buffer has no vbo(not supported or other reason), or with user pointer drawing
+         * idxData will be != NULL
+         */
+        if(idxData == NULL) {
+            idxData = ((IWineD3DIndexBufferImpl *) This->stateBlock->pIndexData)->resource.allocatedMemory;
+        }
+
         if (idxSize == 2) pIdxBufS = (const short *) idxData;
         else pIdxBufL = (const long *) idxData;
     }
@@ -1165,7 +1173,7 @@ inline void drawStridedInstanced(IWineD3DDevice *iface, WineDirect3DVertexStride
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     IWineD3DStateBlockImpl *stateblock = This->stateBlock;
 
-    if (idxData == NULL) {
+    if (idxSize == 0) {
         /* This is a nasty thing. MSDN says no hardware supports that and apps have to use software vertex processing.
          * We don't support this for now
          *

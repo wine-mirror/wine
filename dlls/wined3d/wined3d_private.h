@@ -426,8 +426,10 @@ typedef void (*APPLYSTATEFUNC)(DWORD state, IWineD3DStateBlockImpl *stateblock, 
 
 #define STATE_STREAMSRC (STATE_TRANSFORM(WINED3DTS_WORLDMATRIX(255)) + 1)
 #define STATE_IS_STREAMSRC(a) ((a) == STATE_STREAMSRC)
+#define STATE_INDEXBUFFER (STATE_STREAMSRC + 1)
+#define STATE_IS_INDEXBUFFER(a) ((a) == STATE_INDEXBUFFER)
 
-#define STATE_VDECL (STATE_STREAMSRC + 1)
+#define STATE_VDECL (STATE_INDEXBUFFER + 1)
 #define STATE_IS_VDECL(a) ((a) == STATE_VDECL)
 
 #define STATE_VSHADER (STATE_VDECL + 1)
@@ -792,6 +794,10 @@ typedef struct IWineD3DIndexBufferImpl
     /* IUnknown & WineD3DResource Information     */
     const IWineD3DIndexBufferVtbl *lpVtbl;
     IWineD3DResourceClass     resource;
+
+    GLuint                    vbo;
+    UINT                      dirtystart, dirtyend;
+    LONG                      lockcount;
 
     /* WineD3DVertexBuffer specifics */
 } IWineD3DIndexBufferImpl;
