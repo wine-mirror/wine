@@ -66,6 +66,9 @@ static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
 static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
 
 
+static const WCHAR cmd_ConfigureLPTPortCommandOKW[] = {'C','o','n','f','i','g','u','r','e',
+                                    'L','P','T','P','o','r','t',
+                                    'C','o','m','m','a','n','d','O','K',0};
 static WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
                                     'T','r','a','n','s','m','i','s','s','i','o','n',
                                     'R','e','t','r','y','T','i','m','e','o','u','t',0};
@@ -85,9 +88,13 @@ static WCHAR Monitors_LocalPortW[] = {
                                 'L','o','c','a','l',' ','P','o','r','t',0};
 
 static CHAR  num_0A[] = "0";
+static WCHAR num_0W[] = {'0',0};
 static CHAR  num_1A[] = "1";
+static WCHAR num_1W[] = {'1',0};
 static CHAR  num_999999A[] = "999999";
+static WCHAR num_999999W[] = {'9','9','9','9','9','9',0};
 static CHAR  num_1000000A[] = "1000000";
+static WCHAR num_1000000W[] = {'1','0','0','0','0','0','0',0};
 
 static WCHAR portname_com1W[] = {'C','O','M','1',':',0};
 static WCHAR portname_com2W[] = {'C','O','M','2',':',0};
@@ -364,6 +371,114 @@ static void test_XcvClosePort(void)
         res = pXcvClosePort(hXcv);
         }
     }
+}
+
+/* ########################### */
+
+static void test_XcvDataPort_ConfigureLPTPortCommandOK(void)
+{
+    CHAR    org_value[16];
+    CHAR    buffer[16];
+    HKEY    hroot = NULL;
+    HANDLE  hXcv;
+    DWORD   res;
+    DWORD   needed;
+
+    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
+
+    hXcv = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+    ok(res, "hXcv: %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+    /* Read the original value from the registry */
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsA, 0, KEY_ALL_ACCESS, &hroot);
+    if (res == ERROR_ACCESS_DENIED) {
+        pXcvClosePort(hXcv);
+        skip("ACCESS_DENIED\n");
+        return;
+    }
+
+    if (res != ERROR_SUCCESS) {
+        /* unable to open the registry: skip the test */
+        pXcvClosePort(hXcv);
+        skip("got %d\n", res);
+        return;
+    }
+    org_value[0] = '\0';
+    needed = sizeof(org_value)-1 ;
+    res = RegQueryValueExA(hroot, TransmissionRetryTimeoutA, NULL, NULL, (PBYTE) org_value, &needed);
+    ok( (res == ERROR_SUCCESS) || (res == ERROR_FILE_NOT_FOUND),
+        "returned %u and %u for \"%s\" (expected ERROR_SUCCESS or "
+        "ERROR_FILE_NOT_FOUND)\n", res, needed, org_value);
+
+    RegDeleteValueA(hroot, TransmissionRetryTimeoutA);
+
+    /* set to "0" */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_ConfigureLPTPortCommandOKW, (PBYTE) num_0W, sizeof(num_0W), NULL, 0, &needed);
+    if (res == ERROR_INVALID_PARAMETER) {
+        pXcvClosePort(hXcv);
+        skip("'ConfigureLPTPortCommandOK' not supported\n");
+        return;
+    }
+    ok( res == ERROR_SUCCESS, "returned %d with %u (expected ERROR_SUCCESS)\n", res, GetLastError());
+    needed = sizeof(buffer)-1 ;
+    res = RegQueryValueExA(hroot, TransmissionRetryTimeoutA, NULL, NULL, (PBYTE) buffer, &needed);
+    ok( (res == ERROR_SUCCESS) && (lstrcmpA(buffer, num_0A) == 0),
+        "returned %d and '%s' (expected ERROR_SUCCESS and '%s')\n",
+        res, buffer, num_0A);
+
+
+    /* set to "1" */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_ConfigureLPTPortCommandOKW, (PBYTE) num_1W, sizeof(num_1W), NULL, 0, &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with %u (expected ERROR_SUCCESS)\n", res, GetLastError());
+    needed = sizeof(buffer)-1 ;
+    res = RegQueryValueExA(hroot, TransmissionRetryTimeoutA, NULL, NULL, (PBYTE) buffer, &needed);
+    ok( (res == ERROR_SUCCESS) && (lstrcmpA(buffer, num_1A) == 0),
+        "returned %d and '%s' (expected ERROR_SUCCESS and '%s')\n",
+        res, buffer, num_1A);
+
+    /* set to "999999" */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_ConfigureLPTPortCommandOKW, (PBYTE) num_999999W, sizeof(num_999999W), NULL, 0, &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with %u (expected ERROR_SUCCESS)\n", res, GetLastError());
+    needed = sizeof(buffer)-1 ;
+    res = RegQueryValueExA(hroot, TransmissionRetryTimeoutA, NULL, NULL, (PBYTE) buffer, &needed);
+    ok( (res == ERROR_SUCCESS) && (lstrcmpA(buffer, num_999999A) == 0),
+        "returned %d and '%s' (expected ERROR_SUCCESS and '%s')\n",
+        res, buffer, num_999999A);
+
+    /* set to "1000000" */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_ConfigureLPTPortCommandOKW, (PBYTE) num_1000000W, sizeof(num_1000000W), NULL, 0, &needed);
+    ok( res == ERROR_SUCCESS, "returned %d with %u (expected ERROR_SUCCESS)\n", res, GetLastError());
+    needed = sizeof(buffer)-1 ;
+    res = RegQueryValueExA(hroot, TransmissionRetryTimeoutA, NULL, NULL, (PBYTE) buffer, &needed);
+    ok( (res == ERROR_SUCCESS) && (lstrcmpA(buffer, num_1000000A) == 0),
+        "returned %d and '%s' (expected ERROR_SUCCESS and '%s')\n",
+        res, buffer, num_1000000A);
+
+    /*  using cmd_ConfigureLPTPortCommandOKW with does_not_existW:
+        the string "does_not_exist" is written to the registry */
+
+
+    /* restore the original value */
+    RegDeleteValueA(hroot, TransmissionRetryTimeoutA);
+    if (org_value[0]) {
+        res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)org_value, lstrlenA(org_value)+1);
+        ok(res == ERROR_SUCCESS, "unable to restore original value (got %u): %s\n", res, org_value);
+    }
+
+    RegCloseKey(hroot);
+    pXcvClosePort(hXcv);
+
 }
 
 /* ########################### */
@@ -923,6 +1038,7 @@ START_TEST(localmon)
     test_DeletePort();
     test_EnumPorts();
     test_XcvClosePort();
+    test_XcvDataPort_ConfigureLPTPortCommandOK();
     test_XcvDataPort_GetTransmissionRetryTimeout();
     test_XcvDataPort_MonitorUI();
     test_XcvDataPort_PortIsValid();
