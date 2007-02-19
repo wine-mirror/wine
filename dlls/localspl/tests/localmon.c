@@ -65,10 +65,16 @@ static BOOL  (WINAPI *pAddPortUI)(PCWSTR, HWND, PCWSTR, PWSTR *);
 static BOOL  (WINAPI *pConfigurePortUI)(PCWSTR, HWND, PCWSTR);
 static BOOL  (WINAPI *pDeletePortUI)(PCWSTR, HWND, PCWSTR);
 
+
+static WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
+                                    'T','r','a','n','s','m','i','s','s','i','o','n',
+                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
+
 static WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static WCHAR cmd_MonitorUI_lcaseW[] = {'m','o','n','i','t','o','r','u','i',0};
 static WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
 static WCHAR does_not_existW[] = {'d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
+static CHAR  emptyA[] = "";
 static WCHAR emptyW[] = {0};
 static WCHAR Monitors_LocalPortW[] = {
                                 'S','y','s','t','e','m','\\',
@@ -78,12 +84,26 @@ static WCHAR Monitors_LocalPortW[] = {
                                 'M','o','n','i','t','o','r','s','\\',
                                 'L','o','c','a','l',' ','P','o','r','t',0};
 
+static CHAR  num_0A[] = "0";
+static CHAR  num_1A[] = "1";
+static CHAR  num_999999A[] = "999999";
+static CHAR  num_1000000A[] = "1000000";
+
 static WCHAR portname_com1W[] = {'C','O','M','1',':',0};
 static WCHAR portname_com2W[] = {'C','O','M','2',':',0};
 static WCHAR portname_fileW[] = {'F','I','L','E',':',0};
 static WCHAR portname_lpt1W[] = {'L','P','T','1',':',0};
 static WCHAR portname_lpt2W[] = {'L','P','T','2',':',0};
 static WCHAR server_does_not_existW[] = {'\\','\\','d','o','e','s','_','n','o','t','_','e','x','i','s','t',0};
+
+static CHAR  TransmissionRetryTimeoutA[] = {'T','r','a','n','s','m','i','s','s','i','o','n',
+                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
+
+static CHAR  WinNT_CV_WindowsA[] = {'S','o','f','t','w','a','r','e','\\',
+                                    'M','i','c','r','o','s','o','f','t','\\',
+                                    'W','i','n','d','o','w','s',' ','N','T','\\',
+                                    'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                    'W','i','n','d','o','w','s',0};
 static WCHAR wineW[] = {'W','i','n','e',0};
 
 static WCHAR tempdirW[MAX_PATH];
@@ -344,6 +364,134 @@ static void test_XcvClosePort(void)
         res = pXcvClosePort(hXcv);
         }
     }
+}
+
+/* ########################### */
+
+static void test_XcvDataPort_GetTransmissionRetryTimeout(void)
+{
+    CHAR    org_value[16];
+    HKEY    hroot = NULL;
+    HANDLE  hXcv;
+    DWORD   buffer[2];
+    DWORD   res;
+    DWORD   needed;
+    DWORD   len;
+
+
+    if ((pXcvOpenPort == NULL) || (pXcvDataPort == NULL) || (pXcvClosePort == NULL)) return;
+
+    hXcv = (HANDLE) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+    ok(res, "hXcv: %d with %u and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
+    if (!res) return;
+
+    /* ask for needed size */
+    needed = (DWORD) 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, NULL, 0, &needed);
+    if (res == ERROR_INVALID_PARAMETER) {
+        pXcvClosePort(hXcv);
+        skip("'GetTransmissionRetryTimeout' not supported\n");
+        return;
+    }
+    len = sizeof(DWORD);
+    ok( (res == ERROR_INSUFFICIENT_BUFFER) && (needed == len),
+        "returned %d with %u and %u (expected ERROR_INSUFFICIENT_BUFFER "
+        "and '%u')\n", res, GetLastError(), needed, len);
+    len = needed;
+
+    /* Read the original value from the registry */
+    res = RegOpenKeyExA(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsA, 0, KEY_ALL_ACCESS, &hroot);
+    if (res == ERROR_ACCESS_DENIED) {
+        pXcvClosePort(hXcv);
+        skip("ACCESS_DENIED\n");
+        return;
+    }
+
+    if (res != ERROR_SUCCESS) {
+        /* unable to open the registry: skip the test */
+        pXcvClosePort(hXcv);
+        skip("got %d\n", res);
+        return;
+    }
+
+    org_value[0] = '\0';
+    needed = sizeof(org_value)-1 ;
+    res = RegQueryValueExA(hroot, TransmissionRetryTimeoutA, NULL, NULL, (PBYTE) org_value, &needed);
+    ok( (res == ERROR_SUCCESS) || (res == ERROR_FILE_NOT_FOUND),
+        "returned %u and %u for \"%s\" (expected ERROR_SUCCESS or "
+        "ERROR_FILE_NOT_FOUND)\n", res, needed, org_value);
+
+    /* Get default value (documented as 90 in the w2k reskit, but that is wrong) */
+    RegDeleteValueA(hroot, TransmissionRetryTimeoutA);
+    needed = (DWORD) 0xdeadbeef;
+    buffer[0] = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, (PBYTE) buffer, len, &needed);
+    ok( (res == ERROR_SUCCESS) && (buffer[0] == 45),
+        "returned %d with %u and %u for %d\n (expected ERROR_SUCCESS "
+        "for '45')\n", res, GetLastError(), needed, buffer[0]);
+
+    /* the default timeout is returned, when the value is empty */
+    res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)emptyA, 1);
+    needed = (DWORD) 0xdeadbeef;
+    buffer[0] = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, (PBYTE) buffer, len, &needed);
+    ok( (res == ERROR_SUCCESS) && (buffer[0] == 45),
+        "returned %d with %u and %u for %d\n (expected ERROR_SUCCESS "
+        "for '45')\n", res, GetLastError(), needed, buffer[0]);
+
+    /* the dialog is limited (1 - 999999), but that is done somewhere else */
+    res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)num_0A, lstrlenA(num_0A)+1);
+    needed = (DWORD) 0xdeadbeef;
+    buffer[0] = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, (PBYTE) buffer, len, &needed);
+    ok( (res == ERROR_SUCCESS) && (buffer[0] == 0),
+        "returned %d with %u and %u for %d\n (expected ERROR_SUCCESS "
+        "for '0')\n", res, GetLastError(), needed, buffer[0]);
+
+
+    res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)num_1A, lstrlenA(num_1A)+1);
+    needed = (DWORD) 0xdeadbeef;
+    buffer[0] = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, (PBYTE) buffer, len, &needed);
+    ok( (res == ERROR_SUCCESS) && (buffer[0] == 1),
+        "returned %d with %u and %u for %d\n (expected 'ERROR_SUCCESS' "
+        "for '1')\n", res, GetLastError(), needed, buffer[0]);
+
+    res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)num_999999A, lstrlenA(num_999999A)+1);
+    needed = (DWORD) 0xdeadbeef;
+    buffer[0] = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, (PBYTE) buffer, len, &needed);
+    ok( (res == ERROR_SUCCESS) && (buffer[0] == 999999),
+        "returned %d with %u and %u for %d\n (expected ERROR_SUCCESS "
+        "for '999999')\n", res, GetLastError(), needed, buffer[0]);
+
+
+    res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)num_1000000A, lstrlenA(num_1000000A)+1);
+    needed = (DWORD) 0xdeadbeef;
+    buffer[0] = 0xdeadbeef;
+    SetLastError(0xdeadbeef);
+    res = pXcvDataPort(hXcv, cmd_GetTransmissionRetryTimeoutW, NULL, 0, (PBYTE) buffer, len, &needed);
+    ok( (res == ERROR_SUCCESS) && (buffer[0] == 1000000),
+        "returned %d with %u and %u for %d\n (expected ERROR_SUCCESS "
+        "for '1000000')\n", res, GetLastError(), needed, buffer[0]);
+
+    /* restore the original value */
+    RegDeleteValueA(hroot, TransmissionRetryTimeoutA);
+    if (org_value[0]) {
+        res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)org_value, lstrlenA(org_value)+1);
+        ok(res == ERROR_SUCCESS, "unable to restore original value (got %u): %s\n", res, org_value);
+    }
+
+    RegCloseKey(hroot);
+    pXcvClosePort(hXcv);
 }
 
 /* ########################### */
@@ -775,6 +923,7 @@ START_TEST(localmon)
     test_DeletePort();
     test_EnumPorts();
     test_XcvClosePort();
+    test_XcvDataPort_GetTransmissionRetryTimeout();
     test_XcvDataPort_MonitorUI();
     test_XcvDataPort_PortIsValid();
     test_XcvOpenPort();
