@@ -4889,6 +4889,7 @@ static const WCHAR WC_LINK[] = { 'S','y','s','L','i','n','k',0 };
 /* SysLink messages */
 #define LM_HITTEST           (WM_USER + 768)
 #define LM_GETIDEALHEIGHT    (WM_USER + 769)
+#define LM_GETIDEALSIZE      (LM_GETIDEALHEIGHT)
 #define LM_SETITEM           (WM_USER + 770)
 #define LM_GETITEM           (WM_USER + 771)
 
