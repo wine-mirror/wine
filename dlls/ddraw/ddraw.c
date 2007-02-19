@@ -1136,50 +1136,6 @@ IDirectDrawImpl_GetGDISurface(IDirectDraw7 *iface,
 }
 
 /*****************************************************************************
- * IDirectDrawImpl_EnumDisplayModesCB
- *
- * Callback function for IDirectDraw7::EnumDisplayModes. Translates
- * the wineD3D values to ddraw values and calls the application callback
- *
- * Params:
- *  device: The IDirectDraw7 interface to the current device
- *  With, Height, Pixelformat, Refresh: Enumerated display mode
- *  context: the context pointer passed to IWineD3DDevice::EnumDisplayModes
- *
- * Returns:
- *  The return value from the application callback
- *
- *****************************************************************************/ 
-static HRESULT WINAPI
-IDirectDrawImpl_EnumDisplayModesCB(IUnknown *pDevice,
-                                   UINT Width,
-                                   UINT Height,
-                                   WINED3DFORMAT Pixelformat,
-                                   FLOAT Refresh,
-                                   void *context)
-{
-    DDSURFACEDESC2 callback_sd;
-    EnumDisplayModesCBS *cbs = (EnumDisplayModesCBS *) context;
-
-    memset(&callback_sd, 0, sizeof(callback_sd));
-    callback_sd.dwSize = sizeof(callback_sd);
-    callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
-
-    callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH;
-    if(Refresh > 0.0)
-    {
-        callback_sd.dwFlags |= DDSD_REFRESHRATE;
-        callback_sd.u2.dwRefreshRate = 60.0;
-    }
-
-    callback_sd.dwHeight = Height;
-    callback_sd.dwWidth = Width;
-
-    PixelFormat_WineD3DtoDD(&callback_sd.u4.ddpfPixelFormat, Pixelformat);
-    return cbs->callback(&callback_sd, cbs->context);
-}
-
-/*****************************************************************************
  * IDirectDraw7::EnumDisplayModes
  *
  * Enumerates the supported Display modes. The modes can be filtered with
@@ -1204,34 +1160,59 @@ IDirectDrawImpl_EnumDisplayModes(IDirectDraw7 *iface,
                                  LPDDENUMMODESCALLBACK2 cb)
 {
     ICOM_THIS_FROM(IDirectDrawImpl, IDirectDraw7, iface);
-    UINT Width = 0, Height = 0;
+    unsigned int modenum = 0;
     WINED3DFORMAT pixelformat = WINED3DFMT_UNKNOWN;
-    EnumDisplayModesCBS cbs;
+    WINED3DDISPLAYMODE mode;
+    DDSURFACEDESC2 callback_sd;
 
     TRACE("(%p)->(%p,%p,%p): Relay\n", This, DDSD, Context, cb);
 
     /* This looks sane */
     if(!cb) return DDERR_INVALIDPARAMS;
 
-    /* The private callback structure */
-    cbs.callback = cb;
-    cbs.context = Context;
-
     if(DDSD)
     {
-        if (DDSD->dwFlags & DDSD_WIDTH)
-            Width = DDSD->dwWidth;
-        if (DDSD->dwFlags & DDSD_HEIGHT)
-            Height = DDSD->dwHeight;
         if ((DDSD->dwFlags & DDSD_PIXELFORMAT) && (DDSD->u4.ddpfPixelFormat.dwFlags & DDPF_RGB) )
             pixelformat = PixelFormat_DD2WineD3D(&DDSD->u4.ddpfPixelFormat);
     }
 
-    return IWineD3DDevice_EnumDisplayModes(This->wineD3DDevice,
-                                           Flags,
-                                           Width, Height, pixelformat,
-                                           &cbs,
-                                           IDirectDrawImpl_EnumDisplayModesCB);
+    while(IWineD3D_EnumAdapterModes(This->wineD3D,
+                                    WINED3DADAPTER_DEFAULT,
+                                    pixelformat,
+                                    modenum++,
+                                    &mode) == WINED3D_OK) {
+        if(DDSD)
+        {
+            if(DDSD->dwFlags & DDSD_WIDTH && mode.Width != DDSD->dwWidth) continue;
+            if(DDSD->dwFlags & DDSD_HEIGHT && mode.Height != DDSD->dwHeight) continue;
+        }
+
+        memset(&callback_sd, 0, sizeof(callback_sd));
+        callback_sd.dwSize = sizeof(callback_sd);
+        callback_sd.u4.ddpfPixelFormat.dwSize = sizeof(DDPIXELFORMAT);
+
+        callback_sd.dwFlags = DDSD_HEIGHT|DDSD_WIDTH|DDSD_PIXELFORMAT|DDSD_PITCH;
+        if(Flags & DDEDM_REFRESHRATES)
+        {
+            callback_sd.dwFlags |= DDSD_REFRESHRATE;
+            callback_sd.u2.dwRefreshRate = mode.RefreshRate;
+        }
+
+        callback_sd.dwWidth = mode.Width;
+        callback_sd.dwHeight = mode.Height;
+
+        PixelFormat_WineD3DtoDD(&callback_sd.u4.ddpfPixelFormat, mode.Format);
+
+        TRACE("Enumerating %dx%d@%d\n", callback_sd.dwWidth, callback_sd.dwHeight, callback_sd.u4.ddpfPixelFormat.u1.dwRGBBitCount);
+
+        if(cb(&callback_sd, Context) == DDENUMRET_CANCEL)
+        {
+            TRACE("Application asked to terminate the enumeration\n");
+            return DD_OK;
+        }
+    }
+    TRACE("End of enumeration\n");
+    return DD_OK;
 }
 
 /*****************************************************************************

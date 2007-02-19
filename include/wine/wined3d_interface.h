@@ -233,13 +233,6 @@ typedef HRESULT WINAPI (*D3DCB_CREATEADDITIONALSWAPCHAIN) (IUnknown *pDevice,
                                                struct IWineD3DSwapChain **pSwapChain
                                                );
 
-typedef HRESULT WINAPI (*D3DCB_ENUMDISPLAYMODESCALLBACK) (IUnknown *pDevice,
-                                                          UINT Width,
-                                                          UINT Height,
-                                                          WINED3DFORMAT Pixelformat,
-                                                          FLOAT Refresh,
-                                                          LPVOID context);
-
 /*****************************************************************************
  * Callback functions for custom implicit object destruction.
  */
@@ -363,7 +356,6 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
     STDMETHOD(Init3D)(THIS_ WINED3DPRESENT_PARAMETERS* pPresentationParameters, D3DCB_CREATEADDITIONALSWAPCHAIN D3DCB_CreateAdditionalSwapChain);
     STDMETHOD(Uninit3D)(THIS, D3DCB_DESTROYSURFACEFN pFn, D3DCB_DESTROYSWAPCHAINFN pFn2);
     STDMETHOD_(void, SetFullscreen)(THIS_ BOOL fullscreen);
-    STDMETHOD(EnumDisplayModes)(THIS_ DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT Format, void *context, D3DCB_ENUMDISPLAYMODESCALLBACK cb) PURE;
     STDMETHOD(EvictManagedResources)(THIS) PURE;
     STDMETHOD_(UINT, GetAvailableTextureMem)(THIS) PURE;
     STDMETHOD(GetBackBuffer)(THIS_ UINT iSwapChain, UINT BackBuffer, WINED3DBACKBUFFER_TYPE, struct IWineD3DSurface** ppBackBuffer) PURE;
@@ -500,7 +492,6 @@ DECLARE_INTERFACE_(IWineD3DDevice,IWineD3DBase)
 #define IWineD3DDevice_Init3D(p, a, b)                          (p)->lpVtbl->Init3D(p, a, b)
 #define IWineD3DDevice_Uninit3D(p, a, b)                        (p)->lpVtbl->Uninit3D(p, a, b)
 #define IWineD3DDevice_SetFullscreen(p, a)                      (p)->lpVtbl->SetFullscreen(p, a)
-#define IWineD3DDevice_EnumDisplayModes(p,a,b,c,d,e,f)          (p)->lpVtbl->EnumDisplayModes(p,a,b,c,d,e,f)
 #define IWineD3DDevice_EvictManagedResources(p)                 (p)->lpVtbl->EvictManagedResources(p)
 #define IWineD3DDevice_GetAvailableTextureMem(p)                (p)->lpVtbl->GetAvailableTextureMem(p)
 #define IWineD3DDevice_GetBackBuffer(p,a,b,c,d)                 (p)->lpVtbl->GetBackBuffer(p,a,b,c,d)

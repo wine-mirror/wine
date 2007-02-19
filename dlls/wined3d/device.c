@@ -1822,30 +1822,6 @@ static void WINAPI IWineD3DDeviceImpl_SetFullscreen(IWineD3DDevice *iface, BOOL 
     This->ddraw_fullscreen = fullscreen;
 }
 
-static HRESULT WINAPI IWineD3DDeviceImpl_EnumDisplayModes(IWineD3DDevice *iface, DWORD Flags, UINT Width, UINT Height, WINED3DFORMAT pixelformat, LPVOID context, D3DCB_ENUMDISPLAYMODESCALLBACK callback) {
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    DEVMODEW DevModeW;
-    int i;
-    const PixelFormatDesc *formatDesc  = getFormatDescEntry(pixelformat);
-
-    TRACE("(%p)->(%x,%d,%d,%d,%p,%p)\n", This, Flags, Width, Height, pixelformat, context, callback);
-
-    for (i = 0; EnumDisplaySettingsExW(NULL, i, &DevModeW, 0); i++) {
-        /* Ignore some modes if a description was passed */
-        if ( (Width > 0)  && (Width != DevModeW.dmPelsWidth)) continue;
-        if ( (Height > 0)  && (Height != DevModeW.dmPelsHeight)) continue;
-        if ( (pixelformat != WINED3DFMT_UNKNOWN) && ( formatDesc->bpp != DevModeW.dmBitsPerPel) ) continue;
-
-        TRACE("Enumerating %dx%d@%s\n", DevModeW.dmPelsWidth, DevModeW.dmPelsHeight, debug_d3dformat(pixelformat_for_depth(DevModeW.dmBitsPerPel)));
-
-        if (callback((IUnknown *) This, (UINT) DevModeW.dmPelsWidth, (UINT) DevModeW.dmPelsHeight, pixelformat_for_depth(DevModeW.dmBitsPerPel), 60.0, context) == DDENUMRET_CANCEL)
-            return WINED3D_OK;
-    }
-
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DDeviceImpl_SetDisplayMode(IWineD3DDevice *iface, UINT iSwapChain, WINED3DDISPLAYMODE* pMode) {
     DEVMODEW devmode;
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
@@ -5713,7 +5689,6 @@ const IWineD3DDeviceVtbl IWineD3DDevice_Vtbl =
     IWineD3DDeviceImpl_Init3D,
     IWineD3DDeviceImpl_Uninit3D,
     IWineD3DDeviceImpl_SetFullscreen,
-    IWineD3DDeviceImpl_EnumDisplayModes,
     IWineD3DDeviceImpl_EvictManagedResources,
     IWineD3DDeviceImpl_GetAvailableTextureMem,
     IWineD3DDeviceImpl_GetBackBuffer,
