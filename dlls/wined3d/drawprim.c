@@ -365,74 +365,39 @@ void primitiveConvertFVFtoOffset(DWORD thisFVF, DWORD stride, BYTE *data, WineDi
 }
 
 void primitiveConvertToStridedData(IWineD3DDevice *iface, WineDirect3DVertexStridedData *strided, BOOL *fixup) {
-
-    short         LoopThroughTo = 0;
-    short         nStream;
+    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     GLint         streamVBO = 0;
-    DWORD preLoadStreams[MAX_STREAMS], numPreloadStreams = 0;
+    DWORD  stride  = This->stateBlock->streamStride[0];
+    BYTE  *data    = NULL;
+    DWORD  thisFVF = 0;
 
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    /* OK, Now to setup the data locations
-       For the non-created vertex shaders, the VertexShader var holds the real
-          FVF and only stream 0 matters
-       For the created vertex shaders, there is an FVF per stream              */
-    if (!This->stateBlock->streamIsUP && !(This->stateBlock->vertexShader == NULL)) {
-        LoopThroughTo = MAX_STREAMS;
+    /* Retrieve appropriate FVF */
+    thisFVF = This->stateBlock->fvf;
+    /* Handle memory passed directly as well as vertex buffers */
+    if (This->stateBlock->streamIsUP) {
+        streamVBO = 0;
+        data    = (BYTE *)This->stateBlock->streamSource[0];
     } else {
-        LoopThroughTo = 1;
-    }
-
-    /* Work through stream by stream */
-    for (nStream=0; nStream<LoopThroughTo; ++nStream) {
-        DWORD  stride  = This->stateBlock->streamStride[nStream];
-        BYTE  *data    = NULL;
-        DWORD  thisFVF = 0;
-
-        /* Skip empty streams */
-        if (This->stateBlock->streamSource[nStream] == NULL) continue;
-
-        /* Retrieve appropriate FVF */
-        if (LoopThroughTo == 1) { /* Use FVF, not vertex shader */
-            thisFVF = This->stateBlock->fvf;
-            /* Handle memory passed directly as well as vertex buffers */
-            if (This->stateBlock->streamIsUP) {
-                streamVBO = 0;
-                data    = (BYTE *)This->stateBlock->streamSource[nStream];
-            } else {
-                /* The for loop should iterate through here only once per stream, so we don't need magic to prevent double loading
-                 * buffers
-                 */
-                preLoadStreams[numPreloadStreams] = nStream;
-                numPreloadStreams++;
-                /* GetMemory binds the VBO */
-                data = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[nStream], 0, &streamVBO);
-                if(fixup) {
-                    if(streamVBO != 0 ) *fixup = TRUE;
-                }
-            }
-        } else {
-#if 0 /* TODO: Vertex shader support */
-            thisFVF = This->stateBlock->vertexShaderDecl->fvf[nStream];
-            data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[nStream], 0);
-#endif
+        /* The for loop should iterate through here only once per stream, so we don't need magic to prevent double loading
+         * buffers
+         */
+        data = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[0], 0, &streamVBO);
+        if(fixup) {
+            if(streamVBO != 0 ) *fixup = TRUE;
         }
-        VTRACE(("FVF for stream %d is %lx\n", nStream, thisFVF));
-        if (thisFVF == 0) continue;
-
-        /* Now convert the stream into pointers */
-        primitiveConvertFVFtoOffset(thisFVF, stride, data, strided, streamVBO, nStream);
     }
-    /* Now call PreLoad on all the vertex buffers. In the very rare case
+    VTRACE(("FVF for stream 0 is %lx\n", thisFVF));
+
+    /* Now convert the stream into pointers */
+    primitiveConvertFVFtoOffset(thisFVF, stride, data, strided, streamVBO, 0);
+
+    /* Now call PreLoad on the vertex buffer. In the very rare case
      * that the buffers stopps converting PreLoad will dirtify the VDECL again.
      * The vertex buffer can now use the strided structure in the device instead of finding its
      * own again.
-     *
-     * NULL streams won't be recorded in the array, UP streams won't be either. A stream is only
-     * once in there.
      */
-    for(nStream=0; nStream < numPreloadStreams; nStream++) {
-            IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[preLoadStreams[nStream]]);
+    if(!This->stateBlock->streamIsUP) {
+        IWineD3DVertexBuffer_PreLoad(This->stateBlock->streamSource[0]);
     }
 }
 
