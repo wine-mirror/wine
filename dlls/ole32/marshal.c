@@ -123,7 +123,8 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
         IPSFactoryBuffer_Release(psfb);
         if (hr != S_OK)
         {
-            ERR("Failed to create an IRpcStubBuffer from IPSFactory for %s\n", debugstr_guid(riid));
+            ERR("Failed to create an IRpcStubBuffer from IPSFactory for %s with error 0x%08x\n",
+                debugstr_guid(riid), hr);
             IUnknown_Release(iobject);
             return hr;
         }
