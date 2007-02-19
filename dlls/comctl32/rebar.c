@@ -133,7 +133,7 @@ typedef struct
     UINT    fStatus;        /* status flags, reset only by _Validate */
     UINT    fDraw;          /* drawing flags, reset only by _Layout */
     UINT    uCDret;         /* last return from NM_CUSTOMDRAW */
-    RECT    rcBand;         /* calculated band rectangle */
+    RECT    rcBand;         /* calculated band rectangle - coordinates swapped for CCS_VERT */
     RECT    rcGripper;      /* calculated gripper rectangle */
     RECT    rcCapImage;     /* calculated caption image rectangle */
     RECT    rcCapText;      /* calculated caption text rectangle */
@@ -174,7 +174,7 @@ typedef struct
     SIZE     imageSize;   /* image size (image list) */
     DWORD    dwStyle;     /* window style */
     DWORD    orgStyle;    /* original style (dwStyle may change) */
-    SIZE     calcSize;    /* calculated rebar size */
+    SIZE     calcSize;    /* calculated rebar size - coordinates swapped for CCS_VERT */
     SIZE     oldSize;     /* previous calculated rebar size */
     BOOL     bUnicode;    /* TRUE if parent wants notify in W format */
     BOOL     DoRedraw;    /* TRUE to acutally draw bands */
@@ -463,16 +463,6 @@ static int get_rect_cy(REBAR_INFO *infoPtr, RECT *lpRect)
     if (infoPtr->dwStyle & CCS_VERT)
         return lpRect->right - lpRect->left;
     return lpRect->bottom - lpRect->top;
-}
-
-static void swap_size_if_vert(REBAR_INFO *infoPtr, SIZE *size)
-{
-    if (infoPtr->dwStyle & CCS_VERT)
-    {
-        LONG tmp = size->cx;
-        size->cx = size->cy;
-        size->cy = tmp;
-    }
 }
 
 static void round_child_height(REBAR_BAND *lpBand, int cyHeight)
@@ -966,13 +956,12 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
     MapWindowPoints(HWND_DESKTOP, GetParent(infoPtr->hwndSelf), (LPPOINT)&rcSelf, 2);
     translate_rect(infoPtr, &rcSelf, &rcSelf);
 
-    height = (infoPtr->dwStyle & CCS_VERT ? infoPtr->calcSize.cx : infoPtr->calcSize.cy) + 2*yedge;
+    height = infoPtr->calcSize.cy + 2*yedge;
     if (!(infoPtr->dwStyle & CCS_NOPARENTALIGN)) {
         RECT rcParent;
-        SIZE calcSize;
 
         x = -xedge;
-        width = (infoPtr->dwStyle & CCS_VERT ? infoPtr->calcSize.cy : infoPtr->calcSize.cx) + 2*xedge;
+        width = infoPtr->calcSize.cx + 2*xedge;
         y = 0; /* quiet compiler warning */
         switch ( infoPtr->dwStyle & CCS_LAYOUT_MASK) {
             case 0:     /* shouldn't happen - see NCCreate */
@@ -985,9 +974,7 @@ REBAR_ForceResize (REBAR_INFO *infoPtr)
             case CCS_BOTTOM:
                 GetClientRect(GetParent(infoPtr->hwndSelf), &rcParent);
                 translate_rect(infoPtr, &rcParent, &rcParent);
-                calcSize = infoPtr->calcSize;
-                swap_size_if_vert(infoPtr, &calcSize);
-                y = rcParent.bottom - calcSize.cy - yedge;
+                y = rcParent.bottom - infoPtr->calcSize.cy - yedge;
                 break;
 	}
     }
@@ -1375,7 +1362,6 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
         infoPtr->oldSize = infoPtr->calcSize;
         infoPtr->calcSize.cx = adjcx;
         infoPtr->calcSize.cy = 0;
-        swap_size_if_vert(infoPtr, &infoPtr->calcSize);
         infoPtr->uNumRows = 0;
         REBAR_ForceResize(infoPtr);
         return;
@@ -1417,9 +1403,8 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 
     infoPtr->calcSize.cx = adjcx;
     infoPtr->calcSize.cy = yPos;
-    swap_size_if_vert(infoPtr, &infoPtr->calcSize);
-    if (infoPtr->calcSize.cx != infoPtr->oldSize.cx || infoPtr->calcSize.cy != infoPtr->oldSize.cy)
-        if (notify && (yPos != infoPtr->calcSize.cy)) infoPtr->fStatus |= NTF_HGHTCHG;
+    if (notify && (infoPtr->oldSize.cy != infoPtr->calcSize.cy))
+        infoPtr->fStatus |= NTF_HGHTCHG;
 
     TRACE("calcsize notify=%d, size=(%d, %d), origheight=(%d,%d)\n", notify,
             infoPtr->calcSize.cx, infoPtr->calcSize.cy,
@@ -1717,7 +1702,7 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
 		rcRowSep = rcBand;
 		if (infoPtr->dwStyle & CCS_VERT) {
 		    rcRowSep.right += SEP_WIDTH_SIZE;
-		    rcRowSep.bottom = infoPtr->calcSize.cy;
+		    rcRowSep.bottom = infoPtr->calcSize.cx;
                     if (theme)
                         DrawThemeEdge (theme, hdc, RP_BAND, 0, &rcRowSep, EDGE_ETCHED, BF_RIGHT, NULL);
                     else
@@ -2120,7 +2105,7 @@ REBAR_GetBarHeight (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
     INT nHeight;
 
-    nHeight = (infoPtr->dwStyle & CCS_VERT) ? infoPtr->calcSize.cx : infoPtr->calcSize.cy;
+    nHeight = infoPtr->calcSize.cy;
 
     TRACE("height = %d\n", nHeight);
 
@@ -2382,7 +2367,7 @@ REBAR_MaximizeBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if (lParam && (lpBand->cxEffective < cxIdealBand))
         cxDesired = cxIdealBand;
     else
-        cxDesired = (infoPtr->dwStyle&CCS_VERT ? infoPtr->calcSize.cy : infoPtr->calcSize.cx);
+        cxDesired = infoPtr->calcSize.cx;
 
     iRowBegin = get_row_begin_for_band(infoPtr, uBand);
     iRowEnd   = get_row_end_for_band(infoPtr, uBand);
