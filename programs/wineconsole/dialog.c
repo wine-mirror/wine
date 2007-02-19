@@ -67,6 +67,8 @@ static INT_PTR WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
 	di->hDlg = hDlg;
 	SetWindowLongPtr(hDlg, DWLP_USER, (LONG_PTR)di);
 
+	SendMessage(GetDlgItem(hDlg,IDC_OPT_HIST_SIZE_UD), UDM_SETRANGE, 0, MAKELPARAM (500, 0));
+
 	if (di->config.cursor_size <= 25)	idc = IDC_OPT_CURSOR_SMALL;
 	else if (di->config.cursor_size <= 50)	idc = IDC_OPT_CURSOR_MEDIUM;
 	else				        idc = IDC_OPT_CURSOR_LARGE;
