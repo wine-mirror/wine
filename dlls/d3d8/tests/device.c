@@ -942,6 +942,64 @@ cleanup:
     if(hwnd) DestroyWindow(hwnd);
 }
 
+static void test_limits(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D8                  *pD3d               = NULL;
+    IDirect3DDevice8            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    IDirect3DTexture8           *pTexture           = NULL;
+    int i;
+
+    pD3d = pDirect3DCreate8( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D8 object\n");
+    hwnd = CreateWindow( "static", "d3d8_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D8_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D8_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK, "IDirect3D8_CreateDevice failed with %s\n", DXGetErrorString8(hr));
+    if(!pDevice) goto cleanup;
+
+    hr = IDirect3DDevice8_CreateTexture(pDevice, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture);
+    ok(hr == D3D_OK, "IDirect3DDevice8_CreateTexture failed with %s\n", DXGetErrorString8(hr));
+    if(!pTexture) goto cleanup;
+
+    /* There are 8 texture stages. We should be able to access all of them */
+    for(i = 0; i < 8; i++) {
+        hr = IDirect3DDevice8_SetTexture(pDevice, i, (IDirect3DBaseTexture8 *) pTexture);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_SetTexture(pDevice, i, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString8(hr));
+        hr = IDirect3DDevice8_SetTextureStageState(pDevice, i, D3DTSS_COLOROP, D3DTOP_ADD);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTextureStageState for texture %d failed with %s\n", i, DXGetErrorString8(hr));
+    }
+
+    /* Investigations show that accessing higher textures stage states does not return an error either. Writing
+     * to too high texture stages(approximately texture 40) causes memory corruption in windows, so there is no
+     * bounds checking but how do I test that?
+     */
+
+cleanup:
+    if(pTexture) IDirect3DTexture8_Release(pTexture);
+    if(pD3d) IDirect3D8_Release(pD3d);
+    if(pDevice) IDirect3D8_Release(pDevice);
+    if(hwnd) DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d8_handle = LoadLibraryA( "d3d8.dll" );
@@ -964,5 +1022,6 @@ START_TEST(device)
         test_states();
         test_scene();
         test_shader();
+        test_limits();
     }
 }

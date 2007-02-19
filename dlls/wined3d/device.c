@@ -2695,12 +2695,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
     * GL_MAX_TEXTURE_COORDS_ARB.
     * Ok GForce say it's ok to use glTexParameter/glGetTexParameter(...).
      ******************/
-    /** NOTE: States are applied in IWineD3DBaseTextre ApplyStateChanges the sampler state handler**/
-    if(Sampler >  GL_LIMITS(sampler_stages) || Sampler < 0 || Type > WINED3D_HIGHEST_SAMPLER_STATE || Type < 0) {
-         FIXME("sampler %d type %s(%u) is out of range [max_samplers=%d, highest_state=%d]\n",
-            Sampler, debug_d3dsamplerstate(Type), Type, GL_LIMITS(sampler_stages), WINED3D_HIGHEST_SAMPLER_STATE);
-        return WINED3DERR_INVALIDCALL;
-    }
 
     TRACE("(%p) : Sampler=%d, Type=%s(%d), Value=%d\n", This, Sampler,
         debug_d3dsamplerstate(Type), Type, Value);
@@ -2726,7 +2720,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetSamplerState(IWineD3DDevice *iface, 
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, DWORD Sampler, WINED3DSAMPLERSTATETYPE Type, DWORD* Value) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    /** TODO: check that sampler is in  range **/
     *Value = This->stateBlock->samplerState[Sampler][Type];
     TRACE("(%p) : Sampler %d Type %u Returning %d\n", This, Sampler, Type, *Value);
 
@@ -3685,12 +3678,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTextureStageState(IWineD3DDevice *if
 
     TRACE("(%p) : Stage=%d, Type=%s(%d), Value=%d\n", This, Stage, debug_d3dtexturestate(Type), Type, Value);
 
-    /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(texture_stages)) {
-        TRACE("Attempt to access invalid texture rejected\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     This->updateStateBlock->changed.textureState[Stage][Type] = TRUE;
     This->updateStateBlock->set.textureState[Stage][Type]     = TRUE;
     This->updateStateBlock->textureState[Stage][Type]         = Value;
@@ -3789,12 +3776,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetTexture(IWineD3DDevice *iface, DWORD
     }
 #endif
 
-    /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(sampler_stages) || Stage < 0) {
-        WARN("Attempt to access invalid texture rejected\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if(pTexture != NULL) {
         /* SetTexture isn't allowed on textures in WINED3DPOOL_SCRATCH; 
          */
@@ -3888,11 +3869,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetTexture(IWineD3DDevice *iface, DWORD
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : (%d /* Stage */,%p /* ppTexture */)\n", This, Stage, ppTexture);
 
-    /* Reject invalid texture units */
-    if (Stage >= GL_LIMITS(sampler_stages)) {
-        TRACE("Attempt to access invalid texture rejected\n");
-        return WINED3DERR_INVALIDCALL;
-    }
     *ppTexture=This->stateBlock->textures[Stage];
     if (*ppTexture)
         IWineD3DBaseTexture_AddRef(*ppTexture);

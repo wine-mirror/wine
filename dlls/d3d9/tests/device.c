@@ -1094,6 +1094,69 @@ cleanup:
     if(hwnd) DestroyWindow(hwnd);
 }
 
+static void test_limits(void)
+{
+    HRESULT                      hr;
+    HWND                         hwnd               = NULL;
+    IDirect3D9                  *pD3d               = NULL;
+    IDirect3DDevice9            *pDevice            = NULL;
+    D3DPRESENT_PARAMETERS        d3dpp;
+    D3DDISPLAYMODE               d3ddm;
+    IDirect3DTexture9           *pTexture           = NULL;
+    int i;
+
+    pD3d = pDirect3DCreate9( D3D_SDK_VERSION );
+    ok(pD3d != NULL, "Failed to create IDirect3D9 object\n");
+    hwnd = CreateWindow( "static", "d3d9_test", WS_OVERLAPPEDWINDOW, 100, 100, 160, 160, NULL, NULL, NULL, NULL );
+    ok(hwnd != NULL, "Failed to create window\n");
+    if (!pD3d || !hwnd) goto cleanup;
+
+    IDirect3D9_GetAdapterDisplayMode( pD3d, D3DADAPTER_DEFAULT, &d3ddm );
+    ZeroMemory( &d3dpp, sizeof(d3dpp) );
+    d3dpp.Windowed         = TRUE;
+    d3dpp.SwapEffect       = D3DSWAPEFFECT_DISCARD;
+    d3dpp.BackBufferWidth  = 800;
+    d3dpp.BackBufferHeight  = 600;
+    d3dpp.BackBufferFormat = d3ddm.Format;
+    d3dpp.EnableAutoDepthStencil = TRUE;
+    d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+
+    hr = IDirect3D9_CreateDevice( pD3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL /* no NULLREF here */, hwnd,
+                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDevice );
+    ok(hr == D3D_OK, "IDirect3D9_CreateDevice failed with %s\n", DXGetErrorString9(hr));
+    if(!pDevice) goto cleanup;
+
+    hr = IDirect3DDevice9_CreateTexture(pDevice, 16, 16, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &pTexture, NULL);
+    ok(hr == D3D_OK, "IDirect3DDevice9_CreateTexture failed with %s\n", DXGetErrorString9(hr));
+    if(!pTexture) goto cleanup;
+
+    /* There are 16 pixel samplers. We should be able to access all of them */
+    for(i = 0; i < 16; i++) {
+        hr = IDirect3DDevice9_SetTexture(pDevice, i, (IDirect3DBaseTexture9 *) pTexture);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetTexture(pDevice, i, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTexture for sampler %d failed with %s\n", i, DXGetErrorString9(hr));
+        hr = IDirect3DDevice9_SetSamplerState(pDevice, i, D3DSAMP_SRGBTEXTURE, TRUE);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetSamplerState for sampler %d failed with %s\n", i, DXGetErrorString9(hr));
+    }
+
+    /* Now test all 8 textures stage states */
+    for(i = 0; i < 8; i++) {
+        hr = IDirect3DDevice9_SetTextureStageState(pDevice, i, D3DTSS_COLOROP, D3DTOP_ADD);
+        ok(hr == D3D_OK, "IDirect3DDevice9_SetTextureStageState for texture %d failed with %s\n", i, DXGetErrorString9(hr));
+    }
+
+    /* Investigations show that accessing higher samplers / textures stage states does not return an error either. Writing
+     * to too high samplers(approximately sampler 40) causes memory corruption in windows, so there is no bounds checking
+     * but how do I test that?
+     */
+cleanup:
+    if(pTexture) IDirect3DTexture9_Release(pTexture);
+    if(pD3d) IDirect3D9_Release(pD3d);
+    if(pDevice) IDirect3D9_Release(pDevice);
+    if(hwnd) DestroyWindow(hwnd);
+}
+
 START_TEST(device)
 {
     HMODULE d3d9_handle = LoadLibraryA( "d3d9.dll" );
@@ -1114,5 +1177,6 @@ START_TEST(device)
         test_cursor();
         test_reset();
         test_scene();
+        test_limits();
     }
 }

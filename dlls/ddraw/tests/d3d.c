@@ -521,6 +521,35 @@ static void SceneTest(void)
     /* TODO: Verify that blitting works in the same way as in d3d9 */
 }
 
+static void LimitTest(void)
+{
+    IDirectDrawSurface7 *pTexture = NULL;
+    HRESULT hr;
+    int i;
+    DDSURFACEDESC2 ddsd;
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    ddsd.dwWidth = 16;
+    ddsd.dwHeight = 16;
+    hr = IDirectDraw7_CreateSurface(lpDD, &ddsd, &pTexture, NULL);
+    ok(hr==DD_OK,"CreateSurface returned: %x\n",hr);
+    if(!pTexture) return;
+
+    for(i = 0; i < 8; i++) {
+        hr = IDirect3DDevice7_SetTexture(lpD3DDevice, i, pTexture);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %08x\n", i, hr);
+        hr = IDirect3DDevice7_SetTexture(lpD3DDevice, i, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTexture for sampler %d failed with %08x\n", i, hr);
+        hr = IDirect3DDevice7_SetTextureStageState(lpD3DDevice, i, D3DTSS_COLOROP, D3DTOP_ADD);
+        ok(hr == D3D_OK, "IDirect3DDevice8_SetTextureStageState for texture %d failed with %08x\n", i, hr);
+    }
+
+    IDirectDrawSurface7_Release(pTexture);
+}
+
 START_TEST(d3d)
 {
     init_function_pointers();
@@ -537,5 +566,6 @@ START_TEST(d3d)
     ProcessVerticesTest();
     StateTest();
     SceneTest();
+    LimitTest();
     ReleaseDirect3D();
 }
