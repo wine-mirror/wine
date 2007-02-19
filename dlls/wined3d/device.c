@@ -2021,16 +2021,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, 
     return WINED3D_OK;
 }
 
-/*Should be quite easy, just an extension of vertexdata
-ref...
-http://msdn.microsoft.com/archive/default.asp?url=/archive/en-us/directx9_c_Summer_04/directx/graphics/programmingguide/advancedtopics/DrawingMultipleInstances.asp
-
-The divider is a bit odd though
-
-VertexOffset = StartVertex / Divider * StreamStride +
-               VertexIndex / Divider * StreamStride + StreamOffset
-
-*/
 static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSourceFreq(IWineD3DDevice *iface,  UINT StreamNumber, UINT Divider) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     UINT oldFlags = This->updateStateBlock->streamFlags[StreamNumber];
@@ -2150,8 +2140,8 @@ static HRESULT WINAPI IWineD3DDeviceImpl_MultiplyTransform(IWineD3DDevice *iface
  *****/
 /* Note lights are real special cases. Although the device caps state only eg. 8 are supported,
    you can reference any indexes you want as long as that number max are enabled at any
-   one point in time! Therefore since the indexes can be anything, we need a linked list of them.
-   However, this causes stateblock problems. When capturing the state block, I duplicate the list,
+   one point in time! Therefore since the indexes can be anything, we need a hashmap of them.
+   However, this causes stateblock problems. When capturing the state block, I duplicate the hashmap,
    but when recording, just build a chain pretty much of commands to be replayed.                  */
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD Index, CONST WINED3DLIGHT* pLight) {
