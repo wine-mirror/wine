@@ -203,14 +203,36 @@ static DWORD WINAPI threadFunc_CloseHandle(LPVOID p)
     return 0;
 }
 
+static void create_function_addr_events(HANDLE events[2])
+{
+    char buffer[256];
+
+    sprintf(buffer, "threadFunc_SetEvent %p", threadFunc_SetEvent);
+    events[0] = CreateEvent(NULL, FALSE, FALSE, buffer);
+
+    sprintf(buffer, "threadFunc_CloseHandle %p", threadFunc_CloseHandle);
+    events[1] = CreateEvent(NULL, FALSE, FALSE, buffer);
+}
+
 /* check CreateRemoteThread */
 static VOID test_CreateRemoteThread(void)
 {
     HANDLE hProcess, hThread, hEvent, hRemoteEvent;
     DWORD tid, ret, exitcode;
+    HANDLE hAddrEvents[2];
 
     hProcess = create_target_process("sleep");
     ok(hProcess != NULL, "Can't start process\n");
+
+    /* ensure threadFunc_SetEvent & threadFunc_CloseHandle are the same
+     * address as in the child process */
+    create_function_addr_events(hAddrEvents);
+    ret = WaitForMultipleObjects(2, hAddrEvents, TRUE, 5000);
+    if (ret == WAIT_TIMEOUT)
+    {
+        skip("child process wasn't mapped at same address, so can't do CreateRemoteThread tests.\n");
+        return;
+    }
 
     hEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
     ok(hEvent != NULL, "Can't create event, err=%u\n", GetLastError());
@@ -843,6 +865,10 @@ START_TEST(thread)
    {
        if (!strcmp(argv[2], "sleep"))
        {
+           HANDLE hAddrEvents[2];
+           create_function_addr_events(hAddrEvents);
+           SetEvent(hAddrEvents[0]);
+           SetEvent(hAddrEvents[1]);
            Sleep(5000); /* spawned process runs for at most 5 seconds */
            return;
        }
