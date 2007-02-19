@@ -767,11 +767,11 @@ LRESULT VFWAPI ICSendMessage16(HIC16 hic, UINT16 msg, DWORD lParam1, DWORD lPara
 DWORD WINAPI VideoCapDriverDescAndVer16(WORD nr, LPSTR buf1, WORD buf1len,
                                         LPSTR buf2, WORD buf2len)
 {
+    static const char version_info_spec[] = "\\StringFileInfo\\040904E4\\FileDescription";
     DWORD	verhandle;
     DWORD	infosize;
     UINT	subblocklen;
     char	*s, buf[2048], fn[260];
-    static char version_info_spec[] = "\\StringFileInfo\\040904E4\\FileDescription";
     LPBYTE	infobuf;
     LPVOID	subblock;
     DWORD	i, cnt = 0, lRet;
