@@ -2025,23 +2025,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetStreamSource(IWineD3DDevice *iface, 
 
 static HRESULT WINAPI IWineD3DDeviceImpl_GetStreamSource(IWineD3DDevice *iface, UINT StreamNumber,IWineD3DVertexBuffer** pStream, UINT *pOffset, UINT* pStride) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    UINT streamFlags;
 
     TRACE("(%p) : StreamNo: %d, Stream (%p), Stride %d\n", This, StreamNumber,
            This->stateBlock->streamSource[StreamNumber], This->stateBlock->streamStride[StreamNumber]);
-
-
-    streamFlags = StreamNumber &(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
-    if (streamFlags) {
-        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
-           FIXME("stream index data not supported\n");
-        }
-        if (streamFlags & WINED3DSTREAMSOURCE_INDEXEDDATA) {
-            FIXME("stream instance data not supported\n");
-        }
-    }
-
-    StreamNumber&= ~(WINED3DSTREAMSOURCE_INDEXEDDATA | WINED3DSTREAMSOURCE_INSTANCEDATA);
 
     if (StreamNumber >= MAX_STREAMS) {
         WARN("Stream out of range %d\n", StreamNumber);
