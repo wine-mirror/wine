@@ -638,9 +638,9 @@ static void test_ReleaseHfont(void)
 
     /* Try to add a bad HFONT */
     hres = IFont_ReleaseHfont(ifnt1,(HFONT)32);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_ReleaseHfont: (Bad HFONT) Expected S_FALSE but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Release all refs */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
@@ -655,15 +655,15 @@ static void test_ReleaseHfont(void)
 
     /* Check that both lists are empty */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* The list should be empty */
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
-        hres);}
+        hres);
 
     IFont_Release(ifnt1);
     IFont_Release(ifnt2);
@@ -672,9 +672,6 @@ static void test_ReleaseHfont(void)
 static void test_AddRefHfont(void)
 {
     FONTDESC fd;
-    LPVOID pvObj1 = NULL;
-    LPVOID pvObj2 = NULL;
-    LPVOID pvObj3 = NULL;
     IFont* ifnt1 = NULL;
     IFont* ifnt2 = NULL;
     IFont* ifnt3 = NULL;
@@ -695,12 +692,10 @@ static void test_AddRefHfont(void)
     fd.fStrikethrough = 0;
 
     /* Create HFONTs and IFONTs */
-    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj1);
-    ifnt1 = pvObj1;
+    pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt1);
     IFont_get_hFont(ifnt1,&hfnt1);
     fd.lpstrName = arial_font;
-    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj2);
-    ifnt2 = pvObj2;
+    pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt2);
     IFont_get_hFont(ifnt2,&hfnt2);
 
     /* Try invalid HFONT */
@@ -711,9 +706,9 @@ static void test_AddRefHfont(void)
 
     /* Try to add a bad HFONT */
     hres = IFont_AddRefHfont(ifnt1,(HFONT)32);
-    todo_wine{ ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Bad HFONT) Expected S_FALSE but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Add simple IFONT HFONT pair */
     hres = IFont_AddRefHfont(ifnt1,hfnt1);
@@ -723,9 +718,9 @@ static void test_AddRefHfont(void)
 
     /* IFONT and HFONT do not have to be the same (always looks at HFONT) */
     hres = IFont_AddRefHfont(ifnt2,hfnt1);
-    todo_wine {ok(hres == S_OK,
+    ok(hres == S_OK,
         "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Release all hfnt1 refs */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
@@ -734,20 +729,20 @@ static void test_AddRefHfont(void)
         hres);
 
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
-    todo_wine {ok(hres == S_OK,
+    ok(hres == S_OK,
         "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
-    todo_wine {ok(hres == S_OK,
+    ok(hres == S_OK,
         "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Check if hfnt1 is empty */
     hres = IFont_ReleaseHfont(ifnt1,hfnt1);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Release all hfnt2 refs */
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
@@ -757,9 +752,9 @@ static void test_AddRefHfont(void)
 
     /* Check if hfnt2 is empty */
     hres = IFont_ReleaseHfont(ifnt2,hfnt2);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Release ref) Expected S_FALSE but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Show that releasing an IFONT does not always release it from the HFONT cache. */
 
@@ -767,15 +762,15 @@ static void test_AddRefHfont(void)
 
     /* Add a reference for destroyed hfnt1 */
     hres = IFont_AddRefHfont(ifnt2,hfnt1);
-    todo_wine {ok(hres == S_OK,
+    ok(hres == S_OK,
         "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Decrement reference for destroyed hfnt1 */
     hres = IFont_ReleaseHfont(ifnt2,hfnt1);
-    todo_wine {ok(hres == S_OK,
+    ok(hres == S_OK,
         "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Shows that releasing all IFONT's does clear the HFONT cache. */
 
@@ -783,23 +778,22 @@ static void test_AddRefHfont(void)
 
     /* Need to make a new IFONT for testing */
     fd.fUnderline = 1;
-    pOleCreateFontIndirect(&fd, &IID_IFont, &pvObj3);
-    ifnt3 = pvObj3;
+    pOleCreateFontIndirect(&fd, &IID_IFont, (void **)&ifnt3);
     IFont_get_hFont(ifnt3,&hfnt3);
 
     /* Add a reference for destroyed hfnt1 */
     hres = IFont_AddRefHfont(ifnt3,hfnt1);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Add ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
     /* Decrement reference for destroyed hfnt1 */
     hres = IFont_ReleaseHfont(ifnt3,hfnt1);
-    todo_wine {ok(hres == S_FALSE,
+    ok(hres == S_FALSE,
         "IFont_AddRefHfont: (Release ref) Expected S_OK but got 0x%08x\n",
-        hres);}
+        hres);
 
-    hres = IFont_Release(ifnt3);
+    IFont_Release(ifnt3);
 }
 
 START_TEST(olefont)

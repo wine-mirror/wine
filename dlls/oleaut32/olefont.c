@@ -34,6 +34,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "wine/list.h"
 #include "wine/unicode.h"
 #include "objbase.h"
 #include "oleauto.h"    /* for SysAllocString(....) */
@@ -51,6 +52,48 @@ WINE_DEFAULT_DEBUG_CHANNEL(ole);
 #define FONTPERSIST_ITALIC        0x02
 #define FONTPERSIST_UNDERLINE     0x04
 #define FONTPERSIST_STRIKETHROUGH 0x08
+
+
+/***********************************************************************
+ * List of the HFONTs it has given out, with each one having a separate
+ * ref count.
+ */
+typedef struct _HFONTItem
+{
+  struct list entry;
+
+  /* Reference count for that instance of the class. */
+  LONG ref;
+
+  /* Contain the font associated with this object. */
+  HFONT gdiFont;
+
+} HFONTItem, *PHFONTItem;
+
+static struct list OLEFontImpl_hFontList = LIST_INIT(OLEFontImpl_hFontList);
+
+/* Counts how many fonts contain at least one lock */
+static LONG ifont_cnt = 0;
+
+/***********************************************************************
+ * Critical section for OLEFontImpl_hFontList
+ */
+static CRITICAL_SECTION OLEFontImpl_csHFONTLIST;
+static CRITICAL_SECTION_DEBUG OLEFontImpl_csHFONTLIST_debug =
+{
+  0, 0, &OLEFontImpl_csHFONTLIST,
+  { &OLEFontImpl_csHFONTLIST_debug.ProcessLocksList,
+    &OLEFontImpl_csHFONTLIST_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": OLEFontImpl_csHFONTLIST") }
+};
+static CRITICAL_SECTION OLEFontImpl_csHFONTLIST = { &OLEFontImpl_csHFONTLIST_debug, -1, 0, 0, 0, 0 };
+
+static void HFONTItem_Delete(PHFONTItem item)
+{
+  DeleteObject(item->gdiFont);
+  list_remove(&item->entry);
+  HeapFree(GetProcessHeap(), 0, item);
+}
 
 /***********************************************************************
  * Declaration of the implementation class for the IFont interface
@@ -85,11 +128,6 @@ struct OLEFontImpl
    * Contain the font associated with this object.
    */
   HFONT gdiFont;
-
-  /*
-   * Font lock count.
-   */
-  DWORD fontLock;
 
   /*
    * Size ratio
@@ -406,6 +444,7 @@ static void OLEFont_SendNotify(OLEFontImpl* this, DISPID dispID)
   CONNECTDATA CD;
   HRESULT hres;
 
+  this->gdiFont = 0;
   hres = IConnectionPoint_EnumConnections(this->pPropertyNotifyCP, &pEnum);
   if (SUCCEEDED(hres))
   {
@@ -509,7 +548,6 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
    * Initializing all the other members.
    */
   newObject->gdiFont  = 0;
-  newObject->fontLock = 0;
   newObject->cyLogical  = 72L;
   newObject->cyHimetric = 2540L;
   newObject->pPropertyNotifyCP = NULL;
@@ -523,6 +561,8 @@ static OLEFontImpl* OLEFontImpl_Construct(LPFONTDESC fontDesc)
     OLEFontImpl_Destroy(newObject);
     return NULL;
   }
+
+  InterlockedIncrement(&ifont_cnt);
 
   TRACE("returning %p\n", newObject);
   return newObject;
@@ -631,17 +671,26 @@ ULONG WINAPI OLEFontImpl_Release(
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
   ULONG ret;
+  PHFONTItem ptr, next;
   TRACE("(%p)->(ref=%d)\n", this, this->ref);
 
-  /*
-   * Decrease the reference count on this object.
-   */
+  /* Decrease the reference count for current interface */
   ret = InterlockedDecrement(&this->ref);
 
-  /*
-   * If the reference count goes down to 0, perform suicide.
-   */
-  if (ret==0) OLEFontImpl_Destroy(this);
+  /* If the reference count goes down to 0, destroy. */
+  if (ret == 0)
+  {
+    ULONG fontlist_refs = InterlockedDecrement(&ifont_cnt);
+    /* Check if all HFONT list refs are zero */
+    if (fontlist_refs == 0)
+    {
+      EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+      LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &OLEFontImpl_hFontList, HFONTItem, entry)
+        HFONTItem_Delete(ptr);
+      LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
+    }
+    OLEFontImpl_Destroy(this);
+  }
 
   return ret;
 }
@@ -1013,6 +1062,7 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
     LOGFONTW logFont;
     INT      fontHeight;
     CY       cySize;
+    PHFONTItem newEntry;
 
     /*
      * The height of the font returned by the get_Size property is the
@@ -1042,6 +1092,14 @@ static HRESULT WINAPI OLEFontImpl_get_hFont(
     strcpyW(logFont.lfFaceName,this->description.lpstrName);
 
     this->gdiFont = CreateFontIndirectW(&logFont);
+
+    /* Add font to the cache */
+    newEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(HFONTItem));
+    newEntry->ref = 1;
+    newEntry->gdiFont = this->gdiFont;
+    EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+    list_add_tail(&OLEFontImpl_hFontList,&newEntry->entry);
+    LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
   }
 
   *phfont = this->gdiFont;
@@ -1062,6 +1120,8 @@ static HRESULT WINAPI OLEFontImpl_Clone(
   LOGFONTW logFont;
   INT      fontHeight;
   CY       cySize;
+  PHFONTItem newEntry;
+
   OLEFontImpl *this = (OLEFontImpl *)iface;
   TRACE("(%p)->(%p)\n", this, ppfont);
 
@@ -1109,6 +1169,15 @@ static HRESULT WINAPI OLEFontImpl_Clone(
   strcpyW(logFont.lfFaceName,this->description.lpstrName);
 
   newObject->gdiFont = CreateFontIndirectW(&logFont);
+
+  /* Add font to the cache */
+  InterlockedIncrement(&ifont_cnt);
+  newEntry = HeapAlloc(GetProcessHeap(), 0, sizeof(HFONTItem));
+  newEntry->ref = 1;
+  newEntry->gdiFont = newObject->gdiFont;
+  EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+  list_add_tail(&OLEFontImpl_hFontList,&newEntry->entry);
+  LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
 
   /* create new connection points */
   newObject->pPropertyNotifyCP = NULL;
@@ -1222,15 +1291,28 @@ static HRESULT WINAPI OLEFontImpl_AddRefHfont(
   HFONT hfont)
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
-  TRACE("(%p)->(%p) (lock=%d)\n", this, hfont, this->fontLock);
+  PHFONTItem ptr, next;
+  HRESULT hres = S_FALSE; /* assume not present */
 
-  if ( (hfont == 0) ||
-       (hfont != this->gdiFont) )
+  TRACE("(%p)->(%p)\n", this, hfont);
+
+  if (!hfont)
     return E_INVALIDARG;
 
-  this->fontLock++;
+  /* Check of the hFont is already in the list */
+  EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+  LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &OLEFontImpl_hFontList, HFONTItem, entry)
+  {
+    if (ptr->gdiFont == hfont)
+    {
+      ptr->ref++;
+      hres = S_OK;
+      break;
+    }
+  }
+  LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
 
-  return S_OK;
+  return hres;
 }
 
 /************************************************************************
@@ -1243,24 +1325,33 @@ static HRESULT WINAPI OLEFontImpl_ReleaseHfont(
   HFONT hfont)
 {
   OLEFontImpl *this = (OLEFontImpl *)iface;
-  TRACE("(%p)->(%p) (lock=%d)\n", this, hfont, this->fontLock);
+  PHFONTItem ptr, next;
+  HRESULT hres = S_FALSE; /* assume not present */
 
-  if ( (hfont == 0) ||
-       (hfont != this->gdiFont) )
+  TRACE("(%p)->(%p)\n", this, hfont);
+
+  if (!hfont)
     return E_INVALIDARG;
 
-  this->fontLock--;
-
-  /*
-   * If we just released our last font reference, destroy it.
-   */
-  if (this->fontLock==0)
+  /* Check of the hFont is already in the list */
+  EnterCriticalSection(&OLEFontImpl_csHFONTLIST);
+  LIST_FOR_EACH_ENTRY_SAFE(ptr, next, &OLEFontImpl_hFontList, HFONTItem, entry)
   {
-    DeleteObject(this->gdiFont);
-    this->gdiFont = 0;
+    if ((ptr->gdiFont == hfont) && ptr->ref)
+    {
+      /* Remove from cache and delete object if not referenced */
+      if (!--ptr->ref)
+      {
+        if (ptr->gdiFont == this->gdiFont)
+          this->gdiFont = NULL;
+      }
+      hres = S_OK;
+      break;
+    }
   }
+  LeaveCriticalSection(&OLEFontImpl_csHFONTLIST);
 
-  return S_OK;
+  return hres;
 }
 
 /************************************************************************
