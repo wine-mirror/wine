@@ -2728,11 +2728,13 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetSamplerState(IWineD3DDevice *iface, 
 
 static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, CONST RECT* pRect) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    RECT windowRect;
-    UINT winHeight;
 
     This->updateStateBlock->set.scissorRect = TRUE;
     This->updateStateBlock->changed.scissorRect = TRUE;
+    if(memcmp(&This->updateStateBlock->scissorRect, pRect, sizeof(*pRect)) == 0) {
+        TRACE("App is setting the old scissor rectangle over, nothing to do\n");
+        return WINED3D_OK;
+    }
     memcpy(&This->updateStateBlock->scissorRect, pRect, sizeof(*pRect));
 
     if(This->isRecordingState) {
@@ -2740,17 +2742,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
         return WINED3D_OK;
     }
 
-    GetClientRect(((IWineD3DSwapChainImpl *)This->swapchains[0])->win_handle, &windowRect);
-    /* Warning: glScissor uses window coordinates, not viewport coordinates, so our viewport correction does not apply
-    * Warning2: Even in windowed mode the coords are relative to the window, not the screen
-    */
-    winHeight = windowRect.bottom - windowRect.top;
-    TRACE("(%p)Setting new Scissor Rect to %d:%d-%d:%d\n", This, pRect->left, pRect->bottom - winHeight,
-          pRect->right - pRect->left, pRect->bottom - pRect->top);
-    ENTER_GL();
-    glScissor(pRect->left, winHeight - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
-    checkGLcall("glScissor");
-    LEAVE_GL();
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
 
     return WINED3D_OK;
 }

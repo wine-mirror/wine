@@ -3045,6 +3045,23 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
     return;
 }
 
+static void scissorrect(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    IWineD3DSwapChainImpl *swapchain = (IWineD3DSwapChainImpl *) stateblock->wineD3DDevice->swapchains[0];
+    RECT *pRect = &stateblock->scissorRect;
+    RECT windowRect;
+    UINT winHeight;
+
+    GetClientRect(swapchain->win_handle, &windowRect);
+    /* Warning: glScissor uses window coordinates, not viewport coordinates, so our viewport correction does not apply
+     * Warning2: Even in windowed mode the coords are relative to the window, not the screen
+     */
+    winHeight = windowRect.bottom - windowRect.top;
+    TRACE("(%p) Setting new Scissor Rect to %d:%d-%d:%d\n", stateblock->wineD3DDevice, pRect->left, pRect->bottom - winHeight,
+          pRect->right - pRect->left, pRect->bottom - pRect->top);
+    glScissor(pRect->left, winHeight - pRect->bottom, pRect->right - pRect->left, pRect->bottom - pRect->top);
+    checkGLcall("glScissor");
+}
+
 const struct StateEntry StateTable[] =
 {
       /* State name                                         representative,                                     apply function */
@@ -4074,4 +4091,6 @@ const struct StateEntry StateTable[] =
     { /*   , STATE_ACTIVELIGHT(5)                   */      STATE_ACTIVELIGHT(5),                               light               },
     { /*   , STATE_ACTIVELIGHT(6)                   */      STATE_ACTIVELIGHT(6),                               light               },
     { /*   , STATE_ACTIVELIGHT(7)                   */      STATE_ACTIVELIGHT(7),                               light               },
+
+    { /* Scissor rect                               */      STATE_SCISSORRECT,                                  scissorrect         }
 };
