@@ -409,7 +409,6 @@ static void test_openfile(void)
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(NULL, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
     ok ( !hOpenFile, "Expected FtpOpenFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_HANDLE,
         "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
     InternetCloseHandle(hOpenFile); /* Just in case */
@@ -429,7 +428,6 @@ static void test_openfile(void)
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, NULL, GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
     ok ( !hOpenFile, "Expected FtpOpenFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     InternetCloseHandle(hOpenFile); /* Just in case */
@@ -438,7 +436,6 @@ static void test_openfile(void)
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", 0, FTP_TRANSFER_TYPE_ASCII, 0);
     ok ( !hOpenFile, "Expected FtpOpenFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     InternetCloseHandle(hOpenFile); /* Just in case */
@@ -447,7 +444,6 @@ static void test_openfile(void)
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ|GENERIC_WRITE, FTP_TRANSFER_TYPE_ASCII, 0);
     ok ( !hOpenFile, "Expected FtpOpenFileA to fail\n");
-    todo_wine
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
     InternetCloseHandle(hOpenFile); /* Just in case */
@@ -455,28 +451,23 @@ static void test_openfile(void)
     /* Illegal condition flags */
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, 5, 0);
-    todo_wine
-    {
     ok ( !hOpenFile, "Expected FtpOpenFileA to fail\n");
     ok ( GetLastError() == ERROR_INVALID_PARAMETER,
         "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
-    }
     InternetCloseHandle(hOpenFile); /* Just in case */
 
     /* All OK */
     SetLastError(0xdeadbeef);
     hOpenFile = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
-    todo_wine
-    {
     ok ( hOpenFile != NULL, "Expected FtpOpenFileA to succeed\n");
     /* For some strange/unknown reason, win98 returns ERROR_FILE_NOT_FOUND */
     ok ( GetLastError() == ERROR_SUCCESS || GetLastError() == ERROR_FILE_NOT_FOUND,
         "Expected ERROR_SUCCESS or ERROR_FILE_NOT_FOUND (win98), got %d\n", GetLastError());
-    }
 
     if (hOpenFile)
     {
         BOOL bRet;
+        HINTERNET hOpenFile2;
 
         /* We have a handle so all ftp calls should fail (TODO: Put more ftp-calls in here) */
         SetLastError(0xdeadbeef);
@@ -485,6 +476,13 @@ static void test_openfile(void)
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
         DeleteFileA("should_be_non_existing_deadbeef"); /* Just in case */
+
+        SetLastError(0xdeadbeef);
+        hOpenFile2 = FtpOpenFileA(hFtp, "welcome.msg", GENERIC_READ, FTP_TRANSFER_TYPE_ASCII, 0);
+        ok ( bRet == FALSE, "Expected FtpOpenFileA to fail\n");
+        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+        InternetCloseHandle(hOpenFile); /* Just in case */
     }
 
     InternetCloseHandle(hOpenFile);
