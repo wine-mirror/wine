@@ -1028,7 +1028,7 @@ static UCHAR NetBTCall(void *adapt, PNCB ncb, void **sess)
                     ret = NRC_CMDTMO;
                 else
                 {
-                    static UCHAR fakedCalledName[] = "*SMBSERVER";
+                    static const UCHAR fakedCalledName[] = "*SMBSERVER";
                     const UCHAR *calledParty = cacheEntry->nbname[0] == '*'
                      ? fakedCalledName : cacheEntry->nbname;
 
