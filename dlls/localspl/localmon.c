@@ -64,6 +64,9 @@ typedef struct {
 static struct list xcv_handles = LIST_INIT( xcv_handles );
 
 /* ############################### */
+static const WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
+                                    'T','r','a','n','s','m','i','s','s','i','o','n',
+                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
 
 static const WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
@@ -75,11 +78,20 @@ static const WCHAR portname_FILE[] = {'F','I','L','E',':',0};
 static const WCHAR portname_CUPS[] = {'C','U','P','S',':',0};
 static const WCHAR portname_LPR[]  = {'L','P','R',':',0};
 
+static const WCHAR TransmissionRetryTimeoutW[] = {'T','r','a','n','s','m','i','s','s','i','o','n',
+                                    'R','e','t','r','y','T','i','m','e','o','u','t',0};
+
 static const WCHAR WinNT_CV_PortsW[] = {'S','o','f','t','w','a','r','e','\\',
                                         'M','i','c','r','o','s','o','f','t','\\',
                                         'W','i','n','d','o','w','s',' ','N','T','\\',
                                         'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
                                         'P','o','r','t','s',0};
+
+static const WCHAR WinNT_CV_WindowsW[] = {'S','o','f','t','w','a','r','e','\\',
+                                        'M','i','c','r','o','s','o','f','t','\\',
+                                        'W','i','n','d','o','w','s',' ','N','T','\\',
+                                        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+                                        'W','i','n','d','o','w','s',0};
 
 /******************************************************************
  * display the Dialog "Nothing to configure"
@@ -424,10 +436,34 @@ BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
 DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData, DWORD cbInputData,
                 PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded)
 {
+    WCHAR   buffer[16];     /* buffer for a decimal number */
     DWORD   res;
+    DWORD   needed;
+    HKEY    hroot;
+
 
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
+
+    if (!lstrcmpW(pszDataName, cmd_GetTransmissionRetryTimeoutW)) {
+        * pcbOutputNeeded = sizeof(DWORD);
+        if (cbOutputData >= sizeof(DWORD)) {
+            /* the w2k resource kit documented a default of 90, but that's wrong */
+            *((LPDWORD) pOutputData) = 45;
+
+            res = RegOpenKeyW(HKEY_LOCAL_MACHINE, WinNT_CV_WindowsW, &hroot);
+            if (res == ERROR_SUCCESS) {
+                needed = sizeof(buffer) - sizeof(WCHAR);
+                res = RegQueryValueExW(hroot, TransmissionRetryTimeoutW, NULL, NULL, (LPBYTE) buffer, &needed);
+                if ((res == ERROR_SUCCESS) && (buffer[0])) {
+                    *((LPDWORD) pOutputData) = strtoulW(buffer, NULL, 0);
+                }
+                RegCloseKey(hroot);
+            }
+            return ERROR_SUCCESS;
+        }
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
 
 
     if (!lstrcmpW(pszDataName, cmd_MonitorUIW)) {
