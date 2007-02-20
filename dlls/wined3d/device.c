@@ -3345,7 +3345,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_GetPixelShaderConstantF(
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT
 process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCount, WineDirect3DVertexStridedData *lpStrideData, DWORD SrcFVF, IWineD3DVertexBufferImpl *dest, DWORD dwFlags) {
-    char *dest_ptr, *dest_conv = NULL;
+    char *dest_ptr, *dest_conv = NULL, *dest_conv_addr = NULL;
     unsigned int i;
     DWORD DestFVF = dest->fvf;
     WINED3DVIEWPORT vp;
@@ -3396,12 +3396,12 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     }
 
     if(dest->vbo) {
-        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->vbo));
-        dest_conv = GL_EXTCALL(glMapBufferARB(GL_ARRAY_BUFFER_ARB, GL_WRITE_ONLY_ARB));
-        if(!dest_conv) {
-            ERR("glMapBuffer failed\n");
+        dest_conv_addr = HeapAlloc(GetProcessHeap(), 0, dwCount * get_flexible_vertex_size(DestFVF));
+        if(!dest_conv_addr) {
+            ERR("Out of memory\n");
             /* Continue without storing converted vertices */
         }
+        dest_conv = dest_conv_addr;
     }
 
     /* Should I clip?
@@ -3425,9 +3425,6 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
         }
     } else doClip = FALSE;
     dest_ptr = ((char *) dest->resource.allocatedMemory) + dwDestIndex * get_flexible_vertex_size(DestFVF);
-    if(dest_conv) {
-        dest_conv = ((char *) dest_conv) + dwDestIndex * get_flexible_vertex_size(DestFVF);
-    }
 
     IWineD3DDevice_GetTransform( (IWineD3DDevice *) This,
                                  WINED3DTS_VIEW,
@@ -3680,8 +3677,13 @@ process_vertices_strided(IWineD3DDeviceImpl *This, DWORD dwDestIndex, DWORD dwCo
     }
 
     if(dest_conv) {
-        GL_EXTCALL(glUnmapBufferARB(GL_ARRAY_BUFFER_ARB));
-        checkGLcall("glUnmapBufferARB(GL_ARRAY_BUFFER_ARB)");
+        GL_EXTCALL(glBindBufferARB(GL_ARRAY_BUFFER_ARB, dest->vbo));
+        checkGLcall("glBindBufferARB(GL_ARRAY_BUFFER_ARB)");
+        GL_EXTCALL(glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, dwDestIndex * get_flexible_vertex_size(DestFVF),
+                                      dwCount * get_flexible_vertex_size(DestFVF),
+                                      dest_conv_addr));
+        checkGLcall("glBufferSubDataARB(GL_ARRAY_BUFFER_ARB)");
+        HeapFree(GetProcessHeap(), 0, dest_conv_addr);
     }
 
     LEAVE_GL();
