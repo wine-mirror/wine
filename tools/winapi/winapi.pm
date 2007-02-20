@@ -385,7 +385,7 @@ sub parse_spec_file($$) {
 		    my $name4 = $name;
 		    $name4 =~ s/^(VxDCall)\d$/$1/;
 
-		    # FIXME: This special case is becuase of a very ugly kludge that should be fixed IMHO
+		    # FIXME: This special case is because of a very ugly kludge that should be fixed IMHO
 		    my $name5 = $name;
 		    $name5 =~ s/^(.*?16)_(.*?)$/$1_fn$2/;
 

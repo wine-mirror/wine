@@ -165,7 +165,7 @@ static void test_ddraw_objects(void)
     ok(ref == 1, "Got refcount %ld, expected 1\n", ref);
     IDirectDrawPalette_Release(palette);
 
-    /* Simmilar for surfaces */
+    /* Similar for surfaces */
     hr = IDirectDraw4_CreateSurface(DDraw4, &ddsd, &surface4, NULL);
     ok(hr == DD_OK, "CreateSurface returned %08x\n", hr);
     ref = getRefcount( (IUnknown *) DDraw4);

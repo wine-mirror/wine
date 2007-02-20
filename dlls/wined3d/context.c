@@ -197,7 +197,7 @@ static GLXFBConfig* pbuffer_find_fbconfigs(
  *  This: Device to activate the context for
  *  target: Surface this context will render to
  *  display: X11 connection
- *  win: Taget window. NULL for a pbuffer
+ *  win: Target window. NULL for a pbuffer
  *
  *****************************************************************************/
 WineD3DContext *CreateContext(IWineD3DDeviceImpl *This, IWineD3DSurfaceImpl *target, Display *display, Window win) {
@@ -368,7 +368,7 @@ out:
  * Removes a context from the context manager. The opengl context is not
  * destroyed or unset. context is not a valid pointer after that call.
  *
- * Simmilar to the former call this isn't a performance critical function. A
+ * Similar to the former call this isn't a performance critical function. A
  * helper function for DestroyContext.
  *
  * Params:

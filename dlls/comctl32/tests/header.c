@@ -520,7 +520,7 @@ static void test_hdm_getitemrect(void)
     expect(80, rect.right);
     expect(18, rect.bottom);
     retVal = SendMessage(hWndHeader, HDM_GETITEMRECT, 10, (LPARAM) &rect);
-    ok(retVal == 0, "Getting rect of non-existing item should return 0, got %d\n", retVal);
+    ok(retVal == 0, "Getting rect of nonexistent item should return 0, got %d\n", retVal);
 }
 
 static void test_hdm_layout (void)

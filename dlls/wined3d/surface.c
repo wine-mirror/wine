@@ -266,8 +266,8 @@ ULONG WINAPI IWineD3DSurfaceImpl_Release(IWineD3DSurface *iface) {
                     TRACE("Activating primary front buffer\n");
                     ActivateContext(device, swapchain->frontBuffer, CTXUSAGE_RESOURCELOAD);
                 } else {
-                    TRACE("Device is beeing destroyed, setting lastActiveRenderTarget = 0xdeadbabe\n");
-                    /* Implicit render target destroyed, that means the device is beeing destroyed
+                    TRACE("Device is being destroyed, setting lastActiveRenderTarget = 0xdeadbabe\n");
+                    /* Implicit render target destroyed, that means the device is being destroyed
                      * whatever we set here, it shouldn't matter
                      */
                     device->lastActiveRenderTarget = (IWineD3DSurface *) 0xdeadbabe;
@@ -760,7 +760,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
 
         /* TODO: Make sure that *any* context is active for this thread. It is not important which context that is,
          * nor that is has any special setup(CTXUSAGE_LOADRESOURCE is fine), but the code below needs a context.
-         * A context is guaranted to be there in a single threaded environment, but not with multithreading
+         * A context is guaranteed to be there in a single threaded environment, but not with multithreading
          */
         if (0 != This->glDescription.textureName) {
             /* Now I have to copy thing bits back */
@@ -2802,7 +2802,7 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
         }
     }
 
-    /* Default: Fall back to the generic blt. Not an error, a TRACE is enought */
+    /* Default: Fall back to the generic blt. Not an error, a TRACE is enough */
     TRACE("Didn't find any usable render target setup for hw blit, falling back to software\n");
     return WINED3DERR_INVALIDCALL;
 }

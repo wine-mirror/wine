@@ -2839,7 +2839,7 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         updateFog = TRUE;
     }
 
-    /* Reapply lighting if it is not sheduled for reapplication already */
+    /* Reapply lighting if it is not scheduled for reapplication already */
     if(!isStateDirty(context, STATE_RENDER(WINED3DRS_LIGHTING))) {
         state_lighting(STATE_RENDER(WINED3DRS_LIGHTING), stateblock, context);
     }

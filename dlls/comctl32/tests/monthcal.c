@@ -237,7 +237,7 @@ static void test_monthcal_currDate(HWND hwnd)
     expect(st_original.wMinute, st_new.wMinute);
     expect(st_original.wSecond, st_new.wSecond);
 
-    /* lparam can not be NULL */
+    /* lparam cannot be NULL */
     res = SendMessage(hwnd, MCM_GETCURSEL, 0, (LPARAM) NULL);
     expect(0, res);
 }
@@ -258,7 +258,7 @@ static void test_monthcal_firstDay(HWND hwnd)
             res = SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) 0);
             expect(fday, res);
         }else{
-            skip("Can not retrive first day of the week\n");
+            skip("Cannot retrieve first day of the week\n");
             SendMessage(hwnd, MCM_SETFIRSTDAYOFWEEK, 0, (LPARAM) 0);
         }
 

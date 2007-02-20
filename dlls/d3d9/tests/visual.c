@@ -20,8 +20,8 @@
 /* This test framework allows limited testing of rendering results. Things are rendered, shown on
  * the framebuffer, read back from there and compared to expected colors.
  *
- * However, neither d3d nor opengl is guaranted to be pixel exact, and thus the capability of this test
- * is rather limited. As a general guideline for adding tests, do not rely on corner pixels. Draw a big enought
+ * However, neither d3d nor opengl is guaranteed to be pixel exact, and thus the capability of this test
+ * is rather limited. As a general guideline for adding tests, do not rely on corner pixels. Draw a big enough
  * area which shows specific behavior(like a quad on the whole screen), and try to get resulting colos with
  * all bits set or unset in all channels(like pure red, green, blue, white, black). Hopefully everything that
  * causes visible results in games can be tested in a way that does not depend on pixel exactness
@@ -261,7 +261,7 @@ static void lighting_test(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %s\n", DXGetErrorString9(hr));
 
     /* Hack for a bug in d3d9: SetFVF creates a converted vertex declaration, with a circular refcount.
-     * This prevents the screen resulution from beeing restored correctly on device release. Unset the vdecl
+     * This prevents the screen resolution from being restored correctly on device release. Unset the vdecl
      */
     IDirect3DDevice9_SetVertexDeclaration(device, NULL);
 }

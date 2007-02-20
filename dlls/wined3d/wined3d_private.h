@@ -560,7 +560,7 @@ typedef struct IWineD3DImpl
 
 extern const IWineD3DVtbl IWineD3D_Vtbl;
 
-/* TODO: setup some flags in the regestry to enable, disable pbuffer support
+/* TODO: setup some flags in the registry to enable, disable pbuffer support
 (since it will break quite a few things until contexts are managed properly!) */
 extern BOOL pbuffer_support;
 /* allocate one pbuffer per surface */

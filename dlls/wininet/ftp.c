@@ -3421,7 +3421,7 @@ static DWORD FTP_SetResponseError(DWORD dwResponse)
 	case 451: /* Action aborted. Server error. */
 	case 452: /* Action not taken. Insufficient storage space on server. */
 	case 502: /* Command not implemented. */
-	case 503: /* Bad sequence of command. */
+	case 503: /* Bad sequence of commands. */
 	case 504: /* Command not implemented for that parameter. */
 	case 532: /* Need account for storing files */
 	case 551: /* Requested action aborted. Page type unknown */
