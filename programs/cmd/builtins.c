@@ -472,6 +472,12 @@ char condition[MAX_PATH], *command, *s;
     }
     WCMD_parameter (p, 2+negate, &command);
   }
+  else if (!lstrcmpi (condition, "defined")) {
+    if (GetEnvironmentVariableA(WCMD_parameter (p, 1+negate, NULL), NULL, 0) > 0) {
+        test = 1;
+    }
+    WCMD_parameter (p, 2+negate, &command);
+  }
   else if ((s = strstr (p, "=="))) {
     s += 2;
     if (!lstrcmpi (condition, WCMD_parameter (s, 0, NULL))) test = 1;
