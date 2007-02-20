@@ -110,6 +110,17 @@ sub find_spec_files($) {
         $$spec_file_found{$spec_file}++;
         $$spec_file2dir{$spec_file}{$allowed_dir}++;
         $$dir2spec_file{$allowed_dir}{$spec_file}++;
+        # gdi32.dll and gdi.exe have some extra sources in subdirectories
+        if ($spec_file =~ m!/gdi32\.spec$!)
+        {
+            $$spec_file2dir{$spec_file}{"$allowed_dir/enhmfdrv"}++;
+            $$dir2spec_file{"$allowed_dir/enhmfdrv"}{$spec_file}++;
+        }
+        if ($spec_file =~ m!/gdi(?:32|\.exe)\.spec$!)
+        {
+            $$spec_file2dir{$spec_file}{"$allowed_dir/mfdrv"}++;
+            $$dir2spec_file{"$allowed_dir/mfdrv"}{$spec_file}++;
+        }
     }
 
     return $spec_file_found;
