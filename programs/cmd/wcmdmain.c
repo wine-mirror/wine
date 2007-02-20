@@ -662,6 +662,9 @@ char filetorun[MAX_PATH];
   }
   if (!status) {
     WCMD_print_error ();
+    /* If a command fails to launch, it sets errorlevel 9009 - which
+       does not seem to have any associated constant definition     */
+    errorlevel = 9009;
     return;
   }
   if (!console) errorlevel = 0;
