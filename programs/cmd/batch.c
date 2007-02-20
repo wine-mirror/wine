@@ -155,6 +155,14 @@ int i;
       strcpy (p, t);
       strcat (p, s);
       free (s);
+    } else if (*(p+1)=='*') {
+      char *startOfParms = NULL;
+      s = strdup (p+2);
+      t = WCMD_parameter (context -> command, 1, &startOfParms);
+      if (startOfParms != NULL) strcpy (p, startOfParms);
+      else *p = 0x00;
+      strcat (p, s);
+      free (s);
     } else {
       p++;
     }
@@ -245,7 +253,8 @@ char *p;
       case '\0':
         return param;
       default:
-        if (where != NULL) *where = s;
+        /* Only return where if it is for the right parameter */
+        if (where != NULL && i==n) *where = s;
 	while ((*s != '\0') && (*s != ' ')) {
 	  *p++ = *s++;
 	}
