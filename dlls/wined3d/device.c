@@ -4167,10 +4167,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
       render target does not have an attached depth buffer. Similarly, if you specify the WINED3DCLEAR_STENCIL flag
       when the depth-buffer format does not contain stencil buffer information, this method fails. */
     GLbitfield     glMask = 0;
-    GLboolean      old_ztest;
-    GLfloat        old_z_clear_value;
-    GLint          old_stencil_clear_value;
-    GLfloat        old_color_clear_value[4];
     unsigned int   i;
     CONST WINED3DRECT* curRect;
 
@@ -4179,8 +4175,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     ENTER_GL();
 
-    glEnable(GL_SCISSOR_TEST);
-    checkGLcall("glEnable GL_SCISSOR_TEST");
+    if(pRects) {
+        glEnable(GL_SCISSOR_TEST);
+        checkGLcall("glEnable GL_SCISSOR_TEST");
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
+    } else {
+        glDisable(GL_SCISSOR_TEST);
+        checkGLcall("glEnable GL_SCISSOR_TEST");
+    }
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     if (Count > 0 && pRects) {
         curRect = pRects;
@@ -4190,7 +4193,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     /* Only set the values up once, as they are not changing */
     if (Flags & WINED3DCLEAR_STENCIL) {
-        glGetIntegerv(GL_STENCIL_CLEAR_VALUE, &old_stencil_clear_value);
         glClearStencil(Stencil);
         checkGLcall("glClearStencil");
         glMask = glMask | GL_STENCIL_BUFFER_BIT;
@@ -4198,17 +4200,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     if (Flags & WINED3DCLEAR_ZBUFFER) {
-        glGetBooleanv(GL_DEPTH_WRITEMASK, &old_ztest);
         glDepthMask(GL_TRUE);
-        glGetFloatv(GL_DEPTH_CLEAR_VALUE, &old_z_clear_value);
         glClearDepth(Z);
         checkGLcall("glClearDepth");
         glMask = glMask | GL_DEPTH_BUFFER_BIT;
+        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_ZWRITEENABLE));
     }
 
     if (Flags & WINED3DCLEAR_TARGET) {
         TRACE("Clearing screen with glClear to color %x\n", Color);
-        glGetFloatv(GL_COLOR_CLEAR_VALUE, old_color_clear_value);
         glClearColor(D3DCOLOR_R(Color),
                      D3DCOLOR_G(Color),
                      D3DCOLOR_B(Color),
@@ -4232,13 +4232,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
             glScissor(curRect->x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect->y2),
                       curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
             checkGLcall("glScissor");
-        } else {
-            glScissor(This->stateBlock->viewport.X,
-                      (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
-                      (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
-                      This->stateBlock->viewport.Width,
-                      This->stateBlock->viewport.Height);
-            checkGLcall("glScissor");
         }
 
         /* Clear the selected rectangle (or full screen) */
@@ -4251,26 +4244,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     /* Restore the old values (why..?) */
     if (Flags & WINED3DCLEAR_STENCIL) {
-        glClearStencil(old_stencil_clear_value);
         glStencilMask(This->stateBlock->renderState[WINED3DRS_STENCILWRITEMASK]);
     }
-    if (Flags & WINED3DCLEAR_ZBUFFER) {
-        glDepthMask(old_ztest);
-        glClearDepth(old_z_clear_value);
-    }
     if (Flags & WINED3DCLEAR_TARGET) {
-        glClearColor(old_color_clear_value[0],
-                     old_color_clear_value[1],
-                     old_color_clear_value[2],
-                     old_color_clear_value[3]);
         glColorMask(This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
                     This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
                     This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
                     This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     }
 
-    glDisable(GL_SCISSOR_TEST);
-    checkGLcall("glDisable");
     LEAVE_GL();
 
     /* Dirtify the target surface for now. If the surface is locked regularily, and an up to date sysmem copy exists,
