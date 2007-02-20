@@ -54,7 +54,6 @@ struct subscriber {
 };
 
 static UINT ControlEvent_HandleControlEvent(MSIPACKAGE *, LPCWSTR, LPCWSTR, msi_dialog*);
-static VOID ControlEvent_CleanupDialogSubscriptions(MSIPACKAGE *package, LPWSTR dialog);
 
 /*
  * Create a dialog box and run it if it's modal
@@ -321,7 +320,7 @@ VOID ControlEvent_FireSubscribedEvent( MSIPACKAGE *package, LPCWSTR event,
     }
 }
 
-static VOID ControlEvent_CleanupDialogSubscriptions(MSIPACKAGE *package, LPWSTR dialog)
+VOID ControlEvent_CleanupDialogSubscriptions(MSIPACKAGE *package, LPWSTR dialog)
 {
     struct list *i, *t;
     struct subscriber *sub;

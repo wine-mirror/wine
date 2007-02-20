@@ -3429,6 +3429,9 @@ void msi_dialog_destroy( msi_dialog *dialog )
     if( dialog->hwnd )
         DestroyWindow( dialog->hwnd );
 
+    /* unsubscribe events */
+    ControlEvent_CleanupDialogSubscriptions(dialog->package, dialog->name);
+
     /* destroy the list of controls */
     while( !list_empty( &dialog->controls ) )
     {
