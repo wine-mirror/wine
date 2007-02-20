@@ -1198,7 +1198,7 @@ BOOL WINAPI CommConfigDialogA(
     HMODULE hConfigModule;
     BOOL r = FALSE;
 
-    TRACE("(%p %p %p)\n",lpszDevice, hWnd, lpCommConfig);
+    TRACE("(%s, %p, %p)\n", debugstr_a(lpszDevice), hWnd, lpCommConfig);
 
     hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
@@ -1228,7 +1228,7 @@ BOOL WINAPI CommConfigDialogW(
     HMODULE hConfigModule;
     BOOL r = FALSE;
 
-    TRACE("(%p %p %p)\n",lpszDevice, hWnd, lpCommConfig);
+    TRACE("(%s, %p, %p)\n", debugstr_w(lpszDevice), hWnd, lpCommConfig);
 
     hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
@@ -1266,7 +1266,7 @@ BOOL WINAPI GetCommConfig(
 {
     BOOL r;
 
-    TRACE("(%p %p)\n",hFile,lpCommConfig);
+    TRACE("(%p, %p, %p) *lpdwSize: %u\n", hFile, lpCommConfig, lpdwSize, lpdwSize ? *lpdwSize : 0 );
 
     if(lpCommConfig == NULL)
         return FALSE;
@@ -1300,7 +1300,7 @@ BOOL WINAPI SetCommConfig(
     LPCOMMCONFIG lpCommConfig,	/* [in] The desired configuration. */
     DWORD dwSize) 		/* [in] size of the lpCommConfig struct */
 {
-    TRACE("(%p %p)\n",hFile,lpCommConfig);
+    TRACE("(%p, %p, %u)\n", hFile, lpCommConfig, dwSize);
     return SetCommState(hFile,&lpCommConfig->dcb);
 }
 
@@ -1323,7 +1323,7 @@ BOOL WINAPI SetDefaultCommConfigW(
     HMODULE hConfigModule;
     BOOL r = FALSE;
 
-    TRACE("(%p %p %x)\n",lpszDevice, lpCommConfig, dwSize);
+    TRACE("(%s, %p, %u)\n", debugstr_w(lpszDevice), lpCommConfig, dwSize);
 
     hConfigModule = LoadLibraryW(lpszSerialUI);
     if(!hConfigModule)
@@ -1357,7 +1357,7 @@ BOOL WINAPI SetDefaultCommConfigA(
     LPWSTR lpDeviceW = NULL;
     DWORD len;
 
-    TRACE("(%s %p %x)\n",debugstr_a(lpszDevice),lpCommConfig,dwSize);
+    TRACE("(%s, %p, %u)\n", debugstr_a(lpszDevice), lpCommConfig, dwSize);
 
     if (lpszDevice)
     {
@@ -1393,12 +1393,13 @@ BOOL WINAPI GetDefaultCommConfigW(
      static const WCHAR comW[] = {'C','O','M',0};
      static const WCHAR formatW[] = {'C','O','M','%','c',':','3','8','4','0','0',',','n',',','8',',','1',0};
 
+     TRACE("(%s, %p, %p)  *lpdwSize: %u\n", debugstr_w(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
+
      if (strncmpiW(lpszName,comW,3)) {
         ERR("not implemented for <%s>\n", debugstr_w(lpszName));
         return FALSE;
      }
 
-     TRACE("(%s %p %d)\n", debugstr_w(lpszName), lpCC, *lpdwSize );
      if (*lpdwSize < sizeof(COMMCONFIG)) {
          *lpdwSize = sizeof(COMMCONFIG);
          return FALSE;
@@ -1438,7 +1439,7 @@ BOOL WINAPI GetDefaultCommConfigA(
 	BOOL ret = FALSE;
 	UNICODE_STRING lpszNameW;
 
-	TRACE("(%s,%p,%d)\n",lpszName,lpCC,*lpdwSize);
+	TRACE("(%s, %p, %p)  *lpdwSize: %u\n", debugstr_a(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
 	if(lpszName) RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
 	else lpszNameW.Buffer = NULL;
 
