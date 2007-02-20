@@ -100,7 +100,7 @@ sub find_spec_files($) {
     my $allowed_dir;
     my $spec_file;
 
-    my @spec_files = <{dlls/*/*.spec,dlls/*/*/*.spec}>;
+    my @spec_files = <{dlls/*/*.spec}>;
 
     foreach $spec_file (@spec_files) {
         $spec_file =~ /(.*)\/.*\.spec/;
