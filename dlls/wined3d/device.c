@@ -4294,7 +4294,7 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_DrawIndexedPrimitive(IWineD3DDevice *
     UINT                 idxStride = 2;
     IWineD3DIndexBuffer *pIB;
     WINED3DINDEXBUFFER_DESC  IdxBufDsc;
-    GLint vbo;
+    GLuint vbo;
 
     pIB = This->stateBlock->pIndexData;
     This->stateBlock->streamIsUP = FALSE;

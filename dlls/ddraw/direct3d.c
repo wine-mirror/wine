@@ -804,7 +804,7 @@ IDirect3DImpl_7_CreateDevice(IDirect3D7 *iface,
      */
     hr = IWineD3DDevice_CreateIndexBuffer(This->wineD3DDevice,
                                           0x40000, /* Length. Don't know how long it should be */
-                                          0, /* Usage */
+                                          WINED3DUSAGE_DYNAMIC, /* Usage */
                                           WINED3DFMT_INDEX16, /* Format. D3D7 uses WORDS */
                                           WINED3DPOOL_DEFAULT,
                                           &object->indexbuffer,

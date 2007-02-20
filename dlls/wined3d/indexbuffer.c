@@ -60,8 +60,11 @@ static ULONG WINAPI IWineD3DIndexBufferImpl_Release(IWineD3DIndexBuffer *iface) 
     if (ref == 0) {
         if(This->vbo) {
             ENTER_GL();
-            GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, 0));
-            checkGLcall("glBindBufferARB");
+            /* No need to manually unset the buffer. glDeleteBuffers unsets it for the current context,
+             * but not for other contexts. However, because the d3d buffer is destroyed the app has to
+             * unset it before doing the next draw, thus dirtifying the index buffer state and forcing
+             * binding a new buffer
+             */
             GL_EXTCALL(glDeleteBuffersARB(1, &This->vbo));
             checkGLcall("glDeleteBuffersARB");
             LEAVE_GL();
@@ -159,6 +162,8 @@ static HRESULT WINAPI IWineD3DIndexBufferImpl_Unlock(IWineD3DIndexBuffer *iface)
         LEAVE_GL();
         This->dirtystart = 0;
         This->dirtyend = 0;
+        /* TODO: Move loading into preload when the buffer is used, that avoids dirtifying the state */
+        IWineD3DDeviceImpl_MarkStateDirty(This->resource.wineD3DDevice, STATE_INDEXBUFFER);
     }
     return WINED3D_OK;
 }

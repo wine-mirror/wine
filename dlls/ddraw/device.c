@@ -3691,7 +3691,7 @@ IDirect3DDeviceImpl_7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
      */
     hr = IWineD3DIndexBuffer_Lock(This->indexbuffer,
                                   0 /* OffSetToLock */,
-                                  0 /* SizeToLock - doesn't matter */,
+                                  IndexCount * sizeof(WORD),
                                   (BYTE **) &LockedIndices,
                                   0 /* Flags */);
     assert(IndexCount < 0x100000);
