@@ -244,7 +244,7 @@ int main (int argc, char *argv[])
       else
           WCMD_process_command(cmd);
       HeapFree(GetProcessHeap(), 0, cmd);
-      return 0;
+      return errorlevel;
   }
 
   SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_LINE_INPUT |
@@ -504,7 +504,8 @@ void WCMD_process_command (char *command)
         WCMD_volume (0, p);
         break;
       case WCMD_EXIT:
-        ExitProcess (0);
+        WCMD_exit ();
+        break;
       default:
         WCMD_run_program (whichcmd, 0);
     }

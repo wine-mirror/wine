@@ -37,6 +37,7 @@ void WCMD_directory (void);
 void WCMD_echo (const char *);
 void WCMD_endlocal (void);
 void WCMD_enter_paged_mode(void);
+void WCMD_exit (void);
 void WCMD_for (char *);
 void WCMD_give_help (char *command);
 void WCMD_goto (void);
@@ -83,6 +84,7 @@ typedef struct {
   HANDLE h;             /* Handle to the open batch file */
   int shift_count;	/* Number of SHIFT commands executed */
   void *prev_context;	/* Pointer to the previous context block */
+  BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
 } BATCH_CONTEXT;
 
 #endif /* !RC_INVOKED */

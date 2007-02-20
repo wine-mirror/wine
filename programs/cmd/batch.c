@@ -87,13 +87,14 @@ BATCH_CONTEXT *prev_context;
   context -> command = command;
   context -> shift_count = 0;
   context -> prev_context = prev_context;
+  context -> skip_rest = FALSE;
 
 /*
  * 	Work through the file line by line. Specific batch commands are processed here,
  * 	the rest are handled by the main command processor.
  */
 
-  while (WCMD_fgets (string, sizeof(string), h)) {
+  while (context -> skip_rest == FALSE && WCMD_fgets (string, sizeof(string), h)) {
       if (strlen(string) == MAXSTRING -1) {
           WCMD_output_asis( "Line in Batch processing possibly truncated. Using:\n");
           WCMD_output_asis( string);

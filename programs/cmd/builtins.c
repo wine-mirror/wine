@@ -1159,3 +1159,22 @@ BOOL status;
   }
   return 1;
 }
+
+/**************************************************************************
+ * WCMD_exit
+ *
+ * Exit either the process, or just this batch program
+ *
+ */
+
+void WCMD_exit (void) {
+
+    int rc = atoi(param1); /* Note: atoi of empty parameter is 0 */
+
+    if (context && lstrcmpi(quals, "/B") == 0) {
+        errorlevel = rc;
+        context -> skip_rest = TRUE;
+    } else {
+        ExitProcess(rc);
+    }
+}
