@@ -187,7 +187,7 @@ sub _check_function($$$$$$) {
 		("double", "double");
 	    } elsif(defined($kind) && $kind eq "longlong") {
 		$n+=1;
-		"double";
+		"longlong";
 	    } else {
 		$n++;
 		$kind;
@@ -230,7 +230,8 @@ sub _check_function($$$$$$) {
 		    $output->write("argument " . ($n + 1) . " type is forbidden: " .
 				   "$argument_types[$n] ($argument_kinds[$n])\n");
 		}
-	    } elsif($argument_kinds[$n] ne $declared_argument_kinds[$n]) {
+	    } elsif($argument_kinds[$n] ne $declared_argument_kinds[$n] &&
+                   !($argument_kinds[$n] eq "longlong" && $declared_argument_kinds[$n] eq "double")) {
 		if($options->report_argument_kind($argument_kinds[$n]) ||
 		   $options->report_argument_kind($declared_argument_kinds[$n]))
 		{
