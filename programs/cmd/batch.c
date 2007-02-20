@@ -153,14 +153,6 @@ int i;
     if (*(p+1) == '~') {
       WCMD_HandleTildaModifiers(&p, NULL);
       p++;
-    } else if (CompareString (LOCALE_USER_DEFAULT,
-                              NORM_IGNORECASE | SORT_STRINGSORT,
-	                      (p+1), 11, "ERRORLEVEL%", -1) == 2) {
-      char output[10];
-      sprintf(output, "%d", errorlevel);
-      s = strdup (p+12);
-      strcpy (p, output);
-      strcat (p, s);
     } else if ((i >= 0) && (i <= 9)) {
       s = strdup (p+2);
       t = WCMD_parameter (context -> command, i + context -> shift_count, NULL);
@@ -175,6 +167,53 @@ int i;
       else *p = 0x00;
       strcat (p, s);
       free (s);
+
+    /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
+    /* override if existing env var called that name              */
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                              NORM_IGNORECASE | SORT_STRINGSORT,
+                              (p+1), 11, "ERRORLEVEL%", -1) == 2) &&
+              (GetEnvironmentVariable("ERRORLEVEL", cmd2, 1) == 0) &&
+              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      char output[10];
+      sprintf(output, "%d", errorlevel);
+      s = strdup (p+12);
+      strcpy (p, output);
+      strcat (p, s);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                              NORM_IGNORECASE | SORT_STRINGSORT,
+                              (p+1), 5, "DATE%", -1) == 2) &&
+              (GetEnvironmentVariable("DATE", cmd2, 1) == 0) &&
+              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+
+      GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
+                    NULL, cmd2, MAXSTRING);
+      s = strdup (p+6);
+      strcpy (p, cmd2);
+      strcat (p, s);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                              NORM_IGNORECASE | SORT_STRINGSORT,
+                              (p+1), 5, "TIME%", -1) == 2) &&
+              (GetEnvironmentVariable("TIME", cmd2, 1) == 0) &&
+              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
+                        NULL, cmd2, MAXSTRING);
+      s = strdup (p+6);
+      strcpy (p, cmd2);
+      strcat (p, s);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                              NORM_IGNORECASE | SORT_STRINGSORT,
+                              (p+1), 3, "CD%", -1) == 2) &&
+              (GetEnvironmentVariable("CD", cmd2, 1) == 0) &&
+              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      GetCurrentDirectory (MAXSTRING, cmd2);
+      s = strdup (p+4);
+      strcpy (p, cmd2);
+      strcat (p, s);
+
     } else {
       p++;
     }
