@@ -79,6 +79,10 @@ static const WCHAR cmd_GetTransmissionRetryTimeoutW[] = {'G','e','t',
 
 static const WCHAR cmd_MonitorUIW[] = {'M','o','n','i','t','o','r','U','I',0};
 static const WCHAR cmd_PortIsValidW[] = {'P','o','r','t','I','s','V','a','l','i','d',0};
+static const WCHAR cmd_SetDefaultCommConfigW[] = {'S','e','t',
+                                    'D','e','f','a','u','l','t',
+                                    'C','o','m','m','C','o','n','f','i','g',0};
+
 static const WCHAR dllnameuiW[] = {'l','o','c','a','l','u','i','.','d','l','l',0};
 
 static const WCHAR portname_LPT[]  = {'L','P','T',0};
@@ -446,10 +450,10 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
                 PBYTE pOutputData, DWORD cbOutputData, PDWORD pcbOutputNeeded)
 {
     WCHAR   buffer[16];     /* buffer for a decimal number */
+    LPWSTR  ptr;
     DWORD   res;
     DWORD   needed;
     HKEY    hroot;
-
 
     TRACE("(%p, %s, %p, %d, %p, %d, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
@@ -511,6 +515,17 @@ DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInput
 
         /* ERROR_ACCESS_DENIED, ERROR_PATH_NOT_FOUND ore something else */
         return GetLastError();
+    }
+
+    if (!lstrcmpW(pszDataName, cmd_SetDefaultCommConfigW)) {
+        /* get the portname from the Handle */
+        ptr =  strchrW(((xcv_t *)hXcv)->nameW, ' ');
+        ptr++;  /* skip the space */
+        lstrcpynW(buffer, ptr, sizeof(buffer)/sizeof(WCHAR));
+        if (buffer[0]) buffer[lstrlenW(buffer)-1] = '\0';  /* remove the ':' */
+        res = SetDefaultCommConfigW(buffer, (LPCOMMCONFIG) pInputData, cbInputData);
+        TRACE("got %u with %u\n", res, GetLastError() );
+        return res ? ERROR_SUCCESS : GetLastError();
     }
 
     FIXME("command not supported: %s\n", debugstr_w(pszDataName));
