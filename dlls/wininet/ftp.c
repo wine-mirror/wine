@@ -175,16 +175,6 @@ BOOL WINAPI FtpPutFileA(HINTERNET hConnect, LPCSTR lpszLocalFile,
     return ret;
 }
 
-/***********************************************************************
- *           FtpPutFileW (WININET.@)
- *
- * Uploads a file to the FTP server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpPutFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPPUTFILEW const *req = &workRequest->u.FtpPutFileW;
@@ -199,6 +189,16 @@ static void AsyncFtpPutFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszNewRemoteFile);
 }
 
+/***********************************************************************
+ *           FtpPutFileW (WININET.@)
+ *
+ * Uploads a file to the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpPutFileW(HINTERNET hConnect, LPCWSTR lpszLocalFile,
     LPCWSTR lpszNewRemoteFile, DWORD dwFlags, DWORD dwContext)
 {
@@ -355,16 +355,6 @@ BOOL WINAPI FtpSetCurrentDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 }
 
 
-/***********************************************************************
- *           FtpSetCurrentDirectoryW (WININET.@)
- *
- * Change the working directory on the FTP server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpSetCurrentDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPSETCURRENTDIRECTORYW const *req = &workRequest->u.FtpSetCurrentDirectoryW;
@@ -376,6 +366,16 @@ static void AsyncFtpSetCurrentDirectoryProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
 }
 
+/***********************************************************************
+ *           FtpSetCurrentDirectoryW (WININET.@)
+ *
+ * Change the working directory on the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpSetCurrentDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 {
     LPWININETFTPSESSIONW lpwfs = NULL;
@@ -495,16 +495,6 @@ BOOL WINAPI FtpCreateDirectoryA(HINTERNET hConnect, LPCSTR lpszDirectory)
 }
 
 
-/***********************************************************************
- *           FtpCreateDirectoryW (WININET.@)
- *
- * Create new directory on the FTP server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpCreateDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPCREATEDIRECTORYW const *req = &workRequest->u.FtpCreateDirectoryW;
@@ -516,6 +506,16 @@ static void AsyncFtpCreateDirectoryProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
 }
 
+/***********************************************************************
+ *           FtpCreateDirectoryW (WININET.@)
+ *
+ * Create new directory on the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpCreateDirectoryW(HINTERNET hConnect, LPCWSTR lpszDirectory)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -643,16 +643,6 @@ HINTERNET WINAPI FtpFindFirstFileA(HINTERNET hConnect,
 }
 
 
-/***********************************************************************
- *           FtpFindFirstFileW (WININET.@)
- *
- * Search the specified directory
- *
- * RETURNS
- *    HINTERNET on success
- *    NULL on failure
- *
- */
 static void AsyncFtpFindFirstFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPFINDFIRSTFILEW const *req = &workRequest->u.FtpFindFirstFileW;
@@ -665,6 +655,16 @@ static void AsyncFtpFindFirstFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszSearchFile);
 }
 
+/***********************************************************************
+ *           FtpFindFirstFileW (WININET.@)
+ *
+ * Search the specified directory
+ *
+ * RETURNS
+ *    HINTERNET on success
+ *    NULL on failure
+ *
+ */
 HINTERNET WINAPI FtpFindFirstFileW(HINTERNET hConnect,
     LPCWSTR lpszSearchFile, LPWIN32_FIND_DATAW lpFindFileData, DWORD dwFlags, DWORD dwContext)
 {
@@ -833,16 +833,6 @@ BOOL WINAPI FtpGetCurrentDirectoryA(HINTERNET hFtpSession, LPSTR lpszCurrentDire
 }
 
 
-/***********************************************************************
- *           FtpGetCurrentDirectoryW (WININET.@)
- *
- * Retrieves the current directory
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpGetCurrentDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPGETCURRENTDIRECTORYW const *req = &workRequest->u.FtpGetCurrentDirectoryW;
@@ -853,6 +843,16 @@ static void AsyncFtpGetCurrentDirectoryProc(WORKREQUEST *workRequest)
     FTP_FtpGetCurrentDirectoryW(lpwfs, req->lpszDirectory, req->lpdwDirectory);
 }
 
+/***********************************************************************
+ *           FtpGetCurrentDirectoryW (WININET.@)
+ *
+ * Retrieves the current directory
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpGetCurrentDirectoryW(HINTERNET hFtpSession, LPWSTR lpszCurrentDirectory,
     LPDWORD lpdwCurrentDirectory)
 {
@@ -993,16 +993,6 @@ HINTERNET WINAPI FtpOpenFileA(HINTERNET hFtpSession,
 }
 
 
-/***********************************************************************
- *           FtpOpenFileW (WININET.@)
- *
- * Open a remote file for writing or reading
- *
- * RETURNS
- *    HINTERNET handle on success
- *    NULL on failure
- *
- */
 static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPOPENFILEW const *req = &workRequest->u.FtpOpenFileW;
@@ -1015,6 +1005,16 @@ static void AsyncFtpOpenFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszFilename);
 }
 
+/***********************************************************************
+ *           FtpOpenFileW (WININET.@)
+ *
+ * Open a remote file for writing or reading
+ *
+ * RETURNS
+ *    HINTERNET handle on success
+ *    NULL on failure
+ *
+ */
 HINTERNET WINAPI FtpOpenFileW(HINTERNET hFtpSession,
     LPCWSTR lpszFileName, DWORD fdwAccess, DWORD dwFlags,
     DWORD dwContext)
@@ -1198,16 +1198,6 @@ BOOL WINAPI FtpGetFileA(HINTERNET hInternet, LPCSTR lpszRemoteFile, LPCSTR lpszN
 }
 
 
-/***********************************************************************
- *           FtpGetFileW (WININET.@)
- *
- * Retrieve file from the FTP server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPGETFILEW const *req = &workRequest->u.FtpGetFileW;
@@ -1222,6 +1212,17 @@ static void AsyncFtpGetFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszNewFile);
 }
 
+
+/***********************************************************************
+ *           FtpGetFileW (WININET.@)
+ *
+ * Retrieve file from the FTP server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpGetFileW(HINTERNET hInternet, LPCWSTR lpszRemoteFile, LPCWSTR lpszNewFile,
     BOOL fFailIfExists, DWORD dwLocalFlagsAttribute, DWORD dwInternetFlags,
     DWORD dwContext)
@@ -1402,16 +1403,6 @@ BOOL WINAPI FtpDeleteFileA(HINTERNET hFtpSession, LPCSTR lpszFileName)
     return ret;
 }
 
-/***********************************************************************
- *           FtpDeleteFileW  (WININET.@)
- *
- * Delete a file on the ftp server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpDeleteFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPDELETEFILEW const *req = &workRequest->u.FtpDeleteFileW;
@@ -1423,6 +1414,16 @@ static void AsyncFtpDeleteFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszFilename);
 }
 
+/***********************************************************************
+ *           FtpDeleteFileW  (WININET.@)
+ *
+ * Delete a file on the ftp server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpDeleteFileW(HINTERNET hFtpSession, LPCWSTR lpszFileName)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -1541,16 +1542,6 @@ BOOL WINAPI FtpRemoveDirectoryA(HINTERNET hFtpSession, LPCSTR lpszDirectory)
     return ret;
 }
 
-/***********************************************************************
- *           FtpRemoveDirectoryW  (WININET.@)
- *
- * Remove a directory on the ftp server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpRemoveDirectoryProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPREMOVEDIRECTORYW const *req = &workRequest->u.FtpRemoveDirectoryW;
@@ -1562,6 +1553,16 @@ static void AsyncFtpRemoveDirectoryProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszDirectory);
 }
 
+/***********************************************************************
+ *           FtpRemoveDirectoryW  (WININET.@)
+ *
+ * Remove a directory on the ftp server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpRemoveDirectoryW(HINTERNET hFtpSession, LPCWSTR lpszDirectory)
 {
     LPWININETFTPSESSIONW lpwfs;
@@ -1684,16 +1685,6 @@ BOOL WINAPI FtpRenameFileA(HINTERNET hFtpSession, LPCSTR lpszSrc, LPCSTR lpszDes
     return ret;
 }
 
-/***********************************************************************
- *           FtpRenameFileW  (WININET.@)
- *
- * Rename a file on the ftp server
- *
- * RETURNS
- *    TRUE on success
- *    FALSE on failure
- *
- */
 static void AsyncFtpRenameFileProc(WORKREQUEST *workRequest)
 {
     struct WORKREQ_FTPRENAMEFILEW const *req = &workRequest->u.FtpRenameFileW;
@@ -1706,6 +1697,16 @@ static void AsyncFtpRenameFileProc(WORKREQUEST *workRequest)
     HeapFree(GetProcessHeap(), 0, req->lpszDestFile);
 }
 
+/***********************************************************************
+ *           FtpRenameFileW  (WININET.@)
+ *
+ * Rename a file on the ftp server
+ *
+ * RETURNS
+ *    TRUE on success
+ *    FALSE on failure
+ *
+ */
 BOOL WINAPI FtpRenameFileW(HINTERNET hFtpSession, LPCWSTR lpszSrc, LPCWSTR lpszDest)
 {
     LPWININETFTPSESSIONW lpwfs;
