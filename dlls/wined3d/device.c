@@ -3012,20 +3012,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, GL_LIMITS(vshader_constantsF) - start);
+    int i;
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
 
-    if (srcData == NULL || ((signed int) GL_LIMITS(vshader_constantsF) - (signed int) start) <= (signed int) 0)
+    /* Specifically test start > limit to catch MAX_UINT overflows when adding start + count */
+    if (srcData == NULL || start + count > GL_LIMITS(vshader_constantsF) || start > GL_LIMITS(vshader_constantsF))
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
-    for (i = 0; i < cnt; i++)
-        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
-           srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
+    memcpy(&This->updateStateBlock->vertexShaderConstantF[start * 4], srcData, count * sizeof(float) * 4);
+    if(TRACE_ON(d3d)) {
+        for (i = 0; i < count; i++)
+            TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
+                srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
+    }
 
-    for (i = start; i < cnt + start; ++i) {
+    for (i = start; i < count + start; ++i) {
         if (!This->updateStateBlock->set.vertexShaderConstantsF[i]) {
             constant_entry *ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(constant_entry));
             ptr->idx = i;
@@ -3289,20 +3292,23 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
     UINT count) {
 
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    int i, cnt = min(count, GL_LIMITS(pshader_constantsF) - start);
+    int i;
 
     TRACE("(iface %p, srcData %p, start %d, count %d)\n",
             iface, srcData, start, count);
 
-    if (srcData == NULL || cnt < 0)
+    /* Specifically test start > limit to catch MAX_UINT overflows when adding start + count */
+    if (srcData == NULL || start + count > GL_LIMITS(pshader_constantsF) || start > GL_LIMITS(pshader_constantsF))
         return WINED3DERR_INVALIDCALL;
 
-    memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, cnt * sizeof(float) * 4);
-    for (i = 0; i < cnt; i++)
-        TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
-           srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
+    memcpy(&This->updateStateBlock->pixelShaderConstantF[start * 4], srcData, count * sizeof(float) * 4);
+    if(TRACE_ON(d3d)) {
+        for (i = 0; i < count; i++)
+            TRACE("Set FLOAT constant %u to { %f, %f, %f, %f }\n", start + i,
+                srcData[i*4], srcData[i*4+1], srcData[i*4+2], srcData[i*4+3]);
+    }
 
-    for (i = start; i < cnt + start; ++i) {
+    for (i = start; i < count + start; ++i) {
         if (!This->updateStateBlock->set.pixelShaderConstantsF[i]) {
             constant_entry *ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(constant_entry));
             ptr->idx = i;

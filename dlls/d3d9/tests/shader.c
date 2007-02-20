@@ -109,6 +109,33 @@ static void test_get_set_vertex_shader(IDirect3DDevice9 *device_ptr)
         "Expected hret 0x%x, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
 }
 
+static void test_vertex_shader_constant(IDirect3DDevice9 *device_ptr, DWORD consts)
+{
+    float c[4] = { 0.0, 0.0, 0.0, 0.0 };
+    float d[16] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    HRESULT hr;
+
+    /* A simple check that the stuff works at all */
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, 0, c, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+
+    /* Test corner cases: Write to const MAX - 1, MAX, MAX + 1, and writing 4 consts from
+     * MAX - 1
+     */
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, consts - 1, c, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, consts + 0, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, consts + 1, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, consts - 1, d, 4);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+
+    /* Constant -1 */
+    hr = IDirect3DDevice9_SetVertexShaderConstantF(device_ptr, -1, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+}
+
 static void test_get_set_pixel_shader(IDirect3DDevice9 *device_ptr)
 {
     static DWORD simple_ps[] = {0xFFFF0101,                                     /* ps_1_1                       */
@@ -146,6 +173,33 @@ static void test_get_set_pixel_shader(IDirect3DDevice9 *device_ptr)
         "Expected hret 0x%x, current_shader_ptr %p, refcount %d.\n", hret, current_shader_ptr, shader_refcount, D3D_OK, shader_ptr, i);
 }
 
+static void test_pixel_shader_constant(IDirect3DDevice9 *device_ptr)
+{
+    float c[4] = { 0.0, 0.0, 0.0, 0.0 };
+    float d[16] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    HRESULT hr;
+    DWORD consts = 0;
+
+    /* A simple check that the stuff works at all */
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device_ptr, 0, c, 1);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetVertexShaderConstantF returned 0x%08x\n", hr);
+
+    /* Is there really no max pixel shader constant value??? Test how far I can go */
+    while(SUCCEEDED(IDirect3DDevice9_SetPixelShaderConstantF(device_ptr, consts++, c, 1)));
+    consts = consts - 1;
+    trace("SetPixelShaderConstantF was able to set %d shader constants\n", consts);
+
+    /* Test corner cases: writing 4 consts from MAX - 1, everything else is pointless
+     * given the way the constant limit was found out
+     */
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device_ptr, consts - 1, d, 4);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetPixelShaderConstantF returned 0x%08x\n", hr);
+
+    /* Constant -1 */
+    hr = IDirect3DDevice9_SetPixelShaderConstantF(device_ptr, -1, c, 1);
+    ok(hr == D3DERR_INVALIDCALL, "IDirect3DDevice9_SetPixelShaderConstantF returned 0x%08x\n", hr);
+}
+
 START_TEST(shader)
 {
     D3DCAPS9 caps;
@@ -166,12 +220,15 @@ START_TEST(shader)
     if (caps.VertexShaderVersion & 0xffff)
     {
         test_get_set_vertex_shader(device_ptr);
+        test_vertex_shader_constant(device_ptr, caps.MaxVertexShaderConst);
     }
     else skip("No vertex shader support\n");
 
     if (caps.PixelShaderVersion & 0xffff)
     {
         test_get_set_pixel_shader(device_ptr);
+        /* No max pixel shader constant value??? */
+        test_pixel_shader_constant(device_ptr);
     }
     else skip("No pixel shader support\n");
 }
