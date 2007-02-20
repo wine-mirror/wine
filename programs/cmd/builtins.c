@@ -433,6 +433,13 @@ char string[MAX_PATH];
     return;
   }
   if (context != NULL) {
+
+    /* Handle special :EOF label */
+    if (lstrcmpi (":eof", param1) == 0) {
+      context -> skip_rest = TRUE;
+      return;
+    }
+
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
     while (WCMD_fgets (string, sizeof(string), context -> h)) {
       if ((string[0] == ':') && (lstrcmpi (&string[1], param1) == 0)) return;
