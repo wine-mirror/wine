@@ -114,9 +114,7 @@ sub fixup_user_message_2_windowsx($$) {
     $lparam =~ s/^\(LPARAM\)\s*//;
 
     my @arguments;
-    if(0) {
-	# Nothing
-    } elsif($msg =~ /^WM_COMMAND$/) {
+    if($msg =~ /^WM_COMMAND$/) {
 	(my $id, my $code_notify) = _parse_makelong($wparam);
 	my $hwndctl = $lparam;
 	@arguments = ($id, $hwndctl, $code_notify);

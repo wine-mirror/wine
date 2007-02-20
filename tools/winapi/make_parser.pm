@@ -95,9 +95,7 @@ sub make_output($$) {
     $file = "";
     $message = "";
 
-    if(0) {
-	# Nothing
-    } elsif(/^\*\*\* \[(.*?)\] Error (\d+)$/) {
+    if(/^\*\*\* \[(.*?)\] Error (\d+)$/) {
 	# Nothing
     } elsif(/^\*\*\* Error code (\d+)$/) {
 	# Nothing
@@ -294,9 +292,7 @@ sub gcc_output($$) {
 	if(s/^warning:\s+//) {
 	    my $suppress = 0;
 
-	    if(0) {
-		# Nothing
-	    } elsif(/^((?:signed |unsigned )?(?:int|long)) format, (different type|\S+) arg \(arg (\d+)\)$/) {
+	    if(/^((?:signed |unsigned )?(?:int|long)) format, (different type|\S+) arg \(arg (\d+)\)$/) {
 		my $type = $2;
 		if($type =~ /^(?:
 		   HACCEL|HACMDRIVER|HANDLE|HBITMAP|HBRUSH|HCALL|HCURSOR|HDC|HDRVR|HDESK|HDRAWDIB
@@ -451,9 +447,7 @@ sub ld_output($$) {
     $file = shift;
     local $_ = shift;
 
-    if(0) {
-	# Nothing
-    } elsif(/^In function \`(.*?)\':$/) {
+    if(/^In function \`(.*?)\':$/) {
 	$function = $1;
     } elsif(/^more undefined references to \`(.*?)\' follow$/) {
 	# Nothing

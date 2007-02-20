@@ -604,9 +604,7 @@ sub parse_c_declaration($$$$$$$$$$$$) {
     # Variable
     my $type;
 
-    if(0) {
-	# Nothing
-    } elsif(s/^WINE_(?:DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\(\s*(\w+)\s*\)\s*//s) { # FIXME: Wine specific kludge
+    if(s/^WINE_(?:DEFAULT|DECLARE)_DEBUG_CHANNEL\s*\(\s*(\w+)\s*\)\s*//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
     } elsif(s/^__ASM_GLOBAL_FUNC\(\s*(\w+)\s*,\s*//s) { # FIXME: Wine specific kludge
 	$self->_update_c_position($&, \$line, \$column);
@@ -995,9 +993,7 @@ sub parse_c_file($$$$) {
 		}
 
 
-		if (0) {
-		    # Nothing
-		} elsif($preprocessor =~ /^\#\s*if/) {
+		if($preprocessor =~ /^\#\s*if/) {
 		    if($preprocessor =~ /^\#\s*if\s*0/) {
 			$if0++;
 		    } elsif($if0 > 0) {
@@ -1193,9 +1189,7 @@ sub parse_c_function($$$$$) {
     my $begin_line = $line;
     my $begin_column = $column + 1;
 
-    if(0) {
-	# Nothing
-    } elsif($self->_parse_c('__declspec\((?:dllexport|dllimport|naked)\)|INTERNETAPI|RPCRTAPI', \$_, \$line, \$column)) {
+    if($self->_parse_c('__declspec\((?:dllexport|dllimport|naked)\)|INTERNETAPI|RPCRTAPI', \$_, \$line, \$column)) {
 	# Nothing
     }
 
@@ -1215,9 +1209,7 @@ sub parse_c_function($$$$$) {
 	}
     }
 
-    if(0) {
-	# Nothing
-    } elsif($self->_parse_c('DECL_GLOBAL_CONSTRUCTOR', \$_, \$line, \$column, \$name)) { # FIXME: Wine specific kludge
+    if($self->_parse_c('DECL_GLOBAL_CONSTRUCTOR', \$_, \$line, \$column, \$name)) { # FIXME: Wine specific kludge
 	# Nothing
     } elsif($self->_parse_c('WINE_EXCEPTION_FILTER\(\w+\)', \$_, \$line, \$column, \$name)) { # FIXME: Wine specific kludge
 	# Nothing
@@ -1259,9 +1251,7 @@ sub parse_c_function($$$$$) {
     }
 
 
-    if (0) {
-	# Nothing
-    } elsif($self->_parse_c('__attribute__\s*\(\s*\(\s*(?:constructor|destructor)\s*\)\s*\)', \$_, \$line, \$column)) {
+    if($self->_parse_c('__attribute__\s*\(\s*\(\s*(?:constructor|destructor)\s*\)\s*\)', \$_, \$line, \$column)) {
 	# Nothing
     }
 
@@ -1383,9 +1373,7 @@ sub parse_c_preprocessor($$$$) {
 	return 1;
     }
 
-    if(0) {
-	# Nothing
-    } elsif(/^\#\s*define\s*(.*?)$/s) {
+    if(/^\#\s*define\s*(.*?)$/s) {
 	$self->_update_c_position($_, \$line, \$column);
     } elsif(/^\#\s*else/s) {
 	$self->_update_c_position($_, \$line, \$column);
@@ -1783,9 +1771,7 @@ sub parse_c_type($$$$$) {
 
     $self->_parse_c("(?:const|volatile)", \$_, \$line, \$column);
 
-    if(0) {
-	# Nothing
-    } elsif($self->_parse_c('ICOM_VTABLE\(.*?\)', \$_, \$line, \$column, \$type)) {
+    if($self->_parse_c('ICOM_VTABLE\(.*?\)', \$_, \$line, \$column, \$type)) {
 	# Nothing
     } elsif($self->_parse_c('(?:enum\s+|interface\s+|struct\s+|union\s+)?(?:(?:MSVCRT|WS)\(\s*\w+\s*\)|\w+)\s*(\*\s*)*',
 			    \$_, \$line, \$column, \$type))
