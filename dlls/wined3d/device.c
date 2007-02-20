@@ -2813,11 +2813,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetScissorRect(IWineD3DDevice *iface, C
 
     This->updateStateBlock->set.scissorRect = TRUE;
     This->updateStateBlock->changed.scissorRect = TRUE;
-    if(memcmp(&This->updateStateBlock->scissorRect, pRect, sizeof(*pRect)) == 0) {
+    if(EqualRect(&This->updateStateBlock->scissorRect, pRect)) {
         TRACE("App is setting the old scissor rectangle over, nothing to do\n");
         return WINED3D_OK;
     }
-    memcpy(&This->updateStateBlock->scissorRect, pRect, sizeof(*pRect));
+    CopyRect(&This->updateStateBlock->scissorRect, pRect);
 
     if(This->isRecordingState) {
         TRACE("Recording... not performing anything\n");
