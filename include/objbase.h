@@ -416,7 +416,7 @@ typedef enum tagCOWAIT_FLAGS
     COWAIT_ALERTABLE = 0x00000002
 } COWAIT_FLAGS;
 
-HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags,DWORD dwTimeout,ULONG cHandles,const HANDLE* pHandles,LPDWORD lpdwindex);
+HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags,DWORD dwTimeout,ULONG cHandles,LPHANDLE pHandles,LPDWORD lpdwindex);
 
 /*****************************************************************************
  *	GUID API

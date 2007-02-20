@@ -3148,7 +3148,7 @@ static BOOL COM_PeekMessage(struct apartment *apt, MSG *msg)
  *  MsgWaitForMultipleObjects, WaitForMultipleObjects.
  */
 HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags, DWORD dwTimeout,
-    ULONG cHandles, const HANDLE* pHandles, LPDWORD lpdwindex)
+    ULONG cHandles, LPHANDLE pHandles, LPDWORD lpdwindex)
 {
     HRESULT hr = S_OK;
     DWORD start_time = GetTickCount();
