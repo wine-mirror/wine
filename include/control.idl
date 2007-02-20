@@ -28,6 +28,7 @@ interface IBasicVideo;
 interface IVideoWindow;
 interface IMediaEvent;
 interface IMediaEventEx;
+interface IMediaPosition;
 
 typedef long OAFilterState;
 typedef LONG_PTR OAHWND;
@@ -205,4 +206,28 @@ interface IMediaEventEx : IMediaEvent
     HRESULT SetNotifyWindow( [in] OAHWND hwnd, [in] long lMsg, [in] LONG_PTR lInstanceData );
     HRESULT SetNotifyFlags( [in] long lNoNotifyFlags );
     HRESULT GetNotifyFlags( [out] long *lplNoNotifyFlags );
+}
+
+
+/*****************************************************************************
+ * IMediaPosition interface
+ */
+[
+    object,
+    uuid(56a868b2-0ad4-11ce-b03a-0020af0ba770),
+    pointer_default(unique)
+]
+interface IMediaPosition : IDispatch
+{
+    HRESULT get_Duration( [out] REFTIME *plength );
+    HRESULT put_CurrentPosition( [in] REFTIME llTime );
+    HRESULT get_CurrentPosition( [out] REFTIME *pllTime );
+    HRESULT get_StopTime( [out] REFTIME *pllTime );
+    HRESULT put_StopTime( [in] REFTIME llTime );
+    HRESULT get_PrerollTime( [out] REFTIME *pllTime );
+    HRESULT put_PrerollTime( [in] REFTIME llTime );
+    HRESULT put_Rate( [in] double dRate );
+    HRESULT get_Rate( [out] double *pdRate );
+    HRESULT CanSeekForward( [out] LONG *pCanSeekForward );
+    HRESULT CanSeekBackward( [out] LONG *pCanSeekBackward );
 }
