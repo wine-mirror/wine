@@ -963,7 +963,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
     ICOM_THIS_MULTI(IFilterGraphImpl, IGraphBuilder_vtbl, iface);
     static const WCHAR string[] = {'R','e','a','d','e','r',0};
     IBaseFilter* preader = NULL;
-    IBaseFilter* psplitter;
+    IBaseFilter* psplitter = NULL;
     IPin* ppinreader;
     IPin* ppinsplitter;
     IEnumPins* penumpins;
