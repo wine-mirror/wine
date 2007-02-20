@@ -112,33 +112,6 @@ DWORD WINAPI CM_Get_Device_ID_ListA(
     return CR_SUCCESS;
 }
 
-
-/***********************************************************************
- *		SetupCopyOEMInfA  (SETUPAPI.@)
- */
-BOOL WINAPI SetupCopyOEMInfA(PCSTR sourceinffile, PCSTR sourcemedialoc,
-			    DWORD mediatype, DWORD copystyle, PSTR destinfname,
-			    DWORD destnamesize, PDWORD required,
-			    PSTR *destinfnamecomponent)
-{
-  FIXME("stub: source %s location %s ...\n", debugstr_a(sourceinffile),
-        debugstr_a(sourcemedialoc));
-  return FALSE;
-}
-
-/***********************************************************************
- *      SetupCopyOEMInfW  (SETUPAPI.@)
- */
-BOOL WINAPI SetupCopyOEMInfW(PCWSTR sourceinffile, PCWSTR sourcemedialoc,
-                DWORD mediatype, DWORD copystyle, PWSTR destinfname,
-                DWORD destnamesize, PDWORD required,
-                PWSTR *destinfnamecomponent)
-{
-  FIXME("stub: source %s location %s ...\n", debugstr_w(sourceinffile),
-        debugstr_w(sourcemedialoc));
-  return FALSE;
-}
-
 /***********************************************************************
  *		SetupInitializeFileLogW(SETUPAPI.@)
  */

@@ -877,3 +877,92 @@ void WINAPI AssertFail(LPCSTR lpFile, UINT uLine, LPCSTR lpMessage)
 {
     FIXME("%s %u %s\n", lpFile, uLine, lpMessage);
 }
+
+/***********************************************************************
+ *      SetupCopyOEMInfA  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupCopyOEMInfA( PCSTR source, PCSTR location,
+                              DWORD media_type, DWORD style, PSTR dest,
+                              DWORD buffer_size, PDWORD required_size, PSTR *component )
+{
+    BOOL ret = FALSE;
+    WCHAR destW[MAX_PATH], *sourceW = NULL, *locationW = NULL;
+    INT size = sizeof(destW);
+
+    TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_a(source), debugstr_a(location),
+          media_type, style, dest, buffer_size, required_size, component);
+
+    if (source && !(sourceW = strdupAtoW( source ))) return FALSE;
+    if (location && !(locationW = strdupAtoW( location ))) goto done;
+
+    if (!(ret = SetupCopyOEMInfW( sourceW, locationW, media_type, style, destW, size, NULL, NULL )))
+        goto done;
+
+    size = WideCharToMultiByte( CP_ACP, 0, destW, -1, NULL, 0, NULL, NULL );
+    if (required_size) *required_size = size;
+
+    if (dest)
+    {
+        if (buffer_size >= size)
+        {
+            WideCharToMultiByte( CP_ACP, 0, destW, -1, dest, buffer_size, NULL, NULL );
+            if (component) *component = strrchr( dest, '\\' ) + 1;
+        }
+        else
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            goto done;
+        }
+    }
+
+done:
+    HeapFree( GetProcessHeap(), 0, sourceW );
+    HeapFree( GetProcessHeap(), 0, locationW );
+    return ret;
+}
+
+/***********************************************************************
+ *      SetupCopyOEMInfW  (SETUPAPI.@)
+ */
+BOOL WINAPI SetupCopyOEMInfW( PCWSTR source, PCWSTR location,
+                              DWORD media_type, DWORD style, PWSTR dest,
+                              DWORD buffer_size, PDWORD required_size, PWSTR *component )
+{
+    BOOL ret = FALSE;
+    WCHAR target[MAX_PATH], *p;
+    static const WCHAR inf_oem[] = { '\\','i','n','f','\\','O','E','M',0 };
+    DWORD size;
+
+    TRACE("%s, %s, %d, %d, %p, %d, %p, %p\n", debugstr_w(source), debugstr_w(location),
+          media_type, style, dest, buffer_size, required_size, component);
+
+    if (!GetWindowsDirectoryW( target, sizeof(target)/sizeof(WCHAR) )) return FALSE;
+
+    strcatW( target, inf_oem );
+    p = strrchrW( source, '\\' ) + 1;
+    strcatW( target, p );
+
+    size = strlenW( target ) + 1;
+    if (dest)
+    {
+        if (buffer_size >= size)
+        {
+            /* FIXME: honour style flags */
+            if ((ret = CopyFileW( source, target, FALSE )))
+            {
+                if (style & SP_COPY_DELETESOURCE) DeleteFileW( source );
+                strcpyW( dest, target );
+            }
+        }
+        else
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            ret = FALSE;
+        }
+    }
+
+    if (component) *component = p;
+    if (required_size) *required_size = size;
+
+    return ret;
+}
