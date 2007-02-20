@@ -815,7 +815,6 @@ static HRESULT WINAPI GraphBuilder_Connect(IGraphBuilder *iface,
             }
             while (++i < nb) IPin_Release(ppins[i]);
             CoTaskMemFree(ppins);
-            IBaseFilter_Release(pfilter);
             IPin_Release(ppinfilter);
             break;
         }
@@ -1082,7 +1081,7 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
         }
         IGraphBuilder_RemoveFilter(iface, psplitter);
         IBaseFilter_Release(psplitter);
-        ppinsplitter = NULL;
+        psplitter = NULL;
     }
 
     /* Render all output pin of the splitter by calling IGraphBuilder_Render on each of them */
@@ -1103,10 +1102,6 @@ static HRESULT WINAPI GraphBuilder_RenderFile(IGraphBuilder *iface,
 
         hr = (partial ? VFW_S_PARTIAL_RENDER : S_OK);
     }
-
-    if (psplitter)
-        IBaseFilter_Release(psplitter);
-    IBaseFilter_Release(preader);
 
     return hr;
 }
