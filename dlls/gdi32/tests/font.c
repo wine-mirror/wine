@@ -821,89 +821,6 @@ static void test_GetOutlineTextMetrics(void)
     ReleaseDC(0, hdc);
 }
 
-static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count, BOOL unicode)
-{
-    HDC hdc;
-    LOGFONTA lf;
-    HFONT hfont, hfont_old;
-    CHARSETINFO csi;
-    FONTSIGNATURE fs;
-    INT cs;
-    DWORD i, ret;
-    char name[64];
-
-    assert(count <= 128);
-
-    memset(&lf, 0, sizeof(lf));
-
-    lf.lfCharSet = charset;
-    lf.lfHeight = 10;
-    lstrcpyA(lf.lfFaceName, "Arial");
-    SetLastError(0xdeadbeef);
-    hfont = CreateFontIndirectA(&lf);
-    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
-
-    hdc = GetDC(0);
-    hfont_old = SelectObject(hdc, hfont);
-
-    cs = GetTextCharsetInfo(hdc, &fs, 0);
-    ok(cs == charset, "expected %d, got %d\n", charset, cs);
-
-    SetLastError(0xdeadbeef);
-    ret = GetTextFace(hdc, sizeof(name), name);
-    ok(ret, "GetTextFace error %u\n", GetLastError());
-
-    if (charset == SYMBOL_CHARSET)
-    {
-        ok(strcmp("Arial", name), "face name should NOT be Arial\n");
-        ok(fs.fsCsb[0] & (1 << 31), "symbol encoding should be available\n");
-    }
-    else
-    {
-        ok(!strcmp("Arial", name), "face name should be Arial, not %s\n", name);
-        ok(!(fs.fsCsb[0] & (1 << 31)), "symbol encoding should NOT be available\n");
-    }
-
-    if (!TranslateCharsetInfo((DWORD *)cs, &csi, TCI_SRCCHARSET))
-    {
-        trace("Can't find codepage for charset %d\n", cs);
-        ReleaseDC(0, hdc);
-        return FALSE;
-    }
-    ok(csi.ciACP == code_page, "expected %d, got %d\n", code_page, csi.ciACP);
-
-    if (unicode)
-    {
-        char ansi_buf[128];
-        WCHAR unicode_buf[128];
-
-        for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
-
-        MultiByteToWideChar(code_page, 0, ansi_buf, count, unicode_buf, count);
-
-        SetLastError(0xdeadbeef);
-        ret = pGetGlyphIndicesW(hdc, unicode_buf, count, idx, 0);
-        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
-    }
-    else
-    {
-        char ansi_buf[128];
-
-        for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
-
-        SetLastError(0xdeadbeef);
-        ret = pGetGlyphIndicesA(hdc, ansi_buf, count, idx, 0);
-        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
-    }
-
-    SelectObject(hdc, hfont_old);
-    DeleteObject(hfont);
-
-    ReleaseDC(0, hdc);
-
-    return TRUE;
-}
-
 static void testJustification(HDC hdc, PSTR str, RECT *clientArea)
 {
     INT         x, y,
@@ -1031,6 +948,89 @@ static void test_SetTextJustification(void)
     DeleteObject(hfont);
     ReleaseDC(hwnd, hdc);
     DestroyWindow(hwnd);
+}
+
+static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count, BOOL unicode)
+{
+    HDC hdc;
+    LOGFONTA lf;
+    HFONT hfont, hfont_old;
+    CHARSETINFO csi;
+    FONTSIGNATURE fs;
+    INT cs;
+    DWORD i, ret;
+    char name[64];
+
+    assert(count <= 128);
+
+    memset(&lf, 0, sizeof(lf));
+
+    lf.lfCharSet = charset;
+    lf.lfHeight = 10;
+    lstrcpyA(lf.lfFaceName, "Arial");
+    SetLastError(0xdeadbeef);
+    hfont = CreateFontIndirectA(&lf);
+    ok(hfont != 0, "CreateFontIndirectA error %u\n", GetLastError());
+
+    hdc = GetDC(0);
+    hfont_old = SelectObject(hdc, hfont);
+
+    cs = GetTextCharsetInfo(hdc, &fs, 0);
+    ok(cs == charset, "expected %d, got %d\n", charset, cs);
+
+    SetLastError(0xdeadbeef);
+    ret = GetTextFace(hdc, sizeof(name), name);
+    ok(ret, "GetTextFace error %u\n", GetLastError());
+
+    if (charset == SYMBOL_CHARSET)
+    {
+        ok(strcmp("Arial", name), "face name should NOT be Arial\n");
+        ok(fs.fsCsb[0] & (1 << 31), "symbol encoding should be available\n");
+    }
+    else
+    {
+        ok(!strcmp("Arial", name), "face name should be Arial, not %s\n", name);
+        ok(!(fs.fsCsb[0] & (1 << 31)), "symbol encoding should NOT be available\n");
+    }
+
+    if (!TranslateCharsetInfo((DWORD *)cs, &csi, TCI_SRCCHARSET))
+    {
+        trace("Can't find codepage for charset %d\n", cs);
+        ReleaseDC(0, hdc);
+        return FALSE;
+    }
+    ok(csi.ciACP == code_page, "expected %d, got %d\n", code_page, csi.ciACP);
+
+    if (unicode)
+    {
+        char ansi_buf[128];
+        WCHAR unicode_buf[128];
+
+        for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
+
+        MultiByteToWideChar(code_page, 0, ansi_buf, count, unicode_buf, count);
+
+        SetLastError(0xdeadbeef);
+        ret = pGetGlyphIndicesW(hdc, unicode_buf, count, idx, 0);
+        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
+    }
+    else
+    {
+        char ansi_buf[128];
+
+        for (i = 0; i < count; i++) ansi_buf[i] = (BYTE)(i + 128);
+
+        SetLastError(0xdeadbeef);
+        ret = pGetGlyphIndicesA(hdc, ansi_buf, count, idx, 0);
+        ok(ret == count, "GetGlyphIndicesA error %u\n", GetLastError());
+    }
+
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+
+    ReleaseDC(0, hdc);
+
+    return TRUE;
 }
 
 static void test_font_charset(void)
