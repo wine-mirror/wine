@@ -126,7 +126,7 @@ static void test_createdir(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
@@ -187,7 +187,7 @@ static void test_deletefile(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
@@ -263,7 +263,7 @@ static void test_getfile(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
@@ -417,7 +417,7 @@ static void test_openfile(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
@@ -543,7 +543,7 @@ static void test_putfile(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
@@ -640,7 +640,7 @@ static void test_removedir(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
@@ -709,7 +709,7 @@ static void test_renamefile(void)
     hFtp = InternetConnect(hInternet, "ftp.winehq.org", INTERNET_DEFAULT_FTP_PORT, "anonymous", "IEUser@", INTERNET_SERVICE_FTP, 0, 0);
     if(!hFtp)
     {
-        skip("No ftp connection could be made\n");
+        skip("No ftp connection could be made to ftp.winehq.org\n");
         InternetCloseHandle(hInternet);
         return;
     }
