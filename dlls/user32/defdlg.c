@@ -59,13 +59,6 @@ static DLGPROC DEFDLG_GetDlgProc( HWND hwnd )
  */
 static void DEFDLG_SetFocus( HWND hwndDlg, HWND hwndCtrl )
 {
-    HWND hwndPrev = GetFocus();
-
-    if (IsChild( hwndDlg, hwndPrev ))
-    {
-        if (SendMessageW( hwndPrev, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
-            SendMessageW( hwndPrev, EM_SETSEL, -1, 0 );
-    }
     if (SendMessageW( hwndCtrl, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
         SendMessageW( hwndCtrl, EM_SETSEL, 0, -1 );
     SetFocus( hwndCtrl );
@@ -102,9 +95,9 @@ static void DEFDLG_RestoreFocus( HWND hwnd )
         /* If no saved focus control exists, set focus to the first visible,
            non-disabled, WS_TABSTOP control in the dialog */
         infoPtr->hwndFocus = GetNextDlgTabItem( hwnd, 0, FALSE );
-       if (!IsWindow( infoPtr->hwndFocus )) return;
+        if (!IsWindow( infoPtr->hwndFocus )) return;
     }
-    SetFocus( infoPtr->hwndFocus );
+    DEFDLG_SetFocus( hwnd, infoPtr->hwndFocus );
 
     /* This used to set infoPtr->hwndFocus to NULL for no apparent reason,
        sometimes losing focus when receiving WM_SETFOCUS messages. */

@@ -4278,6 +4278,7 @@ static void subclass_button(void)
     cls.hInstance = GetModuleHandle(0);
     cls.lpfnWndProc = button_hook_proc;
     cls.lpszClassName = "my_button_class";
+    UnregisterClass(cls.lpszClassName, cls.hInstance);
     if (!RegisterClassA(&cls)) assert(0);
 }
 
@@ -4415,6 +4416,7 @@ static void subclass_static(void)
     cls.hInstance = GetModuleHandle(0);
     cls.lpfnWndProc = static_hook_proc;
     cls.lpszClassName = "my_static_class";
+    UnregisterClass(cls.lpszClassName, cls.hInstance);
     if (!RegisterClassA(&cls)) assert(0);
 }
 
@@ -7630,6 +7632,7 @@ static void subclass_edit(void)
     cls.hInstance = GetModuleHandle(0);
     cls.lpfnWndProc = edit_hook_proc;
     cls.lpszClassName = "my_edit_class";
+    UnregisterClass(cls.lpszClassName, cls.hInstance);
     if (!RegisterClassA(&cls)) assert(0);
 }
 
@@ -8832,6 +8835,110 @@ static void test_ShowWindow(void)
     DestroyWindow(hwnd);
 }
 
+static const struct message WmDefDlgSetFocus_1[] = {
+    { WM_GETDLGCODE, sent|wparam|lparam, 0, 0 },
+    { WM_GETTEXTLENGTH, sent|wparam|lparam|optional, 0, 0 }, /* XP */
+    { WM_GETTEXT, sent|wparam|optional, 6 }, /* XP */
+    { WM_GETTEXT, sent|wparam|optional, 12 }, /* XP */
+    { EM_SETSEL, sent|wparam, 0 }, /* XP sets lparam to text length, Win9x to -2 */
+    { HCBT_SETFOCUS, hook },
+    { WM_IME_SETCONTEXT, sent|wparam|optional, 1 },
+    { WM_IME_NOTIFY, sent|wparam|defwinproc|optional, 2 },
+    { EVENT_OBJECT_FOCUS, winevent_hook|wparam|lparam, OBJID_CLIENT, 0 },
+    { WM_SETFOCUS, sent|wparam, 0 },
+    { WM_CTLCOLOREDIT, sent },
+    { EVENT_OBJECT_CREATE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_LOCATIONCHANGE, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { EVENT_OBJECT_SHOW, winevent_hook|wparam|lparam, OBJID_CARET, 0 },
+    { WM_COMMAND, sent|wparam, MAKEWPARAM(1, EN_SETFOCUS) },
+    { 0 }
+};
+static const struct message WmDefDlgSetFocus_2[] = {
+    { WM_GETDLGCODE, sent|wparam|lparam, 0, 0 },
+    { WM_GETTEXTLENGTH, sent|wparam|lparam|optional, 0, 0 }, /* XP */
+    { WM_GETTEXT, sent|wparam|optional, 6 }, /* XP */
+    { WM_GETTEXT, sent|wparam|optional, 12 }, /* XP */
+    { EM_SETSEL, sent|wparam, 0 }, /* XP sets lparam to text length, Win9x to -2 */
+    { 0 }
+};
+
+static void test_dialog_messages(void)
+{
+    HWND hdlg, hedit1, hedit2, hfocus;
+    LRESULT ret;
+
+#define set_selection(hctl, start, end) \
+    ret = SendMessage(hctl, EM_SETSEL, start, end); \
+    ok(ret == 1, "EM_SETSEL returned %ld\n", ret);
+
+#define check_selection(hctl, start, end) \
+    ret = SendMessage(hctl, EM_GETSEL, 0, 0); \
+    ok(ret == MAKELRESULT(start, end), "wrong selection (%d - %d)\n", LOWORD(ret), HIWORD(ret));
+
+    subclass_edit();
+
+    hdlg = CreateWindowEx(WS_EX_DLGMODALFRAME, "TestDialogClass", NULL,
+                          WS_VISIBLE|WS_CAPTION|WS_SYSMENU|WS_DLGFRAME,
+                          0, 0, 100, 100, 0, 0, 0, NULL);
+    ok(hdlg != 0, "Failed to create custom dialog window\n");
+
+    hedit1 = CreateWindowEx(0, "my_edit_class", NULL,
+                           WS_CHILD|WS_BORDER|WS_VISIBLE|WS_TABSTOP,
+                           0, 0, 80, 20, hdlg, (HMENU)1, 0, NULL);
+    ok(hedit1 != 0, "Failed to create edit control\n");
+    hedit2 = CreateWindowEx(0, "my_edit_class", NULL,
+                           WS_CHILD|WS_BORDER|WS_VISIBLE|WS_TABSTOP,
+                           0, 40, 80, 20, hdlg, (HMENU)2, 0, NULL);
+    ok(hedit2 != 0, "Failed to create edit control\n");
+
+    SendMessage(hedit1, WM_SETTEXT, 0, (LPARAM)"hello");
+    SendMessage(hedit2, WM_SETTEXT, 0, (LPARAM)"bye");
+
+    hfocus = GetFocus();
+    ok(hfocus == hdlg, "wrong focus %p\n", hfocus);
+
+    SetFocus(hedit2);
+    hfocus = GetFocus();
+    ok(hfocus == hedit2, "wrong focus %p\n", hfocus);
+
+    check_selection(hedit1, 0, 0);
+    check_selection(hedit2, 0, 0);
+
+    set_selection(hedit2, 0, -1);
+    check_selection(hedit2, 0, 3);
+
+    SetFocus(0);
+    hfocus = GetFocus();
+    ok(hfocus == 0, "wrong focus %p\n", hfocus);
+
+    flush_sequence();
+    ret = DefDlgProc(hdlg, WM_SETFOCUS, 0, 0);
+    ok(ret == 0, "WM_SETFOCUS returned %ld\n", ret);
+    ok_sequence(WmDefDlgSetFocus_1, "DefDlgProc(WM_SETFOCUS) 1", FALSE);
+
+    hfocus = GetFocus();
+    ok(hfocus == hedit1, "wrong focus %p\n", hfocus);
+
+    check_selection(hedit1, 0, 5);
+    check_selection(hedit2, 0, 3);
+
+    flush_sequence();
+    ret = DefDlgProc(hdlg, WM_SETFOCUS, 0, 0);
+    ok(ret == 0, "WM_SETFOCUS returned %ld\n", ret);
+    ok_sequence(WmDefDlgSetFocus_2, "DefDlgProc(WM_SETFOCUS) 2", FALSE);
+
+    hfocus = GetFocus();
+    ok(hfocus == hedit1, "wrong focus %p\n", hfocus);
+
+    check_selection(hedit1, 0, 5);
+    check_selection(hedit2, 0, 3);
+
+    EndDialog(hdlg, 0);
+
+#undef set_selection
+#undef check_selection
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -8901,6 +9008,7 @@ START_TEST(msg)
     test_TrackMouseEvent();
     test_SetWindowRgn();
     test_sys_menu();
+    test_dialog_messages();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)
