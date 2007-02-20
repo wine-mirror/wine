@@ -54,6 +54,7 @@ static HRESULT WINAPI WBCF_QueryInterface(LPCLASSFACTORY iface,
 
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IClassFactory, riid)) {
         *ppobj = iface;
+        IClassFactory_AddRef(iface);
         return S_OK;
     }
 

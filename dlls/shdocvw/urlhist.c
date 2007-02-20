@@ -37,9 +37,10 @@ static HRESULT WINAPI UrlHistoryStg_QueryInterface(IUrlHistoryStg2 *iface, REFII
         *ppv = iface;
     }
 
-    if(*ppv)
+    if(*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
-
+    }
 
     WARN("(%s %p)\n", debugstr_guid(riid), ppv);
     return E_NOINTERFACE;
@@ -47,11 +48,13 @@ static HRESULT WINAPI UrlHistoryStg_QueryInterface(IUrlHistoryStg2 *iface, REFII
 
 static ULONG WINAPI UrlHistoryStg_AddRef(IUrlHistoryStg2 *iface)
 {
+    SHDOCVW_LockModule();
     return 2;
 }
 
 static ULONG WINAPI UrlHistoryStg_Release(IUrlHistoryStg2 *iface)
 {
+    SHDOCVW_UnlockModule();
     return 1;
 }
 
