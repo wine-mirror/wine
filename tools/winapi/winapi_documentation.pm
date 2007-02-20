@@ -137,7 +137,7 @@ sub check_documentation($) {
 		} elsif ($ordinal eq "init") {
 		    $ordinal = 0;
 		} else {
-		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong1\n");
+		    $output->write("documentation: invalid ordinal for $external_name (\U$module\E.$ordinal)\n");
 		    next;
 		}
 
@@ -164,8 +164,8 @@ sub check_documentation($) {
 
 		}
 
-		if (!$found && $external_name ne "DllMain" && $ordinal !~ /^0$/) {
-		    $output->write("documentation: $external_name (\U$module\E.$ordinal) wrong2\n");
+		if (!$found && $external_name ne "DllMain" && $ordinal ne "0") {
+		    $output->write("documentation: $external_name (\U$module\E.$ordinal) not declared in the spec file\n");
 		}
 	    }
 	}
