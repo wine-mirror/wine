@@ -963,6 +963,7 @@ DWORD status;
     }
   }
   else {
+    if (*command == '=') command++; /* Skip leading '=' */
     status = SetEnvironmentVariable ("PATH", command);
     if (!status) WCMD_print_error();
   }
