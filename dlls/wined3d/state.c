@@ -2981,21 +2981,16 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
         glLightfv(GL_LIGHT0 + Index, GL_AMBIENT, colRGBA);
         checkGLcall("glLightfv");
 
-        /* Attenuation - Are these right? guessing... */
-        glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
-        checkGLcall("glLightf");
-        glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
-        checkGLcall("glLightf");
-
         if ((lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range) >= FLT_MIN) {
             quad_att = 1.4/(lightInfo->OriginalParms.Range *lightInfo->OriginalParms.Range);
         } else {
             quad_att = 0; /*  0 or  MAX?  (0 seems to be ok) */
         }
 
-        if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
-        glLightf(GL_LIGHT0 + Index, GL_QUADRATIC_ATTENUATION, quad_att);
-        checkGLcall("glLightf");
+        /* Do not assign attenuation values for lights that do not use them. D3D apps are free to pass any junk,
+         * but gl drivers use them and may crash due to bad Attenuation values. Need for Speed most wanted sets
+         * Attenuation0 to NaN and crashes in the gl lib
+         */
 
         switch (lightInfo->OriginalParms.Type) {
             case WINED3DLIGHT_POINT:
@@ -3003,6 +2998,14 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
                 glLightfv(GL_LIGHT0 + Index, GL_POSITION, &lightInfo->lightPosn[0]);
                 checkGLcall("glLightfv");
                 glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+                checkGLcall("glLightf");
+                /* Attenuation - Are these right? guessing... */
+                glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
+                checkGLcall("glLightf");
+                glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
+                checkGLcall("glLightf");
+                if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
+                glLightf(GL_LIGHT0 + Index, GL_QUADRATIC_ATTENUATION, quad_att);
                 checkGLcall("glLightf");
                 /* FIXME: Range */
                 break;
@@ -3017,6 +3020,14 @@ static void light(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContex
                 glLightf(GL_LIGHT0 + Index, GL_SPOT_EXPONENT, lightInfo->exponent);
                 checkGLcall("glLightf");
                 glLightf(GL_LIGHT0 + Index, GL_SPOT_CUTOFF, lightInfo->cutoff);
+                checkGLcall("glLightf");
+                /* Attenuation - Are these right? guessing... */
+                glLightf(GL_LIGHT0 + Index, GL_CONSTANT_ATTENUATION,  lightInfo->OriginalParms.Attenuation0);
+                checkGLcall("glLightf");
+                glLightf(GL_LIGHT0 + Index, GL_LINEAR_ATTENUATION,    lightInfo->OriginalParms.Attenuation1);
+                checkGLcall("glLightf");
+                if (quad_att < lightInfo->OriginalParms.Attenuation2) quad_att = lightInfo->OriginalParms.Attenuation2;
+                glLightf(GL_LIGHT0 + Index, GL_QUADRATIC_ATTENUATION, quad_att);
                 checkGLcall("glLightf");
                 /* FIXME: Range */
                 break;

@@ -2199,6 +2199,37 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetLight(IWineD3DDevice *iface, DWORD I
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     TRACE("(%p) : Idx(%d), pLight(%p). Hash index is %d\n", This, Index, pLight, Hi);
 
+    /* Check the parameter range. Need for speed most wanted sets junk lights which confuse
+     * the gl driver.
+     */
+    if(!pLight) {
+        WARN("Light pointer = NULL, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    switch(pLight->Type) {
+        case WINED3DLIGHT_POINT:
+        case WINED3DLIGHT_SPOT:
+        case WINED3DLIGHT_PARALLELPOINT:
+        case WINED3DLIGHT_GLSPOT:
+            /* Incorrect attenuation values can cause the gl driver to crash. Happens with Need for speed
+             * most wanted
+             */
+            if(pLight->Attenuation0 < 0.0 || pLight->Attenuation1 < 0.0 || pLight->Attenuation2 < 0.0) {
+                WARN("Attenuation is negative, returning WINED3DERR_INVALIDCALL\n");
+                return WINED3DERR_INVALIDCALL;
+            }
+            break;
+
+        case WINED3DLIGHT_DIRECTIONAL:
+            /* Ignores attenuation */
+            break;
+
+        default:
+        WARN("Light type out of range, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     LIST_FOR_EACH(e, &This->updateStateBlock->lightMap[Hi]) {
         object = LIST_ENTRY(e, PLIGHTINFOEL, entry);
         if(object->OriginalIndex == Index) break;
