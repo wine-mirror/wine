@@ -178,7 +178,6 @@ void primitiveDeclarationConvertToStridedData(
             TRACE("Stream is up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             streamVBO = 0;
             data    = (BYTE *)This->stateBlock->streamSource[element->Stream];
-            if(fixup && *fixup) FIXME("Missing fixed and unfixed vertices, expect graphics glitches\n");
         } else {
             TRACE("Stream isn't up %d, %p\n", element->Stream, This->stateBlock->streamSource[element->Stream]);
             if(!isPreLoaded[element->Stream]) {
@@ -189,7 +188,10 @@ void primitiveDeclarationConvertToStridedData(
             data    = IWineD3DVertexBufferImpl_GetMemory(This->stateBlock->streamSource[element->Stream], 0, &streamVBO);
             if(fixup) {
                 if( streamVBO != 0) *fixup = TRUE;
-                else if(*fixup) FIXME("Missing fixed and unfixed vertices, expect graphics glitches\n");
+                else if(*fixup && This->stateBlock->vertexShader == NULL) {
+                    /* This may be bad with the fixed function pipeline */
+                    FIXME("Missing fixed and unfixed vertices, expect graphics glitches\n");
+                }
             }
         }
         stride  = This->stateBlock->streamStride[element->Stream];
