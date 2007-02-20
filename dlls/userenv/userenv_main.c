@@ -53,6 +53,30 @@ BOOL WINAPI CreateEnvironmentBlock( LPVOID* lpEnvironment,
     return FALSE;
 }
 
+BOOL WINAPI ExpandEnvironmentStringsForUserA( HANDLE hToken, LPCSTR lpSrc,
+                     LPSTR lpDest, DWORD dwSize )
+{
+    BOOL ret;
+
+    TRACE("%p %s %p %d\n", hToken, debugstr_a(lpSrc), lpDest, dwSize);
+
+    ret = ExpandEnvironmentStringsA( lpSrc, lpDest, dwSize );
+    TRACE("<- %s\n", debugstr_a(lpDest));
+    return ret;
+}
+
+BOOL WINAPI ExpandEnvironmentStringsForUserW( HANDLE hToken, LPCWSTR lpSrc,
+                     LPWSTR lpDest, DWORD dwSize )
+{
+    BOOL ret;
+
+    TRACE("%p %s %p %d\n", hToken, debugstr_w(lpSrc), lpDest, dwSize);
+
+    ret = ExpandEnvironmentStringsW( lpSrc, lpDest, dwSize );
+    TRACE("<- %s\n", debugstr_w(lpDest));
+    return ret;
+}
+
 BOOL WINAPI GetUserProfileDirectoryA( HANDLE hToken, LPSTR lpProfileDir,
                      LPDWORD lpcchSize )
 {
