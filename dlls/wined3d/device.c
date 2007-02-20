@@ -4701,8 +4701,6 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
     int offset    = 0;
     int rowoffset = 0; /* how many bytes to add onto the end of a row to wraparound to the beginning of the next */
     glDescriptor *glDescription = NULL;
-    GLenum textureDimensions = GL_TEXTURE_2D;
-    IWineD3DBaseTexture *baseTexture;
 
     WINED3DSURFACE_DESC  winedesc;
 
@@ -4736,12 +4734,16 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         IWineD3DSurface_GetDesc(pDestinationSurface, &winedesc);
     }
 
+    ENTER_GL();
+    if (GL_SUPPORT(ARB_MULTITEXTURE)) {
+        GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
+        checkGLcall("glActiveTextureARB");
+    }
+
     /* Make sure the surface is loaded and up to date */
     IWineD3DSurface_PreLoad(pDestinationSurface);
 
     IWineD3DSurface_GetGlDesc(pDestinationSurface, &glDescription);
-
-    ENTER_GL();
 
     /* this needs to be done in lines if the sourceRect != the sourceWidth */
     srcWidth   = pSourceRect ? pSourceRect->right - pSourceRect->left   : srcSurfaceWidth;
@@ -4847,18 +4849,11 @@ static HRESULT  WINAPI  IWineD3DDeviceImpl_UpdateSurface(IWineD3DDevice *iface, 
         }
      }
     checkGLcall("glTexSubImage2D");
-    ((IWineD3DSurfaceImpl *)pDestinationSurface)->Flags |= SFLAG_GLDIRTY;
 
-    /* I only need to look up baseTexture here, so it may be a good idea to hava a GL_TARGET ->
-     * GL_DIMENSIONS lookup, or maybe store the dimensions on the surface (but that's making the
-     * surface bigger than it needs to be hmm.. */
-    if (WINED3D_OK == IWineD3DSurface_GetContainer(pDestinationSurface, &IID_IWineD3DBaseTexture, (void **)&baseTexture)) {
-        textureDimensions = IWineD3DBaseTexture_GetTextureDimensions(baseTexture);
-        IWineD3DBaseTexture_Release(baseTexture);
-    }
-
-    glDisable(textureDimensions); /* This needs to be managed better.... */
     LEAVE_GL();
+
+    ((IWineD3DSurfaceImpl *)pDestinationSurface)->Flags |= SFLAG_GLDIRTY;
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SAMPLER(0));
 
     return WINED3D_OK;
 }
