@@ -1753,19 +1753,28 @@ static const IMediaSeekingVtbl IMediaSeeking_VTable =
 };
 
 /*** IUnknown methods ***/
-static HRESULT WINAPI MediaPosition_QueryInterface(IMediaPosition* iface, REFIID riid, void** ppvObject){
-    FIXME("(%p) stub!\n", iface);
-    return E_NOTIMPL;
+static HRESULT WINAPI MediaPosition_QueryInterface(IMediaPosition* iface, REFIID riid, void** ppvObj){
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaPosition_vtbl, iface);
+
+    TRACE("(%p/%p)->(%s (%p), %p)\n", This, iface, debugstr_guid(riid), riid, ppvObj);
+
+    return Filtergraph_QueryInterface(This, riid, ppvObj);
 }
 
 static ULONG WINAPI MediaPosition_AddRef(IMediaPosition *iface){
-    FIXME("(%p) stub!\n", iface);
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaPosition_vtbl, iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return Filtergraph_AddRef(This);
 }
 
 static ULONG WINAPI MediaPosition_Release(IMediaPosition *iface){
-    FIXME("(%p) stub!\n", iface);
-    return E_NOTIMPL;
+    ICOM_THIS_MULTI(IFilterGraphImpl, IMediaPosition_vtbl, iface);
+
+    TRACE("(%p/%p)->()\n", This, iface);
+
+    return Filtergraph_Release(This);
 }
 
 /*** IDispatch methods ***/
