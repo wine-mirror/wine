@@ -301,12 +301,31 @@ int main (int argc, char *argv[])
 
 void WCMD_process_command (char *command)
 {
-    char *cmd, *p;
+    char *cmd, *p, *s;
     int status, i, len;
     DWORD count, creationDisposition;
     HANDLE h;
     char *whichcmd;
     SECURITY_ATTRIBUTES sa;
+
+/*
+ *	Replace errorlevel with current value (This shrinks in
+ *	  place and hence no need to reallocate the memory yet)
+ */
+    p = command;
+    while ((p = strchr(p, '%'))) {
+      if (CompareString (LOCALE_USER_DEFAULT,
+                                NORM_IGNORECASE | SORT_STRINGSORT,
+                                (p+1), 11, "ERRORLEVEL%", -1) == 2) {
+        char output[10];
+        sprintf(output, "%d", errorlevel);
+        s = strdup (p+12);
+        strcpy (p, output);
+        strcat (p, s);
+      } else {
+        p++;
+      }
+    }
 
 /*
  *	Expand up environment variables.

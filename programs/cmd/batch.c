@@ -146,13 +146,21 @@ int i;
   /*   contents of fred, then the digit 1. Would need to remove */
   /*   ExpandEnvStrings to achieve this                         */
 
-  /* Replace use of %0...%9 */
+  /* Replace use of %0...%9 and errorlevel*/
   p = cmd1;
   while ((p = strchr(p, '%'))) {
     i = *(p+1) - '0';
     if (*(p+1) == '~') {
       WCMD_HandleTildaModifiers(&p, NULL);
       p++;
+    } else if (CompareString (LOCALE_USER_DEFAULT,
+                              NORM_IGNORECASE | SORT_STRINGSORT,
+	                      (p+1), 11, "ERRORLEVEL%", -1) == 2) {
+      char output[10];
+      sprintf(output, "%d", errorlevel);
+      s = strdup (p+12);
+      strcpy (p, output);
+      strcat (p, s);
     } else if ((i >= 0) && (i <= 9)) {
       s = strdup (p+2);
       t = WCMD_parameter (context -> command, i + context -> shift_count, NULL);
