@@ -11,6 +11,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 /* The following are also defined in io.h */
 #define _A_NORMAL 0x00000000
 #define _A_RDONLY 0x00000001
@@ -43,5 +45,7 @@ unsigned int _getdiskfree(unsigned int, struct _diskfree_t *);
 
 
 #define diskfree_t _diskfree_t
+
+#include <poppack.h>
 
 #endif /* __WINE_DOS_H */

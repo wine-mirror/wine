@@ -27,6 +27,8 @@
 #error "eh.h is meant only for C++ applications"
 #endif
 
+#include <pshpack8.h>
+
 struct _EXCEPTION_POINTERS;
 
 typedef void (*terminate_handler)(void);
@@ -41,5 +43,7 @@ _se_translator_function _set_se_translator(_se_translator_function func);
 
 void        terminate(void);
 void        unexpected(void);
+
+#include <poppack.h>
 
 #endif /* __WINE_EH_H */

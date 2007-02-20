@@ -11,6 +11,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -76,5 +78,7 @@ static inline int chdir(const char* newdir) { return _chdir(newdir); }
 static inline char* getcwd(char * buf, int size) { return _getcwd(buf, size); }
 static inline int mkdir(const char* newdir) { return _mkdir(newdir); }
 static inline int rmdir(const char* dir) { return _rmdir(dir); }
+
+#include <poppack.h>
 
 #endif /* __WINE_DIRECT_H */

@@ -23,6 +23,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifdef __i386__
 
 typedef struct __JUMP_BUFFER
@@ -60,5 +62,7 @@ int         longjmp(jmp_buf,int);
 #endif
 
 #define setjmp _setjmp
+
+#include <poppack.h>
 
 #endif /* __WINE_SETJMP_H */

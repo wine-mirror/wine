@@ -23,6 +23,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #if !defined(_MSC_VER) && !defined(__int64)
 #define __int64 long long
 #endif
@@ -133,5 +135,7 @@ int         _ismbstrail(const unsigned char*,const unsigned char*);
 #ifdef __cplusplus
 }
 #endif
+
+#include <poppack.h>
 
 #endif /* __WINE_MBSTRING_H */

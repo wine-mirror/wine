@@ -12,6 +12,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,5 +95,7 @@ static const union {
 #ifdef __cplusplus
 }
 #endif
+
+#include <poppack.h>
 
 #endif /* __WINE_MATH_H */

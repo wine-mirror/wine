@@ -11,6 +11,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifndef _WCHAR_T_DEFINED
 #define _WCHAR_T_DEFINED
 #ifndef __cplusplus
@@ -182,5 +184,7 @@ extern int sopen(const char*,int,int,...) __attribute__((alias("_sopen")));
 #define open _open
 #define sopen _sopen
 #endif /* __GNUC__ */
+
+#include <poppack.h>
 
 #endif /* __WINE_IO_H */

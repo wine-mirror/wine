@@ -23,6 +23,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifndef _TIME_T_DEFINED
 typedef long time_t;
 #define _TIME_T_DEFINED
@@ -54,5 +56,7 @@ void        _ftime(struct _timeb*);
 #define timeb _timeb
 
 static inline void ftime(struct _timeb* ptr) { return _ftime(ptr); }
+
+#include <poppack.h>
 
 #endif /* __WINE_SYS_TIMEB_H */

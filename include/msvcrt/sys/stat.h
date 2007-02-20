@@ -11,6 +11,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #include <sys/types.h>
 
 #ifndef _WCHAR_T_DEFINED
@@ -173,5 +175,7 @@ static inline int stat(const char* path, struct stat* ptr) { return _stat(path, 
 static inline int umask(int fd) { return _umask(fd); }
 #define _UMASK_DEFINED
 #endif
+
+#include <poppack.h>
 
 #endif /* __WINE_SYS_STAT_H */

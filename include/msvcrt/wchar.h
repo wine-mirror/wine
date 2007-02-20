@@ -11,6 +11,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #include <stdarg.h>
 
 #ifdef __cplusplus
@@ -427,5 +429,7 @@ int             wctob(wint_t);
 #ifdef __cplusplus
 }
 #endif
+
+#include <poppack.h>
 
 #endif /* __WINE_WCHAR_H */

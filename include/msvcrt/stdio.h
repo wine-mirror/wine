@@ -11,6 +11,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifndef RC_INVOKED
 #include <stdarg.h>
 #endif
@@ -249,5 +251,7 @@ static inline wint_t fputwchar(wint_t wc) { return _fputwchar(wc); }
 static inline int getw(FILE* file) { return _getw(file); }
 static inline int putw(int val, FILE* file) { return _putw(val, file); }
 static inline FILE* wpopen(const wchar_t* command,const wchar_t* mode) { return _wpopen(command, mode); }
+
+#include <poppack.h>
 
 #endif /* __WINE_STDIO_H */

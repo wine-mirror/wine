@@ -23,6 +23,8 @@
 #define __WINE_USE_MSVCRT
 #endif
 
+#include <pshpack8.h>
+
 #ifndef _WCHAR_T_DEFINED
 #define _WCHAR_T_DEFINED
 #ifndef __cplusplus
@@ -61,5 +63,7 @@ int         _wutime(const wchar_t*,struct _utimbuf*);
 #define utimbuf _utimbuf
 
 static inline int utime(const char* path, struct _utimbuf* buf) { return _utime(path, buf); }
+
+#include <poppack.h>
 
 #endif /* __WINE_SYS_UTIME_H */
