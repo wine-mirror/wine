@@ -917,7 +917,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     if (fmap->with_crc && (fmap->crc != calc_crc32(fmap)))
     {
         ERR("Bad CRC for module %s (got %08x while expecting %08lx)\n",
-            module->module.ImageName, calc_crc32(fmap), fmap->crc);
+            module->module.LoadedImageName, calc_crc32(fmap), fmap->crc);
         /* we don't tolerate mis-matched files */
         return FALSE;
     }
