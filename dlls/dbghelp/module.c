@@ -384,21 +384,104 @@ enum module_type module_get_type_by_name(const char* name)
 DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
                            const char* ModuleName, DWORD BaseOfDll, DWORD SizeOfDll)
 {
+    return SymLoadModuleEx(hProcess, hFile, ImageName, ModuleName, BaseOfDll,
+                           SizeOfDll, NULL, 0);
+}
+
+/***********************************************************************
+ *			SymLoadModuleEx (DBGHELP.@)
+ */
+DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
+                                PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
+                                PMODLOAD_DATA Data, DWORD Flags)
+{
+    LPWSTR      wImageName, wModuleName;
+    unsigned    len;
+    DWORD64     ret;
+
+    TRACE("(%p %p %s %s %s %08x %p %08x)\n",
+          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
+          wine_dbgstr_longlong(BaseOfDll), DllSize, Data, Flags);
+
+    if (ImageName)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, ImageName, -1, NULL, 0);
+        wImageName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, ImageName, -1, wImageName, len);
+    }
+    else wImageName = NULL;
+    if (ModuleName)
+    {
+        len = MultiByteToWideChar(CP_ACP, 0, ModuleName, -1, NULL, 0);
+        wModuleName = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        MultiByteToWideChar(CP_ACP, 0, ModuleName, -1, wModuleName, len);
+    }
+    else wModuleName = NULL;
+
+    ret = SymLoadModuleExW(hProcess, hFile, wImageName, wModuleName,
+                          BaseOfDll, DllSize, Data, Flags);
+    HeapFree(GetProcessHeap(), 0, wImageName);
+    HeapFree(GetProcessHeap(), 0, wModuleName);
+    return ret;
+}
+
+/***********************************************************************
+ *			SymLoadModuleExW (DBGHELP.@)
+ */
+DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageName,
+                                 PCWSTR wModuleName, DWORD64 BaseOfDll, DWORD SizeOfDll,
+                                 PMODLOAD_DATA Data, DWORD Flags)
+{
     struct process*     pcs;
     struct module*	module = NULL;
+    char                ImageName[MAX_PATH], amodname[MAX_PATH], *ModuleName;
 
-    TRACE("(%p %p %s %s %08x %08x)\n",
-          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
-          BaseOfDll, SizeOfDll);
 
-    pcs = process_find_by_handle(hProcess);
-    if (!pcs) return FALSE;
+    TRACE("(%p %p %s %s %s %08x %p %08x)\n",
+          hProcess, hFile, debugstr_w(wImageName), debugstr_w(wModuleName),
+          wine_dbgstr_longlong(BaseOfDll), SizeOfDll, Data, Flags);
+
+    if (Data)
+        FIXME("Unsupported load data parameter %p for %s\n",
+              Data, debugstr_w(wImageName));
+    if (!validate_addr64(BaseOfDll)) return FALSE;
+
+    if (!(pcs = process_find_by_handle(hProcess))) return FALSE;
+
+    if (Flags & SLMFLAG_VIRTUAL)
+    {
+        WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, MAX_PATH,
+                            NULL, NULL);
+        module = module_new(pcs, ImageName, module_get_type_by_name(ImageName),
+                            TRUE, (DWORD)BaseOfDll, SizeOfDll, 0, 0);
+        if (!module) return FALSE;
+        if (wModuleName)
+        {
+            WideCharToMultiByte(CP_ACP,0, wModuleName, -1, ModuleName = amodname, MAX_PATH,
+                                NULL, NULL);
+            module_set_module(module, ModuleName);
+        }
+        module->module.SymType = SymVirtual;
+
+        return TRUE;
+    }
+    if (Flags & ~(SLMFLAG_VIRTUAL))
+        FIXME("Unsupported Flags %08x for %s\n", Flags, debugstr_w(wImageName));
 
     /* force transparent ELF loading / unloading */
     elf_synchronize_module_list(pcs);
 
     /* this is a Wine extension to the API just to redo the synchronisation */
-    if (!ImageName && !hFile) return 0;
+    if (!wImageName && !hFile) return 0;
+
+    WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, MAX_PATH,
+                        NULL, NULL);
+
+    if (wModuleName)
+        WideCharToMultiByte(CP_ACP,0, wModuleName, -1, ModuleName = amodname, MAX_PATH,
+                            NULL, NULL);
+    else
+        ModuleName = NULL;
 
     if (module_is_elf_container_loaded(pcs, ImageName, ModuleName))
     {
@@ -406,21 +489,21 @@ DWORD WINAPI SymLoadModule(HANDLE hProcess, HANDLE hFile, const char* ImageName,
         if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
                                               BaseOfDll, SizeOfDll)))
             goto done;
-        WARN("Couldn't locate %s\n", ImageName);
+        WARN("Couldn't locate %s\n", debugstr_w(wImageName));
         return 0;
     }
-    TRACE("Assuming %s as native DLL\n", ImageName);
+    TRACE("Assuming %s as native DLL\n", debugstr_w(wImageName));
     if (!(module = pe_load_module(pcs, ImageName, hFile, BaseOfDll, SizeOfDll)))
     {
         if (module_get_type_by_name(ImageName) == DMT_ELF &&
             (module = elf_load_module(pcs, ImageName, BaseOfDll)))
             goto done;
         FIXME("Should have successfully loaded debug information for image %s\n",
-              ImageName);
+              debugstr_w(wImageName));
         if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
                                               BaseOfDll, SizeOfDll)))
             goto done;
-        WARN("Couldn't locate %s\n", ImageName);
+        WARN("Couldn't locate %s\n", debugstr_w(wImageName));
         return 0;
     }
     module->module.NumSyms = module->ht_symbols.num_elts;
@@ -433,74 +516,6 @@ done:
     lstrcpynA(module->module.ImageName, ImageName, sizeof(module->module.ImageName));
 
     return module->module.BaseOfImage;
-}
-
-/***********************************************************************
- *			SymLoadModuleEx (DBGHELP.@)
- */
-DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
-                                PCSTR ModuleName, DWORD64 BaseOfDll, DWORD DllSize,
-                                PMODLOAD_DATA Data, DWORD Flags)
-{
-    TRACE("(%p %p %s %s %s %08x %p %08x)\n",
-          hProcess, hFile, debugstr_a(ImageName), debugstr_a(ModuleName),
-          wine_dbgstr_longlong(BaseOfDll), DllSize, Data, Flags);
-
-    if (Data)
-        FIXME("Unsupported load data parameter %p for %s\n", Data, ImageName);
-    if (!validate_addr64(BaseOfDll)) return FALSE;
-    if (Flags & SLMFLAG_VIRTUAL)
-    {
-        struct process* pcs = process_find_by_handle(hProcess);
-        struct module* module;
-        if (!pcs) return FALSE;
-
-        module = module_new(pcs, ImageName, module_get_type_by_name(ImageName), TRUE, 
-                            (DWORD)BaseOfDll, DllSize, 0, 0);
-        if (!module) return FALSE;
-        if (ModuleName)
-            module_set_module(module, ModuleName);
-        module->module.SymType = SymVirtual;
-
-        return TRUE;
-    }
-    if (Flags & ~(SLMFLAG_VIRTUAL))
-        FIXME("Unsupported Flags %08x for %s\n", Flags, ImageName);
-
-    return SymLoadModule(hProcess, hFile, ImageName, ModuleName, (DWORD)BaseOfDll, DllSize);
-}
-
-/***********************************************************************
- *			SymLoadModuleExW (DBGHELP.@)
- */
-DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageName,
-                                 PCWSTR wModuleName, DWORD64 BaseOfDll, DWORD DllSize,
-                                 PMODLOAD_DATA Data, DWORD Flags)
-{
-    LPSTR       ImageName, ModuleName;
-    unsigned    len;
-    BOOL        ret;
-
-    if (wImageName)
-    {
-        len = WideCharToMultiByte(CP_ACP,0, wImageName, -1, NULL, 0, NULL, NULL);
-        ImageName = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, len, NULL, NULL);
-    }
-    else ImageName = NULL;
-    if (wModuleName)
-    {
-        len = WideCharToMultiByte(CP_ACP,0, wModuleName, -1, NULL, 0, NULL, NULL);
-        ModuleName = HeapAlloc(GetProcessHeap(), 0, len);
-        WideCharToMultiByte(CP_ACP,0, wModuleName, -1, ModuleName, len, NULL, NULL);
-    }
-    else ModuleName = NULL;
-
-    ret = SymLoadModuleEx(hProcess, hFile, ImageName, ModuleName,
-                          BaseOfDll, DllSize, Data, Flags);
-    HeapFree(GetProcessHeap(), 0, ImageName);
-    HeapFree(GetProcessHeap(), 0, ModuleName);
-    return ret;
 }
 
 /***********************************************************************
