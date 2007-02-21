@@ -37,8 +37,9 @@ const WCHAR        S_ElfW[]         = {'<','e','l','f','>','\0'};
 const WCHAR        S_WineLoaderW[]  = {'<','w','i','n','e','-','l','o','a','d','e','r','>','\0'};
 static const WCHAR S_DotSoW[]       = {'.','s','o','\0'};
 static const WCHAR S_DotPdbW[]      = {'.','p','d','b','\0'};
-static const WCHAR S_WinePThreadW[] = {'w','i','n','e','-','p','t','h','r','e','a','d','\0'};
-static const WCHAR S_WineKThreadW[] = {'w','i','n','e','-','k','t','h','r','e','a','d','\0'};
+const WCHAR        S_WinePThreadW[] = {'w','i','n','e','-','p','t','h','r','e','a','d','\0'};
+const WCHAR        S_WineKThreadW[] = {'w','i','n','e','-','k','t','h','r','e','a','d','\0'};
+const WCHAR        S_SlashW[]       = {'/','\0'};
 
 static const WCHAR S_AcmW[] = {'.','a','c','m','\0'};
 static const WCHAR S_DllW[] = {'.','d','l','l','\0'};

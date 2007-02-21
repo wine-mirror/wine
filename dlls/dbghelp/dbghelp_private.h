@@ -432,6 +432,9 @@ extern DWORD WINAPI addr_to_linear(HANDLE hProcess, HANDLE hThread, ADDRESS* add
 /* module.c */
 extern const WCHAR      S_ElfW[];
 extern const WCHAR      S_WineLoaderW[];
+extern const WCHAR      S_WinePThreadW[];
+extern const WCHAR      S_WineKThreadW[];
+extern const WCHAR      S_SlashW[];
 
 extern struct module*
                     module_find_by_addr(const struct process* pcs, unsigned long addr,
