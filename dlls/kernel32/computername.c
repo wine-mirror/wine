@@ -406,7 +406,7 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
 BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD size)
 {
     char buf[256];
-    int len = sizeof (buf), ret;
+    int len = sizeof(buf) - 1, ret;
     TRACE("%d, %p, %p\n", type, name, size);
     switch( type )
     {
@@ -458,7 +458,7 @@ BOOL WINAPI GetComputerNameExA(COMPUTER_NAME_FORMAT type, LPSTR name, LPDWORD si
 BOOL WINAPI GetComputerNameExW( COMPUTER_NAME_FORMAT type, LPWSTR name, LPDWORD size )
 {
     char buf[256];
-    int len = sizeof (buf), ret;
+    int len = sizeof(buf) - 1, ret;
 
     TRACE("%d, %p, %p\n", type, name, size);
     switch( type )
