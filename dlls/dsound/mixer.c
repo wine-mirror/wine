@@ -724,6 +724,19 @@ void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb)
 }
 
 /**
+ * Calculate the distance between two buffer offsets, taking wraparound
+ * into account.
+ */
+static inline DWORD DSOUND_BufPtrDiff(DWORD buflen, DWORD ptr1, DWORD ptr2)
+{
+	if (ptr1 >= ptr2) {
+		return ptr1 - ptr2;
+	} else {
+		return buflen + ptr1 - ptr2;
+	}
+}
+
+/**
  * Mix some frames from the given secondary buffer "dsb" into the device
  * primary buffer.
  *
@@ -744,18 +757,10 @@ static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD wri
 	/* determine this buffer's write position */
 	DWORD buf_writepos = DSOUND_CalcPlayPosition(dsb, writepos, writepos);
 	/* determine how much already-mixed data exists */
-	DWORD buf_done =
-		((dsb->buf_mixpos < buf_writepos) ? dsb->buflen : 0) +
-		dsb->buf_mixpos - buf_writepos;
-	DWORD primary_done =
-		((dsb->primary_mixpos < writepos) ? dsb->device->buflen : 0) +
-		dsb->primary_mixpos - writepos;
-	DWORD adv_done =
-		((dsb->device->mixpos < writepos) ? dsb->device->buflen : 0) +
-		dsb->device->mixpos - writepos;
-	DWORD played =
-		((buf_writepos < dsb->playpos) ? dsb->buflen : 0) +
-		buf_writepos - dsb->playpos;
+	DWORD buf_done = DSOUND_BufPtrDiff(dsb->buflen, dsb->buf_mixpos, buf_writepos);
+	DWORD primary_done = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->primary_mixpos, writepos);
+	DWORD adv_done = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->device->mixpos, writepos);
+	DWORD played = DSOUND_BufPtrDiff(dsb->buflen, buf_writepos, dsb->playpos);
 	DWORD buf_left = dsb->buflen - buf_writepos;
 	int still_behind;
 
@@ -883,9 +888,7 @@ post_mix:
 	 * advance its underrun detector...*/
 	if (still_behind) return 0;
 	if ((mixlen - len) < primary_done) return 0;
-	slen = ((dsb->primary_mixpos < dsb->device->mixpos) ?
-		dsb->device->buflen : 0) + dsb->primary_mixpos -
-		dsb->device->mixpos;
+	slen = DSOUND_BufPtrDiff(dsb->device->buflen, dsb->primary_mixpos, dsb->device->mixpos);
 	if (slen > mixlen) {
 		/* the primary_done and still_behind checks above should have worked */
 		FIXME("problem with advancement calculation (advlen=%d > mixlen=%d)\n", slen, mixlen);
@@ -1087,22 +1090,19 @@ static void DSOUND_PerformMix(DirectSoundDevice *device)
 		DSOUND_CheckReset(device, writepos);
 
 		/* check how much prebuffering is left */
-		inq = device->mixpos;
-		if (inq < writepos)
-			inq += device->buflen;
-		inq -= writepos;
+		inq = DSOUND_BufPtrDiff(device->buflen, device->mixpos, writepos);
 
 		/* find the maximum we can prebuffer */
-		if (!paused) {
-			maxq = playpos;
-			if (maxq < writepos)
-				maxq += device->buflen;
-			maxq -= writepos;
-		} else maxq = device->buflen;
+		if (!paused)
+			maxq = DSOUND_BufPtrDiff(device->buflen, playpos, writepos);
+		/* If we get the whole buffer, difference is 0, so we need to set whole buffer then */
+		if (paused || !maxq)
+			maxq = device->buflen;
 
 		/* clip maxq to device->prebuf */
 		frag = device->prebuf * device->fraglen;
-		if (maxq > frag) maxq = frag;
+		if (maxq > frag)
+			maxq = frag;
 
 		/* check for consistency */
 		if (inq > maxq) {
@@ -1248,7 +1248,7 @@ void CALLBACK DSOUND_callback(HWAVEOUT hwo, UINT msg, DWORD dwUser, DWORD dw1, D
 		playpos = pwplay * fraglen;
 		mixpos = device->mixpos;
 		/* check remaining mixed data */
-		inq = ((mixpos < playpos) ? buflen : 0) + mixpos - playpos;
+		inq = DSOUND_BufPtrDiff(buflen, mixpos, playpos);
 		mixq = inq / fraglen;
 		if ((inq - (mixq * fraglen)) > 0) mixq++;
 		/* complete the playing buffer */
