@@ -802,26 +802,49 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
  *    is the global debug file directory, and execdir has been turned
  *    into a relative path)." (from GDB manual)
  */
-static char* elf_locate_debug_link (const char* filename, const char* moduleDir)
+static char* elf_locate_debug_link(const char* filename, const char* loaded_file,
+                                   struct elf_file_map* fmap_link)
 {
-    static const char globalDebugDir[] = "/usr/lib/debug";
-    const size_t moduleDirLen = strlen (moduleDir);
-    const size_t globalDebugDirLen = strlen (globalDebugDir);
-    struct stat statbuf;
+    static const char globalDebugDir[] = "/usr/lib/debug/";
+    const size_t globalDebugDirLen = strlen(globalDebugDir);
+    char* p;
+    char* slash;
 
-    char* p = HeapAlloc (GetProcessHeap(), 0,
-        moduleDirLen + 1 + max (6, globalDebugDirLen) + 1 + strlen (filename)+1);
+    p = HeapAlloc(GetProcessHeap(), 0,
+                  globalDebugDirLen + strlen(loaded_file) + 1 + 6 + 1 + strlen(filename) + 1);
 
-    sprintf (p, "%s/%s", moduleDir, filename);
-    if (stat(p, &statbuf) != -1 && !S_ISDIR(statbuf.st_mode)) return p;
+    if (!p) return FALSE;
 
-    sprintf (p, "%s/.debug/%s", moduleDir, filename);
-    if (stat(p, &statbuf) != -1 && !S_ISDIR(statbuf.st_mode)) return p;
+    /* we prebuild the string with "execdir" */
+    strcpy(p, loaded_file);
+    slash = strrchr(p, '/');
+    if (slash == NULL) slash = p; else slash++;
 
-    sprintf (p, "%s/%s/%s", globalDebugDir, moduleDir, filename);
-    if (stat(p, &statbuf) != -1 && !S_ISDIR(statbuf.st_mode)) return p;
+    /* testing execdir/filename */
+    strcpy(slash, filename);
+    if (elf_map_file(p, fmap_link)) goto found;
 
-    strcpy (p, filename);
+    /* testing execdir/.debug/filename */
+    sprintf(slash, ".debug/%s", filename);
+    if (elf_map_file(p, fmap_link)) goto found;
+
+    /* testing globaldebugdir/execdir/filename */
+    memmove(p + globalDebugDirLen, p, slash - p);
+    memcpy(p, globalDebugDir, globalDebugDirLen);
+    slash += globalDebugDirLen;
+    strcpy(slash, filename);
+    if (elf_map_file(p, fmap_link)) goto found;
+
+    strcpy(p, filename);
+    if (elf_map_file(p, fmap_link)) goto found;
+
+    HeapFree(GetProcessHeap(), 0, p);
+
+    WARN("Couldn't locate or map %s\n", filename);
+    return NULL;
+
+found:
+    TRACE("Located debug information file %s at %s\n", filename, p);
     return p;
 }
 
@@ -845,19 +868,11 @@ static BOOL elf_debuglink_parse (struct module* module,
     BOOL ret = FALSE;
     const char* dbg_link = (char*)debuglink;
     struct elf_file_map fmap_link;
-    char* moduleDir;
     char* link_file;
-    char* slash;
 
-    moduleDir = HeapAlloc (GetProcessHeap(), 0, strlen (module->module.LoadedImageName) + 1);
-    strcpy (moduleDir, module->module.LoadedImageName);
-    slash = strrchr (moduleDir, '/');
-    if (slash != 0) *slash = 0;
+    link_file = elf_locate_debug_link(dbg_link, module->module.LoadedImageName, &fmap_link);
 
-    link_file = elf_locate_debug_link (dbg_link, moduleDir);
-    TRACE("Located debug information file %s at %s\n", dbg_link, link_file);
-
-    if (elf_map_file(link_file, &fmap_link))
+    if (link_file)
     {
 	fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
 	fmap_link.with_crc = 1;
@@ -868,12 +883,8 @@ static BOOL elf_debuglink_parse (struct module* module,
 	else
 	    WARN("Couldn't load debug information from %s\n", link_file);
 	elf_unmap_file(&fmap_link);
+        HeapFree(GetProcessHeap(), 0, link_file);
     }
-    else
-        WARN("Couldn't map %s\n", dbg_link);
-
-    HeapFree (GetProcessHeap(), 0, link_file);
-    HeapFree (GetProcessHeap(), 0, moduleDir);
 
     return ret;
 }
