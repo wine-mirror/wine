@@ -669,7 +669,7 @@ found:
     reply->time   = msg->time;
     reply->info   = msg->info;
 
-    if (flags & GET_MSG_REMOVE)
+    if (flags & PM_REMOVE)
     {
         if (msg->data)
         {
@@ -700,7 +700,7 @@ static int get_quit_message( struct msg_queue *queue, unsigned int flags,
         reply->time   = get_tick_count();
         reply->info   = 0;
 
-        if (flags & GET_MSG_REMOVE)
+        if (flags & PM_REMOVE)
         {
             queue->quit_message = 0;
             if (list_empty( &queue->msg_list[POST_MESSAGE] ))
@@ -1691,11 +1691,13 @@ DECL_HANDLER(get_message)
     struct list *ptr;
     struct msg_queue *queue = get_current_queue();
     user_handle_t get_win = get_user_full_handle( req->get_win );
+    unsigned int filter = req->flags >> 16;
 
     reply->active_hooks = get_active_hooks();
 
     if (!queue) return;
     queue->last_get_msg = current_time;
+    if (!filter) filter = QS_ALLINPUT;
 
     /* first check for sent messages */
     if ((ptr = list_head( &queue->msg_list[SEND_MESSAGE] )))
@@ -1704,14 +1706,19 @@ DECL_HANDLER(get_message)
         receive_message( queue, msg, reply );
         return;
     }
-    if (req->flags & GET_MSG_SENT_ONLY) goto done;  /* nothing else to check */
 
     /* clear changed bits so we can wait on them if we don't find a message */
-    if (req->get_first == 0 && req->get_last == ~0U) queue->changed_bits = 0;
-    else queue->changed_bits &= QS_ALLPOSTMESSAGE;
+    if (filter & QS_POSTMESSAGE)
+    {
+        queue->changed_bits &= ~(QS_POSTMESSAGE | QS_HOTKEY | QS_TIMER);
+        if (req->get_first == 0 && req->get_last == ~0U) queue->changed_bits &= ~QS_ALLPOSTMESSAGE;
+    }
+    if (filter & QS_INPUT) queue->changed_bits &= ~QS_INPUT;
+    if (filter & QS_PAINT) queue->changed_bits &= ~QS_PAINT;
 
     /* then check for posted messages */
-    if (get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
+    if ((filter & QS_POSTMESSAGE) &&
+        get_posted_message( queue, get_win, req->get_first, req->get_last, req->flags, reply ))
         return;
 
     /* only check for quit messages if not posted messages pending.
@@ -1720,12 +1727,14 @@ DECL_HANDLER(get_message)
         return;
 
     /* then check for any raw hardware message */
-    if (filter_contains_hw_range( req->get_first, req->get_last ) &&
+    if ((filter & QS_INPUT) &&
+        filter_contains_hw_range( req->get_first, req->get_last ) &&
         get_hardware_message( current, req->hw_id, get_win, req->get_first, req->get_last, reply ))
         return;
 
     /* now check for WM_PAINT */
-    if (queue->paint_count &&
+    if ((filter & QS_PAINT) &&
+        queue->paint_count &&
         check_msg_filter( WM_PAINT, req->get_first, req->get_last ) &&
         (reply->win = find_window_to_repaint( get_win, current )))
     {
@@ -1741,8 +1750,9 @@ DECL_HANDLER(get_message)
     }
 
     /* now check for timer */
-    if ((timer = find_expired_timer( queue, get_win, req->get_first,
-                                     req->get_last, (req->flags & GET_MSG_REMOVE) )))
+    if ((filter & QS_TIMER) &&
+        (timer = find_expired_timer( queue, get_win, req->get_first,
+                                     req->get_last, (req->flags & PM_REMOVE) )))
     {
         reply->type   = MSG_POSTED;
         reply->win    = timer->win;
@@ -1756,7 +1766,6 @@ DECL_HANDLER(get_message)
         return;
     }
 
- done:
     set_error( STATUS_PENDING );  /* FIXME */
 }
 

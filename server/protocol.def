@@ -1839,7 +1839,7 @@ enum message_type
 
 /* Get a message from the current queue */
 @REQ(get_message)
-    int             flags;     /* see below */
+    unsigned int    flags;     /* PM_* flags */
     user_handle_t   get_win;   /* window handle to get */
     unsigned int    get_first; /* first message code to get */
     unsigned int    get_last;  /* last message code to get */
@@ -1859,8 +1859,7 @@ enum message_type
     data_size_t     total;     /* total size of extra data */
     VARARG(data,message_data); /* message data for sent messages */
 @END
-#define GET_MSG_REMOVE      1  /* remove the message */
-#define GET_MSG_SENT_ONLY   2  /* only get sent messages */
+
 
 /* Reply to a sent message */
 @REQ(reply_message)

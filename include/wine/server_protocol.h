@@ -2485,7 +2485,7 @@ struct send_hardware_message_reply
 struct get_message_request
 {
     struct request_header __header;
-    int             flags;
+    unsigned int    flags;
     user_handle_t   get_win;
     unsigned int    get_first;
     unsigned int    get_last;
@@ -2508,8 +2508,7 @@ struct get_message_reply
     data_size_t     total;
     /* VARARG(data,message_data); */
 };
-#define GET_MSG_REMOVE      1
-#define GET_MSG_SENT_ONLY   2
+
 
 
 struct reply_message_request
@@ -4657,6 +4656,6 @@ union generic_reply
     struct get_object_info_reply get_object_info_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 276
+#define SERVER_PROTOCOL_VERSION 277
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

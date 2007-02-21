@@ -1942,7 +1942,7 @@ static void *get_hook_proc( void *proc, const WCHAR *module )
  * Peek for a message matching the given parameters. Return FALSE if none available.
  * All pending sent messages are processed before returning.
  */
-static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags )
+static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags )
 {
     LRESULT result;
     ULONG_PTR extra_info = 0;
@@ -2071,7 +2071,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
             break;
         case MSG_HARDWARE:
             if (!process_hardware_message( &info.msg, hw_id, extra_info,
-                                           hwnd, first, last, flags & GET_MSG_REMOVE ))
+                                           hwnd, first, last, flags & PM_REMOVE ))
             {
                 TRACE("dropping msg %x\n", info.msg.message );
                 goto next;  /* ignore it */
@@ -2100,6 +2100,9 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
         thread_info->receive_info = old_info;
     next:
         HeapFree( GetProcessHeap(), 0, buffer );
+
+        /* if some PM_QS* flags were specified, only handle sent messages from now on */
+        if (HIWORD(flags)) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
     }
 }
 
@@ -2112,7 +2115,7 @@ static BOOL peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, int flags 
 inline static void process_sent_messages(void)
 {
     MSG msg;
-    peek_message( &msg, 0, 0, 0, GET_MSG_REMOVE | GET_MSG_SENT_ONLY );
+    peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE );
 }
 
 
@@ -2755,9 +2758,6 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
     struct user_thread_info *thread_info = get_user_thread_info();
     MSG msg;
 
-    if (HIWORD(flags))
-        FIXME("PM_QS_xxxx flags (%04x) are not handled\n", flags >> 16);
-
     USER_CheckNotLock();
 
     /* check for graphics events */
@@ -2767,7 +2767,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
 
     for (;;)
     {
-        if (!peek_message( &msg, hwnd, first, last, (flags & PM_REMOVE) ? GET_MSG_REMOVE : 0 ))
+        if (!peek_message( &msg, hwnd, first, last, flags ))
         {
             if (!(flags & PM_NOYIELD))
             {
@@ -2785,7 +2785,7 @@ BOOL WINAPI PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT f
                 /* Have to remove the message explicitly.
                    Do this before handling it, because the message handler may
                    call PeekMessage again */
-                peek_message( &msg, msg.hwnd, msg.message, msg.message, GET_MSG_REMOVE );
+                peek_message( &msg, msg.hwnd, msg.message, msg.message, flags | PM_REMOVE );
             }
             handle_internal_message( msg.hwnd, msg.message, msg.wParam, msg.lParam );
         }

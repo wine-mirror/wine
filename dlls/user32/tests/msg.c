@@ -7876,73 +7876,55 @@ static void test_PeekMessage(void)
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (qs_input << 16));
-todo_wine {
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
-}
     ok_sequence(WmUser, "WmUser", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_PAINT|QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE);
-todo_wine {
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
-}
     ok_sequence(WmUser, "WmUser", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE);
-todo_wine {
     ok(ret && msg.message == WM_CHAR && msg.wParam == 'z',
        "got %d and %04x wParam %08x instead of TRUE and WM_CHAR wParam 'z'\n",
        ret, msg.message, msg.wParam);
-}
     ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_POSTMESSAGE);
-todo_wine {
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
-}
     ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_PAINT|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_PAINT);
@@ -7952,10 +7934,8 @@ todo_wine {
     ok_sequence(WmPaint, "WmPaint", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_PAINT);
@@ -7965,28 +7945,22 @@ todo_wine {
     ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, WM_CHAR, WM_CHAR, PM_REMOVE);
@@ -7996,10 +7970,8 @@ todo_wine {
     ok_sequence(WmUser, "WmUser", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, WM_CHAR, WM_CHAR, PM_REMOVE);
@@ -8009,73 +7981,55 @@ todo_wine {
     ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     PostMessageA(info.hwnd, WM_CHAR, 'z', 0);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(QS_POSTMESSAGE, QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     trace("signalling to send message\n");
     SetEvent(info.hevent[EV_SENDMSG]);
     WaitForSingleObject(info.hevent[EV_ACK], INFINITE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(QS_SENDMESSAGE, QS_SENDMESSAGE|QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_KEY << 16));
-todo_wine {
     ok(!ret,
        "PeekMessageA should have returned FALSE instead of msg %04x\n",
         msg.message);
-}
     ok_sequence(WmUser, "WmUser", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16));
-todo_wine {
     ok(ret && msg.message == WM_KEYDOWN && msg.wParam == 'N',
        "got %d and %04x wParam %08x instead of TRUE and WM_KEYDOWN wParam 'N'\n",
        ret, msg.message, msg.wParam);
     ok_sequence(WmKeyDownSkippedSeq, "WmKeyDownSkippedSeq", FALSE);
-}
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE|QS_KEY),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16));
-todo_wine {
     ok(ret && msg.message == WM_KEYUP && msg.wParam == 'N',
        "got %d and %04x wParam %08x instead of TRUE and WM_KEYUP wParam 'N'\n",
        ret, msg.message, msg.wParam);
     ok_sequence(WmKeyUpSkippedSeq, "WmKeyUpSkippedSeq", FALSE);
-}
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE);
@@ -8085,18 +8039,14 @@ todo_wine {
     ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
-todo_wine {
     ok(qstatus == MAKELONG(0, QS_POSTMESSAGE),
        "wrong qstatus %08x\n", qstatus);
-}
 
     msg.message = 0;
     ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE);
-todo_wine {
     ok(ret && msg.message == WM_CHAR && msg.wParam == 'z',
        "got %d and %04x wParam %08x instead of TRUE and WM_CHAR wParam 'z'\n",
        ret, msg.message, msg.wParam);
-}
     ok_sequence(WmEmptySeq, "WmEmptySeq", FALSE);
 
     qstatus = GetQueueStatus(qs_all_input);
