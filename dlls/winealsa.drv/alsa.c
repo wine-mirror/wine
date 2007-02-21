@@ -50,7 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(alsa);
 
 #ifdef USE_PIPE_SYNC
 #define INIT_OMR(omr) do { if (pipe(omr->msg_pipe) < 0) { omr->msg_pipe[0] = omr->msg_pipe[1] = -1; } } while (0)
-#define CLOSE_OMR(Omr) do { close(omr->msg_pipe[0]); close(omr->msg_pipe[1]); } while (0)
+#define CLOSE_OMR(omr) do { close(omr->msg_pipe[0]); close(omr->msg_pipe[1]); } while (0)
 #define SIGNAL_OMR(omr) do { int x = 0; write((omr)->msg_pipe[1], &x, sizeof(x)); } while (0)
 #define CLEAR_OMR(omr) do { int x = 0; read((omr)->msg_pipe[0], &x, sizeof(x)); } while (0)
 #define RESET_OMR(omr) do { } while (0)
@@ -118,7 +118,6 @@ void ALSA_WaitRingMessage(ALSA_MSG_RING* omr, DWORD sleep)
 {
     WAIT_OMR(omr, sleep);
 }
-
 
 /******************************************************************
  *		ALSA_AddRingMessage
