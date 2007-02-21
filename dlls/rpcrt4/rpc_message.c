@@ -1030,10 +1030,16 @@ fail:
 RPC_STATUS WINAPI I_RpcSendReceive(PRPC_MESSAGE pMsg)
 {
   RPC_STATUS status;
+  RPC_MESSAGE original_message;
 
   TRACE("(%p)\n", pMsg);
+
+  original_message = *pMsg;
   status = I_RpcSend(pMsg);
   if (status == RPC_S_OK)
     status = I_RpcReceive(pMsg);
+  /* free the buffer replaced by a new buffer in I_RpcReceive */
+  if (status == RPC_S_OK)
+    I_RpcFreeBuffer(&original_message);
   return status;
 }
