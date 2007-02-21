@@ -477,12 +477,12 @@ extern BOOL         pdb_fetch_file_info(struct pdb_lookup* pdb_lookup);
 /* pe_module.c */
 extern BOOL         pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth);
 extern struct module*
-                    pe_load_module(struct process* pcs, const char* name,
+                    pe_load_module(struct process* pcs, const WCHAR* name,
                                    HANDLE hFile, DWORD base, DWORD size);
 extern struct module*
-                    pe_load_module_from_pcs(struct process* pcs, const char* name, 
-                                            const char* mod_name, DWORD base, DWORD size);
-extern BOOL         pe_load_debug_info(const struct process* pcs, 
+                    pe_load_module_from_pcs(struct process* pcs, const WCHAR* name,
+                                            const WCHAR* mod_name, DWORD base, DWORD size);
+extern BOOL         pe_load_debug_info(const struct process* pcs,
                                        struct module* module);
 /* source.c */
 extern unsigned     source_new(struct module* module, const char* basedir, const char* source);

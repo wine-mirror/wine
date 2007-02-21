@@ -101,9 +101,9 @@ static BOOL pe_load_dbg_file(const struct process* pcs, struct module* module,
     WINE_TRACE("Processing DBG file %s\n", dbg_name);
 
     if (SymFindFileInPath(pcs->handle, NULL, dbg_name, NULL, 0, 0, 0, tmp, dbg_match, NULL) &&
-        (hFile = CreateFileA(tmp, GENERIC_READ, FILE_SHARE_READ, NULL, 
+        (hFile = CreateFileA(tmp, GENERIC_READ, FILE_SHARE_READ, NULL,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) != INVALID_HANDLE_VALUE &&
-        ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
+        ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0) &&
         ((dbg_mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL))
     {
         hdr = (const IMAGE_SEPARATE_DEBUG_HEADER*)dbg_mapping;
@@ -323,38 +323,32 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
  *		pe_load_module
  *
  */
-struct module* pe_load_module(struct process* pcs, const char* name,
+struct module* pe_load_module(struct process* pcs, const WCHAR* name,
                               HANDLE hFile, DWORD base, DWORD size)
 {
     struct module*      module = NULL;
     BOOL                opened = FALSE;
     HANDLE              hMap;
     void*               mapping;
-    char                loaded_name[MAX_PATH];
+    WCHAR               loaded_name[MAX_PATH];
 
     loaded_name[0] = '\0';
     if (!hFile)
     {
-        unsigned len = WideCharToMultiByte(CP_ACP,0, pcs->search_path, -1, NULL, 0, NULL, NULL);
-        char* sp;
-
         if (!name)
         {
             /* FIXME SetLastError */
             return NULL;
         }
-        sp = HeapAlloc(GetProcessHeap(), 0, len);
-        if (!sp) return FALSE;
-        WideCharToMultiByte(CP_ACP,0, pcs->search_path, -1, sp, len, NULL, NULL);
 
-        if ((hFile = FindExecutableImage(name, sp, loaded_name)) == NULL)
+        if ((hFile = FindExecutableImageExW(name, pcs->search_path, loaded_name, NULL, NULL)) == NULL)
             return NULL;
         opened = TRUE;
     }
-    else if (name) strcpy(loaded_name, name);
+    else if (name) strcpyW(loaded_name, name);
     else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         FIXME("Trouble ahead (no module name passed in deferred mode)\n");
-    if (!(module = module_find_by_nameA(pcs, loaded_name, DMT_PE)) &&
+    if (!(module = module_find_by_name(pcs, loaded_name, DMT_PE)) &&
         (hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
     {
         if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
@@ -366,9 +360,9 @@ struct module* pe_load_module(struct process* pcs, const char* name,
                 if (!base) base = nth->OptionalHeader.ImageBase;
                 if (!size) size = nth->OptionalHeader.SizeOfImage;
 
-                module = module_newA(pcs, loaded_name, DMT_PE, FALSE, base, size,
-                                     nth->FileHeader.TimeDateStamp,
-                                     nth->OptionalHeader.CheckSum);
+                module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
+                                    nth->FileHeader.TimeDateStamp,
+                                    nth->OptionalHeader.CheckSum);
                 if (module)
                 {
                     if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
@@ -405,17 +399,17 @@ BOOL pe_load_nt_header(HANDLE hProc, DWORD base, IMAGE_NT_HEADERS* nth)
  *		pe_load_module_from_pcs
  *
  */
-struct module* pe_load_module_from_pcs(struct process* pcs, const char* name, 
-                                       const char* mod_name, DWORD base, DWORD size)
+struct module* pe_load_module_from_pcs(struct process* pcs, const WCHAR* name,
+                                       const WCHAR* mod_name, DWORD base, DWORD size)
 {
     struct module*      module;
-    const char*         ptr;
+    const WCHAR*        ptr;
 
-    if ((module = module_find_by_nameA(pcs, name, DMT_PE))) return module;
+    if ((module = module_find_by_name(pcs, name, DMT_PE))) return module;
     if (mod_name) ptr = mod_name;
     else
     {
-        for (ptr = name + strlen(name) - 1; ptr >= name; ptr--)
+        for (ptr = name + strlenW(name) - 1; ptr >= name; ptr--)
         {
             if (*ptr == '/' || *ptr == '\\')
             {
@@ -424,7 +418,7 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
             }
         }
     }
-    if (ptr && (module = module_find_by_nameA(pcs, ptr, DMT_PE))) return module;
+    if (ptr && (module = module_find_by_name(pcs, ptr, DMT_PE))) return module;
     if (base)
     {
         if (pcs->dbg_hdr_addr)
@@ -434,13 +428,13 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
             if (pe_load_nt_header(pcs->handle, base, &nth))
             {
                 if (!size) size = nth.OptionalHeader.SizeOfImage;
-                module = module_newA(pcs, name, DMT_PE, FALSE, base, size,
-                                     nth.FileHeader.TimeDateStamp,
-                                     nth.OptionalHeader.CheckSum);
+                module = module_new(pcs, name, DMT_PE, FALSE, base, size,
+                                    nth.FileHeader.TimeDateStamp,
+                                    nth.OptionalHeader.CheckSum);
             }
         } else if (size)
-            module = module_newA(pcs, name, DMT_PE, FALSE, base, size,
-                                 0 /* FIXME */, 0 /* FIXME */);
+            module = module_new(pcs, name, DMT_PE, FALSE, base, size,
+                                0 /* FIXME */, 0 /* FIXME */);
     }
     return module;
 }

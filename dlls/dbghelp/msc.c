@@ -2139,7 +2139,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
     /* Open and map() .PDB file */
     if ((hFile = open_pdb_file(pcs, pdb_lookup)) == NULL ||
-        ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
+        ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
         ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
     {
         WARN("Unable to open .PDB file: %s\n", pdb_lookup->filename);
@@ -2267,9 +2267,9 @@ BOOL pdb_fetch_file_info(struct pdb_lookup* pdb_lookup)
     char*               image = NULL;
     BOOL                ret = TRUE;
 
-    if ((hFile = CreateFileA(pdb_lookup->filename, GENERIC_READ, FILE_SHARE_READ, NULL, 
+    if ((hFile = CreateFileA(pdb_lookup->filename, GENERIC_READ, FILE_SHARE_READ, NULL,
                              OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL)) == INVALID_HANDLE_VALUE ||
-        ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
+        ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) == NULL) ||
         ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) == NULL))
     {
         WARN("Unable to open .PDB file: %s\n", pdb_lookup->filename);

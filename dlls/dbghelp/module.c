@@ -517,21 +517,21 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (module_is_elf_container_loaded(pcs, wImageName, wModuleName))
     {
         /* force the loading of DLL as builtin */
-        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
+        if ((module = pe_load_module_from_pcs(pcs, wImageName, wModuleName,
                                               BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", debugstr_w(wImageName));
         return 0;
     }
     TRACE("Assuming %s as native DLL\n", debugstr_w(wImageName));
-    if (!(module = pe_load_module(pcs, ImageName, hFile, BaseOfDll, SizeOfDll)))
+    if (!(module = pe_load_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
     {
         if (module_get_type_by_name(ImageName) == DMT_ELF &&
             (module = elf_load_module(pcs, ImageName, BaseOfDll)))
             goto done;
         FIXME("Should have successfully loaded debug information for image %s\n",
               debugstr_w(wImageName));
-        if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
+        if ((module = pe_load_module_from_pcs(pcs, wImageName, wModuleName,
                                               BaseOfDll, SizeOfDll)))
             goto done;
         WARN("Couldn't locate %s\n", debugstr_w(wImageName));
