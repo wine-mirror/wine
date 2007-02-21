@@ -2248,7 +2248,9 @@ static BOOL pdb_process_file(const struct process* pcs,
         else
             msc_dbg->module->module.PdbSig70 = pdb_lookup->u.ds.guid;
         msc_dbg->module->module.PdbAge = pdb_lookup->age;
-        strcpy(msc_dbg->module->module.LoadedPdbName, pdb_lookup->filename);
+        MultiByteToWideChar(CP_ACP, 0, pdb_lookup->filename, -1,
+                            msc_dbg->module->module.LoadedPdbName,
+                            sizeof(msc_dbg->module->module.LoadedPdbName) / sizeof(WCHAR));
         /* FIXME: we could have a finer grain here */
         msc_dbg->module->module.LineNumbers = TRUE;
         msc_dbg->module->module.GlobalSymbols = TRUE;

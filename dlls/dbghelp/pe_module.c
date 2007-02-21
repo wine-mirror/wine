@@ -3,7 +3,7 @@
  *
  * Copyright (C) 1996,      Eric Youngdale.
  * Copyright (C) 1999-2000, Ulrich Weigand.
- * Copyright (C) 2004,      Eric Pouech.
+ * Copyright (C) 2004-2007, Eric Pouech.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -289,10 +289,10 @@ BOOL pe_load_debug_info(const struct process* pcs, struct module* module)
     void*               mapping;
     IMAGE_NT_HEADERS*   nth;
 
-    hFile = CreateFileA(module->module.LoadedImageName, GENERIC_READ, FILE_SHARE_READ,
+    hFile = CreateFileW(module->module.LoadedImageName, GENERIC_READ, FILE_SHARE_READ,
                         NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE) return ret;
-    if ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0)
+    if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != 0)
     {
         if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
         {
@@ -354,8 +354,8 @@ struct module* pe_load_module(struct process* pcs, const char* name,
     else if (name) strcpy(loaded_name, name);
     else if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
         FIXME("Trouble ahead (no module name passed in deferred mode)\n");
-    if (!(module = module_find_by_name(pcs, loaded_name, DMT_PE)) &&
-        (hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
+    if (!(module = module_find_by_nameA(pcs, loaded_name, DMT_PE)) &&
+        (hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
     {
         if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
         {
@@ -365,10 +365,10 @@ struct module* pe_load_module(struct process* pcs, const char* name,
             {
                 if (!base) base = nth->OptionalHeader.ImageBase;
                 if (!size) size = nth->OptionalHeader.SizeOfImage;
-            
-                module = module_new(pcs, loaded_name, DMT_PE, FALSE, base, size,
-                                    nth->FileHeader.TimeDateStamp, 
-                                    nth->OptionalHeader.CheckSum);
+
+                module = module_newA(pcs, loaded_name, DMT_PE, FALSE, base, size,
+                                     nth->FileHeader.TimeDateStamp,
+                                     nth->OptionalHeader.CheckSum);
                 if (module)
                 {
                     if (dbghelp_options & SYMOPT_DEFERRED_LOADS)
@@ -411,7 +411,7 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
     struct module*      module;
     const char*         ptr;
 
-    if ((module = module_find_by_name(pcs, name, DMT_PE))) return module;
+    if ((module = module_find_by_nameA(pcs, name, DMT_PE))) return module;
     if (mod_name) ptr = mod_name;
     else
     {
@@ -424,7 +424,7 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
             }
         }
     }
-    if (ptr && (module = module_find_by_name(pcs, ptr, DMT_PE))) return module;
+    if (ptr && (module = module_find_by_nameA(pcs, ptr, DMT_PE))) return module;
     if (base)
     {
         if (pcs->dbg_hdr_addr)
@@ -434,11 +434,13 @@ struct module* pe_load_module_from_pcs(struct process* pcs, const char* name,
             if (pe_load_nt_header(pcs->handle, base, &nth))
             {
                 if (!size) size = nth.OptionalHeader.SizeOfImage;
-                module = module_new(pcs, name, DMT_PE, FALSE, base, size,
-                                    nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum);
+                module = module_newA(pcs, name, DMT_PE, FALSE, base, size,
+                                     nth.FileHeader.TimeDateStamp,
+                                     nth.OptionalHeader.CheckSum);
             }
         } else if (size)
-            module = module_new(pcs, name, DMT_PE, FALSE, base, size, 0 /* FIXME */, 0 /* FIXME */);
+            module = module_newA(pcs, name, DMT_PE, FALSE, base, size,
+                                 0 /* FIXME */, 0 /* FIXME */);
     }
     return module;
 }

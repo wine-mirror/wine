@@ -1174,7 +1174,7 @@ BOOL WINAPI SymFromName(HANDLE hProcess, PCSTR Name, PSYMBOL_INFO Symbol)
         assert(name - Name < sizeof(tmp));
         memcpy(tmp, Name, name - Name);
         tmp[name - Name] = '\0';
-        module = module_find_by_name(pcs, tmp, DMT_UNKNOWN);
+        module = module_find_by_nameA(pcs, tmp, DMT_UNKNOWN);
         return find_name(pcs, module, name + 1, Symbol);
     }
     for (module = pcs->lmodules; module; module = module->next)

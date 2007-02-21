@@ -2,7 +2,7 @@
  * File module.c - module handling for the wine debugger
  *
  * Copyright (C) 1993,      Eric Youngdale.
- * 		 2000-2004, Eric Pouech
+ * 		 2000-2007, Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,60 +30,73 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "winnls.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
-static const char * const ext[] = {".acm", ".dll", ".drv", ".exe", ".ocx", ".vxd", NULL};
+const WCHAR        S_ElfW[]         = {'<','e','l','f','>','\0'};
+const WCHAR        S_WineLoaderW[]  = {'<','w','i','n','e','-','l','o','a','d','e','r','>','\0'};
+static const WCHAR S_DotSoW[]       = {'.','s','o','\0'};
+static const WCHAR S_PdbW[]         = {'.','p','d','b','\0'};
+static const WCHAR S_WinePThreadW[] = {'w','i','n','e','-','p','t','h','r','e','a','d','\0'};
+static const WCHAR S_WineKThreadW[] = {'w','i','n','e','-','k','t','h','r','e','a','d','\0'};
 
-static int match_ext(const char* ptr, size_t len)
+static const WCHAR S_AcmW[] = {'.','a','c','m','\0'};
+static const WCHAR S_DllW[] = {'.','d','l','l','\0'};
+static const WCHAR S_DrvW[] = {'.','d','r','v','\0'};
+static const WCHAR S_ExeW[] = {'.','e','x','e','\0'};
+static const WCHAR S_OcxW[] = {'.','o','c','x','\0'};
+static const WCHAR S_VxdW[] = {'.','v','x','d','\0'};
+static const WCHAR * const ext[] = {S_AcmW, S_DllW, S_DrvW, S_ExeW, S_OcxW, S_VxdW, NULL};
+
+static int match_ext(const WCHAR* ptr, size_t len)
 {
-    const char * const *e;
+    const WCHAR* const *e;
     size_t      l;
 
     for (e = ext; *e; e++)
     {
-        l = strlen(*e);
+        l = strlenW(*e);
         if (l >= len) return FALSE;
-        if (strncasecmp(&ptr[len - l], *e, l)) continue;
+        if (strncmpiW(&ptr[len - l], *e, l)) continue;
         return l;
     }
     return 0;
 }
-        
-static void module_fill_module(const char* in, char* out, size_t size)
+
+static void module_fill_module(const WCHAR* in, WCHAR* out, size_t size)
 {
-    const char  *ptr,*endptr;
+    const WCHAR *ptr,*endptr;
     size_t      len, l;
 
-    endptr = in + strlen(in);
+    endptr = in + strlenW(in);
     for (ptr = endptr - 1;
          ptr >= in && *ptr != '/' && *ptr != '\\';
          ptr--);
     ptr++;
     len = min(endptr-ptr,size-1);
-    memcpy(out, ptr, len);
+    memcpy(out, ptr, len * sizeof(WCHAR));
     out[len] = '\0';
     if (len > 4 && (l = match_ext(out, len)))
         out[len - l] = '\0';
     else if (len > 12 &&
-             (!strcasecmp(out + len - 12, "wine-pthread") || 
-              !strcasecmp(out + len - 12, "wine-kthread")))
-        lstrcpynA(out, "<wine-loader>", size);
+             (!strcmpiW(out + len - 12, S_WinePThreadW) ||
+              !strcmpiW(out + len - 12, S_WineKThreadW)))
+        lstrcpynW(out, S_WineLoaderW, size);
     else
     {
-        if (len > 3 && !strcasecmp(&out[len - 3], ".so") &&
+        if (len > 3 && !strcmpiW(&out[len - 3], S_DotSoW) &&
             (l = match_ext(out, len - 3)))
-            strcpy(&out[len - l - 3], "<elf>");
+            strcpyW(&out[len - l - 3], S_ElfW);
     }
-    while ((*out = tolower(*out))) out++;
+    while ((*out = tolowerW(*out))) out++;
 }
 
-void module_set_module(struct module* module, const char* name)
+void module_set_module(struct module* module, const WCHAR* name)
 {
     module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
-    strcpy(module->module_name, module->module.ModuleName);
+    WideCharToMultiByte(CP_ACP, 0, module->module.ModuleName, -1,
+                        module->module_name, sizeof(module->module_name),
+                        NULL, NULL);
 }
 
 static const char*      get_module_type(enum module_type type, BOOL virtual)
@@ -97,12 +110,12 @@ static const char*      get_module_type(enum module_type type, BOOL virtual)
 }
 
 /***********************************************************************
- * Creates and links a new module to a process 
+ * Creates and links a new module to a process
  */
-struct module* module_new(struct process* pcs, const char* name, 
+struct module* module_new(struct process* pcs, const WCHAR* name,
                           enum module_type type, BOOL virtual,
                           unsigned long mod_addr, unsigned long size,
-                          unsigned long stamp, unsigned long checksum) 
+                          unsigned long stamp, unsigned long checksum)
 {
     struct module*      module;
 
@@ -115,17 +128,18 @@ struct module* module_new(struct process* pcs, const char* name,
     module->next = pcs->lmodules;
     pcs->lmodules = module;
 
-    TRACE("=> %s %08lx-%08lx %s\n", 
-          get_module_type(type, virtual), mod_addr, mod_addr + size, name);
+    TRACE("=> %s %08lx-%08lx %s\n",
+          get_module_type(type, virtual), mod_addr, mod_addr + size,
+          debugstr_w(name));
 
     pool_init(&module->pool, 65536);
-    
+
     module->module.SizeOfStruct = sizeof(module->module);
     module->module.BaseOfImage = mod_addr;
     module->module.ImageSize = size;
     module_set_module(module, name);
     module->module.ImageName[0] = '\0';
-    lstrcpynA(module->module.LoadedImageName, name, sizeof(module->module.LoadedImageName));
+    lstrcpynW(module->module.LoadedImageName, name, sizeof(module->module.LoadedImageName) / sizeof(WCHAR));
     module->module.SymType = SymNone;
     module->module.NumSyms = 0;
     module->module.TimeDateStamp = stamp;
@@ -163,12 +177,23 @@ struct module* module_new(struct process* pcs, const char* name,
     return module;
 }
 
+struct module* module_newA(struct process* pcs, const char* name,
+                          enum module_type type, BOOL virtual,
+                          unsigned long mod_addr, unsigned long size,
+                          unsigned long stamp, unsigned long checksum)
+{
+    WCHAR wname[MAX_PATH];
+
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname) / sizeof(WCHAR));
+    return module_new(pcs, wname, type, virtual, mod_addr, size, stamp, checksum);
+}
+
 /***********************************************************************
  *	module_find_by_name
  *
  */
-struct module* module_find_by_name(const struct process* pcs, 
-                                   const char* name, enum module_type type)
+struct module* module_find_by_name(const struct process* pcs,
+                                   const WCHAR* name, enum module_type type)
 {
     struct module*      module;
 
@@ -180,24 +205,33 @@ struct module* module_find_by_name(const struct process* pcs,
     }
     else
     {
-        char                modname[MAX_PATH];
+        WCHAR   modname[MAX_PATH];
 
         for (module = pcs->lmodules; module; module = module->next)
         {
             if (type == module->type &&
-                !strcasecmp(name, module->module.LoadedImageName)) 
+                !strcmpiW(name, module->module.LoadedImageName))
                 return module;
         }
         module_fill_module(name, modname, sizeof(modname));
         for (module = pcs->lmodules; module; module = module->next)
         {
             if (type == module->type &&
-                !strcasecmp(modname, module->module.ModuleName)) 
+                !strcmpiW(modname, module->module.ModuleName))
                 return module;
         }
     }
     SetLastError(ERROR_INVALID_NAME);
     return NULL;
+}
+
+struct module* module_find_by_nameA(const struct process* pcs,
+                                    const char* name, enum module_type type)
+{
+    WCHAR wname[MAX_PATH];
+
+    MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname) / sizeof(WCHAR));
+    return module_find_by_name(pcs, wname, type);
 }
 
 /***********************************************************************
@@ -274,7 +308,8 @@ BOOL module_get_debug(struct module_pair* pair)
             idsl64.BaseOfImage = pair->effective->module.BaseOfImage;
             idsl64.CheckSum = pair->effective->module.CheckSum;
             idsl64.TimeDateStamp = pair->effective->module.TimeDateStamp;
-            strcpy(idsl64.FileName, pair->effective->module.ImageName);
+            WideCharToMultiByte(CP_ACP, 0, pair->effective->module.ImageName, -1,
+                                idsl64.FileName, sizeof(idsl64.FileName), NULL, NULL);
             idsl64.Reparse = FALSE;
             idsl64.hFile = INVALID_HANDLE_VALUE;
 
@@ -325,10 +360,11 @@ struct module* module_find_by_addr(const struct process* pcs, unsigned long addr
     return module;
 }
 
-static BOOL module_is_elf_container_loaded(struct process* pcs, const char* ImageName,
-                                           const char* ModuleName)
+static BOOL module_is_elf_container_loaded(struct process* pcs,
+                                           const WCHAR* ImageName,
+                                           const WCHAR* ModuleName)
 {
-    char                buffer[MAX_PATH];
+    WCHAR               buffer[MAX_PATH];
     size_t              len;
     struct module*      module;
 
@@ -337,12 +373,12 @@ static BOOL module_is_elf_container_loaded(struct process* pcs, const char* Imag
         module_fill_module(ImageName, buffer, sizeof(buffer));
         ModuleName = buffer;
     }
-    len = strlen(ModuleName);
+    len = strlenW(ModuleName);
     for (module = pcs->lmodules; module; module = module->next)
     {
-        if (!strncasecmp(module->module.ModuleName, ModuleName, len) &&
+        if (!strncmpiW(module->module.ModuleName, ModuleName, len) &&
             module->type == DMT_ELF &&
-            !strcmp(module->module.ModuleName + len, "<elf>"))
+            !strcmpW(module->module.ModuleName + len, S_ElfW))
             return TRUE;
     }
     return FALSE;
@@ -452,15 +488,10 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     {
         WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, MAX_PATH,
                             NULL, NULL);
-        module = module_new(pcs, ImageName, module_get_type_by_name(ImageName),
+        module = module_new(pcs, wImageName, module_get_type_by_name(ImageName),
                             TRUE, (DWORD)BaseOfDll, SizeOfDll, 0, 0);
         if (!module) return FALSE;
-        if (wModuleName)
-        {
-            WideCharToMultiByte(CP_ACP,0, wModuleName, -1, ModuleName = amodname, MAX_PATH,
-                                NULL, NULL);
-            module_set_module(module, ModuleName);
-        }
+        if (wModuleName) module_set_module(module, wModuleName);
         module->module.SymType = SymVirtual;
 
         return TRUE;
@@ -483,7 +514,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     else
         ModuleName = NULL;
 
-    if (module_is_elf_container_loaded(pcs, ImageName, ModuleName))
+    if (module_is_elf_container_loaded(pcs, wImageName, wModuleName))
     {
         /* force the loading of DLL as builtin */
         if ((module = pe_load_module_from_pcs(pcs, ImageName, ModuleName,
@@ -508,12 +539,13 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     }
     module->module.NumSyms = module->ht_symbols.num_elts;
 done:
-    /* by default pe_load_module fills module.ModuleName from a derivation 
+    /* by default pe_load_module fills module.ModuleName from a derivation
      * of ImageName. Overwrite it, if we have better information
      */
-    if (ModuleName)
-        module_set_module(module, ModuleName);
-    lstrcpynA(module->module.ImageName, ImageName, sizeof(module->module.ImageName));
+    if (wModuleName)
+        module_set_module(module, wModuleName);
+    lstrcpynW(module->module.ImageName, wImageName,
+              sizeof(module->module.ImageName) / sizeof(CHAR));
 
     return module->module.BaseOfImage;
 }
@@ -712,8 +744,7 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
                                        PVOID UserContext)
 {
     HMODULE*    hMods;
-    char        base[256], mod[256];
-    WCHAR       modW[256];
+    WCHAR       baseW[256], modW[256];
     DWORD       i, sz;
     MODULEINFO  mi;
 
@@ -731,10 +762,9 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
     for (i = 0; i < sz; i++)
     {
         if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
-            !GetModuleBaseNameA(hProcess, hMods[i], base, sizeof(base)))
+            !GetModuleBaseNameW(hProcess, hMods[i], baseW, sizeof(baseW) / sizeof(WCHAR)))
             continue;
-        module_fill_module(base, mod, sizeof(mod));
-        MultiByteToWideChar(CP_ACP, 0, mod, -1, modW, sizeof(modW) / sizeof(modW));
+        module_fill_module(baseW, modW, sizeof(modW) / sizeof(CHAR));
         EnumLoadedModulesCallback(modW, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage,
                                   UserContext);
     }
@@ -875,36 +905,9 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
     module = module_find_by_addr(pcs, dwAddr, DMT_UNKNOWN);
     if (!module) return FALSE;
 
-    miw64.SizeOfStruct  = sizeof(miw64);
-    miw64.BaseOfImage   = module->module.BaseOfImage;
-    miw64.ImageSize     = module->module.ImageSize;
-    miw64.TimeDateStamp = module->module.TimeDateStamp;
-    miw64.CheckSum      = module->module.CheckSum;
-    miw64.NumSyms       = module->module.NumSyms;
-    miw64.SymType       = module->module.SymType;
-    MultiByteToWideChar(CP_ACP, 0, module->module.ModuleName, -1,
-                        miw64.ModuleName, sizeof(miw64.ModuleName) / sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, module->module.ImageName, -1,
-                        miw64.ImageName, sizeof(miw64.ImageName) / sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, module->module.LoadedImageName, -1,
-                        miw64.LoadedImageName, sizeof(miw64.LoadedImageName) / sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, module->module.LoadedPdbName, -1,
-                        miw64.LoadedPdbName, sizeof(miw64.LoadedPdbName) / sizeof(WCHAR));
+    miw64 = module->module;
 
-    miw64.CVSig         = module->module.CVSig;
-    MultiByteToWideChar(CP_ACP, 0, module->module.CVData, -1,
-                        miw64.CVData, sizeof(miw64.CVData) / sizeof(WCHAR));
-    miw64.PdbSig        = module->module.PdbSig;
-    miw64.PdbSig70      = module->module.PdbSig70;
-    miw64.PdbAge        = module->module.PdbAge;
-    miw64.PdbUnmatched  = module->module.PdbUnmatched;
-    miw64.DbgUnmatched  = module->module.DbgUnmatched;
-    miw64.LineNumbers   = module->module.LineNumbers;
-    miw64.GlobalSymbols = module->module.GlobalSymbols;
-    miw64.TypeInfo      = module->module.TypeInfo;
-    miw64.SourceIndexed = module->module.SourceIndexed;
-    miw64.Publics       = module->module.Publics;
-
+    /* update debug information from container if any */
     if (module->module.SymType == SymNone)
     {
         module = module_get_container(pcs, module);

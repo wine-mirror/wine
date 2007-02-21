@@ -133,7 +133,7 @@ BOOL WINAPI SymEnumSourceFiles(HANDLE hProcess, ULONG64 ModBase, PCSTR Mask,
     {
         if (Mask[0] == '!')
         {
-            pair.requested = module_find_by_name(pair.pcs, Mask + 1, DMT_UNKNOWN);
+            pair.requested = module_find_by_nameA(pair.pcs, Mask + 1, DMT_UNKNOWN);
             if (!module_get_debug(&pair)) return FALSE;
         }
         else

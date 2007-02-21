@@ -2,7 +2,7 @@
  * File elf.c - processing of ELF files
  *
  * Copyright (C) 1996, Eric Youngdale.
- *		 1999-2004 Eric Pouech
+ *		 1999-2007 Eric Pouech
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -802,21 +802,23 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
  *    is the global debug file directory, and execdir has been turned
  *    into a relative path)." (from GDB manual)
  */
-static char* elf_locate_debug_link(const char* filename, const char* loaded_file,
+static char* elf_locate_debug_link(const char* filename, const WCHAR* loaded_file,
                                    struct elf_file_map* fmap_link)
 {
     static const char globalDebugDir[] = "/usr/lib/debug/";
     const size_t globalDebugDirLen = strlen(globalDebugDir);
+    size_t loaded_file_len;
     char* p;
     char* slash;
 
+    loaded_file_len = WideCharToMultiByte(CP_UNIXCP, 0, loaded_file, -1, NULL, 0, NULL, NULL);
     p = HeapAlloc(GetProcessHeap(), 0,
-                  globalDebugDirLen + strlen(loaded_file) + 1 + 6 + 1 + strlen(filename) + 1);
+                  globalDebugDirLen + loaded_file_len + 6 + 1 + strlen(filename) + 1);
 
     if (!p) return FALSE;
 
     /* we prebuild the string with "execdir" */
-    strcpy(p, loaded_file);
+    WideCharToMultiByte(CP_UNIXCP, 0, loaded_file, -1, p, loaded_file_len, NULL, NULL);
     slash = strrchr(p, '/');
     if (slash == NULL) slash = p; else slash++;
 
@@ -879,7 +881,9 @@ static BOOL elf_debuglink_parse (struct module* module,
 	ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
                                            ht_symtab);
 	if (ret)
-	    strcpy(module->module.LoadedPdbName, link_file);
+            MultiByteToWideChar(CP_ACP, 0, link_file, -1,
+                                module->module.LoadedPdbName,
+                                sizeof(module->module.LoadedPdbName));
 	else
 	    WARN("Couldn't load debug information from %s\n", link_file);
 	elf_unmap_file(&fmap_link);
@@ -928,7 +932,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
     if (fmap->with_crc && (fmap->crc != calc_crc32(fmap)))
     {
         ERR("Bad CRC for module %s (got %08x while expecting %08lx)\n",
-            module->module.LoadedImageName, calc_crc32(fmap), fmap->crc);
+            debugstr_w(module->module.LoadedImageName), calc_crc32(fmap), fmap->crc);
         /* we don't tolerate mis-matched files */
         return FALSE;
     }
@@ -1062,14 +1066,14 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                 lret = elf_debuglink_parse (module, pool, ht_symtab, dbg_link);
                 if (!lret)
 		    WARN("Couldn't load linked debug file for %s\n",
-			  module->module.ModuleName);
+                         debugstr_w(module->module.ModuleName));
                 ret = ret || lret;
             }
             elf_unmap_section(fmap, debuglink_sect);
         }
     }
-    if (strstr(module->module.ModuleName, "<elf>") ||
-        !strcmp(module->module.ModuleName, "<wine-loader>"))
+    if (strstrW(module->module.ModuleName, S_ElfW) ||
+        !strcmpW(module->module.ModuleName, S_WineLoaderW))
     {
         /* add the thunks for native libraries */
         if (!(dbghelp_options & SYMOPT_PUBLICS_ONLY))
@@ -1095,7 +1099,7 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
 
     if (module->type != DMT_ELF || !module->elf_info)
     {
-	ERR("Bad elf module '%s'\n", module->module.LoadedImageName);
+	ERR("Bad elf module '%s'\n", debugstr_w(module->module.LoadedImageName));
 	return FALSE;
     }
 
@@ -1104,8 +1108,12 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
 
     if (!fmap)
     {
+        char    LoadedImageName[MAX_PATH];
+
         fmap = &my_fmap;
-        ret = elf_map_file(module->module.LoadedImageName, fmap);
+        WideCharToMultiByte(CP_ACP, 0, module->module.LoadedImageName, -1,
+                            LoadedImageName, MAX_PATH, NULL, NULL);
+        ret = elf_map_file(LoadedImageName, fmap);
     }
     if (ret)
         ret = elf_load_debug_info_from_map(module, fmap, &pool, &ht_symtab);
@@ -1201,12 +1209,12 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
 
     if (elf_info->flags & ELF_INFO_MODULE)
     {
-        struct elf_module_info *elf_module_info = 
+        struct elf_module_info *elf_module_info =
             HeapAlloc(GetProcessHeap(), 0, sizeof(struct elf_module_info));
         if (!elf_module_info) goto leave;
-        elf_info->module = module_new(pcs, filename, DMT_ELF, FALSE,
-                                      (load_offset) ? load_offset : fmap.elf_start, 
-                                      fmap.elf_size, 0, calc_crc32(&fmap));
+        elf_info->module = module_newA(pcs, filename, DMT_ELF, FALSE,
+                                       (load_offset) ? load_offset : fmap.elf_start,
+                                       fmap.elf_size, 0, calc_crc32(&fmap));
         if (!elf_info->module)
         {
             HeapFree(GetProcessHeap(), 0, elf_module_info);
@@ -1313,7 +1321,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const char* filename,
     struct module*      module;
 
     if (filename == NULL || *filename == '\0') return FALSE;
-    if ((module = module_find_by_name(pcs, filename, DMT_ELF)))
+    if ((module = module_find_by_nameA(pcs, filename, DMT_ELF)))
     {
         elf_info->module = module;
         module->elf_info->elf_mark = 1;
@@ -1469,7 +1477,7 @@ BOOL elf_read_wine_loader_dbg_info(struct process* pcs)
     elf_info.flags = ELF_INFO_DEBUG_HEADER | ELF_INFO_MODULE;
     if (!elf_search_loader(pcs, &elf_info)) return FALSE;
     elf_info.module->elf_info->elf_loader = 1;
-    strcpy(elf_info.module->module.ModuleName, "<wine-loader>");
+    module_set_module(elf_info.module, S_WineLoaderW);
     return (pcs->dbg_hdr_addr = elf_info.dbg_hdr_addr) != 0;
 }
 
