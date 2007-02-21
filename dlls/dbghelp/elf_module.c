@@ -192,33 +192,39 @@ static inline unsigned elf_get_map_size(struct elf_file_map* fmap, int sidx)
  *
  * Maps an ELF file into memory (and checks it's a real ELF file)
  */
-static BOOL elf_map_fileA(const char* filename, struct elf_file_map* fmap)
+static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
 {
     static const BYTE   elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
     struct stat	        statbuf;
     int                 i;
     Elf32_Phdr          phdr;
     unsigned            tmp, page_mask = getpagesize() - 1;
+    char*               filename;
+    unsigned            len;
+    BOOL                ret = FALSE;
 
+    len = WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+    if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
+    WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
 
     fmap->fd = -1;
     fmap->with_crc = 0;
 
     /* check that the file exists, and that the module hasn't been loaded yet */
-    if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) return FALSE;
+    if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) goto done;
 
     /* Now open the file, so that we can mmap() it. */
-    if ((fmap->fd = open(filename, O_RDONLY)) == -1) return FALSE;
+    if ((fmap->fd = open(filename, O_RDONLY)) == -1) goto done;
 
     if (read(fmap->fd, &fmap->elfhdr, sizeof(fmap->elfhdr)) != sizeof(fmap->elfhdr))
-        return FALSE;
+        goto done;
     /* and check for an ELF header */
     if (memcmp(fmap->elfhdr.e_ident, 
-               elf_signature, sizeof(elf_signature))) return FALSE;
+               elf_signature, sizeof(elf_signature))) goto done;
 
     fmap->sect = HeapAlloc(GetProcessHeap(), 0,
                            fmap->elfhdr.e_shnum * sizeof(fmap->sect[0]));
-    if (!fmap->sect) return FALSE;
+    if (!fmap->sect) goto done;
 
     lseek(fmap->fd, fmap->elfhdr.e_shoff, SEEK_SET);
     for (i = 0; i < fmap->elfhdr.e_shnum; i++)
@@ -245,19 +251,8 @@ static BOOL elf_map_fileA(const char* filename, struct elf_file_map* fmap)
      * otherwise, all addresses are zero based and start has no effect
      */
     fmap->elf_size -= fmap->elf_start;
-    return TRUE;
-}
-
-static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
-{
-    char*       filename;
-    unsigned    len;
-    BOOL        ret;
-
-    len = WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, NULL, 0, NULL, NULL);
-    if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
-    WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
-    ret = elf_map_fileA(filename, fmap);
+    ret = TRUE;
+done:
     HeapFree(GetProcessHeap(), 0, filename);
     return ret;
 }
