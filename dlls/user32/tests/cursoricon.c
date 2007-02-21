@@ -1,6 +1,8 @@
-/* Unit test suite for cursors and icons.
+/*
+ * Unit test suite for cursors and icons.
  *
  * Copyright 2006 Michael Kaufmann
+ * Copyright 2007 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -235,6 +237,142 @@ static void test_CopyImage_Bitmap(int depth)
     HeapFree(GetProcessHeap(), 0, info);
 }
 
+static void test_icon_info_dbg(HICON hIcon, UINT exp_cx, UINT exp_cy, UINT exp_bpp, int line)
+{
+    ICONINFO info;
+    DWORD ret;
+    BITMAP bmMask, bmColor;
+
+    ret = GetIconInfo(hIcon, &info);
+    ok_(__FILE__, line)(ret, "GetIconInfo failed\n");
+
+    /* CreateIcon under XP causes info.fIcon to be 0 */
+    ok_(__FILE__, line)(info.xHotspot == exp_cx/2, "info.xHotspot = %u\n", info.xHotspot);
+    ok_(__FILE__, line)(info.yHotspot == exp_cy/2, "info.yHotspot = %u\n", info.yHotspot);
+    ok_(__FILE__, line)(info.hbmMask != 0, "info.hbmMask is NULL\n");
+
+    ret = GetObject(info.hbmMask, sizeof(bmMask), &bmMask);
+    ok_(__FILE__, line)(ret == sizeof(bmMask), "GetObject(info.hbmMask) failed, ret %u\n", ret);
+
+    if (exp_bpp == 1)
+        ok_(__FILE__, line)(info.hbmColor == 0, "info.hbmColor should be NULL\n");
+
+    if (info.hbmColor)
+    {
+        HDC hdc;
+        UINT display_bpp;
+
+        hdc = GetDC(0);
+        display_bpp = GetDeviceCaps(hdc, BITSPIXEL);
+        ReleaseDC(0, hdc);
+
+        ret = GetObject(info.hbmColor, sizeof(bmColor), &bmColor);
+        ok_(__FILE__, line)(ret == sizeof(bmColor), "GetObject(info.hbmColor) failed, ret %u\n", ret);
+
+        ok_(__FILE__, line)(bmColor.bmBitsPixel == display_bpp /* XP */ ||
+           bmColor.bmBitsPixel == exp_bpp /* Win98 */,
+           "bmColor.bmBitsPixel = %d\n", bmColor.bmBitsPixel);
+        ok_(__FILE__, line)(bmColor.bmWidth == exp_cx, "bmColor.bmWidth = %d\n", bmColor.bmWidth);
+        ok_(__FILE__, line)(bmColor.bmHeight == exp_cy, "bmColor.bmHeight = %d\n", bmColor.bmHeight);
+
+        ok_(__FILE__, line)(bmMask.bmBitsPixel == 1, "bmMask.bmBitsPixel = %d\n", bmMask.bmBitsPixel);
+        ok_(__FILE__, line)(bmMask.bmWidth == exp_cx, "bmMask.bmWidth = %d\n", bmMask.bmWidth);
+        ok_(__FILE__, line)(bmMask.bmHeight == exp_cy, "bmMask.bmHeight = %d\n", bmMask.bmHeight);
+    }
+    else
+    {
+        ok_(__FILE__, line)(bmMask.bmBitsPixel == 1, "bmMask.bmBitsPixel = %d\n", bmMask.bmBitsPixel);
+        ok_(__FILE__, line)(bmMask.bmWidth == exp_cx, "bmMask.bmWidth = %d\n", bmMask.bmWidth);
+        ok_(__FILE__, line)(bmMask.bmHeight == exp_cy * 2, "bmMask.bmHeight = %d\n", bmMask.bmHeight);
+    }
+}
+
+#define test_icon_info(a,b,c,d) test_icon_info_dbg((a),(b),(c),(d),__LINE__)
+
+static void test_CreateIcon(void)
+{
+    static const BYTE bmp_bits[1024];
+    HICON hIcon;
+    HBITMAP hbmMask, hbmColor;
+    ICONINFO info;
+    HDC hdc;
+    UINT display_bpp;
+
+    hdc = GetDC(0);
+    display_bpp = GetDeviceCaps(hdc, BITSPIXEL);
+    ReleaseDC(0, hdc);
+
+    /* these crash under XP
+    hIcon = CreateIcon(0, 16, 16, 1, 1, bmp_bits, NULL);
+    hIcon = CreateIcon(0, 16, 16, 1, 1, NULL, bmp_bits);
+    */
+
+    hIcon = CreateIcon(0, 16, 16, 1, 1, bmp_bits, bmp_bits);
+    ok(hIcon != 0, "CreateIcon failed\n");
+    test_icon_info(hIcon, 16, 16, 1);
+    DestroyIcon(hIcon);
+
+    hIcon = CreateIcon(0, 16, 16, 1, display_bpp, bmp_bits, bmp_bits);
+    ok(hIcon != 0, "CreateIcon failed\n");
+    test_icon_info(hIcon, 16, 16, display_bpp);
+    DestroyIcon(hIcon);
+
+    hbmMask = CreateBitmap(16, 16, 1, 1, bmp_bits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+    hbmColor = CreateBitmap(16, 16, 1, display_bpp, bmp_bits);
+    ok(hbmColor != 0, "CreateBitmap failed\n");
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = 0;
+    info.hbmColor = 0;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(!hIcon, "CreateIconIndirect should fail\n");
+    ok(GetLastError() == 0xdeadbeaf, "wrong error %u\n", GetLastError());
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = 0;
+    info.hbmColor = hbmColor;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(!hIcon, "CreateIconIndirect should fail\n");
+    ok(GetLastError() == 0xdeadbeaf, "wrong error %u\n", GetLastError());
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmMask;
+    info.hbmColor = hbmColor;
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 16, 16, display_bpp);
+    DestroyIcon(hIcon);
+
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+
+    hbmMask = CreateBitmap(16, 32, 1, 1, bmp_bits);
+    ok(hbmMask != 0, "CreateBitmap failed\n");
+
+    info.fIcon = TRUE;
+    info.xHotspot = 8;
+    info.yHotspot = 8;
+    info.hbmMask = hbmMask;
+    info.hbmColor = 0;
+    SetLastError(0xdeadbeaf);
+    hIcon = CreateIconIndirect(&info);
+    ok(hIcon != 0, "CreateIconIndirect failed\n");
+    test_icon_info(hIcon, 16, 16, 1);
+    DestroyIcon(hIcon);
+
+    DeleteObject(hbmMask);
+    DeleteObject(hbmColor);
+}
+
 START_TEST(cursoricon)
 {
     test_CopyImage_Bitmap(1);
@@ -243,4 +381,5 @@ START_TEST(cursoricon)
     test_CopyImage_Bitmap(16);
     test_CopyImage_Bitmap(24);
     test_CopyImage_Bitmap(32);
+    test_CreateIcon();
 }

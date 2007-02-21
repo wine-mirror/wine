@@ -1841,7 +1841,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         else
         {
             info->nWidth        = bmpAnd.bmWidth;
-            info->nHeight       = bmpAnd.bmHeight * 2;
+            info->nHeight       = bmpAnd.bmHeight / 2;
             info->nWidthBytes   = get_bitmap_width_bytes(bmpAnd.bmWidth, 1);
             info->bPlanes       = 1;
             info->bBitsPerPixel = 1;
