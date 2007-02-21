@@ -201,6 +201,43 @@ BOOL WINAPI SymMatchFileName(char* file, char* match,
     return mptr == match - 1;
 }
 
+static BOOL do_searchW(const WCHAR* file, WCHAR* buffer, BOOL recurse,
+                       PENUMDIRTREE_CALLBACKW cb, void* user)
+{
+    HANDLE              h;
+    WIN32_FIND_DATAW    fd;
+    unsigned            pos;
+    BOOL                found = FALSE;
+    static const WCHAR  S_AllW[] = {'*','.','*','\0'};
+    static const WCHAR  S_DotW[] = {'.','\0'};
+    static const WCHAR  S_DotDotW[] = {'.','\0'};
+
+    pos = strlenW(buffer);
+    if (buffer[pos - 1] != '\\') buffer[pos++] = '\\';
+    strcpyW(buffer + pos, S_AllW);
+    if ((h = FindFirstFileW(buffer, &fd)) == INVALID_HANDLE_VALUE)
+        return FALSE;
+    /* doc doesn't specify how the tree is enumerated...
+     * doing a depth first based on, but may be wrong
+     */
+    do
+    {
+        if (!strcmpW(fd.cFileName, S_DotW) || !strcmpW(fd.cFileName, S_DotDotW)) continue;
+
+        strcpyW(buffer + pos, fd.cFileName);
+        if (recurse && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+            found = do_searchW(file, buffer, TRUE, cb, user);
+        else if (SymMatchFileNameW(buffer, (WCHAR*)file, NULL, NULL))
+        {
+            if (!cb || cb(buffer, user)) found = TRUE;
+        }
+    } while (!found && FindNextFileW(h, &fd));
+    if (!found) buffer[--pos] = '\0';
+    FindClose(h);
+
+    return found;
+}
+
 static BOOL do_search(const char* file, char* buffer, BOOL recurse,
                       PENUMDIRTREE_CALLBACK cb, void* user)
 {
@@ -247,17 +284,56 @@ BOOL WINAPI SearchTreeForFile(PCSTR root, PCSTR file, PSTR buffer)
 }
 
 /******************************************************************
+ *		EnumDirTreeW (DBGHELP.@)
+ *
+ *
+ */
+BOOL WINAPI EnumDirTreeW(HANDLE hProcess, PCWSTR root, PCWSTR file,
+                        LPWSTR buffer, PENUMDIRTREE_CALLBACKW cb, PVOID user)
+{
+    TRACE("(%p %s %s %p %p %p)\n",
+          hProcess, debugstr_w(root), debugstr_w(file), buffer, cb, user);
+
+    strcpyW(buffer, root);
+    return do_searchW(file, buffer, TRUE, cb, user);
+}
+
+/******************************************************************
  *		EnumDirTree (DBGHELP.@)
  *
  *
  */
+struct enum_dir_treeWA
+{
+    PENUMDIRTREE_CALLBACK       cb;
+    void*                       user;
+    char                        name[MAX_PATH];
+};
+
+static BOOL CALLBACK enum_dir_treeWA(LPCWSTR name, PVOID user)
+{
+    struct enum_dir_treeWA*     edt = user;
+
+    WideCharToMultiByte(CP_ACP, 0, name, -1, edt->name, MAX_PATH, NULL, NULL);
+    return edt->cb(edt->name, edt->user);
+}
+
 BOOL WINAPI EnumDirTree(HANDLE hProcess, PCSTR root, PCSTR file,
                         LPSTR buffer, PENUMDIRTREE_CALLBACK cb, PVOID user)
 {
-    TRACE("(%p %s %s %p %p %p)\n", hProcess, root, file, buffer, cb, user);
+    WCHAR                       rootW[MAX_PATH];
+    WCHAR                       fileW[MAX_PATH];
+    WCHAR                       bufferW[MAX_PATH];
+    struct enum_dir_treeWA      edt;
+    BOOL                        ret;
 
-    strcpy(buffer, root);
-    return do_search(file, buffer, TRUE, cb, user);
+    edt.cb = cb;
+    edt.user = user;
+    MultiByteToWideChar(CP_ACP, 0, root, -1, rootW, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, MAX_PATH);
+    if ((ret = EnumDirTreeW(hProcess, rootW, fileW, bufferW, enum_dir_treeWA, &edt)))
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
+    return ret;
 }
 
 struct sffip

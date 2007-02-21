@@ -1,7 +1,7 @@
 @ stub DbgHelpCreateUserDump
 @ stub DbgHelpCreateUserDumpW
 @ stdcall EnumDirTree(long str str ptr ptr ptr)
-@ stub EnumDirTreeW
+@ stdcall EnumDirTreeW(long wstr wstr ptr ptr ptr)
 @ stdcall EnumerateLoadedModules(long ptr ptr)
 @ stdcall EnumerateLoadedModules64(long ptr ptr)
 @ stdcall EnumerateLoadedModulesW64(long ptr ptr)
