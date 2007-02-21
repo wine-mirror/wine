@@ -76,17 +76,46 @@ HANDLE WINAPI FindDebugInfoFileEx(PCSTR FileName, PCSTR SymbolPath,
 }
 
 /******************************************************************
+ *		FindExecutableImageExW (DBGHELP.@)
+ *
+ */
+HANDLE WINAPI FindExecutableImageExW(PCWSTR FileName, PCWSTR SymbolPath, PWSTR ImageFilePath,
+                                     PFIND_EXE_FILE_CALLBACKW Callback, void* user)
+{
+    HANDLE h;
+
+    if (Callback) FIXME("Unsupported callback yet\n");
+    if (!SearchPathW(SymbolPath, FileName, NULL, MAX_PATH, ImageFilePath, NULL))
+        return NULL;
+    h = CreateFileW(ImageFilePath, GENERIC_READ, FILE_SHARE_READ, NULL,
+                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    return (h == INVALID_HANDLE_VALUE) ? NULL : h;
+}
+
+/******************************************************************
+ *		FindExecutableImageEx (DBGHELP.@)
+ *
+ */
+HANDLE WINAPI FindExecutableImageEx(PCSTR FileName, PCSTR SymbolPath, PSTR ImageFilePath,
+                                    PFIND_EXE_FILE_CALLBACK Callback, void* user)
+{
+    HANDLE h;
+
+    if (Callback) FIXME("Unsupported callback yet\n");
+    if (!SearchPathA(SymbolPath, FileName, NULL, MAX_PATH, ImageFilePath, NULL))
+        return NULL;
+    h = CreateFileA(ImageFilePath, GENERIC_READ, FILE_SHARE_READ, NULL,
+                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    return (h == INVALID_HANDLE_VALUE) ? NULL : h;
+}
+
+/******************************************************************
  *		FindExecutableImage (DBGHELP.@)
  *
  */
 HANDLE WINAPI FindExecutableImage(PCSTR FileName, PCSTR SymbolPath, PSTR ImageFilePath)
 {
-    HANDLE h;
-    if (!SearchPathA(SymbolPath, FileName, NULL, MAX_PATH, ImageFilePath, NULL))
-        return NULL;
-    h = CreateFileA(ImageFilePath, GENERIC_READ, FILE_SHARE_READ, NULL, 
-                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    return (h == INVALID_HANDLE_VALUE) ? NULL : h;
+    return FindExecutableImageEx(FileName, SymbolPath, ImageFilePath, NULL, NULL);
 }
 
 /***********************************************************************

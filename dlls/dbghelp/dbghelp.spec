@@ -10,8 +10,8 @@
 @ stdcall FindDebugInfoFileEx(str str ptr ptr ptr)
 @ stub FindDebugInfoFileExW
 @ stdcall FindExecutableImage(str str str)
-@ stub FindExecutableImageEx
-@ stub FindExecutableImageExW
+@ stdcall FindExecutableImageEx(str str ptr ptr ptr)
+@ stdcall FindExecutableImageExW(wstr wstr ptr ptr ptr)
 @ stub FindFileInPath
 @ stub FindFileInSearchPath
 @ stdcall GetTimestampForLoadedLibrary(long)

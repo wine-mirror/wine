@@ -6,7 +6,7 @@
 @ stdcall FindDebugInfoFile(str str str) dbghelp.FindDebugInfoFile
 @ stdcall FindDebugInfoFileEx(str str ptr ptr ptr) dbghelp.FindDebugInfoFileEx
 @ stdcall FindExecutableImage(str str str) dbghelp.FindExecutableImage
-@ stub FindExecutableImageEx
+@ stdcall FindExecutableImageEx(str str ptr ptr ptr) dbghelp.FindExecutableImageEx
 @ stub FindFileInPath
 @ stub FindFileInSearchPath
 @ stdcall GetImageConfigInformation(ptr ptr)
