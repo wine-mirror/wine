@@ -649,6 +649,12 @@ void X11DRV_SetCursor( CURSORICONINFO *lpCursor )
 {
     Cursor cursor;
 
+    if (lpCursor)
+        TRACE("%ux%u, planes %u, bpp %u\n",
+              lpCursor->nWidth, lpCursor->nHeight, lpCursor->bPlanes, lpCursor->bBitsPerPixel);
+    else
+        TRACE("NULL\n");
+
     if (root_window != DefaultRootWindow(gdi_display))
     {
         /* If in desktop mode, set the cursor on the desktop window */
