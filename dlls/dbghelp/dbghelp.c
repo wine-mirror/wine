@@ -500,10 +500,10 @@ BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
     TRACE("%p %u %p\n", pcs, action, data);
 
     if (!pcs->reg_cb) return FALSE;
-    if (pcs->reg_is_unicode)
+    if (!pcs->reg_is_unicode)
     {
-        IMAGEHLP_DEFERRED_SYMBOL_LOAD64*    idsl;
-        IMAGEHLP_DEFERRED_SYMBOL_LOADW64    idslW;
+        IMAGEHLP_DEFERRED_SYMBOL_LOAD64     idsl;
+        IMAGEHLP_DEFERRED_SYMBOL_LOADW64*   idslW;
 
         switch (action)
         {
@@ -516,15 +516,15 @@ BOOL pcs_callback(const struct process* pcs, ULONG action, void* data)
         case CBA_DEFERRED_SYMBOL_LOAD_FAILURE:
         case CBA_DEFERRED_SYMBOL_LOAD_PARTIAL:
         case CBA_DEFERRED_SYMBOL_LOAD_START:
-            idsl = (IMAGEHLP_DEFERRED_SYMBOL_LOAD64*)(DWORD)data;
-            idslW.SizeOfStruct = sizeof(idslW);
-            idslW.BaseOfImage = idsl->BaseOfImage;
-            idslW.CheckSum = idsl->CheckSum;
-            idslW.TimeDateStamp = idsl->TimeDateStamp;
-            MultiByteToWideChar(CP_ACP, 0, idsl->FileName, -1, 
-                                idslW.FileName, sizeof(idslW.FileName) / sizeof(WCHAR));
-            idslW.Reparse = idsl->Reparse;
-            data = &idslW;
+            idslW = (IMAGEHLP_DEFERRED_SYMBOL_LOADW64*)(DWORD)data;
+            idsl.SizeOfStruct = sizeof(idsl);
+            idsl.BaseOfImage = idslW->BaseOfImage;
+            idsl.CheckSum = idslW->CheckSum;
+            idsl.TimeDateStamp = idslW->TimeDateStamp;
+            WideCharToMultiByte(CP_ACP, 0, idslW->FileName, -1,
+                                idsl.FileName, sizeof(idsl.FileName), NULL, NULL);
+            idsl.Reparse = idslW->Reparse;
+            data = &idsl;
             break;
         case CBA_DUPLICATE_SYMBOL:
         case CBA_EVENT:

@@ -275,7 +275,7 @@ struct module* module_get_containee(const struct process* pcs,
  */
 BOOL module_get_debug(struct module_pair* pair)
 {
-    IMAGEHLP_DEFERRED_SYMBOL_LOAD64     idsl64;
+    IMAGEHLP_DEFERRED_SYMBOL_LOADW64    idslW64;
 
     if (!pair->requested) return FALSE;
     /* for a PE builtin, always get info from container */
@@ -293,20 +293,20 @@ BOOL module_get_debug(struct module_pair* pair)
             ret = elf_load_debug_info(pair->effective, NULL);
             break;
         case DMT_PE:
-            idsl64.SizeOfStruct = sizeof(idsl64);
-            idsl64.BaseOfImage = pair->effective->module.BaseOfImage;
-            idsl64.CheckSum = pair->effective->module.CheckSum;
-            idsl64.TimeDateStamp = pair->effective->module.TimeDateStamp;
-            WideCharToMultiByte(CP_ACP, 0, pair->effective->module.ImageName, -1,
-                                idsl64.FileName, sizeof(idsl64.FileName), NULL, NULL);
-            idsl64.Reparse = FALSE;
-            idsl64.hFile = INVALID_HANDLE_VALUE;
+            idslW64.SizeOfStruct = sizeof(idslW64);
+            idslW64.BaseOfImage = pair->effective->module.BaseOfImage;
+            idslW64.CheckSum = pair->effective->module.CheckSum;
+            idslW64.TimeDateStamp = pair->effective->module.TimeDateStamp;
+            memcpy(idslW64.FileName, pair->effective->module.ImageName,
+                   sizeof(idslW64.FileName));
+            idslW64.Reparse = FALSE;
+            idslW64.hFile = INVALID_HANDLE_VALUE;
 
-            pcs_callback(pair->pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idsl64);
+            pcs_callback(pair->pcs, CBA_DEFERRED_SYMBOL_LOAD_START, &idslW64);
             ret = pe_load_debug_info(pair->pcs, pair->effective);
             pcs_callback(pair->pcs,
                          ret ? CBA_DEFERRED_SYMBOL_LOAD_COMPLETE : CBA_DEFERRED_SYMBOL_LOAD_FAILURE,
-                         &idsl64);
+                         &idslW64);
             break;
         default:
             ret = FALSE;
