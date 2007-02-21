@@ -191,13 +191,12 @@ BOOL WINAPI SymGetSearchPathW(HANDLE hProcess, LPWSTR szSearchPath,
 BOOL WINAPI SymGetSearchPath(HANDLE hProcess, LPSTR szSearchPath, 
                              DWORD SearchPathLength)
 {
-    WCHAR*      buffer = HeapAlloc(GetProcessHeap(), 0, SearchPathLength);
+    WCHAR*      buffer = HeapAlloc(GetProcessHeap(), 0, SearchPathLength * sizeof(WCHAR));
     BOOL        ret = FALSE;
 
     if (buffer)
     {
-        ret = SymGetSearchPathW(hProcess, buffer,
-                                SearchPathLength * sizeof(WCHAR));
+        ret = SymGetSearchPathW(hProcess, buffer, SearchPathLength);
         if (ret)
             WideCharToMultiByte(CP_ACP, 0, buffer, SearchPathLength,
                                 szSearchPath, SearchPathLength, NULL, NULL);
