@@ -447,6 +447,8 @@ extern enum module_type
 extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs, 
                                   struct module* module);
+extern void         module_set_module(struct module* module, const char* name);
+
 /* msc.c */
 extern BOOL         pe_load_debug_directory(const struct process* pcs, 
                                             struct module* module, 

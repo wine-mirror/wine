@@ -79,6 +79,11 @@ static void module_fill_module(const char* in, char* out, size_t size)
     while ((*out = tolower(*out))) out++;
 }
 
+void module_set_module(struct module* module, const char* name)
+{
+    module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
+}
+
 static const char*      get_module_type(enum module_type type, BOOL virtual)
 {
     switch (type)
@@ -116,8 +121,7 @@ struct module* module_new(struct process* pcs, const char* name,
     module->module.SizeOfStruct = sizeof(module->module);
     module->module.BaseOfImage = mod_addr;
     module->module.ImageSize = size;
-    module_fill_module(name, module->module.ModuleName,
-                       sizeof(module->module.ModuleName));
+    module_set_module(module, name);
     module->module.ImageName[0] = '\0';
     lstrcpynA(module->module.LoadedImageName, name, sizeof(module->module.LoadedImageName));
     module->module.SymType = SymNone;
@@ -423,7 +427,7 @@ done:
      * of ImageName. Overwrite it, if we have better information
      */
     if (ModuleName)
-        lstrcpynA(module->module.ModuleName, ModuleName, sizeof(module->module.ModuleName));
+        module_set_module(module, ModuleName);
     lstrcpynA(module->module.ImageName, ImageName, sizeof(module->module.ImageName));
 
     return module->module.BaseOfImage;
@@ -453,7 +457,7 @@ DWORD64 WINAPI  SymLoadModuleEx(HANDLE hProcess, HANDLE hFile, PCSTR ImageName,
                             (DWORD)BaseOfDll, DllSize, 0, 0);
         if (!module) return FALSE;
         if (ModuleName)
-            lstrcpynA(module->module.ModuleName, ModuleName, sizeof(module->module.ModuleName));
+            module_set_module(module, ModuleName);
         module->module.SymType = SymVirtual;
 
         return TRUE;
