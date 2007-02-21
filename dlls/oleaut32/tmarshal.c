@@ -356,6 +356,7 @@ static int _nroffuncs(ITypeInfo *tinfo) {
         n += _nroffuncs(tinfo2);
         ITypeInfo_Release(tinfo2);
     }
+    ITypeInfo_ReleaseTypeAttr(tinfo, attr);
     i = 0;
     while (1) {
 	hres = ITypeInfoImpl_GetInternalFuncDesc(tinfo,i,&fdesc);
