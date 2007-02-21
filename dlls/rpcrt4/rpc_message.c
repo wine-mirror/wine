@@ -784,6 +784,27 @@ fail:
 
 /***********************************************************************
  *           I_RpcGetBuffer [RPCRT4.@]
+ *
+ * Allocates a buffer for use by I_RpcSend or I_RpcSendReceive and binds to the
+ * server interface.
+ *
+ * PARAMS
+ *  pMsg [I/O] RPC message information.
+ *
+ * RETURNS
+ *  Success: RPC_S_OK.
+ *  Failure: RPC_S_INVALID_BINDING if pMsg->Handle is invalid.
+ *           RPC_S_SERVER_UNAVAILABLE if unable to connect to server.
+ *           ERROR_OUTOFMEMORY if buffer allocation failed.
+ *
+ * NOTES
+ *  The pMsg->BufferLength field determines the size of the buffer to allocate,
+ *  in bytes.
+ *
+ *  Use I_RpcFreeBuffer() to unbind from the server and free the message buffer.
+ *
+ * SEE ALSO
+ *  I_RpcFreeBuffer(), I_RpcSend(), I_RpcReceive(), I_RpcSendReceive().
  */
 RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 {
@@ -810,6 +831,18 @@ static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg)
 
 /***********************************************************************
  *           I_RpcFreeBuffer [RPCRT4.@]
+ *
+ * Frees a buffer allocated by I_RpcGetBuffer or I_RpcReceive and unbinds from
+ * the server interface.
+ *
+ * PARAMS
+ *  pMsg [I/O] RPC message information.
+ *
+ * RETURNS
+ *  RPC_S_OK.
+ *
+ * SEE ALSO
+ *  I_RpcGetBuffer(), I_RpcReceive().
  */
 RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 {
@@ -822,6 +855,20 @@ RPC_STATUS WINAPI I_RpcFreeBuffer(PRPC_MESSAGE pMsg)
 
 /***********************************************************************
  *           I_RpcSend [RPCRT4.@]
+ *
+ * Sends a message to the server.
+ *
+ * PARAMS
+ *  pMsg [I/O] RPC message information.
+ *
+ * RETURNS
+ *  Unknown.
+ *
+ * NOTES
+ *  The buffer must have been allocated with I_RpcGetBuffer().
+ *
+ * SEE ALSO
+ *  I_RpcGetBuffer(), I_RpcReceive(), I_RpcSendReceive().
  */
 RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 {
@@ -964,6 +1011,21 @@ fail:
 
 /***********************************************************************
  *           I_RpcSendReceive [RPCRT4.@]
+ *
+ * Sends a message to the server and receives the response.
+ *
+ * PARAMS
+ *  pMsg [I/O] RPC message information.
+ *
+ * RETURNS
+ *  Success: RPC_S_OK.
+ *  Failure: Any error code.
+ *
+ * NOTES
+ *  The buffer must have been allocated with I_RpcGetBuffer().
+ *
+ * SEE ALSO
+ *  I_RpcGetBuffer(), I_RpcSend(), I_RpcReceive().
  */
 RPC_STATUS WINAPI I_RpcSendReceive(PRPC_MESSAGE pMsg)
 {
