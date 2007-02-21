@@ -347,7 +347,7 @@ static void ODBC_ReplicateODBCToRegistry (int is_user, SQLHENV hEnv)
                         KEY_ALL_ACCESS, NULL, &hDSN, NULL))
                         == ERROR_SUCCESS)
                 {
-                    static const char *DRIVERKEY = "Driver";
+                    static const char DRIVERKEY[] = "Driver";
                     if ((reg_ret = RegQueryValueExA (hDSN, DRIVERKEY,
                             NULL, NULL, NULL, NULL))
                             == ERROR_FILE_NOT_FOUND)
@@ -2108,7 +2108,7 @@ SQLRETURN WINAPI SQLSetScrollOptions(
 
 static int SQLColAttributes_KnownStringAttribute(SQLUSMALLINT fDescType)
 {
-    static SQLUSMALLINT attrList[] =
+    static const SQLUSMALLINT attrList[] =
     {
         SQL_COLUMN_OWNER_NAME,
         SQL_COLUMN_QUALIFIER_NAME,
