@@ -403,36 +403,6 @@ enum module_type module_get_type_by_name(const WCHAR* name)
     return DMT_PE;
 }
 
-/******************************************************************
- *		module_get_type_by_nameA
- *
- * Guesses a filename type from its extension
- */
-enum module_type module_get_type_by_nameA(const char* name)
-{
-    const char* ptr;
-    int         len = strlen(name);
-
-    /* check for terminating .so or .so.[digit] */
-    ptr = strrchr(name, '.');
-    if (ptr)
-    {
-        if (!strcmp(ptr, ".so") ||
-            (isdigit(ptr[1]) && !ptr[2] && ptr >= name + 3 && !memcmp(ptr - 3, ".so", 3)))
-            return DMT_ELF;
-        else if (!strcasecmp(ptr, ".pdb"))
-            return DMT_PDB;
-    }
-    /* wine-[kp]thread is also an ELF module */
-    else if (((len > 12 && name[len - 13] == '/') || len == 12) && 
-             (!strcasecmp(name + len - 12, "wine-pthread") || 
-              !strcasecmp(name + len - 12, "wine-kthread")))
-    {
-        return DMT_ELF;
-    }
-    return DMT_PE;
-}
-
 /***********************************************************************
  *			SymLoadModule (DBGHELP.@)
  */
@@ -489,8 +459,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 {
     struct process*     pcs;
     struct module*	module = NULL;
-    char                ImageName[MAX_PATH], amodname[MAX_PATH], *ModuleName;
-
 
     TRACE("(%p %p %s %s %s %08x %p %08x)\n",
           hProcess, hFile, debugstr_w(wImageName), debugstr_w(wModuleName),
@@ -505,8 +473,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 
     if (Flags & SLMFLAG_VIRTUAL)
     {
-        WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, MAX_PATH,
-                            NULL, NULL);
         module = module_new(pcs, wImageName, module_get_type_by_name(wImageName),
                             TRUE, (DWORD)BaseOfDll, SizeOfDll, 0, 0);
         if (!module) return FALSE;
@@ -523,15 +489,6 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
 
     /* this is a Wine extension to the API just to redo the synchronisation */
     if (!wImageName && !hFile) return 0;
-
-    WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, MAX_PATH,
-                        NULL, NULL);
-
-    if (wModuleName)
-        WideCharToMultiByte(CP_ACP,0, wModuleName, -1, ModuleName = amodname, MAX_PATH,
-                            NULL, NULL);
-    else
-        ModuleName = NULL;
 
     if (module_is_elf_container_loaded(pcs, wImageName, wModuleName))
     {

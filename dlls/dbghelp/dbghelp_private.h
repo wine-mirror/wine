@@ -456,8 +456,6 @@ extern struct module*
                                          const struct module* inner);
 extern enum module_type
                     module_get_type_by_name(const WCHAR* name);
-extern enum module_type
-                    module_get_type_by_nameA(const char* name);
 extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs,
                                   struct module* module);
