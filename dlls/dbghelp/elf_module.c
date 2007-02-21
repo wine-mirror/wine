@@ -1358,9 +1358,10 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
     void*               lm_addr;
     struct link_map     lm;
     char		bufstr[256];
+    WCHAR               bufstrW[MAX_PATH];
 
     if (!pcs->dbg_hdr_addr ||
-        !ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr, 
+        !ReadProcessMemory(pcs->handle, (void*)pcs->dbg_hdr_addr,
                            &dbg_hdr, sizeof(dbg_hdr), NULL))
         return FALSE;
 
@@ -1380,7 +1381,8 @@ static BOOL elf_enum_modules_internal(const struct process* pcs,
         {
 	    bufstr[sizeof(bufstr) - 1] = '\0';
             if (main_name && !bufstr[0]) strcpy(bufstr, main_name);
-            if (!cb(bufstr, (unsigned long)lm.l_addr, user)) break;
+            MultiByteToWideChar(CP_UNIXCP, 0, bufstr, -1, bufstrW, sizeof(bufstrW) / sizeof(WCHAR));
+            if (!cb(bufstrW, (unsigned long)lm.l_addr, user)) break;
 	}
     }
     return TRUE;
@@ -1392,14 +1394,16 @@ struct elf_sync
     struct elf_info     elf_info;
 };
 
-static BOOL elf_enum_sync_cb(const char* name, unsigned long addr, void* user)
+static BOOL elf_enum_sync_cb(const WCHAR* name, unsigned long addr, void* user)
 {
     struct elf_sync*    es = user;
+    char                tmp[MAX_PATH];
 
-    elf_search_and_load_file(es->pcs, name, addr, &es->elf_info);
+    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp), 0, 0);
+    elf_search_and_load_file(es->pcs, tmp, addr, &es->elf_info);
     return TRUE;
 }
-    
+
 /******************************************************************
  *		elf_synchronize_module_list
  *
@@ -1520,10 +1524,13 @@ struct elf_load
  * Callback for elf_load_module, used to walk the list of loaded
  * modules.
  */
-static BOOL elf_load_cb(const char* name, unsigned long addr, void* user)
+static BOOL elf_load_cb(const WCHAR* nameW, unsigned long addr, void* user)
 {
     struct elf_load*    el = user;
     const char*         p;
+    char                name[MAX_PATH];
+
+    WideCharToMultiByte(CP_UNIXCP, 0, nameW, -1, name, sizeof(name), 0, 0);
 
     /* memcmp is needed for matches when bufstr contains also version information
      * el->name: libc.so, name: libc.so.6.0

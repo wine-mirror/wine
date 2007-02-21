@@ -270,22 +270,22 @@ static BOOL WINAPI fetch_pe_module_info_cb(WCHAR* name, DWORD64 base, DWORD size
  *
  * Callback for accumulating in dump_context an ELF modules set
  */
-static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base, 
+static BOOL fetch_elf_module_info_cb(const WCHAR* name, unsigned long base,
                                      void* user)
 {
     struct dump_context*        dc = (struct dump_context*)user;
     DWORD                       rbase, size, checksum;
-    WCHAR                       tmp[MAX_PATH];
+    char                        tmp[MAX_PATH];
 
     /* FIXME: there's no relevant timestamp on ELF modules */
     /* NB: if we have a non-null base from the live-target use it (whenever
      * the ELF module is relocatable or not). If we have a null base (ELF
      * module isn't relocatable) then grab its base address from ELF file
      */
-    if (!elf_fetch_file_info(name, &rbase, &size, &checksum))
+    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp), 0, 0);
+    if (!elf_fetch_file_info(tmp, &rbase, &size, &checksum))
         size = checksum = 0;
-    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp) / sizeof(WCHAR));
-    add_module(dc, tmp, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
+    add_module(dc, name, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
     return TRUE;
 }
 
