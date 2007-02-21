@@ -132,7 +132,7 @@ static BOOL WINAPI tgt_process_minidump_write(HANDLE hProcess, void* addr,
     return FALSE;
 }
 
-BOOL CALLBACK validate_file(PSTR name, void* user)
+BOOL CALLBACK validate_file(PCWSTR name, void* user)
 {
     return FALSE; /* get the first file we find !! */
 }
@@ -149,7 +149,7 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     MINIDUMP_MODULE*            mm;
     MINIDUMP_STRING*            mds;
     char                        exec_name[1024];
-    char                        name[1024];
+    WCHAR                       nameW[1024];
     unsigned                    len;
 
     /* fetch PID */
@@ -173,17 +173,16 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
             len = WideCharToMultiByte(CP_ACP, 0, mds->Buffer,
                                       mds->Length / sizeof(WCHAR), 
-                                      name, sizeof(name) - 1, NULL, NULL);
-            name[len] = 0;
-            for (ptr = name + len - 1; ptr >= name; ptr--)
+                                      exec_name, sizeof(exec_name) - 1, NULL, NULL);
+            exec_name[len] = 0;
+            for (ptr = exec_name + len - 1; ptr >= exec_name; ptr--)
             {
                 if (*ptr == '/' || *ptr == '\\')
                 {
-                    strcpy(exec_name, ptr + 1);
+                    memmove(exec_name, ptr + 1, strlen(ptr + 1) + 1);
                     break;
                 }
             }
-            if (ptr < name) strcpy(exec_name, name);
         }
     }
 
@@ -294,22 +293,21 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
     if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, &dir,
                                &stream, &size))
     {
-        char    buffer[MAX_PATH];
+        WCHAR   buffer[MAX_PATH];
 
         mml = (MINIDUMP_MODULE_LIST*)stream;
         for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
-            len = WideCharToMultiByte(CP_ACP, 0, mds->Buffer,
-                                      mds->Length / sizeof(WCHAR), 
-                                      name, sizeof(name) - 1, NULL, NULL);
-            name[len] = 0;
-            if (SymFindFileInPath(hProc, NULL, name, (void*)(DWORD_PTR)mm->CheckSum,
-                                  0, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
-                SymLoadModule(hProc, NULL, buffer, NULL, mm->BaseOfImage, mm->SizeOfImage);
+            memcpy(nameW, mds->Buffer, mds->Length);
+            nameW[mds->Length / sizeof(WCHAR)] = 0;
+            if (SymFindFileInPathW(hProc, NULL, nameW, (void*)(DWORD_PTR)mm->CheckSum,
+                                   0, 0, SSRVOPT_DWORD, buffer, validate_file, NULL))
+                SymLoadModuleExW(hProc, NULL, buffer, NULL, mm->BaseOfImage, mm->SizeOfImage,
+                                 NULL, 0);
             else
-                SymLoadModuleEx(hProc, NULL, name, NULL, mm->BaseOfImage, mm->SizeOfImage,
-                                NULL, SLMFLAG_VIRTUAL);
+                SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
+                                 NULL, SLMFLAG_VIRTUAL);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ModuleListStream, &dir, &stream, &size))
@@ -318,12 +316,10 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         for (i = 0, mm = &mml->Modules[0]; i < mml->NumberOfModules; i++, mm++)
         {
             mds = (MINIDUMP_STRING*)((char*)data->mapping + mm->ModuleNameRva);
-            len = WideCharToMultiByte(CP_ACP, 0, mds->Buffer,
-                                      mds->Length / sizeof(WCHAR), 
-                                      name, sizeof(name) - 1, NULL, NULL);
-            name[len] = 0;
-            SymLoadModule(hProc, NULL, name, NULL, 
-                          mm->BaseOfImage, mm->SizeOfImage);
+            memcpy(nameW, mds->Buffer, mds->Length);
+            nameW[mds->Length / sizeof(WCHAR)] = 0;
+            SymLoadModuleExW(hProc, NULL, nameW, NULL, mm->BaseOfImage, mm->SizeOfImage,
+                             NULL, 0);
         }
     }
     if (MiniDumpReadDumpStream(data->mapping, ExceptionStream, &dir, &stream, &size))
