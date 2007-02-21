@@ -472,7 +472,7 @@ static void test_openfile(void)
         /* We have a handle so all ftp calls should fail (TODO: Put more ftp-calls in here) */
         SetLastError(0xdeadbeef);
         bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
-        ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
+        ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
         DeleteFileA("should_be_non_existing_deadbeef"); /* Just in case */
@@ -482,7 +482,7 @@ static void test_openfile(void)
         ok ( bRet == FALSE, "Expected FtpOpenFileA to fail\n");
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
-        InternetCloseHandle(hOpenFile); /* Just in case */
+        InternetCloseHandle(hOpenFile2); /* Just in case */
     }
 
     InternetCloseHandle(hOpenFile);
