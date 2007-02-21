@@ -50,9 +50,9 @@ static void test_getfile_no_open(void)
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(NULL, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    todo_wine
-    ok ( GetLastError() == ERROR_INTERNET_NOT_INITIALIZED,
-        "Expected ERROR_INVALID_HANDLE, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_NOT_INITIALIZED ||
+         GetLastError() == ERROR_INVALID_HANDLE,
+        "Expected ERROR_INTERNET_NOT_INITIALIZED or ERROR_INVALID_HANDLE (win98), got %d\n", GetLastError());
 }
 
 static void test_connect(void)
@@ -245,12 +245,13 @@ static void test_getfile(void)
      *   Condition flags
      */
 
-    /* Test to show validity of 'local file' parameter is tested first (together with 'remote file') */
+    /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(NULL, NULL, "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INVALID_HANDLE ||
+         GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_HANDLE (win98) or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Test to show session handle is checked before 'condition flags' */
     SetLastError(0xdeadbeef);
@@ -377,12 +378,13 @@ static void test_getfile(void)
 
     hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
 
-    /* Test to show existence of local file is tested before 'session handle type' */
+    /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hConnect, NULL, "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE ||
+         GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE (win98) or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Test to show that 'session handle type' is checked before 'condition flags' */
     SetLastError(0xdeadbeef);
@@ -525,12 +527,13 @@ static void test_putfile(void)
      *   Condition flags
      */
 
-    /* Test to show validity of 'local file' parameter is tested first (together with 'remote file') */
+    /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
     bRet = FtpPutFileA(NULL, NULL, "non_existing_remote", FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INVALID_HANDLE ||
+         GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_HANDLE (win98) or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Test to show session handle is checked before 'condition flags' */
     SetLastError(0xdeadbeef);
@@ -600,12 +603,13 @@ static void test_putfile(void)
 
     hConnect = InternetConnect(hInternet, "www.winehq.org", INTERNET_DEFAULT_HTTP_PORT, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
 
-    /* Test to show validity of 'local file' parameter is tested a before 'session handle type' */
+    /* Test to show the parameter checking order depends on the Windows version */
     SetLastError(0xdeadbeef);
     bRet = FtpPutFileA(hConnect, NULL, "non_existing_remote", FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
-        "Expected ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+    ok ( GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE ||
+         GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INTERNET_INCORRECT_HANDLE_TYPE (win98) or ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
 
     /* Test to show that 'session handle type' is checked before 'condition flags' */
     SetLastError(0xdeadbeef);
