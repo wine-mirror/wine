@@ -164,7 +164,7 @@ struct symt_udt* symt_new_udt(struct module* module, const char* typename,
 {
     struct symt_udt*            sym;
 
-    TRACE_(dbghelp_symt)("Adding udt %s:%s\n", module->module.ModuleName, typename);
+    TRACE_(dbghelp_symt)("Adding udt %s:%s\n", module->module_name, typename);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagUDT;

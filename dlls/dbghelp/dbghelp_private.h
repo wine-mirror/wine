@@ -311,12 +311,16 @@ struct process;
 struct module
 {
     IMAGEHLP_MODULE64           module;
+    /* ANSI copy of module.ModuleName for efficiency */
+    char                        module_name[MAX_PATH];
     struct module*              next;
     enum module_type		type : 16;
     unsigned short              is_virtual : 1;
+
+    /* specific information for debug types */
     struct elf_module_info*	elf_info;
     struct dwarf2_module_info_s*dwarf2_info;
-    
+
     /* memory allocation pool */
     struct pool                 pool;
 

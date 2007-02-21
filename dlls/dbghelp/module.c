@@ -82,6 +82,7 @@ static void module_fill_module(const char* in, char* out, size_t size)
 void module_set_module(struct module* module, const char* name)
 {
     module_fill_module(name, module->module.ModuleName, sizeof(module->module.ModuleName));
+    strcpy(module->module_name, module->module.ModuleName);
 }
 
 static const char*      get_module_type(enum module_type type, BOOL virtual)
@@ -519,7 +520,7 @@ BOOL module_remove(struct process* pcs, struct module* module)
 {
     struct module**     p;
 
-    TRACE("%s (%p)\n", module->module.ModuleName, module);
+    TRACE("%s (%p)\n", module->module_name, module);
     hash_table_destroy(&module->ht_symbols);
     hash_table_destroy(&module->ht_types);
     HeapFree(GetProcessHeap(), 0, (char*)module->sources);
@@ -592,7 +593,7 @@ BOOL  WINAPI SymEnumerateModules(HANDLE hProcess,
     {
         if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
             continue;
-        if (!EnumModulesCallback(module->module.ModuleName, 
+        if (!EnumModulesCallback(module->module_name,
                                  module->module.BaseOfImage, UserContext))
             break;
     }
@@ -616,7 +617,7 @@ BOOL  WINAPI SymEnumerateModules64(HANDLE hProcess,
     {
         if (!(dbghelp_options & SYMOPT_WINE_WITH_ELF_MODULES) && module->type == DMT_ELF)
             continue;
-        if (!EnumModulesCallback(module->module.ModuleName, 
+        if (!EnumModulesCallback(module->module_name,
                                  module->module.BaseOfImage, UserContext))
             break;
     }

@@ -2417,7 +2417,7 @@ static BOOL codeview_process_info(const struct process* pcs,
     }
     default:
         ERR("Unknown CODEVIEW signature %.4s in module %s\n",
-            (const char*)signature, msc_dbg->module->module.ModuleName);
+            (const char*)signature, msc_dbg->module->module_name);
         break;
     }
     if (ret)

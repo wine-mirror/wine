@@ -130,8 +130,8 @@ struct symt_compiland* symt_new_compiland(struct module* module,
 {
     struct symt_compiland*    sym;
 
-    TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n", 
-                         module->module.ModuleName, source_get(module, src_idx));
+    TRACE_(dbghelp_symt)("Adding compiland symbol %s:%s\n",
+                         module->module_name, source_get(module, src_idx));
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag = SymTagCompiland;
@@ -151,9 +151,9 @@ struct symt_public* symt_new_public(struct module* module,
     struct symt_public* sym;
     struct symt**       p;
 
-    TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n", 
-                         module->module.ModuleName, name, address);
-    if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) && 
+    TRACE_(dbghelp_symt)("Adding public symbol %s:%s @%lx\n",
+                         module->module_name, name, address);
+    if ((dbghelp_options & SYMOPT_AUTO_PUBLICS) &&
         symt_find_nearest(module, address) != NULL)
         return NULL;
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
@@ -186,8 +186,8 @@ struct symt_data* symt_new_global_variable(struct module* module,
     struct symt**       p;
     DWORD64             tsz;
 
-    TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n", 
-                         module->module.ModuleName, name, addr, type);
+    TRACE_(dbghelp_symt)("Adding global symbol %s:%s @%lx %p\n",
+                         module->module_name, name, addr, type);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
         sym->symt.tag      = SymTagData;
@@ -202,7 +202,7 @@ struct symt_data* symt_new_global_variable(struct module* module,
         {
             if (tsz != size)
                 FIXME("Size mismatch for %s.%s between type (%s) and src (%lu)\n",
-                      module->module.ModuleName, name, 
+                      module->module_name, name,
                       wine_dbgstr_longlong(tsz), size);
         }
         if (compiland)
@@ -223,8 +223,8 @@ struct symt_function* symt_new_function(struct module* module,
     struct symt_function*       sym;
     struct symt**               p;
 
-    TRACE_(dbghelp_symt)("Adding global function %s:%s @%lx-%lx\n", 
-                         module->module.ModuleName, name, addr, addr + size - 1);
+    TRACE_(dbghelp_symt)("Adding global function %s:%s @%lx-%lx\n",
+                         module->module_name, name, addr, addr + size - 1);
 
     assert(!sig_type || sig_type->tag == SymTagFunctionType);
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
@@ -309,8 +309,8 @@ struct symt_data* symt_add_func_local(struct module* module,
     struct symt_data*   locsym;
     struct symt**       p;
 
-    TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n", 
-                         module->module.ModuleName, func->hash_elt.name, 
+    TRACE_(dbghelp_symt)("Adding local symbol (%s:%s): %s %p\n",
+                         module->module_name, func->hash_elt.name,
                          name, type);
 
     assert(func);
@@ -424,8 +424,8 @@ struct symt_thunk* symt_new_thunk(struct module* module,
 {
     struct symt_thunk*  sym;
 
-    TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%lx-%lx\n", 
-                         module->module.ModuleName, name, addr, addr + size - 1);
+    TRACE_(dbghelp_symt)("Adding global thunk %s:%s @%lx-%lx\n",
+                         module->module_name, name, addr, addr + size - 1);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -455,7 +455,7 @@ struct symt_data* symt_new_constant(struct module* module,
     struct symt_data*  sym;
 
     TRACE_(dbghelp_symt)("Adding constant value %s:%s\n",
-                         module->module.ModuleName, name);
+                         module->module_name, name);
 
     if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
     {
@@ -877,7 +877,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
         {
             if (pair.requested->type == DMT_PE && module_get_debug(&pair))
             {
-                if (regexec(&mod_regex, pair.requested->module.ModuleName, 0, NULL, 0) == 0 &&
+                if (regexec(&mod_regex, pair.requested->module_name, 0, NULL, 0) == 0 &&
                     symt_enum_module(&pair, &sym_regex, se))
                     break;
             }
@@ -892,7 +892,7 @@ static BOOL sym_enum(HANDLE hProcess, ULONG64 BaseOfDll, PCSTR Mask,
                     !module_get_containee(pair.pcs, pair.requested) &&
                     module_get_debug(&pair))
                 {
-                    if (regexec(&mod_regex, pair.requested->module.ModuleName, 0, NULL, 0) == 0 &&
+                    if (regexec(&mod_regex, pair.requested->module_name, 0, NULL, 0) == 0 &&
                         symt_enum_module(&pair, &sym_regex, se))
                     break;
                 }
