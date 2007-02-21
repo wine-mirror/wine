@@ -192,7 +192,7 @@ static inline unsigned elf_get_map_size(struct elf_file_map* fmap, int sidx)
  *
  * Maps an ELF file into memory (and checks it's a real ELF file)
  */
-static BOOL elf_map_file(const char* filename, struct elf_file_map* fmap)
+static BOOL elf_map_fileA(const char* filename, struct elf_file_map* fmap)
 {
     static const BYTE   elf_signature[4] = { ELFMAG0, ELFMAG1, ELFMAG2, ELFMAG3 };
     struct stat	        statbuf;
@@ -246,6 +246,20 @@ static BOOL elf_map_file(const char* filename, struct elf_file_map* fmap)
      */
     fmap->elf_size -= fmap->elf_start;
     return TRUE;
+}
+
+static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
+{
+    char*       filename;
+    unsigned    len;
+    BOOL        ret;
+
+    len = WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+    if (!(filename = HeapAlloc(GetProcessHeap(), 0, len))) return FALSE;
+    WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
+    ret = elf_map_fileA(filename, fmap);
+    HeapFree(GetProcessHeap(), 0, filename);
+    return ret;
 }
 
 /******************************************************************
@@ -824,21 +838,21 @@ static char* elf_locate_debug_link(const char* filename, const WCHAR* loaded_fil
 
     /* testing execdir/filename */
     strcpy(slash, filename);
-    if (elf_map_file(p, fmap_link)) goto found;
+    if (elf_map_fileA(p, fmap_link)) goto found;
 
     /* testing execdir/.debug/filename */
     sprintf(slash, ".debug/%s", filename);
-    if (elf_map_file(p, fmap_link)) goto found;
+    if (elf_map_fileA(p, fmap_link)) goto found;
 
     /* testing globaldebugdir/execdir/filename */
     memmove(p + globalDebugDirLen, p, slash - p);
     memcpy(p, globalDebugDir, globalDebugDirLen);
     slash += globalDebugDirLen;
     strcpy(slash, filename);
-    if (elf_map_file(p, fmap_link)) goto found;
+    if (elf_map_fileA(p, fmap_link)) goto found;
 
     strcpy(p, filename);
-    if (elf_map_file(p, fmap_link)) goto found;
+    if (elf_map_fileA(p, fmap_link)) goto found;
 
     HeapFree(GetProcessHeap(), 0, p);
 
@@ -1108,12 +1122,8 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
 
     if (!fmap)
     {
-        char    LoadedImageName[MAX_PATH];
-
         fmap = &my_fmap;
-        WideCharToMultiByte(CP_UNIXCP, 0, module->module.LoadedImageName, -1,
-                            LoadedImageName, MAX_PATH, NULL, NULL);
-        ret = elf_map_file(LoadedImageName, fmap);
+        ret = elf_map_file(module->module.LoadedImageName, fmap);
     }
     if (ret)
         ret = elf_load_debug_info_from_map(module, fmap, &pool, &ht_symtab);
@@ -1132,10 +1142,8 @@ BOOL elf_fetch_file_info(const WCHAR* name, DWORD* base,
                          DWORD* size, DWORD* checksum)
 {
     struct elf_file_map fmap;
-    char                tmp[MAX_PATH];
 
-    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp), 0, 0);
-    if (!elf_map_file(tmp, &fmap)) return FALSE;
+    if (!elf_map_file(name, &fmap)) return FALSE;
     if (base) *base = fmap.elf_start;
     *size = fmap.elf_size;
     *checksum = calc_crc32(&fmap);
@@ -1160,12 +1168,10 @@ static BOOL elf_load_file(struct process* pcs, const WCHAR* filename,
     BOOL                ret = FALSE;
     struct elf_file_map fmap;
     int	       	        i;
-    char                tmp[MAX_PATH];
 
     TRACE("Processing elf file '%s' at %08lx\n", debugstr_w(filename), load_offset);
 
-    WideCharToMultiByte(CP_UNIXCP, 0, filename, -1, tmp, sizeof(tmp), NULL, NULL);
-    if (!elf_map_file(tmp, &fmap)) goto leave;
+    if (!elf_map_file(filename, &fmap)) goto leave;
 
     /* Next, we need to find a few of the internal ELF headers within
      * this thing.  We need the main executable header, and the section
