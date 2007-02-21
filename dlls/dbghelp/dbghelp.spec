@@ -26,8 +26,8 @@
 @ stdcall MapDebugInformation(long str str long)
 @ stdcall MiniDumpReadDumpStream(ptr long ptr ptr ptr)
 @ stdcall MiniDumpWriteDump(ptr long ptr long long long long)
-@ stdcall SearchTreeForFile(str str str)
-@ stub SearchTreeForFileW
+@ stdcall SearchTreeForFile(str str ptr)
+@ stdcall SearchTreeForFileW(wstr wstr ptr)
 @ stdcall StackWalk(long long long ptr ptr ptr ptr ptr ptr)
 @ stdcall StackWalk64(long long long ptr ptr ptr ptr ptr ptr)
 @ stub SymAddSymbol

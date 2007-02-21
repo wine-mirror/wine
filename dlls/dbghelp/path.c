@@ -273,14 +273,32 @@ static BOOL do_search(const char* file, char* buffer, BOOL recurse,
 }
 
 /***********************************************************************
+ *           SearchTreeForFileW (DBGHELP.@)
+ */
+BOOL WINAPI SearchTreeForFileW(PCWSTR root, PCWSTR file, PWSTR buffer)
+{
+    TRACE("(%s, %s, %p)\n",
+          debugstr_w(root), debugstr_w(file), buffer);
+    strcpyW(buffer, root);
+    return do_searchW(file, buffer, TRUE, NULL, NULL);
+}
+
+/***********************************************************************
  *           SearchTreeForFile (DBGHELP.@)
  */
 BOOL WINAPI SearchTreeForFile(PCSTR root, PCSTR file, PSTR buffer)
 {
-    TRACE("(%s, %s, %p)\n", 
-          debugstr_a(root), debugstr_a(file), buffer);
-    strcpy(buffer, root);
-    return do_search(file, buffer, TRUE, NULL, NULL);
+    WCHAR       rootW[MAX_PATH];
+    WCHAR       fileW[MAX_PATH];
+    WCHAR       bufferW[MAX_PATH];
+    BOOL        ret;
+
+    MultiByteToWideChar(CP_ACP, 0, root, -1, rootW, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, file, -1, fileW, MAX_PATH);
+    ret = SearchTreeForFileW(rootW, fileW, bufferW);
+    if (ret)
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
+    return ret;
 }
 
 /******************************************************************
