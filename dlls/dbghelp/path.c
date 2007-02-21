@@ -32,6 +32,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 
 static inline BOOL is_sep(char ch) {return ch == '/' || ch == '\\';}
+static inline BOOL is_sepW(WCHAR ch) {return ch == '/' || ch == '\\';}
 
 static inline const char* file_name(const char* str)
 {
@@ -143,6 +144,34 @@ BOOL WINAPI MakeSureDirectoryPathExists(LPCSTR DirPath)
        SetLastError(ERROR_SUCCESS);
 
     return TRUE;
+}
+
+/******************************************************************
+ *		SymMatchFileNameW (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymMatchFileNameW(WCHAR* file, WCHAR* match,
+                              WCHAR** filestop, WCHAR** matchstop)
+{
+    WCHAR*      fptr;
+    WCHAR*      mptr;
+
+    TRACE("(%s %s %p %p)\n",
+          debugstr_w(file), debugstr_w(match), filestop, matchstop);
+
+    fptr = file + strlenW(file) - 1;
+    mptr = match + strlenW(match) - 1;
+
+    while (fptr >= file && mptr >= match)
+    {
+        if (toupperW(*fptr) != toupperW(*mptr) && !(is_sepW(*fptr) && is_sepW(*mptr)))
+            break;
+        fptr--; mptr--;
+    }
+    if (filestop) *filestop = fptr;
+    if (matchstop) *matchstop = mptr;
+
+    return mptr == match - 1;
 }
 
 /******************************************************************
