@@ -404,7 +404,7 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
     s.user = user;
 
     filename = file_name(full_path);
-    s.kind = module_get_type_by_name(filename);
+    s.kind = module_get_type_by_nameA(filename);
 
     /* first check full path to file */
     if (sffip_cb(full_path, &s))

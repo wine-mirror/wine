@@ -455,7 +455,9 @@ extern struct module*
                     module_get_containee(const struct process* pcs,
                                          const struct module* inner);
 extern enum module_type
-                    module_get_type_by_name(const char* name);
+                    module_get_type_by_name(const WCHAR* name);
+extern enum module_type
+                    module_get_type_by_nameA(const char* name);
 extern void         module_reset_debug_info(struct module* module);
 extern BOOL         module_remove(struct process* pcs,
                                   struct module* module);

@@ -36,7 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dbghelp);
 const WCHAR        S_ElfW[]         = {'<','e','l','f','>','\0'};
 const WCHAR        S_WineLoaderW[]  = {'<','w','i','n','e','-','l','o','a','d','e','r','>','\0'};
 static const WCHAR S_DotSoW[]       = {'.','s','o','\0'};
-static const WCHAR S_PdbW[]         = {'.','p','d','b','\0'};
+static const WCHAR S_DotPdbW[]      = {'.','p','d','b','\0'};
 static const WCHAR S_WinePThreadW[] = {'w','i','n','e','-','p','t','h','r','e','a','d','\0'};
 static const WCHAR S_WineKThreadW[] = {'w','i','n','e','-','k','t','h','r','e','a','d','\0'};
 
@@ -378,7 +378,37 @@ static BOOL module_is_elf_container_loaded(struct process* pcs,
  *
  * Guesses a filename type from its extension
  */
-enum module_type module_get_type_by_name(const char* name)
+enum module_type module_get_type_by_name(const WCHAR* name)
+{
+    const WCHAR*ptr;
+    int         len = strlenW(name);
+
+    /* check for terminating .so or .so.[digit] */
+    ptr = strrchrW(name, '.');
+    if (ptr)
+    {
+        if (!strcmpW(ptr, S_DotSoW) ||
+            (isdigit(ptr[1]) && !ptr[2] && ptr >= name + 3 && !memcmp(ptr - 3, S_DotSoW, 3)))
+            return DMT_ELF;
+        else if (!strcmpiW(ptr, S_DotPdbW))
+            return DMT_PDB;
+    }
+    /* wine-[kp]thread is also an ELF module */
+    else if (((len > 12 && name[len - 13] == '/') || len == 12) &&
+             (!strcmpiW(name + len - 12, S_WinePThreadW) ||
+              !strcmpiW(name + len - 12, S_WineKThreadW)))
+    {
+        return DMT_ELF;
+    }
+    return DMT_PE;
+}
+
+/******************************************************************
+ *		module_get_type_by_nameA
+ *
+ * Guesses a filename type from its extension
+ */
+enum module_type module_get_type_by_nameA(const char* name)
 {
     const char* ptr;
     int         len = strlen(name);
@@ -477,7 +507,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     {
         WideCharToMultiByte(CP_ACP,0, wImageName, -1, ImageName, MAX_PATH,
                             NULL, NULL);
-        module = module_new(pcs, wImageName, module_get_type_by_name(ImageName),
+        module = module_new(pcs, wImageName, module_get_type_by_name(wImageName),
                             TRUE, (DWORD)BaseOfDll, SizeOfDll, 0, 0);
         if (!module) return FALSE;
         if (wModuleName) module_set_module(module, wModuleName);
@@ -515,7 +545,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     TRACE("Assuming %s as native DLL\n", debugstr_w(wImageName));
     if (!(module = pe_load_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
     {
-        if (module_get_type_by_name(ImageName) == DMT_ELF &&
+        if (module_get_type_by_name(wImageName) == DMT_ELF &&
             (module = elf_load_module(pcs, wImageName, BaseOfDll)))
             goto done;
         FIXME("Should have successfully loaded debug information for image %s\n",
