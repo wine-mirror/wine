@@ -816,43 +816,46 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
  *    is the global debug file directory, and execdir has been turned
  *    into a relative path)." (from GDB manual)
  */
-static char* elf_locate_debug_link(const char* filename, const WCHAR* loaded_file,
+static WCHAR* elf_locate_debug_link(const char* filename, const WCHAR* loaded_file,
                                    struct elf_file_map* fmap_link)
 {
-    static const char globalDebugDir[] = "/usr/lib/debug/";
-    const size_t globalDebugDirLen = strlen(globalDebugDir);
-    size_t loaded_file_len;
-    char* p;
-    char* slash;
+    static const WCHAR globalDebugDirW[] = {'/','u','s','r','/','l','i','b','/','d','e','b','u','g','/'};
+    static const WCHAR dotDebugW[] = {'.','d','e','b','u','g','/'};
+    const size_t globalDebugDirLen = sizeof(globalDebugDirW) / sizeof(WCHAR);
+    size_t filename_len;
+    WCHAR* p;
+    WCHAR* slash;
 
-    loaded_file_len = WideCharToMultiByte(CP_UNIXCP, 0, loaded_file, -1, NULL, 0, NULL, NULL);
+    filename_len = MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, NULL, 0);
     p = HeapAlloc(GetProcessHeap(), 0,
-                  globalDebugDirLen + loaded_file_len + 6 + 1 + strlen(filename) + 1);
-
+                  (globalDebugDirLen + strlenW(loaded_file) + 6 + 1 + filename_len + 1) * sizeof(WCHAR));
     if (!p) return FALSE;
 
     /* we prebuild the string with "execdir" */
-    WideCharToMultiByte(CP_UNIXCP, 0, loaded_file, -1, p, loaded_file_len, NULL, NULL);
-    slash = strrchr(p, '/');
+    strcpyW(p, loaded_file);
+    slash = strrchrW(p, '/');
     if (slash == NULL) slash = p; else slash++;
 
     /* testing execdir/filename */
-    strcpy(slash, filename);
-    if (elf_map_fileA(p, fmap_link)) goto found;
+    MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash, filename_len);
+    if (elf_map_file(p, fmap_link)) goto found;
+
+    HeapValidate(GetProcessHeap(), 0, 0);
 
     /* testing execdir/.debug/filename */
-    sprintf(slash, ".debug/%s", filename);
-    if (elf_map_fileA(p, fmap_link)) goto found;
+    memcpy(slash, dotDebugW, sizeof(dotDebugW));
+    MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash + sizeof(dotDebugW) / sizeof(WCHAR), filename_len);
+    if (elf_map_file(p, fmap_link)) goto found;
 
     /* testing globaldebugdir/execdir/filename */
-    memmove(p + globalDebugDirLen, p, slash - p);
-    memcpy(p, globalDebugDir, globalDebugDirLen);
+    memmove(p + globalDebugDirLen, p, (slash - p) * sizeof(WCHAR));
+    memcpy(p, globalDebugDirW, globalDebugDirLen * sizeof(WCHAR));
     slash += globalDebugDirLen;
-    strcpy(slash, filename);
-    if (elf_map_fileA(p, fmap_link)) goto found;
+    MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash, filename_len);
+    if (elf_map_file(p, fmap_link)) goto found;
 
-    strcpy(p, filename);
-    if (elf_map_fileA(p, fmap_link)) goto found;
+    /* finally testing filename */
+    if (elf_map_file(slash, fmap_link)) goto found;
 
     HeapFree(GetProcessHeap(), 0, p);
 
@@ -860,7 +863,7 @@ static char* elf_locate_debug_link(const char* filename, const WCHAR* loaded_fil
     return NULL;
 
 found:
-    TRACE("Located debug information file %s at %s\n", filename, p);
+    TRACE("Located debug information file %s at %s\n", filename, debugstr_w(p));
     return p;
 }
 
@@ -884,7 +887,7 @@ static BOOL elf_debuglink_parse (struct module* module,
     BOOL ret = FALSE;
     const char* dbg_link = (char*)debuglink;
     struct elf_file_map fmap_link;
-    char* link_file;
+    WCHAR* link_file;
 
     link_file = elf_locate_debug_link(dbg_link, module->module.LoadedImageName, &fmap_link);
 
@@ -895,11 +898,9 @@ static BOOL elf_debuglink_parse (struct module* module,
 	ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
                                            ht_symtab);
 	if (ret)
-            MultiByteToWideChar(CP_ACP, 0, link_file, -1,
-                                module->module.LoadedPdbName,
-                                sizeof(module->module.LoadedPdbName));
+            strcpyW(module->module.LoadedPdbName,link_file);
 	else
-	    WARN("Couldn't load debug information from %s\n", link_file);
+	    WARN("Couldn't load debug information from %s\n", debugstr_w(link_file));
 	elf_unmap_file(&fmap_link);
         HeapFree(GetProcessHeap(), 0, link_file);
     }
