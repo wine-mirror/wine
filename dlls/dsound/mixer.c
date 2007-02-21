@@ -98,6 +98,14 @@ void DSOUND_RecalcFormat(IDirectSoundBufferImpl *dsb)
 	dsb->writelead = (dsb->freq / 100) * dsb->pwfx->nBlockAlign;
 }
 
+/**
+ * Check for application callback requests for when the play position
+ * reaches certain points.
+ *
+ * The offsets that will be triggered will be those between the recorded
+ * "last played" position for the buffer (i.e. dsb->playpos) and "len" bytes
+ * beyond that position.
+ */
 void DSOUND_CheckEvent(IDirectSoundBufferImpl *dsb, int len)
 {
 	int			i;
@@ -163,6 +171,10 @@ static inline BYTE cvtS16toU8(INT16 s)
     return (s >> 8) ^ (unsigned char)0x80;
 }
 
+/**
+ * Copy a single frame from the given input buffer to the given output buffer.
+ * Translate 8 <-> 16 bits and mono <-> stereo
+ */
 static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE *obuf )
 {
 	DirectSoundDevice * device = dsb->device;
@@ -209,7 +221,24 @@ static inline void cp_fields(const IDirectSoundBufferImpl *dsb, BYTE *ibuf, BYTE
         }
 }
 
-/* Now with PerfectPitch (tm) technology */
+/**
+ * Mix at most the given amount of data into the given device buffer from the
+ * given secondary buffer, starting from the dsb's first currently unmixed
+ * frame (buf_mixpos), translating frequency (pitch), stereo/mono and
+ * bits-per-sample. The secondary buffer sample is looped if it is not
+ * long enough and it is a looping buffer.
+ * (Doesn't perform any mixing - this is a straight copy operation).
+ *
+ * Now with PerfectPitch (tm) technology
+ *
+ * dsb = the secondary buffer
+ * buf = the device buffer
+ * len = number of bytes to store in the device buffer
+ *
+ * Returns: the number of bytes read from the secondary buffer
+ *   (ie. len, adjusted for frequency, number of channels and sample size,
+ *    and limited by buffer length for non-looping buffers)
+ */
 static INT DSOUND_MixerNorm(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 {
 	INT	i, size, ipos, ilen;
@@ -356,6 +385,10 @@ static void DSOUND_MixerVol(IDirectSoundBufferImpl *dsb, BYTE *buf, INT len)
 	}
 }
 
+/**
+ * Make sure the device's tmp_buffer is at least the given size. Return a
+ * pointer to it.
+ */
 static LPBYTE DSOUND_tmpbuffer(DirectSoundDevice *device, DWORD len)
 {
     TRACE("(%p,%d)\n", device, len);
@@ -372,6 +405,19 @@ static LPBYTE DSOUND_tmpbuffer(DirectSoundDevice *device, DWORD len)
     return device->tmp_buffer;
 }
 
+/**
+ * Mix (at most) the given number of bytes into the given position of the
+ * device buffer, from the secondary buffer "dsb" (starting at the current
+ * mix position for that buffer).
+ *
+ * Returns the number of bytes actually mixed into the device buffer. This
+ * will match fraglen unless the end of the secondary buffer is reached
+ * (and it is not looping).
+ *
+ * dsb  = the secondary buffer to mix from
+ * writepos = position (offset) in device buffer to write at
+ * fraglen = number of bytes to mix
+ */
 static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWORD fraglen)
 {
 	INT	i, len, ilen, field, todo;
@@ -381,9 +427,15 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 	len = fraglen;
 	if (!(dsb->playflags & DSBPLAY_LOOPING)) {
+		/* This buffer is not looping, so make sure the requested
+		 * length will not take us past the end of the buffer */
 		int secondary_remainder = dsb->buflen - dsb->buf_mixpos;
 		int adjusted_remainder = MulDiv(dsb->device->pwfx->nAvgBytesPerSec, secondary_remainder, dsb->nAvgBytesPerSec);
 		assert(adjusted_remainder >= 0);
+			/* The adjusted remainder must be at least one sample,
+			 * otherwise we will never reach the end of the
+			 * secondary buffer, as there will perpetually be a
+			 * fractional remainder */
 		TRACE("secondary_remainder = %d, adjusted_remainder = %d, len = %d\n", secondary_remainder, adjusted_remainder, len);
 		if (adjusted_remainder < len) {
 			TRACE("clipping len to remainder of secondary buffer\n");
@@ -404,12 +456,16 @@ static DWORD DSOUND_MixInBuffer(IDirectSoundBufferImpl *dsb, DWORD writepos, DWO
 
 	TRACE("MixInBuffer (%p) len = %d, dest = %d\n", dsb, len, writepos);
 
+	/* first, copy the data from the DirectSoundBuffer into the temporary
+	   buffer, translating frequency/bits-per-sample/number-of-channels
+	   to match the device settings */
 	ilen = DSOUND_MixerNorm(dsb, ibuf, len);
 	if ((dsb->dsbd.dwFlags & DSBCAPS_CTRLPAN) ||
 	    (dsb->dsbd.dwFlags & DSBCAPS_CTRLVOLUME) ||
 	    (dsb->dsbd.dwFlags & DSBCAPS_CTRL3D))
 		DSOUND_MixerVol(dsb, ibuf, len);
 
+	/* Now mix the temporary buffer into the devices main buffer */
 	if (dsb->device->pwfx->wBitsPerSample == 8) {
 		BYTE	*obuf = dsb->device->buffer + writepos;
 
@@ -667,8 +723,23 @@ void DSOUND_ForceRemix(IDirectSoundBufferImpl *dsb)
 	LeaveCriticalSection(&dsb->lock);
 }
 
+/**
+ * Mix some frames from the given secondary buffer "dsb" into the device
+ * primary buffer.
+ *
+ * dsb = the secondary buffer
+ * playpos = the current play position in the device buffer (primary buffer)
+ * writepos = the current safe-to-write position in the device buffer
+ * mixlen = the maximum number of bytes in the primary buffer to mix, from the
+ *          current writepos.
+ *
+ * Returns: the number of bytes beyond the writepos that were mixed.
+ */
 static DWORD DSOUND_MixOne(IDirectSoundBufferImpl *dsb, DWORD playpos, DWORD writepos, DWORD mixlen)
 {
+	/* The buffer's primary_mixpos may be before or after the the device
+	 * buffer's mixpos, but both must be ahead of writepos. */
+
 	DWORD len, slen;
 	/* determine this buffer's write position */
 	DWORD buf_writepos = DSOUND_CalcPlayPosition(dsb, writepos, writepos);
@@ -823,6 +894,19 @@ post_mix:
 	return slen;
 }
 
+/**
+ * For a DirectSoundDevice, go through all the currently playing buffers and
+ * mix them in to the device buffer.
+ *
+ * playpos = the current play position in the primary buffer
+ * writepos = the current safe-to-write position in the primary buffer
+ * mixlen = the maximum amount to mix into the primary buffer
+ *          (beyond the current writepos)
+ * recover = true if the sound device may have been reset and the write
+ *           position in the device buffer changed
+ *
+ * Returns:  the length beyond the writepos that was mixed to.
+ */
 static DWORD DSOUND_MixToPrimary(DirectSoundDevice *device, DWORD playpos, DWORD writepos, DWORD mixlen, BOOL recover)
 {
 	INT			i, len, maxlen = 0;
@@ -941,6 +1025,11 @@ void DSOUND_WaveQueue(DirectSoundDevice *device, DWORD mixq)
 
 /* #define SYNC_CALLBACK */
 
+/**
+ * Perform mixing for a Direct Sound device. That is, go through all the
+ * secondary buffers (the sound bites currently playing) and mix them in
+ * to the primary buffer (the device buffer).
+ */
 static void DSOUND_PerformMix(DirectSoundDevice *device)
 {
 	int nfiller;
