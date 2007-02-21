@@ -470,8 +470,23 @@ static void test_openfile(void)
     {
         BOOL bRet;
         HINTERNET hOpenFile2;
+        HANDLE    hFile;
 
-        /* We have a handle so all ftp calls should fail (TODO: Put more ftp-calls in here) */
+        /* We have a handle so all ftp calls should fail (TODO: Put all ftp-calls in here) */
+        SetLastError(0xdeadbeef);
+        bRet = FtpCreateDirectoryA(hFtp, "new_directory_deadbeef");
+        ok ( bRet == FALSE, "Expected FtpCreateDirectoryA to fail\n");
+        todo_wine
+        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        bRet = FtpDeleteFileA(hFtp, "non_existent_file_deadbeef");
+        ok ( bRet == FALSE, "Expected FtpDeleteFileA to fail\n");
+        todo_wine
+        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+
         SetLastError(0xdeadbeef);
         bRet = FtpGetFileA(hFtp, "welcome.msg", "should_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
         ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
@@ -485,6 +500,33 @@ static void test_openfile(void)
         ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
             "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
         InternetCloseHandle(hOpenFile2); /* Just in case */
+
+        /* Create a temporary local file */
+        SetLastError(0xdeadbeef);
+        hFile = CreateFileA("now_existing_local", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+        ok ( hFile != NULL, "Error creating a local file : %d\n", GetLastError());
+        CloseHandle(hFile);
+        SetLastError(0xdeadbeef);
+        bRet = FtpPutFileA(hFtp, "now_existing_local", "non_existing_remote", FTP_TRANSFER_TYPE_UNKNOWN, 0);
+        ok ( bRet == FALSE, "Expected FtpPutFileA to fail\n");
+        todo_wine
+        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+        DeleteFileA("now_existing_local");
+
+        SetLastError(0xdeadbeef);
+        bRet = FtpRemoveDirectoryA(hFtp, "should_be_non_existing_deadbeef_dir");
+        ok ( bRet == FALSE, "Expected FtpRemoveDirectoryA to fail\n");
+        todo_wine
+        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        bRet = FtpRenameFileA(hFtp , "should_be_non_existing_deadbeef", "new");
+        ok ( bRet == FALSE, "Expected FtpRenameFileA to fail\n");
+        todo_wine
+        ok ( GetLastError() == ERROR_FTP_TRANSFER_IN_PROGRESS,
+            "Expected ERROR_FTP_TRANSFER_IN_PROGRESS, got %d\n", GetLastError());
     }
 
     InternetCloseHandle(hOpenFile);
