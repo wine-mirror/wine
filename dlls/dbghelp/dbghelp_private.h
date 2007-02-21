@@ -418,7 +418,7 @@ extern void*        fetch_buffer(struct process* pcs, unsigned size);
 #define ELF_NO_MAP      ((const void*)0xffffffff)
 typedef BOOL (*elf_enum_modules_cb)(const WCHAR*, unsigned long addr, void* user);
 extern BOOL         elf_enum_modules(HANDLE hProc, elf_enum_modules_cb, void*);
-extern BOOL         elf_fetch_file_info(const char* name, DWORD* base, DWORD* size, DWORD* checksum);
+extern BOOL         elf_fetch_file_info(const WCHAR* name, DWORD* base, DWORD* size, DWORD* checksum);
 struct elf_file_map;
 extern BOOL         elf_load_debug_info(struct module* module, struct elf_file_map* fmap);
 extern struct module*

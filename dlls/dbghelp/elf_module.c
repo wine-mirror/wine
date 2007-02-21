@@ -1128,11 +1128,14 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
  *
  * Gathers some more information for an ELF module from a given file
  */
-BOOL elf_fetch_file_info(const char* name, DWORD* base,
+BOOL elf_fetch_file_info(const WCHAR* name, DWORD* base,
                          DWORD* size, DWORD* checksum)
 {
     struct elf_file_map fmap;
-    if (!elf_map_file(name, &fmap)) return FALSE;
+    char                tmp[MAX_PATH];
+
+    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp), 0, 0);
+    if (!elf_map_file(tmp, &fmap)) return FALSE;
     if (base) *base = fmap.elf_start;
     *size = fmap.elf_size;
     *checksum = calc_crc32(&fmap);
@@ -1594,7 +1597,7 @@ BOOL	elf_synchronize_module_list(struct process* pcs)
     return FALSE;
 }
 
-BOOL elf_fetch_file_info(const char* name, DWORD* base,
+BOOL elf_fetch_file_info(const WCHAR* name, DWORD* base,
                          DWORD* size, DWORD* checksum)
 {
     return FALSE;

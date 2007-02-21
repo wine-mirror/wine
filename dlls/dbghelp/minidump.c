@@ -275,15 +275,13 @@ static BOOL fetch_elf_module_info_cb(const WCHAR* name, unsigned long base,
 {
     struct dump_context*        dc = (struct dump_context*)user;
     DWORD                       rbase, size, checksum;
-    char                        tmp[MAX_PATH];
 
     /* FIXME: there's no relevant timestamp on ELF modules */
     /* NB: if we have a non-null base from the live-target use it (whenever
      * the ELF module is relocatable or not). If we have a null base (ELF
      * module isn't relocatable) then grab its base address from ELF file
      */
-    WideCharToMultiByte(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp), 0, 0);
-    if (!elf_fetch_file_info(tmp, &rbase, &size, &checksum))
+    if (!elf_fetch_file_info(name, &rbase, &size, &checksum))
         size = checksum = 0;
     add_module(dc, name, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
     return TRUE;

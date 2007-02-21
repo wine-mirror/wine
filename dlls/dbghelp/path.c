@@ -392,25 +392,19 @@ static BOOL CALLBACK sffip_cb(LPCWSTR buffer, void* user)
         }
         break;
     case DMT_ELF:
+        if (elf_fetch_file_info(buffer, 0, &size, &checksum))
         {
-            char                fn[MAX_PATH];
-
-            WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
-
-            if (elf_fetch_file_info(fn, 0, &size, &checksum))
+            if (checksum != (DWORD_PTR)s->id)
             {
-                if (checksum != (DWORD_PTR)s->id)
-                {
-                    WARN("Found %s, but wrong checksums: %08x %08lx\n",
-                         debugstr_w(buffer), checksum, (DWORD_PTR)s->id);
-                    return FALSE;
-                }
-            }
-            else
-            {
-                WARN("Couldn't read %s\n", debugstr_w(buffer));
+                WARN("Found %s, but wrong checksums: %08x %08lx\n",
+                     debugstr_w(buffer), checksum, (DWORD_PTR)s->id);
                 return FALSE;
             }
+        }
+        else
+        {
+            WARN("Couldn't read %s\n", debugstr_w(buffer));
+            return FALSE;
         }
         break;
     case DMT_PDB:
