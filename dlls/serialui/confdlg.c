@@ -205,7 +205,7 @@ static BOOL SERIALUI_GetConfItems(HWND hDlg, DWORD id, LPCPARAM2STR table, LPDWO
  * dcb.BaudRate. This code is to convert back and forth between CBR_ style
  * and integers. The dialog box uses integer values.
  */
-static DWORD SERIALUI_BaudConvertTable[] =  {
+static const DWORD SERIALUI_BaudConvertTable[] =  {
   CBR_110, 110, CBR_300, 300, CBR_600, 600, CBR_1200, 1200,
   CBR_2400, 2400, CBR_4800, 4800, CBR_9600, 9600, CBR_14400, 14400,
   CBR_19200, 19200, CBR_38400, 38400, CBR_56000, 56000, CBR_57600, 57600,
