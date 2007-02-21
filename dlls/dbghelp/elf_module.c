@@ -1063,7 +1063,7 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             dbg_link = (const BYTE*) elf_map_section(fmap, debuglink_sect);
             if (dbg_link != ELF_NO_MAP)
             {
-                lret = elf_debuglink_parse (module, pool, ht_symtab, dbg_link);
+                lret = elf_debuglink_parse(module, pool, ht_symtab, dbg_link);
                 if (!lret)
 		    WARN("Couldn't load linked debug file for %s\n",
                          debugstr_w(module->module.ModuleName));
@@ -1111,7 +1111,7 @@ BOOL elf_load_debug_info(struct module* module, struct elf_file_map* fmap)
         char    LoadedImageName[MAX_PATH];
 
         fmap = &my_fmap;
-        WideCharToMultiByte(CP_ACP, 0, module->module.LoadedImageName, -1,
+        WideCharToMultiByte(CP_UNIXCP, 0, module->module.LoadedImageName, -1,
                             LoadedImageName, MAX_PATH, NULL, NULL);
         ret = elf_map_file(LoadedImageName, fmap);
     }
@@ -1209,12 +1209,14 @@ static BOOL elf_load_file(struct process* pcs, const char* filename,
 
     if (elf_info->flags & ELF_INFO_MODULE)
     {
+        WCHAR wfilename[MAX_PATH];
         struct elf_module_info *elf_module_info =
             HeapAlloc(GetProcessHeap(), 0, sizeof(struct elf_module_info));
         if (!elf_module_info) goto leave;
-        elf_info->module = module_newA(pcs, filename, DMT_ELF, FALSE,
-                                       (load_offset) ? load_offset : fmap.elf_start,
-                                       fmap.elf_size, 0, calc_crc32(&fmap));
+        MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, wfilename, sizeof(wfilename) / sizeof(WCHAR));
+        elf_info->module = module_new(pcs, wfilename, DMT_ELF, FALSE,
+                                      (load_offset) ? load_offset : fmap.elf_start,
+                                      fmap.elf_size, 0, calc_crc32(&fmap));
         if (!elf_info->module)
         {
             HeapFree(GetProcessHeap(), 0, elf_module_info);
@@ -1508,7 +1510,7 @@ struct elf_load
 {
     struct process*     pcs;
     struct elf_info     elf_info;
-    const char*         name;
+    char                name[MAX_PATH];
     BOOL                ret;
 };
 
@@ -1543,23 +1545,26 @@ static BOOL elf_load_cb(const char* name, unsigned long addr, void* user)
  * Also, find module real name and load address from
  * the real loaded modules list in pcs address space
  */
-struct module*  elf_load_module(struct process* pcs, const char* name, unsigned long addr)
+struct module*  elf_load_module(struct process* pcs, const WCHAR* name, unsigned long addr)
 {
     struct elf_load     el;
 
-    TRACE("(%p %s %08lx)\n", pcs, name, addr);
+    TRACE("(%p %s %08lx)\n", pcs, debugstr_w(name), addr);
 
     el.elf_info.flags = ELF_INFO_MODULE;
     el.ret = FALSE;
 
     if (pcs->dbg_hdr_addr) /* we're debugging a life target */
     {
+        const WCHAR*  ptr;
+
         el.pcs = pcs;
         /* do only the lookup from the filename, not the path (as we lookup module
          * name in the process' loaded module list)
          */
-        el.name = strrchr(name, '/');
-        if (!el.name++) el.name = name;
+        ptr = strrchrW(name, '/');
+        if (!ptr++) ptr = name;
+        WideCharToMultiByte(CP_UNIXCP, 0, ptr, -1, el.name, sizeof(el.name), NULL, NULL);
         el.ret = FALSE;
 
         if (!elf_enum_modules_internal(pcs, NULL, elf_load_cb, &el))
@@ -1567,7 +1572,8 @@ struct module*  elf_load_module(struct process* pcs, const char* name, unsigned 
     }
     else if (addr)
     {
-        el.ret = elf_search_and_load_file(pcs, name, addr, &el.elf_info);
+        WideCharToMultiByte(CP_UNIXCP, 0, name, -1, el.name, sizeof(el.name), NULL, NULL);
+        el.ret = elf_search_and_load_file(pcs, el.name, addr, &el.elf_info);
     }
     if (!el.ret) return NULL;
     assert(el.elf_info.module);
@@ -1597,7 +1603,7 @@ BOOL elf_enum_modules(HANDLE hProc, elf_enum_modules_cb cb, void* user)
     return FALSE;
 }
 
-struct module*  elf_load_module(struct process* pcs, const char* name, unsigned long addr)
+struct module*  elf_load_module(struct process* pcs, const WCHAR* name, unsigned long addr)
 {
     return NULL;
 }

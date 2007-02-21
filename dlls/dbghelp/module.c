@@ -177,17 +177,6 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
     return module;
 }
 
-struct module* module_newA(struct process* pcs, const char* name,
-                          enum module_type type, BOOL virtual,
-                          unsigned long mod_addr, unsigned long size,
-                          unsigned long stamp, unsigned long checksum)
-{
-    WCHAR wname[MAX_PATH];
-
-    MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname) / sizeof(WCHAR));
-    return module_new(pcs, wname, type, virtual, mod_addr, size, stamp, checksum);
-}
-
 /***********************************************************************
  *	module_find_by_name
  *
@@ -527,7 +516,7 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     if (!(module = pe_load_module(pcs, wImageName, hFile, BaseOfDll, SizeOfDll)))
     {
         if (module_get_type_by_name(ImageName) == DMT_ELF &&
-            (module = elf_load_module(pcs, ImageName, BaseOfDll)))
+            (module = elf_load_module(pcs, wImageName, BaseOfDll)))
             goto done;
         FIXME("Should have successfully loaded debug information for image %s\n",
               debugstr_w(wImageName));

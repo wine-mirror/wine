@@ -422,7 +422,7 @@ extern BOOL         elf_fetch_file_info(const char* name, DWORD* base, DWORD* si
 struct elf_file_map;
 extern BOOL         elf_load_debug_info(struct module* module, struct elf_file_map* fmap);
 extern struct module*
-                    elf_load_module(struct process* pcs, const char* name, unsigned long);
+                    elf_load_module(struct process* pcs, const WCHAR* name, unsigned long);
 extern BOOL         elf_read_wine_loader_dbg_info(struct process* pcs);
 extern BOOL         elf_synchronize_module_list(struct process* pcs);
 struct elf_thunk_area;
@@ -448,11 +448,6 @@ extern struct module*
                                enum module_type type, BOOL virtual,
                                unsigned long addr, unsigned long size,
                                unsigned long stamp, unsigned long checksum);
-extern struct module*
-                    module_newA(struct process* pcs, const char* name,
-                                enum module_type type, BOOL virtual,
-                                unsigned long addr, unsigned long size,
-                                unsigned long stamp, unsigned long checksum);
 extern struct module*
                     module_get_container(const struct process* pcs,
                                          const struct module* inner);
