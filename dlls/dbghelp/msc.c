@@ -1856,7 +1856,7 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
     }
 }
 
-static BOOL CALLBACK pdb_match(char* file, void* user)
+static BOOL CALLBACK pdb_match(const char* file, void* user)
 {
     /* accept first file that exists */
     HANDLE h = CreateFileA(file, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);

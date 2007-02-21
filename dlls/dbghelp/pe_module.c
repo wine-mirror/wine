@@ -77,7 +77,7 @@ static BOOL pe_load_stabs(const struct process* pcs, struct module* module,
     return ret;
 }
 
-static BOOL CALLBACK dbg_match(char* file, void* user)
+static BOOL CALLBACK dbg_match(const char* file, void* user)
 {
     /* accept first file */
     return FALSE;

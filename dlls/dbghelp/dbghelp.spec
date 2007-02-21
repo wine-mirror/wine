@@ -54,7 +54,7 @@
 @ stub SymFindDebugInfoFile
 @ stub SymFindDebugInfoFileW
 @ stdcall SymFindFileInPath(long str str ptr long long long ptr ptr ptr)
-@ stub SymFindFileInPathW
+@ stdcall SymFindFileInPathW(long wstr wstr ptr long long long ptr ptr ptr)
 @ stdcall SymFromAddr(ptr double ptr ptr)
 @ stdcall SymFromAddrW(ptr double ptr ptr)
 @ stub SymFromIndex

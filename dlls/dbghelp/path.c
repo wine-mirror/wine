@@ -42,6 +42,14 @@ static inline const char* file_name(const char* str)
     return p + 1;
 }
 
+static inline const WCHAR* file_nameW(const WCHAR* str)
+{
+    const WCHAR*      p;
+
+    for (p = str + strlenW(str) - 1; p >= str && !is_sepW(*p); p--);
+    return p + 1;
+}
+
 /******************************************************************
  *		FindDebugInfoFile (DBGHELP.@)
  *
@@ -238,40 +246,6 @@ static BOOL do_searchW(const WCHAR* file, WCHAR* buffer, BOOL recurse,
     return found;
 }
 
-static BOOL do_search(const char* file, char* buffer, BOOL recurse,
-                      PENUMDIRTREE_CALLBACK cb, void* user)
-{
-    HANDLE              h;
-    WIN32_FIND_DATAA    fd;
-    unsigned            pos;
-    BOOL                found = FALSE;
-
-    pos = strlen(buffer);
-    if (buffer[pos - 1] != '\\') buffer[pos++] = '\\';
-    strcpy(buffer + pos, "*.*");
-    if ((h = FindFirstFileA(buffer, &fd)) == INVALID_HANDLE_VALUE)
-        return FALSE;
-    /* doc doesn't specify how the tree is enumerated... 
-     * doing a depth first based on, but may be wrong
-     */
-    do
-    {
-        if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, "..")) continue;
-
-        strcpy(buffer + pos, fd.cFileName);
-        if (recurse && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-            found = do_search(file, buffer, TRUE, cb, user);
-        else if (SymMatchFileName(buffer, (char*)file, NULL, NULL))
-        {
-            if (!cb || cb(buffer, user)) found = TRUE;
-        }
-    } while (!found && FindNextFileA(h, &fd));
-    if (!found) buffer[--pos] = '\0';
-    FindClose(h);
-
-    return found;
-}
-
 /***********************************************************************
  *           SearchTreeForFileW (DBGHELP.@)
  */
@@ -368,7 +342,7 @@ struct sffip
     DWORD                       two;
     DWORD                       three;
     DWORD                       flags;
-    PFINDFILEINPATHCALLBACK     cb;
+    PFINDFILEINPATHCALLBACKW    cb;
     void*                       user;
 };
 
@@ -377,7 +351,7 @@ struct sffip
  * returns TRUE when file is found, FALSE to continue searching
  * (NB this is the opposite conventions as for SymFindFileInPathProc)
  */
-static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
+static BOOL CALLBACK sffip_cb(LPCWSTR buffer, void* user)
 {
     struct sffip*       s = (struct sffip*)user;
     DWORD               size, checksum;
@@ -395,10 +369,10 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
 
             timestamp = ~(DWORD_PTR)s->id;
             size = ~s->two;
-            hFile = CreateFileA(buffer, GENERIC_READ, FILE_SHARE_READ, NULL, 
+            hFile = CreateFileW(buffer, GENERIC_READ, FILE_SHARE_READ, NULL,
                                 OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (hFile == INVALID_HANDLE_VALUE) return FALSE;
-            if ((hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
+            if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)) != NULL)
             {
                 if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
                 {
@@ -412,32 +386,40 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             CloseHandle(hFile);
             if (timestamp != (DWORD_PTR)s->id || size != s->two)
             {
-                WARN("Found %s, but wrong size or timestamp\n", buffer);
+                WARN("Found %s, but wrong size or timestamp\n", debugstr_w(buffer));
                 return FALSE;
             }
         }
         break;
     case DMT_ELF:
-        if (elf_fetch_file_info(buffer, 0, &size, &checksum))
         {
-            if (checksum != (DWORD_PTR)s->id)
+            char                fn[MAX_PATH];
+
+            WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
+
+            if (elf_fetch_file_info(fn, 0, &size, &checksum))
             {
-                WARN("Found %s, but wrong checksums: %08x %08lx\n",
-                      buffer, checksum, (DWORD_PTR)s->id);
+                if (checksum != (DWORD_PTR)s->id)
+                {
+                    WARN("Found %s, but wrong checksums: %08x %08lx\n",
+                         debugstr_w(buffer), checksum, (DWORD_PTR)s->id);
+                    return FALSE;
+                }
+            }
+            else
+            {
+                WARN("Couldn't read %s\n", debugstr_w(buffer));
                 return FALSE;
             }
-        }
-        else
-        {
-            WARN("Couldn't read %s\n", buffer);
-            return FALSE;
         }
         break;
     case DMT_PDB:
         {
             struct pdb_lookup   pdb_lookup;
+            char                fn[MAX_PATH];
 
-            pdb_lookup.filename = buffer;
+            WideCharToMultiByte(CP_ACP, 0, buffer, -1, fn, MAX_PATH, NULL, NULL);
+            pdb_lookup.filename = fn;
 
             if (!pdb_fetch_file_info(&pdb_lookup)) return FALSE;
             switch (pdb_lookup.kind)
@@ -445,26 +427,26 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             case PDB_JG:
                 if (s->flags & SSRVOPT_GUIDPTR)
                 {
-                    WARN("Found %s, but wrong PDB version\n", buffer);
+                    WARN("Found %s, but wrong PDB version\n", debugstr_w(buffer));
                     return FALSE;
                 }
                 if (pdb_lookup.u.jg.timestamp != (DWORD_PTR)s->id)
                 {
                     WARN("Found %s, but wrong signature: %08x %08lx\n",
-                         buffer, pdb_lookup.u.jg.timestamp, (DWORD_PTR)s->id);
+                         debugstr_w(buffer), pdb_lookup.u.jg.timestamp, (DWORD_PTR)s->id);
                     return FALSE;
                 }
                 break;
             case PDB_DS:
                 if (!(s->flags & SSRVOPT_GUIDPTR))
                 {
-                    WARN("Found %s, but wrong PDB version\n", buffer);
+                    WARN("Found %s, but wrong PDB version\n", debugstr_w(buffer));
                     return FALSE;
                 }
                 if (memcmp(&pdb_lookup.u.ds.guid, (GUID*)s->id, sizeof(GUID)))
                 {
                     WARN("Found %s, but wrong GUID: %s %s\n",
-                         buffer, debugstr_guid(&pdb_lookup.u.ds.guid),
+                         debugstr_w(buffer), debugstr_guid(&pdb_lookup.u.ds.guid),
                          debugstr_guid((GUID*)s->id));
                     return FALSE;
                 }
@@ -473,7 +455,7 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
             if (pdb_lookup.age != s->two)
             {
                 WARN("Found %s, but wrong age: %08x %08x\n",
-                     buffer, pdb_lookup.age, s->two);
+                     debugstr_w(buffer), pdb_lookup.age, s->two);
                 return FALSE;
             }
         }
@@ -485,39 +467,30 @@ static BOOL CALLBACK sffip_cb(LPCSTR buffer, void* user)
     /* yes, EnumDirTree/do_search and SymFindFileInPath callbacks use the opposite
      * convention to stop/continue enumeration. sigh.
      */
-    return !(s->cb)((char*)buffer, s->user);
+    return !(s->cb)((WCHAR*)buffer, s->user);
 }
 
 /******************************************************************
- *		SymFindFileInPath (DBGHELP.@)
+ *		SymFindFileInPathW (DBGHELP.@)
  *
  */
-BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_path,
-                              PVOID id, DWORD two, DWORD three, DWORD flags,
-                              LPSTR buffer, PFINDFILEINPATHCALLBACK cb,
-                              PVOID user)
+BOOL WINAPI SymFindFileInPathW(HANDLE hProcess, PCWSTR searchPath, PCWSTR full_path,
+                               PVOID id, DWORD two, DWORD three, DWORD flags,
+                               LPWSTR buffer, PFINDFILEINPATHCALLBACKW cb,
+                               PVOID user)
 {
     struct sffip        s;
     struct process*     pcs = process_find_by_handle(hProcess);
-    char                tmp[MAX_PATH];
-    char*               ptr;
-    char*               buf = NULL;
-    const char*         filename;
-    const char*         searchPath = inSearchPath;
+    WCHAR               tmp[MAX_PATH];
+    WCHAR*              ptr;
+    const WCHAR*        filename;
 
     TRACE("(%p %s %s %p %08x %08x %08x %p %p %p)\n",
-          hProcess, searchPath, full_path, id, two, three, flags,
-          buffer, cb, user);
+          hProcess, debugstr_w(searchPath), debugstr_w(full_path),
+          id, two, three, flags, buffer, cb, user);
 
     if (!pcs) return FALSE;
-    if (!searchPath)
-    {
-        unsigned len = WideCharToMultiByte(CP_ACP, 0, pcs->search_path, -1, NULL, 0, NULL, NULL);
-
-        searchPath = buf = HeapAlloc(GetProcessHeap(), 0, len);
-        if (!searchPath) return FALSE;
-        WideCharToMultiByte(CP_ACP, 0, pcs->search_path, -1, buf, len, NULL, NULL);
-    }
+    if (!searchPath) searchPath = pcs->search_path;
 
     s.id = id;
     s.two = two;
@@ -526,38 +499,66 @@ BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR inSearchPath, PCSTR full_pa
     s.cb = cb;
     s.user = user;
 
-    filename = file_name(full_path);
-    s.kind = module_get_type_by_nameA(filename);
+    filename = file_nameW(full_path);
+    s.kind = module_get_type_by_name(filename);
 
     /* first check full path to file */
     if (sffip_cb(full_path, &s))
     {
-        strcpy(buffer, full_path);
-        HeapFree(GetProcessHeap(), 0, buf);
+        strcpyW(buffer, full_path);
         return TRUE;
     }
 
     while (searchPath)
     {
-        ptr = strchr(searchPath, ';');
+        ptr = strchrW(searchPath, ';');
         if (ptr)
         {
-            memcpy(tmp, searchPath, ptr - searchPath);
+            memcpy(tmp, searchPath, (ptr - searchPath) * sizeof(WCHAR));
             tmp[ptr - searchPath] = 0;
             searchPath = ptr + 1;
         }
         else
         {
-            strcpy(tmp, searchPath);
+            strcpyW(tmp, searchPath);
             searchPath = NULL;
         }
-        if (do_search(filename, tmp, FALSE, sffip_cb, &s))
+        if (do_searchW(filename, tmp, FALSE, sffip_cb, &s))
         {
-            strcpy(buffer, tmp);
-            HeapFree(GetProcessHeap(), 0, buf);
+            strcpyW(buffer, tmp);
             return TRUE;
         }
     }
-    HeapFree(GetProcessHeap(), 0, buf);
     return FALSE;
+}
+
+/******************************************************************
+ *		SymFindFileInPath (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymFindFileInPath(HANDLE hProcess, PCSTR searchPath, PCSTR full_path,
+                              PVOID id, DWORD two, DWORD three, DWORD flags,
+                              LPSTR buffer, PFINDFILEINPATHCALLBACK cb,
+                              PVOID user)
+{
+    WCHAR                       searchPathW[MAX_PATH];
+    WCHAR                       full_pathW[MAX_PATH];
+    WCHAR                       bufferW[MAX_PATH];
+    struct enum_dir_treeWA      edt;
+    BOOL                        ret;
+
+    /* a PFINDFILEINPATHCALLBACK and a PENUMDIRTREE_CALLBACK have actually the
+     * same signature & semantics, hence we can reuse the EnumDirTree W->A
+     * conversion helper
+     */
+    edt.cb = cb;
+    edt.user = user;
+    if (searchPath)
+        MultiByteToWideChar(CP_ACP, 0, searchPath, -1, searchPathW, MAX_PATH);
+    MultiByteToWideChar(CP_ACP, 0, full_path, -1, full_pathW, MAX_PATH);
+    if ((ret =  SymFindFileInPathW(hProcess, searchPath ? searchPathW : NULL, full_pathW,
+                                   id, two, three, flags,
+                                   bufferW, enum_dir_treeWA, &edt)))
+        WideCharToMultiByte(CP_ACP, 0, bufferW, -1, buffer, MAX_PATH, NULL, NULL);
+    return ret;
 }
