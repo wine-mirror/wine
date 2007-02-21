@@ -1492,6 +1492,29 @@ BOOL WINAPI ImmUnregisterWordW(
   return FALSE;
 }
 
+/***********************************************************************
+ *		ImmGetImeMenuItemsA (IMM32.@)
+ */
+DWORD WINAPI ImmGetImeMenuItemsA( HIMC hIMC, DWORD dwFlags, DWORD dwType,
+   LPIMEMENUITEMINFOA lpImeParentMenu, LPIMEMENUITEMINFOA lpImeMenu,
+    DWORD dwSize)
+{
+  FIXME("(%p, %i, %i, %p, %p, %i): stub\n", hIMC, dwFlags, dwType,
+    lpImeParentMenu, lpImeMenu, dwSize);
+  return 0;
+}
+
+/***********************************************************************
+*		ImmGetImeMenuItemsW (IMM32.@)
+*/
+DWORD WINAPI ImmGetImeMenuItemsW( HIMC hIMC, DWORD dwFlags, DWORD dwType,
+   LPIMEMENUITEMINFOW lpImeParentMenu, LPIMEMENUITEMINFOW lpImeMenu,
+   DWORD dwSize)
+{
+  FIXME("(%p, %i, %i, %p, %p, %i): stub\n", hIMC, dwFlags, dwType,
+    lpImeParentMenu, lpImeMenu, dwSize);
+  return 0;
+}
 
 /*****
  * Internal functions to help with IME window management
