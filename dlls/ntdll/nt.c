@@ -217,8 +217,10 @@ NTSTATUS WINAPI NtQueryInformationToken(
     case TokenType:
         len = sizeof (TOKEN_TYPE);
         break;
-#if 0
     case TokenImpersonationLevel:
+        len = sizeof(SECURITY_IMPERSONATION_LEVEL);
+        break;
+#if 0
     case TokenStatistics:
 #endif /* 0 */
     default:
@@ -351,6 +353,17 @@ NTSTATUS WINAPI NtQueryInformationToken(
             *(RtlSubAuthoritySid(sid, 0)) = SECURITY_INTERACTIVE_RID;
             owner->Owner = sid;
         }
+        break;
+    case TokenImpersonationLevel:
+        SERVER_START_REQ( get_token_impersonation_level )
+        {
+            SECURITY_IMPERSONATION_LEVEL *impersonation_level = tokeninfo;
+            req->handle = token;
+            status = wine_server_call( req );
+            if (status == STATUS_SUCCESS)
+                *impersonation_level = reply->impersonation_level;
+        }
+        SERVER_END_REQ;
         break;
     default:
         {

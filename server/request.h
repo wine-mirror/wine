@@ -326,6 +326,7 @@ DECL_HANDLER(create_symlink);
 DECL_HANDLER(open_symlink);
 DECL_HANDLER(query_symlink);
 DECL_HANDLER(get_object_info);
+DECL_HANDLER(get_token_impersonation_level);
 
 #ifdef WANT_REQUEST_HANDLERS
 
@@ -548,6 +549,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_open_symlink,
     (req_handler)req_query_symlink,
     (req_handler)req_get_object_info,
+    (req_handler)req_get_token_impersonation_level,
 };
 #endif  /* WANT_REQUEST_HANDLERS */
 

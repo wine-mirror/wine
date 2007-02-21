@@ -2862,3 +2862,10 @@ enum message_type
     unsigned int   access;        /* granted access mask */
     unsigned int   ref_count;     /* object ref count */
 @END
+
+/* Query the impersonation level of an impersonation token */
+@REQ(get_token_impersonation_level)
+    obj_handle_t   handle;        /* handle to the object */
+@REPLY
+    int            impersonation_level; /* impersonation level of the impersonation token */
+@END

@@ -1386,6 +1386,23 @@ DECL_HANDLER(get_token_groups)
     }
 }
 
+DECL_HANDLER(get_token_impersonation_level)
+{
+    struct token *token;
+
+    if ((token = (struct token *)get_handle_obj( current->process, req->handle,
+                                                 TOKEN_QUERY,
+                                                 &token_ops )))
+    {
+        if (token->primary)
+            set_error( STATUS_INVALID_PARAMETER );
+        else
+            reply->impersonation_level = token->impersonation_level;
+
+        release_object( token );
+    }
+}
+
 DECL_HANDLER(set_security_object)
 {
     data_size_t sd_size = get_req_data_size();
