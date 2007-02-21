@@ -48,7 +48,7 @@ struct dump_module
     ULONG                               size;
     DWORD                               timestamp;
     DWORD                               checksum;
-    char                                name[MAX_PATH];
+    WCHAR                               name[MAX_PATH];
 };
 
 struct dump_context
@@ -219,7 +219,7 @@ static BOOL fetch_thread_info(struct dump_context* dc, int thd_idx,
  *
  * Add a module to a dump context
  */
-static BOOL add_module(struct dump_context* dc, const char* name,
+static BOOL add_module(struct dump_context* dc, const WCHAR* name,
                        DWORD base, DWORD size, DWORD timestamp, DWORD checksum,
                        BOOL is_elf)
 {
@@ -231,11 +231,11 @@ static BOOL add_module(struct dump_context* dc, const char* name,
                                  ++dc->num_module * sizeof(*dc->module));
     if (!dc->module) return FALSE;
     if (is_elf ||
-        !GetModuleFileNameExA(dc->hProcess, (HMODULE)base, 
+        !GetModuleFileNameExW(dc->hProcess, (HMODULE)base,
                               dc->module[dc->num_module - 1].name,
-                              sizeof(dc->module[dc->num_module - 1].name)))
-        lstrcpynA(dc->module[dc->num_module - 1].name, name,
-                  sizeof(dc->module[dc->num_module - 1].name));
+                              sizeof(dc->module[dc->num_module - 1].name) / sizeof(WCHAR)))
+        lstrcpynW(dc->module[dc->num_module - 1].name, name,
+                  sizeof(dc->module[dc->num_module - 1].name) / sizeof(WCHAR));
     dc->module[dc->num_module - 1].base = base;
     dc->module[dc->num_module - 1].size = size;
     dc->module[dc->num_module - 1].timestamp = timestamp;
@@ -250,14 +250,16 @@ static BOOL add_module(struct dump_context* dc, const char* name,
  *
  * Callback for accumulating in dump_context a PE modules set
  */
-static BOOL WINAPI fetch_pe_module_info_cb(char* name, DWORD base, DWORD size,
+static BOOL WINAPI fetch_pe_module_info_cb(WCHAR* name, DWORD64 base, DWORD size,
                                            void* user)
 {
     struct dump_context*        dc = (struct dump_context*)user;
     IMAGE_NT_HEADERS            nth;
 
+    if (!validate_addr64(base)) return FALSE;
+
     if (pe_load_nt_header(dc->hProcess, base, &nth))
-        add_module((struct dump_context*)user, name, base, size, 
+        add_module((struct dump_context*)user, name, base, size,
                    nth.FileHeader.TimeDateStamp, nth.OptionalHeader.CheckSum,
                    FALSE);
     return TRUE;
@@ -272,7 +274,8 @@ static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base,
                                      void* user)
 {
     struct dump_context*        dc = (struct dump_context*)user;
-    DWORD rbase, size, checksum;
+    DWORD                       rbase, size, checksum;
+    WCHAR                       tmp[MAX_PATH];
 
     /* FIXME: there's no relevant timestamp on ELF modules */
     /* NB: if we have a non-null base from the live-target use it (whenever
@@ -281,13 +284,14 @@ static BOOL fetch_elf_module_info_cb(const char* name, unsigned long base,
      */
     if (!elf_fetch_file_info(name, &rbase, &size, &checksum))
         size = checksum = 0;
-    add_module(dc, name, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
+    MultiByteToWideChar(CP_UNIXCP, 0, name, -1, tmp, sizeof(tmp) / sizeof(WCHAR));
+    add_module(dc, tmp, base ? base : rbase, size, 0 /* FIXME */, checksum, TRUE);
     return TRUE;
 }
 
 static void fetch_module_info(struct dump_context* dc)
 {
-    EnumerateLoadedModules(dc->hProcess, fetch_pe_module_info_cb, dc);
+    EnumerateLoadedModulesW64(dc->hProcess, fetch_pe_module_info_cb, dc);
     /* Since we include ELF modules in a separate stream from the regular PE ones,
      * we can always include those ELF modules (they don't eat lots of space)
      * And it's always a good idea to have a trace of the loaded ELF modules for
@@ -436,13 +440,10 @@ static  void    dump_modules(struct dump_context* dc, BOOL dump_elf)
             flags_out |= ModuleWriteTlsData;
         if (dc->type & MiniDumpWithCodeSegs)
             flags_out |= ModuleWriteCodeSegs;
-        ms->Length = MultiByteToWideChar(CP_ACP, 0, 
-                                         dc->module[i].name, -1,
-                                         NULL, 0) * sizeof(WCHAR);
+        ms->Length = (lstrlenW(dc->module[i].name) + 1) * sizeof(WCHAR);
         if (sizeof(ULONG) + ms->Length > sizeof(tmp))
             FIXME("Buffer overflow!!!\n");
-        MultiByteToWideChar(CP_ACP, 0, dc->module[i].name, -1,
-                            ms->Buffer, ms->Length/sizeof(WCHAR));
+        lstrcpyW(ms->Buffer, dc->module[i].name);
 
         if (dc->cb)
         {
