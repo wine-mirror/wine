@@ -531,10 +531,10 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
         AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszOpenBrackets2);
 
-        for(j=0; j<pFuncDesc->cParams; j++)
+        for(j=0; j<namesNo-1; j++)
         {
             if(j != 0) AddToTLDataStrW(tld, wszComa);
-            if(pFuncDesc->cParams != 1)
+            if(namesNo-1 != 1)
             {
                 AddToTLDataStrW(tld, wszNewLine);
                 AddSpaces(tld, tabSize);
