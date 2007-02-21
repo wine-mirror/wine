@@ -1005,6 +1005,36 @@ static void set_object_sd( struct object *obj, const struct security_descriptor 
     obj->sd = pnew_sd;
 }
 
+int check_object_access(struct object *obj, unsigned int *access)
+{
+    GENERIC_MAPPING mapping;
+    struct token *token = current->token ? current->token : current->process->token;
+    LUID_AND_ATTRIBUTES priv;
+    unsigned int status, priv_count = 1;
+    int res;
+
+    mapping.GenericAll = obj->ops->map_access( obj, GENERIC_ALL );
+
+    if (!obj->sd)
+    {
+        if (*access & MAXIMUM_ALLOWED)
+            *access = mapping.GenericAll;
+        return TRUE;
+    }
+
+    mapping.GenericRead  = obj->ops->map_access( obj, GENERIC_READ );
+    mapping.GenericWrite = obj->ops->map_access( obj, GENERIC_WRITE );
+    mapping.GenericExecute = obj->ops->map_access( obj, GENERIC_EXECUTE );
+
+    res = token_access_check( token, obj->sd, *access, &priv, &priv_count,
+                              &mapping, access, &status ) == STATUS_SUCCESS &&
+          status == STATUS_SUCCESS;
+
+    if (!res) set_error( STATUS_ACCESS_DENIED );
+    return res;
+}
+
+
 /* open a security token */
 DECL_HANDLER(open_token)
 {

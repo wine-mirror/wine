@@ -857,7 +857,7 @@ static void test_token_attr(void)
         BYTE buf[1024];
         DWORD bufsize = sizeof(buf);
         ret = GetTokenInformation(Token, TokenUser,(void*)buf, bufsize, &bufsize);
-        todo_wine ok(ret, "GetTokenInformation failed with error %d\n", GetLastError());
+        ok(ret, "GetTokenInformation failed with error %d\n", GetLastError());
         CloseHandle(Token);
     }
 

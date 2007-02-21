@@ -36,6 +36,7 @@
 #include "handle.h"
 #include "process.h"
 #include "thread.h"
+#include "security.h"
 #include "request.h"
 
 struct handle_entry
@@ -222,11 +223,10 @@ static obj_handle_t alloc_entry( struct handle_table *table, void *obj, unsigned
 
 /* allocate a handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int access, unsigned int attr )
+static obj_handle_t alloc_handle_no_access_check( struct process *process, void *ptr, unsigned int access, unsigned int attr )
 {
     struct object *obj = ptr;
 
-    access = obj->ops->map_access( obj, access );
     access &= ~RESERVED_ALL;
     if (attr & OBJ_INHERIT) access |= RESERVED_INHERIT;
     if (!process->handles)
@@ -237,9 +237,20 @@ obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int acce
     return alloc_entry( process->handles, obj, access );
 }
 
+/* allocate a handle for an object, checking the dacl allows the process to */
+/* access it and incrementing its refcount */
+/* return the handle, or 0 on error */
+obj_handle_t alloc_handle( struct process *process, void *ptr, unsigned int access, unsigned int attr )
+{
+    struct object *obj = ptr;
+    access = obj->ops->map_access( obj, access );
+    if (access && !check_object_access( obj, &access )) return 0;
+    return alloc_handle_no_access_check( process, ptr, access, attr );
+}
+
 /* allocate a global handle for an object, incrementing its refcount */
 /* return the handle, or 0 on error */
-static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
+static obj_handle_t alloc_global_handle_no_access_check( void *obj, unsigned int access )
 {
     if (!global_table)
     {
@@ -248,6 +259,15 @@ static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
         make_object_static( &global_table->obj );
     }
     return handle_local_to_global( alloc_entry( global_table, obj, access ));
+}
+
+/* allocate a global handle for an object, checking the dacl allows the */
+/* process to access it and incrementing its refcount and incrementing its refcount */
+/* return the handle, or 0 on error */
+static obj_handle_t alloc_global_handle( void *obj, unsigned int access )
+{
+    if (access && !check_object_access( obj, &access )) return 0;
+    return alloc_global_handle_no_access_check( obj, access );
 }
 
 /* return a handle entry, or NULL if the handle is invalid */
@@ -449,25 +469,41 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
                                unsigned int access, unsigned int attr, unsigned int options )
 {
     obj_handle_t res;
+    struct handle_entry *entry;
+    unsigned int src_access;
     struct object *obj = get_handle_obj( src, src_handle, 0, NULL );
 
     if (!obj) return 0;
-    if (options & DUP_HANDLE_SAME_ACCESS)
+    if ((entry = get_handle( src, src_handle )))
+        src_access = entry->access;
+    else  /* pseudo-handle, give it full access */
     {
-        struct handle_entry *entry = get_handle( src, src_handle );
-        if (entry)
-            access = entry->access;
-        else  /* pseudo-handle, give it full access */
-        {
-            access = obj->ops->map_access( obj, GENERIC_ALL );
-            clear_error();
-        }
+        src_access = obj->ops->map_access( obj, GENERIC_ALL );
+        clear_error();
     }
-    access &= ~RESERVED_ALL;
-    if (options & DUP_HANDLE_MAKE_GLOBAL)
-        res = alloc_global_handle( obj, access );
+    src_access &= ~RESERVED_ALL;
+
+    if (options & DUP_HANDLE_SAME_ACCESS)
+        access = src_access;
     else
-        res = alloc_handle( dst, obj, access, attr );
+        access = obj->ops->map_access( obj, access ) & ~RESERVED_ALL;
+
+    /* asking for the more access rights than src_access? */
+    if (access & ~src_access)
+    {
+        if (options & DUP_HANDLE_MAKE_GLOBAL)
+            res = alloc_global_handle( obj, access );
+        else
+            res = alloc_handle( dst, obj, access, attr );
+    }
+    else
+    {
+        if (options & DUP_HANDLE_MAKE_GLOBAL)
+            res = alloc_global_handle_no_access_check( obj, access );
+        else
+            res = alloc_handle_no_access_check( dst, obj, access, attr );
+    }
+
     release_object( obj );
     return res;
 }
