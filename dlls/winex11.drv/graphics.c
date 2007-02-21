@@ -1312,9 +1312,10 @@ X11DRV_ExtFloodFill( X11DRV_PDEVICE *physDev, INT x, INT y, COLORREF color,
         wine_tsx11_lock();
         XSetFunction( gdi_display, physDev->gc, GXcopy );
         X11DRV_InternalFloodFill(image, physDev,
-                                 physDev->dc_rect.left + pt.x - rect.left,
-                                 physDev->dc_rect.top + pt.y - rect.top,
-                                 rect.left, rect.top,
+                                 pt.x - rect.left,
+                                 pt.y - rect.top,
+                                 physDev->dc_rect.left + rect.left,
+                                 physDev->dc_rect.top + rect.top,
                                  X11DRV_PALETTE_ToPhysical( physDev, color ),
                                  fillType );
         wine_tsx11_unlock();
