@@ -369,9 +369,22 @@ static HRESULT WINAPI ITSProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPC
         DWORD *pcchResult, DWORD dwReserved)
 {
     ITSProtocol *This = PROTINFO_THIS(iface);
-    FIXME("(%p)->(%s %x %08x %p %d %p %d)\n", This, debugstr_w(pwzUrl), ParseAction,
+
+    TRACE("(%p)->(%s %x %08x %p %d %p %d)\n", This, debugstr_w(pwzUrl), ParseAction,
           dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
-    return E_NOTIMPL;
+
+    switch(ParseAction) {
+    case PARSE_CANONICALIZE:
+        FIXME("PARSE_CANONICALIZE\n");
+        return E_NOTIMPL;
+    case PARSE_SECURITY_URL:
+        FIXME("PARSE_SECURITY_URL\n");
+        return E_NOTIMPL;
+    default:
+        return INET_E_DEFAULT_ACTION;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ITSProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
