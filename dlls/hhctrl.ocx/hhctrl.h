@@ -50,6 +50,10 @@ typedef struct CHMInfo
     IITStorage *pITStorage;
     IStorage *pStorage;
     LPCWSTR szFile;
+
+    IStream *strings_stream;
+    char **strings;
+    DWORD strings_size;
 } CHMInfo;
 
 
@@ -85,6 +89,11 @@ static inline void *hhctrl_alloc_zero(size_t len)
 static inline void *hhctrl_realloc(void *mem, size_t len)
 {
     return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline void *hhctrl_realloc_zero(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len);
 }
 
 static inline BOOL hhctrl_free(void *mem)
