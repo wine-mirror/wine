@@ -73,6 +73,12 @@ static enum {
     MK_PROTOCOL
 } test_protocol;
 
+static const WCHAR cache_file1[] =
+    {'t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR cache_file2[] =
+    {'t','e','s','t','.','c','h','m',':',':','\\','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR *cache_file = cache_file1;
+
 static HRESULT WINAPI ProtocolSink_QueryInterface(IInternetProtocolSink *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocolSink, riid)) {
@@ -103,8 +109,6 @@ static HRESULT WINAPI ProtocolSink_ReportProgress(IInternetProtocolSink *iface, 
 {
     static const WCHAR blank_html[] = {'b','l','a','n','k','.','h','t','m','l',0};
     static const WCHAR text_html[] = {'t','e','x','t','/','h','t','m','l',0};
-    static const WCHAR cache_file[] =
-        {'t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
 
     switch(ulStatusCode) {
     case BINDSTATUS_BEGINDOWNLOADDATA:
@@ -391,6 +395,7 @@ static void test_protocol_url(IClassFactory *factory, LPCWSTR url)
 
 static void test_its_protocol(void)
 {
+    IInternetProtocolInfo *info;
     IClassFactory *factory;
     IUnknown *unk;
     ULONG ref;
@@ -404,6 +409,10 @@ static void test_its_protocol(void)
          't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
     static const WCHAR blank_url4[] = {'i','t','s',':',
         't','e','s','t','.','c','h','m',':',':','b','l','a','n','k','.','h','t','m','l',0};
+    static const WCHAR blank_url5[] = {'i','t','s',':',
+        't','e','s','t','.','c','h','m',':',':','\\','b','l','a','n','k','.','h','t','m','l',0};
+    static const WCHAR blank_url6[] = {'i','t','s',':',
+        't','e','s','t','.','c','h','m',':',':','/','%','6','2','l','a','n','k','.','h','t','m','l',0};
     static const WCHAR wrong_url1[] =
         {'i','t','s',':','t','e','s','t','.','c','h','m',':',':','/','b','l','a','n','.','h','t','m','l',0};
     static const WCHAR wrong_url2[] =
@@ -421,6 +430,9 @@ static void test_its_protocol(void)
     ok(hres == S_OK, "CoGetClassObject failed: %08x\n", hres);
     if(!SUCCEEDED(hres))
         return;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&info);
+    ok(hres == E_NOINTERFACE, "Could not get IInternetProtocolInfo: %08x\n", hres);
 
     hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)&factory);
     ok(hres == S_OK, "Could not get IClassFactory interface\n");
@@ -449,6 +461,8 @@ static void test_its_protocol(void)
             test_protocol_url(factory, blank_url2);
             test_protocol_url(factory, blank_url3);
             test_protocol_url(factory, blank_url4);
+            test_protocol_url(factory, blank_url5);
+            test_protocol_url(factory, blank_url6);
         }
 
         IClassFactory_Release(factory);
@@ -462,8 +476,10 @@ static void test_mk_protocol(void)
     IClassFactory *cf;
     HRESULT hres;
 
-    static const WCHAR blank_url[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
+    static const WCHAR blank_url1[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
          't','e','s','t','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+    static const WCHAR blank_url2[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
+         't','e','s','t','.','c','h','m',':',':','\\','b','l','a','n','k','.','h','t','m','l',0};
 
     test_protocol = MK_PROTOCOL;
 
@@ -473,7 +489,10 @@ static void test_mk_protocol(void)
     if(!SUCCEEDED(hres))
         return;
 
-    test_protocol_url(cf, blank_url);
+    cache_file = cache_file1;
+    test_protocol_url(cf, blank_url1);
+    cache_file = cache_file2;
+    test_protocol_url(cf, blank_url2);
 
     IClassFactory_Release(cf);
 }
