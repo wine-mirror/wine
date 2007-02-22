@@ -701,3 +701,25 @@ NET_API_STATUS WINAPI NetUserModalsGet(
 
     return NERR_Success;
 }
+
+/******************************************************************************
+ *                NetUserChangePassword  (NETAPI32.@)
+ * PARAMS
+ *  domainname  [I] Optional. Domain on which the user resides or the logon
+ *                  domain of the current user if NULL.
+ *  username    [I] Optional. Username to change the password for or the name
+ *                  of the current user if NULL.
+ *  oldpassword [I] The user's current password.
+ *  newpassword [I] The password that the user will be changed to using.
+ *
+ * RETURNS
+ *  Success: NERR_Success.
+ *  Failure: NERR_* failure code or win error code.
+ *
+ */
+NET_API_STATUS WINAPI NetUserChangePassword(LPCWSTR domainname, LPCWSTR username,
+    LPCWSTR oldpassword, LPCWSTR newpassword)
+{
+    FIXME("(%s, %s, ..., ...)\n", debugstr_w(domainname), debugstr_w(username));
+    return NERR_InternalError;
+}
