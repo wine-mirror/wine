@@ -182,7 +182,7 @@ static int X11DRV_XRandR_GetCurrentMode(void)
     return res;
 }
 
-static void X11DRV_XRandR_SetCurrentMode(int mode)
+static LONG X11DRV_XRandR_SetCurrentMode(int mode)
 {
     SizeID size;
     Rotation rot;
@@ -243,9 +243,13 @@ static void X11DRV_XRandR_SetCurrentMode(int mode)
     pXRRFreeScreenConfigInfo(sc);
     wine_tsx11_unlock();
     if (stat == RRSetConfigSuccess)
+    {
         X11DRV_handle_desktop_resize( dd_modes[mode].dwWidth, dd_modes[mode].dwHeight );
-    else
-        ERR("Resolution change not successful -- perhaps display has changed?\n");
+        return DISP_CHANGE_SUCCESSFUL;
+    }
+
+    ERR("Resolution change not successful -- perhaps display has changed?\n");
+    return DISP_CHANGE_FAILED;
 }
 
 void X11DRV_XRandR_Init(void)

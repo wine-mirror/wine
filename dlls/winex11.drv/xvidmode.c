@@ -111,7 +111,7 @@ static int X11DRV_XF86VM_GetCurrentMode(void)
   return 0;
 }
 
-static void X11DRV_XF86VM_SetCurrentMode(int mode)
+static LONG X11DRV_XF86VM_SetCurrentMode(int mode)
 {
   DWORD dwBpp = screen_depth;
   if (dwBpp == 24) dwBpp = 32;
@@ -135,6 +135,7 @@ static void X11DRV_XF86VM_SetCurrentMode(int mode)
   wine_tsx11_unlock();
   X11DRV_handle_desktop_resize( real_xf86vm_modes[mode]->hdisplay,
                                 real_xf86vm_modes[mode]->vdisplay );
+  return DISP_CHANGE_SUCCESSFUL;
 }
 
 void X11DRV_XF86VM_Init(void)

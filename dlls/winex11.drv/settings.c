@@ -43,17 +43,17 @@ static const unsigned int depths[]  = {8, 16, 32};
 
 /* pointers to functions that actually do the hard stuff */
 static int (*pGetCurrentMode)(void);
-static void (*pSetCurrentMode)(int mode);
+static LONG (*pSetCurrentMode)(int mode);
 static const char *handler_name;
 
-/* 
+/*
  * Set the handlers for resolution changing functions
  * and initialize the master list of modes
  */
-LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name, 
-                                 int (*pNewGCM)(void), 
-                                 void (*pNewSCM)(int), 
-                                 unsigned int nmodes, 
+LPDDHALMODEINFO X11DRV_Settings_SetHandlers(const char *name,
+                                 int (*pNewGCM)(void),
+                                 LONG (*pNewSCM)(int),
+                                 unsigned int nmodes,
                                  int reserve_depths)
 {
     handler_name = name;
@@ -144,9 +144,10 @@ static int X11DRV_nores_GetCurrentMode(void)
 {
     return 0;
 }
-static void X11DRV_nores_SetCurrentMode(int mode)
+static LONG X11DRV_nores_SetCurrentMode(int mode)
 {
     TRACE("Ignoring mode change request\n");
+    return DISP_CHANGE_FAILED;
 }
 /* default handler only gets the current X desktop resolution */
 void X11DRV_Settings_Init(void)
@@ -297,7 +298,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         /* we have a valid mode */
         TRACE("Requested display settings match mode %d (%s)\n", i, handler_name);
         if (!(flags & CDS_TEST))
-            pSetCurrentMode(i);
+            return pSetCurrentMode(i);
         return DISP_CHANGE_SUCCESSFUL;
     }
 
@@ -316,9 +317,18 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 static DWORD PASCAL X11DRV_Settings_SetMode(LPDDHAL_SETMODEDATA data)
 {
     TRACE("Mode %d requested by DDHAL (%s)\n", data->dwModeIndex, handler_name);
-    pSetCurrentMode(data->dwModeIndex);
-    X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL, NULL);
-    data->ddRVal = DD_OK;
+    switch (pSetCurrentMode(data->dwModeIndex))
+    {
+    case DISP_CHANGE_SUCCESSFUL:
+        X11DRV_DDHAL_SwitchMode(data->dwModeIndex, NULL, NULL);
+        data->ddRVal = DD_OK;
+        break;
+    case DISP_CHANGE_BADMODE:
+        data->ddRVal = DDERR_WRONGMODE;
+        break;
+    default:
+        data->ddRVal = DDERR_UNSUPPORTEDMODE;
+    }
     return DDHAL_DRIVER_HANDLED;
 }
 int X11DRV_Settings_CreateDriver(LPDDHALINFO info)
