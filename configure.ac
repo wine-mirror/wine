@@ -1771,6 +1771,7 @@ dlls/wineoss.drv/Makefile
 dlls/wineps.drv/Makefile
 dlls/winequartz.drv/Makefile
 dlls/winex11.drv/Makefile
+dlls/wing32/Makefile
 dlls/wininet/Makefile
 dlls/wininet/tests/Makefile
 dlls/winmm/Makefile
