@@ -453,8 +453,8 @@ DWORD WINAPI VerInstallFileA(
 	if (buf1) {
 	    buf2 = _fetch_versioninfo(tmpfn,&tmpvffi);
 	    if (buf2) {
-	    	char	*tbuf1,*tbuf2;
-	    	static CHAR trans_array[] = "\\VarFileInfo\\Translation";
+		char	*tbuf1,*tbuf2;
+		static const CHAR trans_array[] = "\\VarFileInfo\\Translation";
 		UINT	len1,len2;
 
 		len1=len2=40;
