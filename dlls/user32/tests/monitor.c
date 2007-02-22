@@ -104,26 +104,26 @@ static void test_enumdisplaydevices(void)
 struct vid_mode
 {
     DWORD w, h, bpp, freq, fields;
-    LONG res;
+    LONG success;
 };
 
 static struct vid_mode vid_modes_test[] = {
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, DISP_CHANGE_SUCCESSFUL},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, DISP_CHANGE_SUCCESSFUL},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , DISP_CHANGE_SUCCESSFUL},
-    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , DISP_CHANGE_SUCCESSFUL},
-    {640, 480, 0, 0,                                DM_BITSPERPEL                      , DISP_CHANGE_SUCCESSFUL},
-    {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, DISP_CHANGE_SUCCESSFUL},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY, 1},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT |                 DM_DISPLAYFREQUENCY, 1},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL                      , 1},
+    {640, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT                                      , 1},
+    {640, 480, 0, 0,                                DM_BITSPERPEL                      , 1},
+    {640, 480, 0, 0,                                                DM_DISPLAYFREQUENCY, 1},
 
-    {0, 0, 0, 0, DM_PELSWIDTH, DISP_CHANGE_SUCCESSFUL},
-    {0, 0, 0, 0, DM_PELSHEIGHT, DISP_CHANGE_SUCCESSFUL},
+    {0, 0, 0, 0, DM_PELSWIDTH, 1},
+    {0, 0, 0, 0, DM_PELSHEIGHT, 1},
 
-    {640, 480, 0, 0, DM_PELSWIDTH, DISP_CHANGE_BADMODE},
-    {640, 480, 0, 0, DM_PELSHEIGHT, DISP_CHANGE_BADMODE},
-    {  0, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, DISP_CHANGE_BADMODE},
-    {640,   0, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, DISP_CHANGE_BADMODE},
+    {640, 480, 0, 0, DM_PELSWIDTH, 0},
+    {640, 480, 0, 0, DM_PELSHEIGHT, 0},
+    {  0, 480, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
+    {640,   0, 0, 0, DM_PELSWIDTH | DM_PELSHEIGHT, 0},
 
-    {0, 0, 0, 10, DM_DISPLAYFREQUENCY, DISP_CHANGE_BADMODE},
+    {0, 0, 0, 0, DM_DISPLAYFREQUENCY, 0},
 };
 #define vid_modes_cnt (sizeof(vid_modes_test) / sizeof(vid_modes_test[0]))
 
@@ -144,7 +144,10 @@ static void test_ChangeDisplaySettingsEx(void)
         dm.dmDisplayFrequency = vid_modes_test[i].freq;
         dm.dmFields           = vid_modes_test[i].fields;
         res = ChangeDisplaySettingsEx(NULL, &dm, NULL, CDS_FULLSCREEN, NULL);
-        ok(res == vid_modes_test[i].res, "Failed to change resolution[%d]: %d\n", i, res);
+        ok(vid_modes_test[i].success ?
+           (res == DISP_CHANGE_SUCCESSFUL) :
+           (res == DISP_CHANGE_BADMODE || res == DISP_CHANGE_BADPARAM),
+           "Unexpected ChangeDisplaySettingsEx() return code for resolution[%d]: %d\n", i, res);
 
         if (res == DISP_CHANGE_SUCCESSFUL)
         {
