@@ -7458,7 +7458,23 @@ static HWND LISTVIEW_SetToolTips( LISTVIEW_INFO *infoPtr, HWND hwndNewToolTip)
   return hwndOldToolTip;
 }
 
-/* LISTVIEW_SetUnicodeFormat */
+/*
+ * DESCRIPTION:
+ *   sets the Unicode character format flag for the control
+ * PARAMETER(S):
+ *    [I] infoPtr         :valid pointer to the listview structure
+ *    [I] fUnicode        :true to switch to UNICODE false to switch to ANSI
+ *
+ * RETURN:
+ *    Old Unicode Format
+ */
+static BOOL LISTVIEW_SetUnicodeFormat( LISTVIEW_INFO *infoPtr, BOOL fUnicode)
+{
+  BOOL rc = infoPtr->notifyFormat;
+  infoPtr->notifyFormat = (fUnicode)?NFR_UNICODE:NFR_ANSI;
+  return rc;
+}
+
 /* LISTVIEW_SetWorkAreas */
 
 /***
@@ -9604,7 +9620,8 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_SETTOOLTIPS:
     return (LRESULT)LISTVIEW_SetToolTips(infoPtr, (HWND)lParam);
 
-  /* case LVM_SETUNICODEFORMAT: */
+  case LVM_SETUNICODEFORMAT:
+    return LISTVIEW_SetUnicodeFormat(infoPtr, wParam);
 
   /* case LVM_SETVIEW: */
 
