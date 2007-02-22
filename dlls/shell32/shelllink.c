@@ -1744,7 +1744,10 @@ static HRESULT WINAPI IShellLinkW_fnGetIDList(IShellLinkW * iface, LPITEMIDLIST 
     TRACE("(%p)->(ppidl=%p)\n",This, ppidl);
 
     if (!This->pPidl)
+    {
+	*ppidl = NULL;
         return S_FALSE;
+    }
     *ppidl = ILClone(This->pPidl);
     return S_OK;
 }
