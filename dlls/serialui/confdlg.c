@@ -49,6 +49,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(comm);
 
 static HMODULE SERIALUI_hModule;
 
+static const WCHAR comW[] = {'c','o','m',0 };
+
 /***********************************************************************
  * DllMain [Internal] Initializes the internal 'SERIALUI.DLL'.
  *
@@ -535,7 +537,7 @@ BOOL WINAPI drvSetDefaultCommConfigA(
  * FIXME: uses the wrong registry key... should use a digit, not
  *        the comm port name.
  */
-BOOL WINAPI drvGetDefaultCommConfigW(
+DWORD WINAPI drvGetDefaultCommConfigW(
 	LPCWSTR lpszDevice, LPCOMMCONFIG lpCommConfig, LPDWORD lpdwSize)
 {
     HKEY hKeyReg, hKeyPort;
@@ -543,16 +545,25 @@ BOOL WINAPI drvGetDefaultCommConfigW(
     DWORD r,dwSize,dwType;
     static const WCHAR fmt[] = {'%','s','\\','%','s',0 };
 
-    TRACE("%p %p %p\n",lpszDevice,lpCommConfig,lpdwSize);
+    TRACE("(%s, %p, %p) *lpdwSize: %u\n", debugstr_w(lpszDevice), lpCommConfig, lpdwSize, lpdwSize ? *lpdwSize : 0);
 
-    if(!lpCommConfig)
-        return FALSE;
+    if ((!lpszDevice) || (!lpCommConfig) || (!lpdwSize)) {
+        return ERROR_INVALID_PARAMETER;
+    }
 
-    if(!lpdwSize)
-        return FALSE;
+    if (*lpdwSize < sizeof (COMMCONFIG)) {
+        *lpdwSize = sizeof (COMMCONFIG);
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
 
-    if(*lpdwSize < sizeof (COMMCONFIG))
-        return FALSE;
+    /* only "com1" - "com9" is allowed */
+    r = sizeof(comW) / sizeof(WCHAR);       /* len of "com\0" */
+    lstrcpynW(szKeyName, lpszDevice, r);    /* simulate a lstrcmpnW */
+    r--;
+    if( lstrcmpW(szKeyName, comW) ||
+        (lpszDevice[r] < '1') || (lpszDevice[r] > '9') || lpszDevice[r+1]) {
+        return ERROR_BADKEY;
+    }
 
     *lpdwSize = sizeof (COMMCONFIG);
     memset(lpCommConfig, 0 , sizeof (COMMCONFIG));
@@ -560,8 +571,7 @@ BOOL WINAPI drvGetDefaultCommConfigW(
     lpCommConfig->wVersion = 1;
 
     r = RegConnectRegistryW(NULL, HKEY_LOCAL_MACHINE, &hKeyReg);
-    if(r != ERROR_SUCCESS)
-        return FALSE;
+    if(r != ERROR_SUCCESS) return r;
 
     snprintfW(szKeyName, sizeof(szKeyName)/sizeof(WCHAR), fmt, lpszCommKey ,lpszDevice);
     r = RegOpenKeyW(hKeyReg, szKeyName, &hKeyPort);
@@ -571,12 +581,13 @@ BOOL WINAPI drvGetDefaultCommConfigW(
         dwType = 0;
         r = RegQueryValueExW( hKeyPort, lpszDCB, NULL,
                              &dwType, (LPBYTE)&lpCommConfig->dcb, &dwSize);
-        if ((r==ERROR_SUCCESS) && (dwType != REG_BINARY))
-            r = 1;
-        if ((r==ERROR_SUCCESS) && (dwSize != sizeof(DCB)))
-            r = 1;
 
         RegCloseKey(hKeyPort);
+        if ((r!=ERROR_SUCCESS) || (dwType != REG_BINARY) || (dwSize != sizeof(DCB))) {
+            RegCloseKey(hKeyReg);
+            return ERROR_INVALID_PARAMETER;
+        }
+
     }
     else
     {
@@ -589,22 +600,22 @@ BOOL WINAPI drvGetDefaultCommConfigW(
         lpCommConfig->dcb.ByteSize = 8;
         lpCommConfig->dcb.Parity = NOPARITY;
         lpCommConfig->dcb.StopBits = ONESTOPBIT;
-        return TRUE;
+        return ERROR_SUCCESS;
     }
 
     RegCloseKey(hKeyReg);
 
-    return (r==ERROR_SUCCESS);
+    return r;
 }
 
 /***********************************************************************
  * drvGetDefaultCommConfigA (SERIALUI.@)
  */
-BOOL WINAPI drvGetDefaultCommConfigA(
+DWORD WINAPI drvGetDefaultCommConfigA(
 	LPCSTR lpszDevice, LPCOMMCONFIG lpCommConfig, LPDWORD lpdwSize)
 {
     LPWSTR strW = SERIALUI_strdup( lpszDevice );
-    BOOL r = drvGetDefaultCommConfigW( strW, lpCommConfig, lpdwSize );
+    DWORD r = drvGetDefaultCommConfigW( strW, lpCommConfig, lpdwSize );
     SERIALUI_strfree( strW );
     return r;
 }
