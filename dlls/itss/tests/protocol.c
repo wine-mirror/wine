@@ -409,6 +409,67 @@ static void test_protocol_url(IClassFactory *factory, LPCWSTR url)
     read_protocol = NULL;
 }
 
+static const WCHAR rel_url1[] =
+    {'t','e','s','t','.','h','t','m','l',0};
+static const WCHAR rel_url2[] =
+    {'t','e','s','t','.','c','h','m',':',':','/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR rel_url3[] =
+    {'/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR rel_url4[] =
+    {'t','e',':','t','.','h','t','m','l',0};
+static const WCHAR rel_url5[] =
+    {'d','i','r','/','t','e','s','t','.','h','t','m','l',0};
+
+static const WCHAR base_url1[] = {'i','t','s',':',
+    't','e','s','t',':','.','c','h','m',':',':','/','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR base_url2[] = {'i','t','s',':','t','e','s','t','.','c','h','m',
+    ':',':','/','d','i','r','/','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR base_url3[] = {'m','s','-','i','t','s',':','t','e','s','t','.','c','h','m',
+    ':',':','/','d','i','r','/','b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR base_url4[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
+    't','e','s','t','.','c','h','m',':',':','/','d','i','r','/',
+    'b','l','a','n','k','.','h','t','m','l',0};
+static const WCHAR base_url5[] = {'x','x','x',':','t','e','s','t','.','c','h','m',
+    ':',':','/','d','i','r','/','b','l','a','n','k','.','h','t','m','l',0};
+
+static const WCHAR combined_url1[] = {'i','t','s',':',
+    't','e','s','t','.','c','h','m',':',':','/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR combined_url2[] = {'i','t','s',':',
+    't','e','s','t','.','c','h','m',':',':','/','d','i','r','/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR combined_url3[] = {'i','t','s',':',
+    't','e','s','t',':','.','c','h','m',':',':','/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR combined_url4[] = {'i','t','s',':','t','e','s','t','.','c','h','m',
+    ':',':','b','l','a','n','k','.','h','t','m','l','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR combined_url5[] = {'m','s','-','i','t','s',':',
+    't','e','s','t','.','c','h','m',':',':','/','d','i','r','/','t','e','s','t','.','h','t','m','l',0};
+static const WCHAR combined_url6[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':',
+    't','e','s','t','.','c','h','m',':',':','/','d','i','r','/','t','e','s','t','.','h','t','m','l',0};
+
+static const struct {
+    LPCWSTR base_url;
+    LPCWSTR rel_url;
+    DWORD flags;
+    HRESULT hres;
+    LPCWSTR combined_url;
+} combine_tests[] = {
+    {blank_url1, blank_url1, 0, STG_E_INVALIDNAME, NULL},
+    {blank_url2, blank_url2, 0, STG_E_INVALIDNAME, NULL},
+    {blank_url1, rel_url1, 0, S_OK, combined_url1},
+    {blank_url1, rel_url2, 0, STG_E_INVALIDNAME, NULL},
+    {blank_url1, rel_url3, 0, S_OK, combined_url1},
+    {blank_url1, rel_url4, 0, STG_E_INVALIDNAME, NULL},
+    {blank_url1, rel_url3, URL_ESCAPE_SPACES_ONLY|URL_DONT_ESCAPE_EXTRA_INFO, S_OK, combined_url1},
+    {blank_url1, rel_url5, 0, S_OK, combined_url2},
+    {rel_url1, rel_url2, 0, 0x80041001, NULL},
+    {base_url1, rel_url1, 0, S_OK, combined_url3},
+    {base_url2, rel_url1, 0, S_OK, combined_url2},
+    {blank_url4, rel_url1, 0, S_OK, combined_url4},
+    {base_url3, rel_url1, 0, S_OK, combined_url5},
+    {base_url4, rel_url1, 0, S_OK, combined_url6},
+    {base_url5, rel_url1, 0, INET_E_USE_DEFAULT_PROTOCOLHANDLER, NULL},
+    {base_url2, rel_url3, 0, S_OK, combined_url1},
+};
+
 static void test_its_protocol_info(IInternetProtocol *protocol)
 {
     IInternetProtocolInfo *info;
@@ -429,6 +490,30 @@ static void test_its_protocol_info(IInternetProtocol *protocol)
                "[%d] failed: %08x, expected INET_E_DEFAULT_ACTION\n", i, hres);
         }
     }
+
+    for(i=0; i < sizeof(combine_tests)/sizeof(combine_tests[0]); i++) {
+        size = 0xdeadbeef;
+        memset(buf, 0xfe, sizeof(buf));
+        hres = IInternetProtocolInfo_CombineUrl(info, combine_tests[i].base_url,
+                combine_tests[i].rel_url, combine_tests[i].flags, buf,
+                sizeof(buf)/sizeof(WCHAR), &size, 0);
+        ok(hres == combine_tests[i].hres, "[%d] CombineUrl returned %08x, expected %08x\n",
+           i, hres, combine_tests[i].hres);
+        ok(size == (combine_tests[i].combined_url ? lstrlenW(combine_tests[i].combined_url)+1
+           : 0xdeadbeef), "[%d] unexpected size=%d\n", i, size);
+        if(combine_tests[i].combined_url)
+            ok(!lstrcmpW(combine_tests[i].combined_url, buf), "[%d] unexpected result\n", i);
+        else
+            ok(buf[0] == 0xfefe, "buf changed\n");
+    }
+
+    size = 0xdeadbeef;
+    memset(buf, 0xfe, sizeof(buf));
+    hres = IInternetProtocolInfo_CombineUrl(info, blank_url1, rel_url1, 0, buf,
+            1, &size, 0);
+    ok(hres == E_OUTOFMEMORY, "CombineUrl failed: %08x\n", hres);
+    ok(size == sizeof(combined_url1)/sizeof(WCHAR), "size=%d\n", size);
+    ok(buf[0] == 0xfefe, "buf changed\n");
 
     IInternetProtocolInfo_Release(info);
 }

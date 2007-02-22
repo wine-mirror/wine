@@ -392,10 +392,45 @@ static HRESULT WINAPI ITSProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
         DWORD cchResult, DWORD* pcchResult, DWORD dwReserved)
 {
     ITSProtocol *This = PROTINFO_THIS(iface);
-    FIXME("(%p)->(%s %s %08x %p %d %p %d)\n", This, debugstr_w(pwzBaseUrl),
+    LPCWSTR base_end, ptr;
+    DWORD rel_len;
+
+    static const WCHAR separator[] = {':',':',0};
+
+    TRACE("(%p)->(%s %s %08x %p %d %p %d)\n", This, debugstr_w(pwzBaseUrl),
             debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult,
             pcchResult, dwReserved);
-    return E_NOTIMPL;
+
+    base_end = strstrW(pwzBaseUrl, separator);
+    if(!base_end)
+        return 0x80041001;
+    base_end += 2;
+
+    if(!skip_schema(pwzBaseUrl))
+        return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
+
+    if(strchrW(pwzRelativeUrl, ':'))
+        return STG_E_INVALIDNAME;
+
+    if(pwzRelativeUrl[0] != '/') {
+        ptr = strrchrW(base_end, '/');
+        if(ptr)
+            base_end = ptr+1;
+        else
+            base_end += strlenW(base_end);
+    }
+
+    rel_len = strlenW(pwzRelativeUrl)+1;
+
+    *pcchResult = rel_len + (base_end-pwzBaseUrl);
+
+    if(*pcchResult > cchResult)
+        return E_OUTOFMEMORY;
+
+    memcpy(pwzResult, pwzBaseUrl, (base_end-pwzBaseUrl)*sizeof(WCHAR));
+    strcpyW(pwzResult + (base_end-pwzBaseUrl), pwzRelativeUrl);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ITSProtocolInfo_CompareUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl1,
