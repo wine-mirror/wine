@@ -55,7 +55,7 @@ static name_space *find_name_space(LPCWSTR protocol)
     return NULL;
 }
 
-static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, IUnknown **ret)
+static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, IClassFactory **ret)
 {
     WCHAR str_clsid[64];
     HKEY hkey = NULL;
@@ -96,14 +96,14 @@ static HRESULT get_protocol_iface(LPCWSTR schema, DWORD schema_len, CLSID *pclsi
     if(pclsid)
         *pclsid = clsid;
 
-    return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IUnknown, (void**)ret);
+    return CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IClassFactory, (void**)ret);
 }
 
 IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
 {
     IInternetProtocolInfo *ret = NULL;
+    IClassFactory *cf;
     name_space *ns;
-    IUnknown *unk;
     WCHAR schema[64];
     DWORD schema_len;
     HRESULT hres;
@@ -124,19 +124,20 @@ IInternetProtocolInfo *get_protocol_info(LPCWSTR url)
             return ret;
     }
 
-    hres = get_protocol_iface(schema, schema_len, NULL, &unk);
+    hres = get_protocol_cf(schema, schema_len, NULL, &cf);
     if(FAILED(hres))
         return NULL;
 
-    hres = IUnknown_QueryInterface(unk, &IID_IInternetProtocolInfo, (void**)&ret);
-    IUnknown_Release(unk);
+    hres = IClassFactory_QueryInterface(cf, &IID_IInternetProtocolInfo, (void**)&ret);
+    if(FAILED(hres))
+        IClassFactory_CreateInstance(cf, NULL, &IID_IInternetProtocolInfo, (void**)&ret);
+    IClassFactory_Release(cf);
 
     return ret;
 }
 
 HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret)
 {
-    IUnknown *unk;
     name_space *ns;
     WCHAR schema[64];
     DWORD schema_len;
@@ -155,13 +156,7 @@ HRESULT get_protocol_handler(LPCWSTR url, CLSID *clsid, IClassFactory **ret)
         return S_OK;
     }
 
-    hres = get_protocol_iface(schema, schema_len, clsid, &unk);
-    if(FAILED(hres))
-        return hres;
-
-    hres = IUnknown_QueryInterface(unk, &IID_IClassFactory, (void**)ret);
-    IUnknown_Release(unk);
-    return hres;
+    return get_protocol_cf(schema, schema_len, clsid, ret);
 }
 
 static HRESULT WINAPI InternetSession_QueryInterface(IInternetSession *iface,
