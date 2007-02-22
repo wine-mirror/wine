@@ -23,8 +23,10 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "winreg.h"
 #include "ole2.h"
 #include "urlmon.h"
+#include "shlwapi.h"
 #include "itsstor.h"
 #include "chm_lib.h"
 
@@ -135,8 +137,8 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ITSProtocol *This = PROTOCOL_THIS(iface);
     BINDINFO bindinfo;
     DWORD bindf = 0, len;
-    LPWSTR file_name, mime;
-    LPCWSTR object_name, path;
+    LPWSTR file_name, mime, object_name, p;
+    LPCWSTR ptr;
     struct chmFile *chm_file;
     struct chmUnitInfo chm_object;
     int res;
@@ -147,8 +149,8 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     TRACE("(%p)->(%s %p %p %08x %d)\n", This, debugstr_w(szUrl), pOIProtSink,
             pOIBindInfo, grfPI, dwReserved);
 
-    path = skip_schema(szUrl);
-    if(!path)
+    ptr = skip_schema(szUrl);
+    if(!ptr)
         return INET_E_USE_DEFAULT_PROTOCOLHANDLER;
 
     memset(&bindinfo, 0, sizeof(bindinfo));
@@ -161,39 +163,57 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
 
     ReleaseBindInfo(&bindinfo);
 
-    object_name = strstrW(path, separator);
-    if(!object_name) {
+    len = strlenW(ptr)+3;
+    file_name = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    memcpy(file_name, ptr, len*sizeof(WCHAR));
+    hres = UrlUnescapeW(file_name, NULL, &len, URL_UNESCAPE_INPLACE);
+    if(FAILED(hres)) {
+        WARN("UrlUnescape failed: %08x\n", hres);
+        HeapFree(GetProcessHeap(), 0, file_name);
+        return hres;
+    }
+
+    p = strstrW(file_name, separator);
+    if(!p) {
         WARN("invalid url\n");
+        HeapFree(GetProcessHeap(), 0, file_name);
         return report_result(pOIProtSink, STG_E_FILENOTFOUND);
     }
 
-    len = object_name-path;
-    file_name = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
-    memcpy(file_name, path, len*sizeof(WCHAR));
-    file_name[len] = 0;
+    *p = 0;
     chm_file = chm_openW(file_name);
     if(!chm_file) {
         WARN("Could not open chm file\n");
+        HeapFree(GetProcessHeap(), 0, file_name);
         return report_result(pOIProtSink, STG_E_FILENOTFOUND);
     }
 
-    object_name += 2;
+    object_name = p+2;
+    if(*object_name != '/' && *object_name != '\\') {
+        int len = strlenW(object_name)+1;
+        memmove(object_name+1, object_name, len*sizeof(WCHAR));
+        *object_name = '/';
+    }
+
+    for(p=object_name; *p; p++) {
+        if(*p == '\\')
+            *p = '/';
+    }
+
+    TRACE("Resolving %s\n", debugstr_w(object_name));
+
     memset(&chm_object, 0, sizeof(chm_object));
     res = chm_resolve_object(chm_file, object_name, &chm_object);
-    if(res != CHM_RESOLVE_SUCCESS && object_name[0] != '/') {
-        WCHAR tmp_obj_name[MAX_PATH];
-        tmp_obj_name[0] = '/';
-        strcpyW(tmp_obj_name+1, object_name);
-        res = chm_resolve_object(chm_file, tmp_obj_name, &chm_object);
-    }
     if(res != CHM_RESOLVE_SUCCESS) {
         WARN("Could not resolve chm object\n");
+        HeapFree(GetProcessHeap(), 0, object_name);
         chm_close(chm_file);
         return report_result(pOIProtSink, STG_E_FILENOTFOUND);
     }
 
     IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_SENDINGREQUEST,
-                                         object_name[0] == '/' ? object_name+1 : object_name);
+                                         strrchrW(object_name, '/')+1);
+    HeapFree(GetProcessHeap(), 0, file_name);
 
     /* FIXME: Native doesn't use FindMimeFromData */
     hres = FindMimeFromData(NULL, szUrl, NULL, 0, NULL, 0, &mime, 0);
@@ -211,7 +231,7 @@ static HRESULT WINAPI ITSProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             chm_object.length, chm_object.length);
     if(FAILED(hres)) {
         WARN("ReportData failed: %08x\n", hres);
-        chm_close(chm_file);
+        release_chm(This);
         return report_result(pOIProtSink, hres);
     }
 
