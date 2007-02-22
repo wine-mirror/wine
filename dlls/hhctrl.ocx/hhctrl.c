@@ -27,6 +27,24 @@ WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
 int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine);
 
+HINSTANCE hhctrl_hinstance;
+
+BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
+{
+    TRACE("(%p,%d,%p)\n", hInstance, fdwReason, lpvReserved);
+
+    switch (fdwReason)
+    {
+    case DLL_PROCESS_ATTACH:
+        hhctrl_hinstance = hInstance;
+        DisableThreadLibraryCalls(hInstance);
+        break;
+    case DLL_PROCESS_DETACH:
+        break;
+    }
+    return TRUE;
+}
+
 static const char *command_to_string(UINT command)
 {
 #define X(x) case x: return #x

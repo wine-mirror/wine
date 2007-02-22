@@ -10,7 +10,6 @@ C_SRCS = \
 	chm.c \
 	help.c \
 	hhctrl.c \
-	main.c \
 	regsvr.c \
 	webbrowser.c
 
