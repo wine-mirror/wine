@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Jacek Caban for CodeWeavers
+ * Copyright 2006-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(itss);
 
 typedef struct {
-    const IInternetProtocolVtbl  *lpInternetProtocolVtbl;
+    const IInternetProtocolVtbl     *lpInternetProtocolVtbl;
+    const IInternetProtocolInfoVtbl *lpInternetProtocolInfoVtbl;
 
     LONG ref;
 
@@ -46,6 +47,7 @@ typedef struct {
 } ITSProtocol;
 
 #define PROTOCOL(x)  ((IInternetProtocol*)  &(x)->lpInternetProtocolVtbl)
+#define PROTINFO(x)  ((IInternetProtocolInfo*) &(x)->lpInternetProtocolInfoVtbl)
 
 static void release_chm(ITSProtocol *This)
 {
@@ -72,6 +74,9 @@ static HRESULT WINAPI ITSProtocol_QueryInterface(IInternetProtocol *iface, REFII
     }else if(IsEqualGUID(&IID_IInternetProtocol, riid)) {
         TRACE("(%p)->(IID_IInternetProtocol %p)\n", This, ppv);
         *ppv = PROTOCOL(This);
+    }else if(IsEqualGUID(&IID_IInternetProtocolInfo, riid)) {
+        TRACE("(%p)->(IID_IInternetProtocolInfo %p)\n", This, ppv);
+        *ppv = PROTINFO(This);
     }
 
     if(*ppv) {
@@ -338,6 +343,78 @@ static const IInternetProtocolVtbl ITSProtocolVtbl = {
     ITSProtocol_UnlockRequest
 };
 
+#define PROTINFO_THIS(iface) DEFINE_THIS(ITSProtocol, InternetProtocolInfo, iface)
+
+static HRESULT WINAPI ITSProtocolInfo_QueryInterface(IInternetProtocolInfo *iface,
+                                              REFIID riid, void **ppv)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    return IInternetProtocol_QueryInterface(PROTOCOL(This), riid, ppv);
+}
+
+static ULONG WINAPI ITSProtocolInfo_AddRef(IInternetProtocolInfo *iface)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    return IInternetProtocol_AddRef(PROTOCOL(This));
+}
+
+static ULONG WINAPI ITSProtocolInfo_Release(IInternetProtocolInfo *iface)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    return IInternetProtocol_Release(PROTOCOL(This));
+}
+
+static HRESULT WINAPI ITSProtocolInfo_ParseUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        PARSEACTION ParseAction, DWORD dwParseFlags, LPWSTR pwzResult, DWORD cchResult,
+        DWORD *pcchResult, DWORD dwReserved)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    FIXME("(%p)->(%s %x %08x %p %d %p %d)\n", This, debugstr_w(pwzUrl), ParseAction,
+          dwParseFlags, pwzResult, cchResult, pcchResult, dwReserved);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITSProtocolInfo_CombineUrl(IInternetProtocolInfo *iface,
+        LPCWSTR pwzBaseUrl, LPCWSTR pwzRelativeUrl, DWORD dwCombineFlags, LPWSTR pwzResult,
+        DWORD cchResult, DWORD* pcchResult, DWORD dwReserved)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    FIXME("(%p)->(%s %s %08x %p %d %p %d)\n", This, debugstr_w(pwzBaseUrl),
+            debugstr_w(pwzRelativeUrl), dwCombineFlags, pwzResult, cchResult,
+            pcchResult, dwReserved);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITSProtocolInfo_CompareUrl(IInternetProtocolInfo *iface, LPCWSTR pwzUrl1,
+        LPCWSTR pwzUrl2, DWORD dwCompareFlags)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    FIXME("%p)->(%s %s %08x)\n", This, debugstr_w(pwzUrl1), debugstr_w(pwzUrl2), dwCompareFlags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ITSProtocolInfo_QueryInfo(IInternetProtocolInfo *iface, LPCWSTR pwzUrl,
+        QUERYOPTION QueryOption, DWORD dwQueryFlags, LPVOID pBuffer, DWORD cbBuffer, DWORD* pcbBuf,
+        DWORD dwReserved)
+{
+    ITSProtocol *This = PROTINFO_THIS(iface);
+    FIXME("(%p)->(%s %08x %08x %p %d %p %d)\n", This, debugstr_w(pwzUrl), QueryOption,
+          dwQueryFlags, pBuffer, cbBuffer, pcbBuf, dwReserved);
+    return E_NOTIMPL;
+}
+
+#undef PROTINFO_THIS
+
+static const IInternetProtocolInfoVtbl ITSProtocolInfoVtbl = {
+    ITSProtocolInfo_QueryInterface,
+    ITSProtocolInfo_AddRef,
+    ITSProtocolInfo_Release,
+    ITSProtocolInfo_ParseUrl,
+    ITSProtocolInfo_CombineUrl,
+    ITSProtocolInfo_CompareUrl,
+    ITSProtocolInfo_QueryInfo
+};
+
 HRESULT ITSProtocol_create(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
     ITSProtocol *ret;
@@ -349,6 +426,7 @@ HRESULT ITSProtocol_create(IUnknown *pUnkOuter, LPVOID *ppobj)
     ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ITSProtocol));
 
     ret->lpInternetProtocolVtbl = &ITSProtocolVtbl;
+    ret->lpInternetProtocolInfoVtbl = &ITSProtocolInfoVtbl;
     ret->ref = 1;
 
     *ppobj = PROTOCOL(ret);

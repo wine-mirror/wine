@@ -393,6 +393,19 @@ static void test_protocol_url(IClassFactory *factory, LPCWSTR url)
     read_protocol = NULL;
 }
 
+static void test_its_protocol_info(IInternetProtocol *protocol)
+{
+    IInternetProtocolInfo *info;
+    HRESULT hres;
+
+    hres = IInternetProtocol_QueryInterface(protocol, &IID_IInternetProtocolInfo, (void**)&info);
+    ok(hres == S_OK, "Could not get IInternetProtocolInfo interface: %08x\n", hres);
+    if(FAILED(hres))
+        return;
+
+    IInternetProtocolInfo_Release(info);
+}
+
 static void test_its_protocol(void)
 {
     IInternetProtocolInfo *info;
@@ -442,6 +455,8 @@ static void test_its_protocol(void)
         hres = IClassFactory_CreateInstance(factory, NULL, &IID_IInternetProtocol, (void**)&protocol);
         ok(hres == S_OK, "Could not get IInternetProtocol: %08x\n", hres);
         if(SUCCEEDED(hres)) {
+            test_its_protocol_info(protocol);
+
             test_protocol_fail(protocol, wrong_url1, STG_E_FILENOTFOUND);
             test_protocol_fail(protocol, wrong_url2, STG_E_FILENOTFOUND);
             test_protocol_fail(protocol, wrong_url3, STG_E_FILENOTFOUND);
