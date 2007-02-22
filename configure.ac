@@ -1711,6 +1711,7 @@ dlls/secur32/tests/Makefile
 dlls/security/Makefile
 dlls/sensapi/Makefile
 dlls/serialui/Makefile
+dlls/serialui/tests/Makefile
 dlls/setupapi/Makefile
 dlls/setupapi/tests/Makefile
 dlls/sfc/Makefile

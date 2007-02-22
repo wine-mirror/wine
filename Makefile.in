@@ -340,6 +340,7 @@ ALL_MAKEFILES = \
 	dlls/security/Makefile \
 	dlls/sensapi/Makefile \
 	dlls/serialui/Makefile \
+	dlls/serialui/tests/Makefile \
 	dlls/setupapi/Makefile \
 	dlls/setupapi/tests/Makefile \
 	dlls/sfc/Makefile \
@@ -672,6 +673,7 @@ dlls/secur32/tests/Makefile: dlls/secur32/tests/Makefile.in dlls/Maketest.rules
 dlls/security/Makefile: dlls/security/Makefile.in dlls/Makedll.rules
 dlls/sensapi/Makefile: dlls/sensapi/Makefile.in dlls/Makedll.rules
 dlls/serialui/Makefile: dlls/serialui/Makefile.in dlls/Makedll.rules
+dlls/serialui/tests/Makefile: dlls/serialui/tests/Makefile.in dlls/Maketest.rules
 dlls/setupapi/Makefile: dlls/setupapi/Makefile.in dlls/Makedll.rules
 dlls/setupapi/tests/Makefile: dlls/setupapi/tests/Makefile.in dlls/Maketest.rules
 dlls/sfc/Makefile: dlls/sfc/Makefile.in dlls/Makedll.rules

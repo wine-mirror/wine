@@ -441,6 +441,9 @@ dlls/secur32/tests/testlist.c
 dlls/sensapi/libsensapi.def
 dlls/serialui/libserialui.def
 dlls/serialui/serialui_rc.res
+dlls/serialui/tests/*.ok
+dlls/serialui/tests/serialui_crosstest.exe
+dlls/serialui/tests/testlist.c
 dlls/setupapi/libsetupapi.def
 dlls/setupapi/setupapi.res
 dlls/setupapi/tests/*.ok
@@ -830,6 +833,7 @@ programs/winetest/rpcrt4_test.exe
 programs/winetest/rsabase_test.exe
 programs/winetest/rsaenh_test.exe
 programs/winetest/secur32_test.exe
+programs/winetest/serialui_test.exe
 programs/winetest/setupapi_test.exe
 programs/winetest/shdocvw_test.exe
 programs/winetest/shell32_test.exe

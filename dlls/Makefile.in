@@ -263,6 +263,7 @@ TESTSUBDIRS = \
 	rsabase/tests \
 	rsaenh/tests \
 	secur32/tests \
+	serialui/tests \
 	setupapi/tests \
 	shdocvw/tests \
 	shell32/tests \
