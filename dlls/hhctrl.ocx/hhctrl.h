@@ -70,6 +70,28 @@ BOOL CHM_OpenCHM(CHMInfo *pCHMInfo, LPCWSTR szFile);
 BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 void CHM_CloseCHM(CHMInfo *pCHMInfo);
 
+/* memory allocation functions */
+
+static inline void *hhctrl_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
+static inline void *hhctrl_alloc_zero(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+}
+
+static inline void *hhctrl_realloc(void *mem, size_t len)
+{
+    return HeapReAlloc(GetProcessHeap(), 0, mem, len);
+}
+
+static inline BOOL hhctrl_free(void *mem)
+{
+    return HeapFree(GetProcessHeap(), 0, mem);
+}
+
 static inline LPWSTR strdupAtoW(LPCSTR str)
 {
     LPWSTR ret;
@@ -79,7 +101,7 @@ static inline LPWSTR strdupAtoW(LPCSTR str)
         return NULL;
 
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    ret = hhctrl_alloc(len*sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
 
     return ret;

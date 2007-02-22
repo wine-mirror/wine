@@ -66,7 +66,7 @@ static LPWSTR HH_LoadString(DWORD dwID)
     iSize = LoadStringW(hhctrl_hinstance, dwID, NULL, 0);
     iSize += 2; /* some strings (tab text) needs double-null termination */
 
-    string = HeapAlloc(GetProcessHeap(), 0, iSize * sizeof(WCHAR));
+    string = hhctrl_alloc(iSize * sizeof(WCHAR));
     LoadStringW(hhctrl_hinstance, dwID, string, iSize);
 
     return string;
@@ -457,7 +457,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
         szBuf[dwLen + 2] = 0; /* Double-null terminate */
 
         buttons[dwIndex].iString = (DWORD)SendMessageW(hToolbar, TB_ADDSTRINGW, 0, (LPARAM)szBuf);
-        HeapFree(GetProcessHeap(), 0, szBuf);
+        hhctrl_free(szBuf);
     }
 
     SendMessageW(hToolbar, TB_ADDBUTTONSW, dwNumButtons, (LPARAM)&buttons);
@@ -504,7 +504,7 @@ static void NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD dwStrID, D
     tie.pszText = tabText;
 
     SendMessageW( hwndTabCtrl, TCM_INSERTITEMW, dwIndex, (LPARAM)&tie );
-    HeapFree(GetProcessHeap(), 0, tabText);
+    hhctrl_free(tabText);
 }
 
 static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
@@ -782,11 +782,11 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
 
 static HHInfo *HH_OpenHH(HINSTANCE hInstance, LPWSTR szCmdLine)
 {
-    HHInfo *pHHInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HHInfo));
+    HHInfo *pHHInfo = hhctrl_alloc_zero(sizeof(HHInfo));
 
-    pHHInfo->pHHWinType = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(HH_WINTYPEW));
-    pHHInfo->pCHMInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(CHMInfo));
-    pHHInfo->pWBInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(WBInfo));
+    pHHInfo->pHHWinType = hhctrl_alloc_zero(sizeof(HH_WINTYPEW));
+    pHHInfo->pCHMInfo = hhctrl_alloc(sizeof(CHMInfo));
+    pHHInfo->pWBInfo = hhctrl_alloc(sizeof(WBInfo));
     pHHInfo->hInstance = hInstance;
     pHHInfo->szCmdLine = szCmdLine;
 
@@ -801,31 +801,31 @@ static void HH_Close(HHInfo *pHHInfo)
     /* Free allocated strings */
     if (pHHInfo->pHHWinType)
     {
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszType);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszCaption);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszToc);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszIndex);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszFile);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszHome);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszJump1);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszJump2);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszUrlJump1);
-        HeapFree(GetProcessHeap(), 0, (LPWSTR)pHHInfo->pHHWinType->pszUrlJump2);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszType);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszCaption);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszToc);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszIndex);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszFile);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszHome);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszJump1);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszJump2);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszUrlJump1);
+        hhctrl_free((LPWSTR)pHHInfo->pHHWinType->pszUrlJump2);
     }
 
-    HeapFree(GetProcessHeap(), 0, pHHInfo->pHHWinType);
-    HeapFree(GetProcessHeap(), 0, pHHInfo->szCmdLine);
+    hhctrl_free(pHHInfo->pHHWinType);
+    hhctrl_free(pHHInfo->szCmdLine);
 
     if (pHHInfo->pCHMInfo)
     {
         CHM_CloseCHM(pHHInfo->pCHMInfo);
-        HeapFree(GetProcessHeap(), 0, pHHInfo->pCHMInfo);
+        hhctrl_free(pHHInfo->pCHMInfo);
     }
 
     if (pHHInfo->pWBInfo)
     {
         WB_UnEmbedBrowser(pHHInfo->pWBInfo);
-        HeapFree(GetProcessHeap(), 0, pHHInfo->pWBInfo);
+        hhctrl_free(pHHInfo->pWBInfo);
     }
 }
 
@@ -865,7 +865,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     }
 
     HH_Close(pHHInfo);
-    HeapFree(GetProcessHeap(), 0, pHHInfo);
+    hhctrl_free(pHHInfo);
     OleUninitialize();
 
     return 0;

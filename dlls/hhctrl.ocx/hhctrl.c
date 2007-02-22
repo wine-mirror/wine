@@ -97,7 +97,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
     {
         DWORD len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
 
-        file = HeapAlloc( GetProcessHeap(), 0, len );
+        file = hhctrl_alloc(len);
         WideCharToMultiByte( CP_ACP, 0, filename, -1, file, len, NULL, NULL );
     }
 
@@ -113,7 +113,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
         default:
             FIXME("HH case %s not handled.\n", command_to_string( command ));
     }
-    HeapFree(GetProcessHeap(), 0, file);
+    hhctrl_free(file);
     return 0;
 }
 
@@ -126,12 +126,12 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
     {
         DWORD len = MultiByteToWideChar( CP_ACP, 0, filename, -1, NULL, 0 );
 
-        wfile = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR));
+        wfile = hhctrl_alloc(len*sizeof(WCHAR));
         MultiByteToWideChar( CP_ACP, 0, filename, -1, wfile, len );
     }
 
     result = HtmlHelpW( caller, wfile, command, data );
 
-    HeapFree( GetProcessHeap(), 0, wfile );
+    hhctrl_free(wfile);
     return result;
 }

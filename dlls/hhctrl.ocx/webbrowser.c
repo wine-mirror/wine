@@ -74,7 +74,7 @@ static ULONG STDMETHODCALLTYPE Site_Release(IOleClientSite *iface)
     if (refCount)
         return refCount;
 
-    HeapFree(GetProcessHeap(), 0, This);
+    hhctrl_free(This);
     return 0;
 }
 
@@ -579,8 +579,7 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
     /* clear out struct to keep from accessing invalid ptrs */
     ZeroMemory(pWBInfo, sizeof(WBInfo));
 
-    iOleClientSiteImpl = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                   sizeof(IOleClientSiteImpl));
+    iOleClientSiteImpl = hhctrl_alloc_zero(sizeof(IOleClientSiteImpl));
     if (!iOleClientSiteImpl)
         return FALSE;
 
@@ -631,7 +630,7 @@ BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent)
 
 error:
     WB_UnEmbedBrowser(pWBInfo);
-    HeapFree(GetProcessHeap(), 0, iOleClientSiteImpl);
+    hhctrl_free(iOleClientSiteImpl);
 
     return FALSE;
 }

@@ -36,7 +36,7 @@ static LPWSTR CHM_ReadString(CHMInfo *pChmInfo, DWORD dwOffset)
     static const WCHAR stringsW[] = {'#','S','T','R','I','N','G','S',0};
 
     dwSize = CB_READ_BLOCK;
-    szString = HeapAlloc(GetProcessHeap(), 0, dwSize);
+    szString = hhctrl_alloc(dwSize);
 
     if (FAILED(IStorage_OpenStream(pStorage, stringsW, NULL, STGM_READ, 0, &pStream)))
         return NULL;
@@ -59,13 +59,13 @@ static LPWSTR CHM_ReadString(CHMInfo *pChmInfo, DWORD dwOffset)
             if (!szString[iPos])
             {
                 stringW = strdupAtoW(szString);
-                HeapFree(GetProcessHeap(), 0, szString);
+                hhctrl_free(szString);
                 return stringW;
             }
         }
 
         dwSize *= 2;
-        szString = HeapReAlloc(GetProcessHeap(), 0, szString, dwSize);
+        szString = hhctrl_realloc(szString, dwSize);
         szString += cbRead;
     }
 
