@@ -48,7 +48,6 @@ typedef struct tagHHInfo
     HH_WINTYPEW *pHHWinType;
     CHMInfo *pCHMInfo;
     WBInfo *pWBInfo;
-    HINSTANCE hInstance;
     LPWSTR szCmdLine;
     HWND hwndTabCtrl;
     HWND hwndSizeBar;
@@ -196,7 +195,7 @@ static void HH_RegisterSizeBarClass(HHInfo *pHHInfo)
     wcex.lpfnWndProc    = (WNDPROC)SizeBar_WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
-    wcex.hInstance      = pHHInfo->hInstance;
+    wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_SIZEWE);
     wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
@@ -233,7 +232,7 @@ static BOOL HH_AddSizeBar(HHInfo *pHHInfo)
 
     hWnd = CreateWindowExW(dwExStyles, szSizeBarClass, szEmpty, dwStyles,
                            rc.left, rc.top, rc.right, rc.bottom,
-                           hwndParent, NULL, pHHInfo->hInstance, NULL);
+                           hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
 
@@ -303,7 +302,7 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
     wcex.lpfnWndProc    = (WNDPROC)Child_WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
-    wcex.hInstance      = pHHInfo->hInstance;
+    wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_BTNFACE + 1);
@@ -437,7 +436,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 
     hToolbar = CreateWindowExW(dwExStyles, TOOLBARCLASSNAMEW, NULL, dwStyles,
                                0, 0, 0, 0, hwndParent, NULL,
-                               pHHInfo->hInstance, NULL);
+                               hhctrl_hinstance, NULL);
     if (!hToolbar)
         return FALSE;
 
@@ -520,7 +519,7 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
 
     hWnd = CreateWindowExW(dwExStyles, szChildClass, szEmpty, dwStyles,
                            rc.left, rc.top, rc.right, rc.bottom,
-                           hwndParent, NULL, pHHInfo->hInstance, NULL);
+                           hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
 
@@ -528,21 +527,21 @@ static BOOL HH_AddNavigationPane(HHInfo *pHHInfo)
                                   0, TAB_TOP_PADDING,
                                   rc.right - TAB_RIGHT_PADDING,
                                   rc.bottom - TAB_TOP_PADDING,
-                                  hWnd, NULL, pHHInfo->hInstance, NULL);
+                                  hWnd, NULL, hhctrl_hinstance, NULL);
     if (!hwndTabCtrl)
         return FALSE;
 
     if (*pHHInfo->pHHWinType->pszToc)
-        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
+        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
 
     if (*pHHInfo->pHHWinType->pszIndex)
-        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
+        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
 
     if (pHHInfo->pHHWinType->fsWinProperties & HHWIN_PROP_TAB_SEARCH)
-        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_SEARCH, dwIndex++);
+        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_SEARCH, dwIndex++);
 
     if (pHHInfo->pHHWinType->fsWinProperties & HHWIN_PROP_TAB_FAVORITES)
-        NP_CreateTab(pHHInfo->hInstance, hwndTabCtrl, IDS_FAVORITES, dwIndex++);
+        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_FAVORITES, dwIndex++);
 
     SendMessageW(hwndTabCtrl, WM_SETFONT, (WPARAM)pHHInfo->hFont, TRUE);
 
@@ -580,7 +579,7 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
     hWnd = CreateWindowExW(dwExStyles, szChildClass, szEmpty, dwStyles,
                            rc.left, rc.top, rc.right, rc.bottom,
-                           hwndParent, NULL, pHHInfo->hInstance, NULL);
+                           hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
 
@@ -662,7 +661,6 @@ static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
 static BOOL HH_CreateHelpWindow(HHInfo *pHHInfo)
 {
     HWND hWnd;
-    HINSTANCE hInstance = pHHInfo->hInstance;
     RECT winPos = pHHInfo->pHHWinType->rcWindowPos;
     WNDCLASSEXW wcex;
     DWORD dwStyles, dwExStyles;
@@ -677,7 +675,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *pHHInfo)
     wcex.lpfnWndProc    = (WNDPROC)Help_WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
+    wcex.hInstance      = hhctrl_hinstance;
     wcex.hIcon          = LoadIconW(NULL, (LPCWSTR)IDI_APPLICATION);
     wcex.hCursor        = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
     wcex.hbrBackground  = (HBRUSH)(COLOR_MENU + 1);
@@ -716,7 +714,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *pHHInfo)
     }
 
     hWnd = CreateWindowExW(dwExStyles, windowClassW, pHHInfo->pHHWinType->pszCaption,
-                           dwStyles, x, y, width, height, NULL, NULL, hInstance, NULL);
+                           dwStyles, x, y, width, height, NULL, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
 
@@ -780,14 +778,13 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
     return TRUE;
 }
 
-static HHInfo *HH_OpenHH(HINSTANCE hInstance, LPWSTR szCmdLine)
+static HHInfo *HH_OpenHH(LPWSTR szCmdLine)
 {
     HHInfo *pHHInfo = hhctrl_alloc_zero(sizeof(HHInfo));
 
     pHHInfo->pHHWinType = hhctrl_alloc_zero(sizeof(HH_WINTYPEW));
     pHHInfo->pCHMInfo = hhctrl_alloc(sizeof(CHMInfo));
     pHHInfo->pWBInfo = hhctrl_alloc(sizeof(WBInfo));
-    pHHInfo->hInstance = hInstance;
     pHHInfo->szCmdLine = szCmdLine;
 
     return pHHInfo;
@@ -849,7 +846,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     if (FAILED(OleInitialize(NULL)))
         return -1;
 
-    pHHInfo = HH_OpenHH(hInstance, strdupAtoW(szCmdLine));
+    pHHInfo = HH_OpenHH(strdupAtoW(szCmdLine));
     if (!pHHInfo || !HH_OpenCHM(pHHInfo) || !HH_CreateViewer(pHHInfo))
     {
         OleUninitialize();
