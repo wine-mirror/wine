@@ -204,15 +204,15 @@ static INT_PTR CALLBACK SHDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lP
     switch (d->dwType)
     {
     case 0:
-      ShowWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
+      ShowWindow(GetDlgItem(hDlg, IDCANCEL), SW_HIDE);
       /* FIXME: Move OK button to position of the Cancel button (cosmetic) */
     case 1:
-      ShowWindow(GetDlgItem(hDlg, IDYES), FALSE);
-      ShowWindow(GetDlgItem(hDlg, IDNO), FALSE);
+      ShowWindow(GetDlgItem(hDlg, IDYES), SW_HIDE);
+      ShowWindow(GetDlgItem(hDlg, IDNO), SW_HIDE);
       break;
     default:
-      ShowWindow(GetDlgItem(hDlg, IDOK), FALSE);
-      ShowWindow(GetDlgItem(hDlg, IDCANCEL), FALSE);
+      ShowWindow(GetDlgItem(hDlg, IDOK), SW_HIDE);
+      ShowWindow(GetDlgItem(hDlg, IDCANCEL), SW_HIDE);
       break;
     }
     return TRUE;
