@@ -89,9 +89,14 @@ static BOOL dns_gethostbyname ( char *name, int *size )
         ebufsize *= 2;
         extrabuf = HeapReAlloc( GetProcessHeap(), 0, extrabuf, ebufsize ) ;
     }
-    
+
     if ( res )
         WARN ("Error in gethostbyname_r %d (%d)\n", res, locerr);
+    else if ( !host )
+    {
+        WARN ("gethostbyname_r returned NULL host, locerr = %d\n", locerr);
+        res = 1;
+    }
     else
     {
         int len = strlen ( host->h_name );
