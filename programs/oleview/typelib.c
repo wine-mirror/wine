@@ -437,6 +437,7 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
     BSTR bstrName, *bstrParamNames;
     WCHAR wszText[MAX_LOAD_STRING];
     WCHAR wszAfter[MAX_LOAD_STRING];
+    WCHAR szRhs[] = {'r','h','s',0};    /* Right-hand side of a propput */
     BOOL bFirst;
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
@@ -531,10 +532,10 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
         AddToTLDataStrW(tld, bstrName);
         AddToTLDataStrW(tld, wszOpenBrackets2);
 
-        for(j=0; j<namesNo-1; j++)
+        for(j=0; j<pFuncDesc->cParams; j++)
         {
             if(j != 0) AddToTLDataStrW(tld, wszComa);
-            if(namesNo-1 != 1)
+            if(pFuncDesc->cParams != 1)
             {
                 AddToTLDataStrW(tld, wszNewLine);
                 AddSpaces(tld, tabSize);
@@ -574,8 +575,12 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             AddToTLDataStrW(tld, wszText);
             AddToTLDataStrW(tld, wszAfter);
             AddToTLDataStrW(tld, wszSpace);
-            AddToTLDataStrW(tld, bstrParamNames[j+1]);
-            SysFreeString(bstrParamNames[j+1]);
+            if (j+1 < namesNo) {
+                AddToTLDataStrW(tld, bstrParamNames[j+1]);
+                SysFreeString(bstrParamNames[j+1]);
+            } else {
+                AddToTLDataStrW(tld, szRhs);
+            }
         }
         AddToTLDataStrW(tld, wszCloseBrackets2);
         AddToTLDataStrW(tld, wszSemicolon);
