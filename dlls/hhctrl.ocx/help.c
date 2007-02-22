@@ -57,18 +57,6 @@ typedef struct tagHHInfo
 
 extern HINSTANCE hhctrl_hinstance;
 
-static LPWSTR HH_ANSIToUnicode(LPCSTR ansi)
-{
-    LPWSTR unicode;
-    int count;
-
-    count = MultiByteToWideChar(CP_ACP, 0, ansi, -1, NULL, 0);
-    unicode = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, ansi, -1, unicode, count);
-
-    return unicode;
-}
-
 /* Loads a string from the resource file */
 static LPWSTR HH_LoadString(DWORD dwID)
 {
@@ -861,7 +849,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     if (FAILED(OleInitialize(NULL)))
         return -1;
 
-    pHHInfo = HH_OpenHH(hInstance, HH_ANSIToUnicode(szCmdLine));
+    pHHInfo = HH_OpenHH(hInstance, strdupAtoW(szCmdLine));
     if (!pHHInfo || !HH_OpenCHM(pHHInfo) || !HH_CreateViewer(pHHInfo))
     {
         OleUninitialize();

@@ -20,18 +20,6 @@
 
 #include "hhctrl.h"
 
-static LPWSTR CHM_ANSIToUnicode(LPCSTR ansi)
-{
-    LPWSTR unicode;
-    int count;
-
-    count = MultiByteToWideChar(CP_ACP, 0, ansi, -1, NULL, 0);
-    unicode = HeapAlloc(GetProcessHeap(), 0, count * sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, ansi, -1, unicode, count);
-
-    return unicode;
-}
-
 /* Reads a string from the #STRINGS section in the CHM file */
 static LPWSTR CHM_ReadString(CHMInfo *pChmInfo, DWORD dwOffset)
 {
@@ -70,7 +58,7 @@ static LPWSTR CHM_ReadString(CHMInfo *pChmInfo, DWORD dwOffset)
         {
             if (!szString[iPos])
             {
-                stringW = CHM_ANSIToUnicode(szString);
+                stringW = strdupAtoW(szString);
                 HeapFree(GetProcessHeap(), 0, szString);
                 return stringW;
             }

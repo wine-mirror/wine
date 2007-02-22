@@ -70,4 +70,19 @@ BOOL CHM_OpenCHM(CHMInfo *pCHMInfo, LPCWSTR szFile);
 BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 void CHM_CloseCHM(CHMInfo *pCHMInfo);
 
+static inline LPWSTR strdupAtoW(LPCSTR str)
+{
+    LPWSTR ret;
+    DWORD len;
+
+    if(!str)
+        return NULL;
+
+    len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
+    ret = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+    MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
+
+    return ret;
+}
+
 #endif
