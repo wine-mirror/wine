@@ -51,6 +51,7 @@ typedef struct tagInputContextData
         BOOL            bOpen;
         BOOL            bInternalState;
         BOOL            bRead;
+        BOOL            bInComposition;
         LOGFONTW        font;
         HFONT           textfont;
         COMPOSITIONFORM CompForm;
@@ -1130,6 +1131,9 @@ BOOL WINAPI ImmNotifyIME(
                         ImmInternalPostIMEMessage(WM_IME_COMPOSITION,
                                             root_context->ResultString[0],
                                             GCS_RESULTSTR|GCS_RESULTCLAUSE);
+
+                        ImmInternalPostIMEMessage(WM_IME_ENDCOMPOSITION, 0, 0);
+                        root_context->bInComposition = FALSE;
                     }
                     break;
                 case CPS_CONVERT:
@@ -1227,7 +1231,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
     MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->font.lfFaceName,
                         LF_FACESIZE);
 
-    SendMessageW(root_context->hwnd, WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0);
+    ImmInternalPostIMEMessage(WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
     {
@@ -1251,7 +1255,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
         return FALSE;
 
     memcpy(&data->font,lplf,sizeof(LOGFONTW));
-    SendMessageW(root_context->hwnd, WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0);
+    ImmInternalPostIMEMessage(WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
     {
@@ -1337,6 +1341,12 @@ BOOL WINAPI ImmSetCompositionStringW(
 
     if (dwIndex == SCS_SETSTR)
     {
+	if (!root_context->bInComposition)
+	{
+            ImmInternalPostIMEMessage(WM_IME_STARTCOMPOSITION, 0, 0);
+            root_context->bInComposition = TRUE;
+	}
+
          flags = GCS_COMPSTR;
 
          if (root_context->dwCompStringLength)
@@ -1396,7 +1406,7 @@ BOOL WINAPI ImmSetCompositionWindow(
     if (reshow)
         ShowWindow(hwndDefault,SW_SHOWNOACTIVATE);
 
-    SendMessageW(root_context->hwnd, WM_IME_NOTIFY,IMN_SETCOMPOSITIONWINDOW, 0);
+    ImmInternalPostIMEMessage(WM_IME_NOTIFY,IMN_SETCOMPOSITIONWINDOW, 0);
     return TRUE;
 }
 
@@ -1424,14 +1434,8 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
 
     if (hIMC == (HIMC)FROM_IME)
     {
-        if (fOpen)
-            ImmInternalPostIMEMessage(WM_IME_STARTCOMPOSITION, 0, 0);
-
         ImmInternalSetOpenStatus(fOpen);
-
-        if (!fOpen)
-            ImmInternalPostIMEMessage(WM_IME_ENDCOMPOSITION, 0, 0);
-
+        ImmInternalPostIMEMessage(WM_IME_NOTIFY, IMN_SETOPENSTATUS, 0);
         return TRUE;
     }
 
