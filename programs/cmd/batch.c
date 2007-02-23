@@ -437,7 +437,7 @@ void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
 
 #define NUMMODIFIERS 11
-  const char const validmodifiers[NUMMODIFIERS] = {
+  const char validmodifiers[NUMMODIFIERS] = {
         '~', 'f', 'd', 'p', 'n', 'x', 's', 'a', 't', 'z', '$'
   };
 
