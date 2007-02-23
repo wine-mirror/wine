@@ -2175,6 +2175,7 @@ int WINAPI WSAHtons(SOCKET s, WS_u_short hostshort, WS_u_short *lpnetshort)
  */
 WS_u_long WINAPI WS_inet_addr(const char *cp)
 {
+    if (!cp) return INADDR_NONE;
     return inet_addr(cp);
 }
 

@@ -1491,7 +1491,7 @@ done:
         closesocket(server_socket);
 }
 
-static void test_extendedSocketOptions()
+static void test_extendedSocketOptions(void)
 {
     WSADATA wsa;
     SOCKET sock;
@@ -1565,7 +1565,7 @@ static void test_extendedSocketOptions()
     WSACleanup();
 }
 
-static void test_getsockname()
+static void test_getsockname(void)
 {
     WSADATA wsa;
     SOCKET sock;
@@ -1612,6 +1612,14 @@ static void test_getsockname()
     WSACleanup();
 }
 
+static void test_inet_addr(void)
+{
+    u_long addr;
+
+    addr = inet_addr(NULL);
+    ok(addr == INADDR_NONE, "inet_addr succeeded unexpectedly\n");
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -1643,6 +1651,7 @@ START_TEST( sock )
     test_select();
     test_accept();
     test_getsockname();
+    test_inet_addr();
 
     Exit();
 }
