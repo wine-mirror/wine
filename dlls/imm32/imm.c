@@ -563,6 +563,21 @@ LONG WINAPI ImmGetCompositionStringA(
         }
         rc = sizeof(DWORD)*2;
     }
+    else if (dwIndex == GCS_RESULTCLAUSE)
+    {
+        TRACE("GSC_RESULTCLAUSE %p %i\n", data->ResultString, data->dwResultStringSize);
+
+        rc = WideCharToMultiByte(CP_ACP, 0, (LPWSTR)data->ResultString,
+                                 data->dwResultStringSize/ sizeof(WCHAR), NULL,
+                                 0, NULL, NULL);
+
+        if (dwBufLen >= sizeof(DWORD)*2)
+        {
+            ((LPDWORD)lpBuf)[0] = 0;
+            ((LPDWORD)lpBuf)[1] = rc;
+        }
+        rc = sizeof(DWORD)*2;
+    }
     else
     {
         FIXME("Unhandled index 0x%x\n",dwIndex);
