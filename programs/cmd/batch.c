@@ -42,9 +42,12 @@ extern DWORD errorlevel;
  *
  * We need to handle recursion correctly, since one batch program might call another.
  * So parameters for this batch file are held in a BATCH_CONTEXT structure.
+ *
+ * To support call within the same batch program, another input parameter is
+ * a label to goto once opened.
  */
 
-void WCMD_batch (char *file, char *command, int called) {
+void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE pgmHandle) {
 
 #define WCMD_BATCH_EXT_SIZE 5
 
@@ -55,27 +58,33 @@ char extension_exe[WCMD_BATCH_EXT_SIZE] = ".exe";
 unsigned int  i;
 BATCH_CONTEXT *prev_context;
 
-  for(i=0; (i<(sizeof(extension_batch)/WCMD_BATCH_EXT_SIZE)) && 
-           (h == INVALID_HANDLE_VALUE); i++) {
-  strcpy (string, file);
-  CharLower (string);
-    if (strstr (string, extension_batch[i]) == NULL) strcat (string, extension_batch[i]);
-  h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
-                  NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-  }
-  if (h == INVALID_HANDLE_VALUE) {
+  if (startLabel == NULL) {
+    for(i=0; (i<(sizeof(extension_batch)/WCMD_BATCH_EXT_SIZE)) &&
+             (h == INVALID_HANDLE_VALUE); i++) {
     strcpy (string, file);
     CharLower (string);
-    if (strstr (string, extension_exe) == NULL) strcat (string, extension_exe);
+      if (strstr (string, extension_batch[i]) == NULL) strcat (string, extension_batch[i]);
     h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
                     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (h != INVALID_HANDLE_VALUE) {
-      WCMD_run_program (command, 0);
-    } else {
-      SetLastError (ERROR_FILE_NOT_FOUND);
-      WCMD_print_error ();
     }
-    return;
+    if (h == INVALID_HANDLE_VALUE) {
+      strcpy (string, file);
+      CharLower (string);
+      if (strstr (string, extension_exe) == NULL) strcat (string, extension_exe);
+      h = CreateFile (string, GENERIC_READ, FILE_SHARE_READ,
+                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      if (h != INVALID_HANDLE_VALUE) {
+        WCMD_run_program (command, 0);
+      } else {
+        SetLastError (ERROR_FILE_NOT_FOUND);
+        WCMD_print_error ();
+      }
+      return;
+    }
+  } else {
+    DuplicateHandle(GetCurrentProcess(), pgmHandle,
+                    GetCurrentProcess(), &h,
+                    0, FALSE, DUPLICATE_SAME_ACCESS);
   }
 
 /*
@@ -89,6 +98,12 @@ BATCH_CONTEXT *prev_context;
   context -> shift_count = 0;
   context -> prev_context = prev_context;
   context -> skip_rest = FALSE;
+
+  /* If processing a call :label, 'goto' the label in question */
+  if (startLabel) {
+    strcpy(param1, startLabel);
+    WCMD_goto();
+  }
 
 /*
  * 	Work through the file line by line. Specific batch commands are processed here,
@@ -694,4 +709,41 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
   strcpy(*start, finaloutput);
   strcat(*start, pos);
   free(pos);
+}
+
+/*******************************************************************
+ * WCMD_call - processes a batch call statement
+ *
+ *	If there is a leading ':', calls within this batch program
+ *	otherwise launches another program.
+ */
+void WCMD_call (char *command) {
+
+  /* Run other program if no leading ':' */
+  if (*command != ':') {
+    WCMD_run_program(command, 1);
+  } else {
+
+    char gotoLabel[MAX_PATH];
+
+    strcpy(gotoLabel, param1);
+
+    if (context) {
+
+      LARGE_INTEGER li;
+
+      /* Save the current file position, call the same file,
+         restore position                                    */
+      li.QuadPart = 0;
+      li.LowPart = SetFilePointer(context -> h, li.LowPart,
+                     &li.HighPart, FILE_CURRENT);
+
+      WCMD_batch (param1, command, 1, gotoLabel, context->h);
+
+      SetFilePointer(context -> h, li.LowPart,
+                     &li.HighPart, FILE_BEGIN);
+    } else {
+      printf("Cannot call batch label outside of a batch script\n");
+    }
+  }
 }

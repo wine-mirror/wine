@@ -434,6 +434,7 @@ char string[MAX_PATH];
     return;
   }
   if (context != NULL) {
+    char *paramStart = param1;
 
     /* Handle special :EOF label */
     if (lstrcmpi (":eof", param1) == 0) {
@@ -441,9 +442,12 @@ char string[MAX_PATH];
       return;
     }
 
+    /* Support goto :label as well as goto label */
+    if (*paramStart == ':') paramStart++;
+
     SetFilePointer (context -> h, 0, NULL, FILE_BEGIN);
     while (WCMD_fgets (string, sizeof(string), context -> h)) {
-      if ((string[0] == ':') && (lstrcmpi (&string[1], param1) == 0)) return;
+      if ((string[0] == ':') && (lstrcmpi (&string[1], paramStart) == 0)) return;
     }
     WCMD_output ("Target to GOTO not found\n");
   }

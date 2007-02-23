@@ -265,7 +265,7 @@ int main (int argc, char *argv[])
   if (h != INVALID_HANDLE_VALUE) {
     CloseHandle (h);
 #if 0
-    WCMD_batch_command (string);
+    WCMD_batch ((char *)"\\autoexec.bat", (char *)"\\autoexec.bat", 0, NULL, INVALID_HANDLE_VALUE);
 #endif
   }
 
@@ -422,7 +422,7 @@ void WCMD_process_command (char *command)
         WCMD_setshow_attrib ();
         break;
       case WCMD_CALL:
-        WCMD_run_program (p, 1);
+        WCMD_call (p);
         break;
       case WCMD_CD:
       case WCMD_CHDIR:
@@ -628,14 +628,14 @@ char filetorun[MAX_PATH];
     if (!ext || !strcasecmp( ext, ".bat"))
     {
       if (SearchPath (NULL, param1, ".bat", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command, called);
+        WCMD_batch (filetorun, command, called, NULL, INVALID_HANDLE_VALUE);
         return;
       }
     }
     if (!ext || !strcasecmp( ext, ".cmd"))
     {
       if (SearchPath (NULL, param1, ".cmd", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command, called);
+        WCMD_batch (filetorun, command, called, NULL, INVALID_HANDLE_VALUE);
         return;
       }
     }
@@ -644,7 +644,7 @@ char filetorun[MAX_PATH];
     char *ext = strrchr( param1, '.' );
     if (ext && (!strcasecmp( ext, ".bat" ) || !strcasecmp( ext, ".cmd" )))
     {
-      WCMD_batch (param1, command, called);
+      WCMD_batch (param1, command, called, NULL, INVALID_HANDLE_VALUE);
       return;
     }
 
@@ -657,7 +657,7 @@ char filetorun[MAX_PATH];
                       NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
       if (h != INVALID_HANDLE_VALUE) {
         CloseHandle (h);
-        WCMD_batch (param1, command, called);
+        WCMD_batch (param1, command, called, NULL, INVALID_HANDLE_VALUE);
         return;
       }
     }

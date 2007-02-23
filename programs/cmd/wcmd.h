@@ -27,7 +27,8 @@
 #include <stdio.h>
 #include <ctype.h>
 
-void WCMD_batch (char *, char *, int);
+void WCMD_batch (char *, char *, int, char *, HANDLE);
+void WCMD_call (char *command);
 void WCMD_change_tty (void);
 void WCMD_clear_screen (void);
 void WCMD_copy (void);
