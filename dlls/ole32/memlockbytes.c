@@ -286,11 +286,8 @@ static HRESULT WINAPI HGLOBALLockBytesImpl_QueryInterface(
   /*
    * Compare the riid with the interface IDs implemented by this object.
    */
-  if (memcmp(&IID_IUnknown, riid, sizeof(IID_IUnknown)) == 0)
-  {
-    *ppvObject = (ILockBytes*)This;
-  }
-  else if (memcmp(&IID_ILockBytes, riid, sizeof(IID_ILockBytes)) == 0)
+  if (IsEqualIID(riid, &IID_IUnknown) ||
+      IsEqualIID(riid, &IID_ILockBytes))
   {
     *ppvObject = (ILockBytes*)This;
   }
