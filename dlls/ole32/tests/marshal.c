@@ -48,6 +48,7 @@ static const IID IID_IWineTest =
 }; /* 5201163f-8164-4fd0-a1a2-5d5a3654d3bd */
 
 #define EXTENTID_WineTest IID_IWineTest
+#define CLSID_WineTest IID_IWineTest
 
 static void test_cocreateinstance_proxy(void)
 {
@@ -1963,6 +1964,145 @@ static void test_freethreadedmarshaler(void)
     IMarshal_Release(pFTMarshal);
 }
 
+static void test_inproc_handler(void)
+{
+    HRESULT hr;
+    IUnknown *pObject;
+    IUnknown *pObject2;
+    char buffer[256];
+    LPOLESTR pszClsid;
+    HKEY hkey;
+    DWORD dwDisposition;
+    DWORD error;
+
+    hr = StringFromCLSID(&CLSID_WineTest, &pszClsid);
+    ok_ole_success(hr, "StringFromCLSID");
+    strcpy(buffer, "CLSID\\");
+    WideCharToMultiByte(CP_ACP, 0, pszClsid, -1, buffer + strlen(buffer), sizeof(buffer) - strlen(buffer), NULL, NULL);
+    CoTaskMemFree(pszClsid);
+    strcat(buffer, "\\InprocHandler32");
+    error = RegCreateKeyEx(HKEY_CLASSES_ROOT, buffer, 0, NULL, 0, KEY_SET_VALUE, NULL, &hkey, &dwDisposition);
+    ok(error == ERROR_SUCCESS, "RegCreateKeyEx failed with error %d\n", error);
+    error = RegSetValueEx(hkey, NULL, 0, REG_SZ, (const unsigned char *)"ole32.dll", strlen("ole32.dll") + 1);
+    ok(error == ERROR_SUCCESS, "RegSetValueEx failed with error %d\n", error);
+    RegCloseKey(hkey);
+
+    hr = CoCreateInstance(&CLSID_WineTest, NULL, CLSCTX_INPROC_HANDLER, &IID_IUnknown, (void **)&pObject);
+    todo_wine
+    ok_ole_success(hr, "CoCreateInstance");
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUnknown_QueryInterface(pObject, &IID_IWineTest, (void **)&pObject2);
+        ok(hr == E_NOINTERFACE, "IUnknown_QueryInterface on handler for invalid interface returned 0x%08x instead of E_NOINTERFACE\n", hr);
+
+        /* it's a handler as it supports IOleObject */
+        hr = IUnknown_QueryInterface(pObject, &IID_IOleObject, (void **)&pObject2);
+        ok_ole_success(hr, "IUnknown_QueryInterface(&IID_IOleObject)");
+        IUnknown_Release(pObject2);
+
+        IUnknown_Release(pObject);
+    }
+
+    RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
+    *strrchr(buffer, '\\') = '\0';
+    RegDeleteKey(HKEY_CLASSES_ROOT, buffer);
+}
+
+static HRESULT WINAPI Test_SMI_QueryInterface(
+    IStdMarshalInfo *iface,
+    REFIID riid,
+    LPVOID *ppvObj)
+{
+    if (ppvObj == NULL) return E_POINTER;
+
+    if (IsEqualGUID(riid, &IID_IUnknown) ||
+        IsEqualGUID(riid, &IID_IStdMarshalInfo))
+    {
+        *ppvObj = (LPVOID)iface;
+        IClassFactory_AddRef(iface);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Test_SMI_AddRef(IStdMarshalInfo *iface)
+{
+    LockModule();
+    return 2; /* non-heap-based object */
+}
+
+static ULONG WINAPI Test_SMI_Release(IStdMarshalInfo *iface)
+{
+    UnlockModule();
+    return 1; /* non-heap-based object */
+}
+
+static HRESULT WINAPI Test_SMI_GetClassForHandler(
+    IStdMarshalInfo *iface,
+    DWORD dwDestContext,
+    void *pvDestContext,
+    CLSID *pClsid)
+{
+    *pClsid = CLSID_WineTest;
+    return S_OK;
+}
+
+static const IStdMarshalInfoVtbl Test_SMI_Vtbl =
+{
+    Test_SMI_QueryInterface,
+    Test_SMI_AddRef,
+    Test_SMI_Release,
+    Test_SMI_GetClassForHandler
+};
+
+static IStdMarshalInfo Test_SMI = {&Test_SMI_Vtbl};
+
+static void test_handler_marshaling(void)
+{
+    HRESULT hr;
+    IStream *pStream = NULL;
+    IUnknown *pProxy = NULL;
+    IUnknown *pObject;
+    DWORD tid;
+    HANDLE thread;
+    static const LARGE_INTEGER ullZero;
+
+    cLocks = 0;
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &pStream);
+    ok_ole_success(hr, "CreateStreamOnHGlobal");
+    tid = start_host_object(pStream, &IID_IUnknown, (IUnknown*)&Test_SMI, MSHLFLAGS_NORMAL, &thread);
+
+    ok_more_than_one_lock();
+
+    IStream_Seek(pStream, ullZero, STREAM_SEEK_SET, NULL);
+    hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
+    ok_ole_success(hr, "CoUnmarshalInterface");
+    IStream_Release(pStream);
+
+    ok_more_than_one_lock();
+
+    hr = IUnknown_QueryInterface(pProxy, &IID_IWineTest, (void **)&pObject);
+    ok(hr == E_NOINTERFACE, "IUnknown_QueryInterface with unknown IID should have returned E_NOINTERFACE instead of 0x%08x\n", hr);
+
+    /* it's a handler as it supports IOleObject */
+    hr = IUnknown_QueryInterface(pProxy, &IID_IOleObject, (void **)&pObject);
+    todo_wine
+    ok_ole_success(hr, "IUnknown_QueryInterface(&IID_IOleObject)");
+    if (SUCCEEDED(hr)) IUnknown_Release(pObject);
+
+    IUnknown_Release(pProxy);
+
+    ok_no_locks();
+
+    end_host_object(tid, thread);
+
+    /* FIXME: test IPersist interface has the same effect as IStdMarshalInfo */
+}
+
+
 static HANDLE heventShutdown;
 
 static void LockModuleOOP(void)
@@ -2441,6 +2581,8 @@ START_TEST(marshal)
     test_call_from_message();
     test_WM_QUIT_handling();
     test_freethreadedmarshaler();
+    test_inproc_handler();
+    test_handler_marshaling();
 
     /* doesn't pass with Win9x COM DLLs (even though Essential COM says it should) */
     if (0) test_out_of_process_com();
