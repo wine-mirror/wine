@@ -72,6 +72,80 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
     return chm->strings[offset >> BLOCK_BITS] + (offset & BLOCK_MASK);
 }
 
+static BOOL ReadChmSystem(CHMInfo *chm)
+{
+    IStream *stream;
+    DWORD ver=0xdeadbeef, read, buf_size;
+    char *buf;
+    HRESULT hres;
+
+    struct {
+        WORD code;
+        WORD len;
+    } entry;
+
+    static const WCHAR wszSYSTEM[] = {'#','S','Y','S','T','E','M',0};
+
+    hres = IStorage_OpenStream(chm->pStorage, wszSYSTEM, NULL, STGM_READ, 0, &stream);
+    if(FAILED(hres)) {
+        WARN("Could not open #SYSTEM stream: %08x\n", hres);
+        return FALSE;
+    }
+
+    IStream_Read(stream, &ver, sizeof(ver), &read);
+    TRACE("version is %x\n", ver);
+
+    buf = hhctrl_alloc(8*sizeof(DWORD));
+    buf_size = 8*sizeof(DWORD);
+
+    while(1) {
+        hres = IStream_Read(stream, &entry, sizeof(entry), &read);
+        if(hres != S_OK)
+            break;
+
+        if(entry.len > buf_size)
+            buf = hhctrl_realloc(buf, buf_size=entry.len);
+
+        hres = IStream_Read(stream, buf, entry.len, &read);
+        if(hres != S_OK)
+            break;
+
+        switch(entry.code) {
+        case 0x2:
+            TRACE("Default topic is %s\n", debugstr_an(buf, entry.len));
+            break;
+        case 0x3:
+            TRACE("Title is %s\n", debugstr_an(buf, entry.len));
+            break;
+        case 0x5:
+            TRACE("Default window is %s\n", debugstr_an(buf, entry.len));
+            break;
+        case 0x6:
+            TRACE("Compiled file is %s\n", debugstr_an(buf, entry.len));
+            break;
+        case 0x9:
+            TRACE("Version is %s\n", debugstr_an(buf, entry.len));
+            break;
+        case 0xa:
+            TRACE("Time is %08x\n", *(DWORD*)buf);
+            break;
+        case 0xc:
+            TRACE("Number of info types: %d\n", *(DWORD*)buf);
+            break;
+        case 0xf:
+            TRACE("Check sum: %x\n", *(DWORD*)buf);
+            break;
+        default:
+            TRACE("unhandled code %x, size %x\n", entry.code, entry.len);
+        }
+    }
+
+    hhctrl_free(buf);
+    IStream_Release(stream);
+
+    return SUCCEEDED(hres);
+}
+
 /* Loads the HH_WINTYPE data from the CHM file
  *
  * FIXME: There may be more than one window type in the file, so
@@ -155,6 +229,11 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
             &ret->strings_stream);
     if(FAILED(hres)) {
         WARN("Could not open #STRINGS stream: %08x\n", hres);
+        return CloseCHM(ret);
+    }
+
+    if(!ReadChmSystem(ret)) {
+        WARN("Could not read #SYSTEM\n");
         return CloseCHM(ret);
     }
 
