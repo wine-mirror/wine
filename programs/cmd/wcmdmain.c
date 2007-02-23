@@ -301,27 +301,104 @@ int main (int argc, char *argv[])
 
 void WCMD_process_command (char *command)
 {
-    char *cmd, *p, *s;
+    char *cmd, *p, *s, *t;
+    char temp[MAXSTRING];
     int status, i, len;
     DWORD count, creationDisposition;
     HANDLE h;
     char *whichcmd;
     SECURITY_ATTRIBUTES sa;
+    char *new_cmd;
 
-/*
- *	Replace errorlevel with current value (This shrinks in
- *	  place and hence no need to reallocate the memory yet)
- */
-    p = command;
+    /* Move copy of the command onto the heap so it can be expanded */
+    new_cmd = HeapAlloc( GetProcessHeap(), 0, MAXSTRING );
+    strcpy(new_cmd, command);
+
+    /* For commands in a context (batch program):                  */
+    /*   Expand environment variables in a batch file %{0-9} first */
+    /*     including support for any ~ modifiers                   */
+    /* Additionally:                                               */
+    /*   Expand the DATE, TIME, CD and ERRORLEVEL special names    */
+    /*     allowing environment variable overrides                 */
+
+    /* FIXME: Winnt would replace %1%fred%1 with first parm, then */
+    /*   contents of fred, then the digit 1. Would need to remove */
+    /*   ExpandEnvStrings to achieve this                         */
+    /* NOTE: To support the %PATH:xxx% syntax, also need to do    */
+    /*   manual expansion of environment variables here           */
+
+    p = new_cmd;
     while ((p = strchr(p, '%'))) {
-      if (CompareString (LOCALE_USER_DEFAULT,
-                                NORM_IGNORECASE | SORT_STRINGSORT,
-                                (p+1), 11, "ERRORLEVEL%", -1) == 2) {
-        char output[10];
-        sprintf(output, "%d", errorlevel);
-        s = strdup (p+12);
-        strcpy (p, output);
+      i = *(p+1) - '0';
+
+      /* Replace %~ modifications if in batch program */
+      if (context && *(p+1) == '~') {
+        WCMD_HandleTildaModifiers(&p, NULL);
+        p++;
+
+      /* Replace use of %0...%9 if in batch program*/
+      } else if (context && (i >= 0) && (i <= 9)) {
+        s = strdup (p+2);
+        t = WCMD_parameter (context -> command, i + context -> shift_count, NULL);
+        strcpy (p, t);
         strcat (p, s);
+        free (s);
+
+      /* Replace use of %* if in batch program*/
+      } else if (context && *(p+1)=='*') {
+        char *startOfParms = NULL;
+        s = strdup (p+2);
+        t = WCMD_parameter (context -> command, 1, &startOfParms);
+        if (startOfParms != NULL) strcpy (p, startOfParms);
+        else *p = 0x00;
+        strcat (p, s);
+        free (s);
+
+      /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
+      /* override if existing env var called that name              */
+      } else if ((CompareString (LOCALE_USER_DEFAULT,
+                                  NORM_IGNORECASE | SORT_STRINGSORT,
+                                (p+1), 11, "ERRORLEVEL%", -1) == 2) &&
+                (GetEnvironmentVariable("ERRORLEVEL", temp, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+        sprintf(temp, "%d", errorlevel);
+          s = strdup (p+12);
+        strcpy (p, temp);
+        strcat (p, s);
+
+      } else if ((CompareString (LOCALE_USER_DEFAULT,
+                                NORM_IGNORECASE | SORT_STRINGSORT,
+                                (p+1), 5, "DATE%", -1) == 2) &&
+                (GetEnvironmentVariable("DATE", temp, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+
+        GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
+                      NULL, temp, MAXSTRING);
+        s = strdup (p+6);
+        strcpy (p, temp);
+        strcat (p, s);
+
+      } else if ((CompareString (LOCALE_USER_DEFAULT,
+                                NORM_IGNORECASE | SORT_STRINGSORT,
+                                (p+1), 5, "TIME%", -1) == 2) &&
+                (GetEnvironmentVariable("TIME", temp, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+        GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
+                          NULL, temp, MAXSTRING);
+        s = strdup (p+6);
+        strcpy (p, temp);
+          strcat (p, s);
+
+      } else if ((CompareString (LOCALE_USER_DEFAULT,
+                                NORM_IGNORECASE | SORT_STRINGSORT,
+                                (p+1), 3, "CD%", -1) == 2) &&
+                (GetEnvironmentVariable("CD", temp, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+        GetCurrentDirectory (MAXSTRING, temp);
+        s = strdup (p+4);
+        strcpy (p, temp);
+        strcat (p, s);
+
       } else {
         p++;
       }
@@ -329,14 +406,41 @@ void WCMD_process_command (char *command)
 
 /*
  *	Expand up environment variables.
+ *      FIXME: Move this to above, without reallocating
  */
-    len = ExpandEnvironmentStrings (command, NULL, 0);
+    len = ExpandEnvironmentStrings (new_cmd, NULL, 0);
     cmd = HeapAlloc( GetProcessHeap(), 0, len );
-    status = ExpandEnvironmentStrings (command, cmd, len);
+    status = ExpandEnvironmentStrings (new_cmd, cmd, len);
     if (!status) {
       WCMD_print_error ();
       HeapFree( GetProcessHeap(), 0, cmd );
+      HeapFree( GetProcessHeap(), 0, new_cmd );
       return;
+    } else {
+      HeapFree( GetProcessHeap(), 0, new_cmd );
+    }
+
+    /* In a batch program, unknown variables are replace by nothing */
+    /* so remove any remaining %var%                                */
+    if (context) {
+      p = cmd;
+      while ((p = strchr(p, '%'))) {
+        s = strchr(p+1, '%');
+        if (!s) {
+          *p=0x00;
+        } else {
+          t = strdup(s+1);
+          strcpy(p, t);
+          free(t);
+        }
+      }
+
+      /* Show prompt before batch line IF echo is on and in batch program */
+      if (echo_mode && (cmd[0] != '@')) {
+        WCMD_show_prompt();
+        WCMD_output_asis ( cmd);
+        WCMD_output_asis ( "\n");
+      }
     }
 
 /*

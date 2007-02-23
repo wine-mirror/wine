@@ -20,16 +20,10 @@
 
 #include "wcmd.h"
 
-void WCMD_batch_command (char *line);
-void WCMD_HandleTildaModifiers(char **start, char *forVariable);
-
 extern int echo_mode;
 extern char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 extern BATCH_CONTEXT *context;
 extern DWORD errorlevel;
-
-/* msdn specified max for Win XP */
-#define MAXSTRING 8192
 
 /****************************************************************************
  * WCMD_batch
@@ -117,7 +111,7 @@ BATCH_CONTEXT *prev_context;
           WCMD_output_asis( "\n");
       }
       if (string[0] != ':') {                      /* Skip over labels */
-          WCMD_batch_command (string);
+          WCMD_process_command (string);
       }
   }
   CloseHandle (h);
@@ -136,133 +130,6 @@ BATCH_CONTEXT *prev_context;
   else {
     context = prev_context;
   }
-}
-
-/****************************************************************************
- * WCMD_batch_command
- *
- * Execute one line from a batch file, expanding parameters.
- */
-
-void WCMD_batch_command (char *line) {
-
-DWORD status;
-char cmd1[MAXSTRING],cmd2[MAXSTRING];
-char *p, *s, *t;
-int i;
-
-  /* Get working version of command line */
-  strcpy(cmd1, line);
-
-  /* Expand environment variables in a batch file %{0-9} first  */
-  /*   Then env vars, and if any left (ie use of undefined vars,*/
-  /*   replace with spaces                                      */
-  /* FIXME: Winnt would replace %1%fred%1 with first parm, then */
-  /*   contents of fred, then the digit 1. Would need to remove */
-  /*   ExpandEnvStrings to achieve this                         */
-
-  /* Replace use of %0...%9 and errorlevel*/
-  p = cmd1;
-  while ((p = strchr(p, '%'))) {
-    i = *(p+1) - '0';
-    if (*(p+1) == '~') {
-      WCMD_HandleTildaModifiers(&p, NULL);
-      p++;
-    } else if ((i >= 0) && (i <= 9)) {
-      s = strdup (p+2);
-      t = WCMD_parameter (context -> command, i + context -> shift_count, NULL);
-      strcpy (p, t);
-      strcat (p, s);
-      free (s);
-    } else if (*(p+1)=='*') {
-      char *startOfParms = NULL;
-      s = strdup (p+2);
-      t = WCMD_parameter (context -> command, 1, &startOfParms);
-      if (startOfParms != NULL) strcpy (p, startOfParms);
-      else *p = 0x00;
-      strcat (p, s);
-      free (s);
-
-    /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
-    /* override if existing env var called that name              */
-    } else if ((CompareString (LOCALE_USER_DEFAULT,
-                              NORM_IGNORECASE | SORT_STRINGSORT,
-                              (p+1), 11, "ERRORLEVEL%", -1) == 2) &&
-              (GetEnvironmentVariable("ERRORLEVEL", cmd2, 1) == 0) &&
-              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-      char output[10];
-      sprintf(output, "%d", errorlevel);
-      s = strdup (p+12);
-      strcpy (p, output);
-      strcat (p, s);
-
-    } else if ((CompareString (LOCALE_USER_DEFAULT,
-                              NORM_IGNORECASE | SORT_STRINGSORT,
-                              (p+1), 5, "DATE%", -1) == 2) &&
-              (GetEnvironmentVariable("DATE", cmd2, 1) == 0) &&
-              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-
-      GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
-                    NULL, cmd2, MAXSTRING);
-      s = strdup (p+6);
-      strcpy (p, cmd2);
-      strcat (p, s);
-
-    } else if ((CompareString (LOCALE_USER_DEFAULT,
-                              NORM_IGNORECASE | SORT_STRINGSORT,
-                              (p+1), 5, "TIME%", -1) == 2) &&
-              (GetEnvironmentVariable("TIME", cmd2, 1) == 0) &&
-              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-      GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
-                        NULL, cmd2, MAXSTRING);
-      s = strdup (p+6);
-      strcpy (p, cmd2);
-      strcat (p, s);
-
-    } else if ((CompareString (LOCALE_USER_DEFAULT,
-                              NORM_IGNORECASE | SORT_STRINGSORT,
-                              (p+1), 3, "CD%", -1) == 2) &&
-              (GetEnvironmentVariable("CD", cmd2, 1) == 0) &&
-              (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-      GetCurrentDirectory (MAXSTRING, cmd2);
-      s = strdup (p+4);
-      strcpy (p, cmd2);
-      strcat (p, s);
-
-    } else {
-      p++;
-    }
-  }
-
-  /* Now replace environment variables */
-  status = ExpandEnvironmentStrings(cmd1, cmd2, sizeof(cmd2));
-  if (!status) {
-    WCMD_print_error ();
-    return;
-  }
-
-  /* In a batch program, unknown variables are replace by nothing */
-  /* so remove any remaining %var%                                */
-  p = cmd2;
-  while ((p = strchr(p, '%'))) {
-    s = strchr(p+1, '%');
-    if (!s) {
-      *p=0x00;
-    } else {
-      t = strdup(s+1);
-      strcpy(p, t);
-      free(t);
-    }
-  }
-
-  /* Show prompt before batch line IF echo is on */
-  if (echo_mode && (line[0] != '@')) {
-    WCMD_show_prompt();
-    WCMD_output_asis ( cmd2);
-    WCMD_output_asis ( "\n");
-  }
-
-  WCMD_process_command (cmd2);
 }
 
 /*******************************************************************

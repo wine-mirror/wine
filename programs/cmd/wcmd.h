@@ -79,6 +79,8 @@ char *WCMD_parameter (char *s, int n, char **where);
 char *WCMD_strtrim_leading_spaces (char *string);
 void WCMD_strtrim_trailing_spaces (char *string);
 void WCMD_opt_s_strip_quotes(char *cmd);
+void WCMD_HandleTildaModifiers(char **start, char *forVariable);
+
 
 /*	Data structure to hold context when executing batch files */
 
@@ -151,3 +153,6 @@ extern const char nyi[];
 extern const char newline[];
 extern const char version_string[];
 extern const char anykey[];
+
+/* msdn specified max for Win XP */
+#define MAXSTRING 8192
