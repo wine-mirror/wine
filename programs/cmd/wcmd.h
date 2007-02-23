@@ -49,8 +49,10 @@ void WCMD_output_asis (const char *message);
 void WCMD_parse (char *s, char *q, char *p1, char *p2);
 void WCMD_pause (void);
 void WCMD_pipe (char *command);
+void WCMD_popd (void);
 void WCMD_print_error (void);
 void WCMD_process_command (char *command);
+void WCMD_pushd (void);
 int  WCMD_read_console (char *string, int str_len);
 void WCMD_remove_dir (void);
 void WCMD_rename (void);
@@ -137,9 +139,11 @@ typedef struct {
 
 #define WCMD_ENDLOCAL 36
 #define WCMD_SETLOCAL 37
+#define WCMD_PUSHD  38
+#define WCMD_POPD   39
 
 /* Must be last in list */
-#define WCMD_EXIT   38
+#define WCMD_EXIT   40
 
 /* Some standard messages */
 extern const char nyi[];

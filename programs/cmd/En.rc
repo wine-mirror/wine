@@ -196,6 +196,12 @@ The verify flag has no function in Wine.\n"
 
   WCMD_VOL,    "Help about VOL\n"
 
+  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
+stack, and then changes the current directory to the supplied one.\n"
+
+  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
+PUSHD.\n"
+
   WCMD_EXIT,
 "EXIT terminates the current command session and returns\n\
 to the operating system or shell from which you invoked cmd.\n"
@@ -215,7 +221,9 @@ HELP\t\tShow brief help details on a topic\n\
 MD (MKDIR)\tCreate a subdirectory\n\
 MOVE\t\tMove a file, set of files or directory tree\n\
 PATH\t\tSet or show the search path\n\
+POPD\t\tRestores the directory to the last one saved with PUSHD\n\
 PROMPT\t\tChange the command prompt\n\
+PUSHD\t\tChanges to a new directory, saving the current one\n\
 REN (RENAME)\tRename a file\n\
 RD (RMDIR)\tDelete a subdirectory\n\
 SET\t\tSet or show environment variables\n\

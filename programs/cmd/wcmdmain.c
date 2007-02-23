@@ -32,7 +32,7 @@ const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", 
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
                 "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", 
-                "ENDLOCAL", "SETLOCAL", "EXIT" };
+                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "EXIT" };
 
 HINSTANCE hinst;
 DWORD errorlevel;
@@ -521,6 +521,12 @@ void WCMD_process_command (char *command)
         break;
       case WCMD_VOL:
         WCMD_volume (0, p);
+        break;
+      case WCMD_PUSHD:
+        WCMD_pushd();
+        break;
+      case WCMD_POPD:
+        WCMD_popd();
         break;
       case WCMD_EXIT:
         WCMD_exit ();

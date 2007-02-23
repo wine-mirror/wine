@@ -45,6 +45,7 @@ struct env_stack
 };
 
 struct env_stack *saved_environment;
+struct env_stack *pushd_directories;
 
 extern HINSTANCE hinst;
 extern char *inbuilt[];
@@ -449,6 +450,59 @@ char string[MAX_PATH];
   return;
 }
 
+/*****************************************************************************
+ * WCMD_pushd
+ *
+ *	Push a directory onto the stack
+ */
+
+void WCMD_pushd (void) {
+    struct env_stack *curdir;
+    BOOL   status;
+    WCHAR *thisdir;
+
+    curdir  = LocalAlloc (LMEM_FIXED, sizeof (struct env_stack));
+    thisdir = LocalAlloc (LMEM_FIXED, 1024 * sizeof(WCHAR));
+    if( !curdir || !thisdir ) {
+      LocalFree(curdir);
+      LocalFree(thisdir);
+      WCMD_output ("out of memory\n");
+      return;
+    }
+
+    GetCurrentDirectoryW (1024, thisdir);
+    status = SetCurrentDirectoryA (param1);
+    if (!status) {
+      WCMD_print_error ();
+      LocalFree(curdir);
+      LocalFree(thisdir);
+      return;
+    } else {
+      curdir -> next    = pushd_directories;
+      curdir -> strings = thisdir;
+      pushd_directories = curdir;
+    }
+}
+
+
+/*****************************************************************************
+ * WCMD_popd
+ *
+ *	Pop a directory from the stack
+ */
+
+void WCMD_popd (void) {
+    struct env_stack *temp = pushd_directories;
+
+    if (!pushd_directories)
+      return;
+
+    /* pop the old environment from the stack, and make it the current dir */
+    pushd_directories = temp->next;
+    SetCurrentDirectoryW(temp->strings);
+    LocalFree (temp->strings);
+    LocalFree (temp);
+}
 
 /****************************************************************************
  * WCMD_if
