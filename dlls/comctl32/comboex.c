@@ -577,17 +577,25 @@ static BOOL COMBOEX_GetItemA (COMBOEX_INFO *infoPtr, COMBOBOXEXITEMA *cit)
     tmpcit.pszText = 0;
     if(!COMBOEX_GetItemW (infoPtr, &tmpcit)) return FALSE;
 
-    if (is_textW(tmpcit.pszText) && cit->pszText)
-        WideCharToMultiByte (CP_ACP, 0, tmpcit.pszText, -1,
-			     cit->pszText, cit->cchTextMax, NULL, NULL);
-    else if (cit->pszText) cit->pszText[0] = 0;
-    else cit->pszText = (LPSTR)tmpcit.pszText;
+    if (cit->mask & CBEIF_TEXT)
+    {
+        if (is_textW(tmpcit.pszText) && cit->pszText)
+            WideCharToMultiByte(CP_ACP, 0, tmpcit.pszText, -1,
+                                cit->pszText, cit->cchTextMax, NULL, NULL);
+        else if (cit->pszText) cit->pszText[0] = 0;
+        else cit->pszText = (LPSTR)tmpcit.pszText;
+    }
 
-    cit->iImage = tmpcit.iImage;
-    cit->iSelectedImage = tmpcit.iSelectedImage;
-    cit->iOverlay = tmpcit.iOverlay;
-    cit->iIndent = tmpcit.iIndent;
-    cit->lParam = tmpcit.lParam;
+    if (cit->mask & CBEIF_IMAGE)
+        cit->iImage = tmpcit.iImage;
+    if (cit->mask & CBEIF_SELECTEDIMAGE)
+        cit->iSelectedImage = tmpcit.iSelectedImage;
+    if (cit->mask & CBEIF_OVERLAY)
+        cit->iOverlay = tmpcit.iOverlay;
+    if (cit->mask & CBEIF_INDENT)
+        cit->iIndent = tmpcit.iIndent;
+    if (cit->mask & CBEIF_LPARAM)
+        cit->lParam = tmpcit.lParam;
 
     return TRUE;
 }
