@@ -318,8 +318,8 @@ void WCMD_process_command (char *command)
     /*   Expand environment variables in a batch file %{0-9} first */
     /*     including support for any ~ modifiers                   */
     /* Additionally:                                               */
-    /*   Expand the DATE, TIME, CD and ERRORLEVEL special names    */
-    /*     allowing environment variable overrides                 */
+    /*   Expand the DATE, TIME, CD, RANDOM and ERRORLEVEL special  */
+    /*     names allowing environment variable overrides           */
 
     /* FIXME: Winnt would replace %1%fred%1 with first parm, then */
     /*   contents of fred, then the digit 1. Would need to remove */
@@ -396,6 +396,16 @@ void WCMD_process_command (char *command)
                 (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
         GetCurrentDirectory (MAXSTRING, temp);
         s = strdup (p+4);
+        strcpy (p, temp);
+        strcat (p, s);
+
+      } else if ((CompareString (LOCALE_USER_DEFAULT,
+                                NORM_IGNORECASE | SORT_STRINGSORT,
+                                (p+1), 7, "RANDOM%", -1) == 2) &&
+                (GetEnvironmentVariable("RANDOM", temp, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+        sprintf(temp, "%d", rand() % 32768);
+        s = strdup (p+8);
         strcpy (p, temp);
         strcat (p, s);
 
