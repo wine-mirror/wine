@@ -800,10 +800,7 @@ static void HH_Close(HHInfo *pHHInfo)
     hhctrl_free(pHHInfo->pHHWinType);
 
     if (pHHInfo->pCHMInfo)
-    {
-        CHM_CloseCHM(pHHInfo->pCHMInfo);
-        hhctrl_free(pHHInfo->pCHMInfo);
-    }
+        CloseCHM(pHHInfo->pCHMInfo);
 
     if (pHHInfo->pWBInfo)
     {
@@ -816,12 +813,16 @@ static HHInfo *HH_OpenHH(LPWSTR filename)
 {
     HHInfo *pHHInfo = hhctrl_alloc_zero(sizeof(HHInfo));
 
+    pHHInfo->pCHMInfo = OpenCHM(filename);
+    if(!pHHInfo->pCHMInfo) {
+        HH_Close(pHHInfo);
+        return NULL;
+    }
+
     pHHInfo->pHHWinType = hhctrl_alloc_zero(sizeof(HH_WINTYPEW));
-    pHHInfo->pCHMInfo = hhctrl_alloc(sizeof(CHMInfo));
     pHHInfo->pWBInfo = hhctrl_alloc(sizeof(WBInfo));
 
-    if (!CHM_OpenCHM(pHHInfo->pCHMInfo, filename)
-        || !CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, pHHInfo->pHHWinType)) {
+    if (!CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, pHHInfo->pHHWinType)) {
         HH_Close(pHHInfo);
         return NULL;
     }

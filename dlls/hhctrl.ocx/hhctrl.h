@@ -70,9 +70,9 @@ void WB_UnEmbedBrowser(WBInfo *pWBInfo);
 void WB_ResizeBrowser(WBInfo *pWBInfo, DWORD dwWidth, DWORD dwHeight);
 void WB_DoPageAction(WBInfo *pWBInfo, DWORD dwAction);
 
-BOOL CHM_OpenCHM(CHMInfo *pCHMInfo, LPCWSTR szFile);
+CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
-void CHM_CloseCHM(CHMInfo *pCHMInfo);
+CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
 
 /* memory allocation functions */
 

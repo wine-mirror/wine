@@ -127,48 +127,60 @@ done:
 }
 
 /* Opens the CHM file for reading */
-BOOL CHM_OpenCHM(CHMInfo *pChmInfo, LPCWSTR szFile)
+CHMInfo *OpenCHM(LPCWSTR szFile)
 {
     HRESULT hres;
 
     static const WCHAR wszSTRINGS[] = {'#','S','T','R','I','N','G','S',0};
 
-    pChmInfo->szFile = szFile;
+    CHMInfo *ret = hhctrl_alloc_zero(sizeof(CHMInfo));
 
-    if (FAILED(CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
-                                &IID_IITStorage, (void **) &pChmInfo->pITStorage)))
-        return FALSE;
+    ret->szFile = szFile;
 
-    if (FAILED(IITStorage_StgOpenStorage(pChmInfo->pITStorage, szFile, NULL,
-                                         STGM_READ | STGM_SHARE_DENY_WRITE,
-                                         NULL, 0, &pChmInfo->pStorage)))
-        return FALSE;
+    hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IITStorage, (void **) &ret->pITStorage) ;
+    if(FAILED(hres)) {
+        WARN("Could not create ITStorage: %08x\n", hres);
+        return CloseCHM(ret);
+    }
 
-    hres = IStorage_OpenStream(pChmInfo->pStorage, wszSTRINGS, NULL, STGM_READ, 0,
-                               &pChmInfo->strings_stream);
+    hres = IITStorage_StgOpenStorage(ret->pITStorage, szFile, NULL,
+            STGM_READ | STGM_SHARE_DENY_WRITE, NULL, 0, &ret->pStorage);
+    if(FAILED(hres)) {
+        WARN("Could not open storage: %08x\n", hres);
+        return CloseCHM(ret);
+    }
+
+    hres = IStorage_OpenStream(ret->pStorage, wszSTRINGS, NULL, STGM_READ, 0,
+            &ret->strings_stream);
     if(FAILED(hres)) {
         WARN("Could not open #STRINGS stream: %08x\n", hres);
-        return FALSE;
+        return CloseCHM(ret);
     }
 
-    pChmInfo->strings = NULL;
-    pChmInfo->strings_size = 0;
-
-    return TRUE;
+    return ret;
 }
 
-void CHM_CloseCHM(CHMInfo *pCHMInfo)
+CHMInfo *CloseCHM(CHMInfo *chm)
 {
-    IITStorage_Release(pCHMInfo->pITStorage);
-    IStorage_Release(pCHMInfo->pStorage);
-    IStream_Release(pCHMInfo->strings_stream);
+    if(chm->pITStorage)
+        IITStorage_Release(chm->pITStorage);
 
-    if(pCHMInfo->strings_size) {
+    if(chm->pStorage)
+        IStorage_Release(chm->pStorage);
+
+    if(chm->strings_stream)
+        IStream_Release(chm->strings_stream);
+
+    if(chm->strings_size) {
         int i;
 
-        for(i=0; i<pCHMInfo->strings_size; i++)
-            hhctrl_free(pCHMInfo->strings[i]);
+        for(i=0; i<chm->strings_size; i++)
+            hhctrl_free(chm->strings[i]);
     }
 
-    hhctrl_free(pCHMInfo->strings);
+    hhctrl_free(chm->strings);
+    hhctrl_free(chm);
+
+    return NULL;
 }
