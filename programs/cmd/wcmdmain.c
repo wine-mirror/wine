@@ -46,6 +46,8 @@ char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
 static HANDLE old_stdin = INVALID_HANDLE_VALUE, old_stdout = INVALID_HANDLE_VALUE;
 
+static char *WCMD_expand_envvar(char *start);
+
 /*****************************************************************************
  * Main entry point. This is a console application so we have a main() not a
  * winmain().
@@ -303,7 +305,7 @@ void WCMD_process_command (char *command)
 {
     char *cmd, *p, *s, *t;
     char temp[MAXSTRING];
-    int status, i, len;
+    int status, i;
     DWORD count, creationDisposition;
     HANDLE h;
     char *whichcmd;
@@ -410,25 +412,10 @@ void WCMD_process_command (char *command)
         strcat (p, s);
 
       } else {
-        p++;
+        p = WCMD_expand_envvar(p);
       }
     }
-
-/*
- *	Expand up environment variables.
- *      FIXME: Move this to above, without reallocating
- */
-    len = ExpandEnvironmentStrings (new_cmd, NULL, 0);
-    cmd = HeapAlloc( GetProcessHeap(), 0, len );
-    status = ExpandEnvironmentStrings (new_cmd, cmd, len);
-    if (!status) {
-      WCMD_print_error ();
-      HeapFree( GetProcessHeap(), 0, cmd );
-      HeapFree( GetProcessHeap(), 0, new_cmd );
-      return;
-    } else {
-      HeapFree( GetProcessHeap(), 0, new_cmd );
-    }
+    cmd = new_cmd;
 
     /* In a batch program, unknown variables are replace by nothing */
     /* so remove any remaining %var%                                */
@@ -1134,4 +1121,206 @@ char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[10
   wsprintf (temp_cmd, "%s < %s", command, temp_file);
   WCMD_process_command (temp_cmd);
   DeleteFile (temp_file);
+}
+
+/*************************************************************************
+ * WCMD_expand_envvar
+ *
+ *	Expands environment variables, allowing for character substitution
+ */
+static char *WCMD_expand_envvar(char *start) {
+    char *endOfVar = NULL, *s;
+    char *colonpos = NULL;
+    char thisVar[MAXSTRING];
+    char thisVarContents[MAXSTRING];
+    char savedchar = 0x00;
+    int len;
+
+    /* Find the end of the environment variable, and extract name */
+    endOfVar = strchr(start+1, '%');
+    if (endOfVar == NULL) {
+      /* FIXME: Some special conditions here depending opn whether
+         in batch, complex or not, and whether env var exists or not! */
+      return start+1;
+    }
+    strncpy(thisVar, start, (endOfVar - start)+1);
+    thisVar[(endOfVar - start)+1] = 0x00;
+    colonpos = strchr(thisVar+1, ':');
+
+    /* If there's complex substitution, just need %var% for now
+       to get the expanded data to play with                    */
+    if (colonpos) {
+        *colonpos = '%';
+        savedchar = *(colonpos+1);
+        *(colonpos+1) = 0x00;
+    }
+
+    /* Expand to contents, if unchanged, return */
+    len = ExpandEnvironmentStrings(thisVar, thisVarContents,
+                                     sizeof(thisVarContents));
+    if (len == 0)
+      return endOfVar+1;
+
+    /* In a batch program, unknown env vars are replaced with nothing,
+         note syntax %garbage:1,3% results in anything after the ':'
+         except the %
+       From the command line, you just get back what you entered      */
+    if (lstrcmpi(thisVar, thisVarContents) == 0) {
+
+      /* Restore the complex part after the compare */
+      if (colonpos) {
+        *colonpos = ':';
+        *(colonpos+1) = savedchar;
+      }
+
+      s = strdup (endOfVar + 1);
+
+      /* Command line - just ignore this */
+      if (context == NULL) return endOfVar+1;
+
+      /* Batch - replace unknown env var with nothing */
+      if (colonpos == NULL) {
+        strcpy (start, s);
+
+      } else {
+        len = strlen(thisVar);
+        thisVar[len-1] = 0x00;
+        /* If %:...% supplied, : is retained */
+        if (colonpos == thisVar+1) {
+          strcpy (start, colonpos);
+        } else {
+          strcpy (start, colonpos+1);
+        }
+        strcat (start, s);
+      }
+      free (s);
+      return start;
+
+    }
+
+    /* See if we need to do complex substitution (any ':'s), if not
+       then our work here is done                                  */
+    if (colonpos == NULL) {
+      s = strdup (endOfVar + 1);
+      strcpy (start, thisVarContents);
+      strcat (start, s);
+      free(s);
+      return start;
+    }
+
+    /* Restore complex bit */
+    *colonpos = ':';
+    *(colonpos+1) = savedchar;
+
+    /*
+        Handle complex substitutions:
+           xxx=yyy    (replace xxx with yyy)
+           *xxx=yyy   (replace up to and including xxx with yyy)
+           ~x         (from x chars in)
+           ~-x        (from x chars from the end)
+           ~x,y       (from x chars in for y characters)
+           ~x,-y      (from x chars in until y characters from the end)
+     */
+
+    /* ~ is substring manipulation */
+    if (savedchar == '~') {
+
+      int   substrposition, substrlength;
+      char *commapos = strchr(colonpos+2, ',');
+      char *startCopy;
+
+      substrposition = atol(colonpos+2);
+      if (commapos) substrlength = atol(commapos+1);
+
+      s = strdup (endOfVar + 1);
+
+      /* Check bounds */
+      if (substrposition >= 0) {
+        startCopy = &thisVarContents[min(substrposition, len)];
+      } else {
+        startCopy = &thisVarContents[max(0, len+substrposition-1)];
+      }
+
+      if (commapos == NULL) {
+        strcpy (start, startCopy); /* Copy the lot */
+      } else if (substrlength < 0) {
+
+        int copybytes = (len+substrlength-1)-(startCopy-thisVarContents);
+        if (copybytes > len) copybytes = len;
+        else if (copybytes < 0) copybytes = 0;
+        strncpy (start, startCopy, copybytes); /* Copy the lot */
+        start[copybytes] = 0x00;
+      } else {
+        strncpy (start, startCopy, substrlength); /* Copy the lot */
+        start[substrlength] = 0x00;
+      }
+
+      strcat (start, s);
+      free(s);
+      return start;
+
+    /* search and replace manipulation */
+    } else {
+      char *equalspos = strstr(colonpos, "=");
+      char *replacewith = equalspos+1;
+      char *found       = NULL;
+      char *searchIn;
+      char *searchFor;
+
+      s = strdup (endOfVar + 1);
+      if (equalspos == NULL) return start+1;
+
+      /* Null terminate both strings */
+      thisVar[strlen(thisVar)-1] = 0x00;
+      *equalspos = 0x00;
+
+      /* Since we need to be case insensitive, copy the 2 buffers */
+      searchIn  = strdup(thisVarContents);
+      CharUpperBuff(searchIn, strlen(thisVarContents));
+      searchFor = strdup(colonpos+1);
+      CharUpperBuff(searchFor, strlen(colonpos+1));
+
+
+      /* Handle wildcard case */
+      if (*(colonpos+1) == '*') {
+        /* Search for string to replace */
+        found = strstr(searchIn, searchFor+1);
+
+        if (found) {
+          /* Do replacement */
+          strcpy(start, replacewith);
+          strcat(start, thisVarContents + (found-searchIn) + strlen(searchFor+1));
+          strcat(start, s);
+          free(s);
+        } else {
+          /* Copy as it */
+          strcpy(start, thisVarContents);
+          strcat(start, s);
+        }
+
+      } else {
+        /* Loop replacing all instances */
+        char *lastFound = searchIn;
+        char *outputposn = start;
+
+        *start = 0x00;
+        while ((found = strstr(lastFound, searchFor))) {
+            strncpy(outputposn,
+                    thisVarContents + (lastFound-searchIn),
+                    (found - lastFound));
+            outputposn  = outputposn + (found - lastFound);
+            *outputposn = 0x00;
+            strcat(outputposn, replacewith);
+            outputposn = outputposn + strlen(replacewith);
+            lastFound = found + strlen(searchFor);
+        }
+        strcat(outputposn,
+                thisVarContents + (lastFound-searchIn));
+        strcat(outputposn, s);
+      }
+      free(searchIn);
+      free(searchFor);
+      return start;
+    }
+    return start+1;
 }
