@@ -258,25 +258,6 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
 
     old_client_rect = data->client_rect;
 
-    if (!IsRectEmpty( &valid_rects[0] ))
-    {
-        int x_offset = 0, y_offset = 0;
-
-        if (data->whole_window)
-        {
-            /* the X server will move the bits for us */
-            x_offset = data->whole_rect.left - new_whole_rect.left;
-            y_offset = data->whole_rect.top - new_whole_rect.top;
-        }
-
-        if (x_offset != valid_rects[1].left - valid_rects[0].left ||
-            y_offset != valid_rects[1].top - valid_rects[0].top)
-        {
-            /* FIXME: should copy the window bits here */
-            valid_rects = NULL;
-        }
-    }
-
     if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
     if (win == WND_OTHER_PROCESS)
     {
@@ -343,7 +324,29 @@ BOOL X11DRV_SetWindowPos( HWND hwnd, HWND insert_after, const RECT *rectWindow,
         TRACE( "win %p window %s client %s style %08x\n",
                hwnd, wine_dbgstr_rect(rectWindow), wine_dbgstr_rect(rectClient), new_style );
 
-        /* FIXME: copy the valid bits */
+        if (!IsRectEmpty( &valid_rects[0] ))
+        {
+            int x_offset = 0, y_offset = 0;
+
+            if (data->whole_window)
+            {
+                /* the X server will move the bits for us */
+                x_offset = data->whole_rect.left - new_whole_rect.left;
+                y_offset = data->whole_rect.top - new_whole_rect.top;
+            }
+
+            if (x_offset != valid_rects[1].left - valid_rects[0].left ||
+                y_offset != valid_rects[1].top - valid_rects[0].top)
+            {
+                /* FIXME: should copy the window bits here */
+                RECT invalid_rect = valid_rects[0];
+
+                /* invalid_rects are relative to the client area */
+                OffsetRect( &invalid_rect, -rectClient->left, -rectClient->top );
+                RedrawWindow( hwnd, &invalid_rect, NULL, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
+            }
+        }
+
 
         if (data->whole_window && !data->lock_changes)
         {
