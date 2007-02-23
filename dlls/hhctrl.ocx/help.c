@@ -48,7 +48,6 @@ typedef struct tagHHInfo
     HH_WINTYPEW *pHHWinType;
     CHMInfo *pCHMInfo;
     WBInfo *pWBInfo;
-    LPWSTR szCmdLine;
     HWND hwndTabCtrl;
     HWND hwndSizeBar;
     HFONT hFont;
@@ -778,18 +777,6 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
     return TRUE;
 }
 
-static HHInfo *HH_OpenHH(LPWSTR szCmdLine)
-{
-    HHInfo *pHHInfo = hhctrl_alloc_zero(sizeof(HHInfo));
-
-    pHHInfo->pHHWinType = hhctrl_alloc_zero(sizeof(HH_WINTYPEW));
-    pHHInfo->pCHMInfo = hhctrl_alloc(sizeof(CHMInfo));
-    pHHInfo->pWBInfo = hhctrl_alloc(sizeof(WBInfo));
-    pHHInfo->szCmdLine = szCmdLine;
-
-    return pHHInfo;
-}
-
 static void HH_Close(HHInfo *pHHInfo)
 {
     if (!pHHInfo)
@@ -811,7 +798,6 @@ static void HH_Close(HHInfo *pHHInfo)
     }
 
     hhctrl_free(pHHInfo->pHHWinType);
-    hhctrl_free(pHHInfo->szCmdLine);
 
     if (pHHInfo->pCHMInfo)
     {
@@ -826,15 +812,21 @@ static void HH_Close(HHInfo *pHHInfo)
     }
 }
 
-static BOOL HH_OpenCHM(HHInfo *pHHInfo)
+static HHInfo *HH_OpenHH(LPWSTR filename)
 {
-    if (!CHM_OpenCHM(pHHInfo->pCHMInfo, pHHInfo->szCmdLine))
-        return FALSE;
+    HHInfo *pHHInfo = hhctrl_alloc_zero(sizeof(HHInfo));
 
-    if (!CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, pHHInfo->pHHWinType))
-        return FALSE;
+    pHHInfo->pHHWinType = hhctrl_alloc_zero(sizeof(HH_WINTYPEW));
+    pHHInfo->pCHMInfo = hhctrl_alloc(sizeof(CHMInfo));
+    pHHInfo->pWBInfo = hhctrl_alloc(sizeof(WBInfo));
 
-    return TRUE;
+    if (!CHM_OpenCHM(pHHInfo->pCHMInfo, filename)
+        || !CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, pHHInfo->pHHWinType)) {
+        HH_Close(pHHInfo);
+        return NULL;
+    }
+
+    return pHHInfo;
 }
 
 /* FIXME: Check szCmdLine for bad arguments */
@@ -847,7 +839,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         return -1;
 
     pHHInfo = HH_OpenHH(strdupAtoW(szCmdLine));
-    if (!pHHInfo || !HH_OpenCHM(pHHInfo) || !HH_CreateViewer(pHHInfo))
+    if (!pHHInfo || !HH_CreateViewer(pHHInfo))
     {
         OleUninitialize();
         return -1;
