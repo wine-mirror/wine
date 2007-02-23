@@ -78,11 +78,24 @@ static BOOL            wined3d_fake_gl_context_foreign;
 static BOOL            wined3d_fake_gl_context_available = FALSE;
 static Display*        wined3d_fake_gl_context_display = NULL;
 
+static CRITICAL_SECTION wined3d_fake_gl_context_cs;
+static CRITICAL_SECTION_DEBUG wined3d_fake_gl_context_cs_debug =
+{
+    0, 0, &wined3d_fake_gl_context_cs,
+    { &wined3d_fake_gl_context_cs_debug.ProcessLocksList,
+      &wined3d_fake_gl_context_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": wined3d_fake_gl_context_cs") }
+};
+static CRITICAL_SECTION wined3d_fake_gl_context_cs = { &wined3d_fake_gl_context_cs_debug, -1, 0, 0, 0, 0 };
+
 static void WineD3D_ReleaseFakeGLContext(void) {
     GLXContext glCtx;
 
+    EnterCriticalSection(&wined3d_fake_gl_context_cs);
+
     if(!wined3d_fake_gl_context_available) {
         TRACE_(d3d_caps)("context not available\n");
+        LeaveCriticalSection(&wined3d_fake_gl_context_cs);
         return;
     }
 
@@ -95,16 +108,20 @@ static void WineD3D_ReleaseFakeGLContext(void) {
             glXMakeCurrent(wined3d_fake_gl_context_display, None, NULL);
             glXDestroyContext(wined3d_fake_gl_context_display, glCtx);
         }
-        LEAVE_GL();
         wined3d_fake_gl_context_available = FALSE;
     }
     assert(wined3d_fake_gl_context_ref >= 0);
 
+    LeaveCriticalSection(&wined3d_fake_gl_context_cs);
+    LEAVE_GL();
 }
 
 static BOOL WineD3D_CreateFakeGLContext(void) {
     XVisualInfo* visInfo;
     GLXContext   glCtx;
+
+    ENTER_GL();
+    EnterCriticalSection(&wined3d_fake_gl_context_cs);
 
     TRACE_(d3d_caps)("getting context...\n");
     if(wined3d_fake_gl_context_ref > 0) goto ret;
@@ -118,8 +135,6 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
         wined3d_fake_gl_context_display = get_display(device_context);
         ReleaseDC(0, device_context);
     }
-
-    ENTER_GL();
 
     visInfo = NULL;
     glCtx = glXGetCurrentContext();
@@ -170,10 +185,12 @@ static BOOL WineD3D_CreateFakeGLContext(void) {
     TRACE_(d3d_caps)("incrementing ref from %i\n", wined3d_fake_gl_context_ref);
     wined3d_fake_gl_context_ref++;
     wined3d_fake_gl_context_available = TRUE;
+    LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     return TRUE;
   fail:
     if(visInfo) XFree(visInfo);
     if(glCtx) glXDestroyContext(wined3d_fake_gl_context_display, glCtx);
+    LeaveCriticalSection(&wined3d_fake_gl_context_cs);
     LEAVE_GL();
     return FALSE;
 }
