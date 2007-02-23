@@ -156,7 +156,7 @@ void X11DRV_Settings_Init(void)
                                 X11DRV_nores_GetCurrentMode, 
                                 X11DRV_nores_SetCurrentMode, 
                                 1, 0);
-    X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 0);
+    X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
 }
 
 /***********************************************************************
