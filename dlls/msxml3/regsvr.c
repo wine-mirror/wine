@@ -583,6 +583,22 @@ static struct regsvr_coclass const coclass_list[] = {
 	"Both",
 	"Msxml"
     },
+    {   &CLSID_XMLSchemaCache,
+	"XML Schema Cache",
+	NULL,
+	"msxml3.dll",
+	"Both",
+	"Msxml2.XMLSchemaCache",
+        "3.0"
+    },
+    {   &CLSID_XMLSchemaCache30,
+	"XML Schema Cache 3.0",
+	NULL,
+	"msxml3.dll",
+	"Both",
+	"Msxml2.XMLSchemaCache",
+        "3.0"
+    },
     { NULL }			/* list terminator */
 };
 
@@ -662,6 +678,17 @@ static struct progid const progid_list[] = {
 	&CLSID_XMLDocument,
 	NULL
     },
+    {   "Msxml2.XMLSchemaCache",
+        "XML Schema Cache",
+        &CLSID_XMLSchemaCache,
+        "Msxml2.XMLSchemaCache.3.0"
+    },
+    {   "Msxml2.XMLSchemaCache.3.0",
+        "XML Schema Cache 3.0",
+        &CLSID_XMLSchemaCache30,
+        NULL
+    },
+
     { NULL }			/* list terminator */
 };
 
