@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ver);
  *      Added this function to clean up the code.
  *
  *****************************************************************************/
-static void print_vffi_debug(VS_FIXEDFILEINFO *vffi)
+static void print_vffi_debug(const VS_FIXEDFILEINFO *vffi)
 {
     BOOL    versioned_printer = FALSE;
 
