@@ -1528,7 +1528,7 @@ typedef struct _D3DVOLUME_DESC {
     D3DRESOURCETYPE     Type;
     DWORD               Usage;
     D3DPOOL             Pool;
-    UINT                Size;
+
     UINT                Width;
     UINT                Height;
     UINT                Depth;
