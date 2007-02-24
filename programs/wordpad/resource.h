@@ -21,6 +21,11 @@
 #define ID_FILE_SAVE 1002
 #define ID_FILE_NEW 1003
 
+#define ID_PRINT 1004
+#define ID_PREVIEW 1005
+
+#define ID_FIND 1006
+
 #define ID_ALIGN_LEFT 1100
 #define ID_ALIGN_CENTER 1101
 #define ID_ALIGN_RIGHT 1102

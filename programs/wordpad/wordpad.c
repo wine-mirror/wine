@@ -207,7 +207,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     if(!SendMessage(hReBarWnd, RB_SETBARINFO, 0, (LPARAM)&rbi))
         return -1;
 
-    hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NODIVIDER|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_FLAT,
+    hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NODIVIDER|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
       IDC_TOOLBAR,
       3, hInstance, IDB_TOOLBAR,
       NULL, 0,
@@ -220,9 +220,13 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILEOPEN, ID_FILE_OPEN);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILESAVE, ID_FILE_SAVE);
     AddSeparator(hToolBarWnd);
+    AddButton(hToolBarWnd, nStdBitmaps+STD_PRINT, ID_PRINT);
+    AddButton(hToolBarWnd, nStdBitmaps+STD_PRINTPRE, ID_PREVIEW);
+    AddSeparator(hToolBarWnd);
+    AddButton(hToolBarWnd, nStdBitmaps+STD_FIND, ID_FIND);
+    AddSeparator(hToolBarWnd);
     AddButton(hToolBarWnd, nStdBitmaps+STD_CUT, ID_EDIT_CUT);
     AddButton(hToolBarWnd, nStdBitmaps+STD_COPY, ID_EDIT_COPY);
-    AddSeparator(hToolBarWnd);
     AddButton(hToolBarWnd, nStdBitmaps+STD_UNDO, ID_EDIT_UNDO);
     AddButton(hToolBarWnd, nStdBitmaps+STD_REDOW, ID_EDIT_REDO);
     AddSeparator(hToolBarWnd);
@@ -333,7 +337,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_FILE_OPEN:
     case ID_FILE_SAVE:
-        MessageBox(hWnd, "Open/Save not implemented", "WordPad", MB_OK);
+    case ID_PRINT:
+    case ID_PREVIEW:
+    case ID_FIND:
+        MessageBox(hWnd, "Not implemented", "WordPad", MB_OK);
         break;
 
     case ID_FORMAT_BOLD:
