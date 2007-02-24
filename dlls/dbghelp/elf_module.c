@@ -112,8 +112,6 @@ struct elf_file_map
         const char*                     mapped;
     }*                          sect;
     int                         fd;
-    unsigned                    with_crc;
-    unsigned long               crc;
     const char*	                shstrtab;
     struct elf_file_map*        alternate;      /* another ELF file (linked to this one) */
 };
@@ -266,7 +264,6 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
     WideCharToMultiByte(CP_UNIXCP, 0, filenameW, -1, filename, len, NULL, NULL);
 
     fmap->fd = -1;
-    fmap->with_crc = 0;
     fmap->shstrtab = ELF_NO_MAP;
     fmap->alternate = NULL;
 
@@ -856,10 +853,18 @@ static DWORD calc_crc32(struct elf_file_map* fmap)
 #undef UPDC32
 }
 
-static BOOL elf_load_debug_info_from_map(struct module* module,
-                                         struct elf_file_map* fmap,
-                                         struct pool* pool,
-                                         struct hash_table* ht_symtab);
+static BOOL elf_check_debug_link(const WCHAR* file, struct elf_file_map* fmap, DWORD crc)
+{
+    BOOL        ret;
+    if (!elf_map_file(file, fmap)) return FALSE;
+    if (!(ret = crc == calc_crc32(fmap)))
+    {
+        WARN("Bad CRC for file %s (got %08x while expecting %08x)\n",
+             debugstr_w(file), calc_crc32(fmap), crc);
+        elf_unmap_file(fmap);
+    }
+    return ret;
+}
 
 /******************************************************************
  *		elf_locate_debug_link
@@ -880,20 +885,24 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
  *    is the global debug file directory, and execdir has been turned
  *    into a relative path)." (from GDB manual)
  */
-static WCHAR* elf_locate_debug_link(const char* filename, const WCHAR* loaded_file,
-                                   struct elf_file_map* fmap_link)
+static BOOL elf_locate_debug_link(struct elf_file_map* fmap, const char* filename,
+                                  const WCHAR* loaded_file, DWORD crc)
 {
     static const WCHAR globalDebugDirW[] = {'/','u','s','r','/','l','i','b','/','d','e','b','u','g','/'};
     static const WCHAR dotDebugW[] = {'.','d','e','b','u','g','/'};
     const size_t globalDebugDirLen = sizeof(globalDebugDirW) / sizeof(WCHAR);
     size_t filename_len;
-    WCHAR* p;
+    WCHAR* p = NULL;
     WCHAR* slash;
+    struct elf_file_map* fmap_link = NULL;
+
+    fmap_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*fmap_link));
+    if (!fmap_link) return FALSE;
 
     filename_len = MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, NULL, 0);
     p = HeapAlloc(GetProcessHeap(), 0,
                   (globalDebugDirLen + strlenW(loaded_file) + 6 + 1 + filename_len + 1) * sizeof(WCHAR));
-    if (!p) return FALSE;
+    if (!p) goto found;
 
     /* we prebuild the string with "execdir" */
     strcpyW(p, loaded_file);
@@ -902,33 +911,34 @@ static WCHAR* elf_locate_debug_link(const char* filename, const WCHAR* loaded_fi
 
     /* testing execdir/filename */
     MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash, filename_len);
-    if (elf_map_file(p, fmap_link)) goto found;
-
-    HeapValidate(GetProcessHeap(), 0, 0);
+    if (elf_check_debug_link(p, fmap_link, crc)) goto found;
 
     /* testing execdir/.debug/filename */
     memcpy(slash, dotDebugW, sizeof(dotDebugW));
     MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash + sizeof(dotDebugW) / sizeof(WCHAR), filename_len);
-    if (elf_map_file(p, fmap_link)) goto found;
+    if (elf_check_debug_link(p, fmap_link, crc)) goto found;
 
     /* testing globaldebugdir/execdir/filename */
     memmove(p + globalDebugDirLen, p, (slash - p) * sizeof(WCHAR));
     memcpy(p, globalDebugDirW, globalDebugDirLen * sizeof(WCHAR));
     slash += globalDebugDirLen;
     MultiByteToWideChar(CP_UNIXCP, 0, filename, -1, slash, filename_len);
-    if (elf_map_file(p, fmap_link)) goto found;
+    if (elf_check_debug_link(p, fmap_link, crc)) goto found;
 
     /* finally testing filename */
-    if (elf_map_file(slash, fmap_link)) goto found;
+    if (elf_check_debug_link(slash, fmap_link, crc)) goto found;
 
-    HeapFree(GetProcessHeap(), 0, p);
 
     WARN("Couldn't locate or map %s\n", filename);
-    return NULL;
+    HeapFree(GetProcessHeap(), 0, p);
+    HeapFree(GetProcessHeap(), 0, fmap_link);
+    return FALSE;
 
 found:
     TRACE("Located debug information file %s at %s\n", filename, debugstr_w(p));
-    return p;
+    HeapFree(GetProcessHeap(), 0, p);
+    fmap->alternate = fmap_link;
+    return TRUE;
 }
 
 /******************************************************************
@@ -937,10 +947,8 @@ found:
  * Parses a .gnu_debuglink section and loads the debug info from
  * the external file specified there.
  */
-static BOOL elf_debuglink_parse (struct module* module,
-                                 struct pool* pool,
-                                 struct hash_table* ht_symtab,
-				 const BYTE* debuglink)
+static BOOL elf_debuglink_parse(struct elf_file_map* fmap, struct module* module,
+                                const BYTE* debuglink)
 {
     /* The content of a debug link section is:
      * 1/ a NULL terminated string, containing the file name for the
@@ -948,28 +956,11 @@ static BOOL elf_debuglink_parse (struct module* module,
      * 2/ padding on 4 byte boundary
      * 3/ CRC of the linked ELF file
      */
-    BOOL ret = FALSE;
     const char* dbg_link = (char*)debuglink;
-    struct elf_file_map fmap_link;
-    WCHAR* link_file;
+    DWORD crc;
 
-    link_file = elf_locate_debug_link(dbg_link, module->module.LoadedImageName, &fmap_link);
-
-    if (link_file)
-    {
-	fmap_link.crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
-	fmap_link.with_crc = 1;
-	ret = elf_load_debug_info_from_map(module, &fmap_link, pool,
-                                           ht_symtab);
-	if (ret)
-            strcpyW(module->module.LoadedPdbName,link_file);
-	else
-	    WARN("Couldn't load debug information from %s\n", debugstr_w(link_file));
-	elf_unmap_file(&fmap_link);
-        HeapFree(GetProcessHeap(), 0, link_file);
-    }
-
-    return ret;
+    crc = *(const DWORD*)(dbg_link + ((DWORD_PTR)(strlen(dbg_link) + 4) & ~3));
+    return elf_locate_debug_link(fmap, dbg_link, module->module.LoadedImageName, crc);
 }
 
 /******************************************************************
@@ -1002,14 +993,6 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
         {NULL,                                  0,                    0, 0}
     };
 
-    if (fmap->with_crc && (fmap->crc != calc_crc32(fmap)))
-    {
-        ERR("Bad CRC for module %s (got %08x while expecting %08lx)\n",
-            debugstr_w(module->module.LoadedImageName), calc_crc32(fmap), fmap->crc);
-        /* we don't tolerate mis-matched files */
-        return FALSE;
-    }
-
     module->module.SymType = SymExport;
 
     /* create a hash table for the symtab */
@@ -1022,6 +1005,22 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
                                 debug_line_sect, debug_loclist_sect;
         struct elf_section_map  debuglink_sect;
 
+        /* if present, add the .gnu_debuglink file as an alternate to current one */
+	if (elf_find_section(fmap, ".gnu_debuglink", SHT_NULL, &debuglink_sect))
+        {
+            const BYTE* dbg_link;
+
+            dbg_link = (const BYTE*)elf_map_section(&debuglink_sect);
+            if (dbg_link != ELF_NO_MAP)
+            {
+                lret = elf_debuglink_parse(fmap, module, dbg_link);
+                if (!lret)
+		    WARN("Couldn't load linked debug file for %s\n",
+                         debugstr_w(module->module.ModuleName));
+                ret = ret || lret;
+            }
+            elf_unmap_section(&debuglink_sect);
+        }
         if (elf_find_section(fmap, ".stab", SHT_NULL, &stab_sect) &&
             elf_find_section(fmap, ".stabstr", SHT_NULL, &stabstr_sect))
         {
@@ -1087,21 +1086,6 @@ static BOOL elf_load_debug_info_from_map(struct module* module,
             elf_unmap_section(&debug_str_sect);
             elf_unmap_section(&debug_line_sect);
             elf_unmap_section(&debug_loclist_sect);
-        }
-	if (elf_find_section(fmap, ".gnu_debuglink", SHT_NULL, &debuglink_sect))
-        {
-            const BYTE* dbg_link;
-
-            dbg_link = (const BYTE*)elf_map_section(&debuglink_sect);
-            if (dbg_link != ELF_NO_MAP)
-            {
-                lret = elf_debuglink_parse(module, pool, ht_symtab, dbg_link);
-                if (!lret)
-		    WARN("Couldn't load linked debug file for %s\n",
-                         debugstr_w(module->module.ModuleName));
-                ret = ret || lret;
-            }
-            elf_unmap_section(&debuglink_sect);
         }
     }
     if (strstrW(module->module.ModuleName, S_ElfW) ||
