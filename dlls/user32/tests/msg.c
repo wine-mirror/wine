@@ -8889,6 +8889,20 @@ static void test_dialog_messages(void)
 #undef check_selection
 }
 
+static void test_nullCallback(void)
+{
+    HWND hwnd;
+    MSG msg;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test overlapped", WS_OVERLAPPEDWINDOW,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+
+    SendMessageCallbackA(hwnd,WM_NULL,0,0,NULL,0);
+    while (PeekMessage( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessage( &msg );
+    DestroyWindow(hwnd);
+}
+
 START_TEST(msg)
 {
     BOOL ret;
@@ -8959,6 +8973,7 @@ START_TEST(msg)
     test_SetWindowRgn();
     test_sys_menu();
     test_dialog_messages();
+    test_nullCallback();
 
     UnhookWindowsHookEx(hCBT_hook);
     if (pUnhookWinEvent)

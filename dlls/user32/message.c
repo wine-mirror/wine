@@ -1905,6 +1905,8 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info
 static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UINT msg,
                                           ULONG_PTR data, LRESULT result )
 {
+    if (!callback) return;
+
     if (TRACE_ON(relay))
         DPRINTF( "%04x:Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
                  GetCurrentThreadId(), callback, hwnd, SPY_GetMsgName( msg, hwnd ),
