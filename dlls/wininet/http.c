@@ -851,7 +851,7 @@ end:
 static UINT HTTP_EncodeBase64( LPCSTR bin, unsigned int len, LPWSTR base64 )
 {
     UINT n = 0, x;
-    static LPCSTR HTTP_Base64Enc = 
+    static const CHAR HTTP_Base64Enc[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     while( len > 0 )

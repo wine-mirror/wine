@@ -95,7 +95,7 @@ typedef enum {
   FTP_CMD_QUIT,
 } FTP_COMMAND;
 
-static const CHAR *szFtpCommands[] = {
+static const CHAR *const szFtpCommands[] = {
   "ACCT",
   "CWD",
   "DELE",
