@@ -115,6 +115,7 @@ struct elf_file_map
     unsigned                    with_crc;
     unsigned long               crc;
     const char*	                shstrtab;
+    struct elf_file_map*        alternate;      /* another ELF file (linked to this one) */
 };
 
 struct elf_section_map
@@ -167,27 +168,32 @@ static const char* elf_map_section(struct elf_section_map* esm)
  *		elf_find_section
  *
  * Finds a section by name (and type) into memory from an ELF file
+ * or its alternate if any
  */
 static BOOL elf_find_section(struct elf_file_map* fmap, const char* name,
                              unsigned sht, struct elf_section_map* esm)
 {
     unsigned i;
 
-    if (fmap->shstrtab == ELF_NO_MAP)
+    while (fmap)
     {
-        struct elf_section_map  hdr_esm = {fmap, fmap->elfhdr.e_shstrndx};
-        fmap->shstrtab = elf_map_section(&hdr_esm);
-        if (fmap->shstrtab == ELF_NO_MAP) return FALSE;
-    }
-    for (i = 0; i < fmap->elfhdr.e_shnum; i++)
-    {
-	if (strcmp(fmap->shstrtab + fmap->sect[i].shdr.sh_name, name) == 0 &&
-            (sht == SHT_NULL || sht == fmap->sect[i].shdr.sh_type))
+        if (fmap->shstrtab == ELF_NO_MAP)
         {
-            esm->fmap = fmap;
-            esm->sidx = i;
-	    return TRUE;
+            struct elf_section_map  hdr_esm = {fmap, fmap->elfhdr.e_shstrndx};
+            fmap->shstrtab = elf_map_section(&hdr_esm);
+            if (fmap->shstrtab == ELF_NO_MAP) return FALSE;
         }
+        for (i = 0; i < fmap->elfhdr.e_shnum; i++)
+        {
+            if (strcmp(fmap->shstrtab + fmap->sect[i].shdr.sh_name, name) == 0 &&
+                (sht == SHT_NULL || sht == fmap->sect[i].shdr.sh_type))
+            {
+                esm->fmap = fmap;
+                esm->sidx = i;
+                return TRUE;
+            }
+        }
+        fmap = fmap->alternate;
     }
     return FALSE;
 }
@@ -217,9 +223,14 @@ static void elf_end_find(struct elf_file_map* fmap)
 {
     struct elf_section_map      esm;
 
-    esm.fmap = fmap; esm.sidx = fmap->elfhdr.e_shstrndx;
-    elf_unmap_section(&esm);
-    fmap->shstrtab = ELF_NO_MAP;
+    while (fmap)
+    {
+        esm.fmap = fmap;
+        esm.sidx = fmap->elfhdr.e_shstrndx;
+        elf_unmap_section(&esm);
+        fmap->shstrtab = ELF_NO_MAP;
+        fmap = fmap->alternate;
+    }
 }
 
 /******************************************************************
@@ -257,6 +268,7 @@ static BOOL elf_map_file(const WCHAR* filenameW, struct elf_file_map* fmap)
     fmap->fd = -1;
     fmap->with_crc = 0;
     fmap->shstrtab = ELF_NO_MAP;
+    fmap->alternate = NULL;
 
     /* check that the file exists, and that the module hasn't been loaded yet */
     if (stat(filename, &statbuf) == -1 || S_ISDIR(statbuf.st_mode)) goto done;
@@ -312,16 +324,20 @@ done:
  */
 static void elf_unmap_file(struct elf_file_map* fmap)
 {
-    if (fmap->fd != -1)
+    while (fmap)
     {
-        struct elf_section_map  esm;
-        esm.fmap = fmap;
-        for (esm.sidx = 0; esm.sidx < fmap->elfhdr.e_shnum; esm.sidx++)
+        if (fmap->fd != -1)
         {
-            elf_unmap_section(&esm);
+            struct elf_section_map  esm;
+            esm.fmap = fmap;
+            for (esm.sidx = 0; esm.sidx < fmap->elfhdr.e_shnum; esm.sidx++)
+            {
+                elf_unmap_section(&esm);
+            }
+            HeapFree(GetProcessHeap(), 0, fmap->sect);
+            close(fmap->fd);
         }
-        HeapFree(GetProcessHeap(), 0, fmap->sect);
-        close(fmap->fd);
+        fmap = fmap->alternate;
     }
 }
 
