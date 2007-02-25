@@ -30,15 +30,17 @@ BEGIN
     END
     POPUP "É&dition"
     BEGIN
-        MENUITEM "&Annuler\tCtrl+Z",               ID_EDIT_UNDO
-        MENUITEM "&Répéter\tCtrl+Y",               ID_EDIT_REDO
-        MENUITEM "&Sélectionner tout\tCtrl+A",         ID_EDIT_SELECTALL
+        MENUITEM "&Annuler\tCtrl+Z",                ID_EDIT_UNDO
+        MENUITEM "&Répéter\tCtrl+Y",                ID_EDIT_REDO
         MENUITEM SEPARATOR
-        MENUITEM "&Couper\tCtrl+X",                ID_EDIT_CUT
-        MENUITEM "Co&pier\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "&Couper\tCtrl+X",                 ID_EDIT_CUT
+        MENUITEM "Co&pier\tCtrl+C",                 ID_EDIT_COPY
+        MENUITEM "C&oller\tCtrl+V",                 ID_EDIT_PASTE
+        MENUITEM "&Effacer\tDel",                   ID_EDIT_CLEAR
+        MENUITEM "&Sélectionner tout\tCtrl+A",      ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Lecture-&seule",                  ID_EDIT_READONLY
-        MENUITEM "&Modifié",                   ID_EDIT_MODIFIED
+        MENUITEM "&Modifié",                        ID_EDIT_MODIFIED
         MENUITEM SEPARATOR
         POPUP "&Avancés"
         BEGIN

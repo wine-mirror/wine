@@ -33,10 +33,12 @@ BEGIN
     BEGIN
         MENUITEM "&Cofnij\tCtrl+Z",               ID_EDIT_UNDO
         MENUITEM "&Powtórz\tCtrl+Y",               ID_EDIT_REDO
-        MENUITEM "&Zaznacz wszystko\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Wy&tnij\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Kopiuj\tCtrl+C",               ID_EDIT_COPY
+        MENUITEM "Wkl&ej\tCtrl+V",                ID_EDIT_PASTE
+        MENUITEM "&Usuñ\tDel",                    ID_EDIT_CLEAR
+        MENUITEM "&Zaznacz wszystko\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Tylko do &odczytu",                  ID_EDIT_READONLY
         MENUITEM "&Zmodifykowany",                   ID_EDIT_MODIFIED

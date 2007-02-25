@@ -377,6 +377,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         PostMessage(hwndEditor, WM_PASTE, 0, 0);
         break;
 
+    case ID_EDIT_CLEAR:
+        PostMessage(hwndEditor, WM_CLEAR, 0, 0);
+        break;
+
     case ID_EDIT_SELECTALL:
         {
         CHARRANGE range = {0, -1};

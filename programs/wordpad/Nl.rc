@@ -32,10 +32,12 @@ BEGIN
     BEGIN
         MENUITEM "&Ongedaan maken\tCtrl+Z",     ID_EDIT_UNDO
         MENUITEM "O&pnieuw\tCtrl+Y",            ID_EDIT_REDO
-        MENUITEM "&Alles selecteren\tCtrl+A",   ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "K&nippen\tCtrl+X",            ID_EDIT_CUT
         MENUITEM "&Kopieren\tCtrl+C",           ID_EDIT_COPY
+        MENUITEM "&Plakken\tCtrl+V",            ID_EDIT_PASTE
+        MENUITEM "&Verwijderen\tDel",           ID_EDIT_CLEAR
+        MENUITEM "&Alles selecteren\tCtrl+A",   ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Alleen &lezen",               ID_EDIT_READONLY
         MENUITEM "&Gewijzigd",                  ID_EDIT_MODIFIED

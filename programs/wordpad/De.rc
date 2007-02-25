@@ -32,10 +32,12 @@ BEGIN
     BEGIN
         MENUITEM "&Rückgängig\tCtrl+Z",         ID_EDIT_UNDO
         MENUITEM "&Wiederholen\tCtrl+Y",        ID_EDIT_REDO
-        MENUITEM "&Alles markieren\tCtrl+A",    ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Aus&schneiden\tCtrl+X",       ID_EDIT_CUT
         MENUITEM "&Kopieren\tCtrl+C",           ID_EDIT_COPY
+        MENUITEM "&Einfügen\tCtrl+V",           ID_EDIT_PASTE
+        MENUITEM "&Löschen\tDEL",               ID_EDIT_CLEAR
+        MENUITEM "&Alles markieren\tCtrl+A",    ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Schreibgeschü&tzt",           ID_EDIT_READONLY
         MENUITEM "&Geändert",                   ID_EDIT_MODIFIED

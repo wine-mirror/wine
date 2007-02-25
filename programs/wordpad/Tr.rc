@@ -34,10 +34,12 @@ BEGIN
     BEGIN
         MENUITEM "&Geri Al\tCtrl+Z",            ID_EDIT_UNDO
         MENUITEM "&Yinele\tCtrl+Y",             ID_EDIT_REDO
-        MENUITEM "&Tümünü seç\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Ke&s\tCtrl+X",                ID_EDIT_CUT
         MENUITEM "&Kopyala\tCtrl+C",            ID_EDIT_COPY
+        MENUITEM "Ya&pýþtýr\tCtrl+V",           ID_EDIT_PASTE
+        MENUITEM "&Sil\tDel",                   ID_EDIT_CLEAR
+        MENUITEM "&Tümünü seç\tCtrl+A",         ID_EDIT_SELECTALL
         MENUITEM SEPARATOR
         MENUITEM "Salt-&okunur",                ID_EDIT_READONLY
         MENUITEM "&Deðiþmiþ",                   ID_EDIT_MODIFIED
