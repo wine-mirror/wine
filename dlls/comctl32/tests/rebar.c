@@ -26,6 +26,7 @@
 
 #include "wine/test.h"
 
+RECT height_change_notify_rect;
 static HWND hMainWnd;
 static HWND hRebar;
 
@@ -89,6 +90,16 @@ static HWND build_toolbar(int nr, HWND hParent)
 
 static LRESULT CALLBACK MyWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+    switch (msg)
+    {
+        case WM_NOTIFY:
+            {
+                NMHDR *lpnm = (NMHDR *)lParam;
+                if (lpnm->code == RBN_HEIGHTCHANGE)
+                    GetClientRect(hRebar, &height_change_notify_rect);
+            }
+            break;
+    }
     return DefWindowProcA(hWnd, msg, wParam, lParam);
 }
 
@@ -440,12 +451,24 @@ static void layout_test()
 static void dump_client(HWND hRebar)
 {
     RECT r;
+    BOOL notify;
     GetWindowRect(hRebar, &r);
     MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2);
-    printf("    {{%d, %d, %d, %d}, %d},\n", r.left, r.top, r.right, r.bottom, SendMessage(hRebar, RB_GETROWCOUNT, 0, 0));
+    if (height_change_notify_rect.top != -1)
+    {
+        RECT rcClient;
+        GetClientRect(hRebar, &rcClient);
+        assert(EqualRect(&rcClient, &height_change_notify_rect));
+        notify = TRUE;
+    }
+    else
+        notify = FALSE;
+    printf("    {{%d, %d, %d, %d}, %d, %s},\n", r.left, r.top, r.right, r.bottom, SendMessage(hRebar, RB_GETROWCOUNT, 0, 0),
+        notify ? "TRUE" : "FALSE");
+    SetRect(&height_change_notify_rect, -1, -1, -1, -1);
 }
 
-#define comment(fmt, arg1)
+#define comment(fmt, arg1) printf("/* " fmt " */\n", arg1);
 #define check_client() dump_client(hRebar)
 
 #else
@@ -453,97 +476,128 @@ static void dump_client(HWND hRebar)
 typedef struct {
     RECT rc;
     INT iNumRows;
+    BOOL heightNotify;
 } rbresize_test_result_t;
 
 rbresize_test_result_t resize_results[] = {
 /* style 00000001 */
-    {{0, 2, 672, 2}, 0},
-    {{0, 2, 672, 22}, 1},
-    {{0, 2, 672, 22}, 1},
-    {{0, 2, 672, 22}, 1},
+    {{0, 2, 672, 2}, 0, FALSE},
+    {{0, 2, 672, 22}, 1, TRUE},
+    {{0, 2, 672, 22}, 1, FALSE},
+    {{0, 2, 672, 22}, 1, FALSE},
+    {{0, 2, 672, 22}, 1, FALSE},
+    {{0, 2, 672, 22}, 0, FALSE},
 /* style 00000041 */
-    {{0, 0, 672, 0}, 0},
-    {{0, 0, 672, 20}, 1},
-    {{0, 0, 672, 20}, 1},
-    {{0, 0, 672, 20}, 1},
+    {{0, 0, 672, 0}, 0, FALSE},
+    {{0, 0, 672, 20}, 1, TRUE},
+    {{0, 0, 672, 20}, 1, FALSE},
+    {{0, 0, 672, 20}, 1, FALSE},
+    {{0, 0, 672, 20}, 1, FALSE},
+    {{0, 0, 672, 20}, 0, FALSE},
 /* style 00000003 */
-    {{0, 226, 672, 226}, 0},
-    {{0, 206, 672, 226}, 1},
-    {{0, 206, 672, 226}, 1},
-    {{0, 206, 672, 226}, 1},
+    {{0, 226, 672, 226}, 0, FALSE},
+    {{0, 206, 672, 226}, 1, TRUE},
+    {{0, 206, 672, 226}, 1, FALSE},
+    {{0, 206, 672, 226}, 1, FALSE},
+    {{0, 206, 672, 226}, 1, FALSE},
+    {{0, 206, 672, 226}, 0, FALSE},
 /* style 00000043 */
-    {{0, 226, 672, 226}, 0},
-    {{0, 206, 672, 226}, 1},
-    {{0, 206, 672, 226}, 1},
-    {{0, 206, 672, 226}, 1},
+    {{0, 226, 672, 226}, 0, FALSE},
+    {{0, 206, 672, 226}, 1, TRUE},
+    {{0, 206, 672, 226}, 1, FALSE},
+    {{0, 206, 672, 226}, 1, FALSE},
+    {{0, 206, 672, 226}, 1, FALSE},
+    {{0, 206, 672, 226}, 0, FALSE},
 /* style 00000080 */
-    {{2, 0, 2, 226}, 0},
-    {{2, 0, 22, 226}, 1},
-    {{2, 0, 22, 226}, 1},
-    {{2, 0, 22, 226}, 1},
+    {{2, 0, 2, 226}, 0, FALSE},
+    {{2, 0, 22, 226}, 1, TRUE},
+    {{2, 0, 22, 226}, 1, FALSE},
+    {{2, 0, 22, 226}, 1, FALSE},
+    {{2, 0, 22, 226}, 1, FALSE},
+    {{2, 0, 22, 226}, 0, FALSE},
 /* style 00000083 */
-    {{672, 0, 672, 226}, 0},
-    {{652, 0, 672, 226}, 1},
-    {{652, 0, 672, 226}, 1},
-    {{652, 0, 672, 226}, 1},
+    {{672, 0, 672, 226}, 0, FALSE},
+    {{652, 0, 672, 226}, 1, TRUE},
+    {{652, 0, 672, 226}, 1, FALSE},
+    {{652, 0, 672, 226}, 1, FALSE},
+    {{652, 0, 672, 226}, 1, FALSE},
+    {{652, 0, 672, 226}, 0, FALSE},
 /* style 00000008 */
-    {{10, 11, 510, 11}, 0},
-    {{10, 15, 510, 35}, 1},
-    {{10, 17, 510, 37}, 1},
-    {{10, 14, 110, 54}, 2},
-    {{0, 4, 0, 44}, 2},
-    {{0, 6, 0, 46}, 2},
-    {{0, 8, 0, 48}, 2},
+    {{10, 11, 510, 11}, 0, FALSE},
+    {{10, 15, 510, 35}, 1, TRUE},
+    {{10, 17, 510, 37}, 1, FALSE},
+    {{10, 14, 110, 54}, 2, TRUE},
+    {{0, 4, 0, 44}, 2, FALSE},
+    {{0, 6, 0, 46}, 2, FALSE},
+    {{0, 8, 0, 48}, 2, FALSE},
+    {{0, 12, 0, 32}, 1, TRUE},
+    {{0, 4, 100, 24}, 0, FALSE},
 /* style 00000048 */
-    {{10, 5, 510, 5}, 0},
-    {{10, 5, 510, 25}, 1},
-    {{10, 5, 510, 25}, 1},
-    {{10, 10, 110, 50}, 2},
-    {{0, 0, 0, 40}, 2},
-    {{0, 0, 0, 40}, 2},
-    {{0, 0, 0, 40}, 2},
+    {{10, 5, 510, 5}, 0, FALSE},
+    {{10, 5, 510, 25}, 1, TRUE},
+    {{10, 5, 510, 25}, 1, FALSE},
+    {{10, 10, 110, 50}, 2, TRUE},
+    {{0, 0, 0, 40}, 2, FALSE},
+    {{0, 0, 0, 40}, 2, FALSE},
+    {{0, 0, 0, 40}, 2, FALSE},
+    {{0, 0, 0, 20}, 1, TRUE},
+    {{0, 0, 100, 20}, 0, FALSE},
 /* style 00000004 */
-    {{10, 5, 510, 20}, 0},
-    {{10, 5, 510, 20}, 1},
-    {{10, 10, 110, 110}, 2},
-    {{0, 0, 0, 0}, 2},
-    {{0, 0, 0, 0}, 2},
-    {{0, 0, 0, 0}, 2},
+    {{10, 5, 510, 20}, 0, FALSE},
+    {{10, 5, 510, 20}, 1, TRUE},
+    {{10, 10, 110, 110}, 2, TRUE},
+    {{0, 0, 0, 0}, 2, FALSE},
+    {{0, 0, 0, 0}, 2, FALSE},
+    {{0, 0, 0, 0}, 2, FALSE},
+    {{0, 0, 0, 0}, 1, TRUE},
+    {{0, 0, 100, 100}, 0, FALSE},
 /* style 00000002 */
-    {{0, 5, 672, 5}, 0},
-    {{0, 5, 672, 25}, 1},
-    {{0, 10, 672, 30}, 1},
-    {{0, 0, 672, 20}, 1},
+    {{0, 5, 672, 5}, 0, FALSE},
+    {{0, 5, 672, 25}, 1, TRUE},
+    {{0, 10, 672, 30}, 1, FALSE},
+    {{0, 0, 672, 20}, 1, FALSE},
+    {{0, 0, 672, 20}, 1, FALSE},
+    {{0, 0, 672, 20}, 0, FALSE},
 /* style 00000082 */
-    {{10, 0, 10, 226}, 0},
-    {{10, 0, 30, 226}, 1},
-    {{10, 0, 30, 226}, 1},
-    {{0, 0, 20, 226}, 1},
+    {{10, 0, 10, 226}, 0, FALSE},
+    {{10, 0, 30, 226}, 1, TRUE},
+    {{10, 0, 30, 226}, 1, FALSE},
+    {{0, 0, 20, 226}, 1, FALSE},
+    {{0, 0, 20, 226}, 1, FALSE},
+    {{0, 0, 20, 226}, 0, FALSE},
 /* style 00800001 */
-    {{-2, 0, 674, 4}, 0},
-    {{-2, 0, 674, 24}, 1},
-    {{-2, 0, 674, 24}, 1},
-    {{-2, 0, 674, 24}, 1},
+    {{-2, 0, 674, 4}, 0, FALSE},
+    {{-2, 0, 674, 24}, 1, TRUE},
+    {{-2, 0, 674, 24}, 1, FALSE},
+    {{-2, 0, 674, 24}, 1, FALSE},
+    {{-2, 0, 674, 24}, 1, FALSE},
+    {{-2, 0, 674, 24}, 0, FALSE},
 /* style 00800048 */
-    {{10, 5, 510, 9}, 0},
-    {{10, 5, 510, 29}, 1},
-    {{10, 5, 510, 29}, 1},
-    {{10, 10, 110, 54}, 2},
-    {{0, 0, 0, 44}, 2},
-    {{0, 0, 0, 44}, 2},
-    {{0, 0, 0, 44}, 2},
+    {{10, 5, 510, 9}, 0, FALSE},
+    {{10, 5, 510, 29}, 1, TRUE},
+    {{10, 5, 510, 29}, 1, FALSE},
+    {{10, 10, 110, 54}, 2, TRUE},
+    {{0, 0, 0, 44}, 2, FALSE},
+    {{0, 0, 0, 44}, 2, FALSE},
+    {{0, 0, 0, 44}, 2, FALSE},
+    {{0, 0, 0, 24}, 1, TRUE},
+    {{0, 0, 100, 24}, 0, FALSE},
 /* style 00800004 */
-    {{10, 5, 510, 20}, 0},
-    {{10, 5, 510, 20}, 1},
-    {{10, 10, 110, 110}, 2},
-    {{0, 0, 0, 0}, 2},
-    {{0, 0, 0, 0}, 2},
-    {{0, 0, 0, 0}, 2},
+    {{10, 5, 510, 20}, 0, FALSE},
+    {{10, 5, 510, 20}, 1, TRUE},
+    {{10, 10, 110, 110}, 2, TRUE},
+    {{0, 0, 0, 0}, 2, FALSE},
+    {{0, 0, 0, 0}, 2, FALSE},
+    {{0, 0, 0, 0}, 2, FALSE},
+    {{0, 0, 0, 0}, 1, TRUE},
+    {{0, 0, 100, 100}, 0, FALSE},
 /* style 00800002 */
-    {{-2, 5, 674, 9}, 0},
-    {{-2, 5, 674, 29}, 1},
-    {{-2, 10, 674, 34}, 1},
-    {{-2, 0, 674, 24}, 1},
+    {{-2, 5, 674, 9}, 0, FALSE},
+    {{-2, 5, 674, 29}, 1, TRUE},
+    {{-2, 10, 674, 34}, 1, FALSE},
+    {{-2, 0, 674, 24}, 1, FALSE},
+    {{-2, 0, 674, 24}, 1, FALSE},
+    {{-2, 0, 674, 24}, 0, FALSE},
 };
 
 static int resize_numtests = 0;
@@ -556,18 +610,23 @@ static int resize_numtests = 0;
         GetWindowRect(hRebar, &r); \
         MapWindowPoints(HWND_DESKTOP, hMainWnd, (LPPOINT)&r, 2); \
         if ((dwStyles[i] & (CCS_NOPARENTALIGN|CCS_NODIVIDER)) == CCS_NOPARENTALIGN) {\
-            check_rect_no_top("client", r, res->rc); /* the top coordinate changes after every layout and very implementation-dependent */ \
+            check_rect_no_top("client", r, res->rc); /* the top coordinate changes after every layout and is very implementation-dependent */ \
         } else { \
             check_rect("client", r, res->rc); \
         } \
         expect_eq((int)SendMessage(hRebar, RB_GETROWCOUNT, 0, 0), res->iNumRows, int, "%d"); \
+        if (res->heightNotify) { \
+            RECT rcClient; \
+            GetClientRect(hRebar, &rcClient); \
+            check_rect("notify", height_change_notify_rect, rcClient); \
+        } else ok(height_change_notify_rect.top == -1, "Unexpected RBN_HEIGHTCHANGE received\n"); \
+        SetRect(&height_change_notify_rect, -1, -1, -1, -1); \
     }
 
 #endif
 
 static void resize_test()
 {
-    HWND hRebar;
     DWORD dwStyles[] = {CCS_TOP, CCS_TOP | CCS_NODIVIDER, CCS_BOTTOM, CCS_BOTTOM | CCS_NODIVIDER, CCS_VERT, CCS_RIGHT,
         CCS_NOPARENTALIGN, CCS_NOPARENTALIGN | CCS_NODIVIDER, CCS_NORESIZE, CCS_NOMOVEY, CCS_NOMOVEY | CCS_VERT,
         CCS_TOP | WS_BORDER, CCS_NOPARENTALIGN | CCS_NODIVIDER | WS_BORDER, CCS_NORESIZE | WS_BORDER,
@@ -579,6 +638,7 @@ static void resize_test()
     for (i = 0; i < styles_count; i++)
     {
         comment("style %08x", dwStyles[i]);
+        SetRect(&height_change_notify_rect, -1, -1, -1, -1);
         hRebar = CreateWindow(REBARCLASSNAME, "A", dwStyles[i] | WS_CHILD | WS_VISIBLE, 10, 5, 500, 15, hMainWnd, NULL, GetModuleHandle(NULL), 0);
         check_client();
         add_band_w(hRebar, NULL, 70, 100, 0);
@@ -607,6 +667,11 @@ static void resize_test()
             SendMessage(hRebar, WM_SIZE, SIZE_RESTORED, MAKELONG(500, 500));
             check_client();
         }
+        SendMessage(hRebar, RB_DELETEBAND, 0, 0);
+        check_client();
+        SendMessage(hRebar, RB_DELETEBAND, 0, 0);
+        MoveWindow(hRebar, 0, 0, 100, 100, TRUE);
+        check_client();
         DestroyWindow(hRebar);
     }
 }

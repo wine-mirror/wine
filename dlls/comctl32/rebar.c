@@ -73,15 +73,6 @@
 #define GLATESTING 0
 
 /*
- *
- * 2.  At "FIXME:  problem # 2" WinRAR:
- *   if "#if 1" then last band draws in separate row
- *   if "#if 0" then last band draws in previous row *** just like native ***
- *
- */
-#define PROBLEM2 0
-
-/*
  * 3. REBAR_MoveChildWindows should have a loop because more than
  *    one pass is made (together with the RBN_CHILDSIZEs) is made on
  *    at least RB_INSERTBAND
@@ -196,7 +187,6 @@ typedef struct
 /* fStatus flags */
 #define BEGIN_DRAG_ISSUED   0x00000001
 #define AUTO_RESIZE         0x00000002
-#define NTF_HGHTCHG         0x00000008
 #define BAND_NEEDS_LAYOUT   0x00000010
 #define BAND_NEEDS_REDRAW   0x00000020
 
@@ -1004,7 +994,6 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
     WCHAR szClassName[40];
     UINT i;
     NMREBARCHILDSIZE  rbcz;
-    NMHDR heightchange;
     HDWP deferpos;
 
     if (!(deferpos = BeginDeferWindowPos(infoPtr->uNumBands)))
@@ -1097,17 +1086,6 @@ REBAR_MoveChildWindows (REBAR_INFO *infoPtr, UINT start, UINT endplus)
 
     if (infoPtr->DoRedraw)
 	UpdateWindow (infoPtr->hwndSelf);
-
-    if (infoPtr->fStatus & NTF_HGHTCHG) {
-        infoPtr->fStatus &= ~NTF_HGHTCHG;
-        /*
-         * We need to force a resize here, because some applications
-         * try to get the rebar size during processing of the 
-         * RBN_HEIGHTCHANGE notification.
-         */
-        REBAR_ForceResize (infoPtr);
-        REBAR_Notify (&heightchange, infoPtr, RBN_HEIGHTCHANGE);
-    }
 
     /* native (from **1 above) does:
      *      UpdateWindow(rebar)
@@ -1357,9 +1335,8 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 
     if (infoPtr->uNumBands == 0) {
         TRACE("No bands - setting size to (0,%d), vert: %lx\n", adjcx, infoPtr->dwStyle & CCS_VERT);
-        /* TODO: send a notify if height changed */
         infoPtr->calcSize.cx = adjcx;
-        infoPtr->calcSize.cy = 0;
+        /* the calcSize.cy won't change for a 0 band rebar */
         infoPtr->uNumRows = 0;
         REBAR_ForceResize(infoPtr);
         return;
@@ -1401,9 +1378,6 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 
     infoPtr->calcSize.cx = adjcx;
     infoPtr->calcSize.cy = yPos;
-    if (notify && (oldSize.cy != infoPtr->calcSize.cy))
-        infoPtr->fStatus |= NTF_HGHTCHG;
-
     TRACE("calcsize notify=%d, size=(%d, %d), origheight=(%d,%d)\n", notify,
             infoPtr->calcSize.cx, infoPtr->calcSize.cy,
 	    oldSize.cx, oldSize.cy);
@@ -1411,6 +1385,14 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
     REBAR_DumpBand (infoPtr);
     REBAR_MoveChildWindows (infoPtr, 0, infoPtr->uNumBands);
     REBAR_ForceResize (infoPtr);
+
+    /* note: after a RBN_HEIGHTCHANGE native sends once again all the RBN_CHILDSIZE
+     * and does another ForceResize */
+    if (notify && (oldSize.cy != infoPtr->calcSize.cy))
+    {
+        NMHDR heightchange;
+        REBAR_Notify(&heightchange, infoPtr, RBN_HEIGHTCHANGE);
+    }
 }
 
 
