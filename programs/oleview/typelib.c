@@ -752,6 +752,7 @@ void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
     hFirst = TreeView_GetChild(typelib.hTree, hFirst);
 
     AddToTLDataStrWithTabsW(pTLData, wszPredefinition);
+    AddToTLDataStrW(pTLData, wszNewLine);
 
     hCur = hFirst;
     memset(&tvi, 0, sizeof(TVITEM));
@@ -766,6 +767,7 @@ void AddPredefinitions(HTREEITEM hFirst, TYPELIB_DATA *pTLData)
         {
             AddToStrW(wszText, wszSemicolon);
             AddToTLDataStrWithTabsW(pTLData, wszText);
+            AddToTLDataStrW(pTLData, wszNewLine);
         }
         hCur = TreeView_GetNextSibling(typelib.hTree, hCur);
     }
