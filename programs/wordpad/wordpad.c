@@ -619,7 +619,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hOldInstance, LPSTR szCmdPar
 
     hMainWnd = CreateWindowExW(0, wszMainWndClass, wszAppTitle, WS_OVERLAPPEDWINDOW,
       CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, hInstance, NULL);
-    ShowWindow(hMainWnd, SW_SHOWMAXIMIZED);
+    ShowWindow(hMainWnd, SW_SHOWDEFAULT);
 
     HandleCommandLine(GetCommandLineW());
 
