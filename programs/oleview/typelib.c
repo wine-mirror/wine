@@ -87,7 +87,7 @@ static const WCHAR wszPARAMFLAG_FIN[] = { 'i','n','\0' };
 static const WCHAR wszPARAMFLAG_FOUT[] = { 'o','u','t','\0' };
 static const WCHAR wszPARAMFLAG_FLCID[] = { 'c','i','d','\0' };
 static const WCHAR wszPARAMFLAG_FRETVAL[] = { 'r','e','t','v','a','l','\0' };
-static const WCHAR wszPARAMFLAG_FOPT[] = { 'o','p','t','\0' };
+static const WCHAR wszPARAMFLAG_FOPT[] = { 'o','p','t','i','o','n','a','l','\0' };
 static const WCHAR wszPARAMFLAG_FHASCUSTDATA[]
     = { 'h','a','s','c','u','s','t','d','a','t','a','\0' };
 static const WCHAR wszDefaultValue[]
