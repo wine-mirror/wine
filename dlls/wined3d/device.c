@@ -399,7 +399,7 @@ static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferIm
     /* Use static write only usage for now. Dynamic index buffers stay in sysmem, and due to the sysmem
         * copy no readback will be needed
         */
-    glUsage = GL_STATIC_DRAW;
+    glUsage = GL_STATIC_DRAW_ARB;
     GL_EXTCALL(glBufferDataARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->resource.size, NULL, glUsage));
     error = glGetError();
     if(error != GL_NO_ERROR) {
