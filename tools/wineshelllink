@@ -153,8 +153,8 @@ BEGIN {  RS="<" }
 #   new item
 write_menu_file()
 {
-    menu=`echo $1 | sed 's!/!-!g'`
-    filename=`echo $2 | sed 's!/!-!g'`
+    menu=`echo "$1" | sed 's!/!-!g'`
+    filename=`echo "$2" | sed 's!/!-!g'`
 
     tmpfile=`mktemp /tmp/wine.XXXXXX`
     (
