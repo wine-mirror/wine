@@ -3188,6 +3188,122 @@ static void test_special_tables(void)
     ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
 }
 
+static void test_select_markers(void)
+{
+    MSIHANDLE hdb = 0, rec, view, res;
+    LPCSTR query;
+    UINT r;
+    DWORD size;
+    CHAR buf[MAX_PATH];
+
+    hdb = create_db();
+    ok( hdb, "failed to create db\n");
+
+    r = run_query(hdb, 0,
+            "CREATE TABLE `Table` (`One` CHAR(72), `Two` CHAR(72), `Three` SHORT PRIMARY KEY `One`, `Two`, `Three`)");
+    ok(r == S_OK, "cannot create table: %d\n", r);
+
+    r = run_query(hdb, 0, "INSERT INTO `Table` "
+            "( `One`, `Two`, `Three` ) VALUES ( 'apple', 'one', 1 )");
+    ok(r == S_OK, "cannot add file to the Media table: %d\n", r);
+
+    r = run_query(hdb, 0, "INSERT INTO `Table` "
+            "( `One`, `Two`, `Three` ) VALUES ( 'apple', 'two', 1 )");
+    ok(r == S_OK, "cannot add file to the Media table: %d\n", r);
+
+    r = run_query(hdb, 0, "INSERT INTO `Table` "
+            "( `One`, `Two`, `Three` ) VALUES ( 'apple', 'two', 2 )");
+    ok(r == S_OK, "cannot add file to the Media table: %d\n", r);
+
+    r = run_query(hdb, 0, "INSERT INTO `Table` "
+            "( `One`, `Two`, `Three` ) VALUES ( 'banana', 'three', 3 )");
+    ok(r == S_OK, "cannot add file to the Media table: %d\n", r);
+
+    rec = MsiCreateRecord(2);
+    MsiRecordSetString(rec, 1, "apple");
+    MsiRecordSetString(rec, 2, "two");
+
+    query = "SELECT * FROM `Table` WHERE `One`=? AND `Two`=? ORDER BY `Three`";
+    r = MsiDatabaseOpenView(hdb, query, &view);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+
+    r = MsiViewExecute(view, rec);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    r = MsiViewFetch(view, &res);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 1, buf, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 2, buf, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
+    }
+
+    r = MsiRecordGetInteger(res, 3);
+    todo_wine
+    {
+        ok(r == 1, "Expected 1, got %d\n", r);
+    }
+
+    MsiCloseHandle(res);
+
+    r = MsiViewFetch(view, &res);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 1, buf, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmp(buf, "apple"), "Expected apple, got %s\n", buf);
+    }
+
+    size = MAX_PATH;
+    r = MsiRecordGetString(res, 2, buf, &size);
+    todo_wine
+    {
+        ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
+        ok(!lstrcmp(buf, "two"), "Expected two, got %s\n", buf);
+    }
+
+    r = MsiRecordGetInteger(res, 3);
+    todo_wine
+    {
+        ok(r == 2, "Expected 2, got %d\n", r);
+    }
+
+    MsiCloseHandle(res);
+
+    r = MsiViewFetch(view, &res);
+    ok(r == ERROR_NO_MORE_ITEMS, "Expected ERROR_NO_MORE_ITEMS, got %d\n", r);
+
+    r = MsiViewClose(view);
+    ok(r == ERROR_SUCCESS, "MsiViewClose failed\n");
+    r = MsiCloseHandle(view);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+    r = MsiCloseHandle(hdb);
+    ok(r == ERROR_SUCCESS, "MsiCloseHandle failed\n");
+}
+
 START_TEST(db)
 {
     test_msidatabase();
@@ -3211,4 +3327,5 @@ START_TEST(db)
     test_integers();
     test_update();
     test_special_tables();
+    test_select_markers();
 }
