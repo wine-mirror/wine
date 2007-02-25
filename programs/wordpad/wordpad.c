@@ -227,6 +227,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddSeparator(hToolBarWnd);
     AddButton(hToolBarWnd, nStdBitmaps+STD_CUT, ID_EDIT_CUT);
     AddButton(hToolBarWnd, nStdBitmaps+STD_COPY, ID_EDIT_COPY);
+    AddButton(hToolBarWnd, nStdBitmaps+STD_PASTE, ID_EDIT_PASTE);
     AddButton(hToolBarWnd, nStdBitmaps+STD_UNDO, ID_EDIT_UNDO);
     AddButton(hToolBarWnd, nStdBitmaps+STD_REDOW, ID_EDIT_REDO);
     AddSeparator(hToolBarWnd);
@@ -370,6 +371,10 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_EDIT_COPY:
         PostMessage(hwndEditor, WM_COPY, 0, 0);
+        break;
+
+    case ID_EDIT_PASTE:
+        PostMessage(hwndEditor, WM_PASTE, 0, 0);
         break;
 
     case ID_EDIT_SELECTALL:
