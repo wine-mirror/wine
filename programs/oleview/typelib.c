@@ -76,6 +76,7 @@ static const WCHAR wszVT_UNKNOWN[] = { 'I','U','n','k','n','o','w','n','\0' };
 static const WCHAR wszVT_DISPATCH[] = { 'I','D','i','s','p','a','t','c','h','\0' };
 static const WCHAR wszVT_DATE[] = { 'D','A','T','E','\0' };
 static const WCHAR wszVT_R8[] = { 'd','o','u','b','l','e','\0' };
+static const WCHAR wszVT_SAFEARRAY[] = { 'S','A','F','E','A','R','R','A','Y','\0' };
 
 const WCHAR wszFormat[] = { '0','x','%','.','8','l','x','\0' };
 static const WCHAR wszStdCall[] = { '_','s','t','d','c','a','l','l','\0' };
@@ -342,6 +343,12 @@ void CreateTypeInfo(WCHAR *wszAddTo, WCHAR *wszAddAfter, TYPEDESC tdesc, ITypeIn
         }
         CreateTypeInfo(wszAddTo, wszAddAfter, U(tdesc).lpadesc->tdescElem, pTypeInfo);
         break;
+	case VT_SAFEARRAY:
+	AddToStrW(wszAddTo, wszVT_SAFEARRAY);
+	AddToStrW(wszAddTo, wszOpenBrackets2);
+        CreateTypeInfo(wszAddTo, wszAddAfter, *U(tdesc).lptdesc, pTypeInfo);
+        AddToStrW(wszAddTo, wszCloseBrackets2);
+	break;
         case VT_PTR:
         CreateTypeInfo(wszAddTo, wszAddAfter, *U(tdesc).lptdesc, pTypeInfo);
         AddToStrW(wszAddTo, wszAsterix);
