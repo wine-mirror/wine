@@ -21,6 +21,8 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_IE 0x0400
 
+#define MAX_STRING_LEN 255
+
 #include <stdarg.h>
 #include <ctype.h>
 #include <stdio.h>
@@ -29,9 +31,9 @@
 #include <windows.h>
 #include <richedit.h>
 #include <commctrl.h>
+#include <commdlg.h>
 
 #include "resource.h"
-
 
 /* use LoadString */
 static const WCHAR xszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a','d',0};
@@ -43,6 +45,32 @@ static const WCHAR wszAppTitle[] = {'W','i','n','e',' ','W','o','r','d','p','a',
 
 static HWND hMainWnd;
 static HWND hEditorWnd;
+
+static char szFilter[MAX_STRING_LEN];
+
+/* Load string resources */
+static void DoLoadStrings()
+{
+    LPSTR p = szFilter;
+    char files_rtf[] = "*.rtf";
+    char files_txt[] = "*.txt";
+    char files_all[] = "*.*";
+    HINSTANCE hInstance = (HINSTANCE)GetWindowLongPtr(hMainWnd, GWLP_HINSTANCE);
+
+    LoadString(hInstance, STRING_RICHTEXT_FILES_RTF, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, files_rtf);
+    p += strlen(p) + 1;
+    LoadString(hInstance, STRING_TEXT_FILES_TXT, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, files_txt);
+    p += strlen(p) + 1;
+    LoadString(hInstance, STRING_ALL_FILES, p, MAX_STRING_LEN);
+    p += strlen(p) + 1;
+    lstrcpy(p, files_all);
+    p += strlen(p) + 1;
+    *p = '\0';
+}
 
 static void AddButton(HWND hwndToolBar, int nImage, int nCommand)
 {
@@ -94,6 +122,10 @@ static void DoOpenFile(LPCWSTR szFileName)
     DWORD dwNumRead;
     EDITSTREAM es;
 
+    char szCaption[MAX_PATH];
+    char szAppTitle[sizeof(wszAppTitle)];
+    char szSeparator[] = " - ";
+
     hFile = CreateFileW(szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (hFile == INVALID_HANDLE_VALUE)
@@ -133,6 +165,42 @@ static void DoOpenFile(LPCWSTR szFileName)
     HeapFree(GetProcessHeap(), 0, pTemp);
 
     SetFocus(hEditorWnd);
+
+    WideCharToMultiByte(CP_ACP, 0, wszAppTitle, -1, szAppTitle, sizeof(wszAppTitle), NULL, NULL);
+
+    WideCharToMultiByte(CP_ACP, 0, szFileName, -1, szCaption, MAX_PATH, NULL, NULL);
+
+    lstrcat(szCaption, szSeparator);
+    lstrcat(szCaption, szAppTitle);
+
+    SetWindowText(hMainWnd, szCaption);
+}
+
+static void DialogOpenFile()
+{
+    OPENFILENAME ofn;
+
+    char szFile[MAX_PATH] = "";
+    char szDefExt[] = "rtf";
+
+    ZeroMemory(&ofn, sizeof(ofn));
+
+    ofn.lStructSize = sizeof(ofn);
+    ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+    ofn.hwndOwner = hMainWnd;
+    ofn.lpstrFilter = szFilter;
+    ofn.lpstrFile = szFile;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = szDefExt;
+
+    if(GetOpenFileName(&ofn))
+    {
+        WCHAR szOpenFile[MAX_PATH];
+
+        MultiByteToWideChar(CP_ACP, 0, ofn.lpstrFile, MAX_PATH, szOpenFile, sizeof(szOpenFile)/sizeof(szOpenFile[0]));
+
+        DoOpenFile(szOpenFile);
+    }
 }
 
 static void HandleCommandLine(LPWSTR cmdline)
@@ -263,6 +331,9 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     SetFocus(hEditorWnd);
     SendMessage(hEditorWnd, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
+
+    DoLoadStrings();
+
     return 0;
 }
 
@@ -337,6 +408,9 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
         break;
 
     case ID_FILE_OPEN:
+        DialogOpenFile();
+        break;
+
     case ID_FILE_SAVE:
     case ID_PRINT:
     case ID_PREVIEW:

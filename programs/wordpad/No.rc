@@ -66,3 +66,10 @@ BEGIN
         END
     END
 END
+
+STRINGTABLE DISCARDABLE
+BEGIN
+    STRING_RICHTEXT_FILES_RTF,  "Rikt tekstformat (*.rtf)"
+    STRING_TEXT_FILES_TXT,      "Tekstfiler (*.txt)"
+    STRING_ALL_FILES,           "Alle filer (*.*)"
+END
