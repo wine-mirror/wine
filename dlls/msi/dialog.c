@@ -2448,6 +2448,8 @@ static void msi_dialog_vcl_add_columns( msi_dialog *dialog, msi_control *control
     static const WCHAR zero[] = {'0',0};
     static const WCHAR negative[] = {'-',0};
 
+    if (!text) return;
+
     while ((begin = strchrW( begin, '{' )) && count < 5)
     {
         if (!(end = strchrW( begin, '}' )))
