@@ -87,10 +87,10 @@ static const WCHAR wszPARAMFLAG_FOUT[] = { 'o','u','t','\0' };
 static const WCHAR wszPARAMFLAG_FLCID[] = { 'c','i','d','\0' };
 static const WCHAR wszPARAMFLAG_FRETVAL[] = { 'r','e','t','v','a','l','\0' };
 static const WCHAR wszPARAMFLAG_FOPT[] = { 'o','p','t','\0' };
-static const WCHAR wszPARAMFLAG_FHASDEFAULT[]
-    = { 'h','a','s','d','e','f','a','u','l','t','\0' };
 static const WCHAR wszPARAMFLAG_FHASCUSTDATA[]
     = { 'h','a','s','c','u','s','t','d','a','t','a','\0' };
+static const WCHAR wszDefaultValue[]
+    = { 'd','e','f','a','u','l','t','v','a','l','u','e','\0' };
 
 static const WCHAR wszReadOnly[] = { 'r','e','a','d','o','n','l','y','\0' };
 
@@ -559,8 +559,31 @@ int EnumFuncs(ITypeInfo *pTypeInfo, int cFuncs, HTREEITEM hParent)
             ENUM_PARAM_FLAG(PARAMFLAG_FLCID);
             ENUM_PARAM_FLAG(PARAMFLAG_FRETVAL);
             ENUM_PARAM_FLAG(PARAMFLAG_FOPT);
-            ENUM_PARAM_FLAG(PARAMFLAG_FHASDEFAULT);
             ENUM_PARAM_FLAG(PARAMFLAG_FHASCUSTDATA);
+
+            if(U(pFuncDesc->lprgelemdescParam[j]).paramdesc.wParamFlags & PARAMFLAG_FHASDEFAULT)
+            {
+		VARIANT var, *param=&U(pFuncDesc->lprgelemdescParam[j]).paramdesc.pparamdescex->varDefaultValue;
+		VariantInit(&var);
+                if(bFirst) AddToTLDataStrW(tld,
+                        wszOpenBrackets1);
+                else
+                {
+                    AddToTLDataStrW(tld, wszComa);
+                    AddToTLDataStrW(tld, wszSpace);
+                }
+                bFirst = FALSE;
+                AddToTLDataStrW(tld, wszDefaultValue);
+                AddToTLDataStrW(tld, wszOpenBrackets2);
+		if (V_VT(param) == VT_BSTR)
+		{
+		    AddToTLDataStrW(tld, wszInvertedComa);
+		    AddToTLDataStrW(tld, V_BSTR(&var));
+		    AddToTLDataStrW(tld, wszInvertedComa);
+		} else if (VariantChangeType(&var, param, 0, VT_BSTR) == S_OK)
+		    AddToTLDataStrW(tld, V_BSTR(&var));
+                AddToTLDataStrW(tld, wszCloseBrackets2);
+            }
 
             if(!bFirst)
             {
