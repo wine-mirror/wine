@@ -7702,7 +7702,6 @@ static CALLBACK VOID LISTVIEW_DelayedEditItem(HWND hwnd, UINT uMsg, UINT_PTR idE
 static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
 {
   LISTVIEW_INFO *infoPtr;
-  UINT uView = lpcs->style & LVS_TYPEMASK;
   LOGFONTW logFont;
 
   TRACE("(lpcs=%p)\n", lpcs);
@@ -7714,7 +7713,7 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
   infoPtr->hwndSelf = hwnd;
-  infoPtr->dwStyle = lpcs->style;
+  infoPtr->dwStyle = lpcs->style;    /* Note: may be changed in WM_CREATE */
   /* determine the type of structures to use */
   infoPtr->hwndNotify = lpcs->hwndParent;
   /* infoPtr->notifyFormat will be filled in WM_CREATE */
@@ -7752,10 +7751,6 @@ static LRESULT LISTVIEW_NCCreate(HWND hwnd, const CREATESTRUCTW *lpcs)
   if (!(infoPtr->hdpaPosX  = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaPosY  = DPA_Create(10))) goto fail;
   if (!(infoPtr->hdpaColumns = DPA_Create(10))) goto fail;
-
-  /* initialize the icon sizes */
-  set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, uView != LVS_ICON);
-  set_icon_size(&infoPtr->iconStateSize, infoPtr->himlState, TRUE);
   return TRUE;
 
 fail:
@@ -7789,6 +7784,7 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   TRACE("(lpcs=%p)\n", lpcs);
 
+  infoPtr->dwStyle = lpcs->style;
   infoPtr->notifyFormat = SendMessageW(infoPtr->hwndNotify, WM_NOTIFYFORMAT,
                                        (WPARAM)infoPtr->hwndSelf, (LPARAM)NF_QUERY);
 
@@ -7824,6 +7820,9 @@ static LRESULT LISTVIEW_Create(HWND hwnd, const CREATESTRUCTW *lpcs)
 
   OpenThemeData(hwnd, themeClass);
 
+  /* initialize the icon sizes */
+  set_icon_size(&infoPtr->iconSize, infoPtr->himlNormal, uView != LVS_ICON);
+  set_icon_size(&infoPtr->iconStateSize, infoPtr->himlState, TRUE);
   return 0;
 }
 

@@ -350,13 +350,18 @@ static HIMAGELIST test_create_imagelist;
 static LRESULT CALLBACK create_test_wndproc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     if (uMsg == WM_CREATE)
+    {
+        LPCREATESTRUCT lpcs = (LPCREATESTRUCT)lParam;
+        lpcs->style |= LVS_REPORT;
         SendMessage(hwnd, LVM_SETIMAGELIST, 0, (LPARAM)test_create_imagelist);
+    }
     return CallWindowProc(listviewWndProc, hwnd, uMsg, wParam, lParam);
 }
 
 static void test_create()
 {
     HWND hList;
+    HWND hHeader;
     WNDCLASSEX cls;
     cls.cbSize = sizeof(WNDCLASSEX);
     ok(GetClassInfoEx(GetModuleHandle(NULL), "SysListView32", &cls), "GetClassInfoEx failed\n");
@@ -368,6 +373,8 @@ static void test_create()
     test_create_imagelist = ImageList_Create(16, 16, 0, 5, 10);
     hList = CreateWindow("MyListView32", "Test", WS_VISIBLE, 0, 0, 100, 100, NULL, NULL, GetModuleHandle(NULL), 0);
     ok((HIMAGELIST)SendMessage(hList, LVM_GETIMAGELIST, 0, 0) == test_create_imagelist, "Image list not obtained\n");
+    hHeader = (HWND)SendMessage(hList, LVM_GETHEADER, 0, 0);
+    ok(IsWindow(hHeader) && IsWindowVisible(hHeader), "Listview not in report mode\n");
     DestroyWindow(hList);
 }
 
