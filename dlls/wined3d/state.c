@@ -666,6 +666,7 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
         /* No fog? Disable it, and we're done :-) */
         glDisable(GL_FOG);
         checkGLcall("glDisable GL_FOG");
+        return;
     }
 
     tmpvalue.d = stateblock->renderState[WINED3DRS_FOGSTART];
