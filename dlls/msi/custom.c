@@ -452,9 +452,6 @@ static UINT wait_thread_handle( msi_custom_action_info *info )
     else
     {
         TRACE("%s running in background\n", debugstr_w( info->action ));
-
-        if (info->type & msidbCustomActionTypeContinue)
-            free_custom_action_data( info );
     }
 
     return rc;
@@ -528,6 +525,10 @@ static DWORD WINAPI ACTION_CallDllFunction( const LPGUID guid )
         ERR("GetProcAddress(%s) failed\n", debugstr_w( info->function ) );
 
     FreeLibrary(hModule);
+
+    if (info->type & msidbCustomActionTypeAsync &&
+        info->type & msidbCustomActionTypeContinue)
+        free_custom_action_data( info );
 
     return r;
 }
