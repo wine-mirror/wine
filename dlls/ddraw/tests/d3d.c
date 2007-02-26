@@ -248,33 +248,33 @@ static void LightTest(void)
     U3(light.dcvDiffuse).b = 1.f;
     U3(light.dvDirection).z = 1.f;
 
-    U3(light.dvAttenuation0) = -1.0 / 0.0; /* -INFINITY */
+    light.dvAttenuation0 = -1.0 / 0.0; /* -INFINITY */
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==DDERR_INVALIDPARAMS, "SetLight returned: %x\n", rc);
 
-    U3(light.dvAttenuation0) = -1.0;
+    light.dvAttenuation0 = -1.0;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==DDERR_INVALIDPARAMS, "SetLight returned: %x\n", rc);
 
-    U3(light.dvAttenuation0) = 0.0;
+    light.dvAttenuation0 = 0.0;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
 
-    U3(light.dvAttenuation0) = 1.0;
+    light.dvAttenuation0 = 1.0;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
 
-    U3(light.dvAttenuation0) = 1.0 / 0.0; /* +INFINITY */
+    light.dvAttenuation0 = 1.0 / 0.0; /* +INFINITY */
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
 
-    U3(light.dvAttenuation0) = 0.0 / 0.0; /* NaN */
+    light.dvAttenuation0 = 0.0 / 0.0; /* NaN */
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
 
     /* Directional light ignores attenuation */
     light.dltType = D3DLIGHT_DIRECTIONAL;
-    U3(light.dvAttenuation0) = -1.0;
+    light.dvAttenuation0 = -1.0;
     rc = IDirect3DDevice7_SetLight(lpD3DDevice, 103, &light);
     ok(rc==D3D_OK, "SetLight returned: %x\n", rc);
 }
