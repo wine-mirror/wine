@@ -678,8 +678,10 @@ static void state_fog(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DCo
        ((IWineD3DVertexShaderImpl *)stateblock->vertexShader)->usesFog) {
         glFogi(GL_FOG_MODE, GL_LINEAR);
         checkGLcall("glFogi(GL_FOG_MODE, GL_LINEAR)");
-        fogstart = 1.0;
-        fogend = 0.0;
+        if (stateblock->renderState[WINED3DRS_FOGTABLEMODE] == WINED3DFOG_NONE) {
+            fogstart = 1.0;
+            fogend = 0.0;
+        }
         context->last_was_foggy_shader = TRUE;
     }
     /* DX 7 sdk: "If both render states(vertex and table fog) are set to valid modes,
