@@ -124,7 +124,11 @@ static LONG X11DRV_desktop_SetCurrentMode(int mode)
     if (dwBpp != dd_modes[mode].dwBPP)
     {
         FIXME("Cannot change screen BPP from %d to %d\n", dwBpp, dd_modes[mode].dwBPP);
-        return DISP_CHANGE_BADMODE;
+        /* Ignore the depth missmatch
+         *
+         * Some (older) applications require a specific bit depth, this will allow them
+         * to run. X11drv performs a color depth conversion if needed.
+         */
     }
     TRACE("Resizing Wine desktop window to %dx%d\n", dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
     X11DRV_resize_desktop(dd_modes[mode].dwWidth, dd_modes[mode].dwHeight);
