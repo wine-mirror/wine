@@ -236,6 +236,7 @@ static void test_getfile(void)
 {
     BOOL      bRet;
     HINTERNET hInternet, hFtp, hConnect;
+    HANDLE    hFile;
 
     /* The order of checking is:
      *
@@ -317,7 +318,29 @@ static void test_getfile(void)
         "Local file should not have been created\n");
     DeleteFileA("should_be_non_existing_deadbeef");
 
-    /* Remote file doesn't exist */
+    /* Remote file doesn't exist (and local doesn't exist as well) */
+    SetLastError(0xdeadbeef);
+    bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
+    ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
+    todo_wine
+    {
+    ok ( GetLastError() == ERROR_INTERNET_EXTENDED_ERROR,
+        "Expected ERROR_INTERNET_EXTENDED_ERROR, got %d\n", GetLastError());
+    /* Currently Wine always creates the local file (even on failure) which is not correct, hence the test */
+    ok (GetFileAttributesA("should_also_be_non_existing_deadbeef") == INVALID_FILE_ATTRIBUTES,
+        "Local file should not have been created\n");
+    }
+    DeleteFileA("should_also_be_non_existing_deadbeef");
+
+    /* Same call as the previous but now the local file does exists. Windows just removes the file if the call fails
+     * even if the local existed before!
+     */
+
+    /* Create a temporary local file */
+    SetLastError(0xdeadbeef);
+    hFile = CreateFileA("should_also_be_non_existing_deadbeef", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok ( hFile != NULL, "Error creating a local file : %d\n", GetLastError());
+    CloseHandle(hFile);
     SetLastError(0xdeadbeef);
     bRet = FtpGetFileA(hFtp, "should_be_non_existing_deadbeef", "should_also_be_non_existing_deadbeef", FALSE, FILE_ATTRIBUTE_NORMAL, FTP_TRANSFER_TYPE_UNKNOWN, 0);
     ok ( bRet == FALSE, "Expected FtpGetFileA to fail\n");
