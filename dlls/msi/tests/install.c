@@ -241,6 +241,31 @@ static const CHAR ui_custom_action_dat[] = "Action\tType\tSource\tTarget\tISComm
                                            "CustomAction\tAction\n"
                                            "SetUIProperty\t51\tHASUIRUN\t1\t\n";
 
+static const CHAR rof_component_dat[] = "Component\tComponentId\tDirectory_\tAttributes\tCondition\tKeyPath\n"
+                                        "s72\tS38\ts72\ti2\tS255\tS72\n"
+                                        "Component\tComponent\n"
+                                        "maximus\t\tMSITESTDIR\t0\t1\tmaximus\n";
+
+static const CHAR rof_feature_dat[] = "Feature\tFeature_Parent\tTitle\tDescription\tDisplay\tLevel\tDirectory_\tAttributes\n"
+                                      "s38\tS38\tL64\tL255\tI2\ti2\tS72\ti2\n"
+                                      "Feature\tFeature\n"
+                                      "feature\t\t\t\t2\t1\tTARGETDIR\t0";
+
+static const CHAR rof_feature_comp_dat[] = "Feature_\tComponent_\n"
+                                           "s38\ts72\n"
+                                           "FeatureComponents\tFeature_\tComponent_\n"
+                                           "feature\tmaximus";
+
+static const CHAR rof_file_dat[] = "File\tComponent_\tFileName\tFileSize\tVersion\tLanguage\tAttributes\tSequence\n"
+                                   "s72\ts72\tl255\ti4\tS72\tS20\tI2\ti2\n"
+                                   "File\tFile\n"
+                                   "maximus\tmaximus\tmaximus\t500\t\t\t8192\t1";
+
+static const CHAR rof_media_dat[] = "DiskId\tLastSequence\tDiskPrompt\tCabinet\tVolumeLabel\tSource\n"
+                                    "i2\ti4\tL64\tS255\tS32\tS72\n"
+                                    "Media\tDiskId\n"
+                                    "1\t1\t\t\tDISK1\t\n";
+
 typedef struct _msi_table
 {
     const CHAR *filename;
@@ -336,6 +361,18 @@ static const msi_table ui_tables[] =
     ADD_TABLE(ui_install_ui_seq),
     ADD_TABLE(ui_custom_action),
     ADD_TABLE(cc_media),
+    ADD_TABLE(property),
+};
+
+static const msi_table rof_tables[] =
+{
+    ADD_TABLE(rof_component),
+    ADD_TABLE(directory),
+    ADD_TABLE(rof_feature),
+    ADD_TABLE(rof_feature_comp),
+    ADD_TABLE(rof_file),
+    ADD_TABLE(install_exec_seq),
+    ADD_TABLE(rof_media),
     ADD_TABLE(property),
 };
 
@@ -1120,6 +1157,56 @@ static void test_uiLevelFlags(void)
     DeleteFile(msifile);
 }
 
+static BOOL file_matches(LPSTR path)
+{
+    CHAR buf[MAX_PATH];
+    HANDLE file;
+    DWORD size;
+
+    file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                      NULL, OPEN_EXISTING, 0, NULL);
+
+    ZeroMemory(buf, MAX_PATH);
+    ReadFile(file, buf, 15, &size, NULL);
+    CloseHandle(file);
+
+    return !lstrcmp(buf, "msitest\\maximus");
+}
+
+static void test_readonlyfile(void)
+{
+    UINT r;
+    DWORD size;
+    HANDLE file;
+    CHAR path[MAX_PATH];
+
+    CreateDirectoryA("msitest", NULL);
+    create_file("msitest\\maximus", 500);
+    create_database(msifile, rof_tables, sizeof(rof_tables) / sizeof(msi_table));
+
+    MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
+
+    lstrcpy(path, PROG_FILES_DIR);
+    lstrcat(path, "\\msitest");
+    CreateDirectory(path, NULL);
+
+    lstrcat(path, "\\maximus");
+    file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                      NULL, CREATE_NEW, FILE_ATTRIBUTE_READONLY, NULL);
+    if (file == INVALID_HANDLE_VALUE) printf("didnt work here: %d\n", GetLastError());
+
+    WriteFile(file, "readonlyfile", 20, &size, NULL);
+    CloseHandle(file);
+
+    r = MsiInstallProductA(msifile, NULL);
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(file_matches(path), "Expected file to be overwritten\n");
+    ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
+    ok(delete_pf("msitest", FALSE), "File not installed\n");
+
+    DeleteFile(msifile);
+}
+
 START_TEST(install)
 {
     DWORD len;
@@ -1145,6 +1232,7 @@ START_TEST(install)
     test_mixedmedia();
     test_samesequence();
     test_uiLevelFlags();
+    test_readonlyfile();
 
     SetCurrentDirectoryA(prev_path);
 }

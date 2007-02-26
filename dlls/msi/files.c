@@ -638,13 +638,9 @@ static void schedule_install_files(MSIPACKAGE *package)
     }
 }
 
-static UINT copy_install_file(MSIFILE *file)
+static UINT copy_file(MSIFILE *file)
 {
     BOOL ret;
-    UINT gle;
-
-    TRACE("Copying %s to %s\n", debugstr_w(file->SourcePath),
-          debugstr_w(file->TargetPath));
 
     ret = CopyFileW(file->SourcePath, file->TargetPath, FALSE);
     if (ret)
@@ -653,7 +649,20 @@ static UINT copy_install_file(MSIFILE *file)
         return ERROR_SUCCESS;
     }
 
-    gle = GetLastError();
+    return GetLastError();
+}
+
+static UINT copy_install_file(MSIFILE *file)
+{
+    UINT gle;
+
+    TRACE("Copying %s to %s\n", debugstr_w(file->SourcePath),
+          debugstr_w(file->TargetPath));
+
+    gle = copy_file(file);
+    if (gle == ERROR_SUCCESS)
+        return gle;
+
     if (gle == ERROR_ALREADY_EXISTS && file->state == msifs_overwrite)
     {
         TRACE("overwriting existing file\n");
@@ -664,6 +673,13 @@ static UINT copy_install_file(MSIFILE *file)
         /* FIXME: this needs to be tested, I'm pretty sure it fails */
         TRACE("Source file not found\n");
         gle = ERROR_SUCCESS;
+    }
+    else if (gle == ERROR_ACCESS_DENIED)
+    {
+        SetFileAttributesW(file->TargetPath, FILE_ATTRIBUTE_NORMAL);
+
+        gle = copy_file(file);
+        TRACE("Overwriting existing file: %d\n", gle);
     }
     else if (!(file->Attributes & msidbFileAttributesVital))
     {
