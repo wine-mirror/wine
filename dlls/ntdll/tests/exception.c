@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdio.h>
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x500 /* For NTSTATUS */
@@ -35,6 +36,8 @@
 #include "wine/test.h"
 
 #ifdef __i386__
+static int      my_argc;
+static char**   my_argv;
 
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
@@ -42,6 +45,8 @@ static NTSTATUS  (WINAPI *pNtSetContextThread)(HANDLE,CONTEXT*);
 static NTSTATUS  (WINAPI *pRtlRaiseException)(EXCEPTION_RECORD *rec);
 static PVOID     (WINAPI *pRtlAddVectoredExceptionHandler)(ULONG first, PVECTORED_EXCEPTION_HANDLER func);
 static ULONG     (WINAPI *pRtlRemoveVectoredExceptionHandler)(PVOID handler);
+static NTSTATUS  (WINAPI *pNtReadVirtualMemory)(HANDLE, const void*, void*, SIZE_T, SIZE_T*);
+static NTSTATUS  (WINAPI *pNtTerminateProcess)(HANDLE handle, LONG exit_code);
 static void *code_mem;
 
 /* Test various instruction combinations that cause a protection fault on the i386,
@@ -198,6 +203,10 @@ LONG CALLBACK rtlraiseexception_vectored_handler(EXCEPTION_POINTERS *ExceptionIn
     todo_wine {
     ok(rec->ExceptionAddress == (char *)code_mem + 0xb, "ExceptionAddress at %p instead of %p\n",
        rec->ExceptionAddress, (char *)code_mem + 0xb);
+
+    if (pNtCurrentTeb()->Peb->BeingDebugged)
+        ok((void *)context->Eax == pRtlRaiseException, "debugger managed to modify Eax to %x should be %p\n",
+           context->Eax, pRtlRaiseException);
     }
 
     /* check that context.Eip is fixed up only for EXCEPTION_BREAKPOINT
@@ -306,6 +315,19 @@ static void run_rtlraiseexception_test(DWORD exceptioncode)
     pNtCurrentTeb()->Tib.ExceptionList = frame.Prev;
 }
 
+static void test_rtlraiseexcpetion(void)
+{
+    if (!pRtlRaiseException)
+    {
+        skip("RtlRaiseException not found\n");
+        return;
+    }
+
+    /* test without debugger */
+    run_rtlraiseexception_test(0x12345);
+    run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
+    run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+}
 
 static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *frame,
                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
@@ -512,35 +534,14 @@ static void test_exceptions(void)
     CONTEXT ctx;
     NTSTATUS res;
 
-    pNtGetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtGetContextThread" );
-    pNtSetContextThread = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtSetContextThread" );
-    pRtlRaiseException  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlRaiseException" );
-    pRtlAddVectoredExceptionHandler = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
-                                                              "RtlAddVectoredExceptionHandler" );
-    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
-                                                                 "RtlRemoveVectoredExceptionHandler" );
-
     if (!pNtGetContextThread || !pNtSetContextThread)
     {
         trace( "NtGetContextThread/NtSetContextThread not found, skipping tests\n" );
         return;
     }
-    if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)
-        have_vectored_api = TRUE;
-    else
-        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
 
     /* test handling of debug registers */
     run_exception_test(dreg_handler, NULL, &segfault_code, sizeof(segfault_code));
-
-    if (pRtlRaiseException)
-    {
-        run_rtlraiseexception_test(0x12345);
-        run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
-        run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
-    }
-    else
-        skip( "RtlRaiseException not found\n" );
 
     ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
     res = pNtGetContextThread(GetCurrentThread(), &ctx);
@@ -574,17 +575,122 @@ static void test_exceptions(void)
     run_exception_test(int3_handler, NULL, int3_code, sizeof(int3_code));
 }
 
+static void test_debugger(void)
+{
+    char cmdline[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFO si = { 0 };
+    DEBUG_EVENT de;
+    DWORD continuestatus;
+    PVOID code_mem_address = NULL;
+    NTSTATUS status;
+    SIZE_T size_read;
+    int counter = 0;
+    si.cb = sizeof(si);
+
+    if(!pNtGetContextThread || !pNtSetContextThread || !pNtReadVirtualMemory || !pNtTerminateProcess)
+    {
+        skip("NtGetContextThread, NtSetContextThread, NtReadVirtualMemory or NtTerminateProcess not found\n)");
+        return;
+    }
+
+    sprintf(cmdline, "%s %s %s", my_argv[0], my_argv[1], "debuggee");
+    ok(CreateProcess(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL,
+                     &si, &pi) != 0, "error: %u\n", GetLastError());
+
+    do
+    {
+        continuestatus = DBG_CONTINUE;
+        ok(WaitForDebugEvent(&de, INFINITE), "reading debug event\n");
+
+        if (de.dwThreadId != pi.dwThreadId)
+        {
+            trace("event %d not coming from main thread, ignoring\n", de.dwDebugEventCode);
+            ContinueDebugEvent(de.dwProcessId, de.dwThreadId, DBG_CONTINUE);
+            continue;
+        }
+
+        if (de.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT)
+        {
+            if(de.u.CreateProcessInfo.lpBaseOfImage != pNtCurrentTeb()->Peb->ImageBaseAddress)
+            {
+                skip("child process loaded at different address, terminating it\n");
+                pNtTerminateProcess(pi.hProcess, 1);
+            }
+        }
+        else if (de.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
+        {
+            CONTEXT ctx;
+
+            counter++;
+            status = pNtReadVirtualMemory(pi.hProcess, &code_mem, &code_mem_address,
+                                          sizeof(code_mem_address), &size_read);
+            ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
+
+            ctx.ContextFlags = CONTEXT_FULL;
+            status = pNtGetContextThread(pi.hThread, &ctx);
+            ok(!status, "NtGetContextThread failed with 0x%x\n", status);
+
+            trace("excpetion 0x%x at %p firstchance=%d Eip=0x%x, Eax=0x%x\n",
+                  de.u.Exception.ExceptionRecord.ExceptionCode,
+                  de.u.Exception.ExceptionRecord.ExceptionAddress, de.u.Exception.dwFirstChance, ctx.Eip, ctx.Eax);
+
+            if (counter > 100)
+            {
+                ok(FALSE, "got way too many exceptions, probaby caught in a infinite loop, terminating child\n");
+                pNtTerminateProcess(pi.hProcess, 1);
+            }
+            else if (counter >= 2) /* skip startup breakpoint */
+            {
+                ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at %x instead of %p\n",
+                    ctx.Eip, (char *)code_mem_address + 0xb);
+                /* setting the context from debugger does not affect the context, the exception handlers gets */
+                /* uncomment once wine is fixed */
+                /* ctx.Eip = 0x12345; */
+                ctx.Eax = 0xf00f00f1;
+                status = pNtSetContextThread(pi.hThread, &ctx);
+                ok(!status, "NtSetContextThread failed with 0x%x\n", status);
+
+                if (de.u.Exception.dwFirstChance)
+                    continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+            }
+        }
+
+        ContinueDebugEvent(de.dwProcessId, de.dwThreadId, continuestatus);
+
+    } while (de.dwDebugEventCode != EXIT_PROCESS_DEBUG_EVENT);
+
+    ok(CloseHandle(pi.hThread) != 0, "error %u\n", GetLastError());
+    ok(CloseHandle(pi.hProcess) != 0, "error %u\n", GetLastError());
+
+    return;
+}
+
 #endif  /* __i386__ */
 
 START_TEST(exception)
 {
 #ifdef __i386__
     pNtCurrentTeb = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtCurrentTeb" );
+    pNtGetContextThread  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtGetContextThread" );
+    pNtSetContextThread  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtSetContextThread" );
+    pNtReadVirtualMemory = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtReadVirtualMemory" );
+    pRtlRaiseException   = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlRaiseException" );
+    pNtTerminateProcess  = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "NtTerminateProcess" );
+    pRtlAddVectoredExceptionHandler    = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
+                                                                 "RtlAddVectoredExceptionHandler" );
+    pRtlRemoveVectoredExceptionHandler = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"),
+                                                                 "RtlRemoveVectoredExceptionHandler" );
     if (!pNtCurrentTeb)
     {
         trace( "NtCurrentTeb not found, skipping tests\n" );
         return;
     }
+
+    if (pRtlAddVectoredExceptionHandler && pRtlRemoveVectoredExceptionHandler)
+        have_vectored_api = TRUE;
+    else
+        skip("RtlAddVectoredExceptionHandler or RtlRemoveVectoredExceptionHandler not found\n");
 
     /* 1024 byte should be sufficient */
     code_mem = VirtualAlloc(NULL, 1024, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
@@ -592,8 +698,35 @@ START_TEST(exception)
         trace("VirtualAlloc failed\n");
         return;
     }
+
+    my_argc = winetest_get_mainargs( &my_argv );
+    if (my_argc >= 3)
+    {
+        /* child must be run under a debugger */
+        if (!pNtCurrentTeb()->Peb->BeingDebugged)
+        {
+            ok(FALSE, "child process not being debugged?\n");
+            return;
+        }
+
+        if (pRtlRaiseException)
+        {
+            run_rtlraiseexception_test(0x12345);
+            run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
+            run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+        }
+        else
+            skip( "RtlRaiseException not found\n" );
+
+        /* rest of tests only run in parent */
+        return;
+    }
+
     test_prot_fault();
     test_exceptions();
+    test_rtlraiseexcpetion();
+
+    test_debugger();
 
     VirtualFree(code_mem, 1024, MEM_RELEASE);
 #endif
