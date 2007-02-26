@@ -126,7 +126,7 @@ static DWORD getPixelColor(IDirect3DDevice7 *device, UINT x, UINT y)
      */
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
     ddsd.dwFlags = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS;
     ddsd.dwWidth = 640;
     ddsd.dwHeight = 480;
@@ -141,7 +141,7 @@ static DWORD getPixelColor(IDirect3DDevice7 *device, UINT x, UINT y)
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
-    ddsd.ddpfPixelFormat.dwSize = sizeof(ddsd.ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
 
     hr = IDirectDrawSurface_BltFast(surf, 0, 0, Surface, NULL, 0);
     ok(hr == DD_OK, "IDirectDrawSurface7_BltFast returned %08x\n", hr);
