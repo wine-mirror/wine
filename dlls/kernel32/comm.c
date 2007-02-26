@@ -1388,35 +1388,23 @@ BOOL WINAPI GetDefaultCommConfigW(
                               afterwards the number of bytes copied to the buffer or
                               the needed size of the buffer. */
 {
-     LPDCB lpdcb = &(lpCC->dcb);
-     WCHAR temp[40];
-     static const WCHAR comW[] = {'C','O','M',0};
-     static const WCHAR formatW[] = {'C','O','M','%','c',':','3','8','4','0','0',',','n',',','8',',','1',0};
+    FARPROC pGetDefaultCommConfig;
+    HMODULE hConfigModule;
+    DWORD   res = ERROR_INVALID_PARAMETER;
 
-     TRACE("(%s, %p, %p)  *lpdwSize: %u\n", debugstr_w(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
+    TRACE("(%s, %p, %p)  *lpdwSize: %u\n", debugstr_w(lpszName), lpCC, lpdwSize, lpdwSize ? *lpdwSize : 0 );
+    hConfigModule = LoadLibraryW(lpszSerialUI);
 
-     if (strncmpiW(lpszName,comW,3)) {
-        ERR("not implemented for <%s>\n", debugstr_w(lpszName));
-        return FALSE;
-     }
+    if (hConfigModule) {
+        pGetDefaultCommConfig = GetProcAddress(hConfigModule, "drvGetDefaultCommConfigW");
+        if (pGetDefaultCommConfig) {
+            res = pGetDefaultCommConfig(lpszName, lpCC, lpdwSize);
+        }
+        FreeLibrary(hConfigModule);
+    }
 
-     if (*lpdwSize < sizeof(COMMCONFIG)) {
-         *lpdwSize = sizeof(COMMCONFIG);
-         return FALSE;
-       }
-
-     *lpdwSize = sizeof(COMMCONFIG);
-
-     lpCC->dwSize = sizeof(COMMCONFIG);
-     lpCC->wVersion = 1;
-     lpCC->dwProviderSubType = PST_RS232;
-     lpCC->dwProviderOffset = 0L;
-     lpCC->dwProviderSize = 0L;
-
-     sprintfW( temp, formatW, lpszName[3]);
-     FIXME("setting %s as default\n", debugstr_w(temp));
-
-     return BuildCommDCBW( temp, lpdcb);
+    if (res) SetLastError(res);
+    return (res == ERROR_SUCCESS);
 }
 
 /**************************************************************************
@@ -1443,7 +1431,7 @@ BOOL WINAPI GetDefaultCommConfigA(
 	if(lpszName) RtlCreateUnicodeStringFromAsciiz(&lpszNameW,lpszName);
 	else lpszNameW.Buffer = NULL;
 
-	if(lpszNameW.Buffer) ret = GetDefaultCommConfigW(lpszNameW.Buffer,lpCC,lpdwSize);
+	ret = GetDefaultCommConfigW(lpszNameW.Buffer,lpCC,lpdwSize);
 
 	RtlFreeUnicodeString(&lpszNameW);
 	return ret;
