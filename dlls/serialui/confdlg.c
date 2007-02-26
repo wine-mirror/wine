@@ -569,6 +569,7 @@ DWORD WINAPI drvGetDefaultCommConfigW(
     memset(lpCommConfig, 0 , sizeof (COMMCONFIG));
     lpCommConfig->dwSize = sizeof (COMMCONFIG);
     lpCommConfig->wVersion = 1;
+    lpCommConfig->dwProviderSubType = PST_RS232;
 
     r = RegConnectRegistryW(NULL, HKEY_LOCAL_MACHINE, &hKeyReg);
     if(r != ERROR_SUCCESS) return r;
