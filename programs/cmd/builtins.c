@@ -35,6 +35,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include "wcmd.h"
+#include <shellapi.h>
 
 void WCMD_execute (char *orig_command, char *parameter, char *substitution);
 
@@ -633,7 +634,24 @@ void WCMD_remove_dir (void) {
     WCMD_output ("Argument missing\n");
     return;
   }
-  if (!RemoveDirectory (param1)) WCMD_print_error ();
+
+  /* If subdirectory search not supplied, just try to remove
+     and report error if it fails (eg if it contains a file) */
+  if (strstr (quals, "/S") == NULL) {
+    if (!RemoveDirectory (param1)) WCMD_print_error ();
+
+  /* Otherwise use ShFileOp to recursively remove a directory */
+  } else {
+
+    /* Do the delete */
+    SHFILEOPSTRUCT lpDir;
+    lpDir.hwnd   = NULL;
+    lpDir.pTo    = NULL;
+    lpDir.pFrom  = param1;
+    lpDir.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
+    lpDir.wFunc  = FO_DELETE;
+    if (SHFileOperationA(&lpDir)) WCMD_print_error ();
+  }
 }
 
 /****************************************************************************
