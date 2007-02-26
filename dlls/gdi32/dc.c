@@ -626,14 +626,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
-    if (!(dc = DC_AllocDC( funcs, DC_MAGIC )))
-    {
-        DRIVER_release_driver( funcs );
-        return 0;
-    }
+    if (!(dc = DC_AllocDC( funcs, DC_MAGIC ))) goto error;
     hdc = dc->hSelf;
 
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
+    if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;
 
     TRACE("(driver=%s, device=%s, output=%s): returning %p\n",
           debugstr_w(driver), debugstr_w(device), debugstr_w(output), dc->hSelf );
@@ -642,17 +639,21 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         !dc->funcs->pCreateDC( hdc, &dc->physDev, buf, device, output, initData ))
     {
         WARN("creation aborted by device\n" );
-        GDI_FreeObject( dc->hSelf, dc );
-        DRIVER_release_driver( funcs );
-        return 0;
+        goto error;
     }
 
-    dc->hVisRgn = CreateRectRgn( 0, 0, GetDeviceCaps( hdc, DESKTOPHORZRES ),
-                                 GetDeviceCaps( hdc, DESKTOPVERTRES ) );
+    SetRectRgn( dc->hVisRgn, 0, 0,
+                GetDeviceCaps( hdc, DESKTOPHORZRES ), GetDeviceCaps( hdc, DESKTOPVERTRES ) );
 
     DC_InitDC( dc );
     GDI_ReleaseObj( hdc );
     return hdc;
+
+error:
+    if (dc && dc->hVisRgn) DeleteObject( dc->hVisRgn );
+    if (dc) GDI_FreeObject( dc->hSelf, dc );
+    DRIVER_release_driver( funcs );
+    return 0;
 }
 
 
@@ -741,15 +742,12 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
 
     if (!funcs) return 0;
 
-    if (!(dc = DC_AllocDC( funcs, MEMORY_DC_MAGIC )))
-    {
-        DRIVER_release_driver( funcs );
-        return 0;
-    }
+    if (!(dc = DC_AllocDC( funcs, MEMORY_DC_MAGIC ))) goto error;
 
     TRACE("(%p): returning %p\n", hdc, dc->hSelf );
 
     dc->hBitmap = GetStockObject( DEFAULT_BITMAP );
+    if (!(dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 ))) goto error;   /* default bitmap is 1x1 */
 
     /* Copy the driver-specific physical device info into
      * the new DC. The driver may use this read-only info
@@ -760,16 +758,18 @@ HDC WINAPI CreateCompatibleDC( HDC hdc )
         !dc->funcs->pCreateDC( dc->hSelf, &dc->physDev, NULL, NULL, NULL, NULL ))
     {
         WARN("creation aborted by device\n");
-        GDI_FreeObject( dc->hSelf, dc );
-        DRIVER_release_driver( funcs );
-        return 0;
+        goto error;
     }
-
-    dc->hVisRgn = CreateRectRgn( 0, 0, 1, 1 );  /* default bitmap is 1x1 */
 
     DC_InitDC( dc );
     GDI_ReleaseObj( dc->hSelf );
     return dc->hSelf;
+
+error:
+    if (dc && dc->hVisRgn) DeleteObject( dc->hVisRgn );
+    if (dc) GDI_FreeObject( dc->hSelf, dc );
+    DRIVER_release_driver( funcs );
+    return 0;
 }
 
 
