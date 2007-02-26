@@ -2177,7 +2177,7 @@ static void write_struct_expr(FILE *h, const expr_t *e, int brackets,
         case EXPR_VOID:
             break;
         case EXPR_NUM:
-            fprintf(h, "%ld", e->u.lval);
+            fprintf(h, "%lu", e->u.lval);
             break;
         case EXPR_HEXNUM:
             fprintf(h, "0x%lx", e->u.lval);
