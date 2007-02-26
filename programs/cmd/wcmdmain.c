@@ -641,107 +641,208 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
 /******************************************************************************
  * WCMD_run_program
  *
- *	Execute a command line as an external program. If no extension given then
- *	precedence is given to .BAT files. Must allow recursion.
- *	
- *	called is 1 if the program was invoked with a CALL command - removed
- *	from command -. It is only used for batch programs.
+ *	Execute a command line as an external program. Must allow recursion.
  *
- *	FIXME: Case sensitivity in suffixes!
+ *      Precedence:
+ *        Manual testing under windows shows PATHEXT plays a key part in this,
+ *      and the search algorithm and precedence appears to be as follows.
+ *
+ *      Search locations:
+ *        If directory supplied on command, just use that directory
+ *        If extension supplied on command, look for that explicit name first
+ *        Otherwise, search in each directory on the path
+ *      Precedence:
+ *        If extension supplied on command, look for that explicit name first
+ *        Then look for supplied name .* (even if extension supplied, so
+ *          'garbage.exe' will match 'garbage.exe.cmd')
+ *        If any found, cycle through PATHEXT looking for name.exe one by one
+ *      Launching
+ *        Once a match has been found, it is launched - Code currently uses
+ *          findexecutable to acheive this which is left untouched.
  */
 
 void WCMD_run_program (char *command, int called) {
 
-STARTUPINFO st;
-PROCESS_INFORMATION pe;
-SHFILEINFO psfi;
-DWORD console;
-BOOL status;
-HANDLE h;
-HINSTANCE hinst;
-char filetorun[MAX_PATH];
+  char  temp[MAX_PATH];
+  char  pathtosearch[MAX_PATH];
+  char *pathposn;
+  char  stemofsearch[MAX_PATH];
+  char *lastSlash;
+  char  pathext[MAXSTRING];
+  BOOL  extensionsupplied = FALSE;
+  BOOL  launched = FALSE;
+  BOOL  status;
+
 
   WCMD_parse (command, quals, param1, param2);	/* Quick way to get the filename */
   if (!(*param1) && !(*param2))
     return;
-  if (strpbrk (param1, "/\\:") == NULL) {  /* No explicit path given */
-    char *ext = strrchr( param1, '.' );
-    if (!ext || !strcasecmp( ext, ".bat"))
-    {
-      if (SearchPath (NULL, param1, ".bat", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command, called, NULL, INVALID_HANDLE_VALUE);
-        return;
-      }
+
+  /* Calculate the search path and stem to search for */
+  if (strpbrk (param1, "/\\:") == NULL) {  /* No explicit path given, search path */
+    strcpy(pathtosearch,".;");
+    status = GetEnvironmentVariable ("PATH", &pathtosearch[2], sizeof(pathtosearch)-2);
+    if ((status == 0) || (status > sizeof(pathtosearch))) {
+      lstrcpy (pathtosearch, ".");
     }
-    if (!ext || !strcasecmp( ext, ".cmd"))
-    {
-      if (SearchPath (NULL, param1, ".cmd", sizeof(filetorun), filetorun, NULL)) {
-        WCMD_batch (filetorun, command, called, NULL, INVALID_HANDLE_VALUE);
-        return;
-      }
-    }
+    if (strchr(param1, '.') != NULL) extensionsupplied = TRUE;
+    strcpy(stemofsearch, param1);
+
+  } else {
+
+    /* Convert eg. ..\fred to include a directory by removing file part */
+    GetFullPathName(param1, MAX_PATH, pathtosearch, NULL);
+    lastSlash = strrchr(pathtosearch, '\\');
+    if (lastSlash) *lastSlash = 0x00;
+    if (strchr(lastSlash, '.') != NULL) extensionsupplied = TRUE;
+    strcpy(stemofsearch, lastSlash+1);
   }
-  else {                                        /* Explicit path given */
-    char *ext = strrchr( param1, '.' );
-    if (ext && (!strcasecmp( ext, ".bat" ) || !strcasecmp( ext, ".cmd" )))
-    {
-      WCMD_batch (param1, command, called, NULL, INVALID_HANDLE_VALUE);
-      return;
+
+  /* Now extract PATHEXT */
+  status = GetEnvironmentVariable ("PATHEXT", pathext, sizeof(pathext));
+  if ((status == 0) || (status > sizeof(pathext))) {
+    lstrcpy (pathext, ".bat;.com;.cmd;.exe");
+  }
+
+  /* Loop through the search path, dir by dir */
+  pathposn = pathtosearch;
+  while (!launched && pathposn) {
+
+    char  thisDir[MAX_PATH] = "";
+    char *pos               = NULL;
+    BOOL  found             = FALSE;
+
+    /* Work on the first directory on the search path */
+    pos = strchr(pathposn, ';');
+    if (pos) {
+      strncpy(thisDir, pathposn, (pos-pathposn));
+      thisDir[(pos-pathposn)] = 0x00;
+      pathposn = pos+1;
+
+    } else {
+      strcpy(thisDir, pathposn);
+      pathposn = NULL;
     }
 
-    if (ext && strpbrk( ext, "/\\:" )) ext = NULL;
-    if (!ext)
-    {
-      strcpy (filetorun, param1);
-      strcat (filetorun, ".bat");
-      h = CreateFile (filetorun, GENERIC_READ, FILE_SHARE_READ,
-                      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    /* Since you can have eg. ..\.. on the path, need to expand
+       to full information                                      */
+    strcpy(temp, thisDir);
+    GetFullPathName(temp, MAX_PATH, thisDir, NULL);
+
+    /* 1. If extension supplied, see if that file exists */
+    strcat(thisDir, "\\");
+    strcat(thisDir, stemofsearch);
+    pos = &thisDir[strlen(thisDir)]; /* Pos = end of name */
+
+    if (GetFileAttributes(thisDir) != INVALID_FILE_ATTRIBUTES) {
+      found = TRUE;
+    }
+
+    /* 2. Any .* matches? */
+    if (!found) {
+      HANDLE          h;
+      WIN32_FIND_DATA finddata;
+
+      strcat(thisDir,".*");
+      h = FindFirstFile(thisDir, &finddata);
+      FindClose(h);
       if (h != INVALID_HANDLE_VALUE) {
-        CloseHandle (h);
-        WCMD_batch (param1, command, called, NULL, INVALID_HANDLE_VALUE);
+
+        char *thisExt = pathext;
+
+        /* 3. Yes - Try each path ext */
+        while (thisExt) {
+          char *nextExt = strchr(thisExt, ';');
+
+          if (nextExt) {
+            strncpy(pos, thisExt, (nextExt-thisExt));
+            pos[(nextExt-thisExt)] = 0x00;
+            thisExt = nextExt+1;
+          } else {
+            strcpy(pos, thisExt);
+            thisExt = NULL;
+          }
+
+          if (GetFileAttributes(thisDir) != INVALID_FILE_ATTRIBUTES) {
+            found = TRUE;
+            thisExt = NULL;
+          }
+        }
+      }
+    }
+
+    /* Once found, launch it */
+    if (found) {
+      STARTUPINFO st;
+      PROCESS_INFORMATION pe;
+      SHFILEINFO psfi;
+      DWORD console;
+      HINSTANCE hinst;
+      char *ext = strrchr( thisDir, '.' );
+      launched = TRUE;
+
+      /* Special case BAT and CMD */
+      if (ext && !strcasecmp(ext, ".bat")) {
+        WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
+        return;
+      } else if (ext && !strcasecmp(ext, ".cmd")) {
+        WCMD_batch (thisDir, command, called, NULL, INVALID_HANDLE_VALUE);
+        return;
+      } else {
+
+        /* thisDir contains the file to be launched, but with what?
+           eg. a.exe will require a.exe to be launched, a.html may be iexplore */
+        hinst = FindExecutable (param1, NULL, temp);
+        if ((INT_PTR)hinst < 32)
+          console = 0;
+        else
+          console = SHGetFileInfo (temp, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
+
+        ZeroMemory (&st, sizeof(STARTUPINFO));
+        st.cb = sizeof(STARTUPINFO);
+        init_msvcrt_io_block(&st);
+
+        /* Launch the process and if a CUI wait on it to complete */
+        status = CreateProcess (thisDir, command, NULL, NULL, TRUE,
+                                0, NULL, NULL, &st, &pe);
+        if ((opt_c || opt_k) && !opt_s && !status
+            && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
+          /* strip first and last quote characters and try again */
+          WCMD_opt_s_strip_quotes(command);
+          opt_s=1;
+          WCMD_run_program(command, called);
+          return;
+        }
+        if (!status) {
+          WCMD_print_error ();
+          /* If a command fails to launch, it sets errorlevel 9009 - which
+             does not seem to have any associated constant definition     */
+          errorlevel = 9009;
+          return;
+        }
+        if (!console) errorlevel = 0;
+        else
+        {
+            if (!HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
+            GetExitCodeProcess (pe.hProcess, &errorlevel);
+            if (errorlevel == STILL_ACTIVE) errorlevel = 0;
+        }
+        CloseHandle(pe.hProcess);
+        CloseHandle(pe.hThread);
         return;
       }
     }
   }
 
-	/* No batch file found, assume executable */
+  /* Not found anywhere - give up */
+  SetLastError(ERROR_FILE_NOT_FOUND);
+  WCMD_print_error ();
 
-  hinst = FindExecutable (param1, NULL, filetorun);
-  if ((INT_PTR)hinst < 32)
-    console = 0;
-  else
-    console = SHGetFileInfo (filetorun, 0, &psfi, sizeof(psfi), SHGFI_EXETYPE);
+  /* If a command fails to launch, it sets errorlevel 9009 - which
+     does not seem to have any associated constant definition     */
+  errorlevel = 9009;
+  return;
 
-  ZeroMemory (&st, sizeof(STARTUPINFO));
-  st.cb = sizeof(STARTUPINFO);
-  init_msvcrt_io_block(&st);
-
-  status = CreateProcess (NULL, command, NULL, NULL, TRUE, 
-                          0, NULL, NULL, &st, &pe);
-  if ((opt_c || opt_k) && !opt_s && !status
-      && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
-    /* strip first and last quote characters and try again */
-    WCMD_opt_s_strip_quotes(command);
-    opt_s=1;
-    WCMD_run_program(command, called);
-    return;
-  }
-  if (!status) {
-    WCMD_print_error ();
-    /* If a command fails to launch, it sets errorlevel 9009 - which
-       does not seem to have any associated constant definition     */
-    errorlevel = 9009;
-    return;
-  }
-  if (!console) errorlevel = 0;
-  else
-  {
-      if (!HIWORD(console)) WaitForSingleObject (pe.hProcess, INFINITE);
-      GetExitCodeProcess (pe.hProcess, &errorlevel);
-      if (errorlevel == STILL_ACTIVE) errorlevel = 0;
-  }
-  CloseHandle(pe.hProcess);
-  CloseHandle(pe.hThread);
 }
 
 /******************************************************************************
