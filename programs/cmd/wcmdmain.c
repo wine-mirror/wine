@@ -304,7 +304,6 @@ int main (int argc, char *argv[])
 void WCMD_process_command (char *command)
 {
     char *cmd, *p, *s, *t;
-    char temp[MAXSTRING];
     int status, i;
     DWORD count, creationDisposition;
     HANDLE h;
@@ -322,12 +321,8 @@ void WCMD_process_command (char *command)
     /* Additionally:                                               */
     /*   Expand the DATE, TIME, CD, RANDOM and ERRORLEVEL special  */
     /*     names allowing environment variable overrides           */
-
-    /* FIXME: Winnt would replace %1%fred%1 with first parm, then */
-    /*   contents of fred, then the digit 1. Would need to remove */
-    /*   ExpandEnvStrings to achieve this                         */
-    /* NOTE: To support the %PATH:xxx% syntax, also need to do    */
-    /*   manual expansion of environment variables here           */
+    /* NOTE: To support the %PATH:xxx% syntax, also perform        */
+    /*   manual expansion of environment variables here            */
 
     p = new_cmd;
     while ((p = strchr(p, '%'))) {
@@ -355,61 +350,6 @@ void WCMD_process_command (char *command)
         else *p = 0x00;
         strcat (p, s);
         free (s);
-
-      /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
-      /* override if existing env var called that name              */
-      } else if ((CompareString (LOCALE_USER_DEFAULT,
-                                  NORM_IGNORECASE | SORT_STRINGSORT,
-                                (p+1), 11, "ERRORLEVEL%", -1) == 2) &&
-                (GetEnvironmentVariable("ERRORLEVEL", temp, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-        sprintf(temp, "%d", errorlevel);
-          s = strdup (p+12);
-        strcpy (p, temp);
-        strcat (p, s);
-
-      } else if ((CompareString (LOCALE_USER_DEFAULT,
-                                NORM_IGNORECASE | SORT_STRINGSORT,
-                                (p+1), 5, "DATE%", -1) == 2) &&
-                (GetEnvironmentVariable("DATE", temp, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-
-        GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
-                      NULL, temp, MAXSTRING);
-        s = strdup (p+6);
-        strcpy (p, temp);
-        strcat (p, s);
-
-      } else if ((CompareString (LOCALE_USER_DEFAULT,
-                                NORM_IGNORECASE | SORT_STRINGSORT,
-                                (p+1), 5, "TIME%", -1) == 2) &&
-                (GetEnvironmentVariable("TIME", temp, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-        GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
-                          NULL, temp, MAXSTRING);
-        s = strdup (p+6);
-        strcpy (p, temp);
-          strcat (p, s);
-
-      } else if ((CompareString (LOCALE_USER_DEFAULT,
-                                NORM_IGNORECASE | SORT_STRINGSORT,
-                                (p+1), 3, "CD%", -1) == 2) &&
-                (GetEnvironmentVariable("CD", temp, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-        GetCurrentDirectory (MAXSTRING, temp);
-        s = strdup (p+4);
-        strcpy (p, temp);
-        strcat (p, s);
-
-      } else if ((CompareString (LOCALE_USER_DEFAULT,
-                                NORM_IGNORECASE | SORT_STRINGSORT,
-                                (p+1), 7, "RANDOM%", -1) == 2) &&
-                (GetEnvironmentVariable("RANDOM", temp, 1) == 0) &&
-                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
-        sprintf(temp, "%d", rand() % 32768);
-        s = strdup (p+8);
-        strcpy (p, temp);
-        strcat (p, s);
 
       } else {
         p = WCMD_expand_envvar(p);
@@ -1156,8 +1096,57 @@ static char *WCMD_expand_envvar(char *start) {
     }
 
     /* Expand to contents, if unchanged, return */
-    len = ExpandEnvironmentStrings(thisVar, thisVarContents,
-                                     sizeof(thisVarContents));
+    /* Handle DATE, TIME, ERRORLEVEL and CD replacements allowing */
+    /* override if existing env var called that name              */
+    if ((CompareString (LOCALE_USER_DEFAULT,
+                        NORM_IGNORECASE | SORT_STRINGSORT,
+                        thisVar, 12, "%ERRORLEVEL%", -1) == 2) &&
+                (GetEnvironmentVariable("ERRORLEVEL", thisVarContents, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      sprintf(thisVarContents, "%d", errorlevel);
+      len = strlen(thisVarContents);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                               NORM_IGNORECASE | SORT_STRINGSORT,
+                               thisVar, 6, "%DATE%", -1) == 2) &&
+                (GetEnvironmentVariable("DATE", thisVarContents, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+
+      GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL,
+                    NULL, thisVarContents, MAXSTRING);
+      len = strlen(thisVarContents);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                               NORM_IGNORECASE | SORT_STRINGSORT,
+                               thisVar, 6, "%TIME%", -1) == 2) &&
+                (GetEnvironmentVariable("TIME", thisVarContents, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      GetTimeFormat(LOCALE_USER_DEFAULT, TIME_NOSECONDS, NULL,
+                        NULL, thisVarContents, MAXSTRING);
+      len = strlen(thisVarContents);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                               NORM_IGNORECASE | SORT_STRINGSORT,
+                               thisVar, 4, "%CD%", -1) == 2) &&
+                (GetEnvironmentVariable("CD", thisVarContents, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      GetCurrentDirectory (MAXSTRING, thisVarContents);
+      len = strlen(thisVarContents);
+
+    } else if ((CompareString (LOCALE_USER_DEFAULT,
+                               NORM_IGNORECASE | SORT_STRINGSORT,
+                               thisVar, 8, "%RANDOM%", -1) == 2) &&
+                (GetEnvironmentVariable("RANDOM", thisVarContents, 1) == 0) &&
+                (GetLastError() == ERROR_ENVVAR_NOT_FOUND)) {
+      sprintf(thisVarContents, "%d", rand() % 32768);
+      len = strlen(thisVarContents);
+
+    } else {
+
+      len = ExpandEnvironmentStrings(thisVar, thisVarContents,
+                                      sizeof(thisVarContents));
+    }
+
     if (len == 0)
       return endOfVar+1;
 
