@@ -4226,26 +4226,34 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glMask = glMask | GL_COLOR_BUFFER_BIT;
     }
 
-    /* Now process each rect in turn */
-    for (i = 0; i < Count || i == 0; i++) {
-
-        if (curRect) {
-            /* Note gl uses lower left, width/height */
-            TRACE("(%p) %p Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This, curRect,
-                  curRect->x1, curRect->y1, curRect->x2, curRect->y2,
-                  curRect->x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect->y2),
-                  curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            glScissor(curRect->x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect->y2),
-                      curRect->x2 - curRect->x1, curRect->y2 - curRect->y1);
-            checkGLcall("glScissor");
-        }
-
-        /* Clear the selected rectangle (or full screen) */
+    if (!curRect) {
         glClear(glMask);
         checkGLcall("glClear");
+    } else {
+        /* Now process each rect in turn */
+        for (i = 0; i < Count; i++) {
+            /* Note gl uses lower left, width/height */
+            TRACE("(%p) %p Rect=(%d,%d)->(%d,%d) glRect=(%d,%d), len=%d, hei=%d\n", This, curRect,
+                  curRect[i].x1, curRect[i].y1, curRect[i].x2, curRect[i].y2,
+                  curRect[i].x1, (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect[i].y2),
+                  curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
 
-        /* Step to the next rectangle */
-        if (curRect) curRect = curRect + sizeof(WINED3DRECT);
+            /* Tests show that rectangles where x1 > x2 or y1 > y2 are ignored silently.
+             * The rectangle is not cleared, no error is returned, but further rectanlges are
+             * still cleared if they are valid
+             */
+            if(curRect[i].x1 > curRect[i].x2 || curRect[i].y1 > curRect[i].y2) {
+                TRACE("Rectangle with negative dimensions, ignoring\n");
+                continue;
+            }
+
+            glScissor(curRect[i].x1, ((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height - curRect[i].y2,
+                        curRect[i].x2 - curRect[i].x1, curRect[i].y2 - curRect[i].y1);
+            checkGLcall("glScissor");
+
+            glClear(glMask);
+            checkGLcall("glClear");
+        }
     }
 
     /* Restore the old values (why..?) */
@@ -4253,10 +4261,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
         glStencilMask(This->stateBlock->renderState[WINED3DRS_STENCILWRITEMASK]);
     }
     if (Flags & WINED3DCLEAR_TARGET) {
-        glColorMask(This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
-                    This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE] & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
+        DWORD mask = This->stateBlock->renderState[WINED3DRS_COLORWRITEENABLE];
+        glColorMask(mask & WINED3DCOLORWRITEENABLE_RED ? GL_TRUE : GL_FALSE,
+                    mask & WINED3DCOLORWRITEENABLE_GREEN ? GL_TRUE : GL_FALSE,
+                    mask & WINED3DCOLORWRITEENABLE_BLUE  ? GL_TRUE : GL_FALSE,
+                    mask & WINED3DCOLORWRITEENABLE_ALPHA ? GL_TRUE : GL_FALSE);
     }
 
     LEAVE_GL();

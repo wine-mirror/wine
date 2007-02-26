@@ -301,6 +301,52 @@ static void lighting_test(IDirect3DDevice7 *device)
     ok(hr == D3D_OK, "IDirect3DDevice7_SetRenderState returned %08x\n", hr);
 }
 
+static void clear_test(IDirect3DDevice7 *device)
+{
+    /* Tests the correctness of clearing parameters */
+    HRESULT hr;
+    D3DRECT rect[2];
+    D3DRECT rect_negneg;
+    DWORD color;
+
+    hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
+
+    /* Positive x, negative y */
+    rect[0].x1 = 0;
+    rect[0].y1 = 480;
+    rect[0].x2 = 320;
+    rect[0].y2 = 240;
+
+    /* Positive x, positive y */
+    rect[1].x1 = 0;
+    rect[1].y1 = 0;
+    rect[1].x2 = 320;
+    rect[1].y2 = 240;
+    /* Clear 2 rectangles with one call. Shows that a positive value is returned, but the negative rectangle
+     * is ignored, the positive is still cleared afterwards
+     */
+    hr = IDirect3DDevice7_Clear(device, 2, rect, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
+
+    /* negative x, negative y */
+    rect_negneg.x1 = 640;
+    rect_negneg.x1 = 240;
+    rect_negneg.x2 = 320;
+    rect_negneg.y2 = 0;
+    hr = IDirect3DDevice7_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
+    ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
+
+    color = getPixelColor(device, 160, 360); /* lower left quad */
+    ok(color == 0x00ffffff, "Clear rectangle 3(pos, neg) has color %08x\n", color);
+    color = getPixelColor(device, 160, 120); /* upper left quad */
+    ok(color == 0x00ff0000, "Clear rectangle 1(pos, pos) has color %08x\n", color);
+    color = getPixelColor(device, 480, 360); /* lower right quad  */
+    ok(color == 0x00ffffff, "Clear rectangle 4(NULL) has color %08x\n", color);
+    color = getPixelColor(device, 480, 120); /* upper right quad */
+    ok(color == 0x00ffffff, "Clear rectangle 4(neg, neg) has color %08x\n", color);
+}
+
 START_TEST(visual)
 {
     HRESULT hr;
@@ -342,6 +388,7 @@ START_TEST(visual)
 
     /* Now run the tests */
     lighting_test(Direct3DDevice);
+    clear_test(Direct3DDevice);
 
 cleanup:
     releaseObjects();
