@@ -447,6 +447,11 @@ static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferIm
     GLenum error, glUsage;
     TRACE("Creating VBO for Index Buffer %p\n", object);
 
+    /* The following code will modify the ELEMENT_ARRAY_BUFFER binding, make sure it is
+     * restored on the next draw
+     */
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_INDEXBUFFER);
+
     ENTER_GL();
     while(glGetError());
 
@@ -454,8 +459,7 @@ static void CreateIndexBufferVBO(IWineD3DDeviceImpl *This, IWineD3DIndexBufferIm
     error = glGetError();
     if(error != GL_NO_ERROR || object->vbo == 0) {
         ERR("Creating a vbo failed, continueing without vbo for this buffer\n");
-        object->vbo = 0;
-        return;
+        goto out;
     }
 
     GL_EXTCALL(glBindBufferARB(GL_ELEMENT_ARRAY_BUFFER_ARB, object->vbo));
