@@ -934,7 +934,7 @@ static WCHAR *get_familyname(FT_Face ft_face)
 
 #define ADDFONT_EXTERNAL_FONT 0x01
 #define ADDFONT_FORCE_BITMAP  0x02
-static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
+static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *target_family, DWORD flags)
 {
     FT_Face ft_face;
     TT_OS2 *pOS2;
@@ -963,7 +963,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             for(cursor = mac_list; *cursor; cursor++)
             {
                 had_one = TRUE;
-                AddFontFileToList(*cursor, NULL, flags);
+                AddFontFileToList(*cursor, NULL, NULL, flags);
                 HeapFree(GetProcessHeap(), 0, *cursor);
             }
             HeapFree(GetProcessHeap(), 0, mac_list);
@@ -1008,6 +1008,19 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, DWORD flags)
             TRACE("Font file %s lacks either a family or style name\n", debugstr_a(file));
             pFT_Done_Face(ft_face);
             return FALSE;
+        }
+
+        if (target_family)
+        {
+            localised_family = get_familyname(ft_face);
+            if (lstrcmpW(localised_family,target_family)!=0)
+            {
+                TRACE("Skipping Index %i: Incorrect Family name for replacement\n",(INT)face_index);
+                HeapFree(GetProcessHeap(), 0, localised_family);
+                num_faces = ft_face->num_faces;
+                continue;
+            }
+            HeapFree(GetProcessHeap(), 0, localised_family);
         }
 
         if(!family_name)
@@ -1259,7 +1272,7 @@ static void LoadReplaceList(void)
                         TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
                               debugstr_w(face->StyleName), familyA);
                         /* Now add a new entry with the new family name */
-                        AddFontFileToList(face->file, familyA, ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
+                        AddFontFileToList(face->file, familyA, family->FamilyName, ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
                     }
                     break;
                 }
@@ -1438,7 +1451,7 @@ static BOOL ReadFontDir(const char *dirname, BOOL external_fonts)
 	if(S_ISDIR(statbuf.st_mode))
 	    ReadFontDir(path, external_fonts);
 	else
-	    AddFontFileToList(path, NULL, external_fonts ? ADDFONT_EXTERNAL_FONT : 0);
+	    AddFontFileToList(path, NULL, NULL, external_fonts ? ADDFONT_EXTERNAL_FONT : 0);
     }
     closedir(dir);
     return TRUE;
@@ -1506,7 +1519,7 @@ LOAD_FUNCPTR(FcPatternGetString);
         if(len < 4) continue;
         ext = &file[ len - 3 ];
         if(strcasecmp(ext, "pfa") && strcasecmp(ext, "pfb"))
-            AddFontFileToList(file, NULL, ADDFONT_EXTERNAL_FONT);
+            AddFontFileToList(file, NULL, NULL,  ADDFONT_EXTERNAL_FONT);
     }
     pFcFontSetDestroy(fontset);
     pFcObjectSetDestroy(os);
@@ -1537,7 +1550,7 @@ static BOOL load_font_from_data_dir(LPCWSTR file)
 
         WideCharToMultiByte(CP_UNIXCP, 0, file, -1, unix_name + strlen(unix_name), len, NULL, NULL);
 
-        ret = AddFontFileToList(unix_name, NULL, ADDFONT_FORCE_BITMAP);
+        ret = AddFontFileToList(unix_name, NULL, NULL, ADDFONT_FORCE_BITMAP);
         HeapFree(GetProcessHeap(), 0, unix_name);
     }
     return ret;
@@ -1563,7 +1576,7 @@ static void load_system_fonts(void)
 
                 sprintfW(pathW, fmtW, windowsdir, data);
                 if((unixname = wine_get_unix_file_name(pathW))) {
-                    added = AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
+                    added = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
                     HeapFree(GetProcessHeap(), 0, unixname);
                 }
                 if (!added)
@@ -1697,7 +1710,7 @@ INT WineEngAddFontResourceEx(LPCWSTR file, DWORD flags, PVOID pdv)
 
         if((unixname = wine_get_unix_file_name(file)))
         {
-            AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
+            AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
             HeapFree(GetProcessHeap(), 0, unixname);
         }
     }
@@ -2020,7 +2033,7 @@ BOOL WineEngInit(void)
                 {
                     if((unixname = wine_get_unix_file_name((LPWSTR)data)))
                     {
-                        AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
+                        AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
                         HeapFree(GetProcessHeap(), 0, unixname);
                     }
                 }
@@ -2033,7 +2046,7 @@ BOOL WineEngInit(void)
                     sprintfW(pathW, fmtW, windowsdir, data);
                     if((unixname = wine_get_unix_file_name(pathW)))
                     {
-                        added = AddFontFileToList(unixname, NULL, ADDFONT_FORCE_BITMAP);
+                        added = AddFontFileToList(unixname, NULL, NULL, ADDFONT_FORCE_BITMAP);
                         HeapFree(GetProcessHeap(), 0, unixname);
                     }
                     if (!added)
