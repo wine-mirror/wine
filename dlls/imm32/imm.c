@@ -169,6 +169,21 @@ static void ImmInternalPostIMEMessage(UINT msg, WPARAM wParam, LPARAM lParam)
        PostMessageW(target, msg, wParam, lParam);
 }
 
+static LRESULT ImmInternalSendIMENotify(WPARAM notify, LPARAM lParam)
+{
+    LRESULT rc = 0;
+
+    if (root_context->hwnd)
+       rc = SendMessageW(root_context->hwnd, WM_IME_NOTIFY, notify, lParam);
+    else
+    {
+       HWND target = GetFocus();
+       if (target)
+           rc = SendMessageW(target, WM_IME_NOTIFY, notify, lParam);
+    }
+
+    return rc;
+}
 
 static void ImmInternalSetOpenStatus(BOOL fOpen)
 {
@@ -202,7 +217,7 @@ static void ImmInternalSetOpenStatus(BOOL fOpen)
     else
         ShowWindow(hwndDefault, SW_SHOWNOACTIVATE);
 
-   SendMessageW(root_context->hwnd, WM_IME_NOTIFY, IMN_SETOPENSTATUS, 0);
+   ImmInternalSendIMENotify(IMN_SETOPENSTATUS, 0);
 }
 
 
@@ -1231,7 +1246,7 @@ BOOL WINAPI ImmSetCompositionFontA(HIMC hIMC, LPLOGFONTA lplf)
     MultiByteToWideChar(CP_ACP, 0, lplf->lfFaceName, -1, data->font.lfFaceName,
                         LF_FACESIZE);
 
-    ImmInternalPostIMEMessage(WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0);
+    ImmInternalSendIMENotify(IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
     {
@@ -1255,7 +1270,7 @@ BOOL WINAPI ImmSetCompositionFontW(HIMC hIMC, LPLOGFONTW lplf)
         return FALSE;
 
     memcpy(&data->font,lplf,sizeof(LOGFONTW));
-    ImmInternalPostIMEMessage(WM_IME_NOTIFY, IMN_SETCOMPOSITIONFONT, 0);
+    ImmInternalSendIMENotify(IMN_SETCOMPOSITIONFONT, 0);
 
     if (data->textfont)
     {
@@ -1406,7 +1421,7 @@ BOOL WINAPI ImmSetCompositionWindow(
     if (reshow)
         ShowWindow(hwndDefault,SW_SHOWNOACTIVATE);
 
-    ImmInternalPostIMEMessage(WM_IME_NOTIFY,IMN_SETCOMPOSITIONWINDOW, 0);
+    ImmInternalSendIMENotify(IMN_SETCOMPOSITIONWINDOW, 0);
     return TRUE;
 }
 
@@ -1435,7 +1450,7 @@ BOOL WINAPI ImmSetOpenStatus(HIMC hIMC, BOOL fOpen)
     if (hIMC == (HIMC)FROM_IME)
     {
         ImmInternalSetOpenStatus(fOpen);
-        ImmInternalPostIMEMessage(WM_IME_NOTIFY, IMN_SETOPENSTATUS, 0);
+        ImmInternalSendIMENotify(IMN_SETOPENSTATUS, 0);
         return TRUE;
     }
 
