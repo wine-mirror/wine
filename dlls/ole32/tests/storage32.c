@@ -232,6 +232,7 @@ static void test_storage_stream(void)
     IStorage *stg = NULL;
     HRESULT r;
     IStream *stm = NULL;
+    IStream *stm2 = NULL;
     ULONG count = 0;
     LARGE_INTEGER pos;
     ULARGE_INTEGER p;
@@ -281,6 +282,9 @@ static void test_storage_stream(void)
     r = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, 0, &stm );
     ok(r==S_OK, "IStorage->CreateStream failed\n");
 
+    r = IStream_Clone(stm, &stm2);
+    ok(r==S_OK, "failed to clone stream\n");
+
     r = IStream_Write(stm, NULL, 0, NULL );
     ok(r==STG_E_INVALIDPOINTER, "IStream->Write wrong error\n");
     r = IStream_Write(stm, "Hello\n", 0, NULL );
@@ -317,6 +321,8 @@ static void test_storage_stream(void)
     ok(count == 0, "read bytes from empty stream\n");
 
     /* wrap up */
+    r = IStream_Release(stm2);
+    ok(r == 0, "wrong ref count\n");
     r = IStream_Release(stm);
     ok(r == 0, "wrong ref count\n");
     r = IStorage_Release(stg);

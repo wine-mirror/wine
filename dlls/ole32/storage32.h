@@ -257,6 +257,7 @@ struct StorageBaseImpl
  * StorageBaseImpl stream list handlers
  */
 
+void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm);
 void StorageBaseImpl_RemoveStream(StorageBaseImpl * stg, StgStreamImpl * strm);
 
 /****************************************************************************

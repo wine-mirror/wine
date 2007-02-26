@@ -93,8 +93,6 @@ static void StorageImpl_SetNextBlockInChain(StorageImpl* This, ULONG blockIndex,
 static HRESULT StorageImpl_LoadFileHeader(StorageImpl* This);
 static void StorageImpl_SaveFileHeader(StorageImpl* This);
 
-static void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm);
-
 static void Storage32Impl_AddBlockDepot(StorageImpl* This, ULONG blockIndex);
 static ULONG Storage32Impl_AddExtBlockDepot(StorageImpl* This);
 static ULONG Storage32Impl_GetNextExtendedBlock(StorageImpl* This, ULONG blockIndex);
@@ -467,12 +465,6 @@ static HRESULT WINAPI StorageBaseImpl_OpenStream(
        * nail down the reference.
        */
       IStream_AddRef(*ppstm);
-
-      /*
-       * add us to the storage's list of active streams
-       */
-
-      StorageBaseImpl_AddStream(This,newStream);
 
       res = S_OK;
       goto end;
@@ -1063,11 +1055,6 @@ static HRESULT WINAPI StorageBaseImpl_CreateStream(
      * the reference.
      */
     IStream_AddRef(*ppstm);
-
-    /* add us to the storage's list of active streams
-     */
-    StorageBaseImpl_AddStream(This,newStream);
-
   }
   else
   {
@@ -1895,7 +1882,7 @@ static HRESULT WINAPI StorageImpl_Stat( IStorage* iface,
  * Internal stream list handlers
  */
 
-static void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm)
+void StorageBaseImpl_AddStream(StorageBaseImpl * stg, StgStreamImpl * strm)
 {
   TRACE("Stream added (stg=%p strm=%p)\n", stg, strm);
   list_add_tail(&stg->strmHead,&strm->StrmListEntry);

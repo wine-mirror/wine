@@ -880,6 +880,8 @@ static HRESULT WINAPI StgStreamImpl_Clone(
     return STG_E_INSUFFICIENTMEMORY; /* Currently the only reason for new_stream=0 */
 
   *ppstm = (IStream*) new_stream;
+  IStream_AddRef(*ppstm);
+
   seek_pos.QuadPart = This->currentPosition.QuadPart;
 
   hres=StgStreamImpl_Seek (*ppstm, seek_pos, STREAM_SEEK_SET, NULL);
@@ -974,6 +976,9 @@ StgStreamImpl* StgStreamImpl_Construct(
      * this stream are large or small.
      */
     StgStreamImpl_OpenBlockChain(newStream);
+
+    /* add us to the storage's list of active streams */
+    StorageBaseImpl_AddStream(parentStorage, newStream);
   }
 
   return newStream;
