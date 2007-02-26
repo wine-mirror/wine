@@ -1224,43 +1224,42 @@ static void LoadReplaceList(void)
 {
     HKEY hkey;
     DWORD valuelen, datalen, i = 0, type, dlen, vlen;
-    LPSTR value;
+    LPWSTR value;
     LPVOID data;
     Family *family;
     Face *face;
     struct list *family_elem_ptr, *face_elem_ptr;
-    WCHAR old_nameW[200];
+    CHAR familyA[400];
 
     /* @@ Wine registry key: HKCU\Software\Wine\Fonts\Replacements */
     if(RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts\\Replacements", &hkey) == ERROR_SUCCESS)
     {
-        RegQueryInfoKeyA(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+        RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 			 &valuelen, &datalen, NULL, NULL);
 
 	valuelen++; /* returned value doesn't include room for '\0' */
-	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(CHAR));
+	value = HeapAlloc(GetProcessHeap(), 0, valuelen * sizeof(WCHAR));
 	data = HeapAlloc(GetProcessHeap(), 0, datalen);
 
 	dlen = datalen;
 	vlen = valuelen;
-	while(RegEnumValueA(hkey, i++, value, &vlen, NULL, &type, data,
+	while(RegEnumValueW(hkey, i++, value, &vlen, NULL, &type, data,
 			    &dlen) == ERROR_SUCCESS) {
-	    TRACE("Got %s=%s\n", debugstr_a(value), debugstr_a(data));
+	    TRACE("Got %s=%s\n", debugstr_w(value), debugstr_w(data));
             /* "NewName"="Oldname" */
-            if(!MultiByteToWideChar(CP_ACP, 0, data, -1, old_nameW, sizeof(old_nameW)/sizeof(WCHAR)))
-                break;
+            WideCharToMultiByte(CP_ACP, 0, value, -1, familyA, sizeof(familyA), NULL, NULL);
 
             /* Find the old family and hence all of the font files
                in that family */
             LIST_FOR_EACH(family_elem_ptr, &font_list) {
-                family = LIST_ENTRY(family_elem_ptr, Family, entry); 
-                if(!strcmpiW(family->FamilyName, old_nameW)) {                
+                family = LIST_ENTRY(family_elem_ptr, Family, entry);
+                if(!strcmpiW(family->FamilyName, data)) {
                     LIST_FOR_EACH(face_elem_ptr, &family->faces) {
                         face = LIST_ENTRY(face_elem_ptr, Face, entry);
                         TRACE("mapping %s %s to %s\n", debugstr_w(family->FamilyName),
-                              debugstr_w(face->StyleName), value);
+                              debugstr_w(face->StyleName), familyA);
                         /* Now add a new entry with the new family name */
-                        AddFontFileToList(face->file, value, ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
+                        AddFontFileToList(face->file, familyA, ADDFONT_FORCE_BITMAP | (face->external ? ADDFONT_EXTERNAL_FONT : 0));
                     }
                     break;
                 }
