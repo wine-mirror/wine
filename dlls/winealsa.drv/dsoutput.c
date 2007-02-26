@@ -143,9 +143,6 @@ static DWORD CALLBACK DBSB_MMAPLoop(LPVOID data)
     TRACE_(waveloop)("0x%8p\n", data);
     TRACE("0x%8p, framelength: %lu, area: %8p\n", data, pdbi->mmap_buflen_frames, pdbi->mmap_areas);
 
-    if (areas != pdbi->mmap_areas || areas->addr != pdbi->mmap_areas->addr)
-        FIXME("Can't access sound driver's buffer directly.\n");
-
     do {
         enum win_wm_message msg;
         DWORD param;
