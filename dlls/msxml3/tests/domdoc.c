@@ -29,7 +29,8 @@
 
 #include "wine/test.h"
 
-const CLSID CLSID_DOMDocument2 = {0xf6d90f11, 0x9c73, 0x11d3, {0xb3, 0x2e, 0x00,0xc0, 0x4f, 0x99, 0x0b, 0xb4}};
+const CLSID CLSID_DOMDocument2 = {0xf6d90f11, 0x9c73, 0x11d3, {0xb3, 0x2e, 0x00, 0xc0, 0x4f, 0x99, 0x0b, 0xb4}};
+const IID IID_IXMLDOMDocument2 = {0x2933bf95, 0x7b36, 0x11d2, {0xb2, 0x0e, 0x00, 0xc0, 0x4f, 0x98, 0x3e, 0x60}};
 
 static const WCHAR szEmpty[] = { 0 };
 static const WCHAR szIncomplete[] = {
@@ -1154,6 +1155,32 @@ static void test_XMLHTTP(void)
     SysFreeString(bstrResponse);
 }
 
+static void test_IXMLDOMDocument2(void)
+{
+    HRESULT r;
+    VARIANT_BOOL b;
+    BSTR str;
+    IXMLDOMDocument *doc;
+    IXMLDOMDocument2 *doc2;
+
+    r = CoCreateInstance( &CLSID_DOMDocument, NULL,
+        CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (LPVOID*)&doc );
+    if( r != S_OK )
+        return;
+
+    str = SysAllocString( szComplete4 );
+    r = IXMLDOMDocument_loadXML( doc, str, &b );
+    ok( r == S_OK, "loadXML failed\n");
+    ok( b == VARIANT_TRUE, "failed to load XML string\n");
+    SysFreeString( str );
+
+    r = IXMLDOMDocument_QueryInterface( doc, &IID_IXMLDOMDocument2, (void**)&doc2 );
+    ok( r == S_OK, "ret %08x\n", r );
+    ok( doc == (IXMLDOMDocument*)doc2, "interfaces differ\n");
+    IXMLDOMDocument2_Release( doc2 );
+    IXMLDOMDocument_Release( doc );
+}
+
 START_TEST(domdoc)
 {
     HRESULT r;
@@ -1170,6 +1197,7 @@ START_TEST(domdoc)
     test_get_childNodes();
     test_removeChild();
     test_XMLHTTP();
+    test_IXMLDOMDocument2();
 
     CoUninitialize();
 }
