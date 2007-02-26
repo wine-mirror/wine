@@ -253,6 +253,21 @@ static void HandleCommandLine(LPWSTR cmdline)
         MessageBox(hMainWnd, "Printing not implemented", "WordPad", MB_OK);
 }
 
+static void DoDefaultFont()
+{
+    static const WCHAR szFaceName[] = {'T','i','m','e','s',' ','N','e','w',' ','R','o','m','a','n',0};
+    CHARFORMAT2W fmt;
+
+    ZeroMemory(&fmt, sizeof(fmt));
+
+    fmt.cbSize = sizeof(fmt);
+    fmt.dwMask = CFM_FACE;
+
+    lstrcpyW(fmt.szFaceName, szFaceName);
+
+    SendMessage(hEditorWnd, EM_SETCHARFORMAT,  SCF_DEFAULT, (LPARAM)&fmt);
+}
+
 static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 {
     HWND hToolBarWnd, hReBarWnd;
@@ -331,6 +346,8 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     SetFocus(hEditorWnd);
     SendMessage(hEditorWnd, EM_SETEVENTMASK, 0, ENM_SELCHANGE);
+
+    DoDefaultFont();
 
     DoLoadStrings();
 
