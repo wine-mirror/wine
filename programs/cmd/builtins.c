@@ -939,11 +939,15 @@ static int WCMD_compare( const void *a, const void *b )
  * WCMD_setshow_sortenv
  *
  * sort variables into order for display
+ * Optionally only display those who start with a stub
+ * returns the count displayed
  */
-static void WCMD_setshow_sortenv(const char *s)
+static int WCMD_setshow_sortenv(const char *s, const char *stub)
 {
-  UINT count=0, len=0, i;
+  UINT count=0, len=0, i, displayedcount=0, stublen=0;
   const char **str;
+
+  if (stub) stublen = strlen(stub);
 
   /* count the number of strings, and the total length */
   while ( s[len] ) {
@@ -954,7 +958,7 @@ static void WCMD_setshow_sortenv(const char *s)
   /* add the strings to an array */
   str = LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, count * sizeof (char*) );
   if( !str )
-    return;
+    return 0;
   str[0] = s;
   for( i=1; i<count; i++ )
     str[i] = str[i-1] + lstrlen(str[i-1]) + 1;
@@ -964,11 +968,17 @@ static void WCMD_setshow_sortenv(const char *s)
 
   /* print it */
   for( i=0; i<count; i++ ) {
+    if (!stub || CompareString (LOCALE_USER_DEFAULT,
+                                NORM_IGNORECASE | SORT_STRINGSORT,
+                                str[i], stublen, stub, -1) == 2) {
       WCMD_output_asis(str[i]);
       WCMD_output_asis("\n");
+      displayedcount++;
+    }
   }
 
   LocalFree( str );
+  return displayedcount;
 }
 
 /****************************************************************************
@@ -982,27 +992,16 @@ void WCMD_setshow_env (char *s) {
 LPVOID env;
 char *p;
 int status;
-char buffer[1048];
 
   if (strlen(param1) == 0) {
     env = GetEnvironmentStrings ();
-    WCMD_setshow_sortenv( env );
+    WCMD_setshow_sortenv( env, NULL );
   }
   else {
     p = strchr (s, '=');
     if (p == NULL) {
-
-      /* FIXME: Emulate Win98 for now, ie "SET C" looks ONLY for an
-         environment variable C, whereas on NT it shows ALL variables
-         starting with C.
-       */
-      status = GetEnvironmentVariable(s, buffer, sizeof(buffer));
-      if (status) {
-        WCMD_output_asis( s);
-        WCMD_output_asis( "=");
-        WCMD_output_asis( buffer);
-        WCMD_output_asis( "\n");
-      } else {
+      env = GetEnvironmentStrings ();
+      if (WCMD_setshow_sortenv( env, s ) == 0) {
         WCMD_output ("Environment variable %s not defined\n", s);
       }
       return;
@@ -1013,7 +1012,6 @@ char buffer[1048];
     status = SetEnvironmentVariable (s, p);
     if ((!status) & (GetLastError() != ERROR_ENVVAR_NOT_FOUND)) WCMD_print_error();
   }
-  /* WCMD_output (newline);   @JED*/
 }
 
 /****************************************************************************
