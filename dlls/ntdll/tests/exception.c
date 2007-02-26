@@ -38,6 +38,7 @@
 #ifdef __i386__
 static int      my_argc;
 static char**   my_argv;
+static int      test_stage;
 
 static struct _TEB * (WINAPI *pNtCurrentTeb)(void);
 static NTSTATUS  (WINAPI *pNtGetContextThread)(HANDLE,CONTEXT*);
@@ -260,6 +261,11 @@ static DWORD rtlraiseexception_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     if(have_vectored_api)
         ok(context->Eax == 0xf00f00f0, "Eax is %x, should have been set to 0xf00f00f0 in vectored handler\n",
            context->Eax);
+
+    /* give the debugger a chance to examine the state a second time */
+    /* without the exception handler changing Eip */
+    if (test_stage == 2)
+        return ExceptionContinueSearch;
 
     /* Eip in context is decreased by 1
      * Increase it again, else execution will continue in the middle of a instruction */
@@ -621,10 +627,14 @@ static void test_debugger(void)
         else if (de.dwDebugEventCode == EXCEPTION_DEBUG_EVENT)
         {
             CONTEXT ctx;
+            int stage;
 
             counter++;
             status = pNtReadVirtualMemory(pi.hProcess, &code_mem, &code_mem_address,
                                           sizeof(code_mem_address), &size_read);
+            ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
+            status = pNtReadVirtualMemory(pi.hProcess, &test_stage, &stage,
+                                          sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
 
             ctx.ContextFlags = CONTEXT_FULL;
@@ -642,17 +652,61 @@ static void test_debugger(void)
             }
             else if (counter >= 2) /* skip startup breakpoint */
             {
-                ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at %x instead of %p\n",
-                    ctx.Eip, (char *)code_mem_address + 0xb);
-                /* setting the context from debugger does not affect the context, the exception handlers gets */
-                /* uncomment once wine is fixed */
-                /* ctx.Eip = 0x12345; */
-                ctx.Eax = 0xf00f00f1;
+                if (stage == 1)
+                {
+                    ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at %x instead of %p\n",
+                       ctx.Eip, (char *)code_mem_address + 0xb);
+                    /* setting the context from debugger does not affect the context, the exception handlers gets */
+                    /* uncomment once wine is fixed */
+                    /* ctx.Eip = 0x12345; */
+                    ctx.Eax = 0xf00f00f1;
+
+                    /* let the debuggee handle the exception */
+                    continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+                }
+                else if (stage == 2)
+                {
+                    if (de.u.Exception.dwFirstChance)
+                    {
+                        /* debugger gets first chance exception with unmodified ctx.Eip */
+                        ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at 0x%x instead of %p\n",
+                            ctx.Eip, (char *)code_mem_address + 0xb);
+
+                        /* setting the context from debugger does not affect the context, the exception handlers gets */
+                        /* uncomment once wine is fixed */
+                        /* ctx.Eip = 0x12345; */
+                        ctx.Eax = 0xf00f00f1;
+
+                        /* pass exception to debuggee
+                         * exception will not be handled and
+                         * a second chance exception will be raised */
+                        continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+                    }
+                    else
+                    {
+                        /* debugger gets context after exception handler has played with it */
+                        /* ctx.Eip is the same value the exception handler got */
+                        if (de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT)
+                        {
+                            todo_wine{
+                            ok((char *)ctx.Eip == (char *)code_mem_address + 0xa, "Eip at 0x%x instead of %p\n",
+                                ctx.Eip, (char *)code_mem_address + 0xa);
+                            }
+                            /* need to fixup Eip for debuggee */
+                            if ((char *)ctx.Eip == (char *)code_mem_address + 0xa)
+                                ctx.Eip += 1;
+                        }
+                        else
+                            ok((char *)ctx.Eip == (char *)code_mem_address + 0xb, "Eip at 0x%x instead of %p\n",
+                                ctx.Eip, (char *)code_mem_address + 0xb);
+                        /* here we handle exception */
+                    }
+                }
+                else
+                    ok(FALSE, "unexpected stage %d\n", stage);
+
                 status = pNtSetContextThread(pi.hThread, &ctx);
                 ok(!status, "NtSetContextThread failed with 0x%x\n", status);
-
-                if (de.u.Exception.dwFirstChance)
-                    continuestatus = DBG_EXCEPTION_NOT_HANDLED;
             }
         }
 
@@ -711,6 +765,11 @@ START_TEST(exception)
 
         if (pRtlRaiseException)
         {
+            test_stage = 1;
+            run_rtlraiseexception_test(0x12345);
+            run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
+            run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
+            test_stage = 2;
             run_rtlraiseexception_test(0x12345);
             run_rtlraiseexception_test(EXCEPTION_BREAKPOINT);
             run_rtlraiseexception_test(EXCEPTION_INVALID_HANDLE);
