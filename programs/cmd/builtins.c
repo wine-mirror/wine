@@ -271,14 +271,17 @@ char *p;
     WCMD_output ("%s :File Not Found\n",param1);
     return;
   }
+  /* Support del <dirname> by just deleting all files dirname\* */
   if ((strchr(param1,'*') == NULL) && (strchr(param1,'?') == NULL)
   	&& (!recurse) && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
     strcat (param1, "\\*");
     FindClose(hff);
     WCMD_delete (1);
     return;
-  }
-  if ((strchr(param1,'*') != NULL) || (strchr(param1,'?') != NULL)) {
+
+  } else {
+
+    /* Build the filename to delete as <supplied directory>\<findfirst filename> */
     strcpy (fpath, param1);
     do {
       p = strrchr (fpath, '\\');
@@ -288,26 +291,32 @@ char *p;
       }
       else strcpy (fpath, fd.cFileName);
       if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        BOOL  ok = TRUE;
+
         /* /P means prompt for each file */
         if (strstr (quals, "/P") != NULL) {
-          BOOL  ok;
           char  question[MAXSTRING];
 
           /* Ask for confirmation */
           sprintf(question, "%s, Delete", fpath);
           ok = WCMD_ask_confirm(question, FALSE);
+        }
 
-          /* Only delete if answer is 'Y' */
-          if (ok && !DeleteFile (fpath)) WCMD_print_error ();
-        } else {
+        /* Only proceed if ok to */
+        if (ok) {
+
+          /* If file is read only, and /F supplied, delete it */
+          if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY &&
+              strstr (quals, "/F") != NULL) {
+              SetFileAttributes(fpath, fd.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
+          }
+
+          /* Now do the delete */
           if (!DeleteFile (fpath)) WCMD_print_error ();
         }
+
       }
     } while (FindNextFile(hff, &fd) != 0);
-    FindClose (hff);
-  }
-  else {
-    if (!DeleteFile (param1)) WCMD_print_error ();
     FindClose (hff);
   }
 }
