@@ -55,6 +55,7 @@ static HRESULT WINAPI schema_cache_QueryInterface( IXMLDOMSchemaCollection *ifac
     TRACE("%p %s %p\n", This, debugstr_guid( riid ), ppvObject );
 
     if ( IsEqualIID( riid, &IID_IUnknown ) ||
+         IsEqualIID( riid, &IID_IDispatch ) ||
          IsEqualIID( riid, &IID_IXMLDOMSchemaCollection ) )
     {
         *ppvObject = iface;

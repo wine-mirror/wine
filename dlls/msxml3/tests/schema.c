@@ -86,8 +86,118 @@ void test_schema_refs(void)
     SysFreeString(str);
     VariantClear(&v);
 
+    V_VT(&v) = VT_INT;
+    r = IXMLDOMDocument2_get_schemas(doc, &v);
+    ok(r == S_FALSE, "ret %08x\n", r);
+    ok(V_VT(&v) == VT_NULL, "vt %x\n", V_VT(&v));
+
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 2, "ref %d\n", ref);
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)schema;
+
+    /* check that putref_schemas takes a ref */
+    r = IXMLDOMDocument2_putref_schemas(doc, v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 4, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+    VariantClear(&v);
+
+    /* refs now 2 */
+    V_VT(&v) = VT_INT;
+    /* check that get_schemas adds a ref */
+    r = IXMLDOMDocument2_get_schemas(doc, &v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ok(V_VT(&v) == VT_DISPATCH, "vt %x\n", V_VT(&v));
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 4, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+
+    /* refs now 3 */
+    /* get_schemas doesn't release a ref if passed VT_DISPATCH - ie it doesn't call VariantClear() */
+    r = IXMLDOMDocument2_get_schemas(doc, &v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ok(V_VT(&v) == VT_DISPATCH, "vt %x\n", V_VT(&v));
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 5, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+
+    /* refs now 4 */
+    /* release the two refs returned by get_schemas */
+    IXMLDOMSchemaCollection_Release(schema);
+    IXMLDOMSchemaCollection_Release(schema);
+
+    /* refs now 2 */
+
+    /* check that taking another ref on the document doesn't change the schema's ref count */
+    IXMLDOMDocument2_AddRef(doc);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 3, "ref %d\n", ref);
     IXMLDOMSchemaCollection_Release(schema);
     IXMLDOMDocument2_Release(doc);
+
+
+    /* refs now 2 */
+    /* call putref_schema with some odd variants */
+    V_VT(&v) = VT_INT;
+    r = IXMLDOMDocument2_putref_schemas(doc, v);
+    ok(r == E_FAIL, "ret %08x\n", r);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 3, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+
+    /* refs now 2 */
+    /* calling with VT_EMPTY releases the schema */
+    V_VT(&v) = VT_EMPTY;
+    r = IXMLDOMDocument2_putref_schemas(doc, v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 2, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+
+    /* refs now 1 */
+    /* try setting with VT_UNKNOWN */
+    IXMLDOMSchemaCollection_AddRef(schema);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)schema;
+    r = IXMLDOMDocument2_putref_schemas(doc, v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 4, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+    VariantClear(&v);
+
+    /* refs now 2 */
+    /* calling with VT_NULL releases the schema */
+    V_VT(&v) = VT_NULL;
+    r = IXMLDOMDocument2_putref_schemas(doc, v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 2, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+
+    /* refs now 1 */
+    /* set again */
+    IXMLDOMSchemaCollection_AddRef(schema);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)schema;
+    r = IXMLDOMDocument2_putref_schemas(doc, v);
+    ok(r == S_OK, "ret %08x\n", r);
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 4, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+    VariantClear(&v);
+
+    /* refs now 2 */
+
+    /* release the final ref on the doc which should release its ref on the schema */
+    IXMLDOMDocument2_Release(doc);
+
+    ref = IXMLDOMSchemaCollection_AddRef(schema);
+    ok(ref == 2, "ref %d\n", ref);
+    IXMLDOMSchemaCollection_Release(schema);
+    IXMLDOMSchemaCollection_Release(schema);
 }
 
 START_TEST(schema)

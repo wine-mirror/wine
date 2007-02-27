@@ -171,6 +171,7 @@ typedef struct _domdoc
     VARIANT_BOOL preserving;
     IUnknown *node_unk;
     IXMLDOMNode *node;
+    IXMLDOMSchemaCollection *schema;
     HRESULT error;
 } domdoc;
 
@@ -254,6 +255,7 @@ static ULONG WINAPI domdoc_Release(
     if ( ref == 0 )
     {
         IUnknown_Release( This->node_unk );
+        if(This->schema) IXMLDOMSchemaCollection_Release( This->schema );
         HeapFree( GetProcessHeap(), 0, This );
     }
 
@@ -1293,7 +1295,7 @@ static HRESULT WINAPI domdoc_put_onTransformNode(
 }
 
 static HRESULT WINAPI domdoc_get_namespaces(
-    IXMLDOMDocument2* This,
+    IXMLDOMDocument2* iface,
     IXMLDOMSchemaCollection** schemaCollection )
 {
     FIXME("\n");
@@ -1301,23 +1303,66 @@ static HRESULT WINAPI domdoc_get_namespaces(
 }
 
 static HRESULT WINAPI domdoc_get_schemas(
-    IXMLDOMDocument2* This,
+    IXMLDOMDocument2* iface,
     VARIANT* var1 )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    HRESULT hr = S_FALSE;
+    IXMLDOMSchemaCollection *cur_schema = This->schema;
+
+    TRACE("(%p)->(%p)\n", This, var1);
+
+    VariantInit(var1); /* Test shows we don't call VariantClear here */
+    V_VT(var1) = VT_NULL;
+
+    if(cur_schema)
+    {
+        hr = IXMLDOMSchemaCollection_QueryInterface(cur_schema, &IID_IDispatch, (void**)&V_DISPATCH(var1));
+        if(SUCCEEDED(hr))
+            V_VT(var1) = VT_DISPATCH;
+    }
+    return hr;
 }
 
 static HRESULT WINAPI domdoc_putref_schemas(
-    IXMLDOMDocument2* This,
+    IXMLDOMDocument2* iface,
     VARIANT var1)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    domdoc *This = impl_from_IXMLDOMDocument2( iface );
+    HRESULT hr = E_FAIL;
+    IXMLDOMSchemaCollection *new_schema = NULL;
+
+    FIXME("(%p): semi-stub\n", This);
+    switch(V_VT(&var1))
+    {
+    case VT_UNKNOWN:
+        hr = IUnknown_QueryInterface(V_UNKNOWN(&var1), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
+        break;
+
+    case VT_DISPATCH:
+        hr = IDispatch_QueryInterface(V_DISPATCH(&var1), &IID_IXMLDOMSchemaCollection, (void**)&new_schema);
+        break;
+
+    case VT_NULL:
+    case VT_EMPTY:
+        hr = S_OK;
+        break;
+
+    default:
+        WARN("Can't get schema from vt %x\n", V_VT(&var1));
+    }
+
+    if(SUCCEEDED(hr))
+    {
+        IXMLDOMSchemaCollection *old_schema = InterlockedExchangePointer((void**)&This->schema, new_schema);
+        if(old_schema) IXMLDOMSchemaCollection_Release(old_schema);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI domdoc_validate(
-    IXMLDOMDocument2* This,
+    IXMLDOMDocument2* iface,
     IXMLDOMParseError** err)
 {
     FIXME("\n");
@@ -1325,7 +1370,7 @@ static HRESULT WINAPI domdoc_validate(
 }
 
 static HRESULT WINAPI domdoc_setProperty(
-    IXMLDOMDocument2* This,
+    IXMLDOMDocument2* iface,
     BSTR p,
     VARIANT var)
 {
@@ -1334,7 +1379,7 @@ static HRESULT WINAPI domdoc_setProperty(
 }
 
 static HRESULT WINAPI domdoc_getProperty(
-    IXMLDOMDocument2* This,
+    IXMLDOMDocument2* iface,
     BSTR p,
     VARIANT* var)
 {
@@ -1447,6 +1492,7 @@ HRESULT DOMDocument_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     doc->resolving = 0;
     doc->preserving = 0;
     doc->error = S_OK;
+    doc->schema = NULL;
 
     xmldoc = xmlNewDoc(NULL);
     if(!xmldoc)
