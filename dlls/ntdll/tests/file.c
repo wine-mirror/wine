@@ -81,8 +81,40 @@ static void nt_mailslot_test(void)
     if  ( rc == STATUS_SUCCESS ) rc = pNtClose(hslot);
 
     /*
+     * Test that the length field is checked properly
+     */
+    attr.Length = 0;
+    rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
+         &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
+         &TimeOut);
+    todo_wine ok( rc == STATUS_INVALID_PARAMETER, "rc = %x not c000000d STATUS_INVALID_PARAMETER\n", rc);
+
+    if  (rc == STATUS_SUCCESS) pNtClose(hslot);
+
+    attr.Length = sizeof(OBJECT_ATTRIBUTES)+1;
+    rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
+         &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
+         &TimeOut);
+    todo_wine ok( rc == STATUS_INVALID_PARAMETER, "rc = %x not c000000d STATUS_INVALID_PARAMETER\n", rc);
+
+    if  (rc == STATUS_SUCCESS) pNtClose(hslot);
+
+    /*
+     * Test handling of a NULL unicode string in ObjectName
+     */
+    InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
+    attr.ObjectName = NULL;
+    rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
+         &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
+         &TimeOut);
+    ok( rc == STATUS_OBJECT_PATH_SYNTAX_BAD, "rc = %x not c000003b STATUS_OBJECT_PATH_SYNTAX_BAD\n", rc);
+
+    if  (rc == STATUS_SUCCESS) pNtClose(hslot);
+
+    /*
      * Test a valid call
      */
+    InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
          &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
          &TimeOut);

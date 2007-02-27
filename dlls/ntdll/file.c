@@ -2213,6 +2213,10 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
 
     if (!pHandle) return STATUS_ACCESS_VIOLATION;
 
+    if (!attr) return STATUS_INVALID_PARAMETER;
+
+    if (!attr->ObjectName) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+
     if (attr->ObjectName->Length < sizeof(leadin) ||
         strncmpiW( attr->ObjectName->Buffer, 
                    leadin, sizeof(leadin)/sizeof(leadin[0]) ))
