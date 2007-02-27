@@ -14,6 +14,7 @@ CTESTS = \
 	generated.c \
 	info.c \
 	large_int.c \
+	file.c \
 	om.c \
 	path.c \
 	port.c \
