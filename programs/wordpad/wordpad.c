@@ -290,7 +290,7 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     if(!SendMessage(hReBarWnd, RB_SETBARINFO, 0, (LPARAM)&rbi))
         return -1;
 
-    hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NODIVIDER|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
+    hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
       IDC_TOOLBAR,
       3, hInstance, IDB_TOOLBAR,
       NULL, 0,
@@ -396,7 +396,7 @@ static LRESULT OnNotify( HWND hWnd, WPARAM wParam, LPARAM lParam)
         SELCHANGE *pSC = (SELCHANGE *)lParam;
         char buf[128];
 
-        sprintf( buf,"selection = %d..%d, line count=%ld\n",
+        sprintf( buf,"selection = %d..%d, line count=%ld",
                  pSC->chrg.cpMin, pSC->chrg.cpMax,
         SendMessage(hwndEditor, EM_GETLINECOUNT, 0, 0));
         SetWindowText(GetDlgItem(hWnd, IDC_STATUSBAR), buf);
@@ -421,6 +421,7 @@ static LRESULT OnCommand( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     case ID_FILE_NEW:
         SetWindowTextA(hwndEditor, "");
+        SetWindowTextW(hMainWnd, wszAppTitle);
         /* FIXME: set default format too */
         break;
 
