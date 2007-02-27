@@ -2822,6 +2822,12 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     HANDLE retval;
     HKEY hkeyPrinter, hkeyPrinters, hkeyDriver, hkeyDrivers;
     LONG size;
+    static const WCHAR attributesW[]      = {'A','t','t','r','i','b','u','t','e','s',0},
+                       default_devmodeW[] = {'D','e','f','a','u','l','t',' ','D','e','v','M','o','d','e',0},
+                       priorityW[]        = {'P','r','i','o','r','i','t','y',0},
+                       start_timeW[]      = {'S','t','a','r','t','T','i','m','e',0},
+                       statusW[]          = {'S','t','a','t','u','s',0},
+                       until_timeW[]      = {'U','n','t','i','l','T','i','m','e',0};
 
     TRACE("(%s,%d,%p)\n", debugstr_w(pName), Level, pPrinter);
 
@@ -2845,7 +2851,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	return 0;
     }
     if(!RegOpenKeyW(hkeyPrinters, pi->pPrinterName, &hkeyPrinter)) {
-	if (!RegQueryValueA(hkeyPrinter,"Attributes",NULL,NULL)) {
+	if (!RegQueryValueW(hkeyPrinter, attributesW, NULL, NULL)) {
 	    SetLastError(ERROR_PRINTER_ALREADY_EXISTS);
 	    RegCloseKey(hkeyPrinter);
 	    RegCloseKey(hkeyPrinters);
@@ -2884,7 +2890,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 	RegCloseKey(hkeyPrinters);
 	return 0;
     }
-    RegSetValueExA(hkeyPrinter, "Attributes", 0, REG_DWORD,
+    RegSetValueExW(hkeyPrinter, attributesW, 0, REG_DWORD,
 		   (LPBYTE)&pi->Attributes, sizeof(DWORD));
     set_reg_szW(hkeyPrinter, DatatypeW, pi->pDatatype);
 
@@ -2928,7 +2934,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     if (dmW)
     {
         dmA = DEVMODEdupWtoA(GetProcessHeap(), dmW);
-        RegSetValueExA(hkeyPrinter, "Default DevMode", 0, REG_BINARY, 
+        RegSetValueExW(hkeyPrinter, default_devmodeW, 0, REG_BINARY,
                        (LPBYTE)dmA, dmA->dmSize + dmA->dmDriverExtra);
         HeapFree(GetProcessHeap(), 0, dmA);
         if(!pi->pDevMode)
@@ -2942,16 +2948,16 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
     set_reg_szW(hkeyPrinter, PortW, pi->pPortName);
     set_reg_szW(hkeyPrinter, Print_ProcessorW, pi->pPrintProcessor);
     set_reg_szW(hkeyPrinter, Printer_DriverW, pi->pDriverName);
-    RegSetValueExA(hkeyPrinter, "Priority", 0, REG_DWORD,
-		   (LPBYTE)&pi->Priority, sizeof(DWORD));
+    RegSetValueExW(hkeyPrinter, priorityW, 0, REG_DWORD,
+                   (LPBYTE)&pi->Priority, sizeof(DWORD));
     set_reg_szW(hkeyPrinter, Separator_FileW, pi->pSepFile);
     set_reg_szW(hkeyPrinter, Share_NameW, pi->pShareName);
-    RegSetValueExA(hkeyPrinter, "StartTime", 0, REG_DWORD,
-		   (LPBYTE)&pi->StartTime, sizeof(DWORD));
-    RegSetValueExA(hkeyPrinter, "Status", 0, REG_DWORD,
-		   (LPBYTE)&pi->Status, sizeof(DWORD));
-    RegSetValueExA(hkeyPrinter, "UntilTime", 0, REG_DWORD,
-		   (LPBYTE)&pi->UntilTime, sizeof(DWORD));
+    RegSetValueExW(hkeyPrinter, start_timeW, 0, REG_DWORD,
+                   (LPBYTE)&pi->StartTime, sizeof(DWORD));
+    RegSetValueExW(hkeyPrinter, statusW, 0, REG_DWORD,
+                   (LPBYTE)&pi->Status, sizeof(DWORD));
+    RegSetValueExW(hkeyPrinter, until_timeW, 0, REG_DWORD,
+                   (LPBYTE)&pi->UntilTime, sizeof(DWORD));
 
     RegCloseKey(hkeyPrinter);
     RegCloseKey(hkeyPrinters);
