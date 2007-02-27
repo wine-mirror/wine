@@ -20427,7 +20427,653 @@ MAKE_TEST_RULES=dlls/Maketest.rules
 MAKE_PROG_RULES=programs/Makeprog.rules
 
 
-ac_config_files="$ac_config_files Make.rules dlls/Makedll.rules dlls/Makeimplib.rules dlls/Maketest.rules programs/Makeprog.rules Makefile dlls/Makefile dlls/activeds/Makefile dlls/advapi32/Makefile dlls/advapi32/tests/Makefile dlls/advpack/Makefile dlls/advpack/tests/Makefile dlls/amstream/Makefile dlls/atl/Makefile dlls/avicap32/Makefile dlls/avifil32/Makefile dlls/browseui/Makefile dlls/browseui/tests/Makefile dlls/cabinet/Makefile dlls/cabinet/tests/Makefile dlls/capi2032/Makefile dlls/cards/Makefile dlls/cfgmgr32/Makefile dlls/clusapi/Makefile dlls/comcat/Makefile dlls/comcat/tests/Makefile dlls/comctl32/Makefile dlls/comctl32/tests/Makefile dlls/comdlg32/Makefile dlls/comdlg32/tests/Makefile dlls/compstui/Makefile dlls/credui/Makefile dlls/crtdll/Makefile dlls/crypt32/Makefile dlls/crypt32/tests/Makefile dlls/cryptdll/Makefile dlls/cryptnet/Makefile dlls/ctl3d32/Makefile dlls/d3d8/Makefile dlls/d3d8/tests/Makefile dlls/d3d9/Makefile dlls/d3d9/tests/Makefile dlls/d3dim/Makefile dlls/d3drm/Makefile dlls/d3dx8/Makefile dlls/d3dxof/Makefile dlls/dbghelp/Makefile dlls/dciman32/Makefile dlls/ddraw/Makefile dlls/ddraw/tests/Makefile dlls/ddrawex/Makefile dlls/devenum/Makefile dlls/dinput/Makefile dlls/dinput/tests/Makefile dlls/dinput8/Makefile dlls/dmband/Makefile dlls/dmcompos/Makefile dlls/dmime/Makefile dlls/dmloader/Makefile dlls/dmscript/Makefile dlls/dmstyle/Makefile dlls/dmsynth/Makefile dlls/dmusic/Makefile dlls/dmusic32/Makefile dlls/dnsapi/Makefile dlls/dnsapi/tests/Makefile dlls/dplay/Makefile dlls/dplayx/Makefile dlls/dpnet/Makefile dlls/dpnhpast/Makefile dlls/dsound/Makefile dlls/dsound/tests/Makefile dlls/dswave/Makefile dlls/dxdiagn/Makefile dlls/dxerr8/Makefile dlls/dxerr9/Makefile dlls/dxguid/Makefile dlls/gdi32/Makefile dlls/gdi32/tests/Makefile dlls/glu32/Makefile dlls/gphoto2.ds/Makefile dlls/hhctrl.ocx/Makefile dlls/hid/Makefile dlls/hlink/Makefile dlls/hlink/tests/Makefile dlls/iccvid/Makefile dlls/icmp/Makefile dlls/ifsmgr.vxd/Makefile dlls/imaadp32.acm/Makefile dlls/imagehlp/Makefile dlls/imm32/Makefile dlls/infosoft/Makefile dlls/infosoft/tests/Makefile dlls/inseng/Makefile dlls/iphlpapi/Makefile dlls/iphlpapi/tests/Makefile dlls/itss/Makefile dlls/itss/tests/Makefile dlls/kernel32/Makefile dlls/kernel32/tests/Makefile dlls/localspl/Makefile dlls/localspl/tests/Makefile dlls/lz32/Makefile dlls/lz32/tests/Makefile dlls/mapi32/Makefile dlls/mapi32/tests/Makefile dlls/mciavi32/Makefile dlls/mcicda/Makefile dlls/mciseq/Makefile dlls/mciwave/Makefile dlls/midimap/Makefile dlls/mlang/Makefile dlls/mlang/tests/Makefile dlls/mmdevldr.vxd/Makefile dlls/monodebg.vxd/Makefile dlls/mpr/Makefile dlls/mprapi/Makefile dlls/msacm32.drv/Makefile dlls/msacm32/Makefile dlls/msacm32/tests/Makefile dlls/msadp32.acm/Makefile dlls/mscms/Makefile dlls/mscms/tests/Makefile dlls/mscoree/Makefile dlls/msdmo/Makefile dlls/msftedit/Makefile dlls/msg711.acm/Makefile dlls/mshtml/Makefile dlls/mshtml/tests/Makefile dlls/msi/Makefile dlls/msi/tests/Makefile dlls/msimg32/Makefile dlls/msisys.ocx/Makefile dlls/msnet32/Makefile dlls/msrle32/Makefile dlls/msvcrt/Makefile dlls/msvcrt/tests/Makefile dlls/msvcrt20/Makefile dlls/msvcrt40/Makefile dlls/msvcrtd/Makefile dlls/msvcrtd/tests/Makefile dlls/msvfw32/Makefile dlls/msvidc32/Makefile dlls/mswsock/Makefile dlls/msxml3/Makefile dlls/msxml3/tests/Makefile dlls/nddeapi/Makefile dlls/netapi32/Makefile dlls/netapi32/tests/Makefile dlls/newdev/Makefile dlls/ntdll/Makefile dlls/ntdll/tests/Makefile dlls/ntdsapi/Makefile dlls/objsel/Makefile dlls/odbc32/Makefile dlls/odbccp32/Makefile dlls/odbccp32/tests/Makefile dlls/ole32/Makefile dlls/ole32/tests/Makefile dlls/oleacc/Makefile dlls/oleaut32/Makefile dlls/oleaut32/tests/Makefile dlls/olecli32/Makefile dlls/oledlg/Makefile dlls/olepro32/Makefile dlls/olesvr32/Makefile dlls/opengl32/Makefile dlls/powrprof/Makefile dlls/psapi/Makefile dlls/psapi/tests/Makefile dlls/pstorec/Makefile dlls/qcap/Makefile dlls/quartz/Makefile dlls/quartz/tests/Makefile dlls/query/Makefile dlls/rasapi32/Makefile dlls/resutils/Makefile dlls/riched20/Makefile dlls/riched20/tests/Makefile dlls/riched32/Makefile dlls/rpcrt4/Makefile dlls/rpcrt4/tests/Makefile dlls/rsabase/Makefile dlls/rsabase/tests/Makefile dlls/rsaenh/Makefile dlls/rsaenh/tests/Makefile dlls/sane.ds/Makefile dlls/secur32/Makefile dlls/secur32/tests/Makefile dlls/security/Makefile dlls/sensapi/Makefile dlls/serialui/Makefile dlls/serialui/tests/Makefile dlls/setupapi/Makefile dlls/setupapi/tests/Makefile dlls/sfc/Makefile dlls/sfc_os/Makefile dlls/shdoclc/Makefile dlls/shdocvw/Makefile dlls/shdocvw/tests/Makefile dlls/shell32/Makefile dlls/shell32/tests/Makefile dlls/shfolder/Makefile dlls/shlwapi/Makefile dlls/shlwapi/tests/Makefile dlls/snmpapi/Makefile dlls/snmpapi/tests/Makefile dlls/spoolss/Makefile dlls/stdole2.tlb/Makefile dlls/stdole32.tlb/Makefile dlls/sti/Makefile dlls/strmiids/Makefile dlls/svrapi/Makefile dlls/tapi32/Makefile dlls/twain_32/Makefile dlls/unicows/Makefile dlls/url/Makefile dlls/urlmon/Makefile dlls/urlmon/tests/Makefile dlls/user32/Makefile dlls/user32/tests/Makefile dlls/userenv/Makefile dlls/usp10/Makefile dlls/usp10/tests/Makefile dlls/uuid/Makefile dlls/uxtheme/Makefile dlls/uxtheme/tests/Makefile dlls/vdhcp.vxd/Makefile dlls/vdmdbg/Makefile dlls/version/Makefile dlls/version/tests/Makefile dlls/vmm.vxd/Makefile dlls/vnbt.vxd/Makefile dlls/vnetbios.vxd/Makefile dlls/vtdapi.vxd/Makefile dlls/vwin32.vxd/Makefile dlls/w32skrnl/Makefile dlls/winealsa.drv/Makefile dlls/winearts.drv/Makefile dlls/wineaudioio.drv/Makefile dlls/winecoreaudio.drv/Makefile dlls/winecrt0/Makefile dlls/wined3d/Makefile dlls/winedos/Makefile dlls/wineesd.drv/Makefile dlls/winejack.drv/Makefile dlls/winejoystick.drv/Makefile dlls/winemp3.acm/Makefile dlls/winenas.drv/Makefile dlls/wineoss.drv/Makefile dlls/wineps.drv/Makefile dlls/winequartz.drv/Makefile dlls/winex11.drv/Makefile dlls/wing32/Makefile dlls/wininet/Makefile dlls/wininet/tests/Makefile dlls/winmm/Makefile dlls/winmm/tests/Makefile dlls/winnls32/Makefile dlls/winspool.drv/Makefile dlls/winspool.drv/tests/Makefile dlls/wintab32/Makefile dlls/wintrust/Makefile dlls/wintrust/tests/Makefile dlls/wldap32/Makefile dlls/wnaspi32/Makefile dlls/wow32/Makefile dlls/ws2_32/Makefile dlls/ws2_32/tests/Makefile dlls/wsock32/Makefile dlls/wtsapi32/Makefile documentation/Makefile fonts/Makefile include/Makefile libs/Makefile libs/port/Makefile libs/wine/Makefile libs/wpp/Makefile loader/Makefile programs/Makefile programs/clock/Makefile programs/cmd/Makefile programs/cmdlgtst/Makefile programs/control/Makefile programs/eject/Makefile programs/expand/Makefile programs/explorer/Makefile programs/hh/Makefile programs/icinfo/Makefile programs/iexplore/Makefile programs/msiexec/Makefile programs/notepad/Makefile programs/oleview/Makefile programs/progman/Makefile programs/regedit/Makefile programs/regsvr32/Makefile programs/rpcss/Makefile programs/rundll32/Makefile programs/start/Makefile programs/taskmgr/Makefile programs/uninstaller/Makefile programs/view/Makefile programs/wineboot/Makefile programs/winebrowser/Makefile programs/winecfg/Makefile programs/wineconsole/Makefile programs/winedbg/Makefile programs/winefile/Makefile programs/winemenubuilder/Makefile programs/winemine/Makefile programs/winepath/Makefile programs/winetest/Makefile programs/winevdm/Makefile programs/winhelp/Makefile programs/winver/Makefile programs/wordpad/Makefile server/Makefile tools/Makefile tools/widl/Makefile tools/winebuild/Makefile tools/winedump/Makefile tools/winegcc/Makefile tools/wmc/Makefile tools/wrc/Makefile"
+ac_config_files="$ac_config_files Make.rules"
+
+ac_config_files="$ac_config_files dlls/Makedll.rules"
+
+ac_config_files="$ac_config_files dlls/Makeimplib.rules"
+
+ac_config_files="$ac_config_files dlls/Maketest.rules"
+
+ac_config_files="$ac_config_files programs/Makeprog.rules"
+
+ac_config_files="$ac_config_files Makefile"
+
+ac_config_files="$ac_config_files dlls/Makefile"
+
+ac_config_files="$ac_config_files dlls/activeds/Makefile"
+
+ac_config_files="$ac_config_files dlls/advapi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/advapi32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/advpack/Makefile"
+
+ac_config_files="$ac_config_files dlls/advpack/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/amstream/Makefile"
+
+ac_config_files="$ac_config_files dlls/atl/Makefile"
+
+ac_config_files="$ac_config_files dlls/avicap32/Makefile"
+
+ac_config_files="$ac_config_files dlls/avifil32/Makefile"
+
+ac_config_files="$ac_config_files dlls/browseui/Makefile"
+
+ac_config_files="$ac_config_files dlls/browseui/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/cabinet/Makefile"
+
+ac_config_files="$ac_config_files dlls/cabinet/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/capi2032/Makefile"
+
+ac_config_files="$ac_config_files dlls/cards/Makefile"
+
+ac_config_files="$ac_config_files dlls/cfgmgr32/Makefile"
+
+ac_config_files="$ac_config_files dlls/clusapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/comcat/Makefile"
+
+ac_config_files="$ac_config_files dlls/comcat/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/comctl32/Makefile"
+
+ac_config_files="$ac_config_files dlls/comctl32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/comdlg32/Makefile"
+
+ac_config_files="$ac_config_files dlls/comdlg32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/compstui/Makefile"
+
+ac_config_files="$ac_config_files dlls/credui/Makefile"
+
+ac_config_files="$ac_config_files dlls/crtdll/Makefile"
+
+ac_config_files="$ac_config_files dlls/crypt32/Makefile"
+
+ac_config_files="$ac_config_files dlls/crypt32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/cryptdll/Makefile"
+
+ac_config_files="$ac_config_files dlls/cryptnet/Makefile"
+
+ac_config_files="$ac_config_files dlls/ctl3d32/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3d8/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3d8/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3d9/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3d9/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3dim/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3drm/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3dx8/Makefile"
+
+ac_config_files="$ac_config_files dlls/d3dxof/Makefile"
+
+ac_config_files="$ac_config_files dlls/dbghelp/Makefile"
+
+ac_config_files="$ac_config_files dlls/dciman32/Makefile"
+
+ac_config_files="$ac_config_files dlls/ddraw/Makefile"
+
+ac_config_files="$ac_config_files dlls/ddraw/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/ddrawex/Makefile"
+
+ac_config_files="$ac_config_files dlls/devenum/Makefile"
+
+ac_config_files="$ac_config_files dlls/dinput/Makefile"
+
+ac_config_files="$ac_config_files dlls/dinput/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/dinput8/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmband/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmcompos/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmime/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmloader/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmscript/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmstyle/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmsynth/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmusic/Makefile"
+
+ac_config_files="$ac_config_files dlls/dmusic32/Makefile"
+
+ac_config_files="$ac_config_files dlls/dnsapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/dnsapi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/dplay/Makefile"
+
+ac_config_files="$ac_config_files dlls/dplayx/Makefile"
+
+ac_config_files="$ac_config_files dlls/dpnet/Makefile"
+
+ac_config_files="$ac_config_files dlls/dpnhpast/Makefile"
+
+ac_config_files="$ac_config_files dlls/dsound/Makefile"
+
+ac_config_files="$ac_config_files dlls/dsound/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/dswave/Makefile"
+
+ac_config_files="$ac_config_files dlls/dxdiagn/Makefile"
+
+ac_config_files="$ac_config_files dlls/dxerr8/Makefile"
+
+ac_config_files="$ac_config_files dlls/dxerr9/Makefile"
+
+ac_config_files="$ac_config_files dlls/dxguid/Makefile"
+
+ac_config_files="$ac_config_files dlls/gdi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/gdi32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/glu32/Makefile"
+
+ac_config_files="$ac_config_files dlls/gphoto2.ds/Makefile"
+
+ac_config_files="$ac_config_files dlls/hhctrl.ocx/Makefile"
+
+ac_config_files="$ac_config_files dlls/hid/Makefile"
+
+ac_config_files="$ac_config_files dlls/hlink/Makefile"
+
+ac_config_files="$ac_config_files dlls/hlink/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/iccvid/Makefile"
+
+ac_config_files="$ac_config_files dlls/icmp/Makefile"
+
+ac_config_files="$ac_config_files dlls/ifsmgr.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/imaadp32.acm/Makefile"
+
+ac_config_files="$ac_config_files dlls/imagehlp/Makefile"
+
+ac_config_files="$ac_config_files dlls/imm32/Makefile"
+
+ac_config_files="$ac_config_files dlls/infosoft/Makefile"
+
+ac_config_files="$ac_config_files dlls/infosoft/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/inseng/Makefile"
+
+ac_config_files="$ac_config_files dlls/iphlpapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/iphlpapi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/itss/Makefile"
+
+ac_config_files="$ac_config_files dlls/itss/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/kernel32/Makefile"
+
+ac_config_files="$ac_config_files dlls/kernel32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/localspl/Makefile"
+
+ac_config_files="$ac_config_files dlls/localspl/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/lz32/Makefile"
+
+ac_config_files="$ac_config_files dlls/lz32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/mapi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/mapi32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/mciavi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/mcicda/Makefile"
+
+ac_config_files="$ac_config_files dlls/mciseq/Makefile"
+
+ac_config_files="$ac_config_files dlls/mciwave/Makefile"
+
+ac_config_files="$ac_config_files dlls/midimap/Makefile"
+
+ac_config_files="$ac_config_files dlls/mlang/Makefile"
+
+ac_config_files="$ac_config_files dlls/mlang/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/mmdevldr.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/monodebg.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/mpr/Makefile"
+
+ac_config_files="$ac_config_files dlls/mprapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/msacm32.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/msacm32/Makefile"
+
+ac_config_files="$ac_config_files dlls/msacm32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/msadp32.acm/Makefile"
+
+ac_config_files="$ac_config_files dlls/mscms/Makefile"
+
+ac_config_files="$ac_config_files dlls/mscms/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/mscoree/Makefile"
+
+ac_config_files="$ac_config_files dlls/msdmo/Makefile"
+
+ac_config_files="$ac_config_files dlls/msftedit/Makefile"
+
+ac_config_files="$ac_config_files dlls/msg711.acm/Makefile"
+
+ac_config_files="$ac_config_files dlls/mshtml/Makefile"
+
+ac_config_files="$ac_config_files dlls/mshtml/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/msi/Makefile"
+
+ac_config_files="$ac_config_files dlls/msi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/msimg32/Makefile"
+
+ac_config_files="$ac_config_files dlls/msisys.ocx/Makefile"
+
+ac_config_files="$ac_config_files dlls/msnet32/Makefile"
+
+ac_config_files="$ac_config_files dlls/msrle32/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvcrt/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvcrt/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvcrt20/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvcrt40/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvcrtd/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvcrtd/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvfw32/Makefile"
+
+ac_config_files="$ac_config_files dlls/msvidc32/Makefile"
+
+ac_config_files="$ac_config_files dlls/mswsock/Makefile"
+
+ac_config_files="$ac_config_files dlls/msxml3/Makefile"
+
+ac_config_files="$ac_config_files dlls/msxml3/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/nddeapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/netapi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/netapi32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/newdev/Makefile"
+
+ac_config_files="$ac_config_files dlls/ntdll/Makefile"
+
+ac_config_files="$ac_config_files dlls/ntdll/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/ntdsapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/objsel/Makefile"
+
+ac_config_files="$ac_config_files dlls/odbc32/Makefile"
+
+ac_config_files="$ac_config_files dlls/odbccp32/Makefile"
+
+ac_config_files="$ac_config_files dlls/odbccp32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/ole32/Makefile"
+
+ac_config_files="$ac_config_files dlls/ole32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/oleacc/Makefile"
+
+ac_config_files="$ac_config_files dlls/oleaut32/Makefile"
+
+ac_config_files="$ac_config_files dlls/oleaut32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/olecli32/Makefile"
+
+ac_config_files="$ac_config_files dlls/oledlg/Makefile"
+
+ac_config_files="$ac_config_files dlls/olepro32/Makefile"
+
+ac_config_files="$ac_config_files dlls/olesvr32/Makefile"
+
+ac_config_files="$ac_config_files dlls/opengl32/Makefile"
+
+ac_config_files="$ac_config_files dlls/powrprof/Makefile"
+
+ac_config_files="$ac_config_files dlls/psapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/psapi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/pstorec/Makefile"
+
+ac_config_files="$ac_config_files dlls/qcap/Makefile"
+
+ac_config_files="$ac_config_files dlls/quartz/Makefile"
+
+ac_config_files="$ac_config_files dlls/quartz/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/query/Makefile"
+
+ac_config_files="$ac_config_files dlls/rasapi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/resutils/Makefile"
+
+ac_config_files="$ac_config_files dlls/riched20/Makefile"
+
+ac_config_files="$ac_config_files dlls/riched20/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/riched32/Makefile"
+
+ac_config_files="$ac_config_files dlls/rpcrt4/Makefile"
+
+ac_config_files="$ac_config_files dlls/rpcrt4/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/rsabase/Makefile"
+
+ac_config_files="$ac_config_files dlls/rsabase/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/rsaenh/Makefile"
+
+ac_config_files="$ac_config_files dlls/rsaenh/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/sane.ds/Makefile"
+
+ac_config_files="$ac_config_files dlls/secur32/Makefile"
+
+ac_config_files="$ac_config_files dlls/secur32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/security/Makefile"
+
+ac_config_files="$ac_config_files dlls/sensapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/serialui/Makefile"
+
+ac_config_files="$ac_config_files dlls/serialui/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/setupapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/setupapi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/sfc/Makefile"
+
+ac_config_files="$ac_config_files dlls/sfc_os/Makefile"
+
+ac_config_files="$ac_config_files dlls/shdoclc/Makefile"
+
+ac_config_files="$ac_config_files dlls/shdocvw/Makefile"
+
+ac_config_files="$ac_config_files dlls/shdocvw/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/shell32/Makefile"
+
+ac_config_files="$ac_config_files dlls/shell32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/shfolder/Makefile"
+
+ac_config_files="$ac_config_files dlls/shlwapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/shlwapi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/snmpapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/snmpapi/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/spoolss/Makefile"
+
+ac_config_files="$ac_config_files dlls/stdole2.tlb/Makefile"
+
+ac_config_files="$ac_config_files dlls/stdole32.tlb/Makefile"
+
+ac_config_files="$ac_config_files dlls/sti/Makefile"
+
+ac_config_files="$ac_config_files dlls/strmiids/Makefile"
+
+ac_config_files="$ac_config_files dlls/svrapi/Makefile"
+
+ac_config_files="$ac_config_files dlls/tapi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/twain_32/Makefile"
+
+ac_config_files="$ac_config_files dlls/unicows/Makefile"
+
+ac_config_files="$ac_config_files dlls/url/Makefile"
+
+ac_config_files="$ac_config_files dlls/urlmon/Makefile"
+
+ac_config_files="$ac_config_files dlls/urlmon/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/user32/Makefile"
+
+ac_config_files="$ac_config_files dlls/user32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/userenv/Makefile"
+
+ac_config_files="$ac_config_files dlls/usp10/Makefile"
+
+ac_config_files="$ac_config_files dlls/usp10/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/uuid/Makefile"
+
+ac_config_files="$ac_config_files dlls/uxtheme/Makefile"
+
+ac_config_files="$ac_config_files dlls/uxtheme/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/vdhcp.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/vdmdbg/Makefile"
+
+ac_config_files="$ac_config_files dlls/version/Makefile"
+
+ac_config_files="$ac_config_files dlls/version/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/vmm.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/vnbt.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/vnetbios.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/vtdapi.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/vwin32.vxd/Makefile"
+
+ac_config_files="$ac_config_files dlls/w32skrnl/Makefile"
+
+ac_config_files="$ac_config_files dlls/winealsa.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winearts.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/wineaudioio.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winecoreaudio.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winecrt0/Makefile"
+
+ac_config_files="$ac_config_files dlls/wined3d/Makefile"
+
+ac_config_files="$ac_config_files dlls/winedos/Makefile"
+
+ac_config_files="$ac_config_files dlls/wineesd.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winejack.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winejoystick.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winemp3.acm/Makefile"
+
+ac_config_files="$ac_config_files dlls/winenas.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/wineoss.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/wineps.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winequartz.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winex11.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/wing32/Makefile"
+
+ac_config_files="$ac_config_files dlls/wininet/Makefile"
+
+ac_config_files="$ac_config_files dlls/wininet/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/winmm/Makefile"
+
+ac_config_files="$ac_config_files dlls/winmm/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/winnls32/Makefile"
+
+ac_config_files="$ac_config_files dlls/winspool.drv/Makefile"
+
+ac_config_files="$ac_config_files dlls/winspool.drv/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/wintab32/Makefile"
+
+ac_config_files="$ac_config_files dlls/wintrust/Makefile"
+
+ac_config_files="$ac_config_files dlls/wintrust/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/wldap32/Makefile"
+
+ac_config_files="$ac_config_files dlls/wnaspi32/Makefile"
+
+ac_config_files="$ac_config_files dlls/wow32/Makefile"
+
+ac_config_files="$ac_config_files dlls/ws2_32/Makefile"
+
+ac_config_files="$ac_config_files dlls/ws2_32/tests/Makefile"
+
+ac_config_files="$ac_config_files dlls/wsock32/Makefile"
+
+ac_config_files="$ac_config_files dlls/wtsapi32/Makefile"
+
+ac_config_files="$ac_config_files documentation/Makefile"
+
+ac_config_files="$ac_config_files fonts/Makefile"
+
+ac_config_files="$ac_config_files include/Makefile"
+
+ac_config_files="$ac_config_files libs/Makefile"
+
+ac_config_files="$ac_config_files libs/port/Makefile"
+
+ac_config_files="$ac_config_files libs/wine/Makefile"
+
+ac_config_files="$ac_config_files libs/wpp/Makefile"
+
+ac_config_files="$ac_config_files loader/Makefile"
+
+ac_config_files="$ac_config_files programs/Makefile"
+
+ac_config_files="$ac_config_files programs/clock/Makefile"
+
+ac_config_files="$ac_config_files programs/cmd/Makefile"
+
+ac_config_files="$ac_config_files programs/cmdlgtst/Makefile"
+
+ac_config_files="$ac_config_files programs/control/Makefile"
+
+ac_config_files="$ac_config_files programs/eject/Makefile"
+
+ac_config_files="$ac_config_files programs/expand/Makefile"
+
+ac_config_files="$ac_config_files programs/explorer/Makefile"
+
+ac_config_files="$ac_config_files programs/hh/Makefile"
+
+ac_config_files="$ac_config_files programs/icinfo/Makefile"
+
+ac_config_files="$ac_config_files programs/iexplore/Makefile"
+
+ac_config_files="$ac_config_files programs/msiexec/Makefile"
+
+ac_config_files="$ac_config_files programs/notepad/Makefile"
+
+ac_config_files="$ac_config_files programs/oleview/Makefile"
+
+ac_config_files="$ac_config_files programs/progman/Makefile"
+
+ac_config_files="$ac_config_files programs/regedit/Makefile"
+
+ac_config_files="$ac_config_files programs/regsvr32/Makefile"
+
+ac_config_files="$ac_config_files programs/rpcss/Makefile"
+
+ac_config_files="$ac_config_files programs/rundll32/Makefile"
+
+ac_config_files="$ac_config_files programs/start/Makefile"
+
+ac_config_files="$ac_config_files programs/taskmgr/Makefile"
+
+ac_config_files="$ac_config_files programs/uninstaller/Makefile"
+
+ac_config_files="$ac_config_files programs/view/Makefile"
+
+ac_config_files="$ac_config_files programs/wineboot/Makefile"
+
+ac_config_files="$ac_config_files programs/winebrowser/Makefile"
+
+ac_config_files="$ac_config_files programs/winecfg/Makefile"
+
+ac_config_files="$ac_config_files programs/wineconsole/Makefile"
+
+ac_config_files="$ac_config_files programs/winedbg/Makefile"
+
+ac_config_files="$ac_config_files programs/winefile/Makefile"
+
+ac_config_files="$ac_config_files programs/winemenubuilder/Makefile"
+
+ac_config_files="$ac_config_files programs/winemine/Makefile"
+
+ac_config_files="$ac_config_files programs/winepath/Makefile"
+
+ac_config_files="$ac_config_files programs/winetest/Makefile"
+
+ac_config_files="$ac_config_files programs/winevdm/Makefile"
+
+ac_config_files="$ac_config_files programs/winhelp/Makefile"
+
+ac_config_files="$ac_config_files programs/winver/Makefile"
+
+ac_config_files="$ac_config_files programs/wordpad/Makefile"
+
+ac_config_files="$ac_config_files server/Makefile"
+
+ac_config_files="$ac_config_files tools/Makefile"
+
+ac_config_files="$ac_config_files tools/widl/Makefile"
+
+ac_config_files="$ac_config_files tools/winebuild/Makefile"
+
+ac_config_files="$ac_config_files tools/winedump/Makefile"
+
+ac_config_files="$ac_config_files tools/winegcc/Makefile"
+
+ac_config_files="$ac_config_files tools/wmc/Makefile"
+
+ac_config_files="$ac_config_files tools/wrc/Makefile"
 
 
 cat >confcache <<\_ACEOF

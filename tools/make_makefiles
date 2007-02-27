@@ -229,10 +229,14 @@ foreach my $var (sort { $makerules{$a} cmp $makerules{$b}; } keys %makerules)
     push @lines, "AC_SUBST_FILE($var)\n\n";
 }
 
-replace_in_file( "configure.ac", '^MAKE_RULES', '\]\)$',
-                 @lines,
-                 "AC_CONFIG_FILES([\n",
-                 join ("\n", (sort values %makerules), (sort @makefiles) ), "])\n" );
+foreach my $var ((sort values %makerules), (sort @makefiles))
+{
+    push @lines, "AC_CONFIG_FILES([$var])\n";
+}
+
+push @lines, "\nAC_OUTPUT\n";
+
+replace_in_file( "configure.ac", '^MAKE_RULES', '^AC_OUTPUT$', @lines);
 
 
 ################################################################
