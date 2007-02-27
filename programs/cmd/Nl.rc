@@ -227,4 +227,8 @@ VER\t\tToon de versie van CMD\n\
 VOL\t\tToon het label van een schijf\n\
 EXIT\t\tSluit CMD af\n\n\
 type HELP <opdracht> voor meer informatie over bovengenoemde opdrachten\n"
+
+  WCMD_CONFIRM, "Are you sure"
+  WCMD_YES, "Y"
+  WCMD_NO, "N"
 }

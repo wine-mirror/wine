@@ -247,4 +247,8 @@ VOL\t\tZeigt die Bezeichnung eines Laufwerkes an\n\
 EXIT\t\tBeendet den CMD\n\n\
 Geben Sie HELP <Befehl> ein, damit Sie weitere Informationen für einen der\n\
 obigen Befehle erhalten.\n"
+
+  WCMD_CONFIRM, "Are you sure"
+  WCMD_YES, "Y"
+  WCMD_NO, "N"
 }

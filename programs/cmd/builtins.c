@@ -643,8 +643,22 @@ void WCMD_remove_dir (void) {
   /* Otherwise use ShFileOp to recursively remove a directory */
   } else {
 
-    /* Do the delete */
     SHFILEOPSTRUCT lpDir;
+
+    /* Ask first */
+    if (strstr (quals, "/Q") == NULL) {
+      BOOL  ok;
+      char  question[MAXSTRING];
+
+      /* Ask for confirmation */
+      sprintf(question, "%s, ", param1);
+      ok = WCMD_ask_confirm(question);
+
+      /* Abort if answer is 'N' */
+      if (!ok) return;
+    }
+
+    /* Do the delete */
     lpDir.hwnd   = NULL;
     lpDir.pTo    = NULL;
     lpDir.pFrom  = param1;
@@ -786,7 +800,7 @@ void WCMD_endlocal (void) {
   }
   LocalFree (old);
   FreeEnvironmentStringsW (env);
-  
+
   /* restore old environment */
   env = temp->strings;
   len = 0;
@@ -1259,4 +1273,44 @@ void WCMD_exit (void) {
     } else {
         ExitProcess(rc);
     }
+}
+
+/**************************************************************************
+ * WCMD_ask_confirm
+ *
+ * Issue a message and ask 'Are you sure (Y/N)', waiting on a valid
+ * answer.
+ *
+ * Returns True if Y answer is selected
+ *
+ */
+BOOL WCMD_ask_confirm (char *message) {
+
+    char  msgbuffer[MAXSTRING];
+    char  Ybuffer[MAXSTRING];
+    char  Nbuffer[MAXSTRING];
+    char  answer[MAX_PATH] = "";
+    DWORD count = 0;
+
+    /* Load the translated 'Are you sure', plus valid answers */
+    LoadString (hinst, WCMD_CONFIRM, msgbuffer, sizeof(msgbuffer));
+    LoadString (hinst, WCMD_YES, Ybuffer, sizeof(Ybuffer));
+    LoadString (hinst, WCMD_NO, Nbuffer, sizeof(Nbuffer));
+
+    /* Loop waiting on a Y or N */
+    while (answer[0] != Ybuffer[0] && answer[0] != Nbuffer[0]) {
+      WCMD_output_asis (message);
+      WCMD_output_asis (msgbuffer);
+      WCMD_output_asis (" (");
+      WCMD_output_asis (Ybuffer);
+      WCMD_output_asis ("/");
+      WCMD_output_asis (Nbuffer);
+      WCMD_output_asis (")?");
+      ReadFile (GetStdHandle(STD_INPUT_HANDLE), answer, sizeof(answer),
+                &count, NULL);
+      answer[0] = toupper(answer[0]);
+    }
+
+    /* Return the answer */
+    return (answer[0] == Ybuffer[0]);
 }

@@ -224,4 +224,8 @@ VER\t\tAffiche la version de cmd actuellement en mémoire.\n\
 VOL\t\tAffiche le nom de volume d'un lecteur de disque\n\
 EXIT\t\tQuitte CMD\n\n\
 Entrez HELP <commande> pour plus d'informations sur les commandes ci-dessus\n"
+
+  WCMD_CONFIRM, "Are you sure"
+  WCMD_YES, "Y"
+  WCMD_NO, "N"
 }

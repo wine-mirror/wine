@@ -219,4 +219,8 @@ VER\t\tCMD 현재 버젼 보여주기\n\
 VOL\t\t디스크 장치의 불륨 라벨 보여주기\n\
 EXIT\t\tCMD 닫기\n\n\
 HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
+
+  WCMD_CONFIRM, "Are you sure"
+  WCMD_YES, "Y"
+  WCMD_NO, "N"
 }

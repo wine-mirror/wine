@@ -228,4 +228,8 @@ VER\t\tCMDのバージョンを表示\n\
 VOL\t\tディスクデバイスのボリュームラベルを表示\n\
 EXIT\t\tCMDを終了\n\n\
 上記のコマンドに関する詳細を表示するには HELP <コマンド名> と入力して下さい。\n"
+
+  WCMD_CONFIRM, "Are you sure"
+  WCMD_YES, "Y"
+  WCMD_NO, "N"
 }
