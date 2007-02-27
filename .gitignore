@@ -213,6 +213,9 @@ dlls/dnsapi/tests/testlist.c
 dlls/dplay/libdplay.def
 dlls/dplay/version.res
 dlls/dplayx/libdplayx.def
+dlls/dplayx/tests/*.ok
+dlls/dplayx/tests/dplayx_crosstest.exe
+dlls/dplayx/tests/testlist.c
 dlls/dplayx/version.res
 dlls/dpnet/libdpnet.def
 dlls/dpnet/version.res
@@ -803,6 +806,7 @@ programs/winetest/d3d9_test.exe
 programs/winetest/ddraw_test.exe
 programs/winetest/dinput_test.exe
 programs/winetest/dnsapi_test.exe
+programs/winetest/dplayx_test.exe
 programs/winetest/dsound_test.exe
 programs/winetest/gdi32_test.exe
 programs/winetest/hlink_test.exe

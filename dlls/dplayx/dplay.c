@@ -3244,7 +3244,11 @@ static HRESULT WINAPI DP_SetSessionDesc
   HeapFree( GetProcessHeap(), 0, This->dp2->lpSessionDesc );
 
   This->dp2->lpSessionDesc = lpTempSessDesc;
-
+  if( bInitial )
+  {
+    /*Initializing session GUID*/
+    CoCreateGuid( &(This->dp2->lpSessionDesc->guidInstance) );
+  }
   /* Set the new */
   DP_CopySessionDesc( This->dp2->lpSessionDesc, lpSessDesc, bAnsi );
 

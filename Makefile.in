@@ -216,6 +216,7 @@ ALL_MAKEFILES = \
 	dlls/dnsapi/tests/Makefile \
 	dlls/dplay/Makefile \
 	dlls/dplayx/Makefile \
+	dlls/dplayx/tests/Makefile \
 	dlls/dpnet/Makefile \
 	dlls/dpnhpast/Makefile \
 	dlls/dsound/Makefile \
@@ -549,6 +550,7 @@ dlls/dnsapi/Makefile: dlls/dnsapi/Makefile.in dlls/Makedll.rules
 dlls/dnsapi/tests/Makefile: dlls/dnsapi/tests/Makefile.in dlls/Maketest.rules
 dlls/dplay/Makefile: dlls/dplay/Makefile.in dlls/Makedll.rules
 dlls/dplayx/Makefile: dlls/dplayx/Makefile.in dlls/Makedll.rules
+dlls/dplayx/tests/Makefile: dlls/dplayx/tests/Makefile.in dlls/Maketest.rules
 dlls/dpnet/Makefile: dlls/dpnet/Makefile.in dlls/Makedll.rules
 dlls/dpnhpast/Makefile: dlls/dpnhpast/Makefile.in dlls/Makedll.rules
 dlls/dsound/Makefile: dlls/dsound/Makefile.in dlls/Makedll.rules

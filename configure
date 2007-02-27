@@ -20563,6 +20563,8 @@ ac_config_files="$ac_config_files dlls/dplay/Makefile"
 
 ac_config_files="$ac_config_files dlls/dplayx/Makefile"
 
+ac_config_files="$ac_config_files dlls/dplayx/tests/Makefile"
+
 ac_config_files="$ac_config_files dlls/dpnet/Makefile"
 
 ac_config_files="$ac_config_files dlls/dpnhpast/Makefile"
@@ -21709,6 +21711,7 @@ do
     "dlls/dnsapi/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dnsapi/tests/Makefile" ;;
     "dlls/dplay/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dplay/Makefile" ;;
     "dlls/dplayx/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dplayx/Makefile" ;;
+    "dlls/dplayx/tests/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dplayx/tests/Makefile" ;;
     "dlls/dpnet/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnet/Makefile" ;;
     "dlls/dpnhpast/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dpnhpast/Makefile" ;;
     "dlls/dsound/Makefile") CONFIG_FILES="$CONFIG_FILES dlls/dsound/Makefile" ;;

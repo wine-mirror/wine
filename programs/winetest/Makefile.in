@@ -36,6 +36,7 @@ TESTBINS = \
 	ddraw_test.exe \
 	dinput_test.exe \
 	dnsapi_test.exe \
+	dplayx_test.exe \
 	dsound_test.exe \
 	gdi32_test.exe \
 	hlink_test.exe \
@@ -109,6 +110,8 @@ dinput_test.exe: $(DLLDIR)/dinput/tests/dinput_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dinput/tests/dinput_test.exe$(DLLEXT) $@ && $(STRIP) $@
 dnsapi_test.exe: $(DLLDIR)/dnsapi/tests/dnsapi_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dnsapi/tests/dnsapi_test.exe$(DLLEXT) $@ && $(STRIP) $@
+dplayx_test.exe: $(DLLDIR)/dplayx/tests/dplayx_test.exe$(DLLEXT)
+	cp $(DLLDIR)/dplayx/tests/dplayx_test.exe$(DLLEXT) $@ && $(STRIP) $@
 dsound_test.exe: $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT)
 	cp $(DLLDIR)/dsound/tests/dsound_test.exe$(DLLEXT) $@ && $(STRIP) $@
 gdi32_test.exe: $(DLLDIR)/gdi32/tests/gdi32_test.exe$(DLLEXT)

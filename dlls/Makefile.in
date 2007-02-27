@@ -233,6 +233,7 @@ TESTSUBDIRS = \
 	ddraw/tests \
 	dinput/tests \
 	dnsapi/tests \
+	dplayx/tests \
 	dsound/tests \
 	gdi32/tests \
 	hlink/tests \
