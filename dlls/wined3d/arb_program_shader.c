@@ -50,21 +50,30 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_constants);
  */
 static void shader_arb_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info, GLuint target_type,
         unsigned int max_constants, float* constants, struct list *constant_list) {
-    constant_entry *constant;
+    constants_entry *constant;
     local_constant* lconst;
-    int i;
+    DWORD i, j;
+    DWORD *idx;
 
     if (TRACE_ON(d3d_shader)) {
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
-            i = constant->idx;
-            TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                    constants[i * 4 + 0], constants[i * 4 + 1],
-                    constants[i * 4 + 2], constants[i * 4 + 3]);
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+            idx = constant->idx;
+            j = constant->count;
+            while (j--) {
+                i = *idx++;
+                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
+                        constants[i * 4 + 0], constants[i * 4 + 1],
+                        constants[i * 4 + 2], constants[i * 4 + 3]);
+            }
         }
     }
-    LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
-        i = constant->idx;
-        GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+    LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+        idx = constant->idx;
+        j = constant->count;
+        while (j--) {
+            i = *idx++;
+            GL_EXTCALL(glProgramEnvParameter4fvARB(target_type, i, constants + (i * 4)));
+        }
     }
     checkGLcall("glProgramEnvParameter4fvARB()");
 

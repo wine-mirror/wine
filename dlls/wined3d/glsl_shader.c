@@ -105,28 +105,37 @@ void shader_glsl_load_psamplers(
 static void shader_glsl_load_constantsF(IWineD3DBaseShaderImpl* This, WineD3D_GL_Info *gl_info,
         unsigned int max_constants, float* constants, GLhandleARB *constant_locations,
         struct list *constant_list) {
-    constant_entry *constant;
+    constants_entry *constant;
     local_constant* lconst;
     GLhandleARB tmp_loc;
-    int i;
+    DWORD i, j;
+    DWORD *idx;
 
     if (TRACE_ON(d3d_shader)) {
-        LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
-            i = constant->idx;
-            tmp_loc = constant_locations[i];
-            if (tmp_loc != -1) {
-                TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
-                        constants[i * 4 + 0], constants[i * 4 + 1],
-                        constants[i * 4 + 2], constants[i * 4 + 3]);
+        LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+            idx = constant->idx;
+            j = constant->count;
+            while (j--) {
+                i = *idx++;
+                tmp_loc = constant_locations[i];
+                if (tmp_loc != -1) {
+                    TRACE_(d3d_constants)("Loading constants %i: %f, %f, %f, %f\n", i,
+                            constants[i * 4 + 0], constants[i * 4 + 1],
+                            constants[i * 4 + 2], constants[i * 4 + 3]);
+                }
             }
         }
     }
-    LIST_FOR_EACH_ENTRY(constant, constant_list, constant_entry, entry) {
-        i = constant->idx;
-        tmp_loc = constant_locations[i];
-        if (tmp_loc != -1) {
-            /* We found this uniform name in the program - go ahead and send the data */
-            GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
+    LIST_FOR_EACH_ENTRY(constant, constant_list, constants_entry, entry) {
+        idx = constant->idx;
+        j = constant->count;
+        while (j--) {
+            i = *idx++;
+            tmp_loc = constant_locations[i];
+            if (tmp_loc != -1) {
+                /* We found this uniform name in the program - go ahead and send the data */
+                GL_EXTCALL(glUniform4fvARB(tmp_loc, 1, constants + (i * 4)));
+            }
         }
     }
     checkGLcall("glUniform4fvARB()");

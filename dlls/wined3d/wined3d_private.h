@@ -1194,9 +1194,10 @@ typedef struct SAVEDSTATES {
 } SAVEDSTATES;
 
 typedef struct {
-    struct list entry;
-    int idx;
-} constant_entry;
+    struct  list entry;
+    DWORD   count;
+    DWORD   idx[13];
+} constants_entry;
 
 struct IWineD3DStateBlockImpl
 {

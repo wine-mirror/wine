@@ -2958,9 +2958,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetVertexShaderConstantF(
 
     for (i = start; i < count + start; ++i) {
         if (!This->updateStateBlock->set.vertexShaderConstantsF[i]) {
-            constant_entry *ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(constant_entry));
-            ptr->idx = i;
-            list_add_head(&This->updateStateBlock->set_vconstantsF, &ptr->entry);
+            constants_entry *ptr = LIST_ENTRY(list_head(&This->updateStateBlock->set_vconstantsF), constants_entry, entry);
+            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx)) {
+                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
+                list_add_head(&This->updateStateBlock->set_vconstantsF, &ptr->entry);
+            }
+            ptr->idx[ptr->count++] = i;
             This->updateStateBlock->set.vertexShaderConstantsF[i] = TRUE;
         }
         This->updateStateBlock->changed.vertexShaderConstantsF[i] = TRUE;
@@ -3238,9 +3241,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetPixelShaderConstantF(
 
     for (i = start; i < count + start; ++i) {
         if (!This->updateStateBlock->set.pixelShaderConstantsF[i]) {
-            constant_entry *ptr = HeapAlloc(GetProcessHeap(), 0, sizeof(constant_entry));
-            ptr->idx = i;
-            list_add_head(&This->updateStateBlock->set_pconstantsF, &ptr->entry);
+            constants_entry *ptr = LIST_ENTRY(list_head(&This->updateStateBlock->set_pconstantsF), constants_entry, entry);
+            if (!ptr || ptr->count >= sizeof(ptr->idx) / sizeof(*ptr->idx)) {
+                ptr = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(constants_entry));
+                list_add_head(&This->updateStateBlock->set_pconstantsF, &ptr->entry);
+            }
+            ptr->idx[ptr->count++] = i;
             This->updateStateBlock->set.pixelShaderConstantsF[i] = TRUE;
         }
         This->updateStateBlock->changed.pixelShaderConstantsF[i] = TRUE;

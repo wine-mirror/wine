@@ -249,7 +249,7 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
     TRACE("(%p) : Releasing from %d\n", This, refCount + 1);
 
     if (!refCount) {
-        constant_entry *constant, *constant2;
+        constants_entry *constant, *constant2;
         int counter;
 
         /* type 0 represents the primary stateblock, so free all the resources */
@@ -284,11 +284,11 @@ static ULONG  WINAPI IWineD3DStateBlockImpl_Release(IWineD3DStateBlock *iface) {
         HeapFree(GetProcessHeap(), 0, This->set.pixelShaderConstantsF);
         HeapFree(GetProcessHeap(), 0, This->changed.pixelShaderConstantsF);
 
-        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_vconstantsF, constant_entry, entry) {
+        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_vconstantsF, constants_entry, entry) {
             HeapFree(GetProcessHeap(), 0, constant);
         }
 
-        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_pconstantsF, constant_entry, entry) {
+        LIST_FOR_EACH_ENTRY_SAFE(constant, constant2, &This->set_pconstantsF, constants_entry, entry) {
             HeapFree(GetProcessHeap(), 0, constant);
         }
 
