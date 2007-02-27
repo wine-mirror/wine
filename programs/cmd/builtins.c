@@ -240,7 +240,7 @@ char *p;
 
   /* If filename part of parameter is * or *.*, prompt unless
      /Q supplied.                                            */
-  if (strstr (quals, "/Q") == NULL) {
+  if ((strstr (quals, "/Q") == NULL) && (strstr (quals, "/P") == NULL)) {
 
     char drive[10];
     char dir[MAX_PATH];
@@ -259,7 +259,7 @@ char *p;
 
       /* Ask for confirmation */
       sprintf(question, "%s, ", fpath);
-      ok = WCMD_ask_confirm(question);
+      ok = WCMD_ask_confirm(question, TRUE);
 
       /* Abort if answer is 'N' */
       if (!ok) return;
@@ -288,7 +288,20 @@ char *p;
       }
       else strcpy (fpath, fd.cFileName);
       if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-        if (!DeleteFile (fpath)) WCMD_print_error ();
+        /* /P means prompt for each file */
+        if (strstr (quals, "/P") != NULL) {
+          BOOL  ok;
+          char  question[MAXSTRING];
+
+          /* Ask for confirmation */
+          sprintf(question, "%s, Delete", fpath);
+          ok = WCMD_ask_confirm(question, FALSE);
+
+          /* Only delete if answer is 'Y' */
+          if (ok && !DeleteFile (fpath)) WCMD_print_error ();
+        } else {
+          if (!DeleteFile (fpath)) WCMD_print_error ();
+        }
       }
     } while (FindNextFile(hff, &fd) != 0);
     FindClose (hff);
@@ -681,7 +694,7 @@ void WCMD_remove_dir (void) {
 
       /* Ask for confirmation */
       sprintf(question, "%s, ", param1);
-      ok = WCMD_ask_confirm(question);
+      ok = WCMD_ask_confirm(question, TRUE);
 
       /* Abort if answer is 'N' */
       if (!ok) return;
@@ -1313,7 +1326,7 @@ void WCMD_exit (void) {
  * Returns True if Y answer is selected
  *
  */
-BOOL WCMD_ask_confirm (char *message) {
+BOOL WCMD_ask_confirm (char *message, BOOL showSureText) {
 
     char  msgbuffer[MAXSTRING];
     char  Ybuffer[MAXSTRING];
@@ -1329,7 +1342,9 @@ BOOL WCMD_ask_confirm (char *message) {
     /* Loop waiting on a Y or N */
     while (answer[0] != Ybuffer[0] && answer[0] != Nbuffer[0]) {
       WCMD_output_asis (message);
-      WCMD_output_asis (msgbuffer);
+      if (showSureText) {
+        WCMD_output_asis (msgbuffer);
+      }
       WCMD_output_asis (" (");
       WCMD_output_asis (Ybuffer);
       WCMD_output_asis ("/");

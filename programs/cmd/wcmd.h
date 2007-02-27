@@ -80,7 +80,7 @@ char *WCMD_strtrim_leading_spaces (char *string);
 void WCMD_strtrim_trailing_spaces (char *string);
 void WCMD_opt_s_strip_quotes(char *cmd);
 void WCMD_HandleTildaModifiers(char **start, char *forVariable);
-BOOL WCMD_ask_confirm (char *message);
+BOOL WCMD_ask_confirm (char *message, BOOL showSureText);
 
 void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext);
 
