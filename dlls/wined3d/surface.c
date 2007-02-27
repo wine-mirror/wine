@@ -691,7 +691,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LockRect(IWineD3DSurface *iface, WINED
              * Read from the back buffer
              */
             TRACE("Locking offscreen render target\n");
-            glReadBuffer(GL_BACK);
+            glReadBuffer(myDevice->offscreenBuffer);
             srcIsUpsideDown = TRUE;
         } else {
             if(iface == swapchain->frontBuffer) {
@@ -1087,8 +1087,8 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
         if(!swapchain) {
             /* Primary offscreen render target */
             TRACE("Offscreen render target\n");
-            glDrawBuffer(GL_BACK);
-            checkGLcall("glDrawBuffer(GL_BACK)");
+            glDrawBuffer(myDevice->offscreenBuffer);
+            checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
         } else {
             if(iface == swapchain->frontBuffer) {
                 TRACE("Onscreen front buffer\n");
@@ -1118,7 +1118,10 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_UnlockRect(IWineD3DSurface *iface) {
                 flush_to_framebuffer_texture(This);
                 break;
         }
-        if(!swapchain || swapchain->backBuffer) {
+        if(!swapchain) {
+            glDrawBuffer(myDevice->offscreenBuffer);
+            checkGLcall("glDrawBuffer(myDevice->offscreenBuffer)");
+        } else if(swapchain->backBuffer) {
             glDrawBuffer(GL_BACK);
             checkGLcall("glDrawBuffer(GL_BACK)");
         } else {
@@ -1730,7 +1733,7 @@ static HRESULT WINAPI IWineD3DSurfaceImpl_LoadTexture(IWineD3DSurface *iface) {
 
             glGetIntegerv(GL_READ_BUFFER, &prevRead);
             vcheckGLcall("glGetIntegerv");
-            glReadBuffer(GL_BACK);
+            glReadBuffer(This->resource.wineD3DDevice->offscreenBuffer);
             vcheckGLcall("glReadBuffer");
 
             glCopyTexImage2D(This->glDescription.target,
@@ -1891,7 +1894,7 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SaveSnapshot(IWineD3DSurface *iface, const ch
 
         glGetIntegerv(GL_READ_BUFFER, &prevRead);
         vcheckGLcall("glGetIntegerv");
-        glReadBuffer(GL_BACK);
+        glReadBuffer(swapChain ? GL_BACK : This->resource.wineD3DDevice->offscreenBuffer);
         vcheckGLcall("glReadBuffer");
         glCopyTexImage2D(GL_TEXTURE_2D,
                             0,
@@ -2179,7 +2182,9 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
     /* Bind the target texture */
     glBindTexture(GL_TEXTURE_2D, This->glDescription.textureName);
     checkGLcall("glBindTexture");
-    if(!swapchain || (swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0])) {
+    if(!swapchain) {
+        glReadBuffer(myDevice->offscreenBuffer);
+    } else if(swapchain->backBuffer && SrcSurface == swapchain->backBuffer[0]) {
         glReadBuffer(GL_BACK);
     } else {
         glReadBuffer(GL_FRONT);
@@ -2775,8 +2780,8 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                 glDrawBuffer(GL_FRONT);
                 checkGLcall("glDrawBuffer(GL_FRONT)");
             } else if(This == (IWineD3DSurfaceImpl *) myDevice->render_targets[0]) {
-                glDrawBuffer(GL_BACK);
-                checkGLcall("glDrawBuffer(GL_BACK)");
+                glDrawBuffer(myDevice->offscreenBuffer);
+                checkGLcall("glDrawBuffer(myDevice->offscreenBuffer3)");
             } else {
                 TRACE("Surface is higher back buffer, falling back to software\n");
                 return WINED3DERR_INVALIDCALL;
@@ -2793,10 +2798,12 @@ static HRESULT IWineD3DSurfaceImpl_BltOverride(IWineD3DSurfaceImpl *This, RECT *
                                 0 /* Stencil */);
 
             /* Restore the original draw buffer */
-            if(!dstSwapchain || (dstSwapchain->backBuffer && dstSwapchain->backBuffer[0])) {
+            if(!dstSwapchain) {
+                glDrawBuffer(myDevice->offscreenBuffer);
+            } else if(dstSwapchain->backBuffer && dstSwapchain->backBuffer[0]) {
                 glDrawBuffer(GL_BACK);
-                vcheckGLcall("glDrawBuffer");
             }
+            vcheckGLcall("glDrawBuffer");
 
             return WINED3D_OK;
         }

@@ -1707,6 +1707,28 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     This->contexts[0]->last_was_rhw = 0;
     glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights);
     checkGLcall("glGetIntegerv(GL_MAX_LIGHTS, &This->maxConcurrentLights)");
+
+    switch(wined3d_settings.offscreen_rendering_mode) {
+        case ORM_FBO:
+        case ORM_PBUFFER:
+            This->offscreenBuffer = GL_BACK;
+            break;
+
+        case ORM_BACKBUFFER:
+        {
+            GLint auxBuffers;
+            glGetIntegerv(GL_AUX_BUFFERS, &auxBuffers);
+            TRACE("Got %d aux buffers\n", auxBuffers);
+            if(auxBuffers > 0) {
+                TRACE("Using auxilliary buffer for offscreen rendering\n");
+                This->offscreenBuffer = GL_AUX0;
+            } else {
+                TRACE("Using back buffer for offscreen rendering\n");
+                This->offscreenBuffer = GL_BACK;
+            }
+        }
+    }
+
     TRACE("(%p) All defaults now set up, leaving Init3D with %p\n", This, This);
     LEAVE_GL();
 

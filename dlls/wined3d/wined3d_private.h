@@ -623,6 +623,7 @@ struct IWineD3DDeviceImpl
 
     /* X and GL Information */
     GLint                   maxConcurrentLights;
+    GLenum                  offscreenBuffer;
 
     /* Selected capabilities */
     int vs_selected_mode;
