@@ -1759,6 +1759,8 @@ BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
       iconinfo->yHotspot = ciconinfo->ptHotSpot.y;
     }
 
+    height = ciconinfo->nHeight;
+
     if (ciconinfo->bBitsPerPixel > 1)
     {
         iconinfo->hbmColor = CreateBitmap( ciconinfo->nWidth, ciconinfo->nHeight,
@@ -1766,12 +1768,11 @@ BOOL WINAPI GetIconInfo(HICON hIcon, PICONINFO iconinfo)
                                 (char *)(ciconinfo + 1)
                                 + ciconinfo->nHeight *
                                 get_bitmap_width_bytes (ciconinfo->nWidth,1) );
-        height = ciconinfo->nHeight;
     }
     else
     {
         iconinfo->hbmColor = 0;
-        height = ciconinfo->nHeight * 2;
+        height *= 2;
     }
 
     iconinfo->hbmMask = CreateBitmap ( ciconinfo->nWidth, height,
