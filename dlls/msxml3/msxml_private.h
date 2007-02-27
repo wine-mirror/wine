@@ -61,5 +61,6 @@ extern LONG xmldoc_release( xmlDocPtr doc );
 extern IXMLDOMParseError *create_parseError( LONG code, BSTR url, BSTR reason, BSTR srcText,
                                              LONG line, LONG linepos, LONG filepos );
 extern HRESULT DOMDocument_create( IUnknown *pUnkOuter, LPVOID *ppObj );
+extern HRESULT SchemaCache_create( IUnknown *pUnkOuter, LPVOID *ppObj );
 
 #endif /* __MSXML_PRIVATE__ */

@@ -21,6 +21,7 @@ C_SRCS = \
 	parseerror.c \
 	pi.c \
 	regsvr.c \
+	schema.c \
 	text.c \
 	uuid.c
 
