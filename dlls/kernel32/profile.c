@@ -1288,7 +1288,7 @@ UINT WINAPI GetPrivateProfileIntW( LPCWSTR section, LPCWSTR entry,
     if (!buffer[0]) return (UINT)def_val;
 
     RtlInitUnicodeString( &bufferW, buffer );
-    RtlUnicodeStringToInteger( &bufferW, 10, &result);
+    RtlUnicodeStringToInteger( &bufferW, 0, &result);
     return result;
 }
 
