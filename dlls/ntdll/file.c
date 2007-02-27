@@ -2210,6 +2210,8 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
               pHandle, DesiredAccess, attr, IoStatusBlock,
               CreateOptions, MailslotQuota, MaxMessageSize, TimeOut);
 
+    if (!pHandle) return STATUS_ACCESS_VIOLATION;
+
     if (attr->ObjectName->Length < sizeof(leadin) ||
         strncmpiW( attr->ObjectName->Buffer, 
                    leadin, sizeof(leadin)/sizeof(leadin[0]) ))

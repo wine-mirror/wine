@@ -55,11 +55,19 @@ static void nt_mailslot_test(void)
     WCHAR buffer1[] = { '\\','?','?','\\','M','A','I','L','S','L','O','T','\\',
                         'R',':','\\','F','R','E','D','\0' };
 
+    TimeOut.QuadPart = -1;
 
     pRtlInitUnicodeString(&str, buffer1);
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
     DesiredAccess = CreateOptions = MailslotQuota = MaxMessageSize = 0;
-    TimeOut.QuadPart = -1;
+
+    /*
+     * Check for NULL pointer handling
+     */
+    rc = pNtCreateMailslotFile(NULL, DesiredAccess,
+         &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
+         &TimeOut);
+    ok( rc == STATUS_ACCESS_VIOLATION, "rc = %x not c0000005 STATUS_ACCESS_VIOLATION\n", rc);
 
     /*
      * Test a valid call
