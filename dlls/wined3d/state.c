@@ -388,6 +388,22 @@ static void state_clipping(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
     DWORD enable  = 0xFFFFFFFF;
     DWORD disable = 0x00000000;
 
+    if(stateblock->vertexShader) {
+        /* The spec says that opengl clipping planes are disabled when using shaders. Direct3D planes aren't,
+         * so that is an issue. The MacOS ATI driver keeps clipping planes activated with shaders in some
+         * contitions I got sick of tracking down. The shader state handler disables all clip planes because
+         * of that - don't do anything here and keep them disabled
+         */
+        if(stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
+            static BOOL warned = FALSE;
+            if(!warned) {
+                FIXME("Clipping not supported with vertex shaders\n");
+                warned = TRUE;
+            }
+        }
+        return;
+    }
+
     /* TODO: Keep track of previously enabled clipplanes to avoid unneccessary resetting
      * of already set values
      */
@@ -2924,11 +2940,32 @@ static void vertexdeclaration(DWORD state, IWineD3DStateBlockImpl *stateblock, W
         if(!isStateDirty(context, STATE_RENDER(WINED3DRS_COLORVERTEX))) {
             state_colormat(STATE_RENDER(WINED3DRS_COLORVERTEX), stateblock, context);
         }
+
+        if(context->last_was_vshader && !isStateDirty(context, STATE_RENDER(WINED3DRS_CLIPPLANEENABLE))) {
+            state_clipping(STATE_RENDER(WINED3DRS_CLIPPLANEENABLE), stateblock, context);
+        }
     } else {
         /* We compile the shader here because we need the vertex declaration
          * in order to determine if we need to do any swizzling for D3DCOLOR
          * registers. If the shader is already compiled this call will do nothing. */
         IWineD3DVertexShader_CompileShader(stateblock->vertexShader);
+
+        if(!context->last_was_vshader) {
+            int i;
+            static BOOL warned = FALSE;
+            /* Disable all clip planes to get defined results on all drivers. See comment in the
+             * state_clipping state handler
+             */
+            for(i = 0; i < GL_LIMITS(clipplanes); i++) {
+                glDisable(GL_CLIP_PLANE0 + i);
+                checkGLcall("glDisable(GL_CLIP_PLANE0 + i)");
+            }
+
+            if(!warned && stateblock->renderState[WINED3DRS_CLIPPLANEENABLE]) {
+                FIXME("Clipping not supported with vertex shaders\n");
+                warned = TRUE;
+            }
+        }
     }
 
     /* Vertex and pixel shaders are applied together for now, so let the last dirty state do the
