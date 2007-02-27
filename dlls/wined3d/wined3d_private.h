@@ -628,6 +628,7 @@ struct IWineD3DDeviceImpl
     int vs_selected_mode;
     int ps_selected_mode;
     const shader_backend_t *shader_backend;
+    hash_table_t *glsl_program_lookup;
 
     /* To store */
     BOOL                    view_ident;        /* true iff view matrix is identity                */
@@ -700,10 +701,6 @@ struct IWineD3DDeviceImpl
     DWORD ddraw_width, ddraw_height;
     WINED3DFORMAT ddraw_format;
     BOOL ddraw_fullscreen;
-
-    /* List of GLSL shader programs and their associated vertex & pixel shaders */
-    struct list glsl_shader_progs;
-
 
     /* Final position fixup constant */
     float                       posFixup[4];
@@ -1463,13 +1460,19 @@ typedef void (*SHADER_HANDLER) (struct SHADER_OPCODE_ARG*);
  * vertex shaders.  A list of this type is maintained on the DeviceImpl, and is only
  * used if the user is using GLSL shaders. */
 struct glsl_shader_prog_link {
-    struct list             entry;
+    struct list             vshader_entry;
+    struct list             pshader_entry;
     GLhandleARB             programId;
     GLhandleARB             *vuniformF_locations;
     GLhandleARB             *puniformF_locations;
-    IWineD3DVertexShader*   vertexShader;
-    IWineD3DPixelShader*    pixelShader;
+    GLhandleARB             vshader;
+    GLhandleARB             pshader;
 };
+
+typedef struct {
+    GLhandleARB vshader;
+    GLhandleARB pshader;
+} glsl_program_key_t;
 
 /* TODO: Make this dynamic, based on shader limits ? */
 #define MAX_REG_ADDR 1
@@ -1600,6 +1603,8 @@ extern const SHADER_OPCODE* shader_get_opcode(
 extern void shader_delete_constant_list(
     struct list* clist);
 
+void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_link *entry);
+
 /* Vertex shader utility functions */
 extern BOOL vshader_get_input(
     IWineD3DVertexShader* iface,
@@ -1726,6 +1731,9 @@ typedef struct IWineD3DBaseShaderClass
 
     /* Type of shader backend */
     int shader_mode;
+
+    /* Programs this shader is linked with */
+    struct list linked_programs;
 
     /* Immediate constants (override global ones) */
     struct list constantsB;

@@ -1994,16 +1994,42 @@ void vshader_glsl_output_unpack(
     }
 }
 
-/** Attach a GLSL pixel or vertex shader object to the shader program */
-static void attach_glsl_shader(IWineD3DDevice *iface, IWineD3DBaseShader* shader) {
+static void add_glsl_program_entry(IWineD3DDeviceImpl *device, struct glsl_shader_prog_link *entry) {
+    glsl_program_key_t *key;
+
+    key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
+    key->vshader = entry->vshader;
+    key->pshader = entry->pshader;
+
+    hash_table_put(device->glsl_program_lookup, key, entry);
+}
+
+static struct glsl_shader_prog_link *get_glsl_program_entry(IWineD3DDeviceImpl *device,
+        GLhandleARB vshader, GLhandleARB pshader) {
+    glsl_program_key_t key;
+
+    key.vshader = vshader;
+    key.pshader = pshader;
+
+    return (struct glsl_shader_prog_link *)hash_table_get(device->glsl_program_lookup, &key);
+}
+
+void delete_glsl_program_entry(IWineD3DDevice *iface, struct glsl_shader_prog_link *entry) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
-    GLhandleARB shaderObj = ((IWineD3DBaseShaderImpl*)shader)->baseShader.prgId;
-    if (This->stateBlock->glsl_program && shaderObj != 0) {
-        TRACE("Attaching GLSL shader object %u to program %u\n", shaderObj, This->stateBlock->glsl_program->programId);
-        GL_EXTCALL(glAttachObjectARB(This->stateBlock->glsl_program->programId, shaderObj));
-        checkGLcall("glAttachObjectARB");
-    }
+    glsl_program_key_t *key;
+
+    key = HeapAlloc(GetProcessHeap(), 0, sizeof(glsl_program_key_t));
+    key->vshader = entry->vshader;
+    key->pshader = entry->pshader;
+    hash_table_remove(This->glsl_program_lookup, key);
+
+    GL_EXTCALL(glDeleteObjectARB(entry->programId));
+    if (entry->vshader) list_remove(&entry->vshader_entry);
+    if (entry->pshader) list_remove(&entry->pshader_entry);
+    HeapFree(GetProcessHeap(), 0, entry->vuniformF_locations);
+    HeapFree(GetProcessHeap(), 0, entry->puniformF_locations);
+    HeapFree(GetProcessHeap(), 0, entry);
 }
 
 /** Sets the GLSL program ID for the given pixel and vertex shader combination.
@@ -2011,61 +2037,50 @@ static void attach_glsl_shader(IWineD3DDevice *iface, IWineD3DBaseShader* shader
  * inside of the DrawPrimitive() part of the render loop).
  *
  * If a program for the given combination does not exist, create one, and store
- * the program in the list.  If it creates a program, it will link the given
- * objects, too.
- *
- * We keep the shader programs around on a list because linking
- * shader objects together is an expensive operation.  It's much
- * faster to loop through a list of pre-compiled & linked programs
- * each time that the application sets a new pixel or vertex shader
- * than it is to re-link them together at that time.
- *
- * The list will be deleted in IWineD3DDevice::Release().
+ * the program in the hash table.  If it creates a program, it will link the
+ * given objects, too.
  */
 static void set_glsl_shader_program(IWineD3DDevice *iface) {
     IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
     WineD3D_GL_Info *gl_info               = &((IWineD3DImpl *)(This->wineD3D))->gl_info;
     IWineD3DPixelShader  *pshader          = This->stateBlock->pixelShader;
     IWineD3DVertexShader *vshader          = This->stateBlock->vertexShader;
-    struct glsl_shader_prog_link *curLink  = NULL;
-    struct glsl_shader_prog_link *newLink  = NULL;
-    struct list *ptr                       = NULL;
+    struct glsl_shader_prog_link *entry    = NULL;
     GLhandleARB programId                  = 0;
     int i;
     char glsl_name[8];
 
-    ptr = list_head( &This->glsl_shader_progs );
-    while (ptr) {
-        /* At least one program exists - see if it matches our ps/vs combination */
-        curLink = LIST_ENTRY( ptr, struct glsl_shader_prog_link, entry );
-        if (vshader == curLink->vertexShader && pshader == curLink->pixelShader) {
-            /* Existing Program found, use it */
-            TRACE("Found existing program (%u) for this vertex/pixel shader combination\n",
-                   curLink->programId);
-            This->stateBlock->glsl_program = curLink;
-            return;
-        }
-        /* This isn't the entry we need - try the next one */
-        ptr = list_next( &This->glsl_shader_progs, ptr );
+    GLhandleARB vshader_id = (vshader && This->vs_selected_mode == SHADER_GLSL) ? ((IWineD3DBaseShaderImpl*)vshader)->baseShader.prgId : 0;
+    GLhandleARB pshader_id = (pshader && This->ps_selected_mode == SHADER_GLSL) ? ((IWineD3DBaseShaderImpl*)pshader)->baseShader.prgId : 0;
+    entry = get_glsl_program_entry(This, vshader_id, pshader_id);
+    if (entry) {
+        This->stateBlock->glsl_program = entry;
+        return;
     }
 
     /* If we get to this point, then no matching program exists, so we create one */
     programId = GL_EXTCALL(glCreateProgramObjectARB());
     TRACE("Created new GLSL shader program %u\n", programId);
 
-    /* Allocate a new link for the list of programs */
-    newLink = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
-    newLink->programId    = programId;
-    This->stateBlock->glsl_program = newLink;
+    /* Create the entry */
+    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(struct glsl_shader_prog_link));
+    entry->programId = programId;
+    entry->vshader = vshader_id;
+    entry->pshader = pshader_id;
+    /* Add the hash table entry */
+    add_glsl_program_entry(This, entry);
+
+    /* Set the current program */
+    This->stateBlock->glsl_program = entry;
 
     /* Attach GLSL vshader */
-    if (NULL != vshader && This->vs_selected_mode == SHADER_GLSL) {
-        int i;
+    if (vshader_id) {
         int max_attribs = 16;   /* TODO: Will this always be the case? It is at the moment... */
         char tmp_name[10];
 
-        TRACE("Attaching vertex shader to GLSL program\n");
-        attach_glsl_shader(iface, (IWineD3DBaseShader*)vshader);
+        TRACE("Attaching GLSL shader object %u to program %u\n", vshader_id, programId);
+        GL_EXTCALL(glAttachObjectARB(programId, vshader_id));
+        checkGLcall("glAttachObjectARB");
 
         /* Bind vertex attributes to a corresponding index number to match
          * the same index numbers as ARB_vertex_programs (makes loading
@@ -2081,34 +2096,34 @@ static void set_glsl_shader_program(IWineD3DDevice *iface) {
              GL_EXTCALL(glBindAttribLocationARB(programId, i, tmp_name));
         }
         checkGLcall("glBindAttribLocationARB");
-        newLink->vertexShader = vshader;
+
+        list_add_head(&((IWineD3DBaseShaderImpl *)vshader)->baseShader.linked_programs, &entry->vshader_entry);
     }
 
     /* Attach GLSL pshader */
-    if (NULL != pshader && This->ps_selected_mode == SHADER_GLSL) {
-        TRACE("Attaching pixel shader to GLSL program\n");
-        attach_glsl_shader(iface, (IWineD3DBaseShader*)pshader);
-        newLink->pixelShader = pshader;
+    if (pshader_id) {
+        TRACE("Attaching GLSL shader object %u to program %u\n", pshader_id, programId);
+        GL_EXTCALL(glAttachObjectARB(programId, pshader_id));
+        checkGLcall("glAttachObjectARB");
+
+        list_add_head(&((IWineD3DBaseShaderImpl *)pshader)->baseShader.linked_programs, &entry->pshader_entry);
     }
 
     /* Link the program */
     TRACE("Linking GLSL shader program %u\n", programId);
     GL_EXTCALL(glLinkProgramARB(programId));
     print_glsl_info_log(&GLINFO_LOCATION, programId);
-    list_add_head( &This->glsl_shader_progs, &newLink->entry);
 
-    newLink->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(vshader_constantsF));
+    entry->vuniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(vshader_constantsF));
     for (i = 0; i < GL_LIMITS(vshader_constantsF); ++i) {
         snprintf(glsl_name, sizeof(glsl_name), "VC[%i]", i);
-        newLink->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+        entry->vuniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
-    newLink->puniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(pshader_constantsF));
+    entry->puniformF_locations = HeapAlloc(GetProcessHeap(), 0, sizeof(GLhandleARB) * GL_LIMITS(pshader_constantsF));
     for (i = 0; i < GL_LIMITS(pshader_constantsF); ++i) {
         snprintf(glsl_name, sizeof(glsl_name), "PC[%i]", i);
-        newLink->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
+        entry->puniformF_locations[i] = GL_EXTCALL(glGetUniformLocationARB(programId, glsl_name));
     }
-
-    return;
 }
 
 static GLhandleARB create_glsl_blt_shader(WineD3D_GL_Info *gl_info) {

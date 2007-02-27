@@ -2386,6 +2386,26 @@ static HRESULT WINAPI IWineD3DImpl_GetDeviceCaps(IWineD3D *iface, UINT Adapter, 
     return WINED3D_OK;
 }
 
+static unsigned int glsl_program_key_hash(void *key) {
+    glsl_program_key_t *k = (glsl_program_key_t *)key;
+
+    unsigned int hash = k->vshader | k->pshader << 16;
+    hash += ~(hash << 15);
+    hash ^=  (hash >> 10);
+    hash +=  (hash << 3);
+    hash ^=  (hash >> 6);
+    hash += ~(hash << 11);
+    hash ^=  (hash >> 16);
+
+    return hash;
+}
+
+static BOOL glsl_program_key_compare(void *keya, void *keyb) {
+    glsl_program_key_t *ka = (glsl_program_key_t *)keya;
+    glsl_program_key_t *kb = (glsl_program_key_t *)keyb;
+
+    return ka->vshader == kb->vshader && ka->pshader == kb->pshader;
+}
 
 /* Note due to structure differences between dx8 and dx9 D3DPRESENT_PARAMETERS,
    and fields being inserted in the middle, a new structure is used in place    */
@@ -2456,6 +2476,7 @@ static HRESULT  WINAPI IWineD3DImpl_CreateDevice(IWineD3D *iface, UINT Adapter, 
     select_shader_mode(&This->gl_info, DeviceType, &object->ps_selected_mode, &object->vs_selected_mode);
     if (object->ps_selected_mode == SHADER_GLSL || object->vs_selected_mode == SHADER_GLSL) {
         object->shader_backend = &glsl_shader_backend;
+        object->glsl_program_lookup = hash_table_create(&glsl_program_key_hash, &glsl_program_key_compare);
     } else if (object->ps_selected_mode == SHADER_ARB || object->vs_selected_mode == SHADER_ARB) {
         object->shader_backend = &arb_program_shader_backend;
     } else {

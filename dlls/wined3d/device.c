@@ -32,7 +32,6 @@
 #include "wined3d_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
-WINE_DECLARE_DEBUG_CHANNEL(d3d_shader);
 #define GLINFO_LOCATION ((IWineD3DImpl *)(This->wineD3D))->gl_info
 
 /* Define the default light parameters as specified by MSDN */
@@ -99,6 +98,7 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
     object->parent       = parent; \
     object->ref          = 1; \
     object->baseShader.device = (IWineD3DDevice*) This; \
+    list_init(&object->baseShader.linked_programs); \
     *pp##type = (IWineD3D##type *) object; \
 }
 
@@ -149,76 +149,6 @@ static void set_depth_stencil_fbo(IWineD3DDevice *iface, IWineD3DSurface *depth_
 const float identity[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};  /* When needed for comparisons */
 
 /**********************************************************
- * GLSL helper functions follow
- **********************************************************/
-
-/** Detach the GLSL pixel or vertex shader object from the shader program */
-static void detach_glsl_shader(IWineD3DDevice *iface, GLhandleARB shaderObj, GLhandleARB programId) {
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-
-    if (shaderObj != 0 && programId != 0) {
-        TRACE_(d3d_shader)("Detaching GLSL shader object %u from program %u\n", shaderObj, programId);
-        GL_EXTCALL(glDetachObjectARB(programId, shaderObj));
-        checkGLcall("glDetachObjectARB");
-    }
-}
-
-/** Delete a GLSL shader program */
-static void delete_glsl_shader_program(IWineD3DDevice *iface, GLhandleARB obj) {
-
-    IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *)iface;
-    
-    if (obj != 0) {
-        TRACE_(d3d_shader)("Deleting GLSL shader program %u\n", obj);
-        GL_EXTCALL(glDeleteObjectARB(obj));
-        checkGLcall("glDeleteObjectARB");
-    }
-}
-
-/** Delete the list of linked programs this shader is associated with.
- * Also at this point, check to see if there are any objects left attached
- * to each GLSL program.  If not, delete the GLSL program object.
- * This will be run when a device is released. */
-static void delete_glsl_shader_list(IWineD3DDevice* iface) {
-    
-    struct list *ptr                       = NULL;
-    struct glsl_shader_prog_link *curLink  = NULL;
-    IWineD3DDeviceImpl *This               = (IWineD3DDeviceImpl *)iface;
-    
-    int numAttached = 0;
-    int i;
-    GLhandleARB objList[2];   /* There should never be more than 2 objects attached 
-                                 (one pixel shader and one vertex shader at most) */
-    
-    ptr = list_head( &This->glsl_shader_progs );
-    while (ptr) {
-        /* First, get the current item,
-         * save the link to the next pointer, 
-         * detach and delete shader objects,
-         * then de-allocate the list item's memory */
-        curLink = LIST_ENTRY( ptr, struct glsl_shader_prog_link, entry );
-        ptr = list_next( &This->glsl_shader_progs, ptr );
-
-        /* See if this object is still attached to the program - it may have been detached already */
-        GL_EXTCALL(glGetAttachedObjectsARB(curLink->programId, 2, &numAttached, objList));
-        TRACE_(d3d_shader)("%i GLSL objects are currently attached to program %u\n", numAttached, curLink->programId);
-        for (i = 0; i < numAttached; i++) {
-            detach_glsl_shader(iface, objList[i], curLink->programId);
-        }
-        
-        delete_glsl_shader_program(iface, curLink->programId);
-
-        /* Free the uniform locations */
-        HeapFree(GetProcessHeap(), 0, curLink->vuniformF_locations);
-        HeapFree(GetProcessHeap(), 0, curLink->puniformF_locations);
-
-        /* Free the memory for this list item */    
-        HeapFree(GetProcessHeap(), 0, curLink);
-    }
-}
-
-/**********************************************************
  * IUnknown parts follows
  **********************************************************/
 
@@ -261,14 +191,11 @@ static ULONG WINAPI IWineD3DDeviceImpl_Release(IWineD3DDevice *iface) {
 
         HeapFree(GetProcessHeap(), 0, This->draw_buffers);
 
+        if (This->glsl_program_lookup) hash_table_destroy(This->glsl_program_lookup);
+
         /* TODO: Clean up all the surfaces and textures! */
         /* NOTE: You must release the parent if the object was created via a callback
         ** ***************************/
-
-        /* Delete any GLSL shader programs that may exist */
-        if (This->vs_selected_mode == SHADER_GLSL ||
-            This->ps_selected_mode == SHADER_GLSL)
-            delete_glsl_shader_list(iface);
 
         /* Release the update stateblock */
         if(IWineD3DStateBlock_Release((IWineD3DStateBlock *)This->updateStateBlock) > 0){
@@ -1763,9 +1690,6 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 #if 0
     IWineD3DImpl_CheckGraphicsMemory();
 #endif
-
-    /* Initialize our list of GLSL programs */
-    list_init(&This->glsl_shader_progs);
 
     { /* Set a default viewport */
         WINED3DVIEWPORT vp;

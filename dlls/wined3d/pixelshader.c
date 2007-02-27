@@ -74,7 +74,16 @@ static ULONG  WINAPI IWineD3DPixelShaderImpl_Release(IWineD3DPixelShader *iface)
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
         if (This->baseShader.shader_mode == SHADER_GLSL && This->baseShader.prgId != 0) {
-            /* If this shader is still attached to a program, GL will perform a lazy delete */
+            struct list *linked_programs = &This->baseShader.linked_programs;
+
+            TRACE("Deleting linked programs\n");
+            if (linked_programs->next) {
+                struct glsl_shader_prog_link *entry, *entry2;
+                LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, linked_programs, struct glsl_shader_prog_link, pshader_entry) {
+                    delete_glsl_program_entry(This->baseShader.device, entry);
+                }
+            }
+
             TRACE("Deleting shader object %u\n", This->baseShader.prgId);
             GL_EXTCALL(glDeleteObjectARB(This->baseShader.prgId));
             checkGLcall("glDeleteObjectARB");
