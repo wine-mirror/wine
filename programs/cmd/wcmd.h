@@ -82,6 +82,7 @@ void WCMD_opt_s_strip_quotes(char *cmd);
 void WCMD_HandleTildaModifiers(char **start, char *forVariable);
 BOOL WCMD_ask_confirm (char *message);
 
+void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext);
 
 /*	Data structure to hold context when executing batch files */
 

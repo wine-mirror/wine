@@ -237,6 +237,35 @@ char *p;
     WCMD_output ("Argument missing\n");
     return;
   }
+
+  /* If filename part of parameter is * or *.*, prompt unless
+     /Q supplied.                                            */
+  if (strstr (quals, "/Q") == NULL) {
+
+    char drive[10];
+    char dir[MAX_PATH];
+    char fname[MAX_PATH];
+    char ext[MAX_PATH];
+
+    /* Convert path into actual directory spec */
+    GetFullPathName (param1, sizeof(fpath), fpath, NULL);
+    WCMD_splitpath(fpath, drive, dir, fname, ext);
+
+    /* Only prompt for * and *.*, not *a, a*, *.a* etc */
+    if ((strcmp(fname, "*") == 0) &&
+        (*ext == 0x00 || (strcmp(ext, ".*") == 0))) {
+      BOOL  ok;
+      char  question[MAXSTRING];
+
+      /* Ask for confirmation */
+      sprintf(question, "%s, ", fpath);
+      ok = WCMD_ask_confirm(question);
+
+      /* Abort if answer is 'N' */
+      if (!ok) return;
+    }
+  }
+
   hff = FindFirstFile (param1, &fd);
   if (hff == INVALID_HANDLE_VALUE) {
     WCMD_output ("%s :File Not Found\n",param1);

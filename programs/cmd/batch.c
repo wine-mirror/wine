@@ -230,8 +230,8 @@ char *p;
   return p;
 }
 
-/* _splitpath - copied from winefile as no obvious way to use it otherwise */
-void _splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
+/* WCMD_splitpath - copied from winefile as no obvious way to use it otherwise */
+void WCMD_splitpath(const CHAR* path, CHAR* drv, CHAR* dir, CHAR* name, CHAR* ext)
 {
         const CHAR* end; /* end of processed string */
 	const CHAR* p;	 /* search pointer */
@@ -528,7 +528,7 @@ void WCMD_HandleTildaModifiers(char **start, char *forVariable) {
       if (finaloutput[0] != 0x00) strcat(finaloutput, " ");
 
       /* Split into components */
-      _splitpath(fullfilename, drive, dir, fname, ext);
+      WCMD_splitpath(fullfilename, drive, dir, fname, ext);
 
       /* 5. Handle 'd' : Drive Letter */
       if (memchr(firstModifier, 'd', modifierLen) != NULL) {
