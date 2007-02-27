@@ -634,6 +634,15 @@ static void vshader_set_input(
     This->semantics_in[regnum].reg = reg_token;
 }
 
+static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2) {
+    if (usage_idx1 != usage_idx2) return FALSE;
+    if (usage1 == usage2) return TRUE;
+    if (usage1 == WINED3DDECLUSAGE_POSITION && usage2 == WINED3DDECLUSAGE_POSITIONT) return TRUE;
+    if (usage2 == WINED3DDECLUSAGE_POSITION && usage1 == WINED3DDECLUSAGE_POSITIONT) return TRUE;
+
+    return FALSE;
+}
+
 BOOL vshader_get_input(
     IWineD3DVertexShader* iface,
     BYTE usage_req, BYTE usage_idx_req,
@@ -647,7 +656,7 @@ BOOL vshader_get_input(
         DWORD usage = (usage_token & WINED3DSP_DCL_USAGE_MASK) >> WINED3DSP_DCL_USAGE_SHIFT;
         DWORD usage_idx = (usage_token & WINED3DSP_DCL_USAGEINDEX_MASK) >> WINED3DSP_DCL_USAGEINDEX_SHIFT;
 
-        if (usage_token && (usage == usage_req && usage_idx == usage_idx_req)) {
+        if (usage_token && match_usage(usage, usage_idx, usage_req, usage_idx_req)) {
             *regnum = i;
             return TRUE;
         }
@@ -673,7 +682,7 @@ BOOL vshader_input_is_color(
          * if it has D3DCOLOR as it's type. This works for both d3d8 and d3d9. */
         for (i = 0; i < vertexDeclaration->declarationWNumElements-1; ++i) {
             WINED3DVERTEXELEMENT *element = vertexDeclaration->pDeclarationWine + i;
-            if ((element->Usage == usage && element->UsageIndex == usage_idx)) {
+            if (match_usage(element->Usage, element->UsageIndex, usage, usage_idx)) {
                 return element->Type == WINED3DDECLTYPE_D3DCOLOR;
             }
         }
