@@ -1477,9 +1477,16 @@ static void test_process_security(void)
     event = CreateEvent( NULL, TRUE, TRUE, "test_event" );
     ok(event != NULL, "CreateEvent %d\n", GetLastError());
 
+    SecurityDescriptor->Revision = 0;
+    CHECK_SET_SECURITY( event, OWNER_SECURITY_INFORMATION, ERROR_UNKNOWN_REVISION );
+    SecurityDescriptor->Revision = SECURITY_DESCRIPTOR_REVISION;
+
     CHECK_SET_SECURITY( event, OWNER_SECURITY_INFORMATION, ERROR_INVALID_SECURITY_DESCR );
     CHECK_SET_SECURITY( event, GROUP_SECURITY_INFORMATION, ERROR_INVALID_SECURITY_DESCR );
     CHECK_SET_SECURITY( event, SACL_SECURITY_INFORMATION, ERROR_ACCESS_DENIED );
+    CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
+    /* NULL DACL is valid and means default DACL from token */
+    SecurityDescriptor->Control |= SE_DACL_PRESENT;
     CHECK_SET_SECURITY( event, DACL_SECURITY_INFORMATION, ERROR_SUCCESS );
 
     /* Set owner and group and dacl */

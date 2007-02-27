@@ -1569,34 +1569,39 @@ NTSTATUS WINAPI NtSetSecurityObject(HANDLE Handle,
     if (!SecurityDescriptor) return STATUS_ACCESS_VIOLATION;
 
     memset( &sd, 0, sizeof(sd) );
-    RtlGetControlSecurityDescriptor( SecurityDescriptor, &control, &revision );
+    status = RtlGetControlSecurityDescriptor( SecurityDescriptor, &control, &revision );
+    if (status != STATUS_SUCCESS) return status;
     sd.control = control & ~SE_SELF_RELATIVE;
 
     if (SecurityInformation & OWNER_SECURITY_INFORMATION)
     {
-        RtlGetOwnerSecurityDescriptor( SecurityDescriptor, &owner, &defaulted );
+        status = RtlGetOwnerSecurityDescriptor( SecurityDescriptor, &owner, &defaulted );
+        if (status != STATUS_SUCCESS) return status;
         if (!(sd.owner_len = RtlLengthSid( owner )))
             return STATUS_INVALID_SECURITY_DESCR;
     }
 
     if (SecurityInformation & GROUP_SECURITY_INFORMATION)
     {
-        RtlGetGroupSecurityDescriptor( SecurityDescriptor, &group, &defaulted );
+        status = RtlGetGroupSecurityDescriptor( SecurityDescriptor, &group, &defaulted );
+        if (status != STATUS_SUCCESS) return status;
         if (!(sd.group_len = RtlLengthSid( group )))
             return STATUS_INVALID_SECURITY_DESCR;
     }
 
     if (SecurityInformation & SACL_SECURITY_INFORMATION)
     {
-        RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
-        sd.sacl_len = present ? sacl->AclSize : 0;
+        status = RtlGetSaclSecurityDescriptor( SecurityDescriptor, &present, &sacl, &defaulted );
+        if (status != STATUS_SUCCESS) return status;
+        sd.sacl_len = (sacl && present) ? sacl->AclSize : 0;
         sd.control |= SE_SACL_PRESENT;
     }
 
     if (SecurityInformation & DACL_SECURITY_INFORMATION)
     {
-        RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
-        sd.dacl_len = present ? dacl->AclSize : 0;
+        status = RtlGetDaclSecurityDescriptor( SecurityDescriptor, &present, &dacl, &defaulted );
+        if (status != STATUS_SUCCESS) return status;
+        sd.dacl_len = (dacl && present) ? dacl->AclSize : 0;
         sd.control |= SE_DACL_PRESENT;
     }
 
