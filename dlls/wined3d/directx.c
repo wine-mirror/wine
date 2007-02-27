@@ -285,7 +285,7 @@ void select_shader_max_constants(
     switch (vs_selected_mode) {
         case SHADER_GLSL:
             /* Subtract the other potential uniforms from the max available (bools, ints, and 1 row of projection matrix) */
-            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - MAX_CONST_B - MAX_CONST_I - 1;
+            gl_info->max_vshader_constantsF = gl_info->vs_glsl_constantsF - (MAX_CONST_B / 4) - MAX_CONST_I - 1;
             break;
         case SHADER_ARB:
             /* We have to subtract any other PARAMs that we might use in our shader programs.
@@ -308,7 +308,7 @@ void select_shader_max_constants(
              * that a sm <= 1.3 shader does not need all the uniforms provided by a glsl-capable card,
              * and lets not take away a uniform needlessly from all other shaders.
              */
-            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - MAX_CONST_B - MAX_CONST_I;
+            gl_info->max_pshader_constantsF = gl_info->ps_glsl_constantsF - (MAX_CONST_B / 4) - MAX_CONST_I;
             break;
         case SHADER_ARB:
             /* The arb shader only loads the bump mapping environment matrix into the shader if it finds
