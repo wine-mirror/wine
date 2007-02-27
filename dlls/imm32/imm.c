@@ -171,18 +171,15 @@ static void ImmInternalPostIMEMessage(UINT msg, WPARAM wParam, LPARAM lParam)
 
 static LRESULT ImmInternalSendIMENotify(WPARAM notify, LPARAM lParam)
 {
-    LRESULT rc = 0;
+    HWND target;
 
-    if (root_context->hwnd)
-       rc = SendMessageW(root_context->hwnd, WM_IME_NOTIFY, notify, lParam);
-    else
-    {
-       HWND target = GetFocus();
-       if (target)
-           rc = SendMessageW(target, WM_IME_NOTIFY, notify, lParam);
-    }
+    target = root_context->hwnd;
+    if (!target) target = GetFocus();
 
-    return rc;
+    if (target)
+       return SendMessageW(target, WM_IME_NOTIFY, notify, lParam);
+
+    return 0;
 }
 
 static void ImmInternalSetOpenStatus(BOOL fOpen)
