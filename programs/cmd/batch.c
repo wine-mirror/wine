@@ -147,6 +147,7 @@ int i = 0;
 static char param[MAX_PATH];
 char *p;
 
+  if (where != NULL) *where = NULL;
   p = param;
   while (TRUE) {
     switch (*s) {
@@ -154,7 +155,7 @@ char *p;
 	s++;
 	break;
       case '"':
-        if (where != NULL) *where = s;
+        if (where != NULL && i==n) *where = s;
 	s++;
 	while ((*s != '\0') && (*s != '"')) {
 	  *p++ = *s++;
@@ -169,7 +170,7 @@ char *p;
         p = param;
 	break;
       case '(':
-        if (where != NULL) *where = s;
+        if (where != NULL && i==n) *where = s;
 	s++;
 	while ((*s != '\0') && (*s != ')')) {
 	  *p++ = *s++;
