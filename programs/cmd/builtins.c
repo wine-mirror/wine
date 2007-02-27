@@ -224,6 +224,12 @@ void WCMD_create_dir (void) {
  *
  * Delete a file or wildcarded set.
  *
+ * Note on /A:
+ *  - Testing shows /A is repeatable, eg. /a-r /ar matches all files
+ *  - Each set is a pattern, eg /ahr /as-r means
+ *         readonly+hidden OR nonreadonly system files
+ *  - The '-' applies to a single field, ie /a:-hr means read only
+ *         non-hidden files
  */
 
 void WCMD_delete (int recurse) {
@@ -292,9 +298,66 @@ char *p;
       else strcpy (fpath, fd.cFileName);
       if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
         BOOL  ok = TRUE;
+        char *nextA = strstr (quals, "/A");
+
+        /* Handle attribute matching (/A) */
+        if (nextA != NULL) {
+          ok = FALSE;
+          while (nextA != NULL && !ok) {
+
+            char *thisA = (nextA+2);
+            BOOL  stillOK = TRUE;
+
+            /* Skip optional : */
+            if (*thisA == ':') thisA++;
+
+            /* Parse each of the /A[:]xxx in turn */
+            while (*thisA && *thisA != '/') {
+              BOOL negate    = FALSE;
+              BOOL attribute = FALSE;
+
+              /* Match negation of attribute first */
+              if (*thisA == '-') {
+                negate=TRUE;
+                thisA++;
+              }
+
+              /* Match attribute */
+              switch (*thisA) {
+              case 'R': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY);
+                        break;
+              case 'H': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
+                        break;
+              case 'S': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM);
+                        break;
+              case 'A': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE);
+                        break;
+              default:
+                  WCMD_output ("Syntax error\n");
+              }
+
+              /* Now check result, keeping a running boolean about whether it
+                 matches all parsed attribues so far                         */
+              if (attribute && !negate) {
+                  stillOK = stillOK;
+              } else if (!attribute && negate) {
+                  stillOK = stillOK;
+              } else {
+                  stillOK = FALSE;
+              }
+              thisA++;
+            }
+
+            /* Save the running total as the final result */
+            ok = stillOK;
+
+            /* Step on to next /A set */
+            nextA = strstr (nextA+1, "/A");
+          }
+        }
 
         /* /P means prompt for each file */
-        if (strstr (quals, "/P") != NULL) {
+        if (ok && strstr (quals, "/P") != NULL) {
           char  question[MAXSTRING];
 
           /* Ask for confirmation */
