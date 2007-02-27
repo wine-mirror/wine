@@ -673,6 +673,8 @@ extern void X11DRV_send_keyboard_input( WORD wVk, WORD wScan, DWORD dwFlags, DWO
                                         DWORD dwExtraInfo, UINT injected_flags );
 extern void X11DRV_send_mouse_input( HWND hwnd, DWORD flags, DWORD x, DWORD y,
                                      DWORD data, DWORD time, DWORD extra_info, UINT injected_flags );
+extern DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
+                                                 DWORD mask, DWORD flags );
 
 typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
 

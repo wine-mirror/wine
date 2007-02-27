@@ -1835,8 +1835,12 @@ void X11DRV_InitKeyboard(void)
  */
 SHORT X11DRV_GetAsyncKeyState(INT key)
 {
-    SHORT retval = ((key_state_table[key] & 0x40) ? 0x0001 : 0) |
-                   ((key_state_table[key] & 0x80) ? 0x8000 : 0);
+    SHORT retval;
+
+    X11DRV_MsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_KEY, 0 );
+
+    retval = ((key_state_table[key] & 0x40) ? 0x0001 : 0) |
+             ((key_state_table[key] & 0x80) ? 0x8000 : 0);
     key_state_table[key] &= ~0x40;
     TRACE_(key)("(%x) -> %x\n", key, retval);
     return retval;
