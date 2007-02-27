@@ -2202,6 +2202,7 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
      ULONG CreateOptions, ULONG MailslotQuota, ULONG MaxMessageSize,
      PLARGE_INTEGER TimeOut)
 {
+    LARGE_INTEGER timeout;
     static const WCHAR leadin[] = {
         '\\','?','?','\\','M','A','I','L','S','L','O','T','\\'};
     NTSTATUS ret;
@@ -2219,13 +2220,21 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
         return STATUS_OBJECT_NAME_INVALID;
     }
 
+    /*
+     *  For a NULL TimeOut pointer set the default timeout value
+     */
+    if  (!TimeOut)
+        timeout.QuadPart = -1;
+    else
+        timeout.QuadPart = TimeOut->QuadPart;
+
     SERVER_START_REQ( create_mailslot )
     {
         req->access = DesiredAccess;
         req->attributes = attr->Attributes;
         req->rootdir = attr->RootDirectory;
         req->max_msgsize = MaxMessageSize;
-        req->read_timeout = (TimeOut->QuadPart <= 0) ? TimeOut->QuadPart / -10000 : -1;
+        req->read_timeout = (timeout.QuadPart <= 0) ? timeout.QuadPart / -10000 : -1;
         wine_server_add_data( req, attr->ObjectName->Buffer,
                               attr->ObjectName->Length );
         ret = wine_server_call( req );

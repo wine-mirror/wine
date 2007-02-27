@@ -70,6 +70,17 @@ static void nt_mailslot_test(void)
     ok( rc == STATUS_ACCESS_VIOLATION, "rc = %x not c0000005 STATUS_ACCESS_VIOLATION\n", rc);
 
     /*
+     * Test to see if the Timeout can be NULL
+     */
+    rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
+         &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
+         NULL);
+    ok( rc == STATUS_SUCCESS, "rc = %x not STATUS_SUCCESS\n", rc);
+    ok( hslot != 0, "Handle is invalid\n");
+
+    if  ( rc == STATUS_SUCCESS ) rc = pNtClose(hslot);
+
+    /*
      * Test a valid call
      */
     rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
