@@ -43,6 +43,9 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 #ifdef HAVE_ARPA_INET_H
 # include <arpa/inet.h>
 #endif
@@ -742,6 +745,8 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
 
   for (ai_cur = ai; ai_cur; ai_cur = ai_cur->ai_next)
   {
+    int val;
+
     if (TRACE_ON(rpc))
     {
       char host[256];
@@ -765,6 +770,11 @@ static RPC_STATUS rpcrt4_ncacn_ip_tcp_open(RpcConnection* Connection)
       close(sock);
       continue;
     }
+
+    /* RPC depends on having minimal latency so disable the Nagle algorithm */
+    val = 1;
+    setsockopt(sock, SOL_TCP, TCP_NODELAY, &val, sizeof(val));
+
     tcpc->sock = sock;
 
     freeaddrinfo(ai);
