@@ -5,7 +5,7 @@
  * Copyright 2003-2004 Raphael Junqueira
  * Copyright 2004 Christian Costa
  * Copyright 2005 Oliver Stieber
- * Copyright 2006 Henri Verbeet
+ * Copyright 2006-2007 Henri Verbeet
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2579,3 +2579,221 @@ BOOL CalculateTexRect(IWineD3DSurfaceImpl *This, RECT *Rect, float glTexCoord[4]
     return TRUE;
 }
 #undef GLINFO_LOCATION
+
+/* Hash table functions */
+
+hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function)
+{
+    hash_table_t *table;
+    unsigned int initial_size = 8;
+
+    table = HeapAlloc(GetProcessHeap(), 0, sizeof(hash_table_t) + (initial_size * sizeof(struct list)));
+    if (!table)
+    {
+        ERR("Failed to allocate table, returning NULL.\n");
+        return NULL;
+    }
+
+    table->hash_function = hash_function;
+    table->compare_function = compare_function;
+
+    table->grow_size = initial_size - (initial_size >> 2);
+    table->shrink_size = 0;
+
+    table->buckets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, initial_size * sizeof(struct list));
+    if (!table->buckets)
+    {
+        ERR("Failed to allocate table buckets, returning NULL.\n");
+        HeapFree(GetProcessHeap(), 0, table);
+        return NULL;
+    }
+    table->bucket_count = initial_size;
+
+    table->entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, table->grow_size * sizeof(hash_table_entry_t));
+    if (!table->entries)
+    {
+        ERR("Failed to allocate table entries, returning NULL.\n");
+        HeapFree(GetProcessHeap(), 0, table->buckets);
+        HeapFree(GetProcessHeap(), 0, table);
+        return NULL;
+    }
+    table->entry_count = 0;
+
+    list_init(&table->free_entries);
+    table->count = 0;
+
+    return table;
+}
+
+void hash_table_destroy(hash_table_t *table)
+{
+    unsigned int i = 0;
+
+    for (i = 0; i < table->entry_count; ++i)
+    {
+        HeapFree(GetProcessHeap(), 0, table->entries[i].key);
+    }
+
+    HeapFree(GetProcessHeap(), 0, table->entries);
+    HeapFree(GetProcessHeap(), 0, table->buckets);
+    HeapFree(GetProcessHeap(), 0, table);
+}
+
+static inline hash_table_entry_t *hash_table_get_by_idx(hash_table_t *table, void *key, unsigned int idx)
+{
+    hash_table_entry_t *entry;
+
+    if (table->buckets[idx].next)
+        LIST_FOR_EACH_ENTRY(entry, &(table->buckets[idx]), hash_table_entry_t, entry)
+            if (table->compare_function(entry->key, key)) return entry;
+
+    return NULL;
+}
+
+static BOOL hash_table_resize(hash_table_t *table, unsigned int new_bucket_count)
+{
+    unsigned int new_entry_count = 0;
+    hash_table_entry_t *new_entries;
+    struct list *new_buckets;
+    unsigned int grow_size = new_bucket_count - (new_bucket_count >> 2);
+    unsigned int i;
+
+    new_buckets = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, new_bucket_count * sizeof(struct list));
+    if (!new_buckets)
+    {
+        ERR("Failed to allocate new buckets, returning FALSE.\n");
+        return FALSE;
+    }
+
+    new_entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, grow_size * sizeof(hash_table_entry_t));
+    if (!new_entries)
+    {
+        ERR("Failed to allocate new entries, returning FALSE.\n");
+        HeapFree(GetProcessHeap(), 0, new_buckets);
+        return FALSE;
+    }
+
+    for (i = 0; i < table->bucket_count; ++i)
+    {
+        if (table->buckets[i].next)
+        {
+            hash_table_entry_t *entry, *entry2;
+
+            LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &table->buckets[i], hash_table_entry_t, entry)
+            {
+                int j;
+                hash_table_entry_t *new_entry = new_entries + (new_entry_count++);
+                *new_entry = *entry;
+
+                j = new_entry->hash & (new_bucket_count - 1);
+
+                if (!new_buckets[j].next) list_init(&new_buckets[j]);
+                list_add_head(&new_buckets[j], &new_entry->entry);
+            }
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, table->buckets);
+    table->buckets = new_buckets;
+
+    HeapFree(GetProcessHeap(), 0, table->entries);
+    table->entries = new_entries;
+
+    table->entry_count = new_entry_count;
+    list_init(&table->free_entries);
+
+    table->bucket_count = new_bucket_count;
+    table->grow_size = grow_size;
+    table->shrink_size = new_bucket_count > 8 ? new_bucket_count >> 2 : 0;
+
+    return TRUE;
+}
+
+void hash_table_put(hash_table_t *table, void *key, void *value)
+{
+    unsigned int idx;
+    unsigned int hash;
+    hash_table_entry_t *entry;
+
+    hash = table->hash_function(key);
+    idx = hash & (table->bucket_count - 1);
+    entry = hash_table_get_by_idx(table, key, idx);
+
+    if (entry)
+    {
+        HeapFree(GetProcessHeap(), 0, key);
+        entry->value = value;
+
+        if (!value)
+        {
+            HeapFree(GetProcessHeap(), 0, entry->key);
+            entry->key = NULL;
+
+            /* Remove the entry */
+            list_remove(&entry->entry);
+            list_add_head(&table->free_entries, &entry->entry);
+
+            --table->count;
+
+            /* Shrink if necessary */
+            if (table->count < table->shrink_size) {
+                if (!hash_table_resize(table, table->bucket_count >> 1))
+                {
+                    ERR("Failed to shrink the table...\n");
+                }
+            }
+        }
+
+        return;
+    }
+
+    if (!value) return;
+
+    /* Grow if necessary */
+    if (table->count >= table->grow_size)
+    {
+        if (!hash_table_resize(table, table->bucket_count << 1))
+        {
+            ERR("Failed to grow the table, returning.\n");
+            return;
+        }
+
+        idx = hash & (table->bucket_count - 1);
+    }
+
+    /* Find an entry to insert */
+    if (!list_empty(&table->free_entries))
+    {
+        struct list *elem = list_head(&table->free_entries);
+
+        list_remove(elem);
+        entry = LIST_ENTRY(elem, hash_table_entry_t, entry);
+    } else {
+        entry = table->entries + (table->entry_count++);
+    }
+
+    /* Insert the entry */
+    entry->key = key;
+    entry->value = value;
+    entry->hash = hash;
+    if (!table->buckets[idx].next) list_init(&table->buckets[idx]);
+    list_add_head(&table->buckets[idx], &entry->entry);
+
+    ++table->count;
+}
+
+void hash_table_remove(hash_table_t *table, void *key)
+{
+    hash_table_put(table, key, NULL);
+}
+
+void *hash_table_get(hash_table_t *table, void *key)
+{
+    unsigned int idx;
+    hash_table_entry_t *entry;
+
+    idx = table->hash_function(key) & (table->bucket_count - 1);
+    entry = hash_table_get_by_idx(table, key, idx);
+
+    return entry ? entry->value : NULL;
+}

@@ -44,6 +44,36 @@
 #include "wine/wined3d_gl.h"
 #include "wine/list.h"
 
+/* Hash table functions */
+typedef unsigned int (hash_function_t)(void *key);
+typedef BOOL (compare_function_t)(void *keya, void *keyb);
+
+typedef struct {
+    void *key;
+    void *value;
+    unsigned int hash;
+    struct list entry;
+} hash_table_entry_t;
+
+typedef struct {
+    hash_function_t *hash_function;
+    compare_function_t *compare_function;
+    struct list *buckets;
+    unsigned int bucket_count;
+    hash_table_entry_t *entries;
+    unsigned int entry_count;
+    struct list free_entries;
+    unsigned int count;
+    unsigned int grow_size;
+    unsigned int shrink_size;
+} hash_table_t;
+
+hash_table_t *hash_table_create(hash_function_t *hash_function, compare_function_t *compare_function);
+void hash_table_destroy(hash_table_t *table);
+void *hash_table_get(hash_table_t *table, void *key);
+void hash_table_put(hash_table_t *table, void *key, void *value);
+void hash_table_remove(hash_table_t *table, void *key);
+
 /* Device caps */
 #define MAX_PALETTES      256
 #define MAX_STREAMS       16
