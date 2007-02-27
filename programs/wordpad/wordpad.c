@@ -292,13 +292,13 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
 
     hToolBarWnd = CreateToolbarEx(hReBarWnd, CCS_NOPARENTALIGN|CCS_NOMOVEY|WS_VISIBLE|WS_CHILD|TBSTYLE_TOOLTIPS|TBSTYLE_BUTTON,
       IDC_TOOLBAR,
-      3, hInstance, IDB_TOOLBAR,
+      6, hInstance, IDB_TOOLBAR,
       NULL, 0,
       24, 24, 16, 16, sizeof(TBBUTTON));
 
     ab.hInst = HINST_COMMCTRL;
     ab.nID = IDB_STD_SMALL_COLOR;
-    nStdBitmaps = SendMessage(hToolBarWnd, TB_ADDBITMAP, 3, (LPARAM)&ab);
+    nStdBitmaps = SendMessage(hToolBarWnd, TB_ADDBITMAP, 6, (LPARAM)&ab);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILENEW, ID_FILE_NEW);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILEOPEN, ID_FILE_OPEN);
     AddButton(hToolBarWnd, nStdBitmaps+STD_FILESAVE, ID_FILE_SAVE);
@@ -317,6 +317,10 @@ static LRESULT OnCreate( HWND hWnd, WPARAM wParam, LPARAM lParam)
     AddButton(hToolBarWnd, 0, ID_FORMAT_BOLD);
     AddButton(hToolBarWnd, 1, ID_FORMAT_ITALIC);
     AddButton(hToolBarWnd, 2, ID_FORMAT_UNDERLINE);
+    AddSeparator(hToolBarWnd);
+    AddButton(hToolBarWnd, 3, ID_ALIGN_LEFT);
+    AddButton(hToolBarWnd, 4, ID_ALIGN_CENTER);
+    AddButton(hToolBarWnd, 5, ID_ALIGN_RIGHT);
 
     SendMessage(hToolBarWnd, TB_ADDSTRING, 0, (LPARAM)"Exit\0");
     SendMessage(hToolBarWnd, TB_AUTOSIZE, 0, 0);
@@ -361,9 +365,13 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
     HWND hwndToolBar = GetDlgItem(hwndReBar, IDC_TOOLBAR);
     int from, to;
     CHARFORMAT2W fmt;
+    PARAFORMAT2 pf;
 
     ZeroMemory(&fmt, sizeof(fmt));
     fmt.cbSize = sizeof(fmt);
+
+    ZeroMemory(&pf, sizeof(pf));
+    pf.cbSize = sizeof(pf);
 
     SendMessage(hwndEditor, EM_GETCHARFORMAT, TRUE, (LPARAM)&fmt);
 
@@ -380,6 +388,12 @@ static LRESULT OnUser( HWND hWnd, WPARAM wParam, LPARAM lParam)
     SendMessage(hwndToolBar, TB_INDETERMINATE, ID_FORMAT_ITALIC, !(fmt.dwMask & CFM_ITALIC));
     SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_FORMAT_UNDERLINE, (fmt.dwMask & CFM_UNDERLINE) && (fmt.dwEffects & CFE_UNDERLINE));
     SendMessage(hwndToolBar, TB_INDETERMINATE, ID_FORMAT_UNDERLINE, !(fmt.dwMask & CFM_UNDERLINE));
+
+    SendMessage(hwndEditor, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_ALIGN_LEFT, (pf.wAlignment == PFA_LEFT));
+    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_ALIGN_CENTER, (pf.wAlignment == PFA_CENTER));
+    SendMessage(hwndToolBar, TB_CHECKBUTTON, ID_ALIGN_RIGHT, (pf.wAlignment == PFA_RIGHT));
+
     return 0;
 }
 
