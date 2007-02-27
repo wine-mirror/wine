@@ -968,7 +968,7 @@ static void  NC_DrawCaption( HDC  hdc, RECT *rect, HWND hwnd, DWORD  style,
         }
     }
 
-    if (InternalGetWindowText( hwnd, buffer, sizeof(buffer)/sizeof(WCHAR) ))
+    if (GetWindowTextW( hwnd, buffer, sizeof(buffer)/sizeof(WCHAR) ))
     {
         NONCLIENTMETRICSW nclm;
         HFONT hFont, hOldFont;
