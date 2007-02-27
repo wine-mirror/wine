@@ -4,7 +4,7 @@
  *  Copyright 1997,98 Marcel Baur <mbaur@g26.ethz.ch>
  *  Proofread 1998 by David Lee Lambert <lamber45@egr.msu.edu>
  *  Copyright 2002 Sylvain Petreolle <spetreolle@yahoo.fr>
- *  Copyright 2005 YunSong Hwang
+ *  Copyright 2007 Bang Jun-Young <junyoung@mogua.com>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,49 +21,49 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 MAIN_MENU MENU
 {
  POPUP "파일(&F)" {
-  MENUITEM "새 파일(&N)\tCtrl+N",           CMD_NEW
-  MENUITEM "열기(&O)...\tCtrl+O",     CMD_OPEN
-  MENUITEM "저장(&S)\tCtrl+S",     CMD_SAVE
-  MENUITEM "다른 이름으로 저장(&A)...",       CMD_SAVE_AS
+  MENUITEM "새로 만들기(&N)\tCtrl+N",   CMD_NEW
+  MENUITEM "열기(&O)...\tCtrl+O",       CMD_OPEN
+  MENUITEM "저장(&S)\tCtrl+S",          CMD_SAVE
+  MENUITEM "다른 이름으로 저장(&A)...", CMD_SAVE_AS
   MENUITEM SEPARATOR
-  MENUITEM "프린트(&P)...\tCtrl+P",            CMD_PRINT
-  MENUITEM "페이지 설정(&T)...",    CMD_PAGE_SETUP
-  MENUITEM "프린트 설정(&R)...", CMD_PRINTER_SETUP
+  MENUITEM "인쇄(&P)...\tCtrl+P",       CMD_PRINT
+  MENUITEM "페이지 설정(&T)...",        CMD_PAGE_SETUP
+  MENUITEM "프린터 설정(&R)...",        CMD_PRINTER_SETUP
   MENUITEM SEPARATOR
-  MENUITEM "나가기(&X)",             CMD_EXIT
+  MENUITEM "끝내기(&X)",                CMD_EXIT
  }
 POPUP "편집(&E)" {
-  MENUITEM "되돌리기(&U)\tCtrl+Z",     CMD_UNDO
+  MENUITEM "실행 취소(&U)\tCtrl+Z",     CMD_UNDO
   MENUITEM SEPARATOR
   MENUITEM "잘라내기(&T)\tCtrl+X",      CMD_CUT
-  MENUITEM "복사(&C)\tCtrl+C",     CMD_COPY
-  MENUITEM "붙여넣기(&P)\tCtrl+V",    CMD_PASTE
-  MENUITEM "지우기(&D)\tDel",      CMD_DELETE
+  MENUITEM "복사(&C)\tCtrl+C",          CMD_COPY
+  MENUITEM "붙여넣기(&P)\tCtrl+V",      CMD_PASTE
+  MENUITEM "삭제(&D)\tDel",             CMD_DELETE
   MENUITEM SEPARATOR
-  MENUITEM "모두 선택(&A)\tCtrl+A",       CMD_SELECT_ALL
-  MENUITEM "시간/날짜(&T)\tF5",    CMD_TIME_DATE
+  MENUITEM "모두 선택(&A)\tCtrl+A",     CMD_SELECT_ALL
+  MENUITEM "시간/날짜(&T)\tF5",         CMD_TIME_DATE
   MENUITEM SEPARATOR
-  MENUITEM "긴 줄 넘기기(&W)",  CMD_WRAP
-  MENUITEM "글꼴(&F)...",          CMD_FONT
+  MENUITEM "자동 줄 바꿈(&W)",          CMD_WRAP
+  MENUITEM "글꼴(&F)...",               CMD_FONT
  }
 POPUP "찾기(&S)" {
-  MENUITEM "찾기(&S)...\tCtrl+F",   CMD_SEARCH
-  MENUITEM "다시 찾기(&S)\tF3",  CMD_SEARCH_NEXT
+  MENUITEM "찾기(&S)...\tCtrl+F",       CMD_SEARCH
+  MENUITEM "다음 찾기(&N)\tF3",         CMD_SEARCH_NEXT
  }
 POPUP "도움말(&H)" {
-  MENUITEM "목록(&C)",         CMD_HELP_CONTENTS
-  MENUITEM "찾기(&S)...",        CMD_HELP_SEARCH
-  MENUITEM "도움말의 도움말(&H)",     CMD_HELP_ON_HELP
+  MENUITEM "항목(&C)",                  CMD_HELP_CONTENTS
+  MENUITEM "찾기(&S)...",               CMD_HELP_SEARCH
+  MENUITEM "도움말 사용법(&H)",         CMD_HELP_ON_HELP
   MENUITEM SEPARATOR
   POPUP "정보(&O)" {
-   MENUITEM "저작권(&L)...",         CMD_LICENSE
-   MENUITEM "보증 없음(&N)...",     CMD_NO_WARRANTY
-   MENUITEM "Wine 정보(&A)...",      CMD_ABOUT_WINE
+   MENUITEM "라이센스(&L)...",          CMD_LICENSE
+   MENUITEM "무보증(&N)...",            CMD_NO_WARRANTY
+   MENUITEM "Wine 정보(&A)...",         CMD_ABOUT_WINE
   }
  }
 }
@@ -75,9 +75,9 @@ STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 FONT 8, "MS Shell Dlg"
 CAPTION "페이지 설정"
 {
-LTEXT    "머릿말(&H):",  0x140,   10, 07, 40, 15
+LTEXT    "머리글(&H):",  0x140,   10, 07, 40, 15
 EDITTEXT                         0x141,       60, 05,110, 12, WS_BORDER | WS_TABSTOP
-LTEXT    "꼬릿말(&F):",  0x142,   10, 24, 40, 15
+LTEXT    "바닥글(&F):",  0x142,   10, 24, 40, 15
 EDITTEXT                         0x143,       60, 22,110, 12, WS_BORDER | WS_TABSTOP
 
 GROUPBOX "여백(&M):",      0x144,     10, 43,160, 45
@@ -87,49 +87,48 @@ LTEXT    "위(&T):",         0x148,    20, 73, 30, 10, WS_CHILD
 EDITTEXT /*STRING_PAGESETUP_TOPVALUE,*/    0x14A,        50, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 LTEXT    "오른쪽(&R):",       0x14B, 100, 55, 30, 10, WS_CHILD
 EDITTEXT /*STRING_PAGESETUP_RIGHTVALUE,*/  0x14D,     130, 55, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
-LTEXT    "아래쪽(&B):",      0x14E,100, 73, 30, 10, WS_CHILD
+LTEXT    "아래(&B):",      0x14E,100, 73, 30, 10, WS_CHILD
 EDITTEXT /*STRING_PAGESETUP_BOTTOMVALUE,*/ 0x150,    130, 73, 35, 11, WS_CHILD | WS_BORDER | WS_TABSTOP
 
-DEFPUSHBUTTON "확인",         IDOK,                   180,  3, 40, 15, WS_TABSTOP
-PUSHBUTTON    "취소",     IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
-PUSHBUTTON    "도움말(&H)",       IDHELP,                180, 39, 40, 15, WS_TABSTOP
+DEFPUSHBUTTON "확인",       IDOK,                   180,  3, 40, 15, WS_TABSTOP
+PUSHBUTTON    "취소",       IDCANCEL,               180, 21, 40, 15, WS_TABSTOP
+PUSHBUTTON    "도움말(&H)", IDHELP,                 180, 39, 40, 15, WS_TABSTOP
 }
 
 STRINGTABLE DISCARDABLE
 {
 STRING_PAGESETUP_HEADERVALUE,   "&n"        /* FIXME */
-STRING_PAGESETUP_FOOTERVALUE,   "Page &s"   /* FIXME */
-STRING_PAGESETUP_LEFTVALUE,             "20 mm"     /* FIXME */
+STRING_PAGESETUP_FOOTERVALUE,   "&s 페이지" /* FIXME */
+STRING_PAGESETUP_LEFTVALUE,     "20 mm"     /* FIXME */
 STRING_PAGESETUP_RIGHTVALUE,    "20 mm"     /* FIXME */
-STRING_PAGESETUP_TOPVALUE,              "25 mm"     /* FIXME */
+STRING_PAGESETUP_TOPVALUE,      "25 mm"     /* FIXME */
 STRING_PAGESETUP_BOTTOMVALUE,   "25 mm"     /* FIXME */
 
 STRING_NOTEPAD,                                 "메모장"
-STRING_ERROR,                                   "에러"
+STRING_ERROR,                                   "오류"
 STRING_WARNING,                                 "경고"
 STRING_INFO,                                    "정보"
 
-STRING_UNTITLED,                                "제목없음"
+STRING_UNTITLED,                                "제목 없음"
 
 STRING_ALL_FILES,                               "모든 파일 (*.*)"
-STRING_TEXT_FILES_TXT,                  "텍스트 파일 (*.txt)"
+STRING_TEXT_FILES_TXT,                          "텍스트 문서 (*.txt)"
 
-STRING_TOOLARGE,                                "파일 '%s' 는 메모장으로 열기에는 너무 큽니다.\n \
+STRING_TOOLARGE,                                "%s 파일이 너무 커서 메모장으로는 열 수 없습니다.\n \
 다른 편집기를 사용하십시오."
-STRING_NOTEXT,                                  "당신은 어떤 글자도 입력하지 않았습니다. \
-\n아무거나 입력하고 다시 시도하십시오"
-STRING_DOESNOTEXIST,                            "파일 '%s'\n는 존재하지 않습니다.\n\n \
-당신은 새 파일을 만들겠습니까?"
-STRING_NOTSAVED,                                "파일'%s'\n는 고쳐졌습니다.\n\n \
-당신은 바뀐 걸 저장하겠습니까?"
-STRING_NOTFOUND,                                        "'%s' could not be found."
-STRING_OUT_OF_MEMORY,                   "이 작업을 끝마치기에는 메모리가 부족합니다. \
-\n 하나나 더 많은 풀그림을 닫아서 사용 가능한 메모리량을 늘려주십시오."
+STRING_NOTEXT,                                  "입력한 내용이 없습니다.\
+\n내용을 입력한 후 재시도하십시오"
+STRING_DOESNOTEXIST,                            "%s\n파일이 없습니다.\n\n \
+파일을 새로 만드시겠습니까?"
+STRING_NOTSAVED,                                "%s\n파일 내용이 변경되었습니다.\n\n \
+변경 내용을 저장하시겠습니까?"
+STRING_NOTFOUND,                                "%s 문자열을 찾을 수 없습니다."
+STRING_OUT_OF_MEMORY,                           "이 작업을 완료하는 데 필요한 메모리가 부족합니다.\
+\n사용 가능한 메모리의 양을 확보하기 위해 하나 이상의 응용 프로그램을 닫아 주십시오.\n"
 
 }
 
-
-STRINGTABLE DISCARDABLE LANGUAGE LANG_KOREAN, SUBLANG_NEUTRAL
+STRINGTABLE DISCARDABLE LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 {
 IDS_LICENSE_CAPTION,            "라이센스"
 IDS_LICENSE,
@@ -145,7 +144,7 @@ You should have received a copy of the GNU Lesser General Public \
 License along with this library; if not, write to the Free Software \
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA"
 
-IDS_WARRANTY_CAPTION, "무 보증"
+IDS_WARRANTY_CAPTION, "무보증"
 IDS_WARRANTY,
 "This library is distributed in the hope that it will be useful, \
 but WITHOUT ANY WARRANTY; without even the implied warranty of \
