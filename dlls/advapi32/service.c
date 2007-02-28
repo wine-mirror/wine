@@ -1644,146 +1644,64 @@ BOOL WINAPI QueryServiceStatusEx(SC_HANDLE hService, SC_STATUS_TYPE InfoLevel,
 /******************************************************************************
  * QueryServiceConfigA [ADVAPI32.@]
  */
-BOOL WINAPI 
-QueryServiceConfigA( SC_HANDLE hService,
-                     LPQUERY_SERVICE_CONFIGA lpServiceConfig,
-                     DWORD cbBufSize, LPDWORD pcbBytesNeeded)
+BOOL WINAPI QueryServiceConfigA( SC_HANDLE hService, LPQUERY_SERVICE_CONFIGA config,
+                                 DWORD size, LPDWORD needed )
 {
-    static const CHAR szDisplayName[] = "DisplayName";
-    static const CHAR szType[] = "Type";
-    static const CHAR szStart[] = "Start";
-    static const CHAR szError[] = "ErrorControl";
-    static const CHAR szImagePath[] = "ImagePath";
-    static const CHAR szGroup[] = "Group";
-    static const CHAR szDependencies[] = "Dependencies";
-    struct sc_service *hsvc;
-    HKEY hKey;
-    CHAR str_buffer[ MAX_PATH ];
-    LONG r;
-    DWORD type, val, sz, total, n;
-    LPSTR p;
+    DWORD n;
+    LPSTR p, buffer;
+    BOOL ret;
+    QUERY_SERVICE_CONFIGW *configW;
 
-    TRACE("%p %p %d %p\n", hService, lpServiceConfig,
-           cbBufSize, pcbBytesNeeded);
+    TRACE("%p %p %d %p\n", hService, config, size, needed);
 
-    hsvc = sc_handle_get_handle_data(hService, SC_HTYPE_SERVICE);
-    if (!hsvc)
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, 2 * size )))
     {
-        SetLastError( ERROR_INVALID_HANDLE );
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return FALSE;
     }
-    hKey = hsvc->hkey;
+    configW = (QUERY_SERVICE_CONFIGW *)buffer;
+    ret = QueryServiceConfigW( hService, configW, 2 * size, needed );
+    if (!ret) goto done;
 
-    /* calculate the size required first */
-    total = sizeof (QUERY_SERVICE_CONFIGA);
+    config->dwServiceType      = configW->dwServiceType;
+    config->dwStartType        = configW->dwStartType;
+    config->dwErrorControl     = configW->dwErrorControl;
+    config->lpBinaryPathName   = NULL;
+    config->lpLoadOrderGroup   = NULL;
+    config->dwTagId            = configW->dwTagId;
+    config->lpDependencies     = NULL;
+    config->lpServiceStartName = NULL;
+    config->lpDisplayName      = NULL;
 
-    sz = sizeof(str_buffer);
-    r = RegQueryValueExA( hKey, szImagePath, 0, &type, (LPBYTE)str_buffer, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
-    {
-        sz = ExpandEnvironmentStringsA(str_buffer,NULL,0);
-        if( 0 == sz ) return FALSE;
+    p = (LPSTR)(config + 1);
+    n = size - sizeof(*config);
+    ret = FALSE;
 
-        total += sz;
-    }
-    else
-    {
-        /* FIXME: set last error */
-        return FALSE;
-    }
+#define MAP_STR(str) \
+    do { \
+        if (configW->str) \
+        { \
+            DWORD sz = WideCharToMultiByte( CP_ACP, 0, configW->str, -1, p, n, NULL, NULL ); \
+            if (!sz) goto done; \
+            config->str = p; \
+            p += sz; \
+            n -= sz; \
+        } \
+    } while (0)
 
-    sz = 0;
-    r = RegQueryValueExA( hKey, szGroup, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
+    MAP_STR( lpBinaryPathName );
+    MAP_STR( lpLoadOrderGroup );
+    MAP_STR( lpDependencies );
+    MAP_STR( lpServiceStartName );
+    MAP_STR( lpDisplayName );
+#undef MAP_STR
 
-    sz = 0;
-    r = RegQueryValueExA( hKey, szDependencies, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_MULTI_SZ ) )
-        total += sz;
+    *needed = p - buffer;
+    ret = TRUE;
 
-    sz = 0;
-    r = RegQueryValueExA( hKey, szStart, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
-
-    sz = 0;
-    r = RegQueryValueExA( hKey, szDisplayName, 0, &type, NULL, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ ) )
-        total += sz;
-
-    *pcbBytesNeeded = total;
-
-    /* if there's not enough memory, return an error */
-    if( total > cbBufSize )
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return FALSE;
-    }
-
-    ZeroMemory( lpServiceConfig, total );
-
-    sz = sizeof val;
-    r = RegQueryValueExA( hKey, szType, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
-        lpServiceConfig->dwServiceType = val;
-
-    sz = sizeof val;
-    r = RegQueryValueExA( hKey, szStart, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
-        lpServiceConfig->dwStartType = val;
-
-    sz = sizeof val;
-    r = RegQueryValueExA( hKey, szError, 0, &type, (LPBYTE)&val, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_DWORD ) )
-        lpServiceConfig->dwErrorControl = val;
-
-    /* now do the strings */
-    p = (LPSTR) &lpServiceConfig[1];
-    n = total - sizeof (QUERY_SERVICE_CONFIGA);
-
-    sz = sizeof(str_buffer);
-    r = RegQueryValueExA( hKey, szImagePath, 0, &type, (LPBYTE)str_buffer, &sz );
-    if( ( r == ERROR_SUCCESS ) && ( type == REG_SZ || type == REG_EXPAND_SZ ) )
-    {
-        sz = ExpandEnvironmentStringsA(str_buffer, p, n);
-        if( 0 == sz || sz > n ) return FALSE;
-
-        lpServiceConfig->lpBinaryPathName = p;
-        p += sz;
-        n -= sz;
-    }
-    else
-    {
-        /* FIXME: set last error */
-        return FALSE;
-    }
-
-    sz = n;
-    r = RegQueryValueExA( hKey, szGroup, 0, &type, (LPBYTE)p, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
-    {
-        lpServiceConfig->lpLoadOrderGroup = p;
-        p += sz;
-        n -= sz;
-    }
-
-    sz = n;
-    r = RegQueryValueExA( hKey, szDependencies, 0, &type, (LPBYTE)p, &sz );
-    if( ( r == ERROR_SUCCESS ) || ( type == REG_SZ ) )
-    {
-        lpServiceConfig->lpDependencies = p;
-        p += sz;
-        n -= sz;
-    }
-
-    if( n < 0 )
-        ERR("Buffer overflow!\n");
-
-    TRACE("Image path = %s\n", lpServiceConfig->lpBinaryPathName );
-    TRACE("Group      = %s\n", lpServiceConfig->lpLoadOrderGroup );
-
-    return TRUE;
+done:
+    HeapFree( GetProcessHeap(), 0, buffer );
+    return ret;
 }
 
 /******************************************************************************
