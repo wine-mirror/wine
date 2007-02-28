@@ -668,6 +668,22 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
     return TRUE;
 }
 
+static BOOL AddContentTab(HHInfo *info)
+{
+    info->tabs[TAB_CONTENTS].hwnd = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW,
+           szEmpty, WS_CHILD | WS_BORDER | 0x25, 50, 50, 100, 100,
+           info->WinType.hwndNavigation, NULL, hhctrl_hinstance, NULL);
+    if(!info->tabs[TAB_CONTENTS].hwnd) {
+        ERR("Could not create treeview control\n");
+        return FALSE;
+    }
+
+    ResizeTabChild(info, info->tabs[TAB_CONTENTS].hwnd);
+    ShowWindow(info->tabs[TAB_CONTENTS].hwnd, SW_SHOW);
+
+    return TRUE;
+}
+
 /* Viewer Window */
 
 static LRESULT Help_OnSize(HWND hWnd)
@@ -838,6 +854,9 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
         return FALSE;
 
     if (!HH_AddHTMLPane(pHHInfo))
+        return FALSE;
+
+    if (!AddContentTab(pHHInfo))
         return FALSE;
 
     return TRUE;
