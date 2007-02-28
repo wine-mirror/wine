@@ -2034,6 +2034,29 @@ static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
     }
 }
 
+static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
+    UINT index = state - STATE_CLIPPLANE(0);
+
+    if(isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW)) || index > GL_LIMITS(clipplanes)) {
+        return;
+    }
+
+    /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadMatrixf((float *) &stateblock->transforms[WINED3DTS_VIEW].u.m[0][0]);
+
+    TRACE("Clipplane [%f,%f,%f,%f]\n",
+          stateblock->clipplane[index][0],
+          stateblock->clipplane[index][1],
+          stateblock->clipplane[index][2],
+          stateblock->clipplane[index][3]);
+    glClipPlane(GL_CLIP_PLANE0 + index, stateblock->clipplane[index]);
+    checkGLcall("glClipPlane");
+
+    glPopMatrix();
+}
+
 static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     unsigned int k;
 
@@ -2060,10 +2083,11 @@ static void transform_view(DWORD state, IWineD3DStateBlockImpl *stateblock, Wine
         checkGLcall("glLightfv dirn");
     }
 
-    /* Reset Clipping Planes if clipping is enabled. TODO: Call clipplane apply func */
+    /* Reset Clipping Planes  */
     for (k = 0; k < GL_LIMITS(clipplanes); k++) {
-        glClipPlane(GL_CLIP_PLANE0 + k, stateblock->clipplane[k]);
-        checkGLcall("glClipPlane");
+        if(!isStateDirty(context, STATE_CLIPPLANE(k))) {
+            clipplane(STATE_CLIPPLANE(k), stateblock, context);
+        }
     }
 
     if(context->last_was_rhw) {
@@ -4118,5 +4142,38 @@ const struct StateEntry StateTable[] =
     { /*   , STATE_ACTIVELIGHT(6)                   */      STATE_ACTIVELIGHT(6),                               light               },
     { /*   , STATE_ACTIVELIGHT(7)                   */      STATE_ACTIVELIGHT(7),                               light               },
 
-    { /* Scissor rect                               */      STATE_SCISSORRECT,                                  scissorrect         }
+    { /* Scissor rect                               */      STATE_SCISSORRECT,                                  scissorrect         },
+      /* Clip planes */
+    { /* STATE_CLIPPLANE(0)                         */      STATE_CLIPPLANE(0),                                 clipplane           },
+    { /* STATE_CLIPPLANE(1)                         */      STATE_CLIPPLANE(1),                                 clipplane           },
+    { /* STATE_CLIPPLANE(2)                         */      STATE_CLIPPLANE(2),                                 clipplane           },
+    { /* STATE_CLIPPLANE(3)                         */      STATE_CLIPPLANE(3),                                 clipplane           },
+    { /* STATE_CLIPPLANE(4)                         */      STATE_CLIPPLANE(4),                                 clipplane           },
+    { /* STATE_CLIPPLANE(5)                         */      STATE_CLIPPLANE(5),                                 clipplane           },
+    { /* STATE_CLIPPLANE(6)                         */      STATE_CLIPPLANE(6),                                 clipplane           },
+    { /* STATE_CLIPPLANE(7)                         */      STATE_CLIPPLANE(7),                                 clipplane           },
+    { /* STATE_CLIPPLANE(8)                         */      STATE_CLIPPLANE(8),                                 clipplane           },
+    { /* STATE_CLIPPLANE(9)                         */      STATE_CLIPPLANE(9),                                 clipplane           },
+    { /* STATE_CLIPPLANE(10)                        */      STATE_CLIPPLANE(10),                                clipplane           },
+    { /* STATE_CLIPPLANE(11)                        */      STATE_CLIPPLANE(11),                                clipplane           },
+    { /* STATE_CLIPPLANE(12)                        */      STATE_CLIPPLANE(12),                                clipplane           },
+    { /* STATE_CLIPPLANE(13)                        */      STATE_CLIPPLANE(13),                                clipplane           },
+    { /* STATE_CLIPPLANE(14)                        */      STATE_CLIPPLANE(14),                                clipplane           },
+    { /* STATE_CLIPPLANE(15)                        */      STATE_CLIPPLANE(15),                                clipplane           },
+    { /* STATE_CLIPPLANE(16)                        */      STATE_CLIPPLANE(16),                                clipplane           },
+    { /* STATE_CLIPPLANE(17)                        */      STATE_CLIPPLANE(17),                                clipplane           },
+    { /* STATE_CLIPPLANE(18)                        */      STATE_CLIPPLANE(18),                                clipplane           },
+    { /* STATE_CLIPPLANE(19)                        */      STATE_CLIPPLANE(19),                                clipplane           },
+    { /* STATE_CLIPPLANE(20)                        */      STATE_CLIPPLANE(20),                                clipplane           },
+    { /* STATE_CLIPPLANE(21)                        */      STATE_CLIPPLANE(21),                                clipplane           },
+    { /* STATE_CLIPPLANE(22)                        */      STATE_CLIPPLANE(22),                                clipplane           },
+    { /* STATE_CLIPPLANE(23)                        */      STATE_CLIPPLANE(23),                                clipplane           },
+    { /* STATE_CLIPPLANE(24)                        */      STATE_CLIPPLANE(24),                                clipplane           },
+    { /* STATE_CLIPPLANE(25)                        */      STATE_CLIPPLANE(25),                                clipplane           },
+    { /* STATE_CLIPPLANE(26)                        */      STATE_CLIPPLANE(26),                                clipplane           },
+    { /* STATE_CLIPPLANE(27)                        */      STATE_CLIPPLANE(27),                                clipplane           },
+    { /* STATE_CLIPPLANE(28)                        */      STATE_CLIPPLANE(28),                                clipplane           },
+    { /* STATE_CLIPPLANE(29)                        */      STATE_CLIPPLANE(29),                                clipplane           },
+    { /* STATE_CLIPPLANE(30)                        */      STATE_CLIPPLANE(30),                                clipplane           },
+    { /* STATE_CLIPPLANE(31)                        */      STATE_CLIPPLANE(31),                                clipplane           },
 };

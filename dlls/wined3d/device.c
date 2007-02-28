@@ -2418,6 +2418,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
 
     This->updateStateBlock->changed.clipplane[Index] = TRUE;
     This->updateStateBlock->set.clipplane[Index] = TRUE;
+
+    if(This->updateStateBlock->clipplane[Index][0] == pPlane[0] &&
+       This->updateStateBlock->clipplane[Index][1] == pPlane[1] &&
+       This->updateStateBlock->clipplane[Index][2] == pPlane[2] &&
+       This->updateStateBlock->clipplane[Index][3] == pPlane[3]) {
+        TRACE("Application is setting old values over, nothing to do\n");
+        return WINED3D_OK;
+    }
+
     This->updateStateBlock->clipplane[Index][0] = pPlane[0];
     This->updateStateBlock->clipplane[Index][1] = pPlane[1];
     This->updateStateBlock->clipplane[Index][2] = pPlane[2];
@@ -2429,25 +2438,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_SetClipPlane(IWineD3DDevice *iface, DWO
         return WINED3D_OK;
     }
 
-    /* Apply it */
-
-    ENTER_GL();
-
-    /* Clip Plane settings are affected by the model view in OpenGL, the View transform in direct3d */
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadMatrixf((float *) &This->stateBlock->transforms[WINED3DTS_VIEW].u.m[0][0]);
-
-    TRACE("Clipplane [%f,%f,%f,%f]\n",
-          This->updateStateBlock->clipplane[Index][0],
-          This->updateStateBlock->clipplane[Index][1],
-          This->updateStateBlock->clipplane[Index][2],
-          This->updateStateBlock->clipplane[Index][3]);
-    glClipPlane(GL_CLIP_PLANE0 + Index, This->updateStateBlock->clipplane[Index]);
-    checkGLcall("glClipPlane");
-
-    glPopMatrix();
-    LEAVE_GL();
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_CLIPPLANE(Index));
 
     return WINED3D_OK;
 }
