@@ -23,10 +23,193 @@
 #include <commctrl.h>
 
 #include "wine/test.h"
+#include "msg.h"
+
+#define PARENT_SEQ_INDEX    0
+#define LISTVIEW_SEQ_INDEX  1
+#define NUM_MSG_SEQUENCES   2
+
+#define LISTVIEW_ID 0
+#define HEADER_ID   1
+
+HWND hwndparent;
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+static const struct message redraw_listview_seq[] = {
+    { WM_PAINT,      sent|id,            0, 0, LISTVIEW_ID },
+    { WM_PAINT,      sent|id,            0, 0, HEADER_ID },
+    { WM_NCPAINT,    sent|id|defwinproc, 0, 0, HEADER_ID },
+    { WM_ERASEBKGND, sent|id|defwinproc, 0, 0, HEADER_ID },
+    { WM_NOTIFY,     sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { WM_NCPAINT,    sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { WM_ERASEBKGND, sent|id|defwinproc, 0, 0, LISTVIEW_ID },
+    { 0 }
+};
+
+struct subclass_info
+{
+    WNDPROC oldproc;
+};
+
+static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCPAINT &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        message != WM_GETICON &&
+        message != WM_DEVICECHANGE)
+    {
+        trace("parent: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        add_message(sequences, PARENT_SEQ_INDEX, &msg);
+    }
+
+    defwndproc_counter++;
+    ret = DefWindowProcA(hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
+static BOOL register_parent_wnd_class(void)
+{
+    WNDCLASSA cls;
+
+    cls.style = 0;
+    cls.lpfnWndProc = parent_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "Listview test parent class";
+    return RegisterClassA(&cls);
+}
+
+static HWND create_parent_window(void)
+{
+    if (!register_parent_wnd_class())
+        return NULL;
+
+    return CreateWindowEx(0, "Listview test parent class",
+                          "Listview test parent window",
+                          WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX |
+                          WS_MAXIMIZEBOX | WS_VISIBLE,
+                          0, 0, 100, 100,
+                          GetDesktopWindow(), NULL, GetModuleHandleA(NULL), NULL);
+}
+
+static LRESULT WINAPI listview_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("listview: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    msg.id = LISTVIEW_ID;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+    return ret;
+}
+
+static HWND create_listview_control()
+{
+    struct subclass_info *info;
+    HWND hwnd;
+    RECT rect;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
+
+    GetClientRect(hwndparent, &rect);
+    hwnd = CreateWindowExA(0, WC_LISTVIEW, "foo",
+                           WS_CHILD | WS_BORDER | WS_VISIBLE | LVS_REPORT,
+                           0, 0, rect.right, rect.bottom,
+                           hwndparent, NULL, GetModuleHandleA(NULL), NULL);
+    ok(hwnd != NULL, "gle=%d\n", GetLastError());
+
+    if (!hwnd)
+    {
+        HeapFree(GetProcessHeap(), 0, info);
+        return NULL;
+    }
+
+    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
+                                            (LONG)listview_subclass_proc);
+    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+
+    return hwnd;
+}
+
+static LRESULT WINAPI header_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("header: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    msg.id = HEADER_ID;
+    add_message(sequences, LISTVIEW_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+    return ret;
+}
+
+static HWND subclass_header(HWND hwndListview)
+{
+    struct subclass_info *info;
+    HWND hwnd;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
+
+    hwnd = ListView_GetHeader(hwndListview);
+    info->oldproc = (WNDPROC)SetWindowLongA(hwnd, GWL_WNDPROC,
+                                            (LONG)header_subclass_proc);
+    SetWindowLongA(hwnd, GWL_USERDATA, (LONG)info);
+
+    return hwnd;
+}
 
 static void test_images(void)
 {
-    HWND hwnd, hwndparent = 0;
+    HWND hwnd;
     DWORD r;
     LVITEM item;
     HIMAGELIST himl;
@@ -95,7 +278,7 @@ static void test_images(void)
 
 static void test_checkboxes(void)
 {
-    HWND hwnd, hwndparent = 0;
+    HWND hwnd;
     LVITEMA item;
     DWORD r;
     static CHAR text[]  = "Text",
@@ -236,7 +419,7 @@ static void test_checkboxes(void)
 static void test_items(void)
 {
     const LPARAM lparamTest = 0x42;
-    HWND hwnd, hwndparent = 0;
+    HWND hwnd;
     LVITEMA item;
     LVCOLUMNA column;
     DWORD r;
@@ -378,6 +561,25 @@ static void test_create()
     DestroyWindow(hList);
 }
 
+static void test_redraw(void)
+{
+    HWND hwnd, hwndheader;
+
+    hwnd = create_listview_control();
+    hwndheader = subclass_header(hwnd);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    trace("invalidate & update\n");
+    InvalidateRect(hwnd, NULL, TRUE);
+    UpdateWindow(hwnd);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, redraw_listview_seq, "redraw listview", TRUE);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    DestroyWindow(hwnd);
+}
+
 START_TEST(listview)
 {
     INITCOMMONCONTROLSEX icc;
@@ -386,8 +588,13 @@ START_TEST(listview)
     icc.dwSize = sizeof icc;
     InitCommonControlsEx(&icc);
 
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
+
+    hwndparent = create_parent_window();
+
     test_images();
     test_checkboxes();
     test_items();
     test_create();
+    test_redraw();
 }
