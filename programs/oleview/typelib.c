@@ -95,6 +95,7 @@ static const WCHAR wszDefaultValue[]
     = { 'd','e','f','a','u','l','t','v','a','l','u','e','\0' };
 
 static const WCHAR wszReadOnly[] = { 'r','e','a','d','o','n','l','y','\0' };
+static const WCHAR wszConst[] = { 'c','o','n','s','t','\0' };
 
 void ShowLastError(void)
 {
@@ -443,6 +444,7 @@ int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
     VARDESC *pVarDesc;
     BSTR bstrName;
     WCHAR wszText[MAX_LOAD_STRING];
+    WCHAR wszAfter[MAX_LOAD_STRING];
 
     U(tvis).item.mask = TVIF_TEXT|TVIF_PARAM;
     U(tvis).item.cchTextMax = MAX_LOAD_STRING;
@@ -462,7 +464,7 @@ int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         U(tvis).item.lParam = (LPARAM) tld;
 
         memset(wszText, 0, sizeof(wszText));
-        AddToStrW(wszText, bstrName);
+        memset(wszAfter, 0, sizeof(wszAfter));
 
         if (pVarDesc->varkind == VAR_CONST)
         {
@@ -470,14 +472,21 @@ int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
             VariantInit(&var);
             if (VariantChangeType(&var, pVarDesc->lpvarValue, 0, VT_BSTR) == S_OK)
             {
+                AddToStrW(wszText, wszConst);
                 AddToStrW(wszText, wszSpace);
-                AddToStrW(wszText, wszEquals);
-                AddToStrW(wszText, wszSpace);
-                AddToStrW(wszText, V_BSTR(&var));
+                AddToStrW(wszAfter, wszSpace);
+                AddToStrW(wszAfter, wszEquals);
+                AddToStrW(wszAfter, wszSpace);
+                AddToStrW(wszAfter, V_BSTR(&var));
             }
         }
 
-	AddToTLDataStrW(tld, wszText);
+        CreateTypeInfo(wszText, wszAfter, pVarDesc->elemdescVar.tdesc, pTypeInfo);
+        AddToStrW(wszText, wszSpace);
+        AddToStrW(wszText, bstrName);
+        AddToStrW(wszText, wszAfter);
+	AddToTLDataStrW(tld, bstrName);
+        AddToTLDataStrW(tld, wszAfter);
 	if (i<cVars-1)
             AddToTLDataStrW(tld, wszComa);
         AddToTLDataStrW(tld, wszNewLine);
