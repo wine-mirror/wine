@@ -151,7 +151,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
  * FIXME: There may be more than one window type in the file, so
  *        add the ability to choose a certain window type
  */
-BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pChmInfo, HH_WINTYPEW *pHHWinType)
+BOOL LoadWinTypeFromCHM(CHMInfo *pChmInfo, HH_WINTYPEW *pHHWinType)
 {
     LARGE_INTEGER liOffset;
     IStorage *pStorage = pChmInfo->pStorage;
@@ -209,7 +209,7 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
 
     CHMInfo *ret = hhctrl_alloc_zero(sizeof(CHMInfo));
 
-    ret->szFile = szFile;
+    ret->szFile = strdupW(szFile);
 
     hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
             &IID_IITStorage, (void **) &ret->pITStorage) ;

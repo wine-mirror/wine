@@ -1,5 +1,6 @@
 /*
  * Copyright 2005 James Hawkins
+ * Copyright 2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,6 +38,7 @@
 #endif
 
 #include "wine/itss.h"
+#include "wine/unicode.h"
 
 #define WB_GOBACK     0
 #define WB_GOFORWARD  1
@@ -75,7 +77,7 @@ void ResizeWebBrowser(HHInfo*,DWORD,DWORD);
 void DoPageAction(HHInfo*,DWORD);
 
 CHMInfo *OpenCHM(LPCWSTR szFile);
-BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
+BOOL LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
 
 /* memory allocation functions */
@@ -103,6 +105,21 @@ static inline void *hhctrl_realloc_zero(void *mem, size_t len)
 static inline BOOL hhctrl_free(void *mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
+}
+
+static inline LPWSTR strdupW(LPCWSTR str)
+{
+    LPWSTR ret;
+    int size;
+
+    if(!str)
+        return NULL;
+
+    size = (strlenW(str)+1)*sizeof(WCHAR);
+    ret = hhctrl_alloc(size);
+    memcpy(ret, str, size);
+
+    return ret;
 }
 
 static inline LPWSTR strdupAtoW(LPCSTR str)

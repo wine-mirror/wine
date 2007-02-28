@@ -24,7 +24,6 @@
 #include "commctrl.h"
 #include "wininet.h"
 
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 #include "resource.h"
@@ -737,7 +736,7 @@ static void HH_InitRequiredControls(DWORD dwControls)
 }
 
 /* Creates the whole package */
-static BOOL HH_CreateViewer(HHInfo *pHHInfo)
+static BOOL CreateViewer(HHInfo *pHHInfo)
 {
     HH_CreateFont(pHHInfo);
 
@@ -765,7 +764,7 @@ static BOOL HH_CreateViewer(HHInfo *pHHInfo)
     return TRUE;
 }
 
-static void HH_Close(HHInfo *info)
+static void ReleaseHelpViewer(HHInfo *info)
 {
     if (!info)
         return;
@@ -786,43 +785,49 @@ static void HH_Close(HHInfo *info)
         CloseCHM(info->pCHMInfo);
 
     ReleaseWebBrowser(info);
+
+    hhctrl_free(info);
+    OleUninitialize();
 }
 
-static HHInfo *HH_OpenHH(LPWSTR filename)
+static HHInfo *CreateHelpViewer(LPCWSTR filename)
 {
-    HHInfo *pHHInfo = hhctrl_alloc_zero(sizeof(HHInfo));
+    HHInfo *info = hhctrl_alloc_zero(sizeof(HHInfo));
 
-    pHHInfo->pCHMInfo = OpenCHM(filename);
-    if(!pHHInfo->pCHMInfo) {
-        HH_Close(pHHInfo);
+    OleInitialize(NULL);
+
+    info->pCHMInfo = OpenCHM(filename);
+    if(!info->pCHMInfo) {
+        ReleaseHelpViewer(info);
         return NULL;
     }
 
-    if (!CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, &pHHInfo->WinType)) {
-        HH_Close(pHHInfo);
+    if (!LoadWinTypeFromCHM(info->pCHMInfo, &info->WinType)) {
+        ReleaseHelpViewer(info);
         return NULL;
     }
 
-    return pHHInfo;
+    if(!CreateViewer(info)) {
+        ReleaseHelpViewer(info);
+        return NULL;
+    }
+
+    return info;
 }
 
 /* FIXME: Check szCmdLine for bad arguments */
 int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 {
     MSG msg;
-    HHInfo *pHHInfo;
+    HHInfo *info;
+    LPWSTR filename = strdupAtoW(szCmdLine);
 
-    if (FAILED(OleInitialize(NULL)))
+    info = CreateHelpViewer(filename);
+    hhctrl_free(filename);
+    if(!info)
         return -1;
 
-    pHHInfo = HH_OpenHH(strdupAtoW(szCmdLine));
-    if (!pHHInfo || !HH_CreateViewer(pHHInfo))
-    {
-        OleUninitialize();
-        return -1;
-    }
-
-    NavigateToChm(pHHInfo, pHHInfo->pCHMInfo->szFile, pHHInfo->WinType.pszFile);
+    NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
     
     while (GetMessageW(&msg, 0, 0, 0))
     {
@@ -830,9 +835,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         DispatchMessageW(&msg);
     }
 
-    HH_Close(pHHInfo);
-    hhctrl_free(pHHInfo);
-    OleUninitialize();
+    ReleaseHelpViewer(info);
 
     return 0;
 }
