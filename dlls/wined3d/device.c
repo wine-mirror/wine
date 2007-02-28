@@ -1075,10 +1075,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         break;
 
     case WINED3DQUERYTYPE_EVENT:
-        /* Half-Life 2 needs this query. It does not render the main menu correctly otherwise
-         * Pretend to support it, faking this query does not do much harm except potentially lowering performance
-         */
-        FIXME("(%p) Event query: Unimplemented, but pretending to be supported\n", This);
+        if(!GL_SUPPORT(NV_FENCE)) {
+            /* Half-Life 2 needs this query. It does not render the main menu correctly otherwise
+             * Pretend to support it, faking this query does not do much harm except potentially lowering performance
+             */
+            FIXME("(%p) Event query: Unimplemented, but pretending to be supported\n", This);
+        }
         hr = WINED3D_OK;
         break;
 
@@ -1112,10 +1114,18 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
             GL_EXTCALL(glGenQueriesARB(1, &((WineQueryOcclusionData *)(object->extendedData))->queryId));
             break;
         }
+    case WINED3DQUERYTYPE_EVENT:
+        /* TODO: GL_APPLE_fence */
+        if(GL_SUPPORT(NV_FENCE)) {
+            object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
+            GL_EXTCALL(glGenFencesNV(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
+            checkGLcall("glGenFencesNV");
+        }
+        break;
+
     case WINED3DQUERYTYPE_VCACHE:
     case WINED3DQUERYTYPE_RESOURCEMANAGER:
     case WINED3DQUERYTYPE_VERTEXSTATS:
-    case WINED3DQUERYTYPE_EVENT:
     case WINED3DQUERYTYPE_TIMESTAMP:
     case WINED3DQUERYTYPE_TIMESTAMPDISJOINT:
     case WINED3DQUERYTYPE_TIMESTAMPFREQ:

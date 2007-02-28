@@ -1339,6 +1339,9 @@ typedef struct  WineQueryOcclusionData {
     GLuint  queryId;
 } WineQueryOcclusionData;
 
+typedef struct  WineQueryEventData {
+    GLuint  fenceId;
+} WineQueryEventData;
 
 /*****************************************************************************
  * IWineD3DSwapChainImpl implementation structure (extends IUnknown)
