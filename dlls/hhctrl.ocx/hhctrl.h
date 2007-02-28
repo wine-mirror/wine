@@ -57,18 +57,22 @@ typedef struct CHMInfo
 } CHMInfo;
 
 
-typedef struct WBInfo
-{
-    IOleClientSite *pOleClientSite;
-    IWebBrowser2 *pWebBrowser2;
-    IOleObject *pBrowserObject;
-    HWND hwndParent;
-} WBInfo;
+typedef struct {
+    IOleClientSite *client_site;
+    IWebBrowser2 *web_browser;
+    IOleObject *wb_object;
 
-BOOL WB_EmbedBrowser(WBInfo *pWBInfo, HWND hwndParent);
-void WB_UnEmbedBrowser(WBInfo *pWBInfo);
-void WB_ResizeBrowser(WBInfo *pWBInfo, DWORD dwWidth, DWORD dwHeight);
-void WB_DoPageAction(WBInfo *pWBInfo, DWORD dwAction);
+    HH_WINTYPEW WinType;
+    CHMInfo *pCHMInfo;
+    HWND hwndTabCtrl;
+    HWND hwndSizeBar;
+    HFONT hFont;
+} HHInfo;
+
+BOOL InitWebBrowser(HHInfo*,HWND);
+void ReleaseWebBrowser(HHInfo*);
+void ResizeWebBrowser(HHInfo*,DWORD,DWORD);
+void DoPageAction(HHInfo*,DWORD);
 
 CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL CHM_LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);

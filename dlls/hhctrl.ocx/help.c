@@ -43,16 +43,6 @@ static void Help_OnSize(HWND hWnd);
 
 static const WCHAR szEmpty[] = {0};
 
-typedef struct tagHHInfo
-{
-    HH_WINTYPEW WinType;
-    CHMInfo *pCHMInfo;
-    WBInfo *pWBInfo;
-    HWND hwndTabCtrl;
-    HWND hwndSizeBar;
-    HFONT hFont;
-} HHInfo;
-
 /* Loads a string from the resource file */
 static LPWSTR HH_LoadString(DWORD dwID)
 {
@@ -68,7 +58,7 @@ static LPWSTR HH_LoadString(DWORD dwID)
     return string;
 }
 
-static BOOL NavigateToChm(WBInfo *pWBInfo, LPCWSTR file, LPCWSTR index)
+static BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
 {
     WCHAR buf[INTERNET_MAX_URL_LENGTH];
     WCHAR full_path[MAX_PATH];
@@ -77,7 +67,7 @@ static BOOL NavigateToChm(WBInfo *pWBInfo, LPCWSTR file, LPCWSTR index)
     static const WCHAR url_format[] =
         {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','/','%','s',0};
 
-    if (!pWBInfo->pWebBrowser2)
+    if (!info->web_browser)
         return FALSE;
 
     if(!GetFullPathNameW(file, sizeof(full_path), full_path, NULL)) {
@@ -90,7 +80,7 @@ static BOOL NavigateToChm(WBInfo *pWBInfo, LPCWSTR file, LPCWSTR index)
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(buf);
 
-    IWebBrowser2_Navigate2(pWBInfo->pWebBrowser2, &url, 0, 0, 0, 0);
+    IWebBrowser2_Navigate2(info->web_browser, &url, 0, 0, 0, 0);
     VariantClear(&url);
 
     return TRUE;
@@ -316,24 +306,24 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
 
 static void TB_OnClick(HWND hWnd, DWORD dwID)
 {
-    HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
+    HHInfo *info = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
 
     switch (dwID)
     {
         case IDTB_STOP:
-            WB_DoPageAction(pHHInfo->pWBInfo, WB_STOP);
+            DoPageAction(info, WB_STOP);
             break;
         case IDTB_REFRESH:
-            WB_DoPageAction(pHHInfo->pWBInfo, WB_REFRESH);
+            DoPageAction(info, WB_REFRESH);
             break;
         case IDTB_BACK:
-            WB_DoPageAction(pHHInfo->pWBInfo, WB_GOBACK);
+            DoPageAction(info, WB_GOBACK);
             break;
         case IDTB_HOME:
-            NavigateToChm(pHHInfo->pWBInfo, pHHInfo->pCHMInfo->szFile, pHHInfo->WinType.pszHome);
+            NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszHome);
             break;
         case IDTB_FORWARD:
-            WB_DoPageAction(pHHInfo->pWBInfo, WB_GOFORWARD);
+            DoPageAction(info, WB_GOFORWARD);
             break;
         case IDTB_EXPAND:
         case IDTB_CONTRACT:
@@ -580,7 +570,7 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
     if (!hWnd)
         return FALSE;
 
-    if (!WB_EmbedBrowser(pHHInfo->pWBInfo, hWnd))
+    if (!InitWebBrowser(pHHInfo, hWnd))
         return FALSE;
 
     /* store the pointer to the HH info struct */
@@ -623,7 +613,7 @@ static void Help_OnSize(HWND hWnd)
 
     /* Resize browser window taking the frame size into account */
     dwSize = GetSystemMetrics(SM_CXFRAME);
-    WB_ResizeBrowser(pHHInfo->pWBInfo, rc.right - dwSize, rc.bottom - dwSize);
+    ResizeWebBrowser(pHHInfo, rc.right - dwSize, rc.bottom - dwSize);
 }
 
 static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -795,11 +785,7 @@ static void HH_Close(HHInfo *info)
     if (info->pCHMInfo)
         CloseCHM(info->pCHMInfo);
 
-    if (info->pWBInfo)
-    {
-        WB_UnEmbedBrowser(info->pWBInfo);
-        hhctrl_free(info->pWBInfo);
-    }
+    ReleaseWebBrowser(info);
 }
 
 static HHInfo *HH_OpenHH(LPWSTR filename)
@@ -811,8 +797,6 @@ static HHInfo *HH_OpenHH(LPWSTR filename)
         HH_Close(pHHInfo);
         return NULL;
     }
-
-    pHHInfo->pWBInfo = hhctrl_alloc(sizeof(WBInfo));
 
     if (!CHM_LoadWinTypeFromCHM(pHHInfo->pCHMInfo, &pHHInfo->WinType)) {
         HH_Close(pHHInfo);
@@ -838,7 +822,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         return -1;
     }
 
-    NavigateToChm(pHHInfo->pWBInfo, pHHInfo->pCHMInfo->szFile, pHHInfo->WinType.pszFile);
+    NavigateToChm(pHHInfo, pHHInfo->pCHMInfo->szFile, pHHInfo->WinType.pszFile);
     
     while (GetMessageW(&msg, 0, 0, 0))
     {
