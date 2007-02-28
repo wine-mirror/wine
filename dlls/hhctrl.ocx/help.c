@@ -40,6 +40,9 @@ static LRESULT Help_OnSize(HWND hWnd);
 #define WINTYPE_DEFAULT_HEIGHT      640
 #define WINTYPE_DEFAULT_NAVWIDTH    250
 
+#define TAB_TOP_PADDING     8
+#define TAB_RIGHT_PADDING   4
+
 static const WCHAR szEmpty[] = {0};
 
 /* Loads a string from the resource file */
@@ -250,7 +253,7 @@ static const WCHAR szChildClass[] = {
     'H','H',' ','C','h','i','l','d',0
 };
 
-static void Child_OnPaint(HWND hWnd)
+static LRESULT Child_OnPaint(HWND hWnd)
 {
     PAINTSTRUCT ps;
     HDC hdc;
@@ -278,17 +281,35 @@ static void Child_OnPaint(HWND hWnd)
     }
 
     EndPaint(hWnd, &ps);
+
+    return 0;
+}
+
+static LRESULT Child_OnSize(HWND hwnd)
+{
+    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+    RECT rect;
+
+    if(!info || hwnd != info->WinType.hwndNavigation)
+        return 0;
+
+    GetClientRect(hwnd, &rect);
+    SetWindowPos(info->hwndTabCtrl, HWND_TOP, 0, 0,
+                 rect.right - TAB_RIGHT_PADDING,
+                 rect.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
+    return 0;
 }
 
 static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
-        case WM_PAINT:
-            Child_OnPaint(hWnd);
-            break;
-        default:
-            return DefWindowProcW(hWnd, message, wParam, lParam);
+    case WM_PAINT:
+        return Child_OnPaint(hWnd);
+    case WM_SIZE:
+        return Child_OnSize(hWnd);
+    default:
+        return DefWindowProcW(hWnd, message, wParam, lParam);
     }
 
     return 0;
@@ -470,9 +491,6 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
 
 /* Navigation Pane */
 
-#define TAB_TOP_PADDING     8
-#define TAB_RIGHT_PADDING   4
-
 static void NP_GetNavigationRect(HHInfo *pHHInfo, RECT *rc)
 {
     HWND hwndParent = pHHInfo->WinType.hwndHelp;
@@ -523,6 +541,8 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
                            hwndParent, NULL, hhctrl_hinstance, NULL);
     if (!hWnd)
         return FALSE;
+
+    SetWindowLongPtrW(hWnd, GWLP_USERDATA, (LONG_PTR)info);
 
     hwndTabCtrl = CreateWindowExW(dwExStyles, WC_TABCONTROLW, szEmpty, dwStyles,
                                   0, TAB_TOP_PADDING,
@@ -611,11 +631,6 @@ static LRESULT Help_OnSize(HWND hWnd)
     NP_GetNavigationRect(pHHInfo, &rc);
     SetWindowPos(pHHInfo->WinType.hwndNavigation, HWND_TOP, 0, 0,
                  rc.right, rc.bottom, SWP_NOMOVE);
-
-    GetClientRect(pHHInfo->WinType.hwndNavigation, &rc);
-    SetWindowPos(pHHInfo->hwndTabCtrl, HWND_TOP, 0, 0,
-                 rc.right - TAB_RIGHT_PADDING,
-                 rc.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
 
     SB_GetSizeBarRect(pHHInfo, &rc);
     SetWindowPos(pHHInfo->hwndSizeBar, HWND_TOP, rc.left, rc.top,
