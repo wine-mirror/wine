@@ -1428,8 +1428,7 @@ static size_t write_typeformatstring_var(FILE *file, int indent, const func_t *f
             if (pointer_attr)
             {
                 if (! ptr_level)
-                    error("'%s': pointer attribute applied to non-pointer type",
-                          var->name);
+                    error("'%s': pointer attribute applied to non-pointer type\n", var->name);
                 pointer_type = pointer_attr;
             }
             else
