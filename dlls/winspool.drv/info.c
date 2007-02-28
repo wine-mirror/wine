@@ -7224,8 +7224,8 @@ static BOOL schedule_pipe(LPCWSTR cmd, LPCWSTR filename)
         signal(SIGPIPE, SIG_DFL);
         signal(SIGCHLD, SIG_DFL);
 
-        system(cmdA);
-        exit(0);
+        execl("/bin/sh", "/bin/sh", "-c", cmdA, (char*)0);
+        _exit(1);
     }
 
     while((no_read = read(file_fd, buf, sizeof(buf))) > 0)
