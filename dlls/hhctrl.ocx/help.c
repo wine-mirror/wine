@@ -53,8 +53,6 @@ typedef struct tagHHInfo
     HFONT hFont;
 } HHInfo;
 
-extern HINSTANCE hhctrl_hinstance;
-
 /* Loads a string from the resource file */
 static LPWSTR HH_LoadString(DWORD dwID)
 {

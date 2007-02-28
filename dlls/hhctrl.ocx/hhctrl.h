@@ -116,4 +116,6 @@ static inline LPWSTR strdupAtoW(LPCSTR str)
     return ret;
 }
 
+extern HINSTANCE hhctrl_hinstance;
+
 #endif
