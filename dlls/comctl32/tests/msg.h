@@ -37,7 +37,8 @@ typedef enum
     beginpaint = 0x40,
     optional = 0x80,
     hook = 0x100,
-    winevent_hook =0x200
+    winevent_hook =0x200,
+    id = 0x400
 } msg_flags_t;
 
 struct message
@@ -46,6 +47,7 @@ struct message
     msg_flags_t flags;  /* message props */
     WPARAM wParam;      /* expected value of wParam */
     LPARAM lParam;      /* expected value of lParam */
+    UINT id;            /* id of the window */
 };
 
 struct msg_sequence

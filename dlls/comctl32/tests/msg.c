@@ -46,6 +46,7 @@ void add_message(struct msg_sequence **seq, int sequence_index,
     msg_seq->sequence[msg_seq->count].flags = msg->flags;
     msg_seq->sequence[msg_seq->count].wParam = msg->wParam;
     msg_seq->sequence[msg_seq->count].lParam = msg->lParam;
+    msg_seq->sequence[msg_seq->count].id = msg->id;
 
     msg_seq->count++;
 }
@@ -123,6 +124,26 @@ void ok_sequence_(struct msg_sequence **seq, int sequence_index,
                     ok_(file, line) (expected->lParam == actual->lParam,
                         "%s: in msg 0x%04x expecting lParam 0x%lx got 0x%lx\n",
                         context, expected->message, expected->lParam, actual->lParam);
+                }
+            }
+
+            if (expected->flags & id)
+            {
+                if (expected->id != actual->id && todo)
+                {
+                    todo_wine
+                    {
+                        failcount++;
+                        ok_(file, line) (FALSE,
+                            "%s: in msg 0x%04x expecting id 0x%x got 0x%x\n",
+                            context, expected->message, expected->id, actual->id);
+                    }
+                }
+                else
+                {
+                    ok_(file, line) (expected->id == actual->id,
+                        "%s: in msg 0x%04x expecting id 0x%x got 0x%x\n",
+                        context, expected->message, expected->id, actual->id);
                 }
             }
 
