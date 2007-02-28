@@ -110,7 +110,8 @@ WIN32_FIND_DATA fd;
 HANDLE hff;
 BOOL force, status;
 static const char overwrite[] = "Overwrite file (Y/N)?";
-char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
+char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile, copycmd[3];
+DWORD len;
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -140,7 +141,16 @@ char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile;
     FindClose (hff);
   }
 
-  force = (strstr (quals, "/Y") != NULL);
+  /* /-Y has the highest priority, then /Y and finally the COPYCMD env. variable */
+  if (strstr (quals, "/-Y"))
+    force = FALSE;
+  else if (strstr (quals, "/Y"))
+    force = TRUE;
+  else {
+    len = GetEnvironmentVariable ("COPYCMD", copycmd, sizeof(copycmd));
+    force = (len && len < sizeof(copycmd) && ! lstrcmpi (copycmd, "/Y"));
+  }
+
   if (!force) {
     hff = FindFirstFile (outpath, &fd);
     if (hff != INVALID_HANDLE_VALUE) {
