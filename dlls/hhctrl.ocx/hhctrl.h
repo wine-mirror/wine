@@ -32,6 +32,7 @@
 #include "ole2.h"
 #include "exdisp.h"
 #include "mshtmhst.h"
+#include "commctrl.h"
 
 #ifdef INIT_GUID
 #include "initguid.h"
@@ -46,6 +47,23 @@
 #define WB_SEARCH     3
 #define WB_REFRESH    4
 #define WB_STOP       5
+
+typedef struct {
+    LPWSTR chm_file;
+    LPWSTR chm_index;
+} ChmPath;
+
+typedef struct ContentItem {
+    struct ContentItem *parent;
+    struct ContentItem *child;
+    struct ContentItem *next;
+
+    HTREEITEM id;
+
+    LPWSTR name;
+    LPWSTR local;
+    ChmPath merge;
+} ContentItem;
 
 typedef struct CHMInfo
 {
@@ -75,6 +93,7 @@ typedef struct {
 
     HH_WINTYPEW WinType;
     CHMInfo *pCHMInfo;
+    ContentItem *content;
     HWND hwndTabCtrl;
     HWND hwndSizeBar;
     HFONT hFont;
@@ -88,9 +107,14 @@ void ReleaseWebBrowser(HHInfo*);
 void ResizeWebBrowser(HHInfo*,DWORD,DWORD);
 void DoPageAction(HHInfo*,DWORD);
 
+void InitContent(HHInfo*);
+void ReleaseContent(HHInfo*);
+
 CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
+void SetChmPath(ChmPath*,LPCWSTR);
+IStream *GetChmStream(CHMInfo*,LPCWSTR,ChmPath*);
 LPWSTR FindContextAlias(CHMInfo*,DWORD);
 
 HHInfo *CreateHelpViewer(LPCWSTR);

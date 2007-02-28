@@ -8,6 +8,7 @@ EXTRALIBS = -luuid
 
 C_SRCS = \
 	chm.c \
+	content.c \
 	help.c \
 	hhctrl.c \
 	regsvr.c \

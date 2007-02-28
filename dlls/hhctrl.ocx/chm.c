@@ -247,6 +247,55 @@ done:
     return SUCCEEDED(hr);
 }
 
+void SetChmPath(ChmPath *file, LPCWSTR path)
+{
+    LPCWSTR ptr;
+    static const WCHAR separatorW[] = {':',':',0};
+
+    ptr = strstrW(path, separatorW);
+    if(ptr) {
+        file->chm_file = hhctrl_alloc((ptr-path+1)*sizeof(WCHAR));
+        memcpy(file->chm_file, path, (ptr-path)*sizeof(WCHAR));
+        file->chm_file[ptr-path] = 0;
+        ptr += 2;
+    }else {
+        file->chm_file = NULL;
+        ptr = path;
+    }
+
+    file->chm_index = strdupW(ptr);
+}
+
+IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
+{
+    IStorage *storage;
+    IStream *stream;
+    HRESULT hres;
+
+    TRACE("%s (%s :: %s)\n", debugstr_w(parent_chm), debugstr_w(chm_file->chm_file),
+          debugstr_w(chm_file->chm_index));
+
+    if(parent_chm || chm_file->chm_file) {
+        hres = IITStorage_StgOpenStorage(info->pITStorage,
+                chm_file->chm_file ? chm_file->chm_file : parent_chm, NULL,
+                STGM_READ | STGM_SHARE_DENY_WRITE, NULL, 0, &storage);
+        if(FAILED(hres)) {
+            WARN("Could not open storage: %08x\n", hres);
+            return NULL;
+        }
+    }else {
+        storage = info->pStorage;
+        IStorage_AddRef(info->pStorage);
+    }
+
+    hres = IStorage_OpenStream(storage, chm_file->chm_index, NULL, STGM_READ, 0, &stream);
+    IStorage_Release(storage);
+    if(FAILED(hres))
+        WARN("Could not open stream: %08x\n", hres);
+
+    return stream;
+}
+
 /* Opens the CHM file for reading */
 CHMInfo *OpenCHM(LPCWSTR szFile)
 {

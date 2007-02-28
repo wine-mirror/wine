@@ -859,6 +859,8 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
     if (!AddContentTab(pHHInfo))
         return FALSE;
 
+    InitContent(pHHInfo);
+
     return TRUE;
 }
 
@@ -883,6 +885,7 @@ void ReleaseHelpViewer(HHInfo *info)
         CloseCHM(info->pCHMInfo);
 
     ReleaseWebBrowser(info);
+    ReleaseContent(info);
 
     if(info->WinType.hwndHelp)
         DestroyWindow(info->WinType.hwndHelp);
