@@ -25,8 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
-int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine);
-
 HINSTANCE hhctrl_hinstance;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
@@ -87,33 +85,34 @@ static const char *command_to_string(UINT command)
 
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 {
-    CHAR *file = NULL;
 
     TRACE("(%p, %s, command=%s, data=%d)\n",
           caller, debugstr_w( filename ),
           command_to_string( command ), data);
 
-    if (filename)
-    {
-        DWORD len = WideCharToMultiByte( CP_ACP, 0, filename, -1, NULL, 0, NULL, NULL );
-
-        file = hhctrl_alloc(len);
-        WideCharToMultiByte( CP_ACP, 0, filename, -1, file, len, NULL, NULL );
-    }
-
     switch (command)
     {
-        case HH_DISPLAY_TOPIC:
-        case HH_DISPLAY_TOC:
-        case HH_DISPLAY_SEARCH:
-        case HH_HELP_CONTEXT:
-            FIXME("Not all HH cases handled correctly\n");
-            doWinMain(GetModuleHandleW(NULL), file);
-            break;
-        default:
-            FIXME("HH case %s not handled.\n", command_to_string( command ));
+    case HH_DISPLAY_TOPIC:
+    case HH_DISPLAY_TOC:
+    case HH_DISPLAY_SEARCH:
+    case HH_HELP_CONTEXT: {
+        HHInfo *info;
+        BOOL res;
+
+        FIXME("Not all HH cases handled correctly\n");
+
+        info = CreateHelpViewer(filename);
+
+        res = NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
+        if(!res)
+            ReleaseHelpViewer(info);
+
+        return NULL; /* FIXME */
     }
-    hhctrl_free(file);
+    default:
+        FIXME("HH case %s not handled.\n", command_to_string( command ));
+    }
+
     return 0;
 }
 
