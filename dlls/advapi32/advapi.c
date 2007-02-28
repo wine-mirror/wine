@@ -84,7 +84,7 @@ BOOL WINAPI
 GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 {
     const char *name = wine_get_user_name();
-    DWORD len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
+    DWORD i, len = MultiByteToWideChar( CP_UNIXCP, 0, name, -1, NULL, 0 );
 
     if (len > *lpSize)
     {
@@ -95,6 +95,12 @@ GetUserNameW( LPWSTR lpszName, LPDWORD lpSize )
 
     *lpSize = len;
     MultiByteToWideChar( CP_UNIXCP, 0, name, -1, lpszName, len );
+
+    /* Word uses the user name to create named mutexes and file mappings,
+     * and backslashes in the name cause the creation to fail.
+     */
+    for (i = 0; lpszName[i]; i++)
+        if (lpszName[i] == '\\' || lpszName[i] == '/') lpszName[i] = '_';
     return TRUE;
 }
 
