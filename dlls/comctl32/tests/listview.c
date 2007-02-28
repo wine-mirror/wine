@@ -573,7 +573,7 @@ static void test_redraw(void)
     trace("invalidate & update\n");
     InvalidateRect(hwnd, NULL, TRUE);
     UpdateWindow(hwnd);
-    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, redraw_listview_seq, "redraw listview", TRUE);
+    ok_sequence(sequences, LISTVIEW_SEQ_INDEX, redraw_listview_seq, "redraw listview", FALSE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
 

@@ -8798,6 +8798,9 @@ static LRESULT LISTVIEW_Paint(LISTVIEW_INFO *infoPtr, HDC hdc)
 	    LISTVIEW_Arrange(infoPtr, LVA_DEFAULT);
 	LISTVIEW_UpdateScroll(infoPtr);
     }
+
+    UpdateWindow(infoPtr->hwndHeader);
+
     if (hdc) 
 	LISTVIEW_Refresh(infoPtr, hdc);
     else
