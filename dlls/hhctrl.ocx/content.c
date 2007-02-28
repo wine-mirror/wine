@@ -351,6 +351,34 @@ static ContentItem *parse_hhc(HHInfo *info, IStream *str, insert_type_t *insert_
     return ret;
 }
 
+static void insert_content_item(HWND hwnd, ContentItem *parent, ContentItem *item)
+{
+    TVINSERTSTRUCTW tvis;
+
+    memset(&tvis, 0, sizeof(tvis));
+    tvis.u.item.mask = TVIF_TEXT|TVIF_PARAM;
+    tvis.u.item.cchTextMax = strlenW(item->name)+1;
+    tvis.u.item.pszText = item->name;
+    tvis.u.item.lParam = (LPARAM)item;
+    tvis.hParent = parent ? parent->id : 0;
+    tvis.hInsertAfter = TVI_LAST;
+
+    item->id = (HTREEITEM)SendMessageW(hwnd, TVM_INSERTITEMW, 0, (LPARAM)&tvis);
+}
+
+static void fill_content_tree(HWND hwnd, ContentItem *parent, ContentItem *item)
+{
+    while(item) {
+        if(item->name) {
+            insert_content_item(hwnd, parent, item);
+            fill_content_tree(hwnd, item, item->child);
+        }else {
+            fill_content_tree(hwnd, parent, item->child);
+        }
+        item = item->next;
+    }
+}
+
 static void set_item_parents(ContentItem *parent, ContentItem *item)
 {
     while(item) {
@@ -380,6 +408,7 @@ void InitContent(HHInfo *info)
     IStream_Release(stream);
 
     set_item_parents(NULL, info->content);
+    fill_content_tree(info->tabs[TAB_CONTENTS].hwnd, NULL, info->content);
 }
 
 static void free_content_item(ContentItem *item)
