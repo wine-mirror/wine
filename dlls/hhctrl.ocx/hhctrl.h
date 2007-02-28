@@ -79,9 +79,11 @@ void DoPageAction(HHInfo*,DWORD);
 CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
+LPWSTR FindContextAlias(CHMInfo*,DWORD);
 
 HHInfo *CreateHelpViewer(LPCWSTR);
 void ReleaseHelpViewer(HHInfo*);
+BOOL NavigateToUrl(HHInfo*,LPCWSTR);
 BOOL NavigateToChm(HHInfo*,LPCWSTR,LPCWSTR);
 
 /* memory allocation functions */

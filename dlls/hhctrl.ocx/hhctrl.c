@@ -2,6 +2,7 @@
  * hhctrl implementation
  *
  * Copyright 2004 Krzysztof Foltman
+ * Copyright 2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,7 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
 HINSTANCE hhctrl_hinstance;
-BOOL hh_process;
+BOOL hh_process = FALSE;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -84,9 +85,11 @@ static const char *command_to_string(UINT command)
 #undef X
 }
 
+/******************************************************************
+ *		HtmlHelpW (hhctrl.ocx.15)
+ */
 HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 {
-
     TRACE("(%p, %s, command=%s, data=%d)\n",
           caller, debugstr_w( filename ),
           command_to_string( command ), data);
@@ -95,8 +98,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
     {
     case HH_DISPLAY_TOPIC:
     case HH_DISPLAY_TOC:
-    case HH_DISPLAY_SEARCH:
-    case HH_HELP_CONTEXT: {
+    case HH_DISPLAY_SEARCH:{
         HHInfo *info;
         BOOL res;
 
@@ -110,6 +112,23 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
 
         return NULL; /* FIXME */
     }
+    case HH_HELP_CONTEXT: {
+        HHInfo *info;
+        LPWSTR url;
+
+        info = CreateHelpViewer(filename);
+        if(!info)
+            return NULL;
+
+        url = FindContextAlias(info->pCHMInfo, data);
+        if(!url)
+            return NULL;
+
+        NavigateToUrl(info, url);
+        hhctrl_free(url);
+
+        return NULL; /* FIXME */
+    }
     default:
         FIXME("HH case %s not handled.\n", command_to_string( command ));
     }
@@ -117,6 +136,9 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD data)
     return 0;
 }
 
+/******************************************************************
+ *		HtmlHelpA (hhctrl.ocx.14)
+ */
 HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
 {
     WCHAR *wfile = NULL;

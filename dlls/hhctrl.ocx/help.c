@@ -57,14 +57,31 @@ static LPWSTR HH_LoadString(DWORD dwID)
     return string;
 }
 
+BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
+{
+    VARIANT url;
+    HRESULT hres;
+
+    V_VT(&url) = VT_BSTR;
+    V_BSTR(&url) = SysAllocString(surl);
+
+    hres = IWebBrowser2_Navigate2(info->web_browser, &url, 0, 0, 0, 0);
+
+    VariantClear(&url);
+
+    return SUCCEEDED(hres);
+}
+
 BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
 {
     WCHAR buf[INTERNET_MAX_URL_LENGTH];
     WCHAR full_path[MAX_PATH];
-    VARIANT url;
+    LPWSTR ptr;
 
     static const WCHAR url_format[] =
         {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','/','%','s',0};
+
+    TRACE("%p %s %s\n", info, debugstr_w(file), debugstr_w(index));
 
     if (!info->web_browser)
         return FALSE;
@@ -76,13 +93,11 @@ BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
 
     wsprintfW(buf, url_format, full_path, index);
 
-    V_VT(&url) = VT_BSTR;
-    V_BSTR(&url) = SysAllocString(buf);
+    /* FIXME: HACK */
+    if((ptr = strchrW(buf, '#')))
+       *ptr = 0;
 
-    IWebBrowser2_Navigate2(info->web_browser, &url, 0, 0, 0, 0);
-    VariantClear(&url);
-
-    return TRUE;
+    return NavigateToUrl(info, buf);
 }
 
 /* Size Bar */

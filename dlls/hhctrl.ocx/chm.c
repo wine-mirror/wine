@@ -146,6 +146,53 @@ static BOOL ReadChmSystem(CHMInfo *chm)
     return SUCCEEDED(hres);
 }
 
+LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
+{
+    IStream *ivb_stream;
+    DWORD size, read, i;
+    DWORD *buf;
+    LPCSTR ret = NULL;
+    HRESULT hres;
+
+    static const WCHAR wszIVB[] = {'#','I','V','B',0};
+
+    hres = IStorage_OpenStream(chm->pStorage, wszIVB, NULL, STGM_READ, 0, &ivb_stream);
+    if(FAILED(hres)) {
+        WARN("Could not open #IVB stream: %08x\n", hres);
+        return NULL;
+    }
+
+    hres = IStream_Read(ivb_stream, &size, sizeof(size), &read);
+    if(FAILED(hres)) {
+        WARN("Read failed: %08x\n", hres);
+        IStream_Release(ivb_stream);
+        return NULL;
+    }
+
+    buf = hhctrl_alloc(size);
+    hres = IStream_Read(ivb_stream, buf, size, &read);
+    IStream_Release(ivb_stream);
+    if(FAILED(hres)) {
+        WARN("Read failed: %08x\n", hres);
+        hhctrl_free(buf);
+        return NULL;
+    }
+
+    size /= 2*sizeof(DWORD);
+
+    for(i=0; i<size; i++) {
+        if(buf[2*i] == index) {
+            ret = GetChmString(chm, buf[2*i+1]);
+            break;
+        }
+    }
+
+    hhctrl_free(buf);
+
+    TRACE("returning %s\n", debugstr_a(ret));
+    return strdupAtoW(ret);
+}
+
 /* Loads the HH_WINTYPE data from the CHM file
  *
  * FIXME: There may be more than one window type in the file, so
