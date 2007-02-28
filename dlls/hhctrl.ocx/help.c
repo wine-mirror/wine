@@ -178,7 +178,7 @@ static void HH_RegisterSizeBarClass(HHInfo *pHHInfo)
 
     wcex.cbSize         = sizeof(WNDCLASSEXW);
     wcex.style          = 0;
-    wcex.lpfnWndProc    = (WNDPROC)SizeBar_WndProc;
+    wcex.lpfnWndProc    = SizeBar_WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hhctrl_hinstance;
@@ -285,7 +285,7 @@ static void HH_RegisterChildWndClass(HHInfo *pHHInfo)
 
     wcex.cbSize         = sizeof(WNDCLASSEXW);
     wcex.style          = 0;
-    wcex.lpfnWndProc    = (WNDPROC)Child_WndProc;
+    wcex.lpfnWndProc    = Child_WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hhctrl_hinstance;
@@ -658,7 +658,7 @@ static BOOL HH_CreateHelpWindow(HHInfo *info)
 
     wcex.cbSize         = sizeof(WNDCLASSEXW);
     wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = (WNDPROC)Help_WndProc;
+    wcex.lpfnWndProc    = Help_WndProc;
     wcex.cbClsExtra     = 0;
     wcex.cbWndExtra     = 0;
     wcex.hInstance      = hhctrl_hinstance;
