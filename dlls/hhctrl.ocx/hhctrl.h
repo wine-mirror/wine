@@ -80,6 +80,10 @@ CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
 
+HHInfo *CreateHelpViewer(LPCWSTR);
+void ReleaseHelpViewer(HHInfo*);
+BOOL NavigateToChm(HHInfo*,LPCWSTR,LPCWSTR);
+
 /* memory allocation functions */
 
 static inline void *hhctrl_alloc(size_t len)

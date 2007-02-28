@@ -57,7 +57,7 @@ static LPWSTR HH_LoadString(DWORD dwID)
     return string;
 }
 
-static BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
+BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
 {
     WCHAR buf[INTERNET_MAX_URL_LENGTH];
     WCHAR full_path[MAX_PATH];
@@ -764,7 +764,7 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
     return TRUE;
 }
 
-static void ReleaseHelpViewer(HHInfo *info)
+void ReleaseHelpViewer(HHInfo *info)
 {
     if (!info)
         return;
@@ -790,7 +790,7 @@ static void ReleaseHelpViewer(HHInfo *info)
     OleUninitialize();
 }
 
-static HHInfo *CreateHelpViewer(LPCWSTR filename)
+HHInfo *CreateHelpViewer(LPCWSTR filename)
 {
     HHInfo *info = hhctrl_alloc_zero(sizeof(HHInfo));
 
@@ -813,29 +813,4 @@ static HHInfo *CreateHelpViewer(LPCWSTR filename)
     }
 
     return info;
-}
-
-/* FIXME: Check szCmdLine for bad arguments */
-int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
-{
-    MSG msg;
-    HHInfo *info;
-    LPWSTR filename = strdupAtoW(szCmdLine);
-
-    info = CreateHelpViewer(filename);
-    hhctrl_free(filename);
-    if(!info)
-        return -1;
-
-    NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
-    
-    while (GetMessageW(&msg, 0, 0, 0))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
-
-    ReleaseHelpViewer(info);
-
-    return 0;
 }

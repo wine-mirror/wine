@@ -135,3 +135,31 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
     hhctrl_free(wfile);
     return result;
 }
+
+/******************************************************************
+ *		doWinMain (hhctrl.ocx.13)
+ */
+int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
+{
+    MSG msg;
+    HHInfo *info;
+    LPWSTR filename = strdupAtoW(szCmdLine);
+
+    /* FIXME: Check szCmdLine for bad arguments */
+    info = CreateHelpViewer(filename);
+    hhctrl_free(filename);
+    if(!info)
+        return -1;
+
+    NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
+
+    while (GetMessageW(&msg, 0, 0, 0))
+    {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    ReleaseHelpViewer(info);
+
+    return 0;
+}
