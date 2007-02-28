@@ -39,7 +39,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(advapi);
 
 static const WCHAR szServiceManagerKey[] = { 'S','y','s','t','e','m','\\',
       'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
-      'S','e','r','v','i','c','e','s','\\',0 };
+      'S','e','r','v','i','c','e','s',0 };
 static const WCHAR  szSCMLock[] = {'A','D','V','A','P','I','_','S','C','M',
                                    'L','O','C','K',0};
 
@@ -1010,8 +1010,7 @@ SC_HANDLE WINAPI OpenSCManagerW( LPCWSTR lpMachineName, LPCWSTR lpDatabaseName,
     if (r!=ERROR_SUCCESS)
         goto error;
 
-    r = RegOpenKeyExW(hReg, szServiceManagerKey,
-                      0, KEY_ALL_ACCESS, &manager->hkey);
+    r = RegCreateKeyW(hReg, szServiceManagerKey, &manager->hkey);
     RegCloseKey( hReg );
     if (r!=ERROR_SUCCESS)
         goto error;
