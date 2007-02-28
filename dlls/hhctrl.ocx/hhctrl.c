@@ -163,3 +163,12 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 
     return 0;
 }
+
+/******************************************************************
+ *		DllGetClassObject (hhctrl.ocx.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID *ppv)
+{
+    FIXME("(%s %s %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
+    return CLASS_E_CLASSNOTAVAILABLE;
+}
