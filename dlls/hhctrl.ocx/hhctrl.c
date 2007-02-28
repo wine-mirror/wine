@@ -159,8 +159,6 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         DispatchMessageW(&msg);
     }
 
-    ReleaseHelpViewer(info);
-
     return 0;
 }
 

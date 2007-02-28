@@ -627,6 +627,9 @@ static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         break;
     case WM_SIZE:
         return Help_OnSize(hWnd);
+    case WM_CLOSE:
+        ReleaseHelpViewer((HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA));
+        return 0;
     case WM_DESTROY:
         PostQuitMessage(0);
         break;
@@ -779,6 +782,9 @@ void ReleaseHelpViewer(HHInfo *info)
         CloseCHM(info->pCHMInfo);
 
     ReleaseWebBrowser(info);
+
+    if(info->WinType.hwndHelp)
+        DestroyWindow(info->WinType.hwndHelp);
 
     hhctrl_free(info);
     OleUninitialize();
