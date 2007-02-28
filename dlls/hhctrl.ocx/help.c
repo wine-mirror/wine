@@ -30,7 +30,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
-static void Help_OnSize(HWND hWnd);
+static LRESULT Help_OnSize(HWND hWnd);
 
 /* Window type defaults */
 
@@ -584,14 +584,14 @@ static BOOL HH_AddHTMLPane(HHInfo *pHHInfo)
 
 /* Viewer Window */
 
-static void Help_OnSize(HWND hWnd)
+static LRESULT Help_OnSize(HWND hWnd)
 {
     HHInfo *pHHInfo = (HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA);
     DWORD dwSize;
     RECT rc;
 
     if (!pHHInfo)
-        return;
+        return 0;
 
     NP_GetNavigationRect(pHHInfo, &rc);
     SetWindowPos(pHHInfo->WinType.hwndNavigation, HWND_TOP, 0, 0,
@@ -613,32 +613,26 @@ static void Help_OnSize(HWND hWnd)
     /* Resize browser window taking the frame size into account */
     dwSize = GetSystemMetrics(SM_CXFRAME);
     ResizeWebBrowser(pHHInfo, rc.right - dwSize, rc.bottom - dwSize);
+
+    return 0;
 }
 
 static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    PAINTSTRUCT ps;
-    HDC hdc;
-
     switch (message)
     {
-        case WM_COMMAND:
-            if (HIWORD(wParam) == BN_CLICKED)
-                TB_OnClick(hWnd, LOWORD(wParam));
-            break;
-        case WM_SIZE:
-            Help_OnSize(hWnd);
-            break;
-        case WM_PAINT:
-            hdc = BeginPaint(hWnd, &ps);
-            EndPaint(hWnd, &ps);
-            break;
-        case WM_DESTROY:
-            PostQuitMessage(0);
-            break;
+    case WM_COMMAND:
+        if (HIWORD(wParam) == BN_CLICKED)
+            TB_OnClick(hWnd, LOWORD(wParam));
+        break;
+    case WM_SIZE:
+        return Help_OnSize(hWnd);
+    case WM_DESTROY:
+        PostQuitMessage(0);
+        break;
 
-        default:
-            return DefWindowProcW(hWnd, message, wParam, lParam);
+    default:
+        return DefWindowProcW(hWnd, message, wParam, lParam);
     }
 
     return 0;
