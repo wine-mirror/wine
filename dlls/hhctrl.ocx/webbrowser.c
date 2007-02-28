@@ -580,7 +580,7 @@ BOOL InitWebBrowser(HHInfo *info, HWND hwndParent)
     if (!iOleClientSiteImpl)
         return FALSE;
 
-    iOleClientSiteImpl->ref = 0;
+    iOleClientSiteImpl->ref = 1;
     iOleClientSiteImpl->lpVtbl = &MyIOleClientSiteTable;
     iOleClientSiteImpl->lpvtblOleInPlaceSite = &MyIOleInPlaceSiteTable;
     iOleClientSiteImpl->lpvtblOleInPlaceFrame = &MyIOleInPlaceFrameTable;
@@ -632,12 +632,7 @@ error:
 
 void ReleaseWebBrowser(HHInfo *info)
 {
-    if (info->wb_object)
-    {
-        IOleObject_Close(info->wb_object, OLECLOSE_NOSAVE);
-        IOleObject_Release(info->wb_object);
-        info->wb_object = NULL;
-    }
+    HRESULT hres;
 
     if (info->web_browser)
     {
@@ -649,6 +644,21 @@ void ReleaseWebBrowser(HHInfo *info)
     {
         IOleClientSite_Release(info->client_site);
         info->client_site = NULL;
+    }
+
+    if(info->wb_object) {
+        IOleInPlaceSite *inplace;
+
+        hres = IOleObject_QueryInterface(info->wb_object, &IID_IOleInPlaceSite, (void**)&inplace);
+        if(SUCCEEDED(hres)) {
+            IOleInPlaceSite_OnInPlaceDeactivate(inplace);
+            IOleInPlaceSite_Release(inplace);
+        }
+
+        IOleObject_SetClientSite(info->wb_object, NULL);
+
+        IOleObject_Release(info->wb_object);
+        info->wb_object = NULL;
     }
 }
 
