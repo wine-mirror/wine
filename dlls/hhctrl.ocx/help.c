@@ -2,6 +2,7 @@
  * Help Viewer Implementation
  *
  * Copyright 2005 James Hawkins
+ * Copyright 2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -341,6 +342,29 @@ static LRESULT OnTabChange(HWND hwnd)
     return 0;
 }
 
+static LRESULT OnTopicChange(HWND hwnd, ContentItem *item)
+{
+    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+    LPCWSTR chmfile = NULL;
+    ContentItem *iter = item;
+
+    if(!item || !info)
+        return 0;
+
+    TRACE("name %s loal %s\n", debugstr_w(item->name), debugstr_w(item->local));
+
+    while(iter) {
+        if(iter->merge.chm_file) {
+            chmfile = iter->merge.chm_file;
+            break;
+        }
+        iter = iter->parent;
+    }
+
+    NavigateToChm(info, chmfile, item->local);
+    return 0;
+}
+
 static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -354,6 +378,8 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         switch(nmhdr->code) {
         case TCN_SELCHANGE:
             return OnTabChange(hWnd);
+        case TVN_SELCHANGEDW:
+            return OnTopicChange(hWnd, (ContentItem*)((NMTREEVIEWW *)lParam)->itemNew.lParam);
         }
         break;
     }
