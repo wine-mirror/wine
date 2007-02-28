@@ -505,8 +505,8 @@ static int CreateSpoolFile(LPCSTR pszOutput)
             signal( SIGPIPE, SIG_DFL );
             signal( SIGCHLD, SIG_DFL );
 
-            system(psCmdP);
-            exit(0);
+            execl("/bin/sh", "/bin/sh", "-c", psCmdP, (char*)0);
+            _exit(1);
 
         }
         close (fds[0]);
