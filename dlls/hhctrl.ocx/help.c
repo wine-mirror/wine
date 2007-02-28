@@ -631,7 +631,8 @@ static LRESULT CALLBACK Help_WndProc(HWND hWnd, UINT message, WPARAM wParam, LPA
         ReleaseHelpViewer((HHInfo *)GetWindowLongPtrW(hWnd, GWLP_USERDATA));
         return 0;
     case WM_DESTROY:
-        PostQuitMessage(0);
+        if(hh_process)
+            PostQuitMessage(0);
         break;
 
     default:

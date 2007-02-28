@@ -142,5 +142,6 @@ static inline LPWSTR strdupAtoW(LPCSTR str)
 }
 
 extern HINSTANCE hhctrl_hinstance;
+extern BOOL hh_process;
 
 #endif

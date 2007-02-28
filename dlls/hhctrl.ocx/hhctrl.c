@@ -26,6 +26,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 
 HINSTANCE hhctrl_hinstance;
+BOOL hh_process;
 
 BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -143,6 +144,8 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     MSG msg;
     HHInfo *info;
     LPWSTR filename = strdupAtoW(szCmdLine);
+
+    hh_process = TRUE;
 
     /* FIXME: Check szCmdLine for bad arguments */
     info = CreateHelpViewer(filename);
