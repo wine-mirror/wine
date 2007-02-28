@@ -629,16 +629,20 @@ int WINAPI WinMain (HINSTANCE hInst, HINSTANCE hPrevInst,
     }
     if (!submit) {
         static CHAR platform_windows[]  = "WINETEST_PLATFORM=windows",
+                    platform_wine[]     = "WINETEST_PLATFORM=wine",
                     debug_yes[]         = "WINETEST_DEBUG=1",
                     interactive_no[]    = "WINETEST_INTERACTIVE=0",
                     report_success_no[] = "WINETEST_REPORT_SUCCESS=0";
+        CHAR *platform;
 
         report (R_STATUS, "Starting up");
 
         if (!running_on_visible_desktop ())
             report (R_FATAL, "Tests must be run on a visible desktop");
 
-        if (reset_env && (putenv (platform_windows) ||
+        platform = running_under_wine () ? platform_wine : platform_windows;
+
+        if (reset_env && (putenv (platform) ||
                           putenv (debug_yes)        ||
                           putenv (interactive_no)   ||
                           putenv (report_success_no)))
