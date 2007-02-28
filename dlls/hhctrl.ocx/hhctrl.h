@@ -58,6 +58,15 @@ typedef struct CHMInfo
     DWORD strings_size;
 } CHMInfo;
 
+#define TAB_CONTENTS   0
+#define TAB_INDEX      1
+#define TAB_SEARCH     2
+#define TAB_FAVORITES  3
+
+typedef struct {
+    HWND hwnd;
+    DWORD id;
+} HHTab;
 
 typedef struct {
     IOleClientSite *client_site;
@@ -69,6 +78,9 @@ typedef struct {
     HWND hwndTabCtrl;
     HWND hwndSizeBar;
     HFONT hFont;
+
+    HHTab tabs[TAB_FAVORITES+1];
+    DWORD current_tab;
 } HHInfo;
 
 BOOL InitWebBrowser(HHInfo*,HWND);

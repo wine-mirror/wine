@@ -42,6 +42,7 @@ static LRESULT Help_OnSize(HWND hWnd);
 
 #define TAB_TOP_PADDING     8
 #define TAB_RIGHT_PADDING   4
+#define TAB_MARGIN  8
 
 static const WCHAR szEmpty[] = {0};
 
@@ -285,6 +286,24 @@ static LRESULT Child_OnPaint(HWND hWnd)
     return 0;
 }
 
+static void ResizeTabChild(HHInfo *info, HWND hwnd)
+{
+    RECT rect, tabrc;
+    DWORD cnt;
+
+    GetClientRect(info->WinType.hwndNavigation, &rect);
+    SendMessageW(info->hwndTabCtrl, TCM_GETITEMRECT, 0, (LPARAM)&tabrc);
+    cnt = SendMessageW(info->hwndTabCtrl, TCM_GETROWCOUNT, 0, 0);
+
+    rect.left = TAB_MARGIN;
+    rect.top = TAB_TOP_PADDING + cnt*(tabrc.bottom-tabrc.top) + TAB_MARGIN;
+    rect.right -= TAB_RIGHT_PADDING + TAB_MARGIN;
+    rect.bottom -= TAB_MARGIN;
+
+    SetWindowPos(hwnd, NULL, rect.left, rect.top, rect.right-rect.left,
+                 rect.bottom-rect.top, SWP_NOZORDER | SWP_NOACTIVATE);
+}
+
 static LRESULT Child_OnSize(HWND hwnd)
 {
     HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
@@ -297,6 +316,28 @@ static LRESULT Child_OnSize(HWND hwnd)
     SetWindowPos(info->hwndTabCtrl, HWND_TOP, 0, 0,
                  rect.right - TAB_RIGHT_PADDING,
                  rect.bottom - TAB_TOP_PADDING, SWP_NOMOVE);
+
+    ResizeTabChild(info, info->tabs[TAB_CONTENTS].hwnd);
+    return 0;
+}
+
+static LRESULT OnTabChange(HWND hwnd)
+{
+    HHInfo *info = (HHInfo*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+
+    TRACE("%p\n", hwnd);
+
+    if (!info)
+        return 0;
+
+    if(info->tabs[info->current_tab].hwnd)
+        ShowWindow(info->tabs[info->current_tab].hwnd, SW_HIDE);
+
+    info->current_tab = SendMessageW(info->hwndTabCtrl, TCM_GETCURSEL, 0, 0);
+
+    if(info->tabs[info->current_tab].hwnd)
+        ShowWindow(info->tabs[info->current_tab].hwnd, SW_SHOW);
+
     return 0;
 }
 
@@ -308,6 +349,14 @@ static LRESULT CALLBACK Child_WndProc(HWND hWnd, UINT message, WPARAM wParam, LP
         return Child_OnPaint(hWnd);
     case WM_SIZE:
         return Child_OnSize(hWnd);
+    case WM_NOTIFY: {
+        NMHDR *nmhdr = (NMHDR*)lParam;
+        switch(nmhdr->code) {
+        case TCN_SELCHANGE:
+            return OnTabChange(hWnd);
+        }
+        break;
+    }
     default:
         return DefWindowProcW(hWnd, message, wParam, lParam);
     }
@@ -513,16 +562,19 @@ static void NP_GetNavigationRect(HHInfo *pHHInfo, RECT *rc)
     rc->right = pHHInfo->WinType.iNavWidth;
 }
 
-static void NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD dwStrID, DWORD dwIndex)
+static DWORD NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD index)
 {
     TCITEMW tie;
-    LPWSTR tabText = HH_LoadString(dwStrID);
+    LPWSTR tabText = HH_LoadString(index);
+    DWORD ret;
 
     tie.mask = TCIF_TEXT;
     tie.pszText = tabText;
 
-    SendMessageW( hwndTabCtrl, TCM_INSERTITEMW, dwIndex, (LPARAM)&tie );
+    ret = SendMessageW( hwndTabCtrl, TCM_INSERTITEMW, index, (LPARAM)&tie );
+
     hhctrl_free(tabText);
+    return ret;
 }
 
 static BOOL HH_AddNavigationPane(HHInfo *info)
@@ -531,7 +583,6 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
     HWND hwndParent = info->WinType.hwndHelp;
     DWORD dwStyles = WS_CHILDWINDOW | WS_VISIBLE;
     DWORD dwExStyles = WS_EX_LEFT | WS_EX_LTRREADING | WS_EX_RIGHTSCROLLBAR;
-    DWORD dwIndex = 0;
     RECT rc;
 
     NP_GetNavigationRect(info, &rc);
@@ -553,16 +604,16 @@ static BOOL HH_AddNavigationPane(HHInfo *info)
         return FALSE;
 
     if (*info->WinType.pszToc)
-        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_CONTENTS, dwIndex++);
+        info->tabs[TAB_CONTENTS].id = NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_CONTENTS);
 
     if (*info->WinType.pszIndex)
-        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_INDEX, dwIndex++);
+        info->tabs[TAB_INDEX].id = NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_INDEX);
 
     if (info->WinType.fsWinProperties & HHWIN_PROP_TAB_SEARCH)
-        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_SEARCH, dwIndex++);
+        info->tabs[TAB_SEARCH].id = NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_SEARCH);
 
     if (info->WinType.fsWinProperties & HHWIN_PROP_TAB_FAVORITES)
-        NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_FAVORITES, dwIndex++);
+        info->tabs[TAB_FAVORITES].id = NP_CreateTab(hhctrl_hinstance, hwndTabCtrl, IDS_FAVORITES);
 
     SendMessageW(hwndTabCtrl, WM_SETFONT, (WPARAM)info->hFont, TRUE);
 
