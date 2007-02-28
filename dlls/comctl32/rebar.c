@@ -1299,7 +1299,7 @@ static void REBAR_LayoutRow(REBAR_INFO *infoPtr, int iBeginBand, int iEndBand, i
 }
 
 static VOID
-REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
+REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect)
 {
     REBAR_BAND *lpBand;
     RECT rcAdj;
@@ -1378,7 +1378,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 
     infoPtr->calcSize.cx = adjcx;
     infoPtr->calcSize.cy = yPos;
-    TRACE("calcsize notify=%d, size=(%d, %d), origheight=(%d,%d)\n", notify,
+    TRACE("calcsize size=(%d, %d), origheight=(%d,%d)\n",
             infoPtr->calcSize.cx, infoPtr->calcSize.cy,
 	    oldSize.cx, oldSize.cy);
 
@@ -1388,7 +1388,7 @@ REBAR_Layout(REBAR_INFO *infoPtr, LPRECT lpRect, BOOL notify)
 
     /* note: after a RBN_HEIGHTCHANGE native sends once again all the RBN_CHILDSIZE
      * and does another ForceResize */
-    if (notify && (oldSize.cy != infoPtr->calcSize.cy))
+    if (oldSize.cy != infoPtr->calcSize.cy)
     {
         NMHDR heightchange;
         REBAR_Notify(&heightchange, infoPtr, RBN_HEIGHTCHANGE);
@@ -1942,7 +1942,7 @@ REBAR_DeleteBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 
     TRACE("setting NEEDS_LAYOUT\n");
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-    REBAR_Layout(infoPtr, NULL, TRUE);
+    REBAR_Layout(infoPtr, NULL);
 
     return TRUE;
 }
@@ -2316,7 +2316,7 @@ REBAR_InsertBandT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnico
 
     REBAR_DumpBand (infoPtr);
 
-    REBAR_Layout(infoPtr, NULL, TRUE);
+    REBAR_Layout(infoPtr, NULL);
     InvalidateRect(infoPtr->hwndSelf, 0, TRUE);
 
     return TRUE;
@@ -2538,7 +2538,7 @@ REBAR_SetBandInfoT(REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, BOOL bUnic
     REBAR_DumpBand (infoPtr);
 
     if (bChanged && (lprbbi->fMask & (RBBIM_CHILDSIZE | RBBIM_SIZE | RBBIM_STYLE))) {
-	  REBAR_Layout(infoPtr, NULL, TRUE);
+	  REBAR_Layout(infoPtr, NULL);
 	  InvalidateRect(infoPtr->hwndSelf, 0, 1);
     }
 
@@ -2688,7 +2688,7 @@ REBAR_ShowBand (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     }
 
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-    REBAR_Layout(infoPtr, NULL, TRUE);
+    REBAR_Layout(infoPtr, NULL);
     InvalidateRect(infoPtr->hwndSelf, 0, 1);
 
     return TRUE;
@@ -2718,7 +2718,7 @@ REBAR_SizeToRect (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     /* force full _Layout processing */
     TRACE("setting NEEDS_LAYOUT\n");
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-    REBAR_Layout(infoPtr, lpRect, TRUE);
+    REBAR_Layout(infoPtr, lpRect);
     InvalidateRect (infoPtr->hwndSelf, NULL, TRUE);
     return TRUE;
 }
@@ -3286,7 +3286,6 @@ REBAR_SetCursor (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 static LRESULT
 REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 {
-    RECT rcClient;
     REBAR_BAND *lpBand;
     UINT i;
 
@@ -3298,12 +3297,7 @@ REBAR_SetFont (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
 	REBAR_ValidateBand (infoPtr, lpBand);
     }
 
-
-    if (LOWORD(lParam)) {
-        GetClientRect (infoPtr->hwndSelf, &rcClient);
-        REBAR_Layout(infoPtr, &rcClient, FALSE);
-    }
-
+    REBAR_Layout(infoPtr, NULL);
     return 0;
 }
 
@@ -3365,7 +3359,7 @@ REBAR_Size (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     }
 
     infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-    REBAR_Layout(infoPtr, NULL, TRUE);
+    REBAR_Layout(infoPtr, NULL);
 
     return 0;
 }
@@ -3385,7 +3379,7 @@ REBAR_StyleChanged (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     if ((ss->styleNew ^ ss->styleOld) & CCS_VERT)
     {
         infoPtr->fStatus |= BAND_NEEDS_LAYOUT;
-        REBAR_Layout(infoPtr, NULL, TRUE);
+        REBAR_Layout(infoPtr, NULL);
     }
 
     return FALSE;
