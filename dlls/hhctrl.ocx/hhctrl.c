@@ -142,18 +142,11 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD data)
 int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
 {
     MSG msg;
-    HHInfo *info;
-    LPWSTR filename = strdupAtoW(szCmdLine);
 
     hh_process = TRUE;
 
     /* FIXME: Check szCmdLine for bad arguments */
-    info = CreateHelpViewer(filename);
-    hhctrl_free(filename);
-    if(!info)
-        return -1;
-
-    NavigateToChm(info, info->pCHMInfo->szFile, info->WinType.pszFile);
+    HtmlHelpA(GetDesktopWindow(), szCmdLine, HH_DISPLAY_TOPIC, 0);
 
     while (GetMessageW(&msg, 0, 0, 0))
     {
