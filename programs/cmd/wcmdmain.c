@@ -672,6 +672,7 @@ void WCMD_run_program (char *command, int called) {
   BOOL  extensionsupplied = FALSE;
   BOOL  launched = FALSE;
   BOOL  status;
+  DWORD len;
 
 
   WCMD_parse (command, quals, param1, param2);	/* Quick way to get the filename */
@@ -681,8 +682,8 @@ void WCMD_run_program (char *command, int called) {
   /* Calculate the search path and stem to search for */
   if (strpbrk (param1, "/\\:") == NULL) {  /* No explicit path given, search path */
     strcpy(pathtosearch,".;");
-    status = GetEnvironmentVariable ("PATH", &pathtosearch[2], sizeof(pathtosearch)-2);
-    if ((status == 0) || (status > sizeof(pathtosearch))) {
+    len = GetEnvironmentVariable ("PATH", &pathtosearch[2], sizeof(pathtosearch)-2);
+    if ((len == 0) || (len >= sizeof(pathtosearch) - 2)) {
       lstrcpy (pathtosearch, ".");
     }
     if (strchr(param1, '.') != NULL) extensionsupplied = TRUE;
@@ -699,8 +700,8 @@ void WCMD_run_program (char *command, int called) {
   }
 
   /* Now extract PATHEXT */
-  status = GetEnvironmentVariable ("PATHEXT", pathext, sizeof(pathext));
-  if ((status == 0) || (status > sizeof(pathext))) {
+  len = GetEnvironmentVariable ("PATHEXT", pathext, sizeof(pathext));
+  if ((len == 0) || (len >= sizeof(pathext))) {
     lstrcpy (pathext, ".bat;.com;.cmd;.exe");
   }
 
@@ -857,9 +858,10 @@ void WCMD_show_prompt (void) {
 int status;
 char out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
 char *p, *q;
+DWORD len;
 
-  status = GetEnvironmentVariable ("PROMPT", prompt_string, sizeof(prompt_string));
-  if ((status == 0) || (status > sizeof(prompt_string))) {
+  len = GetEnvironmentVariable ("PROMPT", prompt_string, sizeof(prompt_string));
+  if ((len == 0) || (len >= sizeof(prompt_string))) {
     lstrcpy (prompt_string, "$P$G");
   }
   p = prompt_string;
