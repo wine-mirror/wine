@@ -2699,7 +2699,7 @@ BOOL WINAPI InternetCheckConnectionW( LPCWSTR lpszUrl, DWORD dwFlags, DWORD dwRe
  */
 
   BOOL   rc = FALSE;
-  static const CHAR ping[] = "ping -w 1 ";
+  static const CHAR ping[] = "ping -c 1 ";
   static const CHAR redirect[] = " >/dev/null 2>/dev/null";
   CHAR *command = NULL;
   WCHAR hostW[1024];
