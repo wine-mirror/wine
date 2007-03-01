@@ -4398,6 +4398,91 @@ BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
     return ret;
 }
     
+/* Retrieve a list of supported Unicode ranges for a given font.
+ * Can be called with NULL gs to calculate the buffer size. Returns
+ * the number of ranges found.
+ */
+static DWORD get_font_unicode_ranges(FT_Face face, GLYPHSET *gs)
+{
+    DWORD num_ranges = 0;
+
+    if (face->charmap->encoding == FT_ENCODING_UNICODE && pFT_Get_First_Char)
+    {
+        FT_UInt glyph_code;
+        FT_ULong char_code, char_code_prev;
+
+        glyph_code = 0;
+        char_code_prev = char_code = pFT_Get_First_Char(face, &glyph_code);
+
+        TRACE("face encoding FT_ENCODING_UNICODE, number of glyphs %ld, first glyph %u, first char %04lx\n",
+               face->num_glyphs, glyph_code, char_code);
+
+        if (!glyph_code) return 0;
+
+        if (gs)
+        {
+            gs->ranges[0].wcLow = (USHORT)char_code;
+            gs->ranges[0].cGlyphs = 0;
+            gs->cGlyphsSupported = 0;
+        }
+
+        num_ranges = 1;
+        while (glyph_code)
+        {
+            if (char_code < char_code_prev)
+            {
+                ERR("expected increasing char code from FT_Get_Next_Char\n");
+                return 0;
+            }
+            if (char_code - char_code_prev > 1)
+            {
+                num_ranges++;
+                if (gs)
+                {
+                    gs->ranges[num_ranges - 1].wcLow = (USHORT)char_code;
+                    gs->ranges[num_ranges - 1].cGlyphs = 1;
+                    gs->cGlyphsSupported++;
+                }
+            }
+            else if (gs)
+            {
+                gs->ranges[num_ranges - 1].cGlyphs++;
+                gs->cGlyphsSupported++;
+            }
+            char_code_prev = char_code;
+            char_code = pFT_Get_Next_Char(face, char_code, &glyph_code);
+        }
+    }
+    else
+        FIXME("encoding %u not supported\n", face->charmap->encoding);
+
+    return num_ranges;
+}
+
+DWORD WineEngGetFontUnicodeRanges(HDC hdc, LPGLYPHSET glyphset)
+{
+    DWORD size = 0;
+    DC *dc = DC_GetDCPtr(hdc);
+
+    TRACE("(%p, %p)\n", hdc, glyphset);
+
+    if (!dc) return 0;
+
+    if (dc->gdiFont)
+    {
+        DWORD num_ranges = get_font_unicode_ranges(dc->gdiFont->ft_face, glyphset);
+
+        size = sizeof(GLYPHSET) + sizeof(WCRANGE) * (num_ranges - 1);
+        if (glyphset)
+        {
+            glyphset->cbThis = size;
+            glyphset->cRanges = num_ranges;
+        }
+    }
+
+    GDI_ReleaseObj(hdc);
+    return size;
+}
 
 /*************************************************************
  *     FontIsLinked
@@ -4811,6 +4896,12 @@ UINT WineEngGetTextCharsetInfo(GdiFont *font, LPFONTSIGNATURE fs, DWORD flags)
 BOOL WineEngGetLinkedHFont(DC *dc, WCHAR c, HFONT *new_hfont, UINT *glyph)
 {
     return FALSE;
+}
+
+DWORD WineEngGetFontUnicodeRanges(HDC hdc, LPGLYPHSET glyphset)
+{
+    FIXME("(%p, %p): stub\n", hdc, glyphset);
+    return 0;
 }
 
 BOOL WINAPI FontIsLinked(HDC hdc)

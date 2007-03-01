@@ -3326,9 +3326,19 @@ BOOL WINAPI GetCharWidthI(HDC hdc, UINT first, UINT count, LPWORD glyphs, LPINT 
 
 /***********************************************************************
  *           GetFontUnicodeRanges    (GDI32.@)
+ *
+ *  Retrieve a list of supported Unicode characters in a font.
+ *
+ *  PARAMS
+ *   hdc  [I] Handle to a device context.
+ *   lpgs [O] GLYPHSET structure specifying supported character ranges.
+ *
+ *  RETURNS
+ *   Success: Number of bytes written to the buffer pointed to by lpgs.
+ *   Failure: 0
+ *
  */
 DWORD WINAPI GetFontUnicodeRanges(HDC hdc, LPGLYPHSET lpgs)
 {
-    FIXME("(%p, %p): stub\n", hdc, lpgs);
-    return 0;
+    return WineEngGetFontUnicodeRanges(hdc, lpgs);
 }

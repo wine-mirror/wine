@@ -1088,6 +1088,43 @@ static void test_font_charset(void)
         skip("Symbol or Wingdings is not installed\n");
 }
 
+static void test_GetFontUnicodeRanges(void)
+{
+    LOGFONTA lf;
+    HDC hdc;
+    HFONT hfont, hfont_old;
+    DWORD size, i;
+    GLYPHSET *gs;
+
+    memset(&lf, 0, sizeof(lf));
+    lstrcpyA(lf.lfFaceName, "Arial");
+    hfont = create_font("Arial", &lf);
+
+    hdc = GetDC(0);
+    hfont_old = SelectObject(hdc, hfont);
+
+    size = GetFontUnicodeRanges(NULL, NULL);
+    ok(!size, "GetFontUnicodeRanges succeeded unexpectedly\n");
+
+    size = GetFontUnicodeRanges(hdc, NULL);
+    ok(size, "GetFontUnicodeRanges failed unexpectedly\n");
+
+    gs = HeapAlloc(GetProcessHeap(), 0, size);
+
+    size = GetFontUnicodeRanges(hdc, gs);
+    ok(size, "GetFontUnicodeRanges failed\n");
+
+    for (i = 0; i < gs->cRanges; i++)
+        trace("%03d wcLow %04x cGlyphs %u\n", i, gs->ranges[i].wcLow, gs->ranges[i].cGlyphs);
+    trace("found %u ranges\n", gs->cRanges);
+
+    HeapFree(GetProcessHeap(), 0, gs);
+
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+    ReleaseDC(NULL, hdc);
+}
+
 START_TEST(font)
 {
     test_logfont();
@@ -1101,4 +1138,5 @@ START_TEST(font)
     test_GetOutlineTextMetrics();
     test_SetTextJustification();
     test_font_charset();
+    test_GetFontUnicodeRanges();
 }
