@@ -790,7 +790,8 @@ START_TEST(rebar)
     wc.lpfnWndProc = MyWndProc;
     RegisterClassA(&wc);
     hMainWnd = CreateWindowExA(0, "MyTestWnd", "Blah", WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, CW_USEDEFAULT, 680, 226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
+      CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
+      226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
       NULL, NULL, GetModuleHandleA(NULL), 0);
     GetClientRect(hMainWnd, &rc);
     ShowWindow(hMainWnd, SW_SHOW);
