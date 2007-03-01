@@ -2251,7 +2251,7 @@ static inline void fb_copy_to_texture_direct(IWineD3DSurfaceImpl *This, IWineD3D
 
 /* Uses the hardware to stretch and flip the image */
 static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWineD3DSurface *SrcSurface, IWineD3DSwapChainImpl *swapchain, WINED3DRECT *srect, WINED3DRECT *drect, BOOL upsidedown) {
-    GLuint backup, src;
+    GLuint src, backup = 0;
     IWineD3DDeviceImpl *myDevice = This->resource.wineD3DDevice;
     IWineD3DSurfaceImpl *Src = (IWineD3DSurfaceImpl *) SrcSurface;
     float left, right, top, bottom; /* Texture coordinates */
@@ -2263,22 +2263,27 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     ENTER_GL();
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
 
-    /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
-     * we are reading from the back buffer, the backup can be used as source texture
-     */
-    glGenTextures(1, &backup);
-    checkGLcall("glGenTextures(1, &backup)");
-    glBindTexture(GL_TEXTURE_2D, backup);
-    checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+    if(!swapchain && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
+        glGenTextures(1, &backup);
+        checkGLcall("glGenTextures\n");
+        glBindTexture(GL_TEXTURE_2D, backup);
+        checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+    } else {
+        /* Backup the back buffer and copy the source buffer into a texture to draw an upside down stretched quad. If
+         * we are reading from the back buffer, the backup can be used as source texture
+         */
+        if(Src->glDescription.textureName == 0) {
+            /* Get it a description */
+            IWineD3DSurface_PreLoad(SrcSurface);
+        }
+        glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName);
+        checkGLcall("glBindTexture(Src->glDescription.target, Src->glDescription.textureName)");
+    }
 
     glReadBuffer(GL_BACK);
     checkGLcall("glReadBuffer(GL_BACK)");
 
     /* TODO: Only back up the part that will be overwritten */
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Src->pow2Width, Src->pow2Height, 0,
-                 GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    checkGLcall("glTexImage2D");
-
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0,
                         0, 0 /* read offsets */,
                         0, 0,
@@ -2287,13 +2292,14 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
 
     checkGLcall("glCopyTexSubImage2D");
 
+    /* No issue with overriding these - the sampler is dirty due to blit usage */
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     checkGLcall("glTexParameteri");
 
-    if(!swapchain || (IWineD3DSurface *) This == swapchain->backBuffer[0]) {
-        src = backup;
+    if(!swapchain || (IWineD3DSurface *) Src == swapchain->backBuffer[0]) {
+        src = backup ? backup : Src->glDescription.textureName;
     } else {
         glReadBuffer(GL_FRONT);
         checkGLcall("glReadBuffer(GL_FRONT)");
@@ -2370,8 +2376,8 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     checkGLcall("glCopyTexSubImage2D");
 
     /* Write the back buffer backup back */
-    glBindTexture(GL_TEXTURE_2D, backup);
-    checkGLcall("glBindTexture(GL_TEXTURE_2D, backup)");
+    glBindTexture(GL_TEXTURE_2D, backup ? backup : Src->glDescription.textureName);
+    checkGLcall("glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName)");
 
     glBegin(GL_QUADS);
         /* top left */
@@ -2392,12 +2398,14 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glEnd();
 
     /* Cleanup */
-    if(src != backup) {
+    if(src != Src->glDescription.textureName && src != backup) {
         glDeleteTextures(1, &src);
         checkGLcall("glDeleteTextures(1, &src)");
     }
-    glDeleteTextures(1, &backup);
-    checkGLcall("glDeleteTextures(1, &backup)");
+    if(backup) {
+        glDeleteTextures(1, &backup);
+        checkGLcall("glDeleteTextures(1, &backup)");
+    }
     LEAVE_GL();
 }
 
