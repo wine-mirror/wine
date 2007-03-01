@@ -149,6 +149,7 @@ BASEDIRS = \
 	rsabase \
 	rsaenh \
 	sane.ds \
+	schannel \
 	secur32 \
 	security \
 	sensapi \
