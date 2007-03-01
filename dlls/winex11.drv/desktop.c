@@ -46,7 +46,7 @@ static void make_modes(void)
 {
     int i;
     /* original specified desktop size */
-    X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 0);
+    X11DRV_Settings_AddOneMode(screen_width, screen_height, 0, 60);
     for (i=0; i<NUM_DESKTOP_MODES; i++)
     {
         if ( (widths[i] <= max_width) && (heights[i] <= max_height) )
@@ -55,14 +55,14 @@ static void make_modes(void)
                  ( (widths[i] != screen_width) || (heights[i] != screen_height) ) )
             {
                 /* only add them if they are smaller than the root window and unique */
-                X11DRV_Settings_AddOneMode(widths[i], heights[i], 0, 0);
+                X11DRV_Settings_AddOneMode(widths[i], heights[i], 0, 60);
             }
         }
     }
     if ((max_width != screen_width) && (max_height != screen_height))
     {
         /* root window size (if different from desktop window) */
-        X11DRV_Settings_AddOneMode(max_width, max_height, 0, 0);
+        X11DRV_Settings_AddOneMode(max_width, max_height, 0, 60);
     }
 }
 
