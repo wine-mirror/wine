@@ -788,7 +788,9 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", gl_info->vs_nv_version);
                 gl_info->supported[NV_VERTEX_PROGRAM] = TRUE;
             } else if (strstr(ThisExtn, "GL_NV_fence")) {
-                gl_info->supported[NV_FENCE] = TRUE;
+                if(!gl_info->supported[APPLE_FENCE]) {
+                    gl_info->supported[NV_FENCE] = TRUE;
+                }
 
             /**
              * ATI
@@ -807,8 +809,18 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 gl_info->vs_ati_version = VS_VERSION_11;
                 TRACE_(d3d_caps)(" FOUND: ATI (EXT) Vertex Shader support - version=%02x\n", gl_info->vs_ati_version);
                 gl_info->supported[EXT_VERTEX_SHADER] = TRUE;
+            /**
+             * Apple
+             */
+            } else if (strstr(ThisExtn, "GL_APPLE_fence")) {
+                /* GL_NV_fence and GL_APPLE_fence provide the same functionality basically.
+                 * The apple extension interacts with some other apple exts. Disable the NV
+                 * extension if the apple one is support to prevent confusion in other parts
+                 * of the code
+                 */
+                gl_info->supported[NV_FENCE] = FALSE;
+                gl_info->supported[APPLE_FENCE] = TRUE;
             }
-
 
             if (*GL_Extensions == ' ') GL_Extensions++;
         }

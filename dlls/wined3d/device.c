@@ -1075,7 +1075,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         break;
 
     case WINED3DQUERYTYPE_EVENT:
-        if(!GL_SUPPORT(NV_FENCE)) {
+        if(!(GL_SUPPORT(NV_FENCE) || GL_SUPPORT(APPLE_FENCE) )) {
             /* Half-Life 2 needs this query. It does not render the main menu correctly otherwise
              * Pretend to support it, faking this query does not do much harm except potentially lowering performance
              */
@@ -1116,7 +1116,11 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateQuery(IWineD3DDevice *iface, WINE
         }
     case WINED3DQUERYTYPE_EVENT:
         /* TODO: GL_APPLE_fence */
-        if(GL_SUPPORT(NV_FENCE)) {
+        if(GL_SUPPORT(APPLE_FENCE)) {
+            object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
+            GL_EXTCALL(glGenFencesAPPLE(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
+            checkGLcall("glGenFencesAPPLE");
+        } else if(GL_SUPPORT(NV_FENCE)) {
             object->extendedData = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WineQueryEventData));
             GL_EXTCALL(glGenFencesNV(1, &((WineQueryEventData *)(object->extendedData))->fenceId));
             checkGLcall("glGenFencesNV");

@@ -65,9 +65,14 @@ static ULONG  WINAPI IWineD3DQueryImpl_Release(IWineD3DQuery *iface) {
     TRACE("(%p) : Releasing from %d\n", This, This->ref);
     ref = InterlockedDecrement(&This->ref);
     if (ref == 0) {
-        if(This->type == WINED3DQUERYTYPE_EVENT && GL_SUPPORT(NV_FENCE)) {
-            GL_EXTCALL(glDeleteFencesNV(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
-            checkGLcall("glDeleteFencesNV");
+        if(This->type == WINED3DQUERYTYPE_EVENT) {
+            if(GL_SUPPORT(APPLE_FENCE)) {
+                GL_EXTCALL(glDeleteFencesAPPLE(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
+                checkGLcall("glDeleteFencesAPPLE");
+            } else if(GL_SUPPORT(NV_FENCE)) {
+                GL_EXTCALL(glDeleteFencesNV(1, &((WineQueryEventData *)(This->extendedData))->fenceId));
+                checkGLcall("glDeleteFencesNV");
+            }
         } else if(This->type == WINED3DQUERYTYPE_OCCLUSION && GL_SUPPORT(ARB_OCCLUSION_QUERY)) {
             GL_EXTCALL(glDeleteQueriesARB(1, &((WineQueryOcclusionData *)(This->extendedData))->queryId));
             checkGLcall("glDeleteQueriesARB");
@@ -162,7 +167,10 @@ static HRESULT  WINAPI IWineD3DQueryImpl_GetData(IWineD3DQuery* iface, void* pDa
     case WINED3DQUERYTYPE_EVENT:
     {
         BOOL* data = pData;
-        if(GL_SUPPORT(NV_FENCE)) {
+        if(GL_SUPPORT(APPLE_FENCE)) {
+            *data = GL_EXTCALL(glTestFenceAPPLE(((WineQueryEventData *)This->extendedData)->fenceId));
+            checkGLcall("glTestFenceAPPLE");
+        } else if(GL_SUPPORT(NV_FENCE)) {
             *data = GL_EXTCALL(glTestFenceNV(((WineQueryEventData *)This->extendedData)->fenceId));
             checkGLcall("glTestFenceNV");
         } else {
@@ -381,13 +389,17 @@ static HRESULT  WINAPI IWineD3DQueryImpl_Issue(IWineD3DQuery* iface,  DWORD dwIs
             break;
 
         case WINED3DQUERYTYPE_EVENT: {
-            if (GL_SUPPORT(GL_NV_fence)) {
-                if (dwIssueFlags & WINED3DISSUE_END) {
+            if (dwIssueFlags & WINED3DISSUE_END) {
+                if(GL_SUPPORT(APPLE_FENCE)) {
+                    GL_EXTCALL(glSetFenceAPPLE(((WineQueryEventData *)This->extendedData)->fenceId));
+                    checkGLcall("glSetFenceAPPLE");
+                } else if (GL_SUPPORT(NV_FENCE)) {
                     GL_EXTCALL(glSetFenceNV(((WineQueryEventData *)This->extendedData)->fenceId, GL_ALL_COMPLETED_NV));
-                } else if(dwIssueFlags & WINED3DISSUE_BEGIN) {
-                    /* Started implicitly at device creation */
-                    ERR("Event query issued with START flag - what to do?\n");
+                    checkGLcall("glSetFenceNV");
                 }
+            } else if(dwIssueFlags & WINED3DISSUE_BEGIN) {
+                /* Started implicitly at device creation */
+                ERR("Event query issued with START flag - what to do?\n");
             }
         }
 

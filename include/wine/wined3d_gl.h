@@ -1146,6 +1146,19 @@ typedef GLboolean (APIENTRY * PGLFNTESTFENCENVPROC) (GLuint);
 typedef void (APIENTRY * PGLFNFINISHFENCENVPROC) (GLuint);
 typedef GLboolean (APIENTRY * PGLFNISFENCENVPROC) (GLuint);
 typedef void (APIENTRY * PGLFNGETFENCEIVNVPROC) (GLuint, GLenum, GLint *);
+/* GL_APPLE_fence */
+#ifndef GL_NV_fence
+#define GL_DRAW_PIXELS_APPLE                0x8A0A
+#define GL_FENCE_APPLE                      0x84F3
+#endif
+typedef void (APIENTRY * PGLFNGENFENCESAPPLEPROC) (GLsizei, GLuint *);
+typedef void (APIENTRY * PGLFNDELETEFENCESAPPLEPROC) (GLuint, const GLuint *);
+typedef void (APIENTRY * PGLFNSETFENCEAPPLEPROC) (GLuint);
+typedef GLboolean (APIENTRY * PGLFNTESTFENCEAPPLEPROC) (GLuint);
+typedef void (APIENTRY * PGLFNFINISHFENCEAPPLEPROC) (GLuint);
+typedef GLboolean (APIENTRY * PGLFNISFENCEAPPLEPROC) (GLuint);
+typedef GLboolean (APIENTRY * PGLFNTESTOBJECTAPPLEPROC) (GLenum, GLuint);
+typedef void (APIENTRY * PGLFNFINISHOBJECTAPPLEPROC) (GLenum, GLuint);
 
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
@@ -1509,6 +1522,8 @@ typedef enum _GL_SupportedExt {
   ATI_TEXTURE_ENV_COMBINE3,
   ATI_TEXTURE_MIRROR_ONCE,
   EXT_VERTEX_SHADER,
+  /* APPLE */
+  APPLE_FENCE,
 
   OPENGL_SUPPORTED_EXT_END
 } GL_SupportedExt;
@@ -1708,6 +1723,15 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNFINISHFENCENVPROC,                         glFinishFenceNV); \
     USE_GL_FUNC(PGLFNISFENCENVPROC,                             glIsFenceNV); \
     USE_GL_FUNC(PGLFNGETFENCEIVNVPROC,                          glGetFenceivNV); \
+    /* GL_APPLE_fence */ \
+    USE_GL_FUNC(PGLFNGENFENCESAPPLEPROC,                        glGenFencesAPPLE); \
+    USE_GL_FUNC(PGLFNDELETEFENCESAPPLEPROC,                     glDeleteFencesAPPLE); \
+    USE_GL_FUNC(PGLFNSETFENCEAPPLEPROC,                         glSetFenceAPPLE); \
+    USE_GL_FUNC(PGLFNTESTFENCEAPPLEPROC,                        glTestFenceAPPLE); \
+    USE_GL_FUNC(PGLFNFINISHFENCEAPPLEPROC,                      glFinishFenceAPPLE); \
+    USE_GL_FUNC(PGLFNISFENCEAPPLEPROC,                          glIsFenceAPPLE); \
+    USE_GL_FUNC(PGLFNTESTOBJECTAPPLEPROC,                       glTestObjectAPPLE); \
+    USE_GL_FUNC(PGLFNFINISHOBJECTAPPLEPROC,                     glFinishObjectAPPLE); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \
