@@ -945,8 +945,8 @@ int main( int argc, char *argv[] )
         if (path->name[0] != '/') continue;
         if (top_src_dir)
         {
-            if (!strncmp( path->name, top_src_dir, strlen(top_src_dir) )) continue;
-            if (path->name[strlen(top_src_dir)] == '/') continue;
+            if (!strncmp( path->name, top_src_dir, strlen(top_src_dir) ) &&
+                path->name[strlen(top_src_dir)] == '/') continue;
         }
         list_remove( &path->entry );
         free( path );
