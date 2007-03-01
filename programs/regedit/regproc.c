@@ -503,7 +503,7 @@ LPSTR getRegKeyName(LPSTR lpLine)
         LPSTR keyNameEnd;
 
         keyNameBeg++;                             /* is not part of the name */
-        keyNameEnd = strchr(lpLineCopy, ']');
+        keyNameEnd = strrchr(lpLineCopy, ']');
         if (keyNameEnd) {
             *keyNameEnd = '\0';               /* remove ']' from the key name */
         }
