@@ -647,13 +647,13 @@ HRESULT WINAPI FindMimeFromData(LPBC pBC, LPCWSTR pwzUrl, LPVOID pBuffer,
 
         res = RegOpenKeyW(HKEY_CLASSES_ROOT, ptr, &hkey);
         if(res != ERROR_SUCCESS)
-            return E_FAIL;
+            return HRESULT_FROM_WIN32(res);
 
         size = sizeof(mime);
         res = RegQueryValueExW(hkey, wszContentType, NULL, NULL, (LPBYTE)mime, &size);
         RegCloseKey(hkey);
         if(res != ERROR_SUCCESS)
-            return E_FAIL;
+            return HRESULT_FROM_WIN32(res);
 
         *ppwzMimeOut = CoTaskMemAlloc(size);
         memcpy(*ppwzMimeOut, mime, size);

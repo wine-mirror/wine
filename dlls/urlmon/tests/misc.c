@@ -367,14 +367,15 @@ static const WCHAR mimeAppXMSDownload[] =
 static const struct {
     LPCWSTR url;
     LPCWSTR mime;
+    HRESULT hres;
 } mime_tests[] = {
-    {url1, mimeTextHtml},
-    {url2, mimeTextHtml},
-    {url3, mimeTextHtml},
-    {url4, NULL},
-    {url5, NULL},
-    {url6, NULL},
-    {url7, NULL}
+    {url1, mimeTextHtml, S_OK},
+    {url2, mimeTextHtml, S_OK},
+    {url3, mimeTextHtml, S_OK},
+    {url4, NULL, E_FAIL},
+    {url5, NULL, HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)},
+    {url6, NULL, E_FAIL},
+    {url7, NULL, HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND)}
 };
 
 static BYTE data1[] = "test data\n";
@@ -539,7 +540,9 @@ static void test_FindMimeFromData(void)
             ok(!lstrcmpW(mime, mime_tests[i].mime), "[%d] wrong mime\n", i);
             CoTaskMemFree(mime);
         }else {
-            ok(hres == E_FAIL, "[%d] FindMimeFromData failed: %08x, expected E_FAIL\n", i, hres);
+            ok(hres == E_FAIL || hres == mime_tests[i].hres,
+               "[%d] FindMimeFromData failed: %08x, expected %08x\n",
+               i, hres, mime_tests[i].hres);
             ok(mime == (LPWSTR)0xf0f0f0f0, "[%d] mime != 0xf0f0f0f0\n", i);
         }
 
