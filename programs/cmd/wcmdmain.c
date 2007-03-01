@@ -855,10 +855,10 @@ void WCMD_run_program (char *command, int called) {
 
 void WCMD_show_prompt (void) {
 
-int status;
-char out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
-char *p, *q;
-DWORD len;
+  int status;
+  char out_string[MAX_PATH], curdir[MAX_PATH], prompt_string[MAX_PATH];
+  char *p, *q;
+  DWORD len;
 
   len = GetEnvironmentVariable ("PROMPT", prompt_string, sizeof(prompt_string));
   if ((len == 0) || (len >= sizeof(prompt_string))) {
@@ -936,9 +936,9 @@ DWORD len;
  */
 
 void WCMD_print_error (void) {
-LPVOID lpMsgBuf;
-DWORD error_code;
-int status;
+  LPVOID lpMsgBuf;
+  DWORD error_code;
+  int status;
 
   error_code = GetLastError ();
   status = FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -1015,9 +1015,9 @@ int p = 0;
 
 void WCMD_output (const char *format, ...) {
 
-va_list ap;
-char string[1024];
-int ret;
+  va_list ap;
+  char string[1024];
+  int ret;
 
   va_start(ap,format);
   ret = vsnprintf (string, sizeof( string), format, ap);
@@ -1036,7 +1036,7 @@ static BOOL paged_mode;
 
 void WCMD_enter_paged_mode(void)
 {
-CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
   if (GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleInfo))
     max_height = consoleInfo.dwSize.Y;
@@ -1089,7 +1089,7 @@ void WCMD_output_asis (const char *message) {
 
 char *WCMD_strtrim_leading_spaces (char *string) {
 
-char *ptr;
+  char *ptr;
 
   ptr = string;
   while (*ptr == ' ') ptr++;
@@ -1105,7 +1105,7 @@ char *ptr;
 
 void WCMD_strtrim_trailing_spaces (char *string) {
 
-char *ptr;
+  char *ptr;
 
   ptr = string + lstrlen (string) - 1;
   while ((*ptr == ' ') && (ptr >= string)) {
@@ -1142,8 +1142,8 @@ void WCMD_opt_s_strip_quotes(char *cmd) {
 
 void WCMD_pipe (char *command) {
 
-char *p;
-char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[1024];
+  char *p;
+  char temp_path[MAX_PATH], temp_file[MAX_PATH], temp_file2[MAX_PATH], temp_cmd[1024];
 
   GetTempPath (sizeof(temp_path), temp_path);
   GetTempFileName (temp_path, "CMD", 0, temp_file);

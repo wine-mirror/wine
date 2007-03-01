@@ -105,13 +105,13 @@ void WCMD_change_tty (void) {
 
 void WCMD_copy (void) {
 
-DWORD count;
-WIN32_FIND_DATA fd;
-HANDLE hff;
-BOOL force, status;
-static const char overwrite[] = "Overwrite file (Y/N)?";
-char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile, copycmd[3];
-DWORD len;
+  DWORD count;
+  WIN32_FIND_DATA fd;
+  HANDLE hff;
+  BOOL force, status;
+  static const char overwrite[] = "Overwrite file (Y/N)?";
+  char string[8], outpath[MAX_PATH], inpath[MAX_PATH], *infile, copycmd[3];
+  DWORD len;
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -244,10 +244,10 @@ void WCMD_create_dir (void) {
 
 void WCMD_delete (int recurse) {
 
-WIN32_FIND_DATA fd;
-HANDLE hff;
-char fpath[MAX_PATH];
-char *p;
+  WIN32_FIND_DATA fd;
+  HANDLE hff;
+  char fpath[MAX_PATH];
+  char *p;
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -403,8 +403,8 @@ char *p;
 
 void WCMD_echo (const char *command) {
 
-static const char eon[] = "Echo is ON\n", eoff[] = "Echo is OFF\n";
-int count;
+  static const char eon[] = "Echo is ON\n", eoff[] = "Echo is OFF\n";
+  int count;
 
   if ((command[0] == '.') && (command[1] == 0)) {
     WCMD_output (newline);
@@ -441,11 +441,11 @@ int count;
 
 void WCMD_for (char *p) {
 
-WIN32_FIND_DATA fd;
-HANDLE hff;
-char *cmd, *item;
-char set[MAX_PATH], param[MAX_PATH];
-int i;
+  WIN32_FIND_DATA fd;
+  HANDLE hff;
+  char *cmd, *item;
+  char set[MAX_PATH], param[MAX_PATH];
+  int i;
 
   if (lstrcmpi (WCMD_parameter (p, 1, NULL), "in")
 	|| lstrcmpi (WCMD_parameter (p, 3, NULL), "do")
@@ -489,8 +489,8 @@ int i;
 
 void WCMD_execute (char *orig_cmd, char *param, char *subst) {
 
-char *new_cmd, *p, *s, *dup;
-int size;
+  char *new_cmd, *p, *s, *dup;
+  int size;
 
   size = lstrlen (orig_cmd);
   new_cmd = (char *) LocalAlloc (LMEM_FIXED | LMEM_ZEROINIT, size);
@@ -519,8 +519,8 @@ int size;
 
 void WCMD_give_help (char *command) {
 
-int i;
-char buffer[2048];
+  int i;
+  char buffer[2048];
 
   command = WCMD_strtrim_leading_spaces(command);
   if (lstrlen(command) == 0) {
@@ -552,7 +552,7 @@ char buffer[2048];
 
 void WCMD_goto (void) {
 
-char string[MAX_PATH];
+  char string[MAX_PATH];
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -642,13 +642,13 @@ void WCMD_popd (void) {
 
 void WCMD_if (char *p) {
 
-int negate = 0, test = 0;
-char condition[MAX_PATH], *command, *s;
+  int negate = 0, test = 0;
+  char condition[MAX_PATH], *command, *s;
 
   if (!lstrcmpi (param1, "not")) {
     negate = 1;
     lstrcpy (condition, param2);
-}
+  }
   else {
     lstrcpy (condition, param1);
   }
@@ -693,10 +693,10 @@ char condition[MAX_PATH], *command, *s;
 
 void WCMD_move (void) {
 
-int status;
-char outpath[MAX_PATH], inpath[MAX_PATH], *infile;
-WIN32_FIND_DATA fd;
-HANDLE hff;
+  int status;
+  char outpath[MAX_PATH], inpath[MAX_PATH], *infile;
+  WIN32_FIND_DATA fd;
+  HANDLE hff;
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -739,8 +739,8 @@ HANDLE hff;
 
 void WCMD_pause (void) {
 
-DWORD count;
-char string[32];
+  DWORD count;
+  char string[32];
 
   WCMD_output (anykey);
   ReadFile (GetStdHandle(STD_INPUT_HANDLE), string, sizeof(string), &count, NULL);
@@ -801,7 +801,7 @@ void WCMD_remove_dir (void) {
 
 void WCMD_rename (void) {
 
-int status;
+  int status;
 
   if (param1[0] == 0x00 || param2[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -957,10 +957,10 @@ void WCMD_endlocal (void) {
 
 void WCMD_setshow_attrib (void) {
 
-DWORD count;
-HANDLE hff;
-WIN32_FIND_DATA fd;
-char flags[9] = {"        "};
+  DWORD count;
+  HANDLE hff;
+  WIN32_FIND_DATA fd;
+  char flags[9] = {"        "};
 
   if (param1[0] == '-') {
     WCMD_output (nyi);
@@ -1013,8 +1013,8 @@ char flags[9] = {"        "};
 
 void WCMD_setshow_default (void) {
 
-BOOL status;
-char string[1024];
+  BOOL status;
+  char string[1024];
 
   if (strlen(param1) == 0) {
     GetCurrentDirectory (sizeof(string), string);
@@ -1040,8 +1040,8 @@ char string[1024];
 
 void WCMD_setshow_date (void) {
 
-char curdate[64], buffer[64];
-DWORD count;
+  char curdate[64], buffer[64];
+  DWORD count;
 
   if (lstrlen(param1) == 0) {
     if (GetDateFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL,
@@ -1127,9 +1127,9 @@ static int WCMD_setshow_sortenv(const char *s, const char *stub)
 
 void WCMD_setshow_env (char *s) {
 
-LPVOID env;
-char *p;
-int status;
+  LPVOID env;
+  char *p;
+  int status;
 
   if (strlen(param1) == 0) {
     env = GetEnvironmentStrings ();
@@ -1160,8 +1160,8 @@ int status;
 
 void WCMD_setshow_path (char *command) {
 
-char string[1024];
-DWORD status;
+  char string[1024];
+  DWORD status;
 
   if (strlen(param1) == 0) {
     status = GetEnvironmentVariable ("PATH", string, sizeof(string));
@@ -1189,7 +1189,7 @@ DWORD status;
 
 void WCMD_setshow_prompt (void) {
 
-char *s;
+  char *s;
 
   if (strlen(param1) == 0) {
     SetEnvironmentVariable ("PROMPT", NULL);
@@ -1213,9 +1213,9 @@ char *s;
 
 void WCMD_setshow_time (void) {
 
-char curtime[64], buffer[64];
-DWORD count;
-SYSTEMTIME st;
+  char curtime[64], buffer[64];
+  DWORD count;
+  SYSTEMTIME st;
 
   if (strlen(param1) == 0) {
     GetLocalTime(&st);
@@ -1263,9 +1263,9 @@ void WCMD_title (char *command) {
 
 void WCMD_type (void) {
 
-HANDLE h;
-char buffer[512];
-DWORD count;
+  HANDLE h;
+  char buffer[512];
+  DWORD count;
 
   if (param1[0] == 0x00) {
     WCMD_output ("Argument missing\n");
@@ -1295,8 +1295,8 @@ DWORD count;
 
 void WCMD_verify (char *command) {
 
-static const char von[] = "Verify is ON\n", voff[] = "Verify is OFF\n";
-int count;
+  static const char von[] = "Verify is ON\n", voff[] = "Verify is OFF\n";
+  int count;
 
   count = strlen(command);
   if (count == 0) {
@@ -1335,9 +1335,9 @@ void WCMD_version (void) {
 
 int WCMD_volume (int mode, char *path) {
 
-DWORD count, serial;
-char string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
-BOOL status;
+  DWORD count, serial;
+  char string[MAX_PATH], label[MAX_PATH], curdir[MAX_PATH];
+  BOOL status;
 
   if (lstrlen(path) == 0) {
     status = GetCurrentDirectory (sizeof(curdir), curdir);

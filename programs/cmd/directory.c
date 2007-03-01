@@ -53,10 +53,10 @@ static ULONGLONG byte_total;
 
 void WCMD_directory (void) {
 
-char path[MAX_PATH], drive[8];
-int status, paged_mode;
-ULARGE_INTEGER avail, total, free;
-CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+  char path[MAX_PATH], drive[8];
+  int status, paged_mode;
+  ULARGE_INTEGER avail, total, free;
+  CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
   byte_total = 0;
   file_total = dir_total = 0;
@@ -128,15 +128,15 @@ CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
 
 void WCMD_list_directory (char *search_path, int level) {
 
-char string[1024], datestring[32], timestring[32];
-char *p;
-char real_path[MAX_PATH];
-WIN32_FIND_DATA *fd;
-FILETIME ft;
-SYSTEMTIME st;
-HANDLE hff;
-int status, dir_count, file_count, entry_count, i, widest, cur_width, tmp_width;
-ULARGE_INTEGER byte_count, file_size;
+  char string[1024], datestring[32], timestring[32];
+  char *p;
+  char real_path[MAX_PATH];
+  WIN32_FIND_DATA *fd;
+  FILETIME ft;
+  SYSTEMTIME st;
+  HANDLE hff;
+  int status, dir_count, file_count, entry_count, i, widest, cur_width, tmp_width;
+  ULARGE_INTEGER byte_count, file_size;
 
   dir_count = 0;
   file_count = 0;
@@ -323,10 +323,10 @@ ULARGE_INTEGER byte_count, file_size;
 
 char * WCMD_filesize64 (ULONGLONG n) {
 
-ULONGLONG q;
-unsigned int r, i;
-char *p;
-static char buff[32];
+  ULONGLONG q;
+  unsigned int r, i;
+  char *p;
+  static char buff[32];
 
   p = buff;
   i = -3;
@@ -350,8 +350,8 @@ static char buff[32];
 
 char * WCMD_strrev (char *buff) {
 
-int r, i;
-char b;
+  int r, i;
+  char b;
 
   r = lstrlen (buff);
   for (i=0; i<r/2; i++) {

@@ -45,12 +45,12 @@ void WCMD_batch (char *file, char *command, int called, char *startLabel, HANDLE
 
 #define WCMD_BATCH_EXT_SIZE 5
 
-HANDLE h = INVALID_HANDLE_VALUE;
-char string[MAXSTRING];
-char extension_batch[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
-char extension_exe[WCMD_BATCH_EXT_SIZE] = ".exe";
-unsigned int  i;
-BATCH_CONTEXT *prev_context;
+  HANDLE h = INVALID_HANDLE_VALUE;
+  char string[MAXSTRING];
+  char extension_batch[][WCMD_BATCH_EXT_SIZE] = {".bat",".cmd"};
+  char extension_exe[WCMD_BATCH_EXT_SIZE] = ".exe";
+  unsigned int  i;
+  BATCH_CONTEXT *prev_context;
 
   if (startLabel == NULL) {
     for(i=0; (i<(sizeof(extension_batch)/WCMD_BATCH_EXT_SIZE)) &&
@@ -143,9 +143,9 @@ BATCH_CONTEXT *prev_context;
 
 char *WCMD_parameter (char *s, int n, char **where) {
 
-int i = 0;
-static char param[MAX_PATH];
-char *p;
+  int i = 0;
+  static char param[MAX_PATH];
+  char *p;
 
   if (where != NULL) *where = NULL;
   p = param;
@@ -213,9 +213,9 @@ char *p;
 
 char *WCMD_fgets (char *s, int n, HANDLE h) {
 
-DWORD bytes;
-BOOL status;
-char *p;
+  DWORD bytes;
+  BOOL status;
+  char *p;
 
   p = s;
   do {
