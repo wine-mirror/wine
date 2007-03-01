@@ -284,10 +284,8 @@ BOOL WINAPI FTP_FtpPutFileW(LPWININETFTPSESSIONW lpwfs, LPCWSTR lpszLocalFile,
     /* Open file to be uploaded */
     if (INVALID_HANDLE_VALUE ==
         (hFile = CreateFileW(lpszLocalFile, GENERIC_READ, 0, 0, OPEN_EXISTING, 0, 0)))
-    {
-        INTERNET_SetLastError(ERROR_FILE_NOT_FOUND);
+        /* Let CreateFile set the appropriate error */
         return FALSE;
-    }
 
     hIC = lpwfs->lpAppInfo;
 

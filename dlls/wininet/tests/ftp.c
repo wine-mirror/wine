@@ -616,6 +616,9 @@ static void test_putfile(void)
         return;
     }
 
+    /* Start clean */
+    DeleteFileA("non_existing_local");
+
     /* We should have a ftp-connection, try some puts */
 
     /* No local file given */
