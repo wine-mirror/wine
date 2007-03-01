@@ -61,7 +61,7 @@
 @ stub SaslIdentifyPackageW
 @ stub SaslInitializeSecurityContextA
 @ stub SaslInitializeSecurityContextW
-@ stub SealMessage
+@ stdcall SealMessage(ptr long ptr long) EncryptMessage
 @ stub SecCacheSspiPackages
 @ stub SecGetLocaleSpecificEncryptionRules
 @ stub SecpFreeMemory
@@ -69,5 +69,5 @@
 @ stub SecpTranslateNameEx
 @ stdcall TranslateNameA(str long long ptr ptr)
 @ stdcall TranslateNameW(wstr long long ptr ptr)
-@ stub UnsealMessage
+@ stdcall UnsealMessage(ptr ptr long ptr) DecryptMessage
 @ stdcall VerifySignature(ptr ptr long ptr)
