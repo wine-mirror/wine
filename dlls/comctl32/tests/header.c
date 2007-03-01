@@ -1052,7 +1052,9 @@ static void init(void) {
     RegisterClassA(&wc);
 
     hHeaderParentWnd = CreateWindowExA(0, "HeaderTestClass", "Header test", WS_OVERLAPPEDWINDOW, 
-      CW_USEDEFAULT, CW_USEDEFAULT, 680, 260, NULL, NULL, GetModuleHandleA(NULL), 0);
+      CW_USEDEFAULT, CW_USEDEFAULT, 672+2*GetSystemMetrics(SM_CXSIZEFRAME),
+      226+GetSystemMetrics(SM_CYCAPTION)+2*GetSystemMetrics(SM_CYSIZEFRAME),
+      NULL, NULL, GetModuleHandleA(NULL), 0);
     assert(hHeaderParentWnd != NULL);
     ShowWindow(hHeaderParentWnd, SW_SHOW);
 }
