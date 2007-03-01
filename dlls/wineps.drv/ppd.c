@@ -572,6 +572,8 @@ PPD *PSDRV_ParsePPD(char *fname)
 	return NULL;
     }
 
+    ppd->ColorDevice = CD_NotSpecified;
+
     /*
      *	The Windows PostScript drivers create the following "virtual bin" for
      *	every PostScript printer
@@ -599,8 +601,10 @@ PPD *PSDRV_ParsePPD(char *fname)
 
 	else if(!strcmp("*ColorDevice", tuple.key)) {
 	    if(!strcasecmp(tuple.value, "true"))
-	        ppd->ColorDevice = TRUE;
-	    TRACE("ColorDevice = %d\n", (int)ppd->ColorDevice);
+                ppd->ColorDevice = CD_True;
+            else
+                ppd->ColorDevice = CD_False;
+            TRACE("ColorDevice = %s\n", ppd->ColorDevice == CD_True ? "True" : "False");
 	}
 
 	else if((!strcmp("*DefaultResolution", tuple.key)) ||

@@ -632,7 +632,7 @@ DWORD PSDRV_DeviceCapabilities(LPSTR lpszDriver, LPCSTR lpszDevice, LPCSTR lpszP
 
   /* Printer supports colour printing - 1 if yes, 0 if no (Win2k/XP only) */
   case DC_COLORDEVICE:
-    return pi->ppd->ColorDevice;
+    return (pi->ppd->ColorDevice != CD_False) ? TRUE : FALSE;
 
   /* Identification number of the printer manufacturer for use with ICM (Win9x only) */
   case DC_MANUFACTURER:

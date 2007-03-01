@@ -84,7 +84,7 @@ BOOL PSDRV_CopyColor(PSCOLOR *col1, PSCOLOR *col2)
  *	     PSDRV_CreateColor
  *
  * Creates a PostScript colour from a COLORREF.
- * Result is grey scale if ColorDevice field of ppd is FALSE else an
+ * Result is grey scale if ColorDevice field of ppd is CD_False else an
  * rgb colour is produced.
  */
 void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
@@ -100,7 +100,7 @@ void PSDRV_CreateColor( PSDRV_PDEVICE *physDev, PSCOLOR *pscolor,
     g = ((wincolor >> 8) & 0xff) / 256.0;
     b = ((wincolor >> 16) & 0xff) / 256.0;
 
-    if(physDev->pi->ppd->ColorDevice) {
+    if(physDev->pi->ppd->ColorDevice != CD_False) {
         pscolor->type = PSCOLOR_RGB;
 	pscolor->value.rgb.r = r;
 	pscolor->value.rgb.g = g;
