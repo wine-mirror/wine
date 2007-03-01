@@ -74,6 +74,10 @@
 #include "rpc_server.h"
 #include "epm_towers.h"
 
+#ifndef SOL_TCP
+# define SOL_TCP IPPROTO_TCP
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(rpc);
 
 static CRITICAL_SECTION connection_pool_cs;
