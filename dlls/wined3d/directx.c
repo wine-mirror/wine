@@ -787,6 +787,8 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                     gl_info->vs_nv_version = VS_VERSION_10;
                 TRACE_(d3d_caps)(" FOUND: NVIDIA (NV) Vertex Shader support - version=%02x\n", gl_info->vs_nv_version);
                 gl_info->supported[NV_VERTEX_PROGRAM] = TRUE;
+            } else if (strstr(ThisExtn, "GL_NV_fence")) {
+                gl_info->supported[NV_FENCE] = TRUE;
 
             /**
              * ATI

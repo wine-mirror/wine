@@ -345,6 +345,7 @@ typedef void (APIENTRY * PGLFNGLWEIGHTPOINTERARB) (GLint size, GLenum type, GLsi
 #define GL_MAX_COLOR_ATTACHMENTS_EXT           0x8CDF
 #define GL_MAX_RENDERBUFFER_SIZE_EXT           0x84E8
 #define GL_INVALID_FRAMEBUFFER_OPERATION_EXT   0x0506
+
 #endif
 typedef GLboolean (APIENTRY * PGLFNGLISRENDERBUFFEREXTPROC)(GLuint renderbuffer);
 typedef void (APIENTRY * PGLFNGLBINDRENDERBUFFEREXTPROC)(GLenum target, GLuint renderbuffer);
@@ -1132,6 +1133,20 @@ typedef void (APIENTRY * PGLFNACTIVESTENCILFACEEXTPROC) (GLenum face);
 #endif
 typedef void (APIENTRY * PGLFNSTENCILOPSEPARATEATIPROC) (GLenum, GLenum, GLenum, GLenum);
 typedef void (APIENTRY * PGLFNSTENCILFUNCSEPARATEATIPROC) (GLenum, GLenum, GLint, GLuint);
+/* GL_NV_fence */
+#ifndef GL_NV_fence
+#define GL_ALL_COMPLETED_NV                 0x84F2
+#define GL_FENCE_STATUS_NV                  0x84F3
+#define GL_FENCE_CONDITION_NV               0x84F4
+#endif
+typedef void (APIENTRY * PGLFNGENFENCESNVPROC) (GLsizei, GLuint *);
+typedef void (APIENTRY * PGLFNDELETEFENCESNVPROC) (GLuint, const GLuint *);
+typedef void (APIENTRY * PGLFNSETFENCENVPROC) (GLuint, GLenum);
+typedef GLboolean (APIENTRY * PGLFNTESTFENCENVPROC) (GLuint);
+typedef void (APIENTRY * PGLFNFINISHFENCENVPROC) (GLuint);
+typedef GLboolean (APIENTRY * PGLFNISFENCENVPROC) (GLuint);
+typedef void (APIENTRY * PGLFNGETFENCEIVNVPROC) (GLuint, GLenum, GLint *);
+
 /* GL_VERSION_2_0 */
 #ifndef GL_VERSION_2_0
 #define GL_VERSION_2_0 1
@@ -1488,6 +1503,7 @@ typedef enum _GL_SupportedExt {
   NV_TEXTURE_SHADER2,
   NV_TEXTURE_SHADER3,
   NV_VERTEX_PROGRAM,
+  NV_FENCE,
   /* ATI */
   ATI_SEPARATE_STENCIL,
   ATI_TEXTURE_ENV_COMBINE3,
@@ -1684,6 +1700,14 @@ typedef enum _GL_SupportedExt {
     USE_GL_FUNC(PGLFNCOMBINERPARAMETERINVPROC,                  glCombinerParameteriNV); \
     USE_GL_FUNC(PGLFNCOMBINERPARAMETERIVNVPROC,                 glCombinerParameterivNV); \
     USE_GL_FUNC(PGLFNFINALCOMBINERINPUTNVPROC,                  glFinalCombinerInputNV); \
+    /* GL_NV_fence */ \
+    USE_GL_FUNC(PGLFNGENFENCESNVPROC,                           glGenFencesNV); \
+    USE_GL_FUNC(PGLFNDELETEFENCESNVPROC,                        glDeleteFencesNV); \
+    USE_GL_FUNC(PGLFNSETFENCENVPROC,                            glSetFenceNV); \
+    USE_GL_FUNC(PGLFNTESTFENCENVPROC,                           glTestFenceNV); \
+    USE_GL_FUNC(PGLFNFINISHFENCENVPROC,                         glFinishFenceNV); \
+    USE_GL_FUNC(PGLFNISFENCENVPROC,                             glIsFenceNV); \
+    USE_GL_FUNC(PGLFNGETFENCEIVNVPROC,                          glGetFenceivNV); \
 
 /* OpenGL 2.0 functions */
 #define GL2_FUNCS_GEN \
