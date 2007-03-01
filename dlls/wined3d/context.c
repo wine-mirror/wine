@@ -472,11 +472,13 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
         checkGLcall("glDisable(GL_REGISTER_COMBINERS_NV)");
     }
     if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-        for(i = GL_LIMITS(samplers) - 1; i > 0 ; i--) {
-            if (GL_SUPPORT(ARB_MULTITEXTURE)) {
-                GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
-                checkGLcall("glActiveTextureARB");
-            }
+        /* The blitting code uses (for now) the fixed function pipeline, so make sure to reset all fixed
+         * function texture unit. No need to care for higher samplers
+         */
+        for(i = GL_LIMITS(textures) - 1; i > 0 ; i--) {
+            GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB + i));
+            checkGLcall("glActiveTextureARB");
+
             glDisable(GL_TEXTURE_CUBE_MAP_ARB);
             checkGLcall("glDisable GL_TEXTURE_CUBE_MAP_ARB");
             glDisable(GL_TEXTURE_3D);
@@ -486,9 +488,10 @@ static inline void SetupForBlit(IWineD3DDeviceImpl *This, WineD3DContext *contex
             glDisable(GL_TEXTURE_1D);
             checkGLcall("glDisable GL_TEXTURE_1D");
 
-            if(i < MAX_TEXTURES) {
-                Context_MarkStateDirty(context, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
-            }
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+            checkGLcall("glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);");
+
+            Context_MarkStateDirty(context, STATE_TEXTURESTAGE(i, WINED3DTSS_COLOROP));
             Context_MarkStateDirty(context, STATE_SAMPLER(i));
         }
         GL_EXTCALL(glActiveTextureARB(GL_TEXTURE0_ARB));
