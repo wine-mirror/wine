@@ -21,6 +21,8 @@
 
 #include "hhctrl.h"
 
+#include "winreg.h"
+#include "shlwapi.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
@@ -247,23 +249,38 @@ done:
     return SUCCEEDED(hr);
 }
 
-void SetChmPath(ChmPath *file, LPCWSTR path)
+void SetChmPath(ChmPath *file, LPCWSTR base_file, LPCWSTR path)
 {
     LPCWSTR ptr;
     static const WCHAR separatorW[] = {':',':',0};
 
     ptr = strstrW(path, separatorW);
     if(ptr) {
-        file->chm_file = hhctrl_alloc((ptr-path+1)*sizeof(WCHAR));
-        memcpy(file->chm_file, path, (ptr-path)*sizeof(WCHAR));
-        file->chm_file[ptr-path] = 0;
+        WCHAR chm_file[MAX_PATH];
+        WCHAR rel_path[MAX_PATH];
+        WCHAR base_path[MAX_PATH];
+        LPWSTR p;
+
+        strcpyW(base_path, base_file);
+        p = strrchrW(base_path, '\\');
+        if(p)
+            *p = 0;
+
+        memcpy(rel_path, path, (ptr-path)*sizeof(WCHAR));
+        rel_path[ptr-path] = 0;
+
+        PathCombineW(chm_file, base_path, rel_path);
+
+        file->chm_file = strdupW(chm_file);
         ptr += 2;
     }else {
-        file->chm_file = NULL;
+        file->chm_file = strdupW(base_file);
         ptr = path;
     }
 
     file->chm_index = strdupW(ptr);
+
+    TRACE("ChmFile = {%s %s}\n", debugstr_w(file->chm_file), debugstr_w(file->chm_index));
 }
 
 IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
@@ -299,13 +316,16 @@ IStream *GetChmStream(CHMInfo *info, LPCWSTR parent_chm, ChmPath *chm_file)
 /* Opens the CHM file for reading */
 CHMInfo *OpenCHM(LPCWSTR szFile)
 {
+    WCHAR file[MAX_PATH] = {0};
+    DWORD res;
     HRESULT hres;
 
     static const WCHAR wszSTRINGS[] = {'#','S','T','R','I','N','G','S',0};
 
     CHMInfo *ret = hhctrl_alloc_zero(sizeof(CHMInfo));
 
-    ret->szFile = strdupW(szFile);
+    res = GetFullPathNameW(szFile, sizeof(file), file, NULL);
+    ret->szFile = strdupW(file);
 
     hres = CoCreateInstance(&CLSID_ITStorage, NULL, CLSCTX_INPROC_SERVER,
             &IID_IITStorage, (void **) &ret->pITStorage) ;

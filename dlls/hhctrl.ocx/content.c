@@ -160,7 +160,7 @@ static const char *get_attr(const char *node, const char *name, int *len)
     return ptr;
 }
 
-static void parse_obj_node_param(ContentItem *item, const char *text)
+static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const char *text)
 {
     const char *ptr;
     LPWSTR *param, merge;
@@ -195,12 +195,12 @@ static void parse_obj_node_param(ContentItem *item, const char *text)
     (*param)[wlen] = 0;
 
     if(param == &merge) {
-        SetChmPath(&item->merge, merge);
+        SetChmPath(&item->merge, hhc_root->merge.chm_file, merge);
         hhctrl_free(merge);
     }
 }
 
-static ContentItem *parse_hhc(HHInfo*,IStream*,insert_type_t*);
+static ContentItem *parse_hhc(HHInfo*,IStream*,ContentItem*,insert_type_t*);
 
 static ContentItem *insert_item(ContentItem *item, ContentItem *new_item, insert_type_t insert_type)
 {
@@ -226,7 +226,8 @@ static ContentItem *insert_item(ContentItem *item, ContentItem *new_item, insert
     return NULL;
 }
 
-static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, insert_type_t *insert_type)
+static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, ContentItem *hhc_root,
+        insert_type_t *insert_type)
 {
     strbuf_t node, node_name;
     ContentItem *item;
@@ -246,7 +247,7 @@ static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, insert_
         if(!strcasecmp(node_name.buf, "/object"))
             break;
         if(!strcasecmp(node_name.buf, "param"))
-            parse_obj_node_param(item, node.buf);
+            parse_obj_node_param(item, hhc_root, node.buf);
 
         strbuf_zero(&node);
     }
@@ -259,7 +260,7 @@ static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, insert_
 
         merge_stream = GetChmStream(info->pCHMInfo, item->merge.chm_file, &item->merge);
         if(merge_stream) {
-            item->child = parse_hhc(info, merge_stream, insert_type);
+            item->child = parse_hhc(info, merge_stream, hhc_root, insert_type);
             IStream_Release(merge_stream);
         }else {
             WARN("Could not get %s::%s stream\n", debugstr_w(item->merge.chm_file),
@@ -271,7 +272,7 @@ static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, insert_
     return item;
 }
 
-static ContentItem *parse_ul(HHInfo *info, stream_t *stream)
+static ContentItem *parse_ul(HHInfo *info, stream_t *stream, ContentItem *hhc_root)
 {
     strbuf_t node, node_name;
     ContentItem *ret = NULL, *prev = NULL, *new_item = NULL;
@@ -295,13 +296,13 @@ static ContentItem *parse_ul(HHInfo *info, stream_t *stream)
 
             if(ptr && len == sizeof(sz_text_sitemap)-1
                && !memcmp(ptr, sz_text_sitemap, len)) {
-                new_item = parse_sitemap_object(info, stream, &it);
+                new_item = parse_sitemap_object(info, stream, hhc_root, &it);
                 prev = insert_item(prev, new_item, it);
                 if(!ret)
                     ret = prev;
             }
         }else if(!strcasecmp(node_name.buf, "ul")) {
-            new_item = parse_ul(info, stream);
+            new_item = parse_ul(info, stream, hhc_root);
             insert_item(prev, new_item, INSERT_CHILD);
         }else if(!strcasecmp(node_name.buf, "/ul")) {
             break;
@@ -316,7 +317,8 @@ static ContentItem *parse_ul(HHInfo *info, stream_t *stream)
     return ret;
 }
 
-static ContentItem *parse_hhc(HHInfo *info, IStream *str, insert_type_t *insert_type)
+static ContentItem *parse_hhc(HHInfo *info, IStream *str, ContentItem *hhc_root,
+        insert_type_t *insert_type)
 {
     stream_t stream;
     strbuf_t node, node_name;
@@ -335,7 +337,7 @@ static ContentItem *parse_hhc(HHInfo *info, IStream *str, insert_type_t *insert_
         TRACE("%s\n", node.buf);
 
         if(!strcasecmp(node_name.buf, "ul")) {
-            ContentItem *item = parse_ul(info, &stream);
+            ContentItem *item = parse_ul(info, &stream, hhc_root);
             prev = insert_item(prev, item, INSERT_CHILD);
             if(!ret)
                 ret = prev;
@@ -394,9 +396,7 @@ void InitContent(HHInfo *info)
     insert_type_t insert_type;
 
     info->content = hhctrl_alloc_zero(sizeof(ContentItem));
-    SetChmPath(&info->content->merge, info->WinType.pszToc);
-    if(!info->content->merge.chm_file)
-        info->content->merge.chm_file = strdupW(info->pCHMInfo->szFile);
+    SetChmPath(&info->content->merge, info->pCHMInfo->szFile, info->WinType.pszToc);
 
     stream = GetChmStream(info->pCHMInfo, info->pCHMInfo->szFile, &info->content->merge);
     if(!stream) {
@@ -404,7 +404,7 @@ void InitContent(HHInfo *info)
         return;
     }
 
-    info->content->child = parse_hhc(info, stream, &insert_type);
+    info->content->child = parse_hhc(info, stream, info->content, &insert_type);
     IStream_Release(stream);
 
     set_item_parents(NULL, info->content);

@@ -113,7 +113,7 @@ void ReleaseContent(HHInfo*);
 CHMInfo *OpenCHM(LPCWSTR szFile);
 BOOL LoadWinTypeFromCHM(CHMInfo *pCHMInfo, HH_WINTYPEW *pHHWinType);
 CHMInfo *CloseCHM(CHMInfo *pCHMInfo);
-void SetChmPath(ChmPath*,LPCWSTR);
+void SetChmPath(ChmPath*,LPCWSTR,LPCWSTR);
 IStream *GetChmStream(CHMInfo*,LPCWSTR,ChmPath*);
 LPWSTR FindContextAlias(CHMInfo*,DWORD);
 
