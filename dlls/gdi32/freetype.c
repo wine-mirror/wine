@@ -1013,7 +1013,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
         if (target_family)
         {
             localised_family = get_familyname(ft_face);
-            if (lstrcmpW(localised_family,target_family)!=0)
+            if (localised_family && lstrcmpW(localised_family,target_family)!=0)
             {
                 TRACE("Skipping Index %i: Incorrect Family name for replacement\n",(INT)face_index);
                 HeapFree(GetProcessHeap(), 0, localised_family);
