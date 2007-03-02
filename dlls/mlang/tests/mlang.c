@@ -86,8 +86,11 @@ static void test_multibyte_to_unicode_translations(IMultiLanguage2 *iML2)
     ok(ret == S_OK, "IMultiLanguage2_ConvertStringToUnicode failed: %08x\n", ret);
     ok(lenA == lstrlenA(stringA), "expected lenA %u, got %u\n", lstrlenA(stringA), lenA);
     ok(lenW == lstrlenW(stringW), "expected lenW %u, got %u\n", lstrlenW(stringW), lenW);
-    ok(bufW[lenW] != 0, "buf should not be 0 terminated\n");
-    bufW[lenW] = 0; /* -1 doesn't include 0 terminator */
+    if (lenW < sizeof(bufW)/sizeof(bufW[0])) {
+       /* can only happen if the convert call fails */
+       ok(bufW[lenW] != 0, "buf should not be 0 terminated\n");
+       bufW[lenW] = 0; /* -1 doesn't include 0 terminator */
+    }
     ok(!lstrcmpW(bufW, stringW), "bufW/stringW mismatch\n");
 
     memset(bufW, 'x', sizeof(bufW));
