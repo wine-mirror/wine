@@ -4171,10 +4171,13 @@ void test_gettext(void)
     UnregisterClass( clsname, NULL );
 }
 
+
 static void test_GetUpdateRect(void)
 {
     RECT rc1, rc2;
     HWND hgrandparent, hparent, hchild;
+    WNDCLASSA cls;
+    const char* classNameA = "GetUpdateRectClass";
 
     hgrandparent = CreateWindowA("static", "grandparent", WS_OVERLAPPEDWINDOW,
                                  0, 0, 100, 100, NULL, NULL, 0, NULL);
@@ -4183,6 +4186,52 @@ static void test_GetUpdateRect(void)
                             0, 0, 100, 100, hgrandparent, NULL, 0, NULL);
 
     hchild = CreateWindowA("static", "child", WS_CHILD|WS_VISIBLE,
+                            10, 10, 30, 30, hparent, NULL, 0, NULL);
+
+    ShowWindow(hgrandparent, SW_SHOW);
+    UpdateWindow(hgrandparent);
+
+    ShowWindow(hchild, SW_HIDE);
+    SetRect(&rc2, 0, 0, 0, 0);
+    GetUpdateRect(hgrandparent, &rc1, FALSE);
+    todo_wine
+    {
+        ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
+                rc1.left, rc1.top, rc1.right, rc1.bottom,
+                rc2.left, rc2.top, rc2.right, rc2.bottom);
+    }
+
+    SetRect(&rc2, 10, 10, 40, 40);
+    GetUpdateRect(hparent, &rc1, FALSE);
+    ok(EqualRect(&rc1, &rc2), "rects do not match (%d,%d,%d,%d) / (%d,%d,%d,%d)\n",
+            rc1.left, rc1.top, rc1.right, rc1.bottom,
+            rc2.left, rc2.top, rc2.right, rc2.bottom);
+
+    DestroyWindow(hgrandparent);
+
+    cls.style = 0;
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(0);
+    cls.hIcon = 0;
+    cls.hCursor = LoadCursorA(0, (LPSTR)IDC_ARROW);
+    cls.hbrBackground = GetStockObject(WHITE_BRUSH);
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = classNameA;
+
+    if(!RegisterClassA(&cls)) {
+       trace("Register failed %d\n", GetLastError());
+       return;
+    }
+
+    hgrandparent = CreateWindowA("static", "grandparent", WS_OVERLAPPEDWINDOW,
+                                 0, 0, 100, 100, NULL, NULL, 0, NULL);
+
+    hparent = CreateWindowA(classNameA, "parent", WS_CHILD|WS_VISIBLE,
+                            0, 0, 100, 100, hgrandparent, NULL, 0, NULL);
+
+    hchild = CreateWindowA(classNameA, "child", WS_CHILD|WS_VISIBLE,
                             10, 10, 30, 30, hparent, NULL, 0, NULL);
 
     ShowWindow(hgrandparent, SW_SHOW);
