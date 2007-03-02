@@ -28,7 +28,7 @@
 
 #include "wine/test.h"
 
-static const char *msifile = "winetest.msi";
+static const char *msifile = "msitest.msi";
 CHAR CURR_DIR[MAX_PATH];
 CHAR PROG_FILES_DIR[MAX_PATH];
 
@@ -964,7 +964,8 @@ static void delete_cab_files(void)
     CHAR path[MAX_PATH];
 
     lstrcpyA(path, CURR_DIR);
-    lstrcatA(path, "\\*.cab\0");
+    lstrcatA(path, "\\*.cab");
+    path[strlen(path) + 1] = '\0';
 
     shfl.hwnd = NULL;
     shfl.wFunc = FO_DELETE;
@@ -1103,10 +1104,11 @@ static void test_mixedmedia(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
-    DeleteFile("maximus");
-    DeleteFile("augustus");
-    DeleteFile("caesar");
+    /* Delete the files in the temp (current) folder */
+    DeleteFile("msitest\\maximus");
+    DeleteFile("msitest\\augustus");
     RemoveDirectory("msitest");
+    DeleteFile("caesar");
     DeleteFile("test1.cab");
     DeleteFile(msifile);
 }
@@ -1204,6 +1206,9 @@ static void test_readonlyfile(void)
     ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "File not installed\n");
 
+    /* Delete the files in the temp (current) folder */
+    DeleteFile("msitest\\maximus");
+    RemoveDirectory("msitest");
     DeleteFile(msifile);
 }
 
