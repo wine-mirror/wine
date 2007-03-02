@@ -77,13 +77,17 @@ static void test_md5_ctx(void)
         { 0x43, 0x03, 0xdd, 0x8c, 0x60, 0xd9, 0x3a, 0x22,
           0x0b, 0x28, 0xd0, 0xb2, 0x65, 0x93, 0xd0, 0x36 };
 
-    if (!(module = LoadLibrary( "advapi32.dll" ))) return;
+    if (!(module = GetModuleHandleA( "advapi32.dll" ))) return;
 
     pMD5Init = (fnMD5Init)GetProcAddress( module, "MD5Init" );
     pMD5Update = (fnMD5Update)GetProcAddress( module, "MD5Update" );
     pMD5Final = (fnMD5Final)GetProcAddress( module, "MD5Final" );
 
-    if (!pMD5Init || !pMD5Update || !pMD5Final) goto out;
+    if (!pMD5Init || !pMD5Update || !pMD5Final)
+    {
+        skip("Needed functions are not available\n");
+        goto out;
+    }
 
     memset( &ctx, 0, sizeof(ctx) );
     pMD5Init( &ctx );
