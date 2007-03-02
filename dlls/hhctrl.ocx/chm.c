@@ -249,10 +249,28 @@ done:
     return SUCCEEDED(hr);
 }
 
+static LPCWSTR skip_schema(LPCWSTR url)
+{
+    static const WCHAR its_schema[] = {'i','t','s',':'};
+    static const WCHAR msits_schema[] = {'m','s','-','i','t','s',':'};
+    static const WCHAR mk_schema[] = {'m','k',':','@','M','S','I','T','S','t','o','r','e',':'};
+
+    if(!strncmpiW(its_schema, url, sizeof(its_schema)/sizeof(WCHAR)))
+        return url+sizeof(its_schema)/sizeof(WCHAR);
+    if(!strncmpiW(msits_schema, url, sizeof(msits_schema)/sizeof(WCHAR)))
+        return url+sizeof(msits_schema)/sizeof(WCHAR);
+    if(!strncmpiW(mk_schema, url, sizeof(mk_schema)/sizeof(WCHAR)))
+        return url+sizeof(mk_schema)/sizeof(WCHAR);
+
+    return url;
+}
+
 void SetChmPath(ChmPath *file, LPCWSTR base_file, LPCWSTR path)
 {
     LPCWSTR ptr;
     static const WCHAR separatorW[] = {':',':',0};
+
+    path = skip_schema(path);
 
     ptr = strstrW(path, separatorW);
     if(ptr) {
