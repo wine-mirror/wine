@@ -1994,7 +1994,7 @@ void vshader_glsl_output_unpack(
                break;
 
            case WINED3DDECLUSAGE_FOG:
-               shader_addline(buffer, "gl_FogFragCoord%s = OUT%u%s;\n", reg_mask, i, reg_mask);
+               shader_addline(buffer, "gl_FogFragCoord = OUT%u%s;\n", i, reg_mask);
                break;
 
            default:
