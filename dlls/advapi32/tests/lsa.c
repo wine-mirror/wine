@@ -54,6 +54,8 @@ static BOOL init(void)
 
         if (pLsaClose && pLsaFreeMemory && pLsaOpenPolicy && pLsaQueryInformationPolicy && pConvertSidToStringSidA)
             return TRUE;
+        else
+            skip("Needed functions are not available\n");
     }
 
     return FALSE;
