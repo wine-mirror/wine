@@ -482,7 +482,7 @@ run_tests (char *logname)
         report (R_FATAL, "Could not create directory: %s", tempdir);
     report (R_DIR, tempdir);
 
-    xprintf ("Version 3\n");
+    xprintf ("Version 4\n");
     strres = extract_rcdata (MAKEINTRESOURCE(WINE_BUILD), STRINGRES, &strsize);
     xprintf ("Tests from build ");
     if (strres) xprintf ("%.*s", strsize, strres);
