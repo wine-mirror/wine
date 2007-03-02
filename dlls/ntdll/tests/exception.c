@@ -591,6 +591,7 @@ static void test_debugger(void)
     PVOID code_mem_address = NULL;
     NTSTATUS status;
     SIZE_T size_read;
+    BOOL ret;
     int counter = 0;
     si.cb = sizeof(si);
 
@@ -601,8 +602,10 @@ static void test_debugger(void)
     }
 
     sprintf(cmdline, "%s %s %s", my_argv[0], my_argv[1], "debuggee");
-    ok(CreateProcess(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL,
-                     &si, &pi) != 0, "error: %u\n", GetLastError());
+    ret = CreateProcess(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS, NULL, NULL, &si, &pi);
+    ok(ret, "could not create child process error: %u\n", GetLastError());
+    if (!ret)
+        return;
 
     do
     {
