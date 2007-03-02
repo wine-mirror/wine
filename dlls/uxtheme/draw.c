@@ -1389,7 +1389,7 @@ static HRESULT draw_rect_edge (HDC hdc, HTHEME theme, int part, int state,
         LTInnerI = RBInnerI = LTRBInnerFlat[uType & (BDR_INNER|BDR_OUTER)];
         LTOuterI = RBOuterI = LTRBOuterFlat[uType & (BDR_INNER|BDR_OUTER)];
 
-        if( LTInnerI != -1 ) LTInnerI = RBInnerI = COLOR_BTNFACE;
+        if( LTInnerI != -1 ) LTInnerI = RBInnerI = EDGE_FILL;
     }
     else if(uFlags & BF_SOFT)
     {
