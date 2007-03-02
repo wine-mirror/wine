@@ -283,6 +283,7 @@ LPSTR getArg( LPSTR arg)
     if( arg[0]     == '\"' ) arg++;
 
     tmp = HeapAlloc(GetProcessHeap(), 0, strlen(arg)+1);
+    CHECK_ENOUGH_MEMORY(tmp);
     strcpy(tmp, arg);
 
     return tmp;
@@ -543,6 +544,18 @@ void doSetValue(LPSTR stdInput)
     {
         if ( bTheKeyIsOpen != FALSE )
             closeKey();                    /* Close the previous key before */
+
+        /* delete the key if we encounter '-' at the start of reg key */
+        if ( stdInput[1] == '-')
+        {
+            int last_chr = strlen(stdInput) - 1;
+
+            /* skip leading "[-" and get rid of trailing "]" */
+            if (stdInput[last_chr] == ']')
+                stdInput[last_chr] = '\0';
+            delete_registry_key(stdInput+2);
+            return;
+        }
 
         if ( openKey(stdInput) != ERROR_SUCCESS )
             fprintf(stderr,"%s: setValue failed to open key %s\n",
