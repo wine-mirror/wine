@@ -62,10 +62,12 @@ static LPWSTR HH_LoadString(DWORD dwID)
     return string;
 }
 
-BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
+static HRESULT navigate_url(HHInfo *info, LPCWSTR surl)
 {
     VARIANT url;
     HRESULT hres;
+
+    TRACE("%s\n", debugstr_w(surl));
 
     V_VT(&url) = VT_BSTR;
     V_BSTR(&url) = SysAllocString(surl);
@@ -74,7 +76,29 @@ BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
 
     VariantClear(&url);
 
-    return SUCCEEDED(hres);
+    if(FAILED(hres))
+        TRACE("Navigation failed: %08lx\n", hres);
+
+    return hres;
+}
+
+BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
+{
+    ChmPath chm_path;
+    BOOL ret;
+    HRESULT hres;
+
+    hres = navigate_url(info, surl);
+    if(SUCCEEDED(hres))
+        return TRUE;
+
+    SetChmPath(&chm_path, info->pCHMInfo->szFile, surl);
+    ret = NavigateToChm(info, chm_path.chm_file, chm_path.chm_index);
+
+    hhctrl_free(chm_path.chm_file);
+    hhctrl_free(chm_path.chm_index);
+
+    return ret;
 }
 
 BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
@@ -84,7 +108,7 @@ BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
     LPWSTR ptr;
 
     static const WCHAR url_format[] =
-        {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','/','%','s',0};
+        {'m','k',':','@','M','S','I','T','S','t','o','r','e',':','%','s',':',':','%','s',0};
 
     TRACE("%p %s %s\n", info, debugstr_w(file), debugstr_w(index));
 
@@ -102,7 +126,7 @@ BOOL NavigateToChm(HHInfo *info, LPCWSTR file, LPCWSTR index)
     if((ptr = strchrW(buf, '#')))
        *ptr = 0;
 
-    return NavigateToUrl(info, buf);
+    return SUCCEEDED(navigate_url(info, buf));
 }
 
 /* Size Bar */
@@ -892,6 +916,8 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
 
 void ReleaseHelpViewer(HHInfo *info)
 {
+    TRACE("(%p)\n", info);
+
     if (!info)
         return;
 
