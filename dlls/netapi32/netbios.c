@@ -179,7 +179,7 @@ BOOL NetBIOSRegisterAdapter(ULONG transport, DWORD ifIndex, void *data)
      data);
     for (i = 0; i < gNumTransports && gTransports[i].id != transport; i++)
         ;
-    if (gTransports[i].id == transport)
+    if ((i < gNumTransports) && gTransports[i].id == transport)
     {
         NetBIOSTransport *transportPtr = &gTransports[i].transport;
 
