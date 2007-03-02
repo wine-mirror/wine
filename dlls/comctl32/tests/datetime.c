@@ -21,14 +21,148 @@
 #include <commctrl.h>
 
 #include "wine/test.h"
+#include "msg.h"
 
 #define expect(EXPECTED, GOT) ok((GOT)==(EXPECTED), "Expected %d, got %ld\n", (EXPECTED), (GOT))
 
 #define expect_unsuccess(EXPECTED, GOT) ok((GOT)==(EXPECTED), "Expected %d(unsuccessful), got %ld(successful)\n", (EXPECTED), (GOT))
 
+#define NUM_MSG_SEQUENCES   1
+#define DATETIME_SEQ_INDEX    0
+
+static struct msg_sequence *sequences[NUM_MSG_SEQUENCES];
+
+static const struct message test_dtm_set_format_seq[] = {
+    { DTM_SETFORMATA, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { DTM_SETFORMATA, sent|wparam, 0x00000000 },
+    { 0 }
+};
+
+static const struct message test_dtm_set_and_get_mccolor_seq[] = {
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000000, 0x00ffffff },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000000, 0x00dcb464 },
+    { DTM_GETMCCOLOR, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000004, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000004, 0x00ffffff },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000004, 0x00dcb464 },
+    { DTM_GETMCCOLOR, sent|wparam|lparam, 0x00000004, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000001, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000001, 0x00ffffff },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000001, 0x00dcb464 },
+    { DTM_GETMCCOLOR, sent|wparam|lparam, 0x00000001, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000002, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000002, 0x00ffffff },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000002, 0x00dcb464 },
+    { DTM_GETMCCOLOR, sent|wparam|lparam, 0x00000002, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000003, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000003, 0x00ffffff },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000003, 0x00dcb464 },
+    { DTM_GETMCCOLOR, sent|wparam|lparam, 0x00000003, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000005, 0x00000000 },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000005, 0x00ffffff },
+    { DTM_SETMCCOLOR, sent|wparam|lparam, 0x00000005, 0x00dcb464 },
+    { DTM_GETMCCOLOR, sent|wparam|lparam, 0x00000005, 0x00000000 },
+    { 0 }
+};
+
+static const struct message test_dtm_set_and_get_mcfont_seq[] = {
+    { DTM_SETMCFONT, sent|lparam, 0, 0x00000001 },
+    { DTM_GETMCFONT, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message test_dtm_get_monthcal_seq[] = {
+    { DTM_GETMONTHCAL, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+static const struct message test_dtm_set_and_get_range_seq[] = {
+    { DTM_SETRANGE, sent|wparam, 0x00000001 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000002 },
+    { DTM_SETRANGE, sent|wparam, 0x00000002 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000},
+    { DTM_SETRANGE, sent|wparam, 0x00000001 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { 0 }
+};
+
+static const struct message test_dtm_set_range_swap_min_max_seq[] = {
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_GETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_GETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { DTM_SETRANGE, sent|wparam, 0x00000003 },
+    { DTM_GETRANGE, sent|wparam, 0x00000000 },
+    { 0 }
+};
+
+static const struct message test_dtm_set_and_get_system_time_seq[] = {
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000001 },
+    { DTM_GETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_GETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { DTM_SETSYSTEMTIME, sent|wparam, 0x00000000 },
+    { 0 }
+};
+
+static const struct message destroy_window_seq[] = {
+    { WM_DESTROY, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { WM_NCDESTROY, sent|wparam|lparam, 0x00000000, 0x00000000 },
+    { 0 }
+};
+
+struct subclass_info
+{
+    WNDPROC oldproc;
+};
+
+static LRESULT WINAPI datetime_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    struct subclass_info *info = (struct subclass_info *)GetWindowLongA(hwnd, GWL_USERDATA);
+    static long defwndproc_counter = 0;
+    LRESULT ret;
+    struct message msg;
+
+    trace("datetime: %p, %04x, %08x, %08lx\n", hwnd, message, wParam, lParam);
+
+    msg.message = message;
+    msg.flags = sent|wparam|lparam;
+    if (defwndproc_counter) msg.flags |= defwinproc;
+    msg.wParam = wParam;
+    msg.lParam = lParam;
+    add_message(sequences, DATETIME_SEQ_INDEX, &msg);
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(info->oldproc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
+
 static HWND create_datetime_control(DWORD style, DWORD exstyle)
 {
+    struct subclass_info *info;
     HWND hWndDateTime = NULL;
+
+    info = HeapAlloc(GetProcessHeap(), 0, sizeof(struct subclass_info));
+    if (!info)
+        return NULL;
 
     hWndDateTime = CreateWindowEx(0,
         DATETIMEPICK_CLASS,
@@ -39,6 +173,15 @@ static HWND create_datetime_control(DWORD style, DWORD exstyle)
         NULL,
         NULL,
         NULL);
+
+    if (!hWndDateTime) {
+        HeapFree(GetProcessHeap(), 0, info);
+        return NULL;
+    }
+
+    info->oldproc = (WNDPROC)SetWindowLongA(hWndDateTime, GWL_WNDPROC,
+                                            (LONG)datetime_subclass_proc);
+    SetWindowLongA(hWndDateTime, GWL_USERDATA, (LONG)info);
 
     return hWndDateTime;
 }
@@ -55,6 +198,9 @@ static void test_dtm_set_format(HWND hWndDateTime)
             (LPARAM)"'Today is: 'hh':'m':'s dddd MMM dd', 'yyyy");
         expect(1, r);
     }
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_format_seq, "test_dtm_set_format", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 void test_mccolor_types(HWND hWndDateTime, int mccolor_type, const char* mccolor_name)
@@ -85,6 +231,9 @@ static void test_dtm_set_and_get_mccolor(HWND hWndDateTime)
     test_mccolor_types(hWndDateTime, MCSC_TITLEBK, "MCSC_TITLEBK");
     test_mccolor_types(hWndDateTime, MCSC_TITLETEXT, "MCSC_TITLETEXT");
     test_mccolor_types(hWndDateTime, MCSC_TRAILINGTEXT, "MCSC_TRAILINGTEXT");
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_mccolor_seq, "test_dtm_set_and_get_mccolor", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 static void test_dtm_set_and_get_mcfont(HWND hWndDateTime)
@@ -95,6 +244,9 @@ static void test_dtm_set_and_get_mcfont(HWND hWndDateTime)
     SendMessage(hWndDateTime, DTM_SETMCFONT, (WPARAM)hFontOrig, TRUE);
     hFontNew = (HFONT)SendMessage(hWndDateTime, DTM_GETMCFONT, 0, 0);
     ok(hFontOrig == hFontNew, "Expected hFontOrig==hFontNew, hFontOrig=%p, hFontNew=%p\n", hFontOrig, hFontNew);
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_mcfont_seq, "test_dtm_set_and_get_mcfont", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 static void test_dtm_get_monthcal(HWND hWndDateTime)
@@ -105,6 +257,9 @@ static void test_dtm_get_monthcal(HWND hWndDateTime)
         r = SendMessage(hWndDateTime, DTM_GETMONTHCAL, 0, 0);
         ok(r == (LPARAM)NULL, "Expected NULL(no child month calendar control), got %ld\n", r);
     }
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_get_monthcal_seq, "test_dtm_get_monthcal", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 void fill_systime_struct(SYSTEMTIME *st, int year, int month, int dayofweek, int day, int hour, int minute, int second, int milliseconds)
@@ -218,6 +373,9 @@ static void test_dtm_set_and_get_range(HWND hWndDateTime)
     ok(r == (GDTR_MIN | GDTR_MAX), "Expected %x, not %x(GDTR_MIN) or %x(GDTR_MAX), got %lx\n", (GDTR_MIN | GDTR_MAX), GDTR_MIN, GDTR_MAX, r);
     expect_systime(&st[0], &getSt[0]);
     expect_systime(&st[1], &getSt[1]);
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_range_seq, "test_dtm_set_and_get_range", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 /* when max<min for DTM_SETRANGE, Windows seems to swap the min and max values,
@@ -311,6 +469,9 @@ static void test_dtm_set_range_swap_min_max(HWND hWndDateTime)
     ok(r == (GDTR_MIN | GDTR_MAX), "Expected %x, not %x(GDTR_MIN) or %x(GDTR_MAX), got %lx\n", (GDTR_MIN | GDTR_MAX), GDTR_MIN, GDTR_MAX, r);
     expect_systime(&st[0], &getSt[0]);
     expect_systime(&st[1], &getSt[1]);
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_range_swap_min_max_seq, "test_dtm_set_range_swap_min_max", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 static void test_dtm_set_and_get_system_time(HWND hWndDateTime)
@@ -352,6 +513,9 @@ static void test_dtm_set_and_get_system_time(HWND hWndDateTime)
         r = SendMessage(hWndDateTime, DTM_SETSYSTEMTIME, GDT_VALID, (LPARAM)&st);
         expect_unsuccess(0, r);
     }
+
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, test_dtm_set_and_get_system_time_seq, "test_dtm_set_and_get_system_time", FALSE);
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
 }
 
 static void test_datetime_control(void)
@@ -369,12 +533,13 @@ static void test_datetime_control(void)
         test_dtm_set_and_get_range(hWndDateTime);
         test_dtm_set_range_swap_min_max(hWndDateTime);
         test_dtm_set_and_get_system_time(hWndDateTime);
-        }
+    }
     else {
         skip("hWndDateTime is NULL\n");
     }
 
     DestroyWindow(hWndDateTime);
+    ok_sequence(sequences, DATETIME_SEQ_INDEX, destroy_window_seq, "test_dtm_set_and_get_system_time", TRUE);
 }
 
 START_TEST(datetime)
@@ -384,6 +549,7 @@ START_TEST(datetime)
     icex.dwSize = sizeof(icex);
     icex.dwICC = ICC_DATE_CLASSES;
     InitCommonControlsEx(&icex);
+    init_msg_sequences(sequences, NUM_MSG_SEQUENCES);
 
     test_datetime_control();
 }
