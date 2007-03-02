@@ -248,18 +248,18 @@ static void test_delete(void)
     shfo.hNameMappings = NULL;
     shfo.lpszProgressTitle = NULL;
 
-    ok(!SHFileOperationA(&shfo), "Deletion was successful\n");
-    ok(file_exists("test4.txt"), "Directory should not be removed\n");
-    ok(!file_exists("test1.txt"), "File should be removed\n");
+    ok(!SHFileOperationA(&shfo), "Deletion was not successful\n");
+    ok(file_exists("test4.txt"), "Directory should not have been removed\n");
+    ok(!file_exists("test1.txt"), "File should have been removed\n");
 
     ret = SHFileOperationA(&shfo);
     ok(!ret, "Directory exists, but is not removed, ret=%d\n", ret);
-    ok(file_exists("test4.txt"), "Directory should not be removed\n");
+    ok(file_exists("test4.txt"), "Directory should not have been removed\n");
 
     shfo.fFlags = FOF_NOCONFIRMATION | FOF_SILENT | FOF_NOERRORUI;
 
-    ok(!SHFileOperationA(&shfo), "Directory removed\n");
-    ok(!file_exists("test4.txt"), "Directory should be removed\n");
+    ok(!SHFileOperationA(&shfo), "Directory is not removed\n");
+    ok(!file_exists("test4.txt"), "Directory should have been removed\n");
 
     ret = SHFileOperationA(&shfo);
     ok(!ret, "The requested file does not exist, ret=%d\n", ret);
@@ -267,33 +267,33 @@ static void test_delete(void)
     init_shfo_tests();
     sprintf(buf, "%s\\%s", CURR_DIR, "test4.txt");
     buf[strlen(buf) + 1] = '\0';
-    ok(MoveFileA("test1.txt", "test4.txt\\test1.txt"), "Fill the subdirectory\n");
-    ok(!SHFileOperationA(&shfo), "Directory removed\n");
-    ok(!file_exists("test4.txt"), "Directory is removed\n");
+    ok(MoveFileA("test1.txt", "test4.txt\\test1.txt"), "Filling the subdirectory failed\n");
+    ok(!SHFileOperationA(&shfo), "Directory is not removed\n");
+    ok(!file_exists("test4.txt"), "Directory is not removed\n");
 
     init_shfo_tests();
     shfo.pFrom = "test1.txt\0test4.txt\0";
-        ok(!SHFileOperationA(&shfo), "Directory and a file removed\n");
-        ok(!file_exists("test1.txt"), "The file should be removed\n");
-        ok(!file_exists("test4.txt"), "Directory should be removed\n");
-    ok(file_exists("test2.txt"), "This file should not be removed\n");
+    ok(!SHFileOperationA(&shfo), "Directory and a file are not removed\n");
+    ok(!file_exists("test1.txt"), "The file should have been removed\n");
+    ok(!file_exists("test4.txt"), "Directory should have been removed\n");
+    ok(file_exists("test2.txt"), "This file should not have been removed\n");
 
     /* FOF_FILESONLY does not delete a dir matching a wildcard */
     init_shfo_tests();
     shfo.fFlags |= FOF_FILESONLY;
     shfo.pFrom = "*.txt\0";
-        ok(!SHFileOperation(&shfo), "Failed to delete files\n");
-        ok(!file_exists("test1.txt"), "test1.txt should be removed\n");
-        ok(!file_exists("test_5.txt"), "test_5.txt should be removed\n");
-    ok(file_exists("test4.txt"), "test4.txt should not be removed\n");
+    ok(!SHFileOperation(&shfo), "Failed to delete files\n");
+    ok(!file_exists("test1.txt"), "test1.txt should have been removed\n");
+    ok(!file_exists("test_5.txt"), "test_5.txt should have been removed\n");
+    ok(file_exists("test4.txt"), "test4.txt should not have been removed\n");
 
     /* FOF_FILESONLY only deletes a dir if explicitly specified */
     init_shfo_tests();
     shfo.pFrom = "test_?.txt\0test4.txt\0";
-        ok(!SHFileOperation(&shfo), "Failed to delete files\n");
-        ok(!file_exists("test4.txt"), "test4.txt should be removed\n");
-        ok(!file_exists("test_5.txt"), "test_5.txt should be removed\n");
-    ok(file_exists("test1.txt"), "test1.txt should not be removed\n");
+    ok(!SHFileOperation(&shfo), "Failed to delete files and directory\n");
+    ok(!file_exists("test4.txt"), "test4.txt should have been removed\n");
+    ok(!file_exists("test_5.txt"), "test_5.txt should have been removed\n");
+    ok(file_exists("test1.txt"), "test1.txt should not have been removed\n");
 
     /* try to delete an invalid filename */
     init_shfo_tests();
@@ -301,7 +301,7 @@ static void test_delete(void)
     shfo.fFlags &= ~FOF_FILESONLY;
     shfo.fAnyOperationsAborted = FALSE;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
+    ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
     ok(!shfo.fAnyOperationsAborted, "Expected no aborted operations\n");
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
@@ -310,7 +310,7 @@ static void test_delete(void)
     shfo.pFrom = "test1.txt\0";
     shfo.wFunc = 0;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
+    ok(ret == ERROR_INVALID_PARAMETER, "Expected ERROR_INVALID_PARAMETER, got %d\n", ret);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* try an invalid list, only one null terminator */
@@ -318,7 +318,7 @@ static void test_delete(void)
     shfo.pFrom = "";
     shfo.wFunc = FO_DELETE;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
+    ok(ret == ERROR_ACCESS_DENIED, "Expected ERROR_ACCESS_DENIED, got %d\n", ret);
     ok(file_exists("test1.txt"), "Expected test1.txt to exist\n");
 
     /* delete a dir, and then a file inside the dir, same as
@@ -327,8 +327,8 @@ static void test_delete(void)
     init_shfo_tests();
     shfo.pFrom = "testdir2\0testdir2\\one.txt\0";
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
-        ok(!file_exists("testdir2"), "Expected testdir2 to not exist\n");
+    ok(ret == ERROR_PATH_NOT_FOUND, "Expected ERROR_PATH_NOT_FOUND, got %d\n", ret);
+    ok(!file_exists("testdir2"), "Expected testdir2 to not exist\n");
     ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
 
     /* try the FOF_NORECURSION flag, continues deleting subdirs */
@@ -336,9 +336,9 @@ static void test_delete(void)
     shfo.pFrom = "testdir2\0";
     shfo.fFlags |= FOF_NORECURSION;
     ret = SHFileOperation(&shfo);
-        ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
-        ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
-        ok(!file_exists("testdir2\\nested"), "Expected testdir2\\nested to exist\n");
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ok(!file_exists("testdir2\\one.txt"), "Expected testdir2\\one.txt to not exist\n");
+    ok(!file_exists("testdir2\\nested"), "Expected testdir2\\nested to exist\n");
 }
 
 /* tests the FO_RENAME action */
