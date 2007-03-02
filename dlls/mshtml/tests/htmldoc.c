@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Jacek Caban
+ * Copyright 2005-2007 Jacek Caban for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -43,17 +43,19 @@ DEFINE_SHLGUID(CGID_Undocumented, 0x000214D4L, 0, 0);
 #define SET_EXPECT(func) \
     expect_ ## func = TRUE
 
-#define CHECK_EXPECT(func) \
-    do { \
-        ok(expect_ ##func, "unexpected call " #func "\n"); \
-        expect_ ## func = FALSE; \
-        called_ ## func = TRUE; \
-    }while(0)
+#define SET_CALLED(func) \
+    called_ ## func = TRUE
 
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
         called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
     }while(0)
 
 #define CHECK_CALLED(func) \
@@ -110,12 +112,20 @@ DEFINE_EXPECT(OnChanged_1005);
 DEFINE_EXPECT(GetDisplayName);
 DEFINE_EXPECT(BindToStorage);
 DEFINE_EXPECT(Abort);
+DEFINE_EXPECT(Read);
+DEFINE_EXPECT(CreateInstance);
+DEFINE_EXPECT(Start);
+DEFINE_EXPECT(Terminate);
+DEFINE_EXPECT(Protocol_Read);
+DEFINE_EXPECT(LockRequest);
+DEFINE_EXPECT(UnlockRequest);
 
 static BOOL expect_LockContainer_fLock;
 static BOOL expect_SetActiveObject_active;
 static BOOL set_clientsite = FALSE, container_locked = FALSE;
 static BOOL readystate_set_loading = FALSE;
 static BOOL editmode = FALSE;
+static int stream_read, protocol_read;
 static enum load_state_t {
     LD_DOLOAD,
     LD_LOADING,
@@ -126,9 +136,232 @@ static enum load_state_t {
 
 static LPCOLESTR expect_status_text = NULL;
 
+static const char html_page[] =
+"<html>"
+"<head><link rel=\"stylesheet\" type=\"text/css\" href=\"test.css\"></head>"
+"<body>test</body>"
+"</html>";
+
+static const char css_data[] = "body {color: red}";
+
+static const WCHAR doc_url[] = {'w','i','n','e','t','e','s','t',':','d','o','c',0};
+
 static HRESULT QueryInterface(REFIID riid, void **ppv);
 static void test_readyState(IUnknown*);
 static void test_MSHTML_QueryStatus(IUnknown*,DWORD);
+
+static HRESULT WINAPI Protocol_QueryInterface(IInternetProtocol *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IInternetProtocol, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Protocol_AddRef(IInternetProtocol *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Protocol_Release(IInternetProtocol *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
+        IInternetProtocolSink *pOIProtSink, IInternetBindInfo *pOIBindInfo,
+        DWORD grfPI, DWORD dwReserved)
+{
+    BINDINFO bindinfo;
+    DWORD bindf = 0;
+    HRESULT hres;
+
+    static const WCHAR wszTextCss[] = {'t','e','x','t','/','c','s','s',0};
+    static const WCHAR empty_str = {0};
+
+    CHECK_EXPECT(Start);
+
+    ok(pOIProtSink != NULL, "pOIProtSink == NULL\n");
+    ok(pOIBindInfo != NULL, "pOIBindInfo == NULL\n");
+    ok(!grfPI, "grfPI = %x\n", grfPI);
+    ok(!dwReserved, "dwReserved = %d\n", dwReserved);
+
+    memset(&bindinfo, 0, sizeof(bindinfo));
+    bindinfo.cbSize = sizeof(bindinfo);
+    hres = IInternetBindInfo_GetBindInfo(pOIBindInfo, &bindf, &bindinfo);
+    ok(hres == S_OK, "GetBindInfo failed: %08x\n", hres);
+    ok(bindf == (BINDF_FROMURLMON|BINDF_PULLDATA|BINDF_NEEDFILE|BINDF_ASYNCSTORAGE|BINDF_ASYNCHRONOUS),
+       "bindf = %x\n", bindf);
+
+    ok(bindinfo.cbSize == sizeof(bindinfo), "bindinfo.cbSize=%d\n", bindinfo.cbSize);
+    ok(bindinfo.szExtraInfo == NULL, "bindinfo.szExtraInfo=%p\n", bindinfo.szExtraInfo);
+    /* TODO: test stgmedData */
+    ok(bindinfo.grfBindInfoF == 0, "bindinfo.grfBinfInfoF=%08x\n", bindinfo.grfBindInfoF);
+    ok(bindinfo.dwBindVerb == 0, "bindinfo.dwBindVerb=%d\n", bindinfo.dwBindVerb);
+    ok(bindinfo.szCustomVerb == 0, "bindinfo.szCustomVerb=%p\n", bindinfo.szCustomVerb);
+    ok(bindinfo.cbstgmedData == 0, "bindinfo.cbstgmedData=%d\n", bindinfo.cbstgmedData);
+    ok(bindinfo.dwOptions == 0x80000, "bindinfo.dwOptions=%x\n", bindinfo.dwOptions);
+    ok(bindinfo.dwOptionsFlags == 0, "bindinfo.dwOptionsFlags=%d\n", bindinfo.dwOptionsFlags);
+    /* TODO: test dwCodePage */
+    /* TODO: test securityAttributes */
+    ok(IsEqualGUID(&IID_NULL, &bindinfo.iid), "unexepected bindinfo.iid\n");
+    ok(bindinfo.pUnk == NULL, "bindinfo.pUnk=%p\n", bindinfo.pUnk);
+    ok(bindinfo.dwReserved == 0, "bindinfo.dwReserved=%d\n", bindinfo.dwReserved);
+
+    hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
+            BINDSTATUS_CACHEFILENAMEAVAILABLE, &empty_str);
+    ok(hres == S_OK, "ReportProgress(BINDSTATUS_CACHEFILENAMEAVAILABLE) failed: %08x\n", hres);
+
+    hres = IInternetProtocolSink_ReportProgress(pOIProtSink,
+            BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE, wszTextCss);
+    ok(hres == S_OK,
+       "ReportProgress(BINDSTATUS_VERIFIEDMIMETYPEAVAILABLE) failed: %08x\n", hres);
+
+    hres = IInternetProtocolSink_ReportData(pOIProtSink,
+            BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION, 13, 13);
+    ok(hres == S_OK, "ReportData failed: %08x\n", hres);
+
+    hres = IInternetProtocolSink_ReportResult(pOIProtSink, S_OK, 0, NULL);
+    ok(hres == S_OK, "ReportResult failed: %08x\n", hres);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_Continue(IInternetProtocol *iface,
+        PROTOCOLDATA *pProtocolData)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Abort(IInternetProtocol *iface, HRESULT hrReason,
+        DWORD dwOptions)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Terminate(IInternetProtocol *iface, DWORD dwOptions)
+{
+    CHECK_EXPECT(Terminate);
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_Suspend(IInternetProtocol *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Resume(IInternetProtocol *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_Read(IInternetProtocol *iface, void *pv,
+        ULONG cb, ULONG *pcbRead)
+{
+    CHECK_EXPECT2(Protocol_Read);
+
+    ok(pv != NULL, "pv == NULL\n");
+    ok(cb > sizeof(css_data), "cb < sizeof(css_data)\n");
+    ok(pcbRead != NULL, "pcbRead == NULL\n");
+    ok(!*pcbRead, "*pcbRead=%d\n", *pcbRead);
+
+    if(protocol_read)
+        return S_FALSE;
+
+    protocol_read += *pcbRead = sizeof(css_data)-1;
+    memcpy(pv, css_data, sizeof(css_data)-1);
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_Seek(IInternetProtocol *iface,
+        LARGE_INTEGER dlibMove, DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Protocol_LockRequest(IInternetProtocol *iface, DWORD dwOptions)
+{
+    CHECK_EXPECT(LockRequest);
+    return S_OK;
+}
+
+static HRESULT WINAPI Protocol_UnlockRequest(IInternetProtocol *iface)
+{
+    CHECK_EXPECT(UnlockRequest);
+    return S_OK;
+}
+
+static const IInternetProtocolVtbl ProtocolVtbl = {
+    Protocol_QueryInterface,
+    Protocol_AddRef,
+    Protocol_Release,
+    Protocol_Start,
+    Protocol_Continue,
+    Protocol_Abort,
+    Protocol_Terminate,
+    Protocol_Suspend,
+    Protocol_Resume,
+    Protocol_Read,
+    Protocol_Seek,
+    Protocol_LockRequest,
+    Protocol_UnlockRequest
+};
+
+static IInternetProtocol Protocol = { &ProtocolVtbl };
+
+static HRESULT WINAPI ClassFactory_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    if(!IsEqualGUID(&IID_IInternetProtocolInfo, riid))
+        ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI ClassFactory_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClassFactory_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+                                        REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IInternetProtocolInfo, riid))
+        return E_NOINTERFACE;
+
+    CHECK_EXPECT(CreateInstance);
+    ok(ppv != NULL, "ppv == NULL\n");
+
+    *ppv = &Protocol;
+    return S_OK;
+}
+
+static HRESULT WINAPI ClassFactory_LockServer(IClassFactory *iface, BOOL dolock)
+{
+    ok(0, "unexpected call\n");
+    return S_OK;
+}
+
+static const IClassFactoryVtbl ClassFactoryVtbl = {
+    ClassFactory_QueryInterface,
+    ClassFactory_AddRef,
+    ClassFactory_Release,
+    ClassFactory_CreateInstance,
+    ClassFactory_LockServer
+};
+
+static IClassFactory ClassFactory = { &ClassFactoryVtbl };
 
 static HRESULT WINAPI HlinkFrame_QueryInterface(IHlinkFrame *iface, REFIID riid, void **ppv)
 {
@@ -288,6 +521,124 @@ static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
+static HRESULT WINAPI Stream_QueryInterface(IStream *iface, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Stream_AddRef(IStream *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI Stream_Release(IStream *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI Stream_Read(IStream *iface, void *pv,
+                                  ULONG cb, ULONG *pcbRead)
+{
+    CHECK_EXPECT2(Read);
+    ok(pv != NULL, "pv == NULL\n");
+    ok(cb > sizeof(html_page), "cb = %d\n", cb);
+    ok(pcbRead != NULL, "pcbRead == NULL\n");
+    ok(!*pcbRead, "*pcbRead = %d\n", *pcbRead);
+
+    if(stream_read)
+        return S_FALSE;
+
+    memcpy(pv, html_page, sizeof(html_page)-1);
+    stream_read += *pcbRead = sizeof(html_page)-1;
+    return S_OK;
+}
+
+static HRESULT WINAPI Stream_Write(IStream *iface, const void *pv,
+                                          ULONG cb, ULONG *pcbWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Seek(IStream *iface, LARGE_INTEGER dlibMove,
+                                         DWORD dwOrigin, ULARGE_INTEGER *plibNewPosition)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_SetSize(IStream *iface, ULARGE_INTEGER libNewSize)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_CopyTo(IStream *iface, IStream *pstm,
+        ULARGE_INTEGER cb, ULARGE_INTEGER *pcbRead, ULARGE_INTEGER *pcbWritten)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Commit(IStream *iface, DWORD grfCommitFlags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Revert(IStream *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_LockRegion(IStream *iface, ULARGE_INTEGER libOffset,
+                                               ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_UnlockRegion(IStream *iface,
+        ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Stat(IStream *iface, STATSTG *pstatstg,
+                                         DWORD dwStatFlag)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Stream_Clone(IStream *iface, IStream **ppstm)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IStreamVtbl StreamVtbl = {
+    Stream_QueryInterface,
+    Stream_AddRef,
+    Stream_Release,
+    Stream_Read,
+    Stream_Write,
+    Stream_Seek,
+    Stream_SetSize,
+    Stream_CopyTo,
+    Stream_Commit,
+    Stream_Revert,
+    Stream_LockRegion,
+    Stream_UnlockRegion,
+    Stream_Stat,
+    Stream_Clone
+};
+
+static IStream Stream = { &StreamVtbl };
+
 static HRESULT WINAPI Binding_QueryInterface(IBinding *iface, REFIID riid, void **ppv)
 {
     if(IsEqualGUID(&IID_IWinInetHttpInfo, riid))
@@ -421,13 +772,11 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
     FORMATETC formatetc = {0xc02d, NULL, 1, -1, TYMED_ISTREAM};
     STGMEDIUM stgmedium;
     BINDINFO bindinfo;
-    DWORD bindf, written=0;
-    IStream *stream;
+    DWORD bindf;
     HRESULT hres;
 
     static OLECHAR BSCBHolder[] = { '_','B','S','C','B','_','H','o','l','d','e','r','_',0 };
     static const WCHAR wszTextHtml[] = {'t','e','x','t','/','h','t','m','l',0};
-    static const char html_page[] = "<html><body>test</body></html>";
 
     CHECK_EXPECT(BindToStorage);
 
@@ -470,21 +819,19 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
                                           wszTextHtml);
     ok(hres == S_OK, "OnProgress(BINDSTATUS_MIMETYPEAVAILABLE) failed: %08x\n", hres);
 
-    hres = IBindStatusCallback_OnProgress(callback, 0, 0, BINDSTATUS_BEGINDOWNLOADDATA,
-                                          NULL);
+    hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
+                                          BINDSTATUS_BEGINDOWNLOADDATA, doc_url);
     ok(hres == S_OK, "OnProgress(BINDSTATUS_BEGINDOWNLOADDATA) failed: %08x\n", hres);
 
-    CreateStreamOnHGlobal(0, TRUE, &stream);
-    IStream_Write(stream, html_page, sizeof(html_page)-1, &written);
-
+    SET_EXPECT(Read);
     stgmedium.tymed = TYMED_ISTREAM;
-    U(stgmedium).pstm = stream;
+    U(stgmedium).pstm = &Stream;
     stgmedium.pUnkForRelease = (IUnknown*)iface;
     hres = IBindStatusCallback_OnDataAvailable(callback,
             BSCF_FIRSTDATANOTIFICATION|BSCF_LASTDATANOTIFICATION,
-            100, &formatetc, &stgmedium);
+            sizeof(html_page)-1, &formatetc, &stgmedium);
     ok(hres == S_OK, "OnDataAvailable failed: %08x\n", hres);
-    IStream_Release(stream);
+    CHECK_CALLED(Read);
 
     hres = IBindStatusCallback_OnProgress(callback, sizeof(html_page)-1, sizeof(html_page)-1,
             BINDSTATUS_ENDDOWNLOADDATA, NULL);
@@ -567,17 +914,14 @@ static HRESULT WINAPI Moniker_RelativePathTo(IMoniker *iface, IMoniker *pmkOther
 static HRESULT WINAPI Moniker_GetDisplayName(IMoniker *iface, IBindCtx *pbc,
         IMoniker *pmkToLeft, LPOLESTR *ppszDisplayName)
 {
-    static const WCHAR winetest_test[] =
-        {'w','i','n','e','t','e','s','t',':','t','e','s','t',0};
-
     CHECK_EXPECT2(GetDisplayName);
 
     /* ok(pbc != NULL, "pbc == NULL\n"); */
     ok(pmkToLeft == NULL, "pmkToLeft=%p\n", pmkToLeft);
     ok(ppszDisplayName != NULL, "ppszDisplayName == NULL\n");
 
-    *ppszDisplayName = CoTaskMemAlloc(sizeof(winetest_test));
-    memcpy(*ppszDisplayName, winetest_test, sizeof(winetest_test));
+    *ppszDisplayName = CoTaskMemAlloc(sizeof(doc_url));
+    memcpy(*ppszDisplayName, doc_url, sizeof(doc_url));
 
     return S_OK;
 }
@@ -1883,7 +2227,7 @@ static void test_Load(IPersistMoniker *persist)
     test_readyState((IUnknown*)persist);
 }
 
-static void test_download(BOOL verb_done)
+static void test_download(BOOL verb_done, BOOL css_dwl)
 {
     HWND hwnd;
     MSG msg;
@@ -1900,6 +2244,14 @@ static void test_download(BOOL verb_done)
     SET_EXPECT(SetStatusText);
     SET_EXPECT(Exec_SETDOWNLOADSTATE_1);
     SET_EXPECT(GetDropTarget);
+    if(css_dwl) {
+        SET_EXPECT(CreateInstance);
+        SET_EXPECT(Start);
+        SET_EXPECT(LockRequest);
+        SET_EXPECT(Terminate);
+        SET_EXPECT(Protocol_Read);
+        SET_EXPECT(UnlockRequest);
+    }
     SET_EXPECT(OnChanged_1005);
     SET_EXPECT(OnChanged_READYSTATE);
     SET_EXPECT(Exec_SETPROGRESSPOS);
@@ -1921,6 +2273,25 @@ static void test_download(BOOL verb_done)
     CHECK_CALLED(SetStatusText);
     CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
     CHECK_CALLED(GetDropTarget);
+    if(css_dwl) {
+        if(called_CreateInstance) {
+            CHECK_CALLED(CreateInstance);
+            CHECK_CALLED(Start);
+            CHECK_CALLED(LockRequest);
+            CHECK_CALLED(Terminate);
+            CHECK_CALLED(Protocol_Read);
+            CHECK_CALLED(UnlockRequest);
+        }else {
+            skip("CreateInstance not called. Assuming no Gecko installed.\n");
+
+            SET_CALLED(CreateInstance);
+            SET_CALLED(Start);
+            SET_CALLED(LockRequest);
+            SET_CALLED(Terminate);
+            SET_CALLED(Protocol_Read);
+            SET_CALLED(UnlockRequest);
+        }
+    }
     CHECK_CALLED(OnChanged_1005);
     CHECK_CALLED(OnChanged_READYSTATE);
     CHECK_CALLED(Exec_SETPROGRESSPOS);
@@ -2632,6 +3003,8 @@ static void init_test(enum load_state_t ls) {
     call_UIActivate = FALSE;
     load_state = ls;
     editmode = FALSE;
+    stream_read = 0;
+    protocol_read = 0;
 }
 
 static void test_HTMLDocument(enum load_state_t ls)
@@ -2662,7 +3035,7 @@ static void test_HTMLDocument(enum load_state_t ls)
     }
 
     if(load_state == LD_LOADING)
-        test_download(FALSE);
+        test_download(FALSE, TRUE);
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_OleCommandTarget_fail(unk);
@@ -2732,7 +3105,7 @@ static void test_HTMLDocument_hlink(void)
     test_Persist(unk);
     test_Navigate(unk);
 
-    test_download(FALSE);
+    test_download(FALSE, TRUE);
 
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
     test_exec_onunload(unk);
@@ -2776,7 +3149,7 @@ static void test_editing_mode(void)
 
     test_exec_editmode(unk);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED);
-    test_download(TRUE);
+    test_download(TRUE, FALSE);
     test_MSHTML_QueryStatus(unk, OLECMDF_SUPPORTED|OLECMDF_ENABLED);
 
     test_UIDeactivate();
@@ -2790,6 +3163,23 @@ static void test_editing_mode(void)
 
     ref = IUnknown_Release(unk);
     ok(ref == 0, "ref=%d, expected 0\n", ref);
+}
+
+static void register_protocol(void)
+{
+    IInternetSession *session;
+    HRESULT hres;
+
+    static const WCHAR wsz_winetest[] = {'w','i','n','e','t','e','s','t',0};
+
+    hres = CoInternetGetSession(0, &session, 0);
+    ok(hres == S_OK, "CoInternetGetSession failed: %08x\n", hres);
+
+    hres = IInternetSession_RegisterNameSpace(session, &ClassFactory, &IID_NULL,
+            wsz_winetest, 0, NULL, 0);
+    ok(hres == S_OK, "RegisterNameSpace failed: %08x\n", hres);
+
+    IInternetSession_Release(session);
 }
 
 static void gecko_installer_workaround(BOOL disable)
@@ -2828,6 +3218,7 @@ START_TEST(htmldoc)
 
     CoInitialize(NULL);
     container_hwnd = create_container_window();
+    register_protocol();
 
     test_HTMLDocument(LD_NO);
     test_HTMLDocument(LD_DOLOAD);
