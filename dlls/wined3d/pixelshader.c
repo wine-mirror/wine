@@ -733,7 +733,7 @@ CONST SHADER_OPCODE IWineD3DPixelShaderImpl_shader_ins[] = {
     {WINED3DSIO_DSY,      "dsy",      GLNAME_REQUIRE_GLSL, 1, 2, pshader_dsy,     NULL, NULL, 0, 0},
     {WINED3DSIO_TEXLDD,   "texldd",   GLNAME_REQUIRE_GLSL, 1, 5, pshader_texldd,  NULL, NULL, WINED3DPS_VERSION(2,1), -1},
     {WINED3DSIO_SETP,     "setp",     GLNAME_REQUIRE_GLSL, 1, 3, pshader_setp,    NULL, NULL, 0, 0},
-    {WINED3DSIO_TEXLDL,   "texldl",   GLNAME_REQUIRE_GLSL, 1, 2, pshader_texldl,  NULL, NULL, 0, 0},
+    {WINED3DSIO_TEXLDL,   "texldl",   GLNAME_REQUIRE_GLSL, 1, 3, pshader_texldl,  NULL, NULL, 0, 0},
     {WINED3DSIO_PHASE,    "phase",    GLNAME_REQUIRE_GLSL, 0, 0, pshader_nop,     NULL, NULL, 0, 0},
     {0,               NULL,       NULL,   0, 0, NULL,            NULL, 0, 0}
 };
