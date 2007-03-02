@@ -424,6 +424,13 @@ static HRESULT WINAPI BindStatusCallback_OnDataAvailable(IBindStatusCallback *if
 
             This->readed += This->nsstream->buf_size;
         }while(hres == S_OK);
+    }else {
+        BYTE buf[1024];
+        DWORD read;
+        do {
+            read = 0;
+            hres = IStream_Read(pstgmed->u.pstm, buf, sizeof(buf), &read);
+        }while(hres == S_OK && read);
     }
 
     return S_OK;
