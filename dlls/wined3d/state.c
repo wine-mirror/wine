@@ -2053,7 +2053,7 @@ static void transform_world(DWORD state, IWineD3DStateBlockImpl *stateblock, Win
 static void clipplane(DWORD state, IWineD3DStateBlockImpl *stateblock, WineD3DContext *context) {
     UINT index = state - STATE_CLIPPLANE(0);
 
-    if(isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW)) || index > GL_LIMITS(clipplanes)) {
+    if(isStateDirty(context, STATE_TRANSFORM(WINED3DTS_VIEW)) || index >= GL_LIMITS(clipplanes)) {
         return;
     }
 
