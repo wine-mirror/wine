@@ -4138,14 +4138,9 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
 
     ENTER_GL();
 
-    if(pRects) {
-        glEnable(GL_SCISSOR_TEST);
-        checkGLcall("glEnable GL_SCISSOR_TEST");
-        IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
-    } else {
-        glDisable(GL_SCISSOR_TEST);
-        checkGLcall("glEnable GL_SCISSOR_TEST");
-    }
+    glEnable(GL_SCISSOR_TEST);
+    checkGLcall("glEnable GL_SCISSOR_TEST");
+    IWineD3DDeviceImpl_MarkStateDirty(This, STATE_SCISSORRECT);
     IWineD3DDeviceImpl_MarkStateDirty(This, STATE_RENDER(WINED3DRS_SCISSORTESTENABLE));
 
     if (Count > 0 && pRects) {
@@ -4184,6 +4179,12 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Clear(IWineD3DDevice *iface, DWORD Coun
     }
 
     if (!curRect) {
+        glScissor(This->stateBlock->viewport.X,
+                  (((IWineD3DSurfaceImpl *)This->render_targets[0])->currentDesc.Height -
+                  (This->stateBlock->viewport.Y + This->stateBlock->viewport.Height)),
+                   This->stateBlock->viewport.Width,
+                   This->stateBlock->viewport.Height);
+        checkGLcall("glScissor");
         glClear(glMask);
         checkGLcall("glClear");
     } else {
@@ -5246,10 +5247,20 @@ static void     WINAPI  IWineD3DDeviceImpl_SetCursorPosition(IWineD3DDevice* ifa
 static BOOL     WINAPI  IWineD3DDeviceImpl_ShowCursor(IWineD3DDevice* iface, BOOL bShow) {
     IWineD3DDeviceImpl *This = (IWineD3DDeviceImpl *) iface;
     BOOL oldVisible = This->bCursorVisible;
+    POINT pt;
+
     TRACE("(%p) : visible(%d)\n", This, bShow);
 
     if(This->cursorTexture)
         This->bCursorVisible = bShow;
+    /*
+     * When ShowCursor is first called it should make the cursor appear at the OS's last
+     * known cursor position.  Because of this, some applications just repetitively call
+     * ShowCursor in order to update the cursor's position.  This behavior is undocumented.
+     */
+    GetCursorPos(&pt);
+    This->xScreenSpace = pt.x;
+    This->yScreenSpace = pt.y;
 
     return oldVisible;
 }
