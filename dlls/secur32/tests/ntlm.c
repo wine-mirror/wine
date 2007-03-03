@@ -568,7 +568,7 @@ static void testInitializeSecurityContextFlags()
 
     if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
-        trace("Package not installed, skipping test!\n");
+        skip("Package not installed, skipping test!\n");
         return;
     }
 
@@ -585,7 +585,7 @@ static void testInitializeSecurityContextFlags()
 
     if((sec_status = setupClient(&client, sec_pkg_name)) != SEC_E_OK)
     {
-        trace("Setting up the client returned %s, skipping test!\n",
+        skip("Setting up the client returned %s, skipping test!\n",
                 getSecError(sec_status));
         return;
     }
@@ -774,128 +774,127 @@ static void testAuth(ULONG data_rep, BOOL fake)
     SspiData                client, server;
     SEC_WINNT_AUTH_IDENTITY id;
     SecPkgContext_Sizes     ctxt_sizes;
-    static char             sec_pkg_name[] = "NTLM";
+    static char             sec_pkg_name[] = "NTLM",
+                            test_user[] = "testuser",
+                            workgroup[] = "WORKGROUP",
+                            test_pass[] = "testpass";
 
-    if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)== SEC_E_OK)
+    if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)!= SEC_E_OK)
     {
-        static char test_user[] = "testuser",
-                    workgroup[] = "WORKGROUP",
-                    test_pass[] = "testpass";
+        skip("Package not installed, skipping test.\n");
+        return;
+    }
 
-        pFreeContextBuffer(pkg_info);
-        id.User = (unsigned char*) test_user;
-        id.UserLength = strlen((char *) id.User);
-        id.Domain = (unsigned char *) workgroup;
-        id.DomainLength = strlen((char *) id.Domain);
-        id.Password = (unsigned char*) test_pass;
-        id.PasswordLength = strlen((char *) id.Password);
-        id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    pFreeContextBuffer(pkg_info);
+    id.User = (unsigned char*) test_user;
+    id.UserLength = strlen((char *) id.User);
+    id.Domain = (unsigned char *) workgroup;
+    id.DomainLength = strlen((char *) id.Domain);
+    id.Password = (unsigned char*) test_pass;
+    id.PasswordLength = strlen((char *) id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
-        client.id = &id;
-        
-        sec_status = setupClient(&client, sec_pkg_name);
+    client.id = &id;
 
-        if(sec_status != SEC_E_OK)
-        {
-            trace("Error: Setting up the client returned %s, exiting test!\n",
-                    getSecError(sec_status));
-            pFreeCredentialsHandle(client.cred);
-            return;
-        }
+    sec_status = setupClient(&client, sec_pkg_name);
+
+    if(sec_status != SEC_E_OK)
+    {
+        skip("Error: Setting up the client returned %s, exiting test!\n",
+                getSecError(sec_status));
+        pFreeCredentialsHandle(client.cred);
+        return;
+    }
+
+    if(fake)
+        sec_status = setupFakeServer(&server, sec_pkg_name);
+    else
+        sec_status = setupServer(&server, sec_pkg_name);
+
+    if(sec_status != SEC_E_OK)
+    {
+        skip("Error: Setting up the server returned %s, exiting test!\n",
+                getSecError(sec_status));
+        pFreeCredentialsHandle(server.cred);
+        pFreeCredentialsHandle(client.cred);
+        return;
+    }
+
+    while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
+    {
+        client_stat = runClient(&client, first, data_rep);
+
+        ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
+                "Running the client returned %s, more tests will fail.\n",
+                getSecError(client_stat));
+
+        communicate(&client, &server);
 
         if(fake)
-            sec_status = setupFakeServer(&server, sec_pkg_name);
+            server_stat = runFakeServer(&server, first, data_rep);
         else
-            sec_status = setupServer(&server, sec_pkg_name);
+            server_stat = runServer(&server, first, data_rep);
 
-        if(sec_status != SEC_E_OK)
-        {
-            trace("Error: Setting up the server returned %s, exiting test!\n",
-                    getSecError(sec_status));
-            pFreeCredentialsHandle(server.cred);
-            pFreeCredentialsHandle(client.cred);
-            return;
-        }
+        ok(server_stat == SEC_E_OK || server_stat == SEC_I_CONTINUE_NEEDED ||
+                server_stat == SEC_E_LOGON_DENIED,
+                "Running the server returned %s, more tests will fail from now.\n",
+                getSecError(server_stat));
 
-
-        while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
-        {
-            client_stat = runClient(&client, first, data_rep);
-
-            ok(client_stat == SEC_E_OK || client_stat == SEC_I_CONTINUE_NEEDED,
-                    "Running the client returned %s, more tests will fail.\n",
-                    getSecError(client_stat));
-
-            communicate(&client, &server);
-
-            if(fake)
-                server_stat = runFakeServer(&server, first, data_rep);
-            else
-                server_stat = runServer(&server, first, data_rep);
-
-            ok(server_stat == SEC_E_OK || server_stat == SEC_I_CONTINUE_NEEDED ||
-                    server_stat == SEC_E_LOGON_DENIED,
-                    "Running the server returned %s, more tests will fail from now.\n",
-                    getSecError(server_stat));
-
-            communicate(&server, &client);
-            trace("Looping\n");
-            first = FALSE;
-        }
-
-        if(client_stat == SEC_E_OK)
-        {
-            sec_status = pQueryContextAttributesA(client.ctxt,
-                    SECPKG_ATTR_SIZES, &ctxt_sizes);
-
-            ok(sec_status == SEC_E_OK, 
-                    "pQueryContextAttributesA(SECPKG_ATTR_SIZES) returned %s\n",
-                    getSecError(sec_status));
-            ok(ctxt_sizes.cbMaxToken == 1904,
-                    "cbMaxToken should be 1904 but is %lu\n", 
-                    ctxt_sizes.cbMaxToken);
-            ok(ctxt_sizes.cbMaxSignature == 16,
-                    "cbMaxSignature should be 16 but is %lu\n",
-                    ctxt_sizes.cbMaxSignature);
-            ok(ctxt_sizes.cbSecurityTrailer == 16,
-                    "cbSecurityTrailer should be 16 but is  %lu\n",
-                    ctxt_sizes.cbSecurityTrailer);
-            ok(ctxt_sizes.cbBlockSize == 0,
-                    "cbBlockSize should be 0 but is %lu\n",
-                    ctxt_sizes.cbBlockSize);
-        }
-        else
-            trace("Authentication failed, skipping test.\n");
-
-        cleanupBuffers(&client);
-        cleanupBuffers(&server);
-        
-        if(!fake)
-        {
-            sec_status = pDeleteSecurityContext(server.ctxt);
-            ok(sec_status == SEC_E_OK, "DeleteSecurityContext(server) returned %s\n",
-                getSecError(sec_status));
-        }
-
-        sec_status = pDeleteSecurityContext(client.ctxt);
-        ok(sec_status == SEC_E_OK, "DeleteSecurityContext(client) returned %s\n",
-                getSecError(sec_status));
-        
-        if(!fake)
-        {   
-            sec_status = pFreeCredentialsHandle(server.cred);
-            ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(server) returned %s\n",
-                getSecError(sec_status));
-        }
-        
-        sec_status = pFreeCredentialsHandle(client.cred);
-        ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(client) returned %s\n",
-                getSecError(sec_status));
+        communicate(&server, &client);
+        trace("Looping\n");
+        first = FALSE;
     }
-    else
+
+    if(client_stat != SEC_E_OK)
     {
-        trace("Package not installed, skipping test.\n");
+        skip("Authentication failed, skipping test.\n");
+        goto tAuthend;
     }
+
+    sec_status = pQueryContextAttributesA(client.ctxt,
+            SECPKG_ATTR_SIZES, &ctxt_sizes);
+
+    ok(sec_status == SEC_E_OK,
+            "pQueryContextAttributesA(SECPKG_ATTR_SIZES) returned %s\n",
+            getSecError(sec_status));
+    ok(ctxt_sizes.cbMaxToken == 1904,
+            "cbMaxToken should be 1904 but is %lu\n",
+            ctxt_sizes.cbMaxToken);
+    ok(ctxt_sizes.cbMaxSignature == 16,
+            "cbMaxSignature should be 16 but is %lu\n",
+            ctxt_sizes.cbMaxSignature);
+    ok(ctxt_sizes.cbSecurityTrailer == 16,
+            "cbSecurityTrailer should be 16 but is  %lu\n",
+            ctxt_sizes.cbSecurityTrailer);
+    ok(ctxt_sizes.cbBlockSize == 0,
+            "cbBlockSize should be 0 but is %lu\n",
+            ctxt_sizes.cbBlockSize);
+
+tAuthend:
+    cleanupBuffers(&client);
+    cleanupBuffers(&server);
+
+    if(!fake)
+    {
+        sec_status = pDeleteSecurityContext(server.ctxt);
+        ok(sec_status == SEC_E_OK, "DeleteSecurityContext(server) returned %s\n",
+            getSecError(sec_status));
+    }
+
+    sec_status = pDeleteSecurityContext(client.ctxt);
+    ok(sec_status == SEC_E_OK, "DeleteSecurityContext(client) returned %s\n",
+            getSecError(sec_status));
+
+    if(!fake)
+    {
+        sec_status = pFreeCredentialsHandle(server.cred);
+        ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(server) returned %s\n",
+            getSecError(sec_status));
+    }
+
+    sec_status = pFreeCredentialsHandle(client.cred);
+    ok(sec_status == SEC_E_OK, "FreeCredentialsHandle(client) returned %s\n",
+            getSecError(sec_status));
 }
 
 static void testSignSeal()
@@ -912,211 +911,209 @@ static void testSignSeal()
     SecBuffer               data[2], fake_data[2], complex_data[4];
     ULONG                   qop = 0;
     SecPkgContext_Sizes     ctxt_sizes;
+    static char             test_user[] = "testuser",
+                            workgroup[] = "WORKGROUP",
+                            test_pass[] = "testpass";
 
     /****************************************************************
      * This is basically the same as in testAuth with a fake server,
      * as we need a valid, authenticated context.
      */
-    if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info)== SEC_E_OK)
+    if(pQuerySecurityPackageInfoA( sec_pkg_name, &pkg_info) != SEC_E_OK)
     {
-        static char test_user[] = "testuser",
-                    workgroup[] = "WORKGROUP",
-                    test_pass[] = "testpass";
+        skip("Package not installed, skipping test.\n");
+        return;
+    }
 
-        pFreeContextBuffer(pkg_info);
-        id.User = (unsigned char*) test_user;
-        id.UserLength = strlen((char *) id.User);
-        id.Domain = (unsigned char *) workgroup;
-        id.DomainLength = strlen((char *) id.Domain);
-        id.Password = (unsigned char*) test_pass;
-        id.PasswordLength = strlen((char *) id.Password);
-        id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
+    pFreeContextBuffer(pkg_info);
+    id.User = (unsigned char*) test_user;
+    id.UserLength = strlen((char *) id.User);
+    id.Domain = (unsigned char *) workgroup;
+    id.DomainLength = strlen((char *) id.Domain);
+    id.Password = (unsigned char*) test_pass;
+    id.PasswordLength = strlen((char *) id.Password);
+    id.Flags = SEC_WINNT_AUTH_IDENTITY_ANSI;
 
-        client.id = &id;
+    client.id = &id;
 
-        sec_status = setupClient(&client, sec_pkg_name);
+    sec_status = setupClient(&client, sec_pkg_name);
 
-        if(sec_status != SEC_E_OK)
-        {
-            trace("Error: Setting up the client returned %s, exiting test!\n",
-                    getSecError(sec_status));
-            pFreeCredentialsHandle(client.cred);
-            return;
-        }
-
-        sec_status = setupFakeServer(&server, sec_pkg_name);
-
-        while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
-        {
-            client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
-
-            communicate(&client, &server);
-
-            server_stat = runFakeServer(&server, first, SECURITY_NETWORK_DREP);
-
-            communicate(&server, &client);
-            trace("Looping\n");
-            first = FALSE;
-        }
-
-        /********************************************
-         *    Now start with the actual testing     *
-         ********************************************/
-
-        if(pQueryContextAttributesA(client.ctxt, SECPKG_ATTR_SIZES,
-                    &ctxt_sizes) != SEC_E_OK)
-        {
-            trace("Failed to get context sizes, aborting test.\n");
-            goto end;
-        }
-
-        crypt.ulVersion = SECBUFFER_VERSION;
-        crypt.cBuffers = 2;
-
-        crypt.pBuffers = fake_data;
-
-        fake_data[0].BufferType = SECBUFFER_DATA;
-        fake_data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
-        fake_data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[0].cbBuffer);
-
-        fake_data[1].BufferType = SECBUFFER_DATA;
-        fake_data[1].cbBuffer = lstrlen(message);
-        fake_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[1].cbBuffer);
-
-        sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
-        ok(sec_status == SEC_E_INVALID_TOKEN,
-                "MakeSignature returned %s, not SEC_E_INVALID_TOKEN.\n",
+    if(sec_status != SEC_E_OK)
+    {
+        skip("Error: Setting up the client returned %s, exiting test!\n",
                 getSecError(sec_status));
+        pFreeCredentialsHandle(client.cred);
+        return;
+    }
 
-        crypt.pBuffers = data;
+    sec_status = setupFakeServer(&server, sec_pkg_name);
 
-        data[0].BufferType = SECBUFFER_TOKEN;
-        data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
-        data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[0].cbBuffer);
+    while(client_stat == SEC_I_CONTINUE_NEEDED && server_stat == SEC_I_CONTINUE_NEEDED)
+    {
+        client_stat = runClient(&client, first, SECURITY_NETWORK_DREP);
 
-        data[1].BufferType = SECBUFFER_DATA;
-        data[1].cbBuffer = lstrlen(message);
-        data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
-        memcpy(data[1].pvBuffer, message, data[1].cbBuffer);
+        communicate(&client, &server);
 
-        /* As we forced NTLM to fall back to a password-derived session key,
-         * we should get the same signature for our data, no matter if
-         * it is sent by the client or the server
-         */
-        sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
-        ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
-        ok(!memcmp(crypt.pBuffers[0].pvBuffer, message_signature,
-                   crypt.pBuffers[0].cbBuffer), "Signature is not as expected.\n");
+        server_stat = runFakeServer(&server, first, SECURITY_NETWORK_DREP);
 
-        data[0].cbBuffer = sizeof(message_signature);
+        communicate(&server, &client);
+        trace("Looping\n");
+        first = FALSE;
+    }
 
-        memcpy(data[0].pvBuffer, crypt_trailer_client, data[0].cbBuffer);
+    /********************************************
+     *    Now start with the actual testing     *
+     ********************************************/
 
-        sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
-        ok(sec_status == SEC_E_MESSAGE_ALTERED,
-                "VerifySignature returned %s, not SEC_E_MESSAGE_ALTERED.\n",
-                getSecError(sec_status));
+    if(pQueryContextAttributesA(client.ctxt, SECPKG_ATTR_SIZES,
+                &ctxt_sizes) != SEC_E_OK)
+    {
+        skip("Failed to get context sizes, aborting test.\n");
+        goto end;
+    }
 
-        memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
+    crypt.ulVersion = SECBUFFER_VERSION;
+    crypt.cBuffers = 2;
 
-        sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
-        ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
+    crypt.pBuffers = fake_data;
 
-        sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
-        ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
+    fake_data[0].BufferType = SECBUFFER_DATA;
+    fake_data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+    fake_data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[0].cbBuffer);
 
-        ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
-                   crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
-        ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
-                   crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+    fake_data[1].BufferType = SECBUFFER_DATA;
+    fake_data[1].cbBuffer = lstrlen(message);
+    fake_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, fake_data[1].cbBuffer);
 
-        data[0].cbBuffer = sizeof(crypt_trailer_server);
-        data[1].cbBuffer = sizeof(crypt_message_server);
-        memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
-        memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
+    sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_INVALID_TOKEN,
+            "MakeSignature returned %s, not SEC_E_INVALID_TOKEN.\n",
+            getSecError(sec_status));
 
-        sec_status = pDecryptMessage(client.ctxt, &crypt, 0, &qop);
+    crypt.pBuffers = data;
 
-        ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
-        ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
-                   crypt.pBuffers[1].cbBuffer),
-                "Failed to decrypt message correctly.\n");
+    data[0].BufferType = SECBUFFER_TOKEN;
+    data[0].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+    data[0].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[0].cbBuffer);
 
-        trace("Testing with more than one buffer.\n");
+    data[1].BufferType = SECBUFFER_DATA;
+    data[1].cbBuffer = lstrlen(message);
+    data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
+    memcpy(data[1].pvBuffer, message, data[1].cbBuffer);
 
-        crypt.cBuffers = sizeof(complex_data)/sizeof(complex_data[0]);
-        crypt.pBuffers = complex_data;
+    /* As we forced NTLM to fall back to a password-derived session key,
+     * we should get the same signature for our data, no matter if
+     * it is sent by the client or the server
+     */
+    sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
+    ok(!memcmp(crypt.pBuffers[0].pvBuffer, message_signature,
+               crypt.pBuffers[0].cbBuffer), "Signature is not as expected.\n");
 
-        complex_data[0].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
-        complex_data[0].cbBuffer = sizeof(message_header);
-        complex_data[0].pvBuffer = message_header;
+    data[0].cbBuffer = sizeof(message_signature);
 
-        complex_data[1].BufferType = SECBUFFER_DATA;
-        complex_data[1].cbBuffer = lstrlen(message);
-        complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
-        memcpy(complex_data[1].pvBuffer, message, complex_data[1].cbBuffer);
+    memcpy(data[0].pvBuffer, crypt_trailer_client, data[0].cbBuffer);
 
-        complex_data[2].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
-        complex_data[2].cbBuffer = sizeof(message_header);
-        complex_data[2].pvBuffer = message_header;
+    sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_MESSAGE_ALTERED,
+            "VerifySignature returned %s, not SEC_E_MESSAGE_ALTERED.\n",
+            getSecError(sec_status));
 
-        complex_data[3].BufferType = SECBUFFER_TOKEN;
-        complex_data[3].cbBuffer = ctxt_sizes.cbSecurityTrailer;
-        complex_data[3].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[3].cbBuffer);
+    memcpy(data[0].pvBuffer, message_signature, data[0].cbBuffer);
 
-        /* We should get a dummy signature again. */
-        sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
-        ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
-        ok(!memcmp(crypt.pBuffers[3].pvBuffer, message_signature,
-                   crypt.pBuffers[3].cbBuffer), "Signature is not as expected.\n");
+    sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
 
-        /* Being a dummy signature, it will verify right away, as if the server
-         * sent it */
-        sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
-        ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK\n",
-                getSecError(sec_status));
+    sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
 
-        sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
-        ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
+    ok(!memcmp(crypt.pBuffers[0].pvBuffer, crypt_trailer_client,
+               crypt.pBuffers[0].cbBuffer), "Crypt trailer not as expected.\n");
+    ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client,
+               crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
 
-        ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
-                   crypt.pBuffers[3].cbBuffer), "Crypt trailer not as expected.\n");
+    data[0].cbBuffer = sizeof(crypt_trailer_server);
+    data[1].cbBuffer = sizeof(crypt_message_server);
+    memcpy(data[0].pvBuffer, crypt_trailer_server, data[0].cbBuffer);
+    memcpy(data[1].pvBuffer, crypt_message_server, data[1].cbBuffer);
 
-        ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
-                   crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+    sec_status = pDecryptMessage(client.ctxt, &crypt, 0, &qop);
 
-        memcpy(complex_data[1].pvBuffer, crypt_message_server2, complex_data[1].cbBuffer);
-        memcpy(complex_data[3].pvBuffer, crypt_trailer_server2, complex_data[3].cbBuffer);
+    ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
+    ok(!memcmp(crypt.pBuffers[1].pvBuffer, message_binary,
+               crypt.pBuffers[1].cbBuffer),
+            "Failed to decrypt message correctly.\n");
 
-        sec_status = pDecryptMessage(client.ctxt, &crypt, 0, &qop);
-        ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
-                getSecError(sec_status));
+    trace("Testing with more than one buffer.\n");
+
+    crypt.cBuffers = sizeof(complex_data)/sizeof(complex_data[0]);
+    crypt.pBuffers = complex_data;
+
+    complex_data[0].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+    complex_data[0].cbBuffer = sizeof(message_header);
+    complex_data[0].pvBuffer = message_header;
+
+    complex_data[1].BufferType = SECBUFFER_DATA;
+    complex_data[1].cbBuffer = lstrlen(message);
+    complex_data[1].pvBuffer = HeapAlloc(GetProcessHeap(), 0, data[1].cbBuffer);
+    memcpy(complex_data[1].pvBuffer, message, complex_data[1].cbBuffer);
+
+    complex_data[2].BufferType = SECBUFFER_DATA|SECBUFFER_READONLY_WITH_CHECKSUM;
+    complex_data[2].cbBuffer = sizeof(message_header);
+    complex_data[2].pvBuffer = message_header;
+
+    complex_data[3].BufferType = SECBUFFER_TOKEN;
+    complex_data[3].cbBuffer = ctxt_sizes.cbSecurityTrailer;
+    complex_data[3].pvBuffer = HeapAlloc(GetProcessHeap(), 0, complex_data[3].cbBuffer);
+
+    /* We should get a dummy signature again. */
+    sec_status = pMakeSignature(client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_OK, "MakeSignature returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
+    ok(!memcmp(crypt.pBuffers[3].pvBuffer, message_signature,
+               crypt.pBuffers[3].cbBuffer), "Signature is not as expected.\n");
+
+    /* Being a dummy signature, it will verify right away, as if the server
+     * sent it */
+    sec_status = pVerifySignature(client.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_OK, "VerifySignature returned %s, not SEC_E_OK\n",
+            getSecError(sec_status));
+
+    sec_status = pEncryptMessage(client.ctxt, 0, &crypt, 0);
+    ok(sec_status == SEC_E_OK, "EncryptMessage returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
+
+    ok(!memcmp(crypt.pBuffers[3].pvBuffer, crypt_trailer_client2,
+               crypt.pBuffers[3].cbBuffer), "Crypt trailer not as expected.\n");
+
+    ok(!memcmp(crypt.pBuffers[1].pvBuffer, crypt_message_client2,
+               crypt.pBuffers[1].cbBuffer), "Crypt message not as expected.\n");
+
+    memcpy(complex_data[1].pvBuffer, crypt_message_server2, complex_data[1].cbBuffer);
+    memcpy(complex_data[3].pvBuffer, crypt_trailer_server2, complex_data[3].cbBuffer);
+
+    sec_status = pDecryptMessage(client.ctxt, &crypt, 0, &qop);
+    ok(sec_status == SEC_E_OK, "DecryptMessage returned %s, not SEC_E_OK.\n",
+            getSecError(sec_status));
 
 
 end:
-        cleanupBuffers(&client);
-        cleanupBuffers(&server);
+    cleanupBuffers(&client);
+    cleanupBuffers(&server);
 
-        pDeleteSecurityContext(client.ctxt);
-        pFreeCredentialsHandle(client.cred);
+    pDeleteSecurityContext(client.ctxt);
+    pFreeCredentialsHandle(client.cred);
 
-        HeapFree(GetProcessHeap(), 0, fake_data[0].pvBuffer);
-        HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
-        HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
-        HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
-        HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
-        HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
-    }
-    else
-    {
-        trace("Package not installed, skipping test.\n");
-    }
+    HeapFree(GetProcessHeap(), 0, fake_data[0].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, fake_data[1].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, data[0].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, data[1].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, complex_data[1].pvBuffer);
+    HeapFree(GetProcessHeap(), 0, complex_data[3].pvBuffer);
 }
 
 START_TEST(ntlm)
