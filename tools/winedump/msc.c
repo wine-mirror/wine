@@ -511,6 +511,7 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 {
     const union codeview_reftype* reftype = (const union codeview_reftype*)type;
     int                 i, leaf_len, value;
+    unsigned int        j;
     const char*         str;
 
     switch (type->generic.id)
@@ -663,9 +664,9 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     case LF_ARGLIST_V2:
         printf("\t%x => Arglist V2(#%u):", curr_type, reftype->arglist_v2.num);
-        for (i = 0; i < reftype->arglist_v2.num; i++)
+        for (j = 0; j < reftype->arglist_v2.num; j++)
         {
-            printf("\t %x", reftype->arglist_v2.args[i]);
+            printf("\t %x", reftype->arglist_v2.args[j]);
         }
         printf("\t\n");
         break;
@@ -786,9 +787,9 @@ static void codeview_dump_one_type(unsigned curr_type, const union codeview_type
 
     case LF_DERIVED_V2:
         printf("\t%x => Derived V2(#%u):", curr_type, reftype->derived_v2.num);
-        for (i = 0; i < reftype->derived_v2.num; i++)
+        for (j = 0; j < reftype->derived_v2.num; j++)
         {
-            printf(" %x", reftype->derived_v2.drvdcls[i]);
+            printf(" %x", reftype->derived_v2.drvdcls[j]);
         }
         printf("\n");
         break;
@@ -832,9 +833,10 @@ int codeview_dump_types_from_block(const void* table, unsigned long len)
 
 int codeview_dump_symbols(const void* root, unsigned long size)
 {
-    int     i, length;
-    char*   curr_func = NULL;
-    int     nest_block = 0;
+    unsigned int i;
+    int          length;
+    char*        curr_func = NULL;
+    int          nest_block = 0;
     /*
      * Loop over the different types of records and whenever we
      * find something we are interested in, record it and move on.

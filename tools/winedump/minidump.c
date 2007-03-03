@@ -44,7 +44,7 @@ static void dump_mdmp_string(DWORD rva)
         printf("<<?>>");
 }
 
-static const MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, int str_idx)
+static const MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, unsigned int str_idx)
 {
     const MINIDUMP_DIRECTORY*   dir;
     unsigned int                i;
