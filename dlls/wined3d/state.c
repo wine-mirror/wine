@@ -2155,7 +2155,7 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
             if(stateblock->wineD3DDevice->render_offscreen) {
-                glOrtho(X, X + width, Y, Y - height, -minZ, -maxZ);
+                glOrtho(X, X + width, -Y, -Y - height, -minZ, -maxZ);
             } else {
                 glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
             }
@@ -2169,7 +2169,7 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
             if(stateblock->wineD3DDevice->render_offscreen) {
-                glOrtho(X, X + width, Y, Y - height, 1.0, -1.0);
+                glOrtho(X, X + width, -Y, -Y - height, 1.0, -1.0);
             } else {
                 glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
             }
