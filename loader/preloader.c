@@ -1006,7 +1006,8 @@ static int is_in_preload_range( const ElfW(auxv_t) *av, int type )
 /* set the process name if supported */
 static void set_process_name( int argc, char *argv[] )
 {
-    unsigned int i, off;
+    int i;
+    unsigned int off;
     char *p, *name, *end;
 
     /* set the process short name */
