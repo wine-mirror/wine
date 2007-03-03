@@ -4232,7 +4232,7 @@ static const struct message WmSetFontButtonSeq[] =
 {
     { WM_SETFONT, sent },
     { WM_PAINT, sent },
-    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_CTLCOLORBTN, sent|defwinproc },
     { 0 }
 };
@@ -4372,7 +4372,7 @@ static const struct message WmSetFontStaticSeq[] =
 {
     { WM_SETFONT, sent },
     { WM_PAINT, sent|defwinproc },
-    { WM_ERASEBKGND, sent|defwinproc },
+    { WM_ERASEBKGND, sent|defwinproc|optional },
     { WM_CTLCOLORSTATIC, sent|defwinproc },
     { 0 }
 };
@@ -8010,7 +8010,10 @@ static void test_PeekMessage(void)
        "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
-    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16));
+    if (qs_all_input & QS_RAWINPUT) /* use QS_RAWINPUT only if supported */
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16));
+    else /* workaround for a missing QS_RAWINPUT support */
+        ret = PeekMessageA(&msg, 0, WM_KEYDOWN, WM_KEYDOWN, PM_REMOVE);
     ok(ret && msg.message == WM_KEYDOWN && msg.wParam == 'N',
        "got %d and %04x wParam %08x instead of TRUE and WM_KEYDOWN wParam 'N'\n",
        ret, msg.message, msg.wParam);
@@ -8021,7 +8024,10 @@ static void test_PeekMessage(void)
        "wrong qstatus %08x\n", qstatus);
 
     msg.message = 0;
-    ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16));
+    if (qs_all_input & QS_RAWINPUT) /* use QS_RAWINPUT only if supported */
+        ret = PeekMessageA(&msg, 0, 0, 0, PM_REMOVE | (QS_RAWINPUT << 16));
+    else /* workaround for a missing QS_RAWINPUT support */
+        ret = PeekMessageA(&msg, 0, WM_KEYUP, WM_KEYUP, PM_REMOVE);
     ok(ret && msg.message == WM_KEYUP && msg.wParam == 'N',
        "got %d and %04x wParam %08x instead of TRUE and WM_KEYUP wParam 'N'\n",
        ret, msg.message, msg.wParam);
