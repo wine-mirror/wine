@@ -193,7 +193,7 @@ static BOOL CALLBACK CRYPT_ReturnhWnd(HWND *phWnd)
 	if ( !(provider->pFuncs->p##name = (void*)GetProcAddress(provider->hModule, #name)) ) goto error
 #define CRYPT_GetProvFuncOpt(name) \
 	provider->pFuncs->p##name = (void*)GetProcAddress(provider->hModule, #name)
-static PCRYPTPROV CRYPT_LoadProvider(PWSTR pImage)
+static PCRYPTPROV CRYPT_LoadProvider(PCWSTR pImage)
 {
 	PCRYPTPROV provider;
 	DWORD errorcode = ERROR_NOT_ENOUGH_MEMORY;
