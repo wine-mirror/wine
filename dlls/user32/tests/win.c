@@ -707,10 +707,9 @@ static BOOL RegisterWindowClasses(void)
     return TRUE;
 }
 
-static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_borders)
+static void verify_window_info(HWND hwnd, const WINDOWINFO *info)
 {
     RECT rcWindow, rcClient;
-    UINT border;
     DWORD status;
 
     ok(IsWindow(hwnd), "bad window handle\n");
@@ -734,20 +733,24 @@ static void verify_window_info(HWND hwnd, const WINDOWINFO *info, BOOL test_bord
     ok(info->dwWindowStatus == status, "wrong dwWindowStatus: %04x != %04x\n",
        info->dwWindowStatus, status);
 
-    if (test_borders && !IsRectEmpty(&rcWindow))
-    {
-	trace("rcWindow: %d,%d - %d,%d\n", rcWindow.left, rcWindow.top, rcWindow.right, rcWindow.bottom);
-	trace("rcClient: %d,%d - %d,%d\n", rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
+    trace("rcWindow: %d,%d - %d,%d\n", rcWindow.left, rcWindow.top, rcWindow.right, rcWindow.bottom);
+    trace("rcClient: %d,%d - %d,%d\n", rcClient.left, rcClient.top, rcClient.right, rcClient.bottom);
 
-	ok(info->cxWindowBorders == (unsigned)(rcClient.left - rcWindow.left),
-            "wrong cxWindowBorders %d != %d\n", info->cxWindowBorders, rcClient.left - rcWindow.left);
-	border = min(rcWindow.bottom - rcClient.bottom, rcClient.top - rcWindow.top);
-	ok(info->cyWindowBorders == border,
-	   "wrong cyWindowBorders %d != %d\n", info->cyWindowBorders, border);
-    }
-
+    /* win2k and XP return broken border info in GetWindowInfo most of
+     * the time, so there is no point in testing it.
+     */
+#if 0
+    UINT border;
+    ok(info->cxWindowBorders == (unsigned)(rcClient.left - rcWindow.left),
+       "wrong cxWindowBorders %d != %d\n", info->cxWindowBorders, rcClient.left - rcWindow.left);
+    border = min(rcWindow.bottom - rcClient.bottom, rcClient.top - rcWindow.top);
+    ok(info->cyWindowBorders == border,
+       "wrong cyWindowBorders %d != %d\n", info->cyWindowBorders, border);
+#endif
     ok(info->atomWindowType == GetClassLongA(hwnd, GCW_ATOM), "wrong atomWindowType\n");
-    ok(info->wCreatorVersion == 0x0400, "wrong wCreatorVersion %04x\n", info->wCreatorVersion);
+    ok(info->wCreatorVersion == 0x0400 /* NT4, Win2000, XP, Win2003 */ ||
+       info->wCreatorVersion == 0x0500 /* Vista */,
+       "wrong wCreatorVersion %04x\n", info->wCreatorVersion);
 }
 
 static void FixedAdjustWindowRectEx(RECT* rc, LONG style, BOOL menu, LONG exstyle)
@@ -848,10 +851,7 @@ static LRESULT CALLBACK cbt_hook_proc(int nCode, WPARAM wParam, LPARAM lParam)
 	     */
 	    info.cbSize = sizeof(WINDOWINFO);
 	    ok(pGetWindowInfo((HWND)wParam, &info), "GetWindowInfo should not fail\n");
-	    /* win2k SP4 returns broken border info if GetWindowInfo
-	     * is being called from HCBT_DESTROYWND or HCBT_MINMAX hook proc.
-	     */
-	    verify_window_info((HWND)wParam, &info, nCode != HCBT_MINMAX);
+	    verify_window_info((HWND)wParam, &info);
 	}
     }
 
