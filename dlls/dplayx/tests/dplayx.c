@@ -18,6 +18,7 @@
  */
 
 #include "wine/test.h"
+#define INITGUID
 #include <dplay.h>
 
 static BOOL validSP = FALSE; /*This global variable is needed until wine has a working service provider
@@ -32,7 +33,6 @@ static BOOL CALLBACK EnumConnectionsCallback(LPCGUID lpguidSP, LPVOID lpConnecti
     {
         /*I'm forcing TCP/IP Sevice provider*/
         hr = IDirectPlayX_InitializeConnection((LPDIRECTPLAY4) lpContext, lpConnection, 0);
-        todo_wine ok( SUCCEEDED( hr ), "It's not possible to initialize TCP/IP service provider\n");
         if( SUCCEEDED( hr ))
             validSP = TRUE;
         return FALSE;
