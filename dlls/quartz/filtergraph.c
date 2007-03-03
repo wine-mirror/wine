@@ -4517,7 +4517,7 @@ HRESULT FilterGraph_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     InitializeCriticalSection(&fimpl->cs);
     fimpl->nItfCacheEntries = 0;
 
-    hr = CoCreateInstance(&CLSID_FilterMapper, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);
+    hr = CoCreateInstance(&CLSID_FilterMapper2, NULL, CLSCTX_INPROC_SERVER, &IID_IFilterMapper2, (LPVOID*)&fimpl->pFilterMapper2);
     if (FAILED(hr)) {
         ERR("Unable to create filter mapper (%x)\n", hr);
 	return hr;
