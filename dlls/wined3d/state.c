@@ -2154,7 +2154,11 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              * the Z coordinate does not affect the size of the primitives
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, -minZ, -maxZ);
-            glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+            if(stateblock->wineD3DDevice->render_offscreen) {
+                glOrtho(X, X + width, Y, Y - height, -minZ, -maxZ);
+            } else {
+                glOrtho(X, X + width, Y + height, Y, -minZ, -maxZ);
+            }
         } else {
             /* If the app mixes transformed and untransformed primitives we can't use the coordinate system
              * trick above because this would mess up transformed and untransformed Z order. Pass the z position
@@ -2164,7 +2168,11 @@ static void transform_projection(DWORD state, IWineD3DStateBlockImpl *stateblock
              * replacement shader.
              */
             TRACE("Calling glOrtho with %f, %f, %f, %f\n", width, height, 1.0, -1.0);
-            glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
+            if(stateblock->wineD3DDevice->render_offscreen) {
+                glOrtho(X, X + width, Y, Y - height, 1.0, -1.0);
+            } else {
+                glOrtho(X, X + width, Y + height, Y, 1.0, -1.0);
+            }
         }
         checkGLcall("glOrtho");
 
