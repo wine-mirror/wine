@@ -34,14 +34,14 @@ struct ustring {
     unsigned char *Buffer;
 };
 
-typedef NTSTATUS (WINAPI *fnSystemFunction001)(const LPBYTE, const LPBYTE, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction002)(const LPBYTE, const LPBYTE, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction003)(const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction001)(const BYTE *, const BYTE *, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction002)(const BYTE *, const BYTE *, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction003)(const BYTE *, LPBYTE);
 typedef NTSTATUS (WINAPI *fnSystemFunction004)(const struct ustring *, const struct ustring *, struct ustring *);
 typedef NTSTATUS (WINAPI *fnSystemFunction005)(const struct ustring *, const struct ustring *, struct ustring *);
 typedef VOID (WINAPI *fnSystemFunction006)( PCSTR passwd, PSTR lmhash );
-typedef NTSTATUS (WINAPI *fnSystemFunction008)(const LPBYTE, const LPBYTE, LPBYTE);
-typedef NTSTATUS (WINAPI *fnSystemFunction009)(const LPBYTE, const LPBYTE, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction008)(const BYTE *, const BYTE *, LPBYTE);
+typedef NTSTATUS (WINAPI *fnSystemFunction009)(const BYTE *, const BYTE *, LPBYTE);
 typedef int (WINAPI *descrypt)(unsigned char *, unsigned char *, unsigned char *);
 typedef NTSTATUS (WINAPI *fnSystemFunction030)(void*, void*);
 typedef NTSTATUS (WINAPI *fnSystemFunction032)(struct ustring *, struct ustring *);

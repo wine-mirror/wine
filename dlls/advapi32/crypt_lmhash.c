@@ -73,7 +73,7 @@ NTSTATUS WINAPI SystemFunction006( LPCSTR password, LPSTR hash )
  *  see http://davenport.sourceforge.net/ntlm.html#theLmResponse
  *
  */
-NTSTATUS WINAPI SystemFunction008(const LPBYTE challenge, const LPBYTE hash, LPBYTE response)
+NTSTATUS WINAPI SystemFunction008(const BYTE *challenge, const BYTE *hash, LPBYTE response)
 {
     BYTE key[7*3];
 
@@ -95,7 +95,7 @@ NTSTATUS WINAPI SystemFunction008(const LPBYTE challenge, const LPBYTE hash, LPB
  *
  * Seems to do the same as SystemFunction008 ...
  */
-NTSTATUS WINAPI SystemFunction009(const LPBYTE challenge, const LPBYTE hash, LPBYTE response)
+NTSTATUS WINAPI SystemFunction009(const BYTE *challenge, const BYTE *hash, LPBYTE response)
 {
     return SystemFunction008(challenge, hash, response);
 }
@@ -115,7 +115,7 @@ NTSTATUS WINAPI SystemFunction009(const LPBYTE challenge, const LPBYTE hash, LPB
  *  Failure: STATUS_UNSUCCESSFUL
  *
  */
-NTSTATUS WINAPI SystemFunction001(const LPBYTE data, const LPBYTE key, LPBYTE output)
+NTSTATUS WINAPI SystemFunction001(const BYTE *data, const BYTE *key, LPBYTE output)
 {
     if (!data || !output)
         return STATUS_UNSUCCESSFUL;
@@ -138,7 +138,7 @@ NTSTATUS WINAPI SystemFunction001(const LPBYTE data, const LPBYTE key, LPBYTE ou
  *  Failure: STATUS_UNSUCCESSFUL
  *
  */
-NTSTATUS WINAPI SystemFunction002(const LPBYTE data, const LPBYTE key, LPBYTE output)
+NTSTATUS WINAPI SystemFunction002(const BYTE *data, const BYTE *key, LPBYTE output)
 {
     if (!data || !output)
         return STATUS_UNSUCCESSFUL;
@@ -160,7 +160,7 @@ NTSTATUS WINAPI SystemFunction002(const LPBYTE data, const LPBYTE key, LPBYTE ou
  *  Failure: STATUS_UNSUCCESSFUL
  *
  */
-NTSTATUS WINAPI SystemFunction003(const LPBYTE key, LPBYTE output)
+NTSTATUS WINAPI SystemFunction003(const BYTE *key, LPBYTE output)
 {
     if (!output)
         return STATUS_UNSUCCESSFUL;
@@ -310,7 +310,7 @@ NTSTATUS WINAPI SystemFunction005(const struct ustring *in,
  *  Success: STATUS_SUCCESS
  *  Failure: STATUS_UNSUCCESSFUL  if the input or output buffer is NULL
  */
-NTSTATUS WINAPI SystemFunction012(const LPBYTE in, const LPBYTE key, LPBYTE out)
+NTSTATUS WINAPI SystemFunction012(const BYTE *in, const BYTE *key, LPBYTE out)
 {
     if (!in || !out)
         return STATUS_UNSUCCESSFUL;
@@ -339,7 +339,7 @@ NTSTATUS WINAPI SystemFunction012(const LPBYTE in, const LPBYTE key, LPBYTE out)
  *  Success: STATUS_SUCCESS
  *  Failure: STATUS_UNSUCCESSFUL  if the input or output buffer is NULL
  */
-NTSTATUS WINAPI SystemFunction013(const LPBYTE in, const LPBYTE key, LPBYTE out)
+NTSTATUS WINAPI SystemFunction013(const BYTE *in, const BYTE *key, LPBYTE out)
 {
     if (!in || !out)
         return STATUS_UNSUCCESSFUL;
@@ -362,7 +362,7 @@ NTSTATUS WINAPI SystemFunction013(const LPBYTE in, const LPBYTE key, LPBYTE out)
  * RETURNS
  *  Success: STATUS_SUCCESS
  */
-NTSTATUS WINAPI SystemFunction024(const LPBYTE in, const LPBYTE key, LPBYTE out)
+NTSTATUS WINAPI SystemFunction024(const BYTE *in, const BYTE *key, LPBYTE out)
 {
     BYTE deskey[0x10];
 
@@ -390,7 +390,7 @@ NTSTATUS WINAPI SystemFunction024(const LPBYTE in, const LPBYTE key, LPBYTE out)
  * RETURNS
  *  Success: STATUS_SUCCESS
  */
-NTSTATUS WINAPI SystemFunction025(const LPBYTE in, const LPBYTE key, LPBYTE out)
+NTSTATUS WINAPI SystemFunction025(const BYTE *in, const BYTE *key, LPBYTE out)
 {
     BYTE deskey[0x10];
 
