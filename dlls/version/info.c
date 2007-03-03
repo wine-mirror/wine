@@ -238,7 +238,7 @@ typedef struct
  */
 static DWORD VERSION_GetFileVersionInfo_PE( LPCWSTR filename, DWORD datasize, LPVOID data )
 {
-    VS_FIXEDFILEINFO *vffi;
+    const VS_FIXEDFILEINFO *vffi;
     DWORD len;
     BYTE *buf;
     HMODULE hModule;
@@ -313,7 +313,7 @@ END:
  */
 static DWORD VERSION_GetFileVersionInfo_16( LPCSTR filename, DWORD datasize, LPVOID data )
 {
-    VS_FIXEDFILEINFO *vffi;
+    const VS_FIXEDFILEINFO *vffi;
     DWORD len, offset;
     BYTE *buf;
     HMODULE16 hModule;
