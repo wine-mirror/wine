@@ -1605,7 +1605,6 @@ const IWineD3DSurfaceVtbl IWineGDISurface_Vtbl =
     IWineGDISurfaceImpl_LoadTexture,
     IWineGDISurfaceImpl_SaveSnapshot,
     IWineD3DSurfaceImpl_SetContainer,
-    IWineD3DSurfaceImpl_SetPBufferState,
     IWineD3DSurfaceImpl_SetGlTextureDesc,
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,

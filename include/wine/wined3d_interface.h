@@ -1113,7 +1113,6 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
     STDMETHOD(LoadTexture)(THIS) PURE;
     STDMETHOD(SaveSnapshot)(THIS_ const char *filename) PURE;
     STDMETHOD(SetContainer)(THIS_ IWineD3DBase *container) PURE;
-    STDMETHOD(SetPBufferState)(THIS_ BOOL inPBuffer, BOOL  inTexture) PURE;
     STDMETHOD_(void,SetGlTextureDesc)(THIS_ UINT textureName, int target) PURE;
     STDMETHOD_(void,GetGlDesc)(THIS_ glDescriptor **glDescription) PURE;
     STDMETHOD_(CONST void *, GetData)(THIS) PURE;
@@ -1168,7 +1167,6 @@ DECLARE_INTERFACE_(IWineD3DSurface,IWineD3DResource)
 #define IWineD3DSurface_LoadTexture(p)               (p)->lpVtbl->LoadTexture(p)
 #define IWineD3DSurface_SaveSnapshot(p,a)            (p)->lpVtbl->SaveSnapshot(p,a)
 #define IWineD3DSurface_SetContainer(p,a)            (p)->lpVtbl->SetContainer(p,a)
-#define IWineD3DSurface_SetPBufferState(p,a,b)       (p)->lpVtbl->SetPBufferState(p,a,b)
 #define IWineD3DSurface_SetGlTextureDesc(p,a,b)      (p)->lpVtbl->SetGlTextureDesc(p,a,b)
 #define IWineD3DSurface_GetGlDesc(p,a)               (p)->lpVtbl->GetGlDesc(p,a)
 #define IWineD3DSurface_GetData(p)                   (p)->lpVtbl->GetData(p)

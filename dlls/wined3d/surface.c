@@ -2130,25 +2130,6 @@ HRESULT WINAPI IWineD3DSurfaceImpl_SetMem(IWineD3DSurface *iface, void *Mem) {
     return WINED3D_OK;
 }
 
-/* TODO: replace this function with context management routines */
-HRESULT WINAPI IWineD3DSurfaceImpl_SetPBufferState(IWineD3DSurface *iface, BOOL inPBuffer, BOOL  inTexture) {
-    IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
-
-    if(inPBuffer) {
-        This->Flags |= SFLAG_INPBUFFER;
-    } else {
-        This->Flags &= ~SFLAG_INPBUFFER;
-    }
-
-    if(inTexture) {
-        This->Flags |= SFLAG_INTEXTURE;
-    } else {
-        This->Flags &= ~SFLAG_INTEXTURE;
-    }
-
-    return WINED3D_OK;
-}
-
 static HRESULT WINAPI IWineD3DSurfaceImpl_Flip(IWineD3DSurface *iface, IWineD3DSurface *override, DWORD Flags) {
     IWineD3DSurfaceImpl *This = (IWineD3DSurfaceImpl *)iface;
     IWineD3DDevice *D3D = (IWineD3DDevice *) This->resource.wineD3DDevice;
@@ -3261,7 +3242,6 @@ const IWineD3DSurfaceVtbl IWineD3DSurface_Vtbl =
     IWineD3DSurfaceImpl_LoadTexture,
     IWineD3DSurfaceImpl_SaveSnapshot,
     IWineD3DSurfaceImpl_SetContainer,
-    IWineD3DSurfaceImpl_SetPBufferState,
     IWineD3DSurfaceImpl_SetGlTextureDesc,
     IWineD3DSurfaceImpl_GetGlDesc,
     IWineD3DSurfaceImpl_GetData,
