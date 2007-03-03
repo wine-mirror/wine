@@ -62,7 +62,7 @@ static const struct object_creation_info object_creation[] =
 {
     { &CLSID_FilterGraph, FilterGraph_create },
     { &CLSID_FilterGraphNoThread, FilterGraphNoThread_create },
-    { &CLSID_FilterMapper, FilterMapper2_create },
+    { &CLSID_FilterMapper, FilterMapper_create },
     { &CLSID_FilterMapper2, FilterMapper2_create },
     { &CLSID_AsyncReader, AsyncReader_create },
     { &CLSID_MemoryAllocator, StdMemAllocator_create },
