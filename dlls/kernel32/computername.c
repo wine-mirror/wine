@@ -371,7 +371,7 @@ out:
 BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
 {
     WCHAR nameW[ MAX_COMPUTERNAME_LENGTH + 1 ];
-    DWORD sizeW = MAX_COMPUTERNAME_LENGTH;
+    DWORD sizeW = MAX_COMPUTERNAME_LENGTH + 1;
     unsigned int len;
     BOOL ret;
 
@@ -381,17 +381,16 @@ BOOL WINAPI GetComputerNameA(LPSTR name, LPDWORD size)
     /* for compatibility with Win9x */
     __TRY
     {
-        if ( *size < len + 1 )
+        if ( *size < len )
         {
-            *size = len + 1;
+            *size = len;
             SetLastError( ERROR_MORE_DATA );
             ret = FALSE;
         }
-        else 
+        else
         {
             WideCharToMultiByte ( CP_ACP, 0, nameW, -1, name, len, NULL, 0 );
-            name[len] = 0;
-            *size = len;
+            *size = len - 1;
             ret = TRUE;
         }
     }

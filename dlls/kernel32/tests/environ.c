@@ -239,6 +239,7 @@ static void test_GetComputerName(void)
     LPSTR name;
     LPWSTR nameW;
     DWORD error;
+    int name_len;
 
     size = 0;
     ret = GetComputerNameA((LPSTR)0xdeadbeef, &size);
@@ -248,6 +249,16 @@ static void test_GetComputerName(void)
     ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
     ret = GetComputerNameA(name, &size);
     ok(ret, "GetComputerNameA failed with error %d\n", GetLastError());
+    HeapFree(GetProcessHeap(), 0, name);
+
+    size = MAX_COMPUTERNAME_LENGTH + 1;
+    name = HeapAlloc(GetProcessHeap(), 0, size * sizeof(name[0]));
+    ok(name != NULL, "HeapAlloc failed with error %d\n", GetLastError());
+    ret = GetComputerNameA(name, &size);
+    ok(ret, "GetComputerNameA failed with error %d\n", GetLastError());
+    trace("computer name is \"%s\"\n", name);
+    name_len = strlen(name);
+    ok(size == name_len, "size should be same as length, name_len=%d, size=%d\n", name_len, size);
     HeapFree(GetProcessHeap(), 0, name);
 
     size = 0;
