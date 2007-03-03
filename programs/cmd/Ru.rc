@@ -2,6 +2,7 @@
  * Wine command prompt (Russian resources)
  *
  * Copyright 2003 Igor Stepin
+ * Copyright 2007 Lyutin Anatoly
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,13 +25,13 @@ STRINGTABLE
 {
   WCMD_ATTRIB, "Справка об ATTRIB\n"
   WCMD_CALL,
-"CALL <имя bat-файла> используется в bat-файлах для запуска команд\n\
-из другого bat-файла. When the batch file exits, control returns to\n\
-the file which called it. The CALL command may supply parameters to the\n\
-called procedure.\n\
+"CALL <имя bat-файла> используется в bat-файлах для запуска других\n\
+bat-файлов. При выходе из bat-файла управление возвращается\n\
+файлу, вызвавшему его. Команда CALL может передавать параметры\n\
+вызванному bat-файлу.\n\
 \n\
-Changes to default directory, environment variables etc made within a\n\
-called procedure are inherited by the caller.\n"
+Изменения каталога по умолчанию, переменных окружения и т.д., сделанные\n\
+вызванной процедурой, наследуются вызвавшему.\n"
 
   WCMD_CD,     "Справка о CD\n"
   WCMD_CHDIR,  "Справка о CHDIR\n"
@@ -44,106 +45,111 @@ called procedure are inherited by the caller.\n"
   WCMD_DIR,    "Справка о DIR\n"
 
   WCMD_ECHO,
-"ECHO <строка> отображает <строку> на текущем терминальном утройстве.\n\
+"ECHO <строка> отображает <строку> на текущем терминальном устройстве.\n\
 \n\
-ECHO ON causes all subsequent commands in a batch file to be displayed\n\
-on the terminal device before they are executed.\n\
+ECHO ON включает отображение всех последующих команд в bat-файле\n\
+в терминал перед их выполнением.\n\
 \n\
-ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n\
-default). The ECHO OFF command can be prevented from displaying by\n\
-preceding it with an @ sign.\n"
+ECHO OFF даёт эффект, противоположный ECHO ON (ECHO отключено (OFF) по\n\
+умолчанию). Знак @, предшествующий ECHO OFF, препятствует её отображению.\n"
 
   WCMD_ERASE,  "Справка об ERASE\n"
 
   WCMD_FOR,
-"The FOR command is used to execute a command for each of a set of files.\n\
+"FOR используется для применения заданной <команды> для\n\
+одного файла или набора файлов.\n\
 \n\
-Syntax: FOR %variable IN (set) DO command\n\
+Синтаксис: FOR %переменная IN (набор) DO команда\n\
 \n\
-The requirement to double the % sign when using FOR in a batch file does\n\
-not exist in wcmd.\n"
+Необходимость в удвоении знака % при использовании FOR в bat-файлах\n\
+отсутствует в cmd.\n"
+
 
   WCMD_GOTO,
-"The GOTO command transfers execution to another statement within a\n\
-batch file.\n\
+"GOTO передаёт управление на строку, помеченную специальной меткой, в\n\
+пределах bat-файла.\n\
 \n\
-The label which is the target of a GOTO may be up to 255 characters\n\
-long but may not include spaces (this is different from other operating\n\
-systems). If two or more identical labels exist in a batch file the\n\
-first one will always be executed. Attempting to GOTO a nonexistent\n\
-label terminates the batch file execution.\n\
+Метка, являющаяся целью GOTO, может иметь длину до 255 символов, но\n\
+не может содержать пробелы (это отличие от других операционных\n\
+систем). Если в bat-файле присутствует две или более метки с одинаковым именем,\n\
+то передаваться управление будет всегда на первую.\n\
+Попытка GOTO перейти по несуществующей метке прерывает выполнение bat-файла.\n\
 \n\
-GOTO has no effect when used interactively.\n"
+Команда GOTO не работает в интерактивном режиме.\n"
 
   WCMD_HELP,   "Справка о HELP\n"
 
   WCMD_IF,
-"IF is used to conditionally execute a command.\n\
+"IF осуществляет условную обработку.\n\
 \n\
-Syntax:	IF [NOT] EXIST filename command\n\
-	IF [NOT] string1==string2 command\n\
-	IF [NOT] ERRORLEVEL number command\n\
+Синтаксис:	IF [NOT] EXIST файл команда\n\
+		IF [NOT] \"строка1\"==\"строка2\" команда\n\
+		IF [NOT] ERRORLEVEL число команда\n\
 \n\
-In the second form of the command, string1 and string2 must be in double\n\
-quotes. The comparison is not case-sensitive.\n"
+В первом примере команда EXIST проверяет существование файла.\n\
+Во втором примере сравнение не зависит от регистра.\n\
+В третьем примере ERRORLEVEL - значение, возвращаемое программой после выполнения.\n\
+IF проверяет ERRORLEVEL на >= <число>.\n"
 
-  WCMD_LABEL,  "LABEL is used to set a disk volume label.  \n\
+  WCMD_LABEL,
+"LABEL задаёт метку диска.\n\
 \n\
-Syntax: LABEL [drive:]\n\
-The command will prompt you for the new volume label for the given drive.\n\
-You can display the disk volume label with the VOL command.\n"
+Синтаксис: LABEL [диск:]\n\
+Команда выводит подсказку о создании новой метки для диска.\n\
+Посмотреть текущую метку диска возможно с помощью команды VOL.\n"
+
 
   WCMD_MD,     "Справка о MD\n"
   WCMD_MKDIR,  "Справка о MKDIR\n"
   WCMD_MOVE,
-"MOVE relocates a file or directory to a new point within the file system.\n\
+"MOVE перемещает файл или каталог на новое место файловой системы.\n\
 \n\
-If the item being moved is a directory then all the files and subdirectories\n\
-below the item are moved as well.\n\
+Если перемещается каталог, то все файлы и подкаталоги внутри него\n\
+также переместятся.\n\
 \n\
-MOVE fails if the old and new locations are on different DOS drive letters.\n"
+MOVE не работает для перемещения данных с одного логического диска на другой.\n"
 
   WCMD_PATH,
-"PATH displays or changes the wcmd search path.\n\
+"PATH отображает или изменяет маршрут поиска в cmd.\n\
 \n\
-Entering PATH will display the current PATH setting (initially this is\n\
-the value given in your wine.conf file). To change the setting follow the\n\
-PATH command with the new value.\n\
+Команда PATH отображает текущую установку пути поиска исполняемых файлов\n\
+(первоначально это значение задаётся в Вашем wine.conf файле).\n\
+Для изменения значения вызовите PATH с новым значением.\n\
 \n\
-It is also possible to modify the PATH by using the PATH environment\n\
-variable, for example:\n\
+Так же возможно изменять значение PATH, используя значение переменной\n\
+окружения PATH, например:\n\
 		PATH %PATH%;c:\\temp \n"
 
   WCMD_PAUSE,
-"PAUSE displays a message on the screen 'Press Return key to continue'\n\
-and waits for the user to press the Return key. It is mainly useful in\n\
-batch files to allow the user to read the output of a previous command\n\
-before it scrolls off the screen.\n"
+"PAUSE выводит на экран сообщение 'Press Return key to continue'\n\
+и ждёт пока пользователь не нажмёт клавишу Return. Она используется\n\
+в bat-файлах для того, чтобы пользователь смог прочесть вывод предыдущей команды\n\
+прежде чем он исчезнет с экрана.\n"
 
   WCMD_PROMPT,
-"PROMPT sets the command-line prompt.\n\
+"PROMPT изменяет вид подсказки командной строки.\n\
 \n\
-The string following the PROMPT command (and the space immediately after)\n\
-appears at the beginning of the line when wcmd is waiting for input.\n\
+Строка, идущая после команды PROMPT (и за пробелом после команды),\n\
+появляется в начале строки, когда cmd ждёт ввода.\n\
 \n\
-The following character strings have the special meaning shown:\n\
+Следующие строки имеют предопределённые значения, которые можно отобразить:\n\
 \n\
 $$    Знак доллара        $_    Linefeed            $b    Знак Pipe (|)\n\
-$d    Текущая дата        $e    Escape              $g    Знак >\n\
+$d    Текущая дата        $e    Esc-символ (27)     $g    Знак >\n\
 $l    Знак <              $n    Текущий диск        $p    Текущий путь\n\
-$q    Знак равно          $t    Текущее время       $v    Версия wcmd\n\
+$q    Знак равно          $t    Текущее время       $v    Версия cmd\n\
 \n\
-Note that entering the PROMPT command without a prompt-string resets the\n\
-prompt to the default, which is the current drive letter followed by its\n\
-current directory and a greater-than (>) sign.\n\
-(like a command PROMPT $p$g).\n\
+При вводе команды PROMPT без новой строки подсказки\n\
+подсказка устанавливается по умолчанию (буква текущего диска, путь до текущего\n\
+каталога и знак больше (>).\n\
+(как при вызове PROMPT $p$g).\n\
 \n\
-The prompt can also be changed by altering the PROMPT environment variable,\n\
-so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
+Подсказка может быть также изменена сменой переменной окружения PROMPT,\n\
+поэтому команда 'SET PROMPT=<текст>' имеет такой же эффект, как 'PROMPT <text>'\n"
 
   WCMD_REM,
-"Командная трока, начинающаяся с REM (с последующим пробелом) не выполняет\n\
-никаких действий и следовательно используется для комментариев в bat-файлах.\n"
+"Командная строка, начинающаяся с REM (с последующим пробелом) не выполняет\n\
+никаких действий, поэтому REM используется для комментариев в bat-файлах.\n"
 
   WCMD_REN,    "Справка о REN\n"
   WCMD_RENAME, "Справка о RENAME\n"
@@ -151,56 +157,63 @@ so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'\n"
   WCMD_RMDIR,  "Справка о RMDIR\n"
 
   WCMD_SET,
-"SET показывает или изменяет переменные окружения wcmd.\n\
+"SET показывает или изменяет переменные окружения cmd.\n\
 \n\
 SET без параметров показывает всё текущее окружение.\n\
 \n\
 Для создания или изменения переменной окружения используйте:\n\
 \n\
-      SET <пекременная>=<значение>\n\
+      SET <переменная>=<значение>\n\
 \n\
-где <переменная> и <занчение> являются символьными строками. There must be no\n\
-spaces before the equals sign, nor can the variable name\n\
-have embedded spaces.\n\
+где <переменная> и <значение> являются символьными строками. Перед знаком\n\
+равно не должно быть пробелов, имя переменной не может содержать\n\
+пробелы.\n\
 \n\
-Under Wine, the environment of the underlying operating system is\n\
-included into the Win32 environment, there will generally therefore be\n\
-many more values than in a native Win32 implementation. Note that it is\n\
-not possible to affect the operating system environment from within wcmd.\n"
+В Wine переменные окружения основной операционной системы включены\n\
+в окружение Win32, поэтому будет доступно несколько больше\n\
+переменных, чем в обычной Win32. Стоит отметить,\n\
+что невозможно изменить окружение операционной системы из cmd.\n"
 
   WCMD_SHIFT,
-"SHIFT is used in a batch file to remove one parameter from the head of\n\
-the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n\
-if called from the command line.\n"
+"SHIFT используется в bat-файлах для удаления одного параметра с вершины\n\
+списка, таким образом параметр 2 переместится в параметр 1 и так далее.\n\
+SHIFT не работает при вызове в командной строке.\n"
 
   WCMD_TIME,   "Справка о TIME\n"
 
-  WCMD_TITLE,  "Устанавливает заголовок окна wcmd для текущей сессии,\n синтаксис: TITLE [строка]\n"
+  WCMD_TITLE,  "Устанавливает заголовок окна cmd для текущей сессии.\n Синтаксис: TITLE <строка>\n"
 
   WCMD_TYPE,
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n\
-if redirected). No check is made that the file is readable text.\n"
+"TYPE <файл> копирует <файл> в устройство консоли (или куда угодно, если он перенаправлен).\n\
+Проверка на то, что файл - это текст, предназначенный для чтения, отсутствует.\n"
 
   WCMD_VERIFY,
-"VERIFY is used to set, clear or test the verify flag. Valid forms are:\n\
+"VERIFY предназначена для установки, сброса или определения флага проверки\n\
+корректности записи файлов на диск. Возможные значения:\n\
 \n\
 VERIFY ON	Установить флаг\n\
 VERIFY OFF	Сбросить флаг\n\
-VERIFY		Displays ON or OFF as appropriate.\n\
+VERIFY		Выводит текущее состояние: ON или OFF.\n\
 \n\
 Флаг verify не используется Wine.\n"
 
   WCMD_VER,
-"VER отображает версию запущенного wcmd\n"
+"VER отображает версию запущенного cmd\n"
 
   WCMD_VOL,    "Справка о VOL\n"
 
-  WCMD_EXIT,
-"EXIT завершает текущую командную сессию в возвращает\n\
-в операционную систему или оболочку из которой был запущен wcmd.\n"
+  WCMD_PUSHD,  "PUSHD <directoryname> saves the current directory onto a\n\
+stack, and then changes the current directory to the supplied one.\n"
 
-  1000, "Встроенные команды WCMD:\n\
-ATTRIB\t\tПоказать или изменить DOS-аттрибуты файла\n\
+  WCMD_POPD,   "POPD changes current directory to the last one saved with\n\
+PUSHD.\n"
+
+  WCMD_EXIT,
+"EXIT завершает текущую командную сессию и возвращает\n\
+в операционную систему или оболочку из которой был запущен cmd.\n"
+
+  1000, "Встроенные команды CMD:\n\
+ATTRIB\t\tПоказать или изменить DOS-атрибуты файла\n\
 CALL\t\tЗапустить bat-файл из другого bat-файла\n\
 CD (CHDIR)\tСменить текущую папку\n\
 CLS\t\tОчистить экран консоли\n\
@@ -214,16 +227,18 @@ HELP\t\tПоказать крадкую подсказку по команде\n\
 MD (MKDIR)\tСоздать папку\n\
 MOVE\t\tПереместить файл, набор файлов или дерево папок\n\
 PATH\t\tПоказать или изменить путь поиска программ\n\
+POPD\t\tRestores the directory to the last one saved with PUSHD\n\
+PUSHD\t\tChanges to a new directory, saving the current one\n\
 PROMPT\t\tИзменить приглашение командной строки\n\
 REN (RENAME)\tПереименовать файл\n\
 RD (RMDIR)\tУдалить папку\n\
 SET\t\tПоказать или изменить переменные окружения\n\
 TIME\t\tПоказать или изменить текущее системное время\n\
-TITLE\t\tУстанавить заголовок окна wcmd для текущей сессии\n\
+TITLE\t\tУстанавить заголовок окна cmd для текущей сессии\n\
 TYPE\t\tВывести содержание текстового файла\n\
-VER\t\tПоказать текущую версию WCMD\n\
+VER\t\tПоказать текущую версию CMD\n\
 VOL\t\tПоказать метку тома дискового устройства\n\
-EXIT\t\tВыйти из WCMD\n\n\
+EXIT\t\tВыйти из CMD\n\n\
 Выполните HELP <команда> для дополнительной информации по перечисленным выше командам.\n"
 
   WCMD_CONFIRM, "Are you sure"
