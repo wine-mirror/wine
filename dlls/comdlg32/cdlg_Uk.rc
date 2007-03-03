@@ -232,22 +232,22 @@ FONT 8, "MS Shell Dlg"
     GROUPBOX        "Принтер",        grp4,   8,  4, 272,84, WS_GROUP
     CONTROL         "Друк у фай&л", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
     PUSHBUTTON      "&Властивості",    psh2, 212, 17,  60,14, WS_GROUP
-    LTEXT           "&Ім'я:",         stc6,  16, 20,  36,8
-    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
-    LTEXT           "Статус:",        stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "Емульовано",    stc12, 60, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "Тип:",          stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "Емульовано",     stc11, 60, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "Місце:",         stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Емульовано", stc14, 60, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "Примітка:",    stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "Емульовано",   stc13, 60, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "&Ім'я:",         stc6,  16, 20,  46,8
+    COMBOBOX                          cmb4,  64, 18, 140,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Статус:",        stc8,  16, 36,  46,10, SS_NOPREFIX
+    LTEXT           "Емульовано",    stc12, 64, 36, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Тип:",          stc7,  16, 48,  46,10, SS_NOPREFIX
+    LTEXT           "Емульовано",     stc11, 64, 48, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Місце:",         stc10, 16, 60,  46,10, SS_NOPREFIX
+    LTEXT           "Емульовано", stc14, 64, 60, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Примітка:",    stc9,  16, 72,  46,10, SS_NOPREFIX
+    LTEXT           "Емульовано",   stc13, 64, 72, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Копії",         grp2, 160, 92, 120,64, WS_GROUP
     LTEXT           "Число &копій:",stc5,168,108,68,8
-    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
-    CONTROL         "&Розбити",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,230,130,40,12
-    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
+    ICON            "",               ico3, 162,124,  60,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "&Розбити",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,230,130,42,12
+    EDITTEXT                          edt3, 230,106,  42,12, WS_GROUP | ES_NUMBER
 
     GROUPBOX        "Друкувати",    grp1,   8,92,  144,64, WS_GROUP
     CONTROL         "&Все",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
@@ -255,7 +255,7 @@ FONT 8, "MS Shell Dlg"
     CONTROL         "&Виділення",     rad2,"Button",BS_AUTORADIOBUTTON,16,138,64,12
     EDITTEXT                          edt1,  85,122,  20,12, WS_GROUP | ES_NUMBER
     EDITTEXT                          edt2, 120,122,  20,12, WS_GROUP | ES_NUMBER
-    RTEXT           "&від:",         stc2,  70,124,  10,8
+    RTEXT           "&від:",         stc2,  70,124,  12,8
     RTEXT           "&до:",           stc3, 106,124,  10,8
 }
 

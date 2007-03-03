@@ -232,22 +232,22 @@ FONT 8, "MS Shell Dlg"
     GROUPBOX        "Принтер",        grp4,   8,  4, 272,84, WS_GROUP
     CONTROL         "Печать в фай&л", chx1, "Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,212,70,64,12
     PUSHBUTTON      "&Свойства",    psh2, 212, 17,  60,14, WS_GROUP
-    LTEXT           "&Имя:",         stc6,  16, 20,  36,8
-    COMBOBOX                          cmb4,  52, 18, 152,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
-    LTEXT           "Статус:",        stc8,  16, 36,  36,10, SS_NOPREFIX
-    LTEXT           "Эмулирован",    stc12, 52, 36, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "Тип:",          stc7,  16, 48,  36,10, SS_NOPREFIX
-    LTEXT           "Эмулирован",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "Место:",         stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Эмулировано", stc14, 60, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
-    LTEXT           "Примечание:",   stc9,  16, 72,  36,10, SS_NOPREFIX
-    LTEXT           "Эмулировано",   stc13, 60, 72, 152,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "&Имя:",         stc6,  16, 20,  46,8
+    COMBOBOX                          cmb4,  64, 18, 140,152,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_GROUP | WS_TABSTOP
+    LTEXT           "Статус:",        stc8,  16, 36,  46,10, SS_NOPREFIX
+    LTEXT           "Эмулирован",    stc12, 64, 36, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Тип:",          stc7,  16, 48,  46,10, SS_NOPREFIX
+    LTEXT           "Эмулирован",     stc11, 64, 48, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Место:",         stc10, 16, 60,  46,10, SS_NOPREFIX
+    LTEXT           "Эмулировано", stc14, 64, 60, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Примечание:",   stc9,  16, 72,  46,10, SS_NOPREFIX
+    LTEXT           "Эмулировано",   stc13, 64, 72, 100,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
     GROUPBOX        "Копии",         grp2, 160, 92, 120,64, WS_GROUP
     LTEXT           "Число &копий:",stc5,168,108,68,8
-    ICON            "",               ico3, 162,124,  76,24, WS_GROUP | SS_CENTERIMAGE
-    CONTROL         "&Разбить",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,230,130,40,12
-    EDITTEXT                          edt3, 240,106,  32,12, WS_GROUP | ES_NUMBER
+    ICON            "",               ico3, 162,124,  60,24, WS_GROUP | SS_CENTERIMAGE
+    CONTROL         "&Разбить",       chx2,"Button",BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,230,130,42,12
+    EDITTEXT                          edt3, 230,106,  42,12, WS_GROUP | ES_NUMBER
 
     GROUPBOX        "Печатать",    grp1,   8,92,  144,64, WS_GROUP
     CONTROL         "&Все",           rad1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,16,106,64,12
@@ -278,7 +278,7 @@ BEGIN
     LTEXT           "Тип:",          stc7,  16, 48,  36,10, SS_NOPREFIX
     LTEXT           "Эмулирован",     stc11, 52, 48, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Место:",         stc10, 16, 60,  36,10, SS_NOPREFIX
-    LTEXT           "Эмулировано", stc14, 52, 60, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
+    LTEXT           "Эмулировано", stc14, 52, 60, 36,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
     LTEXT           "Заметки:",       stc9,  16, 72,  36,10, SS_NOPREFIX
     LTEXT           "Эмулированы",   stc13, 52, 72, 224,10, SS_NOPREFIX | SS_LEFTNOWORDWRAP
 
