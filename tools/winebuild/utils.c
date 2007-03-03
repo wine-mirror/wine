@@ -454,7 +454,7 @@ unsigned int get_alignment(unsigned int align)
     case CPU_POWERPC:
     case CPU_ALPHA:
         n = 0;
-        while ((1 << n) != align) n++;
+        while ((1u << n) != align) n++;
         return n;
     }
     /* unreached */

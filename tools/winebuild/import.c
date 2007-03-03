@@ -168,7 +168,7 @@ static void free_imports( struct import *imp )
 /* check whether a given dll is imported in delayed mode */
 static int is_delayed_import( const char *name )
 {
-    int i;
+    unsigned int i;
 
     for (i = 0; i < delayed_imports.count; i++)
     {
@@ -468,7 +468,8 @@ static void check_undefined_exports( DLLSPEC *spec )
 static char *create_undef_symbols_file( DLLSPEC *spec )
 {
     char *as_file, *obj_file;
-    unsigned int i;
+    int i;
+    unsigned int j;
     FILE *f;
 
     as_file = get_temp_file_name( output_file_name, ".s" );
@@ -482,8 +483,8 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
         if (odp->flags & FLAG_FORWARD) continue;
         fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(odp->link_name) );
     }
-    for (i = 0; i < extra_ld_symbols.count; i++)
-        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.names[i]) );
+    for (j = 0; j < extra_ld_symbols.count; j++)
+        fprintf( f, "\t%s %s\n", get_asm_ptr_keyword(), asm_name(extra_ld_symbols.names[j]) );
     fclose( f );
 
     obj_file = get_temp_file_name( output_file_name, ".o" );
@@ -557,7 +558,8 @@ void read_undef_symbols( DLLSPEC *spec, char **argv )
 /* resolve the imports for a Win32 module */
 int resolve_imports( DLLSPEC *spec )
 {
-    unsigned int i, j, removed;
+    int i;
+    unsigned int j, removed;
     ORDDEF *odp;
 
     sort_names( &ignore_symbols );

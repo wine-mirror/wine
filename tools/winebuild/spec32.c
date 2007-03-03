@@ -51,7 +51,7 @@ static inline int needs_relay( const ORDDEF *odp )
 /* check if dll will output relay thunks */
 int has_relays( DLLSPEC *spec )
 {
-    unsigned int i;
+    int i;
 
     if (target_cpu != CPU_x86) return 0;
 
@@ -70,7 +70,8 @@ int has_relays( DLLSPEC *spec )
  */
 static void output_relay_debug( DLLSPEC *spec )
 {
-    unsigned int i, j, args, flags;
+    int i;
+    unsigned int j, args, flags;
 
     /* first the table of entry point offsets */
 
