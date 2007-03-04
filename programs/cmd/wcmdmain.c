@@ -26,13 +26,16 @@
 
 #include "config.h"
 #include "wcmd.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 const char * const inbuilt[] = {"ATTRIB", "CALL", "CD", "CHDIR", "CLS", "COPY", "CTTY",
 		"DATE", "DEL", "DIR", "ECHO", "ERASE", "FOR", "GOTO",
 		"HELP", "IF", "LABEL", "MD", "MKDIR", "MOVE", "PATH", "PAUSE",
 		"PROMPT", "REM", "REN", "RENAME", "RD", "RMDIR", "SET", "SHIFT",
                 "TIME", "TITLE", "TYPE", "VERIFY", "VER", "VOL", 
-                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "EXIT" };
+                "ENDLOCAL", "SETLOCAL", "PUSHD", "POPD", "ASSOC", "EXIT" };
 
 HINSTANCE hinst;
 DWORD errorlevel;
@@ -441,6 +444,7 @@ void WCMD_process_command (char *command)
  * Strip leading whitespaces, and a '@' if supplied
  */
     whichcmd = WCMD_strtrim_leading_spaces(cmd);
+    WINE_TRACE("Command: '%s'\n", cmd);
     if (whichcmd[0] == '@') whichcmd++;
 
 /*
@@ -569,6 +573,9 @@ void WCMD_process_command (char *command)
         break;
       case WCMD_POPD:
         WCMD_popd();
+        break;
+      case WCMD_ASSOC:
+        WCMD_assoc(p);
         break;
       case WCMD_EXIT:
         WCMD_exit ();

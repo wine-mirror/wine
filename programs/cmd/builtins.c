@@ -1457,3 +1457,159 @@ BOOL WCMD_ask_confirm (char *message, BOOL showSureText) {
     /* Return the answer */
     return (answer[0] == Ybuffer[0]);
 }
+
+/*****************************************************************************
+ * WCMD_assoc
+ *
+ *	Lists or sets file associations
+ */
+void WCMD_assoc (char *command) {
+
+    HKEY    key;
+    DWORD   accessOptions = KEY_READ;
+    char   *newValue;
+    LONG    rc = ERROR_SUCCESS;
+    char    keyValue[MAXSTRING];
+    DWORD   valueLen = MAXSTRING;
+    HKEY    readKey;
+
+
+    /* See if parameter includes '=' */
+    errorlevel = 0;
+    newValue = strchr(command, '=');
+    if (newValue) accessOptions |= KEY_WRITE;
+
+    /* Open a key to HKEY_CLASSES_ROOT for enumerating */
+    if (RegOpenKeyEx(HKEY_CLASSES_ROOT, "", 0,
+                     accessOptions, &key) != ERROR_SUCCESS) {
+      WINE_FIXME("Unexpected failure opening HKCR key: %d\n", GetLastError());
+      return;
+    }
+
+    /* If no paramaters then list all associations */
+    if (*command == 0x00) {
+      int index = 0;
+
+      /* Enumerate all the keys */
+      while (rc != ERROR_NO_MORE_ITEMS) {
+        char  keyName[MAXSTRING];
+        DWORD nameLen;
+
+        /* Find the next value */
+        nameLen = MAXSTRING;
+        rc = RegEnumKeyEx(key, index++,
+                          keyName, &nameLen,
+                          NULL, NULL, NULL, NULL);
+
+        if (rc == ERROR_SUCCESS) {
+
+          /* Only interested in extension ones */
+          if (keyName[0] == '.') {
+
+            if (RegOpenKeyEx(key, keyName, 0,
+                             accessOptions, &readKey) == ERROR_SUCCESS) {
+
+              rc = RegQueryValueEx(readKey, NULL, NULL, NULL,
+                                   (LPBYTE)keyValue, &valueLen);
+              WCMD_output_asis(keyName);
+              WCMD_output_asis("=");
+              /* If no default value found, leave line empty after '=' */
+              if (rc == ERROR_SUCCESS) {
+                WCMD_output_asis(keyValue);
+              }
+              WCMD_output_asis("\n");
+            }
+          }
+        }
+      }
+      RegCloseKey(readKey);
+
+    } else {
+
+      /* Parameter supplied - if no '=' on command line, its a query */
+      if (newValue == NULL) {
+        char *space;
+
+        /* Query terminates the parameter at the first space */
+        strcpy(keyValue, command);
+        space = strchr(keyValue, ' ');
+        if (space) *space=0x00;
+
+        if (RegOpenKeyEx(key, keyValue, 0,
+                         accessOptions, &readKey) == ERROR_SUCCESS) {
+
+          rc = RegQueryValueEx(readKey, NULL, NULL, NULL,
+                               (LPBYTE)keyValue, &valueLen);
+          WCMD_output_asis(command);
+          WCMD_output_asis("=");
+          /* If no default value found, leave line empty after '=' */
+          if (rc == ERROR_SUCCESS) WCMD_output_asis(keyValue);
+          WCMD_output_asis("\n");
+          RegCloseKey(readKey);
+
+        } else {
+          char  msgbuffer[MAXSTRING];
+          char  outbuffer[MAXSTRING];
+
+          /* Load the translated 'File association not found' */
+          LoadString (hinst, WCMD_NOASSOC, msgbuffer, sizeof(msgbuffer));
+          sprintf(outbuffer, msgbuffer, keyValue);
+          WCMD_output_asis(outbuffer);
+          errorlevel = 2;
+        }
+
+      /* Not a query - its a set or clear of a value */
+      } else {
+
+        /* Get pointer to new value */
+        *newValue = 0x00;
+        newValue++;
+
+        /* If nothing after '=' then clear value */
+        if (*newValue == 0x00) {
+
+          rc = RegDeleteKey(key, command);
+          if (rc == ERROR_SUCCESS) {
+            WINE_TRACE("HKCR Key '%s' deleted\n", command);
+
+          } else if (rc != ERROR_FILE_NOT_FOUND) {
+            WCMD_print_error();
+            errorlevel = 2;
+
+          } else {
+            char  msgbuffer[MAXSTRING];
+            char  outbuffer[MAXSTRING];
+
+            /* Load the translated 'File association not found' */
+            LoadString (hinst, WCMD_NOASSOC, msgbuffer, sizeof(msgbuffer));
+            sprintf(outbuffer, msgbuffer, keyValue);
+            WCMD_output_asis(outbuffer);
+            errorlevel = 2;
+          }
+
+        /* It really is a set value = contents */
+        } else {
+          rc = RegCreateKeyEx(key, command, 0, NULL, REG_OPTION_NON_VOLATILE,
+                              accessOptions, NULL, &readKey, NULL);
+          if (rc == ERROR_SUCCESS) {
+            rc = RegSetValueEx(readKey, NULL, 0, REG_SZ,
+                                 (LPBYTE)newValue, strlen(newValue));
+            RegCloseKey(readKey);
+          }
+
+          if (rc != ERROR_SUCCESS) {
+            WCMD_print_error();
+            errorlevel = 2;
+          } else {
+            WCMD_output_asis(command);
+            WCMD_output_asis("=");
+            WCMD_output_asis(newValue);
+            WCMD_output_asis("\n");
+          }
+        }
+      }
+    }
+
+    /* Clean up */
+    RegCloseKey(key);
+}

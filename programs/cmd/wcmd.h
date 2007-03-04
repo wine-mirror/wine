@@ -27,6 +27,7 @@
 #include <stdio.h>
 #include <ctype.h>
 
+void WCMD_assoc (char *);
 void WCMD_batch (char *, char *, int, char *, HANDLE);
 void WCMD_call (char *command);
 void WCMD_change_tty (void);
@@ -155,9 +156,10 @@ struct env_stack
 #define WCMD_SETLOCAL 37
 #define WCMD_PUSHD  38
 #define WCMD_POPD   39
+#define WCMD_ASSOC  40
 
 /* Must be last in list */
-#define WCMD_EXIT   40
+#define WCMD_EXIT   41
 
 /* Some standard messages */
 extern const char nyi[];
@@ -169,6 +171,7 @@ extern const char anykey[];
 #define WCMD_CONFIRM  1001
 #define WCMD_YES      1002
 #define WCMD_NO       1003
+#define WCMD_NOASSOC  1004
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192

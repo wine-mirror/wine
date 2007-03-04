@@ -238,4 +238,5 @@ Enter HELP <command> for further information on any of the above commands\n"
   WCMD_CONFIRM, "Are you sure"
   WCMD_YES, "Y"
   WCMD_NO, "N"
+  WCMD_NOASSOC, "File association missing for extension %s\n"
 }

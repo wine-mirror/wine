@@ -232,4 +232,5 @@ EXIT\t\tCMDÇèIóπ\n\n\
   WCMD_CONFIRM, "Are you sure"
   WCMD_YES, "Y"
   WCMD_NO, "N"
+  WCMD_NOASSOC, "File association missing for extension %s\n"
 }

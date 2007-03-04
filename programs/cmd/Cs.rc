@@ -234,4 +234,5 @@ Zadejte HELP <pøíkaz> pro podrobnìjší informace o nìkterém z výše uvedených pøík
   WCMD_CONFIRM, "Are you sure"
   WCMD_YES, "Y"
   WCMD_NO, "N"
+  WCMD_NOASSOC, "File association missing for extension %s\n"
 }

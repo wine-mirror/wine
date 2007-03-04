@@ -223,4 +223,5 @@ HELP <명령>을 치면 그 명령의 상세한 정보를 보여줌\n"
   WCMD_CONFIRM, "Are you sure"
   WCMD_YES, "Y"
   WCMD_NO, "N"
+  WCMD_NOASSOC, "File association missing for extension %s\n"
 }
