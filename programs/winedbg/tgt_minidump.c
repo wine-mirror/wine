@@ -283,11 +283,14 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
 
     if (MiniDumpReadDumpStream(data->mapping, ThreadListStream, &dir, &stream, &size))
     {
-        MINIDUMP_THREAD_LIST*     mtl = (MINIDUMP_THREAD_LIST*)stream;
-        MINIDUMP_THREAD*          mt = &mtl->Threads[0];
+        MINIDUMP_THREAD_LIST*   mtl = (MINIDUMP_THREAD_LIST*)stream;
+        ULONG                   i;
 
-        dbg_add_thread(dbg_curr_process, mt->ThreadId, NULL, 
-                       (void*)(DWORD_PTR)mt->Teb);
+        for (i = 0; i < mtl->NumberOfThreads; i++)
+        {
+            dbg_add_thread(dbg_curr_process, mtl->Threads[i].ThreadId, NULL,
+                           (void*)(DWORD_PTR)mtl->Threads[i].Teb);
+        }
     }
     /* first load ELF modules, then do the PE ones */
     if (MiniDumpReadDumpStream(data->mapping, Wine_ElfModuleListStream, &dir,
