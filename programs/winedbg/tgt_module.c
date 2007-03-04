@@ -51,11 +51,17 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
 {
     DWORD opts = SymGetOptions();
     HANDLE hDummy = (HANDLE)0x87654321;
+    enum dbg_start ret = start_ok;
 
     SymSetOptions((opts & ~(SYMOPT_UNDNAME|SYMOPT_DEFERRED_LOADS)) |
                   SYMOPT_LOAD_LINES | SYMOPT_AUTO_PUBLICS | 0x40000000);
-    SymInitialize(hDummy, NULL, FALSE);
-    SymLoadModule(hDummy, NULL, name, NULL, 0, 0);
+    if (!SymInitialize(hDummy, NULL, FALSE))
+        return start_error_init;
+    if (!SymLoadModule(hDummy, NULL, name, NULL, 0, 0))
+    {
+        ret = start_error_init;
+        keep = FALSE;
+    }
 
     if (keep)
     {
@@ -64,6 +70,8 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
         SymSetOptions(SymGetOptions() | 0x40000000);
         dbg_curr_process = dbg_add_process(&be_process_module_io, 1, hDummy);
         dbg_curr_pid = 1;
+        dbg_curr_thread = dbg_add_thread(dbg_curr_process, 2, NULL, NULL);
+
         /* FIXME: missing thread creation, fetching frames, restoring dbghelp's options... */
     }
     else
@@ -72,7 +80,7 @@ enum dbg_start tgt_module_load(const char* name, BOOL keep)
         SymSetOptions(opts);
     }
 
-    return start_ok;
+    return ret;
 }
 
 static BOOL tgt_process_module_close_process(struct dbg_process* pcs, BOOL kill)
