@@ -34,7 +34,7 @@ void WCMD_change_tty (void);
 void WCMD_clear_screen (void);
 void WCMD_copy (void);
 void WCMD_create_dir (void);
-void WCMD_delete (int recurse);
+void WCMD_delete (char *);
 void WCMD_directory (void);
 void WCMD_echo (const char *);
 void WCMD_endlocal (void);

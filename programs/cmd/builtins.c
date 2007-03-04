@@ -239,156 +239,174 @@ void WCMD_create_dir (void) {
  *         non-hidden files
  */
 
-void WCMD_delete (int recurse) {
+void WCMD_delete (char *command) {
 
-  WIN32_FIND_DATA fd;
-  HANDLE hff;
-  char fpath[MAX_PATH];
-  char *p;
+    int   argno         = 0;
+    int   argsProcessed = 0;
+    char *argN          = command;
 
-  if (param1[0] == 0x00) {
-    WCMD_output ("Argument missing\n");
-    return;
-  }
+    /* Loop through all args */
+    while (argN) {
+      char *thisArg = WCMD_parameter (command, argno++, &argN);
+      if (argN && argN[0] != '/') {
 
-  /* If filename part of parameter is * or *.*, prompt unless
-     /Q supplied.                                            */
-  if ((strstr (quals, "/Q") == NULL) && (strstr (quals, "/P") == NULL)) {
+        WIN32_FIND_DATA fd;
+        HANDLE hff;
+        char fpath[MAX_PATH];
+        char *p;
 
-    char drive[10];
-    char dir[MAX_PATH];
-    char fname[MAX_PATH];
-    char ext[MAX_PATH];
 
-    /* Convert path into actual directory spec */
-    GetFullPathName (param1, sizeof(fpath), fpath, NULL);
-    WCMD_splitpath(fpath, drive, dir, fname, ext);
+        WINE_TRACE("del: Processing arg %s (quals:%s)\n", thisArg, quals);
+        argsProcessed++;
 
-    /* Only prompt for * and *.*, not *a, a*, *.a* etc */
-    if ((strcmp(fname, "*") == 0) &&
-        (*ext == 0x00 || (strcmp(ext, ".*") == 0))) {
-      BOOL  ok;
-      char  question[MAXSTRING];
+        /* If filename part of parameter is * or *.*, prompt unless
+           /Q supplied.                                            */
+        if ((strstr (quals, "/Q") == NULL) && (strstr (quals, "/P") == NULL)) {
 
-      /* Ask for confirmation */
-      sprintf(question, "%s, ", fpath);
-      ok = WCMD_ask_confirm(question, TRUE);
+          char drive[10];
+          char dir[MAX_PATH];
+          char fname[MAX_PATH];
+          char ext[MAX_PATH];
 
-      /* Abort if answer is 'N' */
-      if (!ok) return;
-    }
-  }
+          /* Convert path into actual directory spec */
+          GetFullPathName (thisArg, sizeof(fpath), fpath, NULL);
+          WCMD_splitpath(fpath, drive, dir, fname, ext);
 
-  hff = FindFirstFile (param1, &fd);
-  if (hff == INVALID_HANDLE_VALUE) {
-    WCMD_output ("%s :File Not Found\n",param1);
-    return;
-  }
-  /* Support del <dirname> by just deleting all files dirname\* */
-  if ((strchr(param1,'*') == NULL) && (strchr(param1,'?') == NULL)
-  	&& (!recurse) && (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-    strcat (param1, "\\*");
-    FindClose(hff);
-    WCMD_delete (1);
-    return;
+          /* Only prompt for * and *.*, not *a, a*, *.a* etc */
+          if ((strcmp(fname, "*") == 0) &&
+              (*ext == 0x00 || (strcmp(ext, ".*") == 0))) {
+            BOOL  ok;
+            char  question[MAXSTRING];
 
-  } else {
+            /* Ask for confirmation */
+            sprintf(question, "%s, ", fpath);
+            ok = WCMD_ask_confirm(question, TRUE);
 
-    /* Build the filename to delete as <supplied directory>\<findfirst filename> */
-    strcpy (fpath, param1);
-    do {
-      p = strrchr (fpath, '\\');
-      if (p != NULL) {
-        *++p = '\0';
-        strcat (fpath, fd.cFileName);
-      }
-      else strcpy (fpath, fd.cFileName);
-      if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
-        BOOL  ok = TRUE;
-        char *nextA = strstr (quals, "/A");
+            /* Abort if answer is 'N' */
+            if (!ok) continue;
+          }
+        }
 
-        /* Handle attribute matching (/A) */
-        if (nextA != NULL) {
-          ok = FALSE;
-          while (nextA != NULL && !ok) {
+        hff = FindFirstFile (thisArg, &fd);
+        if (hff == INVALID_HANDLE_VALUE) {
+          WCMD_output ("%s :File Not Found\n", thisArg);
+          continue;
+        }
+        /* Support del <dirname> by just deleting all files dirname\* */
+        if ((strchr(thisArg,'*') == NULL) && (strchr(thisArg,'?') == NULL)
+		&& (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+          char modifiedParm[MAX_PATH];
+          strcpy(modifiedParm, thisArg);
+          strcat(modifiedParm, "\\*");
+          FindClose(hff);
+          WCMD_delete(modifiedParm);
+          continue;
 
-            char *thisA = (nextA+2);
-            BOOL  stillOK = TRUE;
+        } else {
 
-            /* Skip optional : */
-            if (*thisA == ':') thisA++;
-
-            /* Parse each of the /A[:]xxx in turn */
-            while (*thisA && *thisA != '/') {
-              BOOL negate    = FALSE;
-              BOOL attribute = FALSE;
-
-              /* Match negation of attribute first */
-              if (*thisA == '-') {
-                negate=TRUE;
-                thisA++;
-              }
-
-              /* Match attribute */
-              switch (*thisA) {
-              case 'R': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY);
-                        break;
-              case 'H': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
-                        break;
-              case 'S': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM);
-                        break;
-              case 'A': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE);
-                        break;
-              default:
-                  WCMD_output ("Syntax error\n");
-              }
-
-              /* Now check result, keeping a running boolean about whether it
-                 matches all parsed attribues so far                         */
-              if (attribute && !negate) {
-                  stillOK = stillOK;
-              } else if (!attribute && negate) {
-                  stillOK = stillOK;
-              } else {
-                  stillOK = FALSE;
-              }
-              thisA++;
+          /* Build the filename to delete as <supplied directory>\<findfirst filename> */
+          strcpy (fpath, thisArg);
+          do {
+            p = strrchr (fpath, '\\');
+            if (p != NULL) {
+              *++p = '\0';
+              strcat (fpath, fd.cFileName);
             }
+            else strcpy (fpath, fd.cFileName);
+            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+              BOOL  ok = TRUE;
+              char *nextA = strstr (quals, "/A");
 
-            /* Save the running total as the final result */
-            ok = stillOK;
+              /* Handle attribute matching (/A) */
+              if (nextA != NULL) {
+                ok = FALSE;
+                while (nextA != NULL && !ok) {
 
-            /* Step on to next /A set */
-            nextA = strstr (nextA+1, "/A");
-          }
+                  char *thisA = (nextA+2);
+                  BOOL  stillOK = TRUE;
+
+                  /* Skip optional : */
+                  if (*thisA == ':') thisA++;
+
+                  /* Parse each of the /A[:]xxx in turn */
+                  while (*thisA && *thisA != '/') {
+                    BOOL negate    = FALSE;
+                    BOOL attribute = FALSE;
+
+                    /* Match negation of attribute first */
+                    if (*thisA == '-') {
+                      negate=TRUE;
+                      thisA++;
+                    }
+
+                    /* Match attribute */
+                    switch (*thisA) {
+                    case 'R': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY);
+                              break;
+                    case 'H': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN);
+                              break;
+                    case 'S': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM);
+                              break;
+                    case 'A': attribute = (fd.dwFileAttributes & FILE_ATTRIBUTE_ARCHIVE);
+                              break;
+                    default:
+                        WCMD_output ("Syntax error\n");
+                    }
+
+                    /* Now check result, keeping a running boolean about whether it
+                       matches all parsed attribues so far                         */
+                    if (attribute && !negate) {
+                        stillOK = stillOK;
+                    } else if (!attribute && negate) {
+                        stillOK = stillOK;
+                    } else {
+                        stillOK = FALSE;
+                    }
+                    thisA++;
+                  }
+
+                  /* Save the running total as the final result */
+                  ok = stillOK;
+
+                  /* Step on to next /A set */
+                  nextA = strstr (nextA+1, "/A");
+                }
+              }
+
+              /* /P means prompt for each file */
+              if (ok && strstr (quals, "/P") != NULL) {
+                char  question[MAXSTRING];
+
+                /* Ask for confirmation */
+                sprintf(question, "%s, Delete", fpath);
+                ok = WCMD_ask_confirm(question, FALSE);
+              }
+
+              /* Only proceed if ok to */
+              if (ok) {
+
+                /* If file is read only, and /F supplied, delete it */
+                if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY &&
+                    strstr (quals, "/F") != NULL) {
+                    SetFileAttributes(fpath, fd.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
+                }
+
+                /* Now do the delete */
+                if (!DeleteFile (fpath)) WCMD_print_error ();
+              }
+
+            }
+          } while (FindNextFile(hff, &fd) != 0);
+          FindClose (hff);
         }
-
-        /* /P means prompt for each file */
-        if (ok && strstr (quals, "/P") != NULL) {
-          char  question[MAXSTRING];
-
-          /* Ask for confirmation */
-          sprintf(question, "%s, Delete", fpath);
-          ok = WCMD_ask_confirm(question, FALSE);
-        }
-
-        /* Only proceed if ok to */
-        if (ok) {
-
-          /* If file is read only, and /F supplied, delete it */
-          if (fd.dwFileAttributes & FILE_ATTRIBUTE_READONLY &&
-              strstr (quals, "/F") != NULL) {
-              SetFileAttributes(fpath, fd.dwFileAttributes & ~FILE_ATTRIBUTE_READONLY);
-          }
-
-          /* Now do the delete */
-          if (!DeleteFile (fpath)) WCMD_print_error ();
-        }
-
       }
-    } while (FindNextFile(hff, &fd) != 0);
-    FindClose (hff);
-  }
+    }
+
+    /* Handle no valid args */
+    if (argsProcessed == 0) {
+      WCMD_output ("Argument missing\n");
+      return;
+    }
 }
 
 /****************************************************************************

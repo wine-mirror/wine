@@ -488,7 +488,7 @@ void WCMD_process_command (char *command)
 	break;
       case WCMD_DEL:
       case WCMD_ERASE:
-        WCMD_delete (0);
+        WCMD_delete (p);
         break;
       case WCMD_DIR:
         WCMD_directory ();
