@@ -506,7 +506,7 @@ struct WineD3DContext {
     DWORD                   isStateDirty[STATE_HIGHEST/32 + 1]; /* Bitmap to find out quickly if a state is dirty */
 
     IWineD3DSurface         *surface;
-    /* TODO: Thread this ctx belongs to                    */
+    DWORD                   tid;    /* Thread ID which owns this context at the moment */
 
     /* Stores some inforation about the context state for optimization */
     BOOL                    last_was_rhw;      /* true iff last draw_primitive was in xyzrhw mode */
@@ -1357,7 +1357,8 @@ typedef struct IWineD3DSwapChainImpl
 
     long prev_time, frames;   /* Performance tracking */
 
-    WineD3DContext         *context; /* Later a array for multithreading */
+    WineD3DContext        **context; /* Later a array for multithreading */
+    unsigned int            num_contexts;
 
     HWND                    win_handle;
     Window                  win;

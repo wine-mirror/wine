@@ -1351,10 +1351,15 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
     *     doesn't match actual visual? Cannot choose one here - code removed as it ONLY works if the one
     *     it chooses is identical to the one already being used!
      **********************************/
-
     /** FIXME: Handle stencil appropriately via EnableAutoDepthStencil / AutoDepthStencilFormat **/
+
+    object->context = HeapAlloc(GetProcessHeap(), 0, sizeof(object->context));
+    if(!object->context) {
+    }
+    object->num_contexts = 1;
+
     ENTER_GL();
-    object->context = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, display, object->win);
+    object->context[0] = CreateContext(This, (IWineD3DSurfaceImpl *) object->frontBuffer, display, object->win);
     LEAVE_GL();
 
     if (!object->context) {
@@ -1363,7 +1368,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_CreateAdditionalSwapChain(IWineD3DDevic
         goto error;
     } else {
         TRACE("Context created (HWND=%p, glContext=%p, Window=%ld)\n",
-               object->win_handle, object->context->glCtx, object->win);
+               object->win_handle, object->context[0]->glCtx, object->win);
     }
 
    /*********************
@@ -1501,7 +1506,7 @@ error:
         object->backBuffer = NULL;
     }
     if(object->context) {
-        DestroyContext(This, object->context);
+        DestroyContext(This, object->context[0]);
     }
     if(object->frontBuffer) {
         IWineD3DSurface_GetParent(object->frontBuffer, &bufferParent);
@@ -1682,7 +1687,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
         This->lastActiveRenderTarget = swapchain->frontBuffer;
     }
     IWineD3DSurface_AddRef(This->render_targets[0]);
-    This->activeContext = swapchain->context;
+    This->activeContext = swapchain->context[0];
 
     /* Depth Stencil support */
     This->stencilBufferTarget = This->depthStencilBuffer;
@@ -1700,7 +1705,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
     *  with Default values
     */
 
-    ((IWineD3DImpl *) This->wineD3D)->isGLInfoValid = IWineD3DImpl_FillGLCaps( This->wineD3D, swapchain->context->display);
+    ((IWineD3DImpl *) This->wineD3D)->isGLInfoValid = IWineD3DImpl_FillGLCaps(This->wineD3D, swapchain->context[0]->display);
     /* Setup all the devices defaults */
     IWineD3DStateBlock_InitStartupStateBlock((IWineD3DStateBlock *)This->stateBlock);
 #if 0

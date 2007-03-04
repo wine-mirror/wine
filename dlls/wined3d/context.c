@@ -616,7 +616,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
         hr = IWineD3DSurface_GetContainer(target, &IID_IWineD3DSwapChain, (void **) &swapchain);
         if(hr == WINED3D_OK && swapchain) {
             TRACE("Rendering onscreen\n");
-            context = ((IWineD3DSwapChainImpl *) swapchain)->context;
+            context = ((IWineD3DSwapChainImpl *) swapchain)->context[0];
             This->render_offscreen = FALSE;
             /* The context != This->activeContext will catch a NOP context change. This can occur
              * if we are switching back to swapchain rendering in case of FBO or Back Buffer offscreen
@@ -652,7 +652,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                         /* This may happen if the app jumps streight into offscreen rendering
                          * Start using the context of the primary swapchain
                          */
-                        context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context;
+                        context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0];
                     }
                     set_render_target_fbo((IWineD3DDevice *) This, 0, target);
                     break;
@@ -671,7 +671,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                          * Create the context on the same server as the primary swapchain. The primary swapchain is exists at this point.
                          */
                         This->pbufferContext = CreateContext(This, targetimpl,
-                                                             ((IWineD3DSwapChainImpl *) This->swapchains[0])->context->display,
+                                                             ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0]->display,
                                                              0 /* Window */);
                         This->pbufferWidth = targetimpl->currentDesc.Width;
                         This->pbufferHeight = targetimpl->currentDesc.Height;
@@ -694,7 +694,7 @@ void ActivateContext(IWineD3DDeviceImpl *This, IWineD3DSurface *target, ContextU
                         /* This may happen if the app jumps streight into offscreen rendering
                          * Start using the context of the primary swapchain
                          */
-                        context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context;
+                        context = ((IWineD3DSwapChainImpl *) This->swapchains[0])->context[0];
                     }
                     glDrawBuffer(This->offscreenBuffer);
                     checkGLcall("glDrawBuffer(This->offscreenBuffer)");
