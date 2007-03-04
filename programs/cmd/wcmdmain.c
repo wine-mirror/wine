@@ -878,8 +878,14 @@ void WCMD_show_prompt (void) {
         case '$':
 	  *q++ = '$';
 	  break;
+	case 'A':
+	  *q++ = '&';
+	  break;
 	case 'B':
 	  *q++ = '|';
+	  break;
+	case 'C':
+	  *q++ = '(';
 	  break;
 	case 'D':
 	  GetDateFormat (LOCALE_USER_DEFAULT, DATE_SHORTDATE, NULL, NULL, q, MAX_PATH);
@@ -888,8 +894,14 @@ void WCMD_show_prompt (void) {
 	case 'E':
 	  *q++ = '\E';
 	  break;
+	case 'F':
+	  *q++ = ')';
+	  break;
 	case 'G':
 	  *q++ = '>';
+	  break;
+	case 'H':
+	  *q++ = '\b';
 	  break;
 	case 'L':
 	  *q++ = '<';
@@ -910,13 +922,16 @@ void WCMD_show_prompt (void) {
 	case 'Q':
 	  *q++ = '=';
 	  break;
+	case 'S':
+	  *q++ = ' ';
+	  break;
 	case 'T':
 	  GetTimeFormat (LOCALE_USER_DEFAULT, 0, NULL, NULL, q, MAX_PATH);
 	  while (*q) q++;
 	  break;
-       case 'V':
-           lstrcat (q, version_string);
-           while (*q) q++;
+	case 'V':
+	  lstrcat (q, version_string);
+	  while (*q) q++;
          break;
 	case '_':
 	  *q++ = '\n';
