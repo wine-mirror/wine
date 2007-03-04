@@ -1730,10 +1730,7 @@ static HRESULT WINAPI IWineD3DDeviceImpl_Init3D(IWineD3DDevice *iface, WINED3DPR
 
         case ORM_BACKBUFFER:
         {
-            GLint auxBuffers;
-            glGetIntegerv(GL_AUX_BUFFERS, &auxBuffers);
-            TRACE("Got %d aux buffers\n", auxBuffers);
-            if(auxBuffers > 0) {
+            if(GL_LIMITS(aux_buffers) > 0) {
                 TRACE("Using auxilliary buffer for offscreen rendering\n");
                 This->offscreenBuffer = GL_AUX0;
             } else {
