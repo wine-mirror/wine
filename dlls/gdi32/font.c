@@ -3223,14 +3223,14 @@ UINT WINAPI GetTextCharsetInfo(HDC hdc, LPFONTSIGNATURE fs, DWORD flags)
     UINT ret = DEFAULT_CHARSET;
     DC *dc = DC_GetDCPtr(hdc);
 
-    if (!dc) goto done;
+    if (dc)
+    {
+        if (dc->gdiFont)
+            ret = WineEngGetTextCharsetInfo(dc->gdiFont, fs, flags);
 
-    if (dc->gdiFont)
-        ret = WineEngGetTextCharsetInfo(dc->gdiFont, fs, flags);
+        GDI_ReleaseObj(hdc);
+    }
 
-    GDI_ReleaseObj(hdc);
-
-done:
     if (ret == DEFAULT_CHARSET && fs)
         memset(fs, 0, sizeof(FONTSIGNATURE));
     return ret;
