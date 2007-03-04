@@ -36,6 +36,9 @@
 
 #include "wcmd.h"
 #include <shellapi.h>
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 void WCMD_execute (char *orig_command, char *parameter, char *substitution);
 
@@ -752,44 +755,59 @@ void WCMD_pause (void) {
  * Delete a directory.
  */
 
-void WCMD_remove_dir (void) {
+void WCMD_remove_dir (char *command) {
 
-  if (param1[0] == 0x00) {
+  int   argno         = 0;
+  int   argsProcessed = 0;
+  char *argN          = command;
+
+  /* Loop through all args */
+  while (argN) {
+    char *thisArg = WCMD_parameter (command, argno++, &argN);
+    if (argN && argN[0] != '/') {
+      WINE_TRACE("rd: Processing arg %s (quals:%s)\n", thisArg, quals);
+      argsProcessed++;
+
+      /* If subdirectory search not supplied, just try to remove
+         and report error if it fails (eg if it contains a file) */
+      if (strstr (quals, "/S") == NULL) {
+        if (!RemoveDirectory (thisArg)) WCMD_print_error ();
+
+      /* Otherwise use ShFileOp to recursively remove a directory */
+      } else {
+
+        SHFILEOPSTRUCT lpDir;
+
+        /* Ask first */
+        if (strstr (quals, "/Q") == NULL) {
+          BOOL  ok;
+          char  question[MAXSTRING];
+
+          /* Ask for confirmation */
+          sprintf(question, "%s, ", thisArg);
+          ok = WCMD_ask_confirm(question, TRUE);
+
+          /* Abort if answer is 'N' */
+          if (!ok) return;
+        }
+
+        /* Do the delete */
+        lpDir.hwnd   = NULL;
+        lpDir.pTo    = NULL;
+        lpDir.pFrom  = thisArg;
+        lpDir.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
+        lpDir.wFunc  = FO_DELETE;
+        if (SHFileOperationA(&lpDir)) WCMD_print_error ();
+      }
+    }
+  }
+
+  /* Handle no valid args */
+  if (argsProcessed == 0) {
     WCMD_output ("Argument missing\n");
     return;
   }
 
-  /* If subdirectory search not supplied, just try to remove
-     and report error if it fails (eg if it contains a file) */
-  if (strstr (quals, "/S") == NULL) {
-    if (!RemoveDirectory (param1)) WCMD_print_error ();
-
-  /* Otherwise use ShFileOp to recursively remove a directory */
-  } else {
-
-    SHFILEOPSTRUCT lpDir;
-
-    /* Ask first */
-    if (strstr (quals, "/Q") == NULL) {
-      BOOL  ok;
-      char  question[MAXSTRING];
-
-      /* Ask for confirmation */
-      sprintf(question, "%s, ", param1);
-      ok = WCMD_ask_confirm(question, TRUE);
-
-      /* Abort if answer is 'N' */
-      if (!ok) return;
-    }
-
-    /* Do the delete */
-    lpDir.hwnd   = NULL;
-    lpDir.pTo    = NULL;
-    lpDir.pFrom  = param1;
-    lpDir.fFlags = FOF_SILENT | FOF_NOCONFIRMATION | FOF_NOERRORUI;
-    lpDir.wFunc  = FO_DELETE;
-    if (SHFileOperationA(&lpDir)) WCMD_print_error ();
-  }
 }
 
 /****************************************************************************

@@ -530,7 +530,7 @@ void WCMD_process_command (char *command)
 	break;
       case WCMD_RD:
       case WCMD_RMDIR:
-        WCMD_remove_dir ();
+        WCMD_remove_dir (p);
         break;
       case WCMD_SETLOCAL:
         WCMD_setlocal(p);
