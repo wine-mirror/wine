@@ -470,7 +470,7 @@ int EnumEnums(ITypeInfo *pTypeInfo, int cVars, HTREEITEM hParent)
         {
             VARIANT var;
             VariantInit(&var);
-            if (VariantChangeType(&var, pVarDesc->lpvarValue, 0, VT_BSTR) == S_OK)
+            if (VariantChangeType(&var, U(*pVarDesc).lpvarValue, 0, VT_BSTR) == S_OK)
             {
                 AddToStrW(wszText, wszConst);
                 AddToStrW(wszText, wszSpace);
