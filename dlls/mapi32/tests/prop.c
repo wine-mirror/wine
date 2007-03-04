@@ -1342,10 +1342,22 @@ static void test_IProp(void)
 
 START_TEST(prop)
 {
-    if(!InitFuncPtrs())
-        return;
+    SCODE ret;
 
-    pScInitMapiUtil(0);
+    if(!InitFuncPtrs())
+    {
+        skip("Needed functions are not available\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pScInitMapiUtil(0);
+    if ((ret != S_OK) && (GetLastError() == ERROR_PROC_NOT_FOUND))
+    {
+        skip("ScInitMapiUtil is not implemented\n");
+        FreeLibrary(hMapi32);
+        return;
+    }
 
     test_PropCopyMore();
     test_UlPropSize();

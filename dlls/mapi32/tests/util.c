@@ -169,12 +169,27 @@ static void test_IsBadBoundedStringPtr(void)
 
 START_TEST(util)
 {
+    SCODE ret;
+
     hMapi32 = LoadLibraryA("mapi32.dll");
 
     pScInitMapiUtil = (void*)GetProcAddress(hMapi32, "ScInitMapiUtil@4");
+
     if (!pScInitMapiUtil)
+    {
+        skip("ScInitMapiUtil is not available\n");
+        FreeLibrary(hMapi32);
         return;
-    pScInitMapiUtil(0);
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pScInitMapiUtil(0);
+    if ((ret != S_OK) && (GetLastError() == ERROR_PROC_NOT_FOUND))
+    {
+        skip("ScInitMapiUtil is not implemented\n");
+        FreeLibrary(hMapi32);
+        return;
+    }
 
     test_SwapPword();
     test_SwapPlong();
@@ -183,4 +198,6 @@ START_TEST(util)
     test_UlFromSzHex();
     test_CbOfEncoded();
     test_IsBadBoundedStringPtr();
+
+    FreeLibrary(hMapi32);
 }
