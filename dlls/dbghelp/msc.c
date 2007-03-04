@@ -755,12 +755,9 @@ static struct symt* codeview_add_type_struct(struct codeview_type_parse* ctp,
 
 static struct symt* codeview_new_func_signature(struct codeview_type_parse* ctp, 
                                                 struct symt* existing,
-                                                unsigned ret_type,
-                                                unsigned args_list,
                                                 enum CV_call_e call_conv)
 {
     struct symt_function_signature*     sym;
-    const union codeview_reftype*       reftype;
 
     if (existing)
     {
@@ -769,10 +766,19 @@ static struct symt* codeview_new_func_signature(struct codeview_type_parse* ctp,
     }
     else
     {
-        sym = symt_new_function_signature(ctp->module, 
-                                          codeview_fetch_type(ctp, ret_type),
-                                          call_conv);
+        sym = symt_new_function_signature(ctp->module, NULL, call_conv);
     }
+    return &sym->symt;
+}
+
+static void codeview_add_func_signature_args(struct codeview_type_parse* ctp,
+                                             struct symt_function_signature* sym,
+                                             unsigned ret_type,
+                                             unsigned args_list)
+{
+    const union codeview_reftype*       reftype;
+
+    sym->rettype = codeview_fetch_type(ctp, ret_type);
     if (args_list && (reftype = codeview_jump_to_type(ctp, args_list)))
     {
         int i;
@@ -792,8 +798,6 @@ static struct symt* codeview_new_func_signature(struct codeview_type_parse* ctp,
             FIXME("Unexpected leaf %x for signature's pmt\n", reftype->generic.id);
         }
     }
-
-    return &sym->symt;
 }
 
 static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
@@ -979,34 +983,55 @@ static struct symt* codeview_parse_one_type(struct codeview_type_parse* ctp,
         break;
 
     case LF_PROCEDURE_V1:
-        symt = codeview_new_func_signature(ctp, existing,
-                                           type->procedure_v1.rvtype,
-                                           details ? type->procedure_v1.arglist : 0,
-                                           type->procedure_v1.call);
+        symt = codeview_new_func_signature(ctp, existing, type->procedure_v1.call);
+        if (details)
+        {
+            codeview_add_type(curr_type, symt);
+            codeview_add_func_signature_args(ctp,
+                                             (struct symt_function_signature*)symt,
+                                             type->procedure_v1.rvtype,
+                                             type->procedure_v1.arglist);
+        }
         break;
     case LF_PROCEDURE_V2:
-        symt = codeview_new_func_signature(ctp, existing,
-                                           type->procedure_v2.rvtype,
-                                           details ? type->procedure_v2.arglist : 0,
-                                           type->procedure_v2.call);
+        symt = codeview_new_func_signature(ctp, existing,type->procedure_v2.call);
+        if (details)
+        {
+            codeview_add_type(curr_type, symt);
+            codeview_add_func_signature_args(ctp,
+                                             (struct symt_function_signature*)symt,
+                                             type->procedure_v2.rvtype,
+                                             type->procedure_v2.arglist);
+        }
         break;
+
     case LF_MFUNCTION_V1:
         /* FIXME: for C++, this is plain wrong, but as we don't use arg types
          * nor class information, this would just do for now
          */
-        symt = codeview_new_func_signature(ctp, existing,
-                                           type->mfunction_v1.rvtype,
-                                           details ? type->mfunction_v1.arglist : 0,
-                                           type->mfunction_v1.call);
+        symt = codeview_new_func_signature(ctp, existing, type->mfunction_v1.call);
+        if (details)
+        {
+            codeview_add_type(curr_type, symt);
+            codeview_add_func_signature_args(ctp,
+                                             (struct symt_function_signature*)symt,
+                                             type->mfunction_v1.rvtype,
+                                             type->mfunction_v1.arglist);
+        }
         break;
     case LF_MFUNCTION_V2:
         /* FIXME: for C++, this is plain wrong, but as we don't use arg types
          * nor class information, this would just do for now
          */
-        symt = codeview_new_func_signature(ctp, existing,
-                                           type->mfunction_v2.rvtype,
-                                           details ? type->mfunction_v2.arglist : 0,
-                                           type->mfunction_v2.call);
+        symt = codeview_new_func_signature(ctp, existing, type->mfunction_v2.call);
+        if (details)
+        {
+            codeview_add_type(curr_type, symt);
+            codeview_add_func_signature_args(ctp,
+                                             (struct symt_function_signature*)symt,
+                                             type->mfunction_v2.rvtype,
+                                             type->mfunction_v2.arglist);
+        }
         break;
 
     case LF_VTSHAPE_V1:
