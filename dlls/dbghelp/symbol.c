@@ -828,7 +828,7 @@ static BOOL symt_enum_locals(struct process* pcs, const char* mask,
  * Helper for transforming an ANSI symbol info into an UNICODE one.
  * Assume that MaxNameLen is the same for both version (A & W).
  */
-static void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
+void copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si)
 {
     siw->SizeOfStruct = si->SizeOfStruct;
     siw->TypeIndex = si->TypeIndex; 
