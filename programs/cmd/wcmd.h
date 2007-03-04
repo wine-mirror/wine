@@ -94,6 +94,15 @@ typedef struct {
   BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
 } BATCH_CONTEXT;
 
+/* Data structure to save setlocal and pushd information */
+
+struct env_stack
+{
+  struct env_stack *next;
+  int    stackdepth;       /* Only used for pushd and popd */
+  WCHAR *strings;
+};
+
 #endif /* !RC_INVOKED */
 
 /*

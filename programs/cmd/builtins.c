@@ -42,12 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(cmd);
 
 void WCMD_execute (char *orig_command, char *parameter, char *substitution);
 
-struct env_stack
-{
-  struct env_stack *next;
-  WCHAR *strings;
-};
-
 struct env_stack *saved_environment;
 struct env_stack *pushd_directories;
 
@@ -612,6 +606,11 @@ void WCMD_pushd (void) {
     } else {
       curdir -> next    = pushd_directories;
       curdir -> strings = thisdir;
+      if (pushd_directories == NULL) {
+        curdir -> stackdepth = 1;
+      } else {
+        curdir -> stackdepth = pushd_directories -> stackdepth + 1;
+      }
       pushd_directories = curdir;
     }
 }

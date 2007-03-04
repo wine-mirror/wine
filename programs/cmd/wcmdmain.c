@@ -45,6 +45,7 @@ const char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
 static HANDLE old_stdin = INVALID_HANDLE_VALUE, old_stdout = INVALID_HANDLE_VALUE;
+extern struct env_stack *pushd_directories;
 
 static char *WCMD_expand_envvar(char *start);
 
@@ -932,9 +933,15 @@ void WCMD_show_prompt (void) {
 	case 'V':
 	  lstrcat (q, version_string);
 	  while (*q) q++;
-         break;
+          break;
 	case '_':
 	  *q++ = '\n';
+	  break;
+	case '+':
+	  if (pushd_directories) {
+	    memset(q, '+', pushd_directories->stackdepth);
+	    q = q + pushd_directories->stackdepth;
+	  }
 	  break;
       }
       p++;
