@@ -313,16 +313,16 @@ static void clear_test(IDirect3DDevice7 *device)
     ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
 
     /* Positive x, negative y */
-    rect[0].x1 = 0;
-    rect[0].y1 = 480;
-    rect[0].x2 = 320;
-    rect[0].y2 = 240;
+    U1(rect[0]).x1 = 0;
+    U2(rect[0]).y1 = 480;
+    U3(rect[0]).x2 = 320;
+    U4(rect[0]).y2 = 240;
 
     /* Positive x, positive y */
-    rect[1].x1 = 0;
-    rect[1].y1 = 0;
-    rect[1].x2 = 320;
-    rect[1].y2 = 240;
+    U1(rect[1]).x1 = 0;
+    U2(rect[1]).y1 = 0;
+    U3(rect[1]).x2 = 320;
+    U4(rect[1]).y2 = 240;
     /* Clear 2 rectangles with one call. Shows that a positive value is returned, but the negative rectangle
      * is ignored, the positive is still cleared afterwards
      */
@@ -330,10 +330,10 @@ static void clear_test(IDirect3DDevice7 *device)
     ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
 
     /* negative x, negative y */
-    rect_negneg.x1 = 640;
-    rect_negneg.x1 = 240;
-    rect_negneg.x2 = 320;
-    rect_negneg.y2 = 0;
+    U1(rect_negneg).x1 = 640;
+    U2(rect_negneg).y1 = 240;
+    U3(rect_negneg).x2 = 320;
+    U4(rect_negneg).y2 = 0;
     hr = IDirect3DDevice7_Clear(device, 1, &rect_negneg, D3DCLEAR_TARGET, 0xff00ff00, 0.0, 0);
     ok(hr == D3D_OK, "IDirect3DDevice7_Clear failed with %08x\n", hr);
 
