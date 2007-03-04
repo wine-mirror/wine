@@ -676,8 +676,16 @@ int types_print_type(const struct dbg_type* type, BOOL details)
         break;
     case SymTagFunctionType:
         types_get_info(type, TI_GET_TYPE, &subtype.id);
-        subtype.module = type->module;
-        types_print_type(&subtype, FALSE);
+        /* is the returned type the same object as function sig itself ? */
+        if (subtype.id != type->id)
+        {
+            subtype.module = type->module;
+            types_print_type(&subtype, FALSE);
+        }
+        else
+        {
+            dbg_printf("<ret_type=self>");
+        }
         dbg_printf(" (*%s)(", name);
         if (types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
         {
