@@ -603,13 +603,13 @@ void WCMD_call (char *command) {
       /* Save the current file position, call the same file,
          restore position                                    */
       li.QuadPart = 0;
-      li.LowPart = SetFilePointer(context -> h, li.LowPart,
-                     &li.HighPart, FILE_CURRENT);
+      li.u.LowPart = SetFilePointer(context -> h, li.u.LowPart,
+                     &li.u.HighPart, FILE_CURRENT);
 
       WCMD_batch (param1, command, 1, gotoLabel, context->h);
 
-      SetFilePointer(context -> h, li.LowPart,
-                     &li.HighPart, FILE_BEGIN);
+      SetFilePointer(context -> h, li.u.LowPart,
+                     &li.u.HighPart, FILE_BEGIN);
     } else {
       printf("Cannot call batch label outside of a batch script\n");
     }
