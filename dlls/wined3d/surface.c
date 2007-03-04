@@ -2261,11 +2261,23 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     float left, right, top, bottom; /* Texture coordinates */
     UINT fbwidth = Src->currentDesc.Width;
     UINT fbheight = Src->currentDesc.Height;
+    GLenum drawBuffer = GL_BACK;
 
     TRACE("Using hwstretch blit\n");
     /* Activate the Proper context for reading from the source surface, set it up for blitting */
     ENTER_GL();
     ActivateContext(myDevice, SrcSurface, CTXUSAGE_BLIT);
+
+    /* Try to use an aux buffer for drawing the rectangle. This way it doesn't need restoring.
+     * This way we don't have to wait for the 2nd readback to finish to leave this function.
+     */
+    if(GL_LIMITS(aux_buffers) >= 2) {
+        /* Got more than one aux buffer? Use the 2nd aux buffer */
+        drawBuffer = GL_AUX1;
+    } else if((swapchain || myDevice->offscreenBuffer == GL_BACK) && GL_LIMITS(aux_buffers) >= 1) {
+        /* Only one aux buffer, but it isn't used (Onscreen rendering, or non-aux orm)? Use it! */
+        drawBuffer = GL_AUX0;
+    }
 
     if(!swapchain && wined3d_settings.offscreen_rendering_mode == ORM_FBO) {
         glGenTextures(1, &backup);
@@ -2350,6 +2362,9 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
+    glDrawBuffer(drawBuffer);
+    glReadBuffer(drawBuffer);
+
     glBegin(GL_QUADS);
         /* bottom left */
         glTexCoord2f(left, bottom);
@@ -2383,23 +2398,28 @@ static inline void fb_copy_to_texture_hwstretch(IWineD3DSurfaceImpl *This, IWine
     glBindTexture(GL_TEXTURE_2D, backup ? backup : Src->glDescription.textureName);
     checkGLcall("glBindTexture(GL_TEXTURE_2D, Src->glDescription.textureName)");
 
-    glBegin(GL_QUADS);
-        /* top left */
-        glTexCoord2f(0.0, (float) fbheight / (float) Src->pow2Height);
-        glVertex2i(0, 0);
+    if(drawBuffer == GL_BACK) {
+        glBegin(GL_QUADS);
+            /* top left */
+            glTexCoord2f(0.0, (float) fbheight / (float) Src->pow2Height);
+            glVertex2i(0, 0);
 
-        /* bottom left */
-        glTexCoord2f(0.0, 0.0);
-        glVertex2i(0, fbheight);
+            /* bottom left */
+            glTexCoord2f(0.0, 0.0);
+            glVertex2i(0, fbheight);
 
-        /* bottom right */
-        glTexCoord2f((float) fbwidth / (float) Src->pow2Width, 0.0);
-        glVertex2i(fbwidth, Src->currentDesc.Height);
+            /* bottom right */
+            glTexCoord2f((float) fbwidth / (float) Src->pow2Width, 0.0);
+            glVertex2i(fbwidth, Src->currentDesc.Height);
 
-        /* top right */
-        glTexCoord2f((float) fbwidth / (float) Src->pow2Width, (float) fbheight / (float) Src->pow2Height);
-        glVertex2i(fbwidth, 0);
-    glEnd();
+            /* top right */
+            glTexCoord2f((float) fbwidth / (float) Src->pow2Width, (float) fbheight / (float) Src->pow2Height);
+            glVertex2i(fbwidth, 0);
+        glEnd();
+    } else {
+        /* Restore the old draw buffer */
+        glDrawBuffer(GL_BACK);
+    }
 
     /* Cleanup */
     if(src != Src->glDescription.textureName && src != backup) {
