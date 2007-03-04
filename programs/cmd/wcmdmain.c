@@ -47,7 +47,6 @@ const char version_string[] = "CMD Version " PACKAGE_VERSION "\n\n";
 const char anykey[] = "Press Return key to continue: ";
 char quals[MAX_PATH], param1[MAX_PATH], param2[MAX_PATH];
 BATCH_CONTEXT *context = NULL;
-static HANDLE old_stdin = INVALID_HANDLE_VALUE, old_stdout = INVALID_HANDLE_VALUE;
 extern struct env_stack *pushd_directories;
 
 static char *WCMD_expand_envvar(char *start);
@@ -314,6 +313,8 @@ void WCMD_process_command (char *command)
     char *whichcmd;
     SECURITY_ATTRIBUTES sa;
     char *new_cmd;
+    HANDLE old_stdin = INVALID_HANDLE_VALUE;
+    HANDLE old_stdout = INVALID_HANDLE_VALUE;
 
     /* Move copy of the command onto the heap so it can be expanded */
     new_cmd = HeapAlloc( GetProcessHeap(), 0, MAXSTRING );
@@ -587,12 +588,10 @@ void WCMD_process_command (char *command)
     if (old_stdin != INVALID_HANDLE_VALUE) {
       CloseHandle (GetStdHandle (STD_INPUT_HANDLE));
       SetStdHandle (STD_INPUT_HANDLE, old_stdin);
-      old_stdin = INVALID_HANDLE_VALUE;
     }
     if (old_stdout != INVALID_HANDLE_VALUE) {
       CloseHandle (GetStdHandle (STD_OUTPUT_HANDLE));
       SetStdHandle (STD_OUTPUT_HANDLE, old_stdout);
-      old_stdout = INVALID_HANDLE_VALUE;
     }
 }
 
@@ -606,8 +605,7 @@ static void init_msvcrt_io_block(STARTUPINFO* st)
     GetStartupInfo(&st_p);
     st->cbReserved2 = st_p.cbReserved2;
     st->lpReserved2 = st_p.lpReserved2;
-    if (st_p.cbReserved2 && st_p.lpReserved2 &&
-        (old_stdin != INVALID_HANDLE_VALUE || old_stdout != INVALID_HANDLE_VALUE))
+    if (st_p.cbReserved2 && st_p.lpReserved2)
     {
         /* Override the entries for fd 0,1,2 if we happened
          * to change those std handles (this depends on the way wcmd sets
