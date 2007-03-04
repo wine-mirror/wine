@@ -573,6 +573,11 @@ static BOOL CALLBACK print_types_mod_cb(PSTR mod_name, DWORD base, void* ctx)
 
 int print_types(void)
 {
+    if (!dbg_curr_process)
+    {
+        dbg_printf("No known process, cannot print types\n");
+        return 0;
+    }
     SymEnumerateModules(dbg_curr_process->handle, print_types_mod_cb, NULL);
     return 0;
 }
