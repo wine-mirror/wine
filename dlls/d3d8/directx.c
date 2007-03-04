@@ -377,6 +377,10 @@ static HRESULT WINAPI IDirect3D8Impl_CreateDevice(LPDIRECT3D8 iface, UINT Adapte
     localParameters.FullScreen_RefreshRateInHz                  = pPresentationParameters->FullScreen_RefreshRateInHz;
     localParameters.PresentationInterval                        = pPresentationParameters->FullScreen_PresentationInterval;
 
+    if(BehaviourFlags & D3DCREATE_MULTITHREADED) {
+        IWineD3DDevice_SetMultithreaded(object->WineD3DDevice);
+    }
+
     hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters, D3D8CB_CreateAdditionalSwapChain);
 
     pPresentationParameters->BackBufferWidth                    = localParameters.BackBufferWidth;

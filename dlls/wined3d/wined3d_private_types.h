@@ -299,5 +299,8 @@ typedef enum _WINED3DSHADER_INSTRUCTION_OPCODE_TYPE {
 #define WINED3DSHADER_VERSION_MINOR(version) (((version) >> 0) & 0xFF)
 #define WINED3DPS_END() 0x0000FFFF
 #define WINED3DVS_END() 0x0000FFFF
-  
+
+/* Multithreaded flag. Removed from the public header to signal that IWineD3D::CreateDevice ignores it */
+#define WINED3DCREATE_MULTITHREADED                 0x00000004
+
 #endif

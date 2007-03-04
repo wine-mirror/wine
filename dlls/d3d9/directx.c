@@ -367,6 +367,10 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapte
     localParameters.FullScreen_RefreshRateInHz          = pPresentationParameters->FullScreen_RefreshRateInHz;
     localParameters.PresentationInterval                = pPresentationParameters->PresentationInterval;
 
+    if(BehaviourFlags & D3DCREATE_MULTITHREADED) {
+        IWineD3DDevice_SetMultithreaded(object->WineD3DDevice);
+    }
+
     hr = IWineD3DDevice_Init3D(object->WineD3DDevice, &localParameters, D3D9CB_CreateAdditionalSwapChain);
 
     pPresentationParameters->BackBufferWidth            = localParameters.BackBufferWidth;
@@ -389,6 +393,7 @@ static HRESULT WINAPI IDirect3D9Impl_CreateDevice(LPDIRECT3D9 iface, UINT Adapte
         HeapFree(GetProcessHeap(), 0, object);
         *ppReturnedDeviceInterface = NULL;
     }
+
     return hr;
 }
 

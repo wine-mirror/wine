@@ -323,7 +323,8 @@ IDirectDrawImpl_Release(IDirectDraw7 *iface)
  * DDSCL_SETFOCUSWINDOW may only be used with DDSCL_NOWINDOWCHANGES
  *
  * Handled flags: DDSCL_NORMAL, DDSCL_FULLSCREEN, DDSCL_EXCLUSIVE,
- *                DDSCL_SETFOCUSWINDOW (partially)
+ *                DDSCL_SETFOCUSWINDOW (partially),
+ *                DDSCL_MULTITHREADED (work in progress)
  *
  * Unhandled flags, which should be implemented
  *  DDSCL_SETDEVICEWINDOW: Sets a window specially used for rendering (I don't
@@ -334,8 +335,7 @@ IDirectDrawImpl_Release(IDirectDraw7 *iface)
  * Unsure about these: DDSCL_FPUSETUP DDSCL_FPURESERVE
  *
  * These seem not really imporant for wine
- *  DDSCL_ALLOWREBOOT, DDSCL_NOWINDOWCHANGES, DDSCL_ALLOWMODEX,
- *  DDSCL_MULTITHREDED
+ *  DDSCL_ALLOWREBOOT, DDSCL_NOWINDOWCHANGES, DDSCL_ALLOWMODEX
  *
  * Returns:
  *  DD_OK if the cooperative level was set successfully
@@ -501,13 +501,19 @@ IDirectDrawImpl_SetCooperativeLevel(IDirectDraw7 *iface,
         }
     }
 
+    if(cooplevel & DDSCL_MULTITHREADED && !(This->cooperative_level & DDSCL_MULTITHREADED))
+    {
+        FIXME("DirectDraw is not thread safe yet\n");
+
+        /* Enable thread safety in wined3d */
+        IWineD3DDevice_SetMultithreaded(This->wineD3DDevice);
+    }
+
     /* Unhandled flags */
     if(cooplevel & DDSCL_ALLOWREBOOT)
         WARN("(%p) Unhandled flag DDSCL_ALLOWREBOOT, harmless\n", This);
     if(cooplevel & DDSCL_ALLOWMODEX)
         WARN("(%p) Unhandled flag DDSCL_ALLOWMODEX, harmless\n", This);
-    if(cooplevel & DDSCL_MULTITHREADED)
-        FIXME("(%p) Unhandled flag DDSCL_MULTITHREADED, Uh Oh...\n", This);
     if(cooplevel & DDSCL_FPUSETUP)
         WARN("(%p) Unhandled flag DDSCL_FPUSETUP, harmless\n", This);
     if(cooplevel & DDSCL_FPUPRESERVE)
