@@ -386,7 +386,12 @@ static void test_GdiGetCharDimensions(void)
     SIZE size;
     LONG avgwidth, height;
     static const char szAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    if (!pGdiGetCharDimensions) return;
+
+    if (!pGdiGetCharDimensions)
+    {
+        skip("GetFontUnicodeRanges not available on this platform\n");
+        return;
+    }
 
     hdc = CreateCompatibleDC(NULL);
 
@@ -506,13 +511,13 @@ static void test_GetGlyphIndices()
     TEXTMETRIC textm;
 
     if (!pGetGlyphIndicesW) {
-        trace("GetGlyphIndices not available on platform\n");
+        skip("GetGlyphIndices not available on platform\n");
         return;
     }
 
     if(!is_font_installed("Symbol"))
     {
-        trace("Symbol is not installed so skipping this test\n");
+        skip("Symbol is not installed so skipping this test\n");
         return;
     }
 
