@@ -928,7 +928,6 @@ static HRESULT WINAPI FileAsyncReader_RequestAllocator(IAsyncReader * iface, IMe
         /* FIXME: check we are still aligned */
         if (SUCCEEDED(hr))
         {
-            IMemAllocator_AddRef(pPreferred);
             *ppActual = pPreferred;
             TRACE("FileAsyncReader_RequestAllocator -- %x\n", hr);
             return S_OK;
