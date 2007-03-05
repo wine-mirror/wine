@@ -86,7 +86,7 @@ static DWORD report_deactivated_spooler = 1;
     { \
         if(report_deactivated_spooler > 0) { \
             report_deactivated_spooler--; \
-            trace("The Service 'Spooler' is required for many test\n"); \
+            skip("The Service 'Spooler' is required for many test\n"); \
         } \
         return; \
     }
@@ -308,7 +308,7 @@ static void test_AddMonitor(void)
     RETURN_ON_DEACTIVATED_SPOOLER(res)
 
     if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        trace("skip tests (ACCESS_DENIED)\n");
+        skip("(ACCESS_DENIED)\n");
         return;
     }
 
@@ -319,7 +319,7 @@ static void test_AddMonitor(void)
         "ERROR_INVALID_ENVIRONMENT)\n", res, GetLastError());
 
     if (!entry) {
-        trace("No usable Monitor found: Skip tests\n");
+        skip("No usable Monitor found\n");
         return;
     }
 
@@ -434,7 +434,7 @@ static void test_AddPort(void)
     res = AddPortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
     if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        trace("skip tests (ACCESS_DENIED)\n");
+        skip("(ACCESS_DENIED)\n");
         return;
     }
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
@@ -474,7 +474,7 @@ static void test_ConfigurePort(void)
     res = ConfigurePortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
     if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        trace(" skip tests (ACCESS_DENIED)\n");
+        skip("(ACCESS_DENIED)\n");
         return;
     }
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
@@ -530,7 +530,7 @@ static void test_DeleteMonitor(void)
     entry = find_installed_monitor();
 
     if (!entry) {
-        trace("No usable Monitor found: Skip tests\n");
+        skip("No usable Monitor found\n");
         return;
     }
 
@@ -615,7 +615,7 @@ static void test_DeletePort(void)
     res = DeletePortA(NULL, 0, empty);
     /* Allowed only for (Printer-)Administrators */
     if (!res && (GetLastError() == ERROR_ACCESS_DENIED)) {
-        trace("skip tests (ACCESS_DENIED)\n");
+        skip("(ACCESS_DENIED)\n");
         return;
     }
     /* XP: ERROR_NOT_SUPPORTED, NT351 and 9x: ERROR_INVALID_PARAMETER */
@@ -653,7 +653,7 @@ static void test_EnumForms(LPSTR pName)
     if (!res || !hprinter)
     {
         /* Open the local Prinserver is not supported on win9x */
-        if (pName) trace("Failed to open '%s', skiping the test\n", pName);
+        if (pName) skip("Failed to open '%s' (not supported on win9x)\n", pName);
         return;
     }
 
@@ -776,7 +776,7 @@ static void test_EnumMonitors(void)
 
         /* Level 2 is not supported on win9x */
         if (!res && (GetLastError() == ERROR_INVALID_LEVEL)) {
-            trace("Level %d not supported, skipping tests\n", level);
+            skip("Level %d not supported\n", level);
             continue;
         }
 
@@ -785,7 +785,7 @@ static void test_EnumMonitors(void)
             "ERROR_INSUFFICIENT_BUFFER)\n", level, res, GetLastError());
 
         if (!cbBuf) {
-            trace("no valid buffer size returned, skipping tests\n");
+            skip("no valid buffer size returned\n");
             continue;
         }
 
@@ -884,7 +884,7 @@ static void test_EnumPorts(void)
         
         /* Level 2 is not supported on NT 3.x */
         if (!res && (GetLastError() == ERROR_INVALID_LEVEL)) {
-            trace("Level %d not supported, skipping tests\n", level);
+            skip("Level %d not supported\n", level);
             continue;
         }
 
@@ -1045,7 +1045,7 @@ static void test_GetPrinterDriverDirectory(void)
         "ERROR_INSUFFICIENT_BUFFER)\n", res, GetLastError());
 
     if (!cbBuf) {
-        trace("no valid buffer size returned, skipping tests\n");
+        skip("no valid buffer size returned\n");
         return;
     }
 
@@ -1716,8 +1716,9 @@ static void test_XcvDataW_PortIsValid(void)
     status = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataW(hXcv, cmd_PortIsValidW, (PBYTE) emptyW, sizeof(emptyW), NULL, 0, &needed, &status);
-    ok( res && (status == ERROR_PATH_NOT_FOUND),
-        "returned %d with %u and %u for status %u (expected '!= 0' for ERROR_PATH_NOT_FOUND)\n",
+    ok( res && ((status == ERROR_FILE_NOT_FOUND) || (status == ERROR_PATH_NOT_FOUND)),
+        "returned %d with %u and %u for status %u (expected '!= 0' for status: "
+        "ERROR_FILE_NOT_FOUND or ERROR_PATH_NOT_FOUND)\n",
         res, GetLastError(), needed, status);
 
     /* a directory is not allowed */
@@ -1797,7 +1798,7 @@ static void test_GetPrinterDriver(void)
 
     if (!default_printer)
     {
-        trace("There is no default printer installed, skiping the test\n");
+        skip("There is no default printer installed\n");
         return;
     }
 
@@ -1805,7 +1806,7 @@ static void test_GetPrinterDriver(void)
     ret = OpenPrinter(default_printer, &hprn, NULL);
     if (!ret)
     {
-        trace("There is no printers installed, skiping the test\n");
+        skip("Unable to open the default printer (%s)\n", default_printer);
         return;
     }
     ok(hprn != 0, "wrong hprn %p\n", hprn);
@@ -1906,7 +1907,7 @@ static void test_DocumentProperties(void)
 
     if (!default_printer)
     {
-        trace("There is no default printer installed, skiping the test\n");
+        skip("There is no default printer installed\n");
         return;
     }
 
@@ -1914,7 +1915,7 @@ static void test_DocumentProperties(void)
     ret = OpenPrinter(default_printer, &hprn, NULL);
     if (!ret)
     {
-        trace("There is no printers installed, skiping the test\n");
+        skip("Unable to open the default printer (%s)\n", default_printer);
         return;
     }
     ok(hprn != 0, "wrong hprn %p\n", hprn);
@@ -1966,7 +1967,7 @@ static void test_EnumPrinters(void)
     /* EnumPrintersW is not supported on all platforms */
     if (!ret && (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED))
     {
-        trace("EnumPrintersW is not implemented, skipping some tests\n");
+        skip("EnumPrintersW is not implemented\n");
         return;
     }
 
