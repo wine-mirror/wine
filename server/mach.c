@@ -20,6 +20,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <assert.h>
 #include <errno.h>
@@ -46,7 +47,20 @@
 #include <mach/thread_act.h>
 #include <servers/bootstrap.h>
 
-extern int __pthread_kill(mach_port_t, int);
+#if defined(__APPLE__) && defined(__i386__)
+extern int pthread_kill_syscall( mach_port_t, int );
+__ASM_GLOBAL_FUNC( pthread_kill_syscall,
+                   "movl $328,%eax\n\t"  /* SYS___pthread_kill */
+                   "int $0x80\n\t"
+                   "jae 1f\n\t"
+                   "negl %eax\n"
+                   "1:\tret" );
+#else
+static inline int pthread_kill_syscall( mach_port_t, int )
+{
+    return -ENOSYS;
+}
+#endif
 
 static mach_port_t server_mach_port;
 
@@ -232,7 +246,11 @@ int send_thread_signal( struct thread *thread, int sig )
         if (!mach_port_extract_right( process_port, thread->unix_tid,
                                       MACH_MSG_TYPE_COPY_SEND, &port, &type ))
         {
-            ret = __pthread_kill( port, sig );
+            if ((ret = pthread_kill_syscall( port, sig )) < 0)
+            {
+                errno = -ret;
+                ret = -1;
+            }
             mach_port_deallocate( mach_task_self(), port );
         }
         else errno = ESRCH;
