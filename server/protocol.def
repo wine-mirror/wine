@@ -2233,6 +2233,7 @@ enum message_type
 /* Set the window region */
 @REQ(set_window_region)
     user_handle_t  window;        /* handle to the window */
+    int            redraw;        /* redraw the window? */
     VARARG(region,rectangles);    /* list of rectangles for the region */
 @END
 

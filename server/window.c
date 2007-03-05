@@ -1443,6 +1443,33 @@ done:
 }
 
 
+/* set the window region, updating the update region if necessary */
+static void set_window_region( struct window *win, struct region *region, int redraw )
+{
+    struct region *old_vis_rgn = NULL, *new_vis_rgn;
+    struct window *top = get_top_clipping_window( win );
+
+    /* no need to redraw if window is not visible */
+    if (redraw && !is_visible( win )) redraw = 0;
+
+    if (redraw) old_vis_rgn = get_visible_region( win, top, DCX_WINDOW );
+
+    if (win->win_region) free_region( win->win_region );
+    win->win_region = region;
+
+    if (old_vis_rgn && (new_vis_rgn = get_visible_region( win, top, DCX_WINDOW )))
+    {
+        /* expose anything revealed by the change */
+        if (xor_region( new_vis_rgn, old_vis_rgn, new_vis_rgn ))
+            expose_window( win, top, new_vis_rgn );
+        free_region( new_vis_rgn );
+    }
+
+    if (old_vis_rgn) free_region( old_vis_rgn );
+    clear_error();  /* we ignore out of memory errors since the region has been set */
+}
+
+
 /* create a window */
 DECL_HANDLER(create_window)
 {
@@ -1900,8 +1927,7 @@ DECL_HANDLER(set_window_region)
         if (!(region = create_region_from_req_data( get_req_data(), get_req_data_size() )))
             return;
     }
-    if (win->win_region) free_region( win->win_region );
-    win->win_region = region;
+    set_window_region( win, region, req->redraw );
 }
 
 

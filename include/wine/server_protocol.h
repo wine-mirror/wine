@@ -3060,6 +3060,7 @@ struct set_window_region_request
 {
     struct request_header __header;
     user_handle_t  window;
+    int            redraw;
     /* VARARG(region,rectangles); */
 };
 struct set_window_region_reply
@@ -4671,6 +4672,6 @@ union generic_reply
     struct get_token_impersonation_level_reply get_token_impersonation_level_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 278
+#define SERVER_PROTOCOL_VERSION 279
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -250,6 +250,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         SERVER_START_REQ( set_window_region )
         {
             req->window = hwnd;
+            req->redraw = (bRedraw != 0);
             if (data->rdh.nCount)
                 wine_server_add_data( req, data->Buffer, data->rdh.nCount * sizeof(RECT) );
             else
@@ -263,6 +264,7 @@ int WINAPI SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL bRedraw )
         SERVER_START_REQ( set_window_region )
         {
             req->window = hwnd;
+            req->redraw = (bRedraw != 0);
             ret = !wine_server_call_err( req );
         }
         SERVER_END_REQ;

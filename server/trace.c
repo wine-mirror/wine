@@ -2708,6 +2708,7 @@ static void dump_get_window_region_reply( const struct get_window_region_reply *
 static void dump_set_window_region_request( const struct set_window_region_request *req )
 {
     fprintf( stderr, " window=%p,", req->window );
+    fprintf( stderr, " redraw=%d,", req->redraw );
     fprintf( stderr, " region=" );
     dump_varargs_rectangles( cur_size );
 }
