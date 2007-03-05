@@ -693,17 +693,6 @@ void pshader_hw_texreg2gb(SHADER_OPCODE_ARG* arg) {
 }
 
 void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
-#if 0
-     SHADER_BUFFER* buffer = arg->buffer;
-     DWORD reg1 = arg->dst  & WINED3DSP_REGNUM_MASK;
-     DWORD reg2 = arg->src[0] & WINED3DSP_REGNUM_MASK;
-     char dst_str[8];
-
-     /* FIXME: Should apply the BUMPMAPENV matrix */
-     sprintf(dst_str, "T%u", reg1);
-     shader_addline(buffer, "ADD TMP.rg, fragment.texcoord[%u], T%u;\n", reg1, reg2);
-     shader_hw_sample(arg, reg1, dst_str, "TMP");
-#endif
     IWineD3DPixelShaderImpl* This = (IWineD3DPixelShaderImpl*) arg->shader;
 
     DWORD dst = arg->dst;
@@ -720,6 +709,17 @@ void pshader_hw_texbem(SHADER_OPCODE_ARG* arg) {
 
     if(This->bumpenvmatconst) {
         /*shader_addline(buffer, "MOV T%u, fragment.texcoord[%u];\n", 1, 1); Not needed - done already */
+
+        /* Plain GL does not have any signed formats suitable for that instruction.
+         * So the surface loading code converts the -128 ... 127 signed integers to
+         * 0 ... 255 unsigned ones. The following line undoes that.
+         *
+         * TODO: Both GL_NV_texture_shader and GL_ATI_envmap_bumpmap provide pixel formats
+         * suitable for loading the Direct3D perturbation data. If one of them is used, do
+         * not correct the signedness
+         */
+        shader_addline(buffer, "MAD T%u, T%u, coefmul.x, -one;\n", src, src);
+
         shader_addline(buffer, "SWZ TMP2, bumpenvmat, x, z, 0, 0;\n");
         shader_addline(buffer, "DP3 TMP.r, TMP2, T%u;\n", src);
         shader_addline(buffer, "SWZ TMP2, bumpenvmat, y, w, 0, 0;\n");

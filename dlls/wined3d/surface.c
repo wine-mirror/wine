@@ -1451,6 +1451,10 @@ HRESULT d3dfmt_get_conv(IWineD3DSurfaceImpl *This, BOOL need_alpha_ck, BOOL use_
             break;
 
         case WINED3DFMT_V8U8:
+            /* TODO: GL_NV_texture_shader and GL_ATI_envmap_bumpmap provide suitable formats.
+             * use one of them instead of converting
+             * Remember to adjust the texbem instruction in the shader
+             */
             *convert = CONVERT_V8U8;
             *format = GL_BGR;
             *internal = GL_RGB8;
@@ -1581,15 +1585,15 @@ HRESULT d3dfmt_convert_surface(BYTE *src, BYTE *dst, UINT pitch, UINT width, UIN
         {
             unsigned int x, y;
             short *Source;
-            char *Dest;
+            unsigned char *Dest;
             for(y = 0; y < height; y++) {
                 Source = (short *) (src + y * pitch);
-                Dest = (char *) (dst + y * outpitch);
+                Dest = (unsigned char *) (dst + y * outpitch);
                 for (x = 0; x < width; x++ ) {
                     long color = (*Source++);
-                    Dest[0] = color >> 8;
-                    Dest[1] = color;
-                    Dest[2] = 0xff;
+                    /* B */ Dest[0] = 0xff;
+                    /* G */ Dest[1] = (color >> 8) + 128; /* V */
+                    /* R */ Dest[2] = (color) + 128;      /* U */
                     Dest += 3;
                 }
             }
