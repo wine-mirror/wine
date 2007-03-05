@@ -1125,7 +1125,7 @@ ULONG WINAPI PullPin_Release(IPin * iface)
     PullPin *This = (PullPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
 
-    TRACE("(%p/%p)->()\n", This, iface);
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
     if (!refCount)
     {
