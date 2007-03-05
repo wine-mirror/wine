@@ -1515,10 +1515,39 @@ BOOL WINAPI CallNamedPipeW(
     LPVOID lpOutput, DWORD lpOutputSize,
     LPDWORD lpBytesRead, DWORD nTimeout)
 {
-    FIXME("%s %p %d %p %d %p %d\n",
-           debugstr_w(lpNamedPipeName), lpInput, lpInputSize,
-           lpOutput, lpOutputSize, lpBytesRead, nTimeout);
-    return FALSE;
+    HANDLE pipe;
+    BOOL ret;
+    DWORD mode;
+
+    TRACE("%s %p %d %p %d %p %d\n",
+          debugstr_w(lpNamedPipeName), lpInput, lpInputSize,
+          lpOutput, lpOutputSize, lpBytesRead, nTimeout);
+
+    pipe = CreateFileW(lpNamedPipeName, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+    if (pipe == INVALID_HANDLE_VALUE)
+    {
+        ret = WaitNamedPipeW(lpNamedPipeName, nTimeout);
+        if (!ret)
+            return FALSE;
+        pipe = CreateFileW(lpNamedPipeName, GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+        if (pipe == INVALID_HANDLE_VALUE)
+            return FALSE;
+    }
+
+    mode = PIPE_READMODE_MESSAGE;
+    ret = SetNamedPipeHandleState(pipe, &mode, NULL, NULL);
+    if (!ret)
+    {
+        CloseHandle(pipe);
+        return FALSE;
+    }
+
+    ret = TransactNamedPipe(pipe, lpInput, lpInputSize, lpOutput, lpOutputSize, lpBytesRead, NULL);
+    CloseHandle(pipe);
+    if (!ret)
+        return FALSE;
+
+    return TRUE;
 }
 
 /******************************************************************
