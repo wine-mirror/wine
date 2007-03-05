@@ -30,8 +30,24 @@
 
 #include "wine/test.h"
 
+LONG  (WINAPI *pGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
+BOOL  (WINAPI *pGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
+DWORD (WINAPI *pGetFontUnicodeRanges)(HDC hdc, LPGLYPHSET lpgs);
 DWORD (WINAPI *pGetGlyphIndicesA)(HDC hdc, LPCSTR lpstr, INT count, LPWORD pgi, DWORD flags);
 DWORD (WINAPI *pGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
+
+static HMODULE hgdi32 = 0;
+
+static void init(void)
+{
+    hgdi32 = GetModuleHandleA("gdi32.dll");
+
+    pGdiGetCharDimensions = (void *)GetProcAddress(hgdi32, "GdiGetCharDimensions");
+    pGetCharABCWidthsW = (void *)GetProcAddress(hgdi32, "GetCharABCWidthsW");
+    pGetFontUnicodeRanges = (void *)GetProcAddress(hgdi32, "GetFontUnicodeRanges");
+    pGetGlyphIndicesA = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesA");
+    pGetGlyphIndicesW = (void *)GetProcAddress(hgdi32, "GetGlyphIndicesW");
+}
 
 static INT CALLBACK is_font_installed_proc(const LOGFONT *elf, const TEXTMETRIC *ntm, DWORD type, LPARAM lParam)
 {
@@ -370,27 +386,25 @@ static void test_GdiGetCharDimensions(void)
     SIZE size;
     LONG avgwidth, height;
     static const char szAlphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-    typedef LONG (WINAPI *fnGdiGetCharDimensions)(HDC hdc, LPTEXTMETRICW lptm, LONG *height);
-    fnGdiGetCharDimensions GdiGetCharDimensions = (fnGdiGetCharDimensions)GetProcAddress(LoadLibrary("gdi32"), "GdiGetCharDimensions");
-    if (!GdiGetCharDimensions) return;
+    if (!pGdiGetCharDimensions) return;
 
     hdc = CreateCompatibleDC(NULL);
 
     GetTextExtentPoint(hdc, szAlphabet, strlen(szAlphabet), &size);
     avgwidth = ((size.cx / 26) + 1) / 2;
 
-    ret = GdiGetCharDimensions(hdc, &tm, &height);
+    ret = pGdiGetCharDimensions(hdc, &tm, &height);
     ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
     ok(height == tm.tmHeight, "GdiGetCharDimensions should have set height to %d instead of %d\n", tm.tmHeight, height);
 
-    ret = GdiGetCharDimensions(hdc, &tm, NULL);
+    ret = pGdiGetCharDimensions(hdc, &tm, NULL);
     ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
 
-    ret = GdiGetCharDimensions(hdc, NULL, NULL);
+    ret = pGdiGetCharDimensions(hdc, NULL, NULL);
     ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
 
     height = 0;
-    ret = GdiGetCharDimensions(hdc, NULL, &height);
+    ret = pGdiGetCharDimensions(hdc, NULL, &height);
     ok(ret == avgwidth, "GdiGetCharDimensions should have returned width of %d instead of %d\n", avgwidth, ret);
     ok(height == size.cy, "GdiGetCharDimensions should have set height to %d instead of %d\n", size.cy, height);
 
@@ -401,11 +415,9 @@ static void test_GetCharABCWidthsW(void)
 {
     BOOL ret;
     ABC abc[1];
-    typedef BOOL (WINAPI *fnGetCharABCWidthsW)(HDC hdc, UINT first, UINT last, LPABC abc);
-    fnGetCharABCWidthsW GetCharABCWidthsW = (fnGetCharABCWidthsW)GetProcAddress(LoadLibrary("gdi32"), "GetCharABCWidthsW");
-    if (!GetCharABCWidthsW) return;
+    if (!pGetCharABCWidthsW) return;
 
-    ret = GetCharABCWidthsW(NULL, 'a', 'a', abc);
+    ret = pGetCharABCWidthsW(NULL, 'a', 'a', abc);
     ok(!ret, "GetCharABCWidthsW should have returned FALSE\n");
 }
 
@@ -493,10 +505,7 @@ static void test_GetGlyphIndices()
     WORD     glyphs[(sizeof(testtext)/2)-1];
     TEXTMETRIC textm;
 
-    typedef BOOL (WINAPI *fnGetGlyphIndicesW)(HDC hdc, LPCWSTR lpstr, INT count, LPWORD pgi, DWORD flags);
-    fnGetGlyphIndicesW GetGlyphIndicesW = (fnGetGlyphIndicesW)GetProcAddress(LoadLibrary("gdi32"), 
-                                           "GetGlyphIndicesW");
-    if (!GetGlyphIndicesW) {
+    if (!pGetGlyphIndicesW) {
         trace("GetGlyphIndices not available on platform\n");
         return;
     }
@@ -516,11 +525,11 @@ static void test_GetGlyphIndices()
 
     ok(GetTextMetrics(hdc, &textm), "GetTextMetric failed\n");
     flags |= GGI_MARK_NONEXISTING_GLYPHS;
-    charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
     ok(glyphs[4] == 0x001f, "GetGlyphIndices should have returned a nonexistent char not %04x\n", glyphs[4]);
     flags = 0;
-    charcount = GetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
+    charcount = pGetGlyphIndicesW(hdc, testtext, (sizeof(testtext)/2)-1, glyphs, flags);
     ok(charcount == 5, "GetGlyphIndices count of glyphs should = 5 not %d\n", charcount);
     ok(glyphs[4] == textm.tmDefaultChar, "GetGlyphIndices should have returned a %04x not %04x\n", 
                     textm.tmDefaultChar, glyphs[4]);
@@ -1048,9 +1057,6 @@ static void test_font_charset(void)
     };
     int i;
 
-    pGetGlyphIndicesA = (void *)GetProcAddress(GetModuleHandle("gdi32.dll"), "GetGlyphIndicesA");
-    pGetGlyphIndicesW = (void *)GetProcAddress(GetModuleHandle("gdi32.dll"), "GetGlyphIndicesW");
-
     if (!pGetGlyphIndicesA || !pGetGlyphIndicesW)
     {
         skip("Skipping the font charset test on a Win9x platform\n");
@@ -1096,6 +1102,12 @@ static void test_GetFontUnicodeRanges(void)
     DWORD size, i;
     GLYPHSET *gs;
 
+    if (!pGetFontUnicodeRanges)
+    {
+        skip("GetFontUnicodeRanges not available before W2K\n");
+        return;
+    }
+
     memset(&lf, 0, sizeof(lf));
     lstrcpyA(lf.lfFaceName, "Arial");
     hfont = create_font("Arial", &lf);
@@ -1103,15 +1115,15 @@ static void test_GetFontUnicodeRanges(void)
     hdc = GetDC(0);
     hfont_old = SelectObject(hdc, hfont);
 
-    size = GetFontUnicodeRanges(NULL, NULL);
+    size = pGetFontUnicodeRanges(NULL, NULL);
     ok(!size, "GetFontUnicodeRanges succeeded unexpectedly\n");
 
-    size = GetFontUnicodeRanges(hdc, NULL);
+    size = pGetFontUnicodeRanges(hdc, NULL);
     ok(size, "GetFontUnicodeRanges failed unexpectedly\n");
 
     gs = HeapAlloc(GetProcessHeap(), 0, size);
 
-    size = GetFontUnicodeRanges(hdc, gs);
+    size = pGetFontUnicodeRanges(hdc, gs);
     ok(size, "GetFontUnicodeRanges failed\n");
 
     for (i = 0; i < gs->cRanges; i++)
@@ -1127,6 +1139,8 @@ static void test_GetFontUnicodeRanges(void)
 
 START_TEST(font)
 {
+    init();
+
     test_logfont();
     test_bitmap_font();
     test_bitmap_font_metrics();
