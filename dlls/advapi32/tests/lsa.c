@@ -54,8 +54,6 @@ static BOOL init(void)
 
         if (pLsaClose && pLsaFreeMemory && pLsaOpenPolicy && pLsaQueryInformationPolicy && pConvertSidToStringSidA)
             return TRUE;
-        else
-            skip("Needed functions are not available\n");
     }
 
     return FALSE;
@@ -180,8 +178,10 @@ static void test_lsa(void)
 
 START_TEST(lsa)
 {
-    if (!init())
+    if (!init()) {
+        skip("Needed functions are not available\n");
         return;
+    }
 
     test_lsa();
 }
