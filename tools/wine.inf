@@ -251,14 +251,12 @@ HKLM,%FontSubStr%,"Courier New Greek,161",,"Courier New,161"
 HKLM,%FontSubStr%,"Courier New TUR,162",,"Courier New,162"
 HKLM,%FontSubStr%,"Helv",,"MS Sans Serif"
 HKLM,%FontSubStr%,"Helvetica",,"Arial"
-HKLM,%FontSubStr%,"MS Shell Dlg",,"Tahoma"
 HKLM,%FontSubStr%,"MS Shell Dlg 2",,"Tahoma"
 HKLM,%FontSubStr%,"Times",,"Times New Roman"
 HKLM,%FontSubStr%,"Times New Roman CE,238",,"Times New Roman,238"
 HKLM,%FontSubStr%,"Times New Roman CYR,204",,"Times New Roman,204"
 HKLM,%FontSubStr%,"Times New Roman Greek,161",,"Times New Roman,161"
 HKLM,%FontSubStr%,"Times New Roman TUR,162",,"Times New Roman,162"
-HKLM,%FontSubStr%,"Tms Rmn",,"Times New Roman"
 HKLM,System\CurrentControlSet\Hardware Profiles\Current\Software\Fonts,"LogPixels",0x10003,0x00000060
 
 [MCI]

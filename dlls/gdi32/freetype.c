@@ -1732,67 +1732,84 @@ static const struct nls_update_font_list
     UINT ansi_cp, oem_cp;
     const char *oem, *fixed, *system;
     const char *courier, *serif, *small, *sserif;
+   /* these are for font substitute */
+    const char *shelldlg, *tmsrmn;
 } nls_update_font_list[] =
 {
     /* Latin 1 (United States) */
     { 1252, 437, "vgaoem.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+      "Tahoma","Times New Roman",
     },
     /* Latin 1 (Multilingual) */
     { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+      "Tahoma","Times New Roman",  /* FIXME unverified */
     },
     /* Eastern Europe */
     { 1250, 852, "vga852.fon", "vgafixe.fon", "vgasyse.fon",
       "couree.fon", "serifee.fon", "smallee.fon", "sserifee.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Cyrillic */
     { 1251, 866, "vga866.fon", "vgafixr.fon", "vgasysr.fon",
       "courer.fon", "serifer.fon", "smaller.fon", "sserifer.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Greek */
     { 1253, 737, "vga869.fon", "vgafixg.fon", "vgasysg.fon",
       "coureg.fon", "serifeg.fon", "smalleg.fon", "sserifeg.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Turkish */
     { 1254, 857, "vga857.fon", "vgafixt.fon", "vgasyst.fon",
       "couret.fon", "serifet.fon", "smallet.fon", "sserifet.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Hebrew */
     { 1255, 862, "vgaoem.fon", "vgaf1255.fon", "vgas1255.fon",
       "coue1255.fon", "sere1255.fon", "smae1255.fon", "ssee1255.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Arabic */
     { 1256, 720, "vgaoem.fon", "vgaf1256.fon", "vgas1256.fon",
       "coue1256.fon", "sere1256.fon", "smae1256.fon", "ssee1256.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Baltic */
     { 1257, 775, "vga775.fon", "vgaf1257.fon", "vgas1257.fon",
       "coue1257.fon", "sere1257.fon", "smae1257.fon", "ssee1257.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Vietnamese */
     { 1258, 1258, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Thai */
     { 874, 874, "vga850.fon", "vgaf874.fon", "vgas874.fon",
       "coure.fon", "serife.fon", "smalle.fon", "ssee874.fon",
+      "Tahoma","Times New Roman", /* FIXME unverified */
     },
     /* Japanese */
     { 932, 932, "vga932.fon", "jvgafix.fon", "jvgasys.fon",
       "coure.fon", "serife.fon", "jsmalle.fon", "sserife.fon",
+      "MS UI Gothic","MS Serif",
     },
     /* Chinese Simplified */
     { 936, 936, "vga936.fon", "svgafix.fon", "svgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+      "Tahoma", "Times New Roman", /* FIXME unverified */
     },
     /* Korean */
     { 949, 949, "vga949.fon", "hvgafix.fon", "hvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+      "Tahoma",  "Times New Roman", /* FIXME unverified */
     },
     /* Chinese Traditional */
     { 950, 950, "vga950.fon", "cvgafix.fon", "cvgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon",
+      "Tahoma",  "Times New Roman", /* FIXME unverified */
     }
 };
 
@@ -1883,6 +1900,14 @@ static void update_font_info(void)
             add_font_list(hkey, &nls_update_font_list[i]);
             RegCloseKey(hkey);
 
+            if (!RegCreateKeyA( HKEY_LOCAL_MACHINE, "Software\\Microsoft\\Windows NT\\CurrentVersion\\FontSubstitutes", &hkey ))
+            {
+                RegSetValueExA(hkey, "MS Shell Dlg", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].shelldlg,
+                               strlen(nls_update_font_list[i].shelldlg)+1);
+                RegSetValueExA(hkey, "Tms Rmn", 0, REG_SZ, (const BYTE *)nls_update_font_list[i].tmsrmn,
+                               strlen(nls_update_font_list[i].tmsrmn)+1);
+                RegCloseKey(hkey);
+            }
             return;
         }
     }
