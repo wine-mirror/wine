@@ -231,13 +231,25 @@ VOID INTERNET_SendCallback(LPWININETHANDLEHEADER hdr, DWORD dwContext,
         case INTERNET_STATUS_CONNECTING_TO_SERVER:
         case INTERNET_STATUS_CONNECTED_TO_SERVER:
             lpvNewInfo = WININET_strdup_AtoW(lpvStatusInfo);
+            break;
+        case INTERNET_STATUS_RESOLVING_NAME:
+        case INTERNET_STATUS_REDIRECT:
+            lpvNewInfo = WININET_strdupW(lpvStatusInfo);
+            break;
         }
     }else {
         switch(dwInternetStatus)
         {
+        case INTERNET_STATUS_NAME_RESOLVED:
+        case INTERNET_STATUS_CONNECTING_TO_SERVER:
+        case INTERNET_STATUS_CONNECTED_TO_SERVER:
+            lpvNewInfo = HeapAlloc(GetProcessHeap(), 0, strlen(lpvStatusInfo) + 1);
+            if (lpvNewInfo) strcpy(lpvNewInfo, lpvStatusInfo);
+            break;
         case INTERNET_STATUS_RESOLVING_NAME:
         case INTERNET_STATUS_REDIRECT:
             lpvNewInfo = WININET_strdup_WtoA(lpvStatusInfo);
+            break;
         }
     }
     
