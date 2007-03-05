@@ -859,6 +859,9 @@ static UINT HANDLE_CustomType34(MSIPACKAGE *package, LPCWSTR source,
 void ACTION_FinishCustomActions(MSIPACKAGE* package)
 {
     struct list *item;
+    HANDLE *wait_handles;
+    unsigned int handle_count, i;
+    msi_custom_action_info *info, *cursor;
 
     while ((item = list_head( &package->RunningActions )))
     {
@@ -874,27 +877,25 @@ void ACTION_FinishCustomActions(MSIPACKAGE* package)
         msi_free( action );
     }
 
-    while (1)
+    EnterCriticalSection( &msi_custom_action_cs );
+
+    handle_count = list_count( &msi_pending_custom_actions );
+    wait_handles = HeapAlloc( GetProcessHeap(), 0, handle_count * sizeof(HANDLE) );
+
+    handle_count = 0;
+    LIST_FOR_EACH_ENTRY_SAFE( info, cursor, &msi_pending_custom_actions, msi_custom_action_info, entry )
     {
-        HANDLE handle;
-        msi_custom_action_info *info;
-
-        EnterCriticalSection( &msi_custom_action_cs );
-        item = list_head( &msi_pending_custom_actions );
-        info = LIST_ENTRY( item, msi_custom_action_info, entry );
-
-        if (item && info->package == package )
+        if (info->package == package )
         {
-            handle = info->handle;
+            wait_handles[handle_count++] = info->handle;
             free_custom_action_data( info );
         }
-        else
-            handle = NULL;
-        LeaveCriticalSection( &msi_custom_action_cs );
-
-        if (!item)
-            break;
-
-        msi_dialog_check_messages( handle );
     }
+
+    LeaveCriticalSection( &msi_custom_action_cs );
+
+    for (i = 0; i < handle_count; i++)
+        msi_dialog_check_messages( wait_handles[i] );
+
+    HeapFree( GetProcessHeap(), 0, wait_handles );
 }
