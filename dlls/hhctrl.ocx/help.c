@@ -77,7 +77,7 @@ static HRESULT navigate_url(HHInfo *info, LPCWSTR surl)
     VariantClear(&url);
 
     if(FAILED(hres))
-        TRACE("Navigation failed: %08lx\n", hres);
+        TRACE("Navigation failed: %08x\n", hres);
 
     return hres;
 }
