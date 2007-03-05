@@ -394,7 +394,7 @@ static ULONG WINAPI DSoundRender_Release(IBaseFilter * iface)
     DSoundRenderImpl *This = (DSoundRenderImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
     if (!refCount)
     {

@@ -362,7 +362,7 @@ static ULONG WINAPI AsyncReader_AddRef(IBaseFilter * iface)
     AsyncReader *This = (AsyncReader *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
     
-    TRACE("(%p/%p)->() AddRef from %d\n", This, iface, refCount - 1);
+    TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
     
     return refCount;
 }
@@ -372,7 +372,7 @@ static ULONG WINAPI AsyncReader_Release(IBaseFilter * iface)
     AsyncReader *This = (AsyncReader *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
     
-    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
     
     if (!refCount)
     {
@@ -751,7 +751,7 @@ static ULONG WINAPI FileAsyncReaderPin_Release(IPin * iface)
     FileAsyncReader *This = (FileAsyncReader *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     
-    TRACE("()\n");
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
     
     if (!refCount)
     {

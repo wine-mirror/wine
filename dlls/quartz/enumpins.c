@@ -47,6 +47,8 @@ HRESULT IEnumPinsImpl_Construct(const ENUMPINDETAILS * pDetails, IEnumPins ** pp
     pEnumPins->uIndex = 0;
     CopyMemory(&pEnumPins->enumPinDetails, pDetails, sizeof(ENUMPINDETAILS));
     *ppEnum = (IEnumPins *)(&pEnumPins->lpVtbl);
+
+    TRACE("Created new enumerator (%p)\n", *ppEnum);
     return S_OK;
 }
 
@@ -77,7 +79,7 @@ static ULONG WINAPI IEnumPinsImpl_AddRef(IEnumPins * iface)
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("()\n");
+    TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
 
     return refCount;
 }
@@ -87,7 +89,7 @@ static ULONG WINAPI IEnumPinsImpl_Release(IEnumPins * iface)
     IEnumPinsImpl *This = (IEnumPinsImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("()\n");
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
     
     if (!refCount)
     {

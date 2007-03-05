@@ -228,7 +228,7 @@ static ULONG WINAPI FilterMapper2_AddRef(IFilterMapper2 * iface)
     FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
     ULONG refCount = InterlockedIncrement(&This->refCount);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p)->() AddRef from %d\n", This, refCount - 1);
 
     return refCount;
 }
@@ -238,7 +238,7 @@ static ULONG WINAPI FilterMapper2_Release(IFilterMapper2 * iface)
     FilterMapper2Impl *This = (FilterMapper2Impl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p)->()\n", iface);
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
     if (refCount == 0)
     {

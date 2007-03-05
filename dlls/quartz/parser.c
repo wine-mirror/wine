@@ -179,7 +179,7 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
     ParserImpl *This = (ParserImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->refCount);
 
-    TRACE("(%p/%p)->() Release from %d\n", This, iface, refCount + 1);
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
     
     if (!refCount)
     {
@@ -195,7 +195,7 @@ static ULONG WINAPI Parser_Release(IBaseFilter * iface)
         HeapFree(GetProcessHeap(), 0, This->ppPins);
         This->lpVtbl = NULL;
         
-        TRACE("Destroying AVI splitter\n");
+        TRACE("Destroying parser\n");
         CoTaskMemFree(This);
         
         return 0;
