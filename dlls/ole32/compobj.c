@@ -1461,15 +1461,11 @@ static HRESULT COM_GetRegisteredClassObject(
   while (curClass != 0)
   {
     /*
-     * Check if we have a match on the class ID.
+     * Check if we have a match on the class ID and context.
      */
-    if (IsEqualGUID(&(curClass->classIdentifier), rclsid))
+    if ((dwClsContext & curClass->runContext) &&
+        IsEqualGUID(&(curClass->classIdentifier), rclsid))
     {
-      /*
-       * Since we don't do out-of process or DCOM just right away, let's ignore the
-       * class context.
-       */
-
       /*
        * We have a match, return the pointer to the class object.
        */
