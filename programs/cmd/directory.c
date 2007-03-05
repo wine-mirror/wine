@@ -25,8 +25,6 @@
  * environment-variable and batch parameter substitution already done.
  */
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define WIN32_LEAN_AND_MEAN
 
 #include "wcmd.h"
@@ -224,13 +222,8 @@ void WCMD_list_directory (char *search_path, int level) {
           WCMD_output ("%s", (fd+i)->cFileName);
           tmp_width = tmp_width + strlen((fd+i)->cFileName) ;
           file_count++;
-#ifndef NONAMELESSSTRUCT
-          file_size.LowPart = (fd+i)->nFileSizeLow;
-          file_size.HighPart = (fd+i)->nFileSizeHigh;
-#else
           file_size.u.LowPart = (fd+i)->nFileSizeLow;
           file_size.u.HighPart = (fd+i)->nFileSizeHigh;
-#endif
       byte_count.QuadPart += file_size.QuadPart;
       }
       cur_width = cur_width + widest;
@@ -257,13 +250,8 @@ void WCMD_list_directory (char *search_path, int level) {
     }
     else {
       file_count++;
-#ifndef NONAMELESSSTRUCT
-      file_size.LowPart = (fd+i)->nFileSizeLow;
-      file_size.HighPart = (fd+i)->nFileSizeHigh;
-#else
       file_size.u.LowPart = (fd+i)->nFileSizeLow;
       file_size.u.HighPart = (fd+i)->nFileSizeHigh;
-#endif
       byte_count.QuadPart += file_size.QuadPart;
 	  if (!bare) {
          WCMD_output ("%10s  %8s    %10s  %s\n",
