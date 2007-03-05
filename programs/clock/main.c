@@ -180,6 +180,7 @@ static VOID CLOCK_ToggleTitle(VOID)
     else {
 	style = (style & ~(WS_POPUP|WS_THICKFRAME)) | WS_OVERLAPPEDWINDOW;
         SetMenu(Globals.hMainWnd, Globals.hMainMenu);
+        SetWindowRgn(Globals.hMainWnd, 0, TRUE);
     }
     SetWindowLong(Globals.hMainWnd, GWL_STYLE, style);
     SetWindowPos(Globals.hMainWnd, 0,0,0,0,0, 
@@ -311,7 +312,7 @@ static VOID CLOCK_Paint(HWND hWnd)
     FillRect(dcMem, &ps.rcPaint, GetStockObject(LTGRAY_BRUSH));
 
     if(Globals.bAnalog)
-	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds);
+	AnalogClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.bWithoutTitle);
     else
 	DigitalClock(dcMem, Globals.MaxX, Globals.MaxY, Globals.bSeconds, Globals.hFont);
 
@@ -361,6 +362,19 @@ static LRESULT WINAPI CLOCK_WndProc (HWND hWnd, UINT msg, WPARAM wParam, LPARAM 
         case WM_SIZE: {
             Globals.MaxX = LOWORD(lParam);
             Globals.MaxY = HIWORD(lParam);
+            if (Globals.bAnalog && Globals.bWithoutTitle)
+            {
+                RECT rect;
+                INT diameter = min( Globals.MaxX, Globals.MaxY );
+                HRGN hrgn = CreateEllipticRgn( (Globals.MaxX - diameter) / 2,
+                                               (Globals.MaxY - diameter) / 2,
+                                               (Globals.MaxX + diameter) / 2,
+                                               (Globals.MaxY + diameter) / 2 );
+                GetWindowRect( hWnd, &rect );
+                MapWindowPoints( 0, hWnd, (LPPOINT)&rect, 2 );
+                OffsetRgn( hrgn, -rect.left, -rect.top );
+                SetWindowRgn( Globals.hMainWnd, hrgn, TRUE );
+            }
 	    CLOCK_ResetFont();
             break;
         }
