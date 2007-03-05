@@ -703,13 +703,17 @@ void     dbg_active_wait_for_first_exception(void)
 static	unsigned dbg_start_debuggee(LPSTR cmdLine)
 {
     PROCESS_INFORMATION	info;
-    STARTUPINFOA	startup;
+    STARTUPINFOA	startup, current;
     DWORD               flags;
+
+    GetStartupInfoA(&current);
 
     memset(&startup, 0, sizeof(startup));
     startup.cb = sizeof(startup);
     startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWNORMAL;
+
+    startup.wShowWindow = (current.dwFlags & STARTF_USESHOWWINDOW) ?
+        current.wShowWindow : SW_SHOWNORMAL;
 
     /* FIXME: shouldn't need the CREATE_NEW_CONSOLE, but as usual CUI:s need it
      * while GUI:s don't
