@@ -86,7 +86,7 @@ static void test_md5_ctx(void)
     if (!pMD5Init || !pMD5Update || !pMD5Final)
     {
         skip("Needed functions are not available\n");
-        goto out;
+        return;
     }
 
     memset( &ctx, 0, sizeof(ctx) );
@@ -102,9 +102,6 @@ static void test_md5_ctx(void)
     pMD5Final( &ctx );
     ok( ctxcmp( &ctx, &ctx_initialized ), "context has changed\n" );
     ok( !memcmp( ctx.digest, expect, sizeof(expect) ), "incorrect result\n" );
-
-out:
-    FreeLibrary( module );
 }
 
 START_TEST(crypt_md5)
