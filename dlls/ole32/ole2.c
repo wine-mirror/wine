@@ -966,7 +966,7 @@ HRESULT WINAPI OleLoad(
    */
   hres = CoCreateInstance(&storageInfo.clsid,
 			  NULL,
-			  CLSCTX_INPROC_HANDLER,
+			  CLSCTX_INPROC_HANDLER|CLSCTX_INPROC_SERVER,
 			  riid,
 			  (void**)&pUnk);
 
