@@ -457,7 +457,7 @@ static UINT wait_thread_handle( msi_custom_action_info *info )
     return rc;
 }
 
-static msi_custom_action_info *find_action_by_guid( const LPGUID guid )
+static msi_custom_action_info *find_action_by_guid( const GUID *guid )
 {
     msi_custom_action_info *info;
     BOOL found = FALSE;
@@ -481,7 +481,7 @@ static msi_custom_action_info *find_action_by_guid( const LPGUID guid )
     return info;
 }
 
-static DWORD WINAPI ACTION_CallDllFunction( const LPGUID guid )
+static DWORD WINAPI ACTION_CallDllFunction( const GUID *guid )
 {
     msi_custom_action_info *info;
     MsiCustomActionEntryPoint fn;
