@@ -53,7 +53,7 @@ typedef struct tagWINE_HDD {
     struct tagWINE_HDD* next;
 } WINE_HDD;
 
-static int num_colours(const LPBITMAPINFOHEADER lpbi)
+static int num_colours(const BITMAPINFOHEADER *lpbi)
 {
 	if(lpbi->biClrUsed)
 		return lpbi->biClrUsed;
