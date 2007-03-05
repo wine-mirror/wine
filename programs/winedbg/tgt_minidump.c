@@ -44,7 +44,6 @@ void minidump_write(const char* file, const EXCEPTION_RECORD* rec)
     HANDLE                              hFile;
     MINIDUMP_EXCEPTION_INFORMATION      mei;
     EXCEPTION_POINTERS                  ep;
-    DWORD                               wine_opt;
 
     hFile = CreateFile(file, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS,
                        FILE_ATTRIBUTE_NORMAL, NULL);
@@ -59,14 +58,9 @@ void minidump_write(const char* file, const EXCEPTION_RECORD* rec)
         ep.ContextRecord = &dbg_context;
         mei.ClientPointers = FALSE;
     }
-    /* this is a wine specific options to return also ELF modules in the
-     * dumping
-     */
-    SymSetOptions((wine_opt = SymGetOptions()) | 0x40000000);
     MiniDumpWriteDump(dbg_curr_process->handle, dbg_curr_process->pid,
                       hFile, MiniDumpNormal/*|MiniDumpWithDataSegs*/,
                       rec ? &mei : NULL, NULL, NULL);
-    SymSetOptions(wine_opt);
     CloseHandle(hFile);
 }
 
