@@ -1762,7 +1762,7 @@ REBAR_InternalEraseBkGnd (REBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam, REC
 }
 
 static void
-REBAR_InternalHitTest (REBAR_INFO *infoPtr, const LPPOINT lpPt, UINT *pFlags, INT *pBand)
+REBAR_InternalHitTest (REBAR_INFO *infoPtr, const POINT *lpPt, UINT *pFlags, INT *pBand)
 {
     REBAR_BAND *lpBand;
     RECT rect;
