@@ -3018,6 +3018,11 @@ static void test_installprops(void)
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     trace("Time = %s\n", buf);
 
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "PackageCode", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("PackageCode = %s\n", buf);
+
     CloseHandle(hkey);
     MsiCloseHandle(hpkg);
     DeleteFile(msifile);

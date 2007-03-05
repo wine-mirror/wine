@@ -459,12 +459,16 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     CloseHandle( hkey );
 }
 
-static UINT msi_get_word_count( MSIPACKAGE *package )
+static UINT msi_load_summary_properties( MSIPACKAGE *package )
 {
     UINT rc;
-    INT word_count;
     MSIHANDLE suminfo;
     MSIHANDLE hdb = alloc_msihandle( &package->db->hdr );
+    INT word_count;
+    DWORD len;
+    LPWSTR package_code;
+    static const WCHAR szPackageCode[] = {
+        'P','a','c','k','a','g','e','C','o','d','e',0};
 
     if (!hdb) {
         ERR("Unable to allocate handle\n");
@@ -475,20 +479,38 @@ static UINT msi_get_word_count( MSIPACKAGE *package )
     if (rc != ERROR_SUCCESS)
     {
         ERR("Unable to open Summary Information\n");
-        return 0;
+        return rc;
     }
 
+    /* load package attributes */
     rc = MsiSummaryInfoGetPropertyW( suminfo, PID_WORDCOUNT, NULL,
                                      &word_count, NULL, NULL, NULL );
-    if (rc != ERROR_SUCCESS)
+    if (rc == ERROR_SUCCESS)
+        package->WordCount = word_count;
+    else
+        WARN("Unable to query word count\n");
+
+    /* load package code property */
+    len = 0;
+    rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
+                                     NULL, NULL, NULL, &len );
+    if (rc == ERROR_MORE_DATA)
     {
-        ERR("Unable to query word count\n");
-        MsiCloseHandle(suminfo);
-        return 0;
+        len++;
+        package_code = msi_alloc( len * sizeof(WCHAR) );
+        rc = MsiSummaryInfoGetPropertyW( suminfo, PID_REVNUMBER, NULL,
+                                         NULL, NULL, package_code, &len );
+        if (rc == ERROR_SUCCESS)
+            MSI_SetPropertyW( package, szPackageCode, package_code );
+        else
+            WARN("Unable to query rev number, %d\n", rc);
+        msi_free( package_code );
     }
+    else
+        WARN("Unable to query rev number, %d\n", rc);
 
     MsiCloseHandle(suminfo);
-    return word_count;
+    return ERROR_SUCCESS;
 }
 
 static MSIPACKAGE *msi_alloc_package( void )
@@ -542,7 +564,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
         msiobj_addref( &db->hdr );
         package->db = db;
 
-        package->WordCount = msi_get_word_count( package );
+        package->WordCount = 0;
         package->PackagePath = strdupW( db->path );
         package->BaseURL = strdupW( base_url );
 
@@ -553,6 +575,7 @@ MSIPACKAGE *MSI_CreatePackage( MSIDATABASE *db, LPWSTR base_url )
 
         package->ProductCode = msi_dup_property( package, szProductCode );
         set_installed_prop( package );
+        msi_load_summary_properties( package );
     }
 
     return package;
