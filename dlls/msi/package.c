@@ -182,6 +182,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     LPWSTR check;
     HKEY hkey;
     LONG res;
+    SYSTEM_INFO sys_info;
+    SYSTEMTIME systemtime;
 
     static const WCHAR cszbs[]={'\\',0};
     static const WCHAR CFF[] = 
@@ -242,6 +244,7 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     static const WCHAR szSix[] = {'6',0 };
 
     static const WCHAR szVersionMsi[] = { 'V','e','r','s','i','o','n','M','s','i',0 };
+    static const WCHAR szVersionDatabase[] = { 'V','e','r','s','i','o','n','D','a','t','a','b','a','s','e',0 };
     static const WCHAR szPhysicalMemory[] = { 'P','h','y','s','i','c','a','l','M','e','m','o','r','y',0 };
     static const WCHAR szFormat2[] = {'%','l','i','.','%','l','i',0};
 /* Screen properties */
@@ -263,15 +266,16 @@ static VOID set_installer_properties(MSIPACKAGE *package)
     };
     static const WCHAR szUSERNAME[] = {'U','S','E','R','N','A','M','E',0};
     static const WCHAR szCOMPANYNAME[] = {'C','O','M','P','A','N','Y','N','A','M','E',0};
-    SYSTEM_INFO sys_info;
+    static const WCHAR szDate[] = {'D','a','t','e',0};
+    static const WCHAR szTime[] = {'T','i','m','e',0};
 
     /*
      * Other things that probably should be set:
      *
      * SystemLanguageID ComputerName UserLanguageID LogonUser VirtualMemory
-     * Intel ShellAdvSupport DefaultUIFont VersionDatabase PackagecodeChanging
+     * ShellAdvSupport DefaultUIFont PackagecodeChanging
      * ProductState CaptionHeight BorderTop BorderSide TextHeight
-     * RedirectedDllSupport Time Date Privileged
+     * RedirectedDllSupport
      */
 
     SHGetFolderPathW(NULL,CSIDL_PROGRAM_FILES_COMMON,NULL,0,pth);
@@ -389,6 +393,8 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     sprintfW( bufstr, szFormat2, MSI_MAJORVERSION, MSI_MINORVERSION);
     MSI_SetPropertyW( package, szVersionMsi, bufstr );
+    sprintfW( bufstr, szFormat, MSI_MAJORVERSION * 100);
+    MSI_SetPropertyW( package, szVersionDatabase, bufstr );
 
     GetSystemInfo( &sys_info );
     if (sys_info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
@@ -432,6 +438,22 @@ static VOID set_installer_properties(MSIPACKAGE *package)
 
     if ( set_user_sid_prop( package ) != ERROR_SUCCESS)
         ERR("Failed to set the UserSID property\n");
+
+    /* Date and time properties */
+    GetSystemTime( &systemtime );
+    if (GetDateFormatW( LOCALE_USER_DEFAULT, DATE_SHORTDATE, &systemtime,
+                        NULL, bufstr, sizeof(bufstr)/sizeof(bufstr[0]) ))
+        MSI_SetPropertyW( package, szDate, bufstr );
+    else
+        ERR("Couldn't set Date property: GetDateFormat failed with error %d\n", GetLastError());
+
+    if (GetTimeFormatW( LOCALE_USER_DEFAULT,
+                        TIME_FORCE24HOURFORMAT | TIME_NOTIMEMARKER,
+                        &systemtime, NULL, bufstr,
+                        sizeof(bufstr)/sizeof(bufstr[0]) ))
+        MSI_SetPropertyW( package, szTime, bufstr );
+    else
+        ERR("Couldn't set Time property: GetTimeFormat failed with error %d\n", GetLastError());
 
     msi_free( check );
     CloseHandle( hkey );

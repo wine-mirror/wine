@@ -2998,6 +2998,26 @@ static void test_installprops(void)
     ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
     ok( !lstrcmp(buf, path), "Expected %s, got %s\n", path, buf);
 
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "VersionDatabase", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("VersionDatabase = %s\n", buf);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "VersionMsi", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("VersionMsi = %s\n", buf);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "Date", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("Date = %s\n", buf);
+
+    size = MAX_PATH;
+    r = MsiGetProperty(hpkg, "Time", buf, &size);
+    ok( r == ERROR_SUCCESS, "failed to get property: %d\n", r);
+    trace("Time = %s\n", buf);
+
     CloseHandle(hkey);
     MsiCloseHandle(hpkg);
     DeleteFile(msifile);
