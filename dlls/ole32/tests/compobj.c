@@ -542,7 +542,15 @@ static void test_CoUnmarshalInterface(void)
     ok_ole_success(hr, "CreateStreamOnHGlobal");
 
     hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
+    todo_wine
+    ok(hr == CO_E_NOTINITIALIZED, "CoUnmarshalInterface should have returned CO_E_NOTINITIALIZED instead of 0x%08x\n", hr);
+
+    pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+
+    hr = CoUnmarshalInterface(pStream, &IID_IUnknown, (void **)&pProxy);
     ok(hr == STG_E_READFAULT, "CoUnmarshalInterface should have returned STG_E_READFAULT instead of 0x%08x\n", hr);
+
+    CoUninitialize();
 
     hr = CoUnmarshalInterface(pStream, &IID_IUnknown, NULL);
     ok(hr == E_INVALIDARG, "CoUnmarshalInterface should have returned E_INVALIDARG instead of 0x%08x\n", hr);
