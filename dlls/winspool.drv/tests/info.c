@@ -2020,4 +2020,7 @@ START_TEST(info)
     test_SetDefaultPrinter();
     test_XcvDataW_MonitorUI();
     test_XcvDataW_PortIsValid();
+
+    /* Cleanup our temporary file */
+    DeleteFileA(tempfileA);
 }
