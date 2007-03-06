@@ -799,20 +799,467 @@ static void test_CreatePipe(void)
     ok(CloseHandle(piperead), "CloseHandle for the read pipe failed\n");
 }
 
+struct named_pipe_client_params
+{
+    DWORD security_flags;
+    HANDLE token;
+    BOOL revert;
+};
+
+#define PIPE_NAME "\\\\.\\pipe\\named_pipe_test"
+
+static DWORD CALLBACK named_pipe_client_func(LPVOID p)
+{
+    struct named_pipe_client_params *params = (struct named_pipe_client_params *)p;
+    HANDLE pipe;
+    BOOL ret;
+    const char message[] = "Test";
+    DWORD bytes_read, bytes_written;
+    char dummy;
+    TOKEN_PRIVILEGES *Privileges = NULL;
+
+    if (params->token)
+    {
+        if (params->revert)
+        {
+            /* modify the token so we can tell if the pipe impersonation
+             * token reverts to the process token */
+            ret = AdjustTokenPrivileges(params->token, TRUE, NULL, 0, NULL, NULL);
+            ok(ret, "AdjustTokenPrivileges failed with error %d\n", GetLastError());
+        }
+        ret = SetThreadToken(NULL, params->token);
+        ok(ret, "SetThreadToken failed with error %d\n", GetLastError());
+    }
+    else
+    {
+        DWORD Size = 0;
+        HANDLE process_token;
+
+        ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY|TOKEN_ADJUST_PRIVILEGES, &process_token);
+        ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
+
+        ret = GetTokenInformation(process_token, TokenPrivileges, NULL, 0, &Size);
+        ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetTokenInformation(TokenPrivileges) failed with %d\n", GetLastError());
+        Privileges = (TOKEN_PRIVILEGES *)HeapAlloc(GetProcessHeap(), 0, Size);
+        ret = GetTokenInformation(process_token, TokenPrivileges, Privileges, Size, &Size);
+        ok(ret, "GetTokenInformation(TokenPrivileges) failed with %d\n", GetLastError());
+
+        ret = AdjustTokenPrivileges(process_token, TRUE, NULL, 0, NULL, NULL);
+        ok(ret, "AdjustTokenPrivileges failed with error %d\n", GetLastError());
+
+        CloseHandle(process_token);
+    }
+
+    pipe = CreateFile(PIPE_NAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, params->security_flags, NULL);
+    ok(pipe != INVALID_HANDLE_VALUE, "CreateFile for pipe failed with error %d\n", GetLastError());
+
+    ret = WriteFile(pipe, message, sizeof(message), &bytes_written, NULL);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
+
+    ret = ReadFile(pipe, &dummy, sizeof(dummy), &bytes_read, NULL);
+    ok(ret, "ReadFile failed with error %d\n", GetLastError());
+
+    if (params->token)
+    {
+        if (params->revert)
+        {
+            ret = RevertToSelf();
+            ok(ret, "RevertToSelf failed with error %d\n", GetLastError());
+        }
+        else
+        {
+            ret = AdjustTokenPrivileges(params->token, TRUE, NULL, 0, NULL, NULL);
+            ok(ret, "AdjustTokenPrivileges failed with error %d\n", GetLastError());
+        }
+    }
+    else
+    {
+        HANDLE process_token;
+
+        ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &process_token);
+        ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
+
+        ret = AdjustTokenPrivileges(process_token, FALSE, Privileges, 0, NULL, NULL);
+        ok(ret, "AdjustTokenPrivileges failed with error %d\n", GetLastError());
+
+        HeapFree(GetProcessHeap(), 0, Privileges);
+
+        CloseHandle(process_token);
+    }
+
+    ret = WriteFile(pipe, message, sizeof(message), &bytes_written, NULL);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
+
+    ret = ReadFile(pipe, &dummy, sizeof(dummy), &bytes_read, NULL);
+    ok(ret, "ReadFile failed with error %d\n", GetLastError());
+
+    CloseHandle(pipe);
+
+    return 0;
+}
+
+static HANDLE make_impersonation_token(DWORD Access, SECURITY_IMPERSONATION_LEVEL ImpersonationLevel)
+{
+    HANDLE ProcessToken;
+    HANDLE Token = NULL;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_DUPLICATE, &ProcessToken);
+    ok(ret, "OpenProcessToken failed with error %d\n", GetLastError());
+
+    ret = DuplicateTokenEx(ProcessToken, Access, NULL, ImpersonationLevel, TokenImpersonation, &Token);
+    ok(ret, "DuplicateToken failed with error %d\n", GetLastError());
+
+    CloseHandle(ProcessToken);
+
+    return Token;
+}
+
+static void test_ImpersonateNamedPipeClient(HANDLE hClientToken, DWORD security_flags, BOOL revert, void (*test_func)(int, HANDLE))
+{
+    HANDLE hPipeServer;
+    BOOL ret;
+    DWORD dwTid;
+    HANDLE hThread;
+    char buffer[256];
+    DWORD dwBytesRead;
+    DWORD error;
+    struct named_pipe_client_params params;
+    char dummy = 0;
+    DWORD dwBytesWritten;
+    HANDLE hToken = NULL;
+    SECURITY_IMPERSONATION_LEVEL ImpersonationLevel;
+    DWORD size;
+
+    hPipeServer = CreateNamedPipe(PIPE_NAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_READMODE_BYTE | PIPE_WAIT, 1, 100, 100, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hPipeServer != INVALID_HANDLE_VALUE, "CreateNamedPipe failed with error %d\n", GetLastError());
+
+    params.security_flags = security_flags;
+    params.token = hClientToken;
+    params.revert = revert;
+    hThread = CreateThread(NULL, 0, named_pipe_client_func, &params, 0, &dwTid);
+    ok(hThread != NULL, "CreateThread failed with error %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = ImpersonateNamedPipeClient(hPipeServer);
+    error = GetLastError();
+    todo_wine
+    ok(!ret && (error == ERROR_CANNOT_IMPERSONATE), "ImpersonateNamedPipeClient should have failed with ERROR_CANNOT_IMPERSONATE instead of %d\n", GetLastError());
+
+    ret = ConnectNamedPipe(hPipeServer, NULL);
+    ok(ret || (GetLastError() == ERROR_PIPE_CONNECTED), "ConnectNamedPipe failed with error %d\n", GetLastError());
+
+    ret = ReadFile(hPipeServer, buffer, sizeof(buffer), &dwBytesRead, NULL);
+    ok(ret, "ReadFile failed with error %d\n", GetLastError());
+
+    ret = ImpersonateNamedPipeClient(hPipeServer);
+    todo_wine
+    ok(ret, "ImpersonateNamedPipeClient failed with error %d\n", GetLastError());
+
+    ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hToken);
+    todo_wine
+    ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
+
+    (*test_func)(0, hToken);
+
+    ret = GetTokenInformation(hToken, TokenImpersonationLevel, &ImpersonationLevel, sizeof(ImpersonationLevel), &size);
+    todo_wine {
+    ok(ret, "GetTokenInformation(TokenImpersonationLevel) failed with error %d\n", GetLastError());
+    ok(ImpersonationLevel == SecurityImpersonation, "ImpersonationLevel should have been SecurityImpersonation instead of %d\n", ImpersonationLevel);
+    }
+
+    CloseHandle(hToken);
+
+    RevertToSelf();
+
+    ret = WriteFile(hPipeServer, &dummy, sizeof(dummy), &dwBytesWritten, NULL);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
+
+    ret = ReadFile(hPipeServer, buffer, sizeof(buffer), &dwBytesRead, NULL);
+    ok(ret, "ReadFile failed with error %d\n", GetLastError());
+
+    ret = ImpersonateNamedPipeClient(hPipeServer);
+    todo_wine
+    ok(ret, "ImpersonateNamedPipeClient failed with error %d\n", GetLastError());
+
+    ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hToken);
+    todo_wine
+    ok(ret, "OpenThreadToken failed with error %d\n", GetLastError());
+
+    (*test_func)(1, hToken);
+
+    CloseHandle(hToken);
+
+    RevertToSelf();
+
+    ret = WriteFile(hPipeServer, &dummy, sizeof(dummy), &dwBytesWritten, NULL);
+    ok(ret, "WriteFile failed with error %d\n", GetLastError());
+
+    WaitForSingleObject(hThread, INFINITE);
+
+    ret = ImpersonateNamedPipeClient(hPipeServer);
+    todo_wine
+    ok(ret, "ImpersonateNamedPipeClient failed with error %d\n", GetLastError());
+
+    RevertToSelf();
+
+    CloseHandle(hThread);
+    CloseHandle(hPipeServer);
+}
+
+static BOOL are_all_privileges_disabled(HANDLE hToken)
+{
+    BOOL ret;
+    TOKEN_PRIVILEGES *Privileges = NULL;
+    DWORD Size = 0;
+    BOOL all_privs_disabled = TRUE;
+    DWORD i;
+
+    ret = GetTokenInformation(hToken, TokenPrivileges, NULL, 0, &Size);
+    if (!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+    {
+        Privileges = HeapAlloc(GetProcessHeap(), 0, Size);
+        ret = GetTokenInformation(hToken, TokenPrivileges, Privileges, Size, &Size);
+        if (!ret) return FALSE;
+    }
+    else
+        return FALSE;
+
+    for (i = 0; i < Privileges->PrivilegeCount; i++)
+    {
+        if (Privileges->Privileges[i].Attributes & SE_PRIVILEGE_ENABLED)
+        {
+            all_privs_disabled = FALSE;
+            break;
+        }
+    }
+
+    HeapFree(GetProcessHeap(), 0, Privileges);
+
+    return all_privs_disabled;
+}
+
+static DWORD get_privilege_count(HANDLE hToken)
+{
+    TOKEN_STATISTICS Statistics;
+    DWORD Size = sizeof(Statistics);
+    BOOL ret;
+
+    ret = GetTokenInformation(hToken, TokenStatistics, &Statistics, Size, &Size);
+    todo_wine
+    ok(ret, "GetTokenInformation(TokenStatistics)\n");
+    if (!ret) return -1;
+
+    return Statistics.PrivilegeCount;
+}
+
+static void test_no_sqos_no_token(int call_index, HANDLE hToken)
+{
+    DWORD priv_count;
+
+    switch (call_index)
+    {
+    case 0:
+        priv_count = get_privilege_count(hToken);
+        todo_wine
+        ok(priv_count == 0, "privilege count should have been 0 instead of %d\n", priv_count);
+        break;
+    case 1:
+        priv_count = get_privilege_count(hToken);
+        ok(priv_count > 0, "privilege count should now be > 0 instead of 0\n");
+        ok(!are_all_privileges_disabled(hToken), "impersonated token should not have been modified\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_no_sqos(int call_index, HANDLE hToken)
+{
+    switch (call_index)
+    {
+    case 0:
+        ok(!are_all_privileges_disabled(hToken), "token should be a copy of the process one\n");
+        break;
+    case 1:
+        todo_wine
+        ok(are_all_privileges_disabled(hToken), "impersonated token should have been modified\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_static_context(int call_index, HANDLE hToken)
+{
+    switch (call_index)
+    {
+    case 0:
+        ok(!are_all_privileges_disabled(hToken), "token should be a copy of the process one\n");
+        break;
+    case 1:
+        ok(!are_all_privileges_disabled(hToken), "impersonated token should not have been modified\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_dynamic_context(int call_index, HANDLE hToken)
+{
+    switch (call_index)
+    {
+    case 0:
+        ok(!are_all_privileges_disabled(hToken), "token should be a copy of the process one\n");
+        break;
+    case 1:
+        todo_wine
+        ok(are_all_privileges_disabled(hToken), "impersonated token should have been modified\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_dynamic_context_no_token(int call_index, HANDLE hToken)
+{
+    switch (call_index)
+    {
+    case 0:
+        todo_wine
+        ok(are_all_privileges_disabled(hToken), "token should be a copy of the process one\n");
+        break;
+    case 1:
+        ok(!are_all_privileges_disabled(hToken), "process token modification should have been detected and impersonation token updated\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_no_sqos_revert(int call_index, HANDLE hToken)
+{
+    DWORD priv_count;
+    switch (call_index)
+    {
+    case 0:
+        priv_count = get_privilege_count(hToken);
+        todo_wine
+        ok(priv_count == 0, "privilege count should have been 0 instead of %d\n", priv_count);
+        break;
+    case 1:
+        priv_count = get_privilege_count(hToken);
+        ok(priv_count > 0, "privilege count should now be > 0 instead of 0\n");
+        ok(!are_all_privileges_disabled(hToken), "impersonated token should not have been modified\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_static_context_revert(int call_index, HANDLE hToken)
+{
+    switch (call_index)
+    {
+    case 0:
+        todo_wine
+        ok(are_all_privileges_disabled(hToken), "privileges should have been disabled\n");
+        break;
+    case 1:
+        todo_wine
+        ok(are_all_privileges_disabled(hToken), "impersonated token should not have been modified\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_dynamic_context_revert(int call_index, HANDLE hToken)
+{
+    switch (call_index)
+    {
+    case 0:
+        todo_wine
+        ok(are_all_privileges_disabled(hToken), "privileges should have been disabled\n");
+        break;
+    case 1:
+        ok(!are_all_privileges_disabled(hToken), "impersonated token should now be process token\n");
+        break;
+    default:
+        ok(0, "shouldn't happen\n");
+    }
+}
+
+static void test_impersonation(void)
+{
+    HANDLE hClientToken;
+    HANDLE hProcessToken;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hProcessToken);
+    if (!ret)
+    {
+        skip("couldn't open process token, skipping impersonation tests\n");
+        return;
+    }
+
+    if (!get_privilege_count(hProcessToken) || are_all_privileges_disabled(hProcessToken))
+    {
+        skip("token didn't have any privileges or they were all disabled. token not suitable for impersonation tests\n");
+        CloseHandle(hProcessToken);
+        return;
+    }
+    CloseHandle(hProcessToken);
+
+    test_ImpersonateNamedPipeClient(NULL, 0, FALSE, test_no_sqos_no_token);
+    hClientToken = make_impersonation_token(TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, SecurityImpersonation);
+    test_ImpersonateNamedPipeClient(hClientToken, 0, FALSE, test_no_sqos);
+    CloseHandle(hClientToken);
+    hClientToken = make_impersonation_token(TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, SecurityImpersonation);
+    test_ImpersonateNamedPipeClient(hClientToken,
+        SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION, FALSE,
+        test_static_context);
+    CloseHandle(hClientToken);
+    hClientToken = make_impersonation_token(TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, SecurityImpersonation);
+    test_ImpersonateNamedPipeClient(hClientToken,
+        SECURITY_SQOS_PRESENT | SECURITY_CONTEXT_TRACKING | SECURITY_IMPERSONATION,
+        FALSE, test_dynamic_context);
+    CloseHandle(hClientToken);
+    test_ImpersonateNamedPipeClient(NULL,
+        SECURITY_SQOS_PRESENT | SECURITY_CONTEXT_TRACKING | SECURITY_IMPERSONATION,
+        FALSE, test_dynamic_context_no_token);
+
+    hClientToken = make_impersonation_token(TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, SecurityImpersonation);
+    test_ImpersonateNamedPipeClient(hClientToken, 0, TRUE, test_no_sqos_revert);
+    CloseHandle(hClientToken);
+    hClientToken = make_impersonation_token(TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, SecurityImpersonation);
+    test_ImpersonateNamedPipeClient(hClientToken,
+        SECURITY_SQOS_PRESENT | SECURITY_IMPERSONATION, TRUE,
+        test_static_context_revert);
+    CloseHandle(hClientToken);
+    hClientToken = make_impersonation_token(TOKEN_IMPERSONATE | TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, SecurityImpersonation);
+    test_ImpersonateNamedPipeClient(hClientToken,
+        SECURITY_SQOS_PRESENT | SECURITY_CONTEXT_TRACKING | SECURITY_IMPERSONATION,
+        TRUE, test_dynamic_context_revert);
+    CloseHandle(hClientToken);
+}
+
 START_TEST(pipe)
 {
-    trace("test 1 of 6:\n");
+    trace("test 1 of 7:\n");
     if (test_DisconnectNamedPipe())
         return;
-    trace("test 2 of 6:\n");
+    trace("test 2 of 7:\n");
     test_CreateNamedPipe_instances_must_match();
-    trace("test 3 of 6:\n");
+    trace("test 3 of 7:\n");
     test_NamedPipe_2();
-    trace("test 4 of 6:\n");
+    trace("test 4 of 7:\n");
     test_CreateNamedPipe(PIPE_TYPE_BYTE);
-    trace("test 5 of 6\n");
+    trace("test 5 of 7\n");
     test_CreateNamedPipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
-    trace("test 6 of 6\n");
+    trace("test 6 of 7\n");
     test_CreatePipe();
+    trace("test 7 of 7\n");
+    test_impersonation();
     trace("all tests done\n");
 }
