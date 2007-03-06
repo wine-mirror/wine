@@ -64,7 +64,7 @@ static void test_session_guid(LPDIRECTPLAY4 pDP)
     sessionDesc.dwSize = sizeof( DPSESSIONDESC2 );
     memcpy(&sessionDesc.guidApplication, &appGuid, 16);
     sessionDesc.dwFlags = DPSESSION_CLIENTSERVER;
-    sessionDesc.lpszSessionNameA = name;
+    U1(sessionDesc).lpszSessionNameA = name;
     sessionDesc.dwMaxPlayers = 10;
     sessionDesc.dwCurrentPlayers = 0;
     IDirectPlayX_Open(pDP, &sessionDesc, DPOPEN_CREATE);
