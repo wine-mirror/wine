@@ -588,7 +588,6 @@ static void test_ROT(void)
     hr = IRunningObjectTable_Register(pROT, 0, (IUnknown*)&Test_ClassFactory,
                                       pMoniker, &dwCookie);
     ok_ole_success(hr, IRunningObjectTable_Register);
-    IMoniker_Release(pMoniker);
 
     ok_more_than_one_lock();
 
