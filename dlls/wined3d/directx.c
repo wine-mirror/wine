@@ -704,7 +704,7 @@ BOOL IWineD3DImpl_FillGLCaps(IWineD3D *iface, Display* display) {
                 TRACE_(d3d_caps)(" FOUND: EXT Point parameters support\n");
                 gl_info->supported[EXT_POINT_PARAMETERS] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_secondary_color") == 0) {
-                TRACE_(d3d_caps)(" FOUND: EXT Secondary coord support\n");
+                TRACE_(d3d_caps)(" FOUND: EXT Secondary color support\n");
                 gl_info->supported[EXT_SECONDARY_COLOR] = TRUE;
             } else if (strcmp(ThisExtn, "GL_EXT_stencil_two_side") == 0) {
                 TRACE_(d3d_caps)(" FOUND: EXT Stencil two side support\n");
