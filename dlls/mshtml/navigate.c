@@ -141,12 +141,13 @@ static nsresult NSAPI nsInputStream_ReadSegments(nsIInputStream *iface,
 
     nsres = aWriter(NSINSTREAM(This), aClousure, This->buf, 0, This->buf_size, &written);
     if(NS_FAILED(nsres))
-        FIXME("aWritter failed: %08x\n", nsres);
-    if(written != This->buf_size)
-        FIXME("written != buf_size\n");
+        TRACE("aWritter failed: %08x\n", nsres);
+    else if(written != This->buf_size)
+        FIXME("written %d != buf_size %d\n", written, This->buf_size);
 
     This->buf_size -= written; 
 
+    *_retval = written;
     return nsres;
 }
 
