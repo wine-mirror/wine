@@ -1018,6 +1018,7 @@ static BOOL AddFontFileToList(const char *file, char *fake_family, const WCHAR *
                 TRACE("Skipping Index %i: Incorrect Family name for replacement\n",(INT)face_index);
                 HeapFree(GetProcessHeap(), 0, localised_family);
                 num_faces = ft_face->num_faces;
+                pFT_Done_Face(ft_face);
                 continue;
             }
             HeapFree(GetProcessHeap(), 0, localised_family);
