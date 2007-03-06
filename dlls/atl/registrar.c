@@ -479,7 +479,7 @@ static HRESULT file_register(Registrar *This, LPCOLESTR fileName, BOOL do_regist
     HRESULT hres;
 
     file = CreateFileW(fileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_READONLY, NULL);
-    if(file) {
+    if(file != INVALID_HANDLE_VALUE) {
         filelen = GetFileSize(file, NULL);
         regstra = HeapAlloc(GetProcessHeap(), 0, filelen);
         lres = ReadFile(file, regstra, filelen, NULL, NULL);
